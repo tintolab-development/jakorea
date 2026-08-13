@@ -23,6 +23,7 @@ import {
   DEFAULT_CONFIRM_ACTOR,
 } from '@/features/corporate-consultation/api/store'
 import { maskPhoneNumber } from '@/features/corporate-consultation/lib/phone-mask'
+import { corporateConsultationMutationFailureAlert } from '@/features/corporate-consultation/lib/mutation-failure-alert'
 import { CorporateConsultationDetailModal } from '@/features/corporate-consultation/ui/detail-modal'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -30,6 +31,7 @@ import {
   FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
@@ -39,6 +41,7 @@ import {
   resolvePendingDateRangeFromUrl,
   type PendingDateRange,
   type UrlDateRangePendingSyncRef,
+  ymdFromParam,
 } from '@/shared/lib/url-date-range-pending-sync'
 import {
   CmsButton,
@@ -103,12 +106,12 @@ function parseApplied(searchParams: URLSearchParams): CorporateConsultationListF
   if (contactName) filter.contactName = contactName
   const departmentTitle = (searchParams.get('cc_dept') ?? '').trim()
   if (departmentTitle) filter.departmentTitle = departmentTitle
-  const appliedFrom = searchParams.get('cc_applied_from')
-  const appliedTo = searchParams.get('cc_applied_to')
+  const appliedFrom = ymdFromParam(searchParams.get('cc_applied_from'))
+  const appliedTo = ymdFromParam(searchParams.get('cc_applied_to'))
   if (appliedFrom) filter.appliedFrom = appliedFrom
   if (appliedTo) filter.appliedTo = appliedTo
-  const confirmedFrom = searchParams.get('cc_confirmed_from')
-  const confirmedTo = searchParams.get('cc_confirmed_to')
+  const confirmedFrom = ymdFromParam(searchParams.get('cc_confirmed_from'))
+  const confirmedTo = ymdFromParam(searchParams.get('cc_confirmed_to'))
   if (confirmedFrom) filter.confirmedFrom = confirmedFrom
   if (confirmedTo) filter.confirmedTo = confirmedTo
   return filter
@@ -232,15 +235,16 @@ export function CorporateConsultationsPage() {
   })
 
   const listQuery = useCorporateConsultationsList(appliedFilter)
-  const removeMutation = useRemoveCorporateConsultations()
-  const confirmMutation = useConfirmCorporateConsultations()
+  const removeMutation = useRemoveCorporateConsultations(appliedFilter)
+  const confirmMutation = useConfirmCorporateConsultations(appliedFilter)
 
   useInvalidateOnWindowEvent(
     CORPORATE_CONSULTATIONS_CHANGED_EVENT,
     corporateConsultationQueryKeys.all
   )
 
-  const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
+  const rows = useMemo(() => listQuery.data?.items ?? [], [listQuery.data?.items])
+  const totalCount = listQuery.data?.totalCount ?? rows.length
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [detailOpen, setDetailOpen] = useState(false)
@@ -250,12 +254,12 @@ export function CorporateConsultationsPage() {
 
   const rowNoMap = useMemo(() => {
     const map = new Map<string, number>()
-    const total = rows.length
+    const total = totalCount
     rows.forEach((row, index) => {
       map.set(row.id, total - index)
     })
     return map
-  }, [rows])
+  }, [totalCount, rows])
 
   const handleSearch = useCallback(() => {
     applySearch()
@@ -286,7 +290,7 @@ export function CorporateConsultationsPage() {
   const refreshDetailFromList = useCallback(
     async (id: string) => {
       const next = await listQuery.refetch()
-      const found = (next.data ?? []).find(r => r.id === id) ?? null
+      const found = (next.data?.items ?? []).find(r => r.id === id) ?? null
       if (found) {
         setDetailRow(found)
         return
@@ -328,11 +332,13 @@ export function CorporateConsultationsPage() {
       if (detailRow && selectedRowKeys.map(String).includes(detailRow.id)) {
         closeDetail()
       }
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '상담 신청 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(
+        corporateConsultationMutationFailureAlert(
+          error,
+          '상담 신청 삭제에 실패했습니다. 다시 시도해 주세요.',
+        ),
+      )
       void listQuery.refetch()
     }
   }, [closeDetail, detailRow, listQuery, removeMutation, selectedRowKeys, showAlert])
@@ -348,11 +354,13 @@ export function CorporateConsultationsPage() {
       if (detailRow && selectedRowKeys.map(String).includes(detailRow.id)) {
         await refreshDetailFromList(detailRow.id)
       }
-    } catch {
-      showAlert({
-        title: '확인 실패',
-        content: '상담 신청 확인에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(
+        corporateConsultationMutationFailureAlert(
+          error,
+          '상담 신청 확인에 실패했습니다. 다시 시도해 주세요.',
+        ),
+      )
       void listQuery.refetch()
     }
   }, [
@@ -372,11 +380,13 @@ export function CorporateConsultationsPage() {
         actorName: DEFAULT_CONFIRM_ACTOR,
       })
       await refreshDetailFromList(detailRow.id)
-    } catch {
-      showAlert({
-        title: '확인 실패',
-        content: '상담 신청 확인에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(
+        corporateConsultationMutationFailureAlert(
+          error,
+          '상담 신청 확인에 실패했습니다. 다시 시도해 주세요.',
+        ),
+      )
     }
   }, [confirmMutation, detailRow, refreshDetailFromList, showAlert])
 
@@ -386,11 +396,13 @@ export function CorporateConsultationsPage() {
       await removeMutation.mutateAsync([detailRow.id])
       setSelectedRowKeys(prev => prev.filter(k => k !== detailRow.id))
       closeDetail()
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '상담 신청 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(
+        corporateConsultationMutationFailureAlert(
+          error,
+          '상담 신청 삭제에 실패했습니다. 다시 시도해 주세요.',
+        ),
+      )
     }
   }, [closeDetail, detailRow, removeMutation, showAlert])
 
@@ -609,7 +621,7 @@ export function CorporateConsultationsPage() {
           <div className="table-header-title--wrapper">
             <span className="table-title">기업 후원 상담 신청 목록</span>
             <span className="table-description">
-              총 {rows.length.toLocaleString('ko-KR')}건
+              총 {totalCount.toLocaleString('ko-KR')}건
             </span>
           </div>
           <div className="table-header-actions--wrapper">
@@ -648,7 +660,10 @@ export function CorporateConsultationsPage() {
               columnWidth: COL.checkbox,
             }}
             onRow={record => ({
-              onClick: () => openDetail(record),
+              onClick: e => {
+                if (isTableSelectionClick(e)) return
+                openDetail(record)
+              },
               style: { cursor: 'pointer' },
             })}
             scroll={{ x: true }}

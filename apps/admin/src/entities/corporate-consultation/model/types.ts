@@ -25,6 +25,7 @@ export type CorporateConsultation = {
   appliedAt: string
   confirmedAt: string | null
   confirmedByName: string | null
+  version: number
 }
 
 export type CorporateConsultationListFilter = {
@@ -36,6 +37,11 @@ export type CorporateConsultationListFilter = {
   appliedTo?: string
   confirmedFrom?: string
   confirmedTo?: string
+}
+
+export type CorporateConsultationListResult = {
+  items: CorporateConsultation[]
+  totalCount: number
 }
 
 /** 개인정보 조회 감사( mock ) */

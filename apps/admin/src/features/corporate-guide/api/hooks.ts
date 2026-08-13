@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
   BannerSaveInput,
+  CorporateGuideData,
   MetricSaveItem,
   PartnershipSaveItem,
 } from '@/entities/corporate-guide/model/types'
@@ -17,6 +18,12 @@ function source(): 'remote' | 'local' {
   return shouldUseCorporateGuideRemoteApi() ? 'remote' : 'local'
 }
 
+function cachedDetail(
+  queryClient: ReturnType<typeof useQueryClient>,
+): CorporateGuideData | undefined {
+  return queryClient.getQueryData<CorporateGuideData>(corporateGuideQueryKeys.detail(source()))
+}
+
 export function useCorporateGuide(enabled = true) {
   const dataSource = source()
   return useQuery({
@@ -28,36 +35,39 @@ export function useCorporateGuide(enabled = true) {
   })
 }
 
-function useInvalidateGuide() {
+function useSetGuideCache() {
   const queryClient = useQueryClient()
-  return (data: Awaited<ReturnType<typeof getCorporateGuideService>>) => {
+  return (data: CorporateGuideData) => {
     queryClient.setQueryData(corporateGuideQueryKeys.detail(source()), data)
-    void queryClient.invalidateQueries({ queryKey: corporateGuideQueryKeys.all })
   }
 }
 
 export function useSaveCorporateBanner() {
-  const setCache = useInvalidateGuide()
+  const queryClient = useQueryClient()
+  const setCache = useSetGuideCache()
   return useMutation({
-    mutationFn: (input: BannerSaveInput) => saveBannerService(input),
+    mutationFn: (input: BannerSaveInput) => saveBannerService(input, cachedDetail(queryClient)),
     retry: false,
     onSuccess: data => setCache(data),
   })
 }
 
 export function useSaveMetrics() {
-  const setCache = useInvalidateGuide()
+  const queryClient = useQueryClient()
+  const setCache = useSetGuideCache()
   return useMutation({
-    mutationFn: (items: MetricSaveItem[]) => saveMetricsService(items),
+    mutationFn: (items: MetricSaveItem[]) => saveMetricsService(items, cachedDetail(queryClient)),
     retry: false,
     onSuccess: data => setCache(data),
   })
 }
 
 export function useSavePartnership() {
-  const setCache = useInvalidateGuide()
+  const queryClient = useQueryClient()
+  const setCache = useSetGuideCache()
   return useMutation({
-    mutationFn: (items: PartnershipSaveItem[]) => savePartnershipService(items),
+    mutationFn: (items: PartnershipSaveItem[]) =>
+      savePartnershipService(items, cachedDetail(queryClient)),
     retry: false,
     onSuccess: data => setCache(data),
   })

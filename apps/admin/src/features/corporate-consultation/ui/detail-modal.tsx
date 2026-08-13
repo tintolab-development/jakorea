@@ -8,8 +8,10 @@ import 'dayjs/locale/ko'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { CorporateConsultation } from '@/entities/corporate-consultation/model/types'
+import { shouldUseCorporateConsultationRemoteApi } from '@/features/corporate-consultation/api/capabilities'
+import { downloadCorporateConsultationAttachmentService } from '@/features/corporate-consultation/api/service'
 import { DEFAULT_CONFIRM_ACTOR } from '@/features/corporate-consultation/api/store'
-import { CmsButton, ConfirmModal, ContentModal } from '@/shared/ui'
+import { CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
 
 import './detail-modal.css'
 
@@ -72,6 +74,7 @@ export function CorporateConsultationDetailModal({
   onConfirm,
   onDelete,
 }: Props) {
+  const { showAlert } = useCmsAlert()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   useEffect(() => {
@@ -110,17 +113,49 @@ export function CorporateConsultationDetailModal({
     )
 
   const attachmentView =
-    data?.attachmentFileName && data.attachmentUrl ? (
-      <a
-        className="corp-consult-detail-modal__attachment"
-        href={data.attachmentUrl}
-        download={data.attachmentFileName}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <FileIcon className="corp-consult-detail-modal__file-icon" />
+    data?.attachmentFileName ? (
+      shouldUseCorporateConsultationRemoteApi() ? (
+        <button
+          type="button"
+          className="corp-consult-detail-modal__attachment"
+          onClick={() => {
+            if (!data?.id) return
+            void downloadCorporateConsultationAttachmentService(data.id)
+              .then(result => {
+                if (!result?.downloadUrl) {
+                  showAlert({
+                    title: '다운로드 실패',
+                    content: '첨부파일을 불러오지 못했습니다.',
+                  })
+                  return
+                }
+                window.open(result.downloadUrl, '_blank', 'noopener,noreferrer')
+              })
+              .catch(() => {
+                showAlert({
+                  title: '다운로드 실패',
+                  content: '첨부파일 다운로드에 실패했습니다.',
+                })
+              })
+          }}
+        >
+          <FileIcon className="corp-consult-detail-modal__file-icon" />
+          <span>{data.attachmentFileName}</span>
+        </button>
+      ) : data.attachmentUrl ? (
+        <a
+          className="corp-consult-detail-modal__attachment"
+          href={data.attachmentUrl}
+          download={data.attachmentFileName}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <FileIcon className="corp-consult-detail-modal__file-icon" />
+          <span>{data.attachmentFileName}</span>
+        </a>
+      ) : (
         <span>{data.attachmentFileName}</span>
-      </a>
+      )
     ) : (
       <span>-</span>
     )

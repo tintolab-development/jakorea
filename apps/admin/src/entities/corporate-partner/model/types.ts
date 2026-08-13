@@ -9,14 +9,18 @@ export type CorporatePartner = {
   isPublic: boolean
   logoUrl: string
   logoFileName?: string
+  logoAssetId?: number
   name: string
   createdAt: string
   updatedAt: string
+  version: number
 }
 
 export type CorporatePartnerCreateInput = {
   isPublic: boolean
   logoUrl: string
+  logoFile?: File
+  logoAssetId?: number
   logoFileName?: string
   name: string
   /** 1-based, 범위 1…n+1 */
@@ -26,6 +30,8 @@ export type CorporatePartnerCreateInput = {
 export type CorporatePartnerUpdateInput = {
   isPublic?: boolean
   logoUrl?: string
+  logoFile?: File
+  logoAssetId?: number
   logoFileName?: string
   name?: string
   /** 1-based, 범위 1…n */
@@ -39,4 +45,9 @@ export type CorporatePartnerListFilter = {
   registeredFrom?: string
   /** YYYY-MM-DD */
   registeredTo?: string
+}
+
+export type CorporatePartnerListResult = {
+  items: CorporatePartner[]
+  totalCount: number
 }

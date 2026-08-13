@@ -10,6 +10,7 @@ import type {
   UsageGuideItemId,
 } from '@/entities/individual-donation/model/types'
 import { useSaveUsageGuide } from '@/features/individual-donation/api/hooks'
+import { individualDonationSaveFailureAlert } from '@/features/individual-donation/lib/save-failure-alert'
 import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
@@ -67,8 +68,10 @@ export function UsageGuideSectionCard({ items }: Props) {
         const d = drafts[item.id]
         return {
           id: item.id as UsageGuideItemId,
+          apiId: item.apiId,
           mainText: d?.mainText ?? item.mainText,
           subText: d?.subText ?? item.subText,
+          version: item.version,
         }
       })
       for (const row of payload) {
@@ -84,19 +87,12 @@ export function UsageGuideSectionCard({ items }: Props) {
       await saveMutation.mutateAsync(payload)
       setIsEditing(false)
     } catch (err) {
-      const message = err instanceof Error ? err.message : ''
-      if (message === 'USAGE_MAIN_TEXT_REQUIRED') {
-        showAlert({ title: '입력 확인', content: '메인 텍스트를 입력해 주세요.' })
-        return
-      }
-      if (message === 'USAGE_SUB_TEXT_REQUIRED') {
-        showAlert({ title: '입력 확인', content: '서브 텍스트를 입력해 주세요.' })
-        return
-      }
-      showAlert({
-        title: '저장 실패',
-        content: '후원금 사용 안내 저장에 실패했습니다. 다시 시도해 주세요.',
-      })
+      showAlert(
+        individualDonationSaveFailureAlert(
+          err,
+          '후원금 사용 안내 저장에 실패했습니다. 다시 시도해 주세요.'
+        )
+      )
     }
   }, [drafts, items, saveMutation, showAlert])
 
