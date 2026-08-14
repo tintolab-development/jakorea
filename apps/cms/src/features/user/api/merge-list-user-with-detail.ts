@@ -5,6 +5,9 @@ import {
   isInstructorMaskedPlaceholder,
   looksLikeInstructorActivityEnumCode,
 } from '@/features/user/api/map-instructor-activity-display'
+import {
+  inferInstructorMemberProfileFromRoles,
+} from '@/features/user/api/map-member-role'
 import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
 import { resolveCanonicalUserDetailId } from '@/features/user/api/user-response-row-id'
 import { mergeTermsAgreementRowsFromPatch } from '@/features/user/api/member-basic-info-terms-patch'
@@ -54,6 +57,18 @@ function resolveMergedAffiliation(
 ): string | undefined {
   const fetchedAffiliation = fetched.affiliation?.trim()
   const listAffiliation = listUser.affiliation?.trim()
+
+  /**
+   * 상세 GET이 미재학(NOT_ENROLLED)이면 목록에 남은 소속을 되살리지 않는다.
+   * (포털 온보딩에서 재학→해당 없음 변경 후 CMS 상세가 옛 소속을 보여주던 원인)
+   */
+  if (fetched.schoolEnrollmentStatus === 'NOT_ENROLLED') {
+    if (fetchedAffiliation && !looksLikeInstructorActivityEnumCode(fetchedAffiliation)) {
+      return fetchedAffiliation
+    }
+    return undefined
+  }
+
   if (fetchedAffiliation && !looksLikeInstructorActivityEnumCode(fetchedAffiliation)) {
     return fetchedAffiliation
   }
@@ -129,7 +144,10 @@ function resolveMergedListMetrics(
   return Object.keys(next).length > 0 ? next : undefined
 }
 
-/** 자택 주소 상세 — unmask 등 더 긴(원문에 가까운) 쪽 우선 */
+/**
+ * 자택 주소 상세 — 상세 GET(비마스킹) 우선.
+ * 예전엔 더 긴 문자열을 고르다 목록의 구주소가 포털에서 바꾼 신주소보다 길면 구주소가 남았다.
+ */
 function resolveMergedDetailAddressDetail(
   listUser: Omit<User, 'password'>,
   fetched: Omit<User, 'password'>
@@ -139,13 +157,10 @@ function resolveMergedDetailAddressDetail(
   const fetchedOk =
     fetchedDetail && !isInstructorMaskedPlaceholder(fetchedDetail) ? fetchedDetail : undefined
   const listOk = listDetail && !isInstructorMaskedPlaceholder(listDetail) ? listDetail : undefined
-  if (fetchedOk && listOk) {
-    return fetchedOk.length >= listOk.length ? fetchedOk : listOk
-  }
   return fetchedOk || listOk || fetchedDetail || listDetail || undefined
 }
 
-/** 자택 주소 — `"마스킹"` 제외, unmask 등 더 긴(원문에 가까운) 쪽 우선 */
+/** 자택 주소 — 상세 GET(비마스킹) 우선, 마스킹이면 목록 값 */
 function resolveMergedDetailAddress(
   listUser: Omit<User, 'password'>,
   fetched: Omit<User, 'password'>
@@ -155,9 +170,6 @@ function resolveMergedDetailAddress(
   const fetchedOk =
     fetchedAddr && !isInstructorMaskedPlaceholder(fetchedAddr) ? fetchedAddr : undefined
   const listOk = listAddr && !isInstructorMaskedPlaceholder(listAddr) ? listAddr : undefined
-  if (fetchedOk && listOk) {
-    return fetchedOk.length >= listOk.length ? fetchedOk : listOk
-  }
   return fetchedOk || listOk || undefined
 }
 
@@ -226,7 +238,9 @@ export function mergeListUserWithFetchedDetail(
     instructorInfo: resolveMergedInstructorInfo(listUser.instructorInfo, fetched.instructorInfo),
     instructorCmsProfile: fetched.instructorCmsProfile ?? listUser.instructorCmsProfile,
     instructorCmsSettlement: fetched.instructorCmsSettlement ?? listUser.instructorCmsSettlement,
+    roles: fetched.roles ?? listUser.roles,
     instructorMemberProfile:
+      inferInstructorMemberProfileFromRoles(fetched.roles ?? listUser.roles) ??
       fetched.instructorMemberProfile ??
       (fetchedRevoked || listRevoked ? undefined : listUser.instructorMemberProfile),
     affiliatedSchoolUserId:
@@ -263,7 +277,14 @@ export function applySavedBasicInfoPatchToUser(
   if (patch.phone !== undefined) next.phone = patch.phone
   if (patch.email !== undefined) next.email = patch.email
   if (patch.detailAddress !== undefined) next.detailAddress = patch.detailAddress
+  if (Object.prototype.hasOwnProperty.call(patch, 'detailAddressDetail')) {
+    const detail = patch.detailAddressDetail?.trim()
+    next.detailAddressDetail = detail || undefined
+  }
   if (patch.affiliation !== undefined) next.affiliation = patch.affiliation
+  if (patch.schoolEnrollmentStatus !== undefined) {
+    next.schoolEnrollmentStatus = patch.schoolEnrollmentStatus
+  }
   if (patch.gender !== undefined) next.gender = patch.gender
   if (patch.birthDate !== undefined) next.birthDate = patch.birthDate
   if (patch.socialAccounts !== undefined) next.socialAccounts = patch.socialAccounts

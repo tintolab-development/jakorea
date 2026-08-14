@@ -20,15 +20,37 @@ describe('resolveRegisteredByAdmin', () => {
       resolveRegisteredByAdmin({ role: 'INDIVIDUAL', adminAccountId: 42 })
     ).toBe(false)
   })
+
+  it('infers from preRegistered / createdByAdmin', () => {
+    expect(resolveRegisteredByAdmin({ preRegistered: true })).toBe(true)
+    expect(resolveRegisteredByAdmin({ createdByAdmin: true })).toBe(true)
+  })
 })
 
 describe('resolveIdentitySelfSignupCompletedAfterAdminRegistration', () => {
-  it('does not treat identityVerified alone as self-signup for admin-provisioned ADMIN', () => {
+  it('treats identityVerified as completed for admin-provisioned members', () => {
     expect(
       resolveIdentitySelfSignupCompletedAfterAdminRegistration({
         role: 'ADMIN',
         adminAccountId: 1,
         identityVerified: true,
+      })
+    ).toBe(true)
+    expect(
+      resolveIdentitySelfSignupCompletedAfterAdminRegistration({
+        preRegistered: true,
+        createdByAdmin: true,
+        identityVerified: true,
+      })
+    ).toBe(true)
+  })
+
+  it('keeps admin-provisioned incomplete when identityVerified is false', () => {
+    expect(
+      resolveIdentitySelfSignupCompletedAfterAdminRegistration({
+        preRegistered: true,
+        createdByAdmin: true,
+        identityVerified: false,
       })
     ).toBe(false)
   })

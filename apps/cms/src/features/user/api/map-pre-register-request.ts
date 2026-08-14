@@ -5,6 +5,7 @@ import type {
   AdminPreRegisterSchoolRequest,
   SchoolOrganizationUpsertRequest,
 } from '@/shared/api/generated/members/schemas'
+import type { PortalSchoolSelectionRequest } from '@/shared/api/generated/members/schemas/portalSchoolSelectionRequest'
 import type { AdminPreRegisterMemberRequest } from '@/shared/api/generated/members/schemas/adminPreRegisterMemberRequest'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
@@ -75,7 +76,7 @@ export function mapCreateUserRequestToPreRegisterIndividual(
   if (!email) {
     throw new Error('개인 회원 등록에는 이메일이 필요합니다.')
   }
-  const body: AdminPreRegisterIndividualRequest = {
+  const body: AdminPreRegisterIndividualRequest & { grade?: string } = {
     email,
     name,
     rawPassword: resolveAdminProvisionedTempPassword(email),
@@ -88,6 +89,11 @@ export function mapCreateUserRequestToPreRegisterIndividual(
   if (request.affiliation?.trim()) body.schoolName = request.affiliation.trim()
   if (request.schoolEnrollmentStatus) {
     body.enrollmentStatus = request.schoolEnrollmentStatus
+  }
+  // OpenAPI v9에 grade 미선언 — BE 저장·상세 반환용으로 wire에 포함 (스펙 추가 예정)
+  const grade = request.grade?.trim()
+  if (grade && request.schoolEnrollmentStatus === 'ENROLLED') {
+    body.grade = grade
   }
   if (request.id1365?.trim()) body.external1365Id = request.id1365.trim()
   return attachTermsAgreements(body, request)
@@ -140,12 +146,14 @@ export function mapCreateUserRequestToCreateSchool(
 
 export function mapCreateUserRequestToPreRegisterInstructor(
   request: CreateUserRequest
-): AdminPreRegisterInstructorRequest {
+): AdminPreRegisterInstructorRequest & { schoolSelection?: PortalSchoolSelectionRequest } {
   const { email, name, phone, gender, birthDate } = baseIdentity(request)
   if (!email) {
     throw new Error('강사 회원 등록에는 이메일이 필요합니다.')
   }
-  const body: AdminPreRegisterInstructorRequest = {
+  const body: AdminPreRegisterInstructorRequest & {
+    schoolSelection?: PortalSchoolSelectionRequest
+  } = {
     email,
     name,
     rawPassword: resolveAdminProvisionedTempPassword(email),
@@ -162,6 +170,8 @@ export function mapCreateUserRequestToPreRegisterInstructor(
 
   if (request.instructorCmsProfile) {
     body.profile = toApiInstructorCmsProfile(request.instructorCmsProfile)
+    const schoolSelection = request.instructorCmsProfile.affiliation.schoolSelection
+    if (schoolSelection) body.schoolSelection = schoolSelection
     const legacy = buildLegacyFlatFieldsFromCmsProfile(request.instructorCmsProfile)
     if (legacy.educationLevel) body.educationLevel = legacy.educationLevel
     if (legacy.careerText) body.careerText = legacy.careerText

@@ -94,17 +94,26 @@ export function upsertEditableTermsAgreementInDraft(
 /** PATCH 선택 약관을 상세 termsAgreements에 항목별로 병합 (필수 약관 유지) */
 export function mergeTermsAgreementRowsFromPatch(
   existing: TermsAgreementRow[] | undefined,
-  patchRows: TermsAgreementRequest[]
+  patchRows: TermsAgreementRequest[],
+  agreedAtIso = new Date().toISOString()
 ): TermsAgreementRow[] {
+  const existingByType = new Map(
+    (existing ?? [])
+      .filter(row => row.termsType?.trim())
+      .map(row => [row.termsType!.trim(), row])
+  )
   const overlay = new Map<string, TermsAgreementRow>()
   for (const row of patchRows) {
     const termsType = row.termsType?.trim()
     if (!termsType) continue
+    const prev = existingByType.get(termsType)
+    const agreedChanged = prev == null || Boolean(prev.agreed) !== Boolean(row.agreed)
     overlay.set(termsType, {
       termsType,
       termsVersion: row.version,
       required: row.required,
       agreed: row.agreed,
+      ...(agreedChanged ? { agreedAt: agreedAtIso } : {}),
     })
   }
 

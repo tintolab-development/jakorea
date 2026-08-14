@@ -1,34 +1,31 @@
 import type { User } from '@/types/user'
+import {
+  inferInstructorMemberProfileFromRoles,
+  memberRolesWithInstructorRevoked,
+} from '@/features/user/api/map-member-role'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
 
 /**
  * 강사 권한 박탈 후 CMS User 스냅샷.
- * - 순수 강사 → 개인(INDIVIDUAL), 전체 회원 목록
- * - 교사·겸직 → 일반 교사(school_teacher) 상세, 강사 목록 제외
- * - 회원 유형 라벨은 `instructorApprovalStatus: REVOKED` → 강사(권한박탈)
+ * 상세 유형(강사/겸직)은 유지하고 `INSTRUCTOR` → `INSTRUCTOR_REVOKED`.
+ * 강사 목록에서는 제외되고 전체 회원 목록에만 남는다.
  */
 export function applyInstructorPermissionRevokedToUser(
   user: Omit<User, 'password'>
 ): Omit<User, 'password'> {
-  const profile = resolveInstructorMemberProfile(user)
-  const keepAsTeacher = profile === 'school_teacher' || profile === 'instructor_dual'
-
-  if (keepAsTeacher) {
-    return {
-      ...user,
-      role: 'INSTRUCTOR',
-      instructorMemberProfile: 'school_teacher',
-      instructorInfo: undefined,
-      instructorApprovalStatus: 'REVOKED',
-    }
-  }
+  const roles = memberRolesWithInstructorRevoked(user.roles) ?? user.roles
+  const profile =
+    inferInstructorMemberProfileFromRoles(roles) ??
+    resolveInstructorMemberProfile({ ...user, roles }) ??
+    user.instructorMemberProfile ??
+    'instructor_only'
 
   return {
     ...user,
-    role: 'INDIVIDUAL',
-    instructorMemberProfile: undefined,
-    instructorInfo: undefined,
+    role: 'INSTRUCTOR',
+    ...(roles ? { roles } : {}),
+    instructorMemberProfile: profile,
     instructorApprovalStatus: 'REVOKED',
   }
 }

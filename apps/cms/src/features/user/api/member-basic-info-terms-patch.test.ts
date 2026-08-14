@@ -53,17 +53,42 @@ describe('member-basic-info-terms-patch', () => {
       [
         { termsType: 'SERVICE_TERMS', termsVersion: '1', required: true, agreed: true },
         { termsType: 'PRIVACY_COLLECTION', termsVersion: '1', required: true, agreed: true },
-        { termsType: 'MARKETING', termsVersion: '1', required: false, agreed: false },
+        { termsType: 'MARKETING', termsVersion: '1', required: false, agreed: false, agreedAt: '2026-01-01T00:00:00Z' },
         { termsType: 'PORTRAIT_RIGHTS', termsVersion: '1', required: false, agreed: true },
       ],
-      [{ termsType: 'MARKETING', version: '1', required: false, agreed: true }]
+      [{ termsType: 'MARKETING', version: '1', required: false, agreed: true }],
+      '2026-08-14T01:00:00.000Z'
     )
 
     expect(merged).toEqual([
       { termsType: 'SERVICE_TERMS', termsVersion: '1', required: true, agreed: true },
       { termsType: 'PRIVACY_COLLECTION', termsVersion: '1', required: true, agreed: true },
-      { termsType: 'MARKETING', termsVersion: '1', required: false, agreed: true },
+      {
+        termsType: 'MARKETING',
+        termsVersion: '1',
+        required: false,
+        agreed: true,
+        agreedAt: '2026-08-14T01:00:00.000Z',
+      },
       { termsType: 'PORTRAIT_RIGHTS', termsVersion: '1', required: false, agreed: true },
     ])
+  })
+
+  it('동의 여부가 바뀌지 않으면 agreedAt을 유지한다', () => {
+    const merged = mergeTermsAgreementRowsFromPatch(
+      [
+        {
+          termsType: 'MARKETING',
+          termsVersion: '1',
+          required: false,
+          agreed: true,
+          agreedAt: '2026-01-01T00:00:00Z',
+        },
+      ],
+      [{ termsType: 'MARKETING', version: '1', required: false, agreed: true }],
+      '2026-08-14T01:00:00.000Z'
+    )
+
+    expect(merged[0]?.agreedAt).toBe('2026-01-01T00:00:00Z')
   })
 })

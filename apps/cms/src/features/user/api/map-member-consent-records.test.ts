@@ -41,8 +41,6 @@ describe('applyTermsAgreementsToSchema', () => {
       { termsType: 'PORTRAIT_RIGHTS', agreed: false },
       { termsType: 'PAYMENT_STATEMENT', agreed: true },
       { termsType: 'EDUCATOR_PLEDGE', agreed: false },
-      { termsType: 'ADMINISTRATIVE_JOINT', agreed: true },
-      { termsType: 'SEX_OFFENSE_CHECK', agreed: false },
     ])
 
     const field = (label: string) =>
@@ -64,22 +62,9 @@ describe('applyTermsAgreementsToSchema', () => {
       type: 'document',
       agreed: false,
     })
-    expect(field('지급조서 사전 동의서')).toMatchObject({
-      type: 'document',
-      agreed: true,
-    })
-    expect(field('교육진행자 서약서')).toMatchObject({
-      type: 'document',
-      agreed: false,
-    })
-    expect(field('행정정보 공동이용 사전동의서')).toMatchObject({
-      type: 'document',
-      agreed: true,
-    })
-    expect(field('성범죄 경력 조회 동의서')).toMatchObject({
-      type: 'document',
-      agreed: false,
-    })
+    // 일반·교사(비겸직) preset에는 강사 전용 항목이 없음
+    expect(field('지급조서 사전 동의서')).toBeUndefined()
+    expect(field('교육진행자 서약서')).toBeUndefined()
   })
 
   it('등록 canonical termsType(상세 조회)을 동의 상태로 반영한다', () => {

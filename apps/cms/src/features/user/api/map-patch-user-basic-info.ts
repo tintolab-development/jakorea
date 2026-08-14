@@ -8,17 +8,71 @@ import {
   toApiInstructorCmsSettlement,
 } from '@/features/user/api/map-instructor-cms-profile'
 
+/**
+ * 개인 회원 상세 GET·pre-register는 `address`/`addressDetail`, `schoolName`/`enrollmentStatus`가 SSOT.
+ * PATCH OpenAPI(`detailAddress`/`affiliation`)만 보내면 저장되지 않고 새로고침 시 이전 값이 남는다.
+ */
+export type AdminMemberBasicInfoUpdateRequestWithAddress = AdminMemberBasicInfoUpdateRequest & {
+  address?: string
+  addressDetail?: string
+  homeAddress?: string
+  homeAddressDetail?: string
+  schoolName?: string
+  enrollmentStatus?: 'ENROLLED' | 'NOT_ENROLLED'
+  grade?: string
+}
+
+function applyHomeAddressToPatchBody(
+  body: AdminMemberBasicInfoUpdateRequestWithAddress,
+  patch: PatchUserBasicInfoInput
+) {
+  if (
+    patch.detailAddress === undefined &&
+    !Object.prototype.hasOwnProperty.call(patch, 'detailAddressDetail')
+  ) {
+    return
+  }
+  const street = (patch.detailAddress ?? '').trim()
+  const detail = (patch.detailAddressDetail ?? '').trim()
+  body.detailAddress = street
+  body.address = street
+  body.addressDetail = detail
+  body.homeAddress = street
+  body.homeAddressDetail = detail
+}
+
+/** 개인 회원 전용 — `schoolEnrollmentStatus`가 있을 때만 extras를 붙인다. */
+function applyIndividualAffiliationToPatchBody(
+  body: AdminMemberBasicInfoUpdateRequestWithAddress,
+  patch: PatchUserBasicInfoInput
+) {
+  if (patch.schoolEnrollmentStatus === undefined && patch.individualSchoolName === undefined) {
+    return
+  }
+  if (patch.individualSchoolName !== undefined) {
+    body.schoolName = patch.individualSchoolName
+  }
+  if (patch.schoolEnrollmentStatus !== undefined) {
+    body.enrollmentStatus = patch.schoolEnrollmentStatus
+  }
+  const grade = patch.individualGrade?.trim()
+  if (grade) {
+    body.grade = grade
+  }
+}
+
 /** 관리자 코멘트는 POST comments API로 분리 — PATCH body에서 제외 */
 export function mapPatchUserBasicInfoToApiRequest(
   patch: PatchUserBasicInfoInput
-): AdminMemberBasicInfoUpdateRequest {
-  const body: AdminMemberBasicInfoUpdateRequest = {}
+): AdminMemberBasicInfoUpdateRequestWithAddress {
+  const body: AdminMemberBasicInfoUpdateRequestWithAddress = {}
 
   if (patch.name !== undefined) body.name = patch.name
   if (patch.phone !== undefined) body.phone = patch.phone
   if (patch.email !== undefined) body.email = patch.email
-  if (patch.detailAddress !== undefined) body.detailAddress = patch.detailAddress
+  applyHomeAddressToPatchBody(body, patch)
   if (patch.affiliation !== undefined) body.affiliation = patch.affiliation
+  applyIndividualAffiliationToPatchBody(body, patch)
   if (patch.gender !== undefined) {
     body.gender = toApiGender(patch.gender) ?? patch.gender
   }

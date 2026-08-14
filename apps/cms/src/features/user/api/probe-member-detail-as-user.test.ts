@@ -4,6 +4,7 @@ const fetchIndividualMemberDetailRemote = vi.fn()
 const fetchMemberExternalIdentifiersRemote = vi.fn()
 const fetchSchoolMemberDetailRemote = vi.fn()
 const fetchInstructorMemberDetailRemote = vi.fn()
+const fetchTeacherMemberDetailRemote = vi.fn()
 
 vi.mock('@/features/user/api/members-api-client', () => ({
   fetchIndividualMemberDetailRemote: (...args: unknown[]) =>
@@ -13,6 +14,8 @@ vi.mock('@/features/user/api/members-api-client', () => ({
   fetchSchoolMemberDetailRemote: (...args: unknown[]) => fetchSchoolMemberDetailRemote(...args),
   fetchInstructorMemberDetailRemote: (...args: unknown[]) =>
     fetchInstructorMemberDetailRemote(...args),
+  fetchTeacherMemberDetailRemote: (...args: unknown[]) =>
+    fetchTeacherMemberDetailRemote(...args),
 }))
 
 vi.mock('@/features/user/api/fetch-admin-member-detail', () => ({
@@ -44,6 +47,32 @@ describe('probeMemberDetailAsUser', () => {
     expect(user.name).toBe('김틴토')
     expect(fetchIndividualMemberDetailRemote).toHaveBeenCalledTimes(1)
     expect(fetchSchoolMemberDetailRemote).not.toHaveBeenCalled()
+    expect(fetchInstructorMemberDetailRemote).not.toHaveBeenCalled()
+  })
+
+  it('SCHOOL_TEACHER 단독 roles는 teacher 상세 GET을 쓴다', async () => {
+    fetchIndividualMemberDetailRemote.mockResolvedValue({
+      member: {
+        memberId: 10,
+        roles: ['SCHOOL_TEACHER'],
+        name: '김교사',
+        email: 't@b.com',
+      },
+    })
+    fetchTeacherMemberDetailRemote.mockResolvedValue({
+      member: {
+        memberId: 10,
+        roles: ['SCHOOL_TEACHER'],
+        name: '김교사',
+        email: 't@b.com',
+      },
+      organizationName: '진월초등학교',
+    })
+
+    const user = await probeMemberDetailAsUser('member-10', 10)
+
+    expect(user.instructorMemberProfile).toBe('school_teacher')
+    expect(fetchTeacherMemberDetailRemote).toHaveBeenCalledTimes(1)
     expect(fetchInstructorMemberDetailRemote).not.toHaveBeenCalled()
   })
 })

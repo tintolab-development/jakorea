@@ -24,6 +24,8 @@ import {
   toDisplayGender,
 } from '@/features/user/api/map-member-gender-birth'
 import {
+  copyMemberRoles,
+  inferInstructorMemberProfileFromRoles,
   mapMemberStatusToIsActive,
   resolvePrimaryUserRole,
 } from '@/features/user/api/map-member-role'
@@ -288,6 +290,7 @@ export function mapMemberDetailToUser(
   const role = resolvePrimaryUserRole(detail.roles, options?.fallbackRole)
   const now = new Date().toISOString()
   const normalizedBirthDate = toApiBirthDate(detail.birthDate)
+  const roles = copyMemberRoles(detail.roles)
 
   const user: Omit<User, 'password'> = {
     id: uuid,
@@ -296,6 +299,7 @@ export function mapMemberDetailToUser(
     name: String(detail.name ?? '').trim() || '-',
     phone: detail.phone?.trim() || undefined,
     role,
+    ...(roles ? { roles } : {}),
     gender: (() => {
       const display = toDisplayGender(detail.gender)
       return display === '-' ? undefined : display
@@ -319,6 +323,11 @@ export function mapMemberDetailToUser(
       }),
     under14: detail.under14,
     guardianConsentRequired: detail.guardianConsentRequired,
+  }
+
+  const profileFromRoles = inferInstructorMemberProfileFromRoles(detail.roles)
+  if (profileFromRoles) {
+    user.instructorMemberProfile = profileFromRoles
   }
 
   if (role === 'INSTRUCTOR' && instructorProfile) {
@@ -452,13 +461,6 @@ function applyCmsAffiliationFromProfile(
         user.affiliation = `${user.affiliation}, ${orgPart}`
       }
     }
-
-    if (
-      schoolName &&
-      (!user.instructorMemberProfile || user.instructorMemberProfile === 'instructor_only')
-    ) {
-      user.instructorMemberProfile = 'school_teacher'
-    }
     return
   }
 
@@ -518,13 +520,6 @@ function applyInstructorProfile(
   const primaryActivityLabel =
     toInstructorActivityTypeLabel(profile?.primaryActivityType) ?? activityLabels[0]
 
-  const primaryUpper = profile?.primaryActivityType?.trim().toUpperCase()
-  if (primaryUpper === 'SCHOOL_TEACHER') {
-    user.instructorMemberProfile = user.instructorMemberProfile ?? 'school_teacher'
-  } else if (primaryUpper === 'GENERAL') {
-    user.instructorMemberProfile = user.instructorMemberProfile ?? 'instructor_only'
-  }
-
   const feeGrade = toInstructorFeeGradeDisplayLabel(profile?.defaultFeeGrade)
   const jaGrade = pickTrimmed(profile?.defaultJaGrade, profile?.jaGrade)
   const educationLevel = resolveInstructorPublicTextField(profile?.educationLevel)
@@ -573,9 +568,12 @@ export function mapIndividualMemberDetailToUser(
   }
 
   const schoolName = detail.schoolName?.trim()
+  const grade = pickTrimmed((detail as { grade?: string }).grade)
   if (schoolName) {
     if (enrollment === 'NOT_ENROLLED') {
       user.affiliation = schoolName
+    } else if (enrollment === 'ENROLLED' && grade) {
+      user.affiliation = `${schoolName}${USER_AFFILIATION_PIPE_SEP}${grade}`
     } else if (enrollment === 'ENROLLED') {
       user.affiliation = schoolName
     } else {
@@ -585,6 +583,9 @@ export function mapIndividualMemberDetailToUser(
           ? `${schoolName}${USER_AFFILIATION_PIPE_SEP}${legacySuffix}`
           : schoolName
     }
+  } else if (enrollment === 'NOT_ENROLLED') {
+    // 포털에서 소속 해제 시 schoolName 비움 — 목록 merge가 옛 소속을 되살리지 않도록 명시
+    user.affiliation = undefined
   }
   if (detail.termsAgreements?.length) {
     user.termsAgreements = detail.termsAgreements
@@ -679,15 +680,6 @@ export function mapInstructorMemberDetailToUser(
   )
   if (schoolName) {
     user.affiliatedSchoolName = schoolName
-    const primaryUpper = profile?.primaryActivityType?.trim().toUpperCase()
-    // GENERAL(순수 강사)는 학교명 필드만으로 겸직(dual)로 올리지 않음
-    // → 새로고침 시 「강사 상세」가 「교사 상세」로 바뀌는 문제 방지
-    if (
-      primaryUpper !== 'GENERAL' &&
-      (!user.instructorMemberProfile || user.instructorMemberProfile === 'instructor_only')
-    ) {
-      user.instructorMemberProfile = 'instructor_dual'
-    }
   }
 
   const employmentLabel = toEmploymentStatusDisplayLabel(
@@ -792,7 +784,13 @@ export function mapTeacherMemberDetailToUser(
     fallbackRole: options?.fallbackRole ?? 'INSTRUCTOR',
   })
   user.role = 'INSTRUCTOR'
-  user.instructorMemberProfile = 'school_teacher'
+  user.instructorMemberProfile =
+    inferInstructorMemberProfileFromRoles(member.roles) ?? 'school_teacher'
+
+  const organizationId = coercePositiveInt(detail.organizationId)
+  if (organizationId != null) {
+    user.organizationId = organizationId
+  }
 
   const schoolName = detail.organizationName?.trim()
   if (schoolName) {
