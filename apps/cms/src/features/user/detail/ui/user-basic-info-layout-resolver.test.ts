@@ -35,13 +35,31 @@ describe('resolveBasicInfoLayout — instructor', () => {
     }
   })
 
-  it('순수 교사(school_teacher)는 school_teacher variant', () => {
+  it('순수 교사(school_teacher)는 단일 카드 SCHOOL_TEACHER 섹션', () => {
     const resolved = resolveBasicInfoLayout({
       bodyKey: 'instructor',
       instructorProfile: 'school_teacher',
     })
+    expect(resolved.layout).toBe(BasicInfoLayout.SINGLE_CARD)
+    if (resolved.layout === BasicInfoLayout.SINGLE_CARD) {
+      expect(resolved.sections).toEqual([BasicInfoSectionTypes.SCHOOL_TEACHER])
+    }
+  })
+})
+
+describe('resolveBasicInfoLayout — all_users', () => {
+  it('일반 회원은 META+PROFILE split + all_users variant를 유지한다', () => {
+    const resolved = resolveBasicInfoLayout({
+      bodyKey: 'all_users',
+      instructorProfile: null,
+    })
+    expect(resolved.layout).toBe(BasicInfoLayout.SPLIT_CARD)
     if (resolved.layout === BasicInfoLayout.SPLIT_CARD) {
-      expect(resolved.splitSectionVariant).toBe('school_teacher')
+      expect(resolved.sections).toEqual([
+        BasicInfoSectionTypes.META,
+        BasicInfoSectionTypes.PROFILE,
+      ])
+      expect(resolved.splitSectionVariant).toBe('all_users')
     }
   })
 })

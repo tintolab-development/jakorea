@@ -1,5 +1,5 @@
 import { rethrowIdentityApiError, unwrapApiData } from './api-unwrap'
-import { toApiBirthDate, toVerifiedBirthDate } from './birth-date'
+import { toApiBirthDate, toApiGender, toVerifiedBirthDate } from './birth-date'
 import { IdentityVerificationApiError } from './errors'
 import { normalizeVerificationSession } from './parse-verification-session'
 import {
@@ -35,6 +35,11 @@ export interface CreateIdentityVerificationClientOptions {
   /** 기본 `MEMBER_SIGNUP` */
   flow?: string
   storagePrefix?: string
+  /**
+   * true면 nice/start에 expectedBirthDate·expectedGender·expectedName을 넣지 않는다.
+   * 관리자 등록 온보딩처럼 서버 사전검증이 start를 막는 경우, 검증은 confirm 단계에서만 한다.
+   */
+  omitExpectedProfileOnStart?: boolean
 }
 
 export interface IdentityVerificationClient {
@@ -103,8 +108,17 @@ export function createIdentityVerificationClient(
       state: challengeState,
     }
 
+    if (options.omitExpectedProfileOnStart) {
+      return request
+    }
+
     if (input.birthDate?.trim()) {
       request.expectedBirthDate = toApiBirthDate(input.birthDate)
+    }
+
+    const expectedGender = toApiGender(input.gender)
+    if (expectedGender) {
+      request.expectedGender = expectedGender
     }
 
     if (input.name?.trim()) {

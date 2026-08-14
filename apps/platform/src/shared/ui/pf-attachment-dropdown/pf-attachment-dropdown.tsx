@@ -17,8 +17,10 @@ export type PFAttachmentDropdownItem = {
 
 export type PFAttachmentDropdownProps = {
   files: PFAttachmentDropdownItem[]
-  /** 트리거 라벨 prefix. 기본: 첨부파일 */
+  /** 트리거 라벨 prefix. 기본: 첨부파일 → `{label} ({count})` */
   label?: string
+  /** 지정 시 prefix 조합 대신 이 문구를 트리거에 표시 */
+  triggerLabel?: string
   className?: string
   /** 첨부 0건이면 null 렌더 (기본 true) */
   hideWhenEmpty?: boolean
@@ -32,6 +34,7 @@ export type PFAttachmentDropdownProps = {
 export function PFAttachmentDropdown({
   files,
   label = '첨부파일',
+  triggerLabel: triggerLabelProp,
   className,
   hideWhenEmpty = true,
 }: PFAttachmentDropdownProps) {
@@ -42,7 +45,7 @@ export function PFAttachmentDropdown({
 
   const count = files.length
   const rootClassName = [styles.root, className].filter(Boolean).join(' ')
-  const triggerLabel = `${label} (${count})`
+  const triggerLabel = triggerLabelProp ?? `${label} (${count})`
 
   useEffect(() => {
     if (!isOpen) return

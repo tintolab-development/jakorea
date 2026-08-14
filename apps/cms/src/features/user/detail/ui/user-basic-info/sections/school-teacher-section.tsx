@@ -1,57 +1,61 @@
+/**
+ * 교사 상세(강사 겸직 아님, `school_teacher`) 기본 정보 — 조회 전용.
+ * 강사 상세·일반 회원 상세 섹션과 분리한다.
+ */
+
+import type { ReactNode } from 'react'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { SchoolTeacherEmploymentStatusDropdown } from '@/features/user/detail/lib/school-teacher-employment-status'
 import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
-import { ContactInfoFieldsRow } from './shared'
+import { ContactInfoViewRow } from './shared'
 import type { BasicInfoSectionContext } from './types'
-import {
-  affiliationAndGradeView,
-  detailAddressView,
-  genderBirthView,
-  instructorApplicationTypeLine,
-  instructorBankView,
-  instructorCareerYearsLine,
-  oneLineIntroLine,
-  socialView,
-} from '../display'
+import { genderBirthView, resolveSchoolTeacherAffiliationDisplay, socialView } from '../display'
 import { formatDate } from '@/shared/utils'
 
-function instructorBusinessIncomeView(user: BasicInfoSectionContext['user']) {
-  const businessIncome =
-    user.instructorInfo?.isBusinessIncome === true
-      ? '해당'
-      : user.instructorInfo?.isBusinessIncome === false
-        ? '해당 없음'
-        : '-'
-  return <span>{businessIncome}</span>
-}
-
-export function SchoolTeacherMetaSection(ctx: BasicInfoSectionContext) {
-  const { user } = ctx
-  return (
-    <EditableRow type="double">
-      <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
-      <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
-    </EditableRow>
-  )
+function schoolTeacherSchoolNameView(user: BasicInfoSectionContext['user']): string {
+  return resolveSchoolTeacherAffiliationDisplay(user).school || '-'
 }
 
 export function SchoolTeacherSection(ctx: BasicInfoSectionContext) {
-  const { user, scheduleChangeCount, personalInfoRevealed } = ctx
+  const { user, scheduleChangeCount, personalInfoRevealed, onEmploymentStatusChange } = ctx
+  const nameWithBadge = (nameNode: ReactNode) => (
+    <span className="user-basic-info-section__name-with-badge">
+      {nameNode}
+      {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
+        <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
+      ) : null}
+    </span>
+  )
+
   return (
     <>
+      <EditableRow type="single">
+        <EditableField
+          label="가입일"
+          fullRow
+          readOnlyDisplay
+          view={<span>{formatDate(user.createdAt)}</span>}
+        />
+      </EditableRow>
+      <EditableRow type="single">
+        <EditableField
+          label="연동된 소셜 계정"
+          fullRow
+          readOnlyDisplay
+          view={socialView(user)}
+        />
+      </EditableRow>
+      <EditableRow type="double">
+        <EditableField label="성명" readOnlyDisplay view={nameWithBadge(user.name)} />
+        <EditableField label="성별 및 생년월일" readOnlyDisplay view={genderBirthView(user)} />
+      </EditableRow>
+      <ContactInfoViewRow user={user} personalInfoRevealed={personalInfoRevealed} />
       <EditableRow type="double">
         <EditableField
-          label="성명"
+          label="소속"
           readOnlyDisplay
-          view={
-            <span className="user-basic-info-section__name-with-badge">
-              {user.name}
-              {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
-                <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
-              ) : null}
-            </span>
-          }
+          view={<span>{schoolTeacherSchoolNameView(user)}</span>}
         />
         <EditableField
           label="재직 현황"
@@ -60,63 +64,9 @@ export function SchoolTeacherSection(ctx: BasicInfoSectionContext) {
             <SchoolTeacherEmploymentStatusDropdown
               userId={user.id}
               employmentStatusLabel={user.listMetrics?.employmentStatusLabel}
+              onChange={onEmploymentStatusChange}
             />
           }
-        />
-      </EditableRow>
-      <EditableRow type="double">
-        <EditableField label="성별 및 생년월일" readOnlyDisplay view={genderBirthView(user)} />
-        <EditableField
-          label="강사 경력"
-          readOnlyDisplay
-          view={<span>{instructorCareerYearsLine(user)}</span>}
-        />
-      </EditableRow>
-      <EditableRow type="single">
-        <EditableField
-          label="회원 유형"
-          readOnlyDisplay
-          view={<span>{instructorApplicationTypeLine(user)}</span>}
-        />
-      </EditableRow>
-      <ContactInfoFieldsRow
-        user={user}
-        personalInfoRevealed={personalInfoRevealed}
-        phoneValue=""
-        emailValue=""
-        onPhoneChange={() => undefined}
-        onEmailChange={() => undefined}
-        readOnlyDisplay
-      />
-      <EditableRow type="double">
-        <EditableField
-          label="자택 주소"
-          readOnlyDisplay
-          view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
-        />
-        <EditableField
-          label="소속 및 담당 학년"
-          readOnlyDisplay
-          view={affiliationAndGradeView(user)}
-        />
-      </EditableRow>
-      <EditableRow type="double">
-        <EditableField
-          label="정산 계좌 정보"
-          readOnlyDisplay
-          view={<span>{instructorBankView(user, personalInfoRevealed)}</span>}
-        />
-        <EditableField
-          label="사업소득자 여부"
-          readOnlyDisplay
-          view={instructorBusinessIncomeView(user)}
-        />
-      </EditableRow>
-      <EditableRow type="single">
-        <EditableField
-          label="한 줄 소개"
-          readOnlyDisplay
-          view={<span>{oneLineIntroLine(user)}</span>}
         />
       </EditableRow>
     </>

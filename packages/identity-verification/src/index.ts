@@ -9,7 +9,12 @@ export type { CreateIdentityVerificationStateOptions, IdentityVerificationState 
 
 export { IdentityVerificationApiError, parseIdentityVerificationApiError } from './errors'
 
-export { toApiBirthDate, toVerifiedBirthDate } from './birth-date'
+export {
+  normalizeBirthDateDigits,
+  toApiBirthDate,
+  toApiGender,
+  toVerifiedBirthDate,
+} from './birth-date'
 
 export {
   NiceAuthPopupBlockedError,

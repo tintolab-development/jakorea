@@ -50,7 +50,7 @@ function resolveUiKeyForTermsType(
 }
 
 function isChoiceAgreed(value: unknown): boolean {
-  return value === true || value === 'agree'
+  return value === true
 }
 
 function isAgreedForUiKey(

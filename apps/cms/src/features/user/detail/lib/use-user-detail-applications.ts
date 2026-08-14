@@ -1,25 +1,21 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { applicationService } from '@/entities/application/api/application-service'
 import type { Application, ApplicationSubjectType } from '@/types/domain'
 import type { User } from '@/types/user'
 import {
-  fetchMemberApplicationsRemote,
-  fetchMemberProgramHistoryRemote,
-} from '@/features/user/api/members-api-client'
-import {
-  filterApplicationsBySubjectType,
-  mapMemberApplicationHistoryItems,
-} from '@/features/user/api/map-member-application-history'
-import { mapMemberProgramHistoryToEnrollmentApplications } from '@/features/user/api/map-member-program-history'
+  useMemberApplicationsQuery,
+  useMemberProgramHistoryQuery,
+} from '@/features/user/api/hooks/use-member-detail-subresource-queries'
+import { filterApplicationsBySubjectType } from '@/features/user/api/map-member-application-history'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
 
 export type UserDetailDisplayUser = Omit<User, 'password'>
 
-const MEMBER_DETAIL_LIST_SIZE = 200
-
-function splitApplicationsForRole(
+export function splitApplicationsForRole(
   all: Application[],
   role: User['role']
 ): { applications: Application[]; enrollmentApplications: Application[] } {
@@ -44,39 +40,30 @@ function splitApplicationsForRole(
   return { applications: all, enrollmentApplications: [] }
 }
 
-async function loadApplicationsRemote(
-  displayUser: UserDetailDisplayUser
-): Promise<{ applications: Application[]; enrollmentApplications: Application[] }> {
-  const memberId = resolveMemberIdForApi(displayUser.id)
-  const [applicationsRes, historyRes] = await Promise.all([
-    fetchMemberApplicationsRemote(memberId, { page: 0, size: MEMBER_DETAIL_LIST_SIZE }),
-    fetchMemberProgramHistoryRemote(memberId, { page: 0, size: MEMBER_DETAIL_LIST_SIZE }),
-  ])
-
-  const fromApplications = mapMemberApplicationHistoryItems(
-    applicationsRes.items,
-    displayUser.id
-  )
-  const fromHistory = mapMemberProgramHistoryToEnrollmentApplications(
-    historyRes.items,
-    displayUser.id
-  )
-
+export function mergeMemberApplicationsWithProgramHistory(
+  fromApplications: Application[],
+  fromHistory: Application[],
+  role: User['role']
+): { applications: Application[]; enrollmentApplications: Application[] } {
   const mergedById = new Map<string, Application>()
   for (const app of [...fromApplications, ...fromHistory]) {
     mergedById.set(app.id, app)
   }
+  return splitApplicationsForRole([...mergedById.values()], role)
+}
 
-  return splitApplicationsForRole([...mergedById.values()], displayUser.role)
+function tryResolveMemberId(user: UserDetailDisplayUser | null | undefined): number | undefined {
+  if (!user) return undefined
+  try {
+    return resolveMemberIdForApi(user.id, { memberId: user.memberId })
+  } catch {
+    return user.memberId
+  }
 }
 
 export async function loadApplicationsForUser(
   displayUser: UserDetailDisplayUser
 ): Promise<{ applications: Application[]; enrollmentApplications: Application[] }> {
-  if (isMembersRemoteEnabled()) {
-    return loadApplicationsRemote(displayUser)
-  }
-
   if (displayUser.role === 'INSTRUCTOR') {
     const [instructorApps, studentApps] = await Promise.all([
       applicationService.getByUserId(displayUser.id, 'instructor'),
@@ -101,12 +88,47 @@ export function useUserDetailApplications(
   options?: { enabled?: boolean }
 ) {
   const enabled = options?.enabled !== false
+  const membersRemote = isMembersRemoteEnabled()
+  const queryClient = useQueryClient()
+  const memberId = tryResolveMemberId(displayUser)
+  const queryEnabled = Boolean(open && enabled && displayUser)
+
+  const applicationsQuery = useMemberApplicationsQuery(
+    memberId,
+    displayUser?.id,
+    queryEnabled && membersRemote
+  )
+  const programHistoryQuery = useMemberProgramHistoryQuery(
+    memberId,
+    displayUser?.id,
+    queryEnabled && membersRemote
+  )
+
+  const remoteMerged = useMemo(() => {
+    if (!membersRemote || !displayUser) {
+      return { applications: [] as Application[], enrollmentApplications: [] as Application[] }
+    }
+    return mergeMemberApplicationsWithProgramHistory(
+      applicationsQuery.data ?? [],
+      programHistoryQuery.data?.enrollmentFromHistory ?? [],
+      displayUser.role
+    )
+  }, [membersRemote, displayUser, applicationsQuery.data, programHistoryQuery.data])
+
   const [applications, setApplications] = useState<Application[]>([])
   const [enrollmentApplications, setEnrollmentApplications] = useState<Application[]>([])
   const [applicationsLoading, setApplicationsLoading] = useState(false)
 
   const refetchApplications = useCallback(async () => {
     if (!displayUser || !enabled) return
+    if (membersRemote) {
+      if (memberId == null) return
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: memberQueryKeys.applications(memberId) }),
+        queryClient.invalidateQueries({ queryKey: memberQueryKeys.programHistory(memberId) }),
+      ])
+      return
+    }
     try {
       const { applications: nextApps, enrollmentApplications: nextEnrollment } =
         await loadApplicationsForUser(displayUser)
@@ -117,13 +139,15 @@ export function useUserDetailApplications(
       setApplications([])
       setEnrollmentApplications([])
     }
-  }, [displayUser, enabled])
+  }, [displayUser, enabled, memberId, membersRemote, queryClient])
 
   const applicationLoadKey = displayUser
     ? `${displayUser.id}:${displayUser.memberId ?? ''}:${displayUser.role}`
     : ''
 
   useEffect(() => {
+    if (membersRemote) return
+
     if (open && displayUser && enabled) {
       const run = async () => {
         setApplicationsLoading(true)
@@ -148,7 +172,18 @@ export function useUserDetailApplications(
       setApplications([])
       setEnrollmentApplications([])
     }
-  }, [open, applicationLoadKey, enabled])
+  }, [open, applicationLoadKey, enabled, membersRemote])
+
+  if (membersRemote) {
+    return {
+      applications: remoteMerged.applications,
+      enrollmentApplications: remoteMerged.enrollmentApplications,
+      applicationsLoading: Boolean(
+        queryEnabled && (applicationsQuery.isLoading || programHistoryQuery.isLoading)
+      ),
+      refetchApplications,
+    }
+  }
 
   return {
     applications,

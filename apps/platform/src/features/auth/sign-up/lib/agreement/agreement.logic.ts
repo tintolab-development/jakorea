@@ -1,32 +1,32 @@
-import type { AgreementKey, AgreementState, ConsentChoice } from '../../model/sign-up.types'
+import type { AgreementKey, AgreementState } from '../../model/sign-up.types'
 import { agreementItems } from '../constants'
-import { isAllAgreed, isRequiredAgreed, listDisagreedRequiredLabels } from '../utils'
+import { isAllAgreed, isRequiredAgreed } from '../utils'
 
 export { agreementItems }
 
 export function createInitialAgreementState(): AgreementState {
   return {
-    service: null,
-    privacy: null,
-    marketing: null,
-    portrait: null,
+    service: false,
+    privacy: false,
+    marketing: false,
+    portrait: false,
   }
 }
 
-export function setAgreementChoice(
+export function toggleAgreementState(
   agreements: AgreementState,
   key: AgreementKey,
-  choice: ConsentChoice,
 ): AgreementState {
-  return { ...agreements, [key]: choice }
+  return { ...agreements, [key]: !agreements[key] }
 }
 
-export function setAllAgreementChoices(choice: ConsentChoice): AgreementState {
+export function toggleAllAgreementState(agreements: AgreementState): AgreementState {
+  const next = !isAllAgreed(agreements, agreementItems)
   return {
-    service: choice,
-    privacy: choice,
-    marketing: choice,
-    portrait: choice,
+    service: next,
+    privacy: next,
+    marketing: next,
+    portrait: next,
   }
 }
 
@@ -34,6 +34,5 @@ export function getAgreementDerived(agreements: AgreementState) {
   return {
     isAllAgreed: isAllAgreed(agreements, agreementItems),
     isRequiredAgreed: isRequiredAgreed(agreements, agreementItems),
-    disagreedRequiredLabels: listDisagreedRequiredLabels(agreements, agreementItems),
   }
 }

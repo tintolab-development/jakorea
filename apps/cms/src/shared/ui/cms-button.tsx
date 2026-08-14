@@ -20,7 +20,7 @@ type CmsButtonPropsOmit =
   | 'className'
   | 'style'
 
-export type CmsButtonVariant = 'primary' | 'secondary' | 'default' | 'delete'
+export type CmsButtonVariant = 'primary' | 'secondary' | 'default' | 'cancel' | 'delete'
 
 export type CmsButtonSize = 'large' | 'medium' | 'small'
 

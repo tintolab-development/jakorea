@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
   getMypageLnbItems,
   MOCK_MYPAGE_PROGRAM_STATS,
@@ -10,7 +11,12 @@ import {
   type MypageProgramStats,
   type MypageScheduleEvent,
 } from '@/features/mypage'
-import { getDevAuthLoggedIn } from '@/shared/lib'
+import {
+  getAccessToken,
+  getDevAuthLoggedIn,
+  isRemoteApiConfigured,
+  resolveLoginRequiredPath,
+} from '@/shared/lib'
 import { MypageLayout } from '@/widgets/mypage-layout'
 import { PFText } from '@/shared/ui'
 import { MypageHomeContent } from './home-content'
@@ -27,6 +33,7 @@ export function MypageHomePage() {
   const navigate = useNavigate()
   const [isAuthReady, setIsAuthReady] = useState(false)
   const member = useMypageMember()
+  const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const lnbItems = getMypageLnbItems(member.profile)
   /** API 로그인 세션에서는 mock 통계·일정을 쓰지 않음 (실 API 연동 전 빈 값) */
   const programStats = member.isRemoteSession ? EMPTY_PROGRAM_STATS : MOCK_MYPAGE_PROGRAM_STATS
@@ -35,15 +42,21 @@ export function MypageHomePage() {
     : MOCK_MYPAGE_SCHEDULE_EVENTS
 
   useEffect(() => {
+    const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
+    if (hasRemoteToken) {
+      setIsAuthReady(true)
+      return
+    }
+
     if (!getDevAuthLoggedIn()) {
-      navigate(`/auth/required?redirect=${encodeURIComponent(MYPAGE_PATH)}`)
+      navigate(resolveLoginRequiredPath(MYPAGE_PATH))
       return
     }
 
     setIsAuthReady(true)
   }, [navigate])
 
-  if (!isAuthReady) {
+  if (!isAuthReady || isChecking || isRedirecting) {
     return null
   }
 

@@ -38,6 +38,7 @@ import {
   toInstructorFeeGradeApiValue,
 } from '@/features/user/api/map-instructor-activity-display'
 import type { Affiliation } from '@/shared/api/generated/members/schemas/affiliation'
+import type { PortalSchoolSelectionRequest } from '@/shared/api/generated/members/schemas/portalSchoolSelectionRequest'
 import { parseOrganizationNamesFromText } from '@/features/user/detail/lib/parse-instructor-affiliation-text'
 
 const MONTH_FORMAT = 'YYYY-MM'
@@ -70,6 +71,49 @@ function parseYear(value: string | undefined): Dayjs | null {
 function trimOptional(value: string | undefined): string | undefined {
   const trimmed = value?.trim()
   return trimmed ? trimmed : undefined
+}
+
+export function buildInstructorSchoolSelectionFromForm(
+  values: Pick<
+    InstructorProfileFormValues,
+    | 'memberType'
+    | 'schoolName'
+    | 'schoolOrganizationId'
+    | 'schoolProvider'
+    | 'schoolExternalCode'
+    | 'schoolLevel'
+    | 'schoolRegionSido'
+    | 'schoolRegionSigungu'
+    | 'schoolZipcode'
+    | 'schoolAddress'
+  >
+): PortalSchoolSelectionRequest | undefined {
+  if (values.memberType !== 'school_teacher') return undefined
+  const name = trimOptional(values.schoolName)
+  if (!name) return undefined
+
+  const selection: PortalSchoolSelectionRequest = {
+    name,
+    organizationCategory: 'SCHOOL',
+  }
+  if (values.schoolOrganizationId != null && Number.isFinite(values.schoolOrganizationId)) {
+    selection.schoolOrganizationId = values.schoolOrganizationId
+  }
+  const provider = trimOptional(values.schoolProvider)
+  if (provider) selection.provider = provider
+  const externalSchoolCode = trimOptional(values.schoolExternalCode)
+  if (externalSchoolCode) selection.externalSchoolCode = externalSchoolCode
+  const schoolLevel = trimOptional(values.schoolLevel)
+  if (schoolLevel) selection.schoolLevel = schoolLevel
+  const regionSido = trimOptional(values.schoolRegionSido)
+  if (regionSido) selection.regionSido = regionSido
+  const regionSigungu = trimOptional(values.schoolRegionSigungu)
+  if (regionSigungu) selection.regionSigungu = regionSigungu
+  const zipcode = trimOptional(values.schoolZipcode)
+  if (zipcode) selection.zipcode = zipcode
+  const address = trimOptional(values.schoolAddress)
+  if (address) selection.address = address
+  return selection
 }
 
 /** Form.List는 빈 배열이면 행·입력 UI가 0개 — 편집 화면에서 최소 1행 보장 */
@@ -136,6 +180,7 @@ export function instructorProfileFormValuesToCmsProfile(
   values: InstructorProfileFormValues
 ): InstructorCmsProfileProposal {
   const memberType = values.memberType === 'school_teacher' ? 'SCHOOL_TEACHER' : 'GENERAL'
+  const schoolSelection = buildInstructorSchoolSelectionFromForm(values)
   const affiliation =
     memberType === 'SCHOOL_TEACHER'
       ? {
@@ -143,7 +188,11 @@ export function instructorProfileFormValuesToCmsProfile(
           ...(values.employmentStatus
             ? { employmentStatus: values.employmentStatus as InstructorCmsProfileProposal['affiliation']['employmentStatus'] }
             : {}),
-          organizationNames: [],
+          organizationNames: [] as string[],
+          ...(values.schoolOrganizationId != null && Number.isFinite(values.schoolOrganizationId)
+            ? { organizationId: values.schoolOrganizationId }
+            : {}),
+          ...(schoolSelection ? { schoolSelection } : {}),
         }
       : {
           organizationNames: values.affiliationNone
@@ -430,6 +479,9 @@ export function instructorCmsProfileToFormValues(
           employmentStatus: mapCmsEmploymentStatus(affiliation.employmentStatus) ?? '',
           affiliationName: '',
           affiliationNone: false,
+          ...(affiliation.organizationId != null
+            ? { schoolOrganizationId: affiliation.organizationId }
+            : {}),
         }
       : {
           schoolName: '',
@@ -720,6 +772,9 @@ export function normalizeInstructorCmsProfileFromApi(
     memberType,
     ...(profile.status?.trim() ? { status: profile.status.trim() } : {}),
     affiliation: {
+      ...(profile.affiliation?.organizationId != null && Number.isFinite(profile.affiliation.organizationId)
+        ? { organizationId: profile.affiliation.organizationId }
+        : {}),
       ...(profile.affiliation?.schoolName?.trim()
         ? { schoolName: profile.affiliation.schoolName.trim() }
         : {}),
@@ -758,6 +813,9 @@ function toApiAffiliation(
   affiliation: InstructorCmsProfileProposal['affiliation']
 ): Affiliation {
   const result: Affiliation = {}
+  if (affiliation.organizationId != null && Number.isFinite(affiliation.organizationId)) {
+    result.organizationId = affiliation.organizationId
+  }
   if (affiliation.schoolName?.trim()) result.schoolName = affiliation.schoolName.trim()
   if (affiliation.employmentStatus) result.employmentStatus = affiliation.employmentStatus
   const orgs = affiliation.organizationNames?.map(name => name.trim()).filter(Boolean) ?? []

@@ -6,7 +6,11 @@
   gap: var(--spacing-40);
   box-sizing: border-box;
   padding-block: var(--spacing-48);
-  padding-inline: var(--page-padding-x);
+}
+.content {
+  width: 100%;
+  max-width: var(--content-shell-max-width);
+  margin: 0 auto;
 }
 
 .sectionHeader {
@@ -149,6 +153,7 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--spacing-24);
+    padding-bottom: var(--spacing-60);
   }
 
   .action {

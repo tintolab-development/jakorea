@@ -3,6 +3,10 @@ export const MYPAGE_PATH = '/mypage'
 /** 마이페이지 LNB — 강사 역할 신청 양식 */
 export const INSTRUCTOR_APPLY_PATH = '/mypage/instructor-apply'
 
+export function instructorApplyConsentPath(consentKey: string): string {
+  return `${INSTRUCTOR_APPLY_PATH}/consent/${consentKey}`
+}
+
 export const MOCK_MYPAGE_USER_NAME = '홍길동'
 
 /** 강사 마이페이지 mock — 소속·재직 뱃지 */

@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
-import type { AffiliatedTeacherLinkTarget, User } from '@/types/user'
+import type { AffiliatedTeacherLinkTarget, SchoolTeacherEmploymentStatus, User } from '@/types/user'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { TabState } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
 import type { UseUserDetailModalsResult } from '@/features/user/detail/lib/use-user-detail-modals'
@@ -62,6 +62,10 @@ export interface UserDetailFullpageShellValue {
   /** 마스터 관리자 + ADMIN 대상일 때만 정의 — 뷰 모드 권한 유형 즉시 저장 */
   onPatchAdminPermissionVariantFromDetailView?: (
     nextPermission: AdminPermissionTagVariant
+  ) => void | Promise<void>
+  /** 교사(겸직 아님) 재직 현황 태그 — PATCH 후 교사 상세 재조회 */
+  onTeacherEmploymentStatusChange?: (
+    status: SchoolTeacherEmploymentStatus
   ) => void | Promise<void>
   onOpenInstructorPermissionRevoke: () => void
   onCloseInstructorPermissionRevoke: () => void

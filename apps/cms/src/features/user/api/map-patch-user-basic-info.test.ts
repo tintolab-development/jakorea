@@ -3,6 +3,26 @@ import {
   mapPatchUserBasicInfoToAdminAccountApiRequest,
   mapPatchUserBasicInfoToApiRequest,
 } from './map-patch-user-basic-info'
+import { draftToAdminProvisionedIndividualBasicInfoPatch } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
+import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
+
+function individualDraft(
+  overrides: Partial<AdminProvisionedMemberBasicInfoDraft>
+): AdminProvisionedMemberBasicInfoDraft {
+  return {
+    name: '홍길동',
+    phone: '010-0000-0000',
+    email: 'hong@example.com',
+    detailAddress: '',
+    affiliationInstitution: '',
+    affiliationGrade: '',
+    gender: '남성',
+    birthDate: '1990-01-01',
+    socialAccount: '',
+    adminComment: '',
+    ...overrides,
+  }
+}
 
 describe('mapPatchUserBasicInfoToApiRequest', () => {
   it('instructorCertifications를 instructorInfo.certifications로 매핑한다', () => {
@@ -41,6 +61,95 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
       name: '김강사',
       termsAgreements: [{ termsType: 'MARKETING', version: '1.0', required: false, agreed: true }],
     })
+  })
+
+  it('자택 주소는 개인 회원 GET·등록과 같은 address/addressDetail로 보낸다', () => {
+    const body = mapPatchUserBasicInfoToApiRequest({
+      detailAddress: '서울특별시 관악구 관악로 1',
+      detailAddressDetail: '202호',
+    })
+
+    expect(body).toMatchObject({
+      detailAddress: '서울특별시 관악구 관악로 1',
+      address: '서울특별시 관악구 관악로 1',
+      addressDetail: '202호',
+      homeAddress: '서울특별시 관악구 관악로 1',
+      homeAddressDetail: '202호',
+    })
+  })
+
+  it('개인 회원 소속은 GET·등록과 같은 schoolName/enrollmentStatus로 보낸다', () => {
+    const body = mapPatchUserBasicInfoToApiRequest({
+      affiliation: '서울고등학교 | 2학년',
+      individualSchoolName: '서울고등학교',
+      schoolEnrollmentStatus: 'ENROLLED',
+      individualGrade: '2학년',
+    })
+
+    expect(body).toMatchObject({
+      affiliation: '서울고등학교 | 2학년',
+      schoolName: '서울고등학교',
+      enrollmentStatus: 'ENROLLED',
+      grade: '2학년',
+    })
+  })
+
+  it('미재학 소속은 schoolName과 NOT_ENROLLED로 보낸다', () => {
+    const body = mapPatchUserBasicInfoToApiRequest({
+      affiliation: 'JA코리아',
+      individualSchoolName: 'JA코리아',
+      schoolEnrollmentStatus: 'NOT_ENROLLED',
+    })
+
+    expect(body).toMatchObject({
+      affiliation: 'JA코리아',
+      schoolName: 'JA코리아',
+      enrollmentStatus: 'NOT_ENROLLED',
+    })
+    expect(body.grade).toBeUndefined()
+  })
+
+  it('강사 affiliation만 있으면 schoolName/enrollmentStatus extras를 넣지 않는다', () => {
+    const body = mapPatchUserBasicInfoToApiRequest({
+      affiliation: '고양고등학교 | 재직',
+    })
+
+    expect(body.affiliation).toBe('고양고등학교 | 재직')
+    expect(body.schoolName).toBeUndefined()
+    expect(body.enrollmentStatus).toBeUndefined()
+    expect(body.grade).toBeUndefined()
+  })
+
+  it('개인 회원 상세 초안은 schoolName/enrollmentStatus로 PATCH된다', () => {
+    const patch = draftToAdminProvisionedIndividualBasicInfoPatch(
+      individualDraft({
+        affiliationInstitution: '서울고등학교',
+        affiliationGrade: '2학년',
+        schoolEnrollmentStatus: 'enrolled',
+      })
+    )
+    const body = mapPatchUserBasicInfoToApiRequest(patch)
+
+    expect(body.schoolName).toBe('서울고등학교')
+    expect(body.enrollmentStatus).toBe('ENROLLED')
+    expect(body.grade).toBe('2학년')
+    expect(body.affiliation).toBe('서울고등학교 | 2학년')
+  })
+
+  it('개인 회원 미재학 초안은 기관명만 schoolName으로 PATCH된다', () => {
+    const patch = draftToAdminProvisionedIndividualBasicInfoPatch(
+      individualDraft({
+        affiliationInstitution: 'JA코리아',
+        affiliationGrade: '2학년',
+        schoolEnrollmentStatus: 'not_enrolled',
+      })
+    )
+    const body = mapPatchUserBasicInfoToApiRequest(patch)
+
+    expect(body.schoolName).toBe('JA코리아')
+    expect(body.enrollmentStatus).toBe('NOT_ENROLLED')
+    expect(body.affiliation).toBe('JA코리아')
+    expect(body.grade).toBeUndefined()
   })
 })
 

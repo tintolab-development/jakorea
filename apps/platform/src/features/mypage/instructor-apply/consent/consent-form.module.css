@@ -1,0 +1,90 @@
+.form {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: inherit;
+  align-self: stretch;
+}
+
+.prose {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.proseList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.radioGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-16);
+  align-items: center;
+}
+
+.radioOption {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-6);
+  cursor: pointer;
+  color: var(--color-neutral-black);
+}
+
+.radioOption input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--color-primary-500);
+}
+
+.tableWrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.infoTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.infoTable th,
+.infoTable td {
+  padding: var(--spacing-12) var(--spacing-16);
+  border: 1px solid var(--table-line, #e0e0e0);
+  text-align: left;
+  vertical-align: top;
+  word-break: keep-all;
+}
+
+.infoTable th {
+  background: var(--BG-header, #f5f6f7);
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  padding-top: var(--spacing-16);
+}
+
+.inlineFields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-8);
+  min-width: 0;
+  width: 100%;
+}
+
+.hyphen {
+  color: var(--color-neutral-cool-600);
+}

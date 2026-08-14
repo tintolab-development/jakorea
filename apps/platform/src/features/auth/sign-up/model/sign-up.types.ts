@@ -1,7 +1,6 @@
 export type MemberType = 'general' | 'teacher'
 export type GenderType = 'male' | 'female'
 export type AgreementKey = 'service' | 'privacy' | 'marketing' | 'portrait'
-export type ConsentChoice = 'agree' | 'disagree' | null
 export type EmailCheckStatus = 'idle' | 'success' | 'error'
 export type SchoolStatus = 'enrolled' | 'none'
 export type EmploymentStatus = 'employed' | 'on-leave'
@@ -27,7 +26,7 @@ export type ConfirmationRow = {
   value: string
 }
 
-export type AgreementState = Record<AgreementKey, ConsentChoice>
+export type AgreementState = Record<AgreementKey, boolean>
 
 export type GuardianAgreementKey =
   | 'service'
@@ -43,7 +42,7 @@ export type GuardianAgreementItem = {
   guide?: string
 }
 
-export type GuardianAgreementState = Record<GuardianAgreementKey, ConsentChoice>
+export type GuardianAgreementState = Record<GuardianAgreementKey, boolean>
 
 import type { ReactElement } from 'react'
 import type { UseSignUpReturn } from '../hooks/use-sign-up'

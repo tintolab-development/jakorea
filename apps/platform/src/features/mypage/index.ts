@@ -8,6 +8,7 @@ export type {
 } from './model/types'
 export {
   INSTRUCTOR_APPLY_PATH,
+  instructorApplyConsentPath,
   MOCK_MYPAGE_AFFILIATION,
   MOCK_MYPAGE_EMPLOYMENT_LABEL,
   MOCK_MYPAGE_PROGRAM_STATS,
@@ -36,14 +37,19 @@ export { useMypageMember } from './hooks/use-mypage-member'
 export type { MypageMemberView } from './hooks/use-mypage-member'
 export {
   canSubmitInstructorRoleRequest,
+  getInstructorApplyConsentPageTitle,
+  getInstructorApplyConsentPath,
   getInstructorRoleRequestStatusMessage,
+  InstructorApplyConsentWriteForm,
   InstructorApplyForm,
+  isInstructorApplyConsentKey,
   mapInstructorApplyFormToCreateRequest,
   useCreateInstructorRoleRequestMutation,
   useCurrentInstructorRoleRequestQuery,
   useInstructorApplyLockedBasic,
 } from './instructor-apply'
 export type {
+  InstructorApplyConsentKey,
   InstructorApplyFormProps,
   InstructorApplyLockedBasicInfo,
 } from './instructor-apply'

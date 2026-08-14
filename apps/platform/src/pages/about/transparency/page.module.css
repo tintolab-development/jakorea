@@ -92,6 +92,8 @@
 
 /* 차트 범례(프로그램 운영비·사무비 등) ↔ 테이블 헤더 */
 .financeTable {
+  width: 100%;
+  min-width: 0;
   margin-top: calc(66px - var(--spacing-40));
 }
 
@@ -100,8 +102,29 @@
 }
 
 @media (--bp-below-pc) {
+  .content {
+    padding-inline: var(--spacing-20);
+  }
+
+  /* 셸 padding-block(74)을 상쇄해 버튼 ↔ 푸터 시안 32px */
+  .page {
+    margin-bottom: calc(-1 * var(--content-padding-block));
+  }
+
   .hero {
-    margin-bottom: var(--spacing-48);
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-12);
+    /* 셸 상단 74px → 헤더 아래 시안 40px */
+    margin-top: calc(var(--spacing-40) - var(--content-padding-block));
+    margin-bottom: 0;
+    padding-bottom: var(--spacing-40);
+  }
+
+  .pageBackground {
+    height: 560px;
   }
 
   .principles {
@@ -110,7 +133,15 @@
 
   .financeArea {
     gap: var(--spacing-64);
-    padding-block: var(--spacing-48) var(--spacing-64);
+    padding-block: var(--spacing-48) var(--spacing-32);
+  }
+
+  .financeArea::before {
+    bottom: 0;
+  }
+
+  .financeArea > :last-child {
+    margin-top: calc(var(--spacing-32) - var(--spacing-64));
   }
 
   .financeSection {
@@ -119,5 +150,34 @@
 
   .financeTable {
     margin-top: 0;
+  }
+
+  .heroLabel {
+    color: var(--color-primary-700);
+    font-family: var(--font-family-base);
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 160%;
+  }
+
+  .heroTitle {
+    color: var(--color-neutral-black);
+    font-family: var(--font-family-base);
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 140%;
+    letter-spacing: -0.48px;
+  }
+
+  .financeTitle {
+    color: var(--color-neutral-black);
+    font-family: var(--font-family-base);
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    letter-spacing: -0.48px;
   }
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   mapIndividualMemberDetailToUser,
   mapInstructorMemberDetailToUser,
+  mapTeacherMemberDetailToUser,
   resolveInstructorBankFields,
 } from './map-member-detail-to-user'
 import { mergeListUserWithFetchedDetail } from './merge-list-user-with-detail'
@@ -226,6 +227,14 @@ describe('mapInstructorMemberDetailToUser', () => {
   it('BE `"마스킹"` placeholder 경력·소개 필드는 User에 저장하지 않는다', () => {
     const user = mapInstructorMemberDetailToUser(
       baseInstructorDetail({
+        member: {
+          memberId: 101,
+          uuid: 'instructor-uuid',
+          email: 'teacher@example.com',
+          name: '김강사',
+          roles: ['SCHOOL_TEACHER'],
+          status: 'ACTIVE',
+        },
         instructorProfile: {
           memberId: 101,
           primaryActivityType: 'SCHOOL_TEACHER',
@@ -280,6 +289,14 @@ describe('mapInstructorMemberDetailToUser', () => {
   it('CMS profile.affiliation.schoolName을 affiliatedSchoolName·담당 학년에 매핑한다', () => {
     const user = mapInstructorMemberDetailToUser(
       baseInstructorDetail({
+        member: {
+          memberId: 101,
+          uuid: 'instructor-uuid',
+          email: 'teacher@example.com',
+          name: '김강사',
+          roles: ['SCHOOL_TEACHER'],
+          status: 'ACTIVE',
+        },
         instructorProfile: {
           memberId: 101,
           primaryActivityType: 'SCHOOL_TEACHER',
@@ -310,7 +327,48 @@ describe('mapInstructorMemberDetailToUser', () => {
     expect(user.instructorCmsProfile?.affiliation.schoolName).toBe('진월초등학교')
   })
 
-  it('학교명 + SCHOOL_TEACHER가 아니면 겸직(dual)로 올린다', () => {
+  it('학교명만 있고 SCHOOL_TEACHER roles이면 교사 단독이다', () => {
+    const user = mapInstructorMemberDetailToUser(
+      baseInstructorDetail({
+        member: {
+          memberId: 101,
+          roles: ['SCHOOL_TEACHER'],
+          name: '김교사',
+          email: 't@test.com',
+        },
+        instructorProfile: {
+          memberId: 101,
+          primaryActivityType: 'SCHOOL_TEACHER',
+        },
+        affiliatedSchoolName: '진월초등학교',
+      } as InstructorMemberDetailTestInput)
+    )
+
+    expect(user.affiliatedSchoolName).toBe('진월초등학교')
+    expect(user.instructorMemberProfile).toBe('school_teacher')
+  })
+
+  it('학교명 + INSTRUCTOR+SCHOOL_TEACHER roles이면 겸직이다', () => {
+    const user = mapInstructorMemberDetailToUser(
+      baseInstructorDetail({
+        member: {
+          memberId: 101,
+          roles: ['SCHOOL_TEACHER', 'INSTRUCTOR'],
+          name: '이겸직',
+          email: 'd@test.com',
+        },
+        instructorProfile: {
+          memberId: 101,
+          primaryActivityType: 'SCHOOL_TEACHER',
+        },
+        affiliatedSchoolName: '진월초등학교',
+      } as InstructorMemberDetailTestInput)
+    )
+
+    expect(user.instructorMemberProfile).toBe('instructor_dual')
+  })
+
+  it('학교명 + 비GENERAL activity만으로는 겸직으로 올리지 않는다', () => {
     const user = mapInstructorMemberDetailToUser(
       baseInstructorDetail({
         instructorProfile: {
@@ -322,7 +380,7 @@ describe('mapInstructorMemberDetailToUser', () => {
     )
 
     expect(user.affiliatedSchoolName).toBe('진월초등학교')
-    expect(user.instructorMemberProfile).toBe('instructor_dual')
+    expect(user.instructorMemberProfile).not.toBe('instructor_dual')
   })
 
   it('top-level 계좌가 없으면 bankAccounts(current)를 사용한다', () => {
@@ -410,6 +468,14 @@ describe('mapInstructorMemberDetailToUser', () => {
   it('SCHOOL_TEACHER여도 루트 계좌를 instructorInfo에 매핑한다', () => {
     const user = mapInstructorMemberDetailToUser(
       baseInstructorDetail({
+        member: {
+          memberId: 101,
+          uuid: 'instructor-uuid',
+          email: 'teacher@example.com',
+          name: '김강사',
+          roles: ['SCHOOL_TEACHER'],
+          status: 'ACTIVE',
+        },
         bankName: '우리은행',
         accountNumber: '*************',
         accountHolder: '김**',
@@ -625,5 +691,28 @@ describe('mergeListUserWithFetchedDetail listMetrics', () => {
 
     expect(merged.affiliation).toBe('진월초등학교, JA 강사단')
     expect(merged.bio).toBe('목록 소개')
+  })
+})
+
+describe('mapTeacherMemberDetailToUser', () => {
+  it('소속 학교 organizationId와 재직 현황을 매핑한다', () => {
+    const user = mapTeacherMemberDetailToUser({
+      member: {
+        memberId: 42,
+        uuid: 'teacher-uuid',
+        email: 'teacher@example.com',
+        name: '김교사',
+        roles: ['SCHOOL_TEACHER'],
+        status: 'ACTIVE',
+      },
+      organizationId: 12,
+      organizationName: '진월초등학교',
+      employmentStatus: 'ACTIVE',
+    })
+
+    expect(user.organizationId).toBe(12)
+    expect(user.instructorMemberProfile).toBe('school_teacher')
+    expect(user.affiliatedSchoolName).toBe('진월초등학교')
+    expect(user.listMetrics?.employmentStatusLabel).toBe('재직중')
   })
 })

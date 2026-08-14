@@ -9,7 +9,10 @@ import {
   maskedUserForInstructorDetail,
   userToApplicantInstructorRow,
 } from '@/features/user/shared/lib/user-to-applicant-instructor-row'
-import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import {
+  resolveInstructorMemberProfile,
+  isInstructorSchoolTeacherProfile,
+} from '@/entities/user/lib/resolve-instructor-member-profile'
 import {
   programsHistoryHasChildMenu,
   clampProgramsChildForUser,
@@ -25,7 +28,7 @@ import { useMemberProgramHistoryQuery } from '@/features/user/api/hooks/use-memb
 import { useUserDetailUrlSync } from './use-user-detail-url-sync'
 import type { UseUserDetailModalsResult } from './use-user-detail-modals'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { User } from '@/types/user'
+import type { User, SchoolTeacherEmploymentStatus } from '@/types/user'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import { getProgramAdminDetailInfoTabUrl } from '@/features/program/general/lib/program-admin-detail-url'
 import type {
@@ -36,7 +39,9 @@ import {
   canAccessAdminCommentInAdminDetail,
   canEditAdminMemberInfo,
   canStartAdminMemberProfileEdit,
+  isCmsInstructorFeeJaRestrictedEditTarget,
   shouldShowCmsMemberInfoEditButton,
+  shouldShowCmsMemberInfoEditButtonOrInstructorRestricted,
   shouldShowAdminCommentSectionForViewer,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import {
@@ -49,6 +54,7 @@ import {
   draftToAdminProvisionedIndividualBasicInfoPatch,
   draftToAdminProvisionedInstructorBasicInfoPatch,
   draftToBasicInfoPatch,
+  draftToInstructorFeeAndJaGradePatch,
   draftToSchoolAdminCommentOnlyPatch,
   draftToSchoolInstitutionBasicInfoPatch,
   userToAdminCommentOnlyDraft,
@@ -76,6 +82,8 @@ import {
 } from '@/features/user/api/merge-list-user-with-detail'
 import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
 import { upsertMember1365ExternalIdentifierRemote, upsertMemberAdminCommentRemote } from '@/features/user/api/members-api-client'
+import { updateTeacherMemberEmploymentStatusAndRefresh } from '@/features/user/api/update-teacher-member-employment-status'
+import { getMemberIdByUuid } from '@/features/user/api/member-id-registry'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { revokeInstructorPermission } from '@/entities/user/api/user-service'
@@ -89,7 +97,7 @@ const BASIC_INFO_EDIT_UNMASK_REASON = '정보 수정'
 const BASIC_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
   "관리자에 의해 등록된 회원은 정보 수정 시 개인정보 마스킹이 해제되며, 개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다. 해당 회원의 개인정보 열람 및 정보를 수정하시겠습니까?"
 
-export type BasicInfoEditScope = 'none' | 'profile' | 'comment'
+export type BasicInfoEditScope = 'none' | 'profile' | 'comment' | 'instructor_fee_ja'
 
 export type InstructorPermissionRevokeNotifyTiming = 'immediate' | 'manual'
 
@@ -145,9 +153,11 @@ export function useUserDetailController({
     useUserDetailApplications(open, displayUser, { enabled: loadProgramHistoryResources })
 
   const membersRemote = isMembersRemoteEnabled()
+  const programHistoryMemberId =
+    displayUser?.memberId ?? (displayUser ? getMemberIdByUuid(displayUser.id) : undefined)
   const { data: programHistoryData, isLoading: programHistoryLoading } =
     useMemberProgramHistoryQuery(
-      displayUser?.memberId,
+      programHistoryMemberId,
       displayUser?.id,
       loadProgramHistoryResources && membersRemote
     )
@@ -399,12 +409,17 @@ export function useUserDetailController({
     (sourceUser?: Omit<User, 'password'> | null) => {
       const target = sourceUser ?? displayUser
       if (!target) return
-      if (!shouldShowCmsMemberInfoEditButton(target)) return
+      if (!shouldShowCmsMemberInfoEditButtonOrInstructorRestricted(target)) return
 
       const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
       const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, target.role)
 
+      const restrictedFeeJa =
+        isCmsInstructorFeeJaRestrictedEditTarget(target) &&
+        !shouldShowCmsMemberInfoEditButton(target)
+
       if (target.role === 'SCHOOL' && bodyKey === 'institution') {
+        if (restrictedFeeJa) return
         setBasicInfoDraft(userToSchoolInstitutionEditDraft(target))
         setBasicInfoEditScope('profile')
         setBasicInfoEditing(true)
@@ -414,13 +429,14 @@ export function useUserDetailController({
 
       if (target.role === 'INSTRUCTOR' && bodyKey === 'instructor') {
         setBasicInfoDraft(userToAdminProvisionedBasicDraft(target))
-        setBasicInfoEditScope('profile')
+        setBasicInfoEditScope(restrictedFeeJa ? 'instructor_fee_ja' : 'profile')
         setBasicInfoEditing(true)
         focusDetailInfoTab()
         return
       }
 
       if (bodyKey === 'admin') {
+        if (restrictedFeeJa) return
         if (!canStartAdminMemberProfileEdit(currentUser, target)) return
         setBasicInfoDraft(userToAdminProvisionedBasicDraft(target))
         setBasicInfoEditScope('profile')
@@ -430,6 +446,7 @@ export function useUserDetailController({
       }
 
       if (bodyKey !== 'all_users') return
+      if (restrictedFeeJa) return
       setBasicInfoDraft(userToAdminProvisionedBasicDraft(target))
       setBasicInfoEditScope('profile')
       setBasicInfoEditing(true)
@@ -439,15 +456,19 @@ export function useUserDetailController({
   )
 
   /** 관리자 등록 회원 — 마스킹 미해제 시 안내 모달 후 unmask, 이후 수정 진입.
-   * 학교(기관) 상세는 마스킹 대상 없음 → 안내 모달 없이 바로 수정 진입. */
+   * 학교(기관) 상세는 마스킹 대상 없음 → 안내 모달 없이 바로 수정 진입.
+   * 강사 등급 제한 수정도 PII 없음 → 바로 수정 진입. */
   const requestStartBasicInfoEdit = useCallback(() => {
     if (!displayUser) return
-    if (!shouldShowCmsMemberInfoEditButton(displayUser)) return
-    if (displayUser.role !== 'SCHOOL' && !personalInfoRevealed) {
-      setEditUnmaskConfirmOpen(true)
+    if (!shouldShowCmsMemberInfoEditButtonOrInstructorRestricted(displayUser)) return
+    const restrictedFeeJa =
+      isCmsInstructorFeeJaRestrictedEditTarget(displayUser) &&
+      !shouldShowCmsMemberInfoEditButton(displayUser)
+    if (restrictedFeeJa || displayUser.role === 'SCHOOL' || personalInfoRevealed) {
+      startBasicInfoEdit()
       return
     }
-    startBasicInfoEdit()
+    setEditUnmaskConfirmOpen(true)
   }, [displayUser, personalInfoRevealed, startBasicInfoEdit])
 
   const closeEditUnmaskConfirm = useCallback(() => {
@@ -600,6 +621,8 @@ export function useUserDetailController({
       let patch: PatchUserBasicInfoInput
       if (basicInfoEditScope === 'comment') {
         patch = draftToSchoolAdminCommentOnlyPatch(basicInfoDraft)
+      } else if (basicInfoEditScope === 'instructor_fee_ja') {
+        patch = draftToInstructorFeeAndJaGradePatch(basicInfoDraft)
       } else if (displayUser.role === 'SCHOOL') {
         patch = draftToSchoolInstitutionBasicInfoPatch(basicInfoDraft)
       } else if (displayUser.role === 'INSTRUCTOR') {
@@ -614,7 +637,10 @@ export function useUserDetailController({
         patch = draftToBasicInfoPatch(basicInfoDraft)
       }
 
-      if (basicInfoEditScope === 'profile' && Object.prototype.hasOwnProperty.call(patch, 'adminComment')) {
+      if (
+        (basicInfoEditScope === 'profile' || basicInfoEditScope === 'instructor_fee_ja') &&
+        Object.prototype.hasOwnProperty.call(patch, 'adminComment')
+      ) {
         const { adminComment: _adminComment, ...patchWithoutComment } = patch
         patch = patchWithoutComment
       }
@@ -676,7 +702,9 @@ export function useUserDetailController({
       setBasicInfoEditing(false)
       setBasicInfoEditScope('none')
       setBasicInfoDraft(null)
-      const skipListInvalidate = membersRemote && basicInfoEditScope === 'profile'
+      const skipListInvalidate =
+        membersRemote &&
+        (basicInfoEditScope === 'profile' || basicInfoEditScope === 'instructor_fee_ja')
       onMemberBasicInfoSaved?.(merged, skipListInvalidate ? { skipListInvalidate: true } : undefined)
     } catch (error) {
       handleError(error, { defaultMessage: '회원 정보 저장에 실패했습니다.' })
@@ -718,6 +746,44 @@ export function useUserDetailController({
       }
     },
     [displayUser, currentUser, patchMemberBasicInfo, onMemberBasicInfoSaved]
+  )
+
+  const patchTeacherEmploymentStatus = useCallback(
+    async (status: SchoolTeacherEmploymentStatus) => {
+      if (!displayUser || !isInstructorSchoolTeacherProfile(displayUser)) return
+      if (!membersRemote) return
+      if (displayUser.memberId == null) {
+        handleError(new Error('교사 memberId가 없어 재직 현황을 저장할 수 없습니다.'), {
+          context: 'userDetail.employmentStatus.missingTeacherMemberId',
+        })
+        return
+      }
+      try {
+        const refreshed = await updateTeacherMemberEmploymentStatusAndRefresh({
+          memberId: displayUser.memberId,
+          organizationId: displayUser.organizationId,
+          employmentStatus: status,
+        })
+        const merged = mergeListUserWithFetchedDetail(displayUser, refreshed)
+        queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
+        queryClient.setQueryData(
+          [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
+          merged
+        )
+        if (merged.organizationId != null) {
+          void queryClient.invalidateQueries({
+            queryKey: memberQueryKeys.schoolTeachers(merged.organizationId),
+          })
+        }
+        onMemberBasicInfoSaved?.(merged, { skipListInvalidate: true })
+      } catch (error) {
+        handleError(error, {
+          defaultMessage: getMemberApiErrorMessage(error, '재직 현황 변경에 실패했습니다.'),
+        })
+        throw error
+      }
+    },
+    [displayUser, membersRemote, queryClient, onMemberBasicInfoSaved]
   )
 
   const openInstructorPermissionRevoke = useCallback(() => {
@@ -772,6 +838,10 @@ export function useUserDetailController({
         throw new Error('강사 정보가 없어 평가 등급을 반영할 수 없습니다.')
       }
 
+      if (basicInfoEditing && basicInfoEditScope === 'instructor_fee_ja') {
+        setBasicInfoDraft(prev => (prev ? { ...prev, jaEvaluationGrade: grade } : prev))
+      }
+
       // remote: 모달에서 evaluation-grade POST 완료됨. mock만 상세 패치로 영속화.
       if (patchMemberBasicInfo && !isMembersRemoteEnabled()) {
         const persisted = await patchMemberBasicInfo(displayUser.id, {
@@ -808,7 +878,14 @@ export function useUserDetailController({
       setJaGradeEvaluationOpen(false)
       onMemberBasicInfoSaved?.(mergedUser)
     },
-    [displayUser, onMemberBasicInfoSaved, patchMemberBasicInfo, queryClient]
+    [
+      displayUser,
+      onMemberBasicInfoSaved,
+      patchMemberBasicInfo,
+      queryClient,
+      basicInfoEditing,
+      basicInfoEditScope,
+    ]
   )
 
   const handleSidebarSelectTop = useCallback(
@@ -940,11 +1017,8 @@ export function useUserDetailController({
 
     if (displayUser.role !== 'INSTRUCTOR') return null
     const profile = resolveInstructorMemberProfile(displayUser)
-    if (
-      profile !== 'instructor_dual' &&
-      profile !== 'instructor_only' &&
-      profile !== 'school_teacher'
-    ) {
+    // 순수 교사(school_teacher): 기본 정보·약관만 — 학력·경력 등 강사 제출양식 미노출
+    if (profile !== 'instructor_dual' && profile !== 'instructor_only') {
       return null
     }
     const src = personalInfoRevealed ? displayUser : maskedUserForInstructorDetail(displayUser)
@@ -996,6 +1070,7 @@ export function useUserDetailController({
       saveBasicInfoEdit,
       updateBasicInfoDraft,
       patchAdminPermissionVariantFromDetailView,
+      patchTeacherEmploymentStatus,
       openInstructorPermissionRevoke,
       closeInstructorPermissionRevoke,
       confirmInstructorPermissionRevoke,

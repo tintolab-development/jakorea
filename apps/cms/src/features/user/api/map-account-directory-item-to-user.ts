@@ -3,6 +3,7 @@ import { AccountDirectoryItemResponseAccountType } from '@/shared/api/generated/
 import { roleCodeToAdminPermissionVariant } from '@/features/user/api/admin-approval-role'
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
 import {
+  copyMemberRoles,
   inferInstructorMemberProfileFromRoles,
   mapMemberStatusToIsActive,
   resolvePrimaryUserRoleFromRoles,
@@ -77,20 +78,24 @@ export function mapAccountDirectoryItemToUser(
 
   const role = resolvePrimaryUserRoleFromRoles(item.roles)
   const instructorMemberProfile = inferInstructorMemberProfileFromRoles(item.roles)
+  const resolvedRole =
+    role === 'INDIVIDUAL' && instructorMemberProfile != null ? 'INSTRUCTOR' : role
+  const roles = copyMemberRoles(item.roles)
   return {
     id: uuid,
     memberId,
     email: String(item.email ?? '').trim() || '-',
     name: String(item.name ?? '').trim() || '-',
     phone: item.phone?.trim() || undefined,
-    role,
+    role: resolvedRole,
+    ...(roles ? { roles } : {}),
     isActive: mapMemberStatusToIsActive(undefined, item.status),
     createdAt: item.createdAt ?? now,
     updatedAt: item.createdAt ?? now,
     lastLoginAt: item.lastLoginAt ?? undefined,
-    registeredByAdmin: resolveRegisteredByAdmin({ role }),
+    registeredByAdmin: resolveRegisteredByAdmin({ role: resolvedRole }),
     identitySelfSignupCompletedAfterAdminRegistration:
-      resolveIdentitySelfSignupCompletedAfterAdminRegistration({ role }),
+      resolveIdentitySelfSignupCompletedAfterAdminRegistration({ role: resolvedRole }),
     ...(instructorMemberProfile ? { instructorMemberProfile } : {}),
   }
 }

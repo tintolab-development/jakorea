@@ -4,7 +4,7 @@
 
 import type { ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import type { User } from '@/types/user'
+import type { User, SchoolTeacherEmploymentStatus } from '@/types/user'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
@@ -47,6 +47,8 @@ export interface UserBasicInfoSectionProps {
   externalId1365?: UserBasicInfoExternalId1365 | null
   personalInfoRevealed?: boolean
   memberInfoEditing?: boolean
+  /** profile 전체 수정 | instructor_fee_ja 강사비·JA만 (조회 레이아웃 유지) */
+  memberInfoEditScope?: 'profile' | 'instructor_fee_ja'
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
   adminPermissionVariantPatching?: boolean
@@ -54,6 +56,7 @@ export interface UserBasicInfoSectionProps {
     nextPermission: AdminPermissionTagVariant
   ) => void | Promise<void>
   adminMemberProfileFieldsEditableWhenEditing?: boolean
+  onEmploymentStatusChange?: (status: SchoolTeacherEmploymentStatus) => void | Promise<void>
 }
 
 export function UserBasicInfoSection({
@@ -68,11 +71,13 @@ export function UserBasicInfoSection({
   externalId1365,
   personalInfoRevealed = false,
   memberInfoEditing = false,
+  memberInfoEditScope = 'profile',
   memberInfoDraft,
   onMemberInfoDraftChange,
   adminPermissionVariantPatching = false,
   onPatchAdminPermissionVariantFromDetailView,
   adminMemberProfileFieldsEditableWhenEditing = true,
+  onEmploymentStatusChange,
 }: UserBasicInfoSectionProps) {
   const [searchParams] = useSearchParams()
   const entryFromQuery = parseUserBasicInfoEntryQuery(
@@ -85,6 +90,8 @@ export function UserBasicInfoSection({
     instructorProfile,
   })
   const cmsMayEditBasicProfileFields = shouldShowCmsMemberInfoEditButton(user)
+  const feeJaRestrictedEdit =
+    memberInfoEditing && memberInfoEditScope === 'instructor_fee_ja'
   const detailInfoFormMode: 'view' | 'edit' = memberInfoEditing ? 'edit' : 'view'
 
   const permissionRole =
@@ -105,9 +112,11 @@ export function UserBasicInfoSection({
     memberInfoDraft,
     onMemberInfoDraftChange,
     cmsMayEditBasicProfileFields,
+    feeJaRestrictedEdit,
     adminPermissionVariantPatching,
     onPatchAdminPermissionVariantFromDetailView,
     adminMemberProfileFieldsEditableWhenEditing,
+    onEmploymentStatusChange,
     viewContext: {
       mode: detailInfoFormMode,
       role: bodyKey,

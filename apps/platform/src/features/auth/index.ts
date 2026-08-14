@@ -37,18 +37,23 @@ export {
   usePortalLoginMutation,
   usePortalMeQuery,
   usePortalProfileQuery,
+  usePortalProfileUpdateMutation,
+  usePortalPasswordChangeMutation,
   getLoginApiErrorMessage,
 } from './sign-in'
 export type {
   AuthTokenResponse,
   HomepageMeResponse,
   MemberLoginRequest,
+  PasswordChangeRequest,
   PortalProfileResponse,
+  UpdatePortalProfileRequest,
 } from './sign-in'
 
 export {
   useSignupIdentityVerification,
   useGuardianIdentityVerification,
+  useFindPasswordIdentityVerification,
   processIdentityCallback,
   buildIdentityCallbackKey,
   isIdentityCallbackHandled,
@@ -60,7 +65,9 @@ export {
   requireAdminRegisteredWizardState,
   updateAdminRegisteredWizardState,
   useAdminRegisteredProfileHydration,
+  useAdminRegisteredNoticeRedirect,
   setAdminRegisteredPasswordChangeRequired,
   isMockAdminRegisteredFirstLogin,
+  requiresAdminRegisteredOnboarding,
   clearAdminRegisteredWizardState,
 } from './admin-registered'

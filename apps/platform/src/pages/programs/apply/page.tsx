@@ -8,7 +8,7 @@ import {
   useMockProgramById,
 } from '@/features/program'
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
-import { getDevAuthLoggedIn } from '@/shared/lib'
+import { getDevAuthLoggedIn, resolveLoginRequiredPath } from '@/shared/lib'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 import { useNavigate } from 'react-router-dom'
@@ -25,9 +25,7 @@ export function ProgramApplyPage() {
     }
 
     if (!getDevAuthLoggedIn()) {
-      navigate(
-        `/auth/required?redirect=${encodeURIComponent(`/programs/${programId}/apply`)}`
-      )
+      navigate(resolveLoginRequiredPath(`/programs/${programId}/apply`))
       return
     }
 

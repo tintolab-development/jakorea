@@ -5,6 +5,10 @@ export function parseAuthTokenResponse(payload: unknown): {
   tokenType?: string
   expiresInSeconds?: number
   passwordChangeRequired?: boolean
+  adminProvisionedOnboardingRequired?: boolean
+  adminProvisionedOnboardingStep?: string
+  registeredByAdmin?: boolean
+  identitySelfSignupCompletedAfterAdminRegistration?: boolean
 } {
   if (!payload || typeof payload !== 'object') {
     throw new Error('로그인 응답을 해석할 수 없습니다.')
@@ -34,6 +38,20 @@ export function parseAuthTokenResponse(payload: unknown): {
     passwordChangeRequired:
       typeof root.passwordChangeRequired === 'boolean'
         ? root.passwordChangeRequired
+        : undefined,
+    adminProvisionedOnboardingRequired:
+      typeof root.adminProvisionedOnboardingRequired === 'boolean'
+        ? root.adminProvisionedOnboardingRequired
+        : undefined,
+    adminProvisionedOnboardingStep:
+      typeof root.adminProvisionedOnboardingStep === 'string'
+        ? root.adminProvisionedOnboardingStep
+        : undefined,
+    registeredByAdmin:
+      typeof root.registeredByAdmin === 'boolean' ? root.registeredByAdmin : undefined,
+    identitySelfSignupCompletedAfterAdminRegistration:
+      typeof root.identitySelfSignupCompletedAfterAdminRegistration === 'boolean'
+        ? root.identitySelfSignupCompletedAfterAdminRegistration
         : undefined,
   }
 }

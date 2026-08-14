@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { clearAdminRegisteredWizardState } from '@/features/auth/admin-registered'
 import { ScrollRestoration, useNavigate } from 'react-router-dom'
 import { postPortalAuthLogout } from '@/shared/api/axios-instance'
 import {
@@ -28,8 +29,9 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
   const isHero = layout === 'hero'
   const isAuth = layout === 'auth'
   const isHome = layout === 'home'
+  const isSupport = layout === 'support'
   const useContentShell = layout === 'default' || isHero
-  const transparentHeader = isMypage || isHero || isHome
+  const transparentHeader = isMypage || isHero || isHome || isSupport
   /* 홈 PC만 반전 — 모바일은 header-mobile CSS에서 불투명·컬러 로고로 덮음 */
   const inverseHeader = isHome
 
@@ -56,6 +58,7 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
         }
       }
       clearAuthTokens()
+      clearAdminRegisteredWizardState()
       setDevAuthLoggedIn(false)
       setIsLoggedIn(false)
       navigate('/')
@@ -70,7 +73,13 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
     children
   )
 
-  const mainClassName = isMypage ? styles.mainMypage : isHome ? styles.mainHome : styles.main
+  const mainClassName = isMypage
+    ? styles.mainMypage
+    : isHome
+      ? styles.mainHome
+      : isSupport
+        ? styles.mainSupport
+        : styles.main
 
   return (
     <div className={styles.layout}>

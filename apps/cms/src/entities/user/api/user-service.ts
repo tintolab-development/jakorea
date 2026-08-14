@@ -36,6 +36,7 @@ import {
   mapSchoolOrganizationToUser,
   mapSchoolOrganizationsToUsers,
   parseOrganizationIdFromUserId,
+  shouldFetchSchoolOrganizationDetail,
 } from '@/features/user/api/map-school-organization-to-user'
 import {
   instructorListRolesExactAnyOf,
@@ -64,6 +65,7 @@ import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gend
 import {
   mapIsActiveToMemberStatus,
   mapUserRoleToApiRole,
+  resolveInstructorMemberProfileHint,
 } from '@/features/user/api/map-member-role'
 import {
   bulkDeleteAdminsRemote,
@@ -375,6 +377,7 @@ export type PatchUserBasicInfoInput = Partial<
     | 'phone'
     | 'email'
     | 'detailAddress'
+    | 'detailAddressDetail'
     | 'affiliation'
     | 'gender'
     | 'birthDate'
@@ -394,6 +397,15 @@ export type PatchUserBasicInfoInput = Partial<
   instructorCmsSettlement?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsSettlement
   /** PATCH `termsAgreements` — 약관·동의 여부 수정 */
   termsAgreements?: TermsAgreementRequest[]
+  /**
+   * 개인 회원 GET·pre-register `enrollmentStatus`.
+   * 있을 때만 PATCH extras(`schoolName`/`enrollmentStatus`)를 붙인다 — 강사 `affiliation`과 분리.
+   */
+  schoolEnrollmentStatus?: User['schoolEnrollmentStatus']
+  /** 개인 회원 GET·pre-register `schoolName` (기관명만, 학년 파이프 없음) */
+  individualSchoolName?: string
+  /** 개인 회원 학년 — extra `grade` (GET·pre-register 전용 필드 없음) */
+  individualGrade?: string
 }
 
 /** 코멘트 전용 저장 시 상세 GET·코멘트 목록 GET을 줄이기 위한 힌트 */
@@ -744,7 +756,14 @@ export async function patchUserBasicInfo(
   if (patch.phone !== undefined) user.phone = patch.phone
   if (patch.email !== undefined) user.email = patch.email
   if (patch.detailAddress !== undefined) user.detailAddress = patch.detailAddress
+  if (Object.prototype.hasOwnProperty.call(patch, 'detailAddressDetail')) {
+    const detail = patch.detailAddressDetail?.trim()
+    user.detailAddressDetail = detail || undefined
+  }
   if (patch.affiliation !== undefined) user.affiliation = patch.affiliation
+  if (patch.schoolEnrollmentStatus !== undefined) {
+    user.schoolEnrollmentStatus = patch.schoolEnrollmentStatus
+  }
   if (patch.gender !== undefined) user.gender = patch.gender
   if (patch.birthDate !== undefined) user.birthDate = patch.birthDate
   if (patch.socialAccounts !== undefined) user.socialAccounts = patch.socialAccounts
@@ -832,6 +851,8 @@ export async function getUserById(
     email?: string
     /** 소속 교사(학교 목록) 상세는 `/teacher`, 순수·겸직 강사는 `/instructor` */
     instructorMemberProfile?: User['instructorMemberProfile']
+    /** 서버 `roles[]` — 있으면 `/teacher` vs `/instructor` 분기에 우선 */
+    roles?: string[]
   }
 ): Promise<Omit<User, 'password'> | null> {
   if (isMembersRemoteEnabled()) {
@@ -849,7 +870,13 @@ export async function getUserById(
       const organizationId =
         options?.organizationId ?? parseOrganizationIdFromUserId(userId) ?? undefined
 
-      if (options?.role === 'SCHOOL' || organizationId != null) {
+      if (
+        shouldFetchSchoolOrganizationDetail({
+          userId,
+          role: options?.role,
+          organizationId,
+        })
+      ) {
         if (organizationId != null) {
           return mapSchoolOrganizationToUser(await fetchSchoolOrganizationRemote(organizationId))
         }
@@ -891,8 +918,16 @@ export async function getUserById(
         )
       }
 
-      if (role === 'INSTRUCTOR') {
-        const useTeacherDetail = options?.instructorMemberProfile === 'school_teacher'
+      const profileHint = resolveInstructorMemberProfileHint({
+        roles: options?.roles,
+        instructorMemberProfile: options?.instructorMemberProfile,
+      })
+      if (
+        role === 'INSTRUCTOR' ||
+        profileHint === 'school_teacher' ||
+        profileHint === 'instructor_dual'
+      ) {
+        const useTeacherDetail = profileHint === 'school_teacher'
         if (useTeacherDetail) {
           const [detail, externalIdentifiers] = await Promise.all([
             fetchTeacherMemberDetailRemote(memberId),
@@ -907,17 +942,19 @@ export async function getUserById(
           return user
         }
 
-        const [detail, externalIdentifiers] = await Promise.all([
-          fetchInstructorMemberDetailRemote(memberId),
-          fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
-        ])
-        const user = mapInstructorMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
-        const id1365 = resolve1365IdFromExternalIdentifiers(
-          externalIdentifiers,
-          detail.member?.external1365Id
-        )
-        if (id1365) user.id1365 = id1365
-        return user
+        if (role === 'INSTRUCTOR') {
+          const [detail, externalIdentifiers] = await Promise.all([
+            fetchInstructorMemberDetailRemote(memberId),
+            fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
+          ])
+          const user = mapInstructorMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
+          const id1365 = resolve1365IdFromExternalIdentifiers(
+            externalIdentifiers,
+            detail.member?.external1365Id
+          )
+          if (id1365) user.id1365 = id1365
+          return user
+        }
       }
 
       if (role === 'INDIVIDUAL') {

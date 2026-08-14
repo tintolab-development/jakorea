@@ -35,3 +35,14 @@
     margin-top: calc(-1 * var(--app-header-height));
   }
 }
+
+/* 후원 — ContentShell 없음, PC만 투명 헤더가 히어로 위에 겹침 */
+.mainSupport {
+  composes: main;
+}
+
+@media (--bp-pc-up) {
+  .mainSupport {
+    margin-top: calc(-1 * var(--app-header-height));
+  }
+}

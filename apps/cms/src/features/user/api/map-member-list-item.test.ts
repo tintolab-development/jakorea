@@ -127,7 +127,7 @@ describe('mapMemberListItemToUser — ADMIN', () => {
     expect(user.id).toBe('admin-account-9')
   })
 
-  it('roles SCHOOL_TEACHER는 instructorMemberProfile school_teacher로 매핑한다', () => {
+  it('roles SCHOOL_TEACHER는 INSTRUCTOR + school_teacher 프로필로 매핑한다', () => {
     const user = mapMemberListItemToUser({
       uuid: 'teacher-member',
       roles: ['SCHOOL_TEACHER'],
@@ -135,7 +135,63 @@ describe('mapMemberListItemToUser — ADMIN', () => {
       name: '김교사',
     })
 
-    expect(user.role).toBe('INDIVIDUAL')
+    expect(user.role).toBe('INSTRUCTOR')
     expect(user.instructorMemberProfile).toBe('school_teacher')
+  })
+
+  it('SCHOOL_TEACHER + 학교 소속 id만으로는 겸직이 아니다', () => {
+    const user = mapMemberListItemToUser({
+      uuid: 'teacher-affiliated',
+      roles: ['SCHOOL_TEACHER'],
+      email: 't@test.com',
+      name: '김교사',
+      affiliatedSchoolUserId: 'school-1',
+      affiliatedSchoolName: '진월초등학교',
+    })
+
+    expect(user.role).toBe('INSTRUCTOR')
+    expect(user.instructorMemberProfile).toBe('school_teacher')
+    expect(user.affiliatedSchoolUserId).toBe('school-1')
+  })
+
+  it('SCHOOL_TEACHER+INSTRUCTOR는 교사 겸직이다', () => {
+    const user = mapMemberListItemToUser({
+      uuid: 'dual-member',
+      roles: ['SCHOOL_TEACHER', 'INSTRUCTOR'],
+      email: 'd@test.com',
+      name: '이겸직',
+      affiliatedSchoolUserId: 'school-1',
+    })
+
+    expect(user.instructorMemberProfile).toBe('instructor_dual')
+    expect(user.roles).toEqual(['SCHOOL_TEACHER', 'INSTRUCTOR'])
+  })
+
+  it('API instructorMemberProfile dual보다 SCHOOL_TEACHER 단독 roles가 우선한다', () => {
+    const user = mapMemberListItemToUser({
+      uuid: 'teacher-api-dual',
+      roles: ['SCHOOL_TEACHER'],
+      instructorMemberProfile: 'instructor_dual',
+      email: 't@test.com',
+      name: '김교사',
+      affiliatedSchoolUserId: 'school-1',
+    })
+
+    expect(user.role).toBe('INSTRUCTOR')
+    expect(user.instructorMemberProfile).toBe('school_teacher')
+    expect(user.roles).toEqual(['SCHOOL_TEACHER'])
+  })
+
+  it('INSTRUCTOR 단독 roles는 instructor_only다', () => {
+    const user = mapMemberListItemToUser({
+      uuid: 'instructor-only',
+      roles: ['INSTRUCTOR'],
+      instructorMemberProfile: 'school_teacher',
+      email: 'i@test.com',
+      name: '김강사',
+    })
+
+    expect(user.role).toBe('INSTRUCTOR')
+    expect(user.instructorMemberProfile).toBe('instructor_only')
   })
 })

@@ -1,4 +1,5 @@
 import { clearAdminRegisteredPasswordChangeRequired } from '@/features/auth/admin-registered'
+import { clearFindPasswordRecoveryState } from '@/features/auth/find-password'
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './complete.module.css'
@@ -8,6 +9,7 @@ import { useNavigate } from 'react-router-dom'
 export function FindPasswordCompletePage() {
   const navigate = useNavigate()
   const handleGoLogin = () => {
+    clearFindPasswordRecoveryState()
     clearAdminRegisteredPasswordChangeRequired()
     navigate('/auth/sign-in')
   }

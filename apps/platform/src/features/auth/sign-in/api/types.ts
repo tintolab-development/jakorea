@@ -12,6 +12,19 @@ export type AuthTokenResponse = {
   expiresInSeconds?: number
   /** 관리자 발급 임시 비밀번호 변경 필요 */
   passwordChangeRequired?: boolean
+  /** CMS 관리자가 등록한 회원의 포털 온보딩이 아직 남아 있는지 */
+  adminProvisionedOnboardingRequired?: boolean
+  /** 다음 서버 처리 단계. PROFILE, IDENTITY, PASSWORD, DONE 등 */
+  adminProvisionedOnboardingStep?: string
+  /** CMS 관리자에 의해 생성된 회원인지 */
+  registeredByAdmin?: boolean
+  /** 관리자 등록 후 본인 프로필·본인인증·비밀번호 변경까지 완료했는지 */
+  identitySelfSignupCompletedAfterAdminRegistration?: boolean
+}
+
+export type PasswordChangeRequest = {
+  currentPassword: string
+  newPassword: string
 }
 
 /** GET /api/portal/auth/me — HomepageMeResponse */
@@ -26,6 +39,40 @@ export type HomepageMeResponse = {
   teacher?: boolean
   identityVerified?: boolean
   lastLoginAt?: string
+  registeredByAdmin?: boolean
+  identitySelfSignupCompletedAfterAdminRegistration?: boolean
+}
+
+/**
+ * PATCH /api/portal/me/profile
+ * OpenAPI `UpdatePortalProfileRequest` + GET `PortalProfileResponse` 필드.
+ * 서버가 조회 응답과 같은 본문을 요구할 수 있어 이름·연락처 등 GET 필드를 함께 보낸다.
+ */
+export type UpdatePortalProfileRequest = {
+  memberId?: number
+  email?: string
+  name?: string
+  phone?: string
+  birthDate?: string
+  gender?: string
+  memberType?: string
+  teacher?: boolean
+  instructor?: boolean
+  postalCode?: string
+  address?: string
+  addressDetail?: string
+  regionSido?: string
+  regionSigungu?: string
+  /** 소속 해제 시 `null`로 전달해 CMS 학교 FK를 비운다 */
+  schoolOrganizationId?: number | null
+  schoolName?: string
+  grade?: string
+  affiliationName?: string
+  schoolEnrollmentStatus?: string
+  teacherEmploymentStatus?: string
+  external1365Id?: string
+  accountStatus?: string
+  joinedAt?: string
 }
 
 /** GET /api/portal/me/profile — PortalProfileResponse */

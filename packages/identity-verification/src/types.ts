@@ -2,6 +2,8 @@ export interface IdentityVerificationStartRequest {
   provider?: string
   expectedName?: string
   expectedBirthDate?: string
+  /** API `M` | `F` */
+  expectedGender?: string
   expectedPhone?: string
   flow?: string
   frontendReturnUrl?: string

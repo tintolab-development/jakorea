@@ -18,6 +18,7 @@ import {
 import {
   mapSchoolOrganizationToUser,
   parseOrganizationIdFromUserId,
+  shouldFetchSchoolOrganizationDetail,
 } from '@/features/user/api/map-school-organization-to-user'
 import {
   fetchAdminMemberDetailAsUser,
@@ -74,7 +75,13 @@ export function useMemberDetailQuery(
       const organizationId =
         options?.organizationId ?? parseOrganizationIdFromUserId(userId) ?? undefined
 
-      if (options?.role === 'SCHOOL' || organizationId != null) {
+      if (
+        shouldFetchSchoolOrganizationDetail({
+          userId,
+          role: options?.role,
+          organizationId,
+        })
+      ) {
         if (organizationId != null) {
           return mapSchoolOrganizationToUser(await fetchSchoolOrganizationRemote(organizationId))
         }

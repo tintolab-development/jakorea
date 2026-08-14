@@ -14,18 +14,39 @@
   width: 100%;
   min-width: 0;
   flex-direction: column;
-  padding-inline: var(--page-padding-x);
+  padding-inline: 0;
   /* ContentShell padding-block(74)과 합쳐 푸터까지 100px이 되도록 */
   padding-bottom: calc(var(--spacing-100) - var(--content-padding-block));
 }
 
+/* 제목 + 탭 — 시안 상단 영역 */
+.top {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--spacing-40) var(--spacing-20) 0 var(--spacing-20);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-20);
+  align-self: stretch;
+  /* ContentShell padding-block(74) 상쇄 → 헤더 아래 40px */
+  margin-top: calc(-1 * var(--content-padding-block));
+}
+
 .hero {
-  margin-bottom: var(--spacing-40);
+  margin: 0;
 }
 
 .heroTitle {
   display: block;
   margin: 0;
+  color: var(--color-neutral-black, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 26px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+  letter-spacing: -0.52px;
   word-break: keep-all;
 }
 
@@ -33,78 +54,120 @@
 
 .tabs {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-12);
-  margin-bottom: var(--spacing-100);
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  align-items: flex-start;
+  align-self: stretch;
 }
 
-.tab {
+.tabs :global([role='tablist']) {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-8) var(--spacing-20);
-  border: none;
-  border-radius: var(--radius-999);
-  background: transparent;
-  color: var(--color-neutral-black-30);
-  cursor: pointer;
-  font-family: var(--font-family-base);
-  font-size: 24px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 150%;
-  letter-spacing: -0.24px;
-  white-space: nowrap;
-  transition:
-    color 160ms ease,
-    background-color 160ms ease;
-}
-
-.tab:focus-visible {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
-}
-
-.tabActive {
-  height: 60px;
-  padding: 0 var(--spacing-28);
+  width: 100%;
+  padding-bottom: var(--spacing-32);
+  justify-content: flex-start;
+  align-items: flex-start;
   gap: 10px;
-  border-radius: 131px;
-  background: var(--color-element-default-gray);
-  color: var(--color-primary-700);
+  align-self: stretch;
+}
+
+.tabs :global([role='tab']) {
+  display: flex;
+  box-sizing: border-box;
+  height: 30px;
+  min-height: 30px;
+  max-height: 30px;
+  padding: 0 14px;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  border-radius: 99px;
+  background: transparent;
   font-family: var(--font-family-base);
-  font-size: 24px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 600;
-  line-height: 150%;
-  letter-spacing: -0.24px;
-  cursor: default;
+  line-height: 160%;
+  letter-spacing: 0;
+}
+
+.tabs :global([role='tab'][aria-selected='true']) {
+  background: var(--color-element-default-gray, rgba(41, 96, 117, 0.1));
+  color: var(--color-primary-700, #285f74);
+}
+
+.body {
+  display: flex;
+  padding: 0 var(--spacing-20);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-24);
+  align-self: stretch;
 }
 
 .toolbar {
   display: flex;
   width: 100%;
   min-width: 0;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   justify-content: space-between;
-  gap: var(--spacing-24);
-  margin-bottom: 45.5px;
+  gap: var(--spacing-16);
 }
 
 .count {
   flex-shrink: 0;
+  color: var(--color-neutral-black, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.16px;
 }
 
 .search {
-  width: 360px;
+  width: 100%;
   max-width: 100%;
   flex-shrink: 1;
   min-width: 0;
 }
 
 .searchField {
+  display: flex;
   width: 100%;
   max-width: 100%;
+  height: 52px;
+  padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) 14px;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  border-radius: var(--radius-16);
+  border: 1px solid var(--color-border-default, #d9d9d9);
+  background: var(--color-neutral-white, #fff);
+}
+
+.searchField :global(input) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
+
+.searchField :global(input::placeholder) {
+  overflow: hidden;
+  color: var(--color-neutral-warm-500, #999);
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
 }
 
 /* ── 카드 그리드 ── */
@@ -117,13 +180,14 @@
 }
 
 .gridAnnual {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 12px;
+  row-gap: 24px;
 }
 
 .gridAudit {
-  grid-template-columns: repeat(3, minmax(0, 467px));
-  column-gap: 28px;
-  row-gap: var(--spacing-40);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
 }
 
 .empty {
@@ -135,51 +199,109 @@
   display: flex;
   width: 100%;
   justify-content: center;
-  margin-top: var(--spacing-100);
+  margin-top: var(--spacing-40);
+  padding-inline: var(--spacing-20);
 }
 
-@media (--bp-below-pc) {
-  .hero {
-    margin-bottom: var(--spacing-32);
-  }
-
-  .tabs {
-    margin-bottom: var(--spacing-100);
-  }
-
-  .toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-16);
-  }
-
-  .search {
-    width: 100%;
-  }
-
-  .gridAnnual {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .gridAudit {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .pagination {
-    margin-top: var(--spacing-100);
-  }
-}
-
-@media (max-width: 560px) {
-  .gridAnnual,
-  .gridAudit {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.pagination button {
+  width: 36px;
+  height: 36px;
 }
 
 @media (--bp-pc-up) {
   .content {
     padding-inline: 80px;
+  }
+
+  .top {
+    padding: 0;
+    margin-top: 0;
+    gap: var(--spacing-40);
+    margin-bottom: var(--spacing-100);
+  }
+
+  .body {
+    padding: 0;
+    gap: 0;
+  }
+
+  .toolbar {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-24);
+    margin-bottom: 45.5px;
+  }
+
+  .heroTitle {
+    font-size: 48px;
+    line-height: 140%;
+    letter-spacing: -0.48px;
+  }
+
+  .tabs {
+    padding-bottom: 0;
+  }
+
+  .tabs :global([role='tablist']) {
+    padding-bottom: 0;
+    gap: var(--spacing-20);
+  }
+
+  .tabs :global([role='tab']) {
+    height: 60px;
+    min-height: 60px;
+    max-height: none;
+    padding: 0 var(--spacing-28);
+    gap: 10px;
+    border-radius: 131px;
+    font-size: 24px;
+    line-height: 150%;
+    letter-spacing: -0.24px;
+  }
+
+  .tabs :global([role='tab'][aria-selected='true']) {
+    color: var(--color-primary-700);
+  }
+
+  .count {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 144%;
+    letter-spacing: 0;
+  }
+
+  .search {
+    width: 360px;
+  }
+
+  .searchField {
+    height: 54px;
+  }
+
+  .gridAnnual {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--spacing-40);
+  }
+
+  .gridAudit {
+    grid-template-columns: repeat(3, minmax(0, 467px));
+    column-gap: 28px;
+    row-gap: var(--spacing-40);
+  }
+
+  .grid,
+  .empty,
+  .pagination {
+    padding-inline: 0;
+  }
+
+  .pagination {
+    margin-top: var(--spacing-100);
+  }
+
+  .pagination button {
+    width: 48px;
+    height: 48px;
   }
 }
 

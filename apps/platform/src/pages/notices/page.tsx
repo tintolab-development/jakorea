@@ -74,7 +74,9 @@ export function NoticesPage() {
           </div>
         </div>
 
-        <PFDivider />
+        <div className={styles.divider}>
+          <PFDivider />
+        </div>
 
         <div className={styles.list}>
           {pageItems.length === 0 ? (

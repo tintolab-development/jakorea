@@ -1,6 +1,6 @@
 /**
  * CMS 전용 버튼 (antd .ant-btn 위에 스펙 적용)
- * - variant: primary | secondary | default | delete
+ * - variant: primary | secondary | default | cancel | delete
  * - size: large | medium | small
  * - hover 시 색·테두리 변화 없음
  *
@@ -10,6 +10,7 @@
  *   medium          120×40 · padding 6×14 · radius 6 · gap 10 · font 14/600/150%
  *   small           100×32 · padding 6×12 · radius 6 · gap 4 · font 12/600/150%
  * Secondary: border + mint 6% overlay + #FFF
+ * Cancel: 흰 배경 · 테두리 rgba(61,61,61,0.16) · 텍스트 #3D3D3D (풀페이지 모달 취소)
  * Delete: border + `--color-bg-red` (red 10% overlay + #FFF)
  *
  * Figma auto-layout이 `padding: 32px 31px`처럼 height와 모순된 값을 내보내는 경우
@@ -200,6 +201,12 @@
   color: var(--main-BK, #3d3d3d) !important;
 }
 
+.cms-button.ant-btn.cms-button--cancel:not(:disabled):not(.ant-btn-disabled) {
+  border-color: rgba(61, 61, 61, 0.16) !important;
+  background: var(--main-WT, #fff) !important;
+  color: var(--main-BK, #3d3d3d) !important;
+}
+
 .cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled) {
   color: var(--color-red, #c32f4a) !important;
   border-color: var(--color-red, #c32f4a) !important;
@@ -239,6 +246,15 @@
 .cms-button.ant-btn.cms-button--default:not(:disabled):not(.ant-btn-disabled):active {
   border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
   background: var(--default-WT, #fff) !important;
+  color: var(--main-BK, #3d3d3d) !important;
+  box-shadow: none !important;
+}
+
+.cms-button.ant-btn.cms-button--cancel:not(:disabled):not(.ant-btn-disabled):hover,
+.cms-button.ant-btn.cms-button--cancel:not(:disabled):not(.ant-btn-disabled):focus,
+.cms-button.ant-btn.cms-button--cancel:not(:disabled):not(.ant-btn-disabled):active {
+  border-color: rgba(61, 61, 61, 0.16) !important;
+  background: var(--main-WT, #fff) !important;
   color: var(--main-BK, #3d3d3d) !important;
   box-shadow: none !important;
 }

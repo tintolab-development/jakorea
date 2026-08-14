@@ -21,7 +21,7 @@ export function HeroSection() {
       <div className={styles.content}>
         <div className={styles.textArea}>
           <div className={styles.text}>
-            <PFText as="span" typo="hl-lg" color="primary-700" className={styles.eyebrow}>
+            <PFText as="span" typo="hl-lg" color="black" className={styles.eyebrow}>
               {HERO_LABEL}
             </PFText>
 

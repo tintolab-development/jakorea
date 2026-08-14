@@ -20,7 +20,7 @@ import {
   SUPPORT_CORPORATE_PATH,
   SUPPORT_TALENT_PATH,
 } from '@/shared/config/gnb-temporary-paths'
-import { getDevAuthLoggedIn } from '@/shared/lib'
+import { getDevAuthLoggedIn, resolveLoginRequiredPath } from '@/shared/lib'
 import logOutIconUrl from '../image/icon/log-out.svg'
 import notificationsIconUrl from '../image/icon/notifications.svg'
 import personIconUrl from '../image/icon/person.svg'
@@ -107,7 +107,7 @@ export const loggedInActionRoutes: Partial<Record<string, string>> = {
 
 export function getLoggedInActionRoute(label: string) {
   if (label === '마이페이지' && !getDevAuthLoggedIn()) {
-    return `/auth/required?redirect=${encodeURIComponent(MYPAGE_PATH)}`
+    return resolveLoginRequiredPath(MYPAGE_PATH)
   }
 
   return loggedInActionRoutes[label]

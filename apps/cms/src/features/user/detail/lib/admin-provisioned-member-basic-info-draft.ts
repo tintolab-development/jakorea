@@ -315,6 +315,7 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
     | 'phone'
     | 'email'
     | 'detailAddress'
+    | 'detailAddressDetail'
     | 'affiliation'
     | 'gender'
     | 'birthDate'
@@ -326,13 +327,16 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
   const social = draft.socialAccount.trim()
   const adminTrimmed = draft.adminComment.trim()
   const affiliation = composeIndividualAffiliationFromDraft(draft)
-  const detailAddress = composeDetailAddressFromDraft(draft)
+  const detailAddressSearch = (draft.detailAddressSearch ?? '').trim()
+  const detailAddressDetail = (draft.detailAddressDetail ?? '').trim()
+  const detailAddressFallback = (draft.detailAddress ?? '').trim()
   const adminPermissionVariant = (draft.adminPermissionVariant ?? '').trim()
   return {
     name: draft.name.trim(),
     phone: draft.phone.trim() || undefined,
     email: draft.email.trim(),
-    detailAddress: detailAddress || undefined,
+    detailAddress: detailAddressSearch || detailAddressFallback || undefined,
+    detailAddressDetail,
     affiliation,
     gender: draft.gender.trim() || undefined,
     birthDate: draft.birthDate.trim() || undefined,
@@ -347,6 +351,22 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
   }
 }
 
+function draftToIndividualAffiliationPatch(
+  draft: AdminProvisionedMemberBasicInfoDraft
+): Pick<PatchUserBasicInfoInput, 'schoolEnrollmentStatus' | 'individualSchoolName' | 'individualGrade'> {
+  const enrollment = draft.schoolEnrollmentStatus
+  if (enrollment !== 'enrolled' && enrollment !== 'not_enrolled') {
+    return {}
+  }
+  const enrolled = enrollment === 'enrolled'
+  const grade = enrolled ? draft.affiliationGrade.trim() : ''
+  return {
+    schoolEnrollmentStatus: enrolled ? 'ENROLLED' : 'NOT_ENROLLED',
+    individualSchoolName: draft.affiliationInstitution.trim(),
+    ...(grade ? { individualGrade: grade } : {}),
+  }
+}
+
 /** 관리자 등록 개인 — 기본정보 + 선택 동의만 PATCH */
 export function draftToAdminProvisionedIndividualBasicInfoPatch(
   draft: AdminProvisionedMemberBasicInfoDraft
@@ -355,6 +375,7 @@ export function draftToAdminProvisionedIndividualBasicInfoPatch(
   const termsAgreements = filterEditableTermsAgreementsForBasicInfoPatch(draft.termsAgreements)
   return {
     ...base,
+    ...draftToIndividualAffiliationPatch(draft),
     ...(termsAgreements ? { termsAgreements } : {}),
   }
 }
@@ -382,6 +403,20 @@ export function draftToAdminCommentAndInstructorFeePatch(
   return {
     adminComment: adminTrimmed ? adminTrimmed : undefined,
     listMetrics: feeGrade ? { instructorFeeGradeLabel: feeGrade } : undefined,
+  }
+}
+
+/** 어드민 등록 강사 — 본인인증 완료 후 제한 수정: 강사비 등급·JA 평가 등급만 */
+export function draftToInstructorFeeAndJaGradePatch(
+  draft: AdminProvisionedMemberBasicInfoDraft
+): PatchUserBasicInfoInput {
+  const feeGrade = (draft.instructorFeeGrade ?? '').trim()
+  const jaGrade = (draft.jaEvaluationGrade ?? '').trim()
+  return {
+    listMetrics: {
+      ...(feeGrade ? { instructorFeeGradeLabel: feeGrade } : {}),
+      ...(jaGrade ? { jaEvaluationGrade: jaGrade } : {}),
+    },
   }
 }
 

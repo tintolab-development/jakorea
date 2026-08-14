@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { BUSINESS_INCOME_OPTIONS } from '@jakorea/domain/instructor/business-income'
 import { CAREER_LEVEL_OPTIONS } from '@jakorea/domain/instructor/career-level'
 import {
@@ -65,6 +66,8 @@ import { getInstructorApplyApiErrorMessage } from './api/get-instructor-apply-ap
 import { mapInstructorApplyFormToCreateRequest } from './api/map-create-request'
 import { useCreateInstructorRoleRequestMutation } from './api/use-create-instructor-role-request-mutation'
 import { EducationSchoolNameField } from './education-school-name-field'
+import { getInstructorApplyConsentPath } from './consent/catalog'
+import { loadInstructorApplyFormDraft, saveInstructorApplyFormDraft } from './consent/form-persist'
 import type { InstructorApplyLockedBasicInfo } from './map-locked-basic-info'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
@@ -199,8 +202,12 @@ export type InstructorApplyFormProps = {
 }
 
 export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: InstructorApplyFormProps) {
+  const navigate = useNavigate()
   const [values, setValues] = useState<InstructorSharedProfileFormValues>(() =>
-    applyLockedBasic(INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES, lockedBasic)
+    applyLockedBasic(
+      loadInstructorApplyFormDraft() ?? INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES,
+      lockedBasic
+    )
   )
   const [alert, setAlert] = useState<AlertState>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -211,6 +218,10 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
   useEffect(() => {
     setValues(prev => applyLockedBasic(prev, lockedBasic))
   }, [lockedBasic])
+
+  useEffect(() => {
+    saveInstructorApplyFormDraft(values)
+  }, [values])
 
   const availableEducationKeys = useMemo(
     () => resolveAvailableEducationDetailKeys(values.eduSchoolType),
@@ -259,12 +270,8 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
   }
 
   const handleConsentDocumentWrite = (key: InstructorConsentDocumentKey) => {
-    // 기본정보와 동의서 데이터 연동 없음. TODO: Platform 동의서 템플릿 에디터 연동
-    patch(key, CONSENT_VALUE.agree)
-    setAlert({
-      title: '안내',
-      description: '동의서 작성을 완료했습니다. (임시 — 템플릿 에디터 연동 예정)',
-    })
+    saveInstructorApplyFormDraft(values)
+    navigate(getInstructorApplyConsentPath(key))
   }
 
   const handleSubmit = () => {

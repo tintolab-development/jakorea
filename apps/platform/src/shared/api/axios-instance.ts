@@ -12,6 +12,7 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
+import { isAdminOnboardingRequired } from '@/shared/lib/admin-onboarding-session'
 import {
   clearAuthTokens,
   getAccessToken,
@@ -95,6 +96,8 @@ function isExcludedFromAutoRefresh(url?: string): boolean {
     path.includes(`${PORTAL_AUTH_PREFIX}/refresh`) ||
     path.includes(`${PORTAL_AUTH_PREFIX}/logout`) ||
     path.includes(`${PORTAL_AUTH_PREFIX}/signup`) ||
+    path.includes(`${PORTAL_AUTH_PREFIX}/email/check`) ||
+    path.includes(`${PORTAL_AUTH_PREFIX}/password-reset`) ||
     path.includes(PORTAL_ORGANIZATIONS_SCHOOLS)
   )
 }
@@ -228,6 +231,15 @@ function parseExpiresInFromRefreshBody(payload: unknown): number | undefined {
 }
 
 function handleAuthFailure() {
+  const onAdminRegisteredOnboarding =
+    isAdminOnboardingRequired() &&
+    typeof window !== 'undefined' &&
+    window.location.pathname.startsWith('/auth/admin-registered')
+
+  if (onAdminRegisteredOnboarding) {
+    return
+  }
+
   clearAuthTokens()
   setDevAuthLoggedIn(false)
   if (typeof window !== 'undefined') {

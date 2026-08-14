@@ -1,5 +1,6 @@
 import type { GenderType } from '@/features/auth/sign-up'
 import { isValidEmailId, normalizeEmailId } from '@/shared/lib/email-id'
+import { setAdminOnboardingRequired } from '@/shared/lib/admin-onboarding-session'
 import { MOCK_ADMIN_REGISTERED_BIRTH_DATE, MOCK_ADMIN_REGISTERED_EMAIL } from './constants'
 import {
   clearAdminRegisteredWizardState,
@@ -51,11 +52,28 @@ export function canSkipAdminRegisteredBirthStep() {
   return Boolean(state?.birthDate && state.gender)
 }
 
+/**
+ * 관리자가 등록한 계정 안내 화면으로 보낼지.
+ * `registeredByAdmin === true` 이고 본인 가입 온보딩이 아직 끝나지 않았을 때만 true.
+ */
+export function requiresAdminRegisteredOnboarding(flags: {
+  registeredByAdmin?: boolean
+  identitySelfSignupCompletedAfterAdminRegistration?: boolean
+}) {
+  return (
+    flags.registeredByAdmin === true &&
+    flags.identitySelfSignupCompletedAfterAdminRegistration === false
+  )
+}
+
 export function setAdminRegisteredPasswordChangeRequired(
   email: string,
   entrySource: 'first-login' | 'sign-up' = 'first-login',
 ) {
   initAdminRegisteredWizardState(normalizeEmailId(email), entrySource)
+  if (entrySource === 'first-login') {
+    setAdminOnboardingRequired(true)
+  }
 }
 
 export function getAdminRegisteredPasswordChangeRequired() {
@@ -65,6 +83,7 @@ export function getAdminRegisteredPasswordChangeRequired() {
 
 export function clearAdminRegisteredPasswordChangeRequired() {
   clearAdminRegisteredWizardState()
+  setAdminOnboardingRequired(false)
 }
 
 export function requiresAdminRegisteredPasswordChange(email: string) {

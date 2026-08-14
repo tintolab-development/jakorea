@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { clearAdminRegisteredWizardState } from '@/features/auth/admin-registered'
 import { MYPAGE_PATH } from '@/features/mypage'
-import { setDevAuthLoggedIn } from '@/shared/lib'
+import { setAdminOnboardingRequired, setDevAuthLoggedIn } from '@/shared/lib'
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
@@ -11,8 +11,9 @@ import { useNavigate } from 'react-router-dom'
 export function AdminRegisteredCompletePage() {
   const navigate = useNavigate()
   useEffect(() => {
-    setDevAuthLoggedIn(true)
+    setAdminOnboardingRequired(false)
     clearAdminRegisteredWizardState()
+    setDevAuthLoggedIn(true)
   }, [])
 
   const handleStart = () => {

@@ -3,6 +3,7 @@
  * 로그인 연동 시 set/clear 호출. axios 인터셉터가 get을 사용한다.
  */
 
+import { setAdminOnboardingRequired } from './admin-onboarding-session'
 import { queryClient } from './query-client'
 
 export const PLATFORM_AUTH_TOKEN_KEY = 'platform_auth_token'
@@ -58,6 +59,8 @@ export function clearAuthTokens(options?: { clearQueryCache?: boolean }) {
     localStorage.removeItem(PLATFORM_AUTH_REFRESH_TOKEN_KEY)
     localStorage.removeItem(PLATFORM_AUTH_EXPIRES_AT_KEY)
   }
+
+  setAdminOnboardingRequired(false)
 
   if (options?.clearQueryCache !== false) {
     queryClient.removeQueries({ queryKey: ['platform'] })
