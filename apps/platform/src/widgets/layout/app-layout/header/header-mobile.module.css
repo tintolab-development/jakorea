@@ -43,10 +43,11 @@
 
 .logo {
   display: block;
-  width: 104px;
-  height: 32px;
+  /* 시안: JA Korea + Member of JA Worldwide 한 줄 — 195 뷰박스 비율 유지 */
+  width: min(168px, 52vw);
+  height: auto;
   flex-shrink: 0;
-  aspect-ratio: 13 / 4;
+  aspect-ratio: 195 / 60;
   object-fit: contain;
   object-position: left center;
 }
