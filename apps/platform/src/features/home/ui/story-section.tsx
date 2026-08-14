@@ -93,7 +93,7 @@ export function StorySection() {
         </div>
 
         <div className={styles.viewAllRow}>
-          <Link className={[styles.viewAllLink, 'typo-bd-lg-sb'].join(' ')} to={IMPACT_STORIES_PATH}>
+          <Link className={styles.viewAllLink} to={IMPACT_STORIES_PATH}>
             전체보기
           </Link>
         </div>

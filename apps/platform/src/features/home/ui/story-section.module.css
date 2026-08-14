@@ -41,14 +41,15 @@
 
 /* 모바일 전용 섹션 타이틀 (YouTube 카피 이관) */
 .mobileTitle {
+  width: 100%;
   margin: 0 0 var(--spacing-8);
-  color: var(--color-neutral-black);
+  color: var(--color-neutral-black, #3d3d3d);
   text-align: center;
   font-family: var(--font-family-base);
   font-size: 22px;
   font-style: normal;
   font-weight: 700;
-  line-height: 144%;
+  line-height: 135%;
   letter-spacing: -0.44px;
 }
 
@@ -188,12 +189,27 @@
   position: absolute;
   top: 12px;
   left: 12px;
+  display: inline-flex;
+  height: 26px;
+  padding: 0 10px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 999px;
+  font-family: var(--font-family-base);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
 }
 
 @media (--bp-pc-up) {
   .subCardBadge {
     top: 17px;
     left: 17px;
+    height: auto;
+    padding: var(--spacing-4) var(--spacing-12);
+    font-size: inherit;
+    line-height: 1;
   }
 }
 
@@ -201,10 +217,12 @@
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  color: var(--color-neutral-black);
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 150%;
+  color: var(--color-neutral-black, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 145%;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -234,16 +252,20 @@
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  height: 48px;
-  flex-shrink: 0;
+  height: 52px;
+  flex: 1 0 0;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-4);
-  padding: 12px var(--spacing-28);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-999);
-  background: var(--color-neutral-white);
-  color: var(--color-neutral-cool-700);
+  padding: 0 28px;
+  border: 1px solid var(--color-border-default, #d9d9d9);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white, #fff);
+  color: var(--color-primary-800, #22404d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
   text-align: center;
   text-decoration: none;
   transition:
@@ -256,9 +278,12 @@
     width: 160px;
     min-width: 160px;
     height: 53px;
+    flex: 0 0 auto;
     padding: 13px var(--spacing-28);
-    border-radius: var(--radius-16);
     color: var(--color-neutral-black);
+    font-size: 18px;
+    line-height: 150%;
+    letter-spacing: -0.18px;
   }
 }
 
