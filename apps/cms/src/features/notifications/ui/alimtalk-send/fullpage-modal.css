@@ -167,7 +167,7 @@
   flex: 1 1 auto;
   width: auto;
   min-width: 0;
-  height: 777px;
+  min-height: 777px;
   flex-direction: column;
   align-items: stretch;
   gap: 20px;
@@ -179,8 +179,7 @@
 
 .alimtalk-send-fullpage__content-main > .alimtalk-send-fullpage__empty,
 .alimtalk-send-fullpage__content-main > .alimtalk-send-fullpage__content-tables {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 1 0 auto;
 }
 
 .alimtalk-send-fullpage__section-title {
@@ -258,30 +257,6 @@
 }
 
 .alimtalk-send-fullpage__content-tables {
-  flex: 1 1 auto;
+  flex: 1 0 auto;
   min-width: 0;
-  min-height: 0;
-  overflow: auto;
-}
-
-.alimtalk-send-fullpage__inner-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.alimtalk-send-fullpage__inner-table th,
-.alimtalk-send-fullpage__inner-table td {
-  padding: 8px 12px;
-  border: 1px solid var(--table-line, #e0e0e0);
-  color: var(--kt-chatMessage, #282a2b);
-  font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 140%;
-  text-align: left;
-}
-
-.alimtalk-send-fullpage__inner-table th {
-  background: var(--BG-header);
-  font-weight: 700;
 }
