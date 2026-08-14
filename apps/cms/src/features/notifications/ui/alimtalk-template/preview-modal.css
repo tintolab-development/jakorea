@@ -76,69 +76,152 @@
   height: auto;
 }
 
-.alimtalk-template-preview__phone-title {
+.alimtalk-template-preview__stage {
   position: absolute;
-  top: 52px;
+  top: 55px;
   left: 50%;
-  margin: 0;
+  width: 309.401px;
+  bottom: 92px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: auto;
+  background: transparent;
   transform: translateX(-50%);
-  color: #3d3d3d;
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.2;
+  pointer-events: none;
+}
+
+.alimtalk-template-preview__nav {
+  display: flex;
+  width: 309.401px;
+  height: 34.341px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  pointer-events: none;
+}
+
+.alimtalk-template-preview__nav-title {
+  margin: 0;
+  overflow: hidden;
+  color: #000;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 11.945px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  text-align: center;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.alimtalk-template-preview__stage {
-  position: absolute;
-  top: 92px;
-  right: 22px;
-  bottom: 108px;
-  left: 22px;
-  overflow: auto;
+.alimtalk-template-preview__message {
+  display: flex;
+  width: 309.401px;
+  padding: 0 17.58px 0 8.79px;
+  box-sizing: border-box;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.alimtalk-template-preview__message-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+}
+
+.alimtalk-template-preview__avatar {
+  width: 29.885px;
+  height: 29.885px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.alimtalk-template-preview__message-col {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 4.5px;
+}
+
+.alimtalk-template-preview__nickname {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 10.548px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
 }
 
 .alimtalk-template-preview__bubble {
   display: flex;
+  width: 100%;
   flex-direction: column;
   overflow: hidden;
-  border-radius: 12px;
+  align-self: stretch;
+  border-radius: 16px;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .alimtalk-template-preview__bubble-head {
-  padding: 10px 14px;
+  display: flex;
+  height: 30px;
+  padding: 7.911px 8.79px 7.032px 8.79px;
+  box-sizing: border-box;
+  align-items: flex-start;
+  gap: 8.79px;
+  align-self: stretch;
   background: #fee500;
-  color: #191919;
+  color: var(--kt-chatMessage, #282a2b);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 13px;
+  font-style: normal;
   font-weight: 700;
-  line-height: 150%;
-  text-align: center;
+  line-height: normal;
 }
 
 .alimtalk-template-preview__bubble-body {
-  padding: 14px 14px 12px;
-  color: #191919;
+  display: flex;
+  padding: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8.79px;
+  align-self: stretch;
+}
+
+.alimtalk-template-preview__bubble-text {
+  margin: 0;
+  color: var(--kt-chatMessage, #282a2b);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 13px;
+  font-style: normal;
   font-weight: 400;
-  line-height: 150%;
+  line-height: 140%; /* 18.2px */
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .alimtalk-template-preview__cta {
   display: flex;
-  align-items: center;
+  padding: 7px 0;
   justify-content: center;
-  margin: 0 14px 14px;
-  min-height: 40px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: #f2f3f5;
-  color: #191919;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 150%;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  border-radius: 4px;
+  background: #eee;
+  color: var(--kt-chatMessage, #282a2b);
   text-align: center;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 140%;
 }
