@@ -32,7 +32,8 @@ export function DoDontSection() {
           </li>
           <li>
             라벨-값 세로형은 <code>DetailInfoForm</code>, 목록형 가로 표는 Ant <code>Table</code> +{' '}
-            <code>cms-data-table</code>, 행·열 교차표만 <code>CrossTable</code>을 사용합니다.
+            <code>cms-data-table</code>, 행·열 교차표만 <code>CrossTable</code>, 알림톡 버튼·바로
+            연결 중첩 표는 <code>AlimtalkNestedTable</code>을 사용합니다.
           </li>
           <li>
             테이블·상세 값 셀의 인라인 구분은 리터럴 <code> | </code>가 아니라{' '}

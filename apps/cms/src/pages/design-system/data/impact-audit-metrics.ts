@@ -185,6 +185,11 @@ export const DS_IMPACT_ADOPTION_ROWS: DsImpactAdoptionRow[] = [
     files: '2',
     note: '템플릿 미리보기 · 발송 풀페이지 · #alimtalk-phone',
   },
+  {
+    primitive: 'AlimtalkNestedTable',
+    files: '1',
+    note: '발송 풀페이지 템플릿 내용 · #alimtalk-nested-table',
+  },
 ]
 
 export type DsImpactCommonizationRow = {
@@ -323,6 +328,13 @@ export const DS_IMPACT_TOUCHPOINT_ROWS: DsImpactTouchpointRow[] = [
     touchpoint: 'alimtalk-phone-preview.css',
     change: '알림톡 휴대폰 프레임·버블 타이포',
     blast: '템플릿 미리보기 · 알림톡 발송 풀페이지 · /design-system#alimtalk-phone',
+    risk: 'Local',
+    tone: 'neutral',
+  },
+  {
+    touchpoint: 'alimtalk-nested-table.css',
+    change: '알림톡 버튼·바로 연결 중첩 표',
+    blast: '알림톡 발송 풀페이지 · /design-system#alimtalk-nested-table',
     risk: 'Local',
     tone: 'neutral',
   },

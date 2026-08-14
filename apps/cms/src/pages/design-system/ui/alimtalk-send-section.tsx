@@ -18,8 +18,11 @@ export function AlimtalkSendSection() {
         <code>32px 52px</code> · 단락 gap 32px · 하단 52px 스페이서입니다.
         <br />
         위젯: padding 20px · radius 16px · shadow <code>0 0 16px rgba(0,0,0,0.06)</code> · 제목
-        20/700/140%. 1·3번은 <code>DetailInfoForm</code> 표. 4번은 제목·휴대폰 상단 정렬, 내용 영역·휴대폰
-        하단 정렬(높이 777px).
+        20/700/140%. 1·3번은 <code>DetailInfoForm</code> 표. 4번 버튼·바로 연결은{' '}
+        <code>AlimtalkNestedTable</code> (
+        <a href="#alimtalk-nested-table">AlimTalk nested table</a>
+        ). 제목·휴대폰 상단 정렬. 4번 표는 내부 스크롤 없이 아래로 늘어나고, 풀페이지 본문이
+        스크롤됩니다. 표가 짧을 때 내용 영역 최소 높이는 휴대폰과 같은 777px입니다.
         <br />
         취소는 <code>CmsButton variant=&quot;cancel&quot;</code> large 140×44. 수신자 액션은
         disabled 없이 안내·준비 중 Alert입니다.
