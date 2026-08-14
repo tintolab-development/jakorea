@@ -34,12 +34,14 @@ Spec for consent UI in **member detail**, **registration modals**, and related f
 
 ## Visibility by preset (detail)
 
-| Item | Individual | Instructor (dual / only) | Admin |
-|------|------------|--------------------------|-------|
-| PII, Marketing, Terms | ✓ | ✓ | per preset |
-| Portrait | ✓ | per preset | — |
-| Payment statement | — | ✓ | — |
-| Educator / Admin joint / Crime | — | ✓ | — |
+| Item | Individual | School teacher (non-dual) | Instructor (dual / only) | Admin |
+|------|------------|---------------------------|--------------------------|-------|
+| Terms, PII, Marketing, Portrait | ✓ | ✓ | ✓ | Terms/PII/Marketing/MFA per admin preset |
+| Payment statement | — | — | ✓ | — |
+| Educator / Admin joint / Crime | — | — | ✓ | — |
+
+**school_teacher** (겸직 아님): 일반 회원과 동일하게 **4항목만** 노출. 강사 전용 4항목(지급조서·교육진행자·행정정보·성범죄)은 숨김.  
+`CONSENT_PRESET_SCHEMA.school_teacher` = individual-like rows.
 
 **ADMIN** preset may hide items — if code diverges, update both this doc and the component.
 
@@ -70,4 +72,4 @@ FE SSOT: `member-basic-info-terms-patch.ts` · `user-consent-agreement-section.t
 - `preview` 모드 + 슬롯 CSS로 잠그지 말 것 — 지급조서·라디오까지 막힘
 - 애매하면 코드 변경 전 사용자에게 확인
 
-**Last updated:** 2026-08-13
+**Last updated:** 2026-08-14
