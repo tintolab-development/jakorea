@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import logoUrl from '@/shared/assets/brand/ja-logo.svg'
+import logoUrl from '@/shared/assets/brand/ja-logo-mobile.png'
 import menuIconUrl from './image/icon/menu.svg'
 import styles from './header-mobile.module.css'
 
