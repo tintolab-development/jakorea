@@ -626,14 +626,21 @@ const allMenuItems: MenuItemConfig[] = [
     children: [
       {
         key: '/admin/notifications/kakao-alimtalk',
-        label: '카카오 알림톡 관리',
+        label: '알림톡 관리',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
       },
       {
-        key: '/admin/notifications/mail-sms',
-        label: '메일&문자 관리',
+        key: '/admin/notifications/mail',
+        label: '메일 관리',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/admin/notifications/sms',
+        label: '문자 관리',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
