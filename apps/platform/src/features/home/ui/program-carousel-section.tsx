@@ -12,6 +12,7 @@ import { platformMediaQueries } from '@/shared/lib/breakpoints'
 import { useMediaQuery } from '@/shared/hooks'
 import { PFArrowButton, PFStateBadge, PFText } from '@/shared/ui'
 import chevronRightUrl from '../image/icon/chevron-right-black-12.svg'
+import viewAllChevronUrl from '../image/icon/chevron-right-black-18.svg'
 import styles from './program-carousel-section.module.css'
 
 const MAX_ITEMS = 8
@@ -99,11 +100,21 @@ export function ProgramCarouselSection() {
       <div className={styles.inner}>
         <div className={styles.content}>
           <div className={styles.header}>
-            <PFText as="h2" typo="hd-lg" color="black" className={styles.title}>
-              새로운 배움이 기다리고 있어요
-            </PFText>
-            <Link className={[styles.viewAllLink, 'typo-bd-lg-sb'].join(' ')} to={PROGRAMS_PATH}>
+            <h2 className={styles.title}>
+              새로운 배움이
+              <br className={styles.titleBreak} />
+              기다리고 있어요
+            </h2>
+            <Link className={styles.viewAllLink} to={PROGRAMS_PATH}>
               전체보기
+              <img
+                className={styles.viewAllIcon}
+                src={viewAllChevronUrl}
+                alt=""
+                width={18.4}
+                height={18.4}
+                aria-hidden="true"
+              />
             </Link>
           </div>
 
