@@ -11,7 +11,7 @@ import type {
   CorporatePartnerListFilter,
 } from '@/entities/corporate-partner/model/types'
 import {
-  useCorporatePartnersAll,
+  useCorporatePartnersList,
   useCreateCorporatePartner,
   useRemoveCorporatePartners,
   useReorderCorporatePartners,
@@ -20,6 +20,7 @@ import {
 } from '@/features/corporate-partner/api/hooks'
 import { corporatePartnerQueryKeys } from '@/features/corporate-partner/api/query-keys'
 import { CORPORATE_PARTNERS_CHANGED_EVENT } from '@/features/corporate-partner/api/store'
+import { corporatePartnerMutationFailureAlert } from '@/features/corporate-partner/lib/mutation-failure-alert'
 import {
   CorporatePartnerFormModal,
   type CorporatePartnerFormValues,
@@ -118,25 +119,6 @@ const searchSyncRules: readonly TableSearchParamRule<PartnerPendingFilters>[] = 
   },
 ]
 
-function ymdFromIso(iso: string): string {
-  if (!iso) return ''
-  return iso.slice(0, 10)
-}
-
-function matchesClientFilter(
-  row: CorporatePartner,
-  filter: CorporatePartnerListFilter
-): boolean {
-  if (filter.isPublic === true && !row.isPublic) return false
-  if (filter.isPublic === false && row.isPublic) return false
-  const nameQ = filter.name?.trim().toLowerCase()
-  if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
-  const created = ymdFromIso(row.createdAt)
-  if (filter.registeredFrom && created < filter.registeredFrom) return false
-  if (filter.registeredTo && created > filter.registeredTo) return false
-  return true
-}
-
 function formatCreatedAt(iso: string): string {
   const d = dayjs(iso)
   if (!d.isValid()) return '-'
@@ -152,12 +134,6 @@ function periodAsPickerValue(
 
 export function CorporatePartnersPage() {
   const { showAlert } = useCmsAlert()
-  const listQuery = useCorporatePartnersAll()
-  const createMutation = useCreateCorporatePartner()
-  const updateMutation = useUpdateCorporatePartner()
-  const removeMutation = useRemoveCorporatePartners()
-  const reorderMutation = useReorderCorporatePartners()
-  const setPublicMutation = useSetCorporatePartnerPublic()
 
   const {
     pendingFilters,
@@ -195,22 +171,11 @@ export function CorporatePartnersPage() {
     },
   })
 
-  const allRows = useMemo(() => listQuery.data ?? [], [listQuery.data])
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [formOpen, setFormOpen] = useState(false)
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
   const [editingPartner, setEditingPartner] = useState<CorporatePartner | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-
-  useInvalidateOnWindowEvent(
-    CORPORATE_PARTNERS_CHANGED_EVENT,
-    corporatePartnerQueryKeys.lists()
-  )
-
-  const rows = useMemo(
-    () => allRows.filter(row => matchesClientFilter(row, appliedFilter)),
-    [allRows, appliedFilter]
-  )
 
   const hasActiveFilter = useMemo(() => {
     return (
@@ -221,6 +186,35 @@ export function CorporatePartnersPage() {
     )
   }, [appliedFilter])
 
+  const listQuery = useCorporatePartnersList(appliedFilter)
+  /**
+   * 등록 모달용 전체 건수.
+   * 필터 없는 목록이면 listQuery.totalCount로 충분하고,
+   * 필터 중 등록 시에만 별도 전체 목록 GET (필터 GET과 혼동 방지).
+   */
+  const unfilteredCountQuery = useCorporatePartnersList(
+    undefined,
+    formOpen && formMode === 'create' && hasActiveFilter,
+  )
+  const createMutation = useCreateCorporatePartner()
+  const updateMutation = useUpdateCorporatePartner(appliedFilter)
+  const removeMutation = useRemoveCorporatePartners(appliedFilter)
+  const reorderMutation = useReorderCorporatePartners(appliedFilter)
+  const setPublicMutation = useSetCorporatePartnerPublic(appliedFilter)
+
+  const rows = useMemo(() => listQuery.data?.items ?? [], [listQuery.data?.items])
+  const totalCount = listQuery.data?.totalCount ?? rows.length
+  const allCount = hasActiveFilter
+    ? (unfilteredCountQuery.data?.totalCount ??
+      unfilteredCountQuery.data?.items.length ??
+      0)
+    : totalCount
+
+  useInvalidateOnWindowEvent(
+    CORPORATE_PARTNERS_CHANGED_EVENT,
+    corporatePartnerQueryKeys.lists()
+  )
+
   const handleSearch = useCallback(() => {
     applySearch()
     setSelectedRowKeys([])
@@ -228,36 +222,28 @@ export function CorporatePartnersPage() {
 
   const handleRowsReorder = useCallback(
     (reorderedRows: CorporatePartner[]) => {
-      const reorderedIds = reorderedRows.map(row => row.id)
-      let cursor = 0
-      const mergedIds =
-        reorderedRows.length === allRows.length
-          ? reorderedIds
-          : allRows.map(row => {
-              if (matchesClientFilter(row, appliedFilter)) {
-                return reorderedIds[cursor++]!
-              }
-              return row.id
-            })
-
-      void reorderMutation.mutateAsync(mergedIds).catch(() => {
-        showAlert({
-          title: '순서 변경 실패',
-          content: '후원사 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
+      void reorderMutation
+        .mutateAsync(reorderedRows.map(row => row.id))
+        .catch(error => {
+          const alert = corporatePartnerMutationFailureAlert(
+            error,
+            '후원사 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
+          )
+          showAlert(alert)
+          void listQuery.refetch()
         })
-        void listQuery.refetch()
-      })
     },
-    [allRows, appliedFilter, listQuery, reorderMutation, showAlert]
+    [listQuery, reorderMutation, showAlert]
   )
 
   const handleTogglePublic = useCallback(
     (id: string, isPublic: boolean) => {
-      void setPublicMutation.mutateAsync({ id, isPublic }).catch(() => {
-        showAlert({
-          title: '공개 여부 변경 실패',
-          content: '공개 여부 변경에 실패했습니다. 다시 시도해 주세요.',
-        })
+      void setPublicMutation.mutateAsync({ id, isPublic }).catch(error => {
+        const alert = corporatePartnerMutationFailureAlert(
+          error,
+          '공개 여부 변경에 실패했습니다. 다시 시도해 주세요.',
+        )
+        showAlert(alert)
         void listQuery.refetch()
       })
     },
@@ -286,14 +272,14 @@ export function CorporatePartnersPage() {
         }
         setFormOpen(false)
         setEditingPartner(null)
-      } catch {
-        showAlert({
-          title: formMode === 'edit' ? '수정 실패' : '등록 실패',
-          content:
-            formMode === 'edit'
-              ? '후원사 수정에 실패했습니다. 다시 시도해 주세요.'
-              : '후원사 등록에 실패했습니다. 다시 시도해 주세요.',
-        })
+      } catch (error) {
+        const alert = corporatePartnerMutationFailureAlert(
+          error,
+          formMode === 'edit'
+            ? '후원사 수정에 실패했습니다. 다시 시도해 주세요.'
+            : '후원사 등록에 실패했습니다. 다시 시도해 주세요.',
+        )
+        showAlert(alert)
       }
     },
     [createMutation, editingPartner, formMode, showAlert, updateMutation]
@@ -316,11 +302,12 @@ export function CorporatePartnersPage() {
       await removeMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '후원사 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      const alert = corporatePartnerMutationFailureAlert(
+        error,
+        '후원사 삭제에 실패했습니다. 다시 시도해 주세요.',
+      )
+      showAlert(alert)
     }
   }, [removeMutation, selectedRowKeys, showAlert])
 
@@ -351,6 +338,7 @@ export function CorporatePartnersPage() {
         render: (_value, record) => (
           <Switch
             checked={record.isPublic}
+            disabled={setPublicMutation.isPending}
             onChange={checked => handleTogglePublic(record.id, checked)}
             aria-label={`${record.name || '후원사'} 공개 여부`}
           />
@@ -407,11 +395,9 @@ export function CorporatePartnersPage() {
         ),
       },
     ],
-    [handleTogglePublic, openEdit]
+    [handleTogglePublic, openEdit, setPublicMutation.isPending]
   )
 
-  const totalCount = rows.length
-  const allCount = allRows.length
   const formLoading =
     formMode === 'edit' ? updateMutation.isPending : createMutation.isPending
 
@@ -514,7 +500,8 @@ export function CorporatePartnersPage() {
         <CorporatePartnersSortableTable
           rows={rows}
           columns={columns}
-          loading={listQuery.isLoading}
+          loading={listQuery.isLoading || reorderMutation.isPending}
+          disabled={reorderMutation.isPending}
           onRowsReorder={handleRowsReorder}
           locale={{ emptyText }}
           rowSelection={{

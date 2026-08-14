@@ -24,6 +24,11 @@ import {
   formatCreatedDateTime,
   formatYmdDot,
 } from '@/features/history-awards-certs/lib/format'
+import {
+  deleteConfirmContent,
+  deleteFailureAlert,
+  publishedMustUnpublishAlert,
+} from '@/features/history-awards-certs/lib/delete-guards'
 import { AwardFormModal } from '@/features/history-awards-certs/ui/award-form-modal'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -287,16 +292,17 @@ export function AwardPanel() {
 
   const handleDetailDelete = useCallback(async () => {
     if (!editing) return
+    if (editing.isPublic) {
+      showAlert(publishedMustUnpublishAlert('수상'))
+      return
+    }
     try {
       await removeMutation.mutateAsync([editing.id])
       setFormOpen(false)
       setEditing(null)
       setSelectedRowKeys(prev => prev.filter(k => String(k) !== editing.id))
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '수상 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(deleteFailureAlert('수상', error))
     }
   }, [editing, removeMutation, showAlert])
 
@@ -305,19 +311,21 @@ export function AwardPanel() {
       showAlert({ title: '선택 항목 없음', content: '삭제할 수상을 선택해 주세요.' })
       return
     }
+    const idSet = new Set(selectedRowKeys.map(String))
+    if (rows.some(row => idSet.has(row.id) && row.isPublic)) {
+      showAlert(publishedMustUnpublishAlert('수상'))
+      return
+    }
     setDeleteConfirmOpen(true)
-  }, [selectedRowKeys.length, showAlert])
+  }, [rows, selectedRowKeys, showAlert])
 
   const handleDeleteConfirm = useCallback(async () => {
     try {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '수상 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(deleteFailureAlert('수상', error))
     }
   }, [removeMutation, selectedRowKeys, showAlert])
 
@@ -570,7 +578,7 @@ export function AwardPanel() {
       <ConfirmModal
         open={deleteConfirmOpen}
         title="수상 삭제"
-        content={`선택한 수상 ${selectedRowKeys.length}건을 삭제하시겠습니까?\n삭제된 항목은 복구할 수 없습니다.`}
+        content={deleteConfirmContent('수상', selectedRowKeys.length)}
         confirmText="삭제"
         cancelText="취소"
         danger

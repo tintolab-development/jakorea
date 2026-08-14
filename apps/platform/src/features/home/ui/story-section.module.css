@@ -1,6 +1,6 @@
 .section {
   width: 100%;
-  padding-block: var(--spacing-64);
+  padding-block: var(--spacing-48);
   /* 홈 YouTube+스토리 밴드 배경이 비치도록 투명 */
   background: transparent;
 }
@@ -18,7 +18,8 @@
   margin-inline: auto;
   padding-inline: var(--spacing-20);
   flex-direction: column;
-  gap: var(--spacing-48);
+  align-items: stretch;
+  gap: var(--spacing-24);
 }
 
 @media (--bp-pc-up) {
@@ -38,8 +39,28 @@
   }
 }
 
+/* 모바일 전용 섹션 타이틀 (YouTube 카피 이관) */
+.mobileTitle {
+  width: 100%;
+  margin: 0 0 var(--spacing-8);
+  color: var(--color-neutral-black, #3d3d3d);
+  text-align: center;
+  font-family: var(--font-family-base);
+  font-size: 22px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 135%;
+  letter-spacing: -0.44px;
+}
+
+@media (--bp-pc-up) {
+  .mobileTitle {
+    display: none;
+  }
+}
+
 .featured {
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: var(--spacing-20);
   color: inherit;
@@ -48,6 +69,7 @@
 
 @media (--bp-pc-up) {
   .featured {
+    display: flex;
     flex-direction: row;
     align-items: center;
     gap: var(--spacing-64);
@@ -128,9 +150,15 @@
   min-width: 0;
   flex-direction: column;
   align-self: stretch;
-  gap: var(--spacing-20);
+  gap: var(--spacing-12);
   color: inherit;
   text-decoration: none;
+}
+
+@media (--bp-pc-up) {
+  .subCard {
+    gap: var(--spacing-20);
+  }
 }
 
 .subCard:focus-visible {
@@ -142,8 +170,8 @@
 .subCardMedia {
   position: relative;
   width: 100%;
-  aspect-ratio: 453 / 255;
-  border-radius: var(--radius-12);
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-16);
   overflow: hidden;
   align-self: stretch;
 }
@@ -153,49 +181,110 @@
     width: 100%;
     height: 255px;
     aspect-ratio: auto;
+    border-radius: var(--radius-12);
   }
 }
 
 .subCardBadge {
   position: absolute;
-  top: 17px;
-  left: 17px;
+  top: 12px;
+  left: 12px;
+  display: inline-flex;
+  height: 26px;
+  padding: 0 10px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 999px;
+  font-family: var(--font-family-base);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+@media (--bp-pc-up) {
+  .subCardBadge {
+    top: 17px;
+    left: 17px;
+    height: auto;
+    padding: var(--spacing-4) var(--spacing-12);
+    font-size: inherit;
+    line-height: 1;
+  }
 }
 
 .subCardTitle {
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  color: var(--color-neutral-black);
+  color: var(--color-neutral-black, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 145%;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
+@media (--bp-pc-up) {
+  .subCardTitle {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+}
+
 .viewAllRow {
   display: flex;
+  width: 100%;
   justify-content: center;
+  margin-top: var(--spacing-8);
+}
+
+@media (--bp-pc-up) {
+  .viewAllRow {
+    margin-top: 0;
+  }
 }
 
 .viewAllLink {
   display: flex;
   box-sizing: border-box;
-  width: 160px;
-  min-width: 160px;
-  height: 53px;
-  flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  flex: 1 0 0;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-4);
-  padding: 13px var(--spacing-28);
-  border: 1px solid var(--color-border-default);
+  padding: 0 28px;
+  border: 1px solid var(--color-border-default, #d9d9d9);
   border-radius: var(--radius-16);
-  background: var(--color-neutral-white);
-  color: var(--color-neutral-black);
+  background: var(--color-neutral-white, #fff);
+  color: var(--color-primary-800, #22404d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
   text-align: center;
   text-decoration: none;
   transition:
     border-color 160ms ease,
     color 160ms ease;
+}
+
+@media (--bp-pc-up) {
+  .viewAllLink {
+    width: 160px;
+    min-width: 160px;
+    height: 53px;
+    flex: 0 0 auto;
+    padding: 13px var(--spacing-28);
+    color: var(--color-neutral-black);
+    font-size: 18px;
+    line-height: 150%;
+    letter-spacing: -0.18px;
+  }
 }
 
 .viewAllLink:hover {

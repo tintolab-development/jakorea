@@ -7,6 +7,7 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { DonateCta } from '@/entities/individual-donation/model/types'
 import { useSaveDonateCta } from '@/features/individual-donation/api/hooks'
+import { individualDonationSaveFailureAlert } from '@/features/individual-donation/lib/save-failure-alert'
 import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
@@ -50,19 +51,17 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
       return
     }
     try {
-      await saveMutation.mutateAsync({ linkUrl })
+      await saveMutation.mutateAsync({ linkUrl, version: donateCta.version })
       setIsEditing(false)
     } catch (err) {
-      if (err instanceof Error && err.message === 'DONATE_LINK_REQUIRED') {
-        showAlert({ title: '입력 확인', content: '연결 링크를 입력해 주세요.' })
-        return
-      }
-      showAlert({
-        title: '저장 실패',
-        content: '후원하기 연결 링크 저장에 실패했습니다. 다시 시도해 주세요.',
-      })
+      showAlert(
+        individualDonationSaveFailureAlert(
+          err,
+          '후원하기 연결 링크 저장에 실패했습니다. 다시 시도해 주세요.'
+        )
+      )
     }
-  }, [draftLink, saveMutation, showAlert])
+  }, [donateCta.version, draftLink, saveMutation, showAlert])
 
   const columns = useMemo<ColumnsType<Row>>(
     () => [

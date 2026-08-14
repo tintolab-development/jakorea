@@ -13,6 +13,10 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { DirectionsInfo } from '@/entities/directions/model/types'
 import { useSaveDirections } from '@/features/directions/api/hooks'
 import { directionsQueryKeys } from '@/features/directions/api/query-keys'
+import {
+  directionsSaveFailureAlert,
+  validateDirectionsBeforeSave,
+} from '@/features/directions/lib/save-validation'
 import { CmsButton, CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
 
 import './directions-form-card.css'
@@ -30,6 +34,7 @@ function cloneDirections(data: DirectionsInfo): DirectionsInfo {
     fax: data.fax,
     email: data.email,
     updatedAt: data.updatedAt,
+    version: data.version,
   }
 }
 
@@ -66,14 +71,16 @@ export function DirectionsFormCard({ data }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
+    const validationAlert = validateDirectionsBeforeSave(draft)
+    if (validationAlert) {
+      showAlert(validationAlert)
+      return
+    }
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
-    } catch {
-      showAlert({
-        title: '저장 실패',
-        content: '오시는 길 정보 저장에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(directionsSaveFailureAlert(error))
       void queryClient.invalidateQueries({ queryKey: directionsQueryKeys.all })
     }
   }, [draft, saveMutation, showAlert, queryClient])

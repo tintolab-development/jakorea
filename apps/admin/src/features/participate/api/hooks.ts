@@ -28,8 +28,8 @@ export function useSaveParticipateMenuLinks() {
     mutationFn: (data: ParticipateMenuLinks) => saveParticipateMenuLinksService(data),
     retry: false,
     onSuccess: data => {
+      // PUT 응답이 전체 2행(+version) — 추가 GET 없이 캐시 반영
       queryClient.setQueryData(participateQueryKeys.menuLinksDetail(source()), data)
-      void queryClient.invalidateQueries({ queryKey: participateQueryKeys.all })
     },
   })
 }

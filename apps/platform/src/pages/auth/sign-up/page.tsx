@@ -1,7 +1,7 @@
 import { createElement } from 'react'
 import { useSignUp } from '@/features/auth/sign-up'
 import type { SignUpStepNumber } from '@/features/auth/sign-up'
-import { STEP_COMPONENTS } from './step-registry'
+import { STEP_COMPONENTS } from './step-registry.tsx'
 
 export function SignUpPage() {
   const signUp = useSignUp()

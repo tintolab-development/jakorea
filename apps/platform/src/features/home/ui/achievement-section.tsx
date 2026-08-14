@@ -1,9 +1,27 @@
+import { useEffect, useRef, useState } from 'react'
+import { useIntersectionObserver } from '@/shared/hooks/use-intersection-observer'
+import { usePrefersReducedMotion } from '@/shared/hooks/use-prefers-reduced-motion'
 import { HOME_ACHIEVEMENT_HIGHLIGHT, HOME_ACHIEVEMENT_STATS } from '../lib/mock'
+import { AnimatedStatNumber } from './animated-stat-number'
 import styles from './achievement-section.module.css'
 
 export function AchievementSection() {
+  const sectionRef = useRef<HTMLElement>(null)
+  const prefersReducedMotion = usePrefersReducedMotion()
+  const isInView = useIntersectionObserver(sectionRef, {
+    threshold: 0.25,
+    rootMargin: '0px 0px -8% 0px',
+  })
+  const [hasStarted, setHasStarted] = useState(false)
+
+  useEffect(() => {
+    if (isInView) setHasStarted(true)
+  }, [isInView])
+
+  const countEnabled = prefersReducedMotion || hasStarted
+
   return (
-    <section className={styles.section}>
+    <section className={styles.section} ref={sectionRef}>
       <div className={styles.inner}>
         <div className={styles.header}>
           <p className={styles.eyebrow}>ACHIEVEMENTS</p>
@@ -26,7 +44,12 @@ export function AchievementSection() {
               <div className={styles.stat} key={stat.label}>
                 <dt className={styles.statLabel}>{stat.label}</dt>
                 <dd className={styles.statValue}>
-                  <span className={styles.statNumber}>{stat.value}</span>
+                  <AnimatedStatNumber
+                    value={stat.value}
+                    className={styles.statNumber}
+                    enabled={countEnabled}
+                    immediate={prefersReducedMotion}
+                  />
                   <span className={styles.statUnit}>{stat.unit}</span>
                 </dd>
               </div>
@@ -38,7 +61,12 @@ export function AchievementSection() {
         <div className={styles.highlight}>
           <p className={styles.highlightLabel}>{HOME_ACHIEVEMENT_HIGHLIGHT.label}</p>
           <p className={styles.highlightValue}>
-            <span className={styles.highlightNumber}>{HOME_ACHIEVEMENT_HIGHLIGHT.value}</span>
+            <AnimatedStatNumber
+              value={HOME_ACHIEVEMENT_HIGHLIGHT.value}
+              className={styles.highlightNumber}
+              enabled={countEnabled}
+              immediate={prefersReducedMotion}
+            />
             <span className={styles.highlightUnit}>{HOME_ACHIEVEMENT_HIGHLIGHT.unit}</span>
           </p>
         </div>

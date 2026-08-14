@@ -28,6 +28,7 @@ import {
   FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
@@ -539,7 +540,10 @@ export function NoticesPage() {
               columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             }}
             onRow={record => ({
-              onClick: () => goDetail(record),
+              onClick: e => {
+                if (isTableSelectionClick(e)) return
+                goDetail(record)
+              },
               style: { cursor: 'pointer' },
             })}
             scroll={{ x: true }}

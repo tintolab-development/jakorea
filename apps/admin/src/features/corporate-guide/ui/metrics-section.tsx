@@ -7,6 +7,7 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { MetricItem, MetricItemId } from '@/entities/corporate-guide/model/types'
 import { useSaveMetrics } from '@/features/corporate-guide/api/hooks'
+import { corporateGuideSaveFailureAlert } from '@/features/corporate-guide/lib/save-failure-alert'
 import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
@@ -64,8 +65,10 @@ export function MetricsSectionCard({ items }: Props) {
         const d = drafts[item.id]
         return {
           id: item.id as MetricItemId,
+          apiId: item.apiId,
           title: d?.title ?? item.title,
           description: d?.description ?? item.description,
+          version: item.version,
         }
       })
       for (const row of payload) {
@@ -81,19 +84,12 @@ export function MetricsSectionCard({ items }: Props) {
       await saveMutation.mutateAsync(payload)
       setIsEditing(false)
     } catch (err) {
-      const message = err instanceof Error ? err.message : ''
-      if (message === 'METRIC_TITLE_REQUIRED') {
-        showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
-        return
-      }
-      if (message === 'METRIC_DESCRIPTION_REQUIRED') {
-        showAlert({ title: '입력 확인', content: '설명을 입력해 주세요.' })
-        return
-      }
-      showAlert({
-        title: '저장 실패',
-        content: '핵심 지표 저장에 실패했습니다. 다시 시도해 주세요.',
-      })
+      showAlert(
+        corporateGuideSaveFailureAlert(
+          err,
+          '핵심 지표 저장에 실패했습니다. 다시 시도해 주세요.'
+        )
+      )
     }
   }, [drafts, items, saveMutation, showAlert])
 

@@ -25,8 +25,8 @@ export function useSaveGnbMenu() {
     mutationFn: (doc: GnbMenuDoc) => saveGnbMenuService(doc),
     retry: false,
     onSuccess: data => {
+      // PUT이 전체 GNB 문서를 반환하므로 setQueryData만 — invalidate 금지
       queryClient.setQueryData(gnbMenuQueryKeys.detail(source()), data)
-      void queryClient.invalidateQueries({ queryKey: gnbMenuQueryKeys.all })
     },
   })
 }

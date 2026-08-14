@@ -13,6 +13,10 @@ import {
   useCmsAlert,
 } from '@/shared/ui'
 import type { StripBanner, StripBannerCreateInput } from '@/entities/strip-banner/model/types'
+import {
+  HTTP_LINK_URL_FORMAT_ALERT,
+  isValidHttpLinkUrl,
+} from '@/shared/lib/http-link-url'
 import './form-modal.css'
 
 const TEXT_MAX_LENGTH = 80
@@ -132,13 +136,18 @@ function StripBannerFormBody({
       })
       return null
     }
+    const trimmedLinkUrl = linkEnabled ? linkUrl.trim() : ''
+    if (trimmedLinkUrl && !isValidHttpLinkUrl(trimmedLinkUrl)) {
+      showAlert(HTTP_LINK_URL_FORMAT_ALERT)
+      return null
+    }
     return {
       isActive,
       text: trimmed,
       periodStart: start.format('YYYY-MM-DD'),
       periodEnd: end.format('YYYY-MM-DD'),
       linkEnabled,
-      linkUrl: linkEnabled ? linkUrl.trim() : '',
+      linkUrl: trimmedLinkUrl,
     }
   }, [isActive, linkEnabled, linkUrl, periodRange, showAlert, text])
 

@@ -10,6 +10,10 @@ import type {
 import { useSaveJaKoreaWorldwide } from '@/features/ja-korea-worldwide/api/hooks'
 import { BranchesTable } from '@/features/ja-korea-worldwide/ui/branches-table'
 import { BottomTextTable } from '@/features/ja-korea-worldwide/ui/bottom-text-table'
+import {
+  HTTP_LINK_URL_FORMAT_ALERT,
+  isValidHttpLinkUrl,
+} from '@/shared/lib/http-link-url'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 
 import './worldwide-form.css'
@@ -23,6 +27,7 @@ function cloneWorldwide(data: JaKoreaWorldwide): JaKoreaWorldwide {
     branches: data.branches.map(b => ({ ...b })),
     bottomText: data.bottomText,
     updatedAt: data.updatedAt,
+    settingVersion: data.settingVersion,
   }
 }
 
@@ -43,6 +48,14 @@ export function WorldwideFormCard({ data }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
+    const invalidLink = draft.branches.find(branch => {
+      const trimmed = branch.linkUrl.trim()
+      return trimmed.length > 0 && !isValidHttpLinkUrl(trimmed)
+    })
+    if (invalidLink) {
+      showAlert(HTTP_LINK_URL_FORMAT_ALERT)
+      return
+    }
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)

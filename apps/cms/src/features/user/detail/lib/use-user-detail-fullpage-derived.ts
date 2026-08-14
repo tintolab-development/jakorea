@@ -20,6 +20,9 @@ export interface UseUserDetailFullpageDerivedParams {
   tabState: TabState
   applications: Application[]
   enrollmentApplications: Application[]
+  /** 강사 권한 신청 상세 — 역할이 INDIVIDUAL이어도 강사 상세 섹션 구성 */
+  mode?: 'default' | 'permission'
+  permissionRole?: 'instructor' | 'admin'
 }
 
 export interface UserDetailFullpageDerived {
@@ -35,12 +38,20 @@ export function useUserDetailFullpageDerived({
   tabState,
   applications,
   enrollmentApplications,
+  mode = 'default',
+  permissionRole,
 }: UseUserDetailFullpageDerivedParams): UserDetailFullpageDerived | null {
   return useMemo(() => {
     if (!displayUser) return null
 
     const strategyCtx = { displayUser, applications, enrollmentApplications }
-    const strategy = roleStrategyMap[displayUser.role]
+    const strategyRole =
+      mode === 'permission' && permissionRole === 'instructor'
+        ? 'INSTRUCTOR'
+        : mode === 'permission' && permissionRole === 'admin'
+          ? 'ADMIN'
+          : displayUser.role
+    const strategy = roleStrategyMap[strategyRole]
     const rawSections = strategy.getSections(strategyCtx)
     const remote1365 =
       isMembersRemoteEnabled() && displayUser.id1365?.trim()
@@ -72,5 +83,13 @@ export function useUserDetailFullpageDerived({
       enrollmentTableRows,
       resolvedProgramsChild,
     }
-  }, [displayUser, tabState.lnb, tabState.child, applications, enrollmentApplications])
+  }, [
+    displayUser,
+    tabState.lnb,
+    tabState.child,
+    applications,
+    enrollmentApplications,
+    mode,
+    permissionRole,
+  ])
 }

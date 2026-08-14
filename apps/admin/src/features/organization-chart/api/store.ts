@@ -23,6 +23,7 @@ function buildSeedOrganizationChart(): OrganizationChartInfo {
     imageUrl: orgChartImage,
     imageFileName: 'org-chart.png',
     updatedAt: '2026-07-01T00:00:00.000Z',
+    version: 0,
   }
 }
 
@@ -31,7 +32,7 @@ function asString(value: unknown, fallback: string): string {
 }
 
 function normalizeOrganizationChart(
-  raw: Partial<OrganizationChartInfo> | null | undefined
+  raw: Partial<OrganizationChartInfo> | null | undefined,
 ): OrganizationChartInfo {
   const seed = buildSeedOrganizationChart()
   if (!raw || typeof raw !== 'object') return seed
@@ -40,7 +41,9 @@ function normalizeOrganizationChart(
     imageUrl: asString(raw.imageUrl, seed.imageUrl),
     imageFileName:
       typeof raw.imageFileName === 'string' ? raw.imageFileName : seed.imageFileName,
+    imageAssetId: typeof raw.imageAssetId === 'number' ? raw.imageAssetId : undefined,
     updatedAt: asString(raw.updatedAt, seed.updatedAt),
+    version: typeof raw.version === 'number' ? raw.version : 0,
   }
 }
 
@@ -72,13 +75,16 @@ export function readOrganizationChart(): OrganizationChartInfo {
 }
 
 export function saveOrganizationChart(
-  input: OrganizationChartSaveInput
+  input: OrganizationChartSaveInput,
 ): OrganizationChartInfo {
+  const current = readOrganizationChart()
   const next = normalizeOrganizationChart({
     mainTitle: input.mainTitle.trim(),
     imageUrl: input.imageUrl.trim(),
     imageFileName: input.imageFileName?.trim() || undefined,
+    imageAssetId: input.imageAssetId,
     updatedAt: new Date().toISOString(),
+    version: current.version,
   })
   writeOrganizationChartFile({ version: 1, data: next })
   return next

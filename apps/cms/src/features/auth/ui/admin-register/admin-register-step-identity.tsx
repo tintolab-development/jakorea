@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { LoadingButton } from '@/shared/ui/loading-button'
 
 import type { IdentityVerificationHookStatus } from '@/features/auth/identity-verification'
@@ -12,6 +13,8 @@ interface AdminRegisterStepIdentityProps {
   errorMessage?: string | null
   verifiedName?: string
   verifiedPhone?: string
+  idleTitle?: string
+  idleDescription?: ReactNode | null
 }
 
 export function AdminRegisterStepIdentity({
@@ -21,6 +24,8 @@ export function AdminRegisterStepIdentity({
   errorMessage,
   verifiedName,
   verifiedPhone,
+  idleTitle,
+  idleDescription,
 }: AdminRegisterStepIdentityProps) {
   return (
     <div className="admin-register-step admin-register-step--identity">
@@ -41,6 +46,8 @@ export function AdminRegisterStepIdentity({
           errorMessage={errorMessage}
           verifiedName={verifiedName}
           verifiedPhone={verifiedPhone}
+          idleTitle={idleTitle}
+          idleDescription={idleDescription}
         />
         <div className="admin-register-step__actions admin-register-step__actions--single">
           <LoadingButton

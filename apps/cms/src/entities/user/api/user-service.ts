@@ -14,7 +14,10 @@ import {
   matchesInstructorSettlementFilter,
 } from '@/entities/user/lib/matches-instructor-list-filters'
 import { applyInstructorPermissionRevokedToUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
-import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
+import {
+  isInstructorPermissionRevoked,
+  matchesAllTabRoleFilter,
+} from '@/features/user/shared/lib/member-list-display'
 import { markInstructorPermissionRevoked } from '@/features/user/shared/lib/revoked-instructor-overlay'
 import {
   canAssignUserProgramRoleForProgram,
@@ -37,14 +40,17 @@ import {
 import {
   instructorListRolesExactAnyOf,
   rolesExactAnyOfForAllTabRoleFilter,
+  type AllTabRoleFilterValue,
 } from '@/features/user/api/map-roles-exact-any-of'
 import {
   applySavedBasicInfoPatchToUser,
   mergeListUserWithFetchedDetail,
 } from '@/features/user/api/merge-list-user-with-detail'
+import { mergeTermsAgreementRowsFromPatch } from '@/features/user/api/member-basic-info-terms-patch'
 import {
   mapIndividualMemberDetailToUser,
   mapInstructorMemberDetailToUser,
+  mapTeacherMemberDetailToUser,
   mapMemberDetailToUser,
   mapSchoolMemberDetailToUser,
 } from '@/features/user/api/map-member-detail-to-user'
@@ -58,14 +64,18 @@ import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gend
 import {
   mapIsActiveToMemberStatus,
   mapUserRoleToApiRole,
-  resolvePrimaryUserRole,
 } from '@/features/user/api/map-member-role'
 import {
+  bulkDeleteAdminsRemote,
+  bulkDeleteAllAccountsRemote,
+  bulkDeleteMembersRemote,
+  bulkDeleteSchoolsRemote,
   changeAdminAccountRoleRemote,
   createAdminAccountRemote,
   createSchoolOrganizationRemote,
   deleteMemberRemote,
   deleteAdminAccountRemote,
+  deleteSchoolRemote,
   fetchAdminsPageRemote,
   fetchIndividualMemberDetailRemote,
   fetchInstructorMemberDetailRemote,
@@ -75,6 +85,7 @@ import {
   fetchSchoolMemberDetailRemote,
   fetchSchoolOrganizationRemote,
   fetchSchoolsPageRemote,
+  fetchTeacherMemberDetailRemote,
   preRegisterIndividualRemote,
   preRegisterInstructorRemote,
   revokeInstructorPermissionRemote,
@@ -82,6 +93,14 @@ import {
   updateAdminBasicInfoRemote,
   upsertMemberAdminCommentRemote,
 } from '@/features/user/api/members-api-client'
+import { fetchAllAccountsDirectoryPage } from '@/features/user/api/fetch-all-accounts-directory-page'
+import {
+  collectAdminAccountIds,
+  collectMemberIds,
+  collectOrganizationIds,
+  toAccountDirectoryBulkDeleteTargets,
+} from '@/features/user/api/partition-users-for-bulk-delete'
+import type { MemberListKind } from '@/shared/config/member-list-kinds'
 import { adminPermissionFeeGradeToRoleCode } from '@/features/user/api/admin-approval-role'
 import type { InstructorCertificationUpsertRequest } from '@/shared/api/generated/members/schemas/instructorCertificationUpsertRequest'
 import type { AdminTermsAgreementRequest } from '@/shared/api/generated/members/schemas/adminTermsAgreementRequest'
@@ -96,6 +115,7 @@ import {
 } from '@/features/user/api/map-patch-user-basic-info'
 import { resolve1365IdFromExternalIdentifiers } from '@/features/user/api/map-external-identifiers'
 import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
+import { probeMemberDetailAsUser } from '@/features/user/api/probe-member-detail-as-user'
 import {
   fetchAdminMemberDetailAsUser,
   isAdminMemberDetailRole,
@@ -104,11 +124,6 @@ import {
   shouldUseAdminAccountDetailApi,
 } from '@/features/user/api/fetch-admin-member-detail'
 import { mapAdminAccountListItems } from '@/features/user/api/map-admin-account-list-item-to-user'
-import {
-  createInitialMergeCursor,
-  fetchAllMembersMergedPage,
-  type AllMembersMergeCursor,
-} from '@/features/user/api/fetch-all-members-merged-page'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 
 /**
@@ -116,6 +131,7 @@ import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-err
  */
 export async function getUsers(filters?: {
   role?: UserRole
+  allTabRoleFilter?: AllTabRoleFilterValue | 'ALL'
   search?: string
   isActive?: boolean
   createdAtFrom?: string
@@ -137,8 +153,9 @@ export async function getUsers(filters?: {
 
   let users = [...mockUsers]
 
-  // 권한 필터
-  if (filters?.role) {
+  if (filters?.allTabRoleFilter && filters.allTabRoleFilter !== 'ALL') {
+    users = users.filter(user => matchesAllTabRoleFilter(user, filters.allTabRoleFilter!))
+  } else if (filters?.role) {
     users = users.filter(user => user.role === filters.role)
   }
 
@@ -217,8 +234,12 @@ export async function getUsers(filters?: {
 
 export interface GetUsersPageParams {
   role?: UserRole
-  /** 전체 회원 — members + admin-accounts 병합 조회 */
-  mergeAdminAccounts?: boolean
+  /** 전체 회원 탭 — `GET /api/admin/members/all` */
+  listAllAccounts?: boolean
+  /** 전체 회원 탭 유형 필터 */
+  allTabRoleFilter?: AllTabRoleFilterValue | 'ALL'
+  /** 전체 회원 디렉터리 — MEMBER / ADMIN_ACCOUNT */
+  accountType?: 'MEMBER' | 'ADMIN_ACCOUNT'
   search?: string
   isActive?: boolean
   createdAtFrom?: string
@@ -238,7 +259,7 @@ export interface GetUsersPageResult {
   users: Omit<User, 'password'>[]
   total: number
   hasMore: boolean
-  nextPageParam?: number | AllMembersMergeCursor
+  nextPageParam?: number
 }
 
 const PAGE_SIZE = 15
@@ -249,19 +270,26 @@ const PAGE_SIZE = 15
  */
 export async function getUsersPage(
   filters: GetUsersPageParams | undefined,
-  pageParam: number | AllMembersMergeCursor = 0
+  pageParam = 0
 ): Promise<GetUsersPageResult> {
   if (isMembersRemoteEnabled()) {
     try {
       const apiFilters = filters ?? {}
+      const page = pageParam
 
-      if (apiFilters.mergeAdminAccounts) {
-        const cursor =
-          typeof pageParam === 'number' ? createInitialMergeCursor() : pageParam
-        return fetchAllMembersMergedPage(apiFilters, cursor, PAGE_SIZE)
+      if (apiFilters.listAllAccounts) {
+        return fetchAllAccountsDirectoryPage(
+          {
+            search: apiFilters.search,
+            createdAtFrom: apiFilters.createdAtFrom,
+            createdAtTo: apiFilters.createdAtTo,
+            accountType: apiFilters.accountType,
+            allTabRoleFilter: apiFilters.allTabRoleFilter,
+          },
+          page,
+          PAGE_SIZE
+        )
       }
-
-      const page = typeof pageParam === 'number' ? pageParam : 0
 
       if (apiFilters.role === 'ADMIN') {
         const res = await fetchAdminsPageRemote({
@@ -438,7 +466,15 @@ async function patchAdminUserBasicInfoRemote(
   }
 
   const { adminComment: _adminComment, listMetrics, ...patchWithoutCommentAndMetrics } = patch
-  const body = mapPatchUserBasicInfoToAdminAccountApiRequest(patchWithoutCommentAndMetrics)
+  let resolvedTerms = patchWithoutCommentAndMetrics.termsAgreements
+  if (resolvedTerms != null && resolvedTerms.length > 0) {
+    resolvedTerms = await resolvePreRegisterTermsAgreementVersions(resolvedTerms)
+  }
+  const patchForAdminBody: PatchUserBasicInfoInput = {
+    ...patchWithoutCommentAndMetrics,
+    ...(resolvedTerms != null ? { termsAgreements: resolvedTerms } : {}),
+  }
+  const body = mapPatchUserBasicInfoToAdminAccountApiRequest(patchForAdminBody)
   const hasBasicBody = Object.keys(body).length > 0
 
   const permVariant = listMetrics?.adminPermissionVariant
@@ -755,12 +791,10 @@ export async function patchUserBasicInfo(
     }
   }
   if (patch.termsAgreements != null) {
-    user.termsAgreements = patch.termsAgreements.map(row => ({
-      termsType: row.termsType,
-      termsVersion: row.version,
-      required: row.required,
-      agreed: row.agreed,
-    }))
+    user.termsAgreements = mergeTermsAgreementRowsFromPatch(
+      user.termsAgreements,
+      patch.termsAgreements
+    )
   }
   user.updatedAt = new Date().toISOString()
 
@@ -796,6 +830,8 @@ export async function getUserById(
     role?: UserRole
     adminAccountId?: number
     email?: string
+    /** 소속 교사(학교 목록) 상세는 `/teacher`, 순수·겸직 강사는 `/instructor` */
+    instructorMemberProfile?: User['instructorMemberProfile']
   }
 ): Promise<Omit<User, 'password'> | null> {
   if (isMembersRemoteEnabled()) {
@@ -825,33 +861,14 @@ export async function getUserById(
 
       const memberId = resolveMemberIdForApi(userId, options)
       // options.role은 위에서 SCHOOL early-return 후 좁혀질 수 있어 명시 타입 유지
-      let role: UserRole | undefined = options?.role
+      const role: UserRole | undefined = options?.role
 
       if (!role) {
-        const legacy = await fetchMemberDetailRemote(memberId)
-        role = resolvePrimaryUserRole(legacy.roles)
-        if (
-          isAdminMemberDetailRole(role) &&
-          shouldUseAdminAccountDetailApi({ userId, adminAccountId: options?.adminAccountId })
-        ) {
-          return fetchAdminMemberDetailAsUser(userId, {
-            memberId,
-            adminAccountId: options?.adminAccountId,
-            email: legacy.email,
-          })
-        }
-        if (role !== 'SCHOOL' && role !== 'INSTRUCTOR' && role !== 'INDIVIDUAL') {
-          const externalIdentifiers = await fetchMemberExternalIdentifiersRemote(memberId).catch(
-            () => []
-          )
-          const user = mapMemberDetailToUser(legacy, null)
-          const id1365 = resolve1365IdFromExternalIdentifiers(
-            externalIdentifiers,
-            legacy.external1365Id
-          )
-          if (id1365) user.id1365 = id1365
-          return user
-        }
+        // individual→school→instructor 탐침 1회 + 즉시 매핑 (역할별 GET 재호출 금지)
+        return probeMemberDetailAsUser(userId, memberId, {
+          adminAccountId: options?.adminAccountId,
+          email: options?.email,
+        })
       }
 
       if (
@@ -874,15 +891,22 @@ export async function getUserById(
         )
       }
 
-      if (role === 'SCHOOL') {
-        if (organizationId != null) {
-          return mapSchoolOrganizationToUser(await fetchSchoolOrganizationRemote(organizationId))
-        }
-        const detail = await fetchSchoolMemberDetailRemote(memberId)
-        return mapSchoolMemberDetailToUser(detail, { fallbackRole: 'SCHOOL' })
-      }
-
       if (role === 'INSTRUCTOR') {
+        const useTeacherDetail = options?.instructorMemberProfile === 'school_teacher'
+        if (useTeacherDetail) {
+          const [detail, externalIdentifiers] = await Promise.all([
+            fetchTeacherMemberDetailRemote(memberId),
+            fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
+          ])
+          const user = mapTeacherMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
+          const id1365 = resolve1365IdFromExternalIdentifiers(
+            externalIdentifiers,
+            detail.member?.external1365Id
+          )
+          if (id1365) user.id1365 = id1365
+          return user
+        }
+
         const [detail, externalIdentifiers] = await Promise.all([
           fetchInstructorMemberDetailRemote(memberId),
           fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
@@ -1394,10 +1418,26 @@ export async function revokeInstructorPermission(
 export async function deleteUser(
   userId: UUID,
   reason = 'CMS 관리자 회원 삭제',
-  options?: { memberId?: number; adminAccountId?: number; role?: UserRole; email?: string }
+  options?: {
+    memberId?: number
+    adminAccountId?: number
+    organizationId?: number
+    role?: UserRole
+    email?: string
+  }
 ): Promise<void> {
   if (isMembersRemoteEnabled()) {
     try {
+      if (options?.role === 'SCHOOL') {
+        const organizationId =
+          options.organizationId ?? parseOrganizationIdFromUserId(userId)
+        if (organizationId == null) {
+          throw new Error('학교 organization id가 없습니다.')
+        }
+        await deleteSchoolRemote(organizationId, { reason })
+        return
+      }
+
       if (
         shouldUseAdminAccountDetailApi({
           role: options?.role,
@@ -1428,4 +1468,82 @@ export async function deleteUser(
   }
 
   mockUsers.splice(userIndex, 1)
+}
+
+const DEFAULT_DELETE_REASON = 'CMS 관리자 회원 삭제'
+
+/**
+ * 목록 탭별 일괄·단건 삭제 (remote). mock에서는 단건 `deleteUser` 루프.
+ */
+export async function deleteUsersByListKind(
+  users: Omit<User, 'password'>[],
+  listKind: MemberListKind,
+  reason = DEFAULT_DELETE_REASON
+): Promise<void> {
+  if (users.length === 0) return
+
+  if (!isMembersRemoteEnabled()) {
+    for (const u of users) {
+      await deleteUser(u.id, reason, {
+        role: u.role,
+        memberId: u.memberId,
+        adminAccountId: u.adminAccountId,
+        organizationId: u.organizationId ?? parseOrganizationIdFromUserId(u.id),
+        email: u.email,
+      })
+    }
+    return
+  }
+
+  try {
+    if (listKind === 'all') {
+      await bulkDeleteAllAccountsRemote({
+        targets: toAccountDirectoryBulkDeleteTargets(users),
+        reason,
+      })
+      return
+    }
+
+    if (listKind === 'admins') {
+      if (users.length === 1) {
+        const u = users[0]
+        await deleteUser(u.id, reason, {
+          role: u.role,
+          adminAccountId: u.adminAccountId,
+          email: u.email,
+        })
+        return
+      }
+      await bulkDeleteAdminsRemote({ ids: collectAdminAccountIds(users), reason })
+      return
+    }
+
+    if (listKind === 'institutions') {
+      if (users.length === 1) {
+        const u = users[0]
+        await deleteUser(u.id, reason, {
+          role: 'SCHOOL',
+          organizationId: u.organizationId ?? parseOrganizationIdFromUserId(u.id),
+          email: u.email,
+        })
+        return
+      }
+      await bulkDeleteSchoolsRemote({ ids: collectOrganizationIds(users), reason })
+      return
+    }
+
+    if (users.length === 1) {
+      const u = users[0]
+      await deleteUser(u.id, reason, {
+        role: u.role,
+        memberId: u.memberId,
+        email: u.email,
+      })
+      return
+    }
+
+    await bulkDeleteMembersRemote({ ids: collectMemberIds(users), reason })
+  } catch (error) {
+    throw new Error(getMemberApiErrorMessage(error, '회원 삭제에 실패했습니다.'))
+  }
 }

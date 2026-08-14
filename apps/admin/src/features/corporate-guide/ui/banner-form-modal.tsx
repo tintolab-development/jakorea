@@ -80,6 +80,8 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
   const { showAlert } = useCmsAlert()
   const [imageUrl, setImageUrl] = useState(initial.imageUrl)
   const [imageFileName, setImageFileName] = useState(initial.imageFileName ?? '')
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imageAssetId, setImageAssetId] = useState(initial.imageAssetId)
   const [mainText, setMainText] = useState(initial.mainText)
   const [subText, setSubText] = useState(initial.subText)
   const [errors, setErrors] = useState<{
@@ -112,6 +114,8 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
         const dataUrl = await readFileAsDataUrl(file)
         setImageUrl(dataUrl)
         setImageFileName(file.name)
+        setImageFile(file)
+        setImageAssetId(undefined)
         setErrors(prev => ({ ...prev, image: undefined }))
       } catch {
         showAlert({
@@ -126,11 +130,13 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
   const handleRemoveFile = useCallback(() => {
     setImageUrl('')
     setImageFileName('')
+    setImageFile(null)
+    setImageAssetId(undefined)
   }, [])
 
   const handleSubmit = useCallback(() => {
     const nextErrors: typeof errors = {}
-    if (!imageUrl.trim()) {
+    if (!imageUrl.trim() && !imageFile && imageAssetId == null) {
       nextErrors.image = '배너 이미지를 등록해 주세요.'
     }
     if (!mainText.trim()) {
@@ -147,10 +153,22 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
     onSubmit({
       imageUrl: imageUrl.trim(),
       imageFileName: imageFileName || undefined,
+      imageFile,
+      imageAssetId,
       mainText,
       subText,
+      version: initial.version,
     })
-  }, [imageFileName, imageUrl, mainText, onSubmit, subText])
+  }, [
+    imageAssetId,
+    imageFile,
+    imageFileName,
+    imageUrl,
+    initial.version,
+    mainText,
+    onSubmit,
+    subText,
+  ])
 
   return (
     <ContentModal

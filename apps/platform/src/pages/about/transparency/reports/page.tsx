@@ -15,7 +15,7 @@ import {
   type TransparencyReportType,
   type TransparencyReportsListParams,
 } from '@/features/transparency'
-import { PFPagination, PFSearchInput, PFText } from '@/shared/ui'
+import { PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 const PAGE_CONFIG: Record<
@@ -34,17 +34,17 @@ const PAGE_CONFIG: Record<
     reports: MOCK_ANNUAL_REPORTS,
   },
   audit: {
-    heroTitle: '기부금 운영의 투명성을\n확인받고 있습니다',
+    heroTitle: '기부금 운영의 투명성을\n확인하고 있습니다',
     path: TRANSPARENCY_AUDIT_REPORTS_PATH,
     pageSize: AUDIT_REPORTS_PAGE_SIZE,
     reports: MOCK_AUDIT_REPORTS,
   },
 }
 
-const TABS: { type: TransparencyReportType; label: string }[] = [
-  { type: 'annual', label: '연차보고서' },
-  { type: 'audit', label: '회계감사 보고서' },
-]
+const TAB_ITEMS = [
+  { key: 'annual', label: '연차보고서' },
+  { key: 'audit', label: '회계감사 보고서' },
+] as const
 
 export type TransparencyReportsPageProps = {
   type: TransparencyReportType
@@ -95,64 +95,60 @@ export function TransparencyReportsPage({ type }: TransparencyReportsPageProps) 
   return (
     <section className={styles.page}>
       <div className={styles.content}>
-        <header className={styles.hero}>
-          <PFText as="h1" typo="page-title-md" color="black" className={styles.heroTitle}>
-            {config.heroTitle.split('\n').map((line, index) => (
-              <Fragment key={line}>
-                {index > 0 ? <br /> : null}
-                {line}
-              </Fragment>
-            ))}
-          </PFText>
-        </header>
+        <div className={styles.top}>
+          <header className={styles.hero}>
+            <PFText as="h1" typo="page-title-md" color="black" className={styles.heroTitle}>
+              {config.heroTitle.split('\n').map((line, index) => (
+                <Fragment key={line}>
+                  {index > 0 ? <br /> : null}
+                  {line}
+                </Fragment>
+              ))}
+            </PFText>
+          </header>
 
-        <nav className={styles.tabs} aria-label="보고서 유형">
-          {TABS.map(tab => {
-            const isActive = tab.type === type
-            return (
-              <button
-                key={tab.type}
-                type="button"
-                aria-current={isActive ? 'page' : undefined}
-                className={[styles.tab, isActive ? styles.tabActive : '']
-                  .filter(Boolean)
-                  .join(' ')}
-                onClick={() => {
-                  if (!isActive) navigate(PAGE_CONFIG[tab.type].path)
-                }}
-              >
-                {tab.label}
-              </button>
-            )
-          })}
-        </nav>
-
-        <div className={styles.toolbar}>
-          <PFText as="span" typo="hd-sm" color="black" className={styles.count}>
-            {`총 ${filteredReports.length}건`}
-          </PFText>
-          <div className={styles.search}>
-            <PFSearchInput
-              className={styles.searchField}
-              variant="outlined"
-              value={params.q}
-              onValueChange={q => updateParams({ q, page: 1 })}
-              placeholder="제목, 내용으로 검색해 보세요"
+          <nav className={styles.tabs}>
+            <PFTabs
+              items={[...TAB_ITEMS]}
+              value={type}
+              variant="category"
+              ariaLabel="보고서 유형"
+              onChange={key => {
+                const next = key as TransparencyReportType
+                if (next !== type) navigate(PAGE_CONFIG[next].path)
+              }}
             />
-          </div>
+          </nav>
         </div>
 
-        {pageItems.length === 0 ? (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-            검색 결과가 없습니다.
-          </PFText>
-        ) : (
-          <div className={[styles.grid, type === 'annual' ? styles.gridAnnual : styles.gridAudit].join(' ')}>
-            {pageItems.map(report => (
-              <ReportCard key={report.id} report={report} variant={type} />
-            ))}
+        <div className={styles.body}>
+          <div className={styles.toolbar}>
+            <PFText as="span" typo="hd-sm" color="black" className={styles.count}>
+              {`총 ${filteredReports.length}건`}
+            </PFText>
+            <div className={styles.search}>
+              <PFSearchInput
+                className={styles.searchField}
+                variant="outlined"
+                value={params.q}
+                onValueChange={q => updateParams({ q, page: 1 })}
+                placeholder="제목, 내용으로 검색해 보세요"
+              />
+            </div>
           </div>
-        )}
+
+          {pageItems.length === 0 ? (
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
+              검색 결과가 없습니다.
+            </PFText>
+          ) : (
+            <div className={[styles.grid, type === 'annual' ? styles.gridAnnual : styles.gridAudit].join(' ')}>
+              {pageItems.map(report => (
+                <ReportCard key={report.id} report={report} variant={type} />
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className={styles.pagination}>
           <PFPagination

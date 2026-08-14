@@ -14,6 +14,11 @@ import {
   useCmsAlert,
 } from '@/shared/ui'
 import type { Popup, PopupCreateInput } from '@/entities/popup/model/types'
+import { shouldUsePopupRemoteApi } from '@/features/popup/api/capabilities'
+import {
+  HTTP_LINK_URL_FORMAT_ALERT,
+  isValidHttpLinkUrl,
+} from '@/shared/lib/http-link-url'
 import './form-modal.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
@@ -146,6 +151,8 @@ function PopupFormBody({
   const [linkUrl, setLinkUrl] = useState(() =>
     variant === 'detail' && initial ? initial.linkUrl : ''
   )
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null)
+  const [imageCleared, setImageCleared] = useState(false)
 
   const createdAtLabel = initial ? formatCreatedAt(initial.createdAt) : '-'
 
@@ -164,6 +171,8 @@ function PopupFormBody({
         const dataUrl = await readFileAsDataUrl(file)
         setImageUrl(dataUrl)
         setImageFileName(file.name)
+        setPendingImageFile(file)
+        setImageCleared(false)
       } catch {
         showAlert({
           title: '파일 읽기 실패',
@@ -177,10 +186,34 @@ function PopupFormBody({
   const handleRemoveFile = useCallback(() => {
     setImageUrl('')
     setImageFileName('')
+    setPendingImageFile(null)
+    setImageCleared(true)
   }, [])
 
   const validateAndBuild = useCallback((): PopupFormValues | null => {
-    if (!imageUrl.trim()) {
+    const useRemote = shouldUsePopupRemoteApi()
+    const hasExistingRemoteImage =
+      useRemote &&
+      !imageCleared &&
+      !pendingImageFile &&
+      Boolean(initial?.imageAssetId) &&
+      Boolean(imageUrl.trim())
+
+    if (!imageUrl.trim() && !hasExistingRemoteImage) {
+      showAlert({
+        title: '이미지 필수',
+        content: '팝업 이미지를 등록해 주세요.',
+      })
+      return null
+    }
+    if (useRemote && variant === 'create' && !pendingImageFile) {
+      showAlert({
+        title: '이미지 필수',
+        content: '팝업 이미지를 파일로 등록해 주세요.',
+      })
+      return null
+    }
+    if (useRemote && variant === 'detail' && imageCleared && !pendingImageFile) {
       showAlert({
         title: '이미지 필수',
         content: '팝업 이미지를 등록해 주세요.',
@@ -217,27 +250,39 @@ function PopupFormBody({
       })
       return null
     }
+    const trimmedLinkUrl = linkEnabled ? linkUrl.trim() : ''
+    if (trimmedLinkUrl && !isValidHttpLinkUrl(trimmedLinkUrl)) {
+      showAlert(HTTP_LINK_URL_FORMAT_ALERT)
+      return null
+    }
     return {
       isActive,
       imageUrl,
       imageFileName: imageFileName || undefined,
+      imageFile: pendingImageFile,
+      imageAssetId:
+        !pendingImageFile && !imageCleared ? initial?.imageAssetId : undefined,
       name,
       altText,
       periodStart: start.format('YYYY-MM-DD'),
       periodEnd: end.format('YYYY-MM-DD'),
       linkEnabled,
-      linkUrl: linkEnabled ? linkUrl : '',
+      linkUrl: trimmedLinkUrl,
     }
   }, [
     altText,
+    imageCleared,
     imageFileName,
     imageUrl,
+    initial?.imageAssetId,
     isActive,
     linkEnabled,
     linkUrl,
     name,
+    pendingImageFile,
     periodRange,
     showAlert,
+    variant,
   ])
 
   const handlePrimaryAction = useCallback(() => {

@@ -54,6 +54,7 @@ function buildSeedPartners(): CorporatePartner[] {
       name,
       createdAt: ts,
       updatedAt: ts,
+      version: 0,
     }
   })
 }
@@ -148,6 +149,7 @@ export function createCorporatePartner(
     name,
     createdAt: now,
     updatedAt: now,
+    version: 0,
   }
 
   const next = normalizeSortOrders([...shifted, item])

@@ -10,6 +10,7 @@ import type {
   PartnershipStepNumber,
 } from '@/entities/corporate-guide/model/types'
 import { useSavePartnership } from '@/features/corporate-guide/api/hooks'
+import { corporateGuideSaveFailureAlert } from '@/features/corporate-guide/lib/save-failure-alert'
 import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
@@ -67,8 +68,10 @@ export function PartnershipSectionCard({ items }: Props) {
         const d = drafts[item.step]
         return {
           step: item.step as PartnershipStepNumber,
+          apiId: item.apiId,
           title: d?.title ?? item.title,
           description: d?.description ?? item.description,
+          version: item.version,
         }
       })
       for (const row of payload) {
@@ -84,19 +87,12 @@ export function PartnershipSectionCard({ items }: Props) {
       await saveMutation.mutateAsync(payload)
       setIsEditing(false)
     } catch (err) {
-      const message = err instanceof Error ? err.message : ''
-      if (message === 'PARTNERSHIP_TITLE_REQUIRED') {
-        showAlert({ title: '입력 확인', content: '단계 제목을 입력해 주세요.' })
-        return
-      }
-      if (message === 'PARTNERSHIP_DESCRIPTION_REQUIRED') {
-        showAlert({ title: '입력 확인', content: '단계 설명을 입력해 주세요.' })
-        return
-      }
-      showAlert({
-        title: '저장 실패',
-        content: '파트너십 절차 저장에 실패했습니다. 다시 시도해 주세요.',
-      })
+      showAlert(
+        corporateGuideSaveFailureAlert(
+          err,
+          '파트너십 절차 저장에 실패했습니다. 다시 시도해 주세요.'
+        )
+      )
     }
   }, [drafts, items, saveMutation, showAlert])
 

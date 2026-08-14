@@ -30,6 +30,8 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
   const isHome = layout === 'home'
   const useContentShell = layout === 'default' || isHero
   const transparentHeader = isMypage || isHero || isHome
+  /* 홈 PC만 반전 — 모바일은 header-mobile CSS에서 불투명·컬러 로고로 덮음 */
+  const inverseHeader = isHome
 
   useEffect(() => {
     const handleDevAuthChange = (event: Event) => {
@@ -78,7 +80,7 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
         isLoggedIn={isLoggedIn}
         onLogout={handleLogout}
         transparent={transparentHeader}
-        inverse={isHome}
+        inverse={inverseHeader}
       />
       <main className={mainClassName}>{mainContent}</main>
       <Footer />

@@ -54,10 +54,18 @@ function normalizeAttachment(
 }
 
 function normalizeCategory(raw: Partial<ImpactStoryCategory>, i: number): ImpactStoryCategory {
+  const version =
+    typeof raw.version === 'number' && Number.isFinite(raw.version) ? raw.version : undefined
+  const storyCount =
+    typeof raw.storyCount === 'number' && Number.isFinite(raw.storyCount)
+      ? raw.storyCount
+      : undefined
   return {
     id: asString(raw.id, `is-cat-${i}`),
     name: asString(raw.name, '카테고리'),
     sortOrder: asNumber(raw.sortOrder, i),
+    ...(version != null ? { version } : {}),
+    ...(storyCount != null ? { storyCount } : {}),
   }
 }
 

@@ -13,6 +13,7 @@ import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/components/table-filter-group-field-width'
+import { ALL_MEMBER_LIST_ROLE_TYPE_LABELS } from '@/features/user/shared/lib/member-list-display'
 
 function searchField(label: string, placeholder: string): FilterFieldConfig {
   return {
@@ -42,9 +43,12 @@ const MEMBER_ROLE_SELECT_FIELD: FilterFieldConfig = {
   width: FILTER_CONTROL_MAX_WIDTH_PX,
   options: [
     { label: '전체', value: 'ALL' },
-    { label: '개인', value: 'INDIVIDUAL' },
-    { label: '강사', value: 'INSTRUCTOR' },
-    { label: '관리자', value: 'ADMIN' },
+    { label: ALL_MEMBER_LIST_ROLE_TYPE_LABELS.INDIVIDUAL, value: 'INDIVIDUAL' },
+    { label: ALL_MEMBER_LIST_ROLE_TYPE_LABELS.SCHOOL_TEACHER, value: 'SCHOOL_TEACHER' },
+    { label: ALL_MEMBER_LIST_ROLE_TYPE_LABELS.INSTRUCTOR, value: 'INSTRUCTOR' },
+    { label: ALL_MEMBER_LIST_ROLE_TYPE_LABELS.INSTRUCTOR_DUAL, value: 'INSTRUCTOR_DUAL' },
+    { label: ALL_MEMBER_LIST_ROLE_TYPE_LABELS.INSTRUCTOR_REVOKED, value: 'INSTRUCTOR_REVOKED' },
+    { label: ALL_MEMBER_LIST_ROLE_TYPE_LABELS.ADMIN, value: 'ADMIN' },
   ],
 }
 

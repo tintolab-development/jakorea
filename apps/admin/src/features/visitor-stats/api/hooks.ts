@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import type { VisitorStatsQuery } from '@/entities/visitor-stats/model/types'
 import { shouldUseVisitorStatsRemoteApi } from './capabilities'
+import {
+  VISITOR_STATS_SEED_YEARS,
+} from './mappers'
 import { visitorStatsQueryKeys } from './query-keys'
 import { getVisitorStatsService } from './service'
 import { listVisitorMonthOptions, listVisitorYearOptions } from './store'
@@ -21,6 +24,12 @@ export function useVisitorStats(query: VisitorStatsQuery) {
 }
 
 export function useVisitorStatsFilterOptions() {
+  if (shouldUseVisitorStatsRemoteApi()) {
+    return {
+      years: [...VISITOR_STATS_SEED_YEARS],
+      months: listVisitorMonthOptions(),
+    }
+  }
   return {
     years: listVisitorYearOptions(),
     months: listVisitorMonthOptions(),

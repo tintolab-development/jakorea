@@ -248,7 +248,7 @@ export function saveEducationBusinessFieldDocument(input: {
     if (!patch) return row
     return {
       ...row,
-      name: patch.name,
+      // 사업분야명은 고정 — 패치의 name은 무시
       description: patch.description,
       guideText: patch.guideText,
       updatedAt: now,

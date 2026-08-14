@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
 import { SUPPORT_CORPORATE_PATH } from '@/shared/config/gnb-temporary-paths'
@@ -24,12 +25,29 @@ function LogoChips({ logos, hidden }: { logos: readonly HomePartnerLogo[]; hidde
 }
 
 export function PartnerMarqueeSection() {
+  const flatLogos = useMemo(
+    () => HOME_PARTNER_LOGO_ROWS.flatMap(row => [...row]),
+    [],
+  )
+
   return (
     <section className={styles.section}>
       <div className={styles.header}>
         <p className={styles.eyebrow}>Our Partners in Education</p>
         <h2 className={styles.title}>배움에 함께하는 후원 기업들</h2>
       </div>
+
+      <ul className={styles.logoGrid} aria-label="후원 기업 로고">
+        {flatLogos.map(logo => (
+          <li className={styles.logoChip} key={logo.name}>
+            {logo.logoUrl ? (
+              <img className={styles.logoImage} src={logo.logoUrl} alt={logo.name} />
+            ) : (
+              <span className={styles.logoText}>{logo.name}</span>
+            )}
+          </li>
+        ))}
+      </ul>
 
       <div className={styles.marqueeArea} aria-label="후원 기업 로고">
         {HOME_PARTNER_LOGO_ROWS.map((row, rowIndex) => (

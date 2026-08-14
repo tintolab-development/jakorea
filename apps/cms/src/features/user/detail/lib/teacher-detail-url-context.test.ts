@@ -50,6 +50,21 @@ describe('userDetailModalTitle', () => {
     expect(userDetailModalTitle({ name: '진월초', role: 'SCHOOL' })).toBe('학교 상세 (진월초)')
     expect(userDetailModalTitle({ name: '관리자', role: 'ADMIN' })).toBe('관리자 상세 (관리자)')
   })
+
+  it('권한 승인 상세는 신청 상세 타이틀을 쓴다', () => {
+    expect(
+      userDetailModalTitle(
+        { name: '김틴토', role: 'INDIVIDUAL' },
+        { mode: 'permission', permissionRole: 'instructor' }
+      )
+    ).toBe('강사 신청 상세 (김틴토)')
+    expect(
+      userDetailModalTitle(
+        { name: '이관리', role: 'INDIVIDUAL' },
+        { mode: 'permission', permissionRole: 'admin' }
+      )
+    ).toBe('관리자 신청 상세 (이관리)')
+  })
 })
 
 describe('teacher-detail-url-context', () => {

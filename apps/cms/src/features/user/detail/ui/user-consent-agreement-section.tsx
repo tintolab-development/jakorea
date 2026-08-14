@@ -43,8 +43,8 @@ export interface UserConsentAgreementSectionProps {
   /** remote 모드에서 API 로딩 중 */
   remoteConsentLoading?: boolean
   /**
-   * 관리자 등록 회원 기본정보 수정 — 선택 동의만 편집.
-   * 필수(서비스·개인정보·MFA)는 조회 고정.
+   * 관리자 등록 회원 기본정보 수정.
+   * 선택 동의: 라디오 편집. 필수(서비스·개인정보·MFA): 라디오 노출 + disabled.
    */
   editing?: boolean
   draftTermsAgreements?: TermsAgreementRequest[]
@@ -340,15 +340,29 @@ function resolveConsentFieldEdit(
   field: ConsentFieldSchema,
   ctx: ConsentRenderCtx
 ): ReactNode | undefined {
-  if (!ctx.editing || !ctx.onEditableConsentChange) return undefined
+  if (!ctx.editing) return undefined
   if (field.value.type === 'empty_half') return undefined
-  if (isMemberBasicInfoImmutableConsentLabel(field.label)) return undefined
-  if (!(field.label in CONSENT_LABEL_TO_EDITABLE_TERMS_TYPE)) return undefined
 
   const fallbackAgreed =
     field.value.type === 'remote_consent' || field.value.type === 'document'
       ? field.value.agreed
       : false
+
+  // 필수 약관: 수정 불가 — 라디오 형식으로 노출하되 disabled (FE/BE 공통)
+  if (isMemberBasicInfoImmutableConsentLabel(field.label)) {
+    return (
+      <CmsRadioGroup
+        options={CONSENT_RADIO_OPTIONS}
+        size="large"
+        value={fallbackAgreed ? 'agree' : 'disagree'}
+        disabled
+      />
+    )
+  }
+
+  if (!ctx.onEditableConsentChange) return undefined
+  if (!(field.label in CONSENT_LABEL_TO_EDITABLE_TERMS_TYPE)) return undefined
+
   const agreed = resolveEditableConsentAgreedFromDraft(
     ctx.draftTermsAgreements,
     field.label,

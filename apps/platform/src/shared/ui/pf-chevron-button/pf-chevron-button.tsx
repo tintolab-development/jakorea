@@ -7,9 +7,11 @@ import chevronLeftDisabledUrl from './icons/chevron-left-disabled.svg'
 import chevronRightDisabledUrl from './icons/chevron-right-disabled.svg'
 import styles from './pf-chevron-button.module.css'
 
+export type PFChevronButtonSize = 'large' | 'small'
 export type PFChevronButtonDirection = 'left' | 'right'
 
 export type PFChevronButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
+  size?: PFChevronButtonSize
   direction?: PFChevronButtonDirection
   /** 행·텍스트 버튼 등 부모가 클릭을 담당할 때 span으로 렌더 */
   decorative?: boolean
@@ -29,6 +31,7 @@ const iconUrlMap = {
 } as const
 
 export function PFChevronButton({
+  size = 'large',
   direction = 'left',
   decorative = false,
   className,
@@ -37,7 +40,7 @@ export function PFChevronButton({
   ...props
 }: PFChevronButtonProps) {
   const icons = iconUrlMap[direction]
-  const buttonClassName = [styles.button, className].filter(Boolean).join(' ')
+  const buttonClassName = [styles.button, styles[size], className].filter(Boolean).join(' ')
 
   const content = disabled ? (
     <img className={styles.icon} src={icons.disabled} alt="" aria-hidden="true" />

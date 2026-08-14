@@ -7,6 +7,10 @@ import type {
 } from '@/entities/history-awards-certs/model/types'
 import { coerceRadioBoolean } from '@/features/history-awards-certs/lib/format'
 import {
+  deleteConfirmContent,
+  publishedMustUnpublishAlert,
+} from '@/features/history-awards-certs/lib/delete-guards'
+import {
   CmsButton,
   CmsInput,
   CmsRadio,
@@ -120,7 +124,14 @@ function HistoryFormBody({
                   variant="delete"
                   size="large"
                   type="button"
-                  onClick={() => setDeleteConfirmOpen(true)}
+                  onClick={() => {
+                    // 저장된 공개 상태 기준 — 미저장 draft isPublic과 분리
+                    if (initial?.isPublic) {
+                      showAlert(publishedMustUnpublishAlert('연혁'))
+                      return
+                    }
+                    setDeleteConfirmOpen(true)
+                  }}
                   disabled={confirmLoading || deleteLoading}
                   loading={deleteLoading}
                 >
@@ -227,7 +238,7 @@ function HistoryFormBody({
       <ConfirmModal
         open={deleteConfirmOpen}
         title="연혁 삭제"
-        content={'선택한 연혁을 삭제하시겠습니까?\n삭제된 항목은 복구할 수 없습니다.'}
+        content={deleteConfirmContent('연혁')}
         confirmText="삭제"
         cancelText="취소"
         danger

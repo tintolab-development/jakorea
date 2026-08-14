@@ -19,17 +19,19 @@
 .headerTransparent {
   position: relative;
   z-index: 2;
-  background: transparent;
+  /* 홈 모바일 시안: 불투명 흰 헤더 (PC 헤더는 header-desktop 담당) */
+  background: var(--color-neutral-white);
+  border-bottom-color: var(--color-border-default);
 }
 
-/* 어두운 히어로 위 — 로고·아이콘 흰색 반전 (전용 흰색 에셋 수급 전 임시 filter) */
 .headerInverse {
-  border-bottom-color: transparent;
+  border-bottom-color: var(--color-border-default);
 }
 
+/* inverse prop이 와도 모바일은 컬러 로고·아이콘 유지 */
 .headerInverse .logo,
 .headerInverse .menuIcon {
-  filter: brightness(0) invert(1);
+  filter: none;
 }
 
 .logoLink {

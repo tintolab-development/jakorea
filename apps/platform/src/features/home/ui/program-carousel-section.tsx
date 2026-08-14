@@ -12,6 +12,7 @@ import { platformMediaQueries } from '@/shared/lib/breakpoints'
 import { useMediaQuery } from '@/shared/hooks'
 import { PFArrowButton, PFStateBadge, PFText } from '@/shared/ui'
 import chevronRightUrl from '../image/icon/chevron-right-black-12.svg'
+import viewAllChevronUrl from '../image/icon/chevron-right-black-18.svg'
 import styles from './program-carousel-section.module.css'
 
 const MAX_ITEMS = 8
@@ -77,7 +78,7 @@ function ProgramCard({ program }: { program: ProgramListItem }) {
 
 export function ProgramCarouselSection() {
   const isPcUp = useMediaQuery(platformMediaQueries.pcUp)
-  /** PC: 아이템 617px × 3 + gap → 약 3장 노출 */
+  /** PC: 아이템 617px × 3 + gap → 약 3장 노출 · 모바일은 네이티브 가로 스크롤 */
   const visibleCount = isPcUp ? 3 : 1
   const [index, setIndex] = useState(0)
 
@@ -90,18 +91,30 @@ export function ProgramCarouselSection() {
     return null
   }
 
-  const trackStyle = { '--slide-index': clampedIndex } as CSSProperties
+  const trackStyle = isPcUp
+    ? ({ '--slide-index': clampedIndex } as CSSProperties)
+    : undefined
 
   return (
     <section className={styles.section}>
       <div className={styles.inner}>
         <div className={styles.content}>
           <div className={styles.header}>
-            <PFText as="h2" typo="hd-lg" color="black" className={styles.title}>
-              새로운 배움이 기다리고 있어요
-            </PFText>
-            <Link className={[styles.viewAllLink, 'typo-bd-lg-sb'].join(' ')} to={PROGRAMS_PATH}>
+            <h2 className={styles.title}>
+              새로운 배움이
+              <br className={styles.titleBreak} />
+              기다리고 있어요
+            </h2>
+            <Link className={styles.viewAllLink} to={PROGRAMS_PATH}>
               전체보기
+              <img
+                className={styles.viewAllIcon}
+                src={viewAllChevronUrl}
+                alt=""
+                width={18.4}
+                height={18.4}
+                aria-hidden="true"
+              />
             </Link>
           </div>
 
@@ -116,38 +129,40 @@ export function ProgramCarouselSection() {
           </div>
         </div>
 
-        <div className={styles.controls}>
-          <button
-            className={styles.pageButton}
-            type="button"
-            aria-label="이전 프로그램"
-            onClick={() =>
-              setIndex(clampedIndex <= 0 ? maxIndex : clampedIndex - 1)
-            }
-          >
-            <img
-              className={[styles.pageButtonIcon, styles.pageButtonIconPrev].join(' ')}
-              src={chevronRightUrl}
-              alt=""
-              aria-hidden="true"
-            />
-          </button>
-          <button
-            className={styles.pageButton}
-            type="button"
-            aria-label="다음 프로그램"
-            onClick={() =>
-              setIndex(clampedIndex >= maxIndex ? 0 : clampedIndex + 1)
-            }
-          >
-            <img
-              className={styles.pageButtonIcon}
-              src={chevronRightUrl}
-              alt=""
-              aria-hidden="true"
-            />
-          </button>
-        </div>
+        {isPcUp ? (
+          <div className={styles.controls}>
+            <button
+              className={styles.pageButton}
+              type="button"
+              aria-label="이전 프로그램"
+              onClick={() =>
+                setIndex(clampedIndex <= 0 ? maxIndex : clampedIndex - 1)
+              }
+            >
+              <img
+                className={[styles.pageButtonIcon, styles.pageButtonIconPrev].join(' ')}
+                src={chevronRightUrl}
+                alt=""
+                aria-hidden="true"
+              />
+            </button>
+            <button
+              className={styles.pageButton}
+              type="button"
+              aria-label="다음 프로그램"
+              onClick={() =>
+                setIndex(clampedIndex >= maxIndex ? 0 : clampedIndex + 1)
+              }
+            >
+              <img
+                className={styles.pageButtonIcon}
+                src={chevronRightUrl}
+                alt=""
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+        ) : null}
       </div>
     </section>
   )

@@ -16,6 +16,8 @@ export type GnbSubMenu = {
   sortOrder: number
   isActive: boolean
   name: string
+  /** 낙관적 잠금 (remote 필수). mock은 0 */
+  version: number
 }
 
 export type GnbTopMenu = {

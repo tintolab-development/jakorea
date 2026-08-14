@@ -5,6 +5,7 @@ import {
   buildPreRegisterDocumentTermsAgreements,
   buildPreRegisterRadioTermsAgreements,
   buildPreRegisterTermsAgreements,
+  omitOptionalDisagreedPreRegisterTerms,
 } from './build-pre-register-terms-agreements'
 
 describe('build-pre-register-terms-agreements', () => {
@@ -119,6 +120,41 @@ describe('build-pre-register-terms-agreements', () => {
       'FACILITATOR_PLEDGE',
       'ADMINISTRATIVE_INFO_CONSENT',
       'CRIMINAL_HISTORY_CHECK_CONSENT',
+    ])
+  })
+
+  it('omitOptionalDisagreedPreRegisterTerms — 선택 미동의만 제외한다', () => {
+    const rows = omitOptionalDisagreedPreRegisterTerms([
+      {
+        termsType: 'SERVICE_TERMS',
+        version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+        required: true,
+        agreed: true,
+      },
+      {
+        termsType: 'PRIVACY_COLLECTION',
+        version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+        required: true,
+        agreed: false,
+      },
+      {
+        termsType: 'MARKETING',
+        version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+        required: false,
+        agreed: false,
+      },
+      {
+        termsType: 'PORTRAIT_RIGHTS',
+        version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+        required: false,
+        agreed: true,
+      },
+    ])
+
+    expect(rows?.map(row => row.termsType)).toEqual([
+      'SERVICE_TERMS',
+      'PRIVACY_COLLECTION',
+      'PORTRAIT_RIGHTS',
     ])
   })
 

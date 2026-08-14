@@ -1,4 +1,4 @@
-import type { UserRole } from '@/types/user'
+import type { InstructorMemberProfile, UserRole } from '@/types/user'
 
 const ROLE_PRIORITY: UserRole[] = ['ADMIN', 'INSTRUCTOR', 'SCHOOL', 'INDIVIDUAL']
 
@@ -33,6 +33,20 @@ export function resolvePrimaryUserRoleFromRoles(roles: string[] | undefined): Us
 /** 학교(교사) 회원 목록 — `roles`에 SCHOOL 포함 여부 */
 export function memberRolesIncludeSchool(roles: string[] | undefined): boolean {
   return (roles ?? []).some(r => normalizeRoleToken(r) === 'SCHOOL')
+}
+
+/** 교사 회원 유형 토큰 — UserRole SCHOOL(기관)과 구분 */
+export function memberRolesIncludeSchoolTeacher(roles: string[] | undefined): boolean {
+  return (roles ?? []).some(r => r.trim().toUpperCase().replace(/-/g, '_') === 'SCHOOL_TEACHER')
+}
+
+/** 전체 회원 목록 표시용 — `SCHOOL_TEACHER`(+ INSTRUCTOR) → instructorMemberProfile */
+export function inferInstructorMemberProfileFromRoles(
+  roles: string[] | undefined
+): InstructorMemberProfile | undefined {
+  if (!memberRolesIncludeSchoolTeacher(roles)) return undefined
+  const hasInstructor = (roles ?? []).some(r => normalizeRoleToken(r) === 'INSTRUCTOR')
+  return hasInstructor ? 'instructor_dual' : 'school_teacher'
 }
 
 export function resolvePrimaryUserRole(

@@ -20,4 +20,12 @@ export interface AuthTokenResponse {
   expiresInSeconds?: number;
   /** 관리자 발급 임시 비밀번호를 변경해야 하는지 여부 */
   passwordChangeRequired?: boolean;
+  /** CMS 관리자가 등록한 회원의 포털 온보딩이 아직 남아 있는지 여부 */
+  adminProvisionedOnboardingRequired?: boolean;
+  /** 다음 서버 처리 단계. PROFILE, IDENTITY, PASSWORD, DONE 중 하나이며 일반 회원은 null입니다. */
+  adminProvisionedOnboardingStep?: string;
+  /** CMS 관리자에 의해 생성된 회원인지 여부 */
+  registeredByAdmin?: boolean;
+  /** 관리자 등록 후 본인 프로필·본인인증·비밀번호 변경까지 완료했는지 여부 */
+  identitySelfSignupCompletedAfterAdminRegistration?: boolean;
 }

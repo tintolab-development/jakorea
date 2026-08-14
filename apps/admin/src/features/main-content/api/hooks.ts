@@ -33,13 +33,22 @@ export function useMainContents(enabled = true) {
 
 export function useImpactStoryOptions(enabled = true) {
   const dataSource = source()
-  return useQuery({
+  const contentsQuery = useMainContents(enabled && dataSource === 'remote')
+  const localQuery = useQuery({
     queryKey: mainContentQueryKeys.impactOptions(dataSource),
     queryFn: () => listImpactStoryOptionsService(),
-    enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    enabled: enabled && dataSource === 'local',
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: false,
   })
+
+  if (dataSource === 'remote') {
+    return {
+      ...contentsQuery,
+      data: contentsQuery.data?.impactStoryOptions ?? [],
+    }
+  }
+  return localQuery
 }
 
 function useInvalidateMainContents() {

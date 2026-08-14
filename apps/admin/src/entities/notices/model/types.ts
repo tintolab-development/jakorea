@@ -8,13 +8,18 @@ export type NoticeAttachment = {
   id: string
   name: string
   mime: NoticeAttachmentMime
-  /** mock: data URL */
+  /** mock: data URL / remote: publicUrl */
   dataUrl?: string
+  /** remote upload용 원본 File (신규 선택 시) */
+  file?: File
+  /** remote asset id */
+  assetId?: number
 }
 
 export type Notice = {
   id: string
   title: string
+  /** 에디터 본문 — local은 markdown, remote 응답은 HTML일 수 있음 */
   contentMarkdown: string
   isPublic: boolean
   isPinned: boolean
@@ -25,6 +30,8 @@ export type Notice = {
   updatedAt: string
   viewCount: number
   attachments: NoticeAttachment[]
+  /** Optimistic locking — remote API */
+  version: number
 }
 
 export type NoticeListFilter = {

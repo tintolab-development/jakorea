@@ -1,6 +1,7 @@
 const DS_TOC_ITEMS = [
   { id: 'foundations', label: 'Foundations' },
   { id: 'buttons', label: 'Buttons' },
+  { id: 'auth', label: 'Auth' },
   { id: 'forms', label: 'Forms' },
   { id: 'detail-forms', label: 'Detail Forms' },
   { id: 'list-layout', label: 'List layout' },

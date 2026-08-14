@@ -21,6 +21,7 @@ function buildSeedBi(): JaKoreaBi {
     subText:
       "A 브랜드의 초기 모델인 ‘새’의 형상을 바탕으로, 청소년들이 교육을 통해 얻은 지식과 기술, 유연한 사고방식을 세상과 나누며 글로벌 사회에 긍정적인 영향력을 펼쳐가는 모습을 ‘날개’라는 시각적 상징으로 표현했습니다.",
     updatedAt: '2026-07-01T00:00:00.000Z',
+    version: 0,
   }
 }
 
@@ -36,6 +37,7 @@ function normalizeBi(raw: Partial<JaKoreaBi> | null | undefined): JaKoreaBi {
     mainText: asString(raw.mainText, seed.mainText),
     subText: asString(raw.subText, seed.subText),
     updatedAt: asString(raw.updatedAt, seed.updatedAt),
+    version: typeof raw.version === 'number' ? raw.version : 0,
   }
 }
 
@@ -72,6 +74,7 @@ export function saveJaKoreaBi(data: JaKoreaBi): JaKoreaBi {
     mainText: data.mainText.trimEnd(),
     subText: data.subText.trimEnd(),
     updatedAt: new Date().toISOString(),
+    version: data.version ?? 0,
   })
   writeBiFile({ version: 1, data: next })
   return next

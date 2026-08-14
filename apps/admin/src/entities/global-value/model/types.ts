@@ -16,6 +16,8 @@ export type GlobalValue = {
   /** 고정 아이콘 식별자 — 업로드/변경 없음 */
   iconKey: GlobalValueKey
   updatedAt: string
+  /** 낙관적 잠금 (remote 필수). mock은 0 */
+  version: number
 }
 
 export type GlobalValueTextPatch = {

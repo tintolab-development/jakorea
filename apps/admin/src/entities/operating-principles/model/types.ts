@@ -18,11 +18,15 @@ export type OperatingPrinciple = {
   isActive: boolean
   title: string
   subText: string
+  /** 낙관적 잠금 (remote 필수). mock은 0 */
+  version: number
   updatedAt: string
 }
 
 export type OperatingPrinciplesDoc = {
   intro: OperatingPrinciplesIntro
+  /** intro(setting) 낙관적 잠금 */
+  settingVersion: number
   principles: OperatingPrinciple[]
   updatedAt: string
 }

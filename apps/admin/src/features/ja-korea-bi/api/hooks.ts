@@ -25,8 +25,8 @@ export function useSaveJaKoreaBi() {
     mutationFn: (data: JaKoreaBi) => saveJaKoreaBiService(data),
     retry: false,
     onSuccess: data => {
+      // PUT 응답이 단건 전체(+version) — 추가 GET 없이 캐시 반영
       queryClient.setQueryData(jaKoreaBiQueryKeys.detail(source()), data)
-      void queryClient.invalidateQueries({ queryKey: jaKoreaBiQueryKeys.all })
     },
   })
 }

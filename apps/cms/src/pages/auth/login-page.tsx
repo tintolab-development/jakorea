@@ -2,11 +2,12 @@
  * 로그인 페이지
  */
 
-import { Form, Input, Button, Typography, Space, Alert } from 'antd'
+import { Form, Button, Typography, Space, Alert } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { LoadingButton } from '@/shared/ui/loading-button'
+import { CmsInput } from '@/shared/ui'
 import { useEffect, useState } from 'react'
 import type { LoginRequest } from '@/types/user'
 import type { LoginMode } from '@/entities/user/api/auth-service'
@@ -19,11 +20,11 @@ import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
 import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-approval-pending-notice'
 import { isAdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
+import { resolvePostAuthRedirectPath } from '@/shared/utils/post-auth-redirect'
 import { getUserByEmail } from '@/data/mock/users'
 import { useLoginAttempts } from '@/features/auth/hooks/use-login-attempts'
 import { LOGIN_POLICY } from '@/shared/constants/login-policy'
 import { handleError } from '@/shared/utils/error-handler'
-import { AuthFormLabel } from '@/features/auth/ui/auth-form-label'
 import { AuthLogoLink } from '@/features/auth/ui/auth-logo-link'
 import './login-page.css'
 
@@ -66,8 +67,17 @@ export function LoginPage() {
     socialAlreadyLinked?: string
   }>()
   const authStore = useAuthStore()
-  const { login, setAuth, loading, error, isAuthenticated, requiresMfa, user, clearError } =
-    authStore
+  const {
+    login,
+    setAuth,
+    loading,
+    error,
+    isAuthenticated,
+    requiresMfa,
+    passwordChangeRequired,
+    user,
+    clearError,
+  } = authStore
   const [form] = Form.useForm()
   const [mfaModalOpen, setMfaModalOpen] = useState(false)
   const [loginMode, setLoginMode] = useState<LoginMode | null>(null)
@@ -93,10 +103,13 @@ export function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const finalRedirectPath = redirectPath || getRedirectPathByRole(user)
-      navigate(finalRedirectPath, { replace: true })
+      const fallback = redirectPath || getRedirectPathByRole(user)
+      navigate(
+        resolvePostAuthRedirectPath({ passwordChangeRequired, fallbackPath: fallback }),
+        { replace: true }
+      )
     }
-  }, [isAuthenticated, user, navigate, redirectPath])
+  }, [isAuthenticated, user, navigate, redirectPath, passwordChangeRequired])
 
   const submitLogin = async (values: LoginRequest, mode: LoginMode) => {
     if (checkLocked()) {
@@ -124,12 +137,16 @@ export function LoginPage() {
       }
 
       const currentUser = authStore.user
-      if (currentUser) {
-        const finalRedirectPath = redirectPath || getRedirectPathByRole(currentUser)
-        navigate(finalRedirectPath, { replace: true })
-      } else {
-        navigate(redirectPath || '/', { replace: true })
-      }
+      const fallback = currentUser
+        ? redirectPath || getRedirectPathByRole(currentUser)
+        : redirectPath || '/'
+      navigate(
+        resolvePostAuthRedirectPath({
+          passwordChangeRequired: useAuthStore.getState().passwordChangeRequired,
+          fallbackPath: fallback,
+        }),
+        { replace: true }
+      )
     } catch (loginError: unknown) {
       if (isAdminLoginApprovalPendingError(loginError)) {
         clearError()
@@ -195,9 +212,16 @@ export function LoginPage() {
 
     if (currentIsAuthenticated && !currentRequiresMfa && mfaModalOpen && currentUser) {
       setMfaModalOpen(false)
-      const finalRedirectPath = redirectPath || getRedirectPathByRole(currentUser)
+      const fallback = redirectPath || getRedirectPathByRole(currentUser)
       setTimeout(() => {
-        navigate(finalRedirectPath, { replace: true })
+        const latest = useAuthStore.getState()
+        navigate(
+          resolvePostAuthRedirectPath({
+            passwordChangeRequired: latest.passwordChangeRequired,
+            fallbackPath: fallback,
+          }),
+          { replace: true }
+        )
       }, 200)
     }
   }, [isAuthenticated, requiresMfa, mfaModalOpen, navigate, user, redirectPath])
@@ -209,8 +233,14 @@ export function LoginPage() {
       const authState = useAuthStore.getState()
       if (authState.isAuthenticated && !authState.requiresMfa && mfaModalOpen && authState.user) {
         setMfaModalOpen(false)
-        const finalRedirectPath = redirectPath || getRedirectPathByRole(authState.user)
-        navigate(finalRedirectPath, { replace: true })
+        const fallback = redirectPath || getRedirectPathByRole(authState.user)
+        navigate(
+          resolvePostAuthRedirectPath({
+            passwordChangeRequired: authState.passwordChangeRequired,
+            fallbackPath: fallback,
+          }),
+          { replace: true }
+        )
       }
     }, 500)
 
@@ -265,21 +295,31 @@ export function LoginPage() {
                   >
                     <Form.Item
                       name="email"
-                      label={<AuthFormLabel>이메일</AuthFormLabel>}
                       rules={[
                         { required: true, message: '이메일을 입력해 주세요.' },
                         { type: 'email', message: '올바른 이메일 형식을 입력해 주세요.' },
                       ]}
                     >
-                      <Input placeholder="이메일 주소를 입력해 주세요" autoComplete="email" />
+                      <CmsInput
+                        label="이메일"
+                        required
+                        inputSize="xlarge"
+                        width="100%"
+                        placeholder="이메일 주소를 입력해 주세요"
+                        autoComplete="email"
+                      />
                     </Form.Item>
 
                     <Form.Item
                       name="password"
-                      label={<AuthFormLabel>비밀번호</AuthFormLabel>}
                       rules={[{ required: true, message: '비밀번호를 입력해 주세요.' }]}
                     >
-                      <Input.Password
+                      <CmsInput
+                        label="비밀번호"
+                        required
+                        type="password"
+                        inputSize="xlarge"
+                        width="100%"
                         placeholder="비밀번호를 입력해 주세요"
                         autoComplete="current-password"
                         disabled={isLocked}

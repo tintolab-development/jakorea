@@ -115,6 +115,7 @@ function CorporatePartnerFormBody({
   const [logoUrl, setLogoUrl] = useState(() =>
     mode === 'edit' && initial ? initial.logoUrl : ''
   )
+  const [logoFile, setLogoFile] = useState<File | undefined>(undefined)
   const [logoFileName, setLogoFileName] = useState(() =>
     mode === 'edit' && initial ? (initial.logoFileName ?? '') : ''
   )
@@ -170,6 +171,7 @@ function CorporatePartnerFormBody({
       try {
         const dataUrl = await readFileAsDataUrl(file)
         setLogoUrl(dataUrl)
+        setLogoFile(file)
         setLogoFileName(file.name)
         setErrors(prev => ({ ...prev, logo: undefined }))
       } catch {
@@ -184,6 +186,7 @@ function CorporatePartnerFormBody({
 
   const handleRemoveFile = useCallback(() => {
     setLogoUrl('')
+    setLogoFile(undefined)
     setLogoFileName('')
   }, [])
 
@@ -207,11 +210,12 @@ function CorporatePartnerFormBody({
     onSubmit({
       isPublic,
       logoUrl: logoUrl.trim(),
+      logoFile,
       logoFileName: logoFileName || undefined,
       name: name.trim(),
       sortOrder: orderNum,
     })
-  }, [isPublic, logoFileName, logoUrl, maxOrder, name, onSubmit, sortOrder])
+  }, [isPublic, logoFile, logoFileName, logoUrl, maxOrder, name, onSubmit, sortOrder])
 
   const title = mode === 'edit' ? '후원사 수정' : '후원사 등록'
   const confirmLabel = mode === 'edit' ? '저장' : '등록'
@@ -411,7 +415,9 @@ export function CorporatePartnerFormModal({
   if (!open) return null
 
   const formKey =
-    mode === 'edit' ? `edit-${initial?.id ?? 'unknown'}` : `create-${String(open)}`
+    mode === 'edit'
+      ? `edit-${initial?.id ?? 'unknown'}`
+      : `create-${totalCount}`
 
   return (
     <CorporatePartnerFormBody

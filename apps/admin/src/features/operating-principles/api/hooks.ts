@@ -1,5 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { OperatingPrinciplesSavePayload } from '@/entities/operating-principles/model/types'
+import type {
+  OperatingPrinciplesDoc,
+  OperatingPrinciplesSavePayload,
+} from '@/entities/operating-principles/model/types'
 import { shouldUseOperatingPrinciplesRemoteApi } from './capabilities'
 import { operatingPrinciplesQueryKeys } from './query-keys'
 import {
@@ -11,6 +14,14 @@ import {
 
 function source(): 'remote' | 'local' {
   return shouldUseOperatingPrinciplesRemoteApi() ? 'remote' : 'local'
+}
+
+function cachedDoc(
+  queryClient: ReturnType<typeof useQueryClient>,
+): OperatingPrinciplesDoc | undefined {
+  return queryClient.getQueryData<OperatingPrinciplesDoc>(
+    operatingPrinciplesQueryKeys.detail(source()),
+  )
 }
 
 export function useOperatingPrinciples(enabled = true) {
@@ -27,11 +38,11 @@ export function useOperatingPrinciples(enabled = true) {
 export function useReorderOperatingPrinciples() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (orderedIds: string[]) => reorderOperatingPrinciplesService(orderedIds),
+    mutationFn: (orderedIds: string[]) =>
+      reorderOperatingPrinciplesService(orderedIds, cachedDoc(queryClient)),
     retry: false,
     onSuccess: data => {
       queryClient.setQueryData(operatingPrinciplesQueryKeys.detail(source()), data)
-      void queryClient.invalidateQueries({ queryKey: operatingPrinciplesQueryKeys.all })
     },
   })
 }
@@ -40,11 +51,10 @@ export function useSetPrincipleActive() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-      setPrincipleActiveService(id, isActive),
+      setPrincipleActiveService(id, isActive, cachedDoc(queryClient)),
     retry: false,
     onSuccess: data => {
       queryClient.setQueryData(operatingPrinciplesQueryKeys.detail(source()), data)
-      void queryClient.invalidateQueries({ queryKey: operatingPrinciplesQueryKeys.all })
     },
   })
 }
@@ -53,11 +63,10 @@ export function useSaveOperatingPrinciples() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (payload: OperatingPrinciplesSavePayload) =>
-      saveOperatingPrinciplesService(payload),
+      saveOperatingPrinciplesService(payload, cachedDoc(queryClient)),
     retry: false,
     onSuccess: data => {
       queryClient.setQueryData(operatingPrinciplesQueryKeys.detail(source()), data)
-      void queryClient.invalidateQueries({ queryKey: operatingPrinciplesQueryKeys.all })
     },
   })
 }

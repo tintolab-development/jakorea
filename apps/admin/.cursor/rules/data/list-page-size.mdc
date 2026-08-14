@@ -1,0 +1,50 @@
+---
+description: Admin paginated list GET — page/size 기본값·상한 (과도한 size 금지)
+globs:
+  - apps/admin/src/features/**/api/mappers.ts
+  - apps/admin/src/features/**/api/service.ts
+  - apps/admin/src/features/**/api/hooks.ts
+alwaysApply: false
+---
+
+# Admin 목록 — `page` / `size` 쿼리
+
+Homepage Admin OpenAPI 목록(`page`·`size` 있는 GET)의 **한 페이지 크기**.
+
+관련: [list-filter-query-api.mdc](./list-filter-query-api.mdc) · [mutation-fetch-amplification.mdc](./mutation-fetch-amplification.mdc) · [api-mock-remote.mdc](./api-mock-remote.mdc)
+
+## 기본값
+
+| 항목 | 값 |
+|------|-----|
+| `page` | `0` (0-based, BE 기본과 동일) |
+| `size` | **`20`** (BE `@RequestParam(defaultValue = "20")`와 정합) |
+
+```ts
+// ✅ to*ListParams
+const params = { page: 0, size: 20, /* …filters */ }
+```
+
+## 금지
+
+| 금지 | 이유 |
+|------|------|
+| `size: 100` / `200` / `500` 등으로 **한 번에 전부** 가져오기 | 페이로드·DB·네트워크 낭비. “전체 목록이 필요해서”라는 이유로 키우지 말 것 |
+| UI `pagination={false}`라서 size를 부풀리기 | 테이블 페이징 미구현이어도 **API size는 20 유지**. 서버 페이징 UI는 별도 작업 |
+| mutation 전 version을 위해 **큰 list GET** | 단건은 `*Detail(id)` / 캐시 행의 `version` 사용 ([mutation-fetch-amplification](./mutation-fetch-amplification.mdc)) |
+| bulk-delete version을 위해 size를 키운 list | 선택 행의 캐시 `version` 또는 **id별 detail** |
+
+## 예외
+
+- OpenAPI/컨트롤러에 **다른 default size**가 명시된 엔드포인트만 그 값을 따른다 (문서·스펙 우선).
+- `size`를 올리는 변경은 **의도·상한·UI 페이징 계획**을 PR/응답에 적고, 200+ 는 원칙적으로 불가.
+
+## 체크
+
+- [ ] `to*ListParams`의 `LIST_PAGE_SIZE` (또는 리터럴) ≤ **20** (스펙 예외 제외)
+- [ ] update / toggle / bulk-delete가 “전체 list로 version 확보”에 의존하지 않음
+- [ ] Network 탭에서 `size=100|200|…` 같은 비정상 값이 없는지
+
+**기준 구현:** `features/history-awards-certs/api/mappers.ts` (`LIST_PAGE_SIZE = 20`) · `service.ts` (detail로 version)
+
+**Last updated:** 2026-08-13

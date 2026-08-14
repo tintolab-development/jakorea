@@ -6,6 +6,7 @@ import {
   unmaskAdminAccountPrivacyRemote,
   unmaskIndividualMemberPrivacyRemote,
   unmaskInstructorMemberPrivacyRemote,
+  unmaskInstructorRoleRequestPrivacyRemote,
   unmaskMemberPrivacyRemote,
 } from '@/features/user/api/members-api-client'
 import type { UserRole } from '@/types/user'
@@ -36,6 +37,18 @@ export async function fetchAdminAccountPrivacyUnmask(
   const body = { reason }
   try {
     return await unmaskAdminAccountPrivacyRemote(adminAccountId, body)
+  } catch (err) {
+    wrapPrivacyUnmaskError(err)
+  }
+}
+
+export async function fetchInstructorRoleRequestPrivacyUnmask(
+  requestId: number,
+  reason: string
+): Promise<unknown> {
+  const body = { reason }
+  try {
+    return await unmaskInstructorRoleRequestPrivacyRemote(requestId, body)
   } catch (err) {
     wrapPrivacyUnmaskError(err)
   }

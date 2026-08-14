@@ -4,21 +4,20 @@
   margin-inline: auto;
   border-collapse: separate;
   border-spacing: 0;
-  table-layout: fixed;
+  table-layout: auto;
   font-family: var(--font-family-base);
 }
 
-/* Figma: 구분 셀 ≈844 / 비율·금액 균등(≈314+314) → 56% / 22% / 22% */
 .colCategory {
-  width: 56%;
+  width: auto;
 }
 
 .colRatio {
-  width: 22%;
+  width: 0;
 }
 
 .colAmount {
-  width: 22%;
+  width: 1%;
 }
 
 .headCell {
@@ -70,27 +69,229 @@
   border-bottom: 1px solid var(--color-neutral-cool-100);
 }
 
-/* Figma: 총계 행 상하 Spacing/32 */
+.pcOnlyInline {
+  display: none;
+}
+
+.mobileOnlyInline {
+  display: inline;
+}
+
+.pcOnly {
+  display: none;
+}
+
+.metricsCell {
+  text-align: right;
+}
+
+.categoryCell {
+  min-width: 0;
+  text-align: left;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+
+.headCategory,
+.headMetrics {
+  text-align: left;
+}
+
+.headMetrics {
+  text-align: right;
+}
+
+.amountValue {
+  display: block;
+  color: var(--color-neutral-cool-500);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.mobilePercent {
+  display: block;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .totalRow .cell {
   height: auto;
-  padding-block: var(--spacing-32);
-  background: var(--color-neutral-cool-80);
+  padding-block: var(--spacing-20);
+  background: transparent;
   color: #2f8a4f;
 }
 
-@media (--bp-below-pc) {
-  .headCell,
+.totalRow .amountValue,
+.totalRow .mobilePercent {
+  color: #2f8a4f;
+}
+
+.totalRow .amountValue {
+  font-weight: 600;
+}
+
+@media (--bp-pc-up) {
+  .table {
+    table-layout: fixed;
+  }
+
+  .colCategory {
+    width: 56%;
+  }
+
+  .colRatio {
+    width: 22%;
+  }
+
+  .colAmount {
+    width: 22%;
+  }
+
+  .pcOnly {
+    display: table-cell;
+  }
+
+  .pcOnlyInline {
+    display: inline;
+  }
+
+  .mobileOnlyInline,
+  .mobilePercent {
+    display: none;
+  }
+
+  .categoryCell,
+  .headCategory,
+  .headMetrics,
+  .metricsCell {
+    text-align: center;
+  }
+
+  .amountValue {
+    display: inline;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
   .cell {
-    height: 56px;
-    padding: var(--spacing-12) var(--spacing-16);
+    white-space: nowrap;
+  }
+
+  .totalRow .cell {
+    padding-block: var(--spacing-32);
+    background: var(--color-neutral-cool-80);
+    color: #2f8a4f;
+  }
+}
+
+@media (--bp-below-pc) {
+  .table,
+  .table :global(thead),
+  .table :global(tbody) {
+    display: block;
+    width: 100%;
+  }
+
+  .table :global(colgroup) {
+    display: none;
+  }
+
+  .headRow,
+  .row,
+  .totalRow {
+    display: flex;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-12);
+  }
+
+  .row {
+    border-bottom: 1px solid var(--color-neutral-black-10);
+  }
+
+  .headRow {
+    padding: var(--spacing-8) var(--spacing-12);
+    border-radius: var(--radius-8);
+    background: var(--color-neutral-white);
+  }
+
+  .headCell {
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    overflow: visible;
+    background: transparent;
+    color: var(--color-neutral-black);
     font-size: 14px;
+    font-weight: 600;
+    line-height: 140%;
+    letter-spacing: 0;
+    white-space: nowrap;
+    border-radius: 0;
   }
 
-  .headCell:first-child {
-    border-radius: 16px 0 0 16px;
+  .headCategory,
+  .categoryCell {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: left;
   }
 
-  .headCell:last-child {
-    border-radius: 0 16px 16px 0;
+  .headMetrics,
+  .metricsCell {
+    flex: 0 0 auto;
+    width: auto;
+    margin-left: auto;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .cell,
+  .row .cell {
+    height: auto;
+    min-height: 0;
+    padding: var(--spacing-8) var(--spacing-12);
+    border-bottom: none;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 140%;
+    letter-spacing: 0;
+    white-space: normal;
+  }
+
+  .categoryCell {
+    color: var(--color-neutral-black);
+    font-weight: 400;
+  }
+
+  .mobilePercent {
+    color: var(--color-neutral-black);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: normal;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .amountValue {
+    color: var(--color-neutral-cool-600);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: normal;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .totalRow .cell {
+    padding-block: var(--spacing-12);
+    border-bottom: none;
+    font-weight: 700;
+    line-height: 140%;
   }
 }

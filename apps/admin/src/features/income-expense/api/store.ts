@@ -35,7 +35,7 @@ function item(
   sortOrder: number,
   category?: ExpenseCategory
 ): FinanceItem {
-  return { id, name, ratio, amount, sortOrder, ...(category ? { category } : {}) }
+  return { id, name, ratio, amount, sortOrder, version: 0, ...(category ? { category } : {}) }
 }
 
 function buildSeedData(): IncomeExpenseFileData {
@@ -110,6 +110,7 @@ function normalizeItem(
     ratio: asNumber(raw.ratio, 0),
     amount: asNumber(raw.amount, 0),
     sortOrder: asNumber(raw.sortOrder, index + 1),
+    version: asNumber(raw.version, 0),
     ...(category ? { category } : {}),
   }
 }
@@ -235,6 +236,7 @@ export function createFinanceItem(
     ratio: input.ratio,
     amount: input.amount,
     sortOrder: list.length + 1,
+    version: 0,
     ...(input.category ? { category: input.category } : {}),
   }
 

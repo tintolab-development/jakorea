@@ -29,7 +29,6 @@ export function useSaveJaKoreaWorldwide() {
     retry: false,
     onSuccess: data => {
       queryClient.setQueryData(jaKoreaWorldwideQueryKeys.detail(source()), data)
-      void queryClient.invalidateQueries({ queryKey: jaKoreaWorldwideQueryKeys.all })
     },
   })
 }

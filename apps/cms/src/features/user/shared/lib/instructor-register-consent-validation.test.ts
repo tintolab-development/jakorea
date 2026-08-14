@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { collectInstructorRegisterValidation } from '@jakorea/domain/instructor/validate-register'
 import type { InstructorRegisterValidationInput } from '@jakorea/domain/instructor/validate-register'
+import { getInstructorRequiredConsentAgreeKeys } from '@jakorea/domain/instructor/form-layout'
 import {
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
   buildRequiredConsentDisagreeAlertMessage,
@@ -64,6 +65,28 @@ describe('instructor register consent validation', () => {
         consentPortrait: 'disagree',
         consentPaymentStatement: 'disagree',
       })
+    )
+    expect(result.missingRequired).toBe(false)
+  })
+
+  it('Platform 강사 신청 필수 동의 키는 강사 신규 등록과 동일하다', () => {
+    expect([...getInstructorRequiredConsentAgreeKeys('platformApply')]).toEqual([
+      ...getInstructorRequiredConsentAgreeKeys('cmsRegister'),
+    ])
+  })
+
+  it('동의서 미작성(미동의)만으로는 Platform 강사 신청 필수 누락이 되지 않는다', () => {
+    const result = collectInstructorRegisterValidation(
+      baseValues({
+        consentPaymentStatement: 'disagree',
+        consentEducatorPledge: 'disagree',
+        consentAdministrativeJoint: 'disagree',
+        consentSexOffenseCheck: 'disagree',
+      }),
+      {},
+      {
+        requiredConsentAgreeKeys: [...getInstructorRequiredConsentAgreeKeys('platformApply')],
+      }
     )
     expect(result.missingRequired).toBe(false)
   })

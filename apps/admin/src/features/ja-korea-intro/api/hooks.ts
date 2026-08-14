@@ -25,8 +25,8 @@ export function useSaveJaKoreaIntro() {
     mutationFn: (data: JaKoreaIntro) => saveJaKoreaIntroService(data),
     retry: false,
     onSuccess: data => {
+      // PUT 응답이 단건 전체(+version) — 추가 GET 없이 캐시 반영
       queryClient.setQueryData(jaKoreaIntroQueryKeys.detail(source()), data)
-      void queryClient.invalidateQueries({ queryKey: jaKoreaIntroQueryKeys.all })
     },
   })
 }

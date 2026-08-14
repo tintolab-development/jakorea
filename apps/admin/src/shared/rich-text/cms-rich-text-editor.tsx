@@ -12,18 +12,24 @@ type CmsRichTextEditorProps = Omit<RichTextEditorProps, 'toolbar'> & {
    */
   showToolbar?: boolean
   toolbar?: RichTextEditorProps['toolbar']
+  /** 인라인 이미지·YouTube 삽입 (기본 true) */
+  allowInlineMedia?: boolean
 }
 
-/** CMS Rich Text 에디터 — Ant Design 툴바 기본 포함 */
+/** CMS RichText 에디터 — Ant Design 툴바 기본 포함 */
 export function CmsRichTextEditor({
   editor,
   showToolbar = true,
   toolbar,
+  allowInlineMedia = true,
   className,
   ...rest
 }: CmsRichTextEditorProps) {
   const toolbarNode =
-    toolbar ?? (showToolbar ? <RichTextToolbar editor={editor} /> : null)
+    toolbar ??
+    (showToolbar ? (
+      <RichTextToolbar editor={editor} allowInlineMedia={allowInlineMedia} />
+    ) : null)
 
   return (
     <RichTextEditor

@@ -12,6 +12,11 @@ export type TransparencyReport = {
   thumbnailFileName: string
   attachmentFileName: string
   attachmentUrl: string
+  /** Homepage asset ids (remote) */
+  thumbnailAssetId?: number
+  attachmentAssetId?: number
+  /** 낙관적 잠금 (remote 필수). mock은 0 */
+  version: number
   /** 표시 전용 — 어드민에서 수정하지 않음 */
   downloadCount: number
   createdAt: string
@@ -31,6 +36,10 @@ export type ReportCreateInput = {
   thumbnailFileName: string
   attachmentFileName: string
   attachmentUrl: string
+  thumbnailFile?: File | null
+  attachmentFile?: File | null
+  thumbnailAssetId?: number
+  attachmentAssetId?: number
 }
 
 export type ReportUpdateInput = ReportCreateInput & {
@@ -40,4 +49,5 @@ export type ReportUpdateInput = ReportCreateInput & {
 export type NtsDisclosure = {
   linkUrl: string
   updatedAt: string
+  version: number
 }

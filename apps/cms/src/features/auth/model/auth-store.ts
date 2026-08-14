@@ -41,6 +41,8 @@ interface AuthState {
   isAuthenticated: boolean
   mfaState: MfaState | null // Phase 0.5.1: MFA 상태
   requiresMfa: boolean // Phase 0.5.1: MFA 필요 여부
+  /** MFA verify 등에서 내려온 임시 비밀번호 변경 필요 플래그 */
+  passwordChangeRequired: boolean
   // Phase 2: checkAuth 중복 호출 방지를 위한 내부 상태
   _isCheckingAuth: boolean
   _checkAuthPromise: Promise<void> | null
@@ -57,6 +59,7 @@ interface AuthState {
   setMfaVerified: () => void // Phase 0.5.1: MFA 인증 완료 처리 (Mock TOTP)
   completeAdminAuth: (tokens: AuthTokenResponse) => void // 실 API MFA 검증 후 JWT 저장
   applySocialAuthTokens: (tokens: AuthTokenResponse) => void // 실 API 소셜 SSO 토큰 저장
+  clearPasswordChangeRequired: () => void
   setAuth: (authData: { user: Omit<User, 'password'>; token: string; expiresAt: string }) => void // Phase 0.1.3: 인증 상태 직접 설정
   refreshToken: () => Promise<boolean> // Phase 0.5: 토큰 갱신 Mock 로직
   checkSessionExpiry: () => boolean // Phase 0.5: 세션 만료 확인
@@ -64,6 +67,7 @@ interface AuthState {
 
 const TOKEN_STORAGE_KEY = 'auth_token'
 const TOKEN_EXPIRY_KEY = 'auth_expires_at'
+const PASSWORD_CHANGE_REQUIRED_KEY = 'auth_password_change_required'
 
 function tokenExpiresAtFromResponse(tokens: AuthTokenResponse): string {
   if (tokens.expiresInSeconds && tokens.expiresInSeconds > 0) {
@@ -117,6 +121,7 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
           token,
           expiresAt,
           isAuthenticated: true,
+          passwordChangeRequired: localStorage.getItem(PASSWORD_CHANGE_REQUIRED_KEY) === '1',
         }
       } catch {
         // JSON 파싱 실패 시 초기화
@@ -125,6 +130,7 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
           token: null,
           expiresAt: null,
           isAuthenticated: false,
+          passwordChangeRequired: false,
         }
       }
     }
@@ -135,6 +141,7 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
     token: null,
     expiresAt: null,
     isAuthenticated: false,
+    passwordChangeRequired: false,
   }
 }
 
@@ -151,6 +158,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     error: null,
     mfaState: null, // Phase 0.5.1: MFA 상태
     requiresMfa: false, // Phase 0.5.1: MFA 필요 여부
+    passwordChangeRequired: initialState.passwordChangeRequired ?? false,
     _isCheckingAuth: false, // Phase 2: checkAuth 중복 호출 방지
     _checkAuthPromise: null, // Phase 2: checkAuth Promise 저장
 
@@ -241,6 +249,15 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
       const normalizedUser = elevateAdminToMaster(state.user)
       const { token, expiresAt } = persistAuthTokens(normalizedUser, tokens)
+      const passwordChangeRequired = tokens.passwordChangeRequired === true
+
+      if (typeof window !== 'undefined' && window.localStorage) {
+        if (passwordChangeRequired) {
+          localStorage.setItem(PASSWORD_CHANGE_REQUIRED_KEY, '1')
+        } else {
+          localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_KEY)
+        }
+      }
 
       set({
         user: normalizedUser,
@@ -254,6 +271,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             }
           : null,
         requiresMfa: false,
+        passwordChangeRequired,
       })
 
       clearDashboardQueryCache()
@@ -265,6 +283,13 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearPerformanceQueryCache()
       clearProgramQueryCache()
       void flushSocialPendingLinks()
+    },
+
+    clearPasswordChangeRequired: () => {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_KEY)
+      }
+      set({ passwordChangeRequired: false })
     },
 
     applySocialAuthTokens: (tokens: AuthTokenResponse) => {
@@ -319,9 +344,11 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         localStorage.removeItem(TOKEN_EXPIRY_KEY)
         localStorage.removeItem('auth_user')
         localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY)
+        localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_KEY)
       }
 
       set({
+        passwordChangeRequired: false,
         user: null,
         token: null,
         expiresAt: null,

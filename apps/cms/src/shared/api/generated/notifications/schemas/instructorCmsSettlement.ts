@@ -5,15 +5,21 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberBankAccountUpsertRequest } from './memberBankAccountUpsertRequest';
 
 /**
- * 강사 현재 정산 계좌. 상세 응답에서는 루트 계좌 필드와 bankAccounts 배열을 중복 반환하지 않고 이 객체만 사용합니다.
+ * 강사 정산 정보. Platform 권한 신청과 CMS 강사 등록/상세가 같은 구조를 사용합니다.
  */
 export interface InstructorCmsSettlement {
   bankName?: string;
-  /** 계좌번호. 기본 상세 조회에서는 마스킹되고 개인정보 원문 조회에서만 원문을 반환합니다. */
+  /** 현재 계좌번호. 기본 상세 조회에서는 마스킹되고 개인정보 원문 조회에서만 원문을 반환합니다. */
   accountNumber?: string;
-  /** 예금주. 기본 상세 조회에서는 마스킹됩니다. */
+  /** 현재 예금주. 기본 상세 조회에서는 마스킹됩니다. */
   accountHolder?: string;
   businessIncome?: boolean;
+  /**
+     * @minItems 0
+     * @maxItems 20
+     */
+  bankAccounts?: MemberBankAccountUpsertRequest[];
 }

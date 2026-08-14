@@ -62,7 +62,7 @@ const SEED_ROWS: readonly SeedRow[] = [
     channel: 'youtube',
     name: '유튜브',
     isActive: true,
-    linkUrl: 'youtube.com/user/jakorea2002',
+    linkUrl: 'https://youtube.com/user/jakorea2002',
   },
 ]
 
@@ -86,6 +86,7 @@ function buildSeedLinks(): SocialLink[] {
       sortOrder: index + 1,
       isActive: row.isActive,
       linkUrl: row.linkUrl,
+      version: 0,
       updatedAt: ts,
     }
   })
@@ -117,6 +118,7 @@ function ensureFixedChannels(items: SocialLink[]): SocialLink[] {
       name: CHANNEL_NAME[row.channel],
       isActive: Boolean(row.isActive),
       linkUrl: typeof row.linkUrl === 'string' ? row.linkUrl : '',
+      version: typeof row.version === 'number' ? row.version : 0,
       updatedAt: typeof row.updatedAt === 'string' ? row.updatedAt : seed.updatedAt,
       sortOrder: typeof row.sortOrder === 'number' ? row.sortOrder : seed.sortOrder,
     })

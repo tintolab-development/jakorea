@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import {
   fetchAffiliatedTeachersRemote,
@@ -9,6 +9,7 @@ import {
   fetchSchoolTeachersRemote,
 } from '@/features/user/api/members-api-client'
 import { mapAffiliatedTeacherRows } from '@/features/user/api/map-affiliated-teacher-row'
+import { parseOrganizationIdFromUserId } from '@/features/user/api/map-school-organization-to-user'
 import { mapMemberAdminPrograms } from '@/features/user/api/map-member-admin-program'
 import {
   mapMemberApplicationHistoryItems,
@@ -28,7 +29,7 @@ import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabi
 import type { Application } from '@/types/domain'
 import type { UserHistory } from '@/types/domain'
 import type { Program } from '@/types/domain'
-import type { SchoolAffiliatedTeacherRow } from '@/types/user'
+import type { SchoolAffiliatedTeacherRow, User } from '@/types/user'
 
 const MEMBER_DETAIL_LIST_SIZE = 200
 
@@ -58,6 +59,8 @@ export function useMemberCommentsQuery(
 /**
  * 학교 소속 교사 — `organizationId` 우선 (`listTeachers`),
  * 없으면 legacy `memberId` affiliated-teachers.
+ *
+ * 학교 상세 진입마다 목록을 다시 받아야 하므로 staleTime=0 + refetchOnMount always.
  */
 export function useAffiliatedTeachersQuery(
   memberId: number | undefined,
@@ -74,6 +77,8 @@ export function useAffiliatedTeachersQuery(
         isMembersRemoteEnabled() &&
         (useOrgApi || memberId != null)
     ),
+    staleTime: 0,
+    refetchOnMount: 'always',
     queryFn: async (): Promise<SchoolAffiliatedTeacherRow[]> => {
       const rows = useOrgApi
         ? await fetchSchoolTeachersRemote(organizationId)
@@ -85,6 +90,36 @@ export function useAffiliatedTeachersQuery(
         getMemberApiErrorMessage(error, '소속 교사 목록을 불러오지 못했습니다.'),
     },
   })
+}
+
+/** 학교 상세 GET 성공 직후 소속 교사 목록을 바로 요청(기본정보 탭 마운트 전에도 시작). */
+export function prefetchSchoolAffiliatedTeachers(
+  queryClient: QueryClient,
+  user: Pick<User, 'role' | 'organizationId' | 'memberId' | 'id'>
+): void {
+  if (!isMembersRemoteEnabled() || user.role !== 'SCHOOL') return
+
+  const organizationId =
+    user.organizationId ?? parseOrganizationIdFromUserId(user.id) ?? undefined
+
+  if (organizationId != null) {
+    void queryClient.prefetchQuery({
+      queryKey: memberQueryKeys.schoolTeachers(organizationId),
+      staleTime: 0,
+      queryFn: async (): Promise<SchoolAffiliatedTeacherRow[]> =>
+        mapAffiliatedTeacherRows(await fetchSchoolTeachersRemote(organizationId)),
+    })
+    return
+  }
+
+  if (user.memberId != null) {
+    void queryClient.prefetchQuery({
+      queryKey: memberQueryKeys.affiliatedTeachers(user.memberId),
+      staleTime: 0,
+      queryFn: async (): Promise<SchoolAffiliatedTeacherRow[]> =>
+        mapAffiliatedTeacherRows(await fetchAffiliatedTeachersRemote(user.memberId!)),
+    })
+  }
 }
 
 export function useMemberApplicationsQuery(

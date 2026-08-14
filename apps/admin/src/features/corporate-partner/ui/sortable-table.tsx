@@ -22,6 +22,7 @@ export function CorporatePartnersSortableTable({
   rowSelection,
   onRowsReorder,
   locale,
+  disabled = false,
 }: {
   rows: CorporatePartner[]
   columns: ColumnsType<CorporatePartner>
@@ -29,10 +30,12 @@ export function CorporatePartnersSortableTable({
   rowSelection?: TableProps<CorporatePartner>['rowSelection']
   onRowsReorder: (reorderedRows: CorporatePartner[]) => void
   locale?: TableProps<CorporatePartner>['locale']
+  disabled?: boolean
 }) {
   const { items, rowIds, dndContextProps } = useAdminTableDndReorder({
     rows,
     onRowsReorder,
+    disabled,
   })
 
   return (

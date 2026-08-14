@@ -15,15 +15,20 @@ export type EducationTextbook = {
   /** 미첨부 시 기본 썸네일 URL */
   thumbnailUrl: string
   thumbnailFileName?: string
+  /** remote upload용 원본 File */
+  thumbnailFile?: File
+  /** remote asset id */
+  thumbnailAssetId?: number
   /** 총 단원 수 */
   unitCount: number
   /** 상세 차시 설명 */
   unitSessionText: string
-  /** 단원 소개 Markdown (비어 있으면 상세 비노출) */
+  /** 단원 소개 Markdown/HTML */
   unitIntroMarkdown: string
   authorName: string
   createdAt: string
   updatedAt: string
+  version?: number
 }
 
 export type EducationTextbookCreateInput = {
@@ -35,6 +40,8 @@ export type EducationTextbookCreateInput = {
   description: string
   thumbnailUrl: string
   thumbnailFileName?: string
+  thumbnailFile?: File
+  thumbnailAssetId?: number
   unitCount: number
   unitSessionText: string
   unitIntroMarkdown: string

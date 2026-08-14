@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { HeroBannerCreateInput, HeroBannerUpdateInput } from '@/entities/hero-banner/model/types'
+import type {
+  HeroBanner,
+  HeroBannerCreateInput,
+  HeroBannerUpdateInput,
+} from '@/entities/hero-banner/model/types'
 import { shouldUseHeroBannerRemoteApi } from './capabilities'
 import { heroBannerQueryKeys } from './query-keys'
 import {
@@ -13,6 +17,24 @@ import {
 
 function source(): 'remote' | 'local' {
   return shouldUseHeroBannerRemoteApi() ? 'remote' : 'local'
+}
+
+function cachedList(queryClient: ReturnType<typeof useQueryClient>): HeroBanner[] | undefined {
+  return queryClient.getQueryData<HeroBanner[]>(heroBannerQueryKeys.list(source()))
+}
+
+function patchHeroInList(
+  queryClient: ReturnType<typeof useQueryClient>,
+  hero: HeroBanner,
+) {
+  queryClient.setQueryData<HeroBanner[]>(heroBannerQueryKeys.list(source()), old => {
+    if (!old) return [hero]
+    const idx = old.findIndex(row => row.id === hero.id)
+    if (idx < 0) return old
+    const next = [...old]
+    next[idx] = hero
+    return next
+  })
 }
 
 export function useHeroBannersList(enabled = true) {
@@ -41,10 +63,10 @@ export function useUpdateHeroBanner() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: HeroBannerUpdateInput }) =>
-      updateHeroBannerService(id, patch),
+      updateHeroBannerService(id, patch, cachedList(queryClient)),
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: heroBannerQueryKeys.lists() })
+    onSuccess: data => {
+      patchHeroInList(queryClient, data)
     },
   })
 }
@@ -52,10 +74,13 @@ export function useUpdateHeroBanner() {
 export function useRemoveHeroBanners() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (ids: string[]) => removeHeroBannersService(ids),
+    mutationFn: (ids: string[]) => removeHeroBannersService(ids, cachedList(queryClient)),
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: heroBannerQueryKeys.lists() })
+    onSuccess: (_data, ids) => {
+      const idSet = new Set(ids)
+      queryClient.setQueryData<HeroBanner[]>(heroBannerQueryKeys.list(source()), old =>
+        (old ?? []).filter(row => !idSet.has(row.id)),
+      )
     },
   })
 }
@@ -63,11 +88,11 @@ export function useRemoveHeroBanners() {
 export function useReorderHeroBanners() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (orderedIds: string[]) => reorderHeroBannersService(orderedIds),
+    mutationFn: (orderedIds: string[]) =>
+      reorderHeroBannersService(orderedIds, cachedList(queryClient)),
     retry: false,
     onSuccess: rows => {
       queryClient.setQueryData(heroBannerQueryKeys.list(source()), rows)
-      void queryClient.invalidateQueries({ queryKey: heroBannerQueryKeys.lists() })
     },
   })
 }
@@ -76,10 +101,10 @@ export function useSetHeroBannerActive() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-      setHeroBannerActiveService(id, isActive),
+      setHeroBannerActiveService(id, isActive, cachedList(queryClient)),
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: heroBannerQueryKeys.lists() })
+    onSuccess: data => {
+      patchHeroInList(queryClient, data)
     },
   })
 }

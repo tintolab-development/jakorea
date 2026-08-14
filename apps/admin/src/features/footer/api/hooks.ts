@@ -1,15 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
+  FooterAdminDoc,
   FooterOrgInfo,
+  FooterOrgInfoSaveInput,
+  FooterRelatedLogo,
   FooterRelatedLogoSaveInput,
+  FooterTopMenu,
   FooterTopMenuPatch,
 } from '@/entities/footer/model/types'
 import { shouldUseFooterRemoteApi } from './capabilities'
 import { footerQueryKeys } from './query-keys'
 import {
-  getFooterOrgInfoService,
-  listFooterRelatedLogosService,
-  listFooterTopMenusService,
+  getFooterAdminService,
   reorderFooterRelatedLogosService,
   reorderFooterTopMenusService,
   saveFooterOrgInfoService,
@@ -25,24 +27,48 @@ function source(): 'remote' | 'local' {
 
 const localStale = Number.POSITIVE_INFINITY
 
-export function useFooterTopMenusList(enabled = true) {
+function adminKey() {
+  return footerQueryKeys.admin(source())
+}
+
+function patchAdminCache(
+  queryClient: ReturnType<typeof useQueryClient>,
+  patch: Partial<FooterAdminDoc>,
+) {
+  queryClient.setQueryData<FooterAdminDoc>(adminKey(), prev =>
+    prev ? { ...prev, ...patch } : prev,
+  )
+}
+
+function useFooterAdminQuery(enabled = true) {
   const dataSource = source()
   return useQuery({
-    queryKey: footerQueryKeys.topMenusList(dataSource),
-    queryFn: () => listFooterTopMenusService(),
+    queryKey: footerQueryKeys.admin(dataSource),
+    queryFn: () => getFooterAdminService(),
     enabled,
     staleTime: dataSource === 'remote' ? 30_000 : localStale,
     retry: dataSource === 'remote' ? 1 : false,
   })
 }
 
+export function useFooterTopMenusList(enabled = true) {
+  const query = useFooterAdminQuery(enabled)
+  return {
+    ...query,
+    data: query.data?.topMenus,
+  }
+}
+
 export function useReorderFooterTopMenus() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (orderedIds: string[]) => reorderFooterTopMenusService(orderedIds),
+    mutationFn: (orderedIds: string[]) => {
+      const cached = queryClient.getQueryData<FooterAdminDoc>(adminKey())?.topMenus
+      return reorderFooterTopMenusService(orderedIds, cached)
+    },
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: footerQueryKeys.topMenus() })
+    onSuccess: (menus: FooterTopMenu[]) => {
+      patchAdminCache(queryClient, { topMenus: menus })
     },
   })
 }
@@ -50,11 +76,13 @@ export function useReorderFooterTopMenus() {
 export function useSetFooterTopMenuActive() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-      setFooterTopMenuActiveService(id, isActive),
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const cached = queryClient.getQueryData<FooterAdminDoc>(adminKey())?.topMenus
+      return setFooterTopMenuActiveService(id, isActive, cached)
+    },
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: footerQueryKeys.topMenus() })
+    onSuccess: (menus: FooterTopMenu[]) => {
+      patchAdminCache(queryClient, { topMenus: menus })
     },
   })
 }
@@ -62,55 +90,57 @@ export function useSetFooterTopMenuActive() {
 export function useSaveFooterTopMenus() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (patches: FooterTopMenuPatch[]) => saveFooterTopMenusService(patches),
+    mutationFn: (patches: FooterTopMenuPatch[]) => {
+      const cached = queryClient.getQueryData<FooterAdminDoc>(adminKey())?.topMenus
+      return saveFooterTopMenusService(patches, cached)
+    },
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: footerQueryKeys.topMenus() })
+    onSuccess: (menus: FooterTopMenu[]) => {
+      patchAdminCache(queryClient, { topMenus: menus })
     },
   })
 }
 
 export function useFooterOrgInfo(enabled = true) {
-  const dataSource = source()
-  return useQuery({
-    queryKey: footerQueryKeys.orgInfoDetail(dataSource),
-    queryFn: () => getFooterOrgInfoService(),
-    enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : localStale,
-    retry: dataSource === 'remote' ? 1 : false,
-  })
+  const query = useFooterAdminQuery(enabled)
+  return {
+    ...query,
+    data: query.data?.orgInfo,
+  }
 }
 
 export function useSaveFooterOrgInfo() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: FooterOrgInfo) => saveFooterOrgInfoService(data),
+    mutationFn: (input: FooterOrgInfoSaveInput) => {
+      const cached = queryClient.getQueryData<FooterAdminDoc>(adminKey())?.orgInfo
+      return saveFooterOrgInfoService(input, cached)
+    },
     retry: false,
-    onSuccess: data => {
-      queryClient.setQueryData(footerQueryKeys.orgInfoDetail(source()), data)
-      void queryClient.invalidateQueries({ queryKey: footerQueryKeys.orgInfo() })
+    onSuccess: (orgInfo: FooterOrgInfo) => {
+      patchAdminCache(queryClient, { orgInfo })
     },
   })
 }
 
 export function useFooterRelatedLogosList(enabled = true) {
-  const dataSource = source()
-  return useQuery({
-    queryKey: footerQueryKeys.relatedLogosList(dataSource),
-    queryFn: () => listFooterRelatedLogosService(),
-    enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : localStale,
-    retry: dataSource === 'remote' ? 1 : false,
-  })
+  const query = useFooterAdminQuery(enabled)
+  return {
+    ...query,
+    data: query.data?.relatedLogos,
+  }
 }
 
 export function useReorderFooterRelatedLogos() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (orderedIds: string[]) => reorderFooterRelatedLogosService(orderedIds),
+    mutationFn: (orderedIds: string[]) => {
+      const cached = queryClient.getQueryData<FooterAdminDoc>(adminKey())?.relatedLogos
+      return reorderFooterRelatedLogosService(orderedIds, cached)
+    },
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: footerQueryKeys.relatedLogos() })
+    onSuccess: (relatedLogos: FooterRelatedLogo[]) => {
+      patchAdminCache(queryClient, { relatedLogos })
     },
   })
 }
@@ -118,11 +148,17 @@ export function useReorderFooterRelatedLogos() {
 export function useSetFooterRelatedLogoActive() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-      setFooterRelatedLogoActiveService(id, isActive),
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const cached = queryClient.getQueryData<FooterAdminDoc>(adminKey())?.relatedLogos
+      return setFooterRelatedLogoActiveService(id, isActive, cached)
+    },
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: footerQueryKeys.relatedLogos() })
+    onSuccess: (updated: FooterRelatedLogo) => {
+      const prev = queryClient.getQueryData<FooterAdminDoc>(adminKey())
+      if (!prev) return
+      patchAdminCache(queryClient, {
+        relatedLogos: prev.relatedLogos.map(row => (row.id === updated.id ? updated : row)),
+      })
     },
   })
 }
@@ -130,10 +166,17 @@ export function useSetFooterRelatedLogoActive() {
 export function useSaveFooterRelatedLogo() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: FooterRelatedLogoSaveInput) => saveFooterRelatedLogoService(input),
+    mutationFn: (input: FooterRelatedLogoSaveInput) => {
+      const cached = queryClient.getQueryData<FooterAdminDoc>(adminKey())?.relatedLogos
+      return saveFooterRelatedLogoService(input, cached)
+    },
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: footerQueryKeys.relatedLogos() })
+    onSuccess: (updated: FooterRelatedLogo) => {
+      const prev = queryClient.getQueryData<FooterAdminDoc>(adminKey())
+      if (!prev) return
+      patchAdminCache(queryClient, {
+        relatedLogos: prev.relatedLogos.map(row => (row.id === updated.id ? updated : row)),
+      })
     },
   })
 }

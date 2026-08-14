@@ -25,9 +25,7 @@ const OUTER_RADIUS = PIE_SIZE / 2
 const RING_THICKNESS = 56
 const INNER_RADIUS = OUTER_RADIUS - RING_THICKNESS
 /** 모바일: 좁은 폭에 맞춤 · 두께는 반경 비율로 축소 */
-const MOBILE_OUTER_RADIUS = 140
-const MOBILE_INNER_RADIUS =
-  MOBILE_OUTER_RADIUS - Math.round(RING_THICKNESS * (MOBILE_OUTER_RADIUS / OUTER_RADIUS))
+const MOBILE_OUTER_RADIUS = 148
 /** 세그먼트 중앙각에서 링 바깥으로 뻗는 짧은 방사형 구간 길이 */
 const RADIAL_LEN = 28
 /** 도넛 외곽과 라벨 수평선(레일) 사이 최소 여백 */
@@ -81,8 +79,9 @@ export function FinanceDonutChart({
   ariaLabel,
 }: FinanceDonutChartProps) {
   const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
-  const pieOuterRadius = isBelowPc ? MOBILE_OUTER_RADIUS : OUTER_RADIUS
-  const pieInnerRadius = isBelowPc ? MOBILE_INNER_RADIUS : INNER_RADIUS
+  const pieOuterRadius = isBelowPc ? '88%' : OUTER_RADIUS
+  const pieInnerRadius = isBelowPc ? '70%' : INNER_RADIUS
+  const layoutRadius = isBelowPc ? MOBILE_OUTER_RADIUS : OUTER_RADIUS
   const chartHeight = isBelowPc ? MOBILE_CHART_HEIGHT : height
 
   const { slices, totalAmount, totalLabel } = summary
@@ -121,7 +120,7 @@ export function FinanceDonutChart({
       acc.push({
         id: slice.id,
         side: dx >= 0 ? 'right' : 'left',
-        desiredY: dy * (pieOuterRadius + RADIAL_LEN),
+        desiredY: dy * (layoutRadius + RADIAL_LEN),
         endAngle: startAngle + sweep,
       })
       return acc
@@ -140,7 +139,7 @@ export function FinanceDonutChart({
       }
     }
     return layouts
-  }, [slices, pieOuterRadius])
+  }, [slices, layoutRadius])
 
   const renderCallout = (props: CalloutRenderProps) => {
     if (isBelowPc) return null

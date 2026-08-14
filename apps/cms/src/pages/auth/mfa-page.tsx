@@ -20,6 +20,7 @@ import {
 } from '@/shared/constants/mfa-policy'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import { unknownErrorText } from '@/shared/utils/error-handler'
+import { resolvePostAuthRedirectPath } from '@/shared/utils/post-auth-redirect'
 import type { TotpProvisioning } from '@/types/mfa'
 import './mfa-page.css'
 
@@ -112,7 +113,13 @@ export function MfaPage() {
       if (verified) {
         completeMfa()
         setMfaVerified()
-        navigate('/')
+        navigate(
+          resolvePostAuthRedirectPath({
+            passwordChangeRequired: useAuthStore.getState().passwordChangeRequired,
+            fallbackPath: '/',
+          }),
+          { replace: true }
+        )
       } else {
         form.setFieldsValue({ otpCode: '' })
         setOtpCode('')

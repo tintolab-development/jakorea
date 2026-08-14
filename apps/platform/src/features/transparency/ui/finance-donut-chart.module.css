@@ -30,22 +30,22 @@
 
 @media (--bp-below-pc) {
   .chartArea {
-    /* 모바일: 도넛을 뷰포트에 맞춤(콜아웃 숨김) */
-    max-width: min(100%, 544px);
+    width: min(100%, 320px);
+    height: min(calc(100vw - 2 * var(--spacing-20)), 320px);
+    max-width: 320px;
   }
 }
 
 .center {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-4);
   pointer-events: none;
   text-align: center;
-  transform: translate(-50%, -50%);
 }
 
 .centerTotal {
@@ -56,6 +56,7 @@
   font-style: normal;
   font-weight: 600;
   line-height: normal;
+  text-align: center;
 }
 
 .centerLabel {
@@ -126,10 +127,28 @@
   }
 
   .centerTotal {
-    font-size: 28px;
+    width: 100%;
+    max-width: 70%;
+    color: var(--color-neutral-black);
+    font-size: clamp(16px, 4.6vw, 22px);
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    white-space: nowrap;
   }
 
   .centerLabel {
-    font-size: 14px;
+    width: 100%;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .legend {
+    gap: var(--spacing-8) var(--spacing-12);
+  }
+
+  .legendDot {
+    width: 12px;
+    height: 12px;
   }
 }

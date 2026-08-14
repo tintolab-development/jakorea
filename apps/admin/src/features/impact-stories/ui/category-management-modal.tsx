@@ -134,7 +134,10 @@ export function CategoryManagementModal({
 
   const requestDeleteCategory = useCallback(
     (row: ImpactStoryCategory) => {
-      const inUse = countByCategoryId(stories, s => s.categoryId, row.id) > 0
+      const inUse =
+        typeof row.storyCount === 'number'
+          ? row.storyCount > 0
+          : countByCategoryId(stories, s => s.categoryId, row.id) > 0
       if (inUse) {
         setDeleteBlockedOpen(true)
         return

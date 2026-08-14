@@ -1,7 +1,9 @@
 /**
- * 조직도 관리 — remote API opt-in stub.
- * 백엔드 연동 전까지 항상 local mock을 사용한다.
+ * 조직도 관리 — remote API opt-in
+ * API 로그인(실 JWT)일 때만 Homepage OpenAPI 사용
  */
+import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
+
 export function shouldUseOrganizationChartRemoteApi(): boolean {
-  return false
+  return shouldUseHomepageRemoteApi()
 }

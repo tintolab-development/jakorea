@@ -7,6 +7,7 @@ import {
 } from '@/features/user/api/map-instructor-activity-display'
 import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
 import { resolveCanonicalUserDetailId } from '@/features/user/api/user-response-row-id'
+import { mergeTermsAgreementRowsFromPatch } from '@/features/user/api/member-basic-info-terms-patch'
 
 const MASK_GUARDED_LIST_METRIC_KEYS = new Set<keyof NonNullable<User['listMetrics']>>([
   'instructorCareerYearsLabel',
@@ -353,12 +354,10 @@ export function applySavedBasicInfoPatchToUser(
   }
 
   if (patch.termsAgreements != null) {
-    next.termsAgreements = patch.termsAgreements.map(row => ({
-      termsType: row.termsType,
-      termsVersion: row.version,
-      required: row.required,
-      agreed: row.agreed,
-    }))
+    next.termsAgreements = mergeTermsAgreementRowsFromPatch(
+      next.termsAgreements,
+      patch.termsAgreements
+    )
   }
 
   return next

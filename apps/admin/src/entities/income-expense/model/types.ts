@@ -26,6 +26,8 @@ export type FinanceItem = {
   /** 금액 (원) */
   amount: number
   sortOrder: number
+  /** 낙관적 잠금 (remote 필수). mock은 0 */
+  version: number
   /** 지출 테이블 항목만 필수 */
   category?: ExpenseCategory
 }

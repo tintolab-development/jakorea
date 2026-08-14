@@ -49,6 +49,7 @@ function buildSeedTopMenus(): FooterTopMenu[] {
       name: '이용약관',
       isInternal: true,
       linkUrl: '',
+      version: 0,
     },
     {
       id: 'footer-menu-privacy',
@@ -56,6 +57,7 @@ function buildSeedTopMenus(): FooterTopMenu[] {
       name: '개인정보처리방침',
       isInternal: true,
       linkUrl: '',
+      version: 0,
     },
     {
       id: 'footer-menu-directions',
@@ -63,6 +65,7 @@ function buildSeedTopMenus(): FooterTopMenu[] {
       name: '오시는길',
       isInternal: true,
       linkUrl: '',
+      version: 0,
     },
     {
       id: 'footer-menu-nts-disclosure',
@@ -70,6 +73,7 @@ function buildSeedTopMenus(): FooterTopMenu[] {
       name: '국세청 공시 및 공개 내역',
       isInternal: false,
       linkUrl: 'https://www.hometax.go.kr/websquare/websquare.html?w2xPath=/ui/pp/index.xml',
+      version: 0,
     },
     {
       id: 'footer-menu-nts-report',
@@ -77,6 +81,7 @@ function buildSeedTopMenus(): FooterTopMenu[] {
       name: '국세청 탈세 제보',
       isInternal: false,
       linkUrl: 'https://www.hometax.go.kr/',
+      version: 0,
     },
     {
       id: 'footer-menu-donate',
@@ -84,6 +89,7 @@ function buildSeedTopMenus(): FooterTopMenu[] {
       name: '후원하기',
       isInternal: false,
       linkUrl: 'https://www.mrm.co.kr/',
+      version: 0,
     },
     {
       id: 'footer-menu-receipt',
@@ -91,6 +97,7 @@ function buildSeedTopMenus(): FooterTopMenu[] {
       name: '기부금영수증',
       isInternal: false,
       linkUrl: 'https://www.mrm.co.kr/',
+      version: 0,
     },
   ]
   return items.map((item, i) => ({ ...item, sortOrder: i + 1 }))
@@ -109,6 +116,7 @@ function buildSeedOrgInfo(): FooterOrgInfo {
     logoUrl: PLACEHOLDER_LOGO,
     logoFileName: 'ja-korea-logo.svg',
     updatedAt: '2026-07-01T00:00:00.000Z',
+    version: 0,
   }
 }
 
@@ -116,38 +124,46 @@ function buildSeedRelatedLogos(): FooterRelatedLogo[] {
   return [
     {
       id: 'footer-logo-1',
+      partnerId: 1,
       sortOrder: 1,
       isActive: true,
       hasContent: true,
       name: '기획재정부',
       logoUrl: PARTNER_LOGO,
       logoFileName: 'moe.png',
+      version: 0,
     },
     {
       id: 'footer-logo-2',
+      partnerId: 2,
       sortOrder: 2,
       isActive: true,
       hasContent: true,
       name: '국세청',
       logoUrl: PARTNER_LOGO,
       logoFileName: 'nts.png',
+      version: 0,
     },
     {
       id: 'footer-logo-3',
+      partnerId: 3,
       sortOrder: 3,
       isActive: true,
       hasContent: true,
       name: '국민권익위원회',
       logoUrl: PARTNER_LOGO,
       logoFileName: 'acrc.png',
+      version: 0,
     },
     {
       id: 'footer-logo-4',
+      partnerId: 4,
       sortOrder: 4,
       isActive: false,
       hasContent: false,
       name: '',
       logoUrl: '',
+      version: 0,
     },
   ]
 }
@@ -168,6 +184,7 @@ function normalizeTopMenu(raw: Partial<FooterTopMenu>, fallbackId: string, order
     name: asString(raw.name),
     isInternal: asBool(raw.isInternal, false),
     linkUrl: asString(raw.linkUrl),
+    version: typeof raw.version === 'number' ? raw.version : 0,
   }
 }
 
@@ -185,7 +202,9 @@ function normalizeOrgInfo(raw: Partial<FooterOrgInfo> | null | undefined): Foote
     email: asString(raw.email, seed.email),
     logoUrl: asString(raw.logoUrl, seed.logoUrl),
     logoFileName: typeof raw.logoFileName === 'string' ? raw.logoFileName : seed.logoFileName,
+    logoAssetId: typeof raw.logoAssetId === 'number' ? raw.logoAssetId : undefined,
     updatedAt: asString(raw.updatedAt, seed.updatedAt),
+    version: typeof raw.version === 'number' ? raw.version : 0,
   }
 }
 
@@ -198,14 +217,21 @@ function normalizeRelatedLogo(
     typeof raw.hasContent === 'boolean'
       ? raw.hasContent
       : Boolean(asString(raw.name) || asString(raw.logoUrl))
+  const partnerId =
+    typeof raw.partnerId === 'number'
+      ? raw.partnerId
+      : Number(/^footer-logo-(\d+)$/.exec(asString(raw.id, fallbackId))?.[1] ?? order)
   return {
     id: asString(raw.id, fallbackId),
+    partnerId,
     sortOrder: typeof raw.sortOrder === 'number' ? raw.sortOrder : order,
     isActive: asBool(raw.isActive, hasContent),
     hasContent,
     name: asString(raw.name),
     logoUrl: asString(raw.logoUrl),
     logoFileName: typeof raw.logoFileName === 'string' ? raw.logoFileName : undefined,
+    logoAssetId: typeof raw.logoAssetId === 'number' ? raw.logoAssetId : undefined,
+    version: typeof raw.version === 'number' ? raw.version : 0,
   }
 }
 
@@ -324,7 +350,7 @@ export function saveFooterTopMenus(patches: FooterTopMenuPatch[]): FooterTopMenu
     if (!patch) return row
     return {
       ...row,
-      name: patch.name.trim() || row.name,
+      name: (patch.name?.trim() || row.name),
       linkUrl: patch.linkUrl.trim(),
     }
   })
@@ -350,7 +376,9 @@ export function saveFooterOrgInfo(data: FooterOrgInfo): FooterOrgInfo {
     email: data.email.trim(),
     logoUrl: data.logoUrl.trim(),
     logoFileName: data.logoFileName,
+    logoAssetId: data.logoAssetId,
     updatedAt: new Date().toISOString(),
+    version: data.version,
   })
   writeFile({ ...file, orgInfo: next })
   return next
@@ -398,6 +426,7 @@ export function saveFooterRelatedLogo(input: FooterRelatedLogoSaveInput): Footer
     name,
     logoUrl,
     logoFileName: input.logoFileName,
+    logoAssetId: input.logoAssetId ?? file.relatedLogos[index]!.logoAssetId,
   }
   const items = [...file.relatedLogos]
   items[index] = next

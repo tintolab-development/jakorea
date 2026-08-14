@@ -54,6 +54,11 @@ import './rich-text-toolbar.css'
 
 export type RichTextToolbarProps = {
   editor: Editor | null
+  /**
+   * 인라인 이미지·YouTube 삽입 허용 (기본 true).
+   * Homepage 공지 API는 body에서 img/iframe을 sanitize로 제거하므로 remote 공지는 false.
+   */
+  allowInlineMedia?: boolean
 }
 
 const EMPTY_TOOLBAR_STATE = {
@@ -105,7 +110,10 @@ function getActiveTextAlign(editor: Editor): TextAlignValue {
  * Figma 스펙 커스텀 툴바 — 드롭다운 + B/I/U/S·목록·삽입(이미지·YouTube 등).
  * 이미지 선택 시 `tiptap-extension-resize-image`가 크기·좌/중/우 정렬 UI를 표시한다.
  */
-export function RichTextToolbar({ editor }: RichTextToolbarProps) {
+export function RichTextToolbar({
+  editor,
+  allowInlineMedia = true,
+}: RichTextToolbarProps) {
   const imageFileInputRef = useRef<HTMLInputElement>(null)
   const state =
     useEditorState({
@@ -254,30 +262,43 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
     [run]
   )
 
-  const insertMenuItems: MenuProps['items'] = useMemo(
-    () => [
-      {
-        key: 'image-url',
-        label: '이미지 (URL)',
-        onClick: () => {
-          const src = promptImageUrl()
-          if (src) run(ed => insertImageFromUrl(ed, src))
-        },
-      },
-      {
-        key: 'image-file',
-        label: '이미지 (파일)',
-        onClick: () => imageFileInputRef.current?.click(),
-      },
-      {
-        key: 'youtube',
-        label: 'YouTube 동영상',
-        onClick: () => {
-          const url = promptYoutubeUrl()
-          if (url) run(ed => insertYoutubeFromUrl(ed, url))
-        },
-      },
-      { type: 'divider' },
+  const insertMenuItems: MenuProps['items'] = useMemo(() => {
+    const mediaItems: MenuProps['items'] = allowInlineMedia
+      ? [
+          {
+            key: 'image-url',
+            label: '이미지 (URL)',
+            onClick: () => {
+              const src = promptImageUrl()
+              if (src) run(ed => insertImageFromUrl(ed, src))
+            },
+          },
+          {
+            key: 'image-file',
+            label: '이미지 (파일)',
+            onClick: () => imageFileInputRef.current?.click(),
+          },
+          {
+            key: 'youtube',
+            label: 'YouTube 동영상',
+            onClick: () => {
+              const url = promptYoutubeUrl()
+              if (url) run(ed => insertYoutubeFromUrl(ed, url))
+            },
+          },
+          { type: 'divider' },
+        ]
+      : [
+          {
+            key: 'inline-media-disabled',
+            label: '이미지는 하단 첨부 파일을 사용해 주세요',
+            disabled: true,
+          },
+          { type: 'divider' },
+        ]
+
+    return [
+      ...mediaItems,
       {
         key: 'link',
         label: '링크',
@@ -288,9 +309,8 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
         label: '인용',
         onClick: () => run(ed => ed.chain().focus().toggleBlockquote().run()),
       },
-    ],
-    [run]
-  )
+    ]
+  }, [allowInlineMedia, run])
 
   const handleImageFileChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -313,6 +333,7 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
         className="rich-text-toolbar__file-input"
         tabIndex={-1}
         aria-hidden
+        disabled={!allowInlineMedia}
         onChange={handleImageFileChange}
       />
       <ToolbarDropdown
