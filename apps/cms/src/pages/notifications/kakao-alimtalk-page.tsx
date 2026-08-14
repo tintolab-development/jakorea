@@ -5,13 +5,16 @@
 import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AlimtalkTemplateList } from '@/features/notifications/ui/alimtalk-template/list'
+import { SendFullpageModal } from '@/features/notifications/ui/alimtalk-send/fullpage-modal'
 import { ComingSoonTabPanel } from '@/features/notifications/ui/coming-soon-tab-panel'
 import type { KakaoAlimtalkTabKey } from '@/features/notifications/model/alimtalk-template/types'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import './kakao-alimtalk-page.css'
 
 const TAB_PARAM = 'tab'
+const SEND_MODAL_PARAM = 'modal'
+const SEND_MODAL_VALUE = 'send'
 
 const TAB_ITEMS: { key: KakaoAlimtalkTabKey; label: string }[] = [
   { key: 'template', label: '알림톡 템플릿' },
@@ -24,9 +27,9 @@ function parseTabKey(raw: string | null): KakaoAlimtalkTabKey {
 }
 
 export function KakaoAlimtalkPage() {
-  const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
+  const sendOpen = searchParams.get(SEND_MODAL_PARAM) === SEND_MODAL_VALUE
 
   const handleTabChange = useCallback(
     (key: string) => {
@@ -48,11 +51,26 @@ export function KakaoAlimtalkPage() {
   )
 
   const handleSendAlimtalk = useCallback(() => {
-    showAlert({
-      title: '준비 중',
-      content: '알림톡 발송 기능은 현재 준비 중입니다.',
-    })
-  }, [showAlert])
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.set(SEND_MODAL_PARAM, SEND_MODAL_VALUE)
+        return next
+      },
+      { replace: false }
+    )
+  }, [setSearchParams])
+
+  const handleCloseSend = useCallback(() => {
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.delete(SEND_MODAL_PARAM)
+        return next
+      },
+      { replace: true }
+    )
+  }, [setSearchParams])
 
   return (
     <div className="kakao-alimtalk-page">
@@ -76,6 +94,7 @@ export function KakaoAlimtalkPage() {
           description="알림톡 발송 및 수신 결과 조회 기능은 현재 준비 중입니다."
         />
       )}
+      <SendFullpageModal open={sendOpen} onClose={handleCloseSend} />
     </div>
   )
 }

@@ -28,6 +28,19 @@ export type AlimtalkCategory = {
   parentId: string
 }
 
+export type AlimtalkEmphasisType = 'NONE'
+
+export type AlimtalkTemplateButton = {
+  typeLabel: string
+  name: string
+  variant: 'channel' | 'default'
+}
+
+export type AlimtalkTemplateQuickLink = {
+  typeLabel: string
+  name: string
+}
+
 export type AlimtalkTemplateItem = {
   id: string
   name: string
@@ -37,9 +50,13 @@ export type AlimtalkTemplateItem = {
   updatedAt: string
   senderProfile: string
   messageType: AlimtalkTemplateType
-  emphasisType: 'NONE'
+  emphasisType: AlimtalkEmphasisType
+  isSecurityTemplate: boolean
   content: string
+  extraInfo: string
   ctaLabel: string
+  buttons: AlimtalkTemplateButton[]
+  quickLinks: AlimtalkTemplateQuickLink[]
 }
 
 export type AlimtalkTemplatePendingFilters = {

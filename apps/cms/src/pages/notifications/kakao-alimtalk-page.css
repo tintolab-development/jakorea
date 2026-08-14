@@ -1,4 +1,11 @@
 /* 탭 ↔ 필터 간격 — Gemini 찾아가는 연수·템플릿 목록과 동일 */
+.kakao-alimtalk-page {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: calc(100vh - 64px - 64px);
+}
+
 .kakao-alimtalk-page__tabs.cms-text-tabs .cms-text-tabs__row {
   padding-left: 20px;
   padding-bottom: 16px;
@@ -8,6 +15,45 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.kakao-alimtalk-page .program-list-page {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.kakao-alimtalk-page .filter-table-layout {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  margin-bottom: 0;
+}
+
+.kakao-alimtalk-page .filter-table-layout__table {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.kakao-alimtalk-page .alimtalk-template-split {
+  flex: 1 1 0;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.kakao-alimtalk-page .alimtalk-category-tree {
+  max-height: none;
+  height: 100%;
+  overflow: auto;
+}
+
+.kakao-alimtalk-page .alimtalk-template-detail--empty {
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 .notification-coming-soon-tab-panel {
