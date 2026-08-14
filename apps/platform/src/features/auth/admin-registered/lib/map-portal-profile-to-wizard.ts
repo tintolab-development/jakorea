@@ -64,9 +64,16 @@ export function mapPortalProfileToAdminRegisteredWizardPartial(
   const memberType = mapMemberType(profile)
   const mappedGender = mapGender(profile.gender)
   const mappedBirthDate = mapBirthDate(profile.birthDate)
-  const schoolStatus = mapSchoolStatus(profile.schoolEnrollmentStatus)
+  const schoolStatus =
+    mapSchoolStatus(profile.schoolEnrollmentStatus) ??
+    (profile.schoolName?.trim()
+      ? 'enrolled'
+      : (current.schoolStatus ?? (memberType === 'teacher' ? undefined : 'none')))
   const employmentStatus = mapEmploymentStatus(profile.teacherEmploymentStatus)
   const schoolAddress = mapSchoolAddress(profile)
+  const notEnrolled = schoolStatus === 'none'
+  const profileSchoolName =
+    profile.schoolName?.trim() || profile.affiliationName?.trim() || ''
 
   return {
     email: profile.email?.trim() || current.email,
@@ -77,16 +84,20 @@ export function mapPortalProfileToAdminRegisteredWizardPartial(
     verifiedPhone: current.verifiedPhone || profile.phone?.trim() || undefined,
     address: profile.address?.trim() ?? current.address ?? '',
     addressDetail: profile.addressDetail?.trim() ?? current.addressDetail ?? '',
-    schoolName: profile.schoolName?.trim() || profile.affiliationName?.trim() || current.schoolName || '',
-    grade: profile.grade?.trim() ?? current.grade ?? '',
-    schoolStatus:
-      schoolStatus ??
-      (profile.schoolName?.trim()
-        ? 'enrolled'
-        : (current.schoolStatus ?? (memberType === 'teacher' ? undefined : 'none'))),
+    postalCode: profile.postalCode?.trim() ?? current.postalCode ?? '',
+    regionSido: profile.regionSido?.trim() ?? current.regionSido ?? '',
+    regionSigungu: profile.regionSigungu?.trim() ?? current.regionSigungu ?? '',
+    // 미재학이면 wizard에 남은 이전 학교명을 되살리지 않는다
+    schoolName: notEnrolled ? '' : profileSchoolName || current.schoolName || '',
+    grade: notEnrolled ? '' : (profile.grade?.trim() ?? current.grade ?? ''),
+    schoolStatus,
     employmentStatus: employmentStatus ?? current.employmentStatus,
-    schoolAddress: schoolAddress ?? current.schoolAddress,
+    schoolAddress: notEnrolled ? '' : (schoolAddress ?? current.schoolAddress),
+    schoolOrganizationId: notEnrolled
+      ? null
+      : (profile.schoolOrganizationId ?? current.schoolOrganizationId ?? null),
     volunteerId: profile.external1365Id?.trim() ?? current.volunteerId ?? '',
+    portalProfile: profile,
     profileHydrated: true,
   }
 }

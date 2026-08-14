@@ -9,7 +9,12 @@ export {
   AdminRegisteredNoticePage,
 } from './admin-registered'
 export { FindEmailCompletePage, FindEmailPage } from './find-email'
-export { FindPasswordCompletePage, FindPasswordPage, FindPasswordResetPage } from './find-password'
+export {
+  FindPasswordCompletePage,
+  FindPasswordIdentityCallbackPage,
+  FindPasswordPage,
+  FindPasswordResetPage,
+} from './find-password'
 export {
   SignUpPage,
   SignUpCompletePage,
@@ -22,6 +27,7 @@ export {
   SignUpGuardianIdentityCallbackPage,
   SignUpIdentityMockNicePage,
   SignUpGuardianIdentityMockNicePage,
+  FindPasswordIdentityMockNicePage,
 } from './sign-up/identity-pages'
 export { RequiredPage } from './required'
 export { SocialErrorPage } from './social'

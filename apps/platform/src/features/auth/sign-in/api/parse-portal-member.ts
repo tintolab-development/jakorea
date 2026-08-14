@@ -38,6 +38,10 @@ export function parseHomepageMeResponse(payload: unknown): HomepageMeResponse {
     teacher: optionalBoolean(root.teacher),
     identityVerified: optionalBoolean(root.identityVerified),
     lastLoginAt: optionalString(root.lastLoginAt),
+    registeredByAdmin: optionalBoolean(root.registeredByAdmin),
+    identitySelfSignupCompletedAfterAdminRegistration: optionalBoolean(
+      root.identitySelfSignupCompletedAfterAdminRegistration,
+    ),
   }
 }
 

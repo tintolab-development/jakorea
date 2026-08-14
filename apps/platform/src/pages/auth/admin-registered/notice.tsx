@@ -16,29 +16,19 @@ function AdminRegisteredFirstLoginNotice() {
   }
 
   return (
-    <div className={styles.shellBreakout}>
-      <div className={styles.card}>
-        <div className={styles.cardInner}>
-          <img
-            className={styles.illustration}
-            src={illustExclamationUrl}
-            alt=""
-            aria-hidden="true"
-          />
-          <h1 className={styles.title}>관리자에 의해 가입된 회원입니다.</h1>
-          <p className={styles.description}>
-            현재 비밀번호는 가입된 이메일 주소와 동일합니다.
-            <br />
-            안전한 이용을 위해 본인인증 후 비밀번호를 변경해 주세요.
-          </p>
-          <div className={styles.actions}>
-            <PFButton size="xlarge" width="100%" onClick={handleChangePassword}>
-              본인인증 후 비밀번호 변경하기
-            </PFButton>
-          </div>
-        </div>
+    <>
+      <PFText as="p" typo="bd-lg-rg" color="primary-800">
+        현재 비밀번호는 가입된 이메일 주소와 동일합니다.
+        <br />
+        안전한 이용을 위해 본인인증 후 비밀번호를 변경해 주세요.
+      </PFText>
+
+      <div className={styles.actions}>
+        <PFButton size="xlarge" width="100%" onClick={handleChangePassword}>
+          본인인증 후 비밀번호 변경하기
+        </PFButton>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -82,10 +72,6 @@ function AdminRegisteredSignUpNotice() {
 export function AdminRegisteredNoticePage() {
   const isSignUpEntry = isAdminRegisteredSignUpEntry()
 
-  if (!isSignUpEntry) {
-    return <AdminRegisteredFirstLoginNotice />
-  }
-
   return (
     <section>
       <div className={styles.intro}>
@@ -93,7 +79,7 @@ export function AdminRegisteredNoticePage() {
         <PFText as="h1" typo="hd-md" color="black" className={authPageCopyClass('title')}>
           관리자가 등록한 계정이에요.
         </PFText>
-        <AdminRegisteredSignUpNotice />
+        {isSignUpEntry ? <AdminRegisteredSignUpNotice /> : <AdminRegisteredFirstLoginNotice />}
       </div>
     </section>
   )

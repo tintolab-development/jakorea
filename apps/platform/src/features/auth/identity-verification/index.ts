@@ -1,6 +1,8 @@
 export {
   signupIdentityVerificationClient,
   guardianIdentityVerificationClient,
+  findPasswordIdentityVerificationClient,
+  adminProvisionedIdentityVerificationClient,
 } from './api'
 export {
   buildIdentityCallbackKey,
@@ -10,6 +12,8 @@ export {
 export {
   useSignupIdentityVerification,
   useGuardianIdentityVerification,
+  useFindPasswordIdentityVerification,
+  useAdminProvisionedIdentityVerification,
 } from './hooks'
 
 export type {

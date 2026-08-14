@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { PFText } from '@/shared/ui'
+import { isAdminProvisionedIdentityConfirmPending } from '@/features/auth/admin-registered'
 import {
   buildIdentityCallbackKey,
   isIdentityCallbackHandled,
@@ -7,10 +8,15 @@ import {
   processIdentityCallback,
   signupIdentityVerificationClient,
 } from '@/features/auth/identity-verification'
+import { getLoginApiErrorMessage } from '@/features/auth/sign-in'
 import styles from './identity-callback.module.css'
 
 const SIGNUP_IDENTITY_FLOW = 'MEMBER_SIGNUP'
 
+/**
+ * 관리자 등록 온보딩도 NICE allowlist상 signup callback URL을 재사용한다.
+ * admin pending이면 profile GET을 건너뛰어 profileToken을 부모 창 confirm에 남긴다.
+ */
 export function SignUpIdentityCallbackPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [noOpener, setNoOpener] = useState(false)
@@ -25,18 +31,28 @@ export function SignUpIdentityCallbackPage() {
     markIdentityCallbackHandled(callbackKey)
 
     const execute = async () => {
-      const outcome = await processIdentityCallback(
-        signupIdentityVerificationClient,
-        new URLSearchParams(window.location.search),
-      )
+      const skipVerifiedProfileFetch = isAdminProvisionedIdentityConfirmPending()
 
-      if (outcome.kind === 'verified' || outcome.kind === 'cancelled') {
-        return
-      }
+      try {
+        const outcome = await processIdentityCallback(
+          signupIdentityVerificationClient,
+          new URLSearchParams(window.location.search),
+          { skipVerifiedProfileFetch },
+        )
 
-      if (outcome.kind === 'failed') {
-        setNoOpener(outcome.noOpener)
-        setErrorMessage(outcome.message)
+        if (outcome.kind === 'verified' || outcome.kind === 'cancelled') {
+          return
+        }
+
+        if (outcome.kind === 'failed') {
+          setNoOpener(outcome.noOpener)
+          setErrorMessage(outcome.message)
+        }
+      } catch (error) {
+        setNoOpener(false)
+        setErrorMessage(
+          getLoginApiErrorMessage(error, '본인인증 정보를 확인할 수 없습니다. 다시 시도해 주세요.'),
+        )
       }
     }
 
