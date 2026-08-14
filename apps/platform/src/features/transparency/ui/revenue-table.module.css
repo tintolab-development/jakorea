@@ -211,6 +211,10 @@
     gap: var(--spacing-12);
   }
 
+  .row {
+    border-bottom: 1px solid var(--color-neutral-black-10);
+  }
+
   .headRow {
     padding: var(--spacing-8) var(--spacing-12);
     border-radius: var(--radius-8);
@@ -248,11 +252,12 @@
     white-space: nowrap;
   }
 
-  .cell {
+  .cell,
+  .row .cell {
     height: auto;
     min-height: 0;
     padding: var(--spacing-8) var(--spacing-12);
-    border-bottom: 1px solid var(--color-neutral-black-10);
+    border-bottom: none;
     font-size: 14px;
     font-weight: 400;
     line-height: 140%;

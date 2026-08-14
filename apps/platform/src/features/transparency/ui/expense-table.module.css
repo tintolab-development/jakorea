@@ -337,6 +337,15 @@
     gap: var(--spacing-12);
   }
 
+  .table :global(tbody) tr {
+    border-bottom: 1px solid var(--color-neutral-black-10);
+  }
+
+  .headRow,
+  .totalRow {
+    border-bottom: none;
+  }
+
   .headRow {
     padding: var(--spacing-8) var(--spacing-12);
     border-radius: var(--radius-8);
@@ -387,9 +396,19 @@
     font-size: 14px;
   }
 
+  .cell,
+  .groupLastRow .cell,
+  .groupLastRow .subtotalCell,
+  .totalRow .cell,
+  .groupHeadingCell {
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+  }
+
   .cell {
     padding: var(--spacing-8) var(--spacing-12);
-    border-bottom: 1px solid var(--color-neutral-black-10);
+    overflow: visible;
     white-space: normal;
   }
 
@@ -426,7 +445,7 @@
 
   .groupHeadingCell {
     padding: var(--spacing-16) var(--spacing-12) var(--spacing-8);
-    border-bottom: 1px solid var(--color-neutral-black-10);
+    border-bottom: none;
     color: var(--color-primary-800);
     font-size: 12px;
     font-weight: 600;
@@ -439,7 +458,6 @@
 
   .groupLastRow .cell {
     padding-bottom: var(--spacing-8);
-    border-bottom: 1px solid var(--color-neutral-black-10);
   }
 
   .groupStartRow .cell,
@@ -471,7 +489,7 @@
 
   .totalRow .cell {
     padding-block: var(--spacing-12);
-    border-bottom: none;
+    overflow: visible;
     background: transparent;
     color: var(--color-primary-700);
     font-size: 16px;
