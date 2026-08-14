@@ -1,13 +1,20 @@
 /*
- * 띠배너 1개 높이: padding 16×2 + Body/Medium/bold line-height 24 = 56px
- * 홈 첫 폴드(1920×1080) 계산용 — 히어로 height에서 차감
+ * 띠배너 1개 높이
+ * 모바일: padding 12×2 + 콘텐츠 → 46px
+ * PC: padding 16×2 + Body/Medium/bold line-height 24 = 56px
  */
 .strip {
-  --home-strip-banner-height: 56px;
+  --home-strip-banner-height: 46px;
 
   display: flex;
   flex-direction: column;
   width: 100%;
+}
+
+@media (--bp-pc-up) {
+  .strip {
+    --home-strip-banner-height: 56px;
+  }
 }
 
 .banner {
@@ -15,13 +22,21 @@
   box-sizing: border-box;
   width: 100%;
   height: var(--home-strip-banner-height);
-  padding: var(--spacing-16) 0;
+  padding: 12px 20px;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  align-self: stretch;
+  gap: 8px;
   text-align: center;
   text-decoration: none;
   color: var(--color-neutral-cool-80);
+}
+
+@media (--bp-pc-up) {
+  .banner {
+    padding: var(--spacing-16) 0;
+    gap: 10px;
+  }
 }
 
 .banner:focus-visible {
