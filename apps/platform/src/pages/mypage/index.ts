@@ -1,2 +1,3 @@
 export { MypageHomePage } from './home/page'
 export { MypageInstructorApplyPage } from './instructor-apply/page'
+export { MypageInstructorApplyConsentPage } from './instructor-apply/consent/page'

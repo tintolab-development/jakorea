@@ -1,3 +1,10 @@
+export {
+  getInstructorApplyConsentPageTitle,
+  getInstructorApplyConsentPath,
+  isInstructorApplyConsentKey,
+  InstructorApplyConsentWriteForm,
+} from './consent'
+export type { InstructorApplyConsentKey } from './consent'
 export { InstructorApplyForm } from './instructor-apply-form'
 export type { InstructorApplyFormProps } from './instructor-apply-form'
 export type { InstructorApplyLockedBasicInfo } from './map-locked-basic-info'

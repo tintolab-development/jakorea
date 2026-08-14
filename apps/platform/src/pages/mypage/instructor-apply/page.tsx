@@ -10,15 +10,20 @@ import {
   useCurrentInstructorRoleRequestQuery,
   useInstructorApplyLockedBasic,
 } from '@/features/mypage'
-import { getAccessToken } from '@/shared/lib/auth-token'
-import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
-import { getDevAuthLoggedIn } from '@/shared/lib'
+import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
+import {
+  getAccessToken,
+  getDevAuthLoggedIn,
+  isRemoteApiConfigured,
+  resolveLoginRequiredPath,
+} from '@/shared/lib'
 import { PFAlertModal, PFFormPage, PFText } from '@/shared/ui'
 
 export function MypageInstructorApplyPage() {
   const navigate = useNavigate()
   const [isAuthReady, setIsAuthReady] = useState(false)
   const [successOpen, setSuccessOpen] = useState(false)
+  const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const { isLoading, isError, lockedBasic } = useInstructorApplyLockedBasic()
   const remoteSession = isRemoteApiConfigured() && Boolean(getAccessToken())
   const currentRequestQuery = useCurrentInstructorRoleRequestQuery({ enabled: remoteSession })
@@ -26,15 +31,20 @@ export function MypageInstructorApplyPage() {
   const statusMessage = getInstructorRoleRequestStatusMessage(currentRequestQuery.data)
 
   useEffect(() => {
+    if (remoteSession) {
+      setIsAuthReady(true)
+      return
+    }
+
     if (!getDevAuthLoggedIn()) {
-      navigate(`/auth/required?redirect=${encodeURIComponent(INSTRUCTOR_APPLY_PATH)}`)
+      navigate(resolveLoginRequiredPath(INSTRUCTOR_APPLY_PATH))
       return
     }
 
     setIsAuthReady(true)
-  }, [navigate])
+  }, [navigate, remoteSession])
 
-  if (!isAuthReady) {
+  if (!isAuthReady || isChecking || isRedirecting) {
     return null
   }
 
