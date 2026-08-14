@@ -41,16 +41,16 @@ export function DetailPanel({ template, categoryName, onPreview }: DetailPanelPr
           <DetailInfoForm.Field label="발신 프로필" view={template.senderProfile} />
           <DetailInfoForm.Field label="메시지 유형" view={MESSAGE_TYPE_LABEL[template.messageType]} />
         </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="템플릿 상세"
+            fullRow
             view={
               <CmsButton variant="secondary" size="medium" type="button" onClick={onPreview}>
                 미리보기
               </CmsButton>
             }
           />
-          <DetailInfoForm.Field label="" view={null} />
         </DetailInfoForm.Row>
       </DetailInfoForm>
     </div>
