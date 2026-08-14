@@ -3,4 +3,5 @@ export { SignUpGuardianIdentityCallbackPage } from './guardian-identity-callback
 export {
   SignUpIdentityMockNicePage,
   SignUpGuardianIdentityMockNicePage,
+  FindPasswordIdentityMockNicePage,
 } from './identity-mock'
