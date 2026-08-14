@@ -4,6 +4,7 @@
  */
 
 import type { NoticeAttachment, NoticeDetail, NoticeListItem } from '../model/types'
+import { filterAndSortNotices } from './filter-notices'
 
 type CmsNoticeSeed = {
   id: string
@@ -353,4 +354,26 @@ export function useMockNoticesCatalog(): NoticeCatalogItem[] {
 export function useMockNoticeDetail(id: string | null): NoticeDetail | null {
   if (!id) return null
   return getMockNoticeDetailById(id)
+}
+
+export type AdjacentNotices = {
+  previous: NoticeListItem | null
+  next: NoticeListItem | null
+}
+
+/**
+ * 핀 상단 + 게시일 desc 기준 인접 글.
+ * - previous(이전글): 목록에서 아래(더 오래된) 글
+ * - next(다음글): 목록에서 위(더 최근) 글
+ */
+export function getAdjacentNotices(id: string): AdjacentNotices {
+  const sorted = filterAndSortNotices(getMockNotices(), { q: '' })
+  const index = sorted.findIndex(item => item.id === id)
+  if (index < 0) {
+    return { previous: null, next: null }
+  }
+  return {
+    next: index > 0 ? (sorted[index - 1] ?? null) : null,
+    previous: index < sorted.length - 1 ? (sorted[index + 1] ?? null) : null,
+  }
 }
