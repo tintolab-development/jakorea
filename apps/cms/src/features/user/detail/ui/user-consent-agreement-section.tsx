@@ -15,12 +15,18 @@ import {
   isMemberBasicInfoImmutableConsentLabel,
   resolveEditableConsentAgreedFromDraft,
 } from '@/features/user/api/member-basic-info-terms-patch'
+import { MemberConsentDocumentViewModal } from '@/features/user/shared/ui/member-consent-document-view-modal'
+import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
+import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
 import {
+  CONSENT_RADIO_OPTIONS,
+  type ConsentValue,
+} from '@/features/user/shared/ui/instructor-profile-form'
+import {
+  isMemberCrimeConsentField,
   resolveMemberConsentTemplateByLabel,
   type MemberConsentTemplateEntry,
 } from '@/features/user/shared/lib/member-consent-template-map'
-import { MemberConsentDocumentViewModal } from '@/features/user/shared/ui/member-consent-document-view-modal'
-import { CONSENT_RADIO_OPTIONS } from '@/features/user/shared/ui/instructor-profile-form'
 import './detail-info/user-detail-section-head.css'
 import './user-consent-agreement-section.css'
 
@@ -208,8 +214,14 @@ const MARKETING_AND_MFA_ROW: ConsentRowSchema = {
 /** 관리자 회원 — 약관·동의 4항목(2열×2행) */
 export const CONSENT_ROWS_ADMIN: ConsentRowSchema[] = [TERMS_AND_PRIVACY_ROW, MARKETING_AND_MFA_ROW]
 
-/** 회원 상세 약관·동의 — 스크린샷 기준 8항목(2열×4행) */
-const CONSENT_ROWS_FULL: ConsentRowSchema[] = [
+/** 일반·교사(비겸직) — 서비스·개인정보·마케팅·초상권 (2열×2행) */
+const CONSENT_ROWS_INDIVIDUAL_LIKE: ConsentRowSchema[] = [
+  TERMS_AND_PRIVACY_ROW,
+  MARKETING_AND_PORTRAIT_ROW,
+]
+
+/** 강사(순수·겸직) — 위 + 지급조서·교육진행자·행정정보·성범죄 (2열×4행) */
+const CONSENT_ROWS_INSTRUCTOR: ConsentRowSchema[] = [
   TERMS_AND_PRIVACY_ROW,
   MARKETING_AND_PORTRAIT_ROW,
   PAYMENT_AND_EDUCATOR_ROW,
@@ -221,16 +233,18 @@ const ADMIN_CONSENT_CAPTION = '* 미동의 시 서비스 가입 및 관리자 �
 /** 프리셋별 행·필드 구조 (표시 데이터와 분리) */
 export const CONSENT_PRESET_SCHEMA: ConsentPresetSchema = {
   admin: CONSENT_ROWS_ADMIN,
-  individual: CONSENT_ROWS_FULL,
-  school_teacher: CONSENT_ROWS_FULL,
-  instructor_dual: CONSENT_ROWS_FULL,
-  instructor_only: CONSENT_ROWS_FULL,
+  individual: CONSENT_ROWS_INDIVIDUAL_LIKE,
+  /** 교사(겸직 아님) — 강사 전용 동의(지급조서·서약·행정·성범죄) 미노출 */
+  school_teacher: CONSENT_ROWS_INDIVIDUAL_LIKE,
+  instructor_dual: CONSENT_ROWS_INSTRUCTOR,
+  instructor_only: CONSENT_ROWS_INSTRUCTOR,
 }
 
-export const CONSENT_ROWS_PERMISSION_INSTRUCTOR: ConsentRowSchema[] = CONSENT_ROWS_FULL
+export const CONSENT_ROWS_PERMISSION_INSTRUCTOR: ConsentRowSchema[] = CONSENT_ROWS_INSTRUCTOR
 
 export interface ConsentRenderCtx {
   openDocumentForLabel: (label: string, formResponseId?: number) => void
+  onWriteConsentDocument?: (label: string) => void
   editing?: boolean
   draftTermsAgreements?: TermsAgreementRequest[]
   onEditableConsentChange?: (label: string, agreed: boolean) => void
@@ -336,6 +350,40 @@ function resolveConsentFieldView(
   }
 }
 
+function ConsentDocumentFieldEdit({
+  agreed,
+  onDisagree,
+  onWrite,
+}: {
+  agreed: boolean
+  onDisagree: () => void
+  onWrite: () => void
+}) {
+  return (
+    <span className="user-consent-agreement-section__document-edit">
+      <CmsRadioGroup
+        options={CONSENT_RADIO_OPTIONS}
+        size="large"
+        value={agreed ? 'agree' : 'disagree'}
+        onChange={event => {
+          const next = event.target.value as ConsentValue
+          if (next === 'disagree') {
+            onDisagree()
+            return
+          }
+          onWrite()
+        }}
+      />
+      <span className="user-consent-agreement-section__value-sep" aria-hidden>
+        |
+      </span>
+      <CmsButton variant="secondary" size="medium" type="button" onClick={onWrite}>
+        동의서 작성
+      </CmsButton>
+    </span>
+  )
+}
+
 function resolveConsentFieldEdit(
   field: ConsentFieldSchema,
   ctx: ConsentRenderCtx
@@ -368,6 +416,17 @@ function resolveConsentFieldEdit(
     field.label,
     fallbackAgreed
   )
+
+  const documentEntry = resolveMemberConsentTemplateByLabel(field.label)
+  if (documentEntry && ctx.onWriteConsentDocument) {
+    return (
+      <ConsentDocumentFieldEdit
+        agreed={agreed}
+        onDisagree={() => ctx.onEditableConsentChange?.(field.label, false)}
+        onWrite={() => ctx.onWriteConsentDocument?.(field.label)}
+      />
+    )
+  }
 
   return (
     <CmsRadioGroup
@@ -436,6 +495,11 @@ type ActiveConsentView = {
   formResponseId?: number
 }
 
+type ActiveConsentWrite = {
+  label: string
+  entry: MemberConsentTemplateEntry
+}
+
 export function UserConsentAgreementSection({
   preset = 'individual',
   viewVariant = 'default',
@@ -448,6 +512,7 @@ export function UserConsentAgreementSection({
   onEditableConsentChange,
 }: UserConsentAgreementSectionProps) {
   const [activeView, setActiveView] = useState<ActiveConsentView | null>(null)
+  const [activeWrite, setActiveWrite] = useState<ActiveConsentWrite | null>(null)
 
   const effectiveCaption = caption ?? (preset === 'admin' ? ADMIN_CONSENT_CAPTION : DEFAULT_CAPTION)
 
@@ -465,6 +530,18 @@ export function UserConsentAgreementSection({
     [onOpenAgreementDocument]
   )
 
+  const openWriteForLabel = useCallback((label: string) => {
+    const entry = resolveMemberConsentTemplateByLabel(label)
+    if (entry) setActiveWrite({ label, entry })
+  }, [])
+
+  const closeWrite = useCallback(() => setActiveWrite(null), [])
+
+  const handleWriteComplete = useCallback(() => {
+    if (activeWrite) onEditableConsentChange?.(activeWrite.label, true)
+    setActiveWrite(null)
+  }, [activeWrite, onEditableConsentChange])
+
   const baseSchema =
     viewVariant === 'permission_instructor'
       ? CONSENT_ROWS_PERMISSION_INSTRUCTOR
@@ -474,11 +551,14 @@ export function UserConsentAgreementSection({
   const lowerRows = schema.slice(2)
   const ctx: ConsentRenderCtx = {
     openDocumentForLabel,
+    onWriteConsentDocument: editing ? openWriteForLabel : undefined,
     editing,
     draftTermsAgreements,
     onEditableConsentChange,
   }
   const formMode = editing ? 'edit' : 'view'
+  const writingCrime =
+    activeWrite != null && isMemberCrimeConsentField(activeWrite.entry.fieldKey)
 
   return (
     <div className="user-consent-agreement-section">
@@ -512,6 +592,18 @@ export function UserConsentAgreementSection({
           formResponseId={activeView.formResponseId}
           onClose={() => setActiveView(null)}
         />
+      ) : null}
+      {activeWrite != null && !writingCrime ? (
+        <MemberConsentAgreementModal
+          open
+          templateId={activeWrite.entry.templateId}
+          modalTitle={activeWrite.entry.modalTitle}
+          onClose={closeWrite}
+          onComplete={handleWriteComplete}
+        />
+      ) : null}
+      {writingCrime ? (
+        <MemberConsentCrimeModal open onClose={closeWrite} onComplete={handleWriteComplete} />
       ) : null}
     </div>
   )

@@ -57,25 +57,42 @@ export function SchoolTeacherEmploymentStatusDropdown({
   userId,
   employmentStatusLabel,
   emptyFallback = <span>-</span>,
+  onChange,
 }: {
   userId: string
   employmentStatusLabel?: string
   /** 파싱 실패 시. `null`이면 아무것도 렌더하지 않음(강사 소속 인라인용) */
   emptyFallback?: ReactNode | null
+  /** remote 저장. 없으면 화면 상태만 변경(mock) */
+  onChange?: (status: SchoolTeacherEmploymentStatus) => void | Promise<void>
 }) {
   const [employmentStatus, setEmploymentStatus] = useState<SchoolTeacherEmploymentStatus | null>(() =>
     parseSchoolTeacherEmploymentStatus(employmentStatusLabel)
   )
   const [employmentDropdownOpen, setEmploymentDropdownOpen] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
 
   useEffect(() => {
     setEmploymentStatus(parseSchoolTeacherEmploymentStatus(employmentStatusLabel))
   }, [userId, employmentStatusLabel])
 
-  const handleEmploymentStatusChange = useCallback((next: SchoolTeacherEmploymentStatus) => {
-    setEmploymentStatus(next)
-    setEmploymentDropdownOpen(false)
-  }, [])
+  const handleEmploymentStatusChange = useCallback(
+    async (next: SchoolTeacherEmploymentStatus) => {
+      if (next === employmentStatus) return
+      setEmploymentDropdownOpen(false)
+      if (!onChange) {
+        setEmploymentStatus(next)
+        return
+      }
+      setIsUpdating(true)
+      try {
+        await onChange(next)
+      } finally {
+        setIsUpdating(false)
+      }
+    },
+    [employmentStatus, onChange]
+  )
 
   if (employmentStatus == null) {
     return emptyFallback
@@ -91,6 +108,7 @@ export function SchoolTeacherEmploymentStatusDropdown({
         renderBadge={status => <SchoolTeacherEmploymentStatusBadge status={status} />}
         isItemDisabled={(cur, opt) => cur === opt}
         onChange={handleEmploymentStatusChange}
+        isUpdating={isUpdating}
         isOpen={employmentDropdownOpen}
         onOpenChange={setEmploymentDropdownOpen}
         tagLayout="tag100"

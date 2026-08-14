@@ -26,22 +26,9 @@
 }
 
 /*
- * 교사 상세 — 성명 블록 행 높이 56px (셀 여유 + tag100 인라인 셸 48).
- * StatusDropdownCell tag100 + INLINE_TAG100(116×48) — 열림 시에도 행 높이 유지.
+ * 교사 상세(강사 겸직 아님) — 재직 현황 행은 다른 기본정보 행과 동일 높이.
+ * (과거 tag100 트리거 클리핑 방지용 min-height:56px 제거)
  */
-.user-basic-info-section--school-teacher-profile-card .detail-info-form__name-block {
-  grid-template-rows: 56px 56px;
-}
-
-.user-basic-info-section--school-teacher-profile-card
-  .detail-info-form__name-block-cell {
-  min-height: 0;
-}
-
-.user-basic-info-section--school-teacher-profile-card
-  .detail-info-form__name-block-cell--r1 {
-  overflow: visible;
-}
 
 /* 강사·교사 겸 강사 — 성명+일정변경 배지 행 높이 (교사 카드와 동일) */
 .user-basic-info-section--instructor-profile-card .detail-info-form__name-block {
@@ -62,9 +49,41 @@
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
+  vertical-align: middle;
 }
 
-/* 트리거 패딩·크롬은 StatusDropdownCell tag100 + INLINE_TAG100 셸(116×48) */
+/*
+ * 상세 인라인 재직 태그 — 전역 INLINE_TAG100(116×48)은 테이블 밀림 방지용.
+ * 회원 상세에서는 배지 100×32에 맞춰 셸·트리거 여백을 줄인다.
+ */
+.user-basic-info-section__teacher-employment-dropdown.status-dropdown-cell__inline-tag100 {
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+  height: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  flex: 0 0 100px;
+}
+
+.user-basic-info-section__teacher-employment-dropdown
+  .ant-dropdown-trigger,
+.user-basic-info-section__teacher-employment-dropdown
+  .status-dropdown-cell__status-trigger--tag-100,
+.user-basic-info-section__teacher-employment-dropdown
+  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
+  box-sizing: border-box !important;
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* 트리거 패딩·크롬은 StatusDropdownCell tag100 + 상세 전용 압축 셸 */
 .user-basic-info-section__teacher-employment-dropdown
   .user-basic-info-section__teacher-employment-badge.app-status-badge,
 .user-basic-info-section__teacher-employment-dropdown
@@ -289,11 +308,6 @@
 
 .user-basic-info-section__admin-permission-inline .status-dropdown-cell__status-trigger--open {
   box-shadow: none !important;
-}
-
-/* 조회 슬롯만 상단 정렬 — `--edit` 값 셀에는 적용되지 않음 */
-.user-basic-info-section .detail-info-form__field-content--view {
-  align-items: flex-start;
 }
 
 /* 관리자 담당 프로그램 수 — `DetailInfoForm.Separator` 포함 한 줄 정렬 */
