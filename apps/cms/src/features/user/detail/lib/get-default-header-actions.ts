@@ -69,7 +69,8 @@ export function actionConfigToCmsVariant(variant: string | undefined): CmsButton
     variant === 'delete' ||
     variant === 'primary' ||
     variant === 'secondary' ||
-    variant === 'default'
+    variant === 'default' ||
+    variant === 'cancel'
   ) {
     return variant
   }

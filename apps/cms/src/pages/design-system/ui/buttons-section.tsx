@@ -20,8 +20,10 @@ export function ButtonsSection() {
         <strong>Large + icon</strong> — 180×44 · padding <code>6px 16px 6px 10px</code> (캘린더·엑셀
         등).
         <br />
-        <strong>Variant</strong> — primary(솔리드) · secondary(민트 아웃라인) · default(회색) ·
-        delete(레드 아웃라인). 「정보 수정」은 <code>secondary</code> + <code>large</code>(140).
+        <strong>Variant</strong> — primary(솔리드) · secondary(민트 아웃라인) · default(회색 0.1) ·
+        cancel(흰 배경 · 테두리 rgba(61,61,61,0.16) · 텍스트 #3D3D3D) · delete(레드 아웃라인). 「정보
+        수정」은 <code>secondary</code> + <code>large</code>(140). 풀페이지 모달 「취소」는{' '}
+        <code>cancel</code> + <code>large</code>(140×44).
         <br />
         <strong>용도</strong> — 테이블 상단 액션=<strong>large</strong> · 모달 푸터=
         <strong>large</strong> (140×44) · FileSelectField 내 버튼=medium ·{' '}
@@ -40,6 +42,9 @@ export function ButtonsSection() {
           </CmsButton>
           <CmsButton variant="default" size="large">
             Default
+          </CmsButton>
+          <CmsButton variant="cancel" size="large">
+            취소
           </CmsButton>
           <CmsButton variant="delete" size="large">
             Delete
@@ -109,18 +114,25 @@ export function ButtonsSection() {
 
       <DsDemo label="모달 푸터 (large 140×44)">
         <p className="ds-demo__hint" style={{ marginTop: 0 }}>
-          Confirm / DeleteGuide / Alert / 등록 모달 푸터 — 취소 <code>secondary</code> · 확인{' '}
+          Confirm / DeleteGuide / Alert / 등록 모달 푸터 — 취소는 컨텍스트에 따라{' '}
+          <code>secondary</code>(민트) 또는 <code>cancel</code>(흰 아웃라인) · 확인{' '}
           <code>primary</code> 또는 <code>delete</code> · 모두 <code>size=&quot;large&quot;</code>.
           CSS: <code>.content-modal__footer-actions</code> 강제.
         </p>
         <div className="ds-demo__row">
+          <CmsButton variant="cancel" size="large">
+            취소
+          </CmsButton>
+          <CmsButton variant="primary" size="large">
+            알림톡 발송
+          </CmsButton>
           <CmsButton variant="secondary" size="large">
             취소
           </CmsButton>
           <CmsButton variant="primary" size="large">
             확인
           </CmsButton>
-          <CmsButton variant="secondary" size="large">
+          <CmsButton variant="cancel" size="large">
             취소
           </CmsButton>
           <CmsButton variant="delete" size="large">
