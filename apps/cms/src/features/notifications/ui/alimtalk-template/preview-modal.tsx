@@ -1,8 +1,6 @@
-import { ContentModal, CmsButton } from '@/shared/ui'
+import { ContentModal, CmsButton, AlimtalkPhonePreview } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { AlimtalkTemplateItem } from '@/features/notifications/model/alimtalk-template/types'
-import phonePreviewImage from '@/assets/images/message/alimtalk-detail-preview.png'
-import profilePic from '@/assets/images/message/profile-pic.png'
 import './preview-modal.css'
 
 const NHN_CLOUD_URL = 'https://www.nhncloud.com/kr'
@@ -76,37 +74,11 @@ export function PreviewModal({ open, template, onClose }: PreviewModalProps) {
               </CmsButton>
             </div>
           </div>
-          <div className="alimtalk-template-preview__phone">
-            <img
-              className="alimtalk-template-preview__phone-frame"
-              src={phonePreviewImage}
-              alt=""
-            />
-            <div className="alimtalk-template-preview__stage">
-              <div className="alimtalk-template-preview__nav" aria-hidden>
-                <p className="alimtalk-template-preview__nav-title">{template.senderProfile}</p>
-              </div>
-              <div className="alimtalk-template-preview__message">
-                <div className="alimtalk-template-preview__message-row">
-                  <img
-                    className="alimtalk-template-preview__avatar"
-                    src={profilePic}
-                    alt=""
-                  />
-                  <div className="alimtalk-template-preview__message-col">
-                    <p className="alimtalk-template-preview__nickname">{template.senderProfile}</p>
-                    <div className="alimtalk-template-preview__bubble">
-                      <div className="alimtalk-template-preview__bubble-head">알림톡 도착</div>
-                      <div className="alimtalk-template-preview__bubble-body">
-                        <p className="alimtalk-template-preview__bubble-text">{template.content}</p>
-                        <span className="alimtalk-template-preview__cta">{template.ctaLabel}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <AlimtalkPhonePreview
+            senderName={template.senderProfile}
+            content={template.content}
+            ctaLabel={template.ctaLabel}
+          />
         </div>
       ) : null}
     </ContentModal>

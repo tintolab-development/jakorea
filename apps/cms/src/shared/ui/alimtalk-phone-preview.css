@@ -1,0 +1,213 @@
+.alimtalk-phone-preview {
+  --alimtalk-phone-scale: calc(369 / 337);
+  position: relative;
+  flex: 0 0 369px;
+  width: 369px;
+  height: 777px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.alimtalk-phone-preview__frame {
+  display: block;
+  width: 369px;
+  height: 777px;
+  object-fit: fill;
+}
+
+.alimtalk-phone-preview__stage {
+  position: absolute;
+  top: calc(55px * var(--alimtalk-phone-scale));
+  left: 50%;
+  width: calc(309.401px * var(--alimtalk-phone-scale));
+  bottom: calc(92px * var(--alimtalk-phone-scale));
+  display: flex;
+  flex-direction: column;
+  gap: calc(10px * var(--alimtalk-phone-scale));
+  overflow: auto;
+  background: transparent;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.alimtalk-phone-preview__nav {
+  display: flex;
+  width: 100%;
+  height: calc(34.341px * var(--alimtalk-phone-scale));
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  pointer-events: none;
+}
+
+.alimtalk-phone-preview__nav-title {
+  margin: 0;
+  overflow: hidden;
+  color: #000;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: calc(11.945px * var(--alimtalk-phone-scale));
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alimtalk-phone-preview__message {
+  display: flex;
+  width: 100%;
+  padding: 0 calc(17.58px * var(--alimtalk-phone-scale)) 0 calc(8.79px * var(--alimtalk-phone-scale));
+  box-sizing: border-box;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.alimtalk-phone-preview__message-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+}
+
+.alimtalk-phone-preview__avatar {
+  width: calc(29.885px * var(--alimtalk-phone-scale));
+  height: calc(29.885px * var(--alimtalk-phone-scale));
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.alimtalk-phone-preview__message-col {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 4.5px;
+}
+
+.alimtalk-phone-preview__nickname {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: calc(10.548px * var(--alimtalk-phone-scale));
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.alimtalk-phone-preview__bubble {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  align-self: stretch;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.alimtalk-phone-preview__bubble-head {
+  display: flex;
+  height: calc(30px * var(--alimtalk-phone-scale));
+  padding: calc(7.911px * var(--alimtalk-phone-scale)) calc(8.79px * var(--alimtalk-phone-scale))
+    calc(7.032px * var(--alimtalk-phone-scale)) calc(8.79px * var(--alimtalk-phone-scale));
+  box-sizing: border-box;
+  align-items: flex-start;
+  gap: 8.79px;
+  align-self: stretch;
+  background: #fee500;
+  color: var(--kt-chatMessage, #282a2b);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.alimtalk-phone-preview__bubble-body {
+  display: flex;
+  padding: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8.79px;
+  align-self: stretch;
+}
+
+.alimtalk-phone-preview__bubble-text {
+  margin: 0;
+  color: var(--kt-chatMessage, #282a2b);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 140%; /* 18.2px */
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.alimtalk-phone-preview__bubble-extra {
+  margin: 0;
+  color: var(--kt-chatMessage, #282a2b);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 140%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.alimtalk-phone-preview__cta {
+  display: flex;
+  padding: 7px 0;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  border-radius: 4px;
+  background: #eee;
+  color: var(--kt-chatMessage, #282a2b);
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 140%;
+}
+
+.alimtalk-phone-preview__cta--channel {
+  background: #fee500;
+  font-weight: 700;
+}
+
+.alimtalk-phone-preview__cta--outline {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+}
+
+.alimtalk-phone-preview__quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+}
+
+.alimtalk-phone-preview__quick-link {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 6px 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8e8e8;
+  color: var(--kt-chatMessage, #282a2b);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 140%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
