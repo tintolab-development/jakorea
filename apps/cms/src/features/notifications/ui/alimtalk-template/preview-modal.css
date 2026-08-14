@@ -1,0 +1,144 @@
+.alimtalk-template-preview-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  width: 1000px;
+  padding: 26px 30px 34px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+  max-height: none;
+}
+
+.alimtalk-template-preview-modal.teal-header-modal--bounded .ant-modal-body {
+  gap: 0;
+}
+
+.alimtalk-template-preview-modal.content-modal.content-modal--title-body-gap-always
+  .teal-header-modal__body {
+  padding-top: 30px;
+}
+
+.alimtalk-template-preview {
+  display: flex;
+  align-items: stretch;
+  gap: 20px;
+  width: 100%;
+}
+
+.alimtalk-template-preview__info {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.alimtalk-template-preview__actions {
+  margin-top: auto;
+  justify-content: flex-start;
+}
+
+.alimtalk-template-preview__hint {
+  margin: 0;
+  color: rgba(61, 61, 61, 0.6);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.alimtalk-template-preview__link {
+  color: var(--color-link, #0070e7);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: none;
+  text-decoration-thickness: auto;
+  text-underline-offset: auto;
+  text-underline-position: from-font;
+}
+
+.alimtalk-template-preview__phone {
+  position: relative;
+  flex: 0 0 337px;
+  width: 337px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.alimtalk-template-preview__phone-frame {
+  display: block;
+  width: 337px;
+  height: auto;
+}
+
+.alimtalk-template-preview__phone-title {
+  position: absolute;
+  top: 52px;
+  left: 50%;
+  margin: 0;
+  transform: translateX(-50%);
+  color: #3d3d3d;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.alimtalk-template-preview__stage {
+  position: absolute;
+  top: 92px;
+  right: 22px;
+  bottom: 108px;
+  left: 22px;
+  overflow: auto;
+}
+
+.alimtalk-template-preview__bubble {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.alimtalk-template-preview__bubble-head {
+  padding: 10px 14px;
+  background: #fee500;
+  color: #191919;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 150%;
+  text-align: center;
+}
+
+.alimtalk-template-preview__bubble-body {
+  padding: 14px 14px 12px;
+  color: #191919;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 150%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.alimtalk-template-preview__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 14px 14px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #f2f3f5;
+  color: #191919;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 150%;
+  text-align: center;
+}
