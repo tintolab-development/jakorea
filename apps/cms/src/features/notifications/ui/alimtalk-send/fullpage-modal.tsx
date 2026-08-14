@@ -15,6 +15,7 @@ import {
   ALIMTALK_CATEGORY_MOCK,
   ALIMTALK_TEMPLATE_ITEM_MOCK,
 } from '@/features/notifications/model/alimtalk-template/mock'
+import { ALIMTALK_MESSAGE_TYPE_LABEL } from '@/features/notifications/model/alimtalk-template/types'
 import { categoryNameById } from '@/features/notifications/lib/tree'
 import { ContentPanel } from './content-panel'
 import './fullpage-modal.css'
@@ -26,10 +27,6 @@ const UNSELECTED_CONTENT =
 
 const PROGRAM_OPTIONS = [{ label: '2026 JA Company Of The Year', value: 'prog-coy-2026' }]
 const SENDER_OPTIONS = [{ label: 'JA Korea', value: 'JA Korea' }]
-
-const MESSAGE_TYPE_LABEL = {
-  BASIC: '기본형',
-} as const
 
 const EMPHASIS_TYPE_LABEL = {
   NONE: '선택 안 함',
@@ -97,16 +94,12 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
 
   const phoneButtons = useMemo(() => {
     if (!selectedTemplate) return undefined
-    const channel = selectedTemplate.buttons.filter(button => button.variant === 'channel')
-    const named = selectedTemplate.buttons.filter(button => button.variant === 'default').slice(0, 1)
-    return [...channel, ...named].map(button => ({
+    const named = selectedTemplate.buttons
+      .filter(button => button.variant === 'default')
+      .slice(0, 1)
+    return named.map(button => ({
       variant: button.variant,
-      label:
-        button.variant === 'channel'
-          ? '채널 추가'
-          : button.name === 'test sample'
-            ? '버튼명'
-            : button.name,
+      label: button.name === 'test sample' ? '버튼명' : button.name,
     }))
   }, [selectedTemplate])
 
@@ -285,7 +278,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                     label="메시지 유형"
                     view={
                       selectedTemplate
-                        ? MESSAGE_TYPE_LABEL[selectedTemplate.messageType]
+                        ? ALIMTALK_MESSAGE_TYPE_LABEL[selectedTemplate.messageType]
                         : EMPTY_INFO
                     }
                   />
@@ -336,6 +329,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                 senderName={selectedTemplate?.senderProfile ?? 'JA KOREA'}
                 content={selectedTemplate?.content ?? UNSELECTED_CONTENT}
                 extraContent={selectedTemplate?.extraInfo}
+                messageType={selectedTemplate?.messageType}
                 buttons={phoneButtons}
                 quickLinks={selectedTemplate?.quickLinks.map(link => link.name)}
               />

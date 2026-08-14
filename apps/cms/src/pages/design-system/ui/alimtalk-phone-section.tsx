@@ -17,11 +17,9 @@ export function AlimtalkPhoneSection() {
         <AlimtalkPhonePreview
           senderName="JA KOREA"
           content="템플릿 내용 더미 텍스트입니다."
-          extraContent="부가 정보 더미 텍스트입니다. 채널 추가하고 이 채널의 마케팅 메시지 등을 카카오톡으로 받기"
-          buttons={[
-            { variant: 'channel', label: '채널 추가' },
-            { variant: 'default', label: '버튼명' },
-          ]}
+          extraContent="부가 정보 더미 텍스트입니다."
+          messageType="COMPLEX"
+          buttons={[{ variant: 'default', label: '버튼명' }]}
           quickLinks={['바로연결명', '바로연결명 02', '톡에서 예약하기']}
         />
       </DsDemo>

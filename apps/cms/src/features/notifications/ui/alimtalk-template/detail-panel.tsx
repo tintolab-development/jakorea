@@ -1,11 +1,10 @@
 import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
-import type { AlimtalkTemplateItem } from '@/features/notifications/model/alimtalk-template/types'
-
-const MESSAGE_TYPE_LABEL = {
-  BASIC: '기본형',
-} as const
+import {
+  ALIMTALK_MESSAGE_TYPE_LABEL,
+  type AlimtalkTemplateItem,
+} from '@/features/notifications/model/alimtalk-template/types'
 
 type DetailPanelProps = {
   template: AlimtalkTemplateItem | null
@@ -39,7 +38,10 @@ export function DetailPanel({ template, categoryName, onPreview }: DetailPanelPr
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="발신 프로필" view={template.senderProfile} />
-          <DetailInfoForm.Field label="메시지 유형" view={MESSAGE_TYPE_LABEL[template.messageType]} />
+          <DetailInfoForm.Field
+            label="메시지 유형"
+            view={ALIMTALK_MESSAGE_TYPE_LABEL[template.messageType]}
+          />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field

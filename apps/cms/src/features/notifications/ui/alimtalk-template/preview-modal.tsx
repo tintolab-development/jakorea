@@ -1,13 +1,12 @@
 import { ContentModal, CmsButton, AlimtalkPhonePreview } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import type { AlimtalkTemplateItem } from '@/features/notifications/model/alimtalk-template/types'
+import {
+  ALIMTALK_MESSAGE_TYPE_LABEL,
+  type AlimtalkTemplateItem,
+} from '@/features/notifications/model/alimtalk-template/types'
 import './preview-modal.css'
 
 const NHN_CLOUD_URL = 'https://www.nhncloud.com/kr'
-
-const MESSAGE_TYPE_LABEL = {
-  BASIC: '기본형',
-} as const
 
 const EMPHASIS_TYPE_LABEL = {
   NONE: '선택 안 함',
@@ -41,7 +40,7 @@ export function PreviewModal({ open, template, onClose }: PreviewModalProps) {
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label="메세지 유형"
-                  view={MESSAGE_TYPE_LABEL[template.messageType]}
+                  view={ALIMTALK_MESSAGE_TYPE_LABEL[template.messageType]}
                 />
               </DetailInfoForm.Row>
               <DetailInfoForm.Row type="single">
@@ -77,7 +76,16 @@ export function PreviewModal({ open, template, onClose }: PreviewModalProps) {
           <AlimtalkPhonePreview
             senderName={template.senderProfile}
             content={template.content}
-            ctaLabel={template.ctaLabel}
+            extraContent={template.extraInfo}
+            messageType={template.messageType}
+            buttons={template.buttons
+              .filter(button => button.variant === 'default')
+              .slice(0, 1)
+              .map(button => ({
+                variant: 'default' as const,
+                label: button.name === 'test sample' ? '버튼명' : button.name,
+              }))}
+            quickLinks={template.quickLinks.map(link => link.name)}
           />
         </div>
       ) : null}
