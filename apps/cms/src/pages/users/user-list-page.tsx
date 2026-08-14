@@ -537,6 +537,7 @@ export function UserListPage() {
           email: restoreHint.email ?? hintUser?.email,
           instructorMemberProfile:
             urlDetailCtx.instructorMemberProfile ?? hintUser?.instructorMemberProfile,
+          roles: hintUser?.roles,
         })
         if (cancelled) return
         const fetched = useUserStore.getState().usersById[targetId]
@@ -733,6 +734,7 @@ export function UserListPage() {
           adminAccountId: user.adminAccountId,
           email: user.email,
           instructorMemberProfile: user.instructorMemberProfile,
+          roles: user.roles,
         })
         if (!fetched) {
           handleError(new Error('회원 상세를 불러오지 못했습니다.'), {
@@ -741,8 +743,13 @@ export function UserListPage() {
           pendingOpenedUserIdRef.current = null
           return
         }
-        // 상세 GET만 본문으로 사용 — 목록 행 필드(소속·프로필 등)를 덮어쓰지 않음
-        openMemberDetailFetched(fetched, { replace: opts?.replace ?? false })
+        const displayUser = applyTeacherDetailUrlContext(fetched, {
+          affiliatedSchoolName:
+            fetched.affiliatedSchoolName ?? user.affiliatedSchoolName,
+          instructorMemberProfile:
+            fetched.instructorMemberProfile ?? user.instructorMemberProfile,
+        })
+        openMemberDetailFetched(displayUser, { replace: opts?.replace ?? false })
       } catch (error) {
         pendingOpenedUserIdRef.current = null
         handleError(error, { defaultMessage: '회원 상세를 불러오지 못했습니다.' })

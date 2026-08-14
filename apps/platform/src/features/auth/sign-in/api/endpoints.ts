@@ -5,6 +5,11 @@ export const portalAuthPaths = {
   refresh: () => '/api/portal/auth/refresh',
   logout: () => '/api/portal/auth/logout',
   me: () => '/api/portal/auth/me',
+  emailCheck: () => '/api/portal/auth/email/check',
+  passwordChange: () => '/api/portal/auth/password/change',
+  passwordResetConfirm: () => '/api/portal/auth/password-reset/confirm',
+  adminProvisionedProfile: () => '/api/portal/auth/admin-provisioned/profile',
+  adminProvisionedIdentityConfirm: () => '/api/portal/auth/admin-provisioned/identity/confirm',
 } as const
 
 /** 포털 회원 본인 리소스 (`/api/portal/me/**`) */

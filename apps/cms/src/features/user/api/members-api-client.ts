@@ -41,10 +41,12 @@ import type {
   SchoolOrganizationListItemResponse,
   SchoolOrganizationUpsertRequest,
   TeacherMemberDetailResponse,
+  PortalSchoolSelectionRequest,
 } from '@/shared/api/generated/members/schemas'
 import type { AdminAccountApprovalDetailResponse } from '@/shared/api/generated/members/schemas/adminAccountApprovalDetailResponse'
 import type { AdminAccountBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminAccountBasicInfoUpdateRequest'
 import type { AdminMemberBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminMemberBasicInfoUpdateRequest'
+import type { AdminMemberBasicInfoUpdateRequestWithAddress } from '@/features/user/api/map-patch-user-basic-info'
 import type { AdminMemberCommentCreateRequest } from '@/shared/api/generated/members/schemas/adminMemberCommentCreateRequest'
 import type { AdminCommentUpdateRequest } from '@/shared/api/generated/members/schemas/adminCommentUpdateRequest'
 import type { AdminMemberDeleteRequest } from '@/shared/api/generated/members/schemas/adminMemberDeleteRequest'
@@ -203,9 +205,11 @@ export async function fetchTeacherMemberDetailRemote(
 
 export async function updateMemberBasicInfoRemote(
   memberId: number,
-  body: AdminMemberBasicInfoUpdateRequest
+  body: AdminMemberBasicInfoUpdateRequestWithAddress
 ): Promise<UserResponse> {
-  return unwrapApiBody(await membersApi.updateMemberBasicInfo(memberId, body))
+  return unwrapApiBody(
+    await membersApi.updateMemberBasicInfo(memberId, body as AdminMemberBasicInfoUpdateRequest)
+  )
 }
 
 export async function fetchMemberCommentsRemote(
@@ -367,7 +371,7 @@ export async function preRegisterSchoolRemote(
 }
 
 export async function preRegisterInstructorRemote(
-  body: AdminPreRegisterInstructorRequest
+  body: AdminPreRegisterInstructorRequest & { schoolSelection?: PortalSchoolSelectionRequest }
 ): Promise<MemberWorkflowResponse> {
   return unwrapApiBody(await membersApi.preRegisterInstructor(body))
 }

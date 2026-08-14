@@ -29,6 +29,7 @@ export function UserDetailFullpageTabPanels() {
     onBasicInfoDraftChange,
     adminPermissionVariantPatching,
     onPatchAdminPermissionVariantFromDetailView,
+    onTeacherEmploymentStatusChange,
     onPermissionResendNotification,
     onOpenJaGradeEvaluation,
     scheduleChangeCount,
@@ -48,11 +49,18 @@ export function UserDetailFullpageTabPanels() {
           personalInfoRevealed={personalInfoRevealed}
           instructorResumeApplicantRow={instructorResumeApplicantRow}
           onNavigateToLinkedUser={onNavigateToLinkedUser}
-          memberInfoEditing={basicInfoEditing && basicInfoEditScope === 'profile'}
+          memberInfoEditing={
+            basicInfoEditing &&
+            (basicInfoEditScope === 'profile' || basicInfoEditScope === 'instructor_fee_ja')
+          }
+          memberInfoEditScope={
+            basicInfoEditScope === 'instructor_fee_ja' ? 'instructor_fee_ja' : 'profile'
+          }
           memberInfoDraft={basicInfoDraft}
           onMemberInfoDraftChange={onBasicInfoDraftChange}
           adminPermissionVariantPatching={adminPermissionVariantPatching}
           onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
+          onEmploymentStatusChange={onTeacherEmploymentStatusChange}
           onPermissionResendNotification={onPermissionResendNotification}
           onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
           scheduleChangeCount={scheduleChangeCount}

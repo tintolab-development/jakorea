@@ -18,6 +18,9 @@ export const platformQueryKeys = {
     /** 회원가입 이메일 가용성 (mutation 키·캐시 무효화용) */
     emailAvailability: (email: string) =>
       [...platformQueryKeys.auth.all(), 'email-availability', email] as const,
+    /** 회원 이메일 존재 확인 — POST /api/portal/auth/email/check */
+    emailCheck: (purpose: string) =>
+      [...platformQueryKeys.auth.all(), 'email-check', purpose] as const,
     /** 회원가입 약관 원장 */
     signupTerms: (memberType: string, birthDate: string) =>
       [...platformQueryKeys.auth.all(), 'signup-terms', memberType, birthDate] as const,

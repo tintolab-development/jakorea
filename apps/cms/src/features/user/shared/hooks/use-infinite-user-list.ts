@@ -3,9 +3,9 @@
  * 15명씩 로드
  */
 
-import { useInfiniteQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
-import { getUsersPage, type GetUsersPageParams } from '@/entities/user/api/user-service'
+import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query'
+import { useLayoutEffect, useMemo } from 'react'
+import { getUsersPage, type GetUsersPageParams, type GetUsersPageResult } from '@/entities/user/api/user-service'
 import {
   memberQueryKeys,
   serializeMemberListFilters,
@@ -15,14 +15,41 @@ import type { User } from '@/types/user'
 
 export type UseInfiniteUserListFilters = GetUsersPageParams
 
+/** 목록 재진입 시 캐시된 2페이지 이상을 refetch하지 않도록 첫 페이지만 남긴다. */
+export function keepFirstInfiniteQueryPage<T>(
+  data: InfiniteData<T> | undefined
+): InfiniteData<T> | undefined {
+  if (!data || data.pages.length <= 1) return data
+  return {
+    ...data,
+    pages: data.pages.slice(0, 1),
+    pageParams: data.pageParams.slice(0, 1),
+  }
+}
+
 export function useInfiniteUserList(filters: UseInfiniteUserListFilters) {
+  const queryClient = useQueryClient()
   const remote = isMembersRemoteEnabled()
   const filtersKey = serializeMemberListFilters(filters)
+  const listNamespace = remote ? (filters.role === 'SCHOOL' ? 'schools' : 'members') : 'mock'
   const queryKey = remote
-    ? filters.role === 'SCHOOL'
+    ? listNamespace === 'schools'
       ? memberQueryKeys.schoolsList(filtersKey)
       : memberQueryKeys.list(filtersKey)
     : (['users', 'list', filters] as const)
+
+  // useInfiniteQuery보다 먼저 두어, refetchOnMount가 캐시된 2페이지를 모두 치지 않게 한다.
+  useLayoutEffect(() => {
+    const key =
+      listNamespace === 'schools'
+        ? memberQueryKeys.schoolsList(filtersKey)
+        : listNamespace === 'members'
+          ? memberQueryKeys.list(filtersKey)
+          : (['users', 'list', filters] as const)
+    queryClient.setQueryData<InfiniteData<GetUsersPageResult>>(key, keepFirstInfiniteQueryPage)
+    // filters 참조는 매 렌더 달라질 수 있어 직렬화된 식별자만 의존한다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- queryKey 안정성은 filtersKey + listNamespace
+  }, [queryClient, filtersKey, listNamespace])
 
   const query = useInfiniteQuery({
     queryKey,

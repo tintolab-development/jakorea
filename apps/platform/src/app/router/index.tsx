@@ -10,6 +10,7 @@ import {
   FindEmailCompletePage,
   FindEmailPage,
   FindPasswordCompletePage,
+  FindPasswordIdentityCallbackPage,
   FindPasswordPage,
   FindPasswordResetPage,
   RequiredPage,
@@ -20,13 +21,14 @@ import {
   SignUpGuardianIdentityCallbackPage,
   SignUpIdentityMockNicePage,
   SignUpGuardianIdentityMockNicePage,
+  FindPasswordIdentityMockNicePage,
   SignUpSocialConnectCompletePage,
   SignUpSocialConnectErrorPage,
   SignUpSocialConnectPage,
   SocialErrorPage,
 } from '@/pages/auth'
 import { HomePage } from '@/pages/home'
-import { MypageHomePage, MypageInstructorApplyPage } from '@/pages/mypage'
+import { MypageHomePage, MypageInstructorApplyConsentPage, MypageInstructorApplyPage } from '@/pages/mypage'
 import {
   ProgramApplyCompletePage,
   ProgramApplyPage,
@@ -157,8 +159,20 @@ export const router = createBrowserRouter([
         path: '/auth/sign-up/guardian-identity/mock',
         element: <SignUpGuardianIdentityMockNicePage />,
       },
+      {
+        path: '/auth/find-password/identity/callback',
+        element: <FindPasswordIdentityCallbackPage />,
+      },
+      {
+        path: '/auth/find-password/identity/mock',
+        element: <FindPasswordIdentityMockNicePage />,
+      },
       { path: '/programs/:programId/apply', element: <ProgramApplyPage /> },
       { path: '/mypage/instructor-apply', element: <MypageInstructorApplyPage /> },
+      {
+        path: '/mypage/instructor-apply/consent/:consentKey',
+        element: <MypageInstructorApplyConsentPage />,
+      },
       { path: '/design-system', element: <DesignSystemPage /> },
     ],
   },

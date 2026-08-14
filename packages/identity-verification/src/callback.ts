@@ -1,4 +1,3 @@
-import type { IdentityVerificationClient } from './client'
 import { closeIdentityPopupSoon, postIdentityMessageToOpener } from './messaging'
 import {
   normalizeVerificationSession,
@@ -6,11 +5,26 @@ import {
 } from './parse-verification-session'
 import { pickProfileTokenFromSearchParams } from './parse-verified-identity-profile'
 import { toVerifiedBirthDate } from './birth-date'
+import type { IdentityVerificationClient } from './client'
 import type { IdentityCallbackOutcome, IdentityVerifiedPayload } from './types'
 
 export interface ProcessIdentityCallbackOptions {
   /** useEffect cleanup 시 true — noOpener UI 억제 */
   cancelled?: boolean
+  /**
+   * profile GET 전에 호출. admin-provisioned identity/confirm처럼
+   * profileToken을 먼저 소비해야 하는 후속 API에 사용한다.
+   */
+  beforeProfileFetch?: (input: {
+    sessionId: number
+    profileToken: string
+  }) => Promise<void>
+  /**
+   * true면 verified profile GET을 하지 않는다.
+   * 부모 창에서 profileToken으로 confirm 할 때 토큰 선소비를 막는다.
+   * 세션/쿼리에 이름·전화가 없어도 sessionId·profileToken만으로 성공 메시지를 보낸다.
+   */
+  skipVerifiedProfileFetch?: boolean
 }
 
 function failOutcome(
@@ -30,8 +44,13 @@ function failOutcome(
 async function processRemoteCallback(
   client: IdentityVerificationClient,
   params: URLSearchParams,
-  cancelled: boolean
+  cancelled: boolean,
+  options: Pick<
+    ProcessIdentityCallbackOptions,
+    'beforeProfileFetch' | 'skipVerifiedProfileFetch'
+  > = {}
 ): Promise<IdentityCallbackOutcome> {
+  const { beforeProfileFetch, skipVerifiedProfileFetch } = options
   const { state } = client
   const queryError = params.get('error')
   const queryMessage = params.get('message') ?? params.get('errorMessage')
@@ -98,20 +117,48 @@ async function processRemoteCallback(
       return failOutcome(message, cancelled, posted)
     }
 
-    const profile = await client.fetchVerifiedProfile(sessionId, profileToken)
+    if (beforeProfileFetch) {
+      await beforeProfileFetch({ sessionId, profileToken })
+    }
+
     const fromQuery = pickVerifiedFieldsFromCallbackLocation(
       params,
       typeof window !== 'undefined' ? window.location.hash : ''
     )
 
-    const verifiedName = profile.name ?? fromQuery.verifiedName
-    const verifiedPhone = profile.phone ?? fromQuery.verifiedPhone
-    const verifiedBirthDate =
-      (profile.birthDate ? toVerifiedBirthDate(profile.birthDate) : undefined) ??
-      (profile.birthDateRaw ? toVerifiedBirthDate(profile.birthDateRaw) : undefined) ??
-      fromQuery.verifiedBirthDate
+    /**
+     * profile GET은 백엔드에 따라 profileToken을 소비할 수 있다.
+     * beforeProfileFetch(confirm) 이후이거나, 세션/쿼리에 PII가 있으면 조회를 생략한다.
+     */
+    let verifiedName = session.verifiedName ?? fromQuery.verifiedName
+    let verifiedPhone = session.verifiedPhone ?? fromQuery.verifiedPhone
+    let verifiedBirthDate = session.verifiedBirthDate ?? fromQuery.verifiedBirthDate
+    let verifiedAt = session.verifiedAt
+    let resolvedSessionId = session.sessionId ?? sessionId
 
     if (!verifiedName || !verifiedPhone) {
+      if (!skipVerifiedProfileFetch) {
+        try {
+          const profile = await client.fetchVerifiedProfile(sessionId, profileToken)
+          verifiedName = profile.name ?? verifiedName
+          verifiedPhone = profile.phone ?? verifiedPhone
+          verifiedBirthDate =
+            (profile.birthDate ? toVerifiedBirthDate(profile.birthDate) : undefined) ??
+            (profile.birthDateRaw ? toVerifiedBirthDate(profile.birthDateRaw) : undefined) ??
+            verifiedBirthDate
+          verifiedAt = profile.verifiedAt ?? verifiedAt
+          resolvedSessionId = profile.sessionId ?? resolvedSessionId
+        } catch {
+          // confirm 등으로 토큰이 이미 소비된 경우 — 세션/쿼리 값만으로 진행
+        }
+      }
+    }
+
+    if (verifiedBirthDate) {
+      verifiedBirthDate = toVerifiedBirthDate(verifiedBirthDate)
+    }
+
+    if (!skipVerifiedProfileFetch && (!verifiedName || !verifiedPhone)) {
       const message = '본인인증 프로필 정보를 확인할 수 없습니다.'
       const posted = postIdentityMessageToOpener({ type: 'IDENTITY_FAILED', message })
       if (posted) {
@@ -123,13 +170,13 @@ async function processRemoteCallback(
 
     const payload: IdentityVerifiedPayload = {
       type: 'IDENTITY_VERIFIED',
-      sessionId: profile.sessionId ?? session.sessionId ?? sessionId,
-      sessionUuid: session.sessionUuid ?? String(session.sessionId ?? sessionId),
+      sessionId: resolvedSessionId,
+      sessionUuid: session.sessionUuid ?? String(resolvedSessionId),
       profileToken,
       verifiedName,
       verifiedPhone,
       verifiedBirthDate,
-      verifiedAt: profile.verifiedAt ?? session.verifiedAt ?? new Date().toISOString(),
+      verifiedAt: verifiedAt ?? new Date().toISOString(),
     }
 
     const posted = postIdentityMessageToOpener(payload)
@@ -237,7 +284,10 @@ export async function processIdentityCallback(
   const cancelled = options.cancelled ?? false
 
   if (client.isRemoteEnabled()) {
-    return processRemoteCallback(client, searchParams, cancelled)
+    return processRemoteCallback(client, searchParams, cancelled, {
+      beforeProfileFetch: options.beforeProfileFetch,
+      skipVerifiedProfileFetch: options.skipVerifiedProfileFetch,
+    })
   }
 
   return processMockCallback(client, searchParams, cancelled)

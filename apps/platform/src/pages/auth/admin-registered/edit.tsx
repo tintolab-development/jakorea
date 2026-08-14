@@ -3,15 +3,20 @@ import { useNavigate } from 'react-router-dom'
 import {
   getAdminRegisteredProfileFields,
   isAdminRegisteredEditValid,
+  mapAdminRegisteredEditToPortalProfileUpdate,
   requireAdminRegisteredWizardState,
   updateAdminRegisteredWizardState,
   useAdminRegisteredProfileHydration,
 } from '@/features/auth/admin-registered'
+import { getLoginApiErrorMessage, usePortalProfileUpdateMutation } from '@/features/auth/sign-in'
 import {
   AddressSearchModal,
+  SchoolSearchModal,
   schoolGradeOptions,
   type SchoolStatus,
+  type SelectedSchool,
 } from '@/features/auth/sign-up'
+import { isRemoteApiConfigured } from '@/shared/lib'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import chevronRightGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
@@ -25,12 +30,22 @@ export function AdminRegisteredEditPage() {
   const profile = wizardState ? getAdminRegisteredProfileFields(wizardState) : null
   const [schoolStatus, setSchoolStatus] = useState<SchoolStatus>(profile?.schoolStatus ?? 'none')
   const [schoolName, setSchoolName] = useState(profile?.schoolName ?? '')
+  const [schoolAddress, setSchoolAddress] = useState(wizardState?.schoolAddress ?? '')
+  const [schoolOrganizationId, setSchoolOrganizationId] = useState<number | null>(
+    wizardState?.schoolOrganizationId ?? wizardState?.portalProfile?.schoolOrganizationId ?? null,
+  )
   const [grade, setGrade] = useState(profile?.grade ?? '')
   const [address, setAddress] = useState(profile?.address ?? '')
   const [addressDetail, setAddressDetail] = useState(profile?.addressDetail ?? '')
+  const [postalCode, setPostalCode] = useState(profile?.postalCode ?? '')
+  const [regionSido, setRegionSido] = useState(profile?.regionSido ?? '')
+  const [regionSigungu, setRegionSigungu] = useState(profile?.regionSigungu ?? '')
   const [volunteerId, setVolunteerId] = useState(profile?.volunteerId ?? '')
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+  const [isSchoolSearchModalOpen, setIsSchoolSearchModalOpen] = useState(false)
   const [fieldsSynced, setFieldsSynced] = useState(Boolean(wizardState?.profileHydrated))
+  const [submitError, setSubmitError] = useState<string>()
+  const profileUpdateMutation = usePortalProfileUpdateMutation()
 
   useEffect(() => {
     if (!wizardState?.birthDate || !wizardState.gender) {
@@ -43,9 +58,16 @@ export function AdminRegisteredEditPage() {
     const next = getAdminRegisteredProfileFields(wizardState)
     setSchoolStatus(next.schoolStatus)
     setSchoolName(next.schoolName)
+    setSchoolAddress(wizardState.schoolAddress ?? '')
+    setSchoolOrganizationId(
+      wizardState.schoolOrganizationId ?? wizardState.portalProfile?.schoolOrganizationId ?? null,
+    )
     setGrade(next.grade)
     setAddress(next.address)
     setAddressDetail(next.addressDetail)
+    setPostalCode(next.postalCode)
+    setRegionSido(next.regionSido)
+    setRegionSigungu(next.regionSigungu)
     setVolunteerId(next.volunteerId)
     setFieldsSynced(true)
   }, [wizardState, fieldsSynced])
@@ -70,23 +92,88 @@ export function AdminRegisteredEditPage() {
 
     if (status === 'none') {
       setSchoolName('')
+      setSchoolAddress('')
+      setSchoolOrganizationId(null)
       setGrade('')
     }
   }
 
-  const handleSubmit = () => {
-    if (!isValid) {
+  const handleSchoolSelect = (school: SelectedSchool) => {
+    setSchoolName(school.name)
+    setSchoolAddress(school.address?.trim() ?? '')
+    setSchoolOrganizationId(school.organizationId ?? null)
+    setIsSchoolSearchModalOpen(false)
+  }
+
+  const persistWizard = () => {
+    updateAdminRegisteredWizardState({
+      schoolStatus,
+      schoolName,
+      schoolAddress,
+      schoolOrganizationId,
+      grade,
+      address,
+      addressDetail,
+      postalCode,
+      regionSido,
+      regionSigungu,
+      volunteerId,
+    })
+  }
+
+  const handleSubmit = async () => {
+    if (!isValid || profileUpdateMutation.isPending) {
       return
     }
 
-    updateAdminRegisteredWizardState({
+    setSubmitError(undefined)
+
+    const payload = mapAdminRegisteredEditToPortalProfileUpdate({
       schoolStatus,
       schoolName,
       grade,
       address,
       addressDetail,
+      postalCode,
+      regionSido,
+      regionSigungu,
       volunteerId,
+      schoolOrganizationId,
+      email: wizardState.email,
+      name: wizardState.verifiedName,
+      phone: wizardState.verifiedPhone,
+      birthDate: wizardState.birthDate,
+      gender: wizardState.gender,
+      memberType: wizardState.memberType,
+      employmentStatus: wizardState.employmentStatus,
+      portalProfile: wizardState.portalProfile,
     })
+
+    if (isRemoteApiConfigured()) {
+      try {
+        const updated = await profileUpdateMutation.mutateAsync(payload)
+        updateAdminRegisteredWizardState({
+          schoolStatus,
+          schoolName,
+          schoolAddress,
+          schoolOrganizationId,
+          grade,
+          address,
+          addressDetail,
+          postalCode,
+          regionSido,
+          regionSigungu,
+          volunteerId,
+          portalProfile: updated,
+          profileHydrated: true,
+        })
+      } catch (error) {
+        setSubmitError(getLoginApiErrorMessage(error, '회원 정보를 수정하지 못했습니다.'))
+        return
+      }
+    } else {
+      persistWizard()
+    }
 
     navigate('/auth/admin-registered/confirm')
   }
@@ -144,14 +231,28 @@ export function AdminRegisteredEditPage() {
 
         {schoolStatus === 'enrolled' ? (
           <>
-            <PFTextInput
-              size="xlarge"
-              label="소속/학교명"
-              placeholder="소속 또는 학교명을 입력해 주세요"
-              required
-              value={schoolName}
-              onValueChange={setSchoolName}
-            />
+            <div className={sharedStyles.addressField}>
+              <PFText as="span" typo="label-md" color="inherit" className={sharedStyles.fieldLabel}>
+                소속/학교명 <span className={sharedStyles.inlineRequiredMark}>*</span>
+              </PFText>
+              <div className={sharedStyles.addressSearchRow}>
+                <PFTextInput
+                  size="xlarge"
+                  placeholder="검색으로 학교를 선택해 주세요"
+                  required
+                  value={schoolName}
+                  readOnly
+                  onClick={() => setIsSchoolSearchModalOpen(true)}
+                />
+                <PFButton
+                  size="xlarge"
+                  variant="secondary"
+                  onClick={() => setIsSchoolSearchModalOpen(true)}
+                >
+                  검색
+                </PFButton>
+              </div>
+            </div>
 
             <div className={sharedStyles.gradeField}>
               <PFText as="span" typo="label-md" color="inherit" className={sharedStyles.fieldLabel}>
@@ -196,12 +297,7 @@ export function AdminRegisteredEditPage() {
               readOnly
               onClick={() => setIsAddressModalOpen(true)}
             />
-            <PFButton
-              size="xlarge"
-              variant="secondary"
-              width="100%"
-              onClick={() => setIsAddressModalOpen(true)}
-            >
+            <PFButton size="xlarge" variant="secondary" onClick={() => setIsAddressModalOpen(true)}>
               주소 검색
             </PFButton>
           </div>
@@ -223,13 +319,20 @@ export function AdminRegisteredEditPage() {
       </div>
 
       <div className={sharedStyles.actionsTerms}>
+        {submitError ? (
+          <PFText as="p" typo="bd-sm-md" color="error" className={sharedStyles.submitError}>
+            {submitError}
+          </PFText>
+        ) : null}
         <PFButton
           size="xlarge"
           width="100%"
-          disabled={!isValid || isHydrating}
-          onClick={handleSubmit}
+          disabled={!isValid || isHydrating || profileUpdateMutation.isPending}
+          onClick={() => {
+            void handleSubmit()
+          }}
         >
-          가입 정보 수정하기
+          {profileUpdateMutation.isPending ? '수정 중…' : '가입 정보 수정하기'}
         </PFButton>
         <PFButton size="xlarge" variant="tertiary" width="100%" onClick={handlePrevious}>
           이전
@@ -241,8 +344,16 @@ export function AdminRegisteredEditPage() {
         onClose={() => setIsAddressModalOpen(false)}
         onSelect={selection => {
           setAddress(selection.address)
+          setPostalCode(selection.postalCode ?? '')
+          setRegionSido(selection.regionSido ?? '')
+          setRegionSigungu(selection.regionSigungu ?? '')
           setIsAddressModalOpen(false)
         }}
+      />
+      <SchoolSearchModal
+        open={isSchoolSearchModalOpen}
+        onClose={() => setIsSchoolSearchModalOpen(false)}
+        onSelect={handleSchoolSelect}
       />
     </section>
   )

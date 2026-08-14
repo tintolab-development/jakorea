@@ -12,20 +12,24 @@ import {
 /**
  * 관리자 등록 온보딩 — 로그인 세션의 포털 프로필을 wizard에 반영.
  * 확인·수정 화면에서 가입 정보 표시에 사용한다.
+ *
+ * `initial`은 매 렌더 JSON.parse로 새 참조가 될 수 있으므로
+ * effect 의존성은 `email` 등 안정적인 값만 사용한다.
  */
 export function useAdminRegisteredProfileHydration(initial: AdminRegisteredWizardState | null) {
   const [wizardState, setWizardState] = useState<AdminRegisteredWizardState | null>(initial)
+  const email = initial?.email?.trim() ?? ''
   const remote = isRemoteApiConfigured()
   const hasToken = Boolean(getAccessToken())
-  const needsHydration = Boolean(initial?.email) && !wizardState?.profileHydrated
+  const needsHydration = Boolean(email) && !wizardState?.profileHydrated
   const shouldFetch = remote && hasToken && needsHydration
 
   const profileQuery = usePortalProfileQuery({ enabled: shouldFetch })
 
   useEffect(() => {
-    if (!initial) return
+    if (!email) return
     setWizardState(getAdminRegisteredWizardState())
-  }, [initial])
+  }, [email])
 
   useEffect(() => {
     if (!profileQuery.data) return
@@ -34,7 +38,7 @@ export function useAdminRegisteredProfileHydration(initial: AdminRegisteredWizar
     if (!current) return
 
     if (current.profileHydrated) {
-      setWizardState(current)
+      setWizardState(prev => (prev?.profileHydrated ? prev : current))
       return
     }
 

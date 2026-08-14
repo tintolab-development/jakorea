@@ -28,7 +28,7 @@ import {
   canStartAdminMemberProfileEdit,
   isCmsAdminUser,
   shouldShowAdminCommentSectionForViewer,
-  shouldShowCmsMemberInfoEditButton,
+  shouldShowCmsMemberInfoEditButtonOrInstructorRestricted,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import {
   isMemberBasicInfoPatchRemoteEnabled,
@@ -90,7 +90,9 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
   }
 
   const isProfileEditing =
-    pageShell.basicInfoEditing && pageShell.basicInfoEditScope === 'profile'
+    pageShell.basicInfoEditing &&
+    (pageShell.basicInfoEditScope === 'profile' ||
+      pageShell.basicInfoEditScope === 'instructor_fee_ja')
   const isCommentEditing =
     pageShell.basicInfoEditing && pageShell.basicInfoEditScope === 'comment'
 
@@ -127,7 +129,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
 
   const showProfileEditStart =
     !isProfileEditing &&
-    shouldShowCmsMemberInfoEditButton(displayUser) &&
+    shouldShowCmsMemberInfoEditButtonOrInstructorRestricted(displayUser) &&
     canEditProfileBody &&
     (displayUser.role !== 'ADMIN' || canStartAdminMemberProfileEdit(currentUser, displayUser)) &&
     !remoteBasicInfoSaveBlocked

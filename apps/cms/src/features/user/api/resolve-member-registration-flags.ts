@@ -23,10 +23,14 @@ export function resolveRegisteredByAdmin(source: MemberRegistrationFlagSource): 
   return false
 }
 
+/**
+ * 어드민 등록 후 본인 최초로그인·본인인증(및 비밀번호 변경) 완료 여부.
+ * - 명시 플래그가 true면 완료
+ * - 그 외(어드민 등록 포함)는 `identityVerified === true`를 완료로 간주
+ */
 export function resolveIdentitySelfSignupCompletedAfterAdminRegistration(
   source: MemberRegistrationFlagSource
 ): boolean {
   if (source.identitySelfSignupCompletedAfterAdminRegistration === true) return true
-  if (resolveRegisteredByAdmin(source)) return false
   return source.identityVerified === true
 }

@@ -180,6 +180,11 @@ describe('mapCreateUserRequestToPreRegisterInstructor', () => {
       ...INITIAL_VALUES,
       memberType: 'school_teacher',
       schoolName: '고양고등학교',
+      schoolProvider: 'NEIS',
+      schoolExternalCode: 'B109000000',
+      schoolAddress: '경기도 고양시',
+      schoolRegionSido: '경기도',
+      schoolRegionSigungu: '고양시',
       employmentStatus: 'ACTIVE',
       instructorFeeGrade: '2급 강사비',
       homeAddress: '자택로 1',
@@ -207,6 +212,15 @@ describe('mapCreateUserRequestToPreRegisterInstructor', () => {
     expect(body.profile?.defaultFeeGrade).toBe('2')
     expect(body.feeGrade).toBe('2')
     expect(body.profile?.affiliation?.schoolName).toBe('고양고등학교')
+    expect(body.schoolSelection).toMatchObject({
+      name: '고양고등학교',
+      provider: 'NEIS',
+      externalSchoolCode: 'B109000000',
+      address: '경기도 고양시',
+      regionSido: '경기도',
+      regionSigungu: '고양시',
+      organizationCategory: 'SCHOOL',
+    })
     expect(body.settlement?.bankName).toBe('국민')
     expect(body.settlement?.accountNumber).toBe('123')
     expect(body.settlement?.accountHolder).toBe('홍길동')

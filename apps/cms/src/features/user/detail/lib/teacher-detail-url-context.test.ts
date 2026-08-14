@@ -85,14 +85,52 @@ describe('teacher-detail-url-context', () => {
     expect(next.instructorMemberProfile).toBe('instructor_dual')
   })
 
-  it('teacherDetailUrlParamsFromUser는 resolved 프로필을 넣는다', () => {
+  it('INDIVIDUAL + school_teacher 힌트는 INSTRUCTOR로 올려 교사 상세를 유지한다', () => {
+    const base = {
+      id: 'u1',
+      email: 't@example.com',
+      name: '김교사',
+      role: 'INDIVIDUAL',
+    } as unknown as Omit<User, 'password'>
+
+    const next = applyTeacherDetailUrlContext(base, {
+      instructorMemberProfile: 'school_teacher',
+      affiliatedSchoolName: '진월초등학교',
+    })
+
+    expect(next.role).toBe('INSTRUCTOR')
+    expect(next.instructorMemberProfile).toBe('school_teacher')
+    expect(next.affiliatedSchoolName).toBe('진월초등학교')
+  })
+
+  it('teacherDetailUrlParamsFromUser는 roles SCHOOL_TEACHER로 교사 단독 프로필을 넣는다', () => {
     const params = teacherDetailUrlParamsFromUser({
       role: 'INSTRUCTOR',
+      roles: ['SCHOOL_TEACHER'],
       affiliatedSchoolUserId: 'school-1',
       affiliatedSchoolName: '진월초등학교',
     })
     expect(params.affiliatedSchool).toBe('진월초등학교')
-    expect(params.instructorProfile).toBe('instructor_dual')
+    expect(params.instructorProfile).toBe('school_teacher')
+  })
+
+  it('SCHOOL_TEACHER 단독 roles는 URL dual 힌트로 덮지 않는다', () => {
+    const base = {
+      id: 'u1',
+      email: 't@example.com',
+      name: '김교사',
+      role: 'INSTRUCTOR',
+      roles: ['SCHOOL_TEACHER'],
+      instructorMemberProfile: 'school_teacher',
+    } as unknown as Omit<User, 'password'>
+
+    const next = applyTeacherDetailUrlContext(base, {
+      instructorMemberProfile: 'instructor_dual',
+      affiliatedSchoolName: '진월초등학교',
+    })
+
+    expect(next.instructorMemberProfile).toBe('school_teacher')
+    expect(next.affiliatedSchoolName).toBe('진월초등학교')
   })
 
   it('URL instructor_only는 API dual 추론보다 우선한다', () => {

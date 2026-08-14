@@ -9,14 +9,19 @@ import {
   fetchInstructorMemberDetailRemote,
   fetchMemberExternalIdentifiersRemote,
   fetchSchoolMemberDetailRemote,
+  fetchTeacherMemberDetailRemote,
 } from '@/features/user/api/members-api-client'
 import {
   mapIndividualMemberDetailToUser,
   mapInstructorMemberDetailToUser,
   mapSchoolMemberDetailToUser,
+  mapTeacherMemberDetailToUser,
 } from '@/features/user/api/map-member-detail-to-user'
 import { resolve1365IdFromExternalIdentifiers } from '@/features/user/api/map-external-identifiers'
-import { resolvePrimaryUserRole } from '@/features/user/api/map-member-role'
+import {
+  inferInstructorMemberProfileFromRoles,
+  resolvePrimaryUserRole,
+} from '@/features/user/api/map-member-role'
 import {
   fetchAdminMemberDetailAsUser,
   isAdminMemberDetailRole,
@@ -60,7 +65,13 @@ export async function probeMemberDetailAsUser(
       }
       // roles가 INSTRUCTOR/SCHOOL이면 해당 상세로 한 번 더 조회 (enrich)
       if (isSpecializedMemberRole(role)) {
-        return fetchSpecializedMemberDetailAsUser(userId, memberId, role, options)
+        return fetchSpecializedMemberDetailAsUser(
+          userId,
+          memberId,
+          role,
+          options,
+          detail.member.roles
+        )
       }
       // individual 엔드포인트가 응답했으면 동일 GET을 반복하지 않고 즉시 매핑
       const user = mapIndividualMemberDetailToUser(detail, { fallbackRole: 'INDIVIDUAL' })
@@ -90,6 +101,9 @@ export async function probeMemberDetailAsUser(
       fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
     ])
     if (detail.member) {
+      if (inferInstructorMemberProfileFromRoles(detail.member.roles) === 'school_teacher') {
+        return fetchInstructorLikeDetailAsUser(memberId, detail.member.roles)
+      }
       const user = mapInstructorMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
       const id1365 = resolve1365IdFromExternalIdentifiers(
         externalIdentifiers,
@@ -110,6 +124,28 @@ function isSpecializedMemberRole(role: UserRole): boolean {
   return role === 'INSTRUCTOR' || role === 'SCHOOL'
 }
 
+async function fetchInstructorLikeDetailAsUser(
+  memberId: number,
+  roles?: string[]
+): Promise<Omit<User, 'password'>> {
+  const useTeacher = inferInstructorMemberProfileFromRoles(roles) === 'school_teacher'
+  const [detail, externalIdentifiers] = await Promise.all([
+    useTeacher
+      ? fetchTeacherMemberDetailRemote(memberId)
+      : fetchInstructorMemberDetailRemote(memberId),
+    fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
+  ])
+  const user = useTeacher
+    ? mapTeacherMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
+    : mapInstructorMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
+  const id1365 = resolve1365IdFromExternalIdentifiers(
+    externalIdentifiers,
+    detail.member?.external1365Id
+  )
+  if (id1365) user.id1365 = id1365
+  return user
+}
+
 async function fetchSpecializedMemberDetailAsUser(
   userId: string,
   memberId: number,
@@ -117,7 +153,8 @@ async function fetchSpecializedMemberDetailAsUser(
   options?: {
     adminAccountId?: number
     email?: string
-  }
+  },
+  roles?: string[]
 ): Promise<Omit<User, 'password'>> {
   if (role === 'SCHOOL') {
     return mapSchoolMemberDetailToUser(await fetchSchoolMemberDetailRemote(memberId), {
@@ -125,17 +162,7 @@ async function fetchSpecializedMemberDetailAsUser(
     })
   }
   if (role === 'INSTRUCTOR') {
-    const [detail, externalIdentifiers] = await Promise.all([
-      fetchInstructorMemberDetailRemote(memberId),
-      fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
-    ])
-    const user = mapInstructorMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
-    const id1365 = resolve1365IdFromExternalIdentifiers(
-      externalIdentifiers,
-      detail.member?.external1365Id
-    )
-    if (id1365) user.id1365 = id1365
-    return user
+    return fetchInstructorLikeDetailAsUser(memberId, roles)
   }
   if (
     isAdminMemberDetailRole(role) &&

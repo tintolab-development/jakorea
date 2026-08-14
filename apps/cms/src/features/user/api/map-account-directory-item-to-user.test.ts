@@ -40,9 +40,10 @@ describe('mapAccountDirectoryItemToUser', () => {
     expect(user.memberId).toBe(42)
     expect(user.adminAccountId).toBeUndefined()
     expect(user.id).toBe('member-uuid-42')
+    expect(user.instructorMemberProfile).toBe('instructor_only')
   })
 
-  it('roles SCHOOL_TEACHER는 학교(교사) 프로필로 매핑한다', () => {
+  it('roles SCHOOL_TEACHER는 INSTRUCTOR + school_teacher 프로필로 매핑한다', () => {
     const user = mapAccountDirectoryItemToUser({
       accountType: AccountDirectoryItemResponseAccountType.MEMBER,
       accountId: 10,
@@ -55,8 +56,9 @@ describe('mapAccountDirectoryItemToUser', () => {
       createdAt: '2026-03-01T00:00:00Z',
     })
 
-    expect(user.role).toBe('INDIVIDUAL')
+    expect(user.role).toBe('INSTRUCTOR')
     expect(user.instructorMemberProfile).toBe('school_teacher')
+    expect(user.roles).toEqual(['SCHOOL_TEACHER'])
   })
 
   it('SCHOOL_TEACHER+INSTRUCTOR는 교사 겸직으로 매핑한다', () => {
@@ -74,5 +76,6 @@ describe('mapAccountDirectoryItemToUser', () => {
 
     expect(user.role).toBe('INSTRUCTOR')
     expect(user.instructorMemberProfile).toBe('instructor_dual')
+    expect(user.roles).toEqual(['SCHOOL_TEACHER', 'INSTRUCTOR'])
   })
 })

@@ -107,11 +107,33 @@
 .addressSearchRow {
   display: flex;
   width: 100%;
+  max-width: 100%;
+  align-items: stretch;
   gap: var(--spacing-12);
+  box-sizing: border-box;
 }
 
 .addressSearchRow > :first-child {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.addressSearchRow > :last-child {
+  flex: 0 0 auto;
+}
+
+@media (--bp-below-pc) {
+  .addressSearchRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-8);
+  }
+
+  .addressSearchRow > :first-child,
+  .addressSearchRow > :last-child {
+    flex: none;
+    width: 100%;
+  }
 }
 
 .gradeField {
@@ -155,6 +177,10 @@
 
 .message {
   margin: 0 0 var(--spacing-16);
+}
+
+.submitError {
+  margin: 0 0 var(--spacing-8);
 }
 
 .completeIntro {

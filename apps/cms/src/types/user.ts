@@ -92,6 +92,11 @@ export interface User {
   profileImageUrl?: string
   phone?: string
   role: UserRole
+  /**
+   * 서버 회원 `roles[]`.
+   * 교사(`SCHOOL_TEACHER` 단독) vs 교사 겸 강사(`INSTRUCTOR` + `SCHOOL_TEACHER`) SSOT.
+   */
+  roles?: string[]
 
   // 관리자 전용 (§2.2)
   adminLevel?: AdminLevel
@@ -174,7 +179,9 @@ export interface User {
 
   /**
    * 관리자 등록 후 본인 직접 가입(추가 절차)을 완료한 경우. true이면 CMS에서 **직접 등록**과 동일하게 취급한다.
-   * 기본정보 일괄 수정은 불가(읽기 전용)·관리자 코멘트(및 관리자 회원의 권한 유형)는 CMS 관리자 전원 예외, 강사(INSTRUCTOR)는 강사비 등급도 예외.
+   * API `identityVerified === true`로도 정규화된다.
+   * 기본정보 일괄 수정은 불가(읽기 전용). 관리자 코멘트는 별도 [코멘트 작성].
+   * 강사·교사(`role === 'INSTRUCTOR'`)는 강사비·JA 평가 등급만 [정보 수정] 예외.
    */
   identitySelfSignupCompletedAfterAdminRegistration?: boolean
 

@@ -75,6 +75,7 @@ interface UserStore {
       adminAccountId?: number
       email?: string
       instructorMemberProfile?: UserWithoutPassword['instructorMemberProfile']
+      roles?: string[]
     }
   ) => Promise<UserWithoutPassword | null>
   createUser: (request: CreateUserRequest) => Promise<UserWithoutPassword>

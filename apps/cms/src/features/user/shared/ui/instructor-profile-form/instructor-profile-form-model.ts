@@ -105,6 +105,15 @@ export type InstructorRegisterModalFormValues = {
   affiliationName: string
   affiliationNone: boolean
   schoolName: string
+  /** CMS 학교 organizationId — 검색 결과가 CMS 학교일 때 */
+  schoolOrganizationId?: number
+  schoolProvider?: string
+  schoolExternalCode?: string
+  schoolLevel?: string
+  schoolRegionSido?: string
+  schoolRegionSigungu?: string
+  schoolZipcode?: string
+  schoolAddress?: string
   employmentStatus: SchoolTeacherEmploymentStatus | ''
   instructorCareer: string
   /** 강사비 등급 — BE `profile.defaultFeeGrade` (CMS 등록 전용) */
@@ -179,6 +188,14 @@ export const INITIAL_VALUES: InstructorProfileFormValues = {
   affiliationName: '',
   affiliationNone: false,
   schoolName: '',
+  schoolOrganizationId: undefined,
+  schoolProvider: '',
+  schoolExternalCode: '',
+  schoolLevel: '',
+  schoolRegionSido: '',
+  schoolRegionSigungu: '',
+  schoolZipcode: '',
+  schoolAddress: '',
   employmentStatus: '',
   instructorCareer: '',
   instructorFeeGrade: '',

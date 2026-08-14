@@ -57,12 +57,15 @@ export interface UserDetailFullpageBasicTabContentProps {
   instructorResumeApplicantRow: ApplicantInstructorRow | null
   onNavigateToLinkedUser?: (target: AffiliatedTeacherLinkTarget) => void
   memberInfoEditing?: boolean
+  /** profile = 전체 기본정보, instructor_fee_ja = 강사비·JA 등급만 */
+  memberInfoEditScope?: 'profile' | 'instructor_fee_ja'
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
   adminPermissionVariantPatching?: boolean
   onPatchAdminPermissionVariantFromDetailView?: (
     nextPermission: AdminPermissionTagVariant
   ) => void | Promise<void>
+  onEmploymentStatusChange?: (status: SchoolTeacherEmploymentStatus) => void | Promise<void>
   onPermissionResendNotification?: (ctx: {
     userId: string
     permissionRole: 'instructor' | 'admin'
@@ -81,10 +84,12 @@ export function UserDetailFullpageBasicTabContent({
   instructorResumeApplicantRow,
   onNavigateToLinkedUser,
   memberInfoEditing = false,
+  memberInfoEditScope = 'profile',
   memberInfoDraft,
   onMemberInfoDraftChange,
   adminPermissionVariantPatching = false,
   onPatchAdminPermissionVariantFromDetailView,
+  onEmploymentStatusChange,
   onPermissionResendNotification,
   onOpenJaGradeEvaluation,
   scheduleChangeCount,
@@ -212,13 +217,16 @@ export function UserDetailFullpageBasicTabContent({
   ])
 
   const isInstructorPermissionDetail = mode === 'permission' && permissionRole === 'instructor'
-  // 강사 수정은 등록 폼 재사용(InstructorDetailEditForm)이 SSOT — 동의·이력 섹션까지 폼이 직접 렌더한다
-  const instructorRegisterLikeEdit = resolveInstructorRegisterLikeEdit({
-    user,
-    memberInfoEditing,
-    memberInfoDraft,
-    onMemberInfoDraftChange,
-  })
+  // 전체 프로필 수정만 등록 폼 재사용. 강사비·JA 제한 수정은 조회 레이아웃 + 해당 필드만 인라인 편집.
+  const instructorRegisterLikeEdit =
+    memberInfoEditScope === 'instructor_fee_ja'
+      ? null
+      : resolveInstructorRegisterLikeEdit({
+          user,
+          memberInfoEditing,
+          memberInfoDraft,
+          onMemberInfoDraftChange,
+        })
 
   /** 개인·관리자 상세 — 선택 동의 편집 / 필수 동의는 라디오 disabled */
   const memberConsentEditing = Boolean(
@@ -276,6 +284,7 @@ export function UserDetailFullpageBasicTabContent({
             externalId1365={basicTab.externalId1365}
             personalInfoRevealed={personalInfoRevealed}
             memberInfoEditing={memberInfoEditing}
+            memberInfoEditScope={memberInfoEditScope}
             memberInfoDraft={memberInfoDraft}
             onMemberInfoDraftChange={onMemberInfoDraftChange}
             adminPermissionVariantPatching={adminPermissionVariantPatching}
@@ -284,6 +293,7 @@ export function UserDetailFullpageBasicTabContent({
             onPermissionResendNotification={onPermissionResendNotification}
             onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
             scheduleChangeCount={scheduleChangeCount}
+            onEmploymentStatusChange={membersRemote ? onEmploymentStatusChange : undefined}
           />
           {basicTab.showConsentAgreement ? (
             <UserConsentAgreementSection

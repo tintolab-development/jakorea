@@ -4,6 +4,8 @@ export {
   postPortalLogin,
   getPortalMe,
   getPortalProfile,
+  patchPortalProfile,
+  postPortalPasswordChange,
   parseAuthTokenResponse,
   expiresAtFromExpiresInSeconds,
   parseHomepageMeResponse,
@@ -13,11 +15,15 @@ export type {
   AuthTokenResponse,
   HomepageMeResponse,
   MemberLoginRequest,
+  PasswordChangeRequest,
   PortalProfileResponse,
+  UpdatePortalProfileRequest,
 } from './api'
 export { getLoginApiErrorMessage } from './lib'
 export {
   usePortalLoginMutation,
   usePortalMeQuery,
   usePortalProfileQuery,
+  usePortalProfileUpdateMutation,
+  usePortalPasswordChangeMutation,
 } from './hooks'

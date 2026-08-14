@@ -1,5 +1,5 @@
 export { portalAuthPaths, portalMePaths } from './endpoints'
-export { postPortalLogin, getPortalMe, getPortalProfile } from './client'
+export { postPortalLogin, getPortalMe, getPortalProfile, patchPortalProfile, postPortalPasswordChange } from './client'
 export { parseAuthTokenResponse, expiresAtFromExpiresInSeconds } from './parse-auth-token'
 export {
   parseHomepageMeResponse,
@@ -9,5 +9,7 @@ export type {
   AuthTokenResponse,
   HomepageMeResponse,
   MemberLoginRequest,
+  PasswordChangeRequest,
   PortalProfileResponse,
+  UpdatePortalProfileRequest,
 } from './types'

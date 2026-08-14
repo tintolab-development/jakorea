@@ -1,4 +1,4 @@
-import type { InstructorMemberProfile, ProgramRole, User, UserRole } from '@/types/user'
+import type { ProgramRole, User, UserRole } from '@/types/user'
 import { parseAdminAccountIdFromUserId } from '@/features/user/api/fetch-admin-member-detail'
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
 import {
@@ -9,6 +9,7 @@ import {
   mapMemberStatusToIsActive,
   memberRolesIncludeSchool,
   resolvePrimaryUserRoleFromRoles,
+  copyMemberRoles,
   inferInstructorMemberProfileFromRoles,
 } from '@/features/user/api/map-member-role'
 import { mapApiUserListRowMetrics } from '@/features/user/api/map-user-list-row-metrics'
@@ -43,30 +44,6 @@ function resolveListItemUuid(
   if (id && !isUserResponseDisplayRowId(id)) return id
 
   return fallbackUuid(memberId)
-}
-
-function mapInstructorMemberProfile(raw?: string): InstructorMemberProfile | undefined {
-  const v = raw?.trim()
-  if (v === 'school_teacher' || v === 'instructor_dual' || v === 'instructor_only') return v
-  return undefined
-}
-
-function inferInstructorMemberProfileFromListItem(
-  item: MemberListItemResponse
-): InstructorMemberProfile | undefined {
-  const fromApi = mapInstructorMemberProfile(item.instructorMemberProfile)
-  if (fromApi) return fromApi
-
-  if (item.affiliatedSchoolUserId?.trim()) return 'instructor_dual'
-
-  const fromRoles = inferInstructorMemberProfileFromRoles(item.roles)
-  if (fromRoles) return fromRoles
-
-  const typeLabel =
-    item.listMetrics?.permissionApplicationTypeLabel?.trim() ||
-    item.listMetrics?.instructorTypeLabel?.trim()
-  if (typeLabel === '교사 회원') return 'school_teacher'
-  return undefined
 }
 
 function mapProgramRoles(raw?: Record<string, string>): Record<string, ProgramRole> | undefined {
@@ -145,8 +122,9 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
 
   const now = new Date().toISOString()
   const listMetrics = mapApiUserListRowMetrics(item.listMetrics)
-  const instructorMemberProfile = inferInstructorMemberProfileFromListItem(item)
+  const instructorMemberProfile = inferInstructorMemberProfileFromRoles(item.roles)
   const programRoles = mapProgramRoles(item.programRoles)
+  const roles = copyMemberRoles(item.roles)
 
   const user: Omit<User, 'password'> = {
     id: uuid,
@@ -155,6 +133,7 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
     name: String(item.name ?? item.organizationName ?? item.organizationText ?? '').trim() || '-',
     phone: item.phone?.trim() || undefined,
     role,
+    ...(roles ? { roles } : {}),
     isActive: resolveListItemIsActive(item),
     createdAt: item.createdAt ?? now,
     updatedAt: item.updatedAt ?? now,

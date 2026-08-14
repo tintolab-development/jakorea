@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   mapSchoolOrganizationToUser,
   parseOrganizationIdFromUserId,
+  shouldFetchSchoolOrganizationDetail,
   toOrganizationUserId,
 } from './map-school-organization-to-user'
 
@@ -34,5 +35,27 @@ describe('parseOrganizationIdFromUserId', () => {
   it('organization- prefix를 파싱한다', () => {
     expect(parseOrganizationIdFromUserId(toOrganizationUserId(9))).toBe(9)
     expect(parseOrganizationIdFromUserId('member-1')).toBeUndefined()
+  })
+})
+
+describe('shouldFetchSchoolOrganizationDetail', () => {
+  it('SCHOOL 역할이면 organization 상세를 쓴다', () => {
+    expect(
+      shouldFetchSchoolOrganizationDetail({
+        userId: 'school-uuid',
+        role: 'SCHOOL',
+        organizationId: 12,
+      })
+    ).toBe(true)
+  })
+
+  it('교사(INSTRUCTOR)의 소속 organizationId만으로는 학교 상세를 타지 않는다', () => {
+    expect(
+      shouldFetchSchoolOrganizationDetail({
+        userId: 'teacher-uuid',
+        role: 'INSTRUCTOR',
+        organizationId: 12,
+      })
+    ).toBe(false)
   })
 })

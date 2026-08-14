@@ -197,6 +197,30 @@ describe('mergeListUserWithFetchedDetail', () => {
     expect(merged.listMetrics?.highestEducationLabel).toBe('대학원 | 졸업')
     expect(merged.listMetrics?.jaEvaluationGrade).toBe('B')
   })
+
+  it('상세 roles SCHOOL_TEACHER 단독이면 목록 dual 프로필을 교사로 고친다', () => {
+    const list = baseUser({
+      id: 'teacher-uuid',
+      role: 'INSTRUCTOR',
+      name: '김교사',
+      instructorMemberProfile: 'instructor_dual',
+      roles: ['INSTRUCTOR', 'SCHOOL_TEACHER'],
+      schoolInfo: undefined,
+    })
+    const fetched = baseUser({
+      id: 'teacher-uuid',
+      role: 'INSTRUCTOR',
+      name: '김교사',
+      instructorMemberProfile: 'school_teacher',
+      roles: ['SCHOOL_TEACHER'],
+      schoolInfo: undefined,
+    })
+
+    const merged = mergeListUserWithFetchedDetail(list, fetched)
+
+    expect(merged.roles).toEqual(['SCHOOL_TEACHER'])
+    expect(merged.instructorMemberProfile).toBe('school_teacher')
+  })
 })
 
 describe('applySavedBasicInfoPatchToUser', () => {
@@ -246,7 +270,46 @@ describe('applySavedBasicInfoPatchToUser', () => {
     expect(merged.termsAgreements).toEqual([
       { termsType: 'SERVICE_TERMS', termsVersion: '1', required: true, agreed: true },
       { termsType: 'PRIVACY_COLLECTION', termsVersion: '1', required: true, agreed: true },
-      { termsType: 'MARKETING', termsVersion: '1', required: false, agreed: true },
+      { termsType: 'MARKETING', termsVersion: '1', required: false, agreed: true, agreedAt: expect.any(String) },
     ])
+  })
+
+  it('자택 주소 상세 저장 시 이전 상세를 남기지 않는다', () => {
+    const user = baseUser({
+      id: 'individual-uuid',
+      role: 'INDIVIDUAL',
+      name: '홍길동',
+      email: 'hong@example.com',
+      detailAddress: '서울특별시 관악구 관악로 1',
+      detailAddressDetail: '101호',
+    })
+
+    const merged = applySavedBasicInfoPatchToUser(user, {
+      detailAddress: '서울특별시 관악구 관악로 1',
+      detailAddressDetail: '202호',
+    })
+
+    expect(merged.detailAddress).toBe('서울특별시 관악구 관악로 1')
+    expect(merged.detailAddressDetail).toBe('202호')
+  })
+
+  it('개인 회원 소속 저장 시 재학 여부를 반영한다', () => {
+    const user = baseUser({
+      id: 'individual-uuid',
+      role: 'INDIVIDUAL',
+      name: '홍길동',
+      email: 'hong@example.com',
+      affiliation: '서울고등학교',
+      schoolEnrollmentStatus: 'ENROLLED',
+    })
+
+    const merged = applySavedBasicInfoPatchToUser(user, {
+      affiliation: 'JA코리아',
+      individualSchoolName: 'JA코리아',
+      schoolEnrollmentStatus: 'NOT_ENROLLED',
+    })
+
+    expect(merged.affiliation).toBe('JA코리아')
+    expect(merged.schoolEnrollmentStatus).toBe('NOT_ENROLLED')
   })
 })

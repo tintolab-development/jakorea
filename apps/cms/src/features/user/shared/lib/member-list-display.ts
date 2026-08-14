@@ -12,6 +12,7 @@ const MEMBER_LIST_ROLE_LABELS = {
 
 export const REVOKED_INSTRUCTOR_ROLE_TYPE_LABEL = '강사(권한박탈)'
 export const DUAL_MEMBER_ROLE_TYPE_LABEL = `${MEMBER_LIST_ROLE_LABELS.SCHOOL}, ${MEMBER_LIST_ROLE_LABELS.INSTRUCTOR}`
+export const DUAL_REVOKED_MEMBER_ROLE_TYPE_LABEL = `${MEMBER_LIST_ROLE_LABELS.SCHOOL}, ${REVOKED_INSTRUCTOR_ROLE_TYPE_LABEL}`
 
 export const ALL_MEMBER_LIST_ROLE_TYPE_LABELS = {
   INDIVIDUAL: MEMBER_LIST_ROLE_LABELS.INDIVIDUAL,
@@ -30,6 +31,14 @@ export function isInstructorPermissionRevoked(
   return isInstructorPermissionRevokedOverlay(record)
 }
 
+function resolveListInstructorProfile(
+  record: Parameters<typeof getAllMemberListRoleTypeLabel>[0]
+) {
+  return record.role === 'INSTRUCTOR'
+    ? resolveInstructorMemberProfile(record)
+    : record.instructorMemberProfile
+}
+
 /** 전체 회원 목록 — 회원 유형 열 */
 export function getAllMemberListRoleTypeLabel(
   record: Pick<User, 'role'> &
@@ -41,17 +50,15 @@ export function getAllMemberListRoleTypeLabel(
         | 'instructorApprovalStatus'
         | 'id'
         | 'memberId'
+        | 'roles'
       >
     >
 ): string {
+  const profile = resolveListInstructorProfile(record)
   if (isInstructorPermissionRevoked(record)) {
+    if (profile === 'instructor_dual') return DUAL_REVOKED_MEMBER_ROLE_TYPE_LABEL
     return REVOKED_INSTRUCTOR_ROLE_TYPE_LABEL
   }
-
-  const profile =
-    record.role === 'INSTRUCTOR'
-      ? resolveInstructorMemberProfile(record)
-      : record.instructorMemberProfile
 
   if (profile === 'instructor_dual') {
     return DUAL_MEMBER_ROLE_TYPE_LABEL
@@ -71,6 +78,17 @@ export function matchesAllTabRoleFilter(
   filter: keyof typeof ALL_MEMBER_LIST_ROLE_TYPE_LABELS | 'ALL'
 ): boolean {
   if (filter === 'ALL') return true
+  if (filter === 'INSTRUCTOR_REVOKED') {
+    if (!isInstructorPermissionRevoked(record)) return false
+    const profile = resolveListInstructorProfile(record)
+    return profile === 'instructor_only' || profile === 'instructor_dual' || profile == null
+  }
+  if (filter === 'INSTRUCTOR_DUAL') {
+    return (
+      !isInstructorPermissionRevoked(record) &&
+      getAllMemberListRoleTypeLabel(record) === ALL_MEMBER_LIST_ROLE_TYPE_LABELS.INSTRUCTOR_DUAL
+    )
+  }
   return getAllMemberListRoleTypeLabel(record) === ALL_MEMBER_LIST_ROLE_TYPE_LABELS[filter]
 }
 

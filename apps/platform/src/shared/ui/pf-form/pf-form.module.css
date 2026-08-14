@@ -173,8 +173,12 @@
 }
 
 .fieldRowDouble {
-  flex-direction: row;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) 200px minmax(0, 1fr);
+}
+
+.fieldRowDouble:has(.fieldLabelWide) {
+  grid-template-columns: 220px minmax(0, 1fr) 220px minmax(0, 1fr);
 }
 
 .field {
@@ -189,12 +193,23 @@
 }
 
 .fieldRowDouble > .field {
-  flex: 1 1 50%;
-  min-width: min(100%, 280px);
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: span 2;
+  min-width: 0;
+}
+
+.fieldRowDouble > .field:nth-child(2) {
+  border-left: 1px solid var(--table-line, #e0e0e0);
+}
+
+.fieldRowDouble > .field > .fieldLabel {
+  width: auto;
 }
 
 .fieldRowDouble > .fieldFull {
-  flex: 1 1 100%;
+  display: flex;
+  grid-column: 1 / -1;
 }
 
 .fieldLabel {
@@ -378,14 +393,22 @@
 
   .fieldRow,
   .fieldRowDouble {
+    display: flex;
     flex-direction: column;
     border-bottom: none;
   }
 
   .fieldRowDouble > .field {
+    display: flex;
     width: 100%;
     min-width: 0;
     flex: 1 1 auto;
+    grid-column: auto;
+    border-left: none;
+  }
+
+  .fieldRowDouble > .field > .fieldLabel {
+    width: 100%;
   }
 
   .fieldRow .field {

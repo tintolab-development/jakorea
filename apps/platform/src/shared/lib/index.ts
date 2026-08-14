@@ -10,6 +10,13 @@ export {
   getRefreshToken,
   setAuthTokens,
 } from './auth-token'
+export {
+  ADMIN_REGISTERED_ONBOARDING_PATH,
+  PLATFORM_ADMIN_ONBOARDING_REQUIRED_KEY,
+  isAdminOnboardingRequired,
+  resolveLoginRequiredPath,
+  setAdminOnboardingRequired,
+} from './admin-onboarding-session'
 export { queryClient } from './query-client'
 export { DEV_AUTH_CHANGE_EVENT, getDevAuthLoggedIn, setDevAuthLoggedIn } from './dev-auth'
 export {

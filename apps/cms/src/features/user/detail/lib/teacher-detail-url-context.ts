@@ -1,5 +1,6 @@
 import type { InstructorMemberProfile, User } from '@/types/user'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import { inferInstructorMemberProfileFromRoles } from '@/features/user/api/map-member-role'
 
 /** 교사/겸직 강사 상세 — 새로고침 시 학교명·프로필 복원용 */
 export const USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY = 'affiliatedSchool' as const
@@ -78,6 +79,7 @@ export function teacherDetailUrlParamsFromUser(
   user: Pick<
     User,
     | 'role'
+    | 'roles'
     | 'affiliatedSchoolName'
     | 'schoolInfo'
     | 'instructorMemberProfile'
@@ -107,6 +109,7 @@ export function memberDetailUrlParamsFromUser(
   user: Pick<
     User,
     | 'role'
+    | 'roles'
     | 'memberId'
     | 'affiliatedSchoolName'
     | 'schoolInfo'
@@ -129,8 +132,9 @@ export function memberDetailUrlParamsFromUser(
 
 /**
  * API 상세에 학교명·프로필이 비어도 URL/드릴다운 힌트로 상세 UI를 유지한다.
- * URL `instructorProfile`이 있으면 API 추론(school_teacher/dual)보다 우선 —
- * 순수 강사(`instructor_only`) 새로고침 시 「교사 상세」로 바뀌는 것 방지.
+ * 서버 `roles[]`가 있으면 URL `instructorProfile`보다 우선 —
+ * `SCHOOL_TEACHER` 단독 교사가 겸직(dual) URL로 덮이지 않게 한다.
+ * roles가 없을 때만 URL이 API 추론보다 우선 (순수 강사 새로고침 시 교사 상세로 바뀌는 것 방지).
  */
 export function applyTeacherDetailUrlContext(
   user: Omit<User, 'password'>,
@@ -148,7 +152,8 @@ export function applyTeacherDetailUrlContext(
   if (next.role !== 'INSTRUCTOR') return next
 
   if (ctx.instructorMemberProfile) {
-    next = { ...next, instructorMemberProfile: ctx.instructorMemberProfile }
+    const fromRoles = inferInstructorMemberProfileFromRoles(next.roles)
+    next = { ...next, instructorMemberProfile: fromRoles ?? ctx.instructorMemberProfile }
   }
 
   const school = ctx.affiliatedSchoolName?.trim()

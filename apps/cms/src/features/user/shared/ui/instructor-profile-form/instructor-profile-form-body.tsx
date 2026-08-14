@@ -19,6 +19,7 @@ import {
   CmsSelect,
   SchoolSearch,
 } from '@/shared/ui'
+import type { SchoolSearchSelection, SchoolSearchSelectMeta } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { FreeWriteItemsSection } from '@/shared/components/free-write-items-section'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
@@ -188,6 +189,12 @@ export interface InstructorProfileFormBodyProps {
    * Ant Design Form은 setFieldValue 시 onValuesChange를 호출하지 않음.
    */
   onConsentValuesCommit?: () => void
+  /**
+   * 학력·경력·JA활동·자격·수상·자유작성·강사등급 등 강사 제출양식 섹션.
+   * 순수 교사(`school_teacher`) 상세에서는 false — 기본 정보·약관만.
+   * 등록 모달에서 회원유형이 교사이면 자동 숨김.
+   */
+  includeInstructorApplicationSections?: boolean
   className?: string
 }
 
@@ -204,6 +211,7 @@ export function InstructorProfileFormBody({
   basicInfoExtraBeforeBusinessIncome,
   onOpenJaGradeEvaluation,
   onConsentValuesCommit,
+  includeInstructorApplicationSections = true,
   className,
 }: InstructorProfileFormBodyProps) {
   const isDetailEdit = layoutVariant === 'detailEdit'
@@ -219,6 +227,9 @@ export function InstructorProfileFormBody({
   const affiliationNone = Form.useWatch('affiliationNone', form) === true
   const jaEvaluationGrade = Form.useWatch('jaEvaluationGrade', form) ?? ''
   const isTeacherMember = memberType === 'school_teacher'
+  /** 상세: prop / 등록: 교사 선택 시 강사 제출양식 숨김 (겸직은 detailEdit + prop true) */
+  const showInstructorApplicationSections =
+    includeInstructorApplicationSections && (isDetailEdit || !isTeacherMember)
   const allValues = Form.useWatch([], form) as InstructorProfileFormValues | undefined
   const careerLevel = Form.useWatch('careerLevel', form) ?? 'new'
 
@@ -304,17 +315,60 @@ export function InstructorProfileFormBody({
     onConsentValuesCommit?.()
   }
 
+  const handleSchoolSelect = (selection: SchoolSearchSelection, meta: SchoolSearchSelectMeta) => {
+    if (selection.source === 'neis') {
+      const school = selection.item
+      form.setFieldsValue({
+        schoolName: school.schulNm.trim(),
+        schoolProvider: 'NEIS',
+        schoolExternalCode: school.sdSchulCode.trim(),
+        schoolLevel: school.schulKndScNm.trim(),
+        schoolAddress: school.orgRdnma.trim(),
+        schoolZipcode: school.orgRdnzc.trim(),
+        schoolRegionSido: meta.regionSido,
+        schoolRegionSigungu: meta.regionSigungu,
+        schoolOrganizationId: undefined,
+      })
+      return
+    }
+
+    const univ = selection.item
+    const schoolName = univ.campusName
+      ? `${univ.schoolName.trim()} (${univ.campusName.trim()})`
+      : univ.schoolName.trim()
+    form.setFieldsValue({
+      schoolName,
+      schoolProvider: 'CAREER_NET',
+      schoolExternalCode: univ.seq.trim(),
+      schoolLevel: univ.schoolGubun.trim() || univ.schoolType.trim(),
+      schoolAddress: univ.address.trim(),
+      schoolZipcode: '',
+      schoolRegionSido: meta.regionSido || univ.region.trim(),
+      schoolRegionSigungu: meta.regionSigungu,
+      schoolOrganizationId: undefined,
+    })
+  }
+
   const affiliationFieldEdit = isTeacherMember ? (
     <div className="detail-info-form-inputs-wrapper-no-gap">
       <Form.Item name="schoolName" noStyle>
         <SchoolSearch
           value={schoolName}
           onChange={nextSchoolName => form.setFieldValue('schoolName', nextSchoolName)}
+          onSelect={handleSchoolSelect}
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.schoolName}
           inputSize="medium"
           width={FORM_INPUTS_2_WIDTHS[0]}
         />
       </Form.Item>
+      <Form.Item name="schoolProvider" hidden preserve />
+      <Form.Item name="schoolExternalCode" hidden preserve />
+      <Form.Item name="schoolLevel" hidden preserve />
+      <Form.Item name="schoolAddress" hidden preserve />
+      <Form.Item name="schoolZipcode" hidden preserve />
+      <Form.Item name="schoolRegionSido" hidden preserve />
+      <Form.Item name="schoolRegionSigungu" hidden preserve />
+      <Form.Item name="schoolOrganizationId" hidden preserve />
       <DetailInfoForm.InputsSeparator />
       <Form.Item name="employmentStatus" noStyle>
         <CmsSelect
@@ -559,7 +613,7 @@ export function InstructorProfileFormBody({
           </DetailInfoForm.Row>
         </DetailInfoForm>
 
-        {formLayout.showInstructorGradeSection ? (
+        {formLayout.showInstructorGradeSection && showInstructorApplicationSections ? (
           <DetailInfoForm title="강사 등급" mode="edit" className="instructor-register-modal__grade-section">
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
@@ -665,6 +719,7 @@ export function InstructorProfileFormBody({
               </DetailInfoForm.Row>
             </DetailInfoForm>
 
+            {!isTeacherMember ? (
             <DetailInfoForm
               title="약관 및 동의"
               hideHeader
@@ -724,9 +779,12 @@ export function InstructorProfileFormBody({
                 />
               </DetailInfoForm.Row>
             </DetailInfoForm>
+            ) : null}
           </div>
         </DetailInfoForm>
 
+        {showInstructorApplicationSections ? (
+          <>
         <InstructorRegisterEducationSection />
 
         <DetailInfoForm title="경력사항" mode="edit" className="instructor-register-career">
@@ -982,6 +1040,8 @@ export function InstructorProfileFormBody({
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.freeWrite}
           className={isDetailEdit ? 'detail-info-form--gap-bottom' : undefined}
         />
+          </>
+        ) : null}
       </div>
 
       {activeConsentField != null &&

@@ -171,6 +171,28 @@ describe('map-instructor-cms-profile', () => {
     expect(back.jaEvaluationGrade).toBe('B')
   })
 
+  it('교사 유형 학교 검색값은 affiliation.schoolSelection에 담는다', () => {
+    const profile = instructorProfileFormValuesToCmsProfile({
+      ...INITIAL_VALUES,
+      memberType: 'school_teacher',
+      schoolName: '고양고등학교',
+      schoolProvider: 'NEIS',
+      schoolExternalCode: 'B109000000',
+      schoolAddress: '경기도 고양시',
+      schoolRegionSido: '경기도',
+      schoolRegionSigungu: '고양시',
+      employmentStatus: 'ACTIVE',
+    })
+
+    expect(profile.affiliation.schoolName).toBe('고양고등학교')
+    expect(profile.affiliation.schoolSelection).toMatchObject({
+      name: '고양고등학교',
+      provider: 'NEIS',
+      externalSchoolCode: 'B109000000',
+    })
+    expect(toApiInstructorCmsProfile(profile).affiliation?.schoolName).toBe('고양고등학교')
+  })
+
   it('profile 목록 필드가 빈 배열이어도 Form.List용 최소 1행을 반환한다', () => {
     const profile = instructorProfileFormValuesToCmsProfile({
       ...INITIAL_VALUES,

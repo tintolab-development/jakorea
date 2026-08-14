@@ -1,4 +1,4 @@
-import type { User } from '@/types/user'
+import type { User, UserRole } from '@/types/user'
 import type { SchoolOrganizationListItemResponse } from '@/shared/api/generated/members/schemas/schoolOrganizationListItemResponse'
 import { coercePositiveInt } from '@/features/user/api/user-response-row-id'
 
@@ -17,6 +17,23 @@ export function parseOrganizationIdFromUserId(userId: string | undefined | null)
     return Number.isFinite(n) && n > 0 ? n : undefined
   }
   return undefined
+}
+
+/**
+ * 학교 organization 상세 GET 여부.
+ * 교사 회원의 소속 `organizationId`는 학교 상세가 아니므로, 역할 힌트가 SCHOOL이 아니면 타지 않는다.
+ */
+export function shouldFetchSchoolOrganizationDetail(input: {
+  userId: string
+  role?: UserRole
+  organizationId?: number
+}): boolean {
+  if (input.role === 'SCHOOL') return true
+  if (input.role != null) return false
+  return (
+    parseOrganizationIdFromUserId(input.userId) != null ||
+    coercePositiveInt(input.organizationId) != null
+  )
 }
 
 export function mapSchoolOrganizationToUser(

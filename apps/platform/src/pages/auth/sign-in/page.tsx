@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   isMockAdminRegisteredFirstLogin,
+  requiresAdminRegisteredOnboarding,
   setAdminRegisteredPasswordChangeRequired,
 } from '@/features/auth/admin-registered'
 import {
@@ -87,6 +88,8 @@ export function SignInPage() {
     accessToken: string
     refreshToken: string
     expiresInSeconds?: number
+    /** false면 토큰만 보관(온보딩 API용). 헤더·마이페이지는 비로그인 */
+    markLoggedIn?: boolean
   }) => {
     // 이전 세션 회원 캐시 제거 후 새 토큰 저장 (mock 프로필 잔여와 분리)
     queryClient.removeQueries({ queryKey: platformQueryKeys.auth.me() })
@@ -97,7 +100,7 @@ export function SignInPage() {
       expiresAt: expiresAtFromExpiresInSeconds(input.expiresInSeconds),
     })
     setDevMemberProfile('individual')
-    setDevAuthLoggedIn(true)
+    setDevAuthLoggedIn(input.markLoggedIn !== false)
   }
 
   const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
@@ -131,12 +134,13 @@ export function SignInPage() {
         password,
       })
 
-      if (tokens.passwordChangeRequired) {
+      if (requiresAdminRegisteredOnboarding(tokens)) {
         setAdminRegisteredPasswordChangeRequired(validation.normalized)
         completeLoginSession({
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
           expiresInSeconds: tokens.expiresInSeconds,
+          markLoggedIn: false,
         })
         navigate('/auth/admin-registered/notice')
         return

@@ -1,10 +1,5 @@
-import { useState } from 'react'
-import {
-  REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
-  buildRequiredConsentDisagreeAlertMessage,
-} from '@jakorea/domain/shared/required-consent-alert'
-import type { ConsentChoice, UseSignUpReturn } from '@/features/auth/sign-up'
-import { PFAlertModal, PFButton, PFText, PFToggle } from '@/shared/ui'
+import type { UseSignUpReturn } from '@/features/auth/sign-up'
+import { PFButton, PFText, PFToggle } from '@/shared/ui'
 import { SignUpLayout } from '../layout/shell'
 import { SignUpStepLayout } from '../layout/sign-up-step-layout'
 import styles from '../wizard.module.css'
@@ -13,27 +8,9 @@ type GuardianAgreementStepProps = {
   signUp: UseSignUpReturn
 }
 
-const CONSENT_CHOICES: { value: Exclude<ConsentChoice, null>; label: string }[] = [
-  { value: 'agree', label: '동의' },
-  { value: 'disagree', label: '미동의' },
-]
-
 export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
   const { step, guardian } = signUp
   const agreement = guardian.agreement
-  const [alertOpen, setAlertOpen] = useState(false)
-  const [alertMessage, setAlertMessage] = useState('')
-
-  const handleContinue = () => {
-    if (!agreement.isRequiredAgreed) {
-      setAlertMessage(
-        buildRequiredConsentDisagreeAlertMessage(agreement.disagreedRequiredLabels),
-      )
-      setAlertOpen(true)
-      return
-    }
-    agreement.continue()
-  }
 
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
@@ -43,7 +20,12 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
         actionsVariant="terms"
         actions={
           <>
-            <PFButton size="xlarge" width="100%" onClick={handleContinue}>
+            <PFButton
+              size="xlarge"
+              width="100%"
+              disabled={!agreement.isRequiredAgreed}
+              onClick={agreement.continue}
+            >
               동의하고 계속하기
             </PFButton>
             <PFButton size="xlarge" variant="tertiary" width="100%" onClick={step.goPrevious}>
@@ -72,7 +54,12 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
           <div className={styles.agreementList}>
             {agreement.items.map(item => (
               <div className={styles.agreementItem} key={item.key}>
-                <div className={styles.agreementChoiceBlock}>
+                <PFToggle
+                  variant="check-small"
+                  checked={agreement.state[item.key]}
+                  onChange={() => agreement.toggle(item.key)}
+                  className={styles.agreementCheckButton}
+                >
                   <span className={styles.agreementText}>
                     <PFText
                       typo="bd-sm-md"
@@ -85,27 +72,7 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
                       {item.label}
                     </PFText>
                   </span>
-                  <div
-                    className={styles.agreementChoiceGroup}
-                    role="radiogroup"
-                    aria-label={item.label}
-                  >
-                    {CONSENT_CHOICES.map(choice => (
-                      <label key={choice.value} className={styles.agreementChoiceOption}>
-                        <input
-                          type="radio"
-                          name={`guardian-agreement-${item.key}`}
-                          value={choice.value}
-                          checked={agreement.state[item.key] === choice.value}
-                          onChange={() => agreement.setChoice(item.key, choice.value)}
-                        />
-                        <PFText as="span" typo="bd-md-rg" color="black">
-                          {choice.label}
-                        </PFText>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+                </PFToggle>
                 <button className={styles.termsViewButton} type="button">
                   <PFText typo="bd-sm-md" color="inherit">
                     보기
@@ -135,13 +102,6 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
           </PFText>
         </div>
       </SignUpStepLayout>
-
-      <PFAlertModal
-        open={alertOpen}
-        title={REQUIRED_CONSENT_DISAGREE_ALERT_TITLE}
-        description={alertMessage}
-        onConfirm={() => setAlertOpen(false)}
-      />
     </SignUpLayout>
   )
 }

@@ -1,3 +1,5 @@
 export { usePortalLoginMutation } from './use-portal-login-mutation'
 export { usePortalMeQuery } from './use-portal-me-query'
 export { usePortalProfileQuery } from './use-portal-profile-query'
+export { usePortalProfileUpdateMutation } from './use-portal-profile-update-mutation'
+export { usePortalPasswordChangeMutation } from './use-portal-password-change-mutation'

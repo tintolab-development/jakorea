@@ -1,7 +1,7 @@
 /**
  * 강사 기본 정보 — **조회 전용** 섹션.
- * 수정 화면은 등록 폼을 재사용하는 `InstructorDetailEditForm`이 SSOT이므로
- * 이 파일에 `edit` 슬롯을 추가하지 않는다.
+ * 전체 프로필 수정은 `InstructorDetailEditForm`이 SSOT.
+ * 본인인증 완료 후 제한 수정(`feeJaRestrictedEdit`)만 강사비·JA를 인라인 편집한다.
  */
 
 import type { ReactNode } from 'react'
@@ -32,6 +32,10 @@ import {
 } from '../status'
 import type { BasicInfoSectionContext } from './types'
 import { ContactInfoViewRow } from './shared'
+import {
+  canEditInstructorFeeJaFields,
+  InstructorFeeGradeSelect,
+} from './instructor-fee-ja-edit'
 import { formatDate } from '@/shared/utils'
 
 function instructorBusinessIncomeView(user: BasicInfoSectionContext['user']) {
@@ -96,6 +100,27 @@ function InstructorAffiliationView({ user }: { user: BasicInfoSectionContext['us
   )
 }
 
+function jaEvaluationGradeField(ctx: BasicInfoSectionContext) {
+  const draftGrade = ctx.memberInfoDraft?.jaEvaluationGrade?.trim()
+  const userForJa =
+    draftGrade && canEditInstructorFeeJaFields(ctx)
+      ? {
+          ...ctx.user,
+          listMetrics: {
+            ...ctx.user.listMetrics,
+            jaEvaluationGrade: draftGrade,
+          },
+        }
+      : ctx.user
+  return (
+    <InstructorJaEvaluationGradeField
+      user={userForJa}
+      wrapClassName="user-basic-info-section__permission-approval-dropdown-wrap"
+      onOpenJaGradeEvaluation={ctx.onOpenJaGradeEvaluation}
+    />
+  )
+}
+
 export function InstructorMetaSection(ctx: BasicInfoSectionContext) {
   const {
     user,
@@ -104,6 +129,8 @@ export function InstructorMetaSection(ctx: BasicInfoSectionContext) {
   } = ctx
   const isInstructorPermissionDetail =
     viewContext.permissionView && viewContext.permissionRole === 'instructor'
+  const canEditFeeJa = canEditInstructorFeeJaFields(ctx)
+  const jaField = jaEvaluationGradeField(ctx)
 
   return (
     <>
@@ -125,14 +152,9 @@ export function InstructorMetaSection(ctx: BasicInfoSectionContext) {
         )}
         <EditableField
           label="JA 평가 등급"
-          readOnlyDisplay
-          view={
-            <InstructorJaEvaluationGradeField
-              user={user}
-              wrapClassName="user-basic-info-section__permission-approval-dropdown-wrap"
-              onOpenJaGradeEvaluation={ctx.onOpenJaGradeEvaluation}
-            />
-          }
+          readOnlyDisplay={!canEditFeeJa}
+          view={jaField}
+          edit={jaField}
         />
       </EditableRow>
       <EditableRow type="double">
@@ -147,6 +169,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
   const { user, scheduleChangeCount, personalInfoRevealed, viewContext } = ctx
   const isInstructorPermissionDetail =
     viewContext.permissionView && viewContext.permissionRole === 'instructor'
+  const canEditFeeJa = canEditInstructorFeeJaFields(ctx)
   const nameWithBadge = (nameNode: ReactNode) => (
     <span className="user-basic-info-section__name-with-badge">
       {nameNode}
@@ -195,8 +218,9 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         {!isInstructorPermissionDetail ? (
           <EditableField
             label="강사비 등급"
-            readOnlyDisplay
+            readOnlyDisplay={!canEditFeeJa}
             view={<span>{instructorFeeGradeLine(user)}</span>}
+            edit={<InstructorFeeGradeSelect ctx={ctx} />}
           />
         ) : (
           <EditableField

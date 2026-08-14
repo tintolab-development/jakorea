@@ -10,6 +10,7 @@ export const BasicInfoSectionTypes = {
   ALL_USERS: 'ALL_USERS',
   INSTITUTION: 'INSTITUTION',
   ADMIN: 'ADMIN',
+  SCHOOL_TEACHER: 'SCHOOL_TEACHER',
 } as const
 
 export type BasicInfoSectionType = (typeof BasicInfoSectionTypes)[keyof typeof BasicInfoSectionTypes]
@@ -35,7 +36,8 @@ export type BasicInfoLayoutResolved =
       sections: readonly [
         | typeof BasicInfoSectionTypes.ALL_USERS
         | typeof BasicInfoSectionTypes.INSTITUTION
-        | typeof BasicInfoSectionTypes.ADMIN,
+        | typeof BasicInfoSectionTypes.ADMIN
+        | typeof BasicInfoSectionTypes.SCHOOL_TEACHER,
       ]
     }
 
@@ -44,12 +46,6 @@ export function usesInstructorMemberBasicInfoLayout(
   instructorProfile: InstructorMemberProfile | null | undefined
 ): boolean {
   return instructorProfile !== 'school_teacher'
-}
-
-function resolveInstructorSectionVariant(
-  instructorProfile: InstructorMemberProfile | null | undefined
-): SplitSectionVariant {
-  return usesInstructorMemberBasicInfoLayout(instructorProfile) ? 'instructor' : 'school_teacher'
 }
 
 /**
@@ -66,10 +62,16 @@ export function resolveBasicInfoLayout({
   instructorProfile: InstructorMemberProfile | null | undefined
 }): BasicInfoLayoutResolved {
   if (bodyKey === 'instructor') {
+    if (!usesInstructorMemberBasicInfoLayout(instructorProfile)) {
+      return {
+        layout: BasicInfoLayout.SINGLE_CARD,
+        sections: [BasicInfoSectionTypes.SCHOOL_TEACHER],
+      }
+    }
     return {
       layout: BasicInfoLayout.SPLIT_CARD,
       sections: [BasicInfoSectionTypes.META, BasicInfoSectionTypes.PROFILE],
-      splitSectionVariant: resolveInstructorSectionVariant(instructorProfile),
+      splitSectionVariant: 'instructor',
     }
   }
 

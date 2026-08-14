@@ -14,6 +14,7 @@ import {
   mapUserToInstructorProfileFormValues,
   isInstructorConsentFormFieldKey,
 } from '@/features/user/detail/lib/map-user-to-instructor-profile-form'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import { socialView } from '@/features/user/detail/ui/user-basic-info/display'
 import { InstructorJaEvaluationGradeField } from '@/features/user/detail/ui/user-basic-info/instructor-ja-grade-field'
 import {
@@ -69,6 +70,7 @@ export function InstructorDetailEditForm({
   isInstructorPermissionDetail = false,
 }: InstructorDetailEditFormProps) {
   const [form] = Form.useForm<InstructorProfileFormValues>()
+  const isSchoolTeacherOnly = resolveInstructorMemberProfile(user) === 'school_teacher'
 
   const initialValues = useMemo(
     () => mapUserToInstructorProfileFormValues(user, instructorResumeApplicantRow),
@@ -117,42 +119,66 @@ export function InstructorDetailEditForm({
 
   const basicInfoPrefix = (
     <>
-      <DetailInfoForm.Row type="double">
-        {isInstructorPermissionDetail ? (
+      {!isSchoolTeacherOnly ? (
+        <DetailInfoForm.Row type="double">
+          {isInstructorPermissionDetail ? (
+            <DetailInfoForm.Field
+              label="권한 승인 현황"
+              view={permissionApprovalStatus}
+              edit={permissionApprovalStatus}
+            />
+          ) : (
+            <DetailInfoForm.Field
+              label="정산 현황"
+              view={settlementStatusView(user)}
+              edit={<span>{settlementStatusView(user)}</span>}
+            />
+          )}
           <DetailInfoForm.Field
-            label="권한 승인 현황"
-            view={permissionApprovalStatus}
-            edit={permissionApprovalStatus}
+            label="JA 평가 등급"
+            view={jaEvaluationGradeDisplay}
+            edit={jaEvaluationGradeDisplay}
           />
-        ) : (
+        </DetailInfoForm.Row>
+      ) : null}
+      {isSchoolTeacherOnly ? (
+        <>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="가입일"
+              fullRow
+              view={formatDate(user.createdAt)}
+              edit={<span>{formatDate(user.createdAt)}</span>}
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="연동된 소셜 계정"
+              fullRow
+              view={socialView(user)}
+              edit={<span>{socialView(user)}</span>}
+            />
+          </DetailInfoForm.Row>
+        </>
+      ) : (
+        <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
-            label="정산 현황"
-            view={settlementStatusView(user)}
-            edit={<span>{settlementStatusView(user)}</span>}
+            label="가입일"
+            view={formatDate(user.createdAt)}
+            edit={<span>{formatDate(user.createdAt)}</span>}
           />
-        )}
-        <DetailInfoForm.Field
-          label="JA 평가 등급"
-          view={jaEvaluationGradeDisplay}
-          edit={jaEvaluationGradeDisplay}
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="가입일"
-          view={formatDate(user.createdAt)}
-          edit={<span>{formatDate(user.createdAt)}</span>}
-        />
-        <DetailInfoForm.Field
-          label="연동된 소셜 계정"
-          view={socialView(user)}
-          edit={<span>{socialView(user)}</span>}
-        />
-      </DetailInfoForm.Row>
+          <DetailInfoForm.Field
+            label="연동된 소셜 계정"
+            view={socialView(user)}
+            edit={<span>{socialView(user)}</span>}
+          />
+        </DetailInfoForm.Row>
+      )}
     </>
   )
 
-  const basicInfoExtraBeforeBusinessIncome = !isInstructorPermissionDetail ? (
+  const basicInfoExtraBeforeBusinessIncome =
+    !isInstructorPermissionDetail && !isSchoolTeacherOnly ? (
     <DetailInfoForm.Row type="single">
       <DetailInfoForm.Field
         label="강사비 등급"
@@ -196,6 +222,7 @@ export function InstructorDetailEditForm({
         basicInfoPrefix={basicInfoPrefix}
         basicInfoExtraBeforeBusinessIncome={basicInfoExtraBeforeBusinessIncome}
         onConsentValuesCommit={flushDraftFromForm}
+        includeInstructorApplicationSections={!isSchoolTeacherOnly}
       />
     </Form>
   )

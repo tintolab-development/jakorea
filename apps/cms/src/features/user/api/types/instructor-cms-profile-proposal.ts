@@ -22,6 +22,8 @@ export type InstructorCmsGraduateDegree = 'master' | 'doctor'
 
 /** CMS 기본정보 — 소속 (일반: affiliationName / 교사: schoolName + employmentStatus) */
 export interface InstructorCmsAffiliation {
+  /** CMS 학교 PK — `profile.affiliation.organizationId` */
+  organizationId?: number
   /** 교사 회원 — 「소속」학교명 */
   schoolName?: string
   /** 교사 회원 — 「재직 현황」 */
@@ -30,6 +32,11 @@ export interface InstructorCmsAffiliation {
   organizationNames?: string[]
   /** 학교 memberId — drill-down · affiliated-teachers 연동 */
   affiliatedSchoolUserId?: string
+  /**
+   * 학교 검색 선택값. 강사 pre-register 최상위 `schoolSelection`으로 전달.
+   * 학교명 snapshot만으로는 서버가 학교를 생성·연결하지 않는다.
+   */
+  schoolSelection?: import('@/shared/api/generated/members/schemas/portalSchoolSelectionRequest').PortalSchoolSelectionRequest
 }
 
 /** CMS 「자택 주소지」 */

@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { clearAdminRegisteredWizardState } from '@/features/auth/admin-registered'
 import { ScrollRestoration, useNavigate } from 'react-router-dom'
 import { postPortalAuthLogout } from '@/shared/api/axios-instance'
 import {
@@ -57,6 +58,7 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
         }
       }
       clearAuthTokens()
+      clearAdminRegisteredWizardState()
       setDevAuthLoggedIn(false)
       setIsLoggedIn(false)
       navigate('/')

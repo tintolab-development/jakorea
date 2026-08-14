@@ -5,12 +5,13 @@ import {
 } from './apply-instructor-permission-revoked'
 
 describe('applyInstructorPermissionRevokedToUser', () => {
-  it('순수 강사는 개인으로 전환하고 REVOKED를 남긴다', () => {
+  it('순수 강사는 강사 상세를 유지하고 REVOKED를 남긴다', () => {
     const next = applyInstructorPermissionRevokedToUser({
       id: 'u1',
       email: 'a@test.com',
       name: '순수강사',
       role: 'INSTRUCTOR',
+      roles: ['INSTRUCTOR'],
       instructorMemberProfile: 'instructor_only',
       instructorInfo: {
         bankName: '국민',
@@ -23,28 +24,43 @@ describe('applyInstructorPermissionRevokedToUser', () => {
       updatedAt: '2026-01-01',
     })
 
-    expect(next.role).toBe('INDIVIDUAL')
-    expect(next.instructorMemberProfile).toBeUndefined()
-    expect(next.instructorInfo).toBeUndefined()
+    expect(next.role).toBe('INSTRUCTOR')
+    expect(next.instructorMemberProfile).toBe('instructor_only')
+    expect(next.roles).toEqual(['INSTRUCTOR_REVOKED'])
+    expect(next.instructorInfo).toEqual({
+      bankName: '국민',
+      accountNumber: '1',
+      accountHolder: '순수강사',
+      isBusinessIncome: false,
+    })
     expect(next.instructorApprovalStatus).toBe('REVOKED')
   })
 
-  it('겸직·교사 강사는 school_teacher로 남기고 REVOKED를 남긴다', () => {
+  it('겸직 강사는 겸직 상세를 유지하고 INSTRUCTOR_REVOKED로 바꾼다', () => {
     const next = applyInstructorPermissionRevokedToUser({
       id: 'u2',
       email: 'b@test.com',
       name: '겸직강사',
       role: 'INSTRUCTOR',
       instructorMemberProfile: 'instructor_dual',
+      roles: ['INSTRUCTOR', 'SCHOOL_TEACHER'],
       affiliatedSchoolUserId: 'school-1',
+      instructorInfo: {
+        bankName: '우리',
+        accountNumber: '2',
+        accountHolder: '겸직강사',
+        isBusinessIncome: true,
+      },
       isActive: true,
       createdAt: '2026-01-01',
       updatedAt: '2026-01-01',
     })
 
     expect(next.role).toBe('INSTRUCTOR')
-    expect(next.instructorMemberProfile).toBe('school_teacher')
+    expect(next.instructorMemberProfile).toBe('instructor_dual')
     expect(next.instructorApprovalStatus).toBe('REVOKED')
+    expect(next.roles).toEqual(['INSTRUCTOR_REVOKED', 'SCHOOL_TEACHER'])
+    expect(next.instructorInfo?.bankName).toBe('우리')
   })
 })
 
