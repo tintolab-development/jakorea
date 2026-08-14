@@ -2,8 +2,9 @@
   display: flex;
   width: 100%;
   min-width: 0;
+  flex-direction: column;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   gap: var(--spacing-12);
 }
@@ -12,20 +13,20 @@
 .actions .reportButton {
   display: flex;
   box-sizing: border-box;
-  width: 240px;
-  min-width: 160px;
+  width: 100%;
+  min-width: 0;
   height: auto;
   padding: 13px var(--spacing-28);
   justify-content: center;
   align-items: center;
   gap: var(--spacing-4);
-  border-radius: var(--radius-16);
+  border-radius: var(--radius-999);
   border: 1px solid var(--color-neutral-black-10);
   background: var(--color-primary-500);
   color: var(--color-neutral-white);
   text-align: center;
   font-family: var(--font-family-base);
-  font-size: 18px;
+  font-size: 16px;
   font-style: normal;
   font-weight: 600;
   line-height: 150%;
@@ -36,20 +37,20 @@
 .actions .ntsButton {
   display: flex;
   box-sizing: border-box;
-  width: 240px;
-  min-width: 160px;
+  width: 100%;
+  min-width: 0;
   height: auto;
   padding: 13px var(--spacing-28);
   justify-content: center;
   align-items: center;
   gap: var(--spacing-4);
-  border-radius: var(--radius-16);
+  border-radius: var(--radius-999);
   border: 1px solid var(--color-border-default);
   background: var(--color-neutral-white);
   color: var(--color-neutral-black);
   text-align: center;
   font-family: var(--font-family-base);
-  font-size: 18px;
+  font-size: 16px;
   font-style: normal;
   font-weight: 600;
   line-height: 150%;
@@ -69,4 +70,19 @@
   height: 24px;
   flex-shrink: 0;
   aspect-ratio: 1 / 1;
+}
+
+@media (--bp-pc-up) {
+  .actions {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .actions .reportButton,
+  .actions .ntsButton {
+    width: 240px;
+    min-width: 160px;
+    border-radius: var(--radius-16);
+    font-size: 18px;
+  }
 }
