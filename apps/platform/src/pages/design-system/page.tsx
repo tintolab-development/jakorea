@@ -111,6 +111,15 @@ const typographyTokenSpecs = [
     letterSpacing: '-0.48px',
   },
   {
+    token: 'typo-page-title-sm',
+    pfText: 'page-title-sm' as const,
+    figma: 'pageTitle/small',
+    size: '44px',
+    weight: '600',
+    lineHeight: '140%',
+    letterSpacing: '-0.44px',
+  },
+  {
     token: 'typo-hd-lg',
     pfText: 'hd-lg',
     figma: 'Heading/Large',

@@ -23,7 +23,7 @@ function WhyCard({ card }: { card: WhyCardContent }) {
     <article className={styles.card}>
       <div className={[styles.cardContent, WHY_CARD_CONTENT_CLASS[card.id]].join(' ')}>
         <div className={styles.cardInfo}>
-          <PFCategoryBadge size="small" variant="secondary" className={styles.badge}>
+          <PFCategoryBadge size="large" variant="secondary" className={styles.badge}>
             {card.badge}
           </PFCategoryBadge>
           <div className={styles.cardMessage}>
@@ -63,50 +63,52 @@ function WhyCard({ card }: { card: WhyCardContent }) {
 export function WhySection() {
   return (
     <section className={styles.section} aria-labelledby="individual-donation-why-title">
-      <div className={styles.sectionHeader}>
-        <PFText
-          as="h2"
-          id="individual-donation-why-title"
-          typo="hd-lg"
-          color="black"
-          className={styles.title}
-        >
-          {WHY_SECTION_TITLE}
-        </PFText>
-
-        <div className={styles.action}>
+      <div className={styles.content}>
+        <div className={styles.sectionHeader}>
           <PFText
-            as="p"
-            typo="bd-md-rg"
-            color="neutral-cool-600"
-            className={styles.actionDescription}
+            as="h2"
+            id="individual-donation-why-title"
+            typo="page-title-sm"
+            color="black"
+            className={styles.title}
           >
-            {WHY_SECTION_ACTION_DESCRIPTION}
+            {WHY_SECTION_TITLE}
           </PFText>
-          {/* TODO: 투명경영 페이지 경로 연결 */}
-          <PFButton
-            type="button"
-            size="xlarge"
-            variant="tertiary"
-            className={styles.actionButton}
-          >
-            <span>{WHY_SECTION_ACTION_BUTTON_LABEL}</span>
-            <img
-              className={styles.actionIcon}
-              src={arrowDiagonalBlackUrl}
-              alt=""
-              aria-hidden="true"
-              width={24}
-              height={24}
-            />
-          </PFButton>
-        </div>
-      </div>
 
-      <div className={styles.cardList}>
-        {WHY_CARDS.map(card => (
-          <WhyCard key={card.id} card={card} />
-        ))}
+          <div className={styles.action}>
+            <PFText
+              as="p"
+              typo="bd-md-rg"
+              color="neutral-cool-600"
+              className={styles.actionDescription}
+            >
+              {WHY_SECTION_ACTION_DESCRIPTION}
+            </PFText>
+            {/* TODO: 투명경영 페이지 경로 연결 */}
+            <PFButton
+              type="button"
+              size="xlarge"
+              variant="tertiary"
+              className={styles.actionButton}
+            >
+              <span>{WHY_SECTION_ACTION_BUTTON_LABEL}</span>
+              <img
+                className={styles.actionIcon}
+                src={arrowDiagonalBlackUrl}
+                alt=""
+                aria-hidden="true"
+                width={24}
+                height={24}
+              />
+            </PFButton>
+          </div>
+        </div>
+
+        <div className={styles.cardList}>
+          {WHY_CARDS.map(card => (
+            <WhyCard key={card.id} card={card} />
+          ))}
+        </div>
       </div>
     </section>
   )
