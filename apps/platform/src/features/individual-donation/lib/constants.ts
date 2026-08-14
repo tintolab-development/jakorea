@@ -43,3 +43,17 @@ export const WHY_CARDS: readonly WhyCardContent[] = [
   },
 ]
 
+export const CTA_SECTION_EYEBROW = 'Grow together'
+
+export const CTA_SECTION_TITLE_LINES = [
+  '청소년을 위한 작은 실천',
+  '지금 시작해 보세요',
+] as const
+
+export const CTA_SECTION_BUTTON_LABEL = '성장 후원하기'
+
+export const IMPACT_SECTION_TITLE = '후원이 만드는 변화를 확인해 보세요'
+
+export const IMPACT_SLIDER_VISIBLE_COUNT = 3
+
+

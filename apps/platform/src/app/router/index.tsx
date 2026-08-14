@@ -99,6 +99,11 @@ export const router = createBrowserRouter([
       { path: ABOUT_HISTORY_PATH, element: <TemporaryPage /> },
       { path: ABOUT_CAREERS_PATH, element: <TemporaryPage /> },
       { path: IMPACT_STORIES_PATH, element: <ImpactStoriesPage /> },
+    ],
+  },
+  {
+    element: <AppLayoutRoute layout="support" />,
+    children: [
       { path: INDIVIDUAL_DONATION_PATH, element: <IndividualDonationPage /> },
       { path: SUPPORT_CORPORATE_PATH, element: <TemporaryPage /> },
       { path: SUPPORT_TALENT_PATH, element: <TemporaryPage /> },

@@ -1,0 +1,130 @@
+.section {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding-block: var(--spacing-56);
+  background: linear-gradient(180deg, rgb(245 247 247 / 0%) 0%, #f5f7f7 100%);
+}
+
+.content {
+  display: flex;
+  width: 100%;
+  max-width: var(--content-shell-max-width);
+  min-width: 0;
+  margin-inline: auto;
+  flex-direction: column;
+  gap: var(--spacing-32);
+}
+
+.title {
+  margin: 0;
+  word-break: keep-all;
+}
+
+.list {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  list-style: none;
+}
+
+.listItem {
+  width: 100%;
+  min-width: 0;
+}
+
+.viewport,
+.track,
+.slide,
+.navigation,
+.prevButton,
+.nextButton {
+  display: none;
+}
+
+@media (--bp-pc-up) {
+  .section {
+    padding-block: var(--spacing-150);
+  }
+
+  .content {
+    gap: var(--spacing-60);
+  }
+
+  .list {
+    display: none;
+  }
+
+  .viewport {
+    --carousel-gap: var(--spacing-24);
+    --visible-count: 3;
+    --slide-width: calc(
+      (100cqi - ((var(--visible-count) - 1) * var(--carousel-gap))) / var(--visible-count)
+    );
+
+    container-type: inline-size;
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .track {
+    display: flex;
+    width: max-content;
+    margin: 0;
+    padding: 0;
+    gap: var(--carousel-gap);
+    list-style: none;
+    transform: translateX(
+      calc(var(--slide-index, 0) * (var(--slide-width) + var(--carousel-gap)) * -1)
+    );
+    transition: transform 450ms ease;
+  }
+
+  .slide {
+    box-sizing: border-box;
+    display: block;
+    flex: 0 0 var(--slide-width);
+    width: var(--slide-width);
+    max-width: var(--slide-width);
+    min-width: var(--slide-width);
+  }
+
+  .navigation {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-12);
+  }
+
+  .prevButton,
+  .nextButton {
+    display: flex;
+    border: 1px solid var(--color-neutral-black-10);
+    background: var(--color-neutral-white);
+    box-shadow: var(--shadow-card-lg);
+  }
+
+  .prevButton {
+    transform: scaleX(-1);
+  }
+
+  .prevButton:hover:not(:disabled),
+  .nextButton:hover:not(:disabled) {
+    background: var(--color-neutral-white);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    transition: none;
+  }
+}
