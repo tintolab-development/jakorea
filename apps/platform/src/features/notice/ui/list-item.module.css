@@ -65,16 +65,55 @@
 
 @media (--bp-below-pc) {
   .row {
-    flex-wrap: wrap;
-    gap: var(--spacing-8) var(--spacing-16);
-    padding: var(--spacing-24) var(--spacing-16);
+    box-sizing: border-box;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    gap: var(--spacing-8);
+    padding-block: var(--spacing-16);
+    padding-inline: 0;
   }
 
+  .no {
+    display: none;
+  }
+
+  /* 뱃지·제목·날짜를 row의 한 컬럼으로 풀어 8px gap이 균일하게 적용되게 함 */
   .titleGroup {
-    flex: 1 1 calc(100% - 48px);
+    display: contents;
+  }
+
+  .badge,
+  .badge:global(.typo-bd-sm-sb) {
+    display: flex;
+    box-sizing: border-box;
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    height: 24px;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    border-radius: var(--radius-999);
+    background: var(--color-primary-500);
+    color: var(--color-neutral-white);
+    font-family: var(--font-family-base);
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 140%;
   }
 
   .title {
+    margin: 0;
+    padding: 0;
+    color: var(--color-neutral-black);
+    font-family: var(--font-family-base);
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 145%;
     white-space: normal;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -83,6 +122,14 @@
 
   .date {
     width: 100%;
-    padding-left: calc(2ch + var(--spacing-48));
+    margin: 0;
+    padding: 0;
+    padding-left: 0;
+    color: var(--color-neutral-cool-600);
+    font-family: var(--font-family-base);
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
   }
 }
