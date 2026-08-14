@@ -9,10 +9,10 @@
  * design-system·test/spec 제외.
  * cms-data-table = 클래스 문자열 (`*.{ts,tsx,css}`).
  * raw Button/Modal/Empty/Descriptions = antd named import · `shared/ui|shared/components` 제외.
- * 재집계일: 2026-07-30 (StatusDropdownCell tag100 크롬 통일 · chrome=hug 제거)
+ * 재집계일: 2026-08-14 (AlimtalkPhonePreview 카탈로그)
  */
 
-export const DS_IMPACT_AS_OF = '2026-07-30'
+export const DS_IMPACT_AS_OF = '2026-08-14'
 
 export const DS_IMPACT_AUDIT_METHOD =
   '심볼 \\bName\\b · apps/cms/src *.{ts,tsx} · excl /design-system/ · excl *.test|*.spec · cms-data-table=class'
@@ -180,6 +180,11 @@ export const DS_IMPACT_ADOPTION_ROWS: DsImpactAdoptionRow[] = [
     files: '41',
     note: 'tag100 단일 크롬 · INLINE_TAG100 폼/상세·교재명 · Editable/Textbook 등',
   },
+  {
+    primitive: 'AlimtalkPhonePreview',
+    files: '2',
+    note: '템플릿 미리보기 · 발송 풀페이지 · #alimtalk-phone',
+  },
 ]
 
 export type DsImpactCommonizationRow = {
@@ -313,6 +318,13 @@ export const DS_IMPACT_TOUCHPOINT_ROWS: DsImpactTouchpointRow[] = [
     blast: 'PostDetailModal · 공지/출석 첨부',
     risk: 'Medium',
     tone: 'warning',
+  },
+  {
+    touchpoint: 'alimtalk-phone-preview.css',
+    change: '알림톡 휴대폰 프레임·버블 타이포',
+    blast: '템플릿 미리보기 · 알림톡 발송 풀페이지 · /design-system#alimtalk-phone',
+    risk: 'Local',
+    tone: 'neutral',
   },
 ]
 
