@@ -1,115 +1,75 @@
-import type { AlimtalkTemplateRow } from './types'
+import { ALIMTALK_ROOT_CATEGORY_ID, type AlimtalkCategory, type AlimtalkTemplateItem } from './types'
 
-const TEMPLATE_CONTENT =
-  '안녕하세요, JA Korea입니다.\n\n회원님의 가입을 진심으로 환영합니다.\n\n서비스 이용 안내 및 문의사항은 고객센터로 연락해 주세요.\n\n감사합니다.'
+const SIGNUP_CONTENT = `안녕하세요, JA Korea입니다.
 
-export const ALIMTALK_TEMPLATE_MOCK_ROWS: AlimtalkTemplateRow[] = [
+회원님의 가입을 진심으로 환영합니다.
+
+서비스 이용 안내 및 문의사항은 고객센터로 연락해 주세요.
+
+감사합니다.`
+
+const PASSWORD_CONTENT = `안녕하세요, JA Korea입니다.
+
+비밀번호 변경이 완료되었습니다.
+
+본인이 요청하지 않은 변경이라면 고객센터로 즉시 문의해 주세요.
+
+감사합니다.`
+
+const APPLY_CONTENT = `안녕하세요, JA Korea입니다.
+
+프로그램 신청이 정상적으로 접수되었습니다.
+
+신청 내역은 마이페이지에서 확인할 수 있습니다.
+
+감사합니다.`
+
+export const ALIMTALK_CATEGORY_MOCK: AlimtalkCategory[] = [
+  { id: 'cat-notice', name: '전체 공지', parentId: ALIMTALK_ROOT_CATEGORY_ID },
+  { id: 'cat-system', name: '시스템 안내', parentId: 'cat-notice' },
+  { id: 'cat-program', name: '프로그램 안내', parentId: ALIMTALK_ROOT_CATEGORY_ID },
+  { id: 'cat-test-01', name: 'test 01', parentId: 'cat-program' },
+  { id: 'cat-test-02', name: 'test 02', parentId: 'cat-test-01' },
+]
+
+export const ALIMTALK_TEMPLATE_ITEM_MOCK: AlimtalkTemplateItem[] = [
   {
-    id: 'alimtalk-9',
-    displayNo: 9,
-    kakaoApprovalStatus: 'REGISTERED',
-    templateUsageStatus: 'WAITING',
-    channelName: 'JA KOREA',
-    templateType: 'BASIC',
+    id: 'tpl-signup',
+    name: '회원가입 안내',
     templateName: '회원가입 안내',
-    templateContent: TEMPLATE_CONTENT,
-    characterCount: 915,
-    registeredAt: '2026-01-28T14:32:00',
+    categoryId: 'cat-system',
+    registeredAt: '2026-09-15T09:15:00',
+    updatedAt: '2026-09-15T09:15:00',
+    senderProfile: 'JA KOREA',
+    messageType: 'BASIC',
+    emphasisType: 'NONE',
+    content: SIGNUP_CONTENT,
+    ctaLabel: 'JA 홈페이지 바로가기',
   },
   {
-    id: 'alimtalk-8',
-    displayNo: 8,
-    kakaoApprovalStatus: 'REQUESTED',
-    templateUsageStatus: 'NORMAL',
-    channelName: 'JA KOREA',
-    templateType: 'BASIC',
-    templateName: '비밀번호 변경 안내',
-    templateContent: TEMPLATE_CONTENT,
-    characterCount: 915,
-    registeredAt: '2026-01-25T11:20:00',
+    id: 'tpl-password',
+    name: '비밀번호 변경 안내',
+    templateName: 'JA Company Of the Year 2차 교육 워크숍 수강 안내',
+    categoryId: 'cat-notice',
+    registeredAt: '2026-09-15T09:15:00',
+    updatedAt: '2026-09-15T09:15:00',
+    senderProfile: 'JA KOREA',
+    messageType: 'BASIC',
+    emphasisType: 'NONE',
+    content: PASSWORD_CONTENT,
+    ctaLabel: 'JA 홈페이지 바로가기',
   },
   {
-    id: 'alimtalk-7',
-    displayNo: 7,
-    kakaoApprovalStatus: 'APPROVED',
-    templateUsageStatus: 'SUSPENDED',
-    channelName: 'JA KOREA',
-    templateType: 'BASIC',
-    templateName: '프로그램 신청 완료 안내',
-    templateContent: TEMPLATE_CONTENT,
-    characterCount: 915,
-    registeredAt: '2026-01-20T09:15:00',
-  },
-  {
-    id: 'alimtalk-6',
-    displayNo: 6,
-    kakaoApprovalStatus: 'REJECTED',
-    templateUsageStatus: 'DORMANT',
-    channelName: 'JA KOREA',
-    templateType: 'BASIC',
-    templateName: '프로그램 취소 안내',
-    templateContent: TEMPLATE_CONTENT,
-    characterCount: 915,
-    registeredAt: '2026-01-15T16:45:00',
-  },
-  {
-    id: 'alimtalk-5',
-    displayNo: 5,
-    kakaoApprovalStatus: 'APPROVED',
-    templateUsageStatus: 'BLOCKED',
-    channelName: 'JA KOREA',
-    templateType: 'BASIC',
-    templateName: '정산 신청 접수 안내',
-    templateContent: TEMPLATE_CONTENT,
-    characterCount: 915,
-    registeredAt: '2026-01-10T10:00:00',
-  },
-  {
-    id: 'alimtalk-4',
-    displayNo: 4,
-    kakaoApprovalStatus: 'REGISTERED',
-    templateUsageStatus: 'NORMAL',
-    channelName: 'JA KOREA',
-    templateType: 'BASIC',
-    templateName: '강사 매칭 확정 안내',
-    templateContent: TEMPLATE_CONTENT,
-    characterCount: 915,
-    registeredAt: '2025-12-28T13:22:00',
-  },
-  {
-    id: 'alimtalk-3',
-    displayNo: 3,
-    kakaoApprovalStatus: 'REQUESTED',
-    templateUsageStatus: 'WAITING',
-    channelName: 'JA KOREA',
-    templateType: 'BASIC',
-    templateName: '일정 변경 안내',
-    templateContent: TEMPLATE_CONTENT,
-    characterCount: 915,
-    registeredAt: '2025-12-10T08:30:00',
-  },
-  {
-    id: 'alimtalk-2',
-    displayNo: 2,
-    kakaoApprovalStatus: 'APPROVED',
-    templateUsageStatus: 'NORMAL',
-    channelName: 'JA KOREA',
-    templateType: 'BASIC',
-    templateName: '수료증 발급 안내',
-    templateContent: TEMPLATE_CONTENT,
-    characterCount: 915,
-    registeredAt: '2025-11-05T17:10:00',
-  },
-  {
-    id: 'alimtalk-1',
-    displayNo: 1,
-    kakaoApprovalStatus: 'REJECTED',
-    templateUsageStatus: 'SUSPENDED',
-    channelName: 'JA KOREA',
-    templateType: 'BASIC',
-    templateName: '봉사 활동 안내',
-    templateContent: TEMPLATE_CONTENT,
-    characterCount: 915,
-    registeredAt: '2025-09-20T12:00:00',
+    id: 'tpl-apply',
+    name: '프로그램 신청 안내',
+    templateName: '프로그램 신청 안내',
+    categoryId: 'cat-program',
+    registeredAt: '2026-09-15T09:15:00',
+    updatedAt: '2026-09-15T09:15:00',
+    senderProfile: 'JA KOREA',
+    messageType: 'BASIC',
+    emphasisType: 'NONE',
+    content: APPLY_CONTENT,
+    ctaLabel: 'JA 홈페이지 바로가기',
   },
 ]
