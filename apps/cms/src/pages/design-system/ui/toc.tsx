@@ -24,6 +24,8 @@ export const DS_TOC_ITEMS: TocItem[] = [
   { id: 'status-extended', label: 'Status tags (extended)' },
   { id: 'navigation', label: 'Navigation' },
   { id: 'feedback', label: 'Empty & Loading' },
+  { id: 'alimtalk-phone', label: 'AlimTalk phone' },
+  { id: 'alimtalk-send', label: 'AlimTalk send' },
   { id: 'do-dont', label: "Do / Don't" },
 ]
 

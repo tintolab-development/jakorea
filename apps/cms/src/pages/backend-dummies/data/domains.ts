@@ -66,7 +66,7 @@ export const BACKEND_DUMMY_DOMAINS: readonly BackendDummyDomain[] = [
     label: '알림 메시지',
     shortLabel: '알림',
     gateKeys: ['notifications'],
-    description: '카카오 알림톡·메일&문자 (SSOT estimated)',
+    description: '알림톡·메일·문자 (SSOT estimated)',
   },
   {
     id: 'performance',

@@ -1,262 +1,411 @@
 /**
- * 알림 메시지 관리 > 카카오 알림톡 관리 > 알림톡 양식 탭
+ * 알림 메시지 관리 > 알림톡 관리 > 알림톡 템플릿 탭
  */
 
-import { useCallback, useMemo } from 'react'
-import dayjs from 'dayjs'
-import { Spin, Table } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { useSearchParams } from 'react-router-dom'
-import { shouldUseAlimtalkTemplatesRemoteApi } from '@/features/notifications/api/alimtalk-template-service'
-import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
-import { useAlimtalkTemplateListQuery } from '@/features/notifications/hooks/use-alimtalk-template-list-query'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
-import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
-import { ALIMTALK_TEMPLATE_FILTER_FIELDS } from '@/features/notifications/model/alimtalk-template/filter-fields'
-import { ALIMTALK_TEMPLATE_MOCK_ROWS } from '@/features/notifications/model/alimtalk-template/mock'
-import { alimtalkTemplateTablePageConfig } from '@/features/notifications/model/alimtalk-template/table.config'
-import type {
-  AlimtalkTemplateRow,
-  AlimtalkTemplateTableContext,
-  KakaoApprovalStatus,
-  TemplateUsageStatus,
+import { CmsButton, CmsModal, ConfirmModal, useCmsAlert } from '@/shared/ui'
+import {
+  ALIMTALK_ROOT_CATEGORY_ID,
+  type AlimtalkCategory,
+  type AlimtalkTemplateItem,
+  type AlimtalkTemplatePendingFilters,
+  type AlimtalkTreeSelection,
 } from '@/features/notifications/model/alimtalk-template/types'
+import { ALIMTALK_TEMPLATE_FILTER_FIELDS } from '@/features/notifications/model/alimtalk-template/filter-fields'
+import {
+  applyAlimtalkFiltersToSearchParams,
+  pendingFiltersFromSearchParams,
+} from '@/features/notifications/model/alimtalk-template/filter-url'
+import {
+  ALIMTALK_CATEGORY_MOCK,
+  ALIMTALK_TEMPLATE_ITEM_MOCK,
+} from '@/features/notifications/model/alimtalk-template/mock'
+import {
+  canMoveCategoryTo,
+  categoryHasChildren,
+  categoryNameById,
+  collectDeleteIds,
+  filterAlimtalkTree,
+  findTemplate,
+  moveCategoryToParent,
+  moveTemplateToCategory,
+} from '@/features/notifications/lib/tree'
+import { CategoryNameModal } from './category-name-modal'
+import { CategoryTree, parseAlimtalkDndId, ALIMTALK_DND_CATEGORY_MOVE_PREFIX } from './category-tree'
+import { DetailPanel } from './detail-panel'
+import { PreviewModal } from './preview-modal'
 import '@/pages/programs/program-list-page.css'
 import './list.css'
 
-const APPROVAL_STATUS_LABEL: Record<KakaoApprovalStatus, string> = {
-  REGISTERED: '등록',
-  REQUESTED: '요청',
-  APPROVED: '승인',
-  REJECTED: '반려',
+type PendingMove =
+  | { kind: 'template'; templateId: string; targetCategoryId: string }
+  | { kind: 'category'; categoryId: string; targetParentId: string }
+
+type DeleteDialog = 'category' | 'template' | 'blocked' | null
+
+function defaultExpandedIds(categories: AlimtalkCategory[]): Set<string> {
+  return new Set([ALIMTALK_ROOT_CATEGORY_ID, ...categories.map(category => category.id)])
 }
 
-const USAGE_STATUS_LABEL: Record<TemplateUsageStatus, string> = {
-  WAITING: '대기',
-  NORMAL: '정상',
-  SUSPENDED: '중단',
-  DORMANT: '휴면',
-  BLOCKED: '차단',
+function targetCategoryForAdd(selection: AlimtalkTreeSelection, templates: AlimtalkTemplateItem[]): string {
+  if (!selection) return ALIMTALK_ROOT_CATEGORY_ID
+  if (selection.kind === 'category') return selection.id
+  return findTemplate(templates, selection.id)?.categoryId ?? ALIMTALK_ROOT_CATEGORY_ID
 }
 
-const TEMPLATE_TYPE_LABEL = {
-  BASIC: '기본형',
-} as const
-
-const COL_WIDTH = {
-  no: TABLE_COLUMN_WIDTHS.index,
-  approvalStatus: 120,
-  usageStatus: 120,
-  channelName: 120,
-  templateType: 88,
-  templateName: 160,
-  templateContent: 280,
-  characterCount: 88,
-  registeredAt: 176,
-  manage: 120,
-} as const
-
-const TABLE_SCROLL_X =
-  COL_WIDTH.no +
-  COL_WIDTH.approvalStatus +
-  COL_WIDTH.usageStatus +
-  COL_WIDTH.channelName +
-  COL_WIDTH.templateType +
-  COL_WIDTH.templateName +
-  COL_WIDTH.templateContent +
-  COL_WIDTH.characterCount +
-  COL_WIDTH.registeredAt +
-  COL_WIDTH.manage
-
-function approvalStatusCell(status: KakaoApprovalStatus) {
-  const base = 'alimtalk-template-list__status'
-  const modifier =
-    status === 'REGISTERED'
-      ? `${base}--approval-registered`
-      : status === 'REQUESTED'
-        ? `${base}--approval-requested`
-        : status === 'APPROVED'
-          ? `${base}--approval-approved`
-          : `${base}--approval-rejected`
-  return <span className={`${base} ${modifier}`}>{APPROVAL_STATUS_LABEL[status]}</span>
-}
-
-function usageStatusCell(status: TemplateUsageStatus) {
-  const base = 'alimtalk-template-list__status'
-  const modifier =
-    status === 'WAITING'
-      ? `${base}--usage-waiting`
-      : status === 'NORMAL'
-        ? `${base}--usage-normal`
-        : status === 'SUSPENDED'
-          ? `${base}--usage-suspended`
-          : status === 'DORMANT'
-            ? `${base}--usage-dormant`
-            : `${base}--usage-blocked`
-  return <span className={`${base} ${modifier}`}>{USAGE_STATUS_LABEL[status]}</span>
+function categoryIdForEdit(
+  selection: AlimtalkTreeSelection,
+  templates: AlimtalkTemplateItem[]
+): string | null {
+  if (!selection) return null
+  if (selection.kind === 'category') {
+    return selection.id === ALIMTALK_ROOT_CATEGORY_ID ? null : selection.id
+  }
+  const parentId = findTemplate(templates, selection.id)?.categoryId
+  if (!parentId || parentId === ALIMTALK_ROOT_CATEGORY_ID) return null
+  return parentId
 }
 
 export function AlimtalkTemplateList() {
   const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
-  const tableContext = useMemo<AlimtalkTemplateTableContext>(() => ({}), [])
-  const remoteEnabled = shouldUseAlimtalkTemplatesRemoteApi()
-  const listQuery = useAlimtalkTemplateListQuery(searchParams, true)
-  const rows = remoteEnabled ? (listQuery.data ?? []) : ALIMTALK_TEMPLATE_MOCK_ROWS
+  const appliedFilters = useMemo(() => pendingFiltersFromSearchParams(searchParams), [searchParams])
+  const [pendingFilters, setPendingFilters] = useState<AlimtalkTemplatePendingFilters>(appliedFilters)
+  const pendingFiltersRef = useRef(pendingFilters)
+  pendingFiltersRef.current = pendingFilters
 
-  const {
-    pendingFilters,
-    applySearch: handleSearch,
-    handleFilterChange,
-    displayedCount,
-    tableData,
-  } = useTablePage(alimtalkTemplateTablePageConfig, {
-    data: rows,
-    searchParams,
-    setSearchParams,
-    context: tableContext,
+  useEffect(() => {
+    setPendingFilters(appliedFilters)
+  }, [appliedFilters])
+
+  const [categories, setCategories] = useState<AlimtalkCategory[]>(ALIMTALK_CATEGORY_MOCK)
+  const [templates, setTemplates] = useState<AlimtalkTemplateItem[]>(ALIMTALK_TEMPLATE_ITEM_MOCK)
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() =>
+    defaultExpandedIds(ALIMTALK_CATEGORY_MOCK)
+  )
+  const [selection, setSelection] = useState<AlimtalkTreeSelection>({
+    kind: 'template',
+    id: 'tpl-password',
   })
-
-  const handleViewDetail = useCallback(() => {
-    showAlert({
-      title: '준비 중',
-      content: '양식 상세보기 기능은 현재 준비 중입니다.',
-    })
-  }, [showAlert])
-
-  const columns = useMemo<ColumnsType<AlimtalkTemplateRow>>(
-    () => [
-      {
-        title: 'No.',
-        key: 'no',
-        className: CMS_TABLE_NO_COL_CLASS,
-        width: COL_WIDTH.no,
-        align: 'center',
-        render: (_: unknown, row: AlimtalkTemplateRow) => row.displayNo,
-      },
-      {
-        title: '카카오 승인 현황',
-        key: 'kakaoApprovalStatus',
-        width: COL_WIDTH.approvalStatus,
-        align: 'center',
-        render: (_: unknown, row: AlimtalkTemplateRow) =>
-          approvalStatusCell(row.kakaoApprovalStatus),
-      },
-      {
-        title: '템플릿 사용 현황',
-        key: 'templateUsageStatus',
-        width: COL_WIDTH.usageStatus,
-        align: 'center',
-        render: (_: unknown, row: AlimtalkTemplateRow) => usageStatusCell(row.templateUsageStatus),
-      },
-      {
-        title: '카카오 채널명',
-        dataIndex: 'channelName',
-        key: 'channelName',
-        width: COL_WIDTH.channelName,
-        align: 'center',
-      },
-      {
-        title: '유형',
-        key: 'templateType',
-        width: COL_WIDTH.templateType,
-        align: 'center',
-        render: (_: unknown, row: AlimtalkTemplateRow) => TEMPLATE_TYPE_LABEL[row.templateType],
-      },
-      {
-        title: '템플릿명',
-        dataIndex: 'templateName',
-        key: 'templateName',
-        width: COL_WIDTH.templateName,
-        ellipsis: { showTitle: true },
-      },
-      {
-        title: '템플릿 내용',
-        dataIndex: 'templateContent',
-        key: 'templateContent',
-        width: COL_WIDTH.templateContent,
-        render: (value: string) => (
-          <span className="alimtalk-template-list__content" title={value}>
-            {value}
-          </span>
-        ),
-      },
-      {
-        title: '글자 수',
-        dataIndex: 'characterCount',
-        key: 'characterCount',
-        width: COL_WIDTH.characterCount,
-        align: 'center',
-      },
-      {
-        title: '최종 등록일',
-        key: 'registeredAt',
-        width: COL_WIDTH.registeredAt,
-        align: 'center',
-        render: (_: unknown, row: AlimtalkTemplateRow) =>
-          dayjs(row.registeredAt).format('YYYY.MM.DD HH:mm'),
-      },
-      {
-        title: '양식 관리',
-        key: 'manage',
-        width: COL_WIDTH.manage,
-        align: 'center',
-        render: () => (
-          <CmsButton variant="secondary" type="button" onClick={handleViewDetail}>
-            양식 상세보기
-          </CmsButton>
-        ),
-      },
-    ],
-    [handleViewDetail]
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [deleteDialog, setDeleteDialog] = useState<DeleteDialog>(null)
+  const [pendingMove, setPendingMove] = useState<PendingMove | null>(null)
+  const [categoryModal, setCategoryModal] = useState<{ mode: 'add' | 'edit'; categoryId: string | null } | null>(
+    null
   )
 
-  const listErrorMessage =
-    remoteEnabled && listQuery.isError
-      ? getNotificationsApiErrorMessage(
-          listQuery.error,
-          '알림톡 양식 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
+  const visibleTree = useMemo(
+    () =>
+      filterAlimtalkTree(
+        categories,
+        templates,
+        appliedFilters.categoryName,
+        appliedFilters.templateName
+      ),
+    [appliedFilters.categoryName, appliedFilters.templateName, categories, templates]
+  )
+
+  const selectedTemplate =
+    selection?.kind === 'template' ? findTemplate(templates, selection.id) ?? null : null
+  const selectedCategoryName = selectedTemplate
+    ? categoryNameById(categories, selectedTemplate.categoryId)
+    : ''
+
+  const selectedDeleteIds = useMemo(() => {
+    if (!selection || (selection.kind === 'category' && selection.id === ALIMTALK_ROOT_CATEGORY_ID)) {
+      return new Set<string>()
+    }
+    return new Set([selection.id])
+  }, [selection])
+
+  const deletableCheckedCount = useMemo(() => {
+    const { categoryIds, templateIds } = collectDeleteIds(categories, templates, selectedDeleteIds)
+    return categoryIds.length + templateIds.length
+  }, [categories, selectedDeleteIds, templates])
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  )
+
+  const handleFilterChange = useCallback((key: string, value: unknown) => {
+    setPendingFilters(prev => {
+      const next = { ...prev, [key]: typeof value === 'string' ? value : '' }
+      pendingFiltersRef.current = next
+      return next
+    })
+  }, [])
+
+  const handleSearch = useCallback(() => {
+    setSearchParams(prev => applyAlimtalkFiltersToSearchParams(prev, pendingFiltersRef.current), {
+      replace: true,
+    })
+  }, [setSearchParams])
+
+  const handleToggleExpand = useCallback((categoryId: string) => {
+    setExpandedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(categoryId)) next.delete(categoryId)
+      else next.add(categoryId)
+      return next
+    })
+  }, [])
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const active = parseAlimtalkDndId(String(event.active.id))
+      const over = event.over ? parseAlimtalkDndId(String(event.over.id)) : null
+      if (!active || over?.kind !== 'category') return
+
+      const isCategoryMove = String(event.active.id).startsWith(ALIMTALK_DND_CATEGORY_MOVE_PREFIX)
+      if (isCategoryMove && active.kind === 'category') {
+        if (!canMoveCategoryTo(categories, active.id, over.id)) return
+        setPendingMove({ kind: 'category', categoryId: active.id, targetParentId: over.id })
+        return
+      }
+
+      if (active.kind !== 'template') return
+      const template = findTemplate(templates, active.id)
+      if (!template || template.categoryId === over.id) return
+      setPendingMove({ kind: 'template', templateId: active.id, targetCategoryId: over.id })
+    },
+    [categories, templates]
+  )
+
+  const handleConfirmMove = useCallback(() => {
+    if (!pendingMove) return
+    if (pendingMove.kind === 'template') {
+      setTemplates(prev =>
+        moveTemplateToCategory(prev, pendingMove.templateId, pendingMove.targetCategoryId)
+      )
+      setExpandedIds(prev => new Set(prev).add(pendingMove.targetCategoryId))
+    } else {
+      setCategories(prev =>
+        moveCategoryToParent(prev, pendingMove.categoryId, pendingMove.targetParentId)
+      )
+      setExpandedIds(prev => new Set(prev).add(pendingMove.targetParentId))
+    }
+    setPendingMove(null)
+  }, [pendingMove])
+
+  const handleRequestDelete = useCallback(() => {
+    if (!selection) return
+    if (selection.kind === 'category') {
+      if (selection.id === ALIMTALK_ROOT_CATEGORY_ID) return
+      if (categoryHasChildren(categories, templates, selection.id)) {
+        setDeleteDialog('blocked')
+        return
+      }
+      setDeleteDialog('category')
+      return
+    }
+    setDeleteDialog('template')
+  }, [categories, selection, templates])
+
+  const handleConfirmDelete = useCallback(() => {
+    const { categoryIds, templateIds } = collectDeleteIds(categories, templates, selectedDeleteIds)
+    const categoryIdSet = new Set(categoryIds)
+    const templateIdSet = new Set(templateIds)
+    setCategories(prev => prev.filter(category => !categoryIdSet.has(category.id)))
+    setTemplates(prev => prev.filter(template => !templateIdSet.has(template.id)))
+    setSelection(current => {
+      if (!current) return current
+      if (current.kind === 'category' && categoryIdSet.has(current.id)) return null
+      if (current.kind === 'template' && templateIdSet.has(current.id)) return null
+      return current
+    })
+    setDeleteDialog(null)
+  }, [categories, selectedDeleteIds, templates])
+
+  const handleSubmitCategory = useCallback(
+    (name: string) => {
+      if (!categoryModal) return
+      if (categoryModal.mode === 'add') {
+        const parentId = targetCategoryForAdd(selection, templates)
+        const id = `cat-${Date.now()}`
+        setCategories(prev => [...prev, { id, name, parentId }])
+        setExpandedIds(prev => new Set(prev).add(parentId).add(id))
+        setSelection({ kind: 'category', id })
+      } else if (categoryModal.categoryId) {
+        const editId = categoryModal.categoryId
+        setCategories(prev =>
+          prev.map(category => (category.id === editId ? { ...category, name } : category))
         )
-      : null
+      }
+      setCategoryModal(null)
+    },
+    [categoryModal, selection, templates]
+  )
+
+  const editCategoryId = categoryIdForEdit(selection, templates)
 
   return (
     <div className="program-list-page">
       <FilterTableLayout
         bordered={false}
         filterResponsiveWrap={false}
+        hideExcelDownload
         fields={ALIMTALK_TEMPLATE_FILTER_FIELDS}
         filters={{
-          kakaoApprovalStatus: pendingFilters.kakaoApprovalStatus,
-          templateUsageStatus: pendingFilters.templateUsageStatus,
-          channelName: pendingFilters.channelName,
+          categoryName: pendingFilters.categoryName,
           templateName: pendingFilters.templateName,
-          dateRange: pendingFilters.dateRange ?? undefined,
         }}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
-        title="카카오 알림톡 양식"
-        description={`총 ${displayedCount.toLocaleString()}건`}
+        title="알림톡 템플릿"
+        actions={
+          <>
+            <CmsButton
+              variant="delete"
+              size="large"
+              type="button"
+              disabled={deletableCheckedCount === 0}
+              onClick={handleRequestDelete}
+            >
+              선택 삭제
+            </CmsButton>
+            <CmsButton
+              variant="secondary"
+              size="large"
+              type="button"
+              disabled={!editCategoryId}
+              onClick={() => setCategoryModal({ mode: 'edit', categoryId: editCategoryId })}
+            >
+              카테고리 수정
+            </CmsButton>
+            <CmsButton
+              variant="secondary"
+              size="large"
+              type="button"
+              onClick={() =>
+                setCategoryModal({
+                  mode: 'add',
+                  categoryId: targetCategoryForAdd(selection, templates),
+                })
+              }
+            >
+              카테고리 추가
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              size="large"
+              type="button"
+              onClick={() =>
+                showAlert({
+                  title: '준비 중',
+                  content: '템플릿 등록 기능은 현재 준비 중입니다.',
+                })
+              }
+            >
+              템플릿 등록
+            </CmsButton>
+          </>
+        }
       >
-        {remoteEnabled && listQuery.isLoading ? (
-          <div className="alimtalk-template-list__loading">
-            <Spin />
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+          <div className="alimtalk-template-split">
+            <CategoryTree
+              categories={visibleTree.categories}
+              templates={visibleTree.templates}
+              expandedIds={expandedIds}
+              selection={selection}
+              onToggleExpand={handleToggleExpand}
+              onSelect={setSelection}
+            />
+            <DetailPanel
+              template={selectedTemplate}
+              categoryName={selectedCategoryName}
+              onPreview={() => setPreviewOpen(true)}
+            />
           </div>
-        ) : listErrorMessage ? (
-          <div className="alimtalk-template-list__error">{listErrorMessage}</div>
-        ) : (
-          <Table<AlimtalkTemplateRow>
-            rowKey="id"
-            className="cms-data-table alimtalk-template-list__table"
-            tableLayout="fixed"
-            scroll={{ x: TABLE_SCROLL_X }}
-            columns={columns}
-            dataSource={tableData}
-            pagination={false}
-          />
-        )}
+        </DndContext>
       </FilterTableLayout>
+
+      <PreviewModal
+        open={previewOpen}
+        template={selectedTemplate}
+        onClose={() => setPreviewOpen(false)}
+      />
+      <CmsModal
+        open={deleteDialog === 'blocked'}
+        onClose={() => setDeleteDialog(null)}
+        title="카테고리 삭제 불가"
+        content="카테고리 하위에 카테고리 또는 템플릿이 있으면 삭제할 수 없습니다."
+        buttons={[
+          { label: '닫기', onClick: () => setDeleteDialog(null), variant: 'secondary' },
+          { label: '확인', onClick: () => setDeleteDialog(null), variant: 'primary' },
+        ]}
+      />
+      <CmsModal
+        open={deleteDialog === 'category'}
+        onClose={() => setDeleteDialog(null)}
+        title="카테고리 삭제"
+        content="카테고리를 삭제하시겠습니까?"
+        buttons={[
+          { label: '취소', onClick: () => setDeleteDialog(null), variant: 'secondary' },
+          { label: '삭제', onClick: handleConfirmDelete, variant: 'delete' },
+        ]}
+      />
+      <ConfirmModal
+        open={deleteDialog === 'template'}
+        title="선택 삭제"
+        content={`선택한 ${deletableCheckedCount}개 항목을 삭제하시겠습니까?`}
+        warningMessage="삭제된 항목은 복구할 수 없습니다."
+        danger
+        confirmText="삭제"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteDialog(null)}
+      />
+      <CmsModal
+        open={pendingMove?.kind === 'category'}
+        onClose={() => setPendingMove(null)}
+        title="카테고리 이동"
+        content={
+          pendingMove?.kind === 'category'
+            ? `카테고리 이동 시 하위의 카테고리/템플릿도 같이 이동됩니다.\n[${categoryNameById(categories, pendingMove.categoryId)}] 카테고리의 위치를 이동하시겠습니까?`
+            : ''
+        }
+        buttons={[
+          { label: '취소', onClick: () => setPendingMove(null), variant: 'secondary' },
+          { label: '이동', onClick: handleConfirmMove, variant: 'primary' },
+        ]}
+      />
+      <CmsModal
+        open={pendingMove?.kind === 'template'}
+        onClose={() => setPendingMove(null)}
+        title="템플릿 이동"
+        buttons={[
+          { label: '취소', onClick: () => setPendingMove(null), variant: 'secondary' },
+          { label: '이동', onClick: handleConfirmMove, variant: 'primary' },
+        ]}
+      >
+        {pendingMove?.kind === 'template' ? (
+          <p className="cms-modal__content">
+            해당 템플릿을 <strong>[{categoryNameById(categories, pendingMove.targetCategoryId)}]</strong>{' '}
+            카테고리로 이동하시겠습니까?
+          </p>
+        ) : null}
+      </CmsModal>
+      <CategoryNameModal
+        open={categoryModal != null}
+        mode={categoryModal?.mode ?? 'add'}
+        parentName={
+          categoryModal?.mode === 'add' && categoryModal.categoryId
+            ? categoryNameById(categories, categoryModal.categoryId)
+            : 'Category'
+        }
+        initialName={
+          categoryModal?.mode === 'edit' && categoryModal.categoryId
+            ? categoryNameById(categories, categoryModal.categoryId)
+            : ''
+        }
+        onCancel={() => setCategoryModal(null)}
+        onSubmit={handleSubmitCategory}
+      />
     </div>
   )
 }

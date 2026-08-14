@@ -229,5 +229,7 @@ export type {
   AttachmentDownloadListProps,
   AttachmentDownloadItem,
 } from './posts'
+export { AlimtalkPhonePreview } from './alimtalk-phone-preview'
+export type { AlimtalkPhonePreviewProps, AlimtalkPhonePreviewButton } from './alimtalk-phone-preview'
 export { CrossTable } from './cross-table'
 export type { CrossTableProps, CrossTableRow } from './cross-table'

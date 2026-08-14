@@ -4,6 +4,8 @@
  */
 
 import { useEffect } from 'react'
+import { AlimtalkPhoneSection } from './ui/alimtalk-phone-section'
+import { AlimtalkSendSection } from './ui/alimtalk-send-section'
 import { ButtonsSection } from './ui/buttons-section'
 import { CalendarSection } from './ui/calendar-section'
 import { DashboardSection } from './ui/dashboard-section'
@@ -82,6 +84,8 @@ export function DesignSystemPage() {
           <StatusExtendedSection />
           <NavigationSection />
           <FeedbackSection />
+          <AlimtalkPhoneSection />
+          <AlimtalkSendSection />
           <DoDontSection />
         </div>
       </div>

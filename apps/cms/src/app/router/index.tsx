@@ -769,15 +769,30 @@ export const router = createBrowserRouter([
                 ),
               },
               {
-                path: 'mail-sms',
+                path: 'mail',
                 element: (
                   <ProtectedRoute requiredRoles={['ADMIN']}>
                     <ComingSoonPage
-                      title="메일&문자 관리 준비 중"
-                      description="메일 및 문자 발송 관리 기능은 현재 준비 중입니다."
+                      title="메일 관리"
+                      description="메일 관리 기능은 현재 준비 중입니다."
                     />
                   </ProtectedRoute>
                 ),
+              },
+              {
+                path: 'sms',
+                element: (
+                  <ProtectedRoute requiredRoles={['ADMIN']}>
+                    <ComingSoonPage
+                      title="문자 관리"
+                      description="문자 관리 기능은 현재 준비 중입니다."
+                    />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: 'mail-sms',
+                element: <Navigate to="/admin/notifications/mail" replace />,
               },
             ],
           },

@@ -11,11 +11,13 @@ export {
   noticeDetailPath,
 } from './lib/constants'
 export {
+  getAdjacentNotices,
   getMockNoticeById,
   getMockNoticeDetailById,
   getMockNotices,
   useMockNoticeDetail,
   useMockNoticesCatalog,
+  type AdjacentNotices,
   type NoticeCatalogItem,
 } from './lib/mock-notices'
 export { filterAndSortNotices } from './lib/filter-notices'
@@ -32,3 +34,4 @@ export {
   type ParsedNoticeRoute,
 } from './lib/routes'
 export { NoticeListItemRow } from './ui/list-item'
+export { NoticeAdjacentNav } from './ui/adjacent-nav'
