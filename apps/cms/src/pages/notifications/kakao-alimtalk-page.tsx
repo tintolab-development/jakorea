@@ -1,5 +1,5 @@
 /**
- * 알림 메시지 관리 > 카카오 알림톡 관리
+ * 알림 메시지 관리 > 알림톡 관리
  */
 
 import { useCallback } from 'react'
@@ -14,17 +14,13 @@ import './kakao-alimtalk-page.css'
 const TAB_PARAM = 'tab'
 
 const TAB_ITEMS: { key: KakaoAlimtalkTabKey; label: string }[] = [
-  { key: 'alimtalk-template', label: '알림톡 양식' },
-  { key: 'brand-template', label: '브랜드 메시지 양식' },
-  { key: 'scheduled', label: '예약 발송 목록' },
-  { key: 'results', label: '발송 결과' },
+  { key: 'template', label: '알림톡 템플릿' },
+  { key: 'send-history', label: '알림톡 발송 조회' },
 ]
 
 function parseTabKey(raw: string | null): KakaoAlimtalkTabKey {
-  if (raw === 'brand-template' || raw === 'scheduled' || raw === 'results') {
-    return raw
-  }
-  return 'alimtalk-template'
+  if (raw === 'send-history' || raw === 'results') return 'send-history'
+  return 'template'
 }
 
 export function KakaoAlimtalkPage() {
@@ -38,7 +34,7 @@ export function KakaoAlimtalkPage() {
       setSearchParams(
         prev => {
           const next = new URLSearchParams(prev)
-          if (nextKey === 'alimtalk-template') {
+          if (nextKey === 'template') {
             next.delete(TAB_PARAM)
           } else {
             next.set(TAB_PARAM, nextKey)
@@ -51,17 +47,10 @@ export function KakaoAlimtalkPage() {
     [setSearchParams]
   )
 
-  const handleCreateBrandMessage = useCallback(() => {
+  const handleSendAlimtalk = useCallback(() => {
     showAlert({
       title: '준비 중',
-      content: '브랜드 메시지 작성 기능은 현재 준비 중입니다.',
-    })
-  }, [showAlert])
-
-  const handleCreateAlimtalk = useCallback(() => {
-    showAlert({
-      title: '준비 중',
-      content: '알림톡 작성 기능은 현재 준비 중입니다.',
+      content: '알림톡 발송 기능은 현재 준비 중입니다.',
     })
   }, [showAlert])
 
@@ -74,34 +63,17 @@ export function KakaoAlimtalkPage() {
         onChange={handleTabChange}
         items={TAB_ITEMS}
         trailing={
-          activeKey === 'alimtalk-template' ? (
-            <>
-              <CmsButton variant="secondary" type="button" onClick={handleCreateBrandMessage}>
-                브랜드 메시지 작성
-              </CmsButton>
-              <CmsButton variant="primary" type="button" onClick={handleCreateAlimtalk}>
-                알림톡 작성
-              </CmsButton>
-            </>
-          ) : null
+          <CmsButton variant="primary" size="large" type="button" onClick={handleSendAlimtalk}>
+            알림톡 발송
+          </CmsButton>
         }
       />
-      {activeKey === 'alimtalk-template' ? (
+      {activeKey === 'template' ? (
         <AlimtalkTemplateList />
-      ) : activeKey === 'brand-template' ? (
-        <ComingSoonTabPanel
-          title="브랜드 메시지 양식 준비 중"
-          description="브랜드 메시지 양식 관리 기능은 현재 준비 중입니다."
-        />
-      ) : activeKey === 'scheduled' ? (
-        <ComingSoonTabPanel
-          title="예약 발송 목록 준비 중"
-          description="예약 발송 목록 기능은 현재 준비 중입니다."
-        />
       ) : (
         <ComingSoonTabPanel
-          title="발송 결과 준비 중"
-          description="발송 결과 조회 기능은 현재 준비 중입니다."
+          title="알림톡 발송 조회 준비 중"
+          description="알림톡 발송 및 수신 결과 조회 기능은 현재 준비 중입니다."
         />
       )}
     </div>
