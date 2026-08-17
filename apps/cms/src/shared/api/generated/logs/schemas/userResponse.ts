@@ -59,6 +59,7 @@ export interface UserResponse {
   permissionApprovalHandledAt?: string;
   permissionNotificationResentAt?: string;
   registeredByAdmin?: boolean;
+  createdByAdmin?: boolean;
   identitySelfSignupCompletedAfterAdminRegistration?: boolean;
   bio?: string;
   detailAddress?: string;

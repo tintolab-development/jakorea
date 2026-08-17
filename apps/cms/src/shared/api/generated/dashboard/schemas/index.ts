@@ -61,6 +61,7 @@ export * from './adminProgramRoleSaveRequest';
 export * from './adminProvisionedIdentityConfirmRequest';
 export * from './adminProvisionedOnboardingResponse';
 export * from './adminProvisionedProfileRequest';
+export * from './adminProvisionedProfileRequestGender';
 export * from './adminRoleChangeRequest';
 export * from './adminRolePermissionMatrixResponse';
 export * from './adminRolePermissionUpdateRequest';

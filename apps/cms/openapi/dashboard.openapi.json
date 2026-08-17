@@ -7406,6 +7406,9 @@
           "enrollmentStatus": {
             "type": "string"
           },
+          "grade": {
+            "type": "string"
+          },
           "addressDetailMasked": {
             "type": "boolean"
           },
@@ -7737,6 +7740,10 @@
               "$ref": "#/components/schemas/TermsAgreementRequest"
             }
           },
+          "schoolSelection": {
+            "$ref": "#/components/schemas/PortalSchoolSelectionRequest",
+            "description": "교사회원 소속 학교 선택값. CMS organizationId가 없는 NEIS 학교도 서버가 canonical organization으로 해석/등록합니다."
+          },
           "profile": {
             "$ref": "#/components/schemas/InstructorCmsProfile"
           },
@@ -7826,6 +7833,19 @@
           },
           "enrollmentStatus": {
             "type": "string"
+          },
+          "schoolOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "기존 CMS 학교 PK. 재학중인 경우 schoolName보다 우선하며, 생략 시 고유한 schoolName을 안전하게 해석합니다."
+          },
+          "schoolSelection": {
+            "$ref": "#/components/schemas/PortalSchoolSelectionRequest"
+          },
+          "grade": {
+            "type": "string",
+            "description": "재학중 소속 학년",
+            "example": "3학년"
           },
           "external1365Id": {
             "type": "string"
@@ -15747,6 +15767,14 @@
             "type": "integer",
             "format": "int64"
           },
+          "schoolName": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "schoolSelection": {
+            "$ref": "#/components/schemas/PortalSchoolSelectionRequest"
+          },
           "schoolEnrollmentStatus": {
             "type": "string",
             "maxLength": 30,
@@ -15852,6 +15880,13 @@
           },
           "gender": {
             "type": "string",
+            "description": "성별. 저장 및 본인인증 비교 시 MALE/FEMALE/OTHER로 정규화됨",
+            "enum": [
+              "MALE",
+              "FEMALE",
+              "OTHER"
+            ],
+            "example": "FEMALE",
             "maxLength": 20,
             "minLength": 0
           }
@@ -16274,6 +16309,9 @@
             "format": "date-time"
           },
           "registeredByAdmin": {
+            "type": "boolean"
+          },
+          "createdByAdmin": {
             "type": "boolean"
           },
           "identitySelfSignupCompletedAfterAdminRegistration": {
@@ -26491,6 +26529,26 @@
               "type": "string"
             }
           },
+          "createdByAdmin": {
+            "type": "boolean",
+            "description": "관리자에 의해 생성된 계정인지 여부. MEMBER는 member.created_by_admin_id, ADMIN_ACCOUNT는 생성 감사 로그를 기준으로 계산합니다."
+          },
+          "registeredByAdmin": {
+            "type": "boolean",
+            "description": "관리자 등록 계정 여부. createdByAdmin과 동일 의미의 프론트 호환 필드입니다."
+          },
+          "preRegistered": {
+            "type": "boolean",
+            "description": "회원 사전등록 상태. 관리자 계정에는 false입니다."
+          },
+          "identityVerified": {
+            "type": "boolean",
+            "description": "본인인증 완료 여부"
+          },
+          "identitySelfSignupCompletedAfterAdminRegistration": {
+            "type": "boolean",
+            "description": "관리자 등록 회원의 최초 본인확인/온보딩 완료 여부. 관리자 계정에는 false입니다."
+          },
           "lastLoginAt": {
             "type": "string",
             "format": "date-time"
@@ -28975,6 +29033,15 @@
           "mfaRequired": {
             "type": "boolean"
           },
+          "createdByAdmin": {
+            "type": "boolean"
+          },
+          "registeredByAdmin": {
+            "type": "boolean"
+          },
+          "identityVerified": {
+            "type": "boolean"
+          },
           "permissionVersion": {
             "type": "integer",
             "format": "int32"
@@ -29054,6 +29121,15 @@
             "type": "string"
           },
           "mfaRequired": {
+            "type": "boolean"
+          },
+          "createdByAdmin": {
+            "type": "boolean"
+          },
+          "registeredByAdmin": {
+            "type": "boolean"
+          },
+          "identityVerified": {
             "type": "boolean"
           },
           "permissionVersion": {

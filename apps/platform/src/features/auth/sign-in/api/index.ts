@@ -11,5 +11,6 @@ export type {
   MemberLoginRequest,
   PasswordChangeRequest,
   PortalProfileResponse,
+  PortalSchoolSelectionRequest,
   UpdatePortalProfileRequest,
 } from './types'

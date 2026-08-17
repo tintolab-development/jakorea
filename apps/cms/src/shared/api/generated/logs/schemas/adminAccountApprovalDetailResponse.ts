@@ -22,6 +22,9 @@ export interface AdminAccountApprovalDetailResponse {
   roleCode?: string;
   roleName?: string;
   mfaRequired?: boolean;
+  createdByAdmin?: boolean;
+  registeredByAdmin?: boolean;
+  identityVerified?: boolean;
   permissionVersion?: number;
   verificationReason?: string;
   verificationResult?: string;

@@ -17,6 +17,7 @@ export type {
   MemberLoginRequest,
   PasswordChangeRequest,
   PortalProfileResponse,
+  PortalSchoolSelectionRequest,
   UpdatePortalProfileRequest,
 } from './api'
 export { getLoginApiErrorMessage } from './lib'

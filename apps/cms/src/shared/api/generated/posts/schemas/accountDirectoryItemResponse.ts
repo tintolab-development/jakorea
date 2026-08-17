@@ -26,6 +26,16 @@ export interface AccountDirectoryItemResponse {
   status?: string;
   /** 회원 역할 또는 관리자 권한 코드 */
   roles?: string[];
+  /** 관리자에 의해 생성된 계정인지 여부. MEMBER는 member.created_by_admin_id, ADMIN_ACCOUNT는 생성 감사 로그를 기준으로 계산합니다. */
+  createdByAdmin?: boolean;
+  /** 관리자 등록 계정 여부. createdByAdmin과 동일 의미의 프론트 호환 필드입니다. */
+  registeredByAdmin?: boolean;
+  /** 회원 사전등록 상태. 관리자 계정에는 false입니다. */
+  preRegistered?: boolean;
+  /** 본인인증 완료 여부 */
+  identityVerified?: boolean;
+  /** 관리자 등록 회원의 최초 본인확인/온보딩 완료 여부. 관리자 계정에는 false입니다. */
+  identitySelfSignupCompletedAfterAdminRegistration?: boolean;
   lastLoginAt?: string;
   createdAt?: string;
   /** 관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다. */

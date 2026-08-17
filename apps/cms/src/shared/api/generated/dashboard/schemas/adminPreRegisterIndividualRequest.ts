@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { PortalSchoolSelectionRequest } from './portalSchoolSelectionRequest';
 import type { TermsAgreementRequest } from './termsAgreementRequest';
 
 export interface AdminPreRegisterIndividualRequest {
@@ -22,6 +23,11 @@ export interface AdminPreRegisterIndividualRequest {
   zipCode?: string;
   schoolName?: string;
   enrollmentStatus?: string;
+  /** 기존 CMS 학교 PK. 재학중인 경우 schoolName보다 우선하며, 생략 시 고유한 schoolName을 안전하게 해석합니다. */
+  schoolOrganizationId?: number;
+  schoolSelection?: PortalSchoolSelectionRequest;
+  /** 재학중 소속 학년 */
+  grade?: string;
   external1365Id?: string;
   termsAgreements?: TermsAgreementRequest[];
 }
