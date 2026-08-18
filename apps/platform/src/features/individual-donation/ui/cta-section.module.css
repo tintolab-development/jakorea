@@ -6,8 +6,6 @@
   flex-direction: column;
   box-sizing: border-box;
   overflow: hidden;
-  padding-block: var(--spacing-48);
-  padding-inline: var(--page-padding-x);
   background: var(--color-neutral-white);
 }
 
@@ -19,6 +17,7 @@
   min-width: 0;
   flex-direction: column;
   gap: var(--spacing-24);
+  padding: var(--spacing-56) var(--spacing-20);
 }
 
 .textArea {
@@ -76,7 +75,7 @@
   justify-content: space-between;
   gap: var(--spacing-12);
   margin: 0;
-  padding: var(--spacing-16) var(--spacing-28) var(--spacing-16) var(--spacing-24);
+  padding: var(--spacing-12) var(--spacing-40) var(--spacing-12) var(--spacing-32);
   border: 0;
   border-radius: var(--radius-999);
   background: var(--color-gradient-primary-01);
@@ -102,10 +101,29 @@
   flex-shrink: 0;
 }
 
+.textArea .text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+@media (--bp-below-pc) {
+  .eyebrow {
+    font-size: 30px;
+  }
+  .title {
+    font-size: 24px;
+    line-height: 150%;
+  }
+  .actionLabel {
+    font-size: 18px;
+    letter-spacing: -0.18px;
+  }
+}
 @media (--bp-pc-up) {
   .section {
     position: relative;
-    padding-block: var(--spacing-150);
+    padding-block: 180px 300px;
     padding-inline: 0;
   }
   .section::before {
@@ -129,6 +147,7 @@
     flex-direction: row;
     align-items: stretch;
     gap: var(--spacing-32);
+    padding: 0 var(--spacing-20);
   }
 
   .textArea {
@@ -143,8 +162,6 @@
     box-sizing: border-box;
   }
   .textArea .text {
-    display: flex;
-    flex-direction: column;
     gap: var(--spacing-28);
     padding-left: var(--spacing-16);
     padding-top: var(--spacing-48);

@@ -11,6 +11,7 @@
   width: 100%;
   max-width: var(--content-shell-max-width);
   margin: 0 auto;
+  padding: var(--spacing-56) var(--spacing-20);
 }
 
 .sectionHeader {
@@ -19,7 +20,8 @@
   min-width: 0;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-20);
+  gap: var(--spacing-32);
+  padding-bottom: var(--spacing-32);
 }
 
 .title,
@@ -32,7 +34,6 @@
   width: 100%;
   min-width: 0;
   flex-direction: column;
-  align-items: flex-start;
   gap: var(--spacing-12);
 }
 
@@ -44,6 +45,22 @@
 .actionIcon {
   display: block;
   flex-shrink: 0;
+}
+
+.actionIconDefault {
+  display: block;
+}
+
+.actionIconHover {
+  display: none;
+}
+
+.actionButton:hover:not(:disabled) .actionIconDefault {
+  display: none;
+}
+
+.actionButton:hover:not(:disabled) .actionIconHover {
+  display: block;
 }
 
 .cardList {
@@ -92,7 +109,7 @@
   min-width: 0;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-20);
+  gap: var(--spacing-16);
   box-sizing: border-box;
   padding: var(--spacing-24);
 }
@@ -120,8 +137,9 @@
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
-  min-height: 220px;
-  aspect-ratio: 16 / 11;
+  min-height: 180px;
+  aspect-ratio: 335 / 180;
+  
 }
 
 .imageFrame {
@@ -142,10 +160,33 @@
   background: var(--color-neutral-cool-100);
 }
 
+@media (--bp-below-pc) {
+  .title {
+    font-size: 24px;
+    line-height: 150%;
+    letter-spacing: 0;
+  }
+  .cardTitle {
+    font-size: 22px;
+    line-height: 130%;
+    letter-spacing: -0.44px;
+  }
+  .cardDescription {
+    font-size: 16px;
+    letter-spacing: -0.16px;
+  }
+  .badge {
+    font-size: 14px;
+  }
+}
 @media (--bp-pc-up) {
   .section {
     gap: var(--spacing-48);
     padding-block: var(--spacing-80);
+  }
+
+  .content {
+    padding: 0 var(--spacing-20);
   }
 
   .sectionHeader {
@@ -180,6 +221,7 @@
   }
 
   .cardInfo {
+    gap: var(--spacing-20);
     padding: var(--spacing-60) var(--spacing-52);
   }
 

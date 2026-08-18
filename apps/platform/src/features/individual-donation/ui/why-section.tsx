@@ -1,5 +1,6 @@
 import { Fragment } from 'react'
 import arrowDiagonalBlackUrl from '@/shared/assets/icons/arrow-diagonal-black.svg'
+import arrowDiagonalMintUrl from '@/shared/assets/icons/arrow-diagonal-mint.svg'
 import { PFButton, PFCategoryBadge, PFText } from '@/shared/ui'
 import {
   WHY_CARDS,
@@ -93,8 +94,16 @@ export function WhySection() {
             >
               <span>{WHY_SECTION_ACTION_BUTTON_LABEL}</span>
               <img
-                className={styles.actionIcon}
+                className={[styles.actionIcon, styles.actionIconDefault].join(' ')}
                 src={arrowDiagonalBlackUrl}
+                alt=""
+                aria-hidden="true"
+                width={24}
+                height={24}
+              />
+              <img
+                className={[styles.actionIcon, styles.actionIconHover].join(' ')}
+                src={arrowDiagonalMintUrl}
                 alt=""
                 aria-hidden="true"
                 width={24}

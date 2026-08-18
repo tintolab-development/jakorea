@@ -19,9 +19,24 @@ export function HeroSection() {
       />
 
       <div className={styles.content}>
+        <div className={styles.media}>
+          <div className={styles.imageFrame}>
+            {HERO_IMAGE_URL ? (
+              <img
+                className={styles.image}
+                src={HERO_IMAGE_URL}
+                alt=""
+                width={960}
+                height={720}
+              />
+            ) : (
+              <div className={styles.imagePlaceholder} aria-hidden="true" />
+            )}
+          </div>
+        </div>
         <div className={styles.textArea}>
           <div className={styles.text}>
-            <PFText as="span" typo="hl-lg" color="black" className={styles.eyebrow}>
+            <PFText as="span" typo="hl-lg" className={styles.eyebrow}>
               {HERO_LABEL}
             </PFText>
 
@@ -41,29 +56,12 @@ export function HeroSection() {
             </PFText>
 
             <PFText as="p" typo="bd-lg-rg" color="neutral-cool-700" className={styles.description}>
-              {HERO_DESCRIPTION_LINES.map((line, index) => (
+              {HERO_DESCRIPTION_LINES.map((line) => (
                 <Fragment key={line}>
-                  {index > 0 ? <br /> : null}
                   {line}
                 </Fragment>
               ))}
             </PFText>
-          </div>
-        </div>
-
-        <div className={styles.media}>
-          <div className={styles.imageFrame}>
-            {HERO_IMAGE_URL ? (
-              <img
-                className={styles.image}
-                src={HERO_IMAGE_URL}
-                alt=""
-                width={960}
-                height={720}
-              />
-            ) : (
-              <div className={styles.imagePlaceholder} aria-hidden="true" />
-            )}
           </div>
         </div>
       </div>
