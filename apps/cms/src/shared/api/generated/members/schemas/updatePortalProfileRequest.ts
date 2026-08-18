@@ -5,6 +5,7 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorPortalProfileUpdate } from './instructorPortalProfileUpdate';
 import type { PortalSchoolSelectionRequest } from './portalSchoolSelectionRequest';
 
 /**
@@ -68,4 +69,5 @@ export interface UpdatePortalProfileRequest {
      * @maxLength 100
      */
   external1365Id?: string;
+  instructorProfile?: InstructorPortalProfileUpdate;
 }
