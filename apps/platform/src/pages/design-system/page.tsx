@@ -21,6 +21,7 @@ import {
   PFCategoryBadge,
   PFAlertModal,
   PFArrowButton,
+  PFCarouselButton,
   PFChevronButton,
   PFPageButton,
   PFButton,
@@ -1300,6 +1301,67 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
               <PFChevronButton direction="right" decorative />
               <PFChevronButton size="small" direction="left" decorative />
               <PFChevronButton size="small" direction="right" decorative />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFCarouselButton
+        </PFText>
+        <div className={styles.buttonStack}>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              large
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFCarouselButton size="large" direction="left" aria-label="이전 large" />
+              <PFCarouselButton size="large" direction="right" aria-label="다음 large" />
+              <PFCarouselButton
+                size="large"
+                direction="left"
+                disabled
+                aria-label="이전 large disabled"
+              />
+              <PFCarouselButton
+                size="large"
+                direction="right"
+                disabled
+                aria-label="다음 large disabled"
+              />
+            </div>
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              small
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFCarouselButton size="small" direction="left" aria-label="이전 small" />
+              <PFCarouselButton size="small" direction="right" aria-label="다음 small" />
+              <PFCarouselButton
+                size="small"
+                direction="left"
+                disabled
+                aria-label="이전 small disabled"
+              />
+              <PFCarouselButton
+                size="small"
+                direction="right"
+                disabled
+                aria-label="다음 small disabled"
+              />
+            </div>
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              decorative
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFCarouselButton size="large" direction="left" decorative />
+              <PFCarouselButton size="large" direction="right" decorative />
+              <PFCarouselButton size="small" direction="left" decorative />
+              <PFCarouselButton size="small" direction="right" decorative />
             </div>
           </div>
         </div>

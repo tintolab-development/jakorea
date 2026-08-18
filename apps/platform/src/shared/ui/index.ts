@@ -4,6 +4,12 @@ export { PFAlertModal } from './pf-alert-modal'
 export type { PFAlertModalProps } from './pf-alert-modal'
 export { PFArrowButton } from './pf-arrow-button'
 export type { PFArrowButtonProps, PFArrowButtonSize, PFArrowButtonVariant } from './pf-arrow-button'
+export { PFCarouselButton } from './pf-carousel-button'
+export type {
+  PFCarouselButtonDirection,
+  PFCarouselButtonProps,
+  PFCarouselButtonSize,
+} from './pf-carousel-button'
 export { PFChevronButton } from './pf-chevron-button'
 export type {
   PFChevronButtonDirection,
