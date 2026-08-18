@@ -1,5 +1,6 @@
 /**
  * 가로형 테이블 — runtime preview (CMS form-editor-horizontal-table 대응)
+ * Platform 재사용 스펙: 모서리 16px, th 16/700, td 16/500, 강조 20/700
  */
 
 .form-template-horizontal-table-wrap {
@@ -15,30 +16,10 @@
   display: flex;
   flex-direction: column;
   align-self: stretch;
-  border-radius: var(--detail-info-form-body-radius, 8px);
+  border-radius: 16px;
   border: 1px solid var(--table-line, #e0e0e0);
   background: var(--main-WT, #fff);
-  overflow: visible;
-}
-
-.form-template-horizontal-table__row--header
-  .form-template-horizontal-table__th:first-child {
-  border-top-left-radius: calc(var(--detail-info-form-body-radius, 8px) - 1px);
-}
-
-.form-template-horizontal-table__row--header
-  .form-template-horizontal-table__th:last-child {
-  border-top-right-radius: calc(var(--detail-info-form-body-radius, 8px) - 1px);
-}
-
-.form-template-horizontal-table__row:not(.form-template-horizontal-table__row--header):last-child
-  .form-template-horizontal-table__td:first-child {
-  border-bottom-left-radius: calc(var(--detail-info-form-body-radius, 8px) - 1px);
-}
-
-.form-template-horizontal-table__row:not(.form-template-horizontal-table__row--header):last-child
-  .form-template-horizontal-table__td:last-child {
-  border-bottom-right-radius: calc(var(--detail-info-form-body-radius, 8px) - 1px);
+  overflow: hidden;
 }
 
 .form-template-horizontal-table__row {
@@ -89,6 +70,7 @@
   flex: 1 1 auto;
   min-width: 0;
   width: 100%;
+  color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
@@ -110,6 +92,18 @@
   font-weight: 500;
 }
 
+.form-template-horizontal-table__cell-text--emphasized:not(
+  .form-template-horizontal-table__cell-text--placeholder
+) {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
 .form-template-horizontal-table__cell-text--header.form-template-horizontal-table__cell-text--placeholder {
   color: var(--gray-85969-d, #85969d);
   font-weight: 700;
@@ -120,92 +114,17 @@
   opacity: 1;
 }
 
-/* p1 — 항목 열 16/500, 수집·이용 목적·보유기간 20/700 */
-.form-template-horizontal-table-wrap--payment-pre-consent-p1
-  .form-template-horizontal-table__td--field:nth-child(2)
-  .form-template-horizontal-table__cell-text--body:not(
-    .form-template-horizontal-table__cell-text--placeholder
-  ),
-.form-template-horizontal-table-wrap--payment-pre-consent-p1
-  .form-template-horizontal-table__td--field:nth-child(3)
-  .form-template-horizontal-table__cell-text--body:not(
-    .form-template-horizontal-table__cell-text--placeholder
-  ) {
-  color: var(--main-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 20px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
-}
-
-/* p2 — 항목·보유기간(1·3열)만 20/700, 수집·이용 목적(2열)은 16/500 */
-.form-template-horizontal-table-wrap--payment-pre-consent-p2
-  .form-template-horizontal-table__row--header
-  .form-template-horizontal-table__cell-text--header {
-  font-weight: 500;
-}
-
-.form-template-horizontal-table-wrap--payment-pre-consent-p2
-  .form-template-horizontal-table__td--field:nth-child(1)
-  .form-template-horizontal-table__cell-text--body:not(
-    .form-template-horizontal-table__cell-text--placeholder
-  ),
-.form-template-horizontal-table-wrap--payment-pre-consent-p2
-  .form-template-horizontal-table__td--field:nth-child(3)
-  .form-template-horizontal-table__cell-text--body:not(
-    .form-template-horizontal-table__cell-text--placeholder
-  ) {
-  color: var(--main-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 20px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
-}
-
-/* p3·p4 — 항목 열(2번째) 16/500, 나머지 20/700 */
-.form-template-horizontal-table-wrap--payment-pre-consent-third-party
-  .form-template-horizontal-table__td--field
-  .form-template-horizontal-table__cell-text--body:not(
-    .form-template-horizontal-table__cell-text--placeholder
-  ) {
-  color: var(--main-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 20px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
-}
-
-.form-template-horizontal-table-wrap--payment-pre-consent-third-party
-  .form-template-horizontal-table__td--field:nth-child(2)
-  .form-template-horizontal-table__cell-text--body:not(
-    .form-template-horizontal-table__cell-text--placeholder
-  ) {
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.form-template-horizontal-table-wrap--payment-pre-consent-third-party
-  .form-template-horizontal-table__row--header
-  .form-template-horizontal-table__cell-text--header {
-  font-weight: 500;
-}
-
+/* 테이블 16px → 설명글, 설명글 24px → 라디오 */
 .form-template-horizontal-table__bottom {
   margin: 0;
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
 }
 
 .form-template-horizontal-table__bottom-static {
-  color: var(--main-BK, #3d3d3d);
+  color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
@@ -223,4 +142,87 @@
   flex-wrap: nowrap !important;
   gap: 16px !important;
   align-items: center;
+}
+
+/**
+ * 모바일 — 표 그리드 대신 cool-50 카드 + 항목 라벨 / 값 리스트.
+ * 헤더 행은 숨기고 각 셀의 열 이름을 라벨로 올린다. CMS surface는 유지.
+ */
+@media (max-width: 1079px) {
+  .form-template-host[data-surface='platformUser'] .form-template-horizontal-table {
+    padding: 0 16px;
+    border: none;
+    border-radius: 12px;
+    background: var(--color-neutral-cool-50, #f5f7f7);
+  }
+
+  .form-template-host[data-surface='platformUser']
+    .form-template-horizontal-table__row--header {
+    display: none;
+  }
+
+  .form-template-host[data-surface='platformUser'] .form-template-horizontal-table__row {
+    flex-direction: column;
+    border: none;
+  }
+
+  .form-template-host[data-surface='platformUser'] .form-template-horizontal-table__td,
+  .form-template-host[data-surface='platformUser'] .form-template-horizontal-table__td--field {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    min-height: auto;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 8px;
+    padding: 16px 0;
+    border-left: none;
+    border-bottom: 1px solid var(--color-neutral-black-10, rgba(61, 61, 61, 0.1));
+    text-align: left;
+  }
+
+  .form-template-host[data-surface='platformUser']
+    .form-template-horizontal-table__row:last-child
+    .form-template-horizontal-table__td:last-child {
+    border-bottom: none;
+  }
+
+  .form-template-host[data-surface='platformUser']
+    .form-template-horizontal-table__td[data-label]:not([data-label=''])::before {
+    content: attr(data-label);
+    color: var(--color-neutral-cool-600, #667278);
+    font-family: Pretendard, sans-serif;
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 140%;
+    text-align: left;
+  }
+
+  /* td 텍스트 — 강조 포함 Body/Small/regular 로 통일 */
+  .form-template-host[data-surface='platformUser'] .form-template-horizontal-table__cell-text,
+  .form-template-host[data-surface='platformUser']
+    .form-template-horizontal-table__cell-text--emphasized:not(
+      .form-template-horizontal-table__cell-text--placeholder
+    ) {
+    color: var(--color-neutral-black, #3d3d3d);
+    font-family: Pretendard, sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 160%;
+    text-align: left;
+  }
+
+  /* 테이블 하단 설명글 — td 텍스트와 동일 타이포 */
+  .form-template-host[data-surface='platformUser']
+    .form-template-horizontal-table__bottom-static {
+    color: var(--color-neutral-black, #3d3d3d);
+    font-family: Pretendard, sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 160%;
+  }
 }
