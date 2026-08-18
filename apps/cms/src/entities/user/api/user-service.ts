@@ -406,6 +406,16 @@ export type PatchUserBasicInfoInput = Partial<
   individualSchoolName?: string
   /** 개인 회원 학년 — extra `grade` (GET·pre-register 전용 필드 없음) */
   individualGrade?: string
+  /** 재학 중 CMS 학교 PK — wire extension */
+  individualSchoolOrganizationId?: number | null
+  /** NEIS/CareerNet 검색 메타 — CMS PK 없을 때 schoolSelection */
+  individualSchoolProvider?: string
+  individualSchoolExternalCode?: string
+  individualSchoolLevel?: string
+  individualSchoolAddress?: string
+  individualSchoolZipcode?: string
+  individualSchoolRegionSido?: string
+  individualSchoolRegionSigungu?: string
 }
 
 /** 코멘트 전용 저장 시 상세 GET·코멘트 목록 GET을 줄이기 위한 힌트 */
@@ -1090,6 +1100,16 @@ export interface CreateUserRequest {
   affiliation?: string
   grade?: string
   schoolEnrollmentStatus?: 'ENROLLED' | 'NOT_ENROLLED'
+  /** CMS 등록 학교 PK — 재학 중 pre-register */
+  schoolOrganizationId?: number | null
+  /** NEIS/CareerNet 학교 검색 메타 — CMS PK 없을 때 schoolSelection */
+  schoolProvider?: string
+  schoolExternalCode?: string
+  schoolLevel?: string
+  schoolAddress?: string
+  schoolZipcode?: string
+  schoolRegionSido?: string
+  schoolRegionSigungu?: string
   neisCode?: string
   regionSido?: string
   regionSigungu?: string

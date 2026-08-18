@@ -3,14 +3,20 @@ import { ADMIN_REGISTER_TOTAL_STEPS } from '@/types/admin-register'
 interface RegisterStepProgressProps {
   currentStep: number
   totalSteps?: number
+  className?: string
 }
 
 export function RegisterStepProgress({
   currentStep,
   totalSteps = ADMIN_REGISTER_TOTAL_STEPS,
+  className,
 }: RegisterStepProgressProps) {
+  const navClassName = className
+    ? `register-step-progress ${className}`
+    : 'register-step-progress'
+
   return (
-    <nav className="register-step-progress" aria-label="회원가입 진행 단계">
+    <nav className={navClassName} aria-label="회원가입 진행 단계">
       <ol className="register-step-progress__list">
         {Array.from({ length: totalSteps }, (_, index) => {
           const step = index + 1

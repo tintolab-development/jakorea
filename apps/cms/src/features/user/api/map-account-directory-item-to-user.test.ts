@@ -78,4 +78,40 @@ describe('mapAccountDirectoryItemToUser', () => {
     expect(user.instructorMemberProfile).toBe('instructor_dual')
     expect(user.roles).toEqual(['SCHOOL_TEACHER', 'INSTRUCTOR'])
   })
+
+  it('createdByAdmin·본인인증 플래그를 registeredByAdmin·identitySelfSignup에 반영한다', () => {
+    const user = mapAccountDirectoryItemToUser({
+      accountType: AccountDirectoryItemResponseAccountType.MEMBER,
+      accountId: 99,
+      memberId: 99,
+      uuid: 'admin-created-99',
+      email: 'a***@ja.org',
+      name: '관리자등록',
+      roles: ['INDIVIDUAL'],
+      status: 'ACTIVE',
+      createdAt: '2026-04-01T00:00:00Z',
+      createdByAdmin: true,
+      identityVerified: false,
+    })
+
+    expect(user.registeredByAdmin).toBe(true)
+    expect(user.identitySelfSignupCompletedAfterAdminRegistration).toBe(false)
+  })
+
+  it('createdByAdmin이 false이면 직접 가입으로 매핑한다', () => {
+    const user = mapAccountDirectoryItemToUser({
+      accountType: AccountDirectoryItemResponseAccountType.MEMBER,
+      accountId: 100,
+      memberId: 100,
+      uuid: 'self-100',
+      email: 's***@ja.org',
+      name: '직접가입',
+      roles: ['INDIVIDUAL'],
+      status: 'ACTIVE',
+      createdAt: '2026-04-02T00:00:00Z',
+      createdByAdmin: false,
+    })
+
+    expect(user.registeredByAdmin).toBe(false)
+  })
 })

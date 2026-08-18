@@ -11,6 +11,7 @@ import {
 import {
   resolveIdentitySelfSignupCompletedAfterAdminRegistration,
   resolveRegisteredByAdmin,
+  type MemberRegistrationFlagSource,
 } from '@/features/user/api/resolve-member-registration-flags'
 import { coercePositiveInt } from '@/features/user/api/user-response-row-id'
 import type { User } from '@/types/user'
@@ -22,6 +23,23 @@ function resolveDirectoryAdminAccountId(item: AccountDirectoryItemResponse): num
       ? coercePositiveInt(item.accountId)
       : undefined)
   )
+}
+
+function buildDirectoryRegistrationFlagSource(
+  item: AccountDirectoryItemResponse,
+  role: User['role'],
+  adminAccountId?: number
+): MemberRegistrationFlagSource {
+  return {
+    role,
+    adminAccountId,
+    registeredByAdmin: item.registeredByAdmin,
+    preRegistered: item.preRegistered,
+    createdByAdmin: item.createdByAdmin,
+    identitySelfSignupCompletedAfterAdminRegistration:
+      item.identitySelfSignupCompletedAfterAdminRegistration,
+    identityVerified: item.identityVerified,
+  }
 }
 
 function resolveDirectoryMemberId(item: AccountDirectoryItemResponse): number | undefined {
@@ -69,9 +87,13 @@ export function mapAccountDirectoryItemToUser(
       createdAt: item.createdAt ?? now,
       updatedAt: item.createdAt ?? now,
       lastLoginAt: item.lastLoginAt ?? undefined,
-      registeredByAdmin: resolveRegisteredByAdmin({ role, adminAccountId }),
+      registeredByAdmin: resolveRegisteredByAdmin(
+        buildDirectoryRegistrationFlagSource(item, role, adminAccountId)
+      ),
       identitySelfSignupCompletedAfterAdminRegistration:
-        resolveIdentitySelfSignupCompletedAfterAdminRegistration({ role, adminAccountId }),
+        resolveIdentitySelfSignupCompletedAfterAdminRegistration(
+          buildDirectoryRegistrationFlagSource(item, role, adminAccountId)
+        ),
       listMetrics: permissionVariant ? { adminPermissionVariant: permissionVariant } : undefined,
     }
   }
@@ -93,9 +115,13 @@ export function mapAccountDirectoryItemToUser(
     createdAt: item.createdAt ?? now,
     updatedAt: item.createdAt ?? now,
     lastLoginAt: item.lastLoginAt ?? undefined,
-    registeredByAdmin: resolveRegisteredByAdmin({ role: resolvedRole }),
+    registeredByAdmin: resolveRegisteredByAdmin(
+      buildDirectoryRegistrationFlagSource(item, resolvedRole, adminAccountId)
+    ),
     identitySelfSignupCompletedAfterAdminRegistration:
-      resolveIdentitySelfSignupCompletedAfterAdminRegistration({ role: resolvedRole }),
+      resolveIdentitySelfSignupCompletedAfterAdminRegistration(
+        buildDirectoryRegistrationFlagSource(item, resolvedRole, adminAccountId)
+      ),
     ...(instructorMemberProfile ? { instructorMemberProfile } : {}),
   }
 }
