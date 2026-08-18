@@ -28,7 +28,12 @@ import {
   SocialErrorPage,
 } from '@/pages/auth'
 import { HomePage } from '@/pages/home'
-import { MypageHomePage, MypageInstructorApplyConsentPage, MypageInstructorApplyPage } from '@/pages/mypage'
+import {
+  MypageHomePage,
+  MypageInstructorApplyConsentPage,
+  MypageInstructorApplyPage,
+  MypageSettingsPage,
+} from '@/pages/mypage'
 import {
   ProgramApplyCompletePage,
   ProgramApplyPage,
@@ -114,6 +119,10 @@ export const router = createBrowserRouter([
   {
     element: <AppLayoutRoute layout="mypage" />,
     children: [{ path: '/mypage', element: <MypageHomePage /> }],
+  },
+  {
+    element: <AppLayoutRoute layout="mypage-subpage" />,
+    children: [{ path: '/mypage/settings', element: <MypageSettingsPage /> }],
   },
   {
     element: <AppLayoutRoute layout="auth" />,

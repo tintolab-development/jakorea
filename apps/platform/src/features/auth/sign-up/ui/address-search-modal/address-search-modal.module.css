@@ -9,6 +9,7 @@
   width: 100%;
   grid-template-columns: 1fr 160px;
   gap: var(--spacing-12);
+  margin-top: 28px;
 }
 
 .addressModalSearchButton {

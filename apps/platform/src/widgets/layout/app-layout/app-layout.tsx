@@ -25,13 +25,14 @@ type AppLayoutProps = {
 export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
   const navigate = useNavigate()
   const [isLoggedIn, setIsLoggedIn] = useState(getDevAuthLoggedIn)
-  const isMypage = layout === 'mypage'
+  const isMypageHome = layout === 'mypage'
+  const isMypage = isMypageHome || layout === 'mypage-subpage'
   const isHero = layout === 'hero'
   const isAuth = layout === 'auth'
   const isHome = layout === 'home'
   const isSupport = layout === 'support'
   const useContentShell = layout === 'default' || isHero
-  const transparentHeader = isMypage || isHero || isHome || isSupport
+  const transparentHeader = isMypageHome || isHero || isHome || isSupport
   /* 홈 PC만 반전 — 모바일은 header-mobile CSS에서 불투명·컬러 로고로 덮음 */
   const inverseHeader = isHome
 

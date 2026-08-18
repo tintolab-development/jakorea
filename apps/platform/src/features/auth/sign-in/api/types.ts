@@ -62,20 +62,20 @@ export type PortalSchoolSelectionRequest = {
  * 이메일·이름·휴대폰·생년월일·성별은 본인인증 필드로 PATCH 대상이 아님.
  */
 export type UpdatePortalProfileRequest = {
-  postalCode?: string
-  address?: string
-  addressDetail?: string
-  regionSido?: string
-  regionSigungu?: string
-  grade?: string
-  affiliationName?: string
+  postalCode?: string | null
+  address?: string | null
+  addressDetail?: string | null
+  regionSido?: string | null
+  regionSigungu?: string | null
+  grade?: string | null
+  affiliationName?: string | null
   /** 소속 해제 시 `null`로 전달해 CMS 학교 FK를 비운다 */
   schoolOrganizationId?: number | null
-  schoolName?: string
+  schoolName?: string | null
   schoolSelection?: PortalSchoolSelectionRequest
-  schoolEnrollmentStatus?: string
-  teacherEmploymentStatus?: string
-  external1365Id?: string
+  schoolEnrollmentStatus?: string | null
+  teacherEmploymentStatus?: string | null
+  external1365Id?: string | null
 }
 
 /** GET /api/portal/me/profile — PortalProfileResponse */
@@ -107,4 +107,17 @@ export type PortalProfileResponse = {
   external1365Id?: string
   accountStatus?: string
   joinedAt?: string
+}
+
+/** POST /api/portal/me/phone/identity/confirm — OpenAPI `PhoneIdentityConfirmRequest` */
+export type PhoneIdentityConfirmRequest = {
+  identityVerificationSessionId?: number
+  profileToken: string
+}
+
+/** POST /api/portal/me/phone/identity/confirm — OpenAPI `PhoneIdentityChangeResponse` */
+export type PhoneIdentityChangeResponse = {
+  memberId?: number
+  phone?: string
+  changedAt?: string
 }

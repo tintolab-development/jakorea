@@ -1,0 +1,99 @@
+.page {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-40);
+}
+
+.section {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.sectionTitle {
+  margin: 0;
+}
+
+.fields {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-20);
+}
+
+.genderField,
+.schoolStatusField,
+.addressField {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.fieldLabel {
+  padding-left: var(--spacing-8);
+  color: var(--color-neutral-warm-600);
+}
+
+.genderOptions,
+.schoolStatusOptions {
+  display: flex;
+  width: 100%;
+  gap: var(--spacing-12);
+}
+
+.inlineRequiredMark {
+  color: var(--color-error);
+}
+
+.inlineRow {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  align-items: stretch;
+  gap: var(--spacing-12);
+  box-sizing: border-box;
+}
+
+.inlineRow > :first-child {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.inlineRow > :last-child {
+  flex: 0 0 auto;
+}
+
+@media (--bp-below-pc) {
+  .inlineRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-8);
+  }
+
+  .inlineRow > :first-child,
+  .inlineRow > :last-child {
+    flex: none;
+    width: 100%;
+  }
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.submitError {
+  margin: 0 0 var(--spacing-8);
+}
+
+.fieldError {
+  margin: 0;
+  padding-left: var(--spacing-8);
+}

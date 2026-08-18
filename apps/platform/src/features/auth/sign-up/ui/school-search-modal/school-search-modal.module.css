@@ -3,6 +3,7 @@
   width: 100%;
   grid-template-columns: 1fr 1fr 1fr;
   gap: var(--spacing-12);
+  margin-top: 28px;
 }
 
 .schoolModalSearchRow {

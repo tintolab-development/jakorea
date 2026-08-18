@@ -780,6 +780,7 @@ export function DesignSystemPage() {
   const [toggleLarge, setToggleLarge] = useState(false)
   const [toggleSmall, setToggleSmall] = useState(true)
   const [toggleText, setToggleText] = useState(false)
+  const [toggleSwitch, setToggleSwitch] = useState(true)
   const [layoutSearchQuery, setLayoutSearchQuery] = useState('')
   const [layoutFilterTarget, setLayoutFilterTarget] = useState('all')
   const [layoutFilterStatus, setLayoutFilterStatus] = useState('all')
@@ -1775,6 +1776,7 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
             offLabel="오름차순"
             onLabel="내림차순"
           />
+          <PFToggle variant="switch" checked={toggleSwitch} onChange={setToggleSwitch} aria-label="스위치" />
         </div>
       </div>
 

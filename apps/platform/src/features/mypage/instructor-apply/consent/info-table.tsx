@@ -1,12 +1,13 @@
-import { PFText } from '@/shared/ui'
 import styles from './consent-form.module.css'
 
 export function ConsentInfoTable({
   headers,
   rows,
+  emphasizedColumns = [],
 }: {
   headers: readonly string[]
   rows: readonly (readonly string[])[]
+  emphasizedColumns?: readonly number[]
 }) {
   return (
     <div className={styles.tableWrap}>
@@ -15,9 +16,7 @@ export function ConsentInfoTable({
           <tr>
             {headers.map((header, index) => (
               <th key={`${index}-${header}`}>
-                <PFText as="span" typo="bd-sm-md" color="black">
-                  {header}
-                </PFText>
+                <span className={styles.headerText}>{header}</span>
               </th>
             ))}
           </tr>
@@ -26,10 +25,16 @@ export function ConsentInfoTable({
           {rows.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {row.map((cell, cellIndex) => (
-                <td key={`${rowIndex}-${cellIndex}`}>
-                  <PFText as="span" typo="bd-sm-rg" color="black">
+                <td key={`${rowIndex}-${cellIndex}`} data-label={headers[cellIndex] ?? ''}>
+                  <span
+                    className={
+                      emphasizedColumns.includes(cellIndex)
+                        ? styles.cellTextEmphasized
+                        : styles.cellText
+                    }
+                  >
                     {cell || '—'}
-                  </PFText>
+                  </span>
                 </td>
               ))}
             </tr>

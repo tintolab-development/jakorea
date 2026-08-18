@@ -24,7 +24,11 @@ export function ConsentWriteRadioGroup({
             checked={value === option.value}
             onChange={() => onChange(option.value)}
           />
-          <PFText as="span" typo="bd-md-rg" color="black">
+          <PFText
+            as="span"
+            typo="bd-md-rg"
+            color={value === option.value ? 'primary-500' : 'black'}
+          >
             {option.label}
           </PFText>
         </label>

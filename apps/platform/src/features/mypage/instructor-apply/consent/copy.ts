@@ -18,6 +18,7 @@ export const PAYMENT_TABLES = [
         '10년',
       ],
     ],
+    emphasizedColumns: [2],
     footer:
       '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 기관 사업에 필요한 업무처리에 제약이 발생할 수 있습니다.',
   },
@@ -25,6 +26,7 @@ export const PAYMENT_TABLES = [
     title: '2. 고유식별번호(주민등록번호) 수집·이용',
     headers: ['항목', '수집·이용 목적', '보유기간'],
     rows: [['주민등록번호', '지급명세서(소득세 납부) 제출 항목', '10년']],
+    emphasizedColumns: [0, 2],
     footer:
       '위의 고유식별번호(주민등록번호) 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 활동비지급 및 세금신고 등 업무처리에 제약이 발생할 수 있습니다.',
   },
@@ -40,6 +42,7 @@ export const PAYMENT_TABLES = [
         '10년',
       ],
     ],
+    emphasizedColumns: [0, 2, 3],
     footer:
       '위의 개인정보의 제3자 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 활동비지급 및 세금신고 등 업무처리에 제약이 발생할 수 있습니다.',
   },
@@ -47,6 +50,7 @@ export const PAYMENT_TABLES = [
     title: '4. 고유식별번호 제3자 제공·이용',
     headers: ['제공받는 곳', '항목', '제공목적', '제공받는 자의 보유기간'],
     rows: [['국세청', '성명, 주소', '원천세 신고', '소득세법에 따른 보관기간']],
+    emphasizedColumns: [0, 2, 3],
     footer:
       '위의 고유식별정보의 제3자 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 활동비지급 및 세금 신고 등 업무처리에 제약이 발생할 수 있습니다.',
   },
@@ -54,6 +58,8 @@ export const PAYMENT_TABLES = [
 
 export const PAYMENT_MID_CONSENT =
   '상기 본인은 위와 같이 「개인정보보호법」등 관련 법규에 의거하여 개인정보 수집 및 활용에 동의합니다.'
+export const PAYMENT_BASIC_SECTION_TITLE = `${PAYMENT_TABLES.length + 1}. 지급조서`
+export const PAYMENT_PURPOSE_FIXED = '강사비 또는 활동비 지급'
 export const PAYMENT_FINAL_CONFIRM =
   '본인은 본 비용 지급 목적의 활동에 참여하였으며 상기 내용을 바탕으로 금액을 수령함을 확인합니다.'
 export const PAYMENT_CLOSING = 'JA KOREA 귀하'

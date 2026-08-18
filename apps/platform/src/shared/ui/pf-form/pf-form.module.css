@@ -398,7 +398,8 @@
     border-bottom: none;
   }
 
-  .fieldRowDouble > .field {
+  .fieldRowDouble > .field,
+  .fieldRowDouble > .field:nth-child(2) {
     display: flex;
     width: 100%;
     min-width: 0;
