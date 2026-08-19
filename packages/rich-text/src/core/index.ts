@@ -1,3 +1,6 @@
+export { Editor, Node, mergeAttributes } from '@tiptap/core'
+export { Plugin, TextSelection, NodeSelection } from '@tiptap/pm/state'
+export type { EditorState, Transaction } from '@tiptap/pm/state'
 export { createRichTextExtensions } from './extensions'
 export { createRichTextEditorApi } from './editor-api'
 export { isRichTextEditorReady } from './editor-ready'

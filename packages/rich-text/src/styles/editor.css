@@ -43,7 +43,7 @@
   position: relative;
   z-index: 1;
   flex: 1 1 auto;
-  align-items: flex-start;
+  align-items: stretch;
   align-self: stretch;
   gap: 8px;
   width: 100%;
@@ -52,23 +52,39 @@
   height: var(--rt-body-height, auto);
   max-height: var(--rt-body-max-height, none);
   box-sizing: border-box;
-  padding: var(--rt-body-padding, 16px);
+  padding: 0;
   overflow: auto;
+  cursor: text;
   border-bottom-left-radius: var(--rt-radius, 8px);
   border-bottom-right-radius: var(--rt-radius, 8px);
+}
+
+.rich-text-editor__content {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  box-sizing: border-box;
+  cursor: text;
 }
 
 .rich-text-editor__body .tiptap {
   flex: 1;
   align-self: stretch;
   min-width: 0;
-  min-height: inherit;
+  min-height: 100%;
   padding: 0;
   outline: none;
+  cursor: text;
 }
 
 .rich-text-editor__body .ProseMirror {
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: var(--rt-body-padding, 16px);
   outline: none;
+  cursor: text;
 }
 
 .rich-text-editor__body .tiptap p.is-empty::before,
