@@ -35,6 +35,10 @@ export type KakaoAlimtalkTabKey = 'template' | 'send-history'
 
 export const ALIMTALK_ROOT_CATEGORY_ID = 'root'
 
+/** NHN Cloud Notification Hub 알림톡 템플릿 콘솔 */
+export const NHN_CLOUD_ALIMTALK_TEMPLATE_CONSOLE_URL =
+  'https://console.nhncloud.com/org/sfoA1rvGz53XfaQ7/project/eSpBZ77a/service/vCxeDW3z#template' as const
+
 export type AlimtalkCategory = {
   id: string
   name: string
