@@ -1,0 +1,52 @@
+.talent-intro-interview__form {
+  width: 100%;
+}
+
+.talent-intro-interview .detail-info-form__field {
+  min-height: 54px;
+  --detail-info-label-w: 160px !important;
+  grid-template-columns: 160px minmax(0, 1fr) !important;
+}
+
+.talent-intro-interview .detail-info-form__field-label {
+  display: flex !important;
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.talent-intro-interview .detail-info-form__field-content {
+  justify-content: flex-start;
+  align-items: center;
+  text-align: left;
+}
+
+.talent-intro-interview__preline {
+  display: block;
+  white-space: pre-line;
+  word-break: keep-all;
+  line-height: 150%;
+}
+
+.talent-intro-interview__search-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--default-BK, #3d3d3d);
+  cursor: pointer;
+}
+
+.talent-intro-interview__search-btn:hover {
+  color: var(--color-mint-01, #01a1af);
+}
+
+.talent-intro-interview__post-input .ant-input {
+  cursor: pointer;
+}
