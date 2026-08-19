@@ -19,8 +19,12 @@ export type MailTemplateItem = {
   updatedAt: string
   senderName: string
   senderEmail: string
-  attachmentFileName?: string
+  subject: string
+  bodyHtml: string
+  attachmentFileNames: string[]
 }
+
+export type MailTemplateFormMode = 'create' | 'edit'
 
 export type MailTemplatePendingFilters = {
   categoryName: string
