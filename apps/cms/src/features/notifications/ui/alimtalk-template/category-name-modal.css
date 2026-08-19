@@ -3,9 +3,13 @@
  * 추가: 600×320 고정
  */
 .category-name-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  box-sizing: border-box;
   width: 600px;
+  height: auto;
+  max-height: none;
   padding: 24px 30px 32px;
   border-radius: 12px;
+  overflow: visible;
 }
 
 .category-name-modal--add.content-modal.teal-header-modal.ant-modal {
@@ -13,24 +17,16 @@
 }
 
 .category-name-modal--add.content-modal.teal-header-modal.ant-modal .ant-modal-content {
-  box-sizing: border-box;
-  width: 600px;
   min-height: 320px;
-  height: auto;
-  overflow: visible;
 }
 
-.category-name-modal--add.teal-header-modal--bounded .ant-modal-content {
+.category-name-modal.teal-header-modal--bounded .ant-modal-content {
   max-height: none;
 }
 
-.category-name-modal--add .teal-header-modal__body,
-.category-name-modal--add.teal-header-modal--bounded .teal-header-modal__body {
-  flex: 0 0 auto;
-  overflow: visible;
-}
-
-.category-name-modal--add.teal-header-modal--bounded .ant-modal-body {
+.category-name-modal .teal-header-modal__body,
+.category-name-modal.teal-header-modal--bounded .teal-header-modal__body,
+.category-name-modal.teal-header-modal--bounded .ant-modal-body {
   flex: 0 0 auto;
   overflow: visible;
 }
