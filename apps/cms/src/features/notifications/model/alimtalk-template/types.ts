@@ -41,7 +41,19 @@ export type AlimtalkCategory = {
   parentId: string
 }
 
-export type AlimtalkEmphasisType = 'NONE'
+export type AlimtalkEmphasisType = 'NONE' | 'TEXT' | 'IMAGE' | 'ITEM_LIST'
+
+export const ALIMTALK_EMPHASIS_TYPE_LABEL: Record<AlimtalkEmphasisType, string> = {
+  NONE: '선택 안 함',
+  TEXT: '강조 표기형',
+  IMAGE: '이미지형',
+  ITEM_LIST: '아이템 리스트형',
+}
+
+export type AlimtalkItemListEntry = {
+  name: string
+  content: string
+}
 
 export type AlimtalkLinkDestinations = {
   pc?: string
@@ -75,6 +87,17 @@ export type AlimtalkTemplateItem = {
   senderProfile: string
   messageType: AlimtalkTemplateType
   emphasisType: AlimtalkEmphasisType
+  emphasisTitle?: string
+  emphasisSubtitle?: string
+  imageUrl?: string
+  imageFileName?: string
+  templateHeader?: string
+  itemTitle?: string
+  itemDescription?: string
+  itemImageUrl?: string
+  itemImageFileName?: string
+  itemList?: AlimtalkItemListEntry[]
+  itemSummary?: AlimtalkItemListEntry
   isSecurityTemplate: boolean
   content: string
   extraInfo: string
