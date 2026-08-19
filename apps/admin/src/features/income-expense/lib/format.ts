@@ -6,10 +6,11 @@ import type {
   ExpenseCategory,
   FinanceItem,
 } from '@/entities/income-expense/model/types'
+import { formatNumberDisplay } from '@/shared/lib/format-display'
 
 export function formatRatioDisplay(value: number): string {
   if (!Number.isFinite(value)) return '0%'
-  return `${Number(value.toFixed(2))}%`
+  return `${formatNumberDisplay(Number(value.toFixed(2)))}%`
 }
 
 export function formatAmount(value: number): string {

@@ -17,6 +17,7 @@ import {
   HTTP_LINK_URL_FORMAT_ALERT,
   isValidHttpLinkUrl,
 } from '@/shared/lib/http-link-url'
+import { formatDateDot } from '@/shared/lib/format-display'
 import './form-modal.css'
 
 const TEXT_MAX_LENGTH = 80
@@ -41,8 +42,7 @@ function coerceRadioBoolean(raw: unknown): boolean {
 }
 
 function formatYmdDot(ymd: string): string {
-  if (!ymd) return '-'
-  return ymd.replace(/-/g, '.')
+  return formatDateDot(ymd)
 }
 
 function formatCreatedAt(iso: string): string {

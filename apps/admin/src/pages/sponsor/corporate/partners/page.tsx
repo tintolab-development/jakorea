@@ -3,13 +3,14 @@
  */
 
 import { useCallback, useMemo, useState, type Key } from 'react'
-import dayjs, { type Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { Image, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type {
   CorporatePartner,
   CorporatePartnerListFilter,
 } from '@/entities/corporate-partner/model/types'
+import { formatDateTimeDot } from '@/shared/lib/format-display'
 import {
   useCorporatePartnersList,
   useCreateCorporatePartner,
@@ -120,9 +121,7 @@ const searchSyncRules: readonly TableSearchParamRule<PartnerPendingFilters>[] = 
 ]
 
 function formatCreatedAt(iso: string): string {
-  const d = dayjs(iso)
-  if (!d.isValid()) return '-'
-  return d.format('YYYY.MM.DD HH:mm')
+  return formatDateTimeDot(iso)
 }
 
 function periodAsPickerValue(

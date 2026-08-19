@@ -19,6 +19,7 @@ import {
   HTTP_LINK_URL_FORMAT_ALERT,
   isValidHttpLinkUrl,
 } from '@/shared/lib/http-link-url'
+import { formatDateDot } from '@/shared/lib/format-display'
 import './form-modal.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
@@ -60,8 +61,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
 }
 
 function formatYmdDot(ymd: string): string {
-  if (!ymd) return '-'
-  return ymd.replace(/-/g, '.')
+  return formatDateDot(ymd)
 }
 
 function formatCreatedAt(iso: string): string {

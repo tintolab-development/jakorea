@@ -7,7 +7,6 @@
 
 import { useCallback, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import dayjs from 'dayjs'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
 import type { Notice } from '@/entities/notices/model/types'
 import {
@@ -23,6 +22,7 @@ import {
 } from '@/features/notices/ui/notice-form-modal'
 import { NoticePinnedIcon } from '@/features/notices/ui/notice-pin-icon'
 import { downloadFile } from '@/shared/lib/file-download'
+import { formatDateTimeDot } from '@/shared/lib/format-display'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { RichTextViewer } from '@/shared/rich-text'
 import {
@@ -36,9 +36,7 @@ import {
 import './detail-page.css'
 
 function formatMetaDate(iso: string): string {
-  const d = dayjs(iso)
-  if (!d.isValid()) return '-'
-  return d.format('YYYY년 M월 D일 HH:mm:ss')
+  return formatDateTimeDot(iso)
 }
 
 function resolveNoticeBodyFormat(content: string): 'markdown' | 'html' {
