@@ -43,6 +43,43 @@ describe('CmsNumericInput', () => {
     expect(onValueChange).toHaveBeenLastCalledWith('12345')
   })
 
+  it('integer는 천단위 구분으로 표시하고 raw digits를 반환한다', () => {
+    const onValueChange = vi.fn()
+    render(
+      createElement(CmsNumericInput, {
+        mode: 'integer',
+        'aria-label': '인원',
+        onValueChange,
+      })
+    )
+
+    const input = screen.getByRole('textbox', { name: '인원' })
+    fireEvent.change(input, { target: { value: '1234' } })
+
+    expect(input).toHaveValue('1,234')
+    expect(onValueChange).toHaveBeenLastCalledWith('1234')
+  })
+
+  it('decimal은 blur에서 후행 0을 제거하고 천단위를 유지한다', () => {
+    const onValueChange = vi.fn()
+    render(
+      createElement(CmsNumericInput, {
+        mode: 'decimal',
+        precision: 2,
+        'aria-label': '비율',
+        onValueChange,
+      })
+    )
+
+    const input = screen.getByRole('textbox', { name: '비율' })
+    fireEvent.change(input, { target: { value: '1234.50' } })
+    expect(input).toHaveValue('1,234.50')
+
+    fireEvent.blur(input)
+    expect(input).toHaveValue('1,234.5')
+    expect(onValueChange).toHaveBeenLastCalledWith('1234.5')
+  })
+
   it('빈값과 decimal 중간 상태를 보존하고 precision을 적용한다', () => {
     const onValueChange = vi.fn()
     render(
