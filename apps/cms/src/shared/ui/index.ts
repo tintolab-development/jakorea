@@ -145,7 +145,7 @@ export type {
   UniversitySearchSelectMeta,
 } from './university-search'
 export { CmsCompactPagination } from './cms-compact-pagination'
-export type { CmsCompactPaginationProps } from './cms-compact-pagination'
+export type { CmsCompactPaginationProps, CmsCompactPaginationVariant } from './cms-compact-pagination'
 export type { CmsControlSize } from './cms-control-size'
 export { CmsSelect, CMS_MULTI_SELECT_TAG_COLORS } from './cms-select'
 export type { CmsSelectProps } from './cms-select'
@@ -234,6 +234,8 @@ export type {
   AlimtalkPhonePreviewProps,
   AlimtalkPhonePreviewButton,
   AlimtalkPhoneMessageType,
+  AlimtalkPhoneEmphasisType,
+  AlimtalkPhoneItemListEntry,
 } from './alimtalk-phone-preview'
 export { AlimtalkNestedTable } from './alimtalk-nested-table'
 export type {
