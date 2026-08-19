@@ -5,4 +5,9 @@ export const notificationsQueryKeys = {
     list: (searchParamsKey: string) =>
       [...notificationsQueryKeys.alimtalkTemplates.all(), 'list', searchParamsKey] as const,
   },
+  alimtalkSendHistory: {
+    all: () => [...notificationsQueryKeys.all, 'alimtalk-send-history'] as const,
+    list: (searchParamsKey: string) =>
+      [...notificationsQueryKeys.alimtalkSendHistory.all(), 'list', searchParamsKey] as const,
+  },
 } as const
