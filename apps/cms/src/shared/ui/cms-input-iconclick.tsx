@@ -16,6 +16,8 @@ interface CmsInputIconClickProps {
   editButtonClassName?: string
   /** true면 제목 텍스트만 표시하고 연필 버튼·편집 입력을 쓰지 않음(템플릿 사용자 모드 등) */
   readOnly?: boolean
+  /** 값이 비어 있을 때 표시·입력 힌트 */
+  placeholder?: string
 }
 
 export function CmsInputIconClick({
@@ -32,7 +34,9 @@ export function CmsInputIconClick({
   textClassName,
   editButtonClassName,
   readOnly = false,
+  placeholder,
 }: CmsInputIconClickProps) {
+  const showPlaceholder = !value.trim() && Boolean(placeholder)
   const inputRef = useRef<HTMLInputElement>(null)
   const iconMaskId = `cms-input-iconclick-title-mask-${useId().replace(/:/g, '')}`
   const join = (...names: Array<string | undefined>) => names.filter(Boolean).join(' ')
@@ -81,10 +85,19 @@ export function CmsInputIconClick({
               handleBlur()
             }
           }}
-          aria-label={inputAriaLabel ?? '텍스트 입력'}
+          placeholder={placeholder}
+          aria-label={inputAriaLabel ?? placeholder ?? '텍스트 입력'}
         />
       ) : (
-        <span className={join('cms-input-iconclick__text', textClassName)}>{value}</span>
+        <span
+          className={join(
+            'cms-input-iconclick__text',
+            showPlaceholder ? 'cms-input-iconclick__text--placeholder' : undefined,
+            textClassName
+          )}
+        >
+          {showPlaceholder ? placeholder : value}
+        </span>
       )}
       {!readOnly ? (
         <button
