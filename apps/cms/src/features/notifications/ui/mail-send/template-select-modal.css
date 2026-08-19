@@ -1,0 +1,166 @@
+.mail-send-template-select-field__trigger {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  cursor: pointer;
+}
+
+.mail-send-template-select-field__trigger[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+.mail-send-template-select-field__trigger .cms-select {
+  width: 100%;
+  pointer-events: none;
+}
+
+.mail-send-template-select-field__trigger:hover .cms-select:not(.cms-select--disabled),
+.mail-send-template-select-field__trigger:focus-visible .cms-select:not(.cms-select--disabled) {
+  border-color: var(--color-mint-01, #01a1af);
+}
+
+.mail-send-template-select-field__trigger .cms-select .ant-select-arrow {
+  background-image: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  min-height: 16px !important;
+  color: var(--gray-85969-d, #85969d);
+}
+
+.mail-send-template-select-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  width: 800px;
+  max-height: none;
+}
+
+.mail-send-template-select-modal .teal-header-modal__footer {
+  margin-top: 16px;
+}
+
+.mail-send-template-select-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.mail-send-template-select-modal__search {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12, 12px);
+  width: 100%;
+}
+
+.mail-send-template-select-modal__search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mail-send-template-select-modal__table-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mail-send-template-select-modal__count {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.mail-send-template-select-modal__table.cms-data-table .ant-table-thead > tr > th,
+.mail-send-template-select-modal__table.cms-data-table .ant-table-tbody > tr > td {
+  box-sizing: border-box;
+  min-height: 54px;
+  height: 54px;
+  padding: 12px 20px !important;
+  vertical-align: middle !important;
+  text-align: center !important;
+}
+
+.mail-send-template-select-modal__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.mail-send-template-select-modal__col-actions,
+.mail-send-template-select-modal__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.mail-send-template-select-modal__col-actions {
+  width: 220px !important;
+  min-width: 80px;
+  max-width: 220px !important;
+}
+
+.mail-send-template-select-modal__row-actions {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 30px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  vertical-align: middle;
+}
+
+.mail-send-template-select-modal__action-btn.cms-button.ant-btn {
+  display: flex !important;
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 6px 12px !important;
+  flex-shrink: 0;
+  border-radius: var(--radius-6, 6px);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.mail-send-template-select-modal__action-btn--preview.cms-button.ant-btn:not(:disabled):not(
+    .ant-btn-disabled
+  ) {
+  color: var(--main-BK, #3d3d3d) !important;
+  border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
+  background: var(--default-WT, #fff) !important;
+}
+
+.mail-send-template-select-modal__action-btn--use.cms-button.ant-btn:not(:disabled):not(
+    .ant-btn-disabled
+  ) {
+  color: var(--color-mint-01, #01a1af) !important;
+  border: 1px solid var(--color-mint-01, #01a1af) !important;
+  background: linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+    #fff !important;
+}
+
+.mail-send-template-select-modal__pagination {
+  display: flex;
+  justify-content: center;
+}
+
+.mail-send-template-select-modal__empty {
+  display: flex;
+  flex-direction: column;
+  height: 180px;
+  padding: 40px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  box-sizing: border-box;
+  border-radius: var(--radius-8, 8px);
+  border: 1px solid var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  background: rgba(61, 61, 61, 0.04);
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-line;
+}

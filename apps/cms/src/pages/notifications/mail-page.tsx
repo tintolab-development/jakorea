@@ -5,12 +5,15 @@
 import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { MailTemplateList } from '@/features/notifications/ui/mail-template/list'
+import { SendFullpageModal } from '@/features/notifications/ui/mail-send/fullpage-modal'
 import type { MailTabKey } from '@/features/notifications/model/mail-template/types'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import './mail-page.css'
 
 const TAB_PARAM = 'tab'
+const SEND_MODAL_PARAM = 'modal'
+const SEND_MODAL_VALUE = 'send'
 
 const TAB_ITEMS: { key: MailTabKey; label: string }[] = [
   { key: 'template', label: '메일 템플릿' },
@@ -23,9 +26,9 @@ function parseTabKey(raw: string | null): MailTabKey {
 }
 
 export function MailPage() {
-  const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
+  const sendOpen = searchParams.get(SEND_MODAL_PARAM) === SEND_MODAL_VALUE
 
   const handleTabChange = useCallback(
     (key: string) => {
@@ -47,11 +50,26 @@ export function MailPage() {
   )
 
   const handleSendMail = useCallback(() => {
-    showAlert({
-      title: '준비 중',
-      content: '메일 발송 기능은 현재 준비 중입니다.',
-    })
-  }, [showAlert])
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.set(SEND_MODAL_PARAM, SEND_MODAL_VALUE)
+        return next
+      },
+      { replace: false }
+    )
+  }, [setSearchParams])
+
+  const handleCloseSend = useCallback(() => {
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.delete(SEND_MODAL_PARAM)
+        return next
+      },
+      { replace: true }
+    )
+  }, [setSearchParams])
 
   return (
     <div className="mail-page">
@@ -72,6 +90,7 @@ export function MailPage() {
       ) : (
         <div className="notification-coming-soon-tab-panel">메일 발송 조회 기능은 현재 준비 중입니다.</div>
       )}
+      <SendFullpageModal open={sendOpen} onClose={handleCloseSend} />
     </div>
   )
 }
