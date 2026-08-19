@@ -1,32 +1,41 @@
-import {
-  ALIMTALK_ROOT_CATEGORY_ID,
-  type AlimtalkCategory,
-  type AlimtalkTemplateItem,
-} from '@/features/notifications/model/alimtalk-template/types'
+export const NOTIFICATION_ROOT_CATEGORY_ID = 'root'
 
-export type AlimtalkTreeChild =
-  | { kind: 'category'; category: AlimtalkCategory }
-  | { kind: 'template'; template: AlimtalkTemplateItem }
+export type NotificationTreeCategory = {
+  id: string
+  name: string
+  parentId: string
+}
+
+export type NotificationTreeTemplate = {
+  id: string
+  name: string
+  templateName: string
+  categoryId: string
+}
+
+export type NotificationTreeChild<T extends NotificationTreeTemplate> =
+  | { kind: 'category'; category: NotificationTreeCategory }
+  | { kind: 'template'; template: T }
 
 export function categoryChildren(
-  categories: AlimtalkCategory[],
+  categories: NotificationTreeCategory[],
   parentId: string
-): AlimtalkCategory[] {
+): NotificationTreeCategory[] {
   return categories.filter(category => category.parentId === parentId)
 }
 
-export function templatesInCategory(
-  templates: AlimtalkTemplateItem[],
+export function templatesInCategory<T extends NotificationTreeTemplate>(
+  templates: T[],
   categoryId: string
-): AlimtalkTemplateItem[] {
+): T[] {
   return templates.filter(template => template.categoryId === categoryId)
 }
 
-export function childrenOf(
-  categories: AlimtalkCategory[],
-  templates: AlimtalkTemplateItem[],
+export function childrenOf<T extends NotificationTreeTemplate>(
+  categories: NotificationTreeCategory[],
+  templates: T[],
   parentId: string
-): AlimtalkTreeChild[] {
+): NotificationTreeChild<T>[] {
   return [
     ...categoryChildren(categories, parentId).map(
       category => ({ kind: 'category', category }) as const
@@ -38,32 +47,43 @@ export function childrenOf(
 }
 
 export function findCategory(
-  categories: AlimtalkCategory[],
+  categories: NotificationTreeCategory[],
   id: string
-): AlimtalkCategory | undefined {
+): NotificationTreeCategory | undefined {
   return categories.find(category => category.id === id)
 }
 
-export function findTemplate(
-  templates: AlimtalkTemplateItem[],
+export function findTemplate<T extends NotificationTreeTemplate>(
+  templates: T[],
   id: string
-): AlimtalkTemplateItem | undefined {
+): T | undefined {
   return templates.find(template => template.id === id)
 }
 
 export function categoryNameById(
-  categories: AlimtalkCategory[],
+  categories: NotificationTreeCategory[],
   id: string
 ): string {
-  if (id === ALIMTALK_ROOT_CATEGORY_ID) return 'Category'
+  if (id === NOTIFICATION_ROOT_CATEGORY_ID) return 'Category'
   return findCategory(categories, id)?.name ?? '-'
 }
 
-export function ancestorIds(categories: AlimtalkCategory[], categoryId: string): string[] {
+/** 루트 제외 조상→현재 카테고리명. UI에서는 TdDivider로 구분한다. */
+export function categoryPathNames(
+  categories: NotificationTreeCategory[],
+  categoryId: string
+): string[] {
+  return ancestorIds(categories, categoryId)
+    .reverse()
+    .map(id => categoryNameById(categories, id))
+    .filter(name => name !== '-')
+}
+
+export function ancestorIds(categories: NotificationTreeCategory[], categoryId: string): string[] {
   const ids: string[] = []
   let currentId = categoryId
   const seen = new Set<string>()
-  while (currentId && currentId !== ALIMTALK_ROOT_CATEGORY_ID && !seen.has(currentId)) {
+  while (currentId && currentId !== NOTIFICATION_ROOT_CATEGORY_ID && !seen.has(currentId)) {
     seen.add(currentId)
     ids.push(currentId)
     const category = findCategory(categories, currentId)
@@ -74,7 +94,7 @@ export function ancestorIds(categories: AlimtalkCategory[], categoryId: string):
 }
 
 export function descendantCategoryIds(
-  categories: AlimtalkCategory[],
+  categories: NotificationTreeCategory[],
   categoryId: string
 ): string[] {
   const ids: string[] = []
@@ -88,16 +108,16 @@ export function descendantCategoryIds(
   return ids
 }
 
-export function collectDeleteIds(
-  categories: AlimtalkCategory[],
-  templates: AlimtalkTemplateItem[],
+export function collectDeleteIds<T extends NotificationTreeTemplate>(
+  categories: NotificationTreeCategory[],
+  templates: T[],
   checkedIds: ReadonlySet<string>
 ): { categoryIds: string[]; templateIds: string[] } {
   const categoryIds = new Set<string>()
   const templateIds = new Set<string>()
 
   for (const id of checkedIds) {
-    if (id === ALIMTALK_ROOT_CATEGORY_ID) continue
+    if (id === NOTIFICATION_ROOT_CATEGORY_ID) continue
     const category = findCategory(categories, id)
     if (category) {
       categoryIds.add(category.id)
@@ -117,44 +137,44 @@ export function collectDeleteIds(
   return { categoryIds: [...categoryIds], templateIds: [...templateIds] }
 }
 
-export function categoryHasChildren(
-  categories: AlimtalkCategory[],
-  templates: AlimtalkTemplateItem[],
+export function categoryHasChildren<T extends NotificationTreeTemplate>(
+  categories: NotificationTreeCategory[],
+  templates: T[],
   categoryId: string
 ): boolean {
   return childrenOf(categories, templates, categoryId).length > 0
 }
 
-export function moveTemplateToCategory(
-  templates: AlimtalkTemplateItem[],
+export function moveTemplateToCategory<T extends NotificationTreeTemplate>(
+  templates: T[],
   templateId: string,
   targetCategoryId: string
-): AlimtalkTemplateItem[] {
+): T[] {
   return templates.map(template =>
     template.id === templateId ? { ...template, categoryId: targetCategoryId } : template
   )
 }
 
 export function canMoveCategoryTo(
-  categories: AlimtalkCategory[],
+  categories: NotificationTreeCategory[],
   categoryId: string,
   targetParentId: string
 ): boolean {
-  if (categoryId === ALIMTALK_ROOT_CATEGORY_ID) return false
+  if (categoryId === NOTIFICATION_ROOT_CATEGORY_ID) return false
   if (categoryId === targetParentId) return false
   const category = findCategory(categories, categoryId)
   if (!category || category.parentId === targetParentId) return false
-  if (targetParentId !== ALIMTALK_ROOT_CATEGORY_ID) {
+  if (targetParentId !== NOTIFICATION_ROOT_CATEGORY_ID) {
     if (ancestorIds(categories, targetParentId).includes(categoryId)) return false
   }
   return true
 }
 
 export function moveCategoryToParent(
-  categories: AlimtalkCategory[],
+  categories: NotificationTreeCategory[],
   categoryId: string,
   targetParentId: string
-): AlimtalkCategory[] {
+): NotificationTreeCategory[] {
   if (!canMoveCategoryTo(categories, categoryId, targetParentId)) return categories
   return categories.map(category =>
     category.id === categoryId ? { ...category, parentId: targetParentId } : category
@@ -166,12 +186,12 @@ function includesIgnoreCase(value: string, query: string): boolean {
   return value.toLowerCase().includes(query.toLowerCase())
 }
 
-export function filterAlimtalkTree(
-  categories: AlimtalkCategory[],
-  templates: AlimtalkTemplateItem[],
+export function filterNotificationTree<T extends NotificationTreeTemplate>(
+  categories: NotificationTreeCategory[],
+  templates: T[],
   categoryNameQuery: string,
   templateNameQuery: string
-): { categories: AlimtalkCategory[]; templates: AlimtalkTemplateItem[] } {
+): { categories: NotificationTreeCategory[]; templates: T[] } {
   const categoryQ = categoryNameQuery.trim()
   const templateQ = templateNameQuery.trim()
   if (!categoryQ && !templateQ) {
@@ -215,3 +235,6 @@ export function filterAlimtalkTree(
     templates: templates.filter(template => visibleTemplateIds.has(template.id)),
   }
 }
+
+/** @deprecated use filterNotificationTree */
+export const filterAlimtalkTree = filterNotificationTree
