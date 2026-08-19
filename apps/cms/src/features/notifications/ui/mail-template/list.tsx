@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, CmsModal, ConfirmModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsModal, ConfirmModal } from '@/shared/ui'
 import {
   MAIL_ROOT_CATEGORY_ID,
   type MailCategory,
@@ -19,6 +19,12 @@ import {
   applyMailFiltersToSearchParams,
   pendingFiltersFromSearchParams,
 } from '@/features/notifications/model/mail-template/filter-url'
+import {
+  closeMailFormSearchParams,
+  mailFormStateFromSearchParams,
+  openMailCreateFormSearchParams,
+  openMailEditFormSearchParams,
+} from '@/features/notifications/model/mail-template/form-url'
 import {
   MAIL_CATEGORY_MOCK,
   MAIL_TEMPLATE_ITEM_MOCK,
@@ -40,6 +46,9 @@ import {
   ALIMTALK_DND_CATEGORY_MOVE_PREFIX,
 } from '@/features/notifications/ui/alimtalk-template/category-tree'
 import { DetailPanel } from './detail-panel'
+import { FormModal } from './form-modal'
+import { PreviewModal } from './preview-modal'
+import type { MailTemplateFormDraft } from './use-form'
 import '@/pages/programs/program-list-page.css'
 import '@/features/notifications/ui/alimtalk-template/list.css'
 import './list.css'
@@ -74,9 +83,11 @@ function categoryIdForEdit(
 }
 
 export function MailTemplateList() {
-  const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
   const appliedFilters = useMemo(() => pendingFiltersFromSearchParams(searchParams), [searchParams])
+  const formState = useMemo(() => mailFormStateFromSearchParams(searchParams), [searchParams])
+  const formOpen = formState.open
+  const formMode = formState.mode
   const [pendingFilters, setPendingFilters] = useState<MailTemplatePendingFilters>(appliedFilters)
   const pendingFiltersRef = useRef(pendingFilters)
   pendingFiltersRef.current = pendingFilters
@@ -99,6 +110,32 @@ export function MailTemplateList() {
   const [categoryModal, setCategoryModal] = useState<{ mode: 'add' | 'edit'; categoryId: string | null } | null>(
     null
   )
+  const [previewOpen, setPreviewOpen] = useState(false)
+
+  useEffect(() => {
+    if (!formOpen) return
+    if (formMode === 'edit') {
+      if (!formState.templateId) {
+        setSearchParams(prev => closeMailFormSearchParams(prev), { replace: true })
+        return
+      }
+      const template = findTemplate(templates, formState.templateId)
+      if (!template) {
+        setSearchParams(prev => closeMailFormSearchParams(prev), { replace: true })
+        return
+      }
+      setSelection(current =>
+        current?.kind === 'template' && current.id === template.id
+          ? current
+          : { kind: 'template', id: template.id }
+      )
+      setExpandedIds(prev => new Set(prev).add(template.categoryId))
+      return
+    }
+    if (formState.categoryId) {
+      setExpandedIds(prev => new Set(prev).add(formState.categoryId!))
+    }
+  }, [formMode, formOpen, formState.categoryId, formState.templateId, setSearchParams, templates])
 
   const visibleTree = useMemo(
     () =>
@@ -113,6 +150,10 @@ export function MailTemplateList() {
 
   const selectedTemplate =
     selection?.kind === 'template' ? findTemplate(templates, selection.id) ?? null : null
+  const editingTemplate = useMemo(() => {
+    if (formMode !== 'edit' || !formState.templateId) return null
+    return findTemplate(templates, formState.templateId) ?? null
+  }, [formMode, formState.templateId, templates])
   const selectedCategoryName = selectedTemplate
     ? categoryNameById(categories, selectedTemplate.categoryId)
     : ''
@@ -244,6 +285,80 @@ export function MailTemplateList() {
     [categoryModal, selection, templates]
   )
 
+  const handleCloseForm = useCallback(() => {
+    setSearchParams(prev => closeMailFormSearchParams(prev), { replace: true })
+  }, [setSearchParams])
+
+  const handleOpenCreate = useCallback(() => {
+    const categoryId = targetCategoryForAdd(selection, templates)
+    setSearchParams(prev => openMailCreateFormSearchParams(prev, categoryId), { replace: false })
+  }, [selection, setSearchParams, templates])
+
+  const handleOpenEdit = useCallback(() => {
+    if (!selectedTemplate) return
+    setSearchParams(prev => openMailEditFormSearchParams(prev, selectedTemplate.id), {
+      replace: false,
+    })
+  }, [selectedTemplate, setSearchParams])
+
+  const handleSubmitForm = useCallback(
+    (draft: MailTemplateFormDraft) => {
+      const now = new Date().toISOString()
+      if (formMode === 'create') {
+        const id = `mail-tpl-${Date.now()}`
+        const categoryId =
+          formState.categoryId?.trim() || targetCategoryForAdd(selection, templates)
+        const next: MailTemplateItem = {
+          id,
+          name: draft.templateName,
+          templateName: draft.templateName,
+          categoryId,
+          registeredAt: now,
+          updatedAt: now,
+          senderName: draft.senderName,
+          senderEmail: draft.senderEmail,
+          subject: draft.subject,
+          bodyHtml: draft.bodyHtml,
+          attachmentFileNames: draft.attachmentFileNames,
+        }
+        setTemplates(prev => [...prev, next])
+        setSelection({ kind: 'template', id })
+        setExpandedIds(prev => new Set(prev).add(categoryId))
+      } else if (editingTemplate) {
+        const editId = editingTemplate.id
+        setTemplates(prev =>
+          prev.map(item =>
+            item.id === editId
+              ? {
+                  ...item,
+                  name: draft.templateName,
+                  templateName: draft.templateName,
+                  senderName: draft.senderName,
+                  senderEmail: draft.senderEmail,
+                  subject: draft.subject,
+                  bodyHtml: draft.bodyHtml,
+                  attachmentFileNames: draft.attachmentFileNames,
+                  updatedAt: now,
+                }
+              : item
+          )
+        )
+      }
+      handleCloseForm()
+    },
+    [editingTemplate, formMode, formState.categoryId, handleCloseForm, selection, templates]
+  )
+
+  const handleDeleteFromForm = useCallback(() => {
+    if (!editingTemplate) return
+    const editId = editingTemplate.id
+    setTemplates(prev => prev.filter(item => item.id !== editId))
+    setSelection(current =>
+      current?.kind === 'template' && current.id === editId ? null : current
+    )
+    handleCloseForm()
+  }, [editingTemplate, handleCloseForm])
+
   const editCategoryId = categoryIdForEdit(selection, templates)
 
   return (
@@ -297,12 +412,7 @@ export function MailTemplateList() {
               variant="primary"
               size="large"
               type="button"
-              onClick={() =>
-                showAlert({
-                  title: '준비 중',
-                  content: '템플릿 등록 기능은 현재 준비 중입니다.',
-                })
-              }
+              onClick={handleOpenCreate}
             >
               템플릿 등록
             </CmsButton>
@@ -322,12 +432,8 @@ export function MailTemplateList() {
             <DetailPanel
               template={selectedTemplate}
               categoryName={selectedCategoryName}
-              onPreview={() =>
-                showAlert({
-                  title: '준비 중',
-                  content: '템플릿 미리보기 기능은 현재 준비 중입니다.',
-                })
-              }
+              onPreview={() => setPreviewOpen(true)}
+              onEdit={handleOpenEdit}
             />
           </div>
         </DndContext>
@@ -408,6 +514,20 @@ export function MailTemplateList() {
         }
         onCancel={() => setCategoryModal(null)}
         onSubmit={handleSubmitCategory}
+      />
+      <FormModal
+        open={formOpen}
+        mode={formMode}
+        template={formMode === 'edit' ? editingTemplate : null}
+        onClose={handleCloseForm}
+        onSubmit={handleSubmitForm}
+        onDelete={handleDeleteFromForm}
+      />
+      <PreviewModal
+        open={previewOpen && selectedTemplate != null}
+        subject={selectedTemplate?.subject ?? ''}
+        bodyHtml={selectedTemplate?.bodyHtml ?? ''}
+        onClose={() => setPreviewOpen(false)}
       />
     </div>
   )

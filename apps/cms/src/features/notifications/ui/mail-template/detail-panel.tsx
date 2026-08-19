@@ -7,14 +7,22 @@ type DetailPanelProps = {
   template: MailTemplateItem | null
   categoryName: string
   onPreview: () => void
+  onEdit: () => void
 }
 
-export function DetailPanel({ template, categoryName, onPreview }: DetailPanelProps) {
+export function DetailPanel({ template, categoryName, onPreview, onEdit }: DetailPanelProps) {
   if (!template) {
     return <div className="mail-template-detail mail-template-detail--empty" />
   }
 
-  const senderView = `${template.senderName} | ${template.senderEmail}`
+  const senderView = (
+    <>
+      {template.senderName}
+      <DetailInfoForm.TdDivider />
+      {template.senderEmail}
+    </>
+  )
+  const attachmentView = template.attachmentFileNames[0] || '-'
 
   return (
     <div className="mail-template-detail">
@@ -37,16 +45,21 @@ export function DetailPanel({ template, categoryName, onPreview }: DetailPanelPr
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="발신 메일" view={senderView} />
-          <DetailInfoForm.Field label="첨부 파일" view={template.attachmentFileName || '-'} />
+          <DetailInfoForm.Field label="첨부 파일" view={attachmentView} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="템플릿 상세"
             fullRow
             view={
-              <CmsButton variant="secondary" size="medium" type="button" onClick={onPreview}>
-                미리보기
-              </CmsButton>
+              <div className="mail-template-detail__actions">
+                <CmsButton variant="secondary" size="medium" type="button" onClick={onPreview}>
+                  미리보기
+                </CmsButton>
+                <CmsButton variant="secondary" size="medium" type="button" onClick={onEdit}>
+                  수정
+                </CmsButton>
+              </div>
             }
           />
         </DetailInfoForm.Row>

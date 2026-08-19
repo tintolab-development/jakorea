@@ -17,3 +17,9 @@
   min-height: 220px;
   align-self: stretch;
 }
+
+.mail-template-detail__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
