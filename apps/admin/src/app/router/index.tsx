@@ -30,6 +30,8 @@ import { IndividualDonationPage } from '@/pages/sponsor/individual/page'
 import { CorporateGuidePage } from '@/pages/sponsor/corporate/guide/page'
 import { CorporatePartnersPage } from '@/pages/sponsor/corporate/partners/page'
 import { CorporateConsultationsPage } from '@/pages/sponsor/corporate/consultations/page'
+import { TalentDonationIntroPage } from '@/pages/sponsor/talent/intro/page'
+import { TalentDonationApplicationsPage } from '@/pages/sponsor/talent/applications/page'
 import { SiteInfoPage } from '@/pages/site/info/page'
 import { GnbMenuPage } from '@/pages/site/gnb/page'
 import { FooterPage } from '@/pages/site/footer/page'
@@ -69,6 +71,8 @@ const IMPLEMENTED_LEAF_PATHS = new Set([
   '/sponsor/corporate/guide',
   '/sponsor/corporate/partners',
   '/sponsor/corporate/consultations',
+  '/sponsor/talent/intro',
+  '/sponsor/talent/applications',
   '/site/info',
   '/site/gnb',
   '/site/footer',
@@ -179,6 +183,11 @@ export const router = createBrowserRouter([
       {
         path: 'sponsor/corporate/consultations',
         element: <CorporateConsultationsPage />,
+      },
+      { path: 'sponsor/talent/intro', element: <TalentDonationIntroPage /> },
+      {
+        path: 'sponsor/talent/applications',
+        element: <TalentDonationApplicationsPage />,
       },
       { path: 'site/info', element: <SiteInfoPage /> },
       { path: 'site/gnb', element: <GnbMenuPage /> },
