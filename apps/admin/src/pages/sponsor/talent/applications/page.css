@@ -1,0 +1,32 @@
+/**
+ * 재능기부 신청 관리 목록
+ */
+
+.talent-apps-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.talent-apps-page__filter-card {
+  margin-bottom: var(--spacing-24, 24px);
+}
+
+.talent-apps-page__filter {
+  width: 100%;
+}
+
+.talent-apps-page__table-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow: auto;
+}
+
+.talent-apps-page__status--pending {
+  color: var(--color-mint-01, #01a1af);
+  font-weight: 600;
+}
+
+.talent-apps-page__status--confirmed {
+  color: var(--default-BK, #3d3d3d);
+  font-weight: 500;
+}
