@@ -4,13 +4,14 @@
 
 import { useCallback, useMemo, useState, type Key } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import dayjs, { type Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { Switch, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type {
   ImpactStory,
   ImpactStoryListFilter,
 } from '@/entities/impact-stories/model/types'
+import { formatDateTimeDot } from '@/shared/lib/format-display'
 import {
   useCreateImpactStory,
   useImpactStoriesList,
@@ -152,9 +153,7 @@ function rangeAsPicker(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
 }
 
 function formatDateTime(iso: string): string {
-  const d = dayjs(iso)
-  if (!d.isValid()) return '-'
-  return d.format('YYYY.MM.DD HH:mm')
+  return formatDateTimeDot(iso)
 }
 
 export function ImpactStoriesPage() {

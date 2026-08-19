@@ -170,7 +170,7 @@ export function NoticeListPage() {
                         <Divider type="vertical" />
                         <Text type="secondary" style={{ fontSize: 13 }}>
                           <CalendarOutlined style={{ marginRight: 4 }} />
-                          {dayjs(notice.createdAt).format('YYYY-MM-DD')}
+                          {dayjs(notice.createdAt).format('YYYY.MM.DD')}
                         </Text>
                       </Space>
                     }
@@ -215,7 +215,7 @@ export function NoticeListPage() {
             >
               <Text type="secondary">{selectedNotice.author}</Text>
               <Text type="secondary">
-                {dayjs(selectedNotice.createdAt).format('YYYY-MM-DD HH:mm')}
+                {dayjs(selectedNotice.createdAt).format('YYYY.MM.DD HH:mm')}
               </Text>
               <Text type="secondary">조회수 {selectedNotice.viewCount.toLocaleString()}</Text>
             </Space>

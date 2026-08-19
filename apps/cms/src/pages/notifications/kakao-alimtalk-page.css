@@ -1,14 +1,22 @@
+/* 헤더 ↔ 탭: layout-content 32px + 탭 16px 이중 패딩을 상단 16px만 사용 */
+.layout-content:has(.kakao-alimtalk-page) {
+  --cms-layout-content-padding-top: 16px;
+  padding-top: 16px;
+}
+
 /* 탭 ↔ 필터 간격 — Gemini 찾아가는 연수·템플릿 목록과 동일 */
 .kakao-alimtalk-page {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  min-height: calc(100vh - 64px - 64px);
+  min-height: calc(100vh - 64px - 16px - 32px);
 }
 
-.kakao-alimtalk-page__tabs.cms-text-tabs .cms-text-tabs__row {
-  padding-left: 20px;
+.kakao-alimtalk-page .kakao-alimtalk-page__tabs.cms-text-tabs .cms-text-tabs__row {
+  padding-top: 0;
+  padding-right: 0;
   padding-bottom: 16px;
+  padding-left: 20px;
 }
 
 .kakao-alimtalk-page__tabs .cms-text-tabs__trailing {
@@ -24,7 +32,7 @@
   min-height: 0;
 }
 
-.kakao-alimtalk-page .filter-table-layout {
+.kakao-alimtalk-page .program-list-page .filter-table-layout {
   display: flex;
   flex: 1 1 0;
   flex-direction: column;
@@ -32,7 +40,7 @@
   margin-bottom: 0;
 }
 
-.kakao-alimtalk-page .filter-table-layout__table {
+.kakao-alimtalk-page .program-list-page .filter-table-layout__table {
   display: flex;
   flex: 1 1 0;
   flex-direction: column;

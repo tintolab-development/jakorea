@@ -27,9 +27,6 @@
 
 .instructorTitle {
   margin: 0;
-  display: inline-flex;
-  align-items: baseline;
-  flex-wrap: wrap;
 }
 
 .instructorHonorific {
@@ -63,7 +60,9 @@
   gap: var(--spacing-4);
   border: 0;
   background: transparent;
-  cursor: not-allowed;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 }
 
 .settingsIcon {

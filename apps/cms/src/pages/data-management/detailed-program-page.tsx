@@ -297,7 +297,7 @@ export default function DetailedProgramPage() {
         width: 180,
         render: (v: string | undefined) =>
           v ? (
-            dayjs(v).format('YYYY.MM.DD HH:mm:ss')
+            dayjs(v).format('YYYY.MM.DD HH:mm')
           ) : (
             <span style={{ color: 'var(--color-text-tertiary, #8c8c8c)' }}>-</span>
           ),

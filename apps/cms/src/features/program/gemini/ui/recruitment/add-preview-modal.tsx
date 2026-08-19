@@ -1,4 +1,3 @@
-import dayjs from 'dayjs'
 import {
   ANNOUNCEMENT_PUBLISHED_OPTIONS,
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
@@ -8,16 +7,13 @@ import {
   GEMINI_RECRUITMENT_EDUCATION_TARGET_OPTIONS,
 } from '../../lib/recruitment/add-form-options'
 import type { GeminiRecruitmentAddFormSnapshot } from '../../lib/recruitment/add-local-save'
+import { formatDateRangeDot } from '@/shared/utils'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import './add-preview-modal.css'
 
 function formatPeriod(start: string | null, end: string | null): string {
-  if (!start || !end) return '-'
-  const a = dayjs(start)
-  const b = dayjs(end)
-  if (!a.isValid() || !b.isValid()) return '-'
-  return `${a.format('YYYY. MM. DD')} ~ ${b.format('YYYY. MM. DD')}`
+  return formatDateRangeDot(start, end)
 }
 
 function resolveEducationTargets(levels: string[]): string {

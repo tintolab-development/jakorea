@@ -20,14 +20,15 @@ export function useRichTextEditor({
   placeholder,
   autofocus = false,
   preset = 'full',
+  extraExtensions,
   onReady,
 }: UseRichTextEditorOptions) {
   const onReadyRef = useRef(onReady)
   onReadyRef.current = onReady
 
   const extensions = useMemo(
-    () => createRichTextExtensions({ placeholder, preset }),
-    [placeholder, preset]
+    () => createRichTextExtensions({ placeholder, preset, extraExtensions }),
+    [placeholder, preset, extraExtensions]
   )
 
   const { content, contentType } = useMemo(
@@ -55,7 +56,7 @@ export function useRichTextEditor({
         onReadyRef.current?.(createRichTextEditorApi(instance))
       },
     },
-    [resetKey, placeholder]
+    [resetKey, placeholder, extraExtensions]
   )
 
   useEffect(() => {

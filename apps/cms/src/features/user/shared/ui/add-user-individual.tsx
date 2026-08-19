@@ -12,6 +12,8 @@ import {
   CmsRadioGroup,
   CmsSelect,
   SchoolSearch,
+  type SchoolSearchSelection,
+  type SchoolSearchSelectMeta,
 } from '@/shared/ui'
 import { CmsDateTextInput, isValidBirthDateFormValue, birthDateFormValueToApi, isBirthDateInputIncomplete } from '@/shared/ui/date-text-input'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -55,6 +57,14 @@ interface AddUserIndividualFormValues {
   schoolEnrollmentStatus: SchoolEnrollmentStatus
   schoolName: string
   grade: string
+  schoolProvider?: string
+  schoolExternalCode?: string
+  schoolLevel?: string
+  schoolAddress?: string
+  schoolZipcode?: string
+  schoolRegionSido?: string
+  schoolRegionSigungu?: string
+  schoolOrganizationId?: number
   affiliationOrganization: string
   affiliationNone: boolean
   contact: string
@@ -325,6 +335,40 @@ export function AddUserIndividual({
     setActiveConsentField(null)
   }
 
+  const handleSchoolSelect = (selection: SchoolSearchSelection, meta: SchoolSearchSelectMeta) => {
+    if (selection.source === 'neis') {
+      const school = selection.item
+      form.setFieldsValue({
+        schoolName: school.schulNm.trim(),
+        schoolProvider: 'NEIS',
+        schoolExternalCode: school.sdSchulCode.trim(),
+        schoolLevel: school.schulKndScNm.trim(),
+        schoolAddress: school.orgRdnma.trim(),
+        schoolZipcode: school.orgRdnzc.trim(),
+        schoolRegionSido: meta.regionSido,
+        schoolRegionSigungu: meta.regionSigungu,
+        schoolOrganizationId: undefined,
+      })
+      return
+    }
+
+    const univ = selection.item
+    const nextSchoolName = univ.campusName
+      ? `${univ.schoolName.trim()} (${univ.campusName.trim()})`
+      : univ.schoolName.trim()
+    form.setFieldsValue({
+      schoolName: nextSchoolName,
+      schoolProvider: 'CAREER_NET',
+      schoolExternalCode: univ.seq.trim(),
+      schoolLevel: univ.schoolGubun.trim() || univ.schoolType.trim(),
+      schoolAddress: univ.address.trim(),
+      schoolZipcode: '',
+      schoolRegionSido: meta.regionSido || univ.region.trim(),
+      schoolRegionSigungu: meta.regionSigungu,
+      schoolOrganizationId: undefined,
+    })
+  }
+
   const handleFinish = async (values: AddUserIndividualFormValues) => {
     const enrolled = values.schoolEnrollmentStatus === 'enrolled'
     const affiliation = enrolled
@@ -348,6 +392,14 @@ export function AddUserIndividual({
       schoolEnrollmentStatus: enrolled ? 'ENROLLED' : 'NOT_ENROLLED',
       affiliation,
       grade: enrolled ? values.grade.trim() : undefined,
+      schoolOrganizationId: enrolled ? values.schoolOrganizationId ?? null : null,
+      schoolProvider: enrolled ? values.schoolProvider?.trim() || undefined : undefined,
+      schoolExternalCode: enrolled ? values.schoolExternalCode?.trim() || undefined : undefined,
+      schoolLevel: enrolled ? values.schoolLevel?.trim() || undefined : undefined,
+      schoolAddress: enrolled ? values.schoolAddress?.trim() || undefined : undefined,
+      schoolZipcode: enrolled ? values.schoolZipcode?.trim() || undefined : undefined,
+      schoolRegionSido: enrolled ? values.schoolRegionSido?.trim() || undefined : undefined,
+      schoolRegionSigungu: enrolled ? values.schoolRegionSigungu?.trim() || undefined : undefined,
       termsAgreements: buildPreRegisterTermsAgreements(
         {
           consentTermsOfService: values.consentTermsOfService,
@@ -408,7 +460,18 @@ export function AddUserIndividual({
 
   useEffect(() => {
     if (schoolEnrollmentStatus === 'not_enrolled') {
-      form.setFieldsValue({ schoolName: '', grade: '' })
+      form.setFieldsValue({
+        schoolName: '',
+        grade: '',
+        schoolProvider: undefined,
+        schoolExternalCode: undefined,
+        schoolLevel: undefined,
+        schoolAddress: undefined,
+        schoolZipcode: undefined,
+        schoolRegionSido: undefined,
+        schoolRegionSigungu: undefined,
+        schoolOrganizationId: undefined,
+      })
       return
     }
     form.setFieldsValue({ affiliationOrganization: '', affiliationNone: false })
@@ -497,11 +560,20 @@ export function AddUserIndividual({
                         onChange={nextSchoolName =>
                           form.setFieldValue('schoolName', nextSchoolName)
                         }
+                        onSelect={handleSchoolSelect}
                         placeholder="소속 학교명"
                         inputSize="medium"
                         width={FORM_INPUTS_2_WIDTHS[0]}
                       />
                     </Form.Item>
+                    <Form.Item name="schoolProvider" hidden preserve />
+                    <Form.Item name="schoolExternalCode" hidden preserve />
+                    <Form.Item name="schoolLevel" hidden preserve />
+                    <Form.Item name="schoolAddress" hidden preserve />
+                    <Form.Item name="schoolZipcode" hidden preserve />
+                    <Form.Item name="schoolRegionSido" hidden preserve />
+                    <Form.Item name="schoolRegionSigungu" hidden preserve />
+                    <Form.Item name="schoolOrganizationId" hidden preserve />
                     <DetailInfoForm.InputsSeparator />
                     <Form.Item name="grade" noStyle>
                       <CmsSelect

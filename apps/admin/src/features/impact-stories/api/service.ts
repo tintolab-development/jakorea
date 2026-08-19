@@ -22,6 +22,7 @@ import {
   toCategoryCreateRequest,
   toCategoryUpdateRequest,
   toPublishedToggleRequest,
+  LIST_PAGE_SIZE,
   toStoryCreateRequest,
   toStoryListParams,
   toStoryUpdateRequest,
@@ -139,6 +140,48 @@ export async function listStoriesService(
     return listRemoteStories(filter)
   }
   return readStories(filter)
+}
+
+export type ImpactStoryListPage = {
+  items: ImpactStory[]
+  totalCount: number
+  page: number
+  size: number
+  totalPages: number
+}
+
+export async function listStoriesPageService(
+  filter?: ImpactStoryListFilter,
+): Promise<ImpactStoryListPage> {
+  const page = filter?.page ?? 0
+  const size = LIST_PAGE_SIZE
+
+  if (shouldUseImpactStoriesRemoteApi()) {
+    const response = await impactStoryApi().list7(toStoryListParams(filter))
+    const items = (response.items ?? []).map(mapStoryListItemToDomain)
+    const totalCount = response.totalCount ?? items.length
+    const totalPages =
+      response.totalPages ?? (totalCount === 0 ? 0 : Math.ceil(totalCount / size))
+    return {
+      items,
+      totalCount,
+      page: response.page ?? page,
+      size: response.size ?? size,
+      totalPages,
+    }
+  }
+
+  const all = readStories(filter)
+  const totalCount = all.length
+  const totalPages = totalCount === 0 ? 0 : Math.ceil(totalCount / size)
+  const start = page * size
+  return {
+    items: all.slice(start, start + size),
+    totalCount,
+    page,
+    size,
+    totalPages,
+  }
 }
 
 export async function getStoryService(id: string): Promise<ImpactStory | null> {

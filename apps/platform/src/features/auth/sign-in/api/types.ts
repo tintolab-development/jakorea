@@ -43,36 +43,39 @@ export type HomepageMeResponse = {
   identitySelfSignupCompletedAfterAdminRegistration?: boolean
 }
 
-/**
- * PATCH /api/portal/me/profile
- * OpenAPI `UpdatePortalProfileRequest` + GET `PortalProfileResponse` 필드.
- * 서버가 조회 응답과 같은 본문을 요구할 수 있어 이름·연락처 등 GET 필드를 함께 보낸다.
- */
-export type UpdatePortalProfileRequest = {
-  memberId?: number
-  email?: string
+/** CMS 미등록 학교(NEIS 등) 선택값 — OpenAPI PortalSchoolSelectionRequest */
+export type PortalSchoolSelectionRequest = {
+  schoolOrganizationId?: number
+  provider?: string
+  externalSchoolCode?: string
   name?: string
-  phone?: string
-  birthDate?: string
-  gender?: string
-  memberType?: string
-  teacher?: boolean
-  instructor?: boolean
-  postalCode?: string
-  address?: string
-  addressDetail?: string
+  schoolLevel?: string
+  organizationCategory?: string
   regionSido?: string
   regionSigungu?: string
+  zipcode?: string
+  address?: string
+}
+
+/**
+ * PATCH /api/portal/me/profile — OpenAPI `UpdatePortalProfileRequest`.
+ * 이메일·이름·휴대폰·생년월일·성별은 본인인증 필드로 PATCH 대상이 아님.
+ */
+export type UpdatePortalProfileRequest = {
+  postalCode?: string | null
+  address?: string | null
+  addressDetail?: string | null
+  regionSido?: string | null
+  regionSigungu?: string | null
+  grade?: string | null
+  affiliationName?: string | null
   /** 소속 해제 시 `null`로 전달해 CMS 학교 FK를 비운다 */
   schoolOrganizationId?: number | null
-  schoolName?: string
-  grade?: string
-  affiliationName?: string
-  schoolEnrollmentStatus?: string
-  teacherEmploymentStatus?: string
-  external1365Id?: string
-  accountStatus?: string
-  joinedAt?: string
+  schoolName?: string | null
+  schoolSelection?: PortalSchoolSelectionRequest
+  schoolEnrollmentStatus?: string | null
+  teacherEmploymentStatus?: string | null
+  external1365Id?: string | null
 }
 
 /** GET /api/portal/me/profile — PortalProfileResponse */
@@ -104,4 +107,17 @@ export type PortalProfileResponse = {
   external1365Id?: string
   accountStatus?: string
   joinedAt?: string
+}
+
+/** POST /api/portal/me/phone/identity/confirm — OpenAPI `PhoneIdentityConfirmRequest` */
+export type PhoneIdentityConfirmRequest = {
+  identityVerificationSessionId?: number
+  profileToken: string
+}
+
+/** POST /api/portal/me/phone/identity/confirm — OpenAPI `PhoneIdentityChangeResponse` */
+export type PhoneIdentityChangeResponse = {
+  memberId?: number
+  phone?: string
+  changedAt?: string
 }

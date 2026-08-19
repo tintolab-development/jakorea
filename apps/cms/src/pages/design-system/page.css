@@ -198,6 +198,28 @@ body.ds-page-active {
   min-width: 0;
 }
 
+.ds-editor-demo__stack {
+  max-width: none;
+}
+
+.ds-editor-demo__insert {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ds-editor-demo .mail-template-variable,
+.ds-editor-demo__viewer .mail-template-variable {
+  color: var(--color-mint-01, #01a1af);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  cursor: text;
+}
+
 .ds-editor-demo__viewer {
   width: 100%;
   min-height: 120px;

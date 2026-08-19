@@ -5,9 +5,9 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import dayjs from 'dayjs'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
 import type { ImpactStory } from '@/entities/impact-stories/model/types'
+import { formatDateTimeDot } from '@/shared/lib/format-display'
 import {
   useImpactStoryCategories,
   useImpactStoryDetail,
@@ -37,9 +37,7 @@ import {
 import './detail-page.css'
 
 function formatMetaDate(iso: string): string {
-  const d = dayjs(iso)
-  if (!d.isValid()) return '-'
-  return d.format('YYYY년 M월 D일 HH:mm:ss')
+  return formatDateTimeDot(iso)
 }
 
 export function ImpactStoryDetailPage() {

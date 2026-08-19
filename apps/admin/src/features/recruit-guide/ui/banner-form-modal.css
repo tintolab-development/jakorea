@@ -1,0 +1,85 @@
+.recruit-guide-banner-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  padding: 24px 30px 32px;
+}
+
+.recruit-guide-banner-modal.content-modal.content-modal--title-body-gap-always
+  .teal-header-modal__body,
+.recruit-guide-banner-modal.content-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 12px;
+  gap: 30px;
+}
+
+.recruit-guide-banner-modal .teal-header-modal__footer {
+  margin-top: 30px;
+}
+
+.recruit-guide-banner-modal__form {
+  width: 100%;
+}
+
+.recruit-guide-banner-modal__image-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+}
+
+.recruit-guide-banner-modal__preview {
+  width: 86px;
+  height: 86px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-secondary, #f7f7f7);
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.recruit-guide-banner-modal__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recruit-guide-banner-modal__file-field {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.recruit-guide-banner-modal .detail-info-form__field-content--edit > * {
+  display: block;
+  margin-block: 0 !important;
+  width: 100%;
+  min-width: 0;
+}
+
+.recruit-guide-banner-modal .file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.recruit-guide-banner-modal .file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.recruit-guide-banner-modal .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
+  resize: none;
+}
+
+.recruit-guide-banner-modal__field-error {
+  margin-top: 6px;
+  color: var(--color-error, #e53935);
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 150%;
+}

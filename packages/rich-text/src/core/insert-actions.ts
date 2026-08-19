@@ -1,4 +1,5 @@
 import type { Editor } from '@tiptap/react'
+import '@tiptap/extension-emoji'
 import {
   getEmbedUrlFromYoutubeUrl,
   isValidYoutubeUrl,
@@ -119,18 +120,15 @@ export function outdentListItem(editor: Editor): void {
   dispatchListIndentKey(editor, true)
 }
 
-export function insertEmoji(editor: Editor, name: string): void {
-  const chain = editor.chain().focus() as ReturnType<Editor['chain']> & {
-    setEmoji?: (attrs: { name: string }) => { run: () => boolean }
-  }
-  if (typeof chain.setEmoji === 'function') {
-    chain.setEmoji({ name }).run()
-    return
+export function insertEmoji(editor: Editor, name: string): boolean {
+  if (editor.chain().focus().setEmoji(name).run()) {
+    return true
   }
   const item = findEmojiByName(name)
   if (item?.emoji) {
-    editor.chain().focus().insertContent(item.emoji).run()
+    return editor.chain().focus().insertContent(item.emoji).run()
   }
+  return false
 }
 
 export const RICH_TEXT_IMAGE_ACCEPT = IMAGE_ACCEPT

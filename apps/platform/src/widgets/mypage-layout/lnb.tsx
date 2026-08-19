@@ -1,4 +1,4 @@
-import type { MypageLnbItem } from '@/features/mypage'
+import type { MypageLnbItem, MypageLnbItemKey } from '@/features/mypage'
 import { PFText } from '@/shared/ui'
 import { InstructorApplyCta } from './instructor-apply-cta'
 import { getLnbIconUrl } from './lnb-icon-map'
@@ -7,11 +7,18 @@ import styles from './lnb.module.css'
 type LnbProps = {
   items: MypageLnbItem[]
   showInstructorApply?: boolean
+  ariaLabel?: string
+  onItemSelect?: (key: MypageLnbItemKey) => void
 }
 
-export function Lnb({ items, showInstructorApply = false }: LnbProps) {
+export function Lnb({
+  items,
+  showInstructorApply = false,
+  ariaLabel = '마이페이지 메뉴',
+  onItemSelect,
+}: LnbProps) {
   return (
-    <nav className={styles.lnb} aria-label="마이페이지 메뉴">
+    <nav className={styles.lnb} aria-label={ariaLabel}>
       <div className={styles.menu}>
         {items.map(item => {
           const itemClassName = [
@@ -21,6 +28,8 @@ export function Lnb({ items, showInstructorApply = false }: LnbProps) {
           ]
             .filter(Boolean)
             .join(' ')
+          const iconUrl =
+            item.hideIcon === true ? undefined : getLnbIconUrl(item.key, Boolean(item.active))
 
           return (
             <div key={item.key} className={styles.itemBlock}>
@@ -29,13 +38,14 @@ export function Lnb({ items, showInstructorApply = false }: LnbProps) {
                 type="button"
                 aria-current={item.active ? 'page' : undefined}
                 disabled={item.enabled === false}
+                onClick={() => {
+                  if (item.enabled === false) return
+                  onItemSelect?.(item.key)
+                }}
               >
-                <img
-                  className={styles.icon}
-                  src={getLnbIconUrl(item.key, Boolean(item.active))}
-                  alt=""
-                  aria-hidden="true"
-                />
+                {iconUrl ? (
+                  <img className={styles.icon} src={iconUrl} alt="" aria-hidden="true" />
+                ) : null}
                 <PFText
                   as="span"
                   typo="bd-md-md"

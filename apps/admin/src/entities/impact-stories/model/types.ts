@@ -56,6 +56,8 @@ export type ImpactStoryListFilter = {
   publishedTo?: string
   createdFrom?: string
   createdTo?: string
+  /** 0-based. 피커 등 페이징 목록에서만 사용 */
+  page?: number
 }
 
 export type ImpactStoryCreateInput = {

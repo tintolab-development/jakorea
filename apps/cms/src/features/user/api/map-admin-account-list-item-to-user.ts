@@ -4,8 +4,22 @@ import { mapMemberStatusToIsActive } from '@/features/user/api/map-member-role'
 import {
   resolveIdentitySelfSignupCompletedAfterAdminRegistration,
   resolveRegisteredByAdmin,
+  type MemberRegistrationFlagSource,
 } from '@/features/user/api/resolve-member-registration-flags'
 import type { User } from '@/types/user'
+
+function buildAdminListRegistrationFlagSource(
+  item: AdminAccountListItemResponse,
+  adminAccountId?: number
+): MemberRegistrationFlagSource {
+  return {
+    role: 'ADMIN',
+    adminAccountId,
+    registeredByAdmin: item.registeredByAdmin,
+    createdByAdmin: item.createdByAdmin,
+    identityVerified: item.identityVerified,
+  }
+}
 
 export function mapAdminAccountListItemToUser(
   item: AdminAccountListItemResponse
@@ -30,9 +44,13 @@ export function mapAdminAccountListItemToUser(
     createdAt: item.createdAt ?? now,
     updatedAt: item.createdAt ?? now,
     lastLoginAt: item.lastLoginAt ?? undefined,
-    registeredByAdmin: resolveRegisteredByAdmin({ role, adminAccountId }),
+    registeredByAdmin: resolveRegisteredByAdmin(
+      buildAdminListRegistrationFlagSource(item, adminAccountId)
+    ),
     identitySelfSignupCompletedAfterAdminRegistration:
-      resolveIdentitySelfSignupCompletedAfterAdminRegistration({ role, adminAccountId }),
+      resolveIdentitySelfSignupCompletedAfterAdminRegistration(
+        buildAdminListRegistrationFlagSource(item, adminAccountId)
+      ),
     listMetrics: permissionVariant ? { adminPermissionVariant: permissionVariant } : undefined,
   }
 }

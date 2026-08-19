@@ -95,14 +95,7 @@ export function ToolbarDropdown({
       onOpenChange={onOpenChange}
       getPopupContainer={() => document.body}
       popupRender={originNode => (
-        <div
-          onMouseDown={event => {
-            event.preventDefault()
-            event.stopPropagation()
-          }}
-        >
-          {originNode}
-        </div>
+        <div onMouseDown={event => event.preventDefault()}>{originNode}</div>
       )}
     >
       {trigger}

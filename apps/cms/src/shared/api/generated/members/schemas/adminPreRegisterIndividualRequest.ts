@@ -5,23 +5,38 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { PortalSchoolSelectionRequest } from './portalSchoolSelectionRequest';
 import type { TermsAgreementRequest } from './termsAgreementRequest';
 
 export interface AdminPreRegisterIndividualRequest {
-  /** @minLength 1 */
+  /**
+     * @minLength 0
+     * @maxLength 254
+     */
   email: string;
   /** 호환용 입력값입니다. 생략할 수 있으며, 입력하는 경우 가입 이메일과 동일해야 합니다. 실제 초기 비밀번호는 정규화된 가입 이메일로 설정됩니다. */
   rawPassword?: string;
   /** @minLength 1 */
   name: string;
-  phone?: string;
-  gender?: string;
-  birthDate?: string;
-  address?: string;
+  /** @minLength 1 */
+  phone: string;
+  /** @minLength 1 */
+  gender: string;
+  birthDate: string;
+  /** @minLength 1 */
+  address: string;
   addressDetail?: string;
   zipCode?: string;
   schoolName?: string;
-  enrollmentStatus?: string;
+  /** 학교 미재학(해당 없음)일 때 선택 입력하는 소속 기관명 */
+  affiliationName?: string;
+  /** @minLength 1 */
+  enrollmentStatus: string;
+  /** 기존 CMS 학교 PK. 재학중인 경우 schoolName보다 우선하며, 생략 시 고유한 schoolName을 안전하게 해석합니다. */
+  schoolOrganizationId?: number;
+  schoolSelection?: PortalSchoolSelectionRequest;
+  /** 재학중 소속 학년 */
+  grade?: string;
   external1365Id?: string;
   termsAgreements?: TermsAgreementRequest[];
 }

@@ -92,7 +92,7 @@ export default function BugIssueHistoryPage() {
         key: 'occurredAt',
         width: TABLE_COL_WIDTH.occurredAt,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm'),
       },
     ],
     [tableData.length]

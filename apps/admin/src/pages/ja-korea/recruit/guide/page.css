@@ -1,0 +1,41 @@
+/* 페이지가 layout-content 높이를 채움 (header + content padding 32×2)
+ * @see detail-document-form-card.mdc
+ */
+.recruit-guide-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100vh - var(--header-height, 64px) - 64px);
+  height: calc(100vh - var(--header-height, 64px) - 64px);
+}
+
+.recruit-guide-page > .recruit-guide-card.admin-list-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.recruit-guide-page .recruit-guide-section {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.recruit-guide-page .recruit-guide-section .admin-list-toolbar {
+  flex-shrink: 0;
+  align-items: center;
+  margin-bottom: var(--admin-list-toolbar-to-table-gap, 16px);
+}

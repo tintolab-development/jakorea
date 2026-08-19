@@ -29,7 +29,8 @@
 }
 
 .alimtalk-nested-table > thead > tr > th,
-.alimtalk-nested-table > tbody > tr > td {
+.alimtalk-nested-table > tbody > tr > td,
+.alimtalk-nested-table > tfoot > tr > td {
   min-width: 80px;
   min-height: 48px;
   padding: 20px;
@@ -55,11 +56,13 @@
 }
 
 .alimtalk-nested-table > thead > tr > th:last-child,
-.alimtalk-nested-table > tbody > tr > td:last-child {
+.alimtalk-nested-table > tbody > tr > td:last-child,
+.alimtalk-nested-table > tfoot > tr > td:last-child {
   border-right: 0;
 }
 
-.alimtalk-nested-table > tbody > tr:last-child > td {
+.alimtalk-nested-table > tbody:last-child > tr:last-child > td,
+.alimtalk-nested-table > tfoot > tr:last-child > td {
   border-bottom: 0;
 }
 
@@ -76,15 +79,27 @@
 
 .alimtalk-nested-table__toggle-btn {
   display: inline-flex;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   align-items: center;
   justify-content: center;
-  padding: 0;
   border: 0;
   background: transparent;
-  color: var(--main-BK, #3d3d3d);
-  font-size: 10px;
-  line-height: 1;
+  color: #1c1b1f;
   cursor: pointer;
+}
+
+.alimtalk-nested-table__toggle-icon {
+  display: block;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+}
+
+.alimtalk-nested-table__toggle-btn[aria-expanded='false'] .alimtalk-nested-table__toggle-icon {
+  transform: rotate(180deg);
 }
 
 .alimtalk-nested-table__toggle-btn:focus-visible {
@@ -145,4 +160,63 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.alimtalk-nested-table__col-summary {
+  width: 80px;
+}
+
+.alimtalk-nested-table__col-flex {
+  width: auto;
+}
+
+.alimtalk-nested-table--item-list > thead > tr > th,
+.alimtalk-nested-table--item-list > tbody > tr > td,
+.alimtalk-nested-table--item-list > tfoot > tr > td {
+  padding: 0;
+  overflow: visible;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.alimtalk-nested-table--item-list > thead > tr > th.alimtalk-nested-table__summary-col,
+.alimtalk-nested-table--item-list > tbody > tr > td.alimtalk-nested-table__summary-col,
+.alimtalk-nested-table--item-list > tfoot > tr > td.alimtalk-nested-table__summary-col {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+}
+
+.alimtalk-nested-table__cell-inner--summary {
+  display: flex;
+  width: 80px;
+  min-width: 80px;
+  min-height: 48px;
+  padding: 12px 20px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
+.alimtalk-nested-table__cell-inner--flex {
+  display: flex;
+  width: 100%;
+  min-width: 80px;
+  min-height: 48px;
+  padding: 12px 20px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 0;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
+.alimtalk-nested-table--plain > tbody > tr > td,
+.alimtalk-nested-table--footer > tfoot > tr > td {
+  overflow: visible;
+  white-space: pre-wrap;
+  word-break: break-word;
 }

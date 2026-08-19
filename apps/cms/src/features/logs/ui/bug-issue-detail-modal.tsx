@@ -103,11 +103,11 @@ export function BugIssueDetailModal({ open, issueId, onClose }: BugIssueDetailMo
                 <DetailInfoForm.Field label="요약" view={data.detailSummary} />
               </DetailInfoForm.Row>
               <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field label="발생 일시" view={dayjs(data.createdAt).format('YYYY.MM.DD HH:mm:ss')} />
+                <DetailInfoForm.Field label="발생 일시" view={dayjs(data.createdAt).format('YYYY.MM.DD HH:mm')} />
               </DetailInfoForm.Row>
               {data.resolvedAt && (
                 <DetailInfoForm.Row type="single">
-                  <DetailInfoForm.Field label="해결 일시" view={dayjs(data.resolvedAt).format('YYYY.MM.DD HH:mm:ss')} />
+                  <DetailInfoForm.Field label="해결 일시" view={dayjs(data.resolvedAt).format('YYYY.MM.DD HH:mm')} />
                 </DetailInfoForm.Row>
               )}
               <DetailInfoForm.Row type="single">

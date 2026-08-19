@@ -108,21 +108,27 @@ export function PFModal({
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+    panelRef.current?.focus()
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open || !closeOnEscape) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (closeOnEscape && event.key === 'Escape') {
+      if (event.key === 'Escape') {
         handleClose()
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
-    panelRef.current?.focus()
-
     return () => {
-      document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [open, handleClose, closeOnEscape])
+  }, [open, closeOnEscape, handleClose])
 
   useEffect(() => {
     if (!open) return

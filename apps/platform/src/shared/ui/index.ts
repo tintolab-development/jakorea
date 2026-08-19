@@ -44,6 +44,8 @@ export { PFCalendar, CALENDAR_LEGEND_ITEMS, CALENDAR_EVENT_COLORS } from './pf-c
 export type { PFCalendarProps, PFCalendarEvent, CalendarLegendItem } from './pf-calendar'
 export { PFDivider } from './pf-divider'
 export type { PFDividerProps, PFDividerVariant } from './pf-divider'
+export { PFInfoReview } from './pf-info-review'
+export type { PFInfoReviewItem, PFInfoReviewProps } from './pf-info-review'
 export {
   PFFormField,
   PFFormFieldRow,

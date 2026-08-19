@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useMemo, useState, type Key } from 'react'
-import dayjs, { type Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { Image, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -27,6 +27,7 @@ import {
   PopupFormModal,
   type PopupFormValues,
 } from '@/features/popup/ui/form-modal'
+import { formatDateDot, formatDateRangeDot } from '@/shared/lib/format-display'
 import {
   PopupDragHandle,
   PopupsSortableTable,
@@ -127,15 +128,11 @@ const searchSyncRules: readonly TableSearchParamRule<PopupPendingFilters>[] = [
 ]
 
 function formatPeriodDot(start: string, end: string): string {
-  const s = start.replace(/-/g, '.')
-  const e = end.replace(/-/g, '.')
-  return `${s} ~ ${e}`
+  return formatDateRangeDot(start, end)
 }
 
 function formatCreatedDate(iso: string): string {
-  const d = dayjs(iso)
-  if (!d.isValid()) return '-'
-  return d.format('YYYY.MM.DD')
+  return formatDateDot(iso)
 }
 
 function hasPopupListFilter(filter: PopupListFilter): boolean {

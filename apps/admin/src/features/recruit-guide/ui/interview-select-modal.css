@@ -1,0 +1,98 @@
+.recruit-guide-interview-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  padding: 24px 30px 32px;
+}
+
+.recruit-guide-interview-modal .teal-header-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.recruit-guide-interview-modal__search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.recruit-guide-interview-modal__title-input {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.recruit-guide-interview-modal__count {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.recruit-guide-interview-modal__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  padding: 40px 16px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.recruit-guide-interview-modal__empty p {
+  margin: 0;
+  color: var(--color-text-tertiary, #9e9e9e);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.recruit-guide-interview-modal__empty p + p {
+  margin-top: 4px;
+}
+
+.recruit-guide-interview-modal__table .ant-table-tbody > tr.recruit-guide-interview-modal__row--selected > td {
+  background: rgba(1, 161, 175, 0.08);
+}
+
+.recruit-guide-interview-modal__pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.recruit-guide-interview-modal__pager-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.recruit-guide-interview-modal__pager-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.recruit-guide-interview-modal__pager-status {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}

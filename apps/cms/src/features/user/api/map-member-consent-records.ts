@@ -72,7 +72,7 @@ function formatConsentedAt(iso: string | undefined): string | undefined {
   if (!iso?.trim()) return undefined
   const parsed = dayjs(iso)
   if (!parsed.isValid()) return iso
-  return parsed.format('YYYY.MM.DD HH:mm:ss')
+  return parsed.format('YYYY.MM.DD HH:mm')
 }
 
 function agreementToFieldValue(

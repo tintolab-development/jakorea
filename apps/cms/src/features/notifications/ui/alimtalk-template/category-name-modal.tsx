@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -22,13 +22,20 @@ export function CategoryNameModal({
   onSubmit,
 }: CategoryNameModalProps) {
   const [name, setName] = useState(initialName)
+  const viewRef = useRef({ mode, parentName, initialName })
+
+  if (open) {
+    viewRef.current = { mode, parentName, initialName }
+  }
+
+  const view = viewRef.current
 
   useEffect(() => {
     if (open) setName(initialName)
   }, [open, initialName])
 
   const trimmed = name.trim()
-  const title = mode === 'add' ? '카테고리 추가' : '카테고리 수정'
+  const title = view.mode === 'add' ? '카테고리 추가' : '카테고리 수정'
 
   return (
     <ContentModal
@@ -36,7 +43,7 @@ export function CategoryNameModal({
       onCancel={onCancel}
       title={title}
       size="compact"
-      className={['category-name-modal', mode === 'add' ? 'category-name-modal--add' : ''].filter(Boolean).join(' ')}
+      className={['category-name-modal', view.mode === 'add' ? 'category-name-modal--add' : ''].filter(Boolean).join(' ')}
       footer={
         <>
           <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
@@ -46,17 +53,17 @@ export function CategoryNameModal({
             variant="primary"
             size="large"
             type="button"
-            className={mode === 'add' ? 'cms-button--footer-auto' : undefined}
+            className={view.mode === 'add' ? 'cms-button--footer-auto' : undefined}
             disabled={!trimmed}
             onClick={() => onSubmit(trimmed)}
           >
-            {mode === 'add' ? '카테고리 추가' : '수정'}
+            {view.mode === 'add' ? '카테고리 추가' : '수정'}
           </CmsButton>
         </>
       }
     >
       <DetailInfoForm title="카테고리 정보" hideHeader mode="edit">
-        {mode === 'add' ? (
+        {view.mode === 'add' ? (
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="상위 카테고리"
@@ -65,7 +72,7 @@ export function CategoryNameModal({
                 <CmsInput
                   inputSize="large"
                   width="100%"
-                  value={parentName}
+                  value={view.parentName}
                   disabled
                 />
               }

@@ -3,6 +3,8 @@ import type { ChangeEvent } from 'react'
 import type { InputRef } from 'antd'
 import {
   formatCurrencyInput,
+  formatDecimalInputDisplay,
+  formatGroupedDigits,
   normalizeNumericInputOnBlur,
   sanitizeNumericInput,
 } from '@/shared/lib/numeric-input'
@@ -23,6 +25,23 @@ export interface CmsNumericInputProps
   max?: number
   precision?: number
   onValueChange?: (value: string) => void
+}
+
+function formatNumericInputDisplay(raw: string, mode: NumericInputMode): string {
+  if (mode === 'currency') return formatCurrencyInput(raw)
+  if (mode === 'integer') return formatGroupedDigits(raw)
+  if (mode === 'decimal') return formatDecimalInputDisplay(raw)
+  return raw
+}
+
+function restoreGroupedCaret(display: string, rawLength: number): number {
+  let nextCaret = 0
+  let rawCount = 0
+  while (nextCaret < display.length && rawCount < rawLength) {
+    if (display[nextCaret] !== ',') rawCount += 1
+    nextCaret += 1
+  }
+  return nextCaret
 }
 
 export const CmsNumericInput = forwardRef<InputRef, CmsNumericInputProps>(
@@ -54,7 +73,8 @@ export const CmsNumericInput = forwardRef<InputRef, CmsNumericInputProps>(
     )
     const isControlled = value !== undefined
     const rawValue = isControlled ? sanitizeNumericInput(value, options) : internalValue
-    const displayValue = mode === 'currency' ? formatCurrencyInput(rawValue) : rawValue
+    const displayValue = formatNumericInputDisplay(rawValue, mode)
+    const groupsThousands = mode === 'currency' || mode === 'integer' || mode === 'decimal'
 
     const updateValue = (nextValue: string) => {
       if (!isControlled) setInternalValue(nextValue)
@@ -71,16 +91,11 @@ export const CmsNumericInput = forwardRef<InputRef, CmsNumericInputProps>(
       const nextValue = sanitizeNumericInput(input.value, options)
       updateValue(nextValue)
 
-      if (mode === 'currency' && rawBeforeCaret != null) {
+      if (groupsThousands && rawBeforeCaret != null) {
         requestAnimationFrame(() => {
           if (!input.isConnected) return
-          const nextDisplay = formatCurrencyInput(nextValue)
-          let nextCaret = 0
-          let rawCount = 0
-          while (nextCaret < nextDisplay.length && rawCount < rawBeforeCaret) {
-            if (/\d/.test(nextDisplay[nextCaret] ?? '')) rawCount += 1
-            nextCaret += 1
-          }
+          const nextDisplay = formatNumericInputDisplay(nextValue, mode)
+          const nextCaret = restoreGroupedCaret(nextDisplay, rawBeforeCaret)
           input.setSelectionRange(nextCaret, nextCaret)
         })
       }

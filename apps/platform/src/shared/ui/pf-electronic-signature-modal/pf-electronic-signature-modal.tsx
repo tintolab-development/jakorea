@@ -60,20 +60,23 @@ export function PFElectronicSignatureModal({
       return
     }
 
-    if (!selectedStyleCode) return
-    void renderCreateSignatureDataUrl({
-      name: createName,
-      fontStyleCode: selectedStyleCode,
-    }).then(dataUrl => {
+    const fontStyleCode = selectedStyleCode
+    if (!fontStyleCode) return
+
+    void (async () => {
+      const dataUrl = await renderCreateSignatureDataUrl({
+        name: createName,
+        fontStyleCode,
+      }).catch(() => null)
       if (!dataUrl) return
       onSign({
         mode: 'create',
         dataUrl,
         displayName: createName.trim(),
-        fontStyleCode: selectedStyleCode,
+        fontStyleCode,
       })
       onClose()
-    })
+    })()
   }
 
   return (

@@ -223,7 +223,7 @@ export function AdminInquiryPage() {
         onCell: () => ({ className: 'admin-inquiry-page__cell--datetime' }),
         render: (iso: string) => (
           <span className="admin-inquiry-page__datetime-text">
-            {dayjs(iso).format('YYYY.MM.DD HH:mm:ss')}
+            {dayjs(iso).format('YYYY.MM.DD HH:mm')}
           </span>
         ),
       },
@@ -247,7 +247,7 @@ export function AdminInquiryPage() {
         onCell: () => ({ className: 'admin-inquiry-page__cell--datetime' }),
         render: (iso: string | null) => (
           <span className="admin-inquiry-page__datetime-text">
-            {iso == null || iso === '' ? '-' : dayjs(iso).format('YYYY.MM.DD HH:mm:ss')}
+            {iso == null || iso === '' ? '-' : dayjs(iso).format('YYYY.MM.DD HH:mm')}
           </span>
         ),
       },

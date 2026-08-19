@@ -1,6 +1,8 @@
 import { ContentModal, CmsButton, AlimtalkPhonePreview } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
+  ALIMTALK_CHANNEL_ADD_GUIDE,
+  ALIMTALK_EMPHASIS_TYPE_LABEL,
   ALIMTALK_MESSAGE_TYPE_LABEL,
   type AlimtalkTemplateItem,
 } from '@/features/notifications/model/alimtalk-template/types'
@@ -8,17 +10,24 @@ import './preview-modal.css'
 
 const NHN_CLOUD_URL = 'https://www.nhncloud.com/kr'
 
-const EMPHASIS_TYPE_LABEL = {
-  NONE: '선택 안 함',
-} as const
-
 type PreviewModalProps = {
   open: boolean
   template: AlimtalkTemplateItem | null
   onClose: () => void
+  /** 지정 시 「사용하기」에서 템플릿을 발송 화면에 적용 */
+  onUse?: (template: AlimtalkTemplateItem) => void
+  zIndex?: number
 }
 
-export function PreviewModal({ open, template, onClose }: PreviewModalProps) {
+export function PreviewModal({ open, template, onClose, onUse, zIndex }: PreviewModalProps) {
+  const handleUse = () => {
+    if (template && onUse) {
+      onUse(template)
+      return
+    }
+    onClose()
+  }
+
   return (
     <ContentModal
       open={open}
@@ -26,6 +35,7 @@ export function PreviewModal({ open, template, onClose }: PreviewModalProps) {
       title="템플릿 미리보기"
       size="medium"
       className="alimtalk-template-preview-modal"
+      zIndex={zIndex}
     >
       {template ? (
         <div className="alimtalk-template-preview">
@@ -46,7 +56,7 @@ export function PreviewModal({ open, template, onClose }: PreviewModalProps) {
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label="템플릿 강조 유형"
-                  view={EMPHASIS_TYPE_LABEL[template.emphasisType]}
+                  view={ALIMTALK_EMPHASIS_TYPE_LABEL[template.emphasisType]}
                 />
               </DetailInfoForm.Row>
             </DetailInfoForm>
@@ -68,7 +78,7 @@ export function PreviewModal({ open, template, onClose }: PreviewModalProps) {
               <CmsButton variant="secondary" size="large" type="button" onClick={onClose}>
                 닫기
               </CmsButton>
-              <CmsButton variant="primary" size="large" type="button" onClick={onClose}>
+              <CmsButton variant="primary" size="large" type="button" onClick={handleUse}>
                 사용하기
               </CmsButton>
             </div>
@@ -77,7 +87,18 @@ export function PreviewModal({ open, template, onClose }: PreviewModalProps) {
             senderName={template.senderProfile}
             content={template.content}
             extraContent={template.extraInfo}
+            channelGuide={ALIMTALK_CHANNEL_ADD_GUIDE}
             messageType={template.messageType}
+            emphasisType={template.emphasisType}
+            emphasisTitle={template.emphasisTitle}
+            emphasisSubtitle={template.emphasisSubtitle}
+            imageUrl={template.imageUrl}
+            templateHeader={template.templateHeader}
+            itemTitle={template.itemTitle}
+            itemDescription={template.itemDescription}
+            itemImageUrl={template.itemImageUrl}
+            itemList={template.itemList}
+            itemSummary={template.itemSummary}
             buttons={template.buttons
               .filter(button => button.variant === 'default')
               .slice(0, 1)

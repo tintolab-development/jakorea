@@ -29,6 +29,8 @@ export type AdminRegisteredWizardState = {
   schoolAddress?: string
   /** 학교 검색으로 고른 CMS organizationId */
   schoolOrganizationId?: number | null
+  /** NEIS 학교 코드 — CMS PK 없을 때 schoolSelection.externalSchoolCode */
+  schoolNeisCode?: string | null
   grade?: string
   address?: string
   addressDetail?: string
@@ -37,7 +39,7 @@ export type AdminRegisteredWizardState = {
   regionSigungu?: string
   volunteerId?: string
   employmentStatus?: EmploymentStatus
-  /** GET /api/portal/me/profile 원본 — PATCH 시 조회 필드 echo */
+  /** GET /api/portal/me/profile 원본 — teacherEmploymentStatus 등 매핑 참조 */
   portalProfile?: PortalProfileResponse
   /** GET /api/portal/me/profile 반영 여부 */
   profileHydrated?: boolean

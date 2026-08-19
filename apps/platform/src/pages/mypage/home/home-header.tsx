@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+import { MYPAGE_SETTINGS_PATH } from '@/features/mypage'
 import { mypageSettingsIconUrl } from '@/widgets/mypage-layout'
 import { PFText } from '@/shared/ui'
 import styles from './home-header.module.css'
@@ -26,8 +28,8 @@ export function MypageHomeHeader({
           ) : null}
           <div className={styles.nameRow}>
             <PFText as="h1" typo="page-title" color="black" className={styles.instructorTitle}>
-              <span>{displayName}</span>
-              <span className={styles.instructorHonorific}> 강사님</span>
+              {displayName}{' '}
+              <span className={styles.instructorHonorific}>강사</span>님
             </PFText>
             {employmentStatusLabel ? (
               <span className={styles.employmentBadge}>{employmentStatusLabel}</span>
@@ -39,7 +41,7 @@ export function MypageHomeHeader({
           {displayName}님
         </PFText>
       )}
-      <button className={styles.settingsButton} type="button" disabled aria-disabled="true">
+      <Link className={styles.settingsButton} to={MYPAGE_SETTINGS_PATH}>
         <img
           className={styles.settingsIcon}
           src={mypageSettingsIconUrl}
@@ -49,7 +51,7 @@ export function MypageHomeHeader({
         <PFText as="span" typo="bd-md-sb" color="black">
           회원정보 설정
         </PFText>
-      </button>
+      </Link>
     </header>
   )
 }

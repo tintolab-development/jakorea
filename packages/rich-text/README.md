@@ -27,11 +27,14 @@ const { editor } = useRichTextEditor({ enabled: true, initialContent: '' })
 
 ## CSS 변수
 
-`editor.css` / `content.css`는 `--rt-*` 변수로 테마 오버라이드 가능:
+`editor.css` / `content.css` / `toolbar.css`는 `--rt-*` 변수로 테마 오버라이드 가능:
 
 - `--rt-border`, `--rt-background`, `--rt-toolbar-bg`
 - `--rt-content-color`, `--rt-link-color`
 - `--rt-min-height`, `--rt-body-padding`
+- `--rt-toolbar-gap` (기본 8px), `--rt-toolbar-padding`, `--rt-toolbar-trigger-gap`
+
+앱별 노드(메일 `#{변수}` atom 등)는 `useRichTextEditor({ extraExtensions })` / `RichTextViewer extraExtensions`로 주입합니다.
 
 ## CMS 마이그레이션
 

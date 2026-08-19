@@ -27,6 +27,7 @@ export const DS_TOC_ITEMS: TocItem[] = [
   { id: 'alimtalk-phone', label: 'AlimTalk phone' },
   { id: 'alimtalk-nested-table', label: 'AlimTalk nested table' },
   { id: 'alimtalk-send', label: 'AlimTalk send' },
+  { id: 'mail-template', label: 'Mail template' },
   { id: 'do-dont', label: "Do / Don't" },
 ]
 

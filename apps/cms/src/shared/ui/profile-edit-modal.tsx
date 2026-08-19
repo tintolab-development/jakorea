@@ -67,7 +67,7 @@ const TERMS_TYPE_TO_KIND: Record<string, TermsKind> = {
 function formatTermsAgreedAt(iso?: string): string {
   if (!iso?.trim()) return SAMPLE_AGREED_AT
   const parsed = dayjs(iso)
-  return parsed.isValid() ? parsed.format('YYYY.MM.DD HH:mm:ss') : iso
+  return parsed.isValid() ? parsed.format('YYYY.MM.DD HH:mm') : iso
 }
 
 function resolveTermsAgreement(

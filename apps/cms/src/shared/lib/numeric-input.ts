@@ -68,6 +68,10 @@ function removeLeadingZeros(value: string): string {
   return normalized === '' ? '0' : normalized
 }
 
+function stripTrailingZeros(fraction: string): string {
+  return fraction.replace(/0+$/, '')
+}
+
 function normalizeNumber(value: string, mode: NumericInputMode): string {
   const negative = value.startsWith('-')
   const unsigned = negative ? value.slice(1) : value
@@ -75,10 +79,11 @@ function normalizeNumber(value: string, mode: NumericInputMode): string {
   if (mode === 'decimal') {
     const [integer = '', fraction] = unsigned.split('.')
     const normalizedInteger = removeLeadingZeros(integer || '0')
+    const normalizedFraction = fraction == null ? null : stripTrailingZeros(fraction)
     const normalized =
-      fraction == null || fraction === ''
+      normalizedFraction == null || normalizedFraction === ''
         ? normalizedInteger
-        : `${normalizedInteger}.${fraction}`
+        : `${normalizedInteger}.${normalizedFraction}`
     return negative ? `-${normalized}` : normalized
   }
 
@@ -136,4 +141,37 @@ export function formatCurrencyInput(value: string): string {
 
   const digits = value.replace(/\D/g, '')
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+}
+
+/** 정수부 천단위 구분. 부호는 유지한다. */
+export function formatGroupedDigits(value: string): string {
+  if (value === '' || value === '-') return value
+  const negative = value.startsWith('-')
+  const digits = (negative ? value.slice(1) : value).replace(/\D/g, '')
+  const grouped = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return negative ? `-${grouped}` : grouped
+}
+
+/** 입력 표시용 소수 — 정수부만 천단위 구분, 입력 중 소수부는 그대로 둔다. */
+export function formatDecimalInputDisplay(value: string): string {
+  if (value === '' || value === '-' || value === '.' || value === '-.') return value
+  const negative = value.startsWith('-')
+  const unsigned = negative ? value.slice(1) : value
+  const dotIndex = unsigned.indexOf('.')
+  if (dotIndex < 0) {
+    const grouped = formatGroupedDigits(unsigned)
+    return negative ? `-${grouped}` : grouped
+  }
+  const intPart = unsigned.slice(0, dotIndex)
+  const frac = unsigned.slice(dotIndex + 1)
+  const groupedInt = intPart === '' ? '' : formatGroupedDigits(intPart)
+  return `${negative ? '-' : ''}${groupedInt}.${frac}`
+}
+
+/** 목록·화면 숫자 표시 — 천단위 구분, 후행 0 제거 */
+export function formatNumberDisplay(value: number | string | null | undefined): string {
+  if (value == null || value === '') return '-'
+  const numeric = typeof value === 'number' ? value : Number(String(value).replace(/,/g, ''))
+  if (!Number.isFinite(numeric)) return '-'
+  return numeric.toLocaleString('ko-KR', { maximumFractionDigits: 20 })
 }

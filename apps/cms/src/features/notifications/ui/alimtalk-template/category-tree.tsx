@@ -1,11 +1,11 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core'
+import type { AlimtalkTreeSelection } from '@/features/notifications/model/alimtalk-template/types'
 import {
-  ALIMTALK_ROOT_CATEGORY_ID,
-  type AlimtalkCategory,
-  type AlimtalkTemplateItem,
-  type AlimtalkTreeSelection,
-} from '@/features/notifications/model/alimtalk-template/types'
-import { childrenOf } from '@/features/notifications/lib/tree'
+  NOTIFICATION_ROOT_CATEGORY_ID,
+  childrenOf,
+  type NotificationTreeCategory,
+  type NotificationTreeTemplate,
+} from '@/features/notifications/lib/tree'
 import {
   IconFolderClosed,
   IconFolderOpen,
@@ -43,16 +43,16 @@ export function parseAlimtalkDndId(id: string): AlimtalkTreeSelection {
   return null
 }
 
-type CategoryTreeProps = {
-  categories: AlimtalkCategory[]
-  templates: AlimtalkTemplateItem[]
+export type CategoryTreeProps<T extends NotificationTreeTemplate = NotificationTreeTemplate> = {
+  categories: NotificationTreeCategory[]
+  templates: T[]
   expandedIds: ReadonlySet<string>
   selection: AlimtalkTreeSelection
   onToggleExpand: (categoryId: string) => void
   onSelect: (selection: AlimtalkTreeSelection) => void
 }
 
-export function CategoryTree(props: CategoryTreeProps) {
+export function CategoryTree<T extends NotificationTreeTemplate>(props: CategoryTreeProps<T>) {
   return (
     <ul className="alimtalk-category-tree" role="tree">
       <RootRow {...props} />
@@ -70,14 +70,14 @@ function rowClassName(selected: boolean, extra = '') {
     .join(' ')
 }
 
-function RootRow(props: CategoryTreeProps) {
+function RootRow<T extends NotificationTreeTemplate>(props: CategoryTreeProps<T>) {
   const { setNodeRef, isOver } = useDroppable({
-    id: alimtalkCategoryDndId(ALIMTALK_ROOT_CATEGORY_ID),
+    id: alimtalkCategoryDndId(NOTIFICATION_ROOT_CATEGORY_ID),
   })
-  const expanded = props.expandedIds.has(ALIMTALK_ROOT_CATEGORY_ID)
+  const expanded = props.expandedIds.has(NOTIFICATION_ROOT_CATEGORY_ID)
   const selected =
-    props.selection?.kind === 'category' && props.selection.id === ALIMTALK_ROOT_CATEGORY_ID
-  const childNodes = childrenOf(props.categories, props.templates, ALIMTALK_ROOT_CATEGORY_ID)
+    props.selection?.kind === 'category' && props.selection.id === NOTIFICATION_ROOT_CATEGORY_ID
+  const childNodes = childrenOf(props.categories, props.templates, NOTIFICATION_ROOT_CATEGORY_ID)
 
   return (
     <li ref={setNodeRef} className="alimtalk-category-tree__node alimtalk-category-tree__node--root">
@@ -85,7 +85,7 @@ function RootRow(props: CategoryTreeProps) {
         className={rowClassName(selected, isOver ? 'alimtalk-category-tree__row--drop' : '')}
         role="treeitem"
         aria-expanded={expanded}
-        onClick={() => props.onSelect({ kind: 'category', id: ALIMTALK_ROOT_CATEGORY_ID })}
+        onClick={() => props.onSelect({ kind: 'category', id: NOTIFICATION_ROOT_CATEGORY_ID })}
       >
         <span className="alimtalk-category-tree__icon">
           {expanded ? <IconFolderOpen /> : <IconFolderClosed />}
@@ -93,17 +93,17 @@ function RootRow(props: CategoryTreeProps) {
         <span className="alimtalk-category-tree__label">Category</span>
       </div>
       {expanded && childNodes.length > 0 ? (
-        <CategoryChildren parentId={ALIMTALK_ROOT_CATEGORY_ID} fromRoot {...props} />
+        <CategoryChildren parentId={NOTIFICATION_ROOT_CATEGORY_ID} fromRoot {...props} />
       ) : null}
     </li>
   )
 }
 
-function CategoryChildren({
+function CategoryChildren<T extends NotificationTreeTemplate>({
   parentId,
   fromRoot = false,
   ...props
-}: CategoryTreeProps & { parentId: string; fromRoot?: boolean }) {
+}: CategoryTreeProps<T> & { parentId: string; fromRoot?: boolean }) {
   const nodes = childrenOf(props.categories, props.templates, parentId)
   return (
     <ul
@@ -124,10 +124,10 @@ function CategoryChildren({
   )
 }
 
-function CategoryRow({
+function CategoryRow<T extends NotificationTreeTemplate>({
   category,
   ...props
-}: CategoryTreeProps & { category: AlimtalkCategory }) {
+}: CategoryTreeProps<T> & { category: NotificationTreeCategory }) {
   const { setNodeRef: setDropRef, isOver } = useDroppable({ id: alimtalkCategoryDndId(category.id) })
   const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
     id: alimtalkCategoryMoveDndId(category.id),
@@ -184,10 +184,10 @@ function CategoryRow({
   )
 }
 
-function TemplateRow({
+function TemplateRow<T extends NotificationTreeTemplate>({
   template,
   ...props
-}: CategoryTreeProps & { template: AlimtalkTemplateItem }) {
+}: CategoryTreeProps<T> & { template: T }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: alimtalkTemplateDndId(template.id),
   })
