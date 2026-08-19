@@ -168,6 +168,7 @@ const PermissionRequestListPage = lazyLoad(
   () => import('@/pages/admin/permission-request-list-page')
 )
 const KakaoAlimtalkPage = lazyLoad(() => import('@/pages/notifications/kakao-alimtalk-page'))
+const MailPage = lazyLoad(() => import('@/pages/notifications/mail-page'))
 const SchoolMyLearningPage = lazyLoad(() => import('@/pages/surveys/school-my-learning-page'))
 const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
 const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
@@ -772,10 +773,7 @@ export const router = createBrowserRouter([
                 path: 'mail',
                 element: (
                   <ProtectedRoute requiredRoles={['ADMIN']}>
-                    <ComingSoonPage
-                      title="메일 관리"
-                      description="메일 관리 기능은 현재 준비 중입니다."
-                    />
+                    <MailPage />
                   </ProtectedRoute>
                 ),
               },
