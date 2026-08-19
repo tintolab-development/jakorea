@@ -5071,6 +5071,39 @@
           }
         }
       },
+      "PhoneIdentityConfirmRequest": {
+        "type": "object",
+        "properties": {
+          "identityVerificationSessionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "profileToken": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "profileToken"
+        ]
+      },
+      "PhoneIdentityChangeResponse": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "GeneratedFileJobResponse": {
         "type": "object",
         "properties": {
@@ -6406,7 +6439,7 @@
           },
           "adminProvisionedOnboardingStep": {
             "type": "string",
-            "description": "다음 서버 처리 단계. PROFILE, IDENTITY, PASSWORD, DONE 중 하나이며 일반 회원은 null입니다."
+            "description": "다음 서버 처리 단계. PROFILE, IDENTITY, PASSWORD, PROFILE_REVIEW, DONE 중 하나이며 일반 회원은 null입니다."
           },
           "registeredByAdmin": {
             "type": "boolean",
@@ -6457,7 +6490,8 @@
             "format": "email",
             "description": "회원 이메일",
             "example": "member@example.com",
-            "minLength": 1
+            "maxLength": 254,
+            "minLength": 0
           },
           "password": {
             "type": "string",
@@ -7792,6 +7826,9 @@
           "enrollmentStatus": {
             "type": "string"
           },
+          "grade": {
+            "type": "string"
+          },
           "addressDetailMasked": {
             "type": "boolean"
           },
@@ -8123,6 +8160,10 @@
               "$ref": "#/components/schemas/TermsAgreementRequest"
             }
           },
+          "schoolSelection": {
+            "$ref": "#/components/schemas/PortalSchoolSelectionRequest",
+            "description": "교사회원 소속 학교 선택값. CMS organizationId가 없는 NEIS 학교도 서버가 canonical organization으로 해석/등록합니다."
+          },
           "profile": {
             "$ref": "#/components/schemas/InstructorCmsProfile"
           },
@@ -8178,7 +8219,8 @@
           "email": {
             "type": "string",
             "format": "email",
-            "minLength": 1
+            "maxLength": 254,
+            "minLength": 0
           },
           "rawPassword": {
             "type": "string",
@@ -8189,17 +8231,20 @@
             "minLength": 1
           },
           "phone": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "gender": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "birthDate": {
             "type": "string",
             "format": "date"
           },
           "address": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "addressDetail": {
             "type": "string"
@@ -8210,8 +8255,26 @@
           "schoolName": {
             "type": "string"
           },
+          "affiliationName": {
+            "type": "string",
+            "description": "학교 미재학(해당 없음)일 때 선택 입력하는 소속 기관명"
+          },
           "enrollmentStatus": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
+          },
+          "schoolOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "기존 CMS 학교 PK. 재학중인 경우 schoolName보다 우선하며, 생략 시 고유한 schoolName을 안전하게 해석합니다."
+          },
+          "schoolSelection": {
+            "$ref": "#/components/schemas/PortalSchoolSelectionRequest"
+          },
+          "grade": {
+            "type": "string",
+            "description": "재학중 소속 학년",
+            "example": "3학년"
           },
           "external1365Id": {
             "type": "string"
@@ -8224,8 +8287,13 @@
           }
         },
         "required": [
+          "address",
+          "birthDate",
           "email",
-          "name"
+          "enrollmentStatus",
+          "gender",
+          "name",
+          "phone"
         ]
       },
       "PreRegisterConflictResolveRequest": {
@@ -13670,15 +13738,15 @@
             "type": "string",
             "format": "date-time"
           },
+          "businessStartDate": {
+            "type": "string"
+          },
           "businessEndDate": {
             "type": "string"
           },
           "businessYear": {
             "type": "integer",
             "format": "int32"
-          },
-          "businessStartDate": {
-            "type": "string"
           }
         }
       },
@@ -16090,6 +16158,76 @@
           "newPassword"
         ]
       },
+      "InstructorPortalEditableProfile": {
+        "type": "object",
+        "description": "강사가 포탈에서 직접 수정할 수 있는 프로필 필드만 노출한 요청 계약",
+        "properties": {
+          "affiliation": {
+            "$ref": "#/components/schemas/Affiliation"
+          },
+          "instructorCareerSummary": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "oneLineIntro": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "homeAddress": {
+            "$ref": "#/components/schemas/HomeAddress"
+          },
+          "education": {
+            "$ref": "#/components/schemas/Education"
+          },
+          "career": {
+            "$ref": "#/components/schemas/Career"
+          },
+          "jaKoreaActivities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "maxItems": 50,
+            "minItems": 0
+          },
+          "licenses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "maxItems": 50,
+            "minItems": 0
+          },
+          "awards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "maxItems": 50,
+            "minItems": 0
+          },
+          "essays": {
+            "$ref": "#/components/schemas/Essays"
+          }
+        }
+      },
+      "InstructorPortalProfileUpdate": {
+        "type": "object",
+        "description": "강사 회원의 포탈 회원정보 수정. 강사비/JA 등급과 승인 상태는 요청 스키마에서 제외됩니다.",
+        "properties": {
+          "profile": {
+            "$ref": "#/components/schemas/InstructorPortalEditableProfile"
+          },
+          "settlement": {
+            "$ref": "#/components/schemas/InstructorCmsSettlement"
+          }
+        }
+      },
       "UpdatePortalProfileRequest": {
         "type": "object",
         "description": "회원 포탈 내정보 수정 요청. 이메일·이름·휴대폰·생년월일·성별은 본인인증 정보이므로 이 API에서 수정하지 않습니다.",
@@ -16133,6 +16271,14 @@
             "type": "integer",
             "format": "int64"
           },
+          "schoolName": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "schoolSelection": {
+            "$ref": "#/components/schemas/PortalSchoolSelectionRequest"
+          },
           "schoolEnrollmentStatus": {
             "type": "string",
             "maxLength": 30,
@@ -16147,6 +16293,36 @@
             "type": "string",
             "maxLength": 100,
             "minLength": 0
+          },
+          "instructorProfile": {
+            "$ref": "#/components/schemas/InstructorPortalProfileUpdate"
+          }
+        }
+      },
+      "GuardianProfileResponse": {
+        "type": "object",
+        "description": "만 14세 미만 회원의 보호자 정보. 본인 포탈에서만 조회되며 수정은 별도 보호자 동의 절차를 따릅니다.",
+        "properties": {
+          "guardianName": {
+            "type": "string"
+          },
+          "guardianRelation": {
+            "type": "string"
+          },
+          "guardianPhone": {
+            "type": "string"
+          }
+        }
+      },
+      "InstructorPortalProfileResponse": {
+        "type": "object",
+        "description": "강사 회원의 포탈 회원정보 설정 응답. 강사비/JA 등급은 조회 전용입니다.",
+        "properties": {
+          "profile": {
+            "$ref": "#/components/schemas/InstructorCmsProfile"
+          },
+          "settlement": {
+            "$ref": "#/components/schemas/InstructorCmsSettlement"
           }
         }
       },
@@ -16225,6 +16401,12 @@
           "joinedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "guardian": {
+            "$ref": "#/components/schemas/GuardianProfileResponse"
+          },
+          "instructorProfile": {
+            "$ref": "#/components/schemas/InstructorPortalProfileResponse"
           }
         }
       },
@@ -16238,6 +16420,13 @@
           },
           "gender": {
             "type": "string",
+            "description": "성별. 저장 및 본인인증 비교 시 MALE/FEMALE/OTHER로 정규화됨",
+            "enum": [
+              "MALE",
+              "FEMALE",
+              "OTHER"
+            ],
+            "example": "FEMALE",
             "maxLength": 20,
             "minLength": 0
           }
@@ -16660,6 +16849,9 @@
             "format": "date-time"
           },
           "registeredByAdmin": {
+            "type": "boolean"
+          },
+          "createdByAdmin": {
             "type": "boolean"
           },
           "identitySelfSignupCompletedAfterAdminRegistration": {
@@ -21256,7 +21448,7 @@
           },
           "adminProvisionedOnboardingStep": {
             "type": "string",
-            "description": "다음 서버 처리 단계: PROFILE, IDENTITY, PASSWORD, DONE"
+            "description": "다음 서버 처리 단계: PROFILE, IDENTITY, PASSWORD, PROFILE_REVIEW, DONE"
           },
           "identitySelfSignupCompletedAfterAdminRegistration": {
             "type": "boolean",
@@ -26877,6 +27069,26 @@
               "type": "string"
             }
           },
+          "createdByAdmin": {
+            "type": "boolean",
+            "description": "관리자에 의해 생성된 계정인지 여부. MEMBER는 member.created_by_admin_id, ADMIN_ACCOUNT는 생성 감사 로그를 기준으로 계산합니다."
+          },
+          "registeredByAdmin": {
+            "type": "boolean",
+            "description": "관리자 등록 계정 여부. createdByAdmin과 동일 의미의 프론트 호환 필드입니다."
+          },
+          "preRegistered": {
+            "type": "boolean",
+            "description": "회원 사전등록 상태. 관리자 계정에는 false입니다."
+          },
+          "identityVerified": {
+            "type": "boolean",
+            "description": "본인인증 완료 여부"
+          },
+          "identitySelfSignupCompletedAfterAdminRegistration": {
+            "type": "boolean",
+            "description": "관리자 등록 회원의 최초 본인확인/온보딩 완료 여부. 관리자 계정에는 false입니다."
+          },
           "lastLoginAt": {
             "type": "string",
             "format": "date-time"
@@ -29361,6 +29573,15 @@
           "mfaRequired": {
             "type": "boolean"
           },
+          "createdByAdmin": {
+            "type": "boolean"
+          },
+          "registeredByAdmin": {
+            "type": "boolean"
+          },
+          "identityVerified": {
+            "type": "boolean"
+          },
           "permissionVersion": {
             "type": "integer",
             "format": "int32"
@@ -29440,6 +29661,15 @@
             "type": "string"
           },
           "mfaRequired": {
+            "type": "boolean"
+          },
+          "createdByAdmin": {
+            "type": "boolean"
+          },
+          "registeredByAdmin": {
+            "type": "boolean"
+          },
+          "identityVerified": {
             "type": "boolean"
           },
           "permissionVersion": {

@@ -14,7 +14,8 @@ import type { TermsAgreementRequest } from './termsAgreementRequest';
 export interface MemberSignupRequest {
   /**
      * 회원 이메일
-     * @minLength 1
+     * @minLength 0
+     * @maxLength 254
      */
   email: string;
   /**

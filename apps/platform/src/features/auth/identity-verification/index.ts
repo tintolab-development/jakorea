@@ -8,12 +8,16 @@ export {
   buildIdentityCallbackKey,
   isIdentityCallbackHandled,
   markIdentityCallbackHandled,
+  clearMypagePhoneIdentityConfirmPending,
+  isMypagePhoneIdentityConfirmPending,
+  markMypagePhoneIdentityConfirmPending,
 } from './lib'
 export {
   useSignupIdentityVerification,
   useGuardianIdentityVerification,
   useFindPasswordIdentityVerification,
   useAdminProvisionedIdentityVerification,
+  useSettingsPhoneIdentityVerification,
 } from './hooks'
 
 export type {

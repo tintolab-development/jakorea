@@ -1,10 +1,10 @@
 /**
- * PATCH /api/portal/me/profile 매핑 — GET 필드 echo · 빈 external1365Id 유지
+ * PATCH /api/portal/me/profile 매핑 — OpenAPI 허용 필드만 · 빈 external1365Id 유지
  */
 import assert from 'node:assert/strict'
 import { mapAdminRegisteredEditToPortalProfileUpdate } from './map-profile-update.ts'
 
-const enrolled = mapAdminRegisteredEditToPortalProfileUpdate({
+const enrolledWithPk = mapAdminRegisteredEditToPortalProfileUpdate({
   schoolStatus: 'enrolled',
   schoolName: '고양관산초등학교',
   grade: '3학년',
@@ -14,42 +14,40 @@ const enrolled = mapAdminRegisteredEditToPortalProfileUpdate({
   regionSido: '서울특별시',
   regionSigungu: '마포구',
   volunteerId: '',
-  email: 'ilban@test.com',
-  name: '홍길동',
-  phone: '01012345678',
-  birthDate: '1990.05.01',
-  gender: 'female',
-  memberType: 'general',
+  schoolOrganizationId: 6,
   portalProfile: {
-    memberId: 12,
-    email: 'ilban@test.com',
-    name: '홍길동',
-    phone: '01012345678',
-    birthDate: '1990-05-01',
-    gender: 'F',
-    memberType: 'GENERAL',
-    teacher: false,
-    instructor: false,
-    schoolOrganizationId: 6,
-    accountStatus: 'ACTIVE',
-    joinedAt: '2026-01-01T00:00:00Z',
+    teacherEmploymentStatus: 'ACTIVE',
   },
 })
 
-assert.equal(enrolled.schoolEnrollmentStatus, 'ENROLLED')
-assert.equal(enrolled.affiliationName, '고양관산초등학교')
-assert.equal(enrolled.schoolName, '고양관산초등학교')
-assert.equal(enrolled.grade, '3학년')
-assert.equal(enrolled.external1365Id, '')
-assert.equal(enrolled.name, '홍길동')
-assert.equal(enrolled.phone, '01012345678')
-assert.equal(enrolled.email, 'ilban@test.com')
-assert.equal(enrolled.birthDate, '1990-05-01')
-assert.equal(enrolled.gender, 'F')
-assert.equal(enrolled.memberType, 'GENERAL')
-assert.equal(enrolled.teacher, false)
-assert.equal(enrolled.memberId, 12)
-assert.equal(enrolled.schoolOrganizationId, 6)
+assert.equal(enrolledWithPk.schoolEnrollmentStatus, 'ENROLLED')
+assert.equal(enrolledWithPk.affiliationName, '고양관산초등학교')
+assert.equal(enrolledWithPk.schoolName, '고양관산초등학교')
+assert.equal(enrolledWithPk.grade, '3학년')
+assert.equal(enrolledWithPk.external1365Id, '')
+assert.equal(enrolledWithPk.schoolOrganizationId, 6)
+assert.equal(enrolledWithPk.schoolSelection, undefined)
+assert.equal('email' in enrolledWithPk, false)
+assert.equal('name' in enrolledWithPk, false)
+assert.equal('phone' in enrolledWithPk, false)
+assert.equal('memberId' in enrolledWithPk, false)
+
+const enrolledNeisOnly = mapAdminRegisteredEditToPortalProfileUpdate({
+  schoolStatus: 'enrolled',
+  schoolName: '서울중학교',
+  grade: '2학년',
+  address: '서울',
+  addressDetail: '1',
+  volunteerId: '',
+  schoolOrganizationId: null,
+  schoolAddress: '서울특별시 강남구',
+  schoolNeisCode: 'B100000658',
+})
+
+assert.equal(enrolledNeisOnly.schoolOrganizationId, undefined)
+assert.equal(enrolledNeisOnly.schoolSelection?.provider, 'NEIS')
+assert.equal(enrolledNeisOnly.schoolSelection?.externalSchoolCode, 'B100000658')
+assert.equal(enrolledNeisOnly.schoolSelection?.name, '서울중학교')
 
 const with1365 = mapAdminRegisteredEditToPortalProfileUpdate({
   schoolStatus: 'none',
@@ -58,12 +56,10 @@ const with1365 = mapAdminRegisteredEditToPortalProfileUpdate({
   address: '서울',
   addressDetail: '1',
   volunteerId: 'vol-1',
-  name: '김교사',
-  phone: '01000000000',
 })
 assert.equal(with1365.external1365Id, 'vol-1')
 assert.equal(with1365.schoolEnrollmentStatus, 'NOT_ENROLLED')
 assert.equal(with1365.schoolName, '')
-assert.equal(with1365.name, '김교사')
+assert.equal(with1365.schoolOrganizationId, null)
 
 console.log('map-profile-update.selfcheck: ok')

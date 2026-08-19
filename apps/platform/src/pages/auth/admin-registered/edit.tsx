@@ -34,6 +34,9 @@ export function AdminRegisteredEditPage() {
   const [schoolOrganizationId, setSchoolOrganizationId] = useState<number | null>(
     wizardState?.schoolOrganizationId ?? wizardState?.portalProfile?.schoolOrganizationId ?? null,
   )
+  const [schoolNeisCode, setSchoolNeisCode] = useState<string | null>(
+    wizardState?.schoolNeisCode ?? null,
+  )
   const [grade, setGrade] = useState(profile?.grade ?? '')
   const [address, setAddress] = useState(profile?.address ?? '')
   const [addressDetail, setAddressDetail] = useState(profile?.addressDetail ?? '')
@@ -62,6 +65,7 @@ export function AdminRegisteredEditPage() {
     setSchoolOrganizationId(
       wizardState.schoolOrganizationId ?? wizardState.portalProfile?.schoolOrganizationId ?? null,
     )
+    setSchoolNeisCode(wizardState.schoolNeisCode ?? null)
     setGrade(next.grade)
     setAddress(next.address)
     setAddressDetail(next.addressDetail)
@@ -94,6 +98,7 @@ export function AdminRegisteredEditPage() {
       setSchoolName('')
       setSchoolAddress('')
       setSchoolOrganizationId(null)
+      setSchoolNeisCode(null)
       setGrade('')
     }
   }
@@ -102,6 +107,7 @@ export function AdminRegisteredEditPage() {
     setSchoolName(school.name)
     setSchoolAddress(school.address?.trim() ?? '')
     setSchoolOrganizationId(school.organizationId ?? null)
+    setSchoolNeisCode(school.neisCode ?? null)
     setIsSchoolSearchModalOpen(false)
   }
 
@@ -111,6 +117,7 @@ export function AdminRegisteredEditPage() {
       schoolName,
       schoolAddress,
       schoolOrganizationId,
+      schoolNeisCode,
       grade,
       address,
       addressDetail,
@@ -139,12 +146,8 @@ export function AdminRegisteredEditPage() {
       regionSigungu,
       volunteerId,
       schoolOrganizationId,
-      email: wizardState.email,
-      name: wizardState.verifiedName,
-      phone: wizardState.verifiedPhone,
-      birthDate: wizardState.birthDate,
-      gender: wizardState.gender,
-      memberType: wizardState.memberType,
+      schoolAddress,
+      schoolNeisCode,
       employmentStatus: wizardState.employmentStatus,
       portalProfile: wizardState.portalProfile,
     })
@@ -157,6 +160,7 @@ export function AdminRegisteredEditPage() {
           schoolName,
           schoolAddress,
           schoolOrganizationId,
+          schoolNeisCode,
           grade,
           address,
           addressDetail,

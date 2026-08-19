@@ -1,4 +1,8 @@
-import type { HomepageMeResponse, PortalProfileResponse } from './types'
+import type {
+  HomepageMeResponse,
+  PhoneIdentityChangeResponse,
+  PortalProfileResponse,
+} from './types'
 
 function unwrapData(payload: unknown): Record<string, unknown> | null {
   if (!payload || typeof payload !== 'object') return null
@@ -75,5 +79,18 @@ export function parsePortalProfileResponse(payload: unknown): PortalProfileRespo
     external1365Id: optionalString(root.external1365Id),
     accountStatus: optionalString(root.accountStatus),
     joinedAt: optionalString(root.joinedAt),
+  }
+}
+
+export function parsePhoneIdentityChangeResponse(payload: unknown): PhoneIdentityChangeResponse {
+  const root = unwrapData(payload)
+  if (!root) {
+    throw new Error('연락처 변경 결과를 해석할 수 없습니다.')
+  }
+
+  return {
+    memberId: optionalNumber(root.memberId),
+    phone: optionalString(root.phone),
+    changedAt: optionalString(root.changedAt),
   }
 }

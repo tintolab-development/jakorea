@@ -3,17 +3,22 @@ import type { HorizontalTableParagraph } from '@jakorea/form-schema/writing-form
 import type { ParagraphBodyInteractionMode } from '@jakorea/form-schema/surface'
 import { isFormPreviewReadonlyMode } from '@jakorea/form-schema/surface'
 import { resolveHorizontalTablePreviewLayout } from './horizontal-table-preview.js'
-import { resolvePaymentPreConsentHorizontalTableWrapClass } from './horizontal-table-preview-wrap-class.js'
+import {
+  isHorizontalTableEmphasizedBodyCell,
+  resolvePaymentPreConsentHorizontalTableWrapClass,
+} from './horizontal-table-preview-wrap-class.js'
 import './horizontal-table-preview.css'
 
 function HorizontalTableCellText({
   value,
   placeholder,
   variant,
+  emphasized = false,
 }: {
   value: string
   placeholder: string
   variant: 'header' | 'body'
+  emphasized?: boolean
 }) {
   const filled = value.trim().length > 0
   return (
@@ -23,6 +28,7 @@ function HorizontalTableCellText({
         variant === 'header'
           ? 'form-template-horizontal-table__cell-text--header'
           : 'form-template-horizontal-table__cell-text--body',
+        emphasized ? 'form-template-horizontal-table__cell-text--emphasized' : '',
         !filled ? 'form-template-horizontal-table__cell-text--placeholder' : '',
       ]
         .filter(Boolean)
@@ -83,8 +89,14 @@ export function HorizontalTablePreviewBody({
                     .filter(Boolean)
                     .join(' ')}
                   role="gridcell"
+                  data-label={headers[colIndex] ?? ''}
                 >
-                  <HorizontalTableCellText value={cellValue} placeholder="" variant="body" />
+                  <HorizontalTableCellText
+                    value={cellValue}
+                    placeholder=""
+                    variant="body"
+                    emphasized={isHorizontalTableEmphasizedBodyCell(paragraph.id, colIndex)}
+                  />
                 </div>
               )
             })}

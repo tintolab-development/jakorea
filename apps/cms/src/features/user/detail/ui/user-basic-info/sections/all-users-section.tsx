@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput, CmsSelect } from '@/shared/ui'
+import { CmsInput, CmsSelect, SchoolSearch, type SchoolSearchSelection, type SchoolSearchSelectMeta } from '@/shared/ui'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { affiliationView, detailAddressView, genderBirthView } from '../display'
@@ -48,6 +48,41 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
   const isIndividual = user.role === 'INDIVIDUAL'
   const isSchoolEnrollmentAffiliation =
     !isIndividual || (d?.schoolEnrollmentStatus ?? 'enrolled') !== 'not_enrolled'
+
+  const handleSchoolSelect = (selection: SchoolSearchSelection, meta: SchoolSearchSelectMeta) => {
+    if (selection.source === 'neis') {
+      const school = selection.item
+      onMemberInfoDraftChange?.({
+        affiliationInstitution: school.schulNm.trim(),
+        schoolProvider: 'NEIS',
+        schoolExternalCode: school.sdSchulCode.trim(),
+        schoolLevel: school.schulKndScNm.trim(),
+        schoolAddress: school.orgRdnma.trim(),
+        schoolZipcode: school.orgRdnzc.trim(),
+        schoolRegionSido: meta.regionSido,
+        schoolRegionSigungu: meta.regionSigungu,
+        schoolOrganizationId: null,
+      })
+      return
+    }
+
+    const univ = selection.item
+    const schoolName = univ.campusName
+      ? `${univ.schoolName.trim()} (${univ.campusName.trim()})`
+      : univ.schoolName.trim()
+    onMemberInfoDraftChange?.({
+      affiliationInstitution: schoolName,
+      schoolProvider: 'CAREER_NET',
+      schoolExternalCode: univ.seq.trim(),
+      schoolLevel: univ.schoolGubun.trim() || univ.schoolType.trim(),
+      schoolAddress: univ.address.trim(),
+      schoolZipcode: '',
+      schoolRegionSido: meta.regionSido || univ.region.trim(),
+      schoolRegionSigungu: meta.regionSigungu,
+      schoolOrganizationId: null,
+    })
+  }
+
   const nameWithBadge = (nameNode: ReactNode) => (
     <span className="user-basic-info-section__name-with-badge">
       {nameNode}
@@ -160,13 +195,25 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
           edit={
             isSchoolEnrollmentAffiliation ? (
               <span className="detail-info-form-inputs-wrapper-no-gap">
-                <CmsInput
-                  placeholder="학교명"
+                <SchoolSearch
                   value={d?.affiliationInstitution ?? ''}
-                  onChange={e => onMemberInfoDraftChange?.({ affiliationInstitution: e.target.value })}
+                  onChange={nextSchoolName =>
+                    onMemberInfoDraftChange?.({
+                      affiliationInstitution: nextSchoolName,
+                      schoolOrganizationId: null,
+                      schoolProvider: undefined,
+                      schoolExternalCode: undefined,
+                      schoolLevel: undefined,
+                      schoolAddress: undefined,
+                      schoolZipcode: undefined,
+                      schoolRegionSido: undefined,
+                      schoolRegionSigungu: undefined,
+                    })
+                  }
+                  onSelect={handleSchoolSelect}
+                  placeholder="학교명"
                   inputSize="medium"
                   width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
-                  aria-label="소속 기관(학교명)"
                 />
                 <DetailInfoForm.InputsSeparator />
                 <CmsSelect

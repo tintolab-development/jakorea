@@ -94,19 +94,20 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     })
   })
 
-  it('미재학 소속은 schoolName과 NOT_ENROLLED로 보낸다', () => {
+  it('미재학 소속은 schoolName·grade를 비우고 schoolOrganizationId null로 보낸다', () => {
     const body = mapPatchUserBasicInfoToApiRequest({
       affiliation: 'JA코리아',
-      individualSchoolName: 'JA코리아',
+      individualSchoolName: '',
       schoolEnrollmentStatus: 'NOT_ENROLLED',
     })
 
     expect(body).toMatchObject({
       affiliation: 'JA코리아',
-      schoolName: 'JA코리아',
+      schoolName: '',
       enrollmentStatus: 'NOT_ENROLLED',
+      schoolOrganizationId: null,
     })
-    expect(body.grade).toBeUndefined()
+    expect(body.grade).toBe('')
   })
 
   it('강사 affiliation만 있으면 schoolName/enrollmentStatus extras를 넣지 않는다', () => {
@@ -136,7 +137,7 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     expect(body.affiliation).toBe('서울고등학교 | 2학년')
   })
 
-  it('개인 회원 미재학 초안은 기관명만 schoolName으로 PATCH된다', () => {
+  it('개인 회원 미재학 초안은 소속 clear payload로 PATCH된다', () => {
     const patch = draftToAdminProvisionedIndividualBasicInfoPatch(
       individualDraft({
         affiliationInstitution: 'JA코리아',
@@ -146,10 +147,47 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     )
     const body = mapPatchUserBasicInfoToApiRequest(patch)
 
-    expect(body.schoolName).toBe('JA코리아')
+    expect(body.schoolName).toBe('')
     expect(body.enrollmentStatus).toBe('NOT_ENROLLED')
+    expect(body.schoolOrganizationId).toBe(null)
     expect(body.affiliation).toBe('JA코리아')
-    expect(body.grade).toBeUndefined()
+    expect(body.grade).toBe('')
+  })
+
+  it('재학 중 + NEIS 선택 초안은 schoolSelection을 PATCH한다', () => {
+    const patch = draftToAdminProvisionedIndividualBasicInfoPatch(
+      individualDraft({
+        affiliationInstitution: '서울중학교',
+        affiliationGrade: '2학년',
+        schoolEnrollmentStatus: 'enrolled',
+        schoolProvider: 'NEIS',
+        schoolExternalCode: 'B100000658',
+        schoolAddress: '서울특별시 강남구',
+      })
+    )
+    const body = mapPatchUserBasicInfoToApiRequest(patch)
+
+    expect(body.schoolOrganizationId).toBe(null)
+    expect(body.schoolSelection).toMatchObject({
+      provider: 'NEIS',
+      externalSchoolCode: 'B100000658',
+      name: '서울중학교',
+    })
+  })
+
+  it('재학 중 + CMS PK 초안은 schoolOrganizationId를 PATCH한다', () => {
+    const patch = draftToAdminProvisionedIndividualBasicInfoPatch(
+      individualDraft({
+        affiliationInstitution: '진월초등학교',
+        affiliationGrade: '3학년',
+        schoolEnrollmentStatus: 'enrolled',
+        schoolOrganizationId: 42,
+      })
+    )
+    const body = mapPatchUserBasicInfoToApiRequest(patch)
+
+    expect(body.schoolOrganizationId).toBe(42)
+    expect(body.schoolSelection).toBeUndefined()
   })
 })
 

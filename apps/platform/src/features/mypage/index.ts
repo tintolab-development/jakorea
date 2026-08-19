@@ -1,9 +1,11 @@
 export type {
+  MypageHomeLnbItemKey,
   MypageLnbItem,
   MypageLnbItemKey,
   MypageProgramStats,
   MypageScheduleEvent,
   MypageScheduleEventType,
+  MypageSettingsLnbItemKey,
   PlatformMemberProfile,
 } from './model/types'
 export {
@@ -14,6 +16,7 @@ export {
   MOCK_MYPAGE_PROGRAM_STATS,
   MOCK_MYPAGE_USER_NAME,
   MYPAGE_PATH,
+  MYPAGE_SETTINGS_PATH,
 } from './lib/constants'
 export {
   MOCK_MYPAGE_SCHEDULE_EVENTS,
@@ -24,6 +27,20 @@ export {
   toDateKey,
 } from './lib/mock-schedule-events'
 export { getMypageLnbItems } from './lib/lnb-config'
+export {
+  getSettingsLnbItems,
+  mapPortalProfileToSettingsView,
+  SettingsConsentsView,
+  SettingsEditForm,
+  SettingsView,
+  useSettingsView,
+} from './settings'
+export type {
+  SettingsConsentsViewProps,
+  SettingsEditFormProps,
+  SettingsProfileInput,
+  SettingsViewProps,
+} from './settings'
 export {
   getMypageProfileLabel,
   isInstructorMypageProfile,

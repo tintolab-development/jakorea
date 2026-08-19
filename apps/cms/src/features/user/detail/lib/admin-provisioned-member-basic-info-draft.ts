@@ -30,6 +30,15 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   affiliationGrade: string
   /** 개인 회원 — 현재 학교 재학 여부 (등록 폼과 동일) */
   schoolEnrollmentStatus?: 'enrolled' | 'not_enrolled' | ''
+  /** 재학 중 CMS 학교 PK */
+  schoolOrganizationId?: number | null
+  schoolProvider?: string
+  schoolExternalCode?: string
+  schoolLevel?: string
+  schoolAddress?: string
+  schoolZipcode?: string
+  schoolRegionSido?: string
+  schoolRegionSigungu?: string
   /** 1365 자원봉사 ID */
   id1365?: string
   gender: string
@@ -353,17 +362,64 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
 
 function draftToIndividualAffiliationPatch(
   draft: AdminProvisionedMemberBasicInfoDraft
-): Pick<PatchUserBasicInfoInput, 'schoolEnrollmentStatus' | 'individualSchoolName' | 'individualGrade'> {
+): Pick<
+  PatchUserBasicInfoInput,
+  | 'schoolEnrollmentStatus'
+  | 'individualSchoolName'
+  | 'individualGrade'
+  | 'individualSchoolOrganizationId'
+  | 'individualSchoolProvider'
+  | 'individualSchoolExternalCode'
+  | 'individualSchoolLevel'
+  | 'individualSchoolAddress'
+  | 'individualSchoolZipcode'
+  | 'individualSchoolRegionSido'
+  | 'individualSchoolRegionSigungu'
+> {
   const enrollment = draft.schoolEnrollmentStatus
   if (enrollment !== 'enrolled' && enrollment !== 'not_enrolled') {
     return {}
   }
   const enrolled = enrollment === 'enrolled'
   const grade = enrolled ? draft.affiliationGrade.trim() : ''
+  const schoolName = enrolled ? draft.affiliationInstitution.trim() : ''
+
+  if (!enrolled) {
+    return {
+      schoolEnrollmentStatus: 'NOT_ENROLLED',
+      individualSchoolName: '',
+      individualSchoolOrganizationId: null,
+    }
+  }
+
   return {
-    schoolEnrollmentStatus: enrolled ? 'ENROLLED' : 'NOT_ENROLLED',
-    individualSchoolName: draft.affiliationInstitution.trim(),
+    schoolEnrollmentStatus: 'ENROLLED',
+    individualSchoolName: schoolName,
     ...(grade ? { individualGrade: grade } : {}),
+    ...(draft.schoolOrganizationId != null && Number.isFinite(draft.schoolOrganizationId)
+      ? { individualSchoolOrganizationId: draft.schoolOrganizationId }
+      : {
+          individualSchoolOrganizationId: null,
+          ...(draft.schoolProvider?.trim()
+            ? { individualSchoolProvider: draft.schoolProvider.trim() }
+            : {}),
+          ...(draft.schoolExternalCode?.trim()
+            ? { individualSchoolExternalCode: draft.schoolExternalCode.trim() }
+            : {}),
+          ...(draft.schoolLevel?.trim() ? { individualSchoolLevel: draft.schoolLevel.trim() } : {}),
+          ...(draft.schoolAddress?.trim()
+            ? { individualSchoolAddress: draft.schoolAddress.trim() }
+            : {}),
+          ...(draft.schoolZipcode?.trim()
+            ? { individualSchoolZipcode: draft.schoolZipcode.trim() }
+            : {}),
+          ...(draft.schoolRegionSido?.trim()
+            ? { individualSchoolRegionSido: draft.schoolRegionSido.trim() }
+            : {}),
+          ...(draft.schoolRegionSigungu?.trim()
+            ? { individualSchoolRegionSigungu: draft.schoolRegionSigungu.trim() }
+            : {}),
+        }),
   }
 }
 

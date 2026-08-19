@@ -15,6 +15,7 @@ export interface IndividualMemberDetailResponse {
   zipCode?: string;
   schoolName?: string;
   enrollmentStatus?: string;
+  grade?: string;
   addressDetailMasked?: boolean;
   termsAgreements?: TermsAgreementRow[];
 }

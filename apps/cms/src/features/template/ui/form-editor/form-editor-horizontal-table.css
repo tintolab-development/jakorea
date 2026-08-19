@@ -40,7 +40,7 @@
   display: flex;
   flex-direction: column;
   align-self: stretch;
-  border-radius: var(--8, 8px);
+  border-radius: 16px;
   border: 1px solid var(--table-line, #e0e0e0);
   background: var(--main-WT, #fff);
   /* 셀 선택 시 box-shadow가 잘리지 않도록 */
@@ -49,21 +49,21 @@
 
 /* 테이블 외곽 radius와 그리드 스트로크 정합(모서리에서 선이 잘리지 않도록) */
 .form-editor-horizontal-table__row--header .form-editor-horizontal-table__th:first-child {
-  border-top-left-radius: calc(var(--8, 8px) - 1px);
+  border-top-left-radius: 15px;
 }
 
 .form-editor-horizontal-table__row--header .form-editor-horizontal-table__th:last-child {
-  border-top-right-radius: calc(var(--8, 8px) - 1px);
+  border-top-right-radius: 15px;
 }
 
 .form-editor-horizontal-table__row:not(.form-editor-horizontal-table__row--header):last-child
   .form-editor-horizontal-table__td:first-child {
-  border-bottom-left-radius: calc(var(--8, 8px) - 1px);
+  border-bottom-left-radius: 15px;
 }
 
 .form-editor-horizontal-table__row:not(.form-editor-horizontal-table__row--header):last-child
   .form-editor-horizontal-table__td:last-child {
-  border-bottom-right-radius: calc(var(--8, 8px) - 1px);
+  border-bottom-right-radius: 15px;
 }
 
 .form-editor-horizontal-table__row {
@@ -649,7 +649,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
 }
 
 /* 테이블 하단 — 동의 여부 라디오 (203×40, 두 옵션 사이 16px). 세로형 paragraph/table/vertical-table-paragraph-body.css 와 동일 */
@@ -844,16 +844,10 @@
   word-break: break-word;
 }
 
-/* p1 — 수집·이용 목적·보유기간 열만 20/700 */
-.form-editor-horizontal-table-wrap--payment-pre-consent-p1
-  .form-editor-horizontal-table__td--field:nth-child(2)
-  .form-editor-horizontal-table__cell-text--body,
+/* p1 — 보유기간 열만 20/700 (Platform 재사용 스펙과 동일) */
 .form-editor-horizontal-table-wrap--payment-pre-consent-p1
   .form-editor-horizontal-table__td--field:nth-child(3)
   .form-editor-horizontal-table__cell-text--body,
-.form-editor-horizontal-table-wrap--payment-pre-consent-p1
-  .form-editor-horizontal-table__td--field:nth-child(2)
-  .form-editor-horizontal-table__cell-textarea,
 .form-editor-horizontal-table-wrap--payment-pre-consent-p1
   .form-editor-horizontal-table__td--field:nth-child(3)
   .form-editor-horizontal-table__cell-textarea {

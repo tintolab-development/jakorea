@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   getAllMemberListRoleTypeLabel,
+  getMemberSignupTypeLabel,
   isInstructorPermissionRevoked,
   matchesAllTabRoleFilter,
 } from './member-list-display'
@@ -158,5 +159,24 @@ describe('matchesAllTabRoleFilter', () => {
         'INSTRUCTOR_DUAL'
       )
     ).toBe(false)
+  })
+})
+
+describe('getMemberSignupTypeLabel', () => {
+  it('registeredByAdmin(createdByAdmin)이 true이면 관리자 등록', () => {
+    expect(getMemberSignupTypeLabel({ registeredByAdmin: true })).toBe('관리자 등록')
+  })
+
+  it('registeredByAdmin이 false·undefined이면 직접 가입', () => {
+    expect(getMemberSignupTypeLabel({ registeredByAdmin: false })).toBe('직접 가입')
+    expect(getMemberSignupTypeLabel({})).toBe('직접 가입')
+  })
+
+  it('본인인증 완료 여부와 무관하게 registeredByAdmin만 따른다', () => {
+    expect(
+      getMemberSignupTypeLabel({
+        registeredByAdmin: true,
+      })
+    ).toBe('관리자 등록')
   })
 })

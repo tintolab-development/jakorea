@@ -6,7 +6,7 @@ import checkOnSmallUrl from '@/shared/assets/icons/check-on-small.svg'
 import { PFText } from '../pf-text/pf-text'
 import styles from './pf-toggle.module.css'
 
-export type PFToggleVariant = 'check-large' | 'check-small' | 'text'
+export type PFToggleVariant = 'check-large' | 'check-small' | 'text' | 'switch'
 
 type PFToggleBaseProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onChange' | 'children'> & {
   checked: boolean
@@ -27,7 +27,14 @@ type PFToggleTextProps = PFToggleBaseProps & {
   children?: never
 }
 
-export type PFToggleProps = PFToggleCheckProps | PFToggleTextProps
+type PFToggleSwitchProps = PFToggleBaseProps & {
+  variant: 'switch'
+  children?: never
+  offLabel?: never
+  onLabel?: never
+}
+
+export type PFToggleProps = PFToggleCheckProps | PFToggleTextProps | PFToggleSwitchProps
 
 const variantClassNameMap = {
   'check-large': styles.checkLarge,
@@ -60,7 +67,9 @@ export function PFToggle(props: PFToggleProps) {
 
   const toggleClassName = [
     styles.toggle,
-    variant !== 'text' ? variantClassNameMap[variant] : undefined,
+    variant === 'switch' ? styles.switch : undefined,
+    variant === 'switch' && checked ? styles.switchOn : undefined,
+    variant !== 'text' && variant !== 'switch' ? variantClassNameMap[variant] : undefined,
     className,
   ]
     .filter(Boolean)
@@ -80,11 +89,15 @@ export function PFToggle(props: PFToggleProps) {
       type={type}
       className={toggleClassName}
       disabled={disabled}
-      aria-pressed={checked}
+      role={variant === 'switch' ? 'switch' : undefined}
+      aria-checked={variant === 'switch' ? checked : undefined}
+      aria-pressed={variant === 'switch' ? undefined : checked}
       onClick={handleClick}
       {...rest}
     >
-      {variant === 'text' ? (
+      {variant === 'switch' ? (
+        <span className={styles.switchThumb} aria-hidden="true" />
+      ) : variant === 'text' ? (
         <PFText
           typo="bd-sm-md"
           color={checked ? 'primary-500' : 'inherit'}

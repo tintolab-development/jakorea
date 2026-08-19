@@ -15,6 +15,7 @@ export const portalAuthPaths = {
 /** 포털 회원 본인 리소스 (`/api/portal/me/**`) */
 export const portalMePaths = {
   profile: () => '/api/portal/me/profile',
+  phoneIdentityConfirm: () => '/api/portal/me/phone/identity/confirm',
   instructorRoleRequests: () => '/api/portal/me/instructor-role-requests',
   instructorRoleRequestCurrent: () => '/api/portal/me/instructor-role-requests/current',
 } as const

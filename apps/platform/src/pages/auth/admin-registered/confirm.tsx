@@ -5,7 +5,7 @@ import {
   requireAdminRegisteredWizardState,
   useAdminRegisteredProfileHydration,
 } from '@/features/auth/admin-registered'
-import { PFButton, PFText } from '@/shared/ui'
+import { PFButton, PFInfoReview, PFText } from '@/shared/ui'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import sharedStyles from './shared.module.css'
 
@@ -39,43 +39,18 @@ export function AdminRegisteredConfirmPage() {
       </div>
 
       {isHydrating ? (
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={sharedStyles.confirmReview}>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={sharedStyles.statusMessage}>
           가입 정보를 불러오는 중…
         </PFText>
       ) : null}
 
       {isError ? (
-        <PFText as="p" typo="bd-sm-md" color="error" className={sharedStyles.confirmReview}>
+        <PFText as="p" typo="bd-sm-md" color="error" className={sharedStyles.statusMessage}>
           가입 정보를 불러오지 못했습니다. 이전 단계에서 입력·인증한 정보만 표시됩니다.
         </PFText>
       ) : null}
 
-      {!isHydrating ? (
-        <div className={sharedStyles.confirmReview}>
-          {rows.map((row, index) => (
-            <div
-              className={[
-                sharedStyles.confirmReviewRow,
-                index === 0 ? sharedStyles.confirmReviewRowFirst : undefined,
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              key={row.label}
-            >
-              <PFText
-                typo="bd-md-md"
-                color="neutral-cool-500"
-                className={sharedStyles.confirmReviewLabel}
-              >
-                {row.label}
-              </PFText>
-              <PFText typo="bd-md-sb" color="black" className={sharedStyles.confirmReviewValue}>
-                {row.value}
-              </PFText>
-            </div>
-          ))}
-        </div>
-      ) : null}
+      {!isHydrating ? <PFInfoReview rows={rows} className={sharedStyles.confirmReview} /> : null}
 
       <div className={sharedStyles.actionsTerms}>
         <PFButton

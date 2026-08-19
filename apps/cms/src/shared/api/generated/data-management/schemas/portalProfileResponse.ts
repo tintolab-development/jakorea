@@ -5,6 +5,8 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { GuardianProfileResponse } from './guardianProfileResponse';
+import type { InstructorPortalProfileResponse } from './instructorPortalProfileResponse';
 
 export interface PortalProfileResponse {
   memberId?: number;
@@ -30,4 +32,6 @@ export interface PortalProfileResponse {
   external1365Id?: string;
   accountStatus?: string;
   joinedAt?: string;
+  guardian?: GuardianProfileResponse;
+  instructorProfile?: InstructorPortalProfileResponse;
 }

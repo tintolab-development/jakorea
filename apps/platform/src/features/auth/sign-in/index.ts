@@ -5,10 +5,12 @@ export {
   getPortalMe,
   getPortalProfile,
   patchPortalProfile,
+  postPortalPhoneIdentityConfirm,
   postPortalPasswordChange,
   parseAuthTokenResponse,
   expiresAtFromExpiresInSeconds,
   parseHomepageMeResponse,
+  parsePhoneIdentityChangeResponse,
   parsePortalProfileResponse,
 } from './api'
 export type {
@@ -16,7 +18,10 @@ export type {
   HomepageMeResponse,
   MemberLoginRequest,
   PasswordChangeRequest,
+  PhoneIdentityChangeResponse,
+  PhoneIdentityConfirmRequest,
   PortalProfileResponse,
+  PortalSchoolSelectionRequest,
   UpdatePortalProfileRequest,
 } from './api'
 export { getLoginApiErrorMessage } from './lib'
@@ -25,5 +30,6 @@ export {
   usePortalMeQuery,
   usePortalProfileQuery,
   usePortalProfileUpdateMutation,
+  usePortalPhoneIdentityConfirmMutation,
   usePortalPasswordChangeMutation,
 } from './hooks'

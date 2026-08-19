@@ -1,6 +1,7 @@
 import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
 import type { AdminAccountBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminAccountBasicInfoUpdateRequest'
 import type { AdminMemberBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminMemberBasicInfoUpdateRequest'
+import type { PortalSchoolSelectionRequest } from '@/shared/api/generated/members/schemas/portalSchoolSelectionRequest'
 import { filterEditableTermsAgreementsForBasicInfoPatch } from '@/features/user/api/member-basic-info-terms-patch'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 import {
@@ -20,6 +21,44 @@ export type AdminMemberBasicInfoUpdateRequestWithAddress = AdminMemberBasicInfoU
   schoolName?: string
   enrollmentStatus?: 'ENROLLED' | 'NOT_ENROLLED'
   grade?: string
+  /** BE wire extension — 소속 해제 시 `null` (omit 금지) */
+  schoolOrganizationId?: number | null
+  schoolSelection?: PortalSchoolSelectionRequest
+}
+
+function trimOptional(value: string | undefined): string | undefined {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : undefined
+}
+
+function buildIndividualSchoolSelectionFromPatch(
+  patch: PatchUserBasicInfoInput
+): PortalSchoolSelectionRequest | undefined {
+  const name = trimOptional(patch.individualSchoolName)
+  if (!name) return undefined
+
+  const selection: PortalSchoolSelectionRequest = {
+    name,
+    organizationCategory: 'SCHOOL',
+  }
+  const provider = trimOptional(patch.individualSchoolProvider)
+  if (provider) selection.provider = provider
+  const externalSchoolCode = trimOptional(patch.individualSchoolExternalCode)
+  if (externalSchoolCode) {
+    selection.externalSchoolCode = externalSchoolCode
+    if (!selection.provider) selection.provider = 'NEIS'
+  }
+  const schoolLevel = trimOptional(patch.individualSchoolLevel)
+  if (schoolLevel) selection.schoolLevel = schoolLevel
+  const regionSido = trimOptional(patch.individualSchoolRegionSido)
+  if (regionSido) selection.regionSido = regionSido
+  const regionSigungu = trimOptional(patch.individualSchoolRegionSigungu)
+  if (regionSigungu) selection.regionSigungu = regionSigungu
+  const zipcode = trimOptional(patch.individualSchoolZipcode)
+  if (zipcode) selection.zipcode = zipcode
+  const address = trimOptional(patch.individualSchoolAddress)
+  if (address) selection.address = address
+  return selection
 }
 
 function applyHomeAddressToPatchBody(
@@ -49,6 +88,15 @@ function applyIndividualAffiliationToPatchBody(
   if (patch.schoolEnrollmentStatus === undefined && patch.individualSchoolName === undefined) {
     return
   }
+
+  if (patch.schoolEnrollmentStatus === 'NOT_ENROLLED') {
+    body.enrollmentStatus = 'NOT_ENROLLED'
+    body.schoolName = ''
+    body.grade = ''
+    body.schoolOrganizationId = null
+    return
+  }
+
   if (patch.individualSchoolName !== undefined) {
     body.schoolName = patch.individualSchoolName
   }
@@ -58,6 +106,30 @@ function applyIndividualAffiliationToPatchBody(
   const grade = patch.individualGrade?.trim()
   if (grade) {
     body.grade = grade
+  } else if (patch.schoolEnrollmentStatus === 'ENROLLED' && patch.individualGrade === '') {
+    body.grade = ''
+  }
+
+  if (patch.schoolEnrollmentStatus !== 'ENROLLED') {
+    return
+  }
+
+  if (Object.prototype.hasOwnProperty.call(patch, 'individualSchoolOrganizationId')) {
+    const organizationId = patch.individualSchoolOrganizationId
+    if (organizationId != null && Number.isFinite(organizationId)) {
+      body.schoolOrganizationId = organizationId
+      return
+    }
+    const schoolSelection = buildIndividualSchoolSelectionFromPatch(patch)
+    if (schoolSelection) {
+      body.schoolSelection = schoolSelection
+    }
+    if (organizationId === null) {
+      body.schoolOrganizationId = null
+    }
+  } else {
+    const schoolSelection = buildIndividualSchoolSelectionFromPatch(patch)
+    if (schoolSelection) body.schoolSelection = schoolSelection
   }
 }
 

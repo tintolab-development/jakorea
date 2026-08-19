@@ -1,6 +1,5 @@
 import type { User } from '@/types/user'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
-import { shouldShowCmsMemberInfoEditButton } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { isInstructorPermissionRevokedOverlay } from '@/features/user/shared/lib/revoked-instructor-overlay'
 
 const MEMBER_LIST_ROLE_LABELS = {
@@ -92,9 +91,9 @@ export function matchesAllTabRoleFilter(
   return getAllMemberListRoleTypeLabel(record) === ALL_MEMBER_LIST_ROLE_TYPE_LABELS[filter]
 }
 
-/** 전체 회원 목록 — 가입 유형 열 (직접 가입 / 관리자 등록) */
+/** 전체 회원 목록 — 가입 유형 열. API `createdByAdmin`(동치 `registeredByAdmin`) 기준 */
 export function getMemberSignupTypeLabel(
-  user: Pick<User, 'registeredByAdmin' | 'identitySelfSignupCompletedAfterAdminRegistration'>
+  user: Pick<User, 'registeredByAdmin'>
 ): '직접 가입' | '관리자 등록' {
-  return shouldShowCmsMemberInfoEditButton(user) ? '관리자 등록' : '직접 가입'
+  return user.registeredByAdmin ? '관리자 등록' : '직접 가입'
 }

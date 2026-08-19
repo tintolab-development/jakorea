@@ -9,6 +9,7 @@ import type { InstructorCertificationUpsertRequest } from './instructorCertifica
 import type { InstructorCmsProfile } from './instructorCmsProfile';
 import type { InstructorCmsSettlement } from './instructorCmsSettlement';
 import type { MemberBankAccountUpsertRequest } from './memberBankAccountUpsertRequest';
+import type { PortalSchoolSelectionRequest } from './portalSchoolSelectionRequest';
 import type { TermsAgreementRequest } from './termsAgreementRequest';
 
 /**
@@ -103,6 +104,8 @@ export interface AdminPreRegisterInstructorRequest {
   certifications?: InstructorCertificationUpsertRequest[];
   external1365Id?: string;
   termsAgreements?: TermsAgreementRequest[];
+  /** 교사회원 소속 학교 선택값. CMS organizationId가 없는 NEIS 학교도 서버가 canonical organization으로 해석/등록합니다. */
+  schoolSelection?: PortalSchoolSelectionRequest;
   profile?: InstructorCmsProfile;
   settlement?: InstructorCmsSettlement;
 }

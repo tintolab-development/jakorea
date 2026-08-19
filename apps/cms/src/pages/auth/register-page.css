@@ -59,6 +59,11 @@
   padding-left: 8px;
 }
 
+/* /auth/password-change-required/identity 전용 */
+.register-step-progress--password-change-identity {
+  margin-bottom: 48px;
+}
+
 .register-step-progress__list {
   display: flex;
   align-items: center;
