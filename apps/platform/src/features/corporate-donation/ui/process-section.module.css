@@ -1,0 +1,272 @@
+.section {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow-x: clip;
+  background: var(--color-neutral-white);
+}
+
+.content {
+  display: flex;
+  width: 100%;
+  max-width: var(--content-shell-max-width);
+  margin: 0 auto;
+  flex-direction: column;
+  gap: var(--spacing-40);
+  padding: var(--spacing-56) var(--spacing-20);
+  box-sizing: border-box;
+}
+
+.title {
+  margin: 0;
+  text-align: left;
+  word-break: keep-all;
+}
+
+.list {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  list-style: none;
+}
+
+.item {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  gap: var(--spacing-16);
+}
+
+.connectorLeadIn,
+.connector {
+  display: none;
+}
+
+.stepLead {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.badge {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-999);
+  background: var(--color-primary-400);
+  color: var(--color-neutral-white);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 160%;
+}
+
+.stepBody {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.descriptionList {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  list-style: none;
+}
+
+.descriptionItem::marker {
+  color: var(--color-neutral-black);
+}
+
+@media (--bp-below-pc) {
+  .title {
+    font-size: 24px;
+    line-height: 150%;
+    letter-spacing: 0;
+  }
+
+  .stepTitle {
+    font-size: 20px;
+    line-height: 150%;
+    letter-spacing: -0.2px;
+  }
+
+  .descriptionText {
+    font-size: 16px;
+    line-height: 150%;
+    letter-spacing: -0.16px;
+  }
+}
+
+@media (--bp-pc-up) {
+  .content {
+    --process-inline-padding: clamp(100px, 12.5vw, 2200px);
+
+    max-width: none;
+    width: 100%;
+    gap: var(--spacing-120);
+    padding-block: var(--spacing-120) var(--spacing-150);
+    padding-inline: var(--process-inline-padding);
+  }
+
+  .title {
+    text-align: center;
+  }
+
+  .list {
+    --process-badge-size: 48px;
+    --process-column-gap: clamp(64px, 8vw, 140px);
+    --process-arrow-gap: 12px;
+
+    display: grid;
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: var(--spacing-80);
+  }
+
+  .item {
+    flex-direction: column;
+    gap: var(--spacing-24);
+  }
+
+  .stepLead {
+    position: relative;
+    width: 100%;
+    height: var(--process-badge-size);
+    margin-top: 0;
+  }
+
+  .badge {
+    position: relative;
+    z-index: 1;
+    width: var(--process-badge-size);
+    height: var(--process-badge-size);
+    font-size: 24px;
+    line-height: 150%;
+    letter-spacing: -0.24px;
+  }
+
+  .connector {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    z-index: 0;
+    display: flex;
+    width: 100%;
+    align-items: center;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .connectorLine {
+    position: relative;
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 2px;
+    background: rgba(12, 189, 204, 0.50);
+  }
+  .connectorLine::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: -7px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    background-image: url('@/shared/assets/icons/chevron-right-mint.svg');
+    background-size: 16px 16px;
+    background-position: center;
+    background-repeat: no-repeat;
+    transform: translateY(-50%);
+  }
+
+  .item:nth-child(3) .connectorLine::after,
+  .item:last-child .connectorLine::after {
+    display: none;
+  }
+
+  .connectorLeadIn {
+    position: absolute;
+    top: calc(var(--process-badge-size) / 2);
+    left: calc(-1 * var(--process-inline-padding));
+    z-index: 0;
+    display: flex;
+    width: calc(var(--process-inline-padding) - var(--spacing-16));
+    align-items: center;
+    overflow: visible;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .connectorLeadInLine {
+    position: relative;
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 2px;
+    overflow: visible;
+    background: rgba(12, 189, 204, 0.5);
+  }
+
+  .connectorLeadInLine::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: -7px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    background-image: url('@/shared/assets/icons/chevron-right-mint.svg');
+    background-size: 16px 16px;
+    background-position: center;
+    background-repeat: no-repeat;
+    transform: translateY(-50%);
+  }
+
+  .item:first-child .connectorLeadIn {
+    display: none;
+  }
+
+  .connectorTrail {
+    width: calc(100% - var(--process-badge-size) / 2 + var(--process-inline-padding));
+  }
+
+  .connectorFade .connectorLine {
+    background: linear-gradient(
+      90deg,
+      #86DEE6 0%,
+      rgba(1, 161, 175, 0) 100%
+    );
+  }
+
+  .stepBody {
+    gap: var(--spacing-8);
+  }
+
+  .descriptionList {
+    gap: var(--spacing-4);
+    padding-left: 1.15em;
+    list-style: disc;
+  }
+}

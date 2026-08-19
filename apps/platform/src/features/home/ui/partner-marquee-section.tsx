@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { CORPORATE_DONATION_PATH } from '@/features/corporate-donation'
 import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
-import { SUPPORT_CORPORATE_PATH } from '@/shared/config/gnb-temporary-paths'
 import { PFText } from '@/shared/ui'
 import jaArrowCtaMintUrl from '../image/icon/ja-arrow-cta-mint.svg'
 import jaArrowCtaTealUrl from '../image/icon/ja-arrow-cta-teal.svg'
@@ -87,7 +87,7 @@ export function PartnerMarqueeSection() {
                 height={32}
               />
             </Link>
-            <Link className={styles.ctaSecondaryLink} to={SUPPORT_CORPORATE_PATH}>
+            <Link className={styles.ctaSecondaryLink} to={CORPORATE_DONATION_PATH}>
               <PFText as="span" typo="hl-lg" color="primary-500" className={styles.ctaLabel}>
                 기업후원 문의하기
               </PFText>

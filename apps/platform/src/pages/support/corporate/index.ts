@@ -1,0 +1,1 @@
+export { CorporateDonationPage } from './page'

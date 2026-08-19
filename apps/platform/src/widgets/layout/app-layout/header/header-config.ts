@@ -6,6 +6,7 @@ import { isProgramsPath, PROGRAMS_PATH } from '@/features/program'
 import { isResultsPath, RESULTS_PATH } from '@/features/result'
 import { isTextbooksPath, TEXTBOOKS_PATH } from '@/features/textbook'
 import { isTransparencyPath, TRANSPARENCY_PATH } from '@/features/transparency'
+import { CORPORATE_DONATION_PATH } from '@/features/corporate-donation'
 import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
 import { MYPAGE_PATH } from '@/features/mypage'
 import {
@@ -17,7 +18,6 @@ import {
   EDUCATION_ENTREPRENEURSHIP_PATH,
   EDUCATION_FINANCE_PATH,
   isTemporaryPagePath,
-  SUPPORT_CORPORATE_PATH,
   SUPPORT_TALENT_PATH,
 } from '@/shared/config/gnb-temporary-paths'
 import { getDevAuthLoggedIn, resolveLoginRequiredPath } from '@/shared/lib'
@@ -80,7 +80,7 @@ export const navigationGroups = [
     label: '후원하기',
     children: [
       { label: '개인후원', href: INDIVIDUAL_DONATION_PATH },
-      { label: '기업후원', href: SUPPORT_CORPORATE_PATH },
+      { label: '기업후원', href: CORPORATE_DONATION_PATH },
       { label: '재능기부', href: SUPPORT_TALENT_PATH },
     ],
   },
