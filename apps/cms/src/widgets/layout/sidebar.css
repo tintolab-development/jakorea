@@ -11,7 +11,9 @@
   left: 0;
   top: 0;
   height: 100vh !important;
+  height: 100dvh !important;
   max-height: 100vh !important;
+  max-height: 100dvh !important;
   overflow: hidden;
   z-index: 100;
   display: flex !important;

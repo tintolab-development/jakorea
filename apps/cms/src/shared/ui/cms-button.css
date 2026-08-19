@@ -11,7 +11,7 @@
  *   small           100×32 · padding 6×12 · radius 6 · gap 4 · font 12/600/150%
  * Secondary: border + mint 6% overlay + #FFF
  * Cancel: 흰 배경 · 테두리 rgba(61,61,61,0.16) · 텍스트 #3D3D3D (풀페이지 모달 취소)
- * Delete: border + `--color-bg-red` (red 10% overlay + #FFF)
+ * Delete: border + red 6% overlay + #FFF (Figma `--color-red` overlay 0.06)
  *
  * Figma auto-layout이 `padding: 32px 31px`처럼 height와 모순된 값을 내보내는 경우
  * 무시하고 위 size 패딩 + flex center를 쓴다.
@@ -210,11 +210,12 @@
 .cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled) {
   color: var(--color-red, #c32f4a) !important;
   border-color: var(--color-red, #c32f4a) !important;
-  background: var(
-    --color-bg-red,
-    linear-gradient(0deg, rgba(195, 47, 74, 0.1) 0%, rgba(195, 47, 74, 0.1) 100%),
-    #fff
-  ) !important;
+  background: linear-gradient(
+      0deg,
+      rgba(195, 47, 74, 0.06) 0%,
+      rgba(195, 47, 74, 0.06) 100%
+    ),
+    #fff !important;
 }
 
 /* hover / focus / active — 기본 상태와 동일 (시각 변화 없음) */
@@ -264,10 +265,11 @@
 .cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled):active {
   color: var(--color-red, #c32f4a) !important;
   border-color: var(--color-red, #c32f4a) !important;
-  background: var(
-    --color-bg-red,
-    linear-gradient(0deg, rgba(195, 47, 74, 0.1) 0%, rgba(195, 47, 74, 0.1) 100%),
-    #fff
-  ) !important;
+  background: linear-gradient(
+      0deg,
+      rgba(195, 47, 74, 0.06) 0%,
+      rgba(195, 47, 74, 0.06) 100%
+    ),
+    #fff !important;
   box-shadow: none !important;
 }
