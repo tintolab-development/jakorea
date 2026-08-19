@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from 'react'
 import { platformMediaQueries } from '@/shared/lib/breakpoints'
 import { useMediaQuery } from '@/shared/hooks'
-import { PFArrowButton, PFText } from '@/shared/ui'
+import { PFCarouselButton, PFText } from '@/shared/ui'
 import {
   IMPACT_SECTION_TITLE,
   IMPACT_SLIDER_VISIBLE_COUNT,
@@ -49,18 +49,16 @@ export function ImpactSection() {
             </div>
 
             <div className={styles.navigation}>
-              <PFArrowButton
-                className={styles.prevButton}
+              <PFCarouselButton
                 size="large"
-                variant="secondary"
+                direction="left"
                 aria-label="이전 콘텐츠"
                 disabled={!canGoPrev}
                 onClick={() => setSlideIndex(current => Math.max(0, current - 1))}
               />
-              <PFArrowButton
-                className={styles.nextButton}
+              <PFCarouselButton
                 size="large"
-                variant="secondary"
+                direction="right"
                 aria-label="다음 콘텐츠"
                 disabled={!canGoNext}
                 onClick={() => setSlideIndex(current => Math.min(maxIndex, current + 1))}
