@@ -43,6 +43,7 @@ import { AdminAccountLogPage } from '@/pages/logs/admin-account/page'
 import { FileDownloadLogPage } from '@/pages/logs/file-download/page'
 import { PiiAccessLogPage } from '@/pages/logs/pii-access/page'
 import { BugIssueLogPage } from '@/pages/logs/bugs/page'
+import { RecruitGuidePage } from '@/pages/ja-korea/recruit/guide/page'
 import { PlaceholderPage } from '@/pages/placeholder/page'
 import { getLeafMenuPaths } from '@/shared/config/menu-config'
 
@@ -63,6 +64,7 @@ const IMPLEMENTED_LEAF_PATHS = new Set([
   '/ja-korea/notices',
   '/ja-korea/directions',
   '/ja-korea/people',
+  '/ja-korea/recruit/guide',
   '/impact/stories',
   '/education/programs',
   '/education/fields',
@@ -160,6 +162,7 @@ export const router = createBrowserRouter([
       { path: 'ja-korea/notices/:id', element: <NoticeDetailPage /> },
       { path: 'ja-korea/directions', element: <DirectionsPage /> },
       { path: 'ja-korea/people', element: <PeoplePage /> },
+      { path: 'ja-korea/recruit/guide', element: <RecruitGuidePage /> },
       {
         path: 'ja-korea/organization',
         element: <Navigate to="/ja-korea/people" replace />,
