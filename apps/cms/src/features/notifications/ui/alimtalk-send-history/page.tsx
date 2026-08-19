@@ -68,7 +68,7 @@ export function Page() {
         key: 'requestAt',
         width: COL_W.requestAt,
         align: 'center',
-        render: (value: string) => dayjs(value).format('YYYY.MM.DD HH:mm:ss'),
+        render: (value: string) => dayjs(value).format('YYYY.MM.DD HH:mm'),
       },
       {
         title: '템플릿명',
@@ -122,7 +122,7 @@ export function Page() {
         key: 'sentAt',
         width: COL_W.sendAt,
         align: 'center',
-        render: (value: string) => dayjs(value).format('YYYY.MM.DD HH:mm:ss'),
+        render: (value: string) => dayjs(value).format('YYYY.MM.DD HH:mm'),
       },
       {
         title: '수신 일시',
@@ -130,7 +130,7 @@ export function Page() {
         key: 'receivedAt',
         width: COL_W.receiveAt,
         align: 'center',
-        render: (value: string) => dayjs(value).format('YYYY.MM.DD HH:mm:ss'),
+        render: (value: string) => dayjs(value).format('YYYY.MM.DD HH:mm'),
       },
       {
         title: '예약 일시',
@@ -138,7 +138,7 @@ export function Page() {
         key: 'reservedAt',
         width: COL_W.reservedAt,
         align: 'center',
-        render: (value: string) => dayjs(value).format('YYYY.MM.DD HH:mm:ss'),
+        render: (value: string) => dayjs(value).format('YYYY.MM.DD HH:mm'),
       },
     ],
     [rows.length]

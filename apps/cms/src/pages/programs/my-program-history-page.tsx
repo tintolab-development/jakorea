@@ -129,7 +129,7 @@ export function MyProgramHistoryPage() {
     {
       color: 'blue',
       label: '프로그램 생성',
-      time: dayjs(program.createdAt).format('YYYY-MM-DD HH:mm'),
+      time: dayjs(program.createdAt).format('YYYY.MM.DD HH:mm'),
       description: `프로그램 "${program.title}"가 생성되었습니다.`,
     },
   ]
@@ -139,7 +139,7 @@ export function MyProgramHistoryPage() {
     timelineEvents.push({
       color: 'green',
       label: '신청 접수',
-      time: dayjs(firstApp.submittedAt).format('YYYY-MM-DD HH:mm'),
+      time: dayjs(firstApp.submittedAt).format('YYYY.MM.DD HH:mm'),
       description: '프로그램 신청이 접수되었습니다.',
     })
   }
@@ -148,7 +148,7 @@ export function MyProgramHistoryPage() {
     timelineEvents.push({
       color: 'purple',
       label: '매칭 완료',
-      time: dayjs(matching.matchedAt).format('YYYY-MM-DD HH:mm'),
+      time: dayjs(matching.matchedAt).format('YYYY.MM.DD HH:mm'),
       description: '강사와 프로그램이 매칭되었습니다.',
     })
   }
@@ -159,7 +159,7 @@ export function MyProgramHistoryPage() {
         timelineEvents.push({
           color: 'orange',
           label: '일정 확정',
-          time: dayjs(schedule.date).format('YYYY-MM-DD HH:mm'),
+          time: dayjs(schedule.date).format('YYYY.MM.DD HH:mm'),
           description: `첫 일정이 확정되었습니다: ${schedule.title}`,
         })
       }
@@ -213,7 +213,7 @@ export function MyProgramHistoryPage() {
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 150,
-      render: (date: string | Date) => dayjs(date).format('YYYY-MM-DD'),
+      render: (date: string | Date) => dayjs(date).format('YYYY.MM.DD'),
     },
   ]
 
@@ -287,7 +287,7 @@ export function MyProgramHistoryPage() {
                   title: '날짜',
                   dataIndex: 'date',
                   key: 'date',
-                  render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm'),
+                  render: (date: string) => dayjs(date).format('YYYY.MM.DD HH:mm'),
                 },
                 {
                   title: '장소',
@@ -347,14 +347,14 @@ export function MyProgramHistoryPage() {
             />
             <DetailInfoForm.Field
               label="매칭일"
-              view={dayjs(program.matchedAt).format('YYYY-MM-DD')}
+              view={dayjs(program.matchedAt).format('YYYY.MM.DD')}
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="진행 기간"
               fullRow
-              view={`${dayjs(program.startDate).format('YYYY-MM-DD')} ~ ${dayjs(program.endDate).format('YYYY-MM-DD')}`}
+              view={`${dayjs(program.startDate).format('YYYY.MM.DD')} ~ ${dayjs(program.endDate).format('YYYY.MM.DD')}`}
             />
           </DetailInfoForm.Row>
           {fullProgram?.schoolId ? (

@@ -76,7 +76,7 @@ export default function FileDownloadHistoryPage() {
         key: 'downloadedAt',
         width: TABLE_COL_WIDTH.downloadedAt,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm'),
       },
       {
         title: 'IP',

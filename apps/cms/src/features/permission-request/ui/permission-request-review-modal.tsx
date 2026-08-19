@@ -8,6 +8,7 @@ import { CmsButton, CmsRadio, ContentModal } from '@/shared/ui'
 import { useState } from 'react'
 import { Form, Input, DatePicker, Space, Tag } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { formatDateDot, formatDateTimeDot } from '@/shared/utils'
 import type { PermissionRequest, ReviewPermissionRequestInput } from '@/types/permission-request'
 import dayjs from 'dayjs'
 
@@ -123,12 +124,12 @@ export function PermissionRequestReviewModal({
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="요청 기간"
-                view={`${new Date(request.requestedPeriod.startDate).toLocaleDateString('ko-KR')} ~ ${new Date(request.requestedPeriod.endDate).toLocaleDateString('ko-KR')}`}
+                view={`${formatDateDot(request.requestedPeriod.startDate)} ~ ${formatDateDot(request.requestedPeriod.endDate)}`}
               />
             </DetailInfoForm.Row>
           )}
           <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field label="요청일" view={new Date(request.createdAt).toLocaleString('ko-KR')} />
+            <DetailInfoForm.Field label="요청일" view={formatDateTimeDot(request.createdAt)} />
           </DetailInfoForm.Row>
         </DetailInfoForm>
       </div>

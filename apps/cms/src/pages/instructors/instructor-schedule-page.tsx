@@ -278,7 +278,7 @@ export function InstructorSchedulePage() {
                         <strong>{schedule.title}</strong>
                       </div>
                       <div>
-                        {dayjs(schedule.date).format('YYYY-MM-DD')} {schedule.startTime} -{' '}
+                        {dayjs(schedule.date).format('YYYY.MM.DD')} {schedule.startTime} -{' '}
                         {schedule.endTime}
                       </div>
                       {schedule.location && <div>장소: {schedule.location}</div>}

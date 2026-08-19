@@ -9,6 +9,7 @@ import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants/delete-guid
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { formatDateDot } from '@/shared/utils'
 import { CmsButton, DeleteGuideModal, ExcelButton, useCmsAlert } from '@/shared/ui'
 import {
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
@@ -86,7 +87,7 @@ function createInitialFilters(): PendingFilters {
 }
 
 function formatTrainingDate(rawDate: string): string {
-  return dayjs(rawDate).format('YYYY.M.D')
+  return formatDateDot(rawDate)
 }
 
 function filterRows(rows: GeminiPerformanceRow[], filters: PendingFilters) {

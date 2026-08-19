@@ -197,7 +197,7 @@ function AdminFAQPage() {
         key: 'createdAt',
         width: FAQ_LIST_COL_WIDTH.datetime,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm'),
       },
     ],
     [tableData.length]

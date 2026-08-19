@@ -18,24 +18,10 @@ import {
 } from './constants/program-list-constants'
 import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토']
+import { formatDateRangeDot } from '@/shared/utils'
 
 function formatDateRange(start?: string | Date, end?: string | Date): string {
-  if (!start || !end) return '-'
-  try {
-    const d1 = new Date(start)
-    const d2 = new Date(end)
-    const fmt = (d: Date) => {
-      const y = String(d.getFullYear()).slice(-2)
-      const m = String(d.getMonth() + 1).padStart(2, '0')
-      const day = String(d.getDate()).padStart(2, '0')
-      const w = WEEKDAY_KO[d.getDay()]
-      return `${y}.${m}.${day}(${w})`
-    }
-    return `${fmt(d1)} - ${fmt(d2)}`
-  } catch {
-    return '-'
-  }
+  return formatDateRangeDot(start, end)
 }
 
 export interface EnrollmentStatusTableProps {

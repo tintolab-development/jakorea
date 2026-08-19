@@ -158,7 +158,7 @@ export function ProgramSatisfactionPage() {
       key: 'period',
       width: 200,
       render: (_, record) =>
-        `${dayjs(record.startDate).format('YYYY-MM-DD')} ~ ${dayjs(record.endDate).format('YYYY-MM-DD')}`,
+        `${dayjs(record.startDate).format('YYYY.MM.DD')} ~ ${dayjs(record.endDate).format('YYYY.MM.DD')}`,
     },
     {
       title: '만족도 조사 상태',

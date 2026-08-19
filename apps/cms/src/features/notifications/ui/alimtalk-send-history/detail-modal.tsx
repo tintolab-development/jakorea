@@ -33,14 +33,14 @@ export function DetailModal({ open, row, onClose }: DetailModalProps) {
                 <DetailInfoForm.Field
                   label="발송일시"
                   fullRow
-                  view={dayjs(row.sentAt).format('YYYY.MM.DD HH:mm:ss')}
+                  view={dayjs(row.sentAt).format('YYYY.MM.DD HH:mm')}
                 />
               </DetailInfoForm.Row>
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label="수신일시"
                   fullRow
-                  view={dayjs(row.receivedAt).format('YYYY.MM.DD HH:mm:ss')}
+                  view={dayjs(row.receivedAt).format('YYYY.MM.DD HH:mm')}
                 />
               </DetailInfoForm.Row>
               <DetailInfoForm.Row type="single">

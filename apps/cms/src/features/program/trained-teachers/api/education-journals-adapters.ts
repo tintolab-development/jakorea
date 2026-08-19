@@ -16,7 +16,7 @@ export function mapEducationJournalResponseToEntry(
   const date = submitted?.isValid() ? submitted.format('YYYY.MM.DD') : ''
   const dayOfWeek = submitted?.isValid() ? submitted.format('dd') : ''
   const submittedAt = submitted?.isValid()
-    ? submitted.format('YYYY.MM.DD HH:mm:ss')
+    ? submitted.format('YYYY.MM.DD HH:mm')
     : submittedAtRaw
 
   return {

@@ -157,7 +157,7 @@ export function MyMonthlySettlementPage() {
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 150,
-      render: (date: string | Date) => dayjs(date).format('YYYY-MM-DD'),
+      render: (date: string | Date) => dayjs(date).format('YYYY.MM.DD'),
       sorter: (a, b) => {
         const dateA = typeof a.createdAt === 'string' ? new Date(a.createdAt) : a.createdAt
         const dateB = typeof b.createdAt === 'string' ? new Date(b.createdAt) : b.createdAt

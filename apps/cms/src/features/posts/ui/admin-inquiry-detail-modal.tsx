@@ -149,7 +149,7 @@ export function AdminInquiryDetailModal({
                         문의일시
                       </th>
                       <td className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--value">
-                        {dayjs(detail.createdAt).format('YYYY.MM.DD HH:mm:ss')}
+                        {dayjs(detail.createdAt).format('YYYY.MM.DD HH:mm')}
                       </td>
                     </tr>
                     <tr>

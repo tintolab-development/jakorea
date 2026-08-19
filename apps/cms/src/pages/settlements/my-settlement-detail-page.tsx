@@ -198,7 +198,7 @@ export function MySettlementDetailPage() {
                     />
                     <DetailInfoForm.Field
                       label="지급조서 생성일"
-                      view={dayjs(paymentStatement.generatedAt).format('YYYY-MM-DD HH:mm')}
+                      view={dayjs(paymentStatement.generatedAt).format('YYYY.MM.DD HH:mm')}
                     />
                   </DetailInfoForm.Row>
                 </DetailInfoForm>
@@ -219,7 +219,7 @@ export function MySettlementDetailPage() {
               {paymentStatement.instructorConfirmedAt && (
                 <p style={{ margin: 0, color: 'rgba(0, 0, 0, 0.65)' }}>
                   확인 완료일:{' '}
-                  {dayjs(paymentStatement.instructorConfirmedAt).format('YYYY-MM-DD HH:mm')}
+                  {dayjs(paymentStatement.instructorConfirmedAt).format('YYYY.MM.DD HH:mm')}
                 </p>
               )}
               {paymentStatement.paymentCompleted && <Tag color="success">계좌 지급 완료</Tag>}
@@ -273,11 +273,11 @@ export function MySettlementDetailPage() {
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="생성일"
-                view={dayjs(settlement.createdAt).format('YYYY-MM-DD HH:mm')}
+                view={dayjs(settlement.createdAt).format('YYYY.MM.DD HH:mm')}
               />
               <DetailInfoForm.Field
                 label="수정일"
-                view={dayjs(settlement.updatedAt).format('YYYY-MM-DD HH:mm')}
+                view={dayjs(settlement.updatedAt).format('YYYY.MM.DD HH:mm')}
               />
             </DetailInfoForm.Row>
             {settlement.documentGeneratedAt ? (
@@ -285,7 +285,7 @@ export function MySettlementDetailPage() {
                 <DetailInfoForm.Field
                   label="문서 생성일"
                   fullRow
-                  view={dayjs(settlement.documentGeneratedAt).format('YYYY-MM-DD HH:mm')}
+                  view={dayjs(settlement.documentGeneratedAt).format('YYYY.MM.DD HH:mm')}
                 />
               </DetailInfoForm.Row>
             ) : null}
@@ -383,7 +383,7 @@ export function MySettlementDetailPage() {
                       <div style={{ color: 'rgba(0, 0, 0, 0.65)' }}>{history.comment}</div>
                     )}
                     <div style={{ fontSize: 12, color: 'rgba(0, 0, 0, 0.45)' }}>
-                      {dayjs(history.createdAt).format('YYYY-MM-DD HH:mm')}
+                      {dayjs(history.createdAt).format('YYYY.MM.DD HH:mm')}
                     </div>
                   </Space>
                 </Card>

@@ -371,7 +371,7 @@ export default function TextbookPage() {
         key: 'registeredAt',
         width: TEXTBOOK_COL_WIDTH.registeredAt,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm'),
       },
     ],
     [filteredRows.length]
