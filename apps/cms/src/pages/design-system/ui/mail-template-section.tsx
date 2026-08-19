@@ -29,7 +29,8 @@ export function MailTemplateSection() {
         삭제만 가능합니다.
         <br />
         첨부는 <code>FileSelectField</code> · 최대 10개 · 30MB · 파일명 45자. 미리보기는{' '}
-        <code>PreviewModal</code> ContentModal 1000px.
+        미리보기는 <code>PreviewModal</code> ContentModal 1000px · 제목 <code>메일 미리보기</code> ·
+        변수는 샘플값으로 치환됩니다.
       </p>
       <DsDemo label="FormModal (등록)">
         <CmsButton
@@ -64,7 +65,7 @@ export function MailTemplateSection() {
           type="button"
           onClick={() => setPreviewOpen(true)}
         >
-          템플릿 미리보기 열기
+          메일 미리보기 열기
         </CmsButton>
       </DsDemo>
       <FormModal
@@ -80,6 +81,10 @@ export function MailTemplateSection() {
           open={previewOpen}
           subject={SAMPLE.subject}
           bodyHtml={SAMPLE.bodyHtml}
+          senderName={SAMPLE.senderName}
+          senderEmail={SAMPLE.senderEmail}
+          attachments={SAMPLE.attachmentFileNames.map(name => ({ name, sizeBytes: 82 * 1024 }))}
+          previewAt={SAMPLE.updatedAt}
           onClose={() => setPreviewOpen(false)}
         />
       ) : null}

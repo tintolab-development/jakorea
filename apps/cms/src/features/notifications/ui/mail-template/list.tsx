@@ -23,7 +23,6 @@ import {
   closeMailFormSearchParams,
   mailFormStateFromSearchParams,
   openMailCreateFormSearchParams,
-  openMailEditFormSearchParams,
 } from '@/features/notifications/model/mail-template/form-url'
 import {
   MAIL_CATEGORY_MOCK,
@@ -294,13 +293,6 @@ export function MailTemplateList() {
     setSearchParams(prev => openMailCreateFormSearchParams(prev, categoryId), { replace: false })
   }, [selection, setSearchParams, templates])
 
-  const handleOpenEdit = useCallback(() => {
-    if (!selectedTemplate) return
-    setSearchParams(prev => openMailEditFormSearchParams(prev, selectedTemplate.id), {
-      replace: false,
-    })
-  }, [selectedTemplate, setSearchParams])
-
   const handleSubmitForm = useCallback(
     (draft: MailTemplateFormDraft) => {
       const now = new Date().toISOString()
@@ -433,7 +425,6 @@ export function MailTemplateList() {
               template={selectedTemplate}
               categoryName={selectedCategoryName}
               onPreview={() => setPreviewOpen(true)}
-              onEdit={handleOpenEdit}
             />
           </div>
         </DndContext>
@@ -527,6 +518,10 @@ export function MailTemplateList() {
         open={previewOpen && selectedTemplate != null}
         subject={selectedTemplate?.subject ?? ''}
         bodyHtml={selectedTemplate?.bodyHtml ?? ''}
+        senderName={selectedTemplate?.senderName}
+        senderEmail={selectedTemplate?.senderEmail}
+        attachments={selectedTemplate?.attachmentFileNames.map(name => ({ name }))}
+        previewAt={selectedTemplate?.updatedAt}
         onClose={() => setPreviewOpen(false)}
       />
     </div>

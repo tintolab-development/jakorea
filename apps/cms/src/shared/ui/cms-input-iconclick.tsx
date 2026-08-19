@@ -57,13 +57,33 @@ export function CmsInputIconClick({
     onCommitEdit()
   }
 
+  const canRequestEdit = !readOnly && !editing
+
+  const handleRequestEdit = () => {
+    if (!canRequestEdit) return
+    onRequestEdit()
+  }
+
   return (
     <div
       className={join(
         'cms-input-iconclick',
         readOnly ? 'cms-input-iconclick--read-only' : undefined,
+        canRequestEdit ? 'cms-input-iconclick--editable' : undefined,
         containerClassName
       )}
+      role={canRequestEdit ? 'button' : undefined}
+      tabIndex={canRequestEdit ? 0 : undefined}
+      onClick={canRequestEdit ? handleRequestEdit : undefined}
+      onKeyDown={
+        canRequestEdit
+          ? e => {
+              if (e.key !== 'Enter' && e.key !== ' ') return
+              e.preventDefault()
+              handleRequestEdit()
+            }
+          : undefined
+      }
     >
       {readOnly ? (
         <span className={join('cms-input-iconclick__text', textClassName)}>{value}</span>
@@ -103,7 +123,10 @@ export function CmsInputIconClick({
         <button
           type="button"
           className={join('cms-input-iconclick__edit-btn', editButtonClassName)}
-          onClick={onRequestEdit}
+          onClick={e => {
+            e.stopPropagation()
+            handleRequestEdit()
+          }}
           aria-label={editButtonAriaLabel ?? '텍스트 수정'}
           aria-disabled={editing}
           tabIndex={editing ? -1 : 0}

@@ -1,6 +1,6 @@
 import { MAIL_ROOT_CATEGORY_ID, type MailCategory, type MailTemplateItem } from './types'
 
-const WORKSHOP_BODY_HTML = `<p>안녕하세요, <strong><span style="color: #01A1AF; font-size: 15px">#{회원명}</span></strong>님 <strong><span style="color: #01A1AF; font-size: 15px">#{서비스명}</span></strong>입니다.</p><p>2026 JA Company Of the Year 2차 교육 워크숍 수강 안내드립니다.</p>`
+const WORKSHOP_BODY_HTML = `<p>안녕하세요, <strong><span style="color: #01A1AF; font-size: 15px">#{회원명}</span></strong>님 <strong><span style="color: #01A1AF; font-size: 15px">#{프로그램명}</span></strong>입니다.</p><p>2026 JA Company Of the Year 2차 교육 워크숍 수강 안내드립니다.</p>`
 
 export const MAIL_CATEGORY_MOCK: MailCategory[] = [
   { id: 'cat-notice', name: '전체 공지', parentId: MAIL_ROOT_CATEGORY_ID },

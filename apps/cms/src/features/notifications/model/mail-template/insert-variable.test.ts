@@ -41,16 +41,16 @@ describe('insertMailVariableInText', () => {
 
   it('does not split a token when inserting at the start of its interior', () => {
     const text = '#{회원명}'
-    const { next } = insertMailVariableInText(text, '서비스명', 2, 2)
-    expect(next).toBe('#{회원명}#{서비스명}')
+    const { next } = insertMailVariableInText(text, '프로그램명', 2, 2)
+    expect(next).toBe('#{회원명}#{프로그램명}')
   })
 })
 
 describe('findMailVariableRanges', () => {
   it('finds adjacent tokens without treating them as nested', () => {
-    expect(findMailVariableRanges('#{회원명}#{서비스명}')).toEqual([
+    expect(findMailVariableRanges('#{회원명}#{프로그램명}')).toEqual([
       { from: 0, to: 6 },
-      { from: 6, to: 13 },
+      { from: 6, to: 14 },
     ])
   })
 })

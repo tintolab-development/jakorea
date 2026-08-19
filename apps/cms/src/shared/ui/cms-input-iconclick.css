@@ -7,8 +7,16 @@
   min-width: 0;
 }
 
+.cms-input-iconclick--editable {
+  cursor: pointer;
+}
+
 .cms-input-iconclick__text {
   min-width: 0;
+}
+
+.cms-input-iconclick--editable .cms-input-iconclick__text {
+  cursor: pointer;
 }
 
 .cms-input-iconclick__text--placeholder {

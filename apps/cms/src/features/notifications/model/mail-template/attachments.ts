@@ -7,9 +7,11 @@ export const MAIL_ATTACHMENT_BLOCKED_EXTENSIONS = [
   'bat',
   'cmd',
   'com',
+  'cpl',
   'msi',
   'scr',
   'vbs',
+  'wsr',
   'sh',
   'dll',
 ]

@@ -7,12 +7,11 @@ import {
   CmsInput,
   CmsInputIconClick,
   ConfirmModal,
-  FileSelectField,
   useCmsAlert,
 } from '@/shared/ui'
-import { RichTextEditor } from '@/shared/rich-text'
 import type { MailTemplateItem } from '@/features/notifications/model/mail-template/types'
-import { MAIL_ATTACHMENT_GUIDE_LINES } from '@/features/notifications/model/mail-template/attachments'
+import type { MailPreviewAttachment } from '@/features/notifications/model/mail-template/preview'
+import { ComposeFields } from './compose-fields'
 import { PreviewModal } from './preview-modal'
 import {
   useMailTemplateForm,
@@ -21,6 +20,11 @@ import {
 } from './use-form'
 import { VariablesPanel } from './variables-panel'
 import './form-modal.css'
+
+type PreviewDraft = MailTemplateFormDraft & {
+  attachments: MailPreviewAttachment[]
+  previewAt: string
+}
 
 type FormModalProps = {
   open: boolean
@@ -35,7 +39,7 @@ export function FormModal({ open, mode, template, onClose, onSubmit, onDelete }:
   const { showAlert } = useCmsAlert()
   const [previewOpen, setPreviewOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [previewDraft, setPreviewDraft] = useState<MailTemplateFormDraft | null>(null)
+  const [previewDraft, setPreviewDraft] = useState<PreviewDraft | null>(null)
   const form = useMailTemplateForm(open, mode, template)
   const isEdit = mode === 'edit'
   const templateNamePlaceholder = '템플릿명을 입력하세요'
@@ -48,7 +52,12 @@ export function FormModal({ open, mode, template, onClose, onSubmit, onDelete }:
   }, [open, mode])
 
   const handlePreview = () => {
-    setPreviewDraft(form.getDraft())
+    const draft = form.getDraft()
+    setPreviewDraft({
+      ...draft,
+      attachments: form.getPreviewAttachments(),
+      previewAt: new Date().toISOString(),
+    })
     setPreviewOpen(true)
   }
 
@@ -117,7 +126,7 @@ export function FormModal({ open, mode, template, onClose, onSubmit, onDelete }:
                     <CmsButton
                       variant="delete"
                       size="large"
-                      width="max-content"
+                      width={140}
                       type="button"
                       onClick={() => setDeleteOpen(true)}
                     >
@@ -240,71 +249,18 @@ export function FormModal({ open, mode, template, onClose, onSubmit, onDelete }:
                     mode="edit"
                     className="mail-template-form-modal__compose"
                   >
-                    <DetailInfoForm.Row type="single">
-                      <DetailInfoForm.Field
-                        label="제목"
-                        required
-                        fullRow
-                        view={form.subject}
-                        edit={
-                          <div className="mail-template-form-modal__subject">
-                            <CmsInput
-                              ref={form.subjectInputRef}
-                              inputSize="large"
-                              width="100%"
-                              allowClear={false}
-                              maxLength={form.subjectMaxLength}
-                              placeholder="제목을 작성하세요"
-                              value={form.subject}
-                              onChange={event => form.handleSubjectChange(event.target.value)}
-                              onFocus={event => form.rememberSubjectRange(event.currentTarget)}
-                              onBlur={event => form.rememberSubjectRange(event.currentTarget)}
-                              onSelect={event => form.rememberSubjectRange(event.currentTarget)}
-                              onClick={event => form.rememberSubjectRange(event.currentTarget)}
-                              onKeyUp={event => form.rememberSubjectRange(event.currentTarget)}
-                            />
-                            <span className="mail-template-form-modal__subject-count">
-                              {form.subject.length}/{form.subjectMaxLength}
-                            </span>
-                          </div>
-                        }
-                      />
-                    </DetailInfoForm.Row>
-                    <DetailInfoForm.Row type="single">
-                      <DetailInfoForm.Field
-                        label="내용"
-                        required
-                        fullRow
-                        view=""
-                        edit={
-                          <div className="mail-template-form-modal__editor-host">
-                            <RichTextEditor
-                              editor={form.editor}
-                              minHeight={form.editorMinHeight}
-                            />
-                          </div>
-                        }
-                      />
-                    </DetailInfoForm.Row>
-                    <DetailInfoForm.Row type="single">
-                      <DetailInfoForm.Field
-                        label="첨부파일"
-                        fullRow
-                        view=""
-                        edit={
-                          <FileSelectField
-                            className="mail-template-form-modal__file-field"
-                            multiple
-                            maxTotalBytes={0}
-                            buttonLabel="파일 추가"
-                            fileNames={form.attachmentFileNames}
-                            guideLines={MAIL_ATTACHMENT_GUIDE_LINES}
-                            onFilesChange={handleAttachmentAdd}
-                            onRemoveFile={form.handleAttachmentRemove}
-                          />
-                        }
-                      />
-                    </DetailInfoForm.Row>
+                    <ComposeFields
+                      editor={form.editor}
+                      editorMinHeight={form.editorMinHeight}
+                      subject={form.subject}
+                      subjectMaxLength={form.subjectMaxLength}
+                      subjectInputRef={form.subjectInputRef}
+                      attachmentFileNames={form.attachmentFileNames}
+                      onSubjectChange={form.handleSubjectChange}
+                      onRememberSubjectRange={form.rememberSubjectRange}
+                      onAttachmentAdd={handleAttachmentAdd}
+                      onAttachmentRemove={form.handleAttachmentRemove}
+                    />
                   </DetailInfoForm>
                 </section>
               </div>
@@ -316,8 +272,13 @@ export function FormModal({ open, mode, template, onClose, onSubmit, onDelete }:
 
       <PreviewModal
         open={previewOpen}
+        zIndex={1100}
         subject={previewDraft?.subject ?? ''}
         bodyHtml={previewDraft?.bodyHtml ?? ''}
+        senderName={previewDraft?.senderName}
+        senderEmail={previewDraft?.senderEmail}
+        attachments={previewDraft?.attachments}
+        previewAt={previewDraft?.previewAt}
         onClose={() => setPreviewOpen(false)}
       />
       <ConfirmModal

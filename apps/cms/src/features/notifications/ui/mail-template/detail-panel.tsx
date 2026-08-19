@@ -7,10 +7,9 @@ type DetailPanelProps = {
   template: MailTemplateItem | null
   categoryName: string
   onPreview: () => void
-  onEdit: () => void
 }
 
-export function DetailPanel({ template, categoryName, onPreview, onEdit }: DetailPanelProps) {
+export function DetailPanel({ template, categoryName, onPreview }: DetailPanelProps) {
   if (!template) {
     return <div className="mail-template-detail mail-template-detail--empty" />
   }
@@ -52,14 +51,9 @@ export function DetailPanel({ template, categoryName, onPreview, onEdit }: Detai
             label="템플릿 상세"
             fullRow
             view={
-              <div className="mail-template-detail__actions">
-                <CmsButton variant="secondary" size="medium" type="button" onClick={onPreview}>
-                  미리보기
-                </CmsButton>
-                <CmsButton variant="secondary" size="medium" type="button" onClick={onEdit}>
-                  수정
-                </CmsButton>
-              </div>
+              <CmsButton variant="secondary" size="medium" type="button" onClick={onPreview}>
+                미리보기
+              </CmsButton>
             }
           />
         </DetailInfoForm.Row>
