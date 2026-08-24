@@ -26,6 +26,7 @@ import { ModalCatalogSection } from './ui/modal-catalog-section'
 import { ModalProcessSection } from './ui/modal-process-section'
 import { ModalsExtendedSection } from './ui/modals-extended-section'
 import { ModalsSection } from './ui/modals-section'
+import { PaymentOrderCalculationBasisDetailSection } from './ui/payment-order-calculation-basis-detail-section'
 import { NavigationSection } from './ui/navigation-section'
 import { StatusExtendedSection } from './ui/status-extended-section'
 import { StatusSection } from './ui/status-section'
@@ -81,6 +82,7 @@ export function DesignSystemPage() {
           <ModalCatalogSection />
           <ModalProcessSection />
           <ModalsExtendedSection />
+          <PaymentOrderCalculationBasisDetailSection />
           <CalendarSection />
           <StatusSection />
           <StatusExtendedSection />
