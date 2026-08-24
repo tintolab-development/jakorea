@@ -13,8 +13,12 @@ import {
   markAllAdminNotificationsAsRead,
   shouldUseDashboardRemoteApi,
 } from '../api/admin-dashboard-service'
-import { dashboardQueryKeys } from '../api/dashboard-query-keys'
 import { useAdminNotifications } from '../hooks/use-admin-notifications'
+import {
+  applyAllNotificationsRead,
+  applyNotificationHidden,
+  applyNotificationRead,
+} from '../lib/notification-query-cache'
 import { useNotificationStore } from '../model/notification-store'
 import type { Notification } from '../api/notification-service'
 
@@ -48,22 +52,22 @@ export function useNotifications(): UseNotificationsResult {
 
   const { mutateAsync: markRemoteAsRead } = useMutation({
     mutationFn: (notificationId: string) => markAdminNotificationAsRead(notificationId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.notifications('remote', { page: 0, size: 20, unreadOnly: false }) })
+    onSuccess: (_data, notificationId) => {
+      applyNotificationRead(queryClient, notificationId)
     },
   })
 
   const { mutateAsync: hideRemoteNotification } = useMutation({
     mutationFn: (notificationId: string) => hideAdminNotification(notificationId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.notifications('remote', { page: 0, size: 20, unreadOnly: false }) })
+    onSuccess: (_data, notificationId) => {
+      applyNotificationHidden(queryClient, notificationId)
     },
   })
 
   const { mutateAsync: markRemoteAllAsRead } = useMutation({
     mutationFn: () => markAllAdminNotificationsAsRead(),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.notifications('remote', { page: 0, size: 20, unreadOnly: false }) })
+      applyAllNotificationsRead(queryClient)
     },
   })
 

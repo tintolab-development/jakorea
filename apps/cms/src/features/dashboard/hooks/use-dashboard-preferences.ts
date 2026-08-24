@@ -15,7 +15,6 @@ export function useDashboardPreferences(enabled = true) {
     queryFn: () => loadDashboardPreferences(),
     enabled: remoteEnabled,
     staleTime: 60_000,
-    retry: 1,
   })
 }
 
@@ -26,7 +25,7 @@ export function useSaveDashboardPreferences() {
     mutationFn: (payload?: DashboardMePreferencesRequest) => saveDashboardPreferences(payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.preferences('remote') })
-      void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.all })
+      void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.shortcutBadges('remote') })
     },
   })
 }
