@@ -695,6 +695,7 @@ export function getMenuShortcutBadgeCounts(): Record<string, number> {
     textbooks: 0,
     performance: pending.pendingSettlements,
     'email-history': 0,
+    'member-login-history': 0,
     'file-download-history': 0,
     'privacy-query-history': 0,
     'bug-issue-history': 0,

@@ -74,6 +74,7 @@ const SHORTCUT_ICON_MAP: Record<string, React.ReactNode> = {
   'programs-detail': <ShopOutlined />,
   performance: <LineChartOutlined />,
   'email-history': <MailOutlined />,
+  'member-login-history': <UserOutlined />,
   'file-download-history': <CloudDownloadOutlined />,
   'privacy-query-history': <SafetyOutlined />,
   'bug-issue-history': <BugOutlined />,
