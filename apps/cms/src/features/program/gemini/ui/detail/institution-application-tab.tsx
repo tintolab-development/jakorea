@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -12,6 +12,7 @@ import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { createInstitutionAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
+import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from '../../api/visiting-training/capabilities'
 import { useGeminiOrganizationApplicationsQuery } from '../../api/visiting-training/hooks'
 import {
@@ -140,7 +141,9 @@ export function GeminiInstitutionApplicationTab({
     recruitmentId,
     remoteEnabled && Boolean(recruitmentId)
   )
-  const [rows, setRows] = useState(() => getGeminiInstitutionApplicationRows())
+  const [rows, setRows] = useState<GeminiInstitutionApplicationRow[]>(() =>
+    shouldUseGeminiVisitingTrainingRemoteApi() ? [] : getGeminiInstitutionApplicationRows()
+  )
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
@@ -159,6 +162,7 @@ export function GeminiInstitutionApplicationTab({
   }, [remoteEnabled, remoteQuery.data])
 
   const filteredRows = useMemo(() => filterRows(rows, appliedFilters), [rows, appliedFilters])
+  const awaitingRemoteRows = remoteEnabled && isAwaitingFirstQueryData(remoteQuery)
 
   const selectedRows = useMemo(
     () => rows.filter(row => selectedRowKeys.includes(row.id)),
@@ -373,6 +377,11 @@ export function GeminiInstitutionApplicationTab({
 
   return (
     <>
+      {awaitingRemoteRows ? (
+        <div className="detail-fullpage-modal__loading" role="status" aria-label="상세 불러오는 중">
+          <Spin size="large" />
+        </div>
+      ) : (
       <FilterTableLayout
         bordered={false}
         fields={FILTER_FIELDS}
@@ -451,7 +460,6 @@ export function GeminiInstitutionApplicationTab({
           scroll={{ x: TABLE_SCROLL_X }}
           columns={columns}
           dataSource={filteredRows}
-          loading={remoteEnabled && remoteQuery.isFetching}
           pagination={false}
           rowSelection={
             canWrite
@@ -465,6 +473,7 @@ export function GeminiInstitutionApplicationTab({
           }
         />
       </FilterTableLayout>
+      )}
 
       <DeleteGuideModal
         open={bulkRejectOpen}

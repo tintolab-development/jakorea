@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import { useCmsAlert } from '@/shared/ui'
+import { geminiVisitingTrainingQueryKeys } from '../../api/visiting-training/query-keys'
 import { geminiRecruitmentService } from '../../api/recruitment-service'
 import { useGeminiRecruitmentAddForm } from '../../hooks/use-gemini-recruitment-add-form'
 import { persistGeminiRecruitmentAddDraft } from '../../lib/recruitment/add-local-save'
@@ -40,6 +42,7 @@ export function GeminiRecruitmentAddFullpageModal({
   onClose: () => void
 }) {
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
   const form = useGeminiRecruitmentAddForm(open)
   const [closeConfirmOpen, setCloseConfirmOpen] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -65,6 +68,9 @@ export function GeminiRecruitmentAddFullpageModal({
     const snapshot = form.buildSaveSnapshot()
     try {
       await geminiRecruitmentService.register(snapshot)
+      await queryClient.invalidateQueries({
+        queryKey: geminiVisitingTrainingQueryKeys.recruitmentList(),
+      })
       showAlert({
         title: '안내',
         content: REGISTER_SUCCESS_MESSAGE,
@@ -76,7 +82,7 @@ export function GeminiRecruitmentAddFullpageModal({
         content: '모집 공고 등록에 실패했습니다.\n입력값과 서버 상태를 확인한 뒤 다시 시도해 주세요.',
       })
     }
-  }, [form, onClose, showAlert])
+  }, [form, onClose, queryClient, showAlert])
 
   const handleRequestClose = useCallback(() => {
     if (form.isDirty) {

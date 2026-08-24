@@ -48,6 +48,8 @@ export interface ProgramListProps {
   loading?: boolean
   headerTitle?: string
   onView: (program: Program) => void
+  /** 행 hover 시 상세 prefetch (remote 목록) */
+  onPrefetch?: (program: Program) => void
   onBulkDelete?: (programs: Program[]) => void
   onSelectionChange?: (selectedKeys: React.Key[]) => void
   selectedRowKeys?: React.Key[]
@@ -73,6 +75,7 @@ export function ProgramList({
   data,
   loading,
   onView,
+  onPrefetch,
   headerTitle,
   onBulkDelete,
   onSelectionChange,
@@ -262,6 +265,7 @@ export function ProgramList({
             }
             onRow={record => ({
               onClick: () => onView(record),
+              onMouseEnter: onPrefetch ? () => onPrefetch(record) : undefined,
               style: { cursor: 'pointer' },
             })}
             pagination={false}

@@ -7,8 +7,12 @@ export function useDeleteGeneralPrograms() {
 
   return useMutation({
     mutationFn: (programIds: string[]) => deleteGeneralPrograms(programIds),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.all })
+    onSuccess: (_data, programIds) => {
+      for (const programId of programIds) {
+        queryClient.removeQueries({ queryKey: generalProgramQueryKeys.detail(programId) })
+      }
+      void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.lists() })
+      void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.overviewStages() })
     },
   })
 }

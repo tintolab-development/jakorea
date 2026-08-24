@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
-import { Typography } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -203,6 +202,12 @@ export function GeminiRecruitmentDetailFullPageModal({
         open={open}
         onClose={onClose}
         title={detailTitle}
+        loading={isDetailFetching && !resolvedDetail}
+        error={
+          !isDetailFetching && !resolvedDetail
+            ? '모집 공고 정보를 찾을 수 없습니다.'
+            : null
+        }
         headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
         className="program-detail-fullpage-modal gemini-recruitment-detail-fullpage-modal"
         sidebar={
@@ -216,11 +221,7 @@ export function GeminiRecruitmentDetailFullPageModal({
           />
         }
       >
-        {isDetailFetching && !resolvedDetail ? (
-          <Typography.Text type="secondary">모집 공고 정보를 불러오는 중…</Typography.Text>
-        ) : !resolvedDetail ? (
-          <Typography.Text type="secondary">모집 공고 정보를 찾을 수 없습니다.</Typography.Text>
-        ) : (
+        {resolvedDetail ? (
           <>
             {activeLnb === 'info' ? (
               <>
@@ -265,7 +266,7 @@ export function GeminiRecruitmentDetailFullPageModal({
               </div>
             )}
           </>
-        )}
+        ) : null}
       </DetailFullPageModal>
       <GeminiRecruitmentAddPreviewModal
         open={previewOpen}

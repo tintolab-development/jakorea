@@ -238,10 +238,11 @@ export function ProgramDetailFullPageModal({
   const loading = onUpdateProgram ? externalLoading : legacyLoading
   const sponsorName = onUpdateProgram ? externalSponsorName : legacySponsorName
   // remote 부모(onUpdateProgram): 로딩 중 목록/stub program으로 본문 채우지 않음
+  // legacy Zustand: 상세 GET이 있으면 목록 행보다 우선 (빈 탭 고정 방지)
   const displayProgram = useMemo(() => {
     if (onUpdateProgram && externalLoading) return null
     if (onUpdateProgram) return program ?? null
-    return program ?? detailProgram ?? null
+    return detailProgram ?? program ?? null
   }, [detailProgram, program, onUpdateProgram, externalLoading])
   const persistProgramPatch = async (draft: Program, patch: Partial<Program>) => {
     if (onUpdateProgram) {

@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useCallback } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from './capabilities'
 import { geminiVisitingTrainingQueryKeys } from './query-keys'
 import {
@@ -30,6 +31,24 @@ export function useGeminiRecruitmentDetailQuery(
     staleTime: 30_000,
     retry: false,
   })
+}
+
+export function usePrefetchRecruitmentDetail() {
+  const queryClient = useQueryClient()
+  const remoteEnabled = shouldUseGeminiVisitingTrainingRemoteApi()
+
+  return useCallback(
+    (programId: string) => {
+      if (!remoteEnabled || !programId) return
+      void queryClient.prefetchQuery({
+        queryKey: geminiVisitingTrainingQueryKeys.recruitmentDetail(programId),
+        queryFn: () => getGeminiRecruitmentDetail(programId),
+        staleTime: 30_000,
+        retry: false,
+      })
+    },
+    [queryClient, remoteEnabled]
+  )
 }
 
 export function useGeminiOrganizationApplicationsQuery(
