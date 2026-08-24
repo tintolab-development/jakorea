@@ -15,7 +15,7 @@ import {
   resolvePortalDisplayName,
 } from '../lib/map-portal-member-profile'
 import {
-  isInstructorDualMypageProfile,
+  showMypageAffiliationEmployment,
   resolveAffiliationLabel,
   resolveEmploymentStatusLabel,
 } from '../lib/member-profile'
@@ -29,9 +29,9 @@ export type MypageMemberView = {
   displayName: string
   profile: PlatformMemberProfile
   email?: string
-  /** 교사 겸직 강사 이름영역 — 소속 (학교명 우선) */
+  /** 교사·교사 겸직 강사 — 소속 (학교명 우선) */
   affiliationLabel?: string
-  /** 교사 겸직 강사 이름영역 — 재직 뱃지 */
+  /** 교사·교사 겸직 강사 — 재직 뱃지 */
   employmentStatusLabel?: string
 }
 
@@ -46,7 +46,7 @@ export function useMypageMember(): MypageMemberView {
 
   if (!isRemoteSession) {
     const profile = getDevMemberProfile()
-    const showAffiliationEmployment = isInstructorDualMypageProfile(profile)
+    const showAffiliationEmployment = showMypageAffiliationEmployment(profile)
     return {
       isRemoteSession: false,
       isLoading: false,
@@ -77,13 +77,13 @@ export function useMypageMember(): MypageMemberView {
     }),
     profile,
     email: profileQuery.data?.email ?? meQuery.data?.email,
-    affiliationLabel: isInstructorDualMypageProfile(profile)
+    affiliationLabel: showMypageAffiliationEmployment(profile)
       ? resolveAffiliationLabel({
           schoolName: profileQuery.data?.schoolName,
           affiliationName: profileQuery.data?.affiliationName,
         })
       : undefined,
-    employmentStatusLabel: isInstructorDualMypageProfile(profile)
+    employmentStatusLabel: showMypageAffiliationEmployment(profile)
       ? resolveEmploymentStatusLabel(profileQuery.data?.teacherEmploymentStatus)
       : undefined,
   }
