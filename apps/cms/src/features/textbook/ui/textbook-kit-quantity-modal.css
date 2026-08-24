@@ -124,26 +124,7 @@
 }
 
 .textbook-kit-quantity-modal__input {
-  display: flex;
-  box-sizing: border-box;
-  width: 190px;
-  height: 40px;
-  padding: 12px 14px 12px 16px;
-  align-items: center;
-  gap: 8px;
-  border-radius: 6px;
-  border: 1px solid #c4cdd1;
-  background: var(--default-WT, #fff);
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 140%;
-}
-
-.textbook-kit-quantity-modal__input:focus {
-  outline: none;
+  flex-shrink: 0;
 }
 
 .textbook-kit-quantity-modal__footer {

@@ -75,6 +75,9 @@ export function TextbookKitQuantityModal({
                 className="textbook-kit-quantity-modal__input"
                 mode="integer"
                 min={0}
+                inputSize="medium"
+                width={190}
+                aria-label={`${level.label} 키트 수량`}
                 value={quantities[level.key]}
                 onValueChange={nextValue => {
                   setQuantities(prev => ({ ...prev, [level.key]: nextValue }))
