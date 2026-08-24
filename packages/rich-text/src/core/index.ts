@@ -22,6 +22,7 @@ export {
   promptImageUrl,
   promptLinkUrl,
   promptYoutubeUrl,
+  setLinkFromUrl,
   RICH_TEXT_IMAGE_ACCEPT,
 } from './insert-actions'
 export {

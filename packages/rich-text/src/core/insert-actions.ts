@@ -16,16 +16,31 @@ export function promptImageUrl(): string | null {
   return trimmed || null
 }
 
+/** 선택된 텍스트에 링크를 걸거나, 선택이 없으면 URL을 링크 텍스트로 삽입한다. */
+export function setLinkFromUrl(editor: Editor, url: string): boolean {
+  const href = url.trim()
+  if (href === '') {
+    return editor.chain().focus().extendMarkRange('link').unsetLink().run()
+  }
+  if (editor.state.selection.empty && !editor.isActive('link')) {
+    return editor
+      .chain()
+      .focus()
+      .insertContent({
+        type: 'text',
+        text: href,
+        marks: [{ type: 'link', attrs: { href } }],
+      })
+      .run()
+  }
+  return editor.chain().focus().extendMarkRange('link').setLink({ href }).run()
+}
+
 export function promptLinkUrl(editor: Editor): void {
   const previousUrl = editor.getAttributes('link').href as string | undefined
   const url = window.prompt('링크 URL', previousUrl ?? 'https://')
   if (url === null) return
-  const trimmed = url.trim()
-  if (trimmed === '') {
-    editor.chain().focus().extendMarkRange('link').unsetLink().run()
-    return
-  }
-  editor.chain().focus().extendMarkRange('link').setLink({ href: trimmed }).run()
+  setLinkFromUrl(editor, url)
 }
 
 export function promptYoutubeUrl(): string | null {

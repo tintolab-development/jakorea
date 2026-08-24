@@ -120,7 +120,11 @@ export const RichTextHeading = Heading.extend({
   },
 })
 
-/** 드래그 리사이즈·좌/중/우 정렬 (tiptap-extension-resize-image) */
+/**
+ * 드래그 리사이즈·좌/중/우 정렬 (tiptap-extension-resize-image).
+ * 패키지 기본 노드명 `imageResize`는 Markdown `![alt](src)` 파서가 `image`를 만들기 때문에
+ * 저장 후 이미지가 사라진다. 표준 `image` 이름을 유지한다.
+ */
 export const RichTextImageResize = ImageResize.configure({
   inline: false,
   minWidth: 80,
@@ -129,6 +133,15 @@ export const RichTextImageResize = ImageResize.configure({
     class: 'rich-text-content__image',
   },
 }).extend({
+  name: 'image',
+  parseMarkdown: (token, helpers) => {
+    const t = token as { href?: string; title?: string; text?: string }
+    return helpers.createNode('image', {
+      src: t.href ?? '',
+      title: t.title ?? null,
+      alt: t.text ?? '',
+    })
+  },
   renderMarkdown: (node: JSONContent) => {
     const attrs = node.attrs as Record<string, string | undefined> | undefined
     const src = attrs?.src ?? ''
@@ -152,10 +165,18 @@ export const RichTextYoutube = Youtube.configure({
     class: 'rich-text-content__youtube',
   },
 }).extend({
+  parseHTML() {
+    return [
+      ...(this.parent?.() ?? []),
+      { tag: 'iframe.rich-text-content__youtube' },
+      { tag: 'iframe[src*="youtube.com"]' },
+      { tag: 'iframe[src*="youtube-nocookie.com"]' },
+    ]
+  },
   renderMarkdown: (node: JSONContent) => {
     const src = (node.attrs as { src?: string } | undefined)?.src ?? ''
     const embed =
       getEmbedUrlFromYoutubeUrl({ url: src, nocookie: true }) ?? src
-    return `<iframe class="rich-text-content__youtube" width="640" height="360" src="${escapeHtml(embed)}" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>\n\n`
+    return `<div data-youtube-video><iframe class="rich-text-content__youtube" width="640" height="360" src="${escapeHtml(embed)}" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>\n\n`
   },
 })

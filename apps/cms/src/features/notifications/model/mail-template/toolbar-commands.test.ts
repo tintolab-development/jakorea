@@ -3,7 +3,7 @@
  *
  * 메일 템플릿 에디터와 동일한 extension으로 툴바 커맨드가 실제로 적용되는지 검증한다.
  */
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   Editor,
   createRichTextExtensions,
@@ -11,8 +11,13 @@ import {
   getEmojiQuickPickItems,
   insertEmoji,
   insertHorizontalRule,
+  insertImageFromFile,
+  insertImageFromUrl,
   insertTable,
+  insertYoutubeFromUrl,
   NodeSelection,
+  promptLinkUrl,
+  setLinkFromUrl,
 } from '@jakorea/rich-text'
 import { MAIL_VARIABLE_NODE_NAME, MailVariable } from './variable-node'
 
@@ -172,5 +177,108 @@ describe('mail template editor toolbar commands', () => {
       if (node.type.name === 'emoji') hasEmoji = true
     })
     expect(hasEmoji).toBe(true)
+  })
+
+  it('inserts an image from URL into the document', () => {
+    const instance = createEditor('<p>본문</p>')
+    instance.commands.focus()
+    insertImageFromUrl(instance, 'https://example.com/photo.png')
+    const names: string[] = []
+    instance.state.doc.descendants(node => {
+      names.push(node.type.name)
+    })
+    expect(names.some(name => name === 'image' || name === 'imageResize')).toBe(true)
+    expect(instance.getHTML()).toMatch(/<img\b[^>]*src="https:\/\/example\.com\/photo\.png"/i)
+  })
+
+  it('inserts an image from a local file as a data URL', async () => {
+    const instance = createEditor('<p>본문</p>')
+    const file = new File([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])], 'pic.png', {
+      type: 'image/png',
+    })
+    insertImageFromFile(instance, file)
+    await vi.waitFor(() => {
+      expect(instance.getHTML()).toMatch(/<img\b[^>]*src="data:image\/png/i)
+    })
+  })
+
+  it('inserts a YouTube video from a watch URL', () => {
+    const instance = createEditor('<p>본문</p>')
+    instance.commands.focus()
+    insertYoutubeFromUrl(instance, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+    let hasYoutube = false
+    instance.state.doc.descendants(node => {
+      if (node.type.name === 'youtube') hasYoutube = true
+    })
+    expect(hasYoutube).toBe(true)
+    expect(instance.getHTML()).toMatch(/youtube|iframe/i)
+  })
+
+  it('round-trips inserted image and youtube through markdown', () => {
+    const instance = createEditor('<p>본문</p>')
+    instance.commands.focus()
+    insertImageFromUrl(instance, 'https://example.com/photo.png')
+    insertYoutubeFromUrl(instance, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+    const markdown = (instance as Editor & { getMarkdown?: () => string }).getMarkdown?.() ?? ''
+    expect(markdown, markdown).toMatch(/photo\.png/)
+    expect(markdown, markdown).toMatch(/youtube|iframe|dQw4w9WgXcQ/i)
+    instance.destroy()
+
+    const reloaded = createEditor('')
+    reloaded.commands.setContent(markdown, { contentType: 'markdown' })
+    const names: string[] = []
+    reloaded.state.doc.descendants(node => {
+      names.push(node.type.name)
+    })
+    expect(
+      names.some(name => name === 'image' || name === 'imageResize'),
+      `markdown:\n${markdown}\nnodes: ${names.join(',')}`
+    ).toBe(true)
+    expect(names.includes('youtube'), `markdown:\n${markdown}\nnodes: ${names.join(',')}`).toBe(true)
+  })
+
+  it('round-trips inserted image and youtube through HTML', () => {
+    const instance = createEditor('<p>본문</p>')
+    instance.commands.focus()
+    insertImageFromUrl(instance, 'https://example.com/photo.png')
+    insertYoutubeFromUrl(instance, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+    const html = instance.getHTML()
+    instance.destroy()
+
+    const reloaded = createEditor('')
+    reloaded.commands.setContent(html, { contentType: 'html' })
+    const names: string[] = []
+    reloaded.state.doc.descendants(node => {
+      names.push(node.type.name)
+    })
+    expect(names.some(name => name === 'image' || name === 'imageResize'), names.join(',')).toBe(true)
+    expect(names.includes('youtube'), names.join(',')).toBe(true)
+  })
+
+  it('inserts a link when no text is selected', () => {
+    const instance = createEditor('<p>본문</p>')
+    instance.commands.setTextSelection(1)
+    expect(setLinkFromUrl(instance, 'https://example.com')).toBe(true)
+    expect(instance.getHTML()).toMatch(/<a\b[^>]*href="https:\/\/example\.com"/i)
+  })
+
+  it('applies a link to the selected text', () => {
+    const instance = createEditor('<p>본문링크</p>')
+    instance.commands.setTextSelection({ from: 1, to: 5 })
+    expect(setLinkFromUrl(instance, 'https://example.com')).toBe(true)
+    expect(instance.getHTML()).toMatch(/<a\b[^>]*href="https:\/\/example\.com"/i)
+    expect(instance.getHTML()).toContain('본문')
+  })
+
+  it('inserts a link from the prompt helper when the caret is empty', () => {
+    vi.stubGlobal(
+      'prompt',
+      vi.fn(() => 'https://example.com')
+    )
+    const instance = createEditor('<p>본문</p>')
+    instance.commands.setTextSelection(1)
+    promptLinkUrl(instance)
+    expect(instance.getHTML()).toMatch(/<a\b[^>]*href="https:\/\/example\.com"/i)
+    vi.unstubAllGlobals()
   })
 })
