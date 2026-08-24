@@ -9,7 +9,9 @@ import type { PaymentOrderCalculationTableRow } from './payment-order-calculatio
 import {
   isSupportedBasisDetailLayout,
   resolveBasisDetailModalTitle,
+  resolvePaymentOrderCalculationBasisDetailForRow,
   type PaymentOrderCalculationBasisDetail,
+  type PaymentOrderCalculationBasisDetailResolveContext,
 } from './payment-order-calculation-basis-detail'
 import { PaymentOrderCalculationBasisDetailLectureFeeTierView } from './payment-order-calculation-basis-detail-lecture-fee-tier-view'
 import {
@@ -17,6 +19,18 @@ import {
   PaymentOrderCalculationBasisDetailTransportOneWayView,
   PaymentOrderCalculationBasisDetailTransportRoundTripView,
 } from './payment-order-calculation-basis-detail-transport-views'
+import {
+  PaymentOrderCalculationBasisDetailLodging1s1gView,
+  PaymentOrderCalculationBasisDetailLodgingGeneralView,
+} from './payment-order-calculation-basis-detail-lodging-views'
+import { PaymentOrderCalculationBasisDetailMealView } from './payment-order-calculation-basis-detail-meal-view'
+import { PaymentOrderCalculationBasisDetailActivityView } from './payment-order-calculation-basis-detail-activity-view'
+import { PaymentOrderCalculationBasisDetailWithholdingView } from './payment-order-calculation-basis-detail-withholding-view'
+import {
+  resolveSettlementItemSettingForCalculationRow,
+  type PaymentOrderCalculationStatementDetailContext,
+} from '@/features/settlement/lib/resolve-settlement-item-setting-for-calculation-row'
+import type { SettlementItemSettingRow } from '@/data/mock/settlement-item-settings'
 import './payment-order-calculation-basis-detail-modal.css'
 
 export interface PaymentOrderCalculationBasisDetailModalProps {
@@ -65,40 +79,98 @@ export function PaymentOrderCalculationBasisDetailModal({
       {detail.layout === 'transportInstructor' ? (
         <PaymentOrderCalculationBasisDetailTransportInstructorView detail={detail} />
       ) : null}
+      {detail.layout === 'lodgingGeneral' ? (
+        <PaymentOrderCalculationBasisDetailLodgingGeneralView detail={detail} />
+      ) : null}
+      {detail.layout === 'lodging1s1g' ? (
+        <PaymentOrderCalculationBasisDetailLodging1s1gView detail={detail} />
+      ) : null}
+      {detail.layout === 'meal' ? (
+        <PaymentOrderCalculationBasisDetailMealView detail={detail} />
+      ) : null}
+      {detail.layout === 'activity' ? (
+        <PaymentOrderCalculationBasisDetailActivityView detail={detail} />
+      ) : null}
+      {detail.layout === 'withholding' ? (
+        <PaymentOrderCalculationBasisDetailWithholdingView detail={detail} />
+      ) : null}
     </ContentModal>
   )
 }
 
-export function usePaymentOrderCalculationBasisDetailModal(parentOpen = true) {
+export type PaymentOrderCalculationBasisDetailModalContext =
+  PaymentOrderCalculationStatementDetailContext &
+    PaymentOrderCalculationBasisDetailResolveContext
+
+export function usePaymentOrderCalculationBasisDetailModal(
+  parentOpen = true,
+  context?: PaymentOrderCalculationBasisDetailModalContext | null
+) {
   const [basisDetailOpen, setBasisDetailOpen] = useState(false)
   const [selectedBasisDetail, setSelectedBasisDetail] =
     useState<PaymentOrderCalculationBasisDetail | null>(null)
+  const [wageSettingItemOpen, setWageSettingItemOpen] = useState(false)
+  const [wageSettingItem, setWageSettingItem] = useState<SettlementItemSettingRow | null>(null)
 
   useEffect(() => {
     if (!parentOpen) {
       setBasisDetailOpen(false)
       setSelectedBasisDetail(null)
+      setWageSettingItemOpen(false)
+      setWageSettingItem(null)
     }
   }, [parentOpen])
-
-  const handleBasisDetailClick = useCallback((row: PaymentOrderCalculationTableRow) => {
-    if (!isSupportedBasisDetailLayout(row.basisDetail)) {
-      window.alert('준비 중입니다.')
-      return
-    }
-    setSelectedBasisDetail(row.basisDetail)
-    setBasisDetailOpen(true)
-  }, [])
 
   const closeBasisDetailModal = useCallback(() => {
     setBasisDetailOpen(false)
     setSelectedBasisDetail(null)
   }, [])
 
+  const closeWageSettingItemModal = useCallback(() => {
+    setWageSettingItemOpen(false)
+    setWageSettingItem(null)
+  }, [])
+
+  const handleBasisDetailClick = useCallback(
+    (row: PaymentOrderCalculationTableRow) => {
+      if (
+        row.basisDetail &&
+        isSupportedBasisDetailLayout(row.basisDetail) &&
+        row.kind !== 'lecture_fee' &&
+        row.itemLabel !== '강의비' &&
+        row.itemLabel !== '강사비'
+      ) {
+        setSelectedBasisDetail(row.basisDetail)
+        setBasisDetailOpen(true)
+        return
+      }
+
+      const wageItem = resolveSettlementItemSettingForCalculationRow(row, context)
+      if (wageItem) {
+        setWageSettingItem(wageItem)
+        setWageSettingItemOpen(true)
+        return
+      }
+
+      const resolvedDetail = resolvePaymentOrderCalculationBasisDetailForRow(row, context)
+      if (resolvedDetail && isSupportedBasisDetailLayout(resolvedDetail)) {
+        setSelectedBasisDetail(resolvedDetail)
+        setBasisDetailOpen(true)
+        return
+      }
+
+      window.alert('준비 중입니다.')
+    },
+    [context]
+  )
+
   return {
     basisDetailOpen,
     selectedBasisDetail,
     handleBasisDetailClick,
     closeBasisDetailModal,
+    wageSettingItemOpen,
+    wageSettingItem,
+    closeWageSettingItemModal,
   }
 }

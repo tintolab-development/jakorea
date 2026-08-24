@@ -5,7 +5,10 @@
 import type { ReactNode } from 'react'
 import { ModalSpecTable, ModalSpecTableRow } from '@/shared/ui/modal-spec-table'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
-import type { PaymentOrderCalculationBasisDetailTransportPublicTransit } from './payment-order-calculation-basis-detail'
+import type {
+  PaymentOrderCalculationBasisDetailLodgingReceipt,
+  PaymentOrderCalculationBasisDetailTransportPublicTransit,
+} from './payment-order-calculation-basis-detail'
 import { formatPaymentOrderCalculationWonPlain } from './payment-order-calculation-breakdown-table'
 
 export function BasisDetailReadOnlyValue({ children }: { children: ReactNode }) {
@@ -80,6 +83,58 @@ export function BasisDetailPublicTransitValue({
   return (
     <BasisDetailReadOnlyValue>
       {withProgramDetailTdDivider(segments)}
+    </BasisDetailReadOnlyValue>
+  )
+}
+
+function renderReceiptLink(receiptFileName: string, receiptUrl?: string) {
+  if (receiptUrl) {
+    return (
+      <a
+        href={receiptUrl}
+        className="payment-order-calculation-basis-detail-modal__file-link"
+        target="_blank"
+        rel="noreferrer"
+      >
+        {receiptFileName}
+      </a>
+    )
+  }
+  return (
+    <button type="button" className="payment-order-calculation-basis-detail-modal__file-link">
+      {receiptFileName}
+    </button>
+  )
+}
+
+export function BasisDetailLodgingFeeValue({
+  fee,
+}: {
+  fee: PaymentOrderCalculationBasisDetailLodgingReceipt
+}) {
+  const segments: ReactNode[] = [formatPaymentOrderCalculationWonPlain(fee.amountWon)]
+
+  if (fee.receiptFileName) {
+    segments.push(renderReceiptLink(fee.receiptFileName, fee.receiptUrl))
+  }
+
+  return (
+    <BasisDetailReadOnlyValue>
+      {withProgramDetailTdDivider(segments)}
+    </BasisDetailReadOnlyValue>
+  )
+}
+
+export function BasisDetailRateAndAmountValue({
+  rateLabel,
+  amountWon,
+}: {
+  rateLabel: string
+  amountWon: number
+}) {
+  return (
+    <BasisDetailReadOnlyValue>
+      {withProgramDetailTdDivider([rateLabel, formatPaymentOrderCalculationWonPlain(amountWon)])}
     </BasisDetailReadOnlyValue>
   )
 }

@@ -9,10 +9,18 @@ import { getPaymentOrdersDefaultDateRangeParams } from '@/pages/settlement-manag
 import { settlementItemSettingSections } from './settlement-item-settings'
 import type { PaymentOrderCalculationBasisDetail } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import {
+  buildActivityBasisDetail,
   buildLectureFeeTierBasisDetail,
+  buildLodgingBasisDetail,
+  buildMealBasisDetail,
   buildTravelBasisDetail,
+  buildWithholdingBasisDetail,
   lectureFeeLineDescriptionFromStandardTitle,
+  resolveActivityBasisDetailTotalWon,
+  resolveLodgingBasisDetailTotalWon,
+  resolveMealBasisDetailTotalWon,
   resolveTravelBasisDetailTotalWon,
+  resolveWithholdingBasisDetailAmountWon,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 
 export type PaymentOrderAdminProcessingStatus =
@@ -163,7 +171,13 @@ export interface PaymentOrderAdminInstructorDetailProgramRow {
 }
 
 /** 산출 내역서 모달 — 산정 행 구분(합계 수식·표시용) */
-export type PaymentOrderCalculationLineKind = 'lecture_fee' | 'travel' | 'lodging' | 'withholding'
+export type PaymentOrderCalculationLineKind =
+  | 'lecture_fee'
+  | 'travel'
+  | 'lodging'
+  | 'meal'
+  | 'activity'
+  | 'withholding'
 
 /** 산출 내역서 모달 — 기본 정보(프로그램 맥락 4열 `program-detail-info-tab`) */
 export interface PaymentOrderCalculationStatementProgramBasicInfo {
@@ -691,10 +705,19 @@ export function getMockPaymentOrderProgramCalculationStatement(
 
   const includeTravel = seed % 5 !== 0
   const includeLodging = seed % 7 !== 0
+  const includeMeal = seed % 11 !== 0
+  const includeActivity = seed % 13 !== 0
 
   const travelBasisDetail = buildTravelBasisDetail(seed)
   const travelAmount = resolveTravelBasisDetailTotalWon(travelBasisDetail)
-  const lodgingAmount = 80000
+  const lodgingBasisDetail = buildLodgingBasisDetail(seed)
+  const lodgingAmount = resolveLodgingBasisDetailTotalWon(lodgingBasisDetail)
+  const mealBasisDetail = buildMealBasisDetail()
+  const mealAmount = resolveMealBasisDetailTotalWon(mealBasisDetail)
+  const activityBasisDetail = buildActivityBasisDetail()
+  const activityAmount = resolveActivityBasisDetailTotalWon(activityBasisDetail)
+  const lodgingDesc =
+    lodgingBasisDetail.layout === 'lodging1s1g' ? '8만원 고정 지급 (1사1교)' : '15만원 고정 지급'
   const travelDesc =
     travelBasisDetail.layout === 'transportInstructor'
       ? `${travelBasisDetail.distanceKm}km 이동 (1사1교)`
@@ -703,8 +726,13 @@ export function getMockPaymentOrderProgramCalculationStatement(
         : '참여자 교통비 (편도)'
 
   const subtotalBeforeTax =
-    lectureFee + (includeTravel ? travelAmount : 0) + (includeLodging ? lodgingAmount : 0)
-  const withholdingAmount = -Math.round(subtotalBeforeTax * 0.088)
+    lectureFee +
+    (includeTravel ? travelAmount : 0) +
+    (includeLodging ? lodgingAmount : 0) +
+    (includeMeal ? mealAmount : 0) +
+    (includeActivity ? activityAmount : 0)
+  const withholdingBasisDetail = buildWithholdingBasisDetail(subtotalBeforeTax)
+  const withholdingAmount = resolveWithholdingBasisDetailAmountWon(withholdingBasisDetail)
 
   const lectureFeeBasisDetail = buildLectureFeeTierBasisDetail(
     lectureFeeStandardTitle,
@@ -738,9 +766,32 @@ export function getMockPaymentOrderProgramCalculationStatement(
     lines.push({
       id: `calc-line-${instructorLineRow.id}-lodging`,
       itemLabel: '숙박비',
-      description: '8만원 고정 지급',
+      description: lodgingDesc,
       amount: lodgingAmount,
       kind: 'lodging',
+      basisDetail: lodgingBasisDetail,
+    })
+  }
+
+  if (includeMeal) {
+    lines.push({
+      id: `calc-line-${instructorLineRow.id}-meal`,
+      itemLabel: '식사비',
+      description: '3만원 한도 지급',
+      amount: mealAmount,
+      kind: 'meal',
+      basisDetail: mealBasisDetail,
+    })
+  }
+
+  if (includeActivity) {
+    lines.push({
+      id: `calc-line-${instructorLineRow.id}-activity`,
+      itemLabel: '활동비',
+      description: '5만원 한도 지급',
+      amount: activityAmount,
+      kind: 'activity',
+      basisDetail: activityBasisDetail,
     })
   }
 
@@ -750,12 +801,15 @@ export function getMockPaymentOrderProgramCalculationStatement(
     description: '원천징수 8.8%',
     amount: withholdingAmount,
     kind: 'withholding',
+    basisDetail: withholdingBasisDetail,
     amountDisplayOverride: '-NN,NNN원',
   })
 
   const formulaParts: string[] = ['강의비']
   if (includeTravel) formulaParts.push('교통비')
   if (includeLodging) formulaParts.push('숙박비')
+  if (includeMeal) formulaParts.push('식사비')
+  if (includeActivity) formulaParts.push('활동비')
   formulaParts.push('원천징수')
   const formulaLabel =
     formulaParts.length === 2
@@ -840,10 +894,19 @@ export function getMockPaymentOrderInstructorCalculationStatement(
 
   const includeTravel = seed % 5 !== 0
   const includeLodging = seed % 7 !== 0
+  const includeMeal = seed % 11 !== 0
+  const includeActivity = seed % 13 !== 0
 
   const travelBasisDetail = buildTravelBasisDetail(seed)
   const travelAmount = resolveTravelBasisDetailTotalWon(travelBasisDetail)
-  const lodgingAmount = 80000
+  const lodgingBasisDetail = buildLodgingBasisDetail(seed)
+  const lodgingAmount = resolveLodgingBasisDetailTotalWon(lodgingBasisDetail)
+  const mealBasisDetail = buildMealBasisDetail()
+  const mealAmount = resolveMealBasisDetailTotalWon(mealBasisDetail)
+  const activityBasisDetail = buildActivityBasisDetail()
+  const activityAmount = resolveActivityBasisDetailTotalWon(activityBasisDetail)
+  const lodgingDesc =
+    lodgingBasisDetail.layout === 'lodging1s1g' ? '8만원 고정 지급 (1사1교)' : '15만원 고정 지급'
   const travelDesc =
     travelBasisDetail.layout === 'transportInstructor'
       ? `${travelBasisDetail.distanceKm}km 이동 (1사1교)`
@@ -852,8 +915,13 @@ export function getMockPaymentOrderInstructorCalculationStatement(
         : '참여자 교통비 (편도)'
 
   const subtotalBeforeTax =
-    lectureFee + (includeTravel ? travelAmount : 0) + (includeLodging ? lodgingAmount : 0)
-  const withholdingAmount = -Math.round(subtotalBeforeTax * 0.088)
+    lectureFee +
+    (includeTravel ? travelAmount : 0) +
+    (includeLodging ? lodgingAmount : 0) +
+    (includeMeal ? mealAmount : 0) +
+    (includeActivity ? activityAmount : 0)
+  const withholdingBasisDetail = buildWithholdingBasisDetail(subtotalBeforeTax)
+  const withholdingAmount = resolveWithholdingBasisDetailAmountWon(withholdingBasisDetail)
 
   const lectureFeeBasisDetail = buildLectureFeeTierBasisDetail(
     lectureFeeStandardTitle,
@@ -887,9 +955,32 @@ export function getMockPaymentOrderInstructorCalculationStatement(
     lines.push({
       id: `calc-line-${programLineRow.id}-lodging`,
       itemLabel: '숙박비',
-      description: '8만원 고정 지급',
+      description: lodgingDesc,
       amount: lodgingAmount,
       kind: 'lodging',
+      basisDetail: lodgingBasisDetail,
+    })
+  }
+
+  if (includeMeal) {
+    lines.push({
+      id: `calc-line-${programLineRow.id}-meal`,
+      itemLabel: '식사비',
+      description: '3만원 한도 지급',
+      amount: mealAmount,
+      kind: 'meal',
+      basisDetail: mealBasisDetail,
+    })
+  }
+
+  if (includeActivity) {
+    lines.push({
+      id: `calc-line-${programLineRow.id}-activity`,
+      itemLabel: '활동비',
+      description: '5만원 한도 지급',
+      amount: activityAmount,
+      kind: 'activity',
+      basisDetail: activityBasisDetail,
     })
   }
 
@@ -899,12 +990,15 @@ export function getMockPaymentOrderInstructorCalculationStatement(
     description: '원천징수 8.8%',
     amount: withholdingAmount,
     kind: 'withholding',
+    basisDetail: withholdingBasisDetail,
     amountDisplayOverride: '-NN,NNN원',
   })
 
   const formulaParts: string[] = ['강의비']
   if (includeTravel) formulaParts.push('교통비')
   if (includeLodging) formulaParts.push('숙박비')
+  if (includeMeal) formulaParts.push('식사비')
+  if (includeActivity) formulaParts.push('활동비')
   formulaParts.push('원천징수')
   const formulaLabel =
     formulaParts.length === 2

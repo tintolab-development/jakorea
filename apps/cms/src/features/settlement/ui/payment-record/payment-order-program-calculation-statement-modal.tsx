@@ -25,6 +25,7 @@ export function PaymentOrderProgramCalculationStatementModal(
   return (
     <PaymentOrderCalculationStatementModalImpl
       {...props}
+      entryKind="program"
       entryClassName="payment-order-calc-statement-modal--entry-program"
     />
   )

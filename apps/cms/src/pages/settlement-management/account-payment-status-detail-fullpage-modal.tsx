@@ -38,6 +38,7 @@ import {
   PaymentOrderCalculationBasisDetailModal,
   usePaymentOrderCalculationBasisDetailModal,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail-modal'
+import { SettlementItemSettingDetailModal } from '@/pages/settlement-management/settlement-item-setting-detail-modal'
 import {
   AccountPaymentConfirmationModal,
   buildAccountPaymentSingleConfirmationPayload,
@@ -93,7 +94,12 @@ export function AccountPaymentStatusDetailFullPageModal({
     selectedBasisDetail,
     handleBasisDetailClick,
     closeBasisDetailModal,
-  } = usePaymentOrderCalculationBasisDetailModal(open)
+    wageSettingItemOpen,
+    wageSettingItem,
+    closeWageSettingItemModal,
+  } = usePaymentOrderCalculationBasisDetailModal(open, {
+    lectureFeeStandardTitle: detail?.basic.lectureFeeStandardTitle,
+  })
 
   const singlePaymentConfirmPayload = useMemo(
     () => (detail ? buildAccountPaymentSingleConfirmationPayload(detail) : null),
@@ -350,6 +356,12 @@ export function AccountPaymentStatusDetailFullPageModal({
         onCancel={closeBasisDetailModal}
         detail={selectedBasisDetail}
         zIndex={1200}
+      />
+      <SettlementItemSettingDetailModal
+        open={wageSettingItemOpen}
+        onCancel={closeWageSettingItemModal}
+        item={wageSettingItem}
+        readOnly
       />
     </>
   )

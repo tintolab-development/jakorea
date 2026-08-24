@@ -12,6 +12,7 @@ import {
 } from '@/data/mock/payment-order-admin-list'
 import type { SettlementFrontendItemResponse, SettlementFrontendResponse } from '@/shared/api/generated/settlement/schemas'
 import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
+import { mapSettlementFrontendItemTypeToLineKind } from '@/features/settlement/lib/resolve-settlement-item-setting-for-calculation-row'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { KO_DOW } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
 
@@ -35,7 +36,7 @@ function mapItemToLine(item: SettlementFrontendItemResponse, index: number): Pay
     itemLabel: formatPaymentOrderCalculationItemLabel(item.type, amount),
     description: item.description?.trim() || '—',
     amount,
-    kind: amount < 0 ? 'withholding' : 'lecture_fee',
+    kind: mapSettlementFrontendItemTypeToLineKind(item.type, amount),
     // TODO(settlement-api): settlement.calculationDetails[index] → basisDetail 매핑 (layout/basisJson)
   }
 }

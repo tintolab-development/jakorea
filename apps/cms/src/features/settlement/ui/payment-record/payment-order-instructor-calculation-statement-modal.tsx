@@ -25,6 +25,7 @@ export function PaymentOrderInstructorCalculationStatementModal(
   return (
     <PaymentOrderCalculationStatementModalImpl
       {...props}
+      entryKind="instructor"
       entryClassName="payment-order-calc-statement-modal--entry-instructor"
     />
   )

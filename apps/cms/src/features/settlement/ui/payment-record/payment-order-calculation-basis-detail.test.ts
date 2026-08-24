@@ -1,11 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildActivityBasisDetail,
   buildLectureFeeTierBasisDetail,
+  buildLodgingBasisDetail,
+  buildMealBasisDetail,
   buildTravelBasisDetail,
+  buildWithholdingBasisDetail,
   isSupportedBasisDetailLayout,
   lectureFeeLineDescriptionFromStandardTitle,
+  parseLectureSessionStartFromDisplay,
+  resolveActivityBasisDetailTotalWon,
   resolveBasisDetailModalTitle,
+  resolveLodgingBasisDetailTotalWon,
+  resolveMealBasisDetailTotalWon,
+  resolvePaymentOrderCalculationBasisDetailForRow,
   resolveTravelBasisDetailTotalWon,
+  resolveWithholdingBasisDetailAmountWon,
 } from './payment-order-calculation-basis-detail'
 
 describe('payment-order-calculation-basis-detail', () => {
@@ -30,10 +40,14 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(resolveBasisDetailModalTitle(detail)).toBe('강사비 산정 기준 상세')
   })
 
-  it('isSupportedBasisDetailLayout accepts lecture and transport layouts', () => {
+  it('isSupportedBasisDetailLayout accepts all supported layouts', () => {
     const lecture = buildLectureFeeTierBasisDetail('3급 강사비', 300000, 3)!
     expect(isSupportedBasisDetailLayout(lecture)).toBe(true)
     expect(isSupportedBasisDetailLayout(buildTravelBasisDetail(0))).toBe(true)
+    expect(isSupportedBasisDetailLayout(buildLodgingBasisDetail(0))).toBe(true)
+    expect(isSupportedBasisDetailLayout(buildMealBasisDetail())).toBe(true)
+    expect(isSupportedBasisDetailLayout(buildActivityBasisDetail())).toBe(true)
+    expect(isSupportedBasisDetailLayout(buildWithholdingBasisDetail(300000))).toBe(true)
     expect(isSupportedBasisDetailLayout(undefined)).toBe(false)
   })
 
@@ -55,6 +69,65 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(resolveBasisDetailModalTitle(buildTravelBasisDetail(0))).toBe('교통비 산정 기준 상세')
   })
 
+  it('buildLodgingBasisDetail cycles general and 1s1g layouts', () => {
+    const general = buildLodgingBasisDetail(0)
+    expect(general.layout).toBe('lodgingGeneral')
+    expect(general.categoryLabel).toBe('숙박비(일반)')
+    expect(resolveLodgingBasisDetailTotalWon(general)).toBe(150000)
+    expect(resolveBasisDetailModalTitle(general)).toBe('숙박비 산정 기준 상세')
+
+    const oneCompanyOneSchool = buildLodgingBasisDetail(1)
+    expect(oneCompanyOneSchool.layout).toBe('lodging1s1g')
+    expect(oneCompanyOneSchool.categoryLabel).toBe('숙박비(1사1교)')
+    expect(resolveLodgingBasisDetailTotalWon(oneCompanyOneSchool)).toBe(80000)
+    expect(resolveBasisDetailModalTitle(oneCompanyOneSchool)).toBe('1사1교 숙박비 산정 기준 상세')
+  })
+
+  it('buildMealBasisDetail returns meal layout with receipt', () => {
+    const meal = buildMealBasisDetail()
+    expect(meal).toEqual({
+      layout: 'meal',
+      categoryLabel: '식사비',
+      mealFee: {
+        amountWon: 30000,
+        receiptFileName: '식사비 영수증.pdf',
+      },
+      totalWon: 30000,
+    })
+    expect(resolveMealBasisDetailTotalWon(meal)).toBe(30000)
+    expect(resolveBasisDetailModalTitle(meal)).toBe('식사비 산정 기준 상세')
+  })
+
+  it('buildActivityBasisDetail returns activity layout with receipt', () => {
+    const activity = buildActivityBasisDetail()
+    expect(activity).toEqual({
+      layout: 'activity',
+      categoryLabel: '자원봉사자 활동비',
+      activityFee: {
+        amountWon: 50000,
+        receiptFileName: '활동비 영수증.pdf',
+      },
+      totalWon: 50000,
+    })
+    expect(resolveActivityBasisDetailTotalWon(activity)).toBe(50000)
+    expect(resolveBasisDetailModalTitle(activity)).toBe('활동비 산정 기준 상세')
+  })
+
+  it('buildWithholdingBasisDetail returns withholding breakdown for daily salary total', () => {
+    const withholding = buildWithholdingBasisDetail(300000)
+    expect(withholding).toEqual({
+      layout: 'withholding',
+      dailySalaryTotalWon: 300000,
+      earnedIncomeDeductionWon: 150000,
+      incomeTaxRatePercent: 3.3,
+      incomeTaxWon: 4950,
+      earnedIncomeTaxCreditWon: 2722,
+      withholdingTaxAmountWon: 2228,
+    })
+    expect(resolveWithholdingBasisDetailAmountWon(withholding)).toBe(-2228)
+    expect(resolveBasisDetailModalTitle(withholding)).toBe('원천징수 산정 기준 상세')
+  })
+
   it('lectureFeeLineDescriptionFromStandardTitle formats tier descriptions', () => {
     expect(lectureFeeLineDescriptionFromStandardTitle('1급 강사비')).toBe(
       '프로그램 1회 강의비 (1급 강사)'
@@ -62,5 +135,48 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(lectureFeeLineDescriptionFromStandardTitle('특강 강사비')).toBe(
       '프로그램 1회 강의비 (특강 강사)'
     )
+  })
+
+  it('resolvePaymentOrderCalculationBasisDetailForRow builds travel fallback', () => {
+    const detail = resolvePaymentOrderCalculationBasisDetailForRow({
+      kind: 'travel',
+      itemLabel: '교통비',
+      amount: 30000,
+      lineId: 'travel-1',
+      lectureSessionDisplay: '1 ~ 2차시',
+    })
+    expect(detail?.layout).toMatch(/^transport/)
+  })
+
+  it('resolvePaymentOrderCalculationBasisDetailForRow builds activity fallback', () => {
+    const detail = resolvePaymentOrderCalculationBasisDetailForRow({
+      kind: 'activity',
+      itemLabel: '활동비',
+      amount: 50000,
+      lineId: 'activity-1',
+      lectureSessionDisplay: '1 ~ 2차시',
+    })
+    expect(detail?.layout).toBe('activity')
+  })
+
+  it('resolvePaymentOrderCalculationBasisDetailForRow builds withholding fallback', () => {
+    const detail = resolvePaymentOrderCalculationBasisDetailForRow(
+      {
+        kind: 'withholding',
+        itemLabel: '원천징수',
+        amount: -2228,
+        lineId: 'withholding-1',
+        lectureSessionDisplay: '1 ~ 2차시',
+      },
+      { withholdingDailySalaryTotalWon: 300000 }
+    )
+    expect(detail?.layout).toBe('withholding')
+    if (detail?.layout === 'withholding') {
+      expect(detail.withholdingTaxAmountWon).toBe(2228)
+    }
+  })
+
+  it('parseLectureSessionStartFromDisplay extracts first number', () => {
+    expect(parseLectureSessionStartFromDisplay('2 ~ 3차시')).toBe(2)
   })
 })

@@ -30,6 +30,11 @@ import {
   PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH,
   PaymentOrderCalculationBreakdownTable,
 } from './payment-order-calculation-breakdown-table'
+import {
+  PaymentOrderCalculationBasisDetailModal,
+  usePaymentOrderCalculationBasisDetailModal,
+} from './payment-order-calculation-basis-detail-modal'
+import { SettlementItemSettingDetailModal } from '@/pages/settlement-management/settlement-item-setting-detail-modal'
 import { PaymentOrderCalculationStatementInstructorBasicSection } from './payment-order-calculation-statement-instructor-basic-section'
 import { PaymentOrderCalculationStatementProgramBasicSection } from './payment-order-calculation-statement-program-basic-section'
 
@@ -45,6 +50,8 @@ export type PaymentOrderCalculationStatementInstructorContext = Extract<
   { context: 'instructor' }
 >
 
+export type PaymentOrderCalculationStatementEntryKind = 'program' | 'instructor'
+
 export interface PaymentOrderCalculationStatementModalImplProps {
   open: boolean
   onCancel: () => void
@@ -54,6 +61,8 @@ export interface PaymentOrderCalculationStatementModalImplProps {
   paymentOrdersRemote?: boolean
   statementId?: number | null
   detailContextQuery?: PaymentOrdersDetailContextQueryResult
+  /** 지급 현황 상세 진입 경로 — basic/발급 UI는 data.context보다 우선 */
+  entryKind: PaymentOrderCalculationStatementEntryKind
   /** 모달 루트에 추가 (진입 경로 구분·스타일 확장용) */
   entryClassName?: string
   /** 확인 처리·신청 반려 확정 시 라인 상태 반영(상위에서 상세 테이블·집계와 동기화) */
@@ -71,6 +80,7 @@ export function PaymentOrderCalculationStatementModalImpl({
   paymentOrdersRemote = false,
   statementId,
   detailContextQuery,
+  entryKind,
   entryClassName,
   onStatementLineCommitted,
   onAfterRejectResultClosed,
@@ -81,6 +91,23 @@ export function PaymentOrderCalculationStatementModalImpl({
   const [paymentRejectDoneOpen, setPaymentRejectDoneOpen] = useState(false)
   const [paymentRejectReason, setPaymentRejectReason] = useState('')
   const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
+
+  const basisDetailContext = useMemo(() => {
+    if (!data || (data.context !== 'program' && data.context !== 'instructor')) {
+      return null
+    }
+    return { lectureFeeStandardTitle: data.basic.lectureFeeStandardTitle }
+  }, [data])
+
+  const {
+    basisDetailOpen,
+    selectedBasisDetail,
+    handleBasisDetailClick,
+    closeBasisDetailModal,
+    wageSettingItemOpen,
+    wageSettingItem,
+    closeWageSettingItemModal,
+  } = usePaymentOrderCalculationBasisDetailModal(open, basisDetailContext)
 
   /* eslint-disable react-hooks/set-state-in-effect -- 모달 닫힘과 동기화 */
   useEffect(() => {
@@ -96,14 +123,15 @@ export function PaymentOrderCalculationStatementModalImpl({
 
   const issuanceInput = useMemo(() => {
     if (!data) return null
-    if (data.context === 'program') {
-      return mapProgramCalculationStatementToIssuanceInput(data)
+    if (entryKind === 'program') {
+      return mapProgramCalculationStatementToIssuanceInput(
+        data as PaymentOrderCalculationStatementProgramContext
+      )
     }
-    if (data.context === 'instructor') {
-      return mapInstructorCalculationStatementToIssuanceInput(data)
-    }
-    return null
-  }, [data])
+    return mapInstructorCalculationStatementToIssuanceInput(
+      data as PaymentOrderCalculationStatementInstructorContext
+    )
+  }, [data, entryKind])
 
   const issuanceParagraphBodyOptions = useMemo(
     () =>
@@ -176,6 +204,14 @@ export function PaymentOrderCalculationStatementModalImpl({
   }
 
   const statement = data
+
+  if (import.meta.env.DEV && statement.context !== entryKind) {
+    console.warn(
+      '[payment-order-calc-statement] data.context와 entryKind 불일치',
+      { context: statement.context, entryKind }
+    )
+  }
+
   const processingStatusClass = statement.basic.processingStatusClass
   const canIssuePaymentStatement = isPaymentOrderLineEligibleForPaymentStatementIssue(
     processingStatusClass
@@ -201,14 +237,22 @@ export function PaymentOrderCalculationStatementModalImpl({
   }
 
   const basicSection =
-    statement.context === 'program' ? (
+    entryKind === 'program' ? (
       <PaymentOrderCalculationStatementProgramBasicSection
-        basic={statement.basic}
+        basic={
+          statement.context === 'program'
+            ? statement.basic
+            : (statement.basic as unknown as PaymentOrderCalculationStatementProgramContext['basic'])
+        }
         style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
       />
     ) : (
       <PaymentOrderCalculationStatementInstructorBasicSection
-        basic={statement.basic}
+        basic={
+          statement.context === 'instructor'
+            ? statement.basic
+            : (statement.basic as unknown as PaymentOrderCalculationStatementInstructorContext['basic'])
+        }
         style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
       />
     )
@@ -235,6 +279,7 @@ export function PaymentOrderCalculationStatementModalImpl({
           totalAmount={statement.totalAmount}
           processingStatus={processingStatusClass}
           paymentStatementIssueDisabled={!canIssuePaymentStatement}
+          onBasisDetailClick={handleBasisDetailClick}
           onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
           headerActions={
             <>
@@ -311,6 +356,18 @@ export function PaymentOrderCalculationStatementModalImpl({
         paragraphBodyOptions={issuanceParagraphBodyOptions}
         fileName={issuanceFileName}
         zIndex={1500}
+      />
+      <PaymentOrderCalculationBasisDetailModal
+        open={basisDetailOpen}
+        onCancel={closeBasisDetailModal}
+        detail={selectedBasisDetail}
+        zIndex={1200}
+      />
+      <SettlementItemSettingDetailModal
+        open={wageSettingItemOpen}
+        onCancel={closeWageSettingItemModal}
+        item={wageSettingItem}
+        readOnly
       />
     </>
   )

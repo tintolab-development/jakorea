@@ -47,6 +47,10 @@ function categoryLabel(kind: PaymentOrderCalculationLineKind): string {
       return '일반'
     case 'lodging':
       return '고정급'
+    case 'meal':
+      return '일반'
+    case 'activity':
+      return '일반'
     case 'withholding':
       return '일반'
     default:

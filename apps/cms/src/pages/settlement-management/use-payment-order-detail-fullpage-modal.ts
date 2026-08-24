@@ -133,25 +133,31 @@ export function usePaymentOrderDetailFullPageModalState(
     }
     if (!settlementDetailQuery.data) return
 
-    if (type === 'program' && 'programName' in detail) {
-      setCalcStatementData(
-        mapSettlementDetailToProgramCalculationStatement(
-          calcLineRow as PaymentOrderAdminProgramDetailInstructorRow,
-          settlementDetailQuery.data,
-          detail.programName
+    switch (type) {
+      case 'program': {
+        if (!('programName' in detail)) return
+        setCalcStatementData(
+          mapSettlementDetailToProgramCalculationStatement(
+            calcLineRow as PaymentOrderAdminProgramDetailInstructorRow,
+            settlementDetailQuery.data,
+            detail.programName
+          )
         )
-      )
-      return
-    }
-
-    if (type === 'instructor' && 'nameKo' in detail) {
-      setCalcStatementData(
-        mapSettlementDetailToInstructorPageCalculationStatement(
-          calcLineRow as PaymentOrderAdminInstructorDetailProgramRow,
-          settlementDetailQuery.data,
-          detail
+        break
+      }
+      case 'instructor': {
+        if (!('nameKo' in detail)) return
+        setCalcStatementData(
+          mapSettlementDetailToInstructorPageCalculationStatement(
+            calcLineRow as PaymentOrderAdminInstructorDetailProgramRow,
+            settlementDetailQuery.data,
+            detail
+          )
         )
-      )
+        break
+      }
+      default:
+        break
     }
   }, [
     paymentOrdersRemote,
