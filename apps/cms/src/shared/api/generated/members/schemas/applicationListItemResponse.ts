@@ -5,6 +5,7 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ProgramApplicationSupplement } from './programApplicationSupplement';
 
 export interface ApplicationListItemResponse {
   applicationId?: number;
@@ -12,6 +13,7 @@ export interface ApplicationListItemResponse {
   programId?: number;
   programTitle?: string;
   programType?: string;
+  programGroup?: string;
   recruitmentId?: number;
   recruitmentType?: string;
   applicationStatus?: string;
@@ -30,4 +32,5 @@ export interface ApplicationListItemResponse {
   pendingSurveyCount?: number;
   certificateAvailable?: boolean;
   availableActions?: string[];
+  supplement?: ProgramApplicationSupplement;
 }
