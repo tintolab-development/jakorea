@@ -24,8 +24,15 @@ import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
+import {
+  REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+  buildRequiredConsentDisagreeAlertMessage,
+} from '@jakorea/domain/shared/required-consent-alert'
 import { normalizeMemberConsentWriteDraft } from '@/features/user/shared/lib/normalize-member-consent-write-draft'
-import { hasMemberConsentIncompleteRequiredFields } from '@/features/user/shared/lib/validate-member-consent-draft'
+import {
+  collectMemberConsentDisagreedRequiredLabels,
+  hasMemberConsentIncompleteRequiredFields,
+} from '@/features/user/shared/lib/validate-member-consent-draft'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
@@ -136,6 +143,16 @@ export function MemberConsentAgreementModal({
 
   const handleSubmit = useCallback(() => {
     if (draft == null) return
+
+    const disagreedLabels = collectMemberConsentDisagreedRequiredLabels(draft)
+    if (disagreedLabels.length > 0) {
+      showAlert({
+        title: REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+        content: buildRequiredConsentDisagreeAlertMessage(disagreedLabels),
+      })
+      return
+    }
+
     if (
       hasMemberConsentIncompleteRequiredFields(draft, {
         templateId,

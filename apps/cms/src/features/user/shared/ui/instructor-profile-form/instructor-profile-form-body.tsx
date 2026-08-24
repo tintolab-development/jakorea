@@ -26,8 +26,6 @@ import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-butt
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
-import { INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE } from '@/shared/constants/messages'
-import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import type { MemberConsentMemberContext } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
 import { buildMemberPaymentStatementBasicInfoAutofill } from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
 import {
@@ -36,7 +34,6 @@ import {
   resolveInstructorConsentTemplateEntry,
   type InstructorConsentFieldKey,
 } from '@/features/user/shared/lib/instructor-consent-field-map'
-import { isInstructorRegisterBasicInfoIncompleteForConsent } from '@/features/user/shared/lib/validate-instructor-consent-basic-info'
 import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
 import { InstructorRegisterEducationSection } from '@/features/user/shared/ui/instructor-register-education-section'
@@ -191,8 +188,8 @@ export interface InstructorProfileFormBodyProps {
   onConsentValuesCommit?: () => void
   /**
    * 학력·경력·JA활동·자격·수상·자유작성·강사등급 등 강사 제출양식 섹션.
-   * 순수 교사(`school_teacher`) 상세에서는 false — 기본 정보·약관만.
-   * 등록 모달에서 회원유형이 교사이면 자동 숨김.
+   * 순수 교사(`school_teacher`) 상세에서만 false — 기본 정보·약관만.
+   * 신규 등록은 교사/일반 모두 동일하게 노출(소속 필드만 분기).
    */
   includeInstructorApplicationSections?: boolean
   className?: string
@@ -216,7 +213,6 @@ export function InstructorProfileFormBody({
 }: InstructorProfileFormBodyProps) {
   const isDetailEdit = layoutVariant === 'detailEdit'
   const formLayout = getInstructorFormLayout(isDetailEdit ? 'cmsDetailEdit' : 'cmsRegister')
-  const { showAlert } = useCmsAlert()
   const [activeConsentField, setActiveConsentField] = useState<InstructorConsentFieldKey | null>(
     null
   )
@@ -227,9 +223,10 @@ export function InstructorProfileFormBody({
   const affiliationNone = Form.useWatch('affiliationNone', form) === true
   const jaEvaluationGrade = Form.useWatch('jaEvaluationGrade', form) ?? ''
   const isTeacherMember = memberType === 'school_teacher'
-  /** 상세: prop / 등록: 교사 선택 시 강사 제출양식 숨김 (겸직은 detailEdit + prop true) */
-  const showInstructorApplicationSections =
-    includeInstructorApplicationSections && (isDetailEdit || !isTeacherMember)
+  /** 등록: 교사/일반 동일 노출. 상세: 순수 교사만 prop false */
+  const showInstructorApplicationSections = includeInstructorApplicationSections
+  /** 등록은 강사 전용 동의 4건도 일반과 동일. 상세 순수 교사만 숨김 */
+  const showInstructorConsentDocuments = !isDetailEdit || !isTeacherMember
   const allValues = Form.useWatch([], form) as InstructorProfileFormValues | undefined
   const careerLevel = Form.useWatch('careerLevel', form) ?? 'new'
 
@@ -292,16 +289,6 @@ export function InstructorProfileFormBody({
   }
 
   const handleConsentWrite = (fieldKey: InstructorConsentFieldKey) => {
-    if (!formLayout.consent.skipBasicInfoGate) {
-      const values = allValues ?? form.getFieldsValue()
-      if (isInstructorRegisterBasicInfoIncompleteForConsent(values)) {
-        showAlert({
-          title: '안내',
-          content: INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
-        })
-        return
-      }
-    }
     setActiveConsentField(fieldKey)
   }
 
@@ -719,7 +706,7 @@ export function InstructorProfileFormBody({
               </DetailInfoForm.Row>
             </DetailInfoForm>
 
-            {!isTeacherMember ? (
+            {showInstructorConsentDocuments ? (
             <DetailInfoForm
               title="약관 및 동의"
               hideHeader
