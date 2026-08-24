@@ -5,8 +5,8 @@ export const settlementQueryKeys = {
     list: (searchParamsKey: string) =>
       [...settlementQueryKeys.paymentOrders.all(), 'list', searchParamsKey] as const,
     statements: () => [...settlementQueryKeys.paymentOrders.all(), 'statements'] as const,
-    detail: (type: 'program' | 'instructor', key: string) =>
-      [...settlementQueryKeys.paymentOrders.all(), 'detail', type, key] as const,
+    detail: (type: 'program' | 'instructor', key: string, dateRangeKey = 'all') =>
+      [...settlementQueryKeys.paymentOrders.all(), 'detail', type, key, dateRangeKey] as const,
     settlement: (settlementId: number) =>
       [...settlementQueryKeys.paymentOrders.all(), 'settlement', settlementId] as const,
   },

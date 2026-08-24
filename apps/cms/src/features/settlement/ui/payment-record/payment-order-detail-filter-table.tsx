@@ -73,6 +73,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
     columns,
     sectionTitle,
     filterClassName,
+    excelExport,
   } = usePaymentOrderDetailLinesController(props)
 
   return (
@@ -93,7 +94,8 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
       <FilterTableLayout
         className={filterClassName}
         bordered={false}
-        hideExcelDownload
+        filterResponsiveWrap={false}
+        excelExport={excelExport}
         fields={filterFields}
         filters={filterFilters}
         onFilterChange={onFilterCardChange}

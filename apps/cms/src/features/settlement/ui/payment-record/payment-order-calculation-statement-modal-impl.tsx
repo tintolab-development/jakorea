@@ -15,6 +15,7 @@ import {
   buildPaymentStatementIssuanceFileNameFromCalculation,
   buildPaymentStatementIssuanceViewOptionsFromCalculation,
   isPaymentOrderLineEligibleForPaymentStatementIssue,
+  mapInstructorCalculationStatementToIssuanceInput,
   mapProgramCalculationStatementToIssuanceInput,
 } from '@/features/settlement/lib/payment-order-calculation-statement-issuance-view'
 import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
@@ -29,6 +30,7 @@ import {
   PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH,
   PaymentOrderCalculationBreakdownTable,
 } from './payment-order-calculation-breakdown-table'
+import { PaymentOrderCalculationStatementInstructorBasicSection } from './payment-order-calculation-statement-instructor-basic-section'
 import { PaymentOrderCalculationStatementProgramBasicSection } from './payment-order-calculation-statement-program-basic-section'
 
 const CALC_STATEMENT_CONTENT_MIN_WIDTH = PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH
@@ -36,6 +38,11 @@ const CALC_STATEMENT_CONTENT_MIN_WIDTH = PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH
 export type PaymentOrderCalculationStatementProgramContext = Extract<
   PaymentOrderProgramCalculationStatement,
   { context: 'program' }
+>
+
+export type PaymentOrderCalculationStatementInstructorContext = Extract<
+  PaymentOrderProgramCalculationStatement,
+  { context: 'instructor' }
 >
 
 export interface PaymentOrderCalculationStatementModalImplProps {
@@ -75,7 +82,6 @@ export function PaymentOrderCalculationStatementModalImpl({
   const [paymentRejectReason, setPaymentRejectReason] = useState('')
   const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
 
-  /* 상위에서 open만 false로 줄 때(마스크 등) 자식 확인·반려 모달 상태를 비움 */
   /* eslint-disable react-hooks/set-state-in-effect -- 모달 닫힘과 동기화 */
   useEffect(() => {
     if (!open) {
@@ -88,15 +94,16 @@ export function PaymentOrderCalculationStatementModalImpl({
   }, [open])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const programStatement =
-    data?.context === 'program'
-      ? (data as PaymentOrderCalculationStatementProgramContext)
-      : null
-
-  const issuanceInput = useMemo(
-    () => (programStatement ? mapProgramCalculationStatementToIssuanceInput(programStatement) : null),
-    [programStatement]
-  )
+  const issuanceInput = useMemo(() => {
+    if (!data) return null
+    if (data.context === 'program') {
+      return mapProgramCalculationStatementToIssuanceInput(data)
+    }
+    if (data.context === 'instructor') {
+      return mapInstructorCalculationStatementToIssuanceInput(data)
+    }
+    return null
+  }, [data])
 
   const issuanceParagraphBodyOptions = useMemo(
     () =>
@@ -164,13 +171,14 @@ export function PaymentOrderCalculationStatementModalImpl({
     )
   }
 
-  if (!data || data.context !== 'program') {
+  if (!data || (data.context !== 'program' && data.context !== 'instructor')) {
     return null
   }
 
-  const statement: PaymentOrderCalculationStatementProgramContext = data
+  const statement = data
+  const processingStatusClass = statement.basic.processingStatusClass
   const canIssuePaymentStatement = isPaymentOrderLineEligibleForPaymentStatementIssue(
-    statement.basic.processingStatusClass
+    processingStatusClass
   )
 
   const handleRemoteConfirm = async (lectureFeePaymentScheduledDateIso: string) => {
@@ -192,6 +200,19 @@ export function PaymentOrderCalculationStatementModalImpl({
     }
   }
 
+  const basicSection =
+    statement.context === 'program' ? (
+      <PaymentOrderCalculationStatementProgramBasicSection
+        basic={statement.basic}
+        style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
+      />
+    ) : (
+      <PaymentOrderCalculationStatementInstructorBasicSection
+        basic={statement.basic}
+        style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
+      />
+    )
+
   return (
     <>
       <ContentModal
@@ -207,15 +228,12 @@ export function PaymentOrderCalculationStatementModalImpl({
           </CmsButton>
         }
       >
-        <PaymentOrderCalculationStatementProgramBasicSection
-          basic={statement.basic}
-          style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
-        />
+        {basicSection}
         <PaymentOrderCalculationBreakdownTable
           blocks={statement.blocks}
           formulaLabel={statement.formulaLabel}
           totalAmount={statement.totalAmount}
-          processingStatus={statement.basic.processingStatusClass}
+          processingStatus={processingStatusClass}
           paymentStatementIssueDisabled={!canIssuePaymentStatement}
           onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
           headerActions={

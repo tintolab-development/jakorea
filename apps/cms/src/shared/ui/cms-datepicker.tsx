@@ -114,7 +114,7 @@ export interface CmsDateRangePickerProps extends Omit<RangePickerProps, 'variant
   pickerClassName?: string
   inputSize?: CmsControlSize
   width?: number | string
-  /** 시작일 선택 시 종료일을 `시작+1개월−1일`로 설정 (분할 Range UI) */
+  /** 시작일 선택 시 종료일을 `시작+1개월`(동일일)로 설정 (분할 Range UI) */
   oneMonthFromStart?: boolean
 }
 
@@ -184,8 +184,7 @@ const CmsDateRangePickerRender: ForwardRefRenderFunction<
 
   const handleStartChange = (d: Dayjs | null) => {
     if (oneMonthFromStart && d) {
-      const rangeEnd = d.add(1, 'month').subtract(1, 'day')
-      onChange?.([d, rangeEnd], ['', ''])
+      onChange?.([d, d.add(1, 'month')], ['', ''])
       return
     }
     if (d && end && d.isAfter(end)) {

@@ -1,12 +1,18 @@
 import type {
+  PaymentOrderAdminInstructorDetail,
   PaymentOrderAdminInstructorDetailProgramRow,
   PaymentOrderAdminProgramDetailInstructorRow,
   PaymentOrderProgramCalculationStatement,
   PaymentOrderCalculationStatementLine,
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/data/mock/payment-order-admin-list'
-import { PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS } from '@/data/mock/payment-order-admin-list'
+import {
+  PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS,
+  addressDisplayForStatementBlur,
+} from '@/data/mock/payment-order-admin-list'
 import type { SettlementFrontendItemResponse, SettlementFrontendResponse } from '@/shared/api/generated/settlement/schemas'
+import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { KO_DOW } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
 
 type ProgramDetailLineRow = PaymentOrderAdminProgramDetailInstructorRow
@@ -26,10 +32,11 @@ function mapItemToLine(item: SettlementFrontendItemResponse, index: number): Pay
   const amount = item.amount ?? 0
   return {
     id: `calc-line-remote-${index}`,
-    itemLabel: item.type?.trim() || '정산 항목',
+    itemLabel: formatPaymentOrderCalculationItemLabel(item.type, amount),
     description: item.description?.trim() || '—',
     amount,
     kind: amount < 0 ? 'withholding' : 'lecture_fee',
+    // TODO(settlement-api): settlement.calculationDetails[index] → basisDetail 매핑 (layout/basisJson)
   }
 }
 
@@ -103,20 +110,36 @@ export function mapSettlementDetailToProgramCalculationStatement(
 export function mapSettlementDetailToInstructorPageCalculationStatement(
   lineRow: InstructorDetailLineRow,
   settlement: SettlementFrontendResponse,
-  instructorNameKo: string
+  instructorDetail: PaymentOrderAdminInstructorDetail
 ): PaymentOrderProgramCalculationStatement {
   const blocks = buildBlocks(lineRow, settlement)
   const itemsTotal = sumItems(settlement.items)
   const totalAmount = settlement.totalAmount ?? (itemsTotal !== 0 ? itemsTotal : lineRow.estimatedAmount)
 
+  const { addressDisplay, addressBlurredTail } = addressDisplayForStatementBlur(
+    instructorDetail.address
+  )
+  const settlementBankPart = [
+    instructorDetail.bankName,
+    MASKING_POLICY.accountNumber(instructorDetail.accountNumber),
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return {
-    context: 'program',
+    context: 'instructor',
     sourceLineRowId: lineRow.id,
     basic: {
+      nameKo: instructorDetail.nameKo,
+      nameEn: instructorDetail.nameEn,
+      phoneDisplay: MASKING_POLICY.phone(instructorDetail.phone),
+      emailDisplay: MASKING_POLICY.email(instructorDetail.email),
+      addressDisplay,
+      addressBlurredTail,
+      settlementAccountBankNumberPart: settlementBankPart || '—',
+      settlementAccountHolderPart: MASKING_POLICY.accountHolderName(instructorDetail.accountHolder),
+      genderBirthDisplay: '-',
       programName: lineRow.programName,
-      instructorNameKo,
-      businessPeriodDisplay: settlement.period?.trim() || '—',
-      programSessionProgressDisplay: '—',
       processingStatusDisplay: PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS[lineRow.processingStatus],
       processingStatusClass: lineRow.processingStatus,
       processingRejectionReason: lineRow.processingRejectionReason,

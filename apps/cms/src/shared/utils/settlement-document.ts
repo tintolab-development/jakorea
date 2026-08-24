@@ -6,6 +6,7 @@
 
 import ExcelJS from '@zurmokeeper/exceljs'
 import type { Settlement, Instructor } from '@/types/domain'
+import { formatSettlementItemTypeLabel } from '@/shared/constants/settlement-item-type'
 import { downloadExcel, generateFilename } from './file-download'
 import dayjs from 'dayjs'
 
@@ -174,16 +175,9 @@ async function generatePaymentStatementExcel(
   worksheet.getRow(currentRow).height = 25
 
   // 정산 항목 데이터
-  const itemTypeLabels: Record<string, string> = {
-    instructor_fee: '강사비',
-    transportation: '교통비',
-    accommodation: '숙박비',
-    other: '기타',
-  }
-
   settlement.items.forEach(item => {
     currentRow++
-    worksheet.getCell(currentRow, 1).value = itemTypeLabels[item.type] || item.type
+    worksheet.getCell(currentRow, 1).value = formatSettlementItemTypeLabel(item.type, item.type)
     worksheet.getCell(currentRow, 1).style = cellStyle
     worksheet.getCell(currentRow, 2).value = item.description
     worksheet.getCell(currentRow, 2).style = cellStyle
@@ -280,7 +274,7 @@ async function generatePaymentStatementPDF(
           .map(
             item => `
           <tr>
-            <td>${getItemTypeLabel(item.type)}</td>
+            <td>${formatSettlementItemTypeLabel(item.type, item.type)}</td>
             <td>${item.description}</td>
             <td>${item.amount.toLocaleString('ko-KR')}원</td>
           </tr>
@@ -312,16 +306,6 @@ async function generatePaymentStatementPDF(
   link.download = filename
   link.click()
   URL.revokeObjectURL(link.href)
-}
-
-function getItemTypeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    instructor_fee: '강사비',
-    transportation: '교통비',
-    accommodation: '숙박비',
-    other: '기타',
-  }
-  return labels[type] || type
 }
 
 /**

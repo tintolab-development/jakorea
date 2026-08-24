@@ -13,6 +13,7 @@ import type {
   SettlementListItemResponse,
 } from '@/shared/api/generated/settlement/schemas'
 import { formatLectureSessionLabel } from '@/features/settlement-management/api/account-payments/map-settlement-context'
+import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
 
 const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'] as const
 
@@ -37,7 +38,7 @@ function mapItemToCalcLine(
   const amount = item.amount ?? 0
   return {
     id: `calc-line-api-${index}`,
-    itemLabel: item.type?.trim() || '정산 항목',
+    itemLabel: formatPaymentOrderCalculationItemLabel(item.type, amount),
     description: item.description?.trim() || '—',
     amount,
     kind: amount < 0 ? 'withholding' : 'lecture_fee',

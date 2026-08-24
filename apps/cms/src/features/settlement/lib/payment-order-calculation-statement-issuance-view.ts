@@ -177,6 +177,29 @@ export function mapProgramCalculationStatementToIssuanceInput(
   }
 }
 
+export function mapInstructorCalculationStatementToIssuanceInput(
+  statement: Extract<PaymentOrderProgramCalculationStatement, { context: 'instructor' }>
+): PaymentStatementIssuanceFromCalculationInput {
+  const bankParts = statement.basic.settlementAccountBankNumberPart.trim().split(/\s+/)
+  const bankName = bankParts[0]
+  const accountNumber = bankParts.slice(1).join(' ')
+  return {
+    instructorNameKo: statement.basic.nameKo,
+    nameEn: statement.basic.nameEn,
+    addressDisplay: statement.basic.addressDisplay,
+    bankName,
+    accountNumber,
+    accountHolder: statement.basic.settlementAccountHolderPart,
+    programName: statement.basic.programName?.trim() || statement.blocks[0]?.institutionName || '—',
+    lectureFeeStandardTitle: statement.basic.lectureFeeStandardTitle,
+    lectureFeeStandardAmount: statement.basic.lectureFeeStandardAmount,
+    businessIncomeEarnerLabel: statement.basic.businessIncomeEarnerLabel,
+    blocks: statement.blocks,
+    formulaLabel: statement.formulaLabel,
+    totalAmount: statement.totalAmount,
+  }
+}
+
 export function mapAccountPaymentStatusDetailToIssuanceInput(
   detail: AccountPaymentStatusDetail
 ): PaymentStatementIssuanceFromCalculationInput {

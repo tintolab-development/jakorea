@@ -53,7 +53,9 @@ export type PaymentOrderDetailFullPageModalInput = {
   listPageDateRange: [Dayjs, Dayjs] | null
 }
 
-export function usePaymentOrderDetailFullPageModalState(input: PaymentOrderDetailFullPageModalInput) {
+export function usePaymentOrderDetailFullPageModalState(
+  input: PaymentOrderDetailFullPageModalInput
+) {
   const { type, isOpen, onClose, data, listPageDateRange } = input
 
   const row = data
@@ -63,6 +65,7 @@ export function usePaymentOrderDetailFullPageModalState(input: PaymentOrderDetai
   const detailContextQuery = usePaymentOrdersDetailContextQuery(
     type,
     aggregateKey,
+    listPageDateRange,
     isOpen && paymentOrdersRemote
   )
 
@@ -98,7 +101,8 @@ export function usePaymentOrderDetailFullPageModalState(input: PaymentOrderDetai
   }, [paymentOrdersRemote, type, row, detailContextQuery.data])
 
   const remoteInstructorDetail = useMemo(() => {
-    if (!paymentOrdersRemote || type !== 'instructor' || !row || !detailContextQuery.data) return null
+    if (!paymentOrdersRemote || type !== 'instructor' || !row || !detailContextQuery.data)
+      return null
     return buildInstructorDetailFromSettlements(
       row as PaymentOrderAdminInstructorRow,
       detailContextQuery.data.items ?? [],
@@ -145,7 +149,7 @@ export function usePaymentOrderDetailFullPageModalState(input: PaymentOrderDetai
         mapSettlementDetailToInstructorPageCalculationStatement(
           calcLineRow as PaymentOrderAdminInstructorDetailProgramRow,
           settlementDetailQuery.data,
-          detail.nameKo
+          detail
         )
       )
     }
@@ -198,10 +202,10 @@ export function usePaymentOrderDetailFullPageModalState(input: PaymentOrderDetai
   const title = useMemo(() => {
     if (!detail) return ''
     if (type === 'program' && 'programName' in detail) {
-      return `지급 현황 상세_${detail.programName}`
+      return `지급 현황 상세 (${detail.programName})`
     }
     if (type === 'instructor' && 'nameKo' in detail) {
-      return `지급 현황 상세_${detail.nameKo}`
+      return `지급 현황 상세 (${detail.nameKo})`
     }
     return '지급 현황 상세'
   }, [detail, type])

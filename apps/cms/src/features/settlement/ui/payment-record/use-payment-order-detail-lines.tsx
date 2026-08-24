@@ -21,11 +21,16 @@ import {
   type PaymentOrderAdminProgramDetailInstructorRow,
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
-import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
+import {
+  PAYMENT_ORDER_LINE_STATUS_LABELS_FULL,
+  type PaymentOrderDetailAggregateStatus,
+} from '@/shared/constants/payment-order-aggregate-status'
+import type { FilterTableExcelExportConfig } from '@/shared/components/filter-table-layout'
 
 type DetailContextQuery = PaymentOrdersDetailContextQueryResult
 import {
   deriveAggregateFromLines,
+  formatKoreanDateWithWeekday,
   formatWon,
   lineStatusSelectOptions,
   matchesDateRange,
@@ -35,11 +40,24 @@ import {
 } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
 import { renderLineProcessingStatusText } from '@/pages/settlement-management/payment-order-detail-aggregate-status'
 import { CmsButton } from '@/shared/ui'
+import {
+  FILTER_CONTROL_MAX_WIDTH_PX,
+  FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
+} from '@/shared/components/table-filter-group-field-width'
 import { PaymentOrderLectureDateSessionCell } from './payment-order-lecture-date-session-cell'
 
 export type PaymentOrderDetailLineRow =
   | PaymentOrderAdminProgramDetailInstructorRow
   | PaymentOrderAdminInstructorDetailProgramRow
+
+type PaymentOrderDetailLineExcelRow = {
+  no: number
+  name: string
+  institutionName: string
+  lectureDateSession: string
+  processingStatusLabel: string
+  estimatedAmountLabel: string
+}
 
 interface DetailAppliedFilters {
   keyword: string
@@ -189,41 +207,52 @@ export function usePaymentOrderDetailLinesController(
       setRowsState(d.programRows.map(r => ({ ...r })))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- contextRowNo·aggregateKey로 행 식별
-  }, [isOpen, mode, contextRowNo, contextAggregateKey, listPageDateRange, paymentOrdersRemote, detailContextQuery?.data])
+  }, [
+    isOpen,
+    mode,
+    contextRowNo,
+    contextAggregateKey,
+    listPageDateRange,
+    paymentOrdersRemote,
+    detailContextQuery?.data,
+  ])
 
   useEffect(() => {
     onAggregateChange(deriveAggregateFromLines(rowsState.map(r => r.processingStatus)))
   }, [rowsState, onAggregateChange])
 
-  const applyStatementCommit = useCallback((payload: PaymentOrderCalculationStatementCommitPayload) => {
-    setRowsState(prev =>
-      prev.map(row => {
-        if (row.id !== payload.lineId) return row
-        if (payload.status === 'confirmed') {
-          return {
-            ...row,
-            processingStatus: 'confirmed',
-            lectureFeePaymentScheduledDate: payload.lectureFeePaymentScheduledDate,
-            processingRejectionReason: undefined,
+  const applyStatementCommit = useCallback(
+    (payload: PaymentOrderCalculationStatementCommitPayload) => {
+      setRowsState(prev =>
+        prev.map(row => {
+          if (row.id !== payload.lineId) return row
+          if (payload.status === 'confirmed') {
+            return {
+              ...row,
+              processingStatus: 'confirmed',
+              lectureFeePaymentScheduledDate: payload.lectureFeePaymentScheduledDate,
+              processingRejectionReason: undefined,
+            }
           }
-        }
-        if (payload.status === 'application_rejected') {
-          return {
-            ...row,
-            processingStatus: 'application_rejected',
-            processingRejectionReason: payload.rejectionReason,
-            lectureFeePaymentScheduledDate: undefined,
+          if (payload.status === 'application_rejected') {
+            return {
+              ...row,
+              processingStatus: 'application_rejected',
+              processingRejectionReason: payload.rejectionReason,
+              lectureFeePaymentScheduledDate: undefined,
+            }
           }
-        }
-        return { ...row, processingStatus: payload.status }
-      })
-    )
-    if (payload.status === 'confirmed') {
-      console.debug('payment order confirmed', payload)
-    } else if (payload.status === 'application_rejected') {
-      console.debug('payment order application rejected', payload)
-    }
-  }, [])
+          return { ...row, processingStatus: payload.status }
+        })
+      )
+      if (payload.status === 'confirmed') {
+        console.debug('payment order confirmed', payload)
+      } else if (payload.status === 'application_rejected') {
+        console.debug('payment order application rejected', payload)
+      }
+    },
+    []
+  )
 
   useEffect(() => {
     if (!registerStatementCommitSink) return
@@ -275,9 +304,7 @@ export function usePaymentOrderDetailLinesController(
             setSelectedRowKeys([])
           })
           .catch(error => {
-            window.alert(
-              getSettlementApiErrorMessage(error, '지급조서 일괄 확인에 실패했습니다.')
-            )
+            window.alert(getSettlementApiErrorMessage(error, '지급조서 일괄 확인에 실패했습니다.'))
           })
         return
       }
@@ -329,72 +356,43 @@ export function usePaymentOrderDetailLinesController(
         ? {
             key: 'instructorName' as const,
             type: 'search' as const,
-            label: '강사명',
-            placeholder: '강사명을 입력하세요',
-            width: '23%',
+            label: '신청자명',
+            placeholder: '신청자명을 입력하세요',
+            width: FILTER_CONTROL_MAX_WIDTH_PX,
           }
         : {
             key: 'programName' as const,
             type: 'search' as const,
             label: '프로그램명',
             placeholder: '프로그램명을 입력하세요',
-            flex: '1 1 0',
+            width: FILTER_CONTROL_MAX_WIDTH_PX,
           }
 
-    const institutionField =
-      mode === 'program'
-        ? {
-            key: 'institutionName' as const,
-            type: 'search' as const,
-            label: '참여 기관명',
-            placeholder: '기관명을 입력하세요',
-            width: '23%',
-          }
-        : {
-            key: 'institutionName' as const,
-            type: 'search' as const,
-            label: '참여 기관명',
-            placeholder: '기관명을 입력하세요',
-            flex: '1 1 0',
-          }
-
-    const statusField =
-      mode === 'program'
-        ? {
-            key: 'status' as const,
-            type: 'select' as const,
-            label: '지급조서 처리 현황',
-            placeholder: '전체',
-            options: lineStatusSelectOptions.filter(o => o.value !== 'all'),
-            allowClear: true,
-            width: '23%',
-          }
-        : {
-            key: 'status' as const,
-            type: 'select' as const,
-            label: '지급조서 처리 현황',
-            placeholder: '전체',
-            options: lineStatusSelectOptions.filter(o => o.value !== 'all'),
-            allowClear: true,
-            flex: '1 1 0',
-          }
-
-    const dateField =
-      mode === 'program'
-        ? {
-            key: 'dateRange' as const,
-            type: 'dateRange' as const,
-            label: '기간',
-            width: '31%',
-          }
-        : {
-            key: 'dateRange' as const,
-            type: 'dateRange' as const,
-            label: '기간',
-            flex: '1 1 0',
-          }
-
-    return [keywordField, institutionField, statusField, dateField]
+    return [
+      keywordField,
+      {
+        key: 'institutionName' as const,
+        type: 'search' as const,
+        label: '참여 기관명',
+        placeholder: '기관명을 입력하세요',
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
+      },
+      {
+        key: 'status' as const,
+        type: 'select' as const,
+        label: '지급조서 처리 현황',
+        placeholder: '전체',
+        options: lineStatusSelectOptions.filter(o => o.value !== 'all'),
+        allowClear: true,
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
+      },
+      {
+        key: 'dateRange' as const,
+        type: 'dateRange' as const,
+        label: '기간',
+        width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
+      },
+    ]
   }, [mode])
 
   const filterFilters = useMemo(
@@ -453,7 +451,7 @@ export function usePaymentOrderDetailLinesController(
     const nameColumn: ColumnsType<PaymentOrderDetailLineRow>[0] =
       mode === 'program'
         ? {
-            title: '강사명',
+            title: '신청자명',
             dataIndex: 'instructorName',
             key: 'instructorName',
             ellipsis: { showTitle: true },
@@ -487,7 +485,7 @@ export function usePaymentOrderDetailLinesController(
         align: 'center',
       },
       {
-        title: '강의 진행 일자',
+        title: '교육 진행 일자',
         key: 'lecture',
         width: w.lecture,
         align: 'center',
@@ -499,7 +497,7 @@ export function usePaymentOrderDetailLinesController(
         ),
       },
       {
-        title: '지급 조서 처리 현황',
+        title: '지급조서 처리 현황',
         key: 'processingStatus',
         width: w.processing,
         align: 'center',
@@ -510,7 +508,7 @@ export function usePaymentOrderDetailLinesController(
           renderLineProcessingStatusText(row.processingStatus),
       },
       {
-        title: '정산 예정 금액',
+        title: '정산 신청 금액',
         dataIndex: 'estimatedAmount',
         key: 'estimatedAmount',
         width: w.amount,
@@ -547,12 +545,39 @@ export function usePaymentOrderDetailLinesController(
     ]
   }, [mode, onOpenCalculationStatement])
 
-  const sectionTitle = mode === 'program' ? '강사 별 정산 목록' : '프로그램 별 정산 목록'
+  const sectionTitle = mode === 'program' ? '신청자별 정산 목록' : '프로그램별 정산 목록'
 
-  const filterClassName =
-    mode === 'program'
-      ? 'payment-order-detail-filter-table__filters'
-      : 'payment-order-detail-filter-table__filters participating-institutions-section__filters'
+  const filterClassName = 'payment-order-detail-filter-table__filters'
+
+  const excelExport = useMemo((): FilterTableExcelExportConfig<PaymentOrderDetailLineExcelRow> => {
+    const nameTitle = mode === 'program' ? '신청자명' : '프로그램명'
+    const data: PaymentOrderDetailLineExcelRow[] = filteredRows.map(row => ({
+      no: row.no,
+      name:
+        mode === 'program'
+          ? (row as PaymentOrderAdminProgramDetailInstructorRow).instructorName
+          : (row as PaymentOrderAdminInstructorDetailProgramRow).programName,
+      institutionName: row.institutionName,
+      lectureDateSession: `${formatKoreanDateWithWeekday(row.lectureDate)} | ${row.sessionOrdinal}차시`,
+      processingStatusLabel: PAYMENT_ORDER_LINE_STATUS_LABELS_FULL[row.processingStatus],
+      estimatedAmountLabel: formatWon(row.estimatedAmount),
+    }))
+
+    const columns: ColumnsType<PaymentOrderDetailLineExcelRow> = [
+      { title: 'No.', dataIndex: 'no', key: 'no' },
+      { title: nameTitle, dataIndex: 'name', key: 'name' },
+      { title: '참여 기관명', dataIndex: 'institutionName', key: 'institutionName' },
+      { title: '강의 진행 일자', dataIndex: 'lectureDateSession', key: 'lectureDateSession' },
+      {
+        title: '지급 조서 처리 현황',
+        dataIndex: 'processingStatusLabel',
+        key: 'processingStatusLabel',
+      },
+      { title: '정산 예정 금액', dataIndex: 'estimatedAmountLabel', key: 'estimatedAmountLabel' },
+    ]
+
+    return { columns, data }
+  }, [filteredRows, mode])
 
   return {
     filteredRows,
@@ -571,5 +596,6 @@ export function usePaymentOrderDetailLinesController(
     columns,
     sectionTitle,
     filterClassName,
+    excelExport,
   }
 }

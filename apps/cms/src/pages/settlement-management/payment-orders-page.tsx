@@ -57,16 +57,17 @@ export default function PaymentOrdersPage() {
     <div className="payment-orders-page">
       <FilterTableLayout
         className="payment-orders-page__filter-list-layout"
+        filterResponsiveWrap={false}
         contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         fields={paymentOrdersFilterFields}
         filters={{
           exposureMode,
           programName: pendingFilters.programName,
           instructorName: pendingFilters.instructorName,
-          pendingPaymentBucket:
-            pendingFilters.pendingPaymentBucket === 'all'
+          processingStatus:
+            pendingFilters.processingStatus === 'all'
               ? undefined
-              : pendingFilters.pendingPaymentBucket,
+              : pendingFilters.processingStatus,
           dateRange: pendingFilters.dateRange,
         }}
         onFilterChange={handleFilterChange}
