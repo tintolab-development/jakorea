@@ -127,8 +127,9 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동
 | **UI** | `PaymentOrderProgramCalculationStatement` — 세션 블록·산정 라인·합계 수식 |
 | **현재 API** | `GET /api/settlements/{id}` → `SettlementFrontendResponse` (`items`, `calculationResult` unknown) |
 | **갭** | 12종 layout mock과 API flat items 불일치 |
-| **프론트 임시 대응** | remote 시 산출 내역서 모달 **「API 연동 준비 중」** alert |
-| **제안** | 산출서 전용 DTO 또는 revision detail 확장 |
+| **갭 (항목 type)** | `items[].type` enum 미정의 — UI는 7종(강사비·교통비·숙박비·**식사비·활동비·원천징수**·기타) 필요 → [핸드오프 §3.5](./settlement-payment-order-detail-backend-handoff.md#35-산출-내역서--산정-항목-type-enum-확장-p1) |
+| **프론트 임시 대응** | `settlement-item-type.ts` 코드→한글 매핑. layout·basisDetail은 미연동 |
+| **제안** | 산출서 전용 DTO 또는 revision detail 확장 + **`SettlementFrontendItemResponse.type` enum 7종** |
 
 ---
 

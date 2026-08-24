@@ -92,6 +92,62 @@ GET /api/admin/settlements/statements?programId=42
 | **현재 API** | `SettlementListItemResponse`에 기관명 필드 없음 |
 | **제안** | `institutionName` 또는 `schoolName` 필드 추가 (assignment/schedule join) |
 
+### 3.5 산출 내역서 — 산정 항목 `type` enum 확장 *(P1)*
+
+| | |
+|---|---|
+| **UI** | 지급 현황 상세 > 산출 내역서 > **산정 항목** 컬럼 |
+| **현재 API** | `GET /api/admin/settlements/{settlementId}` → `SettlementFrontendResponse.items[]` |
+| **item DTO** | `SettlementFrontendItemResponse` — `type`(string, enum 미정의), `description`, `amount` |
+| **문제** | `type`이 `instructor_fee` 등 **snake_case 코드**로만 내려와 UI에 그대로 노출됨. OpenAPI에 허용 값·한글 라벨 규격 없음 |
+| **프론트 대응** | `shared/constants/settlement-item-type.ts`에서 코드→한글 매핑 (서버 enum 확정 전 임시) |
+
+#### 백엔드 수정 요청
+
+1. **`SettlementFrontendItemResponse.type`에 enum(또는 문서화된 상수 집합) 정의** — OpenAPI `enum` 또는 별도 `SettlementItemType` 스키마
+2. **아래 7종을 SSOT로 합의** — 산출 내역서·지급조서·정산 신청 items 공통 사용 권장
+
+| `type` (제안 코드) | 산정 항목 (UI 라벨) | 비고 |
+|--------------------|---------------------|------|
+| `instructor_fee` | 강사비 | 기존 |
+| `transportation` | 교통비 | 기존 |
+| `accommodation` | 숙박비 | 기존 |
+| `meal` | 식사비 | **신규** — 정산 항목 설정 「식사비」 |
+| `activity` | 활동비 | **신규** — UJAT·자원봉사 활동비 등 |
+| `withholding` | 원천징수 | **신규** — 공제 라인. `amount`는 **음수** 권장 |
+| `other` | 기타 | 기존 |
+
+3. **`description`** — 항목별 상세(차시·거리·공제율 등)는 기존처럼 자유 텍스트. **카테고리명은 `type`으로만** 내려주고 UI는 위 표로 라벨 변환
+4. **원천징수 표현** — `type: "withholding"` + 음수 `amount` 라인을 items에 포함. 상위 `withholdingTaxAmount`만 두고 items에 없으면 산출 내역서 합계 행·라인 불일치
+5. **breaking change 없음** — 기존 4종(`instructor_fee`, `transportation`, `accommodation`, `other`) 응답 유지. 신규 3종은 해당 정산에 항목 있을 때만 추가
+
+#### 응답 예시 (제안)
+
+```json
+{
+  "items": [
+    { "type": "instructor_fee", "description": "강사비 (3차시)", "amount": 300000 },
+    { "type": "transportation", "description": "대전 → 서울 (146.8km)", "amount": 31500 },
+    { "type": "meal", "description": "식사비", "amount": 15000 },
+    { "type": "activity", "description": "UJAT 활동비", "amount": 20000 },
+    { "type": "withholding", "description": "원천징수 8.8%", "amount": -32508 }
+  ],
+  "totalAmount": 333992
+}
+```
+
+#### 수용 기준 (Acceptance)
+
+- [ ] OpenAPI에 `SettlementFrontendItemResponse.type` 허용 값 7종 명시
+- [ ] 스테이징: 식사비·활동비·원천징수가 포함된 정산 상세 조회 시 items에 해당 `type` 존재
+- [ ] 원천징수 라인 `amount` 음수, `items` 합계 = `totalAmount` (또는 `netPaymentAmount`와 정합)
+- [ ] 프론트 Orval 재생성 후 enum 타입 반영 가능
+
+#### 프론트 후속 (백엔드 enum 반영 후)
+
+- `settlement-item-type.ts` — 서버 enum과 1:1 동기화 확인
+- `map-settlement-detail-to-calculation-statement.ts` — `type` 라벨 매핑 유지 (현재 연동됨)
+
 ---
 
 ## 4. 백엔드 **수정 요청** — `GET /settlements` 목록에 `statementId` 포함 *(권장·P1)*
@@ -147,7 +203,7 @@ GET /api/admin/settlements/statements?programId=42
 |----------|------|----------------|
 | P0 | `POST .../statements/bulk-confirm` + 이체 예정일 | 「일괄 확인」 모달 |
 | P0 | `PATCH .../statements/{id}/reject` | 산출 내역서 「신청 반려」 |
-| P1 | 산출 내역서 DTO (`GET /settlements/{id}` 확장) | 산출 내역서 모달 본문 |
+| P1 | 산출 내역서 DTO (`GET /settlements/{id}` 확장) | 산출 내역서 모달 본문 · **items[].type enum 7종** ([§3.5](./settlement-payment-order-detail-backend-handoff.md#35-산출-내역서--산정-항목-type-enum-확장-p1)) |
 | P1 | `GET /settlements/aggregates` (목록용) | 상세와 무관, 목록 성능 |
 
 ---
