@@ -6,6 +6,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   Editor,
+  createRichTextEditorApi,
   createRichTextExtensions,
   EMOJI_QUICK_PICK_NAMES,
   getEmojiQuickPickItems,
@@ -18,6 +19,8 @@ import {
   NodeSelection,
   promptLinkUrl,
   setLinkFromUrl,
+  stripTrailingEmptyMarkdown,
+  stripTrailingEmptyParagraphs,
 } from '@jakorea/rich-text'
 import { MAIL_VARIABLE_NODE_NAME, MailVariable } from './variable-node'
 
@@ -37,6 +40,14 @@ afterEach(() => {
   editor?.destroy()
   editor = null
 })
+
+function countBlockEmptyParagraphs(instance: Editor): number {
+  let count = 0
+  instance.state.doc.forEach(node => {
+    if (node.type.name === 'paragraph' && node.content.size === 0) count += 1
+  })
+  return count
+}
 
 describe('mail template editor toolbar commands', () => {
   it('applies line-height to the current paragraph', () => {
@@ -280,5 +291,54 @@ describe('mail template editor toolbar commands', () => {
     promptLinkUrl(instance)
     expect(instance.getHTML()).toMatch(/<a\b[^>]*href="https:\/\/example\.com"/i)
     vi.unstubAllGlobals()
+  })
+
+  it('serializes two paragraphs with a single blank line', () => {
+    const instance = createEditor('<p>문단1</p><p>문단2</p>')
+    const markdown = createRichTextEditorApi(instance).getMarkdown()
+    expect(markdown).toBe('문단1\n\n문단2')
+    expect(markdown).not.toMatch(/\n{3,}/)
+  })
+
+  it('does not grow empty paragraphs after markdown save and reopen', () => {
+    const instance = createEditor('<p>문단1</p><p>문단2</p>')
+    const markdown = createRichTextEditorApi(instance).getMarkdown()
+    const emptyBefore = countBlockEmptyParagraphs(instance)
+    instance.destroy()
+
+    const reloaded = createEditor('')
+    reloaded.commands.setContent(markdown, { contentType: 'markdown' })
+    expect(countBlockEmptyParagraphs(reloaded)).toBe(emptyBefore)
+    expect(createRichTextEditorApi(reloaded).getMarkdown()).toBe(markdown)
+  })
+
+  it('omits trailing empty paragraphs from saved HTML after image and youtube insert', () => {
+    const instance = createEditor('<p>본문</p>')
+    instance.commands.focus()
+    insertImageFromUrl(instance, 'https://example.com/photo.png')
+    insertYoutubeFromUrl(instance, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+    const html = createRichTextEditorApi(instance).getHTML()
+    expect(html).toMatch(/<img\b[^>]*src="https:\/\/example\.com\/photo\.png"/i)
+    expect(html).toMatch(/youtube|iframe/i)
+    expect(html).not.toMatch(/<p(?:\s[^>]*)?>(?:\s|&nbsp;|<br\b[^>]*>)*<\/p>\s*$/i)
+  })
+})
+
+describe('trailing empty paragraph stripping', () => {
+  it('removes only trailing empty HTML paragraphs', () => {
+    expect(stripTrailingEmptyParagraphs('<p>본문</p><p></p>')).toBe('<p>본문</p>')
+    expect(stripTrailingEmptyParagraphs('<p>본문</p><p><br></p>')).toBe('<p>본문</p>')
+    expect(
+      stripTrailingEmptyParagraphs('<p>본문</p><p><br class="ProseMirror-trailingBreak"></p>')
+    ).toBe('<p>본문</p>')
+    expect(stripTrailingEmptyParagraphs('<p>문단1</p><p></p><p>문단2</p>')).toBe(
+      '<p>문단1</p><p></p><p>문단2</p>'
+    )
+  })
+
+  it('removes only trailing empty markdown paragraphs', () => {
+    expect(stripTrailingEmptyMarkdown('문단1\n\n문단2\n\n')).toBe('문단1\n\n문단2')
+    expect(stripTrailingEmptyMarkdown('문단1\n\n문단2\n\n&nbsp;')).toBe('문단1\n\n문단2')
+    expect(stripTrailingEmptyMarkdown('문단1\n\n\n\n문단2')).toBe('문단1\n\n\n\n문단2')
   })
 })
