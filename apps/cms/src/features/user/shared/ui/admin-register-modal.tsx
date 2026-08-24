@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Form } from 'antd'
-import { CmsButton, CmsInput, CmsRadioGroup, ContentModal } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsPhoneInput, CmsRadioGroup, ContentModal } from '@/shared/ui'
 import {
   CmsDateTextInput,
   birthDateFormValueToApi,
@@ -8,7 +8,7 @@ import {
   isValidBirthDateFormValue,
 } from '@/shared/ui/date-text-input'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
+import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import {
@@ -110,7 +110,7 @@ function collectAdminRegisterValidation(
   const contact = values.contact?.trim()
   if (!contact) {
     missingRequired = true
-  } else if (!KOREAN_PHONE_REGEX.test(contact)) {
+  } else if (!isValidKoreanPhoneNumber(contact)) {
     formatMessages.push('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')
   }
 
@@ -279,7 +279,7 @@ export function AdminRegisterModal({
                     name="contact"
                     style={FORM_ITEM_STYLE}
                   >
-                    <CmsInput placeholder="연락처" inputSize="medium" width="100%" />
+                    <CmsPhoneInput placeholder="연락처" inputSize="medium" width="100%" />
                   </Form.Item>
                 }
               />

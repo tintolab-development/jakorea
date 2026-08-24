@@ -32,6 +32,7 @@ import {
   type IdentityChallengeCompleteResult,
 } from '@/features/auth/identity-verification'
 import { useIdentityVerification as useIdentityVerificationBase } from '@jakorea/identity-verification/react'
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { CmsButton, CmsInput, CmsRadioGroup, ContentModal, useCmsAlert } from '@/shared/ui'
 import { ProfilePasswordChangeModal } from '@/shared/ui/profile-password-change-modal'
 import type { User } from '@/types/user'
@@ -397,7 +398,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
                   readOnlyDisplay
                   view={
                     <ProfileFieldWithAction
-                      value={user.phone?.trim() || '-'}
+                      value={user.phone?.trim() ? formatKoreanPhoneNumber(user.phone) : '-'}
                       actionLabel="본인인증 재인증"
                       onAction={() => {
                         void handleIdentityReverify()

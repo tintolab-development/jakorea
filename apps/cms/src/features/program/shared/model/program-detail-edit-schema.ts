@@ -30,6 +30,7 @@ import {
   resolveProgramWageDeductionLabel,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { z } from 'zod'
+import { formatKoreanPhoneNumber, isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import {
   announcementPublishedFromFormValue,
   announcementPublishedToFormValue,
@@ -89,7 +90,13 @@ const programDetailEditSchemaBase = z.object({
   sponsorManagementIds: z.array(z.string()).optional(),
   sponsorManagerContactId: z.string().optional(),
   managerName: z.string().min(1, '후원사 담당자를 입력해주세요'),
-  contactPhone: z.string().optional(),
+  contactPhone: z
+    .string()
+    .optional()
+    .refine(
+      value => !value?.trim() || isValidKoreanPhoneNumber(value),
+      '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'
+    ),
   contactEmail: z.string().optional(),
   venueKind: z.enum(['inside', 'outside', 'other']).optional(),
   venueDetail: z.string().optional(),
@@ -304,7 +311,9 @@ export function programToDetailEditValues(
     sponsorManagementIds: program.generalCommonInfo?.sponsorManagementIds ?? [],
     sponsorManagerContactId: undefined,
     managerName: program.managerName ?? '',
-    contactPhone: program.contactPhone ?? undefined,
+    contactPhone: program.contactPhone
+      ? formatKoreanPhoneNumber(program.contactPhone)
+      : undefined,
     contactEmail: program.contactEmail ?? undefined,
     venueKind:
       program.institutionType === 'outside_school'

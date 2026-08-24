@@ -1,3 +1,4 @@
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import dayjs from 'dayjs'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { User } from '@/types/user'
@@ -319,7 +320,7 @@ export function mapUserToInstructorProfileFormValues(
     name: user.name ?? '',
     gender: mapGender(user.gender),
     birthDate: birthDateToFormValue(user.birthDate),
-    contact: user.phone ?? '',
+    contact: formatKoreanPhoneNumber(user.phone ?? ''),
     email: user.email ?? '',
     memberType: fromCmsProfile?.memberType ?? resolveMemberType(user),
     ...(fromCmsProfile

@@ -21,7 +21,7 @@ import { CmsButton, ContentModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
-import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
+import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import { collectCmsInstructorRegisterValidation } from '@/features/user/shared/lib/validate-cms-instructor-register'
 import { JaGradeEvaluationModal } from '@/features/user/detail/ui/modal/ja-grade-evaluation-modal'
 import {
@@ -54,7 +54,7 @@ function validateInstructorRegister(values: InstructorRegisterModalFormValues) {
   return collectCmsInstructorRegisterValidation(values, {
     isBirthDateIncomplete: isBirthDateInputIncomplete,
     isBirthDateValid: isValidBirthDateFormValue,
-    isPhoneValid: value => KOREAN_PHONE_REGEX.test(value),
+    isPhoneValid: isValidKoreanPhoneNumber,
   })
 }
 

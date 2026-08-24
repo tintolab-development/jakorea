@@ -19,7 +19,7 @@ import {
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { CmsDatePicker, CmsInput } from '@/shared/ui'
+import { CmsDatePicker, CmsInput, CmsPhoneInput } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
@@ -325,7 +325,7 @@ export function createInstructorsSchema({
                     name="contactPhone"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsInput {...field} value={field.value ?? ''} placeholder="Tel" />
+                      <CmsPhoneInput {...field} value={field.value ?? ''} placeholder="Tel" />
                     )}
                   />
                   <DetailInfoForm.InputsSeparator />

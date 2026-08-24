@@ -15,6 +15,7 @@ import {
   CmsDatePicker,
   CmsInput,
   CmsNumericInput,
+  CmsPhoneInput,
   CmsRadioGroup,
   CmsSelect,
   SchoolSearch,
@@ -487,7 +488,7 @@ export function InstructorProfileFormBody({
               view="-"
               edit={
                 <Form.Item name="contact" style={FORM_ITEM_STYLE}>
-                  <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.contact} inputSize="medium" width="100%" />
+                  <CmsPhoneInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.contact} inputSize="medium" width="100%" />
                 </Form.Item>
               }
             />

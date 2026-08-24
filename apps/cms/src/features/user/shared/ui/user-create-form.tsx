@@ -7,6 +7,8 @@ import { Form, Input, Select, Switch, Space } from 'antd'
 import type { AdminLevel, ProgramRole, UserRole } from '@/types/user'
 import { getRoleLabel, getAdminLevelLabel, getProgramRoleLabel } from '@/shared/ui'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
+import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
 
 const { Option } = Select
@@ -97,8 +99,16 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
       <Form.Item
         name="phone"
         label="전화번호"
+        rules={[
+          {
+            validator: (_, value?: string) =>
+              !value?.trim() || isValidKoreanPhoneNumber(value)
+                ? Promise.resolve()
+                : Promise.reject(new Error('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')),
+          },
+        ]}
       >
-        <Input placeholder="010-1234-5678" />
+        <CmsPhoneInput placeholder="010-1234-5678" />
       </Form.Item>
 
       <Form.Item

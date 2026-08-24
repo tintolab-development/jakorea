@@ -22,6 +22,7 @@ import { parsePositiveIntInput } from '@/features/template/lib/participant-recru
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -763,7 +764,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                         name="contactPhone"
                         control={form.control}
                         render={({ field }) => (
-                          <CmsInput
+                          <CmsPhoneInput
                             {...field}
                             value={field.value ?? ''}
                             placeholder="문의처 전화번호"

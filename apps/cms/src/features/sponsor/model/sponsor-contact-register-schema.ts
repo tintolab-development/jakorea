@@ -3,6 +3,7 @@
  */
 
 import { z } from 'zod'
+import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import type { SponsorContactType } from '@/features/sponsor/model/sponsor-management.types'
 
 const optionalTrimmedString = z.union([z.string().trim(), z.literal('')])
@@ -25,7 +26,7 @@ export const sponsorContactRegisterFormSchema = z.object({
       .string()
       .trim()
       .max(20, '연락처는 20자 이내로 입력해 주세요.')
-      .regex(/^[\d-]+$/, '연락처는 숫자와 하이픈(-)만 입력해 주세요.'),
+      .refine(isValidKoreanPhoneNumber, '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'),
     z.literal(''),
   ]),
   email: optionalTrimmedString.refine(

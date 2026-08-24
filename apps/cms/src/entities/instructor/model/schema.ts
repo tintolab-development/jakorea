@@ -4,10 +4,14 @@
  */
 
 import { z } from 'zod'
+import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 
 export const instructorSchema = z.object({
   name: z.string().min(1, '이름을 입력해주세요'),
-  contactPhone: z.string().min(1, '연락처를 입력해주세요'),
+  contactPhone: z
+    .string()
+    .min(1, '연락처를 입력해주세요')
+    .refine(isValidKoreanPhoneNumber, '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'),
   contactEmail: z.string().email('올바른 이메일을 입력해주세요').optional().or(z.literal('')),
   region: z.string().min(1, '지역을 선택해주세요'),
   specialty: z.array(z.string()).min(1, '최소 1개 이상의 전문분야를 선택해주세요'),

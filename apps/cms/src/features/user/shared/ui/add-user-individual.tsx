@@ -9,6 +9,7 @@ import {
   CmsButton,
   CmsCheckbox,
   CmsInput,
+  CmsPhoneInput,
   CmsRadioGroup,
   CmsSelect,
   SchoolSearch,
@@ -18,7 +19,7 @@ import {
 import { CmsDateTextInput, isValidBirthDateFormValue, birthDateFormValueToApi, isBirthDateInputIncomplete } from '@/shared/ui/date-text-input'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
-import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
+import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
@@ -219,7 +220,7 @@ function collectMemberRegisterValidation(
   const contact = values.contact?.trim()
   if (!contact) {
     missingRequired = true
-  } else if (!KOREAN_PHONE_REGEX.test(contact)) {
+  } else if (!isValidKoreanPhoneNumber(contact)) {
     formatMessages.push('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')
   }
 
@@ -614,7 +615,7 @@ export function AddUserIndividual({
               view="-"
               edit={
                 <Form.Item name="contact" style={FORM_ITEM_STYLE}>
-                  <CmsInput placeholder="연락처" inputSize="medium" width="100%" />
+                  <CmsPhoneInput placeholder="연락처" inputSize="medium" width="100%" />
                 </Form.Item>
               }
             />

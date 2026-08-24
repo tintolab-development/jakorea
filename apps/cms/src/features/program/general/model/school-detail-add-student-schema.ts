@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod'
+import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 
 /** 선택 입력(빈 문자열 허용)용 문자열, max 제한이 필요하면 union으로 각각 정의 */
 const optionalString = z.union([z.string(), z.literal('')])
@@ -33,7 +34,11 @@ export const addStudentFormSchema = z.object({
     .min(1, '학급을 선택해주세요')
     .max(20, '학급은 20자 이내로 입력해주세요'),
   contact: z.union([
-    z.string().trim().max(20, '연락처는 20자 이내로 입력해주세요'),
+    z
+      .string()
+      .trim()
+      .max(20, '연락처는 20자 이내로 입력해주세요')
+      .refine(isValidKoreanPhoneNumber, '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'),
     z.literal(''),
   ]),
   email: optionalString.refine(

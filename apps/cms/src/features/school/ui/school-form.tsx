@@ -4,8 +4,10 @@
  */
 /* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { Form, Input, Select, Space } from 'antd'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useMemo } from 'react'
@@ -51,7 +53,7 @@ export function SchoolForm({ school, onSubmit, onCancel, loading }: SchoolFormPr
         region: school.region,
         address: school.address || '',
         contactPerson: school.contactPerson,
-        contactPhone: school.contactPhone || '',
+        contactPhone: formatKoreanPhoneNumber(school.contactPhone || ''),
         contactEmail: school.contactEmail || '',
       }
     }
@@ -76,7 +78,7 @@ export function SchoolForm({ school, onSubmit, onCancel, loading }: SchoolFormPr
         region: school.region,
         address: school.address || '',
         contactPerson: school.contactPerson,
-        contactPhone: school.contactPhone || '',
+        contactPhone: formatKoreanPhoneNumber(school.contactPhone || ''),
         contactEmail: school.contactEmail || '',
       })
     } else {
@@ -143,11 +145,15 @@ export function SchoolForm({ school, onSubmit, onCancel, loading }: SchoolFormPr
         />
       </Form.Item>
 
-      <Form.Item label="연락처">
+      <Form.Item
+        label="연락처"
+        validateStatus={errors.contactPhone ? 'error' : ''}
+        help={fieldValidationHelp(errors.contactPhone)}
+      >
         <Controller
           name="contactPhone"
           control={control}
-          render={({ field }) => <Input {...field} />}
+          render={({ field }) => <CmsPhoneInput {...field} />}
         />
       </Form.Item>
 
