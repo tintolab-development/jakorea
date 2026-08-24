@@ -9,7 +9,6 @@ import {
   resolvePlatformConsentSectionRequired,
   resolvePlatformConsentSectionTitle,
 } from './platform-consent-paragraph-body'
-import styles from './consent-form.module.css'
 
 export type PlatformConsentFormBodyProps = {
   draft: WritingFormDraft
@@ -56,7 +55,7 @@ export function PlatformConsentFormBody({
   let numberedIndex = 0
 
   return (
-    <div className={styles.schemaForm}>
+    <>
       {draft.paragraphs.map(paragraph => {
         if (shouldHideParagraph(paragraph, hiddenParagraphIds)) {
           return null
@@ -107,6 +106,6 @@ export function PlatformConsentFormBody({
           </PFFormSection>
         )
       })}
-    </div>
+    </>
   )
 }

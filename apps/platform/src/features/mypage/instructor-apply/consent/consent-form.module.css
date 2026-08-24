@@ -3,8 +3,15 @@
   width: 100%;
   flex-direction: column;
   align-items: flex-start;
-  gap: inherit;
+  /* 단락(섹션·진술문 카드) 스택 — PFFormSection 간 32px, 모바일 16px */
+  gap: var(--spacing-32);
   align-self: stretch;
+}
+
+@media (--bp-below-pc) {
+  .form {
+    gap: var(--spacing-16);
+  }
 }
 
 .prose {
@@ -345,10 +352,6 @@
 
 .hyphen {
   color: var(--color-neutral-cool-600);
-}
-
-.schemaForm {
-  width: 100%;
 }
 
 .crimeDocument {
