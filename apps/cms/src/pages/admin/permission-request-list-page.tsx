@@ -3,7 +3,6 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { Spin } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -849,15 +848,7 @@ export function PermissionRequestListPage() {
       )}
 
       {detailOpen && detailUser == null ? (
-        <DetailFullPageModal open onClose={handleCloseDetail} title="강사 신청 상세">
-          <div
-            className="detail-fullpage-modal__loading"
-            role="status"
-            aria-label="상세 불러오는 중"
-          >
-            <Spin size="large" />
-          </div>
-        </DetailFullPageModal>
+        <DetailFullPageModal open onClose={handleCloseDetail} title="강사 신청 상세" loading />
       ) : (
         <UserDetailFullPageModal
           open={detailOpen && detailUser != null && permissionRole != null}

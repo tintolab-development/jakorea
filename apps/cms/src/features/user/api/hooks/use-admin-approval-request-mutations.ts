@@ -30,10 +30,16 @@ function buildRejectReason(payload: InstructorPermissionRejectPayload): string {
 export function useAdminApprovalRequestMutations() {
   const queryClient = useQueryClient()
 
-  const invalidate = () => {
-    void queryClient.invalidateQueries({
+  const invalidateAfterChange = async (adminIds: number[]) => {
+    await queryClient.invalidateQueries({
       queryKey: memberQueryKeys.adminApprovalRequests.all(),
     })
+    await queryClient.invalidateQueries({ queryKey: memberQueryKeys.listAll() })
+    await Promise.all(
+      adminIds.map(adminId =>
+        queryClient.invalidateQueries({ queryKey: memberQueryKeys.detail(adminId) })
+      )
+    )
   }
 
   const approveMutation = useMutation({
@@ -49,7 +55,9 @@ export function useAdminApprovalRequestMutations() {
         await approveAdminApprovalRequestRemote(adminId, { reason })
       }
     },
-    onSuccess: invalidate,
+    onSuccess: async (_data, variables) => {
+      await invalidateAfterChange(variables.adminIds)
+    },
   })
 
   const rejectMutation = useMutation({
@@ -62,7 +70,9 @@ export function useAdminApprovalRequestMutations() {
         await rejectAdminApprovalRequestRemote(adminId, { reason })
       }
     },
-    onSuccess: invalidate,
+    onSuccess: async (_data, variables) => {
+      await invalidateAfterChange(variables.adminIds)
+    },
   })
 
   return {

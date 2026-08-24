@@ -810,7 +810,16 @@ export function useUserDetailController({
           { memberId: displayUser.memberId }
         )
         if (isMembersRemoteEnabled()) {
-          void queryClient.invalidateQueries({ queryKey: memberQueryKeys.all })
+          await queryClient.invalidateQueries({ queryKey: memberQueryKeys.listAll() })
+          await queryClient.invalidateQueries({ queryKey: memberQueryKeys.schoolsListAll() })
+          if (displayUser.memberId != null) {
+            await queryClient.invalidateQueries({
+              queryKey: memberQueryKeys.detail(displayUser.memberId),
+            })
+          }
+          await queryClient.invalidateQueries({
+            queryKey: memberQueryKeys.detailByUuid(displayUser.id),
+          })
         }
         onMemberBasicInfoSaved?.(revoked)
         setInstructorPermissionRevokeOpen(false)

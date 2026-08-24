@@ -62,8 +62,7 @@ export function useInfiniteUserList(filters: UseInfiniteUserListFilters) {
       if (lastPage.nextPageParam !== undefined) return lastPage.nextPageParam
       return allPages.length
     },
-    staleTime: 0,
-    refetchOnMount: 'always',
+    staleTime: 30_000,
   })
 
   const users = useMemo(() => {

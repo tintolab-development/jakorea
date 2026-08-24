@@ -60,7 +60,7 @@ export function useMemberCommentsQuery(
  * 학교 소속 교사 — `organizationId` 우선 (`listTeachers`),
  * 없으면 legacy `memberId` affiliated-teachers.
  *
- * 학교 상세 진입마다 목록을 다시 받아야 하므로 staleTime=0 + refetchOnMount always.
+ * Class C 목록 — staleTime 30s. 탭 전환 시 불필요한 재GET을 줄인다.
  */
 export function useAffiliatedTeachersQuery(
   memberId: number | undefined,
@@ -77,8 +77,7 @@ export function useAffiliatedTeachersQuery(
         isMembersRemoteEnabled() &&
         (useOrgApi || memberId != null)
     ),
-    staleTime: 0,
-    refetchOnMount: 'always',
+    staleTime: 30_000,
     queryFn: async (): Promise<SchoolAffiliatedTeacherRow[]> => {
       const rows = useOrgApi
         ? await fetchSchoolTeachersRemote(organizationId)
@@ -105,7 +104,7 @@ export function prefetchSchoolAffiliatedTeachers(
   if (organizationId != null) {
     void queryClient.prefetchQuery({
       queryKey: memberQueryKeys.schoolTeachers(organizationId),
-      staleTime: 0,
+      staleTime: 30_000,
       queryFn: async (): Promise<SchoolAffiliatedTeacherRow[]> =>
         mapAffiliatedTeacherRows(await fetchSchoolTeachersRemote(organizationId)),
     })
@@ -115,7 +114,7 @@ export function prefetchSchoolAffiliatedTeachers(
   if (user.memberId != null) {
     void queryClient.prefetchQuery({
       queryKey: memberQueryKeys.affiliatedTeachers(user.memberId),
-      staleTime: 0,
+      staleTime: 30_000,
       queryFn: async (): Promise<SchoolAffiliatedTeacherRow[]> =>
         mapAffiliatedTeacherRows(await fetchAffiliatedTeachersRemote(user.memberId!)),
     })

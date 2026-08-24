@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
-import { Alert, Spin } from 'antd'
+import { Alert } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
@@ -619,7 +619,8 @@ export function UserListPage() {
 
   const invalidateList = useCallback(() => {
     if (isMembersRemoteEnabled()) {
-      void queryClient.invalidateQueries({ queryKey: memberQueryKeys.all })
+      void queryClient.invalidateQueries({ queryKey: memberQueryKeys.listAll() })
+      void queryClient.invalidateQueries({ queryKey: memberQueryKeys.schoolsListAll() })
       return
     }
     void queryClient.invalidateQueries({ queryKey: ['users', 'list'] })
@@ -628,7 +629,7 @@ export function UserListPage() {
   const handleMemberBasicInfoSaved = useCallback(
     (
       updated: Omit<User, 'password'>,
-      options?: { skipListInvalidate?: boolean }
+      _options?: { skipListInvalidate?: boolean }
     ) => {
       setDrawerUser(updated)
       setDetailBridgeUser(prev => (prev?.id === updated.id ? updated : prev))
@@ -665,11 +666,8 @@ export function UserListPage() {
         { queryKey: [...memberQueryKeys.all, 'schoolsList'] },
         patchListCache
       )
-      if (!options?.skipListInvalidate) {
-        invalidateList()
-      }
     },
-    [setDrawerUser, setDetailBridgeUser, queryClient, invalidateList]
+    [setDrawerUser, setDetailBridgeUser, queryClient]
   )
 
   /** 상세 GET 완료 후 모달·URL 반영 (목록 시드 선오픈 없음) */
@@ -1287,15 +1285,8 @@ export function UserListPage() {
           open
           onClose={handleUserDetailModalClose}
           title="회원 상세"
-        >
-          <div
-            className="detail-fullpage-modal__loading"
-            role="status"
-            aria-label="상세 불러오는 중"
-          >
-            <Spin size="large" />
-          </div>
-        </DetailFullPageModal>
+          loading
+        />
       ) : (
         <UserDetailFullPageModal
           open={userDetailModalOpen}
