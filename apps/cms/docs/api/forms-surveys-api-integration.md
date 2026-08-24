@@ -3,6 +3,7 @@
 `/templates/form-management` 작성·발급 양식과 Swagger `forms-surveys` 도메인 매핑입니다.
 
 **JSON 계약 SSOT (응답·저장 형식)**: [form-template-json-contract.md](./form-template-json-contract.md)  
+**백엔드 핸드오프 (전환률·미적용 API)**: [templates-api-conversion-status-backend-handoff.md](./templates-api-conversion-status-backend-handoff.md)  
 **마이그레이션 실행 가이드 (PHASE 0–6)**: [forms-surveys-api-migration-guide.md](./forms-surveys-api-migration-guide.md)  
 **백엔드 갭·미구현 목록**: [forms-surveys-api-backend-gaps.md](./forms-surveys-api-backend-gaps.md)
 

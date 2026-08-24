@@ -77,7 +77,7 @@ BE에서 **지원 여부·경로·단건/일괄**을 확정해 주세요.
 - [ ] **Gemini 모집 공고**: DELETE(단건/일괄) 추가 여부
 - [ ] **Gemini 승인 연수**: DELETE(단건/일괄) 추가 여부
 - [ ] **Gemini 실적**: DELETE 추가(Option A) vs 미지원 유지(Option B — FE는 remote 시 UI 숨김 중). 관련: [programs-gemini-performance-api-backend-handoff.md](./programs-gemini-performance-api-backend-handoff.md) §3
-- [ ] **후원사 프로그램 진행 이력**: 삭제 API 추가 여부 (단건+일괄). 관련: [data-management-api-integration.md](./data-management-api-integration.md)
+- [ ] **후원사 프로그램 진행 이력**: 삭제 API 추가 여부 (단건+일괄). **SSOT**: [data-management-api-backend-gaps.md](./data-management-api-backend-gaps.md) P0. 관련: [data-management-api-integration.md](./data-management-api-integration.md)
 
 | # | 화면 | CMS 경로 | FE 파일 | 현재 FE | 요청 |
 |---|------|----------|---------|---------|------|
@@ -85,7 +85,7 @@ BE에서 **지원 여부·경로·단건/일괄**을 확정해 주세요.
 | 11 | Gemini 모집 공고 | `/programs/gemini/visiting-training` (모집) | `features/program/gemini/ui/recruitment/list.tsx` | mock만. remote 시 미연동 안내 | 모집 공고 **일괄 삭제 API 신규** |
 | 12 | Gemini 승인 연수 | 동일 (승인 탭) | `features/program/gemini/ui/approved/list.tsx` | mock만. remote 시 미연동 | 승인 연수 **일괄 삭제 API 신규** |
 | 13 | Gemini 실적 | `/programs/gemini/performance` | `features/program/gemini/ui/performance/list.tsx` | mock만. **remote ON이면 선택삭제 UI 숨김** | 실적 행 **일괄 삭제 API 신규** (또는 미지원 확정) |
-| 18 | 후원사 상세 — 프로그램 진행 이력 | `/sponsor` + 상세 | `features/sponsor/ui/panels/sponsor-program-history-panel.tsx` | remote 시 **disabled**. remove no-op | 후원사 프로그램 이력 **삭제 API 신규** (단건+일괄) |
+| 18 | 후원사 상세 — 프로그램 진행 이력 | `/sponsor` + 상세 | `features/sponsor/ui/panels/sponsor-program-history-panel.tsx` | remote 시 **disabled**. remove no-op | 후원사 프로그램 이력 **삭제 API 신규** (단건+일괄). SSOT: [data-management-api-backend-gaps.md](./data-management-api-backend-gaps.md) |
 
 **P0 FE 기대 동작 (API 제공 시)**
 
@@ -107,10 +107,10 @@ UI가 이미 있고, 단건 DELETE를 N번 호출합니다. 트래픽·원자성
 | 4 | 연수강사 양성 프로그램 목록 | `/programs/trained-teachers` | `pages/programs/trained-teachers/page.tsx` | 예정 필터만. 단건 **N회** | 동일 | 예정만 |
 | 5 | 공지사항 목록 | `/admin/posts/notices` | `pages/posts/admin-notice-list-page.tsx` | `deleteNotices(ids)` → 단건 루프 | 공지 **일괄 삭제** | — |
 | 6 | FAQ 목록 | `/admin/posts/faq` | `pages/posts/admin-faq-page.tsx` | `deleteFaqs(ids)` → 단건 루프 | FAQ **일괄 삭제** | — |
-| 8 | 교재 목록 | `/textbook` | `pages/data-management/textbook-page.tsx` | `deleteTextbooks(ids)` → 단건 루프 | 교재 **일괄 삭제** | — |
-| 9 | 후원사 목록 | `/sponsor` | `pages/data-management/sponsor-page.tsx` | 단건 **N회** | 후원사 **일괄 삭제** | 진행 중 프로그램 있으면 차단 |
-| 10 | 세부 프로그램(마스터) 목록 | `/detailed-program` | `pages/data-management/detailed-program-page.tsx` | `deleteDetailedPrograms(ids)` → 단건 루프 | 세부프로그램 **일괄 삭제** | — |
-| 17 | 후원사 상세 — 담당자 | `/sponsor` + 상세 | `features/sponsor/ui/sponsor-detail-basic-info.tsx` | `deleteSponsorContacts(ids)` → 단건 루프 | 담당자 **일괄 삭제** | — |
+| 8 | 교재 목록 | `/textbook` | `pages/data-management/textbook-page.tsx` | FE가 `POST /api/admin/textbooks/bulk-delete` 사용 | OpenAPI bulk 있음 | — |
+| 9 | 후원사 목록 | `/sponsor` | `pages/data-management/sponsor-page.tsx` | FE가 `POST /api/admin/sponsors/bulk-delete` 사용 (1건은 단건 DELETE) | OpenAPI bulk 있음 | 진행 중 프로그램 있으면 차단 |
+| 10 | 세부 프로그램(마스터) 목록 | `/detailed-program` | `pages/data-management/detailed-program-page.tsx` | FE가 `POST /api/admin/detailed-programs/bulk-delete` 사용 | OpenAPI bulk 있음 | — |
+| 17 | 후원사 상세 — 담당자 | `/sponsor` + 상세 | `features/sponsor/ui/sponsor-detail-basic-info.tsx` | FE가 `POST /api/admin/sponsors/contacts/bulk-delete` 사용 | OpenAPI bulk 있음 | — |
 
 **기존 단건 경로 (참고, FE 현재 사용)**
 

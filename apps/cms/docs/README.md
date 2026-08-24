@@ -152,8 +152,14 @@
 | [e2e-programs-create-database-error-handoff.md](api/e2e-programs-create-database-error-handoff.md) | 일반 프로그램 등록 `DATABASE_ERROR` (P0) |
 | [e2e-admin-auth-mfa-concurrency-handoff.md](api/e2e-admin-auth-mfa-concurrency-handoff.md) | MFA 병렬 challenge (P2) |
 | [forms-surveys-api-integration.md](api/forms-surveys-api-integration.md) | 템플릿 양식 API 연동 명세 |
+| [**templates-api-conversion-status-backend-handoff.md**](api/templates-api-conversion-status-backend-handoff.md) | 템플릿 관리 **전환률 · 미적용 API (백엔드 핸드오프 SSOT)** |
 | [forms-surveys-api-migration-guide.md](api/forms-surveys-api-migration-guide.md) | 템플릿 양식 API **PHASE별 마이그레이션 가이드** |
-| [forms-surveys-api-backend-gaps.md](api/forms-surveys-api-backend-gaps.md) | 템플릿 양식 **백엔드 갭·미구현 핸드오프** |
+| [forms-surveys-api-backend-gaps.md](api/forms-surveys-api-backend-gaps.md) | 템플릿 양식 백엔드 갭 요약 (상세는 위 SSOT) |
+| [logs-api-integration.md](api/logs-api-integration.md) | 보안 설정(로그 관리) API 연동 명세 |
+| [**logs-api-conversion-status-backend-handoff.md**](api/logs-api-conversion-status-backend-handoff.md) | 보안 설정(로그 관리) **전환률 · 미적용 API (백엔드 핸드오프 SSOT)** |
+| [logs-api-backend-gaps.md](api/logs-api-backend-gaps.md) | 보안 설정(로그 관리) 백엔드 갭 요약 (상세는 위 SSOT) |
+| [data-management-api-integration.md](api/data-management-api-integration.md) | 데이터 관리(후원사·교재·세부 프로그램) API 연동 명세 |
+| [data-management-api-backend-gaps.md](api/data-management-api-backend-gaps.md) | 데이터 관리 **백엔드 갭 요청** |
 | [template-create-api-backend-handoff.md](api/template-create-api-backend-handoff.md) | 템플릿 관리 **신규 템플릿 생성** API·로직 갭 (BE 전달용) |
 | [programs-detail-api-conversion-status.md](api/programs-detail-api-conversion-status.md) | 일반 프로그램 상세 LNB Phase·완료율 SSOT |
 | [programs-company-school-api-backend-handoff.md](api/programs-company-school-api-backend-handoff.md) | 1사1교 CRUD 전환 계약·gate (Cat1) |

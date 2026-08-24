@@ -7,7 +7,7 @@ CMS `/templates/form-management` 「+ 신규 템플릿」 플로우 전환에 �
 | **작성일** | 2026-07-13 |
 | **대상 화면** | 작성 양식 탭 → 「+ 신규 템플릿」 (`TemplateCreateModal`) |
 | **OpenAPI** | `forms-surveys` subset (`openapi/forms-surveys.openapi.json`) |
-| **관련 문서** | [forms-surveys-api-backend-gaps.md](./forms-surveys-api-backend-gaps.md) · [forms-surveys-api-migration-guide.md](./forms-surveys-api-migration-guide.md) · [form-template-json-contract.md](./form-template-json-contract.md) |
+| **관련 문서** | [**전환률 SSOT**](./templates-api-conversion-status-backend-handoff.md) · [forms-surveys-api-backend-gaps.md](./forms-surveys-api-backend-gaps.md) · [forms-surveys-api-migration-guide.md](./forms-surveys-api-migration-guide.md) · [form-template-json-contract.md](./form-template-json-contract.md) |
 
 ---
 
