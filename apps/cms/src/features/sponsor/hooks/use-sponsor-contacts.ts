@@ -14,7 +14,7 @@ export interface UseSponsorContactsReturn {
   deleteModalOpen: boolean
   setDeleteModalOpen: (open: boolean) => void
   selectedNames: string[]
-  handleRegister: (payload: SponsorContactRegisterPayload) => void
+  handleRegister: (payload: SponsorContactRegisterPayload) => void | Promise<void>
   handleDelete: () => void
   handleTypeChange: (rowId: string, nextType: SponsorContactRow['contactType']) => void
 }
@@ -69,7 +69,10 @@ export function useSponsorContacts(
       if (remoteActions) {
         const row = contacts.find(c => c.id === rowId)
         if (!row) return
-        void remoteActions.onTypeChange(row, nextType).then(() => setOpenDropdownId(null))
+        void remoteActions
+          .onTypeChange(row, nextType)
+          .then(() => setOpenDropdownId(null))
+          .catch(() => undefined)
         return
       }
       setContacts(prev => {
@@ -92,11 +95,12 @@ export function useSponsorContacts(
   )
 
   const handleRegister = useCallback(
-    (payload: SponsorContactRegisterPayload): void => {
+    async (payload: SponsorContactRegisterPayload): Promise<void> => {
       if (!canWrite) return
       if (remoteActions) {
         const contactType = contacts.length === 0 ? ('lead' as const) : payload.contactType
-        void remoteActions.onRegister(payload, contactType).then(() => setRegisterModalOpenState(false))
+        await remoteActions.onRegister(payload, contactType)
+        setRegisterModalOpenState(false)
         return
       }
       setContacts(prev => {
@@ -128,10 +132,13 @@ export function useSponsorContacts(
     if (!canWrite || selectedKeys.length === 0) return
     if (remoteActions) {
       const ids = selectedKeys.map(k => String(k))
-      void remoteActions.onDelete(ids).then(() => {
-        setSelectedKeysState([])
-        setDeleteModalOpenState(false)
-      })
+      void remoteActions
+        .onDelete(ids)
+        .then(() => {
+          setSelectedKeysState([])
+          setDeleteModalOpenState(false)
+        })
+        .catch(() => undefined)
       return
     }
     const selectedSet = new Set(selectedKeys.map(key => String(key)))

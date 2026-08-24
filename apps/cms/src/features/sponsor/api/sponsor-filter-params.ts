@@ -27,3 +27,17 @@ export function sponsorsParamsFromSearchParams(searchParams: URLSearchParams): S
 
   return params
 }
+
+/** 목록 캐시 키 — 상세 overlay(`sponsorId` 등)는 제외해 필터가 같으면 같은 키. */
+export function serializeSponsorListFilters(searchParams: URLSearchParams): string {
+  const next = new URLSearchParams()
+  const kind = searchParams.get('sp_kind')
+  if (kind === 'corporate' || kind === 'foundation') next.set('sp_kind', kind)
+  const name = (searchParams.get('sp_name') ?? '').trim()
+  if (name) next.set('sp_name', name)
+  const mgr = (searchParams.get('sp_mgr') ?? '').trim()
+  if (mgr) next.set('sp_mgr', mgr)
+  const st = searchParams.get('sp_st')
+  if (st === 'active' || st === 'ended') next.set('sp_st', st)
+  return next.toString()
+}

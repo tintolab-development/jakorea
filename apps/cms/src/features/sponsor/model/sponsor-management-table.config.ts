@@ -19,30 +19,7 @@ function parseStatus(raw: string | null): 'ALL' | SponsorSponsorshipStatus {
   return 'ALL'
 }
 
-function filterRows(
-  data: SponsorManagementRow[],
-  searchParams: URLSearchParams
-): SponsorManagementRow[] {
-  const kind = parseKind(searchParams.get('sp_kind'))
-  const nameQ = (searchParams.get('sp_name') ?? '').trim().toLowerCase()
-  const mgrQ = (searchParams.get('sp_mgr') ?? '').trim().toLowerCase()
-  const st = parseStatus(searchParams.get('sp_st'))
-
-  return data.filter(row => {
-    const rowKind = row.organizationKind ?? 'corporate'
-    if (kind !== 'ALL' && rowKind !== kind) return false
-
-    if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
-
-    const mainName = row.managers?.[0]?.name?.toLowerCase() ?? ''
-    if (mgrQ && !mainName.includes(mgrQ)) return false
-
-    const rowSt = row.sponsorshipStatus ?? 'active'
-    if (st !== 'ALL' && rowSt !== st) return false
-
-    return true
-  })
-}
+/** 목록 필터는 GET /sponsors 쿼리로 적용. 클라 재필터는 하지 않는다. */
 
 const tanstackColumns: ColumnDef<SponsorManagementRow>[] = [{ accessorKey: 'id', header: 'id' }]
 
@@ -131,10 +108,10 @@ export const sponsorManagementTablePageConfig: TablePageConfig<
     getBaseCount: ({ filteredData }) => filteredData.length,
   },
 
-  filterFn: ({ data, searchParams }) => {
-    const filtered = filterRows(data, searchParams)
-    return { dataForTable: filtered, filteredData: filtered }
-  },
+  filterFn: ({ data }) => ({
+    dataForTable: data,
+    filteredData: data,
+  }),
 
   getSearchSync: (_context: SponsorManagementTableContext) => ({
     paramConfig: searchSyncRules,

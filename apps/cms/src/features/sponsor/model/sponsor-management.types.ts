@@ -59,6 +59,17 @@ export type SponsorProgramHistoryFilters = {
 }
 
 /** 후원사 상세 풀페이지용 — 목록 행 + 표시 전용 확장 필드 */
+export type SponsorYearlyBusinessRow = {
+  id: string
+  year: number
+  donationAmount: number
+  beneficiaryCount: number
+  memo: string
+  /** API 필수. UI에는 없음 — GET 값 유지, 신규는 `${year}년` */
+  businessName: string
+  managerNameSnapshot: string
+}
+
 export type SponsorManagementDetailView = SponsorManagementRow & {
   nameDisplayKo: string
   nameDisplayEn: string
@@ -67,4 +78,5 @@ export type SponsorManagementDetailView = SponsorManagementRow & {
   address: string
   contacts: SponsorContactRow[]
   programHistories: SponsorProgramHistoryRow[]
+  yearlyBusinesses: SponsorYearlyBusinessRow[]
 }

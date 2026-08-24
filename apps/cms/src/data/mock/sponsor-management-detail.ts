@@ -144,5 +144,6 @@ export function buildSponsorManagementDetailView(
     address: '경기도 수원시 영통구 삼성로 129(매탄동)',
     contacts: DEFAULT_CONTACTS,
     programHistories: DEFAULT_PROGRAM_HISTORIES,
+    yearlyBusinesses: [],
   }
 }

@@ -3,24 +3,31 @@ import {
   mapSponsorContactResponse,
   mapSponsorDetailResponse,
   mapSponsorResponse,
+  mapYearlyBusinessResponse,
+  shouldPersistYearlyBusinessRow,
   toSponsorContactRequest,
   toSponsorContactUpdateRequest,
   toSponsorRequestFromBasicInfo,
   toSponsorRequestFromRegister,
+  toYearlyBusinessRequest,
 } from '@/features/sponsor/api/adapters/sponsor-adapters'
 import { programHistoriesParamsFromFilters } from '@/features/sponsor/api/program-histories-filter-params'
 import { sponsorsParamsFromSearchParams } from '@/features/sponsor/api/sponsor-filter-params'
 import {
   addSponsorContactRemote,
+  addYearlyBusinessRemote,
+  bulkDeleteSponsorContactsRemote,
+  bulkDeleteSponsorsRemote,
   createSponsorRemote,
-  deleteSponsorContactRemote,
   deleteSponsorRemote,
   endSponsorRemote,
   fetchProgramHistoriesRemote,
   fetchSponsorRemote,
   fetchSponsorsRemote,
+  fetchYearlyBusinessesRemote,
   updateSponsorContactRemote,
   updateSponsorRemote,
+  updateYearlyBusinessRemote,
 } from '@/features/sponsor/api/sponsors-api-client'
 import type {
   SponsorContactRow,
@@ -28,6 +35,7 @@ import type {
   SponsorManagementRow,
   SponsorProgramHistoryFilters,
   SponsorProgramHistoryRow,
+  SponsorYearlyBusinessRow,
 } from '@/features/sponsor/model/sponsor-management.types'
 import type { BasicInfoEditState } from '@/features/sponsor/ui/sponsor-detail-basic-info'
 import type { SponsorContactRegisterPayload } from '@/features/sponsor/ui/modal/sponsor-contact-register-modal'
@@ -61,6 +69,15 @@ export async function getSponsorDetail(id: string): Promise<SponsorManagementDet
   return mapSponsorDetailResponse(dto)
 }
 
+/** 연도별 후원금 — 상세 GET과 분리. 상세 탭 패널에서만 호출한다. */
+export async function getSponsorYearlyBusinesses(
+  sponsorId: string
+): Promise<SponsorYearlyBusinessRow[]> {
+  assertSponsorsRemoteReady()
+  const yearly = await fetchYearlyBusinessesRemote(sponsorId).catch(() => [])
+  return yearly.map(mapYearlyBusinessResponse)
+}
+
 export async function createSponsor(row: SponsorManagementRow): Promise<SponsorManagementRow> {
   assertSponsorsRemoteReady()
   const dto = await createSponsorRemote(toSponsorRequestFromRegister(row))
@@ -79,12 +96,12 @@ export async function updateSponsorBasicInfo(
 
 export async function updateSponsorStatus(
   sponsorId: string,
-  sponsorshipStatus: SponsorManagementRow['sponsorshipStatus']
+  sponsorshipStatus: NonNullable<SponsorManagementRow['sponsorshipStatus']>,
+  existing: SponsorManagementRow
 ): Promise<void> {
   assertSponsorsRemoteReady()
-  const detail = await getSponsorDetail(sponsorId)
   await updateSponsorRemote(sponsorId, {
-    ...toSponsorRequestFromRegister(detail),
+    ...toSponsorRequestFromRegister(existing),
     sponsorshipStatus,
   })
 }
@@ -92,6 +109,15 @@ export async function updateSponsorStatus(
 export async function deleteSponsor(id: string): Promise<void> {
   assertSponsorsRemoteReady()
   await deleteSponsorRemote(id)
+}
+
+export async function deleteSponsors(ids: string[]): Promise<void> {
+  assertSponsorsRemoteReady()
+  if (ids.length === 1) {
+    await deleteSponsorRemote(ids[0]!)
+    return
+  }
+  await bulkDeleteSponsorsRemote(ids)
 }
 
 export async function endSponsorship(id: string): Promise<void> {
@@ -120,8 +146,22 @@ export async function updateSponsorContact(row: SponsorContactRow): Promise<Spon
 
 export async function deleteSponsorContacts(contactIds: string[]): Promise<void> {
   assertSponsorsRemoteReady()
-  for (const id of contactIds) {
-    await deleteSponsorContactRemote(id)
+  await bulkDeleteSponsorContactsRemote(contactIds)
+}
+
+export async function saveSponsorYearlyBusinesses(
+  sponsorId: string,
+  rows: SponsorYearlyBusinessRow[]
+): Promise<void> {
+  assertSponsorsRemoteReady()
+  for (const row of rows) {
+    if (!shouldPersistYearlyBusinessRow(row)) continue
+    const body = toYearlyBusinessRequest(row)
+    if (row.id) {
+      await updateYearlyBusinessRemote(row.id, body)
+    } else {
+      await addYearlyBusinessRemote(sponsorId, body)
+    }
   }
 }
 

@@ -1,8 +1,8 @@
 import type React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { updateSponsorBasicInfo } from '@/features/sponsor/api/admin-sponsors-service'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { useSponsorDetailQuery } from '@/features/sponsor/hooks/use-sponsor-detail-query'
+import { useSponsorMutations } from '@/features/sponsor/hooks/use-sponsor-mutations'
 import type {
   SponsorContactRow,
   SponsorManagementDetailView,
@@ -12,6 +12,7 @@ import type {
 import type { BasicInfoEditState } from '@/features/sponsor/ui/sponsor-detail-basic-info'
 import { normalizeSponsorContactsSingleLead } from '@/features/sponsor/utils/normalize-sponsor-contacts-single-lead'
 import { splitAddress } from '@/features/sponsor/utils/split-address'
+import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
 
 export interface UseSponsorDetailReturn {
   detail: SponsorManagementDetailView
@@ -57,29 +58,45 @@ function sponsorRowToPlaceholderDetail(sponsor: SponsorManagementRow): SponsorMa
     address: '',
     contacts: [],
     programHistories: [],
+    yearlyBusinesses: [],
   }
 }
 
 export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetailReturn {
   const detailQuery = useSponsorDetailQuery(sponsor.id, true)
+  const { updateBasicInfoMutation } = useSponsorMutations()
+  const isAwaitingDetail = isAwaitingFirstQueryData(detailQuery)
 
   const detail = useMemo((): SponsorManagementDetailView => {
     if (detailQuery.data) return detailQuery.data
     return sponsorRowToPlaceholderDetail(sponsor)
   }, [detailQuery.data, sponsor])
 
-  const [contacts, setContacts] = useState<SponsorContactRow[]>([])
-  const [programHistories, setProgramHistories] = useState<SponsorProgramHistoryRow[]>([])
-  const [basicInfo, setBasicInfo] = useState<BasicInfoEditState | null>(null)
+  const [contacts, setContacts] = useState<SponsorContactRow[]>(() =>
+    detailQuery.data
+      ? normalizeSponsorContactsSingleLead(
+          detailQuery.data.contacts.map(contact => ({ ...contact }))
+        )
+      : []
+  )
+  const [programHistories, setProgramHistories] = useState<SponsorProgramHistoryRow[]>(() =>
+    detailQuery.data ? detailQuery.data.programHistories.map(row => ({ ...row })) : []
+  )
+  const [basicInfo, setBasicInfo] = useState<BasicInfoEditState | null>(() =>
+    detailQuery.data ? buildBasicInfoEditStateFromDetail(detailQuery.data) : null
+  )
   const [isEditingBasicInfo, setIsEditingBasicInfo] = useState(false)
 
-  /* eslint-disable react-hooks/set-state-in-effect -- detail 스냅샷으로 편집용 로컬 상태 동기화 */
+  /* eslint-disable react-hooks/set-state-in-effect -- 실데이터 GET 이후에만 편집용 로컬 상태 동기화 */
   useEffect(() => {
-    setContacts(normalizeSponsorContactsSingleLead(detail.contacts.map(contact => ({ ...contact }))))
-    setProgramHistories(detail.programHistories.map(row => ({ ...row })))
-    setBasicInfo(buildBasicInfoEditStateFromDetail(detail))
+    if (!detailQuery.data) return
+    setContacts(
+      normalizeSponsorContactsSingleLead(detailQuery.data.contacts.map(contact => ({ ...contact })))
+    )
+    setProgramHistories(detailQuery.data.programHistories.map(row => ({ ...row })))
+    setBasicInfo(buildBasicInfoEditStateFromDetail(detailQuery.data))
     setIsEditingBasicInfo(false)
-  }, [detail])
+  }, [detailQuery.data])
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const removeProgramHistoryRows = useCallback((_ids: string[]): void => {
@@ -98,8 +115,11 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
       if (!canWrite || !basicInfo) return
       if (isEditingBasicInfo) {
         try {
-          await updateSponsorBasicInfo(sponsor.id, basicInfo, detail)
-          await detailQuery.refetch()
+          await updateBasicInfoMutation.mutateAsync({
+            sponsorId: sponsor.id,
+            basicInfo,
+            existing: detail,
+          })
         } catch (error) {
           console.debug(
             'sponsorDetail basicInfo save failed',
@@ -113,7 +133,7 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
       setBasicInfo(buildBasicInfoEditStateFromDetail(detail))
       setIsEditingBasicInfo(true)
     },
-    [basicInfo, detail, detailQuery, isEditingBasicInfo, sponsor.id]
+    [basicInfo, detail, isEditingBasicInfo, sponsor.id, updateBasicInfoMutation]
   )
 
   return {
@@ -129,7 +149,7 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
     handleToggleBasicInfoEdit,
     programHistoryDeleteDisabled: true,
     refetchDetail: () => detailQuery.refetch(),
-    isLoading: detailQuery.isLoading,
+    isLoading: isAwaitingDetail,
     isError: detailQuery.isError,
   }
 }
