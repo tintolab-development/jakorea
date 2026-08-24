@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Form } from 'antd'
 import type { Notice } from '@/data/mock/notices'
-import { shouldUseNoticesRemoteApi } from '@/features/posts/api/notices/admin-notices-service'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import {
   noticeInitialAttachmentNames,
@@ -51,7 +50,6 @@ export function NoticeFormModal({
   onDeleted }: NoticeFormModalProps) {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
-  const remoteEnabled = shouldUseNoticesRemoteApi()
   const { createMutation, updateMutation, deleteMutation } = useNoticeMutations()
   const categoriesQuery = useNoticeCategoriesQuery(open)
   const [form] = Form.useForm<FormValues>()
@@ -163,9 +161,7 @@ export function NoticeFormModal({
       return
     }
 
-    const attachmentNames = remoteEnabled
-      ? []
-      : [...existingAttachmentNames, ...newFiles.map(f => f.name)]
+    const attachmentNames = [...existingAttachmentNames, ...newFiles.map(f => f.name)]
     const pinToTop = values.pinTop === 'on'
     const base = {
       title: values.title,
@@ -320,9 +316,12 @@ export function NoticeFormModal({
               <FileSelectField
                 className="notice-register-modal__file-field"
                 multiple
-                disabled={remoteEnabled}
+                disabled={!canWrite}
                 buttonLabel="파일 추가"
+                accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.hwp,.hwpx,.ppt,.pptx"
                 fileNames={attachmentDisplayNames}
+                currentTotalBytes={newFiles.reduce((sum, file) => sum + file.size, 0)}
+                maxTotalBytes={ATTACHMENT_MAX_BYTES}
                 onFilesChange={handleAttachmentAdd}
                 onRemoveFile={handleAttachmentRemove}
                 guideLines={[

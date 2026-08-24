@@ -1,6 +1,6 @@
 import {
-  mapCategoryItem,
   mapCategoryItems,
+  mapCreatedCategory,
   type CategoryRow,
 } from '@/features/posts/api/shared/category-adapters'
 import {
@@ -90,18 +90,14 @@ export async function getFaqCategories(): Promise<CategoryRow[]> {
   return mapCategoryItems(dto.items)
 }
 
-export async function createFaqCategory(name: string): Promise<CategoryRow> {
+export async function createFaqCategory(name: string): Promise<CategoryRow | null> {
   assertFaqsRemoteReady()
   const dto = await createFaqCategoryRemote({
     categoryName: name,
     name,
     status: 'active',
   })
-  const created = mapCategoryItems(dto.items).find(c => c.name === name)
-  if (created) return created
-  const fallback = dto.items?.[0] ? mapCategoryItem(dto.items[0]) : null
-  if (fallback) return fallback
-  throw new Error('카테고리 생성 응답을 확인할 수 없습니다.')
+  return mapCreatedCategory(dto, name)
 }
 
 export async function updateFaqCategory(categoryId: string, name: string): Promise<void> {

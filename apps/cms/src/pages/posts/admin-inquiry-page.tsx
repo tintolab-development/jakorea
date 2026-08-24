@@ -5,13 +5,14 @@
 
 import { useCallback, useEffect, useMemo, useState, type Key, type MouseEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Spin, Table } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { shouldUseInquiriesRemoteApi } from '@/features/posts/api/inquiries/admin-inquiries-service'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { useAdminInquiryCategories } from '@/features/posts/hooks/use-admin-inquiry-categories'
 import { useInquiryListQuery } from '@/features/posts/hooks/use-inquiry-list-query'
+import { useInquiryMutations } from '@/features/posts/hooks/use-inquiry-mutations'
 import { buildAdminInquiryFilterRows } from '@/features/posts/model/admin-inquiry-management-filter-fields'
 import { adminInquiryManagementTablePageConfig } from '@/features/posts/model/admin-inquiry-management-table.config'
 import type {
@@ -23,7 +24,7 @@ import { useTablePage } from '@/shared/components/table-system/model/use-table-p
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { CmsButton } from '@/shared/ui'
+import { ActionResultModal, CmsButton } from '@/shared/ui'
 import { AdminInquiryDetailModal } from '@/features/posts/ui/admin-inquiry-detail-modal'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import { InquiryCategoryManagementModal } from '@/features/posts/ui/inquiry-category-management/inquiry-category-management-modal'
@@ -63,6 +64,7 @@ export function AdminInquiryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const listQuery = useInquiryListQuery(searchParams, true)
+  const { deleteMutation, bulkDeleteMutation } = useInquiryMutations()
   const rows = listQuery.data ?? []
   const contentLoading = listQuery.isLoading
   const contentError = listQuery.isError
@@ -114,7 +116,10 @@ export function AdminInquiryPage() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [detailInquiryId, setDetailInquiryId] = useState<string | null>(null)
   const [singleDeleteConfirmOpen, setSingleDeleteConfirmOpen] = useState(false)
-  const [, setSingleDeleteInquiryId] = useState<string | null>(null)
+  const [singleDeleteInquiryId, setSingleDeleteInquiryId] = useState<string | null>(null)
+  const [actionResultOpen, setActionResultOpen] = useState(false)
+  const [actionResultTitle, setActionResultTitle] = useState('')
+  const [actionResultMessage, setActionResultMessage] = useState('')
 
   const closeDetailModal = useCallback(() => {
     setDetailOpen(false)
@@ -131,20 +136,45 @@ export function AdminInquiryPage() {
     setBulkDeleteConfirmOpen(true)
   }, [canWrite, selectedRowKeys.length])
 
-  const handleConfirmBulkDelete = useCallback(() => {
-    setBulkDeleteConfirmOpen(false)
-  }, [])
+  const handleConfirmBulkDelete = useCallback(async () => {
+    const ids = selectedRowKeys.map(k => String(k))
+    if (ids.length === 0) {
+      setBulkDeleteConfirmOpen(false)
+      return
+    }
+    try {
+      await bulkDeleteMutation.mutateAsync(ids)
+      setSelectedRowKeys([])
+      setBulkDeleteConfirmOpen(false)
+    } catch (error) {
+      setActionResultTitle('문의 삭제 실패')
+      setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
+      setActionResultOpen(true)
+    }
+  }, [bulkDeleteMutation, selectedRowKeys])
 
   const handleDetailDeleteRequest = useCallback((id: string) => {
     setSingleDeleteInquiryId(id)
     setSingleDeleteConfirmOpen(true)
   }, [])
 
-  const handleConfirmSingleDelete = useCallback(() => {
-    setSingleDeleteConfirmOpen(false)
-    setSingleDeleteInquiryId(null)
-    closeDetailModal()
-  }, [closeDetailModal])
+  const handleConfirmSingleDelete = useCallback(async () => {
+    if (!singleDeleteInquiryId) {
+      setSingleDeleteConfirmOpen(false)
+      return
+    }
+    try {
+      await deleteMutation.mutateAsync(singleDeleteInquiryId)
+      setSelectedRowKeys(prev => prev.filter(key => String(key) !== singleDeleteInquiryId))
+      setSingleDeleteConfirmOpen(false)
+      setSingleDeleteInquiryId(null)
+      closeDetailModal()
+    } catch (error) {
+      setActionResultTitle('문의 삭제 실패')
+      setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
+      setActionResultOpen(true)
+    }
+  }, [closeDetailModal, deleteMutation, singleDeleteInquiryId])
 
   const columns: ColumnsType<AdminInquiryRow> = useMemo(
     () => [
@@ -266,9 +296,7 @@ export function AdminInquiryPage() {
         open={detailOpen}
         inquiryId={detailInquiryId}
         onCancel={closeDetailModal}
-        onSuccess={() => {
-          void listQuery.refetch()
-        }}
+        onSuccess={() => {}}
         onDeleteClick={handleDetailDeleteRequest}
         canWrite={canWrite}
       />
@@ -303,6 +331,12 @@ export function AdminInquiryPage() {
         onCategoriesChange={() => {}}
         inquiries={rows}
       />
+      <ActionResultModal
+        open={actionResultOpen}
+        title={actionResultTitle}
+        body={actionResultMessage}
+        onClose={() => setActionResultOpen(false)}
+      />
       <FilterTableLayout
         bordered={false}
         className="admin-inquiry-page__filter-layout"
@@ -320,13 +354,13 @@ export function AdminInquiryPage() {
         onSearch={handleSearch}
         title="문의목록"
         description={`총 ${displayedCount.toLocaleString()}건`}
+        contentLoading={contentLoading}
         actions={
           <>
             <CmsButton
               variant="delete"
               onClick={handleBulkDelete}
-              disabled={!canWrite || selectedRowKeys.length === 0 || inquiriesRemote}
-              title={inquiriesRemote ? '문의 삭제 API가 제공되지 않습니다.' : undefined}
+              disabled={!canWrite || selectedRowKeys.length === 0}
             >
               문의삭제
             </CmsButton>
@@ -345,11 +379,7 @@ export function AdminInquiryPage() {
           data: tableData,
         }}
       >
-        {contentLoading ? (
-          <div className="page-content-loading page-content-loading--table-slot" role="status">
-            <Spin />
-          </div>
-        ) : contentError ? (
+        {contentError ? (
           <div className="page-content-error" role="alert">
             {contentError}
           </div>

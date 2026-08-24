@@ -3,13 +3,15 @@
  */
 
 import { useCallback, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import dayjs from 'dayjs'
 import { Spin } from 'antd'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
 import { AttachmentDownloadIcon } from '@/shared/ui'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { shouldUseNoticesRemoteApi } from '@/features/posts/api/notices/admin-notices-service'
+import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
+import { useLeaveDeletedDetail } from '@/features/posts/hooks/use-leave-deleted-detail'
 import { useNoticeDetailQuery } from '@/features/posts/hooks/use-notice-detail-query'
 import { useNoticeMutations } from '@/features/posts/hooks/use-notice-mutations'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
@@ -23,11 +25,14 @@ import './admin-notice-detail-page.css'
 
 export function AdminNoticeDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const remoteEnabled = shouldUseNoticesRemoteApi()
-  const detailQuery = useNoticeDetailQuery(id)
+  const { detailEnabled, goList, leaveToList, runDeleteThenLeave } = useLeaveDeletedDetail(
+    '/admin/posts/notices',
+    id ? postsQueryKeys.notices.detail(id) : undefined
+  )
+  const detailQuery = useNoticeDetailQuery(id, { enabled: detailEnabled })
   const { deleteMutation } = useNoticeMutations()
 
   const [editModalOpen, setEditModalOpen] = useState(false)
@@ -38,10 +43,6 @@ export function AdminNoticeDetailPage() {
 
   const notice = detailQuery.data
 
-  const goList = useCallback(() => {
-    navigate('/admin/posts/notices')
-  }, [navigate])
-
   const handleDelete = useCallback(() => {
     if (!canWrite || !id) return
     setDeleteConfirmOpen(true)
@@ -50,15 +51,14 @@ export function AdminNoticeDetailPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!id) return
     try {
-      await deleteMutation.mutateAsync(id)
+      await runDeleteThenLeave(() => deleteMutation.mutateAsync(id))
       setDeleteConfirmOpen(false)
-      goList()
     } catch (error) {
       setActionResultTitle('공지 삭제 실패')
       setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
       setActionResultOpen(true)
     }
-  }, [deleteMutation, goList, id])
+  }, [deleteMutation, id, runDeleteThenLeave])
 
   const handleEdit = useCallback(() => {
     if (!canWrite) return
@@ -120,8 +120,10 @@ export function AdminNoticeDetailPage() {
         mode="edit"
         notice={notice}
         onCancel={() => setEditModalOpen(false)}
-        onSuccess={() => setEditModalOpen(false)}
-        onDeleted={goList}
+        onSuccess={() => {
+          setEditModalOpen(false)
+        }}
+        onDeleted={leaveToList}
       />
       <ActionResultModal
         open={actionResultOpen}
