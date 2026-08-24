@@ -56,6 +56,10 @@ assert.equal(body.name, '홍길동')
 assert.equal(body.gender, 'M')
 assert.equal(body.birthDate, '1990-05-01')
 assert.equal(body.phone, '01012345678')
+assert.equal(
+  mapInstructorApplyFormToCreateRequest({ ...values, contact: '010-1234-5678' }).phone,
+  '01012345678'
+)
 assert.equal(body.email, 'a@b.com')
 assert.equal(body.requestedActivityType, 'JA 강사단')
 

@@ -1,4 +1,5 @@
 import { EMPTY_SETTINGS_VALUE } from './constants.ts'
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 
 export type SettingsProfileInput = {
   joinedAt?: string
@@ -54,15 +55,8 @@ export function formatSettingsJoinedAt(value: string | undefined): string {
 }
 
 export function formatSettingsPhone(value: string | undefined): string {
-  const digits = value?.replace(/\D/g, '') ?? ''
-  if (digits.length === 11) {
-    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`
-  }
-  if (digits.length === 10) {
-    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
-  }
-  const trimmed = value?.trim()
-  return trimmed || EMPTY_SETTINGS_VALUE
+  const formatted = formatKoreanPhoneNumber(value ?? '')
+  return formatted || EMPTY_SETTINGS_VALUE
 }
 
 export function formatSettingsGender(value: string | undefined): string {

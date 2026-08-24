@@ -1,4 +1,5 @@
 import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
+import { normalizeKoreanPhoneDigits } from '@jakorea/domain/shared/korean-phone'
 import type {
   InstructorRoleRequestCreateRequest,
   InstructorRoleRequestEducationGraduateRow,
@@ -314,7 +315,7 @@ export function mapInstructorApplyFormToCreateRequest(
     name: values.name.trim(),
     gender: toApiGender(values.gender),
     birthDate: toApiBirthDate(values.birthDate),
-    phone: values.contact.trim(),
+    phone: normalizeKoreanPhoneDigits(values.contact),
     email: values.email.trim(),
     profile: mapProfile(values),
     settlement: mapSettlement(values),

@@ -39,6 +39,7 @@ import {
   type InstructorSharedProfileFormValues,
 } from '@jakorea/domain/instructor/profile-form-values'
 import { collectInstructorRegisterValidation } from '@jakorea/domain/instructor/validate-register'
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { isValidEmail, parseBirthDate } from '@/features/auth/sign-up'
 import {
   PFAlertModal,
@@ -435,7 +436,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                   width="200px"
                   placeholder={PH.contact}
                   disabled
-                  value={values.contact}
+                  value={formatKoreanPhoneNumber(values.contact)}
                   onValueChange={value => patch('contact', value)}
                 />
               </PFFormField>
