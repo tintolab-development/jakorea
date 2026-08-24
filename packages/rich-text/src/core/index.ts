@@ -8,6 +8,8 @@ export {
   getInitialEditorContent,
   markdownToHtml,
   serializeEditorContent,
+  stripTrailingEmptyMarkdown,
+  stripTrailingEmptyParagraphs,
   toEditorContentType,
 } from './content'
 export {
