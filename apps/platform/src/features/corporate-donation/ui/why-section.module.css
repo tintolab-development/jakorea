@@ -135,7 +135,7 @@
   }
 
   .content {
-    padding: var(--spacing-120) 0;
+    padding: var(--spacing-120) var(--spacing-20);
   }
 
   .cardList {
