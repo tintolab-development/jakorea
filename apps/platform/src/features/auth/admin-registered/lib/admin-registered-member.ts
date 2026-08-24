@@ -8,6 +8,11 @@ import {
   initAdminRegisteredWizardState,
   updateAdminRegisteredWizardState,
 } from '../model/wizard-state'
+import {
+  shouldContinueAdminProvisionedOnboarding,
+  type AdminProvisionedOnboardingFlags,
+} from './onboarding-step'
+import { syncAdminRegisteredOnboardingSession } from './sync-onboarding-session'
 
 export function isMockAdminRegisteredEmail(email: string) {
   return normalizeEmailId(email) === normalizeEmailId(MOCK_ADMIN_REGISTERED_EMAIL)
@@ -56,24 +61,23 @@ export function canSkipAdminRegisteredBirthStep() {
  * 관리자가 등록한 계정 안내 화면으로 보낼지.
  * `registeredByAdmin === true` 이고 본인 가입 온보딩이 아직 끝나지 않았을 때만 true.
  */
-export function requiresAdminRegisteredOnboarding(flags: {
-  registeredByAdmin?: boolean
-  identitySelfSignupCompletedAfterAdminRegistration?: boolean
-}) {
-  return (
-    flags.registeredByAdmin === true &&
-    flags.identitySelfSignupCompletedAfterAdminRegistration === false
-  )
+export function requiresAdminRegisteredOnboarding(flags: AdminProvisionedOnboardingFlags) {
+  return shouldContinueAdminProvisionedOnboarding(flags)
 }
 
 export function setAdminRegisteredPasswordChangeRequired(
   email: string,
-  entrySource: 'first-login' | 'sign-up' = 'first-login',
+  entrySourceOrFlags: 'first-login' | 'sign-up' | AdminProvisionedOnboardingFlags = 'first-login',
+  maybeEntrySource: 'first-login' | 'sign-up' = 'first-login',
 ) {
-  initAdminRegisteredWizardState(normalizeEmailId(email), entrySource)
-  if (entrySource === 'first-login') {
-    setAdminOnboardingRequired(true)
-  }
+  const entrySource =
+    typeof entrySourceOrFlags === 'string' ? entrySourceOrFlags : maybeEntrySource
+  const flags: AdminProvisionedOnboardingFlags =
+    typeof entrySourceOrFlags === 'string'
+      ? { registeredByAdmin: true }
+      : entrySourceOrFlags
+
+  syncAdminRegisteredOnboardingSession(email, flags, entrySource)
 }
 
 export function getAdminRegisteredPasswordChangeRequired() {
