@@ -199,7 +199,6 @@ export function HowSectionCard({ items }: Props) {
         dataSource={items}
         pagination={false}
         rowKey="id"
-        scroll={{ x: true }}
       />
     </div>
   )

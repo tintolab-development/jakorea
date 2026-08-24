@@ -207,7 +207,6 @@ export function PartnershipSectionCard({ items }: Props) {
         dataSource={items}
         pagination={false}
         rowKey="step"
-        scroll={{ x: true }}
       />
     </div>
   )

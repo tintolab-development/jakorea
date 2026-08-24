@@ -112,7 +112,6 @@ export function BannerSectionCard({ banner }: Props) {
         dataSource={rows}
         pagination={false}
         rowKey="key"
-        scroll={{ x: true }}
       />
 
       <BannerFormModal
