@@ -102,3 +102,15 @@ export const PROCESS_STEPS: readonly ProcessStep[] = [
     ],
   },
 ]
+
+export const CTA_SECTION_EYEBROW = 'Grow together'
+
+export const CTA_SECTION_TITLE_LINES = [
+  '청소년의 가능성이',
+  ' 꽃 피우는 순간,',
+  ' 지금 함께 해주세요'
+] as const
+
+export const CTA_SECTION_BUTTON_LABEL = '기업후원 문의하기'
+
+export const PARTNER_SECTION_TITLE = '함께해준 기업들'

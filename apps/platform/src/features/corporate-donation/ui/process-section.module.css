@@ -87,11 +87,22 @@
   padding: 0;
   flex-direction: column;
   gap: var(--spacing-4);
-  list-style: none;
 }
-
-.descriptionItem::marker {
-  color: var(--color-neutral-black);
+.descriptionItem {
+  position: relative;
+  padding-left: var(--spacing-24);
+}
+.descriptionItem::before {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-999);
+  background-color: var(--color-neutral-black);
+  transform: translateY(-50%);
 }
 
 @media (--bp-below-pc) {
@@ -189,12 +200,12 @@
     display: block;
     position: absolute;
     top: 50%;
-    right: -7px;
-    width: 20px;
-    height: 20px;
+    right: -1px;
+    width: 9px;
+    height: 15px;
     flex-shrink: 0;
-    background-image: url('@/shared/assets/icons/chevron-right-mint.svg');
-    background-size: 16px 16px;
+    background-image: url('@/shared/assets/icons/connector-arrow.svg');
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     transform: translateY(-50%);
@@ -233,12 +244,12 @@
     display: block;
     position: absolute;
     top: 50%;
-    right: -7px;
-    width: 20px;
-    height: 20px;
+    right: -1px;
+    width: 9px;
+    height: 15px;
     flex-shrink: 0;
-    background-image: url('@/shared/assets/icons/chevron-right-mint.svg');
-    background-size: 16px 16px;
+    background-image: url('@/shared/assets/icons/connector-arrow.svg');
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     transform: translateY(-50%);
@@ -266,7 +277,5 @@
 
   .descriptionList {
     gap: var(--spacing-4);
-    padding-left: 1.15em;
-    list-style: disc;
   }
 }
