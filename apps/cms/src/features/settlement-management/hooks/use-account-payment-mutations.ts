@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import {
   markAccountPaymentFailedRemote,
@@ -27,9 +27,7 @@ export function useMarkAccountPaymentPaidMutation() {
       }
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: settlementQueryKeys.accountPayments.all(),
-      })
+      await invalidateAccountPaymentCaches(queryClient)
     },
   })
 }
@@ -40,9 +38,7 @@ export function useMarkAccountPaymentFailedMutation() {
   return useMutation({
     mutationFn: (paymentId: number) => markAccountPaymentFailedRemote(paymentId),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: settlementQueryKeys.accountPayments.all(),
-      })
+      await invalidateAccountPaymentCaches(queryClient)
     },
   })
 }
@@ -57,4 +53,11 @@ export function useTaxReportExportMutation() {
   return useMutation({
     mutationFn: (body: SettlementExportRequest) => requestTaxReportExportRemote(body),
   })
+}
+
+function invalidateAccountPaymentCaches(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: settlementQueryKeys.accountPayments.lists() }),
+    queryClient.invalidateQueries({ queryKey: settlementQueryKeys.accountPayments.details() }),
+  ])
 }

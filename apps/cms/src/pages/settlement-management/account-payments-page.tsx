@@ -20,6 +20,7 @@ import {
 } from '@/data/mock/account-payments-list'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { useAccountPaymentsListQuery } from '@/features/settlement-management/hooks/use-account-payments-list-query'
+import { usePrefetchAccountPaymentDetail } from '@/features/settlement-management/hooks/use-account-payment-detail-query'
 import { useMarkAccountPaymentPaidMutation } from '@/features/settlement-management/hooks/use-account-payment-mutations'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { ACCOUNT_PAYMENT_AGGREGATE_STATUSES } from '@/shared/constants/payment-order-aggregate-status'
@@ -211,6 +212,7 @@ export default function AccountPaymentsPage() {
   )
 
   const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
+  const prefetchAccountPaymentDetail = usePrefetchAccountPaymentDetail()
   const markPaidMutation = useMarkAccountPaymentPaidMutation()
 
   const accountFilterFields = useMemo((): FilterFieldConfig[] => {
@@ -798,15 +800,12 @@ export default function AccountPaymentsPage() {
           onSearch={handleSearch}
           title={viewMode === 'list' ? '계좌 지급 대상 목록' : '예정 프로그램'}
           description={`총 ${total}건`}
+          contentLoading={Boolean(accountPaymentsRemote && accountPaymentsListQuery.isLoading)}
           actions={accountPaymentsFilterTableActions}
           hideExcelDownload
         >
           {viewMode === 'list' ? (
-            accountPaymentsRemote && accountPaymentsListQuery.isLoading ? (
-              <div className="page-content-loading page-content-loading--table-slot" role="status">
-                <Spin />
-              </div>
-            ) : accountPaymentsRemote && accountPaymentsListQuery.isError ? (
+            accountPaymentsRemote && accountPaymentsListQuery.isError ? (
               <div className="page-content-error" role="alert">
                 {accountPaymentsListQuery.error instanceof Error
                   ? accountPaymentsListQuery.error.message
@@ -822,18 +821,16 @@ export default function AccountPaymentsPage() {
               rowSelection={rowSelection}
               rowClassName={() => 'account-payments-page__table-row--clickable'}
               onRow={record => ({
+                onMouseEnter: () => prefetchAccountPaymentDetail(record),
                 onClick: e => {
                   const t = e.target as HTMLElement
                   if (t.closest('.ant-table-selection-column')) return
+                  prefetchAccountPaymentDetail(record)
                   openAccountPaymentDetail(record)
                 },
               })}
             />
             )
-          ) : accountPaymentsRemote && accountPaymentsListQuery.isLoading ? (
-            <div className="page-content-loading page-content-loading--table-slot" role="status">
-              <Spin />
-            </div>
           ) : accountPaymentsRemote && accountPaymentsListQuery.isError ? (
             <div className="page-content-error" role="alert">
               {accountPaymentsListQuery.error instanceof Error

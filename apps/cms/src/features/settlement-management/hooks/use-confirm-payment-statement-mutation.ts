@@ -22,7 +22,9 @@ export function useConfirmPaymentStatementMutation() {
     },
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.all() }),
+        queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.lists() }),
+        queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.statements() }),
+        queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.details() }),
         queryClient.invalidateQueries({ queryKey: settlementQueryKeys.calendar.all() }),
       ])
     },

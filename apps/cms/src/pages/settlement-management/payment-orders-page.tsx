@@ -3,7 +3,6 @@
  * 필터·툴바(제목·뷰 전환·엑셀): FilterTableLayout
  */
 
-import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { ViewModeToggle } from '@/shared/components/view-mode'
 import '@/shared/components/list-page/list-page-layout.css'
@@ -73,6 +72,7 @@ export default function PaymentOrdersPage() {
         onSearch={handleSearch}
         title={listTitle}
         description={`총 ${total}건`}
+        contentLoading={Boolean(contentLoading)}
         actions={
           <ViewModeToggle
             value={viewMode}
@@ -82,11 +82,7 @@ export default function PaymentOrdersPage() {
         }
         excelExport={paymentOrdersExcelExport}
       >
-        {contentLoading ? (
-          <div className="page-content-loading page-content-loading--table-slot" role="status">
-            <Spin />
-          </div>
-        ) : contentError ? (
+        {contentError ? (
           <div className="page-content-error" role="alert">
             {contentError instanceof Error ? contentError.message : '목록을 불러오지 못했습니다.'}
           </div>

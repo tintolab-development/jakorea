@@ -15,6 +15,7 @@ import {
 import { usePaymentOrdersDetailContextQuery } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
 import { useSettlementDetailQuery } from '@/features/settlement-management/hooks/use-settlement-detail-query'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
+import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
 import {
   getMockPaymentOrderCalculationStatementFromInstructorDetailPage,
   getMockPaymentOrderCalculationStatementFromProgramDetailPage,
@@ -228,11 +229,7 @@ export function usePaymentOrderDetailFullPageModalState(input: PaymentOrderDetai
   }
 
   const detailLoading =
-    paymentOrdersRemote &&
-    isOpen &&
-    Boolean(aggregateKey) &&
-    !detail &&
-    (detailContextQuery.isLoading || detailContextQuery.isFetching)
+    paymentOrdersRemote && isOpen && Boolean(aggregateKey) && isAwaitingFirstQueryData(detailContextQuery)
 
   return {
     canRender: Boolean(isOpen && row && detail && !detailLoading),
