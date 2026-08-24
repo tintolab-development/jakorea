@@ -7,6 +7,7 @@
  */
 import type { GuardianProfileResponse } from './guardianProfileResponse';
 import type { InstructorPortalProfileResponse } from './instructorPortalProfileResponse';
+import type { PortalTeacherOrganizationResponse } from './portalTeacherOrganizationResponse';
 
 export interface PortalProfileResponse {
   memberId?: number;
@@ -29,6 +30,7 @@ export interface PortalProfileResponse {
   affiliationName?: string;
   schoolEnrollmentStatus?: string;
   teacherEmploymentStatus?: string;
+  teacherOrganization?: PortalTeacherOrganizationResponse;
   external1365Id?: string;
   accountStatus?: string;
   joinedAt?: string;
