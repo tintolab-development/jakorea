@@ -1,6 +1,12 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import {
+  assertBulkDeleteSucceeded,
+  forEachBulkIdChunk,
+  toBulkNumericIds,
+} from '@/features/data-management/api/bulk-delete'
 import { getJAKoreaCMSBackendAPIDataManagementSubset } from '@/shared/api/generated/data-management/data-management-api'
 import type {
+  BulkActionResponse,
   DetailedProgramRequest,
   DetailedProgramResponse,
   DetailedProgramsParams,
@@ -36,4 +42,13 @@ export async function updateDetailedProgramRemote(
 
 export async function deleteDetailedProgramRemote(id: number): Promise<void> {
   await dmApi.delete3(id)
+}
+
+export async function bulkDeleteDetailedProgramsRemote(ids: string[]): Promise<void> {
+  await forEachBulkIdChunk(ids, async chunk => {
+    const result = unwrapApiBody<BulkActionResponse>(
+      await dmApi.bulkDelete3({ ids: toBulkNumericIds(chunk) })
+    )
+    assertBulkDeleteSucceeded(result, '세부 프로그램 일괄 삭제에 실패했습니다.')
+  })
 }

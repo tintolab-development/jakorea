@@ -20,15 +20,18 @@ export function detailedProgramsParamsFromSearchParams(
   if (usage === 'active') params.useYn = true
   if (usage === 'inactive') params.useYn = false
 
+  const nameQ = (searchParams.get('dp_name') ?? '').trim()
+  if (nameQ) params.keyword = nameQ
+
   return params
 }
 
-/** 서버 keyword 없음 — programName(dp_name)은 클라이언트 필터 유지 */
-export function clientFilterDetailedProgramsByName(
-  rows: import('@/features/detailed-program/model/detailed-program-management.types').DetailedProgramManagementRow[],
-  searchParams: URLSearchParams
-) {
-  const nameQ = (searchParams.get('dp_name') ?? '').trim().toLowerCase()
-  if (!nameQ) return rows
-  return rows.filter(row => row.name.toLowerCase().includes(nameQ))
+/** 목록 캐시 키 — 필터 파라미터만. URL 부가 값이 있어도 같은 조회면 같은 키. */
+export function serializeDetailedProgramListFilters(searchParams: URLSearchParams): string {
+  const next = new URLSearchParams()
+  const usage = searchParams.get('dp_use')
+  if (usage === 'active' || usage === 'inactive') next.set('dp_use', usage)
+  const nameQ = (searchParams.get('dp_name') ?? '').trim()
+  if (nameQ) next.set('dp_name', nameQ)
+  return next.toString()
 }
