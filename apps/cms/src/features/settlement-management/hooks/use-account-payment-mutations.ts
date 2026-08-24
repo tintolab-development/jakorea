@@ -1,30 +1,25 @@
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import {
+  bulkMarkAccountPaymentsPaidRemote,
   markAccountPaymentFailedRemote,
-  markAccountPaymentPaidRemote,
   requestBulkTransferExportRemote,
   requestTaxReportExportRemote,
 } from '@/features/settlement-management/api/settlement-api-client'
 import { settlementQueryKeys } from '@/features/settlement-management/api/settlement-query-keys'
 import type { SettlementExportRequest } from '@/shared/api/generated/settlement/schemas'
 
+const BULK_PAID_REASON = '계좌 지급 완료'
+
 export function useMarkAccountPaymentPaidMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (paymentIds: number[]) => {
-      const errors: string[] = []
-      for (const paymentId of paymentIds) {
-        try {
-          await markAccountPaymentPaidRemote(paymentId)
-        } catch (error) {
-          errors.push(getSettlementApiErrorMessage(error, `지급 완료 처리 실패 (ID: ${paymentId})`))
-        }
-      }
-      if (errors.length > 0) {
-        throw new Error(errors.join('\n'))
-      }
+      if (paymentIds.length === 0) return
+      await bulkMarkAccountPaymentsPaidRemote({
+        paymentIds,
+        reason: BULK_PAID_REASON,
+      })
     },
     onSuccess: async () => {
       await invalidateAccountPaymentCaches(queryClient)
@@ -36,7 +31,8 @@ export function useMarkAccountPaymentFailedMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (paymentId: number) => markAccountPaymentFailedRemote(paymentId),
+    mutationFn: (paymentId: number) =>
+      markAccountPaymentFailedRemote(paymentId, { reason: '계좌 지급 실패' }),
     onSuccess: async () => {
       await invalidateAccountPaymentCaches(queryClient)
     },

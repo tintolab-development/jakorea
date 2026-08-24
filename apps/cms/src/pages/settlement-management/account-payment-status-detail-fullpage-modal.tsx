@@ -35,6 +35,11 @@ import '@/features/settlement/ui/payment-record/payment-order-program-calculatio
 import { PaymentOrderStatusDetailLnbIcon } from './payment-order-status-detail-lnb-icon'
 import { PaymentOrderCalculationBreakdownTable } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
 import {
+  PaymentOrderCalculationBasisDetailModal,
+  usePaymentOrderCalculationBasisDetailModal,
+} from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail-modal'
+import { SettlementItemSettingDetailModal } from '@/pages/settlement-management/settlement-item-setting-detail-modal'
+import {
   AccountPaymentConfirmationModal,
   buildAccountPaymentSingleConfirmationPayload,
 } from '@/features/settlement/ui/account-payment-confirmation-modal'
@@ -84,6 +89,17 @@ export function AccountPaymentStatusDetailFullPageModal({
 
   const [paymentCompleteConfirmOpen, setPaymentCompleteConfirmOpen] = useState(false)
   const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
+  const {
+    basisDetailOpen,
+    selectedBasisDetail,
+    handleBasisDetailClick,
+    closeBasisDetailModal,
+    wageSettingItemOpen,
+    wageSettingItem,
+    closeWageSettingItemModal,
+  } = usePaymentOrderCalculationBasisDetailModal(open, {
+    lectureFeeStandardTitle: detail?.basic.lectureFeeStandardTitle,
+  })
 
   const singlePaymentConfirmPayload = useMemo(
     () => (detail ? buildAccountPaymentSingleConfirmationPayload(detail) : null),
@@ -289,6 +305,7 @@ export function AccountPaymentStatusDetailFullPageModal({
               formulaLabel={detail.formulaLabel}
               totalAmount={detail.totalAmount}
               lectureSessionSegmentLabel="round"
+              onBasisDetailClick={handleBasisDetailClick}
               onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
               headerActions={
                 row.accountPaymentStatus === 'account_paid' ? undefined : (
@@ -323,6 +340,18 @@ export function AccountPaymentStatusDetailFullPageModal({
         paragraphBodyOptions={issuanceParagraphBodyOptions}
         fileName={issuanceFileName}
         zIndex={1500}
+      />
+      <PaymentOrderCalculationBasisDetailModal
+        open={basisDetailOpen}
+        onCancel={closeBasisDetailModal}
+        detail={selectedBasisDetail}
+        zIndex={1200}
+      />
+      <SettlementItemSettingDetailModal
+        open={wageSettingItemOpen}
+        onCancel={closeWageSettingItemModal}
+        item={wageSettingItem}
+        readOnly
       />
     </>
   )

@@ -15,6 +15,7 @@ import {
   buildPaymentStatementIssuanceFileNameFromCalculation,
   buildPaymentStatementIssuanceViewOptionsFromCalculation,
   isPaymentOrderLineEligibleForPaymentStatementIssue,
+  mapInstructorCalculationStatementToIssuanceInput,
   mapProgramCalculationStatementToIssuanceInput,
 } from '@/features/settlement/lib/payment-order-calculation-statement-issuance-view'
 import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
@@ -29,6 +30,12 @@ import {
   PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH,
   PaymentOrderCalculationBreakdownTable,
 } from './payment-order-calculation-breakdown-table'
+import {
+  PaymentOrderCalculationBasisDetailModal,
+  usePaymentOrderCalculationBasisDetailModal,
+} from './payment-order-calculation-basis-detail-modal'
+import { SettlementItemSettingDetailModal } from '@/pages/settlement-management/settlement-item-setting-detail-modal'
+import { PaymentOrderCalculationStatementInstructorBasicSection } from './payment-order-calculation-statement-instructor-basic-section'
 import { PaymentOrderCalculationStatementProgramBasicSection } from './payment-order-calculation-statement-program-basic-section'
 
 const CALC_STATEMENT_CONTENT_MIN_WIDTH = PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH
@@ -37,6 +44,13 @@ export type PaymentOrderCalculationStatementProgramContext = Extract<
   PaymentOrderProgramCalculationStatement,
   { context: 'program' }
 >
+
+export type PaymentOrderCalculationStatementInstructorContext = Extract<
+  PaymentOrderProgramCalculationStatement,
+  { context: 'instructor' }
+>
+
+export type PaymentOrderCalculationStatementEntryKind = 'program' | 'instructor'
 
 export interface PaymentOrderCalculationStatementModalImplProps {
   open: boolean
@@ -47,6 +61,12 @@ export interface PaymentOrderCalculationStatementModalImplProps {
   paymentOrdersRemote?: boolean
   statementId?: number | null
   detailContextQuery?: PaymentOrdersDetailContextQueryResult
+  /**
+   * 산출 내역서 UI 유형 — 상세 페이지가 아니라 **테이블 유형**을 따른다.
+   * 프로그램 상세의 「신청자별 정산 목록」→ `instructor`
+   * 신청자 상세의 「프로그램별 정산 목록」→ `program`
+   */
+  entryKind: PaymentOrderCalculationStatementEntryKind
   /** 모달 루트에 추가 (진입 경로 구분·스타일 확장용) */
   entryClassName?: string
   /** 확인 처리·신청 반려 확정 시 라인 상태 반영(상위에서 상세 테이블·집계와 동기화) */
@@ -64,6 +84,7 @@ export function PaymentOrderCalculationStatementModalImpl({
   paymentOrdersRemote = false,
   statementId,
   detailContextQuery,
+  entryKind,
   entryClassName,
   onStatementLineCommitted,
   onAfterRejectResultClosed,
@@ -75,7 +96,23 @@ export function PaymentOrderCalculationStatementModalImpl({
   const [paymentRejectReason, setPaymentRejectReason] = useState('')
   const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
 
-  /* 상위에서 open만 false로 줄 때(마스크 등) 자식 확인·반려 모달 상태를 비움 */
+  const basisDetailContext = useMemo(() => {
+    if (!data || (data.context !== 'program' && data.context !== 'instructor')) {
+      return null
+    }
+    return { lectureFeeStandardTitle: data.basic.lectureFeeStandardTitle }
+  }, [data])
+
+  const {
+    basisDetailOpen,
+    selectedBasisDetail,
+    handleBasisDetailClick,
+    closeBasisDetailModal,
+    wageSettingItemOpen,
+    wageSettingItem,
+    closeWageSettingItemModal,
+  } = usePaymentOrderCalculationBasisDetailModal(open, basisDetailContext)
+
   /* eslint-disable react-hooks/set-state-in-effect -- 모달 닫힘과 동기화 */
   useEffect(() => {
     if (!open) {
@@ -88,15 +125,17 @@ export function PaymentOrderCalculationStatementModalImpl({
   }, [open])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const programStatement =
-    data?.context === 'program'
-      ? (data as PaymentOrderCalculationStatementProgramContext)
-      : null
-
-  const issuanceInput = useMemo(
-    () => (programStatement ? mapProgramCalculationStatementToIssuanceInput(programStatement) : null),
-    [programStatement]
-  )
+  const issuanceInput = useMemo(() => {
+    if (!data) return null
+    if (entryKind === 'program') {
+      return mapProgramCalculationStatementToIssuanceInput(
+        data as PaymentOrderCalculationStatementProgramContext
+      )
+    }
+    return mapInstructorCalculationStatementToIssuanceInput(
+      data as PaymentOrderCalculationStatementInstructorContext
+    )
+  }, [data, entryKind])
 
   const issuanceParagraphBodyOptions = useMemo(
     () =>
@@ -164,13 +203,22 @@ export function PaymentOrderCalculationStatementModalImpl({
     )
   }
 
-  if (!data || data.context !== 'program') {
+  if (!data || (data.context !== 'program' && data.context !== 'instructor')) {
     return null
   }
 
-  const statement: PaymentOrderCalculationStatementProgramContext = data
+  const statement = data
+
+  if (import.meta.env.DEV && statement.context !== entryKind) {
+    console.warn(
+      '[payment-order-calc-statement] data.context와 entryKind 불일치',
+      { context: statement.context, entryKind }
+    )
+  }
+
+  const processingStatusClass = statement.basic.processingStatusClass
   const canIssuePaymentStatement = isPaymentOrderLineEligibleForPaymentStatementIssue(
-    statement.basic.processingStatusClass
+    processingStatusClass
   )
 
   const handleRemoteConfirm = async (lectureFeePaymentScheduledDateIso: string) => {
@@ -179,7 +227,10 @@ export function PaymentOrderCalculationStatementModalImpl({
       return
     }
     try {
-      await confirmMutation.mutateAsync([statementId])
+      await confirmMutation.mutateAsync({
+        statementIds: [statementId],
+        lectureFeePaymentScheduledDate: lectureFeePaymentScheduledDateIso,
+      })
       await detailContextQuery?.refetch()
       onStatementLineCommitted?.({
         lineId: statement.sourceLineRowId,
@@ -191,6 +242,27 @@ export function PaymentOrderCalculationStatementModalImpl({
       window.alert(getSettlementApiErrorMessage(error, '지급조서 확인 처리에 실패했습니다.'))
     }
   }
+
+  const basicSection =
+    entryKind === 'program' ? (
+      <PaymentOrderCalculationStatementProgramBasicSection
+        basic={
+          statement.context === 'program'
+            ? statement.basic
+            : (statement.basic as unknown as PaymentOrderCalculationStatementProgramContext['basic'])
+        }
+        style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
+      />
+    ) : (
+      <PaymentOrderCalculationStatementInstructorBasicSection
+        basic={
+          statement.context === 'instructor'
+            ? statement.basic
+            : (statement.basic as unknown as PaymentOrderCalculationStatementInstructorContext['basic'])
+        }
+        style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
+      />
+    )
 
   return (
     <>
@@ -207,16 +279,15 @@ export function PaymentOrderCalculationStatementModalImpl({
           </CmsButton>
         }
       >
-        <PaymentOrderCalculationStatementProgramBasicSection
-          basic={statement.basic}
-          style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
-        />
+        {basicSection}
         <PaymentOrderCalculationBreakdownTable
           blocks={statement.blocks}
           formulaLabel={statement.formulaLabel}
           totalAmount={statement.totalAmount}
-          processingStatus={statement.basic.processingStatusClass}
+          processingStatus={processingStatusClass}
           paymentStatementIssueDisabled={!canIssuePaymentStatement}
+          lectureSessionSegmentLabel={entryKind === 'instructor' ? 'round' : 'session'}
+          onBasisDetailClick={handleBasisDetailClick}
           onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
           headerActions={
             <>
@@ -293,6 +364,18 @@ export function PaymentOrderCalculationStatementModalImpl({
         paragraphBodyOptions={issuanceParagraphBodyOptions}
         fileName={issuanceFileName}
         zIndex={1500}
+      />
+      <PaymentOrderCalculationBasisDetailModal
+        open={basisDetailOpen}
+        onCancel={closeBasisDetailModal}
+        detail={selectedBasisDetail}
+        zIndex={1200}
+      />
+      <SettlementItemSettingDetailModal
+        open={wageSettingItemOpen}
+        onCancel={closeWageSettingItemModal}
+        item={wageSettingItem}
+        readOnly
       />
     </>
   )

@@ -10,8 +10,10 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import type {
   PaymentOrderAdminLineProcessingStatus,
+  PaymentOrderCalculationLineKind,
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderCalculationBasisDetail } from './payment-order-calculation-basis-detail'
 import './payment-order-program-calculation-statement-modal.css'
 
 export const PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH = 1200
@@ -27,6 +29,8 @@ export interface PaymentOrderCalculationTableRow {
   description: string
   amount: number
   lineId: string
+  kind: PaymentOrderCalculationLineKind
+  basisDetail?: PaymentOrderCalculationBasisDetail
   amountDisplayOverride?: string
 }
 
@@ -48,6 +52,8 @@ export function buildPaymentOrderCalculationTableRows(
         description: line.description,
         amount: line.amount,
         lineId: line.id,
+        kind: line.kind,
+        basisDetail: line.basisDetail,
         amountDisplayOverride: line.amountDisplayOverride,
       })
     })
@@ -75,17 +81,20 @@ function formatLectureSessionSegment(
 }
 
 export function getPaymentOrderCalculationColumns(options?: {
+  onBasisDetailClick?: (row: PaymentOrderCalculationTableRow) => void
+  /** @deprecated use onBasisDetailClick */
   onDetailClick?: () => void
   /** 강의 진행 일자 열의 세션 구간: `round`이면 차시 → 회차 (계좌 지급 현황 상세 등) */
   lectureSessionSegmentLabel?: 'session' | 'round'
 }): ColumnsType<PaymentOrderCalculationTableRow> {
-  const onDetailClick = () => {
-    window.alert('준비 중입니다.')
-    if (options?.onDetailClick) {
-      options.onDetailClick()
+  const handleBasisDetailClick = (row: PaymentOrderCalculationTableRow) => {
+    if (options?.onBasisDetailClick) {
+      options.onBasisDetailClick(row)
       return
     }
-    }
+    options?.onDetailClick?.()
+    window.alert('준비 중입니다.')
+  }
 
   const sessionLabelMode = options?.lectureSessionSegmentLabel ?? 'session'
 
@@ -160,13 +169,13 @@ export function getPaymentOrderCalculationColumns(options?: {
       key: 'detail',
       width: 176,
       align: 'center',
-      render: () => (
+      render: (_: unknown, row: PaymentOrderCalculationTableRow) => (
         <div className="payment-order-calc-statement-modal__detail-btn-wrap">
           <CmsButton
             variant="default"
             style={{ width: '160px' }}
             size="large"
-            onClick={onDetailClick}
+            onClick={() => handleBasisDetailClick(row)}
           >
             상세 보기
           </CmsButton>
@@ -195,6 +204,8 @@ export interface PaymentOrderCalculationBreakdownTableProps {
   paymentStatementIssueDisabled?: boolean
   /** 계좌 지급 현황 상세 등: 산출 내역 강의 진행 일자 열에서 차시 대신 회차 표기 */
   lectureSessionSegmentLabel?: 'session' | 'round'
+  /** 산정 기준 상세 모달 열기 */
+  onBasisDetailClick?: (row: PaymentOrderCalculationTableRow) => void
 }
 
 export function PaymentOrderCalculationBreakdownTable({
@@ -206,11 +217,12 @@ export function PaymentOrderCalculationBreakdownTable({
   onDownloadPaymentStatement,
   paymentStatementIssueDisabled = false,
   lectureSessionSegmentLabel = 'session',
+  onBasisDetailClick,
 }: PaymentOrderCalculationBreakdownTableProps) {
   const tableRows = useMemo(() => buildPaymentOrderCalculationTableRows(blocks), [blocks])
   const columns = useMemo(
-    () => getPaymentOrderCalculationColumns({ lectureSessionSegmentLabel }),
-    [lectureSessionSegmentLabel]
+    () => getPaymentOrderCalculationColumns({ lectureSessionSegmentLabel, onBasisDetailClick }),
+    [lectureSessionSegmentLabel, onBasisDetailClick]
   )
   const hideHeaderActionsStatuses: PaymentOrderAdminLineProcessingStatus[] = [
     'confirmed',

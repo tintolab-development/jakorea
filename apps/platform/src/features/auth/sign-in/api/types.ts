@@ -14,7 +14,7 @@ export type AuthTokenResponse = {
   passwordChangeRequired?: boolean
   /** CMS 관리자가 등록한 회원의 포털 온보딩이 아직 남아 있는지 */
   adminProvisionedOnboardingRequired?: boolean
-  /** 다음 서버 처리 단계. PROFILE, IDENTITY, PASSWORD, DONE 등 */
+  /** 다음 서버 처리 단계. PROFILE, IDENTITY, PASSWORD, PROFILE_REVIEW, DONE */
   adminProvisionedOnboardingStep?: string
   /** CMS 관리자에 의해 생성된 회원인지 */
   registeredByAdmin?: boolean
@@ -40,7 +40,10 @@ export type HomepageMeResponse = {
   identityVerified?: boolean
   lastLoginAt?: string
   registeredByAdmin?: boolean
+  adminProvisionedOnboardingRequired?: boolean
+  adminProvisionedOnboardingStep?: string
   identitySelfSignupCompletedAfterAdminRegistration?: boolean
+  passwordChangeRequired?: boolean
 }
 
 /** CMS 미등록 학교(NEIS 등) 선택값 — OpenAPI PortalSchoolSelectionRequest */

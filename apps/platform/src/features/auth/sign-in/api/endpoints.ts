@@ -10,6 +10,7 @@ export const portalAuthPaths = {
   passwordResetConfirm: () => '/api/portal/auth/password-reset/confirm',
   adminProvisionedProfile: () => '/api/portal/auth/admin-provisioned/profile',
   adminProvisionedIdentityConfirm: () => '/api/portal/auth/admin-provisioned/identity/confirm',
+  adminProvisionedComplete: () => '/api/portal/auth/admin-provisioned/complete',
 } as const
 
 /** 포털 회원 본인 리소스 (`/api/portal/me/**`) */

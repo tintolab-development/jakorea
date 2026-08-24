@@ -7,8 +7,8 @@ export const settlementQueryKeys = {
       [...settlementQueryKeys.paymentOrders.lists(), searchParamsKey] as const,
     statements: () => [...settlementQueryKeys.paymentOrders.all(), 'statements'] as const,
     details: () => [...settlementQueryKeys.paymentOrders.all(), 'detail'] as const,
-    detail: (type: 'program' | 'instructor', key: string) =>
-      [...settlementQueryKeys.paymentOrders.details(), type, key] as const,
+    detail: (type: 'program' | 'instructor', key: string, dateRangeKey = 'all') =>
+      [...settlementQueryKeys.paymentOrders.details(), type, key, dateRangeKey] as const,
     settlement: (settlementId: number) =>
       [...settlementQueryKeys.paymentOrders.all(), 'settlement', settlementId] as const,
   },
@@ -22,6 +22,8 @@ export const settlementQueryKeys = {
       [...settlementQueryKeys.accountPayments.details(), rowId] as const,
     settlement: (settlementId: number) =>
       [...settlementQueryKeys.accountPayments.all(), 'settlement', settlementId] as const,
+    budgetSummary: (year: number) =>
+      [...settlementQueryKeys.accountPayments.all(), 'budgetSummary', year] as const,
     exports: () => [...settlementQueryKeys.accountPayments.all(), 'exports'] as const,
   },
   calendar: {

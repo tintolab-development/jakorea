@@ -1,7 +1,10 @@
 import { useEffect } from 'react'
-import { clearAdminRegisteredWizardState } from '@/features/auth/admin-registered'
+import {
+  clearAdminRegisteredWizardState,
+  finishAdminRegisteredOnboardingToSignIn,
+} from '@/features/auth/admin-registered'
 import { MYPAGE_PATH } from '@/features/mypage'
-import { setAdminOnboardingRequired, setDevAuthLoggedIn } from '@/shared/lib'
+import { isRemoteApiConfigured, setAdminOnboardingRequired, setDevAuthLoggedIn } from '@/shared/lib'
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
@@ -11,10 +14,14 @@ import { useNavigate } from 'react-router-dom'
 export function AdminRegisteredCompletePage() {
   const navigate = useNavigate()
   useEffect(() => {
+    if (isRemoteApiConfigured()) {
+      finishAdminRegisteredOnboardingToSignIn()
+      return
+    }
     setAdminOnboardingRequired(false)
     clearAdminRegisteredWizardState()
     setDevAuthLoggedIn(true)
-  }, [])
+  }, [navigate])
 
   const handleStart = () => {
     navigate('/')

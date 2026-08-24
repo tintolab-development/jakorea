@@ -8,6 +8,15 @@ export function isInstructorMypageProfile(profile: PlatformMemberProfile) {
   return profile === 'instructor_only' || profile === 'instructor_dual'
 }
 
+export function isSchoolTeacherMypageProfile(profile: PlatformMemberProfile) {
+  return profile === 'school_teacher'
+}
+
+/** 교사회원·교사 겸직 강사 — 소속·재직현황 노출 대상 */
+export function showMypageAffiliationEmployment(profile: PlatformMemberProfile) {
+  return profile === 'school_teacher' || profile === 'instructor_dual'
+}
+
 /** 교사 겸직 강사 — 소속·재직현황 노출 대상 */
 export function isInstructorDualMypageProfile(profile: PlatformMemberProfile) {
   return profile === 'instructor_dual'

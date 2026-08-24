@@ -21,7 +21,7 @@ export function accountPaymentDetailQueryOptions(row: AccountPaymentRow) {
 export function useAccountPaymentDetailQuery(row: AccountPaymentRow | null, open: boolean) {
   const remoteEnabled = useSettlementRemoteEnabled(
     'accountPayments',
-    open && row != null && row.settlementId != null
+    open && row != null && row.accountPaymentId != null
   )
 
   return useQuery({

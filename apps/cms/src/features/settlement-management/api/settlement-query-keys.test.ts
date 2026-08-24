@@ -27,6 +27,9 @@ describe('settlement mutation invalidate prefixes', () => {
     expect(isPrefixedBy(settlementQueryKeys.paymentOrders.detail('program', 'k'), details)).toBe(
       true
     )
+    expect(
+      isPrefixedBy(settlementQueryKeys.paymentOrders.detail('program', 'k', '2026-01-01_2026-01-31'), details)
+    ).toBe(true)
     expect(isPrefixedBy(settlement, lists)).toBe(false)
     expect(isPrefixedBy(settlement, details)).toBe(false)
   })

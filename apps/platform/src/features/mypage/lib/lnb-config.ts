@@ -38,7 +38,6 @@ export function getMypageLnbItems(
     case 'instructor_dual':
       return withActive(INSTRUCTOR_LNB_ITEMS, activeKey)
     case 'school_teacher':
-      // TODO(mypage): 교사회원 LNB — 강사와 별도 스펙
-      return []
+      return withActive(GENERAL_LNB_ITEMS, activeKey)
   }
 }

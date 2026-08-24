@@ -28,3 +28,9 @@ export async function postAdminProvisionedIdentityConfirm(
   )
   return parseAdminProvisionedOnboardingResponse(data)
 }
+
+/** POST /api/portal/auth/admin-provisioned/complete — 가입정보 최종 확인 */
+export async function postAdminProvisionedComplete(): Promise<AdminProvisionedOnboardingResponse> {
+  const { data } = await axiosClient.post<unknown>(portalAuthPaths.adminProvisionedComplete())
+  return parseAdminProvisionedOnboardingResponse(data)
+}

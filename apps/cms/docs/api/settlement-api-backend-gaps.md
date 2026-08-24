@@ -15,6 +15,25 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동
 
 ---
 
+## P0 — 지급 현황 상세 (라인 목록)
+
+| | |
+|---|---|
+| **화면** | 지급조서 확인 → 행 클릭 → 지급 현황 상세 |
+| **프론트 (2026-08-24)** | `GET /api/settlements?programId=` 또는 `?instructorMemberId=` + 목록 `fromDate`/`toDate` |
+| **statements** | **임시** — `GET /statements` 전량 fetch 후 settlementId join. **요청:** settlements DTO에 `statementId` embed → [§4 핸드오프](./settlement-payment-order-detail-backend-handoff.md#4-백엔드-수정-요청--get-settlements-목록에-statementid-포함-권장p1) |
+| **상세 핸드오프** | [settlement-payment-order-detail-backend-handoff.md](./settlement-payment-order-detail-backend-handoff.md) |
+
+### P1 — `SettlementListItemResponse.statementId` *(권장)*
+
+| | |
+|---|---|
+| **갭** | 라인 DTO에 `statementStatus`만 있고 **`statementId` 없음** → 상세 진입 시 `GET /statements` 2차 호출 |
+| **제안** | `GET /api/admin/settlements` 응답 item에 `statementId?: number` 추가 (신규 endpoint 불필요) |
+| **수용 후** | 프론트 statements join 제거 — [핸드오프 §4](./settlement-payment-order-detail-backend-handoff.md#4-백엔드-수정-요청--get-settlements-목록에-statementid-포함-권장p1) |
+
+---
+
 ## P0 — 지급조서 확인
 
 ### 1. 프로그램별·강사별 집계 목록
@@ -108,8 +127,11 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동
 | **UI** | `PaymentOrderProgramCalculationStatement` — 세션 블록·산정 라인·합계 수식 |
 | **현재 API** | `GET /api/settlements/{id}` → `SettlementFrontendResponse` (`items`, `calculationResult` unknown) |
 | **갭** | 12종 layout mock과 API flat items 불일치 |
-| **프론트 임시 대응** | remote 시 산출 내역서 모달 **「API 연동 준비 중」** alert |
-| **제안** | 산출서 전용 DTO 또는 revision detail 확장 |
+| **갭 (항목 type)** | `items[].type` enum 미정의 — UI는 7종(강사비·교통비·숙박비·**식사비·활동비·원천징수**·기타) 필요 → [핸드오프 §3.5](./settlement-payment-order-detail-backend-handoff.md#35-산출-내역서--산정-항목-type-enum-확장-p1) |
+| **갭 (산정 상세·차단)** | **`GET /settlements/{id}`**에 `lectureFeeStandardTitle`/`wageItemType`·`items[].calculationDetail` **없음** → 강사비 행 상세 보기 「준비 중」 → [핸드오프 §3.6](./settlement-payment-order-detail-backend-handoff.md#36--get-settlementssettlementid-필수-확장--강의비-책정-기준산정-기준-상세-p1차단) |
+| **갭 (마스킹)** | **신청자명(강사명)·은행명은 마스킹 금지** — 연락처·이메일·계좌번호·예금주만 마스킹. BE 사전 마스킹 시 UI 불일치 → [핸드오프 §3.7](./settlement-payment-order-detail-backend-handoff.md#37-개인정보-마스킹-정책-지급-현황--산출-내역서) |
+| **프론트 임시 대응** | `settlement-item-type.ts` 코드→한글 매핑. `lectureFeeStandardTitle: '—'`·`basisDetail` 미매핑 |
+| **제안** | **`GET /settlements/{id}` DTO 확장 (필수)** — §3.5 type enum + **§3.6 강의비 책정·calculationDetail** |
 
 ---
 

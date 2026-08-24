@@ -1,17 +1,51 @@
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   getAdminRegisteredSignUpChangePasswordPath,
   isAdminRegisteredSignUpEntry,
+  requiresAdminRegisteredOnboarding,
+  resolveAdminProvisionedOnboardingEntryPath,
+  syncAdminRegisteredOnboardingSession,
 } from '@/features/auth/admin-registered'
+import { usePortalMeQuery } from '@/features/auth/sign-in'
 import illustExclamationUrl from '@/shared/assets/illustration/illust-exclamation.svg'
+import { getAccessToken } from '@/shared/lib/auth-token'
+import { isRemoteApiConfigured } from '@/shared/lib'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './notice.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
-import { useNavigate } from 'react-router-dom'
 
 function AdminRegisteredFirstLoginNotice() {
   const navigate = useNavigate()
+  const remote = isRemoteApiConfigured()
+  const meQuery = usePortalMeQuery({
+    enabled: remote && Boolean(getAccessToken()),
+  })
+
+  useEffect(() => {
+    if (!remote) return
+    if (meQuery.isPending && !meQuery.data) return
+    const me = meQuery.data
+    if (!me || !requiresAdminRegisteredOnboarding(me)) return
+
+    if (me.email?.trim()) {
+      syncAdminRegisteredOnboardingSession(me.email, me, 'first-login')
+    }
+
+    const target = resolveAdminProvisionedOnboardingEntryPath(me)
+    if (target && target !== '/auth/admin-registered/notice') {
+      navigate(target, { replace: true })
+    }
+  }, [meQuery.data, meQuery.isPending, navigate, remote])
 
   const handleChangePassword = () => {
+    if (remote && meQuery.data) {
+      const target = resolveAdminProvisionedOnboardingEntryPath(meQuery.data)
+      if (target) {
+        navigate(target)
+        return
+      }
+    }
     navigate('/auth/admin-registered/birth')
   }
 

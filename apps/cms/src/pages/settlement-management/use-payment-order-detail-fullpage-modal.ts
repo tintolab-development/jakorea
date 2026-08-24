@@ -9,6 +9,7 @@ import {
   buildProgramDetailFromSettlements,
 } from '@/features/settlement-management/api/payment-orders/map-settlement-detail'
 import {
+  instructorIdentityFromLine,
   mapSettlementDetailToInstructorPageCalculationStatement,
   mapSettlementDetailToProgramCalculationStatement,
 } from '@/features/settlement-management/api/payment-orders/map-settlement-detail-to-calculation-statement'
@@ -54,7 +55,9 @@ export type PaymentOrderDetailFullPageModalInput = {
   listPageDateRange: [Dayjs, Dayjs] | null
 }
 
-export function usePaymentOrderDetailFullPageModalState(input: PaymentOrderDetailFullPageModalInput) {
+export function usePaymentOrderDetailFullPageModalState(
+  input: PaymentOrderDetailFullPageModalInput
+) {
   const { type, isOpen, onClose, data, listPageDateRange } = input
 
   const row = data
@@ -64,6 +67,7 @@ export function usePaymentOrderDetailFullPageModalState(input: PaymentOrderDetai
   const detailContextQuery = usePaymentOrdersDetailContextQuery(
     type,
     aggregateKey,
+    listPageDateRange,
     isOpen && paymentOrdersRemote
   )
 
@@ -99,7 +103,8 @@ export function usePaymentOrderDetailFullPageModalState(input: PaymentOrderDetai
   }, [paymentOrdersRemote, type, row, detailContextQuery.data])
 
   const remoteInstructorDetail = useMemo(() => {
-    if (!paymentOrdersRemote || type !== 'instructor' || !row || !detailContextQuery.data) return null
+    if (!paymentOrdersRemote || type !== 'instructor' || !row || !detailContextQuery.data)
+      return null
     return buildInstructorDetailFromSettlements(
       row as PaymentOrderAdminInstructorRow,
       detailContextQuery.data.items ?? [],
@@ -130,25 +135,35 @@ export function usePaymentOrderDetailFullPageModalState(input: PaymentOrderDetai
     }
     if (!settlementDetailQuery.data) return
 
-    if (type === 'program' && 'programName' in detail) {
-      setCalcStatementData(
-        mapSettlementDetailToProgramCalculationStatement(
-          calcLineRow as PaymentOrderAdminProgramDetailInstructorRow,
-          settlementDetailQuery.data,
-          detail.programName
+    switch (type) {
+      case 'program': {
+        if (!('programName' in detail)) return
+        const line = calcLineRow as PaymentOrderAdminProgramDetailInstructorRow
+        setCalcStatementData(
+          mapSettlementDetailToInstructorPageCalculationStatement(
+            line,
+            settlementDetailQuery.data,
+            instructorIdentityFromLine(line.instructorName),
+            detail.programName
+          )
         )
-      )
-      return
-    }
-
-    if (type === 'instructor' && 'nameKo' in detail) {
-      setCalcStatementData(
-        mapSettlementDetailToInstructorPageCalculationStatement(
-          calcLineRow as PaymentOrderAdminInstructorDetailProgramRow,
-          settlementDetailQuery.data,
-          detail.nameKo
+        break
+      }
+      case 'instructor': {
+        if (!('nameKo' in detail)) return
+        const line = calcLineRow as PaymentOrderAdminInstructorDetailProgramRow
+        setCalcStatementData(
+          mapSettlementDetailToProgramCalculationStatement(
+            line,
+            settlementDetailQuery.data,
+            line.programName,
+            detail.nameKo
+          )
         )
-      )
+        break
+      }
+      default:
+        break
     }
   }, [
     paymentOrdersRemote,
@@ -199,10 +214,10 @@ export function usePaymentOrderDetailFullPageModalState(input: PaymentOrderDetai
   const title = useMemo(() => {
     if (!detail) return ''
     if (type === 'program' && 'programName' in detail) {
-      return `지급 현황 상세_${detail.programName}`
+      return `지급 현황 상세 (${detail.programName})`
     }
     if (type === 'instructor' && 'nameKo' in detail) {
-      return `지급 현황 상세_${detail.nameKo}`
+      return `지급 현황 상세 (${detail.nameKo})`
     }
     return '지급 현황 상세'
   }, [detail, type])

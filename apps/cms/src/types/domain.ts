@@ -586,7 +586,14 @@ export interface MatchingHistory {
 }
 
 // 정산 항목 타입
-export type SettlementItemType = 'instructor_fee' | 'transportation' | 'accommodation' | 'other'
+export type SettlementItemType =
+  | 'instructor_fee'
+  | 'transportation'
+  | 'accommodation'
+  | 'meal'
+  | 'activity'
+  | 'withholding'
+  | 'other'
 
 // 정산 항목
 export interface SettlementItem {

@@ -43,9 +43,12 @@ export function parseHomepageMeResponse(payload: unknown): HomepageMeResponse {
     identityVerified: optionalBoolean(root.identityVerified),
     lastLoginAt: optionalString(root.lastLoginAt),
     registeredByAdmin: optionalBoolean(root.registeredByAdmin),
+    adminProvisionedOnboardingRequired: optionalBoolean(root.adminProvisionedOnboardingRequired),
+    adminProvisionedOnboardingStep: optionalString(root.adminProvisionedOnboardingStep),
     identitySelfSignupCompletedAfterAdminRegistration: optionalBoolean(
       root.identitySelfSignupCompletedAfterAdminRegistration,
     ),
+    passwordChangeRequired: optionalBoolean(root.passwordChangeRequired),
   }
 }
 

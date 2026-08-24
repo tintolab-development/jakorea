@@ -410,6 +410,9 @@ importers:
 
   packages/form-schema:
     dependencies:
+      '@jakorea/domain':
+        specifier: workspace:*
+        version: link:../domain
       dayjs:
         specifier: ^1.11.13
         version: 1.11.19

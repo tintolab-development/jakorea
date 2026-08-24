@@ -6,8 +6,12 @@ import {
   type GenderType,
 } from '@/features/auth/sign-up'
 import {
+  applyAdminProvisionedOnboardingResponse,
   mapAdminProvisionedProfileRequest,
+  normalizeAdminProvisionedOnboardingStep,
   requireAdminRegisteredWizardState,
+  resolveAdminProvisionedOnboardingPath,
+  getAdminRegisteredWizardState,
   updateAdminRegisteredWizardState,
   useAdminProvisionedProfileMutation,
 } from '@/features/auth/admin-registered'
@@ -64,6 +68,7 @@ export function AdminRegisteredBirthPage() {
             setMessage('프로필 확인에 실패했어요. 다시 시도해 주세요.')
             return
           }
+          applyAdminProvisionedOnboardingResponse(onboarding)
         } catch (error) {
           setMessage(
             getLoginApiErrorMessage(error, '생년월일·성별 확인에 실패했어요. 다시 시도해 주세요.'),
@@ -73,6 +78,20 @@ export function AdminRegisteredBirthPage() {
       }
 
       updateAdminRegisteredWizardState({ birthDate, gender })
+
+      if (isRemoteApiConfigured()) {
+        let step =
+          normalizeAdminProvisionedOnboardingStep(
+            getAdminRegisteredWizardState()?.adminProvisionedOnboardingStep,
+          ) ?? 'IDENTITY'
+        if (step === 'PROFILE') {
+          step = 'IDENTITY'
+          applyAdminProvisionedOnboardingResponse({ adminProvisionedOnboardingStep: 'IDENTITY' })
+        }
+        navigate(resolveAdminProvisionedOnboardingPath(step) ?? '/auth/admin-registered/identity')
+        return
+      }
+
       navigate('/auth/admin-registered/identity')
     })()
   }

@@ -44,7 +44,9 @@ export type {
 export {
   getMypageProfileLabel,
   isInstructorMypageProfile,
+  isSchoolTeacherMypageProfile,
   showInstructorApplyCta,
+  showMypageAffiliationEmployment,
 } from './lib/member-profile'
 export {
   mapPortalMemberToPlatformProfile,
