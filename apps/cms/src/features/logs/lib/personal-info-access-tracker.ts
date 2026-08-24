@@ -1,4 +1,5 @@
 import { recordPersonalInfoAccess } from '@/entities/personal-info-access-log/api/personal-info-access-log-service'
+import { shouldUseLogsRemoteApi } from '@/features/logs/api/admin-logs-service'
 
 type RuntimeAuthUser = {
   id?: string
@@ -19,6 +20,7 @@ function readRuntimeAuthUser(): RuntimeAuthUser | null {
 export function trackPersonalInfoAccess(accessItem: string, accessPurpose: string): void {
   const purpose = accessPurpose.trim()
   if (!purpose) return
+  if (shouldUseLogsRemoteApi()) return
 
   const user = readRuntimeAuthUser()
   void recordPersonalInfoAccess({

@@ -54,25 +54,11 @@ function resolvePendingDateRangeFromUrl(args: {
   return prev ?? null
 }
 
-function filterLogs(data: PersonalInfoAccessLog[], searchParams: URLSearchParams): PersonalInfoAccessLog[] {
-  const accessPurpose = (searchParams.get('pia_purpose') ?? '').trim().toLowerCase()
-  const accessorName = (searchParams.get('pia_accessor') ?? '').trim().toLowerCase()
-  const from = searchParams.get('pia_from')
-  const to = searchParams.get('pia_to')
-
-  return data
-    .filter(row => {
-      if (accessPurpose && !row.accessPurpose.toLowerCase().includes(accessPurpose)) return false
-      if (accessorName && !row.accessorName.toLowerCase().includes(accessorName)) return false
-      if (from && to) {
-        const accessedAt = dayjs(row.accessedAt)
-        const start = dayjs(from).startOf('day')
-        const end = dayjs(to).endOf('day')
-        if (accessedAt.isBefore(start) || accessedAt.isAfter(end)) return false
-      }
-      return true
-    })
-    .sort((a, b) => dayjs(b.accessedAt).valueOf() - dayjs(a.accessedAt).valueOf())
+/** 서버 필터를 신뢰하고 조회 일시 내림차순만 맞춥니다. */
+function sortLogs(data: PersonalInfoAccessLog[]): PersonalInfoAccessLog[] {
+  return [...data].sort(
+    (a, b) => dayjs(b.accessedAt).valueOf() - dayjs(a.accessedAt).valueOf()
+  )
 }
 
 const tanstackColumns: ColumnDef<PersonalInfoAccessLog>[] = [{ accessorKey: 'id', id: 'id' }]
@@ -166,9 +152,9 @@ export const personalInfoAccessHistoryTablePageConfig: TablePageConfig<
       return { ...prev, [key]: value } as PersonalInfoAccessHistoryPendingFilters
     },
   },
-  filterFn: ({ data, searchParams }) => {
-    const filtered = filterLogs(data, searchParams)
-    return { dataForTable: filtered, filteredData: filtered }
+  filterFn: ({ data }) => {
+    const sorted = sortLogs(data)
+    return { dataForTable: sorted, filteredData: sorted }
   },
   getSearchSync: () => ({
     paramConfig: searchSyncRules,
