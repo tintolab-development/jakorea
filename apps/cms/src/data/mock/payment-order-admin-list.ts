@@ -888,9 +888,8 @@ export function getMockPaymentOrderInstructorCalculationStatement(
   const lectureFeeStandardTitle = pickSettlementWageStandardTitle(seed)
 
   const sessionStart = Math.max(1, programLineRow.sessionOrdinal)
-  const sessionEnd = sessionStart + 1 + (seed % 2)
   const lectureDateDisplay = formatIsoToKoreanWeekday(programLineRow.lectureDate)
-  const lectureSessionDisplay = `${sessionStart} ~ ${sessionEnd}차시`
+  const lectureSessionDisplay = `${sessionStart}차시`
 
   const includeTravel = seed % 5 !== 0
   const includeLodging = seed % 7 !== 0
@@ -906,10 +905,10 @@ export function getMockPaymentOrderInstructorCalculationStatement(
   const activityBasisDetail = buildActivityBasisDetail()
   const activityAmount = resolveActivityBasisDetailTotalWon(activityBasisDetail)
   const lodgingDesc =
-    lodgingBasisDetail.layout === 'lodging1s1g' ? '8만원 고정 지급 (1사1교)' : '15만원 고정 지급'
+    lodgingBasisDetail.layout === 'lodging1s1g' ? '8만원 고정 지급' : '15만원 고정 지급'
   const travelDesc =
     travelBasisDetail.layout === 'transportInstructor'
-      ? `${travelBasisDetail.distanceKm}km 이동 (1사1교)`
+      ? `${travelBasisDetail.distanceKm}km 이동`
       : travelBasisDetail.layout === 'transportRoundTrip'
         ? '참여자 교통비 (왕복)'
         : '참여자 교통비 (편도)'

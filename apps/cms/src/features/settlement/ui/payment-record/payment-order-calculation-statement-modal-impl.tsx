@@ -286,6 +286,7 @@ export function PaymentOrderCalculationStatementModalImpl({
           totalAmount={statement.totalAmount}
           processingStatus={processingStatusClass}
           paymentStatementIssueDisabled={!canIssuePaymentStatement}
+          lectureSessionSegmentLabel={entryKind === 'instructor' ? 'round' : 'session'}
           onBasisDetailClick={handleBasisDetailClick}
           onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
           headerActions={

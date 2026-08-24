@@ -43,7 +43,8 @@ function mapItemToLine(item: SettlementFrontendItemResponse, index: number): Pay
 
 function buildBlocks(
   lineRow: DetailLineRow,
-  settlement: SettlementFrontendResponse
+  settlement: SettlementFrontendResponse,
+  sessionDisplay: 'range' | 'single' = 'range'
 ): PaymentOrderCalculationStatementSessionBlock[] {
   const items = settlement.items ?? []
   const lines = items.length > 0 ? items.map(mapItemToLine) : [
@@ -57,12 +58,17 @@ function buildBlocks(
   ]
 
   const sessionOrdinal = lineRow.sessionOrdinal
+  const lectureSessionDisplay =
+    sessionOrdinal == null
+      ? '—'
+      : sessionDisplay === 'single'
+        ? `${sessionOrdinal}차시`
+        : `${sessionOrdinal} ~ ${sessionOrdinal}차시`
   return [
     {
       institutionName: lineRow.institutionName || '—',
       lectureDateDisplay: formatIsoToKoreanWeekday(lineRow.lectureDate),
-      lectureSessionDisplay:
-        sessionOrdinal != null ? `${sessionOrdinal} ~ ${sessionOrdinal}차시` : '—',
+      lectureSessionDisplay,
       lines,
     },
   ]
@@ -133,7 +139,7 @@ export function mapSettlementDetailToInstructorPageCalculationStatement(
   instructorDetail: PaymentOrderAdminInstructorDetail,
   programName?: string
 ): PaymentOrderProgramCalculationStatement {
-  const blocks = buildBlocks(lineRow, settlement)
+  const blocks = buildBlocks(lineRow, settlement, 'single')
   const itemsTotal = sumItems(settlement.items)
   const totalAmount = settlement.totalAmount ?? (itemsTotal !== 0 ? itemsTotal : lineRow.estimatedAmount)
 
