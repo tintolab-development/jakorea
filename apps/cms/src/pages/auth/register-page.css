@@ -546,14 +546,23 @@
   white-space: nowrap;
 }
 
-.register-email-field__check-btn.cms-button.ant-btn {
+.admin-register-step--email .register-email-field__check-btn.cms-button.ant-btn {
+  display: flex !important;
   width: 120px !important;
-  height: auto;
-  min-height: 52px;
+  height: 52px !important;
+  min-height: 52px !important;
+  padding: 6px 16px !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
   align-self: stretch;
   flex-shrink: 0;
-  padding: 6px 16px !important;
+  border-radius: var(--8, 8px);
   font-size: 16px;
+  font-weight: 600;
+  line-height: 150%;
+  text-align: center;
 }
 
 .register-email-field__message {

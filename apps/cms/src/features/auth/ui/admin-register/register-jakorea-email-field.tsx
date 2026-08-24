@@ -33,7 +33,7 @@ export function RegisterJakoreaEmailField({
       <span className="register-email-field__domain">{JAKOREA_EMAIL_DOMAIN}</span>
       <CmsButton
         variant="secondary"
-        size="medium"
+        size="large"
         width={120}
         className="register-email-field__check-btn"
         loading={checking}
