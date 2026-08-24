@@ -14,12 +14,6 @@
   margin-bottom: 16px;
 }
 
-.education-record-list-page__loading {
-  display: flex;
-  justify-content: center;
-  padding: 48px 0;
-}
-
 .education-record-list-page__top-nav {
   display: flex;
   align-items: center;

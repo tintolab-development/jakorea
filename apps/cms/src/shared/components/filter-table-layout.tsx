@@ -11,6 +11,7 @@
  */
 
 import { useMemo, type ReactNode } from 'react'
+import { Spin } from 'antd'
 import './filter-table-layout.css'
 import { resolveFilterTableExcelFilename } from './filter-table-excel-filename'
 import {
@@ -70,6 +71,11 @@ export interface FilterTableLayoutProps extends TableFilterGroupProps {
    * sticky·가로 overflow는 `filter-table-layout.css` + `layout-content`에서 처리.
    */
   contentVariant?: 'table' | 'calendar'
+  /**
+   * true면 테이블(또는 캘린더) 슬롯에 가운데 정렬 스피너를 표시하고 children은 렌더하지 않는다.
+   * 조회 버튼 스피너는 TableFilterGroup의 `loading`을 그대로 쓴다.
+   */
+  contentLoading?: boolean
   /** 필터·헤더 아래 테이블 본문 */
   children?: ReactNode
   className?: string
@@ -91,6 +97,7 @@ export function FilterTableLayout({
   excelDownloadDisabled,
   topNav,
   contentVariant = 'table',
+  contentLoading = false,
   children,
   className,
   multiRowGridMode,
@@ -189,7 +196,7 @@ export function FilterTableLayout({
             {titleNote != null ? (
               <div className="filter-table-layout__title-note">{titleNote}</div>
             ) : null}
-            {description != null ? (
+            {description != null && !contentLoading ? (
               <div className="filter-table-layout__description">{description}</div>
             ) : null}
           </div>
@@ -216,7 +223,11 @@ export function FilterTableLayout({
       ) : null}
 
       <div className="filter-table-layout__table">
-        {contentVariant === 'calendar' ? (
+        {contentLoading ? (
+          <div className="page-content-loading page-content-loading--table-slot" role="status">
+            <Spin size="large" />
+          </div>
+        ) : contentVariant === 'calendar' ? (
           <div className="filter-table-layout__calendar-body">{children}</div>
         ) : (
           children

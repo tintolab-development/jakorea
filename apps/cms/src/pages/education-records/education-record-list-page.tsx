@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useMemo } from 'react'
-import { Alert, Spin } from 'antd'
+import { Alert } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
@@ -143,6 +143,7 @@ export function EducationRecordListPage() {
         onSearch={handleSearch}
         showTitle={false}
         hideExcelDownload
+        contentLoading={listQuery.isLoading && isDataTab}
         topNav={
           <div className="education-record-list-page__top-nav">
             <EducationRecordTabNav activeTab={activeKey} onTabChange={handleTabChange} />
@@ -157,11 +158,7 @@ export function EducationRecordListPage() {
           </div>
         }
       >
-        {listQuery.isLoading && isDataTab ? (
-          <div className="education-record-list-page__loading">
-            <Spin />
-          </div>
-        ) : isDataTab ? (
+        {isDataTab ? (
           <EducationRecordDataTab
             antdColumns={antdColumns}
             tableData={tableData}
