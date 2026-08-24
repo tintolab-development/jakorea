@@ -8,7 +8,7 @@ export function useAccountPaymentDetailQuery(row: AccountPaymentRow | null, open
   const rowId = row?.id ?? ''
   const remoteEnabled = useSettlementRemoteEnabled(
     'accountPayments',
-    open && row != null && row.settlementId != null
+    open && row != null && row.accountPaymentId != null
   )
 
   return useQuery({

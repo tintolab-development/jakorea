@@ -184,12 +184,18 @@ export function usePaymentOrdersListPage() {
   }, [paymentOrdersRemote, remoteListQuery.data?.instructorRows])
 
   const listProgram = useMemo(
-    () => filterPaymentProgramRows(sourceProgramRows, appliedFromUrl),
-    [sourceProgramRows, appliedFromUrl]
+    () =>
+      paymentOrdersRemote
+        ? sourceProgramRows
+        : filterPaymentProgramRows(sourceProgramRows, appliedFromUrl),
+    [paymentOrdersRemote, sourceProgramRows, appliedFromUrl]
   )
   const listInstructor = useMemo(
-    () => filterPaymentInstructorRows(sourceInstructorRows, appliedFromUrl),
-    [sourceInstructorRows, appliedFromUrl]
+    () =>
+      paymentOrdersRemote
+        ? sourceInstructorRows
+        : filterPaymentInstructorRows(sourceInstructorRows, appliedFromUrl),
+    [paymentOrdersRemote, sourceInstructorRows, appliedFromUrl]
   )
 
   const detailState = useMemo((): PaymentOrdersDetailState => {

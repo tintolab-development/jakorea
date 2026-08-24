@@ -61,7 +61,11 @@ export interface PaymentOrderCalculationStatementModalImplProps {
   paymentOrdersRemote?: boolean
   statementId?: number | null
   detailContextQuery?: PaymentOrdersDetailContextQueryResult
-  /** 지급 현황 상세 진입 경로 — basic/발급 UI는 data.context보다 우선 */
+  /**
+   * 산출 내역서 UI 유형 — 상세 페이지가 아니라 **테이블 유형**을 따른다.
+   * 프로그램 상세의 「신청자별 정산 목록」→ `instructor`
+   * 신청자 상세의 「프로그램별 정산 목록」→ `program`
+   */
   entryKind: PaymentOrderCalculationStatementEntryKind
   /** 모달 루트에 추가 (진입 경로 구분·스타일 확장용) */
   entryClassName?: string
@@ -223,7 +227,10 @@ export function PaymentOrderCalculationStatementModalImpl({
       return
     }
     try {
-      await confirmMutation.mutateAsync([statementId])
+      await confirmMutation.mutateAsync({
+        statementIds: [statementId],
+        lectureFeePaymentScheduledDate: lectureFeePaymentScheduledDateIso,
+      })
       await detailContextQuery?.refetch()
       onStatementLineCommitted?.({
         lineId: statement.sourceLineRowId,

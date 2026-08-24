@@ -1062,27 +1062,86 @@ export function getMockPaymentOrderInstructorCalculationStatement(
 }
 
 /**
- * 프로그램 지급 현황 상세에서 산출 내역서를 열 때 — 프로그램형 기본정보(context: program)·산출 블록
+ * 프로그램 지급 현황 상세 — 「신청자별 정산 목록」행 → 신청자형 산출 내역서
  */
 export function getMockPaymentOrderCalculationStatementFromProgramDetailPage(
-  programRow: PaymentOrderAdminProgramRow,
+  _programRow: PaymentOrderAdminProgramRow,
   programDetail: PaymentOrderAdminProgramDetail,
   lineRow: PaymentOrderAdminProgramDetailInstructorRow
 ): PaymentOrderProgramCalculationStatement {
-  return getMockPaymentOrderProgramCalculationStatement(
-    programRow,
-    lineRow,
-    programDetail.programName
+  const instructorRow =
+    mockPaymentOrderAdminInstructorList.find(r => r.instructorName === lineRow.instructorName) ?? {
+      no: lineRow.no,
+      instructorName: lineRow.instructorName,
+      programCount: 1,
+      processingStatus: 'pending',
+      estimatedAmount: lineRow.estimatedAmount,
+      relatedProgramNames: [programDetail.programName],
+      referenceDate: lineRow.lectureDate,
+      settlementRelevantAttendanceDates: [lineRow.lectureDate],
+      pendingPaymentSettlementItemCount: 0,
+    }
+
+  const programLineRow: PaymentOrderAdminInstructorDetailProgramRow = {
+    id: lineRow.id,
+    no: lineRow.no,
+    settlementId: lineRow.settlementId,
+    statementId: lineRow.statementId,
+    programName: programDetail.programName,
+    institutionName: lineRow.institutionName,
+    lectureDate: lineRow.lectureDate,
+    sessionOrdinal: lineRow.sessionOrdinal,
+    processingStatus: lineRow.processingStatus,
+    estimatedAmount: lineRow.estimatedAmount,
+    lectureFeePaymentScheduledDate: lineRow.lectureFeePaymentScheduledDate,
+    processingRejectionReason: lineRow.processingRejectionReason,
+  }
+
+  return getMockPaymentOrderInstructorCalculationStatement(
+    getMockPaymentOrderInstructorDetail(instructorRow),
+    programLineRow
   )
 }
 
 /**
- * 신청자(강사) 지급 현황 상세에서 산출 내역서를 열 때 — instructor 맥락 기본정보·산출 블록
+ * 신청자 지급 현황 상세 — 「프로그램별 정산 목록」행 → 프로그램형 산출 내역서
  */
 export function getMockPaymentOrderCalculationStatementFromInstructorDetailPage(
-  _instructorRow: PaymentOrderAdminInstructorRow,
+  instructorRow: PaymentOrderAdminInstructorRow,
   instructorDetail: PaymentOrderAdminInstructorDetail,
   programLineRow: PaymentOrderAdminInstructorDetailProgramRow
 ): PaymentOrderProgramCalculationStatement {
-  return getMockPaymentOrderInstructorCalculationStatement(instructorDetail, programLineRow)
+  const programRow = mockPaymentOrderAdminProgramList.find(
+    p => p.programName === programLineRow.programName
+  ) ?? {
+    no: instructorRow.no + 500,
+    programName: programLineRow.programName,
+    instructorCount: instructorRow.programCount,
+    processingStatus: instructorRow.processingStatus,
+    estimatedAmount: instructorRow.estimatedAmount,
+    referenceDate: instructorRow.referenceDate,
+    settlementRelevantAttendanceDates: instructorRow.settlementRelevantAttendanceDates,
+    pendingPaymentSettlementItemCount: instructorRow.pendingPaymentSettlementItemCount,
+  }
+
+  const programDetailLine: PaymentOrderAdminProgramDetailInstructorRow = {
+    id: programLineRow.id,
+    no: programLineRow.no,
+    settlementId: programLineRow.settlementId,
+    statementId: programLineRow.statementId,
+    instructorName: instructorDetail.nameKo,
+    institutionName: programLineRow.institutionName,
+    lectureDate: programLineRow.lectureDate,
+    sessionOrdinal: programLineRow.sessionOrdinal,
+    processingStatus: programLineRow.processingStatus,
+    estimatedAmount: programLineRow.estimatedAmount,
+    lectureFeePaymentScheduledDate: programLineRow.lectureFeePaymentScheduledDate,
+    processingRejectionReason: programLineRow.processingRejectionReason,
+  }
+
+  return getMockPaymentOrderProgramCalculationStatement(
+    programRow,
+    programDetailLine,
+    programLineRow.programName
+  )
 }

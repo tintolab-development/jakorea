@@ -29,8 +29,7 @@ import {
   type DetailModalSidebarNavItem,
 } from '@/shared/ui/detail-modal-sidebar'
 import { PaymentOrderDetailFilterTable } from './payment-order-detail-filter-table'
-import { PaymentOrderInstructorCalculationStatementModal } from './payment-order-instructor-calculation-statement-modal'
-import { PaymentOrderProgramCalculationStatementModal } from './payment-order-program-calculation-statement-modal'
+import { PaymentOrderCalculationStatementModalImpl } from './payment-order-calculation-statement-modal-impl'
 import { PaymentOrderInstructorBasicInfo } from '@/pages/settlement-management/payment-order-instructor-basic-info'
 import { PaymentOrderProgramBasicInfo } from '@/pages/settlement-management/payment-order-program-basic-info'
 import { PaymentOrderStatusDetailLnbIcon } from '@/pages/settlement-management/payment-order-status-detail-lnb-icon'
@@ -206,33 +205,24 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
   return (
     <>
       {kind === 'instructor' ? personalInfoRevealModal : null}
-      {kind === 'program' ? (
-        <PaymentOrderProgramCalculationStatementModal
-          open={calcStatementOpen}
-          onCancel={closeCalculationStatement}
-          data={calcStatementData}
-          loading={calcStatementLoading}
-          loadError={calcStatementError}
-          paymentOrdersRemote={paymentOrdersRemote}
-          statementId={calcStatementId}
-          detailContextQuery={detailContextQuery}
-          onStatementLineCommitted={handleStatementLineCommitted}
-          onAfterRejectResultClosed={closeCalculationStatement}
-        />
-      ) : (
-        <PaymentOrderInstructorCalculationStatementModal
-          open={calcStatementOpen}
-          onCancel={closeCalculationStatement}
-          data={calcStatementData}
-          loading={calcStatementLoading}
-          loadError={calcStatementError}
-          paymentOrdersRemote={paymentOrdersRemote}
-          statementId={calcStatementId}
-          detailContextQuery={detailContextQuery}
-          onStatementLineCommitted={handleStatementLineCommitted}
-          onAfterRejectResultClosed={closeCalculationStatement}
-        />
-      )}
+      <PaymentOrderCalculationStatementModalImpl
+        entryKind={kind === 'program' ? 'instructor' : 'program'}
+        entryClassName={
+          kind === 'program'
+            ? 'payment-order-calc-statement-modal--entry-instructor'
+            : 'payment-order-calc-statement-modal--entry-program'
+        }
+        open={calcStatementOpen}
+        onCancel={closeCalculationStatement}
+        data={calcStatementData}
+        loading={calcStatementLoading}
+        loadError={calcStatementError}
+        paymentOrdersRemote={paymentOrdersRemote}
+        statementId={calcStatementId}
+        detailContextQuery={detailContextQuery}
+        onStatementLineCommitted={handleStatementLineCommitted}
+        onAfterRejectResultClosed={closeCalculationStatement}
+      />
       <DetailFullPageModal
         open={isOpen}
         onClose={resetCalcAndClose}

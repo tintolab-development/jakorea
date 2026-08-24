@@ -18,6 +18,8 @@ export const settlementQueryKeys = {
       [...settlementQueryKeys.accountPayments.all(), 'detail', rowId] as const,
     settlement: (settlementId: number) =>
       [...settlementQueryKeys.accountPayments.all(), 'settlement', settlementId] as const,
+    budgetSummary: (year: number) =>
+      [...settlementQueryKeys.accountPayments.all(), 'budgetSummary', year] as const,
     exports: () => [...settlementQueryKeys.accountPayments.all(), 'exports'] as const,
   },
   calendar: {

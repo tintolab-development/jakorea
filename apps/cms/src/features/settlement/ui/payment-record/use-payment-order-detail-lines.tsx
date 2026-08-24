@@ -9,15 +9,30 @@ import {
   buildInstructorDetailFromSettlements,
   buildProgramDetailFromSettlements,
 } from '@/features/settlement-management/api/payment-orders/map-settlement-detail'
+import {
+  instructorIdentityFromLine,
+  mapSettlementDetailToInstructorPageCalculationStatement,
+  mapSettlementDetailToProgramCalculationStatement,
+} from '@/features/settlement-management/api/payment-orders/map-settlement-detail-to-calculation-statement'
+import { fetchSettlementDetailRemote } from '@/features/settlement-management/api/settlement-api-client'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { useConfirmPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import type { PaymentOrdersDetailContextQueryResult } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
 import {
+  buildMockInstructorDetailLinePaymentStatementIssuancePayload,
+  buildMockProgramDetailLinePaymentStatementIssuancePayload,
+  buildPaymentStatementIssuancePayloadFromCalculationStatement,
+  isPaymentOrderLineEligibleForPaymentStatementIssue,
+  type PaymentStatementIssuancePayload,
+} from '@/features/settlement/lib/payment-order-calculation-statement-issuance-view'
+import {
   getMockPaymentOrderInstructorDetail,
   getMockPaymentOrderProgramDetail,
+  type PaymentOrderAdminInstructorDetail,
   type PaymentOrderAdminInstructorDetailProgramRow,
   type PaymentOrderAdminInstructorRow,
+  type PaymentOrderAdminProgramDetail,
   type PaymentOrderAdminProgramDetailInstructorRow,
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
@@ -159,11 +174,16 @@ export function usePaymentOrderDetailLinesController(
     variant: 'single' | 'multi'
     selectedCount: number
   }>({ open: false, variant: 'single', selectedCount: 0 })
+  const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
+  const [issuanceQueue, setIssuanceQueue] = useState<PaymentStatementIssuancePayload[]>([])
+  const currentIssuancePayload = issuanceQueue[0] ?? null
 
   useEffect(() => {
     if (!isOpen) {
       setBatchConfirmOpen(false)
       setPaymentStatementIssueBlocked({ open: false, variant: 'single', selectedCount: 0 })
+      setIssuanceViewOpen(false)
+      setIssuanceQueue([])
       return
     }
 
@@ -182,6 +202,8 @@ export function usePaymentOrderDetailLinesController(
     setSelectedRowKeys([])
     setBatchConfirmOpen(false)
     setPaymentStatementIssueBlocked({ open: false, variant: 'single', selectedCount: 0 })
+    setIssuanceViewOpen(false)
+    setIssuanceQueue([])
 
     if (mode === 'program') {
       if (paymentOrdersRemote && detailContextQuery?.data) {
@@ -287,7 +309,10 @@ export function usePaymentOrderDetailLinesController(
         }
 
         void confirmMutation
-          .mutateAsync(statementIds)
+          .mutateAsync({
+            statementIds,
+            lectureFeePaymentScheduledDate: iso,
+          })
           .then(() => {
             setRowsState(prev =>
               prev.map(row =>
@@ -331,22 +356,131 @@ export function usePaymentOrderDetailLinesController(
     [rowsState, mode, applied]
   )
 
+  const programDetail = useMemo((): PaymentOrderAdminProgramDetail | null => {
+    if (mode !== 'program') return null
+    if (paymentOrdersRemote && detailContextQuery?.data) {
+      return buildProgramDetailFromSettlements(
+        args.programRow,
+        detailContextQuery.data.items ?? [],
+        detailContextQuery.data.statements ?? []
+      )
+    }
+    return getMockPaymentOrderProgramDetail(args.programRow)
+  }, [mode, paymentOrdersRemote, detailContextQuery?.data, args])
+
+  const instructorDetail = useMemo((): PaymentOrderAdminInstructorDetail | null => {
+    if (mode !== 'instructor') return null
+    if (paymentOrdersRemote && detailContextQuery?.data) {
+      return buildInstructorDetailFromSettlements(
+        args.instructorRow,
+        detailContextQuery.data.items ?? [],
+        detailContextQuery.data.statements ?? []
+      )
+    }
+    return getMockPaymentOrderInstructorDetail(args.instructorRow)
+  }, [mode, paymentOrdersRemote, detailContextQuery?.data, args])
+
+  const buildIssuancePayloadForLine = useCallback(
+    async (lineRow: PaymentOrderDetailLineRow): Promise<PaymentStatementIssuancePayload> => {
+      if (mode === 'program') {
+        if (!programDetail) {
+          throw new Error('프로그램 상세를 불러오지 못했습니다.')
+        }
+        const programLineRow = lineRow as PaymentOrderAdminProgramDetailInstructorRow
+        if (paymentOrdersRemote) {
+          if (programLineRow.settlementId == null) {
+            throw new Error('지급조서 발급 API에 필요한 settlementId가 없습니다.')
+          }
+          const settlement = await fetchSettlementDetailRemote(programLineRow.settlementId)
+          const statement = mapSettlementDetailToInstructorPageCalculationStatement(
+            programLineRow,
+            settlement,
+            instructorIdentityFromLine(programLineRow.instructorName),
+            programDetail.programName
+          )
+          const payload = buildPaymentStatementIssuancePayloadFromCalculationStatement(statement)
+          if (!payload) {
+            throw new Error('지급조서 발급 데이터를 만들 수 없습니다.')
+          }
+          return payload
+        }
+        return buildMockProgramDetailLinePaymentStatementIssuancePayload(
+          args.programRow,
+          programDetail,
+          programLineRow
+        )
+      }
+
+      if (!instructorDetail) {
+        throw new Error('강사 상세를 불러오지 못했습니다.')
+      }
+      const instructorLineRow = lineRow as PaymentOrderAdminInstructorDetailProgramRow
+      if (paymentOrdersRemote) {
+        if (instructorLineRow.settlementId == null) {
+          throw new Error('지급조서 발급 API에 필요한 settlementId가 없습니다.')
+        }
+        const settlement = await fetchSettlementDetailRemote(instructorLineRow.settlementId)
+        const statement = mapSettlementDetailToProgramCalculationStatement(
+          instructorLineRow,
+          settlement,
+          instructorLineRow.programName,
+          instructorDetail.nameKo
+        )
+        const payload = buildPaymentStatementIssuancePayloadFromCalculationStatement(statement)
+        if (!payload) {
+          throw new Error('지급조서 발급 데이터를 만들 수 없습니다.')
+        }
+        return payload
+      }
+      return buildMockInstructorDetailLinePaymentStatementIssuancePayload(
+        args.instructorRow,
+        instructorDetail,
+        instructorLineRow
+      )
+    },
+    [mode, programDetail, instructorDetail, paymentOrdersRemote, args]
+  )
+
+  const closeIssuanceView = useCallback(() => {
+    setIssuanceQueue(prev => {
+      const [, ...rest] = prev
+      if (rest.length === 0) {
+        setIssuanceViewOpen(false)
+      }
+      return rest
+    })
+  }, [])
+
   const handlePaymentStatementIssue = useCallback(() => {
     if (selectedRowKeys.length === 0) return
     const selected = rowsState.filter(r => selectedRowKeys.includes(r.id))
     if (selected.length === 0) return
-    const hasNotConfirmed = selected.some(r => r.processingStatus !== 'confirmed')
-    if (!hasNotConfirmed) {
-      window.alert('준비 중입니다.')
+
+    const hasIneligible = selected.some(
+      row => !isPaymentOrderLineEligibleForPaymentStatementIssue(row.processingStatus)
+    )
+    if (hasIneligible) {
+      const n = selected.length
+      setPaymentStatementIssueBlocked({
+        open: true,
+        variant: n === 1 ? 'single' : 'multi',
+        selectedCount: n,
+      })
       return
     }
-    const n = selected.length
-    if (n === 1) {
-      setPaymentStatementIssueBlocked({ open: true, variant: 'single', selectedCount: 1 })
-    } else {
-      setPaymentStatementIssueBlocked({ open: true, variant: 'multi', selectedCount: n })
-    }
-  }, [rowsState, selectedRowKeys])
+
+    void (async () => {
+      try {
+        const payloads = await Promise.all(selected.map(line => buildIssuancePayloadForLine(line)))
+        setIssuanceQueue(payloads)
+        setIssuanceViewOpen(true)
+      } catch (error) {
+        window.alert(
+          getSettlementApiErrorMessage(error, '지급조서 발급 미리보기를 불러오지 못했습니다.')
+        )
+      }
+    })()
+  }, [buildIssuancePayloadForLine, rowsState, selectedRowKeys])
 
   const keywordFieldKey = mode === 'program' ? 'instructorName' : 'programName'
 
@@ -587,6 +721,9 @@ export function usePaymentOrderDetailLinesController(
     setPaymentStatementIssueBlocked,
     handleBatchConfirm,
     handlePaymentStatementIssue,
+    closeIssuanceView,
+    issuanceViewOpen,
+    currentIssuancePayload,
     selectedRowKeys,
     setSelectedRowKeys,
     filterFields,

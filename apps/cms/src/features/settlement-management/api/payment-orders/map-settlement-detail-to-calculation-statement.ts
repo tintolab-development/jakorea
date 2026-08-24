@@ -73,9 +73,10 @@ function sumItems(items: SettlementFrontendItemResponse[] | undefined): number {
 }
 
 export function mapSettlementDetailToProgramCalculationStatement(
-  lineRow: ProgramDetailLineRow,
+  lineRow: DetailLineRow,
   settlement: SettlementFrontendResponse,
-  programName: string
+  programName: string,
+  instructorNameKo: string
 ): PaymentOrderProgramCalculationStatement {
   const blocks = buildBlocks(lineRow, settlement)
   const itemsTotal = sumItems(settlement.items)
@@ -86,7 +87,7 @@ export function mapSettlementDetailToProgramCalculationStatement(
     sourceLineRowId: lineRow.id,
     basic: {
       programName,
-      instructorNameKo: lineRow.instructorName,
+      instructorNameKo,
       businessPeriodDisplay: settlement.period?.trim() || '—',
       programSessionProgressDisplay: '—',
       processingStatusDisplay: PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS[lineRow.processingStatus],
@@ -108,10 +109,29 @@ export function mapSettlementDetailToProgramCalculationStatement(
   }
 }
 
+export function instructorIdentityFromLine(
+  instructorNameKo: string
+): PaymentOrderAdminInstructorDetail {
+  return {
+    instructorNo: 0,
+    nameKo: instructorNameKo,
+    nameEn: '-',
+    address: '-',
+    phone: '-',
+    email: '-',
+    bankName: '-',
+    accountNumber: '-',
+    accountHolder: '-',
+    totalEstimatedAmount: 0,
+    programRows: [],
+  }
+}
+
 export function mapSettlementDetailToInstructorPageCalculationStatement(
-  lineRow: InstructorDetailLineRow,
+  lineRow: DetailLineRow,
   settlement: SettlementFrontendResponse,
-  instructorDetail: PaymentOrderAdminInstructorDetail
+  instructorDetail: PaymentOrderAdminInstructorDetail,
+  programName?: string
 ): PaymentOrderProgramCalculationStatement {
   const blocks = buildBlocks(lineRow, settlement)
   const itemsTotal = sumItems(settlement.items)
@@ -127,6 +147,9 @@ export function mapSettlementDetailToInstructorPageCalculationStatement(
     .filter(Boolean)
     .join(' ')
 
+  const resolvedProgramName =
+    programName ?? ('programName' in lineRow ? lineRow.programName : undefined)
+
   return {
     context: 'instructor',
     sourceLineRowId: lineRow.id,
@@ -140,7 +163,7 @@ export function mapSettlementDetailToInstructorPageCalculationStatement(
       settlementAccountBankNumberPart: settlementBankPart || '—',
       settlementAccountHolderPart: MASKING_POLICY.accountHolderName(instructorDetail.accountHolder),
       genderBirthDisplay: '-',
-      programName: lineRow.programName,
+      programName: resolvedProgramName,
       processingStatusDisplay: PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS[lineRow.processingStatus],
       processingStatusClass: lineRow.processingStatus,
       processingRejectionReason: lineRow.processingRejectionReason,

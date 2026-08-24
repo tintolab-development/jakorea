@@ -9,6 +9,7 @@ import {
   buildProgramDetailFromSettlements,
 } from '@/features/settlement-management/api/payment-orders/map-settlement-detail'
 import {
+  instructorIdentityFromLine,
   mapSettlementDetailToInstructorPageCalculationStatement,
   mapSettlementDetailToProgramCalculationStatement,
 } from '@/features/settlement-management/api/payment-orders/map-settlement-detail-to-calculation-statement'
@@ -136,10 +137,12 @@ export function usePaymentOrderDetailFullPageModalState(
     switch (type) {
       case 'program': {
         if (!('programName' in detail)) return
+        const line = calcLineRow as PaymentOrderAdminProgramDetailInstructorRow
         setCalcStatementData(
-          mapSettlementDetailToProgramCalculationStatement(
-            calcLineRow as PaymentOrderAdminProgramDetailInstructorRow,
+          mapSettlementDetailToInstructorPageCalculationStatement(
+            line,
             settlementDetailQuery.data,
+            instructorIdentityFromLine(line.instructorName),
             detail.programName
           )
         )
@@ -147,11 +150,13 @@ export function usePaymentOrderDetailFullPageModalState(
       }
       case 'instructor': {
         if (!('nameKo' in detail)) return
+        const line = calcLineRow as PaymentOrderAdminInstructorDetailProgramRow
         setCalcStatementData(
-          mapSettlementDetailToInstructorPageCalculationStatement(
-            calcLineRow as PaymentOrderAdminInstructorDetailProgramRow,
+          mapSettlementDetailToProgramCalculationStatement(
+            line,
             settlementDetailQuery.data,
-            detail
+            line.programName,
+            detail.nameKo
           )
         )
         break

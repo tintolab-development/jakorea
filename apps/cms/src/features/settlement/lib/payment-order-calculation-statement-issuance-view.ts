@@ -3,9 +3,19 @@
  */
 
 import type {
+  PaymentOrderAdminInstructorDetail,
+  PaymentOrderAdminInstructorDetailProgramRow,
+  PaymentOrderAdminInstructorRow,
   PaymentOrderAdminLineProcessingStatus,
+  PaymentOrderAdminProgramDetail,
+  PaymentOrderAdminProgramDetailInstructorRow,
+  PaymentOrderAdminProgramRow,
   PaymentOrderCalculationStatementSessionBlock,
   PaymentOrderProgramCalculationStatement,
+} from '@/data/mock/payment-order-admin-list'
+import {
+  getMockPaymentOrderCalculationStatementFromInstructorDetailPage,
+  getMockPaymentOrderCalculationStatementFromProgramDetailPage,
 } from '@/data/mock/payment-order-admin-list'
 import type { AccountPaymentStatusDetail } from '@/data/mock/account-payments-list'
 import { PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE } from '@/features/program/general/lib/participating-instructor-payment-statement-issuance-view'
@@ -222,4 +232,61 @@ export function mapAccountPaymentStatusDetailToIssuanceInput(
     formulaLabel: detail.formulaLabel,
     totalAmount: detail.totalAmount,
   }
+}
+
+export type PaymentStatementIssuancePayload = {
+  paragraphBodyOptions: RenderFormParagraphBodyOptions
+  fileName: string
+}
+
+export function buildPaymentStatementIssuancePayloadFromCalculationStatement(
+  statement: PaymentOrderProgramCalculationStatement
+): PaymentStatementIssuancePayload | null {
+  if (statement.context !== 'program' && statement.context !== 'instructor') {
+    return null
+  }
+
+  const input =
+    statement.context === 'program'
+      ? mapProgramCalculationStatementToIssuanceInput(statement)
+      : mapInstructorCalculationStatementToIssuanceInput(statement)
+
+  return {
+    paragraphBodyOptions: buildPaymentStatementIssuanceViewOptionsFromCalculation(input),
+    fileName: buildPaymentStatementIssuanceFileNameFromCalculation(input),
+  }
+}
+
+export function buildMockProgramDetailLinePaymentStatementIssuancePayload(
+  programRow: PaymentOrderAdminProgramRow,
+  programDetail: PaymentOrderAdminProgramDetail,
+  lineRow: PaymentOrderAdminProgramDetailInstructorRow
+): PaymentStatementIssuancePayload {
+  const statement = getMockPaymentOrderCalculationStatementFromProgramDetailPage(
+    programRow,
+    programDetail,
+    lineRow
+  )
+  const payload = buildPaymentStatementIssuancePayloadFromCalculationStatement(statement)
+  if (!payload) {
+    throw new Error('program detail line issuance payload could not be built')
+  }
+  return payload
+}
+
+export function buildMockInstructorDetailLinePaymentStatementIssuancePayload(
+  instructorRow: PaymentOrderAdminInstructorRow,
+  instructorDetail: PaymentOrderAdminInstructorDetail,
+  lineRow: PaymentOrderAdminInstructorDetailProgramRow
+): PaymentStatementIssuancePayload {
+  const statement = getMockPaymentOrderCalculationStatementFromInstructorDetailPage(
+    instructorRow,
+    instructorDetail,
+    lineRow
+  )
+  const payload = buildPaymentStatementIssuancePayloadFromCalculationStatement(statement)
+  if (!payload) {
+    throw new Error('instructor detail line issuance payload could not be built')
+  }
+  return payload
 }

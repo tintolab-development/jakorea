@@ -3,8 +3,17 @@ import {
   mapSettlementsToProgramRows,
 } from '@/features/settlement-management/api/payment-orders/map-settlement-list-rows'
 import {
+  mapAggregatesToInstructorRows,
+  mapAggregatesToProgramRows,
+} from '@/features/settlement-management/api/payment-orders/map-settlement-aggregates'
+import {
+  buildPaymentOrdersListAggregateParams,
+  type PaymentOrdersListFilterInput,
+} from '@/features/settlement-management/api/payment-orders/build-payment-orders-list-aggregate-params'
+import {
   fetchAllPaymentStatementsRemote,
   fetchAllSettlementsRemote,
+  fetchSettlementAggregatesRemote,
 } from '@/features/settlement-management/api/settlement-api-client'
 import type { ListSettlementsParams } from '@/shared/api/generated/settlement/schemas'
 import type {
@@ -50,7 +59,26 @@ async function fetchPaymentStatementsForSettlementIds(settlementIds: number[]) {
   )
 }
 
-export async function getPaymentOrdersListRemote(): Promise<PaymentOrdersListData> {
+export async function getPaymentOrdersListRemote(
+  filters: PaymentOrdersListFilterInput = {
+    programName: '',
+    instructorName: '',
+    processingStatus: 'all',
+    dateRange: null,
+  }
+): Promise<PaymentOrdersListData> {
+  const [programAggregates, instructorAggregates] = await Promise.all([
+    fetchSettlementAggregatesRemote(buildPaymentOrdersListAggregateParams('program', filters)),
+    fetchSettlementAggregatesRemote(buildPaymentOrdersListAggregateParams('instructor', filters)),
+  ])
+  return {
+    programRows: mapAggregatesToProgramRows(programAggregates),
+    instructorRows: mapAggregatesToInstructorRows(instructorAggregates),
+  }
+}
+
+/** @deprecated aggregates API 미사용 fallback — 테스트·마이그레이션용 */
+export async function getPaymentOrdersListRemoteFromSettlements(): Promise<PaymentOrdersListData> {
   const items = (await fetchAllSettlementsRemote()) ?? []
   return {
     programRows: mapSettlementsToProgramRows(items),
