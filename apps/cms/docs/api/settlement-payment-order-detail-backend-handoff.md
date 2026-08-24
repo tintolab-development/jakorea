@@ -17,7 +17,7 @@
 |------|--------|------|-------|
 | 정산 라인 목록 | GET | `/api/admin/settlements` | `programId` **또는** `instructorMemberId`, (선택) `fromDate`, `toDate` |
 | statementId 매핑 | GET | `/api/admin/settlements/statements` | **임시 우회** — §3.1·§4 참고. **권장:** settlements 목록 DTO에 `statementId` embed (§4) |
-| 산출 내역서 | GET | `/api/admin/settlements/{settlementId}` | 라인별 (기존 유지) |
+| 산출 내역서 | GET | `/api/admin/settlements/{settlementId}` | 라인별 (기존 유지) · **⭐ §3.6 필수 필드** |
 | 지급조서 확인 | PATCH | `/api/admin/settlements/statements/{statementId}/confirm` | 단건 순차 (기존 유지) |
 
 **aggregateKey:** 목록 집계 행의 `programId` / `instructorMemberId` 문자열.
@@ -84,6 +84,9 @@ GET /api/admin/settlements/statements?programId=42
 | **프론트 임시** | remote 시 `-` 표시 |
 | **제안 (택1)** | ① `GET /api/admin/members/{instructorMemberId}` 조합 · ② `GET /api/settlements/instructor-summary?instructorMemberId=` 신규 · ③ settlements 집계 DTO에 embed |
 
+> **§3.6과 구분:** 본 절은 **프로필·계좌**. 강의비 등급·산정 기준은 **회원 API가 아니라 `GET /settlements/{id}`에 필수** ([§3.6](#36--get-settlementssettlementid-필수-확장--강의비-책정-기준산정-기준-상세-p1차단)).  
+> **개인정보 마스킹 규칙**은 [§3.7](#37-개인정보-마스킹-정책-지급-현황--산출-내역서) 참고.
+
 ### 3.4 참여 기관명
 
 | | |
@@ -148,6 +151,186 @@ GET /api/admin/settlements/statements?programId=42
 - `settlement-item-type.ts` — 서버 enum과 1:1 동기화 확인
 - `map-settlement-detail-to-calculation-statement.ts` — `type` 라벨 매핑 유지 (현재 연동됨)
 
+### 3.6 ⭐ **`GET /settlements/{settlementId}` 필수 확장** — 강의비 책정 기준·산정 기준 상세 *(P1·차단)*
+
+> **백엔드 전달 핵심:** 산출 내역서·「산정 기준 상세 > 상세 보기」·강사비 등급 모달에 필요한 데이터는 **반드시 `GET /api/admin/settlements/{settlementId}` 응답(`SettlementFrontendResponse`)에 포함**해야 합니다.  
+> **회원 API(`GET /members/{id}`)만으로는 불충분** — 정산 건마다 적용된 **매칭·프로그램 임금 정책·산출 스냅샷**이 settlement 상세에 있어야 합니다.
+
+| | |
+|---|---|
+| **대상 API** | **`GET /api/admin/settlements/{settlementId}`** (산출 내역서 모달의 **유일** 상세 소스) |
+| **현재 DTO** | `SettlementFrontendResponse` — `items[]`(type·description·amount), `totalAmount`, `calculationResult`(unknown) |
+| **프론트 임시** | `lectureFeeStandardTitle: '—'` 고정 · `items[].basisDetail` 미매핑 |
+| **사용자 증상** | 강사비 행 **「산정 기준 상세 > 상세 보기」→ 「준비 중입니다.」** · 기본정보 「강의비 책정 기준」 `-` |
+| **§3.3과 구분** | §3.3 = 강사 **프로필·계좌**(이름·주소·계좌). **본 절 = 정산 산출 맥락**(등급·책정·항목별 산정 근거) — **둘 다 필요하나 역할 다름** |
+
+#### 필수 포함 필드 (SettlementFrontendResponse 루트)
+
+아래는 **신규 endpoint 없이** 기존 `GET /settlements/{id}` DTO에 **embed** 요청합니다.
+
+| 필드 (제안명) | 타입 | UI 사용처 | 필수 |
+|---------------|------|-----------|------|
+| `lectureFeeStandardTitle` | `string` | 산출 내역서 기본정보 「강의비 책정 기준」·강사비 **등급 모달** 매핑 (예: `2급 강사비`, `특강 강사비`) | **✅** |
+| `lectureFeeStandardAmount` | `number` 또는 포맷된 `string` | 동일 블록 금액 표시 | **✅** |
+| `wageItemType` | `string` (enum) | `lectureFeeStandardTitle` 대체 가능 — `TIER1`/`TIER2`/`TIER3`/`SPECIAL_LECTURE` 등 ([정산 config `WageItemResponse`](../../src/shared/api/generated/settlement/schemas/wageItemResponse.ts)와 동일 SSOT) | 택1 (title과 **하나는 필수**) |
+| `feeGrade` | `string` | 매칭·강사 정책 등급 코드 — 프론트가 title로 normalize 가능 시 | 선택 (title/wageItemType 없을 때) |
+| `lectureSessionDisplay` | `string` | 강의 진행 회차 (예: `2 ~ 3차시`) — 없으면 schedule join | 권장 |
+| `institutionName` | `string` | 산출 내역 테이블 「참여 기관명」 | 권장 |
+
+> **`lectureFeeStandardTitle` 또는 `wageItemType` 중 최소 1개는 null/빈값이 아니어야** 강사비 행 상세 보기가 동작합니다. 둘 다 없으면 프론트는 「준비 중」만 표시할 수 있습니다.
+
+#### 필수 포함 필드 (items[] — 항목별 산정 기준 상세)
+
+교통비·숙박비·식사비·활동비 등 **항목별 「상세 보기」** 는 행마다 산출 근거 JSON이 필요합니다. **별도 API 2차 호출 없이** `items[]`에 embed 요청.
+
+| 필드 (제안명) | 타입 | UI 사용처 | 필수 |
+|---------------|------|-----------|------|
+| `type` | enum (§3.5 7종) | 산정 항목 컬럼 | **✅** |
+| `description` | `string` | 항목 설명 | **✅** |
+| `amount` | `number` | 정산 금액 | **✅** |
+| `calculationDetail` | `object` 또는 `basisJson` (`string` JSON) | 「산정 기준 상세」 모달 layout·영수증·거리 등 — mock `basisDetail`에 대응 | **✅** (해당 type에 산정 UI 있을 때) |
+
+**`calculationDetail.layout` (제안)** — 프론트 read-only viewer와 1:1:
+
+| layout | 대상 `type` | 비고 |
+|--------|-------------|------|
+| `lectureFeeTier` | `instructor_fee` | tier·책정금·차시 — **루트 `lectureFeeStandardTitle` 없을 때 item fallback** |
+| `transportRoundTrip` / `transportOneWay` / `transportInstructor` | `transportation` | |
+| `lodgingGeneral` / `lodging1s1g` | `accommodation` | |
+| `meal` | `meal` | |
+| `activity` | `activity` | |
+
+원천징수(`withholding`)는 공제 항목 설정 read-only 모달 — `calculationDetail` 없어도 `type`+음수 `amount`로 처리 가능.
+
+#### 응답 예시 (제안 — **`GET /settlements/{id}` 전체**)
+
+```json
+{
+  "id": "12345",
+  "programId": "42",
+  "instructorId": "9001",
+  "period": "2026-08",
+  "lectureFeeStandardTitle": "2급 강사비",
+  "lectureFeeStandardAmount": 915000,
+  "wageItemType": "TIER2",
+  "lectureSessionDisplay": "2 ~ 3차시",
+  "institutionName": "○○초등학교",
+  "items": [
+    {
+      "type": "instructor_fee",
+      "description": "프로그램 1회 강의비 (2급 강사)",
+      "amount": 915000,
+      "calculationDetail": {
+        "layout": "lectureFeeTier",
+        "tier": "2",
+        "categoryLabel": "2급 강사비",
+        "feeAssessmentWon": 915000,
+        "lectureTimeDisplay": "2차시",
+        "totalWon": 915000
+      }
+    },
+    {
+      "type": "transportation",
+      "description": "대전 → 서울 (146.8km)",
+      "amount": 31500,
+      "calculationDetail": {
+        "layout": "transportInstructor",
+        "categoryLabel": "교통비(1사1교)",
+        "distanceKm": 146.8,
+        "fuelCostWon": 30000,
+        "tollFeeWon": 1500,
+        "totalWon": 31500
+      }
+    },
+    {
+      "type": "withholding",
+      "description": "원천징수 8.8%",
+      "amount": -83292
+    }
+  ],
+  "totalAmount": 863208
+}
+```
+
+#### 수용 기준 (Acceptance) — **미충족 시 산출 내역서 상세 보기 불가**
+
+- [ ] **`GET /settlements/{settlementId}`** 응답에 `lectureFeeStandardTitle` **또는** `wageItemType` 포함 (null/`—` 아님)
+- [ ] 동일 응답에 `lectureFeeStandardAmount`(또는 UI 표시 가능 금액) 포함
+- [ ] `instructor_fee` item에 `calculationDetail`(또는 동등 JSON) 포함 **또는** 루트 title/wageItemType으로 강사비 모달 매핑 가능
+- [ ] `transportation` / `accommodation` / `meal` / `activity` item — 해당 항목 존재 시 **`calculationDetail` 포함** (상세 보기 「준비 중」 방지)
+- [ ] **회원 API 추가 호출 없이** 위 필드만으로 산출 내역서·산정 기준 모달 E2E 가능
+- [ ] OpenAPI·Orval 재생성 후 프론트 `map-settlement-detail-to-calculation-statement.ts`에서 `'—'` placeholder 제거
+
+#### 프론트 후속 (백엔드 반영 후)
+
+1. `map-settlement-detail-to-calculation-statement.ts` — `lectureFeeStandardTitle` / `lectureFeeStandardAmount` API 매핑
+2. `items[].calculationDetail` → `PaymentOrderCalculationStatementLine.basisDetail` 변환
+3. `resolve-settlement-item-setting-for-calculation-row.ts` — `wageItemType` → 정산 항목 설정 id 매핑 (필요 시)
+4. 스테이징: 강사비 행 상세 보기 → **「준비 중」 없이** 등급별 강사비 모달 또는 산정 기준 상세 모달
+
+#### ❌ 비권장 / 불충분한 대안
+
+| 대안 | 불충분 이유 |
+|------|-------------|
+| `GET /members/{instructorMemberId}`만 제공 | 강사 **기본 등급** ≠ **해당 정산·매칭에 적용된** 책정 기준 |
+| 목록 API(`GET /settlements`)에만 embed | 산출 내역서는 **`GET /settlements/{id}`** 단건 조회 — 목록 필드만으로는 모달 데이터 부족 |
+| `calculationResult` unknown blob만 | layout·항목 index 매핑 불명 — **`items[].calculationDetail` per-line** 권장 |
+
+### 3.7 개인정보 **마스킹 정책** (지급 현황 · 산출 내역서)
+
+> **백엔드 전달:** 지급 현황 상세·산출 내역서·정산 라인 목록에서 **신청자명(강사명)은 마스킹하지 않습니다.**  
+> API가 이름을 `홍*동` 등으로 **사전 마스킹해 내려보내면 UI 정책과 불일치** — **원문(plain) 제공** 후 표시층에서 아래 규칙만 적용합니다.
+
+#### 적용 화면
+
+- 정산 관리 > **지급조서 확인** — 프로그램/강사별 **지급 현황 상세** 풀페이지
+- **산출 내역서** 모달 — 기본 정보(신청자·강사 블록)
+- (연관) **계좌 지급 현황** 상세 — 동일 원칙
+
+#### 필드별 규칙 (SSOT)
+
+| 구분 | 필드 (API·UI 예) | 마스킹 | 비고 |
+|------|------------------|--------|------|
+| **미마스킹** | `instructorName` / `nameKo` — **신청자명·강사명(한글)** | ❌ **하지 않음** | 목록·상세·산출 내역서 **항상 원문** |
+| **미마스킹** | `nameEn` — **강사명(영문)** | ❌ **하지 않음** | 산출 내역서 강사 맥락 |
+| **미마스킹** | `bankName` — **은행명** | ❌ **하지 않음** | 정산 계좌 정보 좌측 |
+| **마스킹** | `phone` / 연락처 | ✅ | 예: `010-****-5678` (FE `MASKING_POLICY.phone`) |
+| **마스킹** | `email` / 이메일 | ✅ | 예: `ti***@example.com` (FE `MASKING_POLICY.email`) |
+| **마스킹** | `accountNumber` / 계좌번호 | ✅ | 숫자만 `*` — **은행명과 분리 필드** 권장 |
+| **마스킹** | `accountHolder` / 예금주 | ✅ | 성(복성 포함)만 노출 · 나머지 `*` |
+
+#### 정산 계좌 정보 표시 (UI 합성)
+
+프론트는 **은행명 + 마스킹된 계좌번호** | **마스킹된 예금주** 형태로 조합합니다.
+
+```
+{bankName} {maskedAccountNumber} | {maskedAccountHolder}
+예: 국민은행 ************1234 | 홍**
+```
+
+- **은행명(`bankName`)은 절대 마스킹하지 않음**
+- 계좌번호·예금주만 마스킹
+- API는 가능하면 **`bankName` / `accountNumber` / `accountHolder` 분리** — 한 문자열에 섞어 내려보내지 않음
+
+#### 백엔드 수정 요청
+
+1. **`instructorName`·`nameKo`·`nameEn`** — settlements 목록·상세·embed DTO에서 **마스킹 금지** (plain text)
+2. **연락처·이메일·계좌번호·예금주** — plain으로 내려주고 FE가 마스킹 **또는** BE 마스킹 시 **위 표와 동일 규칙** (은행명 제외)
+3. **OpenAPI·응답 예시**에 마스킹 대상/비대상 필드 주석 명시
+
+#### 수용 기준 (Acceptance)
+
+- [ ] `GET /settlements` 목록·상세의 `instructorName` — **원문** (마스킹 패턴 `*` 없음)
+- [ ] 강사 embed / 회원 조합 API의 `nameKo`·`nameEn` — **원문**
+- [ ] `bankName` — **원문** · `accountNumber`·`accountHolder` — 마스킹 또는 plain(FE 처리)
+- [ ] 스테이징: 산출 내역서 「신청자명(한글)」 열에 **전체 이름** 표시, 연락처·이메일·계좌(번호·예금주)만 마스킹
+
+#### 프론트 참고 구현
+
+- `payment-order-instructor-basic-info.tsx` — `nameKo`/`nameEn` plain · 연락처·이메일·계좌 마스킹
+- `map-settlement-detail-to-calculation-statement.ts` — 동일
+- `shared/constants/download-policy.ts` — `MASKING_POLICY` (계좌번호: 숫자만 `*`, 예금주: 성만 노출)
+
 ---
 
 ## 4. 백엔드 **수정 요청** — `GET /settlements` 목록에 `statementId` 포함 *(권장·P1)*
@@ -203,7 +386,8 @@ GET /api/admin/settlements/statements?programId=42
 |----------|------|----------------|
 | P0 | `POST .../statements/bulk-confirm` + 이체 예정일 | 「일괄 확인」 모달 |
 | P0 | `PATCH .../statements/{id}/reject` | 산출 내역서 「신청 반려」 |
-| P1 | 산출 내역서 DTO (`GET /settlements/{id}` 확장) | 산출 내역서 모달 본문 · **items[].type enum 7종** ([§3.5](./settlement-payment-order-detail-backend-handoff.md#35-산출-내역서--산정-항목-type-enum-확장-p1)) |
+| P1 | 산출 내역서 DTO (`GET /settlements/{id}` 확장) | 산출 내역서 모달 본문 · **items[].type enum 7종** ([§3.5](./settlement-payment-order-detail-backend-handoff.md#35-산출-내역서--산정-항목-type-enum-확장-p1)) · **⭐ 강의비 책정·calculationDetail 필수** ([§3.6](./settlement-payment-order-detail-backend-handoff.md#36--get-settlementssettlementid-필수-확장--강의비-책정-기준산정-기준-상세-p1차단)) |
+| P1 | 강사 embed / 회원 조합 DTO | 상세 기본정보 · **마스킹 정책** ([§3.7](./settlement-payment-order-detail-backend-handoff.md#37-개인정보-마스킹-정책-지급-현황--산출-내역서)) — 이름·은행명 plain, 연락처·이메일·계좌(번호·예금주)만 |
 | P1 | `GET /settlements/aggregates` (목록용) | 상세와 무관, 목록 성능 |
 
 ---
@@ -214,9 +398,10 @@ GET /api/admin/settlements/statements?programId=42
 |------|----------------|
 | **상세 정산 라인 목록** (프로그램별 강사 라인 / 강사별 프로그램 라인) | **아니오** — 기존 `GET /settlements` scoped query로 충분 (프론트 연동 완료) |
 | **statementId** | **DTO 필드 추가** — `SettlementListItemResponse.statementId` (§4). 신규 endpoint 불필요 |
-| **강사 기본정보·계좌** | **예 (또는 회원 API 조합)** |
+| **강사 기본정보·계좌** | **예 (또는 회원 API 조합)** · 마스킹: **이름·은행명 plain** / 연락처·이메일·계좌번호·예금주만 ([§3.7](./settlement-payment-order-detail-backend-handoff.md#37-개인정보-마스킹-정책-지급-현황--산출-내역서)) |
 | **참여 기관명** | **DTO 필드 추가** |
 | **일괄 확인·반려·산출서** | **예** — 기존 갭 문서 항목 |
+| **강의비 책정·산정 기준 상세** | **아니오 (신규 API 불필요)** — **`GET /settlements/{id}` DTO 확장 필수** (§3.6). 회원 API 단독 불가 |
 
 ---
 
@@ -227,6 +412,8 @@ GET /api/admin/settlements/statements?programId=42
 3. 상세 테이블 건수 = API 라인 건수 (동일 기간·동일 program/instructor)
 4. 라인 「지급조서 확인」→ `PATCH .../confirm` 후 목록·상세 상태 일치
 5. `statementId` 없는 라인 → confirm/산출서 버튼 비활성 또는 에러 (seed 데이터 점검)
+6. 산출 내역서 → **`GET /settlements/{id}`** 응답에 `lectureFeeStandardTitle`(또는 `wageItemType`)·`items[].calculationDetail` 확인
+7. 강사비 행 「산정 기준 상세 > 상세 보기」→ **등급별 강사비 모달** (「준비 중」 아님)
 
 ---
 
