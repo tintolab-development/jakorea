@@ -1,3 +1,4 @@
+import { isValidKoreanPhoneNumber } from '../shared/korean-phone.js'
 import { isRequiredAddressIncomplete } from '../shared/required-address.js'
 import { CAREER_LEVEL } from './career-level.js'
 import type { ConsentValue } from './consent.js'
@@ -12,8 +13,6 @@ import type {
 } from './profile-form-values.js'
 
 const DEFAULT_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-/** 010-1234-5678 형태 (하이픈 포함) */
-const DEFAULT_KOREAN_PHONE_PATTERN = /^01[016789]-?\d{3,4}-?\d{4}$/
 
 /** 제출 시 기본 정보 전 항목 + 동의(키는 options로 확장 가능) */
 export type InstructorRegisterValidationInput = Pick<
@@ -229,8 +228,7 @@ export function collectInstructorRegisterValidation(
 
   const isBirthDateIncomplete = formatChecks.isBirthDateIncomplete ?? (() => false)
   const isBirthDateValid = formatChecks.isBirthDateValid ?? (() => true)
-  const isPhoneValid =
-    formatChecks.isPhoneValid ?? ((value: string) => DEFAULT_KOREAN_PHONE_PATTERN.test(value))
+  const isPhoneValid = formatChecks.isPhoneValid ?? isValidKoreanPhoneNumber
   const isEmailValid =
     formatChecks.isEmailValid ?? ((value: string) => DEFAULT_EMAIL_PATTERN.test(value))
 
