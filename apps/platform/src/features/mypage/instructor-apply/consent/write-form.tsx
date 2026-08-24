@@ -14,8 +14,6 @@ import {
 } from '@jakorea/form-schema/writing-form'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
-import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { PFAlertModal, PFButton } from '@/shared/ui'
 import type { InstructorApplyConsentKey } from './catalog'
 import { CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE } from './catalog'
@@ -31,6 +29,8 @@ import {
   resolvePaymentConsentSignerName,
 } from './payment-basic-info-fields'
 import { ConsentSignatureStatement } from './signature-statement'
+import { PlatformConsentFormBody } from './platform-consent-form-body'
+import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { useInstructorApplyLockedBasic } from '../use-instructor-apply-locked-basic'
 import styles from './consent-form.module.css'
 
@@ -146,20 +146,17 @@ export function SchemaConsentWriteForm({
             ? paragraph.bodyText.trim()
             : ''
         return (
-          <>
-            {body ? <div className="form-template-preview-text">{body}</div> : null}
-            <ConsentSignatureStatement
-              statement={body}
-              signerName={signerName}
-              signatureDataUrl={state.signatures?.mid ?? ''}
-              onSignatureChange={mid =>
-                setState(prev => ({
-                  ...prev,
-                  signatures: { ...prev.signatures, mid },
-                }))
-              }
-            />
-          </>
+          <ConsentSignatureStatement
+            statement={body}
+            signerName={signerName}
+            signatureDataUrl={state.signatures?.mid ?? ''}
+            onSignatureChange={mid =>
+              setState(prev => ({
+                ...prev,
+                signatures: { ...prev.signatures, mid },
+              }))
+            }
+          />
         )
       }
 
@@ -169,20 +166,17 @@ export function SchemaConsentWriteForm({
             ? paragraph.bodyText.trim()
             : ''
         return (
-          <>
-            {body ? <div className="form-template-preview-text">{body}</div> : null}
-            <ConsentSignatureStatement
-              statement={body}
-              signerName={signerName}
-              signatureDataUrl={state.signatures?.final ?? ''}
-              onSignatureChange={finalSig =>
-                setState(prev => ({
-                  ...prev,
-                  signatures: { ...prev.signatures, final: finalSig },
-                }))
-              }
-            />
-          </>
+          <ConsentSignatureStatement
+            statement={body}
+            signerName={signerName}
+            signatureDataUrl={state.signatures?.final ?? ''}
+            onSignatureChange={finalSig =>
+              setState(prev => ({
+                ...prev,
+                signatures: { ...prev.signatures, final: finalSig },
+              }))
+            }
+          />
         )
       }
 
@@ -213,18 +207,13 @@ export function SchemaConsentWriteForm({
           handleSubmit()
         }}
       >
-        <FormTemplateHost surface="platformUser">
-          <FormTemplateRenderer
-            className={styles.schemaForm}
-            draft={state.draft}
-            interactionMode="user"
-            surface="platformUser"
-            hiddenParagraphIds={hiddenParagraphIds}
-            onUpdateParagraph={updateParagraph}
-            fillOptions={fillOptions}
-            renderParagraphSlot={renderParagraphSlot}
-          />
-        </FormTemplateHost>
+        <PlatformConsentFormBody
+          draft={state.draft}
+          hiddenParagraphIds={hiddenParagraphIds}
+          onUpdateParagraph={updateParagraph}
+          fillOptions={fillOptions}
+          renderParagraphSlot={renderParagraphSlot}
+        />
         <div className={styles.actions}>
           <PFButton size="xlarge" width={240} type="submit">
             작성 완료
