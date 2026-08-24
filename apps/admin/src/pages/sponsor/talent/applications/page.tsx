@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState, type Key } from 'react'
 import type { Dayjs } from 'dayjs'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { applyKoreanPhoneInputChange } from '@jakorea/domain/shared/korean-phone'
 import type {
   ApplicationStatus,
   JaProgramHistoryFilter,
@@ -543,9 +544,23 @@ export function TalentDonationApplicationsPage() {
               <CmsInput
                 inputSize="large"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel"
                 value={pendingFilters.phone}
                 placeholder="연락처를 입력하세요."
-                onChange={e => setPendingFilters(prev => ({ ...prev, phone: e.target.value }))}
+                onChange={e => {
+                  const result = applyKoreanPhoneInputChange(
+                    pendingFilters.phone,
+                    e.target.value,
+                    e.target.selectionStart
+                  )
+                  e.target.value = result.formatted
+                  setPendingFilters(prev => ({ ...prev, phone: result.formatted }))
+                  requestAnimationFrame(() => {
+                    e.target.setSelectionRange(result.caret, result.caret)
+                  })
+                }}
                 onPressEnter={handleSearch}
               />
             </div>
