@@ -19,6 +19,7 @@ import {
   MOCK_VERIFIED_NAME,
   MOCK_VERIFIED_PHONE,
 } from '../lib/constants'
+import { toApiSignupPhone } from '../lib/helpers/to-api-phone'
 import { buildConfirmationRows, formatBirthDateInput } from '../lib/utils'
 import {
   agreementItems,
@@ -378,7 +379,9 @@ export function useSignUp() {
   }) => {
     setIdentityVerificationSessionId(result.sessionId)
     if (result.verifiedName?.trim()) setVerifiedName(result.verifiedName.trim())
-    if (result.verifiedPhone?.trim()) setVerifiedPhone(result.verifiedPhone.trim())
+    if (result.verifiedPhone?.trim()) {
+      setVerifiedPhone(toApiSignupPhone(result.verifiedPhone) ?? result.verifiedPhone.trim())
+    }
     setIsIdentityVerified(true)
     pushWizard(3, 'agreement')
   }
@@ -390,7 +393,9 @@ export function useSignUp() {
   }) => {
     setGuardianVerificationSessionId(result.sessionId)
     if (result.verifiedName?.trim()) setVerifiedName(result.verifiedName.trim())
-    if (result.verifiedPhone?.trim()) setVerifiedPhone(result.verifiedPhone.trim())
+    if (result.verifiedPhone?.trim()) {
+      setVerifiedPhone(toApiSignupPhone(result.verifiedPhone) ?? result.verifiedPhone.trim())
+    }
     setIsGuardianIdentityVerified(true)
     pushWizard(4)
   }
