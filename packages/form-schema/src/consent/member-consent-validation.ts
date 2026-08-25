@@ -1,6 +1,5 @@
 import { isRequiredAddressIncomplete } from '@jakorea/domain/shared/required-address'
 import {
-  AGREEMENT_NOTICE_PARAGRAPH_IDS,
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
   type MultipleChoiceParagraph,
   type TableBottomConsent,
@@ -84,19 +83,6 @@ function isIdTypeWithInputComplete(paragraph: WritingFormParagraph): boolean {
   const nested = paragraph.idTypeWithInput
   if (nested == null) return true
   if (!nested.answerRequired && !nested.requiredMark) return true
-  if (nested.selectedOptionId == null || nested.selectedOptionId === '') return false
-  return nested.inputValue.trim() !== ''
-}
-
-function isAgreementNoticeIdTypeComplete(draft: WritingFormDraft): boolean {
-  const table = draft.paragraphs.find(
-    paragraph => paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.table
-  )
-  if (table == null || table.kind !== 'single_item' || table.variant !== 'horizontal_table') {
-    return false
-  }
-  const nested = table.idTypeWithInput
-  if (nested == null) return false
   if (nested.selectedOptionId == null || nested.selectedOptionId === '') return false
   return nested.inputValue.trim() !== ''
 }
@@ -230,10 +216,6 @@ export function hasMemberConsentIncompleteRequiredFields(
   const templateId = options?.templateId
   if (templateId === 'agreement-portrait') {
     return !isPortraitPersonalConsentResponseComplete(draft)
-  }
-
-  if (templateId === 'agreement-notice') {
-    return !isAgreementNoticeIdTypeComplete(draft)
   }
 
   if (templateId != null && PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) {
