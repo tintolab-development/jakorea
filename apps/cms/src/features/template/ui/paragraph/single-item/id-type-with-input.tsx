@@ -1,10 +1,13 @@
 import { CmsInput, CmsRadio } from '@/shared/ui'
-import type { IdTypeWithInputParagraph } from '@/features/template/model/writing-form-draft.schema'
+import {
+  AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID,
+  type IdTypeWithInputParagraph,
+} from '@/features/template/model/writing-form-draft.schema'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './id-type-with-input.css'
 
 const INPUT_PLACEHOLDER_BY_OPTION_ID: Record<string, string> = {
-  'agreement-notice-id-resident': '주민등록번호를 입력해 주세요',
+  [AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID]: '주민등록번호를 입력해 주세요',
   'agreement-notice-id-passport': '여권번호를 입력해 주세요',
   'agreement-notice-id-driver': '운전면허번호를 입력해 주세요',
   'agreement-notice-id-alien': '외국인등록번호를 입력해 주세요',
@@ -20,17 +23,21 @@ export function IdTypeWithInputBody({
   onChange,
   isEditMode,
   documentMode = false,
+  lockResidentIdType = false,
 }: {
   paragraph: IdTypeWithInputParagraph
   onChange: (next: IdTypeWithInputParagraph) => void
   isEditMode: boolean
   /** A4 문서 미리보기 모드 */
   documentMode?: boolean
+  /** 행정정보 공동이용 — 라디오를 주민등록번호로 고정·비활성 */
+  lockResidentIdType?: boolean
 }) {
   const options = paragraph.options?.length ? paragraph.options : []
-  const selectedId =
-    paragraph.selectedOptionId != null &&
-    options.some(o => o.id === paragraph.selectedOptionId)
+  const selectedId = lockResidentIdType
+    ? AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID
+    : paragraph.selectedOptionId != null &&
+        options.some(o => o.id === paragraph.selectedOptionId)
       ? paragraph.selectedOptionId
       : (options[0]?.id ?? null)
 
@@ -40,6 +47,7 @@ export function IdTypeWithInputBody({
       : paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요'
   const inputValueForView = documentMode ? '' : paragraph.inputValue
   const inputPlaceholderForView = documentMode ? '' : ph
+  const radiosDisabled = documentMode || !isEditMode || lockResidentIdType
   const inputDisabled = documentMode || !isEditMode
 
   const setSelected = (nextId: string) => {
@@ -65,10 +73,10 @@ export function IdTypeWithInputBody({
           .join(' ')}
         value={selectedId ?? undefined}
         onChange={e => {
-          if (!isEditMode) return
+          if (!isEditMode || lockResidentIdType) return
           setSelected(String(e.target.value))
         }}
-        disabled={documentMode || !isEditMode}
+        disabled={radiosDisabled}
       >
         {options.map(opt => (
           <CmsRadio key={opt.id} value={opt.id} className="id-type-with-input__radio">
@@ -85,7 +93,14 @@ export function IdTypeWithInputBody({
         disabled={inputDisabled}
         onChange={e => {
           if (!isEditMode) return
-          onChange({ ...paragraph, inputValue: e.target.value, inputPlaceholder: ph })
+          onChange({
+            ...paragraph,
+            selectedOptionId: lockResidentIdType
+              ? AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID
+              : paragraph.selectedOptionId,
+            inputValue: e.target.value,
+            inputPlaceholder: ph,
+          })
         }}
       />
     </div>

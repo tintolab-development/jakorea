@@ -5,6 +5,7 @@ import type {
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { PaymentPreConsentFixedBlock } from '@/features/template/ui/paragraph/explanation/payment-pre-consent-fixed-block'
 import { ParagraphInput } from '@/features/template/ui/shared/paragraph-input'
+import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { resolveTableBottomConsentRadioValue } from '@/features/template/lib/resolve-table-bottom-consent-radio-value'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -85,18 +86,17 @@ export function ExplanationText({
   }
 
   if (bodyDisplayMode === 'disabled-placeholder') {
-    const text =
-      typeof paragraph.bodyText === 'string' ? paragraph.bodyText.trim() : ''
+    const text = typeof paragraph.bodyText === 'string' ? paragraph.bodyText : ''
     return (
       <div className="form-editor-body explanation-text">
-        <div
-          className="explanation-text__disabled-placeholder"
-          aria-disabled="true"
-        >
-          {text.length > 0 ? (
-            <span className="explanation-text__disabled-placeholder-text">{text}</span>
-          ) : null}
-        </div>
+        <CmsInput
+          className="explanation-text__disabled-input"
+          inputSize="large"
+          width="100%"
+          value={text}
+          disabled
+          allowClear={false}
+        />
         {consentRadios}
       </div>
     )

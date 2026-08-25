@@ -24,39 +24,8 @@
 
 /* 사전 동의서 고정 동의·최종 확인 문구 바: `payment-pre-consent-sheet-bar.css` */
 
-/* 동의서 설명글_텍스트형 — 작성(authoring) + 구조 잠금 단락 본문: Disabled 입력 영역 placeholder
- *
- * `bodyText`가 비어있으면 텍스트 없는 빈 박스(이용기관 명칭),
- * `bodyText`가 있으면 박스 안에 default 텍스트 노출(이용사무 = "범죄경력의 유무 조회").
- * 두 경우 모두 동일 UI 컴포넌트(같은 박스)를 공유한다. */
-.explanation-text__disabled-placeholder {
-  display: flex;
-  height: 44px;
-  min-width: 120px;
+/* 구조 잠금 설명글_텍스트형 본문 — 단락 공통 CmsInput(large, disabled, 100%) */
+.explanation-text__disabled-input.cms-input {
   width: 100%;
-  padding: 0 12px 0 14px;
-  align-items: center;
-  gap: 8px;
   align-self: stretch;
-  border-radius: var(--8, 8px);
-  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
-  background: var(
-    --disabled-default-bg,
-    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%),
-    #fff
-  );
-}
-
-.explanation-text__disabled-placeholder-text {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
-  font-family: Pretendard;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
 }
