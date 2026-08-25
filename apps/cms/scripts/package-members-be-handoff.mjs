@@ -24,6 +24,7 @@ const outDir = outArg ? path.resolve(outArg.slice('--out='.length)) : defaultOut
 
 const coreFiles = [
   'members-pre-register-terms-required-policy-backend-request-2026-08-11.md',
+  'member-consent-filled-document-backend-handoff-2026-08-25.md',
 ]
 
 const toCopy = [...coreFiles]
