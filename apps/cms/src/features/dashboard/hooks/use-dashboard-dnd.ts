@@ -23,8 +23,8 @@ import type { DisplayItemMeta } from '@/features/dashboard/model/dashboard-widge
 import { isWidgetResizable } from '@/shared/config/dashboard-config'
 import {
   COL_SPAN_FULL,
+  areWidgetIdListsEqual,
   computeDragEndResult,
-  getInsertIndexFromPoint,
   type SlotRect,
 } from '@/features/dashboard/lib/dashboard-dnd-helpers'
 
@@ -65,19 +65,15 @@ export function useDashboardDnd({
   userRole,
   roleWidths,
   displayItemsMeta,
-  setWidgetWidth,
   getSlotRects,
   onLayoutSaved,
 }: UseDashboardDndParams) {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [overlayRect, setOverlayRect] = useState<OverlayRect | null>(null)
+  const pointerOriginRef = useRef({ x: 0, y: 0 })
   const lastPointerRef = useRef({ x: 0, y: 0 })
-  const lastDropIndexRef = useRef<number | null>(null)
   /** 드롭 시 over가 null이어도 직전에 올려둔 위젯으로 1:1 교환하기 위함 (DragOverlay가 포인터를 가릴 수 있음) */
   const lastOverIdRef = useRef<string | null>(null)
-  const slotRectsCacheRef = useRef<SlotRect[]>([])
-  const slotRectsCacheTimeRef = useRef(0)
-  const THROTTLE_MS = 80
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -102,63 +98,26 @@ export function useDashboardDnd({
     } else {
       setOverlayRect(null)
     }
-    lastDropIndexRef.current = null
     lastOverIdRef.current = null
-    slotRectsCacheRef.current = []
-    slotRectsCacheTimeRef.current = 0
     const activator = event.activatorEvent as PointerEvent
     if (activator?.clientX != null) {
+      pointerOriginRef.current = { x: activator.clientX, y: activator.clientY }
       lastPointerRef.current = { x: activator.clientX, y: activator.clientY }
     }
   }, [])
 
-  const handleDragMove = useCallback(
-    (event: DragMoveEvent) => {
-      lastPointerRef.current.x += event.delta.x
-      lastPointerRef.current.y += event.delta.y
-      const { over, active } = event
-      const activeIdStr = active.id as string
-      const now = Date.now()
-      if (getSlotRects) {
-        if (
-          slotRectsCacheRef.current.length === 0 ||
-          now - slotRectsCacheTimeRef.current > THROTTLE_MS
-        ) {
-          slotRectsCacheRef.current = getSlotRects()
-          slotRectsCacheTimeRef.current = now
-        }
-      }
-      const slotRects = slotRectsCacheRef.current
-      let nextIndex: number | null = null
-      if (over && over.id !== active.id) {
-        const overIdStr = over.id as string
-        lastOverIdRef.current = overIdStr
-        const overIndex = orderedIds.indexOf(overIdStr)
-        if (overIndex >= 0) {
-          const overRect = slotRects.find(s => s.id === overIdStr)?.rect
-          nextIndex =
-            overRect != null && lastPointerRef.current.x < overRect.left + overRect.width / 2
-              ? overIndex
-              : Math.min(overIndex + 1, orderedIds.length)
-        }
-      } else {
-        if (!over || over.id === active.id) lastOverIdRef.current = null
-        if (slotRects.length > 0) {
-          const { newIndex } = getInsertIndexFromPoint(
-            lastPointerRef.current,
-            slotRects,
-            orderedIds,
-            activeIdStr
-          )
-          nextIndex = newIndex
-        }
-      }
-      if (nextIndex !== lastDropIndexRef.current) {
-        lastDropIndexRef.current = nextIndex
-      }
-    },
-    [orderedIds, getSlotRects]
-  )
+  const handleDragMove = useCallback((event: DragMoveEvent) => {
+    lastPointerRef.current = {
+      x: pointerOriginRef.current.x + event.delta.x,
+      y: pointerOriginRef.current.y + event.delta.y,
+    }
+    const { over, active } = event
+    if (over && over.id !== active.id) {
+      lastOverIdRef.current = over.id as string
+      return
+    }
+    lastOverIdRef.current = null
+  }, [])
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -171,6 +130,11 @@ export function useDashboardDnd({
 
       const oldIndex = orderedIds.indexOf(activeIdStr)
       if (oldIndex === -1) return
+
+      lastPointerRef.current = {
+        x: pointerOriginRef.current.x + event.delta.x,
+        y: pointerOriginRef.current.y + event.delta.y,
+      }
 
       const slotRects = getSlotRects?.() ?? []
 
@@ -198,7 +162,9 @@ export function useDashboardDnd({
         computed.operation === 'swap' && computed.swapTargetId
           ? swapArrayItems(orderedIds, oldIndex, orderedIds.indexOf(computed.swapTargetId))
           : arrayMove(orderedIds, oldIndex, computed.newIndex)
-      // setOrderedIds 내부 reorderToAvoidTopGap 후처리를 유지해 상단 빈칸 보정 정책을 그대로 적용한다.
+
+      if (areWidgetIdListsEqual(orderedIds, next)) return
+
       setOrderedIds(userRole, next)
 
       // QA 중 UI 안정성을 위해 DnD는 순서 이동만 처리하고,
@@ -210,7 +176,6 @@ export function useDashboardDnd({
       setOrderedIds,
       userRole,
       getEffectiveColSpan,
-      setWidgetWidth,
       getSlotRects,
       onLayoutSaved,
     ]

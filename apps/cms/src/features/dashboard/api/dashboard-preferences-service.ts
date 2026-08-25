@@ -4,12 +4,15 @@
 import {
   applyMeDashboardPreferencesResponse,
   buildMeDashboardPreferencesRequest,
+  setCachedMePreferencesRevision,
 } from '@/features/dashboard/api/adapters/dashboard-me-preferences-adapters'
 import {
   fetchMeDashboardPreferencesRemote,
   saveMeDashboardPreferencesRemote,
 } from '@/features/dashboard/api/dashboard-api-client'
 import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
+import { runWithRevisionConflictRetry } from '@/features/dashboard/lib/revision-conflict-retry'
+import { getQueryRetryHttpStatus } from '@/shared/lib/query-retry'
 import type { DashboardMePreferencesRequest } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesRequest'
 import type { DashboardMePreferencesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesResponse'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -35,8 +38,18 @@ export async function saveDashboardPreferences(
   if (!shouldUseDashboardRemoteApi()) {
     return null
   }
-  const body = payload ?? buildMeDashboardPreferencesRequest(resolvePreferencesRole())
-  const saved = await saveMeDashboardPreferencesRemote(body)
-  applyMeDashboardPreferencesResponse(saved, resolvePreferencesRole())
+  const role = resolvePreferencesRole()
+  const body = payload ?? buildMeDashboardPreferencesRequest(role)
+  const saved = await runWithRevisionConflictRetry(
+    body,
+    saveMeDashboardPreferencesRemote,
+    async () => {
+      const latest = await fetchMeDashboardPreferencesRemote()
+      setCachedMePreferencesRevision(latest.revision)
+      return latest.revision
+    },
+    getQueryRetryHttpStatus
+  )
+  applyMeDashboardPreferencesResponse(saved, role)
   return saved
 }

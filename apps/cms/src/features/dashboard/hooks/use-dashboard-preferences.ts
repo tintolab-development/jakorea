@@ -18,14 +18,28 @@ export function useDashboardPreferences(enabled = true) {
   })
 }
 
-export function useSaveDashboardPreferences() {
+export interface SaveDashboardPreferencesOptions {
+  /** 바로가기 가시성 등 settings 변경 시에만 true. layout-only 저장은 false */
+  invalidateShortcutBadges?: boolean
+}
+
+export function useSaveDashboardPreferences(
+  options: SaveDashboardPreferencesOptions = {}
+) {
+  const invalidateShortcutBadges = options.invalidateShortcutBadges ?? true
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (payload?: DashboardMePreferencesRequest) => saveDashboardPreferences(payload),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.preferences('remote') })
-      void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.shortcutBadges('remote') })
+    onSuccess: data => {
+      if (data) {
+        queryClient.setQueryData(dashboardQueryKeys.preferences('remote'), data)
+      }
+      if (invalidateShortcutBadges) {
+        void queryClient.invalidateQueries({
+          queryKey: dashboardQueryKeys.shortcutBadges('remote'),
+        })
+      }
     },
   })
 }

@@ -101,28 +101,46 @@ export function mapRecruitmentListResponse(dto: DashboardRecruitmentListResponse
   return [...byProgram.values()]
 }
 
-/** API는 목표값만 제공 — achieved null이면 UI에서 '-' 표시 */
+/** 실적 미제공이면 null → UI에서 '-' 표시 */
+function kpiAchieved(value: number | undefined): number | null {
+  return value == null ? null : value
+}
+
+function kpiProgramTitle(
+  programId: string,
+  row: DashboardKpiProgressResponse,
+  programTitles?: Map<string, string>
+): string {
+  return (
+    programTitles?.get(programId) ??
+    row.programNameKo ??
+    row.nameKo ??
+    row.programCode ??
+    `프로그램 ${programId}`
+  )
+}
+
 function buildKpiMetricsFromTarget(row: DashboardKpiProgressResponse): KpiMetric[] {
   return [
     {
       key: 'finalParticipants',
       label: '최종 달성 인원',
       description: '명',
-      achieved: null,
+      achieved: kpiAchieved(row.actualParticipantCount),
       target: row.targetParticipantCount ?? 0,
     },
     {
       key: 'finalSchools',
       label: '최종 파견 학교 수',
       description: '개',
-      achieved: null,
+      achieved: kpiAchieved(row.actualSchoolCount),
       target: row.targetSchoolCount ?? 0,
     },
     {
       key: 'finalClasses',
       label: '최종 파견 학급 수',
       description: '개',
-      achieved: null,
+      achieved: kpiAchieved(row.actualClassCount),
       target: row.targetClassCount ?? 0,
     },
   ]
@@ -166,7 +184,7 @@ export function mapKpiProgressListResponse(
     const id = String(programId)
     return {
       programId: id,
-      programTitle: programTitles?.get(id) ?? `프로그램 ${id}`,
+      programTitle: kpiProgramTitle(id, row, programTitles),
       kpis: buildKpiMetricsFromTarget(row),
       educationInstructorTargets: {
         instructors: row.targetInstructorCount ?? 0,
@@ -187,9 +205,15 @@ export function mapProgramInquiryListResponse(
     const bucket = grouped.get(name) ?? { pending: 0, answered: 0, total: 0 }
     bucket.total += 1
     const status = (item.inquiryStatus ?? '').toUpperCase()
-    if (status === 'PENDING' || status === 'WAITING' || status === 'UNANSWERED') {
+    if (
+      status === 'PENDING' ||
+      status === 'WAITING' ||
+      status === 'UNANSWERED' ||
+      status === 'RECEIVED' ||
+      status === 'IN_PROGRESS'
+    ) {
       bucket.pending += 1
-    } else if (item.answeredAt || status === 'ANSWERED' || status === 'COMPLETED') {
+    } else if (item.answeredAt || status === 'ANSWERED' || status === 'COMPLETED' || status === 'CLOSED') {
       bucket.answered += 1
     }
     grouped.set(name, bucket)
