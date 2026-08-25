@@ -1008,6 +1008,30 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
 }
 
 /**
+ * 메뉴 key는 `/admin/posts/notices`·`/admin/posts/faq` exact만 등록돼 있어
+ * 상세 URL(`/admin/posts/notices/:id` 등)은 매칭이 비어 null이 된다.
+ * 사이드바 `selectedKeys`와 동일한 prefix 규칙으로 1뎁스(게시글 관리) / 2·3뎁스(리프)를 맞춘다.
+ */
+function getPostsPathCategoryNameWhenUnmatched(
+  normalizedPath: string,
+  depth: number | undefined
+): string | null {
+  const postsLeaves: Array<{ prefix: string; label: string }> = [
+    { prefix: '/admin/posts/notices/', label: '공지사항' },
+    { prefix: '/admin/posts/faq/', label: 'FAQ' },
+  ]
+
+  for (const leaf of postsLeaves) {
+    if (normalizedPath.startsWith(leaf.prefix)) {
+      if (depth === 1) return '게시글 관리'
+      return leaf.label
+    }
+  }
+
+  return null
+}
+
+/**
  * 메뉴 key는 `/templates/…` exact만 등록돼 있어, form-test·하위 URL 등은 매칭이 비어 null이 된다.
  * 사이드바 `selectedKeys`와 동일한 prefix 규칙으로 1뎁스(템플릿 관리) / 2·3뎁스(리프)를 맞춘다.
  */
@@ -1142,6 +1166,10 @@ export function getCategoryNameByPath(
   }
 
   if (matches.length === 0) {
+    const postsTitle = getPostsPathCategoryNameWhenUnmatched(normalizedPath, depth)
+    if (postsTitle !== null) {
+      return postsTitle
+    }
     const templateTitle = getTemplatesPathCategoryNameWhenUnmatched(normalizedPath, depth)
     if (templateTitle !== null) {
       return templateTitle
