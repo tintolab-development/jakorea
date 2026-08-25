@@ -41,7 +41,7 @@ describe('normalizeMemberConsentWriteDraft', () => {
     )
   })
 
-  it('clears notice subject fields and id type selection', () => {
+  it('keeps notice purpose text and locks id type to resident registration number', () => {
     const draft = normalizeMemberConsentWriteDraft(
       normalizeWritingFormDraft(createAgreementNoticeDraft()),
       'agreement-notice'
@@ -61,14 +61,14 @@ describe('normalizeMemberConsentWriteDraft', () => {
       purpose?.kind === 'single_item' &&
         purpose.variant === 'agreement_explanation_text' &&
         purpose.bodyText
-    ).toBe('')
+    ).toBe('범죄경력 유무 조회')
 
     const table = draft.paragraphs.find(p => p.id === 'agreement-notice-table')
     expect(
       table?.kind === 'single_item' &&
         table.variant === 'horizontal_table' &&
         table.idTypeWithInput?.selectedOptionId
-    ).toBeNull()
+    ).toBe('agreement-notice-id-resident')
     expect(
       table?.kind === 'single_item' &&
         table.variant === 'horizontal_table' &&

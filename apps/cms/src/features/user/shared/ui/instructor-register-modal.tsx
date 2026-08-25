@@ -4,7 +4,7 @@
  * - 제출 버튼은 항상 활성(loading 제외). 필수값 미충족 시 alert
  */
 
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useState, useCallback } from 'react'
 import { Form } from 'antd'
 import {
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
@@ -32,6 +32,13 @@ import {
   type CareerRow,
   type InstructorRegisterModalFormValues,
 } from '@/features/user/shared/ui/instructor-profile-form'
+import type { InstructorConsentFieldKey } from '@/features/user/shared/lib/instructor-consent-field-map'
+import {
+  createEmptyMemberRegisterConsentWriteSnapshots,
+  type MemberConsentAgreementDraftSnapshot,
+  type MemberConsentCrimeDraftSnapshot,
+  type MemberRegisterConsentWriteSnapshots,
+} from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import './instructor-register-modal.css'
 
 export type { InstructorRegisterModalFormValues } from '@/features/user/shared/ui/instructor-profile-form'
@@ -80,6 +87,8 @@ export function InstructorRegisterModal({
   const [form] = Form.useForm<InstructorRegisterModalFormValues>()
   const [formBodyKey, setFormBodyKey] = useState(0)
   const [jaGradeEvaluationOpen, setJaGradeEvaluationOpen] = useState(false)
+  const [consentWriteSnapshots, setConsentWriteSnapshots] =
+    useState<MemberRegisterConsentWriteSnapshots>(createEmptyMemberRegisterConsentWriteSnapshots)
   const registerDraftId = useId()
   const careerLevel = Form.useWatch('careerLevel', form) ?? 'new'
 
@@ -88,6 +97,7 @@ export function InstructorRegisterModal({
       form.setFieldsValue(INITIAL_VALUES)
       setFormBodyKey(key => key + 1)
       setJaGradeEvaluationOpen(false)
+      setConsentWriteSnapshots(createEmptyMemberRegisterConsentWriteSnapshots())
     }
   }, [open, form])
 
@@ -160,6 +170,26 @@ export function InstructorRegisterModal({
     form.submit()
   }
 
+  const handleSaveConsentAgreementSnapshot = useCallback(
+    (fieldKey: InstructorConsentFieldKey, snapshot: MemberConsentAgreementDraftSnapshot) => {
+      setConsentWriteSnapshots(prev => ({
+        ...prev,
+        agreementByFieldKey: { ...prev.agreementByFieldKey, [fieldKey]: snapshot },
+      }))
+    },
+    []
+  )
+
+  const handleSaveConsentCrimeSnapshot = useCallback(
+    (fieldKey: InstructorConsentFieldKey, snapshot: MemberConsentCrimeDraftSnapshot) => {
+      setConsentWriteSnapshots(prev => ({
+        ...prev,
+        crimeByFieldKey: { ...prev.crimeByFieldKey, [fieldKey]: snapshot },
+      }))
+    },
+    []
+  )
+
   return (
     <ContentModal
       open={open}
@@ -203,6 +233,9 @@ export function InstructorRegisterModal({
           key={formBodyKey}
           form={form}
           onOpenJaGradeEvaluation={() => setJaGradeEvaluationOpen(true)}
+          consentWriteSnapshots={consentWriteSnapshots}
+          onSaveConsentAgreementSnapshot={handleSaveConsentAgreementSnapshot}
+          onSaveConsentCrimeSnapshot={handleSaveConsentCrimeSnapshot}
         />
       </Form>
       <JaGradeEvaluationModal

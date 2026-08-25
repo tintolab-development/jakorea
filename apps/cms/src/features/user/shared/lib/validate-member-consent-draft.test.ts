@@ -202,7 +202,7 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     ).toBe(true)
   })
 
-  it('allows agreement-notice when subject and id type are filled', () => {
+  it('allows agreement-notice when subject paragraph is filled', () => {
     const base = normalizeWritingFormDraft(createAgreementNoticeDraft())
     const draft: WritingFormDraft = {
       ...base,
@@ -222,19 +222,6 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
                   ? '19900101'
                   : '01012345678',
           })),
-        }
-      }).map(paragraph => {
-        if (paragraph.id !== 'agreement-notice-table') return paragraph
-        if (paragraph.kind !== 'single_item' || paragraph.variant !== 'horizontal_table') {
-          return paragraph
-        }
-        if (paragraph.idTypeWithInput == null) return paragraph
-        return {
-          ...paragraph,
-          idTypeWithInput: {
-            ...paragraph.idTypeWithInput,
-            inputValue: '900101-1234567',
-          },
         }
       }),
     }
@@ -242,34 +229,5 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-notice' })
     ).toBe(false)
-  })
-
-  it('blocks agreement-notice when id type input is empty', () => {
-    const base = normalizeWritingFormDraft(createAgreementNoticeDraft())
-    const draft: WritingFormDraft = {
-      ...base,
-      paragraphs: base.paragraphs.map(paragraph => {
-        if (paragraph.id !== 'agreement-notice-subject') return paragraph
-        if (paragraph.kind !== 'single_item' || paragraph.variant !== 'short_essay') {
-          return paragraph
-        }
-        return {
-          ...paragraph,
-          items: (paragraph.items ?? []).map(item => ({
-            ...item,
-            bodyText:
-              item.id === 'agreement-notice-subj-name'
-                ? '홍길동'
-                : item.id === 'agreement-notice-subj-birth'
-                  ? '19900101'
-                  : '01012345678',
-          })),
-        }
-      }),
-    }
-
-    expect(
-      hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-notice' })
-    ).toBe(true)
   })
 })

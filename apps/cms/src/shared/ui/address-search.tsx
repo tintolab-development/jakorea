@@ -265,7 +265,7 @@ export function AddressSearch({
           }}
           placeholder={placeholder}
           inputSize={inputSize}
-          width={width}
+          width="100%"
           disabled={disabled}
           className={className}
           aria-haspopup="dialog"
