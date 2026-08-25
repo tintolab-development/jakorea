@@ -43,11 +43,9 @@
 
 .media {
   position: relative;
-  z-index: 2;
-  order: 3;
   width: 100%;
   min-width: 0;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: unset;
 }
 
 .imageFrame {
@@ -152,7 +150,7 @@
 
   .textArea {
     position: relative;
-    width: min(42%, 480px);
+    width: min(32%, 460px);
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -197,14 +195,11 @@
   }
 
   .media {
-    z-index: 2;
-    order: unset;
     width: auto;
     flex: 1 1 auto;
     min-width: 0;
     margin-left: 0;
-    aspect-ratio: 16 / 10;
-    max-height: 550px;
+    aspect-ratio: 948 / 560;
   }
 
   .imageFrame {

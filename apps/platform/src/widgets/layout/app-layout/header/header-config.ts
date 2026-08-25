@@ -8,6 +8,7 @@ import { isTextbooksPath, TEXTBOOKS_PATH } from '@/features/textbook'
 import { isTransparencyPath, TRANSPARENCY_PATH } from '@/features/transparency'
 import { CORPORATE_DONATION_PATH } from '@/features/corporate-donation'
 import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
+import { TALENT_DONATION_PATH } from '@/features/talent-donation'
 import { MYPAGE_PATH } from '@/features/mypage'
 import {
   ABOUT_CAREERS_PATH,
@@ -18,7 +19,6 @@ import {
   EDUCATION_ENTREPRENEURSHIP_PATH,
   EDUCATION_FINANCE_PATH,
   isTemporaryPagePath,
-  SUPPORT_TALENT_PATH,
 } from '@/shared/config/gnb-temporary-paths'
 import { getDevAuthLoggedIn, resolveLoginRequiredPath } from '@/shared/lib'
 import logOutIconUrl from '../image/icon/log-out.svg'
@@ -81,7 +81,7 @@ export const navigationGroups = [
     children: [
       { label: '개인후원', href: INDIVIDUAL_DONATION_PATH },
       { label: '기업후원', href: CORPORATE_DONATION_PATH },
-      { label: '재능기부', href: SUPPORT_TALENT_PATH },
+      { label: '재능기부', href: TALENT_DONATION_PATH },
     ],
   },
 ] as const satisfies readonly NavigationGroup[]

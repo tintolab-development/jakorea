@@ -50,10 +50,12 @@ import { DesignSystemPage } from '@/pages/design-system'
 import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
 import { CorporateDonationPage } from '@/pages/support/corporate'
 import { IndividualDonationPage } from '@/pages/support/individual'
+import { TalentDonationPage } from '@/pages/support/talent'
 import { TemporaryPage } from '@/pages/temporary'
 import { CORPORATE_DONATION_PATH } from '@/features/corporate-donation'
 import { IMPACT_STORIES_PATH } from '@/features/impact-story'
 import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
+import { TALENT_DONATION_PATH } from '@/features/talent-donation'
 import {
   ABOUT_CAREERS_PATH,
   ABOUT_HISTORY_PATH,
@@ -62,7 +64,6 @@ import {
   EDUCATION_DIGITAL_LITERACY_PATH,
   EDUCATION_ENTREPRENEURSHIP_PATH,
   EDUCATION_FINANCE_PATH,
-  SUPPORT_TALENT_PATH,
 } from '@/shared/config/gnb-temporary-paths'
 import { AppLayoutRoute } from './app-layout-route'
 
@@ -114,7 +115,7 @@ export const router = createBrowserRouter([
     children: [
       { path: INDIVIDUAL_DONATION_PATH, element: <IndividualDonationPage /> },
       { path: CORPORATE_DONATION_PATH, element: <CorporateDonationPage /> },
-      { path: SUPPORT_TALENT_PATH, element: <TemporaryPage /> },
+      { path: TALENT_DONATION_PATH, element: <TalentDonationPage /> },
     ],
   },
   {

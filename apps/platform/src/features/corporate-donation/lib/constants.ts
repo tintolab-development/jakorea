@@ -3,17 +3,10 @@ export const CORPORATE_DONATION_PATH = '/support/corporate'
 export const HERO_LABEL = '기업후원'
 
 /** Desktop 시안 줄바꿈 */
-export const HERO_TITLE_LINES = ['청소년의 성장을', '이끌어내는 파트너십의 힘'] as const
-
-/** Mobile 시안 줄바꿈 */
-export const HERO_TITLE_LINES_MOBILE = [
-  '청소년의 성장을 이끌어내는',
-  '파트너십의 힘',
-] as const
+export const HERO_TITLE_LINES = ['청소년의 성장을 이끌어내는 파트너십의 힘'] as const
 
 export const HERO_DESCRIPTION_LINES = [
-  'JA Korea는 기업의 사회적 책임이 청소년의 내일로',
-  '연결될 수 있도록 맞춤형 교육 프로그램을 운영합니다.',
+  'JA Korea는 기업의 사회적 책임이 청소년의 내일로 연결될 수 있도록 맞춤형 교육 프로그램을 운영합니다.',
 ] as const
 
 export type WhyCardId = 'global_expansion' | 'transparent_ops' | 'verified_impact'
