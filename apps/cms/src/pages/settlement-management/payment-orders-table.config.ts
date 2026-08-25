@@ -13,6 +13,26 @@ const P = 'po'
 
 export const PAYMENT_ORDERS_EXPOSURE_PARAM_KEY = `${P}_exp`
 
+/** 지급 현황 상세 풀페이지 — 목록 필터 쿼리와 분리 */
+export const PAYMENT_ORDERS_DETAIL_TYPE_PARAM = `${P}_detail`
+export const PAYMENT_ORDERS_DETAIL_NO_PARAM = `${P}_detail_no`
+export const PAYMENT_ORDERS_DETAIL_KEY_PARAM = `${P}_detail_key`
+
+const PAYMENT_ORDERS_DETAIL_QUERY_KEYS = [
+  PAYMENT_ORDERS_DETAIL_TYPE_PARAM,
+  PAYMENT_ORDERS_DETAIL_NO_PARAM,
+  PAYMENT_ORDERS_DETAIL_KEY_PARAM,
+] as const
+
+/** 목록·캘린더 쿼리 키에서 상세 모달 파라미터를 제외한다. */
+export function paymentOrdersListQuerySearchParamsKey(searchParams: URLSearchParams): string {
+  const next = new URLSearchParams(searchParams)
+  for (const key of PAYMENT_ORDERS_DETAIL_QUERY_KEYS) {
+    next.delete(key)
+  }
+  return next.toString()
+}
+
 export type ExposureMode = 'program' | 'instructor'
 
 /** 지급조서 처리 현황 — `all`은 URL·필터에서 미선택 */
