@@ -3,22 +3,38 @@ import type {
 } from '@jakorea/form-schema/writing-form'
 import type { FormTemplateSurface, ParagraphBodyInteractionMode } from '@jakorea/form-schema/surface'
 import { HorizontalTablePreviewBody } from './horizontal-table-preview-body.js'
+import { FillParagraphBody } from './fill-paragraph-body.js'
 
 export type PreviewParagraphBodyProps = {
   paragraph: WritingFormParagraph
   interactionMode: ParagraphBodyInteractionMode
   surface: FormTemplateSurface
+  onUpdateParagraph?: import('./fill-paragraph-body.js').FormUpdateParagraph
+  fillOptions?: import('./fill-paragraph-body.js').FillParagraphBodyOptions
 }
 
 export function PreviewParagraphBody({
   paragraph,
   interactionMode,
+  onUpdateParagraph,
+  fillOptions,
 }: PreviewParagraphBodyProps) {
   if (interactionMode === 'authoring') {
     return (
       <p className="form-template-preview-placeholder">
         authoring 모드는 CMS 편집기에서만 지원됩니다.
       </p>
+    )
+  }
+
+  if (interactionMode === 'user' && onUpdateParagraph != null) {
+    return (
+      <FillParagraphBody
+        paragraph={paragraph}
+        interactionMode={interactionMode}
+        onUpdateParagraph={onUpdateParagraph}
+        fillOptions={fillOptions}
+      />
     )
   }
 

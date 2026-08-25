@@ -5,7 +5,7 @@ import { SPONSOR_PROGRAM_HISTORY_FILTER_ALL } from '@/features/sponsor/utils/mat
 export function programHistoriesParamsFromFilters(
   filters: SponsorProgramHistoryFilters,
   page = 0,
-  size = 200
+  size = 50
 ): ProgramHistoriesParams {
   const params: ProgramHistoriesParams = { page, size }
   const title = filters.title.trim()

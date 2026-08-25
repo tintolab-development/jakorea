@@ -29,9 +29,11 @@ import { mockFileTemplates } from '@/data/mock/templates'
 import { getFormTemplateByProgramId, formTemplatesByProgramId } from '@/data/mock/form-templates'
 import type { FormFieldDef } from '@/types/form-template'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { FormFieldEditor } from './form-field-editor'
 import dayjs from 'dayjs'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -91,7 +93,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
         venue: program.venue || '',
         curriculum: program.curriculum || '',
         contactEmail: program.contactEmail || '',
-        contactPhone: program.contactPhone || '',
+        contactPhone: formatKoreanPhoneNumber(program.contactPhone || ''),
         oneLineIntroduction: program.oneLineIntroduction || '',
         keyVisualImage: program.keyVisualImage || '',
         applicationFormTemplateId: program.applicationFormTemplateId || '',
@@ -158,7 +160,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
         venue: program.venue || '',
         curriculum: program.curriculum || '',
         contactEmail: program.contactEmail || '',
-        contactPhone: program.contactPhone || '',
+        contactPhone: formatKoreanPhoneNumber(program.contactPhone || ''),
         oneLineIntroduction: program.oneLineIntroduction || '',
         keyVisualImage: program.keyVisualImage || '',
         applicationFormTemplateId: program.applicationFormTemplateId || '',
@@ -439,10 +441,15 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
               />
             </Form.Item>
 
-            <Form.Item label="문의처 연락처" style={{ flex: 1 }}>
-              <Input
+            <Form.Item
+              label="문의처 연락처"
+              validateStatus={errors.contactPhone ? 'error' : ''}
+              help={fieldValidationHelp(errors.contactPhone)}
+              style={{ flex: 1 }}
+            >
+              <CmsPhoneInput
                 value={watch('contactPhone') || ''}
-                onChange={e => setValue('contactPhone', e.target.value)}
+                onChange={e => setValue('contactPhone', e.target.value, { shouldValidate: true })}
                 placeholder="010-1234-5678"
               />
             </Form.Item>

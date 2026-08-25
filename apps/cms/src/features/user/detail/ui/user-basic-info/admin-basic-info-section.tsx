@@ -9,7 +9,7 @@ import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import { ManagedProgramCountDisplay } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput, CmsRadioGroup } from '@/shared/ui'
+import { CmsInput, CmsPhoneInput, CmsRadioGroup } from '@/shared/ui'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { formatDate } from '@/shared/utils'
 import { detailEmailDisplay, detailPhoneDisplay, genderBirthView, socialView } from './display'
@@ -164,7 +164,7 @@ export function AdminBasicInfoSection({
                 <span>{user.phone ?? '-'}</span>
               ) : (
                 <Form.Item name="contact" style={FORM_ITEM_STYLE}>
-                  <CmsInput placeholder="연락처" inputSize="medium" width="100%" />
+                  <CmsPhoneInput placeholder="연락처" inputSize="medium" width="100%" />
                 </Form.Item>
               )
             }

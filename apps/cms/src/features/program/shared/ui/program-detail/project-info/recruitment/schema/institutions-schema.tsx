@@ -4,6 +4,7 @@ import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
@@ -276,7 +277,7 @@ export function createInstitutionsSchema({
                       name="contactPhone"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsInput
+                        <CmsPhoneInput
                           {...field}
                           value={field.value ?? ''}
                           placeholder="02-6085-6028"

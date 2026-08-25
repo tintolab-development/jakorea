@@ -19,6 +19,7 @@ import { UjatRecruitSectionDescriptionHeader } from '../ujat-recruit-section-des
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -406,7 +407,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                       name="contactPhone"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsInput
+                        <CmsPhoneInput
                           {...field}
                           value={field.value ?? ''}
                           placeholder="문의처 전화번호"

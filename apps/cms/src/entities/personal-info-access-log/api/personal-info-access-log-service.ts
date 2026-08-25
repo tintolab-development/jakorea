@@ -25,6 +25,7 @@ export async function recordPersonalInfoAccess(
   payload: RecordPersonalInfoAccessPayload
 ): Promise<PersonalInfoAccessLog> {
   return logPersonalInfoAccess({
+    targetName: payload.targetName ?? '-',
     accessItem: payload.accessItem,
     accessPurpose: payload.accessPurpose,
     accessorId: payload.accessorId ?? 'unknown-user',

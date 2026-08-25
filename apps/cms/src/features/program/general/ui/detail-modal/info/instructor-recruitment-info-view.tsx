@@ -15,6 +15,7 @@ import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-p
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import { ProgramDetailContactReadRow, ProgramDetailDateMethodReadRow } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
@@ -295,7 +296,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                         name="contactPhone"
                         control={form.control}
                         render={({ field }) => (
-                          <CmsInput
+                          <CmsPhoneInput
                             {...field}
                             value={field.value ?? ''}
                             placeholder="문의처 전화번호"

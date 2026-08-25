@@ -7,6 +7,7 @@ import type {
 import type { PortalProfileResponse } from '@/features/auth/sign-in'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { MOCK_ADMIN_REGISTERED_PROFILE } from '../lib/constants'
+import type { AdminProvisionedOnboardingStep } from '../lib/onboarding-step'
 
 const ADMIN_REGISTERED_WIZARD_STORAGE_KEY = 'platform:dev:admin-registered-wizard'
 
@@ -43,6 +44,8 @@ export type AdminRegisteredWizardState = {
   portalProfile?: PortalProfileResponse
   /** GET /api/portal/me/profile 반영 여부 */
   profileHydrated?: boolean
+  /** 로그인·GET /me 의 `adminProvisionedOnboardingStep` 스냅샷 */
+  adminProvisionedOnboardingStep?: AdminProvisionedOnboardingStep
 }
 
 function readWizardState(): AdminRegisteredWizardState | null {

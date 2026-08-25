@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useCallback, useMemo } from 'react'
+import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   fetchGeneralProgramRemoteById,
   getGeneralProgramMockById,
@@ -15,6 +15,28 @@ export interface UseGeneralProgramDetailOptions {
   /** 목록 행 클릭 시 전달된 프로그램 — mock 세션에서 즉시 표시용 */
   initialProgram?: Program | null
   enabled?: boolean
+}
+
+export function generalProgramDetailQueryOptions(programId: string) {
+  return queryOptions({
+    queryKey: generalProgramQueryKeys.detail(programId),
+    queryFn: () => fetchGeneralProgramRemoteById(programId),
+    staleTime: 30_000,
+    retry: false,
+  })
+}
+
+export function usePrefetchGeneralProgramDetail() {
+  const queryClient = useQueryClient()
+  const remoteEnabled = useGeneralProgramsRemoteEnabled()
+
+  return useCallback(
+    (programId: string) => {
+      if (!remoteEnabled || !programId) return
+      void queryClient.prefetchQuery(generalProgramDetailQueryOptions(programId))
+    },
+    [queryClient, remoteEnabled]
+  )
 }
 
 /**
@@ -36,11 +58,8 @@ export function useGeneralProgramDetail(
   }, [remoteEnabled, programId, initialProgram])
 
   const remoteQuery = useQuery({
-    queryKey: generalProgramQueryKeys.detail(programId ?? ''),
-    queryFn: () => fetchGeneralProgramRemoteById(programId!),
+    ...generalProgramDetailQueryOptions(programId ?? ''),
     enabled: remoteEnabled,
-    staleTime: 30_000,
-    retry: false,
   })
 
   const program = remoteEnabled ? (remoteQuery.data ?? null) : mockProgram

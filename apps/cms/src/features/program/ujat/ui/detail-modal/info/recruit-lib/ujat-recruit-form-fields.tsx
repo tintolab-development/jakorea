@@ -14,6 +14,7 @@ import { DividerVertical } from '@/shared/components/divider-vertical'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { INTERVIEW_METHOD_OPTIONS } from '@/features/program/shared/lib/program-detail-info-constants'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
@@ -29,18 +30,22 @@ export function UjatRecruitInquiryContactField({
   label,
   placeholder,
   value,
-  onChange }: {
+  onChange,
+  phone,
+}: {
   label: string
   placeholder: string
   value?: string
   onChange?: (next: string) => void
+  phone?: boolean
 }) {
+  const InputComponent = phone ? CmsPhoneInput : CmsInput
   return (
     <div style={inquiryColumnStyle}>
       <span className="nowrap" style={{ flexShrink: 0 }}>
         {label}
       </span>
-      <CmsInput
+      <InputComponent
         inputSize="medium"
         width={240}
         placeholder={placeholder}

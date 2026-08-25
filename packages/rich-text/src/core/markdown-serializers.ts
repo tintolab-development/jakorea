@@ -88,18 +88,36 @@ function renderAlignedBlock(
     styles.push(`line-height: ${lineHeight}`)
   }
   if (styles.length === 0) return content
-  return `<${tag} style="${styles.map(s => escapeHtml(s)).join('; ')}">${content}</${tag}>\n\n`
+  return `<${tag} style="${styles.map(s => escapeHtml(s)).join('; ')}">${content}</${tag}>`
 }
 
-/** 문단 정렬·줄간격 — Markdown에 HTML 블록으로 보존 */
+const EMPTY_PARAGRAPH_MARKDOWN = '&nbsp;'
+
+type MarkdownRenderCtx = {
+  previousNode?: JSONContent | null
+}
+
+/** 문단 정렬·줄간격 — Markdown에 HTML 블록으로 보존. 블록 간격은 doc의 `\n\n` join이 담당. */
 export const RichTextParagraph = Paragraph.extend({
-  renderMarkdown: (node: JSONContent, helpers: MarkdownRendererHelpers) => {
+  renderMarkdown: (
+    node: JSONContent,
+    helpers: MarkdownRendererHelpers,
+    ctx?: MarkdownRenderCtx
+  ) => {
+    const children = Array.isArray(node.content) ? node.content : []
+    if (children.length === 0) {
+      const previousNode = ctx?.previousNode
+      const previousContent = Array.isArray(previousNode?.content) ? previousNode.content : []
+      const previousNodeIsEmptyParagraph =
+        previousNode?.type === 'paragraph' && previousContent.length === 0
+      return previousNodeIsEmptyParagraph ? EMPTY_PARAGRAPH_MARKDOWN : ''
+    }
     const content = helpers.renderChildren(node.content ?? [])
     const attrs = node.attrs as { textAlign?: string; lineHeight?: string } | undefined
     const align = attrs?.textAlign
     const lineHeight = attrs?.lineHeight
     if ((!align || align === 'left') && !lineHeight) {
-      return `${content}\n\n`
+      return content
     }
     return renderAlignedBlock('p', align, lineHeight, content)
   },
@@ -108,19 +126,24 @@ export const RichTextParagraph = Paragraph.extend({
 export const RichTextHeading = Heading.extend({
   renderMarkdown: (node: JSONContent, helpers: MarkdownRendererHelpers) => {
     const level = (node.attrs as { level?: number } | undefined)?.level ?? 1
-    const content = helpers.renderChildren(node.content ?? [])
+    if (!node.content?.length) return ''
+    const content = helpers.renderChildren(node.content)
     const attrs = node.attrs as { textAlign?: string; lineHeight?: string } | undefined
     const align = attrs?.textAlign
     const lineHeight = attrs?.lineHeight
     const hashes = '#'.repeat(level)
     if ((!align || align === 'left') && !lineHeight) {
-      return `${hashes} ${content}\n\n`
+      return `${hashes} ${content}`
     }
     return renderAlignedBlock(`h${level}`, align, lineHeight, content)
   },
 })
 
-/** 드래그 리사이즈·좌/중/우 정렬 (tiptap-extension-resize-image) */
+/**
+ * 드래그 리사이즈·좌/중/우 정렬 (tiptap-extension-resize-image).
+ * 패키지 기본 노드명 `imageResize`는 Markdown `![alt](src)` 파서가 `image`를 만들기 때문에
+ * 저장 후 이미지가 사라진다. 표준 `image` 이름을 유지한다.
+ */
 export const RichTextImageResize = ImageResize.configure({
   inline: false,
   minWidth: 80,
@@ -129,6 +152,15 @@ export const RichTextImageResize = ImageResize.configure({
     class: 'rich-text-content__image',
   },
 }).extend({
+  name: 'image',
+  parseMarkdown: (token, helpers) => {
+    const t = token as { href?: string; title?: string; text?: string }
+    return helpers.createNode('image', {
+      src: t.href ?? '',
+      title: t.title ?? null,
+      alt: t.text ?? '',
+    })
+  },
   renderMarkdown: (node: JSONContent) => {
     const attrs = node.attrs as Record<string, string | undefined> | undefined
     const src = attrs?.src ?? ''
@@ -136,10 +168,10 @@ export const RichTextImageResize = ImageResize.configure({
     const containerStyle = attrs?.containerStyle
     if (containerStyle?.includes('width')) {
       const style = escapeHtml(containerStyle)
-      return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" class="rich-text-content__image" style="${style}" />\n\n`
+      return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" class="rich-text-content__image" style="${style}" />`
     }
     const safeAlt = alt.replace(/]/g, '\\]')
-    return `![${safeAlt}](${src})\n\n`
+    return `![${safeAlt}](${src})`
   },
 })
 
@@ -152,10 +184,18 @@ export const RichTextYoutube = Youtube.configure({
     class: 'rich-text-content__youtube',
   },
 }).extend({
+  parseHTML() {
+    return [
+      ...(this.parent?.() ?? []),
+      { tag: 'iframe.rich-text-content__youtube' },
+      { tag: 'iframe[src*="youtube.com"]' },
+      { tag: 'iframe[src*="youtube-nocookie.com"]' },
+    ]
+  },
   renderMarkdown: (node: JSONContent) => {
     const src = (node.attrs as { src?: string } | undefined)?.src ?? ''
     const embed =
       getEmbedUrlFromYoutubeUrl({ url: src, nocookie: true }) ?? src
-    return `<iframe class="rich-text-content__youtube" width="640" height="360" src="${escapeHtml(embed)}" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>\n\n`
+    return `<div data-youtube-video><iframe class="rich-text-content__youtube" width="640" height="360" src="${escapeHtml(embed)}" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`
   },
 })

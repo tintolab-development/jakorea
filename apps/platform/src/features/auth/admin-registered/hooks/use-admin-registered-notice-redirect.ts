@@ -9,14 +9,12 @@ import {
   setDevAuthLoggedIn,
 } from '@/shared/lib'
 import { ADMIN_REGISTERED_NOTICE_PATH } from '../lib/constants'
-import {
-  requiresAdminRegisteredOnboarding,
-  setAdminRegisteredPasswordChangeRequired,
-} from '../lib/admin-registered-member'
+import { resolveAdminProvisionedOnboardingEntryPath } from '../lib/onboarding-step'
+import { requiresAdminRegisteredOnboarding } from '../lib/admin-registered-member'
+import { syncAdminRegisteredOnboardingSession } from '../lib/sync-onboarding-session'
 
 /**
- * 마이페이지 진입 시 GET /me 기준으로 관리자 등록 안내 화면으로 보낸다.
- * registeredByAdmin true && identitySelfSignupCompletedAfterAdminRegistration false 만 해당.
+ * 마이페이지 진입 시 GET /me 기준으로 관리자 등록 온보딩 step 화면으로 보낸다.
  */
 export function useAdminRegisteredNoticeRedirect() {
   const navigate = useNavigate()
@@ -40,11 +38,14 @@ export function useAdminRegisteredNoticeRedirect() {
 
     if (requiresAdminRegisteredOnboarding(me)) {
       if (me.email?.trim()) {
-        setAdminRegisteredPasswordChangeRequired(me.email)
+        syncAdminRegisteredOnboardingSession(me.email, me, 'first-login')
       } else {
         setAdminOnboardingRequired(true)
       }
-      navigate(ADMIN_REGISTERED_NOTICE_PATH, { replace: true })
+
+      const target =
+        resolveAdminProvisionedOnboardingEntryPath(me) ?? ADMIN_REGISTERED_NOTICE_PATH
+      navigate(target, { replace: true })
       return
     }
 

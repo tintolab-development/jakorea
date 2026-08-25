@@ -55,6 +55,10 @@ export function useProgramStatusManager(): UseProgramStatusManagerResult {
         await queryClient.invalidateQueries({
           queryKey: generalProgramQueryKeys.detail(programId),
         })
+        await queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.lists() })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramQueryKeys.overviewStages(),
+        })
         return
       }
       await updateProgram(programId, { lifecycleStatus: status })

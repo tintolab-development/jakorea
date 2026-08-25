@@ -14,6 +14,7 @@ import {
   type PaymentOrderAdminProcessingStatus,
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
+import { getPaymentOrdersMonthFilterRange } from '@/pages/settlement-management/payment-orders-date-range'
 import {
   settlementCalendarPrimaryTitle,
   type InstructorSettlementInvoiceDetail,
@@ -334,10 +335,9 @@ export type PaymentOrdersCalendarDetailClick =
   | { exposure: 'program'; row: PaymentOrderAdminProgramRow }
   | { exposure: 'instructor'; row: PaymentOrderAdminInstructorRow }
 
-/** 상단 기간 필터 `dateRangeOneMonthFromStart`와 동일: 해당 월 1일 ~ 다음달 전날 */
+/** 상단 기간 필터 `dateRangeOneMonthFromStart`와 동일: 해당 월 1일 ~ 익월 1일 */
 function oneMonthRangeMatchingFilter(month: Dayjs): [Dayjs, Dayjs] {
-  const start = month.startOf('month')
-  return [start, start.add(1, 'month').subtract(1, 'day')]
+  return getPaymentOrdersMonthFilterRange(month)
 }
 
 export interface PaymentOrdersCalendarViewProps {

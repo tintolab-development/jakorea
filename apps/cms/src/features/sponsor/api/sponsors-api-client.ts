@@ -1,6 +1,12 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import {
+  assertBulkDeleteSucceeded,
+  forEachBulkIdChunk,
+  toBulkNumericIds,
+} from '@/features/data-management/api/bulk-delete'
 import { getJAKoreaCMSBackendAPIDataManagementSubset } from '@/shared/api/generated/data-management/data-management-api'
 import type {
+  BulkActionResponse,
   ProgramHistoriesParams,
   SponsorContactRequest,
   SponsorContactResponse,
@@ -44,6 +50,15 @@ export async function deleteSponsorRemote(id: string): Promise<void> {
   await dmApi.delete1(pathId(id))
 }
 
+export async function bulkDeleteSponsorsRemote(ids: string[]): Promise<void> {
+  await forEachBulkIdChunk(ids, async chunk => {
+    const result = unwrapApiBody<BulkActionResponse>(
+      await dmApi.bulkDeleteSponsors({ ids: toBulkNumericIds(chunk) })
+    )
+    assertBulkDeleteSucceeded(result, '후원사 일괄 삭제에 실패했습니다.')
+  })
+}
+
 export async function endSponsorRemote(id: string): Promise<void> {
   await dmApi.end(pathId(id))
 }
@@ -70,6 +85,15 @@ export async function updateSponsorContactRemote(
 
 export async function deleteSponsorContactRemote(contactId: string): Promise<void> {
   await dmApi.deleteContact(pathId(contactId))
+}
+
+export async function bulkDeleteSponsorContactsRemote(ids: string[]): Promise<void> {
+  await forEachBulkIdChunk(ids, async chunk => {
+    const result = unwrapApiBody<BulkActionResponse>(
+      await dmApi.bulkDeleteContacts({ ids: toBulkNumericIds(chunk) })
+    )
+    assertBulkDeleteSucceeded(result, '담당자 일괄 삭제에 실패했습니다.')
+  })
 }
 
 export async function fetchYearlyBusinessesRemote(

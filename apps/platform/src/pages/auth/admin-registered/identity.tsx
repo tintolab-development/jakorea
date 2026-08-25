@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
+  applyAdminProvisionedOnboardingResponse,
   clearAdminProvisionedIdentityConfirmPending,
+  getAdminRegisteredWizardState,
   markAdminProvisionedIdentityConfirmPending,
+  normalizeAdminProvisionedOnboardingStep,
   requireAdminRegisteredWizardState,
+  resolveAdminProvisionedOnboardingPath,
   updateAdminRegisteredWizardState,
   useAdminProvisionedIdentityConfirmMutation,
 } from '@/features/auth/admin-registered'
@@ -34,7 +38,7 @@ export function AdminRegisteredIdentityPage() {
 
   useEffect(() => {
     if (!wizardState) return
-    if (!wizardState.birthDate || !wizardState.gender) {
+    if (!isRemoteApiConfigured() && (!wizardState.birthDate || !wizardState.gender)) {
       navigate('/auth/admin-registered/birth', { replace: true })
     }
   }, [navigate, wizardState])
@@ -70,6 +74,7 @@ export function AdminRegisteredIdentityPage() {
               setConfirmError('본인인증 정보를 확인할 수 없습니다. 다시 시도해 주세요.')
               return
             }
+            applyAdminProvisionedOnboardingResponse(onboarding)
           } catch (error) {
             setConfirmError(
               getLoginApiErrorMessage(
@@ -89,6 +94,19 @@ export function AdminRegisteredIdentityPage() {
           verifiedName: result.verifiedName,
           verifiedPhone: result.verifiedPhone,
         })
+
+        if (isRemoteApiConfigured()) {
+          const step =
+            normalizeAdminProvisionedOnboardingStep(
+              getAdminRegisteredWizardState()?.adminProvisionedOnboardingStep,
+            ) ?? 'PASSWORD'
+          navigate(
+            resolveAdminProvisionedOnboardingPath(step) ??
+              '/auth/admin-registered/change-password',
+          )
+          return
+        }
+
         navigate('/auth/admin-registered/change-password')
       })()
     },
@@ -115,7 +133,7 @@ export function AdminRegisteredIdentityPage() {
     navigate('/auth/admin-registered/birth')
   }
 
-  if (!wizardState || !canVerify) {
+  if (!wizardState || (!isRemoteApiConfigured() && !canVerify)) {
     return null
   }
 

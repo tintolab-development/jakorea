@@ -4,7 +4,24 @@
  */
 
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import dayjs from 'dayjs'
+import { getPaymentOrdersDefaultDateRangeParams } from '@/pages/settlement-management/payment-orders-date-range'
 import { settlementItemSettingSections } from './settlement-item-settings'
+import type { PaymentOrderCalculationBasisDetail } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
+import {
+  buildActivityBasisDetail,
+  buildLectureFeeTierBasisDetail,
+  buildLodgingBasisDetail,
+  buildMealBasisDetail,
+  buildTravelBasisDetail,
+  buildWithholdingBasisDetail,
+  lectureFeeLineDescriptionFromStandardTitle,
+  resolveActivityBasisDetailTotalWon,
+  resolveLodgingBasisDetailTotalWon,
+  resolveMealBasisDetailTotalWon,
+  resolveTravelBasisDetailTotalWon,
+  resolveWithholdingBasisDetailAmountWon,
+} from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 
 export type PaymentOrderAdminProcessingStatus =
   | 'pending'
@@ -154,7 +171,13 @@ export interface PaymentOrderAdminInstructorDetailProgramRow {
 }
 
 /** 산출 내역서 모달 — 산정 행 구분(합계 수식·표시용) */
-export type PaymentOrderCalculationLineKind = 'lecture_fee' | 'travel' | 'lodging' | 'withholding'
+export type PaymentOrderCalculationLineKind =
+  | 'lecture_fee'
+  | 'travel'
+  | 'lodging'
+  | 'meal'
+  | 'activity'
+  | 'withholding'
 
 /** 산출 내역서 모달 — 기본 정보(프로그램 맥락 4열 `program-detail-info-tab`) */
 export interface PaymentOrderCalculationStatementProgramBasicInfo {
@@ -187,6 +210,12 @@ export interface PaymentOrderCalculationStatementInstructorBasicInfo {
   addressBlurredTail?: string
   settlementAccountBankNumberPart: string
   settlementAccountHolderPart: string
+  /** Mock 시드 기반. Remote 미제공 시 `-` */
+  genderBirthDisplay?: string
+  /** 1 이상이면 성명 옆 일정 변경 배지 */
+  scheduleChangeCancelCount?: number
+  /** 지급조서 발급용 — UI 미노출 */
+  programName?: string
   processingStatusDisplay: string
   processingStatusClass: PaymentOrderAdminLineProcessingStatus
   processingRejectionReason?: string
@@ -206,6 +235,8 @@ export interface PaymentOrderCalculationStatementLine {
   kind: PaymentOrderCalculationLineKind
   /** 시안 마스킹 등 — 있으면 정산 금액 열에 이 문자열을 표시 */
   amountDisplayOverride?: string
+  /** 산정 기준 상세 모달 payload (read-only) */
+  basisDetail?: PaymentOrderCalculationBasisDetail
 }
 
 export interface PaymentOrderCalculationStatementSessionBlock {
@@ -324,24 +355,31 @@ function isoDate(year: number, month: number, day: number): string {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
-/** 지급조서 확인 페이지 URL·필터 기본 기간(목록 mock 출강일 분포와 동일) */
-export const PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE = {
-  from: '2026-04-01',
-  to: '2026-06-30',
-} as const
+const paymentOrdersMockDefaultRange = getPaymentOrdersDefaultDateRangeParams()
+const paymentOrdersMockRangeStart = dayjs(paymentOrdersMockDefaultRange.from)
+const paymentOrdersMockRangeDayCount = Math.max(
+  paymentOrdersMockRangeStart.add(1, 'month').diff(paymentOrdersMockRangeStart, 'day'),
+  1
+)
 
-/** No. 내림차순(큰 번호가 위), 30건 — 2026년 4~6월에 월별 10건씩 고르게 분산 */
+function mockSettlementAttendanceDate(seed: number): string {
+  const offset = seed % paymentOrdersMockRangeDayCount
+  return paymentOrdersMockRangeStart.add(offset, 'day').format('YYYY-MM-DD')
+}
+
+/** @deprecated `getPaymentOrdersDefaultDateRangeParams()` 사용 */
+export const PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE = paymentOrdersMockDefaultRange
+
+/** No. 내림차순(큰 번호가 위), 30건 — 기본 필터 기간(당월 1일~익월 1일) 안에 출강일 분산 */
 export const mockPaymentOrderAdminProgramList: PaymentOrderAdminProgramRow[] = Array.from(
   { length: 30 },
   (_, i) => {
     const no = 230 - i
     const titleIdx = i % programTitles.length
     const statusIdx = i % statuses.length
-    const m = 4 + Math.floor(i / 10)
-    const baseDay = 3 + ((i * 5 + (i % 7) * 3) % 23)
-    const ref = isoDate(2026, m, Math.min(baseDay, 28))
-    const d2 = isoDate(2026, m, Math.min(baseDay + 3, 28))
-    const d3 = isoDate(2026, m, Math.min(baseDay + 7, 28))
+    const ref = mockSettlementAttendanceDate(i * 5)
+    const d2 = mockSettlementAttendanceDate(i * 5 + 3)
+    const d3 = mockSettlementAttendanceDate(i * 5 + 7)
     const pendingCount = i % 13
     return {
       no,
@@ -377,7 +415,7 @@ function buildInstructorCalendarSlot(i: number): { start: string; end: string } 
   return { start: fmt(startMin), end: fmt(endMin) }
 }
 
-/** 강사별 목록: 프로그램명과 교차 연결 — 2026년 4~6월에 월별 7·7·6건 분산 */
+/** 강사별 목록: 프로그램명과 교차 연결 — 기본 필터 기간 안에 출강일 분산 */
 export const mockPaymentOrderAdminInstructorList: PaymentOrderAdminInstructorRow[] =
   instructorNames.map((instructorName, i) => {
     const no = 120 - i
@@ -386,10 +424,8 @@ export const mockPaymentOrderAdminInstructorList: PaymentOrderAdminInstructorRow
       programTitles[i % programTitles.length],
       programTitles[(i + 3) % programTitles.length],
     ].filter((v, j, a) => a.indexOf(v) === j)
-    const m = 4 + Math.floor(i / 7)
-    const baseDay = 4 + ((i * 4 + (i % 5) * 2) % 21)
-    const ref = isoDate(2026, m, Math.min(baseDay, 28))
-    const d2 = isoDate(2026, m, Math.min(baseDay + 4, 28))
+    const ref = mockSettlementAttendanceDate(i * 4)
+    const d2 = mockSettlementAttendanceDate(i * 4 + 4)
     const pendingCount = i % 13
     const slot = buildInstructorCalendarSlot(i)
     const base: PaymentOrderAdminInstructorRow = {
@@ -611,7 +647,7 @@ function splitAddressAfterDongForStatement(address: string): { head: string; tai
   return { head: address.slice(0, end), tail }
 }
 
-function addressDisplayForStatementBlur(address: string): {
+export function addressDisplayForStatementBlur(address: string): {
   addressDisplay: string
   addressBlurredTail?: string
 } {
@@ -661,7 +697,6 @@ export function getMockPaymentOrderProgramCalculationStatement(
     instructorLineRow.estimatedAmount > 0 ? instructorLineRow.estimatedAmount : 915000
   const lectureFeeAmountLabel = `${lectureFee.toLocaleString('ko-KR')}원`
   const lectureFeeStandardTitle = pickSettlementWageStandardTitle(seed)
-  const isSpecialLecture = lectureFeeStandardTitle === '특강 강사비'
 
   const sessionStart = Math.max(1, instructorLineRow.sessionOrdinal)
   const sessionEnd = sessionStart + 1 + (seed % 2)
@@ -670,24 +705,49 @@ export function getMockPaymentOrderProgramCalculationStatement(
 
   const includeTravel = seed % 5 !== 0
   const includeLodging = seed % 7 !== 0
+  const includeMeal = seed % 11 !== 0
+  const includeActivity = seed % 13 !== 0
 
-  const travelAmount = 31500
-  const lodgingAmount = 80000
-  const travelDesc = '대전 중구 -> 서울 강서구 이동 (146.8km)'
+  const travelBasisDetail = buildTravelBasisDetail(seed)
+  const travelAmount = resolveTravelBasisDetailTotalWon(travelBasisDetail)
+  const lodgingBasisDetail = buildLodgingBasisDetail(seed)
+  const lodgingAmount = resolveLodgingBasisDetailTotalWon(lodgingBasisDetail)
+  const mealBasisDetail = buildMealBasisDetail()
+  const mealAmount = resolveMealBasisDetailTotalWon(mealBasisDetail)
+  const activityBasisDetail = buildActivityBasisDetail()
+  const activityAmount = resolveActivityBasisDetailTotalWon(activityBasisDetail)
+  const lodgingDesc =
+    lodgingBasisDetail.layout === 'lodging1s1g' ? '8만원 고정 지급 (1사1교)' : '15만원 고정 지급'
+  const travelDesc =
+    travelBasisDetail.layout === 'transportInstructor'
+      ? `${travelBasisDetail.distanceKm}km 이동 (1사1교)`
+      : travelBasisDetail.layout === 'transportRoundTrip'
+        ? '참여자 교통비 (왕복)'
+        : '참여자 교통비 (편도)'
 
   const subtotalBeforeTax =
-    lectureFee + (includeTravel ? travelAmount : 0) + (includeLodging ? lodgingAmount : 0)
-  const withholdingAmount = -Math.round(subtotalBeforeTax * 0.088)
+    lectureFee +
+    (includeTravel ? travelAmount : 0) +
+    (includeLodging ? lodgingAmount : 0) +
+    (includeMeal ? mealAmount : 0) +
+    (includeActivity ? activityAmount : 0)
+  const withholdingBasisDetail = buildWithholdingBasisDetail(subtotalBeforeTax)
+  const withholdingAmount = resolveWithholdingBasisDetailAmountWon(withholdingBasisDetail)
+
+  const lectureFeeBasisDetail = buildLectureFeeTierBasisDetail(
+    lectureFeeStandardTitle,
+    lectureFee,
+    sessionStart
+  )
 
   const lines: PaymentOrderCalculationStatementLine[] = [
     {
       id: `calc-line-${instructorLineRow.id}-lecture`,
       itemLabel: '강의비',
-      description: isSpecialLecture
-        ? '프로그램 1회 강의비 (특강 강사)'
-        : '프로그램 1회 강의비 (3급 강사)',
+      description: lectureFeeLineDescriptionFromStandardTitle(lectureFeeStandardTitle),
       amount: lectureFee,
       kind: 'lecture_fee',
+      basisDetail: lectureFeeBasisDetail,
     },
   ]
 
@@ -698,6 +758,7 @@ export function getMockPaymentOrderProgramCalculationStatement(
       description: travelDesc,
       amount: travelAmount,
       kind: 'travel',
+      basisDetail: travelBasisDetail,
     })
   }
 
@@ -705,9 +766,32 @@ export function getMockPaymentOrderProgramCalculationStatement(
     lines.push({
       id: `calc-line-${instructorLineRow.id}-lodging`,
       itemLabel: '숙박비',
-      description: '8만원 고정 지급',
+      description: lodgingDesc,
       amount: lodgingAmount,
       kind: 'lodging',
+      basisDetail: lodgingBasisDetail,
+    })
+  }
+
+  if (includeMeal) {
+    lines.push({
+      id: `calc-line-${instructorLineRow.id}-meal`,
+      itemLabel: '식사비',
+      description: '3만원 한도 지급',
+      amount: mealAmount,
+      kind: 'meal',
+      basisDetail: mealBasisDetail,
+    })
+  }
+
+  if (includeActivity) {
+    lines.push({
+      id: `calc-line-${instructorLineRow.id}-activity`,
+      itemLabel: '활동비',
+      description: '5만원 한도 지급',
+      amount: activityAmount,
+      kind: 'activity',
+      basisDetail: activityBasisDetail,
     })
   }
 
@@ -717,12 +801,15 @@ export function getMockPaymentOrderProgramCalculationStatement(
     description: '원천징수 8.8%',
     amount: withholdingAmount,
     kind: 'withholding',
+    basisDetail: withholdingBasisDetail,
     amountDisplayOverride: '-NN,NNN원',
   })
 
   const formulaParts: string[] = ['강의비']
   if (includeTravel) formulaParts.push('교통비')
   if (includeLodging) formulaParts.push('숙박비')
+  if (includeMeal) formulaParts.push('식사비')
+  if (includeActivity) formulaParts.push('활동비')
   formulaParts.push('원천징수')
   const formulaLabel =
     formulaParts.length === 2
@@ -771,6 +858,15 @@ export function getMockPaymentOrderProgramCalculationStatement(
   }
 }
 
+function mockGenderBirthDisplay(seed: number): string {
+  const gender = seed % 2 === 0 ? '남성' : '여성'
+  const year = 1985 + (seed % 15)
+  const month = (seed % 12) + 1
+  const day = (seed % 28) + 1
+  const age = Math.max(20, 2026 - year)
+  return `${gender} | ${year}. ${String(month).padStart(2, '0')}. ${String(day).padStart(2, '0')} (만 ${age}세)`
+}
+
 /**
  * 강사 지급 현황 상세 — 프로그램 정산 행 기준 산출 내역서(강사 맥락 기본정보)
  */
@@ -790,33 +886,56 @@ export function getMockPaymentOrderInstructorCalculationStatement(
   const lectureFee = programLineRow.estimatedAmount > 0 ? programLineRow.estimatedAmount : 915000
   const lectureFeeAmountLabel = `${lectureFee.toLocaleString('ko-KR')}원`
   const lectureFeeStandardTitle = pickSettlementWageStandardTitle(seed)
-  const isSpecialLecture = lectureFeeStandardTitle === '특강 강사비'
 
   const sessionStart = Math.max(1, programLineRow.sessionOrdinal)
-  const sessionEnd = sessionStart + 1 + (seed % 2)
   const lectureDateDisplay = formatIsoToKoreanWeekday(programLineRow.lectureDate)
-  const lectureSessionDisplay = `${sessionStart} ~ ${sessionEnd}차시`
+  const lectureSessionDisplay = `${sessionStart}차시`
 
   const includeTravel = seed % 5 !== 0
   const includeLodging = seed % 7 !== 0
+  const includeMeal = seed % 11 !== 0
+  const includeActivity = seed % 13 !== 0
 
-  const travelAmount = 31500
-  const lodgingAmount = 80000
-  const travelDesc = '대전 중구 -> 서울 강서구 이동 (146.8km)'
+  const travelBasisDetail = buildTravelBasisDetail(seed)
+  const travelAmount = resolveTravelBasisDetailTotalWon(travelBasisDetail)
+  const lodgingBasisDetail = buildLodgingBasisDetail(seed)
+  const lodgingAmount = resolveLodgingBasisDetailTotalWon(lodgingBasisDetail)
+  const mealBasisDetail = buildMealBasisDetail()
+  const mealAmount = resolveMealBasisDetailTotalWon(mealBasisDetail)
+  const activityBasisDetail = buildActivityBasisDetail()
+  const activityAmount = resolveActivityBasisDetailTotalWon(activityBasisDetail)
+  const lodgingDesc =
+    lodgingBasisDetail.layout === 'lodging1s1g' ? '8만원 고정 지급' : '15만원 고정 지급'
+  const travelDesc =
+    travelBasisDetail.layout === 'transportInstructor'
+      ? `${travelBasisDetail.distanceKm}km 이동`
+      : travelBasisDetail.layout === 'transportRoundTrip'
+        ? '참여자 교통비 (왕복)'
+        : '참여자 교통비 (편도)'
 
   const subtotalBeforeTax =
-    lectureFee + (includeTravel ? travelAmount : 0) + (includeLodging ? lodgingAmount : 0)
-  const withholdingAmount = -Math.round(subtotalBeforeTax * 0.088)
+    lectureFee +
+    (includeTravel ? travelAmount : 0) +
+    (includeLodging ? lodgingAmount : 0) +
+    (includeMeal ? mealAmount : 0) +
+    (includeActivity ? activityAmount : 0)
+  const withholdingBasisDetail = buildWithholdingBasisDetail(subtotalBeforeTax)
+  const withholdingAmount = resolveWithholdingBasisDetailAmountWon(withholdingBasisDetail)
+
+  const lectureFeeBasisDetail = buildLectureFeeTierBasisDetail(
+    lectureFeeStandardTitle,
+    lectureFee,
+    sessionStart
+  )
 
   const lines: PaymentOrderCalculationStatementLine[] = [
     {
       id: `calc-line-${programLineRow.id}-lecture`,
       itemLabel: '강의비',
-      description: isSpecialLecture
-        ? '프로그램 1회 강의비 (특강 강사)'
-        : '프로그램 1회 강의비 (3급 강사)',
+      description: lectureFeeLineDescriptionFromStandardTitle(lectureFeeStandardTitle),
       amount: lectureFee,
       kind: 'lecture_fee',
+      basisDetail: lectureFeeBasisDetail,
     },
   ]
 
@@ -827,6 +946,7 @@ export function getMockPaymentOrderInstructorCalculationStatement(
       description: travelDesc,
       amount: travelAmount,
       kind: 'travel',
+      basisDetail: travelBasisDetail,
     })
   }
 
@@ -834,9 +954,32 @@ export function getMockPaymentOrderInstructorCalculationStatement(
     lines.push({
       id: `calc-line-${programLineRow.id}-lodging`,
       itemLabel: '숙박비',
-      description: '8만원 고정 지급',
+      description: lodgingDesc,
       amount: lodgingAmount,
       kind: 'lodging',
+      basisDetail: lodgingBasisDetail,
+    })
+  }
+
+  if (includeMeal) {
+    lines.push({
+      id: `calc-line-${programLineRow.id}-meal`,
+      itemLabel: '식사비',
+      description: '3만원 한도 지급',
+      amount: mealAmount,
+      kind: 'meal',
+      basisDetail: mealBasisDetail,
+    })
+  }
+
+  if (includeActivity) {
+    lines.push({
+      id: `calc-line-${programLineRow.id}-activity`,
+      itemLabel: '활동비',
+      description: '5만원 한도 지급',
+      amount: activityAmount,
+      kind: 'activity',
+      basisDetail: activityBasisDetail,
     })
   }
 
@@ -846,12 +989,15 @@ export function getMockPaymentOrderInstructorCalculationStatement(
     description: '원천징수 8.8%',
     amount: withholdingAmount,
     kind: 'withholding',
+    basisDetail: withholdingBasisDetail,
     amountDisplayOverride: '-NN,NNN원',
   })
 
   const formulaParts: string[] = ['강의비']
   if (includeTravel) formulaParts.push('교통비')
   if (includeLodging) formulaParts.push('숙박비')
+  if (includeMeal) formulaParts.push('식사비')
+  if (includeActivity) formulaParts.push('활동비')
   formulaParts.push('원천징수')
   const formulaLabel =
     formulaParts.length === 2
@@ -886,6 +1032,9 @@ export function getMockPaymentOrderInstructorCalculationStatement(
       addressBlurredTail,
       settlementAccountBankNumberPart: settlementBankPart,
       settlementAccountHolderPart: MASKING_POLICY.accountHolderName(instructorDetail.accountHolder),
+      genderBirthDisplay: mockGenderBirthDisplay(seed),
+      scheduleChangeCancelCount: seed % 4 === 0 ? 1 : undefined,
+      programName: programLineRow.programName,
       processingStatusDisplay: lineStatusToCalculationDisplay(programLineRow.processingStatus),
       processingStatusClass: programLineRow.processingStatus,
       processingRejectionReason:
@@ -912,22 +1061,49 @@ export function getMockPaymentOrderInstructorCalculationStatement(
 }
 
 /**
- * 프로그램 지급 현황 상세에서 산출 내역서를 열 때 — 프로그램형 기본정보(context: program)·산출 블록
+ * 프로그램 지급 현황 상세 — 「신청자별 정산 목록」행 → 신청자형 산출 내역서
  */
 export function getMockPaymentOrderCalculationStatementFromProgramDetailPage(
-  programRow: PaymentOrderAdminProgramRow,
+  _programRow: PaymentOrderAdminProgramRow,
   programDetail: PaymentOrderAdminProgramDetail,
   lineRow: PaymentOrderAdminProgramDetailInstructorRow
 ): PaymentOrderProgramCalculationStatement {
-  return getMockPaymentOrderProgramCalculationStatement(
-    programRow,
-    lineRow,
-    programDetail.programName
+  const instructorRow =
+    mockPaymentOrderAdminInstructorList.find(r => r.instructorName === lineRow.instructorName) ?? {
+      no: lineRow.no,
+      instructorName: lineRow.instructorName,
+      programCount: 1,
+      processingStatus: 'pending',
+      estimatedAmount: lineRow.estimatedAmount,
+      relatedProgramNames: [programDetail.programName],
+      referenceDate: lineRow.lectureDate,
+      settlementRelevantAttendanceDates: [lineRow.lectureDate],
+      pendingPaymentSettlementItemCount: 0,
+    }
+
+  const programLineRow: PaymentOrderAdminInstructorDetailProgramRow = {
+    id: lineRow.id,
+    no: lineRow.no,
+    settlementId: lineRow.settlementId,
+    statementId: lineRow.statementId,
+    programName: programDetail.programName,
+    institutionName: lineRow.institutionName,
+    lectureDate: lineRow.lectureDate,
+    sessionOrdinal: lineRow.sessionOrdinal,
+    processingStatus: lineRow.processingStatus,
+    estimatedAmount: lineRow.estimatedAmount,
+    lectureFeePaymentScheduledDate: lineRow.lectureFeePaymentScheduledDate,
+    processingRejectionReason: lineRow.processingRejectionReason,
+  }
+
+  return getMockPaymentOrderInstructorCalculationStatement(
+    getMockPaymentOrderInstructorDetail(instructorRow),
+    programLineRow
   )
 }
 
 /**
- * 강사 지급 현황 상세에서 산출 내역서를 열 때 — 프로그램 기준(context: program) 기본정보·블록으로 표시
+ * 신청자 지급 현황 상세 — 「프로그램별 정산 목록」행 → 프로그램형 산출 내역서
  */
 export function getMockPaymentOrderCalculationStatementFromInstructorDetailPage(
   instructorRow: PaymentOrderAdminInstructorRow,
@@ -950,12 +1126,16 @@ export function getMockPaymentOrderCalculationStatementFromInstructorDetailPage(
   const programDetailLine: PaymentOrderAdminProgramDetailInstructorRow = {
     id: programLineRow.id,
     no: programLineRow.no,
+    settlementId: programLineRow.settlementId,
+    statementId: programLineRow.statementId,
     instructorName: instructorDetail.nameKo,
     institutionName: programLineRow.institutionName,
     lectureDate: programLineRow.lectureDate,
     sessionOrdinal: programLineRow.sessionOrdinal,
     processingStatus: programLineRow.processingStatus,
     estimatedAmount: programLineRow.estimatedAmount,
+    lectureFeePaymentScheduledDate: programLineRow.lectureFeePaymentScheduledDate,
+    processingRejectionReason: programLineRow.processingRejectionReason,
   }
 
   return getMockPaymentOrderProgramCalculationStatement(

@@ -277,6 +277,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                       placeholder="문의처 전화번호"
                       value={field.value ?? ''}
                       onChange={field.onChange}
+                      phone
                     />
                   )}
                 />

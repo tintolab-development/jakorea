@@ -57,8 +57,6 @@ export type InstructorFormConsentLayout = {
   documentKeys: readonly InstructorConsentDocumentKey[]
   /** true면 해당 surface 동의 단락의 모든 항목을 필수(*)·제출 검증 */
   allItemsRequired: boolean
-  /** true면 동의서 작성 전 기본정보 완성 게이트 생략 (CMS — 기본정보·동의서 미연동) */
-  skipBasicInfoGate: boolean
 }
 
 export type InstructorFormLayout = {
@@ -84,7 +82,6 @@ const CMS_CONSENT_LAYOUT: InstructorFormConsentLayout = {
   radioKeys: ALL_CONSENT_RADIO_KEYS,
   documentKeys: ALL_CONSENT_DOCUMENT_KEYS,
   allItemsRequired: false,
-  skipBasicInfoGate: true,
 }
 
 /**
@@ -106,8 +103,6 @@ const PLATFORM_APPLY_CONSENT_LAYOUT: InstructorFormConsentLayout = {
     'consentSexOffenseCheck',
   ],
   allItemsRequired: false,
-  /** Platform: 동의서↔기본정보 연동·작성 전 기본정보 게이트 없음 */
-  skipBasicInfoGate: true,
 }
 
 export const INSTRUCTOR_FORM_LAYOUT: Record<InstructorFormSurface, InstructorFormLayout> = {
@@ -142,10 +137,7 @@ export const INSTRUCTOR_FORM_LAYOUT: Record<InstructorFormSurface, InstructorFor
     ],
     numberSections: false,
     showInstructorGradeSection: false,
-    consent: {
-      ...CMS_CONSENT_LAYOUT,
-      skipBasicInfoGate: true,
-    },
+    consent: CMS_CONSENT_LAYOUT,
   },
   platformApply: {
     surface: 'platformApply',

@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback } from 'react'
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { shouldUseCompanySchoolRemoteApi } from './capabilities'
 import { shouldRetryCompanySchoolQuery } from './errors'
@@ -57,6 +58,24 @@ export function useCompanySchoolProgramDetail(
   })
 }
 
+export function usePrefetchCompanySchoolProgramDetail() {
+  const queryClient = useQueryClient()
+  const remoteEnabled = shouldUseCompanySchoolRemoteApi()
+
+  return useCallback(
+    (programId: string) => {
+      if (!remoteEnabled || !programId) return
+      void queryClient.prefetchQuery({
+        queryKey: companySchoolQueryKeys.detail(programId),
+        queryFn: () => getCompanySchoolProgram(programId),
+        staleTime: 30_000,
+        retry: shouldRetryCompanySchoolQuery,
+      })
+    },
+    [queryClient, remoteEnabled]
+  )
+}
+
 export function useCreateCompanySchoolProgram() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -65,7 +84,7 @@ export function useCreateCompanySchoolProgram() {
     retry: false,
     onSuccess: program => {
       queryClient.setQueryData(companySchoolQueryKeys.detail(program.id), program)
-      void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.all })
+      invalidateCompanySchoolListCaches(queryClient)
     },
   })
 }
@@ -86,7 +105,7 @@ export function useUpdateCompanySchoolProgram() {
     retry: false,
     onSuccess: program => {
       queryClient.setQueryData(companySchoolQueryKeys.detail(program.id), program)
-      void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.all })
+      invalidateCompanySchoolListCaches(queryClient)
     },
   })
 }
@@ -99,7 +118,7 @@ export function useDeleteCompanySchoolProgram() {
     retry: false,
     onSuccess: (_data, programId) => {
       queryClient.removeQueries({ queryKey: companySchoolQueryKeys.detail(programId) })
-      void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.all })
+      invalidateCompanySchoolListCaches(queryClient)
     },
   })
 }
@@ -114,7 +133,12 @@ export function useDeleteCompanySchoolPrograms() {
       for (const programId of programIds) {
         queryClient.removeQueries({ queryKey: companySchoolQueryKeys.detail(programId) })
       }
-      void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.all })
+      invalidateCompanySchoolListCaches(queryClient)
     },
   })
+}
+
+function invalidateCompanySchoolListCaches(queryClient: QueryClient) {
+  void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.lists() })
+  void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.overviewStages() })
 }

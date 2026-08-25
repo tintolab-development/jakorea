@@ -51,10 +51,11 @@ export function AdminRegisteredEditPage() {
   const profileUpdateMutation = usePortalProfileUpdateMutation()
 
   useEffect(() => {
+    if (isHydrating) return
     if (!wizardState?.birthDate || !wizardState.gender) {
       navigate('/auth/admin-registered/birth', { replace: true })
     }
-  }, [navigate, wizardState?.birthDate, wizardState?.gender])
+  }, [navigate, wizardState?.birthDate, wizardState?.gender, isHydrating])
 
   useEffect(() => {
     if (!wizardState?.profileHydrated || fieldsSynced) return
@@ -76,7 +77,21 @@ export function AdminRegisteredEditPage() {
     setFieldsSynced(true)
   }, [wizardState, fieldsSynced])
 
-  if (!initialWizardState || !wizardState?.birthDate || !wizardState.gender) {
+  if (!initialWizardState) {
+    return null
+  }
+
+  if (isHydrating) {
+    return (
+      <section>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={sharedStyles.statusMessage}>
+          가입 정보를 불러오는 중…
+        </PFText>
+      </section>
+    )
+  }
+
+  if (!wizardState?.birthDate || !wizardState.gender) {
     return null
   }
 

@@ -65,6 +65,7 @@ export const ADMIN_PERMISSION_CATEGORIES: AdminPermissionCategoryDef[] = [
       { id: 'fv_edu_activity_cert', label: '교육진행자 활동인증서' },
       { id: 'fv_certificate', label: '수료증 & 참가 인증서' },
       { id: 'fv_stats', label: '실적 및 통계' },
+      { id: 'fv_member_login_history', label: '회원 로그인 이력' },
       { id: 'fv_download_history', label: '파일 다운로드 이력' },
       { id: 'fv_personal_info_history', label: '개인정보 조회 이력' },
       { id: 'fv_bug_issue_history', label: '버그/이슈 이력' },
@@ -112,6 +113,7 @@ export const ADMIN_PERMISSION_ROLE_LABELS: Record<AdminPermissionRoleTab, string
 
 const ALL_ITEM_IDS: string[] = ADMIN_PERMISSION_CATEGORIES.flatMap(c => c.items.map(i => i.id))
 export const PM_UNCHECKED_PERMISSION_IDS = [
+  'fv_member_login_history',
   'fv_download_history',
   'fv_personal_info_history',
   'fv_bug_issue_history',
@@ -120,11 +122,13 @@ export const PM_UNCHECKED_PERMISSION_IDS = [
 export const PARTNER_UNCHECKED_PERMISSION_IDS = [
   'pii_rrn',
   'pii_account',
+  'fv_member_login_history',
   'fv_download_history',
   'fv_personal_info_history',
   'fv_bug_issue_history',
 ] as const
 export const VIEWER_FILE_VIEW_UNCHECKED_PERMISSION_IDS = [
+  'fv_member_login_history',
   'fv_download_history',
   'fv_personal_info_history',
   'fv_bug_issue_history',

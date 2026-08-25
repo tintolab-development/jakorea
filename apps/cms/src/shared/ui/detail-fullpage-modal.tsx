@@ -3,6 +3,7 @@
  */
 
 import { CloseOutlined } from '@ant-design/icons'
+import { Spin } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import './detail-fullpage-modal.css'
 
@@ -18,7 +19,11 @@ export interface DetailFullPageModalProps {
   contentExtra?: React.ReactNode
   /** 미지정 시 LNB 없이 메인만 풀폭 */
   sidebar?: React.ReactNode
-  children: React.ReactNode
+  children?: React.ReactNode
+  /** 상세 GET 첫 응답 전 — children 대신 공통 스피너 (캐시가 있으면 쓰지 말 것) */
+  loading?: boolean
+  /** 상세 GET 실패 — children 대신 에러. loading이 우선 */
+  error?: React.ReactNode
   /** 닫기(X) 동작 — 미지정 시 onClose */
   onHeaderClose?: () => void
   /** ant-modal 루트에 추가 (예: program-detail-fullpage-modal) */
@@ -26,6 +31,32 @@ export interface DetailFullPageModalProps {
   closeAriaLabel?: string
   /** 다른 풀페이지·미리보기 모달과 스택 순서 조정 (기본 ant Modal 1000) */
   zIndex?: number
+}
+
+function DetailFullPageModalBody({
+  loading,
+  error,
+  children,
+}: {
+  loading?: boolean
+  error?: React.ReactNode
+  children?: React.ReactNode
+}) {
+  if (loading) {
+    return (
+      <div className="detail-fullpage-modal__loading" role="status" aria-label="상세 불러오는 중">
+        <Spin size="large" />
+      </div>
+    )
+  }
+  if (error != null && error !== '') {
+    return (
+      <div className="page-content-error" role="alert">
+        {error}
+      </div>
+    )
+  }
+  return children
 }
 
 export function DetailFullPageModal({
@@ -37,12 +68,19 @@ export function DetailFullPageModal({
   contentExtra,
   sidebar,
   children,
+  loading,
+  error,
   onHeaderClose,
   className: classNameProp,
   closeAriaLabel = '닫기',
   zIndex,
 }: DetailFullPageModalProps) {
   const handleClose = onHeaderClose ?? onClose
+  const body = (
+    <DetailFullPageModalBody loading={loading} error={error}>
+      {children}
+    </DetailFullPageModalBody>
+  )
   const rootClass = [
     'detail-fullpage-modal',
     sidebar == null ? 'detail-fullpage-modal--no-sidebar' : '',
@@ -82,13 +120,13 @@ export function DetailFullPageModal({
             {headerExtra ? <>{headerExtra}</> : null}
           </header>
           <div className="detail-fullpage-modal__content">
-            {contentExtra ? (
+            {contentExtra && !loading && error == null ? (
               <div className="detail-fullpage-modal__content-actions-wrapper">
                 <div className="detail-fullpage-modal__content-actions">{contentExtra}</div>
-                <div>{children}</div>
+                <div>{body}</div>
               </div>
             ) : (
-              children
+              body
             )}
           </div>
         </div>

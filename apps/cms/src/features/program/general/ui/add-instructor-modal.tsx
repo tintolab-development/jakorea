@@ -5,10 +5,14 @@
  * 섹션: 기본 정보(프로필 사진 + 2열 필드), 최종 학력, 경력 상세, 자격 및 면허, 수상 및 수료 내역
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Form, Input, DatePicker, Modal, Pagination } from 'antd' // TODO(custom-ui): 주소검색 nested Modal → ContentModal (커스텀 크롬)
-import type { InputHTMLAttributes } from 'react'
+import type { ChangeEvent, InputHTMLAttributes } from 'react'
 import { useForm, type Path } from 'react-hook-form'
+import {
+  applyKoreanPhoneInputChange,
+  formatKoreanPhoneNumber,
+} from '@jakorea/domain/shared/korean-phone'
 import {
   getCmsJusoMissingKeyMessage,
   readJusoApiUrlFromEnv,
@@ -16,6 +20,51 @@ import {
   useJusoAddressSearch,
   type JusoAddressItem,
 } from '@/shared/hooks'
+
+function NativePhoneTableInput({
+  value,
+  defaultValue,
+  onChange,
+  ...rest
+}: InputHTMLAttributes<HTMLInputElement>) {
+  const innerRef = useRef<HTMLInputElement>(null)
+  const pendingCaret = useRef<number | null>(null)
+  const previousRef = useRef(formatKoreanPhoneNumber(String(value ?? defaultValue ?? '')))
+  const formatted =
+    value === undefined || value === null ? '' : formatKoreanPhoneNumber(String(value))
+  previousRef.current = formatted
+
+  useLayoutEffect(() => {
+    const caret = pendingCaret.current
+    if (caret == null) return
+    pendingCaret.current = null
+    innerRef.current?.setSelectionRange(caret, caret)
+  })
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const result = applyKoreanPhoneInputChange(
+      previousRef.current,
+      event.target.value,
+      event.target.selectionStart
+    )
+    previousRef.current = result.formatted
+    pendingCaret.current = result.caret
+    event.target.value = result.formatted
+    onChange?.(event)
+  }
+
+  return (
+    <input
+      {...rest}
+      ref={innerRef}
+      type="tel"
+      inputMode="numeric"
+      autoComplete="tel"
+      value={formatted}
+      onChange={handleChange}
+    />
+  )
+}
 
 /** 주소 검색용: 아이콘 + 네이티브 input 한 묶음 220×40, Form.Item value/onChange는 input에 전달 */
 interface AddressSearchInputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -511,7 +560,10 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         name="contact"
                         noStyle
                       >
-                        <input className="add-instructor-modal__table-input" placeholder="연락처" />
+                        <NativePhoneTableInput
+                          className="add-instructor-modal__table-input"
+                          placeholder="연락처"
+                        />
                       </Form.Item>
                     </td>
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label">

@@ -65,6 +65,30 @@
   vertical-align: middle;
 }
 
+/*
+ * cms-data-table 기본(height 54px · nowrap)이면 배너 썸네일·pre-line 설명이
+ * 셀·카드 밖으로 넘친다. education-fields 와 동일하게 행 높이를 콘텐츠에 맡긴다.
+ */
+.corporate-guide-section .cms-data-table .ant-table-tbody > tr > td,
+.corporate-guide-section .cms-data-table .ant-table-tbody > tr:hover > td {
+  height: auto !important;
+  min-height: 54px;
+  white-space: normal !important;
+  overflow: visible;
+}
+
+/*
+ * cms-data-table overflow-x:auto 와 Table scroll.x 는 overflow-y:auto 로 계산되어
+ * 흰 카드 안에서 세로 휠을 가로챈다. 세로 스크롤은 layout-content 만 담당.
+ */
+.corporate-guide-section .cms-data-table,
+.corporate-guide-section .cms-data-table .ant-table,
+.corporate-guide-section .cms-data-table .ant-table-container,
+.corporate-guide-section .cms-data-table .ant-table-content,
+.corporate-guide-section .cms-data-table .ant-table-body {
+  overflow: visible !important;
+}
+
 /* 배너: 이미지 컬럼 200px · 썸네일 160×155.256 */
 .corporate-guide-banner-table .ant-table-thead > tr > th.corporate-guide-col--image,
 .corporate-guide-banner-table .ant-table-tbody > tr > td.corporate-guide-col--image {

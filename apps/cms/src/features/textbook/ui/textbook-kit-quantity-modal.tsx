@@ -57,10 +57,15 @@ export function TextbookKitQuantityModal({
       wrapClassName="textbook-kit-quantity-modal-wrap"
       footer={
         <div className="textbook-kit-quantity-modal__footer">
-          <CmsButton variant="secondary" type="button" onClick={onCancel}>
+          <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" type="button" onClick={() => onConfirm(quantities)}>
+          <CmsButton
+            variant="primary"
+            size="large"
+            type="button"
+            onClick={() => onConfirm(quantities)}
+          >
             확인
           </CmsButton>
         </div>
@@ -75,6 +80,9 @@ export function TextbookKitQuantityModal({
                 className="textbook-kit-quantity-modal__input"
                 mode="integer"
                 min={0}
+                inputSize="medium"
+                width={190}
+                aria-label={`${level.label} 키트 수량`}
                 value={quantities[level.key]}
                 onValueChange={nextValue => {
                   setQuantities(prev => ({ ...prev, [level.key]: nextValue }))

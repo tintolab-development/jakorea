@@ -3,12 +3,14 @@
  */
 
 import { useCallback, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import dayjs from 'dayjs'
 import { Spin } from 'antd'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
+import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
 import { useFaqDetailQuery } from '@/features/posts/hooks/use-faq-detail-query'
 import { useFaqMutations } from '@/features/posts/hooks/use-faq-mutations'
+import { useLeaveDeletedDetail } from '@/features/posts/hooks/use-leave-deleted-detail'
 import { FaqFormModal } from '@/features/posts/ui/faq-form-modal'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import { RichTextViewer } from '@/shared/rich-text'
@@ -22,10 +24,13 @@ const ADMIN_FAQ_LIST_PATH = '/admin/posts/faq'
 
 export function AdminFaqDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
-  const detailQuery = useFaqDetailQuery(id)
+  const { detailEnabled, goList, leaveToList, runDeleteThenLeave } = useLeaveDeletedDetail(
+    ADMIN_FAQ_LIST_PATH,
+    id ? postsQueryKeys.faqs.detail(id) : undefined
+  )
+  const detailQuery = useFaqDetailQuery(id, { enabled: detailEnabled })
   const { deleteMutation } = useFaqMutations()
 
   const [editModalOpen, setEditModalOpen] = useState(false)
@@ -36,10 +41,6 @@ export function AdminFaqDetailPage() {
 
   const faq = detailQuery.data
 
-  const goList = useCallback(() => {
-    navigate(ADMIN_FAQ_LIST_PATH)
-  }, [navigate])
-
   const handleDelete = useCallback(() => {
     if (!canWrite || !id) return
     setDeleteConfirmOpen(true)
@@ -48,15 +49,14 @@ export function AdminFaqDetailPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!id) return
     try {
-      await deleteMutation.mutateAsync(id)
+      await runDeleteThenLeave(() => deleteMutation.mutateAsync(id))
       setDeleteConfirmOpen(false)
-      goList()
     } catch (error) {
       setActionResultTitle('FAQ 삭제 실패')
       setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
       setActionResultOpen(true)
     }
-  }, [deleteMutation, goList, id])
+  }, [deleteMutation, id, runDeleteThenLeave])
 
   const handleEdit = useCallback(() => {
     if (!canWrite) return
@@ -109,8 +109,10 @@ export function AdminFaqDetailPage() {
         mode="edit"
         faq={faq}
         onCancel={() => setEditModalOpen(false)}
-        onSuccess={() => setEditModalOpen(false)}
-        onDeleted={goList}
+        onSuccess={() => {
+          setEditModalOpen(false)
+        }}
+        onDeleted={leaveToList}
       />
       <ActionResultModal
         open={actionResultOpen}

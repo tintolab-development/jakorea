@@ -192,7 +192,7 @@ export async function fetchGeneralProgramLectureReports(programId: string): Prom
     const { fetchProgramLectureReportsRemote } = await import(
       '@/features/program/general/api/program-progress-api-client'
     )
-    return await fetchProgramLectureReportsRemote(programId, { page: 0, size: 200 })
+    return await fetchProgramLectureReportsRemote(programId, { page: 0, size: 50 })
   } catch {
     return null
   }

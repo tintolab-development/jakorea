@@ -1,22 +1,23 @@
+import { listMockMemberLoginLogs } from '@/data/mock/member-login-logs'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
+import { filterMemberLoginLogsByRetention } from '@/features/logs/lib/member-login-retention'
 import {
   mapBugIssueLogListResponse,
   mapDownloadLogListResponse,
+  mapMemberLoginLogListResponse,
   mapPersonalInfoAccessLogListResponse,
-  mapSystemIssueDetailResponse,
-  type SystemIssueDetail,
 } from '@/features/logs/api/adapters/logs-adapters'
 import {
   fetchFileAccessLogsRemote,
+  fetchMemberLoginsRemote,
   fetchPrivacyAccessLogsRemote,
-  fetchSystemIssueDetailRemote,
   fetchSystemIssueLogsRemote,
-  patchSystemIssueStatusRemote,
   toLogsQueryParams,
 } from '@/features/logs/api/logs-api-client'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import type { BugIssueLog } from '@/types/bug-issue-log'
 import type { DownloadLog } from '@/types/download-log'
+import type { MemberLoginLog } from '@/types/member-login-log'
 import type { PersonalInfoAccessLog } from '@/types/personal-info-access-log'
 
 export function shouldUseLogsRemoteApi(): boolean {
@@ -48,26 +49,26 @@ export async function getPersonalInfoAccessLogsList(
   return mapPersonalInfoAccessLogListResponse(dto)
 }
 
+export async function getMemberLoginLogsList(
+  filters: Record<string, string> = {}
+): Promise<MemberLoginLog[]> {
+  if (shouldUseLogsRemoteApi()) {
+    try {
+      const dto = await fetchMemberLoginsRemote(toLogsQueryParams(filters))
+      return filterMemberLoginLogsByRetention(mapMemberLoginLogListResponse(dto))
+    } catch {
+      return filterMemberLoginLogsByRetention(listMockMemberLoginLogs(filters))
+    }
+  }
+  return filterMemberLoginLogsByRetention(listMockMemberLoginLogs(filters))
+}
+
 export async function getBugIssueLogsList(
   filters: Record<string, string> = {}
 ): Promise<BugIssueLog[]> {
   assertLogsRemoteApiReady()
   const dto = await fetchSystemIssueLogsRemote(toLogsQueryParams(filters))
   return mapBugIssueLogListResponse(dto)
-}
-
-export async function getSystemIssueDetail(issueId: number): Promise<SystemIssueDetail> {
-  assertLogsRemoteApiReady()
-  const dto = await fetchSystemIssueDetailRemote(issueId)
-  return mapSystemIssueDetailResponse(dto)
-}
-
-export async function updateSystemIssueStatus(
-  issueId: number,
-  status: string
-): Promise<void> {
-  assertLogsRemoteApiReady()
-  await patchSystemIssueStatusRemote(issueId, { status })
 }
 
 export function getLogsApiErrorMessage(error: unknown, fallback: string): string {

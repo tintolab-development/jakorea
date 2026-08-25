@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
-import { Spin, Table } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -158,24 +158,21 @@ export function Page() {
         onSearch={handleSearch}
         title="알림톡 발송 조회"
         description={`총 ${rows.length.toLocaleString()}건`}
+        contentLoading={isLoading}
       >
-        {isLoading ? (
-          <Spin />
-        ) : (
-          <Table<AlimtalkSendHistoryRow>
-            rowKey="id"
-            className="cms-data-table alimtalk-send-history-page__table"
-            tableLayout="fixed"
-            scroll={{ x: TABLE_SCROLL_X }}
-            columns={columns}
-            dataSource={rows}
-            pagination={false}
-            onRow={record => ({
-              className: 'alimtalk-send-history-page__row',
-              onClick: () => setSelectedRow(record),
-            })}
-          />
-        )}
+        <Table<AlimtalkSendHistoryRow>
+          rowKey="id"
+          className="cms-data-table alimtalk-send-history-page__table"
+          tableLayout="fixed"
+          scroll={{ x: TABLE_SCROLL_X }}
+          columns={columns}
+          dataSource={rows}
+          pagination={false}
+          onRow={record => ({
+            className: 'alimtalk-send-history-page__row',
+            onClick: () => setSelectedRow(record),
+          })}
+        />
       </FilterTableLayout>
       <DetailModal open={selectedRow != null} row={selectedRow} onClose={() => setSelectedRow(null)} />
     </>

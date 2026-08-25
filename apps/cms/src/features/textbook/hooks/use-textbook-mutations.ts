@@ -5,34 +5,49 @@ import {
   updateTextbook,
 } from '@/features/textbook/api/admin-textbooks-service'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
+import type { TextbookRow } from '@/features/textbook/model/textbook.types'
+import {
+  applyDeletedToArrayLists,
+  applyUpdatedToArrayLists,
+  invalidateArrayLists,
+} from '@/shared/lib/query-list-cache'
 
-export function useTextbookMutations(listFilterKey: string) {
+function rowId(row: TextbookRow): string {
+  return row.id
+}
+
+export function useTextbookMutations() {
   const queryClient = useQueryClient()
-  const listKey = dataManagementQueryKeys.textbooks.list(listFilterKey)
-
-  const invalidateList = () => {
-    void queryClient.invalidateQueries({ queryKey: listKey })
-  }
+  const listsKey = dataManagementQueryKeys.textbooks.lists()
 
   const createMutation = useMutation({
     mutationFn: createTextbook,
-    onSuccess: invalidateList,
+    onSuccess: async () => {
+      await invalidateArrayLists(queryClient, listsKey)
+    },
   })
 
   const updateMutation = useMutation({
     mutationFn: ({ id, input }: { id: string; input: Parameters<typeof updateTextbook>[1] }) =>
       updateTextbook(id, input),
-    onSuccess: (_data, variables) => {
-      invalidateList()
-      void queryClient.invalidateQueries({
-        queryKey: dataManagementQueryKeys.textbooks.detail(variables.id),
-      })
+    onSuccess: async (data, variables) => {
+      if (!data?.id) {
+        await invalidateArrayLists(queryClient, listsKey)
+        return
+      }
+      queryClient.setQueryData(dataManagementQueryKeys.textbooks.detail(variables.id), data)
+      applyUpdatedToArrayLists(queryClient, listsKey, data, rowId)
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: deleteTextbooks,
-    onSuccess: invalidateList,
+    onSuccess: (_data, ids) => {
+      for (const id of ids) {
+        queryClient.removeQueries({ queryKey: dataManagementQueryKeys.textbooks.detail(id) })
+        applyDeletedToArrayLists(queryClient, listsKey, id, rowId)
+      }
+    },
   })
 
   return { createMutation, updateMutation, deleteMutation }

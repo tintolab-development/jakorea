@@ -1,0 +1,49 @@
+---
+description: CMS form-schema와 Platform 양식 작성 UI·검증은 동일 schema를 SSOT로 따른다
+globs:
+  - "apps/platform/src/features/**/consent/**"
+  - "apps/platform/src/features/form-template/**"
+  - "packages/form-template-runtime/**"
+  - "packages/form-schema/**"
+  - "apps/cms/src/features/template/**"
+  - "apps/cms/src/features/user/shared/**/consent*"
+  - "apps/cms/src/features/user/shared/lib/validate-*consent*"
+alwaysApply: true
+---
+
+# Form template schema parity (CMS ↔ Platform)
+
+## SSOT
+
+- **양식 구조·단락·필수(`requiredMark` / `answerRequired`)·고정 문구·표 데이터**는 `@jakorea/form-schema` seed(`create*Draft()`)와 CMS `document-*.json` seed가 **단일 진실**.
+- Platform에서 CMS 정의 양식을 사용자가 작성·제출하는 화면은 **반드시** 해당 schema draft + `@jakorea/form-template-runtime`(또는 동일 schema를 소비하는 fill renderer)로 렌더한다.
+
+## 금지
+
+- ❌ Platform 전용 `copy.ts` / `*-form.tsx`에 schema와 **별도**로 문구·표·필수 필드·검증을 하드코딩
+- ❌ CMS schema에 없는 필수 항목을 Platform에서만 추가 (`PFFormField required`만으로 필수 확장)
+- ❌ schema `requiredMark: true`인 단락·필드를 Platform에서 optional 처리
+- ❌ 검증을 Platform `validate.ts`에만 두고 CMS `hasMemberConsentIncompleteRequiredFields`와 **분기**
+
+## 허용 (표현층만)
+
+- ✅ Platform shell: `PFFormPage`, PF 입력 컴포넌트, PF 모달·전자서명 (CMS `CmsInput` / TealHeaderModal 대신)
+- ✅ Platform-only UX 확장 — **단**, schema 단락 ID·sidecar 키·submit 검증 규칙은 CMS fill과 동일해야 함  
+  (예: 지급조서 `paymentRecord` sidecar = `PaymentStatementBasicInfoValues`)
+- ✅ `@jakorea/form-schema/consent` 공유 검증·template map·normalize 사용
+
+## 구현 체크리스트
+
+- [ ] consent / 양식 작성 화면 진입 시 `create*Draft()` 또는 API schema + `normalizeMemberConsentWriteDraft`
+- [ ] 필수 incomplete → `@jakorea/form-schema/consent` validator (CMS와 동일 함수)
+- [ ] templateId는 `resolveInstructorApplyConsentTemplate()` 등 **공유 map**에서만
+- [ ] UI-only override는 `renderParagraphSlot` / sidecar state로 — schema JSON 자체는 수정하지 않음
+- [ ] 신규 양식 추가 시 seed + runtime fill 지원 + Platform 연동을 **한 PR**에서
+
+## 관련
+
+- CMS fill: `apps/cms/.cursor/rules/template/agreement-consent-fill-interaction.mdc`
+- Shared: `packages/form-schema/src/consent/`
+- Runtime: `packages/form-template-runtime/src/renderer/fill-paragraph-body.tsx`
+
+**Last updated:** 2026-08-24

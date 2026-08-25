@@ -1,3 +1,4 @@
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import type { User } from '@/types/user'
 import type { AdminRegisterModalFormValues } from '@/features/user/shared/ui/admin-register-modal'
 
@@ -32,7 +33,7 @@ export function mapUserToAdminProfileFormValues(
     name: user.name ?? '',
     gender: mapGender(user.gender),
     birthDate: birthDateToFormValue(user.birthDate),
-    contact: user.phone ?? '',
+    contact: formatKoreanPhoneNumber(user.phone ?? ''),
     email: user.email ?? '',
     consentTermsOfService: 'agree',
     consentPersonalInfo: 'agree',

@@ -17,7 +17,8 @@ export function useUpdateGeneralProgram() {
       patch?: Partial<Program>
     }) => updateGeneralProgram(programId, program, patch),
     onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.all })
+      void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.lists() })
+      void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.overviewStages() })
       void queryClient.invalidateQueries({
         queryKey: generalProgramQueryKeys.detail(variables.programId),
       })

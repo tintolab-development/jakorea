@@ -20,7 +20,9 @@ import {
 } from '@/data/mock/account-payments-list'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { useAccountPaymentsListQuery } from '@/features/settlement-management/hooks/use-account-payments-list-query'
+import { usePrefetchAccountPaymentDetail } from '@/features/settlement-management/hooks/use-account-payment-detail-query'
 import { useMarkAccountPaymentPaidMutation } from '@/features/settlement-management/hooks/use-account-payment-mutations'
+import { useSettlementBudgetSummaryQuery } from '@/features/settlement-management/hooks/use-settlement-budget-summary-query'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { ACCOUNT_PAYMENT_AGGREGATE_STATUSES } from '@/shared/constants/payment-order-aggregate-status'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
@@ -211,7 +213,12 @@ export default function AccountPaymentsPage() {
   )
 
   const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
+  const prefetchAccountPaymentDetail = usePrefetchAccountPaymentDetail()
   const markPaidMutation = useMarkAccountPaymentPaidMutation()
+  const budgetSummaryQuery = useSettlementBudgetSummaryQuery(
+    selectedYearScoped,
+    accountPaymentsRemote
+  )
 
   const accountFilterFields = useMemo((): FilterFieldConfig[] => {
     const colWidth = '25%'
@@ -330,6 +337,24 @@ export default function AccountPaymentsPage() {
       )
       .reduce((s, r) => s + r.amount, 0)
   }, [accountPaymentRows, selectedYearScoped])
+
+  const annualBudgetAmount = accountPaymentsRemote
+    ? budgetSummaryQuery.data?.annualBudgetAmount
+    : MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET
+
+  const completedTotalDisplay = useMemo(() => {
+    if (
+      accountPaymentsRemote &&
+      budgetSummaryQuery.data?.completedPaymentAmount != null
+    ) {
+      return budgetSummaryQuery.data.completedPaymentAmount
+    }
+    return completedTotalForSelectedYear
+  }, [
+    accountPaymentsRemote,
+    budgetSummaryQuery.data?.completedPaymentAmount,
+    completedTotalForSelectedYear,
+  ])
 
   /** 설정된 이체 예정일 구간 + 해당 구간 이체 예정일의 지급예정(pending) 금액 합 — 목록 필터와 동일 행 기준 */
   const card3Meta = useMemo(() => {
@@ -740,10 +765,14 @@ export default function AccountPaymentsPage() {
           <div className="account-payments-page__card-amount-row">
             <span className="account-payments-page__card-amount-num">
               {accountPaymentsRemote
-                ? '—'
-                : MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET.toLocaleString('ko-KR')}
+                ? budgetSummaryQuery.isLoading
+                  ? '…'
+                  : annualBudgetAmount != null
+                    ? annualBudgetAmount.toLocaleString('ko-KR')
+                    : '—'
+                : annualBudgetAmount!.toLocaleString('ko-KR')}
             </span>
-            {!accountPaymentsRemote && (
+            {(accountPaymentsRemote ? annualBudgetAmount != null : true) && (
               <span className="account-payments-page__card-amount-won">원</span>
             )}
           </div>
@@ -754,7 +783,7 @@ export default function AccountPaymentsPage() {
           </span>
           <div className="account-payments-page__card-amount-row">
             <span className="account-payments-page__card-amount-num">
-              {completedTotalForSelectedYear.toLocaleString('ko-KR')}
+              {completedTotalDisplay.toLocaleString('ko-KR')}
             </span>
             <span className="account-payments-page__card-amount-won">원</span>
           </div>
@@ -798,15 +827,12 @@ export default function AccountPaymentsPage() {
           onSearch={handleSearch}
           title={viewMode === 'list' ? '계좌 지급 대상 목록' : '예정 프로그램'}
           description={`총 ${total}건`}
+          contentLoading={Boolean(accountPaymentsRemote && accountPaymentsListQuery.isLoading)}
           actions={accountPaymentsFilterTableActions}
           hideExcelDownload
         >
           {viewMode === 'list' ? (
-            accountPaymentsRemote && accountPaymentsListQuery.isLoading ? (
-              <div className="page-content-loading page-content-loading--table-slot" role="status">
-                <Spin />
-              </div>
-            ) : accountPaymentsRemote && accountPaymentsListQuery.isError ? (
+            accountPaymentsRemote && accountPaymentsListQuery.isError ? (
               <div className="page-content-error" role="alert">
                 {accountPaymentsListQuery.error instanceof Error
                   ? accountPaymentsListQuery.error.message
@@ -822,18 +848,16 @@ export default function AccountPaymentsPage() {
               rowSelection={rowSelection}
               rowClassName={() => 'account-payments-page__table-row--clickable'}
               onRow={record => ({
+                onMouseEnter: () => prefetchAccountPaymentDetail(record),
                 onClick: e => {
                   const t = e.target as HTMLElement
                   if (t.closest('.ant-table-selection-column')) return
+                  prefetchAccountPaymentDetail(record)
                   openAccountPaymentDetail(record)
                 },
               })}
             />
             )
-          ) : accountPaymentsRemote && accountPaymentsListQuery.isLoading ? (
-            <div className="page-content-loading page-content-loading--table-slot" role="status">
-              <Spin />
-            </div>
           ) : accountPaymentsRemote && accountPaymentsListQuery.isError ? (
             <div className="page-content-error" role="alert">
               {accountPaymentsListQuery.error instanceof Error

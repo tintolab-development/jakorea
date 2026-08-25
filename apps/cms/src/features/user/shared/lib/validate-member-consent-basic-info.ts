@@ -13,7 +13,7 @@ export type MemberRegisterConsentBasicInfoInput = {
   detailAddress?: string
 }
 
-/** 회원 신규 등록 — 동의서 작성 전 기본 정보(기본 정보 섹션) 필수값 누락 여부 */
+/** @deprecated CMS 회원 신규 등록 — 동의서↔기본정보 미연동 정책으로 작성 진입 게이트에 사용하지 않음 */
 export function isMemberRegisterBasicInfoIncompleteForConsent(
   values: MemberRegisterConsentBasicInfoInput | undefined,
   isBirthDateIncomplete: (value: string) => boolean = isBirthDateInputIncomplete,

@@ -31,9 +31,11 @@ export const dashboardQueryKeys = {
   /** Swagger: get_me_dashboard_shortcut-badges */
   shortcutBadges: (source: DashboardQueryScope) =>
     [...dashboardQueryKeys.scope(source), 'get_me_dashboard_shortcut_badges'] as const,
+  notificationsAll: (source: DashboardQueryScope) =>
+    [...dashboardQueryKeys.scope(source), 'get_admin_notifications'] as const,
   /** Swagger: get_admin_notifications */
   notifications: (source: DashboardQueryScope, params: Record<string, string | number | boolean>) =>
-    [...dashboardQueryKeys.scope(source), 'get_admin_notifications', params] as const,
+    [...dashboardQueryKeys.notificationsAll(source), params] as const,
   /** Swagger: get_admin_dashboard_widgets_widgetKey_program-filters (options via recruitments) */
   programOptions: (source: DashboardQueryScope, widgetKey: string) =>
     [...dashboardQueryKeys.scope(source), 'get_admin_dashboard_program_options', widgetKey] as const,

@@ -2,6 +2,35 @@
  * 지급 현황 상세 — 필터·구분선·목록 테이블 래퍼·산출 내역 버튼
  * (`PaymentOrderDetailFilterTable` — mode program / instructor 공통)
  */
+
+/* 필터 — TableFilterGroup 공통 치수(240 · gap 12 · dateRange 500) */
+.payment-order-detail-filter-table__filters.filter-table-layout .table-filter-group__container {
+  --filter-field-gap: 12px;
+  --table-filter-field-gap: 12px;
+  gap: var(--filter-field-gap);
+  align-items: flex-end;
+}
+
+.payment-order-detail-filter-table__filters.filter-table-layout
+  .table-filter-group__fields-container {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.payment-order-detail-filter-table__filters.filter-table-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col,
+.payment-order-detail-filter-table__filters.filter-table-layout
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell {
+  flex: 0 0 auto !important;
+  min-width: 0;
+  max-width: none;
+}
+
+.payment-order-detail-filter-table__filters.filter-table-layout .filter-table-layout__filter {
+  flex-shrink: 0;
+}
 /* 강사 별 / 프로그램 별 정산 목록: 본문·헤더 셀 가운데 정렬 (내부 flex·문구 포함) */
 .payment-order-detail-filter-table
   .cms-data-table.ant-table-wrapper

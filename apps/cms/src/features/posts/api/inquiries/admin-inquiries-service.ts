@@ -4,7 +4,9 @@ import {
 } from '@/features/posts/api/inquiries/adapters/inquiry-adapters'
 import { inquiriesParamsFromSearchParams } from '@/features/posts/api/inquiries/inquiry-filter-params'
 import {
+  bulkDeleteInquiriesRemote,
   createInquiryAnswerRemote,
+  deleteInquiryRemote,
   fetchInquiriesRemote,
   fetchInquiryAnswersRemote,
   fetchInquiryRemote,
@@ -65,4 +67,18 @@ export async function submitInquiryReply(inquiryId: string, content: string): Pr
     content: trimmed,
     status: 'ANSWERED',
   })
+}
+
+export async function deleteInquiry(id: string): Promise<void> {
+  assertInquiriesRemoteReady()
+  await deleteInquiryRemote(id)
+}
+
+export async function deleteInquiries(ids: string[]): Promise<void> {
+  assertInquiriesRemoteReady()
+  if (ids.length === 1) {
+    await deleteInquiryRemote(ids[0]!)
+    return
+  }
+  await bulkDeleteInquiriesRemote(ids)
 }

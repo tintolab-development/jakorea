@@ -3,13 +3,10 @@ import {
   mapDetailedProgramResponse,
   toDetailedProgramRequest,
 } from '@/features/detailed-program/api/adapters/detailed-program-adapters'
-import {
-  clientFilterDetailedProgramsByName,
-  detailedProgramsParamsFromSearchParams,
-} from '@/features/detailed-program/api/detailed-program-filter-params'
+import { detailedProgramsParamsFromSearchParams } from '@/features/detailed-program/api/detailed-program-filter-params'
 import {
   createDetailedProgramRemote,
-  deleteDetailedProgramRemote,
+  bulkDeleteDetailedProgramsRemote,
   fetchDetailedProgramsRemote,
   updateDetailedProgramRemote,
 } from '@/features/detailed-program/api/detailed-programs-api-client'
@@ -39,8 +36,7 @@ export async function getDetailedProgramList(
   const dto = await fetchDetailedProgramsRemote(
     detailedProgramsParamsFromSearchParams(searchParams)
   )
-  const rows = mapDetailedProgramListResponse(dto)
-  return clientFilterDetailedProgramsByName(rows, searchParams)
+  return mapDetailedProgramListResponse(dto)
 }
 
 export async function createDetailedProgram(input: {
@@ -63,7 +59,5 @@ export async function updateDetailedProgram(
 
 export async function deleteDetailedPrograms(ids: string[]): Promise<void> {
   assertDetailedProgramsRemoteReady()
-  for (const id of ids) {
-    await deleteDetailedProgramRemote(Number(id))
-  }
+  await bulkDeleteDetailedProgramsRemote(ids)
 }

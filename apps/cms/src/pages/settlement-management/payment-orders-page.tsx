@@ -3,7 +3,6 @@
  * 필터·툴바(제목·뷰 전환·엑셀): FilterTableLayout
  */
 
-import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { ViewModeToggle } from '@/shared/components/view-mode'
 import '@/shared/components/list-page/list-page-layout.css'
@@ -17,7 +16,6 @@ export default function PaymentOrdersPage() {
   const {
     viewMode,
     setViewMode,
-    exposureMode,
     detailState,
     closeDetail,
     appliedFromUrl,
@@ -57,22 +55,24 @@ export default function PaymentOrdersPage() {
     <div className="payment-orders-page">
       <FilterTableLayout
         className="payment-orders-page__filter-list-layout"
+        filterResponsiveWrap={false}
         contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         fields={paymentOrdersFilterFields}
         filters={{
-          exposureMode,
+          exposureMode: pendingFilters.exposureMode,
           programName: pendingFilters.programName,
           instructorName: pendingFilters.instructorName,
-          pendingPaymentBucket:
-            pendingFilters.pendingPaymentBucket === 'all'
+          processingStatus:
+            pendingFilters.processingStatus === 'all'
               ? undefined
-              : pendingFilters.pendingPaymentBucket,
+              : pendingFilters.processingStatus,
           dateRange: pendingFilters.dateRange,
         }}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title={listTitle}
         description={`총 ${total}건`}
+        contentLoading={Boolean(contentLoading)}
         actions={
           <ViewModeToggle
             value={viewMode}
@@ -82,11 +82,7 @@ export default function PaymentOrdersPage() {
         }
         excelExport={paymentOrdersExcelExport}
       >
-        {contentLoading ? (
-          <div className="page-content-loading page-content-loading--table-slot" role="status">
-            <Spin />
-          </div>
-        ) : contentError ? (
+        {contentError ? (
           <div className="page-content-error" role="alert">
             {contentError instanceof Error ? contentError.message : '목록을 불러오지 못했습니다.'}
           </div>

@@ -3,6 +3,7 @@ import type {
   SponsorManagementDetailView,
   SponsorManagementRow,
   SponsorProgramHistoryRow,
+  SponsorYearlyBusinessRow,
 } from '@/features/sponsor/model/sponsor-management.types'
 import type { BasicInfoEditState } from '@/features/sponsor/ui/sponsor-detail-basic-info'
 import type {
@@ -12,11 +13,14 @@ import type {
   SponsorProgramHistoryResponse,
   SponsorRequest,
   SponsorResponse,
+  SponsorYearlyBusinessRequest,
+  SponsorYearlyBusinessResponse,
 } from '@/shared/api/generated/data-management/schemas'
 import type {
   SponsorOrganizationKind,
   SponsorSponsorshipStatus,
 } from '@/types/domain'
+import type { DateValue } from '@/types'
 import type { SponsorContactRegisterPayload } from '@/features/sponsor/ui/modal/sponsor-contact-register-modal'
 
 function parseOrganizationKind(value: string | undefined): SponsorOrganizationKind {
@@ -77,6 +81,82 @@ export function mapProgramHistoryResponse(
   }
 }
 
+export function mapYearlyBusinessResponse(
+  dto: SponsorYearlyBusinessResponse
+): SponsorYearlyBusinessRow {
+  return {
+    id: dto.id ?? '',
+    year: dto.businessYear ?? 0,
+    donationAmount: dto.donationAmount ?? 0,
+    beneficiaryCount: dto.beneficiaryCount ?? 0,
+    memo: dto.memo ?? '',
+    businessName: dto.businessName ?? '',
+    managerNameSnapshot: dto.managerNameSnapshot ?? '',
+  }
+}
+
+export function emptyYearlyBusinessRow(year: number): SponsorYearlyBusinessRow {
+  return {
+    id: '',
+    year,
+    donationAmount: 0,
+    beneficiaryCount: 0,
+    memo: '',
+    businessName: '',
+    managerNameSnapshot: '',
+  }
+}
+
+/** 기존 행이거나 후원금·수혜자·비고가 있으면 저장. 빈 플레이스홀더 연도는 POST하지 않음 */
+export function shouldPersistYearlyBusinessRow(row: SponsorYearlyBusinessRow): boolean {
+  if (row.id.trim()) return true
+  return row.donationAmount > 0 || row.beneficiaryCount > 0 || row.memo.trim().length > 0
+}
+
+export function toYearlyBusinessRequest(row: SponsorYearlyBusinessRow): SponsorYearlyBusinessRequest {
+  const body: SponsorYearlyBusinessRequest = {
+    businessYear: row.year,
+    businessName: row.businessName.trim() || `${row.year}년`,
+    donationAmount: row.donationAmount,
+    beneficiaryCount: row.beneficiaryCount,
+    memo: row.memo,
+  }
+  if (row.managerNameSnapshot.trim()) {
+    body.managerNameSnapshot = row.managerNameSnapshot.trim()
+  }
+  return body
+}
+
+function parseYearFromDate(value: DateValue | undefined): number | undefined {
+  if (value == null) return undefined
+  const raw = value instanceof Date ? String(value.getFullYear()) : String(value)
+  const year = Number(raw.slice(0, 4))
+  return Number.isInteger(year) && year >= 1990 && year <= 2100 ? year : undefined
+}
+
+/** 후원 시작연도~올해 빈 연도를 채워 상세 테이블에 표시 */
+export function mergeYearlyBusinessRows(
+  apiRows: SponsorYearlyBusinessRow[],
+  sponsorshipStartDate: DateValue | undefined,
+  now = new Date()
+): SponsorYearlyBusinessRow[] {
+  const currentYear = now.getFullYear()
+  const apiYears = apiRows.map(row => row.year).filter(year => year > 0)
+  const startYear =
+    parseYearFromDate(sponsorshipStartDate) ??
+    (apiYears.length > 0 ? Math.min(...apiYears) : currentYear)
+  const from = Math.min(startYear, currentYear)
+  const byYear = new Map(apiRows.filter(row => row.year > 0).map(row => [row.year, row]))
+  const rows: SponsorYearlyBusinessRow[] = []
+  for (let year = from; year <= currentYear; year += 1) {
+    rows.push(byYear.get(year) ?? emptyYearlyBusinessRow(year))
+    byYear.delete(year)
+  }
+  for (const leftover of byYear.values()) rows.push(leftover)
+  rows.sort((a, b) => b.year - a.year)
+  return rows
+}
+
 export function mapSponsorDetailResponse(dto: SponsorDetailResponse): SponsorManagementDetailView {
   const base = mapSponsorResponse(dto)
   return {
@@ -88,6 +168,10 @@ export function mapSponsorDetailResponse(dto: SponsorDetailResponse): SponsorMan
     address: dto.address ?? '',
     contacts: (dto.contacts ?? []).map(mapSponsorContactResponse),
     programHistories: (dto.programHistories ?? []).map(mapProgramHistoryResponse),
+    yearlyBusinesses: mergeYearlyBusinessRows(
+      (dto.yearlyBusinesses ?? []).map(mapYearlyBusinessResponse),
+      base.sponsorshipStartDate
+    ),
   }
 }
 

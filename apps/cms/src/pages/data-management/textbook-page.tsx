@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useMemo, useState, type Key } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
@@ -10,9 +10,10 @@ import {
 } from '@/shared/constants'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ContentModal, DeleteGuideModal } from '@/shared/ui'
-import { getTextbookListFilterKey } from '@/features/textbook/api/admin-textbooks-service'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
+import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useTextbookListQuery } from '@/features/textbook/hooks/use-textbook-list-query'
+import { usePrefetchTextbookDetail } from '@/features/textbook/hooks/use-textbook-detail-query'
 import { useTextbookMutations } from '@/features/textbook/hooks/use-textbook-mutations'
 import { useMaterialKitQuantitiesQuery } from '@/features/textbook/hooks/use-material-kit-quantities-query'
 import { useMaterialKitQuantitiesMutation } from '@/features/textbook/hooks/use-material-kit-quantities-mutation'
@@ -95,8 +96,6 @@ export default function TextbookPage() {
   const [pendingFilters, setPendingFilters] = useState<TextbookFilters>(INITIAL_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<TextbookFilters>(INITIAL_FILTERS)
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  const [selectedTextbook, setSelectedTextbook] = useState<TextbookRow | null>(null)
-  const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [registerModalOpen, setRegisterModalOpen] = useState(false)
   const [kitQuantityModalOpen, setKitQuantityModalOpen] = useState(false)
@@ -114,8 +113,8 @@ export default function TextbookPage() {
   const [kitSaveError, setKitSaveError] = useState<string | null>(null)
 
   const listQuery = useTextbookListQuery(appliedFilters, true)
-  const filterKey = getTextbookListFilterKey(appliedFilters)
-  const { createMutation, updateMutation, deleteMutation } = useTextbookMutations(filterKey)
+  const isListLoading = isDataManagementListLoading(listQuery)
+  const { createMutation, updateMutation, deleteMutation } = useTextbookMutations()
   const rows = listQuery.data ?? []
 
   const gradeOptions = useMemo(
@@ -175,16 +174,11 @@ export default function TextbookPage() {
 
   const detailTextbookId = searchParams.get('textbookId')
   const detailMode = searchParams.get('textbookMode') === 'edit' ? 'edit' : 'view'
-
-  useEffect(() => {
-    if (!detailTextbookId) {
-      setDetailModalOpen(false)
-      return
-    }
-    const target = rows.find(row => row.id === detailTextbookId) ?? null
-    setSelectedTextbook(target)
-    setDetailModalOpen(target != null)
-  }, [detailTextbookId, rows])
+  const prefetchTextbookDetail = usePrefetchTextbookDetail()
+  const listTextbook = useMemo(
+    () => (detailTextbookId ? (rows.find(row => row.id === detailTextbookId) ?? null) : null),
+    [detailTextbookId, rows]
+  )
 
   const setDetailRoute = useCallback(
     (id: string | null, mode: 'view' | 'edit' = 'view') => {
@@ -398,18 +392,19 @@ export default function TextbookPage() {
         onSubmit={handleRegisterSubmit}
       />
       <TextbookDetailFullPageModal
-        open={detailModalOpen}
-        textbook={selectedTextbook}
+        open={Boolean(detailTextbookId)}
+        textbookId={detailTextbookId}
+        listTextbook={listTextbook}
         mode={detailMode}
         onClose={() => {
           setDetailRoute(null)
         }}
         onEdit={() => {
-          if (!selectedTextbook) return
-          setDetailRoute(selectedTextbook.id, 'edit')
+          if (!detailTextbookId) return
+          setDetailRoute(detailTextbookId, 'edit')
         }}
         onSave={async payload => {
-          if (!selectedTextbook) return
+          if (!detailTextbookId) return
           if (
             !payload.textbookName.trim() ||
             !payload.textbookNameEn?.trim() ||
@@ -419,10 +414,9 @@ export default function TextbookPage() {
           }
           try {
             const updated = await updateMutation.mutateAsync({
-              id: selectedTextbook.id,
+              id: detailTextbookId,
               input: payload,
             })
-            setSelectedTextbook(updated)
             setDetailRoute(updated.id, 'view')
           } catch (error) {
             console.debug(
@@ -490,6 +484,7 @@ export default function TextbookPage() {
         onSearch={handleSearch}
         title="교재 목록"
         description={`총 ${filteredRows.length.toLocaleString()}건`}
+        contentLoading={isListLoading}
         actions={
           <>
             <CmsButton
@@ -521,7 +516,6 @@ export default function TextbookPage() {
           rowKey="id"
           className="cms-data-table textbook-page__table"
           tableLayout="fixed"
-          loading={listQuery.isLoading}
           scroll={{ x: TEXTBOOK_TABLE_SCROLL_X }}
           columns={columns}
           dataSource={filteredRows}
@@ -533,6 +527,7 @@ export default function TextbookPage() {
             preserveSelectedRowKeys: false,
           }}
           onRow={record => ({
+            onMouseEnter: () => prefetchTextbookDetail(record.id),
             onClick: event => {
               const target = event.target as HTMLElement
               if (
@@ -541,6 +536,7 @@ export default function TextbookPage() {
               ) {
                 return
               }
+              prefetchTextbookDetail(record.id)
               setDetailRoute(record.id, 'view')
             },
             style: { cursor: 'pointer' },

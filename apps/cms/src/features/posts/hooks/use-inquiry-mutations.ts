@@ -1,29 +1,50 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { submitInquiryReply } from '@/features/posts/api/inquiries/admin-inquiries-service'
+import {
+  deleteInquiry,
+  deleteInquiries,
+  submitInquiryReply,
+} from '@/features/posts/api/inquiries/admin-inquiries-service'
 import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
+import {
+  applyDeletedInquiryToLists,
+  invalidateInquiryLists,
+  removeInquiryDetailQueries,
+} from '@/features/posts/lib/inquiry-query-cache'
 
 export function useInquiryMutations() {
   const queryClient = useQueryClient()
 
-  const invalidateInquiries = (inquiryId?: string) => {
-    void queryClient.invalidateQueries({ queryKey: postsQueryKeys.inquiries.all() })
-    if (inquiryId) {
-      void queryClient.invalidateQueries({
-        queryKey: postsQueryKeys.inquiries.detail(inquiryId),
-      })
-      void queryClient.invalidateQueries({
-        queryKey: postsQueryKeys.inquiries.answers(inquiryId),
-      })
-    }
-  }
-
   const replyMutation = useMutation({
     mutationFn: ({ inquiryId, content }: { inquiryId: string; content: string }) =>
       submitInquiryReply(inquiryId, content),
-    onSuccess: (_data, variables) => {
-      invalidateInquiries(variables.inquiryId)
+    onSuccess: async (_data, { inquiryId }) => {
+      await invalidateInquiryLists(queryClient)
+      await queryClient.invalidateQueries({
+        queryKey: postsQueryKeys.inquiries.detail(inquiryId),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: postsQueryKeys.inquiries.answers(inquiryId),
+      })
     },
   })
 
-  return { replyMutation }
+  const deleteMutation = useMutation({
+    mutationFn: deleteInquiry,
+    onSuccess: (_data, id) => {
+      removeInquiryDetailQueries(queryClient, id)
+      applyDeletedInquiryToLists(queryClient, id)
+    },
+  })
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: deleteInquiries,
+    onSuccess: (_data, ids) => {
+      for (const id of ids) {
+        removeInquiryDetailQueries(queryClient, id)
+        applyDeletedInquiryToLists(queryClient, id)
+      }
+    },
+  })
+
+  return { replyMutation, deleteMutation, bulkDeleteMutation }
 }

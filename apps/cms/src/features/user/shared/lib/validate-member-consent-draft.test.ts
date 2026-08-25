@@ -11,7 +11,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { normalizeMemberConsentWriteDraft } from '@/features/user/shared/lib/normalize-member-consent-write-draft'
 import {
-  hasMemberConsentDisagreement,
+  collectMemberConsentDisagreedRequiredLabels,
   hasMemberConsentIncompleteRequiredFields,
 } from '@/features/user/shared/lib/validate-member-consent-draft'
 
@@ -128,7 +128,10 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
       'disagree'
     )
 
-    expect(hasMemberConsentDisagreement(draft)).toBe(true)
+    expect(collectMemberConsentDisagreedRequiredLabels(draft).length).toBeGreaterThan(0)
+    expect(collectMemberConsentDisagreedRequiredLabels(draft)).toEqual([
+      '개인정보 및 초상권 수집·이용 동의',
+    ])
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-portrait' })
     ).toBe(true)
@@ -170,6 +173,9 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
       }),
     }
 
+    expect(collectMemberConsentDisagreedRequiredLabels(draft)).toEqual([
+      '아동·청소년 보호와 성범죄 예방',
+    ])
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-expense' })
     ).toBe(true)

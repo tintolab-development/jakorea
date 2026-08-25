@@ -8,6 +8,8 @@ export {
   getInitialEditorContent,
   markdownToHtml,
   serializeEditorContent,
+  stripTrailingEmptyMarkdown,
+  stripTrailingEmptyParagraphs,
   toEditorContentType,
 } from './content'
 export {
@@ -22,6 +24,7 @@ export {
   promptImageUrl,
   promptLinkUrl,
   promptYoutubeUrl,
+  setLinkFromUrl,
   RICH_TEXT_IMAGE_ACCEPT,
 } from './insert-actions'
 export {

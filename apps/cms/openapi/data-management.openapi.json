@@ -4820,6 +4820,71 @@
           }
         }
       },
+      "WebhookRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "eventOccurredBy": {
+            "type": "string"
+          },
+          "subscribers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookSubscriber"
+            }
+          }
+        }
+      },
+      "WebhookSubscriber": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "old_email": {
+            "type": "string"
+          },
+          "$unsubscribe_reason": {
+            "type": "string"
+          }
+        }
+      },
+      "SubscribeRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "marketingConsent": {
+            "type": "boolean"
+          },
+          "consentVersion": {
+            "type": "string"
+          }
+        }
+      },
+      "SubscribeResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
       "PortalWithdrawalRequest": {
         "type": "object",
         "properties": {
@@ -7476,6 +7541,11 @@
             "type": "string",
             "description": "학교 검색 공급자. 나이스 학교정보 API는 NEIS를 사용합니다.",
             "example": "NEIS"
+          },
+          "educationOfficeCode": {
+            "type": "string",
+            "description": "NEIS 교육청 코드",
+            "example": "B10"
           },
           "externalSchoolCode": {
             "type": "string",
@@ -14583,15 +14653,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessStartDate": {
-            "type": "string"
-          },
           "businessEndDate": {
             "type": "string"
           },
           "businessYear": {
             "type": "integer",
             "format": "int32"
+          },
+          "businessStartDate": {
+            "type": "string"
           }
         }
       },
@@ -17237,6 +17307,9 @@
           "teacherEmploymentStatus": {
             "type": "string"
           },
+          "teacherOrganization": {
+            "$ref": "#/components/schemas/PortalTeacherOrganizationResponse"
+          },
           "external1365Id": {
             "type": "string"
           },
@@ -17252,6 +17325,50 @@
           },
           "instructorProfile": {
             "$ref": "#/components/schemas/InstructorPortalProfileResponse"
+          }
+        }
+      },
+      "PortalTeacherOrganizationResponse": {
+        "type": "object",
+        "description": "교사회원의 현재 학교/재직 정보. teacher_profile.current_organization_id -> organization을 CMS와 Portal이 공통 SSOT로 사용합니다.",
+        "properties": {
+          "organizationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "neisCode": {
+            "type": "string"
+          },
+          "organizationCategory": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "addressDetail": {
+            "type": "string"
+          },
+          "zipCode": {
+            "type": "string"
+          },
+          "regionSido": {
+            "type": "string"
+          },
+          "regionSigungu": {
+            "type": "string"
+          },
+          "employmentStatus": {
+            "type": "string"
+          },
+          "affiliationStatus": {
+            "type": "string"
+          },
+          "affiliationStartedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -20286,6 +20403,73 @@
           }
         }
       },
+      "NeisSchool": {
+        "type": "object",
+        "properties": {
+          "educationOfficeCode": {
+            "type": "string"
+          },
+          "educationOfficeName": {
+            "type": "string"
+          },
+          "schoolCode": {
+            "type": "string"
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "schoolLevel": {
+            "type": "string"
+          },
+          "province": {
+            "type": "string"
+          },
+          "cityDistrict": {
+            "type": "string"
+          },
+          "roadAddress": {
+            "type": "string"
+          },
+          "postalCode": {
+            "type": "string"
+          },
+          "homepageUrl": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      },
+      "NeisSchoolSearchResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NeisSchool"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "hasNext": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      },
       "ApiResponseString": {
         "type": "object",
         "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
@@ -20513,6 +20697,9 @@
           "programType": {
             "type": "string"
           },
+          "programGroup": {
+            "type": "string"
+          },
           "recruitmentId": {
             "type": "integer",
             "format": "int64"
@@ -20580,6 +20767,9 @@
             "items": {
               "type": "string"
             }
+          },
+          "supplement": {
+            "$ref": "#/components/schemas/ProgramApplicationSupplement"
           }
         }
       },
@@ -20607,6 +20797,51 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "ProgramApplicationSupplement": {
+        "type": "object",
+        "description": "프로그램 유형별 회원 포탈 신청 보조 projection. 해당 프로그램에 필요한 보조정보가 없으면 null입니다.",
+        "properties": {
+          "ujat": {
+            "$ref": "#/components/schemas/UjatApplicationSupplement",
+            "description": "UJAT 조직 신청 workflow 상태. ORGANIZATION + UJAT에서만 제공"
+          }
+        }
+      },
+      "UjatApplicationSupplement": {
+        "type": "object",
+        "description": "CMS와 동일한 program_organization_application 기반 UJAT 신청 workflow 상태",
+        "properties": {
+          "temporaryAssignmentStatus": {
+            "type": "string",
+            "description": "임시 배정 상태",
+            "example": "TEMP_ASSIGNMENT_CONFIRMED"
+          },
+          "institutionConfirmationStatus": {
+            "type": "string",
+            "description": "기관 확인 상태",
+            "example": "CONFIRMED"
+          },
+          "institutionConfirmedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "기관 확인 완료 시각"
+          },
+          "assignmentLockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "배정 잠금 시각"
+          },
+          "assignmentRevision": {
+            "type": "integer",
+            "format": "int32",
+            "description": "배정 revision"
+          },
+          "assignmentLocked": {
+            "type": "boolean",
+            "description": "배정 잠금 여부. assignmentLockedAt 존재 여부에서 파생"
           }
         }
       },
@@ -20657,6 +20892,9 @@
             "type": "string"
           },
           "programType": {
+            "type": "string"
+          },
+          "programGroup": {
             "type": "string"
           },
           "recruitmentId": {
@@ -20713,6 +20951,9 @@
           },
           "capabilities": {
             "$ref": "#/components/schemas/ApplicationCapabilities"
+          },
+          "supplement": {
+            "$ref": "#/components/schemas/ProgramApplicationSupplement"
           }
         }
       },
@@ -21392,6 +21633,53 @@
           },
           "portraitConsentUploadAllowed": {
             "type": "boolean"
+          }
+        }
+      },
+      "SubscriptionView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "subjectType": {
+            "type": "string"
+          },
+          "maskedEmail": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "syncStatus": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "agreedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "subscribedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "unsubscribedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastSyncAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastSyncErrorCode": {
+            "type": "string"
           }
         }
       },
@@ -27666,6 +27954,72 @@
           }
         }
       },
+      "NotificationCaseItem": {
+        "type": "object",
+        "properties": {
+          "caseKey": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "caseName": {
+            "type": "string"
+          },
+          "recipientDescription": {
+            "type": "string"
+          },
+          "triggerDescription": {
+            "type": "string"
+          },
+          "templateVariables": {
+            "type": "string"
+          },
+          "channelPolicy": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "sourceVersion": {
+            "type": "string"
+          },
+          "sourceRow": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NotificationCasePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationCaseItem"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "hasNext": {
+            "type": "boolean"
+          }
+        }
+      },
       "NotificationTemplateListResponse": {
         "type": "object",
         "properties": {
@@ -27866,6 +28220,32 @@
         "properties": {
           "delivery": {
             "$ref": "#/components/schemas/NotificationDeliveryResponse"
+          }
+        }
+      },
+      "PageResponseSubscriptionView": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubscriptionView"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "hasNext": {
+            "type": "boolean"
           }
         }
       },
@@ -31012,12 +31392,12 @@
                 },
                 "data": {},
                 "message": {
-                  "example": "401: 인증이 필요하거나 토큰이 만료되었습니다."
+                  "example": "인증이 필요하거나 토큰이 만료되었습니다."
                 },
                 "error": {
                   "properties": {
                     "code": {
-                      "example": "401"
+                      "example": "UNAUTHORIZED"
                     },
                     "message": {
                       "example": "인증이 필요하거나 토큰이 만료되었습니다."
@@ -31032,7 +31412,7 @@
             },
             "examples": {
               "error": {
-                "value": "{\"success\":false,\"data\":null,\"message\":\"401: 인증이 필요하거나 토큰이 만료되었습니다.\",\"error\":{\"code\":\"401\",\"message\":\"인증이 필요하거나 토큰이 만료되었습니다.\",\"field\":null,\"traceId\":\"8a0c72fa7d6c4ec19c3e13d2a1e54a1f\"}}\n"
+                "value": "{\"success\":false,\"data\":null,\"message\":\"인증이 필요하거나 토큰이 만료되었습니다.\",\"error\":{\"code\":\"UNAUTHORIZED\",\"message\":\"인증이 필요하거나 토큰이 만료되었습니다.\",\"field\":null,\"traceId\":\"8a0c72fa7d6c4ec19c3e13d2a1e54a1f\"}}\n"
               }
             }
           }
@@ -31049,12 +31429,12 @@
                 },
                 "data": {},
                 "message": {
-                  "example": "403: 현재 계정에 필요한 권한이 없습니다."
+                  "example": "현재 계정에 필요한 권한이 없습니다."
                 },
                 "error": {
                   "properties": {
                     "code": {
-                      "example": "403"
+                      "example": "PERMISSION_DENIED"
                     },
                     "message": {
                       "example": "현재 계정에 필요한 권한이 없습니다."
@@ -31069,7 +31449,7 @@
             },
             "examples": {
               "error": {
-                "value": "{\"success\":false,\"data\":null,\"message\":\"403: 현재 계정에 필요한 권한이 없습니다.\",\"error\":{\"code\":\"403\",\"message\":\"현재 계정에 필요한 권한이 없습니다.\",\"field\":null,\"traceId\":\"8a0c72fa7d6c4ec19c3e13d2a1e54a1f\"}}\n"
+                "value": "{\"success\":false,\"data\":null,\"message\":\"현재 계정에 필요한 권한이 없습니다.\",\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"현재 계정에 필요한 권한이 없습니다.\",\"field\":null,\"traceId\":\"8a0c72fa7d6c4ec19c3e13d2a1e54a1f\"}}\n"
               }
             }
           }
@@ -31086,12 +31466,12 @@
                 },
                 "data": {},
                 "message": {
-                  "example": "404: 요청한 리소스를 찾을 수 없습니다."
+                  "example": "요청한 리소스를 찾을 수 없습니다."
                 },
                 "error": {
                   "properties": {
                     "code": {
-                      "example": "404"
+                      "example": "RESOURCE_NOT_FOUND"
                     },
                     "message": {
                       "example": "요청한 리소스를 찾을 수 없습니다."
@@ -31106,7 +31486,7 @@
             },
             "examples": {
               "error": {
-                "value": "{\"success\":false,\"data\":null,\"message\":\"404: 요청한 리소스를 찾을 수 없습니다.\",\"error\":{\"code\":\"404\",\"message\":\"요청한 리소스를 찾을 수 없습니다.\",\"field\":null,\"traceId\":\"8a0c72fa7d6c4ec19c3e13d2a1e54a1f\"}}\n"
+                "value": "{\"success\":false,\"data\":null,\"message\":\"요청한 리소스를 찾을 수 없습니다.\",\"error\":{\"code\":\"RESOURCE_NOT_FOUND\",\"message\":\"요청한 리소스를 찾을 수 없습니다.\",\"field\":null,\"traceId\":\"8a0c72fa7d6c4ec19c3e13d2a1e54a1f\"}}\n"
               }
             }
           }
@@ -31123,12 +31503,12 @@
                 },
                 "data": {},
                 "message": {
-                  "example": "409: 상태 전이, 중복 처리, 동시성 정책 때문에 요청을 처리할 수 없습니다."
+                  "example": "상태 전이, 중복 처리, 동시성 정책 때문에 요청을 처리할 수 없습니다."
                 },
                 "error": {
                   "properties": {
                     "code": {
-                      "example": "409"
+                      "example": "CONFLICT"
                     },
                     "message": {
                       "example": "상태 전이, 중복 처리, 동시성 정책 때문에 요청을 처리할 수 없습니다."
@@ -31143,7 +31523,7 @@
             },
             "examples": {
               "error": {
-                "value": "{\"success\":false,\"data\":null,\"message\":\"409: 상태 전이, 중복 처리, 동시성 정책 때문에 요청을 처리할 수 없습니다.\",\"error\":{\"code\":\"409\",\"message\":\"상태 전이, 중복 처리, 동시성 정책 때문에 요청을 처리할 수 없습니다.\",\"field\":null,\"traceId\":\"8a0c72fa7d6c4ec19c3e13d2a1e54a1f\"}}\n"
+                "value": "{\"success\":false,\"data\":null,\"message\":\"상태 전이, 중복 처리, 동시성 정책 때문에 요청을 처리할 수 없습니다.\",\"error\":{\"code\":\"CONFLICT\",\"message\":\"상태 전이, 중복 처리, 동시성 정책 때문에 요청을 처리할 수 없습니다.\",\"field\":null,\"traceId\":\"8a0c72fa7d6c4ec19c3e13d2a1e54a1f\"}}\n"
               }
             }
           }
@@ -31160,12 +31540,12 @@
                 },
                 "data": {},
                 "message": {
-                  "example": "400: 요청 파라미터 또는 본문 값이 유효하지 않습니다."
+                  "example": "요청 파라미터 또는 본문 값이 유효하지 않습니다."
                 },
                 "error": {
                   "properties": {
                     "code": {
-                      "example": "400"
+                      "example": "VALIDATION_FAILED"
                     },
                     "message": {
                       "example": "요청 파라미터 또는 본문 값이 유효하지 않습니다."
@@ -31180,14 +31560,14 @@
             },
             "examples": {
               "error": {
-                "value": "{\"success\":false,\"data\":null,\"message\":\"400: 요청 파라미터 또는 본문 값이 유효하지 않습니다.\",\"error\":{\"code\":\"400\",\"message\":\"요청 파라미터 또는 본문 값이 유효하지 않습니다.\",\"field\":null,\"traceId\":\"8a0c72fa7d6c4ec19c3e13d2a1e54a1f\"}}\n"
+                "value": "{\"success\":false,\"data\":null,\"message\":\"요청 파라미터 또는 본문 값이 유효하지 않습니다.\",\"error\":{\"code\":\"VALIDATION_FAILED\",\"message\":\"요청 파라미터 또는 본문 값이 유효하지 않습니다.\",\"field\":null,\"traceId\":\"8a0c72fa7d6c4ec19c3e13d2a1e54a1f\"}}\n"
               }
             }
           }
         }
       },
       "ServerError": {
-        "description": "서버 내부 오류입니다. 운영 로그와 requestId를 확인하세요.",
+        "description": "서버 내부 오류입니다. 운영 로그와 traceId를 확인하세요.",
         "content": {
           "application/json": {
             "schema": {
@@ -31197,15 +31577,15 @@
                 },
                 "data": {},
                 "message": {
-                  "example": "500: 서버 내부 오류입니다. 운영 로그와 requestId를 확인하세요."
+                  "example": "서버 내부 오류입니다. 운영 로그와 traceId를 확인하세요."
                 },
                 "error": {
                   "properties": {
                     "code": {
-                      "example": "500"
+                      "example": "INTERNAL_SERVER_ERROR"
                     },
                     "message": {
-                      "example": "서버 내부 오류입니다. 운영 로그와 requestId를 확인하세요."
+                      "example": "서버 내부 오류입니다. 운영 로그와 traceId를 확인하세요."
                     },
                     "field": {},
                     "traceId": {
@@ -31217,7 +31597,7 @@
             },
             "examples": {
               "error": {
-                "value": "{\"success\":false,\"data\":null,\"message\":\"500: 서버 내부 오류입니다. 운영 로그와 requestId를 확인하세요.\",\"error\":{\"code\":\"500\",\"message\":\"서버 내부 오류입니다. 운영 로그와 requestId를 확인하세요.\",\"field\":null,\"traceId\":\"8a0c72fa7d6c4ec19c3e13d2a1e54a1f\"}}\n"
+                "value": "{\"success\":false,\"data\":null,\"message\":\"서버 내부 오류입니다. 운영 로그와 traceId를 확인하세요.\",\"error\":{\"code\":\"INTERNAL_SERVER_ERROR\",\"message\":\"서버 내부 오류입니다. 운영 로그와 traceId를 확인하세요.\",\"field\":null,\"traceId\":\"8a0c72fa7d6c4ec19c3e13d2a1e54a1f\"}}\n"
               }
             }
           }

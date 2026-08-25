@@ -1,7 +1,8 @@
 export const generalProgramQueryKeys = {
   all: ['general-programs'] as const,
+  lists: () => [...generalProgramQueryKeys.all, 'list'] as const,
   list: (statusFilter: string | null, tableFiltersKey = '') =>
-    [...generalProgramQueryKeys.all, 'list', statusFilter ?? 'all', tableFiltersKey] as const,
+    [...generalProgramQueryKeys.lists(), statusFilter ?? 'all', tableFiltersKey] as const,
   /** 상단 4카드 위젯 건수 — list 무효화와 함께 갱신 */
   overviewStages: () => [...generalProgramQueryKeys.all, 'overview-stages'] as const,
   detail: (programId: string) =>

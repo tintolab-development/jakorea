@@ -7,8 +7,10 @@
 import { useEffect, useMemo } from 'react'
 import { Form, Input, Select, Space } from 'antd'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { instructorSchema, type InstructorFormData } from '@/entities/instructor/model/schema'
 import type { Instructor } from '@/types/domain'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
@@ -94,7 +96,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
     if (instructor) {
       return {
         name: instructor.name,
-        contactPhone: instructor.contactPhone || '',
+        contactPhone: formatKoreanPhoneNumber(instructor.contactPhone || ''),
         contactEmail: instructor.contactEmail || '',
         region: instructor.region,
         specialty: instructor.specialty || [],
@@ -124,7 +126,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
     if (instructor) {
       reset({
         name: instructor.name,
-        contactPhone: instructor.contactPhone || '',
+        contactPhone: formatKoreanPhoneNumber(instructor.contactPhone || ''),
         contactEmail: instructor.contactEmail || '',
         region: instructor.region,
         specialty: instructor.specialty || [],
@@ -175,7 +177,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
         <Controller
           name="contactPhone"
           control={control}
-          render={({ field }) => <Input {...field} />}
+          render={({ field }) => <CmsPhoneInput {...field} />}
         />
       </Form.Item>
 

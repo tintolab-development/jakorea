@@ -2,22 +2,28 @@ export const settlementQueryKeys = {
   all: ['cms', 'settlement'] as const,
   paymentOrders: {
     all: () => [...settlementQueryKeys.all, 'paymentOrders'] as const,
+    lists: () => [...settlementQueryKeys.paymentOrders.all(), 'list'] as const,
     list: (searchParamsKey: string) =>
-      [...settlementQueryKeys.paymentOrders.all(), 'list', searchParamsKey] as const,
+      [...settlementQueryKeys.paymentOrders.lists(), searchParamsKey] as const,
     statements: () => [...settlementQueryKeys.paymentOrders.all(), 'statements'] as const,
-    detail: (type: 'program' | 'instructor', key: string) =>
-      [...settlementQueryKeys.paymentOrders.all(), 'detail', type, key] as const,
+    details: () => [...settlementQueryKeys.paymentOrders.all(), 'detail'] as const,
+    detail: (type: 'program' | 'instructor', key: string, dateRangeKey = 'all') =>
+      [...settlementQueryKeys.paymentOrders.details(), type, key, dateRangeKey] as const,
     settlement: (settlementId: number) =>
       [...settlementQueryKeys.paymentOrders.all(), 'settlement', settlementId] as const,
   },
   accountPayments: {
     all: () => [...settlementQueryKeys.all, 'accountPayments'] as const,
+    lists: () => [...settlementQueryKeys.accountPayments.all(), 'list'] as const,
     list: (searchParamsKey: string) =>
-      [...settlementQueryKeys.accountPayments.all(), 'list', searchParamsKey] as const,
+      [...settlementQueryKeys.accountPayments.lists(), searchParamsKey] as const,
+    details: () => [...settlementQueryKeys.accountPayments.all(), 'detail'] as const,
     detail: (rowId: string) =>
-      [...settlementQueryKeys.accountPayments.all(), 'detail', rowId] as const,
+      [...settlementQueryKeys.accountPayments.details(), rowId] as const,
     settlement: (settlementId: number) =>
       [...settlementQueryKeys.accountPayments.all(), 'settlement', settlementId] as const,
+    budgetSummary: (year: number) =>
+      [...settlementQueryKeys.accountPayments.all(), 'budgetSummary', year] as const,
     exports: () => [...settlementQueryKeys.accountPayments.all(), 'exports'] as const,
   },
   calendar: {

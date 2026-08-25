@@ -16,6 +16,7 @@ import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-p
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { DividerVertical } from '@/shared/components/divider-vertical'
@@ -463,7 +464,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                         name="contactPhone"
                         control={form.control}
                         render={({ field }) => (
-                          <CmsInput
+                          <CmsPhoneInput
                             {...field}
                             value={field.value ?? ''}
                             placeholder="문의처 전화번호"

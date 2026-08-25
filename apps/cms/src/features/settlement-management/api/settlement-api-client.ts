@@ -1,19 +1,25 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { getJAKoreaCMSBackendAPISettlementSubset } from '@/shared/api/generated/settlement/settlement-api'
 import type {
+  AccountPaymentDetailResponse,
+  BudgetSummaryParams,
   ListAccountPaymentsParams,
   ListExportHistoriesParams,
   ListPaymentStatementsParams,
+  ListSettlementAggregatesParams,
   ListSettlementsParams,
   PageResponseAccountPaymentListItemResponse,
   PageResponsePaymentStatementListItemResponse,
   PageResponseSettlementExportHistoryResponse,
   PageResponseSettlementListItemResponse,
+  SettlementBudgetSummaryResponse,
+  SettlementBulkStatusChangeRequest,
   SettlementConfigResponse,
   SettlementDocumentDownloadResponse,
   SettlementExportRequest,
   SettlementFrontendResponse,
   SettlementStatusChangeRequest,
+  SettlementAggregateResponse,
 } from '@/shared/api/generated/settlement/schemas'
 
 const settlementApi = getJAKoreaCMSBackendAPISettlementSubset()
@@ -38,9 +44,40 @@ export async function fetchSettlementDetailRemote(
 
 export async function confirmPaymentStatementRemote(
   statementId: number,
-  body: SettlementStatusChangeRequest = { reason: '' }
+  body: SettlementStatusChangeRequest = { reason: '지급조서 확인' }
 ): Promise<void> {
   await settlementApi.confirmPaymentStatement(statementId, body)
+}
+
+export async function bulkConfirmPaymentStatementsRemote(
+  body: SettlementBulkStatusChangeRequest
+): Promise<void> {
+  await unwrapApiBody(await settlementApi.bulkConfirmPaymentStatements(body))
+}
+
+export async function bulkMarkAccountPaymentsPaidRemote(
+  body: SettlementBulkStatusChangeRequest
+): Promise<void> {
+  await unwrapApiBody(await settlementApi.bulkPaid(body))
+}
+
+export async function fetchSettlementBudgetSummaryRemote(
+  params: BudgetSummaryParams = {}
+): Promise<SettlementBudgetSummaryResponse> {
+  return unwrapApiBody(await settlementApi.budgetSummary(params))
+}
+
+export async function fetchSettlementAggregatesRemote(
+  params: ListSettlementAggregatesParams
+): Promise<SettlementAggregateResponse[]> {
+  const data = await unwrapApiBody(await settlementApi.listSettlementAggregates(params))
+  return Array.isArray(data) ? data : []
+}
+
+export async function fetchAccountPaymentDetailRemote(
+  paymentId: number
+): Promise<AccountPaymentDetailResponse> {
+  return unwrapApiBody(await settlementApi.getAccountPayment(paymentId))
 }
 
 export async function downloadPaymentStatementRemote(
@@ -57,7 +94,7 @@ export async function fetchAccountPaymentsPageRemote(
 
 export async function markAccountPaymentPaidRemote(
   paymentId: number,
-  body: SettlementStatusChangeRequest = { reason: '' }
+  body: SettlementStatusChangeRequest = { reason: '계좌 지급 완료' }
 ): Promise<void> {
   await settlementApi.markPaid(paymentId, body)
 }
@@ -113,7 +150,7 @@ export async function fetchSettlementCalendarDateRemote(date: string) {
 export async function fetchAllSettlementsRemote(
   params: Omit<ListSettlementsParams, 'page' | 'size'> = {}
 ): Promise<PageResponseSettlementListItemResponse['items']> {
-  const pageSize = 200
+  const pageSize = 50
   let page = 0
   const items: NonNullable<PageResponseSettlementListItemResponse['items']> = []
 
@@ -132,7 +169,7 @@ export async function fetchAllSettlementsRemote(
 export async function fetchAllPaymentStatementsRemote(): Promise<
   NonNullable<PageResponsePaymentStatementListItemResponse['items']>
 > {
-  const pageSize = 200
+  const pageSize = 50
   let page = 0
   const items: NonNullable<PageResponsePaymentStatementListItemResponse['items']> = []
 
@@ -151,7 +188,7 @@ export async function fetchAllPaymentStatementsRemote(): Promise<
 export async function fetchAllAccountPaymentsRemote(
   params: Omit<ListAccountPaymentsParams, 'page' | 'size'> = {}
 ): Promise<NonNullable<PageResponseAccountPaymentListItemResponse['items']>> {
-  const pageSize = 200
+  const pageSize = 50
   let page = 0
   const items: NonNullable<PageResponseAccountPaymentListItemResponse['items']> = []
 

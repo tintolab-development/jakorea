@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useMemo, useState, type Key } from 'react'
 import type { MouseEvent } from 'react'
 import { Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
+import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useSponsorListQuery } from '@/features/sponsor/hooks/use-sponsor-list-query'
-import { useSponsorDetailQuery } from '@/features/sponsor/hooks/use-sponsor-detail-query'
+import { usePrefetchSponsorDetail } from '@/features/sponsor/hooks/use-sponsor-detail-query'
 import { useSponsorMutations } from '@/features/sponsor/hooks/use-sponsor-mutations'
 import type { SponsorSponsorshipStatus } from '@/types/domain'
 import { SponsorSponsorshipStatusBadge } from '@/features/sponsor/ui/sponsor-sponsorship-status-badge'
@@ -64,9 +65,8 @@ export default function SponsorPage() {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const listQuery = useSponsorListQuery(searchParams, true)
-  const { createMutation, deleteMutation, updateStatusMutation } = useSponsorMutations(
-    searchParams.toString()
-  )
+  const isListLoading = isDataManagementListLoading(listQuery)
+  const { createMutation, deleteMutation, bulkDeleteMutation, updateStatusMutation } = useSponsorMutations()
   const rows = listQuery.data ?? []
 
   const {
@@ -89,54 +89,21 @@ export default function SponsorPage() {
   const [actionResultTitle, setActionResultTitle] = useState('')
   const [actionResultMessage, setActionResultMessage] = useState('')
 
+  const prefetchSponsorDetail = usePrefetchSponsorDetail()
   const sponsorIdFromUrl = searchParams.get('sponsorId') ?? ''
-  const detailFromUrlQuery = useSponsorDetailQuery(sponsorIdFromUrl || null, Boolean(sponsorIdFromUrl))
   const sponsorRowForDetail = useMemo((): SponsorManagementRow | null => {
     if (!sponsorIdFromUrl) return null
-    // 상세 GET 결과만 본문에 사용 (목록 행 선표시 금지)
-    if (detailFromUrlQuery.data) {
-      const { contacts: _c, programHistories: _p, ...row } = detailFromUrlQuery.data
-      return row
-    }
-    if (detailFromUrlQuery.isLoading || detailFromUrlQuery.isFetching) {
-      return {
+    return (
+      rows.find(r => r.id === sponsorIdFromUrl) ?? {
         id: sponsorIdFromUrl,
         name: '',
         createdAt: '',
         updatedAt: '',
         programCount: 0,
       }
-    }
-    return null
-  }, [
-    detailFromUrlQuery.data,
-    detailFromUrlQuery.isFetching,
-    detailFromUrlQuery.isLoading,
-    sponsorIdFromUrl,
-  ])
-  const sponsorDetailOpen = Boolean(sponsorIdFromUrl && sponsorRowForDetail)
-
-  useEffect(() => {
-    if (
-      sponsorIdFromUrl &&
-      !detailFromUrlQuery.isLoading &&
-      detailFromUrlQuery.isError &&
-      sponsorRowForDetail?.name === ''
-    ) {
-      setSearchParams(prev => {
-        const next = new URLSearchParams(prev)
-        next.delete('sponsorId')
-        next.delete('sponsorLnb')
-        return next
-      })
-    }
-  }, [
-    detailFromUrlQuery.isError,
-    detailFromUrlQuery.isLoading,
-    setSearchParams,
-    sponsorIdFromUrl,
-    sponsorRowForDetail?.name,
-  ])
+    )
+  }, [rows, sponsorIdFromUrl])
+  const sponsorDetailOpen = Boolean(sponsorIdFromUrl)
 
   const closeSponsorDetail = useCallback(() => {
     const returnTo = sanitizeInternalReturnTo(searchParams.get(SPONSOR_DETAIL_RETURN_TO_PARAM))
@@ -210,9 +177,7 @@ export default function SponsorPage() {
     const ids = new Set(selectedSponsors.map(s => s.id))
     const n = selectedSponsors.length
     try {
-      for (const id of ids) {
-        await deleteMutation.mutateAsync(id)
-      }
+      await bulkDeleteMutation.mutateAsync([...ids])
       setSelectedRowKeys([])
       setBulkSponsorDeleteModalOpen(false)
       setActionResultTitle(buildDeleteCompletedTitle('후원사'))
@@ -233,12 +198,16 @@ export default function SponsorPage() {
         getDataManagementApiErrorMessage(error, '삭제에 실패했습니다.')
       )
     }
-  }, [closeSponsorDetail, deleteMutation, selectedSponsors, sponsorIdFromUrl])
+  }, [bulkDeleteMutation, closeSponsorDetail, selectedSponsors, sponsorIdFromUrl])
 
   const updateSponsorshipStatus = useCallback(
-    async (id: string, next: SponsorSponsorshipStatus) => {
+    async (row: SponsorManagementRow, next: SponsorSponsorshipStatus) => {
       try {
-        await updateStatusMutation.mutateAsync({ sponsorId: id, sponsorshipStatus: next })
+        await updateStatusMutation.mutateAsync({
+          sponsorId: row.id,
+          sponsorshipStatus: next,
+          existing: row,
+        })
       } catch (error) {
         console.debug(
           'sponsorPage status update failed',
@@ -329,6 +298,7 @@ export default function SponsorPage() {
         align: 'center' },
       {
         title: '후원 상태',
+        dataIndex: 'sponsorshipStatus',
         key: 'sponsorshipStatus',
         width: 116,
         align: 'center',
@@ -345,7 +315,7 @@ export default function SponsorPage() {
             onChange={
               canWrite
                 ? newStatus => {
-                    updateSponsorshipStatus(r.id, newStatus)
+                    updateSponsorshipStatus(r, newStatus)
                     setOpenSponsorshipDropdownId(null)
                   }
                 : undefined
@@ -381,6 +351,7 @@ export default function SponsorPage() {
         onSearch={handleSearch}
         title="후원사 목록"
         description={`총 ${displayedCount.toLocaleString()}건`}
+        contentLoading={isListLoading}
         actions={
           <>
             <CmsButton
@@ -408,6 +379,7 @@ export default function SponsorPage() {
           pagination={false}
           onRow={record => ({
             style: { cursor: 'pointer' },
+            onMouseEnter: () => prefetchSponsorDetail(record.id),
             onClick: (e: MouseEvent<HTMLElement>) => {
               const el = e.target as HTMLElement
               if (
@@ -417,6 +389,7 @@ export default function SponsorPage() {
               ) {
                 return
               }
+              prefetchSponsorDetail(record.id)
               setSearchParams(prev => {
                 const next = new URLSearchParams(prev)
                 next.set('sponsorId', record.id)

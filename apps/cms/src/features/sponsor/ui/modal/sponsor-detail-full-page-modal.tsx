@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react'
-import { Spin } from 'antd'
 import { useLocation, useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   addSponsorContact,
   deleteSponsorContacts,
@@ -8,6 +8,14 @@ import {
 } from '@/features/sponsor/api/admin-sponsors-service'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import type { SponsorContactsRemoteActions } from '@/features/sponsor/hooks/use-sponsor-contacts'
+import {
+  applyCreatedContactToDetail,
+  applyDeletedContactsToDetail,
+  applyUpdatedContactToDetail,
+  mergeCreatedContact,
+  mergeUpdatedContact,
+  removeContactsById,
+} from '@/features/sponsor/lib/contact-query-cache'
 import { BulbOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
@@ -93,50 +101,58 @@ function SponsorDetailFullPageModalInner({
     basicInfo,
     contacts,
     handleBasicInfoChange,
+    handleSponsorshipStatusChange,
     isEditingBasicInfo,
     handleToggleBasicInfoEdit,
     removeProgramHistoryRows,
     programHistoryDeleteDisabled,
-    refetchDetail,
     isLoading: isDetailLoading,
     isError: isDetailError,
+    setContacts,
   } = sponsorDetail
 
+  const queryClient = useQueryClient()
   const remoteContactActions = useMemo((): SponsorContactsRemoteActions => ({
       onRegister: async (payload, contactType) => {
         try {
-          await addSponsorContact(sponsor.id, payload, contactType)
-          await refetchDetail()
+          const created = await addSponsorContact(sponsor.id, payload, contactType)
+          applyCreatedContactToDetail(queryClient, sponsor.id, created)
+          setContacts(prev => mergeCreatedContact(prev, created))
         } catch (error) {
           console.debug(
             'sponsorContact register failed',
             getDataManagementApiErrorMessage(error, '담당자 등록에 실패했습니다.')
           )
+          throw error
         }
       },
       onDelete: async ids => {
         try {
           await deleteSponsorContacts(ids)
-          await refetchDetail()
+          applyDeletedContactsToDetail(queryClient, sponsor.id, ids)
+          setContacts(prev => removeContactsById(prev, ids))
         } catch (error) {
           console.debug(
             'sponsorContact delete failed',
             getDataManagementApiErrorMessage(error, '담당자 삭제에 실패했습니다.')
           )
+          throw error
         }
       },
       onTypeChange: async (row, nextType) => {
         try {
-          await updateSponsorContact({ ...row, contactType: nextType })
-          await refetchDetail()
+          const updated = await updateSponsorContact({ ...row, contactType: nextType })
+          applyUpdatedContactToDetail(queryClient, sponsor.id, updated)
+          setContacts(prev => mergeUpdatedContact(prev, updated))
         } catch (error) {
           console.debug(
             'sponsorContact type change failed',
             getDataManagementApiErrorMessage(error, '담당자 유형 변경에 실패했습니다.')
           )
+          throw error
         }
       },
-  }), [refetchDetail, sponsor.id])
+  }), [queryClient, setContacts, sponsor.id])
 
   const sponsorDelete = useSponsorDelete(sponsor, canWrite, onDeleteSponsor, onClose)
   const sponsorContacts = useSponsorContacts(
@@ -187,19 +203,9 @@ function SponsorDetailFullPageModalInner({
     handleToggleBasicInfoEdit(canWrite)
   }, [canWrite, handleToggleBasicInfoEdit])
 
-  if (isDetailLoading && !basicInfo) {
-    return (
-      <DetailFullPageModal open={open} onClose={onClose} title="후원사 상세" className="sponsor-detail-fullpage-modal">
-        <div className="sponsor-detail-fullpage-modal__loading">
-          <Spin size="large" />
-        </div>
-      </DetailFullPageModal>
-    )
-  }
-
-  if (isDetailError || !basicInfo) return null
-
-  const title = `후원사 상세_${detail.nameDisplayKo}`
+  const titleName = detail.nameDisplayKo.trim() || sponsor.name.trim()
+  const title = titleName ? `후원사 상세_${titleName}` : '후원사 상세'
+  const showDetailBody = Boolean(basicInfo) && !isDetailLoading && !isDetailError
   const activeLnbItem =
     SPONSOR_DETAIL_MODAL_SIDEBAR_ITEMS.find(item => item.key === lnbKey) ??
     SPONSOR_DETAIL_MODAL_SIDEBAR_ITEMS[0]
@@ -224,6 +230,8 @@ function SponsorDetailFullPageModalInner({
       open={open}
       onClose={onClose}
       title={title}
+      loading={isDetailLoading}
+      error={isDetailError ? '상세를 불러오지 못했습니다.' : null}
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className="sponsor-detail-fullpage-modal"
       sidebar={
@@ -238,7 +246,7 @@ function SponsorDetailFullPageModalInner({
         />
       }
       contentExtra={
-        lnbKey === LNB_DETAIL ? (
+        showDetailBody && lnbKey === LNB_DETAIL ? (
           <div className="info-section-wrapper">
             <span className="info-section-title">기본 정보</span>
             <div className="info-section-buttons--wrapper">
@@ -253,27 +261,34 @@ function SponsorDetailFullPageModalInner({
         ) : null
       }
     >
-      {lnbKey === LNB_DETAIL ? (
-        <SponsorDetailPanel
-          basicInfo={basicInfo}
-          isEditing={isEditingBasicInfo}
-          onChange={handleBasicInfoChange}
-          contacts={contacts}
-          canWrite={canWrite}
-          contactsProps={sponsorContacts}
-          columns={contactColumns}
-        />
-      ) : (
-        <SponsorProgramHistoryPanel
-          {...programHistory}
-          columns={programHistoryColumns}
-          canWrite={canWrite}
-          onRemoveProgramHistories={removeProgramHistoryRows}
-          deleteDisabled={programHistoryDeleteDisabled}
-          totalCount={programHistory.totalElements}
-          loading={programHistory.isLoading}
-        />
-      )}
+      {showDetailBody && basicInfo ? (
+        lnbKey === LNB_DETAIL ? (
+          <SponsorDetailPanel
+            sponsorId={sponsor.id}
+            basicInfo={basicInfo}
+            isEditing={isEditingBasicInfo}
+            onChange={handleBasicInfoChange}
+            onSponsorshipStatusChange={next => {
+              void handleSponsorshipStatusChange(next)
+            }}
+            contacts={contacts}
+            sponsorshipStartDate={detail.sponsorshipStartDate}
+            canWrite={canWrite}
+            contactsProps={sponsorContacts}
+            columns={contactColumns}
+          />
+        ) : (
+          <SponsorProgramHistoryPanel
+            {...programHistory}
+            columns={programHistoryColumns}
+            canWrite={canWrite}
+            onRemoveProgramHistories={removeProgramHistoryRows}
+            deleteDisabled={programHistoryDeleteDisabled}
+            totalCount={programHistory.totalElements}
+            loading={programHistory.isLoading}
+          />
+        )
+      ) : null}
       <SponsorDeleteModal
         open={sponsorDelete.deleteModalOpen}
         onCancel={sponsorDelete.cancelDelete}

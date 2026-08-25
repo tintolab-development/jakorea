@@ -9,6 +9,7 @@ import {
   CmsButton,
   CmsCheckbox,
   CmsInput,
+  CmsPhoneInput,
   CmsRadioGroup,
   CmsSelect,
   SchoolSearch,
@@ -18,12 +19,9 @@ import {
 import { CmsDateTextInput, isValidBirthDateFormValue, birthDateFormValueToApi, isBirthDateInputIncomplete } from '@/shared/ui/date-text-input'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
-import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
+import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import {
-  INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
-  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
-} from '@/shared/constants/messages'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import {
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
   buildRequiredConsentDisagreeAlertMessage,
@@ -40,7 +38,6 @@ import {
 import { MEMBER_REGISTER_ALL_CONSENT_KEYS } from '@/features/user/shared/lib/member-register-consent-fields'
 import type { MemberConsentMemberContext } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
 import { buildMemberPaymentStatementBasicInfoAutofill } from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
-import { isMemberRegisterBasicInfoIncompleteForConsent } from '@/features/user/shared/lib/validate-member-consent-basic-info'
 import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
 import './add-user-individual.css'
@@ -219,7 +216,7 @@ function collectMemberRegisterValidation(
   const contact = values.contact?.trim()
   if (!contact) {
     missingRequired = true
-  } else if (!KOREAN_PHONE_REGEX.test(contact)) {
+  } else if (!isValidKoreanPhoneNumber(contact)) {
     formatMessages.push('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')
   }
 
@@ -315,14 +312,6 @@ export function AddUserIndividual({
     activeConsentField != null ? resolveMemberConsentTemplateEntry(activeConsentField) : null
 
   const handleConsentWrite = (fieldKey: MemberConsentFieldKey) => {
-    const values = allValues ?? form.getFieldsValue()
-    if (isMemberRegisterBasicInfoIncompleteForConsent(values)) {
-      showAlert({
-        title: '안내',
-        content: INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
-      })
-      return
-    }
     setActiveConsentField(fieldKey)
   }
 
@@ -614,7 +603,7 @@ export function AddUserIndividual({
               view="-"
               edit={
                 <Form.Item name="contact" style={FORM_ITEM_STYLE}>
-                  <CmsInput placeholder="연락처" inputSize="medium" width="100%" />
+                  <CmsPhoneInput placeholder="연락처" inputSize="medium" width="100%" />
                 </Form.Item>
               }
             />

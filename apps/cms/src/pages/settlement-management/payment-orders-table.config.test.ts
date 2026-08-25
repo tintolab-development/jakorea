@@ -1,0 +1,26 @@
+import { describe, expect, it } from 'vitest'
+import {
+  PAYMENT_ORDERS_EXPOSURE_PARAM_KEY,
+  parsePaymentOrdersFiltersFromUrl,
+} from './payment-orders-table.config'
+
+describe('parsePaymentOrdersFiltersFromUrl', () => {
+  it('노출 기준 쿼리가 없으면 프로그램별로 본다', () => {
+    const parsed = parsePaymentOrdersFiltersFromUrl(new URLSearchParams())
+    expect(parsed.exposureMode).toBe('program')
+  })
+
+  it('신청자별 쿼리면 신청자별로 본다', () => {
+    const parsed = parsePaymentOrdersFiltersFromUrl(
+      new URLSearchParams(`${PAYMENT_ORDERS_EXPOSURE_PARAM_KEY}=instructor`)
+    )
+    expect(parsed.exposureMode).toBe('instructor')
+  })
+
+  it('알 수 없는 노출 기준 쿼리는 프로그램별로 본다', () => {
+    const parsed = parsePaymentOrdersFiltersFromUrl(
+      new URLSearchParams(`${PAYMENT_ORDERS_EXPOSURE_PARAM_KEY}=unknown`)
+    )
+    expect(parsed.exposureMode).toBe('program')
+  })
+})

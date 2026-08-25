@@ -6,7 +6,15 @@
 import { z } from 'zod'
 
 export const settlementItemSchema = z.object({
-  type: z.enum(['instructor_fee', 'transportation', 'accommodation', 'other']),
+  type: z.enum([
+    'instructor_fee',
+    'transportation',
+    'accommodation',
+    'meal',
+    'activity',
+    'withholding',
+    'other',
+  ]),
   description: z.string().min(1, '항목 설명을 입력해주세요'),
   amount: z.number().min(0, '금액은 0 이상이어야 합니다'),
 })

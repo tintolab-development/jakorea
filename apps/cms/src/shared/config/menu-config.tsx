@@ -656,11 +656,18 @@ const allMenuItems: MenuItemConfig[] = [
   },
   {
     key: 'logs-group',
-    label: '로그 관리',
+    label: '보안 설정(로그 관리)',
     icon: <IconSecurityLogs />,
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
+      {
+        key: '/logs/member-login-history',
+        label: '회원 로그인 이력',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
       {
         key: '/logs/file-download-history',
         label: '파일 다운로드 이력',

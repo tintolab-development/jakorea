@@ -20,6 +20,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -40,18 +41,21 @@ function InquiryContactColumn({
   placeholder,
   value,
   onChange,
+  phone,
 }: {
   label: string
   placeholder: string
   value: string
   onChange: (next: string) => void
+  phone?: boolean
 }) {
+  const InputComponent = phone ? CmsPhoneInput : CmsInput
   return (
     <div style={inquiryColumnStyle}>
       <span className="nowrap" style={{ flexShrink: 0 }}>
         {label}
       </span>
-      <CmsInput
+      <InputComponent
         inputSize="medium"
         width={240}
         placeholder={placeholder}
@@ -272,6 +276,7 @@ export function GeminiRecruitmentInstitutionFields({
                   placeholder="문의처 전화번호"
                   value={values.inquiryTel}
                   onChange={next => onChange({ inquiryTel: next })}
+                  phone
                 />
                 <DetailInfoForm.InputsSeparator />
                 <InquiryContactColumn

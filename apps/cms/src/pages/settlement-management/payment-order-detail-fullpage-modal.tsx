@@ -3,7 +3,6 @@
  */
 
 import type { Dayjs } from 'dayjs'
-import { Spin } from 'antd'
 import type {
   PaymentOrderAdminInstructorRow,
   PaymentOrderAdminProgramRow,
@@ -36,28 +35,33 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
     return null
   }
 
-  if (detailLoading) {
+  if (detailLoading || detailError) {
     return (
-      <DetailFullPageModal open={isOpen} onClose={onClose} title={title}>
-        <div className="detail-fullpage-modal__loading" role="status" aria-label="상세 불러오는 중">
-          <Spin size="large" />
-        </div>
-      </DetailFullPageModal>
-    )
-  }
-
-  if (detailError) {
-    return (
-      <DetailFullPageModal open={isOpen} onClose={onClose} title={title}>
-        <div className="page-content-error" role="alert">
-          {detailError instanceof Error ? detailError.message : '상세를 불러오지 못했습니다.'}
-        </div>
-      </DetailFullPageModal>
+      <DetailFullPageModal
+        open={isOpen}
+        onClose={onClose}
+        title={title}
+        loading={detailLoading}
+        error={
+          detailError
+            ? detailError instanceof Error
+              ? detailError.message
+              : '상세를 불러오지 못했습니다.'
+            : null
+        }
+      />
     )
   }
 
   if (!canRender || !viewBranch) {
-    return null
+    return (
+      <DetailFullPageModal
+        open={isOpen}
+        onClose={onClose}
+        title={title}
+        error="상세를 불러오지 못했습니다."
+      />
+    )
   }
 
   return (

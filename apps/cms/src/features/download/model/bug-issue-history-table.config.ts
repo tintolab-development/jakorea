@@ -53,23 +53,11 @@ function resolvePendingDateRangeFromUrl(args: {
   return prev ?? null
 }
 
-function filterLogs(data: BugIssueLog[], searchParams: URLSearchParams): BugIssueLog[] {
-  const userName = (searchParams.get('bil_user') ?? '').trim().toLowerCase()
-  const from = searchParams.get('bil_from')
-  const to = searchParams.get('bil_to')
-
-  return data
-    .filter(row => {
-      if (userName && !row.userName.toLowerCase().includes(userName)) return false
-      if (from && to) {
-        const occurredAt = dayjs(row.occurredAt)
-        const start = dayjs(from).startOf('day')
-        const end = dayjs(to).endOf('day')
-        if (occurredAt.isBefore(start) || occurredAt.isAfter(end)) return false
-      }
-      return true
-    })
-    .sort((a, b) => dayjs(b.occurredAt).valueOf() - dayjs(a.occurredAt).valueOf())
+/** 서버 필터를 신뢰하고 발생 일시 내림차순만 맞춥니다. */
+function sortLogs(data: BugIssueLog[]): BugIssueLog[] {
+  return [...data].sort(
+    (a, b) => dayjs(b.occurredAt).valueOf() - dayjs(a.occurredAt).valueOf()
+  )
 }
 
 const tanstackColumns: ColumnDef<BugIssueLog>[] = [{ accessorKey: 'id', id: 'id' }]
@@ -148,9 +136,9 @@ export const bugIssueHistoryTablePageConfig: TablePageConfig<
       return { ...prev, [key]: value } as BugIssueHistoryPendingFilters
     },
   },
-  filterFn: ({ data, searchParams }) => {
-    const filtered = filterLogs(data, searchParams)
-    return { dataForTable: filtered, filteredData: filtered }
+  filterFn: ({ data }) => {
+    const sorted = sortLogs(data)
+    return { dataForTable: sorted, filteredData: sorted }
   },
   getSearchSync: () => ({
     paramConfig: searchSyncRules,

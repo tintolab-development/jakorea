@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Spin, Table } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -23,7 +23,7 @@ const PERSONAL_INFO_ACCESS_TABLE_SCROLL_X = 1120
 
 const TABLE_COL_WIDTH = {
   no: 88,
-  accessItem: 260,
+  targetName: 160,
   accessPurpose: 260,
   accessorName: 150,
   accessedAt: 220,
@@ -57,10 +57,10 @@ export default function PersonalInfoAccessHistoryPage() {
           tableData.length === 0 ? '-' : tableData.length - index,
       },
       {
-        title: '조회 항목',
-        dataIndex: 'accessItem',
-        key: 'accessItem',
-        width: TABLE_COL_WIDTH.accessItem,
+        title: '조회 대상',
+        dataIndex: 'targetName',
+        key: 'targetName',
+        width: TABLE_COL_WIDTH.targetName,
         align: 'center',
         ellipsis: { showTitle: true },
       },
@@ -73,7 +73,7 @@ export default function PersonalInfoAccessHistoryPage() {
         ellipsis: { showTitle: true },
       },
       {
-        title: '조회자',
+        title: '조회자명',
         dataIndex: 'accessorName',
         key: 'accessorName',
         width: TABLE_COL_WIDTH.accessorName,
@@ -86,7 +86,7 @@ export default function PersonalInfoAccessHistoryPage() {
         key: 'accessedAt',
         width: TABLE_COL_WIDTH.accessedAt,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm'),
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
       },
       {
         title: 'IP',
@@ -112,6 +112,7 @@ export default function PersonalInfoAccessHistoryPage() {
       onSearch={applySearch}
       title="개인정보 조회 이력"
       description={`총 ${displayedCount.toLocaleString()}건`}
+      contentLoading={remoteEnabled && isLoading}
       excelExport={{
         columns,
         data: tableData,
@@ -119,8 +120,6 @@ export default function PersonalInfoAccessHistoryPage() {
     >
       {!remoteEnabled ? (
         <LogsQueryError message="로그 관리 API를 사용하려면 관리자 로그인이 필요합니다." />
-      ) : isLoading ? (
-        <Spin />
       ) : isError ? (
         <LogsQueryError
           message={getLogsApiErrorMessage(error, '개인정보 조회 이력을 불러오지 못했습니다.')}

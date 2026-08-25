@@ -149,6 +149,18 @@
   min-width: 0;
 }
 
+/* 슬롯에 직접 넣은 Spin(loading prop 미사용)도 테이블 영역 가운데 */
+.filter-table-layout__table > .ant-spin,
+.filter-table-layout__calendar-body > .ant-spin {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 320px;
+  box-sizing: border-box;
+  padding: 48px 0;
+}
+
 /* split-card 주간 캘린더가 테이블 슬롯에 있을 때(봉사자 면접 등) — min-width·가로 스크롤은 __main·scroll-host */
 .filter-table-layout:has(.calendar-split-card-layout .calendar-week--time-grid) {
   overflow: visible;

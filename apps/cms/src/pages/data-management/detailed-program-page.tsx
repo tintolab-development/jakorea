@@ -4,6 +4,7 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
+import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useDetailedProgramListQuery } from '@/features/detailed-program/hooks/use-detailed-program-list-query'
 import { useDetailedProgramMutations } from '@/features/detailed-program/hooks/use-detailed-program-mutations'
 import { detailedProgramManagementFilterFields } from '@/features/detailed-program/model/detailed-program-management-filter-fields'
@@ -59,9 +60,8 @@ export default function DetailedProgramPage() {
   const canWrite = canPerformWriteAction(useAuthStore(s => s.user))
   const [searchParams, setSearchParams] = useSearchParams()
   const listQuery = useDetailedProgramListQuery(searchParams, true)
-  const { createMutation, updateMutation, deleteMutation } = useDetailedProgramMutations(
-    searchParams.toString()
-  )
+  const isListLoading = isDataManagementListLoading(listQuery)
+  const { createMutation, updateMutation, deleteMutation } = useDetailedProgramMutations()
   const rows = listQuery.data ?? []
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [isEditMode, setIsEditMode] = useState(false)
@@ -319,6 +319,7 @@ export default function DetailedProgramPage() {
         onSearch={handleSearch}
         title="세부 프로그램 목록"
         description={`총 ${(isEditMode ? tableDisplayData.length : displayedCount).toLocaleString()}건`}
+        contentLoading={isListLoading}
         actions={
           <>
             <CmsButton

@@ -3,15 +3,14 @@
  * UI·페이지에서 직접 import하지 말고 admin-logs-service만 사용.
  */
 import { getJAKoreaCMSBackendAPILogsSubset } from '@/shared/api/generated/logs/logs-api'
+import { customInstance } from '@/shared/api/orval-mutator'
 import type {
   BugIssueLogFrontendResponse,
   DownloadLogFrontendResponse,
   FileAccessLogsParams,
   PersonalInfoAccessLogFrontendResponse,
   PrivacyAccessLogsParams,
-  SystemIssueDetailResponse,
   SystemIssueLogsParams,
-  SystemIssueStatusUpdateRequest,
 } from '@/shared/api/generated/logs/schemas'
 
 const logsRemoteApi = getJAKoreaCMSBackendAPILogsSubset()
@@ -58,22 +57,21 @@ export async function fetchPrivacyAccessLogsRemote(
   return unwrapBody(await logsRemoteApi.privacyAccessLogs(query))
 }
 
+export async function fetchMemberLoginsRemote(
+  params: Record<string, string>
+): Promise<unknown> {
+  return unwrapBody(
+    await customInstance<unknown>({
+      url: '/api/admin/logs/member-logins',
+      method: 'GET',
+      params,
+    })
+  )
+}
+
 export async function fetchSystemIssueLogsRemote(
   params: Record<string, string>
 ): Promise<BugIssueLogFrontendResponse[]> {
   const query: SystemIssueLogsParams = { params }
   return unwrapBody(await logsRemoteApi.systemIssueLogs(query))
-}
-
-export async function fetchSystemIssueDetailRemote(
-  issueId: number
-): Promise<SystemIssueDetailResponse> {
-  return unwrapBody(await logsRemoteApi.systemIssueDetail(issueId))
-}
-
-export async function patchSystemIssueStatusRemote(
-  issueId: number,
-  body: SystemIssueStatusUpdateRequest
-): Promise<void> {
-  await logsRemoteApi.updateSystemIssueStatus(issueId, body)
 }

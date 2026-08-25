@@ -66,11 +66,16 @@
 }
 
 /* ----- size (폭·타이포는 `cms-input`과 동일, 높이는 min-height) ----- */
+/*
+ * 멀티라인: 패딩은 textarea에 둔다.
+ * 컨트롤만 패딩하고 textarea는 0이면 Ant `.ant-input-textarea` 래퍼·resize와
+ * 겹칠 때 글자가 테두리에 붙어 보인다. (rows=1은 아래 전용 규칙)
+ */
 .cms-textarea--large .cms-textarea__control {
   width: 240px;
   min-width: 120px;
   min-height: 44px;
-  padding: 8px 12px 8px 14px;
+  padding: 0;
 }
 
 .cms-textarea--large.cms-textarea--explicit-width .cms-textarea__control {
@@ -82,7 +87,7 @@
   width: 240px;
   min-width: 120px;
   min-height: 40px;
-  padding: 6px 12px 6px 14px;
+  padding: 0;
 }
 
 .cms-textarea--medium.cms-textarea--explicit-width .cms-textarea__control {
@@ -94,7 +99,7 @@
   width: 200px;
   min-width: 100px;
   min-height: 32px;
-  padding: 4px 10px 4px 12px;
+  padding: 0;
 }
 
 .cms-textarea--small.cms-textarea--explicit-width .cms-textarea__control {
@@ -104,21 +109,26 @@
 
 .cms-textarea--large .cms-textarea__inner textarea.ant-input {
   font-size: 16px;
+  padding: 8px 14px !important;
 }
 
 .cms-textarea--medium .cms-textarea__inner textarea.ant-input {
   font-size: 15px;
+  padding: 6px 14px !important;
 }
 
 .cms-textarea--small .cms-textarea__inner textarea.ant-input {
   font-size: 14px;
+  padding: 4px 12px !important;
 }
 
 .cms-textarea__inner textarea.ant-input {
+  box-sizing: border-box;
   flex: 1 1 auto;
   min-width: 0;
+  width: 100%;
   margin: 0;
-  padding: 0 !important;
+  /* size별 padding이 우선. 여기는 Ant 기본만 리셋 */
   border: none !important;
   box-shadow: none !important;
   background: transparent !important;
@@ -128,6 +138,14 @@
   color: var(--main-BK, #3d3d3d);
   resize: vertical;
   overflow: auto;
+  /* CmsInput과 동일 — Ant 토큰 패딩 무력화 */
+  --ant-input-padding-block: 0;
+  --ant-input-padding-inline: 0;
+  --ant-padding-sm: 0;
+  --ant-input-padding-block-sm: 0;
+  --ant-input-padding-inline-sm: 0;
+  --ant-input-padding-block-lg: 0;
+  --ant-input-padding-inline-lg: 0;
 }
 
 /* placeholder 타이포 스펙 (인풋 값과 동일 Pretendard·500·150%) */

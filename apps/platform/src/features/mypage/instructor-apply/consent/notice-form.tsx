@@ -7,6 +7,7 @@ import {
   PFText,
   PFTextInput,
 } from '@/shared/ui'
+import { applyKoreanPhoneInputChange } from '@jakorea/domain/shared/korean-phone'
 import { ConsentWriteRadioGroup } from './consent-radio'
 import {
   NOTICE_CONFIRMATION,
@@ -122,8 +123,22 @@ export function NoticeConsentForm({
                 variant="formPage"
                 size="large"
                 placeholder="전화번호를 입력해 주세요"
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel"
                 value={draft.phone}
-                onValueChange={value => patch('phone', value)}
+                onChange={event => {
+                  const result = applyKoreanPhoneInputChange(
+                    draft.phone,
+                    event.target.value,
+                    event.target.selectionStart
+                  )
+                  event.target.value = result.formatted
+                  patch('phone', result.formatted)
+                  requestAnimationFrame(() => {
+                    event.target.setSelectionRange(result.caret, result.caret)
+                  })
+                }}
               />
             </PFFormField>
           </PFFormFieldRow>

@@ -4,9 +4,11 @@ import type { ListAdminApprovalRequestsParams } from '@/features/user/api/admin-
 
 export const memberQueryKeys = {
   all: ['cms', 'members'] as const,
-  list: (filtersKey: string) => [...memberQueryKeys.all, 'list', filtersKey] as const,
+  listAll: () => [...memberQueryKeys.all, 'list'] as const,
+  list: (filtersKey: string) => [...memberQueryKeys.listAll(), filtersKey] as const,
+  schoolsListAll: () => [...memberQueryKeys.all, 'schoolsList'] as const,
   schoolsList: (filtersKey: string) =>
-    [...memberQueryKeys.all, 'schoolsList', filtersKey] as const,
+    [...memberQueryKeys.schoolsListAll(), filtersKey] as const,
   detail: (memberId: number) => [...memberQueryKeys.all, 'detail', memberId] as const,
   detailByUuid: (uuid: string) => [...memberQueryKeys.all, 'detailByUuid', uuid] as const,
   instructorProfile: (memberId: number) =>

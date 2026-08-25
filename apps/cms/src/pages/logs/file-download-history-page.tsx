@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Spin, Table } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -102,6 +102,7 @@ export default function FileDownloadHistoryPage() {
       onSearch={applySearch}
       title="파일 다운로드 이력"
       description={`총 ${displayedCount.toLocaleString()}건`}
+      contentLoading={remoteEnabled && isLoading}
       excelExport={{
         columns,
         data: tableData,
@@ -109,8 +110,6 @@ export default function FileDownloadHistoryPage() {
     >
       {!remoteEnabled ? (
         <LogsQueryError message="로그 관리 API를 사용하려면 관리자 로그인이 필요합니다." />
-      ) : isLoading ? (
-        <Spin />
       ) : isError ? (
         <LogsQueryError
           message={getLogsApiErrorMessage(error, '파일 다운로드 이력을 불러오지 못했습니다.')}

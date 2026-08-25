@@ -4,6 +4,7 @@
  */
 
 import type { DirectionsInfo } from '@/entities/directions/model/types'
+import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import {
   isOptimisticLockConflictError,
   readApiErrorMessage,
@@ -95,6 +96,12 @@ export function validateDirectionsBeforeSave(data: DirectionsInfo): DirectionsAl
     return {
       title: '전화번호 입력 오류',
       content: `전화번호는 ${FIELD_LIMITS.phone}자 이내로 입력해 주세요.`,
+    }
+  }
+  if (phone && !isValidKoreanPhoneNumber(phone)) {
+    return {
+      title: '전화번호 입력 오류',
+      content: '올바른 전화번호 형식이 아닙니다 (예: 02-783-2367)',
     }
   }
   if (fax.length > FIELD_LIMITS.fax) {

@@ -44,3 +44,15 @@ export async function updateInquiryAnswerRemote(
 ): Promise<unknown> {
   return unwrapApiBody(await postsApi.updateInquiryAnswer(pathId(inquiryId), pathId(answerId), body))
 }
+
+export async function deleteInquiryRemote(id: string): Promise<void> {
+  await postsApi.deleteInquiry(pathId(id))
+}
+
+export async function bulkDeleteInquiriesRemote(ids: string[]): Promise<void> {
+  const numericIds = ids.map(pathId).filter((id): id is number => Number.isFinite(id))
+  if (numericIds.length === 0) {
+    throw new Error('삭제할 문의 ID가 올바르지 않습니다.')
+  }
+  await postsApi.bulkDelete2({ ids: numericIds })
+}

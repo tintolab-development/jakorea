@@ -96,7 +96,7 @@ async function revealPersonalInfoWithAudit(
         instructorRoleRequestId,
         reason
       )
-      void queryClient.invalidateQueries({ queryKey: logsQueryKeys.all })
+      void queryClient.invalidateQueries({ queryKey: logsQueryKeys.privacyAccessAll() })
       return { ok: true, payload, role: role ?? 'INSTRUCTOR' }
     } catch (error) {
       const message =
@@ -111,7 +111,7 @@ async function revealPersonalInfoWithAudit(
   if (isMembersRemoteEnabled() && adminAccountId != null) {
     try {
       const payload = await fetchAdminAccountPrivacyUnmask(adminAccountId, reason)
-      void queryClient.invalidateQueries({ queryKey: logsQueryKeys.all })
+      void queryClient.invalidateQueries({ queryKey: logsQueryKeys.privacyAccessAll() })
       return { ok: true, payload, role: 'ADMIN' }
     } catch (error) {
       const message =
@@ -126,7 +126,7 @@ async function revealPersonalInfoWithAudit(
   if (isMembersRemoteEnabled() && Number.isFinite(memberIdNum)) {
     try {
       const payload = await fetchMemberRolePrivacyUnmask(memberIdNum, reason, role)
-      void queryClient.invalidateQueries({ queryKey: logsQueryKeys.all })
+      void queryClient.invalidateQueries({ queryKey: logsQueryKeys.privacyAccessAll() })
       return { ok: true, payload, role }
     } catch (error) {
       const message =
@@ -141,7 +141,7 @@ async function revealPersonalInfoWithAudit(
   if (shouldUseLogsRemoteApi() && memberIdRaw) {
     try {
       await fetchMemberPrivacyUnmask(memberIdRaw, reason)
-      void queryClient.invalidateQueries({ queryKey: logsQueryKeys.all })
+      void queryClient.invalidateQueries({ queryKey: logsQueryKeys.privacyAccessAll() })
       return { ok: true, role }
     } catch (error) {
       const message =

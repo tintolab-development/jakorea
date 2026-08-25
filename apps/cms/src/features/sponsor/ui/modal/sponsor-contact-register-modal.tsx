@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { SponsorContactType } from '@/features/sponsor/model/sponsor-management.types'
@@ -8,7 +8,7 @@ import {
   toSponsorContactRegisterPayload,
   type SponsorContactRegisterFormValues,
 } from '@/features/sponsor/model/sponsor-contact-register-schema'
-import { ContentModal, CmsButton, CmsInput, CmsRadioGroup } from '@/shared/ui'
+import { ContentModal, CmsButton, CmsInput, CmsPhoneInput, CmsRadioGroup } from '@/shared/ui'
 import './sponsor-contact-register-modal.css'
 
 export interface SponsorContactRegisterPayload {
@@ -22,7 +22,7 @@ export interface SponsorContactRegisterPayload {
 interface SponsorContactRegisterModalProps {
   open: boolean
   onCancel: () => void
-  onSubmit: (payload: SponsorContactRegisterPayload) => void
+  onSubmit: (payload: SponsorContactRegisterPayload) => void | Promise<void>
   /** 기존 담당자가 없을 때는 주 담당자만 등록 가능 */
   existingContactCount?: number
 }
@@ -42,20 +42,28 @@ export function SponsorContactRegisterModal({
     resolver: zodResolver(sponsorContactRegisterFormSchema),
     defaultValues: DEFAULT_SPONSOR_CONTACT_REGISTER_FORM_VALUES,
   })
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (!open) return
+    setSubmitting(false)
     reset(DEFAULT_SPONSOR_CONTACT_REGISTER_FORM_VALUES)
   }, [open, reset])
 
   const handleCancel = () => {
+    if (submitting) return
     reset(DEFAULT_SPONSOR_CONTACT_REGISTER_FORM_VALUES)
     onCancel()
   }
 
-  const handleValidSubmit = (values: SponsorContactRegisterFormValues) => {
-    onSubmit(toSponsorContactRegisterPayload(values))
-    reset(DEFAULT_SPONSOR_CONTACT_REGISTER_FORM_VALUES)
+  const handleValidSubmit = async (values: SponsorContactRegisterFormValues) => {
+    if (submitting) return
+    setSubmitting(true)
+    try {
+      await onSubmit(toSponsorContactRegisterPayload(values))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -67,10 +75,15 @@ export function SponsorContactRegisterModal({
       className="sponsor-contact-register-modal"
       footer={
         <>
-          <CmsButton variant="secondary" size="large" onClick={handleCancel}>
+          <CmsButton variant="secondary" size="large" onClick={handleCancel} disabled={submitting}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="large" onClick={() => handleSubmit(handleValidSubmit)()}>
+          <CmsButton
+            variant="primary"
+            size="large"
+            loading={submitting}
+            onClick={() => handleSubmit(handleValidSubmit)()}
+          >
             등록
           </CmsButton>
         </>
@@ -168,7 +181,7 @@ export function SponsorContactRegisterModal({
             name="phone"
             control={control}
             render={({ field, fieldState }) => (
-              <CmsInput
+              <CmsPhoneInput
                 {...field}
                 id="sponsor-contact-phone"
                 placeholder="연락처를 입력해 주세요."

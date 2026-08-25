@@ -40,6 +40,14 @@
       "types": "./dist/shared/required-address.d.ts",
       "import": "./dist/shared/required-address.js"
     },
+    "./shared/korean-phone": {
+      "types": "./dist/shared/korean-phone.d.ts",
+      "import": "./dist/shared/korean-phone.js"
+    },
+    "./shared/korean-business-number": {
+      "types": "./dist/shared/korean-business-number.d.ts",
+      "import": "./dist/shared/korean-business-number.js"
+    },
     "./instructor/gender": {
       "types": "./dist/instructor/gender.d.ts",
       "import": "./dist/instructor/gender.js"

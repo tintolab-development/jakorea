@@ -12,6 +12,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@jakorea/domain": "workspace:*",
     "dayjs": "^1.11.13"
   },
   "exports": {
@@ -38,6 +39,10 @@
     "./paragraph-ids/*": {
       "types": "./dist/paragraph-ids/*.d.ts",
       "import": "./dist/paragraph-ids/*.js"
+    },
+    "./consent": {
+      "types": "./dist/consent/index.d.ts",
+      "import": "./dist/consent/index.js"
     }
   },
   "devDependencies": {

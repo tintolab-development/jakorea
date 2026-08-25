@@ -19,6 +19,7 @@ export const DS_TOC_ITEMS: TocItem[] = [
   { id: 'modal-catalog', label: 'Modal catalog' },
   { id: 'modal-processes', label: 'Modal processes' },
   { id: 'modals-extended', label: 'Modals (extended)' },
+  { id: 'payment-order-calculation-basis-detail', label: 'Payment basis detail' },
   { id: 'calendar', label: 'Calendar' },
   { id: 'status', label: 'Status tags' },
   { id: 'status-extended', label: 'Status tags (extended)' },

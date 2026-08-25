@@ -13,6 +13,7 @@ import {
 assert.equal(formatSettingsJoinedAt('2026-09-15'), '2026년 09월 15일')
 assert.equal(formatSettingsDateDot('1999-01-01'), '1999.01.01')
 assert.equal(formatSettingsPhone('01012345678'), '010-1234-5678')
+assert.equal(formatSettingsPhone('0212345678'), '02-1234-5678')
 assert.equal(formatSettingsGender('F'), '여성')
 assert.equal(formatSettingsEnrollment('ENROLLED'), '재학 중')
 assert.equal(formatSettingsGrade('2'), '2학년')
