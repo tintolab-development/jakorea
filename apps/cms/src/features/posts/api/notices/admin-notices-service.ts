@@ -89,7 +89,7 @@ export async function deleteNotices(ids: string[]): Promise<void> {
 
 export async function getNoticeCategories(): Promise<CategoryRow[]> {
   assertNoticesRemoteReady()
-  const dto = await fetchNoticeCategoriesRemote({ page: 0, size: 200 })
+  const dto = await fetchNoticeCategoriesRemote({ page: 0, size: 50 })
   return mapCategoryItems(dto.items)
 }
 

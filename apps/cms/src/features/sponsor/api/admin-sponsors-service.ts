@@ -177,7 +177,7 @@ export async function getSponsorProgramHistories(
   sponsorId: string,
   filters: SponsorProgramHistoryFilters,
   page = 0,
-  size = 200
+  size = 50
 ): Promise<SponsorProgramHistoriesPage> {
   assertSponsorsRemoteReady()
   const dto = await fetchProgramHistoriesRemote(

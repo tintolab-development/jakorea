@@ -77,7 +77,7 @@ export async function getWritingFormSectionsRemote(): Promise<TemplateSection[]>
   const page = await fetchFormTemplatesRemote({
     formType: WRITING_FORM_TYPE,
     page: 0,
-    size: 200,
+    size: 50,
     useYn: true,
   })
   const items = page.items ?? []
@@ -94,7 +94,7 @@ export async function getIssuanceFormSectionsRemote(): Promise<TemplateSection[]
   const page = await fetchFormTemplatesRemote({
     formType: ISSUANCE_FORM_TYPE,
     page: 0,
-    size: 200,
+    size: 50,
     useYn: true,
   })
   const items = page.items ?? []

@@ -86,7 +86,7 @@ export async function deleteFaqs(ids: string[]): Promise<void> {
 
 export async function getFaqCategories(): Promise<CategoryRow[]> {
   assertFaqsRemoteReady()
-  const dto = await fetchFaqCategoriesRemote({ page: 0, size: 200 })
+  const dto = await fetchFaqCategoriesRemote({ page: 0, size: 50 })
   return mapCategoryItems(dto.items)
 }
 
