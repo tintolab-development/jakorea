@@ -21,11 +21,8 @@ import { getAvailableYearsFromRows } from '@/features/education-record/lib/educa
 import { EducationRecordDataTab } from '@/features/education-record/ui/education-record-data-tab'
 import { EducationRecordSummaryTab } from '@/features/education-record/ui/education-record-summary-tab'
 import { EducationRecordTabNav } from '@/features/education-record/ui/education-record-tab-nav'
-import { getPerformanceRemoteFilterNotice } from '@/features/education-record/api/performance-remote-capabilities'
-import {
-  usePerformanceListQuery,
-  usePerformanceRemoteEnabled,
-} from '@/features/education-record/hooks/use-performance-list-query'
+import { usePerformanceListQuery } from '@/features/education-record/hooks/use-performance-list-query'
+import { usePerformanceSummaryQuery } from '@/features/education-record/hooks/use-performance-summary-query'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ExcelButton } from '@/shared/ui/excel-button'
 import { MESSAGES } from '@/shared/constants'
@@ -41,16 +38,14 @@ function parseTabKey(raw: string | null): EducationRecordTabKey {
 export function EducationRecordListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
-  const remoteEnabled = usePerformanceRemoteEnabled()
 
   const listQuery = usePerformanceListQuery()
   const sourceRows = listQuery.data ?? []
+  const isDataTab = activeKey === 'data'
+  const summaryQuery = usePerformanceSummaryQuery(activeKey === 'summary')
 
   const availableYears = useMemo(() => getAvailableYearsFromRows(sourceRows), [sourceRows])
-  const context = useMemo<EducationRecordTableContext>(
-    () => ({ availableYears }),
-    [availableYears]
-  )
+  const context = useMemo<EducationRecordTableContext>(() => ({ availableYears }), [availableYears])
 
   const {
     pendingFilters,
@@ -85,9 +80,6 @@ export function EducationRecordListPage() {
     [pendingFilters]
   )
 
-  const remoteFilterNotice = getPerformanceRemoteFilterNotice(remoteEnabled)
-  const isDataTab = activeKey === 'data'
-
   const handleTabChange = useCallback(
     (key: EducationRecordTabKey) => {
       setSearchParams(
@@ -115,16 +107,14 @@ export function EducationRecordListPage() {
   })
 
   return (
-    <div className="education-record-list-page">
-      {isDataTab && remoteFilterNotice ? (
-        <Alert
-          type="info"
-          showIcon
-          message={remoteFilterNotice}
-          className="education-record-list-page__remote-notice"
-        />
-      ) : null}
-
+    <div
+      className={[
+        'education-record-list-page',
+        isDataTab ? undefined : 'education-record-list-page--summary',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       {isDataTab && listQuery.isError ? (
         <Alert
           type="error"
@@ -135,7 +125,12 @@ export function EducationRecordListPage() {
       ) : null}
 
       <FilterTableLayout
-        className="education-record-list-page__layout"
+        className={[
+          'education-record-list-page__layout',
+          isDataTab ? undefined : 'education-record-list-page__layout--summary',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         showFilter={isDataTab}
         fields={filterFields}
         filters={filters}
@@ -165,7 +160,12 @@ export function EducationRecordListPage() {
             displayedCount={displayedCount}
           />
         ) : (
-          <EducationRecordSummaryTab />
+          <EducationRecordSummaryTab
+            view={summaryQuery.data}
+            loading={summaryQuery.isLoading || summaryQuery.isFetching}
+            error={summaryQuery.isError}
+            errorMessage={MESSAGES.error.performanceRecordsLoadFailed}
+          />
         )}
       </FilterTableLayout>
     </div>
