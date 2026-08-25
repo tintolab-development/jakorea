@@ -1,6 +1,6 @@
 /**
  * 산출 내역서 — 신청자형 기본 정보
- * 성명·성별/생년·연락처·주소지·계좌 + 지급조서 처리 현황·강의비·사업소득 (단일 그리드)
+ * 성명·성별/생년·연락처·주소지·계좌 / 지급조서 처리 현황·강의비·사업소득 (2블록 + 16px 간격)
  */
 
 import type { CSSProperties } from 'react'
@@ -92,6 +92,11 @@ export function PaymentOrderCalculationStatementInstructorBasicSection({
             }
           />
         </DetailInfoForm.Row>
+      </DetailInfoForm>
+
+      <div className="payment-order-calc-statement-modal__basic-split-gap" aria-hidden />
+
+      <DetailInfoForm title="기본 정보 — 지급 조서" hideHeader className={formCardClass}>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="지급조서 처리 현황"

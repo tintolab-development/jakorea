@@ -1832,6 +1832,7 @@ export function SettlementItemSettingDetailModal({
       width={800}
       className={[
         'settlement-item-setting-detail-modal',
+        readOnly ? 'settlement-item-setting-detail-modal--read-only' : '',
         'content-modal--description-gap-compact',
         item?.id === 'w-4' ? 'settlement-item-setting-detail-modal--special-lecture' : '',
         item?.id === 'p-1' || item?.id === 'p-2'
@@ -1864,8 +1865,8 @@ export function SettlementItemSettingDetailModal({
         .join(' ')}
       footer={
         readOnly ? (
-          <CmsButton variant="secondary" size="large" onClick={onCancel}>
-            닫기
+          <CmsButton variant="primary" size="large" onClick={onCancel}>
+            취소
           </CmsButton>
         ) : (
           <>

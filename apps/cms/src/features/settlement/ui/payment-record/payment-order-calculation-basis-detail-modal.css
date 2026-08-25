@@ -7,6 +7,12 @@
   max-width: min(800px, calc(100vw - 32px));
 }
 
+/* 모달 타이틀 ↔ 본문 30px (content-modal 기본 16px 대체) */
+.payment-order-calculation-basis-detail-modal.content-modal.content-modal--title-body-gap-always
+  .teal-header-modal__body {
+  padding-top: 30px;
+}
+
 .payment-order-calculation-basis-detail-modal .modal-spec-table {
   border-radius: 8px;
 }

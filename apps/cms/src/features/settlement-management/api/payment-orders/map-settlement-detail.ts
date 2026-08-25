@@ -127,6 +127,7 @@ export function buildInstructorDetailFromSettlements(
     accountNumber: '-',
     accountHolder: '-',
     totalEstimatedAmount: row.estimatedAmount,
+    genderBirthDisplay: '-',
     programRows,
   }
 }

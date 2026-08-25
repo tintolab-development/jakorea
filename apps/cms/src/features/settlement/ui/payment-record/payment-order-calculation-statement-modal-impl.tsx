@@ -290,30 +290,32 @@ export function PaymentOrderCalculationStatementModalImpl({
           onBasisDetailClick={handleBasisDetailClick}
           onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
           headerActions={
-            <>
-              <CmsButton
-                variant="delete"
-                size="medium"
-                disabled={paymentOrdersRemote}
-                title={paymentOrdersRemote ? '신청 반려 API 연동 대기 중입니다.' : undefined}
-                onClick={() => {
-                  if (paymentOrdersRemote) {
-                    window.alert('신청 반려 API는 백엔드 연동 대기 중입니다.')
-                    return
-                  }
-                  setPaymentRejectOpen(true)
-                }}
-              >
-                신청 반려
-              </CmsButton>
-              <CmsButton
-                variant="primary"
-                size="medium"
-                onClick={() => setPaymentConfirmOpen(true)}
-              >
-                확인 처리
-              </CmsButton>
-            </>
+            entryKind === 'program' ? (
+              <>
+                <CmsButton
+                  variant="delete"
+                  size="medium"
+                  disabled={paymentOrdersRemote}
+                  title={paymentOrdersRemote ? '신청 반려 API 연동 대기 중입니다.' : undefined}
+                  onClick={() => {
+                    if (paymentOrdersRemote) {
+                      window.alert('신청 반려 API는 백엔드 연동 대기 중입니다.')
+                      return
+                    }
+                    setPaymentRejectOpen(true)
+                  }}
+                >
+                  신청 반려
+                </CmsButton>
+                <CmsButton
+                  variant="primary"
+                  size="medium"
+                  onClick={() => setPaymentConfirmOpen(true)}
+                >
+                  확인 처리
+                </CmsButton>
+              </>
+            ) : undefined
           }
         />
       </ContentModal>

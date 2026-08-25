@@ -184,18 +184,12 @@ export function usePaymentOrdersListPage() {
   }, [paymentOrdersRemote, remoteListQuery.data?.instructorRows])
 
   const listProgram = useMemo(
-    () =>
-      paymentOrdersRemote
-        ? sourceProgramRows
-        : filterPaymentProgramRows(sourceProgramRows, appliedFromUrl),
-    [paymentOrdersRemote, sourceProgramRows, appliedFromUrl]
+    () => filterPaymentProgramRows(sourceProgramRows, appliedFromUrl),
+    [sourceProgramRows, appliedFromUrl]
   )
   const listInstructor = useMemo(
-    () =>
-      paymentOrdersRemote
-        ? sourceInstructorRows
-        : filterPaymentInstructorRows(sourceInstructorRows, appliedFromUrl),
-    [paymentOrdersRemote, sourceInstructorRows, appliedFromUrl]
+    () => filterPaymentInstructorRows(sourceInstructorRows, appliedFromUrl),
+    [sourceInstructorRows, appliedFromUrl]
   )
 
   const detailState = useMemo((): PaymentOrdersDetailState => {
@@ -237,16 +231,16 @@ export function usePaymentOrdersListPage() {
     return mapCalendarItemsToPaymentOrderEvents(
       items,
       resolvedExposureMode,
-      sourceProgramRows,
-      sourceInstructorRows
+      listProgram,
+      listInstructor
     )
   }, [
     paymentOrdersRemote,
     viewMode,
     remoteCalendarQuery.data,
     resolvedExposureMode,
-    sourceProgramRows,
-    sourceInstructorRows,
+    listProgram,
+    listInstructor,
   ])
 
   const isProgram = resolvedExposureMode === 'program'
@@ -391,7 +385,7 @@ export function usePaymentOrdersListPage() {
         key: 'pendingPaymentSettlementItemCount',
         width: 200,
         align: 'center',
-        render: (count: number) => `${count}건`,
+        render: (count: number) => `${count}개`,
       },
       {
         title: '총 정산 신청 금액',
@@ -436,7 +430,7 @@ export function usePaymentOrdersListPage() {
         key: 'pendingPaymentSettlementItemCount',
         width: 200,
         align: 'center',
-        render: (count: number) => `${count}건`,
+        render: (count: number) => `${count}개`,
       },
       {
         title: '총 정산 신청 금액',

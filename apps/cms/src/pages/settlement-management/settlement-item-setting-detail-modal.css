@@ -263,6 +263,14 @@
   padding-top: 0;
 }
 
+/* 산출 내역서 등 read-only 산정 기준: 모달 타이틀 ↔ 본문(설명) 30px */
+.settlement-item-setting-detail-modal.settlement-item-setting-detail-modal--read-only.content-modal
+  .teal-header-modal__body:has(> .content-modal__description),
+.settlement-item-setting-detail-modal.settlement-item-setting-detail-modal--read-only.content-modal
+  .teal-header-modal__body:not(:has(> .content-modal__description)) {
+  padding-top: 30px;
+}
+
 /* 편집 가능 헤더 설명 — plain text description과 동일 슬롯, 내부 스타일은 전용 */
 .settlement-item-setting-detail-modal__header-description-slot.content-modal__description {
   margin: 0;

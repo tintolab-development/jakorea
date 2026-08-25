@@ -62,7 +62,7 @@ export function PaymentOrderCalculationBasisDetailModal({
       titleBodyGap="always"
       zIndex={zIndex}
       footer={
-        <CmsButton variant="secondary" size="large" onClick={onCancel}>
+        <CmsButton variant="primary" size="large" onClick={onCancel}>
           취소
         </CmsButton>
       }

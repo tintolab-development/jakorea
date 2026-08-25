@@ -279,8 +279,12 @@ export interface PaymentOrderAdminInstructorDetail {
   bankName: string
   accountNumber: string
   accountHolder: string
-  /** 목록 테이블과 동일한 총 정산 예정 금액 */
+  /** 목록 테이블과 동일한 총 정산 신청 금액 */
   totalEstimatedAmount: number
+  /** Mock 시드 기반. Remote 미제공 시 `-` */
+  genderBirthDisplay?: string
+  /** 1 이상이면 성명 옆 일정 변경 배지 */
+  scheduleChangeCancelCount?: number
   programRows: PaymentOrderAdminInstructorDetailProgramRow[]
 }
 
@@ -621,6 +625,8 @@ export function getMockPaymentOrderInstructorDetail(
     accountNumber,
     accountHolder,
     totalEstimatedAmount: instructorRow.estimatedAmount,
+    genderBirthDisplay: mockGenderBirthDisplay(mixSeed(n, 17)),
+    scheduleChangeCancelCount: mixSeed(n, 7) % 4 === 0 ? 1 : undefined,
     programRows,
   }
 }
