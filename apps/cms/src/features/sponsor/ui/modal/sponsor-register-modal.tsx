@@ -3,7 +3,7 @@ import { Space } from 'antd'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
-import { AddressSearch, CmsButton, CmsInput, CmsRadioGroup, ContentModal } from '@/shared/ui'
+import { AddressSearch, CmsBusinessNumberInput, CmsButton, CmsInput, CmsRadioGroup, ContentModal } from '@/shared/ui'
 import type { SponsorOrganizationKind } from '@/types/domain'
 
 export interface SponsorRegisterModalProps {
@@ -157,10 +157,10 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
             label="사업자번호"
             view={noopView}
             edit={
-              <CmsInput
+              <CmsBusinessNumberInput
                 value={form.businessNumber}
                 onChange={e => setField('businessNumber', e.target.value)}
-                placeholder="전체"
+                placeholder="000-00-00000"
                 inputSize="medium"
                 width="100%"
               />

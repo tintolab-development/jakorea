@@ -194,7 +194,7 @@ export async function fetchSettlementCalendarDateRemote(date: string) {
 export async function fetchAllSettlementsRemote(
   params: Omit<ListSettlementsParams, 'page' | 'size'> = {}
 ): Promise<PageResponseSettlementListItemResponse['items']> {
-  const pageSize = 200
+  const pageSize = 50
   let page = 0
   const items: NonNullable<PageResponseSettlementListItemResponse['items']> = []
 
@@ -213,7 +213,7 @@ export async function fetchAllSettlementsRemote(
 export async function fetchAllPaymentStatementsRemote(): Promise<
   NonNullable<PageResponsePaymentStatementListItemResponse['items']>
 > {
-  const pageSize = 200
+  const pageSize = 50
   let page = 0
   const items: NonNullable<PageResponsePaymentStatementListItemResponse['items']> = []
 
@@ -232,7 +232,7 @@ export async function fetchAllPaymentStatementsRemote(): Promise<
 export async function fetchAllAccountPaymentsRemote(
   params: Omit<ListAccountPaymentsParams, 'page' | 'size'> = {}
 ): Promise<NonNullable<PageResponseAccountPaymentListItemResponse['items']>> {
-  const pageSize = 200
+  const pageSize = 50
   let page = 0
   const items: NonNullable<PageResponseAccountPaymentListItemResponse['items']> = []
 

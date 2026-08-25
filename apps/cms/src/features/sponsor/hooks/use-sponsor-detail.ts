@@ -24,6 +24,10 @@ export interface UseSponsorDetailReturn {
   removeProgramHistoryRows: (ids: string[]) => void
   isEditingBasicInfo: boolean
   handleBasicInfoChange: (updater: (prev: BasicInfoEditState) => BasicInfoEditState) => void
+  /** 조회 모드: 즉시 API. 수정 모드: 로컬만(수정 완료 시 basicInfo와 함께 저장). */
+  handleSponsorshipStatusChange: (
+    next: NonNullable<SponsorManagementRow['sponsorshipStatus']>
+  ) => Promise<void>
   handleToggleBasicInfoEdit: (canWrite: boolean) => void
   programHistoryDeleteDisabled: boolean
   refetchDetail: () => Promise<unknown>
@@ -64,7 +68,7 @@ function sponsorRowToPlaceholderDetail(sponsor: SponsorManagementRow): SponsorMa
 
 export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetailReturn {
   const detailQuery = useSponsorDetailQuery(sponsor.id, true)
-  const { updateBasicInfoMutation } = useSponsorMutations()
+  const { updateBasicInfoMutation, updateStatusMutation } = useSponsorMutations()
   const isAwaitingDetail = isAwaitingFirstQueryData(detailQuery)
 
   const detail = useMemo((): SponsorManagementDetailView => {
@@ -110,6 +114,39 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
     []
   )
 
+  const handleSponsorshipStatusChange = useCallback(
+    async (
+      next: NonNullable<SponsorManagementRow['sponsorshipStatus']>
+    ): Promise<void> => {
+      if (isEditingBasicInfo) {
+        setBasicInfo(prev => (prev ? { ...prev, sponsorshipStatus: next } : prev))
+        return
+      }
+      const previous = basicInfo?.sponsorshipStatus ?? detail.sponsorshipStatus ?? 'active'
+      setBasicInfo(prev => (prev ? { ...prev, sponsorshipStatus: next } : prev))
+      try {
+        await updateStatusMutation.mutateAsync({
+          sponsorId: sponsor.id,
+          sponsorshipStatus: next,
+          existing: detail,
+        })
+      } catch (error) {
+        setBasicInfo(prev => (prev ? { ...prev, sponsorshipStatus: previous } : prev))
+        console.debug(
+          'sponsorDetail status update failed',
+          getDataManagementApiErrorMessage(error, '후원 상태 변경에 실패했습니다.')
+        )
+      }
+    },
+    [
+      basicInfo?.sponsorshipStatus,
+      detail,
+      isEditingBasicInfo,
+      sponsor.id,
+      updateStatusMutation,
+    ]
+  )
+
   const handleToggleBasicInfoEdit = useCallback(
     async (canWrite: boolean): Promise<void> => {
       if (!canWrite || !basicInfo) return
@@ -146,6 +183,7 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
     removeProgramHistoryRows,
     isEditingBasicInfo,
     handleBasicInfoChange,
+    handleSponsorshipStatusChange,
     handleToggleBasicInfoEdit,
     programHistoryDeleteDisabled: true,
     refetchDetail: () => detailQuery.refetch(),

@@ -101,6 +101,7 @@ function SponsorDetailFullPageModalInner({
     basicInfo,
     contacts,
     handleBasicInfoChange,
+    handleSponsorshipStatusChange,
     isEditingBasicInfo,
     handleToggleBasicInfoEdit,
     removeProgramHistoryRows,
@@ -267,6 +268,9 @@ function SponsorDetailFullPageModalInner({
             basicInfo={basicInfo}
             isEditing={isEditingBasicInfo}
             onChange={handleBasicInfoChange}
+            onSponsorshipStatusChange={next => {
+              void handleSponsorshipStatusChange(next)
+            }}
             contacts={contacts}
             sponsorshipStartDate={detail.sponsorshipStartDate}
             canWrite={canWrite}

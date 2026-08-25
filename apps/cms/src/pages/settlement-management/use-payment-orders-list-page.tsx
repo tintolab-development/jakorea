@@ -15,7 +15,10 @@ import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/components/table-filter-group-field-width'
-import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
+import {
+  EMPTY_TABLE_PAGE_CONTEXT,
+  useTablePage,
+} from '@/shared/components/table-system/model/use-table-page'
 import type { ViewModeToggleOption } from '@/shared/components/view-mode'
 import {
   mockPaymentOrderAdminInstructorList,
@@ -46,8 +49,8 @@ import {
   filterPaymentInstructorRows,
   filterPaymentProgramRows,
   parsePaymentOrdersFiltersFromUrl,
+  PAYMENT_ORDERS_EXPOSURE_PARAM_KEY,
   type ExposureMode,
-  type PaymentOrdersTableContext,
 } from './payment-orders-table.config'
 
 export type PaymentOrdersPageViewMode = 'list' | 'calendar'
@@ -106,7 +109,6 @@ function pickPaymentOrdersListAnchorDate(
 export function usePaymentOrdersListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [viewMode, setViewMode] = useState<PaymentOrdersPageViewMode>('list')
-  const [exposureMode, setExposureMode] = useState<ExposureMode>('program')
 
   const paymentOrdersDefaultRangeAppliedRef = useRef(false)
 
@@ -223,7 +225,8 @@ export function usePaymentOrdersListPage() {
     return t === 'program' || t === 'instructor' ? t : null
   }, [searchParams])
 
-  const resolvedExposureMode: ExposureMode = detailExposureFromUrl ?? exposureMode
+  const resolvedExposureMode: ExposureMode =
+    detailExposureFromUrl ?? appliedFromUrl.exposureMode
 
   const calendarEventsOverride = useMemo(() => {
     if (!paymentOrdersRemote || viewMode !== 'calendar') return undefined
@@ -253,13 +256,6 @@ export function usePaymentOrdersListPage() {
     [isProgram, listProgram, listInstructor]
   )
 
-  const tableContext = useMemo<PaymentOrdersTableContext>(
-    () => ({
-      setExposureMode,
-    }),
-    []
-  )
-
   const {
     pendingFilters,
     applySearch: handleSearch,
@@ -269,8 +265,25 @@ export function usePaymentOrdersListPage() {
     data: rowsForTable,
     searchParams,
     setSearchParams,
-    context: tableContext,
+    context: EMPTY_TABLE_PAGE_CONTEXT,
   })
+
+  const handleFilterChangeWithExposureUrl = useCallback(
+    (key: string, value: unknown) => {
+      handleFilterChange(key, value)
+      if (key !== 'exposureMode') return
+      const mode: ExposureMode = value === 'instructor' ? 'instructor' : 'program'
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set(PAYMENT_ORDERS_EXPOSURE_PARAM_KEY, mode)
+          return next
+        },
+        { replace: true }
+      )
+    },
+    [handleFilterChange, setSearchParams]
+  )
 
   const closeDetail = useCallback(() => {
     setSearchParams(
@@ -290,7 +303,6 @@ export function usePaymentOrdersListPage() {
       type: 'program' | 'instructor',
       data: PaymentOrderAdminProgramRow | PaymentOrderAdminInstructorRow
     ) => {
-      setExposureMode(type)
       setSearchParams(
         prev => {
           const next = new URLSearchParams(prev)
@@ -446,8 +458,10 @@ export function usePaymentOrdersListPage() {
 
   const total = isProgram ? listProgram.length : listInstructor.length
 
+  const pendingIsProgram = pendingFilters.exposureMode !== 'instructor'
+
   const paymentOrdersFilterFields = useMemo((): FilterFieldConfig[] => {
-    const nameFilter: FilterFieldConfig = isProgram
+    const nameFilter: FilterFieldConfig = pendingIsProgram
       ? {
           key: 'programName',
           type: 'search',
@@ -491,7 +505,7 @@ export function usePaymentOrdersListPage() {
         width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
       },
     ]
-  }, [isProgram])
+  }, [pendingIsProgram])
 
   const listTitle = isProgram ? '프로그램별 정산 목록' : '신청자별 정산 목록'
 
@@ -564,13 +578,12 @@ export function usePaymentOrdersListPage() {
   return {
     viewMode,
     setViewMode: handleViewModeChange,
-    exposureMode,
     detailState,
     closeDetail,
     appliedFromUrl,
     pendingFilters,
     handleSearch,
-    handleFilterChange,
+    handleFilterChange: handleFilterChangeWithExposureUrl,
     paymentOrdersFilterFields,
     paymentOrdersViewModeOptions,
     listTitle,

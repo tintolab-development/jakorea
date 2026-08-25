@@ -10,12 +10,14 @@ import {
   SponsorContactsSection,
 } from '@/features/sponsor/ui/sponsor-detail-basic-info'
 import { YearlyBusinessPanel } from '@/features/sponsor/ui/panels/yearly-business-panel'
+import type { SponsorSponsorshipStatus } from '@/types/domain'
 
 export interface SponsorDetailPanelProps {
   sponsorId: string
   basicInfo: BasicInfoEditState
   isEditing: boolean
   onChange: (updater: (prev: BasicInfoEditState) => BasicInfoEditState) => void
+  onSponsorshipStatusChange: (next: SponsorSponsorshipStatus) => void
   contacts: SponsorContactRow[]
   sponsorshipStartDate?: DateValue
   canWrite: boolean
@@ -31,6 +33,7 @@ export function SponsorDetailPanel({
   basicInfo,
   isEditing,
   onChange,
+  onSponsorshipStatusChange,
   contacts,
   sponsorshipStartDate,
   canWrite,
@@ -67,6 +70,7 @@ export function SponsorDetailPanel({
         value={basicInfo}
         isEditing={isEditing}
         onChange={onChange}
+        onSponsorshipStatusChange={onSponsorshipStatusChange}
         canWrite={canWrite}
       />
       <SponsorContactsSection

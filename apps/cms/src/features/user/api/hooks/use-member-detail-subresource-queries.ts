@@ -37,7 +37,7 @@ import type { UserHistory } from '@/types/domain'
 import type { Program } from '@/types/domain'
 import type { SchoolAffiliatedTeacherRow, User } from '@/types/user'
 
-const MEMBER_DETAIL_LIST_SIZE = 200
+const MEMBER_DETAIL_LIST_SIZE = 50
 
 export function useMemberCommentsQuery(
   memberId: number | undefined,

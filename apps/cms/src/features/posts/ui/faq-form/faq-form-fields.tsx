@@ -57,7 +57,7 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
       >
         <CmsTextArea
           placeholder="내용(답변)을 입력해주세요."
-          inputSize="medium"
+          inputSize="large"
           width="100%"
           maxLength={5000}
         />
