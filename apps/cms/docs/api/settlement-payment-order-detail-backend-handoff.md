@@ -3,9 +3,10 @@
 **화면:** 정산 관리 > 지급조서 확인 > 행 클릭 → 지급 현황 상세 풀페이지  
 **프론트 경로:** `features/settlement-management/api/payment-orders/`, `use-payment-order-detail-fullpage-modal.ts`  
 **연동 명세:** [settlement-api-integration.md](./settlement-api-integration.md)  
-**공통 갭:** [settlement-api-backend-gaps.md](./settlement-api-backend-gaps.md)
+**공통 갭:** [settlement-api-backend-gaps.md](./settlement-api-backend-gaps.md)  
+**UI 필드 SSOT (기본 정보·목록 전 열):** [settlement-payment-order-detail-ui-fields-backend-handoff.md](./settlement-payment-order-detail-ui-fields-backend-handoff.md)
 
-**Last updated:** 2026-08-24
+**Last updated:** 2026-08-25
 
 ---
 
@@ -36,18 +37,22 @@
 - [ ] 응답 `SettlementListItemResponse`에 **`settlementId`, `programId`, `instructorMemberId`, `statementStatus`, `lectureDate`, `netPaymentAmount`** 포함
 - [ ] *(임시)* `GET /api/admin/settlements/statements` — 프론트가 settlementId join용으로 2차 호출 중 → **§4 반영 후 제거 예정**
 
-### UI 필드 ↔ API (상세 라인 1행)
+> **기본 정보·목록 모든 열 SSOT:** [settlement-payment-order-detail-ui-fields-backend-handoff.md](./settlement-payment-order-detail-ui-fields-backend-handoff.md) — 참여 기관명·차시·진행 회차·강사 헤더 등 **서버 제공 필수**.
+
+### UI 필드 ↔ API (상세 라인 1행 — 요약)
+
+전체 매핑·헤더 embed는 **[UI 필드 SSOT 문서](./settlement-payment-order-detail-ui-fields-backend-handoff.md)** 참고.
 
 | UI (`PaymentOrderAdminProgramDetailInstructorRow` 등) | API 필드 | 비고 |
 |------------------------------------------------------|----------|------|
 | `instructorName` / `programName` | `instructorName` / `programNameKo` | |
 | `lectureDate` | `lectureDate` | |
-| `sessionOrdinal` | `scheduleId` | 없으면 index fallback |
+| `sessionOrdinal` | **`sessionOrdinal`** (제안) | ❌ 현재 `scheduleId` fallback — SSOT 문서 §4 |
 | `processingStatus` | `statementStatus` | REQUESTED→pending 등 ([§11 갭 문서](./settlement-api-backend-gaps.md#11-ui-8종-vs-api-statementpayment-status)) |
 | `estimatedAmount` | `netPaymentAmount` | |
 | `lectureFeePaymentScheduledDate` | `expectedTransferDate` | |
 | `statementId` | **`SettlementListItemResponse.statementId`** (요청) | 현재는 statements 2차 조회 join — §4 |
-| `institutionName` | **없음** | 현재 UI `-` ([§3.4](#34-참여-기관명)) |
+| `institutionName` | **`institutionName`** (요청) | 현재 UI `-` — SSOT 문서 §4 |
 
 ---
 
@@ -87,13 +92,14 @@ GET /api/admin/settlements/statements?programId=42
 > **§3.6과 구분:** 본 절은 **프로필·계좌**. 강의비 등급·산정 기준은 **회원 API가 아니라 `GET /settlements/{id}`에 필수** ([§3.6](#36--get-settlementssettlementid-필수-확장--강의비-책정-기준산정-기준-상세-p1차단)).  
 > **개인정보 마스킹 규칙**은 [§3.7](#37-개인정보-마스킹-정책-지급-현황--산출-내역서) 참고.
 
-### 3.4 참여 기관명
+### 3.4 참여 기관명 · 차시 · 프로그램 진행 회차
 
 | | |
 |---|---|
-| **UI** | 상세 라인 「참여 기관명」 컬럼·필터 |
-| **현재 API** | `SettlementListItemResponse`에 기관명 필드 없음 |
-| **제안** | `institutionName` 또는 `schoolName` 필드 추가 (assignment/schedule join) |
+| **UI** | 상세 라인 「참여 기관명」·「N차시」·프로그램 기본정보 「진행 회차」·「사업 운영 기간」 |
+| **현재 API** | `institutionName`·`sessionOrdinal`·`programHeader` **없음** |
+| **제안** | [UI 필드 SSOT 문서](./settlement-payment-order-detail-ui-fields-backend-handoff.md) §4·§5 |
+| **프론트 임시** | `institutionName: '-'`, `sessionOrdinal ← scheduleId`, 진행 회차 ← 라인 건수, 사업기간 ← lectureDate min/max |
 
 ### 3.5 산출 내역서 — 산정 항목 `type` enum 확장 *(P1)*
 
@@ -384,6 +390,7 @@ GET /api/admin/settlements/statements?programId=42
 
 | 우선순위 | 항목 | 상세 화면 영향 |
 |----------|------|----------------|
+| **P0** | [UI 필드 SSOT](./settlement-payment-order-detail-ui-fields-backend-handoff.md) — `institutionName`, `sessionOrdinal`, `programHeader`/`instructorHeader` | **기본 정보·목록 모든 열** |
 | P0 | `POST .../statements/bulk-confirm` + 이체 예정일 | 「일괄 확인」 모달 |
 | P0 | `PATCH .../statements/{id}/reject` | 산출 내역서 「신청 반려」 |
 | P1 | 산출 내역서 DTO (`GET /settlements/{id}` 확장) | 산출 내역서 모달 본문 · **items[].type enum 7종** ([§3.5](./settlement-payment-order-detail-backend-handoff.md#35-산출-내역서--산정-항목-type-enum-확장-p1)) · **⭐ 강의비 책정·calculationDetail 필수** ([§3.6](./settlement-payment-order-detail-backend-handoff.md#36--get-settlementssettlementid-필수-확장--강의비-책정-기준산정-기준-상세-p1차단)) |
@@ -399,7 +406,7 @@ GET /api/admin/settlements/statements?programId=42
 | **상세 정산 라인 목록** (프로그램별 강사 라인 / 강사별 프로그램 라인) | **아니오** — 기존 `GET /settlements` scoped query로 충분 (프론트 연동 완료) |
 | **statementId** | **DTO 필드 추가** — `SettlementListItemResponse.statementId` (§4). 신규 endpoint 불필요 |
 | **강사 기본정보·계좌** | **예 (또는 회원 API 조합)** · 마스킹: **이름·은행명 plain** / 연락처·이메일·계좌번호·예금주만 ([§3.7](./settlement-payment-order-detail-backend-handoff.md#37-개인정보-마스킹-정책-지급-현황--산출-내역서)) |
-| **참여 기관명** | **DTO 필드 추가** |
+| **참여 기관명·차시·프로그램 헤더** | **DTO 필드 추가** — [UI 필드 SSOT](./settlement-payment-order-detail-ui-fields-backend-handoff.md) |
 | **일괄 확인·반려·산출서** | **예** — 기존 갭 문서 항목 |
 | **강의비 책정·산정 기준 상세** | **아니오 (신규 API 불필요)** — **`GET /settlements/{id}` DTO 확장 필수** (§3.6). 회원 API 단독 불가 |
 

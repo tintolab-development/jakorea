@@ -9,20 +9,58 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동
 
 | 우선순위 | 건수 | 대표 항목 |
 |----------|------|-----------|
-| P0 | 3 | 집계 목록 API, 일괄 confirm, 목록 필터 |
+| P0 | 4 | 집계 목록 API, **상세 UI 필드(기관명·차시·헤더)**, 일괄 confirm, 목록 필터 |
 | P1 | 5 | 산출 내역서 DTO, 연간 예산, bulk paid, account 상세 GET, config CRUD |
 | P2 | 3 | iconKey, 캘린더 adapter, 상태 enum 매핑표 |
 
 ---
 
-## P0 — 지급 현황 상세 (라인 목록)
+## P0 — 지급 현황 상세 (기본 정보 · 정산 목록 전 열)
+
+| | |
+|---|---|
+| **화면** | 지급조서 확인 → 행 클릭 → **지급 현황 상세** 풀페이지 |
+| **요구** | **기본 정보** + **신청자별/프로그램별 정산 목록** 테이블 **모든 열** 값을 서버에서 제공 |
+| **상세 SSOT** | [settlement-payment-order-detail-ui-fields-backend-handoff.md](./settlement-payment-order-detail-ui-fields-backend-handoff.md) |
+| **프론트 임시** | `institutionName: '-'`, `sessionOrdinal ← scheduleId`, 진행 회차 ← **라인 건수**, 사업기간 ← lectureDate min/max, 강사 프로필 `-` |
+| **산출 내역서 모달** | `GET /settlements/{id}` — `'—'`·`calculationDetail` 미매핑 → [UI 필드 SSOT §4](./settlement-payment-order-detail-ui-fields-backend-handoff.md#4-산출-내역서-모달-목록-상세-보기) |
+| **제안** | `SettlementListItemResponse`에 `institutionName`, `sessionOrdinal`, `statementId` + scoped query **`programHeader` / `instructorHeader` embed** |
+
+### 필수 라인 필드 (`SettlementListItemResponse`)
+
+| UI 컬럼 | API 필드 | 현재 |
+|---------|----------|------|
+| 신청자명 / 프로그램명 | `instructorName` / `programNameKo` | ✅ |
+| 참여 기관명 | `institutionName` | ❌ |
+| 교육 진행 일자 | `lectureDate` | ✅ |
+| N차시 | `sessionOrdinal` (1-based) | ❌ (`scheduleId` misuse) |
+| 지급조서 처리 현황 | `statementStatus` | ✅ |
+| 정산 신청 금액 | `netPaymentAmount` | ✅ |
+
+### 필수 헤더 embed (프로그램 상세 기본 정보)
+
+| UI | API | 현재 |
+|----|-----|------|
+| 사업 운영 기간 | `businessPeriodStart`, `businessPeriodEnd` | ❌ FE 추론 |
+| 프로그램 진행 회차 | `sessionCompleted` / `sessionTotal` | ❌ FE 라인 건수 |
+
+### 필수 헤더 embed (강사 상세 기본 정보)
+
+| UI | API | 현재 |
+|----|-----|------|
+| 이름·연락처·주소·계좌 | `instructorHeader` 또는 members | ❌ `-` |
+| 총 정산 예정 금액 | `totalEstimatedAmount` | 집계 목록 값 |
+
+---
+
+## P0 — 지급 현황 상세 (라인 목록 · API 스코프)
 
 | | |
 |---|---|
 | **화면** | 지급조서 확인 → 행 클릭 → 지급 현황 상세 |
 | **프론트 (2026-08-24)** | `GET /api/settlements?programId=` 또는 `?instructorMemberId=` + 목록 `fromDate`/`toDate` |
 | **statements** | **임시** — `GET /statements` 전량 fetch 후 settlementId join. **요청:** settlements DTO에 `statementId` embed → [§4 핸드오프](./settlement-payment-order-detail-backend-handoff.md#4-백엔드-수정-요청--get-settlements-목록에-statementid-포함-권장p1) |
-| **상세 핸드오프** | [settlement-payment-order-detail-backend-handoff.md](./settlement-payment-order-detail-backend-handoff.md) |
+| **상세 핸드오프** | [settlement-payment-order-detail-backend-handoff.md](./settlement-payment-order-detail-backend-handoff.md) · [UI 필드 SSOT](./settlement-payment-order-detail-ui-fields-backend-handoff.md) |
 
 ### P1 — `SettlementListItemResponse.statementId` *(권장)*
 
@@ -129,9 +167,10 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동
 | **갭** | 12종 layout mock과 API flat items 불일치 |
 | **갭 (항목 type)** | `items[].type` enum 미정의 — UI는 7종(강사비·교통비·숙박비·**식사비·활동비·원천징수**·기타) 필요 → [핸드오프 §3.5](./settlement-payment-order-detail-backend-handoff.md#35-산출-내역서--산정-항목-type-enum-확장-p1) |
 | **갭 (산정 상세·차단)** | **`GET /settlements/{id}`**에 `lectureFeeStandardTitle`/`wageItemType`·`items[].calculationDetail` **없음** → 강사비 행 상세 보기 「준비 중」 → [핸드오프 §3.6](./settlement-payment-order-detail-backend-handoff.md#36--get-settlementssettlementid-필수-확장--강의비-책정-기준산정-기준-상세-p1차단) |
+| **갭 (상세 UI)** | **기본 정보·목록 전 열** — `institutionName`, `sessionOrdinal`, `programHeader`/`instructorHeader` 미제공 → [UI 필드 SSOT](./settlement-payment-order-detail-ui-fields-backend-handoff.md) |
 | **갭 (마스킹)** | **신청자명(강사명)·은행명은 마스킹 금지** — 연락처·이메일·계좌번호·예금주만 마스킹. BE 사전 마스킹 시 UI 불일치 → [핸드오프 §3.7](./settlement-payment-order-detail-backend-handoff.md#37-개인정보-마스킹-정책-지급-현황--산출-내역서) |
 | **프론트 임시 대응** | `settlement-item-type.ts` 코드→한글 매핑. `lectureFeeStandardTitle: '—'`·`basisDetail` 미매핑 |
-| **제안** | **`GET /settlements/{id}` DTO 확장 (필수)** — §3.5 type enum + **§3.6 강의비 책정·calculationDetail** |
+| **제안** | **`GET /settlements/{id}` DTO 확장 (필수)** — §3.5 type enum + **§3.6** + **[UI 필드 SSOT §4](./settlement-payment-order-detail-ui-fields-backend-handoff.md#4-산출-내역서-모달-목록-상세-보기)** 산출 내역서 모달 |
 
 ---
 
