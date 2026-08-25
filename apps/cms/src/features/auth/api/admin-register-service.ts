@@ -6,6 +6,7 @@ import {
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import { isAdminRegisterRemoteEnabled } from '@/features/auth/api/admin-register-remote-capabilities'
 import { buildAdminSelfSignupRequest } from '@/features/auth/lib/map-admin-register-signup-request'
+import { resolveAdminSelfSignupTermsVersion } from '@/features/auth/lib/resolve-admin-self-signup-terms-version'
 import {
   AdminRegisterApiError,
   parseAdminRegisterApiError,
@@ -38,7 +39,8 @@ function unwrapApiData<T>(payload: unknown): T {
 async function completeAdminSignupRemote(
   formData: AdminRegisterWizardData
 ): Promise<AdminRegisterCompleteResult> {
-  const body = buildAdminSelfSignupRequest(formData)
+  const termsVersion = await resolveAdminSelfSignupTermsVersion()
+  const body = buildAdminSelfSignupRequest(formData, termsVersion)
 
   try {
     const { data: payload } = await axiosClient.post<unknown>(
