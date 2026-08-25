@@ -104,10 +104,7 @@
   cursor: not-allowed;
 }
 
-/* Platform 양식 페이지 전용 — radius / 타이포만 분기, 나머지 동일 */
-.formPage {
-  border-radius: var(--radius-8, 8px);
-}
+/* Platform 양식 페이지 전용 — 타이포만 분기 (.field radius-16 유지) */
 
 .formPageInput {
   overflow: hidden;
@@ -132,7 +129,6 @@
   opacity: 1;
 }
 
-.formPage .input:disabled,
 .formPageInput:disabled {
   overflow: hidden;
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));

@@ -56,8 +56,11 @@ export {
   PFFormInlineSegment,
   PFFormInlineSeparator,
   PFFormPage,
+  PFFormPeriodHyphen,
   PFFormPeriodPair,
   PFFormPeriodTilde,
+  PFFormResidentNumberInput,
+  PFFormHomeAddressFields,
   PFFormSection,
 } from './pf-form'
 export type {
@@ -68,12 +71,15 @@ export type {
   PFFormFieldRowProps,
   PFFormFieldTableProps,
   PFFormFieldValueTextProps,
+  PFFormHomeAddressFieldsProps,
   PFFormInlineRowProps,
   PFFormInlineSegmentProps,
   PFFormInlineSeparatorProps,
   PFFormPageProps,
+  PFFormPeriodHyphenProps,
   PFFormPeriodPairProps,
   PFFormPeriodTildeProps,
+  PFFormResidentNumberInputProps,
   PFFormSectionProps,
 } from './pf-form'
 export { PFAttachmentDropdown } from './pf-attachment-dropdown'
@@ -90,6 +96,13 @@ export {
   PFElectronicSignatureModal,
   SIGNATURE_FONT_STYLES,
 } from './pf-electronic-signature-modal'
+export {
+  PFFormSignatureBlock,
+  createFormSignatureValue,
+  formatFormSignatureDate,
+  normalizeFormSignatureValue,
+} from './pf-form-signature-block'
+export type { FormSignatureValue, PFFormSignatureBlockProps } from './pf-form-signature-block'
 export type {
   ElectronicSignatureMode,
   ElectronicSignatureResult,
