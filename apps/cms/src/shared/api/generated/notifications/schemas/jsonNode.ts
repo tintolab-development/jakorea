@@ -6,6 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- Orval OpenAPI object placeholder
 export interface JsonNode {}

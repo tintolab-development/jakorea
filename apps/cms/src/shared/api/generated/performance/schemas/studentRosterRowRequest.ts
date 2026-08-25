@@ -33,7 +33,6 @@ export interface StudentRosterRowRequest {
      * @maximum 999
      */
   studentNo: number;
-  /** @pattern ^$|^[0-9+() .-]{7,30}$ */
   phone?: string;
   /**
      * @minLength 0

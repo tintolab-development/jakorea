@@ -5,13 +5,14 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { FormTemplateVersionResponseVersionStatus } from './formTemplateVersionResponseVersionStatus';
 
 export interface FormTemplateVersionResponse {
   templateVersionId?: number;
   templateId?: number;
   versionNo?: number;
   versionLabel?: string;
-  versionStatus?: string;
+  versionStatus?: FormTemplateVersionResponseVersionStatus;
   schemaJson?: string;
   extensionJson?: string;
   settingsJson?: string;

@@ -19,4 +19,10 @@ export interface MemberApplicationHistoryResponse {
   approvedAt?: string;
   rejectedAt?: string;
   rejectReason?: string;
+  programStartDate?: string;
+  progressYear?: number;
+  enrollmentDisplayStatus?: string;
+  lectureAttendance?: string;
+  hasAssignmentSubmission?: boolean;
+  managerName?: string;
 }

@@ -8,6 +8,26 @@
 
 export type ListProgramRoles1Params = {
 /**
+ * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ */
+title?: string;
+/**
+ * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ */
+year?: number;
+/**
+ * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
+ */
+lifecycleStatus?: string;
+/**
+ * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ */
+participantType?: string;
+/**
+ * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ */
+targetLevel?: string;
+/**
  * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
  */
 page?: number;

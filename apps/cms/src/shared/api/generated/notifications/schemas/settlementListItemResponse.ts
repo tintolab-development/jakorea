@@ -11,10 +11,18 @@ export interface SettlementListItemResponse {
   programId?: number;
   programNameKo?: string;
   scheduleId?: number;
+  sessionOrdinal?: number;
   lectureDate?: string;
   instructorAssignmentId?: number;
   instructorMemberId?: number;
   instructorName?: string;
+  statementId?: number;
+  institutionName?: string;
+  businessPeriodStart?: string;
+  businessPeriodEnd?: string;
+  sessionCompleted?: number;
+  sessionTotal?: number;
+  programSessionProgressDisplay?: string;
   calculationStatus?: string;
   statementStatus?: string;
   paymentStatus?: string;

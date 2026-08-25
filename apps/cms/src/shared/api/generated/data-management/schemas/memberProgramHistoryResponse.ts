@@ -17,4 +17,12 @@ export interface MemberProgramHistoryResponse {
   joinedAt?: string;
   completedAt?: string;
   giveUpAt?: string;
+  programStartDate?: string;
+  progressYear?: number;
+  enrollmentDisplayStatus?: string;
+  lectureAttendance?: string;
+  hasAssignmentSubmission?: boolean;
+  managerName?: string;
+  linkedApplicationId?: number;
+  linkedApplicationType?: string;
 }

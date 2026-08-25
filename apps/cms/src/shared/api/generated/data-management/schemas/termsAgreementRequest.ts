@@ -5,6 +5,7 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { FilledDocumentRequest } from './filledDocumentRequest';
 import type { TermsAgreementRequestTermsType } from './termsAgreementRequestTermsType';
 
 /**
@@ -27,4 +28,14 @@ export interface TermsAgreementRequest {
   agreed?: boolean;
   /** 호환 입력 필드입니다. 저장되는 약관 스냅샷은 서버가 게시 약관 원장에서 생성하며 이 값을 신뢰하지 않습니다. */
   termsSnapshotJson?: string;
+  /** 선택 동의서 4종(PORTRAIT/PAYMENT/FACILITATOR/ADMINISTRATIVE)의 작성 완료 WritingFormDraft. 해당 termsType에서 agreed=true이면 필수이고 agreed=false이면 생략합니다. */
+  filledDocument?: FilledDocumentRequest;
+  /** 성범죄 경력조회 동의서 작성 완료 첨부 파일 object id */
+  evidenceFileObjectId?: number;
+  /**
+     * 호환용 원본 파일명. 서버는 file_object 메타데이터를 우선합니다.
+     * @minLength 0
+     * @maxLength 255
+     */
+  evidenceOriginalFileName?: string;
 }
