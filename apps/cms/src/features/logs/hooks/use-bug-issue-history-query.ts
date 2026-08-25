@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
-import { getBugIssueLogsList } from '@/features/logs/api/admin-logs-service'
+import { getBugIssueLogsPage } from '@/features/logs/api/admin-logs-service'
 import { bugIssueLogsParamsFromSearchParams } from '@/features/logs/api/logs-filter-params'
 import { logsQueryKeys } from '@/features/logs/api/logs-query-keys'
+import { useInfiniteLogList } from '@/features/logs/hooks/use-infinite-log-list'
 import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
 
 export function useBugIssueHistoryQuery(
@@ -11,16 +11,15 @@ export function useBugIssueHistoryQuery(
   const searchParamsKey = searchParams.toString()
   const remoteEnabled = useLogsRemoteQueryEnabled(enabled)
 
-  return useQuery({
+  return useInfiniteLogList({
     queryKey: logsQueryKeys.systemIssues(searchParamsKey),
-    queryFn: () => {
+    queryKeyIdentity: searchParamsKey,
+    queryFn: page => {
       const apiParams = bugIssueLogsParamsFromSearchParams(
         new URLSearchParams(searchParamsKey)
       )
-      return getBugIssueLogsList(apiParams)
+      return getBugIssueLogsPage(apiParams, page)
     },
     enabled: remoteEnabled,
-    staleTime: 30_000,
-    retry: false,
   })
 }

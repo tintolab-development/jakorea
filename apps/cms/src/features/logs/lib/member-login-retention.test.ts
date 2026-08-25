@@ -3,6 +3,8 @@ import dayjs from 'dayjs'
 import { listMockMemberLoginLogs } from '@/data/mock/member-login-logs'
 import type { MemberLoginLog } from '@/types/member-login-log'
 import {
+  applyMemberLoginRetentionFromFilter,
+  clampMemberLoginLogsFromParam,
   filterMemberLoginLogsByRetention,
   isMemberLoginLogWithinRetention,
   memberLoginRetentionCutoff,
@@ -47,5 +49,21 @@ describe('member-login-retention', () => {
     const rows = listMockMemberLoginLogs()
     expect(rows).toHaveLength(130)
     expect(filterMemberLoginLogsByRetention(rows)).toHaveLength(130)
+  })
+
+  it('clamps member-login from to the one-month cutoff', () => {
+    const cutoff = memberLoginRetentionCutoff(now).format('YYYY-MM-DD')
+    expect(clampMemberLoginLogsFromParam(undefined, now)).toBe(cutoff)
+    expect(clampMemberLoginLogsFromParam('2025-01-01', now)).toBe(cutoff)
+    expect(clampMemberLoginLogsFromParam('2026-08-01', now)).toBe('2026-08-01')
+  })
+
+  it('does not inject from unless the user sent one', () => {
+    expect(applyMemberLoginRetentionFromFilter({ loginId: 'a@b.c' }, now)).toEqual({
+      loginId: 'a@b.c',
+    })
+    expect(
+      applyMemberLoginRetentionFromFilter({ from: '2025-01-01' }, now)
+    ).toEqual({ from: memberLoginRetentionCutoff(now).format('YYYY-MM-DD') })
   })
 })

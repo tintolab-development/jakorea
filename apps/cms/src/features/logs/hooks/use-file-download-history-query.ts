@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
-import { getFileDownloadLogsList } from '@/features/logs/api/admin-logs-service'
+import { getFileDownloadLogsPage } from '@/features/logs/api/admin-logs-service'
 import { fileDownloadLogsParamsFromSearchParams } from '@/features/logs/api/logs-filter-params'
 import { logsQueryKeys } from '@/features/logs/api/logs-query-keys'
+import { useInfiniteLogList } from '@/features/logs/hooks/use-infinite-log-list'
 import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
 
 export function useFileDownloadHistoryQuery(
@@ -11,16 +11,15 @@ export function useFileDownloadHistoryQuery(
   const searchParamsKey = searchParams.toString()
   const remoteEnabled = useLogsRemoteQueryEnabled(enabled)
 
-  return useQuery({
+  return useInfiniteLogList({
     queryKey: logsQueryKeys.fileAccess(searchParamsKey),
-    queryFn: () => {
+    queryKeyIdentity: searchParamsKey,
+    queryFn: page => {
       const apiParams = fileDownloadLogsParamsFromSearchParams(
         new URLSearchParams(searchParamsKey)
       )
-      return getFileDownloadLogsList(apiParams)
+      return getFileDownloadLogsPage(apiParams, page)
     },
     enabled: remoteEnabled,
-    staleTime: 30_000,
-    retry: false,
   })
 }

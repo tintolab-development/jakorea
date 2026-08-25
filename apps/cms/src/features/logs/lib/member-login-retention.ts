@@ -27,3 +27,31 @@ export function filterMemberLoginLogsByRetention(
 ): MemberLoginLog[] {
   return rows.filter(row => isMemberLoginLogWithinRetention(row.loggedAt, now))
 }
+
+/** 로그인 이력 조회 `from`을 보관 기간(1개월) 안으로 맞춥니다. 없으면 cutoff를 넣습니다. */
+export function clampMemberLoginLogsFromParam(
+  from: string | undefined,
+  now: Dayjs = dayjs()
+): string {
+  const cutoff = memberLoginRetentionCutoff(now).format('YYYY-MM-DD')
+  const trimmed = from?.trim()
+  if (!trimmed) return cutoff
+  const parsed = dayjs(trimmed)
+  if (!parsed.isValid() || parsed.isBefore(dayjs(cutoff), 'day')) return cutoff
+  return parsed.format('YYYY-MM-DD')
+}
+
+/**
+ * 사용자가 from을 보낸 경우에만 clamp합니다.
+ * 미지정 시 쿼리에 from을 넣지 않습니다 — BE가 최근 1개월을 이미 적용합니다.
+ */
+export function applyMemberLoginRetentionFromFilter(
+  filters: Record<string, string>,
+  now: Dayjs = dayjs()
+): Record<string, string> {
+  if (!filters.from?.trim()) return filters
+  return {
+    ...filters,
+    from: clampMemberLoginLogsFromParam(filters.from, now),
+  }
+}
