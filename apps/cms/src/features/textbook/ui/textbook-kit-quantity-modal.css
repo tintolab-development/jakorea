@@ -19,31 +19,47 @@
 }
 
 .textbook-kit-quantity-modal-wrap .ant-modal.textbook-kit-quantity-modal {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
   right: auto !important;
   bottom: auto !important;
-  transform: translate(-50%, -50%) !important;
-  margin: 0 !important;
+  transform: none !important;
+  margin: 0 auto !important;
   padding-bottom: 0 !important;
   width: min(600px, calc(100vw - 32px)) !important;
   max-width: min(600px, calc(100vw - 32px)) !important;
   box-sizing: border-box !important;
 }
 
+/*
+ * 고정 height:556 제거 — 헤더+설명+5행 테이블+푸터(44)가 556을 넘어
+ * 하단(푸터·패딩)이 잘리던 문제. 콘텐츠 높이에 맞춤.
+ */
 .content-modal.textbook-kit-quantity-modal .ant-modal-content {
   display: flex;
-  width: 600px;
-  height: 556px;
-  padding: 26px 30px 34px 30px;
   flex-direction: column;
   align-items: stretch;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: min(100%, calc(100dvh - 32px));
+  padding: 26px 30px 34px;
   gap: 0;
   flex-shrink: 0;
+  overflow: hidden;
   border-radius: 12px;
   background: #fff;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+}
+
+.content-modal.textbook-kit-quantity-modal .ant-modal-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .content-modal.textbook-kit-quantity-modal .content-modal__description,
@@ -51,16 +67,22 @@
   width: 100%;
 }
 
+.content-modal.textbook-kit-quantity-modal .teal-header-modal__header {
+  flex-shrink: 0;
+}
+
 .content-modal.textbook-kit-quantity-modal .teal-header-modal__body {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 30px;
   min-height: 0;
+  overflow: auto;
 }
 
 .content-modal.textbook-kit-quantity-modal .content-modal__description {
+  flex-shrink: 0;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
@@ -70,14 +92,19 @@
 }
 
 .content-modal.textbook-kit-quantity-modal .teal-header-modal__footer {
+  flex-shrink: 0;
   width: 100%;
   margin-top: 30px;
+  padding: 0;
+  border-top: none;
+  background: transparent;
 }
 
 .textbook-kit-quantity-modal__table {
   display: flex;
   width: 100%;
   flex-direction: column;
+  flex-shrink: 0;
   border-top: 1px solid var(--table-line, #e0e0e0);
   border-left: 1px solid var(--table-line, #e0e0e0);
   border-radius: 10px;
@@ -113,7 +140,7 @@
 .textbook-kit-quantity-modal__td {
   display: flex;
   box-sizing: border-box;
-  min-height: 50px;
+  min-height: 64px;
   padding: 12px;
   align-items: center;
   gap: 12px;

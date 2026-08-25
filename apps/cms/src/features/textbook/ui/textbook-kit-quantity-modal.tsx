@@ -57,10 +57,15 @@ export function TextbookKitQuantityModal({
       wrapClassName="textbook-kit-quantity-modal-wrap"
       footer={
         <div className="textbook-kit-quantity-modal__footer">
-          <CmsButton variant="secondary" type="button" onClick={onCancel}>
+          <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" type="button" onClick={() => onConfirm(quantities)}>
+          <CmsButton
+            variant="primary"
+            size="large"
+            type="button"
+            onClick={() => onConfirm(quantities)}
+          >
             확인
           </CmsButton>
         </div>
