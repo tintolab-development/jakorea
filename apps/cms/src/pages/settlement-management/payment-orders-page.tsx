@@ -16,7 +16,6 @@ export default function PaymentOrdersPage() {
   const {
     viewMode,
     setViewMode,
-    exposureMode,
     detailState,
     closeDetail,
     appliedFromUrl,
@@ -60,7 +59,7 @@ export default function PaymentOrdersPage() {
         contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         fields={paymentOrdersFilterFields}
         filters={{
-          exposureMode,
+          exposureMode: pendingFilters.exposureMode,
           programName: pendingFilters.programName,
           instructorName: pendingFilters.instructorName,
           processingStatus:
