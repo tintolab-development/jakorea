@@ -4,22 +4,18 @@ import {
 } from '../writing-form/draft-schema.js'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '../paragraph-ids/payment-statement-pre-consent-draft.js'
 
-/** Platform 사용자 fill — system 날짜·서명 단락 숨김 (전자서명 sidecar로 대체) */
+/** Platform 사용자 fill — system 날짜 단락 숨김 (전자서명 sidecar로 대체) */
 export const PAYMENT_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
   PAYMENT_STATEMENT_PRE_CONSENT_IDS.midDate,
-  PAYMENT_STATEMENT_PRE_CONSENT_IDS.midSignature,
   PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailDate,
-  PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature,
 ])
 
 export const EDUCATOR_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemDate,
-  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemSignature,
 ])
 
 export const NOTICE_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
   AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate,
-  AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature,
 ])
 
 export function resolvePlatformConsentHiddenParagraphIds(templateId: string): Set<string> {
