@@ -1,5 +1,7 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import type { BulkDownloadEndpointResponse } from '@/features/user/api/download-bulk-endpoint'
 import { getJAKoreaCMSBackendAPISettlementSubset } from '@/shared/api/generated/settlement/settlement-api'
+import customInstance from '@/shared/api/orval-mutator'
 import type {
   AccountPaymentDetailResponse,
   BudgetSummaryParams,
@@ -15,6 +17,7 @@ import type {
   SettlementBudgetSummaryResponse,
   SettlementBulkStatusChangeRequest,
   SettlementConfigResponse,
+  SettlementCorrectionRequest,
   SettlementDocumentDownloadResponse,
   SettlementExportRequest,
   SettlementFrontendResponse,
@@ -84,6 +87,47 @@ export async function downloadPaymentStatementRemote(
   settlementId: number
 ): Promise<SettlementDocumentDownloadResponse> {
   return unwrapApiBody(await settlementApi.downloadPaymentStatement(settlementId))
+}
+
+/** settlement-api-backend-gaps §12 — PATCH .../statements/{statementId}/reject */
+export async function rejectPaymentStatementRemote(
+  statementId: number,
+  body: SettlementStatusChangeRequest
+): Promise<void> {
+  await customInstance({
+    url: `/api/admin/settlements/statements/${statementId}/reject`,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    data: body,
+  })
+}
+
+export async function requestSettlementCorrectionRemote(
+  settlementId: number,
+  body: SettlementCorrectionRequest
+): Promise<void> {
+  await settlementApi.requestCorrection(settlementId, body)
+}
+
+/** 선택 정산 건 지급조서 ZIP — cms-table-bulk-download §5.1 #6 */
+export async function bulkDownloadPaymentStatementsRemote(body: {
+  settlementIds: number[]
+}): Promise<BulkDownloadEndpointResponse> {
+  return unwrapApiBody(
+    await customInstance<BulkDownloadEndpointResponse>({
+      url: '/api/admin/settlements/payment-statements/bulk-download',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    })
+  )
+}
+
+export async function resolvePaymentStatementIdForSettlement(
+  settlementId: number
+): Promise<number | undefined> {
+  const items = await fetchAllPaymentStatementsRemote()
+  return items.find(item => item.settlementId === settlementId)?.statementId
 }
 
 export async function fetchAccountPaymentsPageRemote(

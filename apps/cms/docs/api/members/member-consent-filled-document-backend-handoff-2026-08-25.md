@@ -11,7 +11,7 @@
 
 ## 1. 요약
 
-CMS **회원·강사 신규 등록**에서 작성한 동의서 **세부 내용**이 서버에 남지 않습니다. 지금 저장·조회되는 것은 **항목 전체 동의여부(`agreed`) + 시각**뿐입니다.
+CMS **개인·교사·강사·강사겸교사** 신규 등록에서 작성한 동의서 **세부 내용**이 서버에 남지 않습니다. 지금 저장·조회되는 것은 **항목 전체 동의여부(`agreed`) + 시각**뿐입니다.
 
 회원 상세 「약관 및 동의 > 동의서 보기」는 등록/가입 시 제출한 본문을 복원해야 합니다.
 
@@ -33,7 +33,7 @@ CMS **회원·강사 신규 등록**에서 작성한 동의서 **세부 내용**
 
 ## 2. 목적
 
-CMS 등록·상세 작성, (가능하면) 포털 가입/강사신청에서 작성한 동의서 세부를 DB에 남기고, 회원 상세 「동의서 보기」에서 **제출본 그대로** 복원한다.
+CMS 등록·상세 작성, (가능하면) 포털 가입/강사신청에서 작성한 동의서 세부를 DB에 남기고, 회원 상세 「동의서 보기」에서 **제출본 그대로** 복원한다. **개인·교사·강사·강사겸교사** 모두 동일 본문 계약(§4.1).
 
 - 등록 폼 기본정보 → 동의서 **자동 채움 금지**. 보기는 **제출본만**.
 - 선택 항목 `agreed: false`(미작성)는 [선행 문서 §5.2](./members-pre-register-terms-required-policy-backend-request-2026-08-11.md)대로 **등록 허용**. 보기 시 빈 상태.
@@ -106,6 +106,54 @@ OpenAPI `TermsAgreementRequest.termsSnapshotJson`은 **게시 약관 원장** �
 시드 JSON: [writing-form-seeds-backend-handoff.md](../writing-form-seeds-backend-handoff.md) 「동의 양식 (5)」.
 
 `PAYMENT_STATEMENT_PRE_CONSENT` 원장 별칭 `PAYMENT_STATEMENT_CONSENT`는 선행 문서와 동일. 저장 본문은 `agreement-third-party` / `document-payment-order-pre-consent`와 같은 schema.
+
+§6 저장 필드표는 **회원 유형과 무관하게 동일**하다. 유형별로 다른 것은 **어느 항목을 등록·상세 UI에 보여줄지**와 **어느 pre-register path를 타는지**뿐이다 (§4.1).
+
+### 4.1 회원 유형별 적용 (개인 · 교사 · 강사 · 강사겸교사)
+
+대상: CMS 회원 관리 4유형. **관리자 계정·학교(기관)** 은 동의서 5종 작성 UI가 없어 이번 계약 밖.
+
+등록 필수 약관은 네 유형 모두 `SERVICE_TERMS` + `PRIVACY_COLLECTION`. 동의서 5종은 **전부 선택** (`agreed: false`여도 등록 가능).
+
+| CMS 유형 | 상세 preset | 등록 API | `instructorType` (있을 때) |
+|----------|-------------|----------|----------------------------|
+| **개인** | `individual` | `POST /api/admin/users/pre-register/individual` | — |
+| **교사** (겸직 아님) | `school_teacher` | `POST /api/admin/users/pre-register/instructor` | `SCHOOL_TEACHER` |
+| **강사** | `instructor_only` | `POST /api/admin/users/pre-register/instructor` | `GENERAL` 등 (교사 아님) |
+| **강사겸교사** | `instructor_dual` | 강사와 동일 path (역할 `SCHOOL_TEACHER` + `INSTRUCTOR`) | 교사 겸 강사 |
+
+교사·강사겸교사 **전용 consent API는 없다.** 본문은 `memberId` 기준 `termsAgreements` / `consent-records`에 붙인다. 상세 GET은 개인 `…/users/{id}` · 교사 `…/users/{id}/teacher` · 강사 상세가 달라도 **consent-records는 동일 memberId**.
+
+#### 등록 UI — 동의서 5종 **전부 노출**
+
+| 유형 | 화면 | 비고 |
+|------|------|------|
+| 개인 | `add-user-individual.tsx` | 초상권 + 지급조서·서약·행정·성범죄 |
+| 교사 / 강사 | `instructor-register-modal.tsx` | 회원 유형(교사/일반)과 무관하게 5종. 차이는 **소속**(학교 vs 기관)만 |
+
+등록에서 `agreed: true` + 작성 완료면 **유형과 상관없이** §6 본문을 저장해야 한다. 개인·교사 등록 payload에 지급조서 등이 실려도 **거절·무시하지 말 것**.
+
+#### 상세 UI — 「약관 및 동의」 노출 (CMS `CONSENT_PRESET_SCHEMA`)
+
+| 항목 | 개인 | 교사(비겸직) | 강사 | 강사겸교사 |
+|------|------|--------------|------|------------|
+| 초상권 `PORTRAIT_RIGHTS` | ✓ | ✓ | ✓ | ✓ |
+| 지급조서 `PAYMENT_STATEMENT_PRE_CONSENT` | — | — | ✓ | ✓ |
+| 교육진행자 `FACILITATOR_PLEDGE` | — | — | ✓ | ✓ |
+| 행정정보 `ADMINISTRATIVE_INFO_CONSENT` | — | — | ✓ | ✓ |
+| 성범죄 `CRIMINAL_HISTORY_CHECK_CONSENT` | — | — | ✓ | ✓ |
+
+근거: `user-consent-agreement-section.tsx`. 교사 상세는 일반 회원과 같이 **4항목만**(서비스·개인정보·마케팅·초상권). 강사 전용 4종은 숨김.  
+**등록은 교사도 5종 작성 가능** → 상세에서 숨겨도 **원장은 유지**. 조회 API는 숨긴 항목의 `filledDocument`도 `memberId`로 반환해야 한다. FE가 안 그리는 것과 BE가 버리는 것을 혼동하지 말 것.
+
+상세에서 동의서 **재작성·보기**는 위 표에 ✓인 항목만 CMS가 연다. PATCH도 노출된 선택 항목만 보낸다. 개인·교사 상세에서 지급조서 본문을 지우는 요청은 하지 않음.
+
+#### BE 요청 요약
+
+1. **저장 스키마(§6)는 4유형 공통.** 유형별 DTO를 나누지 말 것.
+2. **individual / instructor pre-register 모두** `filledDocument`(또는 formResponseId) 수용. instructor는 `instructorType=SCHOOL_TEACHER`(교사)와 일반 강사 동일.
+3. **조회는 memberId 단위.** 상세 preset이 항목을 숨겨도 consent-record를 삭제·null 처리하지 말 것.
+4. 강사겸교사 = 강사와 동일 5종 보기/저장. 교사 단독으로 떨어뜨리지 말 것.
 
 ---
 
@@ -260,9 +308,13 @@ type PaymentStatementBasicInfoValues = {
 
 ### 옵션 A — 등록/PATCH에 `filledDocument` 동봉
 
-`POST /api/admin/users/pre-register/individual`  
-`POST /api/admin/users/pre-register/instructor`  
-상세 동의 PATCH (있는 경우)
+적용 path (§4.1):
+
+| Method | Path | 유형 |
+|--------|------|------|
+| `POST` | `/api/admin/users/pre-register/individual` | 개인 |
+| `POST` | `/api/admin/users/pre-register/instructor` | 교사 · 강사 · 강사겸교사 |
+| `PATCH` | 회원 기본정보 (선택 `termsAgreements`) | 상세에서 노출된 항목만. 개인·교사·강사·겸직 공통 원칙 |
 
 `termsAgreements[]` 항목에 예:
 
@@ -302,6 +354,8 @@ type PaymentStatementBasicInfoValues = {
 ---
 
 ## 8. 조회 API
+
+`GET /api/admin/users/{memberId}/consent-records` — **유형 공통** (`memberId`만). 개인·교사·강사·겸직 상세 path가 달라도 본문은 이 레코드(또는 동등 filled-document GET)에서 읽는다. 상세 UI가 항목을 숨겨도 레코드를 생략하지 말 것.
 
 상세 「동의서 보기」가 한 번에 필요한 것:
 
@@ -351,6 +405,24 @@ type PaymentStatementBasicInfoValues = {
 **Given:** 대상자 본인만 채움, 식별번호 `inputValue` 빈 값  
 **Then:** 작성완료·등록 가능. 보기에서 식별번호 빈 칸.
 
+### 9.6 개인 등록 — 초상권 본문 + 상세 보기
+
+**Given:** `POST …/pre-register/individual`. 초상권 §6.1 작성완료.  
+**When:** 개인 상세 → 「동의서 보기」  
+**Then:** 성명·소속·하단 동의 라디오가 작성값과 동일.
+
+### 9.7 교사 등록 — 5종 저장, 상세는 초상권만 노출
+
+**Given:** `POST …/pre-register/instructor` + `instructorType: SCHOOL_TEACHER`. 초상권·지급조서 등 5종 중 작성한 본문 저장.  
+**Then:** 등록 성공. `GET …/consent-records`에 작성한 `termsType` 본문 존재.  
+**And:** 교사 상세 UI는 지급조서 등을 **숨김**이어도 원장은 유지 (삭제·null 금지). 초상권 보기는 제출본 복원.
+
+### 9.8 강사겸교사 상세 — 5종 보기
+
+**Given:** 역할 `SCHOOL_TEACHER` + `INSTRUCTOR`, 5종 작성완료.  
+**When:** 상세 preset `instructor_dual` → 각 「동의서 보기」  
+**Then:** 강사(`instructor_only`)와 동일하게 5종 복원.
+
 ---
 
 ## 10. FE 후속 (이 문서 범위 밖 · 구현하지 않음)
@@ -376,6 +448,9 @@ OpenAPI 갱신 후 `pnpm --filter cms generate:api`.
 - [ ] 성범죄 `evidenceFileObjectId` 연결·다운로드
 - [ ] 행정정보: 이용기관 빈 값 · 이용사무 고정 문구 · 주민번호 미입력 허용
 - [ ] 등록 기본정보로 동의서 서버측 자동 채움 없음
+- [ ] 개인·교사·강사·강사겸교사 모두 §4.1 path로 본문 저장 (유형별 DTO 분기 없음)
+- [ ] 교사 상세가 강사 전용 4종을 숨겨도 consent-record 유지
+- [ ] 강사겸교사 조회 = 강사와 동일 5종
 - [ ] OpenAPI 갱신 후 CMS orval 재생성 가능
 
 ---

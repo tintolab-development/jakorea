@@ -27,6 +27,15 @@ export const SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE = {
   maxHeight: 32,
 } as const
 
+const SCHOOL_TEACHER_EMPLOYMENT_MUTED_TEXT_STATUSES: ReadonlySet<SchoolTeacherEmploymentStatus> =
+  new Set(['ON_LEAVE', 'TRANSFERRED'])
+
+export function isSchoolTeacherEmploymentMutedStatus(
+  status: SchoolTeacherEmploymentStatus
+): boolean {
+  return SCHOOL_TEACHER_EMPLOYMENT_MUTED_TEXT_STATUSES.has(status)
+}
+
 export function parseSchoolTeacherEmploymentStatus(
   label: string | undefined
 ): SchoolTeacherEmploymentStatus | null {

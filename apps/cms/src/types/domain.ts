@@ -855,6 +855,8 @@ export interface UserHistory {
   managerName?: string
   /** API program-history 응답 programName (programService 폴백 전) */
   programName?: string
+  /** API program-history participantId */
+  participantId?: number
   // 강사인 경우
   paymentStatus?: PaymentStatus
   paymentAmount?: number

@@ -18,6 +18,19 @@ describe('isInstructorPermissionRevoked', () => {
     expect(isInstructorPermissionRevoked({})).toBe(false)
   })
 
+  it('roles에 INSTRUCTOR_REVOKED가 있으면 true', () => {
+    expect(
+      isInstructorPermissionRevoked({
+        roles: ['INSTRUCTOR_REVOKED'],
+      })
+    ).toBe(true)
+    expect(
+      isInstructorPermissionRevoked({
+        roles: ['SCHOOL_TEACHER', 'INSTRUCTOR_REVOKED'],
+      })
+    ).toBe(true)
+  })
+
   it('세션 오버레이로 박탈 표시', () => {
     markInstructorPermissionRevoked({ id: 'overlay-user-1', memberId: 9001 })
     expect(isInstructorPermissionRevoked({ id: 'overlay-user-1' })).toBe(true)
@@ -46,6 +59,13 @@ describe('getAllMemberListRoleTypeLabel', () => {
         instructorApprovalStatus: 'REVOKED',
       })
     ).toBe('강사(권한박탈)')
+    expect(
+      getAllMemberListRoleTypeLabel({
+        role: 'INSTRUCTOR',
+        roles: ['INSTRUCTOR_REVOKED'],
+        instructorMemberProfile: 'instructor_only',
+      })
+    ).toBe('강사(권한박탈)')
   })
 
   it('교사 겸 강사 박탈은 학교(교사), 강사(권한박탈)', () => {
@@ -55,6 +75,13 @@ describe('getAllMemberListRoleTypeLabel', () => {
         roles: ['SCHOOL_TEACHER', 'INSTRUCTOR_REVOKED'],
         instructorMemberProfile: 'instructor_dual',
         instructorApprovalStatus: 'REVOKED',
+      })
+    ).toBe('학교(교사), 강사(권한박탈)')
+    expect(
+      getAllMemberListRoleTypeLabel({
+        role: 'INSTRUCTOR',
+        roles: ['SCHOOL_TEACHER', 'INSTRUCTOR_REVOKED'],
+        instructorMemberProfile: 'instructor_dual',
       })
     ).toBe('학교(교사), 강사(권한박탈)')
   })

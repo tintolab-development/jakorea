@@ -1,5 +1,7 @@
 # 정산 관리 API — 백엔드 핸드오프 (갭·스펙 불일치)
 
+> **CMS 강사 회원 상세 → 정산 현황** 탭 API 보완은 **[강사 상세 통합 SSOT](./members/instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md)** (SET-001~008)를 우선 참고하세요. 본 문서는 **정산 관리 LNB** 3화면 전체 갭입니다.
+
 프론트 CMS 정산 관리 LNB 3화면 API 연동 후 확인된 **미존재 API·구조 불일치** 목록입니다.  
 OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동기화)
 

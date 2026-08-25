@@ -6,7 +6,10 @@ CMS LNB 「회원 관리」(회원 목록 · 권한 승인 · 권한 설정) API
 
 | 문서 | 용도 |
 |------|------|
-| [**member-consent-filled-document-backend-handoff-2026-08-25.md**](./member-consent-filled-document-backend-handoff-2026-08-25.md) | **백엔드 전달** — 회원 동의서 5종 작성 본문 저장·조회 (`WritingFormDraft` · 지급조서 sidecar · 성범죄 파일) · UI 기준 저장 항목 (P1) |
+| [**instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md**](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md) | **백엔드 수정 요청 SSOT** — **강사 상세** 프로젝트 참여 이력(수강·강의·봉사) · **정산 현황** API 보완 통합 (PH-001~016 · SET-001~008) (P0/P1) |
+| [**member-consent-filled-document-backend-handoff-2026-08-25.md**](./member-consent-filled-document-backend-handoff-2026-08-25.md) | **백엔드 전달** — 회원 동의서 5종 작성 본문 저장·조회 (`WritingFormDraft` · 지급조서 sidecar · 성범죄 파일) · UI 기준 저장 항목 · **개인·교사·강사·강사겸교사** (P1) |
+| [**school-organization-program-enrollment-history-backend-handoff-2026-08-25.md**](./school-organization-program-enrollment-history-backend-handoff-2026-08-25.md) | **백엔드 신규 API** — 학교(organization) 상세 프로젝트 수강 이력 전용 목록·bulk-delete · mock·member API 조합 금지 (P0) |
+| [**member-program-history-ui-api-parity-backend-handoff-2026-08-25.md**](./member-program-history-ui-api-parity-backend-handoff-2026-08-25.md) | **백엔드 수정 요청** — 회원 상세 프로젝트 참여 이력 UI·API 정합성 · REQ-001~016 (부분일치/불일치 → BE 수정 SSOT). **강사 상세만** → [통합 핸드오프](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md) |
 | [**portal-identity-onboarding-backend-request-2026-08-18.md**](./portal-identity-onboarding-backend-request-2026-08-18.md) | **백엔드 전달** — Portal 본인인증·온보딩 403/500 · CMS↔Portal 소속 동기화 · 비밀번호/409 메시지 (P0/P1) |
 | [**admin-register-signup-type-portal-profile-backend-request-2026-08-14.md**](./admin-register-signup-type-portal-profile-backend-request-2026-08-14.md) | **백엔드 전달** — 가입유형 플래그 · 개인 학년(grade) · Portal 주소/소속 GET·PATCH (P0/P1) |
 | [**members-pre-register-terms-required-policy-backend-request-2026-08-11.md**](./members-pre-register-terms-required-policy-backend-request-2026-08-11.md) | **백엔드 전달** — CMS 회원·강사 등록 약관 `required` 정책 불일치 (P0) |
@@ -36,4 +39,4 @@ pnpm --filter cms package:members-be-handoff -- --openapi
 pnpm --filter cms package:members-be-handoff -- --out=~/Desktop/jakorea-members-be-handoff
 ```
 
-**Last updated:** 2026-08-25
+**Last updated:** 2026-08-25 (강사 상세 프로그램 이력·정산 통합 핸드오프)

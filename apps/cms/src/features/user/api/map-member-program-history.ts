@@ -63,6 +63,7 @@ export function mapMemberProgramHistoryToUserHistory(
     createdAt: item.joinedAt ?? now,
     updatedAt: item.completedAt ?? item.joinedAt ?? now,
     ...(item.programName?.trim() ? { programName: item.programName.trim() } : {}),
+    ...(participantId != null ? { participantId } : {}),
   }
 }
 
@@ -86,9 +87,10 @@ export function mapMemberProgramHistoryToApplication(
     submittedAt: item.joinedAt ?? now,
     createdAt: item.joinedAt ?? now,
     updatedAt: item.completedAt ?? item.joinedAt ?? now,
-    ...(item.programName?.trim()
-      ? { customFields: { programName: item.programName.trim() } }
-      : {}),
+    customFields: {
+      ...(item.programName?.trim() ? { programName: item.programName.trim() } : {}),
+      ...(participantId != null ? { participantId } : {}),
+    },
   }
 }
 

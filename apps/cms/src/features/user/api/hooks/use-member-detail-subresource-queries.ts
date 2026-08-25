@@ -7,7 +7,10 @@ import {
   fetchMemberCommentsRemote,
   fetchMemberProgramHistoryRemote,
   fetchSchoolTeachersRemote,
+  fetchSchoolOrganizationProgramEnrollmentHistoryRemote,
 } from '@/features/user/api/members-api-client'
+import { mapSchoolOrganizationProgramEnrollmentHistoryItems } from '@/features/user/api/map-school-organization-program-enrollment-history'
+import type { ListSchoolOrganizationProgramEnrollmentHistoryParams } from '@/features/user/api/school-organization-program-enrollment-history.types'
 import { mapAffiliatedTeacherRows } from '@/features/user/api/map-affiliated-teacher-row'
 import { parseOrganizationIdFromUserId } from '@/features/user/api/map-school-organization-to-user'
 import { mapMemberAdminPrograms } from '@/features/user/api/map-member-admin-program'
@@ -15,6 +18,7 @@ import {
   mapMemberApplicationHistoryItems,
   filterApplicationsBySubjectType,
 } from '@/features/user/api/map-member-application-history'
+import { enrichMemberApplicationsWithEnrollmentSummaries } from '@/features/user/api/enrich-member-applications-with-enrollment'
 import {
   mapMemberProgramHistoryItems,
   mapMemberProgramHistoryToEnrollmentApplications,
@@ -136,7 +140,8 @@ export function useMemberApplicationsQuery(
         page: 0,
         size: MEMBER_DETAIL_LIST_SIZE,
       })
-      return mapMemberApplicationHistoryItems(res.items, userId!)
+      const mapped = mapMemberApplicationHistoryItems(res.items, userId!)
+      return enrichMemberApplicationsWithEnrollmentSummaries(memberId!, mapped)
     },
     meta: {
       errorMessage: (error: unknown) =>
@@ -175,6 +180,45 @@ export function useMemberProgramHistoryQuery(
     meta: {
       errorMessage: (error: unknown) =>
         getMemberApiErrorMessage(error, '프로그램 참여 이력을 불러오지 못했습니다.'),
+    },
+  })
+}
+
+/**
+ * 학교 organization — 프로젝트 수강 이력 (전용 API, member applications 미사용).
+ */
+export function useSchoolOrganizationProgramEnrollmentHistoryQuery(
+  organizationId: number | undefined,
+  organizationUserId: string | undefined,
+  enabled = true,
+  params?: ListSchoolOrganizationProgramEnrollmentHistoryParams
+) {
+  const filtersKey = JSON.stringify(params ?? {})
+  return useQuery({
+    queryKey: memberQueryKeys.schoolProgramEnrollmentHistory(
+      organizationId ?? 0,
+      filtersKey
+    ),
+    enabled: Boolean(
+      enabled &&
+        organizationId != null &&
+        organizationUserId &&
+        isMembersRemoteEnabled()
+    ),
+    queryFn: async (): Promise<Application[]> => {
+      const res = await fetchSchoolOrganizationProgramEnrollmentHistoryRemote(organizationId!, {
+        page: 0,
+        size: MEMBER_DETAIL_LIST_SIZE,
+        ...params,
+      })
+      return mapSchoolOrganizationProgramEnrollmentHistoryItems(
+        res.items,
+        organizationUserId!
+      )
+    },
+    meta: {
+      errorMessage: (error: unknown) =>
+        getMemberApiErrorMessage(error, '프로젝트 수강 이력을 불러오지 못했습니다.'),
     },
   })
 }

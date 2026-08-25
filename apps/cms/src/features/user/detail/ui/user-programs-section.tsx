@@ -4,9 +4,8 @@ import type { User } from '@/types/user'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import type { UserDetailProgramsChildKey } from '../lib/user-detail-fullpage-helpers'
+import type { CertificateIssueReasonValue } from './modal/certificate-bulk-issue-reason-modal'
 import { ProgramsViewRenderer } from './user-programs-view-renderer'
-import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
-import { MemberDetailMockDataBanner } from '@/features/user/detail/ui/member-detail-mock-data-banner'
 
 export type EnrollmentMode = 'TABLE' | 'STUDENT_HISTORY' | 'SCHOOL_PARTICIPATION'
 
@@ -45,6 +44,19 @@ export interface UserProgramsSectionProps {
   onOpenLectureAttendance: (record: Application) => void
   onOpenAssignment: (record: Application) => void
   onRowClick: (record: Application) => void
+  onOpenVolunteerProgramDetail: (history: UserHistory) => void
+  onBulkDeleteHistory: (rowIds: string[]) => void | Promise<void>
+  onStudentCertificateBulkIssue: (
+    rowIds: readonly string[],
+    reason: CertificateIssueReasonValue,
+    reasonLabel: string
+  ) => void | Promise<void>
+  onVolunteerCertificateBulkIssue: (
+    rowIds: readonly string[],
+    reason: CertificateIssueReasonValue,
+    reasonLabel: string
+  ) => void | Promise<void>
+  progressStatusReadOnly?: boolean
 }
 
 /** 회원 상세 — 프로그램·봉사 이력 탭 본문 (역할별 분기는 상위 전략에서 주입) */
@@ -56,9 +68,6 @@ export function UserProgramsSection(props: UserProgramsSectionProps) {
 
   return (
     <div className="user-detail-fullpage-modal__programs">
-      {isMembersRemoteEnabled() ? (
-        <MemberDetailMockDataBanner message="진행상태 변경·강의보고/출석/과제 모달·수료증 일괄 발급은 API 미제공으로 mock 동작이 유지됩니다." />
-      ) : null}
       <ProgramsViewRenderer {...props} showCertificateBulkIssue={showCertificateBulkIssue} />
     </div>
   )

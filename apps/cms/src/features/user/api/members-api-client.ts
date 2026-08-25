@@ -53,6 +53,12 @@ import type { AdminMemberDeleteRequest } from '@/shared/api/generated/members/sc
 import type { AdminCommentResponse } from '@/shared/api/generated/members/schemas/adminCommentResponse'
 import type { UserResponse } from '@/shared/api/generated/members/schemas/userResponse'
 import type { ListMemberApplicationsParams } from '@/shared/api/generated/members/schemas/listMemberApplicationsParams'
+import type {
+  BulkActionResponse,
+  ListSchoolOrganizationProgramEnrollmentHistoryParams,
+  PageResponseSchoolOrganizationProgramEnrollmentHistoryItemResponse,
+  SchoolOrganizationProgramEnrollmentHistoryBulkDeleteRequest,
+} from '@/features/user/api/school-organization-program-enrollment-history.types'
 import type { ListMemberProgramHistoryParams } from '@/shared/api/generated/members/schemas/listMemberProgramHistoryParams'
 import type { ListMemberAdminProgramsParams } from '@/shared/api/generated/members/schemas/listMemberAdminProgramsParams'
 import type { PageResponseMemberApplicationHistoryResponse } from '@/shared/api/generated/members/schemas/pageResponseMemberApplicationHistoryResponse'
@@ -70,6 +76,11 @@ import type { BulkDecisionRequest } from '@/shared/api/generated/members/schemas
 import type { ListAllCmsMembersAndAdminsParams } from '@/shared/api/generated/members/schemas/listAllCmsMembersAndAdminsParams'
 import type { PageResponseAccountDirectoryItemResponse } from '@/shared/api/generated/members/schemas/pageResponseAccountDirectoryItemResponse'
 import type { DeleteSchoolParams } from '@/shared/api/generated/members/schemas/deleteSchoolParams'
+import type { DeleteApplicationHistoryParams } from '@/shared/api/generated/members/schemas/deleteApplicationHistoryParams'
+import type { MemberEnrollmentSummaryResponse } from '@/shared/api/generated/members/schemas/memberEnrollmentSummaryResponse'
+import type { MemberAssignmentSubmissionResponse } from '@/shared/api/generated/members/schemas/memberAssignmentSubmissionResponse'
+import type { GetApplicationEnrollmentSummaryParams } from '@/shared/api/generated/members/schemas/getApplicationEnrollmentSummaryParams'
+import type { ListAssignmentSubmissionsParams } from '@/shared/api/generated/members/schemas/listAssignmentSubmissionsParams'
 
 const membersApi = getJAKoreaCMSBackendAPIMembersSubset()
 
@@ -310,6 +321,46 @@ export async function fetchMemberProgramHistoryRemote(
   params?: ListMemberProgramHistoryParams
 ): Promise<PageResponseMemberProgramHistoryResponse> {
   return unwrapApiBody(await membersApi.listMemberProgramHistory(memberId, params))
+}
+
+/** Swagger `getApplicationEnrollmentSummary` — enrollment-summary */
+export async function fetchApplicationEnrollmentSummaryRemote(
+  memberId: number,
+  applicationId: number,
+  params?: GetApplicationEnrollmentSummaryParams
+): Promise<MemberEnrollmentSummaryResponse> {
+  return unwrapApiBody(
+    await membersApi.getApplicationEnrollmentSummary(memberId, applicationId, params)
+  )
+}
+
+/** Swagger `listAssignmentSubmissions` — assignment-submissions */
+export async function fetchApplicationAssignmentSubmissionsRemote(
+  memberId: number,
+  applicationId: number,
+  params?: ListAssignmentSubmissionsParams
+): Promise<MemberAssignmentSubmissionResponse[]> {
+  const data = await unwrapApiBody(
+    await membersApi.listAssignmentSubmissions(memberId, applicationId, params)
+  )
+  return Array.isArray(data) ? data : []
+}
+
+/** Swagger `deleteApplicationHistory` — DELETE applications/{applicationId} */
+export async function deleteMemberApplicationHistoryRemote(
+  memberId: number,
+  applicationId: number,
+  params?: DeleteApplicationHistoryParams
+): Promise<void> {
+  await membersApi.deleteApplicationHistory(memberId, applicationId, params)
+}
+
+/** Swagger `deleteProgramHistory` — DELETE program-history/{participantId} */
+export async function deleteMemberProgramHistoryRemote(
+  memberId: number,
+  participantId: number
+): Promise<void> {
+  await membersApi.deleteProgramHistory(memberId, participantId)
 }
 
 export async function fetchAffiliatedTeachersRemote(
@@ -578,4 +629,33 @@ export async function revokeInstructorPermissionRemote(
     headers: { 'Content-Type': 'application/json' },
     data: body,
   })
+}
+
+/** Handoff — `GET .../organizations/schools/{organizationId}/program-enrollment-history` */
+export async function fetchSchoolOrganizationProgramEnrollmentHistoryRemote(
+  organizationId: number,
+  params?: ListSchoolOrganizationProgramEnrollmentHistoryParams
+): Promise<PageResponseSchoolOrganizationProgramEnrollmentHistoryItemResponse> {
+  return unwrapApiBody(
+    await customInstance<unknown>({
+      url: `/api/admin/organizations/schools/${organizationId}/program-enrollment-history`,
+      method: 'GET',
+      params,
+    })
+  )
+}
+
+/** Handoff — `POST .../organizations/schools/{organizationId}/program-enrollment-history/bulk-delete` */
+export async function bulkDeleteSchoolOrganizationProgramEnrollmentHistoryRemote(
+  organizationId: number,
+  body: SchoolOrganizationProgramEnrollmentHistoryBulkDeleteRequest
+): Promise<BulkActionResponse> {
+  return unwrapApiBody(
+    await customInstance<unknown>({
+      url: `/api/admin/organizations/schools/${organizationId}/program-enrollment-history/bulk-delete`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    })
+  )
 }

@@ -18,6 +18,7 @@ export function EnrollmentTableView(props: RendererProps) {
     onOpenLectureAttendance,
     onOpenAssignment,
     onRowClick,
+    progressStatusReadOnly = false,
   } = props
   const { enrollmentSectionTitle, enrollmentEmptyDescription } = programsHistoryConfig
   const [searchParams, setSearchParams] = useSearchParams()
@@ -37,8 +38,9 @@ export function EnrollmentTableView(props: RendererProps) {
         onProgressStatusChange,
         onOpenLectureAttendance,
         onOpenAssignmentSubmission: onOpenAssignment,
+        progressStatusReadOnly,
       }),
-    [onProgressStatusChange, onOpenLectureAttendance, onOpenAssignment]
+    [onProgressStatusChange, onOpenLectureAttendance, onOpenAssignment, progressStatusReadOnly]
   )
 
   return (

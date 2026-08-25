@@ -49,15 +49,33 @@ function pfx(ctx: MemberProgramLectureTableContext): string {
   return `mplh${modeSlug(ctx.mode)}`
 }
 
-function programYear(programId: string): number | null {
+function programYear(programId: string, record?: Application): number | null {
+  const fromApi = record?.customFields?.progressYear
+  if (typeof fromApi === 'number' && Number.isFinite(fromApi)) return fromApi
   const p = programService.getByIdSync(programId)
   if (!p) return null
   return new Date(p.startDate).getFullYear()
 }
 
-function programTitle(programId: string): string {
+function programTitle(programId: string, record?: Application): string {
+  const fromApi = record?.customFields?.programName
+  if (typeof fromApi === 'string' && fromApi.trim()) return fromApi.trim()
   const p = programService.getByIdSync(programId)
   return p?.title ?? programId
+}
+
+function applicationEnrollmentDisplayStatus(app: Application): ProgramEnrollmentDisplayStatus {
+  const fromApi = app.customFields?.enrollmentDisplayStatus
+  if (typeof fromApi === 'string' && fromApi.trim()) {
+    return fromApi.trim() as ProgramEnrollmentDisplayStatus
+  }
+  const program = programService.getByIdSync(app.programId)
+  return getEffectiveEnrollmentDisplayStatus(
+    app.status,
+    app.progressStatus,
+    program?.lifecycleStatus,
+    app.rejectionKind
+  )
 }
 
 function deriveVolunteerDisplayStatus(history: UserHistory): ProgramEnrollmentDisplayStatus {
@@ -78,19 +96,24 @@ function filterApplications(
   const year = searchParams.get(`${pr}_year`) ?? ''
   const enrollmentStatus = searchParams.get(`${pr}_est`) ?? ''
   const managerName = (searchParams.get(`${pr}_mgr`) ?? '').trim()
+  const isSchoolMode = ctx.mode === 'schoolProgramParticipation'
 
   return applications.filter(app => {
-    const t = programTitle(app.programId)
+    const t = isSchoolMode ? programTitle(app.programId, app) : programTitle(app.programId)
     if (title && !t.includes(title)) return false
-    const y = programYear(app.programId)
+    const y = isSchoolMode ? programYear(app.programId, app) : programYear(app.programId)
     if (year && (y == null || String(y) !== year)) return false
-    const program = programService.getByIdSync(app.programId)
-    const displayStatus = getEffectiveEnrollmentDisplayStatus(
-      app.status,
-      app.progressStatus,
-      program?.lifecycleStatus,
-      app.rejectionKind
-    )
+    const displayStatus = isSchoolMode
+      ? applicationEnrollmentDisplayStatus(app)
+      : (() => {
+          const program = programService.getByIdSync(app.programId)
+          return getEffectiveEnrollmentDisplayStatus(
+            app.status,
+            app.progressStatus,
+            program?.lifecycleStatus,
+            app.rejectionKind
+          )
+        })()
     if (enrollmentStatus && displayStatus !== enrollmentStatus) return false
     const mgr = (app.managerName ?? '').trim()
     if (managerName && !mgr.includes(managerName)) return false

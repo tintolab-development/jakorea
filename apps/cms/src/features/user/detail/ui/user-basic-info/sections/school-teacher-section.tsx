@@ -30,18 +30,14 @@ export function SchoolTeacherSection(ctx: BasicInfoSectionContext) {
 
   return (
     <>
-      <EditableRow type="single">
+      <EditableRow type="double">
         <EditableField
           label="가입일"
-          fullRow
           readOnlyDisplay
           view={<span>{formatDate(user.createdAt)}</span>}
         />
-      </EditableRow>
-      <EditableRow type="single">
         <EditableField
           label="연동된 소셜 계정"
-          fullRow
           readOnlyDisplay
           view={socialView(user)}
         />

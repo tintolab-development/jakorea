@@ -44,6 +44,11 @@ export interface AssignmentSubmissionModalProps {
   schoolId?: string
   application?: Application | null
   userName?: string
+  /** remote API 상세 — 지정 시 mock 미사용 */
+  remoteDetail?: AssignmentSubmissionDetail | null
+  remoteDetailLoading?: boolean
+  onBulkDownload?: () => void | Promise<void>
+  bulkDownloadLoading?: boolean
 }
 
 const DEFAULT_PROGRAM_TITLE = '프로그램'
@@ -72,9 +77,14 @@ export function AssignmentSubmissionModal({
   schoolId = '',
   application = null,
   userName = '',
+  remoteDetail = undefined,
+  remoteDetailLoading = false,
+  onBulkDownload,
+  bulkDownloadLoading = false,
 }: AssignmentSubmissionModalProps) {
   const [assignmentRoleRevision, setAssignmentRoleRevision] = useState(0)
   const detail: AssignmentSubmissionDetail | null = useMemo(() => {
+    if (remoteDetail !== undefined) return remoteDetail
     void assignmentRoleRevision
     if (!open) return null
     const title = programTitle.trim() || DEFAULT_PROGRAM_TITLE
@@ -85,7 +95,7 @@ export function AssignmentSubmissionModal({
       return getAssignmentSubmissionDetail(student, schoolId, title)
     }
     return null
-  }, [open, student, schoolId, application, userName, programTitle, assignmentRoleRevision])
+  }, [open, student, schoolId, application, userName, programTitle, assignmentRoleRevision, remoteDetail])
 
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewRound, setPreviewRound] = useState<number>(1)
@@ -208,8 +218,10 @@ export function AssignmentSubmissionModal({
         variant="primary"
         size="large" style={{ minWidth: 180 }}
         icon={<DownloadOutlined />}
+        loading={bulkDownloadLoading}
+        disabled={onBulkDownload == null}
         onClick={() => {
-          window.alert('준비 중입니다.')
+          if (onBulkDownload) void onBulkDownload()
         }}
       >
         과제 일괄 다운로드
@@ -234,7 +246,9 @@ export function AssignmentSubmissionModal({
         className="assignment-submission-modal"
       >
         <div className="assignment-submission-modal__body">
-          {detail ? (
+          {remoteDetailLoading ? (
+            <div className="assignment-submission-modal__loading">로딩 중...</div>
+          ) : detail ? (
             <>
               <div className="assignment-submission-modal__list-head">
                 <span className="assignment-submission-modal__list-title">

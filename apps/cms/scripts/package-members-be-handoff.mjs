@@ -23,6 +23,7 @@ const defaultOut = path.join(cmsRoot, 'dist', `members-be-handoff-${date}`)
 const outDir = outArg ? path.resolve(outArg.slice('--out='.length)) : defaultOut
 
 const coreFiles = [
+  'instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md',
   'members-pre-register-terms-required-policy-backend-request-2026-08-11.md',
   'member-consent-filled-document-backend-handoff-2026-08-25.md',
 ]

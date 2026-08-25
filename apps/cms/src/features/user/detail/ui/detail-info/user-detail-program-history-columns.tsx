@@ -16,12 +16,14 @@ export interface CreateProgramHistoryColumnsParams {
   onProgressStatusChange: (app: Application, displayStatus: ProgramEnrollmentDisplayStatus) => void
   onOpenLectureAttendance: (record: Application) => void
   onOpenAssignmentSubmission: (record: Application) => void
+  progressStatusReadOnly?: boolean
 }
 
 export function createProgramHistoryColumns({
   onProgressStatusChange,
   onOpenLectureAttendance,
   onOpenAssignmentSubmission,
+  progressStatusReadOnly = false,
 }: CreateProgramHistoryColumnsParams): ColumnsType<Application> {
   return [
     {
@@ -53,18 +55,24 @@ export function createProgramHistoryColumns({
           program?.lifecycleStatus,
           record.rejectionKind
         )
-        const menuItems: MenuProps['items'] = PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER.map(key => ({
-          key,
-          label: <StatusBadge domain="programEnrollment" status={key} variant="badge" />,
-          onClick: () => onProgressStatusChange(record, key),
-        }))
+        const menuItems: MenuProps['items'] = progressStatusReadOnly
+          ? undefined
+          : PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER.map(key => ({
+              key,
+              label: <StatusBadge domain="programEnrollment" status={key} variant="badge" />,
+              onClick: () => onProgressStatusChange(record, key),
+            }))
         return (
           <span className="user-detail-modal__progress-cell" onClick={e => e.stopPropagation()}>
-            <Dropdown menu={{ items: menuItems }} trigger={['click']}>
-              <span className="user-detail-modal__progress-dropdown-trigger">
-                <StatusBadge domain="programEnrollment" status={displayStatus} variant="badge" />
-              </span>
-            </Dropdown>
+            {progressStatusReadOnly ? (
+              <StatusBadge domain="programEnrollment" status={displayStatus} variant="badge" />
+            ) : (
+              <Dropdown menu={{ items: menuItems }} trigger={['click']}>
+                <span className="user-detail-modal__progress-dropdown-trigger">
+                  <StatusBadge domain="programEnrollment" status={displayStatus} variant="badge" />
+                </span>
+              </Dropdown>
+            )}
           </span>
         )
       },

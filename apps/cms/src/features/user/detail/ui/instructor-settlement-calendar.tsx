@@ -10,8 +10,8 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import {
   INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT,
-  type InstructorSettlementListRow,
-} from '@/data/mock/instructor-member-settlements'
+} from '@/shared/constants/instructor-settlement-status'
+import type { InstructorSettlementListRow } from '@/features/user/detail/model/instructor-settlement-types'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import {
   CalendarMain,

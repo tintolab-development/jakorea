@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
 import { applicationService } from '@/entities/application/api/application-service'
-import { mockUserHistories } from '@/data/mock/mypage'
 import dayjs from 'dayjs'
 import {
   maskedUserForInstructorDetail,
@@ -24,7 +23,10 @@ import {
 } from './user-detail-fullpage-helpers'
 import { buildUserDetailSidebarItems } from '../ui/detail-info/user-detail-fullpage-sidebar-items'
 import { useUserDetailApplications } from './use-user-detail-applications'
-import { useMemberProgramHistoryQuery } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
+import {
+  useMemberProgramHistoryQuery,
+  useSchoolOrganizationProgramEnrollmentHistoryQuery,
+} from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { useUserDetailUrlSync } from './use-user-detail-url-sync'
 import type { UseUserDetailModalsResult } from './use-user-detail-modals'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
@@ -81,7 +83,17 @@ import {
   mergeListUserWithFetchedDetail,
 } from '@/features/user/api/merge-list-user-with-detail'
 import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
-import { upsertMember1365ExternalIdentifierRemote, upsertMemberAdminCommentRemote } from '@/features/user/api/members-api-client'
+import { upsertMember1365ExternalIdentifierRemote, upsertMemberAdminCommentRemote, deleteMemberApplicationHistoryRemote, deleteMemberProgramHistoryRemote, bulkDeleteSchoolOrganizationProgramEnrollmentHistoryRemote } from '@/features/user/api/members-api-client'
+import { parseSchoolOrganizationEnrollmentRowId } from '@/features/user/api/map-school-organization-program-enrollment-history'
+import { parseOrganizationIdFromUserId } from '@/features/user/api/map-school-organization-to-user'
+import { bulkIssueCertificatesRemote, bulkDownloadCertificatesRemote } from '@/features/user/api/certificates-api-client'
+import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
+import {
+  collectParticipantIdsFromHistoryRowIds,
+  parseMemberProgramHistoryRowId,
+} from '@/features/user/api/member-program-history-ids'
+import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { updateTeacherMemberEmploymentStatusAndRefresh } from '@/features/user/api/update-teacher-member-employment-status'
 import { getMemberIdByUuid } from '@/features/user/api/member-id-registry'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
@@ -144,13 +156,49 @@ export function useUserDetailController({
   const [searchParams, setSearchParams] = useSearchParams()
   const currentUser = useAuthStore(state => state.user)
   const queryClient = useQueryClient()
+  const { showAlert } = useCmsAlert()
 
   const [tabState, setTabState] = useState<TabState>({ lnb: 'detail-info' })
   /** 권한 승인 상세는 신청 정보(기본/약관/이력서)만 — 프로그램 신청·참여 이력 API 생략 */
   const loadProgramHistoryResources = open && mode !== 'permission'
+  const isSchoolDetail = displayUser?.role === 'SCHOOL'
 
-  const { applications, enrollmentApplications, applicationsLoading, refetchApplications } =
-    useUserDetailApplications(open, displayUser, { enabled: loadProgramHistoryResources })
+  const schoolOrganizationId = useMemo(() => {
+    if (!isSchoolDetail || !displayUser) return undefined
+    return (
+      displayUser.organizationId ?? parseOrganizationIdFromUserId(displayUser.id) ?? undefined
+    )
+  }, [displayUser, isSchoolDetail])
+
+  const {
+    applications: memberApplications,
+    enrollmentApplications,
+    applicationsLoading: memberApplicationsLoading,
+    refetchApplications: refetchMemberApplications,
+  } = useUserDetailApplications(open, displayUser, {
+    enabled: loadProgramHistoryResources && !isSchoolDetail,
+  })
+
+  const {
+    data: schoolEnrollmentApplications = [],
+    isLoading: schoolEnrollmentLoading,
+    refetch: refetchSchoolEnrollment,
+  } = useSchoolOrganizationProgramEnrollmentHistoryQuery(
+    schoolOrganizationId,
+    displayUser?.id,
+    loadProgramHistoryResources && isSchoolDetail
+  )
+
+  const applications = isSchoolDetail ? schoolEnrollmentApplications : memberApplications
+  const applicationsLoading = isSchoolDetail ? schoolEnrollmentLoading : memberApplicationsLoading
+
+  const refetchApplications = useCallback(async () => {
+    if (isSchoolDetail) {
+      await refetchSchoolEnrollment()
+      return
+    }
+    await refetchMemberApplications()
+  }, [isSchoolDetail, refetchMemberApplications, refetchSchoolEnrollment])
 
   const membersRemote = isMembersRemoteEnabled()
   const programHistoryMemberId =
@@ -289,28 +337,14 @@ export function useUserDetailController({
       return
     }
 
-    if (open && displayUser) {
-      setVolunteerHistoriesLoading(true)
-      try {
-        const histories = mockUserHistories.filter(
-          h => h.userId === displayUser.id && h.finalStatus !== 'CANCELLED'
-        )
-        histories.sort((a, b) => dayjs(b.completedAt).diff(dayjs(a.completedAt)))
-        setVolunteerHistories(histories)
-      } catch (error) {
-        console.error('Failed to load user histories:', error)
-        setVolunteerHistories([])
-      } finally {
-        setVolunteerHistoriesLoading(false)
-      }
-    } else {
-      setVolunteerHistories([])
-    }
-  }, [open, displayUser, membersRemote, programHistoryData, programHistoryLoading])
+    setVolunteerHistories([])
+    setVolunteerHistoriesLoading(false)
+  }, [membersRemote, programHistoryData, programHistoryLoading])
 
   const handleProgressStatusChange = useCallback(
     async (app: Application, displayStatus: ProgramEnrollmentDisplayStatus) => {
       if (!displayUser) return
+      if (membersRemote) return
       try {
         if (displayStatus === 'REJECTED') {
           await applicationService.update(app.id, {
@@ -358,7 +392,129 @@ export function useUserDetailController({
         console.error('Failed to update progress status:', e)
       }
     },
-    [displayUser, refetchApplications]
+    [displayUser, refetchApplications, membersRemote]
+  )
+
+  const handleBulkDeleteHistory = useCallback(
+    async (rowIds: string[]) => {
+      if (!displayUser || !membersRemote || rowIds.length === 0) return
+
+      if (displayUser.role === 'SCHOOL') {
+        const organizationId =
+          displayUser.organizationId ?? parseOrganizationIdFromUserId(displayUser.id)
+        if (organizationId == null) return
+        const historyRowIds = rowIds
+          .map(rowId => parseSchoolOrganizationEnrollmentRowId(rowId)?.historyRowId)
+          .filter((id): id is number => id != null)
+        if (historyRowIds.length === 0) return
+        try {
+          await bulkDeleteSchoolOrganizationProgramEnrollmentHistoryRemote(organizationId, {
+            historyRowIds,
+          })
+          await refetchApplications()
+        } catch (error) {
+          showAlert({
+            title: '안내',
+            content: getMemberApiErrorMessage(error, '프로젝트 수강 이력 삭제에 실패했습니다.'),
+          })
+        }
+        return
+      }
+
+      if (!displayUser.memberId) return
+      try {
+        await Promise.all(
+          rowIds.map(async rowId => {
+            const parsed = parseMemberProgramHistoryRowId(rowId)
+            if (!parsed) return
+            if (parsed.kind === 'application') {
+              await deleteMemberApplicationHistoryRemote(displayUser.memberId!, parsed.numericId)
+              return
+            }
+            await deleteMemberProgramHistoryRemote(displayUser.memberId!, parsed.numericId)
+          })
+        )
+        await refetchApplications()
+      } catch (error) {
+        showAlert({
+          title: '안내',
+          content: getMemberApiErrorMessage(error, '프로그램 이력 삭제에 실패했습니다.'),
+        })
+      }
+    },
+    [displayUser, membersRemote, refetchApplications, showAlert]
+  )
+
+  const handleCertificateBulkIssue = useCallback(
+    async (rowIds: readonly string[], _reason: CertificateIssueReasonValue, reasonLabel: string, certificateType: 'COMPLETION' | 'ACTIVITY') => {
+      if (!membersRemote) return
+      const participantIds = collectParticipantIdsFromHistoryRowIds(rowIds)
+      if (participantIds.length === 0) {
+        showAlert({
+          title: '안내',
+          content:
+            '선택한 이력 중 증명서 발급 가능한 참여 건이 없습니다. 프로그램 배정이 완료된 이력을 선택해 주세요.',
+        })
+        return
+      }
+      try {
+        const issueBody = {
+          participantIds,
+          certificateType,
+          issueReason: reasonLabel,
+        }
+        const result = await bulkIssueCertificatesRemote(issueBody)
+        const successCount = result.successCount ?? participantIds.length
+        try {
+          const download = await bulkDownloadCertificatesRemote(issueBody)
+          if (download.downloadEndpoint) {
+            await downloadFromBulkEndpoint(download.downloadEndpoint, '증명서_일괄')
+          }
+        } catch (downloadError) {
+          showAlert({
+            title: '안내',
+            content: getMemberApiErrorMessage(
+              downloadError,
+              `${successCount}건 발급은 완료되었으나 ZIP 다운로드에 실패했습니다.`
+            ),
+          })
+          await refetchApplications()
+          return
+        }
+        showAlert({
+          title: '안내',
+          content: `${successCount}건의 증명서 발급 및 다운로드가 완료되었습니다.`,
+        })
+        await refetchApplications()
+      } catch (error) {
+        showAlert({
+          title: '안내',
+          content: getMemberApiErrorMessage(error, '증명서 발급에 실패했습니다.'),
+        })
+      }
+    },
+    [membersRemote, refetchApplications, showAlert]
+  )
+
+  const handleStudentCertificateBulkIssue = useCallback(
+    (rowIds: readonly string[], reason: CertificateIssueReasonValue, reasonLabel: string) => {
+      void handleCertificateBulkIssue(rowIds, reason, reasonLabel, 'COMPLETION')
+    },
+    [handleCertificateBulkIssue]
+  )
+
+  const handleVolunteerCertificateBulkIssue = useCallback(
+    (rowIds: readonly string[], reason: CertificateIssueReasonValue, reasonLabel: string) => {
+      void handleCertificateBulkIssue(rowIds, reason, reasonLabel, 'ACTIVITY')
+    },
+    [handleCertificateBulkIssue]
+  )
+
+  const openVolunteerProgramDetail = useCallback(
+    (history: UserHistory) => {
+      navigate(getProgramAdminDetailInfoTabUrl(history.programId))
+    },
+    [navigate]
   )
 
   const openWithdrawConfirm = useCallback(() => {
@@ -1066,6 +1222,10 @@ export function useUserDetailController({
       closeLectureAttendanceModal: modals.lectureAttendance.close,
       closeAssignmentSubmissionModal: modals.assignment.close,
       openEnrollmentProgramDetail,
+      openVolunteerProgramDetail,
+      handleBulkDeleteHistory,
+      handleStudentCertificateBulkIssue,
+      handleVolunteerCertificateBulkIssue,
       openWithdrawConfirm,
       closeWithdrawConfirm,
       closeInstitutionDeleteBlocked,

@@ -75,10 +75,10 @@ export async function loadApplicationsForUser(
     const studentApps = await applicationService.getByUserId(displayUser.id, 'student')
     return { applications: studentApps, enrollmentApplications: [] }
   }
-  let subjectType: ApplicationSubjectType | undefined
-  if (displayUser.role === 'SCHOOL') subjectType = 'school'
-  const userApplications = await applicationService.getByUserId(displayUser.id, subjectType)
-  return { applications: userApplications, enrollmentApplications: [] }
+  if (displayUser.role === 'SCHOOL') {
+    /** 학교 상세 — organization 전용 API만 사용 (mock 금지) */
+    return { applications: [], enrollmentApplications: [] }
+  }
 }
 
 export function useUserDetailApplications(
