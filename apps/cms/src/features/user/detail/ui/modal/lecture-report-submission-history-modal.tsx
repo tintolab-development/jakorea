@@ -6,9 +6,13 @@ import { DownloadOutlined } from '@ant-design/icons'
 import type { Application } from '@/types/domain'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
+import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { AssignmentSubmissionCellActionButton } from '@/features/program/general/ui/assignment-submission-history-table'
 import {
   bulkDownloadMemberLectureReportsRemote,
+  downloadFormSubmissionFileRemote,
+  downloadMemberLectureReportRemote,
   fetchMemberLectureReportsRemote,
 } from '@/features/user/api/member-program-history-api-client'
 import { mapMemberLectureReportsToTableRows } from '@/features/user/api/map-member-lecture-reports'
@@ -26,19 +30,42 @@ interface LectureReportSubmissionHistoryModalProps {
   onCancel: () => void
 }
 
+type StatusTextKind = 'scheduled' | 'completed' | 'undone'
+
+function statusTextClassNames(kind: StatusTextKind): string {
+  return `lecture-report-submission-history-modal__status-text lecture-report-submission-history-modal__status-text--${kind}`
+}
+
 function lectureProgressClass(label: MemberLectureReportTableRow['lectureProgressLabel']): string {
-  if (label === '진행 완료') return 'lecture-report-submission-history-modal__status-text'
-  return 'lecture-report-submission-history-modal__status-text lecture-report-submission-history-modal__status-text--scheduled'
+  if (label === '진행 예정') return statusTextClassNames('scheduled')
+  return statusTextClassNames('completed')
 }
 
 function submissionStatusClass(label: MemberLectureReportTableRow['submissionStatusLabel']): string {
-  if (label === '미제출') {
-    return 'lecture-report-submission-history-modal__status-text lecture-report-submission-history-modal__status-text--undone'
+  if (label === '미제출') return statusTextClassNames('undone')
+  if (label === '진행 예정') return statusTextClassNames('scheduled')
+  return statusTextClassNames('completed')
+}
+
+function renderReportCell(
+  record: MemberLectureReportTableRow,
+  options: {
+    reportDownloadingId: string | null
+    onViewReport: (record: MemberLectureReportTableRow) => void
   }
-  if (label === '진행 예정') {
-    return 'lecture-report-submission-history-modal__status-text lecture-report-submission-history-modal__status-text--scheduled'
+) {
+  if (record.lectureProgressLabel === '진행 예정' || !record.canViewReport) {
+    return '-'
   }
-  return 'lecture-report-submission-history-modal__status-text'
+
+  return (
+    <AssignmentSubmissionCellActionButton
+      loading={options.reportDownloadingId === record.id}
+      onClick={() => options.onViewReport(record)}
+    >
+      강의보고서 보기
+    </AssignmentSubmissionCellActionButton>
+  )
 }
 
 export function LectureReportSubmissionHistoryModal({
@@ -49,6 +76,7 @@ export function LectureReportSubmissionHistoryModal({
 }: LectureReportSubmissionHistoryModalProps) {
   const { showAlert } = useCmsAlert()
   const [bulkDownloading, setBulkDownloading] = useState(false)
+  const [reportDownloadingId, setReportDownloadingId] = useState<string | null>(null)
   const applicationId =
     application != null ? resolveMemberApplicationIdFromApplication(application) : undefined
 
@@ -93,10 +121,43 @@ export function LectureReportSubmissionHistoryModal({
     }
   }, [memberId, applicationId, rows, showAlert])
 
+  const handleViewReport = useCallback(
+    async (record: MemberLectureReportTableRow) => {
+      if (memberId == null || applicationId == null || !record.canViewReport) return
+      setReportDownloadingId(record.id)
+      try {
+        const fileId = record.reportFileIds?.[0]
+        if (fileId != null) {
+          await downloadFormSubmissionFileRemote(
+            fileId,
+            `강의보고서_${record.reportId ?? record.id}`
+          )
+          return
+        }
+        if (record.reportId != null) {
+          await downloadMemberLectureReportRemote(
+            memberId,
+            applicationId,
+            record.reportId,
+            `강의보고서_${record.reportId}`
+          )
+        }
+      } catch (error) {
+        showAlert({
+          title: '안내',
+          content: getMemberApiErrorMessage(error, '강의보고서 다운로드에 실패했습니다.'),
+        })
+      } finally {
+        setReportDownloadingId(null)
+      }
+    },
+    [memberId, applicationId, showAlert]
+  )
+
   const columns = useMemo(
     (): ColumnsType<MemberLectureReportTableRow> => [
       {
-        title: '교육 진행 일자 및 교육 차시',
+        title: '교육 진행 일정',
         dataIndex: 'educationDateLabel',
         key: 'educationDateLabel',
         align: 'center',
@@ -109,6 +170,7 @@ export function LectureReportSubmissionHistoryModal({
         key: 'submissionPeriodLabel',
         align: 'center',
         width: 300,
+        render: (value: string) => value?.trim() || '-',
       },
       {
         title: '강의 진행 여부',
@@ -134,15 +196,15 @@ export function LectureReportSubmissionHistoryModal({
         title: '강의보고서',
         key: 'report',
         align: 'center',
-        width: 140,
-        render: (_: unknown, record: MemberLectureReportTableRow) => (
-          <CmsButton variant="default" size="large" disabled={!record.canViewReport}>
-            강의보고서 보기
-          </CmsButton>
-        ),
+        width: 300,
+        render: (_: unknown, record) =>
+          renderReportCell(record, {
+            reportDownloadingId,
+            onViewReport: record => void handleViewReport(record),
+          }),
       },
     ],
-    []
+    [handleViewReport, reportDownloadingId]
   )
 
   return (
@@ -155,13 +217,20 @@ export function LectureReportSubmissionHistoryModal({
       description={`**[${programTitle}]** 프로그램의 강의보고서 제출 내역입니다.`}
       footer={
         <>
-          <CmsButton variant="secondary" size="large" width={160} onClick={onCancel}>
+          <CmsButton
+            variant="secondary"
+            size="medium"
+            width={120}
+            className="cms-button--footer-auto lecture-report-submission-history-modal__footer-btn lecture-report-submission-history-modal__footer-btn--close"
+            onClick={onCancel}
+          >
             닫기
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
-            style={{ minWidth: 180 }}
+            size="medium"
+            width={200}
+            className="cms-button--footer-auto lecture-report-submission-history-modal__footer-btn lecture-report-submission-history-modal__footer-btn--bulk"
             icon={<DownloadOutlined />}
             loading={bulkDownloading}
             disabled={memberId == null || applicationId == null}
@@ -173,27 +242,36 @@ export function LectureReportSubmissionHistoryModal({
       }
     >
       <div className="lecture-report-submission-history-modal__body">
-        {reportsQuery.isLoading ? (
-          <div className="lecture-report-submission-history-modal__loading">로딩 중...</div>
-        ) : (
-          <>
-            <div className="lecture-report-submission-history-modal__list-head">
-              <span className="lecture-report-submission-history-modal__list-title">
-                강의보고서 제출 목록
-              </span>
-              <span className="lecture-report-submission-history-modal__list-count">
-                {rows.length}건
-              </span>
-            </div>
+        <FilterTableLayout
+          className="lecture-report-submission-history-modal__table-layout"
+          showFilter={false}
+          bordered={false}
+          fields={[]}
+          filters={{}}
+          onFilterChange={() => {}}
+          onSearch={() => {}}
+          title="강의보고서 제출 목록"
+          description={reportsQuery.isLoading ? undefined : `총 ${rows.length}건`}
+          hideExcelDownload
+          contentLoading={reportsQuery.isLoading}
+        >
+          <div className="lecture-report-submission-history-modal__table-outer">
             <Table<MemberLectureReportTableRow>
               className="cms-data-table cms-data-table--fluid"
               rowKey="id"
               dataSource={rows}
               columns={columns}
               pagination={false}
+              tableLayout="fixed"
+              scroll={{ x: 1140 }}
+              rowClassName={record =>
+                record.lectureProgressLabel === '진행 예정'
+                  ? 'lecture-report-submission-history-modal__row--scheduled'
+                  : ''
+              }
             />
-          </>
-        )}
+          </div>
+        </FilterTableLayout>
       </div>
     </ContentModal>
   )

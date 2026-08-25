@@ -9,6 +9,22 @@
 
 ---
 
+## 0. 백엔드 전달 필수 묶음 (본 문서 위치)
+
+> [members/README.md §필수 묶음](./README.md#회원-상세-이력정산--백엔드-전달-필수-묶음) 7개 문서를 **한 zip**으로 전달합니다.
+
+| # | 문서 | 본 문서와의 관계 |
+|---|------|------------------|
+| 1~2 | member-program-history · instructor 통합 | (타 회원 유형) |
+| 3 | **본 문서** | 학교 — `GET/POST .../program-enrollment-history` · **§3.2 bulk-delete** |
+| 4 | admin-member-managed-program-history | 관리자 담당 이력 |
+| 5~6 | bulk-download · settlement UI fields | (강사 ZIP·산출내역 — 학교 상세 **미해당**) |
+| 7 | [cms-table-bulk-delete-api-backend-handoff.md](../cms-table-bulk-delete-api-backend-handoff.md) | **포함** — 소속 교사 일괄 탈퇴 **#16** (정책 확정 후 · 본 문서 §3.2와 별도) |
+
+**학교 이력 삭제:** §3.2 `bulk-delete`가 SSOT. 개인/강사 이력 단건 DELETE는 [member-program-history §9](./member-program-history-ui-api-parity-backend-handoff-2026-08-25.md) 참고.
+
+---
+
 ## 1. 요약
 
 **질문:** CMS **학교 상세** LNB 「프로젝트 수강 이력」을 mock·회원(member) API 조합 없이 **remote 단일 API**로 조회·삭제할 수 있는가?
@@ -230,4 +246,4 @@ FE `isProgramHistoryDeleteBlockedByDisplayStatus`와 동일 — **진행 중·�
 - **Alternative** — path/필드명 변경안 (FE mapper 동시 수정)
 - **Deferred** — 사유 (FE 빈 목록 유지)
 
-**Last updated:** 2026-08-25
+**Last updated:** 2026-08-25 (§0 필수 묶음 추가)

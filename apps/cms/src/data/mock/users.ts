@@ -23,6 +23,11 @@ export const MOCK_SCHOOL_BUSAN_USER_ID = 'mock-school-busan-001'
 export const MOCK_SCHOOL_DAEGU_USER_ID = 'mock-school-daegu-001'
 export const MOCK_SCHOOL_INCHEON_USER_ID = 'mock-school-incheon-001'
 
+/** 소속 교사 — 교사(겸직x) 프로그램 참여 이력 mock (`mock-aff-link-001` 한서울) */
+export const MOCK_AFFILIATED_TEACHER_SCHOOL_ONLY_USER_ID = 'mock-aff-link-001' as const
+/** 소속 교사 — 교사(겸직 o) 프로그램 참여 이력 mock (`mock-aff-link-002` 김마포) */
+export const MOCK_AFFILIATED_TEACHER_DUAL_USER_ID = 'mock-aff-link-002' as const
+
 function generateUUID(): string {
   // 새로고침마다 동일한 mock ID를 보장해 URL 딥링크(id=...)를 안정적으로 복원한다.
   mockUserSequence += 1
@@ -819,6 +824,7 @@ const mockIndividuals: User[] = [
  * 소속 교사 `linkedUserId` 전용 (`mock-aff-link-001` ~ `015`)
  * 학교 `schoolInfo.affiliatedTeachers` 행은 동일 `linkedUserId`의 본 레코드와 표시를 맞춤(이름·연락처·이메일·학년·재직·가입일=createdAt 동일 `generatePastDate` 인자).
  * 역할은 INSTRUCTOR + `school_teacher` 또는 `instructor_dual`만 연결한다. 순수 강사(`instructor_only`)는 학교 소속이 아니므로 목록에 `linkedUserId`를 두지 않는다.
+ * 프로그램 참여 이력 mock: `mock-aff-link-001`(교사·겸직x), `mock-aff-link-002`(교사·겸직 o) — `affiliated-teacher-program-history-demo.ts`
  */
 const mockAffiliatedTeacherLinkUsers: User[] = [
   {
@@ -832,7 +838,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     instructorId: 'instructor-mock-aff-link-001',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
-    participationHistory: 0,
+    participationHistory: 5,
     isActive: true,
     lastLoginAt: generatePastDate(11),
     createdAt: generatePastDate(121),
@@ -841,6 +847,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     birthDate: '1990-01-15',
     gender: '남성',
     detailAddress: '서울특별시 마포구',
+    affiliatedSchoolUserId: MOCK_SCHOOL_SEOUL_USER_ID,
     affiliatedSchoolName: '서울초등학교',
     listMetrics: {
       employmentStatusLabel: '재직 중',
@@ -857,9 +864,9 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     role: 'INSTRUCTOR',
     permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-002',
-    instructorMemberProfile: 'school_teacher',
+    instructorMemberProfile: 'instructor_dual',
     interviewStatus: 'APPROVED',
-    participationHistory: 0,
+    participationHistory: 5,
     isActive: true,
     lastLoginAt: generatePastDate(12),
     createdAt: generatePastDate(122),
@@ -868,10 +875,20 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     birthDate: '1991-02-20',
     gender: '여성',
     detailAddress: '서울특별시 마포구',
+    affiliatedSchoolUserId: MOCK_SCHOOL_SEOUL_USER_ID,
     affiliatedSchoolName: '서울초등학교',
+    instructorInfo: {
+      bankName: '신한은행',
+      accountHolder: '김마포',
+      accountNumber: '110-123-456789',
+      isBusinessIncome: false,
+    },
     listMetrics: {
       employmentStatusLabel: '재직 중',
       instructorAssignedGrade: '5학년',
+      instructorFeeGradeLabel: '2급 강사비',
+      permissionApplicationTypeLabel: 'JA 강사단',
+      jaEvaluationGrade: 'B',
     },
     socialAccounts: ['구글'],
   },

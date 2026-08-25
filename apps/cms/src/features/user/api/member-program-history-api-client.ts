@@ -1,8 +1,12 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
 import type { MemberLectureReportResponse } from '@/shared/api/generated/members/schemas/memberLectureReportResponse'
+import type { FormSubmissionFileDownloadResponse } from '@/shared/api/generated/forms-surveys/schemas/formSubmissionFileDownloadResponse'
 import customInstance from '@/shared/api/orval-mutator'
-import type { BulkDownloadEndpointResponse } from '@/features/user/api/download-bulk-endpoint'
+import {
+  downloadFromBulkEndpoint,
+  type BulkDownloadEndpointResponse,
+} from '@/features/user/api/download-bulk-endpoint'
 
 const membersApi = getJAKoreaCMSBackendAPIMembersSubset()
 
@@ -75,4 +79,42 @@ export async function bulkDownloadMemberLectureReportsRemote(
       data: body,
     })
   )
+}
+
+/** PH-015 / REQ-010 — 단건 제출 파일 (과제·강의보고서 공통 후보) */
+export async function downloadFormSubmissionFileRemote(
+  submissionFileId: number,
+  filenamePrefix: string
+): Promise<void> {
+  const data = await unwrapApiBody<FormSubmissionFileDownloadResponse>(
+    await customInstance<FormSubmissionFileDownloadResponse>({
+      url: `/api/admin/form-submission-files/${submissionFileId}/download`,
+      method: 'GET',
+    })
+  )
+  if (data.downloadEndpoint) {
+    await downloadFromBulkEndpoint(data.downloadEndpoint, filenamePrefix)
+    return
+  }
+  throw new Error('다운로드 URL이 없습니다.')
+}
+
+/** PH-015 — GET .../lecture-reports/{reportId}/download (BE 미구현 시 404) */
+export async function downloadMemberLectureReportRemote(
+  memberId: number,
+  applicationId: number,
+  reportId: number,
+  filenamePrefix: string
+): Promise<void> {
+  const data = await unwrapApiBody<{ downloadEndpoint?: string }>(
+    await customInstance<{ downloadEndpoint?: string }>({
+      url: `${memberApplicationUrl(memberId, applicationId)}/lecture-reports/${reportId}/download`,
+      method: 'GET',
+    })
+  )
+  if (data.downloadEndpoint) {
+    await downloadFromBulkEndpoint(data.downloadEndpoint, filenamePrefix, 'pdf')
+    return
+  }
+  throw new Error('다운로드 URL이 없습니다.')
 }

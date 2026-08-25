@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
 import { applicationService } from '@/entities/application/api/application-service'
-import dayjs from 'dayjs'
 import {
   maskedUserForInstructorDetail,
   userToApplicantInstructorRow,
@@ -98,6 +97,7 @@ import { updateTeacherMemberEmploymentStatusAndRefresh } from '@/features/user/a
 import { getMemberIdByUuid } from '@/features/user/api/member-id-registry'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
+import { mockUserHistories } from '@/data/mock/mypage'
 import { revokeInstructorPermission } from '@/entities/user/api/user-service'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 
@@ -337,9 +337,18 @@ export function useUserDetailController({
       return
     }
 
-    setVolunteerHistories([])
+    if (!open || !displayUser?.id) {
+      setVolunteerHistories([])
+      setVolunteerHistoriesLoading(false)
+      return
+    }
+
+    const volunteerOnly = mockUserHistories.filter(
+      h => h.userId === displayUser.id && h.role === 'VOLUNTEER'
+    )
+    setVolunteerHistories(volunteerOnly)
     setVolunteerHistoriesLoading(false)
-  }, [membersRemote, programHistoryData, programHistoryLoading])
+  }, [membersRemote, programHistoryData, programHistoryLoading, open, displayUser?.id])
 
   const handleProgressStatusChange = useCallback(
     async (app: Application, displayStatus: ProgramEnrollmentDisplayStatus) => {

@@ -61,6 +61,8 @@ import type {
 } from '@/features/user/api/school-organization-program-enrollment-history.types'
 import type { ListMemberProgramHistoryParams } from '@/shared/api/generated/members/schemas/listMemberProgramHistoryParams'
 import type { ListMemberAdminProgramsParams } from '@/shared/api/generated/members/schemas/listMemberAdminProgramsParams'
+import type { ListProgramRoles1Params } from '@/shared/api/generated/members/schemas/listProgramRoles1Params'
+import type { PageResponseAdminProgramAssignmentResponse } from '@/shared/api/generated/members/schemas/pageResponseAdminProgramAssignmentResponse'
 import type { PageResponseMemberApplicationHistoryResponse } from '@/shared/api/generated/members/schemas/pageResponseMemberApplicationHistoryResponse'
 import type { PageResponseMemberProgramHistoryResponse } from '@/shared/api/generated/members/schemas/pageResponseMemberProgramHistoryResponse'
 import type { PageResponseMemberAdminProgramResponse } from '@/shared/api/generated/members/schemas/pageResponseMemberAdminProgramResponse'
@@ -297,6 +299,22 @@ export async function deleteMemberAdminProgramRemote(
   programId: number
 ): Promise<void> {
   await membersApi.deleteAdminProgram(memberId, programId)
+}
+
+/** Swagger `listProgramRoles_1` — GET admin-accounts/{adminAccountId}/program-roles */
+export async function fetchAdminAccountProgramRolesRemote(
+  adminAccountId: number,
+  params?: ListProgramRoles1Params
+): Promise<PageResponseAdminProgramAssignmentResponse> {
+  return unwrapApiBody(await membersApi.listProgramRoles1(adminAccountId, params))
+}
+
+/** Swagger `deleteProgramRole` — DELETE admin-accounts/{adminAccountId}/program-roles/{programId} */
+export async function deleteAdminAccountProgramRoleRemote(
+  adminAccountId: number,
+  programId: number
+): Promise<void> {
+  await membersApi.deleteProgramRole(adminAccountId, programId)
 }
 
 export async function resendInstructorRoleNotificationRemote(requestId: number): Promise<void> {

@@ -28,15 +28,22 @@ export const memberQueryKeys = {
     [...memberQueryKeys.all, 'affiliatedTeachers', memberId] as const,
   schoolTeachers: (organizationId: number) =>
     [...memberQueryKeys.all, 'schoolTeachers', organizationId] as const,
-  schoolProgramEnrollmentHistory: (organizationId: number, filtersKey = '') =>
+  schoolProgramEnrollmentHistory: (
+    organizationId: number,
+    filtersKey = '',
+    organizationUserId = ''
+  ) =>
     [
       ...memberQueryKeys.all,
       'schoolProgramEnrollmentHistory',
       organizationId,
+      organizationUserId,
       filtersKey,
     ] as const,
   adminPrograms: (memberId: number) =>
     [...memberQueryKeys.all, 'adminPrograms', memberId] as const,
+  adminAccountPrograms: (adminAccountId: number) =>
+    [...memberQueryKeys.all, 'adminAccountPrograms', adminAccountId] as const,
   instructorRoleRequests: {
     all: () => [...memberQueryKeys.all, 'instructorRoleRequests'] as const,
     list: (paramsKey: string) =>

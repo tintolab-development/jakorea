@@ -214,12 +214,24 @@ export function LectureAttendanceModal({
   }, [editing, cancelCorrection, onCancel])
 
   const footer = summaryAttendanceCounts != null ? (
-    <CmsButton variant="secondary" size="medium" onClick={onCancel}>
+    <CmsButton
+      variant="secondary"
+      size="medium"
+      width={120}
+      className="cms-button--footer-auto lecture-attendance-modal__footer-btn lecture-attendance-modal__footer-btn--close"
+      onClick={onCancel}
+    >
       닫기
     </CmsButton>
   ) : editing ? (
     <>
-      <CmsButton variant="secondary" size="medium" onClick={cancelCorrection}>
+      <CmsButton
+        variant="secondary"
+        size="medium"
+        width={120}
+        className="cms-button--footer-auto lecture-attendance-modal__footer-btn lecture-attendance-modal__footer-btn--close"
+        onClick={cancelCorrection}
+      >
         취소
       </CmsButton>
       <CmsButton variant="primary" size="medium" onClick={saveCorrection}>
@@ -228,7 +240,13 @@ export function LectureAttendanceModal({
     </>
   ) : (
     <>
-      <CmsButton variant="secondary" size="medium" onClick={onCancel}>
+      <CmsButton
+        variant="secondary"
+        size="medium"
+        width={120}
+        className="cms-button--footer-auto lecture-attendance-modal__footer-btn lecture-attendance-modal__footer-btn--close"
+        onClick={onCancel}
+      >
         닫기
       </CmsButton>
       <CmsButton variant="primary" size="medium" onClick={startCorrection}>

@@ -17,6 +17,7 @@ export interface AssignmentPreviewModalProps {
   roundNumber: number
   /** 파일 다운로드 클릭 시 (선택) */
   onDownload?: () => void
+  downloadLoading?: boolean
 }
 
 export function AssignmentPreviewModal({
@@ -24,20 +25,28 @@ export function AssignmentPreviewModal({
   onCancel,
   studentName,
   roundNumber,
-  onDownload: _onDownload,
+  onDownload,
+  downloadLoading = false,
 }: AssignmentPreviewModalProps) {
   const footer = (
     <>
-      <CmsButton variant="secondary" size="large" onClick={onCancel}>
+      <CmsButton
+        variant="secondary"
+        size="medium"
+        width={120}
+        className="cms-button--footer-auto assignment-preview-modal__footer-btn assignment-preview-modal__footer-btn--close"
+        onClick={onCancel}
+      >
         닫기
       </CmsButton>
       <CmsButton
         variant="primary"
-        size="large"
+        size="medium"
         icon={<DownloadOutlined />}
-        // onClick={() => onDownload?.()}
-        onClick={() => window.alert('준비 중입니다.')}
-        className="assignment-preview-modal__btn-download"
+        loading={downloadLoading}
+        disabled={onDownload == null}
+        onClick={() => onDownload?.()}
+        className="cms-button--footer-auto assignment-preview-modal__footer-btn assignment-preview-modal__footer-btn--download"
       >
         파일 다운로드
       </CmsButton>

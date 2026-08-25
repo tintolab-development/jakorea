@@ -299,6 +299,41 @@ export function InstructorProfileFormBody({
     })
   }
 
+  const schoolTeacherSchoolFieldEdit = (
+    <>
+      <Form.Item name="schoolName" noStyle>
+        <SchoolSearch
+          value={schoolName}
+          onChange={nextSchoolName => form.setFieldValue('schoolName', nextSchoolName)}
+          onSelect={handleSchoolSelect}
+          placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.schoolName}
+          inputSize="medium"
+          width="100%"
+        />
+      </Form.Item>
+      <Form.Item name="schoolProvider" hidden preserve />
+      <Form.Item name="schoolExternalCode" hidden preserve />
+      <Form.Item name="schoolLevel" hidden preserve />
+      <Form.Item name="schoolAddress" hidden preserve />
+      <Form.Item name="schoolZipcode" hidden preserve />
+      <Form.Item name="schoolRegionSido" hidden preserve />
+      <Form.Item name="schoolRegionSigungu" hidden preserve />
+      <Form.Item name="schoolOrganizationId" hidden preserve />
+    </>
+  )
+
+  const schoolTeacherEmploymentFieldEdit = (
+    <Form.Item name="employmentStatus" style={FORM_ITEM_STYLE}>
+      <CmsSelect
+        placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.employmentStatus}
+        inputSize="medium"
+        width="100%"
+        options={EMPLOYMENT_STATUS_OPTIONS}
+        allowClear
+      />
+    </Form.Item>
+  )
+
   const affiliationFieldEdit = isTeacherMember ? (
     <div className="detail-info-form-inputs-wrapper-no-gap">
       <Form.Item name="schoolName" noStyle>
@@ -452,13 +487,31 @@ export function InstructorProfileFormBody({
             />
           </DetailInfoForm.Row>
           {isDetailEdit ? (
-            <>
-              <Form.Item name="memberType" hidden preserve />
-              <DetailInfoForm.Row type="double">
-                <DetailInfoForm.Field label="소속" view="-" edit={affiliationFieldEdit} />
-                <DetailInfoForm.Field label="강사 경력" view="-" edit={instructorCareerFieldEdit} />
-              </DetailInfoForm.Row>
-            </>
+            isTeacherMember ? (
+              <>
+                <Form.Item name="memberType" hidden preserve />
+                <DetailInfoForm.Row type="double">
+                  <DetailInfoForm.Field
+                    label="소속"
+                    view="-"
+                    edit={schoolTeacherSchoolFieldEdit}
+                  />
+                  <DetailInfoForm.Field
+                    label="재직 현황"
+                    view="-"
+                    edit={schoolTeacherEmploymentFieldEdit}
+                  />
+                </DetailInfoForm.Row>
+              </>
+            ) : (
+              <>
+                <Form.Item name="memberType" hidden preserve />
+                <DetailInfoForm.Row type="double">
+                  <DetailInfoForm.Field label="소속" view="-" edit={affiliationFieldEdit} />
+                  <DetailInfoForm.Field label="강사 경력" view="-" edit={instructorCareerFieldEdit} />
+                </DetailInfoForm.Row>
+              </>
+            )
           ) : (
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
@@ -473,6 +526,8 @@ export function InstructorProfileFormBody({
               <DetailInfoForm.Field label="소속" view="-" edit={affiliationFieldEdit} />
             </DetailInfoForm.Row>
           )}
+          {!(isDetailEdit && isTeacherMember) ? (
+            <>
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="자택 주소지"
@@ -561,6 +616,8 @@ export function InstructorProfileFormBody({
               }
             />
           </DetailInfoForm.Row>
+            </>
+          ) : null}
         </DetailInfoForm>
 
         {formLayout.showInstructorGradeSection && showInstructorApplicationSections ? (

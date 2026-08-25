@@ -2,6 +2,7 @@ import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import {
   fetchAffiliatedTeachersRemote,
+  fetchAdminAccountProgramRolesRemote,
   fetchMemberAdminProgramsRemote,
   fetchMemberApplicationsRemote,
   fetchMemberCommentsRemote,
@@ -9,6 +10,7 @@ import {
   fetchSchoolTeachersRemote,
   fetchSchoolOrganizationProgramEnrollmentHistoryRemote,
 } from '@/features/user/api/members-api-client'
+import { fetchSchoolOrganizationProgramEnrollmentHistoryMock } from '@/features/user/api/fetch-school-organization-program-enrollment-history-mock'
 import { mapSchoolOrganizationProgramEnrollmentHistoryItems } from '@/features/user/api/map-school-organization-program-enrollment-history'
 import type { ListSchoolOrganizationProgramEnrollmentHistoryParams } from '@/features/user/api/school-organization-program-enrollment-history.types'
 import { mapAffiliatedTeacherRows } from '@/features/user/api/map-affiliated-teacher-row'
@@ -194,18 +196,22 @@ export function useSchoolOrganizationProgramEnrollmentHistoryQuery(
   params?: ListSchoolOrganizationProgramEnrollmentHistoryParams
 ) {
   const filtersKey = JSON.stringify(params ?? {})
+  const membersRemote = isMembersRemoteEnabled()
   return useQuery({
     queryKey: memberQueryKeys.schoolProgramEnrollmentHistory(
       organizationId ?? 0,
-      filtersKey
+      filtersKey,
+      membersRemote ? '' : (organizationUserId ?? '')
     ),
     enabled: Boolean(
       enabled &&
-        organizationId != null &&
         organizationUserId &&
-        isMembersRemoteEnabled()
+        (membersRemote ? organizationId != null : true)
     ),
     queryFn: async (): Promise<Application[]> => {
+      if (!membersRemote) {
+        return fetchSchoolOrganizationProgramEnrollmentHistoryMock(organizationUserId!)
+      }
       const res = await fetchSchoolOrganizationProgramEnrollmentHistoryRemote(organizationId!, {
         page: 0,
         size: MEMBER_DETAIL_LIST_SIZE,
@@ -223,11 +229,35 @@ export function useSchoolOrganizationProgramEnrollmentHistoryQuery(
   })
 }
 
-export function useMemberAdminProgramsQuery(memberId: number | undefined, enabled = true) {
+export type AdminManagedProgramsQueryScope = {
+  memberId?: number
+  adminAccountId?: number
+}
+
+export function useMemberAdminProgramsQuery(
+  scope: AdminManagedProgramsQueryScope,
+  enabled = true
+) {
+  const { memberId, adminAccountId } = scope
+  const useAdminAccountPath = adminAccountId != null && adminAccountId > 0
+
   return useQuery({
-    queryKey: memberQueryKeys.adminPrograms(memberId ?? 0),
-    enabled: Boolean(enabled && memberId != null && isMembersRemoteEnabled()),
+    queryKey: useAdminAccountPath
+      ? memberQueryKeys.adminAccountPrograms(adminAccountId!)
+      : memberQueryKeys.adminPrograms(memberId ?? 0),
+    enabled: Boolean(
+      enabled &&
+        isMembersRemoteEnabled() &&
+        (useAdminAccountPath || (memberId != null && memberId > 0))
+    ),
     queryFn: async (): Promise<Program[]> => {
+      if (useAdminAccountPath) {
+        const res = await fetchAdminAccountProgramRolesRemote(adminAccountId!, {
+          page: 0,
+          size: MEMBER_DETAIL_LIST_SIZE,
+        })
+        return mapMemberAdminPrograms(res.items)
+      }
       const res = await fetchMemberAdminProgramsRemote(memberId!, {
         page: 0,
         size: MEMBER_DETAIL_LIST_SIZE,

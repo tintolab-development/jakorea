@@ -13,9 +13,12 @@ import { Button } from 'antd'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { TableFilterGroup, type FilterFieldConfig } from '@/shared/components/table-filter-group'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
+import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { ExcelButton } from '@/shared/ui/excel-button'
 import {
   INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
+  getInstructorSettlementStatusLabel,
   isInstructorSettlementEligibleForPaymentStatementIssue,
 } from '@/shared/constants/instructor-settlement-status'
 import type { InstructorSettlementListRow } from '@/features/user/detail/model/instructor-settlement-types'
@@ -243,7 +246,7 @@ export function InstructorPaymentTab({
       { title: '프로그램명', dataIndex: 'programName', key: 'programName' },
       { title: '참여 기관명', dataIndex: 'institutionName', key: 'institutionName' },
       {
-        title: '강의 진행 일자',
+        title: '교육 진행 일자',
         dataIndex: 'lectureDateDisplay',
         key: 'lectureDateDisplay',
         minWidth: 250,
@@ -261,7 +264,7 @@ export function InstructorPaymentTab({
         ),
       },
       {
-        title: '정산 예정 금액',
+        title: '정산 신청 금액',
         dataIndex: 'scheduledAmount',
         key: 'scheduledAmount',
         align: 'center',
@@ -288,18 +291,39 @@ export function InstructorPaymentTab({
     [openInvoice]
   )
 
+  const excelExportColumns: ColumnsType<InstructorSettlementListRow> = useMemo(
+    () => [
+      { title: 'No.', dataIndex: 'no', key: 'no' },
+      { title: '프로그램명', dataIndex: 'programName', key: 'programName' },
+      { title: '참여 기관명', dataIndex: 'institutionName', key: 'institutionName' },
+      { title: '교육 진행 일자', dataIndex: 'lectureDateDisplay', key: 'lectureDateDisplay' },
+      {
+        title: '정산 현황',
+        key: 'status',
+        render: (_: unknown, row) => getInstructorSettlementStatusLabel(row.status),
+      },
+      {
+        title: '정산 신청 금액',
+        key: 'scheduledAmount',
+        render: (_: unknown, row) => `${row.scheduledAmount.toLocaleString()}원`,
+      },
+    ],
+    []
+  )
+
+  const excelFilename = useMemo(() => {
+    const name = (_instructorName.trim() || '강사').replace(/[\\/:*?"<>|]/g, '')
+    return `정산현황_${name}_${currentMonth.format('YYYY-MM')}`
+  }, [_instructorName, currentMonth])
+
+  const { exportExcel, isExporting: excelExporting } = useTableExcelExport({
+    columns: excelExportColumns,
+    data: filteredRows,
+    filename: excelFilename,
+  })
+
   const handleSearch = () => {
     setAppliedFilters({ ...pendingFilters })
-  }
-
-  if (!settlementsRemote || instructorMemberId == null) {
-    return (
-      <div className="instructor-payment-tab">
-        <div className="instructor-payment-tab__empty-remote">
-          정산 API가 활성화되지 않았거나 강사 memberId가 없어 정산 현황을 조회할 수 없습니다.
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -311,7 +335,7 @@ export function InstructorPaymentTab({
         .filter(Boolean)
         .join(' ')}
     >
-      <Spin spinning={settlementsLoading || bulkDownloadLoading}>
+      <Spin spinning={settlementsLoading || bulkDownloadLoading || excelExporting}>
         <TableFilterGroup
           fields={FILTER_FIELDS}
           filters={pendingFilters}
@@ -382,6 +406,11 @@ export function InstructorPaymentTab({
             >
               지급조서 발급
             </CmsButton>
+            <ExcelButton
+              loading={excelExporting}
+              disabled={settlementsLoading}
+              onClick={() => void exportExcel()}
+            />
           </div>
         </div>
 

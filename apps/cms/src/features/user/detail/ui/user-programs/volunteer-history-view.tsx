@@ -1,11 +1,11 @@
 import { MemberProgramLectureHistory } from '../member-program-lecture-history'
+import { memberShowsVolunteerHistoryCertificateBulkIssue } from '../../lib/member-program-history-certificate-bulk-issue'
 import type { RendererProps } from '../user-programs-view-renderer'
 
 export function VolunteerHistoryView({
   user,
   volunteerHistories,
   volunteerHistoriesLoading,
-  showCertificateBulkIssue,
   onOpenVolunteerProgramDetail,
   onBulkDeleteHistory,
   onVolunteerCertificateBulkIssue,
@@ -17,7 +17,7 @@ export function VolunteerHistoryView({
       volunteerHistories={volunteerHistories}
       loading={volunteerHistoriesLoading}
       memberId={user.memberId}
-      showCertificateBulkIssue={showCertificateBulkIssue}
+      showCertificateBulkIssue={memberShowsVolunteerHistoryCertificateBulkIssue(user)}
       onVolunteerRowClick={onOpenVolunteerProgramDetail}
       onBulkDelete={onBulkDeleteHistory}
       onCertificateIssue={onVolunteerCertificateBulkIssue}

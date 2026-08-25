@@ -208,6 +208,8 @@ function paymentEventToSettlementListRow(
 
   return {
     id: ev.id,
+    /** 집계 캘린더 행 — 단건 settlementId 없음 */
+    settlementId: 0,
     no: isProgram ? programRow.no : (ev.sourceInstructorRow?.no ?? 0),
     programName: programNameForRow,
     instructorName: isProgram

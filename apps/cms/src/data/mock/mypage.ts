@@ -6,6 +6,7 @@
 import type { MyPageData, PrimaryStatus, UserHistory } from '../../types/domain'
 import { mockTodos, mockSchedules, mockApplications, mockProgramsMap } from './index'
 import { mockUsers } from './users'
+import { affiliatedTeacherVolunteerHistories } from './affiliated-teacher-program-history-demo'
 import dayjs from 'dayjs'
 
 const getDate = (daysAgo: number): string => {
@@ -252,6 +253,7 @@ export const mockUserHistories: UserHistory[] = [
         updatedAt: getDate(30 + i * 30),
       }))
     : []),
+  ...affiliatedTeacherVolunteerHistories,
 ]
 
 export const mockUserHistoriesMap = new Map(mockUserHistories.map(history => [history.id, history]))

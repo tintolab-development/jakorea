@@ -92,7 +92,14 @@ export function UserDetailFullpageModalsStack() {
         attendanceApplicationId != null
     ),
     queryFn: () => fetchApplicationLectureAttendanceRemote(memberId!, attendanceApplicationId!),
+    retry: false,
   })
+
+  const attendanceSummaryOnly = useMemo(() => {
+    if (!membersRemote || !modals.lectureAttendance.open || !attendanceApplication) return undefined
+    const summary = attendanceApplication.lectureAttendance?.trim()
+    return summary || undefined
+  }, [membersRemote, modals.lectureAttendance.open, attendanceApplication])
 
   const assignmentRemoteDetail = useMemo(() => {
     if (!membersRemote || !assignmentApplication || !modals.assignment.open) return undefined
@@ -115,10 +122,25 @@ export function UserDetailFullpageModalsStack() {
 
   const attendanceRemoteDetail = useMemo(() => {
     if (!membersRemote || !modals.lectureAttendance.open) return undefined
-    const data = lectureAttendanceQuery.data
-    if (!data) return null
-    return mapMemberLectureAttendanceToDetail(data, displayUser.name)
-  }, [membersRemote, modals.lectureAttendance.open, lectureAttendanceQuery.data, displayUser.name])
+    if (lectureAttendanceQuery.isLoading) return undefined
+    if (lectureAttendanceQuery.isError || !lectureAttendanceQuery.data) {
+      return attendanceSummaryOnly ? undefined : null
+    }
+    const mapped = mapMemberLectureAttendanceToDetail(
+      lectureAttendanceQuery.data,
+      displayUser.name
+    )
+    if (mapped.sessions.length === 0 && attendanceSummaryOnly) return undefined
+    return mapped
+  }, [
+    membersRemote,
+    modals.lectureAttendance.open,
+    lectureAttendanceQuery.isLoading,
+    lectureAttendanceQuery.isError,
+    lectureAttendanceQuery.data,
+    attendanceSummaryOnly,
+    displayUser.name,
+  ])
 
   const [assignmentBulkDownloading, setAssignmentBulkDownloading] = useState(false)
 
@@ -197,6 +219,7 @@ export function UserDetailFullpageModalsStack() {
         application={modals.lectureAttendance.data ?? undefined}
         userName={displayUser.name}
         remoteDetail={membersRemote ? attendanceRemoteDetail : undefined}
+        attendanceSummaryOnly={membersRemote ? attendanceSummaryOnly : undefined}
         remoteDetailLoading={membersRemote && lectureAttendanceQuery.isLoading}
       />
       <AssignmentSubmissionModal

@@ -2,6 +2,7 @@ import { MemberProgramLectureHistory } from '../member-program-lecture-history'
 import type { RendererProps } from '../user-programs-view-renderer'
 
 export function LectureHistoryView({
+  user,
   applications,
   loading,
   onRowClick,

@@ -30,7 +30,7 @@ describe('resolveMemberApplicationIdFromApplication', () => {
     const app = {
       id: 'app-1',
       customFields: { memberApplicationId: 100 },
-    } as Application
+    } as unknown as Application
     expect(resolveMemberApplicationIdFromApplication(app)).toBe(100)
   })
 })
@@ -45,7 +45,7 @@ describe('resolveParticipantIdFromHistoryRow', () => {
     const app = {
       id: 'part-55',
       customFields: { participantId: 55 },
-    } as Application
+    } as unknown as Application
     expect(resolveParticipantIdFromHistoryRow(app)).toBe(55)
   })
 })

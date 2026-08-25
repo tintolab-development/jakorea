@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { applicationService } from '@/entities/application/api/application-service'
-import type { Application, ApplicationSubjectType } from '@/types/domain'
+import type { Application } from '@/types/domain'
 import type { User } from '@/types/user'
 import {
   useMemberApplicationsQuery,
@@ -79,6 +79,7 @@ export async function loadApplicationsForUser(
     /** 학교 상세 — organization 전용 API만 사용 (mock 금지) */
     return { applications: [], enrollmentApplications: [] }
   }
+  return { applications: [], enrollmentApplications: [] }
 }
 
 export function useUserDetailApplications(

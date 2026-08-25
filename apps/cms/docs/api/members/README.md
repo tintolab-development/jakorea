@@ -4,12 +4,34 @@ CMS LNB 「회원 관리」(회원 목록 · 권한 승인 · 권한 설정) API
 
 파일명 `YYYY-MM-DD`는 해당 문서 **마지막 내용 갱신일**입니다.
 
+---
+
+## 회원 상세 이력·정산 — 백엔드 전달 필수 묶음
+
+> **ZIP·산출내역·일괄삭제는 별도 전달이 아닙니다.** 아래 **7개 문서를 한 zip**으로 BE에 전달합니다.  
+> `pnpm --filter cms package:members-be-handoff -- --openapi` 가 동일 구성을 복사합니다.
+
+| # | 문서 | 대상 · 범위 | SSOT ID |
+|---|------|-------------|---------|
+| 1 | [**member-program-history-ui-api-parity-backend-handoff-2026-08-25.md**](./member-program-history-ui-api-parity-backend-handoff-2026-08-25.md) | **개인·순수 교사·강사·겸직** — 프로젝트 참여 이력 (수강·봉사·공통 모달) | REQ-001~016 |
+| 2 | [**instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md**](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md) | **강사·겸직** — 참여 이력(강의 탭) · **정산 현황** | PH-001~016 · SET-001~008 |
+| 3 | [**school-organization-program-enrollment-history-backend-handoff-2026-08-25.md**](./school-organization-program-enrollment-history-backend-handoff-2026-08-25.md) | **학교** — 프로젝트 수강 이력 (목록·bulk-delete) | §3 신규 API |
+| 4 | [**admin-member-managed-program-history-backend-handoff-2026-08-25.md**](./admin-member-managed-program-history-backend-handoff-2026-08-25.md) | **관리자** — 프로그램 담당 이력 | ADM-001~007 |
+| 5 | [**cms-table-bulk-download-api-backend-handoff.md**](../cms-table-bulk-download-api-backend-handoff.md) | **포함** — 과제 ZIP(#7) · 강의보고서 ZIP(#8) · 수료증/인증서 ZIP(#9) · 지급조서 ZIP(#6) | §5.1 #6~#9 |
+| 6 | [**settlement-payment-order-detail-ui-fields-backend-handoff.md**](../settlement-payment-order-detail-ui-fields-backend-handoff.md) | **포함** — 강사 상세 **산출 내역서** 모달 (SET-005) | §4 |
+| 7 | [**cms-table-bulk-delete-api-backend-handoff.md**](../cms-table-bulk-delete-api-backend-handoff.md) | **포함** — 회원 이력·관리자 담당 이력 **일괄 삭제** | §5.1 #14 · #15 |
+
+**ID 대응 (중복 추적 방지):** REQ-001~016 = PH-001~016 (강사 scope는 #2가 SSOT).
+
+**OpenAPI:** `apps/cms/openapi/members.openapi.json` + (정산) `openapi/backend.openapi.json`
+
+---
+
+## 기타 members handoff
+
 | 문서 | 용도 |
 |------|------|
-| [**instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md**](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md) | **백엔드 수정 요청 SSOT** — **강사 상세** 프로젝트 참여 이력(수강·강의·봉사) · **정산 현황** API 보완 통합 (PH-001~016 · SET-001~008) (P0/P1) |
 | [**member-consent-filled-document-backend-handoff-2026-08-25.md**](./member-consent-filled-document-backend-handoff-2026-08-25.md) | **백엔드 전달** — 회원 동의서 5종 작성 본문 저장·조회 (`WritingFormDraft` · 지급조서 sidecar · 성범죄 파일) · UI 기준 저장 항목 · **개인·교사·강사·강사겸교사** (P1) |
-| [**school-organization-program-enrollment-history-backend-handoff-2026-08-25.md**](./school-organization-program-enrollment-history-backend-handoff-2026-08-25.md) | **백엔드 신규 API** — 학교(organization) 상세 프로젝트 수강 이력 전용 목록·bulk-delete · mock·member API 조합 금지 (P0) |
-| [**member-program-history-ui-api-parity-backend-handoff-2026-08-25.md**](./member-program-history-ui-api-parity-backend-handoff-2026-08-25.md) | **백엔드 수정 요청** — 회원 상세 프로젝트 참여 이력 UI·API 정합성 · REQ-001~016 (부분일치/불일치 → BE 수정 SSOT). **강사 상세만** → [통합 핸드오프](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md) |
 | [**portal-identity-onboarding-backend-request-2026-08-18.md**](./portal-identity-onboarding-backend-request-2026-08-18.md) | **백엔드 전달** — Portal 본인인증·온보딩 403/500 · CMS↔Portal 소속 동기화 · 비밀번호/409 메시지 (P0/P1) |
 | [**admin-register-signup-type-portal-profile-backend-request-2026-08-14.md**](./admin-register-signup-type-portal-profile-backend-request-2026-08-14.md) | **백엔드 전달** — 가입유형 플래그 · 개인 학년(grade) · Portal 주소/소속 GET·PATCH (P0/P1) |
 | [**members-pre-register-terms-required-policy-backend-request-2026-08-11.md**](./members-pre-register-terms-required-policy-backend-request-2026-08-11.md) | **백엔드 전달** — CMS 회원·강사 등록 약관 `required` 정책 불일치 (P0) |
@@ -26,10 +48,10 @@ CMS LNB 「회원 관리」(회원 목록 · 권한 승인 · 권한 설정) API
 
 ## 백엔드 전달 (레포 밖)
 
-백엔드는 monorepo를 보지 않으므로 **내보낸 폴더·zip** 으로 전달합니다.
+백엔드는 monorepo를 보지 않으므로 **[회원 상세 이력·정산 필수 묶음](#회원-상세-이력정산--백엔드-전달-필수-묶음)** 7개 문서 + README + (선택) OpenAPI 를 zip으로 전달합니다.
 
 ```bash
-# handoff + README → apps/cms/dist/members-be-handoff-YYYY-MM-DD/
+# 필수 묶음 7종 + README → apps/cms/dist/members-be-handoff-YYYY-MM-DD/
 pnpm --filter cms package:members-be-handoff
 
 # OpenAPI snapshot 포함
@@ -39,4 +61,4 @@ pnpm --filter cms package:members-be-handoff -- --openapi
 pnpm --filter cms package:members-be-handoff -- --out=~/Desktop/jakorea-members-be-handoff
 ```
 
-**Last updated:** 2026-08-25 (강사 상세 프로그램 이력·정산 통합 핸드오프)
+**Last updated:** 2026-08-25 (회원 상세 이력·정산 — ZIP·산출내역·삭제를 필수 묶음에 통합)

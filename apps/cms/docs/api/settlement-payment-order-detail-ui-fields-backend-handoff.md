@@ -5,6 +5,8 @@
 **프론트:** `use-payment-order-detail-fullpage-modal.ts`, `use-payment-order-detail-lines.tsx`, `map-settlement-detail.ts`, `map-settlement-detail-to-calculation-statement.ts`, `payment-order-calculation-statement-modal-impl.tsx`  
 **연관:** [settlement-payment-order-detail-backend-handoff.md](./settlement-payment-order-detail-backend-handoff.md) (API 흐름·statementId) · [settlement-api-backend-gaps.md](./settlement-api-backend-gaps.md)
 
+> **회원 상세 BE 전달:** 본 문서는 [members/README.md §필수 묶음](./members/README.md#회원-상세-이력정산--백엔드-전달-필수-묶음) **#6** 으로 포함됩니다. 강사 회원 상세 정산 **SET-005** — **§4 산출 내역서 모달** SSOT. (정산 관리 LNB 지급 현황 상세와 동일 필드 계약.)
+
 **Last updated:** 2026-08-25
 
 > **작성 기준:** **실제 화면 라벨·테이블 컬럼**만 포함. mock 타입·다른 화면 필드는 제외.  

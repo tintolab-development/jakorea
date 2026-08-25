@@ -543,7 +543,11 @@ export function MemberProgramLectureHistory({
             record.rejectionKind
           )
           const ended = displayStatus === 'PROGRAM_ENDED'
-          const canView = ended && (record.hasLectureReportSubmission ?? true)
+          const canView =
+            ended &&
+            (isMembersRemoteEnabled()
+              ? record.hasLectureReportSubmission === true
+              : (record.hasLectureReportSubmission ?? true))
           return (
             <span
               className="member-program-lecture-history__action-cell"

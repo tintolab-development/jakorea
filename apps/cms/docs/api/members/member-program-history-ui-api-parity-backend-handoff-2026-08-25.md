@@ -5,10 +5,35 @@
 **우선순위:** P0/P1 혼합 — §3 **서버 수정 요청 목록** SSOT  
 **요청 대상:** Members API · (연계) Programs · Forms-surveys 파일 다운로드  
 
-> **강사 회원 상세** (프로젝트 참여 이력 · 정산 현황) BE 보완은 **[통합 SSOT](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md)** 를 우선 참고하세요. 본 문서 REQ-001~016 = 통합 문서 PH-001~016과 동일합니다.
-**관련 FE:** `member-program-lecture-history.tsx` · `enrich-member-applications-with-enrollment.ts` · `map-member-assignment-submissions.ts` · `lecture-attendance-modal.tsx` · `assignment-submission-modal.tsx`  
+> **강사 회원 상세** (프로젝트 참여 이력 · 정산 현황) BE 보완은 **[통합 SSOT](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md)** 를 우선 참고하세요 ( **§5 팝업·모달 재검토** 포함). 본 문서 REQ-001~016 = 통합 문서 PH-001~016과 동일합니다.
+**관련 FE:** `member-program-lecture-history.tsx` · `enrich-member-applications-with-enrollment.ts` · `map-member-assignment-submissions.ts` · `lecture-attendance-modal.tsx` · `assignment-submission-modal.tsx` · **`assignment-submission-history-table.tsx`** · `lecture-report-submission-history-modal.tsx`  
 **관련 명세:** [lecture-attendance-modal-spec.md](../../design/lecture-attendance-modal-spec.md) · [cms-table-bulk-download-api-backend-handoff.md](../cms-table-bulk-download-api-backend-handoff.md) §5.1 #9  
 **OpenAPI subset:** `apps/cms/openapi/members.openapi.json`
+
+---
+
+## 0. 백엔드 전달 필수 묶음 (본 문서 위치)
+
+> ZIP·산출내역·일괄삭제는 **별도 전달 항목이 아닙니다.** [members/README.md §필수 묶음](./README.md#회원-상세-이력정산--백엔드-전달-필수-묶음) 7개 문서를 **한 zip**으로 전달합니다.
+
+| # | 문서 | 본 문서와의 관계 |
+|---|------|------------------|
+| 1 | **본 문서** | 개인·순수 교사·강사·겸직 — 참여 이력 REQ-001~016 |
+| 2 | [instructor-member-detail-program-history-settlement-…](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md) | 강사·겸직 강의 탭 + 정산 SET-* (PH = REQ 동일) |
+| 3 | [school-organization-program-enrollment-history-…](./school-organization-program-enrollment-history-backend-handoff-2026-08-25.md) | 학교 수강 이력 |
+| 4 | [admin-member-managed-program-history-…](./admin-member-managed-program-history-backend-handoff-2026-08-25.md) | 관리자 담당 이력 |
+| 5 | [cms-table-bulk-download-api-backend-handoff.md](../cms-table-bulk-download-api-backend-handoff.md) | **포함** — REQ-011(#7) · REQ-014(#9) · REQ-015(#8) · 강사 지급조서(#6) |
+| 6 | [settlement-payment-order-detail-ui-fields-backend-handoff.md](../settlement-payment-order-detail-ui-fields-backend-handoff.md) | **포함** — 강사 산출 내역서 (SET-005 · [통합 §4.2](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md)) |
+| 7 | [cms-table-bulk-delete-api-backend-handoff.md](../cms-table-bulk-delete-api-backend-handoff.md) | **포함** — 회원 이력 bulk-delete §5.1 **#14** · 관리자 담당 **#15** |
+
+**본 문서에 포함된 연계 요청 (§3):**
+
+| REQ | 연계 문서 | § |
+|-----|-----------|---|
+| REQ-011 | bulk-download | §5.1 **#7** 과제 ZIP |
+| REQ-014 | bulk-download | §5.1 **#9** 수료증/인증서 ZIP |
+| REQ-015 | bulk-download | §5.1 **#8** 강의보고서 ZIP |
+| (삭제) | bulk-delete | §5.1 **#14** 회원 이력 일괄 삭제 (단건 DELETE는 §9 연동됨) |
 
 ---
 
@@ -35,10 +60,24 @@
 
 ## 2. 화면 범위
 
-- **경로:** CMS 회원 목록 → 일반(개인) 회원 상세 풀페이지 → LNB **프로젝트 참여 이력**
-- **하위 탭:** 프로그램 수강 이력(`studentEnrollment`) · 봉사 프로그램 참여 이력(`volunteerProgram`)
-- **테이블 컴포넌트:** `MemberProgramLectureHistory` (`mode=studentEnrollment` | `volunteerProgram`)
+- **경로:** CMS 회원 목록 → 회원 상세 풀페이지 → LNB **프로젝트 참여 이력**
+- **테이블 컴포넌트:** `MemberProgramLectureHistory` (`mode=studentEnrollment` | `volunteerProgram` | `instructorLecture`)
 - **강사 겸직 enrollment 테이블:** `EnrollmentTableView` — 진행 현황 dropdown (REQ-013)
+
+### 2.0 회원 유형별 LNB · 탭 범위 (FE SSOT · 2026-08-25)
+
+`resolveInstructorMemberProfile()` · `user-detail-fullpage-sidebar-items.tsx` · `instructorDetailShowsPaymentStatusLnb()` 기준.
+
+| 회원 유형 | CMS 타이틀 | LNB 「프로젝트 참여 이력」 하위 | LNB 「정산 현황」 | 과제·설문 모달 | 강의보고서 모달 |
+|-----------|------------|--------------------------------|------------------|----------------|----------------|
+| **개인** (`role=INDIVIDUAL`) | 회원 상세 | 수강 · 봉사 | ✗ | 수강 탭 `과제·설문 내역 보기` | ✗ |
+| **순수 교사** (`school_teacher`) | 교사 상세 | 수강 · 봉사 (강의 탭 **없음** · URL `lecture` → `enrollment` 리다이렉트) | ✗ | 수강 탭 | ✗ |
+| **순수 강사** (`instructor_only`) | 강사 상세 | 수강 · 강의 · 봉사 | ✓ | 수강 탭 | 강의 탭 `강의보고서 내역 보기` |
+| **교사 겸 강사** (`instructor_dual`) | 교사 상세 | 수강 · 강의 · 봉사 | ✓ | 수강 탭 | 강의 탭 |
+
+- **순수 교사** 기본 정보: `school_teacher` 전용 2카드 split — 강사 제출양식(학력·경력) 미노출.
+- **수료증 일괄 발급** 버튼: `school_teacher`는 **숨김** (`member-program-history-certificate-bulk-issue.ts`).
+- 강사·교사 겸 강사 **강의·정산** API 갭: [강사 상세 통합 핸드오ff](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md).
 
 ### 2.1 탭별 UI (2026-08-25 FE 확정)
 
@@ -67,13 +106,13 @@
 | **REQ-006** | P0 → **Deferred** | ✗ | ~~봉사 · 과제 모달 진입~~ | 2026-08-25 UI: **봉사 탭 과제 열 제거** → 「내역 보기」 진입점 없음 | **현 UI 기준 BE 작업 불필요.** 수강 `part-*` 과제 모달은 REQ-005 `linkedApplicationId` 또는 participant assignment path로 **별도 협의** | — (봉사 탭 AC 해당 없음) |
 | **REQ-007** | **P0** | ✗ | 출석 모달 · 회차별 그리드 | `enrollment-summary.lectureAttendance`는 **집계 문자열만**. [명세](../../design/lecture-attendance-modal-spec.md) `sessions[]` 없음 | **신규** `GET .../applications/{applicationId}/lecture-attendance` (및 participant variant) — `attendedCount`, `heldCount`, `sessions[{roundNumber, status}]`. status: `ATTENDED` \| `ABSENT` \| `LATE` \| `NOT_HELD` | 모달 회차 테이블이 mock과 동일 구조. FE 축소 모드 해제 |
 | **REQ-008** | P1 | ✗ | 출석 모달 · **수강 `part-*`** | REQ-007이 applicationId만 지원 | REQ-007을 `participantId` path/query로 확장 (REQ-005와 동일 participant 식별) | **수강 이력** program-history 행에서 출석 모달 동일 UX (**봉사 탭 해당 없음**) |
-| **REQ-009** | **P0** | ✗ | 과제 모달 · 테이블 열 | `MemberAssignmentSubmissionResponse`에 UI 열 대응 필드 부족. `responseStatus` 단일 필드로 강의진행·제출현황 **이중 매핑**(부정확). `submittedAt`을 교육일자 열에 오매핑 | 스키마 **확장** — `roundNumber`, `teamRole`, `teamName`, `educationSessionLabel`(또는 date+round), `assignmentPeriodStart/End`, **`lectureProgress`**, **`submissionStatus`** 분리, `contextType` | 과제 모달 7개 열 mock과 1:1. `responseStatus` 단독 사용 금지 |
+| **REQ-009** | **P0** | ✗ | 과제 모달 · 테이블 열 | `MemberAssignmentSubmissionResponse`에 UI 열 대응 필드 부족. `responseStatus` 단일 필드로 강의진행·제출현황 **이중 매핑**(부정확). `submittedAt`을 교육일자 열에 오매핑 | 스키마 **확장** — `roundNumber`, `teamRole`, `teamName`, `educationSessionLabel`(또는 date+round), `assignmentPeriodStart/End`, **`lectureProgress`**, **`submissionStatus`** 분리, `contextType` | 과제 모달 **7열 UI SSOT** 1:1 — `No.` · `역할`(tag100) · `팀명` · `교육 진행 일정` · `과제 제출 기간` · `제출 파일`(300px) · `교육 진행 현황`. `lectureProgress`/`submissionStatus`는 **별도 열 아님** (§7.1). `responseStatus` 단독 사용 금지 |
 | **REQ-010** | **P0** | ✗ | 과제 모달 · 「과제 보기」 | `fileCount`만 있고 `submissionFileIds` 없음. forms-surveys download API 연결 불가 | `submissionFileIds: number[]` (또는 `{fileId,fileName}[]`) 응답 추가 | `fileCount>0` → `GET /api/admin/form-submission-files/{id}/download` 연동 가능 |
 | **REQ-011** | P0 | ✗ | 과제 모달 · 일괄 다운로드 | UI 「과제 일괄 다운로드」 stub | [bulk-download handoff](../cms-table-bulk-download-api-backend-handoff.md) §5.1 #7 — `POST .../assignment-submissions/bulk-download` ZIP/job | 선택 회원·신청 기준 ZIP 1회 다운로드 |
 | **REQ-012** | P2 | ✗ | 과제 모달 · 역할 변경 | mock만 `PATCH team-role` | (선택) `PATCH .../assignment-submissions/{submissionId}/team-role` | 드롭다운 변경 persist |
 | **REQ-013** | P1 | ✗ | enrollment 테이블 · 진행 현황 변경 | Dropdown 변경 mock only, **PATCH 없음** | `PATCH .../applications/{applicationId}/enrollment-status` (또는 동등) — CMS display status ↔ BE status 전이 규칙 | 변경 후 목록/상세 재조회 시 배지 반영 |
 | **REQ-014** | P0 | ✗ | 수료증/활동인증서 · 다운로드 | `POST .../certificates/issues/bulk` **발급만** | [bulk-download handoff](../cms-table-bulk-download-api-backend-handoff.md) §5.1 #9 — 발급 후 ZIP | 일괄 발급 UI → 파일 수령 |
-| **REQ-015** | P1 | ✗ | 강사 이력 · 강의보고서 | `GET .../lecture-reports` 존재, bulk download·FE 미연동 | member-scoped lecture-reports 응답 스키마 확정 + bulk-download | 강의보고서 모달·일괄 다운로드 |
+| **REQ-015** | **P0** | ✗ | 강사 이력 · 강의보고서 | GET·bulk·**단건 download path** FE 연결 — **스키마·BE 미구현** | §PH-015 / [통합 SSOT §5.3](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md) — `reportFileIds[]` 또는 `GET .../lecture-reports/{reportId}/download` | 모달 5열 + 보기 + bulk ZIP |
 | **REQ-016** | P2 | ✗ | 출석 · 정정/저장 | mock 「출석 정정」 | `PATCH` 또는 program-progress `ScheduleAttendanceBulkUpsert`와 역할·path SSOT | CMS 회원 상세에서 정정 저장 (프로그램 진행현황 API 재사용 가능 여부 BE 판단) |
 
 ### 3.1 BE 회신 요청 형식
@@ -171,18 +210,20 @@ FE: `getProgramAdminDetailInfoTabUrl(record.programId)` — **추가 API 불필�
 | 본문 | 회차별 테이블 | `sessions[]`: `{ roundNumber, status: attended \| absent \| late \| not_held }` |
 | 푸터 (mock) | 출석 정정 · 저장 | 회차별 PATCH |
 
-### 6.2 현재 API (◐ — 집계만, **REQ-007** 미충족)
+### 6.2 현재 API (◐ — 집계만 또는 path 미구현)
 
 | API | 응답 | 사용처 |
 |-----|------|--------|
-| `GET .../applications/{applicationId}/enrollment-summary` | `lectureAttendance?: string` (집계 문자열만) | 목록 링크 + remote 모달 **집계만** |
+| `GET .../applications/{applicationId}/enrollment-summary` | `lectureAttendance?: string` (집계 문자열만) | 목록 링크 · **404 폴백 후보** |
+| `GET .../applications/{applicationId}/lecture-attendance` | (제안 스키마 §6.4) | **FE path 연결됨** — OpenAPI·BE 미반영 시 404 |
 
-**Members OpenAPI에 회원·신청 단위 `sessions[]` 조회 API 없음.**
+**2026-08-25:** FE는 회원 상세에서 `lecture-attendance` path를 **이미 호출** ([통합 SSOT §5.1](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md)). OpenAPI subset에 없을 수 있음.
 
 ### 6.3 FE interim (REQ-007 완료 전)
 
 - `lectureAttendance` 집계만 파싱 · 회차 그리드·정정 숨김
 - 배너: 출석 모달 집계값만 표시
+- **2026-08-25 FE:** 회원 상세 `user-detail-fullpage-modals-stack.tsx` — `GET .../lecture-attendance` **404** 또는 `sessions[]` 빈 배열 시 목록 enrich `lectureAttendance` → `attendanceSummaryOnly` 폴백 ([통합 SSOT §5.1](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md))
 
 ### 6.4 서버 수정 요청 상세 — **REQ-007**
 
@@ -216,17 +257,23 @@ GET /api/admin/users/{memberId}/applications/{applicationId}/lecture-attendance
 
 ## 7. 과제 모달 — **BE 수정 필수 (REQ-009 ~ REQ-012)**
 
-### 7.1 UI 테이블 열 (mock SSOT)
+**FE SSOT:** `assignment-submission-history-table.tsx` — 회원 상세 `assignment-submission-modal.tsx` · 프로그램 참여자 상세 `participating-individual-participant-assignment-section.tsx` **동일 7열**.
 
-| UI 열 | mock 필드 | 기대 예시 |
-|-------|-----------|-----------|
-| 역할 | `teamRole` | 팀장 / 팀원 / 개인 (드롭다운 변경 가능) |
-| 팀명 | `teamName` | `1조` 또는 `-` |
-| 교육 진행 일자 및 교육 차시 | `educationDateLabel` | `2026. 01. 05 (월) \| 1차시` |
-| 과제 제출 기간 | `assignmentPeriodLabel` | `26. 01. 01 (수) ~ 26. 01. 07 (화)` |
-| 강의 진행 여부 | `lectureProgress` | `completed` / `scheduled` |
-| 제출 현황 | `submissionStatus` | `submitted` / `not_submitted` / `scheduled` / `none` |
-| 제출 파일 | `canViewAssignment` | true 시 「과제 보기」→ 미리보기 모달 |
+**Shell:** `ContentModal` + `FilterTableLayout` (`과제 및 설문 제출 목록` · `총 N건`) · 푸터 `닫기` **120px** · `과제 일괄 다운로드` **160px** · h40 `CmsButton` (`cms-button--footer-auto`).
+
+### 7.1 UI 테이블 열 (mock 7열 · width)
+
+| UI 열 | width | mock/API 필드 | FE 표시 |
+|-------|-------|---------------|---------|
+| No. | 64 | `roundNumber` | 행 번호 |
+| 역할 | 140 | `teamRole` | tag100 `StatusDropdownCell` (프로그램 참여자 상세) · 회원 상세 remote는 **정적 태그** |
+| 팀명 | 140 | `teamName` | `1조` 또는 `-` |
+| **교육 진행 일정** | 300 | `educationSessionLabel` (없으면 `submittedAt` 포맷) | `renderProgramDetailPipeSeparated` |
+| 과제 제출 기간 | 300 | `assignmentPeriodStart/End` 또는 `assignmentPeriodLabel` | `YYYY. MM. DD (ddd) ~ …` |
+| **제출 파일** | 300 | `submissionFileIds[]` · `fileCount` · `submissionStatus` | 셀 내 상태 + `AssignmentSubmissionCellActionButton` (h40 · width 100%) — `-`/`미제출`/`진행 예정`/`과제 보기`/`제출 완료`/설문·만족도조사 보기 |
+| **교육 진행 현황** | 120 | `lectureProgress` | `진행 예정`/`진행 완료` 라벨 |
+
+> **BE 주의:** `lectureProgress`·`submissionStatus`는 **별도 테이블 열이 아님**. `submissionStatus`는 「제출 파일」셀 상태 텍스트·버튼 활성 조건에 사용.
 
 푸터 「과제 일괄 다운로드」→ **REQ-011**
 
@@ -280,13 +327,30 @@ GET /api/admin/users/{memberId}/applications/{applicationId}/assignment-submissi
 
 ---
 
+## 7.5 강의보고서 모달 (REQ-015 · 강사·교사 겸 강사 강의 탭)
+
+**FE SSOT:** `lecture-report-submission-history-modal.tsx`  
+**Shell:** `ContentModal` + `FilterTableLayout` (`강의보고서 제출 목록` · `총 N건`) · 푸터 `닫기` **120px** · `강의보고서 일괄 다운로드` **200px** · h40.
+
+| UI 열 | width | BE 필드 (권장) | FE 표시 |
+|-------|-------|----------------|---------|
+| **교육 진행 일정** | 300 | `educationDateLabel` | `renderProgramDetailPipeSeparated` |
+| **강의보고서** 제출 기간 | 300 | `submissionPeriodStart/End` 또는 label | `-` 폴백 |
+| 강의 진행 여부 | 120 | `lectureProgress` | `진행 예정`/`진행 완료` · `진행 예정` 행 opacity 0.5 |
+| 제출 현황 | 120 | `submissionStatus` | 제출 상태 라벨 |
+| **강의보고서** | 300 | `reportFileIds[]` | `AssignmentSubmissionCellActionButton` h40 「강의보고서 보기」 |
+
+상세 API·bulk path: [통합 SSOT §5.3](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md) · PH-015.
+
+---
+
 ## 8. 기타 — **BE 수정 요청 (REQ-013 ~ REQ-015)**
 
 | 기능 | UI | API | **BE 수정 요청** |
 |------|-----|-----|------------------|
 | 모집 신청 현황 변경 | enrollment dropdown | PATCH 없음 | **REQ-013** |
 | 수료증/활동인증서 다운로드 | 수강: 수료·참여 / 봉사: **활동 + 수료·참여** 일괄 발급 UI | `POST .../issues/bulk` 발급만 | **REQ-014** (발급 후 ZIP) |
-| 강의보고서 (강사 이력) | 모달·bulk | GET만·bulk 없음 | **REQ-015** |
+| 강의보고서 (강사 이력) | 모달·bulk·**보기 onClick** | GET·bulk·단건 download **FE path** ✅ · 스키마 **BE 미구현** | **REQ-015** · [통합 §5.3](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md) |
 
 ---
 
@@ -349,17 +413,30 @@ REQ-004, REQ-012, REQ-016
 
 ## 12. FE 후속 (REQ 완료 후)
 
-| REQ | FE 파일 |
-|-----|---------|
-| REQ-003, 005 | `enrich-member-applications-with-enrollment.ts`, `member-program-lecture-history.tsx` |
-| REQ-001, 004 | `member-program-lecture-history.tsx` (진행년도·필터) |
-| REQ-002 | `map-member-application-history.ts`, `map-member-program-history.ts` |
-| REQ-007, 008, 016 | `lecture-attendance-modal.tsx` |
-| REQ-009, 010, 011, 012 | `map-member-assignment-submissions.ts`, `assignment-submission-modal.tsx`, `assignment-preview-modal.tsx` |
-| REQ-013 | `enrollment-table-view.tsx`, `use-user-detail-controller.ts` |
-| REQ-014 | `member-program-lecture-history.tsx`, certificates client |
-| REQ-015 | `lecture-report-submission-history-modal.tsx` |
+| REQ | FE 파일 | 상태 (2026-08-25) |
+|-----|---------|-------------------|
+| REQ-003, 005 | `enrich-member-applications-with-enrollment.ts`, `member-program-lecture-history.tsx` | BE 대기 |
+| REQ-001, 004 | `member-program-lecture-history.tsx` (진행년도·필터) | BE 대기 |
+| REQ-002 | `map-member-application-history.ts`, `map-member-program-history.ts` | BE 대기 |
+| REQ-007, 008 (interim) | `user-detail-fullpage-modals-stack.tsx`, `lecture-attendance-modal.tsx` | 집계 폴백 **✅** · sessions[] **BE 대기** |
+| REQ-009, 010, 011, 012 | `map-member-assignment-submissions.ts`, `assignment-submission-modal.tsx`, **`assignment-submission-history-table.tsx`**, `assignment-preview-modal.tsx` | 7열 FilterTableLayout UI **✅** · mapper·preview download wiring **✅** · BE 스키마 **대기** |
+| REQ-013 | `enrollment-table-view.tsx`, `use-user-detail-controller.ts` | BE 대기 |
+| REQ-014 | `member-program-lecture-history.tsx`, certificates client | bulk ZIP **BE 대기** |
+| REQ-015 | `lecture-report-submission-history-modal.tsx`, `map-member-lecture-reports.ts` | 5열 FilterTableLayout UI **✅** · onClick·mapper **✅** · BE 필드/path **대기** |
 
 ---
 
-**Last updated:** 2026-08-25 (봉사 탭 UI — 출석·과제 열 제거, 툴바·REQ-005/006/008 scope 반영)
+## 13. 팝업·모달 UI ↔ API (교차 참조)
+
+> **강사 상세 + 정산·산출 내역서** 포함 전체 재검토: [instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md §5](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md)
+
+| 팝업 | REQ/PH | UI 열·액션 | BE 요청에 포함 | FE wiring (2026-08-25) |
+|------|--------|-----------|----------------|------------------------|
+| 출석 (`LectureAttendanceModal`) | REQ-007~008 | 학생명·출석률·회차 그리드 | ✅ sessions[] | path **✅** · 404 집계 폴백 **✅** |
+| 과제 (`AssignmentSubmissionModal`) | REQ-009~011 | **7열 SSOT** (§7.1) · h40 제출 파일 버튼 · 푸터 120/160px · 일괄 ZIP | ✅ 스키마·fileIds·bulk | FilterTableLayout **✅** · preview download **✅** (fileIds BE 대기) |
+| 강의보고서 (`LectureReportSubmissionHistoryModal`) | REQ-015 | **5열** (`교육 진행 일정` · `강의보고서 제출 기간` · …) · h40 보기 · 푸터 120/200px · 일괄 ZIP | ✅ reportFileIds·단건/bulk path | FilterTableLayout **✅** · onClick **✅** · mapper **✅** |
+| 산출 내역서 (`InstructorInvoiceModal`) | SET-005 (강사 SSOT) | 기본정보·산출 테이블·confirm/reject | ✅ [UI 필드 SSOT §4](../settlement-payment-order-detail-ui-fields-backend-handoff.md) | flat items interim · 상세 `-` **BE 대기** |
+
+---
+
+**Last updated:** 2026-08-25 (§0 백엔드 전달 필수 묶음 · §14 cross-ref)

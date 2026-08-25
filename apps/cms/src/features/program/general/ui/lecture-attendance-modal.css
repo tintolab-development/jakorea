@@ -152,3 +152,20 @@
 .lecture-attendance-modal__session-radios .app-radio {
   margin-inline-end: 0;
 }
+
+/* 푸터 — 닫기/취소 120×40 */
+.lecture-attendance-modal
+  .content-modal__footer-actions
+  .lecture-attendance-modal__footer-btn--close.cms-button.ant-btn {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+}
