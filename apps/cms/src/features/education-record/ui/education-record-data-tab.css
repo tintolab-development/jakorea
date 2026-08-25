@@ -1,5 +1,6 @@
 /**
  * 실적 관리 > 실적 데이터 탭 — 툴바(제목/건수/엑셀 버튼) 스타일
+ * 세로는 페이지 스크롤(합계 탭과 동일). 가로는 테이블 내부 스크롤.
  */
 
 .er-data-tab {
@@ -45,10 +46,6 @@
 }
 
 /* 실적 데이터 테이블: 긴 텍스트가 옆 셀로 침범하지 않도록 강제 말줄임 */
-.er-data-tab .cms-data-table table.ant-table {
-  table-layout: fixed;
-}
-
 .er-data-tab .cms-data-table .ant-table-thead > tr > th,
 .er-data-tab .cms-data-table .ant-table-tbody > tr > td {
   overflow: hidden;
@@ -65,10 +62,26 @@
   white-space: nowrap;
 }
 
-/* IP Owned · Course Delivered By: 말줄임 없이 전체 노출(줄바꿈) */
+/*
+ * IP Owned · Course Delivered By: 말줄임 없이 전체 노출(줄바꿈).
+ * filter-table-layout 의 th/td height:54px !important 보다 구체성을 높여
+ * wrap 헤더·셀이 잘리지 않게 한다.
+ */
+.education-record-list-page__layout
+  .er-data-tab
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.er-data-tab__cell--wrap,
+.education-record-list-page__layout
+  .er-data-tab
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.er-data-tab__cell--wrap,
 .er-data-tab .cms-data-table .ant-table-thead > tr > th.er-data-tab__cell--wrap,
 .er-data-tab .cms-data-table .ant-table-tbody > tr > td.er-data-tab__cell--wrap {
-  overflow: visible;
+  overflow: hidden;
   text-overflow: clip;
   white-space: normal;
   height: auto !important;
@@ -82,18 +95,42 @@
   display: block;
   max-width: 100%;
   white-space: normal;
-  overflow: visible;
+  overflow: hidden;
   text-overflow: clip;
 }
 
 /*
- * 실적관리 테이블은 AntD 내부 스크롤(scroll.x/y)을 사용하므로
- * 바깥 래퍼의 가로 스크롤을 비활성화해 헤더/바디 수평 동기화 지연(흔들림)을 줄인다.
+ * 세로는 콘텐츠 높이만큼 카드를 늘리고(페이지 스크롤),
+ * 가로는 AntD `.ant-table-content` 만 스크롤해 흰 카드 밖으로 열이 삐져나오지 않게 한다.
  */
 .er-data-tab .list-page-layout__table-shell {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: hidden;
+  overflow-y: visible;
 }
 
 .er-data-tab .cms-data-table {
-  overflow-x: visible;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+.er-data-tab .cms-data-table .ant-table-container {
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+.er-data-tab .cms-data-table .ant-table-content {
+  overflow-x: auto !important;
+  overscroll-behavior-x: contain;
+}
+
+.er-data-tab .cms-data-table table {
+  table-layout: fixed !important;
+  width: max-content !important;
+  min-width: 100%;
 }
