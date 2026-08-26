@@ -1,6 +1,6 @@
 # 정산 관리 API — 백엔드 핸드오프 (갭·스펙 불일치)
 
-> **CMS 강사 회원 상세 → 정산 현황** 탭 API 보완은 **[강사 상세 통합 SSOT](./members/instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md)** (SET-001~008)를 우선 참고하세요. 본 문서는 **정산 관리 LNB** 3화면 전체 갭입니다.
+> **CMS 강사 회원 상세 → 정산 현황** 탭 API 보완은 **[강사 상세 통합 SSOT](./members/instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md)** (SET-001~009)를 우선 참고하세요. 본 문서는 **정산 관리 LNB** 3화면 전체 갭입니다.
 
 프론트 CMS 정산 관리 LNB 3화면 API 연동 후 확인된 **미존재 API·구조 불일치** 목록입니다.  
 OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동기화)
@@ -11,9 +11,33 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동
 
 | 우선순위 | 건수 | 대표 항목 |
 |----------|------|-----------|
-| P0 | 4 | 집계 목록 API, **상세 UI 필드(기관명·차시·헤더)**, 일괄 confirm, 목록 필터 |
+| P0 | 6 | **사람 이름 마스킹 금지**, **지급조서 발급 원문 + 산출 내역서 unmask**, 강사 프로필·계좌 embed, 집계 목록, 일괄 confirm, 목록 필터 |
 | P1 | 5 | 산출 내역서 DTO, 연간 예산, bulk paid, account 상세 GET, config CRUD |
 | P2 | 3 | iconKey, 캘린더 adapter, 상태 enum 매핑표 |
+
+---
+
+## P0 — 신청자명·성명 등 **사람 이름 마스킹 금지**
+
+| | |
+|---|---|
+| **화면** | 정산 관리 **전체** — 지급조서 확인 목록 「신청자명」, 지급 현황 상세·산출 내역서 「성명」, 계좌 지급 「신청자명」, 캘린더 강사명 |
+| **요청** | `instructorName` / `nameKo`를 **plain**으로 반환. `홍*동` 등 **BE 사전 마스킹 금지** |
+| **SSOT** | [UI 필드 SSOT §1.1](./settlement-payment-order-detail-ui-fields-backend-handoff.md#11--p0-서버-수정-요청--신청자명성명-등-사람-이름-마스킹-금지) · [핸드오프 §3.7](./settlement-payment-order-detail-backend-handoff.md#37-개인정보-마스킹-정책--p0-서버-수정-요청-사람-이름-마스킹-금지) |
+| **대상 API** | `GET /settlements`, `GET /settlements/{id}`, `GET /settlements/aggregates`, `GET /settlements/calendar`, `GET /account-payments` |
+| **구분** | 예금주(`accountHolder`)는 이름 컬럼이 아님 — 기존처럼 마스킹 가능(또는 FE) |
+
+---
+
+## P0 — 지급조서 발급(원문) · 산출 내역서 unmask API
+
+| | |
+|---|---|
+| **화면** | 산출 내역서 모달 「개인정보 확인」· **지급조서 발급** PDF/미리보기 |
+| **요청** | `POST /api/admin/settlements/{settlementId}/privacy/unmask` `{ reason }` → `SettlementFrontendResponse` **전 PII 원문**. 발급 양식에 마스킹 문자열 기입 금지 |
+| **원문 필드** | phone, email, address, bankName, accountNumber, accountHolder, gender, birthDate, 주민등록번호(발급) |
+| **SSOT** | [UI 필드 SSOT §1.2](./settlement-payment-order-detail-ui-fields-backend-handoff.md#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api) · [핸드오프 §3.8](./settlement-payment-order-detail-backend-handoff.md#38-지급조서-발급원문--산출-내역서-unmask-api-p0) |
+| **SET-006과 구분** | bulk ZIP은 **파일 묶음**. PDF **내용**의 원문 PII는 본 항목 (SET-009) |
 
 ---
 
@@ -24,18 +48,18 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동
 | **화면** | 지급조서 확인 → 행 클릭 → **지급 현황 상세** 풀페이지 |
 | **요구** | **기본 정보** + **신청자별/프로그램별 정산 목록** 테이블 **모든 열** 값을 서버에서 제공 |
 | **상세 SSOT** | [settlement-payment-order-detail-ui-fields-backend-handoff.md](./settlement-payment-order-detail-ui-fields-backend-handoff.md) |
-| **프론트 임시** | `institutionName: '-'`, `sessionOrdinal ← scheduleId`, 진행 회차 ← **라인 건수**, 사업기간 ← lectureDate min/max, 강사 프로필 `-` |
-| **산출 내역서 모달** | `GET /settlements/{id}` — `'—'`·`calculationDetail` 미매핑 → [UI 필드 SSOT §4](./settlement-payment-order-detail-ui-fields-backend-handoff.md#4-산출-내역서-모달-목록-상세-보기) |
-| **제안** | `SettlementListItemResponse`에 `institutionName`, `sessionOrdinal`, `statementId` + scoped query **`programHeader` / `instructorHeader` embed** |
+| **프론트 임시** | 강사 프로필·계좌 `-` — **[UI SSOT §4.5 P0 요청](./settlement-payment-order-detail-ui-fields-backend-handoff.md#45--백엔드-요청-p0--강사-프로필계좌-현재-ui--)** (`gender`, `birthDate`, `phone`, `email`, `address`, 계좌 3종) |
+| **산출 내역서 모달** | 강의비·회차·기관명 매핑됨. **강사 PII는 동일 §4.5** |
+| **제안** | **`GET /settlements/{id}` + `instructorHeader`에 강사 프로필·계좌 8필드 embed** — [UI SSOT §4.5](./settlement-payment-order-detail-ui-fields-backend-handoff.md#45--백엔드-요청-p0--강사-프로필계좌-현재-ui--) |
 
 ### 필수 라인 필드 (`SettlementListItemResponse`)
 
 | UI 컬럼 | API 필드 | 현재 |
 |---------|----------|------|
 | 신청자명 / 프로그램명 | `instructorName` / `programNameKo` | ✅ |
-| 참여 기관명 | `institutionName` | ❌ |
+| 참여 기관명 | `institutionName` | ✅ |
 | 교육 진행 일자 | `lectureDate` | ✅ |
-| N차시 | `sessionOrdinal` (1-based) | ❌ (`scheduleId` misuse) |
+| N차시 | `sessionOrdinal` (1-based) | ✅ (`scheduleId` 미사용) |
 | 지급조서 처리 현황 | `statementStatus` | ✅ |
 | 정산 신청 금액 | `netPaymentAmount` | ✅ |
 
@@ -43,14 +67,15 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동
 
 | UI | API | 현재 |
 |----|-----|------|
-| 사업 운영 기간 | `businessPeriodStart`, `businessPeriodEnd` | ❌ FE 추론 |
-| 프로그램 진행 회차 | `sessionCompleted` / `sessionTotal` | ❌ FE 라인 건수 |
+| 사업 운영 기간 | `businessPeriodStart`, `businessPeriodEnd` | ✅ 목록 DTO |
+| 프로그램 진행 회차 | `sessionCompleted` / `sessionTotal` | ✅ 목록 DTO |
 
 ### 필수 헤더 embed (강사 상세 기본 정보)
 
 | UI | API | 현재 |
 |----|-----|------|
-| 이름·연락처·주소·계좌 | `instructorHeader` 또는 members | ❌ `-` |
+| 성별·생년 | `gender`, `birthDate` | ❌ **서버 요청** |
+| 연락처·이메일·주소·계좌 | `phone`, `email`, `address`, `bankName`, `accountNumber`, `accountHolder` | ❌ **서버 요청** — [UI SSOT §4.5](./settlement-payment-order-detail-ui-fields-backend-handoff.md#45--백엔드-요청-p0--강사-프로필계좌-현재-ui--) |
 | 총 정산 예정 금액 | `totalEstimatedAmount` | 집계 목록 값 |
 
 ---
@@ -169,8 +194,9 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동
 | **갭** | 12종 layout mock과 API flat items 불일치 |
 | **갭 (항목 type)** | `items[].type` enum 미정의 — UI는 7종(강사비·교통비·숙박비·**식사비·활동비·원천징수**·기타) 필요 → [핸드오프 §3.5](./settlement-payment-order-detail-backend-handoff.md#35-산출-내역서--산정-항목-type-enum-확장-p1) |
 | **갭 (산정 상세·차단)** | **`GET /settlements/{id}`**에 `lectureFeeStandardTitle`/`wageItemType`·`items[].calculationDetail` **없음** → 강사비 행 상세 보기 「준비 중」 → [핸드오프 §3.6](./settlement-payment-order-detail-backend-handoff.md#36--get-settlementssettlementid-필수-확장--강의비-책정-기준산정-기준-상세-p1차단) |
-| **갭 (상세 UI)** | **기본 정보·목록 전 열** — `institutionName`, `sessionOrdinal`, `programHeader`/`instructorHeader` 미제공 → [UI 필드 SSOT](./settlement-payment-order-detail-ui-fields-backend-handoff.md) |
-| **갭 (마스킹)** | **신청자명(강사명)·은행명은 마스킹 금지** — 연락처·이메일·계좌번호·예금주만 마스킹. BE 사전 마스킹 시 UI 불일치 → [핸드오프 §3.7](./settlement-payment-order-detail-backend-handoff.md#37-개인정보-마스킹-정책-지급-현황--산출-내역서) |
+| **갭 (상세 UI)** | 강사 프로필·계좌 **미제공** (`gender`/`birthDate`/`phone`/`email`/`address`/계좌) → [UI 필드 SSOT §4.5](./settlement-payment-order-detail-ui-fields-backend-handoff.md#45--백엔드-요청-p0--강사-프로필계좌-현재-ui--) |
+| **갭 (마스킹)** | **신청자명·성명 마스킹 금지 (P0)** — `instructorName`/`nameKo` plain. BE 사전 마스킹 시 복원 불가 → [UI SSOT §1.1](./settlement-payment-order-detail-ui-fields-backend-handoff.md#11--p0-서버-수정-요청--신청자명성명-등-사람-이름-마스킹-금지) |
+| **갭 (발급·unmask)** | 산출 내역서 **화면 마스킹 해제 API 없음** · 지급조서 발급이 마스킹 값을 바인딩 → [UI SSOT §1.2](./settlement-payment-order-detail-ui-fields-backend-handoff.md#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api) |
 | **프론트 임시 대응** | `settlement-item-type.ts` 코드→한글 매핑. `lectureFeeStandardTitle: '—'`·`basisDetail` 미매핑 |
 | **제안** | **`GET /settlements/{id}` DTO 확장 (필수)** — §3.5 type enum + **§3.6** + **[UI 필드 SSOT §4](./settlement-payment-order-detail-ui-fields-backend-handoff.md#4-산출-내역서-모달-목록-상세-보기)** 산출 내역서 모달 |
 

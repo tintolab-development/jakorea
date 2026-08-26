@@ -6,7 +6,7 @@
 **공통 갭:** [settlement-api-backend-gaps.md](./settlement-api-backend-gaps.md)  
 **UI 필드 SSOT (기본 정보·목록 전 열):** [settlement-payment-order-detail-ui-fields-backend-handoff.md](./settlement-payment-order-detail-ui-fields-backend-handoff.md)
 
-**Last updated:** 2026-08-25
+**Last updated:** 2026-08-26
 
 ---
 
@@ -80,26 +80,28 @@ GET /api/admin/settlements/statements?programId=42
 
 §4 백엔드 수정 요청 본문 참고.
 
-### 3.3 상세 기본정보 (강사 블록)
+### 3.3 상세 기본정보 (강사 블록) — **P0 서버 요청**
 
 | | |
 |---|---|
-| **UI** | 강사 상세 — 이름·주소·연락처·계좌 (mock 기준) |
-| **현재 API** | settlements 라인에 **개인정보·계좌 없음** |
-| **프론트 임시** | remote 시 `-` 표시 |
-| **제안 (택1)** | ① `GET /api/admin/members/{instructorMemberId}` 조합 · ② `GET /api/settlements/instructor-summary?instructorMemberId=` 신규 · ③ settlements 집계 DTO에 embed |
+| **UI** | 강사 상세 풀페이지 · 산출 내역서 신청자 블록 — 성별/생년·연락처·이메일·주소·계좌 |
+| **현재 API** | `SettlementFrontendResponse`에 **개인정보·계좌 필드 없음** (`instructorName`만) |
+| **프론트 임시** | remote 시 `-` 표시 (`instructorIdentityFromLine`) |
+| **요청 필드** | `gender`, `birthDate`, `phone`, `email`, `address`, `bankName`, `accountNumber`, `accountHolder` |
+| **제안** | **권장:** ① `GET /settlements/{id}` 루트 embed + ② `GET /settlements?instructorMemberId=` `instructorHeader`. 차선: `GET /api/admin/members/{instructorMemberId}` 조합 |
+| **SSOT** | [UI 필드 SSOT §4.5](./settlement-payment-order-detail-ui-fields-backend-handoff.md#45--백엔드-요청-p0--강사-프로필계좌-현재-ui--) |
 
 > **§3.6과 구분:** 본 절은 **프로필·계좌**. 강의비 등급·산정 기준은 **회원 API가 아니라 `GET /settlements/{id}`에 필수** ([§3.6](#36--get-settlementssettlementid-필수-확장--강의비-책정-기준산정-기준-상세-p1차단)).  
-> **개인정보 마스킹 규칙**은 [§3.7](#37-개인정보-마스킹-정책-지급-현황--산출-내역서) 참고.
+> **개인정보 마스킹 규칙**은 [§3.7](#37-개인정보-마스킹-정책--p0-서버-수정-요청-사람-이름-마스킹-금지) 참고. 지급조서 발급·산출 내역서 원문 열람은 [§3.8](#38-지급조서-발급원문--산출-내역서-unmask-api-p0).
 
 ### 3.4 참여 기관명 · 차시 · 프로그램 진행 회차
 
 | | |
 |---|---|
 | **UI** | 상세 라인 「참여 기관명」·「N차시」·프로그램 기본정보 「진행 회차」·「사업 운영 기간」 |
-| **현재 API** | `institutionName`·`sessionOrdinal`·`programHeader` **없음** |
-| **제안** | [UI 필드 SSOT 문서](./settlement-payment-order-detail-ui-fields-backend-handoff.md) §4·§5 |
-| **프론트 임시** | `institutionName: '-'`, `sessionOrdinal ← scheduleId`, 진행 회차 ← 라인 건수, 사업기간 ← lectureDate min/max |
+| **현재 API** | 라인 `institutionName`·`sessionOrdinal`·기간·회차 **제공됨 (FE 매핑 완료)** |
+| **제안** | [UI 필드 SSOT 문서](./settlement-payment-order-detail-ui-fields-backend-handoff.md) |
+| **프론트** | 매핑 완료. **잔여:** 강사 프로필 §3.3 |
 
 ### 3.5 산출 내역서 — 산정 항목 `type` enum 확장 *(P1)*
 
@@ -282,28 +284,30 @@ GET /api/admin/settlements/statements?programId=42
 | 목록 API(`GET /settlements`)에만 embed | 산출 내역서는 **`GET /settlements/{id}`** 단건 조회 — 목록 필드만으로는 모달 데이터 부족 |
 | `calculationResult` unknown blob만 | layout·항목 index 매핑 불명 — **`items[].calculationDetail` per-line** 권장 |
 
-### 3.7 개인정보 **마스킹 정책** (지급 현황 · 산출 내역서)
+### 3.7 개인정보 **마스킹 정책** — **P0 서버 수정 요청** (사람 이름 마스킹 금지)
 
-> **백엔드 전달:** 지급 현황 상세·산출 내역서·정산 라인 목록에서 **신청자명(강사명)은 마스킹하지 않습니다.**  
-> API가 이름을 `홍*동` 등으로 **사전 마스킹해 내려보내면 UI 정책과 불일치** — **원문(plain) 제공** 후 표시층에서 아래 규칙만 적용합니다.
+> **백엔드 전달 (정산 관리 전체):** UI 라벨 **신청자명·성명** 등 **사람 이름**은 마스킹하지 않습니다.  
+> `instructorName` / `nameKo`를 `홍*동`처럼 **사전 마스킹하면 FE가 원문을 복원할 수 없습니다.** **plain 제공.**  
+> SSOT: [UI 필드 문서 §1.1](./settlement-payment-order-detail-ui-fields-backend-handoff.md#11--p0-서버-수정-요청--신청자명성명-등-사람-이름-마스킹-금지)
 
-#### 적용 화면
+#### 적용 화면 (정산 관리 LNB)
 
-- 정산 관리 > **지급조서 확인** — 프로그램/강사별 **지급 현황 상세** 풀페이지
-- **산출 내역서** 모달 — 기본 정보(신청자·강사 블록)
-- (연관) **계좌 지급 현황** 상세 — 동일 원칙
+- **지급조서 확인** 목록 — 컬럼 「신청자명」
+- 지급 현황 상세 풀페이지 — 「성명」 / 목록 「신청자명」
+- **산출 내역서** 모달 — 기본 정보 「성명」
+- **계좌 지급 확인** 목록·상세 — 「신청자명」
+- 캘린더 뷰 강사명
 
 #### 필드별 규칙 (SSOT)
 
 | 구분 | 필드 (API·UI 예) | 마스킹 | 비고 |
 |------|------------------|--------|------|
-| **미마스킹** | `instructorName` / `nameKo` — **신청자명·강사명(한글)** | ❌ **하지 않음** | 목록·상세·산출 내역서 **항상 원문** |
-| **미마스킹** | `nameEn` — **강사명(영문)** | ❌ **하지 않음** | 산출 내역서 강사 맥락 |
+| **미마스킹 (필수)** | `instructorName` / `nameKo` — **신청자명·성명** | ❌ **하지 않음** | 정산 관리 **전 API 응답 원문** |
 | **미마스킹** | `bankName` — **은행명** | ❌ **하지 않음** | 정산 계좌 정보 좌측 |
-| **마스킹** | `phone` / 연락처 | ✅ | 예: `010-****-5678` (FE `MASKING_POLICY.phone`) |
-| **마스킹** | `email` / 이메일 | ✅ | 예: `ti***@example.com` (FE `MASKING_POLICY.email`) |
-| **마스킹** | `accountNumber` / 계좌번호 | ✅ | 숫자만 `*` — **은행명과 분리 필드** 권장 |
-| **마스킹** | `accountHolder` / 예금주 | ✅ | 성(복성 포함)만 노출 · 나머지 `*` |
+| **마스킹** | `phone` / 연락처 | ✅ | 예: `010-****-5678` (FE) |
+| **마스킹** | `email` / 이메일 | ✅ | 예: `ti***@example.com` (FE) |
+| **마스킹** | `accountNumber` / 계좌번호 | ✅ | 숫자만 `*` — **은행명과 분리** |
+| **마스킹** | `accountHolder` / 예금주 | ✅ | 「성명/신청자명」과 **다른 필드**. 성만 노출 |
 
 #### 정산 계좌 정보 표시 (UI 합성)
 
@@ -320,22 +324,44 @@ GET /api/admin/settlements/statements?programId=42
 
 #### 백엔드 수정 요청
 
-1. **`instructorName`·`nameKo`·`nameEn`** — settlements 목록·상세·embed DTO에서 **마스킹 금지** (plain text)
-2. **연락처·이메일·계좌번호·예금주** — plain으로 내려주고 FE가 마스킹 **또는** BE 마스킹 시 **위 표와 동일 규칙** (은행명 제외)
-3. **OpenAPI·응답 예시**에 마스킹 대상/비대상 필드 주석 명시
+1. **`instructorName`·`nameKo`** — 아래 API에서 **마스킹 금지** (plain). `*` 포함 금지.
+   - `GET /api/admin/settlements` · `GET /api/admin/settlements/{id}`
+   - `GET /api/admin/settlements/aggregates`
+   - `GET /api/admin/settlements/calendar`
+   - `GET /api/admin/account-payments` 및 상세
+   - `instructorHeader.nameKo`
+2. **연락처·이메일·계좌번호·예금주** — plain으로 내려주고 FE가 마스킹
+3. **예금주(`accountHolder`)를 신청자명/성명과 동일 취급하지 말 것** — 예금주만 마스킹 대상
+4. **OpenAPI·응답 예시**에 이름 필드는 unmasked 예시 (`홍길동`) 사용
 
 #### 수용 기준 (Acceptance)
 
-- [ ] `GET /settlements` 목록·상세의 `instructorName` — **원문** (마스킹 패턴 `*` 없음)
-- [ ] 강사 embed / 회원 조합 API의 `nameKo`·`nameEn` — **원문**
-- [ ] `bankName` — **원문** · `accountNumber`·`accountHolder` — 마스킹 또는 plain(FE 처리)
-- [ ] 스테이징: 산출 내역서 「신청자명(한글)」 열에 **전체 이름** 표시, 연락처·이메일·계좌(번호·예금주)만 마스킹
+- [ ] 위 API의 `instructorName` / `nameKo` — **원문** (마스킹 패턴 `*` 없음)
+- [ ] `bankName` — **원문** · `accountNumber`·`accountHolder` — plain (FE 마스킹)
+- [ ] 스테이징 **정산 관리**: 목록 「신청자명」·상세 「성명」·산출 내역서 「성명」이 **전체 이름**. 연락처·이메일·계좌(번호·예금주)만 마스킹
 
 #### 프론트 참고 구현
 
-- `payment-order-instructor-basic-info.tsx` — `nameKo`/`nameEn` plain · 연락처·이메일·계좌 마스킹
+- `payment-order-instructor-basic-info.tsx` — `nameKo` plain · 연락처·이메일·계좌 마스킹
 - `map-settlement-detail-to-calculation-statement.ts` — 동일
 - `shared/constants/download-policy.ts` — `MASKING_POLICY` (계좌번호: 숫자만 `*`, 예금주: 성만 노출)
+
+### 3.8 지급조서 발급(원문) · 산출 내역서 unmask API — **P0**
+
+화면 산출 내역서는 §3.7대로 연락처·이메일·계좌를 **마스킹 표시**합니다.  
+**지급조서 발급 PDF·미리보기**와 산출 내역서 「개인정보 확인」은 **원문**이 필요합니다.
+
+회원 상세와 동일:
+
+| | |
+|---|---|
+| **Method / Path** | `POST /api/admin/settlements/{settlementId}/privacy/unmask` |
+| **Body** | `{ "reason": string }` (1~500자, 감사 로그) |
+| **응답** | `SettlementFrontendResponse` — phone, email, address, bankName, accountNumber, accountHolder, gender, birthDate, **주민등록번호**(발급 양식) **전부 원문** |
+
+상세·필드 표·bulk: [UI SSOT §1.2](./settlement-payment-order-detail-ui-fields-backend-handoff.md#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api)
+
+**SET-006 bulk ZIP**과 구분: ZIP은 파일 묶음. **PDF 본문 PII는 본 unmask(원문)** — 마스킹 문자열을 넣지 말 것.
 
 ---
 
@@ -390,11 +416,12 @@ GET /api/admin/settlements/statements?programId=42
 
 | 우선순위 | 항목 | 상세 화면 영향 |
 |----------|------|----------------|
-| **P0** | [UI 필드 SSOT](./settlement-payment-order-detail-ui-fields-backend-handoff.md) — `institutionName`, `sessionOrdinal`, `programHeader`/`instructorHeader` | **기본 정보·목록 모든 열** |
+| **P0** | **신청자명·성명 마스킹 금지** — [UI SSOT §1.1](./settlement-payment-order-detail-ui-fields-backend-handoff.md#11--p0-서버-수정-요청--신청자명성명-등-사람-이름-마스킹-금지) | 정산 관리 목록·상세·산출 내역서·계좌 지급 **이름 원문** |
+| **P0** | **지급조서 발급 원문 + 산출 내역서 unmask** — [UI SSOT §1.2](./settlement-payment-order-detail-ui-fields-backend-handoff.md#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api) · [§3.8](#38-지급조서-발급원문--산출-내역서-unmask-api-p0) | 발급 PDF에 마스킹 금지 · `POST .../privacy/unmask` |
 | P0 | `POST .../statements/bulk-confirm` + 이체 예정일 | 「일괄 확인」 모달 |
 | P0 | `PATCH .../statements/{id}/reject` | 산출 내역서 「신청 반려」 |
 | P1 | 산출 내역서 DTO (`GET /settlements/{id}` 확장) | 산출 내역서 모달 본문 · **items[].type enum 7종** ([§3.5](./settlement-payment-order-detail-backend-handoff.md#35-산출-내역서--산정-항목-type-enum-확장-p1)) · **⭐ 강의비 책정·calculationDetail 필수** ([§3.6](./settlement-payment-order-detail-backend-handoff.md#36--get-settlementssettlementid-필수-확장--강의비-책정-기준산정-기준-상세-p1차단)) |
-| P1 | 강사 embed / 회원 조합 DTO | 상세 기본정보 · **마스킹 정책** ([§3.7](./settlement-payment-order-detail-backend-handoff.md#37-개인정보-마스킹-정책-지급-현황--산출-내역서)) — 이름·은행명 plain, 연락처·이메일·계좌(번호·예금주)만 |
+| **P0** | 강사 프로필·계좌 embed — [UI SSOT §4.5](./settlement-payment-order-detail-ui-fields-backend-handoff.md#45--백엔드-요청-p0--강사-프로필계좌-현재-ui--) | 풀페이지·산출 내역서 **성별/생년·연락처·주소·계좌** (`-` 해소) |
 | P1 | `GET /settlements/aggregates` (목록용) | 상세와 무관, 목록 성능 |
 
 ---
@@ -405,7 +432,7 @@ GET /api/admin/settlements/statements?programId=42
 |------|----------------|
 | **상세 정산 라인 목록** (프로그램별 강사 라인 / 강사별 프로그램 라인) | **아니오** — 기존 `GET /settlements` scoped query로 충분 (프론트 연동 완료) |
 | **statementId** | **DTO 필드 추가** — `SettlementListItemResponse.statementId` (§4). 신규 endpoint 불필요 |
-| **강사 기본정보·계좌** | **예 (또는 회원 API 조합)** · 마스킹: **이름·은행명 plain** / 연락처·이메일·계좌번호·예금주만 ([§3.7](./settlement-payment-order-detail-backend-handoff.md#37-개인정보-마스킹-정책-지급-현황--산출-내역서)) |
+| **강사 기본정보·계좌** | **예 (또는 회원 API 조합)** · 화면 마스킹: **이름·은행명 plain** / 연락처·이메일·계좌번호·예금주만 ([§3.7](#37-개인정보-마스킹-정책--p0-서버-수정-요청-사람-이름-마스킹-금지)) · **발급·원문 열람은 unmask ([§3.8](#38-지급조서-발급원문--산출-내역서-unmask-api-p0))** |
 | **참여 기관명·차시·프로그램 헤더** | **DTO 필드 추가** — [UI 필드 SSOT](./settlement-payment-order-detail-ui-fields-backend-handoff.md) |
 | **일괄 확인·반려·산출서** | **예** — 기존 갭 문서 항목 |
 | **강의비 책정·산정 기준 상세** | **아니오 (신규 API 불필요)** — **`GET /settlements/{id}` DTO 확장 필수** (§3.6). 회원 API 단독 불가 |

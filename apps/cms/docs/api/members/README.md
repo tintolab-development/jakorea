@@ -14,11 +14,11 @@ CMS LNB 「회원 관리」(회원 목록 · 권한 승인 · 권한 설정) API
 | # | 문서 | 대상 · 범위 | SSOT ID |
 |---|------|-------------|---------|
 | 1 | [**member-program-history-ui-api-parity-backend-handoff-2026-08-25.md**](./member-program-history-ui-api-parity-backend-handoff-2026-08-25.md) | **개인·순수 교사·강사·겸직** — 프로젝트 참여 이력 (수강·봉사·공통 모달) | REQ-001~016 |
-| 2 | [**instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md**](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md) | **강사·겸직** — 참여 이력(강의 탭) · **정산 현황** | PH-001~016 · SET-001~008 |
+| 2 | [**instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md**](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md) | **강사·겸직** — 참여 이력(강의 탭) · **정산 현황** | PH-001~016 · SET-001~009 |
 | 3 | [**school-organization-program-enrollment-history-backend-handoff-2026-08-25.md**](./school-organization-program-enrollment-history-backend-handoff-2026-08-25.md) | **학교** — 프로젝트 수강 이력 (목록·bulk-delete) | §3 신규 API |
 | 4 | [**admin-member-managed-program-history-backend-handoff-2026-08-25.md**](./admin-member-managed-program-history-backend-handoff-2026-08-25.md) | **관리자** — 프로그램 담당 이력 | ADM-001~007 |
 | 5 | [**cms-table-bulk-download-api-backend-handoff.md**](../cms-table-bulk-download-api-backend-handoff.md) | **포함** — 과제 ZIP(#7) · 강의보고서 ZIP(#8) · 수료증/인증서 ZIP(#9) · 지급조서 ZIP(#6) | §5.1 #6~#9 |
-| 6 | [**settlement-payment-order-detail-ui-fields-backend-handoff.md**](../settlement-payment-order-detail-ui-fields-backend-handoff.md) | **포함** — 강사 상세 **산출 내역서** 모달 (SET-005) | §4 |
+| 6 | [**settlement-payment-order-detail-ui-fields-backend-handoff.md**](../settlement-payment-order-detail-ui-fields-backend-handoff.md) | **포함** — 강사 상세 **산출 내역서** 모달 (SET-005) · **지급조서 원문·unmask (SET-009)** | §4 · **§1.2** |
 | 7 | [**cms-table-bulk-delete-api-backend-handoff.md**](../cms-table-bulk-delete-api-backend-handoff.md) | **포함** — 회원 이력·관리자 담당 이력 **일괄 삭제** | §5.1 #14 · #15 |
 
 **ID 대응 (중복 추적 방지):** REQ-001~016 = PH-001~016 (강사 scope는 #2가 SSOT).
@@ -61,4 +61,4 @@ pnpm --filter cms package:members-be-handoff -- --openapi
 pnpm --filter cms package:members-be-handoff -- --out=~/Desktop/jakorea-members-be-handoff
 ```
 
-**Last updated:** 2026-08-25 (회원 상세 이력·정산 — ZIP·산출내역·삭제를 필수 묶음에 통합)
+**Last updated:** 2026-08-26 (SET-009 지급조서 원문·산출 내역서 unmask)

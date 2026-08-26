@@ -20,7 +20,7 @@
 | # | 문서 | 본 문서와의 관계 |
 |---|------|------------------|
 | 1 | [member-program-history-ui-api-parity-…](./member-program-history-ui-api-parity-backend-handoff-2026-08-25.md) | 전 회원 공통 REQ (PH-001~016 = REQ 동일) |
-| 2 | **본 문서** | 강사·겸직 — PH-001~016 · **SET-001~008** |
+| 2 | **본 문서** | 강사·겸직 — PH-001~016 · **SET-001~009** |
 | 3 | [school-organization-program-enrollment-history-…](./school-organization-program-enrollment-history-backend-handoff-2026-08-25.md) | 학교 수강 이력 |
 | 4 | [admin-member-managed-program-history-…](./admin-member-managed-program-history-backend-handoff-2026-08-25.md) | 관리자 담당 이력 |
 | 5 | [cms-table-bulk-download-api-backend-handoff.md](../cms-table-bulk-download-api-backend-handoff.md) | **포함** — PH-011(#7) · PH-014(#9) · PH-015(#8) · SET-006(#6) |
@@ -35,7 +35,8 @@
 | PH-014 | bulk-download | §5.1 **#9** |
 | PH-015 | bulk-download + 본문 §4.1 | §5.1 **#8** + 단건 download |
 | SET-005 | settlement-payment-order-detail-ui-fields | **§4** |
-| SET-006 | bulk-download | §5.1 **#6** |
+| SET-006 | bulk-download | §5.1 **#6** (ZIP). PDF 원문 PII는 SET-009 |
+| SET-009 | settlement-payment-order-detail-ui-fields | **§1.2** unmask |
 
 ---
 
@@ -48,7 +49,7 @@
 | 수강 이력 (`enrollment`) | ◐ | ◐ | PH-001 ~ PH-014 (§4.1) |
 | 강의 이력 (`lecture`) | ◐ | ✗ | PH-001, PH-002, PH-005, **PH-015** |
 | 봉사 이력 (`volunteer`) | ◐ | ◐ | PH-001, PH-002, PH-005, PH-014 |
-| 정산 현황 (`payment`) | ◐ | ✗ | SET-001 ~ SET-008 (§4.2) |
+| 정산 현황 (`payment`) | ◐ | ✗ | SET-001 ~ SET-009 (§4.2) |
 | **팝업·모달** (§5) | ◐ | ✗ | PH-007~011, PH-015, SET-005~008 |
 
 범례: ✓ 일치 · ◐ 부분 일치 · ✗ 불일치
@@ -196,15 +197,16 @@ GET /api/admin/users/{memberId}/applications/{applicationId}/lecture-attendance
 | **SET-003** | P1 | 산출 내역 · confirm/reject | 목록에 `statementId` 없음 → `GET /statements` **전량 fetch** join | 목록 item에 `statementId` embed | N+1·전량 fetch 제거 |
 | **SET-004** | P1 | 필터 | 프로그램명·기관명·정산 현황 **클라이언트** filter | query: `search`, `institutionName`, `statementStatus`/`paymentStatus`, `fromDate`/`toDate` | 서버 필터·건수 일치 |
 | **SET-005** | **P0** | 산출 내역 모달 | `GET /settlements/{id}` flat items · `calculationDetail` 없음 | DTO 확장 — `items[].type` enum(7종), `calculationDetail`, `period`, `withholdingTaxAmount`, `lectureFeeStandardTitle` 등 | [UI 필드 SSOT §4](../settlement-payment-order-detail-ui-fields-backend-handoff.md#4-산출-내역서-모달-목록-상세-보기) |
-| **SET-006** | **P0** | **지급조서 발급** (선택) | bulk ZIP **미구현** → 단건 PDF 순차 fallback | `POST /api/admin/settlements/payment-statements/bulk-download` `{ settlementIds[] }` | [bulk-download §5.1 #6](../cms-table-bulk-download-api-backend-handoff.md) |
+| **SET-006** | **P0** | **지급조서 발급** (선택) | bulk ZIP **미구현** → 단건 PDF 순차 fallback | `POST /api/admin/settlements/payment-statements/bulk-download` `{ settlementIds[] }` | [bulk-download §5.1 #6](../cms-table-bulk-download-api-backend-handoff.md). **PDF 본문 PII는 SET-009 원문** |
 | **SET-007** | P0 | 산출 내역 · **신청 반려** | reject endpoint 없음 (FE path 연결됨) | `PATCH /api/admin/settlements/statements/{statementId}/reject` `{ reason }` | 반려 후 status 반영 |
 | **SET-008** | P1 | 지급조서 확인 | confirm body에 **이체 예정일** — BE 수용 여부 ◐ | `PATCH .../confirm` body: `lectureFeePaymentScheduledDate` (또는 `scheduledPaymentDate`) SSOT | 확인 모달 저장·재조회 |
+| **SET-009** | **P0** | **지급조서 원문 PII · 산출 내역서 unmask** | 발급이 화면 마스킹 값을 바인딩 · unmask API 없음 | `POST /api/admin/settlements/{settlementId}/privacy/unmask` `{ reason }` → 전 PII 원문 | [UI SSOT §1.2](../settlement-payment-order-detail-ui-fields-backend-handoff.md#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api) |
 
-#### SET-005 · SET-006 FE 동작 (2026-08-25)
+#### SET-005 · SET-006 · SET-009 FE 동작 (2026-08-26)
 
 - 목록: `map-settlement-to-instructor-member-row.ts` — `institutionName: '-'`, invoice placeholder
 - 모달: `fetchSettlementDetailRemote` + `mapSettlementDetailToInstructorInvoice` — line item type 한글 매핑만, 상세 「준비 중」 구간 존재
-- 발급: `bulkDownloadPaymentStatementsRemote` 호출 → 실패 시 `downloadPaymentStatementRemote` **순차 fallback**
+- 발급: `bulkDownloadPaymentStatementsRemote` 호출 → 실패 시 `downloadPaymentStatementRemote` **순차 fallback**. FE는 산출 내역서 **마스킹 표시값**을 발급 양식에 바인딩 — **원문은 SET-009 unmask 대기**
 
 #### 정산 UI 8종 ↔ API status (SET 공통 · P2)
 
@@ -344,7 +346,7 @@ GET /api/admin/users/{memberId}/applications/{applicationId}/lecture-attendance
 |----|-----|-----|-----|
 | 확인 처리 + 이체 예정일 | `PATCH .../confirm` + date body | ✅ `useConfirmPaymentStatementMutation` | SET-008 |
 | 신청 반려 | `PATCH .../reject` | ✅ `rejectPaymentStatementRemote` | SET-007 |
-| 지급조서 발급 (푸터) | 단건 download / bulk ZIP | ✅ 단건 · bulk fallback | SET-006 |
+| 지급조서 발급 (푸터) | 단건 download / bulk ZIP · **본문 원문 PII** | ✅ 단건 · bulk fallback · 본문 마스킹 바인딩 | SET-006 · **SET-009** |
 | `statementId` | 목록 embed 또는 resolve | `GET /statements` join | SET-003 |
 
 **문서·UI 일치:** SET-005 요청은 [UI 필드 SSOT §4.1·§4.3·§4.4](../settlement-payment-order-detail-ui-fields-backend-handoff.md)와 **일치**.  
@@ -387,7 +389,7 @@ GET /api/admin/users/{memberId}/applications/{applicationId}/lecture-attendance
 | PH-007, PH-009, PH-010, PH-011 | 수강 출석·과제 모달 |
 | **PH-015** | **강의 강의보고서** 모달·bulk |
 | PH-014 | 증명서 ZIP |
-| SET-001, SET-005, SET-006, SET-007 | 정산 목록·산출·발급·반려 |
+| SET-001, SET-005, SET-006, SET-007, **SET-009** | 정산 목록·산출·발급 ZIP·반려 · **발급 원문 PII / unmask** |
 
 ### P1
 
@@ -424,7 +426,7 @@ PH-004, PH-012, PH-016 · status 매핑表 · 캘린더 slot time
 - [ ] **SET-001:** `institutionName` 필터·열 동작
 - [ ] **SET-003:** confirm/reject에 statementId 1회 조회로 충분
 - [ ] **SET-005:** 산출 내역 모달 line·원천징수·합계 = UI
-- [ ] **SET-006/007:** 지급조서 ZIP · 반려 후 status
+- [ ] **SET-006/007/009:** 지급조서 ZIP · 반려 후 status · **발급 PDF 원문 PII / unmask**
 
 ---
 
@@ -468,4 +470,4 @@ VITE_REAL_API_MODULES=...,members,settlementConfigs,paymentOrders,accountPayment
 
 ---
 
-**Last updated:** 2026-08-25 (§0 필수 묶음 · §11 ZIP·산출내역·삭제 통합)
+**Last updated:** 2026-08-26 (SET-009 지급조서 원문 · 산출 내역서 unmask)
