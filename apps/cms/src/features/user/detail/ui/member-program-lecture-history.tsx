@@ -17,12 +17,15 @@ import type { TableProps } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Application, UserHistory } from '@/types/domain'
-import { programService } from '@/entities/program/api/program-service'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import {
-  getEffectiveEnrollmentDisplayStatus,
+  resolveApplicationEnrollmentDisplayStatus,
+  resolveMemberProgramTitle,
+  resolveMemberProgramYear,
+  resolveVolunteerHistoryDisplayStatus,
+} from '@/features/user/detail/lib/member-program-history-display'
+import {
   isProgramHistoryDeleteBlockedByDisplayStatus,
-  type ProgramEnrollmentDisplayStatus,
 } from '@/shared/constants/status'
 import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -55,44 +58,6 @@ import {
 import { CertificateBulkIssueReasonModal } from './modal/certificate-bulk-issue-reason-modal'
 import type { CertificateIssueReasonValue } from './modal/certificate-bulk-issue-reason-modal'
 import { LectureReportSubmissionHistoryModal } from './modal/lecture-report-submission-history-modal'
-
-function programYear(programId: string, record?: Application | UserHistory): number | null {
-  const fromApi = (record as Application | undefined)?.customFields?.progressYear
-  if (typeof fromApi === 'number' && Number.isFinite(fromApi)) return fromApi
-  if (isMembersRemoteEnabled()) return null
-  const p = programService.getByIdSync(programId)
-  if (!p) return null
-  return new Date(p.startDate).getFullYear()
-}
-
-function programTitle(
-  programId: string,
-  record?: Application | UserHistory
-): string {
-  const fromApi =
-    (record as Application | undefined)?.customFields?.programName ??
-    (record as UserHistory | undefined)?.programName
-  if (typeof fromApi === 'string' && fromApi.trim()) return fromApi.trim()
-  if (isMembersRemoteEnabled()) return programId
-  const p = programService.getByIdSync(programId)
-  return p?.title ?? programId
-}
-
-function enrollmentDisplayStatusForApplication(
-  record: Application
-): ProgramEnrollmentDisplayStatus {
-  const fromApi = record.customFields?.enrollmentDisplayStatus
-  if (typeof fromApi === 'string' && fromApi.trim()) {
-    return fromApi.trim() as ProgramEnrollmentDisplayStatus
-  }
-  const program = programService.getByIdSync(record.programId)
-  return getEffectiveEnrollmentDisplayStatus(
-    record.status,
-    record.progressStatus,
-    program?.lifecycleStatus,
-    record.rejectionKind
-  )
-}
 
 function shouldIgnoreTableRowClick(target: HTMLElement): boolean {
   return (
@@ -159,15 +124,6 @@ function educationGradeFromRecord(record: Application): string {
   const raw = record.customFields?.educationGrade
   if (typeof raw === 'string' && raw.trim()) return raw.trim()
   return '-'
-}
-
-function deriveVolunteerDisplayStatus(history: UserHistory): ProgramEnrollmentDisplayStatus {
-  /** 봉사 이력 취소는 신청 반려 톤으로 통일(면접 단계 구분 없음) */
-  if (history.finalStatus === 'CANCELLED') return 'REJECTED'
-  if (history.finalStatus === 'COMPLETED') return 'PROGRAM_ENDED'
-  if (history.finalStatus === 'CONFIRMED') return 'EDUCATION_IN_PROGRESS'
-  const program = programService.getByIdSync(history.programId)
-  return getEffectiveEnrollmentDisplayStatus('submitted', undefined, program?.lifecycleStatus)
 }
 
 /** 이력 삭제 모달 — 수강 이력 테이블만 「프로그램 수강 이력」 문구 분기 */
@@ -311,7 +267,7 @@ export function MemberProgramLectureHistory({
     const keySet = new Set(selectedRowKeys.map(String))
     const titles = tableData
       .filter(row => keySet.has(String(row.id)))
-      .map(row => programTitle(row.programId, row))
+      .map(row => resolveMemberProgramTitle(row.programId, row))
     return buildProgramProgressHistoryDeleteGuide(titles, historyDeleteDomain)
   }, [tableData, selectedRowKeys, historyDeleteDomain])
 
@@ -320,7 +276,7 @@ export function MemberProgramLectureHistory({
     const keySet = new Set(selectedRowKeys.map(String))
     const titles = tableData
       .filter(row => keySet.has(String(row.id)))
-      .map(row => programTitle(row.programId, row))
+      .map(row => resolveMemberProgramTitle(row.programId, row))
     if (titles.length === 0 || !buildProgramProgressHistoryDeleteGuide(titles, historyDeleteDomain)) {
       return
     }
@@ -340,10 +296,10 @@ export function MemberProgramLectureHistory({
     const hasInProgress =
       mode === 'volunteerProgram'
         ? (selectedRecords as UserHistory[]).some(h =>
-            isProgramHistoryDeleteBlockedByDisplayStatus(deriveVolunteerDisplayStatus(h))
+            isProgramHistoryDeleteBlockedByDisplayStatus(resolveVolunteerHistoryDisplayStatus(h))
           )
         : (selectedRecords as Application[]).some(a =>
-            isProgramHistoryDeleteBlockedByDisplayStatus(enrollmentDisplayStatusForApplication(a))
+            isProgramHistoryDeleteBlockedByDisplayStatus(resolveApplicationEnrollmentDisplayStatus(a))
           )
 
     if (hasInProgress) {
@@ -383,14 +339,15 @@ export function MemberProgramLectureHistory({
           ellipsis: true,
           minWidth: 300,
           align: 'center',
-          render: (_: unknown, record: UserHistory) => programTitle(record.programId, record),
+          render: (_: unknown, record: UserHistory) =>
+            resolveMemberProgramTitle(record.programId, record),
         },
         {
           title: '진행년도',
           key: 'year',
           align: 'center',
           render: (_: unknown, record: UserHistory) => {
-            const y = programYear(record.programId, record)
+            const y = resolveMemberProgramYear(record.programId, record)
             return y != null ? `${y}년` : '-'
           },
         },
@@ -399,7 +356,7 @@ export function MemberProgramLectureHistory({
           key: 'enrollmentDisplay',
           align: 'center',
           render: (_: unknown, record: UserHistory) => (
-            <ProgramEnrollmentStatusText status={deriveVolunteerDisplayStatus(record)} />
+            <ProgramEnrollmentStatusText status={resolveVolunteerHistoryDisplayStatus(record)} />
           ),
         },
         managerCol,
@@ -418,14 +375,15 @@ export function MemberProgramLectureHistory({
         key: 'programTitle',
         ellipsis: true,
         align: 'center',
-        render: (_: unknown, record: Application) => programTitle(record.programId, record),
+        render: (_: unknown, record: Application) =>
+          resolveMemberProgramTitle(record.programId, record),
       },
       {
         title: '진행년도',
         key: 'year',
         align: 'center',
         render: (_: unknown, record: Application) => {
-          const y = programYear(record.programId, record)
+          const y = resolveMemberProgramYear(record.programId, record)
           return y != null ? `${y}년` : '-'
         },
       },
@@ -435,7 +393,7 @@ export function MemberProgramLectureHistory({
         align: 'center',
         render: (_: unknown, record: Application) => (
           <ProgramEnrollmentStatusText
-            status={enrollmentDisplayStatusForApplication(record)}
+            status={resolveApplicationEnrollmentDisplayStatus(record)}
           />
         ),
       },
@@ -535,13 +493,7 @@ export function MemberProgramLectureHistory({
         key: 'lectureReport',
         align: 'center',
         render: (_: unknown, record: Application) => {
-          const program = programService.getByIdSync(record.programId)
-          const displayStatus = getEffectiveEnrollmentDisplayStatus(
-            record.status,
-            record.progressStatus,
-            program?.lifecycleStatus,
-            record.rejectionKind
-          )
+          const displayStatus = resolveApplicationEnrollmentDisplayStatus(record)
           const ended = displayStatus === 'PROGRAM_ENDED'
           const canView =
             ended &&

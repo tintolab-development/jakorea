@@ -106,7 +106,7 @@ function targetLevelLabel(p: Program): string {
   return map[p.targetLevel] ?? '-'
 }
 
-function recruitmentCountDisplay(p: Program, remote: boolean): string {
+export function recruitmentCountDisplay(p: Program, remote: boolean): string {
   const cap = p.rounds[0]?.capacity ?? 0
   const n = p.approvedStudentCount
   if (remote && cap === 0 && (n == null || n === 0)) return '-'

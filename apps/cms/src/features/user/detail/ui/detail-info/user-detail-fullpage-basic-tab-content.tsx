@@ -142,7 +142,6 @@ export function UserDetailFullpageBasicTabContent({
   const {
     data: commentsData,
     isError: commentsError,
-    isLoading: commentsLoading,
   } = useMemberCommentsQuery(
     adminCommentResource?.resourceId,
     loadMemberAdminComments,
@@ -322,8 +321,8 @@ export function UserDetailFullpageBasicTabContent({
     <Space direction="vertical" size={24} style={{ width: '100%' }}>
       {canShowAdminCommentForTarget ? (
         <>
-          {membersRemote && (commentsError || commentsLoading) ? (
-            <MemberDetailMockDataBanner message="관리자 코멘트 API 조회에 실패했습니다. mock 데이터가 표시될 수 있습니다." />
+          {membersRemote && commentsError ? (
+            <MemberDetailMockDataBanner message="관리자 코멘트 API 조회에 실패했습니다. 저장된 값 또는 빈 목록이 표시됩니다." />
           ) : null}
           <UserDetailAdminCommentSection
             user={userForAdminComment}
@@ -391,7 +390,7 @@ export function UserDetailFullpageBasicTabContent({
       {basicTab.showSchoolAffiliatedTeachers ? (
         <>
           {membersRemote && teachersError ? (
-            <MemberDetailMockDataBanner message="소속 교사 목록 API 조회에 실패했습니다. mock 데이터가 표시될 수 있습니다." />
+            <MemberDetailMockDataBanner message="소속 교사 목록 API 조회에 실패했습니다. 저장된 값 또는 빈 목록이 표시됩니다." />
           ) : null}
           <SchoolAffiliatedTeachersSection
             rows={affiliatedTeacherRows}

@@ -1,12 +1,15 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { Application, UserHistory } from '@/types/domain'
-import { programService } from '@/entities/program/api/program-service'
 import {
-  getEffectiveEnrollmentDisplayStatus,
+  resolveApplicationEnrollmentDisplayStatus,
+  resolveMemberProgramTitle,
+  resolveMemberProgramYear,
+  resolveVolunteerHistoryDisplayStatus,
+} from '@/features/user/detail/lib/member-program-history-display'
+import {
   PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER,
   programEnrollmentEconomyListLabels,
-  type ProgramEnrollmentDisplayStatus,
 } from '@/shared/constants/status'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
@@ -49,43 +52,6 @@ function pfx(ctx: MemberProgramLectureTableContext): string {
   return `mplh${modeSlug(ctx.mode)}`
 }
 
-function programYear(programId: string, record?: Application): number | null {
-  const fromApi = record?.customFields?.progressYear
-  if (typeof fromApi === 'number' && Number.isFinite(fromApi)) return fromApi
-  const p = programService.getByIdSync(programId)
-  if (!p) return null
-  return new Date(p.startDate).getFullYear()
-}
-
-function programTitle(programId: string, record?: Application): string {
-  const fromApi = record?.customFields?.programName
-  if (typeof fromApi === 'string' && fromApi.trim()) return fromApi.trim()
-  const p = programService.getByIdSync(programId)
-  return p?.title ?? programId
-}
-
-function applicationEnrollmentDisplayStatus(app: Application): ProgramEnrollmentDisplayStatus {
-  const fromApi = app.customFields?.enrollmentDisplayStatus
-  if (typeof fromApi === 'string' && fromApi.trim()) {
-    return fromApi.trim() as ProgramEnrollmentDisplayStatus
-  }
-  const program = programService.getByIdSync(app.programId)
-  return getEffectiveEnrollmentDisplayStatus(
-    app.status,
-    app.progressStatus,
-    program?.lifecycleStatus,
-    app.rejectionKind
-  )
-}
-
-function deriveVolunteerDisplayStatus(history: UserHistory): ProgramEnrollmentDisplayStatus {
-  if (history.finalStatus === 'CANCELLED') return 'REJECTED'
-  if (history.finalStatus === 'COMPLETED') return 'PROGRAM_ENDED'
-  if (history.finalStatus === 'CONFIRMED') return 'EDUCATION_IN_PROGRESS'
-  const program = programService.getByIdSync(history.programId)
-  return getEffectiveEnrollmentDisplayStatus('submitted', undefined, program?.lifecycleStatus)
-}
-
 function filterApplications(
   applications: Application[],
   searchParams: URLSearchParams,
@@ -99,21 +65,15 @@ function filterApplications(
   const isSchoolMode = ctx.mode === 'schoolProgramParticipation'
 
   return applications.filter(app => {
-    const t = isSchoolMode ? programTitle(app.programId, app) : programTitle(app.programId)
+    const t = isSchoolMode
+      ? resolveMemberProgramTitle(app.programId, app)
+      : resolveMemberProgramTitle(app.programId)
     if (title && !t.includes(title)) return false
-    const y = isSchoolMode ? programYear(app.programId, app) : programYear(app.programId)
+    const y = isSchoolMode
+      ? resolveMemberProgramYear(app.programId, app)
+      : resolveMemberProgramYear(app.programId)
     if (year && (y == null || String(y) !== year)) return false
-    const displayStatus = isSchoolMode
-      ? applicationEnrollmentDisplayStatus(app)
-      : (() => {
-          const program = programService.getByIdSync(app.programId)
-          return getEffectiveEnrollmentDisplayStatus(
-            app.status,
-            app.progressStatus,
-            program?.lifecycleStatus,
-            app.rejectionKind
-          )
-        })()
+    const displayStatus = resolveApplicationEnrollmentDisplayStatus(app)
     if (enrollmentStatus && displayStatus !== enrollmentStatus) return false
     const mgr = (app.managerName ?? '').trim()
     if (managerName && !mgr.includes(managerName)) return false
@@ -133,11 +93,11 @@ function filterVolunteerHistories(
   const managerName = (searchParams.get(`${pr}_mgr`) ?? '').trim()
 
   return rows.filter(h => {
-    const t = programTitle(h.programId)
+    const t = resolveMemberProgramTitle(h.programId, h)
     if (title && !t.includes(title)) return false
-    const y = programYear(h.programId)
+    const y = resolveMemberProgramYear(h.programId, h)
     if (year && (y == null || String(y) !== year)) return false
-    const displayStatus = deriveVolunteerDisplayStatus(h)
+    const displayStatus = resolveVolunteerHistoryDisplayStatus(h)
     if (enrollmentStatus && displayStatus !== enrollmentStatus) return false
     const mgr = (h.managerName ?? '').trim()
     if (managerName && !mgr.includes(managerName)) return false

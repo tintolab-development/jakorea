@@ -9,12 +9,14 @@ import { CmsButton, AttachmentClipIcon } from '@/shared/ui'
 import { Input, Dropdown, Popover, type MenuProps } from 'antd'
 import type { Program, ProgramPost, ProgramFile } from '@/types/domain'
 import {
-  getProgramPostsByProgramId,
-  getProgramPostsByProgramIdAndSchoolId,
-  getProgramFilesByProgramId,
   getReactionTotalCountByPostId,
   getPostViewCountForContext,
 } from '@/data/mock'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import {
+  resolveEnrollmentProgramFilesList,
+  resolveEnrollmentProgramPostsList,
+} from '@/features/user/detail/lib/enrollment-program-posts-source'
 import { PostReadStatusPopoverContent } from './post-read-status-popover'
 import { downloadFile } from '@/shared/lib/file-download'
 import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
@@ -259,25 +261,31 @@ export function EnrollmentProgramDetailPostsTab({
     ? onWriteModalOpenChange!
     : setInternalWriteModalOpen
 
+  const membersRemote = isMembersRemoteEnabled()
   const [detailPost, setDetailPost] = useState<ProgramPost | null>(null)
   const [readPopoverPostId, setReadPopoverPostId] = useState<string | null>(null)
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
   const [postsVersion, setPostsVersion] = useState(0)
   const posts = useMemo(() => {
-    const list =
-      postsOverride != null
-        ? postsOverride
-        : schoolId
-          ? getProgramPostsByProgramIdAndSchoolId(program.id, schoolId)
-          : getProgramPostsByProgramId(program.id)
+    const list = resolveEnrollmentProgramPostsList({
+      membersRemote,
+      postsOverride,
+      programId: program.id,
+      schoolId,
+    })
     return [...list].sort((a, b) => {
       if (a.read !== b.read) return a.read ? 1 : -1
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     })
-  }, [program.id, schoolId, postsVersion, postsOverride])
+  }, [program.id, schoolId, postsVersion, postsOverride, membersRemote])
   const allFilesRaw = useMemo(
-    () => getProgramFilesByProgramId(program.id),
-    [program.id, postsVersion]
+    () =>
+      resolveEnrollmentProgramFilesList({
+        membersRemote,
+        postsOverride,
+        programId: program.id,
+      }),
+    [program.id, postsVersion, membersRemote, postsOverride]
   )
   const schoolPostIds = useMemo(() => new Set(posts.map(p => p.id)), [posts])
   const allFiles = useMemo(() => {

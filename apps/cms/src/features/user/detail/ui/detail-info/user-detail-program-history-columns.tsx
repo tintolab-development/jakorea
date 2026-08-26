@@ -5,9 +5,8 @@ import type { Application } from '@/types/domain'
 import { CmsButton } from '@/shared/ui'
 import { StatusBadge } from '@/shared/components/status-badge'
 import { lectureAttendanceHasAtLeastOne } from '@/shared/utils'
-import { programService } from '@/entities/program/api/program-service'
+import { resolveApplicationEnrollmentDisplayStatus, resolveMemberProgramTitle } from '@/features/user/detail/lib/member-program-history-display'
 import {
-  getEffectiveEnrollmentDisplayStatus,
   PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER,
   type ProgramEnrollmentDisplayStatus,
 } from '@/shared/constants/status'
@@ -38,23 +37,15 @@ export function createProgramHistoryColumns({
       dataIndex: 'programId',
       key: 'programId',
       align: 'center',
-      render: (programId: string) => {
-        const program = programService.getByIdSync(programId)
-        return program ? program.title : programId
-      },
+      render: (programId: string, record: Application) =>
+        resolveMemberProgramTitle(programId, record),
     },
     {
       title: '모집 신청 현황',
       key: 'progressDisplay',
       align: 'center',
       render: (_: unknown, record: Application) => {
-        const program = programService.getByIdSync(record.programId)
-        const displayStatus = getEffectiveEnrollmentDisplayStatus(
-          record.status,
-          record.progressStatus,
-          program?.lifecycleStatus,
-          record.rejectionKind
-        )
+        const displayStatus = resolveApplicationEnrollmentDisplayStatus(record)
         const menuItems: MenuProps['items'] = progressStatusReadOnly
           ? undefined
           : PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER.map(key => ({

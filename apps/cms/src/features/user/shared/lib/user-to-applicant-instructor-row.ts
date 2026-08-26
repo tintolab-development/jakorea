@@ -95,19 +95,19 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
     user.listMetrics?.instructorCareerYearsLabel?.trim() || user.instructorCareerText?.trim()
   const careerYears = parseCareerYearsFromLabel(careerLabel)
   const years = careerYears > 0 ? careerYears : (user.participationHistory ?? 0)
-  const affiliation = user.affiliation?.trim() || 'JA 강사'
-  const remote = isMembersRemoteEnabled()
+  const membersRemote = isMembersRemoteEnabled()
+  const affiliation = user.affiliation?.trim() || (membersRemote ? '-' : 'JA 강사')
   const rawEducationLevel = user.listMetrics?.highestEducationLabel?.trim()
   const { levelPart: rawEducationLevelPart, schoolName: schoolFromLabel } =
     splitHighestEducationLabel(rawEducationLevel)
   const educationLevel =
     (rawEducationLevelPart
       ? formatInstructorEducationLevelDisplay(rawEducationLevelPart)
-      : undefined) || (remote ? REMOTE_RESUME_PLACEHOLDER_EDUCATION : '4년제 졸업')
+      : undefined) || (membersRemote ? REMOTE_RESUME_PLACEHOLDER_EDUCATION : '4년제 졸업')
   const educationSchoolName =
     schoolFromLabel && !isInstructorMaskedPlaceholder(schoolFromLabel)
       ? schoolFromLabel
-      : remote
+      : membersRemote
         ? REMOTE_RESUME_PLACEHOLDER_SCHOOL
         : '-*대학교'
   /** API `profile.essays.freeWrite1` 또는 legacy `selfIntroduction` */
@@ -122,7 +122,7 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
       ? careerLabel
       : years > 0
         ? `${years}년`
-        : remote
+        : membersRemote
           ? '-'
           : '3년'
 
@@ -143,17 +143,17 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
     affiliation,
     approvalStatus: mapApprovalStatus(user.instructorApprovalStatus),
     schoolName: user.schoolInfo?.schoolName ?? user.affiliatedSchoolName ?? '-',
-    nameEnglish: user.nameEn ?? (remote ? '-' : 'Park Tinto'),
-    birthDate: user.birthDate ? formatDate(user.birthDate) : remote ? '-' : '1990.09.15',
+    nameEnglish: user.nameEn ?? (membersRemote ? '-' : 'Park Tinto'),
+    birthDate: user.birthDate ? formatDate(user.birthDate) : membersRemote ? '-' : '1990.09.15',
     gender: (() => {
       const display = toDisplayGender(user.gender)
       if (display !== '-') return display
-      return remote ? '-' : '남성'
+      return membersRemote ? '-' : '남성'
     })(),
     bankName: user.instructorInfo?.bankName ?? '',
     accountNumber: user.instructorInfo?.accountNumber ?? '',
     accountHolder: user.instructorInfo?.accountHolder ?? '',
-    evaluationGrade: grade || (remote ? '-' : 'A'),
+    evaluationGrade: grade || (membersRemote ? '-' : 'A'),
     teachingExperience,
     oneLineIntro: user.bio?.trim() ? user.bio : '-',
     businessIncomeEarnerStatus:
@@ -163,7 +163,7 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
           ? '해당 없음'
           : '해당 없음',
     lectureFeeBasisDisplay:
-      user.listMetrics?.instructorFeeGradeLabel?.trim() || (remote ? '-' : '특강 강사비 | 915,000원'),
+      user.listMetrics?.instructorFeeGradeLabel?.trim() || (membersRemote ? '-' : '특강 강사비 | 915,000원'),
     settlementStatusLabel: user.listMetrics?.settlementStatusLabel?.trim() || undefined,
     freeWriting1: freeWriting1FromApi,
     freeWriting2: '',
@@ -173,7 +173,7 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
     jaKoreaActivities: [],
     educations: educationsFromSummary,
     qualifications,
-    awards: remote
+    awards: membersRemote
       ? []
       : [
           { year: '2024', name: 'OO교육원 웹마스터 915기 교육 수료' },
