@@ -71,6 +71,12 @@ export function resolveBasicInfoLayout({
   }
 
   if (bodyKey === 'instructor') {
+    if (!usesInstructorMemberBasicInfoLayout(instructorProfile)) {
+      return {
+        layout: BasicInfoLayout.SINGLE_CARD,
+        sections: [BasicInfoSectionTypes.SCHOOL_TEACHER],
+      }
+    }
     return {
       layout: BasicInfoLayout.SPLIT_CARD,
       sections: [BasicInfoSectionTypes.META, BasicInfoSectionTypes.PROFILE],

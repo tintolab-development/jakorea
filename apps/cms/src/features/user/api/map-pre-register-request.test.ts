@@ -161,4 +161,36 @@ describe('mapCreateUserRequestToPreRegisterIndividual', () => {
       address: '서울특별시 강남구',
     })
   })
+
+  it('재학 중이면 schoolName·enrollmentStatus·grade를 함께 보낸다', () => {
+    const body = mapCreateUserRequestToPreRegisterIndividual({
+      email: 'enrolled@test.com',
+      password: 'TempPass1!',
+      name: '김재학',
+      role: 'INDIVIDUAL',
+      isActive: true,
+      affiliation: '진월초등학교',
+      schoolEnrollmentStatus: 'ENROLLED',
+      grade: '3학년',
+    })
+
+    expect(body.schoolName).toBe('진월초등학교')
+    expect(body.enrollmentStatus).toBe('ENROLLED')
+    expect((body as { grade?: string }).grade).toBe('3학년')
+  })
+
+  it('미재학이면 grade를 보내지 않는다', () => {
+    const body = mapCreateUserRequestToPreRegisterIndividual({
+      email: 'none@test.com',
+      password: 'TempPass1!',
+      name: '이미재',
+      role: 'INDIVIDUAL',
+      isActive: true,
+      schoolEnrollmentStatus: 'NOT_ENROLLED',
+      grade: '3학년',
+    })
+
+    expect(body.enrollmentStatus).toBe('NOT_ENROLLED')
+    expect((body as { grade?: string }).grade).toBeUndefined()
+  })
 })
