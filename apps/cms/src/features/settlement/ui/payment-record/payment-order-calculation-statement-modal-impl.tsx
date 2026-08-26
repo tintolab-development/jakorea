@@ -34,7 +34,7 @@ import {
   PaymentOrderCalculationBasisDetailModal,
   usePaymentOrderCalculationBasisDetailModal,
 } from './payment-order-calculation-basis-detail-modal'
-import { SettlementItemSettingDetailModal } from '@/pages/settlement-management/settlement-item-setting-detail-modal'
+import { computePaymentOrderCalculationSubtotalBeforeWithholding } from './payment-order-calculation-basis-detail'
 import { PaymentOrderCalculationStatementInstructorBasicSection } from './payment-order-calculation-statement-instructor-basic-section'
 import { PaymentOrderCalculationStatementProgramBasicSection } from './payment-order-calculation-statement-program-basic-section'
 
@@ -100,20 +100,19 @@ export function PaymentOrderCalculationStatementModalImpl({
     if (!data || (data.context !== 'program' && data.context !== 'instructor')) {
       return null
     }
+    const subtotalBeforeWithholding = computePaymentOrderCalculationSubtotalBeforeWithholding(data.blocks)
     return {
       lectureFeeStandardTitle: data.basic.lectureFeeStandardTitle,
-      allowSyntheticFallback: !paymentOrdersRemote,
+      withholdingDailySalaryTotalWon:
+        subtotalBeforeWithholding > 0 ? subtotalBeforeWithholding : undefined,
     }
-  }, [data, paymentOrdersRemote])
+  }, [data])
 
   const {
     basisDetailOpen,
     selectedBasisDetail,
     handleBasisDetailClick,
     closeBasisDetailModal,
-    wageSettingItemOpen,
-    wageSettingItem,
-    closeWageSettingItemModal,
   } = usePaymentOrderCalculationBasisDetailModal(open, basisDetailContext)
 
   /* eslint-disable react-hooks/set-state-in-effect -- 모달 닫힘과 동기화 */
@@ -375,12 +374,6 @@ export function PaymentOrderCalculationStatementModalImpl({
         onCancel={closeBasisDetailModal}
         detail={selectedBasisDetail}
         zIndex={1200}
-      />
-      <SettlementItemSettingDetailModal
-        open={wageSettingItemOpen}
-        onCancel={closeWageSettingItemModal}
-        item={wageSettingItem}
-        readOnly
       />
     </>
   )

@@ -38,7 +38,7 @@ import {
   PaymentOrderCalculationBasisDetailModal,
   usePaymentOrderCalculationBasisDetailModal,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail-modal'
-import { SettlementItemSettingDetailModal } from '@/pages/settlement-management/settlement-item-setting-detail-modal'
+import { computePaymentOrderCalculationSubtotalBeforeWithholding } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import {
   AccountPaymentConfirmationModal,
   buildAccountPaymentSingleConfirmationPayload,
@@ -89,18 +89,23 @@ export function AccountPaymentStatusDetailFullPageModal({
 
   const [paymentCompleteConfirmOpen, setPaymentCompleteConfirmOpen] = useState(false)
   const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
+  const basisDetailContext = useMemo(() => {
+    const subtotalBeforeWithholding = detail
+      ? computePaymentOrderCalculationSubtotalBeforeWithholding(detail.blocks)
+      : 0
+    return {
+      lectureFeeStandardTitle: detail?.basic.lectureFeeStandardTitle,
+      withholdingDailySalaryTotalWon:
+        subtotalBeforeWithholding > 0 ? subtotalBeforeWithholding : undefined,
+    }
+  }, [detail])
+
   const {
     basisDetailOpen,
     selectedBasisDetail,
     handleBasisDetailClick,
     closeBasisDetailModal,
-    wageSettingItemOpen,
-    wageSettingItem,
-    closeWageSettingItemModal,
-  } = usePaymentOrderCalculationBasisDetailModal(open, {
-    lectureFeeStandardTitle: detail?.basic.lectureFeeStandardTitle,
-    allowSyntheticFallback: !accountPaymentsRemote,
-  })
+  } = usePaymentOrderCalculationBasisDetailModal(open, basisDetailContext)
 
   const singlePaymentConfirmPayload = useMemo(
     () => (detail ? buildAccountPaymentSingleConfirmationPayload(detail) : null),
@@ -347,12 +352,6 @@ export function AccountPaymentStatusDetailFullPageModal({
         onCancel={closeBasisDetailModal}
         detail={selectedBasisDetail}
         zIndex={1200}
-      />
-      <SettlementItemSettingDetailModal
-        open={wageSettingItemOpen}
-        onCancel={closeWageSettingItemModal}
-        item={wageSettingItem}
-        readOnly
       />
     </>
   )

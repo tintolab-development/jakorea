@@ -65,6 +65,8 @@ describe('mapSettlementDetailToProgramCalculationStatement', () => {
       '홍길동'
     )
 
+    expect(mapped.context).toBe('program')
+    if (mapped.context !== 'program') return
     expect(mapped.basic.programSessionProgressDisplay).toBe('4 / 16')
     expect(mapped.basic.lectureFeeStandardTitle).toBe('2급 강사비')
     expect(mapped.basic.lectureFeeStandardAmount).toBe('915,000원')
@@ -121,6 +123,8 @@ describe('mapSettlementDetailToInstructorPageCalculationStatement', () => {
       instructorIdentityFromLine('홍길동'),
       'JA 경제교실'
     )
+    expect(mapped.context).toBe('instructor')
+    if (mapped.context !== 'instructor') return
     expect(mapped.basic.lectureFeeStandardTitle).toBe('특강 강사비')
     expect(mapped.basic.lectureFeeStandardAmount).toBe('1,200,000원')
     expect(mapped.basic.phoneDisplay).toBe('-')
