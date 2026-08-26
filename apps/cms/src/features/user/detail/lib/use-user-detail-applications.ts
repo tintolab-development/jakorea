@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { applicationService } from '@/entities/application/api/application-service'
 import type { Application } from '@/types/domain'
+import type { UserHistory } from '@/types/domain'
 import type { User } from '@/types/user'
 import {
   useMemberApplicationsQuery,
@@ -116,6 +117,11 @@ export function useUserDetailApplications(
     )
   }, [membersRemote, displayUser, applicationsQuery.data, programHistoryQuery.data])
 
+  const remoteVolunteerHistories = programHistoryQuery.data?.volunteerHistories ?? []
+  const remoteVolunteerHistoriesLoading = Boolean(
+    queryEnabled && membersRemote && programHistoryQuery.isLoading
+  )
+
   const [applications, setApplications] = useState<Application[]>([])
   const [enrollmentApplications, setEnrollmentApplications] = useState<Application[]>([])
   const [applicationsLoading, setApplicationsLoading] = useState(false)
@@ -182,6 +188,8 @@ export function useUserDetailApplications(
       applicationsLoading: Boolean(
         queryEnabled && (applicationsQuery.isLoading || programHistoryQuery.isLoading)
       ),
+      volunteerHistories: remoteVolunteerHistories,
+      volunteerHistoriesLoading: remoteVolunteerHistoriesLoading,
       refetchApplications,
     }
   }
@@ -190,6 +198,8 @@ export function useUserDetailApplications(
     applications,
     enrollmentApplications,
     applicationsLoading,
+    volunteerHistories: [] as UserHistory[],
+    volunteerHistoriesLoading: false,
     refetchApplications,
   }
 }

@@ -23,7 +23,6 @@ import {
 import { buildUserDetailSidebarItems } from '../ui/detail-info/user-detail-fullpage-sidebar-items'
 import { useUserDetailApplications } from './use-user-detail-applications'
 import {
-  useMemberProgramHistoryQuery,
   useSchoolOrganizationProgramEnrollmentHistoryQuery,
 } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { useUserDetailUrlSync } from './use-user-detail-url-sync'
@@ -94,7 +93,6 @@ import {
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { updateTeacherMemberEmploymentStatusAndRefresh } from '@/features/user/api/update-teacher-member-employment-status'
-import { getMemberIdByUuid } from '@/features/user/api/member-id-registry'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { mockUserHistories } from '@/data/mock/mypage'
@@ -161,6 +159,8 @@ export function useUserDetailController({
   const [tabState, setTabState] = useState<TabState>({ lnb: 'detail-info' })
   /** 권한 승인 상세는 신청 정보(기본/약관/이력서)만 — 프로그램 신청·참여 이력 API 생략 */
   const loadProgramHistoryResources = open && mode !== 'permission'
+  /** 기본정보 등 다른 LNB — 프로그램 이력·수강 API는 history 탭 진입 시에만 */
+  const shouldLoadProgramHistoryTab = loadProgramHistoryResources && tabState.lnb === 'history'
   const isSchoolDetail = displayUser?.role === 'SCHOOL'
 
   const schoolOrganizationId = useMemo(() => {
@@ -174,9 +174,11 @@ export function useUserDetailController({
     applications: memberApplications,
     enrollmentApplications,
     applicationsLoading: memberApplicationsLoading,
+    volunteerHistories: remoteVolunteerHistories,
+    volunteerHistoriesLoading: remoteVolunteerHistoriesLoading,
     refetchApplications: refetchMemberApplications,
   } = useUserDetailApplications(open, displayUser, {
-    enabled: loadProgramHistoryResources && !isSchoolDetail,
+    enabled: shouldLoadProgramHistoryTab && !isSchoolDetail,
   })
 
   const {
@@ -186,7 +188,7 @@ export function useUserDetailController({
   } = useSchoolOrganizationProgramEnrollmentHistoryQuery(
     schoolOrganizationId,
     displayUser?.id,
-    loadProgramHistoryResources && isSchoolDetail
+    shouldLoadProgramHistoryTab && isSchoolDetail
   )
 
   const applications = isSchoolDetail ? schoolEnrollmentApplications : memberApplications
@@ -201,17 +203,14 @@ export function useUserDetailController({
   }, [isSchoolDetail, refetchMemberApplications, refetchSchoolEnrollment])
 
   const membersRemote = isMembersRemoteEnabled()
-  const programHistoryMemberId =
-    displayUser?.memberId ?? (displayUser ? getMemberIdByUuid(displayUser.id) : undefined)
-  const { data: programHistoryData, isLoading: programHistoryLoading } =
-    useMemberProgramHistoryQuery(
-      programHistoryMemberId,
-      displayUser?.id,
-      loadProgramHistoryResources && membersRemote
-    )
 
-  const [volunteerHistories, setVolunteerHistories] = useState<UserHistory[]>([])
-  const [volunteerHistoriesLoading, setVolunteerHistoriesLoading] = useState(false)
+  const [mockVolunteerHistories, setMockVolunteerHistories] = useState<UserHistory[]>([])
+  const [mockVolunteerHistoriesLoading, setMockVolunteerHistoriesLoading] = useState(false)
+
+  const volunteerHistories = membersRemote ? remoteVolunteerHistories : mockVolunteerHistories
+  const volunteerHistoriesLoading = membersRemote
+    ? remoteVolunteerHistoriesLoading
+    : mockVolunteerHistoriesLoading
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false)
   const [institutionDeleteBlockedOpen, setInstitutionDeleteBlockedOpen] = useState(false)
   const [basicInfoEditing, setBasicInfoEditing] = useState(false)
@@ -331,24 +330,21 @@ export function useUserDetailController({
   }, [detailSubjectKey])
 
   useEffect(() => {
-    if (membersRemote) {
-      setVolunteerHistories(programHistoryData?.volunteerHistories ?? [])
-      setVolunteerHistoriesLoading(programHistoryLoading)
+    if (membersRemote) return
+
+    if (shouldLoadProgramHistoryTab && displayUser?.id) {
+      setMockVolunteerHistoriesLoading(true)
+      const volunteerOnly = mockUserHistories.filter(
+        h => h.userId === displayUser.id && h.role === 'VOLUNTEER'
+      )
+      setMockVolunteerHistories(volunteerOnly)
+      setMockVolunteerHistoriesLoading(false)
       return
     }
 
-    if (!open || !displayUser?.id) {
-      setVolunteerHistories([])
-      setVolunteerHistoriesLoading(false)
-      return
-    }
-
-    const volunteerOnly = mockUserHistories.filter(
-      h => h.userId === displayUser.id && h.role === 'VOLUNTEER'
-    )
-    setVolunteerHistories(volunteerOnly)
-    setVolunteerHistoriesLoading(false)
-  }, [membersRemote, programHistoryData, programHistoryLoading, open, displayUser?.id])
+    setMockVolunteerHistories([])
+    setMockVolunteerHistoriesLoading(false)
+  }, [membersRemote, shouldLoadProgramHistoryTab, displayUser?.id])
 
   const handleProgressStatusChange = useCallback(
     async (app: Application, displayStatus: ProgramEnrollmentDisplayStatus) => {

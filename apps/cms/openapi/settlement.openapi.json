@@ -14553,10 +14553,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -19048,15 +19048,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessStartDate": {
-            "type": "string"
-          },
           "businessEndDate": {
             "type": "string"
           },
           "businessYear": {
             "type": "integer",
             "format": "int32"
+          },
+          "businessStartDate": {
+            "type": "string"
           }
         }
       },
