@@ -148,6 +148,21 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(detail?.layout).toMatch(/^transport/)
   })
 
+  it('allowSyntheticFallback=false 이면 교통비 seed를 만들지 않음', () => {
+    expect(
+      resolvePaymentOrderCalculationBasisDetailForRow(
+        {
+          kind: 'travel',
+          itemLabel: '교통비',
+          amount: 30000,
+          lineId: 'travel-1',
+          lectureSessionDisplay: '1 ~ 2차시',
+        },
+        { allowSyntheticFallback: false }
+      )
+    ).toBeUndefined()
+  })
+
   it('resolvePaymentOrderCalculationBasisDetailForRow builds activity fallback', () => {
     const detail = resolvePaymentOrderCalculationBasisDetailForRow({
       kind: 'activity',

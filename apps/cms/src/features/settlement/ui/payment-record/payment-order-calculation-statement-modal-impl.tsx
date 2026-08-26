@@ -100,8 +100,11 @@ export function PaymentOrderCalculationStatementModalImpl({
     if (!data || (data.context !== 'program' && data.context !== 'instructor')) {
       return null
     }
-    return { lectureFeeStandardTitle: data.basic.lectureFeeStandardTitle }
-  }, [data])
+    return {
+      lectureFeeStandardTitle: data.basic.lectureFeeStandardTitle,
+      allowSyntheticFallback: !paymentOrdersRemote,
+    }
+  }, [data, paymentOrdersRemote])
 
   const {
     basisDetailOpen,

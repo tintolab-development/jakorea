@@ -380,6 +380,11 @@ export type PaymentOrderCalculationBasisDetailResolveContext = {
   lectureFeeStandardTitle?: string
   /** 원천징수 fallback — 세전 1일 급여 총액 */
   withholdingDailySalaryTotalWon?: number
+  /**
+   * mock 전용. `false`이면 교통·숙박·식사·활동비·원천징수 seed 합성을 하지 않는다.
+   * 기본값 `true` (mock).
+   */
+  allowSyntheticFallback?: boolean
 }
 
 /** 행 payload·기본정보로 산정 기준 상세 fallback 생성 (mock/API 공통) */
@@ -406,6 +411,10 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
     if (title && title !== '—') {
       return buildLectureFeeTierBasisDetail(title, row.amount, sessionStart)
     }
+  }
+
+  if (context?.allowSyntheticFallback === false) {
+    return undefined
   }
 
   if (row.kind === 'travel' || row.itemLabel === '교통비') {

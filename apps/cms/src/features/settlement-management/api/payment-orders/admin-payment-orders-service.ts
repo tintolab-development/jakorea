@@ -20,6 +20,7 @@ import type {
   PaymentOrderAdminInstructorRow,
   PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
+import { needsPaymentStatementJoin } from '@/features/settlement-management/api/shared/map-frontend-fields'
 
 export interface PaymentOrdersListData {
   programRows: PaymentOrderAdminProgramRow[]
@@ -92,6 +93,9 @@ export async function getPaymentOrdersDetailContextRemote(
 ) {
   const listParams = buildPaymentOrdersDetailListParams(params)
   const items = (await fetchAllSettlementsRemote(listParams)) ?? []
+  if (!needsPaymentStatementJoin(items)) {
+    return { items, statements: [] }
+  }
   const settlementIds = items
     .map(item => item.settlementId)
     .filter((id): id is number => id != null)

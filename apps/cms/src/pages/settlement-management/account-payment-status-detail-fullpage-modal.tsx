@@ -99,6 +99,7 @@ export function AccountPaymentStatusDetailFullPageModal({
     closeWageSettingItemModal,
   } = usePaymentOrderCalculationBasisDetailModal(open, {
     lectureFeeStandardTitle: detail?.basic.lectureFeeStandardTitle,
+    allowSyntheticFallback: !accountPaymentsRemote,
   })
 
   const singlePaymentConfirmPayload = useMemo(

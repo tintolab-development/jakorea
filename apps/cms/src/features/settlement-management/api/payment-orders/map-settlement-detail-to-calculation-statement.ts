@@ -12,9 +12,18 @@ import {
 } from '@/data/mock/payment-order-admin-list'
 import type { SettlementFrontendItemResponse, SettlementFrontendResponse } from '@/shared/api/generated/settlement/schemas'
 import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
-import { mapSettlementFrontendItemTypeToLineKind } from '@/features/settlement/lib/resolve-settlement-item-setting-for-calculation-row'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { KO_DOW } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
+import {
+  formatBusinessIncomeEarnerLabel,
+  formatBusinessPeriodDisplay,
+  formatLectureFeeStandardTitle,
+  formatLectureSessionLabel,
+  formatProgramSessionProgressDisplay,
+  formatWonAmountDisplay,
+  mapCalculationDetailToBasisDetail,
+  mapSettlementFrontendItemTypeToLineKind,
+} from '@/features/settlement-management/api/shared/map-frontend-fields'
 
 type ProgramDetailLineRow = PaymentOrderAdminProgramDetailInstructorRow
 type InstructorDetailLineRow = PaymentOrderAdminInstructorDetailProgramRow
@@ -37,8 +46,24 @@ function mapItemToLine(item: SettlementFrontendItemResponse, index: number): Pay
     description: item.description?.trim() || '—',
     amount,
     kind: mapSettlementFrontendItemTypeToLineKind(item.type, amount),
-    // TODO(settlement-api): settlement.calculationDetails[index] → basisDetail 매핑 (layout/basisJson)
+    basisDetail: mapCalculationDetailToBasisDetail(item.calculationDetail),
   }
+}
+
+function resolveLectureSessionDisplay(
+  lineRow: DetailLineRow,
+  settlement: SettlementFrontendResponse,
+  sessionDisplay: 'range' | 'single'
+): string {
+  const fromApi = settlement.lectureSessionDisplay?.trim()
+  if (fromApi) return fromApi
+
+  const sessionOrdinal = settlement.sessionOrdinal ?? lineRow.sessionOrdinal
+  if (sessionOrdinal == null || sessionOrdinal <= 0) return '—'
+
+  const single = formatLectureSessionLabel(sessionOrdinal)
+  if (sessionDisplay === 'single') return single
+  return `${sessionOrdinal} ~ ${sessionOrdinal}차시`
 }
 
 function buildBlocks(
@@ -57,18 +82,14 @@ function buildBlocks(
     },
   ]
 
-  const sessionOrdinal = lineRow.sessionOrdinal
-  const lectureSessionDisplay =
-    sessionOrdinal == null
-      ? '—'
-      : sessionDisplay === 'single'
-        ? `${sessionOrdinal}차시`
-        : `${sessionOrdinal} ~ ${sessionOrdinal}차시`
+  const institutionName =
+    settlement.institutionName?.trim() || lineRow.institutionName?.trim() || '—'
+
   return [
     {
-      institutionName: lineRow.institutionName || '—',
+      institutionName: institutionName === '-' ? '—' : institutionName,
       lectureDateDisplay: formatIsoToKoreanWeekday(lineRow.lectureDate),
-      lectureSessionDisplay,
+      lectureSessionDisplay: resolveLectureSessionDisplay(lineRow, settlement, sessionDisplay),
       lines,
     },
   ]
@@ -76,6 +97,16 @@ function buildBlocks(
 
 function sumItems(items: SettlementFrontendItemResponse[] | undefined): number {
   return (items ?? []).reduce((sum, item) => sum + (item.amount ?? 0), 0)
+}
+
+function mapCalculationStatementSharedBasic(settlement: SettlementFrontendResponse) {
+  return {
+    lectureFeeStandardTitle: formatLectureFeeStandardTitle(settlement.lectureFeeStandardTitle),
+    lectureFeeStandardAmount: formatWonAmountDisplay(settlement.lectureFeeStandardAmount),
+    businessIncomeEarnerLabel: formatBusinessIncomeEarnerLabel(
+      settlement.businessIncomeEarnerLabel
+    ),
+  }
 }
 
 export function mapSettlementDetailToProgramCalculationStatement(
@@ -94,20 +125,22 @@ export function mapSettlementDetailToProgramCalculationStatement(
     basic: {
       programName,
       instructorNameKo,
-      businessPeriodDisplay: settlement.period?.trim() || '—',
-      programSessionProgressDisplay: '—',
+      businessPeriodDisplay: formatBusinessPeriodDisplay({
+        period: settlement.period,
+        businessPeriodStart: settlement.businessPeriodStart,
+        businessPeriodEnd: settlement.businessPeriodEnd,
+        formatDate: formatIsoToKoreanWeekday,
+      }),
+      programSessionProgressDisplay: formatProgramSessionProgressDisplay(settlement),
       processingStatusDisplay: PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS[lineRow.processingStatus],
       processingStatusClass: lineRow.processingStatus,
       processingRejectionReason: lineRow.processingRejectionReason,
       lectureFeePaymentScheduledDateDisplay: lineRow.lectureFeePaymentScheduledDate
         ? formatIsoToKoreanWeekday(lineRow.lectureFeePaymentScheduledDate)
-        : undefined,
-      lectureFeeStandardTitle: '—',
-      lectureFeeStandardAmount:
-        lineRow.estimatedAmount > 0
-          ? `${lineRow.estimatedAmount.toLocaleString('ko-KR')}원`
-          : '—',
-      businessIncomeEarnerLabel: '해당 없음',
+        : settlement.expectedTransferDate
+          ? formatIsoToKoreanWeekday(settlement.expectedTransferDate)
+          : undefined,
+      ...mapCalculationStatementSharedBasic(settlement),
     },
     blocks,
     formulaLabel: '정산 항목 합계',
@@ -175,13 +208,10 @@ export function mapSettlementDetailToInstructorPageCalculationStatement(
       processingRejectionReason: lineRow.processingRejectionReason,
       lectureFeePaymentScheduledDateDisplay: lineRow.lectureFeePaymentScheduledDate
         ? formatIsoToKoreanWeekday(lineRow.lectureFeePaymentScheduledDate)
-        : undefined,
-      lectureFeeStandardTitle: '—',
-      lectureFeeStandardAmount:
-        lineRow.estimatedAmount > 0
-          ? `${lineRow.estimatedAmount.toLocaleString('ko-KR')}원`
-          : '—',
-      businessIncomeEarnerLabel: '해당 없음',
+        : settlement.expectedTransferDate
+          ? formatIsoToKoreanWeekday(settlement.expectedTransferDate)
+          : undefined,
+      ...mapCalculationStatementSharedBasic(settlement),
     },
     blocks,
     formulaLabel: '정산 항목 합계',

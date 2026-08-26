@@ -13,6 +13,10 @@ import type {
 import {
   mapStatementStatusToLineStatus,
 } from '@/features/settlement-management/api/shared/settlement-status-mappers'
+import {
+  pickBusinessPeriodFromListItems,
+  pickProgramSessionProgressFromListItems,
+} from '@/features/settlement-management/api/shared/map-frontend-fields'
 
 function statementIdBySettlementId(
   statements: PaymentStatementListItemResponse[]
@@ -26,6 +30,15 @@ function statementIdBySettlementId(
   return map
 }
 
+function resolveStatementId(
+  item: SettlementListItemResponse,
+  statementMap: Map<number, number>
+): number | undefined {
+  if (item.statementId != null) return item.statementId
+  const settlementId = item.settlementId
+  return settlementId != null ? statementMap.get(settlementId) : undefined
+}
+
 function toProgramDetailInstructorRow(
   item: SettlementListItemResponse,
   index: number,
@@ -36,12 +49,11 @@ function toProgramDetailInstructorRow(
     id: settlementId != null ? String(settlementId) : `line-${index}`,
     no: index + 1,
     settlementId,
-    statementId:
-      settlementId != null ? statementMap.get(settlementId) : undefined,
+    statementId: resolveStatementId(item, statementMap),
     instructorName: item.instructorName ?? '-',
-    institutionName: '-',
+    institutionName: item.institutionName?.trim() || '-',
     lectureDate: item.lectureDate ?? '',
-    sessionOrdinal: item.scheduleId ?? index + 1,
+    sessionOrdinal: item.sessionOrdinal ?? 0,
     processingStatus: mapStatementStatusToLineStatus(item.statementStatus),
     estimatedAmount: item.netPaymentAmount ?? 0,
     lectureFeePaymentScheduledDate: item.expectedTransferDate,
@@ -58,12 +70,11 @@ function toInstructorDetailProgramRow(
     id: settlementId != null ? String(settlementId) : `line-${index}`,
     no: index + 1,
     settlementId,
-    statementId:
-      settlementId != null ? statementMap.get(settlementId) : undefined,
+    statementId: resolveStatementId(item, statementMap),
     programName: item.programNameKo ?? '-',
-    institutionName: '-',
+    institutionName: item.institutionName?.trim() || '-',
     lectureDate: item.lectureDate ?? '',
-    sessionOrdinal: item.scheduleId ?? index + 1,
+    sessionOrdinal: item.sessionOrdinal ?? 0,
     processingStatus: mapStatementStatusToLineStatus(item.statementStatus),
     estimatedAmount: item.netPaymentAmount ?? 0,
     lectureFeePaymentScheduledDate: item.expectedTransferDate,
@@ -84,19 +95,17 @@ export function buildProgramDetailFromSettlements(
   const instructorRows = filtered.map((item, index) =>
     toProgramDetailInstructorRow(item, index, statementMap)
   )
-  const dates = filtered
-    .map(i => i.lectureDate)
-    .filter((d): d is string => Boolean(d))
-    .sort()
+  const period = pickBusinessPeriodFromListItems(filtered)
+  const progress = pickProgramSessionProgressFromListItems(filtered)
 
   return {
     programNo: row.no,
     programName: row.programName,
     aggregateProcessingStatus: row.processingStatus,
-    businessPeriodStart: dates[0] ?? '',
-    businessPeriodEnd: dates[dates.length - 1] ?? '',
-    sessionCompleted: instructorRows.length,
-    sessionTotal: instructorRows.length,
+    businessPeriodStart: period.businessPeriodStart,
+    businessPeriodEnd: period.businessPeriodEnd,
+    sessionCompleted: progress?.sessionCompleted ?? 0,
+    sessionTotal: progress?.sessionTotal ?? 0,
     instructorRows,
   }
 }

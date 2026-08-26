@@ -1,9 +1,10 @@
-import type { PaymentOrderCalculationLineKind } from '@/data/mock/payment-order-admin-list'
 import {
   settlementItemSettingSections,
   type SettlementItemSettingRow,
 } from '@/data/mock/settlement-item-settings'
 import type { PaymentOrderCalculationTableRow } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
+
+export { mapSettlementFrontendItemTypeToLineKind } from '@/features/settlement-management/api/shared/map-frontend-fields'
 
 export type PaymentOrderCalculationStatementDetailContext = {
   /** 산출 내역서 기본정보 — 강의비 책정 기준 (예: `2급 강사비`) */
@@ -51,15 +52,4 @@ export function resolveSettlementItemSettingForCalculationRow(
   }
 
   return null
-}
-
-export function mapSettlementFrontendItemTypeToLineKind(
-  type: string | undefined,
-  amount: number
-): PaymentOrderCalculationLineKind {
-  const normalized = type?.trim()
-  if (amount < 0 || normalized === 'withholding') return 'withholding'
-  if (normalized === 'transportation') return 'travel'
-  if (normalized === 'accommodation') return 'lodging'
-  return 'lecture_fee'
 }

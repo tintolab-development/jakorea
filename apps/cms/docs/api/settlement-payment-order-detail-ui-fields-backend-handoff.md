@@ -7,7 +7,7 @@
 
 > **회원 상세 BE 전달:** 본 문서는 [members/README.md §필수 묶음](./members/README.md#회원-상세-이력정산--백엔드-전달-필수-묶음) **#6** 으로 포함됩니다. 강사 회원 상세 정산 **SET-005** — **§4 산출 내역서 모달** SSOT. (정산 관리 LNB 지급 현황 상세와 동일 필드 계약.)
 
-**Last updated:** 2026-08-25
+**Last updated:** 2026-08-26
 
 > **작성 기준:** **실제 화면 라벨·테이블 컬럼**만 포함. mock 타입·다른 화면 필드는 제외.  
 > 근거: `payment-order-*-basic-info.tsx`, `use-payment-order-detail-lines.tsx`, `payment-order-calculation-statement-*-basic-section.tsx`, `payment-order-calculation-breakdown-table.tsx`.
@@ -20,14 +20,14 @@
 
 프론트가 mock·집계·fallback으로 **대체·추론·`-` 표시하면 안 되는** 항목입니다.
 
-| 금지 (현재 FE 임시) | 올바른 API 소스 |
-|---------------------|-----------------|
-| 정산 라인 **건수** → 프로그램 진행 회차 (`5 / 5`) | `programHeader.sessionCompleted` / `sessionTotal` |
-| `scheduleId`(PK) → `N차시` | `sessionOrdinal` (1-based 강의 차시) |
-| `lectureDate` min/max → 사업 운영 기간 | `programHeader.businessPeriodStart/End` |
-| `institutionName: '-'` | `SettlementListItemResponse.institutionName` |
-| 강사 프로필·계좌 `-` | `instructorHeader` 또는 members API |
-| 산출 내역서 `'—'`·「준비 중」 | **`GET /settlements/{settlementId}`** 전 필드 |
+| 금지 | 올바른 API 소스 | FE (2026-08-26) |
+|------|-----------------|-----------------|
+| 정산 라인 **건수** → 프로그램 진행 회차 (`5 / 5`) | `sessionCompleted` / `sessionTotal` | ✅ 목록 DTO |
+| `scheduleId`(PK) → `N차시` | `sessionOrdinal` | ✅ |
+| `lectureDate` min/max → 사업 운영 기간 | `businessPeriodStart/End` | ✅ |
+| `institutionName: '-'` | `SettlementListItemResponse.institutionName` | ✅ |
+| 강사 프로필·계좌 `-` | `instructorHeader` 또는 members API | ❌ DTO 미제공 |
+| 산출 내역서 `'—'`·「준비 중」 | **`GET /settlements/{settlementId}`** 전 필드 | ✅ 매핑 (PII·typed `calculationDetail` 없으면 「준비 중」) |
 
 **주 API (풀페이지 목록):** `GET /api/admin/settlements?programId=` · `GET /api/admin/settlements?instructorMemberId=`  
 **주 API (산출 내역서 모달):** `GET /api/admin/settlements/{settlementId}` — 라인 `settlementId`로 **모달 오픈 시 1건 조회**  
@@ -47,8 +47,8 @@
 | UI 라벨 | UI 필드 | 표시 예 | API 필드 (제안) | 필수 | 현재 |
 |---------|---------|---------|-----------------|------|------|
 | 프로그램명 | `programName` | JA 경제교실 | `programNameKo` (헤더) | ✅ | 집계 목록에서 전달 |
-| 사업 운영 기간 | `businessPeriodStart` ~ `End` | `2025. 12. 08(월) ~ …` | `businessPeriodStart`, `businessPeriodEnd` | ✅ | ❌ FE `lectureDate` min/max |
-| 프로그램 진행 회차 | `sessionCompleted` / `sessionTotal` | `4 / 16` | 동일 또는 `programSessionProgressDisplay` | ✅ | ❌ FE **라인 건수** |
+| 사업 운영 기간 | `businessPeriodStart` ~ `End` | `2025. 12. 08(월) ~ …` | `businessPeriodStart`, `businessPeriodEnd` | ✅ | ✅ 목록 DTO (없으면 lectureDate min/max) |
+| 프로그램 진행 회차 | `sessionCompleted` / `sessionTotal` | `4 / 16` | 동일 또는 `programSessionProgressDisplay` | ✅ | ✅ 목록 DTO |
 | 지급 조서 처리 현황 | 집계 배지 | 확인 완료 등 | 라인 `statementStatus` 집계 또는 헤더 | ✅ | FE 라인 집계 |
 
 ### 2.2 신청자별 정산 목록
@@ -57,8 +57,8 @@
 |---------|---------|-------------------------------------|------|------|
 | No. | `no` | (클라이언트 순번) | — | ✅ |
 | **신청자명** | `instructorName` | `instructorName` (plain) | ✅ | ✅ |
-| **참여 기관명** | `institutionName` | `institutionName` / `schoolName` | ✅ | ❌ `-` |
-| **교육 진행 일자** | `lectureDate` + `sessionOrdinal` | `lectureDate`, `sessionOrdinal` | ✅ | 차시 ❌ `scheduleId` fallback |
+| **참여 기관명** | `institutionName` | `institutionName` / `schoolName` | ✅ | ✅ |
+| **교육 진행 일자** | `lectureDate` + `sessionOrdinal` | `lectureDate`, `sessionOrdinal` | ✅ | ✅ (`scheduleId` 미사용) |
 | 지급조서 처리 현황 | `processingStatus` | `statementStatus` | ✅ | ✅ |
 | 정산 신청 금액 | `estimatedAmount` | `netPaymentAmount` | ✅ | ✅ |
 | 산출 내역 | — | `settlementId` | ✅ | ✅ |
@@ -99,8 +99,8 @@
 |---------|---------|-----|------|------|
 | No. | `no` | (클라이언트) | — | ✅ |
 | **프로그램명** | `programName` | `programNameKo` | ✅ | ✅ |
-| **참여 기관명** | `institutionName` | `institutionName` | ✅ | ❌ `-` |
-| **교육 진행 일자** | `lectureDate` + `sessionOrdinal` | `lectureDate`, `sessionOrdinal` | ✅ | 차시 ❌ `scheduleId` |
+| **참여 기관명** | `institutionName` | `institutionName` | ✅ | ✅ |
+| **교육 진행 일자** | `lectureDate` + `sessionOrdinal` | `lectureDate`, `sessionOrdinal` | ✅ | ✅ (`scheduleId` 미사용) |
 | 지급조서 처리 현황 | `processingStatus` | `statementStatus` | ✅ | ✅ |
 | 정산 신청 금액 | `estimatedAmount` | `netPaymentAmount` | ✅ | ✅ |
 | 산출 내역 | — | `settlementId` | ✅ | ✅ |
@@ -126,11 +126,11 @@
 | UI 라벨 | API (`SettlementFrontendResponse` 등) | 필수 | Remote 현재 |
 |---------|----------------------------------------|------|-------------|
 | 프로그램명 | `programNameKo` embed 또는 목록 `programNameKo` | ✅ | ✅ (목록) |
-| 프로그램 진행 회차 | `sessionCompleted`/`sessionTotal` 또는 `programSessionProgressDisplay` | ✅ | ❌ `'—'` |
-| 사업 운영 기간 | `period` 또는 `businessPeriodStart`/`End` | ✅ | △ `period`만 |
+| 프로그램 진행 회차 | `sessionCompleted`/`sessionTotal` 또는 `programSessionProgressDisplay` | ✅ | ✅ |
+| 사업 운영 기간 | `period` 또는 `businessPeriodStart`/`End` | ✅ | ✅ |
 | 지급조서 처리 현황 | `statementStatus` (+ 반려 시 `correctionReason` 등) | ✅ | △ 목록 라인 |
-| 강의비 책정 기준 | `lectureFeeStandardTitle` + `lectureFeeStandardAmount` | ✅ | ❌ `'—'` |
-| 사업소득자 여부 | `businessIncomeEarnerLabel` 또는 boolean embed | ✅ | ❌ `'해당 없음'` 고정 |
+| 강의비 책정 기준 | `lectureFeeStandardTitle` + `lectureFeeStandardAmount` | ✅ | ✅ |
+| 사업소득자 여부 | `businessIncomeEarnerLabel` 또는 boolean embed | ✅ | ✅ (없으면 `'해당 없음'`) |
 
 **지급조서 처리 현황 부가 표기 (상태별):**
 
@@ -153,8 +153,8 @@
 | 자택 주소지 | `address` | ✅ → FE 블러 | ❌ `-` |
 | 정산 계좌 정보 | `bankName`, `accountNumber`, `accountHolder` | ✅ | ❌ `-` |
 | 지급조서 처리 현황 | §4.1과 동일 | ✅ | △ |
-| 강의비 책정 기준 | §4.1과 동일 | ✅ | ❌ `'—'` |
-| 사업소득자 여부 | §4.1과 동일 | ✅ | ❌ 고정 |
+| 강의비 책정 기준 | §4.1과 동일 | ✅ | ✅ |
+| 사업소득자 여부 | §4.1과 동일 | ✅ | ✅ |
 
 성명 옆 **일정 변경&취소** 배지: `scheduleChangeCancelCount` ≥ 1 (선택).
 
@@ -166,14 +166,14 @@
 
 | UI 컬럼 | API 소스 | 필수 | Remote 현재 |
 |---------|----------|------|-------------|
-| 참여 기관명 | `institutionName` (루트 또는 블록) | ✅ | ❌ `'—'` (목록 `-`) |
-| 강의 진행 일자 | `lectureDate` → 요일 포맷 | ✅ | △ 목록 `lectureDate` |
-| 강의 구간 | `lectureSessionDisplay` 또는 `sessionOrdinal` | ✅ | ❌ `scheduleId` fallback |
+| 참여 기관명 | `institutionName` (루트 또는 블록) | ✅ | ✅ |
+| 강의 진행 일자 | `lectureDate` → 요일 포맷 | ✅ | ✅ 목록 `lectureDate` |
+| 강의 구간 | `lectureSessionDisplay` 또는 `sessionOrdinal` | ✅ | ✅ |
 | 산정 항목 | `items[].type` → UI 라벨 | ✅ | ✅ (코드 매핑) |
 | 항목 설명 | `items[].description` | ✅ | ✅ |
 | 정산 금액 | `items[].amount` | ✅ | ✅ |
-| 산정 기준 상세 | `items[].calculationDetail` | ✅ (해당 항목) | ❌ 미매핑 → 「준비 중」 |
-| 합계 | `totalAmount` | ✅ | △ items 합 또는 fallback |
+| 산정 기준 상세 | `items[].calculationDetail` | ✅ (해당 항목) | ✅ `basisJson` typed payload / 없으면 「준비 중」 |
+| 합계 | `totalAmount` | ✅ | ✅ |
 
 **강의 구간 표기:** 프로그램 상세 진입(`entryKind=instructor`) 시 UI는 **「회차」** (`2 ~ 3회차`). 강사 상세 진입 시 **「차시」**.
 
@@ -222,20 +222,14 @@
 }
 ```
 
-### 4.5 Remote FE 임시 (제거 대상)
+### 4.5 Remote 잔여 (DTO 미제공)
 
-`map-settlement-detail-to-calculation-statement.ts`:
+강사 PII는 `SettlementFrontendResponse`에 **아직 없음** — `instructorIdentityFromLine` placeholder 유지.
 
 | 항목 | 현재 |
 |------|------|
-| `programSessionProgressDisplay` | `'—'` |
-| `lectureFeeStandardTitle` / Amount | `'—'` / estimatedAmount 대체 |
-| `businessIncomeEarnerLabel` | `'해당 없음'` 고정 |
 | `genderBirthDisplay` | `'-'` |
-| 강사 연락처·주소·계좌 | `instructorIdentityFromLine` → 전부 `'-'` |
-| `institutionName` (블록) | 목록 `-` |
-| `lectureSessionDisplay` | `sessionOrdinal`/`scheduleId` 추론 |
-| `items[].basisDetail` | 미매핑 |
+| 강사 연락처·주소·계좌 | 전부 `'-'` |
 
 ---
 
@@ -331,18 +325,18 @@
 
 ---
 
-## 7. 프론트 임시 처리 (제거 대상)
+## 7. 프론트 매핑 상태 (2026-08-26)
 
 `map-settlement-detail.ts` · `map-settlement-detail-to-calculation-statement.ts`:
 
-| 항목 | 현재 | 교체 |
-|------|------|------|
-| 참여 기관명 | `'-'` | `item.institutionName` |
-| 차시 | `scheduleId ?? index+1` | `item.sessionOrdinal` |
-| 진행 회차 | `instructorRows.length` | `programHeader` |
-| 사업 운영 기간 | lectureDate min/max | `programHeader` |
-| 강사 프로필 (풀페이지) | `'-'` | `instructorHeader` |
-| 산출 내역서 필드 | §4.5 | `GET /settlements/{id}` |
+| 항목 | 매핑 |
+|------|------|
+| 참여 기관명 | `item.institutionName` |
+| 차시 | `item.sessionOrdinal` (`scheduleId` 미사용) |
+| 진행 회차 | 목록 `sessionCompleted`/`sessionTotal` (라인 건수 미사용) |
+| 사업 운영 기간 | 목록 `businessPeriodStart`/`End` |
+| 강사 프로필 (풀페이지) | **잔여** `'-'` — DTO에 `instructorHeader` 없음 |
+| 산출 내역서 필드 | `GET /settlements/{id}` 매핑 완료 (강사 PII 제외) |
 
 ---
 

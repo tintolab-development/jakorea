@@ -62,5 +62,7 @@ describe('mapSettlementFrontendItemTypeToLineKind', () => {
     expect(mapSettlementFrontendItemTypeToLineKind('accommodation', 100)).toBe('lodging')
     expect(mapSettlementFrontendItemTypeToLineKind('withholding', -100)).toBe('withholding')
     expect(mapSettlementFrontendItemTypeToLineKind('instructor_fee', 100)).toBe('lecture_fee')
+    expect(mapSettlementFrontendItemTypeToLineKind('meal', 15000)).toBe('meal')
+    expect(mapSettlementFrontendItemTypeToLineKind('activity', 20000)).toBe('activity')
   })
 })
