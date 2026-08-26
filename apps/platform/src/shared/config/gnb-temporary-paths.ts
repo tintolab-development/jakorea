@@ -1,6 +1,5 @@
 /** GNB 카테고리 중 본 페이지 미구현 구간의 임시 경로 */
 
-export const ABOUT_INTRODUCTION_PATH = '/about/introduction'
 export const ABOUT_HISTORY_PATH = '/about/history'
 export const ABOUT_CAREERS_PATH = '/about/careers'
 
@@ -10,7 +9,6 @@ export const EDUCATION_ENTREPRENEURSHIP_PATH = '/education/entrepreneurship'
 export const EDUCATION_DIGITAL_LITERACY_PATH = '/education/digital-literacy'
 
 export const TEMPORARY_PAGE_TITLES: Record<string, string> = {
-  [ABOUT_INTRODUCTION_PATH]: '기관소개',
   [ABOUT_HISTORY_PATH]: 'JA History',
   [ABOUT_CAREERS_PATH]: '채용',
   [EDUCATION_CAREER_PATH]: '진로취업',

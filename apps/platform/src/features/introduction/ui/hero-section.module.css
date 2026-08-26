@@ -1,0 +1,826 @@
+.hero {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-top: calc(-1 * (var(--app-header-height) + var(--content-padding-block)));
+  box-sizing: border-box;
+}
+
+.sticky {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100svh;
+  box-sizing: border-box;
+}
+
+.viewport {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: inherit;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+/* —— Motion 1 opening —— */
+.openingStage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding-top: var(--app-header-height);
+}
+
+.openingBackground {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.openingText {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  max-width: 960px;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-40) var(--spacing-28);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.intro,
+.message {
+  margin: 0;
+  color: var(--color-neutral-black);
+  text-align: center;
+  word-break: keep-all;
+}
+
+.introDesktop {
+  display: none;
+}
+
+.introMobile {
+  display: inline;
+  color: var(--color-primary-700);
+}
+
+.intro {
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
+
+.message {
+  margin-top: var(--spacing-12);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 146%;
+  letter-spacing: -0.24px;
+  opacity: 1;
+  transform: none;
+}
+
+.scrollArrow {
+  position: absolute;
+  bottom: var(--spacing-28);
+  left: 50%;
+  z-index: 4;
+  display: inline-flex;
+  width: 60px;
+  height: 60px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  transform: translateX(-50%);
+  cursor: pointer;
+}
+
+.scrollArrowIcon {
+  display: block;
+  width: 60px;
+  height: 60px;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* —— Motion 2 — Mobile: 정적 세로 스택 (모션 없음) —— */
+.splitStage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.brandPanel,
+.brandSlides,
+.brandSlide,
+.contentPanel,
+.contentSlides,
+.contentSlide,
+.phaseLabels,
+.statementStack {
+  display: contents;
+}
+
+.brandBackground {
+  display: none;
+}
+
+.inspiringLead {
+  order: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  padding: var(--spacing-56) var(--spacing-20) 0;
+  box-sizing: border-box;
+  background-color: var(--color-neutral-white);
+}
+
+.inspiringBlocks {
+  order: 2;
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--spacing-20) var(--spacing-56);
+  box-sizing: border-box;
+  background-color: var(--color-neutral-white);
+}
+
+.inspiringTitle,
+.inspiringDescription {
+  word-break: keep-all;
+}
+
+/* Montserrat + 시안 사이즈 (토큰 page-title 대비) */
+.inspiringTitle {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 120%;
+  letter-spacing: -0.4px;
+}
+
+/* 모바일: 본문 톤 강조 */
+.inspiringDescription {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 152%;
+}
+
+.infoBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  position: relative;
+  padding-block: var(--spacing-32);
+}
+
+.infoBlock::before {
+  content: '';
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: #C4E2F8;
+}
+
+.infoBlock:last-child {
+  padding-bottom: 0;
+}
+
+.infoBlock:last-child::before {
+  display: none;
+}
+
+.infoTitle,
+.infoDescription {
+  word-break: keep-all;
+}
+
+/* Vision / Mission — display:contents 펼친 뒤 order로 시안 순서 맞춤 */
+.phaseLabel:first-child {
+  order: 3;
+  padding-top: var(--spacing-56);
+}
+
+.statement:first-child {
+  order: 4;
+  position: relative;
+  padding-bottom: var(--spacing-32);
+}
+.statement:first-child::after {
+  content: '';
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: var(--spacing-20);
+  width: calc(100% - var(--spacing-20));
+  height: 1px;
+  background: #C4E2F8;
+}
+
+.phaseLabel:last-child {
+  order: 6;
+  padding-top: var(--spacing-32);
+}
+
+.statement:last-child {
+  order: 7;
+  padding-bottom: var(--spacing-56);
+}
+
+.phaseLabel,
+.statement {
+  display: flex;
+  margin: 0;
+  flex-direction: column;
+  gap: 0;
+  padding-inline: var(--spacing-20);
+  box-sizing: border-box;
+  background-color: var(--color-neutral-cool-50);
+  opacity: 1;
+  color: var(--color-primary-800);
+}
+
+.phaseIndex,
+.phaseName {
+  color: var(--color-primary-800);
+  font-family: 'Montserrat', sans-serif;
+  line-height: 140%;
+}
+
+.phaseName {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.84px;
+}
+
+.statement {
+  gap: var(--spacing-20);
+  padding-top: var(--spacing-4);
+}
+
+.statementEyebrow,
+.statementBody {
+  word-break: keep-all;
+}
+
+.pcOnly {
+  display: none;
+}
+
+@media (--bp-below-pc) {
+  .infoTitle {
+    font-size: 20px;
+    line-height: 140%;
+    letter-spacing: -0.4px;
+  }
+
+  .infoDescription {
+    font-size: 16px;
+    line-height: 170%;
+    letter-spacing: 0;
+  }
+
+  .statementEyebrow {
+    font-size: 14px;
+  }
+
+  .statementBody {
+    font-size: 20px;
+    line-height: 140%;
+    letter-spacing: -0.4px;
+  }
+}
+
+@media (--bp-pc-up) {
+
+  .pcOnly {
+    display: block;
+  }
+
+  .hero {
+    /* sticky 100vh + Motion 1·2 단계별 scroll room (단독 사용 시) */
+    height: 520vh;
+  }
+
+  /* Hero + Global Value 단일 오케스트레이션 track (520 + 500) */
+  .hero.isUnifiedTrack {
+    height: 1020vh;
+  }
+
+  .sticky {
+    position: sticky;
+    top: 0;
+    /* flex 자식(frameTrack 200%)이 sticky 높이를 밀어 올리지 않도록 고정 */
+    display: block;
+    height: 100vh;
+    max-height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /*
+   * Mission → Value Push/Up:
+   * 세로 연속 Frame(Hero 100vh + Value 100vh)이 통째로 translateY(-50%).
+   * absolute로 sticky 박스 높이와 분리 — Value를 Mission 뒤에 깔지 않음.
+   */
+  .frameTrack {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    width: 100%;
+    height: 200%;
+    flex-direction: column;
+    transition: transform 600ms ease-in-out;
+    will-change: transform;
+  }
+
+  .isFramePushed .frameTrack {
+    transform: translateY(-50%);
+  }
+
+  .frame {
+    position: relative;
+    flex: 0 0 50%;
+    width: 100%;
+    height: 50%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .viewport {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .introDesktop {
+    display: inline;
+  }
+
+  .introMobile {
+    display: none;
+  }
+
+  .openingText {
+    min-height: 280px;
+  }
+
+  .intro {
+    position: relative;
+    z-index: 1;
+    font-size: 60px;
+    font-weight: 700;
+    line-height: 140%;
+    letter-spacing: -0.6px;
+    transition:
+      font-size 350ms ease-in-out,
+      font-weight 350ms ease-in-out,
+      line-height 350ms ease-in-out,
+      letter-spacing 350ms ease-in-out,
+      transform 350ms ease-in-out;
+  }
+
+  .message {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    z-index: 0;
+    margin-top: 0;
+    font-size: 60px;
+    font-weight: 700;
+    line-height: 140%;
+    letter-spacing: -0.6px;
+    opacity: 0;
+    transform: translateY(48px);
+    transition:
+      opacity 350ms ease-in-out,
+      transform 350ms ease-in-out;
+    pointer-events: none;
+  }
+
+  .isRevealed .intro {
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 144%;
+    letter-spacing: -0.68px;
+    transform: translateY(-72px);
+    color: var(--color-primary-800);
+  }
+
+  .isRevealed .message {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .openingStage {
+    position: absolute;
+    inset: 0;
+    flex: none;
+    padding-top: 0;
+    transition: opacity 400ms ease-in-out;
+  }
+
+  .isSplit .openingStage {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .scrollArrow {
+    bottom: var(--spacing-40);
+  }
+
+  /* —— Split layout (desktop motion) —— */
+  .splitStage {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: row;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .isSplit .splitStage {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .brandPanel {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    transition: width 500ms ease-in-out;
+  }
+
+  .isSplit .brandPanel {
+    width: 40%;
+  }
+
+  .brandBackground {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    display: block;
+    width: 100vw;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: left center;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .brandSlides {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    transition: transform 400ms ease-in-out;
+  }
+
+  .isVisionStack .brandSlides {
+    transform: translateY(-100%);
+  }
+
+  .brandSlide {
+    display: flex;
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .inspiringLead {
+    order: unset;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-56);
+    padding: 0 var(--spacing-100);
+    opacity: 0;
+    transform: translateY(40px);
+    background-color: transparent;
+  }
+
+  .phaseInspiring .inspiringLead {
+    animation: inspiringSlideUp 500ms ease-in-out 750ms both;
+  }
+
+  .inspiringTitle,
+  .inspiringDescription {
+    word-break: keep-all;
+  }
+
+  .inspiringTitle {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 60px;
+    font-weight: 800;
+    line-height: 120%;
+    letter-spacing: -0.48px;
+  }
+
+  .inspiringDescription {
+    font-weight: 400;
+  }
+  
+  .statement:first-child {
+    padding-bottom: 0;
+  }
+
+  .statement:first-child::after {
+    display: none;
+  }
+
+  .phaseLabel {
+    gap: var(--spacing-20);
+  }
+
+  .phaseLabels {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    flex-direction: column;
+    justify-content: stretch;
+    gap: 0;
+  }
+
+  .phaseLabel {
+    position: relative;
+    isolation: isolate;
+    order: unset;
+    display: flex;
+    flex: 1 0 0;
+    align-self: stretch;
+    margin: 0;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: var(--spacing-8);
+    padding: 0 var(--spacing-100);
+    box-sizing: border-box;
+    background: transparent;
+    color: var(--color-neutral-black);
+    opacity: 1;
+  }
+
+  .phaseLabel:first-child {
+    padding-top: 0;
+  }
+
+  .phaseLabel:last-child {
+    padding-top: 0;
+  }
+
+  /* dim 배경은 항상 깔아두고 opacity만 전환 — 깜빡임 방지 */
+  .phaseLabel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: rgba(35, 35, 35, 0.14);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 400ms ease-in-out;
+  }
+
+  .phaseLabelDimmed::after {
+    opacity: 0.2;
+  }
+
+  .phaseIndex,
+  .phaseName {
+    position: relative;
+    z-index: 1;
+    transition: opacity 400ms ease-in-out;
+  }
+
+  .phaseLabelDimmed .phaseIndex,
+  .phaseLabelDimmed .phaseName {
+    opacity: 0.2;
+  }
+
+  .phaseName {
+    font-size: 58px;
+    letter-spacing: -1.74px;
+  }
+
+  .contentPanel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
+    display: block;
+    width: 60%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--color-neutral-white);
+    background-image:
+      radial-gradient(circle at 18% 22%, rgb(61 61 61 / 4%) 0%, transparent 42%),
+      radial-gradient(circle at 82% 78%, rgb(61 61 61 / 3.5%) 0%, transparent 48%);
+    background-repeat: no-repeat;
+    transform: translateX(100%);
+    transition: transform 500ms ease-in-out;
+  }
+
+  .isSplit .contentPanel {
+    transform: translateX(0);
+  }
+
+  .contentSlides {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    transition: transform 400ms ease-in-out;
+  }
+
+  .isVisionStack .contentSlides {
+    transform: translateY(-100%);
+  }
+
+  .contentSlide {
+    display: flex;
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    box-sizing: border-box;
+  }
+
+  .inspiringBlocks {
+    order: unset;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0;
+    box-sizing: border-box;
+    opacity: 0;
+    transform: translateX(48px);
+    background-color: transparent;
+  }
+
+  .phaseInspiring .inspiringBlocks {
+    animation: inspiringSlideRight 500ms ease-in-out 750ms both;
+  }
+
+  .infoBlock {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--spacing-56);
+    padding-inline: 140px 70px;
+  }
+
+  .statementStack {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .statement {
+    position: relative;
+    isolation: isolate;
+    order: unset;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--spacing-16) 140px 0;
+    gap: var(--spacing-56);
+    background-color: transparent;
+    opacity: 1;
+  }
+
+  .statement:last-child {
+    padding-bottom: 0;
+  }
+
+  .statement::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: rgba(35, 35, 35, 0.14);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 400ms ease-in-out;
+  }
+
+  .statementDimmed::after {
+    opacity: 0.3;
+  }
+
+  .statementEyebrow,
+  .statementBody {
+    position: relative;
+    z-index: 1;
+    transition: opacity 400ms ease-in-out;
+  }
+
+  .statementDimmed .statementEyebrow,
+  .statementDimmed .statementBody {
+    opacity: 0.3;
+    color: var(--color-neutral-black);
+  }
+}
+
+@keyframes inspiringSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes inspiringSlideRight {
+  from {
+    opacity: 0;
+    transform: translateX(48px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro,
+  .message,
+  .brandPanel,
+  .contentPanel,
+  .brandSlides,
+  .contentSlides,
+  .frameTrack,
+  .phaseLabel::after,
+  .statement::after,
+  .phaseIndex,
+  .phaseName,
+  .statementEyebrow,
+  .statementBody {
+    transition: none;
+  }
+
+  .phaseInspiring .inspiringLead,
+  .phaseInspiring .inspiringBlocks {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

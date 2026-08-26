@@ -9,6 +9,7 @@ export type PFTypography =
   | 'hd-md'
   | 'hd-sm'
   | 'hl-lg'
+  | 'hl-lg-md'
   | 'hl-sm'
   | 'bd-lg-rg'
   | 'bd-lg-sb'
@@ -69,6 +70,7 @@ const typographyClassMap: Record<PFTypography, string> = {
   'hd-md': 'typo-hd-md',
   'hd-sm': 'typo-hd-sm',
   'hl-lg': 'typo-hl-lg',
+  'hl-lg-md': 'typo-hl-lg-md',
   'hl-sm': 'typo-hl-sm',
   'bd-lg-rg': 'typo-bd-lg-rg',
   'bd-lg-sb': 'typo-bd-lg-sb',

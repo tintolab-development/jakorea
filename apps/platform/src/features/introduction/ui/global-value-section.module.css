@@ -1,0 +1,283 @@
+.section {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  box-sizing: border-box;
+  background-color: var(--color-primary-700);
+  color: var(--color-neutral-white);
+}
+
+.panel {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  flex-direction: column;
+  box-sizing: border-box;
+  background-color: var(--color-primary-700);
+  color: var(--color-neutral-white);
+}
+
+.sticky {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.inner {
+  display: flex;
+  width: 100%;
+  max-width: var(--content-shell-max-width);
+  min-width: 0;
+  margin-inline: auto;
+  flex-direction: column;
+  padding: var(--spacing-56) var(--page-padding-x) var(--spacing-64);
+  box-sizing: border-box;
+}
+
+.title {
+  margin: 0 0 var(--spacing-40);
+  word-break: keep-all;
+}
+
+.list {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  border-bottom: 1px solid rgb(255 255 255 / 28%);
+  box-sizing: border-box;
+}
+
+.itemHeader {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-16);
+  box-sizing: border-box;
+}
+
+.number {
+  flex: 0 0 auto;
+}
+
+.koreanCollapsed {
+  display: none;
+  margin: 0;
+  min-width: 0;
+  text-align: right;
+  word-break: keep-all;
+}
+
+.itemBody {
+  display: grid;
+  width: 100%;
+  grid-template-rows: 1fr;
+  transition: none;
+}
+
+.itemBodyInner {
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  padding-bottom: var(--spacing-40);
+  box-sizing: border-box;
+}
+
+.english {
+  margin: 0;
+  text-transform: uppercase;
+  word-break: keep-all;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-16);
+}
+
+.icon {
+  display: block;
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.korean {
+  margin: 0;
+  word-break: keep-all;
+}
+
+/* —— Mobile: 정적 세로 리스트 (모션 없음) —— */
+.isStatic .itemHeader {
+  padding-top: var(--spacing-28);
+}
+
+.isStatic .koreanCollapsed {
+  display: none;
+}
+
+.isStatic .itemBodyInner {
+  padding-top: var(--spacing-12);
+  gap: var(--spacing-20);
+}
+
+.isStatic .english {
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 140%;
+  letter-spacing: -0.22px;
+}
+
+.isStatic .korean {
+  color: var(--color-primary-100);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.isStatic .number {
+  color: var(--color-primary-100);
+}
+
+.isStatic .icon {
+  width: 72px;
+  height: 72px;
+  margin-top: var(--spacing-8);
+}
+
+@media (--bp-pc-up) {
+  /* Desktop accordion은 IntroductionScroll frame 안에서 100% 채움 */
+  .isAccordion {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .inner {
+    height: auto;
+    justify-content: flex-start;
+    padding: var(--spacing-64) var(--spacing-100) var(--spacing-56);
+  }
+
+  .isAccordion .inner {
+    height: 100%;
+  }
+
+  .title {
+    margin-bottom: var(--spacing-48);
+    flex: 0 0 auto;
+  }
+
+  .list {
+    flex: 1 1 auto;
+    min-height: 0;
+    justify-content: flex-start;
+  }
+
+  .itemHeader {
+    min-height: 56px;
+    padding-block: var(--spacing-16);
+  }
+
+  .koreanCollapsed {
+    display: block;
+    opacity: 0;
+    max-width: 52%;
+    pointer-events: none;
+    transition:
+      opacity 400ms ease-in-out,
+      visibility 400ms ease-in-out;
+    visibility: hidden;
+  }
+
+  .isCollapsed .koreanCollapsed {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .isAccordion .itemBody {
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 400ms ease-in-out;
+  }
+
+  .isAccordion .isExpanded .itemBody {
+    grid-template-rows: 1fr;
+  }
+
+  .isExpanded .itemHeader {
+    padding-bottom: var(--spacing-12);
+  }
+
+  .itemBodyInner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: start;
+    gap: var(--spacing-40) var(--spacing-56);
+    padding-top: 0;
+    padding-bottom: var(--spacing-48);
+  }
+
+  .isAccordion .itemBodyInner {
+    opacity: 0;
+    transform: translateY(12px);
+    transition:
+      opacity 400ms ease-in-out,
+      transform 400ms ease-in-out;
+  }
+
+  .isAccordion .isExpanded .itemBodyInner {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .english {
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 140%;
+    letter-spacing: -0.28px;
+  }
+
+  .meta {
+    gap: var(--spacing-24);
+    padding-top: var(--spacing-8);
+  }
+
+  .icon {
+    width: 84px;
+    height: 84px;
+  }
+
+  .korean {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 150%;
+    letter-spacing: -0.18px;
+  }
+
+  .isAccordion .isCollapsed .itemBodyInner {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .itemBody,
+  .itemBodyInner,
+  .koreanCollapsed {
+    transition: none;
+  }
+}

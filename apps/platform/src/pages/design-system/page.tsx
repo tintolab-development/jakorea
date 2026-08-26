@@ -157,6 +157,15 @@ const typographyTokenSpecs = [
     letterSpacing: '-0.24px',
   },
   {
+    token: 'typo-hl-lg-md',
+    pfText: 'hl-lg-md',
+    figma: 'Headline/Large/medium',
+    size: '24px',
+    weight: '500',
+    lineHeight: '150%',
+    letterSpacing: '-0.24px',
+  },
+  {
     token: 'typo-hl-sm',
     pfText: 'hl-sm',
     figma: 'Headline/Small',
