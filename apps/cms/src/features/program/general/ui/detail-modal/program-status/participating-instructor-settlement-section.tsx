@@ -442,7 +442,7 @@ export function ParticipatingInstructorSettlementSection({
       </div>
 
       <PaymentStatementIssuanceViewModal
-        open={paymentStatementViewOpen}
+        open={paymentStatementViewOpen && Boolean(paymentStatementViewOptions)}
         onClose={handleClosePaymentStatementView}
         paragraphBodyOptions={paymentStatementViewOptions}
         fileName={paymentStatementViewFileName}

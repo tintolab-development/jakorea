@@ -341,7 +341,7 @@ export function AccountPaymentStatusDetailFullPageModal({
         data={paymentCompleteConfirmOpen ? singlePaymentConfirmPayload : null}
       />
       <PaymentStatementIssuanceViewModal
-        open={issuanceViewOpen}
+        open={issuanceViewOpen && Boolean(issuanceParagraphBodyOptions)}
         onClose={() => setIssuanceViewOpen(false)}
         paragraphBodyOptions={issuanceParagraphBodyOptions}
         fileName={issuanceFileName}

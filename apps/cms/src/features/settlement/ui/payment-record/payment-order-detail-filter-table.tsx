@@ -96,7 +96,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
         layout="detailFullpage"
       />
       <PaymentStatementIssuanceViewModal
-        open={issuanceViewOpen}
+        open={issuanceViewOpen && Boolean(currentIssuancePayload)}
         onClose={closeIssuanceView}
         paragraphBodyOptions={currentIssuancePayload?.paragraphBodyOptions}
         fileName={currentIssuancePayload?.fileName}
