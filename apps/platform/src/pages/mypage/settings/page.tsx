@@ -81,23 +81,21 @@ export function MypageSettingsPage() {
     }
   }
 
-  const sidebarLeading = (
-    <ProgramBackButton
-      size="small"
-      label="마이페이지로"
-      onClick={() => navigate(MYPAGE_PATH)}
-    />
-  )
-
   const wrap = (children: ReactNode) => (
     <MypageLayout
       variant="subpage"
       lnbItems={lnbItems}
-      sidebarLeading={sidebarLeading}
       lnbAriaLabel="회원정보 설정 메뉴"
       onLnbItemSelect={handleLnbItemSelect}
     >
       <div className={styles.body}>
+        <div className={styles.backLink}>
+          <ProgramBackButton
+            size="small"
+            label="마이페이지로"
+            onClick={() => navigate(MYPAGE_PATH)}
+          />
+        </div>
         <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
           {pageTitle}
         </PFText>

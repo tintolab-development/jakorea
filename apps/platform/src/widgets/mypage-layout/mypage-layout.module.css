@@ -101,10 +101,6 @@
   margin-bottom: var(--spacing-24);
 }
 
-.shellSubpage .sidebar {
-  padding-top: var(--spacing-100);
-}
-
 .shellSubpage .content {
   padding-top: var(--spacing-100);
 }
@@ -181,10 +177,6 @@
     max-width: none;
     padding-top: var(--spacing-16);
     padding-bottom: var(--spacing-48);
-  }
-
-  .shellSubpage .sidebar {
-    padding-top: var(--spacing-100);
   }
 
   .shellSubpage .content {

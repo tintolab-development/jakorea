@@ -2,6 +2,11 @@
   margin: 0 0 var(--spacing-80);
 }
 
+.backLink {
+  align-self: flex-start;
+  margin-bottom: var(--spacing-24);
+}
+
 .body {
   display: flex;
   box-sizing: border-box;
