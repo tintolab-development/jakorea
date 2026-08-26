@@ -130,6 +130,40 @@ describe('mapCalculationDetailToBasisDetail', () => {
     }
   })
 
+  it('lectureFeeSpecial basisJson → basisDetail', () => {
+    const detail = mapCalculationDetailToBasisDetail({
+      layout: 'lectureFeeSpecial',
+      basisJson: JSON.stringify({
+        layout: 'lectureFeeSpecial',
+        categoryLabel: '특강 강사비',
+        feeAssessmentWon: 915000,
+        lectureTimeDisplay: '1차시',
+        totalWon: 915000,
+      }),
+    })
+    expect(detail?.layout).toBe('lectureFeeSpecial')
+    if (detail?.layout === 'lectureFeeSpecial') {
+      expect(detail.categoryLabel).toBe('특강 강사비')
+      expect(detail.totalWon).toBe(915000)
+    }
+  })
+
+  it('lectureFeeGemini basisJson → basisDetail', () => {
+    const detail = mapCalculationDetailToBasisDetail({
+      layout: 'lectureFeeGemini',
+      basisJson: JSON.stringify({
+        layout: 'lectureFeeGemini',
+        categoryLabel: '제미나이 강사비',
+        lectureTimeDisplay: '2차시',
+        feeAssessmentWon: 170000,
+      }),
+    })
+    expect(detail?.layout).toBe('lectureFeeGemini')
+    if (detail?.layout === 'lectureFeeGemini') {
+      expect(detail.feeAssessmentWon).toBe(170000)
+    }
+  })
+
   it('layout만 있고 typed 필드 없으면 undefined', () => {
     expect(
       mapCalculationDetailToBasisDetail({

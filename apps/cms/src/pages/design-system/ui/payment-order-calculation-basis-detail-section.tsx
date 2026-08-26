@@ -3,6 +3,8 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import {
   PaymentOrderCalculationBasisDetailModal,
   buildActivityBasisDetail,
+  buildLectureFeeGeminiBasisDetail,
+  buildLectureFeeSpecialBasisDetail,
   buildLectureFeeTierBasisDetail,
   buildLodgingBasisDetail,
   buildMealBasisDetail,
@@ -40,6 +42,16 @@ function buildPaymentOrderCalculationBasisDetailDemos(): BasisDetailDemoItem[] {
       id: 'lecture-fee-tier-3',
       label: '강사비 3급',
       detail: buildLectureFeeTierBasisDetail('3급 강사비', 300000, 2)!,
+    },
+    {
+      id: 'lecture-fee-special',
+      label: '특강 강사비',
+      detail: buildLectureFeeSpecialBasisDetail(915000, 1),
+    },
+    {
+      id: 'lecture-fee-gemini',
+      label: '제미나이 강사비',
+      detail: buildLectureFeeGeminiBasisDetail(170000, 2),
     },
     {
       id: 'transport-round-trip',

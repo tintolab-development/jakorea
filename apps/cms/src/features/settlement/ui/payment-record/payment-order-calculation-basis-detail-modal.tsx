@@ -8,12 +8,16 @@ import { CmsButton } from '@/shared/ui'
 import type { PaymentOrderCalculationTableRow } from './payment-order-calculation-breakdown-table'
 import {
   isSupportedBasisDetailLayout,
-  resolveBasisDetailModalTitle,
   resolvePaymentOrderCalculationBasisDetailForRow,
+  resolveBasisDetailModalTitle,
   type PaymentOrderCalculationBasisDetail,
   type PaymentOrderCalculationBasisDetailResolveContext,
 } from './payment-order-calculation-basis-detail'
-import { PaymentOrderCalculationBasisDetailLectureFeeTierView } from './payment-order-calculation-basis-detail-lecture-fee-tier-view'
+import {
+  PaymentOrderCalculationBasisDetailLectureFeeGeminiView,
+  PaymentOrderCalculationBasisDetailLectureFeeSpecialView,
+  PaymentOrderCalculationBasisDetailLectureFeeTierView,
+} from './payment-order-calculation-basis-detail-lecture-fee-tier-view'
 import {
   PaymentOrderCalculationBasisDetailTransportInstructorView,
   PaymentOrderCalculationBasisDetailTransportOneWayView,
@@ -26,11 +30,7 @@ import {
 import { PaymentOrderCalculationBasisDetailMealView } from './payment-order-calculation-basis-detail-meal-view'
 import { PaymentOrderCalculationBasisDetailActivityView } from './payment-order-calculation-basis-detail-activity-view'
 import { PaymentOrderCalculationBasisDetailWithholdingView } from './payment-order-calculation-basis-detail-withholding-view'
-import {
-  resolveSettlementItemSettingForCalculationRow,
-  type PaymentOrderCalculationStatementDetailContext,
-} from '@/features/settlement/lib/resolve-settlement-item-setting-for-calculation-row'
-import type { SettlementItemSettingRow } from '@/data/mock/settlement-item-settings'
+import type { PaymentOrderCalculationStatementDetailContext } from '@/features/settlement/lib/resolve-settlement-item-setting-for-calculation-row'
 import './payment-order-calculation-basis-detail-modal.css'
 
 export interface PaymentOrderCalculationBasisDetailModalProps {
@@ -69,6 +69,12 @@ export function PaymentOrderCalculationBasisDetailModal({
     >
       {detail.layout === 'lectureFeeTier' ? (
         <PaymentOrderCalculationBasisDetailLectureFeeTierView detail={detail} />
+      ) : null}
+      {detail.layout === 'lectureFeeSpecial' ? (
+        <PaymentOrderCalculationBasisDetailLectureFeeSpecialView detail={detail} />
+      ) : null}
+      {detail.layout === 'lectureFeeGemini' ? (
+        <PaymentOrderCalculationBasisDetailLectureFeeGeminiView detail={detail} />
       ) : null}
       {detail.layout === 'transportRoundTrip' ? (
         <PaymentOrderCalculationBasisDetailTransportRoundTripView detail={detail} />
@@ -109,15 +115,11 @@ export function usePaymentOrderCalculationBasisDetailModal(
   const [basisDetailOpen, setBasisDetailOpen] = useState(false)
   const [selectedBasisDetail, setSelectedBasisDetail] =
     useState<PaymentOrderCalculationBasisDetail | null>(null)
-  const [wageSettingItemOpen, setWageSettingItemOpen] = useState(false)
-  const [wageSettingItem, setWageSettingItem] = useState<SettlementItemSettingRow | null>(null)
 
   useEffect(() => {
     if (!parentOpen) {
       setBasisDetailOpen(false)
       setSelectedBasisDetail(null)
-      setWageSettingItemOpen(false)
-      setWageSettingItem(null)
     }
   }, [parentOpen])
 
@@ -126,32 +128,8 @@ export function usePaymentOrderCalculationBasisDetailModal(
     setSelectedBasisDetail(null)
   }, [])
 
-  const closeWageSettingItemModal = useCallback(() => {
-    setWageSettingItemOpen(false)
-    setWageSettingItem(null)
-  }, [])
-
   const handleBasisDetailClick = useCallback(
     (row: PaymentOrderCalculationTableRow) => {
-      if (
-        row.basisDetail &&
-        isSupportedBasisDetailLayout(row.basisDetail) &&
-        row.kind !== 'lecture_fee' &&
-        row.itemLabel !== '강의비' &&
-        row.itemLabel !== '강사비'
-      ) {
-        setSelectedBasisDetail(row.basisDetail)
-        setBasisDetailOpen(true)
-        return
-      }
-
-      const wageItem = resolveSettlementItemSettingForCalculationRow(row, context)
-      if (wageItem) {
-        setWageSettingItem(wageItem)
-        setWageSettingItemOpen(true)
-        return
-      }
-
       const resolvedDetail = resolvePaymentOrderCalculationBasisDetailForRow(row, context)
       if (resolvedDetail && isSupportedBasisDetailLayout(resolvedDetail)) {
         setSelectedBasisDetail(resolvedDetail)
@@ -169,8 +147,5 @@ export function usePaymentOrderCalculationBasisDetailModal(
     selectedBasisDetail,
     handleBasisDetailClick,
     closeBasisDetailModal,
-    wageSettingItemOpen,
-    wageSettingItem,
-    closeWageSettingItemModal,
   }
 }

@@ -134,6 +134,10 @@ function hasTypedBasisDetailFields(value: unknown): boolean {
   switch (value.layout) {
     case 'lectureFeeTier':
       return 'tier' in value && 'totalWon' in value
+    case 'lectureFeeSpecial':
+      return 'feeAssessmentWon' in value && 'totalWon' in value
+    case 'lectureFeeGemini':
+      return 'feeAssessmentWon' in value && 'lectureTimeDisplay' in value
     case 'transportInstructor':
       return 'distanceKm' in value
     case 'transportRoundTrip':
