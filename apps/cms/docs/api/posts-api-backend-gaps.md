@@ -47,7 +47,8 @@ G5–G8은 기획 노란 강조 / FE 후속 연동입니다. **OpenAPI만 먼저
 | POST     | `/api/admin/inquiries/bulk-delete`                    | 2건 이상 삭제 — 배선됨                            |
 | GET/POST | `/api/admin/inquiries/{inquiryId}/answers`            | 답변 목록·등록 — 배선됨                           |
 | PATCH    | `/api/admin/inquiries/{inquiryId}/answers/{answerId}` | 기존 답변 수정 — 배선됨                           |
-| —        | `/api/admin/inquiry-categories`                       | **없음**. remote 시 카테고리 관리 버튼 disabled   |
+| GET/POST | `/api/admin/inquiry-categories`                       | 카테고리 모달 — 배선됨                            |
+| PATCH/DELETE | `/api/admin/inquiry-categories/{categoryId}`      | 카테고리 모달 — 배선됨                            |
 
 ---
 
@@ -55,7 +56,7 @@ G5–G8은 기획 노란 강조 / FE 후속 연동입니다. **OpenAPI만 먼저
 
 | 화면       | Notion                    | 조치                               | Gap           |
 | ---------- | ------------------------- | ---------------------------------- | ------------- |
-| 문의 목록  | 카테고리 관리 팝업        | BE 대기. FE 버튼 disabled          | **G1** **G4** |
+| 문의 목록  | 카테고리 관리 팝업        | FE 배선됨. 사용 중 삭제는 409(G4)  | **G4**        |
 | 문의 상세  | 문의 회원명·연락처·이메일 | FE `회원 #id` / `-`                | **G2**        |
 | 문의 목록  | 담당자명                  | FE `관리자 #id`                    | **G3**        |
 | 문의 상세  | 답변 후 삭제 불가         | FE 버튼 비활성. 서버 409 필요      | **G4**        |

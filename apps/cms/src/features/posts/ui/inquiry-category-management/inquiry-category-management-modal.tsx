@@ -7,6 +7,7 @@ import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
+import type { InquiryCategoryRemoteActions } from '@/features/posts/hooks/use-admin-inquiry-categories'
 import { useInquiryCategoryManagementModal } from '@/features/posts/hooks/use-inquiry-category-management-modal'
 import type {
   AdminInquiryRow,
@@ -27,6 +28,7 @@ export type InquiryCategoryManagementModalProps = {
   categories: InquiryCategoryRow[]
   onCategoriesChange: (next: InquiryCategoryRow[]) => void
   inquiries: readonly AdminInquiryRow[]
+  remoteActions?: InquiryCategoryRemoteActions
 }
 
 export function InquiryCategoryManagementModal({
@@ -35,6 +37,7 @@ export function InquiryCategoryManagementModal({
   categories,
   onCategoriesChange,
   inquiries,
+  remoteActions,
 }: InquiryCategoryManagementModalProps) {
   const ctrl = useInquiryCategoryManagementModal({
     open,
@@ -42,6 +45,7 @@ export function InquiryCategoryManagementModal({
     onCategoriesChange,
     inquiries,
     onClose: onCancel,
+    remoteActions,
   })
 
   const {

@@ -8,7 +8,6 @@ import { useSearchParams } from 'react-router-dom'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import { shouldUseInquiriesRemoteApi } from '@/features/posts/api/inquiries/admin-inquiries-service'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { useAdminInquiryCategories } from '@/features/posts/hooks/use-admin-inquiry-categories'
 import { useInquiryListQuery } from '@/features/posts/hooks/use-inquiry-list-query'
@@ -60,7 +59,6 @@ const INQUIRY_LIST_TABLE_SCROLL_X =
 export function AdminInquiryPage() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
-  const inquiriesRemote = shouldUseInquiriesRemoteApi()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const listQuery = useInquiryListQuery(searchParams, true)
@@ -71,8 +69,12 @@ export function AdminInquiryPage() {
     ? getPostsApiErrorMessage(listQuery.error, '문의 목록을 불러오지 못했습니다.')
     : null
 
-  const { categoryRows, allowedCategoryLabels, allowedCategorySet } =
-    useAdminInquiryCategories(rows)
+  const {
+    categoryRows,
+    allowedCategoryLabels,
+    allowedCategorySet,
+    remoteActions: inquiryCategoryRemoteActions,
+  } = useAdminInquiryCategories()
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
 
   const tablePageContext: AdminInquiryTableContext = useMemo(
@@ -330,6 +332,7 @@ export function AdminInquiryPage() {
         categories={categoryRows}
         onCategoriesChange={() => {}}
         inquiries={rows}
+        remoteActions={inquiryCategoryRemoteActions}
       />
       <ActionResultModal
         open={actionResultOpen}
@@ -367,8 +370,6 @@ export function AdminInquiryPage() {
             <CmsButton
               variant="secondary"
               onClick={() => setCategoryModalOpen(true)}
-              disabled={inquiriesRemote}
-              title={inquiriesRemote ? '문의 카테고리 API가 제공되지 않습니다.' : undefined}
             >
               카테고리 관리
             </CmsButton>

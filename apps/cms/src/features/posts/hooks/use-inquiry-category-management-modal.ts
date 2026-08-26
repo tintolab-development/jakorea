@@ -9,6 +9,7 @@ import {
   createNoticeCategoryId,
   hasDuplicateCategoryName,
 } from '@/features/posts/model/notice-category-domain'
+import type { InquiryCategoryRemoteActions } from '@/features/posts/hooks/use-admin-inquiry-categories'
 import type { InquiryCategoryRow } from '@/features/posts/model/admin-inquiry-management.types'
 import type { AdminInquiryRow } from '@/features/posts/model/admin-inquiry-management.types'
 
@@ -18,6 +19,7 @@ export type UseInquiryCategoryManagementModalParams = {
   onCategoriesChange: (next: InquiryCategoryRow[]) => void
   inquiries: readonly AdminInquiryRow[]
   onClose: () => void
+  remoteActions?: InquiryCategoryRemoteActions
 }
 
 export type UseInquiryCategoryManagementModalResult = {
@@ -51,6 +53,7 @@ export function useInquiryCategoryManagementModal({
   onCategoriesChange,
   inquiries,
   onClose,
+  remoteActions,
 }: UseInquiryCategoryManagementModalParams): UseInquiryCategoryManagementModalResult {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState('')
@@ -97,7 +100,7 @@ export function useInquiryCategoryManagementModal({
     setEditDraft('')
   }, [])
 
-  const submitEdit = useCallback(() => {
+  const submitEdit = useCallback(async () => {
     if (editingId == null) return
     const trimmed = editDraft.trim()
     if (trimmed === '') {
@@ -106,11 +109,16 @@ export function useInquiryCategoryManagementModal({
     if (hasDuplicateCategoryName(categories, trimmed, editingId)) {
       return
     }
+    if (remoteActions) {
+      await remoteActions.onUpdate(editingId, trimmed)
+      cancelEdit()
+      return
+    }
     onCategoriesChange(
       categories.map(c => (c.id === editingId ? { ...c, name: trimmed } : c))
     )
     cancelEdit()
-  }, [cancelEdit, categories, editDraft, editingId, onCategoriesChange])
+  }, [cancelEdit, categories, editDraft, editingId, onCategoriesChange, remoteActions])
 
   const removeCategory = useCallback(
     (id: string) => {
@@ -138,19 +146,25 @@ export function useInquiryCategoryManagementModal({
     setPendingDeleteRow(null)
   }, [])
 
-  const confirmDeleteCategory = useCallback(() => {
+  const confirmDeleteCategory = useCallback(async () => {
     if (pendingDeleteRow == null) return
+    if (remoteActions) {
+      await remoteActions.onDelete(pendingDeleteRow.id)
+      setDeleteConfirmOpen(false)
+      setPendingDeleteRow(null)
+      return
+    }
     removeCategory(pendingDeleteRow.id)
     setDeleteConfirmOpen(false)
     setPendingDeleteRow(null)
-  }, [pendingDeleteRow, removeCategory])
+  }, [pendingDeleteRow, remoteActions, removeCategory])
 
   const cancelNew = useCallback(() => {
     setNewDraft('')
     setComposeOpen(false)
   }, [])
 
-  const submitNew = useCallback(() => {
+  const submitNew = useCallback(async () => {
     const trimmed = newDraft.trim()
     if (trimmed === '') {
       return
@@ -158,11 +172,17 @@ export function useInquiryCategoryManagementModal({
     if (hasDuplicateCategoryName(categories, trimmed)) {
       return
     }
+    if (remoteActions) {
+      await remoteActions.onCreate(trimmed)
+      setNewDraft('')
+      setComposeOpen(false)
+      return
+    }
     const id = createNoticeCategoryId()
     onCategoriesChange([...categories, { id, name: trimmed }])
     setNewDraft('')
     setComposeOpen(false)
-  }, [categories, newDraft, onCategoriesChange])
+  }, [categories, newDraft, onCategoriesChange, remoteActions])
 
   const openCompose = useCallback(() => {
     cancelEdit()

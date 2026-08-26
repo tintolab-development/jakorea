@@ -88,6 +88,8 @@ LNB 「게시글 관리」 3화면(공지·FAQ·문의)과 Swagger API 매핑입
 | GET    | `/api/admin/inquiries/{inquiryId}`                    | 상세                                  |
 | DELETE | `/api/admin/inquiries/{inquiryId}`                    | 단건 삭제                             |
 | POST   | `/api/admin/inquiries/bulk-delete`                    | 2건 이상 삭제                         |
+| GET/POST | `/api/admin/inquiry-categories`                     | 카테고리 모달                         |
+| PATCH/DELETE | `/api/admin/inquiry-categories/{categoryId}`      | 카테고리 수정·삭제                    |
 | GET    | `/api/admin/inquiries/{inquiryId}/answers`            | 답변 목록                             |
 | POST   | `/api/admin/inquiries/{inquiryId}/answers`            | 답변 등록 (없을 때)                   |
 | PATCH  | `/api/admin/inquiries/{inquiryId}/answers/{answerId}` | 답변 수정 (있을 때)                   |
@@ -102,7 +104,7 @@ LNB 「게시글 관리」 3화면(공지·FAQ·문의)과 Swagger API 매핑입
 
 | #   | 항목                                       | UI 대응                                                     | Gap |
 | --- | ------------------------------------------ | ----------------------------------------------------------- | --- |
-| 1   | 문의 카테고리 CRUD                         | remote 시 카테고리 관리 버튼 disabled, 목록 distinct로 필터 | G1  |
+| 1   | 문의 카테고리 CRUD                         | 배선됨 (`inquiry-categories`, 공지/FAQ와 동일 모달)         | G1  |
 | 2   | 문의자 이름·연락처·이메일                  | `회원 #{inquirerMemberId}`, phone/email `-`                 | G2  |
 | 3   | `assignedAdminName`                        | `관리자 #{assignedAdminId}`                                 | G3  |
 | 4   | 카테고리 삭제/중복·답변된 문의 삭제 409    | FE 모달 차단 + 서버 409 필요                                | G4  |

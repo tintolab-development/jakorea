@@ -1,4 +1,9 @@
 import {
+  mapCategoryItems,
+  mapCreatedCategory,
+  type CategoryRow,
+} from '@/features/posts/api/shared/category-adapters'
+import {
   mapInquiryDetail,
   mapInquiryListResponse,
 } from '@/features/posts/api/inquiries/adapters/inquiry-adapters'
@@ -6,11 +11,15 @@ import { inquiriesParamsFromSearchParams } from '@/features/posts/api/inquiries/
 import {
   bulkDeleteInquiriesRemote,
   createInquiryAnswerRemote,
+  createInquiryCategoryRemote,
+  deleteInquiryCategoryRemote,
   deleteInquiryRemote,
   fetchInquiriesRemote,
   fetchInquiryAnswersRemote,
+  fetchInquiryCategoriesRemote,
   fetchInquiryRemote,
   updateInquiryAnswerRemote,
+  updateInquiryCategoryRemote,
 } from '@/features/posts/api/inquiries/inquiries-api-client'
 import type {
   AdminInquiryDetail,
@@ -81,4 +90,34 @@ export async function deleteInquiries(ids: string[]): Promise<void> {
     return
   }
   await bulkDeleteInquiriesRemote(ids)
+}
+
+export async function getInquiryCategories(): Promise<CategoryRow[]> {
+  assertInquiriesRemoteReady()
+  const dto = await fetchInquiryCategoriesRemote({ page: 0, size: 100 })
+  return mapCategoryItems(dto.items)
+}
+
+export async function createInquiryCategory(name: string): Promise<CategoryRow | null> {
+  assertInquiriesRemoteReady()
+  const dto = await createInquiryCategoryRemote({
+    categoryName: name,
+    name,
+    status: 'active',
+  })
+  return mapCreatedCategory(dto, name)
+}
+
+export async function updateInquiryCategory(categoryId: string, name: string): Promise<void> {
+  assertInquiriesRemoteReady()
+  await updateInquiryCategoryRemote(categoryId, {
+    categoryName: name,
+    name,
+    status: 'active',
+  })
+}
+
+export async function deleteInquiryCategory(categoryId: string): Promise<void> {
+  assertInquiriesRemoteReady()
+  await deleteInquiryCategoryRemote(categoryId)
 }

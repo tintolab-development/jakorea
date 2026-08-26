@@ -23,6 +23,7 @@ function mapInquiryBase(dto: InquiryResponse): AdminInquiryRow {
     createdAt: dto.createdAt ?? new Date().toISOString(),
     memberName: dto.inquirerMemberId != null ? `회원 #${dto.inquirerMemberId}` : '-',
     programName: dto.programNameSnapshot ?? null,
+    programId: dto.programId != null ? String(dto.programId) : undefined,
     assignee: dto.assignedAdminId != null ? `관리자 #${dto.assignedAdminId}` : null,
     answeredAt: dto.answeredAt ?? null,
     body: dto.content ?? '',
