@@ -11,6 +11,7 @@ import type {
   ApiResponsePerformanceCorrectionResponse,
   ApiResponsePerformanceExternalExportResponse,
   ApiResponsePerformanceRebuildResponse,
+  ApiResponsePerformanceRecordFrontendPageResponse,
   ApiResponsePerformanceRecordFrontendResponse,
   ApiResponsePerformanceRuleResponse,
   ApiResponsePerformanceSnapshotRefreshResponse,
@@ -28,7 +29,6 @@ import type {
   PerformanceClosingRequest,
   PerformanceCorrectionDiffResponse,
   PerformanceCorrectionRequest,
-  PerformanceExportResponse,
   PerformanceExternalExportRequest,
   PerformanceRebuildRequest,
   PerformanceRecordFrontendResponse,
@@ -1098,8 +1098,8 @@ const listSnapshotLinks = (
  */
 const listRecords = (
     params?: ListRecordsParams,
- options?: SecondParameter<typeof customInstance<PerformanceRecordFrontendResponse[]>>,) => {
-      return customInstance<PerformanceRecordFrontendResponse[]>(
+ options?: SecondParameter<typeof customInstance<ApiResponsePerformanceRecordFrontendPageResponse>>,) => {
+      return customInstance<ApiResponsePerformanceRecordFrontendPageResponse>(
       {url: `/api/admin/performance-records`, method: 'GET',
         params
     },
@@ -1262,8 +1262,8 @@ const getRevisionDetail = (
  */
 const exportRecords = (
     params?: ExportRecordsParams,
- options?: SecondParameter<typeof customInstance<PerformanceExportResponse>>,) => {
-      return customInstance<PerformanceExportResponse>(
+ options?: SecondParameter<typeof customInstance<string>>,) => {
+      return customInstance<string>(
       {url: `/api/admin/performance-records/export`, method: 'GET',
         params
     },

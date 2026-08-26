@@ -21,6 +21,10 @@
   ],
   "tags": [
     {
+      "name": "콘텐츠/고객지원",
+      "description": "문의 카테고리 관리 API"
+    },
+    {
       "name": "개인정보/감사",
       "description": "개인정보 조회, export, 승인, raw 다운로드, 감사로그와 보관 정책 API입니다."
     },
@@ -315,6 +319,10 @@
     {
       "name": "기타 API",
       "description": "로그인한 회원의 SSO 계정 연결 및 해제 API"
+    },
+    {
+      "name": "기타 API",
+      "description": "교재 관리 사업 분야 관리 팝업 API"
     },
     {
       "name": "시스템 진단/운영 검증",
@@ -1287,6 +1295,125 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 경로/쿼리 from 필터",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "quarter",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 경로/쿼리 from 필터",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "businessArea",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 경로/쿼리 from 필터",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sponsorNameKo",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 경로/쿼리 from 필터",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mainTitle",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 경로/쿼리 from 필터",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 경로/쿼리 from 필터",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "textbookName",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 경로/쿼리 from 필터",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "institutionName",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 경로/쿼리 from 필터",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sido",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 경로/쿼리 from 필터",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sigungu",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 경로/쿼리 from 필터",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ips",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 경로/쿼리 from 필터",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "educationType",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 경로/쿼리 from 필터",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1402,6 +1529,116 @@
             }
           },
           {
+            "name": "year",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "quarter",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "businessArea",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sponsorNameKo",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mainTitle",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "textbookName",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "institutionName",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sido",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sigungu",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ips",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "educationType",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "description": "페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.",
@@ -1430,10 +1667,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PerformanceRecordFrontendResponse"
-                  }
+                  "$ref": "#/components/schemas/ApiResponsePerformanceRecordFrontendPageResponse"
                 }
               }
             }
@@ -1578,6 +1812,16 @@
             }
           },
           {
+            "name": "programId",
+            "in": "query",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
             "name": "educationMonth",
             "in": "query",
             "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
@@ -1587,13 +1831,122 @@
             }
           },
           {
-            "name": "programId",
+            "name": "status",
             "in": "query",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "description": "상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
             "required": false,
             "schema": {
               "type": "integer",
-              "format": "int64"
+              "format": "int32"
+            }
+          },
+          {
+            "name": "quarter",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "businessArea",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sponsorNameKo",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mainTitle",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "textbookName",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "institutionName",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sido",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sigungu",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ips",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "educationType",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -1648,7 +2001,8 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PerformanceExportResponse"
+                  "type": "string",
+                  "format": "byte"
                 }
               }
             }
@@ -3930,6 +4284,13 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "assignedProgramTypes": {
+            "type": "array",
+            "description": "일정 위젯에 노출할 프로그램 유형. MASTER는 general/company_school/ujat/gemini 전부, 그 외는 담당 프로그램이 있는 유형만",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -8995,6 +9356,70 @@
           "ids"
         ]
       },
+      "TextbookBusinessAreaRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "businessAreaName": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponseTextbookBusinessAreaResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/TextbookBusinessAreaResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "TextbookBusinessAreaResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "textbookCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deletable": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        }
+      },
       "TermsDocumentUpsertRequest": {
         "type": "object",
         "description": "약관 문서 등록/수정 요청. contentFormat=HTML을 권장합니다.",
@@ -13985,6 +14410,65 @@
           }
         }
       },
+      "CategoryRequest": {
+        "type": "object",
+        "description": "카테고리 생성/수정 요청",
+        "properties": {
+          "categoryName": {
+            "type": "string",
+            "description": "카테고리명",
+            "example": "정산"
+          },
+          "name": {
+            "type": "string",
+            "description": "카테고리명 별칭",
+            "example": "정산"
+          },
+          "status": {
+            "type": "string",
+            "description": "사용 상태",
+            "example": "active"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32",
+            "description": "표시 순서",
+            "example": 2
+          }
+        }
+      },
+      "ApiResponseMapStringObject": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {},
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
       "InquiryAnswerRequest": {
         "type": "object",
         "description": "문의 답변 등록 요청",
@@ -14003,6 +14487,70 @@
             "type": "string",
             "description": "상태 변경 사유",
             "example": "관리자 답변 완료"
+          }
+        }
+      },
+      "ApiResponseInquiryAnswerResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/InquiryAnswerResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "InquiryAnswerResponse": {
+        "type": "object",
+        "description": "문의 답변 응답",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "답변 ID",
+            "example": 7001
+          },
+          "inquiryId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "문의 ID",
+            "example": 6001
+          },
+          "content": {
+            "type": "string",
+            "description": "답변 본문",
+            "example": "문의 주신 내용은 담당 부서 확인 후 처리되었습니다."
+          },
+          "answeredByAdminId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "답변 관리자 ID",
+            "example": 9001
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "답변 생성 시각",
+            "example": "2026-06-02T09:00:00Z"
           }
         }
       },
@@ -15840,56 +16388,6 @@
               "archived"
             ],
             "example": "published"
-          }
-        }
-      },
-      "CategoryRequest": {
-        "type": "object",
-        "properties": {
-          "categoryName": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "displayOrder": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "ApiResponseMapStringObject": {
-        "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "요청 처리 성공 여부",
-            "example": false
-          },
-          "data": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "additionalProperties": {},
-            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
-          },
-          "message": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
-            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
-          },
-          "error": {
-            "type": "null",
-            "$ref": "#/components/schemas/ErrorDetail",
-            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
           }
         }
       },
@@ -23231,6 +23729,33 @@
           }
         }
       },
+      "PageResponseTextbookBusinessAreaResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TextbookBusinessAreaResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "SponsorDetailResponse": {
         "type": "object",
         "properties": {
@@ -27856,6 +28381,62 @@
           }
         }
       },
+      "ApiResponsePerformanceRecordFrontendPageResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/PerformanceRecordFrontendPageResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "PerformanceRecordFrontendPageResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PerformanceRecordFrontendResponse"
+            }
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PerformanceRecordListItemResponse": {
         "type": "object",
         "properties": {
@@ -28143,66 +28724,6 @@
           "decidedAt": {
             "type": "string",
             "format": "date-time"
-          }
-        }
-      },
-      "PerformanceExportColumnResponse": {
-        "type": "object",
-        "properties": {
-          "displayOrder": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "key": {
-            "type": "string"
-          },
-          "header": {
-            "type": "string"
-          }
-        }
-      },
-      "PerformanceExportResponse": {
-        "type": "object",
-        "properties": {
-          "exportHistoryId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "exportType": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "recordCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "exportedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "statusPolicy": {
-            "type": "string"
-          },
-          "columnOrderVersion": {
-            "type": "string"
-          },
-          "columns": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PerformanceExportColumnResponse"
-            }
-          },
-          "clientExportEventId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "exportPolicy": {
-            "type": "string"
-          },
-          "rawPrivacyIncluded": {
-            "type": "boolean"
           }
         }
       },
@@ -29289,6 +29810,34 @@
           }
         }
       },
+      "PageResponseMapStringObject": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "InquiryResponse": {
         "type": "object",
         "description": "문의 응답",
@@ -29321,6 +29870,21 @@
             "description": "문의자 회원 ID",
             "example": 3001
           },
+          "inquirerName": {
+            "type": "string",
+            "description": "문의자 표시명",
+            "example": "서봉사"
+          },
+          "inquirerPhone": {
+            "type": "string",
+            "description": "문의자 전화번호",
+            "example": "010-1049-2000"
+          },
+          "inquirerEmail": {
+            "type": "string",
+            "description": "문의자 이메일",
+            "example": "volunteer@example.com"
+          },
           "title": {
             "type": "string",
             "description": "문의 제목",
@@ -29342,6 +29906,11 @@
             "description": "담당 관리자 ID",
             "example": 9001
           },
+          "assignedAdminName": {
+            "type": "string",
+            "description": "담당 관리자 표시명",
+            "example": "운영팀 관리자"
+          },
           "answeredAt": {
             "type": "string",
             "format": "date-time",
@@ -29359,41 +29928,6 @@
             "format": "date-time",
             "description": "문의 수정 시각",
             "example": "2026-06-02T09:30:00Z"
-          }
-        }
-      },
-      "InquiryAnswerResponse": {
-        "type": "object",
-        "description": "문의 답변 응답",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64",
-            "description": "답변 ID",
-            "example": 7001
-          },
-          "inquiryId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "문의 ID",
-            "example": 6001
-          },
-          "content": {
-            "type": "string",
-            "description": "답변 본문",
-            "example": "문의 주신 내용은 담당 부서 확인 후 처리되었습니다."
-          },
-          "answeredByAdminId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "답변 관리자 ID",
-            "example": 9001
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "답변 생성 시각",
-            "example": "2026-06-02T09:00:00Z"
           }
         }
       },
@@ -30824,6 +31358,42 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "participantAppliedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "참여자 신청 수. 해당 유형 모집이 없으면 생략"
+          },
+          "participantCapacity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "참여자 정원. 해당 유형 모집이 없으면 생략"
+          },
+          "studentAppliedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "studentCapacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "volunteerAppliedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "봉사자 신청 수. 해당 유형 모집이 없으면 생략"
+          },
+          "volunteerCapacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "instructorAppliedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "강사 신청 수. 해당 유형 모집이 없으면 생략"
+          },
+          "instructorCapacity": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -30905,6 +31475,12 @@
               "$ref": "#/components/schemas/DashboardProgramInquiryResponse"
             }
           },
+          "summaries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardProgramInquirySummaryResponse"
+            }
+          },
           "params": {
             "type": "object",
             "additionalProperties": {
@@ -30944,6 +31520,38 @@
           "answeredAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "unread": {
+            "type": "boolean",
+            "description": "미열람(답변대기) 여부. 없으면 프론트는 답변대기를 신규로 본다"
+          }
+        }
+      },
+      "DashboardProgramInquirySummaryResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programName": {
+            "type": "string"
+          },
+          "pending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "answered": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unreadCount": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -31066,6 +31674,18 @@
             "type": "integer",
             "format": "int32"
           },
+          "participantApplicable": {
+            "type": "boolean",
+            "description": "참여자 KPI 해당 여부. false면 UI는 해당없음"
+          },
+          "schoolApplicable": {
+            "type": "boolean",
+            "description": "학교 KPI 해당 여부. individual/교육받은 교사는 false"
+          },
+          "classApplicable": {
+            "type": "boolean",
+            "description": "학급 KPI 해당 여부. individual/교육받은 교사는 false"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -31103,34 +31723,6 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/NoticeResponse"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "PageResponseMapStringObject": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "additionalProperties": {}
             }
           },
           "page": {
