@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
-import { getMemberLoginLogsList } from '@/features/logs/api/admin-logs-service'
+import { getMemberLoginLogsPage } from '@/features/logs/api/admin-logs-service'
 import { memberLoginLogsParamsFromSearchParams } from '@/features/logs/api/logs-filter-params'
 import { logsQueryKeys } from '@/features/logs/api/logs-query-keys'
+import { useInfiniteLogList } from '@/features/logs/hooks/use-infinite-log-list'
 
 export function useMemberLoginHistoryQuery(
   searchParams: URLSearchParams,
@@ -9,16 +9,15 @@ export function useMemberLoginHistoryQuery(
 ) {
   const searchParamsKey = searchParams.toString()
 
-  return useQuery({
+  return useInfiniteLogList({
     queryKey: logsQueryKeys.memberLogins(searchParamsKey),
-    queryFn: () => {
+    queryKeyIdentity: searchParamsKey,
+    queryFn: page => {
       const apiParams = memberLoginLogsParamsFromSearchParams(
         new URLSearchParams(searchParamsKey)
       )
-      return getMemberLoginLogsList(apiParams)
+      return getMemberLoginLogsPage(apiParams, page)
     },
     enabled,
-    staleTime: 30_000,
-    retry: false,
   })
 }

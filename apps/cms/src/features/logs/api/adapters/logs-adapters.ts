@@ -3,6 +3,8 @@ import type {
   DownloadLogFrontendResponse,
   PersonalInfoAccessLogFrontendResponse,
 } from '@/shared/api/generated/logs/schemas'
+import type { LogListPage } from '@/features/logs/api/log-list-page'
+import { LOG_LIST_PAGE_SIZE } from '@/features/logs/api/log-list-page'
 import type { BugIssueLog } from '@/types/bug-issue-log'
 import type { DownloadLog } from '@/types/download-log'
 import type { MemberLoginLog } from '@/types/member-login-log'
@@ -31,6 +33,61 @@ function readExtraString(dto: object, keys: readonly string[]): string {
   return '-'
 }
 
+function readFiniteNumber(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
+function unwrapListItems(payload: unknown): unknown[] {
+  if (Array.isArray(payload)) {
+    return payload
+  }
+  if (payload != null && typeof payload === 'object') {
+    const rec = payload as Record<string, unknown>
+    for (const key of ['items', 'content', 'rows', 'data'] as const) {
+      const value = rec[key]
+      if (Array.isArray(value)) return value
+    }
+  }
+  return []
+}
+
+function mapLogListPage<TDto, TItem>(
+  payload: unknown,
+  mapItem: (dto: TDto) => TItem
+): LogListPage<TItem> {
+  const rawItems = unwrapListItems(payload)
+  const items = rawItems
+    .filter((item): item is TDto => item != null && typeof item === 'object')
+    .map(mapItem)
+
+  if (Array.isArray(payload)) {
+    return {
+      items,
+      page: 0,
+      size: items.length || LOG_LIST_PAGE_SIZE,
+      totalElements: items.length,
+      totalPages: items.length > 0 ? 1 : 0,
+      hasNext: false,
+    }
+  }
+
+  const rec =
+    payload != null && typeof payload === 'object'
+      ? (payload as Record<string, unknown>)
+      : {}
+  const page = readFiniteNumber(rec.page, 0)
+  const size = readFiniteNumber(rec.size, LOG_LIST_PAGE_SIZE)
+  const totalElements = readFiniteNumber(rec.totalElements, items.length)
+  const totalPages = readFiniteNumber(
+    rec.totalPages,
+    size > 0 ? Math.ceil(totalElements / size) : 0
+  )
+  const hasNext =
+    typeof rec.hasNext === 'boolean' ? rec.hasNext : page + 1 < totalPages
+
+  return { items, page, size, totalElements, totalPages, hasNext }
+}
+
 export function mapDownloadLogResponse(dto: DownloadLogFrontendResponse): DownloadLog {
   return {
     id: dto.id ?? `log-${Date.now()}`,
@@ -42,10 +99,10 @@ export function mapDownloadLogResponse(dto: DownloadLogFrontendResponse): Downlo
   }
 }
 
-export function mapDownloadLogListResponse(
-  items: DownloadLogFrontendResponse[] | undefined
-): DownloadLog[] {
-  return (items ?? []).map(mapDownloadLogResponse)
+export function mapDownloadLogListPageResponse(payload: unknown): LogListPage<DownloadLog> {
+  return mapLogListPage(payload, (dto: DownloadLogFrontendResponse) =>
+    mapDownloadLogResponse(dto)
+  )
 }
 
 export function mapPersonalInfoAccessLogResponse(
@@ -63,10 +120,12 @@ export function mapPersonalInfoAccessLogResponse(
   }
 }
 
-export function mapPersonalInfoAccessLogListResponse(
-  items: PersonalInfoAccessLogFrontendResponse[] | undefined
-): PersonalInfoAccessLog[] {
-  return (items ?? []).map(mapPersonalInfoAccessLogResponse)
+export function mapPersonalInfoAccessLogListPageResponse(
+  payload: unknown
+): LogListPage<PersonalInfoAccessLog> {
+  return mapLogListPage(payload, (dto: PersonalInfoAccessLogFrontendResponse) =>
+    mapPersonalInfoAccessLogResponse(dto)
+  )
 }
 
 export function mapMemberLoginLogResponse(dto: object): MemberLoginLog {
@@ -90,30 +149,15 @@ export function mapMemberLoginLogResponse(dto: object): MemberLoginLog {
   }
 }
 
-export function mapMemberLoginLogListResponse(payload: unknown): MemberLoginLog[] {
-  const items = normalizeMemberLoginListPayload(payload)
-  return items.map(item => mapMemberLoginLogResponse(item))
-}
-
-function normalizeMemberLoginListPayload(payload: unknown): object[] {
-  if (Array.isArray(payload)) {
-    return payload.filter((item): item is object => item != null && typeof item === 'object')
-  }
-  if (payload != null && typeof payload === 'object') {
-    const rec = payload as Record<string, unknown>
-    for (const key of ['items', 'content', 'rows', 'data'] as const) {
-      const value = rec[key]
-      if (Array.isArray(value)) {
-        return value.filter((item): item is object => item != null && typeof item === 'object')
-      }
-    }
-  }
-  return []
+export function mapMemberLoginLogListPageResponse(
+  payload: unknown
+): LogListPage<MemberLoginLog> {
+  return mapLogListPage(payload, (dto: object) => mapMemberLoginLogResponse(dto))
 }
 
 export function mapBugIssueLogResponse(dto: BugIssueLogFrontendResponse): BugIssueLog {
   return {
-    id: dto.id ?? `bug-${Date.now()}`,
+    id: dto.id != null ? String(dto.id) : `bug-${Date.now()}`,
     screenName: dto.screenName ?? '-',
     errorMessage: dto.errorMessage ?? '-',
     userName: dto.userName ?? '-',
@@ -121,8 +165,8 @@ export function mapBugIssueLogResponse(dto: BugIssueLogFrontendResponse): BugIss
   }
 }
 
-export function mapBugIssueLogListResponse(
-  items: BugIssueLogFrontendResponse[] | undefined
-): BugIssueLog[] {
-  return (items ?? []).map(mapBugIssueLogResponse)
+export function mapBugIssueLogListPageResponse(payload: unknown): LogListPage<BugIssueLog> {
+  return mapLogListPage(payload, (dto: BugIssueLogFrontendResponse) =>
+    mapBugIssueLogResponse(dto)
+  )
 }

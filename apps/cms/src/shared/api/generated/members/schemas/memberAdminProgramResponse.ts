@@ -12,4 +12,11 @@ export interface MemberAdminProgramResponse {
   programName?: string;
   assignmentRole?: string;
   assignedAt?: string;
+  programStartDate?: string;
+  progressYear?: number;
+  lifecycleStatus?: string;
+  approvedStudentCount?: number;
+  recruitmentCapacity?: number;
+  participantType?: string;
+  targetLevel?: string;
 }

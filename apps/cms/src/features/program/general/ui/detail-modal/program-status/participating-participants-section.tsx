@@ -398,9 +398,7 @@ export function ParticipatingParticipantsSection({
         )}
       </FilterTableLayout>
 
-      {viewMode === 'calendar' ? (
-        <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />
-      ) : null}
+      <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />
 
       <CertificateBulkIssueReasonModal
         open={certificateIssueModalOpen}

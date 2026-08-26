@@ -368,3 +368,26 @@
   aspect-ratio: 1 / 1;
 }
 
+/* 리사이즈 제스처 중 Col span은 유지하고, 목표 너비만 점선으로 표시 */
+.dashboard-widget-resize-preview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  box-sizing: border-box;
+  border: 2px dashed var(--JA-mint-01, #01a1af);
+  border-radius: var(--radius-8);
+  pointer-events: none;
+  z-index: 20;
+  background: color-mix(in srgb, var(--JA-mint-01, #01a1af) 6%, transparent);
+}
+
+.dashboard-widget-resize-preview--full {
+  width: calc(200% + 32px);
+}
+
+.dashboard-widget-resize-preview--half {
+  width: calc(50% - 16px);
+  min-width: 120px;
+}
+

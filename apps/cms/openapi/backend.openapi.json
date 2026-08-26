@@ -181,6 +181,10 @@
       "description": "Admin Operations 관련 관리자 API"
     },
     {
+      "name": "기타 API",
+      "description": "확정 학급 슬롯 기반 지역별 봉사자 자동배정 및 출결 담당자 설정"
+    },
+    {
       "name": "프로그램 게시판",
       "description": "프로그램 게시글, 공개 노출, 상세 조회, 게시 상태 관리 API입니다."
     },
@@ -235,6 +239,10 @@
     {
       "name": "외부 연동 제공자",
       "description": "외부 provider 연동 상태, 콜백, 리허설, 운영 확인용 API입니다."
+    },
+    {
+      "name": "기타 API",
+      "description": "교사 회원의 UJAT 임시배정 일정 확인/답변 API"
     },
     {
       "name": "CMS 교재",
@@ -299,6 +307,10 @@
     {
       "name": "시스템 준비도",
       "description": "로컬 RC, staging, provider, 개인정보 감사, 배치 멱등성 등 readiness 확인 API입니다."
+    },
+    {
+      "name": "기타 API",
+      "description": "UJAT 신청기관 임시배정, 기관 일정 확인 및 지역별 교육배정 준비 API"
     },
     {
       "name": "기타 API",
@@ -1448,6 +1460,129 @@
         }
       }
     },
+    "/api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 기관 임시배정 상세",
+        "description": "### 이 API가 하는 일\n- UJAT 기관 임시배정 상세\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)\n- 프론트 담당 영역: 프로그램_execution (`program_execution`)\n- 호출 방식: `GET /api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload\n- 응답 사용 위치: canonical institution schedule, regional assignment, unavailable-date and attendance-manager state\n- 프론트 조회 키: `get_api_admin_programs_programId_ujat_organization_applications_applicationId_temporary_schedule`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE\n- 목데이터 대체: No localStorage persistence; use canonical UJAT schedule/assignment API response and invalidate assignment queries after mutation.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure",
+        "operationId": "getTemporarySchedule",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationScheduleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 신청기관 임시 일정/학급 배정 저장",
+        "description": "### 이 API가 하는 일\n- UJAT 신청기관 임시 일정/학급 배정 저장\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)\n- 프론트 담당 영역: 프로그램_execution (`program_execution`)\n- 호출 방식: `PUT /api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload\n- 응답 사용 위치: canonical institution schedule, regional assignment, unavailable-date and attendance-manager state\n- 프론트 조회 키: `put_api_admin_programs_programId_ujat_organization_applications_applicationId_temporary_schedule`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE\n- 목데이터 대체: No localStorage persistence; use canonical UJAT schedule/assignment API response and invalidate assignment queries after mutation.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure",
+        "operationId": "saveTemporarySchedule",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemporaryScheduleSaveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationScheduleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/programs/{programId}/representative-instructor": {
       "put": {
         "tags": [
@@ -1973,6 +2108,71 @@
                   "$ref": "#/components/schemas/ApiResponseParticipantPerformancePolicyResponse"
                 }
               }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/program-execution/programs/{programId}/ujat/schedules/{scheduleId}/attendance-manager": {
+      "put": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 교육일 출결 담당자 변경",
+        "description": "### 이 API가 하는 일\n- UJAT 교육일 출결 담당자 변경\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)\n- 프론트 담당 영역: 프로그램_execution (`program_execution`)\n- 호출 방식: `PUT /api/admin/program-execution/programs/{programId}/ujat/schedules/{scheduleId}/attendance-manager`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload\n- 응답 사용 위치: canonical institution schedule, regional assignment, unavailable-date and attendance-manager state\n- 프론트 조회 키: `put_api_admin_program_execution_programs_programId_ujat_schedules_scheduleId_attendance_manager`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE\n- 목데이터 대체: No localStorage persistence; use canonical UJAT schedule/assignment API response and invalidate assignment queries after mutation.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure",
+        "operationId": "changeAttendanceManager",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttendanceManagerUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "application/json": {}
             }
           },
           "400": {
@@ -3155,6 +3355,52 @@
             "schema": {
               "type": "integer",
               "format": "int64"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "lifecycleStatus",
+            "in": "query",
+            "description": "상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "participantType",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetLevel",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -4702,6 +4948,65 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/CancelApplicationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/portal/me/program-applications/{applicationId}/ujat/temporary-schedule/confirm": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "회원 포탈 UJAT 기관 일정 확인 및 안내사항 제출",
+        "description": "### 이 API가 하는 일\n- 회원 포탈 UJAT 기관 일정 확인 및 안내사항 제출\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 교사회원 UJAT 교육 일정 확인 (`null`)\n- 프론트 담당 영역: member-portal-ujat-schedule (`member-portal-ujat-schedule`)\n- 호출 방식: `POST /api/portal/me/program-applications/{applicationId}/ujat/temporary-schedule/confirm`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 로그인 교사회원의 본인 기관 프로그램 신청과 임시배정 일정\n- 응답 사용 위치: 임시 교육일·학급 배정과 기관 확인/재확인 상태 반영\n- 프론트 조회 키: `post_api_portal_me_program_applications_applicationId_ujat_temporary_schedule_confirm`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_ORGANIZATION_SCHEDULE_SMOKE\n- 목데이터 대체: 기관 임시배정 일정과 확인 상태는 서버 canonical 응답을 사용하고 localStorage에 영구 저장하지 않습니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 본인 리소스만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure",
+        "operationId": "confirmTemporarySchedule",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstitutionScheduleConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationScheduleResponse"
                 }
               }
             }
@@ -7955,6 +8260,74 @@
         }
       }
     },
+    "/api/admin/users/{memberId}/consent-records/{consentType}/filled-document": {
+      "post": {
+        "tags": [
+          "폼/설문"
+        ],
+        "summary": "회원 동의서 작성본 원문 조회",
+        "description": "### 이 API가 하는 일\n- 회원 동의서 작성본 원문 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/users/{memberId}/consent-records/{consentType}/filled-document`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MEMBER_READ+DYNAMIC_PRIVACY_PERMISSION 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 원문 접근 가능 API\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: WritingFormDraft/paymentBasicInfo exact snapshot reveal; payment requires PRIVACY_ACCOUNT_READ, others PRIVACY_RAW_READ, reason audited",
+        "operationId": "consentFilledDocument",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "consentType",
+            "in": "path",
+            "description": "경로 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminPrivacyUnmaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FilledDocumentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/users/{memberId}/comments": {
       "get": {
         "tags": [
@@ -10274,6 +10647,157 @@
         }
       }
     },
+    "/api/admin/settlement-configs/current/items/{itemKind}/{itemId}/duplicate": {
+      "post": {
+        "tags": [
+          "정산"
+        ],
+        "summary": "정산 설정 항목 카드 복제",
+        "description": "### 이 API가 하는 일\n- 정산 설정 항목 카드 복제\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/settlement-configs/current/items/{itemKind}/{itemId}/duplicate`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: SETTLEMENT_WRITE 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.\n- 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Frontend settlement config card CRUD handoff",
+        "operationId": "duplicateConfigItem",
+        "parameters": [
+          {
+            "name": "itemKind",
+            "in": "path",
+            "description": "경로 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettlementConfigResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값 검증 실패",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "bad-request": {
+                    "summary": "요청 값 검증 실패",
+                    "description": "bad-request",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "BAD_REQUEST: request parameter is invalid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "인증 필요",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "인증 필요",
+                    "description": "unauthorized",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "UNAUTHORIZED: authentication is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 부족",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "forbidden": {
+                    "summary": "권한 부족",
+                    "description": "forbidden",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "PERMISSION_DENIED: admin permission is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "대상 리소스 없음",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "not-found": {
+                    "summary": "대상 리소스 없음",
+                    "description": "not-found",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "NOT_FOUND: requested resource was not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "conflict": {
+                    "summary": "비즈니스 상태 충돌",
+                    "description": "conflict",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "CONFLICT: requested transition is not allowed in the current state"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/settlement-configs/current/duplicate": {
       "post": {
         "tags": [
@@ -10783,6 +11307,75 @@
                       }
                     }
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/schedule-change-request": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 기관 일정 수정 요청",
+        "description": "### 이 API가 하는 일\n- UJAT 기관 일정 수정 요청\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)\n- 프론트 담당 영역: 프로그램_execution (`program_execution`)\n- 호출 방식: `POST /api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/schedule-change-request`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload\n- 응답 사용 위치: canonical institution schedule, regional assignment, unavailable-date and attendance-manager state\n- 프론트 조회 키: `post_api_admin_programs_programId_ujat_organization_applications_applicationId_schedule_change_request`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE\n- 목데이터 대체: No localStorage persistence; use canonical UJAT schedule/assignment API response and invalidate assignment queries after mutation.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure",
+        "operationId": "requestScheduleChange",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationScheduleResponse"
                 }
               }
             }
@@ -12442,6 +13035,260 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/program-execution/programs/{programId}/ujat/schedules/{scheduleId}/unavailability": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 교육일 활동 불가 봉사자 목록",
+        "description": "### 이 API가 하는 일\n- UJAT 교육일 활동 불가 봉사자 목록\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)\n- 프론트 담당 영역: 프로그램_execution (`program_execution`)\n- 호출 방식: `GET /api/admin/program-execution/programs/{programId}/ujat/schedules/{scheduleId}/unavailability`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload\n- 응답 사용 위치: canonical institution schedule, regional assignment, unavailable-date and attendance-manager state\n- 프론트 조회 키: `get_api_admin_program_execution_programs_programId_ujat_schedules_scheduleId_unavailability`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE\n- 목데이터 대체: No localStorage persistence; use canonical UJAT schedule/assignment API response and invalidate assignment queries after mutation.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure",
+        "operationId": "listUnavailable",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VolunteerUnavailabilityResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 봉사자 활동 불가일 설정 및 기존 배정 대체",
+        "description": "### 이 API가 하는 일\n- UJAT 봉사자 활동 불가일 설정 및 기존 배정 대체\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)\n- 프론트 담당 영역: 프로그램_execution (`program_execution`)\n- 호출 방식: `POST /api/admin/program-execution/programs/{programId}/ujat/schedules/{scheduleId}/unavailability`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload\n- 응답 사용 위치: canonical institution schedule, regional assignment, unavailable-date and attendance-manager state\n- 프론트 조회 키: `post_api_admin_program_execution_programs_programId_ujat_schedules_scheduleId_unavailability`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE\n- 목데이터 대체: No localStorage persistence; use canonical UJAT schedule/assignment API response and invalidate assignment queries after mutation.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure",
+        "operationId": "markUnavailable",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VolunteerUnavailabilityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/VolunteerUnavailabilityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/program-execution/programs/{programId}/ujat/partner-assignments:auto": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 지역별 미배정 교육일/학급 자동 배정",
+        "description": "### 이 API가 하는 일\n- UJAT 지역별 미배정 교육일/학급 자동 배정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)\n- 프론트 담당 영역: 프로그램_execution (`program_execution`)\n- 호출 방식: `POST /api/admin/program-execution/programs/{programId}/ujat/partner-assignments:auto`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload\n- 응답 사용 위치: canonical institution schedule, regional assignment, unavailable-date and attendance-manager state\n- 프론트 조회 키: `post_api_admin_program_execution_programs_programId_ujat_partner_assignments_auto`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE\n- 목데이터 대체: No localStorage persistence; use canonical UJAT schedule/assignment API response and invalidate assignment queries after mutation.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure",
+        "operationId": "autoAssign",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoAssignmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoAssignmentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/program-execution/programs/{programId}/ujat/education-slots/{educationSlotId}/direct-assignment": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 교육일 직접배정 및 2인조 분할 재배정",
+        "description": "### 이 API가 하는 일\n- UJAT 교육일 직접배정 및 2인조 분할 재배정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)\n- 프론트 담당 영역: 프로그램_execution (`program_execution`)\n- 호출 방식: `POST /api/admin/program-execution/programs/{programId}/ujat/education-slots/{educationSlotId}/direct-assignment`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected program and educationSlotId; POST includes selected participantId\n- 응답 사용 위치: 직접배정 후보/결과 반영; 미배정 봉사자 우선, 후보 소진 시 기존 2인조 분할 후 두 학급 1인 진행\n- 프론트 조회 키: `post_api_admin_program_execution_programs_programId_ujat_education_slots_educationSlotId_direct_assignment`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE\n- 목데이터 대체: 직접배정 후보와 결과는 서버 canonical assignment state를 사용합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma direct-assignment popup: prefer unassigned volunteer; when none exist, move one member of an existing pair and leave both classes as single-volunteer assignments",
+        "operationId": "directAssign",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "educationSlotId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DirectAssignmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectAssignmentResponse"
                 }
               }
             }
@@ -14606,6 +15453,65 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/SchoolOrganizationListItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/organizations/schools/{organizationId}/program-enrollment-history/bulk-delete": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "학교 프로젝트 수강 이력 일괄 삭제",
+        "description": "### 이 API가 하는 일\n- 학교 프로젝트 수강 이력 일괄 삭제\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/organizations/schools/{organizationId}/program-enrollment-history/bulk-delete`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MEMBER_WRITE 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-08-25 프론트 member-management handoff cross-check",
+        "operationId": "bulkDeleteProgramEnrollmentHistory",
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchoolProgramEnrollmentHistoryBulkDeleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseBulkActionResponse"
                 }
               }
             }
@@ -18406,19 +19312,35 @@
           {
             "name": "formType",
             "in": "query",
-            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "description": "폼 유형",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "WRITING",
+                "ISSUANCE",
+                "SURVEY",
+                "CERTIFICATE"
+              ]
             }
           },
           {
             "name": "category",
             "in": "query",
-            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "description": "폼 카테고리",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "REGISTRATION",
+                "RECRUITMENT",
+                "APPLICATION",
+                "SURVEY",
+                "AGREEMENT",
+                "ISSUANCE",
+                "PROGRAM",
+                "CERTIFICATE"
+              ]
             }
           },
           {
@@ -22751,6 +23673,65 @@
         }
       }
     },
+    "/api/admin/admin-accounts/{adminAccountId}/program-roles/bulk-delete": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "CMS 관리자 담당 프로그램 이력 일괄 삭제",
+        "description": "### 이 API가 하는 일\n- CMS 관리자 담당 프로그램 이력 일괄 삭제\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/admin-accounts/{adminAccountId}/program-roles/bulk-delete`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ADMIN_WRITE 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: ADMIN_CMS 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-08-25 프론트 member-management handoff cross-check",
+        "operationId": "bulkDeleteProgramRoles",
+        "parameters": [
+          {
+            "name": "adminAccountId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminProgramRoleBulkDeleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseBulkActionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/admin-accounts/{adminAccountId}/privacy/unmask": {
       "post": {
         "tags": [
@@ -24367,6 +25348,158 @@
         }
       }
     },
+    "/api/admin/settlements/statements/{statementId}/reject": {
+      "patch": {
+        "tags": [
+          "정산"
+        ],
+        "summary": "정산/계좌지급 부분 수정",
+        "description": "### 이 API가 하는 일\n- 정산/계좌지급 부분 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PATCH /api/admin/settlements/statements/{statementId}/reject`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.\n- 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "operationId": "rejectPaymentStatement",
+        "parameters": [
+          {
+            "name": "statementId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlementStatusChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSettlementStatusChangeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값 검증 실패",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "bad-request": {
+                    "summary": "요청 값 검증 실패",
+                    "description": "bad-request",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "BAD_REQUEST: request parameter is invalid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "인증 필요",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "인증 필요",
+                    "description": "unauthorized",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "UNAUTHORIZED: authentication is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 부족",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "forbidden": {
+                    "summary": "권한 부족",
+                    "description": "forbidden",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "PERMISSION_DENIED: admin permission is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "대상 리소스 없음",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "not-found": {
+                    "summary": "대상 리소스 없음",
+                    "description": "not-found",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "NOT_FOUND: requested resource was not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "conflict": {
+                    "summary": "비즈니스 상태 충돌",
+                    "description": "conflict",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "CONFLICT: requested transition is not allowed in the current state"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/settlements/statements/{statementId}/confirm": {
       "patch": {
         "tags": [
@@ -25189,6 +26322,71 @@
                   "$ref": "#/components/schemas/ApiResponseProgramResponse"
                 }
               }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/programs/{programId}/ujat/volunteers/{participantId}/activity-region": {
+      "patch": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 참여 봉사자 교육 활동 지역 수정",
+        "description": "### 이 API가 하는 일\n- UJAT 참여 봉사자 교육 활동 지역 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)\n- 프론트 담당 영역: 프로그램_execution (`program_execution`)\n- 호출 방식: `PATCH /api/admin/programs/{programId}/ujat/volunteers/{participantId}/activity-region`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload\n- 응답 사용 위치: canonical institution schedule, regional assignment, unavailable-date and attendance-manager state\n- 프론트 조회 키: `patch_api_admin_programs_programId_ujat_volunteers_participantId_activity_region`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE\n- 목데이터 대체: No localStorage persistence; use canonical UJAT schedule/assignment API response and invalidate assignment queries after mutation.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure",
+        "operationId": "updateVolunteerActivityRegion",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "participantId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VolunteerActivityRegionUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "application/json": {}
             }
           },
           "400": {
@@ -31776,6 +32974,52 @@
         }
       }
     },
+    "/api/portal/me/program-applications/{applicationId}/ujat/temporary-schedule": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "회원 포탈 UJAT 임시배정 교육 일정 확인",
+        "description": "### 이 API가 하는 일\n- 회원 포탈 UJAT 임시배정 교육 일정 확인\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 교사회원 UJAT 교육 일정 확인 (`null`)\n- 프론트 담당 영역: member-portal-ujat-schedule (`member-portal-ujat-schedule`)\n- 호출 방식: `GET /api/portal/me/program-applications/{applicationId}/ujat/temporary-schedule`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 로그인 교사회원의 본인 기관 프로그램 신청과 임시배정 일정\n- 응답 사용 위치: 임시 교육일·학급 배정과 기관 확인/재확인 상태 반영\n- 프론트 조회 키: `get_api_portal_me_program_applications_applicationId_ujat_temporary_schedule`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_ORGANIZATION_SCHEDULE_SMOKE\n- 목데이터 대체: 기관 임시배정 일정과 확인 상태는 서버 canonical 응답을 사용하고 localStorage에 영구 저장하지 않습니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 본인 리소스만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure",
+        "operationId": "getTemporarySchedule_1",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationScheduleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/portal/me/organization-applications/{applicationId}/student-documents/policy": {
       "get": {
         "tags": [
@@ -33804,6 +35048,71 @@
           },
           "500": {
             "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          }
+        }
+      }
+    },
+    "/api/admin/users/{memberId}/applications/{applicationId}/lecture-attendance": {
+      "get": {
+        "tags": [
+          "회원/강사"
+        ],
+        "summary": "회원 신청 건 회차별 출석 조회",
+        "description": "### 이 API가 하는 일\n- 회원 신청 건 회차별 출석 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/users/{memberId}/applications/{applicationId}/lecture-attendance`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MEMBER_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-08-25 프론트 member-management handoff cross-check",
+        "operationId": "getLectureAttendance",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "applicationType",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLectureAttendanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
           }
         }
       }
@@ -37677,6 +38986,71 @@
         }
       }
     },
+    "/api/admin/programs/{programId}/ujat/organization-schedule-assignments": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 기관 일정/학급 배정 목록",
+        "description": "### 이 API가 하는 일\n- UJAT 기관 일정/학급 배정 목록\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)\n- 프론트 담당 영역: 프로그램_execution (`program_execution`)\n- 호출 방식: `GET /api/admin/programs/{programId}/ujat/organization-schedule-assignments`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload\n- 응답 사용 위치: canonical institution schedule, regional assignment, unavailable-date and attendance-manager state\n- 프론트 조회 키: `get_api_admin_programs_programId_ujat_organization_schedule_assignments`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE\n- 목데이터 대체: No localStorage persistence; use canonical UJAT schedule/assignment API response and invalidate assignment queries after mutation.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure",
+        "operationId": "listAssignments",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "educationRegionCode",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationApplicationId",
+            "in": "query",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationScheduleListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/programs/{programId}/trained-teacher/performance-summary": {
       "get": {
         "tags": [
@@ -39479,6 +40853,130 @@
         }
       }
     },
+    "/api/admin/program-execution/programs/{programId}/ujat/education-slots/{educationSlotId}/direct-assignment-candidates": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 교육일 직접배정 후보 조회",
+        "description": "### 이 API가 하는 일\n- UJAT 교육일 직접배정 후보 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)\n- 프론트 담당 영역: 프로그램_execution (`program_execution`)\n- 호출 방식: `GET /api/admin/program-execution/programs/{programId}/ujat/education-slots/{educationSlotId}/direct-assignment-candidates`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected program and educationSlotId; POST includes selected participantId\n- 응답 사용 위치: 직접배정 후보/결과 반영; 미배정 봉사자 우선, 후보 소진 시 기존 2인조 분할 후 두 학급 1인 진행\n- 프론트 조회 키: `get_api_admin_program_execution_programs_programId_ujat_education_slots_educationSlotId_direct_assignment_candidates`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE\n- 목데이터 대체: 직접배정 후보와 결과는 서버 canonical assignment state를 사용합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma direct-assignment popup: prefer unassigned volunteer; when none exist, move one member of an existing pair and leave both classes as single-volunteer assignments",
+        "operationId": "directAssignmentCandidates",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "educationSlotId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectAssignmentCandidatesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/program-execution/programs/{programId}/ujat/allocation-matrix": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 지역별 교육 배정 Matrix 조회",
+        "description": "### 이 API가 하는 일\n- UJAT 지역별 교육 배정 Matrix 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)\n- 프론트 담당 영역: 프로그램_execution (`program_execution`)\n- 호출 방식: `GET /api/admin/program-execution/programs/{programId}/ujat/allocation-matrix`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected program, educationRegionCode and optional scheduleIds selected in download popup\n- 응답 사용 위치: 교육일+기관 columns, 봉사자 rows, 배정학급/출결/1인배정/불가일/재배정필요 상태 렌더링 및 엑셀 원천 데이터\n- 프론트 조회 키: `get_api_admin_program_execution_programs_programId_ujat_allocation_matrix`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE\n- 목데이터 대체: 지역별 배정 Matrix와 다운로드 대상 선택은 서버 canonical 응답을 사용하고 localStorage에 영구 저장하지 않습니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma 지역별 교육 배정 테이블 canonical read model; selected scheduleIds can be reused as export data source",
+        "operationId": "allocationMatrix",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "educationRegionCode",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: selected program, educationRegionCode and optional scheduleIds selected in download popup",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scheduleIds",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: selected program, educationRegionCode and optional scheduleIds selected in download popup",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AllocationMatrixResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/program-execution/programs/{programId}/schedules/{scheduleId}/ujat/partner-recommendation": {
       "get": {
         "tags": [
@@ -40956,6 +42454,111 @@
         }
       }
     },
+    "/api/admin/organizations/schools/{organizationId}/program-enrollment-history": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "학교 프로젝트 수강 이력 조회",
+        "description": "### 이 API가 하는 일\n- 학교 프로젝트 수강 이력 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/organizations/schools/{organizationId}/program-enrollment-history`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MEMBER_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-08-25 프론트 member-management handoff cross-check",
+        "operationId": "listProgramEnrollmentHistory",
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "enrollmentStatus",
+            "in": "query",
+            "description": "상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "managerName",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "페이지 크기입니다. 화면별 기본 목록 개수와 일치시켜 호출합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseSchoolOrganizationProgramEnrollmentHistoryItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/organization-applications/{applicationId}/student-documents/policy": {
       "get": {
         "tags": [
@@ -41647,13 +43250,13 @@
           "로그 관리"
         ],
         "summary": "시스템 상태 조회",
-        "description": "### 이 API가 하는 일\n- 시스템 상태 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_api_logs_system-issues`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 시스템 상태 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: userName/from/to/page/size\n- 응답 사용 위치: 시스템 이슈 페이지 목록\n- 프론트 조회 키: `get_api_logs_system-issues`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "systemIssueLogs",
         "parameters": [
           {
             "name": "params",
             "in": "query",
-            "description": "쿼리 파라미터입니다. 요청값 출처: query/path/요청 본문 from 화면 필터",
+            "description": "쿼리 파라미터입니다. 요청값 출처: userName/from/to/page/size",
             "required": true,
             "schema": {
               "type": "object",
@@ -41661,6 +43264,41 @@
                 "type": "string"
               }
             }
+          },
+          {
+            "name": "userName",
+            "in": "query",
+            "description": "사용자명 부분 검색"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "현재 지원 상태: OPEN 또는 RESOLVED"
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "description": "심각도"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "조회 시작일 YYYY-MM-DD 또는 ISO-8601"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "조회 종료일 YYYY-MM-DD 또는 ISO-8601"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "0-base 페이지, 기본 0"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "페이지 크기, 기본 20, 최대 100"
           }
         ],
         "responses": {
@@ -41669,10 +43307,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/BugIssueLogFrontendResponse"
-                  }
+                  "$ref": "#/components/schemas/LogListPageResponseBugIssueLogFrontendResponse"
                 }
               }
             }
@@ -41744,13 +43379,13 @@
           "로그 관리"
         ],
         "summary": "관리자 조회",
-        "description": "### 이 API가 하는 일\n- 관리자 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/privacy-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_api_logs_privacy-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 관리자 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/privacy-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: accessPurpose/accessorName/from/to/page/size\n- 응답 사용 위치: 개인정보 조회 이력 페이지 목록\n- 프론트 조회 키: `get_api_logs_privacy-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "privacyAccessLogs",
         "parameters": [
           {
             "name": "params",
             "in": "query",
-            "description": "쿼리 파라미터입니다. 요청값 출처: query/path/요청 본문 from 화면 필터",
+            "description": "쿼리 파라미터입니다. 요청값 출처: accessPurpose/accessorName/from/to/page/size",
             "required": true,
             "schema": {
               "type": "object",
@@ -41758,6 +43393,41 @@
                 "type": "string"
               }
             }
+          },
+          {
+            "name": "accessPurpose",
+            "in": "query",
+            "description": "조회 목적 부분 검색"
+          },
+          {
+            "name": "accessorName",
+            "in": "query",
+            "description": "조회자명 부분 검색"
+          },
+          {
+            "name": "targetName",
+            "in": "query",
+            "description": "개인정보 조회 대상자명 부분 검색"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "조회 시작일 YYYY-MM-DD 또는 ISO-8601"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "조회 종료일 YYYY-MM-DD 또는 ISO-8601"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "0-base 페이지, 기본 0"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "페이지 크기, 기본 20, 최대 100"
           }
         ],
         "responses": {
@@ -41766,10 +43436,85 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PersonalInfoAccessLogFrontendResponse"
-                  }
+                  "$ref": "#/components/schemas/LogListPageResponsePersonalInfoAccessLogFrontendResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/logs/member-logins": {
+      "get": {
+        "tags": [
+          "로그 관리"
+        ],
+        "summary": "관리자 로그인 이력 조회",
+        "description": "### 이 API가 하는 일\n- 관리자 로그인 이력 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/member-logins`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: adminName/loginId/from/to/page/size\n- 응답 사용 위치: 회원 관리자 로그인 이력 페이지 목록(최근 1개월)\n- 프론트 조회 키: `get_api_logs_member-logins`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Remove member-login mock fallback after FE switches to canonical endpoint.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "operationId": "memberLoginHistory",
+        "parameters": [
+          {
+            "name": "params",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: adminName/loginId/from/to/page/size",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "adminName",
+            "in": "query",
+            "description": "관리자명 부분 검색"
+          },
+          {
+            "name": "loginId",
+            "in": "query",
+            "description": "로그인 아이디/이메일 부분 검색"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "조회 시작일 YYYY-MM-DD 또는 ISO-8601"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "조회 종료일 YYYY-MM-DD 또는 ISO-8601"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "0-base 페이지, 기본 0"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "페이지 크기, 기본 20, 최대 100"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogListPageResponseMemberLoginLogFrontendResponse"
                 }
               }
             }
@@ -41795,13 +43540,13 @@
           "로그 관리"
         ],
         "summary": "파일 조회",
-        "description": "### 이 API가 하는 일\n- 파일 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/file-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_api_logs_file-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 파일 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/file-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: fileName/userName/from/to/page/size\n- 응답 사용 위치: 파일 다운로드 이력 페이지 목록\n- 프론트 조회 키: `get_api_logs_file-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "fileAccessLogs",
         "parameters": [
           {
             "name": "params",
             "in": "query",
-            "description": "쿼리 파라미터입니다. 요청값 출처: query/path/요청 본문 from 화면 필터",
+            "description": "쿼리 파라미터입니다. 요청값 출처: fileName/userName/from/to/page/size",
             "required": true,
             "schema": {
               "type": "object",
@@ -41809,6 +43554,36 @@
                 "type": "string"
               }
             }
+          },
+          {
+            "name": "fileName",
+            "in": "query",
+            "description": "다운로드 파일명 부분 검색"
+          },
+          {
+            "name": "userName",
+            "in": "query",
+            "description": "사용자명 부분 검색"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "조회 시작일 YYYY-MM-DD 또는 ISO-8601"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "조회 종료일 YYYY-MM-DD 또는 ISO-8601"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "0-base 페이지, 기본 0"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "페이지 크기, 기본 20, 최대 100"
           }
         ],
         "responses": {
@@ -41817,10 +43592,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DownloadLogFrontendResponse"
-                  }
+                  "$ref": "#/components/schemas/LogListPageResponseDownloadLogFrontendResponse"
                 }
               }
             }
@@ -46395,6 +48167,157 @@
         "deprecated": true
       }
     },
+    "/api/admin/settlement-configs/current/items/{itemKind}/{itemId}": {
+      "delete": {
+        "tags": [
+          "정산"
+        ],
+        "summary": "정산 설정 항목 카드 삭제",
+        "description": "### 이 API가 하는 일\n- 정산 설정 항목 카드 삭제\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `DELETE /api/admin/settlement-configs/current/items/{itemKind}/{itemId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: SETTLEMENT_WRITE 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.\n- 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Frontend settlement config card CRUD handoff",
+        "operationId": "deleteConfigItem",
+        "parameters": [
+          {
+            "name": "itemKind",
+            "in": "path",
+            "description": "경로 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettlementConfigResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값 검증 실패",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "bad-request": {
+                    "summary": "요청 값 검증 실패",
+                    "description": "bad-request",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "BAD_REQUEST: request parameter is invalid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "인증 필요",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "인증 필요",
+                    "description": "unauthorized",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "UNAUTHORIZED: authentication is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 부족",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "forbidden": {
+                    "summary": "권한 부족",
+                    "description": "forbidden",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "PERMISSION_DENIED: admin permission is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "대상 리소스 없음",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "not-found": {
+                    "summary": "대상 리소스 없음",
+                    "description": "not-found",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "NOT_FOUND: requested resource was not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "conflict": {
+                    "summary": "비즈니스 상태 충돌",
+                    "description": "conflict",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "CONFLICT: requested transition is not allowed in the current state"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/programs/{programId}/materials/{materialId}": {
       "delete": {
         "tags": [
@@ -46433,6 +48356,68 @@
                   "$ref": "#/components/schemas/ApiResponseVoid"
                 }
               }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/program-execution/programs/{programId}/ujat/schedules/{scheduleId}/unavailability/{participantId}": {
+      "delete": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 봉사자 활동 불가일 해제",
+        "description": "### 이 API가 하는 일\n- UJAT 봉사자 활동 불가일 해제\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)\n- 프론트 담당 영역: 프로그램_execution (`program_execution`)\n- 호출 방식: `DELETE /api/admin/program-execution/programs/{programId}/ujat/schedules/{scheduleId}/unavailability/{participantId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload\n- 응답 사용 위치: canonical institution schedule, regional assignment, unavailable-date and attendance-manager state\n- 프론트 조회 키: `delete_api_admin_program_execution_programs_programId_ujat_schedules_scheduleId_unavailability_participantId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE\n- 목데이터 대체: No localStorage persistence; use canonical UJAT schedule/assignment API response and invalidate assignment queries after mutation.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure",
+        "operationId": "clearUnavailable",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "participantId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "application/json": {}
             }
           },
           "400": {
@@ -46859,8 +48844,7 @@
             "minimum": 1
           },
           "phone": {
-            "type": "string",
-            "pattern": "^$|^[0-9+() .-]{7,30}$"
+            "type": "string"
           },
           "email": {
             "type": "string",
@@ -47074,6 +49058,31 @@
           "assignedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "programStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "progressYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lifecycleStatus": {
+            "type": "string"
+          },
+          "approvedStudentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recruitmentCapacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "participantType": {
+            "type": "string"
+          },
+          "targetLevel": {
+            "type": "string"
           }
         }
       },
@@ -47197,6 +49206,21 @@
           },
           "useYn": {
             "type": "boolean"
+          },
+          "iconKey": {
+            "type": "string"
+          },
+          "emojiOverride": {
+            "type": "string"
+          },
+          "layout": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "detailJson": {
+            "type": "string"
           }
         }
       },
@@ -47219,6 +49243,25 @@
           },
           "useYn": {
             "type": "boolean"
+          },
+          "iconKey": {
+            "type": "string"
+          },
+          "emojiOverride": {
+            "type": "string"
+          },
+          "layout": {
+            "type": "string"
+          },
+          "maxLimitWon": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "description": {
+            "type": "string"
+          },
+          "detailJson": {
+            "type": "string"
           }
         }
       },
@@ -47310,6 +49353,41 @@
           },
           "editableYn": {
             "type": "boolean"
+          },
+          "iconKey": {
+            "type": "string"
+          },
+          "emojiOverride": {
+            "type": "string"
+          },
+          "layout": {
+            "type": "string"
+          },
+          "basisHours": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxLimitWon": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "qualificationLines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "remarkLines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "string"
+          },
+          "detailJson": {
+            "type": "string"
           },
           "rateItems": {
             "type": "array",
@@ -47590,6 +49668,158 @@
             "items": {
               "$ref": "#/components/schemas/WageItemRateResponse"
             }
+          }
+        }
+      },
+      "TemporaryScheduleSaveRequest": {
+        "type": "object",
+        "properties": {
+          "educationRegionCode": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TemporaryScheduleSlotRequest"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "educationRegionCode",
+          "slots"
+        ]
+      },
+      "TemporaryScheduleSlotRequest": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "grade": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 0
+          },
+          "className": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "studentCount": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "className",
+          "grade",
+          "scheduleId",
+          "studentCount"
+        ]
+      },
+      "OrganizationScheduleResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationStatus": {
+            "type": "string"
+          },
+          "temporaryAssignmentStatus": {
+            "type": "string"
+          },
+          "institutionConfirmationStatus": {
+            "type": "string"
+          },
+          "assignmentRevision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "institutionConfirmedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "assignmentLockedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationScheduleSlotResponse"
+            }
+          }
+        }
+      },
+      "OrganizationScheduleSlotResponse": {
+        "type": "object",
+        "properties": {
+          "slotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "grade": {
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "classLabel": {
+            "type": "string"
+          },
+          "studentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "assignmentStatus": {
+            "type": "string"
+          },
+          "scheduleStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "scheduleEndAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "organizationAddress": {
+            "type": "string"
+          },
+          "organizationAddressDetail": {
+            "type": "string"
           }
         }
       },
@@ -48114,6 +50344,18 @@
             "type": "string"
           }
         }
+      },
+      "AttendanceManagerUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "participantId"
+        ]
       },
       "ProgramDraftUpsertRequest": {
         "type": "object",
@@ -48716,6 +50958,31 @@
           "assignedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "programStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "progressYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lifecycleStatus": {
+            "type": "string"
+          },
+          "approvedStudentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recruitmentCapacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "participantType": {
+            "type": "string"
+          },
+          "targetLevel": {
+            "type": "string"
           }
         }
       },
@@ -49907,6 +52174,16 @@
           }
         }
       },
+      "InstitutionScheduleConfirmRequest": {
+        "type": "object",
+        "properties": {
+          "guideNote": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          }
+        }
+      },
       "PhoneIdentityConfirmRequest": {
         "type": "object",
         "properties": {
@@ -50178,6 +52455,23 @@
           }
         }
       },
+      "FilledDocumentRequest": {
+        "type": "object",
+        "description": "CMS 동의서 작성 완료 시점의 원문 스냅샷. schemaJson은 WritingFormDraft 객체 자체이며 JSON 문자열을 이중 인코딩하지 않습니다.",
+        "properties": {
+          "templateCode": {
+            "type": "string",
+            "example": "agreement-portrait"
+          },
+          "schemaJson": {
+            "$ref": "#/components/schemas/JsonNode",
+            "description": "@jakorea/form-schema WritingFormDraft 전체 객체"
+          },
+          "paymentBasicInfo": {
+            "$ref": "#/components/schemas/PaymentStatementBasicInfo"
+          }
+        }
+      },
       "HomeAddress": {
         "type": "object",
         "properties": {
@@ -50348,6 +52642,7 @@
           "termsAgreements"
         ]
       },
+      "JsonNode": {},
       "MemberBankAccountUpsertRequest": {
         "type": "object",
         "properties": {
@@ -50372,6 +52667,70 @@
         "required": [
           "bankName"
         ]
+      },
+      "PaymentStatementBasicInfo": {
+        "type": "object",
+        "description": "지급조서 사전 동의서의 작성 폼 외부 기본정보 sidecar",
+        "properties": {
+          "nameKo": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "nameEn": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "residentFront": {
+            "type": "string",
+            "maxLength": 6,
+            "minLength": 0
+          },
+          "residentBack": {
+            "type": "string",
+            "maxLength": 7,
+            "minLength": 0
+          },
+          "affiliation": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "noAffiliation": {
+            "type": "boolean"
+          },
+          "addressRoad": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "addressDetail": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "bankName": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "accountNumber": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "accountHolder": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "paymentPurpose": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          }
+        }
       },
       "TermsAgreementRequest": {
         "type": "object",
@@ -50420,6 +52779,21 @@
           "termsSnapshotJson": {
             "type": "string",
             "description": "호환 입력 필드입니다. 저장되는 약관 스냅샷은 서버가 게시 약관 원장에서 생성하며 이 값을 신뢰하지 않습니다."
+          },
+          "filledDocument": {
+            "$ref": "#/components/schemas/FilledDocumentRequest",
+            "description": "선택 동의서 4종(PORTRAIT/PAYMENT/FACILITATOR/ADMINISTRATIVE)의 작성 완료 WritingFormDraft. 해당 termsType에서 agreed=true이면 필수이고 agreed=false이면 생략합니다."
+          },
+          "evidenceFileObjectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "성범죄 경력조회 동의서 작성 완료 첨부 파일 object id"
+          },
+          "evidenceOriginalFileName": {
+            "type": "string",
+            "description": "호환용 원본 파일명. 서버는 file_object 메타데이터를 우선합니다.",
+            "maxLength": 255,
+            "minLength": 0
           }
         },
         "required": [
@@ -52694,6 +55068,56 @@
           "reason"
         ]
       },
+      "FilledDocumentResponse": {
+        "type": "object",
+        "description": "회원 동의서 작성본 원문 조회 응답. 민감정보 원문 조회 권한과 사유 감사가 적용됩니다.",
+        "properties": {
+          "filledDocumentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "consentRecordId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "consentType": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "templateCode": {
+            "type": "string"
+          },
+          "schemaJson": {
+            "$ref": "#/components/schemas/JsonNode"
+          },
+          "paymentBasicInfo": {
+            "$ref": "#/components/schemas/PaymentStatementBasicInfo"
+          },
+          "evidenceFileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "evidenceOriginalFileName": {
+            "type": "string"
+          },
+          "evidenceAccessPolicy": {
+            "type": "string"
+          },
+          "evidenceDownloadEndpoint": {
+            "type": "string"
+          },
+          "savedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "AdminMemberCommentCreateRequest": {
         "type": "object",
         "properties": {
@@ -54312,10 +56736,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -54728,6 +57152,19 @@
             "type": "number"
           }
         }
+      },
+      "ScheduleChangeRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
       },
       "ApplicationRejectRequest": {
         "type": "object",
@@ -55717,45 +58154,182 @@
           }
         }
       },
-      "UjatDgbongPartnerAssignmentConfirmRequest": {
+      "VolunteerUnavailabilityRequest": {
         "type": "object",
-        "description": "UJAT/DGBONG 파트너 배정 확정 요청",
         "properties": {
-          "primaryParticipantId": {
+          "participantId": {
             "type": "integer",
-            "format": "int64",
-            "description": "주 참가자 ID",
-            "example": 21001
+            "format": "int64"
           },
-          "secondaryParticipantId": {
+          "replacementParticipantId": {
             "type": "integer",
-            "format": "int64",
-            "description": "상대 참가자 ID",
-            "example": 21002
+            "format": "int64"
           },
-          "attendanceManagerParticipantId": {
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "participantId"
+        ]
+      },
+      "VolunteerUnavailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
             "type": "integer",
-            "format": "int64",
-            "description": "출석 관리자 참가자 ID",
-            "example": 21003
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "replacementParticipantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "replacementApplied": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AutoAssignmentRequest": {
+        "type": "object",
+        "properties": {
+          "educationRegionCode": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          }
+        }
+      },
+      "AutoAssignmentResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "targetSlotCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pairAssignedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "singleAssignedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unassignedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutoAssignmentSlotResult"
+            }
+          }
+        }
+      },
+      "AutoAssignmentSlotResult": {
+        "type": "object",
+        "properties": {
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
           },
           "organizationApplicationId": {
             "type": "integer",
-            "format": "int64",
-            "description": "조직 신청 ID",
-            "example": 10001
+            "format": "int64"
           },
           "classLabel": {
-            "type": "string",
-            "description": "배정 반/그룹 라벨",
-            "example": "A반"
+            "type": "string"
           },
-          "generatedByAdminId": {
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string"
+          },
+          "assignmentGroupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "primaryParticipantId": {
             "type": "integer",
-            "format": "int64",
-            "deprecated": true,
-            "description": "레거시 호환 필드. 서버는 인증된 CMS 관리자 ID를 사용하며 이 값은 무시합니다.",
-            "example": 1
+            "format": "int64"
+          },
+          "secondaryParticipantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendanceManagerParticipantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "DirectAssignmentRequest": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "participantId"
+        ]
+      },
+      "DirectAssignmentResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "movedParticipantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "movedFromExistingPair": {
+            "type": "boolean"
+          },
+          "targetAssignment": {
+            "$ref": "#/components/schemas/UjatDgbongPartnerAssignmentResponse"
+          },
+          "remainingSourceAssignment": {
+            "$ref": "#/components/schemas/UjatDgbongPartnerAssignmentResponse"
           }
         }
       },
@@ -55775,6 +58349,10 @@
             "format": "int64"
           },
           "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationSlotId": {
             "type": "integer",
             "format": "int64"
           },
@@ -55806,6 +58384,63 @@
           },
           "cancelReason": {
             "type": "string"
+          }
+        }
+      },
+      "UjatDgbongPartnerAssignmentConfirmRequest": {
+        "type": "object",
+        "description": "UJAT/DGBONG 파트너 배정 확정 요청",
+        "properties": {
+          "primaryParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "주 참가자 ID",
+            "example": 21001
+          },
+          "secondaryParticipantId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "상대 참가자 ID. 2인 배정이 불가능한 경우 null을 허용합니다.",
+            "example": 21002
+          },
+          "attendanceManagerParticipantId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "출석 관리자 참가자 ID. 해당 교육일에 이미 출결 담당자가 있으면 null 허용",
+            "example": 21003
+          },
+          "educationSlotId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "확정된 UJAT 교육 학급 슬롯 ID",
+            "example": 31001
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "조직 신청 ID. educationSlotId가 있으면 서버 canonical 값으로 검증/보정",
+            "example": 10001
+          },
+          "classLabel": {
+            "type": "string",
+            "description": "배정 반/그룹 라벨",
+            "example": "A반"
+          },
+          "generatedByAdminId": {
+            "type": "integer",
+            "format": "int64",
+            "deprecated": true,
+            "description": "레거시 호환 필드. 서버는 인증된 CMS 관리자 ID를 사용하며 이 값은 무시합니다.",
+            "example": 1
           }
         }
       },
@@ -56958,6 +59593,23 @@
         "required": [
           "address",
           "name"
+        ]
+      },
+      "SchoolProgramEnrollmentHistoryBulkDeleteRequest": {
+        "type": "object",
+        "properties": {
+          "historyRowIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "historyRowIds"
         ]
       },
       "NotificationTemplateUpsertRequest": {
@@ -58579,15 +61231,15 @@
             "type": "string",
             "format": "date-time"
           },
+          "businessStartDate": {
+            "type": "string"
+          },
           "businessEndDate": {
             "type": "string"
           },
           "businessYear": {
             "type": "integer",
             "format": "int32"
-          },
-          "businessStartDate": {
-            "type": "string"
           }
         }
       },
@@ -58772,10 +61424,26 @@
             "type": "string"
           },
           "formType": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "WRITING",
+              "ISSUANCE",
+              "SURVEY",
+              "CERTIFICATE"
+            ]
           },
           "category": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "REGISTRATION",
+              "RECRUITMENT",
+              "APPLICATION",
+              "SURVEY",
+              "AGREEMENT",
+              "ISSUANCE",
+              "PROGRAM",
+              "CERTIFICATE"
+            ]
           },
           "description": {
             "type": "string"
@@ -58892,7 +61560,12 @@
             "type": "string"
           },
           "versionStatus": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
           },
           "responseCount": {
             "type": "integer",
@@ -58954,7 +61627,12 @@
             "type": "string"
           },
           "versionStatus": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
           },
           "schemaJson": {
             "type": "string"
@@ -60947,6 +63625,23 @@
           }
         }
       },
+      "AdminProgramRoleBulkDeleteRequest": {
+        "type": "object",
+        "properties": {
+          "programIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "programIds"
+        ]
+      },
       "AdminAccountPrivacyResponse": {
         "type": "object",
         "properties": {
@@ -62296,6 +64991,19 @@
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
           }
         }
+      },
+      "VolunteerActivityRegionUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "educationRegionCode": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "educationRegionCode"
+        ]
       },
       "TrainedTeacherProgramDetailRequest": {
         "type": "object",
@@ -66733,6 +69441,33 @@
           "giveUpAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "programStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "progressYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "enrollmentDisplayStatus": {
+            "type": "string"
+          },
+          "lectureAttendance": {
+            "type": "string"
+          },
+          "hasAssignmentSubmission": {
+            "type": "boolean"
+          },
+          "managerName": {
+            "type": "string"
+          },
+          "linkedApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "linkedApplicationType": {
+            "type": "string"
           }
         }
       },
@@ -66835,6 +69570,22 @@
           },
           "evidenceAccessPolicy": {
             "type": "string"
+          },
+          "filledDocumentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "version": {
+            "type": "string"
+          },
+          "templateCode": {
+            "type": "string"
+          },
+          "filledDocumentAvailable": {
+            "type": "boolean"
+          },
+          "filledDocumentRevealEndpoint": {
+            "type": "string"
           }
         }
       },
@@ -66880,6 +69631,26 @@
             "format": "date-time"
           },
           "rejectReason": {
+            "type": "string"
+          },
+          "programStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "progressYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "enrollmentDisplayStatus": {
+            "type": "string"
+          },
+          "lectureAttendance": {
+            "type": "string"
+          },
+          "hasAssignmentSubmission": {
+            "type": "boolean"
+          },
+          "managerName": {
             "type": "string"
           }
         }
@@ -66942,6 +69713,81 @@
             "format": "date-time"
           },
           "rejectReason": {
+            "type": "string"
+          },
+          "sessionOrdinal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lectureStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "institutionName": {
+            "type": "string"
+          },
+          "reportFileIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        }
+      },
+      "MemberLectureAttendanceResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "heldCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Session"
+            }
+          }
+        }
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "roundNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "absenceReason": {
             "type": "string"
           }
         }
@@ -67009,6 +69855,40 @@
           "fileCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "roundNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "teamRole": {
+            "type": "string"
+          },
+          "teamName": {
+            "type": "string"
+          },
+          "educationSessionLabel": {
+            "type": "string"
+          },
+          "assignmentPeriodStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "assignmentPeriodEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lectureProgress": {
+            "type": "string"
+          },
+          "submissionStatus": {
+            "type": "string"
+          },
+          "submissionFileIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
           }
         }
       },
@@ -67300,6 +70180,10 @@
             "type": "integer",
             "format": "int64"
           },
+          "sessionOrdinal": {
+            "type": "integer",
+            "format": "int32"
+          },
           "lectureDate": {
             "type": "string",
             "format": "date"
@@ -67313,6 +70197,32 @@
             "format": "int64"
           },
           "instructorName": {
+            "type": "string"
+          },
+          "statementId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "institutionName": {
+            "type": "string"
+          },
+          "businessPeriodStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "businessPeriodEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "sessionCompleted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sessionTotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "programSessionProgressDisplay": {
             "type": "string"
           },
           "calculationStatus": {
@@ -67423,11 +70333,65 @@
           }
         }
       },
+      "SettlementFrontendCalculationDetailResponse": {
+        "type": "object",
+        "properties": {
+          "layout": {
+            "type": "string"
+          },
+          "basisJson": {
+            "type": "string"
+          },
+          "resultAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "formulaText": {
+            "type": "string"
+          },
+          "lineLabels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "formulaLines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "summaryLabels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "iconKey": {
+            "type": "string"
+          },
+          "emojiOverride": {
+            "type": "string"
+          }
+        }
+      },
       "SettlementFrontendItemResponse": {
         "type": "object",
         "properties": {
           "type": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "instructor_fee",
+              "transportation",
+              "accommodation",
+              "meal",
+              "activity",
+              "withholding",
+              "other"
+            ]
           },
           "description": {
             "type": "string"
@@ -67435,6 +70399,9 @@
           "amount": {
             "type": "integer",
             "format": "int64"
+          },
+          "calculationDetail": {
+            "$ref": "#/components/schemas/SettlementFrontendCalculationDetailResponse"
           }
         }
       },
@@ -67454,6 +70421,64 @@
             "type": "string"
           },
           "period": {
+            "type": "string"
+          },
+          "programNameKo": {
+            "type": "string"
+          },
+          "businessPeriodStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "businessPeriodEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "sessionCompleted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sessionTotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "programSessionProgressDisplay": {
+            "type": "string"
+          },
+          "sessionOrdinal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lectureFeeStandardTitle": {
+            "type": "string"
+          },
+          "lectureFeeStandardAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "wageItemType": {
+            "type": "string"
+          },
+          "feeGrade": {
+            "type": "string"
+          },
+          "lectureSessionDisplay": {
+            "type": "string"
+          },
+          "institutionName": {
+            "type": "string"
+          },
+          "instructorName": {
+            "type": "string"
+          },
+          "businessIncomeEarnerLabel": {
+            "type": "string"
+          },
+          "expectedTransferDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "correctionReason": {
             "type": "string"
           },
           "items": {
@@ -68643,6 +71668,17 @@
             "type": "array",
             "items": {
               "type": "string"
+            }
+          }
+        }
+      },
+      "OrganizationScheduleListResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationScheduleSlotResponse"
             }
           }
         }
@@ -70545,6 +73581,207 @@
           }
         }
       },
+      "DirectAssignmentCandidate": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "volunteerName": {
+            "type": "string"
+          },
+          "totalAssignedDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "alreadyAssignedOnEducationDate": {
+            "type": "boolean"
+          },
+          "sourceAssignmentGroupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceEducationSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sourceClassLabel": {
+            "type": "string"
+          },
+          "sourcePartnerParticipantId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "DirectAssignmentCandidatesResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "reallocationRequired": {
+            "type": "boolean"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DirectAssignmentCandidate"
+            }
+          }
+        }
+      },
+      "AllocationCell": {
+        "type": "object",
+        "properties": {
+          "columnKey": {
+            "type": "string"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignmentGroupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classLabel": {
+            "type": "string"
+          },
+          "attendanceManager": {
+            "type": "boolean"
+          },
+          "singleAssignment": {
+            "type": "boolean"
+          },
+          "unavailable": {
+            "type": "boolean"
+          },
+          "needsReassignment": {
+            "type": "boolean"
+          },
+          "assignmentStatus": {
+            "type": "string"
+          }
+        }
+      },
+      "AllocationColumn": {
+        "type": "object",
+        "properties": {
+          "columnKey": {
+            "type": "string"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "organizationRegion": {
+            "type": "string"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "classCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AllocationMatrixResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllocationColumn"
+            }
+          },
+          "volunteers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VolunteerRow"
+            }
+          }
+        }
+      },
+      "VolunteerRow": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "volunteerName": {
+            "type": "string"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "participantStatus": {
+            "type": "string"
+          },
+          "giveUp": {
+            "type": "boolean"
+          },
+          "totalAssignedDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllocationCell"
+            }
+          }
+        }
+      },
       "UjatDgbongPartnerCandidateResponse": {
         "type": "object",
         "properties": {
@@ -71871,6 +75108,76 @@
           }
         }
       },
+      "PageResponseSchoolOrganizationProgramEnrollmentHistoryItemResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchoolOrganizationProgramEnrollmentHistoryItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SchoolOrganizationProgramEnrollmentHistoryItemResponse": {
+        "type": "object",
+        "properties": {
+          "historyRowId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programName": {
+            "type": "string"
+          },
+          "progressYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "enrollmentDisplayStatus": {
+            "type": "string"
+          },
+          "businessArea": {
+            "type": "string"
+          },
+          "educationGrade": {
+            "type": "string"
+          },
+          "managerName": {
+            "type": "string"
+          },
+          "deletable": {
+            "type": "boolean"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "NotificationUnreadCountResponse": {
         "type": "object",
         "properties": {
@@ -72377,7 +75684,8 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "integer",
+            "format": "int64"
           },
           "screenName": {
             "type": "string"
@@ -72391,6 +75699,42 @@
           "occurredAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "issueStatus": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          }
+        }
+      },
+      "LogListPageResponseBugIssueLogFrontendResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BugIssueLogFrontendResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
           }
         }
       },
@@ -72453,10 +75797,43 @@
           }
         }
       },
+      "LogListPageResponsePersonalInfoAccessLogFrontendResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PersonalInfoAccessLogFrontendResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
+          }
+        }
+      },
       "PersonalInfoAccessLogFrontendResponse": {
         "type": "object",
         "properties": {
           "id": {
+            "type": "string"
+          },
+          "targetName": {
             "type": "string"
           },
           "accessItem": {
@@ -72472,6 +75849,57 @@
             "type": "string"
           },
           "accessedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ipAddress": {
+            "type": "string"
+          }
+        }
+      },
+      "LogListPageResponseMemberLoginLogFrontendResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberLoginLogFrontendResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MemberLoginLogFrontendResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "adminName": {
+            "type": "string"
+          },
+          "loginId": {
+            "type": "string"
+          },
+          "loggedAt": {
             "type": "string",
             "format": "date-time"
           },
@@ -72501,6 +75929,36 @@
           "downloadedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "LogListPageResponseDownloadLogFrontendResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DownloadLogFrontendResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
           }
         }
       },
@@ -73436,7 +76894,12 @@
             "type": "string"
           },
           "versionStatus": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
           },
           "schemaJson": {
             "type": "string"
@@ -74288,6 +77751,18 @@
             "type": "integer",
             "format": "int64"
           },
+          "programCode": {
+            "type": "string"
+          },
+          "nameKo": {
+            "type": "string"
+          },
+          "programNameKo": {
+            "type": "string"
+          },
+          "programType": {
+            "type": "string"
+          },
           "targetParticipantCount": {
             "type": "integer",
             "format": "int32"
@@ -74313,6 +77788,26 @@
           },
           "targetBudgetAmount": {
             "type": "string"
+          },
+          "actualParticipantCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "actualSchoolCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "actualClassCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "actualVolunteerCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "actualInstructorCount": {
+            "type": "integer",
+            "format": "int32"
           },
           "createdAt": {
             "type": "string",

@@ -14,5 +14,14 @@ export interface WageItemUpsertRequest {
   amount?: number;
   calculationUnit?: string;
   editableYn?: boolean;
+  iconKey?: string;
+  emojiOverride?: string;
+  layout?: string;
+  basisHours?: number;
+  maxLimitWon?: number;
+  qualificationLines?: string[];
+  remarkLines?: string[];
+  description?: string;
+  detailJson?: string;
   rateItems?: WageItemRateUpsertRequest[];
 }

@@ -9,6 +9,10 @@
 export interface DashboardKpiProgressResponse {
   kpiTargetId?: number;
   programId?: number;
+  programCode?: string;
+  nameKo?: string;
+  programNameKo?: string;
+  programType?: string;
   targetParticipantCount?: number;
   targetSchoolCount?: number;
   targetClassCount?: number;
@@ -16,6 +20,11 @@ export interface DashboardKpiProgressResponse {
   targetInstructorCount?: number;
   targetEducationHours?: string;
   targetBudgetAmount?: string;
+  actualParticipantCount?: number;
+  actualSchoolCount?: number;
+  actualClassCount?: number;
+  actualVolunteerCount?: number;
+  actualInstructorCount?: number;
   createdAt?: string;
   updatedAt?: string;
 }

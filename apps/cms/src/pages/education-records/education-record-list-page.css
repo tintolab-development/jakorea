@@ -13,21 +13,27 @@
   box-sizing: border-box;
   /* layout-content: height calc(100dvh-64px), padding 32 top/bottom */
   min-height: calc(100dvh - 64px - 32px - 32px);
+  height: auto;
 }
 
 .education-record-list-page__layout.filter-table-layout {
   display: flex;
-  flex: 1 1 0;
+  flex: 1 0 auto;
   flex-direction: column;
-  min-height: 0;
+  min-width: 0;
+  min-height: unset;
+  height: auto;
+  overflow: visible;
   margin-bottom: 0;
 }
 
 .education-record-list-page__layout .filter-table-layout__table {
-  display: flex;
-  flex: 1 1 0;
-  flex-direction: column;
-  min-height: 0;
+  display: block;
+  flex: 1 0 auto;
+  min-width: 0;
+  min-height: unset;
+  height: auto;
+  overflow: visible;
 }
 
 /*

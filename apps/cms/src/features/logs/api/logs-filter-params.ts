@@ -47,10 +47,7 @@ export function memberLoginLogsParamsFromSearchParams(
   const loginId = searchParams.get('mlh_id')?.trim()
   const from = searchParams.get('mlh_from')?.trim()
   const to = searchParams.get('mlh_to')?.trim()
-  if (adminName) {
-    params.adminName = adminName
-    params.name = adminName
-  }
+  if (adminName) params.adminName = adminName
   if (loginId) params.loginId = loginId
   if (from) params.from = from
   if (to) params.to = to

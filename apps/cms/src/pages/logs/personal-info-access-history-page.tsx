@@ -14,6 +14,7 @@ import {
   EMPTY_TABLE_PAGE_CONTEXT,
   useTablePage,
 } from '@/shared/components/table-system/model/use-table-page'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import type { PersonalInfoAccessLog } from '@/types/personal-info-access-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -32,11 +33,20 @@ const TABLE_COL_WIDTH = {
 
 export default function PersonalInfoAccessHistoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const searchParamsKey = searchParams.toString()
   const remoteEnabled = useLogsRemoteQueryEnabled()
-  const { data: rows = [], isLoading, isError, error } =
-    usePersonalInfoAccessHistoryQuery(searchParams)
+  const {
+    rows,
+    totalElements,
+    isLoading,
+    isError,
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = usePersonalInfoAccessHistoryQuery(searchParams)
 
-  const { pendingFilters, handleFilterChange, applySearch, tableData, displayedCount } = useTablePage(
+  const { pendingFilters, handleFilterChange, applySearch, tableData } = useTablePage(
     personalInfoAccessHistoryTablePageConfig,
     {
       data: rows,
@@ -46,6 +56,13 @@ export default function PersonalInfoAccessHistoryPage() {
     }
   )
 
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: searchParamsKey,
+  })
+
   const columns = useMemo<ColumnsType<PersonalInfoAccessLog>>(
     () => [
       {
@@ -54,7 +71,7 @@ export default function PersonalInfoAccessHistoryPage() {
         width: TABLE_COL_WIDTH.no,
         align: 'center',
         render: (_: unknown, __: PersonalInfoAccessLog, index: number) =>
-          tableData.length === 0 ? '-' : tableData.length - index,
+          totalElements === 0 ? '-' : totalElements - index,
       },
       {
         title: '조회 대상',
@@ -96,7 +113,7 @@ export default function PersonalInfoAccessHistoryPage() {
         align: 'center',
       },
     ],
-    [tableData.length]
+    [totalElements]
   )
 
   return (
@@ -111,7 +128,7 @@ export default function PersonalInfoAccessHistoryPage() {
       onFilterChange={handleFilterChange}
       onSearch={applySearch}
       title="개인정보 조회 이력"
-      description={`총 ${displayedCount.toLocaleString()}건`}
+      description={`총 ${totalElements.toLocaleString()}건`}
       contentLoading={remoteEnabled && isLoading}
       excelExport={{
         columns,
@@ -125,15 +142,18 @@ export default function PersonalInfoAccessHistoryPage() {
           message={getLogsApiErrorMessage(error, '개인정보 조회 이력을 불러오지 못했습니다.')}
         />
       ) : (
-        <Table<PersonalInfoAccessLog>
-          rowKey="id"
-          className="cms-data-table"
-          tableLayout="fixed"
-          scroll={{ x: PERSONAL_INFO_ACCESS_TABLE_SCROLL_X }}
-          columns={columns}
-          dataSource={tableData}
-          pagination={false}
-        />
+        <>
+          <Table<PersonalInfoAccessLog>
+            rowKey="id"
+            className="cms-data-table"
+            tableLayout="fixed"
+            scroll={{ x: PERSONAL_INFO_ACCESS_TABLE_SCROLL_X }}
+            columns={columns}
+            dataSource={tableData}
+            pagination={false}
+          />
+          <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
+        </>
       )}
     </FilterTableLayout>
   )

@@ -12,4 +12,9 @@ export interface DeductionItemUpsertRequest {
   deductionRate?: string;
   deductionAmount?: number;
   useYn?: boolean;
+  iconKey?: string;
+  emojiOverride?: string;
+  layout?: string;
+  description?: string;
+  detailJson?: string;
 }

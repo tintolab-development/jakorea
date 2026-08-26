@@ -3,11 +3,11 @@
  * Orval v8 axios client: (axiosConfig, options?) 시그니처
  */
 import type { AxiosRequestConfig } from 'axios'
-import { axiosClient } from '@/shared/instance/axios-instance'
+import { axiosClient, type RetryableRequest } from '@/shared/instance/axios-instance'
 
 export const customInstance = async <T>(
   config: AxiosRequestConfig,
-  options?: AxiosRequestConfig
+  options?: AxiosRequestConfig & Pick<RetryableRequest, 'skipGlobalErrorAlert' | 'skipRefresh' | 'skipAuth'>
 ): Promise<T> => {
   const { data } = await axiosClient.request<T>({
     ...config,

@@ -1,19 +1,27 @@
 import { listMockMemberLoginLogs } from '@/data/mock/member-login-logs'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
-import { filterMemberLoginLogsByRetention } from '@/features/logs/lib/member-login-retention'
 import {
-  mapBugIssueLogListResponse,
-  mapDownloadLogListResponse,
-  mapMemberLoginLogListResponse,
-  mapPersonalInfoAccessLogListResponse,
+  applyMemberLoginRetentionFromFilter,
+  filterMemberLoginLogsByRetention,
+} from '@/features/logs/lib/member-login-retention'
+import {
+  mapBugIssueLogListPageResponse,
+  mapDownloadLogListPageResponse,
+  mapMemberLoginLogListPageResponse,
+  mapPersonalInfoAccessLogListPageResponse,
 } from '@/features/logs/api/adapters/logs-adapters'
 import {
   fetchFileAccessLogsRemote,
   fetchMemberLoginsRemote,
   fetchPrivacyAccessLogsRemote,
   fetchSystemIssueLogsRemote,
-  toLogsQueryParams,
+  toLogsListQueryParams,
 } from '@/features/logs/api/logs-api-client'
+import {
+  LOG_LIST_PAGE_SIZE,
+  paginateLogList,
+  type LogListPage,
+} from '@/features/logs/api/log-list-page'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import type { BugIssueLog } from '@/types/bug-issue-log'
 import type { DownloadLog } from '@/types/download-log'
@@ -33,42 +41,60 @@ function assertLogsRemoteApiReady(): void {
   }
 }
 
-export async function getFileDownloadLogsList(
-  filters: Record<string, string> = {}
-): Promise<DownloadLog[]> {
+export async function getFileDownloadLogsPage(
+  filters: Record<string, string> = {},
+  page = 0,
+  size = LOG_LIST_PAGE_SIZE
+): Promise<LogListPage<DownloadLog>> {
   assertLogsRemoteApiReady()
-  const dto = await fetchFileAccessLogsRemote(toLogsQueryParams(filters))
-  return mapDownloadLogListResponse(dto)
+  const dto = await fetchFileAccessLogsRemote(toLogsListQueryParams(filters, page, size))
+  return mapDownloadLogListPageResponse(dto)
 }
 
-export async function getPersonalInfoAccessLogsList(
-  filters: Record<string, string> = {}
-): Promise<PersonalInfoAccessLog[]> {
+export async function getPersonalInfoAccessLogsPage(
+  filters: Record<string, string> = {},
+  page = 0,
+  size = LOG_LIST_PAGE_SIZE
+): Promise<LogListPage<PersonalInfoAccessLog>> {
   assertLogsRemoteApiReady()
-  const dto = await fetchPrivacyAccessLogsRemote(toLogsQueryParams(filters))
-  return mapPersonalInfoAccessLogListResponse(dto)
+  const dto = await fetchPrivacyAccessLogsRemote(toLogsListQueryParams(filters, page, size))
+  return mapPersonalInfoAccessLogListPageResponse(dto)
 }
 
-export async function getMemberLoginLogsList(
-  filters: Record<string, string> = {}
-): Promise<MemberLoginLog[]> {
+export async function getMemberLoginLogsPage(
+  filters: Record<string, string> = {},
+  page = 0,
+  size = LOG_LIST_PAGE_SIZE
+): Promise<LogListPage<MemberLoginLog>> {
   if (shouldUseLogsRemoteApi()) {
     try {
-      const dto = await fetchMemberLoginsRemote(toLogsQueryParams(filters))
-      return filterMemberLoginLogsByRetention(mapMemberLoginLogListResponse(dto))
+      const dto = await fetchMemberLoginsRemote(
+        toLogsListQueryParams(applyMemberLoginRetentionFromFilter(filters), page, size)
+      )
+      return mapMemberLoginLogListPageResponse(dto)
     } catch {
-      return filterMemberLoginLogsByRetention(listMockMemberLoginLogs(filters))
+      return paginateLogList(
+        filterMemberLoginLogsByRetention(listMockMemberLoginLogs(filters)),
+        page,
+        size
+      )
     }
   }
-  return filterMemberLoginLogsByRetention(listMockMemberLoginLogs(filters))
+  return paginateLogList(
+    filterMemberLoginLogsByRetention(listMockMemberLoginLogs(filters)),
+    page,
+    size
+  )
 }
 
-export async function getBugIssueLogsList(
-  filters: Record<string, string> = {}
-): Promise<BugIssueLog[]> {
+export async function getBugIssueLogsPage(
+  filters: Record<string, string> = {},
+  page = 0,
+  size = LOG_LIST_PAGE_SIZE
+): Promise<LogListPage<BugIssueLog>> {
   assertLogsRemoteApiReady()
-  const dto = await fetchSystemIssueLogsRemote(toLogsQueryParams(filters))
-  return mapBugIssueLogListResponse(dto)
+  const dto = await fetchSystemIssueLogsRemote(toLogsListQueryParams(filters, page, size))
+  return mapBugIssueLogListPageResponse(dto)
 }
 
 export function getLogsApiErrorMessage(error: unknown, fallback: string): string {

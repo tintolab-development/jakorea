@@ -12,4 +12,10 @@ export interface PaymentItemUpsertRequest {
   maxAmount?: number;
   taxableYn?: boolean;
   useYn?: boolean;
+  iconKey?: string;
+  emojiOverride?: string;
+  layout?: string;
+  maxLimitWon?: number;
+  description?: string;
+  detailJson?: string;
 }

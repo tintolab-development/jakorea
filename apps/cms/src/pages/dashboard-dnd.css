@@ -21,7 +21,19 @@
   transition-duration: 0.08s !important;
 }
 
-/* 드래그 중에만 슬롯 transform GPU 가속 (리플로우 감소) */
-.dashboard-widget-row-wrapper[data-dragging] .ant-col {
+/* 드래그 중인 슬롯만 GPU 힌트 (전 컬럼 will-change는 레이아웃 비용을 키움) */
+.dashboard-widget-row-wrapper[data-dragging] .ant-col[data-dragging] {
   will-change: transform;
+}
+
+.dashboard-widget-drag-overlay__slot {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.dashboard-widget-drag-overlay__slot .widget-card-header {
+  pointer-events: none;
 }
