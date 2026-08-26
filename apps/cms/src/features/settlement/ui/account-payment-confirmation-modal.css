@@ -159,12 +159,12 @@
   width: 100%;
   padding: 12px 16px;
   background: var(--color-bg-base, #fff);
-  font-size: 14px;
-  font-weight: 400;
   color: var(--default-BK, #3d3d3d);
-  text-align: left;
-  font-family: Pretendard, sans-serif;
-  line-height: 140%;
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
   box-sizing: border-box;
   word-break: break-word;
   border-left: none;
