@@ -2,6 +2,7 @@
 
 **작성일:** 2026-08-25  
 **우선순위:** P1 (등록은 boolean만으로 가능 · 상세 「동의서 보기」 복원 불가)  
+**후속 P0:** FE가 옵션 A(`filledDocument`)를 실어 보내면 pre-register가 **HTTP 500** — [member-pre-register-filled-document-500-backend-request-2026-08-26.md](./member-pre-register-filled-document-500-backend-request-2026-08-26.md)  
 **요청 대상:** Members API · consent-records · (택1) form-responses  
 **관련 FE:** `member-register-consent-write-snapshot.ts` · `map-pre-register-request.ts` · `use-form-response-draft-query.ts` · `member-consent-template-map.ts`  
 **관련 정책:** `.cursor/rules/terms-and-consent-policy.mdc`  

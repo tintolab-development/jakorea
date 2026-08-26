@@ -7,7 +7,7 @@
 
 > **회원 상세 BE 전달:** 본 문서는 [members/README.md §필수 묶음](./members/README.md#회원-상세-이력정산--백엔드-전달-필수-묶음) **#6** 으로 포함됩니다. 강사 회원 상세 정산 **SET-005** — **§4 산출 내역서 모달** SSOT. (정산 관리 LNB 지급 현황 상세와 동일 필드 계약.)
 
-**Last updated:** 2026-08-26
+**Last updated:** 2026-08-26 (`nameEn` 발급 필수 · 풀페이지 헤더 생략 · 목 샘플 제거)
 
 > **작성 기준:** **실제 화면 라벨·테이블 컬럼**만 포함. mock 타입·다른 화면 필드는 제외.  
 > 근거: `payment-order-*-basic-info.tsx`, `use-payment-order-detail-lines.tsx`, `payment-order-calculation-statement-*-basic-section.tsx`, `payment-order-calculation-breakdown-table.tsx`.
@@ -27,7 +27,7 @@
 | `lectureDate` min/max → 사업 운영 기간 | `businessPeriodStart/End` | ✅ |
 | `institutionName: '-'` | `SettlementListItemResponse.institutionName` | ✅ |
 | **신청자명·성명 `홍*동`** | `instructorName` / `nameKo` **plain** | ❌ **서버 수정 요청 (P0)** — [§1.1](#11--p0-서버-수정-요청--신청자명성명-등-사람-이름-마스킹-금지) |
-| **지급조서 발급에 마스킹된 PII** | unmask 원문 → 발급 양식 | ❌ **서버 요청 (P0)** — [§1.2](#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api) |
+| **지급조서 발급 PII 공란** (목 샘플 없음) | unmask 원문 + §4.5 embed → 발급 양식 | ❌ **서버 요청 (P0)** — [§1.2](#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api) |
 | 강사 프로필·계좌 `-` | `instructorHeader` + `GET /settlements/{id}` 루트 embed | ❌ **서버 요청 (P0)** — [§4.5](#45--백엔드-요청-p0--강사-프로필계좌-현재-ui--) |
 | 산출 내역서 `'—'`·「준비 중」 | **`GET /settlements/{settlementId}`** 전 필드 | ✅ 매핑 (PII·typed `calculationDetail` 없으면 「준비 중」) |
 
@@ -70,9 +70,10 @@
 ### 1.2 ⭐ **P0 서버 요청** — 지급조서 발급(원문) · 산출 내역서 unmask API
 
 화면의 산출 내역서는 연락처·이메일·주소·계좌를 **마스킹 표시**합니다.  
-**지급조서(발급용) PDF·미리보기**에는 같은 값을 **마스킹 해제(원문)** 로 넣어야 합니다. 마스킹된 문자열을 문서에 넣으면 안 됩니다.
+**지급조서(발급용) PDF·미리보기**에는 같은 값을 **마스킹 해제(원문)** 로 넣어야 합니다. 마스킹된 문자열·목 샘플을 문서에 넣지 않습니다.
 
-현재 FE는 산출 내역서 표시값(`phoneDisplay` 등)을 그대로 발급 양식에 바인딩합니다 — **원문 API가 없으면 발급 문서가 깨집니다.**
+**FE (2026-08-26):** 최강사 등 **목 샘플 폴백 제거**. DTO에 없는 PII는 발급 양식 **공란** (`-`·`*` 문자열도 넣지 않음).  
+원문 API(§4.5 embed + 본 unmask)가 없으면 성명(목록값) 외 주소·계좌·주민번호·영문명이 **빈 문서**로 나갑니다.
 
 #### A. 산출 내역서 마스킹 해제 API **(신규)**
 
@@ -90,6 +91,7 @@
 | 필드 | 산출 내역서 UI | 지급조서 발급 양식 |
 |------|----------------|-------------------|
 | `instructorName` / `nameKo` | 성명 | 성명(한글) |
+| `nameEn` | 산출 내역서·풀페이지 UI 없음 | **성명(영문) — 지급조서 발급 양식 필수. unmask + `GET /settlements/{id}`에 포함** ([§4.5](#45--백엔드-요청-p0--강사-프로필계좌-현재-ui--)). 풀페이지 `instructorHeader`는 생략 가능 |
 | `gender`, `birthDate` | 성별 및 생년월일 | (해당 시) |
 | `phone` | 연락처 | — |
 | `email` | 이메일 | — |
@@ -115,11 +117,11 @@ GET `/settlements/{id}` 기본 응답은 화면용(이름은 plain, 연락처·�
 
 - [ ] OpenAPI에 `POST /api/admin/settlements/{settlementId}/privacy/unmask` + body `reason`
 - [ ] 응답에 연락처·이메일·주소·계좌번호·예금주 **원문** (`*` 없음)
-- [ ] 지급조서 기본정보: 성명·주소·은행·계좌·예금주·주민번호가 원문
+- [ ] 지급조서 기본정보: 성명(한글·영문)·주소·은행·계좌·예금주·주민번호가 원문
 - [ ] 감사 로그에 사유·settlementId·관리자 기록
-- [ ] 스테이징: 산출 내역서 화면은 마스킹, 발급 PDF는 원문
+- [ ] 스테이징: 산출 내역서 화면은 마스킹, 발급 PDF는 원문. **최강사·JA빌딩 등 목 인물 없음**
 
-프론트 후속: 발급 직전 unmask 호출 → `mapInstructorCalculationStatementToIssuanceInput`에 원문 사용. 산출 내역서 「개인정보 확인」은 회원 상세와 동일 confirm 모달.
+프론트 후속: 발급 직전 unmask 호출 → `mapInstructorCalculationStatementToIssuanceInput`에 원문 사용. 산출 내역서 「개인정보 확인」은 회원 상세와 동일 confirm 모달. **목 샘플로 공란을 메우지 않음.**
 
 ---
 
@@ -175,7 +177,7 @@ GET `/settlements/{id}` 기본 응답은 화면용(이름은 plain, 연락처·�
 | 지급 조서 처리 현황 | 집계 배지 | 라인 집계 / embed | ✅ | FE 집계 |
 | 총 정산 예정 금액 | `totalEstimatedAmount` | embed 또는 `sum(netPaymentAmount)` | ✅ | 집계 목록 값 |
 
-> **영문 성명(`nameEn`) UI 없음** — BE 요청 대상 아님. 성별/생년월일은 **풀페이지·산출 내역서 모두 표시**.
+> **영문 성명(`nameEn`)** — 풀페이지·산출 내역서 **화면 라벨 없음**. 화면용 `instructorHeader`에는 불필요. **지급조서 발급 양식에는 필수** → unmask·`GET /settlements/{id}` ([§1.2](#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api) · [§4.5](#45--백엔드-요청-p0--강사-프로필계좌-현재-ui--)). 성별/생년월일은 **풀페이지·산출 내역서 모두 표시**.
 
 마스킹: [상세 핸드오프 §3.7](./settlement-payment-order-detail-backend-handoff.md#37-개인정보-마스킹-정책--p0-서버-수정-요청-사람-이름-마스킹-금지). 발급·원문 열람: [§1.2](#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api).
 
@@ -244,7 +246,7 @@ GET `/settlements/{id}` 기본 응답은 화면용(이름은 plain, 연락처·�
 
 성명 옆 **일정 변경&취소** 배지: `scheduleChangeCancelCount` ≥ 1 (선택).
 
-> **영문 성명 UI 없음** — `nameEn` BE 요청 대상 아님.
+> **영문 성명** — 산출 내역서 **화면 라벨 없음**. `nameEn`은 발급 양식용으로 unmask·상세 GET에 포함 ([§1.2](#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api)).
 
 ### 4.3 산출 내역 테이블
 
@@ -311,14 +313,15 @@ GET `/settlements/{id}` 기본 응답은 화면용(이름은 plain, 연락처·�
 ### 4.5 ⭐ **백엔드 요청 (P0)** — 강사 프로필·계좌 (현재 UI `-`)
 
 OpenAPI `SettlementFrontendResponse` / `SettlementListItemResponse`에 **아래 필드가 없음**.  
-프론트는 `instructorIdentityFromLine`으로 `-`만 표시 중 — **회원 API 2차 호출 없이** 정산 응답에 embed 요청.
+프론트는 `instructorIdentityFromLine`으로 `-`만 표시 중 — **회원 API 2차 호출 없이** 정산 응답에 embed 요청.  
+**지급조서 발급**도 동일 필드가 없으면 양식이 **공란** (목 샘플 없음) — [§1.2](#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api)와 함께 필수.
 
 **대상 API (둘 다 필요)**
 
 | API | 넣는 위치 | 화면 |
 |-----|-----------|------|
 | `GET /api/admin/settlements?instructorMemberId=` | `instructorHeader` embed (§6.2) | 강사 기준 **지급 현황 상세** 풀페이지 기본 정보 |
-| `GET /api/admin/settlements/{settlementId}` | `SettlementFrontendResponse` 루트 (또는 `instructor` 객체) | **산출 내역서** 모달 신청자 기본 정보 · 계좌 지급 상세 |
+| `GET /api/admin/settlements/{settlementId}` | `SettlementFrontendResponse` 루트 (또는 `instructor` 객체) | **산출 내역서** 모달 · **지급조서 발급** (`nameEn` 포함) |
 
 **필수 필드 (plain — 마스킹은 FE)**
 
@@ -332,8 +335,10 @@ OpenAPI `SettlementFrontendResponse` / `SettlementListItemResponse`에 **아래 
 | `bankName` | string | 정산 계좌 — 은행명 | **금지** |
 | `accountNumber` | string | 정산 계좌 — 번호 | FE |
 | `accountHolder` | string | 정산 계좌 — 예금주 | FE |
+| **`nameEn`** | string | (화면 라벨 없음) | 없음 — **지급조서 발급 양식 성명(영문)**. `GET /settlements/{id}` + unmask. **풀페이지 `instructorHeader`는 생략 가능** |
 
-`instructorName` / `nameKo`는 목록에 이미 있음. **성명·신청자명은 원문** (사전 마스킹 금지, [§1.1](#11--p0-서버-수정-요청--신청자명성명-등-사람-이름-마스킹-금지)). `nameEn` **요청하지 않음**.
+`instructorName` / `nameKo`는 목록에 이미 있음. **성명·신청자명은 원문** (사전 마스킹 금지, [§1.1](#11--p0-서버-수정-요청--신청자명성명-등-사람-이름-마스킹-금지)).  
+산출 내역서·상세 화면에는 영문명 라벨 없음. **지급조서 발급 양식에만 영문명** — 상세 GET·unmask에 `nameEn` 포함 ([§1.2](#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api)).
 
 FE 성별·생년 표시 예: `남성 | 1990. 01. 15 (만 36세)` — `gender`+`birthDate`만 있으면 됨.
 
@@ -341,12 +346,12 @@ FE 성별·생년 표시 예: `남성 | 1990. 01. 15 (만 36세)` — `gender`+`
 
 **수용 기준**
 
-- [ ] OpenAPI `SettlementFrontendResponse`에 위 8필드 포함 (null이어도 스키마에 존재)
-- [ ] `GET /settlements?instructorMemberId=` 응답에 동일 필드 embed (`instructorHeader` 또는 동등)
-- [ ] 스테이징: 강사 상세 풀페이지·산출 내역서에서 연락처·주소·계좌가 `-`가 아님
+- [ ] OpenAPI `SettlementFrontendResponse`에 위 **화면 8필드 + `nameEn`** 포함 (null이어도 스키마에 존재)
+- [ ] `GET /settlements?instructorMemberId=` 응답에 **화면 8필드** embed (`instructorHeader` 또는 동등). `nameEn`은 풀페이지 헤더에 불필요
+- [ ] 스테이징: 강사 상세 풀페이지·산출 내역서에서 연락처·주소·계좌가 `-`가 아님. **발급 미리보기에 목 인물 없이** 동일 필드 원문 + **영문명**
 - [ ] 은행명·**성명/신청자명** plain (`*` 없음) / 연락처·이메일·계좌번호·예금주는 원문 (FE 마스킹)
 
-프론트 후속: `instructorIdentityFromLine` placeholder 제거.
+프론트 후속: `instructorIdentityFromLine` placeholder 제거. 발급 양식은 mock 샘플로 채우지 않음.
 
 ---
 
@@ -424,7 +429,7 @@ FE 성별·생년 표시 예: `남성 | 1990. 01. 15 (만 36세)` — `gender`+`
 | **`bankName`**, **`accountNumber`**, **`accountHolder`** | 정산 계좌 정보 | ✅ |
 | `totalEstimatedAmount` | 총 정산 예정 금액 | 권장 (없으면 집계 목록 값) |
 
-`nameEn` **미포함**.
+풀페이지 헤더는 `nameEn` **미포함** (화면 없음). **단건 `GET /settlements/{id}` · unmask** 에는 발급용 `nameEn` 포함 ([§4.5](#45--백엔드-요청-p0--강사-프로필계좌-현재-ui--) · [§1.2](#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api)).
 
 **대안:** `GET /api/admin/members/{instructorMemberId}` 조합 — [상세 핸드오프 §3.3](./settlement-payment-order-detail-backend-handoff.md#33-상세-기본정보-강사-블록). **권장은 정산 응답 embed** (상세 진입 시 회원 API 추가 왕복 방지).
 
@@ -469,6 +474,7 @@ FE 성별·생년 표시 예: `남성 | 1990. 01. 15 (만 36세)` — `gender`+`
 | 진행 회차 | 목록 `sessionCompleted`/`sessionTotal` (라인 건수 미사용) |
 | 사업 운영 기간 | 목록 `businessPeriodStart`/`End` |
 | 강사 프로필 (풀페이지·산출 내역서) | **`-` — [§4.5 P0 서버 요청](#45--백엔드-요청-p0--강사-프로필계좌-현재-ui--)** |
+| 지급조서 발급 PII | **공란** (목 샘플 제거). unmask·embed 대기 — [§1.2](#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api) |
 | 산출 내역서 그 외 필드 | `GET /settlements/{id}` 매핑 완료 |
 
 ---
@@ -489,7 +495,7 @@ FE 성별·생년 표시 예: `남성 | 1990. 01. 15 (만 36세)` — `gender`+`
 - [ ] 강사 맥락 — 성명(plain)·성별/생년·연락처·주소·계좌 API 원문 (마스킹은 FE)
 - [ ] **산정 기준 상세 > 상세 보기** — `calculationDetail`로 모달 동작
 
-- [ ] **지급조서 발급** — unmask 원문으로 성명·주소·계좌·주민번호 기입 ([§1.2](#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api))
+- [ ] **지급조서 발급** — unmask 원문으로 성명(한글·**영문**)·주소·계좌·주민번호 기입 ([§1.2](#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api))
 - [ ] **산출 내역서 unmask** — `POST /settlements/{id}/privacy/unmask` 로 화면 마스킹 해제
 
 ---
@@ -501,7 +507,7 @@ FE 성별·생년 표시 예: `남성 | 1990. 01. 15 (만 36세)` — `gender`+`
 | **P0** | **§1.1 — 신청자명·성명 등 사람 이름 마스킹 금지** (`instructorName` / `nameKo` plain) |
 | **P0** | **§1.2 — 지급조서 발급 원문 + 산출 내역서 `POST .../privacy/unmask`** |
 | **P0** | §5 — 목록 `institutionName`, `sessionOrdinal`, `statementId` |
-| **P0** | **§4.5 · §6.2 — 강사 프로필·계좌** (`gender`, `birthDate`, `phone`, `email`, `address`, 계좌 3종) — **현재 UI `-`** |
+| **P0** | **§4.5 · §6.2 — 강사 프로필·계좌** (`gender`, `birthDate`, `phone`, `email`, `address`, 계좌 3종) — **현재 UI `-`**. 상세 GET·unmask에 **`nameEn`** (발급 양식) |
 | **P0** | §6.1 — `programHeader` (진행 회차·사업기간 — 목록 라인에 이미 있으면 충족) |
 | **P0** | §4 — **`GET /settlements/{id}`** 산출 내역서 전 필드 (프로필 포함) |
 | P1 | [핸드오프 §3.6](./settlement-payment-order-detail-backend-handoff.md#36--get-settlementssettlementid-필수-확장--강의비-책정-기준산정-기준-상세-p1차단) OpenAPI 상세 |

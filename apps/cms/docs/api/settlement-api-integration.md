@@ -62,8 +62,8 @@ LNB 「정산 관리」 3화면(지급조서·계좌 지급·정산 항목 설�
 | Method | Path | UI |
 |--------|------|-----|
 | GET | `/api/account-payments` | 목록·캘린더 (이체 예정일) |
-| GET | `/api/settlements` | 목록·상세 programName/session join |
-| GET | `/api/settlements/{settlementId}` | 상세 산출 블록 |
+| GET | `/api/account-payments/{paymentId}` | 계좌 지급 현황 상세 (목표: **이 1회로 산출 블록까지**) |
+| GET | `/api/settlements/{settlementId}` | 지급조서 확인 산출 내역서. **계좌 지급 상세에서는 우회 호출 중** → [갭 §5.2](./settlement-api-backend-gaps.md#52--p0-서버-보완-요청--계좌-지급-현황-상세를-get-account-paymentsid-1회로) |
 | PATCH | `/api/account-payments/{paymentId}/paid` | 지급 완료 (목록·상세) |
 | PATCH | `/api/account-payments/{paymentId}/failed` | 지급 실패 (hook만) |
 | POST | `/api/settlements/exports/bulk-transfer` | 대량이체 export |
@@ -71,6 +71,8 @@ LNB 「정산 관리」 3화면(지급조서·계좌 지급·정산 항목 설�
 | GET | `/api/settlements/exports` | export 이력 |
 
 **캘린더:** `/api/settlements/calendar`가 아닌 **account-payments 목록** (`scheduledPaymentDate` 기준)
+
+**409 `PAYMENT_STATEMENT_STATUS_CONFLICT`:** 지급조서가 `CONFIRMED`가 아닐 때. 서버 `message`를 모달에 그대로 표시 — **메시지 상세화는 BE 요청** ([갭 문서 §5.1](./settlement-api-backend-gaps.md#51--p0-서버-수정-요청--지급-완료-409-message-상세화)).
 
 ---
 

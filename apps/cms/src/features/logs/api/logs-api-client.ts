@@ -65,7 +65,10 @@ export function toLogsListQueryParams(
 }
 
 function toOrvalListParams<T>(filters: Record<string, string>): T {
-  return { ...filters } as unknown as T
+  const out: Record<string, string | number> = { ...filters }
+  if (filters.page != null) out.page = Number(filters.page)
+  if (filters.size != null) out.size = Number(filters.size)
+  return out as T
 }
 
 export async function fetchFileAccessLogsRemote(

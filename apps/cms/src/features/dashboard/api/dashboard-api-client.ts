@@ -139,7 +139,7 @@ export async function hideAdminNotificationRemote(recipientId: string): Promise<
   await dashboardRemoteApi.hide(Number(recipientId))
 }
 
-/** 위젯 programIds 필터 → 백엔드 평탄 쿼리 (`?programIds=1,2`) */
+/** 위젯 programIds 필터 → 대시보드 목록 query (flat). OpenAPI `params` 맵 래핑은 제거됨. */
 export function toDashboardQueryParams(options?: {
   programIds?: string[]
   extra?: Record<string, string>

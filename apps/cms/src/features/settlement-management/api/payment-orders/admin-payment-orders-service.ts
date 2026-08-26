@@ -61,6 +61,7 @@ async function fetchPaymentStatementsForSettlementIds(settlementIds: number[]) {
 }
 
 export async function getPaymentOrdersListRemote(
+  groupBy: 'program' | 'instructor',
   filters: PaymentOrdersListFilterInput = {
     programName: '',
     instructorName: '',
@@ -68,13 +69,18 @@ export async function getPaymentOrdersListRemote(
     dateRange: null,
   }
 ): Promise<PaymentOrdersListData> {
-  const [programAggregates, instructorAggregates] = await Promise.all([
-    fetchSettlementAggregatesRemote(buildPaymentOrdersListAggregateParams('program', filters)),
-    fetchSettlementAggregatesRemote(buildPaymentOrdersListAggregateParams('instructor', filters)),
-  ])
+  const aggregates = await fetchSettlementAggregatesRemote(
+    buildPaymentOrdersListAggregateParams(groupBy, filters)
+  )
+  if (groupBy === 'program') {
+    return {
+      programRows: mapAggregatesToProgramRows(aggregates),
+      instructorRows: [],
+    }
+  }
   return {
-    programRows: mapAggregatesToProgramRows(programAggregates),
-    instructorRows: mapAggregatesToInstructorRows(instructorAggregates),
+    programRows: [],
+    instructorRows: mapAggregatesToInstructorRows(aggregates),
   }
 }
 

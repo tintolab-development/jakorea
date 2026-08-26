@@ -1,21 +1,15 @@
 import { mapAccountPaymentDetailFromGetApi } from '@/features/settlement-management/api/account-payments/map-account-payment-detail'
 import { mapAccountPaymentListToRows } from '@/features/settlement-management/api/account-payments/map-account-payment-rows'
-import { buildSettlementByIdMap } from '@/features/settlement-management/api/account-payments/map-settlement-context'
 import {
   fetchAccountPaymentDetailRemote,
   fetchAllAccountPaymentsRemote,
-  fetchAllSettlementsRemote,
   fetchSettlementDetailRemote,
 } from '@/features/settlement-management/api/settlement-api-client'
 import type { AccountPaymentRow, AccountPaymentStatusDetail } from '@/data/mock/account-payments-list'
 
 export async function getAccountPaymentsListRemote(): Promise<AccountPaymentRow[]> {
-  const [payments, settlements] = await Promise.all([
-    fetchAllAccountPaymentsRemote(),
-    fetchAllSettlementsRemote(),
-  ])
-  const settlementById = buildSettlementByIdMap(settlements ?? [])
-  return mapAccountPaymentListToRows(payments ?? [], settlementById)
+  const payments = await fetchAllAccountPaymentsRemote()
+  return mapAccountPaymentListToRows(payments ?? [])
 }
 
 export async function getAccountPaymentDetailRemote(

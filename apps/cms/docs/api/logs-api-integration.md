@@ -3,6 +3,7 @@
 보안 설정(로그 관리) `/logs/*` 화면과 Swagger `/api/admin/logs/*` 매핑입니다.
 
 공통 가이드: [backend-handoff.md](./backend-handoff.md) · [api-routes-and-client.md](./api-routes-and-client.md)  
+**백엔드 핸드오프 (전환률·미적용 API)**: [logs-api-conversion-status-backend-handoff.md](./logs-api-conversion-status-backend-handoff.md)  
 **백엔드 Cursor 프롬프트**: [logs-api-backend-cursor-prompt.md](./logs-api-backend-cursor-prompt.md)  
 갭 목록: [logs-api-backend-gaps.md](./logs-api-backend-gaps.md)
 

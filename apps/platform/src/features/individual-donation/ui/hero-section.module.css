@@ -151,7 +151,7 @@
 
 @media (--bp-pc-full-up) {
   .hero {
-    min-height: 100vh;
+    min-height: max(800px, 100vh);
   }
 
   .text {

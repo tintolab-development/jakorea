@@ -6,12 +6,22 @@ import {
   type SettlementByIdMap,
 } from '@/features/settlement-management/api/account-payments/map-settlement-context'
 
+/** OpenAPI 목록 DTO에 아직 없는 필드 — 백엔드가 내려주면 정산 목록 join 없이 사용 */
+type AccountPaymentListItemExtras = AccountPaymentListItemResponse & {
+  programNameKo?: string
+  programName?: string
+  institutionName?: string
+  sessionOrdinal?: number
+  lectureDate?: string
+}
+
 export function mapAccountPaymentListItemToRow(
   item: AccountPaymentListItemResponse,
   index: number,
   settlementById?: SettlementByIdMap
 ): AccountPaymentRow {
   const paymentId = item.accountPaymentId
+  const extra = item as AccountPaymentListItemExtras
   const settlement = item.settlementId != null ? settlementById?.get(item.settlementId) : undefined
 
   return {
@@ -20,11 +30,12 @@ export function mapAccountPaymentListItemToRow(
     settlementId: item.settlementId,
     no: index + 1,
     instructorName: item.instructorName ?? settlement?.instructorName ?? '-',
-    programName: settlement?.programNameKo ?? '-',
-    institutionName: settlement?.institutionName?.trim() || '-',
-    sessionLabel: formatLectureSessionLabel(settlement?.sessionOrdinal),
+    programName: extra.programNameKo ?? extra.programName ?? settlement?.programNameKo ?? '-',
+    institutionName: extra.institutionName?.trim() || settlement?.institutionName?.trim() || '-',
+    sessionLabel: formatLectureSessionLabel(extra.sessionOrdinal ?? settlement?.sessionOrdinal),
     accountPaymentStatus: mapPaymentStatusToAccountPaymentStatus(item.paymentStatus),
     amount: item.netPaymentAmount ?? 0,
+    lectureDate: extra.lectureDate ?? settlement?.lectureDate,
     transferScheduledDate: item.scheduledPaymentDate ?? '',
     bankName: item.bankName,
     maskedAccountNo: item.maskedAccountNo,

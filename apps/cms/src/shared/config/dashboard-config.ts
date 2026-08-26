@@ -113,7 +113,10 @@ export function buildAdminDashboardWidgets(scheduleKinds: ProgramScheduleKind[])
   ]
 }
 
-/** 로그인 사용자 기준 대시보드 위젯 (관리자는 assignedProgramTypes 또는 ACL로 일정 유형 필터) */
+/**
+ * 로그인 사용자 기준 대시보드 위젯 (관리자는 assignedProgramTypes 또는 ACL로 일정 유형 필터)
+ * 로그 알림 위젯은 백엔드 v9에서 API가 제거되어 홈에 붙이지 않는다.
+ */
 export function getDashboardWidgetsForUser(
   user: Omit<User, 'password'> | null,
   assignedProgramTypes?: ProgramScheduleKind[] | null

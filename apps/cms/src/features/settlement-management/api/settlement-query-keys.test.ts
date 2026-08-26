@@ -23,7 +23,13 @@ describe('settlement mutation invalidate prefixes', () => {
     const details = settlementQueryKeys.paymentOrders.details()
     const settlement = settlementQueryKeys.paymentOrders.settlement(9)
 
-    expect(isPrefixedBy(settlementQueryKeys.paymentOrders.list('q'), lists)).toBe(true)
+    expect(isPrefixedBy(settlementQueryKeys.paymentOrders.list('program', 'q'), lists)).toBe(true)
+    expect(isPrefixedBy(settlementQueryKeys.paymentOrders.list('instructor', 'q'), lists)).toBe(
+      true
+    )
+    expect(settlementQueryKeys.paymentOrders.list('program', 'q')).not.toEqual(
+      settlementQueryKeys.paymentOrders.list('instructor', 'q')
+    )
     expect(isPrefixedBy(settlementQueryKeys.paymentOrders.detail('program', 'k'), details)).toBe(
       true
     )
