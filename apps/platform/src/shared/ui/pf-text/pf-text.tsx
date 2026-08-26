@@ -38,6 +38,7 @@ export type PFTextColor =
   | 'neutral-warm-600'
   | 'primary-400'
   | 'primary-500'
+  | 'primary-600'
   | 'primary-700'
   | 'primary-800'
   | 'error'
@@ -96,6 +97,7 @@ const colorClassMap: Record<PFTextColor, string> = {
   'neutral-warm-600': styles.colorNeutralWarm600,
   'primary-400': styles.colorPrimary400,
   'primary-500': styles.colorPrimary500,
+  'primary-600': styles.colorPrimary600,
   'primary-700': styles.colorPrimary700,
   'primary-800': styles.colorPrimary800,
   error: styles.colorError,

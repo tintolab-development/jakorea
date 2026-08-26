@@ -42,6 +42,10 @@
   color: var(--color-primary-500);
 }
 
+.colorPrimary600 {
+  color: var(--color-primary-600);
+}
+
 .colorPrimary700 {
   color: var(--color-primary-700);
 }

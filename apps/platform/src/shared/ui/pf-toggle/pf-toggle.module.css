@@ -24,7 +24,7 @@
 }
 
 .icon + .content {
-  margin-inline-start: var(--spacing-24);
+  margin-inline-start: var(--spacing-16);
 }
 
 @media (--bp-below-pc) {

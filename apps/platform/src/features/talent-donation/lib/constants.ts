@@ -1,5 +1,8 @@
 export const TALENT_DONATION_PATH = '/support/talent'
 
+/** 재능기부 신청 페이지 */
+export const TALENT_DONATION_APPLY_PATH = `${TALENT_DONATION_PATH}/apply`
+
 export const HERO_LABEL = '재능기부'
 
 export const HERO_TITLE_LINES = ['당신의 경험이', ' 청소년의 가능성으로'] as const

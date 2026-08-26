@@ -1,10 +1,12 @@
 import { Fragment } from 'react'
+import { Link } from 'react-router-dom'
 import jaArrowCtaMintUrl from '@/features/home/image/icon/ja-arrow-cta-mint.svg'
 import { PFText } from '@/shared/ui'
 import {
   CTA_SECTION_BUTTON_LABEL,
   CTA_SECTION_EYEBROW,
   CTA_SECTION_TITLE_LINES,
+  TALENT_DONATION_APPLY_PATH,
 } from '../lib/constants'
 import { CTA_PHOTO_IMAGE_URL } from '../lib/cta-images'
 import styles from './cta-section.module.css'
@@ -35,8 +37,7 @@ export function CtaSection() {
             </PFText>
           </div>
           <div className={styles.actionButtonWrap}>
-            {/* TODO: 재능기부 신청하기 경로·기능 연결 */}
-            <button type="button" className={styles.actionButton}>
+            <Link to={TALENT_DONATION_APPLY_PATH} className={styles.actionButton}>
               <PFText as="span" typo="hl-lg" color="white" className={styles.actionLabel}>
                 {CTA_SECTION_BUTTON_LABEL}
               </PFText>
@@ -46,7 +47,7 @@ export function CtaSection() {
                 alt=""
                 aria-hidden="true"
               />
-            </button>
+            </Link>
           </div>
         </div>
 
