@@ -1,6 +1,6 @@
 import whyImage01Url from '../image/why-image-01.png'
 import whyImage02Url from '../image/why-image-02.png'
-import whyImage03Url from '../image/why-image-03.png'
+import ctaImageUrl from '../image/cta-image.png'
 
 export type DonationImpactCategory = 'story' | 'press' | 'report'
 
@@ -43,7 +43,7 @@ export const DONATION_IMPACT_ITEMS: readonly DonationImpactItem[] = [
     categoryLabel: '스토리',
     title: '메트라이프생명 사회공헌재단과 JA Korea의 여름과 겨울 “금융교육”',
     dateLabel: '2026년 05월 08일',
-    imageUrl: whyImage03Url,
+    imageUrl: ctaImageUrl,
     href: '#',
     placeholderColor: '#c5e8eb',
   },
@@ -73,7 +73,7 @@ export const DONATION_IMPACT_ITEMS: readonly DonationImpactItem[] = [
     categoryLabel: '스토리',
     title: '14년 만에 심사위원으로! 민재님이 JA와 함께하는 이유',
     dateLabel: '2024년 05월 08일',
-    imageUrl: whyImage03Url,
+    imageUrl: ctaImageUrl,
     href: '#',
     placeholderColor: '#c5e8eb',
   },

@@ -4,7 +4,7 @@
   flex-direction: column;
   width: 100%;
   min-width: 0;
-  min-height: 420px;
+  min-height: auto;
   margin: 0;
   box-sizing: border-box;
   overflow: hidden;
@@ -24,7 +24,6 @@
 
 .textArea {
   display: flex;
-  flex: 1 1 auto;
   align-items: center;
   justify-content: center;
   min-width: 0;
@@ -104,7 +103,7 @@
 }
 @media (--bp-pc-up) {
   .hero {
-    min-height: 640px;
+    min-height: 100vh;
   }
 
   .background {
@@ -142,6 +141,7 @@
   }
   .eyebrow {
     padding-bottom: var(--spacing-16);
+    color: var(--color-neutral-black);
   }
   .description {
     width: 90%;
@@ -151,7 +151,7 @@
 
 @media (--bp-pc-full-up) {
   .hero {
-    min-height: 800px;
+    min-height: 100vh;
   }
 
   .text {
