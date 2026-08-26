@@ -472,17 +472,12 @@ const institutionNames = [
 
 /**
  * 산출 내역서 > 강의비 책정 기준
- * - 정산 항목 설정의 임금 항목 중 6개를 순환 노출
- * - 단순인건비는 강의비 책정 기준 대상에서 제외
+ * - 정산 항목 설정 임금 6건을 순환 노출
  */
-const settlementWageStandardTitles = [
-  ...(settlementItemSettingSections
+const settlementWageStandardTitles =
+  settlementItemSettingSections
     .find(section => section.kind === 'wage')
-    ?.items.filter(item => item.id !== 'w-7')
-    .slice(0, 6)
-    .map(item => item.title) ?? ['1급 강사비']),
-  '제미나이 강사비',
-]
+    ?.items.map(item => item.title) ?? ['1급 강사비']
 
 function pickSettlementWageStandardTitle(seed: number): string {
   return settlementWageStandardTitles[seed % settlementWageStandardTitles.length] ?? '1급 강사비'

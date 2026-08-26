@@ -18,7 +18,7 @@ export const UJAT_WAGE_PAYMENT_ITEM_NONE_LABEL = PROGRAM_WAGE_PAYMENT_ITEM_NONE_
 export const UJAT_WAGE_DEDUCTION_LABEL = PROGRAM_WAGE_DEDUCTION_LABEL
 export const UJAT_WAGE_OVERLAY_PAYMENT_KEY = 'ujat.wage.paymentItemValues' as const
 
-/** UJAT 등록 양식 기본 지급 항목 — mock `교통비` (id `p-1`) */
+/** UJAT 등록 양식 기본 지급 항목 — mock `강사 교통비` (id `p-1`) */
 export const UJAT_DEFAULT_PAYMENT_ITEM_VALUES: string[] = ['p-1']
 
 export type UjatWageInfoDisplay = {

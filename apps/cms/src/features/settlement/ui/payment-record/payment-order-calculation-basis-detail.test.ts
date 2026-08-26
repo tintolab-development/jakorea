@@ -181,7 +181,7 @@ describe('payment-order-calculation-basis-detail', () => {
     const activity = buildActivityBasisDetail()
     expect(activity).toEqual({
       layout: 'activity',
-      categoryLabel: '자원봉사자 활동비',
+      categoryLabel: '활동비',
       activityFee: {
         amountWon: 50000,
         receiptFileName: '활동비 영수증.pdf',

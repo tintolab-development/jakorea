@@ -101,7 +101,7 @@ export interface PaymentOrderCalculationBasisDetailMeal {
   totalWon: number
 }
 
-/** 자원봉사자 활동비 */
+/** 활동비 */
 export interface PaymentOrderCalculationBasisDetailActivity {
   layout: 'activity'
   categoryLabel: string
@@ -312,12 +312,12 @@ export function resolveMealBasisDetailTotalWon(
   return detail.totalWon
 }
 
-/** mock·데모 — 자원봉사자 활동비 (한도 5만원) */
+/** mock·데모 — 활동비 (한도 5만원) */
 export function buildActivityBasisDetail(): PaymentOrderCalculationBasisDetailActivity {
   const amountWon = 50000
   return {
     layout: 'activity',
-    categoryLabel: '자원봉사자 활동비',
+    categoryLabel: '활동비',
     activityFee: {
       amountWon,
       receiptFileName: '활동비 영수증.pdf',

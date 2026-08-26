@@ -114,7 +114,7 @@ export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_COMMON_INFO_MOCK: NonNullable<
     { grade: '2급 강사비', pricing: '1시간 당 | 기본 : 350,000원' },
     { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 250,000원' },
   ],
-  paymentItems: '교통비(일반), 숙박비(일반), 자원봉사자 활동비',
+  paymentItems: '교통비(일반), 숙박비(일반), 활동비',
   deductionItems: GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL,
   kpi: {
     finalParticipants: 30,
@@ -161,7 +161,7 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK: NonNullable
     { grade: '2급 강사비', pricing: '1시간 당 | 기본 : 350,000원' },
     { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 250,000원' },
   ],
-  paymentItems: '교통비(일반), 숙박비(일반), 자원봉사자 활동비',
+  paymentItems: '교통비(일반), 숙박비(일반), 활동비',
   deductionItems: GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL,
   kpi: {
     finalParticipants: 30,
@@ -464,7 +464,7 @@ export function resolveGeneralProgramCommonInfo(
     wageGradeRows: [
       { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 240,000원' },
     ],
-    paymentItems: '교통비 (1사1교), 숙박비, 자원봉사자 활동비',
+    paymentItems: '강사 교통비, 숙박비, 활동비',
     deductionItems: GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL,
     kpi: {
       finalParticipants: program.approvedStudentCount ?? 30,
