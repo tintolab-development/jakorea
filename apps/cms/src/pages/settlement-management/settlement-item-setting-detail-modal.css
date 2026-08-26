@@ -471,10 +471,43 @@
 }
 
 .settlement-item-setting-detail-modal__section-stack--tier1 > section,
-.settlement-item-setting-detail-modal__section-stack--special-lecture > section {
+.settlement-item-setting-detail-modal__section-stack--special-lecture > section,
+.settlement-item-setting-detail-modal__section-stack--gemini > section {
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+
+/* 제미나이: 산정 기준은 가로 표가 아니라 라벨·입력·원 세로 나열 */
+.settlement-item-setting-detail-modal__gemini-session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.settlement-item-setting-detail-modal__gemini-session-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.settlement-item-setting-detail-modal__gemini-session-label {
+  flex: 0 0 auto;
+  min-width: 48px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.settlement-item-setting-detail-modal--gemini
+  .settlement-item-setting-detail-modal__gemini-session-row
+  .cms-input__control
+  input.ant-input {
+  text-align: right;
 }
 
 /* 섹션 내부: 레이블 ↔ 컨트롤(산정 기준·자격·비고) 세로 간격 6px — 블록 간 간격은 body gap 30px */

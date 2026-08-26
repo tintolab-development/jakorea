@@ -42,6 +42,8 @@ import {
 
 const BASIS_UNIT_OPTIONS_SIMPLE = [{ value: '전체', label: '전체' }]
 
+const CONDITION_TEXTAREA_PLACEHOLDER = '내용을 입력해 주세요.'
+
 const SIMPLE_LABOR_EVIDENCE_RADIO_OPTIONS: ModalSpecTableRadioOption<SettlementItemEvidenceSubmission>[] =
   [
     { value: 'required', label: '필요' },
@@ -320,11 +322,11 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
                 <CmsNumericInput
                   mode="currency"
                   inputSize="medium"
-                  suffix="원"
                   value={maxLimitStr}
                   onValueChange={setMaxLimitStr}
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">원</span>
             </div>
           </ModalSpecTableRow>
         </ModalSpecTable>
@@ -333,7 +335,7 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
   )
 }
 
-/** 특강 강사비(w-4): 조건 표만 — 지급 요건 80px·비고 128px */
+/** 특강 강사비(w-4)·기타 인건비(w-5): 조건 표만 — 지급 요건 80px·비고 128px */
 function SettlementItemSettingDetailSpecialLectureBody({ itemId }: { itemId: string }) {
   const detail = getSettlementItemSettingDetail(itemId)
 
@@ -368,6 +370,7 @@ function SettlementItemSettingDetailSpecialLectureBody({ itemId }: { itemId: str
               rows={3}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="지급 요건"
             />
           </ModalSpecTableRow>
@@ -377,10 +380,134 @@ function SettlementItemSettingDetailSpecialLectureBody({ itemId }: { itemId: str
               rows={5}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="비고"
             />
           </ModalSpecTableRow>
         </ModalSpecTable>
+      </section>
+    </div>
+  )
+}
+
+const GEMINI_SESSION_ROWS: { key: 's1' | 's2' | 's3' | 's4'; label: string }[] = [
+  { key: 's1', label: '1차시' },
+  { key: 's2', label: '2차시' },
+  { key: 's3', label: '3차시' },
+  { key: 's4', label: '4차시' },
+]
+
+/** 제미나이 강사비: 조건 가로 표 + 1~4차시 세로 산정 */
+function SettlementItemSettingDetailGeminiBody({ itemId }: { itemId: string }) {
+  const detail = getSettlementItemSettingDetail(itemId)
+
+  const [qualificationText, setQualificationText] = useState(() =>
+    linesToEditableText(detail.qualificationLines)
+  )
+  const [remarkText, setRemarkText] = useState(() => linesToEditableText(detail.remarkLines))
+  const [session1Str, setSession1Str] = useState(() =>
+    formatWonDisplay(detail.geminiSession1Won ?? 0)
+  )
+  const [session2Str, setSession2Str] = useState(() =>
+    formatWonDisplay(detail.geminiSession2Won ?? null)
+  )
+  const [session3Str, setSession3Str] = useState(() =>
+    formatWonDisplay(detail.geminiSession3Won ?? null)
+  )
+  const [session4Str, setSession4Str] = useState(() =>
+    formatWonDisplay(detail.geminiSession4Won ?? null)
+  )
+
+  useRegisterSettlementDetailSnapshot(
+    () => ({
+      ...getSettlementItemSettingDetail(itemId),
+      layout: 'gemini',
+      qualificationLines: parseEditableLines(qualificationText),
+      remarkLines: parseEditableLines(remarkText),
+      geminiSession1Won: parseWonStringToNumber(session1Str) ?? 0,
+      geminiSession2Won: parseWonStringToNumber(session2Str),
+      geminiSession3Won: parseWonStringToNumber(session3Str),
+      geminiSession4Won: parseWonStringToNumber(session4Str),
+    }),
+    [itemId, qualificationText, remarkText, session1Str, session2Str, session3Str, session4Str]
+  )
+
+  const sessionValue = (key: (typeof GEMINI_SESSION_ROWS)[number]['key']) => {
+    if (key === 's1') return session1Str
+    if (key === 's2') return session2Str
+    if (key === 's3') return session3Str
+    return session4Str
+  }
+
+  const setSessionValue = (
+    key: (typeof GEMINI_SESSION_ROWS)[number]['key'],
+    next: string
+  ) => {
+    if (key === 's1') setSession1Str(next)
+    else if (key === 's2') setSession2Str(next)
+    else if (key === 's3') setSession3Str(next)
+    else setSession4Str(next)
+  }
+
+  return (
+    <div className="settlement-item-setting-detail-modal__section-stack settlement-item-setting-detail-modal__section-stack--gemini">
+      <section aria-labelledby="settlement-detail-condition-label">
+        <h3
+          id="settlement-detail-condition-label"
+          className="settlement-item-setting-detail-modal__section-label"
+        >
+          조건
+        </h3>
+        <ModalSpecTable aria-label="조건">
+          <ModalSpecTableRow label="지급 요건" labelVariant="paymentRequirementShort">
+            <textarea
+              className="modal-spec-table__textarea"
+              rows={2}
+              value={qualificationText}
+              onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
+              aria-label="지급 요건"
+            />
+          </ModalSpecTableRow>
+          <ModalSpecTableRow label="비고" labelVariant="remark">
+            <textarea
+              className="modal-spec-table__textarea"
+              rows={5}
+              value={remarkText}
+              onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
+              aria-label="비고"
+            />
+          </ModalSpecTableRow>
+        </ModalSpecTable>
+      </section>
+
+      <section aria-labelledby="settlement-detail-basis-label">
+        <h3
+          id="settlement-detail-basis-label"
+          className="settlement-item-setting-detail-modal__section-label"
+        >
+          산정 기준
+        </h3>
+        <div className="settlement-item-setting-detail-modal__gemini-session-list">
+          {GEMINI_SESSION_ROWS.map(row => (
+            <div key={row.key} className="settlement-item-setting-detail-modal__gemini-session-row">
+              <span className="settlement-item-setting-detail-modal__gemini-session-label">
+                {row.label}
+              </span>
+              <div className="modal-spec-table__input-wrap">
+                <CmsNumericInput
+                  mode="currency"
+                  inputSize="medium"
+                  value={sessionValue(row.key)}
+                  onValueChange={next => setSessionValue(row.key, next)}
+                  aria-label={`${row.label} 금액`}
+                />
+              </div>
+              <span className="modal-spec-table__suffix-text">원</span>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   )
@@ -1678,6 +1805,10 @@ function SettlementItemSettingDetailModalBody({ itemId }: { itemId: string }) {
     return <SettlementItemSettingDetailSpecialLectureBody itemId={itemId} />
   }
 
+  if (detail.layout === 'gemini') {
+    return <SettlementItemSettingDetailGeminiBody itemId={itemId} />
+  }
+
   if (detail.layout === 'assistantInstructor') {
     return <SettlementItemSettingDetailAssistantBody itemId={itemId} />
   }
@@ -1834,7 +1965,12 @@ export function SettlementItemSettingDetailModal({
         'settlement-item-setting-detail-modal',
         readOnly ? 'settlement-item-setting-detail-modal--read-only' : '',
         'content-modal--description-gap-compact',
-        item?.id === 'w-4' ? 'settlement-item-setting-detail-modal--special-lecture' : '',
+        item && getSettlementItemSettingDetail(item.id).layout === 'specialLecture'
+          ? 'settlement-item-setting-detail-modal--special-lecture'
+          : '',
+        item && getSettlementItemSettingDetail(item.id).layout === 'gemini'
+          ? 'settlement-item-setting-detail-modal--gemini'
+          : '',
         item?.id === 'p-1' || item?.id === 'p-2'
           ? 'settlement-item-setting-detail-modal--transport'
           : '',
@@ -1848,6 +1984,7 @@ export function SettlementItemSettingDetailModal({
         item &&
         [
           'tier1',
+          'gemini',
           'assistantInstructor',
           'simpleLabor',
           'multiInstructor',
