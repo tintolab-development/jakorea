@@ -8,7 +8,35 @@
 
 export type PrivacyAccessLogsParams = {
 /**
- * 쿼리 파라미터입니다. 요청값 출처: query/path/요청 본문 from 화면 필터
+ * 쿼리 파라미터입니다. 요청값 출처: accessPurpose/accessorName/from/to/page/size
  */
 params: {[key: string]: string};
+/**
+ * 조회 목적 부분 검색
+ */
+accessPurpose?: string;
+/**
+ * 조회자명 부분 검색
+ */
+accessorName?: string;
+/**
+ * 개인정보 조회 대상자명 부분 검색
+ */
+targetName?: string;
+/**
+ * 조회 시작일 YYYY-MM-DD 또는 ISO-8601
+ */
+from?: string;
+/**
+ * 조회 종료일 YYYY-MM-DD 또는 ISO-8601
+ */
+to?: string;
+/**
+ * 0-base 페이지, 기본 0
+ */
+page?: string;
+/**
+ * 페이지 크기, 기본 20, 최대 100
+ */
+size?: string;
 };

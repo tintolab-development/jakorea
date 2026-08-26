@@ -181,6 +181,10 @@
       "description": "Admin Operations 관련 관리자 API"
     },
     {
+      "name": "기타 API",
+      "description": "확정 학급 슬롯 기반 지역별 봉사자 자동배정 및 출결 담당자 설정"
+    },
+    {
       "name": "프로그램 게시판",
       "description": "프로그램 게시글, 공개 노출, 상세 조회, 게시 상태 관리 API입니다."
     },
@@ -235,6 +239,10 @@
     {
       "name": "외부 연동 제공자",
       "description": "외부 provider 연동 상태, 콜백, 리허설, 운영 확인용 API입니다."
+    },
+    {
+      "name": "기타 API",
+      "description": "교사 회원의 UJAT 임시배정 일정 확인/답변 API"
     },
     {
       "name": "CMS 교재",
@@ -299,6 +307,10 @@
     {
       "name": "시스템 준비도",
       "description": "로컬 RC, staging, provider, 개인정보 감사, 배치 멱등성 등 readiness 확인 API입니다."
+    },
+    {
+      "name": "기타 API",
+      "description": "UJAT 신청기관 임시배정, 기관 일정 확인 및 지역별 교육배정 준비 API"
     },
     {
       "name": "기타 API",
@@ -2933,8 +2945,7 @@
             "minimum": 1
           },
           "phone": {
-            "type": "string",
-            "pattern": "^$|^[0-9+() .-]{7,30}$"
+            "type": "string"
           },
           "email": {
             "type": "string",
@@ -3148,6 +3159,31 @@
           "assignedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "programStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "progressYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lifecycleStatus": {
+            "type": "string"
+          },
+          "approvedStudentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recruitmentCapacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "participantType": {
+            "type": "string"
+          },
+          "targetLevel": {
+            "type": "string"
           }
         }
       },
@@ -3271,6 +3307,21 @@
           },
           "useYn": {
             "type": "boolean"
+          },
+          "iconKey": {
+            "type": "string"
+          },
+          "emojiOverride": {
+            "type": "string"
+          },
+          "layout": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "detailJson": {
+            "type": "string"
           }
         }
       },
@@ -3293,6 +3344,25 @@
           },
           "useYn": {
             "type": "boolean"
+          },
+          "iconKey": {
+            "type": "string"
+          },
+          "emojiOverride": {
+            "type": "string"
+          },
+          "layout": {
+            "type": "string"
+          },
+          "maxLimitWon": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "description": {
+            "type": "string"
+          },
+          "detailJson": {
+            "type": "string"
           }
         }
       },
@@ -3384,6 +3454,41 @@
           },
           "editableYn": {
             "type": "boolean"
+          },
+          "iconKey": {
+            "type": "string"
+          },
+          "emojiOverride": {
+            "type": "string"
+          },
+          "layout": {
+            "type": "string"
+          },
+          "basisHours": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxLimitWon": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "qualificationLines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "remarkLines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "string"
+          },
+          "detailJson": {
+            "type": "string"
           },
           "rateItems": {
             "type": "array",
@@ -3664,6 +3769,158 @@
             "items": {
               "$ref": "#/components/schemas/WageItemRateResponse"
             }
+          }
+        }
+      },
+      "TemporaryScheduleSaveRequest": {
+        "type": "object",
+        "properties": {
+          "educationRegionCode": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TemporaryScheduleSlotRequest"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "educationRegionCode",
+          "slots"
+        ]
+      },
+      "TemporaryScheduleSlotRequest": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "grade": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 0
+          },
+          "className": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "studentCount": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "className",
+          "grade",
+          "scheduleId",
+          "studentCount"
+        ]
+      },
+      "OrganizationScheduleResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationStatus": {
+            "type": "string"
+          },
+          "temporaryAssignmentStatus": {
+            "type": "string"
+          },
+          "institutionConfirmationStatus": {
+            "type": "string"
+          },
+          "assignmentRevision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "institutionConfirmedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "assignmentLockedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationScheduleSlotResponse"
+            }
+          }
+        }
+      },
+      "OrganizationScheduleSlotResponse": {
+        "type": "object",
+        "properties": {
+          "slotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "grade": {
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "classLabel": {
+            "type": "string"
+          },
+          "studentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "assignmentStatus": {
+            "type": "string"
+          },
+          "scheduleStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "scheduleEndAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "organizationAddress": {
+            "type": "string"
+          },
+          "organizationAddressDetail": {
+            "type": "string"
           }
         }
       },
@@ -4188,6 +4445,18 @@
             "type": "string"
           }
         }
+      },
+      "AttendanceManagerUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "participantId"
+        ]
       },
       "ProgramDraftUpsertRequest": {
         "type": "object",
@@ -4790,6 +5059,31 @@
           "assignedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "programStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "progressYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lifecycleStatus": {
+            "type": "string"
+          },
+          "approvedStudentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recruitmentCapacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "participantType": {
+            "type": "string"
+          },
+          "targetLevel": {
+            "type": "string"
           }
         }
       },
@@ -5981,6 +6275,16 @@
           }
         }
       },
+      "InstitutionScheduleConfirmRequest": {
+        "type": "object",
+        "properties": {
+          "guideNote": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          }
+        }
+      },
       "PhoneIdentityConfirmRequest": {
         "type": "object",
         "properties": {
@@ -6252,6 +6556,23 @@
           }
         }
       },
+      "FilledDocumentRequest": {
+        "type": "object",
+        "description": "CMS 동의서 작성 완료 시점의 원문 스냅샷. schemaJson은 WritingFormDraft 객체 자체이며 JSON 문자열을 이중 인코딩하지 않습니다.",
+        "properties": {
+          "templateCode": {
+            "type": "string",
+            "example": "agreement-portrait"
+          },
+          "schemaJson": {
+            "$ref": "#/components/schemas/JsonNode",
+            "description": "@jakorea/form-schema WritingFormDraft 전체 객체"
+          },
+          "paymentBasicInfo": {
+            "$ref": "#/components/schemas/PaymentStatementBasicInfo"
+          }
+        }
+      },
       "HomeAddress": {
         "type": "object",
         "properties": {
@@ -6422,6 +6743,7 @@
           "termsAgreements"
         ]
       },
+      "JsonNode": {},
       "MemberBankAccountUpsertRequest": {
         "type": "object",
         "properties": {
@@ -6446,6 +6768,70 @@
         "required": [
           "bankName"
         ]
+      },
+      "PaymentStatementBasicInfo": {
+        "type": "object",
+        "description": "지급조서 사전 동의서의 작성 폼 외부 기본정보 sidecar",
+        "properties": {
+          "nameKo": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "nameEn": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "residentFront": {
+            "type": "string",
+            "maxLength": 6,
+            "minLength": 0
+          },
+          "residentBack": {
+            "type": "string",
+            "maxLength": 7,
+            "minLength": 0
+          },
+          "affiliation": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "noAffiliation": {
+            "type": "boolean"
+          },
+          "addressRoad": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "addressDetail": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "bankName": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "accountNumber": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "accountHolder": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "paymentPurpose": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          }
+        }
       },
       "TermsAgreementRequest": {
         "type": "object",
@@ -6494,6 +6880,21 @@
           "termsSnapshotJson": {
             "type": "string",
             "description": "호환 입력 필드입니다. 저장되는 약관 스냅샷은 서버가 게시 약관 원장에서 생성하며 이 값을 신뢰하지 않습니다."
+          },
+          "filledDocument": {
+            "$ref": "#/components/schemas/FilledDocumentRequest",
+            "description": "선택 동의서 4종(PORTRAIT/PAYMENT/FACILITATOR/ADMINISTRATIVE)의 작성 완료 WritingFormDraft. 해당 termsType에서 agreed=true이면 필수이고 agreed=false이면 생략합니다."
+          },
+          "evidenceFileObjectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "성범죄 경력조회 동의서 작성 완료 첨부 파일 object id"
+          },
+          "evidenceOriginalFileName": {
+            "type": "string",
+            "description": "호환용 원본 파일명. 서버는 file_object 메타데이터를 우선합니다.",
+            "maxLength": 255,
+            "minLength": 0
           }
         },
         "required": [
@@ -8768,6 +9169,56 @@
           "reason"
         ]
       },
+      "FilledDocumentResponse": {
+        "type": "object",
+        "description": "회원 동의서 작성본 원문 조회 응답. 민감정보 원문 조회 권한과 사유 감사가 적용됩니다.",
+        "properties": {
+          "filledDocumentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "consentRecordId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "consentType": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "templateCode": {
+            "type": "string"
+          },
+          "schemaJson": {
+            "$ref": "#/components/schemas/JsonNode"
+          },
+          "paymentBasicInfo": {
+            "$ref": "#/components/schemas/PaymentStatementBasicInfo"
+          },
+          "evidenceFileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "evidenceOriginalFileName": {
+            "type": "string"
+          },
+          "evidenceAccessPolicy": {
+            "type": "string"
+          },
+          "evidenceDownloadEndpoint": {
+            "type": "string"
+          },
+          "savedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "AdminMemberCommentCreateRequest": {
         "type": "object",
         "properties": {
@@ -10386,10 +10837,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -10802,6 +11253,19 @@
             "type": "number"
           }
         }
+      },
+      "ScheduleChangeRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
       },
       "ApplicationRejectRequest": {
         "type": "object",
@@ -11791,45 +12255,182 @@
           }
         }
       },
-      "UjatDgbongPartnerAssignmentConfirmRequest": {
+      "VolunteerUnavailabilityRequest": {
         "type": "object",
-        "description": "UJAT/DGBONG 파트너 배정 확정 요청",
         "properties": {
-          "primaryParticipantId": {
+          "participantId": {
             "type": "integer",
-            "format": "int64",
-            "description": "주 참가자 ID",
-            "example": 21001
+            "format": "int64"
           },
-          "secondaryParticipantId": {
+          "replacementParticipantId": {
             "type": "integer",
-            "format": "int64",
-            "description": "상대 참가자 ID",
-            "example": 21002
+            "format": "int64"
           },
-          "attendanceManagerParticipantId": {
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "participantId"
+        ]
+      },
+      "VolunteerUnavailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
             "type": "integer",
-            "format": "int64",
-            "description": "출석 관리자 참가자 ID",
-            "example": 21003
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "replacementParticipantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "replacementApplied": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AutoAssignmentRequest": {
+        "type": "object",
+        "properties": {
+          "educationRegionCode": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          }
+        }
+      },
+      "AutoAssignmentResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "targetSlotCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pairAssignedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "singleAssignedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unassignedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutoAssignmentSlotResult"
+            }
+          }
+        }
+      },
+      "AutoAssignmentSlotResult": {
+        "type": "object",
+        "properties": {
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
           },
           "organizationApplicationId": {
             "type": "integer",
-            "format": "int64",
-            "description": "조직 신청 ID",
-            "example": 10001
+            "format": "int64"
           },
           "classLabel": {
-            "type": "string",
-            "description": "배정 반/그룹 라벨",
-            "example": "A반"
+            "type": "string"
           },
-          "generatedByAdminId": {
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string"
+          },
+          "assignmentGroupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "primaryParticipantId": {
             "type": "integer",
-            "format": "int64",
-            "deprecated": true,
-            "description": "레거시 호환 필드. 서버는 인증된 CMS 관리자 ID를 사용하며 이 값은 무시합니다.",
-            "example": 1
+            "format": "int64"
+          },
+          "secondaryParticipantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendanceManagerParticipantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "DirectAssignmentRequest": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "participantId"
+        ]
+      },
+      "DirectAssignmentResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "movedParticipantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "movedFromExistingPair": {
+            "type": "boolean"
+          },
+          "targetAssignment": {
+            "$ref": "#/components/schemas/UjatDgbongPartnerAssignmentResponse"
+          },
+          "remainingSourceAssignment": {
+            "$ref": "#/components/schemas/UjatDgbongPartnerAssignmentResponse"
           }
         }
       },
@@ -11849,6 +12450,10 @@
             "format": "int64"
           },
           "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationSlotId": {
             "type": "integer",
             "format": "int64"
           },
@@ -11880,6 +12485,63 @@
           },
           "cancelReason": {
             "type": "string"
+          }
+        }
+      },
+      "UjatDgbongPartnerAssignmentConfirmRequest": {
+        "type": "object",
+        "description": "UJAT/DGBONG 파트너 배정 확정 요청",
+        "properties": {
+          "primaryParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "주 참가자 ID",
+            "example": 21001
+          },
+          "secondaryParticipantId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "상대 참가자 ID. 2인 배정이 불가능한 경우 null을 허용합니다.",
+            "example": 21002
+          },
+          "attendanceManagerParticipantId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "출석 관리자 참가자 ID. 해당 교육일에 이미 출결 담당자가 있으면 null 허용",
+            "example": 21003
+          },
+          "educationSlotId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "확정된 UJAT 교육 학급 슬롯 ID",
+            "example": 31001
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "조직 신청 ID. educationSlotId가 있으면 서버 canonical 값으로 검증/보정",
+            "example": 10001
+          },
+          "classLabel": {
+            "type": "string",
+            "description": "배정 반/그룹 라벨",
+            "example": "A반"
+          },
+          "generatedByAdminId": {
+            "type": "integer",
+            "format": "int64",
+            "deprecated": true,
+            "description": "레거시 호환 필드. 서버는 인증된 CMS 관리자 ID를 사용하며 이 값은 무시합니다.",
+            "example": 1
           }
         }
       },
@@ -13032,6 +13694,23 @@
         "required": [
           "address",
           "name"
+        ]
+      },
+      "SchoolProgramEnrollmentHistoryBulkDeleteRequest": {
+        "type": "object",
+        "properties": {
+          "historyRowIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "historyRowIds"
         ]
       },
       "NotificationTemplateUpsertRequest": {
@@ -14653,15 +15332,15 @@
             "type": "string",
             "format": "date-time"
           },
+          "businessStartDate": {
+            "type": "string"
+          },
           "businessEndDate": {
             "type": "string"
           },
           "businessYear": {
             "type": "integer",
             "format": "int32"
-          },
-          "businessStartDate": {
-            "type": "string"
           }
         }
       },
@@ -14846,10 +15525,26 @@
             "type": "string"
           },
           "formType": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "WRITING",
+              "ISSUANCE",
+              "SURVEY",
+              "CERTIFICATE"
+            ]
           },
           "category": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "REGISTRATION",
+              "RECRUITMENT",
+              "APPLICATION",
+              "SURVEY",
+              "AGREEMENT",
+              "ISSUANCE",
+              "PROGRAM",
+              "CERTIFICATE"
+            ]
           },
           "description": {
             "type": "string"
@@ -14966,7 +15661,12 @@
             "type": "string"
           },
           "versionStatus": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
           },
           "responseCount": {
             "type": "integer",
@@ -15028,7 +15728,12 @@
             "type": "string"
           },
           "versionStatus": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
           },
           "schemaJson": {
             "type": "string"
@@ -17021,6 +17726,23 @@
           }
         }
       },
+      "AdminProgramRoleBulkDeleteRequest": {
+        "type": "object",
+        "properties": {
+          "programIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "programIds"
+        ]
+      },
       "AdminAccountPrivacyResponse": {
         "type": "object",
         "properties": {
@@ -18370,6 +19092,19 @@
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
           }
         }
+      },
+      "VolunteerActivityRegionUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "educationRegionCode": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "educationRegionCode"
+        ]
       },
       "TrainedTeacherProgramDetailRequest": {
         "type": "object",
@@ -22807,6 +23542,33 @@
           "giveUpAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "programStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "progressYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "enrollmentDisplayStatus": {
+            "type": "string"
+          },
+          "lectureAttendance": {
+            "type": "string"
+          },
+          "hasAssignmentSubmission": {
+            "type": "boolean"
+          },
+          "managerName": {
+            "type": "string"
+          },
+          "linkedApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "linkedApplicationType": {
+            "type": "string"
           }
         }
       },
@@ -22909,6 +23671,22 @@
           },
           "evidenceAccessPolicy": {
             "type": "string"
+          },
+          "filledDocumentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "version": {
+            "type": "string"
+          },
+          "templateCode": {
+            "type": "string"
+          },
+          "filledDocumentAvailable": {
+            "type": "boolean"
+          },
+          "filledDocumentRevealEndpoint": {
+            "type": "string"
           }
         }
       },
@@ -22954,6 +23732,26 @@
             "format": "date-time"
           },
           "rejectReason": {
+            "type": "string"
+          },
+          "programStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "progressYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "enrollmentDisplayStatus": {
+            "type": "string"
+          },
+          "lectureAttendance": {
+            "type": "string"
+          },
+          "hasAssignmentSubmission": {
+            "type": "boolean"
+          },
+          "managerName": {
             "type": "string"
           }
         }
@@ -23016,6 +23814,81 @@
             "format": "date-time"
           },
           "rejectReason": {
+            "type": "string"
+          },
+          "sessionOrdinal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lectureStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "institutionName": {
+            "type": "string"
+          },
+          "reportFileIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        }
+      },
+      "MemberLectureAttendanceResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "heldCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Session"
+            }
+          }
+        }
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "roundNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "absenceReason": {
             "type": "string"
           }
         }
@@ -23083,6 +23956,40 @@
           "fileCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "roundNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "teamRole": {
+            "type": "string"
+          },
+          "teamName": {
+            "type": "string"
+          },
+          "educationSessionLabel": {
+            "type": "string"
+          },
+          "assignmentPeriodStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "assignmentPeriodEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lectureProgress": {
+            "type": "string"
+          },
+          "submissionStatus": {
+            "type": "string"
+          },
+          "submissionFileIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
           }
         }
       },
@@ -23374,6 +24281,10 @@
             "type": "integer",
             "format": "int64"
           },
+          "sessionOrdinal": {
+            "type": "integer",
+            "format": "int32"
+          },
           "lectureDate": {
             "type": "string",
             "format": "date"
@@ -23387,6 +24298,32 @@
             "format": "int64"
           },
           "instructorName": {
+            "type": "string"
+          },
+          "statementId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "institutionName": {
+            "type": "string"
+          },
+          "businessPeriodStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "businessPeriodEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "sessionCompleted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sessionTotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "programSessionProgressDisplay": {
             "type": "string"
           },
           "calculationStatus": {
@@ -23497,11 +24434,65 @@
           }
         }
       },
+      "SettlementFrontendCalculationDetailResponse": {
+        "type": "object",
+        "properties": {
+          "layout": {
+            "type": "string"
+          },
+          "basisJson": {
+            "type": "string"
+          },
+          "resultAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "formulaText": {
+            "type": "string"
+          },
+          "lineLabels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "formulaLines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "summaryLabels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "iconKey": {
+            "type": "string"
+          },
+          "emojiOverride": {
+            "type": "string"
+          }
+        }
+      },
       "SettlementFrontendItemResponse": {
         "type": "object",
         "properties": {
           "type": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "instructor_fee",
+              "transportation",
+              "accommodation",
+              "meal",
+              "activity",
+              "withholding",
+              "other"
+            ]
           },
           "description": {
             "type": "string"
@@ -23509,6 +24500,9 @@
           "amount": {
             "type": "integer",
             "format": "int64"
+          },
+          "calculationDetail": {
+            "$ref": "#/components/schemas/SettlementFrontendCalculationDetailResponse"
           }
         }
       },
@@ -23528,6 +24522,64 @@
             "type": "string"
           },
           "period": {
+            "type": "string"
+          },
+          "programNameKo": {
+            "type": "string"
+          },
+          "businessPeriodStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "businessPeriodEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "sessionCompleted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sessionTotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "programSessionProgressDisplay": {
+            "type": "string"
+          },
+          "sessionOrdinal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lectureFeeStandardTitle": {
+            "type": "string"
+          },
+          "lectureFeeStandardAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "wageItemType": {
+            "type": "string"
+          },
+          "feeGrade": {
+            "type": "string"
+          },
+          "lectureSessionDisplay": {
+            "type": "string"
+          },
+          "institutionName": {
+            "type": "string"
+          },
+          "instructorName": {
+            "type": "string"
+          },
+          "businessIncomeEarnerLabel": {
+            "type": "string"
+          },
+          "expectedTransferDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "correctionReason": {
             "type": "string"
           },
           "items": {
@@ -24717,6 +25769,17 @@
             "type": "array",
             "items": {
               "type": "string"
+            }
+          }
+        }
+      },
+      "OrganizationScheduleListResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationScheduleSlotResponse"
             }
           }
         }
@@ -26619,6 +27682,207 @@
           }
         }
       },
+      "DirectAssignmentCandidate": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "volunteerName": {
+            "type": "string"
+          },
+          "totalAssignedDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "alreadyAssignedOnEducationDate": {
+            "type": "boolean"
+          },
+          "sourceAssignmentGroupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceEducationSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sourceClassLabel": {
+            "type": "string"
+          },
+          "sourcePartnerParticipantId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "DirectAssignmentCandidatesResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "reallocationRequired": {
+            "type": "boolean"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DirectAssignmentCandidate"
+            }
+          }
+        }
+      },
+      "AllocationCell": {
+        "type": "object",
+        "properties": {
+          "columnKey": {
+            "type": "string"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignmentGroupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classLabel": {
+            "type": "string"
+          },
+          "attendanceManager": {
+            "type": "boolean"
+          },
+          "singleAssignment": {
+            "type": "boolean"
+          },
+          "unavailable": {
+            "type": "boolean"
+          },
+          "needsReassignment": {
+            "type": "boolean"
+          },
+          "assignmentStatus": {
+            "type": "string"
+          }
+        }
+      },
+      "AllocationColumn": {
+        "type": "object",
+        "properties": {
+          "columnKey": {
+            "type": "string"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "organizationRegion": {
+            "type": "string"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "classCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AllocationMatrixResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllocationColumn"
+            }
+          },
+          "volunteers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VolunteerRow"
+            }
+          }
+        }
+      },
+      "VolunteerRow": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "volunteerName": {
+            "type": "string"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "participantStatus": {
+            "type": "string"
+          },
+          "giveUp": {
+            "type": "boolean"
+          },
+          "totalAssignedDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllocationCell"
+            }
+          }
+        }
+      },
       "UjatDgbongPartnerCandidateResponse": {
         "type": "object",
         "properties": {
@@ -27945,6 +29209,76 @@
           }
         }
       },
+      "PageResponseSchoolOrganizationProgramEnrollmentHistoryItemResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchoolOrganizationProgramEnrollmentHistoryItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SchoolOrganizationProgramEnrollmentHistoryItemResponse": {
+        "type": "object",
+        "properties": {
+          "historyRowId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programName": {
+            "type": "string"
+          },
+          "progressYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "enrollmentDisplayStatus": {
+            "type": "string"
+          },
+          "businessArea": {
+            "type": "string"
+          },
+          "educationGrade": {
+            "type": "string"
+          },
+          "managerName": {
+            "type": "string"
+          },
+          "deletable": {
+            "type": "boolean"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "NotificationUnreadCountResponse": {
         "type": "object",
         "properties": {
@@ -28451,7 +29785,8 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "integer",
+            "format": "int64"
           },
           "screenName": {
             "type": "string"
@@ -28465,6 +29800,42 @@
           "occurredAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "issueStatus": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          }
+        }
+      },
+      "LogListPageResponseBugIssueLogFrontendResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BugIssueLogFrontendResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
           }
         }
       },
@@ -28527,10 +29898,43 @@
           }
         }
       },
+      "LogListPageResponsePersonalInfoAccessLogFrontendResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PersonalInfoAccessLogFrontendResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
+          }
+        }
+      },
       "PersonalInfoAccessLogFrontendResponse": {
         "type": "object",
         "properties": {
           "id": {
+            "type": "string"
+          },
+          "targetName": {
             "type": "string"
           },
           "accessItem": {
@@ -28546,6 +29950,57 @@
             "type": "string"
           },
           "accessedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ipAddress": {
+            "type": "string"
+          }
+        }
+      },
+      "LogListPageResponseMemberLoginLogFrontendResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberLoginLogFrontendResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MemberLoginLogFrontendResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "adminName": {
+            "type": "string"
+          },
+          "loginId": {
+            "type": "string"
+          },
+          "loggedAt": {
             "type": "string",
             "format": "date-time"
           },
@@ -28575,6 +30030,36 @@
           "downloadedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "LogListPageResponseDownloadLogFrontendResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DownloadLogFrontendResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
           }
         }
       },
@@ -29510,7 +30995,12 @@
             "type": "string"
           },
           "versionStatus": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
           },
           "schemaJson": {
             "type": "string"
@@ -30362,6 +31852,18 @@
             "type": "integer",
             "format": "int64"
           },
+          "programCode": {
+            "type": "string"
+          },
+          "nameKo": {
+            "type": "string"
+          },
+          "programNameKo": {
+            "type": "string"
+          },
+          "programType": {
+            "type": "string"
+          },
           "targetParticipantCount": {
             "type": "integer",
             "format": "int32"
@@ -30387,6 +31889,26 @@
           },
           "targetBudgetAmount": {
             "type": "string"
+          },
+          "actualParticipantCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "actualSchoolCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "actualClassCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "actualVolunteerCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "actualInstructorCount": {
+            "type": "integer",
+            "format": "int32"
           },
           "createdAt": {
             "type": "string",

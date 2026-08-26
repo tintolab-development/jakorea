@@ -5,6 +5,7 @@ import {
   memberLoginLogsParamsFromSearchParams,
   personalInfoAccessLogsParamsFromSearchParams,
 } from './logs-filter-params'
+import { toLogsListQueryParams, toLogsQueryParams } from './logs-api-client'
 
 describe('logs-filter-params', () => {
   it('maps member login URL params to API params', () => {
@@ -13,7 +14,6 @@ describe('logs-filter-params', () => {
     )
     expect(params).toEqual({
       adminName: '홍길동',
-      name: '홍길동',
       loginId: 'helpdesk2023@gmail.com',
       from: '2026-01-01',
       to: '2026-01-31',
@@ -64,5 +64,28 @@ describe('logs-filter-params', () => {
         new URLSearchParams('bil_status=OPEN&bil_severity=HIGH')
       )
     ).toEqual({ status: 'OPEN', severity: 'HIGH' })
+  })
+
+  it('adds 0-base page and clamped size as top-level query keys', () => {
+    const filters = toLogsQueryParams({
+      adminName: '홍길동',
+      from: '2026-08-01',
+      to: '2026-08-25',
+      page: '99',
+      size: '999',
+    })
+    expect(filters).toEqual({
+      adminName: '홍길동',
+      from: '2026-08-01',
+      to: '2026-08-25',
+    })
+    expect(toLogsListQueryParams(filters, 1, 20)).toEqual({
+      adminName: '홍길동',
+      from: '2026-08-01',
+      to: '2026-08-25',
+      page: '1',
+      size: '20',
+    })
+    expect(toLogsListQueryParams({}, 0, 200).size).toBe('100')
   })
 })

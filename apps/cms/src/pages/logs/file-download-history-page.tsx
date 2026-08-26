@@ -14,6 +14,7 @@ import {
   EMPTY_TABLE_PAGE_CONTEXT,
   useTablePage,
 } from '@/shared/components/table-system/model/use-table-page'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import type { DownloadLog } from '@/types/download-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -31,10 +32,20 @@ const TABLE_COL_WIDTH = {
 
 export default function FileDownloadHistoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const searchParamsKey = searchParams.toString()
   const remoteEnabled = useLogsRemoteQueryEnabled()
-  const { data: rows = [], isLoading, isError, error } = useFileDownloadHistoryQuery(searchParams)
+  const {
+    rows,
+    totalElements,
+    isLoading,
+    isError,
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useFileDownloadHistoryQuery(searchParams)
 
-  const { pendingFilters, handleFilterChange, applySearch, tableData, displayedCount } = useTablePage(
+  const { pendingFilters, handleFilterChange, applySearch, tableData } = useTablePage(
     fileDownloadHistoryTablePageConfig,
     {
       data: rows,
@@ -44,6 +55,13 @@ export default function FileDownloadHistoryPage() {
     }
   )
 
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: searchParamsKey,
+  })
+
   const columns = useMemo<ColumnsType<DownloadLog>>(
     () => [
       {
@@ -52,7 +70,7 @@ export default function FileDownloadHistoryPage() {
         width: TABLE_COL_WIDTH.no,
         align: 'center',
         render: (_: unknown, __: DownloadLog, index: number) =>
-          tableData.length === 0 ? '-' : tableData.length - index,
+          totalElements === 0 ? '-' : totalElements - index,
       },
       {
         title: '다운로드 파일명',
@@ -86,7 +104,7 @@ export default function FileDownloadHistoryPage() {
         align: 'center',
       },
     ],
-    [tableData.length]
+    [totalElements]
   )
 
   return (
@@ -101,7 +119,7 @@ export default function FileDownloadHistoryPage() {
       onFilterChange={handleFilterChange}
       onSearch={applySearch}
       title="파일 다운로드 이력"
-      description={`총 ${displayedCount.toLocaleString()}건`}
+      description={`총 ${totalElements.toLocaleString()}건`}
       contentLoading={remoteEnabled && isLoading}
       excelExport={{
         columns,
@@ -115,15 +133,18 @@ export default function FileDownloadHistoryPage() {
           message={getLogsApiErrorMessage(error, '파일 다운로드 이력을 불러오지 못했습니다.')}
         />
       ) : (
-        <Table<DownloadLog>
-          rowKey="id"
-          className="cms-data-table"
-          tableLayout="fixed"
-          scroll={{ x: FILE_DOWNLOAD_HISTORY_TABLE_SCROLL_X }}
-          columns={columns}
-          dataSource={tableData}
-          pagination={false}
-        />
+        <>
+          <Table<DownloadLog>
+            rowKey="id"
+            className="cms-data-table"
+            tableLayout="fixed"
+            scroll={{ x: FILE_DOWNLOAD_HISTORY_TABLE_SCROLL_X }}
+            columns={columns}
+            dataSource={tableData}
+            pagination={false}
+          />
+          <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
+        </>
       )}
     </FilterTableLayout>
   )

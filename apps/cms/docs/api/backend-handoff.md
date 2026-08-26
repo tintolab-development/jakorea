@@ -18,6 +18,10 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 
 **프로그램 유형별 전환**: [**UJAT 백엔드 핸드오프**](./programs-ujat-api-backend-handoff.md) · [**1사1교 백엔드 핸드오프**](./programs-company-school-api-backend-handoff.md) · [**1사1교 더미 시드**](./company-school-program-dummy-seed-backend-request.md) · [**일반 프로그램 더미 시드**](./general-program-dummy-seed-backend-request.md)
 
+**실적 관리 (LNB `/education-records`)**: [**더미 시드**](./education-records-dummy-seed-backend-request.md) · [`education-records-seed.payload.json`](./education-records-seed.payload.json) — Gemini 실적과 혼용 금지
+
+**대시보드 설정**: [**더미 시드**](./dashboard-settings-dummy-seed-backend-request.md) · [`dashboard-settings-seed.payload.json`](./dashboard-settings-seed.payload.json) — `GET/PUT /api/admin/me/dashboard-preferences`
+
 **테이블 일괄삭제 (CMS 전수)**: [**cms-table-bulk-delete-api-backend-handoff.md**](./cms-table-bulk-delete-api-backend-handoff.md) · **일괄승인**: [**cms-table-bulk-approve-api-backend-handoff.md**](./cms-table-bulk-approve-api-backend-handoff.md) · **일괄다운로드**: [**cms-table-bulk-download-api-backend-handoff.md**](./cms-table-bulk-download-api-backend-handoff.md)
 
 ---

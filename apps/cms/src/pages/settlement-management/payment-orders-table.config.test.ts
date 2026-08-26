@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  PAYMENT_ORDERS_DETAIL_KEY_PARAM,
+  PAYMENT_ORDERS_DETAIL_NO_PARAM,
+  PAYMENT_ORDERS_DETAIL_TYPE_PARAM,
   PAYMENT_ORDERS_EXPOSURE_PARAM_KEY,
   parsePaymentOrdersFiltersFromUrl,
+  paymentOrdersListQuerySearchParamsKey,
 } from './payment-orders-table.config'
 
 describe('parsePaymentOrdersFiltersFromUrl', () => {
@@ -22,5 +26,16 @@ describe('parsePaymentOrdersFiltersFromUrl', () => {
       new URLSearchParams(`${PAYMENT_ORDERS_EXPOSURE_PARAM_KEY}=unknown`)
     )
     expect(parsed.exposureMode).toBe('program')
+  })
+})
+
+describe('paymentOrdersListQuerySearchParamsKey', () => {
+  it('상세 모달 쿼리를 목록 조회 키에서 제외한다', () => {
+    const params = new URLSearchParams(
+      `${PAYMENT_ORDERS_EXPOSURE_PARAM_KEY}=program&po_from=2026-08-01&po_to=2026-08-31&${PAYMENT_ORDERS_DETAIL_TYPE_PARAM}=program&${PAYMENT_ORDERS_DETAIL_KEY_PARAM}=12&${PAYMENT_ORDERS_DETAIL_NO_PARAM}=3`
+    )
+    expect(paymentOrdersListQuerySearchParamsKey(params)).toBe(
+      `${PAYMENT_ORDERS_EXPOSURE_PARAM_KEY}=program&po_from=2026-08-01&po_to=2026-08-31`
+    )
   })
 })

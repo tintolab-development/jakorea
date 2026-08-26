@@ -39,6 +39,8 @@
 
 **preferences_only:** `shortcuts/visibility`, `widgets/layout`, `program-filters` granular API는 호출하지 않음. Me preferences API로 통합.
 
+**로컬 더미 시드 (설정 mock 정합):** [dashboard-settings-dummy-seed-backend-request.md](./dashboard-settings-dummy-seed-backend-request.md) · [`dashboard-settings-seed.payload.json`](./dashboard-settings-seed.payload.json)
+
 **레거시:** `GET/PUT /api/admin/dashboard/preferences` — Orval 생성만 유지, 프론트는 Me API 사용.
 
 ---

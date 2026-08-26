@@ -11,6 +11,7 @@ export interface UjatDgbongPartnerAssignmentResponse {
   programId?: number;
   scheduleId?: number;
   organizationApplicationId?: number;
+  educationSlotId?: number;
   classLabel?: string;
   primaryParticipantId?: number;
   secondaryParticipantId?: number;

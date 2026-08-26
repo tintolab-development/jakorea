@@ -7,9 +7,11 @@
  */
 
 export interface BugIssueLogFrontendResponse {
-  id?: string;
+  id?: number;
   screenName?: string;
   errorMessage?: string;
   userName?: string;
   occurredAt?: string;
+  issueStatus?: string;
+  severity?: string;
 }

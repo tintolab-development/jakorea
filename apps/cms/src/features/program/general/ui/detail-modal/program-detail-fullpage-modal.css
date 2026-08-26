@@ -148,6 +148,18 @@
   padding: 0;
 }
 
+/*
+ * 프로그램 진행 현황 목록(참여 기관·강사·봉사자·참여자):
+ * 셸 content가 flex:1 + min-height:0 이면 테이블이 52px 하단 패딩 위로 넘친다.
+ * 본문을 콘텐츠 높이만큼 늘려 __main 이 스크롤하고, 패딩은 스페이서로 둔다.
+ */
+.program-detail-fullpage-modal
+  .detail-fullpage-modal__content:has(.program-status-participating) {
+  flex: 1 0 auto;
+  min-height: auto;
+  padding-bottom: 0;
+}
+
 .program-detail-fullpage-modal__loading {
   display: flex;
   align-items: center;
@@ -166,7 +178,8 @@
 
 /* 참여 기관 상세 — 바깥 info-tab 추가 하단 패딩 제거 (content 52px만 사용) */
 .program-detail-fullpage-modal__info-tab:has(.school-detail-fullpage-view),
-.program-detail-fullpage-modal__info-tab:has(.ujat-education-progress-institution-detail) {
+.program-detail-fullpage-modal__info-tab:has(.ujat-education-progress-institution-detail),
+.program-detail-fullpage-modal__info-tab:has(.program-status-participating) {
   padding-bottom: 0;
 }
 

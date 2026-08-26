@@ -15,13 +15,15 @@ export function usePaymentOrderDetailInstructorPrivacyReveal(options: {
   isOpen: boolean
   kind: 'program' | 'instructor'
   instructorRowKey: number | null
-  detail: DetailForPrivacy
+  detail: DetailForPrivacy | null
 }) {
   const { isOpen, kind, instructorRowKey, detail } = options
 
   const resolvePersonalInfoAccessItem = useCallback(() => {
-    const instructorDetail = detail as PaymentOrderAdminInstructorDetail
-    return instructorDetail.nameKo ?? '지급 현황 상세 강사'
+    if (detail && 'nameKo' in detail) {
+      return detail.nameKo ?? '지급 현황 상세 강사'
+    }
+    return '지급 현황 상세 강사'
   }, [detail])
 
   return usePersonalInfoReveal({

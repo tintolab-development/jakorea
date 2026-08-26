@@ -5,16 +5,18 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ListTemplatesCategory } from './listTemplatesCategory';
+import type { ListTemplatesFormType } from './listTemplatesFormType';
 
 export type ListTemplatesParams = {
 /**
- * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * 폼 유형
  */
-formType?: string;
+formType?: ListTemplatesFormType;
 /**
- * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * 폼 카테고리
  */
-category?: string;
+category?: ListTemplatesCategory;
 /**
  * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
  */

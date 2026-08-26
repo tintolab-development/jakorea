@@ -575,9 +575,7 @@ export function ParticipatingInstitutionsSection({
         )}
       </FilterTableLayout>
 
-      {viewMode === 'calendar' ? (
-        <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />
-      ) : null}
+      <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />
 
       {!schoolIdFromUrl && (
         <SchoolDetailModal

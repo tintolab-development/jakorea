@@ -49,6 +49,10 @@ import {
   filterPaymentInstructorRows,
   filterPaymentProgramRows,
   parsePaymentOrdersFiltersFromUrl,
+  paymentOrdersListQuerySearchParamsKey,
+  PAYMENT_ORDERS_DETAIL_KEY_PARAM,
+  PAYMENT_ORDERS_DETAIL_NO_PARAM,
+  PAYMENT_ORDERS_DETAIL_TYPE_PARAM,
   PAYMENT_ORDERS_EXPOSURE_PARAM_KEY,
   type ExposureMode,
 } from './payment-orders-table.config'
@@ -76,9 +80,9 @@ const PROCESSING_STATUS_FILTER_OPTIONS: {
 ).map(([value, label]) => ({ value, label }))
 
 /** 풀페이지 상세 — `replace: false`로 열어 뒤로가기 시 목록 복귀 */
-const PO_DETAIL_TYPE = 'po_detail'
-const PO_DETAIL_NO = 'po_detail_no'
-const PO_DETAIL_KEY = 'po_detail_key'
+const PO_DETAIL_TYPE = PAYMENT_ORDERS_DETAIL_TYPE_PARAM
+const PO_DETAIL_NO = PAYMENT_ORDERS_DETAIL_NO_PARAM
+const PO_DETAIL_KEY = PAYMENT_ORDERS_DETAIL_KEY_PARAM
 
 function formatWon(amount: number): string {
   return `${amount.toLocaleString('ko-KR')}원`
@@ -157,7 +161,7 @@ export function usePaymentOrdersListPage() {
   )
 
   const paymentOrdersRemote = shouldUseSettlementRemote('paymentOrders')
-  const searchParamsKey = searchParams.toString()
+  const searchParamsKey = paymentOrdersListQuerySearchParamsKey(searchParams)
   const remoteListQuery = usePaymentOrdersListQuery(searchParamsKey, paymentOrdersRemote)
 
   const calendarRange = useMemo(
@@ -363,7 +367,10 @@ export function usePaymentOrdersListPage() {
     ]
   )
 
-  const appliedResetKey = useMemo(() => searchParams.toString(), [searchParams])
+  const appliedResetKey = useMemo(
+    () => paymentOrdersListQuerySearchParamsKey(searchParams),
+    [searchParams]
+  )
 
   const programColumns: ColumnsType<PaymentOrderAdminProgramRow> = useMemo(
     () => [

@@ -113,18 +113,9 @@ export function buildAdminDashboardWidgets(scheduleKinds: ProgramScheduleKind[])
   ]
 }
 
-function appendMasterLogAlertsWidget(
-  widgets: DashboardWidgetConfig[]
-): DashboardWidgetConfig[] {
-  const maxOrder = widgets.reduce((max, w) => Math.max(max, w.order ?? 0), 0)
-  return [
-    ...widgets,
-    { type: 'log-alerts-widget', colSpan: 24, order: maxOrder + 1, height: 338 },
-  ]
-}
-
 /**
  * 로그인 사용자 기준 대시보드 위젯 (관리자는 ACL로 프로그램 일정 위젯 유형 필터)
+ * 로그 알림 위젯은 백엔드 v9에서 API가 제거되어 홈에 붙이지 않는다.
  */
 export function getDashboardWidgetsForUser(user: Omit<User, 'password'> | null): DashboardWidgetConfig[] {
   if (!user?.role) {
@@ -134,10 +125,7 @@ export function getDashboardWidgetsForUser(user: Omit<User, 'password'> | null):
     return getDashboardWidgetsByRole(user.role)
   }
   const kinds = getProgramScheduleKindsForAdminUser(user)
-  const widgets = buildAdminDashboardWidgets(kinds)
-  const withLogAlerts =
-    user.adminLevel === 'MASTER' ? appendMasterLogAlertsWidget(widgets) : widgets
-  return withLogAlerts.sort((a, b) => (a.order || 0) - (b.order || 0))
+  return buildAdminDashboardWidgets(kinds).sort((a, b) => (a.order || 0) - (b.order || 0))
 }
 
 /**

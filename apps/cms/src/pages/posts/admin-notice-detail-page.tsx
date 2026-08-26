@@ -133,59 +133,85 @@ export function AdminNoticeDetailPage() {
       />
       <div className="admin-notice-detail-page__inner">
         <div className="admin-notice-detail-page__card">
-          <div className="admin-notice-detail-page__top-row">
-            <span
-              className={
-                isPublic
-                  ? 'admin-notice-detail-page__badge admin-notice-detail-page__badge--public'
-                  : 'admin-notice-detail-page__badge admin-notice-detail-page__badge--private'
-              }
-            >
-              {isPublic ? '공개' : '비공개'}
-            </span>
-            <span className="admin-notice-detail-page__views">
-              <EyeOutlined className="admin-notice-detail-page__views-icon" aria-hidden />
-              {notice.viewCount.toLocaleString('ko-KR')}
-            </span>
+          <div className="admin-notice-detail-page__header">
+            <div className="admin-notice-detail-page__top-row">
+              <div className="admin-notice-detail-page__top-badges">
+                <span
+                  className={
+                    isPublic
+                      ? 'admin-notice-detail-page__badge admin-notice-detail-page__badge--public'
+                      : 'admin-notice-detail-page__badge admin-notice-detail-page__badge--private'
+                  }
+                >
+                  {isPublic ? '공개' : '비공개'}
+                </span>
+                {notice.category ? (
+                  <span className="admin-notice-detail-page__badge admin-notice-detail-page__badge--category">
+                    {notice.category}
+                  </span>
+                ) : null}
+              </div>
+              <span className="admin-notice-detail-page__views">
+                <EyeOutlined className="admin-notice-detail-page__views-icon" aria-hidden />
+                {notice.viewCount.toLocaleString('ko-KR')}
+              </span>
+            </div>
+            <h1 className="admin-notice-detail-page__title">{notice.title}</h1>
+            <div className="admin-notice-detail-page__meta">
+              <span className="admin-notice-detail-page__meta-text">{dateStr}</span>
+              {notice.author ? (
+                <>
+                  <span className="admin-notice-detail-page__meta-divider" aria-hidden />
+                  <span className="admin-notice-detail-page__meta-text">{notice.author}</span>
+                </>
+              ) : null}
+            </div>
           </div>
-          <h1 className="admin-notice-detail-page__title">{notice.title}</h1>
-          <div className="admin-notice-detail-page__meta">
-            <span>{notice.category}</span>
-            <span>{notice.author}</span>
-            <span>{dateStr}</span>
-          </div>
+          {attachmentItems.length > 0 ? (
+            <div className="admin-notice-detail-page__attachments">
+              <div className="admin-notice-detail-page__attachments-head">
+                <PaperClipOutlined className="admin-notice-detail-page__clip" aria-hidden />
+                <span>첨부파일</span>
+              </div>
+              <ul className="admin-notice-detail-page__attachments-list">
+                {attachmentItems.map((item, index) => (
+                  <li key={`${item.name}-${index}`}>
+                    <button
+                      type="button"
+                      className="admin-notice-detail-page__file"
+                      onClick={() => handleAttachmentClick(item.name, item.fileUrl)}
+                    >
+                      <span className="admin-notice-detail-page__file-name">{item.name}</span>
+                      <AttachmentDownloadIcon className="admin-notice-detail-page__file-icon" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : notice.hasAttachment && remoteEnabled ? (
+            <div className="admin-notice-detail-page__attachments">
+              <div className="admin-notice-detail-page__attachments-head">
+                <PaperClipOutlined className="admin-notice-detail-page__clip" aria-hidden />
+                <span>첨부파일</span>
+              </div>
+              <p className="admin-notice-detail-page__attachment-hint">첨부파일이 있습니다.</p>
+            </div>
+          ) : null}
           <div className="admin-notice-detail-page__body">
             <RichTextViewer content={notice.content} />
           </div>
-          {attachmentItems.length > 0 ? (
-            <ul className="admin-notice-detail-page__attachments">
-              {attachmentItems.map(item => (
-                <li key={item.name}>
-                  <button
-                    type="button"
-                    className="admin-notice-detail-page__attachment-btn"
-                    onClick={() => handleAttachmentClick(item.name, item.fileUrl)}
-                  >
-                    <PaperClipOutlined aria-hidden />
-                    <span>{item.name}</span>
-                    <AttachmentDownloadIcon />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : notice.hasAttachment && remoteEnabled ? (
-            <p className="admin-notice-detail-page__attachment-hint">첨부파일이 있습니다.</p>
-          ) : null}
           <div className="admin-notice-detail-page__actions">
-            <CmsButton variant="secondary" size="medium" onClick={goList}>
+            <CmsButton variant="secondary" size="large" onClick={goList}>
               목록
             </CmsButton>
-            <CmsButton variant="primary" size="medium" onClick={handleEdit} disabled={!canWrite}>
-              수정
-            </CmsButton>
-            <CmsButton variant="delete" size="medium" onClick={handleDelete} disabled={!canWrite}>
-              삭제
-            </CmsButton>
+            <div className="admin-notice-detail-page__actions-right">
+              <CmsButton variant="delete" size="large" onClick={handleDelete} disabled={!canWrite}>
+                삭제
+              </CmsButton>
+              <CmsButton variant="primary" size="large" onClick={handleEdit} disabled={!canWrite}>
+                수정
+              </CmsButton>
+            </div>
           </div>
         </div>
       </div>

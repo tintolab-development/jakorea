@@ -314,9 +314,9 @@ FE 임시 제안 라벨: 열림 / 처리 중 / 해결 / 종료. **서버 enum이
 
 | Method | Path | operationId | FE | 상태 |
 |--------|------|-------------|----|------|
-| GET | `/api/admin/logs/file-access` | `fileAccessLogs` | `getFileDownloadLogsList` | **배선** |
-| GET | `/api/admin/logs/privacy-access` | `privacyAccessLogs` | `getPersonalInfoAccessLogsList` | **배선** |
-| GET | `/api/admin/logs/system-issues` | `systemIssueLogs` | `getBugIssueLogsList` | **배선** |
+| GET | `/api/admin/logs/file-access` | `fileAccessLogs` | `getFileDownloadLogsPage` | **배선** |
+| GET | `/api/admin/logs/privacy-access` | `privacyAccessLogs` | `getPersonalInfoAccessLogsPage` | **배선** |
+| GET | `/api/admin/logs/system-issues` | `systemIssueLogs` | `getBugIssueLogsPage` | **배선** |
 | GET | `/api/admin/logs/system-issues/{issueId}` | `systemIssueDetail` | Orval만. 페이지 미호출 | **스펙만** |
 | PATCH | `/api/admin/logs/system-issues/{issueId}/status` | `updateSystemIssueStatus` | Orval만. 페이지 미호출 | **스펙만** |
 

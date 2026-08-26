@@ -212,15 +212,14 @@ export function usePaymentOrderDetailFullPageModalState(
   }, [onClose])
 
   const title = useMemo(() => {
-    if (!detail) return ''
-    if (type === 'program' && 'programName' in detail) {
-      return `지급 현황 상세 (${detail.programName})`
+    if (type === 'program' && row && 'programName' in row) {
+      return `지급 현황 상세 (${row.programName})`
     }
-    if (type === 'instructor' && 'nameKo' in detail) {
-      return `지급 현황 상세 (${detail.nameKo})`
+    if (type === 'instructor' && row && 'instructorName' in row) {
+      return `지급 현황 상세 (${row.instructorName})`
     }
     return '지급 현황 상세'
-  }, [detail, type])
+  }, [row, type])
 
   const calcStatementLoading =
     paymentOrdersRemote &&
@@ -247,12 +246,11 @@ export function usePaymentOrderDetailFullPageModalState(
     paymentOrdersRemote && isOpen && Boolean(aggregateKey) && isAwaitingFirstQueryData(detailContextQuery)
 
   return {
-    canRender: Boolean(isOpen && row && detail && !detailLoading),
     detailLoading,
     detailError: paymentOrdersRemote ? detailContextQuery.error : null,
     sharedViewProps,
     viewBranch:
-      row && detail
+      row
         ? {
             kind: type,
             title,
