@@ -28,6 +28,7 @@ export type UseInquiryCategoryManagementModalResult = {
   setEditDraft: (v: string) => void
   newDraft: string
   setNewDraft: (v: string) => void
+  composeOpen: boolean
   deleteBlockedOpen: boolean
   deleteConfirmOpen: boolean
   pendingDeleteRow: InquiryCategoryRow | null
@@ -41,7 +42,7 @@ export type UseInquiryCategoryManagementModalResult = {
   confirmDeleteCategory: () => void
   cancelNew: () => void
   submitNew: () => void
-  focusNewRow: () => void
+  openCompose: () => void
 }
 
 export function useInquiryCategoryManagementModal({
@@ -54,6 +55,7 @@ export function useInquiryCategoryManagementModal({
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState('')
   const [newDraft, setNewDraft] = useState('')
+  const [composeOpen, setComposeOpen] = useState(false)
   const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [pendingDeleteRow, setPendingDeleteRow] = useState<InquiryCategoryRow | null>(null)
@@ -64,6 +66,7 @@ export function useInquiryCategoryManagementModal({
     setEditingId(null)
     setEditDraft('')
     setNewDraft('')
+    setComposeOpen(false)
     setDeleteBlockedOpen(false)
     setDeleteConfirmOpen(false)
     setPendingDeleteRow(null)
@@ -82,6 +85,8 @@ export function useInquiryCategoryManagementModal({
   }, [onClose, resetEphemeralUi])
 
   const startEdit = useCallback((row: InquiryCategoryRow) => {
+    setComposeOpen(false)
+    setNewDraft('')
     setEditingId(row.id)
     setEditDraft(row.name)
     queueMicrotask(() => editInputRef.current?.focus())
@@ -142,6 +147,7 @@ export function useInquiryCategoryManagementModal({
 
   const cancelNew = useCallback(() => {
     setNewDraft('')
+    setComposeOpen(false)
   }, [])
 
   const submitNew = useCallback(() => {
@@ -155,11 +161,14 @@ export function useInquiryCategoryManagementModal({
     const id = createNoticeCategoryId()
     onCategoriesChange([...categories, { id, name: trimmed }])
     setNewDraft('')
-    }, [categories, newDraft, onCategoriesChange])
+    setComposeOpen(false)
+  }, [categories, newDraft, onCategoriesChange])
 
-  const focusNewRow = useCallback(() => {
-    newInputRef.current?.focus()
-  }, [])
+  const openCompose = useCallback(() => {
+    cancelEdit()
+    setComposeOpen(true)
+    queueMicrotask(() => newInputRef.current?.focus())
+  }, [cancelEdit])
 
   const closeDeleteBlocked = useCallback(() => {
     setDeleteBlockedOpen(false)
@@ -173,6 +182,7 @@ export function useInquiryCategoryManagementModal({
     setEditDraft,
     newDraft,
     setNewDraft,
+    composeOpen,
     deleteBlockedOpen,
     deleteConfirmOpen,
     pendingDeleteRow,
@@ -186,6 +196,6 @@ export function useInquiryCategoryManagementModal({
     confirmDeleteCategory,
     cancelNew,
     submitNew,
-    focusNewRow,
+    openCompose,
   }
 }
