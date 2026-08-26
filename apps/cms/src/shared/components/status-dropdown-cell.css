@@ -297,6 +297,11 @@
   flex-shrink: 0;
 }
 
+.status-dropdown-cell__status-trigger--tag-100 .editable-status-badge__label--muted,
+.status-dropdown-cell__dropdown-overlay--tag-100 .editable-status-badge__label--muted {
+  opacity: 0.4 !important;
+}
+
 .status-dropdown-cell__status-trigger--tag-100
   .editable-status-badge.status-dropdown-cell__badge--cell-style,
 .status-dropdown-cell__dropdown-overlay--tag-100

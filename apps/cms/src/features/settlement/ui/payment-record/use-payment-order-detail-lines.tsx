@@ -6,10 +6,6 @@ import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import {
-  buildInstructorDetailFromSettlements,
-  buildProgramDetailFromSettlements,
-} from '@/features/settlement-management/api/payment-orders/map-settlement-detail'
-import {
   instructorIdentityFromLine,
   mapSettlementDetailToInstructorPageCalculationStatement,
   mapSettlementDetailToProgramCalculationStatement,
@@ -26,16 +22,20 @@ import {
   isPaymentOrderLineEligibleForPaymentStatementIssue,
   type PaymentStatementIssuancePayload,
 } from '@/features/settlement/lib/payment-order-calculation-statement-issuance-view'
-import {
-  getMockPaymentOrderInstructorDetail,
-  getMockPaymentOrderProgramDetail,
-  type PaymentOrderAdminInstructorDetail,
-  type PaymentOrderAdminInstructorDetailProgramRow,
-  type PaymentOrderAdminInstructorRow,
-  type PaymentOrderAdminProgramDetail,
-  type PaymentOrderAdminProgramDetailInstructorRow,
-  type PaymentOrderAdminProgramRow,
+import type {
+  PaymentOrderAdminInstructorDetail,
+  PaymentOrderAdminInstructorDetailProgramRow,
+  PaymentOrderAdminInstructorRow,
+  PaymentOrderAdminProgramDetail,
+  PaymentOrderAdminProgramDetailInstructorRow,
+  PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
+import {
+  resolvePaymentOrderInstructorDetailForLines,
+  resolvePaymentOrderInstructorDetailLineRows,
+  resolvePaymentOrderProgramDetailForLines,
+  resolvePaymentOrderProgramDetailLineRows,
+} from './resolve-payment-order-detail-line-source'
 import {
   PAYMENT_ORDER_LINE_STATUS_LABELS_FULL,
   type PaymentOrderDetailAggregateStatus,
@@ -206,27 +206,21 @@ export function usePaymentOrderDetailLinesController(
     setIssuanceQueue([])
 
     if (mode === 'program') {
-      if (paymentOrdersRemote && detailContextQuery?.data) {
-        const d = buildProgramDetailFromSettlements(
+      setRowsState(
+        resolvePaymentOrderProgramDetailLineRows(
+          paymentOrdersRemote,
           args.programRow,
-          detailContextQuery.data.items ?? [],
-          detailContextQuery.data.statements ?? []
+          detailContextQuery?.data
         )
-        setRowsState(d.instructorRows.map(r => ({ ...r })))
-      } else {
-        const d = getMockPaymentOrderProgramDetail(args.programRow)
-        setRowsState(d.instructorRows.map(r => ({ ...r })))
-      }
-    } else if (paymentOrdersRemote && detailContextQuery?.data) {
-      const d = buildInstructorDetailFromSettlements(
-        args.instructorRow,
-        detailContextQuery.data.items ?? [],
-        detailContextQuery.data.statements ?? []
       )
-      setRowsState(d.programRows.map(r => ({ ...r })))
     } else {
-      const d = getMockPaymentOrderInstructorDetail(args.instructorRow)
-      setRowsState(d.programRows.map(r => ({ ...r })))
+      setRowsState(
+        resolvePaymentOrderInstructorDetailLineRows(
+          paymentOrdersRemote,
+          args.instructorRow,
+          detailContextQuery?.data
+        )
+      )
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- contextRowNo·aggregateKey로 행 식별
   }, [
@@ -358,26 +352,20 @@ export function usePaymentOrderDetailLinesController(
 
   const programDetail = useMemo((): PaymentOrderAdminProgramDetail | null => {
     if (mode !== 'program') return null
-    if (paymentOrdersRemote && detailContextQuery?.data) {
-      return buildProgramDetailFromSettlements(
-        args.programRow,
-        detailContextQuery.data.items ?? [],
-        detailContextQuery.data.statements ?? []
-      )
-    }
-    return getMockPaymentOrderProgramDetail(args.programRow)
+    return resolvePaymentOrderProgramDetailForLines(
+      paymentOrdersRemote,
+      args.programRow,
+      detailContextQuery?.data
+    )
   }, [mode, paymentOrdersRemote, detailContextQuery?.data, args])
 
   const instructorDetail = useMemo((): PaymentOrderAdminInstructorDetail | null => {
     if (mode !== 'instructor') return null
-    if (paymentOrdersRemote && detailContextQuery?.data) {
-      return buildInstructorDetailFromSettlements(
-        args.instructorRow,
-        detailContextQuery.data.items ?? [],
-        detailContextQuery.data.statements ?? []
-      )
-    }
-    return getMockPaymentOrderInstructorDetail(args.instructorRow)
+    return resolvePaymentOrderInstructorDetailForLines(
+      paymentOrdersRemote,
+      args.instructorRow,
+      detailContextQuery?.data
+    )
   }, [mode, paymentOrdersRemote, detailContextQuery?.data, args])
 
   const buildIssuancePayloadForLine = useCallback(

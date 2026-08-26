@@ -14,12 +14,26 @@ export interface EditableStatusBadgeProps {
   tone: EditableStatusBadgeTone
   className?: string
   style?: CSSProperties
+  /** true: 라벨 텍스트만 opacity 0.4 (배경·테두리 유지) */
+  mutedLabel?: boolean
 }
 
-export function EditableStatusBadge({ label, tone, className, style }: EditableStatusBadgeProps) {
+export function EditableStatusBadge({
+  label,
+  tone,
+  className,
+  style,
+  mutedLabel = false,
+}: EditableStatusBadgeProps) {
   return (
     <span className={getEditableStatusBadgeClassName(tone, className)} style={style}>
-      {label}
+      {mutedLabel ? (
+        <span className="editable-status-badge__label editable-status-badge__label--muted">
+          {label}
+        </span>
+      ) : (
+        label
+      )}
     </span>
   )
 }

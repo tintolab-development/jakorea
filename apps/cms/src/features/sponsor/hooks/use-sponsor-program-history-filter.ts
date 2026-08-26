@@ -8,13 +8,17 @@ import type {
   SponsorProgramHistoryFilters,
   SponsorProgramHistoryRow,
 } from '@/features/sponsor/model/sponsor-management.types'
-import { SPONSOR_PROGRAM_HISTORY_FILTER_ALL } from '@/features/sponsor/utils/match-program-history-filter'
+import {
+  matchesProgramHistoryFilter,
+  SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+} from '@/features/sponsor/utils/match-program-history-filter'
 import type { UseProgramHistoryFilterReturn } from '@/features/sponsor/hooks/use-program-history-filter'
 
 const INITIAL_PROGRAM_HISTORY_FILTERS = {
   title: '',
   year: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
   lifecycleStatus: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+  participantType: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
   educationTarget: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
   managerName: '',
 } as const satisfies SponsorProgramHistoryFilters
@@ -55,8 +59,10 @@ export function useSponsorProgramHistoryFilter(
   })
 
   const filteredRows = useMemo((): SponsorProgramHistoryRow[] => {
-    return query.data?.items ?? []
-  }, [query.data?.items])
+    const items = query.data?.items ?? []
+    // participantType 등 BE 미지원 키는 클라 보조 매칭
+    return items.filter(row => matchesProgramHistoryFilter(row, appliedFilters))
+  }, [appliedFilters, query.data?.items])
 
   const setSelectedKeys = useCallback((keys: Key[]): void => {
     setSelectedKeysState(keys.map(k => String(k)))

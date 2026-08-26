@@ -13,13 +13,11 @@ import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import { useProgramInquiryStatusList } from '../hooks/use-program-inquiry-status-list'
 import type { ProgramInquiryRow } from '../api/adapters/dashboard-adapters'
+import { inquiryListPath } from '../lib/dashboard-widget-links'
 import '@/shared/ui/widget-more-button.css'
 import './dashboard-widget-table.css'
 
 const { Text } = Typography
-
-/** 게시글 관리 · 문의내역 — `inq_prog`로 프로그램명 필터(부분 일치) */
-const ADMIN_POSTS_INQUIRIES_PATH = '/admin/posts/inquiries'
 
 const WIDGET_KEY = 'customer-inquiry-status-widget'
 const EMPTY_IDS: string[] = []
@@ -58,15 +56,13 @@ export function CustomerInquiryStatusWidget() {
 
   const goToInquiryListForProgram = useCallback(
     (record: ProgramInquiryRow) => {
-      const search = new URLSearchParams()
-      search.set('inq_prog', record.programName)
-      navigate(`${ADMIN_POSTS_INQUIRIES_PATH}?${search.toString()}`)
+      navigate(inquiryListPath(record.programId, record.programName))
     },
     [navigate]
   )
 
   const handleMoreClick = useCallback(() => {
-    navigate(ADMIN_POSTS_INQUIRIES_PATH)
+    navigate(inquiryListPath())
   }, [navigate])
 
   const columns: ColumnsType<ProgramInquiryRow> = useMemo(
@@ -95,7 +91,7 @@ export function CustomerInquiryStatusWidget() {
             <span className="dashboard-widget-table__pending-btn" role="presentation">
               <span className="dashboard-widget-table__pending-inner">
                 <span className="dashboard-widget-table__pending-text">{value}건</span>
-                {!inquiryNotificationReadProgramKeys[record.key] && (
+                {!inquiryNotificationReadProgramKeys[record.key] && (record.unreadCount ?? 0) > 0 && (
                   <span className="dashboard-widget-table__pending-dot" aria-hidden />
                 )}
               </span>

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   getTextbookList,
   getTextbookListFilterKey,
@@ -16,6 +16,7 @@ export function useTextbookListQuery(filters: TextbookListFilters, enabled = tru
     queryFn: () => getTextbookList(filters),
     enabled: remoteEnabled,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
     retry: false,
   })
 }

@@ -68,11 +68,12 @@ export function buildAgreementConsentFillParagraphBodyOptions(
     agreementSystemParticipantName: participantName,
     /** 초상권 1번 표 — 성명·소속 등 응답 입력만 허용(양식 문구·다른 표 셀은 preview 잠금) */
     portraitConsentResponseFieldsInteractive: templateId === 'agreement-portrait' ? true : undefined,
-    /** 행정정보 공동이용 — 이용기관·이용사무·대상자 본인 응답 입력 */
+    /** 행정정보 공동이용 — 대상자 본인만 응답 입력(이용기관·이용사무는 시드 고정) */
     agreementConsentFillInteractiveParagraphIds:
       templateId === 'agreement-notice'
         ? AGREEMENT_NOTICE_CONSENT_FILL_INTERACTIVE_PARAGRAPH_IDS
         : undefined,
+    /** 식별번호 텍스트 입력만 허용. 라디오는 주민등록번호 고정·비활성 */
     agreementNoticeIdTypeInteractive: templateId === 'agreement-notice' ? true : undefined,
     agreementNoticeSubjectPrefilledReadOnly: false,
     /** 구조 잠금 단락 — 본문은 preview 잠금, 하단 동의 라디오만 조작 */

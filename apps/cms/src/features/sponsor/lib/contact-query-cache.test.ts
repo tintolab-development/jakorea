@@ -2,6 +2,10 @@ import { QueryClient } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import {
+  EMPTY_CONTACTS_PARAMS_KEY,
+  serializeContactsParams,
+} from '@/features/sponsor/api/contacts-filter-params'
+import {
   applyCreatedContactToDetail,
   applyDeletedContactsToDetail,
   applyUpdatedContactToDetail,
@@ -17,9 +21,13 @@ function contact(
 ): SponsorContactRow {
   return {
     name: partial.name ?? partial.id,
+    department: '',
     position: '',
+    officePhone: '',
     phone: '',
     email: '',
+    companyAddress: '',
+    memo: '',
     registeredAt: '',
     ...partial,
   }
@@ -114,6 +122,37 @@ describe('applyDeletedContactsToDetail', () => {
 
     expect(queryClient.getQueryData<SponsorManagementDetailView>(key)?.contacts).toEqual([
       contact({ id: 'c2', contactType: 'lead' }),
+    ])
+  })
+})
+
+describe('applyUpdatedContactToDetail list cache', () => {
+  it('patches GET /contacts caches including filtered keys', () => {
+    const queryClient = new QueryClient()
+    const allKey = dataManagementQueryKeys.sponsors.contacts('sp-1', EMPTY_CONTACTS_PARAMS_KEY)
+    const filteredKey = dataManagementQueryKeys.sponsors.contacts(
+      'sp-1',
+      serializeContactsParams({ department: '기획' })
+    )
+    queryClient.setQueryData(allKey, [
+      contact({ id: 'c1', contactType: 'lead', department: '기획' }),
+      contact({ id: 'c2', contactType: 'assistant', department: '영업' }),
+    ])
+    queryClient.setQueryData(filteredKey, [
+      contact({ id: 'c1', contactType: 'lead', department: '기획' }),
+    ])
+
+    applyUpdatedContactToDetail(
+      queryClient,
+      'sp-1',
+      contact({ id: 'c2', contactType: 'lead', department: '영업' })
+    )
+
+    const all = queryClient.getQueryData<SponsorContactRow[]>(allKey) ?? []
+    expect(all.find(row => row.id === 'c2')?.contactType).toBe('lead')
+    expect(all.find(row => row.id === 'c1')?.contactType).toBe('assistant')
+    expect(queryClient.getQueryData<SponsorContactRow[]>(filteredKey)?.map(row => row.id)).toEqual([
+      'c1',
     ])
   })
 })

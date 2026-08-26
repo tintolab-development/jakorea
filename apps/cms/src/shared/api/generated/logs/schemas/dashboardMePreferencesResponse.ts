@@ -16,4 +16,6 @@ export interface DashboardMePreferencesResponse {
   settings?: DashboardMeSettings;
   revision?: number;
   updatedAt?: string;
+  /** 일정 위젯에 노출할 프로그램 유형. MASTER는 general/company_school/ujat/gemini 전부, 그 외는 담당 프로그램이 있는 유형만 */
+  assignedProgramTypes?: string[];
 }

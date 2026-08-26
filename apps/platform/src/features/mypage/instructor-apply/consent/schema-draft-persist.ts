@@ -1,12 +1,13 @@
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import type { PaymentStatementBasicInfoValues } from '@jakorea/form-schema/consent'
+import type { FormSignatureValue } from '@/shared/ui'
 import type { InstructorApplyConsentKey } from './catalog'
 
 const DRAFT_STORAGE_PREFIX = 'platform.instructor-apply.consent-schema-draft.v2.'
 
 export type ConsentSignatureSidecar = {
-  mid?: string
-  final?: string
+  mid?: string | FormSignatureValue
+  final?: string | FormSignatureValue
 }
 
 export type SchemaConsentWriteState = {

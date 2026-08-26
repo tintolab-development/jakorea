@@ -150,7 +150,7 @@ export default function SettlementItemSettingsPage() {
                       <p className="settlement-item-settings__card-desc">{item.description}</p>
                     </div>
                   </button>
-                  {!settlementConfigsRemote ? (
+                  {!settlementConfigsRemote && section.kind === 'payment' ? (
                     <div className="settlement-item-settings__card-more-wrap">
                       <Dropdown
                         trigger={['click']}

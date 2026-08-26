@@ -247,6 +247,14 @@
   border-color: var(--ja-mint-01, #01a1af);
 }
 
+.modal-spec-table__textarea::placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
 .modal-spec-table__field-row {
   display: flex;
   align-items: center;

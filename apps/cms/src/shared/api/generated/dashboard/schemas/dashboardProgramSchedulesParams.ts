@@ -8,7 +8,19 @@
 
 export type DashboardProgramSchedulesParams = {
 /**
- * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * 프로그램 ID 목록. 콤마 구분
  */
-params: {[key: string]: string};
+programIds?: string;
+/**
+ * 프로그램 유형 필터. general | company_school | ujat | gemini 또는 canonical program_type
+ */
+programType?: string;
+/**
+ * 일정 시작일(포함) YYYY-MM-DD, Asia/Seoul
+ */
+dateFrom?: string;
+/**
+ * 일정 종료일(포함) YYYY-MM-DD, Asia/Seoul
+ */
+dateTo?: string;
 };

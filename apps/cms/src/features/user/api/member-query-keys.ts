@@ -18,8 +18,13 @@ export const memberQueryKeys = {
     [...memberQueryKeys.all, 'externalIdentifiers', memberId] as const,
   instructorSettlements: (memberId: number) =>
     [...memberQueryKeys.all, 'instructorSettlements', memberId] as const,
-  comments: (memberId: number, screenCode?: string) =>
-    [...memberQueryKeys.all, 'comments', memberId, screenCode ?? ''] as const,
+  instructorSettlementStatementJoin: (memberId: number) =>
+    [...memberQueryKeys.all, 'instructorSettlementStatementJoin', memberId] as const,
+  comments: (
+    resourceId: number,
+    screenCode?: string,
+    target: 'member' | 'schoolOrganization' = 'member'
+  ) => [...memberQueryKeys.all, 'comments', target, resourceId, screenCode ?? ''] as const,
   applications: (memberId: number) =>
     [...memberQueryKeys.all, 'applications', memberId] as const,
   programHistory: (memberId: number) =>
@@ -28,8 +33,22 @@ export const memberQueryKeys = {
     [...memberQueryKeys.all, 'affiliatedTeachers', memberId] as const,
   schoolTeachers: (organizationId: number) =>
     [...memberQueryKeys.all, 'schoolTeachers', organizationId] as const,
+  schoolProgramEnrollmentHistory: (
+    organizationId: number,
+    filtersKey = '',
+    organizationUserId = ''
+  ) =>
+    [
+      ...memberQueryKeys.all,
+      'schoolProgramEnrollmentHistory',
+      organizationId,
+      organizationUserId,
+      filtersKey,
+    ] as const,
   adminPrograms: (memberId: number) =>
     [...memberQueryKeys.all, 'adminPrograms', memberId] as const,
+  adminAccountPrograms: (adminAccountId: number) =>
+    [...memberQueryKeys.all, 'adminAccountPrograms', adminAccountId] as const,
   instructorRoleRequests: {
     all: () => [...memberQueryKeys.all, 'instructorRoleRequests'] as const,
     list: (paramsKey: string) =>

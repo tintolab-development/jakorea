@@ -13,7 +13,4 @@ export function buildSettlementByIdMap(
   return map
 }
 
-export function formatLectureSessionLabel(scheduleId?: number): string {
-  if (scheduleId == null) return '-'
-  return `${scheduleId}차시`
-}
+export { formatLectureSessionLabel } from '@/features/settlement-management/api/shared/map-frontend-fields'

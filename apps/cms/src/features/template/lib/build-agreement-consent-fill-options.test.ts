@@ -121,11 +121,7 @@ describe('buildAgreementConsentFillParagraphBodyOptions', () => {
     expect(options?.agreementNoticeIdTypeInteractive).toBe(true)
     expect(options?.agreementNoticeSubjectPrefilledReadOnly).toBe(false)
     expect(options?.agreementConsentFillInteractiveParagraphIds).toEqual(
-      new Set([
-        'agreement-notice-institution',
-        'agreement-notice-purpose',
-        'agreement-notice-subject',
-      ])
+      new Set(['agreement-notice-subject'])
     )
     expect(options?.hiddenParagraphIds).toEqual(
       new Set(['agreement-notice-system-date', 'agreement-notice-system-signature'])

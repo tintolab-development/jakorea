@@ -6,9 +6,16 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 카테고리 생성/수정 요청
+ */
 export interface CategoryRequest {
+  /** 카테고리명 */
   categoryName?: string;
+  /** 카테고리명 별칭 */
   name?: string;
+  /** 사용 상태 */
   status?: string;
+  /** 표시 순서 */
   displayOrder?: number;
 }

@@ -148,7 +148,8 @@
 | [programs-seed-case-api-coverage-backend-handoff-2026-07-30.md](api/programs-seed-case-api-coverage-backend-handoff-2026-07-30.md) | **시드 CASE(166401…)** 기준 API 적용률 · 더미 잔존 BE 핸드오프 (2026-07-30) |
 | [**be-handoff-program-dummy-seeds/**](api/be-handoff-program-dummy-seeds/README-BE.md) | **프로그램 더미 시드 zip 패키지** — FE mock 기준 BE 시드 요청 (유형별 레시피) |
 | [education-records-dummy-seed-backend-request.md](api/education-records-dummy-seed-backend-request.md) | **실적 관리**(`/education-records`) FE mock 30건 DB 시드 요청 |
-| [dashboard-settings-dummy-seed-backend-request.md](api/dashboard-settings-dummy-seed-backend-request.md) | **대시보드 설정** FE mock 바로가기 25건·기본 layout DB 시드 요청 |
+| [education-records-api-backend-cursor-prompt.md](api/education-records-api-backend-cursor-prompt.md) | **실적 관리** 목록·합계·엑셀 필터·집계 규칙 **BE Cursor 프롬프트** |
+| [dashboard-settings-dummy-seed-backend-request.md](api/dashboard-settings-dummy-seed-backend-request.md) | **대시보드 설정** FE mock 바로가기 24건·기본 layout DB 시드 요청 |
 | [**e2e-backend-fixes-index.md**](api/e2e-backend-fixes-index.md) | **E2E 관측** 백엔드 수정 요청 인덱스 (programs · members · adminAuth) |
 | [**members/**](api/members/README.md) | **회원 관리 API** — handoff · 연동 · E2E pre-register · gaps · 상세 미존 endpoint |
 | [e2e-programs-create-database-error-handoff.md](api/e2e-programs-create-database-error-handoff.md) | 일반 프로그램 등록 `DATABASE_ERROR` (P0) |

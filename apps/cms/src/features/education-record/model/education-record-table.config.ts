@@ -1,14 +1,13 @@
 /**
  * 실적 관리 목록 TablePageConfig
- * - URL 쿼리 `er_year / er_q / er_sido / er_sigungu / er_sponsor / er_main / er_title / er_book` 와 동기화
- * - 데이터 파이프라인: year → quarter → sido → sigungu → sponsorName → mainTitle → title → textbookName
+ * - URL 쿼리 `er_year / er_q / er_area / er_sido / er_sigungu / er_sponsor / er_main / er_title / er_book / er_org / er_ips / er_etype` 와 동기화
  */
 
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
-import { parseRegionTokens, getRowQuarter, getRowYear } from '../lib/education-record-region'
+import { matchesEducationRecordFilter } from '../lib/match-education-record-filter'
 import { createEducationRecordColumns } from './education-record-columns'
 import type {
   EducationRecordPendingFilters,
@@ -20,13 +19,32 @@ import type {
 const PARAM_KEYS = {
   year: 'er_year',
   quarter: 'er_q',
+  businessArea: 'er_area',
   sido: 'er_sido',
   sigungu: 'er_sigungu',
   sponsorName: 'er_sponsor',
   mainTitle: 'er_main',
   title: 'er_title',
   textbookName: 'er_book',
+  institutionName: 'er_org',
+  ips: 'er_ips',
+  educationType: 'er_etype',
 } as const
+
+const EMPTY_PENDING: EducationRecordPendingFilters = {
+  year: '',
+  quarter: 'ALL',
+  businessArea: '',
+  sido: '',
+  sigungu: '',
+  sponsorName: '',
+  mainTitle: '',
+  title: '',
+  textbookName: '',
+  institutionName: '',
+  ips: '',
+  educationType: '',
+}
 
 function parseQuarter(raw: string | null): 'ALL' | EducationRecordQuarter {
   const n = Number(raw)
@@ -44,77 +62,74 @@ function readFilters(searchParams: URLSearchParams): EducationRecordPendingFilte
   return {
     year: parseYear(searchParams.get(PARAM_KEYS.year)),
     quarter: parseQuarter(searchParams.get(PARAM_KEYS.quarter)),
+    businessArea: searchParams.get(PARAM_KEYS.businessArea) ?? '',
     sido: searchParams.get(PARAM_KEYS.sido) ?? '',
     sigungu: searchParams.get(PARAM_KEYS.sigungu) ?? '',
     sponsorName: searchParams.get(PARAM_KEYS.sponsorName) ?? '',
     mainTitle: searchParams.get(PARAM_KEYS.mainTitle) ?? '',
     title: searchParams.get(PARAM_KEYS.title) ?? '',
     textbookName: searchParams.get(PARAM_KEYS.textbookName) ?? '',
+    institutionName: searchParams.get(PARAM_KEYS.institutionName) ?? '',
+    ips: searchParams.get(PARAM_KEYS.ips) ?? '',
+    educationType: searchParams.get(PARAM_KEYS.educationType) ?? '',
   }
 }
 
-function includesIgnoreCase(source: string | null | undefined, query: string): boolean {
-  if (!query) return true
-  if (!source) return false
-  return source.toLowerCase().includes(query.toLowerCase())
+function isSamePending(
+  a: EducationRecordPendingFilters,
+  b: EducationRecordPendingFilters
+): boolean {
+  return (
+    a.year === b.year &&
+    a.quarter === b.quarter &&
+    a.businessArea === b.businessArea &&
+    a.sido === b.sido &&
+    a.sigungu === b.sigungu &&
+    a.sponsorName === b.sponsorName &&
+    a.mainTitle === b.mainTitle &&
+    a.title === b.title &&
+    a.textbookName === b.textbookName &&
+    a.institutionName === b.institutionName &&
+    a.ips === b.ips &&
+    a.educationType === b.educationType
+  )
+}
+
+function hasAppliedFilters(filters: EducationRecordPendingFilters): boolean {
+  if (filters.year) return true
+  if (filters.quarter !== 'ALL') return true
+  if (filters.businessArea.trim()) return true
+  if (filters.sido.trim()) return true
+  if (filters.sigungu.trim()) return true
+  if (filters.sponsorName.trim()) return true
+  if (filters.mainTitle.trim()) return true
+  if (filters.title.trim()) return true
+  if (filters.textbookName.trim()) return true
+  if (filters.institutionName.trim()) return true
+  if (filters.ips.trim()) return true
+  if (filters.educationType.trim()) return true
+  return false
 }
 
 function filterRows(data: EducationRecordRow[], searchParams: URLSearchParams): EducationRecordRow[] {
   const filters = readFilters(searchParams)
-  const yearNum = filters.year ? Number(filters.year) : null
-  const sponsorNameQ = filters.sponsorName.trim()
-  const mainTitleQ = filters.mainTitle.trim()
-  const titleQ = filters.title.trim()
-  const textbookNameQ = filters.textbookName.trim()
-  const sidoQ = filters.sido.trim()
-  const sigunguQ = filters.sigungu.trim()
-
-  return data.filter(row => {
-    if (yearNum != null) {
-      const year = getRowYear(row)
-      if (year !== yearNum) return false
-    }
-
-    if (filters.quarter !== 'ALL') {
-      const quarter = getRowQuarter(row)
-      if (quarter !== filters.quarter) return false
-    }
-
-    if (sidoQ || sigunguQ) {
-      const tokens = {
-        si: row.si ?? '',
-        gun: row.gun ?? '',
-        gu: row.gu ?? '',
-      }
-      if (!row.si && !row.gun && !row.gu && row.district) {
-        const parsed = parseRegionTokens(row.district)
-        tokens.si = parsed.si
-        tokens.gun = parsed.gun
-        tokens.gu = parsed.gu
-      }
-      const rowSido = row.sido ?? ''
-
-      if (sidoQ && rowSido !== sidoQ) return false
-      if (
-        sigunguQ &&
-        tokens.si !== sigunguQ &&
-        tokens.gun !== sigunguQ &&
-        tokens.gu !== sigunguQ
-      ) {
-        return false
-      }
-    }
-
-    if (sponsorNameQ && !includesIgnoreCase(row.sponsorNameKo, sponsorNameQ)) return false
-    if (mainTitleQ && !includesIgnoreCase(row.mainTitle, mainTitleQ)) return false
-    if (titleQ && !includesIgnoreCase(row.title, titleQ)) return false
-    if (textbookNameQ && !includesIgnoreCase(row.textbookName, textbookNameQ)) return false
-
-    return true
-  })
+  return data.filter(row => matchesEducationRecordFilter(row, filters))
 }
 
 const tanstackColumns: ColumnDef<EducationRecordRow>[] = [{ accessorKey: 'id', header: 'id' }]
+
+function textParam(
+  filterKey: keyof EducationRecordPendingFilters,
+  paramKey: string
+): TableSearchParamRule<EducationRecordPendingFilters> {
+  return {
+    kind: 'param',
+    filterKey,
+    paramKey,
+    condition: f => String(f[filterKey] ?? '').trim().length > 0,
+    transform: v => String(v).trim(),
+  }
+}
 
 const searchSyncRules: readonly TableSearchParamRule<EducationRecordPendingFilters>[] = [
   {
@@ -131,48 +146,16 @@ const searchSyncRules: readonly TableSearchParamRule<EducationRecordPendingFilte
     condition: f => f.quarter !== 'ALL',
     transform: v => String(v),
   },
-  {
-    kind: 'param',
-    filterKey: 'sido',
-    paramKey: PARAM_KEYS.sido,
-    condition: f => f.sido.trim().length > 0,
-    transform: v => String(v).trim(),
-  },
-  {
-    kind: 'param',
-    filterKey: 'sigungu',
-    paramKey: PARAM_KEYS.sigungu,
-    condition: f => f.sigungu.trim().length > 0,
-    transform: v => String(v).trim(),
-  },
-  {
-    kind: 'param',
-    filterKey: 'sponsorName',
-    paramKey: PARAM_KEYS.sponsorName,
-    condition: f => f.sponsorName.trim().length > 0,
-    transform: v => String(v).trim(),
-  },
-  {
-    kind: 'param',
-    filterKey: 'mainTitle',
-    paramKey: PARAM_KEYS.mainTitle,
-    condition: f => f.mainTitle.trim().length > 0,
-    transform: v => String(v).trim(),
-  },
-  {
-    kind: 'param',
-    filterKey: 'title',
-    paramKey: PARAM_KEYS.title,
-    condition: f => f.title.trim().length > 0,
-    transform: v => String(v).trim(),
-  },
-  {
-    kind: 'param',
-    filterKey: 'textbookName',
-    paramKey: PARAM_KEYS.textbookName,
-    condition: f => f.textbookName.trim().length > 0,
-    transform: v => String(v).trim(),
-  },
+  textParam('businessArea', PARAM_KEYS.businessArea),
+  textParam('sido', PARAM_KEYS.sido),
+  textParam('sigungu', PARAM_KEYS.sigungu),
+  textParam('sponsorName', PARAM_KEYS.sponsorName),
+  textParam('mainTitle', PARAM_KEYS.mainTitle),
+  textParam('title', PARAM_KEYS.title),
+  textParam('textbookName', PARAM_KEYS.textbookName),
+  textParam('institutionName', PARAM_KEYS.institutionName),
+  textParam('ips', PARAM_KEYS.ips),
+  textParam('educationType', PARAM_KEYS.educationType),
 ]
 
 function handleEducationRecordFilterChange(args: {
@@ -213,48 +196,14 @@ export const educationRecordTablePageConfig: TablePageConfig<
   },
 
   filters: {
-    initialPending: {
-      year: '',
-      quarter: 'ALL',
-      sido: '',
-      sigungu: '',
-      sponsorName: '',
-      mainTitle: '',
-      title: '',
-      textbookName: '',
-    },
+    initialPending: { ...EMPTY_PENDING },
 
     syncPendingFromUrl: ({ searchParams, setPendingFilters }) => {
       const next = readFilters(searchParams)
-      setPendingFilters(prev => {
-        if (
-          prev.year === next.year &&
-          prev.quarter === next.quarter &&
-          prev.sido === next.sido &&
-          prev.sigungu === next.sigungu &&
-          prev.sponsorName === next.sponsorName &&
-          prev.mainTitle === next.mainTitle &&
-          prev.title === next.title &&
-          prev.textbookName === next.textbookName
-        ) {
-          return prev
-        }
-        return next
-      })
+      setPendingFilters(prev => (isSamePending(prev, next) ? prev : next))
     },
 
-    hasActiveFilters: ({ searchParams }) => {
-      const f = readFilters(searchParams)
-      if (f.year) return true
-      if (f.quarter !== 'ALL') return true
-      if (f.sido.trim()) return true
-      if (f.sigungu.trim()) return true
-      if (f.sponsorName.trim()) return true
-      if (f.mainTitle.trim()) return true
-      if (f.title.trim()) return true
-      if (f.textbookName.trim()) return true
-      return false
-    },
+    hasActiveFilters: ({ searchParams }) => hasAppliedFilters(readFilters(searchParams)),
 
     getBaseCount: ({ filteredData }) => filteredData.length,
 

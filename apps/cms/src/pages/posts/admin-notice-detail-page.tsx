@@ -146,9 +146,7 @@ export function AdminNoticeDetailPage() {
                   {isPublic ? '공개' : '비공개'}
                 </span>
                 {notice.category ? (
-                  <span className="admin-notice-detail-page__badge admin-notice-detail-page__badge--category">
-                    {notice.category}
-                  </span>
+                  <span className="admin-notice-detail-page__category">{notice.category}</span>
                 ) : null}
               </div>
               <span className="admin-notice-detail-page__views">
@@ -167,6 +165,7 @@ export function AdminNoticeDetailPage() {
               ) : null}
             </div>
           </div>
+          <hr className="admin-notice-detail-page__section-divider" />
           {attachmentItems.length > 0 ? (
             <div className="admin-notice-detail-page__attachments">
               <div className="admin-notice-detail-page__attachments-head">
@@ -200,18 +199,18 @@ export function AdminNoticeDetailPage() {
           <div className="admin-notice-detail-page__body">
             <RichTextViewer content={notice.content} />
           </div>
-          <div className="admin-notice-detail-page__actions">
-            <CmsButton variant="secondary" size="large" onClick={goList}>
-              목록
+        </div>
+        <div className="admin-notice-detail-page__actions">
+          <CmsButton variant="secondary" size="large" onClick={goList}>
+            목록
+          </CmsButton>
+          <div className="admin-notice-detail-page__actions-right">
+            <CmsButton variant="delete" size="large" onClick={handleDelete} disabled={!canWrite}>
+              삭제
             </CmsButton>
-            <div className="admin-notice-detail-page__actions-right">
-              <CmsButton variant="delete" size="large" onClick={handleDelete} disabled={!canWrite}>
-                삭제
-              </CmsButton>
-              <CmsButton variant="primary" size="large" onClick={handleEdit} disabled={!canWrite}>
-                수정
-              </CmsButton>
-            </div>
+            <CmsButton variant="primary" size="large" onClick={handleEdit} disabled={!canWrite}>
+              수정
+            </CmsButton>
           </div>
         </div>
       </div>

@@ -3,6 +3,9 @@ export const MYPAGE_PATH = '/mypage'
 /** 마이페이지 — 회원정보 설정 */
 export const MYPAGE_SETTINGS_PATH = '/mypage/settings'
 
+/** 마이페이지 — 문의내역 */
+export const MYPAGE_INQUIRIES_PATH = '/mypage/inquiries'
+
 /** 마이페이지 LNB — 강사 역할 신청 양식 */
 export const INSTRUCTOR_APPLY_PATH = '/mypage/instructor-apply'
 

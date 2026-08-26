@@ -13,6 +13,7 @@ const seedPayload = JSON.parse(
     'utf8'
   )
 ) as {
+  assignedProgramTypes?: string[]
   layout: {
     orderedWidgetIds: string[]
     widgetWidths: Record<string, number>
@@ -36,10 +37,19 @@ describe('dashboard settings seed payload', () => {
     expect(seedPayload.shortcutCatalog.every(item => item.useYn)).toBe(true)
   })
 
-  it('default MASTER layout is full-width mock home widgets', () => {
+  it('default MASTER layout is full-width home widgets including assigned schedule types', () => {
+    expect(seedPayload.assignedProgramTypes).toEqual([
+      'general',
+      'company_school',
+      'ujat',
+      'gemini',
+    ])
     expect(seedPayload.layout.orderedWidgetIds).toEqual([
       'menu-shortcut-widget',
       'program-schedule-general-widget',
+      'program-schedule-company-school-widget',
+      'program-schedule-ujat-widget',
+      'program-schedule-gemini-widget',
       'recruitment-status-widget',
       'customer-inquiry-status-widget',
       'kpi-achievement-widget',

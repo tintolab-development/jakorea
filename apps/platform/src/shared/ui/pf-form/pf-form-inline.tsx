@@ -80,3 +80,20 @@ export function PFFormPeriodTilde({ className, ...rest }: PFFormPeriodTildeProps
     </span>
   )
 }
+
+export type PFFormPeriodHyphenProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children'> & {
+  className?: string
+}
+
+/** 주민등록번호 앞·뒤 쌍 사이 `-` (모바일 margin-inline 2px) */
+export function PFFormPeriodHyphen({ className, ...rest }: PFFormPeriodHyphenProps) {
+  return (
+    <span
+      className={[styles.periodHyphen, className].filter(Boolean).join(' ')}
+      aria-hidden
+      {...rest}
+    >
+      -
+    </span>
+  )
+}

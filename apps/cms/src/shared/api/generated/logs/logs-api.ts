@@ -28,7 +28,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
   export const getJAKoreaCMSBackendAPILogsSubset = () => {
 /**
  * ### 이 API가 하는 일
- * - 시스템 상태 부분 수정
+ * - 버그/이슈 이력 상태 변경
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 로그 관리 (`null`)
  * - 프론트 담당 영역: logs (`logs`)
@@ -47,13 +47,13 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 필요 권한: LOG_WRITE 권한 필요
+ * - 접근 범위: 마스터 관리자만 가능
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
- * - 감사로그 저장: 필수
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수 아님
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -68,8 +68,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
- * @summary 시스템 상태 부분 수정
+ * - 검토 메모: CMS는 호출하지 않음
+ * @summary 버그/이슈 이력 상태 변경
  */
 const updateSystemIssueStatus = (
     issueId: number,
@@ -85,7 +85,7 @@ const updateSystemIssueStatus = (
 
 /**
  * ### 이 API가 하는 일
- * - 시스템 상태 조회
+ * - 버그/이슈 이력 목록 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 로그 관리 (`null`)
  * - 프론트 담당 영역: logs (`logs`)
@@ -104,13 +104,13 @@ const updateSystemIssueStatus = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 필요 권한: LOG_READ 권한 필요
+ * - 접근 범위: 마스터 관리자만 가능
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
- * - 감사로그 저장: 필수
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수 아님
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -125,11 +125,11 @@ const updateSystemIssueStatus = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
- * @summary 시스템 상태 조회
+ * - 검토 메모: CMS 보안 설정 버그/이슈 목록
+ * @summary 버그/이슈 이력 목록 조회
  */
 const systemIssueLogs = (
-    params: SystemIssueLogsParams,
+    params?: SystemIssueLogsParams,
  options?: SecondParameter<typeof customInstance<LogListPageResponseBugIssueLogFrontendResponse>>,) => {
       return customInstance<LogListPageResponseBugIssueLogFrontendResponse>(
       {url: `/api/admin/logs/system-issues`, method: 'GET',
@@ -140,7 +140,7 @@ const systemIssueLogs = (
 
 /**
  * ### 이 API가 하는 일
- * - 시스템 상태 조회
+ * - 버그/이슈 이력 상세 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 로그 관리 (`null`)
  * - 프론트 담당 영역: logs (`logs`)
@@ -159,13 +159,13 @@ const systemIssueLogs = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 필요 권한: LOG_READ 권한 필요
+ * - 접근 범위: 마스터 관리자만 가능
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
- * - 감사로그 저장: 필수
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수 아님
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -180,8 +180,8 @@ const systemIssueLogs = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
- * @summary 시스템 상태 조회
+ * - 검토 메모: CMS는 호출하지 않음
+ * @summary 버그/이슈 이력 상세 조회
  */
 const systemIssueDetail = (
     issueId: number,
@@ -194,14 +194,14 @@ const systemIssueDetail = (
 
 /**
  * ### 이 API가 하는 일
- * - 관리자 조회
+ * - 개인정보 조회 이력 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 로그 관리 (`null`)
  * - 프론트 담당 영역: logs (`logs`)
  * - 호출 방식: `GET /api/admin/logs/privacy-access`
  *
  * ### 화면/프론트 사용 기준
- * - 요청값 출처: accessPurpose/accessorName/from/to/page/size
+ * - 요청값 출처: accessPurpose/accessorName/targetName/from/to/page/size
  * - 응답 사용 위치: 개인정보 조회 이력 페이지 목록
  * - 프론트 조회 키: `get_api_logs_privacy-access`
  * - 구현 상태: 구현 완료
@@ -213,12 +213,12 @@ const systemIssueDetail = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 필요 권한: LOG_READ 권한 필요
+ * - 접근 범위: 마스터 관리자만 가능
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -234,11 +234,11 @@ const systemIssueDetail = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
- * @summary 관리자 조회
+ * - 검토 메모: CMS 보안 설정 개인정보 조회 이력(UNMASKED_VIEW)
+ * @summary 개인정보 조회 이력 조회
  */
 const privacyAccessLogs = (
-    params: PrivacyAccessLogsParams,
+    params?: PrivacyAccessLogsParams,
  options?: SecondParameter<typeof customInstance<LogListPageResponsePersonalInfoAccessLogFrontendResponse>>,) => {
       return customInstance<LogListPageResponsePersonalInfoAccessLogFrontendResponse>(
       {url: `/api/admin/logs/privacy-access`, method: 'GET',
@@ -268,12 +268,12 @@ const privacyAccessLogs = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 필요 권한: LOG_READ 권한 필요
+ * - 접근 범위: 마스터 관리자만 가능
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -289,11 +289,11 @@ const privacyAccessLogs = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
+ * - 검토 메모: CMS 보안 설정 로그인 이력(최근 1개월)
  * @summary 관리자 로그인 이력 조회
  */
 const memberLoginHistory = (
-    params: MemberLoginHistoryParams,
+    params?: MemberLoginHistoryParams,
  options?: SecondParameter<typeof customInstance<LogListPageResponseMemberLoginLogFrontendResponse>>,) => {
       return customInstance<LogListPageResponseMemberLoginLogFrontendResponse>(
       {url: `/api/admin/logs/member-logins`, method: 'GET',
@@ -304,7 +304,7 @@ const memberLoginHistory = (
 
 /**
  * ### 이 API가 하는 일
- * - 파일 조회
+ * - 파일 다운로드 이력 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 로그 관리 (`null`)
  * - 프론트 담당 영역: logs (`logs`)
@@ -323,12 +323,12 @@ const memberLoginHistory = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 필요 권한: LOG_READ 권한 필요
+ * - 접근 범위: 마스터 관리자만 가능
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -344,11 +344,11 @@ const memberLoginHistory = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
- * @summary 파일 조회
+ * - 검토 메모: CMS 보안 설정 파일 다운로드 이력
+ * @summary 파일 다운로드 이력 조회
  */
 const fileAccessLogs = (
-    params: FileAccessLogsParams,
+    params?: FileAccessLogsParams,
  options?: SecondParameter<typeof customInstance<LogListPageResponseDownloadLogFrontendResponse>>,) => {
       return customInstance<LogListPageResponseDownloadLogFrontendResponse>(
       {url: `/api/admin/logs/file-access`, method: 'GET',

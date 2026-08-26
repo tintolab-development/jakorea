@@ -1,5 +1,5 @@
-/** 필터: 사용 여부 — 전체 / 사용 / 미사용 */
-export type DetailedProgramUsageFilter = 'ALL' | 'active' | 'inactive'
+/** 필터: 사용 여부 — 라디오 사용 / 미사용 (전체 없음) */
+export type DetailedProgramUsageFilter = 'active' | 'inactive'
 
 export type DetailedProgramManagementRow = {
   id: string

@@ -1,0 +1,14 @@
+/** 제출 파일·강의보고서 열 — 셀 전체 폭(h40) 액션 버튼 */
+.assignment-submission-history-table__cell-action {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.assignment-submission-history-table__cell-action-btn.cms-button.ant-btn {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+}

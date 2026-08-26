@@ -66,9 +66,13 @@ export function useSponsorContacts(
 
   const handleTypeChange = useCallback(
     (rowId: string, nextType: SponsorContactRow['contactType']): void => {
+      const row = contacts.find(c => c.id === rowId)
+      if (!row) return
+      if (row.contactType === 'lead' && nextType === 'assistant') {
+        const leadCount = contacts.filter(c => c.contactType === 'lead').length
+        if (leadCount <= 1) return
+      }
       if (remoteActions) {
-        const row = contacts.find(c => c.id === rowId)
-        if (!row) return
         void remoteActions
           .onTypeChange(row, nextType)
           .then(() => setOpenDropdownId(null))
@@ -115,9 +119,13 @@ export function useSponsorContacts(
         const nextContact: SponsorContactRow = {
           id: `contact-${Date.now()}-${nextIndex}`,
           name: payload.name,
+          department: payload.department,
           position: payload.position,
+          officePhone: payload.officePhone,
           phone: payload.phone,
           email: payload.email,
+          companyAddress: payload.companyAddress,
+          memo: payload.memo,
           registeredAt: new Date().toISOString(),
           contactType,
         }

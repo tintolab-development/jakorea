@@ -56,6 +56,8 @@ type AgreementOverlay = {
   agreed: boolean
   agreedAt?: string
   formResponseId?: number
+  filledDocumentAvailable?: boolean
+  consentType?: string
 }
 
 export function resolveTermsTypeToConsentLabel(type: string | undefined): string | undefined {
@@ -88,6 +90,8 @@ function agreementToFieldValue(
       agreed,
       agreedAtDisplay: agreed ? agreedAtDisplay : undefined,
       formResponseId: agreement.formResponseId,
+      filledDocumentAvailable: agreement.filledDocumentAvailable,
+      consentType: agreement.consentType,
     }
   }
 
@@ -142,6 +146,8 @@ function buildConsentRecordLabelMap(
       agreed: record.consentValue === true,
       agreedAt: record.consentedAt,
       formResponseId: record.formResponseId,
+      filledDocumentAvailable: record.filledDocumentAvailable,
+      consentType: record.consentType,
     })
   }
   return map
@@ -168,7 +174,8 @@ function overlayAgreementByLabel(
 }
 
 /** 상세 `termsAgreements` + `consent-records` → 약관·동의 UI 스키마.
- * 상세 `termsAgreements`가 있으면 이를 SSOT로 쓰고, 없을 때만 consent-records를 사용한다.
+ * 동의 여부·시각은 상세 `termsAgreements`를 SSOT로 쓰고,
+ * 작성본 조회 메타(`filledDocumentAvailable`·`consentType`)는 consent-records에서 보강한다.
  */
 export function applyMemberConsentToSchema(
   schema: ConsentRowSchema[],
@@ -185,13 +192,25 @@ export function applyMemberConsentToSchema(
   }
 
   const result = neutralizeConsentSchema(schema)
+  const recordsMap = buildConsentRecordLabelMap(records)
 
-  // 상세 약관이 있으면 상세만 반영 (consent-records로 덮어쓰지 않음)
-  if (terms.length > 0) {
-    return overlayAgreementByLabel(result, buildTermsAgreementLabelMap(terms))
+  if (terms.length === 0) {
+    return overlayAgreementByLabel(result, recordsMap)
   }
 
-  return overlayAgreementByLabel(result, buildConsentRecordLabelMap(records))
+  const termsMap = buildTermsAgreementLabelMap(terms)
+  for (const [label, rec] of recordsMap) {
+    const existing = termsMap.get(label)
+    if (existing) {
+      termsMap.set(label, {
+        ...existing,
+        formResponseId: rec.formResponseId ?? existing.formResponseId,
+        filledDocumentAvailable: rec.filledDocumentAvailable ?? existing.filledDocumentAvailable,
+        consentType: rec.consentType ?? existing.consentType,
+      })
+    }
+  }
+  return overlayAgreementByLabel(result, termsMap)
 }
 
 /** @deprecated `applyMemberConsentToSchema` 사용 */

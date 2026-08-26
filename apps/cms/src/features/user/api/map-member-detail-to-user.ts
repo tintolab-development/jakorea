@@ -402,6 +402,15 @@ function applyInstructorCmsStructureToUser(
     })
   }
 
+  const feeGradeLabel = toInstructorFeeGradeDisplayLabel(mergedProfile.defaultFeeGrade)
+  const jaGrade = mergedProfile.defaultJaGrade?.trim()
+  if (feeGradeLabel || jaGrade) {
+    user.listMetrics = assignDefinedListMetrics(user.listMetrics, {
+      ...(feeGradeLabel ? { instructorFeeGradeLabel: feeGradeLabel } : {}),
+      ...(jaGrade ? { jaEvaluationGrade: jaGrade } : {}),
+    })
+  }
+
   const homeLine = mergedProfile.homeAddress.line?.trim()
   if (homeLine && !isInstructorMaskedPlaceholder(homeLine)) {
     user.detailAddress = homeLine

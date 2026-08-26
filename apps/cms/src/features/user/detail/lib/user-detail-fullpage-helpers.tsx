@@ -24,7 +24,6 @@ export type UserDetailUrlSyncUser = Pick<
 export function programsHistoryHasChildMenu(user: UserDetailUrlSyncUser): boolean {
   if (user.role === 'INDIVIDUAL') return true
   if (user.role === 'INSTRUCTOR') return true
-  if (user.role === 'SCHOOL') return true
   return false
 }
 

@@ -689,6 +689,53 @@ pnpm --filter cms exec playwright test tests/e2e/flows/members --project=chromiu
 
 ---
 
+## 데이터 관리 — 후원사 · 교재 · 세부 프로그램
+
+LNB 「데이터 관리」 3화면. **mock fallback 없음** — `VITE_REAL_API_MODULES`에 `sponsors,textbooks,detailedPrograms`와 로컬 시드 DB가 있어야 featured 행·CRUD가 통과한다.
+
+시드 SSOT: [`docs/api/data-management-dummy-seed-backend-request.md`](../api/data-management-dummy-seed-backend-request.md)
+
+| 항목 | 내용 |
+|------|------|
+| 스펙 | `tests/e2e/flows/data-management/sponsor/` · `textbook/` · `detailed-program/` |
+| POM | `sponsor-management.page.ts` · `textbook-management.page.ts` · `detailed-program-management.page.ts` |
+| 시드 상수 | `tests/e2e/pages/data-management-seed-titles.ts` |
+| 경로 | `/sponsor` · `/textbook` · `/detailed-program` (대시보드 우회) |
+
+기본 목록 필터가 전체가 아니다. 후원사 `sp_kind=corporate`, 교재 `tb_use=USED`, 세부 `dp_use=active`. 대표 상세 시드 **제이에이코리아는 재단**이므로 구분=재단 조회 후 연다.
+
+CRUD는 `틴토랩-*` 고유 행만 만들고 시드 행은 수정하지 않는다. 시드가 없으면 목록 셸만 통과하고 annotation.
+
+BE 갭(이력 삭제 P0, 목록 누적 후원금 컬럼 UI, 로고, 서버 엑셀 export)은 미구현 UI를 단언하거나 skip/annotation. 사업 분야 관리는 `GET/POST/PATCH/DELETE /api/admin/textbook-business-areas`로 연동되어 E2E에서 고유 행 CRUD를 수행한다.
+
+### 일반 (headless)
+
+```bash
+pnpm --filter cms test:e2e:data-management
+```
+
+### UI로 확인
+
+```bash
+pnpm --filter cms test:e2e:data-management:ui
+```
+
+### headed
+
+```bash
+pnpm --filter cms test:e2e:data-management:headed
+```
+
+도메인만:
+
+```bash
+pnpm --filter cms test:e2e:data-management:sponsor
+pnpm --filter cms test:e2e:data-management:textbook
+pnpm --filter cms test:e2e:data-management:detailed-program
+```
+
+---
+
 ## 플로우 한눈에 보기
 
 | 플로우 | headless | UI | headed |
@@ -707,6 +754,7 @@ pnpm --filter cms exec playwright test tests/e2e/flows/members --project=chromiu
 | 교육받은 교사 심화 | `test:e2e:programs:trained-teachers:deep` | `test:e2e:programs:trained-teachers:deep:ui` | `test:e2e:programs:trained-teachers:deep:headed` |
 | UJAT 상세 풀페이지 수정 | `test:e2e:programs:ujat:edit` | `test:e2e:programs:ujat:edit:ui` | `test:e2e:programs:ujat:edit:headed` |
 | 회원 목록 CRUD (4 kind, 권한 관리 제외) | `test:e2e:members` | `test:e2e:members:ui` | `test:e2e:members:headed` |
+| 데이터 관리 (후원사·교재·세부 프로그램) | `test:e2e:data-management` | `test:e2e:data-management:ui` | `test:e2e:data-management:headed` |
 | 전체 | `test:e2e` | `test:e2e:ui` | `test:e2e:headed` |
 
 모두 `pnpm --filter cms` 접두사를 붙입니다.
@@ -718,6 +766,7 @@ pnpm --filter cms test:e2e:auth:ui
 pnpm --filter cms test:e2e:programs:registration:ui
 pnpm --filter cms test:e2e:programs:edit:ui
 pnpm --filter cms test:e2e:members:ui
+pnpm --filter cms test:e2e:data-management:ui
 ```
 
 ---
@@ -773,7 +822,11 @@ apps/cms/tests/e2e/
 │   │   ├── ujat-education-regions-crud.spec.ts
 │   │   ├── ujat-program-edit.spec.ts
 │   │   └── detail/                 # 일반 상세 LNB smoke·신청·진행·설문
-│   └── members/                    # 회원 목록 CRUD (세션 재사용)
+│   ├── members/                    # 회원 목록 CRUD (세션 재사용)
+│   └── data-management/            # 후원사·교재·세부 프로그램
+│       ├── sponsor/
+│       ├── textbook/
+│       └── detailed-program/
 ├── fixtures/                       # 공통 test (백엔드 에러 로그 자동 덤프)
 ├── helpers/                        # API 에러 캡처·덤프 · auth-paths · with-authenticated-page
 └── pages/                          # Page Object · form helpers · seed titles
@@ -781,4 +834,4 @@ apps/cms/tests/e2e/
 
 규칙: 모노레포 `.cursor/rules/playwright-e2e.mdc`
 
-**Last updated:** 2026-07-30
+**Last updated:** 2026-08-26

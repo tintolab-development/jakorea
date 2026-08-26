@@ -2,7 +2,7 @@ import { openPortal1365Main } from '@/shared/constants'
 import type { UserDetailRoleStrategy } from './user-detail-role-strategy.types'
 
 export const schoolStrategy: UserDetailRoleStrategy = {
-  hasProgramsChildMenu: true,
+  hasProgramsChildMenu: false,
 
   getEnrollmentRows: ({ applications }) => applications,
 
@@ -26,11 +26,11 @@ export const schoolStrategy: UserDetailRoleStrategy = {
       isSchoolDelete: true,
     },
     programsHistory: {
-      enrollmentSectionTitle: '프로그램 수강 이력',
-      enrollmentEmptyDescription: '프로그램 신청 이력이 없습니다.',
+      enrollmentSectionTitle: '프로젝트 수강 이력',
+      enrollmentEmptyDescription: '프로젝트 수강 이력이 없습니다.',
       enrollmentMode: 'SCHOOL_PARTICIPATION',
       showLectureHistoryWhenLectureChild: false,
-      useSchoolProgramParticipationSingleView: false,
+      useSchoolProgramParticipationSingleView: true,
     },
   }),
 }

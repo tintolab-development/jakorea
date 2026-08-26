@@ -82,6 +82,7 @@ const SponsorContactTypeCell = memo(function SponsorContactTypeCell({
 
 /**
  * 후원사 담당자 테이블의 `ColumnsType` 정의를 생성합니다.
+ * 기획 컬럼: 부서 · 직함 · 유형 · 담당자명 · 내선 · 연락처 · 이메일 · 회사 주소 · 비고 · 등록일시
  */
 export function buildContactColumns(params: BuildContactColumnsParams): ColumnsType<SponsorContactRow> {
   const { contacts, canWrite, openDropdownId, onTypeChange, onDropdownOpenChange } = params
@@ -97,39 +98,20 @@ export function buildContactColumns(params: BuildContactColumnsParams): ColumnsT
       render: (_: unknown, __: SponsorContactRow, index: number) => contactCount - index,
     },
     {
-      title: '담당자명',
-      dataIndex: 'name',
-      key: 'name',
-      width: TABLE_COLUMN_WIDTHS.name,
+      title: '부서',
+      dataIndex: 'department',
+      key: 'department',
+      width: 120,
       ellipsis: true,
+      render: (v: string) => v || '-',
     },
     {
-      title: '직급',
+      title: '직함',
       dataIndex: 'position',
       key: 'position',
       width: 100,
       ellipsis: true,
-    },
-    {
-      title: '연락처',
-      dataIndex: 'phone',
-      key: 'phone',
-      width: TABLE_COLUMN_WIDTHS.phone,
-      ellipsis: true,
-    },
-    {
-      title: '이메일',
-      dataIndex: 'email',
-      key: 'email',
-      width: TABLE_COLUMN_WIDTHS.email,
-      ellipsis: true,
-    },
-    {
-      title: '등록일시',
-      dataIndex: 'registeredAt',
-      key: 'registeredAt',
-      width: 170,
-      render: (v: string) => dayjs(v).format('YYYY.MM.DD HH:mm'),
+      render: (v: string) => v || '-',
     },
     {
       title: '담당자 유형',
@@ -148,6 +130,60 @@ export function buildContactColumns(params: BuildContactColumnsParams): ColumnsT
           onDropdownOpenChange={onDropdownOpenChange}
         />
       ),
+    },
+    {
+      title: '담당자명',
+      dataIndex: 'name',
+      key: 'name',
+      width: TABLE_COLUMN_WIDTHS.name,
+      ellipsis: true,
+    },
+    {
+      title: '내선번호',
+      dataIndex: 'officePhone',
+      key: 'officePhone',
+      width: TABLE_COLUMN_WIDTHS.phone,
+      ellipsis: true,
+      render: (v: string) => v || '-',
+    },
+    {
+      title: '연락처',
+      dataIndex: 'phone',
+      key: 'phone',
+      width: TABLE_COLUMN_WIDTHS.phone,
+      ellipsis: true,
+      render: (v: string) => v || '-',
+    },
+    {
+      title: '이메일',
+      dataIndex: 'email',
+      key: 'email',
+      width: TABLE_COLUMN_WIDTHS.email,
+      ellipsis: true,
+      render: (v: string) => v || '-',
+    },
+    {
+      title: '회사 주소',
+      dataIndex: 'companyAddress',
+      key: 'companyAddress',
+      width: 180,
+      ellipsis: true,
+      render: (v: string) => v || '-',
+    },
+    {
+      title: '비고',
+      dataIndex: 'memo',
+      key: 'memo',
+      width: 140,
+      ellipsis: true,
+      render: (v: string) => v || '-',
+    },
+    {
+      title: '등록일시',
+      dataIndex: 'registeredAt',
+      key: 'registeredAt',
+      width: 170,
+      render: (v: string) => (v ? dayjs(v).format('YYYY.MM.DD HH:mm') : '-'),
     },
   ]
 }

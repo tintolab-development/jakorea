@@ -44,6 +44,11 @@ export function memberRolesIncludeSchoolTeacher(roles: string[] | undefined): bo
   return (roles ?? []).some(r => r.trim().toUpperCase().replace(/-/g, '_') === 'SCHOOL_TEACHER')
 }
 
+/** 강사 권한 박탈 토큰 — `roles[]` SSOT */
+export function memberRolesIncludeInstructorRevoked(roles: string[] | undefined): boolean {
+  return (roles ?? []).some(r => r.trim().toUpperCase().replace(/-/g, '_') === 'INSTRUCTOR_REVOKED')
+}
+
 /** 서버 `roles[]`를 User에 보존 */
 export function copyMemberRoles(roles: string[] | undefined): string[] | undefined {
   if (!Array.isArray(roles) || roles.length === 0) return undefined

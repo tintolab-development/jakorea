@@ -33,6 +33,7 @@ export type AdminInquiryRow = {
   createdAt: string
   memberName: string
   programName: string | null
+  programId?: string
   assignee: string | null
   answeredAt: string | null
   /** 문의 본문 (mock) */

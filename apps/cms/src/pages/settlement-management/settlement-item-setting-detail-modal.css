@@ -263,6 +263,14 @@
   padding-top: 0;
 }
 
+/* 산출 내역서 등 read-only 산정 기준: 모달 타이틀 ↔ 본문(설명) 30px */
+.settlement-item-setting-detail-modal.settlement-item-setting-detail-modal--read-only.content-modal
+  .teal-header-modal__body:has(> .content-modal__description),
+.settlement-item-setting-detail-modal.settlement-item-setting-detail-modal--read-only.content-modal
+  .teal-header-modal__body:not(:has(> .content-modal__description)) {
+  padding-top: 30px;
+}
+
 /* 편집 가능 헤더 설명 — plain text description과 동일 슬롯, 내부 스타일은 전용 */
 .settlement-item-setting-detail-modal__header-description-slot.content-modal__description {
   margin: 0;
@@ -463,10 +471,43 @@
 }
 
 .settlement-item-setting-detail-modal__section-stack--tier1 > section,
-.settlement-item-setting-detail-modal__section-stack--special-lecture > section {
+.settlement-item-setting-detail-modal__section-stack--special-lecture > section,
+.settlement-item-setting-detail-modal__section-stack--gemini > section {
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+
+/* 제미나이: 산정 기준은 가로 표가 아니라 라벨·입력·원 세로 나열 */
+.settlement-item-setting-detail-modal__gemini-session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.settlement-item-setting-detail-modal__gemini-session-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.settlement-item-setting-detail-modal__gemini-session-label {
+  flex: 0 0 auto;
+  min-width: 48px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.settlement-item-setting-detail-modal--gemini
+  .settlement-item-setting-detail-modal__gemini-session-row
+  .cms-input__control
+  input.ant-input {
+  text-align: right;
 }
 
 /* 섹션 내부: 레이블 ↔ 컨트롤(산정 기준·자격·비고) 세로 간격 6px — 블록 간 간격은 body gap 30px */

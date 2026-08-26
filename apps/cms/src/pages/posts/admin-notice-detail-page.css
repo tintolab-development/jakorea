@@ -20,6 +20,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  gap: 32px;
   flex: 1;
   min-height: 0;
 }
@@ -27,7 +28,7 @@
 .admin-notice-detail-page__card {
   display: flex;
   /* Frame 1410117912: padding 24 24 32 24, 블록 간격 24 */
-  padding: 24px 24px 32px;
+  padding: 24px;
   flex-direction: column;
   align-items: flex-start;
   gap: 24px;
@@ -92,9 +93,30 @@
   line-height: 150%;
 }
 
-.admin-notice-detail-page__badge--public,
-.admin-notice-detail-page__badge--category {
+.admin-notice-detail-page__badge--public {
   background: var(--JA-mint-01, #01a1af);
+}
+
+.admin-notice-detail-page__category {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  word-break: break-word;
+  color: var(--JA-mint-01, #01a1af);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 24px */
+}
+
+.admin-notice-detail-page__section-divider {
+  margin: 0;
+  width: 100%;
+  height: 0;
+  border: 0;
+  border-top: 1px solid rgba(61, 61, 61, 0.12);
+  flex-shrink: 0;
 }
 
 .admin-notice-detail-page__badge--private {

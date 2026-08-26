@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   inferInstructorMemberProfileFromRoles,
+  memberRolesIncludeInstructorRevoked,
   memberRolesIncludeSchool,
   memberRolesIncludeSchoolTeacher,
   parseLegacyRoleFilterParam,
@@ -54,6 +55,17 @@ describe('memberRolesIncludeSchoolTeacher', () => {
     expect(memberRolesIncludeSchoolTeacher(['school_teacher'])).toBe(true)
     expect(memberRolesIncludeSchoolTeacher(['SCHOOL'])).toBe(false)
     expect(memberRolesIncludeSchoolTeacher(['INSTRUCTOR'])).toBe(false)
+  })
+})
+
+describe('memberRolesIncludeInstructorRevoked', () => {
+  it('INSTRUCTOR_REVOKED만 true', () => {
+    expect(memberRolesIncludeInstructorRevoked(['INSTRUCTOR_REVOKED'])).toBe(true)
+    expect(memberRolesIncludeInstructorRevoked(['SCHOOL_TEACHER', 'INSTRUCTOR_REVOKED'])).toBe(
+      true
+    )
+    expect(memberRolesIncludeInstructorRevoked(['INSTRUCTOR'])).toBe(false)
+    expect(memberRolesIncludeInstructorRevoked(undefined)).toBe(false)
   })
 })
 

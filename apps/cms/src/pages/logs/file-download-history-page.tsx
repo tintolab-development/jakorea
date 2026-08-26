@@ -8,6 +8,7 @@ import { fileDownloadHistoryTablePageConfig } from '@/features/download/model/fi
 import { getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
 import { useFileDownloadHistoryQuery } from '@/features/logs/hooks/use-file-download-history-query'
 import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
+import { LOGS_EMPTY_SEARCH_TEXT } from '@/features/logs/lib/logs-empty-copy'
 import { LogsQueryError } from '@/features/logs/ui/logs-query-error'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
@@ -15,6 +16,7 @@ import {
   useTablePage,
 } from '@/shared/components/table-system/model/use-table-page'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
+import { EmptyState } from '@/shared/ui'
 import type { DownloadLog } from '@/types/download-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -94,7 +96,7 @@ export default function FileDownloadHistoryPage() {
         key: 'downloadedAt',
         width: TABLE_COL_WIDTH.downloadedAt,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm'),
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
       },
       {
         title: 'IP',
@@ -142,6 +144,9 @@ export default function FileDownloadHistoryPage() {
             columns={columns}
             dataSource={tableData}
             pagination={false}
+            locale={{
+              emptyText: <EmptyState description={LOGS_EMPTY_SEARCH_TEXT} />,
+            }}
           />
           <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
         </>

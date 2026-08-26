@@ -5,6 +5,7 @@ import {
   fetchAccountPaymentDetailRemote,
   fetchAllAccountPaymentsRemote,
   fetchAllSettlementsRemote,
+  fetchSettlementDetailRemote,
 } from '@/features/settlement-management/api/settlement-api-client'
 import type { AccountPaymentRow, AccountPaymentStatusDetail } from '@/data/mock/account-payments-list'
 
@@ -25,6 +26,11 @@ export async function getAccountPaymentDetailRemote(
     throw new Error('계좌 지급 상세에 필요한 accountPaymentId가 없습니다.')
   }
 
-  const detail = await fetchAccountPaymentDetailRemote(paymentId)
-  return mapAccountPaymentDetailFromGetApi(row, detail)
+  const [detail, settlementFrontend] = await Promise.all([
+    fetchAccountPaymentDetailRemote(paymentId),
+    row.settlementId != null
+      ? fetchSettlementDetailRemote(row.settlementId)
+      : Promise.resolve(undefined),
+  ])
+  return mapAccountPaymentDetailFromGetApi(row, detail, settlementFrontend)
 }

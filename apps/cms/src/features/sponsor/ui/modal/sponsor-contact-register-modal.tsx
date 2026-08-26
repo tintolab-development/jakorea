@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { SponsorContactType } from '@/features/sponsor/model/sponsor-management.types'
@@ -14,9 +14,13 @@ import './sponsor-contact-register-modal.css'
 export interface SponsorContactRegisterPayload {
   contactType: SponsorContactType
   name: string
+  department: string
   position: string
+  officePhone: string
   phone: string
   email: string
+  companyAddress: string
+  memo: string
 }
 
 interface SponsorContactRegisterModalProps {
@@ -25,6 +29,35 @@ interface SponsorContactRegisterModalProps {
   onSubmit: (payload: SponsorContactRegisterPayload) => void | Promise<void>
   /** 기존 담당자가 없을 때는 주 담당자만 등록 가능 */
   existingContactCount?: number
+}
+
+function Field({
+  id,
+  label,
+  required,
+  error,
+  children,
+}: {
+  id: string
+  label: string
+  required?: boolean
+  error?: string
+  children: ReactNode
+}) {
+  return (
+    <div className="sponsor-contact-register-modal__field">
+      <label className="sponsor-contact-register-modal__label" htmlFor={id}>
+        {label}
+        {required ? <span className="sponsor-contact-register-modal__required"> *</span> : null}
+      </label>
+      {children}
+      {error ? (
+        <span className="sponsor-contact-register-modal__error" role="alert">
+          {error}
+        </span>
+      ) : null}
+    </div>
+  )
 }
 
 export function SponsorContactRegisterModal({
@@ -97,10 +130,7 @@ export function SponsorContactRegisterModal({
         }}
         noValidate
       >
-        <div className="sponsor-contact-register-modal__field">
-          <label className="sponsor-contact-register-modal__label" htmlFor="sponsor-contact-type">
-            담당자 유형
-          </label>
+        <Field id="sponsor-contact-type" label="담당자 유형" error={errors.contactType?.message}>
           <Controller
             name="contactType"
             control={control}
@@ -116,17 +146,9 @@ export function SponsorContactRegisterModal({
               />
             )}
           />
-          {errors.contactType?.message ? (
-            <span className="sponsor-contact-register-modal__error" role="alert">
-              {errors.contactType.message}
-            </span>
-          ) : null}
-        </div>
+        </Field>
 
-        <div className="sponsor-contact-register-modal__field">
-          <label className="sponsor-contact-register-modal__label" htmlFor="sponsor-contact-name">
-            담당자명 <span className="sponsor-contact-register-modal__required">*</span>
-          </label>
+        <Field id="sponsor-contact-name" label="담당자명" required error={errors.name?.message}>
           <Controller
             name="name"
             control={control}
@@ -141,17 +163,26 @@ export function SponsorContactRegisterModal({
               />
             )}
           />
-          {errors.name?.message ? (
-            <span className="sponsor-contact-register-modal__error" role="alert">
-              {errors.name.message}
-            </span>
-          ) : null}
-        </div>
+        </Field>
 
-        <div className="sponsor-contact-register-modal__field">
-          <label className="sponsor-contact-register-modal__label" htmlFor="sponsor-contact-position">
-            직급
-          </label>
+        <Field id="sponsor-contact-department" label="부서" error={errors.department?.message}>
+          <Controller
+            name="department"
+            control={control}
+            render={({ field, fieldState }) => (
+              <CmsInput
+                {...field}
+                id="sponsor-contact-department"
+                placeholder="부서를 입력해 주세요."
+                inputSize="large"
+                width="100%"
+                status={fieldState.error ? 'error' : undefined}
+              />
+            )}
+          />
+        </Field>
+
+        <Field id="sponsor-contact-position" label="직함" error={errors.position?.message}>
           <Controller
             name="position"
             control={control}
@@ -159,24 +190,33 @@ export function SponsorContactRegisterModal({
               <CmsInput
                 {...field}
                 id="sponsor-contact-position"
-                placeholder="직급을 입력해 주세요."
+                placeholder="직함을 입력해 주세요."
                 inputSize="large"
                 width="100%"
                 status={fieldState.error ? 'error' : undefined}
               />
             )}
           />
-          {errors.position?.message ? (
-            <span className="sponsor-contact-register-modal__error" role="alert">
-              {errors.position.message}
-            </span>
-          ) : null}
-        </div>
+        </Field>
 
-        <div className="sponsor-contact-register-modal__field">
-          <label className="sponsor-contact-register-modal__label" htmlFor="sponsor-contact-phone">
-            연락처
-          </label>
+        <Field id="sponsor-contact-office-phone" label="내선 번호" error={errors.officePhone?.message}>
+          <Controller
+            name="officePhone"
+            control={control}
+            render={({ field, fieldState }) => (
+              <CmsPhoneInput
+                {...field}
+                id="sponsor-contact-office-phone"
+                placeholder="내선 번호를 입력해 주세요."
+                inputSize="large"
+                width="100%"
+                status={fieldState.error ? 'error' : undefined}
+              />
+            )}
+          />
+        </Field>
+
+        <Field id="sponsor-contact-phone" label="연락처" error={errors.phone?.message}>
           <Controller
             name="phone"
             control={control}
@@ -191,17 +231,9 @@ export function SponsorContactRegisterModal({
               />
             )}
           />
-          {errors.phone?.message ? (
-            <span className="sponsor-contact-register-modal__error" role="alert">
-              {errors.phone.message}
-            </span>
-          ) : null}
-        </div>
+        </Field>
 
-        <div className="sponsor-contact-register-modal__field">
-          <label className="sponsor-contact-register-modal__label" htmlFor="sponsor-contact-email">
-            이메일
-          </label>
+        <Field id="sponsor-contact-email" label="이메일" error={errors.email?.message}>
           <Controller
             name="email"
             control={control}
@@ -216,12 +248,45 @@ export function SponsorContactRegisterModal({
               />
             )}
           />
-          {errors.email?.message ? (
-            <span className="sponsor-contact-register-modal__error" role="alert">
-              {errors.email.message}
-            </span>
-          ) : null}
-        </div>
+        </Field>
+
+        <Field
+          id="sponsor-contact-company-address"
+          label="회사 주소"
+          error={errors.companyAddress?.message}
+        >
+          <Controller
+            name="companyAddress"
+            control={control}
+            render={({ field, fieldState }) => (
+              <CmsInput
+                {...field}
+                id="sponsor-contact-company-address"
+                placeholder="회사 주소를 입력해 주세요."
+                inputSize="large"
+                width="100%"
+                status={fieldState.error ? 'error' : undefined}
+              />
+            )}
+          />
+        </Field>
+
+        <Field id="sponsor-contact-memo" label="비고" error={errors.memo?.message}>
+          <Controller
+            name="memo"
+            control={control}
+            render={({ field, fieldState }) => (
+              <CmsInput
+                {...field}
+                id="sponsor-contact-memo"
+                placeholder="비고를 입력해 주세요."
+                inputSize="large"
+                width="100%"
+                status={fieldState.error ? 'error' : undefined}
+              />
+            )}
+          />
+        </Field>
       </form>
     </ContentModal>
   )

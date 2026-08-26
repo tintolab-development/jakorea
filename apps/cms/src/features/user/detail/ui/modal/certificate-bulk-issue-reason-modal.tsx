@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE, CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -33,8 +33,8 @@ export interface CertificateBulkIssueReasonModalProps {
   applicationIds: readonly string[]
   /** 제목·설명에 들어가는 발급 문서명 (기본: 수료증/참여인증서) */
   certificateDocumentLabel?: string
-  /** 지정 시 발급 클릭 후 사유와 함께 호출 (미지정 시 준비 중 안내) */
-  onIssue?: (reason: CertificateIssueReasonValue, reasonLabel: string) => void
+  /** 지정 시 발급 클릭 후 사유와 함께 호출 */
+  onIssue: (reason: CertificateIssueReasonValue, reasonLabel: string) => void
 }
 
 export function CertificateBulkIssueReasonModal({
@@ -62,13 +62,8 @@ export function CertificateBulkIssueReasonModal({
       showAlert({ title: '안내', content: CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE })
       return
     }
-    if (onIssue != null) {
-      onIssue(reason as CertificateIssueReasonValue, reasonLabel)
-      onCancel()
-      return
-    }
+    onIssue(reason as CertificateIssueReasonValue, reasonLabel)
     onCancel()
-    showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
   }
 
   return (

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { getSponsorList } from '@/features/sponsor/api/admin-sponsors-service'
 import { serializeSponsorListFilters } from '@/features/sponsor/api/sponsor-filter-params'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
@@ -13,6 +13,7 @@ export function useSponsorListQuery(searchParams: URLSearchParams, enabled = tru
     queryFn: () => getSponsorList(new URLSearchParams(listFilterKey)),
     enabled: remoteEnabled,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
     retry: false,
   })
 }

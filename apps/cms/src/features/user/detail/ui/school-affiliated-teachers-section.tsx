@@ -9,17 +9,19 @@ import type { AffiliatedTeacherLinkTarget, SchoolAffiliatedTeacherRow, SchoolTea
 import { CmsButton } from '@/shared/ui'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
-import { formatDate } from '@/shared/utils'
+import { formatDateSpaced } from '@/shared/utils'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
   SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
   SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS,
+  isSchoolTeacherEmploymentMutedStatus,
   SchoolTeacherEmploymentStatusBadge,
 } from '@/features/user/detail/lib/school-teacher-employment-status'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
   STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
 } from '@/shared/components'
 import './school-affiliated-teachers-section.css'
 
@@ -132,23 +134,23 @@ export function SchoolAffiliatedTeachersSection({
         key: 'employmentStatus',
         width: 116,
         align: 'center',
+        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
         onCell: () => ({
           className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+          onClick: (e: React.MouseEvent<HTMLTableCellElement>) => e.stopPropagation(),
         }),
         render: (_: unknown, record: Row) => (
-          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
-            <StatusDropdownCell<SchoolTeacherEmploymentStatus>
-              status={record.employmentStatus}
-              statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
-              renderBadge={s => <SchoolTeacherEmploymentStatusBadge status={s} />}
-              isItemDisabled={(cur, opt) => cur === opt}
-              onChange={next => handleEmploymentStatusChange(record.id, next)}
-              isOpen={openEmploymentDropdownId === record.id}
-              onOpenChange={open => setOpenEmploymentDropdownId(open ? record.id : null)}
-              style={SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE}
-              tagLayout="tag100"
-            />
-          </div>
+          <StatusDropdownCell<SchoolTeacherEmploymentStatus>
+            status={record.employmentStatus}
+            statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
+            renderBadge={s => <SchoolTeacherEmploymentStatusBadge status={s} />}
+            isItemDisabled={(cur, opt) => cur === opt}
+            onChange={next => handleEmploymentStatusChange(record.id, next)}
+            isOpen={openEmploymentDropdownId === record.id}
+            onOpenChange={open => setOpenEmploymentDropdownId(open ? record.id : null)}
+            style={SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE}
+            tagLayout="tag100"
+          />
         ),
       },
       {
@@ -157,7 +159,7 @@ export function SchoolAffiliatedTeachersSection({
         key: 'joinedAt',
         width: TABLE_COLUMN_WIDTHS.date,
         align: 'center',
-        render: (d: Row['joinedAt']) => formatDate(d),
+        render: (d: Row['joinedAt']) => formatDateSpaced(d),
       },
     ],
     [rows.length, openEmploymentDropdownId, handleEmploymentStatusChange, personalInfoRevealed]
@@ -190,7 +192,7 @@ export function SchoolAffiliatedTeachersSection({
         <div className="school-affiliated-teachers-section__header-end">
           <CmsButton
             variant="delete"
-            size="large" width={160}
+            size="medium"
             disabled={selectedRowKeys.length === 0}
             onClick={handleWithdraw}
           >
@@ -202,7 +204,7 @@ export function SchoolAffiliatedTeachersSection({
         <DetailInfoForm.Row type="custom">
           <div className="school-affiliated-teachers-section__body">
             <Table
-              className="cms-data-table cms-data-table--fluid"
+              className="cms-data-table cms-data-table--fluid school-affiliated-teachers-section__table"
               rowSelection={{
                 columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                 selectedRowKeys,
@@ -216,6 +218,9 @@ export function SchoolAffiliatedTeachersSection({
               scroll={TABLE_CONFIG.scroll}
               rowKey="id"
               onRow={record => ({
+                className: isSchoolTeacherEmploymentMutedStatus(record.employmentStatus)
+                  ? 'school-affiliated-teachers-section__row--muted-text'
+                  : undefined,
                 onClick: e => {
                   if (isCheckboxClickTarget(e.target)) return
                   handleRowClick(record)

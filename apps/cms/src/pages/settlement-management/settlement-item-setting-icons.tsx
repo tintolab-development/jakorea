@@ -166,7 +166,7 @@ function IconWageTier3() {
   return <IconMedalWage mainFill="#945327" />
 }
 
-function IconSpecialLecture() {
+function IconSpecialLecture({ fill = '#FFCD00' }: { fill?: string }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -178,7 +178,37 @@ function IconSpecialLecture() {
     >
       <path
         d="M21.8737 3.63057L25.6547 11.2916C25.9587 11.9086 26.5477 12.3356 27.2277 12.4346L35.6827 13.6636C37.3967 13.9126 38.0807 16.0186 36.8407 17.2276L30.7227 23.1906C30.2307 23.6706 30.0057 24.3626 30.1217 25.0406L31.5657 33.4606C31.8587 35.1676 30.0667 36.4696 28.5337 35.6636L20.9717 31.6876C20.3627 31.3676 19.6357 31.3676 19.0267 31.6876L11.4647 35.6636C9.93168 36.4696 8.13968 35.1676 8.43268 33.4606L9.87668 25.0406C9.99268 24.3626 9.76868 23.6716 9.27568 23.1906L3.15768 17.2276C1.91768 16.0186 2.60168 13.9126 4.31568 13.6636L12.7707 12.4346C13.4517 12.3356 14.0397 11.9086 14.3437 11.2916L18.1247 3.63057C18.8907 2.07757 21.1057 2.07757 21.8727 3.63057H21.8737Z"
-        fill="#FFCD00"
+        fill={fill}
+      />
+    </svg>
+  )
+}
+
+function IconOtherLabor() {
+  return <IconSpecialLecture fill="#FFDC42" />
+}
+
+function IconGemini() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={40}
+      height={40}
+      viewBox="0 0 40 40"
+      fill="none"
+      aria-hidden
+    >
+      <path
+        d="M20 6.5L21.85 14.15L29.5 16L21.85 17.85L20 25.5L18.15 17.85L10.5 16L18.15 14.15L20 6.5Z"
+        fill="#7B61FF"
+      />
+      <path
+        d="M29.5 22.5L30.45 26.3L34.25 27.25L30.45 28.2L29.5 32L28.55 28.2L24.75 27.25L28.55 26.3L29.5 22.5Z"
+        fill="#B9A8FF"
+      />
+      <path
+        d="M11.5 21L12.2 23.8L15 24.5L12.2 25.2L11.5 28L10.8 25.2L8 24.5L10.8 23.8L11.5 21Z"
+        fill="#B9A8FF"
       />
     </svg>
   )
@@ -623,6 +653,10 @@ export function SettlementItemSettingIcon({ iconKey }: { iconKey: SettlementItem
       return <IconWageTier3 />
     case 'wage_special_lecture':
       return <IconSpecialLecture />
+    case 'wage_other_labor':
+      return <IconOtherLabor />
+    case 'wage_gemini':
+      return <IconGemini />
     case 'wage_assistant':
       return <IconAssistant />
     case 'wage_multi_instructor':
@@ -637,6 +671,7 @@ export function SettlementItemSettingIcon({ iconKey }: { iconKey: SettlementItem
       return <IconMeal />
     case 'pay_meeting':
       return <IconMeeting />
+    case 'pay_activity':
     case 'pay_volunteer':
       return <IconVolunteer />
     case 'deduct_business_33':

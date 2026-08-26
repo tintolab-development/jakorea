@@ -9,7 +9,10 @@ import {
   AllUsersSection,
 } from './user-basic-info/sections/all-users-section'
 import { InstitutionSection } from './user-basic-info/sections/institution-section'
-import { SchoolTeacherSection } from './user-basic-info/sections/school-teacher-section'
+import {
+  SchoolTeacherMetaSection,
+  SchoolTeacherProfileSection,
+} from './user-basic-info/sections/school-teacher-section'
 import { InstructorMetaSection, InstructorSection } from './user-basic-info/sections/instructor-section'
 
 export type BasicInfoSectionRenderContext = BasicInfoSectionContext
@@ -28,6 +31,8 @@ export function renderResolvedBasicInfoSections({
         metaSection === BasicInfoSectionTypes.META ? (
           resolution.splitSectionVariant === 'all_users' ? (
             <AllUsersMetaSection {...shared} />
+          ) : resolution.splitSectionVariant === 'school_teacher' ? (
+            <SchoolTeacherMetaSection {...shared} />
           ) : (
             <InstructorMetaSection {...shared} />
           )
@@ -36,6 +41,8 @@ export function renderResolvedBasicInfoSections({
         profileSection === BasicInfoSectionTypes.PROFILE ? (
           resolution.splitSectionVariant === 'all_users' ? (
             <AllUsersSection {...shared} />
+          ) : resolution.splitSectionVariant === 'school_teacher' ? (
+            <SchoolTeacherProfileSection {...shared} />
           ) : (
             <InstructorSection {...shared} />
           )
@@ -50,8 +57,6 @@ export function renderResolvedBasicInfoSections({
         <AllUsersSection {...shared} />
       ) : section === BasicInfoSectionTypes.INSTITUTION ? (
         <InstitutionSection {...shared} />
-      ) : section === BasicInfoSectionTypes.SCHOOL_TEACHER ? (
-        <SchoolTeacherSection {...shared} />
       ) : null,
   }
 }

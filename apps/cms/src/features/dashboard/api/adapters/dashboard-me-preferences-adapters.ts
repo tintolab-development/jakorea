@@ -3,6 +3,7 @@
  */
 import type { DashboardMePreferencesRequest } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesRequest'
 import type { DashboardMePreferencesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesResponse'
+import { parseAssignedProgramTypes } from '@/data/mock/program-schedule-keys'
 import { useDashboardSettingsStore } from '@/features/dashboard/model/dashboard-settings-store'
 import {
   stripRemovedDashboardWidgetIds,
@@ -79,6 +80,11 @@ export function applyMeDashboardPreferencesResponse(
   role: UserRole
 ): void {
   cachedRevision = dto.revision
+  if (Object.prototype.hasOwnProperty.call(dto, 'assignedProgramTypes')) {
+    useDashboardSettingsStore
+      .getState()
+      .setAssignedProgramTypes(parseAssignedProgramTypes(dto.assignedProgramTypes))
+  }
 
   const settings = dto.settings
   if (settings) {

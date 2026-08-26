@@ -2,24 +2,24 @@ import type { ConsentValue } from '@jakorea/domain/instructor/consent'
 import {
   type PlatformConsentFillOptions,
 } from '@jakorea/form-schema/consent'
-import type {
-  HorizontalTableParagraph,
-  IdTypeWithInputParagraph,
-  MultipleChoiceParagraph,
-  TableBottomConsent,
-  WritingFormParagraph,
+import {
+  AGREEMENT_NOTICE_PARAGRAPH_IDS,
+  type HorizontalTableParagraph,
+  type MultipleChoiceParagraph,
+  type TableBottomConsent,
+  type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import {
   PFFormField,
   PFFormFieldRow,
   PFFormFieldTable,
-  PFSelect,
   PFText,
   PFTextInput,
 } from '@/shared/ui'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { ConsentWriteRadioGroup } from './consent-radio'
 import { ConsentInfoTable } from './info-table'
+import { PlatformIdTypeWithInputFields } from './id-type-with-input-fields'
 import { resolveHorizontalTablePlatformView } from './horizontal-table-from-schema'
 import styles from './consent-form.module.css'
 
@@ -40,67 +40,6 @@ function resolveMultipleChoiceConsent(paragraph: MultipleChoiceParagraph): Conse
   return 'agree'
 }
 
-function resolveIdTypePlaceholder(paragraph: IdTypeWithInputParagraph, selectedId: string | null): string {
-  const placeholders: Record<string, string> = {
-    'agreement-notice-id-resident': '주민등록번호를 입력해 주세요',
-    'agreement-notice-id-passport': '여권번호를 입력해 주세요',
-    'agreement-notice-id-driver': '운전면허번호를 입력해 주세요',
-    'agreement-notice-id-alien': '외국인등록번호를 입력해 주세요',
-  }
-  if (selectedId != null && placeholders[selectedId]) return placeholders[selectedId]
-  return paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요'
-}
-
-function PlatformIdTypeWithInput({
-  paragraph,
-  onChange,
-}: {
-  paragraph: IdTypeWithInputParagraph
-  onChange: (next: IdTypeWithInputParagraph) => void
-}) {
-  const options = paragraph.options?.length ? paragraph.options : []
-  const selectedId =
-    paragraph.selectedOptionId != null && options.some(o => o.id === paragraph.selectedOptionId)
-      ? paragraph.selectedOptionId
-      : (options[0]?.id ?? '')
-  const selectOptions = options.map(opt => ({ value: opt.id, label: opt.label }))
-  const placeholder = resolveIdTypePlaceholder(paragraph, selectedId)
-
-  return (
-    <PFFormFieldTable>
-      <PFFormFieldRow type="double">
-        <PFFormField label="식별번호 종류" required>
-          <PFSelect
-            variant="formPage"
-            size="large"
-            options={selectOptions}
-            value={selectedId}
-            onValueChange={value => {
-              onChange({
-                ...paragraph,
-                selectedOptionId: value,
-                inputPlaceholder: resolveIdTypePlaceholder(paragraph, value),
-                inputValue: '',
-              })
-            }}
-          />
-        </PFFormField>
-        <PFFormField label="식별번호" required>
-          <PFTextInput
-            variant="formPage"
-            size="large"
-            placeholder={placeholder}
-            value={paragraph.inputValue}
-            onValueChange={value =>
-              onChange({ ...paragraph, inputValue: value, inputPlaceholder: placeholder })
-            }
-          />
-        </PFFormField>
-      </PFFormFieldRow>
-    </PFFormFieldTable>
-  )
-}
-
 function PlatformHorizontalTableBody({
   paragraph,
   onUpdateParagraph,
@@ -113,7 +52,12 @@ function PlatformHorizontalTableBody({
 
   return (
     <div className={styles.tableBlock}>
-      <ConsentInfoTable headers={headers} rows={rows} emphasizedColumns={emphasizedColumns} />
+      <ConsentInfoTable
+        headers={headers}
+        rows={rows}
+        emphasizedColumns={emphasizedColumns}
+        hideEmptyPairs={paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.table}
+      />
       {paragraph.showBottomText || paragraph.showBottomConsent || idType != null ? (
         <div className={styles.tableAfter}>
           {paragraph.showBottomText && paragraph.bottomText ? (
@@ -133,8 +77,9 @@ function PlatformHorizontalTableBody({
             />
           ) : null}
           {idType != null ? (
-            <PlatformIdTypeWithInput
+            <PlatformIdTypeWithInputFields
               paragraph={idType}
+              lockResidentIdType={paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.table}
               onChange={next =>
                 onUpdateParagraph(paragraph.id, current =>
                   current.kind === 'single_item' && current.variant === 'horizontal_table'
@@ -312,10 +257,8 @@ export function PlatformConsentParagraphBody({
 
   if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
     return (
-      <div className={styles.closingCard}>
-        <PFText as="p" typo="bd-md-rg" color="black" className={styles.prose}>
-          {paragraph.body}
-        </PFText>
+      <div className={styles.closingRecipient}>
+        <p className={styles.closingRecipientText}>{paragraph.body}</p>
       </div>
     )
   }

@@ -8,7 +8,9 @@ OpenAPI/생성 클라이언트에 **multi-ID bulk DELETE는 없으며**, FE는 �
 | 작성일 | 2026-07-21 |
 | 범위 | `apps/cms` 목록·상세 하위 테이블 (폼 에디터 UX·정산 승인 등 비삭제 selection 제외) |
 | 목적 | 엔티티별 bulk DELETE(또는 soft-delete) API 신설·계약 확정 |
-| 관련 | [backend-handoff.md](./backend-handoff.md) · [cms-table-bulk-approve-api-backend-handoff.md](./cms-table-bulk-approve-api-backend-handoff.md) · [cms-table-bulk-download-api-backend-handoff.md](./cms-table-bulk-download-api-backend-handoff.md) · [programs-gemini-performance-api-backend-handoff.md](./programs-gemini-performance-api-backend-handoff.md) · [data-management-api-integration.md](./data-management-api-integration.md) |
+| 관련 | [backend-handoff.md](./backend-handoff.md) · [cms-table-bulk-approve-api-backend-handoff.md](./cms-table-bulk-approve-api-backend-handoff.md) · [cms-table-bulk-download-api-backend-handoff.md](./cms-table-bulk-download-api-backend-handoff.md) · [programs-gemini-performance-api-backend-handoff.md](./programs-gemini-performance-api-backend-handoff.md) · [data-management-api-backend-gaps.md](./data-management-api-backend-gaps.md) |
+
+> **회원 상세 BE 전달:** 본 문서는 [members/README.md §필수 묶음](./members/README.md#회원-상세-이력정산--백엔드-전달-필수-묶음) **#7** 로 포함됩니다. 회원 상세 관련 항목 — §5.1 **#14** (회원 프로그램 이력 bulk-delete · ADM-007 = **#15** 관리자 담당 이력).
 
 ---
 
@@ -130,7 +132,7 @@ Bulk는 위 리소스의 **동일 권한·동일 soft/hard delete 의미**를 �
 | # | 화면 | FE 파일 | 현재 FE | 백엔드 요청 |
 |---|------|---------|---------|-------------|
 | 14 | 회원 상세 — 프로그램 수강/강의/봉사 이력 | `features/user/detail/ui/member-program-lecture-history.tsx` | `이력 삭제` + selection. 단건 history DELETE는 OpenAPI에 있음. 학교 참여 뷰 `onBulkDelete` **no-op** | application / program-history **일괄 삭제** |
-| 15 | 관리자 상세 — 담당 프로그램 이력 | `features/user/detail/ui/admin-managed-program-history.tsx` | 단건 `deleteMemberAdminProgramRemote` **N회** | admin-programs **일괄 삭제** |
+| 15 | 관리자 상세 — 담당 프로그램 이력 | `admin-managed-program-history.tsx` | `이력 삭제` | 단건 DELETE **✅** (`adminAccountId` path) · [ADM-002~005 스키마](./members/admin-member-managed-program-history-backend-handoff-2026-08-25.md) **BE 대기** | admin-programs **일괄 삭제** |
 | 16 | 학교 상세 — 소속 교사 | `features/user/detail/ui/school-affiliated-teachers-section.tsx` | `회원 탈퇴` UI만, **「준비 중입니다」 stub** | 소속 교사 일괄 탈퇴/삭제 (**정책 확정 후**) |
 | 19 | 프로그램 상세 — 담당자 탭 | `features/program/general/ui/detail-modal/managers/program-managers-tab.tsx` | **local state만** (mock) | 프로그램 담당자 **일괄 해제/삭제** |
 | 20 | 프로그램 진행 현황 — 참여 학교 | `…/program-status/program-progress-tab.tsx` | local list filter | 참여 기관 **일괄 삭제/제외** |

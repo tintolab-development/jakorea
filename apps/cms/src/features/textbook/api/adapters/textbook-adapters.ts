@@ -1,5 +1,19 @@
-import type { TextbookCreateInput, TextbookRow, TextbookEducationStage, TextbookEducationStageKey } from '@/features/textbook/model/textbook.types'
-import { normalizeEducationStages, getStageOptionLabels } from '@/features/textbook/lib/textbook-education-stages'
+import type {
+  TextbookCreateInput,
+  TextbookRow,
+  TextbookEducationStage,
+  TextbookEducationStageKey,
+} from '@/features/textbook/model/textbook.types'
+import {
+  getStageAllLabel,
+  getStageOptionLabels,
+  normalizeEducationStages,
+  normalizeEducationTargetLabel,
+  normalizeGradeToken,
+  resolveSelectedGradeLabels,
+  summarizeEducationStages,
+  toEducationStageKey,
+} from '@/features/textbook/lib/textbook-education-stages'
 import type {
   EducationStageDto,
   PageResponseTextbookResponse,
@@ -19,29 +33,7 @@ const STAGE_KEY_LABELS: Record<TextbookEducationStageKey, string> = {
 }
 
 function parseStageKey(stage: string | undefined): TextbookEducationStageKey {
-  if (
-    stage === 'kindergarten' ||
-    stage === 'elementary' ||
-    stage === 'middle' ||
-    stage === 'high' ||
-    stage === 'university'
-  ) {
-    return stage
-  }
-  switch (stage) {
-    case '유아':
-      return 'kindergarten'
-    case '초등학교':
-      return 'elementary'
-    case '중학교':
-      return 'middle'
-    case '고등학교':
-      return 'high'
-    case '대학교':
-      return 'university'
-    default:
-      return 'elementary'
-  }
+  return toEducationStageKey(stage ?? '') ?? 'elementary'
 }
 
 function mapEducationStagesFromDto(dtos?: EducationStageDto[]): TextbookEducationStage[] {
@@ -65,20 +57,40 @@ function resolveDtoGradeLabels(
   dto: EducationStageDto,
   stageKey: TextbookEducationStageKey
 ): string[] {
-  if (dto.grades?.length) return dto.grades
+  if (dto.grades?.length) {
+    const normalized = dto.grades.flatMap(raw => {
+      const asAll = normalizeGradeToken(stageKey, raw)
+      if (asAll === getStageAllLabel(stageKey)) {
+        return [...getStageOptionLabels(stageKey)]
+      }
+      const fromRange = [...resolveSelectedGradeLabels(stageKey, raw)]
+      if (fromRange.length > 0) return fromRange
+      const single = normalizeGradeToken(stageKey, raw)
+      return single && single !== getStageAllLabel(stageKey) ? [single] : []
+    })
+    return [...new Set(normalized)]
+  }
 
   const optionLabels = [...getStageOptionLabels(stageKey)]
   if (dto.gradeFrom && dto.gradeTo && dto.gradeFrom !== dto.gradeTo) {
-    const fromIndex = optionLabels.indexOf(dto.gradeFrom)
-    const toIndex = optionLabels.indexOf(dto.gradeTo)
+    const fromLabel = normalizeGradeToken(stageKey, dto.gradeFrom) ?? dto.gradeFrom
+    const toLabel = normalizeGradeToken(stageKey, dto.gradeTo) ?? dto.gradeTo
+    const fromIndex = optionLabels.indexOf(fromLabel)
+    const toIndex = optionLabels.indexOf(toLabel)
     if (fromIndex >= 0 && toIndex >= 0) {
       const start = Math.min(fromIndex, toIndex)
       const end = Math.max(fromIndex, toIndex)
       return optionLabels.slice(start, end + 1)
     }
+    return [...resolveSelectedGradeLabels(stageKey, `${dto.gradeFrom}-${dto.gradeTo}`)]
   }
 
-  if (dto.gradeFrom) return [dto.gradeFrom]
+  if (dto.gradeFrom) {
+    const single = normalizeGradeToken(stageKey, dto.gradeFrom)
+    if (single === getStageAllLabel(stageKey)) return optionLabels
+    if (single) return [single]
+    return [...resolveSelectedGradeLabels(stageKey, dto.gradeFrom)]
+  }
   return []
 }
 
@@ -96,21 +108,52 @@ function toEducationStageDtos(stages?: TextbookEducationStage[]): EducationStage
   }))
 }
 
+function normalizeSummaryGrade(
+  educationTarget: string,
+  grade: string
+): string {
+  const stageKey = toEducationStageKey(educationTarget)
+  if (!stageKey || !grade.trim()) return grade
+  const selected = resolveSelectedGradeLabels(stageKey, grade)
+  if (selected.size === 0) return grade
+  const options = getStageOptionLabels(stageKey)
+  if (options.length > 0 && selected.size === options.length) {
+    return getStageAllLabel(stageKey)
+  }
+  if (selected.size === 1) return [...selected][0] ?? grade
+  const ordered = options.filter(label => selected.has(label))
+  if (ordered.length >= 2) {
+    return `${ordered[0]?.replace('학년', '')}-${ordered.at(-1)?.replace('학년', '')}`
+  }
+  return grade
+}
+
 export function mapTextbookResponse(dto: TextbookResponse): TextbookRow {
-  const educationTarget = (dto.educationTarget ?? '') as TextbookEducationTarget
-  const grade = dto.grade ?? ''
+  const rawTarget = dto.educationTarget ?? ''
+  const rawGrade = dto.grade ?? ''
+  const educationTarget =
+    normalizeEducationTargetLabel(rawTarget) ||
+    (rawTarget as TextbookEducationTarget | '')
+  const educationStages = normalizeEducationStages(
+    mapEducationStagesFromDto(dto.educationStages),
+    educationTarget || rawTarget,
+    rawGrade
+  )
+  const summary = summarizeEducationStages(educationStages)
+  const hasSelection = educationStages.some(
+    stage => stage.selected || (stage.grades?.some(grade => grade.selected) ?? false)
+  )
+
   return {
     id: dto.id ?? '',
     businessArea: (dto.businessArea ?? '') as TextbookBusinessArea,
-    educationTarget,
-    grade,
+    educationTarget: (hasSelection ? summary.educationTarget : educationTarget) as TextbookEducationTarget,
+    grade: hasSelection
+      ? summary.grade
+      : normalizeSummaryGrade(educationTarget || rawTarget, rawGrade),
     textbookName: dto.textbookName ?? '',
     textbookNameEn: dto.textbookNameEn ?? '',
-    educationStages: normalizeEducationStages(
-      mapEducationStagesFromDto(dto.educationStages),
-      educationTarget,
-      grade
-    ),
+    educationStages,
     useStatus: (dto.useStatus === 'UNUSED' ? 'UNUSED' : 'USED') as TextbookRow['useStatus'],
     registrant: dto.registrant ?? '-',
     registeredAt: dto.registeredAt ?? '',
@@ -122,10 +165,13 @@ export function mapTextbookListResponse(dto: PageResponseTextbookResponse): Text
 }
 
 export function mapTextbookMatchResponse(dto: TextbookMatchResponse): TextbookRow {
+  const educationTarget =
+    normalizeEducationTargetLabel(dto.educationTarget ?? '') ||
+    ((dto.educationTarget ?? '') as TextbookEducationTarget)
   return {
     id: dto.id ?? '',
     businessArea: (dto.businessArea ?? '') as TextbookBusinessArea,
-    educationTarget: (dto.educationTarget ?? '') as TextbookEducationTarget,
+    educationTarget,
     grade: dto.grade ?? '',
     textbookName: dto.textbookName ?? '',
     textbookNameEn: dto.textbookNameEn ?? '',

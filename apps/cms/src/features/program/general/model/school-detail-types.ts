@@ -206,6 +206,8 @@ export interface AssignmentSubmissionTableRow {
   lectureProgress: LectureProgressDisplayKey
   submissionStatus: AssignmentSubmissionRowStatusKey
   canViewAssignment: boolean
+  /** REQ-010 — BE `submissionFileIds[]` 연동 시 단건 download */
+  submissionFileIds?: number[]
 }
 
 export interface AssignmentSubmissionDetail {

@@ -5,6 +5,7 @@ import {
   instructorCmsProfileToFormValues,
   instructorProfileFormValuesToCmsProfile,
   instructorProfileFormValuesToCmsSettlement,
+  mergeInstructorGradesFromCreateRequestIntoUser,
   toApiInstructorCmsProfile,
   toApiInstructorCmsSettlement,
 } from '@/features/user/api/map-instructor-cms-profile'
@@ -169,6 +170,30 @@ describe('map-instructor-cms-profile', () => {
 
     const back = instructorCmsProfileToFormValues(profile)
     expect(back.jaEvaluationGrade).toBe('B')
+  })
+
+  it('mergeInstructorGradesFromCreateRequestIntoUser — BE 상세에 등급 없을 때 요청 profile로 보강', () => {
+    const profile = instructorProfileFormValuesToCmsProfile({
+      ...INITIAL_VALUES,
+      instructorFeeGrade: '2급 강사비',
+      jaEvaluationGrade: 'C',
+    })
+    const merged = mergeInstructorGradesFromCreateRequestIntoUser(
+      {
+        id: 'member-1',
+        email: 'a@b.c',
+        name: '강사',
+        role: 'INSTRUCTOR',
+        isActive: true,
+        createdAt: '',
+        updatedAt: '',
+      },
+      profile
+    )
+    expect(merged.listMetrics?.jaEvaluationGrade).toBe('C')
+    expect(merged.listMetrics?.instructorFeeGradeLabel).toBe('2급 강사비')
+    expect(merged.instructorCmsProfile?.defaultJaGrade).toBe('C')
+    expect(merged.instructorCmsProfile?.defaultFeeGrade).toBe('2급 강사비')
   })
 
   it('교사 유형 학교 검색값은 affiliation.schoolSelection에 담는다', () => {

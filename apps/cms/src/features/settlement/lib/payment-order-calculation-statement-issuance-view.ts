@@ -20,11 +20,18 @@ import {
 import type { AccountPaymentStatusDetail } from '@/data/mock/account-payments-list'
 import { PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE } from '@/features/program/general/lib/participating-instructor-payment-statement-issuance-view'
 import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
-import { PAYMENT_STATEMENT_BASIC_INFO_SAMPLE_VALUES } from '@/features/template/model/payment-statement-basic-info-sample'
-import { LECTURE_FEE_CALCULATION_SAMPLE_VALUES } from '@/features/template/model/lecture-fee-calculation-sample'
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
+
+/** 지급조서 양식 고정 문구 — 목 회원 데이터가 아님 */
+const PAYMENT_STATEMENT_PAYMENT_PURPOSE = '강사비 또는 활동비 지급'
+
+function presentText(value: string | undefined): string {
+  const trimmed = value?.trim() ?? ''
+  if (!trimmed || trimmed === '-' || trimmed === '—' || trimmed === '–') return ''
+  return trimmed
+}
 
 /** 지급조서 확인 완료·계좌 지급 완료(라인 `rejected` 라벨) */
 export const PAYMENT_ORDER_LINE_STATUSES_ELIGIBLE_FOR_PAYMENT_STATEMENT_ISSUE: readonly PaymentOrderAdminLineProcessingStatus[] =
@@ -72,7 +79,7 @@ function stripAmountDisplayOverrides(
 function parseSessionPartFromBlocks(
   blocks: PaymentOrderCalculationStatementSessionBlock[]
 ): string {
-  const session = blocks[0]?.lectureSessionDisplay?.trim()
+  const session = presentText(blocks[0]?.lectureSessionDisplay)
   if (!session) return '정산'
   const match = session.match(/(\d+)\s*~?\s*(\d+)?\s*(?:차시|회차)/)
   if (match?.[1]) {
@@ -94,29 +101,27 @@ function buildCalculationLines(
 function buildBasicInfoValues(
   input: PaymentStatementIssuanceFromCalculationInput
 ): Partial<PaymentStatementBasicInfoAutofillValues> {
-  const sample = PAYMENT_STATEMENT_BASIC_INFO_SAMPLE_VALUES
-  const nameKo = input.instructorNameKo.trim() || sample.nameKo
+  const nameKo = presentText(input.instructorNameKo)
   return {
     nameKo,
-    nameEn: input.nameEn?.trim() || sample.nameEn,
-    addressRoad: input.addressDisplay?.trim() || sample.addressRoad,
-    addressDetail: sample.addressDetail,
-    bankName: input.bankName?.trim() || sample.bankName,
-    accountNumber: input.accountNumber?.trim() || sample.accountNumber,
-    accountHolder: input.accountHolder?.trim() || nameKo,
-    paymentPurpose: sample.paymentPurpose,
-    affiliation: sample.affiliation,
-    noAffiliation: sample.noAffiliation,
-    residentFront: sample.residentFront,
-    residentBack: sample.residentBack,
+    nameEn: presentText(input.nameEn),
+    addressRoad: presentText(input.addressDisplay),
+    addressDetail: '',
+    bankName: presentText(input.bankName),
+    accountNumber: presentText(input.accountNumber),
+    accountHolder: presentText(input.accountHolder),
+    paymentPurpose: PAYMENT_STATEMENT_PAYMENT_PURPOSE,
+    affiliation: '',
+    noAffiliation: false,
+    residentFront: '',
+    residentBack: '',
   }
 }
 
 function buildLectureFeeCalculationValues(
   input: PaymentStatementIssuanceFromCalculationInput
 ): Partial<LectureFeeCalculationAutofillValues> {
-  const sample = LECTURE_FEE_CALCULATION_SAMPLE_VALUES
-  const businessIncomeLabel = input.businessIncomeEarnerLabel.trim()
+  const businessIncomeLabel = presentText(input.businessIncomeEarnerLabel)
   const isBusinessIncome =
     businessIncomeLabel === '해당' ||
     (businessIncomeLabel.includes('해당') && !businessIncomeLabel.includes('없음'))
@@ -127,30 +132,37 @@ function buildLectureFeeCalculationValues(
     .filter(l => l.kind === 'lecture_fee')
     .reduce((s, l) => s + l.amount, 0)
 
-  const sessionProgress = input.programSessionProgressDisplay?.trim()
-  const sessionCount =
-    sessionProgress?.split('/')[0]?.trim() || String(input.blocks.length || sample.sessionCount)
+  const sessionProgress = presentText(input.programSessionProgressDisplay)
+  const sessionCountFromProgress = sessionProgress.split('/')[0]?.trim() ?? ''
+  const sessionCount = presentText(sessionCountFromProgress)
+
+  const lectureFeeType = presentText(input.lectureFeeStandardTitle)
+  const lectureFeeAmount = presentText(input.lectureFeeStandardAmount)
 
   return {
-    ...sample,
-    lectureFeeType: input.lectureFeeStandardTitle.trim() || sample.lectureFeeType,
-    feeBasisRight: input.lectureFeeStandardAmount.trim()
-      ? `기본 : ${input.lectureFeeStandardAmount.trim()}`
-      : sample.feeBasisRight,
-    businessIncomeLeft: businessIncomeLabel || sample.businessIncomeLeft,
-    businessIncomeRight: isBusinessIncome ? '사업 소득 3.3% 적용' : '기타 소득 8.8% 적용',
+    lectureFeeType,
+    feeBasisLeft: '',
+    feeBasisRight: lectureFeeAmount ? `기본 : ${lectureFeeAmount}` : '',
+    businessIncomeLeft: businessIncomeLabel,
+    businessIncomeRight: businessIncomeLabel
+      ? isBusinessIncome
+        ? '사업 소득 3.3% 적용'
+        : '기타 소득 8.8% 적용'
+      : '',
     sessionCount,
+    sessionHours: '',
     transportFee: hasTravel,
     lodgingFee: hasLodging,
-    totalLectureFee:
-      lectureFeeTotal > 0 ? lectureFeeTotal.toLocaleString('ko-KR') : sample.totalLectureFee,
+    totalStudents: '',
+    totalLectureFee: lectureFeeTotal > 0 ? lectureFeeTotal.toLocaleString('ko-KR') : '',
   }
 }
 
 export function buildPaymentStatementIssuanceFileNameFromCalculation(
   input: PaymentStatementIssuanceFromCalculationInput
 ): string {
-  const institution = input.blocks[0]?.institutionName?.trim() || input.programName
+  const institution =
+    presentText(input.blocks[0]?.institutionName) || presentText(input.programName) || '-'
   return [
     PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE,
     sanitizeFileNamePart(institution),
@@ -175,12 +187,12 @@ export function mapProgramCalculationStatementToIssuanceInput(
   statement: Extract<PaymentOrderProgramCalculationStatement, { context: 'program' }>
 ): PaymentStatementIssuanceFromCalculationInput {
   return {
-    instructorNameKo: statement.basic.instructorNameKo,
-    programName: statement.basic.programName,
-    lectureFeeStandardTitle: statement.basic.lectureFeeStandardTitle,
-    lectureFeeStandardAmount: statement.basic.lectureFeeStandardAmount,
-    businessIncomeEarnerLabel: statement.basic.businessIncomeEarnerLabel,
-    programSessionProgressDisplay: statement.basic.programSessionProgressDisplay,
+    instructorNameKo: presentText(statement.basic.instructorNameKo),
+    programName: presentText(statement.basic.programName),
+    lectureFeeStandardTitle: presentText(statement.basic.lectureFeeStandardTitle),
+    lectureFeeStandardAmount: presentText(statement.basic.lectureFeeStandardAmount),
+    businessIncomeEarnerLabel: presentText(statement.basic.businessIncomeEarnerLabel),
+    programSessionProgressDisplay: presentText(statement.basic.programSessionProgressDisplay),
     blocks: statement.blocks,
     formulaLabel: statement.formulaLabel,
     totalAmount: statement.totalAmount,
@@ -190,20 +202,23 @@ export function mapProgramCalculationStatementToIssuanceInput(
 export function mapInstructorCalculationStatementToIssuanceInput(
   statement: Extract<PaymentOrderProgramCalculationStatement, { context: 'instructor' }>
 ): PaymentStatementIssuanceFromCalculationInput {
-  const bankParts = statement.basic.settlementAccountBankNumberPart.trim().split(/\s+/)
-  const bankName = bankParts[0]
-  const accountNumber = bankParts.slice(1).join(' ')
+  const bankParts = presentText(statement.basic.settlementAccountBankNumberPart).split(/\s+/)
+  const bankName = presentText(bankParts[0])
+  const accountNumber = presentText(bankParts.slice(1).join(' '))
   return {
-    instructorNameKo: statement.basic.nameKo,
-    nameEn: statement.basic.nameEn,
-    addressDisplay: statement.basic.addressDisplay,
+    instructorNameKo: presentText(statement.basic.nameKo),
+    nameEn: presentText(statement.basic.nameEn),
+    addressDisplay: presentText(statement.basic.addressDisplay),
     bankName,
     accountNumber,
-    accountHolder: statement.basic.settlementAccountHolderPart,
-    programName: statement.basic.programName?.trim() || statement.blocks[0]?.institutionName || '—',
-    lectureFeeStandardTitle: statement.basic.lectureFeeStandardTitle,
-    lectureFeeStandardAmount: statement.basic.lectureFeeStandardAmount,
-    businessIncomeEarnerLabel: statement.basic.businessIncomeEarnerLabel,
+    accountHolder: presentText(statement.basic.settlementAccountHolderPart),
+    programName:
+      presentText(statement.basic.programName) ||
+      presentText(statement.blocks[0]?.institutionName) ||
+      '',
+    lectureFeeStandardTitle: presentText(statement.basic.lectureFeeStandardTitle),
+    lectureFeeStandardAmount: presentText(statement.basic.lectureFeeStandardAmount),
+    businessIncomeEarnerLabel: presentText(statement.basic.businessIncomeEarnerLabel),
     blocks: statement.blocks,
     formulaLabel: statement.formulaLabel,
     totalAmount: statement.totalAmount,
@@ -213,21 +228,21 @@ export function mapInstructorCalculationStatementToIssuanceInput(
 export function mapAccountPaymentStatusDetailToIssuanceInput(
   detail: AccountPaymentStatusDetail
 ): PaymentStatementIssuanceFromCalculationInput {
-  const bankParts = detail.basic.settlementAccountBankNumberPart.trim().split(/\s+/)
-  const bankName = bankParts[0]
-  const accountNumber = bankParts.slice(1).join(' ')
+  const bankParts = presentText(detail.basic.settlementAccountBankNumberPart).split(/\s+/)
+  const bankName = presentText(bankParts[0])
+  const accountNumber = presentText(bankParts.slice(1).join(' '))
   return {
-    instructorNameKo: detail.basic.nameKo,
-    nameEn: detail.basic.nameEn,
-    addressDisplay: detail.basic.addressDisplay,
+    instructorNameKo: presentText(detail.basic.nameKo),
+    nameEn: presentText(detail.basic.nameEn),
+    addressDisplay: presentText(detail.basic.addressDisplay),
     bankName,
     accountNumber,
-    accountHolder: detail.basic.settlementAccountHolderPart,
-    programName: detail.basic.programName,
-    lectureFeeStandardTitle: detail.basic.lectureFeeStandardTitle,
-    lectureFeeStandardAmount: detail.basic.lectureFeeStandardAmount,
-    businessIncomeEarnerLabel: detail.basic.businessIncomeEarnerLabel,
-    programSessionProgressDisplay: detail.basic.programSessionProgressDisplay,
+    accountHolder: presentText(detail.basic.settlementAccountHolderPart),
+    programName: presentText(detail.basic.programName),
+    lectureFeeStandardTitle: presentText(detail.basic.lectureFeeStandardTitle),
+    lectureFeeStandardAmount: presentText(detail.basic.lectureFeeStandardAmount),
+    businessIncomeEarnerLabel: presentText(detail.basic.businessIncomeEarnerLabel),
+    programSessionProgressDisplay: presentText(detail.basic.programSessionProgressDisplay),
     blocks: detail.blocks,
     formulaLabel: detail.formulaLabel,
     totalAmount: detail.totalAmount,

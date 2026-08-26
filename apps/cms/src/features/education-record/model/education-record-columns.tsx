@@ -7,26 +7,12 @@
  */
 
 import type { ColumnsType } from 'antd/es/table'
+import {
+  formatEducationRecordEducationType,
+  formatEducationRecordInstitutionType,
+  formatEducationRecordTargetLevel,
+} from '../lib/education-record-labels'
 import type { EducationRecordRow } from '../model/education-record-types'
-
-const TARGET_LEVEL_LABELS: Record<string, string> = {
-  elementary: '초',
-  middle: '중',
-  high: '고',
-  university: '대학생',
-  adult: '성인',
-}
-
-const INSTITUTION_TYPE_LABELS: Record<string, string> = {
-  inside_school: '학교 안',
-  outside_school: '학교 밖',
-}
-
-const PROGRAM_TYPE_LABELS: Record<string, string> = {
-  online: '온라인',
-  offline: '오프라인',
-  hybrid: '온/오프라인',
-}
 
 function formatEducationMonth(record: EducationRecordRow): string {
   if (record.educationMonth) {
@@ -73,22 +59,6 @@ export function createEducationRecordColumns(): ColumnsType<EducationRecordRow> 
       render: (value?: string) => value || '-',
     },
     {
-      title: '후원사명(영문)',
-      dataIndex: 'sponsorNameEn',
-      key: 'sponsorNameEn',
-      width: 220,
-      align: 'center',
-      render: (value?: string) => value || '-',
-    },
-    {
-      title: '대표 프로그램명(영문)',
-      dataIndex: 'titleEn',
-      key: 'titleEn',
-      width: 260,
-      align: 'center',
-      render: (value?: string) => value || '-',
-    },
-    {
       title: '후원사명(국문)',
       dataIndex: 'sponsorNameKo',
       key: 'sponsorNameKo',
@@ -97,10 +67,26 @@ export function createEducationRecordColumns(): ColumnsType<EducationRecordRow> 
       render: (value?: string) => value || '-',
     },
     {
+      title: '후원사명(영문)',
+      dataIndex: 'sponsorNameEn',
+      key: 'sponsorNameEn',
+      width: 220,
+      align: 'center',
+      render: (value?: string) => value || '-',
+    },
+    {
       title: '대표 프로그램명(국문)',
       dataIndex: 'mainTitle',
       key: 'mainTitle',
       width: 240,
+      align: 'center',
+      render: (value?: string) => value || '-',
+    },
+    {
+      title: '대표 프로그램명(영문)',
+      dataIndex: 'titleEn',
+      key: 'titleEn',
+      width: 260,
       align: 'center',
       render: (value?: string) => value || '-',
     },
@@ -129,7 +115,7 @@ export function createEducationRecordColumns(): ColumnsType<EducationRecordRow> 
       render: (value?: string) => value || '-',
     },
     {
-      title: '학교명 (기관)',
+      title: '기관명',
       dataIndex: 'schoolOrOrganizationName',
       key: 'schoolName',
       width: 220,
@@ -150,28 +136,22 @@ export function createEducationRecordColumns(): ColumnsType<EducationRecordRow> 
       key: 'targetLevel',
       width: 110,
       align: 'center',
-      render: (value?: string) => (value ? (TARGET_LEVEL_LABELS[value] ?? value) : '-'),
+      render: (value?: string) => formatEducationRecordTargetLevel(value),
     },
     {
       title: 'IP Owned',
       dataIndex: 'ipOwned',
       key: 'ipOwned',
-      width: 110,
+      width: 130,
       align: 'center',
-      ellipsis: false,
-      onHeaderCell: () => ({ className: 'er-data-tab__cell--wrap' }),
-      onCell: () => ({ className: 'er-data-tab__cell--wrap' }),
       render: (value?: string) => value || 'JA',
     },
     {
       title: 'Course Delivered By',
       dataIndex: 'courseDeliveredBy',
       key: 'courseDeliveredBy',
-      width: 190,
+      width: 210,
       align: 'center',
-      ellipsis: false,
-      onHeaderCell: () => ({ className: 'er-data-tab__cell--wrap' }),
-      onCell: () => ({ className: 'er-data-tab__cell--wrap' }),
       render: (value?: string) => value || '-',
     },
     {
@@ -188,7 +168,7 @@ export function createEducationRecordColumns(): ColumnsType<EducationRecordRow> 
       key: 'institutionType',
       width: 120,
       align: 'center',
-      render: (value?: string) => (value ? (INSTITUTION_TYPE_LABELS[value] ?? value) : '-'),
+      render: (value?: string) => formatEducationRecordInstitutionType(value),
     },
     {
       title: 'IPS',
@@ -222,7 +202,7 @@ export function createEducationRecordColumns(): ColumnsType<EducationRecordRow> 
       key: 'educationType',
       width: 130,
       align: 'center',
-      render: (value?: string) => (value ? (PROGRAM_TYPE_LABELS[value] ?? value) : '-'),
+      render: (value?: string) => formatEducationRecordEducationType(value),
     },
     {
       title: '교육시간',

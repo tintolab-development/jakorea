@@ -193,7 +193,6 @@
   min-width: 0;
 }
 
-/* 타이틀 옆 총 N건 디스크립션 — dashboard-toolbar-description과 동일 타이포 (Typography secondary 색상 덮어씀) */
 .dashboard-widget-table__header-total-count.ant-typography {
   flex-shrink: 0;
   margin-right: var(--spacing-8);

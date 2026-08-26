@@ -2228,6 +2228,9 @@ function migrateAgreementNoticeSeedRequiredMarks(
   return { ...p, requiredMark: false }
 }
 
+/** 행정정보 공동이용 — 식별번호 유형 고정값(주민등록번호) */
+export const AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID = 'agreement-notice-id-resident'
+
 /**
  * 행정정보 공동이용 표 — 1행 시드(연번·행정정보명) 보정 + 최소 행 수 확보.
  * (구 JSON·localStorage/API 저장본이 빈 1행만 가진 경우 복구)
@@ -2264,7 +2267,18 @@ function migrateAgreementNoticeTableSeedRows(
       dataRows.push(Array.from({ length: colCount }, () => ''))
     }
   }
-  return { ...p, dataRows }
+  return {
+    ...p,
+    dataRows,
+    idTypeWithInput:
+      p.idTypeWithInput == null
+        ? p.idTypeWithInput
+        : {
+            ...p.idTypeWithInput,
+            selectedOptionId: AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID,
+            inputPlaceholder: '주민등록번호를 입력해 주세요',
+          },
+  }
 }
 
 function normalizeWritingFormParagraph(p: WritingFormParagraph): WritingFormParagraph {
@@ -2425,7 +2439,7 @@ export const AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
 
 export function createDefaultIdTypeWithInputOptions(): IdTypeWithInputOption[] {
   return [
-    { id: 'agreement-notice-id-resident', label: '주민등록번호' },
+    { id: AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID, label: '주민등록번호' },
     { id: 'agreement-notice-id-passport', label: '여권번호' },
     { id: 'agreement-notice-id-driver', label: '운전면허번호' },
     { id: 'agreement-notice-id-alien', label: '외국인등록번호' },

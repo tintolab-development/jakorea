@@ -14,6 +14,7 @@ const outputPath = join(root, 'openapi/data-management.openapi.json')
 const DATA_MANAGEMENT_PATH_PREFIXES = [
   '/api/admin/sponsors',
   '/api/admin/textbooks',
+  '/api/admin/textbook-business-areas',
   '/api/admin/detailed-programs',
   '/api/admin/material-kits',
 ]

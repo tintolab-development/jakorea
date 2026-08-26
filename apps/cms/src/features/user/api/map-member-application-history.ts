@@ -71,9 +71,10 @@ export function mapMemberApplicationHistoryItem(
     reviewedAt: item.approvedAt ?? item.rejectedAt ?? undefined,
     createdAt: item.submittedAt ?? now,
     updatedAt: item.approvedAt ?? item.rejectedAt ?? item.submittedAt ?? now,
-    ...(item.programName?.trim()
-      ? { customFields: { programName: item.programName.trim() } }
-      : {}),
+    customFields: {
+      ...(item.programName?.trim() ? { programName: item.programName.trim() } : {}),
+      ...(applicationId != null ? { memberApplicationId: applicationId } : {}),
+    },
   }
 }
 
