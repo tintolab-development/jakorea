@@ -11,9 +11,40 @@ const WAGE_TYPE_ICON: Record<string, SettlementItemSettingIconKey> = {
   TIER2: 'wage_tier2',
   TIER3: 'wage_tier3',
   SPECIAL_LECTURE: 'wage_special_lecture',
+  OTHER_LABOR: 'wage_other_labor',
+  GEMINI: 'wage_gemini',
   ASSISTANT: 'wage_assistant',
   MULTI_INSTRUCTOR: 'wage_multi_instructor',
   SIMPLE_LABOR: 'wage_simple_labor',
+}
+
+const ICON_KEYS = new Set<SettlementItemSettingIconKey>([
+  'wage_tier1',
+  'wage_tier2',
+  'wage_tier3',
+  'wage_special_lecture',
+  'wage_other_labor',
+  'wage_gemini',
+  'wage_assistant',
+  'wage_multi_instructor',
+  'wage_simple_labor',
+  'pay_transport',
+  'pay_lodging',
+  'pay_meal',
+  'pay_activity',
+  'pay_meeting',
+  'pay_volunteer',
+  'deduct_business_33',
+  'deduct_other_88',
+  'deduct_other_44',
+  'deduct_other_22',
+])
+
+function asIconKey(value: string | undefined): SettlementItemSettingIconKey | undefined {
+  if (!value) return undefined
+  return ICON_KEYS.has(value as SettlementItemSettingIconKey)
+    ? (value as SettlementItemSettingIconKey)
+    : undefined
 }
 
 function guessPaymentIcon(name: string): SettlementItemSettingIconKey {
@@ -21,7 +52,7 @@ function guessPaymentIcon(name: string): SettlementItemSettingIconKey {
   if (name.includes('숙박')) return 'pay_lodging'
   if (name.includes('식사')) return 'pay_meal'
   if (name.includes('회의')) return 'pay_meeting'
-  if (name.includes('자원봉사')) return 'pay_volunteer'
+  if (name.includes('활동') || name.includes('자원봉사')) return 'pay_activity'
   return 'pay_transport'
 }
 
@@ -48,12 +79,17 @@ export function mapSettlementConfigToSections(
 ): SettlementItemSettingSection[] {
   const wageItems: SettlementItemSettingRow[] = (config.wageItems ?? []).map(item => {
       const type = item.wageItemType?.toUpperCase() ?? ''
-      const iconKey = WAGE_TYPE_ICON[type] ?? 'wage_tier3'
+      const iconKey =
+        asIconKey(item.iconKey) ?? WAGE_TYPE_ICON[type] ?? 'wage_tier3'
       return {
         id: item.id != null ? `w-${item.id}` : `w-${item.name}`,
         apiItemId: item.id,
         title: item.name ?? '임금 항목',
-        description: item.amount != null ? `${item.amount.toLocaleString('ko-KR')}원` : '상세 기준에 따라 적용되는 임금입니다.',
+        description:
+          item.description?.trim() ||
+          (item.amount != null
+            ? `${item.amount.toLocaleString('ko-KR')}원`
+            : '상세 기준에 따라 적용되는 임금입니다.'),
         iconKey,
       }
     })
@@ -67,10 +103,11 @@ export function mapSettlementConfigToSections(
         apiItemId: item.id,
         title: name,
         description:
-          item.maxAmount != null
+          item.description?.trim() ||
+          (item.maxAmount != null
             ? `최대 ${item.maxAmount.toLocaleString('ko-KR')}원`
-            : '상세 기준에 따라 적용되는 지급 항목입니다.',
-        iconKey: guessPaymentIcon(name),
+            : '상세 기준에 따라 적용되는 지급 항목입니다.'),
+        iconKey: asIconKey(item.iconKey) ?? guessPaymentIcon(name),
       }
     })
 
@@ -82,10 +119,12 @@ export function mapSettlementConfigToSections(
         id: item.id != null ? `d-${item.id}` : `d-${name}`,
         apiItemId: item.id,
         title: name,
-        description: item.deductionRate
-          ? `공제율 ${item.deductionRate}`
-          : '상세 기준에 따라 적용되는 공제 항목입니다.',
-        iconKey: guessDeductionIcon(name),
+        description:
+          item.description?.trim() ||
+          (item.deductionRate
+            ? `공제율 ${item.deductionRate}`
+            : '상세 기준에 따라 적용되는 공제 항목입니다.'),
+        iconKey: asIconKey(item.iconKey) ?? guessDeductionIcon(name),
       }
     })
 
