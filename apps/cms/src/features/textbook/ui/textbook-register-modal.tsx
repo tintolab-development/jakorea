@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CmsButton, CmsInput, CmsRadio, CmsSelect, ContentModal } from '@/shared/ui'
-import {
-  TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS,
-  type TextbookBusinessArea,
-} from '@/features/textbook/model/textbook-business-areas'
+import type { TextbookBusinessArea } from '@/features/textbook/model/textbook-business-areas'
+import { useTextbookBusinessAreaSelectOptions } from '@/features/textbook/hooks/use-business-areas-query'
 import {
   TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS,
   type TextbookEducationTarget,
@@ -46,6 +44,7 @@ export function TextbookRegisterModal({
   mode = 'create',
 }: TextbookRegisterModalProps) {
   const [form, setForm] = useState<RegisterFormState>(emptyForm)
+  const { options: businessAreaOptions } = useTextbookBusinessAreaSelectOptions()
 
   useEffect(() => {
     if (!open) return
@@ -139,7 +138,7 @@ export function TextbookRegisterModal({
                 businessArea: (value ?? '') as TextbookBusinessArea | '',
               }))
             }
-            options={TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS}
+            options={businessAreaOptions}
             style={{ width: '100%' }}
           />
         </div>

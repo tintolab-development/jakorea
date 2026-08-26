@@ -2,14 +2,15 @@
 
 ## 사업 분야
 
-교재 목록·필터·등록·상세 수정에서 **사업 분야**는 아래 **4가지만** 허용한다. 표기·철자를 바꾸면 필터·목 데이터·API 계약을 함께 맞춘다.
+교재 목록·필터·등록·상세의 **사업 분야**는 「사업 분야 관리」 마스터 API가 SSOT.
 
-1. 기업가정신
-2. 경제금융
-3. 진로취업
-4. 디지털 리터러시
-
-코드 상수: `features/textbook/model/textbook-business-areas.ts`의 `TEXTBOOK_BUSINESS_AREAS` / `TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS`.
+- API: `GET/POST /api/admin/textbook-business-areas`, `PATCH/DELETE …/{businessAreaId}`
+- 초기 시드(원격 비활성 fallback): `TEXTBOOK_BUSINESS_AREAS` 4종
+- **추가**: 하단 입력 행 → 등록 시 `POST` 즉시
+- **수정**: `PATCH` 즉시 — 서버가 교재 명칭 cascade
+- **삭제**: `deletable === false` 또는 409 → 불가 안내 팝업
+- **사업 분야 설정**: FE 확인 팝업만 (배치 저장 API 없음)
+- 모달 셸: width 600 · max-height 880 · padding 26/30/34 · gap 30 · radius 12 · shadow `0 0 25px rgba(0,0,0,0.35)`
 
 ## 교육 대상
 

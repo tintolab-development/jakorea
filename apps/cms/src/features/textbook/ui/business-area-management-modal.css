@@ -1,0 +1,294 @@
+/**
+ * 사업 분야 관리 모달 — Figma 셸
+ * display:flex; width:600px; max-height:880px;
+ * padding:26px 30px 34px; gap:30px; radius:12; shadow 0 0 25px rgba(0,0,0,0.35)
+ */
+
+.ant-modal-wrap:has(.ant-modal.business-area-management-modal),
+.ant-modal-wrap:has(.ant-modal.business-area-delete-blocked-modal) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.ant-modal-wrap:has(.ant-modal.business-area-management-modal)
+  .ant-modal.business-area-management-modal,
+.ant-modal-wrap:has(.ant-modal.business-area-delete-blocked-modal)
+  .ant-modal.business-area-delete-blocked-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+  width: min(600px, calc(100vw - 32px)) !important;
+  max-width: min(600px, calc(100vw - 32px)) !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+}
+
+.content-modal.business-area-management-modal.ant-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 600px;
+  max-width: min(600px, calc(100vw - 32px));
+  height: auto;
+  max-height: min(880px, calc(100vh - 48px));
+  max-height: min(880px, calc(100dvh - 48px));
+  padding: 26px 30px 34px;
+  gap: 0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+/* 헤더 · 테이블 · 푸터가 형제로 쌓이므로 body에서 gap 30 적용 */
+.content-modal.business-area-management-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 30px;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0 !important;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.content-modal.business-area-management-modal .teal-header-modal__header {
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.content-modal.business-area-management-modal .teal-header-modal__body,
+.content-modal.business-area-management-modal.content-modal--title-body-gap-always
+  .teal-header-modal__body,
+.content-modal.business-area-management-modal.content-modal--title-body-gap-none
+  .teal-header-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  margin-top: 0;
+  padding-top: 0 !important;
+  overflow: hidden;
+  align-items: stretch;
+  gap: 0;
+  box-sizing: border-box;
+}
+
+.content-modal.business-area-management-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  width: 100%;
+  margin-top: 0 !important;
+  padding: 0;
+  justify-content: flex-end;
+}
+
+/* 「사업 분야 추가/저장」 라벨이 140px에 잘리지 않도록 */
+.content-modal.business-area-management-modal
+  .content-modal__footer-actions
+  .cms-button.ant-btn:not(.cms-button--footer-auto) {
+  width: auto !important;
+  min-width: 140px !important;
+  max-width: none !important;
+  padding-inline: 20px !important;
+}
+
+.business-area-management-modal__table-wrap {
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  align-self: stretch;
+}
+
+.business-area-management-modal__table-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  align-self: stretch;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.business-area-management-modal__table.ant-table-wrapper {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  flex: 0 0 auto;
+}
+
+.business-area-management-modal__table-scroll
+  .business-area-management-modal__table
+  .ant-table-thead
+  > tr
+  > th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.business-area-management-modal__table.cms-data-table.ant-table-wrapper,
+.business-area-management-modal__table .ant-table {
+  font-family: Pretendard, sans-serif;
+}
+
+.business-area-management-modal__table .ant-table-container {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-8, 8px);
+  overflow: hidden;
+}
+
+.business-area-management-modal__table .ant-table-thead > tr > th {
+  box-sizing: border-box;
+  height: 50px;
+  padding: 0 8px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.02) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.business-area-management-modal__table.cms-data-table .ant-table-tbody > tr > td {
+  box-sizing: border-box;
+  height: 64px !important;
+  padding: 12px 8px !important;
+  vertical-align: middle !important;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.business-area-management-modal__table .ant-table-tbody > tr > td:last-child,
+.business-area-management-modal__table .ant-table-thead > tr > th:last-child {
+  vertical-align: middle;
+  text-align: center;
+}
+
+.business-area-management-modal__table .ant-table-tbody > tr > td:first-child {
+  border-inline-end: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.business-area-management-modal__table .ant-table-thead > tr > th:first-child {
+  border-inline-end: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.business-area-management-modal__name-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.business-area-management-modal__actions {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+}
+
+.business-area-management-modal__actions > * {
+  flex: 0 0 auto;
+}
+
+.business-area-management-modal__actions .ant-popconfirm,
+.business-area-management-modal__actions .ant-popover-open {
+  display: inline-flex !important;
+  align-items: center;
+}
+
+.business-area-management-modal__action-btn.cms-button.ant-btn {
+  box-sizing: border-box !important;
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+  height: 40px !important;
+  padding: 6px 14px !important;
+  border-radius: 6px !important;
+  flex-shrink: 0;
+}
+
+.business-area-management-modal__compose .cms-input {
+  width: 100%;
+}
+
+.business-area-management-modal__compose .cms-input .ant-input {
+  border-radius: 6px;
+}
+
+.business-area-management-modal__table .ant-table-summary .ant-table-cell {
+  box-sizing: border-box;
+  min-height: 64px;
+  padding: 12px 8px !important;
+  vertical-align: middle !important;
+  text-align: center;
+  background: var(--main-WT, #fff) !important;
+  border-bottom: none !important;
+}
+
+.business-area-management-modal__summary .ant-table-cell .business-area-management-modal__actions {
+  justify-content: center;
+}
+
+.business-area-management-modal__error {
+  margin: 12px 0 0;
+  color: var(--status-error, #cf1322);
+  font-size: 14px;
+  line-height: 20px;
+  flex-shrink: 0;
+}
+
+/* 삭제 불가 / 중복 안내 */
+.content-modal.business-area-delete-blocked-modal .ant-modal-content {
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
+}
+
+.content-modal.business-area-delete-blocked-modal.ant-modal .ant-modal-content {
+  box-sizing: border-box;
+  width: 600px;
+  max-width: calc(100vw - 32px);
+  padding: 26px 30px 34px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+}
+
+.content-modal.business-area-delete-blocked-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 8px;
+}
+
+.business-area-delete-blocked-modal .content-modal__description {
+  width: 100%;
+  min-height: 48px;
+  text-align: left;
+  box-sizing: border-box;
+}
