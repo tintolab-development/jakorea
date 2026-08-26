@@ -10,7 +10,6 @@ import type {
   ApiResponseBulkActionResponse,
   ApiResponseFaqResponse,
   ApiResponseInquiryAnswerMutationResponse,
-  ApiResponseMapStringObject,
   ApiResponseNoticeResponse,
   ApiResponseVoid,
   BulkIdsRequest,
@@ -473,8 +472,8 @@ const noticeCategories = (
  */
 const createNoticeCategory = (
     categoryRequest: CategoryRequest,
- options?: SecondParameter<typeof customInstance<ApiResponseMapStringObject>>,) => {
-      return customInstance<ApiResponseMapStringObject>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/content/notice-categories`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: categoryRequest
@@ -749,8 +748,8 @@ const faqCategories = (
  */
 const createFaqCategory = (
     categoryRequest: CategoryRequest,
- options?: SecondParameter<typeof customInstance<ApiResponseMapStringObject>>,) => {
-      return customInstance<ApiResponseMapStringObject>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/content/faq-categories`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: categoryRequest
@@ -1028,8 +1027,8 @@ const updateNotice = (
  */
 const deleteNoticeCategory = (
     categoryId: string,
- options?: SecondParameter<typeof customInstance<ApiResponseMapStringObject>>,) => {
-      return customInstance<ApiResponseMapStringObject>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/content/notice-categories/${categoryId}`, method: 'DELETE'
     },
       options);
@@ -1083,8 +1082,8 @@ const deleteNoticeCategory = (
 const updateNoticeCategory = (
     categoryId: string,
     categoryRequest: CategoryRequest,
- options?: SecondParameter<typeof customInstance<ApiResponseMapStringObject>>,) => {
-      return customInstance<ApiResponseMapStringObject>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/content/notice-categories/${categoryId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: categoryRequest
@@ -1304,8 +1303,8 @@ const updateFaq = (
  */
 const deleteFaqCategory = (
     categoryId: string,
- options?: SecondParameter<typeof customInstance<ApiResponseMapStringObject>>,) => {
-      return customInstance<ApiResponseMapStringObject>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/content/faq-categories/${categoryId}`, method: 'DELETE'
     },
       options);
@@ -1359,8 +1358,8 @@ const deleteFaqCategory = (
 const updateFaqCategory = (
     categoryId: string,
     categoryRequest: CategoryRequest,
- options?: SecondParameter<typeof customInstance<ApiResponseMapStringObject>>,) => {
-      return customInstance<ApiResponseMapStringObject>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/content/faq-categories/${categoryId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: categoryRequest
@@ -1522,8 +1521,8 @@ const inquiry1 = (
  */
 const deleteInquiry = (
     inquiryId: number,
- options?: SecondParameter<typeof customInstance<ApiResponseVoid>>,) => {
-      return customInstance<ApiResponseVoid>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/inquiries/${inquiryId}`, method: 'DELETE'
     },
       options);

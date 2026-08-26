@@ -36,18 +36,18 @@ export async function fetchSponsorRemote(id: string): Promise<SponsorDetailRespo
 }
 
 export async function createSponsorRemote(body: SponsorRequest): Promise<SponsorResponse> {
-  return unwrapApiBody(await dmApi.create3(body))
+  return unwrapApiBody(await dmApi.create4(body))
 }
 
 export async function updateSponsorRemote(
   id: string,
   body: SponsorRequest
 ): Promise<SponsorResponse> {
-  return unwrapApiBody(await dmApi.update2(pathId(id), body))
+  return unwrapApiBody(await dmApi.update3(pathId(id), body))
 }
 
 export async function deleteSponsorRemote(id: string): Promise<void> {
-  await dmApi.delete1(pathId(id))
+  await dmApi.delete2(pathId(id))
 }
 
 export async function bulkDeleteSponsorsRemote(ids: string[]): Promise<void> {

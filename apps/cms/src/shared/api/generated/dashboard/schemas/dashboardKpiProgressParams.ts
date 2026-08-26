@@ -8,7 +8,7 @@
 
 export type DashboardKpiProgressParams = {
 /**
- * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * 프로그램 ID 목록. 콤마 구분
  */
-params: {[key: string]: string};
+programIds?: string;
 };

@@ -405,7 +405,7 @@ export async function getRecruitmentStatusList(options?: {
 }): Promise<Program[]> {
   if (shouldUseDashboardRemoteApi()) {
     const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
-    const dto = await fetchDashboardRecruitmentsRemote({ params: queryParams })
+    const dto = await fetchDashboardRecruitmentsRemote(queryParams)
     return mapRecruitmentListResponse(dto)
   }
   return getRecruitmentStatusListFromMock(options)
@@ -537,7 +537,7 @@ export async function getKpiAchievementList(options?: {
 }): Promise<ProgramKpiItem[]> {
   if (shouldUseDashboardRemoteApi()) {
     const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
-    const dto = await fetchDashboardKpiProgressRemote({ params: queryParams })
+    const dto = await fetchDashboardKpiProgressRemote(queryParams)
     return mapKpiProgressListResponse(dto)
   }
   return getKpiAchievementListFromMock(options)
@@ -738,7 +738,7 @@ export async function getProgramInquiryStatusList(options?: {
 }): Promise<ProgramInquiryRow[]> {
   if (shouldUseDashboardRemoteApi()) {
     const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
-    const dto = await fetchDashboardProgramInquiriesRemote({ params: queryParams })
+    const dto = await fetchDashboardProgramInquiriesRemote(queryParams)
     return mapProgramInquiryListResponse(dto)
   }
   return getProgramInquiryStatusListFromMock()
@@ -777,7 +777,7 @@ export async function getDashboardScheduleEvents(options?: {
       programIds: options?.programIds,
       extra,
     })
-    const dto = await fetchDashboardProgramSchedulesRemote({ params: queryParams })
+    const dto = await fetchDashboardProgramSchedulesRemote(queryParams)
     return mapProgramScheduleListResponse(dto)
   }
   return []
@@ -789,7 +789,7 @@ export async function getDashboardProgramOptions(widgetKey: string): Promise<Das
     const programType = getDashboardProgramTypeParamForWidget(widgetKey)
     const extra = programType ? { programType } : undefined
     const queryParams = toDashboardQueryParams({ extra })
-    const dto = await fetchDashboardRecruitmentsRemote({ params: queryParams })
+    const dto = await fetchDashboardRecruitmentsRemote(queryParams)
     return mapProgramOptionsFromRecruitmentList(dto)
   }
   return getMockDashboardProgramOptions(widgetKey)

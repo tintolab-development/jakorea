@@ -7,8 +7,10 @@
  */
 import type { DashboardProgramInquiryListResponseParams } from './dashboardProgramInquiryListResponseParams';
 import type { DashboardProgramInquiryResponse } from './dashboardProgramInquiryResponse';
+import type { DashboardProgramInquirySummaryResponse } from './dashboardProgramInquirySummaryResponse';
 
 export interface DashboardProgramInquiryListResponse {
   items?: DashboardProgramInquiryResponse[];
+  summaries?: DashboardProgramInquirySummaryResponse[];
   params?: DashboardProgramInquiryListResponseParams;
 }

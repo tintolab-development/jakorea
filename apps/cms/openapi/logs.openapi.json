@@ -21,6 +21,10 @@
   ],
   "tags": [
     {
+      "name": "콘텐츠/고객지원",
+      "description": "문의 카테고리 관리 API"
+    },
+    {
       "name": "개인정보/감사",
       "description": "개인정보 조회, export, 승인, raw 다운로드, 감사로그와 보관 정책 API입니다."
     },
@@ -317,6 +321,10 @@
       "description": "로그인한 회원의 SSO 계정 연결 및 해제 API"
     },
     {
+      "name": "기타 API",
+      "description": "교재 관리 사업 분야 관리 팝업 API"
+    },
+    {
       "name": "시스템 진단/운영 검증",
       "description": "시스템 상태, 릴리즈 준비도, provider 리허설, 오류 코드 카탈로그 등 운영 확인 API입니다."
     },
@@ -399,8 +407,8 @@
         "tags": [
           "로그 관리"
         ],
-        "summary": "시스템 상태 부분 수정",
-        "description": "### 이 API가 하는 일\n- 시스템 상태 부분 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `PATCH /api/admin/logs/system-issues/{issueId}/status`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `patch_api_logs_system-issues_issueId_status`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "summary": "버그/이슈 이력 상태 변경",
+        "description": "### 이 API가 하는 일\n- 버그/이슈 이력 상태 변경\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `PATCH /api/admin/logs/system-issues/{issueId}/status`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `patch_api_logs_system-issues_issueId_status`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_WRITE 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS는 호출하지 않음",
         "operationId": "updateSystemIssueStatus",
         "parameters": [
           {
@@ -458,26 +466,15 @@
         "tags": [
           "로그 관리"
         ],
-        "summary": "시스템 상태 조회",
-        "description": "### 이 API가 하는 일\n- 시스템 상태 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: userName/from/to/page/size\n- 응답 사용 위치: 시스템 이슈 페이지 목록\n- 프론트 조회 키: `get_api_logs_system-issues`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "summary": "버그/이슈 이력 목록 조회",
+        "description": "### 이 API가 하는 일\n- 버그/이슈 이력 목록 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: userName/from/to/page/size\n- 응답 사용 위치: 시스템 이슈 페이지 목록\n- 프론트 조회 키: `get_api_logs_system-issues`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS 보안 설정 버그/이슈 목록",
         "operationId": "systemIssueLogs",
         "parameters": [
-          {
-            "name": "params",
-            "in": "query",
-            "description": "쿼리 파라미터입니다. 요청값 출처: userName/from/to/page/size",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          },
           {
             "name": "userName",
             "in": "query",
             "description": "사용자명 부분 검색",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -485,7 +482,8 @@
           {
             "name": "status",
             "in": "query",
-            "description": "현재 지원 상태: OPEN 또는 RESOLVED",
+            "description": "현재 지원 상태: OPEN 또는 RESOLVED. CMS 필터 UI에는 없음",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -493,7 +491,8 @@
           {
             "name": "severity",
             "in": "query",
-            "description": "심각도",
+            "description": "심각도. CMS 필터 UI에는 없음",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -501,7 +500,8 @@
           {
             "name": "from",
             "in": "query",
-            "description": "조회 시작일 YYYY-MM-DD 또는 ISO-8601",
+            "description": "조회 시작일 YYYY-MM-DD (Asia/Seoul 00:00:00)",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -509,7 +509,8 @@
           {
             "name": "to",
             "in": "query",
-            "description": "조회 종료일 YYYY-MM-DD 또는 ISO-8601",
+            "description": "조회 종료일 YYYY-MM-DD (Asia/Seoul 해당일 끝)",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -518,16 +519,20 @@
             "name": "page",
             "in": "query",
             "description": "0-base 페이지, 기본 0",
+            "required": false,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int32"
             }
           },
           {
             "name": "size",
             "in": "query",
             "description": "페이지 크기, 기본 20, 최대 100",
+            "required": false,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int32"
             }
           }
         ],
@@ -562,8 +567,8 @@
         "tags": [
           "로그 관리"
         ],
-        "summary": "시스템 상태 조회",
-        "description": "### 이 API가 하는 일\n- 시스템 상태 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues/{issueId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_api_logs_system-issues_issueId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "summary": "버그/이슈 이력 상세 조회",
+        "description": "### 이 API가 하는 일\n- 버그/이슈 이력 상세 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues/{issueId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_api_logs_system-issues_issueId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS는 호출하지 않음",
         "operationId": "systemIssueDetail",
         "parameters": [
           {
@@ -608,26 +613,15 @@
         "tags": [
           "로그 관리"
         ],
-        "summary": "관리자 조회",
-        "description": "### 이 API가 하는 일\n- 관리자 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/privacy-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: accessPurpose/accessorName/from/to/page/size\n- 응답 사용 위치: 개인정보 조회 이력 페이지 목록\n- 프론트 조회 키: `get_api_logs_privacy-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "summary": "개인정보 조회 이력 조회",
+        "description": "### 이 API가 하는 일\n- 개인정보 조회 이력 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/privacy-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: accessPurpose/accessorName/targetName/from/to/page/size\n- 응답 사용 위치: 개인정보 조회 이력 페이지 목록\n- 프론트 조회 키: `get_api_logs_privacy-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS 보안 설정 개인정보 조회 이력(UNMASKED_VIEW)",
         "operationId": "privacyAccessLogs",
         "parameters": [
-          {
-            "name": "params",
-            "in": "query",
-            "description": "쿼리 파라미터입니다. 요청값 출처: accessPurpose/accessorName/from/to/page/size",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          },
           {
             "name": "accessPurpose",
             "in": "query",
             "description": "조회 목적 부분 검색",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -636,6 +630,7 @@
             "name": "accessorName",
             "in": "query",
             "description": "조회자명 부분 검색",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -643,7 +638,8 @@
           {
             "name": "targetName",
             "in": "query",
-            "description": "개인정보 조회 대상자명 부분 검색",
+            "description": "열람 대상 표시명 부분 검색",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -651,7 +647,8 @@
           {
             "name": "from",
             "in": "query",
-            "description": "조회 시작일 YYYY-MM-DD 또는 ISO-8601",
+            "description": "조회 시작일 YYYY-MM-DD (Asia/Seoul 00:00:00)",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -659,7 +656,8 @@
           {
             "name": "to",
             "in": "query",
-            "description": "조회 종료일 YYYY-MM-DD 또는 ISO-8601",
+            "description": "조회 종료일 YYYY-MM-DD (Asia/Seoul 해당일 끝)",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -668,16 +666,20 @@
             "name": "page",
             "in": "query",
             "description": "0-base 페이지, 기본 0",
+            "required": false,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int32"
             }
           },
           {
             "name": "size",
             "in": "query",
             "description": "페이지 크기, 기본 20, 최대 100",
+            "required": false,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int32"
             }
           }
         ],
@@ -713,25 +715,14 @@
           "로그 관리"
         ],
         "summary": "관리자 로그인 이력 조회",
-        "description": "### 이 API가 하는 일\n- 관리자 로그인 이력 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/member-logins`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: adminName/loginId/from/to/page/size\n- 응답 사용 위치: 회원 관리자 로그인 이력 페이지 목록(최근 1개월)\n- 프론트 조회 키: `get_api_logs_member-logins`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Remove member-login mock fallback after FE switches to canonical endpoint.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 관리자 로그인 이력 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/member-logins`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: adminName/loginId/from/to/page/size\n- 응답 사용 위치: 회원 관리자 로그인 이력 페이지 목록(최근 1개월)\n- 프론트 조회 키: `get_api_logs_member-logins`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Remove member-login mock fallback after FE switches to canonical endpoint.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS 보안 설정 로그인 이력(최근 1개월)",
         "operationId": "memberLoginHistory",
         "parameters": [
-          {
-            "name": "params",
-            "in": "query",
-            "description": "쿼리 파라미터입니다. 요청값 출처: adminName/loginId/from/to/page/size",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          },
           {
             "name": "adminName",
             "in": "query",
             "description": "관리자명 부분 검색",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -740,6 +731,7 @@
             "name": "loginId",
             "in": "query",
             "description": "로그인 아이디/이메일 부분 검색",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -747,7 +739,8 @@
           {
             "name": "from",
             "in": "query",
-            "description": "조회 시작일 YYYY-MM-DD 또는 ISO-8601",
+            "description": "조회 시작일 YYYY-MM-DD (Asia/Seoul 00:00:00). 미지정 또는 cutoff 이전이면 오늘-1개월로 clamp",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -755,7 +748,8 @@
           {
             "name": "to",
             "in": "query",
-            "description": "조회 종료일 YYYY-MM-DD 또는 ISO-8601",
+            "description": "조회 종료일 YYYY-MM-DD (Asia/Seoul 해당일 끝)",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -764,16 +758,20 @@
             "name": "page",
             "in": "query",
             "description": "0-base 페이지, 기본 0",
+            "required": false,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int32"
             }
           },
           {
             "name": "size",
             "in": "query",
             "description": "페이지 크기, 기본 20, 최대 100",
+            "required": false,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int32"
             }
           }
         ],
@@ -808,26 +806,15 @@
         "tags": [
           "로그 관리"
         ],
-        "summary": "파일 조회",
-        "description": "### 이 API가 하는 일\n- 파일 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/file-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: fileName/userName/from/to/page/size\n- 응답 사용 위치: 파일 다운로드 이력 페이지 목록\n- 프론트 조회 키: `get_api_logs_file-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "summary": "파일 다운로드 이력 조회",
+        "description": "### 이 API가 하는 일\n- 파일 다운로드 이력 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/file-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: fileName/userName/from/to/page/size\n- 응답 사용 위치: 파일 다운로드 이력 페이지 목록\n- 프론트 조회 키: `get_api_logs_file-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS 보안 설정 파일 다운로드 이력",
         "operationId": "fileAccessLogs",
         "parameters": [
-          {
-            "name": "params",
-            "in": "query",
-            "description": "쿼리 파라미터입니다. 요청값 출처: fileName/userName/from/to/page/size",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
-          },
           {
             "name": "fileName",
             "in": "query",
             "description": "다운로드 파일명 부분 검색",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -836,6 +823,7 @@
             "name": "userName",
             "in": "query",
             "description": "사용자명 부분 검색",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -843,7 +831,8 @@
           {
             "name": "from",
             "in": "query",
-            "description": "조회 시작일 YYYY-MM-DD 또는 ISO-8601",
+            "description": "조회 시작일 YYYY-MM-DD (Asia/Seoul 00:00:00)",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -851,7 +840,8 @@
           {
             "name": "to",
             "in": "query",
-            "description": "조회 종료일 YYYY-MM-DD 또는 ISO-8601",
+            "description": "조회 종료일 YYYY-MM-DD (Asia/Seoul 해당일 끝)",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -860,16 +850,20 @@
             "name": "page",
             "in": "query",
             "description": "0-base 페이지, 기본 0",
+            "required": false,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int32"
             }
           },
           {
             "name": "size",
             "in": "query",
             "description": "페이지 크기, 기본 20, 최대 100",
+            "required": false,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int32"
             }
           }
         ],
@@ -3028,6 +3022,13 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "assignedProgramTypes": {
+            "type": "array",
+            "description": "일정 위젯에 노출할 프로그램 유형. MASTER는 general/company_school/ujat/gemini 전부, 그 외는 담당 프로그램이 있는 유형만",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -8093,6 +8094,70 @@
           "ids"
         ]
       },
+      "TextbookBusinessAreaRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "businessAreaName": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponseTextbookBusinessAreaResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/TextbookBusinessAreaResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "TextbookBusinessAreaResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "textbookCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deletable": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        }
+      },
       "TermsDocumentUpsertRequest": {
         "type": "object",
         "description": "약관 문서 등록/수정 요청. contentFormat=HTML을 권장합니다.",
@@ -8460,6 +8525,19 @@
             "type": "string"
           },
           "address": {
+            "type": "string"
+          },
+          "totalDonationAmount": {
+            "type": "number"
+          },
+          "totalBeneficiaryCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "homepageUrl": {
+            "type": "string"
+          },
+          "logoFileId": {
             "type": "string"
           }
         }
@@ -13070,6 +13148,65 @@
           }
         }
       },
+      "CategoryRequest": {
+        "type": "object",
+        "description": "카테고리 생성/수정 요청",
+        "properties": {
+          "categoryName": {
+            "type": "string",
+            "description": "카테고리명",
+            "example": "정산"
+          },
+          "name": {
+            "type": "string",
+            "description": "카테고리명 별칭",
+            "example": "정산"
+          },
+          "status": {
+            "type": "string",
+            "description": "사용 상태",
+            "example": "active"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32",
+            "description": "표시 순서",
+            "example": 2
+          }
+        }
+      },
+      "ApiResponseMapStringObject": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {},
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
       "InquiryAnswerRequest": {
         "type": "object",
         "description": "문의 답변 등록 요청",
@@ -13088,6 +13225,70 @@
             "type": "string",
             "description": "상태 변경 사유",
             "example": "관리자 답변 완료"
+          }
+        }
+      },
+      "ApiResponseInquiryAnswerResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/InquiryAnswerResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "InquiryAnswerResponse": {
+        "type": "object",
+        "description": "문의 답변 응답",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "답변 ID",
+            "example": 7001
+          },
+          "inquiryId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "문의 ID",
+            "example": 6001
+          },
+          "content": {
+            "type": "string",
+            "description": "답변 본문",
+            "example": "문의 주신 내용은 담당 부서 확인 후 처리되었습니다."
+          },
+          "answeredByAdminId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "답변 관리자 ID",
+            "example": 9001
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "답변 생성 시각",
+            "example": "2026-06-02T09:00:00Z"
           }
         }
       },
@@ -13560,12 +13761,12 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessEndDate": {
-            "type": "string"
-          },
           "businessYear": {
             "type": "integer",
             "format": "int32"
+          },
+          "businessEndDate": {
+            "type": "string"
           },
           "businessStartDate": {
             "type": "string"
@@ -14925,56 +15126,6 @@
               "archived"
             ],
             "example": "published"
-          }
-        }
-      },
-      "CategoryRequest": {
-        "type": "object",
-        "properties": {
-          "categoryName": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "displayOrder": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "ApiResponseMapStringObject": {
-        "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "요청 처리 성공 여부",
-            "example": false
-          },
-          "data": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "additionalProperties": {},
-            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
-          },
-          "message": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
-            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
-          },
-          "error": {
-            "type": "null",
-            "$ref": "#/components/schemas/ErrorDetail",
-            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
           }
         }
       },
@@ -22316,6 +22467,33 @@
           }
         }
       },
+      "PageResponseTextbookBusinessAreaResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TextbookBusinessAreaResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "SponsorDetailResponse": {
         "type": "object",
         "properties": {
@@ -22382,6 +22560,19 @@
             "type": "string"
           },
           "address": {
+            "type": "string"
+          },
+          "totalDonationAmount": {
+            "type": "number"
+          },
+          "totalBeneficiaryCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "homepageUrl": {
+            "type": "string"
+          },
+          "logoFileId": {
             "type": "string"
           },
           "contacts": {
@@ -26928,6 +27119,62 @@
           }
         }
       },
+      "ApiResponsePerformanceRecordFrontendPageResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/PerformanceRecordFrontendPageResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "PerformanceRecordFrontendPageResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PerformanceRecordFrontendResponse"
+            }
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PerformanceRecordListItemResponse": {
         "type": "object",
         "properties": {
@@ -27215,66 +27462,6 @@
           "decidedAt": {
             "type": "string",
             "format": "date-time"
-          }
-        }
-      },
-      "PerformanceExportColumnResponse": {
-        "type": "object",
-        "properties": {
-          "displayOrder": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "key": {
-            "type": "string"
-          },
-          "header": {
-            "type": "string"
-          }
-        }
-      },
-      "PerformanceExportResponse": {
-        "type": "object",
-        "properties": {
-          "exportHistoryId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "exportType": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "recordCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "exportedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "statusPolicy": {
-            "type": "string"
-          },
-          "columnOrderVersion": {
-            "type": "string"
-          },
-          "columns": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PerformanceExportColumnResponse"
-            }
-          },
-          "clientExportEventId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "exportPolicy": {
-            "type": "string"
-          },
-          "rawPrivacyIncluded": {
-            "type": "boolean"
           }
         }
       },
@@ -28361,6 +28548,34 @@
           }
         }
       },
+      "PageResponseMapStringObject": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "InquiryResponse": {
         "type": "object",
         "description": "문의 응답",
@@ -28393,6 +28608,21 @@
             "description": "문의자 회원 ID",
             "example": 3001
           },
+          "inquirerName": {
+            "type": "string",
+            "description": "문의자 표시명",
+            "example": "서봉사"
+          },
+          "inquirerPhone": {
+            "type": "string",
+            "description": "문의자 전화번호",
+            "example": "010-1049-2000"
+          },
+          "inquirerEmail": {
+            "type": "string",
+            "description": "문의자 이메일",
+            "example": "volunteer@example.com"
+          },
           "title": {
             "type": "string",
             "description": "문의 제목",
@@ -28414,6 +28644,11 @@
             "description": "담당 관리자 ID",
             "example": 9001
           },
+          "assignedAdminName": {
+            "type": "string",
+            "description": "담당 관리자 표시명",
+            "example": "운영팀 관리자"
+          },
           "answeredAt": {
             "type": "string",
             "format": "date-time",
@@ -28431,41 +28666,6 @@
             "format": "date-time",
             "description": "문의 수정 시각",
             "example": "2026-06-02T09:30:00Z"
-          }
-        }
-      },
-      "InquiryAnswerResponse": {
-        "type": "object",
-        "description": "문의 답변 응답",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64",
-            "description": "답변 ID",
-            "example": 7001
-          },
-          "inquiryId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "문의 ID",
-            "example": 6001
-          },
-          "content": {
-            "type": "string",
-            "description": "답변 본문",
-            "example": "문의 주신 내용은 담당 부서 확인 후 처리되었습니다."
-          },
-          "answeredByAdminId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "답변 관리자 ID",
-            "example": 9001
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "답변 생성 시각",
-            "example": "2026-06-02T09:00:00Z"
           }
         }
       },
@@ -29896,6 +30096,42 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "participantAppliedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "참여자 신청 수. 해당 유형 모집이 없으면 생략"
+          },
+          "participantCapacity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "참여자 정원. 해당 유형 모집이 없으면 생략"
+          },
+          "studentAppliedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "studentCapacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "volunteerAppliedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "봉사자 신청 수. 해당 유형 모집이 없으면 생략"
+          },
+          "volunteerCapacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "instructorAppliedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "강사 신청 수. 해당 유형 모집이 없으면 생략"
+          },
+          "instructorCapacity": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -29977,6 +30213,12 @@
               "$ref": "#/components/schemas/DashboardProgramInquiryResponse"
             }
           },
+          "summaries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardProgramInquirySummaryResponse"
+            }
+          },
           "params": {
             "type": "object",
             "additionalProperties": {
@@ -30016,6 +30258,38 @@
           "answeredAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "unread": {
+            "type": "boolean",
+            "description": "미열람(답변대기) 여부. 없으면 프론트는 답변대기를 신규로 본다"
+          }
+        }
+      },
+      "DashboardProgramInquirySummaryResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programName": {
+            "type": "string"
+          },
+          "pending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "answered": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unreadCount": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -30138,6 +30412,18 @@
             "type": "integer",
             "format": "int32"
           },
+          "participantApplicable": {
+            "type": "boolean",
+            "description": "참여자 KPI 해당 여부. false면 UI는 해당없음"
+          },
+          "schoolApplicable": {
+            "type": "boolean",
+            "description": "학교 KPI 해당 여부. individual/교육받은 교사는 false"
+          },
+          "classApplicable": {
+            "type": "boolean",
+            "description": "학급 KPI 해당 여부. individual/교육받은 교사는 false"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -30175,34 +30461,6 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/NoticeResponse"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "PageResponseMapStringObject": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "additionalProperties": {}
             }
           },
           "page": {

@@ -30,7 +30,7 @@ import type {
   DashboardWidgetLayoutSaveRequest,
   DashboardWidgetListResponse,
   DashboardWidgetProgramFiltersResponse,
-  List5Params,
+  List6Params,
   NotificationCasePage,
   NotificationUnreadCountResponse,
   NotificationsParams,
@@ -907,8 +907,8 @@ const unreadNotificationCount = (
  * - 검토 메모: 2026-08-22 CMS/portal/NEIS/Stibee cross-review aligned API
  * @summary 알림 발송 정책 케이스 목록 조회
  */
-const list5 = (
-    params?: List5Params,
+const list6 = (
+    params?: List6Params,
  options?: SecondParameter<typeof customInstance<NotificationCasePage>>,) => {
       return customInstance<NotificationCasePage>(
       {url: `/api/admin/notifications/cases`, method: 'GET',
@@ -1123,7 +1123,7 @@ const dashboardShortcuts = (
  * @summary 관리자 조회
  */
 const dashboardRecruitments = (
-    params: DashboardRecruitmentsParams,
+    params?: DashboardRecruitmentsParams,
  options?: SecondParameter<typeof customInstance<DashboardRecruitmentListResponse>>,) => {
       return customInstance<DashboardRecruitmentListResponse>(
       {url: `/api/admin/dashboard/recruitments`, method: 'GET',
@@ -1178,7 +1178,7 @@ const dashboardRecruitments = (
  * @summary 프로그램 조회
  */
 const dashboardProgramSchedules = (
-    params: DashboardProgramSchedulesParams,
+    params?: DashboardProgramSchedulesParams,
  options?: SecondParameter<typeof customInstance<DashboardProgramScheduleListResponse>>,) => {
       return customInstance<DashboardProgramScheduleListResponse>(
       {url: `/api/admin/dashboard/program-schedules`, method: 'GET',
@@ -1233,7 +1233,7 @@ const dashboardProgramSchedules = (
  * @summary 프로그램 조회
  */
 const dashboardProgramInquiries = (
-    params: DashboardProgramInquiriesParams,
+    params?: DashboardProgramInquiriesParams,
  options?: SecondParameter<typeof customInstance<DashboardProgramInquiryListResponse>>,) => {
       return customInstance<DashboardProgramInquiryListResponse>(
       {url: `/api/admin/dashboard/program-inquiries`, method: 'GET',
@@ -1342,7 +1342,7 @@ const dashboardNotificationCount = (
  * @summary 관리자 조회
  */
 const dashboardKpiProgress = (
-    params: DashboardKpiProgressParams,
+    params?: DashboardKpiProgressParams,
  options?: SecondParameter<typeof customInstance<DashboardKpiProgressListResponse>>,) => {
       return customInstance<DashboardKpiProgressListResponse>(
       {url: `/api/admin/dashboard/kpi-progress`, method: 'GET',
@@ -1405,7 +1405,7 @@ const dashboardHome = (
       options);
     }
 
-return {getDashboardPreferences,saveDashboardPreferences,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,readDashboardShortcutBadge,markRead1,hide,markClicked,readAllNotifications,notifications,unreadNotificationCount,list5,getDashboardShortcutBadges,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome}};
+return {getDashboardPreferences,saveDashboardPreferences,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,readDashboardShortcutBadge,markRead1,hide,markClicked,readAllNotifications,notifications,unreadNotificationCount,list6,getDashboardShortcutBadges,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome}};
 export type GetDashboardPreferencesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getDashboardPreferences']>>>
 export type SaveDashboardPreferencesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveDashboardPreferences']>>>
 export type GetWidgetProgramFiltersResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getWidgetProgramFilters']>>>
@@ -1421,7 +1421,7 @@ export type MarkClickedResult = NonNullable<Awaited<ReturnType<ReturnType<typeof
 export type ReadAllNotificationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['readAllNotifications']>>>
 export type NotificationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['notifications']>>>
 export type UnreadNotificationCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['unreadNotificationCount']>>>
-export type List5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['list5']>>>
+export type List6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['list6']>>>
 export type GetDashboardShortcutBadgesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getDashboardShortcutBadges']>>>
 export type DashboardWidgetsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardWidgets']>>>
 export type DashboardShortcutsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardShortcuts']>>>

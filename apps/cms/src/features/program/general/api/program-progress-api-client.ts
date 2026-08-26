@@ -87,9 +87,9 @@ export async function fetchProgramSchedulesViaDashboardRemote(
   const { fetchDashboardProgramSchedulesRemote, toDashboardQueryParams } = await import(
     '@/features/dashboard/api/dashboard-api-client'
   )
-  const body = await fetchDashboardProgramSchedulesRemote({
-    params: toDashboardQueryParams({ programIds: [programId] }),
-  })
+  const body = await fetchDashboardProgramSchedulesRemote(
+    toDashboardQueryParams({ programIds: [programId] })
+  )
   return body.items ?? []
 }
 

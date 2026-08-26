@@ -30,18 +30,18 @@ export async function fetchDetailedProgramRemote(
 export async function createDetailedProgramRemote(
   body: DetailedProgramRequest
 ): Promise<DetailedProgramResponse> {
-  return unwrapApiBody(await dmApi.create6(body))
+  return unwrapApiBody(await dmApi.create7(body))
 }
 
 export async function updateDetailedProgramRemote(
   id: number,
   body: DetailedProgramRequest
 ): Promise<DetailedProgramResponse> {
-  return unwrapApiBody(await dmApi.update4(id, body))
+  return unwrapApiBody(await dmApi.update5(id, body))
 }
 
 export async function deleteDetailedProgramRemote(id: number): Promise<void> {
-  await dmApi.delete3(id)
+  await dmApi.delete4(id)
 }
 
 export async function bulkDeleteDetailedProgramsRemote(ids: string[]): Promise<void> {

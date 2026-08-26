@@ -3,7 +3,6 @@
  * UI·페이지에서 직접 import하지 말고 admin-logs-service만 사용.
  *
  * query는 최상위 키로 보냅니다 (`?page=0&size=20&adminName=…`).
- * Orval 타입의 필수 `params` 맵은 HTTP에 넣지 않습니다(중첩 `params[fileName]` 방지).
  */
 import { getJAKoreaCMSBackendAPILogsSubset } from '@/shared/api/generated/logs/logs-api'
 import type {
@@ -65,11 +64,11 @@ export function toLogsListQueryParams(
   }
 }
 
-function toOrvalListParams<T extends { params: { [key: string]: string } }>(
-  filters: Record<string, string>
-): T {
-  // `params` 맵은 OpenAPI 필수 필드이나 HTTP에는 최상위 query만 보냅니다.
-  return { ...filters } as unknown as T
+function toOrvalListParams<T>(filters: Record<string, string>): T {
+  const out: Record<string, string | number> = { ...filters }
+  if (filters.page != null) out.page = Number(filters.page)
+  if (filters.size != null) out.size = Number(filters.size)
+  return out as T
 }
 
 export async function fetchFileAccessLogsRemote(

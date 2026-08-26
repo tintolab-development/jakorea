@@ -28,4 +28,8 @@ export interface SponsorResponse {
   businessNumber?: string;
   executives?: string;
   address?: string;
+  totalDonationAmount?: number;
+  totalBeneficiaryCount?: number;
+  homepageUrl?: string;
+  logoFileId?: string;
 }
