@@ -1,5 +1,6 @@
 import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
 import type { User } from '@/types/user'
+import type { InfiniteData } from '@tanstack/react-query'
 import {
   formatInstructorCareerDisplay,
   isInstructorMaskedPlaceholder,
@@ -382,6 +383,38 @@ export function applySavedBasicInfoPatchToUser(
   }
 
   return next
+}
+
+/** 목록 infinite query 페이지에서 memberId·uuid로 행을 찾아 상세/등록 결과를 merge한다. */
+export function patchMemberListPagesWithFetchedDetail<
+  TPage extends { users: Omit<User, 'password'>[] },
+>(
+  old: InfiniteData<TPage> | undefined,
+  fetched: Omit<User, 'password'>
+): InfiniteData<TPage> | undefined {
+  if (!old?.pages?.length) return old
+
+  let found = false
+  const pages = old.pages.map(page => ({
+    ...page,
+    users: page.users.map(user => {
+      const matches =
+        user.id === fetched.id ||
+        (fetched.memberId != null && user.memberId === fetched.memberId)
+      if (!matches) return user
+      found = true
+      return mergeListUserWithFetchedDetail(user, fetched)
+    }),
+  }))
+
+  if (!found) {
+    pages[0] = {
+      ...pages[0],
+      users: [fetched, ...pages[0].users],
+    }
+  }
+
+  return { ...old, pages }
 }
 
 function omitUndefinedMetrics(

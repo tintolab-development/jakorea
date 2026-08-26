@@ -18,6 +18,7 @@ import type {
   AdminPreRegisterInstructorRequest,
   AdminPreRegisterSchoolRequest,
   AdminPrivacyUnmaskRequest,
+  FilledDocumentResponse,
   AdminRoleChangeRequest,
   AdminRolePermissionMatrixResponse,
   AdminRolePermissionUpdateRequest,
@@ -249,12 +250,11 @@ export async function updateMemberCommentRemote(
 }
 
 /**
- * 회원 관리자 코멘트 upsert.
- * `existingCommentId`가 있으면 목록 GET 없이 update만 호출한다.
- * 없으면 목록으로 id를 확인한 뒤 update 또는 create.
+ * 회원/학교 organization 관리자 코멘트 upsert.
+ * path param `{memberId}`는 OpenAPI상 "대상 리소스 식별자" — 학교는 `organizationId`를 전달한다.
  */
 export async function upsertMemberAdminCommentRemote(
-  memberId: number,
+  resourceId: number,
   comment: string,
   options?: { existingCommentId?: number; screenCode?: string }
 ): Promise<AdminCommentResponse> {
@@ -266,16 +266,16 @@ export async function upsertMemberAdminCommentRemote(
 
   let commentId = options?.existingCommentId
   if (commentId == null) {
-    const existingComments = await fetchMemberCommentsRemote(memberId, { screenCode }).catch(
+    const existingComments = await fetchMemberCommentsRemote(resourceId, { screenCode }).catch(
       () => []
     )
     commentId = resolveLatestMemberAdminCommentDetail(existingComments, screenCode)?.commentId
   }
 
   if (commentId != null) {
-    return updateMemberCommentRemote(memberId, commentId, { comment: trimmed })
+    return updateMemberCommentRemote(resourceId, commentId, { comment: trimmed })
   }
-  return createMemberCommentRemote(memberId, { screenCode, comment: trimmed })
+  return createMemberCommentRemote(resourceId, { screenCode, comment: trimmed })
 }
 
 export async function deleteMemberCommentRemote(memberId: number, commentId: number): Promise<void> {
@@ -406,6 +406,72 @@ export async function fetchMemberConsentRecordsRemote(
 ): Promise<MemberConsentRecordResponse[]> {
   const data = await unwrapApiBody(await membersApi.consentRecords(memberId))
   return Array.isArray(data) ? data : []
+}
+
+/** POST 동의서 작성본 원문 — 민감정보, 쿼리 캐시에 넣지 말 것 */
+export async function fetchConsentFilledDocumentRemote(
+  memberId: number,
+  consentType: string,
+  body: AdminPrivacyUnmaskRequest
+): Promise<FilledDocumentResponse> {
+  return unwrapApiBody(
+    await membersApi.consentFilledDocument(memberId, consentType, body, {
+      skipGlobalErrorAlert: true,
+    })
+  )
+}
+
+/** 성범죄 첨부 다운로드. presigned가 아니면 감사 사유를 다시 실어 릴레이한다. */
+export async function fetchConsentEvidenceBlobRemote(
+  filled: FilledDocumentResponse,
+  reason: string
+): Promise<Blob | null> {
+  const endpoint = filled.evidenceDownloadEndpoint?.trim()
+  if (endpoint) {
+    try {
+      const payload = await customInstance<Blob>(
+        {
+          url: endpoint,
+          method: 'GET',
+          responseType: 'blob',
+        },
+        { skipGlobalErrorAlert: true }
+      )
+      if (payload instanceof Blob && payload.size > 0 && payload.type !== 'application/json') {
+        return payload
+      }
+    } catch {
+      /* POST 릴레이 시도 */
+    }
+    try {
+      const payload = await customInstance<Blob>(
+        {
+          url: endpoint,
+          method: 'POST',
+          data: { reason },
+          responseType: 'blob',
+        },
+        { skipGlobalErrorAlert: true }
+      )
+      if (payload instanceof Blob && payload.size > 0 && payload.type !== 'application/json') {
+        return payload
+      }
+    } catch {
+      /* fileObjectId 폴백 */
+    }
+  }
+
+  if (filled.evidenceFileObjectId == null) return null
+  const payload = await customInstance<Blob>(
+    {
+      url: `/api/admin/files/${filled.evidenceFileObjectId}/sensitive-downloads/stream`,
+      method: 'POST',
+      data: { reason },
+      responseType: 'blob',
+    },
+    { skipGlobalErrorAlert: true }
+  )
+  return payload instanceof Blob ? payload : null
 }
 
 export async function fetchMemberExternalIdentifiersRemote(

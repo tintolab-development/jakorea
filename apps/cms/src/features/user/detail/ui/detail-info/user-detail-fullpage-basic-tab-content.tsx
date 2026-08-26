@@ -34,9 +34,19 @@ import {
   useMemberCommentsQuery,
 } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { parseOrganizationIdFromUserId } from '@/features/user/api/map-school-organization-to-user'
+import { resolveAdminCommentResource } from '@/features/user/api/resolve-admin-comment-resource'
 import { applyMemberConsentToSchema } from '@/features/user/api/map-member-consent-records'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { shouldFetchMemberConsentRecords } from '@/features/user/detail/lib/fetch-member-detail-basic-tab-resources'
 import { upsertEditableTermsAgreementInDraft } from '@/features/user/api/member-basic-info-terms-patch'
+import { resolveMemberConsentTemplateByLabel } from '@/features/user/shared/lib/member-consent-template-map'
+import {
+  clearConsentWriteSnapshot,
+  upsertConsentAgreementWriteSnapshot,
+  upsertConsentCrimeWriteSnapshot,
+  type MemberConsentAgreementDraftSnapshot,
+  type MemberConsentCrimeDraftSnapshot,
+} from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import {
   updateAffiliatedTeacherEmploymentStatusRemote,
   updateTeacherEmploymentStatusRemote,
@@ -105,36 +115,53 @@ export function UserDetailFullpageBasicTabContent({
   const consentViewVariant =
     mode === 'permission' && permissionRole === 'instructor' ? 'permission_instructor' : 'default'
 
-  /** 권한 승인 상세는 동의·소속교사 등은 신청 스냅샷 우선 — 관리자 코멘트는 memberId로 회원 상세와 동일 조회 */
+  /** 권한 승인 상세는 동의·소속교사 등은 신청 스냅샷 우선 — 관리자 코멘트는 resource id로 회원 상세와 동일 조회 */
   const loadMemberSubresources = mode !== 'permission'
+  const adminCommentResource = resolveAdminCommentResource(user)
   const loadMemberAdminComments =
-    membersRemote && canShowAdminCommentForTarget && user.memberId != null
+    membersRemote && canShowAdminCommentForTarget && adminCommentResource != null
 
-  /** 상세 `termsAgreements`가 있으면 consent-records는 사용하지 않음 — 중복 GET 생략 */
-  const needsConsentRecordsFallback =
-    loadMemberSubresources &&
-    basicTab.showConsentAgreement &&
-    (user.termsAgreements == null || user.termsAgreements.length === 0)
+  /** 작성본 메타는 consent-records에만 있음 — 관리자 계정은 상세 termsAgreements만 사용 */
+  const shouldLoadConsentRecords = shouldFetchMemberConsentRecords({
+    role: user.role,
+    memberId: user.memberId,
+    showConsentAgreement: loadMemberSubresources && basicTab.showConsentAgreement,
+  })
 
-  const { data: consentRecords = [], isLoading: consentLoading } = useMemberConsentRecordsQuery(
+  const consentQuery = useMemberConsentRecordsQuery(
     user.memberId,
-    membersRemote && needsConsentRecordsFallback
+    membersRemote && shouldLoadConsentRecords,
+    { manualFetch: membersRemote }
+  )
+  const consentRecords = consentQuery.data ?? []
+  /** 비활성 쿼리(manualFetch·memberId 없음)의 isPending을 로딩으로 보면 스피너가 멈추지 않음 */
+  const consentLoading = Boolean(
+    membersRemote && shouldLoadConsentRecords && !consentQuery.isFetched
   )
 
   const {
     data: commentsData,
     isError: commentsError,
     isLoading: commentsLoading,
-  } = useMemberCommentsQuery(user.memberId, loadMemberAdminComments)
+  } = useMemberCommentsQuery(
+    adminCommentResource?.resourceId,
+    loadMemberAdminComments,
+    undefined,
+    adminCommentResource?.target,
+    { manualFetch: membersRemote }
+  )
 
   const schoolOrganizationId =
     user.organizationId ?? parseOrganizationIdFromUserId(user.id) ?? undefined
 
-  const { data: affiliatedTeachers = [], isError: teachersError } = useAffiliatedTeachersQuery(
+  const affiliatedTeachersQuery = useAffiliatedTeachersQuery(
     user.memberId,
     membersRemote && loadMemberSubresources && basicTab.showSchoolAffiliatedTeachers,
-    schoolOrganizationId
+    schoolOrganizationId,
+    { manualFetch: membersRemote }
   )
+  const affiliatedTeachers = affiliatedTeachersQuery.data ?? []
+  const teachersError = affiliatedTeachersQuery.isError
 
   const userForAdminComment = useMemo(() => {
     const fromUser = user.adminComment?.trim()
@@ -202,10 +229,8 @@ export function UserDetailFullpageBasicTabContent({
         : CONSENT_PRESET_SCHEMA[consentPreset]
     const detailTerms = user.termsAgreements
     return applyMemberConsentToSchema(baseSchema, {
-      // 상세 termsAgreements가 SSOT — 있을 때 consent-records는 무시
       termsAgreements: detailTerms,
-      consentRecords:
-        detailTerms != null && detailTerms.length > 0 ? undefined : consentRecords,
+      consentRecords,
     })
   }, [
     membersRemote,
@@ -241,15 +266,56 @@ export function UserDetailFullpageBasicTabContent({
   const handleEditableConsentChange = useCallback(
     (label: string, agreed: boolean) => {
       if (!onMemberInfoDraftChange) return
+      const fieldKey = resolveMemberConsentTemplateByLabel(label)?.fieldKey
       onMemberInfoDraftChange({
         termsAgreements: upsertEditableTermsAgreementInDraft(
           memberInfoDraft?.termsAgreements,
           label,
           agreed
         ),
+        ...(!agreed && fieldKey
+          ? {
+              consentWriteSnapshots: clearConsentWriteSnapshot(
+                memberInfoDraft?.consentWriteSnapshots,
+                fieldKey
+              ),
+            }
+          : {}),
       })
     },
-    [memberInfoDraft?.termsAgreements, onMemberInfoDraftChange]
+    [memberInfoDraft?.consentWriteSnapshots, memberInfoDraft?.termsAgreements, onMemberInfoDraftChange]
+  )
+
+  const handleConsentAgreementSnapshotSave = useCallback(
+    (label: string, snapshot: MemberConsentAgreementDraftSnapshot) => {
+      if (!onMemberInfoDraftChange) return
+      const fieldKey = resolveMemberConsentTemplateByLabel(label)?.fieldKey
+      if (!fieldKey) return
+      onMemberInfoDraftChange({
+        consentWriteSnapshots: upsertConsentAgreementWriteSnapshot(
+          memberInfoDraft?.consentWriteSnapshots,
+          fieldKey,
+          snapshot
+        ),
+      })
+    },
+    [memberInfoDraft?.consentWriteSnapshots, onMemberInfoDraftChange]
+  )
+
+  const handleConsentCrimeSnapshotSave = useCallback(
+    (label: string, snapshot: MemberConsentCrimeDraftSnapshot) => {
+      if (!onMemberInfoDraftChange) return
+      const fieldKey = resolveMemberConsentTemplateByLabel(label)?.fieldKey
+      if (!fieldKey) return
+      onMemberInfoDraftChange({
+        consentWriteSnapshots: upsertConsentCrimeWriteSnapshot(
+          memberInfoDraft?.consentWriteSnapshots,
+          fieldKey,
+          snapshot
+        ),
+      })
+    },
+    [memberInfoDraft?.consentWriteSnapshots, onMemberInfoDraftChange]
   )
 
   return (
@@ -303,9 +369,18 @@ export function UserDetailFullpageBasicTabContent({
               remoteConsentLoading={membersRemote && consentLoading}
               editing={memberConsentEditing}
               draftTermsAgreements={memberInfoDraft?.termsAgreements}
+              consentWriteSnapshots={memberInfoDraft?.consentWriteSnapshots}
               onEditableConsentChange={
                 memberConsentEditing ? handleEditableConsentChange : undefined
               }
+              onConsentAgreementSnapshotSave={
+                memberConsentEditing ? handleConsentAgreementSnapshotSave : undefined
+              }
+              onConsentCrimeSnapshotSave={
+                memberConsentEditing ? handleConsentCrimeSnapshotSave : undefined
+              }
+              memberId={user.memberId}
+              membersRemote={membersRemote}
             />
           ) : null}
           {instructorResumeApplicantRow ? (

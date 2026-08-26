@@ -18,8 +18,13 @@ export const memberQueryKeys = {
     [...memberQueryKeys.all, 'externalIdentifiers', memberId] as const,
   instructorSettlements: (memberId: number) =>
     [...memberQueryKeys.all, 'instructorSettlements', memberId] as const,
-  comments: (memberId: number, screenCode?: string) =>
-    [...memberQueryKeys.all, 'comments', memberId, screenCode ?? ''] as const,
+  instructorSettlementStatementJoin: (memberId: number) =>
+    [...memberQueryKeys.all, 'instructorSettlementStatementJoin', memberId] as const,
+  comments: (
+    resourceId: number,
+    screenCode?: string,
+    target: 'member' | 'schoolOrganization' = 'member'
+  ) => [...memberQueryKeys.all, 'comments', target, resourceId, screenCode ?? ''] as const,
   applications: (memberId: number) =>
     [...memberQueryKeys.all, 'applications', memberId] as const,
   programHistory: (memberId: number) =>

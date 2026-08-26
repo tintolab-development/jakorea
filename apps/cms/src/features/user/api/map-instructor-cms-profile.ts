@@ -36,7 +36,9 @@ import type { SchoolTeacherEmploymentStatus } from '@/types/user'
 import {
   formatInstructorEducationLevelDisplay,
   toInstructorFeeGradeApiValue,
+  toInstructorFeeGradeDisplayLabel,
 } from '@/features/user/api/map-instructor-activity-display'
+import type { User } from '@/types/user'
 import type { Affiliation } from '@/shared/api/generated/members/schemas/affiliation'
 import type { PortalSchoolSelectionRequest } from '@/shared/api/generated/members/schemas/portalSchoolSelectionRequest'
 import { parseOrganizationNamesFromText } from '@/features/user/detail/lib/parse-instructor-affiliation-text'
@@ -826,6 +828,52 @@ function toApiAffiliation(
     if (Number.isFinite(parsed)) result.affiliatedSchoolUserId = parsed
   }
   return result
+}
+
+/**
+ * 강사 신규 등록 직후 — BE 상세 GET·목록에 등급이 아직 없을 때 요청 profile 값으로 보강한다.
+ * (JA 평가는 등록 모달에서 `localOnly`로 산출 후 pre-register body에만 실린다.)
+ */
+export function mergeInstructorGradesFromCreateRequestIntoUser(
+  user: Omit<User, 'password'>,
+  profile: InstructorCmsProfileProposal | undefined
+): Omit<User, 'password'> {
+  if (!profile) return user
+
+  const feeGradeRaw = profile.defaultFeeGrade?.trim()
+  const jaGradeRaw = profile.defaultJaGrade?.trim()
+  if (!feeGradeRaw && !jaGradeRaw) return user
+
+  const feeGradeLabel = feeGradeRaw ? toInstructorFeeGradeDisplayLabel(feeGradeRaw) : undefined
+  const jaGrade = jaGradeRaw || undefined
+
+  const next: Omit<User, 'password'> = { ...user }
+
+  if (feeGradeLabel || jaGrade) {
+    next.listMetrics = {
+      ...user.listMetrics,
+      ...(feeGradeLabel ? { instructorFeeGradeLabel: feeGradeLabel } : {}),
+      ...(jaGrade ? { jaEvaluationGrade: jaGrade } : {}),
+    }
+  }
+
+  const needsProfileMerge =
+    (feeGradeRaw && !user.instructorCmsProfile?.defaultFeeGrade?.trim()) ||
+    (jaGradeRaw && !user.instructorCmsProfile?.defaultJaGrade?.trim())
+
+  if (needsProfileMerge) {
+    next.instructorCmsProfile = {
+      ...(user.instructorCmsProfile ?? profile),
+      ...(feeGradeRaw && !user.instructorCmsProfile?.defaultFeeGrade?.trim()
+        ? { defaultFeeGrade: feeGradeRaw }
+        : {}),
+      ...(jaGradeRaw && !user.instructorCmsProfile?.defaultJaGrade?.trim()
+        ? { defaultJaGrade: jaGradeRaw }
+        : {}),
+    }
+  }
+
+  return next
 }
 
 /** CMS proposal DTO → OpenAPI `InstructorCmsProfile` (pre-register·PATCH wire) */

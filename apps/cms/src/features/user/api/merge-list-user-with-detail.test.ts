@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applySavedBasicInfoPatchToUser,
   mergeListUserWithFetchedDetail,
+  patchMemberListPagesWithFetchedDetail,
 } from './merge-list-user-with-detail'
 import type { User } from '@/types/user'
 
@@ -311,5 +312,56 @@ describe('applySavedBasicInfoPatchToUser', () => {
 
     expect(merged.affiliation).toBe('JA코리아')
     expect(merged.schoolEnrollmentStatus).toBe('NOT_ENROLLED')
+  })
+})
+
+describe('patchMemberListPagesWithFetchedDetail', () => {
+  it('목록 행에 JA 등급을 merge하고, 없으면 첫 페이지 앞에 추가한다', () => {
+    const listUser = baseUser({
+      id: 'member-99',
+      memberId: 99,
+      role: 'INSTRUCTOR',
+      name: '신규강사',
+      email: 'new@example.com',
+    })
+    const created = baseUser({
+      id: 'member-99',
+      memberId: 99,
+      role: 'INSTRUCTOR',
+      name: '신규강사',
+      email: 'new@example.com',
+      listMetrics: { jaEvaluationGrade: 'A' },
+      instructorCmsProfile: {
+        memberType: 'GENERAL',
+        affiliation: { organizationNames: [] },
+        homeAddress: { line: '' },
+        education: {},
+        career: { level: 'experienced', rows: [] },
+        jaKoreaActivities: [],
+        licenses: [],
+        awards: [],
+        essays: {},
+        defaultJaGrade: 'A',
+      },
+    })
+
+    const withExisting = patchMemberListPagesWithFetchedDetail(
+      {
+        pages: [{ users: [listUser], nextCursor: undefined }],
+        pageParams: [undefined],
+      },
+      created
+    )
+    expect(withExisting?.pages[0].users[0].listMetrics?.jaEvaluationGrade).toBe('A')
+
+    const withoutExisting = patchMemberListPagesWithFetchedDetail(
+      {
+        pages: [{ users: [] as Omit<User, 'password'>[], nextCursor: undefined }],
+        pageParams: [undefined],
+      },
+      created
+    )
+    expect(withoutExisting?.pages[0]?.users[0]?.id).toBe('member-99')
+    expect(withoutExisting?.pages[0]?.users[0]?.listMetrics?.jaEvaluationGrade).toBe('A')
   })
 })

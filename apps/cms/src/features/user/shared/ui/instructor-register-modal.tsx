@@ -53,7 +53,10 @@ const INSTRUCTOR_REGISTER_REQUIRED_CONSENT_FIELDS = [
 export interface InstructorRegisterModalProps {
   open: boolean
   onClose: () => void
-  onSubmit?: (values: InstructorRegisterModalFormValues) => Promise<void>
+  onSubmit?: (
+    values: InstructorRegisterModalFormValues,
+    snapshots: MemberRegisterConsentWriteSnapshots
+  ) => Promise<void>
   loading?: boolean
 }
 
@@ -117,7 +120,7 @@ export function InstructorRegisterModal({
   const handleFinish = async (values: InstructorRegisterModalFormValues) => {
     try {
       if (onSubmit) {
-        await onSubmit(values)
+        await onSubmit(values, consentWriteSnapshots)
       }
       form.resetFields()
       onClose()

@@ -25,6 +25,14 @@ import {
   InstructorProfileFormBody,
   type InstructorProfileFormValues,
 } from '@/features/user/shared/ui/instructor-profile-form'
+import type { InstructorConsentFieldKey } from '@/features/user/shared/lib/instructor-consent-field-map'
+import {
+  createEmptyMemberRegisterConsentWriteSnapshots,
+  upsertConsentAgreementWriteSnapshot,
+  upsertConsentCrimeWriteSnapshot,
+  type MemberConsentAgreementDraftSnapshot,
+  type MemberConsentCrimeDraftSnapshot,
+} from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
@@ -94,6 +102,34 @@ export function InstructorDetailEditForm({
     )
     onMemberInfoDraftChange({
       termsAgreements,
+      consentTermsDirty: true,
+    })
+  }
+
+  const handleSaveConsentAgreementSnapshot = (
+    fieldKey: InstructorConsentFieldKey,
+    snapshot: MemberConsentAgreementDraftSnapshot
+  ) => {
+    onMemberInfoDraftChange({
+      consentWriteSnapshots: upsertConsentAgreementWriteSnapshot(
+        memberInfoDraft.consentWriteSnapshots,
+        fieldKey,
+        snapshot
+      ),
+      consentTermsDirty: true,
+    })
+  }
+
+  const handleSaveConsentCrimeSnapshot = (
+    fieldKey: InstructorConsentFieldKey,
+    snapshot: MemberConsentCrimeDraftSnapshot
+  ) => {
+    onMemberInfoDraftChange({
+      consentWriteSnapshots: upsertConsentCrimeWriteSnapshot(
+        memberInfoDraft.consentWriteSnapshots,
+        fieldKey,
+        snapshot
+      ),
       consentTermsDirty: true,
     })
   }
@@ -215,6 +251,11 @@ export function InstructorDetailEditForm({
         layoutVariant="detailEdit"
         basicInfoPrefix={basicInfoPrefix}
         basicInfoExtraBeforeBusinessIncome={basicInfoExtraBeforeBusinessIncome}
+        consentWriteSnapshots={
+          memberInfoDraft.consentWriteSnapshots ?? createEmptyMemberRegisterConsentWriteSnapshots()
+        }
+        onSaveConsentAgreementSnapshot={handleSaveConsentAgreementSnapshot}
+        onSaveConsentCrimeSnapshot={handleSaveConsentCrimeSnapshot}
         onConsentValuesCommit={flushDraftFromForm}
         includeInstructorApplicationSections={!isSchoolTeacherOnly}
       />

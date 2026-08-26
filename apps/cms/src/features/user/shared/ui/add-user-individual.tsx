@@ -370,6 +370,7 @@ export function AddUserIndividual({
           consentSexOffenseCheck: values.consentSexOffenseCheck,
         }
       ),
+      consentWriteSnapshots,
     }
     await onSubmit(request)
     form.resetFields()

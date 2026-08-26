@@ -10,7 +10,7 @@ import {
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { Button } from 'antd'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { TableFilterGroup, type FilterFieldConfig } from '@/shared/components/table-filter-group'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
@@ -27,7 +27,10 @@ import {
   summarizeSettlementRows,
   rowsToCalendarEvents,
 } from '@/features/user/detail/lib/instructor-settlement-list-utils'
-import { useMemberInstructorSettlementsQuery } from '@/features/user/api/instructor-member-settlements-remote'
+import {
+  useInstructorSettlementStatementJoinQuery,
+  useMemberInstructorSettlementsQuery,
+} from '@/features/user/api/instructor-member-settlements-remote'
 import { mapSettlementsToInstructorMemberRows } from '@/features/user/api/map-settlement-to-instructor-member-row'
 import {
   isMemberInstructorSettlementsRemoteEnabled,
@@ -35,7 +38,6 @@ import {
 import {
   bulkDownloadPaymentStatementsRemote,
   downloadPaymentStatementRemote,
-  fetchAllPaymentStatementsRemote,
 } from '@/features/settlement-management/api/settlement-api-client'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
@@ -98,6 +100,7 @@ export function InstructorPaymentTab({
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const settlementsRemote = isMemberInstructorSettlementsRemoteEnabled()
+  const manualFetch = settlementsRemote
 
   const [pendingFilters, setPendingFilters] = useState<Record<string, unknown>>({
     programName: '',
@@ -118,23 +121,22 @@ export function InstructorPaymentTab({
     selectedCount: number
   }>({ open: false, variant: 'single', selectedCount: 0 })
 
-  const { data: remoteSettlementItems = [], isLoading: settlementsLoading } =
-    useMemberInstructorSettlementsQuery(instructorMemberId, settlementsRemote)
+  const {
+    data: remoteSettlementItems = [],
+    isLoading: settlementsLoading,
+    isPending: settlementsPending,
+    isFetching: settlementsFetching,
+  } = useMemberInstructorSettlementsQuery(instructorMemberId, true, { manualFetch })
 
-  const { data: statementIdBySettlementId = new Map<number, number>() } = useQuery({
-    queryKey: ['instructor-settlement-statement-join', instructorMemberId],
-    enabled: settlementsRemote && instructorMemberId != null,
-    queryFn: async () => {
-      const statements = await fetchAllPaymentStatementsRemote()
-      const map = new Map<number, number>()
-      for (const statement of statements) {
-        if (statement.settlementId != null && statement.statementId != null) {
-          map.set(statement.settlementId, statement.statementId)
-        }
-      }
-      return map
-    },
-  })
+  const {
+    data: statementIdBySettlementId = new Map<number, number>(),
+    isPending: statementsPending,
+    isFetching: statementsFetching,
+  } = useInstructorSettlementStatementJoinQuery(instructorMemberId, true, { manualFetch })
+
+  const settlementsQueryLoading =
+    manualFetch &&
+    (settlementsPending || settlementsFetching || statementsPending || statementsFetching)
 
   const baseRows = useMemo(() => {
     if (!settlementsRemote || instructorMemberId == null) return []
@@ -335,7 +337,7 @@ export function InstructorPaymentTab({
         .filter(Boolean)
         .join(' ')}
     >
-      <Spin spinning={settlementsLoading || bulkDownloadLoading || excelExporting}>
+      <Spin spinning={settlementsLoading || settlementsQueryLoading || bulkDownloadLoading || excelExporting}>
         <TableFilterGroup
           fields={FILTER_FIELDS}
           filters={pendingFilters}
@@ -408,7 +410,7 @@ export function InstructorPaymentTab({
             </CmsButton>
             <ExcelButton
               loading={excelExporting}
-              disabled={settlementsLoading}
+              disabled={settlementsLoading || settlementsQueryLoading}
               onClick={() => void exportExcel()}
             />
           </div>

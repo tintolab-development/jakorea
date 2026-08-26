@@ -9,8 +9,8 @@ export type FormResponseDraftQueryResult = {
 }
 
 /**
- * 제출된 동의서(formResponse) → WritingFormDraft.
- * BE formResponse 상세 API·answers→draft 매핑 연동 전까지는 항상 draft null.
+ * @deprecated 동의서 보기는 `useConsentFilledDocumentMutation` + filled-document POST를 사용한다.
+ * 제출된 동의서(formResponse) → WritingFormDraft. 더 이상 호출하지 말 것.
  */
 export function useFormResponseDraftQuery(
   formResponseId: number | undefined

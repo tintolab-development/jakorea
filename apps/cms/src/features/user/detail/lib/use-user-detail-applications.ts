@@ -11,8 +11,20 @@ import {
 import { filterApplicationsBySubjectType } from '@/features/user/api/map-member-application-history'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
-import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import type { UserDetailProgramsChildKey } from './user-detail-fullpage-helpers'
+import {
+  fetchMemberProgramHistoryTabResources,
+  resolveMemberProgramHistoryResourceFlags,
+} from './resolve-member-program-history-resource-flags'
+
+function isManualSubresourceQueryLoading(query: {
+  isPending: boolean
+  isFetching: boolean
+}): boolean {
+  return query.isPending || query.isFetching
+}
 
 export type UserDetailDisplayUser = Omit<User, 'password'>
 
@@ -62,22 +74,29 @@ function tryResolveMemberId(user: UserDetailDisplayUser | null | undefined): num
   }
 }
 
-export async function loadApplicationsForUser(
-  displayUser: UserDetailDisplayUser
+async function loadMockApplicationsForProgramsChild(
+  displayUser: UserDetailDisplayUser,
+  programsChild: UserDetailProgramsChildKey
 ): Promise<{ applications: Application[]; enrollmentApplications: Application[] }> {
   if (displayUser.role === 'INSTRUCTOR') {
-    const [instructorApps, studentApps] = await Promise.all([
-      applicationService.getByUserId(displayUser.id, 'instructor'),
-      applicationService.getByUserId(displayUser.id, 'student'),
-    ])
-    return { applications: instructorApps, enrollmentApplications: studentApps }
+    if (programsChild === 'lecture') {
+      const instructorApps = await applicationService.getByUserId(displayUser.id, 'instructor')
+      return { applications: instructorApps, enrollmentApplications: [] }
+    }
+    if (programsChild === 'enrollment') {
+      const studentApps = await applicationService.getByUserId(displayUser.id, 'student')
+      return { applications: [], enrollmentApplications: studentApps }
+    }
+    return { applications: [], enrollmentApplications: [] }
   }
   if (displayUser.role === 'INDIVIDUAL') {
-    const studentApps = await applicationService.getByUserId(displayUser.id, 'student')
-    return { applications: studentApps, enrollmentApplications: [] }
+    if (programsChild === 'enrollment') {
+      const studentApps = await applicationService.getByUserId(displayUser.id, 'student')
+      return { applications: studentApps, enrollmentApplications: [] }
+    }
+    return { applications: [], enrollmentApplications: [] }
   }
   if (displayUser.role === 'SCHOOL') {
-    /** 학교 상세 — organization 전용 API만 사용 (mock 금지) */
     return { applications: [], enrollmentApplications: [] }
   }
   return { applications: [], enrollmentApplications: [] }
@@ -86,25 +105,74 @@ export async function loadApplicationsForUser(
 export function useUserDetailApplications(
   open: boolean,
   displayUser: UserDetailDisplayUser | null | undefined,
-  /** 권한 승인 상세 등 — 프로그램 이력 탭이 없으면 호출 생략 */
-  options?: { enabled?: boolean }
+  options?: {
+    /** history LNB 활성 */
+    enabled?: boolean
+    programsChild?: UserDetailProgramsChildKey
+    hasProgramsChildMenu?: boolean
+  }
 ) {
-  const enabled = options?.enabled !== false
+  const historyTabActive = options?.enabled !== false
+  const programsChild = options?.programsChild ?? 'enrollment'
+  const hasProgramsChildMenu = options?.hasProgramsChildMenu ?? false
   const membersRemote = isMembersRemoteEnabled()
   const queryClient = useQueryClient()
   const memberId = tryResolveMemberId(displayUser)
-  const queryEnabled = Boolean(open && enabled && displayUser)
+  const queryEnabled = Boolean(open && historyTabActive && displayUser)
+  const instructorMemberProfile =
+    displayUser?.role === 'INSTRUCTOR'
+      ? (resolveInstructorMemberProfile(displayUser) ?? undefined)
+      : undefined
+
+  const { loadApplications, loadProgramHistory } = useMemo(
+    () =>
+      resolveMemberProgramHistoryResourceFlags({
+        historyTabActive: queryEnabled,
+        programsChild,
+        hasProgramsChildMenu,
+        instructorMemberProfile,
+      }),
+    [queryEnabled, programsChild, hasProgramsChildMenu, instructorMemberProfile]
+  )
 
   const applicationsQuery = useMemberApplicationsQuery(
     memberId,
     displayUser?.id,
-    queryEnabled && membersRemote
+    queryEnabled && loadApplications,
+    { manualFetch: membersRemote }
   )
   const programHistoryQuery = useMemberProgramHistoryQuery(
     memberId,
     displayUser?.id,
-    queryEnabled && membersRemote
+    queryEnabled && loadProgramHistory,
+    { manualFetch: membersRemote }
   )
+
+  const tabResourceFetchKey = queryEnabled
+    ? `${memberId ?? ''}:${displayUser?.id ?? ''}:${programsChild}:${loadApplications}:${loadProgramHistory}`
+    : ''
+
+  useEffect(() => {
+    if (!membersRemote || !tabResourceFetchKey || memberId == null || !displayUser?.id) return
+
+    void fetchMemberProgramHistoryTabResources(queryClient, {
+      memberId,
+      userId: displayUser.id,
+      historyTabActive: true,
+      programsChild,
+      hasProgramsChildMenu,
+      instructorMemberProfile,
+    })
+  }, [
+    membersRemote,
+    tabResourceFetchKey,
+    memberId,
+    displayUser?.id,
+    programsChild,
+    hasProgramsChildMenu,
+    instructorMemberProfile,
+    queryClient,
+  ])
 
   const remoteMerged = useMemo(() => {
     if (!membersRemote || !displayUser) {
@@ -118,8 +186,26 @@ export function useUserDetailApplications(
   }, [membersRemote, displayUser, applicationsQuery.data, programHistoryQuery.data])
 
   const remoteVolunteerHistories = programHistoryQuery.data?.volunteerHistories ?? []
-  const remoteVolunteerHistoriesLoading = Boolean(
-    queryEnabled && membersRemote && programHistoryQuery.isLoading
+
+  const enrollmentTabLoading = Boolean(
+    queryEnabled &&
+      membersRemote &&
+      loadApplications &&
+      isManualSubresourceQueryLoading(applicationsQuery)
+  )
+
+  const lectureTabLoading = Boolean(
+    queryEnabled &&
+      membersRemote &&
+      loadApplications &&
+      isManualSubresourceQueryLoading(applicationsQuery)
+  )
+
+  const volunteerTabLoading = Boolean(
+    queryEnabled &&
+      membersRemote &&
+      loadProgramHistory &&
+      isManualSubresourceQueryLoading(programHistoryQuery)
   )
 
   const [applications, setApplications] = useState<Application[]>([])
@@ -127,40 +213,42 @@ export function useUserDetailApplications(
   const [applicationsLoading, setApplicationsLoading] = useState(false)
 
   const refetchApplications = useCallback(async () => {
-    if (!displayUser || !enabled) return
+    if (!displayUser || !historyTabActive) return
     if (membersRemote) {
       if (memberId == null) return
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: memberQueryKeys.applications(memberId) }),
-        queryClient.invalidateQueries({ queryKey: memberQueryKeys.programHistory(memberId) }),
-      ])
+      await fetchMemberProgramHistoryTabResources(queryClient, {
+        memberId,
+        userId: displayUser.id,
+        historyTabActive: true,
+        programsChild,
+        hasProgramsChildMenu,
+        instructorMemberProfile,
+      })
       return
     }
     try {
       const { applications: nextApps, enrollmentApplications: nextEnrollment } =
-        await loadApplicationsForUser(displayUser)
+        await loadMockApplicationsForProgramsChild(displayUser, programsChild)
       setApplications(nextApps)
       setEnrollmentApplications(nextEnrollment)
     } catch (error) {
       console.error('Failed to load applications:', error)
-      setApplications([])
-      setEnrollmentApplications([])
     }
-  }, [displayUser, enabled, memberId, membersRemote, queryClient])
+  }, [displayUser, historyTabActive, memberId, membersRemote, programsChild, hasProgramsChildMenu, instructorMemberProfile, queryClient])
 
-  const applicationLoadKey = displayUser
-    ? `${displayUser.id}:${displayUser.memberId ?? ''}:${displayUser.role}`
+  const mockLoadKey = displayUser
+    ? `${displayUser.id}:${displayUser.memberId ?? ''}:${displayUser.role}:${programsChild}:${loadApplications}`
     : ''
 
   useEffect(() => {
     if (membersRemote) return
 
-    if (open && displayUser && enabled) {
+    if (open && displayUser && historyTabActive && loadApplications) {
       const run = async () => {
         setApplicationsLoading(true)
         try {
           const { applications: nextApps, enrollmentApplications: nextEnrollment } =
-            await loadApplicationsForUser(displayUser)
+            await loadMockApplicationsForProgramsChild(displayUser, programsChild)
           setApplications(nextApps)
           setEnrollmentApplications(nextEnrollment)
         } catch (error) {
@@ -168,38 +256,53 @@ export function useUserDetailApplications(
             getMemberApiErrorMessage(error, 'Failed to load applications:'),
             error
           )
-          setApplications([])
-          setEnrollmentApplications([])
         } finally {
           setApplicationsLoading(false)
         }
       }
       void run()
-    } else {
-      setApplications([])
-      setEnrollmentApplications([])
     }
-  }, [open, applicationLoadKey, enabled, membersRemote])
+  }, [open, mockLoadKey, historyTabActive, loadApplications, membersRemote, displayUser, programsChild])
+
+  useEffect(() => {
+    if (membersRemote || open) return
+    setApplications([])
+    setEnrollmentApplications([])
+  }, [membersRemote, open])
 
   if (membersRemote) {
     return {
       applications: remoteMerged.applications,
       enrollmentApplications: remoteMerged.enrollmentApplications,
-      applicationsLoading: Boolean(
-        queryEnabled && (applicationsQuery.isLoading || programHistoryQuery.isLoading)
-      ),
+      applicationsLoading: enrollmentTabLoading || lectureTabLoading,
       volunteerHistories: remoteVolunteerHistories,
-      volunteerHistoriesLoading: remoteVolunteerHistoriesLoading,
+      volunteerHistoriesLoading: volunteerTabLoading,
+      enrollmentTabLoading,
+      lectureTabLoading,
+      volunteerTabLoading,
       refetchApplications,
     }
   }
 
+  const mockMerged = useMemo(() => {
+    if (!displayUser) {
+      return { applications: [] as Application[], enrollmentApplications: [] as Application[] }
+    }
+    return splitApplicationsForRole(
+      [...applications, ...enrollmentApplications],
+      displayUser.role
+    )
+  }, [applications, enrollmentApplications, displayUser])
+
   return {
-    applications,
-    enrollmentApplications,
+    applications: mockMerged.applications,
+    enrollmentApplications: mockMerged.enrollmentApplications,
     applicationsLoading,
     volunteerHistories: [] as UserHistory[],
     volunteerHistoriesLoading: false,
+    enrollmentTabLoading: applicationsLoading,
+    lectureTabLoading: applicationsLoading,
+    volunteerTabLoading: false,
     refetchApplications,
   }
 }

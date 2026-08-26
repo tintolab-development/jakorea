@@ -60,6 +60,7 @@ import {
   mapCreateUserRequestToPreRegisterIndividual,
   mapCreateUserRequestToPreRegisterInstructor,
 } from '@/features/user/api/map-pre-register-request'
+import { mergeInstructorGradesFromCreateRequestIntoUser } from '@/features/user/api/map-instructor-cms-profile'
 import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 import {
@@ -108,6 +109,8 @@ import type { InstructorCertificationUpsertRequest } from '@/shared/api/generate
 import type { AdminTermsAgreementRequest } from '@/shared/api/generated/members/schemas/adminTermsAgreementRequest'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 import { resolvePreRegisterTermsAgreementVersions } from '@/features/user/api/resolve-pre-register-terms-agreement-versions'
+import { attachFilledDocumentsToTermsAgreements } from '@/features/user/api/attach-filled-documents'
+import type { MemberRegisterConsentWriteSnapshots } from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
 import {
   hasAdminCommentPatch,
@@ -397,6 +400,8 @@ export type PatchUserBasicInfoInput = Partial<
   instructorCmsSettlement?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsSettlement
   /** PATCH `termsAgreements` — 약관·동의 여부 수정 */
   termsAgreements?: TermsAgreementRequest[]
+  /** 이번 세션에서 재작성한 동의서 본문 — wire에 안 실리고 attach 후 제거 */
+  consentWriteSnapshots?: MemberRegisterConsentWriteSnapshots
   /**
    * 개인 회원 GET·pre-register `enrollmentStatus`.
    * 있을 때만 PATCH extras(`schoolName`/`enrollmentStatus`)를 붙인다 — 강사 `affiliation`과 분리.
@@ -422,6 +427,7 @@ export type PatchUserBasicInfoInput = Partial<
 export type PatchUserBasicInfoOptions = {
   knownRole?: UserRole
   memberId?: number
+  organizationId?: number
   existingCommentId?: number
   /** 코멘트만 저장 후 이 객체를 기준으로 반환 (추가 상세 GET 생략) */
   baseUser?: Omit<User, 'password'>
@@ -491,6 +497,11 @@ async function patchAdminUserBasicInfoRemote(
   let resolvedTerms = patchWithoutCommentAndMetrics.termsAgreements
   if (resolvedTerms != null && resolvedTerms.length > 0) {
     resolvedTerms = await resolvePreRegisterTermsAgreementVersions(resolvedTerms)
+    resolvedTerms = await attachFilledDocumentsToTermsAgreements(resolvedTerms, {
+      mode: 'patch',
+      snapshots: patch.consentWriteSnapshots,
+      memberId: options?.memberId ?? existing.memberId,
+    })
   }
   const patchForAdminBody: PatchUserBasicInfoInput = {
     ...patchWithoutCommentAndMetrics,
@@ -566,7 +577,40 @@ async function patchUserBasicInfoRemote(
     return patchAdminUserBasicInfoRemote(userId, existing, patch, options)
   }
 
-  const memberId = options?.memberId ?? resolveMemberIdForApi(userId)
+  const role = knownRole ?? existingForRole?.role
+  if (role === 'SCHOOL') {
+    const organizationId =
+      options?.organizationId ??
+      options?.baseUser?.organizationId ??
+      existingForRole?.organizationId ??
+      parseOrganizationIdFromUserId(userId)
+
+    if (organizationId != null) {
+      if (hasAdminCommentPatch(patch)) {
+        const comment = patch.adminComment?.trim()
+        if (comment) {
+          await upsertMemberAdminCommentRemote(organizationId, comment, {
+            existingCommentId: options?.existingCommentId,
+            screenCode: MEMBER_DETAIL_SCREEN_CODE,
+          })
+        }
+      }
+
+      if (isAdminCommentOnlyPatch(patch)) {
+        const base =
+          options?.baseUser ??
+          existingForRole ??
+          (await getUserById(userId).catch(() => null))
+        if (!base) throw new Error('사용자를 찾을 수 없습니다.')
+        return {
+          ...base,
+          adminComment: patch.adminComment?.trim() || base.adminComment,
+        }
+      }
+    }
+  }
+
+  const memberId = options?.memberId ?? resolveMemberIdForApi(userId, options)
   try {
     if (hasAdminCommentPatch(patch)) {
       const comment = patch.adminComment?.trim()
@@ -582,6 +626,11 @@ async function patchUserBasicInfoRemote(
     let resolvedTerms = patchWithoutComment.termsAgreements
     if (resolvedTerms != null && resolvedTerms.length > 0) {
       resolvedTerms = await resolvePreRegisterTermsAgreementVersions(resolvedTerms)
+      resolvedTerms = await attachFilledDocumentsToTermsAgreements(resolvedTerms, {
+        mode: 'patch',
+        snapshots: patch.consentWriteSnapshots,
+        memberId,
+      })
     }
     const patchWithResolvedTerms: PatchUserBasicInfoInput = {
       ...patchWithoutComment,
@@ -1122,6 +1171,8 @@ export interface CreateUserRequest {
   educationLevel?: string
   termsAgreements?: TermsAgreementRequest[]
   adminTermsAgreements?: AdminTermsAgreementRequest[]
+  /** 등록 세션 동의서 작성본 — pre-register 직전 filledDocument로 변환 */
+  consentWriteSnapshots?: MemberRegisterConsentWriteSnapshots
   certifications?: InstructorCertificationUpsertRequest[]
   /** BE §3.8 — CMS 강사 `profile` 구조체 */
   instructorCmsProfile?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsProfileProposal
@@ -1176,10 +1227,15 @@ async function withResolvedTermsAgreements(
     return { ...request, adminTermsAgreements }
   }
   if (request.termsAgreements?.length) {
-    const termsAgreements = (await resolvePreRegisterTermsAgreementVersions(
+    let termsAgreements = (await resolvePreRegisterTermsAgreementVersions(
       request.termsAgreements
     )) as TermsAgreementRequest[] | undefined
-    return { ...request, termsAgreements }
+    termsAgreements = await attachFilledDocumentsToTermsAgreements(termsAgreements, {
+      mode: 'create',
+      snapshots: request.consentWriteSnapshots,
+    })
+    const { consentWriteSnapshots: _snapshots, ...rest } = request
+    return { ...rest, termsAgreements }
   }
   return request
 }
@@ -1258,7 +1314,14 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
 
       const memberId = created.memberId
       if (memberId != null && !Number.isNaN(memberId)) {
-        return await fetchCreatedMemberAsUser(memberId, resolvedRequest.role)
+        const createdUser = await fetchCreatedMemberAsUser(memberId, resolvedRequest.role)
+        if (resolvedRequest.role === 'INSTRUCTOR') {
+          return mergeInstructorGradesFromCreateRequestIntoUser(
+            createdUser,
+            resolvedRequest.instructorCmsProfile
+          )
+        }
+        return createdUser
       }
       if (created.memberUuid?.trim()) {
         return {
@@ -1350,6 +1413,18 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
     const instructorType = request.instructorType?.trim().toUpperCase()
     newUser.instructorMemberProfile =
       instructorType === 'SCHOOL_TEACHER' ? 'school_teacher' : 'instructor_only'
+    if (request.instructorCmsProfile) {
+      newUser.instructorCmsProfile = request.instructorCmsProfile
+    }
+    if (request.instructorCmsSettlement) {
+      newUser.instructorCmsSettlement = request.instructorCmsSettlement
+    }
+    const withGrades = mergeInstructorGradesFromCreateRequestIntoUser(
+      newUser,
+      request.instructorCmsProfile
+    )
+    newUser.listMetrics = withGrades.listMetrics
+    newUser.instructorCmsProfile = withGrades.instructorCmsProfile
   }
 
   if (request.id1365) {

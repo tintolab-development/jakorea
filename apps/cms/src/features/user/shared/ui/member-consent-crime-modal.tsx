@@ -41,6 +41,7 @@ export function MemberConsentCrimeModal({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [displaySrc, setDisplaySrc] = useState<string>(crimeConsentDefaultImage)
   const [replacementFileName, setReplacementFileName] = useState<string | null>(null)
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false)
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export function MemberConsentCrimeModal({
     if (savedSnapshot) {
       setDisplaySrc(savedSnapshot.displaySrc)
       setReplacementFileName(savedSnapshot.replacementFileName)
+      setUploadedFile(savedSnapshot.file ?? null)
       setHasUploadedDocument(true)
       return
     }
@@ -58,6 +60,7 @@ export function MemberConsentCrimeModal({
     let cancelled = false
     setHasUploadedDocument(false)
     setReplacementFileName(null)
+    setUploadedFile(null)
     void loadWritingFormTemplateDraft(AGREEMENT_CRIME_TEMPLATE_CODE).then(saved => {
       if (cancelled) return
       const settings = parseAgreementCrimeConsentSettings(saved?.settingsJson)
@@ -84,6 +87,7 @@ export function MemberConsentCrimeModal({
     void readImageFileAsDataUrl(file).then(dataUrl => {
       setDisplaySrc(dataUrl)
       setReplacementFileName(file.name)
+      setUploadedFile(file)
       setHasUploadedDocument(true)
     })
   }, [])
@@ -114,9 +118,18 @@ export function MemberConsentCrimeModal({
     onSnapshotSave?.({
       displaySrc,
       replacementFileName,
+      file: uploadedFile ?? undefined,
     })
     onComplete()
-  }, [displaySrc, hasUploadedDocument, onComplete, onSnapshotSave, replacementFileName, showAlert])
+  }, [
+    displaySrc,
+    hasUploadedDocument,
+    onComplete,
+    onSnapshotSave,
+    replacementFileName,
+    showAlert,
+    uploadedFile,
+  ])
 
   return (
     <TealHeaderModal
