@@ -306,16 +306,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
   )
 
   const handleProgramCollapseChange = useCallback((keys: string[] | string) => {
-    const next = Array.isArray(keys) ? keys : keys ? [keys] : []
-    setProgramCollapseActiveKey(next)
-    const opened = next[next.length - 1]
-    if (!opened) return
-    requestAnimationFrame(() => {
-      const panel = document.querySelector(
-        `.dashboard-settings-content-modal [data-program-row="${CSS.escape(opened)}"]`
-      )
-      panel?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-    })
+    setProgramCollapseActiveKey(Array.isArray(keys) ? keys : keys ? [keys] : [])
   }, [])
 
   const handleApply = useCallback(() => {
