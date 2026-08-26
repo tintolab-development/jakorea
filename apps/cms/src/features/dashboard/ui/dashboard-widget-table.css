@@ -193,22 +193,6 @@
   min-width: 0;
 }
 
-.dashboard-widget-table__header-count-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.dashboard-widget-table__header-unread-dot {
-  position: absolute;
-  top: 2px;
-  right: 0;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #e4223f;
-}
-
 .dashboard-widget-table__header-total-count.ant-typography {
   flex-shrink: 0;
   margin-right: var(--spacing-8);

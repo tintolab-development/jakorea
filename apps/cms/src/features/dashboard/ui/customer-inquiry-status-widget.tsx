@@ -34,7 +34,6 @@ export function CustomerInquiryStatusWidget() {
   const { data = [], isLoading: loading, isError } = useProgramInquiryStatusList(allowedProgramIds)
 
   const totalCount = data.length
-  const unreadTotal = data.reduce((sum, row) => sum + (row.unreadCount ?? 0), 0)
   const equalWidth = halfColumn ? '25%' : undefined
 
   useLayoutEffect(() => {
@@ -132,14 +131,9 @@ export function CustomerInquiryStatusWidget() {
       title={
         <WidgetTitleWithHandle>
           <span className="widget-card-title">프로그램 별 문의 현황</span>
-          <span className="dashboard-widget-table__header-count-wrap">
-            <Text type="secondary" className="dashboard-widget-table__header-total-count">
-              총 {totalCount}건
-            </Text>
-            {unreadTotal > 0 && (
-              <span className="dashboard-widget-table__header-unread-dot" aria-label="신규 문의" />
-            )}
-          </span>
+          <Text type="secondary" className="dashboard-widget-table__header-total-count">
+            총 {totalCount}건
+          </Text>
         </WidgetTitleWithHandle>
       }
       extra={
