@@ -1,0 +1,1384 @@
+{
+  "meta": {
+    "domain": "faqs",
+    "seedLabel": "posts-fe-mock-v1",
+    "ssot": "apps/cms/src/features/posts/api/admin-faq-mock-store.ts",
+    "categorySsot": "apps/cms/src/data/mock/admin-faq-seeds.ts ADMIN_FAQ_CATEGORY_SEED_NAMES",
+    "upsertKeys": [
+      "seedKey"
+    ],
+    "statusMap": {
+      "published": "published",
+      "draft": "임시저장",
+      "archived": "archived"
+    }
+  },
+  "categories": [
+    {
+      "seedKey": "faq-cat-0",
+      "suggestedNumericId": 1,
+      "categoryName": "회원가입",
+      "name": "회원가입",
+      "status": "active",
+      "displayOrder": 0
+    },
+    {
+      "seedKey": "faq-cat-1",
+      "suggestedNumericId": 2,
+      "categoryName": "프로그램",
+      "name": "프로그램",
+      "status": "active",
+      "displayOrder": 1
+    },
+    {
+      "seedKey": "faq-cat-2",
+      "suggestedNumericId": 3,
+      "categoryName": "회원 탈퇴",
+      "name": "회원 탈퇴",
+      "status": "active",
+      "displayOrder": 2
+    },
+    {
+      "seedKey": "faq-cat-3",
+      "suggestedNumericId": 4,
+      "categoryName": "정산",
+      "name": "정산",
+      "status": "active",
+      "displayOrder": 3
+    },
+    {
+      "seedKey": "faq-cat-4",
+      "suggestedNumericId": 5,
+      "categoryName": "활동",
+      "name": "활동",
+      "status": "active",
+      "displayOrder": 4
+    },
+    {
+      "seedKey": "faq-cat-5",
+      "suggestedNumericId": 6,
+      "categoryName": "봉사시간",
+      "name": "봉사시간",
+      "status": "active",
+      "displayOrder": 5
+    },
+    {
+      "seedKey": "faq-cat-6",
+      "suggestedNumericId": 7,
+      "categoryName": "시스템",
+      "name": "시스템",
+      "status": "active",
+      "displayOrder": 6
+    },
+    {
+      "seedKey": "faq-cat-7",
+      "suggestedNumericId": 8,
+      "categoryName": "안내",
+      "name": "안내",
+      "status": "active",
+      "displayOrder": 7
+    }
+  ],
+  "rows": [
+    {
+      "seedKey": "faq-admin-1",
+      "id": "faq-admin-1",
+      "category": "회원가입",
+      "question": "봉사시간은 언제 확인 가능한가요?",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "홍길동",
+      "status": "임시저장",
+      "createdAt": "2025-09-15T10:00:00"
+    },
+    {
+      "seedKey": "faq-admin-2",
+      "id": "faq-admin-2",
+      "category": "프로그램",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요?",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "이정재",
+      "status": "archived",
+      "createdAt": "2025-09-15T11:00:00"
+    },
+    {
+      "seedKey": "faq-admin-3",
+      "id": "faq-admin-3",
+      "category": "회원 탈퇴",
+      "question": "2인 1조 파트너는 어떻게 정해지나요?",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-15T12:00:00"
+    },
+    {
+      "seedKey": "faq-admin-4",
+      "id": "faq-admin-4",
+      "category": "정산",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요?",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-15T13:00:00"
+    },
+    {
+      "seedKey": "faq-admin-5",
+      "id": "faq-admin-5",
+      "category": "활동",
+      "question": "비밀번호를 잊어버렸어요.",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-15T14:00:00"
+    },
+    {
+      "seedKey": "faq-admin-6",
+      "id": "faq-admin-6",
+      "category": "봉사시간",
+      "question": "봉사단도 활동비를 받나요?",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-15T15:00:00"
+    },
+    {
+      "seedKey": "faq-admin-7",
+      "id": "faq-admin-7",
+      "category": "시스템",
+      "question": "봉사 인증서는 어디서 발급받나요?",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-15T16:00:00"
+    },
+    {
+      "seedKey": "faq-admin-8",
+      "id": "faq-admin-8",
+      "category": "안내",
+      "question": "봉사시간은 언제 확인 가능한가요? (8)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-15T17:00:00"
+    },
+    {
+      "seedKey": "faq-admin-9",
+      "id": "faq-admin-9",
+      "category": "회원가입",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (9)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-15T18:00:00"
+    },
+    {
+      "seedKey": "faq-admin-10",
+      "id": "faq-admin-10",
+      "category": "프로그램",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (10)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-15T19:00:00"
+    },
+    {
+      "seedKey": "faq-admin-11",
+      "id": "faq-admin-11",
+      "category": "회원 탈퇴",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (11)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-15T20:00:00"
+    },
+    {
+      "seedKey": "faq-admin-12",
+      "id": "faq-admin-12",
+      "category": "정산",
+      "question": "비밀번호를 잊어버렸어요. (12)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-15T21:00:00"
+    },
+    {
+      "seedKey": "faq-admin-13",
+      "id": "faq-admin-13",
+      "category": "활동",
+      "question": "봉사단도 활동비를 받나요? (13)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-15T22:00:00"
+    },
+    {
+      "seedKey": "faq-admin-14",
+      "id": "faq-admin-14",
+      "category": "봉사시간",
+      "question": "봉사 인증서는 어디서 발급받나요? (14)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-15T23:00:00"
+    },
+    {
+      "seedKey": "faq-admin-15",
+      "id": "faq-admin-15",
+      "category": "시스템",
+      "question": "봉사시간은 언제 확인 가능한가요? (15)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-16T00:00:00"
+    },
+    {
+      "seedKey": "faq-admin-16",
+      "id": "faq-admin-16",
+      "category": "안내",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (16)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-16T01:00:00"
+    },
+    {
+      "seedKey": "faq-admin-17",
+      "id": "faq-admin-17",
+      "category": "회원가입",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (17)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-16T02:00:00"
+    },
+    {
+      "seedKey": "faq-admin-18",
+      "id": "faq-admin-18",
+      "category": "프로그램",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (18)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "대외협력팀",
+      "status": "임시저장",
+      "createdAt": "2025-09-16T03:00:00"
+    },
+    {
+      "seedKey": "faq-admin-19",
+      "id": "faq-admin-19",
+      "category": "회원 탈퇴",
+      "question": "비밀번호를 잊어버렸어요. (19)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "홍길동",
+      "status": "archived",
+      "createdAt": "2025-09-16T04:00:00"
+    },
+    {
+      "seedKey": "faq-admin-20",
+      "id": "faq-admin-20",
+      "category": "정산",
+      "question": "봉사단도 활동비를 받나요? (20)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-16T05:00:00"
+    },
+    {
+      "seedKey": "faq-admin-21",
+      "id": "faq-admin-21",
+      "category": "활동",
+      "question": "봉사 인증서는 어디서 발급받나요? (21)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-16T06:00:00"
+    },
+    {
+      "seedKey": "faq-admin-22",
+      "id": "faq-admin-22",
+      "category": "봉사시간",
+      "question": "봉사시간은 언제 확인 가능한가요? (22)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-16T07:00:00"
+    },
+    {
+      "seedKey": "faq-admin-23",
+      "id": "faq-admin-23",
+      "category": "시스템",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (23)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-16T08:00:00"
+    },
+    {
+      "seedKey": "faq-admin-24",
+      "id": "faq-admin-24",
+      "category": "안내",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (24)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-16T09:00:00"
+    },
+    {
+      "seedKey": "faq-admin-25",
+      "id": "faq-admin-25",
+      "category": "회원가입",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (25)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-16T10:00:00"
+    },
+    {
+      "seedKey": "faq-admin-26",
+      "id": "faq-admin-26",
+      "category": "프로그램",
+      "question": "비밀번호를 잊어버렸어요. (26)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-16T11:00:00"
+    },
+    {
+      "seedKey": "faq-admin-27",
+      "id": "faq-admin-27",
+      "category": "회원 탈퇴",
+      "question": "봉사단도 활동비를 받나요? (27)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-16T12:00:00"
+    },
+    {
+      "seedKey": "faq-admin-28",
+      "id": "faq-admin-28",
+      "category": "정산",
+      "question": "봉사 인증서는 어디서 발급받나요? (28)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-16T13:00:00"
+    },
+    {
+      "seedKey": "faq-admin-29",
+      "id": "faq-admin-29",
+      "category": "활동",
+      "question": "봉사시간은 언제 확인 가능한가요? (29)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-16T14:00:00"
+    },
+    {
+      "seedKey": "faq-admin-30",
+      "id": "faq-admin-30",
+      "category": "봉사시간",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (30)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-16T15:00:00"
+    },
+    {
+      "seedKey": "faq-admin-31",
+      "id": "faq-admin-31",
+      "category": "시스템",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (31)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-16T16:00:00"
+    },
+    {
+      "seedKey": "faq-admin-32",
+      "id": "faq-admin-32",
+      "category": "안내",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (32)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-16T17:00:00"
+    },
+    {
+      "seedKey": "faq-admin-33",
+      "id": "faq-admin-33",
+      "category": "회원가입",
+      "question": "비밀번호를 잊어버렸어요. (33)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-16T18:00:00"
+    },
+    {
+      "seedKey": "faq-admin-34",
+      "id": "faq-admin-34",
+      "category": "프로그램",
+      "question": "봉사단도 활동비를 받나요? (34)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-16T19:00:00"
+    },
+    {
+      "seedKey": "faq-admin-35",
+      "id": "faq-admin-35",
+      "category": "회원 탈퇴",
+      "question": "봉사 인증서는 어디서 발급받나요? (35)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "IT지원팀",
+      "status": "임시저장",
+      "createdAt": "2025-09-16T20:00:00"
+    },
+    {
+      "seedKey": "faq-admin-36",
+      "id": "faq-admin-36",
+      "category": "정산",
+      "question": "봉사시간은 언제 확인 가능한가요? (36)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "대외협력팀",
+      "status": "archived",
+      "createdAt": "2025-09-16T21:00:00"
+    },
+    {
+      "seedKey": "faq-admin-37",
+      "id": "faq-admin-37",
+      "category": "활동",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (37)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-16T22:00:00"
+    },
+    {
+      "seedKey": "faq-admin-38",
+      "id": "faq-admin-38",
+      "category": "봉사시간",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (38)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-16T23:00:00"
+    },
+    {
+      "seedKey": "faq-admin-39",
+      "id": "faq-admin-39",
+      "category": "시스템",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (39)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-17T00:00:00"
+    },
+    {
+      "seedKey": "faq-admin-40",
+      "id": "faq-admin-40",
+      "category": "안내",
+      "question": "비밀번호를 잊어버렸어요. (40)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-17T01:00:00"
+    },
+    {
+      "seedKey": "faq-admin-41",
+      "id": "faq-admin-41",
+      "category": "회원가입",
+      "question": "봉사단도 활동비를 받나요? (41)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-17T02:00:00"
+    },
+    {
+      "seedKey": "faq-admin-42",
+      "id": "faq-admin-42",
+      "category": "프로그램",
+      "question": "봉사 인증서는 어디서 발급받나요? (42)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-17T03:00:00"
+    },
+    {
+      "seedKey": "faq-admin-43",
+      "id": "faq-admin-43",
+      "category": "회원 탈퇴",
+      "question": "봉사시간은 언제 확인 가능한가요? (43)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-17T04:00:00"
+    },
+    {
+      "seedKey": "faq-admin-44",
+      "id": "faq-admin-44",
+      "category": "정산",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (44)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-17T05:00:00"
+    },
+    {
+      "seedKey": "faq-admin-45",
+      "id": "faq-admin-45",
+      "category": "활동",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (45)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-17T06:00:00"
+    },
+    {
+      "seedKey": "faq-admin-46",
+      "id": "faq-admin-46",
+      "category": "봉사시간",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (46)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-17T07:00:00"
+    },
+    {
+      "seedKey": "faq-admin-47",
+      "id": "faq-admin-47",
+      "category": "시스템",
+      "question": "비밀번호를 잊어버렸어요. (47)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-17T08:00:00"
+    },
+    {
+      "seedKey": "faq-admin-48",
+      "id": "faq-admin-48",
+      "category": "안내",
+      "question": "봉사단도 활동비를 받나요? (48)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-17T09:00:00"
+    },
+    {
+      "seedKey": "faq-admin-49",
+      "id": "faq-admin-49",
+      "category": "회원가입",
+      "question": "봉사 인증서는 어디서 발급받나요? (49)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-17T10:00:00"
+    },
+    {
+      "seedKey": "faq-admin-50",
+      "id": "faq-admin-50",
+      "category": "프로그램",
+      "question": "봉사시간은 언제 확인 가능한가요? (50)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-17T11:00:00"
+    },
+    {
+      "seedKey": "faq-admin-51",
+      "id": "faq-admin-51",
+      "category": "회원 탈퇴",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (51)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-17T12:00:00"
+    },
+    {
+      "seedKey": "faq-admin-52",
+      "id": "faq-admin-52",
+      "category": "정산",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (52)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "운영팀",
+      "status": "임시저장",
+      "createdAt": "2025-09-17T13:00:00"
+    },
+    {
+      "seedKey": "faq-admin-53",
+      "id": "faq-admin-53",
+      "category": "활동",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (53)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "IT지원팀",
+      "status": "archived",
+      "createdAt": "2025-09-17T14:00:00"
+    },
+    {
+      "seedKey": "faq-admin-54",
+      "id": "faq-admin-54",
+      "category": "봉사시간",
+      "question": "비밀번호를 잊어버렸어요. (54)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-17T15:00:00"
+    },
+    {
+      "seedKey": "faq-admin-55",
+      "id": "faq-admin-55",
+      "category": "시스템",
+      "question": "봉사단도 활동비를 받나요? (55)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-17T16:00:00"
+    },
+    {
+      "seedKey": "faq-admin-56",
+      "id": "faq-admin-56",
+      "category": "안내",
+      "question": "봉사 인증서는 어디서 발급받나요? (56)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-17T17:00:00"
+    },
+    {
+      "seedKey": "faq-admin-57",
+      "id": "faq-admin-57",
+      "category": "회원가입",
+      "question": "봉사시간은 언제 확인 가능한가요? (57)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-17T18:00:00"
+    },
+    {
+      "seedKey": "faq-admin-58",
+      "id": "faq-admin-58",
+      "category": "프로그램",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (58)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-17T19:00:00"
+    },
+    {
+      "seedKey": "faq-admin-59",
+      "id": "faq-admin-59",
+      "category": "회원 탈퇴",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (59)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-17T20:00:00"
+    },
+    {
+      "seedKey": "faq-admin-60",
+      "id": "faq-admin-60",
+      "category": "정산",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (60)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-17T21:00:00"
+    },
+    {
+      "seedKey": "faq-admin-61",
+      "id": "faq-admin-61",
+      "category": "활동",
+      "question": "비밀번호를 잊어버렸어요. (61)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-17T22:00:00"
+    },
+    {
+      "seedKey": "faq-admin-62",
+      "id": "faq-admin-62",
+      "category": "봉사시간",
+      "question": "봉사단도 활동비를 받나요? (62)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-17T23:00:00"
+    },
+    {
+      "seedKey": "faq-admin-63",
+      "id": "faq-admin-63",
+      "category": "시스템",
+      "question": "봉사 인증서는 어디서 발급받나요? (63)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-18T00:00:00"
+    },
+    {
+      "seedKey": "faq-admin-64",
+      "id": "faq-admin-64",
+      "category": "안내",
+      "question": "봉사시간은 언제 확인 가능한가요? (64)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-18T01:00:00"
+    },
+    {
+      "seedKey": "faq-admin-65",
+      "id": "faq-admin-65",
+      "category": "회원가입",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (65)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-18T02:00:00"
+    },
+    {
+      "seedKey": "faq-admin-66",
+      "id": "faq-admin-66",
+      "category": "프로그램",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (66)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-18T03:00:00"
+    },
+    {
+      "seedKey": "faq-admin-67",
+      "id": "faq-admin-67",
+      "category": "회원 탈퇴",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (67)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-18T04:00:00"
+    },
+    {
+      "seedKey": "faq-admin-68",
+      "id": "faq-admin-68",
+      "category": "정산",
+      "question": "비밀번호를 잊어버렸어요. (68)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-18T05:00:00"
+    },
+    {
+      "seedKey": "faq-admin-69",
+      "id": "faq-admin-69",
+      "category": "활동",
+      "question": "봉사단도 활동비를 받나요? (69)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "관리자",
+      "status": "임시저장",
+      "createdAt": "2025-09-18T06:00:00"
+    },
+    {
+      "seedKey": "faq-admin-70",
+      "id": "faq-admin-70",
+      "category": "봉사시간",
+      "question": "봉사 인증서는 어디서 발급받나요? (70)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "운영팀",
+      "status": "archived",
+      "createdAt": "2025-09-18T07:00:00"
+    },
+    {
+      "seedKey": "faq-admin-71",
+      "id": "faq-admin-71",
+      "category": "시스템",
+      "question": "봉사시간은 언제 확인 가능한가요? (71)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-18T08:00:00"
+    },
+    {
+      "seedKey": "faq-admin-72",
+      "id": "faq-admin-72",
+      "category": "안내",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (72)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-18T09:00:00"
+    },
+    {
+      "seedKey": "faq-admin-73",
+      "id": "faq-admin-73",
+      "category": "회원가입",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (73)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-18T10:00:00"
+    },
+    {
+      "seedKey": "faq-admin-74",
+      "id": "faq-admin-74",
+      "category": "프로그램",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (74)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-18T11:00:00"
+    },
+    {
+      "seedKey": "faq-admin-75",
+      "id": "faq-admin-75",
+      "category": "회원 탈퇴",
+      "question": "비밀번호를 잊어버렸어요. (75)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-18T12:00:00"
+    },
+    {
+      "seedKey": "faq-admin-76",
+      "id": "faq-admin-76",
+      "category": "정산",
+      "question": "봉사단도 활동비를 받나요? (76)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-18T13:00:00"
+    },
+    {
+      "seedKey": "faq-admin-77",
+      "id": "faq-admin-77",
+      "category": "활동",
+      "question": "봉사 인증서는 어디서 발급받나요? (77)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-18T14:00:00"
+    },
+    {
+      "seedKey": "faq-admin-78",
+      "id": "faq-admin-78",
+      "category": "봉사시간",
+      "question": "봉사시간은 언제 확인 가능한가요? (78)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-18T15:00:00"
+    },
+    {
+      "seedKey": "faq-admin-79",
+      "id": "faq-admin-79",
+      "category": "시스템",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (79)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-18T16:00:00"
+    },
+    {
+      "seedKey": "faq-admin-80",
+      "id": "faq-admin-80",
+      "category": "안내",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (80)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-18T17:00:00"
+    },
+    {
+      "seedKey": "faq-admin-81",
+      "id": "faq-admin-81",
+      "category": "회원가입",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (81)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-18T18:00:00"
+    },
+    {
+      "seedKey": "faq-admin-82",
+      "id": "faq-admin-82",
+      "category": "프로그램",
+      "question": "비밀번호를 잊어버렸어요. (82)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-18T19:00:00"
+    },
+    {
+      "seedKey": "faq-admin-83",
+      "id": "faq-admin-83",
+      "category": "회원 탈퇴",
+      "question": "봉사단도 활동비를 받나요? (83)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-18T20:00:00"
+    },
+    {
+      "seedKey": "faq-admin-84",
+      "id": "faq-admin-84",
+      "category": "정산",
+      "question": "봉사 인증서는 어디서 발급받나요? (84)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-18T21:00:00"
+    },
+    {
+      "seedKey": "faq-admin-85",
+      "id": "faq-admin-85",
+      "category": "활동",
+      "question": "봉사시간은 언제 확인 가능한가요? (85)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-18T22:00:00"
+    },
+    {
+      "seedKey": "faq-admin-86",
+      "id": "faq-admin-86",
+      "category": "봉사시간",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (86)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "이정재",
+      "status": "임시저장",
+      "createdAt": "2025-09-18T23:00:00"
+    },
+    {
+      "seedKey": "faq-admin-87",
+      "id": "faq-admin-87",
+      "category": "시스템",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (87)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "관리자",
+      "status": "archived",
+      "createdAt": "2025-09-19T00:00:00"
+    },
+    {
+      "seedKey": "faq-admin-88",
+      "id": "faq-admin-88",
+      "category": "안내",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (88)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-19T01:00:00"
+    },
+    {
+      "seedKey": "faq-admin-89",
+      "id": "faq-admin-89",
+      "category": "회원가입",
+      "question": "비밀번호를 잊어버렸어요. (89)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-19T02:00:00"
+    },
+    {
+      "seedKey": "faq-admin-90",
+      "id": "faq-admin-90",
+      "category": "프로그램",
+      "question": "봉사단도 활동비를 받나요? (90)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-19T03:00:00"
+    },
+    {
+      "seedKey": "faq-admin-91",
+      "id": "faq-admin-91",
+      "category": "회원 탈퇴",
+      "question": "봉사 인증서는 어디서 발급받나요? (91)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-19T04:00:00"
+    },
+    {
+      "seedKey": "faq-admin-92",
+      "id": "faq-admin-92",
+      "category": "정산",
+      "question": "봉사시간은 언제 확인 가능한가요? (92)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-19T05:00:00"
+    },
+    {
+      "seedKey": "faq-admin-93",
+      "id": "faq-admin-93",
+      "category": "활동",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (93)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-19T06:00:00"
+    },
+    {
+      "seedKey": "faq-admin-94",
+      "id": "faq-admin-94",
+      "category": "봉사시간",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (94)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-19T07:00:00"
+    },
+    {
+      "seedKey": "faq-admin-95",
+      "id": "faq-admin-95",
+      "category": "시스템",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (95)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-19T08:00:00"
+    },
+    {
+      "seedKey": "faq-admin-96",
+      "id": "faq-admin-96",
+      "category": "안내",
+      "question": "비밀번호를 잊어버렸어요. (96)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-19T09:00:00"
+    },
+    {
+      "seedKey": "faq-admin-97",
+      "id": "faq-admin-97",
+      "category": "회원가입",
+      "question": "봉사단도 활동비를 받나요? (97)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-19T10:00:00"
+    },
+    {
+      "seedKey": "faq-admin-98",
+      "id": "faq-admin-98",
+      "category": "프로그램",
+      "question": "봉사 인증서는 어디서 발급받나요? (98)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-19T11:00:00"
+    },
+    {
+      "seedKey": "faq-admin-99",
+      "id": "faq-admin-99",
+      "category": "회원 탈퇴",
+      "question": "봉사시간은 언제 확인 가능한가요? (99)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-19T12:00:00"
+    },
+    {
+      "seedKey": "faq-admin-100",
+      "id": "faq-admin-100",
+      "category": "정산",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (100)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-19T13:00:00"
+    },
+    {
+      "seedKey": "faq-admin-101",
+      "id": "faq-admin-101",
+      "category": "활동",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (101)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-19T14:00:00"
+    },
+    {
+      "seedKey": "faq-admin-102",
+      "id": "faq-admin-102",
+      "category": "봉사시간",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (102)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-19T15:00:00"
+    },
+    {
+      "seedKey": "faq-admin-103",
+      "id": "faq-admin-103",
+      "category": "시스템",
+      "question": "비밀번호를 잊어버렸어요. (103)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "홍길동",
+      "status": "임시저장",
+      "createdAt": "2025-09-19T16:00:00"
+    },
+    {
+      "seedKey": "faq-admin-104",
+      "id": "faq-admin-104",
+      "category": "안내",
+      "question": "봉사단도 활동비를 받나요? (104)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "이정재",
+      "status": "archived",
+      "createdAt": "2025-09-19T17:00:00"
+    },
+    {
+      "seedKey": "faq-admin-105",
+      "id": "faq-admin-105",
+      "category": "회원가입",
+      "question": "봉사 인증서는 어디서 발급받나요? (105)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-19T18:00:00"
+    },
+    {
+      "seedKey": "faq-admin-106",
+      "id": "faq-admin-106",
+      "category": "프로그램",
+      "question": "봉사시간은 언제 확인 가능한가요? (106)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-19T19:00:00"
+    },
+    {
+      "seedKey": "faq-admin-107",
+      "id": "faq-admin-107",
+      "category": "회원 탈퇴",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (107)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-19T20:00:00"
+    },
+    {
+      "seedKey": "faq-admin-108",
+      "id": "faq-admin-108",
+      "category": "정산",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (108)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-19T21:00:00"
+    },
+    {
+      "seedKey": "faq-admin-109",
+      "id": "faq-admin-109",
+      "category": "활동",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (109)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-19T22:00:00"
+    },
+    {
+      "seedKey": "faq-admin-110",
+      "id": "faq-admin-110",
+      "category": "봉사시간",
+      "question": "비밀번호를 잊어버렸어요. (110)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-19T23:00:00"
+    },
+    {
+      "seedKey": "faq-admin-111",
+      "id": "faq-admin-111",
+      "category": "시스템",
+      "question": "봉사단도 활동비를 받나요? (111)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-20T00:00:00"
+    },
+    {
+      "seedKey": "faq-admin-112",
+      "id": "faq-admin-112",
+      "category": "안내",
+      "question": "봉사 인증서는 어디서 발급받나요? (112)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-20T01:00:00"
+    },
+    {
+      "seedKey": "faq-admin-113",
+      "id": "faq-admin-113",
+      "category": "회원가입",
+      "question": "봉사시간은 언제 확인 가능한가요? (113)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-20T02:00:00"
+    },
+    {
+      "seedKey": "faq-admin-114",
+      "id": "faq-admin-114",
+      "category": "프로그램",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (114)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-20T03:00:00"
+    },
+    {
+      "seedKey": "faq-admin-115",
+      "id": "faq-admin-115",
+      "category": "회원 탈퇴",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (115)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-20T04:00:00"
+    },
+    {
+      "seedKey": "faq-admin-116",
+      "id": "faq-admin-116",
+      "category": "정산",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (116)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-20T05:00:00"
+    },
+    {
+      "seedKey": "faq-admin-117",
+      "id": "faq-admin-117",
+      "category": "활동",
+      "question": "비밀번호를 잊어버렸어요. (117)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-20T06:00:00"
+    },
+    {
+      "seedKey": "faq-admin-118",
+      "id": "faq-admin-118",
+      "category": "봉사시간",
+      "question": "봉사단도 활동비를 받나요? (118)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-20T07:00:00"
+    },
+    {
+      "seedKey": "faq-admin-119",
+      "id": "faq-admin-119",
+      "category": "시스템",
+      "question": "봉사 인증서는 어디서 발급받나요? (119)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-20T08:00:00"
+    },
+    {
+      "seedKey": "faq-admin-120",
+      "id": "faq-admin-120",
+      "category": "안내",
+      "question": "봉사시간은 언제 확인 가능한가요? (120)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "대외협력팀",
+      "status": "임시저장",
+      "createdAt": "2025-09-20T09:00:00"
+    },
+    {
+      "seedKey": "faq-admin-121",
+      "id": "faq-admin-121",
+      "category": "회원가입",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (121)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "홍길동",
+      "status": "archived",
+      "createdAt": "2025-09-20T10:00:00"
+    },
+    {
+      "seedKey": "faq-admin-122",
+      "id": "faq-admin-122",
+      "category": "프로그램",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (122)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-20T11:00:00"
+    },
+    {
+      "seedKey": "faq-admin-123",
+      "id": "faq-admin-123",
+      "category": "회원 탈퇴",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (123)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-20T12:00:00"
+    },
+    {
+      "seedKey": "faq-admin-124",
+      "id": "faq-admin-124",
+      "category": "정산",
+      "question": "비밀번호를 잊어버렸어요. (124)",
+      "answer": "로그인 화면의 \"비밀번호 찾기\" 기능을 이용하시거나, 가입 시 등록한 이메일/휴대폰 번호를 통해 본인 인증 후 재설정하실 수 있습니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-20T13:00:00"
+    },
+    {
+      "seedKey": "faq-admin-125",
+      "id": "faq-admin-125",
+      "category": "활동",
+      "question": "봉사단도 활동비를 받나요? (125)",
+      "answer": "기본적으로 봉사 활동은 무보수 원칙이나, 일부 원거리 활동의 경우 교통비 실비가 지급될 수 있습니다. 해당되는 경우 프로그램 공지사항을 통해 별도로 안내드립니다.",
+      "author": "IT지원팀",
+      "status": "published",
+      "createdAt": "2025-09-20T14:00:00"
+    },
+    {
+      "seedKey": "faq-admin-126",
+      "id": "faq-admin-126",
+      "category": "봉사시간",
+      "question": "봉사 인증서는 어디서 발급받나요? (126)",
+      "answer": "전체 봉사 기간이 종료된 후 마이페이지 > 봉사단 활동 관리 > 참여 이력 메뉴에서 인증서를 PDF로 내려받으실 수 있습니다.",
+      "author": "대외협력팀",
+      "status": "published",
+      "createdAt": "2025-09-20T15:00:00"
+    },
+    {
+      "seedKey": "faq-admin-127",
+      "id": "faq-admin-127",
+      "category": "시스템",
+      "question": "봉사시간은 언제 확인 가능한가요? (127)",
+      "answer": "봉사 활동 종료 후 활동 보고서가 승인되면 1365 자원봉사 포털로 실적이 전송됩니다. 전송 후 포털 반영까지는 약 3~5일 정도 소요될 수 있습니다.",
+      "author": "홍길동",
+      "status": "published",
+      "createdAt": "2025-09-20T16:00:00"
+    },
+    {
+      "seedKey": "faq-admin-128",
+      "id": "faq-admin-128",
+      "category": "안내",
+      "question": "1365 아이디가 없으면 봉사시간을 못 받나요? (128)",
+      "answer": "네, 봉사시간은 1365 자원봉사 포털을 통해 연계되므로 반드시 1365 아이디가 필요하며, JAKorea 회원정보에 해당 아이디를 등록해주셔야 합니다.",
+      "author": "이정재",
+      "status": "published",
+      "createdAt": "2025-09-20T17:00:00"
+    },
+    {
+      "seedKey": "faq-admin-129",
+      "id": "faq-admin-129",
+      "category": "회원가입",
+      "question": "2인 1조 파트너는 어떻게 정해지나요? (129)",
+      "answer": "교육 기수와 지역을 고려하여 시스템에서 자동으로 배정하거나 운영팀에서 조정합니다. 가급적 파트너 중복을 피하고 다양한 분들과 활동하실 수 있도록 배정하고 있습니다.",
+      "author": "관리자",
+      "status": "published",
+      "createdAt": "2025-09-20T18:00:00"
+    },
+    {
+      "seedKey": "faq-admin-130",
+      "id": "faq-admin-130",
+      "category": "프로그램",
+      "question": "갑작스러운 사정으로 봉사 일정 변경이 가능한가요? (130)",
+      "answer": "일정 변경은 파트너와 학교 측의 협의가 필요하므로 가급적 지양해주시기 바랍니다. 불가피한 경우 최소 1주일 전에 운영팀으로 연락주셔야 하며, 대리 봉사자 투입 등의 조치가 필요할 수 있습니다.",
+      "author": "운영팀",
+      "status": "published",
+      "createdAt": "2025-09-20T19:00:00"
+    }
+  ]
+}
