@@ -5,6 +5,8 @@ import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import { getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
 import { useMemberLoginHistoryQuery } from '@/features/logs/hooks/use-member-login-history-query'
+import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
+import { LOGS_EMPTY_SEARCH_TEXT } from '@/features/logs/lib/logs-empty-copy'
 import { buildMemberLoginHistoryExcelFilename } from '@/features/logs/lib/member-login-excel'
 import { memberLoginHistoryFilterFields } from '@/features/logs/model/member-login-history-filter-fields'
 import { memberLoginHistoryTablePageConfig } from '@/features/logs/model/member-login-history-table.config'
@@ -24,8 +26,6 @@ import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 
 const MEMBER_LOGIN_HISTORY_TABLE_SCROLL_X = 1120
-const MEMBER_LOGIN_HISTORY_EMPTY_TEXT =
-  '검색 결과가 없습니다. 검색 조건을 변경해 주세요.'
 
 const TABLE_COL_WIDTH = {
   no: 88,
@@ -38,6 +38,7 @@ const TABLE_COL_WIDTH = {
 export default function MemberLoginHistoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const searchParamsKey = searchParams.toString()
+  const remoteEnabled = useLogsRemoteQueryEnabled()
   const {
     rows,
     totalElements,
@@ -134,11 +135,13 @@ export default function MemberLoginHistoryPage() {
       onSearch={applySearch}
       title="회원 로그인 이력"
       description={`총 ${totalElements.toLocaleString()}건`}
-      contentLoading={isLoading}
+      contentLoading={remoteEnabled && isLoading}
       onExcelDownload={exportExcel}
       excelDownloadLoading={isExporting}
     >
-      {isError ? (
+      {!remoteEnabled ? (
+        <LogsQueryError message="로그 관리 API를 사용하려면 관리자 로그인이 필요합니다." />
+      ) : isError ? (
         <LogsQueryError
           message={getLogsApiErrorMessage(error, '회원 로그인 이력을 불러오지 못했습니다.')}
         />
@@ -153,7 +156,7 @@ export default function MemberLoginHistoryPage() {
             dataSource={tableData}
             pagination={false}
             locale={{
-              emptyText: <EmptyState description={MEMBER_LOGIN_HISTORY_EMPTY_TEXT} />,
+              emptyText: <EmptyState description={LOGS_EMPTY_SEARCH_TEXT} />,
             }}
           />
           <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />

@@ -122,35 +122,55 @@ export function AdminFaqDetailPage() {
       />
       <div className="admin-faq-detail-page__inner">
         <div className="admin-faq-detail-page__card">
-          <div className="admin-faq-detail-page__top-row">
-            <span
-              className={
-                isPublic
-                  ? 'admin-faq-detail-page__badge admin-faq-detail-page__badge--public'
-                  : 'admin-faq-detail-page__badge admin-faq-detail-page__badge--private'
-              }
-            >
-              {isPublic ? '공개' : '비공개'}
-            </span>
+          <div className="admin-faq-detail-page__header">
+            <div className="admin-faq-detail-page__top-row">
+              <div className="admin-faq-detail-page__top-badges">
+                <span
+                  className={
+                    isPublic
+                      ? 'admin-faq-detail-page__badge admin-faq-detail-page__badge--public'
+                      : 'admin-faq-detail-page__badge admin-faq-detail-page__badge--private'
+                  }
+                >
+                  {isPublic ? '공개' : '비공개'}
+                </span>
+                {faq.category ? (
+                  <span className="admin-faq-detail-page__category">{faq.category}</span>
+                ) : null}
+              </div>
+            </div>
+            <h1 className="admin-faq-detail-page__title">{faq.question}</h1>
+            <div className="admin-faq-detail-page__meta">
+              <span className="admin-faq-detail-page__meta-text">{dateStr}</span>
+              {faq.author ? (
+                <>
+                  <span className="admin-faq-detail-page__meta-divider" aria-hidden />
+                  <span className="admin-faq-detail-page__meta-text">{faq.author}</span>
+                </>
+              ) : null}
+            </div>
           </div>
-          <h1 className="admin-faq-detail-page__title">{faq.question}</h1>
-          <div className="admin-faq-detail-page__meta">
-            <span>{faq.category}</span>
-            <span>{faq.author}</span>
-            <span>{dateStr}</span>
-          </div>
+          <hr className="admin-faq-detail-page__section-divider" />
           <div className="admin-faq-detail-page__body">
             <RichTextViewer content={faq.answer} />
           </div>
-          <div className="admin-faq-detail-page__actions">
-            <CmsButton variant="secondary" size="medium" onClick={goList}>
-              목록
-            </CmsButton>
-            <CmsButton variant="primary" size="medium" onClick={handleEdit} disabled={!canWrite}>
-              수정
-            </CmsButton>
-            <CmsButton variant="delete" size="medium" onClick={handleDelete} disabled={!canWrite}>
+        </div>
+        <div className="admin-faq-detail-page__actions">
+          <CmsButton variant="secondary" size="large" onClick={goList}>
+            목록
+          </CmsButton>
+          <div className="admin-faq-detail-page__actions-right">
+            <CmsButton
+              variant="delete"
+              size="large"
+              className="admin-faq-delete-btn"
+              onClick={handleDelete}
+              disabled={!canWrite}
+            >
               삭제
+            </CmsButton>
+            <CmsButton variant="primary" size="large" onClick={handleEdit} disabled={!canWrite}>
+              수정
             </CmsButton>
           </div>
         </div>

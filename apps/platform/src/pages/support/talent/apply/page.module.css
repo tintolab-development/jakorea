@@ -1,0 +1,37 @@
+.page {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex: 1 0 auto;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  padding-block: var(--spacing-150);
+  padding-inline: var(--page-padding-x);
+  background: var(--color-neutral-white);
+}
+
+.inner {
+  display: flex;
+  width: 100%;
+  max-width: 560px;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-40);
+  margin-inline: auto;
+}
+
+.title {
+  margin: 0;
+  text-align: center;
+}
+
+@media (--bp-below-pc) {
+  .page {
+    padding-block: var(--spacing-56);
+  }
+
+  .inner {
+    gap: var(--spacing-32);
+  }
+}

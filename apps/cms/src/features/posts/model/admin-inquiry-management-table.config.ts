@@ -49,7 +49,11 @@ function filterRows(
       if (status === 'PENDING' && row.status !== 'PENDING') return false
       if (status === 'ANSWERED' && row.status !== 'ANSWERED') return false
       if (cat !== 'ALL' && row.category !== cat) return false
-      if (prog && !(row.programName ?? '').toLowerCase().includes(prog)) return false
+      if (prog) {
+        const matchesId = /^\d+$/.test(prog) && row.programId === prog
+        const matchesName = (row.programName ?? '').toLowerCase().includes(prog)
+        if (!matchesId && !matchesName) return false
+      }
       if (title && !row.title.toLowerCase().includes(title)) return false
       if (mem && !row.memberName.toLowerCase().includes(mem)) return false
       if (asg && !(row.assignee ?? '').toLowerCase().includes(asg)) return false

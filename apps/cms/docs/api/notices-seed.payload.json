@@ -1,0 +1,485 @@
+{
+  "meta": {
+    "domain": "notices",
+    "seedLabel": "posts-fe-mock-v1",
+    "ssot": "apps/cms/src/features/posts/api/admin-notice-mock-store.ts",
+    "categorySsot": "createInitialNoticeCategoryRows()",
+    "upsertKeys": [
+      "seedKey"
+    ],
+    "note": "필독 is a filter option in mock category rows, not a notice.category value. Keep it as a category row so the CMS modal matches mock.",
+    "statusMap": {
+      "published": "published",
+      "draft": "임시저장",
+      "archived": "archived"
+    }
+  },
+  "categories": [
+    {
+      "seedKey": "notice-cat-0",
+      "suggestedNumericId": 1,
+      "categoryName": "필독",
+      "name": "필독",
+      "status": "active",
+      "displayOrder": 0
+    },
+    {
+      "seedKey": "notice-cat-1",
+      "suggestedNumericId": 2,
+      "categoryName": "안내",
+      "name": "안내",
+      "status": "active",
+      "displayOrder": 1
+    },
+    {
+      "seedKey": "notice-cat-2",
+      "suggestedNumericId": 3,
+      "categoryName": "정산",
+      "name": "정산",
+      "status": "active",
+      "displayOrder": 2
+    },
+    {
+      "seedKey": "notice-cat-3",
+      "suggestedNumericId": 4,
+      "categoryName": "시스템",
+      "name": "시스템",
+      "status": "active",
+      "displayOrder": 3
+    },
+    {
+      "seedKey": "notice-cat-4",
+      "suggestedNumericId": 5,
+      "categoryName": "봉사단",
+      "name": "봉사단",
+      "status": "active",
+      "displayOrder": 4
+    },
+    {
+      "seedKey": "notice-cat-5",
+      "suggestedNumericId": 6,
+      "categoryName": "강사단",
+      "name": "강사단",
+      "status": "active",
+      "displayOrder": 5
+    },
+    {
+      "seedKey": "notice-cat-6",
+      "suggestedNumericId": 7,
+      "categoryName": "최종 합격 발표",
+      "name": "최종 합격 발표",
+      "status": "active",
+      "displayOrder": 6
+    },
+    {
+      "seedKey": "notice-cat-7",
+      "suggestedNumericId": 8,
+      "categoryName": "서류 심사 결과",
+      "name": "서류 심사 결과",
+      "status": "active",
+      "displayOrder": 7
+    }
+  ],
+  "rows": [
+    {
+      "seedKey": "notice-admin-1",
+      "id": "notice-admin-1",
+      "title": "2025년 1월 정산 신청 기간 및 방법 안내",
+      "content": "안녕하세요. JAKorea입니다. 2025년 1월 정산 신청에 대해 안내드립니다.\n    \n1. 신청 기간: 2025년 1월 20일 ~ 1월 25일\n2. 대상: 1월 중 교육/봉사 활동을 완료한 모든 분\n3. 방법: 마이페이지 > 정산 관리 > 정산 신청 메뉴를 통해 접수\n\n기한 내 신청하지 않을 경우 다음 달로 이월되오니 유의하시기 바랍니다.",
+      "category": "정산",
+      "createdAt": "2025-01-15T10:00:00",
+      "isImportant": true,
+      "viewCount": 1250,
+      "hasAttachment": true,
+      "attachmentNames": [
+        "(2026) JA Korea 경제금융교육 커리큘럼.pdf"
+      ],
+      "author": "관리자",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-admin-2",
+      "id": "notice-admin-2",
+      "title": "신규 봉사자 교육 매뉴얼 및 가이드라인 배포",
+      "content": "신규 봉사자분들을 위한 통합 교육 매뉴얼이 업데이트되었습니다. 첨부파일을 확인하여 활동에 참고하시기 바랍니다.",
+      "category": "봉사단",
+      "createdAt": "2025-01-09T14:00:00",
+      "isImportant": true,
+      "viewCount": 867,
+      "hasAttachment": true,
+      "attachmentNames": [
+        "(2026) JA Korea 경제금융교육 커리큘럼.pdf",
+        "JA Korea 공지 부록.pdf"
+      ],
+      "author": "운영팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-admin-3",
+      "id": "notice-admin-3",
+      "title": "CMS 시스템 정기 점검 안내 (1월 20일)",
+      "content": "보다 안정적인 서비스 제공을 위해 시스템 정기 점검이 진행될 예정입니다. 점검 시간 동안은 접속이 제한됩니다.",
+      "category": "시스템",
+      "createdAt": "2025-01-16T09:00:00",
+      "isImportant": true,
+      "viewCount": 454,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "IT지원팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-admin-4",
+      "id": "notice-admin-4",
+      "title": "겨울방학 대학생 교육기부 모집 공고",
+      "content": "겨울방학 기간 동안 초등학교 금융교육을 담당할 대학생 봉사자를 모집합니다.",
+      "category": "안내",
+      "createdAt": "2025-01-02T11:00:00",
+      "isImportant": false,
+      "viewCount": 2151,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "대외협력팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-admin-5",
+      "id": "notice-admin-5",
+      "title": "[작성 중] 2025년 상반기 강사 워크숍 안내",
+      "content": "2025년 상반기 강사 워크숍 일정이 확정되었습니다. 세부 내용을 작성 중입니다.",
+      "category": "강사단",
+      "createdAt": "2025-01-16T10:00:00",
+      "isImportant": false,
+      "viewCount": 68,
+      "hasAttachment": true,
+      "attachmentNames": [
+        "(2026) JA Korea 경제금융교육 커리큘럼.pdf"
+      ],
+      "author": "관리자",
+      "status": "임시저장"
+    },
+    {
+      "seedKey": "notice-admin-6",
+      "id": "notice-admin-6",
+      "title": "2025년 1월 정산 신청 기간 및 방법 안내 (6)",
+      "content": "안녕하세요. JAKorea입니다. 2025년 1월 정산 신청에 대해 안내드립니다.\n    \n1. 신청 기간: 2025년 1월 20일 ~ 1월 25일\n2. 대상: 1월 중 교육/봉사 활동을 완료한 모든 분\n3. 방법: 마이페이지 > 정산 관리 > 정산 신청 메뉴를 통해 접수\n\n기한 내 신청하지 않을 경우 다음 달로 이월되오니 유의하시기 바랍니다.",
+      "category": "정산",
+      "createdAt": "2025-01-10T10:00:00",
+      "isImportant": false,
+      "viewCount": 1335,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "관리자",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-admin-7",
+      "id": "notice-admin-7",
+      "title": "신규 봉사자 교육 매뉴얼 및 가이드라인 배포 (7)",
+      "content": "신규 봉사자분들을 위한 통합 교육 매뉴얼이 업데이트되었습니다. 첨부파일을 확인하여 활동에 참고하시기 바랍니다.",
+      "category": "봉사단",
+      "createdAt": "2025-01-04T14:00:00",
+      "isImportant": false,
+      "viewCount": 952,
+      "hasAttachment": true,
+      "attachmentNames": [
+        "(2026) JA Korea 경제금융교육 커리큘럼.pdf"
+      ],
+      "author": "운영팀",
+      "status": "archived"
+    },
+    {
+      "seedKey": "notice-admin-8",
+      "id": "notice-admin-8",
+      "title": "CMS 시스템 정기 점검 안내 (1월 20일) (8)",
+      "content": "보다 안정적인 서비스 제공을 위해 시스템 정기 점검이 진행될 예정입니다. 점검 시간 동안은 접속이 제한됩니다.",
+      "category": "시스템",
+      "createdAt": "2025-01-11T09:00:00",
+      "isImportant": false,
+      "viewCount": 539,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "IT지원팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-admin-9",
+      "id": "notice-admin-9",
+      "title": "겨울방학 대학생 교육기부 모집 공고 (9)",
+      "content": "겨울방학 기간 동안 초등학교 금융교육을 담당할 대학생 봉사자를 모집합니다.",
+      "category": "안내",
+      "createdAt": "2024-12-28T11:00:00",
+      "isImportant": false,
+      "viewCount": 2236,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "대외협력팀",
+      "status": "임시저장"
+    },
+    {
+      "seedKey": "notice-admin-10",
+      "id": "notice-admin-10",
+      "title": "[작성 중] 2025년 상반기 강사 워크숍 안내 (10)",
+      "content": "2025년 상반기 강사 워크숍 일정이 확정되었습니다. 세부 내용을 작성 중입니다.",
+      "category": "강사단",
+      "createdAt": "2025-01-11T10:00:00",
+      "isImportant": false,
+      "viewCount": 153,
+      "hasAttachment": true,
+      "attachmentNames": [
+        "(2026) JA Korea 경제금융교육 커리큘럼.pdf",
+        "JA Korea 공지 부록.pdf"
+      ],
+      "author": "관리자",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-admin-11",
+      "id": "notice-admin-11",
+      "title": "2025년 1월 정산 신청 기간 및 방법 안내 (11)",
+      "content": "안녕하세요. JAKorea입니다. 2025년 1월 정산 신청에 대해 안내드립니다.\n    \n1. 신청 기간: 2025년 1월 20일 ~ 1월 25일\n2. 대상: 1월 중 교육/봉사 활동을 완료한 모든 분\n3. 방법: 마이페이지 > 정산 관리 > 정산 신청 메뉴를 통해 접수\n\n기한 내 신청하지 않을 경우 다음 달로 이월되오니 유의하시기 바랍니다.",
+      "category": "정산",
+      "createdAt": "2025-01-05T10:00:00",
+      "isImportant": false,
+      "viewCount": 1420,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "관리자",
+      "status": "archived"
+    },
+    {
+      "seedKey": "notice-admin-12",
+      "id": "notice-admin-12",
+      "title": "신규 봉사자 교육 매뉴얼 및 가이드라인 배포 (12)",
+      "content": "신규 봉사자분들을 위한 통합 교육 매뉴얼이 업데이트되었습니다. 첨부파일을 확인하여 활동에 참고하시기 바랍니다.",
+      "category": "봉사단",
+      "createdAt": "2024-12-30T14:00:00",
+      "isImportant": false,
+      "viewCount": 1037,
+      "hasAttachment": true,
+      "attachmentNames": [
+        "(2026) JA Korea 경제금융교육 커리큘럼.pdf",
+        "JA Korea 공지 부록.pdf"
+      ],
+      "author": "운영팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-admin-13",
+      "id": "notice-admin-13",
+      "title": "CMS 시스템 정기 점검 안내 (1월 20일) (13)",
+      "content": "보다 안정적인 서비스 제공을 위해 시스템 정기 점검이 진행될 예정입니다. 점검 시간 동안은 접속이 제한됩니다.",
+      "category": "시스템",
+      "createdAt": "2025-01-06T09:00:00",
+      "isImportant": false,
+      "viewCount": 624,
+      "hasAttachment": true,
+      "attachmentNames": [
+        "(2026) JA Korea 경제금융교육 커리큘럼.pdf"
+      ],
+      "author": "IT지원팀",
+      "status": "임시저장"
+    },
+    {
+      "seedKey": "notice-admin-14",
+      "id": "notice-admin-14",
+      "title": "겨울방학 대학생 교육기부 모집 공고 (14)",
+      "content": "겨울방학 기간 동안 초등학교 금융교육을 담당할 대학생 봉사자를 모집합니다.",
+      "category": "안내",
+      "createdAt": "2024-12-23T11:00:00",
+      "isImportant": false,
+      "viewCount": 2321,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "대외협력팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-admin-15",
+      "id": "notice-admin-15",
+      "title": "[작성 중] 2025년 상반기 강사 워크숍 안내 (15)",
+      "content": "2025년 상반기 강사 워크숍 일정이 확정되었습니다. 세부 내용을 작성 중입니다.",
+      "category": "강사단",
+      "createdAt": "2025-01-06T10:00:00",
+      "isImportant": false,
+      "viewCount": 238,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "관리자",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-result-1",
+      "id": "notice-result-1",
+      "title": "2026 국제무역창업대회(International Trade Challenge, ITC) 참가자 발표",
+      "content": "2026 국제무역창업대회(ITC) 참가자 최종 결과를 발표합니다. 합격하신 분들께는 개별 안내드릴 예정입니다.",
+      "category": "최종 합격 발표",
+      "createdAt": "2026-09-15T10:00:00",
+      "isImportant": true,
+      "viewCount": 1820,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "운영팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-result-2",
+      "id": "notice-result-2",
+      "title": "2026 JA Korea 대학생경제교육봉사단 UJAT36기 최종 합격 발표",
+      "content": "안녕하세요. JA Korea입니다.\n\n2026 JA Korea 대학생경제교육봉사단 UJAT36기에 지원해 주신 모든 분들께 감사드립니다.\n\n엄격한 서류 심사와 면접을 거쳐 최종 합격자를 아래와 같이 발표합니다.\n\n## [최종 합격자 안내]\n\n상세 합격자 명단은 첨부파일을 확인해 주세요. 합격하신 분들께는 개별 안내 메일·문자를 발송할 예정입니다.\n\n## [합격자 안내 사항]\n\n- 합격자 대상 오리엔테이션 참석이 필수입니다.\n- 제출 서류 및 일정은 첨부 안내문을 참고해 주세요.\n- 미제출·미참석 시 합격이 취소될 수 있습니다.\n\n## [추후 상세 일정]\n\n- 합격자 서류 제출 및 오리엔테이션 일정은 첨부 「향후 일정 안내」를 확인해 주세요.\n- 일정 변경 시 홈페이지 공지 및 개별 안내로 공지합니다.\n\n문의: jakorea@jakorea.org / 02-783-2367\n\n감사합니다.\nJA Korea 드림",
+      "category": "최종 합격 발표",
+      "createdAt": "2026-09-15T09:00:00",
+      "isImportant": true,
+      "viewCount": 915000,
+      "hasAttachment": true,
+      "attachmentNames": [
+        "[명단] UJAT 36기 최종합격 명단.pdf",
+        "[안내문] UJAT 36기 향후 일정 안내.pdf"
+      ],
+      "author": "홍길동 매니저",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-result-3",
+      "id": "notice-result-3",
+      "title": "2026 JA Korea 금융교육 강사단 서류 심사 결과",
+      "content": "금융교육 강사단 모집 서류 심사 결과를 안내드립니다.",
+      "category": "서류 심사 결과",
+      "createdAt": "2026-09-14T14:00:00",
+      "isImportant": false,
+      "viewCount": 960,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "강사운영팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-result-4",
+      "id": "notice-result-4",
+      "title": "2026 JA Korea 대학생경제교육봉사단 UJAT36기 서류합격발표",
+      "content": "UJAT36기 1차 서류 합격자를 발표합니다.",
+      "category": "서류 심사 결과",
+      "createdAt": "2026-09-12T11:00:00",
+      "isImportant": true,
+      "viewCount": 2100,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "운영팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-result-5",
+      "id": "notice-result-5",
+      "title": "SAMSUNG X JA Korea 참가자 선정 발표",
+      "content": "SAMSUNG X JA Korea 프로그램 참가자 선정 결과를 발표합니다.",
+      "category": "최종 합격 발표",
+      "createdAt": "2026-09-10T16:00:00",
+      "isImportant": true,
+      "viewCount": 3100,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "대외협력팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-result-6",
+      "id": "notice-result-6",
+      "title": "2026 기업가정신 캠프 참가자 최종 발표",
+      "content": "기업가정신 캠프 참가자 최종 명단을 발표합니다.",
+      "category": "최종 합격 발표",
+      "createdAt": "2026-09-08T10:00:00",
+      "isImportant": false,
+      "viewCount": 740,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "운영팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-result-7",
+      "id": "notice-result-7",
+      "title": "2026 경제금융교육 전문강사단 모집 서류 심사 결과",
+      "content": "경제금융교육 전문강사단 서류 심사 결과를 안내드립니다.",
+      "category": "서류 심사 결과",
+      "createdAt": "2026-09-05T13:00:00",
+      "isImportant": false,
+      "viewCount": 880,
+      "hasAttachment": true,
+      "attachmentNames": [
+        "서류심사_안내.pdf"
+      ],
+      "author": "강사운영팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-result-8",
+      "id": "notice-result-8",
+      "title": "2026 특별한 JOB담 봉사자 최종 합격 발표",
+      "content": "특별한 JOB담 봉사자 최종 합격자를 발표합니다.",
+      "category": "최종 합격 발표",
+      "createdAt": "2026-09-01T09:30:00",
+      "isImportant": true,
+      "viewCount": 1250,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "운영팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-result-9",
+      "id": "notice-result-9",
+      "title": "2026 디지털 리터러시 프로그램 참가자 발표",
+      "content": "디지털 리터러시 프로그램 참가자 최종 결과를 발표합니다.",
+      "category": "최종 합격 발표",
+      "createdAt": "2026-08-28T15:00:00",
+      "isImportant": false,
+      "viewCount": 640,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "교육팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-result-10",
+      "id": "notice-result-10",
+      "title": "2026 진로취업 아카데미 서류 심사 결과",
+      "content": "진로취업 아카데미 서류 심사 결과를 안내드립니다.",
+      "category": "서류 심사 결과",
+      "createdAt": "2026-08-25T11:00:00",
+      "isImportant": false,
+      "viewCount": 520,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "교육팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-result-11",
+      "id": "notice-result-11",
+      "title": "2026 JA Korea 여름 캠프 최종 합격 발표",
+      "content": "여름 캠프 최종 합격자를 발표합니다.",
+      "category": "최종 합격 발표",
+      "createdAt": "2026-08-20T10:00:00",
+      "isImportant": false,
+      "viewCount": 990,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "운영팀",
+      "status": "published"
+    },
+    {
+      "seedKey": "notice-result-12",
+      "id": "notice-result-12",
+      "title": "2026 금융문해력 강사 모집 서류 심사 결과",
+      "content": "금융문해력 강사 모집 서류 심사 결과를 안내드립니다.",
+      "category": "서류 심사 결과",
+      "createdAt": "2026-08-18T14:00:00",
+      "isImportant": false,
+      "viewCount": 430,
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "author": "강사운영팀",
+      "status": "published"
+    }
+  ]
+}

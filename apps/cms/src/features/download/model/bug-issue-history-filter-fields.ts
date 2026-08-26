@@ -15,7 +15,7 @@ export const bugIssueHistoryFilterFields: FilterFieldConfig[] = [
   {
     key: 'dateRange',
     type: 'dateRange',
-    label: '기간',
+    label: '발생일시',
     defaultValue: null,
     width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
   },

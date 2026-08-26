@@ -70,12 +70,16 @@ export function EducationRecordListPage() {
     () => ({
       year: pendingFilters.year || undefined,
       quarter: pendingFilters.quarter === 'ALL' ? undefined : pendingFilters.quarter,
+      businessArea: pendingFilters.businessArea || undefined,
       sido: pendingFilters.sido || undefined,
       sigungu: pendingFilters.sigungu || undefined,
       sponsorName: pendingFilters.sponsorName,
       mainTitle: pendingFilters.mainTitle,
       title: pendingFilters.title,
       textbookName: pendingFilters.textbookName,
+      institutionName: pendingFilters.institutionName,
+      ips: pendingFilters.ips || undefined,
+      educationType: pendingFilters.educationType || undefined,
     }),
     [pendingFilters]
   )

@@ -104,7 +104,18 @@
 }
 @media (--bp-pc-up) {
   .hero {
-    min-height: 640px;
+    min-height: 100vh;
+  }
+
+  .background {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
   }
 
   .background {
@@ -142,6 +153,7 @@
   }
   .eyebrow {
     padding-bottom: var(--spacing-16);
+    color: var(--color-neutral-black);
   }
   .description {
     width: 90%;
@@ -151,7 +163,7 @@
 
 @media (--bp-pc-full-up) {
   .hero {
-    min-height: 800px;
+    min-height: max(800px, 100vh);
   }
 
   .text {

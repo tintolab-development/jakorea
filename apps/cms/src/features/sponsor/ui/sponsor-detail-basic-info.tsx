@@ -13,7 +13,7 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import { AddressSearch, CmsBusinessNumberInput, CmsButton, CmsInput, CmsRadioGroup } from '@/shared/ui'
+import { AddressSearch, CmsBusinessNumberInput, CmsButton, CmsDatePicker, CmsInput, CmsRadioGroup } from '@/shared/ui'
 import type { SponsorOrganizationKind } from '@/types/domain'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { formatKoreanBusinessNumber } from '@jakorea/domain/shared/korean-business-number'
@@ -213,7 +213,21 @@ export function SponsorBasicInfoSection({
         <DetailInfoForm.Field
           label="후원 시작일"
           view={<span>{sponsorshipStartDisplay}</span>}
-          edit={<span>{sponsorshipStartDisplay}</span>}
+          edit={
+            <CmsDatePicker
+              value={value.sponsorshipStartDate ? dayjs(value.sponsorshipStartDate) : null}
+              onChange={date =>
+                onChange(prev => ({
+                  ...prev,
+                  sponsorshipStartDate: date ? date.startOf('day').toISOString() : undefined,
+                }))
+              }
+              placeholder="후원 시작일"
+              format="YYYY.MM.DD"
+              allowClear
+              style={{ width: '100%' }}
+            />
+          }
         />
         <DetailInfoForm.Field
           label="후원 상태"

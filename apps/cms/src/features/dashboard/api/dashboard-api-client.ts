@@ -51,27 +51,31 @@ export async function fetchDashboardNotificationCountRemote(): Promise<Notificat
 }
 
 export async function fetchDashboardRecruitmentsRemote(
-  params: DashboardRecruitmentsParams
+  params: DashboardRecruitmentsParams | Record<string, string>
 ): Promise<DashboardRecruitmentListResponse> {
-  return unwrapBody(await dashboardRemoteApi.dashboardRecruitments(params))
+  return unwrapBody(await dashboardRemoteApi.dashboardRecruitments(params as DashboardRecruitmentsParams))
 }
 
 export async function fetchDashboardKpiProgressRemote(
-  params: DashboardKpiProgressParams
+  params: DashboardKpiProgressParams | Record<string, string>
 ): Promise<DashboardKpiProgressListResponse> {
-  return unwrapBody(await dashboardRemoteApi.dashboardKpiProgress(params))
+  return unwrapBody(await dashboardRemoteApi.dashboardKpiProgress(params as DashboardKpiProgressParams))
 }
 
 export async function fetchDashboardProgramInquiriesRemote(
-  params: DashboardProgramInquiriesParams
+  params: DashboardProgramInquiriesParams | Record<string, string>
 ): Promise<DashboardProgramInquiryListResponse> {
-  return unwrapBody(await dashboardRemoteApi.dashboardProgramInquiries(params))
+  return unwrapBody(
+    await dashboardRemoteApi.dashboardProgramInquiries(params as DashboardProgramInquiriesParams)
+  )
 }
 
 export async function fetchDashboardProgramSchedulesRemote(
-  params: DashboardProgramSchedulesParams
+  params: DashboardProgramSchedulesParams | Record<string, string>
 ): Promise<DashboardProgramScheduleListResponse> {
-  return unwrapBody(await dashboardRemoteApi.dashboardProgramSchedules(params))
+  return unwrapBody(
+    await dashboardRemoteApi.dashboardProgramSchedules(params as DashboardProgramSchedulesParams)
+  )
 }
 
 export async function fetchDashboardPreferencesRemote(): Promise<DashboardPreferencesResponse> {

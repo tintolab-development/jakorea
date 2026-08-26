@@ -32,7 +32,7 @@ import {
   buildResolvedScheduleColorMapForPrograms,
   type ScheduleColorPair,
 } from '@/features/program/shared/ui/program-schedule-colors'
-import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
+import { programScheduleEventPath } from '../lib/dashboard-widget-links'
 import { SegmentedTab } from '@/shared/ui'
 import '@/shared/ui/widget-more-button.css'
 import './program-schedule-widget.css'
@@ -239,14 +239,22 @@ function ScheduleWidgetWeekCellPreview({
       {dayEvents.map(ev => {
         const colorPair = scheduleColorMap.get(ev.programId) ?? SCHEDULE_COLORS[0]
         return (
-          <button
+          <div
             key={ev.id}
-            type="button"
+            role="button"
+            tabIndex={0}
             className="program-calendar-cell-preview__item"
             onClick={e => {
               e.preventDefault()
               e.stopPropagation()
               onEventClick?.(ev)
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                e.stopPropagation()
+                onEventClick?.(ev)
+              }
             }}
           >
             <span
@@ -258,12 +266,15 @@ function ScheduleWidgetWeekCellPreview({
             <span className="program-calendar-cell-preview__desc">
               {getEventTypeLabel(ev.type)} | {ev.time}
             </span>
-          </button>
+          </div>
         )
       })}
     </div>
   )
 }
+
+const EVENT_PREVIEW_POPOVER_CLASS =
+  'program-calendar-cell-preview-popover program-schedule-widget__event-preview-popover'
 
 /** 태그(배지·일정 카드) 기준 상단 고정 미리보기 — 본문은 공통 popover 클래스로 스크롤 가능 */
 function ProgramScheduleEventPreviewPopover({
@@ -271,18 +282,21 @@ function ProgramScheduleEventPreviewPopover({
   variant,
   onEventClick,
   children,
+  placement = 'top',
 }: {
   dayEvents: ScheduleEvent[]
   variant: ProgramScheduleKind
   onEventClick?: (ev: ScheduleEvent) => void
   children: ReactElement
+  placement?: 'top' | 'bottom'
 }) {
   return (
     <Popover
       arrow={false}
       trigger="hover"
-      placement="top"
-      overlayClassName="program-calendar-cell-preview-popover program-schedule-widget__event-preview-popover"
+      placement={placement}
+      overlayClassName={EVENT_PREVIEW_POPOVER_CLASS}
+      classNames={{ root: EVENT_PREVIEW_POPOVER_CLASS }}
       mouseEnterDelay={0.12}
       mouseLeaveDelay={0.08}
       getPopupContainer={() => document.body}
@@ -606,23 +620,11 @@ export function ProgramScheduleWidget({
   }
 
   const handleViewAll = () => {
-    if (viewAllPath.startsWith('/programs/gemini')) {
-      window.alert(WIDGET_MORE_ALERT_MESSAGE)
-      return
-    }
     navigate(viewAllPath)
   }
 
   const handleEventClick = (event: ScheduleEvent) => {
-    if (variant === 'general') {
-      navigate(`/programs/general?programId=${encodeURIComponent(event.programId)}`)
-      return
-    }
-    if (variant === 'ujat') {
-      navigate(`/programs/ujat?programId=${encodeURIComponent(event.programId)}`)
-      return
-    }
-    window.alert(WIDGET_MORE_ALERT_MESSAGE)
+    navigate(programScheduleEventPath(variant, event.programId))
   }
 
   const headerTitle =
@@ -837,30 +839,33 @@ export function ProgramScheduleWidget({
                           dayEvents={dayEvents}
                           variant={variant}
                           onEventClick={handleEventClick}
+                          placement="bottom"
                         >
-                          <div
-                            className="program-schedule-widget__week-event-card"
-                            style={{
-                              backgroundColor: pair.bg,
-                              border: `1px solid ${pair.border}`,
-                            }}
-                            role="button"
-                            tabIndex={0}
-                            onClick={e => {
-                              e.stopPropagation()
-                              handleEventClick(ev)
-                            }}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault()
+                          <div className="program-schedule-widget__week-event-preview-host">
+                            <div
+                              className="program-schedule-widget__week-event-card"
+                              style={{
+                                backgroundColor: pair.bg,
+                                border: `1px solid ${pair.border}`,
+                              }}
+                              role="button"
+                              tabIndex={0}
+                              onClick={e => {
                                 e.stopPropagation()
                                 handleEventClick(ev)
-                              }
-                            }}
-                          >
-                            <div className="program-schedule-widget__week-event-title">{ev.programTitle}</div>
-                            <div className="program-schedule-widget__week-event-time">
-                              {getEventTypeLabel(ev.type)} | {ev.time}
+                              }}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  handleEventClick(ev)
+                                }
+                              }}
+                            >
+                              <div className="program-schedule-widget__week-event-title">{ev.programTitle}</div>
+                              <div className="program-schedule-widget__week-event-time">
+                                {getEventTypeLabel(ev.type)} | {ev.time}
+                              </div>
                             </div>
                           </div>
                         </ProgramScheduleEventPreviewPopover>
@@ -875,36 +880,48 @@ export function ProgramScheduleWidget({
                           dayEvents={dayEvents}
                           variant={variant}
                           onEventClick={handleEventClick}
+                          placement="bottom"
                         >
-                          <div
-                            className="program-schedule-widget__week-event-card program-schedule-widget__week-event-card--color-only"
-                            style={{
-                              backgroundColor: pair.bg,
-                              border: `1px solid ${pair.border}`,
-                            }}
-                            role="button"
-                            tabIndex={0}
-                            onClick={e => {
-                              e.stopPropagation()
-                              const ev = dayEvents.find(x => x.programId === pid)
-                              if (ev) handleEventClick(ev)
-                            }}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault()
+                          <div className="program-schedule-widget__week-event-preview-host">
+                            <div
+                              className="program-schedule-widget__week-event-card program-schedule-widget__week-event-card--color-only"
+                              style={{
+                                backgroundColor: pair.bg,
+                                border: `1px solid ${pair.border}`,
+                              }}
+                              role="button"
+                              tabIndex={0}
+                              onClick={e => {
                                 e.stopPropagation()
                                 const ev = dayEvents.find(x => x.programId === pid)
                                 if (ev) handleEventClick(ev)
-                              }
-                            }}
-                          />
+                              }}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  const ev = dayEvents.find(x => x.programId === pid)
+                                  if (ev) handleEventClick(ev)
+                                }
+                              }}
+                            />
+                          </div>
                         </ProgramScheduleEventPreviewPopover>
                       )
                     })}
                   {dayEvents.length > 2 && (
-                    <div className="program-schedule-widget__week-event-more">
-                      외 {dayEvents.length - 2}개의 항목
-                    </div>
+                    <ProgramScheduleEventPreviewPopover
+                      dayEvents={dayEvents}
+                      variant={variant}
+                      onEventClick={handleEventClick}
+                      placement="bottom"
+                    >
+                      <div className="program-schedule-widget__week-event-preview-host">
+                        <div className="program-schedule-widget__week-event-more">
+                          외 {dayEvents.length - 2}개의 항목
+                        </div>
+                      </div>
+                    </ProgramScheduleEventPreviewPopover>
                   )}
                 </div>
               )}

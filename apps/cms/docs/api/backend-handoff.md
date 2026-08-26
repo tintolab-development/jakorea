@@ -18,7 +18,7 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 
 **프로그램 유형별 전환**: [**UJAT 백엔드 핸드오프**](./programs-ujat-api-backend-handoff.md) · [**1사1교 백엔드 핸드오프**](./programs-company-school-api-backend-handoff.md) · [**1사1교 더미 시드**](./company-school-program-dummy-seed-backend-request.md) · [**일반 프로그램 더미 시드**](./general-program-dummy-seed-backend-request.md)
 
-**실적 관리 (LNB `/education-records`)**: [**더미 시드**](./education-records-dummy-seed-backend-request.md) · [`education-records-seed.payload.json`](./education-records-seed.payload.json) — Gemini 실적과 혼용 금지
+**실적 관리 (LNB `/education-records`)**: [**더미 시드**](./education-records-dummy-seed-backend-request.md) · [`education-records-seed.payload.json`](./education-records-seed.payload.json) · [**목록·합계·엑셀 API Cursor 프롬프트**](./education-records-api-backend-cursor-prompt.md) — Gemini 실적과 혼용 금지
 
 **대시보드 설정**: [**더미 시드**](./dashboard-settings-dummy-seed-backend-request.md) · [`dashboard-settings-seed.payload.json`](./dashboard-settings-seed.payload.json) — `GET/PUT /api/admin/me/dashboard-preferences`
 

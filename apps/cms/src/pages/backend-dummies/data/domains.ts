@@ -80,7 +80,7 @@ export const BACKEND_DUMMY_DOMAINS: readonly BackendDummyDomain[] = [
     label: '로그 관리',
     shortLabel: '로그',
     gateKeys: ['logs'],
-    description: '다운로드·개인정보·버그 이력 (mock fallback 없음)',
+    description: '로그인·다운로드·개인정보·버그 이력 (mock fallback 없음)',
   },
 ] as const
 

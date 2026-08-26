@@ -34,8 +34,16 @@
   color: var(--color-neutral-warm-600);
 }
 
+.colorPrimary400 {
+  color: var(--color-primary-400);
+}
+
 .colorPrimary500 {
   color: var(--color-primary-500);
+}
+
+.colorPrimary600 {
+  color: var(--color-primary-600);
 }
 
 .colorPrimary700 {

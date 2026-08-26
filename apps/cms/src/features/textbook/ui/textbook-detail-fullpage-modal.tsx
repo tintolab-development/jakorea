@@ -15,9 +15,9 @@ import {
   type DetailModalSidebarNavItem,
 } from '@/shared/ui/detail-modal-sidebar'
 import {
-  TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS,
   type TextbookBusinessArea,
 } from '@/features/textbook/model/textbook-business-areas'
+import { useTextbookBusinessAreaSelectOptions } from '@/features/textbook/hooks/use-business-areas-query'
 import { useTextbookDetailQuery } from '@/features/textbook/hooks/use-textbook-detail-query'
 import { useDataManagementRemoteEnabled } from '@/features/data-management/hooks/use-data-management-remote-enabled'
 import type {
@@ -77,6 +77,7 @@ function TextbookDetailFullPageModalInner({
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const remoteEnabled = useDataManagementRemoteEnabled('textbooks', open)
+  const { options: businessAreaOptions } = useTextbookBusinessAreaSelectOptions()
   const detailQuery = useTextbookDetailQuery(textbookId, open)
   const textbook = detailQuery.data ?? (remoteEnabled ? null : listTextbook)
   const isDetailLoading = remoteEnabled && isAwaitingFirstQueryData(detailQuery)
@@ -234,7 +235,7 @@ function TextbookDetailFullPageModalInner({
                           : prev
                       )
                     }
-                    options={TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS}
+                    options={businessAreaOptions}
                     style={{ width: 220 }}
                   />
                 }

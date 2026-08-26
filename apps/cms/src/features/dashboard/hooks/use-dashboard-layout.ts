@@ -49,13 +49,15 @@ export function useDashboardLayout({
 }: UseDashboardLayoutParams): UseDashboardLayoutResult {
   const rowRef = useRef<HTMLDivElement | null>(null)
 
+  const assignedProgramTypes = useDashboardSettingsStore(s => s.assignedProgramTypes)
+
   const widgets = useMemo(() => {
     if (userRole === 'ADMIN') {
-      if (user) return getDashboardWidgetsForUser(user)
+      if (user) return getDashboardWidgetsForUser(user, assignedProgramTypes)
       return getDashboardWidgetsByRole('ADMIN')
     }
     return getDashboardWidgetsByRole(userRole)
-  }, [userRole, user])
+  }, [userRole, user, assignedProgramTypes])
   const defaultIds = useMemo(() => buildDefaultDisplayItemIds(widgets), [widgets])
   const displayItemsMeta = useMemo(() => buildDisplayItemsMeta(widgets), [widgets])
 

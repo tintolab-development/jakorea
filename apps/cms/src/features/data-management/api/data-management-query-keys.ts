@@ -17,6 +17,7 @@ export const dataManagementQueryKeys = {
     matches: (catalogKey: string) =>
       [...dataManagementQueryKeys.textbooks.all(), 'matches', catalogKey] as const,
     kitQuantities: () => [...dataManagementQueryKeys.textbooks.all(), 'kit-quantities'] as const,
+    businessAreas: () => [...dataManagementQueryKeys.textbooks.all(), 'business-areas'] as const,
   },
   sponsors: {
     all: () => [...dataManagementQueryKeys.all, 'sponsors'] as const,
@@ -26,6 +27,10 @@ export const dataManagementQueryKeys = {
     detail: (id: string) => [...dataManagementQueryKeys.sponsors.all(), 'detail', id] as const,
     yearlyBusinesses: (sponsorId: string) =>
       [...dataManagementQueryKeys.sponsors.all(), 'yearly-businesses', sponsorId] as const,
+    contactsAll: (sponsorId: string) =>
+      [...dataManagementQueryKeys.sponsors.all(), 'contacts', sponsorId] as const,
+    contacts: (sponsorId: string, paramsKey: string) =>
+      [...dataManagementQueryKeys.sponsors.contactsAll(sponsorId), paramsKey] as const,
     options: () => [...dataManagementQueryKeys.sponsors.all(), 'options'] as const,
     programHistories: (sponsorId: string, paramsKey: string) =>
       [...dataManagementQueryKeys.sponsors.all(), 'program-histories', sponsorId, paramsKey] as const,

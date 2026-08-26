@@ -12,6 +12,11 @@ import {
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/components/table-filter-group-field-width'
 import { MOCK_SIDO_SIGUNGU } from '@jakorea/location/sido-sigungu'
+import {
+  EDUCATION_RECORD_BUSINESS_AREAS,
+  EDUCATION_RECORD_EDUCATION_TYPE_OPTIONS,
+  EDUCATION_RECORD_IPS_VALUES,
+} from '../lib/education-record-labels'
 
 const QUARTER_OPTIONS: Array<{ label: string; value: string | number }> = [
   { label: '1분기', value: 1 },
@@ -86,6 +91,50 @@ export function createEducationRecordFilterFields({
       },
     },
     {
+      key: 'businessArea',
+      type: 'select',
+      label: '사업 분야',
+      placeholder: '사업 분야',
+      allowClear: true,
+      width: FILTER_CONTROL_MAX_WIDTH_PX,
+      options: EDUCATION_RECORD_BUSINESS_AREAS.map(area => ({ label: area, value: area })),
+    },
+    {
+      key: 'sponsorName',
+      type: 'search',
+      label: '후원사명(국문)',
+      placeholder: '후원사명을 입력하세요',
+      width: FILTER_CONTROL_MAX_WIDTH_PX,
+    },
+    {
+      key: 'mainTitle',
+      type: 'search',
+      label: '대표 프로그램명(국문)',
+      placeholder: '대표 프로그램명을 입력하세요',
+      width: FILTER_CONTROL_MAX_WIDTH_PX,
+    },
+    {
+      key: 'title',
+      type: 'search',
+      label: '세부 프로그램명(국문)',
+      placeholder: '세부 프로그램명을 입력하세요',
+      width: FILTER_CONTROL_MAX_WIDTH_PX,
+    },
+    {
+      key: 'textbookName',
+      type: 'search',
+      label: '교재명(국문)',
+      placeholder: '교재명을 입력하세요',
+      width: FILTER_CONTROL_MAX_WIDTH_PX,
+    },
+    {
+      key: 'institutionName',
+      type: 'search',
+      label: '기관명',
+      placeholder: '기관명을 입력하세요',
+      width: FILTER_CONTROL_MAX_WIDTH_PX,
+    },
+    {
       key: 'institutionRegion',
       type: 'addressRegion',
       label: '기관 소재지',
@@ -101,32 +150,22 @@ export function createEducationRecordFilterFields({
       },
     },
     {
-      key: 'sponsorName',
-      type: 'search',
-      label: '후원사명',
-      placeholder: '후원사명을 입력하세요',
+      key: 'ips',
+      type: 'select',
+      label: 'IPS',
+      placeholder: 'IPS',
+      allowClear: true,
       width: FILTER_CONTROL_MAX_WIDTH_PX,
+      options: EDUCATION_RECORD_IPS_VALUES.map(value => ({ label: value, value })),
     },
     {
-      key: 'mainTitle',
-      type: 'search',
-      label: '대표 프로그램명',
-      placeholder: '대표 프로그램명을 입력하세요',
+      key: 'educationType',
+      type: 'select',
+      label: '교육 형태',
+      placeholder: '교육 형태',
+      allowClear: true,
       width: FILTER_CONTROL_MAX_WIDTH_PX,
-    },
-    {
-      key: 'title',
-      type: 'search',
-      label: '세부 프로그램명',
-      placeholder: '세부 프로그램명을 입력하세요',
-      width: FILTER_CONTROL_MAX_WIDTH_PX,
-    },
-    {
-      key: 'textbookName',
-      type: 'search',
-      label: '교재명',
-      placeholder: '교재명을 입력하세요',
-      width: FILTER_CONTROL_MAX_WIDTH_PX,
+      options: EDUCATION_RECORD_EDUCATION_TYPE_OPTIONS,
     },
   ]
 }

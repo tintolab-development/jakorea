@@ -52,14 +52,46 @@ export function mapSponsorResponse(dto: SponsorResponse): SponsorManagementRow {
   }
 }
 
+const LEAD_CONTACT_TYPE_VALUES = new Set([
+  'lead',
+  'primary',
+  'main',
+  '주담당자',
+  '주 담당자',
+])
+
+const ASSISTANT_CONTACT_TYPE_VALUES = new Set([
+  'assistant',
+  'secondary',
+  'sub',
+  '담당자',
+  '부담당자',
+  '부 담당자',
+])
+
+export function parseSponsorContactType(
+  dto: Pick<SponsorContactResponse, 'contactType' | 'primary'>
+): SponsorContactRow['contactType'] {
+  const raw = dto.contactType?.trim().toLowerCase() ?? ''
+  if (LEAD_CONTACT_TYPE_VALUES.has(raw)) return 'lead'
+  if (ASSISTANT_CONTACT_TYPE_VALUES.has(raw)) return 'assistant'
+  if (dto.primary === true) return 'lead'
+  if (dto.primary === false) return 'assistant'
+  return 'assistant'
+}
+
 export function mapSponsorContactResponse(dto: SponsorContactResponse): SponsorContactRow {
-  const contactType = dto.contactType === 'lead' || dto.primary ? 'lead' : 'assistant'
+  const contactType = parseSponsorContactType(dto)
   return {
     id: dto.id ?? '',
     name: dto.name ?? '',
+    department: dto.department ?? '',
     position: dto.position ?? '',
-    phone: dto.phone ?? dto.mobilePhone ?? dto.officePhone ?? '',
+    officePhone: dto.officePhone ?? '',
+    phone: dto.phone ?? dto.mobilePhone ?? '',
     email: dto.email ?? '',
+    companyAddress: dto.companyAddress ?? '',
+    memo: dto.memo ?? '',
     registeredAt: dto.registeredAt ?? dto.createdAt ?? '',
     contactType,
   }
@@ -76,10 +108,18 @@ export function mapProgramHistoryResponse(
     lifecycleStatus: (dto.lifecycleStatus ?? 'planned') as SponsorProgramHistoryRow['lifecycleStatus'],
     managerName: dto.managerName ?? '',
     participantCount: dto.participantCount ?? '',
-    participantType: (dto.participantType ?? 'school') as SponsorProgramHistoryRow['participantType'],
+    participantType: parseParticipantType(dto.participantType),
     educationTarget: (dto.educationTarget ?? 'elementary') as SponsorProgramHistoryRow['educationTarget'],
   }
 }
+
+function parseParticipantType(
+  raw: string | undefined | null
+): SponsorProgramHistoryRow['participantType'] {
+  if (raw === 'individual' || raw === 'volunteer' || raw === 'school') return raw
+  return 'school'
+}
+
 
 export function mapYearlyBusinessResponse(
   dto: SponsorYearlyBusinessResponse
@@ -225,10 +265,15 @@ export function toSponsorContactRequest(
 ): SponsorContactRequest {
   return {
     name: payload.name.trim(),
+    department: payload.department.trim(),
     position: payload.position.trim(),
+    officePhone: payload.officePhone.trim(),
     mobilePhone: payload.phone.trim(),
     email: payload.email.trim(),
+    companyAddress: payload.companyAddress.trim(),
+    memo: payload.memo.trim(),
     primary: contactType === 'lead',
+    contactType,
   }
 }
 
@@ -237,9 +282,14 @@ export function toSponsorContactUpdateRequest(
 ): SponsorContactRequest {
   return {
     name: row.name,
+    department: row.department,
     position: row.position,
+    officePhone: row.officePhone,
     mobilePhone: row.phone,
     email: row.email,
+    companyAddress: row.companyAddress,
+    memo: row.memo,
     primary: row.contactType === 'lead',
+    contactType: row.contactType,
   }
 }

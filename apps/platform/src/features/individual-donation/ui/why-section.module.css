@@ -77,7 +77,7 @@
   min-width: 0;
   flex-direction: column;
   overflow: hidden;
-  border-radius: var(--radius-24);
+  border-radius: var(--radius-16);
   background: var(--color-neutral-white);
 }
 
@@ -116,7 +116,9 @@
 
 .badge {
   flex-shrink: 0;
+  height: 30px;
   background-color: #fff;
+  color: var(--color-primary-500);
 }
 
 .cardMessage {
@@ -125,6 +127,7 @@
   min-width: 0;
   flex-direction: column;
   gap: var(--spacing-8);
+  padding-left: var(--spacing-4);
 }
 
 .cardTitle,
@@ -212,12 +215,13 @@
   .card {
     flex-direction: row;
     align-items: stretch;
-    min-height: 320px;
+    min-height: 270px;
+    border-radius: var(--radius-16);
   }
 
   .cardContent {
-    flex: 1 1 50%;
-    max-width: 50%;
+    flex: 1 1 45%;
+    max-width: 45%;
   }
 
   .cardInfo {
@@ -226,9 +230,13 @@
   }
 
   .media {
-    flex: 1 1 50%;
-    max-width: 50%;
+    flex: 1 1 55%;
+    max-width: 55%;
     min-height: auto;
     aspect-ratio: auto;
+  }
+  
+  .badge {
+    height: 39px;
   }
 }

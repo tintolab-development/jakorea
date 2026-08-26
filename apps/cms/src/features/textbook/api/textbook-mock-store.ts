@@ -233,6 +233,9 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
 ]
 
+/** LNB 교재 목록 시드 SSOT (API 더미 시드·정합 테스트용) */
+export const TEXTBOOK_LNB_SEED_ROWS: readonly TextbookSeedRow[] = INITIAL_TEXTBOOK_ROWS
+
 function withDetailFields(
   row: Omit<TextbookRow, 'textbookNameEn' | 'educationStages'> & {
     textbookNameEn?: string

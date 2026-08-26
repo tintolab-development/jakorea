@@ -143,6 +143,7 @@ function SortableWidgetSlotInner({
     }
     const sr = slot.getBoundingClientRect()
     const hr = handle.getBoundingClientRect()
+    if (hr.width <= 0 || hr.height <= 0) return
     const next: HandleRect = {
       top: hr.top - sr.top,
       left: hr.left - sr.left,
@@ -177,7 +178,16 @@ function SortableWidgetSlotInner({
       measureHandle()
     })
     ro.observe(slot)
-    return () => ro.disconnect()
+    // lazy 위젯은 스켈레톤→실위젯 교체 시 슬롯 크기가 그대로라 ResizeObserver가 안 돈다.
+    // 핸들(.widget-drag-handle)이 생긴 뒤에야 그랩 오버레이를 붙인다.
+    const mo = new MutationObserver(() => {
+      measureHandle()
+    })
+    mo.observe(slot, { childList: true, subtree: true })
+    return () => {
+      ro.disconnect()
+      mo.disconnect()
+    }
   }, [hasBuiltInHandle, measureHandle, isDragging])
 
   const handleResizePointerDown = useCallback(
@@ -314,6 +324,7 @@ function SortableWidgetSlotInner({
               <span className="widget-drag-handle-bar" />
             </div>
           )}
+          {children}
           {hasBuiltInHandle && handleRect && (
             <div
               ref={setActivatorNodeRef}
@@ -361,7 +372,6 @@ function SortableWidgetSlotInner({
               aria-hidden
             />
           )}
-          {children}
         </div>
       </div>
     </Col>

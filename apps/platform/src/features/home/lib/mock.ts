@@ -1,8 +1,19 @@
 /**
  * 홈 섹션 mock 데이터 — 실제 에셋·API 연동 시 이 파일만 교체.
- * 히어로 이미지·후원사 로고는 에셋 수급 전 placeholder(그라데이션·텍스트)로 표시한다.
  */
 
+import partnerLogo01Url from '@/features/corporate-donation/image/partner-logo-01.svg'
+import partnerLogo02Url from '@/features/corporate-donation/image/partner-logo-02.svg'
+import partnerLogo03Url from '@/features/corporate-donation/image/partner-logo-03.svg'
+import partnerLogo04Url from '@/features/corporate-donation/image/partner-logo-04.svg'
+import partnerLogo05Url from '@/features/corporate-donation/image/partner-logo-05.svg'
+import partnerLogo06Url from '@/features/corporate-donation/image/partner-logo-06.svg'
+import partnerLogo07Url from '@/features/corporate-donation/image/partner-logo-07.svg'
+import partnerLogo08Url from '@/features/corporate-donation/image/partner-logo-08.svg'
+import partnerLogo09Url from '@/features/corporate-donation/image/partner-logo-09.svg'
+import partnerLogo10Url from '@/features/corporate-donation/image/partner-logo-10.svg'
+import partnerLogo11Url from '@/features/corporate-donation/image/partner-logo-11.svg'
+import partnerLogo12Url from '@/features/corporate-donation/image/partner-logo-12.svg'
 import heroClassroomUrl from '../image/background/hero-classroom.png'
 
 export type HomeHeroSlide = {
@@ -80,19 +91,19 @@ export type HomePartnerLogo = {
 /** 후원사 로고 2줄 롤링 — 윗줄/아랫줄 */
 export const HOME_PARTNER_LOGO_ROWS: readonly (readonly HomePartnerLogo[])[] = [
   [
-    { name: 'SAMSUNG' },
-    { name: 'citi' },
-    { name: 'IBM' },
-    { name: 'Google for Education' },
-    { name: 'KRAFTON' },
-    { name: 'lululemon' },
+    { name: 'SAMSUNG', logoUrl: partnerLogo01Url },
+    { name: 'citi', logoUrl: partnerLogo02Url },
+    { name: 'IBM', logoUrl: partnerLogo03Url },
+    { name: 'Google for Education', logoUrl: partnerLogo04Url },
+    { name: 'KRAFTON', logoUrl: partnerLogo05Url },
+    { name: 'lululemon', logoUrl: partnerLogo06Url },
   ],
   [
-    { name: '신한은행' },
-    { name: 'KYOBO 교보생명' },
-    { name: 'MetLife Foundation' },
-    { name: 'BNY' },
-    { name: 'KIC 한국투자공사' },
-    { name: 'Standard Chartered Foundation' },
+    { name: '신한은행', logoUrl: partnerLogo07Url },
+    { name: 'KYOBO 교보생명', logoUrl: partnerLogo08Url },
+    { name: 'MetLife Foundation', logoUrl: partnerLogo09Url },
+    { name: 'BNY', logoUrl: partnerLogo10Url },
+    { name: 'KIC 한국투자공사', logoUrl: partnerLogo11Url },
+    { name: 'Standard Chartered Foundation', logoUrl: partnerLogo12Url },
   ],
 ]

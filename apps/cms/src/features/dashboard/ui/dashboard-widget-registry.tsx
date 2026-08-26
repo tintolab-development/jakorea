@@ -9,6 +9,7 @@ import {
   MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX,
   PROGRAM_SCHEDULE_SLOT_HEIGHT_FULL_PX,
 } from '@/shared/config/dashboard-config'
+import { programScheduleMorePath } from '@/features/dashboard/lib/dashboard-widget-links'
 import { DashboardWidgetSkeleton } from '@/features/dashboard/ui/dashboard-widget-skeleton'
 import { LazyWidget } from '@/features/dashboard/ui/lazy-widget'
 import type { OverallStatistics } from '@/features/dashboard/api/statistics-service'
@@ -318,7 +319,7 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<
         variant="general"
         widgetKey="program-schedule-general-widget"
         title="일반 프로그램 일정"
-        viewAllPath="/programs/general"
+        viewAllPath={programScheduleMorePath('general')}
         user={p.user}
       />
     </LazyWidget>
@@ -329,7 +330,7 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<
         variant="company_school"
         widgetKey="program-schedule-company-school-widget"
         title="1사1교 프로그램 일정"
-        viewAllPath="/programs/company-school"
+        viewAllPath={programScheduleMorePath('company_school')}
         user={p.user}
       />
     </LazyWidget>
@@ -340,7 +341,7 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<
         variant="ujat"
         widgetKey="program-schedule-ujat-widget"
         title="UJAT 프로그램 일정"
-        viewAllPath="/programs/ujat"
+        viewAllPath={programScheduleMorePath('ujat')}
         user={p.user}
       />
     </LazyWidget>
@@ -351,7 +352,7 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<
         variant="gemini"
         widgetKey="program-schedule-gemini-widget"
         title="Gemini 프로그램 일정"
-        viewAllPath="/programs/gemini"
+        viewAllPath={programScheduleMorePath('gemini')}
         user={p.user}
       />
     </LazyWidget>

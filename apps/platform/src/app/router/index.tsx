@@ -51,10 +51,15 @@ import { PeoplePage } from '@/pages/about/people'
 import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transparency'
 import { DesignSystemPage } from '@/pages/design-system'
 import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
+import { CorporateDonationPage } from '@/pages/support/corporate'
 import { IndividualDonationPage } from '@/pages/support/individual'
+import { TalentDonationPage } from '@/pages/support/talent'
+import { TalentDonationApplyPage } from '@/pages/support/talent/apply'
 import { TemporaryPage } from '@/pages/temporary'
+import { CORPORATE_DONATION_PATH } from '@/features/corporate-donation'
 import { IMPACT_STORIES_PATH } from '@/features/impact-story'
 import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
+import { TALENT_DONATION_APPLY_PATH, TALENT_DONATION_PATH } from '@/features/talent-donation'
 import {
   ABOUT_CAREERS_PATH,
   ABOUT_HISTORY_PATH,
@@ -63,8 +68,6 @@ import {
   EDUCATION_DIGITAL_LITERACY_PATH,
   EDUCATION_ENTREPRENEURSHIP_PATH,
   EDUCATION_FINANCE_PATH,
-  SUPPORT_CORPORATE_PATH,
-  SUPPORT_TALENT_PATH,
 } from '@/shared/config/gnb-temporary-paths'
 import { AppLayoutRoute } from './app-layout-route'
 
@@ -115,8 +118,9 @@ export const router = createBrowserRouter([
     element: <AppLayoutRoute layout="support" />,
     children: [
       { path: INDIVIDUAL_DONATION_PATH, element: <IndividualDonationPage /> },
-      { path: SUPPORT_CORPORATE_PATH, element: <TemporaryPage /> },
-      { path: SUPPORT_TALENT_PATH, element: <TemporaryPage /> },
+      { path: CORPORATE_DONATION_PATH, element: <CorporateDonationPage /> },
+      { path: TALENT_DONATION_PATH, element: <TalentDonationPage /> },
+      { path: TALENT_DONATION_APPLY_PATH, element: <TalentDonationApplyPage /> },
     ],
   },
   {

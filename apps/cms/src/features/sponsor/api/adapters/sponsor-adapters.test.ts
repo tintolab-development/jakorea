@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   mapYearlyBusinessResponse,
   mergeYearlyBusinessRows,
+  parseSponsorContactType,
   shouldPersistYearlyBusinessRow,
   toYearlyBusinessRequest,
 } from './sponsor-adapters'
@@ -121,5 +122,21 @@ describe('yearly business adapters', () => {
     expect(rows.map(row => row.year)).toEqual([2025, 2024, 2023])
     expect(rows.find(row => row.year === 2024)?.id).toBe('yb-1')
     expect(rows.find(row => row.year === 2025)?.id).toBe('')
+  })
+})
+
+describe('parseSponsorContactType', () => {
+  it('maps lead aliases including uppercase and korean labels', () => {
+    expect(parseSponsorContactType({ contactType: 'LEAD' })).toBe('lead')
+    expect(parseSponsorContactType({ contactType: 'primary' })).toBe('lead')
+    expect(parseSponsorContactType({ contactType: '주담당자' })).toBe('lead')
+    expect(parseSponsorContactType({ primary: true })).toBe('lead')
+  })
+
+  it('maps assistant aliases and falls back to primary=false', () => {
+    expect(parseSponsorContactType({ contactType: 'ASSISTANT' })).toBe('assistant')
+    expect(parseSponsorContactType({ contactType: '담당자' })).toBe('assistant')
+    expect(parseSponsorContactType({ primary: false })).toBe('assistant')
+    expect(parseSponsorContactType({})).toBe('assistant')
   })
 })

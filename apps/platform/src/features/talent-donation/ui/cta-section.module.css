@@ -1,0 +1,198 @@
+.section {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  padding: var(--spacing-56) var(--spacing-20);
+}
+
+.textArea {
+  display: contents;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--color-primary-500);
+  font-weight: 400;
+  font-family: 'Cafe24Lovingu', sans-serif;
+  line-height: 140%;
+  letter-spacing: 3.52px;
+}
+
+.title {
+  margin: 0;
+  color: var(--color-neutral-black);
+  word-break: keep-all;
+}
+
+.media {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: unset;
+}
+
+.imageFrame {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-24);
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.actionButton {
+  order: 4;
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+  margin: 0;
+  padding: var(--spacing-12) var(--spacing-40) var(--spacing-12) var(--spacing-32);
+  border: 0;
+  border-radius: var(--radius-999);
+  background: var(--color-gradient-primary-01);
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.actionButton:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.actionLabel {
+  display: block;
+  min-width: 0;
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.actionIcon {
+  display: block;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.textArea .text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+@media (--bp-below-pc) {
+  .eyebrow {
+    font-size: 30px;
+  }
+  .title {
+    font-size: 24px;
+    line-height: 150%;
+  }
+  .actionLabel {
+    font-size: 18px;
+    letter-spacing: -0.18px;
+  }
+}
+@media (--bp-pc-up) {
+  .section {
+    position: relative;
+    padding-block: 180px;
+    padding-inline: 0;
+  }
+  .section::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../image/cta-bg.png');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+  }
+
+  .content {
+    width: 100%;
+    max-width: var(--content-shell-max-width);
+    margin: 0 auto;
+    flex-direction: row;
+    align-items: stretch;
+    gap: var(--spacing-32);
+    padding: 0 var(--spacing-20);
+  }
+
+  .textArea {
+    position: relative;
+    width: min(32%, 460px);
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-24);
+    box-sizing: border-box;
+  }
+  .textArea .text {
+    gap: var(--spacing-28);
+    padding-left: var(--spacing-16);
+    padding-top: var(--spacing-48);
+  }
+
+  .actionButtonWrap {
+    padding-left: var(--spacing-6);
+    padding-bottom: var(--spacing-4);
+  }
+
+  .actionButton {
+    width: auto;
+    min-width: 312px;
+    padding: var(--spacing-20) var(--spacing-40) var(--spacing-20) var(--spacing-32);
+  }
+
+  .actionLabel {
+    flex: 0 1 auto;
+  }
+
+  .actionIcon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .media {
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: 0;
+    aspect-ratio: 948 / 560;
+  }
+
+  .imageFrame {
+    border-radius: 32px;
+  }
+}

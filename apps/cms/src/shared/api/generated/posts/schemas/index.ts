@@ -426,6 +426,7 @@ export * from './inquiryAnswerMutationResponse';
 export * from './inquiryAnswerRequest';
 export * from './inquiryAnswerResponse';
 export * from './inquiryAnswerUpdateRequest';
+export * from './inquiryCategoriesParams';
 export * from './inquiryResponse';
 export * from './institutionScheduleConfirmRequest';
 export * from './instructorActivityTypeResponse';

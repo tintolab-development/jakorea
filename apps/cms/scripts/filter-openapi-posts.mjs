@@ -17,6 +17,7 @@ const POSTS_PATH_PREFIXES = [
   '/api/admin/content/faqs',
   '/api/admin/content/faq-categories',
   '/api/admin/inquiries',
+  '/api/admin/inquiry-categories',
 ]
 
 const spec = JSON.parse(readFileSync(inputPath, 'utf8'))

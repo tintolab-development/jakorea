@@ -1,12 +1,15 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { getJAKoreaCMSBackendAPIPostsSubset } from '@/shared/api/generated/posts/posts-api'
 import type {
+  CategoryRequest,
+  Inquiries1Params,
   InquiryAnswerRequest,
   InquiryAnswerResponse,
   InquiryAnswerUpdateRequest,
+  InquiryCategoriesParams,
   InquiryResponse,
-  Inquiries1Params,
   PageResponse,
+  PageResponseMapStringObject,
 } from '@/shared/api/generated/posts/schemas'
 
 const postsApi = getJAKoreaCMSBackendAPIPostsSubset()
@@ -55,4 +58,29 @@ export async function bulkDeleteInquiriesRemote(ids: string[]): Promise<void> {
     throw new Error('삭제할 문의 ID가 올바르지 않습니다.')
   }
   await postsApi.bulkDelete2({ ids: numericIds })
+}
+
+function categoryPathId(id: string): string {
+  return id
+}
+
+export async function fetchInquiryCategoriesRemote(
+  params?: InquiryCategoriesParams
+): Promise<PageResponseMapStringObject> {
+  return unwrapApiBody(await postsApi.inquiryCategories(params))
+}
+
+export async function createInquiryCategoryRemote(body: CategoryRequest): Promise<unknown> {
+  return unwrapApiBody(await postsApi.createInquiryCategory(body))
+}
+
+export async function updateInquiryCategoryRemote(
+  categoryId: string,
+  body: CategoryRequest
+): Promise<void> {
+  await postsApi.updateInquiryCategory(categoryPathId(categoryId), body)
+}
+
+export async function deleteInquiryCategoryRemote(categoryId: string): Promise<void> {
+  await postsApi.deleteInquiryCategory(categoryPathId(categoryId))
 }

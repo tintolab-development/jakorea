@@ -7,7 +7,7 @@
 
 import { Checkbox, Collapse, Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { useCallback, useId, useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getDashboardWidgetsForUser, type DashboardWidgetType } from '@/shared/config/dashboard-config'
@@ -94,16 +94,17 @@ function setWidgetTitleGroup(
 
 export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModalProps) {
   const user = useAuthStore(s => s.user)
+  const assignedProgramTypes = useDashboardSettingsStore(s => s.assignedProgramTypes)
   const { mutate: persistPreferences } = useSaveDashboardPreferences()
   const queryScope = useDashboardQueryScope()
   const useRemote = queryScope === 'remote'
   const { data: apiShortcuts } = useDashboardShortcuts(open && useRemote)
 
   const visibleWidgetEntries = useMemo(() => {
-    const widgets = getDashboardWidgetsForUser(user ?? null)
+    const widgets = getDashboardWidgetsForUser(user ?? null, assignedProgramTypes)
     const allowed = new Set<DashboardWidgetType>(widgets.map(w => w.type))
     return WIDGET_PROGRAM_KEYS.filter(w => allowed.has(w.key as DashboardWidgetType))
-  }, [user])
+  }, [user, assignedProgramTypes])
 
   const visibleWidgetKeys = useMemo(
     () => visibleWidgetEntries.map(w => w.key),
@@ -175,6 +176,8 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
     null
   )
   const [programCollapseActiveKey, setProgramCollapseActiveKey] = useState<string[]>([])
+  /** 모달 open 직후 첫 행만 1회 펼침 — 사용자가 모두 닫은 뒤에는 다시 강제 열지 않음 */
+  const didInitProgramCollapseRef = useRef(false)
   const [draftWidgetProgramIds, setDraftWidgetProgramIds] = useState<Record<
     string,
     string[]
@@ -185,6 +188,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
       setDraftShortcutEnabled(null)
       setDraftWidgetProgramIds(null)
       setProgramCollapseActiveKey([])
+      didInitProgramCollapseRef.current = false
       return
     }
     const s = useDashboardSettingsStore.getState()
@@ -194,7 +198,9 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
 
   useLayoutEffect(() => {
     if (!open || programsCatalogLoading || unifiedRows.length === 0) return
-    setProgramCollapseActiveKey(prev => (prev.length === 0 ? [unifiedRows[0]!.title] : prev))
+    if (didInitProgramCollapseRef.current) return
+    didInitProgramCollapseRef.current = true
+    setProgramCollapseActiveKey([unifiedRows[0]!.title])
   }, [open, programsCatalogLoading, unifiedRows])
 
   const shortcutEnabled =
