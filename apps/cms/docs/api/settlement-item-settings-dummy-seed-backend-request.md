@@ -1,5 +1,7 @@
 # 정산 항목 설정 더미 시드 요청 (BE)
 
+> **2026-08-26 카탈로그 SSOT 이전:** 임금 6 · 지급 6 · 공제 1 및 산출 엔진 수정은 **[settlement-item-settings-category-backend-cursor-prompt.md](./settlement-item-settings-category-backend-cursor-prompt.md)** 를 사용하라. 본 문서 CASE-05~07·13(보조·다수인출강·단순인건비·회의참석비)과 `교통비 (1사1교)` 카드는 **구버전**이다.
+
 CMS **정산 관리 → 정산 항목 설정** 화면의 카드 목록·상세 모달을 FE mock과 동일하게 검증할 수 있도록, **current config 1건 + item 15건** 더미 시드를 요청합니다.
 
 | 항목 | 값 |
@@ -28,7 +30,7 @@ CMS **정산 관리 → 정산 항목 설정** 화면의 카드 목록·상세 �
 | 공제 항목 | https://app.notion.com/p/33af3e2a77d080f89c02da51f89e0a62 | 개발 확인 완료 |
 | 1~3급 상세 | https://app.notion.com/p/389f3e2a77d080f0b739c123618f04ed | 백엔드 확인 |
 | 특강·기타 | https://app.notion.com/p/389f3e2a77d080b5965ef04114e3e58f | 백엔드 확인 |
-| 제미나이 강사비 | https://app.notion.com/p/389f3e2a77d0802b84a5f7b1cefdba95 | 백엔드 확인 · **FE mock 없음** |
+| 제미나이 강사비 | https://app.notion.com/p/389f3e2a77d0802b84a5f7b1cefdba95 | 백엔드 확인 · FE mock `w-gemini` (v2 카탈로그) |
 | 교통비 | https://app.notion.com/p/389f3e2a77d080a1841ff48d08cfa364 | 백엔드 확인 |
 | 숙박비 | https://app.notion.com/p/389f3e2a77d0805580cbf9fd6a659a1e | 백엔드 확인 |
 | 식사비 | https://app.notion.com/p/389f3e2a77d080edb8b2c577f605127d | 백엔드 확인 |
