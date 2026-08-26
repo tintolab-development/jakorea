@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { getDetailedProgramList } from '@/features/detailed-program/api/admin-detailed-programs-service'
 import { serializeDetailedProgramListFilters } from '@/features/detailed-program/api/detailed-program-filter-params'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
@@ -13,6 +13,7 @@ export function useDetailedProgramListQuery(searchParams: URLSearchParams, enabl
     queryFn: () => getDetailedProgramList(new URLSearchParams(listFilterKey)),
     enabled: remoteEnabled,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
     retry: false,
   })
 }
