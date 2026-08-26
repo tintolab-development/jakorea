@@ -11,7 +11,7 @@ import type {
   DashboardRecruitmentListResponse,
   DashboardProgramScheduleResponse,
 } from '@/shared/api/generated/dashboard/schemas'
-import type { KpiMetric, ProgramKpiItem } from '../admin-dashboard-service'
+import type { KpiMetric, KpiMetricKey, ProgramKpiItem } from '../admin-dashboard-service'
 
 export interface DashboardHomeSummary {
   version: string
@@ -22,10 +22,12 @@ export interface DashboardHomeSummary {
 
 export interface ProgramInquiryRow {
   key: string
+  programId?: string
   programName: string
   pending: number
   answered: number
   total: number
+  unreadCount: number
 }
 
 export interface DashboardScheduleEventDto {
@@ -62,6 +64,73 @@ function mapRecruitmentStatus(status: string | undefined): ProgramLifecycleStatu
   return RECRUITMENT_STATUS_TO_LIFECYCLE[normalized] ?? (status as ProgramLifecycleStatus)
 }
 
+/** BE가 recruitmentStatus를 안 준 경우에만 모집 기간으로 추정 */
+export function recruitmentStatusFromPeriod(
+  startAt?: string,
+  endAt?: string
+): ProgramLifecycleStatus | undefined {
+  if (!startAt || !endAt) return undefined
+  const start = Date.parse(startAt)
+  const end = Date.parse(endAt)
+  if (Number.isNaN(start) || Number.isNaN(end)) return undefined
+  const now = Date.now()
+  if (now < start) return 'planned'
+  if (now <= end) return 'recruiting_students'
+  return 'matching_completed'
+}
+
+type RecruitmentCountFields = {
+  participantAppliedCount?: number
+  participantCapacity?: number
+  volunteerAppliedCount?: number
+  volunteerCapacity?: number
+  instructorAppliedCount?: number
+  instructorCapacity?: number
+  studentAppliedCount?: number
+  studentCapacity?: number
+  approvedStudentCount?: number
+}
+
+function pickCount(...values: Array<number | undefined>): number | undefined {
+  for (const value of values) {
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+  }
+  return undefined
+}
+
+function recruitmentCountsFromItem(item: RecruitmentCountFields): {
+  participantApplied?: number
+  participantCapacity?: number
+  volunteerApplied?: number
+  volunteerCapacity?: number
+} {
+  return {
+    participantApplied: pickCount(
+      item.participantAppliedCount,
+      item.studentAppliedCount,
+      item.approvedStudentCount
+    ),
+    participantCapacity: pickCount(item.participantCapacity, item.studentCapacity),
+    volunteerApplied: pickCount(item.volunteerAppliedCount, item.instructorAppliedCount),
+    volunteerCapacity: pickCount(item.volunteerCapacity, item.instructorCapacity),
+  }
+}
+
+function capacityRounds(programId: string, capacity: number | undefined): Program['rounds'] {
+  if (capacity == null) return []
+  return [
+    {
+      id: `${programId}-cap`,
+      programId,
+      roundNumber: 1,
+      startDate: '',
+      endDate: '',
+      capacity,
+      status: 'active',
+    },
+  ]
+}
+
 export function mapDashboardHomeResponse(dto: DashboardHomeResponse): DashboardHomeSummary {
   return {
     version: dto.version ?? '',
@@ -79,7 +148,12 @@ export function mapRecruitmentListResponse(dto: DashboardRecruitmentListResponse
     const programId = item.programId
     if (programId == null) continue
     const id = String(programId)
-    if (!byProgram.has(programId)) {
+    const counts = recruitmentCountsFromItem(item)
+    const lifecycleStatus =
+      mapRecruitmentStatus(item.recruitmentStatus) ??
+      recruitmentStatusFromPeriod(item.recruitmentStartAt, item.recruitmentEndAt)
+    const existing = byProgram.get(programId)
+    if (!existing) {
       byProgram.set(programId, {
         id,
         title: item.nameKo ?? item.programCode ?? id,
@@ -87,14 +161,33 @@ export function mapRecruitmentListResponse(dto: DashboardRecruitmentListResponse
         type: 'offline',
         format: 'workshop',
         category: 'school',
-        rounds: [],
-        startDate: '',
-        endDate: '',
+        rounds: capacityRounds(id, counts.participantCapacity),
+        startDate: item.recruitmentStartAt ?? '',
+        endDate: item.recruitmentEndAt ?? '',
         status: 'active',
-        lifecycleStatus: mapRecruitmentStatus(item.recruitmentStatus),
+        lifecycleStatus,
+        approvedStudentCount: counts.participantApplied,
+        instructors: counts.volunteerApplied,
+        instructorCapacity: counts.volunteerCapacity,
         createdAt: item.createdAt ?? '',
         updatedAt: item.createdAt ?? '',
       })
+      continue
+    }
+    if (existing.approvedStudentCount == null && counts.participantApplied != null) {
+      existing.approvedStudentCount = counts.participantApplied
+    }
+    if (existing.rounds.length === 0 && counts.participantCapacity != null) {
+      existing.rounds = capacityRounds(id, counts.participantCapacity)
+    }
+    if (existing.instructors == null && counts.volunteerApplied != null) {
+      existing.instructors = counts.volunteerApplied
+    }
+    if (existing.instructorCapacity == null && counts.volunteerCapacity != null) {
+      existing.instructorCapacity = counts.volunteerCapacity
+    }
+    if (!existing.lifecycleStatus && lifecycleStatus) {
+      existing.lifecycleStatus = lifecycleStatus
     }
   }
 
@@ -120,7 +213,39 @@ function kpiProgramTitle(
   )
 }
 
-function buildKpiMetricsFromTarget(row: DashboardKpiProgressResponse): KpiMetric[] {
+function normalizeKpiProgramType(value: string | undefined): string {
+  return (value ?? '').trim().toLowerCase().replace(/-/g, '_')
+}
+
+function isTrainedTeachersKpiRow(row: DashboardKpiProgressResponse, title: string): boolean {
+  const type = normalizeKpiProgramType(row.programType)
+  if (type.includes('trained_teacher')) return true
+  return title.includes('교육받은 교사')
+}
+
+function isIndividualKpiRow(row: DashboardKpiProgressResponse): boolean {
+  return normalizeKpiProgramType(row.programType).includes('individual')
+}
+
+function kpiMetricApplicable(
+  row: DashboardKpiProgressResponse,
+  key: KpiMetricKey,
+  title: string
+): boolean {
+  const explicitFlag =
+    key === 'finalParticipants'
+      ? row.participantApplicable
+      : key === 'finalSchools'
+        ? row.schoolApplicable
+        : row.classApplicable
+  if (explicitFlag != null) return explicitFlag
+  if (isTrainedTeachersKpiRow(row, title)) return false
+  if (key === 'finalParticipants') return true
+  if (isIndividualKpiRow(row)) return false
+  return true
+}
+
+function buildKpiMetricsFromTarget(row: DashboardKpiProgressResponse, title: string): KpiMetric[] {
   return [
     {
       key: 'finalParticipants',
@@ -128,6 +253,7 @@ function buildKpiMetricsFromTarget(row: DashboardKpiProgressResponse): KpiMetric
       description: '명',
       achieved: kpiAchieved(row.actualParticipantCount),
       target: row.targetParticipantCount ?? 0,
+      applicable: kpiMetricApplicable(row, 'finalParticipants', title),
     },
     {
       key: 'finalSchools',
@@ -135,6 +261,7 @@ function buildKpiMetricsFromTarget(row: DashboardKpiProgressResponse): KpiMetric
       description: '개',
       achieved: kpiAchieved(row.actualSchoolCount),
       target: row.targetSchoolCount ?? 0,
+      applicable: kpiMetricApplicable(row, 'finalSchools', title),
     },
     {
       key: 'finalClasses',
@@ -142,6 +269,7 @@ function buildKpiMetricsFromTarget(row: DashboardKpiProgressResponse): KpiMetric
       description: '개',
       achieved: kpiAchieved(row.actualClassCount),
       target: row.targetClassCount ?? 0,
+      applicable: kpiMetricApplicable(row, 'finalClasses', title),
     },
   ]
 }
@@ -182,10 +310,11 @@ export function mapKpiProgressListResponse(
 
   return [...byProgram.entries()].map(([programId, row]) => {
     const id = String(programId)
+    const programTitle = kpiProgramTitle(id, row, programTitles)
     return {
       programId: id,
-      programTitle: kpiProgramTitle(id, row, programTitles),
-      kpis: buildKpiMetricsFromTarget(row),
+      programTitle,
+      kpis: buildKpiMetricsFromTarget(row, programTitle),
       educationInstructorTargets: {
         instructors: row.targetInstructorCount ?? 0,
         volunteers: row.targetVolunteerCount ?? 0,
@@ -197,31 +326,75 @@ export function mapKpiProgressListResponse(
 export function mapProgramInquiryListResponse(
   dto: DashboardProgramInquiryListResponse
 ): ProgramInquiryRow[] {
+  const summaries = dto.summaries
+  if (summaries && summaries.length > 0) {
+    return summaries.map((row, index) => {
+      const programId = row.programId != null ? String(row.programId) : undefined
+      const programName = row.programName?.trim() || '프로그램'
+      return {
+        key: programId ?? programName ?? String(index),
+        programId,
+        programName,
+        pending: row.pending ?? 0,
+        answered: row.answered ?? 0,
+        total: row.total ?? 0,
+        unreadCount: row.unreadCount ?? row.pending ?? 0,
+      }
+    })
+  }
+
   const items = dto.items ?? []
-  const grouped = new Map<string, { pending: number; answered: number; total: number }>()
+  const grouped = new Map<
+    string,
+    {
+      programId?: string
+      programName: string
+      pending: number
+      answered: number
+      total: number
+      unreadCount: number
+    }
+  >()
 
   for (const item of items) {
-    const name = item.programNameSnapshot ?? item.title ?? '프로그램'
-    const bucket = grouped.get(name) ?? { pending: 0, answered: 0, total: 0 }
+    const programId = item.programId != null ? String(item.programId) : undefined
+    const programName = item.programNameSnapshot ?? item.title ?? '프로그램'
+    const groupKey = programId ?? programName
+    const bucket = grouped.get(groupKey) ?? {
+      programId,
+      programName,
+      pending: 0,
+      answered: 0,
+      total: 0,
+      unreadCount: 0,
+    }
     bucket.total += 1
     const status = (item.inquiryStatus ?? '').toUpperCase()
-    if (
+    const isPending =
       status === 'PENDING' ||
       status === 'WAITING' ||
       status === 'UNANSWERED' ||
       status === 'RECEIVED' ||
       status === 'IN_PROGRESS'
-    ) {
+    if (isPending) {
       bucket.pending += 1
     } else if (item.answeredAt || status === 'ANSWERED' || status === 'COMPLETED' || status === 'CLOSED') {
       bucket.answered += 1
     }
-    grouped.set(name, bucket)
+    const extra = item as typeof item & { isUnread?: boolean; read?: boolean }
+    const hasReadFlag = item.unread != null || extra.isUnread != null || extra.read != null
+    if (hasReadFlag) {
+      if (item.unread === true || extra.isUnread === true || extra.read === false) {
+        bucket.unreadCount += 1
+      }
+    } else if (isPending) {
+      bucket.unreadCount += 1
+    }
+    grouped.set(groupKey, bucket)
   }
 
-  return [...grouped.entries()].map(([programName, counts], index) => ({
-    key: String(index + 1),
-    programName,
+  return [...grouped.entries()].map(([key, counts]) => ({
+    key,
     ...counts,
   }))
 }

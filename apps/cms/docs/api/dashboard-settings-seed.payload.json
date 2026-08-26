@@ -2,10 +2,14 @@
   "schemaVersion": 1,
   "role": "ADMIN",
   "revision": 1,
+  "assignedProgramTypes": ["general", "company_school", "ujat", "gemini"],
   "layout": {
     "orderedWidgetIds": [
       "menu-shortcut-widget",
       "program-schedule-general-widget",
+      "program-schedule-company-school-widget",
+      "program-schedule-ujat-widget",
+      "program-schedule-gemini-widget",
       "recruitment-status-widget",
       "customer-inquiry-status-widget",
       "kpi-achievement-widget"
@@ -13,6 +17,9 @@
     "widgetWidths": {
       "menu-shortcut-widget": 24,
       "program-schedule-general-widget": 24,
+      "program-schedule-company-school-widget": 24,
+      "program-schedule-ujat-widget": 24,
+      "program-schedule-gemini-widget": 24,
       "recruitment-status-widget": 24,
       "customer-inquiry-status-widget": 24,
       "kpi-achievement-widget": 24
@@ -22,26 +29,25 @@
     "shortcutVisibility": {
       "programs-general-education": true,
       "programs-economy": true,
-      "programs-gemini": true,
       "programs-ujat": true,
+      "programs-gemini": true,
       "users-all": true,
       "users-school": true,
       "users-instructor": true,
       "users-admin": true,
       "permission-requests": true,
+      "admin-permission-settings": true,
       "settlement-payment-orders": true,
       "settlement-account-payments": true,
       "settlement-item-settings": true,
+      "template-management": true,
       "notices": true,
       "faq": true,
       "inquiries": true,
-      "template-management": true,
       "sponsors": true,
       "textbooks": true,
       "programs-detail": true,
       "performance": true,
-      "email-history": true,
-      "member-login-history": true,
       "file-download-history": true,
       "privacy-query-history": true,
       "bug-issue-history": true
@@ -65,17 +71,17 @@
       "useYn": true
     },
     {
-      "id": 162903,
-      "shortcutKey": "programs-gemini",
-      "shortcutName": "Gemini 프로그램",
-      "targetUrl": "/programs/gemini",
-      "useYn": true
-    },
-    {
       "id": 162904,
       "shortcutKey": "programs-ujat",
       "shortcutName": "UJAT 프로그램",
       "targetUrl": "/programs/ujat",
+      "useYn": true
+    },
+    {
+      "id": 162903,
+      "shortcutKey": "programs-gemini",
+      "shortcutName": "제미나이 프로그램",
+      "targetUrl": "/programs/gemini/visiting-training",
       "useYn": true
     },
     {
@@ -88,7 +94,7 @@
     {
       "id": 162906,
       "shortcutKey": "users-school",
-      "shortcutName": "학교(교사)회원",
+      "shortcutName": "학교(교사) 회원 관리",
       "targetUrl": "/users/list?kind=institutions",
       "useYn": true
     },
@@ -114,9 +120,16 @@
       "useYn": true
     },
     {
+      "id": 162926,
+      "shortcutKey": "admin-permission-settings",
+      "shortcutName": "관리자 권한 설정",
+      "targetUrl": "/admin/settings/permissions",
+      "useYn": true
+    },
+    {
       "id": 162910,
       "shortcutKey": "settlement-payment-orders",
-      "shortcutName": "지급 조서 확인",
+      "shortcutName": "지급조서 확인",
       "targetUrl": "/settlement-management/payment-orders",
       "useYn": true
     },
@@ -132,6 +145,13 @@
       "shortcutKey": "settlement-item-settings",
       "shortcutName": "정산 항목 설정",
       "targetUrl": "/settlement-management/item-settings",
+      "useYn": true
+    },
+    {
+      "id": 162916,
+      "shortcutKey": "template-management",
+      "shortcutName": "폼 양식 관리",
+      "targetUrl": "/templates/form-management",
       "useYn": true
     },
     {
@@ -151,15 +171,8 @@
     {
       "id": 162915,
       "shortcutKey": "inquiries",
-      "shortcutName": "문의 사항",
+      "shortcutName": "문의내역",
       "targetUrl": "/admin/posts/inquiries",
-      "useYn": true
-    },
-    {
-      "id": 162916,
-      "shortcutKey": "template-management",
-      "shortcutName": "템플릿 관리",
-      "targetUrl": "/templates/form-management",
       "useYn": true
     },
     {
@@ -173,7 +186,7 @@
       "id": 162918,
       "shortcutKey": "textbooks",
       "shortcutName": "교재 관리",
-      "targetUrl": "/",
+      "targetUrl": "/textbook",
       "useYn": true
     },
     {
@@ -188,20 +201,6 @@
       "shortcutKey": "performance",
       "shortcutName": "실적 관리",
       "targetUrl": "/education-records",
-      "useYn": true
-    },
-    {
-      "id": 162921,
-      "shortcutKey": "email-history",
-      "shortcutName": "메일 발송 이력",
-      "targetUrl": "/",
-      "useYn": true
-    },
-    {
-      "id": 162925,
-      "shortcutKey": "member-login-history",
-      "shortcutName": "회원 로그인 이력",
-      "targetUrl": "/logs/member-login-history",
       "useYn": true
     },
     {

@@ -17,6 +17,10 @@ import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import { useRecruitmentStatusList } from '../hooks/use-recruitment-status-list'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
+import {
+  RECRUITMENT_STATUS_MORE_PATH,
+  recruitmentProgramDetailPath,
+} from '../lib/dashboard-widget-links'
 import '@/shared/ui/widget-more-button.css'
 import './dashboard-widget-table.css'
 
@@ -129,7 +133,7 @@ export function RecruitmentStatusWidget() {
         <LoadingButton
           type="link"
           size="small"
-          onClick={() => navigate('/programs/general')}
+          onClick={() => navigate(RECRUITMENT_STATUS_MORE_PATH)}
           className="widget-more-button"
         >
           더보기
@@ -148,7 +152,7 @@ export function RecruitmentStatusWidget() {
           className="dashboard-widget-table__data"
           onRow={record => ({
             onClick: () => {
-              navigate(`/programs/general?programId=${encodeURIComponent(record.id)}`)
+              navigate(recruitmentProgramDetailPath(record.id))
             },
           })}
         />

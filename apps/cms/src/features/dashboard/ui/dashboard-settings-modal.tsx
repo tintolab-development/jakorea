@@ -94,16 +94,17 @@ function setWidgetTitleGroup(
 
 export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModalProps) {
   const user = useAuthStore(s => s.user)
+  const assignedProgramTypes = useDashboardSettingsStore(s => s.assignedProgramTypes)
   const { mutate: persistPreferences } = useSaveDashboardPreferences()
   const queryScope = useDashboardQueryScope()
   const useRemote = queryScope === 'remote'
   const { data: apiShortcuts } = useDashboardShortcuts(open && useRemote)
 
   const visibleWidgetEntries = useMemo(() => {
-    const widgets = getDashboardWidgetsForUser(user ?? null)
+    const widgets = getDashboardWidgetsForUser(user ?? null, assignedProgramTypes)
     const allowed = new Set<DashboardWidgetType>(widgets.map(w => w.type))
     return WIDGET_PROGRAM_KEYS.filter(w => allowed.has(w.key as DashboardWidgetType))
-  }, [user])
+  }, [user, assignedProgramTypes])
 
   const visibleWidgetKeys = useMemo(
     () => visibleWidgetEntries.map(w => w.key),

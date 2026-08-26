@@ -9,6 +9,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { ProgramScheduleKind } from '@/data/mock/program-schedule-keys'
 
 /** 대시보드 홈(임시 미구현 라우트 대체) */
 export const DASHBOARD_HOME_PATH = '/'
@@ -20,26 +21,25 @@ export const isShortcutItemEnabled = (shortcutEnabled: Record<string, boolean>, 
 export const SHORTCUT_ITEMS: Array<{ id: string; label: string; path: string }> = [
   { id: 'programs-general-education', label: '일반 프로그램', path: '/programs/general' },
   { id: 'programs-economy', label: '1사1교 프로그램', path: '/programs/company-school' },
-  { id: 'programs-gemini', label: 'Gemini 프로그램', path: '/programs/gemini' },
   { id: 'programs-ujat', label: 'UJAT 프로그램', path: '/programs/ujat' },
+  { id: 'programs-gemini', label: '제미나이 프로그램', path: '/programs/gemini/visiting-training' },
   { id: 'users-all', label: '전체 회원 관리', path: '/users/list?kind=all' },
-  { id: 'users-school', label: '학교(교사)회원', path: '/users/list?kind=institutions' },
+  { id: 'users-school', label: '학교(교사) 회원 관리', path: '/users/list?kind=institutions' },
   { id: 'users-instructor', label: '강사 회원 관리', path: '/users/list?kind=instructors' },
   { id: 'users-admin', label: '관리자 관리', path: '/users/list?kind=admins' },
   { id: 'permission-requests', label: '회원 권한 승인', path: '/admin/permission-requests' },
-  { id: 'settlement-payment-orders', label: '지급 조서 확인', path: '/settlement-management/payment-orders' },
+  { id: 'admin-permission-settings', label: '관리자 권한 설정', path: '/admin/settings/permissions' },
+  { id: 'settlement-payment-orders', label: '지급조서 확인', path: '/settlement-management/payment-orders' },
   { id: 'settlement-account-payments', label: '계좌 지급 확인', path: '/settlement-management/account-payments' },
   { id: 'settlement-item-settings', label: '정산 항목 설정', path: '/settlement-management/item-settings' },
+  { id: 'template-management', label: '폼 양식 관리', path: '/templates/form-management' },
   { id: 'notices', label: '공지사항', path: '/admin/posts/notices' },
   { id: 'faq', label: 'FAQ', path: '/admin/posts/faq' },
-  { id: 'inquiries', label: '문의 사항', path: '/admin/posts/inquiries' },
-  { id: 'template-management', label: '템플릿 관리', path: '/templates/form-management' },
+  { id: 'inquiries', label: '문의내역', path: '/admin/posts/inquiries' },
   { id: 'sponsors', label: '후원사 관리', path: '/sponsors' },
-  { id: 'textbooks', label: '교재 관리', path: DASHBOARD_HOME_PATH },
+  { id: 'textbooks', label: '교재 관리', path: '/textbook' },
   { id: 'programs-detail', label: '세부 프로그램 관리', path: '/programs' },
   { id: 'performance', label: '실적 관리', path: '/education-records' },
-  { id: 'email-history', label: '메일 발송 이력', path: DASHBOARD_HOME_PATH },
-  { id: 'member-login-history', label: '회원 로그인 이력', path: '/logs/member-login-history' },
   { id: 'file-download-history', label: '파일 다운로드 이력', path: '/logs/file-download-history' },
   { id: 'privacy-query-history', label: '개인정보 조회 이력', path: '/logs/personal-info-access-history' },
   { id: 'bug-issue-history', label: '버그/이슈 이력', path: '/logs/bug-issue-history' },
@@ -81,6 +81,13 @@ export interface DashboardSettingsState {
   /** 문의 알림 읽음: 프로그램별(행 key) — 해당 행 답변 대기 클릭 시 해당 프로그램만 읽음 처리 */
   inquiryNotificationReadProgramKeys: Record<string, boolean>
   setInquiryNotificationReadProgramKey: (programKey: string) => void
+  /**
+   * Me preferences `assignedProgramTypes`.
+   * null = 아직 없음(ACL 폴백), [] = 담당 유형 없음, 그 외 = 해당 일정 위젯만 노출.
+   * persist 하지 않음.
+   */
+  assignedProgramTypes: ProgramScheduleKind[] | null
+  setAssignedProgramTypes: (kinds: ProgramScheduleKind[] | null) => void
 }
 
 const STORAGE_KEY = 'dashboard-settings'
@@ -141,6 +148,11 @@ export const useDashboardSettingsStore = create<DashboardSettingsState>()(
             [programKey]: true,
           },
         }))
+      },
+
+      assignedProgramTypes: null,
+      setAssignedProgramTypes: kinds => {
+        set({ assignedProgramTypes: kinds })
       },
     }),
     {
