@@ -18,6 +18,7 @@ import type {
   AdminPreRegisterInstructorRequest,
   AdminPreRegisterSchoolRequest,
   AdminPrivacyUnmaskRequest,
+  FilledDocumentResponse,
   AdminRoleChangeRequest,
   AdminRolePermissionMatrixResponse,
   AdminRolePermissionUpdateRequest,
@@ -53,8 +54,16 @@ import type { AdminMemberDeleteRequest } from '@/shared/api/generated/members/sc
 import type { AdminCommentResponse } from '@/shared/api/generated/members/schemas/adminCommentResponse'
 import type { UserResponse } from '@/shared/api/generated/members/schemas/userResponse'
 import type { ListMemberApplicationsParams } from '@/shared/api/generated/members/schemas/listMemberApplicationsParams'
+import type {
+  BulkActionResponse,
+  ListSchoolOrganizationProgramEnrollmentHistoryParams,
+  PageResponseSchoolOrganizationProgramEnrollmentHistoryItemResponse,
+  SchoolOrganizationProgramEnrollmentHistoryBulkDeleteRequest,
+} from '@/features/user/api/school-organization-program-enrollment-history.types'
 import type { ListMemberProgramHistoryParams } from '@/shared/api/generated/members/schemas/listMemberProgramHistoryParams'
 import type { ListMemberAdminProgramsParams } from '@/shared/api/generated/members/schemas/listMemberAdminProgramsParams'
+import type { ListProgramRoles1Params } from '@/shared/api/generated/members/schemas/listProgramRoles1Params'
+import type { PageResponseAdminProgramAssignmentResponse } from '@/shared/api/generated/members/schemas/pageResponseAdminProgramAssignmentResponse'
 import type { PageResponseMemberApplicationHistoryResponse } from '@/shared/api/generated/members/schemas/pageResponseMemberApplicationHistoryResponse'
 import type { PageResponseMemberProgramHistoryResponse } from '@/shared/api/generated/members/schemas/pageResponseMemberProgramHistoryResponse'
 import type { PageResponseMemberAdminProgramResponse } from '@/shared/api/generated/members/schemas/pageResponseMemberAdminProgramResponse'
@@ -70,6 +79,11 @@ import type { BulkDecisionRequest } from '@/shared/api/generated/members/schemas
 import type { ListAllCmsMembersAndAdminsParams } from '@/shared/api/generated/members/schemas/listAllCmsMembersAndAdminsParams'
 import type { PageResponseAccountDirectoryItemResponse } from '@/shared/api/generated/members/schemas/pageResponseAccountDirectoryItemResponse'
 import type { DeleteSchoolParams } from '@/shared/api/generated/members/schemas/deleteSchoolParams'
+import type { DeleteApplicationHistoryParams } from '@/shared/api/generated/members/schemas/deleteApplicationHistoryParams'
+import type { MemberEnrollmentSummaryResponse } from '@/shared/api/generated/members/schemas/memberEnrollmentSummaryResponse'
+import type { MemberAssignmentSubmissionResponse } from '@/shared/api/generated/members/schemas/memberAssignmentSubmissionResponse'
+import type { GetApplicationEnrollmentSummaryParams } from '@/shared/api/generated/members/schemas/getApplicationEnrollmentSummaryParams'
+import type { ListAssignmentSubmissionsParams } from '@/shared/api/generated/members/schemas/listAssignmentSubmissionsParams'
 
 const membersApi = getJAKoreaCMSBackendAPIMembersSubset()
 
@@ -236,12 +250,11 @@ export async function updateMemberCommentRemote(
 }
 
 /**
- * 회원 관리자 코멘트 upsert.
- * `existingCommentId`가 있으면 목록 GET 없이 update만 호출한다.
- * 없으면 목록으로 id를 확인한 뒤 update 또는 create.
+ * 회원/학교 organization 관리자 코멘트 upsert.
+ * path param `{memberId}`는 OpenAPI상 "대상 리소스 식별자" — 학교는 `organizationId`를 전달한다.
  */
 export async function upsertMemberAdminCommentRemote(
-  memberId: number,
+  resourceId: number,
   comment: string,
   options?: { existingCommentId?: number; screenCode?: string }
 ): Promise<AdminCommentResponse> {
@@ -253,16 +266,16 @@ export async function upsertMemberAdminCommentRemote(
 
   let commentId = options?.existingCommentId
   if (commentId == null) {
-    const existingComments = await fetchMemberCommentsRemote(memberId, { screenCode }).catch(
+    const existingComments = await fetchMemberCommentsRemote(resourceId, { screenCode }).catch(
       () => []
     )
     commentId = resolveLatestMemberAdminCommentDetail(existingComments, screenCode)?.commentId
   }
 
   if (commentId != null) {
-    return updateMemberCommentRemote(memberId, commentId, { comment: trimmed })
+    return updateMemberCommentRemote(resourceId, commentId, { comment: trimmed })
   }
-  return createMemberCommentRemote(memberId, { screenCode, comment: trimmed })
+  return createMemberCommentRemote(resourceId, { screenCode, comment: trimmed })
 }
 
 export async function deleteMemberCommentRemote(memberId: number, commentId: number): Promise<void> {
@@ -288,6 +301,22 @@ export async function deleteMemberAdminProgramRemote(
   await membersApi.deleteAdminProgram(memberId, programId)
 }
 
+/** Swagger `listProgramRoles_1` — GET admin-accounts/{adminAccountId}/program-roles */
+export async function fetchAdminAccountProgramRolesRemote(
+  adminAccountId: number,
+  params?: ListProgramRoles1Params
+): Promise<PageResponseAdminProgramAssignmentResponse> {
+  return unwrapApiBody(await membersApi.listProgramRoles1(adminAccountId, params))
+}
+
+/** Swagger `deleteProgramRole` — DELETE admin-accounts/{adminAccountId}/program-roles/{programId} */
+export async function deleteAdminAccountProgramRoleRemote(
+  adminAccountId: number,
+  programId: number
+): Promise<void> {
+  await membersApi.deleteProgramRole(adminAccountId, programId)
+}
+
 export async function resendInstructorRoleNotificationRemote(requestId: number): Promise<void> {
   await membersApi.resendNotification(requestId)
 }
@@ -310,6 +339,46 @@ export async function fetchMemberProgramHistoryRemote(
   params?: ListMemberProgramHistoryParams
 ): Promise<PageResponseMemberProgramHistoryResponse> {
   return unwrapApiBody(await membersApi.listMemberProgramHistory(memberId, params))
+}
+
+/** Swagger `getApplicationEnrollmentSummary` — enrollment-summary */
+export async function fetchApplicationEnrollmentSummaryRemote(
+  memberId: number,
+  applicationId: number,
+  params?: GetApplicationEnrollmentSummaryParams
+): Promise<MemberEnrollmentSummaryResponse> {
+  return unwrapApiBody(
+    await membersApi.getApplicationEnrollmentSummary(memberId, applicationId, params)
+  )
+}
+
+/** Swagger `listAssignmentSubmissions` — assignment-submissions */
+export async function fetchApplicationAssignmentSubmissionsRemote(
+  memberId: number,
+  applicationId: number,
+  params?: ListAssignmentSubmissionsParams
+): Promise<MemberAssignmentSubmissionResponse[]> {
+  const data = await unwrapApiBody(
+    await membersApi.listAssignmentSubmissions(memberId, applicationId, params)
+  )
+  return Array.isArray(data) ? data : []
+}
+
+/** Swagger `deleteApplicationHistory` — DELETE applications/{applicationId} */
+export async function deleteMemberApplicationHistoryRemote(
+  memberId: number,
+  applicationId: number,
+  params?: DeleteApplicationHistoryParams
+): Promise<void> {
+  await membersApi.deleteApplicationHistory(memberId, applicationId, params)
+}
+
+/** Swagger `deleteProgramHistory` — DELETE program-history/{participantId} */
+export async function deleteMemberProgramHistoryRemote(
+  memberId: number,
+  participantId: number
+): Promise<void> {
+  await membersApi.deleteProgramHistory(memberId, participantId)
 }
 
 export async function fetchAffiliatedTeachersRemote(
@@ -337,6 +406,72 @@ export async function fetchMemberConsentRecordsRemote(
 ): Promise<MemberConsentRecordResponse[]> {
   const data = await unwrapApiBody(await membersApi.consentRecords(memberId))
   return Array.isArray(data) ? data : []
+}
+
+/** POST 동의서 작성본 원문 — 민감정보, 쿼리 캐시에 넣지 말 것 */
+export async function fetchConsentFilledDocumentRemote(
+  memberId: number,
+  consentType: string,
+  body: AdminPrivacyUnmaskRequest
+): Promise<FilledDocumentResponse> {
+  return unwrapApiBody(
+    await membersApi.consentFilledDocument(memberId, consentType, body, {
+      skipGlobalErrorAlert: true,
+    })
+  )
+}
+
+/** 성범죄 첨부 다운로드. presigned가 아니면 감사 사유를 다시 실어 릴레이한다. */
+export async function fetchConsentEvidenceBlobRemote(
+  filled: FilledDocumentResponse,
+  reason: string
+): Promise<Blob | null> {
+  const endpoint = filled.evidenceDownloadEndpoint?.trim()
+  if (endpoint) {
+    try {
+      const payload = await customInstance<Blob>(
+        {
+          url: endpoint,
+          method: 'GET',
+          responseType: 'blob',
+        },
+        { skipGlobalErrorAlert: true }
+      )
+      if (payload instanceof Blob && payload.size > 0 && payload.type !== 'application/json') {
+        return payload
+      }
+    } catch {
+      /* POST 릴레이 시도 */
+    }
+    try {
+      const payload = await customInstance<Blob>(
+        {
+          url: endpoint,
+          method: 'POST',
+          data: { reason },
+          responseType: 'blob',
+        },
+        { skipGlobalErrorAlert: true }
+      )
+      if (payload instanceof Blob && payload.size > 0 && payload.type !== 'application/json') {
+        return payload
+      }
+    } catch {
+      /* fileObjectId 폴백 */
+    }
+  }
+
+  if (filled.evidenceFileObjectId == null) return null
+  const payload = await customInstance<Blob>(
+    {
+      url: `/api/admin/files/${filled.evidenceFileObjectId}/sensitive-downloads/stream`,
+      method: 'POST',
+      data: { reason },
+      responseType: 'blob',
+    },
+    { skipGlobalErrorAlert: true }
+  )
+  return payload instanceof Blob ? payload : null
 }
 
 export async function fetchMemberExternalIdentifiersRemote(
@@ -578,4 +713,33 @@ export async function revokeInstructorPermissionRemote(
     headers: { 'Content-Type': 'application/json' },
     data: body,
   })
+}
+
+/** Handoff — `GET .../organizations/schools/{organizationId}/program-enrollment-history` */
+export async function fetchSchoolOrganizationProgramEnrollmentHistoryRemote(
+  organizationId: number,
+  params?: ListSchoolOrganizationProgramEnrollmentHistoryParams
+): Promise<PageResponseSchoolOrganizationProgramEnrollmentHistoryItemResponse> {
+  return unwrapApiBody(
+    await customInstance<unknown>({
+      url: `/api/admin/organizations/schools/${organizationId}/program-enrollment-history`,
+      method: 'GET',
+      params,
+    })
+  )
+}
+
+/** Handoff — `POST .../organizations/schools/{organizationId}/program-enrollment-history/bulk-delete` */
+export async function bulkDeleteSchoolOrganizationProgramEnrollmentHistoryRemote(
+  organizationId: number,
+  body: SchoolOrganizationProgramEnrollmentHistoryBulkDeleteRequest
+): Promise<BulkActionResponse> {
+  return unwrapApiBody(
+    await customInstance<unknown>({
+      url: `/api/admin/organizations/schools/${organizationId}/program-enrollment-history/bulk-delete`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    })
+  )
 }

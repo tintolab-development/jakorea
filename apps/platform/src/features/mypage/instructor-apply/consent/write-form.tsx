@@ -10,11 +10,13 @@ import {
 import {
   ensureAgreementNoticeConfirmationClosing,
   overlayAgreementNoticeSeedHorizontalTable,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { PFAlertModal, PFButton } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFFormSignatureBlock } from '@/shared/ui'
 import type { InstructorApplyConsentKey } from './catalog'
 import { CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE } from './catalog'
 import { CrimeConsentDocumentForm } from './crime-document-form'
@@ -54,7 +56,7 @@ function createInitialSchemaConsentState(consentKey: InstructorApplyConsentKey):
   return {
     draft,
     paymentBasicInfo: templateId === 'agreement-third-party' ? {} : undefined,
-    signatures: templateId === 'agreement-third-party' ? {} : undefined,
+    signatures: {},
     crimeDocumentUploaded: false,
   }
 }
@@ -149,7 +151,7 @@ export function SchemaConsentWriteForm({
           <ConsentSignatureStatement
             statement={body}
             signerName={signerName}
-            signatureDataUrl={state.signatures?.mid ?? ''}
+            signature={state.signatures?.mid}
             onSignatureChange={mid =>
               setState(prev => ({
                 ...prev,
@@ -169,7 +171,25 @@ export function SchemaConsentWriteForm({
           <ConsentSignatureStatement
             statement={body}
             signerName={signerName}
-            signatureDataUrl={state.signatures?.final ?? ''}
+            signature={state.signatures?.final}
+            onSignatureChange={finalSig =>
+              setState(prev => ({
+                ...prev,
+                signatures: { ...prev.signatures, final: finalSig },
+              }))
+            }
+          />
+        )
+      }
+
+      if (
+        paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature ||
+        paragraph.id === EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemSignature
+      ) {
+        return (
+          <PFFormSignatureBlock
+            signerName={signerName}
+            signature={state.signatures?.final}
             onSignatureChange={finalSig =>
               setState(prev => ({
                 ...prev,

@@ -1,0 +1,112 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  border-top: 2px solid var(--color-border-strong);
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-48);
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  padding: var(--spacing-32) var(--spacing-32) var(--spacing-32) var(--spacing-48);
+  border: 0;
+  border-top: 1px solid var(--color-border-default);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: -2px;
+}
+
+.badgeContainer {
+  width: 73px;
+}
+
+.badge {
+  flex-shrink: 0;
+  background: var(--color-element-default-gray);
+  color: var(--color-primary-700);
+}
+
+.title {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  transition: transform 160ms ease;
+}
+
+.chevronExpanded {
+  transform: rotate(180deg);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.panelRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-40);
+  align-self: stretch;
+  padding: var(--spacing-40) 140px var(--spacing-40) var(--spacing-56);
+  background: var(--color-neutral-cool-50);
+}
+
+.label {
+  display: flex;
+  width: 74px;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-8);
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+}
+
+.body {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.empty {
+  margin: 0;
+  padding: var(--spacing-40) var(--spacing-32);
+  border-top: 1px solid var(--color-border-default);
+  text-align: center;
+}
+
+@media (--bp-below-pc) {
+  .panelRow {
+    padding: var(--spacing-40) var(--spacing-32) var(--spacing-40) var(--spacing-56);
+  }
+}

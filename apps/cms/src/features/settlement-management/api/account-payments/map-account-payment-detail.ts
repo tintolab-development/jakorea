@@ -12,11 +12,19 @@ import type {
   SettlementFrontendItemResponse,
   SettlementFrontendResponse,
   SettlementItemResponse,
-  SettlementListItemResponse,
   SettlementResponse,
 } from '@/shared/api/generated/settlement/schemas'
 import { formatLectureSessionLabel } from '@/features/settlement-management/api/account-payments/map-settlement-context'
 import { mapPaymentStatusToAccountPaymentStatus } from '@/features/settlement-management/api/shared/settlement-status-mappers'
+import {
+  formatBusinessIncomeEarnerLabel,
+  formatBusinessPeriodDisplay,
+  formatLectureFeeStandardTitle,
+  formatProgramSessionProgressDisplay,
+  formatWonAmountDisplay,
+  mapCalculationDetailToBasisDetail,
+  mapSettlementFrontendItemTypeToLineKind,
+} from '@/features/settlement-management/api/shared/map-frontend-fields'
 import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
 
 const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'] as const
@@ -35,6 +43,29 @@ function formatLectureDateDisplay(iso: string | undefined): string {
   return formatTransferDateDisplay(iso)
 }
 
+function toRoundSessionLabel(label: string): string {
+  return label.replace(/차시/g, '회차')
+}
+
+function resolveInstitutionName(row: AccountPaymentRow, institutionName?: string): string {
+  const fromApi = institutionName?.trim()
+  if (fromApi) return fromApi
+  if (row.institutionName && row.institutionName !== '-') return row.institutionName
+  return '—'
+}
+
+function resolveSessionDisplay(
+  row: AccountPaymentRow,
+  lectureSessionDisplay?: string,
+  sessionOrdinal?: number
+): string {
+  const fromApi = lectureSessionDisplay?.trim()
+  if (fromApi) return toRoundSessionLabel(fromApi)
+  if (sessionOrdinal != null) return toRoundSessionLabel(formatLectureSessionLabel(sessionOrdinal))
+  if (row.sessionLabel && row.sessionLabel !== '-') return toRoundSessionLabel(row.sessionLabel)
+  return '—'
+}
+
 function mapFrontendItemToCalcLine(
   item: SettlementFrontendItemResponse,
   index: number
@@ -45,7 +76,8 @@ function mapFrontendItemToCalcLine(
     itemLabel: formatPaymentOrderCalculationItemLabel(item.type, amount),
     description: item.description?.trim() || '—',
     amount,
-    kind: amount < 0 ? 'withholding' : 'lecture_fee',
+    kind: mapSettlementFrontendItemTypeToLineKind(item.type, amount),
+    basisDetail: mapCalculationDetailToBasisDetail(item.calculationDetail),
   }
 }
 
@@ -60,13 +92,12 @@ function mapSettlementItemToCalcLine(
     itemLabel: item.itemName?.trim() || formatPaymentOrderCalculationItemLabel(type, amount),
     description: item.itemName?.trim() || '—',
     amount,
-    kind: amount < 0 ? 'withholding' : 'lecture_fee',
+    kind: mapSettlementFrontendItemTypeToLineKind(type, amount),
   }
 }
 
 function buildBlocksFromFrontendSettlement(
   row: AccountPaymentRow,
-  settlementListItem: SettlementListItemResponse | undefined,
   settlement: SettlementFrontendResponse
 ): PaymentOrderCalculationStatementSessionBlock[] {
   const items = settlement.items ?? []
@@ -82,14 +113,15 @@ function buildBlocksFromFrontendSettlement(
     })
   }
 
-  const lectureDate = settlementListItem?.lectureDate ?? row.transferScheduledDate
-  const sessionLabel = formatLectureSessionLabel(settlementListItem?.scheduleId)
-
   return [
     {
-      institutionName: row.institutionName !== '-' ? row.institutionName : '—',
-      lectureDateDisplay: formatLectureDateDisplay(lectureDate),
-      lectureSessionDisplay: sessionLabel.replace(/차시/g, '회차'),
+      institutionName: resolveInstitutionName(row, settlement.institutionName),
+      lectureDateDisplay: formatLectureDateDisplay(row.transferScheduledDate),
+      lectureSessionDisplay: resolveSessionDisplay(
+        row,
+        settlement.lectureSessionDisplay,
+        settlement.sessionOrdinal
+      ),
       lines,
     },
   ]
@@ -113,13 +145,12 @@ function buildBlocksFromSettlementResponse(
   }
 
   const lectureDate = settlement?.lectureDate ?? row.transferScheduledDate
-  const sessionLabel = formatLectureSessionLabel(settlement?.scheduleId)
 
   return [
     {
-      institutionName: row.institutionName !== '-' ? row.institutionName : '—',
+      institutionName: resolveInstitutionName(row),
       lectureDateDisplay: formatLectureDateDisplay(lectureDate),
-      lectureSessionDisplay: sessionLabel.replace(/차시/g, '회차'),
+      lectureSessionDisplay: resolveSessionDisplay(row),
       lines,
     },
   ]
@@ -140,6 +171,10 @@ function buildAccountPaymentStatusDetail(
   extras?: {
     programName?: string
     businessPeriodDisplay?: string
+    programSessionProgressDisplay?: string
+    lectureFeeStandardTitle?: string
+    lectureFeeStandardAmount?: string
+    businessIncomeEarnerLabel?: string
     accountPaymentStatus?: AccountPaymentStatusDetail['basic']['accountPaymentStatus']
     transferScheduledDate?: string
   }
@@ -158,16 +193,19 @@ function buildAccountPaymentStatusDetail(
       settlementAccountHolderPart: row.accountHolder?.trim() || '—',
       programName: extras?.programName ?? row.programName,
       programSessionProgressDisplay:
-        row.sessionLabel !== '-' ? row.sessionLabel.replace(/차시/g, '회차') : '—',
+        extras?.programSessionProgressDisplay ??
+        (row.sessionLabel !== '-' ? toRoundSessionLabel(row.sessionLabel) : '—'),
       businessPeriodDisplay: extras?.businessPeriodDisplay ?? '—',
       accountPaymentStatus,
       accountPaymentStatusLabel: ACCOUNT_PAYMENT_STATUS_LABELS[accountPaymentStatus],
       transferScheduledDateDisplay: formatTransferDateDisplay(
         extras?.transferScheduledDate ?? row.transferScheduledDate
       ),
-      lectureFeeStandardTitle: '—',
-      lectureFeeStandardAmount: row.amount > 0 ? `${row.amount.toLocaleString('ko-KR')}원` : '—',
-      businessIncomeEarnerLabel: '해당 없음',
+      lectureFeeStandardTitle: extras?.lectureFeeStandardTitle ?? '—',
+      lectureFeeStandardAmount:
+        extras?.lectureFeeStandardAmount ??
+        (row.amount > 0 ? `${row.amount.toLocaleString('ko-KR')}원` : '—'),
+      businessIncomeEarnerLabel: extras?.businessIncomeEarnerLabel ?? '해당 없음',
     },
     blocks,
     formulaLabel: '정산 항목 합계',
@@ -181,21 +219,33 @@ function buildAccountPaymentStatusDetail(
 
 export function mapAccountPaymentDetailRemote(
   row: AccountPaymentRow,
-  settlement: SettlementFrontendResponse,
-  settlementListItem?: SettlementListItemResponse
+  settlement: SettlementFrontendResponse
 ): AccountPaymentStatusDetail {
-  const blocks = buildBlocksFromFrontendSettlement(row, settlementListItem, settlement)
+  const blocks = buildBlocksFromFrontendSettlement(row, settlement)
   const itemsTotal = sumFrontendItemsAmount(settlement.items)
   const totalAmount = settlement.totalAmount ?? (itemsTotal !== 0 ? itemsTotal : row.amount)
 
   return buildAccountPaymentStatusDetail(row, blocks, totalAmount, {
-    businessPeriodDisplay: settlement.period?.trim() || '—',
+    programName: settlement.programNameKo ?? row.programName,
+    businessPeriodDisplay: formatBusinessPeriodDisplay({
+      period: settlement.period,
+      businessPeriodStart: settlement.businessPeriodStart,
+      businessPeriodEnd: settlement.businessPeriodEnd,
+      formatDate: formatTransferDateDisplay,
+    }),
+    programSessionProgressDisplay: toRoundSessionLabel(formatProgramSessionProgressDisplay(settlement)),
+    lectureFeeStandardTitle: formatLectureFeeStandardTitle(settlement.lectureFeeStandardTitle),
+    lectureFeeStandardAmount: formatWonAmountDisplay(settlement.lectureFeeStandardAmount),
+    businessIncomeEarnerLabel: formatBusinessIncomeEarnerLabel(
+      settlement.businessIncomeEarnerLabel
+    ),
   })
 }
 
 export function mapAccountPaymentDetailFromGetApi(
   row: AccountPaymentRow,
-  detail: AccountPaymentDetailResponse
+  detail: AccountPaymentDetailResponse,
+  settlementFrontend?: SettlementFrontendResponse
 ): AccountPaymentStatusDetail {
   const payment = detail.payment
   const settlement = detail.settlement
@@ -203,7 +253,8 @@ export function mapAccountPaymentDetailFromGetApi(
   const mergedRow: AccountPaymentRow = {
     ...row,
     instructorName: payment?.instructorName ?? settlement?.instructorName ?? row.instructorName,
-    programName: settlement?.programNameKo ?? row.programName,
+    programName:
+      settlementFrontend?.programNameKo ?? settlement?.programNameKo ?? row.programName,
     amount: payment?.netPaymentAmount ?? settlement?.netPaymentAmount ?? row.amount,
     transferScheduledDate:
       payment?.scheduledPaymentDate ?? settlement?.expectedTransferDate ?? row.transferScheduledDate,
@@ -213,6 +264,10 @@ export function mapAccountPaymentDetailFromGetApi(
     accountPaymentStatus: mapPaymentStatusToAccountPaymentStatus(
       payment?.paymentStatus ?? settlement?.paymentStatus
     ),
+  }
+
+  if (settlementFrontend) {
+    return mapAccountPaymentDetailRemote(mergedRow, settlementFrontend)
   }
 
   const blocks = buildBlocksFromSettlementResponse(mergedRow, settlement)

@@ -56,3 +56,13 @@
   background: var(--editable-badge-red-bg);
   color: var(--editable-badge-red-text);
 }
+
+.editable-status-badge__label {
+  display: inline-block;
+  line-height: inherit;
+}
+
+/** 재직 현황 휴직·전근 — 텍스트만 연하게 (배경·테두리는 톤 클래스 유지) */
+.editable-status-badge__label--muted {
+  opacity: 0.4;
+}

@@ -2,6 +2,8 @@
  * 산출 내역서 — 산정 기준 상세 모달 payload (read-only viewer SSOT)
  */
 
+import type { PaymentOrderCalculationStatementSessionBlock } from '@/data/mock/payment-order-admin-list'
+
 export interface PaymentOrderCalculationBasisDetailLectureFeeTier {
   layout: 'lectureFeeTier'
   tier: '1' | '2' | '3'
@@ -9,6 +11,26 @@ export interface PaymentOrderCalculationBasisDetailLectureFeeTier {
   feeAssessmentWon: number
   lectureTimeDisplay: string
   totalWon: number
+}
+
+/** 특강 강사비 — 1~3급과 동일 표, 급수 없음 */
+export interface PaymentOrderCalculationBasisDetailLectureFeeSpecial {
+  layout: 'lectureFeeSpecial'
+  categoryLabel: string
+  feeAssessmentWon: number
+  lectureTimeDisplay: string
+  totalWon: number
+}
+
+export const SPECIAL_LECTURE_FEE_TITLE = '특강 강사비'
+export const GEMINI_LECTURE_FEE_TITLE = '제미나이 강사비'
+
+/** 제미나이 강사비 — 구분 · 강의 시간 · 강의비 책정 (합계 없음) */
+export interface PaymentOrderCalculationBasisDetailLectureFeeGemini {
+  layout: 'lectureFeeGemini'
+  categoryLabel: string
+  lectureTimeDisplay: string
+  feeAssessmentWon: number
 }
 
 export interface PaymentOrderCalculationBasisDetailTransportPublicTransit {
@@ -100,6 +122,8 @@ export interface PaymentOrderCalculationBasisDetailWithholding {
 
 export type PaymentOrderCalculationBasisDetail =
   | PaymentOrderCalculationBasisDetailLectureFeeTier
+  | PaymentOrderCalculationBasisDetailLectureFeeSpecial
+  | PaymentOrderCalculationBasisDetailLectureFeeGemini
   | PaymentOrderCalculationBasisDetailTransportRoundTrip
   | PaymentOrderCalculationBasisDetailTransportOneWay
   | PaymentOrderCalculationBasisDetailTransportInstructor
@@ -132,7 +156,10 @@ function defaultParticipantTripLeg(): PaymentOrderCalculationBasisDetailTranspor
 export function resolveBasisDetailModalTitle(detail: PaymentOrderCalculationBasisDetail): string {
   switch (detail.layout) {
     case 'lectureFeeTier':
+    case 'lectureFeeGemini':
       return '강사비 산정 기준 상세'
+    case 'lectureFeeSpecial':
+      return '특강 강사비 산정 기준 상세'
     case 'transportRoundTrip':
     case 'transportOneWay':
     case 'transportInstructor':
@@ -158,6 +185,8 @@ export function isSupportedBasisDetailLayout(
   if (!detail) return false
   return (
     detail.layout === 'lectureFeeTier' ||
+    detail.layout === 'lectureFeeSpecial' ||
+    detail.layout === 'lectureFeeGemini' ||
     detail.layout === 'transportRoundTrip' ||
     detail.layout === 'transportOneWay' ||
     detail.layout === 'transportInstructor' ||
@@ -331,27 +360,96 @@ export function resolveWithholdingBasisDetailAmountWon(
   return -detail.withholdingTaxAmountWon
 }
 
+function resolveLectureFeeTier(
+  lectureFeeStandardTitle: string
+): PaymentOrderCalculationBasisDetailLectureFeeTier['tier'] {
+  const mapped = LECTURE_FEE_TIER_TITLE_MAP[lectureFeeStandardTitle]
+  if (mapped) return mapped
+  if (lectureFeeStandardTitle.includes('1급')) return '1'
+  if (lectureFeeStandardTitle.includes('3급')) return '3'
+  return '2'
+}
+
 export function buildLectureFeeTierBasisDetail(
   lectureFeeStandardTitle: string,
   lectureFee: number,
   sessionStart: number
-): PaymentOrderCalculationBasisDetailLectureFeeTier | undefined {
-  const tier = LECTURE_FEE_TIER_TITLE_MAP[lectureFeeStandardTitle]
-  if (!tier) return undefined
-
+): PaymentOrderCalculationBasisDetailLectureFeeTier {
+  const trimmed = lectureFeeStandardTitle.trim()
+  const categoryLabel = isGenericLectureFeeCategoryLabel(trimmed) ? '2급 강사비' : trimmed
   return {
     layout: 'lectureFeeTier',
-    tier,
-    categoryLabel: lectureFeeStandardTitle,
+    tier: resolveLectureFeeTier(categoryLabel),
+    categoryLabel,
     feeAssessmentWon: lectureFee,
     lectureTimeDisplay: `${sessionStart}차시`,
     totalWon: lectureFee,
   }
 }
 
+const GENERIC_LECTURE_FEE_LABELS = new Set(['강사비', '강의비', '—'])
+
+export function isGenericLectureFeeCategoryLabel(title: string | undefined): boolean {
+  const normalized = title?.trim()
+  return !normalized || GENERIC_LECTURE_FEE_LABELS.has(normalized)
+}
+
+export function isSpecialLectureFeeTitle(title: string | undefined): boolean {
+  return title?.trim() === SPECIAL_LECTURE_FEE_TITLE
+}
+
+export function isGeminiLectureFeeTitle(title: string | undefined): boolean {
+  return title?.trim() === GEMINI_LECTURE_FEE_TITLE
+}
+
+export function buildLectureFeeGeminiBasisDetail(
+  lectureFee: number,
+  sessionStart: number
+): PaymentOrderCalculationBasisDetailLectureFeeGemini {
+  return {
+    layout: 'lectureFeeGemini',
+    categoryLabel: GEMINI_LECTURE_FEE_TITLE,
+    lectureTimeDisplay: `${sessionStart}차시`,
+    feeAssessmentWon: lectureFee,
+  }
+}
+
+export function buildLectureFeeSpecialBasisDetail(
+  lectureFee: number,
+  sessionStart: number
+): PaymentOrderCalculationBasisDetailLectureFeeSpecial {
+  return {
+    layout: 'lectureFeeSpecial',
+    categoryLabel: SPECIAL_LECTURE_FEE_TITLE,
+    feeAssessmentWon: lectureFee,
+    lectureTimeDisplay: `${sessionStart}차시`,
+    totalWon: lectureFee,
+  }
+}
+
+export function buildLectureFeeBasisDetailFromStandardTitle(
+  lectureFeeStandardTitle: string,
+  lectureFee: number,
+  sessionStart: number
+):
+  | PaymentOrderCalculationBasisDetailLectureFeeTier
+  | PaymentOrderCalculationBasisDetailLectureFeeSpecial
+  | PaymentOrderCalculationBasisDetailLectureFeeGemini {
+  if (isSpecialLectureFeeTitle(lectureFeeStandardTitle)) {
+    return buildLectureFeeSpecialBasisDetail(lectureFee, sessionStart)
+  }
+  if (isGeminiLectureFeeTitle(lectureFeeStandardTitle)) {
+    return buildLectureFeeGeminiBasisDetail(lectureFee, sessionStart)
+  }
+  return buildLectureFeeTierBasisDetail(lectureFeeStandardTitle, lectureFee, sessionStart)
+}
+
 export function lectureFeeLineDescriptionFromStandardTitle(lectureFeeStandardTitle: string): string {
-  if (lectureFeeStandardTitle === '특강 강사비') {
+  if (isSpecialLectureFeeTitle(lectureFeeStandardTitle)) {
     return '프로그램 1회 강의비 (특강 강사)'
+  }
+  if (isGeminiLectureFeeTitle(lectureFeeStandardTitle)) {
+    return '프로그램 1회 강의비 (제미나이 강사)'
   }
   const tier = LECTURE_FEE_TIER_TITLE_MAP[lectureFeeStandardTitle]
   if (tier) {
@@ -382,6 +480,52 @@ export type PaymentOrderCalculationBasisDetailResolveContext = {
   withholdingDailySalaryTotalWon?: number
 }
 
+/** 원천징수 산정 — 세전 1일 급여 총액(양수 항목 합) */
+export function computePaymentOrderCalculationSubtotalBeforeWithholding(
+  blocks: PaymentOrderCalculationStatementSessionBlock[]
+): number {
+  return blocks
+    .flatMap(block => block.lines)
+    .filter(line => line.amount > 0)
+    .reduce((sum, line) => sum + line.amount, 0)
+}
+
+function isLectureFeeBasisDetail(
+  detail: PaymentOrderCalculationBasisDetail
+): detail is
+  | PaymentOrderCalculationBasisDetailLectureFeeTier
+  | PaymentOrderCalculationBasisDetailLectureFeeSpecial
+  | PaymentOrderCalculationBasisDetailLectureFeeGemini {
+  return (
+    detail.layout === 'lectureFeeTier' ||
+    detail.layout === 'lectureFeeSpecial' ||
+    detail.layout === 'lectureFeeGemini'
+  )
+}
+
+function isLectureFeeCalculationRow(row: { kind: string; itemLabel: string }): boolean {
+  return row.kind === 'lecture_fee' || row.itemLabel === '강의비' || row.itemLabel === '강사비'
+}
+
+function resolveLectureFeeStandardTitleForRow(
+  row: {
+    basisDetail?: PaymentOrderCalculationBasisDetail
+  },
+  context?: PaymentOrderCalculationBasisDetailResolveContext | null
+): string {
+  const fromContext = context?.lectureFeeStandardTitle?.trim()
+  if (!isGenericLectureFeeCategoryLabel(fromContext)) {
+    return fromContext as string
+  }
+  if (row.basisDetail && isLectureFeeBasisDetail(row.basisDetail)) {
+    const fromDetail = row.basisDetail.categoryLabel.trim()
+    if (!isGenericLectureFeeCategoryLabel(fromDetail)) {
+      return fromDetail
+    }
+  }
+  return '2급 강사비'
+}
+
 /** 행 payload·기본정보로 산정 기준 상세 fallback 생성 (mock/API 공통) */
 export function resolvePaymentOrderCalculationBasisDetailForRow(
   row: {
@@ -394,18 +538,28 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
   },
   context?: PaymentOrderCalculationBasisDetailResolveContext | null
 ): PaymentOrderCalculationBasisDetail | undefined {
+  const sessionStart = parseLectureSessionStartFromDisplay(row.lectureSessionDisplay)
+
+  if (isLectureFeeCalculationRow(row)) {
+    return buildLectureFeeBasisDetailFromStandardTitle(
+      resolveLectureFeeStandardTitleForRow(row, context),
+      row.amount,
+      sessionStart
+    )
+  }
+
   if (row.basisDetail && isSupportedBasisDetailLayout(row.basisDetail)) {
     return row.basisDetail
   }
 
-  const sessionStart = parseLectureSessionStartFromDisplay(row.lectureSessionDisplay)
   const seed = hashLineSeed(row.lineId)
 
-  if (row.kind === 'lecture_fee' || row.itemLabel === '강의비' || row.itemLabel === '강사비') {
-    const title = context?.lectureFeeStandardTitle?.trim()
-    if (title && title !== '—') {
-      return buildLectureFeeTierBasisDetail(title, row.amount, sessionStart)
+  if (row.kind === 'withholding' || row.itemLabel === '원천징수') {
+    const dailyTotal = context?.withholdingDailySalaryTotalWon
+    if (dailyTotal && dailyTotal > 0) {
+      return buildWithholdingBasisDetail(dailyTotal)
     }
+    return buildWithholdingBasisDetail(300000)
   }
 
   if (row.kind === 'travel' || row.itemLabel === '교통비') {
@@ -422,14 +576,6 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
 
   if (row.kind === 'activity' || row.itemLabel === '활동비') {
     return buildActivityBasisDetail()
-  }
-
-  if (row.kind === 'withholding' || row.itemLabel === '원천징수') {
-    const dailyTotal = context?.withholdingDailySalaryTotalWon
-    if (dailyTotal && dailyTotal > 0) {
-      return buildWithholdingBasisDetail(dailyTotal)
-    }
-    return buildWithholdingBasisDetail(300000)
   }
 
   return undefined

@@ -68,7 +68,7 @@ export function buildPreRegisterRadioTermsAgreements(
 
 /**
  * 동의서 작성형 — 폼에 있는 항목은 agree/disagree 모두 termsAgreements에 포함.
- * formResponseId·전문 스냅샷 API는 BE 확정 전 — agreed 플래그만 전송.
+ * 작성 본문(`filledDocument`)·성범죄 파일은 createUser 제출 시 snapshot에서 부착한다.
  */
 export function buildPreRegisterDocumentTermsAgreements(
   documents: Partial<Record<PreRegisterDocumentConsentKey, PreRegisterConsentFieldValue>> | undefined
@@ -107,13 +107,8 @@ export function buildPreRegisterTermsAgreements(
 }
 
 /**
- * pre-register wire용 — 선택 약관 `agreed: false` 는 요청에서 제외한다.
- *
- * BE가 선택 미동의를 400으로 거절하는 경우가 있어(문서:
- * `members-pre-register-terms-required-policy-backend-request-2026-08-11.md` §5.2),
- * 미전송(=미동의)으로 우회한다. 필수(`required: true`) 미동의는 그대로 보내 서버 검증을 탄다.
- *
- * BE가 선택 `agreed: false` round-trip을 지원하면 이 필터를 제거할 수 있다.
+ * @deprecated pre-register wire는 선택 `agreed: false`도 그대로 보낸다.
+ * BE가 미동의를 400으로 거절하던 시기의 우회. 호출하지 말 것.
  */
 export function omitOptionalDisagreedPreRegisterTerms<
   T extends { required?: boolean; agreed?: boolean },

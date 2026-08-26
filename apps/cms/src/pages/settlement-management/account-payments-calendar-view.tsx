@@ -126,6 +126,7 @@ function accountPaymentRowToSettlementListRow(row: AccountPaymentRow): Instructo
   const calendarDate = row.transferScheduledDate.slice(0, 10)
   return {
     id: row.id,
+    settlementId: row.settlementId ?? 0,
     no: row.no,
     programName: row.programName,
     instructorName: row.instructorName,

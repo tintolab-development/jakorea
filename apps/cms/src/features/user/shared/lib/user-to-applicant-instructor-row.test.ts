@@ -63,4 +63,14 @@ describe('userToApplicantInstructorRow', () => {
     expect(row.freeWriting1).toBe('')
     expect(row.freeWriting2).toBe('')
   })
+
+  it('remote에서 affiliation empty면 `-`를 사용한다', () => {
+    const row = userToApplicantInstructorRow(baseUser({ affiliation: undefined }))
+    expect(row.affiliation).toBe('-')
+  })
+
+  it('remote에서 affiliation 값이 있으면 그대로 사용한다', () => {
+    const row = userToApplicantInstructorRow(baseUser({ affiliation: '서울 JA' }))
+    expect(row.affiliation).toBe('서울 JA')
+  })
 })

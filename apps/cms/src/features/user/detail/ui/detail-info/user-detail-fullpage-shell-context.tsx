@@ -11,6 +11,7 @@ import type { BasicInfoEditScope } from '@/features/user/detail/lib/use-user-det
 import type { UserDetailFullpageDerived } from '@/features/user/detail/lib/use-user-detail-fullpage-derived'
 import type { InstructorPermissionRevokeNotifyTiming } from '@/features/user/detail/lib/use-user-detail-controller'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
+import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 export interface UserDetailFullpageShellValue {
   mode: 'default' | 'permission'
   permissionRole?: 'instructor' | 'admin'
@@ -37,6 +38,19 @@ export interface UserDetailFullpageShellValue {
   onOpenLectureAttendance: (record: Application) => void
   onOpenAssignmentSubmission: (record: Application) => void
   onOpenEnrollmentProgramDetail: (record: Application) => void
+  onOpenVolunteerProgramDetail: (history: UserHistory) => void
+  onBulkDeleteHistory: (rowIds: string[]) => void | Promise<void>
+  onStudentCertificateBulkIssue: (
+    rowIds: readonly string[],
+    reason: CertificateIssueReasonValue,
+    reasonLabel: string
+  ) => void | Promise<void>
+  onVolunteerCertificateBulkIssue: (
+    rowIds: readonly string[],
+    reason: CertificateIssueReasonValue,
+    reasonLabel: string
+  ) => void | Promise<void>
+  progressStatusReadOnly: boolean
   onWithdrawModalCancel: () => void
   onWithdrawModalConfirm: () => void
   basicInfoEditing: boolean

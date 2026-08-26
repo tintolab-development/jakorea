@@ -13,6 +13,10 @@ export const REQUIRED_TERMS_AGREEMENT_ALERT_MESSAGE = '필수 약관에 동의�
 export const INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE =
   '기본 정보를 먼저 작성 해주세요.'
 
+/** 성범죄 경력조회 동의서 — 제출 시 문서 미첨부 AlertModal 본문 */
+export const CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE =
+  '동의서 파일을 첨부해 주세요.'
+
 /** 미구현 기능 `window.alert` 공통 안내 (프로그램 상세 미리보기, 대시보드 위젯 더보기 등) */
 export const FEATURE_COMING_SOON_ALERT_MESSAGE = '준비 중입니다.'
 

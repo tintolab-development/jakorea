@@ -44,45 +44,6 @@ function findInstructorRow(
   return instructorRows.find(r => r.instructorMemberId === instructorMemberId)
 }
 
-function stubProgramRow(
-  item: SettlementCalendarItemResponse,
-  index: number
-): PaymentOrderAdminProgramRow {
-  const programId = item.programId ?? index
-  return {
-    no: index + 1,
-    programId,
-    aggregateKey: String(programId),
-    programName: item.programNameKo ?? `프로그램 ${programId}`,
-    instructorCount: 1,
-    processingStatus: mapStatementStatusToProcessingStatus(item.statementStatus),
-    estimatedAmount: item.expectedAmount ?? 0,
-    referenceDate: item.date ?? '',
-    settlementRelevantAttendanceDates: item.date ? [item.date] : [],
-    pendingPaymentSettlementItemCount: 0,
-  }
-}
-
-function stubInstructorRow(
-  item: SettlementCalendarItemResponse,
-  index: number
-): PaymentOrderAdminInstructorRow {
-  const instructorMemberId = item.instructorMemberId ?? index
-  return {
-    no: index + 1,
-    instructorMemberId,
-    aggregateKey: String(instructorMemberId),
-    instructorName: item.instructorName ?? `강사 ${instructorMemberId}`,
-    programCount: 1,
-    processingStatus: mapStatementStatusToProcessingStatus(item.statementStatus),
-    estimatedAmount: item.expectedAmount ?? 0,
-    relatedProgramNames: item.programNameKo ? [item.programNameKo] : [],
-    referenceDate: item.date ?? '',
-    settlementRelevantAttendanceDates: item.date ? [item.date] : [],
-    pendingPaymentSettlementItemCount: 0,
-  }
-}
-
 export function mapCalendarItemsToProgramEvents(
   items: SettlementCalendarItemResponse[],
   programRows: PaymentOrderAdminProgramRow[]
@@ -101,6 +62,8 @@ export function mapCalendarItemsToProgramEvents(
     const date = item.date
     const programId = item.programId
     if (!date || programId == null) continue
+
+    if (!findProgramRow(programRows, programId)) continue
 
     const key = `${programId}|${date}`
     const status = mapStatementStatusToProcessingStatus(item.statementStatus)
@@ -124,11 +87,10 @@ export function mapCalendarItemsToProgramEvents(
     }
   }
 
-  return [...grouped.entries()].map(([key, group], index) => {
+  return [...grouped.entries()].map(([key, group]) => {
     const { item, amount, status, instructorIds } = group
     const date = dayjs(item.date)
-    const programRow =
-      findProgramRow(programRows, item.programId) ?? stubProgramRow(item, index)
+    const programRow = findProgramRow(programRows, item.programId)!
 
     return {
       id: `program-api-${key}`,
@@ -154,9 +116,8 @@ export function mapCalendarItemsToInstructorEvents(
     const item = items[index]
     if (!item.date) continue
 
-    const instructorRow =
-      findInstructorRow(instructorRows, item.instructorMemberId) ??
-      stubInstructorRow(item, index)
+    const instructorRow = findInstructorRow(instructorRows, item.instructorMemberId)
+    if (!instructorRow) continue
 
     out.push({
       id: `instructor-api-${item.settlementId ?? index}-${item.date}`,

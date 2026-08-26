@@ -23,6 +23,11 @@ export function UserDetailFullpageTabPanels() {
     onOpenLectureAttendance,
     onOpenAssignmentSubmission,
     onOpenEnrollmentProgramDetail,
+    onOpenVolunteerProgramDetail,
+    onBulkDeleteHistory,
+    onStudentCertificateBulkIssue,
+    onVolunteerCertificateBulkIssue,
+    progressStatusReadOnly,
     basicInfoEditing,
     basicInfoEditScope,
     basicInfoDraft,
@@ -84,6 +89,11 @@ export function UserDetailFullpageTabPanels() {
             onOpenLectureAttendance={onOpenLectureAttendance}
             onOpenAssignment={onOpenAssignmentSubmission}
             onRowClick={onOpenEnrollmentProgramDetail}
+            onOpenVolunteerProgramDetail={onOpenVolunteerProgramDetail}
+            onBulkDeleteHistory={onBulkDeleteHistory}
+            onStudentCertificateBulkIssue={onStudentCertificateBulkIssue}
+            onVolunteerCertificateBulkIssue={onVolunteerCertificateBulkIssue}
+            progressStatusReadOnly={progressStatusReadOnly}
           />
         ))}
       {tabState.lnb === 'payment-status' && (

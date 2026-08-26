@@ -121,9 +121,9 @@
   max-width: 100%;
 }
 
-/* 모달 헤더(산출 내역서) 아래 — 기본 정보 레이블과 첫 테이블 사이 24px */
+/* 모달 헤더(산출 내역서) 아래 — 기본 정보 레이블과 첫 테이블 사이 16px */
 .payment-order-calc-statement-modal__basic-heading {
-  margin: 0 0 24px;
+  margin: 0 0 16px;
   padding: 0 8px;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
@@ -253,7 +253,7 @@
 
 /* 항목 타이틀: 기본 정보, 산출 내역 상세 */
 .payment-order-calc-statement-modal__section-title {
-  margin: 0 0 12px;
+  margin: 0 0 16px;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 18px;
@@ -444,7 +444,7 @@
   padding-inline: 16px !important;
   box-sizing: border-box;
   border-inline-end: 1px solid var(--table-line);
-  border-top: none;
+  border-top: 1px solid var(--table-line);
   text-align: center;
   vertical-align: middle;
   color: var(--default-BK, #3d3d3d);
@@ -490,7 +490,9 @@
 
 .payment-order-calc-statement-modal__summary-row .ant-table-cell {
   background: #f0f7f8 !important;
-  border-color: rgba(0, 0, 0, 0.06) !important;
+  border-top: 1px solid var(--table-line) !important;
+  border-inline-end-color: var(--table-line) !important;
+  border-bottom-color: var(--table-line) !important;
 }
 
 /* 합계 행: 라벨·수식은 공통 타이포, 합계 금액은 민트색만 유지 */

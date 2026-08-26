@@ -15,43 +15,6 @@
 }
 
 .resetButton {
-  display: flex;
-  width: 48px;
-  height: 48px;
   flex: 0 0 auto;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   margin-left: auto;
-  padding: 12px;
-  border: 0;
-  border-radius: var(--radius-999);
-  background: var(--color-element-default-blue);
-  box-sizing: border-box;
-  cursor: pointer;
-}
-
-.resetButton:hover:not(:disabled) .resetIconDefault {
-  display: none;
-}
-
-.resetButton:hover:not(:disabled) .resetIconHover {
-  display: block;
-}
-
-.resetButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.resetIcon {
-  display: block;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-  aspect-ratio: 1 / 1;
-}
-
-.resetIconHover {
-  display: none;
 }

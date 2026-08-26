@@ -4,12 +4,9 @@ import {
   isInstructorSettlementEligibleForPaymentStatementIssue,
   type InstructorSettlementUiStatus,
 } from '@/shared/constants/instructor-settlement-status'
-import {
-  LECTURE_FEE_CALCULATION_LINES_SAMPLE,
-  type PaymentStatementCalculationLinesViewModel,
-} from '@/features/template/model/lecture-fee-calculation-lines-sample'
-import { LECTURE_FEE_CALCULATION_SAMPLE_VALUES } from '@/features/template/model/lecture-fee-calculation-sample'
-import { PAYMENT_STATEMENT_BASIC_INFO_SAMPLE_VALUES } from '@/features/template/model/payment-statement-basic-info-sample'
+import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
+import { PAYMENT_STATEMENT_PRE_CONSENT_BASIC_INFO_AUTHORING_VALUES } from '@/features/template/model/payment-statement-basic-info-sample'
+import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
@@ -32,6 +29,12 @@ export function buildPaymentStatementIssuancePreviewContext(
   settlementRow: ParticipatingInstructorPaymentStatementSettlementContext
 ): PaymentStatementIssuancePreviewContext {
   return { instructor, settlementRow }
+}
+
+function presentText(value: string | undefined): string {
+  const trimmed = value?.trim() ?? ''
+  if (!trimmed || trimmed === '-' || trimmed === '—' || trimmed === '–') return ''
+  return trimmed
 }
 
 function sanitizeFileNamePart(value: string): string {
@@ -81,17 +84,28 @@ function parseEducationScheduleParts(label: string): {
 function buildCalculationLines(
   row: ParticipatingInstructorPaymentStatementSettlementContext
 ): PaymentStatementCalculationLinesViewModel {
-  const lectureFee =
-    row.scheduledSettlementAmount != null
-      ? Math.round(row.scheduledSettlementAmount / (1 - 0.088))
-      : (LECTURE_FEE_CALCULATION_LINES_SAMPLE.blocks[0]?.lines.find(l => l.kind === 'lecture_fee')
-          ?.amount ?? 240_000)
-  const withholdingAmount = -Math.round(lectureFee * 0.088)
-  const totalAmount = lectureFee + withholdingAmount
-
   const { lectureDateDisplay, lectureSessionDisplay } = parseEducationScheduleParts(
     row.educationScheduleLabel
   )
+
+  if (row.scheduledSettlementAmount == null) {
+    return {
+      blocks: [
+        {
+          institutionName: presentText(row.schoolName) || '-',
+          lectureDateDisplay,
+          lectureSessionDisplay,
+          lines: [],
+        },
+      ],
+      formulaLabel: '',
+      totalAmount: 0,
+    }
+  }
+
+  const lectureFee = Math.round(row.scheduledSettlementAmount / (1 - 0.088))
+  const withholdingAmount = -Math.round(lectureFee * 0.088)
+  const totalAmount = lectureFee + withholdingAmount
 
   const lines: PaymentOrderCalculationStatementLine[] = [
     {
@@ -113,7 +127,7 @@ function buildCalculationLines(
   return {
     blocks: [
       {
-        institutionName: row.schoolName,
+        institutionName: presentText(row.schoolName) || '-',
         lectureDateDisplay,
         lectureSessionDisplay,
         lines,
@@ -127,20 +141,43 @@ function buildCalculationLines(
 function buildBasicInfoValues(
   instructor: ParticipatingInstructorRow
 ): Partial<PaymentStatementBasicInfoAutofillValues> {
-  const sample = PAYMENT_STATEMENT_BASIC_INFO_SAMPLE_VALUES
   return {
-    nameKo: instructor.instructorName || sample.nameKo,
-    nameEn: instructor.nameEnglish?.trim() || sample.nameEn,
-    addressRoad: instructor.address?.trim() || instructor.region?.trim() || sample.addressRoad,
-    addressDetail: sample.addressDetail,
-    bankName: sample.bankName,
-    accountNumber: instructor.accountNumber?.trim() || sample.accountNumber,
-    accountHolder: instructor.accountHolder?.trim() || instructor.instructorName || sample.accountHolder,
-    paymentPurpose: sample.paymentPurpose,
-    affiliation: sample.affiliation,
-    noAffiliation: sample.noAffiliation,
-    residentFront: sample.residentFront,
-    residentBack: sample.residentBack,
+    nameKo: presentText(instructor.instructorName),
+    nameEn: presentText(instructor.nameEnglish),
+    addressRoad: presentText(instructor.address) || presentText(instructor.region),
+    addressDetail: '',
+    bankName: presentText(instructor.bankName),
+    accountNumber: presentText(instructor.accountNumber),
+    accountHolder: presentText(instructor.accountHolder),
+    paymentPurpose: PAYMENT_STATEMENT_PRE_CONSENT_BASIC_INFO_AUTHORING_VALUES.paymentPurpose ?? '',
+    affiliation: '',
+    noAffiliation: false,
+    residentFront: '',
+    residentBack: '',
+  }
+}
+
+function buildLectureFeeCalculationValues(
+  instructor: ParticipatingInstructorRow,
+  settlementRow: ParticipatingInstructorPaymentStatementSettlementContext
+): Partial<LectureFeeCalculationAutofillValues> {
+  const lectureFeeTotal =
+    settlementRow.scheduledSettlementAmount != null
+      ? Math.round(settlementRow.scheduledSettlementAmount / (1 - 0.088))
+      : 0
+
+  return {
+    lectureFeeType: '',
+    feeBasisLeft: '',
+    feeBasisRight: '',
+    businessIncomeLeft: '',
+    businessIncomeRight: '',
+    sessionCount: presentText(instructor.lectureRound),
+    sessionHours: '',
+    transportFee: false,
+    lodgingFee: false,
+    totalStudents: instructor.studentCount > 0 ? String(instructor.studentCount) : '',
+    totalLectureFee: lectureFeeTotal > 0 ? lectureFeeTotal.toLocaleString('ko-KR') : '',
   }
 }
 
@@ -151,7 +188,7 @@ export function buildParticipatingInstructorPaymentStatementViewOptions(
 ): RenderFormParagraphBodyOptions {
   return {
     paymentStatementBasicInfoValues: buildBasicInfoValues(instructor),
-    lectureFeeCalculationValues: LECTURE_FEE_CALCULATION_SAMPLE_VALUES,
+    lectureFeeCalculationValues: buildLectureFeeCalculationValues(instructor, settlementRow),
     paymentStatementCalculationLines: buildCalculationLines(settlementRow),
     paymentStatementDisplayMode: 'document',
   }

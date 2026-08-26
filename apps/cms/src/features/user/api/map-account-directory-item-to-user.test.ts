@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { AccountDirectoryItemResponseAccountType } from '@/shared/api/generated/members/schemas/accountDirectoryItemResponseAccountType'
+import { getAllMemberListRoleTypeLabel } from '@/features/user/shared/lib/member-list-display'
 import { mapAccountDirectoryItemToUser } from './map-account-directory-item-to-user'
 
 describe('mapAccountDirectoryItemToUser', () => {
@@ -77,6 +78,31 @@ describe('mapAccountDirectoryItemToUser', () => {
     expect(user.role).toBe('INSTRUCTOR')
     expect(user.instructorMemberProfile).toBe('instructor_dual')
     expect(user.roles).toEqual(['SCHOOL_TEACHER', 'INSTRUCTOR'])
+  })
+
+  it('SCHOOL_TEACHER+INSTRUCTOR_REVOKED는 교사 겸직 박탈로 매핑한다', () => {
+    const user = mapAccountDirectoryItemToUser({
+      accountType: AccountDirectoryItemResponseAccountType.MEMBER,
+      accountId: 12,
+      memberId: 12,
+      uuid: 'revoked-dual-12',
+      email: 'r***@ja.org',
+      name: '박탈겸직',
+      roles: ['SCHOOL_TEACHER', 'INSTRUCTOR_REVOKED'],
+      status: 'ACTIVE',
+      createdAt: '2026-03-01T00:00:00Z',
+    })
+
+    expect(user.role).toBe('INSTRUCTOR')
+    expect(user.instructorMemberProfile).toBe('instructor_dual')
+    expect(user.roles).toEqual(['SCHOOL_TEACHER', 'INSTRUCTOR_REVOKED'])
+    expect(
+      getAllMemberListRoleTypeLabel({
+        role: user.role,
+        roles: user.roles,
+        instructorMemberProfile: user.instructorMemberProfile,
+      })
+    ).toBe('학교(교사), 강사(권한박탈)')
   })
 
   it('createdByAdmin·본인인증 플래그를 registeredByAdmin·identitySelfSignup에 반영한다', () => {

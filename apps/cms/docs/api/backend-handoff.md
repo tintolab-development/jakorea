@@ -14,7 +14,7 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 
 **API 에러 사용자 메시지 (CMS·Platform 공통)**: [backend-handoff §에러 응답](./backend-handoff.md#에러-응답--사용자-노출-메시지-p0--cms--platform-공통) · [Platform handoff](../../platform/docs/api/api-error-response-handoff-2026-07-31.md)
 
-**회원 관리 (members)**: [members/README.md](./members/README.md) · [**백엔드 handoff (등록 약관)**](./members/members-pre-register-terms-required-policy-backend-request-2026-08-11.md)
+**회원 관리 (members)**: [members/README.md](./members/README.md) · [**회원 상세 이력·정산 BE 필수 묶음 (7종)**](./members/README.md#회원-상세-이력정산--백엔드-전달-필수-묶음) · [**동의서 작성 본문**](./members/member-consent-filled-document-backend-handoff-2026-08-25.md) · [**등록 약관**](./members/members-pre-register-terms-required-policy-backend-request-2026-08-11.md)
 
 **프로그램 유형별 전환**: [**UJAT 백엔드 핸드오프**](./programs-ujat-api-backend-handoff.md) · [**1사1교 백엔드 핸드오프**](./programs-company-school-api-backend-handoff.md) · [**1사1교 더미 시드**](./company-school-program-dummy-seed-backend-request.md) · [**일반 프로그램 더미 시드**](./general-program-dummy-seed-backend-request.md)
 
@@ -264,4 +264,4 @@ Swagger Authorize에 관리자 토큰 입력 후 호출.
 3. `pnpm --filter cms generate:api`
 4. dev 서버 재시작
 
-**Last updated:** 2026-07-31 (에러 사용자 메시지 P0 · members handoff 링크)
+**Last updated:** 2026-08-25 (강사 상세 프로그램 이력·정산 통합 핸드오프)

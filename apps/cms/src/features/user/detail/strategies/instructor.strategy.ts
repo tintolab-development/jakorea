@@ -28,8 +28,8 @@ export const instructorStrategy: UserDetailRoleStrategy = {
       programsHistory: {
         enrollmentSectionTitle: '프로그램 수강 이력',
         enrollmentEmptyDescription: '프로그램 수강 이력이 없습니다.',
-        /** 일반 교사·교사 겸 강사·강사 공통: 학교 상세와 동일 필터·표(교육분야·학년·담당자·이력 삭제) */
-        enrollmentMode: 'SCHOOL_PARTICIPATION',
+        /** 일반 회원 상세와 동일 — 출석·과제·담당자·필터·이력 삭제·수료증 */
+        enrollmentMode: 'STUDENT_HISTORY',
         showLectureHistoryWhenLectureChild: true,
         useSchoolProgramParticipationSingleView: false,
       },

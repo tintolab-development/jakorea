@@ -9,6 +9,7 @@ import {
   resolvePlatformConsentSectionRequired,
   resolvePlatformConsentSectionTitle,
 } from './platform-consent-paragraph-body'
+import styles from './consent-form.module.css'
 
 export type PlatformConsentFormBodyProps = {
   draft: WritingFormDraft
@@ -33,6 +34,13 @@ function shouldHideParagraph(
 function isBodyOnlyParagraph(paragraph: WritingFormParagraph): boolean {
   if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine) return true
   if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm) return true
+  if (
+    paragraph.kind === 'description' &&
+    paragraph.variant === 'system' &&
+    paragraph.systemPreset === 'agreement_signature'
+  ) {
+    return true
+  }
   if (
     paragraph.kind === 'single_item' &&
     paragraph.variant === 'agreement_explanation_text' &&
@@ -66,7 +74,9 @@ export function PlatformConsentFormBody({
 
         const slot = renderParagraphSlot?.(paragraph)
         if (slot != null) {
-          const title = resolvePlatformConsentSectionTitle(paragraph, titleIndex)
+          const title = isBodyOnlyParagraph(paragraph)
+            ? ''
+            : resolvePlatformConsentSectionTitle(paragraph, titleIndex)
           if (title) {
             return (
               <PFFormSection
@@ -79,7 +89,11 @@ export function PlatformConsentFormBody({
               </PFFormSection>
             )
           }
-          return <div key={paragraph.id}>{slot}</div>
+          return (
+            <div key={paragraph.id} className={styles.bodyOnlyWrap}>
+              {slot}
+            </div>
+          )
         }
 
         const title = resolvePlatformConsentSectionTitle(paragraph, titleIndex)
@@ -92,7 +106,11 @@ export function PlatformConsentFormBody({
         )
 
         if (isBodyOnlyParagraph(paragraph) || !title) {
-          return <div key={paragraph.id}>{body}</div>
+          return (
+            <div key={paragraph.id} className={styles.bodyOnlyWrap}>
+              {body}
+            </div>
+          )
         }
 
         return (

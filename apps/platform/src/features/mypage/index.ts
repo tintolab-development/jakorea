@@ -16,6 +16,7 @@ export {
   MOCK_MYPAGE_PROGRAM_STATS,
   MOCK_MYPAGE_USER_NAME,
   MYPAGE_PATH,
+  MYPAGE_INQUIRIES_PATH,
   MYPAGE_SETTINGS_PATH,
 } from './lib/constants'
 export {

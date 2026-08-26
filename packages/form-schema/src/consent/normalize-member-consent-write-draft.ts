@@ -1,4 +1,5 @@
 import {
+  AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID,
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
   type WritingFormDraft,
   type WritingFormParagraph,
@@ -23,27 +24,14 @@ function clearMultipleChoice(paragraph: WritingFormParagraph): WritingFormParagr
 }
 
 function clearNoticeInteractiveParagraph(paragraph: WritingFormParagraph): WritingFormParagraph {
-  const interactive = new Set<string>([
-    AGREEMENT_NOTICE_PARAGRAPH_IDS.institution,
-    AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose,
-    AGREEMENT_NOTICE_PARAGRAPH_IDS.subject,
-  ])
-  if (!interactive.has(paragraph.id)) return paragraph
-  if (paragraph.kind !== 'single_item') return paragraph
+  if (paragraph.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.subject) return paragraph
+  if (paragraph.kind !== 'single_item' || paragraph.variant !== 'short_essay') return paragraph
 
-  if (paragraph.variant === 'short_essay') {
-    return {
-      ...paragraph,
-      bodyText: '',
-      items: (paragraph.items ?? []).map(item => ({ ...item, bodyText: '' })),
-    }
+  return {
+    ...paragraph,
+    bodyText: '',
+    items: (paragraph.items ?? []).map(item => ({ ...item, bodyText: '' })),
   }
-
-  if (paragraph.variant === 'agreement_explanation_text') {
-    return { ...paragraph, bodyText: '' }
-  }
-
-  return paragraph
 }
 
 function clearNoticeIdTypeWithInput(paragraph: WritingFormParagraph): WritingFormParagraph {
@@ -62,7 +50,8 @@ function clearNoticeIdTypeWithInput(paragraph: WritingFormParagraph): WritingFor
     ...paragraph,
     idTypeWithInput: {
       ...nested,
-      selectedOptionId: null,
+      selectedOptionId: AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID,
+      inputPlaceholder: '주민등록번호를 입력해 주세요',
       inputValue: '',
     },
   }

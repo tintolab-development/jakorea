@@ -1,5 +1,6 @@
 import type { User } from '@/types/user'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import { memberRolesIncludeInstructorRevoked } from '@/features/user/api/map-member-role'
 import { isInstructorPermissionRevokedOverlay } from '@/features/user/shared/lib/revoked-instructor-overlay'
 
 const MEMBER_LIST_ROLE_LABELS = {
@@ -24,9 +25,11 @@ export const ALL_MEMBER_LIST_ROLE_TYPE_LABELS = {
 
 /** 강사 권한 박탈 여부 — 목록·상세 회원 유형 표시용 */
 export function isInstructorPermissionRevoked(
-  record: Pick<User, 'instructorApprovalStatus'> & Partial<Pick<User, 'id' | 'memberId'>>
+  record: Pick<User, 'instructorApprovalStatus'> &
+    Partial<Pick<User, 'id' | 'memberId' | 'roles'>>
 ): boolean {
   if (record.instructorApprovalStatus?.trim().toUpperCase() === 'REVOKED') return true
+  if (memberRolesIncludeInstructorRevoked(record.roles)) return true
   return isInstructorPermissionRevokedOverlay(record)
 }
 

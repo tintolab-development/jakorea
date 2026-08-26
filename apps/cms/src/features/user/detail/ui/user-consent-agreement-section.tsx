@@ -27,6 +27,11 @@ import {
   resolveMemberConsentTemplateByLabel,
   type MemberConsentTemplateEntry,
 } from '@/features/user/shared/lib/member-consent-template-map'
+import type {
+  MemberConsentAgreementDraftSnapshot,
+  MemberConsentCrimeDraftSnapshot,
+  MemberRegisterConsentWriteSnapshots,
+} from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import './detail-info/user-detail-section-head.css'
 import './user-consent-agreement-section.css'
 
@@ -55,6 +60,17 @@ export interface UserConsentAgreementSectionProps {
   editing?: boolean
   draftTermsAgreements?: TermsAgreementRequest[]
   onEditableConsentChange?: (label: string, agreed: boolean) => void
+  consentWriteSnapshots?: MemberRegisterConsentWriteSnapshots
+  onConsentAgreementSnapshotSave?: (
+    label: string,
+    snapshot: MemberConsentAgreementDraftSnapshot
+  ) => void
+  onConsentCrimeSnapshotSave?: (
+    label: string,
+    snapshot: MemberConsentCrimeDraftSnapshot
+  ) => void
+  memberId?: number
+  membersRemote?: boolean
 }
 
 const DEFAULT_CAPTION = '*미동의 시 서비스 가입 및 프로그램 참여에 제한이 있을 수 있습니다.'
@@ -89,6 +105,8 @@ export type ConsentFieldValueSchema =
       agreed: boolean
       agreedAtDisplay?: string
       formResponseId?: number
+      filledDocumentAvailable?: boolean
+      consentType?: string
     }
   /** 더블 행 우측 빈 절반(격자·하단 보더만 유지) */
   | { type: 'empty_half' }
@@ -243,7 +261,10 @@ export const CONSENT_PRESET_SCHEMA: ConsentPresetSchema = {
 export const CONSENT_ROWS_PERMISSION_INSTRUCTOR: ConsentRowSchema[] = CONSENT_ROWS_INSTRUCTOR
 
 export interface ConsentRenderCtx {
-  openDocumentForLabel: (label: string, formResponseId?: number) => void
+  openDocumentForLabel: (
+    label: string,
+    document: Extract<ConsentFieldValueSchema, { type: 'document' }>
+  ) => void
   onWriteConsentDocument?: (label: string) => void
   editing?: boolean
   draftTermsAgreements?: TermsAgreementRequest[]
@@ -335,9 +356,7 @@ function resolveConsentFieldView(
           agreed={value.agreed}
           agreedAtDisplay={value.agreedAtDisplay}
           onOpenDocument={
-            value.agreed
-              ? () => ctx.openDocumentForLabel(fieldLabel, value.formResponseId)
-              : undefined
+            value.agreed ? () => ctx.openDocumentForLabel(fieldLabel, value) : undefined
           }
         />
       )
@@ -492,7 +511,7 @@ export function renderConsentRow(
 
 type ActiveConsentView = {
   entry: MemberConsentTemplateEntry
-  formResponseId?: number
+  consentType?: string
 }
 
 type ActiveConsentWrite = {
@@ -510,6 +529,11 @@ export function UserConsentAgreementSection({
   editing = false,
   draftTermsAgreements,
   onEditableConsentChange,
+  consentWriteSnapshots,
+  onConsentAgreementSnapshotSave,
+  onConsentCrimeSnapshotSave,
+  memberId,
+  membersRemote = false,
 }: UserConsentAgreementSectionProps) {
   const [activeView, setActiveView] = useState<ActiveConsentView | null>(null)
   const [activeWrite, setActiveWrite] = useState<ActiveConsentWrite | null>(null)
@@ -517,14 +541,18 @@ export function UserConsentAgreementSection({
   const effectiveCaption = caption ?? (preset === 'admin' ? ADMIN_CONSENT_CAPTION : DEFAULT_CAPTION)
 
   const openDocumentForLabel = useCallback(
-    (label: string, formResponseId?: number) => {
+    (label: string, document: Extract<ConsentFieldValueSchema, { type: 'document' }>) => {
       if (onOpenAgreementDocument) {
         onOpenAgreementDocument()
         return
       }
       const entry = resolveMemberConsentTemplateByLabel(label)
       if (entry) {
-        setActiveView({ entry, formResponseId })
+        setActiveView({
+          entry,
+          consentType:
+            document.consentType?.trim() || CONSENT_LABEL_TO_EDITABLE_TERMS_TYPE[label.trim()],
+        })
       }
     },
     [onOpenAgreementDocument]
@@ -589,7 +617,9 @@ export function UserConsentAgreementSection({
           open
           templateId={activeView.entry.templateId}
           modalTitle={activeView.entry.modalTitle}
-          formResponseId={activeView.formResponseId}
+          memberId={memberId}
+          consentType={activeView.consentType}
+          membersRemote={membersRemote}
           onClose={() => setActiveView(null)}
         />
       ) : null}
@@ -598,12 +628,22 @@ export function UserConsentAgreementSection({
           open
           templateId={activeWrite.entry.templateId}
           modalTitle={activeWrite.entry.modalTitle}
+          savedSnapshot={consentWriteSnapshots?.agreementByFieldKey[activeWrite.entry.fieldKey]}
+          onSnapshotSave={snapshot =>
+            onConsentAgreementSnapshotSave?.(activeWrite.label, snapshot)
+          }
           onClose={closeWrite}
           onComplete={handleWriteComplete}
         />
       ) : null}
-      {writingCrime ? (
-        <MemberConsentCrimeModal open onClose={closeWrite} onComplete={handleWriteComplete} />
+      {activeWrite != null && writingCrime ? (
+        <MemberConsentCrimeModal
+          open
+          savedSnapshot={consentWriteSnapshots?.crimeByFieldKey[activeWrite.entry.fieldKey]}
+          onSnapshotSave={snapshot => onConsentCrimeSnapshotSave?.(activeWrite.label, snapshot)}
+          onClose={closeWrite}
+          onComplete={handleWriteComplete}
+        />
       ) : null}
     </div>
   )

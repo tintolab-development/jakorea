@@ -83,6 +83,8 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   instructorCmsSettlement?: InstructorCmsSettlement
   /** 약관·동의 수정 — PATCH `termsAgreements` */
   termsAgreements?: TermsAgreementRequest[]
+  /** 이번 수정 세션에서 재작성한 동의서 본문 */
+  consentWriteSnapshots?: import('@/features/user/shared/lib/member-register-consent-write-snapshot').MemberRegisterConsentWriteSnapshots
   /** 강사 상세 — 이번 수정 세션에서 약관·동의를 변경했을 때만 PATCH에 termsAgreements 포함 */
   consentTermsDirty?: boolean
   /** 관리자 — 권한 유형 태그 */
@@ -433,6 +435,9 @@ export function draftToAdminProvisionedIndividualBasicInfoPatch(
     ...base,
     ...draftToIndividualAffiliationPatch(draft),
     ...(termsAgreements ? { termsAgreements } : {}),
+    ...(draft.consentWriteSnapshots
+      ? { consentWriteSnapshots: draft.consentWriteSnapshots }
+      : {}),
   }
 }
 
@@ -513,7 +518,12 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
     ...(() => {
       if (!draft.consentTermsDirty) return {}
       const termsAgreements = filterEditableTermsAgreementsForBasicInfoPatch(draft.termsAgreements)
-      return termsAgreements ? { termsAgreements } : {}
+      return {
+        ...(termsAgreements ? { termsAgreements } : {}),
+        ...(draft.consentWriteSnapshots
+          ? { consentWriteSnapshots: draft.consentWriteSnapshots }
+          : {}),
+      }
     })(),
     listMetrics: {
       ...(feeGrade ? { instructorFeeGradeLabel: feeGrade } : {}),

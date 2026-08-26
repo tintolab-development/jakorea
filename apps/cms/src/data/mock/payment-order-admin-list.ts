@@ -10,7 +10,7 @@ import { settlementItemSettingSections } from './settlement-item-settings'
 import type { PaymentOrderCalculationBasisDetail } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import {
   buildActivityBasisDetail,
-  buildLectureFeeTierBasisDetail,
+  buildLectureFeeBasisDetailFromStandardTitle,
   buildLodgingBasisDetail,
   buildMealBasisDetail,
   buildTravelBasisDetail,
@@ -279,8 +279,12 @@ export interface PaymentOrderAdminInstructorDetail {
   bankName: string
   accountNumber: string
   accountHolder: string
-  /** 목록 테이블과 동일한 총 정산 예정 금액 */
+  /** 목록 테이블과 동일한 총 정산 신청 금액 */
   totalEstimatedAmount: number
+  /** Mock 시드 기반. Remote 미제공 시 `-` */
+  genderBirthDisplay?: string
+  /** 1 이상이면 성명 옆 일정 변경 배지 */
+  scheduleChangeCancelCount?: number
   programRows: PaymentOrderAdminInstructorDetailProgramRow[]
 }
 
@@ -471,11 +475,14 @@ const institutionNames = [
  * - 정산 항목 설정의 임금 항목 중 6개를 순환 노출
  * - 단순인건비는 강의비 책정 기준 대상에서 제외
  */
-const settlementWageStandardTitles = settlementItemSettingSections
-  .find(section => section.kind === 'wage')
-  ?.items.filter(item => item.id !== 'w-7')
-  .slice(0, 6)
-  .map(item => item.title) ?? ['1급 강사비']
+const settlementWageStandardTitles = [
+  ...(settlementItemSettingSections
+    .find(section => section.kind === 'wage')
+    ?.items.filter(item => item.id !== 'w-7')
+    .slice(0, 6)
+    .map(item => item.title) ?? ['1급 강사비']),
+  '제미나이 강사비',
+]
 
 function pickSettlementWageStandardTitle(seed: number): string {
   return settlementWageStandardTitles[seed % settlementWageStandardTitles.length] ?? '1급 강사비'
@@ -621,6 +628,8 @@ export function getMockPaymentOrderInstructorDetail(
     accountNumber,
     accountHolder,
     totalEstimatedAmount: instructorRow.estimatedAmount,
+    genderBirthDisplay: mockGenderBirthDisplay(mixSeed(n, 17)),
+    scheduleChangeCancelCount: mixSeed(n, 7) % 4 === 0 ? 1 : undefined,
     programRows,
   }
 }
@@ -734,7 +743,7 @@ export function getMockPaymentOrderProgramCalculationStatement(
   const withholdingBasisDetail = buildWithholdingBasisDetail(subtotalBeforeTax)
   const withholdingAmount = resolveWithholdingBasisDetailAmountWon(withholdingBasisDetail)
 
-  const lectureFeeBasisDetail = buildLectureFeeTierBasisDetail(
+  const lectureFeeBasisDetail = buildLectureFeeBasisDetailFromStandardTitle(
     lectureFeeStandardTitle,
     lectureFee,
     sessionStart
@@ -922,7 +931,7 @@ export function getMockPaymentOrderInstructorCalculationStatement(
   const withholdingBasisDetail = buildWithholdingBasisDetail(subtotalBeforeTax)
   const withholdingAmount = resolveWithholdingBasisDetailAmountWon(withholdingBasisDetail)
 
-  const lectureFeeBasisDetail = buildLectureFeeTierBasisDetail(
+  const lectureFeeBasisDetail = buildLectureFeeBasisDetailFromStandardTitle(
     lectureFeeStandardTitle,
     lectureFee,
     sessionStart

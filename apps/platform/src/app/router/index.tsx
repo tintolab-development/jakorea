@@ -33,6 +33,8 @@ import {
   MypageHomePage,
   MypageInstructorApplyConsentPage,
   MypageInstructorApplyPage,
+  MypageInquiriesPage,
+  MypageInquiriesWritePage,
   MypageSettingsPage,
 } from '@/pages/mypage'
 import {
@@ -127,7 +129,11 @@ export const router = createBrowserRouter([
   },
   {
     element: <AppLayoutRoute layout="mypage-subpage" />,
-    children: [{ path: '/mypage/settings', element: <MypageSettingsPage /> }],
+    children: [
+      { path: '/mypage/settings', element: <MypageSettingsPage /> },
+      { path: '/mypage/inquiries', element: <MypageInquiriesPage /> },
+      { path: '/mypage/inquiries/write', element: <MypageInquiriesWritePage /> },
+    ],
   },
   {
     element: <AppLayoutRoute layout="auth" />,

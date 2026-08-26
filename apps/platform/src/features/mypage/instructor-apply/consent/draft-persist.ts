@@ -1,4 +1,5 @@
 import type { ConsentValue } from '@jakorea/domain/instructor/consent'
+import type { FormSignatureValue } from '@/shared/ui'
 import type { InstructorApplyConsentKey } from './catalog'
 import { PAYMENT_PURPOSE_FIXED } from './copy'
 
@@ -20,10 +21,10 @@ export type PaymentConsentDraft = {
   accountNumber: string
   accountHolder: string
   paymentPurpose: string
-  /** 동의 확인 전자서명 (data URL) */
-  midSignature: string
-  /** 수령 확인 전자서명 (data URL) */
-  finalSignature: string
+  /** 동의 확인 전자서명 */
+  midSignature: string | FormSignatureValue
+  /** 수령 확인 전자서명 */
+  finalSignature: string | FormSignatureValue
 }
 
 export type EducatorConsentDraft = {

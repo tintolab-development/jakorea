@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
-import refreshGrayUrl from '@/shared/assets/icons/refresh-gray.svg'
-import refreshMintUrl from '@/shared/assets/icons/refresh-mint.svg'
+import { PFCircleIconButton } from '@/shared/ui'
 import styles from './filter-bar.module.css'
 
 type FilterBarProps = {
@@ -18,25 +17,12 @@ export function FilterBar({
     <div className={styles.bar}>
       <div className={styles.filters}>{children}</div>
       {onReset ? (
-        <button
-          type="button"
+        <PFCircleIconButton
+          icon="refresh"
           className={styles.resetButton}
           aria-label={resetAriaLabel}
           onClick={onReset}
-        >
-          <img
-            className={[styles.resetIcon, styles.resetIconDefault].join(' ')}
-            src={refreshGrayUrl}
-            alt=""
-            aria-hidden="true"
-          />
-          <img
-            className={[styles.resetIcon, styles.resetIconHover].join(' ')}
-            src={refreshMintUrl}
-            alt=""
-            aria-hidden="true"
-          />
-        </button>
+        />
       ) : null}
     </div>
   )

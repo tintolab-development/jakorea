@@ -1,15 +1,14 @@
-import { useState } from 'react'
-import { AddressSearchModal } from '@/features/auth'
 import {
-  PFButton,
   PFCheckbox,
   PFFormControlCluster,
   PFFormField,
   PFFormFieldRow,
   PFFormFieldTable,
+  PFFormHomeAddressFields,
   PFFormInlineRow,
   PFFormInlineSegment,
   PFFormInlineSeparator,
+  PFFormResidentNumberInput,
   PFFormSection,
   PFText,
   PFTextInput,
@@ -40,7 +39,6 @@ export function PaymentConsentForm({
 }) {
   const { lockedBasic } = useInstructorApplyLockedBasic()
   const signerName = lockedBasic.name || draft.nameKo
-  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const paymentPurpose = draft.paymentPurpose.trim() || PAYMENT_PURPOSE_FIXED
 
   const patch = <K extends keyof PaymentConsentDraft>(key: K, value: PaymentConsentDraft[K]) => {
@@ -82,8 +80,8 @@ export function PaymentConsentForm({
       <ConsentSignatureStatement
         statement={PAYMENT_MID_CONSENT}
         signerName={signerName}
-        signatureDataUrl={draft.midSignature}
-        onSignatureChange={dataUrl => patch('midSignature', dataUrl)}
+        signature={draft.midSignature}
+        onSignatureChange={midSignature => patch('midSignature', midSignature)}
       />
 
       <PFFormSection id="payment-basic" title={PAYMENT_BASIC_SECTION_TITLE} required>
@@ -110,37 +108,12 @@ export function PaymentConsentForm({
           </PFFormFieldRow>
           <PFFormFieldRow type="double">
             <PFFormField label="주민등록번호" required>
-              <PFFormInlineRow>
-                <PFFormInlineSegment>
-                  <PFTextInput
-                    variant="formPage"
-                    size="large"
-                    inputMode="numeric"
-                    maxLength={6}
-                    placeholder="주민등록 앞 6자리"
-                    value={draft.residentFront}
-                    onValueChange={value =>
-                      patch('residentFront', value.replace(/\D/g, '').slice(0, 6))
-                    }
-                  />
-                </PFFormInlineSegment>
-                <span className={styles.hyphen} aria-hidden>
-                  -
-                </span>
-                <PFFormInlineSegment>
-                  <PFTextInput
-                    variant="formPage"
-                    size="large"
-                    inputMode="numeric"
-                    maxLength={7}
-                    placeholder="주민등록 뒤 7자리"
-                    value={draft.residentBack}
-                    onValueChange={value =>
-                      patch('residentBack', value.replace(/\D/g, '').slice(0, 7))
-                    }
-                  />
-                </PFFormInlineSegment>
-              </PFFormInlineRow>
+              <PFFormResidentNumberInput
+                frontValue={draft.residentFront}
+                backValue={draft.residentBack}
+                onFrontChange={value => patch('residentFront', value)}
+                onBackChange={value => patch('residentBack', value)}
+              />
             </PFFormField>
             <PFFormField label="소속">
               <PFFormInlineRow>
@@ -174,37 +147,12 @@ export function PaymentConsentForm({
           </PFFormFieldRow>
           <PFFormFieldRow type="single">
             <PFFormField label="자택 주소" required>
-              <PFFormInlineRow>
-                <PFFormInlineSegment>
-                  <div className={styles.inlineFields}>
-                    <PFTextInput
-                      variant="formPage"
-                      size="large"
-                      placeholder="건물명, 도로명 또는 지번"
-                      value={draft.addressRoad}
-                      onValueChange={value => patch('addressRoad', value)}
-                    />
-                    <PFButton
-                      size="small"
-                      variant="secondary"
-                      type="button"
-                      onClick={() => setIsAddressModalOpen(true)}
-                    >
-                      주소 검색
-                    </PFButton>
-                  </div>
-                </PFFormInlineSegment>
-                <PFFormInlineSeparator />
-                <PFFormInlineSegment>
-                  <PFTextInput
-                    variant="formPage"
-                    size="large"
-                    placeholder="상세 주소"
-                    value={draft.addressDetail}
-                    onValueChange={value => patch('addressDetail', value)}
-                  />
-                </PFFormInlineSegment>
-              </PFFormInlineRow>
+              <PFFormHomeAddressFields
+                roadValue={draft.addressRoad}
+                detailValue={draft.addressDetail}
+                onRoadChange={value => patch('addressRoad', value)}
+                onDetailChange={value => patch('addressDetail', value)}
+              />
             </PFFormField>
           </PFFormFieldRow>
           <PFFormFieldRow type="single">
@@ -256,26 +204,15 @@ export function PaymentConsentForm({
         </PFFormFieldTable>
       </PFFormSection>
 
-      <AddressSearchModal
-        open={isAddressModalOpen}
-        onClose={() => setIsAddressModalOpen(false)}
-        onSelect={selection => {
-          patch('addressRoad', selection.address)
-          setIsAddressModalOpen(false)
-        }}
-      />
-
       <ConsentSignatureStatement
         statement={PAYMENT_FINAL_CONFIRM}
         signerName={signerName}
-        signatureDataUrl={draft.finalSignature}
-        onSignatureChange={dataUrl => patch('finalSignature', dataUrl)}
+        signature={draft.finalSignature}
+        onSignatureChange={finalSignature => patch('finalSignature', finalSignature)}
       />
 
-      <div className={styles.closingCard}>
-        <PFText as="p" typo="bd-md-rg" color="black" className={styles.prose}>
-          {PAYMENT_CLOSING}
-        </PFText>
+      <div className={styles.closingRecipient}>
+        <p className={styles.closingRecipientText}>{PAYMENT_CLOSING}</p>
       </div>
     </>
   )

@@ -75,11 +75,18 @@ export {
   type PaymentOrderCalculationBasisDetailModalProps,
 } from './payment-order-calculation-basis-detail-modal'
 export {
+  PaymentOrderCalculationBasisDetailLectureFeeGeminiView,
+  PaymentOrderCalculationBasisDetailLectureFeeSpecialView,
   PaymentOrderCalculationBasisDetailLectureFeeTierView,
+  type PaymentOrderCalculationBasisDetailLectureFeeGeminiViewProps,
+  type PaymentOrderCalculationBasisDetailLectureFeeSpecialViewProps,
   type PaymentOrderCalculationBasisDetailLectureFeeTierViewProps,
 } from './payment-order-calculation-basis-detail-lecture-fee-tier-view'
 export {
   buildActivityBasisDetail,
+  buildLectureFeeBasisDetailFromStandardTitle,
+  buildLectureFeeGeminiBasisDetail,
+  buildLectureFeeSpecialBasisDetail,
   buildLectureFeeTierBasisDetail,
   buildLodgingBasisDetail,
   buildMealBasisDetail,
@@ -96,6 +103,8 @@ export {
   resolveWithholdingBasisDetailAmountWon,
   type PaymentOrderCalculationBasisDetail,
   type PaymentOrderCalculationBasisDetailActivity,
+  type PaymentOrderCalculationBasisDetailLectureFeeGemini,
+  type PaymentOrderCalculationBasisDetailLectureFeeSpecial,
   type PaymentOrderCalculationBasisDetailLodging1s1g,
   type PaymentOrderCalculationBasisDetailLodgingGeneral,
   type PaymentOrderCalculationBasisDetailLectureFeeTier,

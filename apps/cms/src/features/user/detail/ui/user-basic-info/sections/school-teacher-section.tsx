@@ -17,7 +17,23 @@ function schoolTeacherSchoolNameView(user: BasicInfoSectionContext['user']): str
   return resolveSchoolTeacherAffiliationDisplay(user).school || '-'
 }
 
-export function SchoolTeacherSection(ctx: BasicInfoSectionContext) {
+/** 상단 카드 — 가입일·소셜 */
+export function SchoolTeacherMetaSection(ctx: BasicInfoSectionContext) {
+  const { user } = ctx
+  return (
+    <EditableRow type="double">
+      <EditableField
+        label="가입일"
+        readOnlyDisplay
+        view={<span>{formatDate(user.createdAt)}</span>}
+      />
+      <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
+    </EditableRow>
+  )
+}
+
+/** 하단 카드 — 성명·연락처·소속 */
+export function SchoolTeacherProfileSection(ctx: BasicInfoSectionContext) {
   const { user, scheduleChangeCount, personalInfoRevealed, onEmploymentStatusChange } = ctx
   const nameWithBadge = (nameNode: ReactNode) => (
     <span className="user-basic-info-section__name-with-badge">
@@ -30,22 +46,6 @@ export function SchoolTeacherSection(ctx: BasicInfoSectionContext) {
 
   return (
     <>
-      <EditableRow type="single">
-        <EditableField
-          label="가입일"
-          fullRow
-          readOnlyDisplay
-          view={<span>{formatDate(user.createdAt)}</span>}
-        />
-      </EditableRow>
-      <EditableRow type="single">
-        <EditableField
-          label="연동된 소셜 계정"
-          fullRow
-          readOnlyDisplay
-          view={socialView(user)}
-        />
-      </EditableRow>
       <EditableRow type="double">
         <EditableField label="성명" readOnlyDisplay view={nameWithBadge(user.name)} />
         <EditableField label="성별 및 생년월일" readOnlyDisplay view={genderBirthView(user)} />
@@ -69,6 +69,16 @@ export function SchoolTeacherSection(ctx: BasicInfoSectionContext) {
           }
         />
       </EditableRow>
+    </>
+  )
+}
+
+/** @deprecated split 카드용 — {@link SchoolTeacherMetaSection} + {@link SchoolTeacherProfileSection} */
+export function SchoolTeacherSection(ctx: BasicInfoSectionContext) {
+  return (
+    <>
+      <SchoolTeacherMetaSection {...ctx} />
+      <SchoolTeacherProfileSection {...ctx} />
     </>
   )
 }

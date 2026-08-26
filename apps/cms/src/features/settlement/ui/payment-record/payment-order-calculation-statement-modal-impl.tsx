@@ -34,7 +34,7 @@ import {
   PaymentOrderCalculationBasisDetailModal,
   usePaymentOrderCalculationBasisDetailModal,
 } from './payment-order-calculation-basis-detail-modal'
-import { SettlementItemSettingDetailModal } from '@/pages/settlement-management/settlement-item-setting-detail-modal'
+import { computePaymentOrderCalculationSubtotalBeforeWithholding } from './payment-order-calculation-basis-detail'
 import { PaymentOrderCalculationStatementInstructorBasicSection } from './payment-order-calculation-statement-instructor-basic-section'
 import { PaymentOrderCalculationStatementProgramBasicSection } from './payment-order-calculation-statement-program-basic-section'
 
@@ -100,7 +100,12 @@ export function PaymentOrderCalculationStatementModalImpl({
     if (!data || (data.context !== 'program' && data.context !== 'instructor')) {
       return null
     }
-    return { lectureFeeStandardTitle: data.basic.lectureFeeStandardTitle }
+    const subtotalBeforeWithholding = computePaymentOrderCalculationSubtotalBeforeWithholding(data.blocks)
+    return {
+      lectureFeeStandardTitle: data.basic.lectureFeeStandardTitle,
+      withholdingDailySalaryTotalWon:
+        subtotalBeforeWithholding > 0 ? subtotalBeforeWithholding : undefined,
+    }
   }, [data])
 
   const {
@@ -108,9 +113,6 @@ export function PaymentOrderCalculationStatementModalImpl({
     selectedBasisDetail,
     handleBasisDetailClick,
     closeBasisDetailModal,
-    wageSettingItemOpen,
-    wageSettingItem,
-    closeWageSettingItemModal,
   } = usePaymentOrderCalculationBasisDetailModal(open, basisDetailContext)
 
   /* eslint-disable react-hooks/set-state-in-effect -- 모달 닫힘과 동기화 */
@@ -290,30 +292,32 @@ export function PaymentOrderCalculationStatementModalImpl({
           onBasisDetailClick={handleBasisDetailClick}
           onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
           headerActions={
-            <>
-              <CmsButton
-                variant="delete"
-                size="medium"
-                disabled={paymentOrdersRemote}
-                title={paymentOrdersRemote ? '신청 반려 API 연동 대기 중입니다.' : undefined}
-                onClick={() => {
-                  if (paymentOrdersRemote) {
-                    window.alert('신청 반려 API는 백엔드 연동 대기 중입니다.')
-                    return
-                  }
-                  setPaymentRejectOpen(true)
-                }}
-              >
-                신청 반려
-              </CmsButton>
-              <CmsButton
-                variant="primary"
-                size="medium"
-                onClick={() => setPaymentConfirmOpen(true)}
-              >
-                확인 처리
-              </CmsButton>
-            </>
+            entryKind === 'program' ? (
+              <>
+                <CmsButton
+                  variant="delete"
+                  size="medium"
+                  disabled={paymentOrdersRemote}
+                  title={paymentOrdersRemote ? '신청 반려 API 연동 대기 중입니다.' : undefined}
+                  onClick={() => {
+                    if (paymentOrdersRemote) {
+                      window.alert('신청 반려 API는 백엔드 연동 대기 중입니다.')
+                      return
+                    }
+                    setPaymentRejectOpen(true)
+                  }}
+                >
+                  신청 반려
+                </CmsButton>
+                <CmsButton
+                  variant="primary"
+                  size="medium"
+                  onClick={() => setPaymentConfirmOpen(true)}
+                >
+                  확인 처리
+                </CmsButton>
+              </>
+            ) : undefined
           }
         />
       </ContentModal>
@@ -359,7 +363,7 @@ export function PaymentOrderCalculationStatementModalImpl({
         reason={paymentRejectReason}
       />
       <PaymentStatementIssuanceViewModal
-        open={issuanceViewOpen}
+        open={issuanceViewOpen && Boolean(issuanceParagraphBodyOptions)}
         onClose={() => setIssuanceViewOpen(false)}
         paragraphBodyOptions={issuanceParagraphBodyOptions}
         fileName={issuanceFileName}
@@ -370,12 +374,6 @@ export function PaymentOrderCalculationStatementModalImpl({
         onCancel={closeBasisDetailModal}
         detail={selectedBasisDetail}
         zIndex={1200}
-      />
-      <SettlementItemSettingDetailModal
-        open={wageSettingItemOpen}
-        onCancel={closeWageSettingItemModal}
-        item={wageSettingItem}
-        readOnly
       />
     </>
   )

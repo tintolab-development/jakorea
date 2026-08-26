@@ -14,6 +14,12 @@
   }
 }
 
+.bodyOnlyWrap {
+  box-sizing: border-box;
+  width: 100%;
+  align-self: stretch;
+}
+
 .prose {
   margin: 0;
   white-space: pre-wrap;
@@ -48,6 +54,30 @@
   height: 18px;
   margin: 0;
   accent-color: var(--color-primary-500);
+}
+
+.idTypeWithInput {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.idTypeWithInputRadios {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.idTypeWithInputInput {
+  flex: 0 0 auto;
+  width: 280px;
+  max-width: 100%;
 }
 
 .tableBlock {
@@ -228,12 +258,12 @@
 }
 
 /* —— 진술문 + 날짜·서명 (동의 확인 / 수령 확인) —— */
-.statementCard,
-.closingCard {
+.statementCard {
   display: flex;
   box-sizing: border-box;
   width: 100%;
   align-items: center;
+  justify-content: space-between;
   gap: var(--spacing-24);
   padding: var(--spacing-20);
   border-radius: var(--radius-24);
@@ -241,8 +271,33 @@
   box-shadow: var(--shadow-card-lg);
 }
 
-.statementCard {
-  justify-content: space-between;
+/* 마무리글형 — JA KOREA 귀하 등 (양식 `.form` gap 보정 포함) */
+.closingRecipient {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  align-self: stretch;
+  justify-content: center;
+  margin-top: calc(var(--spacing-60) - var(--spacing-32));
+  margin-bottom: calc(var(--spacing-16) - var(--spacing-32));
+}
+
+.closingRecipientText {
+  margin: 0;
+  color: var(--color-neutral-cool-500);
+  font-family: var(--font-family-base);
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 144%;
+  text-align: center;
+}
+
+@media (--bp-below-pc) {
+  .closingRecipient {
+    margin-top: calc(var(--spacing-60) - var(--spacing-16));
+    margin-bottom: 0;
+  }
 }
 
 .statementText {
@@ -257,62 +312,13 @@
   letter-spacing: -0.2px;
 }
 
-.signBlock {
-  display: flex;
+.statementSignatureBlock {
   flex-shrink: 0;
-  align-items: center;
-}
-
-.signer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.signDate {
-  margin-bottom: var(--spacing-8);
-  color: var(--color-neutral-cool-700, #41494d);
-  font-family: var(--font-family-base);
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 150%;
-  letter-spacing: -0.18px;
-}
-
-.signNameRow {
-  display: inline-flex;
-  align-items: center;
-}
-
-.signName,
-.signMark {
-  font-family: var(--font-family-base);
-  font-size: 20px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 150%;
-  letter-spacing: -0.2px;
-}
-
-.signName {
-  margin-right: var(--spacing-16);
-  color: var(--color-neutral-black, #3d3d3d);
-}
-
-.signMark {
-  color: var(--color-neutral-cool-300, #bbc4c7);
-}
-
-.signImage {
-  display: block;
   width: auto;
-  height: 40px;
-  object-fit: contain;
-}
-
-.signButton {
-  margin-left: var(--spacing-24);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 @media (--bp-below-pc) {
@@ -322,15 +328,8 @@
     gap: var(--spacing-16);
   }
 
-  .signBlock {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-16);
-  }
-
-  .signButton {
+  .statementSignatureBlock {
     width: 100%;
-    margin-left: 0;
   }
 }
 
@@ -338,7 +337,7 @@
   display: flex;
   width: 100%;
   justify-content: center;
-  padding-top: var(--spacing-16);
+  padding-top: 0;
 }
 
 .inlineFields {

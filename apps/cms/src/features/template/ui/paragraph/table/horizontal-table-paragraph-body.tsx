@@ -1047,6 +1047,7 @@ export function HorizontalTableParagraphBody({
               onChange={next => onChange({ ...p, idTypeWithInput: next })}
               isEditMode={effectiveEditMode || agreementNoticeIdTypeInteractive}
               documentMode={paymentStatementDisplayMode === 'document'}
+              lockResidentIdType={isAgreementNoticeTable}
             />
           ) : null}
           {p.showBottomConsent ? (
