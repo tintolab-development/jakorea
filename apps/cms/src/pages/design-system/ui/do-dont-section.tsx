@@ -78,7 +78,10 @@ export function DoDontSection() {
           </li>
           <li>
             리치 텍스트는 <code>@/shared/rich-text</code>의 <code>RichTextEditor</code> /{' '}
-            <code>RichTextViewer</code>를 사용합니다 (Toast UI 금지).
+            <code>RichTextViewer</code>를 사용합니다 (Toast UI 금지). 메일 본문 변수는{' '}
+            <code>extraExtensions</code>에 <code>MailVariable</code> atom을 넣습니다 (
+            <a href="#editor">Rich text editor</a> · <a href="#mail-template">Mail template</a>).
+            툴바 간격은 <code>--rt-toolbar-gap</code>(8px) 토큰을 사용합니다.
           </li>
         </ul>
       </div>
@@ -128,6 +131,10 @@ export function DoDontSection() {
           <li>
             날짜의 한 자리 월·일을 입력 도중 즉시 <code>01</code>로 바꾸지 않습니다. 완성된
             날짜만 blur/확정 시 정규화합니다.
+          </li>
+          <li>
+            메일 <code>#{'{변수}'}</code>를 색상·볼드 텍스트로 흉내 내지 않습니다. 에디터 안에서는
+            atom이라 내부 커서가 들어가면 안 됩니다.
           </li>
         </ul>
       </div>

@@ -3,6 +3,7 @@ import { platformQueryKeys } from '@/shared/api/query-keys'
 import { queryClient } from '@/shared/lib/query-client'
 import { setAdminOnboardingRequired } from '@/shared/lib/admin-onboarding-session'
 import { setAuthTokens } from '@/shared/lib/auth-token'
+import { syncAdminRegisteredOnboardingSession } from './sync-onboarding-session'
 
 /**
  * 관리자 등록 최초 로그인 — 비밀번호 변경 후 세션이 끊겨도
@@ -25,5 +26,9 @@ export async function continueAdminRegisteredSessionAfterPasswordChange(input: {
     refreshToken: tokens.refreshToken,
     expiresAt: expiresAtFromExpiresInSeconds(tokens.expiresInSeconds),
   })
+
+  syncAdminRegisteredOnboardingSession(input.email, tokens, 'first-login')
   setAdminOnboardingRequired(true)
+
+  return tokens
 }

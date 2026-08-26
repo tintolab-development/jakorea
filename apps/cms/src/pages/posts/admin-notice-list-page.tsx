@@ -12,7 +12,7 @@ import {
   type MouseEvent,
 } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Spin, Table } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import type { Notice } from '@/data/mock/notices'
@@ -205,7 +205,7 @@ export function AdminNoticeListPage() {
         key: 'createdAt',
         width: NOTICE_LIST_COL_WIDTH.datetime,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm'),
       },
       {
         title: '조회수',
@@ -245,7 +245,9 @@ export function AdminNoticeListPage() {
         open={registerModalOpen}
         mode="create"
         onCancel={() => setRegisterModalOpen(false)}
-        onSuccess={() => setRegisterModalOpen(false)}
+        onSuccess={() => {
+          setRegisterModalOpen(false)
+        }}
       />
       <ActionResultModal
         open={actionResultOpen}
@@ -267,6 +269,7 @@ export function AdminNoticeListPage() {
         onSearch={handleSearch}
         title="공지사항 목록"
         description={`총 ${displayedCount.toLocaleString()}건`}
+        contentLoading={contentLoading}
         actions={
           <>
             <CmsButton
@@ -289,11 +292,7 @@ export function AdminNoticeListPage() {
           data: tableData,
         }}
       >
-        {contentLoading ? (
-          <div className="page-content-loading page-content-loading--table-slot" role="status">
-            <Spin />
-          </div>
-        ) : contentError ? (
+        {contentError ? (
           <div className="page-content-error" role="alert">
             {contentError}
           </div>

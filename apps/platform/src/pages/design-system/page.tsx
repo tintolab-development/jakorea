@@ -21,7 +21,9 @@ import {
   PFCategoryBadge,
   PFAlertModal,
   PFArrowButton,
+  PFCarouselButton,
   PFChevronButton,
+  PFCircleIconButton,
   PFPageButton,
   PFButton,
   PFCheckbox,
@@ -780,6 +782,7 @@ export function DesignSystemPage() {
   const [toggleLarge, setToggleLarge] = useState(false)
   const [toggleSmall, setToggleSmall] = useState(true)
   const [toggleText, setToggleText] = useState(false)
+  const [toggleSwitch, setToggleSwitch] = useState(true)
   const [layoutSearchQuery, setLayoutSearchQuery] = useState('')
   const [layoutFilterTarget, setLayoutFilterTarget] = useState('all')
   const [layoutFilterStatus, setLayoutFilterStatus] = useState('all')
@@ -1307,6 +1310,136 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
 
       <div className={styles.section}>
         <PFText as="div" typo="hl-sm" color="black">
+          PFCircleIconButton
+        </PFText>
+        <div className={styles.buttonStack}>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              forward (Page)
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFCircleIconButton icon="forward" aria-label="이동" />
+              <PFCircleIconButton icon="forward" disabled aria-label="이동 disabled" />
+            </div>
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              search (More)
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFCircleIconButton icon="search" aria-label="검색" />
+              <PFCircleIconButton icon="search" disabled aria-label="검색 disabled" />
+            </div>
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              refresh
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFCircleIconButton icon="refresh" aria-label="새로고침" />
+            </div>
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              delete
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFCircleIconButton icon="delete" aria-label="삭제" />
+              <PFCircleIconButton icon="delete" disabled aria-label="삭제 disabled" />
+            </div>
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              eventCalendar (Class)
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFCircleIconButton icon="eventCalendar" aria-label="일정" />
+              <PFCircleIconButton icon="eventCalendar" disabled aria-label="일정 disabled" />
+            </div>
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              scrollTop (FAB)
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFCircleIconButton icon="scrollTop" aria-label="맨 위로" />
+            </div>
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              decorative
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFCircleIconButton icon="forward" decorative />
+              <PFCircleIconButton icon="refresh" decorative />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFCarouselButton
+        </PFText>
+        <div className={styles.buttonStack}>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              large
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFCarouselButton size="large" direction="left" aria-label="이전 large" />
+              <PFCarouselButton size="large" direction="right" aria-label="다음 large" />
+              <PFCarouselButton
+                size="large"
+                direction="left"
+                disabled
+                aria-label="이전 large disabled"
+              />
+              <PFCarouselButton
+                size="large"
+                direction="right"
+                disabled
+                aria-label="다음 large disabled"
+              />
+            </div>
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              small
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFCarouselButton size="small" direction="left" aria-label="이전 small" />
+              <PFCarouselButton size="small" direction="right" aria-label="다음 small" />
+              <PFCarouselButton
+                size="small"
+                direction="left"
+                disabled
+                aria-label="이전 small disabled"
+              />
+              <PFCarouselButton
+                size="small"
+                direction="right"
+                disabled
+                aria-label="다음 small disabled"
+              />
+            </div>
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              decorative
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFCarouselButton size="large" direction="left" decorative />
+              <PFCarouselButton size="large" direction="right" decorative />
+              <PFCarouselButton size="small" direction="left" decorative />
+              <PFCarouselButton size="small" direction="right" decorative />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
           PFPageButton
         </PFText>
         <div className={styles.buttonStack}>
@@ -1775,6 +1908,7 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
             offLabel="오름차순"
             onLabel="내림차순"
           />
+          <PFToggle variant="switch" checked={toggleSwitch} onChange={setToggleSwitch} aria-label="스위치" />
         </div>
       </div>
 

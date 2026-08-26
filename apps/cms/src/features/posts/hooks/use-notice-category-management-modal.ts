@@ -33,6 +33,7 @@ export type UseNoticeCategoryManagementModalResult = {
   setEditDraft: (v: string) => void
   newDraft: string
   setNewDraft: (v: string) => void
+  composeOpen: boolean
   deleteBlockedOpen: boolean
   deleteConfirmOpen: boolean
   pendingDeleteRow: NoticeCategoryRow | null
@@ -46,7 +47,7 @@ export type UseNoticeCategoryManagementModalResult = {
   confirmDeleteCategory: () => void
   cancelNew: () => void
   submitNew: () => void
-  focusNewRow: () => void
+  openCompose: () => void
 }
 
 export function useNoticeCategoryManagementModal({
@@ -60,6 +61,7 @@ export function useNoticeCategoryManagementModal({
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState('')
   const [newDraft, setNewDraft] = useState('')
+  const [composeOpen, setComposeOpen] = useState(false)
   const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [pendingDeleteRow, setPendingDeleteRow] = useState<NoticeCategoryRow | null>(null)
@@ -70,6 +72,7 @@ export function useNoticeCategoryManagementModal({
     setEditingId(null)
     setEditDraft('')
     setNewDraft('')
+    setComposeOpen(false)
     setDeleteBlockedOpen(false)
     setDeleteConfirmOpen(false)
     setPendingDeleteRow(null)
@@ -89,6 +92,8 @@ export function useNoticeCategoryManagementModal({
   }, [onClose, resetEphemeralUi])
 
   const startEdit = useCallback((row: NoticeCategoryRow) => {
+    setComposeOpen(false)
+    setNewDraft('')
     setEditingId(row.id)
     setEditDraft(row.name)
     queueMicrotask(() => editInputRef.current?.focus())
@@ -160,6 +165,7 @@ export function useNoticeCategoryManagementModal({
 
   const cancelNew = useCallback(() => {
     setNewDraft('')
+    setComposeOpen(false)
   }, [])
 
   const submitNew = useCallback(async () => {
@@ -173,16 +179,20 @@ export function useNoticeCategoryManagementModal({
     if (remoteActions) {
       await remoteActions.onCreate(trimmed)
       setNewDraft('')
+      setComposeOpen(false)
       return
     }
     const id = createNoticeCategoryId()
     onCategoriesChange([...categories, { id, name: trimmed }])
     setNewDraft('')
+    setComposeOpen(false)
   }, [categories, newDraft, onCategoriesChange, remoteActions])
 
-  const focusNewRow = useCallback(() => {
-    newInputRef.current?.focus()
-  }, [])
+  const openCompose = useCallback(() => {
+    cancelEdit()
+    setComposeOpen(true)
+    queueMicrotask(() => newInputRef.current?.focus())
+  }, [cancelEdit])
 
   const closeDeleteBlocked = useCallback(() => {
     setDeleteBlockedOpen(false)
@@ -196,6 +206,7 @@ export function useNoticeCategoryManagementModal({
     setEditDraft,
     newDraft,
     setNewDraft,
+    composeOpen,
     deleteBlockedOpen,
     deleteConfirmOpen,
     pendingDeleteRow,
@@ -209,6 +220,6 @@ export function useNoticeCategoryManagementModal({
     confirmDeleteCategory,
     cancelNew,
     submitNew,
-    focusNewRow,
+    openCompose,
   }
 }

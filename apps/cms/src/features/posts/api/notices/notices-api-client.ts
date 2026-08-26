@@ -1,6 +1,7 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { getJAKoreaCMSBackendAPIPostsSubset } from '@/shared/api/generated/posts/posts-api'
 import type {
+  ApiResponseMapStringObjectData,
   CategoryRequest,
   NoticeCategoriesParams,
   NoticeRequest,
@@ -49,7 +50,7 @@ export async function fetchNoticeCategoriesRemote(
 
 export async function createNoticeCategoryRemote(
   body: CategoryRequest
-): Promise<PageResponseMapStringObject> {
+): Promise<ApiResponseMapStringObjectData | PageResponseMapStringObject> {
   return unwrapApiBody(await postsApi.createNoticeCategory(body))
 }
 

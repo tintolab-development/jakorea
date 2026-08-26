@@ -5,16 +5,22 @@ Swagger/OpenAPI 기반 실 API 연동 시 공통 설정·인증·응답 규칙�
 상세 클라이언트 규칙: [api-routes-and-client.md](./api-routes-and-client.md)  
 Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)  
 대시보드 1차 파일럿: [dashboard-api-integration.md](./dashboard-api-integration.md)  
-**템플릿 양식 (forms-surveys)**: [forms-surveys-api-integration.md](./forms-surveys-api-integration.md) · [PHASE별 마이그레이션](./forms-surveys-api-migration-guide.md) · [**백엔드 갭 목록**](./forms-surveys-api-backend-gaps.md) · [**신규 템플릿 생성 갭**](./template-create-api-backend-handoff.md)  
+**보안 설정(로그 관리)**: [logs-api-integration.md](./logs-api-integration.md) · [**전환률 · 미적용 API (백엔드 핸드오프 SSOT)**](./logs-api-conversion-status-backend-handoff.md) · [백엔드 갭 요약](./logs-api-backend-gaps.md)  
+**데이터 관리**: [data-management-api-integration.md](./data-management-api-integration.md) · [**백엔드 갭 요청**](./data-management-api-backend-gaps.md)  
+**템플릿 양식 (forms-surveys)**: [**전환률 · 미적용 API (백엔드 핸드오프 SSOT)**](./templates-api-conversion-status-backend-handoff.md) · [forms-surveys-api-integration.md](./forms-surveys-api-integration.md) · [PHASE별 마이그레이션](./forms-surveys-api-migration-guide.md) · [백엔드 갭 목록](./forms-surveys-api-backend-gaps.md) · [신규 템플릿 생성 갭](./template-create-api-backend-handoff.md)  
 **일반 프로그램 (programs)**: [programs-api-integration.md](./programs-api-integration.md) · [**등록 플로우 API 목록**](./programs-registration-flow-api-backend-handoff.md) · [**등록 완료 POST 핸드오프**](./programs-create-api-backend-handoff.md) · [마이그레이션 가이드](./programs-api-migration-guide.md) · [백엔드 갭](./programs-api-backend-gaps.md) · [남은 작업](./programs-api-remaining-work.md) · [**상세 완료율 · Phase 5–10**](./programs-detail-api-conversion-status.md) · [**상세 LNB 미전환·CRUD 갭**](./programs-detail-lnb-crud-api-gaps.md)
 
 **E2E 관측 수정 요청**: [**e2e-backend-fixes-index.md**](./e2e-backend-fixes-index.md) (`DATABASE_ERROR` · 회원 등록 path · MFA 동시성)
 
 **API 에러 사용자 메시지 (CMS·Platform 공통)**: [backend-handoff §에러 응답](./backend-handoff.md#에러-응답--사용자-노출-메시지-p0--cms--platform-공통) · [Platform handoff](../../platform/docs/api/api-error-response-handoff-2026-07-31.md)
 
-**회원 관리 (members)**: [members/README.md](./members/README.md) · [**백엔드 handoff (등록 약관)**](./members/members-pre-register-terms-required-policy-backend-request-2026-08-11.md)
+**회원 관리 (members)**: [members/README.md](./members/README.md) · [**회원 상세 이력·정산 BE 필수 묶음 (7종)**](./members/README.md#회원-상세-이력정산--백엔드-전달-필수-묶음) · [**동의서 작성 본문**](./members/member-consent-filled-document-backend-handoff-2026-08-25.md) · [**등록 약관**](./members/members-pre-register-terms-required-policy-backend-request-2026-08-11.md)
 
 **프로그램 유형별 전환**: [**UJAT 백엔드 핸드오프**](./programs-ujat-api-backend-handoff.md) · [**1사1교 백엔드 핸드오프**](./programs-company-school-api-backend-handoff.md) · [**1사1교 더미 시드**](./company-school-program-dummy-seed-backend-request.md) · [**일반 프로그램 더미 시드**](./general-program-dummy-seed-backend-request.md)
+
+**실적 관리 (LNB `/education-records`)**: [**더미 시드**](./education-records-dummy-seed-backend-request.md) · [`education-records-seed.payload.json`](./education-records-seed.payload.json) · [**목록·합계·엑셀 API Cursor 프롬프트**](./education-records-api-backend-cursor-prompt.md) — Gemini 실적과 혼용 금지
+
+**대시보드 설정**: [**더미 시드**](./dashboard-settings-dummy-seed-backend-request.md) · [`dashboard-settings-seed.payload.json`](./dashboard-settings-seed.payload.json) — `GET/PUT /api/admin/me/dashboard-preferences`
 
 **테이블 일괄삭제 (CMS 전수)**: [**cms-table-bulk-delete-api-backend-handoff.md**](./cms-table-bulk-delete-api-backend-handoff.md) · **일괄승인**: [**cms-table-bulk-approve-api-backend-handoff.md**](./cms-table-bulk-approve-api-backend-handoff.md) · **일괄다운로드**: [**cms-table-bulk-download-api-backend-handoff.md**](./cms-table-bulk-download-api-backend-handoff.md)
 
@@ -258,4 +264,4 @@ Swagger Authorize에 관리자 토큰 입력 후 호출.
 3. `pnpm --filter cms generate:api`
 4. dev 서버 재시작
 
-**Last updated:** 2026-07-31 (에러 사용자 메시지 P0 · members handoff 링크)
+**Last updated:** 2026-08-25 (강사 상세 프로그램 이력·정산 통합 핸드오프)

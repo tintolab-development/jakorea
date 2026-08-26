@@ -24,8 +24,19 @@ import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
+import {
+  REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+  buildRequiredConsentDisagreeAlertMessage,
+} from '@jakorea/domain/shared/required-consent-alert'
+import {
+  cloneMemberConsentAgreementDraftSnapshot,
+  type MemberConsentAgreementDraftSnapshot,
+} from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import { normalizeMemberConsentWriteDraft } from '@/features/user/shared/lib/normalize-member-consent-write-draft'
-import { hasMemberConsentIncompleteRequiredFields } from '@/features/user/shared/lib/validate-member-consent-draft'
+import {
+  collectMemberConsentDisagreedRequiredLabels,
+  hasMemberConsentIncompleteRequiredFields,
+} from '@/features/user/shared/lib/validate-member-consent-draft'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
@@ -56,6 +67,9 @@ export interface MemberConsentAgreementModalProps {
   open: boolean
   templateId: string
   modalTitle: string
+  /** 신규 등록 세션 — 이전 작성완료 draft 복원 */
+  savedSnapshot?: MemberConsentAgreementDraftSnapshot | null
+  onSnapshotSave?: (snapshot: MemberConsentAgreementDraftSnapshot) => void
   onClose: () => void
   onComplete: () => void
 }
@@ -71,6 +85,8 @@ export function MemberConsentAgreementModal({
   open,
   templateId,
   modalTitle,
+  savedSnapshot,
+  onSnapshotSave,
   onClose,
   onComplete,
 }: MemberConsentAgreementModalProps) {
@@ -87,6 +103,14 @@ export function MemberConsentAgreementModal({
       setDraft(null)
       setIsDraftLoading(false)
       setPaymentBasicInfo(null)
+      return
+    }
+
+    if (savedSnapshot?.draft) {
+      const restored = cloneMemberConsentAgreementDraftSnapshot(savedSnapshot)
+      setDraft(normalizeWritingFormDraft(restored.draft))
+      setPaymentBasicInfo(restored.paymentBasicInfo ?? {})
+      setIsDraftLoading(false)
       return
     }
 
@@ -117,7 +141,7 @@ export function MemberConsentAgreementModal({
     return () => {
       cancelled = true
     }
-  }, [open, templateId])
+  }, [open, templateId, savedSnapshot])
 
   const updateParagraph = useCallback(
     (id: string, updater: (paragraph: WritingFormParagraph) => WritingFormParagraph) => {
@@ -136,6 +160,16 @@ export function MemberConsentAgreementModal({
 
   const handleSubmit = useCallback(() => {
     if (draft == null) return
+
+    const disagreedLabels = collectMemberConsentDisagreedRequiredLabels(draft)
+    if (disagreedLabels.length > 0) {
+      showAlert({
+        title: REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+        content: buildRequiredConsentDisagreeAlertMessage(disagreedLabels),
+      })
+      return
+    }
+
     if (
       hasMemberConsentIncompleteRequiredFields(draft, {
         templateId,
@@ -148,8 +182,13 @@ export function MemberConsentAgreementModal({
       })
       return
     }
+    const snapshot: MemberConsentAgreementDraftSnapshot = {
+      draft: normalizeWritingFormDraft(draft),
+      paymentBasicInfo: paymentBasicInfo ?? undefined,
+    }
+    onSnapshotSave?.(cloneMemberConsentAgreementDraftSnapshot(snapshot))
     onComplete()
-  }, [draft, onComplete, paymentBasicInfo, showAlert, templateId])
+  }, [draft, onComplete, onSnapshotSave, paymentBasicInfo, showAlert, templateId])
 
   const handlePaymentBasicInfoValuesChange = useCallback(
     (values: PaymentStatementBasicInfoAutofillValues) => {

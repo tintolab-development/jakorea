@@ -1,10 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
+import { queryOptions, useQuery, type QueryClient } from '@tanstack/react-query'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import {
   mapIndividualMemberDetailToUser,
   mapInstructorMemberDetailToUser,
   mapMemberDetailToUser,
   mapSchoolMemberDetailToUser,
+  mapTeacherMemberDetailToUser,
 } from '@/features/user/api/map-member-detail-to-user'
 import {
   fetchIndividualMemberDetailRemote,
@@ -14,6 +15,7 @@ import {
   fetchMemberExternalIdentifiersRemote,
   fetchSchoolMemberDetailRemote,
   fetchSchoolOrganizationRemote,
+  fetchTeacherMemberDetailRemote,
 } from '@/features/user/api/members-api-client'
 import {
   mapSchoolOrganizationToUser,
@@ -26,38 +28,50 @@ import {
   shouldUseAdminAccountDetailApi,
 } from '@/features/user/api/fetch-admin-member-detail'
 import { resolve1365IdFromExternalIdentifiers } from '@/features/user/api/map-external-identifiers'
+import { resolveInstructorMemberProfileHint } from '@/features/user/api/map-member-role'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { probeMemberDetailAsUser } from '@/features/user/api/probe-member-detail-as-user'
 import type { User, UserRole } from '@/types/user'
 
-export function useMemberDetailQuery(
-  userId: string | null | undefined,
-  enabled = true,
-  options?: {
-    role?: UserRole
-    memberId?: number
-    organizationId?: number
-    adminAccountId?: number
-    email?: string
-  }
-) {
-  const remote = isMembersRemoteEnabled()
+export type MemberDetailQueryOptions = {
+  role?: UserRole
+  memberId?: number
+  organizationId?: number
+  adminAccountId?: number
+  email?: string
+  instructorMemberProfile?: User['instructorMemberProfile']
+  roles?: string[]
+}
 
-  return useQuery({
-    queryKey: remote
+export function memberDetailQueryOptions(
+  userId: string,
+  options?: MemberDetailQueryOptions
+) {
+  const instructorProfileHint = resolveInstructorMemberProfileHint({
+    roles: options?.roles,
+    instructorMemberProfile: options?.instructorMemberProfile,
+  })
+
+  return queryOptions({
+    queryKey: isMembersRemoteEnabled()
       ? [
-          ...memberQueryKeys.detailByUuid(userId ?? ''),
+          ...memberQueryKeys.detailByUuid(userId),
           options?.role ?? 'auto',
           options?.adminAccountId ?? '',
           options?.organizationId ?? '',
+          instructorProfileHint ?? '',
         ]
-      : ['users', 'detail', userId, options?.role ?? 'auto', options?.organizationId ?? ''],
-    enabled: Boolean(enabled && userId && remote),
+      : [
+          'users',
+          'detail',
+          userId,
+          options?.role ?? 'auto',
+          options?.organizationId ?? '',
+          instructorProfileHint ?? '',
+        ],
     queryFn: async (): Promise<Omit<User, 'password'>> => {
-      if (!userId) throw new Error('userId가 없습니다.')
-
       if (
         shouldUseAdminAccountDetailApi({
           role: options?.role,
@@ -92,7 +106,6 @@ export function useMemberDetailQuery(
       }
 
       const memberId = resolveMemberIdForApi(userId, { memberId: options?.memberId })
-      // options.role은 위에서 SCHOOL early-return 후 좁혀질 수 있어 명시 타입 유지
       const role: UserRole | undefined = options?.role
 
       if (!role) {
@@ -123,11 +136,20 @@ export function useMemberDetailQuery(
       }
 
       if (role === 'INSTRUCTOR') {
+        const profileHint = resolveInstructorMemberProfileHint({
+          roles: options?.roles,
+          instructorMemberProfile: options?.instructorMemberProfile,
+        })
+        const useTeacherDetail = profileHint === 'school_teacher'
         const [detail, externalIdentifiers] = await Promise.all([
-          fetchInstructorMemberDetailRemote(memberId),
+          useTeacherDetail
+            ? fetchTeacherMemberDetailRemote(memberId)
+            : fetchInstructorMemberDetailRemote(memberId),
           fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
         ])
-        const user = mapInstructorMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
+        const user = useTeacherDetail
+          ? mapTeacherMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
+          : mapInstructorMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
         const id1365 = resolve1365IdFromExternalIdentifiers(
           externalIdentifiers,
           detail.member?.external1365Id
@@ -169,13 +191,39 @@ export function useMemberDetailQuery(
   })
 }
 
+export function useMemberDetailQuery(
+  userId: string | null | undefined,
+  enabled = true,
+  options?: MemberDetailQueryOptions
+) {
+  const remote = isMembersRemoteEnabled()
+
+  return useQuery({
+    ...memberDetailQueryOptions(userId ?? '', options),
+    enabled: Boolean(enabled && userId && remote),
+  })
+}
+
+export function memberConsentRecordsQueryOptions(memberId: number) {
+  return queryOptions({
+    queryKey: memberQueryKeys.consentRecords(memberId),
+    queryFn: () => fetchMemberConsentRecordsRemote(memberId),
+  })
+}
+
+export function fetchMemberConsentRecordsQuery(queryClient: QueryClient, memberId: number) {
+  return queryClient.fetchQuery(memberConsentRecordsQueryOptions(memberId))
+}
+
 export function useMemberConsentRecordsQuery(
   memberId: number | undefined,
-  enabled = true
+  enabled = true,
+  options?: { manualFetch?: boolean }
 ) {
   return useQuery({
-    queryKey: memberQueryKeys.consentRecords(memberId ?? 0),
-    enabled: Boolean(enabled && memberId != null && isMembersRemoteEnabled()),
-    queryFn: () => fetchMemberConsentRecordsRemote(memberId!),
+    ...memberConsentRecordsQueryOptions(memberId ?? 0),
+    enabled: options?.manualFetch
+      ? false
+      : Boolean(enabled && memberId != null && isMembersRemoteEnabled()),
   })
 }

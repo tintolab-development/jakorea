@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UjatEducationRegionUpdateInput } from '@/features/program/ujat/model/education-region.types'
 import { shouldUseUjatEducationRegionsRemoteApi } from './capabilities'
+import {
+  applyCreatedEducationRegion,
+  applyDeletedEducationRegion,
+  applyUpdatedEducationRegion,
+} from './list-cache'
 import { ujatEducationRegionQueryKeys } from './query-keys'
 import {
   listUjatEducationRegionsService,
@@ -14,13 +19,16 @@ function source(): 'remote' | 'local' {
   return shouldUseUjatEducationRegionsRemoteApi() ? 'remote' : 'local'
 }
 
+/** Class A/B 참조 데이터 — mutation에서 목록을 패치하면 GET 생략 */
+const REGION_STALE_TIME_MS = 15 * 60_000
+
 export function useUjatEducationRegionsList(enabled = true) {
   const dataSource = source()
   return useQuery({
     queryKey: ujatEducationRegionQueryKeys.list(dataSource),
     queryFn: () => listUjatEducationRegionsService(),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
+    staleTime: dataSource === 'remote' ? REGION_STALE_TIME_MS : Number.POSITIVE_INFINITY,
     retry: dataSource === 'remote' ? 1 : false,
   })
 }
@@ -30,8 +38,8 @@ export function useCreateUjatEducationRegion() {
   return useMutation({
     mutationFn: createUjatEducationRegionService,
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ujatEducationRegionQueryKeys.lists() })
+    onSuccess: created => {
+      applyCreatedEducationRegion(queryClient, source(), created)
     },
   })
 }
@@ -47,8 +55,8 @@ export function useUpdateUjatEducationRegion() {
       patch: UjatEducationRegionUpdateInput
     }) => updateUjatEducationRegionService(id, patch),
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ujatEducationRegionQueryKeys.lists() })
+    onSuccess: updated => {
+      applyUpdatedEducationRegion(queryClient, source(), updated)
     },
   })
 }
@@ -58,8 +66,9 @@ export function useDeleteUjatEducationRegion() {
   return useMutation({
     mutationFn: (id: string) => deleteUjatEducationRegionService(id),
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ujatEducationRegionQueryKeys.lists() })
+    onSuccess: (result, id) => {
+      if (result.ok !== true) return
+      applyDeletedEducationRegion(queryClient, source(), id)
     },
   })
 }
@@ -71,7 +80,6 @@ export function useReorderUjatEducationRegions() {
     retry: false,
     onSuccess: rows => {
       queryClient.setQueryData(ujatEducationRegionQueryKeys.list(source()), rows)
-      void queryClient.invalidateQueries({ queryKey: ujatEducationRegionQueryKeys.lists() })
     },
   })
 }

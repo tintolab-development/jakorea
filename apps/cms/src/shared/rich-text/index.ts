@@ -11,13 +11,19 @@ import '@jakorea/rich-text/styles/editor.css'
 import '@jakorea/rich-text/styles/toolbar.css'
 
 export {
+  Node,
+  NodeSelection,
+  Plugin,
+  TextSelection,
   createRichTextExtensions,
   createRichTextEditorApi,
   getInitialEditorContent,
   markdownToHtml,
+  mergeAttributes,
   serializeEditorContent,
   toEditorContentType,
 } from '@jakorea/rich-text'
+export type { EditorState, Transaction } from '@jakorea/rich-text'
 export { RichTextViewer, useRichTextEditor } from '@jakorea/rich-text/react'
 export { CmsRichTextEditor as RichTextEditor } from './cms-rich-text-editor'
 export { RichTextToolbar } from './toolbar/rich-text-toolbar'

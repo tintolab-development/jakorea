@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import dayjs from 'dayjs'
 import { Spin } from 'antd'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
-import { shouldUseInquiriesRemoteApi } from '@/features/posts/api/inquiries/admin-inquiries-service'
 import { useInquiryDetailQuery } from '@/features/posts/hooks/use-inquiry-detail-query'
 import { useInquiryMutations } from '@/features/posts/hooks/use-inquiry-mutations'
 import { RichTextViewer } from '@/shared/rich-text'
@@ -28,7 +27,6 @@ export function AdminInquiryDetailModal({
   onDeleteClick,
   canWrite,
 }: AdminInquiryDetailModalProps) {
-  const inquiriesRemote = shouldUseInquiriesRemoteApi()
   const detailQuery = useInquiryDetailQuery(inquiryId, open)
   const { replyMutation } = useInquiryMutations()
   const detail = detailQuery.data ?? null
@@ -63,9 +61,9 @@ export function AdminInquiryDetailModal({
   }, [answerText, canWrite, detail, isAnswerRegistered, onCancel, onSuccess, replyMutation])
 
   const handleDelete = useCallback(() => {
-    if (!detail || !canWrite || inquiriesRemote) return
+    if (!detail || !canWrite) return
     onDeleteClick(detail.id)
-  }, [canWrite, detail, inquiriesRemote, onDeleteClick])
+  }, [canWrite, detail, onDeleteClick])
 
   const footer = (
     <>
@@ -73,8 +71,7 @@ export function AdminInquiryDetailModal({
         variant="delete"
         size="medium"
         onClick={handleDelete}
-        disabled={!canWrite || !detail || inquiriesRemote}
-        title={inquiriesRemote ? '문의 삭제 API가 제공되지 않습니다.' : undefined}
+        disabled={!canWrite || !detail}
       >
         문의삭제
       </CmsButton>
@@ -149,7 +146,7 @@ export function AdminInquiryDetailModal({
                         문의일시
                       </th>
                       <td className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--value">
-                        {dayjs(detail.createdAt).format('YYYY.MM.DD HH:mm:ss')}
+                        {dayjs(detail.createdAt).format('YYYY.MM.DD HH:mm')}
                       </td>
                     </tr>
                     <tr>

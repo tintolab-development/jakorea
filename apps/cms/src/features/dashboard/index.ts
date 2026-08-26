@@ -31,6 +31,7 @@ export { useDashboardShortcutBadges } from './hooks/use-dashboard-shortcut-badge
 export { useAdminNotifications } from './hooks/use-admin-notifications'
 export { useDashboardLogAlerts } from './hooks/use-dashboard-log-alerts'
 export { useDashboardPreferences, useSaveDashboardPreferences } from './hooks/use-dashboard-preferences'
+export { usePersistDashboardLayout } from './hooks/use-persist-layout'
 export {
   useDashboardQueryScope,
   useDashboardRemoteQueryEnabled,

@@ -11,7 +11,7 @@ import { CRIME_CONSENT_DOCUMENT_MODAL_HEADER_TITLE } from '@/features/template/u
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { downloadBlob } from '@/shared/utils/file-download'
 import '@/features/template/ui/template-management/crime-record-consent-document-fullpage-modal.css'
 import './member-consent-crime-modal.css'
@@ -19,29 +19,48 @@ import './member-consent-crime-modal.css'
 const MEMBER_CONSENT_MODAL_Z_INDEX = 1200
 const DEFAULT_DOWNLOAD_FILENAME = '성범죄_경력조회_동의서.png'
 
+import type { MemberConsentCrimeDraftSnapshot } from '@/features/user/shared/lib/member-register-consent-write-snapshot'
+
 export interface MemberConsentCrimeModalProps {
   open: boolean
+  savedSnapshot?: MemberConsentCrimeDraftSnapshot | null
+  onSnapshotSave?: (snapshot: MemberConsentCrimeDraftSnapshot) => void
   onClose: () => void
   onComplete: () => void
 }
 
-export function MemberConsentCrimeModal({ open, onClose, onComplete }: MemberConsentCrimeModalProps) {
+export function MemberConsentCrimeModal({
+  open,
+  savedSnapshot,
+  onSnapshotSave,
+  onClose,
+  onComplete,
+}: MemberConsentCrimeModalProps) {
   const { showAlert } = useCmsAlert()
   const iconMaskId = `member-crime-consent-pen-mask-${useId().replace(/:/g, '')}`
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [displaySrc, setDisplaySrc] = useState<string>(crimeConsentDefaultImage)
   const [replacementFileName, setReplacementFileName] = useState<string | null>(null)
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false)
 
   useEffect(() => {
     if (!open) {
-      setDisplaySrc(crimeConsentDefaultImage)
-      setReplacementFileName(null)
-      setHasUploadedDocument(false)
+      return
+    }
+
+    if (savedSnapshot) {
+      setDisplaySrc(savedSnapshot.displaySrc)
+      setReplacementFileName(savedSnapshot.replacementFileName)
+      setUploadedFile(savedSnapshot.file ?? null)
+      setHasUploadedDocument(true)
       return
     }
 
     let cancelled = false
+    setHasUploadedDocument(false)
+    setReplacementFileName(null)
+    setUploadedFile(null)
     void loadWritingFormTemplateDraft(AGREEMENT_CRIME_TEMPLATE_CODE).then(saved => {
       if (cancelled) return
       const settings = parseAgreementCrimeConsentSettings(saved?.settingsJson)
@@ -50,14 +69,12 @@ export function MemberConsentCrimeModal({ open, onClose, onComplete }: MemberCon
       } else {
         setDisplaySrc(crimeConsentDefaultImage)
       }
-      setReplacementFileName(null)
-      setHasUploadedDocument(false)
     })
 
     return () => {
       cancelled = true
     }
-  }, [open])
+  }, [open, savedSnapshot])
 
   const handlePickDocument = useCallback(() => {
     fileInputRef.current?.click()
@@ -70,6 +87,7 @@ export function MemberConsentCrimeModal({ open, onClose, onComplete }: MemberCon
     void readImageFileAsDataUrl(file).then(dataUrl => {
       setDisplaySrc(dataUrl)
       setReplacementFileName(file.name)
+      setUploadedFile(file)
       setHasUploadedDocument(true)
     })
   }, [])
@@ -93,12 +111,25 @@ export function MemberConsentCrimeModal({ open, onClose, onComplete }: MemberCon
     if (!hasUploadedDocument) {
       showAlert({
         title: '안내',
-        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        content: CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE,
       })
       return
     }
+    onSnapshotSave?.({
+      displaySrc,
+      replacementFileName,
+      file: uploadedFile ?? undefined,
+    })
     onComplete()
-  }, [hasUploadedDocument, onComplete, showAlert])
+  }, [
+    displaySrc,
+    hasUploadedDocument,
+    onComplete,
+    onSnapshotSave,
+    replacementFileName,
+    showAlert,
+    uploadedFile,
+  ])
 
   return (
     <TealHeaderModal

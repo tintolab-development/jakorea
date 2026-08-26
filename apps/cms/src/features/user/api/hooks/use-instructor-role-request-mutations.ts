@@ -28,10 +28,11 @@ function buildRejectBody(payload: InstructorPermissionRejectPayload) {
 export function useInstructorRoleRequestMutations() {
   const queryClient = useQueryClient()
 
-  const invalidate = () => {
-    void queryClient.invalidateQueries({
+  const invalidateAfterChange = async () => {
+    await queryClient.invalidateQueries({
       queryKey: memberQueryKeys.instructorRoleRequests.all(),
     })
+    await queryClient.invalidateQueries({ queryKey: memberQueryKeys.listAll() })
   }
 
   const approveMutation = useMutation({
@@ -44,7 +45,7 @@ export function useInstructorRoleRequestMutations() {
         await approveInstructorRoleRequestRemote(requestId, body)
       }
     },
-    onSuccess: invalidate,
+    onSuccess: invalidateAfterChange,
   })
 
   const rejectMutation = useMutation({
@@ -57,7 +58,7 @@ export function useInstructorRoleRequestMutations() {
         await rejectInstructorRoleRequestRemote(requestId, body)
       }
     },
-    onSuccess: invalidate,
+    onSuccess: invalidateAfterChange,
   })
 
   return {

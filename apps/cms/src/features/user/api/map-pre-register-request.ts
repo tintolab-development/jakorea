@@ -15,16 +15,12 @@ import {
   toApiInstructorCmsSettlement,
 } from '@/features/user/api/map-instructor-cms-profile'
 import { toInstructorFeeGradeApiValue } from '@/features/user/api/map-instructor-activity-display'
-import { omitOptionalDisagreedPreRegisterTerms } from '@/features/user/api/build-pre-register-terms-agreements'
 
 function attachTermsAgreements<
   T extends { termsAgreements?: AdminPreRegisterIndividualRequest['termsAgreements'] },
 >(body: T, request: CreateUserRequest): T {
   if (request.termsAgreements != null && request.termsAgreements.length > 0) {
-    const termsAgreements = omitOptionalDisagreedPreRegisterTerms(request.termsAgreements)
-    if (termsAgreements != null && termsAgreements.length > 0) {
-      body.termsAgreements = termsAgreements
-    }
+    body.termsAgreements = request.termsAgreements
   }
   return body
 }
@@ -36,6 +32,44 @@ function baseIdentity(request: CreateUserRequest) {
   const gender = toApiGender(request.gender)
   const birthDate = toApiBirthDate(request.birthDate)
   return { email, name, phone, gender, birthDate }
+}
+
+function trimOptional(value: string | undefined): string | undefined {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : undefined
+}
+
+/** 재학 중 개인 pre-register — CMS PK 없을 때 NEIS/CareerNet 선택값 */
+function buildIndividualSchoolSelection(
+  request: CreateUserRequest
+): PortalSchoolSelectionRequest | undefined {
+  const name = trimOptional(request.affiliation)
+  if (!name) return undefined
+
+  const selection: PortalSchoolSelectionRequest = {
+    name,
+    organizationCategory: 'SCHOOL',
+  }
+  const provider = trimOptional(request.schoolProvider)
+  if (provider) selection.provider = provider
+  const externalSchoolCode =
+    trimOptional(request.schoolExternalCode) ?? trimOptional(request.neisCode)
+  if (externalSchoolCode) {
+    selection.externalSchoolCode = externalSchoolCode
+    if (!selection.provider) selection.provider = 'NEIS'
+  }
+  const schoolLevel = trimOptional(request.schoolLevel)
+  if (schoolLevel) selection.schoolLevel = schoolLevel
+  const regionSido = trimOptional(request.schoolRegionSido) ?? trimOptional(request.regionSido)
+  if (regionSido) selection.regionSido = regionSido
+  const regionSigungu =
+    trimOptional(request.schoolRegionSigungu) ?? trimOptional(request.regionSigungu)
+  if (regionSigungu) selection.regionSigungu = regionSigungu
+  const zipcode = trimOptional(request.schoolZipcode) ?? trimOptional(request.zipCode)
+  if (zipcode) selection.zipcode = zipcode
+  const address = trimOptional(request.schoolAddress)
+  if (address) selection.address = address
+  return selection
 }
 
 /** @deprecated 단일 pre-register — 역할별 mapper 사용 권장 */
@@ -76,24 +110,56 @@ export function mapCreateUserRequestToPreRegisterIndividual(
   if (!email) {
     throw new Error('개인 회원 등록에는 이메일이 필요합니다.')
   }
-  const body: AdminPreRegisterIndividualRequest & { grade?: string } = {
+  const enrollmentStatus = request.schoolEnrollmentStatus
+  if (!enrollmentStatus) {
+    throw new Error('개인 회원 등록에는 재학/미재학 상태(enrollmentStatus)가 필요합니다.')
+  }
+
+  const requiredPhone = phone?.trim()
+  if (!requiredPhone) {
+    throw new Error('개인 회원 등록에는 전화번호(phone)가 필요합니다.')
+  }
+
+  const requiredGender = gender?.trim()
+  if (!requiredGender) {
+    throw new Error('개인 회원 등록에는 성별(gender)이 필요합니다.')
+  }
+
+  const requiredBirthDate = birthDate?.trim()
+  if (!requiredBirthDate) {
+    throw new Error('개인 회원 등록에는 생년월일(birthDate)이 필요합니다.')
+  }
+
+  const requiredAddress = request.address?.trim()
+  if (!requiredAddress) {
+    throw new Error('개인 회원 등록에는 주소(address)가 필요합니다.')
+  }
+
+  const body: AdminPreRegisterIndividualRequest = {
     email,
     name,
     rawPassword: resolveAdminProvisionedTempPassword(email),
+    phone: requiredPhone,
+    gender: requiredGender,
+    birthDate: requiredBirthDate,
+    address: requiredAddress,
+    enrollmentStatus,
   }
-  if (phone) body.phone = phone
-  if (gender) body.gender = gender
-  if (birthDate) body.birthDate = birthDate
-  if (request.address?.trim()) body.address = request.address.trim()
   if (request.detailAddress?.trim()) body.addressDetail = request.detailAddress.trim()
+  if (request.zipCode?.trim()) body.zipCode = request.zipCode.trim()
   if (request.affiliation?.trim()) body.schoolName = request.affiliation.trim()
-  if (request.schoolEnrollmentStatus) {
-    body.enrollmentStatus = request.schoolEnrollmentStatus
-  }
-  // OpenAPI v9에 grade 미선언 — BE 저장·상세 반환용으로 wire에 포함 (스펙 추가 예정)
   const grade = request.grade?.trim()
   if (grade && request.schoolEnrollmentStatus === 'ENROLLED') {
     body.grade = grade
+  }
+  if (request.schoolEnrollmentStatus === 'ENROLLED') {
+    const organizationId = request.schoolOrganizationId
+    if (organizationId != null && Number.isFinite(organizationId)) {
+      body.schoolOrganizationId = organizationId
+    } else {
+      const schoolSelection = buildIndividualSchoolSelection(request)
+      if (schoolSelection) body.schoolSelection = schoolSelection
+    }
   }
   if (request.id1365?.trim()) body.external1365Id = request.id1365.trim()
   return attachTermsAgreements(body, request)

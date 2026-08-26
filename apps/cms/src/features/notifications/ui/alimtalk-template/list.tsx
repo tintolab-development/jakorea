@@ -6,9 +6,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, CmsModal, ConfirmModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsModal, ConfirmModal } from '@/shared/ui'
 import {
   ALIMTALK_ROOT_CATEGORY_ID,
+  NHN_CLOUD_ALIMTALK_TEMPLATE_CONSOLE_URL,
   type AlimtalkCategory,
   type AlimtalkTemplateItem,
   type AlimtalkTemplatePendingFilters,
@@ -70,7 +71,6 @@ function categoryIdForEdit(
 }
 
 export function AlimtalkTemplateList() {
-  const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
   const appliedFilters = useMemo(() => pendingFiltersFromSearchParams(searchParams), [searchParams])
   const [pendingFilters, setPendingFilters] = useState<AlimtalkTemplatePendingFilters>(appliedFilters)
@@ -295,10 +295,7 @@ export function AlimtalkTemplateList() {
               size="large"
               type="button"
               onClick={() =>
-                showAlert({
-                  title: '준비 중',
-                  content: '템플릿 등록 기능은 현재 준비 중입니다.',
-                })
+                window.open(NHN_CLOUD_ALIMTALK_TEMPLATE_CONSOLE_URL, '_blank', 'noopener,noreferrer')
               }
             >
               템플릿 등록

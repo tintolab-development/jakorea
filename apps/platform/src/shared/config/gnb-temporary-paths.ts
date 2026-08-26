@@ -9,9 +9,6 @@ export const EDUCATION_FINANCE_PATH = '/education/finance'
 export const EDUCATION_ENTREPRENEURSHIP_PATH = '/education/entrepreneurship'
 export const EDUCATION_DIGITAL_LITERACY_PATH = '/education/digital-literacy'
 
-export const SUPPORT_CORPORATE_PATH = '/support/corporate'
-export const SUPPORT_TALENT_PATH = '/support/talent'
-
 export const TEMPORARY_PAGE_TITLES: Record<string, string> = {
   [ABOUT_INTRODUCTION_PATH]: '기관소개',
   [ABOUT_HISTORY_PATH]: 'JA History',
@@ -20,8 +17,6 @@ export const TEMPORARY_PAGE_TITLES: Record<string, string> = {
   [EDUCATION_FINANCE_PATH]: '경제금융',
   [EDUCATION_ENTREPRENEURSHIP_PATH]: '기업가 정신',
   [EDUCATION_DIGITAL_LITERACY_PATH]: '디지털 리터러시',
-  [SUPPORT_CORPORATE_PATH]: '기업후원',
-  [SUPPORT_TALENT_PATH]: '재능기부',
 }
 
 export const TEMPORARY_PAGE_PATHS = Object.keys(TEMPORARY_PAGE_TITLES)

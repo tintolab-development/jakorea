@@ -1,0 +1,119 @@
+.mail-template-compose__subject {
+  position: relative;
+  width: 100%;
+}
+
+.mail-template-compose__subject .cms-input__control {
+  padding-right: 72px;
+}
+
+.mail-template-compose__subject-count {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  color: rgba(61, 61, 61, 0.5);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  pointer-events: none;
+}
+
+.mail-template-compose__editor-host {
+  width: 100%;
+  min-width: 0;
+}
+
+.mail-template-compose__editor-host .cms-rich-text-editor {
+  min-height: 0;
+  --rt-body-padding: 0;
+  --rt-content-color: var(--main-BK, #3d3d3d);
+  --rt-content-font-family: Pretendard, var(--font-family-primary), sans-serif;
+  --rt-content-font-size: 15px;
+  --rt-content-line-height: 150%;
+  --rt-link-color: #0070e7;
+}
+
+.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-editor__body {
+  display: flex;
+  padding: 16px;
+  align-items: flex-start;
+  gap: 8px;
+  align-self: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-editor__content {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-editor__body .ProseMirror,
+.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-editor__body .tiptap,
+.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-editor__body .rich-text-content {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  min-height: 0;
+}
+
+.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-content p {
+  margin: 0;
+}
+
+.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-content,
+.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-content p,
+.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-content li,
+.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-content td,
+.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-content th {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-content a {
+  color: var(--rt-link-color, #0070e7);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: none;
+  text-decoration-thickness: auto;
+  text-underline-offset: auto;
+  text-underline-position: from-font;
+}
+
+.mail-template-compose__editor-host .mail-template-variable {
+  color: var(--color-mint-01, #01a1af);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  cursor: text;
+}
+
+.mail-template-compose__file-field.file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.mail-template-compose__file-field .file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}

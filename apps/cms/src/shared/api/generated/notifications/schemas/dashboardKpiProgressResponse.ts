@@ -9,6 +9,10 @@
 export interface DashboardKpiProgressResponse {
   kpiTargetId?: number;
   programId?: number;
+  programCode?: string;
+  nameKo?: string;
+  programNameKo?: string;
+  programType?: string;
   targetParticipantCount?: number;
   targetSchoolCount?: number;
   targetClassCount?: number;
@@ -16,6 +20,17 @@ export interface DashboardKpiProgressResponse {
   targetInstructorCount?: number;
   targetEducationHours?: string;
   targetBudgetAmount?: string;
+  actualParticipantCount?: number;
+  actualSchoolCount?: number;
+  actualClassCount?: number;
+  actualVolunteerCount?: number;
+  actualInstructorCount?: number;
+  /** 참여자 KPI 해당 여부. false면 UI는 해당없음 */
+  participantApplicable?: boolean;
+  /** 학교 KPI 해당 여부. individual/교육받은 교사는 false */
+  schoolApplicable?: boolean;
+  /** 학급 KPI 해당 여부. individual/교육받은 교사는 false */
+  classApplicable?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -45,13 +45,22 @@ export function ProgramDetailSponsorDetailOverlay() {
     }
   }, [handleClose, queryClient, sponsorId])
 
-  const open = Boolean(sponsorId && (sponsorRow || isResolving))
+  if (!sponsorId) return null
 
-  if (!sponsorId || (!sponsorRow && !isResolving)) return null
-
-  if (!sponsorRow) return null
+  const sponsorForModal: SponsorManagementRow =
+    sponsorRow ?? {
+      id: sponsorId,
+      name: '',
+      createdAt: '',
+      updatedAt: '',
+      programCount: 0,
+    }
 
   return (
-    <SponsorDetailFullPageModal open={open} onClose={handleClose} sponsor={sponsorRow} />
+    <SponsorDetailFullPageModal
+      open={Boolean(sponsorRow || isResolving)}
+      onClose={handleClose}
+      sponsor={sponsorForModal}
+    />
   )
 }

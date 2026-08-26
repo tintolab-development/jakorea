@@ -302,7 +302,7 @@ export function PaymentOrderProgramSettlementTable({
           }
         }}
         onSearch={handleSearch}
-        title="강사 별 정산 목록"
+        title="신청자별 정산 목록"
         description={`총 ${filteredRows.length}건`}
         actions={
           <>

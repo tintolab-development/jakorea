@@ -30,6 +30,8 @@ import { IndividualDonationPage } from '@/pages/sponsor/individual/page'
 import { CorporateGuidePage } from '@/pages/sponsor/corporate/guide/page'
 import { CorporatePartnersPage } from '@/pages/sponsor/corporate/partners/page'
 import { CorporateConsultationsPage } from '@/pages/sponsor/corporate/consultations/page'
+import { TalentDonationIntroPage } from '@/pages/sponsor/talent/intro/page'
+import { TalentDonationApplicationsPage } from '@/pages/sponsor/talent/applications/page'
 import { SiteInfoPage } from '@/pages/site/info/page'
 import { GnbMenuPage } from '@/pages/site/gnb/page'
 import { FooterPage } from '@/pages/site/footer/page'
@@ -41,6 +43,7 @@ import { AdminAccountLogPage } from '@/pages/logs/admin-account/page'
 import { FileDownloadLogPage } from '@/pages/logs/file-download/page'
 import { PiiAccessLogPage } from '@/pages/logs/pii-access/page'
 import { BugIssueLogPage } from '@/pages/logs/bugs/page'
+import { RecruitGuidePage } from '@/pages/ja-korea/recruit/guide/page'
 import { PlaceholderPage } from '@/pages/placeholder/page'
 import { getLeafMenuPaths } from '@/shared/config/menu-config'
 
@@ -61,6 +64,7 @@ const IMPLEMENTED_LEAF_PATHS = new Set([
   '/ja-korea/notices',
   '/ja-korea/directions',
   '/ja-korea/people',
+  '/ja-korea/recruit/guide',
   '/impact/stories',
   '/education/programs',
   '/education/fields',
@@ -69,6 +73,8 @@ const IMPLEMENTED_LEAF_PATHS = new Set([
   '/sponsor/corporate/guide',
   '/sponsor/corporate/partners',
   '/sponsor/corporate/consultations',
+  '/sponsor/talent/intro',
+  '/sponsor/talent/applications',
   '/site/info',
   '/site/gnb',
   '/site/footer',
@@ -156,6 +162,7 @@ export const router = createBrowserRouter([
       { path: 'ja-korea/notices/:id', element: <NoticeDetailPage /> },
       { path: 'ja-korea/directions', element: <DirectionsPage /> },
       { path: 'ja-korea/people', element: <PeoplePage /> },
+      { path: 'ja-korea/recruit/guide', element: <RecruitGuidePage /> },
       {
         path: 'ja-korea/organization',
         element: <Navigate to="/ja-korea/people" replace />,
@@ -179,6 +186,11 @@ export const router = createBrowserRouter([
       {
         path: 'sponsor/corporate/consultations',
         element: <CorporateConsultationsPage />,
+      },
+      { path: 'sponsor/talent/intro', element: <TalentDonationIntroPage /> },
+      {
+        path: 'sponsor/talent/applications',
+        element: <TalentDonationApplicationsPage />,
       },
       { path: 'site/info', element: <SiteInfoPage /> },
       { path: 'site/gnb', element: <GnbMenuPage /> },

@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Form } from 'antd'
 import type { FormInstance } from 'antd/es/form'
-import { createFaq, deleteFaq, updateFaq } from '@/features/posts/api/faqs/admin-faqs-service'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { useFaqCategoriesQuery } from '@/features/posts/hooks/use-faq-categories-query'
+import { useFaqMutations } from '@/features/posts/hooks/use-faq-mutations'
 import type {
   FaqFormFieldValues,
-  FaqFormModalProps } from '@/features/posts/model/faq-form-types'
+  FaqFormModalProps,
+} from '@/features/posts/model/faq-form-types'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { handleError } from '@/shared/utils/error-handler'
@@ -33,11 +34,13 @@ export function useFaqFormModal({
   mode = 'create',
   faq = null,
   onSuccess,
-  onDeleted }: FaqFormModalProps): UseFaqFormModalResult {
+  onDeleted,
+}: FaqFormModalProps): UseFaqFormModalResult {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const [form] = Form.useForm<FaqFormFieldValues>()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const { createMutation, updateMutation, deleteMutation } = useFaqMutations()
 
   const isEdit = mode === 'edit' && faq != null
   const isBroken = mode === 'edit' && open && !faq
@@ -49,14 +52,16 @@ export function useFaqFormModal({
         question: faq.question,
         answer: faq.answer ?? '',
         category: faq.category,
-        visibility: faq.status === 'published' ? 'public' : 'private' })
+        visibility: faq.status === 'published' ? 'public' : 'private',
+      })
     } else {
       form.resetFields()
       form.setFieldsValue({
         question: '',
         answer: '',
         category: undefined,
-        visibility: 'public' })
+        visibility: 'public',
+      })
     }
   }, [open, isEdit, faq, form])
 
@@ -86,21 +91,26 @@ export function useFaqFormModal({
       const status = v.visibility === 'public' ? 'published' : 'draft'
 
       if (isEdit && faq) {
-        const updated = await updateFaq(faq.id, {
-          category,
-          question: v.question.trim(),
-          answer,
-          author,
-          status })
+        const updated = await updateMutation.mutateAsync({
+          id: faq.id,
+          patch: {
+            category,
+            question: v.question.trim(),
+            answer,
+            author,
+            status,
+          },
+        })
         onSuccess?.(updated)
       } else {
-        const created = await createFaq({
+        const created = await createMutation.mutateAsync({
           category,
           question: v.question.trim(),
           answer,
           author,
           status,
-          createdAt: new Date().toISOString() })
+          createdAt: new Date().toISOString(),
+        })
         onSuccess?.(created)
       }
       onCancel()
@@ -113,7 +123,17 @@ export function useFaqFormModal({
         defaultMessage: getPostsApiErrorMessage(err, '저장에 실패했습니다.'),
       })
     }
-  }, [canWrite, form, isEdit, faq, onCancel, onSuccess, user?.name])
+  }, [
+    canWrite,
+    createMutation,
+    form,
+    isEdit,
+    faq,
+    onCancel,
+    onSuccess,
+    updateMutation,
+    user?.name,
+  ])
 
   const handleRequestDelete = useCallback(() => {
     if (!canWrite || !faq) return
@@ -123,7 +143,7 @@ export function useFaqFormModal({
   const handleConfirmDelete = useCallback(async () => {
     if (!faq) return
     try {
-      await deleteFaq(faq.id)
+      await deleteMutation.mutateAsync(faq.id)
       setDeleteConfirmOpen(false)
       onDeleted?.()
       onCancel()
@@ -133,7 +153,7 @@ export function useFaqFormModal({
         defaultMessage: getPostsApiErrorMessage(err, '삭제에 실패했습니다.'),
       })
     }
-  }, [faq, onCancel, onDeleted])
+  }, [deleteMutation, faq, onCancel, onDeleted])
 
   const modalTitle = isEdit ? 'FAQ 수정' : 'FAQ 등록'
   const submitLabel = isEdit ? '수정' : '등록'
@@ -150,5 +170,6 @@ export function useFaqFormModal({
     submitLabel,
     isEdit,
     canWrite,
-    isBroken }
+    isBroken,
+  }
 }

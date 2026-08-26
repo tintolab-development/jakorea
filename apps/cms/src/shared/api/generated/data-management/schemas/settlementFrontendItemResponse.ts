@@ -5,9 +5,12 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SettlementFrontendCalculationDetailResponse } from './settlementFrontendCalculationDetailResponse';
+import type { SettlementFrontendItemResponseType } from './settlementFrontendItemResponseType';
 
 export interface SettlementFrontendItemResponse {
-  type?: string;
+  type?: SettlementFrontendItemResponseType;
   description?: string;
   amount?: number;
+  calculationDetail?: SettlementFrontendCalculationDetailResponse;
 }

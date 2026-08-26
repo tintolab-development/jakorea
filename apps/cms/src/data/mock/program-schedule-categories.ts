@@ -7,12 +7,20 @@
 import type { Program } from '@/types/domain'
 import type { User } from '@/types/user'
 import { filterProgramsByACL } from '@/features/permission-request/lib/program-acl'
+import { getCompanySchoolPrograms } from './economy-programs'
 import { getEducationPrograms } from './education-programs'
 import { mockUjatElementaryListPrograms } from './ujat-programs-list-mock'
 import {
   PROGRAM_SCHEDULE_WIDGET_KEYS,
   type ProgramScheduleKind,
 } from './program-schedule-keys'
+
+const SCHEDULE_KIND_ORDER: readonly ProgramScheduleKind[] = [
+  'general',
+  'company_school',
+  'ujat',
+  'gemini',
+]
 
 export type { ProgramScheduleKind }
 export { PROGRAM_SCHEDULE_WIDGET_KEYS }
@@ -43,11 +51,18 @@ export function getProgramScheduleKindsForAdminUser(
   if (!user || user.role !== 'ADMIN') {
     return []
   }
-  // TODO(dashboard): 1사1교·UJAT·Gemini 일정 위젯은 추후 단계별 노출
   if (user.adminLevel === 'MASTER') {
-    return ['general']
+    return [...SCHEDULE_KIND_ORDER]
   }
 
-  const general = filterProgramsByACL(getGeneralEducationPrograms(), user)
-  return general.length > 0 ? ['general'] : []
+  const pools: Array<[ProgramScheduleKind, Program[]]> = [
+    ['general', getGeneralEducationPrograms()],
+    ['company_school', getCompanySchoolPrograms()],
+    ['ujat', getUjatPrograms()],
+    ['gemini', getGeminiPrograms()],
+  ]
+
+  return pools
+    .filter(([, programs]) => filterProgramsByACL(programs, user).length > 0)
+    .map(([kind]) => kind)
 }

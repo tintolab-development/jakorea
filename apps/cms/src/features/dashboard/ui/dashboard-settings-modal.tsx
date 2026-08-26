@@ -2,12 +2,12 @@
  * 대시보드 설정 모달
  * - 바로가기 아이콘 설정 (체크박스)
  * - 위젯 별 프로그램 설정 (프로그램별 아코디언 + 위젯별 체크)
- * ContentModal(흰 헤더), 800×720px, 바디 스크롤
+ * ContentModal(흰 헤더), 800×최대 720px(뷰포트 안), 바디 스크롤
  */
 
 import { Checkbox, Collapse, Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { useCallback, useLayoutEffect, useMemo, useState } from 'react'
+import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getDashboardWidgetsForUser, type DashboardWidgetType } from '@/shared/config/dashboard-config'
@@ -24,6 +24,14 @@ import { useDashboardQueryScope } from '../hooks/use-dashboard-query-scope'
 import { getMockDashboardProgramOptions } from '../api/dashboard-program-options-mock'
 import { dashboardQueryKeys } from '../api/dashboard-query-keys'
 import { useDashboardShortcuts } from '../hooks/use-dashboard-shortcuts'
+import {
+  buildUnifiedProgramRows,
+  getAllProgramIdsForWidget,
+  isWidgetProgramGroupIndeterminate,
+  isWidgetProgramGroupSelected,
+  setWidgetProgramGroupSelected,
+  type ProgramSettingRow,
+} from '../lib/widget-program-filter'
 import './dashboard-settings-modal.css'
 import { CmsButton } from '@/shared/ui'
 
@@ -34,129 +42,69 @@ export interface DashboardSettingsModalProps {
   onResetLayout?: () => void
 }
 
-/** 동일 title은 하나의 체크박스로 묶음 (mock 등에서 회차·기관별로 id만 다른 행 대응) */
-function buildProgramTitleGroups(
-  rows: { id: string; title: string }[]
-): { title: string; ids: string[] }[] {
-  const byTitle = new Map<string, string[]>()
-  const order: string[] = []
-  for (const { id, title } of rows) {
-    if (!byTitle.has(title)) {
-      byTitle.set(title, [])
-      order.push(title)
-    }
-    byTitle.get(title)!.push(id)
-  }
-  return order.map(title => ({ title, ids: byTitle.get(title)! }))
-}
-
-function getProgramRowsForWidget(
-  catalog: Record<string, { id: string; title: string }[]>,
-  widgetKey: string
-): { id: string; title: string }[] {
-  return catalog[widgetKey] ?? []
-}
-
-function getProgramTitleGroupsForWidget(
-  catalog: Record<string, { id: string; title: string }[]>,
-  widgetKey: string
-) {
-  return buildProgramTitleGroups(getProgramRowsForWidget(catalog, widgetKey))
-}
-
-function getAllProgramIdsForWidget(
-  catalog: Record<string, { id: string; title: string }[]>,
-  widgetKey: string
-): string[] {
-  return getProgramRowsForWidget(catalog, widgetKey).map(p => p.id)
-}
-
 function cloneWidgetProgramIds(src: Record<string, string[]>): Record<string, string[]> {
   return Object.fromEntries(Object.entries(src).map(([k, v]) => [k, [...v]]))
 }
 
-type UnifiedProgramRow = {
-  title: string
-  /** 위젯 키 → 해당 타이틀에 대응하는 program id 목록 (해당 위젯 목록에 없으면 키 없음) */
-  idsByWidget: Record<string, string[]>
-}
-
-function buildUnifiedProgramRows(
-  visibleWidgetKeys: readonly string[],
-  catalog: Record<string, { id: string; title: string }[]>
-): UnifiedProgramRow[] {
-  const titleOrder: string[] = []
-  const byTitle = new Map<string, Record<string, string[]>>()
-
-  for (const widgetKey of visibleWidgetKeys) {
-    for (const group of getProgramTitleGroupsForWidget(catalog, widgetKey)) {
-      if (!byTitle.has(group.title)) {
-        titleOrder.push(group.title)
-        byTitle.set(group.title, {})
-      }
-      const entry = byTitle.get(group.title)!
-      entry[widgetKey] = group.ids
-    }
-  }
-
-  return titleOrder.map(title => ({
-    title,
-    idsByWidget: byTitle.get(title)!,
-  }))
-}
-
-function widgetKeysForProgramRow(row: UnifiedProgramRow, visibleWidgetKeys: readonly string[]) {
+function widgetKeysForProgramRow(row: ProgramSettingRow, visibleWidgetKeys: readonly string[]) {
   return visibleWidgetKeys.filter(wk => (row.idsByWidget[wk]?.length ?? 0) > 0)
 }
 
-/** 위젯에서 해당 타이틀 그룹을 끔 (기존 handleTitleGroupToggle과 동일 결과) */
-function ensureGroupOffWidget(
-  widgetKey: string,
-  groupIds: string[],
-  state: Record<string, string[]>,
-  catalog: Record<string, { id: string; title: string }[]>
-): string[] {
-  const allProgramIds = getAllProgramIdsForWidget(catalog, widgetKey)
-  const currentIds = state[widgetKey] ?? []
-  if (currentIds.length === 0) {
-    return allProgramIds.filter(id => !groupIds.includes(id))
-  }
-  return currentIds.filter(id => !groupIds.includes(id))
+function IsolatedCheckbox({
+  checked,
+  indeterminate,
+  onCheckedChange,
+  children,
+}: {
+  checked: boolean
+  indeterminate?: boolean
+  onCheckedChange: (checked: boolean) => void
+  children?: ReactNode
+}) {
+  const id = useId()
+  return (
+    <Checkbox
+      id={id}
+      checked={checked}
+      indeterminate={indeterminate}
+      onChange={e => {
+        e.stopPropagation()
+        onCheckedChange(e.target.checked)
+      }}
+    >
+      {children}
+    </Checkbox>
+  )
 }
 
-/** 위젯에서 해당 타이틀 그룹을 켬 */
-function ensureGroupOnWidget(
+function setWidgetTitleGroup(
   widgetKey: string,
   groupIds: string[],
   state: Record<string, string[]>,
-  catalog: Record<string, { id: string; title: string }[]>
+  catalog: Record<string, { id: string; title: string }[]>,
+  selected: boolean
 ): string[] {
-  const allProgramIds = getAllProgramIdsForWidget(catalog, widgetKey)
-  const currentIds = state[widgetKey] ?? []
-  if (currentIds.length === 0) {
-    return []
-  }
-  const groupOn = groupIds.every(id => currentIds.includes(id))
-  if (groupOn) {
-    return currentIds
-  }
-  const next = [...new Set([...currentIds, ...groupIds])]
-  const allSelected = allProgramIds.every(id => next.includes(id))
-  return allSelected ? [] : next
+  return setWidgetProgramGroupSelected(
+    state[widgetKey],
+    groupIds,
+    getAllProgramIdsForWidget(catalog, widgetKey),
+    selected
+  )
 }
 
 export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModalProps) {
   const user = useAuthStore(s => s.user)
+  const assignedProgramTypes = useDashboardSettingsStore(s => s.assignedProgramTypes)
   const { mutate: persistPreferences } = useSaveDashboardPreferences()
   const queryScope = useDashboardQueryScope()
   const useRemote = queryScope === 'remote'
   const { data: apiShortcuts } = useDashboardShortcuts(open && useRemote)
 
   const visibleWidgetEntries = useMemo(() => {
-    const widgets = getDashboardWidgetsForUser(user ?? null)
+    const widgets = getDashboardWidgetsForUser(user ?? null, assignedProgramTypes)
     const allowed = new Set<DashboardWidgetType>(widgets.map(w => w.type))
     return WIDGET_PROGRAM_KEYS.filter(w => allowed.has(w.key as DashboardWidgetType))
-  }, [user])
+  }, [user, assignedProgramTypes])
 
   const visibleWidgetKeys = useMemo(
     () => visibleWidgetEntries.map(w => w.key),
@@ -228,6 +176,8 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
     null
   )
   const [programCollapseActiveKey, setProgramCollapseActiveKey] = useState<string[]>([])
+  /** 모달 open 직후 첫 행만 1회 펼침 — 사용자가 모두 닫은 뒤에는 다시 강제 열지 않음 */
+  const didInitProgramCollapseRef = useRef(false)
   const [draftWidgetProgramIds, setDraftWidgetProgramIds] = useState<Record<
     string,
     string[]
@@ -238,6 +188,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
       setDraftShortcutEnabled(null)
       setDraftWidgetProgramIds(null)
       setProgramCollapseActiveKey([])
+      didInitProgramCollapseRef.current = false
       return
     }
     const s = useDashboardSettingsStore.getState()
@@ -247,7 +198,9 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
 
   useLayoutEffect(() => {
     if (!open || programsCatalogLoading || unifiedRows.length === 0) return
-    setProgramCollapseActiveKey(prev => (prev.length === 0 ? [unifiedRows[0]!.title] : prev))
+    if (didInitProgramCollapseRef.current) return
+    didInitProgramCollapseRef.current = true
+    setProgramCollapseActiveKey([unifiedRows[0]!.title])
   }, [open, programsCatalogLoading, unifiedRows])
 
   const shortcutEnabled =
@@ -283,53 +236,40 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
     return anyOn && !shortcutAllEnabled
   }, [shortcutAllEnabled, shortcutCatalogItems, shortcutEnabled])
 
-  const setDraftWidgetProgramIdsForKey = useCallback((widgetKey: string, programIds: string[]) => {
-    setDraftWidgetProgramIds(prev => {
-      const base =
-        prev ?? cloneWidgetProgramIds(useDashboardSettingsStore.getState().widgetProgramIds)
-      return { ...base, [widgetKey]: programIds }
-    })
-  }, [])
-
   const isTitleGroupSelected = useCallback(
-    (widgetKey: string, groupIds: string[]) => {
-      const ids = widgetProgramIds[widgetKey]
-      if (!ids || ids.length === 0) return true
-      return groupIds.every(id => ids.includes(id))
-    },
+    (widgetKey: string, groupIds: string[]) =>
+      isWidgetProgramGroupSelected(widgetProgramIds[widgetKey], groupIds),
+    [widgetProgramIds]
+  )
+
+  const isTitleGroupIndeterminate = useCallback(
+    (widgetKey: string, groupIds: string[]) =>
+      isWidgetProgramGroupIndeterminate(widgetProgramIds[widgetKey], groupIds),
     [widgetProgramIds]
   )
 
   const handleTitleGroupToggle = useCallback(
-    (widgetKey: string, groupIds: string[]) => {
+    (widgetKey: string, groupIds: string[], selected: boolean) => {
       if (!programCatalog) return
-      const allProgramIds = getAllProgramIdsForWidget(programCatalog, widgetKey)
-      const currentIds = widgetProgramIds[widgetKey] ?? []
-      const groupOn = groupIds.every(id => currentIds.includes(id))
-
-      if (currentIds.length === 0) {
-        setDraftWidgetProgramIdsForKey(
-          widgetKey,
-          allProgramIds.filter(id => !groupIds.includes(id))
-        )
-        return
-      }
-
-      if (groupOn) {
-        const remaining = currentIds.filter(id => !groupIds.includes(id))
-        setDraftWidgetProgramIdsForKey(widgetKey, remaining)
-        return
-      }
-
-      const next = [...new Set([...currentIds, ...groupIds])]
-      const allSelected = allProgramIds.every(id => next.includes(id))
-      setDraftWidgetProgramIdsForKey(widgetKey, allSelected ? [] : next)
+      setDraftWidgetProgramIds(prev => {
+        const base =
+          prev ?? cloneWidgetProgramIds(useDashboardSettingsStore.getState().widgetProgramIds)
+        return {
+          ...base,
+          [widgetKey]: setWidgetProgramGroupSelected(
+            base[widgetKey],
+            groupIds,
+            getAllProgramIdsForWidget(programCatalog, widgetKey),
+            selected
+          ),
+        }
+      })
     },
-    [widgetProgramIds, setDraftWidgetProgramIdsForKey, programCatalog]
+    [programCatalog]
   )
 
   const isMasterRowSelected = useCallback(
-    (row: UnifiedProgramRow) => {
+    (row: ProgramSettingRow) => {
       const keys = widgetKeysForProgramRow(row, visibleWidgetKeys)
       if (keys.length === 0) return true
       return keys.every(wk => isTitleGroupSelected(wk, row.idsByWidget[wk]!))
@@ -338,7 +278,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
   )
 
   const isMasterRowIndeterminate = useCallback(
-    (row: UnifiedProgramRow) => {
+    (row: ProgramSettingRow) => {
       const keys = widgetKeysForProgramRow(row, visibleWidgetKeys)
       if (keys.length === 0) return false
       const selected = keys.filter(wk => isTitleGroupSelected(wk, row.idsByWidget[wk]!))
@@ -348,7 +288,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
   )
 
   const handleMasterRowToggle = useCallback(
-    (row: UnifiedProgramRow, turnOn: boolean) => {
+    (row: ProgramSettingRow, turnOn: boolean) => {
       if (!programCatalog) return
       setDraftWidgetProgramIds(prev => {
         const base =
@@ -357,15 +297,17 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
         const keys = widgetKeysForProgramRow(row, visibleWidgetKeys)
         for (const wk of keys) {
           const gids = row.idsByWidget[wk]!
-          next[wk] = turnOn
-            ? ensureGroupOnWidget(wk, gids, next, programCatalog)
-            : ensureGroupOffWidget(wk, gids, next, programCatalog)
+          next[wk] = setWidgetTitleGroup(wk, gids, next, programCatalog, turnOn)
         }
         return next
       })
     },
     [visibleWidgetKeys, programCatalog]
   )
+
+  const handleProgramCollapseChange = useCallback((keys: string[] | string) => {
+    setProgramCollapseActiveKey(Array.isArray(keys) ? keys : keys ? [keys] : [])
+  }, [])
 
   const handleApply = useCallback(() => {
     const s = useDashboardSettingsStore.getState()
@@ -383,10 +325,10 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
 
   const footer = (
     <>
-      <CmsButton variant="secondary" size="small" onClick={onCancel}>
+      <CmsButton variant="secondary" size="large" onClick={onCancel}>
         닫기
       </CmsButton>
-      <CmsButton variant="primary" size="small" onClick={handleApply}>
+      <CmsButton variant="primary" size="large" onClick={handleApply}>
         설정
       </CmsButton>
     </>
@@ -438,9 +380,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
             <Collapse
               bordered={false}
               activeKey={programCollapseActiveKey}
-              onChange={keys =>
-                setProgramCollapseActiveKey(Array.isArray(keys) ? keys : keys ? [keys] : [])
-              }
+              onChange={handleProgramCollapseChange}
               expandIconPosition="end"
               expandIcon={({ isActive }) => (
                 <span
@@ -472,10 +412,10 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
                         onClick={e => e.stopPropagation()}
                         onMouseDown={e => e.stopPropagation()}
                       >
-                        <Checkbox
+                        <IsolatedCheckbox
                           checked={isMasterRowSelected(row)}
                           indeterminate={isMasterRowIndeterminate(row)}
-                          onChange={e => handleMasterRowToggle(row, e.target.checked)}
+                          onCheckedChange={checked => handleMasterRowToggle(row, checked)}
                         />
                       </span>
                       <span className="dashboard-settings-modal__accordion-title" title={row.title}>
@@ -485,18 +425,26 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
                   </div>
                 ),
                 children: (
-                  <div className="dashboard-settings-modal__accordion-body">
+                  <div
+                    className="dashboard-settings-modal__accordion-body"
+                    data-program-row={row.title}
+                    onClick={e => e.stopPropagation()}
+                    onMouseDown={e => e.stopPropagation()}
+                  >
                     {visibleWidgetEntries.flatMap(({ key: widgetKey }) => {
                       const gids = row.idsByWidget[widgetKey]
                       if (!gids?.length) return []
                       return [
-                        <Checkbox
-                          key={widgetKey}
+                        <IsolatedCheckbox
+                          key={`${row.title}::${widgetKey}`}
                           checked={isTitleGroupSelected(widgetKey, gids)}
-                          onChange={() => handleTitleGroupToggle(widgetKey, gids)}
+                          indeterminate={isTitleGroupIndeterminate(widgetKey, gids)}
+                          onCheckedChange={checked =>
+                            handleTitleGroupToggle(widgetKey, gids, checked)
+                          }
                         >
                           {widgetLabelByKey[widgetKey] ?? widgetKey}
-                        </Checkbox>,
+                        </IsolatedCheckbox>,
                       ]
                     })}
                   </div>

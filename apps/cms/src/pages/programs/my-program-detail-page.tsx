@@ -184,7 +184,7 @@ export function MyProgramDetailPage() {
       title: '일정 날짜',
       dataIndex: 'date',
       key: 'date',
-      render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm'),
+      render: (date: string) => dayjs(date).format('YYYY.MM.DD HH:mm'),
     },
     {
       title: '장소',
@@ -267,11 +267,11 @@ export function MyProgramDetailPage() {
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="진행 기간"
-              view={`${dayjs(program.startDate).format('YYYY-MM-DD')} ~ ${dayjs(program.endDate).format('YYYY-MM-DD')}`}
+              view={`${dayjs(program.startDate).format('YYYY.MM.DD')} ~ ${dayjs(program.endDate).format('YYYY.MM.DD')}`}
             />
             <DetailInfoForm.Field
               label="매칭일"
-              view={dayjs(program.matchedAt).format('YYYY-MM-DD')}
+              view={dayjs(program.matchedAt).format('YYYY.MM.DD')}
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="double">

@@ -131,9 +131,9 @@ export function PFTextInput({
           className={inputClassName}
           disabled={disabled}
           required={required}
+          {...props}
           value={currentValue}
           onChange={handleChange}
-          {...props}
         />
         {shouldShowClearButton ? (
           <button

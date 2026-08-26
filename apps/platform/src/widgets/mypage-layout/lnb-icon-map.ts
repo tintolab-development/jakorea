@@ -1,4 +1,4 @@
-import type { MypageLnbItemKey } from '@/features/mypage'
+import type { MypageHomeLnbItemKey, MypageLnbItemKey } from '@/features/mypage'
 import bookGrayIconUrl from './image/icon/book-gray-24.svg'
 import bookMintIconUrl from './image/icon/book-mint-24.svg'
 import handGrayIconUrl from './image/icon/hand-gray-24.svg'
@@ -12,7 +12,7 @@ import speechBubbleMintIconUrl from './image/icon/speechbubble-mint-24.svg'
 import walletGrayIconUrl from './image/icon/wallet-gray-24.svg'
 import walletMintIconUrl from './image/icon/wallet-mint-24.svg'
 
-const LNB_ICON_MAP: Record<MypageLnbItemKey, { gray: string; mint: string }> = {
+const LNB_ICON_MAP: Record<MypageHomeLnbItemKey, { gray: string; mint: string }> = {
   home: { gray: homeGrayIconUrl, mint: homeMintIconUrl },
   lectures: { gray: monitorGrayIconUrl, mint: monitorMintIconUrl },
   settlement: { gray: walletGrayIconUrl, mint: walletMintIconUrl },
@@ -21,8 +21,9 @@ const LNB_ICON_MAP: Record<MypageLnbItemKey, { gray: string; mint: string }> = {
   inquiries: { gray: speechBubbleGrayIconUrl, mint: speechBubbleMintIconUrl },
 }
 
-export function getLnbIconUrl(key: MypageLnbItemKey, active: boolean) {
-  const icons = LNB_ICON_MAP[key]
+export function getLnbIconUrl(key: MypageLnbItemKey, active: boolean): string | undefined {
+  const icons = LNB_ICON_MAP[key as MypageHomeLnbItemKey]
+  if (!icons) return undefined
   return active ? icons.mint : icons.gray
 }
 

@@ -1,46 +1,61 @@
+/**
+ * 강의보고서 제출 내역 모달 — 과제·설문 제출 내역 모달과 동일 shell (ContentModal + FilterTableLayout)
+ */
+
 .lecture-report-submission-history-modal .content-modal__description {
   margin: 0;
   color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
   font-size: 16px;
+  font-style: normal;
   font-weight: 500;
   line-height: 150%;
-}
-
-.lecture-report-submission-history-modal__description-program {
-  font-weight: 700;
 }
 
 .lecture-report-submission-history-modal__body {
   display: flex;
   flex-direction: column;
+  gap: 0;
   min-width: 0;
 }
 
-.lecture-report-submission-history-modal__list-head {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-bottom: 10px;
+.lecture-report-submission-history-modal__table-layout.filter-table-layout {
+  margin-bottom: 0;
+  padding: 0;
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
 }
 
-.lecture-report-submission-history-modal__list-title {
-  color: var(--default-BK, #3d3d3d);
-  font-size: 18px;
-  font-weight: 700;
+.lecture-report-submission-history-modal__table-layout.filter-table-layout--without-filter
+  .filter-table-layout__toolbar {
+  margin-bottom: var(--spacing-16, 16px);
+}
+
+.lecture-report-submission-history-modal__table-layout .filter-table-layout__title {
+  font-size: 20px;
   line-height: 140%;
+  padding-left: 8px;
 }
 
-.lecture-report-submission-history-modal__list-count {
-  color: var(--default-BK, #3d3d3d);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.6;
+.lecture-report-submission-history-modal__table-outer .cms-data-table.cms-data-table--fluid table.ant-table {
+  table-layout: fixed !important;
+  width: 100%;
+}
+
+.lecture-report-submission-history-modal__table-outer
+  .ant-table-tbody
+  > tr.lecture-report-submission-history-modal__row--scheduled {
+  opacity: 0.5;
 }
 
 .lecture-report-submission-history-modal__status-text {
-  color: var(--default-BK, #3d3d3d);
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
   font-size: 16px;
+  font-style: normal;
   font-weight: 500;
   line-height: 150%;
 }
@@ -49,6 +64,40 @@
   color: var(--color-green, #1e8c29);
 }
 
+.lecture-report-submission-history-modal__status-text--completed {
+  color: var(--default-BK, #3d3d3d);
+}
+
 .lecture-report-submission-history-modal__status-text--undone {
   color: var(--color-red, #c32f4a);
+}
+
+/* 푸터 — ContentModal 기본 140×44 덮어쓰기 (h40 · 닫기 120 · 일괄 200) */
+.lecture-report-submission-history-modal
+  .content-modal__footer-actions
+  .lecture-report-submission-history-modal__footer-btn.cms-button.ant-btn {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+}
+
+.lecture-report-submission-history-modal
+  .content-modal__footer-actions
+  .lecture-report-submission-history-modal__footer-btn--close.cms-button.ant-btn {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+}
+
+.lecture-report-submission-history-modal
+  .content-modal__footer-actions
+  .lecture-report-submission-history-modal__footer-btn--bulk.cms-button.ant-btn {
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
 }

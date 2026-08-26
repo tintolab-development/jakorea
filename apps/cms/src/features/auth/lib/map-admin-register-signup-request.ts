@@ -1,6 +1,6 @@
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { toApiBirthDate } from '@jakorea/identity-verification'
 
-import { ADMIN_REGISTER_TERMS_VERSION } from '@/features/auth/lib/admin-register.constants'
 import type { AdminSelfSignupRequest } from '@/features/auth/model/admin-register-api.types'
 import type { AdminRegisterGender, AdminRegisterWizardData } from '@/types/admin-register'
 
@@ -29,7 +29,8 @@ function resolveIdentitySessionUuid(formData: AdminRegisterWizardData): string {
 }
 
 export function buildAdminSelfSignupRequest(
-  formData: AdminRegisterWizardData
+  formData: AdminRegisterWizardData,
+  termsVersion: string
 ): AdminSelfSignupRequest {
   if (
     !formData.email ||
@@ -43,15 +44,22 @@ export function buildAdminSelfSignupRequest(
     throw new Error('가입 정보가 올바르지 않습니다.')
   }
 
+  const resolvedTermsVersion = termsVersion.trim()
+  if (!resolvedTermsVersion) {
+    throw new Error('약관 버전이 없습니다. 잠시 후 다시 시도해 주세요.')
+  }
+
   return {
     email: formData.email,
     password: formData.password,
     name: resolveSignupName(formData),
-    phone: formData.verifiedPhone,
+    phone: formData.verifiedPhone
+      ? formatKoreanPhoneNumber(formData.verifiedPhone) || formData.verifiedPhone
+      : undefined,
     gender: toApiGender(formData.gender),
     birthDate: toApiBirthDate(formData.birthDate),
     identityVerificationSessionUuid: resolveIdentitySessionUuid(formData),
-    termsVersion: ADMIN_REGISTER_TERMS_VERSION,
+    termsVersion: resolvedTermsVersion,
     termsAgreed: formData.termsOfService,
     privacyAgreed: formData.privacyPolicy,
     mfaSetupAgreed: formData.mfaSetupAgreed,

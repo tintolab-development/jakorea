@@ -63,6 +63,13 @@ export function matchesProgramHistoryFilter(
     return false
   }
 
+  if (
+    filters.participantType !== SPONSOR_PROGRAM_HISTORY_FILTER_ALL &&
+    row.participantType !== filters.participantType
+  ) {
+    return false
+  }
+
   if (managerQuery && !row.managerName.toLowerCase().includes(managerQuery)) {
     return false
   }

@@ -25,7 +25,7 @@ import {
   PAYMENT_STATEMENT_A4_HIDDEN_PARAGRAPH_IDS,
 } from '@/features/template/model/payment-statement-issuance-a4-preview'
 import { normalizeWritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
-import { PAYMENT_STATEMENT_ISSUANCE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-config'
+import { resolvePaymentStatementIssuanceDocumentParagraphBodyOptions } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-config'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import { handleError } from '@/shared/utils/error-handler'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
@@ -37,7 +37,7 @@ const PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE = '지급조서'
 export interface PaymentStatementIssuanceViewModalProps {
   open: boolean
   onClose: () => void
-  /** 미전달 시 발급용 기본 목 데이터 */
+  /** 미전달 시 빈 문서(샘플 인물·기관 없음) */
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   /** PDF 저장 파일명(확장자 제외) */
   fileName?: string
@@ -111,11 +111,7 @@ export function PaymentStatementIssuanceViewModal({
   )
 
   const resolvedParagraphBodyOptions = useMemo(
-    () => ({
-      ...PAYMENT_STATEMENT_ISSUANCE_PARAGRAPH_BODY_OPTIONS,
-      ...paragraphBodyOptions,
-      paymentStatementDisplayMode: 'document' as const,
-    }),
+    () => resolvePaymentStatementIssuanceDocumentParagraphBodyOptions(paragraphBodyOptions),
     [paragraphBodyOptions]
   )
 

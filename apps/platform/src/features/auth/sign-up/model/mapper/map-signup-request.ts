@@ -7,6 +7,7 @@ import type {
   SchoolStatus,
 } from '../sign-up.types'
 import { MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE } from '../../lib/constants'
+import { toApiSignupPhone } from '../../lib/helpers/to-api-phone'
 import { parseBirthDate } from '../../lib/utils'
 import { buildTermsAgreementsFromCatalog } from './map-terms-agreements'
 import type {
@@ -99,7 +100,7 @@ function buildMember(input: SignUpMapInput): MemberSignupRequest {
     email: input.email.trim(),
     password: input.password,
     name: (input.name ?? MOCK_VERIFIED_NAME).trim(),
-    phone: (input.phone ?? MOCK_VERIFIED_PHONE).trim() || undefined,
+    phone: toApiSignupPhone(input.phone ?? MOCK_VERIFIED_PHONE),
     birthDate: toApiBirthDate(input.birthDate),
     gender: toApiGender(input.gender),
     under14: input.isUnderAgeSignup,

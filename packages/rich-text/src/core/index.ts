@@ -1,3 +1,6 @@
+export { Editor, Node, mergeAttributes } from '@tiptap/core'
+export { Plugin, TextSelection, NodeSelection } from '@tiptap/pm/state'
+export type { EditorState, Transaction } from '@tiptap/pm/state'
 export { createRichTextExtensions } from './extensions'
 export { createRichTextEditorApi } from './editor-api'
 export { isRichTextEditorReady } from './editor-ready'
@@ -5,6 +8,8 @@ export {
   getInitialEditorContent,
   markdownToHtml,
   serializeEditorContent,
+  stripTrailingEmptyMarkdown,
+  stripTrailingEmptyParagraphs,
   toEditorContentType,
 } from './content'
 export {
@@ -19,6 +24,7 @@ export {
   promptImageUrl,
   promptLinkUrl,
   promptYoutubeUrl,
+  setLinkFromUrl,
   RICH_TEXT_IMAGE_ACCEPT,
 } from './insert-actions'
 export {

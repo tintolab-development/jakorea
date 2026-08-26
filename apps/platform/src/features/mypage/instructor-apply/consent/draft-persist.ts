@@ -1,5 +1,7 @@
 import type { ConsentValue } from '@jakorea/domain/instructor/consent'
+import type { FormSignatureValue } from '@/shared/ui'
 import type { InstructorApplyConsentKey } from './catalog'
+import { PAYMENT_PURPOSE_FIXED } from './copy'
 
 const DRAFT_STORAGE_PREFIX = 'platform.instructor-apply.consent-draft.'
 
@@ -8,6 +10,7 @@ export type ConsentChoice = ConsentValue | ''
 export type PaymentConsentDraft = {
   tableConsents: [ConsentChoice, ConsentChoice, ConsentChoice, ConsentChoice]
   nameKo: string
+  nameEn: string
   residentFront: string
   residentBack: string
   affiliation: string
@@ -17,6 +20,11 @@ export type PaymentConsentDraft = {
   bankName: string
   accountNumber: string
   accountHolder: string
+  paymentPurpose: string
+  /** 동의 확인 전자서명 */
+  midSignature: string | FormSignatureValue
+  /** 수령 확인 전자서명 */
+  finalSignature: string | FormSignatureValue
 }
 
 export type EducatorConsentDraft = {
@@ -48,6 +56,7 @@ export type ConsentWriteDraftMap = {
 export const EMPTY_PAYMENT_CONSENT_DRAFT: PaymentConsentDraft = {
   tableConsents: ['', '', '', ''],
   nameKo: '',
+  nameEn: '',
   residentFront: '',
   residentBack: '',
   affiliation: '',
@@ -57,6 +66,9 @@ export const EMPTY_PAYMENT_CONSENT_DRAFT: PaymentConsentDraft = {
   bankName: '',
   accountNumber: '',
   accountHolder: '',
+  paymentPurpose: PAYMENT_PURPOSE_FIXED,
+  midSignature: '',
+  finalSignature: '',
 }
 
 export const EMPTY_EDUCATOR_CONSENT_DRAFT: EducatorConsentDraft = {

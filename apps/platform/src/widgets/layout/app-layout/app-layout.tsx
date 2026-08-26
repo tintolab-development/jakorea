@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { clearAdminRegisteredWizardState } from '@/features/auth/admin-registered'
-import { ScrollRestoration, useNavigate } from 'react-router-dom'
+import { ScrollRestoration, useLocation, useNavigate } from 'react-router-dom'
+import { isTalentDonationApplyPath } from '@/features/talent-donation'
 import { postPortalAuthLogout } from '@/shared/api/axios-instance'
 import {
   DEV_AUTH_CHANGE_EVENT,
@@ -24,14 +25,18 @@ type AppLayoutProps = {
 
 export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const [isLoggedIn, setIsLoggedIn] = useState(getDevAuthLoggedIn)
-  const isMypage = layout === 'mypage'
+  const isMypageHome = layout === 'mypage'
+  const isMypage = isMypageHome || layout === 'mypage-subpage'
   const isHero = layout === 'hero'
   const isAuth = layout === 'auth'
   const isHome = layout === 'home'
   const isSupport = layout === 'support'
+  /** 재능기부 신청 폼 — 히어로 오버레이(음수 margin·투명 헤더) 제외 */
+  const isSupportHero = isSupport && !isTalentDonationApplyPath(pathname)
   const useContentShell = layout === 'default' || isHero
-  const transparentHeader = isMypage || isHero || isHome || isSupport
+  const transparentHeader = isMypageHome || isHero || isHome || isSupportHero
   /* 홈 PC만 반전 — 모바일은 header-mobile CSS에서 불투명·컬러 로고로 덮음 */
   const inverseHeader = isHome
 
@@ -77,7 +82,7 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
     ? styles.mainMypage
     : isHome
       ? styles.mainHome
-      : isSupport
+      : isSupportHero
         ? styles.mainSupport
         : styles.main
 

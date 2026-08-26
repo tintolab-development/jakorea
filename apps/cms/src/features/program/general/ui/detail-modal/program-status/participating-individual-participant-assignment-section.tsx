@@ -10,10 +10,11 @@ import {
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { useCmsAlert } from '@/shared/ui'
+import { AssignmentSubmissionCellActionButton } from '@/features/program/general/ui/assignment-submission-history-table'
 import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
 import type { Program } from '@/types/domain'
-import { assignmentTeamRoleTagClassName } from '@/features/program/general/lib/assignment-team-role-tag'
+import { assignmentTeamRoleTagClassName, ASSIGNMENT_TEAM_ROLE_TAG_DROPDOWN_STYLE } from '@/features/program/general/lib/assignment-team-role-tag'
 import {
   applyTeamNameFromSessionOrder,
   buildParticipatingIndividualParticipantAssignmentSummary,
@@ -222,17 +223,17 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
 
       if (submission.kind === 'survey_view') {
         return (
-          <CmsButton variant="default" size="large" width={358} onClick={showComingSoon}>
+          <AssignmentSubmissionCellActionButton onClick={showComingSoon}>
             설문조사 보기
-          </CmsButton>
+          </AssignmentSubmissionCellActionButton>
         )
       }
 
       if (submission.kind === 'satisfaction_survey_view') {
         return (
-          <CmsButton variant="default" size="large" width={358} onClick={showComingSoon}>
+          <AssignmentSubmissionCellActionButton onClick={showComingSoon}>
             만족도조사 보기
-          </CmsButton>
+          </AssignmentSubmissionCellActionButton>
         )
       }
 
@@ -286,6 +287,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
                 onOpenChange={open => setOpenTeamRoleDropdownRowId(open ? record.id : null)}
                 emptyPlaceholder="-"
                 tagLayout="tag100"
+                style={ASSIGNMENT_TEAM_ROLE_TAG_DROPDOWN_STYLE}
               />
             )
           },
@@ -316,7 +318,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         {
           title: '제출 파일',
           key: 'submission',
-          width: 390,
+          width: 300,
           align: 'center',
           render: (_value, record) => renderSubmissionCell(record),
         },
@@ -345,7 +347,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         onFilterChange={() => {}}
         onSearch={() => {}}
         title="과제 및 설문 제출 내역"
-        description={`${rows.length}건`}
+        description={`총 ${rows.length}건`}
         hideExcelDownload
       >
         <div className="participating-individual-participant-assignment-section__table-outer assignment-submission-modal__table-outer">

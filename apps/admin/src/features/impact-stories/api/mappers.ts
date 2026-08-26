@@ -129,7 +129,7 @@ export function mapStoryResponseToDomain(row: StoryResponse): ImpactStory {
  */
 export function toStoryListParams(filter?: ImpactStoryListFilter): List7Params {
   const params: List7Params = {
-    page: 0,
+    page: filter?.page ?? 0,
     size: LIST_PAGE_SIZE,
   }
   if (!filter) return params

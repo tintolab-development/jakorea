@@ -5,12 +5,14 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { FormTemplateCreateRequestCategory } from './formTemplateCreateRequestCategory';
+import type { FormTemplateCreateRequestFormType } from './formTemplateCreateRequestFormType';
 
 export interface FormTemplateCreateRequest {
   templateCode?: string;
   templateName?: string;
-  formType?: string;
-  category?: string;
+  formType?: FormTemplateCreateRequestFormType;
+  category?: FormTemplateCreateRequestCategory;
   description?: string;
   useYn?: boolean;
   versionLabel?: string;

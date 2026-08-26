@@ -8,8 +8,8 @@
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+  /* 짧은 콘텐츠는 흰 카드가 영역을 채우고, 길면 layout-content가 스크롤 */
   min-height: calc(100vh - var(--header-height, 64px) - 64px);
-  height: calc(100vh - var(--header-height, 64px) - 64px);
 }
 
 .program-intro-page__tabs {
@@ -20,7 +20,6 @@
 .program-intro-page > .program-intro-card,
 .program-intro-page > .page-content-loading {
   flex: 1 1 auto;
-  min-height: 0;
 }
 
 .program-intro-page__empty {

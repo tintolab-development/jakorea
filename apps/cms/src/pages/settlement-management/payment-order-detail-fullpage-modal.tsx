@@ -3,7 +3,6 @@
  */
 
 import type { Dayjs } from 'dayjs'
-import { Spin } from 'antd'
 import type {
   PaymentOrderAdminInstructorRow,
   PaymentOrderAdminProgramRow,
@@ -25,39 +24,44 @@ export type PaymentOrderDetailFullPageModalProps = {
   listPageDateRange: [Dayjs, Dayjs] | null
 }
 
-export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPageModalProps) {
-  const { isOpen, onClose, type } = props
-  const { canRender, detailLoading, detailError, sharedViewProps, viewBranch } =
-    usePaymentOrderDetailFullPageModalState(props)
+function resolveDetailContentError(
+  detailLoading: boolean,
+  detailError: unknown,
+  hasDetail: boolean
+): string | null {
+  if (detailLoading) return null
+  if (detailError) {
+    return detailError instanceof Error ? detailError.message : '상세를 불러오지 못했습니다.'
+  }
+  if (!hasDetail) return '상세를 불러오지 못했습니다.'
+  return null
+}
 
-  const title = type === 'instructor' ? '강사 지급 현황 상세' : '프로그램 지급 현황 상세'
+export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPageModalProps) {
+  const { isOpen, onClose } = props
+  const { detailLoading, detailError, sharedViewProps, viewBranch } =
+    usePaymentOrderDetailFullPageModalState(props)
 
   if (!isOpen) {
     return null
   }
 
-  if (detailLoading) {
-    return (
-      <DetailFullPageModal open={isOpen} onClose={onClose} title={title}>
-        <div className="detail-fullpage-modal__loading" role="status" aria-label="상세 불러오는 중">
-          <Spin size="large" />
-        </div>
-      </DetailFullPageModal>
-    )
-  }
+  const contentError = resolveDetailContentError(
+    detailLoading,
+    detailError,
+    Boolean(viewBranch?.detail)
+  )
 
-  if (detailError) {
+  if (!viewBranch) {
     return (
-      <DetailFullPageModal open={isOpen} onClose={onClose} title={title}>
-        <div className="page-content-error" role="alert">
-          {detailError instanceof Error ? detailError.message : '상세를 불러오지 못했습니다.'}
-        </div>
-      </DetailFullPageModal>
+      <DetailFullPageModal
+        open={isOpen}
+        onClose={onClose}
+        title="지급 현황 상세"
+        loading={detailLoading}
+        error={contentError}
+      />
     )
-  }
-
-  if (!canRender || !viewBranch) {
-    return null
   }
 
   return (
@@ -65,6 +69,8 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
       {...({
         ...sharedViewProps,
         ...viewBranch,
+        contentLoading: detailLoading,
+        contentError,
       } as PaymentOrderDetailViewProps)}
     />
   )

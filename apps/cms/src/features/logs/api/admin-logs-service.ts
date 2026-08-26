@@ -1,22 +1,23 @@
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
+import { applyMemberLoginRetentionFromFilter } from '@/features/logs/lib/member-login-retention'
 import {
-  mapBugIssueLogListResponse,
-  mapDownloadLogListResponse,
-  mapPersonalInfoAccessLogListResponse,
-  mapSystemIssueDetailResponse,
-  type SystemIssueDetail,
+  mapBugIssueLogListPageResponse,
+  mapDownloadLogListPageResponse,
+  mapMemberLoginLogListPageResponse,
+  mapPersonalInfoAccessLogListPageResponse,
 } from '@/features/logs/api/adapters/logs-adapters'
 import {
   fetchFileAccessLogsRemote,
+  fetchMemberLoginsRemote,
   fetchPrivacyAccessLogsRemote,
-  fetchSystemIssueDetailRemote,
   fetchSystemIssueLogsRemote,
-  patchSystemIssueStatusRemote,
-  toLogsQueryParams,
+  toLogsListQueryParams,
 } from '@/features/logs/api/logs-api-client'
+import { LOG_LIST_PAGE_SIZE, type LogListPage } from '@/features/logs/api/log-list-page'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import type { BugIssueLog } from '@/types/bug-issue-log'
 import type { DownloadLog } from '@/types/download-log'
+import type { MemberLoginLog } from '@/types/member-login-log'
 import type { PersonalInfoAccessLog } from '@/types/personal-info-access-log'
 
 export function shouldUseLogsRemoteApi(): boolean {
@@ -32,42 +33,46 @@ function assertLogsRemoteApiReady(): void {
   }
 }
 
-export async function getFileDownloadLogsList(
-  filters: Record<string, string> = {}
-): Promise<DownloadLog[]> {
+export async function getFileDownloadLogsPage(
+  filters: Record<string, string> = {},
+  page = 0,
+  size = LOG_LIST_PAGE_SIZE
+): Promise<LogListPage<DownloadLog>> {
   assertLogsRemoteApiReady()
-  const dto = await fetchFileAccessLogsRemote(toLogsQueryParams(filters))
-  return mapDownloadLogListResponse(dto)
+  const dto = await fetchFileAccessLogsRemote(toLogsListQueryParams(filters, page, size))
+  return mapDownloadLogListPageResponse(dto)
 }
 
-export async function getPersonalInfoAccessLogsList(
-  filters: Record<string, string> = {}
-): Promise<PersonalInfoAccessLog[]> {
+export async function getPersonalInfoAccessLogsPage(
+  filters: Record<string, string> = {},
+  page = 0,
+  size = LOG_LIST_PAGE_SIZE
+): Promise<LogListPage<PersonalInfoAccessLog>> {
   assertLogsRemoteApiReady()
-  const dto = await fetchPrivacyAccessLogsRemote(toLogsQueryParams(filters))
-  return mapPersonalInfoAccessLogListResponse(dto)
+  const dto = await fetchPrivacyAccessLogsRemote(toLogsListQueryParams(filters, page, size))
+  return mapPersonalInfoAccessLogListPageResponse(dto)
 }
 
-export async function getBugIssueLogsList(
-  filters: Record<string, string> = {}
-): Promise<BugIssueLog[]> {
+export async function getMemberLoginLogsPage(
+  filters: Record<string, string> = {},
+  page = 0,
+  size = LOG_LIST_PAGE_SIZE
+): Promise<LogListPage<MemberLoginLog>> {
   assertLogsRemoteApiReady()
-  const dto = await fetchSystemIssueLogsRemote(toLogsQueryParams(filters))
-  return mapBugIssueLogListResponse(dto)
+  const dto = await fetchMemberLoginsRemote(
+    toLogsListQueryParams(applyMemberLoginRetentionFromFilter(filters), page, size)
+  )
+  return mapMemberLoginLogListPageResponse(dto)
 }
 
-export async function getSystemIssueDetail(issueId: number): Promise<SystemIssueDetail> {
+export async function getBugIssueLogsPage(
+  filters: Record<string, string> = {},
+  page = 0,
+  size = LOG_LIST_PAGE_SIZE
+): Promise<LogListPage<BugIssueLog>> {
   assertLogsRemoteApiReady()
-  const dto = await fetchSystemIssueDetailRemote(issueId)
-  return mapSystemIssueDetailResponse(dto)
-}
-
-export async function updateSystemIssueStatus(
-  issueId: number,
-  status: string
-): Promise<void> {
-  assertLogsRemoteApiReady()
-  await patchSystemIssueStatusRemote(issueId, { status })
+  const dto = await fetchSystemIssueLogsRemote(toLogsListQueryParams(filters, page, size))
+  return mapBugIssueLogListPageResponse(dto)
 }
 
 export function getLogsApiErrorMessage(error: unknown, fallback: string): string {

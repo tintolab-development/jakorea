@@ -4,10 +4,14 @@
 import type { DashboardPreferencesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardPreferencesResponse'
 import type { DashboardPreferencesSaveRequest } from '@/shared/api/generated/dashboard/schemas/dashboardPreferencesSaveRequest'
 import { useDashboardSettingsStore } from '@/features/dashboard/model/dashboard-settings-store'
-import { useDashboardWidgetOrderStore } from '@/features/dashboard/model/dashboard-widget-order-store'
+import {
+  stripRemovedDashboardWidgetIds,
+  stripRemovedDashboardWidgetWidths,
+  useDashboardWidgetOrderStore,
+} from '@/features/dashboard/model/dashboard-widget-order-store'
 
 const SETTINGS_PERSIST_VERSION = 2
-const WIDGET_ORDER_PERSIST_VERSION = 5
+const WIDGET_ORDER_PERSIST_VERSION = 6
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (value != null && typeof value === 'object' && !Array.isArray(value)) {
@@ -41,8 +45,8 @@ function asStringArrayRecord(value: unknown): Record<string, string[]> {
   if (!o) return {}
   const out: Record<string, string[]> = {}
   for (const [k, v] of Object.entries(o)) {
-    if (Array.isArray(v) && v.every(item => typeof item === 'string')) {
-      out[k] = v
+    if (Array.isArray(v) && v.every(item => typeof item === 'string' || typeof item === 'number')) {
+      out[k] = v.map(item => String(item))
     }
   }
   return out
@@ -54,7 +58,7 @@ function asOrderByRole(value: unknown): Record<string, string[]> {
   const out: Record<string, string[]> = {}
   for (const [role, ids] of Object.entries(o)) {
     if (Array.isArray(ids) && ids.every(id => typeof id === 'string')) {
-      out[role] = ids
+      out[role] = stripRemovedDashboardWidgetIds(ids)
     }
   }
   return out
@@ -71,7 +75,7 @@ function asWidthByRole(value: unknown): Record<string, Record<string, 12 | 24>> 
     for (const [widgetId, col] of Object.entries(w)) {
       if (col === 12 || col === 24) mapped[widgetId] = col
     }
-    out[role] = mapped
+    out[role] = stripRemovedDashboardWidgetWidths(mapped) ?? {}
   }
   return out
 }

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { Editor } from '@tiptap/react'
+import type { Extensions } from '@tiptap/core'
 import type {
   RichTextContentFormat,
   RichTextEditorApi,
@@ -19,6 +20,7 @@ export type UseRichTextEditorOptions = {
   autofocus?: boolean
   /** `full`(기본) | `basic` — basic은 paste/드롭 이미지·emoji 등 제외 */
   preset?: 'full' | 'basic'
+  extraExtensions?: Extensions
   onReady?: (api: RichTextEditorApi) => void
 }
 
@@ -43,6 +45,7 @@ export type RichTextViewerProps = {
   markdown?: string
   contentFormat?: RichTextContentFormat
   className?: string
+  extraExtensions?: Extensions
   /** 기본 `403px` — 구 공지 상세 뷰어 */
   maxHeight?: string | number
 }

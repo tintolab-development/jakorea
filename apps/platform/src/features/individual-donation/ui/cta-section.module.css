@@ -6,8 +6,6 @@
   flex-direction: column;
   box-sizing: border-box;
   overflow: hidden;
-  padding-block: var(--spacing-48);
-  padding-inline: var(--page-padding-x);
   background: var(--color-neutral-white);
 }
 
@@ -19,6 +17,7 @@
   min-width: 0;
   flex-direction: column;
   gap: var(--spacing-24);
+  padding: var(--spacing-56) var(--spacing-20);
 }
 
 .textArea {
@@ -28,7 +27,7 @@
 .eyebrow {
   order: 1;
   margin: 0;
-  color: var(--color-primary-500);
+  color: var(--color-primary-600);
   font-weight: 400;
   font-family: 'Cafe24Lovingu', sans-serif;
   line-height: 140%;
@@ -44,11 +43,9 @@
 
 .media {
   position: relative;
-  z-index: 2;
-  order: 3;
   width: 100%;
   min-width: 0;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: unset;
 }
 
 .imageFrame {
@@ -76,7 +73,7 @@
   justify-content: space-between;
   gap: var(--spacing-12);
   margin: 0;
-  padding: var(--spacing-16) var(--spacing-28) var(--spacing-16) var(--spacing-24);
+  padding: var(--spacing-12) var(--spacing-40) var(--spacing-12) var(--spacing-32);
   border: 0;
   border-radius: var(--radius-999);
   background: var(--color-gradient-primary-01);
@@ -102,10 +99,29 @@
   flex-shrink: 0;
 }
 
+.textArea .text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+@media (--bp-below-pc) {
+  .eyebrow {
+    font-size: 30px;
+  }
+  .title {
+    font-size: 24px;
+    line-height: 150%;
+  }
+  .actionLabel {
+    font-size: 18px;
+    letter-spacing: -0.18px;
+  }
+}
 @media (--bp-pc-up) {
   .section {
     position: relative;
-    padding-block: var(--spacing-150);
+    padding-block: 180px;
     padding-inline: 0;
   }
   .section::before {
@@ -116,7 +132,7 @@
     left: -200px;
     width: 100%;
     height: 100%;
-    background-image: url('../image/illustration/why-illustration-03.svg');
+    background-image: url('../image/illustration/cta-illustration.svg');
     background-repeat: no-repeat;
     background-position: left center;
     background-size: auto;
@@ -129,11 +145,12 @@
     flex-direction: row;
     align-items: stretch;
     gap: var(--spacing-32);
+    padding: 0 var(--spacing-20);
   }
 
   .textArea {
     position: relative;
-    width: min(42%, 480px);
+    width: min(32%, 460px);
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -143,8 +160,6 @@
     box-sizing: border-box;
   }
   .textArea .text {
-    display: flex;
-    flex-direction: column;
     gap: var(--spacing-28);
     padding-left: var(--spacing-16);
     padding-top: var(--spacing-48);
@@ -152,7 +167,6 @@
 
   .eyebrow {
     order: unset;
-    color: var(--color-primary-500);
   }
 
   .title {
@@ -181,14 +195,11 @@
   }
 
   .media {
-    z-index: 2;
-    order: unset;
     width: auto;
     flex: 1 1 auto;
     min-width: 0;
     margin-left: 0;
-    aspect-ratio: 16 / 10;
-    max-height: 550px;
+    aspect-ratio: 948 / 560;
   }
 
   .imageFrame {

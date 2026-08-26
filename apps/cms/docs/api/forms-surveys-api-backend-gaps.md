@@ -1,5 +1,9 @@
 # 템플릿 양식 API — 백엔드 핸드오프 (갭·미구현·스펙 불일치)
 
+> **SSOT**: 전환률 · 탭별 계약 · 미적용 API 스펙은  
+> [**templates-api-conversion-status-backend-handoff.md**](./templates-api-conversion-status-backend-handoff.md)  
+> 본 문서는 2026-07 갭 목록입니다. 작성 시드 종수(27) 등은 카탈로그가 **32종**으로 늘었습니다. 백엔드 전달 시 위 문서를 우선하세요.
+
 CMS `/templates/form-management` 작성·발급 양식 mock → `forms-surveys` API 전환 시, **백엔드에 요청·확인이 필요한 항목** 목록입니다.
 
 OpenAPI 기준: `openapi/backend.openapi.json` (v9) · subset `openapi/forms-surveys.openapi.json` (19 paths)  

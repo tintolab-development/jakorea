@@ -4,7 +4,7 @@
 
 import { useCallback, useMemo, useState, type Key } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import dayjs, { type Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { Switch, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Notice, NoticeListFilter } from '@/entities/notices/model/types'
@@ -22,6 +22,7 @@ import {
   type NoticeFormValues,
 } from '@/features/notices/ui/notice-form-modal'
 import { NoticePinnedIcon } from '@/features/notices/ui/notice-pin-icon'
+import { formatDateTimeDot } from '@/shared/lib/format-display'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
@@ -133,9 +134,7 @@ function rangeAsPicker(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
 }
 
 function formatDateTime(iso: string): string {
-  const d = dayjs(iso)
-  if (!d.isValid()) return '-'
-  return d.format('YYYY.MM.DD HH:mm')
+  return formatDateTimeDot(iso)
 }
 
 export function NoticesPage() {

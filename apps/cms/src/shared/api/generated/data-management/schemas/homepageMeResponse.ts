@@ -34,7 +34,7 @@ export interface HomepageMeResponse {
   registeredByAdmin?: boolean;
   /** 관리자 등록 회원 온보딩이 남아 있는지 여부 */
   adminProvisionedOnboardingRequired?: boolean;
-  /** 다음 서버 처리 단계: PROFILE, IDENTITY, PASSWORD, DONE */
+  /** 다음 서버 처리 단계: PROFILE, IDENTITY, PASSWORD, PROFILE_REVIEW, DONE */
   adminProvisionedOnboardingStep?: string;
   /** 관리자 등록 이후 본인 가입 온보딩 완료 여부 */
   identitySelfSignupCompletedAfterAdminRegistration?: boolean;

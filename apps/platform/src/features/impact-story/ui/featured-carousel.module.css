@@ -125,22 +125,6 @@
   margin-top: auto;
 }
 
-.navButton,
-.prevButton {
-  border-radius: var(--radius-999);
-  background:
-    linear-gradient(
-      0deg,
-      var(--color-element-hover) 0%,
-      var(--color-element-hover) 100%
-    ),
-    var(--color-neutral-white);
-}
-
-.prevButton {
-  transform: scaleX(-1);
-}
-
 @media (--bp-below-pc) {
   .mediaLink {
     width: 100%;

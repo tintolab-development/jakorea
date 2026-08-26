@@ -25,6 +25,14 @@ import {
   InstructorProfileFormBody,
   type InstructorProfileFormValues,
 } from '@/features/user/shared/ui/instructor-profile-form'
+import type { InstructorConsentFieldKey } from '@/features/user/shared/lib/instructor-consent-field-map'
+import {
+  createEmptyMemberRegisterConsentWriteSnapshots,
+  upsertConsentAgreementWriteSnapshot,
+  upsertConsentCrimeWriteSnapshot,
+  type MemberConsentAgreementDraftSnapshot,
+  type MemberConsentCrimeDraftSnapshot,
+} from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
@@ -98,6 +106,34 @@ export function InstructorDetailEditForm({
     })
   }
 
+  const handleSaveConsentAgreementSnapshot = (
+    fieldKey: InstructorConsentFieldKey,
+    snapshot: MemberConsentAgreementDraftSnapshot
+  ) => {
+    onMemberInfoDraftChange({
+      consentWriteSnapshots: upsertConsentAgreementWriteSnapshot(
+        memberInfoDraft.consentWriteSnapshots,
+        fieldKey,
+        snapshot
+      ),
+      consentTermsDirty: true,
+    })
+  }
+
+  const handleSaveConsentCrimeSnapshot = (
+    fieldKey: InstructorConsentFieldKey,
+    snapshot: MemberConsentCrimeDraftSnapshot
+  ) => {
+    onMemberInfoDraftChange({
+      consentWriteSnapshots: upsertConsentCrimeWriteSnapshot(
+        memberInfoDraft.consentWriteSnapshots,
+        fieldKey,
+        snapshot
+      ),
+      consentTermsDirty: true,
+    })
+  }
+
   /** setFieldValue(동의서 완료)는 onValuesChange를 안 타므로 form 전체로 draft flush */
   const flushDraftFromForm = () => {
     const values = form.getFieldsValue(true) as InstructorProfileFormValues
@@ -142,24 +178,18 @@ export function InstructorDetailEditForm({
         </DetailInfoForm.Row>
       ) : null}
       {isSchoolTeacherOnly ? (
-        <>
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="가입일"
-              fullRow
-              view={formatDate(user.createdAt)}
-              edit={<span>{formatDate(user.createdAt)}</span>}
-            />
-          </DetailInfoForm.Row>
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="연동된 소셜 계정"
-              fullRow
-              view={socialView(user)}
-              edit={<span>{socialView(user)}</span>}
-            />
-          </DetailInfoForm.Row>
-        </>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="가입일"
+            view={formatDate(user.createdAt)}
+            edit={<span>{formatDate(user.createdAt)}</span>}
+          />
+          <DetailInfoForm.Field
+            label="연동된 소셜 계정"
+            view={socialView(user)}
+            edit={<span>{socialView(user)}</span>}
+          />
+        </DetailInfoForm.Row>
       ) : (
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -221,6 +251,11 @@ export function InstructorDetailEditForm({
         layoutVariant="detailEdit"
         basicInfoPrefix={basicInfoPrefix}
         basicInfoExtraBeforeBusinessIncome={basicInfoExtraBeforeBusinessIncome}
+        consentWriteSnapshots={
+          memberInfoDraft.consentWriteSnapshots ?? createEmptyMemberRegisterConsentWriteSnapshots()
+        }
+        onSaveConsentAgreementSnapshot={handleSaveConsentAgreementSnapshot}
+        onSaveConsentCrimeSnapshot={handleSaveConsentCrimeSnapshot}
         onConsentValuesCommit={flushDraftFromForm}
         includeInstructorApplicationSections={!isSchoolTeacherOnly}
       />

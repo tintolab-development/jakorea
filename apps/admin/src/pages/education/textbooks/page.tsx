@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useMemo, useState, type Key } from 'react'
-import dayjs, { type Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { Image, Switch, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type {
@@ -31,6 +31,7 @@ import {
   type TextbookFormMode,
   type TextbookFormValues,
 } from '@/features/education-textbook/ui/form-modal'
+import { formatDateTimeDot } from '@/shared/lib/format-display'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
@@ -193,9 +194,7 @@ function rangeAsPicker(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
 }
 
 function formatDateTime(iso: string): string {
-  const d = dayjs(iso)
-  if (!d.isValid()) return '-'
-  return d.format('YYYY.MM.DD HH:mm')
+  return formatDateTimeDot(iso)
 }
 
 export function EducationTextbooksPage() {

@@ -10,6 +10,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
+import {
+  applyKoreanPhoneInputChange,
+  formatKoreanPhoneNumber,
+} from '@jakorea/domain/shared/korean-phone'
 import type { DirectionsInfo } from '@/entities/directions/model/types'
 import { useSaveDirections } from '@/features/directions/api/hooks'
 import { directionsQueryKeys } from '@/features/directions/api/query-keys'
@@ -30,7 +34,7 @@ function cloneDirections(data: DirectionsInfo): DirectionsInfo {
     addressKo: data.addressKo,
     addressEn: data.addressEn,
     kakaoMapHtml: data.kakaoMapHtml,
-    phone: data.phone,
+    phone: formatKoreanPhoneNumber(data.phone),
     fax: data.fax,
     email: data.email,
     updatedAt: data.updatedAt,
@@ -236,12 +240,24 @@ export function DirectionsFormCard({ data }: Props) {
                   className={fieldClass(isEditing)}
                   inputSize="medium"
                   width="100%"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
                   value={draft.phone}
                   readOnly={!isEditing}
                   tabIndex={isEditing ? 0 : -1}
                   onChange={e => {
                     if (!isEditing) return
-                    updateDraft({ phone: e.target.value })
+                    const result = applyKoreanPhoneInputChange(
+                      draft.phone,
+                      e.target.value,
+                      e.target.selectionStart
+                    )
+                    e.target.value = result.formatted
+                    updateDraft({ phone: result.formatted })
+                    requestAnimationFrame(() => {
+                      e.target.setSelectionRange(result.caret, result.caret)
+                    })
                   }}
                   placeholder="전화번호 입력"
                 />

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Form, Space } from 'antd'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
 import { buildPreRegisterTermsAgreements } from '@/features/user/api/build-pre-register-terms-agreements'
@@ -9,19 +9,19 @@ import {
   CmsButton,
   CmsCheckbox,
   CmsInput,
+  CmsPhoneInput,
   CmsRadioGroup,
   CmsSelect,
   SchoolSearch,
+  type SchoolSearchSelection,
+  type SchoolSearchSelectMeta,
 } from '@/shared/ui'
 import { CmsDateTextInput, isValidBirthDateFormValue, birthDateFormValueToApi, isBirthDateInputIncomplete } from '@/shared/ui/date-text-input'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
-import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
+import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import {
-  INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
-  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
-} from '@/shared/constants/messages'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import {
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
   buildRequiredConsentDisagreeAlertMessage,
@@ -36,11 +36,14 @@ import {
   resolveMemberConsentTemplateEntry,
 } from '@/features/user/shared/lib/member-consent-template-map'
 import { MEMBER_REGISTER_ALL_CONSENT_KEYS } from '@/features/user/shared/lib/member-register-consent-fields'
-import type { MemberConsentMemberContext } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
-import { buildMemberPaymentStatementBasicInfoAutofill } from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
-import { isMemberRegisterBasicInfoIncompleteForConsent } from '@/features/user/shared/lib/validate-member-consent-basic-info'
 import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
+import {
+  createEmptyMemberRegisterConsentWriteSnapshots,
+  type MemberConsentAgreementDraftSnapshot,
+  type MemberConsentCrimeDraftSnapshot,
+  type MemberRegisterConsentWriteSnapshots,
+} from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import './add-user-individual.css'
 
 type ConsentValue = 'agree' | 'disagree'
@@ -55,6 +58,14 @@ interface AddUserIndividualFormValues {
   schoolEnrollmentStatus: SchoolEnrollmentStatus
   schoolName: string
   grade: string
+  schoolProvider?: string
+  schoolExternalCode?: string
+  schoolLevel?: string
+  schoolAddress?: string
+  schoolZipcode?: string
+  schoolRegionSido?: string
+  schoolRegionSigungu?: string
+  schoolOrganizationId?: number
   affiliationOrganization: string
   affiliationNone: boolean
   contact: string
@@ -78,6 +89,16 @@ interface AddUserIndividualProps {
   loading?: boolean
   formId?: string
   hideActions?: boolean
+  /** 신규 등록 모달 세션 — 동의서 작성 draft 보존·복원 */
+  consentWriteSnapshots?: MemberRegisterConsentWriteSnapshots
+  onSaveConsentAgreementSnapshot?: (
+    fieldKey: MemberConsentFieldKey,
+    snapshot: MemberConsentAgreementDraftSnapshot
+  ) => void
+  onSaveConsentCrimeSnapshot?: (
+    fieldKey: MemberConsentFieldKey,
+    snapshot: MemberConsentCrimeDraftSnapshot
+  ) => void
 }
 
 const CONSENT_RADIO_OPTIONS = [
@@ -209,7 +230,7 @@ function collectMemberRegisterValidation(
   const contact = values.contact?.trim()
   if (!contact) {
     missingRequired = true
-  } else if (!KOREAN_PHONE_REGEX.test(contact)) {
+  } else if (!isValidKoreanPhoneNumber(contact)) {
     formatMessages.push('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')
   }
 
@@ -239,80 +260,25 @@ export function AddUserIndividual({
   loading = false,
   formId,
   hideActions = false,
+  consentWriteSnapshots = createEmptyMemberRegisterConsentWriteSnapshots(),
+  onSaveConsentAgreementSnapshot,
+  onSaveConsentCrimeSnapshot,
 }: AddUserIndividualProps) {
   const { showAlert } = useCmsAlert()
   const [form] = Form.useForm<AddUserIndividualFormValues>()
   const [activeConsentField, setActiveConsentField] = useState<MemberConsentFieldKey | null>(null)
   const allValues = Form.useWatch([], form) as AddUserIndividualFormValues | undefined
   const address = Form.useWatch('address', form) ?? ''
-  const detailAddress = Form.useWatch('detailAddress', form) ?? ''
   const schoolName = Form.useWatch('schoolName', form) ?? ''
   const affiliationNone = Form.useWatch('affiliationNone', form) === true
   const schoolEnrollmentStatus =
     Form.useWatch('schoolEnrollmentStatus', form) ?? INITIAL_VALUES.schoolEnrollmentStatus
   const isEnrolled = schoolEnrollmentStatus === 'enrolled'
 
-  const memberName = Form.useWatch('name', form) ?? ''
-  const memberGrade = Form.useWatch('grade', form) ?? ''
-  const affiliationOrganization = Form.useWatch('affiliationOrganization', form) ?? ''
-
-  const memberConsentContext = useMemo((): MemberConsentMemberContext => {
-    return {
-      name: memberName,
-      birthDate: allValues?.birthDate,
-      phone: allValues?.contact,
-      schoolEnrollmentStatus,
-      schoolName,
-      grade: memberGrade,
-      affiliationOrganization,
-    }
-  }, [
-    affiliationOrganization,
-    allValues?.birthDate,
-    allValues?.contact,
-    memberGrade,
-    memberName,
-    schoolEnrollmentStatus,
-    schoolName,
-  ])
-
-  const paymentStatementBasicInfoAutofill = useMemo(
-    () =>
-      buildMemberPaymentStatementBasicInfoAutofill({
-        name: memberName,
-        birthDate: allValues?.birthDate,
-        homeAddress: address,
-        homeAddressDetail: detailAddress,
-        memberType: 'general',
-        affiliationName: isEnrolled ? schoolName : affiliationOrganization,
-      }),
-    [
-      address,
-      affiliationOrganization,
-      allValues?.birthDate,
-      detailAddress,
-      isEnrolled,
-      memberName,
-      schoolName,
-    ]
-  )
-  const consentAutofillProps = {
-    memberContext: memberConsentContext,
-    paymentStatementBasicInfoAutofill,
-  }
-
   const activeConsentEntry =
     activeConsentField != null ? resolveMemberConsentTemplateEntry(activeConsentField) : null
 
   const handleConsentWrite = (fieldKey: MemberConsentFieldKey) => {
-    const values = allValues ?? form.getFieldsValue()
-    if (isMemberRegisterBasicInfoIncompleteForConsent(values)) {
-      showAlert({
-        title: '안내',
-        content: INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
-      })
-      return
-    }
     setActiveConsentField(fieldKey)
   }
 
@@ -323,6 +289,40 @@ export function AddUserIndividual({
   const handleConsentComplete = (fieldKey: MemberConsentFieldKey) => {
     form.setFieldValue(fieldKey, 'agree')
     setActiveConsentField(null)
+  }
+
+  const handleSchoolSelect = (selection: SchoolSearchSelection, meta: SchoolSearchSelectMeta) => {
+    if (selection.source === 'neis') {
+      const school = selection.item
+      form.setFieldsValue({
+        schoolName: school.schulNm.trim(),
+        schoolProvider: 'NEIS',
+        schoolExternalCode: school.sdSchulCode.trim(),
+        schoolLevel: school.schulKndScNm.trim(),
+        schoolAddress: school.orgRdnma.trim(),
+        schoolZipcode: school.orgRdnzc.trim(),
+        schoolRegionSido: meta.regionSido,
+        schoolRegionSigungu: meta.regionSigungu,
+        schoolOrganizationId: undefined,
+      })
+      return
+    }
+
+    const univ = selection.item
+    const nextSchoolName = univ.campusName
+      ? `${univ.schoolName.trim()} (${univ.campusName.trim()})`
+      : univ.schoolName.trim()
+    form.setFieldsValue({
+      schoolName: nextSchoolName,
+      schoolProvider: 'CAREER_NET',
+      schoolExternalCode: univ.seq.trim(),
+      schoolLevel: univ.schoolGubun.trim() || univ.schoolType.trim(),
+      schoolAddress: univ.address.trim(),
+      schoolZipcode: '',
+      schoolRegionSido: meta.regionSido || univ.region.trim(),
+      schoolRegionSigungu: meta.regionSigungu,
+      schoolOrganizationId: undefined,
+    })
   }
 
   const handleFinish = async (values: AddUserIndividualFormValues) => {
@@ -348,6 +348,14 @@ export function AddUserIndividual({
       schoolEnrollmentStatus: enrolled ? 'ENROLLED' : 'NOT_ENROLLED',
       affiliation,
       grade: enrolled ? values.grade.trim() : undefined,
+      schoolOrganizationId: enrolled ? values.schoolOrganizationId ?? null : null,
+      schoolProvider: enrolled ? values.schoolProvider?.trim() || undefined : undefined,
+      schoolExternalCode: enrolled ? values.schoolExternalCode?.trim() || undefined : undefined,
+      schoolLevel: enrolled ? values.schoolLevel?.trim() || undefined : undefined,
+      schoolAddress: enrolled ? values.schoolAddress?.trim() || undefined : undefined,
+      schoolZipcode: enrolled ? values.schoolZipcode?.trim() || undefined : undefined,
+      schoolRegionSido: enrolled ? values.schoolRegionSido?.trim() || undefined : undefined,
+      schoolRegionSigungu: enrolled ? values.schoolRegionSigungu?.trim() || undefined : undefined,
       termsAgreements: buildPreRegisterTermsAgreements(
         {
           consentTermsOfService: values.consentTermsOfService,
@@ -362,6 +370,7 @@ export function AddUserIndividual({
           consentSexOffenseCheck: values.consentSexOffenseCheck,
         }
       ),
+      consentWriteSnapshots,
     }
     await onSubmit(request)
     form.resetFields()
@@ -408,7 +417,18 @@ export function AddUserIndividual({
 
   useEffect(() => {
     if (schoolEnrollmentStatus === 'not_enrolled') {
-      form.setFieldsValue({ schoolName: '', grade: '' })
+      form.setFieldsValue({
+        schoolName: '',
+        grade: '',
+        schoolProvider: undefined,
+        schoolExternalCode: undefined,
+        schoolLevel: undefined,
+        schoolAddress: undefined,
+        schoolZipcode: undefined,
+        schoolRegionSido: undefined,
+        schoolRegionSigungu: undefined,
+        schoolOrganizationId: undefined,
+      })
       return
     }
     form.setFieldsValue({ affiliationOrganization: '', affiliationNone: false })
@@ -497,11 +517,20 @@ export function AddUserIndividual({
                         onChange={nextSchoolName =>
                           form.setFieldValue('schoolName', nextSchoolName)
                         }
+                        onSelect={handleSchoolSelect}
                         placeholder="소속 학교명"
                         inputSize="medium"
                         width={FORM_INPUTS_2_WIDTHS[0]}
                       />
                     </Form.Item>
+                    <Form.Item name="schoolProvider" hidden preserve />
+                    <Form.Item name="schoolExternalCode" hidden preserve />
+                    <Form.Item name="schoolLevel" hidden preserve />
+                    <Form.Item name="schoolAddress" hidden preserve />
+                    <Form.Item name="schoolZipcode" hidden preserve />
+                    <Form.Item name="schoolRegionSido" hidden preserve />
+                    <Form.Item name="schoolRegionSigungu" hidden preserve />
+                    <Form.Item name="schoolOrganizationId" hidden preserve />
                     <DetailInfoForm.InputsSeparator />
                     <Form.Item name="grade" noStyle>
                       <CmsSelect
@@ -542,7 +571,7 @@ export function AddUserIndividual({
               view="-"
               edit={
                 <Form.Item name="contact" style={FORM_ITEM_STYLE}>
-                  <CmsInput placeholder="연락처" inputSize="medium" width="100%" />
+                  <CmsPhoneInput placeholder="연락처" inputSize="medium" width="100%" />
                 </Form.Item>
               }
             />
@@ -772,7 +801,10 @@ export function AddUserIndividual({
         open
         templateId={activeConsentEntry.templateId}
         modalTitle={activeConsentEntry.modalTitle}
-        {...consentAutofillProps}
+        savedSnapshot={consentWriteSnapshots.agreementByFieldKey[activeConsentField]}
+        onSnapshotSave={snapshot =>
+          onSaveConsentAgreementSnapshot?.(activeConsentField, snapshot)
+        }
         onClose={handleConsentModalClose}
         onComplete={() => handleConsentComplete(activeConsentField)}
       />
@@ -781,6 +813,8 @@ export function AddUserIndividual({
     {activeConsentField != null && isMemberCrimeConsentField(activeConsentField) ? (
       <MemberConsentCrimeModal
         open
+        savedSnapshot={consentWriteSnapshots.crimeByFieldKey[activeConsentField]}
+        onSnapshotSave={snapshot => onSaveConsentCrimeSnapshot?.(activeConsentField, snapshot)}
         onClose={handleConsentModalClose}
         onComplete={() => handleConsentComplete(activeConsentField)}
       />

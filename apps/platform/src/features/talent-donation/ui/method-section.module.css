@@ -1,0 +1,293 @@
+.section {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: var(--color-neutral-white);
+}
+
+.content {
+  display: flex;
+  width: 100%;
+  max-width: var(--content-shell-max-width);
+  margin: 0 auto;
+  flex-direction: column;
+  gap: var(--spacing-64);
+  padding: var(--spacing-56) var(--spacing-20);
+  box-sizing: border-box;
+}
+
+.methods {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-32);
+}
+
+.methodsTitle {
+  margin: 0;
+  word-break: keep-all;
+}
+
+.methodList {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.methodCard {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.methodSurface {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 180px;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: hidden;
+  border-radius: var(--radius-16);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #F1F9FE 0%, #F1F9FE 100%);
+}
+.methodSurface::before {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* 일러스트 수급 전 기본 파스텔 배경 — illustration은 background-image로 교체 */
+.methodSurfaceMentoring::before {
+  background-image: url('../image/illustration/method-illustration-01.svg');
+}
+
+.methodSurfaceAdvisory::before {
+  background-image: url('../image/illustration/method-illustration-02.svg');
+}
+
+.methodSurfaceSupport::before {
+  background-image: url('../image/illustration/method-illustration-03.svg');
+}
+
+.methodBody {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  padding: var(--spacing-24);
+  box-sizing: border-box;
+}
+
+.methodTitle,
+.methodDescription {
+  margin: 0;
+  word-break: keep-all;
+}
+
+.stories {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-28);
+}
+
+.storiesEyebrow {
+  margin: 0;
+  word-break: keep-all;
+}
+
+.storyList {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-56);
+}
+
+.story {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-24);
+}
+
+/* Mobile: DOM(text→visual) 기준 column-reverse → 이미지 → 텍스트 */
+.storyTextFirst,
+.storyMediaFirst {
+  flex-direction: column-reverse;
+}
+
+.storyBody {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-24);
+}
+
+.storyText {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  gap: var(--spacing-16);
+}
+
+.storyTitle,
+.storyDescription {
+  margin: 0;
+  word-break: keep-all;
+}
+
+.storyVisual {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.storyImageFrame {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-16);
+  aspect-ratio: 16 / 10;
+}
+
+.storyImage,
+.storyImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.storyImage {
+  background: var(--color-neutral-cool-100);
+}
+
+.pcOnly {
+  display: none;
+}
+
+@media (--bp-below-pc) {
+  .methodsTitle {
+    font-size: 24px;
+    line-height: 150%;
+  }
+
+  .methodTitle {
+    font-size: 22px;
+  }
+
+  .methodDescription,
+  .storyDescription {
+    font-size: 16px;
+  }
+
+  .storyTitle {
+    font-size: 24px;
+    line-height: 150%;
+  }
+
+  .storyButton {
+    width: 100%;
+  }
+}
+
+@media (--bp-pc-up) {
+  .content {
+    gap: var(--spacing-200);
+    padding: 0 var(--spacing-20) var(--spacing-150);
+  }
+
+  .methods {
+    gap: var(--spacing-60);
+  }
+
+  .methodList {
+    flex-direction: row;
+    align-items: stretch;
+    gap: var(--spacing-32);
+  }
+
+  .methodCard {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .methodSurface {
+    min-height: 280px;
+    border-radius: var(--radius-16);
+  }
+
+  .methodBody {
+    padding: var(--spacing-52) var(--spacing-40);
+  }
+
+  .storyList {
+    gap: var(--spacing-150);
+  }
+
+  .story {
+    align-items: center;
+    gap: var(--spacing-80);
+  }
+
+  .storyTextFirst {
+    flex-direction: row;
+  }
+
+  .storyMediaFirst {
+    flex-direction: row-reverse;
+  }
+
+  .storyBody {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    gap: var(--spacing-60);
+  }
+
+  .storyDescription {
+    font-size: 24px;
+    letter-spacing: -0.24px;
+  }
+
+  .storyVisual {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .storyImageFrame {
+    border-radius: 20px;
+    aspect-ratio: 680 / 400;
+  }
+
+  .pcOnly {
+    display: block;
+  }
+}

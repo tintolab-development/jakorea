@@ -31,6 +31,10 @@ export interface SponsorDetailResponse {
   businessNumber?: string;
   executives?: string;
   address?: string;
+  totalDonationAmount?: number;
+  totalBeneficiaryCount?: number;
+  homepageUrl?: string;
+  logoFileId?: string;
   contacts?: SponsorContactResponse[];
   programHistories?: SponsorProgramHistoryResponse[];
   yearlyBusinesses?: SponsorYearlyBusinessResponse[];

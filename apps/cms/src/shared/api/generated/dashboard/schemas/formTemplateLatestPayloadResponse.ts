@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { FormTemplateLatestPayloadResponseVersionStatus } from './formTemplateLatestPayloadResponseVersionStatus';
 
 export interface FormTemplateLatestPayloadResponse {
   templateId?: number;
@@ -17,7 +18,7 @@ export interface FormTemplateLatestPayloadResponse {
   templateVersionId?: number;
   versionNo?: number;
   versionLabel?: string;
-  versionStatus?: string;
+  versionStatus?: FormTemplateLatestPayloadResponseVersionStatus;
   schemaJson?: string;
   extensionJson?: string;
   settingsJson?: string;

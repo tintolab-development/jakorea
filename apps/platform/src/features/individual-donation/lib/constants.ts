@@ -5,8 +5,8 @@ export const HERO_LABEL = '개인후원'
 export const HERO_TITLE_LINES = ['청소년을 위한', '지속가능한 교육의 첫걸음'] as const
 
 export const HERO_DESCRIPTION_LINES = [
-  'JA Korea는 소중한 후원을 통해 청소년이 미래를 준비하고,',
-  '스스로의 가능성을 펼칠 수 있도록 돕습니다.',
+  'JA Korea는 소중한 후원을 통해 청소년이 미래를 준비하고, 스스로의 가능성을 펼칠 수 있도록 돕습니다.',
+  '',
 ] as const
 
 export const WHY_SECTION_TITLE = '왜 JA 일까요?'

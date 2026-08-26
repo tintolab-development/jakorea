@@ -23,7 +23,7 @@ export async function fetchMaterialKitsRemote(
 export async function createMaterialKitRemote(
   body: MaterialKitRequest
 ): Promise<MaterialKitResponse> {
-  return unwrapApiBody(await dmApi.create5(body))
+  return unwrapApiBody(await dmApi.create6(body))
 }
 
 export async function fetchMaterialKitVersionsRemote(

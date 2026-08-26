@@ -16,4 +16,9 @@ export interface MemberConsentRecordResponse {
   collectedByAdminId?: number;
   evidenceFileObjectId?: number;
   evidenceAccessPolicy?: string;
+  filledDocumentId?: number;
+  version?: string;
+  templateCode?: string;
+  filledDocumentAvailable?: boolean;
+  filledDocumentRevealEndpoint?: string;
 }

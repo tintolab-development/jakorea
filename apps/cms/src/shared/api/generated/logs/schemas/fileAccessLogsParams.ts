@@ -8,7 +8,27 @@
 
 export type FileAccessLogsParams = {
 /**
- * 쿼리 파라미터입니다. 요청값 출처: query/path/요청 본문 from 화면 필터
+ * 다운로드 파일명 부분 검색
  */
-params: {[key: string]: string};
+fileName?: string;
+/**
+ * 사용자명 부분 검색
+ */
+userName?: string;
+/**
+ * 조회 시작일 YYYY-MM-DD (Asia/Seoul 00:00:00)
+ */
+from?: string;
+/**
+ * 조회 종료일 YYYY-MM-DD (Asia/Seoul 해당일 끝)
+ */
+to?: string;
+/**
+ * 0-base 페이지, 기본 0
+ */
+page?: number;
+/**
+ * 페이지 크기, 기본 20, 최대 100
+ */
+size?: number;
 };

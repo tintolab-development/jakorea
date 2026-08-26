@@ -586,7 +586,14 @@ export interface MatchingHistory {
 }
 
 // 정산 항목 타입
-export type SettlementItemType = 'instructor_fee' | 'transportation' | 'accommodation' | 'other'
+export type SettlementItemType =
+  | 'instructor_fee'
+  | 'transportation'
+  | 'accommodation'
+  | 'meal'
+  | 'activity'
+  | 'withholding'
+  | 'other'
 
 // 정산 항목
 export interface SettlementItem {
@@ -848,6 +855,8 @@ export interface UserHistory {
   managerName?: string
   /** API program-history 응답 programName (programService 폴백 전) */
   programName?: string
+  /** API program-history participantId */
+  participantId?: number
   // 강사인 경우
   paymentStatus?: PaymentStatus
   paymentAmount?: number

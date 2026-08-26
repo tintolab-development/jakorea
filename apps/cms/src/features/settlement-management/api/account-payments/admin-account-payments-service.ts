@@ -1,7 +1,8 @@
-import { mapAccountPaymentDetailRemote } from '@/features/settlement-management/api/account-payments/map-account-payment-detail'
+import { mapAccountPaymentDetailFromGetApi } from '@/features/settlement-management/api/account-payments/map-account-payment-detail'
 import { mapAccountPaymentListToRows } from '@/features/settlement-management/api/account-payments/map-account-payment-rows'
 import { buildSettlementByIdMap } from '@/features/settlement-management/api/account-payments/map-settlement-context'
 import {
+  fetchAccountPaymentDetailRemote,
   fetchAllAccountPaymentsRemote,
   fetchAllSettlementsRemote,
   fetchSettlementDetailRemote,
@@ -20,15 +21,16 @@ export async function getAccountPaymentsListRemote(): Promise<AccountPaymentRow[
 export async function getAccountPaymentDetailRemote(
   row: AccountPaymentRow
 ): Promise<AccountPaymentStatusDetail> {
-  const settlementId = row.settlementId
-  if (settlementId == null) {
-    throw new Error('계좌 지급 상세에 필요한 settlementId가 없습니다.')
+  const paymentId = row.accountPaymentId
+  if (paymentId == null) {
+    throw new Error('계좌 지급 상세에 필요한 accountPaymentId가 없습니다.')
   }
 
-  const [settlement, settlements] = await Promise.all([
-    fetchSettlementDetailRemote(settlementId),
-    fetchAllSettlementsRemote(),
+  const [detail, settlementFrontend] = await Promise.all([
+    fetchAccountPaymentDetailRemote(paymentId),
+    row.settlementId != null
+      ? fetchSettlementDetailRemote(row.settlementId)
+      : Promise.resolve(undefined),
   ])
-  const settlementListItem = (settlements ?? []).find(s => s.settlementId === settlementId)
-  return mapAccountPaymentDetailRemote(row, settlement, settlementListItem)
+  return mapAccountPaymentDetailFromGetApi(row, detail, settlementFrontend)
 }

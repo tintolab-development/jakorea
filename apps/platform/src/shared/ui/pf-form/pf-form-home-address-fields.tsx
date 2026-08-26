@@ -1,0 +1,73 @@
+import { useState } from 'react'
+import { AddressSearchModal } from '@/features/auth'
+import { PFTextInput } from '../pf-text-input'
+import { PFFormInlineRow, PFFormInlineSegment, PFFormInlineSeparator } from './pf-form-inline'
+import styles from './pf-form.module.css'
+
+export type PFFormHomeAddressFieldsProps = {
+  roadValue: string
+  detailValue: string
+  onRoadChange: (value: string) => void
+  onDetailChange: (value: string) => void
+  roadPlaceholder?: string
+  detailPlaceholder?: string
+  disabled?: boolean
+}
+
+/** Platform 양식 — 자택 주소 (PC: 검색 버튼 · 모바일: 아이콘 + 세로 스택) */
+export function PFFormHomeAddressFields({
+  roadValue,
+  detailValue,
+  onRoadChange,
+  onDetailChange,
+  roadPlaceholder = '건물명, 도로명 또는 지번',
+  detailPlaceholder = '상세 주소',
+  disabled = false,
+}: PFFormHomeAddressFieldsProps) {
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+
+  const openAddressModal = () => {
+    if (disabled) return
+    setIsAddressModalOpen(true)
+  }
+
+  return (
+    <>
+      <PFFormInlineRow>
+        <PFFormInlineSegment>
+          <PFTextInput
+            className={styles.homeAddressMobileSearch}
+            variant="formPage"
+            size="large"
+            hasIcon
+            readOnly
+            placeholder={roadPlaceholder}
+            disabled={disabled}
+            value={roadValue}
+            onClick={openAddressModal}
+          />
+        </PFFormInlineSegment>
+        <PFFormInlineSeparator />
+        <PFFormInlineSegment>
+          <PFTextInput
+            variant="formPage"
+            size="large"
+            placeholder={detailPlaceholder}
+            disabled={disabled}
+            value={detailValue}
+            onValueChange={onDetailChange}
+          />
+        </PFFormInlineSegment>
+      </PFFormInlineRow>
+
+      <AddressSearchModal
+        open={isAddressModalOpen}
+        onClose={() => setIsAddressModalOpen(false)}
+        onSelect={selection => {
+          onRoadChange(selection.address)
+          setIsAddressModalOpen(false)
+        }}
+      />
+    </>
+  )
+}

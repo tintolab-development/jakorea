@@ -3,7 +3,6 @@
  */
 
 import { useMemo, useState } from 'react'
-import { Spin } from 'antd'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -23,6 +22,7 @@ import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
 import { getMockAccountPaymentStatusDetail } from '@/data/mock/account-payments-list'
 import { useAccountPaymentDetailQuery } from '@/features/settlement-management/hooks/use-account-payment-detail-query'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
+import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
 import {
   buildPaymentStatementIssuanceFileNameFromCalculation,
   buildPaymentStatementIssuanceViewOptionsFromCalculation,
@@ -34,6 +34,11 @@ import './payment-order-admin-status-tag.css'
 import '@/features/settlement/ui/payment-record/payment-order-program-calculation-statement-modal.css'
 import { PaymentOrderStatusDetailLnbIcon } from './payment-order-status-detail-lnb-icon'
 import { PaymentOrderCalculationBreakdownTable } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
+import {
+  PaymentOrderCalculationBasisDetailModal,
+  usePaymentOrderCalculationBasisDetailModal,
+} from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail-modal'
+import { computePaymentOrderCalculationSubtotalBeforeWithholding } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import {
   AccountPaymentConfirmationModal,
   buildAccountPaymentSingleConfirmationPayload,
@@ -79,11 +84,28 @@ export function AccountPaymentStatusDetailFullPageModal({
     [row, accountPaymentsRemote]
   )
   const detail = accountPaymentsRemote ? (detailQuery.data ?? null) : mockDetail
-  const detailLoading = accountPaymentsRemote && open && detailQuery.isLoading
+  const detailLoading = accountPaymentsRemote && open && isAwaitingFirstQueryData(detailQuery)
   const detailError = accountPaymentsRemote ? detailQuery.error : null
 
   const [paymentCompleteConfirmOpen, setPaymentCompleteConfirmOpen] = useState(false)
   const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
+  const basisDetailContext = useMemo(() => {
+    const subtotalBeforeWithholding = detail
+      ? computePaymentOrderCalculationSubtotalBeforeWithholding(detail.blocks)
+      : 0
+    return {
+      lectureFeeStandardTitle: detail?.basic.lectureFeeStandardTitle,
+      withholdingDailySalaryTotalWon:
+        subtotalBeforeWithholding > 0 ? subtotalBeforeWithholding : undefined,
+    }
+  }, [detail])
+
+  const {
+    basisDetailOpen,
+    selectedBasisDetail,
+    handleBasisDetailClick,
+    closeBasisDetailModal,
+  } = usePaymentOrderCalculationBasisDetailModal(open, basisDetailContext)
 
   const singlePaymentConfirmPayload = useMemo(
     () => (detail ? buildAccountPaymentSingleConfirmationPayload(detail) : null),
@@ -126,27 +148,7 @@ export function AccountPaymentStatusDetailFullPageModal({
     return null
   }
 
-  if (detailLoading) {
-    return (
-      <DetailFullPageModal open={open} onClose={onClose} title="계좌 지급 현황 상세">
-        <div className="detail-fullpage-modal__loading" role="status">
-          <Spin />
-        </div>
-      </DetailFullPageModal>
-    )
-  }
-
-  if (detailError || !detail) {
-    return (
-      <DetailFullPageModal open={open} onClose={onClose} title="계좌 지급 현황 상세">
-        <div className="page-content-error" role="alert">
-          {detailError instanceof Error ? detailError.message : '상세를 불러오지 못했습니다.'}
-        </div>
-      </DetailFullPageModal>
-    )
-  }
-
-  const { basic } = detail
+  const { basic } = detail ?? { basic: null }
   const title = '계좌 지급 현황 상세'
   const headerBreadcrumbItems = [
     makeBreadcrumbItem(
@@ -163,6 +165,14 @@ export function AccountPaymentStatusDetailFullPageModal({
         open={open}
         onClose={onClose}
         title={title}
+        loading={detailLoading}
+        error={
+          !detailLoading && (detailError || !detail)
+            ? detailError instanceof Error
+              ? detailError.message
+              : '상세를 불러오지 못했습니다.'
+            : null
+        }
         headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
         className="account-payment-status-detail-fullpage-modal"
         sidebar={
@@ -177,6 +187,7 @@ export function AccountPaymentStatusDetailFullPageModal({
           />
         }
       >
+        {detail && basic ? (
         <div className="account-payment-status-detail-fullpage-modal__root">
           <div className="account-payment-status-detail-fullpage-modal__basic-stack">
             <DetailInfoForm
@@ -300,6 +311,7 @@ export function AccountPaymentStatusDetailFullPageModal({
               formulaLabel={detail.formulaLabel}
               totalAmount={detail.totalAmount}
               lectureSessionSegmentLabel="round"
+              onBasisDetailClick={handleBasisDetailClick}
               onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
               headerActions={
                 row.accountPaymentStatus === 'account_paid' ? undefined : (
@@ -316,6 +328,7 @@ export function AccountPaymentStatusDetailFullPageModal({
             />
           </div>
         </div>
+        ) : null}
       </DetailFullPageModal>
 
       <AccountPaymentConfirmationModal
@@ -328,11 +341,17 @@ export function AccountPaymentStatusDetailFullPageModal({
         data={paymentCompleteConfirmOpen ? singlePaymentConfirmPayload : null}
       />
       <PaymentStatementIssuanceViewModal
-        open={issuanceViewOpen}
+        open={issuanceViewOpen && Boolean(issuanceParagraphBodyOptions)}
         onClose={() => setIssuanceViewOpen(false)}
         paragraphBodyOptions={issuanceParagraphBodyOptions}
         fileName={issuanceFileName}
         zIndex={1500}
+      />
+      <PaymentOrderCalculationBasisDetailModal
+        open={basisDetailOpen}
+        onCancel={closeBasisDetailModal}
+        detail={selectedBasisDetail}
+        zIndex={1200}
       />
     </>
   )

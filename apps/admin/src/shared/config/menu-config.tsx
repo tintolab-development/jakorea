@@ -89,6 +89,7 @@ export const menuItems: MenuItemConfig[] = [
         key: 'ja-korea-recruit-group',
         label: '채용',
         children: [
+          { key: '/ja-korea/recruit/guide', label: '채용 안내 관리' },
           { key: '/ja-korea/recruit/ideal-talent', label: '인재상 관리' },
           { key: '/ja-korea/recruit/postings', label: '공고 관리' },
           { key: '/ja-korea/recruit/applicants', label: '지원자 관리' },
@@ -270,6 +271,7 @@ const PAGE_TITLE_BY_PATH: Record<string, string> = {
   '/ja-korea/income-expense': '수입&지출 관리',
   '/ja-korea/reports-disclosure': '보고서 및 공시 관리',
   '/ja-korea/ja-history/resumes': '강사 이력서',
+  '/ja-korea/recruit/guide': '채용 안내 관리',
   '/ja-korea/recruit/ideal-talent': '인재상 관리',
   '/ja-korea/recruit/postings': '공고 관리',
   '/ja-korea/recruit/applicants': '지원자 관리',

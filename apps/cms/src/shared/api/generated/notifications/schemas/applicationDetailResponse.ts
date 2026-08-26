@@ -9,6 +9,7 @@ import type { ApplicationCapabilities } from './applicationCapabilities';
 import type { ApplicationDetailResponseAnswers } from './applicationDetailResponseAnswers';
 import type { EducationScreenSummary } from './educationScreenSummary';
 import type { ParticipationSummary } from './participationSummary';
+import type { ProgramApplicationSupplement } from './programApplicationSupplement';
 import type { ProgramSummary } from './programSummary';
 
 export interface ApplicationDetailResponse {
@@ -17,6 +18,7 @@ export interface ApplicationDetailResponse {
   programId?: number;
   programTitle?: string;
   programType?: string;
+  programGroup?: string;
   recruitmentId?: number;
   recruitmentType?: string;
   applicationStatus?: string;
@@ -33,4 +35,5 @@ export interface ApplicationDetailResponse {
   participation?: ParticipationSummary;
   summary?: EducationScreenSummary;
   capabilities?: ApplicationCapabilities;
+  supplement?: ProgramApplicationSupplement;
 }

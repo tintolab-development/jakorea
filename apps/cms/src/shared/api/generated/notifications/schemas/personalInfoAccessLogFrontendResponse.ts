@@ -8,6 +8,7 @@
 
 export interface PersonalInfoAccessLogFrontendResponse {
   id?: string;
+  targetName?: string;
   accessItem?: string;
   accessPurpose?: string;
   accessorId?: string;

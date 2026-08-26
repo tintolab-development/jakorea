@@ -5,6 +5,8 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorPortalProfileUpdate } from './instructorPortalProfileUpdate';
+import type { PortalSchoolSelectionRequest } from './portalSchoolSelectionRequest';
 
 /**
  * 회원 포탈 내정보 수정 요청. 이메일·이름·휴대폰·생년월일·성별은 본인인증 정보이므로 이 API에서 수정하지 않습니다.
@@ -48,6 +50,12 @@ export interface UpdatePortalProfileRequest {
   schoolOrganizationId?: number;
   /**
      * @minLength 0
+     * @maxLength 255
+     */
+  schoolName?: string;
+  schoolSelection?: PortalSchoolSelectionRequest;
+  /**
+     * @minLength 0
      * @maxLength 30
      */
   schoolEnrollmentStatus?: string;
@@ -61,4 +69,5 @@ export interface UpdatePortalProfileRequest {
      * @maxLength 100
      */
   external1365Id?: string;
+  instructorProfile?: InstructorPortalProfileUpdate;
 }

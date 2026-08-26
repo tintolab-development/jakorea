@@ -97,6 +97,11 @@ export interface LectureAttendanceModalProps {
   onCorrectAttendance?: () => void
   savedSessions?: LectureAttendanceSession[] | null
   zIndex?: number
+  /** API enrollment-summary 집계값만 있을 때 회차별 mock 대신 요약만 표시 */
+  attendanceSummaryOnly?: string
+  /** remote API 상세 — 지정 시 mock 미사용 */
+  remoteDetail?: LectureAttendanceDetail | null
+  remoteDetailLoading?: boolean
 }
 
 export function LectureAttendanceModal({
@@ -110,9 +115,28 @@ export function LectureAttendanceModal({
   onCorrectAttendance,
   savedSessions = null,
   zIndex,
+  attendanceSummaryOnly,
+  remoteDetail,
+  remoteDetailLoading = false,
 }: LectureAttendanceModalProps) {
+  const summaryAttendanceCounts = useMemo(() => {
+    if (remoteDetail !== undefined) return null
+    if (!attendanceSummaryOnly?.trim()) return null
+    const match = /(\d+)\s*\/\s*(\d+)/.exec(attendanceSummaryOnly.replace('/', ' / '))
+    if (!match) return null
+    return { attended: Number(match[1]), held: Number(match[2]) }
+  }, [attendanceSummaryOnly, remoteDetail])
+
   const detailBase: LectureAttendanceDetail | null = useMemo(() => {
     if (!open) return null
+    if (remoteDetail !== undefined) return remoteDetail
+    if (summaryAttendanceCounts != null && application && userName) {
+      return {
+        studentName: userName,
+        attendanceRatePercent: 0,
+        sessions: [],
+      }
+    }
     if (application && userName) {
       return getLectureAttendanceDetailForApplication(application, userName)
     }
@@ -120,7 +144,7 @@ export function LectureAttendanceModal({
       return getLectureAttendanceDetail(student, schoolId)
     }
     return null
-  }, [open, student, schoolId, application, userName])
+  }, [open, student, schoolId, application, userName, summaryAttendanceCounts, remoteDetail])
 
   const [sessionOverrides, setSessionOverrides] = useState<LectureAttendanceSession[] | null>(null)
   const [editing, setEditing] = useState(false)
@@ -144,7 +168,7 @@ export function LectureAttendanceModal({
   const tableSessions = editing ? sessionDraft : sessions
   const rateSource = editing ? sessionDraft : sessions
   const { attended: attendedDisplay, held: heldDisplay } =
-    countLectureAttendanceHeldAndAttended(rateSource)
+    summaryAttendanceCounts ?? countLectureAttendanceHeldAndAttended(rateSource)
 
   const sessionPairs = useMemo(() => {
     const pairs: Array<[LectureAttendanceSession | null, LectureAttendanceSession | null]> = []
@@ -189,9 +213,25 @@ export function LectureAttendanceModal({
     onCancel()
   }, [editing, cancelCorrection, onCancel])
 
-  const footer = editing ? (
+  const footer = summaryAttendanceCounts != null ? (
+    <CmsButton
+      variant="secondary"
+      size="medium"
+      width={120}
+      className="cms-button--footer-auto lecture-attendance-modal__footer-btn lecture-attendance-modal__footer-btn--close"
+      onClick={onCancel}
+    >
+      닫기
+    </CmsButton>
+  ) : editing ? (
     <>
-      <CmsButton variant="secondary" size="medium" onClick={cancelCorrection}>
+      <CmsButton
+        variant="secondary"
+        size="medium"
+        width={120}
+        className="cms-button--footer-auto lecture-attendance-modal__footer-btn lecture-attendance-modal__footer-btn--close"
+        onClick={cancelCorrection}
+      >
         취소
       </CmsButton>
       <CmsButton variant="primary" size="medium" onClick={saveCorrection}>
@@ -200,7 +240,13 @@ export function LectureAttendanceModal({
     </>
   ) : (
     <>
-      <CmsButton variant="secondary" size="medium" onClick={onCancel}>
+      <CmsButton
+        variant="secondary"
+        size="medium"
+        width={120}
+        className="cms-button--footer-auto lecture-attendance-modal__footer-btn lecture-attendance-modal__footer-btn--close"
+        onClick={onCancel}
+      >
         닫기
       </CmsButton>
       <CmsButton variant="primary" size="medium" onClick={startCorrection}>
@@ -224,7 +270,9 @@ export function LectureAttendanceModal({
           : undefined
       }
     >
-      {detailBase ? (
+      {remoteDetailLoading ? (
+        <div className="lecture-attendance-modal__loading">로딩 중...</div>
+      ) : detailBase ? (
         <div className="lecture-attendance-modal__table-wrap">
           <table className="lecture-attendance-modal__grid">
             <colgroup>
@@ -242,30 +290,32 @@ export function LectureAttendanceModal({
                   <AttendanceRateValue attended={attendedDisplay} held={heldDisplay} />
                 </td>
               </tr>
-              {sessionPairs.map(([left, right], index) => (
-                <tr key={`session-pair-${index}`}>
-                  <th scope="row">{left ? `${left.roundNumber}회차` : null}</th>
-                  <td>
-                    {left ? (
-                      <SessionStatusCell
-                        session={left}
-                        editing={editing}
-                        onPick={patchSessionStatus}
-                      />
-                    ) : null}
-                  </td>
-                  <th scope="row">{right ? `${right.roundNumber}회차` : null}</th>
-                  <td>
-                    {right ? (
-                      <SessionStatusCell
-                        session={right}
-                        editing={editing}
-                        onPick={patchSessionStatus}
-                      />
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
+              {summaryAttendanceCounts == null
+                ? sessionPairs.map(([left, right], index) => (
+                    <tr key={`session-pair-${index}`}>
+                      <th scope="row">{left ? `${left.roundNumber}회차` : null}</th>
+                      <td>
+                        {left ? (
+                          <SessionStatusCell
+                            session={left}
+                            editing={editing}
+                            onPick={patchSessionStatus}
+                          />
+                        ) : null}
+                      </td>
+                      <th scope="row">{right ? `${right.roundNumber}회차` : null}</th>
+                      <td>
+                        {right ? (
+                          <SessionStatusCell
+                            session={right}
+                            editing={editing}
+                            onPick={patchSessionStatus}
+                          />
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))
+                : null}
             </tbody>
           </table>
         </div>

@@ -1,9 +1,13 @@
 .alimtalk-phone-preview {
-  --alimtalk-phone-scale: calc(369 / 337);
+  --alimtalk-phone-scale-x: calc(369 / 337);
+  --alimtalk-phone-scale-y: calc(777 / 690);
+  /* legacy alias — horizontal sizing */
+  --alimtalk-phone-scale: var(--alimtalk-phone-scale-x);
   position: relative;
   flex: 0 0 369px;
   width: 369px;
   height: 777px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -16,31 +20,58 @@
   object-fit: fill;
 }
 
+/* PNG 입력창 아래 파란 홈 인디케이터 영역을 가림 */
+.alimtalk-phone-preview__home-fill {
+  position: absolute;
+  left: 50%;
+  z-index: 1;
+  width: calc(309.401px * var(--alimtalk-phone-scale-x));
+  height: calc(52px * var(--alimtalk-phone-scale-y));
+  bottom: calc(18px * var(--alimtalk-phone-scale-y));
+  pointer-events: none;
+  border-radius: 0 0 28px 28px;
+  background: #fff;
+  transform: translateX(-50%);
+}
+
 .alimtalk-phone-preview__stage {
   position: absolute;
-  top: calc(55px * var(--alimtalk-phone-scale));
+  top: calc(55px * var(--alimtalk-phone-scale-y));
   left: 50%;
-  width: calc(309.401px * var(--alimtalk-phone-scale));
-  bottom: calc(92px * var(--alimtalk-phone-scale));
+  width: calc(309.401px * var(--alimtalk-phone-scale-x));
+  bottom: calc(92px * var(--alimtalk-phone-scale-y));
   display: flex;
   flex-direction: column;
-  gap: calc(10px * var(--alimtalk-phone-scale));
-  overflow: auto;
+  gap: 0;
+  z-index: 2;
+  overflow: hidden;
+  box-sizing: border-box;
   background: transparent;
   transform: translateX(-50%);
   pointer-events: none;
+}
+
+.alimtalk-phone-preview__scroll {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
-.alimtalk-phone-preview__stage::-webkit-scrollbar {
+.alimtalk-phone-preview__scroll::-webkit-scrollbar {
   display: none;
 }
 
 .alimtalk-phone-preview__nav {
   display: flex;
   width: 100%;
-  height: calc(34.341px * var(--alimtalk-phone-scale));
+  height: calc(34.341px * var(--alimtalk-phone-scale-y));
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
@@ -53,7 +84,7 @@
   overflow: hidden;
   color: #000;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: calc(11.945px * var(--alimtalk-phone-scale));
+  font-size: calc(11.945px * var(--alimtalk-phone-scale-y));
   font-style: normal;
   font-weight: 500;
   line-height: normal;
@@ -65,10 +96,10 @@
 .alimtalk-phone-preview__message {
   display: flex;
   width: 100%;
+  flex-shrink: 0;
   padding: 0 calc(17.58px * var(--alimtalk-phone-scale)) 0 calc(8.79px * var(--alimtalk-phone-scale));
   box-sizing: border-box;
   flex-direction: column;
-  justify-content: flex-end;
   align-items: flex-start;
 }
 
@@ -127,9 +158,9 @@
 
 .alimtalk-phone-preview__bubble-head {
   display: flex;
-  height: calc(30px * var(--alimtalk-phone-scale));
-  padding: calc(7.911px * var(--alimtalk-phone-scale)) calc(8.79px * var(--alimtalk-phone-scale))
-    calc(7.032px * var(--alimtalk-phone-scale)) calc(8.79px * var(--alimtalk-phone-scale));
+  height: calc(30px * var(--alimtalk-phone-scale-y));
+  padding: calc(7.911px * var(--alimtalk-phone-scale-y)) calc(8.79px * var(--alimtalk-phone-scale-x))
+    calc(7.032px * var(--alimtalk-phone-scale-y)) calc(8.79px * var(--alimtalk-phone-scale-x));
   box-sizing: border-box;
   align-items: flex-start;
   gap: 8.79px;
@@ -143,6 +174,23 @@
   line-height: normal;
 }
 
+.alimtalk-phone-preview__bubble-image {
+  display: flex;
+  width: 100%;
+  height: 140.5px;
+  align-self: stretch;
+  aspect-ratio: 2 / 1;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.alimtalk-phone-preview__bubble-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .alimtalk-phone-preview__bubble-body {
   display: flex;
   padding: 9px 10px 10px;
@@ -152,23 +200,167 @@
   align-self: stretch;
 }
 
-.alimtalk-phone-preview__bubble-text {
+.alimtalk-phone-preview__bubble-emphasis-text {
+  display: flex;
+  padding: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.alimtalk-phone-preview__bubble-emphasis-divider {
+  height: 1px;
+  align-self: stretch;
+  background: var(--table-line, #e0e0e0);
+}
+
+.alimtalk-phone-preview__bubble-emphasis-subtitle {
   margin: 0;
-  color: var(--kt-chatMessage, #282a2b);
+  color: #888;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 400;
-  line-height: 140%; /* 18.2px */
+  line-height: 130%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.alimtalk-phone-preview__bubble-emphasis-title {
+  margin: 0;
+  color: #282a2b;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 130%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.alimtalk-phone-preview__bubble-template-header {
+  margin: 0;
+  color: #282a2b;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.alimtalk-phone-preview__bubble-item-block {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.alimtalk-phone-preview__bubble-item-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.alimtalk-phone-preview__bubble-item-title {
+  margin: 0;
+  color: #282a2b;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 140%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.alimtalk-phone-preview__bubble-item-desc {
+  margin: 0;
+  color: #888;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 140%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.alimtalk-phone-preview__bubble-item-thumb {
+  display: block;
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.alimtalk-phone-preview__bubble-item-list {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.alimtalk-phone-preview__bubble-item-row {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: 22px;
+  align-self: stretch;
+}
+
+.alimtalk-phone-preview__bubble-item-name {
+  flex: 0 0 auto;
+  color: #888;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 140%;
+  white-space: nowrap;
+}
+
+.alimtalk-phone-preview__bubble-item-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #282a2b;
+  text-align: right;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 140%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.alimtalk-phone-preview__bubble-text {
+  margin: 0;
+  color: #282a2b;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .alimtalk-phone-preview__bubble-extra {
   margin: 0;
-  color: rgba(40, 42, 43, 0.72);
+  color: #888;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 400;
   line-height: 140%;
@@ -178,9 +370,9 @@
 
 .alimtalk-phone-preview__bubble-guide {
   margin: 0;
-  color: rgba(40, 42, 43, 0.72);
+  color: #888;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 400;
   line-height: 140%;
@@ -222,15 +414,12 @@
 }
 
 .alimtalk-phone-preview__cta-icon {
-  display: inline-flex;
-  width: 16px;
-  height: 16px;
+  display: block;
+  width: 29px;
+  height: 37px;
   flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1;
+  aspect-ratio: 29 / 37;
+  object-fit: contain;
 }
 
 .alimtalk-phone-preview__quick-links {

@@ -19,7 +19,7 @@ import {
 } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/components/status-badge'
 import { applicationService } from '@/entities/application/api/application-service'
-import dayjs from 'dayjs'
+import { formatDateDot, formatDateTimeDot } from '@/shared/utils'
 import type { Application, ApplicationStatus } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 
@@ -144,7 +144,7 @@ export function MyProgramApplicationsPage() {
       dataIndex: 'submittedAt',
       key: 'submittedAt',
       width: 150,
-      render: (date: string) => dayjs(date).format('YYYY-MM-DD'),
+      render: (date: string) => formatDateDot(date),
     },
     {
       title: '상태',
@@ -164,7 +164,7 @@ export function MyProgramApplicationsPage() {
       dataIndex: 'reviewedAt',
       key: 'reviewedAt',
       width: 150,
-      render: (date: string | undefined) => (date ? dayjs(date).format('YYYY-MM-DD') : '-'),
+      render: (date: string | undefined) => (date ? formatDateDot(date) : '-'),
     },
     {
       title: '작업',
@@ -271,7 +271,7 @@ export function MyProgramApplicationsPage() {
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="신청일"
-                view={dayjs(selectedApplication.submittedAt).format('YYYY-MM-DD HH:mm')}
+                view={formatDateTimeDot(selectedApplication.submittedAt)}
                 fullRow
               />
             </DetailInfoForm.Row>
@@ -280,7 +280,7 @@ export function MyProgramApplicationsPage() {
                 label="검토일"
                 view={
                   selectedApplication.reviewedAt
-                    ? dayjs(selectedApplication.reviewedAt).format('YYYY-MM-DD HH:mm')
+                    ? formatDateTimeDot(selectedApplication.reviewedAt)
                     : '-'
                 }
                 fullRow

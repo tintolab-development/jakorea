@@ -1,3 +1,5 @@
+import alimtalkImageEmphasisBanner from '@/assets/images/message/alimtalk-image-emphasis-banner.png'
+import alimtalkItemListThumb from '@/assets/images/message/alimtalk-item-list-thumb.png'
 import { ALIMTALK_ROOT_CATEGORY_ID, type AlimtalkCategory, type AlimtalkTemplateItem } from './types'
 
 const SIGNUP_CONTENT = `안녕하세요, JA Korea입니다.
@@ -75,6 +77,12 @@ const BASIC_BUTTONS: AlimtalkTemplateItem['buttons'] = NONE_BUTTONS.filter(
 
 const EXTRA_INFO = '부가 정보 더미 텍스트입니다.'
 
+const EMPHASIS_TEXT_CONTENT = `템플릿 내용 더미 텍스트입니다.
+템플릿 내용 더미 2줄 텍스트입니다.`
+
+const EMPHASIS_TEXT_EXTRA_INFO = `부가 정보 더미 텍스트입니다.
+부가 정보 더미 2줄 텍스트입니다.`
+
 const NONE_QUICK_LINKS: AlimtalkTemplateItem['quickLinks'] = [
   { typeLabel: '웹 링크', name: '바로연결명', destinations: WEB_DESTINATIONS },
   { typeLabel: '앱 링크', name: '바로연결명 02', destinations: APP_DESTINATIONS },
@@ -88,12 +96,28 @@ const NONE_QUICK_LINKS: AlimtalkTemplateItem['quickLinks'] = [
   },
 ]
 
+const EMPHASIS_TEXT_BUTTONS: AlimtalkTemplateItem['buttons'] = [
+  { typeLabel: '채널 추가', name: '채널 추가', variant: 'channel' },
+  {
+    typeLabel: '웹 링크',
+    name: '버튼명',
+    variant: 'default',
+    destinations: WEB_DESTINATIONS,
+  },
+]
+
+const EMPHASIS_TEXT_QUICK_LINKS: AlimtalkTemplateItem['quickLinks'] = [
+  { typeLabel: '웹 링크', name: '바로연결명', destinations: WEB_DESTINATIONS },
+]
+
 export const ALIMTALK_CATEGORY_MOCK: AlimtalkCategory[] = [
   { id: 'cat-notice', name: '전체 공지', parentId: ALIMTALK_ROOT_CATEGORY_ID },
   { id: 'cat-system', name: '시스템 안내', parentId: 'cat-notice' },
   { id: 'cat-program', name: '프로그램 안내', parentId: ALIMTALK_ROOT_CATEGORY_ID },
   { id: 'cat-test-01', name: 'test 01', parentId: 'cat-program' },
   { id: 'cat-test-02', name: 'test 02', parentId: 'cat-test-01' },
+  { id: 'cat-service', name: '서비스이용', parentId: ALIMTALK_ROOT_CATEGORY_ID },
+  { id: 'cat-service-guide', name: '이용안내/공지', parentId: 'cat-service' },
 ]
 
 export const ALIMTALK_TEMPLATE_ITEM_MOCK: AlimtalkTemplateItem[] = [
@@ -182,4 +206,75 @@ export const ALIMTALK_TEMPLATE_ITEM_MOCK: AlimtalkTemplateItem[] = [
     buttons: NONE_BUTTONS,
     quickLinks: NONE_QUICK_LINKS,
   },
+  {
+    id: 'tpl-emphasis-text',
+    name: '강조 표기형 안내',
+    templateName: '템플릿 내용 더미 (강조 표기형)',
+    categoryId: 'cat-service-guide',
+    registeredAt: '2026-09-15T09:15:00',
+    updatedAt: '2026-09-15T09:15:00',
+    senderProfile: 'JA KOREA',
+    messageType: 'COMPLEX',
+    emphasisType: 'TEXT',
+    emphasisTitle: '템플릿 강조 제목 더미 텍스트 (최대 50자까지 작성 가능)',
+    emphasisSubtitle: '템플릿 강조 부제목 더미 텍스트 (최대 50자까지 작성 가능)',
+    isSecurityTemplate: false,
+    content: EMPHASIS_TEXT_CONTENT,
+    extraInfo: EMPHASIS_TEXT_EXTRA_INFO,
+    ctaLabel: '버튼명',
+    buttons: EMPHASIS_TEXT_BUTTONS,
+    quickLinks: EMPHASIS_TEXT_QUICK_LINKS,
+  },
+  {
+    id: 'tpl-emphasis-image',
+    name: '이미지형 안내',
+    templateName: '템플릿 내용 더미 (이미지형)',
+    categoryId: 'cat-service-guide',
+    registeredAt: '2026-09-15T09:15:00',
+    updatedAt: '2026-09-15T09:15:00',
+    senderProfile: 'JA KOREA',
+    messageType: 'COMPLEX',
+    emphasisType: 'IMAGE',
+    imageUrl: alimtalkImageEmphasisBanner,
+    imageFileName: 'banner_test image.png',
+    isSecurityTemplate: false,
+    content: '템플릿 내용 더미 텍스트입니다.',
+    extraInfo: EXTRA_INFO,
+    ctaLabel: '버튼명',
+    buttons: EMPHASIS_TEXT_BUTTONS,
+    quickLinks: EMPHASIS_TEXT_QUICK_LINKS,
+  },
+  {
+    id: 'tpl-emphasis-item-list',
+    name: '아이템 리스트형 안내',
+    templateName: '템플릿 내용 더미 (아이템 리스트형)',
+    categoryId: 'cat-service-guide',
+    registeredAt: '2026-09-15T09:15:00',
+    updatedAt: '2026-09-15T09:15:00',
+    senderProfile: 'JA KOREA',
+    messageType: 'COMPLEX',
+    emphasisType: 'ITEM_LIST',
+    imageUrl: alimtalkImageEmphasisBanner,
+    imageFileName: 'banner_test image.png',
+    templateHeader: '템플릿 헤더 텍스트',
+    itemTitle: '아이템 제목 팔구십일이삼사오육칠팔구십일',
+    itemDescription: '아이템 설명 팔구십일이삼',
+    itemImageUrl: alimtalkItemListThumb,
+    itemImageFileName: 'item_highlight_test image.png',
+    itemList: [
+      { name: '아이템명 01', content: '아이템 내용 01 일이삼사오육칠팔구십일이삼' },
+      { name: '아이템명 02', content: '아이템 내용 02' },
+    ],
+    itemSummary: { name: '일이삼사오육', content: '일이삼사오육칠팔구십일이삼사' },
+    isSecurityTemplate: false,
+    content: '템플릿 내용 더미 텍스트입니다.',
+    extraInfo: EXTRA_INFO,
+    ctaLabel: '채널 추가',
+    buttons: [{ typeLabel: '채널 추가', name: '채널 추가', variant: 'channel' }],
+    quickLinks: EMPHASIS_TEXT_QUICK_LINKS,
+  },
 ]
+
+/** 알림톡 발송 템플릿 선택 팝업용 — 템플릿 목록 mock과 동일 데이터 */
+export const ALIMTALK_SEND_TEMPLATE_PICKER_MOCK: AlimtalkTemplateItem[] =
+  ALIMTALK_TEMPLATE_ITEM_MOCK

@@ -7,6 +7,7 @@ import {
   AdminRegisteredEditPage,
   AdminRegisteredIdentityPage,
   AdminRegisteredNoticePage,
+  AdminRegisteredOnboardingLayout,
   FindEmailCompletePage,
   FindEmailPage,
   FindPasswordCompletePage,
@@ -28,7 +29,14 @@ import {
   SocialErrorPage,
 } from '@/pages/auth'
 import { HomePage } from '@/pages/home'
-import { MypageHomePage, MypageInstructorApplyConsentPage, MypageInstructorApplyPage } from '@/pages/mypage'
+import {
+  MypageHomePage,
+  MypageInstructorApplyConsentPage,
+  MypageInstructorApplyPage,
+  MypageInquiriesPage,
+  MypageInquiriesWritePage,
+  MypageSettingsPage,
+} from '@/pages/mypage'
 import {
   ProgramApplyCompletePage,
   ProgramApplyPage,
@@ -43,10 +51,15 @@ import { PeoplePage } from '@/pages/about/people'
 import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transparency'
 import { DesignSystemPage } from '@/pages/design-system'
 import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
+import { CorporateDonationPage } from '@/pages/support/corporate'
 import { IndividualDonationPage } from '@/pages/support/individual'
+import { TalentDonationPage } from '@/pages/support/talent'
+import { TalentDonationApplyPage } from '@/pages/support/talent/apply'
 import { TemporaryPage } from '@/pages/temporary'
+import { CORPORATE_DONATION_PATH } from '@/features/corporate-donation'
 import { IMPACT_STORIES_PATH } from '@/features/impact-story'
 import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
+import { TALENT_DONATION_APPLY_PATH, TALENT_DONATION_PATH } from '@/features/talent-donation'
 import {
   ABOUT_CAREERS_PATH,
   ABOUT_HISTORY_PATH,
@@ -55,8 +68,6 @@ import {
   EDUCATION_DIGITAL_LITERACY_PATH,
   EDUCATION_ENTREPRENEURSHIP_PATH,
   EDUCATION_FINANCE_PATH,
-  SUPPORT_CORPORATE_PATH,
-  SUPPORT_TALENT_PATH,
 } from '@/shared/config/gnb-temporary-paths'
 import { AppLayoutRoute } from './app-layout-route'
 
@@ -107,8 +118,9 @@ export const router = createBrowserRouter([
     element: <AppLayoutRoute layout="support" />,
     children: [
       { path: INDIVIDUAL_DONATION_PATH, element: <IndividualDonationPage /> },
-      { path: SUPPORT_CORPORATE_PATH, element: <TemporaryPage /> },
-      { path: SUPPORT_TALENT_PATH, element: <TemporaryPage /> },
+      { path: CORPORATE_DONATION_PATH, element: <CorporateDonationPage /> },
+      { path: TALENT_DONATION_PATH, element: <TalentDonationPage /> },
+      { path: TALENT_DONATION_APPLY_PATH, element: <TalentDonationApplyPage /> },
     ],
   },
   {
@@ -116,20 +128,33 @@ export const router = createBrowserRouter([
     children: [{ path: '/mypage', element: <MypageHomePage /> }],
   },
   {
+    element: <AppLayoutRoute layout="mypage-subpage" />,
+    children: [
+      { path: '/mypage/settings', element: <MypageSettingsPage /> },
+      { path: '/mypage/inquiries', element: <MypageInquiriesPage /> },
+      { path: '/mypage/inquiries/write', element: <MypageInquiriesWritePage /> },
+    ],
+  },
+  {
     element: <AppLayoutRoute layout="auth" />,
     children: [
       { path: '/auth/required', element: <RequiredPage /> },
       { path: '/auth/sign-in', element: <SignInPage /> },
       { path: '/auth/admin-registered/notice', element: <AdminRegisteredNoticePage /> },
-      { path: '/auth/admin-registered/birth', element: <AdminRegisteredBirthPage /> },
-      { path: '/auth/admin-registered/identity', element: <AdminRegisteredIdentityPage /> },
       {
-        path: '/auth/admin-registered/change-password',
-        element: <AdminRegisteredChangePasswordPage />,
+        element: <AdminRegisteredOnboardingLayout />,
+        children: [
+          { path: '/auth/admin-registered/birth', element: <AdminRegisteredBirthPage /> },
+          { path: '/auth/admin-registered/identity', element: <AdminRegisteredIdentityPage /> },
+          {
+            path: '/auth/admin-registered/change-password',
+            element: <AdminRegisteredChangePasswordPage />,
+          },
+          { path: '/auth/admin-registered/confirm', element: <AdminRegisteredConfirmPage /> },
+          { path: '/auth/admin-registered/edit', element: <AdminRegisteredEditPage /> },
+          { path: '/auth/admin-registered/complete', element: <AdminRegisteredCompletePage /> },
+        ],
       },
-      { path: '/auth/admin-registered/confirm', element: <AdminRegisteredConfirmPage /> },
-      { path: '/auth/admin-registered/edit', element: <AdminRegisteredEditPage /> },
-      { path: '/auth/admin-registered/complete', element: <AdminRegisteredCompletePage /> },
       { path: '/auth/find-email', element: <FindEmailPage /> },
       { path: '/auth/find-email/complete', element: <FindEmailCompletePage /> },
       { path: '/auth/find-password', element: <FindPasswordPage /> },

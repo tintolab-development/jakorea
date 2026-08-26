@@ -1,19 +1,4 @@
-/* 역할 열 — tag100(100×32 배지) 기준 중앙 정렬, 개인·팀 행 동일 치수 */
-.participating-individual-participant-assignment-section__table-outer
-  .assignment-submission-modal__team-role-tag {
-  box-sizing: border-box;
-  display: inline-flex;
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 100px !important;
-  height: 32px !important;
-  min-height: 32px !important;
-  max-height: 32px !important;
-  padding: 6px 10px;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
-}
+/* 역할 열 — tag100 레이아웃은 assignment-submission-modal.css SSOT */
 
 .participating-individual-participant-assignment-section__role-static {
   box-sizing: border-box;
@@ -52,6 +37,8 @@
   padding-right: 0 !important;
   text-align: center !important;
   vertical-align: middle !important;
+  overflow: clip;
+  box-sizing: border-box;
 }
 
 .participating-individual-participant-assignment-section__table-outer

@@ -6,6 +6,7 @@ import {
   COL_SPAN_FULL,
   COL_SPAN_HALF,
   FULL_WIDTH_CENTER_RATIO,
+  areWidgetIdListsEqual,
   computeDragEndResult,
   getInsertIndexFromPoint,
   isPointerInFullWidthCenterBand,
@@ -25,6 +26,17 @@ function rect(left: number, top: number, width: number, height: number): DOMRect
     toJSON: () => ({}),
   } as DOMRect
 }
+
+describe('areWidgetIdListsEqual', () => {
+  it('같은 순서면 true', () => {
+    expect(areWidgetIdListsEqual(['a', 'b'], ['a', 'b'])).toBe(true)
+  })
+
+  it('다르면 false', () => {
+    expect(areWidgetIdListsEqual(['a', 'b'], ['b', 'a'])).toBe(false)
+    expect(areWidgetIdListsEqual(['a'], ['a', 'b'])).toBe(false)
+  })
+})
 
 describe('isPointerInFullWidthCenterBand', () => {
   it('중앙 FULL_WIDTH_CENTER_RATIO 구간이면 true', () => {

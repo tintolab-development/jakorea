@@ -7,8 +7,20 @@
   min-width: 0;
 }
 
+.cms-input-iconclick--editable {
+  cursor: pointer;
+}
+
 .cms-input-iconclick__text {
   min-width: 0;
+}
+
+.cms-input-iconclick--editable .cms-input-iconclick__text {
+  cursor: pointer;
+}
+
+.cms-input-iconclick__text--placeholder {
+  color: rgba(61, 61, 61, 0.4);
 }
 
 .cms-input-iconclick--read-only .cms-input-iconclick__text {

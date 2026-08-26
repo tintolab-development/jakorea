@@ -207,9 +207,9 @@
 
 .typo-form-field-label {
   font-family: var(--font-family-base);
-  font-size: 16px;
+  font-size: 13px;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 140%;
   letter-spacing: 0;
 }

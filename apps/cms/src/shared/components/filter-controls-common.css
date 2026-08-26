@@ -251,12 +251,13 @@
   min-width: 0 !important;
   width: 100% !important;
   max-width: 100% !important;
-  height: var(--filter-control-height) !important;
-  min-height: var(--filter-control-height) !important;
+  height: 100% !important;
+  min-height: 0 !important;
   display: flex !important;
   align-items: center !important;
   flex: 1 1 auto !important;
   box-sizing: border-box !important;
+  overflow: visible !important;
 }
 
 .table-filter-group .labeled-search-input .cms-input .cms-input__control {
@@ -268,18 +269,19 @@
   box-shadow: none !important;
 }
 
-.table-filter-group .labeled-search-input .cms-input .cms-input__inner .ant-input-affix-wrapper .ant-input {
+.table-filter-group .labeled-search-input .cms-input .cms-input__inner .ant-input-affix-wrapper .ant-input,
+.table-filter-group .labeled-search-input .cms-input .cms-input__inner > .ant-input {
   height: 100% !important;
   min-height: 0 !important;
   line-height: 1 !important;
   padding: 0 !important;
   flex: 1 1 auto;
   min-width: 0;
+  width: 100% !important;
 }
 
-.table-filter-group .labeled-search-input .cms-input .ant-input-clear-icon {
+.table-filter-group .labeled-search-input .cms-input .cms-input__clear {
   flex-shrink: 0;
-  margin-inline-end: 0;
 }
 
 /* 통일 필터 카드 - 운영기간 등 DatePicker / RangePicker */

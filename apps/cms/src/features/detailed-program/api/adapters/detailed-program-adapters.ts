@@ -13,7 +13,7 @@ export function mapDetailedProgramResponse(dto: DetailedProgramResponse): Detail
     id: String(dto.id ?? ''),
     name: dto.nameKo?.trim() ?? '',
     active: dto.useYn ?? true,
-    createdBy: dto.createdByAdminId != null ? String(dto.createdByAdminId) : '-',
+    createdBy: dto.createdByName?.trim() || (dto.createdByAdminId != null ? String(dto.createdByAdminId) : '-'),
     createdAt: dto.createdAt ?? '',
     inUse: false,
   }

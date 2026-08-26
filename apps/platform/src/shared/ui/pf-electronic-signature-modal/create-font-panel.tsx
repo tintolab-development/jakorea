@@ -87,6 +87,8 @@ export function CreateFontPanel({
   )
 }
 
+const SIGNATURE_RENDER_FONT_SIZE = 96
+
 export async function renderCreateSignatureDataUrl(args: {
   name: string
   fontStyleCode: string
@@ -94,22 +96,38 @@ export async function renderCreateSignatureDataUrl(args: {
   const style = SIGNATURE_FONT_STYLES.find(item => item.code === args.fontStyleCode)
   if (!style) return null
 
-  await ensureSignatureFontsReady()
+  const text = args.name.trim()
+  if (!text) return null
 
-  const width = 720
-  const height = 240
+  try {
+    await ensureSignatureFontsReady()
+  } catch {
+    /* 폰트 로드 실패 — fallback 폰트로 렌더 */
+  }
+
+  // 서명 폰트를 못 쓰는 경우에도 shorthand가 유효해야 크기가 유지된다
+  const font = `${style.weight} ${SIGNATURE_RENDER_FONT_SIZE}px ${style.family}, sans-serif`
+
   const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
   const ctx = canvas.getContext('2d')
   if (!ctx) return null
 
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, width, height)
+  ctx.font = font
+  const metrics = ctx.measureText(text)
+  const ascent = metrics.actualBoundingBoxAscent || SIGNATURE_RENDER_FONT_SIZE * 0.8
+  const descent = metrics.actualBoundingBoxDescent || SIGNATURE_RENDER_FONT_SIZE * 0.3
+  const paddingX = Math.round(SIGNATURE_RENDER_FONT_SIZE * 0.15)
+  const paddingY = Math.round(SIGNATURE_RENDER_FONT_SIZE * 0.15)
+
+  // 표시 시 높이에 맞춰 축소되므로 텍스트 크기에 맞는 캔버스로 렌더
+  canvas.width = Math.ceil(Math.max(metrics.width, SIGNATURE_RENDER_FONT_SIZE)) + paddingX * 2
+  canvas.height = Math.ceil(ascent + descent) + paddingY * 2
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.font = font
   ctx.fillStyle = '#1a1a1a'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.font = `${style.weight} 72px ${style.family}`
-  ctx.fillText(args.name.trim(), width / 2, height / 2)
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2)
   return canvas.toDataURL('image/png')
 }

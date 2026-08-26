@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   continueAdminRegisteredSessionAfterPasswordChange,
+  normalizeAdminProvisionedOnboardingStep,
   requireAdminRegisteredWizardState,
+  resolveAdminProvisionedOnboardingPath,
   validateAdminRegisteredChangePassword,
 } from '@/features/auth/admin-registered'
 import { getLoginApiErrorMessage, usePortalPasswordChangeMutation } from '@/features/auth/sign-in'
@@ -29,10 +31,11 @@ export function AdminRegisteredChangePasswordPage() {
   const [submitError, setSubmitError] = useState<string>()
 
   useEffect(() => {
+    if (remoteApi) return
     if (!wizardState?.birthDate || !wizardState.gender) {
       navigate('/auth/admin-registered/birth', { replace: true })
     }
-  }, [navigate, wizardState?.birthDate, wizardState?.gender])
+  }, [navigate, remoteApi, wizardState?.birthDate, wizardState?.gender])
 
   const clearErrors = () => {
     setCurrentPasswordError(undefined)
@@ -41,11 +44,12 @@ export function AdminRegisteredChangePasswordPage() {
     setSubmitError(undefined)
   }
 
-  if (!wizardState?.birthDate || !wizardState.gender) {
+  if (!wizardState || (!remoteApi && (!wizardState.birthDate || !wizardState.gender))) {
     return null
   }
 
   const isBusy = passwordChangeMutation.isPending || isContinuingSession
+  const { email } = wizardState
 
   const handleSubmit = async () => {
     if (isBusy) {
@@ -56,7 +60,7 @@ export function AdminRegisteredChangePasswordPage() {
       currentPassword,
       newPassword,
       confirmPassword,
-      initialPassword: wizardState.email,
+      initialPassword: email,
       matchCurrentToInitial: !remoteApi,
     })
 
@@ -89,10 +93,17 @@ export function AdminRegisteredChangePasswordPage() {
 
       setIsContinuingSession(true)
       try {
-        await continueAdminRegisteredSessionAfterPasswordChange({
-          email: wizardState.email,
+        const tokens = await continueAdminRegisteredSessionAfterPasswordChange({
+          email,
           password: nextPassword,
         })
+        const step =
+          normalizeAdminProvisionedOnboardingStep(tokens.adminProvisionedOnboardingStep) ??
+          'PROFILE_REVIEW'
+        navigate(
+          resolveAdminProvisionedOnboardingPath(step) ?? '/auth/admin-registered/confirm',
+        )
+        return
       } catch (error) {
         setSubmitError(
           getLoginApiErrorMessage(

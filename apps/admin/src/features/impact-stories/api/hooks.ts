@@ -13,6 +13,7 @@ import {
   createStoryService,
   getStoryService,
   listCategoriesService,
+  listStoriesPageService,
   listStoriesService,
   removeStoriesService,
   saveCategoriesService,
@@ -34,6 +35,7 @@ function filterKey(filter: ImpactStoryListFilter): string {
     pt: filter.publishedTo ?? '',
     cf: filter.createdFrom ?? '',
     ct: filter.createdTo ?? '',
+    p: filter.page ?? 0,
   })
 }
 
@@ -92,6 +94,17 @@ export function useImpactStoriesList(filter: ImpactStoryListFilter, enabled = tr
   return useQuery({
     queryKey: impactStoriesQueryKeys.list(dataSource, filterKey(filter)),
     queryFn: () => listStoriesService(filter),
+    enabled,
+    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
+    retry: dataSource === 'remote' ? 1 : false,
+  })
+}
+
+export function useImpactStoriesPagedList(filter: ImpactStoryListFilter, enabled = true) {
+  const dataSource = source()
+  return useQuery({
+    queryKey: impactStoriesQueryKeys.listPage(dataSource, filterKey(filter)),
+    queryFn: () => listStoriesPageService(filter),
     enabled,
     staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
     retry: dataSource === 'remote' ? 1 : false,

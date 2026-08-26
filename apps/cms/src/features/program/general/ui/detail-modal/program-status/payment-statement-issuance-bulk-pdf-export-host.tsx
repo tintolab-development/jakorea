@@ -16,7 +16,7 @@ import {
   PAYMENT_STATEMENT_A4_HIDDEN_PARAGRAPH_IDS,
 } from '@/features/template/model/payment-statement-issuance-a4-preview'
 import { normalizeWritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
-import { PAYMENT_STATEMENT_ISSUANCE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-config'
+import { resolvePaymentStatementIssuanceDocumentParagraphBodyOptions } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-config'
 import {
   buildParticipatingInstructorPaymentStatementViewOptions,
   buildPaymentStatementIssuancePreviewFileName,
@@ -44,14 +44,13 @@ export function PaymentStatementIssuanceBulkPdfExportHost({
   )
   const fileName = useMemo(() => buildPaymentStatementIssuancePreviewFileName(context), [context])
   const paragraphBodyOptions = useMemo(
-    () => ({
-      ...PAYMENT_STATEMENT_ISSUANCE_PARAGRAPH_BODY_OPTIONS,
-      ...buildParticipatingInstructorPaymentStatementViewOptions(
-        context.instructor,
-        context.settlementRow
+    () =>
+      resolvePaymentStatementIssuanceDocumentParagraphBodyOptions(
+        buildParticipatingInstructorPaymentStatementViewOptions(
+          context.instructor,
+          context.settlementRow
+        )
       ),
-      paymentStatementDisplayMode: 'document' as const,
-    }),
     [context]
   )
   const previewParagraphs = useMemo(

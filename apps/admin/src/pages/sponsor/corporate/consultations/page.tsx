@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useMemo, useState, type Key } from 'react'
-import dayjs, { type Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type {
@@ -18,6 +18,7 @@ import {
 } from '@/features/corporate-consultation/api/hooks'
 import { corporateConsultationQueryKeys } from '@/features/corporate-consultation/api/query-keys'
 import { getCorporateConsultationService } from '@/features/corporate-consultation/api/service'
+import { formatDateTimeDot } from '@/shared/lib/format-display'
 import {
   CORPORATE_CONSULTATIONS_CHANGED_EVENT,
   DEFAULT_CONFIRM_ACTOR,
@@ -165,10 +166,7 @@ function rangeAsPicker(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
 }
 
 function formatDateTime(iso: string | null | undefined): string {
-  if (!iso) return '-'
-  const d = dayjs(iso)
-  if (!d.isValid()) return '-'
-  return d.format('YYYY.MM.DD HH:mm')
+  return formatDateTimeDot(iso)
 }
 
 function statusLabel(status: ConsultationStatus): string {

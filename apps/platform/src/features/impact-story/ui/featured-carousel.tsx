@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { PFArrowButton, PFCategoryBadge, PFText } from '@/shared/ui'
+import { PFCarouselButton, PFCategoryBadge, PFText } from '@/shared/ui'
 import { impactStoryDetailPath } from '../lib/constants'
 import type { ImpactStoryListItem } from '../model/types'
 import styles from './featured-carousel.module.css'
@@ -57,17 +57,15 @@ export function FeaturedCarousel({ stories }: FeaturedCarouselProps) {
         <p className={styles.summary}>{story.summary}</p>
 
         <div className={styles.controls}>
-          <PFArrowButton
-            className={styles.prevButton}
-            size="medium"
-            variant="secondary"
+          <PFCarouselButton
+            size="small"
+            direction="left"
             aria-label="이전 스토리"
             onClick={goPrev}
           />
-          <PFArrowButton
-            className={styles.navButton}
-            size="medium"
-            variant="secondary"
+          <PFCarouselButton
+            size="small"
+            direction="right"
             aria-label="다음 스토리"
             onClick={goNext}
           />

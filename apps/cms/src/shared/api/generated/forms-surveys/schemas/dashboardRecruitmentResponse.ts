@@ -18,4 +18,16 @@ export interface DashboardRecruitmentResponse {
   recruitmentStartAt?: string;
   recruitmentEndAt?: string;
   createdAt?: string;
+  /** 참여자 신청 수. 해당 유형 모집이 없으면 생략 */
+  participantAppliedCount?: number;
+  /** 참여자 정원. 해당 유형 모집이 없으면 생략 */
+  participantCapacity?: number;
+  studentAppliedCount?: number;
+  studentCapacity?: number;
+  /** 봉사자 신청 수. 해당 유형 모집이 없으면 생략 */
+  volunteerAppliedCount?: number;
+  volunteerCapacity?: number;
+  /** 강사 신청 수. 해당 유형 모집이 없으면 생략 */
+  instructorAppliedCount?: number;
+  instructorCapacity?: number;
 }

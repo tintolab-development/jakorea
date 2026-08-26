@@ -16,4 +16,13 @@ export interface MemberAssignmentSubmissionResponse {
   reviewedAt?: string;
   rejectReason?: string;
   fileCount?: number;
+  roundNumber?: number;
+  teamRole?: string;
+  teamName?: string;
+  educationSessionLabel?: string;
+  assignmentPeriodStart?: string;
+  assignmentPeriodEnd?: string;
+  lectureProgress?: string;
+  submissionStatus?: string;
+  submissionFileIds?: number[];
 }

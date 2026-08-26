@@ -366,11 +366,11 @@ export function InstructorReportsPage() {
                 </DetailInfoForm.Row>
               )}
               <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field label="제출일" view={dayjs(selectedReport.submittedAt).format('YYYY-MM-DD HH:mm')} />
+                <DetailInfoForm.Field label="제출일" view={dayjs(selectedReport.submittedAt).format('YYYY.MM.DD HH:mm')} />
               </DetailInfoForm.Row>
               {selectedReport.reviewedAt && (
                 <DetailInfoForm.Row type="single">
-                  <DetailInfoForm.Field label="검토일" view={dayjs(selectedReport.reviewedAt).format('YYYY-MM-DD HH:mm')} />
+                  <DetailInfoForm.Field label="검토일" view={dayjs(selectedReport.reviewedAt).format('YYYY.MM.DD HH:mm')} />
                 </DetailInfoForm.Row>
               )}
               {selectedReport.reviewNotes && (

@@ -12,7 +12,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Spin, Table } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import type { AdminFaq } from '@/data/mock/admin-faqs'
@@ -197,7 +197,7 @@ function AdminFAQPage() {
         key: 'createdAt',
         width: FAQ_LIST_COL_WIDTH.datetime,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm'),
       },
     ],
     [tableData.length]
@@ -230,7 +230,9 @@ function AdminFAQPage() {
       <FaqFormModal
         open={registerModalOpen}
         onCancel={() => setRegisterModalOpen(false)}
-        onSuccess={() => setRegisterModalOpen(false)}
+        onSuccess={() => {
+          setRegisterModalOpen(false)
+        }}
       />
       <ActionResultModal
         open={actionResultOpen}
@@ -252,6 +254,7 @@ function AdminFAQPage() {
         onSearch={handleSearch}
         title="FAQ 목록"
         description={`총 ${displayedCount.toLocaleString()}건`}
+        contentLoading={contentLoading}
         actions={
           <>
             <CmsButton
@@ -275,11 +278,7 @@ function AdminFAQPage() {
           data: tableData,
         }}
       >
-        {contentLoading ? (
-          <div className="page-content-loading page-content-loading--table-slot" role="status">
-            <Spin />
-          </div>
-        ) : contentError ? (
+        {contentError ? (
           <div className="page-content-error" role="alert">
             {contentError}
           </div>

@@ -4,8 +4,6 @@ import type {
   GeminiApprovedTrainingStatus,
 } from '../../model/approved/types'
 
-const KO_DOW = ['일', '월', '화', '수', '목', '금', '토'] as const
-
 export const APPROVED_TRAINING_STATUS_LABEL: Record<GeminiApprovedTrainingStatus, string> = {
   SCHEDULED: '프로그램 진행 예정',
   IN_PROGRESS: '프로그램 진행 중',
@@ -33,7 +31,7 @@ export function formatTrainingDatetimeDisplay(
   if (!x.isValid()) {
     return '-'
   }
-  return `${x.format('YYYY. MM. DD')}(${KO_DOW[x.day()]}) | ${row.trainingTimeText}`
+  return `${x.format('YYYY.MM.DD')} | ${row.trainingTimeText}`
 }
 
 export function formatInstructorDisplay(row: GeminiApprovedTrainingRow): string {

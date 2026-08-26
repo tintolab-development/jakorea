@@ -15,7 +15,10 @@ import { getGeneralPrograms } from '@/data/mock/general-programs'
 import { countGeneralProgramOverviewStages } from '@/features/program/general/lib/overview-stage-counts'
 import { countCompanySchoolOverviewStages } from '@/features/program/1c-1s/lib/overview-stage-counts'
 import { getTrainedTeachersPrograms } from '@/data/mock/trained-teachers-programs'
-import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import {
+  isGeneralIndividualProgram,
+  isTrainedTeachersProgram,
+} from '@/features/program/general/lib/survey-audience'
 import { getVolunteerPrograms } from '@/data/mock/volunteer-programs'
 import { mockApplications } from '@/data/mock/applications'
 import { mockMatchings } from '@/data/mock/matchings'
@@ -149,6 +152,8 @@ export interface KpiMetric {
   /** null = API 미제공(달성 실적 없음) */
   achieved: number | null
   target: number
+  /** false = 개인 대상·교육받은 교사 등 해당 없음(비활성) */
+  applicable: boolean
 }
 
 /** 사업별 KPI 대비 달성률 위젯: 프로그램 한 건 */
@@ -405,7 +410,7 @@ export async function getRecruitmentStatusList(options?: {
 }): Promise<Program[]> {
   if (shouldUseDashboardRemoteApi()) {
     const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
-    const dto = await fetchDashboardRecruitmentsRemote({ params: queryParams })
+    const dto = await fetchDashboardRecruitmentsRemote(queryParams)
     return mapRecruitmentListResponse(dto)
   }
   return getRecruitmentStatusListFromMock(options)
@@ -457,13 +462,15 @@ const KPI_LABELS: Record<KpiMetricKey, { label: string; description: string }> =
 
 /** 사업 KPI 목표·위젯 공통: 달성/목표 수치 (patternIndex로 목록 간 변주) */
 function buildKpiMetricsForPattern(patternIndex: number, program?: Program): KpiMetric[] {
+  const trainedTeachers = program != null && isTrainedTeachersProgram(program)
   const isIndividual = program != null && isGeneralIndividualProgram(program)
-  const achievedParticipants = patternIndex % 3 === 0 ? 100 : 80
-  const targetParticipants = 100
-  const achievedSchools = isIndividual ? 0 : 100
-  const targetSchools = isIndividual ? 0 : 100
-  const achievedClasses = isIndividual ? 0 : patternIndex % 2 === 0 ? 100 : 80
-  const targetClasses = isIndividual ? 0 : 100
+  const schoolClassApplicable = !trainedTeachers && !isIndividual
+  const achievedParticipants = trainedTeachers ? 0 : patternIndex % 3 === 0 ? 100 : 80
+  const targetParticipants = trainedTeachers ? 0 : 100
+  const achievedSchools = schoolClassApplicable ? 100 : 0
+  const targetSchools = schoolClassApplicable ? 100 : 0
+  const achievedClasses = schoolClassApplicable ? (patternIndex % 2 === 0 ? 100 : 80) : 0
+  const targetClasses = schoolClassApplicable ? 100 : 0
 
   return [
     {
@@ -472,6 +479,7 @@ function buildKpiMetricsForPattern(patternIndex: number, program?: Program): Kpi
       description: KPI_LABELS.finalParticipants.description,
       achieved: achievedParticipants,
       target: targetParticipants,
+      applicable: !trainedTeachers,
     },
     {
       key: 'finalSchools',
@@ -479,6 +487,7 @@ function buildKpiMetricsForPattern(patternIndex: number, program?: Program): Kpi
       description: KPI_LABELS.finalSchools.description,
       achieved: achievedSchools,
       target: targetSchools,
+      applicable: schoolClassApplicable,
     },
     {
       key: 'finalClasses',
@@ -486,6 +495,7 @@ function buildKpiMetricsForPattern(patternIndex: number, program?: Program): Kpi
       description: KPI_LABELS.finalClasses.description,
       achieved: achievedClasses,
       target: targetClasses,
+      applicable: schoolClassApplicable,
     },
   ]
 }
@@ -537,7 +547,7 @@ export async function getKpiAchievementList(options?: {
 }): Promise<ProgramKpiItem[]> {
   if (shouldUseDashboardRemoteApi()) {
     const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
-    const dto = await fetchDashboardKpiProgressRemote({ params: queryParams })
+    const dto = await fetchDashboardKpiProgressRemote(queryParams)
     return mapKpiProgressListResponse(dto)
   }
   return getKpiAchievementListFromMock(options)
@@ -568,9 +578,14 @@ async function getKpiAchievementListFromMock(options?: {
     })
   }
 
-  return educationPrograms.map((program, index) =>
+  const trainedTeachers = getTrainedTeachersPrograms()
+  const fromEducation = educationPrograms.map((program, index) =>
     buildProgramKpiItemFromProgram(program, index)
   )
+  const fromTrainedTeachers = trainedTeachers.map((program, index) =>
+    buildProgramKpiItemFromProgram(program, educationPrograms.length + index)
+  )
+  return [...fromEducation, ...fromTrainedTeachers]
 }
 
 /** getProgramProgressStages(교육)와 동일한 lifecycle 집계 — 동기·목 데이터 전용 */
@@ -684,6 +699,7 @@ export function getMenuShortcutBadgeCounts(): Record<string, number> {
     'users-instructor': instructorApplicantPending,
     'users-admin': 0,
     'permission-requests': permissionPending,
+    'admin-permission-settings': 0,
     'settlement-payment-orders': paymentOrderPending,
     'settlement-account-payments': accountPaymentPending,
     'settlement-item-settings': 0,
@@ -694,7 +710,6 @@ export function getMenuShortcutBadgeCounts(): Record<string, number> {
     sponsors: 0,
     textbooks: 0,
     performance: pending.pendingSettlements,
-    'email-history': 0,
     'file-download-history': 0,
     'privacy-query-history': 0,
     'bug-issue-history': 0,
@@ -737,7 +752,7 @@ export async function getProgramInquiryStatusList(options?: {
 }): Promise<ProgramInquiryRow[]> {
   if (shouldUseDashboardRemoteApi()) {
     const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
-    const dto = await fetchDashboardProgramInquiriesRemote({ params: queryParams })
+    const dto = await fetchDashboardProgramInquiriesRemote(queryParams)
     return mapProgramInquiryListResponse(dto)
   }
   return getProgramInquiryStatusListFromMock()
@@ -753,9 +768,10 @@ function getProgramInquiryStatusListFromMock(): ProgramInquiryRow[] {
     else bucket.answered += 1
     grouped.set(programName, bucket)
   }
-  return [...grouped.entries()].map(([programName, counts], index) => ({
-    key: String(index + 1),
+  return [...grouped.entries()].map(([programName, counts]) => ({
+    key: programName,
     programName,
+    unreadCount: counts.pending,
     ...counts,
   }))
 }
@@ -776,7 +792,7 @@ export async function getDashboardScheduleEvents(options?: {
       programIds: options?.programIds,
       extra,
     })
-    const dto = await fetchDashboardProgramSchedulesRemote({ params: queryParams })
+    const dto = await fetchDashboardProgramSchedulesRemote(queryParams)
     return mapProgramScheduleListResponse(dto)
   }
   return []
@@ -788,7 +804,7 @@ export async function getDashboardProgramOptions(widgetKey: string): Promise<Das
     const programType = getDashboardProgramTypeParamForWidget(widgetKey)
     const extra = programType ? { programType } : undefined
     const queryParams = toDashboardQueryParams({ extra })
-    const dto = await fetchDashboardRecruitmentsRemote({ params: queryParams })
+    const dto = await fetchDashboardRecruitmentsRemote(queryParams)
     return mapProgramOptionsFromRecruitmentList(dto)
   }
   return getMockDashboardProgramOptions(widgetKey)

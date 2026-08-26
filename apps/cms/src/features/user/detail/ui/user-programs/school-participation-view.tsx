@@ -5,7 +5,10 @@ export function SchoolParticipationView({
   enrollmentTableRows,
   loading,
   showCertificateBulkIssue,
+  programsHistoryConfig,
   onRowClick,
+  onBulkDeleteHistory,
+  onStudentCertificateBulkIssue,
 }: RendererProps) {
   const applications = enrollmentTableRows
   return (
@@ -13,10 +16,11 @@ export function SchoolParticipationView({
       mode="schoolProgramParticipation"
       applications={applications}
       loading={loading}
+      summaryTitle={programsHistoryConfig.enrollmentSectionTitle}
       showCertificateBulkIssue={showCertificateBulkIssue}
       onRowClick={onRowClick}
-      onBulkDelete={() => {
-        }}
+      onBulkDelete={onBulkDeleteHistory}
+      onCertificateIssue={onStudentCertificateBulkIssue}
     />
   )
 }

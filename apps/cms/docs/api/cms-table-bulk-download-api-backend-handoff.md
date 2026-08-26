@@ -10,6 +10,8 @@ CMS에서 테이블·상세의 **일괄/선택 다운로드**(파일 ZIP·PDF �
 | 목적 | 엔티티별 bulk-download / export API 신설·계약 확정 (교육일지 패턴 정렬) |
 | 관련 | [backend-handoff.md](./backend-handoff.md) · [cms-table-bulk-delete-api-backend-handoff.md](./cms-table-bulk-delete-api-backend-handoff.md) · [cms-table-bulk-approve-api-backend-handoff.md](./cms-table-bulk-approve-api-backend-handoff.md) · [programs-trained-teachers-api-backend-handoff.md](./programs-trained-teachers-api-backend-handoff.md) · [settlement-api-backend-gaps.md](./settlement-api-backend-gaps.md) |
 
+> **회원 상세 BE 전달:** 본 문서는 [members/README.md §필수 묶음](./members/README.md#회원-상세-이력정산--백엔드-전달-필수-묶음) **#5** 로 포함됩니다. 회원 상세 관련 항목 — §5.1 **#6~#9** (지급조서 · 과제 · 강의보고서 · 수료증 ZIP). ID 대응: [member-program-history REQ-011/014/015](./members/member-program-history-ui-api-parity-backend-handoff-2026-08-25.md) · [instructor PH-011/014/015 · SET-006](./members/instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md).
+
 ---
 
 ## 0. 범위 정의
@@ -97,9 +99,9 @@ flowchart LR
 
 | # | 화면 | CMS 경로 | FE 파일 | 버튼 | 현재 FE | 요청 |
 |---|------|----------|---------|------|---------|------|
-| 6 | 지급조서 확인 상세·목록 / 회원·교사 정산 탭 | `/settlement-management/payment-orders?…`, 회원 상세 | `payment-order-detail-filter-table.tsx`, `payment-order-*-settlement-table.tsx`, `instructor-payment-tab.tsx`, `teacher-settlement-tab.tsx` | `지급조서 발급` | **Stub** — 전부 confirmed면 `준비 중입니다.`; 미확인 시 차단 모달; 목록은 `onClick` no-op | 선택 라인 **지급조서 bulk 발급/다운로드 API 신규** |
-| 7 | 참여자 상세 과제 / 회원 과제·설문 모달 | `/programs/general` (+ participant), `/users/list` 상세 | `participating-individual-participant-assignment-section.tsx`, `assignment-submission-modal.tsx` | `과제 일괄 다운로드` | **Missing** (`FEATURE_COMING_SOON` / `준비 중입니다.`) | 제출 파일 **ZIP bulk-download 신규** |
-| 8 | 회원 상세 → 강의보고서 제출 내역 | `/users/list?kind=…` | `lecture-report-submission-history-modal.tsx` | `강의보고서 일괄 다운로드` | **Missing** (`준비 중입니다.`) | 회원 기준 강의보고서 **bulk-download 신규** |
+| 6 | 지급조서 확인 상세·목록 / 회원·교사 정산 탭 | `/settlement-management/payment-orders?…`, 회원 상세 | `payment-order-detail-filter-table.tsx`, `payment-order-*-settlement-table.tsx`, `instructor-payment-tab.tsx`, `teacher-settlement-tab.tsx` | `지급조서 발급` | **Stub** — 전부 confirmed면 `준비 중입니다.`; 미확인 시 차단 모달; 목록은 `onClick` no-op | 선택 라인 **지급조서 bulk 발급/다운로드 API 신규**. **PDF 본문은 마스킹 해제 원문** — [UI SSOT §1.2](./settlement-payment-order-detail-ui-fields-backend-handoff.md#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api) |
+| 7 | 참여자 상세 과제 / 회원 과제·설문 모달 | `/programs/general` (+ participant), `/users/list` 상세 | `assignment-submission-history-table.tsx`, `assignment-submission-modal.tsx`, `participating-individual-participant-assignment-section.tsx` | `과제 일괄 다운로드` (푸터 160px · h40) | **FE path 연결** — FilterTableLayout **7열 SSOT** · bulk POST · preview 단건 `submissionFileIds` **BE 대기** | 제출 파일 **ZIP bulk-download** · `submissionFileIds[]` |
+| 8 | 회원 상세 → 강의보고서 제출 내역 | `/users/list?kind=…` | `lecture-report-submission-history-modal.tsx` | `강의보고서 일괄 다운로드` (푸터 200px · h40) · `강의보고서 보기` (열 300px) | **FE path 연결** — FilterTableLayout **5열** · bulk POST · 단건 `reportFileIds` 또는 `GET .../lecture-reports/{id}/download` **BE 대기** | 회원 기준 강의보고서 **bulk-download** · 단건 download |
 | 9 | 회원 상세 → 수강/봉사/강의 이력 | `/users/list?kind=…` | `member-program-lecture-history.tsx`, `certificate-bulk-issue-reason-modal.tsx` | `수료증/참여인증서 발급`, `활동인증서 발급` | **Missing** — 선택 행 기준 다운로드 API 미연동 (`FEATURE_COMING_SOON`) | 선택 이력 **일괄 발급·다운로드 API 신규** |
 
 **P0 FE 기대 동작 (API 제공 시)**

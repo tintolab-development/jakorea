@@ -1,3 +1,5 @@
+import { useMemo, useCallback, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   DeleteGuideModal,
   buildMemberWithdrawMessageLines,
@@ -16,8 +18,21 @@ import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
 import { InstitutionDeleteBlockedModal } from '@/features/user/shared/ui/institution-delete-blocked-modal'
 import { JaGradeEvaluationModal } from '@/features/user/detail/ui/modal/ja-grade-evaluation-modal'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { resolveMemberApplicationIdFromApplication } from '@/features/user/api/member-program-history-ids'
+import { fetchApplicationAssignmentSubmissionsRemote } from '@/features/user/api/members-api-client'
+import {
+  bulkDownloadMemberAssignmentSubmissionsRemote,
+  fetchApplicationLectureAttendanceRemote,
+} from '@/features/user/api/member-program-history-api-client'
+import { mapMemberAssignmentSubmissionsToDetail } from '@/features/user/api/map-member-assignment-submissions'
+import { mapMemberLectureAttendanceToDetail } from '@/features/user/api/map-member-lecture-attendance'
+import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
+import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 
 export function UserDetailFullpageModalsStack() {
+  const { showAlert } = useCmsAlert()
   const {
     modals,
     displayUser,
@@ -44,6 +59,108 @@ export function UserDetailFullpageModalsStack() {
   } = useUserDetailFullpageShell()
 
   const { sections } = derived
+  const membersRemote = isMembersRemoteEnabled()
+  const assignmentApplication = modals.assignment.data
+  const attendanceApplication = modals.lectureAttendance.data
+  const memberId = displayUser.memberId
+  const assignmentId =
+    assignmentApplication != null
+      ? resolveMemberApplicationIdFromApplication(assignmentApplication)
+      : undefined
+  const attendanceApplicationId =
+    attendanceApplication != null
+      ? resolveMemberApplicationIdFromApplication(attendanceApplication)
+      : undefined
+
+  const assignmentSubmissionsQuery = useQuery({
+    queryKey: ['member-detail-assignment-submissions', memberId, assignmentId],
+    enabled: Boolean(
+      membersRemote &&
+        modals.assignment.open &&
+        memberId != null &&
+        assignmentId != null
+    ),
+    queryFn: () => fetchApplicationAssignmentSubmissionsRemote(memberId!, assignmentId!),
+  })
+
+  const lectureAttendanceQuery = useQuery({
+    queryKey: ['member-detail-lecture-attendance', memberId, attendanceApplicationId],
+    enabled: Boolean(
+      membersRemote &&
+        modals.lectureAttendance.open &&
+        memberId != null &&
+        attendanceApplicationId != null
+    ),
+    queryFn: () => fetchApplicationLectureAttendanceRemote(memberId!, attendanceApplicationId!),
+    retry: false,
+  })
+
+  const attendanceSummaryOnly = useMemo(() => {
+    if (!membersRemote || !modals.lectureAttendance.open || !attendanceApplication) return undefined
+    const summary = attendanceApplication.lectureAttendance?.trim()
+    return summary || undefined
+  }, [membersRemote, modals.lectureAttendance.open, attendanceApplication])
+
+  const assignmentRemoteDetail = useMemo(() => {
+    if (!membersRemote || !assignmentApplication || !modals.assignment.open) return undefined
+    const submissions = assignmentSubmissionsQuery.data
+    if (!submissions) return null
+    const programTitle =
+      (assignmentApplication.customFields?.programName as string | undefined)?.trim() || '프로그램'
+    return mapMemberAssignmentSubmissionsToDetail(
+      submissions,
+      programTitle,
+      displayUser.name
+    )
+  }, [
+    membersRemote,
+    assignmentApplication,
+    modals.assignment.open,
+    assignmentSubmissionsQuery.data,
+    displayUser.name,
+  ])
+
+  const attendanceRemoteDetail = useMemo(() => {
+    if (!membersRemote || !modals.lectureAttendance.open) return undefined
+    if (lectureAttendanceQuery.isLoading) return undefined
+    if (lectureAttendanceQuery.isError || !lectureAttendanceQuery.data) {
+      return attendanceSummaryOnly ? undefined : null
+    }
+    const mapped = mapMemberLectureAttendanceToDetail(
+      lectureAttendanceQuery.data,
+      displayUser.name
+    )
+    if (mapped.sessions.length === 0 && attendanceSummaryOnly) return undefined
+    return mapped
+  }, [
+    membersRemote,
+    modals.lectureAttendance.open,
+    lectureAttendanceQuery.isLoading,
+    lectureAttendanceQuery.isError,
+    lectureAttendanceQuery.data,
+    attendanceSummaryOnly,
+    displayUser.name,
+  ])
+
+  const [assignmentBulkDownloading, setAssignmentBulkDownloading] = useState(false)
+
+  const handleAssignmentBulkDownload = useCallback(async () => {
+    if (memberId == null || assignmentId == null) return
+    setAssignmentBulkDownloading(true)
+    try {
+      const response = await bulkDownloadMemberAssignmentSubmissionsRemote(memberId, assignmentId)
+      if (response.downloadEndpoint) {
+        await downloadFromBulkEndpoint(response.downloadEndpoint, '과제_일괄')
+      }
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: getMemberApiErrorMessage(error, '과제 일괄 다운로드에 실패했습니다.'),
+      })
+    } finally {
+      setAssignmentBulkDownloading(false)
+    }
+  }, [memberId, assignmentId, showAlert])
 
   return (
     <>
@@ -101,12 +218,22 @@ export function UserDetailFullpageModalsStack() {
         onCancel={modals.lectureAttendance.close}
         application={modals.lectureAttendance.data ?? undefined}
         userName={displayUser.name}
+        remoteDetail={membersRemote ? attendanceRemoteDetail : undefined}
+        attendanceSummaryOnly={membersRemote ? attendanceSummaryOnly : undefined}
+        remoteDetailLoading={membersRemote && lectureAttendanceQuery.isLoading}
       />
       <AssignmentSubmissionModal
         open={modals.assignment.open}
         onCancel={modals.assignment.close}
         application={modals.assignment.data ?? undefined}
         userName={displayUser.name}
+        programTitle={
+          (assignmentApplication?.customFields?.programName as string | undefined)?.trim()
+        }
+        remoteDetail={membersRemote ? assignmentRemoteDetail : undefined}
+        remoteDetailLoading={membersRemote && assignmentSubmissionsQuery.isLoading}
+        onBulkDownload={membersRemote ? handleAssignmentBulkDownload : undefined}
+        bulkDownloadLoading={assignmentBulkDownloading}
       />
       <JaGradeEvaluationModal
         open={jaGradeEvaluationOpen}

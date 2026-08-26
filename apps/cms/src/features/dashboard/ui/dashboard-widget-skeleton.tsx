@@ -4,6 +4,7 @@
  */
 
 import { Card } from 'antd'
+import { WidgetTitleWithHandle } from '@/features/dashboard/ui/widget-title-with-handle'
 
 export interface DashboardWidgetSkeletonProps {
   loading: boolean
@@ -17,7 +18,7 @@ export function DashboardWidgetSkeleton({
   height = DEFAULT_HEIGHT,
 }: DashboardWidgetSkeletonProps) {
   return (
-    <Card loading={loading}>
+    <Card loading={loading} title={<WidgetTitleWithHandle />}>
       <div style={{ height }} />
     </Card>
   )

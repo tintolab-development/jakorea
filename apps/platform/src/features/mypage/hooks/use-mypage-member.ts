@@ -15,7 +15,7 @@ import {
   resolvePortalDisplayName,
 } from '../lib/map-portal-member-profile'
 import {
-  isInstructorMypageProfile,
+  showMypageAffiliationEmployment,
   resolveAffiliationLabel,
   resolveEmploymentStatusLabel,
 } from '../lib/member-profile'
@@ -29,9 +29,9 @@ export type MypageMemberView = {
   displayName: string
   profile: PlatformMemberProfile
   email?: string
-  /** 강사 이름영역 — 소속 (학교명 우선) */
+  /** 교사·교사 겸직 강사 — 소속 (학교명 우선) */
   affiliationLabel?: string
-  /** 강사 이름영역 — 재직 뱃지 (교사 겸직·재직 상태 있을 때) */
+  /** 교사·교사 겸직 강사 — 재직 뱃지 */
   employmentStatusLabel?: string
 }
 
@@ -46,16 +46,15 @@ export function useMypageMember(): MypageMemberView {
 
   if (!isRemoteSession) {
     const profile = getDevMemberProfile()
-    const isInstructor = isInstructorMypageProfile(profile)
+    const showAffiliationEmployment = showMypageAffiliationEmployment(profile)
     return {
       isRemoteSession: false,
       isLoading: false,
       isError: false,
       displayName: MOCK_MYPAGE_USER_NAME,
       profile,
-      affiliationLabel: isInstructor ? MOCK_MYPAGE_AFFILIATION : undefined,
-      /** mock — 디자인 검수용. 실 API는 teacherEmploymentStatus 있을 때만 */
-      employmentStatusLabel: isInstructor ? MOCK_MYPAGE_EMPLOYMENT_LABEL : undefined,
+      affiliationLabel: showAffiliationEmployment ? MOCK_MYPAGE_AFFILIATION : undefined,
+      employmentStatusLabel: showAffiliationEmployment ? MOCK_MYPAGE_EMPLOYMENT_LABEL : undefined,
     }
   }
 
@@ -78,13 +77,13 @@ export function useMypageMember(): MypageMemberView {
     }),
     profile,
     email: profileQuery.data?.email ?? meQuery.data?.email,
-    affiliationLabel: isInstructorMypageProfile(profile)
+    affiliationLabel: showMypageAffiliationEmployment(profile)
       ? resolveAffiliationLabel({
           schoolName: profileQuery.data?.schoolName,
           affiliationName: profileQuery.data?.affiliationName,
         })
       : undefined,
-    employmentStatusLabel: isInstructorMypageProfile(profile)
+    employmentStatusLabel: showMypageAffiliationEmployment(profile)
       ? resolveEmploymentStatusLabel(profileQuery.data?.teacherEmploymentStatus)
       : undefined,
   }

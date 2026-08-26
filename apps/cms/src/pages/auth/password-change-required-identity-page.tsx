@@ -60,7 +60,11 @@ export function PasswordChangeRequiredIdentityPage() {
 
   return (
     <AuthPageShell showLogo={false} cardClassName="register-card">
-      <RegisterStepProgress currentStep={2} totalSteps={2} />
+      <RegisterStepProgress
+        currentStep={2}
+        totalSteps={2}
+        className="register-step-progress--password-change-identity"
+      />
       <AdminRegisterStepIdentity
         onStartVerify={verify}
         status={status}

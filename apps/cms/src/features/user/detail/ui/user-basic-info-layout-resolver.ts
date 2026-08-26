@@ -61,6 +61,15 @@ export function resolveBasicInfoLayout({
   bodyKey: BasicInfoBodyKey
   instructorProfile: InstructorMemberProfile | null | undefined
 }): BasicInfoLayoutResolved {
+  /** 순수 교사 — 가입일 카드 + 성명·연락처·소속 카드 (2단 split) */
+  if (instructorProfile === 'school_teacher') {
+    return {
+      layout: BasicInfoLayout.SPLIT_CARD,
+      sections: [BasicInfoSectionTypes.META, BasicInfoSectionTypes.PROFILE],
+      splitSectionVariant: 'school_teacher',
+    }
+  }
+
   if (bodyKey === 'instructor') {
     if (!usesInstructorMemberBasicInfoLayout(instructorProfile)) {
       return {

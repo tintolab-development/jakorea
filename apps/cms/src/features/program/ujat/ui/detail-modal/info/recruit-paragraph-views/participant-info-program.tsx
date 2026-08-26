@@ -15,6 +15,7 @@ import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/t
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segments'
 import {
@@ -258,7 +259,7 @@ export function UjatRecruitParticipantInfoProgramView({
                     name="contactPhone"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsInput
+                      <CmsPhoneInput
                         {...field}
                         value={field.value ?? ''}
                         placeholder="문의처 전화번호"

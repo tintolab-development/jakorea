@@ -14,6 +14,8 @@ export interface PortalSchoolSelectionRequest {
   schoolOrganizationId?: number;
   /** 학교 검색 공급자. 나이스 학교정보 API는 NEIS를 사용합니다. */
   provider?: string;
+  /** NEIS 교육청 코드 */
+  educationOfficeCode?: string;
   /** 공급자의 학교 고유 코드. 숫자 이외 문자가 포함될 수 있습니다. */
   externalSchoolCode?: string;
   /** 학교명 */

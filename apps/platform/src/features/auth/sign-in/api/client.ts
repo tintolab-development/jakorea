@@ -4,12 +4,15 @@ import { portalAuthPaths, portalMePaths } from './endpoints'
 import { parseAuthTokenResponse } from './parse-auth-token'
 import {
   parseHomepageMeResponse,
+  parsePhoneIdentityChangeResponse,
   parsePortalProfileResponse,
 } from './parse-portal-member'
 import type {
   HomepageMeResponse,
   MemberLoginRequest,
   PasswordChangeRequest,
+  PhoneIdentityChangeResponse,
+  PhoneIdentityConfirmRequest,
   PortalProfileResponse,
   UpdatePortalProfileRequest,
 } from './types'
@@ -56,6 +59,14 @@ export async function patchPortalProfile(
 ): Promise<PortalProfileResponse> {
   const { data } = await axiosClient.patch<unknown>(portalMePaths.profile(), body)
   return parsePortalProfileResponse(data)
+}
+
+/** POST /api/portal/me/phone/identity/confirm — 연락처 본인인증 후 변경 */
+export async function postPortalPhoneIdentityConfirm(
+  body: PhoneIdentityConfirmRequest,
+): Promise<PhoneIdentityChangeResponse> {
+  const { data } = await axiosClient.post<unknown>(portalMePaths.phoneIdentityConfirm(), body)
+  return parsePhoneIdentityChangeResponse(data)
 }
 
 /** POST /api/portal/auth/password/change */

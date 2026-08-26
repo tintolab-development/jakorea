@@ -5,9 +5,11 @@ import {
   getMypageLnbItems,
   MOCK_MYPAGE_PROGRAM_STATS,
   MOCK_MYPAGE_SCHEDULE_EVENTS,
+  MYPAGE_INQUIRIES_PATH,
   MYPAGE_PATH,
   showInstructorApplyCta,
   useMypageMember,
+  type MypageLnbItemKey,
   type MypageProgramStats,
   type MypageScheduleEvent,
 } from '@/features/mypage'
@@ -56,13 +58,23 @@ export function MypageHomePage() {
     setIsAuthReady(true)
   }, [navigate])
 
+  const handleLnbItemSelect = (key: MypageLnbItemKey) => {
+    if (key === 'inquiries') {
+      navigate(MYPAGE_INQUIRIES_PATH)
+    }
+  }
+
   if (!isAuthReady || isChecking || isRedirecting) {
     return null
   }
 
   if (member.isRemoteSession && member.isLoading) {
     return (
-      <MypageLayout lnbItems={lnbItems} showInstructorApply={showInstructorApplyCta(member.profile)}>
+      <MypageLayout
+        lnbItems={lnbItems}
+        showInstructorApply={showInstructorApplyCta(member.profile)}
+        onLnbItemSelect={handleLnbItemSelect}
+      >
         <div className={styles.placeholder}>
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
             회원 정보를 불러오는 중이에요…
@@ -73,7 +85,11 @@ export function MypageHomePage() {
   }
 
   return (
-    <MypageLayout lnbItems={lnbItems} showInstructorApply={showInstructorApplyCta(member.profile)}>
+    <MypageLayout
+      lnbItems={lnbItems}
+      showInstructorApply={showInstructorApplyCta(member.profile)}
+      onLnbItemSelect={handleLnbItemSelect}
+    >
       <MypageHomeContent
         member={member}
         programStats={programStats}

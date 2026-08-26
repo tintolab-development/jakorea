@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   formatCurrencyInput,
+  formatNumberDisplay,
   normalizeNumericInputOnBlur,
   sanitizeNumericInput,
 } from './numeric-input'
@@ -54,5 +55,23 @@ describe('formatCurrencyInput', () => {
   it('raw digits를 천 단위 쉼표로 표시한다', () => {
     expect(formatCurrencyInput('1234567')).toBe('1,234,567')
     expect(formatCurrencyInput('')).toBe('')
+  })
+})
+
+describe('normalizeNumericInputOnBlur trailing zeros', () => {
+  it('소수 후행 0을 제거한다', () => {
+    expect(normalizeNumericInputOnBlur('1.10', { mode: 'decimal' })).toBe('1.1')
+    expect(normalizeNumericInputOnBlur('1.00', { mode: 'decimal' })).toBe('1')
+    expect(normalizeNumericInputOnBlur('1234.50', { mode: 'decimal', precision: 2 })).toBe(
+      '1234.5'
+    )
+  })
+})
+
+describe('formatNumberDisplay', () => {
+  it('천단위 구분과 후행 0 제거를 적용한다', () => {
+    expect(formatNumberDisplay(1000)).toBe('1,000')
+    expect(formatNumberDisplay(1.0)).toBe('1')
+    expect(formatNumberDisplay('1234.50')).toBe('1,234.5')
   })
 })

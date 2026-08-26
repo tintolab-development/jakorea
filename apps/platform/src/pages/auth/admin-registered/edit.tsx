@@ -34,6 +34,9 @@ export function AdminRegisteredEditPage() {
   const [schoolOrganizationId, setSchoolOrganizationId] = useState<number | null>(
     wizardState?.schoolOrganizationId ?? wizardState?.portalProfile?.schoolOrganizationId ?? null,
   )
+  const [schoolNeisCode, setSchoolNeisCode] = useState<string | null>(
+    wizardState?.schoolNeisCode ?? null,
+  )
   const [grade, setGrade] = useState(profile?.grade ?? '')
   const [address, setAddress] = useState(profile?.address ?? '')
   const [addressDetail, setAddressDetail] = useState(profile?.addressDetail ?? '')
@@ -48,10 +51,11 @@ export function AdminRegisteredEditPage() {
   const profileUpdateMutation = usePortalProfileUpdateMutation()
 
   useEffect(() => {
+    if (isHydrating) return
     if (!wizardState?.birthDate || !wizardState.gender) {
       navigate('/auth/admin-registered/birth', { replace: true })
     }
-  }, [navigate, wizardState?.birthDate, wizardState?.gender])
+  }, [navigate, wizardState?.birthDate, wizardState?.gender, isHydrating])
 
   useEffect(() => {
     if (!wizardState?.profileHydrated || fieldsSynced) return
@@ -62,6 +66,7 @@ export function AdminRegisteredEditPage() {
     setSchoolOrganizationId(
       wizardState.schoolOrganizationId ?? wizardState.portalProfile?.schoolOrganizationId ?? null,
     )
+    setSchoolNeisCode(wizardState.schoolNeisCode ?? null)
     setGrade(next.grade)
     setAddress(next.address)
     setAddressDetail(next.addressDetail)
@@ -72,7 +77,21 @@ export function AdminRegisteredEditPage() {
     setFieldsSynced(true)
   }, [wizardState, fieldsSynced])
 
-  if (!initialWizardState || !wizardState?.birthDate || !wizardState.gender) {
+  if (!initialWizardState) {
+    return null
+  }
+
+  if (isHydrating) {
+    return (
+      <section>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={sharedStyles.statusMessage}>
+          가입 정보를 불러오는 중…
+        </PFText>
+      </section>
+    )
+  }
+
+  if (!wizardState?.birthDate || !wizardState.gender) {
     return null
   }
 
@@ -94,6 +113,7 @@ export function AdminRegisteredEditPage() {
       setSchoolName('')
       setSchoolAddress('')
       setSchoolOrganizationId(null)
+      setSchoolNeisCode(null)
       setGrade('')
     }
   }
@@ -102,6 +122,7 @@ export function AdminRegisteredEditPage() {
     setSchoolName(school.name)
     setSchoolAddress(school.address?.trim() ?? '')
     setSchoolOrganizationId(school.organizationId ?? null)
+    setSchoolNeisCode(school.neisCode ?? null)
     setIsSchoolSearchModalOpen(false)
   }
 
@@ -111,6 +132,7 @@ export function AdminRegisteredEditPage() {
       schoolName,
       schoolAddress,
       schoolOrganizationId,
+      schoolNeisCode,
       grade,
       address,
       addressDetail,
@@ -139,12 +161,8 @@ export function AdminRegisteredEditPage() {
       regionSigungu,
       volunteerId,
       schoolOrganizationId,
-      email: wizardState.email,
-      name: wizardState.verifiedName,
-      phone: wizardState.verifiedPhone,
-      birthDate: wizardState.birthDate,
-      gender: wizardState.gender,
-      memberType: wizardState.memberType,
+      schoolAddress,
+      schoolNeisCode,
       employmentStatus: wizardState.employmentStatus,
       portalProfile: wizardState.portalProfile,
     })
@@ -157,6 +175,7 @@ export function AdminRegisteredEditPage() {
           schoolName,
           schoolAddress,
           schoolOrganizationId,
+          schoolNeisCode,
           grade,
           address,
           addressDetail,

@@ -1,4 +1,8 @@
-export { patchAdminProvisionedProfile, postAdminProvisionedIdentityConfirm } from './client'
+export {
+  patchAdminProvisionedProfile,
+  postAdminProvisionedComplete,
+  postAdminProvisionedIdentityConfirm,
+} from './client'
 export type {
   AdminProvisionedIdentityConfirmRequest,
   AdminProvisionedOnboardingResponse,

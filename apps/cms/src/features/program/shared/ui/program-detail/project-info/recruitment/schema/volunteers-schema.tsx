@@ -17,7 +17,7 @@ import {
 } from '../components/recruitment-form-parts'
 import dayjs from 'dayjs'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { CmsDatePicker, CmsInput } from '@/shared/ui'
+import { CmsDatePicker, CmsInput, CmsPhoneInput } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
@@ -317,7 +317,7 @@ export function createVolunteersSchema({
                       name="contactPhone"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsInput {...field} value={field.value ?? ''} placeholder="02-6347-6113" />
+                        <CmsPhoneInput {...field} value={field.value ?? ''} placeholder="02-6347-6113" />
                       )}
                     />
                   </div>

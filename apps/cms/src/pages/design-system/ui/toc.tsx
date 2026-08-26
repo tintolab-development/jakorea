@@ -19,6 +19,7 @@ export const DS_TOC_ITEMS: TocItem[] = [
   { id: 'modal-catalog', label: 'Modal catalog' },
   { id: 'modal-processes', label: 'Modal processes' },
   { id: 'modals-extended', label: 'Modals (extended)' },
+  { id: 'payment-order-calculation-basis-detail', label: 'Payment basis detail' },
   { id: 'calendar', label: 'Calendar' },
   { id: 'status', label: 'Status tags' },
   { id: 'status-extended', label: 'Status tags (extended)' },
@@ -27,6 +28,7 @@ export const DS_TOC_ITEMS: TocItem[] = [
   { id: 'alimtalk-phone', label: 'AlimTalk phone' },
   { id: 'alimtalk-nested-table', label: 'AlimTalk nested table' },
   { id: 'alimtalk-send', label: 'AlimTalk send' },
+  { id: 'mail-template', label: 'Mail template' },
   { id: 'do-dont', label: "Do / Don't" },
 ]
 

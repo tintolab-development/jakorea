@@ -3,6 +3,7 @@ import type {
   SponsorManagementDetailView,
   SponsorManagementRow,
   SponsorProgramHistoryRow,
+  SponsorYearlyBusinessRow,
 } from '@/features/sponsor/model/sponsor-management.types'
 import type { BasicInfoEditState } from '@/features/sponsor/ui/sponsor-detail-basic-info'
 import type {
@@ -12,11 +13,14 @@ import type {
   SponsorProgramHistoryResponse,
   SponsorRequest,
   SponsorResponse,
+  SponsorYearlyBusinessRequest,
+  SponsorYearlyBusinessResponse,
 } from '@/shared/api/generated/data-management/schemas'
 import type {
   SponsorOrganizationKind,
   SponsorSponsorshipStatus,
 } from '@/types/domain'
+import type { DateValue } from '@/types'
 import type { SponsorContactRegisterPayload } from '@/features/sponsor/ui/modal/sponsor-contact-register-modal'
 
 function parseOrganizationKind(value: string | undefined): SponsorOrganizationKind {
@@ -48,14 +52,46 @@ export function mapSponsorResponse(dto: SponsorResponse): SponsorManagementRow {
   }
 }
 
+const LEAD_CONTACT_TYPE_VALUES = new Set([
+  'lead',
+  'primary',
+  'main',
+  '주담당자',
+  '주 담당자',
+])
+
+const ASSISTANT_CONTACT_TYPE_VALUES = new Set([
+  'assistant',
+  'secondary',
+  'sub',
+  '담당자',
+  '부담당자',
+  '부 담당자',
+])
+
+export function parseSponsorContactType(
+  dto: Pick<SponsorContactResponse, 'contactType' | 'primary'>
+): SponsorContactRow['contactType'] {
+  const raw = dto.contactType?.trim().toLowerCase() ?? ''
+  if (LEAD_CONTACT_TYPE_VALUES.has(raw)) return 'lead'
+  if (ASSISTANT_CONTACT_TYPE_VALUES.has(raw)) return 'assistant'
+  if (dto.primary === true) return 'lead'
+  if (dto.primary === false) return 'assistant'
+  return 'assistant'
+}
+
 export function mapSponsorContactResponse(dto: SponsorContactResponse): SponsorContactRow {
-  const contactType = dto.contactType === 'lead' || dto.primary ? 'lead' : 'assistant'
+  const contactType = parseSponsorContactType(dto)
   return {
     id: dto.id ?? '',
     name: dto.name ?? '',
+    department: dto.department ?? '',
     position: dto.position ?? '',
-    phone: dto.phone ?? dto.mobilePhone ?? dto.officePhone ?? '',
+    officePhone: dto.officePhone ?? '',
+    phone: dto.phone ?? dto.mobilePhone ?? '',
     email: dto.email ?? '',
+    companyAddress: dto.companyAddress ?? '',
+    memo: dto.memo ?? '',
     registeredAt: dto.registeredAt ?? dto.createdAt ?? '',
     contactType,
   }
@@ -72,9 +108,92 @@ export function mapProgramHistoryResponse(
     lifecycleStatus: (dto.lifecycleStatus ?? 'planned') as SponsorProgramHistoryRow['lifecycleStatus'],
     managerName: dto.managerName ?? '',
     participantCount: dto.participantCount ?? '',
-    participantType: (dto.participantType ?? 'school') as SponsorProgramHistoryRow['participantType'],
+    participantType: parseParticipantType(dto.participantType),
     educationTarget: (dto.educationTarget ?? 'elementary') as SponsorProgramHistoryRow['educationTarget'],
   }
+}
+
+function parseParticipantType(
+  raw: string | undefined | null
+): SponsorProgramHistoryRow['participantType'] {
+  if (raw === 'individual' || raw === 'volunteer' || raw === 'school') return raw
+  return 'school'
+}
+
+export function mapYearlyBusinessResponse(
+  dto: SponsorYearlyBusinessResponse
+): SponsorYearlyBusinessRow {
+  return {
+    id: dto.id ?? '',
+    year: dto.businessYear ?? 0,
+    donationAmount: dto.donationAmount ?? 0,
+    beneficiaryCount: dto.beneficiaryCount ?? 0,
+    memo: dto.memo ?? '',
+    businessName: dto.businessName ?? '',
+    managerNameSnapshot: dto.managerNameSnapshot ?? '',
+  }
+}
+
+export function emptyYearlyBusinessRow(year: number): SponsorYearlyBusinessRow {
+  return {
+    id: '',
+    year,
+    donationAmount: 0,
+    beneficiaryCount: 0,
+    memo: '',
+    businessName: '',
+    managerNameSnapshot: '',
+  }
+}
+
+/** 기존 행이거나 후원금·수혜자·비고가 있으면 저장. 빈 플레이스홀더 연도는 POST하지 않음 */
+export function shouldPersistYearlyBusinessRow(row: SponsorYearlyBusinessRow): boolean {
+  if (row.id.trim()) return true
+  return row.donationAmount > 0 || row.beneficiaryCount > 0 || row.memo.trim().length > 0
+}
+
+export function toYearlyBusinessRequest(row: SponsorYearlyBusinessRow): SponsorYearlyBusinessRequest {
+  const body: SponsorYearlyBusinessRequest = {
+    businessYear: row.year,
+    businessName: row.businessName.trim() || `${row.year}년`,
+    donationAmount: row.donationAmount,
+    beneficiaryCount: row.beneficiaryCount,
+    memo: row.memo,
+  }
+  if (row.managerNameSnapshot.trim()) {
+    body.managerNameSnapshot = row.managerNameSnapshot.trim()
+  }
+  return body
+}
+
+function parseYearFromDate(value: DateValue | undefined): number | undefined {
+  if (value == null) return undefined
+  const raw = value instanceof Date ? String(value.getFullYear()) : String(value)
+  const year = Number(raw.slice(0, 4))
+  return Number.isInteger(year) && year >= 1990 && year <= 2100 ? year : undefined
+}
+
+/** 후원 시작연도~올해 빈 연도를 채워 상세 테이블에 표시 */
+export function mergeYearlyBusinessRows(
+  apiRows: SponsorYearlyBusinessRow[],
+  sponsorshipStartDate: DateValue | undefined,
+  now = new Date()
+): SponsorYearlyBusinessRow[] {
+  const currentYear = now.getFullYear()
+  const apiYears = apiRows.map(row => row.year).filter(year => year > 0)
+  const startYear =
+    parseYearFromDate(sponsorshipStartDate) ??
+    (apiYears.length > 0 ? Math.min(...apiYears) : currentYear)
+  const from = Math.min(startYear, currentYear)
+  const byYear = new Map(apiRows.filter(row => row.year > 0).map(row => [row.year, row]))
+  const rows: SponsorYearlyBusinessRow[] = []
+  for (let year = from; year <= currentYear; year += 1) {
+    rows.push(byYear.get(year) ?? emptyYearlyBusinessRow(year))
+    byYear.delete(year)
+  }
+  for (const leftover of byYear.values()) rows.push(leftover)
+  rows.sort((a, b) => b.year - a.year)
+  return rows
 }
 
 export function mapSponsorDetailResponse(dto: SponsorDetailResponse): SponsorManagementDetailView {
@@ -88,6 +207,10 @@ export function mapSponsorDetailResponse(dto: SponsorDetailResponse): SponsorMan
     address: dto.address ?? '',
     contacts: (dto.contacts ?? []).map(mapSponsorContactResponse),
     programHistories: (dto.programHistories ?? []).map(mapProgramHistoryResponse),
+    yearlyBusinesses: mergeYearlyBusinessRows(
+      (dto.yearlyBusinesses ?? []).map(mapYearlyBusinessResponse),
+      base.sponsorshipStartDate
+    ),
   }
 }
 
@@ -141,10 +264,15 @@ export function toSponsorContactRequest(
 ): SponsorContactRequest {
   return {
     name: payload.name.trim(),
+    department: payload.department.trim(),
     position: payload.position.trim(),
+    officePhone: payload.officePhone.trim(),
     mobilePhone: payload.phone.trim(),
     email: payload.email.trim(),
+    companyAddress: payload.companyAddress.trim(),
+    memo: payload.memo.trim(),
     primary: contactType === 'lead',
+    contactType,
   }
 }
 
@@ -153,9 +281,14 @@ export function toSponsorContactUpdateRequest(
 ): SponsorContactRequest {
   return {
     name: row.name,
+    department: row.department,
     position: row.position,
+    officePhone: row.officePhone,
     mobilePhone: row.phone,
     email: row.email,
+    companyAddress: row.companyAddress,
+    memo: row.memo,
     primary: row.contactType === 'lead',
+    contactType: row.contactType,
   }
 }

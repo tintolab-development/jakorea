@@ -242,7 +242,7 @@ export function PaymentStatementBasicInfoDetailForm({
                   onChange={next => patch({ addressRoad: next })}
                   placeholder="건물명, 도로명 또는 지번"
                   inputSize="large"
-                  width="100%"
+                  width="auto"
                   disabled={allAutofillLocked}
                   className="payment-statement-basic-info-detail-form__address-search"
                   modalZIndex={PAYMENT_STATEMENT_ADDRESS_SEARCH_MODAL_Z_INDEX}
@@ -254,8 +254,7 @@ export function PaymentStatementBasicInfoDetailForm({
                   placeholder="건물명, 도로명 또는 지번"
                   value={v.addressRoad}
                   onChange={e => patch({ addressRoad: e.target.value })}
-                  width="100%"
-                  style={{ flex: '1.2 1 0', minWidth: 0 }}
+                  width="auto"
                   aria-label="도로명·지번 주소 (발급 시 자동 입력)"
                 />
               )}
@@ -266,8 +265,7 @@ export function PaymentStatementBasicInfoDetailForm({
                 placeholder="상세 주소"
                 value={v.addressDetail}
                 onChange={e => patch({ addressDetail: e.target.value })}
-                width="100%"
-                style={{ flex: '1 1 0', minWidth: 0 }}
+                width="auto"
                 aria-label="상세 주소 (발급 시 자동 입력)"
               />
             </div>

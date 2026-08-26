@@ -4,6 +4,7 @@ import { isAdminProvisionedIdentityConfirmPending } from '@/features/auth/admin-
 import {
   buildIdentityCallbackKey,
   isIdentityCallbackHandled,
+  isMypagePhoneIdentityConfirmPending,
   markIdentityCallbackHandled,
   processIdentityCallback,
   signupIdentityVerificationClient,
@@ -31,7 +32,8 @@ export function SignUpIdentityCallbackPage() {
     markIdentityCallbackHandled(callbackKey)
 
     const execute = async () => {
-      const skipVerifiedProfileFetch = isAdminProvisionedIdentityConfirmPending()
+      const skipVerifiedProfileFetch =
+        isAdminProvisionedIdentityConfirmPending() || isMypagePhoneIdentityConfirmPending()
 
       try {
         const outcome = await processIdentityCallback(

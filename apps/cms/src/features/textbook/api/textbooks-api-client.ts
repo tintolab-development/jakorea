@@ -1,6 +1,12 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import {
+  assertBulkDeleteSucceeded,
+  forEachBulkIdChunk,
+  toBulkNumericIds,
+} from '@/features/data-management/api/bulk-delete'
 import { getJAKoreaCMSBackendAPIDataManagementSubset } from '@/shared/api/generated/data-management/data-management-api'
 import type {
+  BulkActionResponse,
   MatchesParams,
   PageResponseTextbookResponse,
   TextbookMatchResponse,
@@ -34,6 +40,15 @@ export async function updateTextbookRemote(
 
 export async function deleteTextbookRemote(id: string): Promise<void> {
   await dmApi._delete(id)
+}
+
+export async function bulkDeleteTextbooksRemote(ids: string[]): Promise<void> {
+  await forEachBulkIdChunk(ids, async chunk => {
+    const result = unwrapApiBody<BulkActionResponse>(
+      await dmApi.bulkDelete({ ids: toBulkNumericIds(chunk) })
+    )
+    assertBulkDeleteSucceeded(result, '교재 일괄 삭제에 실패했습니다.')
+  })
 }
 
 export async function fetchTextbookMatchesRemote(

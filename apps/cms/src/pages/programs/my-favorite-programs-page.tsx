@@ -22,6 +22,7 @@ import {
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import dayjs from 'dayjs'
+import { formatDateDot, formatDateRangeDot } from '@/shared/utils'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
 
 const { Option } = Select
@@ -151,11 +152,7 @@ export function MyFavoriteProgramsPage() {
       key: 'period',
       width: 200,
       render: (_, record) => {
-        const start =
-          typeof record.startDate === 'string' ? dayjs(record.startDate) : dayjs(record.startDate)
-        const end =
-          typeof record.endDate === 'string' ? dayjs(record.endDate) : dayjs(record.endDate)
-        return `${start.format('YYYY-MM-DD')} ~ ${end.format('YYYY-MM-DD')}`
+        return formatDateRangeDot(record.startDate, record.endDate)
       },
     },
     {
@@ -163,7 +160,7 @@ export function MyFavoriteProgramsPage() {
       dataIndex: 'favoritedAt',
       key: 'favoritedAt',
       width: 150,
-      render: (date: string) => dayjs(date).format('YYYY-MM-DD'),
+      render: (date: string) => formatDateDot(date),
     },
     {
       title: '관심 해제',

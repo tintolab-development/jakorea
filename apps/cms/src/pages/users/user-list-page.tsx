@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
-import { Alert, Spin } from 'antd'
+import { Alert } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
@@ -30,7 +30,6 @@ import {
   canResolveMemberIdForDetailRestore,
   resolveMemberDetailRestoreHint,
 } from '@/features/user/detail/lib/resolve-member-detail-restore-hint'
-import { prefetchSchoolAffiliatedTeachers } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { MemberRegisterModal } from '@/features/user/shared/ui/member-register-modal'
 import {
   AdminRegisterModal,
@@ -44,6 +43,7 @@ import {
   InstructorRegisterModal,
   type InstructorRegisterModalFormValues,
 } from '@/features/user/shared/ui/instructor-register-modal'
+import type { MemberRegisterConsentWriteSnapshots } from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import { useInfiniteUserList } from '@/features/user/shared/hooks/use-infinite-user-list'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
@@ -99,7 +99,7 @@ import {
 } from '@/features/user/api/member-remote-capabilities'
 import { memberQueryKeys, serializeMemberListFilters } from '@/features/user/api/member-query-keys'
 import { resolveDeleteUserOptions } from '@/features/user/api/resolve-delete-user-options'
-import { mergeListUserWithFetchedDetail } from '@/features/user/api/merge-list-user-with-detail'
+import { mergeListUserWithFetchedDetail, patchMemberListPagesWithFetchedDetail } from '@/features/user/api/merge-list-user-with-detail'
 import { applyAffiliatedTeacherLinkToUser } from '@/features/user/api/apply-affiliated-teacher-link'
 import { buildAdminAccountCreateTermsAgreements } from '@/features/user/api/build-pre-register-terms-agreements'
 import {
@@ -550,7 +550,6 @@ export function UserListPage() {
         const displayUser = withTeacherCtx(fetched)
         openDrawer(displayUser)
         setDetailBridgeUser(displayUser)
-        prefetchSchoolAffiliatedTeachers(queryClient, displayUser)
         setParams(
           {
             id: displayUser.id,
@@ -619,7 +618,8 @@ export function UserListPage() {
 
   const invalidateList = useCallback(() => {
     if (isMembersRemoteEnabled()) {
-      void queryClient.invalidateQueries({ queryKey: memberQueryKeys.all })
+      void queryClient.invalidateQueries({ queryKey: memberQueryKeys.listAll() })
+      void queryClient.invalidateQueries({ queryKey: memberQueryKeys.schoolsListAll() })
       return
     }
     void queryClient.invalidateQueries({ queryKey: ['users', 'list'] })
@@ -628,7 +628,7 @@ export function UserListPage() {
   const handleMemberBasicInfoSaved = useCallback(
     (
       updated: Omit<User, 'password'>,
-      options?: { skipListInvalidate?: boolean }
+      _options?: { skipListInvalidate?: boolean }
     ) => {
       setDrawerUser(updated)
       setDetailBridgeUser(prev => (prev?.id === updated.id ? updated : prev))
@@ -665,11 +665,8 @@ export function UserListPage() {
         { queryKey: [...memberQueryKeys.all, 'schoolsList'] },
         patchListCache
       )
-      if (!options?.skipListInvalidate) {
-        invalidateList()
-      }
     },
-    [setDrawerUser, setDetailBridgeUser, queryClient, invalidateList]
+    [setDrawerUser, setDetailBridgeUser, queryClient]
   )
 
   /** 상세 GET 완료 후 모달·URL 반영 (목록 시드 선오픈 없음) */
@@ -690,8 +687,6 @@ export function UserListPage() {
       setDetailBridgeUser(displayUser)
       openDrawer(displayUser)
       pendingOpenedUserIdRef.current = null
-      // 학교 상세 직후 소속 교사 목록을 항상 다시 조회
-      prefetchSchoolAffiliatedTeachers(queryClient, displayUser)
     },
     [setSelectedUserId, openDrawer, setParams, queryClient]
   )
@@ -743,11 +738,16 @@ export function UserListPage() {
           pendingOpenedUserIdRef.current = null
           return
         }
-        const displayUser = applyTeacherDetailUrlContext(fetched, {
+        const storeSeed = useUserStore.getState().usersById[user.id]
+        let mergedDetail = mergeListUserWithFetchedDetail(user, fetched)
+        if (storeSeed) {
+          mergedDetail = mergeListUserWithFetchedDetail(mergedDetail, storeSeed)
+        }
+        const displayUser = applyTeacherDetailUrlContext(mergedDetail, {
           affiliatedSchoolName:
-            fetched.affiliatedSchoolName ?? user.affiliatedSchoolName,
+            mergedDetail.affiliatedSchoolName ?? user.affiliatedSchoolName,
           instructorMemberProfile:
-            fetched.instructorMemberProfile ?? user.instructorMemberProfile,
+            mergedDetail.instructorMemberProfile ?? user.instructorMemberProfile,
         })
         openMemberDetailFetched(displayUser, { replace: opts?.replace ?? false })
       } catch (error) {
@@ -944,7 +944,10 @@ export function UserListPage() {
     }
   }
 
-  const handleInstructorRegisterSubmit = async (values: InstructorRegisterModalFormValues) => {
+  const handleInstructorRegisterSubmit = async (
+    values: InstructorRegisterModalFormValues,
+    snapshots: MemberRegisterConsentWriteSnapshots
+  ) => {
     try {
       const emailTrim = values.email.trim()
       const email =
@@ -968,7 +971,7 @@ export function UserListPage() {
               values.instructorCareer.trim(),
               values.affiliationNone ? '' : values.affiliationName.trim(),
             ].filter(Boolean)
-      await createUser({
+      const created = await createUser({
         email,
         password: resolveAdminProvisionedTempPassword(email),
         name,
@@ -995,6 +998,7 @@ export function UserListPage() {
             consentSexOffenseCheck: values.consentSexOffenseCheck,
           }
         ),
+        consentWriteSnapshots: snapshots,
         certifications: buildInstructorRegisterCertifications(values.licenseRows),
         instructorInfo: {
           bankName: values.bankName.trim(),
@@ -1004,7 +1008,26 @@ export function UserListPage() {
         },
         isActive: true,
       })
-      invalidateList()
+      if (isMembersRemoteEnabled()) {
+        await queryClient.invalidateQueries({ queryKey: memberQueryKeys.listAll() })
+        await queryClient.invalidateQueries({ queryKey: memberQueryKeys.schoolsListAll() })
+      } else {
+        invalidateList()
+      }
+      const patchListCache = (old: InfiniteData<GetUsersPageResult> | undefined) =>
+        patchMemberListPagesWithFetchedDetail(old, created)
+      queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
+        { queryKey: ['users', 'list'] },
+        patchListCache
+      )
+      queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
+        { queryKey: [...memberQueryKeys.all, 'list'] },
+        patchListCache
+      )
+      queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
+        { queryKey: [...memberQueryKeys.all, 'schoolsList'] },
+        patchListCache
+      )
       closeInstructorRegisterModal()
     } catch (error) {
       handleError(error, { defaultMessage: '강사 등록에 실패했습니다.' })
@@ -1287,15 +1310,8 @@ export function UserListPage() {
           open
           onClose={handleUserDetailModalClose}
           title="회원 상세"
-        >
-          <div
-            className="detail-fullpage-modal__loading"
-            role="status"
-            aria-label="상세 불러오는 중"
-          >
-            <Spin size="large" />
-          </div>
-        </DetailFullPageModal>
+          loading
+        />
       ) : (
         <UserDetailFullPageModal
           open={userDetailModalOpen}

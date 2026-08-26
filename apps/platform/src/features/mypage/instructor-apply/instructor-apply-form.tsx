@@ -39,6 +39,7 @@ import {
   type InstructorSharedProfileFormValues,
 } from '@jakorea/domain/instructor/profile-form-values'
 import { collectInstructorRegisterValidation } from '@jakorea/domain/instructor/validate-register'
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { isValidEmail, parseBirthDate } from '@/features/auth/sign-up'
 import {
   PFAlertModal,
@@ -51,6 +52,7 @@ import {
   PFFormFieldRow,
   PFFormFieldTable,
   PFFormFieldValueText,
+  PFFormHomeAddressFields,
   PFFormInlineRow,
   PFFormInlineSegment,
   PFFormInlineSeparator,
@@ -170,7 +172,11 @@ function RadioGroup<T extends string>({
             disabled={disabled}
             onChange={() => onChange(option.value)}
           />
-          <PFText as="span" typo="bd-md-rg" color="black">
+          <PFText
+            as="span"
+            typo="bd-md-rg"
+            color={value === option.value ? 'primary-500' : 'black'}
+          >
             {option.label}
           </PFText>
         </label>
@@ -431,7 +437,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                   width="200px"
                   placeholder={PH.contact}
                   disabled
-                  value={values.contact}
+                  value={formatKoreanPhoneNumber(values.contact)}
                   onValueChange={value => patch('contact', value)}
                 />
               </PFFormField>
@@ -518,31 +524,15 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
 
             <PFFormFieldRow type="single">
               <PFFormField label="자택 주소지">
-                <PFFormInlineRow>
-                  <PFFormInlineSegment>
-                    <PFTextInput
-                      variant="formPage"
-                      size="large"
-                      width={240}
-                      placeholder={PH.homeAddress}
-                      disabled
-                      value={values.homeAddress}
-                      onValueChange={value => patch('homeAddress', value)}
-                    />
-                  </PFFormInlineSegment>
-                  <PFFormInlineSeparator />
-                  <PFFormInlineSegment>
-                    <PFTextInput
-                      variant="formPage"
-                      size="large"
-                      width={240}
-                      placeholder={PH.homeAddressDetail}
-                      disabled
-                      value={values.homeAddressDetail}
-                      onValueChange={value => patch('homeAddressDetail', value)}
-                    />
-                  </PFFormInlineSegment>
-                </PFFormInlineRow>
+                <PFFormHomeAddressFields
+                  roadValue={values.homeAddress}
+                  detailValue={values.homeAddressDetail}
+                  onRoadChange={value => patch('homeAddress', value)}
+                  onDetailChange={value => patch('homeAddressDetail', value)}
+                  roadPlaceholder={PH.homeAddress}
+                  detailPlaceholder={PH.homeAddressDetail}
+                  disabled
+                />
               </PFFormField>
             </PFFormFieldRow>
             <PFFormFieldRow type="single">

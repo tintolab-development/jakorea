@@ -6,7 +6,7 @@
   "scripts": {
     "predev": "pnpm run build:workspace-deps",
     "prebuild": "pnpm run build:workspace-deps",
-    "build:workspace-deps": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/form-template-runtime --filter @jakorea/rich-text build",
+    "build:workspace-deps": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/form-template-runtime --filter @jakorea/rich-text --filter @jakorea/domain build",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --max-warnings=-1",
@@ -35,6 +35,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^3.9.1",
+    "@jakorea/domain": "workspace:*",
     "@jakorea/form-template-runtime": "workspace:^",
     "@jakorea/rich-text": "workspace:^",
     "@jakorea/ui": "workspace:*",

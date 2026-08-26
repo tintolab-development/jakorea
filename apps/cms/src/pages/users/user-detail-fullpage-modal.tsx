@@ -36,6 +36,7 @@ import {
   type MemberBasicInfoSavedOptions,
 } from '@/features/user/detail/lib/use-user-detail-controller'
 import { useUserDetailFullpageDerived } from '@/features/user/detail/lib/use-user-detail-fullpage-derived'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { useUserDetailModals } from '@/features/user/detail/lib/use-user-detail-modals'
 import { UserDetailLayout } from '@/features/user/detail/ui/detail-info/user-detail-layout'
 import { USER_BASIC_INFO_ENTRY_QUERY_KEY } from '@/features/user/detail/ui/user-basic-info/entry-resolver'
@@ -157,6 +158,11 @@ export function UserDetailFullPageModal({
       onOpenLectureAttendance: actions.openLectureAttendance,
       onOpenAssignmentSubmission: actions.openAssignmentSubmission,
       onOpenEnrollmentProgramDetail: actions.openEnrollmentProgramDetail,
+      onOpenVolunteerProgramDetail: actions.openVolunteerProgramDetail,
+      onBulkDeleteHistory: actions.handleBulkDeleteHistory,
+      onStudentCertificateBulkIssue: actions.handleStudentCertificateBulkIssue,
+      onVolunteerCertificateBulkIssue: actions.handleVolunteerCertificateBulkIssue,
+      progressStatusReadOnly: isMembersRemoteEnabled(),
       onWithdrawModalCancel: actions.closeWithdrawConfirm,
       onWithdrawModalConfirm: actions.handleWithdrawConfirm,
       basicInfoEditing: state.basicInfoEditing,
@@ -228,6 +234,10 @@ export function UserDetailFullPageModal({
     actions.openLectureAttendance,
     actions.openAssignmentSubmission,
     actions.openEnrollmentProgramDetail,
+    actions.openVolunteerProgramDetail,
+    actions.handleBulkDeleteHistory,
+    actions.handleStudentCertificateBulkIssue,
+    actions.handleVolunteerCertificateBulkIssue,
     actions.closeWithdrawConfirm,
     actions.closeInstitutionDeleteBlocked,
     actions.handleWithdrawConfirm,

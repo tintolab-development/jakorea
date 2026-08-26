@@ -5,28 +5,25 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
+import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useSponsorListQuery } from '@/features/sponsor/hooks/use-sponsor-list-query'
-import { useSponsorDetailQuery } from '@/features/sponsor/hooks/use-sponsor-detail-query'
+import { usePrefetchSponsorDetail } from '@/features/sponsor/hooks/use-sponsor-detail-query'
 import { useSponsorMutations } from '@/features/sponsor/hooks/use-sponsor-mutations'
 import type { SponsorSponsorshipStatus } from '@/types/domain'
-import { SponsorSponsorshipStatusBadge } from '@/features/sponsor/ui/sponsor-sponsorship-status-badge'
 import { sponsorManagementFilterFields } from '@/features/sponsor/model/sponsor-management-filter-fields'
 import { sponsorManagementTablePageConfig } from '@/features/sponsor/model/sponsor-management-table.config'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
+  SPONSOR_STATUS_CELL_CLASSNAME,
+  SponsorSponsorshipStatusCell,
+} from '@/features/sponsor/ui/sponsor-sponsorship-status-cell'
+import {
   STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-  StatusDropdownCell,
 } from '@/shared/components/status-dropdown-cell'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { EMPTY_TABLE_PAGE_CONTEXT } from '@/shared/components/table-system/model/use-table-page'
 import { useDeleteGuideMessages } from '@/shared/hooks'
-import {
-  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
-  DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import './sponsor-page.css'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -52,10 +49,8 @@ const ORG_LABEL: Record<NonNullable<SponsorManagementRow['organizationKind']>, s
   corporate: '기업',
   foundation: '재단' }
 
-const SPONSORSHIP_STATUS_OPTIONS = [
-  'active',
-  'ended',
-] as const satisfies readonly SponsorSponsorshipStatus[]
+/** 구분 기본값 — URL에 없으면 기업(`corporate`)으로 고정 */
+const DEFAULT_SPONSOR_KIND = 'corporate'
 
 export default function SponsorPage() {
   const { user } = useAuthStore()
@@ -63,10 +58,28 @@ export default function SponsorPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
+  const organizationKindParam = searchParams.get('sp_kind')
+
+  /** 최초 진입 시 `sp_kind` 없으면 기업으로 URL·조회 쿼리를 맞춘다 */
+  useEffect(() => {
+    if (organizationKindParam === 'corporate' || organizationKindParam === 'foundation') return
+    setSearchParams(
+      prev => {
+        if (prev.get('sp_kind') === 'corporate' || prev.get('sp_kind') === 'foundation') {
+          return prev
+        }
+        const next = new URLSearchParams(prev)
+        next.set('sp_kind', DEFAULT_SPONSOR_KIND)
+        return next
+      },
+      { replace: true }
+    )
+  }, [organizationKindParam, setSearchParams])
+
   const listQuery = useSponsorListQuery(searchParams, true)
-  const { createMutation, deleteMutation, updateStatusMutation } = useSponsorMutations(
-    searchParams.toString()
-  )
+  const isInitialListLoading = isDataManagementListLoading(listQuery)
+  const isListFetching = listQuery.isFetching
+  const { createMutation, deleteMutation, bulkDeleteMutation, updateStatusMutation } = useSponsorMutations()
   const rows = listQuery.data ?? []
 
   const {
@@ -81,7 +94,6 @@ export default function SponsorPage() {
     context: EMPTY_TABLE_PAGE_CONTEXT })
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  const [openSponsorshipDropdownId, setOpenSponsorshipDropdownId] = useState<string | null>(null)
   const [bulkSponsorDeleteModalOpen, setBulkSponsorDeleteModalOpen] = useState(false)
   const [bulkSponsorDeleteBlockedOpen, setBulkSponsorDeleteBlockedOpen] = useState(false)
   const [registerModalOpen, setRegisterModalOpen] = useState(false)
@@ -89,54 +101,21 @@ export default function SponsorPage() {
   const [actionResultTitle, setActionResultTitle] = useState('')
   const [actionResultMessage, setActionResultMessage] = useState('')
 
+  const prefetchSponsorDetail = usePrefetchSponsorDetail()
   const sponsorIdFromUrl = searchParams.get('sponsorId') ?? ''
-  const detailFromUrlQuery = useSponsorDetailQuery(sponsorIdFromUrl || null, Boolean(sponsorIdFromUrl))
   const sponsorRowForDetail = useMemo((): SponsorManagementRow | null => {
     if (!sponsorIdFromUrl) return null
-    // 상세 GET 결과만 본문에 사용 (목록 행 선표시 금지)
-    if (detailFromUrlQuery.data) {
-      const { contacts: _c, programHistories: _p, ...row } = detailFromUrlQuery.data
-      return row
-    }
-    if (detailFromUrlQuery.isLoading || detailFromUrlQuery.isFetching) {
-      return {
+    return (
+      rows.find(r => r.id === sponsorIdFromUrl) ?? {
         id: sponsorIdFromUrl,
         name: '',
         createdAt: '',
         updatedAt: '',
         programCount: 0,
       }
-    }
-    return null
-  }, [
-    detailFromUrlQuery.data,
-    detailFromUrlQuery.isFetching,
-    detailFromUrlQuery.isLoading,
-    sponsorIdFromUrl,
-  ])
-  const sponsorDetailOpen = Boolean(sponsorIdFromUrl && sponsorRowForDetail)
-
-  useEffect(() => {
-    if (
-      sponsorIdFromUrl &&
-      !detailFromUrlQuery.isLoading &&
-      detailFromUrlQuery.isError &&
-      sponsorRowForDetail?.name === ''
-    ) {
-      setSearchParams(prev => {
-        const next = new URLSearchParams(prev)
-        next.delete('sponsorId')
-        next.delete('sponsorLnb')
-        return next
-      })
-    }
-  }, [
-    detailFromUrlQuery.isError,
-    detailFromUrlQuery.isLoading,
-    setSearchParams,
-    sponsorIdFromUrl,
-    sponsorRowForDetail?.name,
-  ])
+    )
+  }, [rows, sponsorIdFromUrl])
+  const sponsorDetailOpen = Boolean(sponsorIdFromUrl)
 
   const closeSponsorDetail = useCallback(() => {
     const returnTo = sanitizeInternalReturnTo(searchParams.get(SPONSOR_DETAIL_RETURN_TO_PARAM))
@@ -210,9 +189,7 @@ export default function SponsorPage() {
     const ids = new Set(selectedSponsors.map(s => s.id))
     const n = selectedSponsors.length
     try {
-      for (const id of ids) {
-        await deleteMutation.mutateAsync(id)
-      }
+      await bulkDeleteMutation.mutateAsync([...ids])
       setSelectedRowKeys([])
       setBulkSponsorDeleteModalOpen(false)
       setActionResultTitle(buildDeleteCompletedTitle('후원사'))
@@ -233,12 +210,16 @@ export default function SponsorPage() {
         getDataManagementApiErrorMessage(error, '삭제에 실패했습니다.')
       )
     }
-  }, [closeSponsorDetail, deleteMutation, selectedSponsors, sponsorIdFromUrl])
+  }, [bulkDeleteMutation, closeSponsorDetail, selectedSponsors, sponsorIdFromUrl])
 
   const updateSponsorshipStatus = useCallback(
-    async (id: string, next: SponsorSponsorshipStatus) => {
+    async (row: SponsorManagementRow, next: SponsorSponsorshipStatus) => {
       try {
-        await updateStatusMutation.mutateAsync({ sponsorId: id, sponsorshipStatus: next })
+        await updateStatusMutation.mutateAsync({
+          sponsorId: row.id,
+          sponsorshipStatus: next,
+          existing: row,
+        })
       } catch (error) {
         console.debug(
           'sponsorPage status update failed',
@@ -306,22 +287,6 @@ export default function SponsorPage() {
         width: 200,
         ellipsis: true },
       {
-        title: '주 담당자',
-        key: 'mainManager',
-        width: TABLE_COLUMN_WIDTHS.name,
-        ellipsis: true,
-        render: (_: unknown, r: SponsorManagementRow) => r.managers?.[0]?.name ?? '-' },
-      {
-        title: '주 담당자 연락처',
-        key: 'mainManagerPhone',
-        width: TABLE_COLUMN_WIDTHS.phone,
-        ellipsis: true,
-        render: (_: unknown, r: SponsorManagementRow) => {
-          const raw = r.managers?.[0]?.phone
-          if (!raw?.trim()) return '-'
-          return MASKING_POLICY.phone(raw)
-        } },
-      {
         title: '프로그램 진행 수',
         dataIndex: 'programCount',
         key: 'programCount',
@@ -329,32 +294,27 @@ export default function SponsorPage() {
         align: 'center' },
       {
         title: '후원 상태',
+        dataIndex: 'sponsorshipStatus',
         key: 'sponsorshipStatus',
         width: 116,
         align: 'center',
         onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
         onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+          className: SPONSOR_STATUS_CELL_CLASSNAME,
         }),
         render: (_: unknown, r: SponsorManagementRow) => (
-          <StatusDropdownCell<SponsorSponsorshipStatus>
-            status={r.sponsorshipStatus ?? 'active'}
-            statusOptions={SPONSORSHIP_STATUS_OPTIONS}
-            renderBadge={s => <SponsorSponsorshipStatusBadge status={s} />}
-            isItemDisabled={(cur, opt) => cur === opt}
-            onChange={
-              canWrite
-                ? newStatus => {
-                    updateSponsorshipStatus(r.id, newStatus)
-                    setOpenSponsorshipDropdownId(null)
-                  }
-                : undefined
-            }
-            isOpen={openSponsorshipDropdownId === r.id}
-            onOpenChange={open => setOpenSponsorshipDropdownId(open ? r.id : null)}
-            tagLayout="tag100"
+          <SponsorSponsorshipStatusCell
+            row={r}
+            canWrite={canWrite}
+            onStatusChange={updateSponsorshipStatus}
           />
         ) },
+      {
+        title: '주 담당자',
+        key: 'mainManager',
+        width: TABLE_COLUMN_WIDTHS.name,
+        ellipsis: true,
+        render: (_: unknown, r: SponsorManagementRow) => r.managers?.[0]?.name ?? '-' },
       {
         title: '후원 시작일',
         dataIndex: 'sponsorshipStartDate',
@@ -363,7 +323,7 @@ export default function SponsorPage() {
         render: (v: string | undefined) =>
           v ? dayjs(v).format('YYYY.MM.DD') : <Typography.Text type="secondary">-</Typography.Text> },
     ],
-    [canWrite, tableData.length, openSponsorshipDropdownId, updateSponsorshipStatus]
+    [canWrite, tableData.length, updateSponsorshipStatus]
   )
 
   return (
@@ -376,11 +336,14 @@ export default function SponsorPage() {
           organizationKind: pendingFilters.organizationKind,
           sponsorName: pendingFilters.sponsorName,
           managerName: pendingFilters.managerName,
-          sponsorshipStatus: pendingFilters.sponsorshipStatus }}
+          sponsorshipStatus: pendingFilters.sponsorshipStatus,
+          sponsorshipStartDateRange: pendingFilters.sponsorshipStartDateRange,
+        }}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="후원사 목록"
         description={`총 ${displayedCount.toLocaleString()}건`}
+        contentLoading={isInitialListLoading}
         actions={
           <>
             <CmsButton
@@ -405,9 +368,11 @@ export default function SponsorPage() {
           className="sponsor-page__table cms-data-table cms-data-table--hoverable"
           columns={columns}
           dataSource={tableData}
+          loading={isListFetching && !isInitialListLoading}
           pagination={false}
           onRow={record => ({
             style: { cursor: 'pointer' },
+            onMouseEnter: () => prefetchSponsorDetail(record.id),
             onClick: (e: MouseEvent<HTMLElement>) => {
               const el = e.target as HTMLElement
               if (
@@ -417,6 +382,7 @@ export default function SponsorPage() {
               ) {
                 return
               }
+              prefetchSponsorDetail(record.id)
               setSearchParams(prev => {
                 const next = new URLSearchParams(prev)
                 next.set('sponsorId', record.id)
@@ -450,8 +416,6 @@ export default function SponsorPage() {
         title={bulkSponsorDeleteTitle}
         lines={bulkSponsorDeleteLines}
         confirmText="후원사 삭제"
-        requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
-        confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
       />
       <SponsorDeleteBlockedModal
         open={bulkSponsorDeleteBlockedOpen}

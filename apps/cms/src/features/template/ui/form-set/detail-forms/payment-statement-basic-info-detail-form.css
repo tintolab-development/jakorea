@@ -60,6 +60,17 @@
   align-items: center;
 }
 
+.payment-statement-basic-info-detail-form .detail-info-form__field-content--edit
+  > .payment-statement-basic-info-detail-form__address {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
 .payment-statement-basic-info-detail-form .detail-info-form__field:has(.payment-statement-basic-info-detail-form__address),
 .payment-statement-basic-info-detail-form .detail-info-form__field:has(.payment-statement-basic-info-detail-form__account) {
   height: auto;
@@ -70,6 +81,8 @@
 .payment-statement-basic-info-detail-form__address,
 .payment-statement-basic-info-detail-form__account {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
   width: 100%;
@@ -82,22 +95,18 @@
   min-width: 0;
 }
 
-.payment-statement-basic-info-detail-form__address > .cms-input,
-.payment-statement-basic-info-detail-form__address > .detail-info-form-inputs-separator {
-  flex-shrink: 0;
-}
-
-.payment-statement-basic-info-detail-form__address > .cms-input:first-child,
-.payment-statement-basic-info-detail-form__address > .payment-statement-basic-info-detail-form__address-search {
-  flex: 1.2 1 0;
-  min-width: 0;
-}
-
-.payment-statement-basic-info-detail-form__address > .cms-input:last-of-type {
+.payment-statement-basic-info-detail-form__address > .address-search__trigger-wrap,
+.payment-statement-basic-info-detail-form__address > .cms-input {
   flex: 1 1 0;
   min-width: 0;
+  width: auto;
 }
 
-.payment-statement-basic-info-detail-form__address-search.address-search__trigger-wrap {
-  display: flex;
+.payment-statement-basic-info-detail-form__address > .detail-info-form-inputs-separator {
+  flex: 0 0 auto;
+}
+
+.payment-statement-basic-info-detail-form__address > .address-search__trigger-wrap .cms-input {
+  width: 100%;
+  min-width: 0;
 }

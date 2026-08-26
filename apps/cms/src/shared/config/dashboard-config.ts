@@ -113,31 +113,22 @@ export function buildAdminDashboardWidgets(scheduleKinds: ProgramScheduleKind[])
   ]
 }
 
-function appendMasterLogAlertsWidget(
-  widgets: DashboardWidgetConfig[]
+/** 로그인 사용자 기준 대시보드 위젯 (관리자는 assignedProgramTypes 또는 ACL로 일정 유형 필터) */
+export function getDashboardWidgetsForUser(
+  user: Omit<User, 'password'> | null,
+  assignedProgramTypes?: ProgramScheduleKind[] | null
 ): DashboardWidgetConfig[] {
-  const maxOrder = widgets.reduce((max, w) => Math.max(max, w.order ?? 0), 0)
-  return [
-    ...widgets,
-    { type: 'log-alerts-widget', colSpan: 24, order: maxOrder + 1, height: 338 },
-  ]
-}
-
-/**
- * 로그인 사용자 기준 대시보드 위젯 (관리자는 ACL로 프로그램 일정 위젯 유형 필터)
- */
-export function getDashboardWidgetsForUser(user: Omit<User, 'password'> | null): DashboardWidgetConfig[] {
   if (!user?.role) {
     return []
   }
   if (user.role !== 'ADMIN') {
     return getDashboardWidgetsByRole(user.role)
   }
-  const kinds = getProgramScheduleKindsForAdminUser(user)
-  const widgets = buildAdminDashboardWidgets(kinds)
-  const withLogAlerts =
-    user.adminLevel === 'MASTER' ? appendMasterLogAlertsWidget(widgets) : widgets
-  return withLogAlerts.sort((a, b) => (a.order || 0) - (b.order || 0))
+  const kinds =
+    assignedProgramTypes != null
+      ? assignedProgramTypes
+      : getProgramScheduleKindsForAdminUser(user)
+  return buildAdminDashboardWidgets(kinds).sort((a, b) => (a.order || 0) - (b.order || 0))
 }
 
 /**

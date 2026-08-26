@@ -7,6 +7,7 @@ import type {
 import type { PortalProfileResponse } from '@/features/auth/sign-in'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { MOCK_ADMIN_REGISTERED_PROFILE } from '../lib/constants'
+import type { AdminProvisionedOnboardingStep } from '../lib/onboarding-step'
 
 const ADMIN_REGISTERED_WIZARD_STORAGE_KEY = 'platform:dev:admin-registered-wizard'
 
@@ -29,6 +30,8 @@ export type AdminRegisteredWizardState = {
   schoolAddress?: string
   /** 학교 검색으로 고른 CMS organizationId */
   schoolOrganizationId?: number | null
+  /** NEIS 학교 코드 — CMS PK 없을 때 schoolSelection.externalSchoolCode */
+  schoolNeisCode?: string | null
   grade?: string
   address?: string
   addressDetail?: string
@@ -37,10 +40,12 @@ export type AdminRegisteredWizardState = {
   regionSigungu?: string
   volunteerId?: string
   employmentStatus?: EmploymentStatus
-  /** GET /api/portal/me/profile 원본 — PATCH 시 조회 필드 echo */
+  /** GET /api/portal/me/profile 원본 — teacherEmploymentStatus 등 매핑 참조 */
   portalProfile?: PortalProfileResponse
   /** GET /api/portal/me/profile 반영 여부 */
   profileHydrated?: boolean
+  /** 로그인·GET /me 의 `adminProvisionedOnboardingStep` 스냅샷 */
+  adminProvisionedOnboardingStep?: AdminProvisionedOnboardingStep
 }
 
 function readWizardState(): AdminRegisteredWizardState | null {

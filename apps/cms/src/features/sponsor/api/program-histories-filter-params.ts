@@ -2,12 +2,17 @@ import type { ProgramHistoriesParams } from '@/shared/api/generated/data-managem
 import type { SponsorProgramHistoryFilters } from '@/features/sponsor/model/sponsor-management.types'
 import { SPONSOR_PROGRAM_HISTORY_FILTER_ALL } from '@/features/sponsor/utils/match-program-history-filter'
 
+/** OpenAPI ProgramHistoriesParams에 participantType 없음 — FE 확장 전송 + BE 갭 */
+export type ProgramHistoriesQueryParams = ProgramHistoriesParams & {
+  participantType?: string
+}
+
 export function programHistoriesParamsFromFilters(
   filters: SponsorProgramHistoryFilters,
   page = 0,
-  size = 200
-): ProgramHistoriesParams {
-  const params: ProgramHistoriesParams = { page, size }
+  size = 50
+): ProgramHistoriesQueryParams {
+  const params: ProgramHistoriesQueryParams = { page, size }
   const title = filters.title.trim()
   if (title) {
     params.programName = title
@@ -18,6 +23,9 @@ export function programHistoriesParamsFromFilters(
   }
   if (filters.lifecycleStatus !== SPONSOR_PROGRAM_HISTORY_FILTER_ALL) {
     params.lifecycleStatus = filters.lifecycleStatus
+  }
+  if (filters.participantType !== SPONSOR_PROGRAM_HISTORY_FILTER_ALL) {
+    params.participantType = filters.participantType
   }
   if (filters.educationTarget !== SPONSOR_PROGRAM_HISTORY_FILTER_ALL) {
     params.educationTarget = filters.educationTarget

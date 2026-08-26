@@ -4,7 +4,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   isMockAdminRegisteredFirstLogin,
   requiresAdminRegisteredOnboarding,
-  setAdminRegisteredPasswordChangeRequired,
+  resolveAdminProvisionedOnboardingEntryPath,
+  syncAdminRegisteredOnboardingSession,
+  ADMIN_REGISTERED_NOTICE_PATH,
 } from '@/features/auth/admin-registered'
 import {
   expiresAtFromExpiresInSeconds,
@@ -120,7 +122,7 @@ export function SignInPage() {
 
     if (!remoteApi) {
       if (isMockAdminRegisteredFirstLogin(validation.normalized, password)) {
-        setAdminRegisteredPasswordChangeRequired(validation.normalized)
+        syncAdminRegisteredOnboardingSession(validation.normalized, { registeredByAdmin: true })
         navigate('/auth/admin-registered/notice')
         return
       }
@@ -135,14 +137,16 @@ export function SignInPage() {
       })
 
       if (requiresAdminRegisteredOnboarding(tokens)) {
-        setAdminRegisteredPasswordChangeRequired(validation.normalized)
+        syncAdminRegisteredOnboardingSession(validation.normalized, tokens, 'first-login')
         completeLoginSession({
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
           expiresInSeconds: tokens.expiresInSeconds,
           markLoggedIn: false,
         })
-        navigate('/auth/admin-registered/notice')
+        const target =
+          resolveAdminProvisionedOnboardingEntryPath(tokens) ?? ADMIN_REGISTERED_NOTICE_PATH
+        navigate(target)
         return
       }
 

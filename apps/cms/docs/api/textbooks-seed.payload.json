@@ -1,0 +1,257 @@
+{
+  "meta": {
+    "domain": "textbooks",
+    "ssot": "apps/cms/src/features/textbook/api/textbook-mock-store.ts TEXTBOOK_LNB_SEED_ROWS",
+    "upsertKeys": [
+      "nameKo",
+      "businessArea",
+      "educationTarget",
+      "grade"
+    ],
+    "materialKitPolicy": "global kit only (textbookId null) — do not clone kit per textbook"
+  },
+  "rows": [
+    {
+      "seedKey": "TB-109",
+      "suggestedNumericId": 700109,
+      "nameKo": "우리나라",
+      "businessArea": "경제금융",
+      "educationTarget": "초등학교",
+      "grade": "4학년",
+      "useStatus": "USED",
+      "registrantName": "김민지",
+      "registeredAt": "2026-03-28T09:00:00"
+    },
+    {
+      "seedKey": "TB-110",
+      "suggestedNumericId": 700110,
+      "nameKo": "성공하는 경제생활",
+      "businessArea": "경제금융",
+      "educationTarget": "초등학교",
+      "grade": "5학년",
+      "useStatus": "USED",
+      "registrantName": "이길동",
+      "registeredAt": "2026-03-28T09:00:00"
+    },
+    {
+      "seedKey": "TB-130",
+      "suggestedNumericId": 700130,
+      "nameKo": "JA MY Business",
+      "businessArea": "기업가정신",
+      "educationTarget": "중학교",
+      "grade": "전학년",
+      "useStatus": "USED",
+      "registrantName": "홍길동",
+      "registeredAt": "2026-03-30T01:10:32"
+    },
+    {
+      "seedKey": "TB-129",
+      "suggestedNumericId": 700129,
+      "nameKo": "JA MY Business",
+      "businessArea": "기업가정신",
+      "educationTarget": "중학교",
+      "grade": "2학년",
+      "useStatus": "USED",
+      "registrantName": "이순신",
+      "registeredAt": "2026-03-30T01:10:32"
+    },
+    {
+      "seedKey": "TB-128",
+      "suggestedNumericId": 700128,
+      "nameKo": "JA MY Business",
+      "businessArea": "기업가정신",
+      "educationTarget": "고등학교",
+      "grade": "3학년",
+      "useStatus": "USED",
+      "registrantName": "강감찬",
+      "registeredAt": "2026-03-30T01:10:32"
+    },
+    {
+      "seedKey": "TB-127",
+      "suggestedNumericId": 700127,
+      "nameKo": "JA MY Business",
+      "businessArea": "기업가정신",
+      "educationTarget": "대학교",
+      "grade": "전학년",
+      "useStatus": "USED",
+      "registrantName": "김유신",
+      "registeredAt": "2026-03-30T01:10:32"
+    },
+    {
+      "seedKey": "TB-126",
+      "suggestedNumericId": 700126,
+      "nameKo": "JA MY Business",
+      "businessArea": "디지털 리터러시",
+      "educationTarget": "초등학교",
+      "grade": "1학년",
+      "useStatus": "USED",
+      "registrantName": "세종대왕",
+      "registeredAt": "2026-03-30T01:10:32"
+    },
+    {
+      "seedKey": "TB-125",
+      "suggestedNumericId": 700125,
+      "nameKo": "JA MY Business",
+      "businessArea": "디지털 리터러시",
+      "educationTarget": "중학교",
+      "grade": "2학년",
+      "useStatus": "USED",
+      "registrantName": "장영실",
+      "registeredAt": "2026-03-30T01:10:32"
+    },
+    {
+      "seedKey": "TB-124",
+      "suggestedNumericId": 700124,
+      "nameKo": "JA MY Business",
+      "businessArea": "디지털 리터러시",
+      "educationTarget": "고등학교",
+      "grade": "3학년",
+      "useStatus": "USED",
+      "registrantName": "신사임당",
+      "registeredAt": "2026-03-30T01:10:32"
+    },
+    {
+      "seedKey": "TB-123",
+      "suggestedNumericId": 700123,
+      "nameKo": "JA MY Business",
+      "businessArea": "기업가정신",
+      "educationTarget": "대학교",
+      "grade": "전학년",
+      "useStatus": "USED",
+      "registrantName": "이황",
+      "registeredAt": "2026-03-30T01:10:32"
+    },
+    {
+      "seedKey": "TB-122",
+      "suggestedNumericId": 700122,
+      "nameKo": "JA MY Business",
+      "businessArea": "기업가정신",
+      "educationTarget": "유아",
+      "grade": "전학년",
+      "useStatus": "USED",
+      "registrantName": "이이",
+      "registeredAt": "2026-03-30T01:10:32"
+    },
+    {
+      "seedKey": "TB-121",
+      "suggestedNumericId": 700121,
+      "nameKo": "JA MY Business",
+      "businessArea": "기업가정신",
+      "educationTarget": "중학교",
+      "grade": "2학년",
+      "useStatus": "UNUSED",
+      "registrantName": "박지원",
+      "registeredAt": "2026-03-30T01:10:32"
+    },
+    {
+      "seedKey": "TB-120",
+      "suggestedNumericId": 700120,
+      "nameKo": "JA Smart Finance",
+      "businessArea": "경제금융",
+      "educationTarget": "고등학교",
+      "grade": "3학년",
+      "useStatus": "USED",
+      "registrantName": "허균",
+      "registeredAt": "2026-03-29T10:15:12"
+    },
+    {
+      "seedKey": "TB-119",
+      "suggestedNumericId": 700119,
+      "nameKo": "JA Smart Finance",
+      "businessArea": "경제금융",
+      "educationTarget": "대학교",
+      "grade": "전학년",
+      "useStatus": "USED",
+      "registrantName": "유관순",
+      "registeredAt": "2026-03-28T14:30:45"
+    },
+    {
+      "seedKey": "TB-118",
+      "suggestedNumericId": 700118,
+      "nameKo": "JA Career Start",
+      "businessArea": "진로취업",
+      "educationTarget": "유아",
+      "grade": "전학년",
+      "useStatus": "UNUSED",
+      "registrantName": "윤봉길",
+      "registeredAt": "2026-03-27T09:05:01"
+    },
+    {
+      "seedKey": "TB-117",
+      "suggestedNumericId": 700117,
+      "nameKo": "JA Career Start",
+      "businessArea": "진로취업",
+      "educationTarget": "중학교",
+      "grade": "2학년",
+      "useStatus": "USED",
+      "registrantName": "정약용",
+      "registeredAt": "2026-03-26T16:48:29"
+    },
+    {
+      "seedKey": "TB-116",
+      "suggestedNumericId": 700116,
+      "nameKo": "JA Startup Thinking",
+      "businessArea": "기업가정신",
+      "educationTarget": "고등학교",
+      "grade": "전학년",
+      "useStatus": "USED",
+      "registrantName": "김구",
+      "registeredAt": "2026-03-25T11:22:33"
+    },
+    {
+      "seedKey": "TB-115",
+      "suggestedNumericId": 700115,
+      "nameKo": "JA Money Basics",
+      "businessArea": "경제금융",
+      "educationTarget": "중학교",
+      "grade": "1학년",
+      "useStatus": "UNUSED",
+      "registrantName": "안중근",
+      "registeredAt": "2026-03-24T13:03:17"
+    },
+    {
+      "seedKey": "TB-114",
+      "suggestedNumericId": 700114,
+      "nameKo": "JA Future Path",
+      "businessArea": "진로취업",
+      "educationTarget": "고등학교",
+      "grade": "2학년",
+      "useStatus": "USED",
+      "registrantName": "유관순",
+      "registeredAt": "2026-03-23T08:17:54"
+    },
+    {
+      "seedKey": "TB-113",
+      "suggestedNumericId": 700113,
+      "nameKo": "JA Venture Lab",
+      "businessArea": "기업가정신",
+      "educationTarget": "대학교",
+      "grade": "3학년",
+      "useStatus": "USED",
+      "registrantName": "신사임당",
+      "registeredAt": "2026-03-22T17:09:48"
+    },
+    {
+      "seedKey": "TB-112",
+      "suggestedNumericId": 700112,
+      "nameKo": "JA Finance for Kids",
+      "businessArea": "경제금융",
+      "educationTarget": "유아",
+      "grade": "전학년",
+      "useStatus": "UNUSED",
+      "registrantName": "세종대왕",
+      "registeredAt": "2026-03-21T12:44:20"
+    },
+    {
+      "seedKey": "TB-111",
+      "suggestedNumericId": 700111,
+      "nameKo": "JA Career Design",
+      "businessArea": "진로취업",
+      "educationTarget": "대학교",
+      "grade": "1학년",
+      "useStatus": "USED",
+      "registrantName": "장영실",
+      "registeredAt": "2026-03-20T15:26:09"
+    }
+  ]
+}

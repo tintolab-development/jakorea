@@ -1,0 +1,166 @@
+.hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: auto;
+  margin: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  /* 대각선 그라데이션 패턴이 과도하게 잘리지 않도록 영역 전체에 맞춤 */
+  background-size: 100% 100%;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: inherit;
+  box-sizing: border-box;
+  gap: var(--spacing-32);
+  padding: var(--spacing-40) var(--spacing-20);
+}
+
+.textArea {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+}
+
+.text {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+.eyebrow,
+.title,
+.description {
+  margin: 0;
+}
+
+.eyebrow {
+  padding-bottom: var(--spacing-12);
+  color: var(--color-neutral-black);
+}
+
+.description {
+  padding-top: var(--spacing-12);
+}
+
+.title,
+.description {
+  word-break: keep-all;
+}
+
+.media {
+  order: -1;
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.imageFrame {
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-24);
+  aspect-ratio: 16 / 10;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.pcOnly {
+  display: none;
+}
+
+@media (--bp-below-pc) {
+  .eyebrow {
+    font-size: 14px;
+    line-height: 160%;
+    letter-spacing: 0;
+  }
+
+  .title {
+    font-size: 24px;
+    line-height: 146%;
+  }
+
+  .description {
+    font-size: 16px;
+    letter-spacing: -0.16px;
+  }
+}
+
+@media (--bp-pc-up) {
+  .hero {
+    min-height: 100vh;
+  }
+
+  .content {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-48);
+    width: 100%;
+    max-width: var(--content-shell-max-width);
+    margin: 0 auto;
+    /* padding: 0 var(--spacing-40); */
+  }
+
+  .textArea {
+    flex: 0 1 42%;
+    max-width: 480px;
+    align-items: center;
+  }
+
+  .text {
+    max-width: 480px;
+  }
+
+  .eyebrow {
+    padding-bottom: var(--spacing-20);
+  }
+
+  .description {
+    padding-top: var(--spacing-28);
+  }
+
+  .media {
+    order: unset;
+    max-width: 800px;
+  }
+
+  .imageFrame {
+    border-radius: 40px;
+    aspect-ratio: 800 / 560;
+  }
+
+  .pcOnly {
+    display: block;
+  }
+}

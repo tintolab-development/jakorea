@@ -1,0 +1,211 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  border-top: 2px solid var(--color-border-strong);
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-48);
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  padding: var(--spacing-32) var(--spacing-32) var(--spacing-32) var(--spacing-48);
+  border-top: 1px solid var(--color-border-default);
+}
+
+.expandButton {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--spacing-48);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.expandButton:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: -2px;
+}
+
+.badgeContainer {
+  width: 73px;
+  flex-shrink: 0;
+}
+
+.badge {
+  flex-shrink: 0;
+  background: var(--color-element-default-gray);
+  color: var(--color-primary-700);
+}
+
+.textArea {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.rowPrimary {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--spacing-16);
+}
+
+.title {
+  min-width: 0;
+  max-width: 403px;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status {
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusAnswered {
+  color: var(--color-neutral-warm-400);
+}
+
+.rowMeta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.date {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metaDivider {
+  width: 1px;
+  height: 12px;
+  flex-shrink: 0;
+  margin: 0 var(--spacing-12);
+  background: var(--color-neutral-cool-200);
+}
+
+.programName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-40);
+}
+
+.chevronButton {
+  display: flex;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.chevronButton:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.chevron {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  transition: transform 160ms ease;
+}
+
+.chevronExpanded {
+  transform: rotate(180deg);
+}
+
+.actionDivider {
+  width: 1px;
+  height: 58px;
+  flex-shrink: 0;
+  margin: 0 var(--spacing-40);
+  background: var(--color-neutral-black-10);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.panelRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-40);
+  align-self: stretch;
+  padding: var(--spacing-40) 140px var(--spacing-40) var(--spacing-56);
+  background: var(--color-neutral-cool-50);
+}
+
+.label {
+  display: flex;
+  width: 74px;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-8);
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+}
+
+.body {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.empty {
+  margin: 0;
+  padding: var(--spacing-40) var(--spacing-32);
+  border-top: 1px solid var(--color-border-default);
+  text-align: center;
+}
+
+@media (--bp-below-pc) {
+  .panelRow {
+    padding: var(--spacing-40) var(--spacing-32) var(--spacing-40) var(--spacing-56);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}

@@ -44,8 +44,8 @@ LNB 「정산 관리」 3화면(지급조서·계좌 지급·정산 항목 설�
 
 | Method | Path | UI |
 |--------|------|-----|
-| GET | `/api/settlements` | 프로그램별·강사별 목록 (클라이언트 집계) |
-| GET | `/api/settlements/statements` | statementId 매핑 |
+| GET | `/api/settlements` | 프로그램별·강사별 목록 (클라이언트 집계) · **지급 현황 상세 라인** (`programId` / `instructorMemberId` + `fromDate`/`toDate`) |
+| GET | `/api/settlements/statements` | statementId 매핑 (상세: settlementId 집합으로 클라이언트 필터) |
 | GET | `/api/settlements/{settlementId}` | 상세 라인·산출 내역서 |
 | PATCH | `/api/settlements/statements/{statementId}/confirm` | 지급조서 확인·일괄 확인·산출 모달 확인(순차) |
 | GET | `/api/settlements/{settlementId}/payment-statement/download` | 지급조서 다운로드 |
@@ -53,7 +53,7 @@ LNB 「정산 관리」 3화면(지급조서·계좌 지급·정산 항목 설�
 | GET | `/api/settlements/calendar/summary` | 월별 요약 (hook 준비) |
 | GET | `/api/settlements/calendar/dates/{date}` | 일자 상세 (hook 준비) |
 
-**remote 잔여 갭:** 산출 내역서 「신청 반려」— statement reject API 없음 → 버튼 비활성
+**remote 잔여 갭:** 산출 내역서 「신청 반려」— statement reject API 없음 → 버튼 비활성 · **상세 백엔드 핸드오프:** [settlement-payment-order-detail-backend-handoff.md](./settlement-payment-order-detail-backend-handoff.md)
 
 ---
 
@@ -86,4 +86,4 @@ remote 시 카드 삭제·복제·상세 저장 UI 비활성.
 
 ## API 갭 상세
 
-백엔드 협의용: [settlement-api-backend-gaps.md](./settlement-api-backend-gaps.md)
+백엔드 협의용: [settlement-api-backend-gaps.md](./settlement-api-backend-gaps.md) · [지급 현황 상세](./settlement-payment-order-detail-backend-handoff.md)

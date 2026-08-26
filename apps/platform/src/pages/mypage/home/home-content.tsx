@@ -1,9 +1,4 @@
-import {
-  isInstructorMypageProfile,
-  type MypageMemberView,
-  type MypageProgramStats,
-  type MypageScheduleEvent,
-} from '@/features/mypage'
+import type { MypageMemberView, MypageProgramStats, MypageScheduleEvent } from '@/features/mypage'
 import { MypageHomeHeader } from './home-header'
 import { ProgramStatCards } from './program-stat-cards'
 import { ScheduleSection } from './schedule-section'
@@ -26,7 +21,7 @@ export function MypageHomeContent({
     <div className={styles.page}>
       <MypageHomeHeader
         displayName={member.displayName}
-        isInstructor={isInstructorMypageProfile(member.profile)}
+        profile={member.profile}
         affiliationLabel={member.affiliationLabel}
         employmentStatusLabel={member.employmentStatusLabel}
       />

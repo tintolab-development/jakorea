@@ -12,6 +12,7 @@ import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widg
 import { GeneralProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/detail-fullpage-modal'
 import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/registration-fullpage-modal'
 import { useDeleteGeneralPrograms } from '@/features/program/general/hooks/use-delete-general-program'
+import { usePrefetchGeneralProgramDetail } from '@/features/program/general/hooks/use-general-program-detail'
 import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
 import {
   isGeneralProgramId,
@@ -76,6 +77,7 @@ export function GeneralProgramListPageContent() {
   } = useGeneralProgramListFilters()
 
   const deleteGeneralProgramsMutation = useDeleteGeneralPrograms()
+  const prefetchGeneralProgramDetail = usePrefetchGeneralProgramDetail()
 
   const { handleBulkDelete } = useProgramListActions()
 
@@ -318,6 +320,7 @@ export function GeneralProgramListPageContent() {
     }
 
     setSelectedProgramForDetail(program)
+    prefetchGeneralProgramDetail(program.id)
     setSearchParams(
       prev => {
         const nextParams = new URLSearchParams(prev)
@@ -397,6 +400,7 @@ export function GeneralProgramListPageContent() {
         loading={listLoading}
         headerTitle={headerTitle}
         onView={handleView}
+        onPrefetch={program => prefetchGeneralProgramDetail(program.id)}
         searchParams={searchParams}
         setSearchParams={setSearchParams}
         disableUrlSync={generalDetailModalOpen}

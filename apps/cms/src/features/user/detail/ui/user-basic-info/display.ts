@@ -1,3 +1,4 @@
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { createElement, type ReactNode } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { User } from '@/types/user'
@@ -394,7 +395,7 @@ export function socialView(user: Omit<User, 'password'>): ReactNode {
 export function detailPhoneDisplay(user: Omit<User, 'password'>, revealed: boolean): string {
   const t = user.phone?.trim()
   if (!t) return '-'
-  if (revealed) return user.phone ?? '-'
+  if (revealed) return formatKoreanPhoneNumber(t) || '-'
   return MASKING_POLICY.phone(t)
 }
 

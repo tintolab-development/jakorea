@@ -110,6 +110,8 @@ export { ExcelButton } from './excel-button'
 export type { ExcelButtonProps } from './excel-button'
 export { CmsInput } from './cms-input'
 export type { CmsInputProps, CmsInputSize } from './cms-input'
+export { CmsPhoneInput } from './cms-phone-input'
+export { CmsBusinessNumberInput } from './cms-business-number-input'
 export { CmsNumericInput } from './numeric-input'
 export type { CmsNumericInputProps } from './numeric-input'
 export type { NumericInputMode } from '../lib/numeric-input'
@@ -145,7 +147,7 @@ export type {
   UniversitySearchSelectMeta,
 } from './university-search'
 export { CmsCompactPagination } from './cms-compact-pagination'
-export type { CmsCompactPaginationProps } from './cms-compact-pagination'
+export type { CmsCompactPaginationProps, CmsCompactPaginationVariant } from './cms-compact-pagination'
 export type { CmsControlSize } from './cms-control-size'
 export { CmsSelect, CMS_MULTI_SELECT_TAG_COLORS } from './cms-select'
 export type { CmsSelectProps } from './cms-select'
@@ -234,6 +236,8 @@ export type {
   AlimtalkPhonePreviewProps,
   AlimtalkPhonePreviewButton,
   AlimtalkPhoneMessageType,
+  AlimtalkPhoneEmphasisType,
+  AlimtalkPhoneItemListEntry,
 } from './alimtalk-phone-preview'
 export { AlimtalkNestedTable } from './alimtalk-nested-table'
 export type {

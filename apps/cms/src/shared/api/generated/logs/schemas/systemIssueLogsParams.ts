@@ -8,7 +8,31 @@
 
 export type SystemIssueLogsParams = {
 /**
- * 쿼리 파라미터입니다. 요청값 출처: query/path/요청 본문 from 화면 필터
+ * 사용자명 부분 검색
  */
-params: {[key: string]: string};
+userName?: string;
+/**
+ * 현재 지원 상태: OPEN 또는 RESOLVED. CMS 필터 UI에는 없음
+ */
+status?: string;
+/**
+ * 심각도. CMS 필터 UI에는 없음
+ */
+severity?: string;
+/**
+ * 조회 시작일 YYYY-MM-DD (Asia/Seoul 00:00:00)
+ */
+from?: string;
+/**
+ * 조회 종료일 YYYY-MM-DD (Asia/Seoul 해당일 끝)
+ */
+to?: string;
+/**
+ * 0-base 페이지, 기본 0
+ */
+page?: number;
+/**
+ * 페이지 크기, 기본 20, 최대 100
+ */
+size?: number;
 };

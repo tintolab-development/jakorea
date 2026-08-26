@@ -2,10 +2,13 @@
  * CMS 전용 텍스트 인풋 — Ant Input borderless + `.cms-input__control` 크롬
  * - size: xlarge | large | medium | small
  * - 라벨 / 에러 메세지 / value 있을 때 clear
+ *
+ * clear는 Ant `allowClear`(affix suffix)를 쓰지 않고 `.cms-input__control` flex 형제로 둔다.
+ * affix + `width:100%` input 조합에서 클리어가 테두리에 잘리는 문제를 막기 위함.
  */
 
-import { forwardRef, useId, useMemo } from 'react'
-import type { CSSProperties, ReactNode } from 'react'
+import { forwardRef, useId, useState } from 'react'
+import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
 import { Form, Input } from 'antd'
 import type { InputProps, InputRef } from 'antd'
 import type { CmsControlSize } from './cms-control-size'
@@ -73,6 +76,11 @@ function CmsInputClearIcon() {
   )
 }
 
+function hasInputText(value: InputProps['value'] | InputProps['defaultValue']): boolean {
+  if (value == null) return false
+  return String(value).length > 0
+}
+
 export const CmsInput = forwardRef<InputRef, CmsInputProps>(
   (
     {
@@ -92,6 +100,7 @@ export const CmsInput = forwardRef<InputRef, CmsInputProps>(
       value,
       defaultValue,
       status,
+      onChange,
       ...rest
     },
     ref
@@ -99,6 +108,11 @@ export const CmsInput = forwardRef<InputRef, CmsInputProps>(
     const generatedId = useId()
     const inputId = id ?? generatedId
     const { status: formStatus, errors: formErrors } = Form.Item.useStatus()
+
+    const isControlled = value !== undefined
+    const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue ?? '')
+    const currentValue = isControlled ? value : uncontrolledValue
+    const showClear = Boolean(allowClear && !disabled && hasInputText(currentValue))
 
     const isError = error || status === 'error' || formStatus === 'error'
     const resolvedMessage =
@@ -114,19 +128,12 @@ export const CmsInput = forwardRef<InputRef, CmsInputProps>(
         ? { width: typeof width === 'number' ? `${width}px` : width }
         : undefined
 
-    const clearConfig = useMemo(
-      () =>
-        allowClear && !disabled
-          ? { clearIcon: <CmsInputClearIcon /> }
-          : false,
-      [allowClear, disabled]
-    )
-
     const rootCn = [
       'cms-input',
       `cms-input--${inputSize}`,
       hasIcon && 'cms-input--has-icon',
       hasExplicitWidth && 'cms-input--explicit-width',
+      showClear && 'cms-input--clearable',
       isError && 'cms-input--error',
       hasLabel && 'cms-input--has-label',
       hasMessage && 'cms-input--has-message',
@@ -142,6 +149,23 @@ export const CmsInput = forwardRef<InputRef, CmsInputProps>(
     ]
       .filter(Boolean)
       .join(' ')
+
+    const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+      if (!isControlled) {
+        setUncontrolledValue(event.target.value)
+      }
+      onChange?.(event)
+    }
+
+    const handleClear = () => {
+      if (!isControlled) {
+        setUncontrolledValue('')
+      }
+      onChange?.({
+        target: { value: '' },
+        currentTarget: { value: '' },
+      } as ChangeEvent<HTMLInputElement>)
+    }
 
     return (
       <span className={rootCn} style={{ ...widthStyle, ...style }}>
@@ -165,14 +189,29 @@ export const CmsInput = forwardRef<InputRef, CmsInputProps>(
               disabled={disabled}
               rootClassName={rootClassName}
               variant="borderless"
-              allowClear={clearConfig}
-              value={value}
-              defaultValue={defaultValue}
+              allowClear={false}
+              value={isControlled ? value : uncontrolledValue}
+              onChange={handleChange}
               aria-invalid={isError || undefined}
               aria-describedby={hasMessage ? `${inputId}-message` : undefined}
               {...rest}
             />
           </span>
+          {showClear ? (
+            <button
+              type="button"
+              className="cms-input__clear"
+              aria-label="입력 내용 지우기"
+              tabIndex={-1}
+              onMouseDown={event => {
+                // 인풋 blur 전에 clear 되도록
+                event.preventDefault()
+              }}
+              onClick={handleClear}
+            >
+              <CmsInputClearIcon />
+            </button>
+          ) : null}
         </span>
 
         {hasMessage ? (

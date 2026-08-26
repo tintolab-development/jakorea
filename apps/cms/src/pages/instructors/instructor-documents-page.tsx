@@ -118,7 +118,7 @@ export function InstructorDocumentsPage() {
       title: '업로드 일시',
       dataIndex: 'uploadedAt',
       key: 'uploadedAt',
-      render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm') },
+      render: (date: string) => dayjs(date).format('YYYY.MM.DD HH:mm') },
     {
       title: '상태',
       dataIndex: 'status',

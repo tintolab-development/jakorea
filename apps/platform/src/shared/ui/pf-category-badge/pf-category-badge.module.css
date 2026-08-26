@@ -3,18 +3,19 @@
 }
 
 .large {
-  height: 32px;
-  padding: 0 var(--spacing-12);
+  height: 36px;
+  padding: var(--spacing-6) var(--spacing-12);
   justify-content: center;
   align-items: center;
   gap: 10px;
 }
 
 .small {
-  padding: var(--spacing-4) var(--spacing-12);
+  padding: var(--spacing-10) var(--spacing-12);
   justify-content: center;
   align-items: center;
   gap: 10px;
+  height: 32px;
 }
 
 .largeWithIcon {
@@ -71,4 +72,31 @@
 .label {
   min-width: 0;
   line-height: 1;
+}
+
+/* Mobile · ~1079 — Caption/semibold compact pill */
+@media (--bp-below-pc) {
+  .large,
+  .small {
+    height: 24px;
+    min-width: 40px;
+    padding: 0 var(--spacing-8);
+    gap: var(--spacing-6);
+    font-family: var(--font-family-base);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .largeWithIcon,
+  .smallWithIcon {
+    height: 24px;
+    min-width: 40px;
+    padding: 0 var(--spacing-8);
+    gap: var(--spacing-6);
+    font-family: var(--font-family-base);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+  }
 }

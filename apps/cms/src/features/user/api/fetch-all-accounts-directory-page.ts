@@ -51,8 +51,6 @@ export async function fetchAllAccountsDirectoryPage(
   const roleFilter = params.allTabRoleFilter ?? 'ALL'
   const baseParams: FetchAllCmsMembersAndAdminsParams = {
     keyword: params.search?.trim() || undefined,
-    createdAtFrom: params.createdAtFrom || undefined,
-    createdAtTo: params.createdAtTo || undefined,
     accountType: params.accountType,
   }
 

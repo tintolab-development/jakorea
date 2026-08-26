@@ -6,7 +6,9 @@ import { Form, Input, Select } from 'antd'
 import { SendOutlined } from '@ant-design/icons'
 import { useState } from 'react'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 
 const { TextArea } = Input
 const { Option } = Select
@@ -104,8 +106,20 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
           <Input type="email" placeholder="답변 받을 이메일 주소 (선택사항)" />
         </Form.Item>
 
-        <Form.Item label="연락처 전화번호 (선택)" name="contactPhone" style={{ marginBottom: 0 }}>
-          <Input placeholder="답변 받을 전화번호 (선택사항)" />
+        <Form.Item
+          label="연락처 전화번호 (선택)"
+          name="contactPhone"
+          style={{ marginBottom: 0 }}
+          rules={[
+            {
+              validator: (_, value?: string) =>
+                !value?.trim() || isValidKoreanPhoneNumber(value)
+                  ? Promise.resolve()
+                  : Promise.reject(new Error('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')),
+            },
+          ]}
+        >
+          <CmsPhoneInput placeholder="답변 받을 전화번호 (선택사항)" />
         </Form.Item>
       </Form>
     </ContentModal>

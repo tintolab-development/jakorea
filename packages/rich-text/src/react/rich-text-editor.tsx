@@ -37,8 +37,24 @@ export function RichTextEditor({
       {toolbar ? (
         <div className="rich-text-editor__toolbar">{toolbar}</div>
       ) : null}
-      <div className="rich-text-editor__body">
-        <EditorContent editor={editor} aria-label={ariaLabel} />
+      <div
+        className="rich-text-editor__body"
+        onMouseDown={event => {
+          if (event.target !== event.currentTarget) return
+          event.preventDefault()
+          const pos = editor.view.posAtCoords({ left: event.clientX, top: event.clientY })
+          editor
+            .chain()
+            .focus()
+            .setTextSelection(pos?.pos ?? editor.state.doc.content.size)
+            .run()
+        }}
+      >
+        <EditorContent
+          editor={editor}
+          className="rich-text-editor__content"
+          aria-label={ariaLabel}
+        />
       </div>
     </div>
   )

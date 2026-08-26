@@ -13,9 +13,10 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import { AddressSearch, CmsButton, CmsInput, CmsRadioGroup } from '@/shared/ui'
+import { AddressSearch, CmsBusinessNumberInput, CmsButton, CmsDatePicker, CmsInput, CmsRadioGroup } from '@/shared/ui'
 import type { SponsorOrganizationKind } from '@/types/domain'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { formatKoreanBusinessNumber } from '@jakorea/domain/shared/korean-business-number'
 import './sponsor-detail-basic-info.css'
 
 const ORG_LABEL: Record<SponsorOrganizationKind, string> = {
@@ -42,6 +43,8 @@ interface SponsorBasicInfoSectionProps {
   value: BasicInfoEditState
   isEditing: boolean
   onChange: (updater: (prev: BasicInfoEditState) => BasicInfoEditState) => void
+  /** 조회 모드에서도 후원 상태 드롭다운으로 즉시 변경(API). 수정 모드에서는 로컬만. */
+  onSponsorshipStatusChange?: (next: SponsorshipStatus) => void
   /** true면 조회 모드에서도 후원 상태를 배지·드롭다운으로 변경 가능 */
   canWrite?: boolean
 }
@@ -50,6 +53,7 @@ export function SponsorBasicInfoSection({
   value,
   isEditing,
   onChange,
+  onSponsorshipStatusChange,
   canWrite = false,
 }: SponsorBasicInfoSectionProps) {
   const [isSponsorshipStatusDropdownOpen, setIsSponsorshipStatusDropdownOpen] = useState(false)
@@ -66,12 +70,16 @@ export function SponsorBasicInfoSection({
           statusOptions={SPONSORSHIP_STATUS_OPTIONS}
           renderBadge={status => <SponsorSponsorshipStatusBadge status={status} />}
           isItemDisabled={(currentStatus, optionStatus) => currentStatus === optionStatus}
-          onChange={next =>
+          onChange={next => {
+            if (onSponsorshipStatusChange) {
+              onSponsorshipStatusChange(next)
+              return
+            }
             onChange(prev => ({
               ...prev,
               sponsorshipStatus: next,
             }))
-          }
+          }}
           isOpen={isSponsorshipStatusDropdownOpen}
           onOpenChange={setIsSponsorshipStatusDropdownOpen}
           tagLayout="tag100"
@@ -139,17 +147,21 @@ export function SponsorBasicInfoSection({
               ),
               sideLabel: '사업자번호',
               side: isEditing ? (
-                <CmsInput
+                <CmsBusinessNumberInput
                   value={value.businessNumber}
                   onChange={event =>
                     onChange(prev => ({ ...prev, businessNumber: event.target.value }))
                   }
-                  placeholder="사업자 번호"
+                  placeholder="000-00-00000"
                   inputSize="medium"
                   width="100%"
                 />
               ) : (
-                <span>{value.businessNumber}</span>
+                <span>
+                  {value.businessNumber
+                    ? formatKoreanBusinessNumber(value.businessNumber)
+                    : '-'}
+                </span>
               ),
             },
           ]}
@@ -201,7 +213,21 @@ export function SponsorBasicInfoSection({
         <DetailInfoForm.Field
           label="후원 시작일"
           view={<span>{sponsorshipStartDisplay}</span>}
-          edit={<span>{sponsorshipStartDisplay}</span>}
+          edit={
+            <CmsDatePicker
+              value={value.sponsorshipStartDate ? dayjs(value.sponsorshipStartDate) : null}
+              onChange={date =>
+                onChange(prev => ({
+                  ...prev,
+                  sponsorshipStartDate: date ? date.startOf('day').toISOString() : undefined,
+                }))
+              }
+              placeholder="후원 시작일"
+              format="YYYY.MM.DD"
+              allowClear
+              style={{ width: '100%' }}
+            />
+          }
         />
         <DetailInfoForm.Field
           label="후원 상태"

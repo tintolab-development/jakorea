@@ -8,10 +8,8 @@ export function useMaterialKitQuantitiesMutation() {
 
   return useMutation({
     mutationFn: (values: TextbookKitQuantityValues) => saveMaterialKitQuantities(values),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: dataManagementQueryKeys.textbooks.kitQuantities(),
-      })
+    onSuccess: (_data, values) => {
+      queryClient.setQueryData(dataManagementQueryKeys.textbooks.kitQuantities(), values)
     },
   })
 }

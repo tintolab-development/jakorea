@@ -13,11 +13,18 @@ import {
 } from '@/shared/ui'
 import {
   ALIMTALK_CATEGORY_MOCK,
-  ALIMTALK_TEMPLATE_ITEM_MOCK,
+  ALIMTALK_SEND_TEMPLATE_PICKER_MOCK,
 } from '@/features/notifications/model/alimtalk-template/mock'
-import { ALIMTALK_MESSAGE_TYPE_LABEL } from '@/features/notifications/model/alimtalk-template/types'
-import { categoryNameById } from '@/features/notifications/lib/tree'
+import {
+  ALIMTALK_CHANNEL_ADD_GUIDE,
+  ALIMTALK_EMPHASIS_TYPE_LABEL,
+  ALIMTALK_MESSAGE_TYPE_LABEL,
+  type AlimtalkTemplateItem,
+} from '@/features/notifications/model/alimtalk-template/types'
+import { categoryPathNames } from '@/features/notifications/lib/tree'
+import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ContentPanel } from './content-panel'
+import { TemplateSelectField } from './template-select-field'
 import './fullpage-modal.css'
 
 const EMPTY_HINT = '발신 프로필/템플릿을 먼저 선택하세요.'
@@ -27,10 +34,6 @@ const UNSELECTED_CONTENT =
 
 const PROGRAM_OPTIONS = [{ label: '2026 JA Company Of The Year', value: 'prog-coy-2026' }]
 const SENDER_OPTIONS = [{ label: 'JA Korea', value: 'JA Korea' }]
-
-const EMPHASIS_TYPE_LABEL = {
-  NONE: '선택 안 함',
-} as const
 
 type SendFullpageModalProps = {
   open: boolean
@@ -46,18 +49,14 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   const [scheduledAt, setScheduledAt] = useState<Dayjs | null>(null)
 
   const selectedTemplate = useMemo(
-    () => ALIMTALK_TEMPLATE_ITEM_MOCK.find(item => item.id === templateId),
+    () => ALIMTALK_SEND_TEMPLATE_PICKER_MOCK.find(item => item.id === templateId),
     [templateId]
   )
 
-  const templateOptions = useMemo(
-    () =>
-      ALIMTALK_TEMPLATE_ITEM_MOCK.map(item => ({
-        label: `${item.name} (${EMPHASIS_TYPE_LABEL[item.emphasisType]})`,
-        value: item.id,
-      })),
-    []
-  )
+  const handleSelectTemplate = (template: AlimtalkTemplateItem) => {
+    setTemplateId(template.id)
+    setSenderProfile(template.senderProfile === 'JA KOREA' ? 'JA Korea' : template.senderProfile)
+  }
 
   const requireTemplate = () => {
     if (selectedTemplate) return true
@@ -185,23 +184,10 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                     required
                     view=""
                     edit={
-                      <CmsSelect
-                        inputSize="large"
-                        withAllOption={false}
-                        placeholder="사용할 템플릿을 선택하세요"
+                      <TemplateSelectField
                         value={templateId}
-                        onChange={value => {
-                          const nextId = typeof value === 'string' ? value : undefined
-                          setTemplateId(nextId)
-                          const next = ALIMTALK_TEMPLATE_ITEM_MOCK.find(item => item.id === nextId)
-                          if (next) {
-                            setSenderProfile(
-                              next.senderProfile === 'JA KOREA' ? 'JA Korea' : next.senderProfile
-                            )
-                          }
-                        }}
-                        options={templateOptions}
-                        style={{ width: '100%' }}
+                        templates={ALIMTALK_SEND_TEMPLATE_PICKER_MOCK}
+                        onSelect={handleSelectTemplate}
                       />
                     }
                   />
@@ -286,7 +272,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                     label="템플릿 강조 유형"
                     view={
                       selectedTemplate
-                        ? EMPHASIS_TYPE_LABEL[selectedTemplate.emphasisType]
+                        ? ALIMTALK_EMPHASIS_TYPE_LABEL[selectedTemplate.emphasisType]
                         : EMPTY_INFO
                     }
                   />
@@ -298,7 +284,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                       selectedTemplate
                         ? selectedTemplate.isSecurityTemplate
                           ? '예'
-                          : '아니오'
+                          : '설정 안 함'
                         : EMPTY_INFO
                     }
                   />
@@ -306,7 +292,12 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                     label="카테고리"
                     view={
                       selectedTemplate
-                        ? categoryNameById(ALIMTALK_CATEGORY_MOCK, selectedTemplate.categoryId)
+                        ? withProgramDetailTdDivider(
+                            categoryPathNames(
+                              ALIMTALK_CATEGORY_MOCK,
+                              selectedTemplate.categoryId
+                            )
+                          )
                         : EMPTY_INFO
                     }
                   />
@@ -329,7 +320,18 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                 senderName={selectedTemplate?.senderProfile ?? 'JA KOREA'}
                 content={selectedTemplate?.content ?? UNSELECTED_CONTENT}
                 extraContent={selectedTemplate?.extraInfo}
+                channelGuide={ALIMTALK_CHANNEL_ADD_GUIDE}
                 messageType={selectedTemplate?.messageType}
+                emphasisType={selectedTemplate?.emphasisType}
+                emphasisTitle={selectedTemplate?.emphasisTitle}
+                emphasisSubtitle={selectedTemplate?.emphasisSubtitle}
+                imageUrl={selectedTemplate?.imageUrl}
+                templateHeader={selectedTemplate?.templateHeader}
+                itemTitle={selectedTemplate?.itemTitle}
+                itemDescription={selectedTemplate?.itemDescription}
+                itemImageUrl={selectedTemplate?.itemImageUrl}
+                itemList={selectedTemplate?.itemList}
+                itemSummary={selectedTemplate?.itemSummary}
                 buttons={phoneButtons}
                 quickLinks={selectedTemplate?.quickLinks.map(link => link.name)}
               />

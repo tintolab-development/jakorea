@@ -233,14 +233,14 @@ export function MySettlementListPage() {
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 150,
-      render: (date: string | Date) => dayjs(date).format('YYYY-MM-DD'),
+      render: (date: string | Date) => dayjs(date).format('YYYY.MM.DD'),
     },
     {
       title: '업데이트일',
       dataIndex: 'updatedAt',
       key: 'updatedAt',
       width: 150,
-      render: (date: string | Date) => dayjs(date).format('YYYY-MM-DD'),
+      render: (date: string | Date) => dayjs(date).format('YYYY.MM.DD'),
     },
   ]
 
@@ -462,14 +462,14 @@ export function MySettlementListPage() {
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="생성일"
-                view={dayjs(selectedSettlement.createdAt).format('YYYY-MM-DD HH:mm')}
+                view={dayjs(selectedSettlement.createdAt).format('YYYY.MM.DD HH:mm')}
                 fullRow
               />
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="수정일"
-                view={dayjs(selectedSettlement.updatedAt).format('YYYY-MM-DD HH:mm')}
+                view={dayjs(selectedSettlement.updatedAt).format('YYYY.MM.DD HH:mm')}
                 fullRow
               />
             </DetailInfoForm.Row>

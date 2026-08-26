@@ -385,11 +385,11 @@ export const BACKEND_DUMMY_CATEGORIES: readonly BackendDummyCategory[] = [
     crudPct: 90,
     dummyPct: 10,
     gateKeys: ['sponsors'],
-    listCrudStatus: 'hybrid',
+    listCrudStatus: 'api-wired',
     applicationsStatus: 'n-a',
     progressNestedStatus: 'n-a',
     surveyManagersStatus: 'n-a',
-    summary: 'sponsors 목록·상세·연결 hybrid.',
+    summary: 'sponsors 목록 CRUD·필터·bulk-delete·연도별 후원금 api-wired. 이력 삭제는 API 없음.',
   }),
   cat({
     id: 'data-textbooks',
@@ -401,11 +401,11 @@ export const BACKEND_DUMMY_CATEGORIES: readonly BackendDummyCategory[] = [
     crudPct: 90,
     dummyPct: 10,
     gateKeys: ['textbooks'],
-    listCrudStatus: 'hybrid',
+    listCrudStatus: 'api-wired',
     applicationsStatus: 'n-a',
     progressNestedStatus: 'n-a',
     surveyManagersStatus: 'n-a',
-    summary: 'textbooks 카탈로그·CRUD hybrid.',
+    summary: 'textbooks CRUD·서버 필터·bulk-delete api-wired. 전역 키트 유지.',
   }),
   cat({
     id: 'data-detailed-programs',
@@ -417,11 +417,11 @@ export const BACKEND_DUMMY_CATEGORIES: readonly BackendDummyCategory[] = [
     crudPct: 90,
     dummyPct: 10,
     gateKeys: ['detailedPrograms'],
-    listCrudStatus: 'hybrid',
+    listCrudStatus: 'api-wired',
     applicationsStatus: 'n-a',
     progressNestedStatus: 'n-a',
     surveyManagersStatus: 'n-a',
-    summary: 'detailedPrograms 목록·CRUD hybrid.',
+    summary: 'detailedPrograms CRUD·keyword 필터·bulk-delete api-wired.',
   }),
 
   // ── notifications (estimated) ──
@@ -498,6 +498,22 @@ export const BACKEND_DUMMY_CATEGORIES: readonly BackendDummyCategory[] = [
 
   // ── logs ──
   cat({
+    id: 'logs-member-login',
+    domainId: 'logs',
+    label: '회원 로그인 이력',
+    shortLabel: '로그인',
+    lnbPath: '/logs/member-login-history',
+    detailPct: 95,
+    crudPct: 95,
+    dummyPct: 5,
+    gateKeys: ['logs'],
+    listCrudStatus: 'api-wired',
+    applicationsStatus: 'n-a',
+    progressNestedStatus: 'n-a',
+    surveyManagersStatus: 'n-a',
+    summary: 'logs 모듈 · mock fallback 없음.',
+  }),
+  cat({
     id: 'logs-file-download',
     domainId: 'logs',
     label: '파일 다운로드 이력',
@@ -543,7 +559,7 @@ export const BACKEND_DUMMY_CATEGORIES: readonly BackendDummyCategory[] = [
     applicationsStatus: 'n-a',
     progressNestedStatus: 'n-a',
     surveyManagersStatus: 'n-a',
-    summary: 'logs 모듈 · mock fallback 없음.',
+    summary: 'logs 모듈 · 목록만(상세 페이지 없음) · mock fallback 없음.',
   }),
 ] as const
 

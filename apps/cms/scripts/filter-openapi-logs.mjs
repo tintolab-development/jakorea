@@ -36,6 +36,18 @@ if (bearer && bearer.type === 'http' && 'name' in bearer) {
   subset.components.securitySchemes.bearerAuth = rest
 }
 
+// Springdoc 일부 query param이 schema/content 없이 내려와 Orval 검증이 실패한다.
+for (const operations of Object.values(subset.paths ?? {})) {
+  for (const operation of Object.values(operations ?? {})) {
+    if (!operation || typeof operation !== 'object' || !Array.isArray(operation.parameters)) continue
+    for (const parameter of operation.parameters) {
+      if (!parameter || typeof parameter !== 'object') continue
+      if ('schema' in parameter || 'content' in parameter) continue
+      parameter.schema = { type: 'string' }
+    }
+  }
+}
+
 writeFileSync(outputPath, `${JSON.stringify(subset, null, 2)}\n`)
 const pathCount = Object.keys(filteredPaths).length
 if (pathCount === 0) {

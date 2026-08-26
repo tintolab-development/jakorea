@@ -9,14 +9,17 @@ import {
   buildSearchParams,
   makeBreadcrumbItem,
 } from '@/shared/lib/detail-fullpage-query-stack'
+import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
 import {
   DetailModalSidebar,
   type DetailModalSidebarNavItem,
 } from '@/shared/ui/detail-modal-sidebar'
 import {
-  TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS,
   type TextbookBusinessArea,
 } from '@/features/textbook/model/textbook-business-areas'
+import { useTextbookBusinessAreaSelectOptions } from '@/features/textbook/hooks/use-business-areas-query'
+import { useTextbookDetailQuery } from '@/features/textbook/hooks/use-textbook-detail-query'
+import { useDataManagementRemoteEnabled } from '@/features/data-management/hooks/use-data-management-remote-enabled'
 import type {
   TextbookCreateInput,
   TextbookEducationStage,
@@ -44,35 +47,58 @@ const TEXTBOOK_DETAIL_LNB_ITEMS: DetailModalSidebarNavItem[] = [
 
 export interface TextbookDetailFullPageModalProps {
   open: boolean
-  textbook: TextbookRow | null
+  textbookId: string | null
+  /** 목록 행 — 본문 선표시용이 아니라 셸 식별·mock 폴백용 */
+  listTextbook: TextbookRow | null
   mode: 'view' | 'edit'
   onClose: () => void
   onEdit: () => void
   onSave: (payload: TextbookCreateInput) => void
 }
 
-export function TextbookDetailFullPageModal({
+export function TextbookDetailFullPageModal(props: TextbookDetailFullPageModalProps) {
+  if (!props.open || !props.textbookId) return null
+  return <TextbookDetailFullPageModalInner key={props.textbookId} {...props} textbookId={props.textbookId} />
+}
+
+type TextbookDetailFullPageModalInnerProps = Omit<TextbookDetailFullPageModalProps, 'textbookId'> & {
+  textbookId: string
+}
+
+function TextbookDetailFullPageModalInner({
   open,
-  textbook,
+  textbookId,
+  listTextbook,
   mode,
   onClose,
   onEdit,
   onSave,
-}: TextbookDetailFullPageModalProps) {
+}: TextbookDetailFullPageModalInnerProps) {
   const location = useLocation()
   const [searchParams] = useSearchParams()
-  const [editForm, setEditForm] = useState<TextbookEditForm | null>(null)
+  const remoteEnabled = useDataManagementRemoteEnabled('textbooks', open)
+  const { options: businessAreaOptions } = useTextbookBusinessAreaSelectOptions()
+  const detailQuery = useTextbookDetailQuery(textbookId, open)
+  const textbook = detailQuery.data ?? (remoteEnabled ? null : listTextbook)
+  const isDetailLoading = remoteEnabled && isAwaitingFirstQueryData(detailQuery)
+  const isDetailError = remoteEnabled && detailQuery.isError
+  const [editForm, setEditForm] = useState<TextbookEditForm | null>(() =>
+    textbook ? toEditForm(textbook) : null
+  )
 
   useEffect(() => {
-    if (!open || !textbook) return
+    if (!textbook) {
+      setEditForm(null)
+      return
+    }
     setEditForm(toEditForm(textbook))
-  }, [open, textbook])
+  }, [textbook])
 
   const isEditMode = mode === 'edit'
-  if (!open || !textbook) return null
-  if (!editForm) return null
-
-  const title = `${textbook.businessArea}_${textbook.textbookName}`
+  const titleSource = textbook ?? listTextbook
+  const title = titleSource
+    ? `${titleSource.businessArea}_${titleSource.textbookName}`
+    : '교재 상세'
   const headerBreadcrumbItems = [
     makeBreadcrumbItem(
       '교재 관리',
@@ -83,6 +109,7 @@ export function TextbookDetailFullPageModal({
   ]
 
   const handleSave = () => {
+    if (!editForm) return
     const payload = toSubmitPayload(editForm)
     if (!payload) {
       return
@@ -90,11 +117,21 @@ export function TextbookDetailFullPageModal({
     onSave(payload)
   }
 
+  const showBody = Boolean(textbook && editForm) && !isDetailLoading && !isDetailError
+
   return (
     <DetailFullPageModal
       open={open}
       onClose={onClose}
       title={title}
+      loading={isDetailLoading}
+      error={
+        isDetailError
+          ? '상세를 불러오지 못했습니다.'
+          : !isDetailLoading && !textbook
+            ? '교재를 찾을 수 없습니다.'
+            : null
+      }
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className="textbook-detail-fullpage-modal"
       sidebar={
@@ -109,13 +146,16 @@ export function TextbookDetailFullPageModal({
         />
       }
       contentExtra={
-        <div className="textbook-detail-fullpage-modal__header-actions">
-          <CmsButton variant="primary" size="medium" onClick={isEditMode ? handleSave : onEdit}>
-            {isEditMode ? '저장' : '정보 수정'}
-          </CmsButton>
-        </div>
+        showBody ? (
+          <div className="textbook-detail-fullpage-modal__header-actions">
+            <CmsButton variant="primary" size="medium" onClick={isEditMode ? handleSave : onEdit}>
+              {isEditMode ? '저장' : '정보 수정'}
+            </CmsButton>
+          </div>
+        ) : null
       }
     >
+      {showBody && textbook && editForm ? (
       <div className="textbook-detail-fullpage-modal__root">
         <section
           className="textbook-detail-fullpage-modal__basic-info-section"
@@ -195,7 +235,7 @@ export function TextbookDetailFullPageModal({
                           : prev
                       )
                     }
-                    options={TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS}
+                    options={businessAreaOptions}
                     style={{ width: 220 }}
                   />
                 }
@@ -272,6 +312,7 @@ export function TextbookDetailFullPageModal({
           ))}
         </DetailInfoForm>
       </div>
+      ) : null}
     </DetailFullPageModal>
   )
 }

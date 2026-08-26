@@ -30,6 +30,15 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   affiliationGrade: string
   /** 개인 회원 — 현재 학교 재학 여부 (등록 폼과 동일) */
   schoolEnrollmentStatus?: 'enrolled' | 'not_enrolled' | ''
+  /** 재학 중 CMS 학교 PK */
+  schoolOrganizationId?: number | null
+  schoolProvider?: string
+  schoolExternalCode?: string
+  schoolLevel?: string
+  schoolAddress?: string
+  schoolZipcode?: string
+  schoolRegionSido?: string
+  schoolRegionSigungu?: string
   /** 1365 자원봉사 ID */
   id1365?: string
   gender: string
@@ -74,6 +83,8 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   instructorCmsSettlement?: InstructorCmsSettlement
   /** 약관·동의 수정 — PATCH `termsAgreements` */
   termsAgreements?: TermsAgreementRequest[]
+  /** 이번 수정 세션에서 재작성한 동의서 본문 */
+  consentWriteSnapshots?: import('@/features/user/shared/lib/member-register-consent-write-snapshot').MemberRegisterConsentWriteSnapshots
   /** 강사 상세 — 이번 수정 세션에서 약관·동의를 변경했을 때만 PATCH에 termsAgreements 포함 */
   consentTermsDirty?: boolean
   /** 관리자 — 권한 유형 태그 */
@@ -353,17 +364,64 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
 
 function draftToIndividualAffiliationPatch(
   draft: AdminProvisionedMemberBasicInfoDraft
-): Pick<PatchUserBasicInfoInput, 'schoolEnrollmentStatus' | 'individualSchoolName' | 'individualGrade'> {
+): Pick<
+  PatchUserBasicInfoInput,
+  | 'schoolEnrollmentStatus'
+  | 'individualSchoolName'
+  | 'individualGrade'
+  | 'individualSchoolOrganizationId'
+  | 'individualSchoolProvider'
+  | 'individualSchoolExternalCode'
+  | 'individualSchoolLevel'
+  | 'individualSchoolAddress'
+  | 'individualSchoolZipcode'
+  | 'individualSchoolRegionSido'
+  | 'individualSchoolRegionSigungu'
+> {
   const enrollment = draft.schoolEnrollmentStatus
   if (enrollment !== 'enrolled' && enrollment !== 'not_enrolled') {
     return {}
   }
   const enrolled = enrollment === 'enrolled'
   const grade = enrolled ? draft.affiliationGrade.trim() : ''
+  const schoolName = enrolled ? draft.affiliationInstitution.trim() : ''
+
+  if (!enrolled) {
+    return {
+      schoolEnrollmentStatus: 'NOT_ENROLLED',
+      individualSchoolName: '',
+      individualSchoolOrganizationId: null,
+    }
+  }
+
   return {
-    schoolEnrollmentStatus: enrolled ? 'ENROLLED' : 'NOT_ENROLLED',
-    individualSchoolName: draft.affiliationInstitution.trim(),
+    schoolEnrollmentStatus: 'ENROLLED',
+    individualSchoolName: schoolName,
     ...(grade ? { individualGrade: grade } : {}),
+    ...(draft.schoolOrganizationId != null && Number.isFinite(draft.schoolOrganizationId)
+      ? { individualSchoolOrganizationId: draft.schoolOrganizationId }
+      : {
+          individualSchoolOrganizationId: null,
+          ...(draft.schoolProvider?.trim()
+            ? { individualSchoolProvider: draft.schoolProvider.trim() }
+            : {}),
+          ...(draft.schoolExternalCode?.trim()
+            ? { individualSchoolExternalCode: draft.schoolExternalCode.trim() }
+            : {}),
+          ...(draft.schoolLevel?.trim() ? { individualSchoolLevel: draft.schoolLevel.trim() } : {}),
+          ...(draft.schoolAddress?.trim()
+            ? { individualSchoolAddress: draft.schoolAddress.trim() }
+            : {}),
+          ...(draft.schoolZipcode?.trim()
+            ? { individualSchoolZipcode: draft.schoolZipcode.trim() }
+            : {}),
+          ...(draft.schoolRegionSido?.trim()
+            ? { individualSchoolRegionSido: draft.schoolRegionSido.trim() }
+            : {}),
+          ...(draft.schoolRegionSigungu?.trim()
+            ? { individualSchoolRegionSigungu: draft.schoolRegionSigungu.trim() }
+            : {}),
+        }),
   }
 }
 
@@ -377,6 +435,9 @@ export function draftToAdminProvisionedIndividualBasicInfoPatch(
     ...base,
     ...draftToIndividualAffiliationPatch(draft),
     ...(termsAgreements ? { termsAgreements } : {}),
+    ...(draft.consentWriteSnapshots
+      ? { consentWriteSnapshots: draft.consentWriteSnapshots }
+      : {}),
   }
 }
 
@@ -457,7 +518,12 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
     ...(() => {
       if (!draft.consentTermsDirty) return {}
       const termsAgreements = filterEditableTermsAgreementsForBasicInfoPatch(draft.termsAgreements)
-      return termsAgreements ? { termsAgreements } : {}
+      return {
+        ...(termsAgreements ? { termsAgreements } : {}),
+        ...(draft.consentWriteSnapshots
+          ? { consentWriteSnapshots: draft.consentWriteSnapshots }
+          : {}),
+      }
     })(),
     listMetrics: {
       ...(feeGrade ? { instructorFeeGradeLabel: feeGrade } : {}),

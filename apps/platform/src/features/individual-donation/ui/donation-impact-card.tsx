@@ -29,11 +29,9 @@ export function DonationImpactCard({ item, className }: DonationImpactCardProps)
               height={256}
             />
           ) : null}
-          <div className={styles.badge}>
-            <PFCategoryBadge size="large" variant="primary">
-              {item.categoryLabel}
-            </PFCategoryBadge>
-          </div>
+          <PFCategoryBadge size="large" variant="primary" className={styles.badge}>
+            {item.categoryLabel}
+          </PFCategoryBadge>
         </div>
 
         <div className={styles.meta}>

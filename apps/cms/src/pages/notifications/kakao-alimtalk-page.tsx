@@ -6,7 +6,7 @@ import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AlimtalkTemplateList } from '@/features/notifications/ui/alimtalk-template/list'
 import { SendFullpageModal } from '@/features/notifications/ui/alimtalk-send/fullpage-modal'
-import { ComingSoonTabPanel } from '@/features/notifications/ui/coming-soon-tab-panel'
+import { Page as AlimtalkSendHistoryPage } from '@/features/notifications/ui/alimtalk-send-history/page'
 import type { KakaoAlimtalkTabKey } from '@/features/notifications/model/alimtalk-template/types'
 import { CmsButton } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -89,10 +89,7 @@ export function KakaoAlimtalkPage() {
       {activeKey === 'template' ? (
         <AlimtalkTemplateList />
       ) : (
-        <ComingSoonTabPanel
-          title="알림톡 발송 조회 준비 중"
-          description="알림톡 발송 및 수신 결과 조회 기능은 현재 준비 중입니다."
-        />
+        <AlimtalkSendHistoryPage />
       )}
       <SendFullpageModal open={sendOpen} onClose={handleCloseSend} />
     </div>

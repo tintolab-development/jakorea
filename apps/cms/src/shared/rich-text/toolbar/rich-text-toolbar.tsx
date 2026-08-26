@@ -16,6 +16,7 @@ import {
   promptLinkUrl,
   promptYoutubeUrl,
   RICH_TEXT_IMAGE_ACCEPT,
+  TextSelection,
 } from '@jakorea/rich-text'
 import {
   FONT_FAMILY_OPTIONS,
@@ -94,6 +95,14 @@ function getLineHeight(editor: Editor): string {
   return (editor.getAttributes('paragraph').lineHeight as string | undefined) ?? ''
 }
 
+function snapToolbarSelection(editor: Editor): void {
+  const { selection, doc } = editor.state
+  const selected = 'node' in selection ? (selection as { node?: { isAtom?: boolean } }).node : null
+  if (!selected?.isAtom) return
+  const near = TextSelection.near(doc.resolve(selection.to), 1)
+  editor.view.dispatch(editor.state.tr.setSelection(near))
+}
+
 function getActiveTextAlign(editor: Editor): TextAlignValue {
   if (editor.isActive({ textAlign: 'center' })) return 'center'
   if (editor.isActive({ textAlign: 'right' })) return 'right'
@@ -143,6 +152,7 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
   const run = useCallback(
     (action: (ed: Editor) => void) => {
       if (!editor) return
+      snapToolbarSelection(editor)
       action(editor)
     },
     [editor]

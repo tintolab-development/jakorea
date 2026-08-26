@@ -22,7 +22,7 @@ function toNoticeRequestStatus(status: Notice['status'] | undefined): NoticeRequ
 
 export function mapNoticeResponse(dto: NoticeResponse): Notice {
   return {
-    id: dto.id ?? '',
+    id: dto.id != null ? String(dto.id) : '',
     title: dto.title ?? '',
     content: dto.content ?? '',
     category: dto.category ?? '',
@@ -36,8 +36,23 @@ export function mapNoticeResponse(dto: NoticeResponse): Notice {
   }
 }
 
-export function mapNoticeListResponse(dto: PageResponseNoticeResponse): Notice[] {
-  return (dto.items ?? []).map(mapNoticeResponse)
+function noticeListItems(
+  dto: PageResponseNoticeResponse | NoticeResponse[] | { content?: NoticeResponse[] } | null | undefined
+): NoticeResponse[] {
+  if (Array.isArray(dto)) return dto
+  if (dto == null || typeof dto !== 'object') return []
+  const record = dto as { items?: NoticeResponse[]; content?: NoticeResponse[] }
+  if (Array.isArray(record.items)) return record.items
+  if (Array.isArray(record.content)) return record.content
+  return []
+}
+
+export function mapNoticeListResponse(
+  dto: PageResponseNoticeResponse | NoticeResponse[] | { content?: NoticeResponse[] } | null | undefined
+): Notice[] {
+  return noticeListItems(dto)
+    .map(mapNoticeResponse)
+    .filter(row => row.id.length > 0)
 }
 
 export function toNoticeRequestFromForm(params: BuildNoticeBodyParams): NoticeRequest {

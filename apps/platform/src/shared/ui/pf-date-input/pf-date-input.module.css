@@ -112,10 +112,6 @@
   cursor: not-allowed;
 }
 
-.formPage {
-  border-radius: var(--radius-8, 8px);
-}
-
 .formPageValue {
   overflow: hidden;
   text-overflow: ellipsis;

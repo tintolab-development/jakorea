@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   getAllMemberListRoleTypeLabel,
+  getMemberSignupTypeLabel,
   isInstructorPermissionRevoked,
   matchesAllTabRoleFilter,
 } from './member-list-display'
@@ -15,6 +16,19 @@ describe('isInstructorPermissionRevoked', () => {
   it('그 외는 false', () => {
     expect(isInstructorPermissionRevoked({ instructorApprovalStatus: 'APPROVED' })).toBe(false)
     expect(isInstructorPermissionRevoked({})).toBe(false)
+  })
+
+  it('roles에 INSTRUCTOR_REVOKED가 있으면 true', () => {
+    expect(
+      isInstructorPermissionRevoked({
+        roles: ['INSTRUCTOR_REVOKED'],
+      })
+    ).toBe(true)
+    expect(
+      isInstructorPermissionRevoked({
+        roles: ['SCHOOL_TEACHER', 'INSTRUCTOR_REVOKED'],
+      })
+    ).toBe(true)
   })
 
   it('세션 오버레이로 박탈 표시', () => {
@@ -45,6 +59,13 @@ describe('getAllMemberListRoleTypeLabel', () => {
         instructorApprovalStatus: 'REVOKED',
       })
     ).toBe('강사(권한박탈)')
+    expect(
+      getAllMemberListRoleTypeLabel({
+        role: 'INSTRUCTOR',
+        roles: ['INSTRUCTOR_REVOKED'],
+        instructorMemberProfile: 'instructor_only',
+      })
+    ).toBe('강사(권한박탈)')
   })
 
   it('교사 겸 강사 박탈은 학교(교사), 강사(권한박탈)', () => {
@@ -54,6 +75,13 @@ describe('getAllMemberListRoleTypeLabel', () => {
         roles: ['SCHOOL_TEACHER', 'INSTRUCTOR_REVOKED'],
         instructorMemberProfile: 'instructor_dual',
         instructorApprovalStatus: 'REVOKED',
+      })
+    ).toBe('학교(교사), 강사(권한박탈)')
+    expect(
+      getAllMemberListRoleTypeLabel({
+        role: 'INSTRUCTOR',
+        roles: ['SCHOOL_TEACHER', 'INSTRUCTOR_REVOKED'],
+        instructorMemberProfile: 'instructor_dual',
       })
     ).toBe('학교(교사), 강사(권한박탈)')
   })
@@ -158,5 +186,24 @@ describe('matchesAllTabRoleFilter', () => {
         'INSTRUCTOR_DUAL'
       )
     ).toBe(false)
+  })
+})
+
+describe('getMemberSignupTypeLabel', () => {
+  it('registeredByAdmin(createdByAdmin)이 true이면 관리자 등록', () => {
+    expect(getMemberSignupTypeLabel({ registeredByAdmin: true })).toBe('관리자 등록')
+  })
+
+  it('registeredByAdmin이 false·undefined이면 직접 가입', () => {
+    expect(getMemberSignupTypeLabel({ registeredByAdmin: false })).toBe('직접 가입')
+    expect(getMemberSignupTypeLabel({})).toBe('직접 가입')
+  })
+
+  it('본인인증 완료 여부와 무관하게 registeredByAdmin만 따른다', () => {
+    expect(
+      getMemberSignupTypeLabel({
+        registeredByAdmin: true,
+      })
+    ).toBe('관리자 등록')
   })
 })

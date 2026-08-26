@@ -1,4 +1,5 @@
 import { formatDateRange } from '../../hooks/use-format-date'
+import { formatNumberDisplay } from '@/shared/utils'
 import { getCapacity, getApplicationCountByProgram } from '../../lib/program-helpers'
 import { resolveGeneralProgramListTitle } from '../../lib/detail-common-info-display'
 import { SponsorNameById } from '@/features/sponsor/ui/sponsor-name-by-id'
@@ -44,7 +45,7 @@ export const studentRecruitmentTableColumns = [
     key: 'applicantCount',
     width: 100,
     align: 'center' as const,
-    render: (_: unknown, record: Program) => `${getApplicationCountByProgram(record.id)}`,
+    render: (_: unknown, record: Program) => formatNumberDisplay(getApplicationCountByProgram(record.id)),
   },
   {
     title: '수강자 모집 인원',
@@ -53,7 +54,7 @@ export const studentRecruitmentTableColumns = [
     align: 'center' as const,
     render: (_: unknown, record: Program) => {
       const cap = getCapacity(record)
-      return cap !== undefined ? `${cap}` : '-'
+      return cap !== undefined ? formatNumberDisplay(cap) : '-'
     },
   },
   {
@@ -157,7 +158,7 @@ export const instructorRecruitmentTableColumns = [
     key: 'applicantCount',
     width: 100,
     align: 'center' as const,
-    render: (_: unknown, record: Program) => `${getApplicationCountByProgram(record.id)}`,
+    render: (_: unknown, record: Program) => formatNumberDisplay(getApplicationCountByProgram(record.id)),
   },
   {
     title: '강사 모집 인원',
@@ -167,8 +168,8 @@ export const instructorRecruitmentTableColumns = [
     render: (_: unknown, record: Program) => {
       const cap = getCapacity(record)
       const current = record.instructors ?? 0
-      if (cap !== undefined && cap !== null) return `${current} / ${cap}`
-      return `${current}`
+      if (cap !== undefined && cap !== null) return `${formatNumberDisplay(current)} / ${formatNumberDisplay(cap)}`
+      return formatNumberDisplay(current)
     },
   },
   {
@@ -247,8 +248,8 @@ export const capacityTableColumnsOverview = {
   render: (_: unknown, record: Program) => {
     const cap = getCapacity(record)
     const approved = record.approvedStudentCount ?? 0
-    if (cap !== undefined) return `${approved} / ${cap}`
-    return `${approved}`
+    if (cap !== undefined) return `${formatNumberDisplay(approved)} / ${formatNumberDisplay(cap)}`
+    return formatNumberDisplay(approved)
   },
 }
 
@@ -261,8 +262,8 @@ export const capacityTableColumnsEducation = [
     render: (_: unknown, record: Program) => {
       const cap = getCapacity(record)
       const approved = record.approvedStudentCount ?? 0
-      if (cap !== undefined) return `${approved} / ${cap}`
-      return `${approved}`
+      if (cap !== undefined) return `${formatNumberDisplay(approved)} / ${formatNumberDisplay(cap)}`
+      return formatNumberDisplay(approved)
     },
   },
   {
@@ -273,8 +274,8 @@ export const capacityTableColumnsEducation = [
     render: (_: unknown, record: Program) => {
       const cap = getCapacity(record)
       const current = record.instructors ?? 0
-      if (cap !== undefined && cap !== null) return `${current} / ${cap}`
-      return `${current}`
+      if (cap !== undefined && cap !== null) return `${formatNumberDisplay(current)} / ${formatNumberDisplay(cap)}`
+      return formatNumberDisplay(current)
     },
   },
 ]

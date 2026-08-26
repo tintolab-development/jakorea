@@ -89,6 +89,22 @@
   min-width: 0;
 }
 
+.sidebarLeading {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 105px;
+}
+
+.contentHeading {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--spacing-24);
+}
+
+.shellSubpage .content {
+  padding-top: var(--spacing-100);
+}
+
 /* ── PC compact · 1080~1599 ──
  * 좌우 패딩 80 고정
  * LNB 280 · 여백 40 · 내용영역 600~1220
@@ -161,5 +177,9 @@
     max-width: none;
     padding-top: var(--spacing-16);
     padding-bottom: var(--spacing-48);
+  }
+
+  .shellSubpage .content {
+    padding-top: var(--spacing-100);
   }
 }

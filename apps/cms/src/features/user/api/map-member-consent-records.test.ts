@@ -117,6 +117,34 @@ describe('applyMemberConsentToSchema', () => {
     expect(marketing).toMatchObject({ type: 'remote_consent', agreed: true })
   })
 
+  it('consent-records의 filledDocumentAvailable·consentType을 terms SSOT 위에 보강한다', () => {
+    const rows = applyMemberConsentToSchema(individualSchema, {
+      termsAgreements: [
+        { termsType: 'PORTRAIT_RIGHTS', agreed: true, agreedAt: '2026-01-15T09:15:42Z' },
+      ],
+      consentRecords: [
+        {
+          consentType: 'PORTRAIT_RIGHTS',
+          consentValue: false,
+          formResponseId: 42,
+          filledDocumentAvailable: true,
+        },
+      ],
+    })
+
+    const portrait = rows
+      .flatMap(r => r.fields)
+      .find(f => f.label === '초상권 수집·이용 동의')?.value
+
+    expect(portrait).toMatchObject({
+      type: 'document',
+      agreed: true,
+      formResponseId: 42,
+      filledDocumentAvailable: true,
+      consentType: 'PORTRAIT_RIGHTS',
+    })
+  })
+
   it('consent-records의 formResponseId를 document 필드에 전달한다', () => {
     const rows = applyMemberConsentToSchema(individualSchema, {
       consentRecords: [

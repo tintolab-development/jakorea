@@ -28,7 +28,7 @@
   height: auto;
   flex-shrink: 0;
   overflow: hidden;
-  aspect-ratio: 461 / 256;
+  aspect-ratio: 335 / 214;
   border-radius: var(--radius-24);
 }
 
@@ -52,20 +52,13 @@
   width: 100%;
   min-width: 0;
   flex-direction: column;
-  /* Spacing/8 — 타이틀 블록 ↔ 날짜 */
   gap: var(--spacing-8);
-  /* Spacing/16 — 좌우 패딩 */
-  padding-inline: var(--spacing-16);
+  padding-inline: var(--spacing-8);
   box-sizing: border-box;
 }
 
 .title {
   display: -webkit-box;
-  /**
-   * Headline/Large 2줄 영역 확보
-   * 한 줄일 때: 여유(39) + Spacing/8 = 시안 갭 47px
-   */
-  min-height: calc(24px * 1.5 + 39px);
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -76,4 +69,29 @@
 
 .date {
   margin: 0;
+}
+
+@media (--bp-below-pc) {
+  .title {
+    font-size: 16px;
+    line-height: 160%;
+    letter-spacing: 0;
+  }
+  .date {
+    font-size: 14px;
+    line-height: normal;
+    letter-spacing: 0;
+  }
+  .badge {
+    height: 26px;
+    font-size: 13px;
+  }
+}
+@media (--bp-pc-up) {
+  .thumbnail {
+    aspect-ratio: 461 / 256;
+  }
+  .meta {
+    padding-inline: var(--spacing-16);
+  }
 }

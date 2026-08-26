@@ -3,27 +3,42 @@ import {
   PFFormFieldRow,
   PFFormFieldTable,
   PFFormSection,
-  PFSelect,
   PFText,
   PFTextInput,
 } from '@/shared/ui'
+import {
+  AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS,
+  createDefaultIdTypeWithInputOptions,
+} from '@jakorea/form-schema/writing-form'
+import { applyKoreanPhoneInputChange } from '@jakorea/domain/shared/korean-phone'
 import { ConsentWriteRadioGroup } from './consent-radio'
 import {
   NOTICE_CONFIRMATION,
   NOTICE_CONSENT_LINES,
-  NOTICE_ID_TYPE_OPTIONS,
   NOTICE_TABLE_FIRST_ROW,
   NOTICE_TABLE_FOOTER,
   NOTICE_TABLE_HEADERS,
 } from './copy'
 import type { NoticeConsentDraft } from './draft-persist'
 import { ConsentInfoTable } from './info-table'
+import { PlatformIdTypeWithInputFields } from './id-type-with-input-fields'
 import styles from './consent-form.module.css'
 
-const ID_TYPE_OPTIONS = NOTICE_ID_TYPE_OPTIONS.map(option => ({
-  value: option.value,
-  label: option.label,
-}))
+const NOTICE_ID_TYPE_PARAGRAPH = {
+  id: AGREEMENT_NOTICE_PARAGRAPH_IDS.idType,
+  kind: 'single_item' as const,
+  variant: 'id_type_with_input' as const,
+  requiredMark: false,
+  paragraphTitle: '',
+  paragraphDescription: '',
+  participatesInTitleNumbering: false,
+  options: createDefaultIdTypeWithInputOptions(),
+  selectedOptionId: AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID,
+  inputPlaceholder: '주민등록번호를 입력해 주세요',
+  inputValue: '',
+  answerRequired: false,
+}
 
 export function NoticeConsentForm({
   draft,
@@ -64,32 +79,19 @@ export function NoticeConsentForm({
       </PFFormSection>
 
       <PFFormSection id="notice-table" title="공동이용 행정정보(구비서류)">
-        <ConsentInfoTable headers={NOTICE_TABLE_HEADERS} rows={[NOTICE_TABLE_FIRST_ROW]} />
+        <ConsentInfoTable
+          headers={NOTICE_TABLE_HEADERS}
+          rows={[NOTICE_TABLE_FIRST_ROW]}
+          hideEmptyPairs
+        />
         <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600" className={styles.prose}>
           {NOTICE_TABLE_FOOTER}
         </PFText>
-        <PFFormFieldTable>
-          <PFFormFieldRow type="double">
-            <PFFormField label="식별번호 종류" required>
-              <PFSelect
-                variant="formPage"
-                size="large"
-                options={ID_TYPE_OPTIONS}
-                value={draft.idType}
-                onValueChange={value => patch('idType', value)}
-              />
-            </PFFormField>
-            <PFFormField label="식별번호" required>
-              <PFTextInput
-                variant="formPage"
-                size="large"
-                placeholder="식별번호를 입력해 주세요"
-                value={draft.idNumber}
-                onValueChange={value => patch('idNumber', value)}
-              />
-            </PFFormField>
-          </PFFormFieldRow>
-        </PFFormFieldTable>
+        <PlatformIdTypeWithInputFields
+          paragraph={{ ...NOTICE_ID_TYPE_PARAGRAPH, inputValue: draft.idNumber }}
+          lockResidentIdType
+          onChange={next => patch('idNumber', next.inputValue)}
+        />
       </PFFormSection>
 
       <PFFormSection id="notice-subject" title="대상자 본인" required>
@@ -122,8 +124,22 @@ export function NoticeConsentForm({
                 variant="formPage"
                 size="large"
                 placeholder="전화번호를 입력해 주세요"
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel"
                 value={draft.phone}
-                onValueChange={value => patch('phone', value)}
+                onChange={event => {
+                  const result = applyKoreanPhoneInputChange(
+                    draft.phone,
+                    event.target.value,
+                    event.target.selectionStart
+                  )
+                  event.target.value = result.formatted
+                  patch('phone', result.formatted)
+                  requestAnimationFrame(() => {
+                    event.target.setSelectionRange(result.caret, result.caret)
+                  })
+                }}
               />
             </PFFormField>
           </PFFormFieldRow>

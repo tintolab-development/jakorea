@@ -1,0 +1,32 @@
+/* 재능기부 소개 관리 — 신청 관리와 같이 페이지 높이를 잠그지 않고 layout-content가 스크롤 */
+.talent-intro-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.talent-intro-page > .talent-intro-card.admin-list-card {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-bottom: 0;
+}
+
+.talent-intro-page .talent-intro-section {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.talent-intro-page .talent-intro-section .admin-list-toolbar {
+  flex-shrink: 0;
+  align-items: center;
+  margin-bottom: var(--admin-list-toolbar-to-table-gap, 16px);
+}

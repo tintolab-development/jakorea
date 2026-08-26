@@ -1,5 +1,4 @@
 import {
-  clientFilterTextbooks,
   serializeTextbookFilters,
   textbooksParamsFromFilters,
   type TextbookListFilters,
@@ -12,7 +11,7 @@ import {
 } from '@/features/textbook/api/adapters/textbook-adapters'
 import {
   createTextbookRemote,
-  deleteTextbookRemote,
+  bulkDeleteTextbooksRemote,
   fetchTextbookMatchesRemote,
   fetchTextbookRemote,
   fetchTextbooksRemote,
@@ -44,8 +43,7 @@ export function shouldUseTextbooksRemoteApi(): boolean {
 export async function getTextbookList(filters: TextbookListFilters): Promise<TextbookRow[]> {
   assertTextbooksRemoteReady()
   const dto = await fetchTextbooksRemote(textbooksParamsFromFilters(filters))
-  const rows = mapTextbookListResponse(dto)
-  return clientFilterTextbooks(rows, filters)
+  return mapTextbookListResponse(dto)
 }
 
 export function getTextbookListFilterKey(filters: TextbookListFilters): string {
@@ -72,9 +70,7 @@ export async function updateTextbook(id: string, input: TextbookCreateInput): Pr
 
 export async function deleteTextbooks(ids: string[]): Promise<void> {
   assertTextbooksRemoteReady()
-  for (const id of ids) {
-    await deleteTextbookRemote(id)
-  }
+  await bulkDeleteTextbooksRemote(ids)
 }
 
 export async function getTextbookMatches(params: MatchesParams = {}): Promise<TextbookRow[]> {

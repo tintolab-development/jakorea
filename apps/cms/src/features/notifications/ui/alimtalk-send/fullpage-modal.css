@@ -7,9 +7,15 @@
   align-items: stretch;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: clip;
   width: 100%;
   background: #f4f6f6;
+}
+
+@supports not (overflow-x: clip) {
+  .alimtalk-send-fullpage-modal.teal-header-modal--full .teal-header-modal__body {
+    overflow-x: visible;
+  }
 }
 
 .alimtalk-send-fullpage-modal__shell {
@@ -156,6 +162,9 @@
 }
 
 .alimtalk-send-fullpage__widget--content > .alimtalk-phone-preview {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   width: 369px;
   max-width: 369px;
   flex: 0 0 369px;
@@ -257,6 +266,10 @@
 }
 
 .alimtalk-send-fullpage__content-tables {
+  display: flex;
   flex: 1 0 auto;
   min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
 }

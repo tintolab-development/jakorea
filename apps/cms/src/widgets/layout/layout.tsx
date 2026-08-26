@@ -65,7 +65,7 @@ export function Layout() {
   }, [location.pathname])
 
   return (
-    <AntLayout className="app-layout" style={{ minHeight: '100vh' }}>
+    <AntLayout className="app-layout">
       <Sidebar />
       <AntLayout>
         <MainHeader />

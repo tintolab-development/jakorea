@@ -11,7 +11,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { normalizeMemberConsentWriteDraft } from '@/features/user/shared/lib/normalize-member-consent-write-draft'
 import {
-  hasMemberConsentDisagreement,
+  collectMemberConsentDisagreedRequiredLabels,
   hasMemberConsentIncompleteRequiredFields,
 } from '@/features/user/shared/lib/validate-member-consent-draft'
 
@@ -128,7 +128,10 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
       'disagree'
     )
 
-    expect(hasMemberConsentDisagreement(draft)).toBe(true)
+    expect(collectMemberConsentDisagreedRequiredLabels(draft).length).toBeGreaterThan(0)
+    expect(collectMemberConsentDisagreedRequiredLabels(draft)).toEqual([
+      '개인정보 및 초상권 수집·이용 동의',
+    ])
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-portrait' })
     ).toBe(true)
@@ -170,6 +173,9 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
       }),
     }
 
+    expect(collectMemberConsentDisagreedRequiredLabels(draft)).toEqual([
+      '아동·청소년 보호와 성범죄 예방',
+    ])
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-expense' })
     ).toBe(true)
@@ -196,7 +202,7 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     ).toBe(true)
   })
 
-  it('allows agreement-notice when subject and id type are filled', () => {
+  it('allows agreement-notice when subject paragraph is filled', () => {
     const base = normalizeWritingFormDraft(createAgreementNoticeDraft())
     const draft: WritingFormDraft = {
       ...base,
@@ -216,19 +222,6 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
                   ? '19900101'
                   : '01012345678',
           })),
-        }
-      }).map(paragraph => {
-        if (paragraph.id !== 'agreement-notice-table') return paragraph
-        if (paragraph.kind !== 'single_item' || paragraph.variant !== 'horizontal_table') {
-          return paragraph
-        }
-        if (paragraph.idTypeWithInput == null) return paragraph
-        return {
-          ...paragraph,
-          idTypeWithInput: {
-            ...paragraph.idTypeWithInput,
-            inputValue: '900101-1234567',
-          },
         }
       }),
     }
@@ -236,34 +229,5 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-notice' })
     ).toBe(false)
-  })
-
-  it('blocks agreement-notice when id type input is empty', () => {
-    const base = normalizeWritingFormDraft(createAgreementNoticeDraft())
-    const draft: WritingFormDraft = {
-      ...base,
-      paragraphs: base.paragraphs.map(paragraph => {
-        if (paragraph.id !== 'agreement-notice-subject') return paragraph
-        if (paragraph.kind !== 'single_item' || paragraph.variant !== 'short_essay') {
-          return paragraph
-        }
-        return {
-          ...paragraph,
-          items: (paragraph.items ?? []).map(item => ({
-            ...item,
-            bodyText:
-              item.id === 'agreement-notice-subj-name'
-                ? '홍길동'
-                : item.id === 'agreement-notice-subj-birth'
-                  ? '19900101'
-                  : '01012345678',
-          })),
-        }
-      }),
-    }
-
-    expect(
-      hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-notice' })
-    ).toBe(true)
   })
 })

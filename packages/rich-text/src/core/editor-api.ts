@@ -1,19 +1,14 @@
 import type { Editor } from '@tiptap/react'
-import type { RichTextEditorApi } from './types'
+import { serializeEditorContent } from './content'
 import { isRichTextEditorReady } from './editor-ready'
+import type { RichTextEditorApi } from './types'
 
 export function createRichTextEditorApi(editor: Editor): RichTextEditorApi {
-  const withMarkdown = editor as Editor & { getMarkdown?: () => string }
-
   return {
-    getMarkdown: () => {
-      if (!isRichTextEditorReady(editor)) return ''
-      if (typeof withMarkdown.getMarkdown === 'function') {
-        return withMarkdown.getMarkdown()
-      }
-      return editor.getHTML()
-    },
-    getHTML: () => (isRichTextEditorReady(editor) ? editor.getHTML() : ''),
+    getMarkdown: () =>
+      isRichTextEditorReady(editor) ? serializeEditorContent(editor, 'markdown') : '',
+    getHTML: () =>
+      isRichTextEditorReady(editor) ? serializeEditorContent(editor, 'html') : '',
     insertText: (text: string) => {
       if (!isRichTextEditorReady(editor)) return
       editor.chain().focus().insertContent(text).run()

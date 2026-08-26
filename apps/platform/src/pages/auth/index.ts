@@ -7,6 +7,7 @@ export {
   AdminRegisteredEditPage,
   AdminRegisteredIdentityPage,
   AdminRegisteredNoticePage,
+  AdminRegisteredOnboardingLayout,
 } from './admin-registered'
 export { FindEmailCompletePage, FindEmailPage } from './find-email'
 export {

@@ -1,4 +1,5 @@
 import {
+  AGREEMENT_NOTICE_PARAGRAPH_IDS,
   FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID,
   normalizeHorizontalTableParagraph,
   normalizeVerticalTableParagraph,
@@ -326,13 +327,16 @@ export function renderFormParagraphBody(
           p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm) &&
         structureLocked &&
         options?.agreementAdminProxyConfirm !== true
+      const isAgreementNoticeFixedExplanationText =
+        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution ||
+        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose
       const shouldRenderDisabledPlaceholder =
-        paragraphInteractionMode === 'authoring' &&
         structureLocked &&
-        (p.paragraphTitle?.trim().length ?? 0) > 0
-      /* 작성(authoring) + 구조 잠금 + 라벨 있는 설명글_텍스트형 (예: 행정정보 공동이용 동의서의 이용기관 명칭/이용사무) —
-         응답자가 채우는 영역이므로 편집 화면에서는 Disabled 입력 박스로 통일.
-         `bodyText`가 비어 있으면 빈 박스(이용기관 명칭), 채워져 있으면 같은 박스 안에 default 텍스트 노출(이용사무). */
+        (p.paragraphTitle?.trim().length ?? 0) > 0 &&
+        !isBodyInteractive &&
+        (paragraphInteractionMode === 'authoring' || isAgreementNoticeFixedExplanationText)
+      /* 구조 잠금 + 라벨 있는 설명글_텍스트형 — 단락 공통 `ExplanationText`의 Disabled CmsInput.
+         행정정보 1·2(이용기관 명칭/이용사무): authoring·fill 모두 시드 고정. */
       let explanationBodyDisplayMode: ExplanationTextBodyDisplayMode = 'input'
       if (isPaymentPreConsentIntro || isPaymentPreConsentWhiteSheetBar) {
         explanationBodyDisplayMode = 'static-body'

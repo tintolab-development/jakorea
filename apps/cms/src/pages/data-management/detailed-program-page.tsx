@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useRef, useState, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
+import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useDetailedProgramListQuery } from '@/features/detailed-program/hooks/use-detailed-program-list-query'
 import { useDetailedProgramMutations } from '@/features/detailed-program/hooks/use-detailed-program-mutations'
 import { detailedProgramManagementFilterFields } from '@/features/detailed-program/model/detailed-program-management-filter-fields'
@@ -58,17 +59,31 @@ function coerceRadioBoolean(raw: unknown): boolean {
 export default function DetailedProgramPage() {
   const canWrite = canPerformWriteAction(useAuthStore(s => s.user))
   const [searchParams, setSearchParams] = useSearchParams()
+
+  const dpUseParam = searchParams.get('dp_use')
+  useEffect(() => {
+    if (dpUseParam === 'active' || dpUseParam === 'inactive') return
+    setSearchParams(
+      prev => {
+        if (prev.get('dp_use') === 'active' || prev.get('dp_use') === 'inactive') return prev
+        const next = new URLSearchParams(prev)
+        next.set('dp_use', 'active')
+        return next
+      },
+      { replace: true }
+    )
+  }, [dpUseParam, setSearchParams])
+
   const listQuery = useDetailedProgramListQuery(searchParams, true)
-  const { createMutation, updateMutation, deleteMutation } = useDetailedProgramMutations(
-    searchParams.toString()
-  )
+  const isInitialListLoading = isDataManagementListLoading(listQuery)
+  const isListFetching = listQuery.isFetching
+  const { createMutation, updateMutation, deleteMutation } = useDetailedProgramMutations()
   const rows = listQuery.data ?? []
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [isEditMode, setIsEditMode] = useState(false)
-  const [draftById, setDraftById] = useState<Record<string, DetailedProgramDraft>>({})
   /** 저장 전까지 목록에서만 숨김(편집 모드 삭제 스테이징) */
   const [stagedDeleteIds, setStagedDeleteIds] = useState<string[]>([])
-  /** 저장 클릭 시점에 클로저의 `draftById`보다 최신 입력을 쓰기 위해 동기 갱신 */
+  /** 키 입력마다 setState 하지 않고 ref만 갱신해 테이블 전체 리렌더를 피한다 */
   const draftByIdRef = useRef<Record<string, DetailedProgramDraft>>({})
   const [addItemModalOpen, setAddItemModalOpen] = useState(false)
   const [addItemModalKey, setAddItemModalKey] = useState(0)
@@ -100,14 +115,12 @@ export default function DetailedProgramPage() {
       next[row.id] = { name: row.name, active: row.active }
     }
     draftByIdRef.current = next
-    setDraftById(next)
     setIsEditMode(true)
   }, [tableData])
 
   const exitEditMode = useCallback(() => {
     draftByIdRef.current = {}
     setIsEditMode(false)
-    setDraftById({})
     setStagedDeleteIds([])
   }, [])
 
@@ -123,18 +136,20 @@ export default function DetailedProgramPage() {
       if (staged.size > 0) {
         await deleteMutation.mutateAsync(Array.from(staged))
       }
-      for (const row of rows) {
-        if (staged.has(row.id)) continue
-        const d = drafts[row.id]
-        if (!d) continue
-        const nextName = d.name.trim()
-        const nextActive = coerceRadioBoolean(d.active)
-        if (row.name !== nextName || row.active !== nextActive) {
-          await updateMutation.mutateAsync({
-            id: row.id,
-            input: { name: nextName, active: nextActive },
-          })
-        }
+      const updates = rows
+        .filter(row => !staged.has(row.id))
+        .map(row => {
+          const d = drafts[row.id]
+          if (!d) return null
+          const nextName = d.name.trim()
+          const nextActive = coerceRadioBoolean(d.active)
+          if (row.name === nextName && row.active === nextActive) return null
+          return { id: row.id, input: { name: nextName, active: nextActive } }
+        })
+        .filter((u): u is { id: string; input: { name: string; active: boolean } } => u != null)
+
+      if (updates.length > 0) {
+        await Promise.all(updates.map(u => updateMutation.mutateAsync(u)))
       }
       exitEditMode()
       setSelectedRowKeys([])
@@ -161,14 +176,9 @@ export default function DetailedProgramPage() {
     if (isEditMode) {
       const idsToStage = selectedRows.map(r => r.id)
       setStagedDeleteIds(prev => [...new Set([...prev, ...idsToStage])])
-      setDraftById(prev => {
-        const next = { ...prev }
-        for (const id of idsToStage) {
-          delete next[id]
-        }
-        draftByIdRef.current = next
-        return next
-      })
+      for (const id of idsToStage) {
+        delete draftByIdRef.current[id]
+      }
       setSelectedRowKeys([])
       return
     }
@@ -206,31 +216,22 @@ export default function DetailedProgramPage() {
   )
 
   const updateDraft = useCallback((id: string, patch: Partial<DetailedProgramDraft>) => {
-    setDraftById(prev => {
-      const cur = prev[id]
-      if (!cur) return prev
-      const nextPatch = { ...patch }
-      if ('active' in nextPatch && nextPatch.active !== undefined) {
-        nextPatch.active = coerceRadioBoolean(nextPatch.active)
-      }
-      const next = { ...prev, [id]: { ...cur, ...nextPatch } }
-      draftByIdRef.current = next
-      return next
-    })
+    const cur = draftByIdRef.current[id]
+    if (!cur) return
+    const nextPatch = { ...patch }
+    if ('active' in nextPatch && nextPatch.active !== undefined) {
+      nextPatch.active = coerceRadioBoolean(nextPatch.active)
+    }
+    draftByIdRef.current = { ...draftByIdRef.current, [id]: { ...cur, ...nextPatch } }
   }, [])
 
   const stagedDeleteSet = useMemo(() => new Set(stagedDeleteIds), [stagedDeleteIds])
 
-  /** 편집 중: 스테이징 삭제 제외 + draft 병합. 뷰 모드: 필터 결과 그대로 */
+  /** 편집 중: 스테이징 삭제 제외. 뷰 모드: 서버 필터 결과. draft는 ref만 갱신 */
   const tableDisplayData = useMemo((): DetailedProgramManagementRow[] => {
-    const base = isEditMode ? tableData.filter(row => !stagedDeleteSet.has(row.id)) : tableData
-    if (!isEditMode) return base
-    return base.map(row => {
-      const d = draftById[row.id]
-      if (!d) return row
-      return { ...row, name: d.name, active: coerceRadioBoolean(d.active) }
-    })
-  }, [draftById, isEditMode, stagedDeleteSet, tableData])
+    if (!isEditMode) return tableData
+    return tableData.filter(row => !stagedDeleteSet.has(row.id))
+  }, [isEditMode, stagedDeleteSet, tableData])
 
   const columns: ColumnsType<DetailedProgramManagementRow> = useMemo(
     () => [
@@ -243,27 +244,6 @@ export default function DetailedProgramPage() {
           tableDisplayData.length - index,
       },
       {
-        title: '세부 프로그램명',
-        dataIndex: 'name',
-        key: 'name',
-        ellipsis: true,
-        render: (_: unknown, row: DetailedProgramManagementRow) => {
-          if (!isEditMode) {
-            return row.name
-          }
-          return (
-            <CmsInput
-              inputSize="medium"
-              width="100%"
-              value={row.name}
-              onChange={e => updateDraft(row.id, { name: e.target.value })}
-              placeholder="세부 프로그램명"
-              maxLength={200}
-            />
-          )
-        },
-      },
-      {
         title: '사용 여부',
         key: 'active',
         width: 200,
@@ -274,11 +254,34 @@ export default function DetailedProgramPage() {
           }
           return (
             <CmsSelect
+              key={`active-${row.id}`}
               inputSize="medium"
               width="100%"
-              value={row.active ? 'true' : 'false'}
+              defaultValue={row.active ? 'true' : 'false'}
               onChange={v => updateDraft(row.id, { active: v === 'true' })}
               options={[...USAGE_SELECT_OPTIONS]}
+            />
+          )
+        },
+      },
+      {
+        title: '세부 프로그램명',
+        dataIndex: 'name',
+        key: 'name',
+        ellipsis: true,
+        render: (_: unknown, row: DetailedProgramManagementRow) => {
+          if (!isEditMode) {
+            return row.name
+          }
+          return (
+            <CmsInput
+              key={`name-${row.id}`}
+              inputSize="medium"
+              width="100%"
+              defaultValue={row.name}
+              onChange={e => updateDraft(row.id, { name: e.target.value })}
+              placeholder="세부 프로그램명"
+              maxLength={200}
             />
           )
         },
@@ -297,7 +300,7 @@ export default function DetailedProgramPage() {
         width: 180,
         render: (v: string | undefined) =>
           v ? (
-            dayjs(v).format('YYYY.MM.DD HH:mm:ss')
+            dayjs(v).format('YYYY.MM.DD HH:mm')
           ) : (
             <span style={{ color: 'var(--color-text-tertiary, #8c8c8c)' }}>-</span>
           ),
@@ -319,6 +322,7 @@ export default function DetailedProgramPage() {
         onSearch={handleSearch}
         title="세부 프로그램 목록"
         description={`총 ${(isEditMode ? tableDisplayData.length : displayedCount).toLocaleString()}건`}
+        contentLoading={isInitialListLoading}
         actions={
           <>
             <CmsButton
@@ -333,14 +337,14 @@ export default function DetailedProgramPage() {
               onClick={isEditMode ? handleSave : enterEditMode}
               disabled={!canWrite}
             >
-              정보 수정
+              {isEditMode ? '수정 완료' : '정보 수정'}
             </CmsButton>
             <CmsButton
               variant="primary"
               onClick={handleAddClick}
               disabled={!canWrite || isEditMode}
             >
-              항목 추가
+              신규 등록
             </CmsButton>
           </>
         }
@@ -354,6 +358,7 @@ export default function DetailedProgramPage() {
           className="cms-data-table"
           columns={columns}
           dataSource={tableDisplayData}
+          loading={isListFetching && !isInitialListLoading}
           pagination={false}
           rowSelection={
             canWrite
@@ -403,7 +408,8 @@ export default function DetailedProgramPage() {
         open={viewDeleteModalOpen}
         title="세부 프로그램 삭제"
         lines={viewDeleteModalLines}
-        confirmText="세부 프로그램 삭제"
+        confirmText="삭제"
+        confirmVariant="delete"
         requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
         confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
         onCancel={() => setViewDeleteModalOpen(false)}

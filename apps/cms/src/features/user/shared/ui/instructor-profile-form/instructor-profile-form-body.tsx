@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Form, Space } from 'antd'
 import type { FormInstance } from 'antd/es/form'
 import type { FormListFieldData } from 'antd/es/form/FormList'
@@ -15,6 +15,7 @@ import {
   CmsDatePicker,
   CmsInput,
   CmsNumericInput,
+  CmsPhoneInput,
   CmsRadioGroup,
   CmsSelect,
   SchoolSearch,
@@ -26,19 +27,20 @@ import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-butt
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
-import { INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE } from '@/shared/constants/messages'
-import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import type { MemberConsentMemberContext } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
-import { buildMemberPaymentStatementBasicInfoAutofill } from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
 import {
   isAgreementInstructorConsentField,
   isInstructorCrimeConsentField,
   resolveInstructorConsentTemplateEntry,
   type InstructorConsentFieldKey,
 } from '@/features/user/shared/lib/instructor-consent-field-map'
-import { isInstructorRegisterBasicInfoIncompleteForConsent } from '@/features/user/shared/lib/validate-instructor-consent-basic-info'
 import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
+import {
+  createEmptyMemberRegisterConsentWriteSnapshots,
+  type MemberConsentAgreementDraftSnapshot,
+  type MemberConsentCrimeDraftSnapshot,
+  type MemberRegisterConsentWriteSnapshots,
+} from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import { InstructorRegisterEducationSection } from '@/features/user/shared/ui/instructor-register-education-section'
 import {
   BUSINESS_INCOME_OPTIONS,
@@ -182,8 +184,20 @@ export interface InstructorProfileFormBodyProps {
   basicInfoPrefix?: ReactNode
   /** Extra rows before 사업소득자 (e.g. 강사비 등급) */
   basicInfoExtraBeforeBusinessIncome?: ReactNode
-  /** 신규 등록 — JA 등급 평가 모달 열기 */
+  /**
+   * 신규 등록 — JA 등급 평가 모달 열기
+   */
   onOpenJaGradeEvaluation?: () => void
+  /** 신규 등록 모달 세션 — 동의서 작성 draft 보존·복원 */
+  consentWriteSnapshots?: MemberRegisterConsentWriteSnapshots
+  onSaveConsentAgreementSnapshot?: (
+    fieldKey: InstructorConsentFieldKey,
+    snapshot: MemberConsentAgreementDraftSnapshot
+  ) => void
+  onSaveConsentCrimeSnapshot?: (
+    fieldKey: InstructorConsentFieldKey,
+    snapshot: MemberConsentCrimeDraftSnapshot
+  ) => void
   /**
    * 동의서 작성 완료 등 `setFieldValue`로 동의값을 바꾼 뒤 호출.
    * Ant Design Form은 setFieldValue 시 onValuesChange를 호출하지 않음.
@@ -191,8 +205,8 @@ export interface InstructorProfileFormBodyProps {
   onConsentValuesCommit?: () => void
   /**
    * 학력·경력·JA활동·자격·수상·자유작성·강사등급 등 강사 제출양식 섹션.
-   * 순수 교사(`school_teacher`) 상세에서는 false — 기본 정보·약관만.
-   * 등록 모달에서 회원유형이 교사이면 자동 숨김.
+   * 순수 교사(`school_teacher`) 상세에서만 false — 기본 정보·약관만.
+   * 신규 등록은 교사/일반 모두 동일하게 노출(소속 필드만 분기).
    */
   includeInstructorApplicationSections?: boolean
   className?: string
@@ -210,98 +224,34 @@ export function InstructorProfileFormBody({
   basicInfoPrefix,
   basicInfoExtraBeforeBusinessIncome,
   onOpenJaGradeEvaluation,
+  consentWriteSnapshots = createEmptyMemberRegisterConsentWriteSnapshots(),
+  onSaveConsentAgreementSnapshot,
+  onSaveConsentCrimeSnapshot,
   onConsentValuesCommit,
   includeInstructorApplicationSections = true,
   className,
 }: InstructorProfileFormBodyProps) {
   const isDetailEdit = layoutVariant === 'detailEdit'
   const formLayout = getInstructorFormLayout(isDetailEdit ? 'cmsDetailEdit' : 'cmsRegister')
-  const { showAlert } = useCmsAlert()
   const [activeConsentField, setActiveConsentField] = useState<InstructorConsentFieldKey | null>(
     null
   )
   const homeAddress = Form.useWatch('homeAddress', form) ?? ''
   const memberType = Form.useWatch('memberType', form) ?? 'general'
-  const memberName = Form.useWatch('name', form) ?? ''
   const schoolName = Form.useWatch('schoolName', form) ?? ''
   const affiliationNone = Form.useWatch('affiliationNone', form) === true
   const jaEvaluationGrade = Form.useWatch('jaEvaluationGrade', form) ?? ''
   const isTeacherMember = memberType === 'school_teacher'
-  /** 상세: prop / 등록: 교사 선택 시 강사 제출양식 숨김 (겸직은 detailEdit + prop true) */
-  const showInstructorApplicationSections =
-    includeInstructorApplicationSections && (isDetailEdit || !isTeacherMember)
-  const allValues = Form.useWatch([], form) as InstructorProfileFormValues | undefined
+  /** 등록: 교사/일반 동일 노출. 상세: 순수 교사만 prop false */
+  const showInstructorApplicationSections = includeInstructorApplicationSections
+  /** 등록은 강사 전용 동의 4건도 일반과 동일. 상세 순수 교사만 숨김 */
+  const showInstructorConsentDocuments = !isDetailEdit || !isTeacherMember
   const careerLevel = Form.useWatch('careerLevel', form) ?? 'new'
 
   const activeConsentEntry =
     activeConsentField != null ? resolveInstructorConsentTemplateEntry(activeConsentField) : null
 
-  const memberConsentContext = useMemo((): MemberConsentMemberContext => {
-    return {
-      name: memberName,
-      birthDate: allValues?.birthDate,
-      phone: allValues?.contact,
-      schoolEnrollmentStatus: isTeacherMember ? 'enrolled' : 'not_enrolled',
-      schoolName: isTeacherMember ? schoolName : undefined,
-      affiliationOrganization:
-        !isTeacherMember && !affiliationNone ? allValues?.affiliationName?.trim() : undefined,
-      affiliationNone: !isTeacherMember && affiliationNone,
-    }
-  }, [
-    affiliationNone,
-    allValues?.affiliationName,
-    allValues?.birthDate,
-    allValues?.contact,
-    isTeacherMember,
-    memberName,
-    schoolName,
-  ])
-
-  const paymentStatementBasicInfoAutofill = useMemo(
-    () =>
-      buildMemberPaymentStatementBasicInfoAutofill({
-        name: memberName,
-        birthDate: allValues?.birthDate,
-        homeAddress,
-        homeAddressDetail: allValues?.homeAddressDetail,
-        bankName: allValues?.bankName,
-        accountNumber: allValues?.accountNumber,
-        accountHolder: allValues?.accountHolder,
-        memberType,
-        affiliationNone,
-        schoolName,
-        affiliationName: allValues?.affiliationName,
-      }),
-    [
-      affiliationNone,
-      allValues?.accountHolder,
-      allValues?.accountNumber,
-      allValues?.affiliationName,
-      allValues?.bankName,
-      allValues?.birthDate,
-      allValues?.homeAddressDetail,
-      homeAddress,
-      memberName,
-      memberType,
-      schoolName,
-    ]
-  )
-  const consentAutofillProps = {
-    memberContext: memberConsentContext,
-    paymentStatementBasicInfoAutofill,
-  }
-
   const handleConsentWrite = (fieldKey: InstructorConsentFieldKey) => {
-    if (!formLayout.consent.skipBasicInfoGate) {
-      const values = allValues ?? form.getFieldsValue()
-      if (isInstructorRegisterBasicInfoIncompleteForConsent(values)) {
-        showAlert({
-          title: '안내',
-          content: INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
-        })
-        return
-      }
-    }
     setActiveConsentField(fieldKey)
   }
 
@@ -348,6 +298,41 @@ export function InstructorProfileFormBody({
       schoolOrganizationId: undefined,
     })
   }
+
+  const schoolTeacherSchoolFieldEdit = (
+    <>
+      <Form.Item name="schoolName" noStyle>
+        <SchoolSearch
+          value={schoolName}
+          onChange={nextSchoolName => form.setFieldValue('schoolName', nextSchoolName)}
+          onSelect={handleSchoolSelect}
+          placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.schoolName}
+          inputSize="medium"
+          width="100%"
+        />
+      </Form.Item>
+      <Form.Item name="schoolProvider" hidden preserve />
+      <Form.Item name="schoolExternalCode" hidden preserve />
+      <Form.Item name="schoolLevel" hidden preserve />
+      <Form.Item name="schoolAddress" hidden preserve />
+      <Form.Item name="schoolZipcode" hidden preserve />
+      <Form.Item name="schoolRegionSido" hidden preserve />
+      <Form.Item name="schoolRegionSigungu" hidden preserve />
+      <Form.Item name="schoolOrganizationId" hidden preserve />
+    </>
+  )
+
+  const schoolTeacherEmploymentFieldEdit = (
+    <Form.Item name="employmentStatus" style={FORM_ITEM_STYLE}>
+      <CmsSelect
+        placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.employmentStatus}
+        inputSize="medium"
+        width="100%"
+        options={EMPLOYMENT_STATUS_OPTIONS}
+        allowClear
+      />
+    </Form.Item>
+  )
 
   const affiliationFieldEdit = isTeacherMember ? (
     <div className="detail-info-form-inputs-wrapper-no-gap">
@@ -487,7 +472,7 @@ export function InstructorProfileFormBody({
               view="-"
               edit={
                 <Form.Item name="contact" style={FORM_ITEM_STYLE}>
-                  <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.contact} inputSize="medium" width="100%" />
+                  <CmsPhoneInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.contact} inputSize="medium" width="100%" />
                 </Form.Item>
               }
             />
@@ -502,13 +487,31 @@ export function InstructorProfileFormBody({
             />
           </DetailInfoForm.Row>
           {isDetailEdit ? (
-            <>
-              <Form.Item name="memberType" hidden preserve />
-              <DetailInfoForm.Row type="double">
-                <DetailInfoForm.Field label="소속" view="-" edit={affiliationFieldEdit} />
-                <DetailInfoForm.Field label="강사 경력" view="-" edit={instructorCareerFieldEdit} />
-              </DetailInfoForm.Row>
-            </>
+            isTeacherMember ? (
+              <>
+                <Form.Item name="memberType" hidden preserve />
+                <DetailInfoForm.Row type="double">
+                  <DetailInfoForm.Field
+                    label="소속"
+                    view="-"
+                    edit={schoolTeacherSchoolFieldEdit}
+                  />
+                  <DetailInfoForm.Field
+                    label="재직 현황"
+                    view="-"
+                    edit={schoolTeacherEmploymentFieldEdit}
+                  />
+                </DetailInfoForm.Row>
+              </>
+            ) : (
+              <>
+                <Form.Item name="memberType" hidden preserve />
+                <DetailInfoForm.Row type="double">
+                  <DetailInfoForm.Field label="소속" view="-" edit={affiliationFieldEdit} />
+                  <DetailInfoForm.Field label="강사 경력" view="-" edit={instructorCareerFieldEdit} />
+                </DetailInfoForm.Row>
+              </>
+            )
           ) : (
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
@@ -523,6 +526,8 @@ export function InstructorProfileFormBody({
               <DetailInfoForm.Field label="소속" view="-" edit={affiliationFieldEdit} />
             </DetailInfoForm.Row>
           )}
+          {!(isDetailEdit && isTeacherMember) ? (
+            <>
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="자택 주소지"
@@ -611,6 +616,8 @@ export function InstructorProfileFormBody({
               }
             />
           </DetailInfoForm.Row>
+            </>
+          ) : null}
         </DetailInfoForm>
 
         {formLayout.showInstructorGradeSection && showInstructorApplicationSections ? (
@@ -719,7 +726,7 @@ export function InstructorProfileFormBody({
               </DetailInfoForm.Row>
             </DetailInfoForm>
 
-            {!isTeacherMember ? (
+            {showInstructorConsentDocuments ? (
             <DetailInfoForm
               title="약관 및 동의"
               hideHeader
@@ -1051,7 +1058,10 @@ export function InstructorProfileFormBody({
           open
           templateId={activeConsentEntry.templateId}
           modalTitle={activeConsentEntry.modalTitle}
-          {...consentAutofillProps}
+          savedSnapshot={consentWriteSnapshots.agreementByFieldKey[activeConsentField]}
+          onSnapshotSave={snapshot =>
+            onSaveConsentAgreementSnapshot?.(activeConsentField, snapshot)
+          }
           onClose={handleConsentModalClose}
           onComplete={() => handleConsentComplete(activeConsentField)}
         />
@@ -1060,6 +1070,8 @@ export function InstructorProfileFormBody({
       {activeConsentField != null && isInstructorCrimeConsentField(activeConsentField) ? (
         <MemberConsentCrimeModal
           open
+          savedSnapshot={consentWriteSnapshots.crimeByFieldKey[activeConsentField]}
+          onSnapshotSave={snapshot => onSaveConsentCrimeSnapshot?.(activeConsentField, snapshot)}
           onClose={handleConsentModalClose}
           onComplete={() => handleConsentComplete(activeConsentField)}
         />

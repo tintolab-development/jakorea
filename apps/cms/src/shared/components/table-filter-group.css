@@ -704,7 +704,11 @@
   max-width: min(100%, var(--filter-field-width)) !important;
 }
 
-/* % Col: 검색 입력 내부도 260px 고정 (inline width:100%·전역 규칙 덮어씀) */
+/* % Col: 바깥 검색 래퍼·CmsInput만 240px — affix까지 240 고정하면
+ * control padding(14×2) 안에서 넘쳐 clear가 테두리에 잘림 */
+.table-filter-group__container
+  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
+  .labeled-search-input,
 .table-filter-group__container
   .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
   .labeled-search-input__input,
@@ -713,24 +717,48 @@
   .labeled-search-input
   .cms-input,
 .table-filter-group__container
-  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
-  .labeled-search-input
-  .ant-input-affix-wrapper,
+  .table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field)
+  .labeled-search-input,
 .table-filter-group__container
   .table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field)
   .labeled-search-input__input,
 .table-filter-group__container
   .table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field)
   .labeled-search-input
-  .cms-input,
-.table-filter-group__container
-  .table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field)
-  .labeled-search-input
-  .ant-input-affix-wrapper {
+  .cms-input {
   min-width: var(--filter-control-max-width, 240px) !important;
   width: var(--filter-control-max-width, 240px) !important;
   max-width: var(--filter-control-max-width, 240px) !important;
   box-sizing: border-box;
+}
+
+.table-filter-group__container
+  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
+  .labeled-search-input
+  .cms-input
+  .cms-input__inner
+  .ant-input-affix-wrapper,
+.table-filter-group__container
+  .table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field)
+  .labeled-search-input
+  .cms-input
+  .cms-input__inner
+  .ant-input-affix-wrapper,
+.table-filter-group__container
+  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
+  .labeled-search-input
+  .cms-input
+  .cms-input__inner
+  .ant-input,
+.table-filter-group__container
+  .table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field)
+  .labeled-search-input
+  .cms-input
+  .cms-input__inner
+  .ant-input {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 /* table-filter-group 라디오 — 시안 래퍼(44px · padding 0 16 0 4 · 옵션 gap 16).

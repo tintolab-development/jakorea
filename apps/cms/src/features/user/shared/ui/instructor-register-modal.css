@@ -108,6 +108,22 @@
   padding-block: 5px;
 }
 
+/** 동의서 작성(라디오 + 버튼) 셀 — DetailInfoForm 기본 상하 12px */
+.instructor-register-modal__consent-block
+  .detail-info-form__field:has(.instructor-register-modal__consent-document) {
+  min-height: auto;
+}
+
+.instructor-register-modal__consent-block
+  .detail-info-form__field:has(.instructor-register-modal__consent-document)
+  .detail-info-form__field-label,
+.instructor-register-modal__consent-block
+  .detail-info-form__field:has(.instructor-register-modal__consent-document)
+  .detail-info-form__field-content {
+  min-height: auto;
+  padding-block: 12px;
+}
+
 .instructor-register-modal__consent-form-stack .detail-info-form__field-content--edit {
   align-items: center;
 }

@@ -18,14 +18,13 @@ export type UseAdminNoticeCategoriesResult = {
   remoteActions: NoticeCategoryRemoteActions
 }
 
+const EMPTY_CATEGORY_ROWS: NoticeCategoryRow[] = []
+
 export function useAdminNoticeCategories(): UseAdminNoticeCategoriesResult {
   const categoriesQuery = useNoticeCategoriesQuery()
   const { createMutation, updateMutation, deleteMutation } = useNoticeCategoryMutations()
 
-  const categoryRows = useMemo<NoticeCategoryRow[]>(
-    () => (categoriesQuery.data ?? []).map(row => ({ id: row.id, name: row.name })),
-    [categoriesQuery.data]
-  )
+  const categoryRows = categoriesQuery.data ?? EMPTY_CATEGORY_ROWS
 
   const allowedCategoryLabels = useMemo(
     () => categoryRows.map(r => r.name),
@@ -41,27 +40,32 @@ export function useAdminNoticeCategories(): UseAdminNoticeCategoriesResult {
     async (name: string) => {
       await createMutation.mutateAsync(name)
     },
-    [createMutation]
+    [createMutation.mutateAsync]
   )
 
   const onUpdate = useCallback(
     async (id: string, name: string) => {
       await updateMutation.mutateAsync({ id, name })
     },
-    [updateMutation]
+    [updateMutation.mutateAsync]
   )
 
   const onDelete = useCallback(
     async (id: string) => {
       await deleteMutation.mutateAsync(id)
     },
-    [deleteMutation]
+    [deleteMutation.mutateAsync]
+  )
+
+  const remoteActions = useMemo(
+    () => ({ onCreate, onUpdate, onDelete }),
+    [onCreate, onDelete, onUpdate]
   )
 
   return {
     categoryRows,
     allowedCategoryLabels,
     allowedCategorySet,
-    remoteActions: { onCreate, onUpdate, onDelete },
+    remoteActions,
   }
 }

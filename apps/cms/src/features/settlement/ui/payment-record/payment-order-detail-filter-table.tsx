@@ -18,6 +18,7 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { PaymentOrderBatchConfirmModal } from './payment-order-batch-confirm-modal'
 import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/modal/instructor-payment-statement-blocked-modal'
+import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
 import { CmsButton } from '@/shared/ui'
 import {
   usePaymentOrderDetailLinesController,
@@ -64,6 +65,9 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
     setPaymentStatementIssueBlocked,
     handleBatchConfirm,
     handlePaymentStatementIssue,
+    closeIssuanceView,
+    issuanceViewOpen,
+    currentIssuancePayload,
     selectedRowKeys,
     setSelectedRowKeys,
     filterFields,
@@ -73,6 +77,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
     columns,
     sectionTitle,
     filterClassName,
+    excelExport,
   } = usePaymentOrderDetailLinesController(props)
 
   return (
@@ -90,10 +95,18 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
         selectedCount={paymentStatementIssueBlocked.selectedCount}
         layout="detailFullpage"
       />
+      <PaymentStatementIssuanceViewModal
+        open={issuanceViewOpen && Boolean(currentIssuancePayload)}
+        onClose={closeIssuanceView}
+        paragraphBodyOptions={currentIssuancePayload?.paragraphBodyOptions}
+        fileName={currentIssuancePayload?.fileName}
+        key={currentIssuancePayload?.fileName ?? 'payment-order-issuance'}
+      />
       <FilterTableLayout
         className={filterClassName}
         bordered={false}
-        hideExcelDownload
+        filterResponsiveWrap={false}
+        excelExport={excelExport}
         fields={filterFields}
         filters={filterFilters}
         onFilterChange={onFilterCardChange}

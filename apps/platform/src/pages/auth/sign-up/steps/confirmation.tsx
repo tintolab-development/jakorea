@@ -1,5 +1,5 @@
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
-import { PFButton, PFText } from '@/shared/ui'
+import { PFButton, PFInfoReview, PFText } from '@/shared/ui'
 import { SignUpLayout } from '../layout/shell'
 import { SignUpStepLayout } from '../layout/sign-up-step-layout'
 import styles from '../wizard.module.css'
@@ -39,30 +39,7 @@ export function ConfirmationStep({ signUp }: ConfirmationStepProps) {
           </>
         }
       >
-        <div className={styles.confirmReview}>
-          {confirmation.rows.map((row, index) => (
-            <div
-              className={[
-                styles.confirmReviewRow,
-                index === 0 ? styles.confirmReviewRowFirst : undefined,
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              key={row.label}
-            >
-              <PFText
-                typo="bd-md-md"
-                color="neutral-cool-500"
-                className={styles.confirmReviewLabel}
-              >
-                {row.label}
-              </PFText>
-              <PFText typo="bd-md-sb" color="black" className={styles.confirmReviewValue}>
-                {row.value}
-              </PFText>
-            </div>
-          ))}
-        </div>
+        <PFInfoReview rows={confirmation.rows} className={styles.confirmReview} />
         {confirmation.message ? (
           <PFText as="p" typo="bd-sm-md" color="error" className={styles.confirmSubmitMessage}>
             {confirmation.message}

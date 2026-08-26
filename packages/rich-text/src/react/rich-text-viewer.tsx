@@ -12,13 +12,14 @@ export function RichTextViewer({
   markdown,
   contentFormat = 'markdown',
   className,
+  extraExtensions,
   maxHeight = '403px',
 }: RichTextViewerProps) {
   const content = markdown ?? contentProp ?? ''
 
   const extensions = useMemo(
-    () => createRichTextExtensions({ openLinksOnClick: true }),
-    []
+    () => createRichTextExtensions({ openLinksOnClick: true, extraExtensions }),
+    [extraExtensions]
   )
 
   const { content: editorContent, contentType } = useMemo(
@@ -40,7 +41,7 @@ export function RichTextViewer({
         },
       },
     },
-    [editorContent, contentType]
+    [editorContent, contentType, extraExtensions]
   )
 
   const rootClass = ['rich-text-viewer', className].filter(Boolean).join(' ')

@@ -69,8 +69,11 @@
   background: rgba(0, 0, 0, 0.3) !important;
 }
 
-/* 모달 래퍼: 화면 정중앙 — 풀페이지는 :has(.teal-header-modal--full) 블록이 stretch를 담당 (이 규칙이 덮어쓰면 좌우 여백만 남음) */
-.ant-modal-wrap:has(.teal-header-modal):not(:has(.teal-header-modal--full)) {
+/* 모달 래퍼: 화면 정중앙 — 풀페이지는 :has(.teal-header-modal--full) 블록이 stretch를 담당 (이 규칙이 덮어쓰면 좌우 여백만 남음)
+ * open=false 시 Ant inline `display: none`을 flex !important가 덮으면 닫힘 순간에 레이아웃이 밀림 */
+.ant-modal-wrap:has(.teal-header-modal):not(:has(.teal-header-modal--full)):not(
+    [style*='display: none']
+  ) {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;

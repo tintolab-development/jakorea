@@ -6,7 +6,6 @@ import { useCallback, useMemo, useState, type Key } from 'react'
 import { Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
-import dayjs from 'dayjs'
 import type { StripBanner } from '@/entities/strip-banner/model/types'
 import {
   MAX_ACTIVE_STRIP_BANNERS,
@@ -24,6 +23,7 @@ import {
 import { stripBannerQueryKeys } from '@/features/strip-banner/api/query-keys'
 import { listStripBannersService } from '@/features/strip-banner/api/service'
 import { STRIP_BANNERS_CHANGED_EVENT } from '@/features/strip-banner/api/store'
+import { formatDateDot } from '@/shared/lib/format-display'
 import {
   StripBannerFormModal,
   type StripBannerFormValues,
@@ -117,15 +117,11 @@ const searchSyncRules: readonly TableSearchParamRule<StripBannerPendingFilters>[
 ]
 
 function formatYmdDot(ymd: string): string {
-  if (!ymd) return '-'
-  return ymd.replace(/-/g, '.')
+  return formatDateDot(ymd)
 }
 
 function formatCreatedDate(iso: string): string {
-  if (!iso) return '-'
-  const d = dayjs(iso)
-  if (!d.isValid()) return '-'
-  return d.format('YYYY.MM.DD')
+  return formatDateDot(iso)
 }
 
 function hasStripBannerListFilter(filter: StripBannerListFilter): boolean {

@@ -12,4 +12,20 @@ test.describe('로그인 → MFA → 대시보드', () => {
     await expect(page.getByRole('heading', { name: '대시보드 홈' })).toBeVisible()
     await expect(page.getByRole('button', { name: '대시보드 설정' })).toBeVisible()
   })
+
+  test('대시보드 설정 모달이 뷰포트 안에서 푸터까지 보인다', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('button', { name: '대시보드 설정' }).click()
+    const dialog = page.getByRole('dialog', { name: '대시보드 설정' })
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByRole('button', { name: '설정' })).toBeVisible()
+    await expect(dialog.getByRole('button', { name: '닫기' })).toBeVisible()
+
+    const box = await dialog.locator('.ant-modal-content').boundingBox()
+    const viewport = page.viewportSize()
+    expect(box, '모달 패널 박스를 측정할 수 있어야 한다').toBeTruthy()
+    expect(viewport).toBeTruthy()
+    expect(box!.y).toBeGreaterThanOrEqual(0)
+    expect(box!.y + box!.height).toBeLessThanOrEqual((viewport?.height ?? 0) + 1)
+  })
 })

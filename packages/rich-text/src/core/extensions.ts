@@ -32,7 +32,7 @@ import type { CreateRichTextExtensionsOptions } from './types'
 export function createRichTextExtensions(
   options: CreateRichTextExtensionsOptions = {}
 ): Extensions {
-  const { placeholder, openLinksOnClick = false, preset = 'full' } = options
+  const { placeholder, openLinksOnClick = false, preset = 'full', extraExtensions } = options
   const isFull = preset === 'full'
 
   const extensions: Extensions = [
@@ -40,6 +40,8 @@ export function createRichTextExtensions(
       paragraph: false,
       heading: false,
       dropcursor: false,
+      link: false,
+      underline: false,
     }),
     Dropcursor.configure({
       color: 'var(--rt-dropcursor, #01A1AF)',
@@ -85,6 +87,10 @@ export function createRichTextExtensions(
         emptyEditorClass: 'rich-text-editor--is-empty',
       })
     )
+  }
+
+  if (extraExtensions?.length) {
+    extensions.push(...extraExtensions)
   }
 
   return extensions

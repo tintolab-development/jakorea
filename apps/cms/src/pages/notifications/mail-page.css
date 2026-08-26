@@ -1,0 +1,68 @@
+/* 헤더 ↔ 탭: layout-content 32px + 탭 16px 이중 패딩을 상단 16px만 사용 */
+.layout-content:has(.mail-page) {
+  --cms-layout-content-padding-top: 16px;
+  padding-top: 16px;
+}
+
+.mail-page {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: calc(100vh - 64px - 16px - 32px);
+}
+
+.mail-page .mail-page__tabs.cms-text-tabs .cms-text-tabs__row {
+  padding-top: 0;
+  padding-right: 0;
+  padding-bottom: 16px;
+  padding-left: 20px;
+}
+
+.mail-page__tabs .cms-text-tabs__trailing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mail-page .program-list-page {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.mail-page .program-list-page .filter-table-layout {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  margin-bottom: 0;
+}
+
+.mail-page .program-list-page .filter-table-layout__table {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.mail-page .mail-template-split {
+  flex: 1 1 0;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.mail-page .alimtalk-category-tree {
+  max-height: none;
+  height: 100%;
+  overflow: auto;
+}
+
+.mail-page .mail-template-detail--empty {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.notification-coming-soon-tab-panel {
+  padding: 48px 24px;
+}

@@ -1,80 +1,48 @@
-import { useCallback } from 'react'
-import { Flex } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
-import type { SponsorContactRow } from '@/features/sponsor/model/sponsor-management.types'
-import type { UseSponsorContactsReturn } from '@/features/sponsor/hooks/use-sponsor-contacts'
+import type { DateValue } from '@/types'
 import {
   type BasicInfoEditState,
   SponsorBasicInfoSection,
-  SponsorContactsSection,
 } from '@/features/sponsor/ui/sponsor-detail-basic-info'
+import { YearlyBusinessPanel } from '@/features/sponsor/ui/panels/yearly-business-panel'
+import type { SponsorSponsorshipStatus } from '@/types/domain'
+import { Flex } from 'antd'
 
 export interface SponsorDetailPanelProps {
+  sponsorId: string
   basicInfo: BasicInfoEditState
   isEditing: boolean
   onChange: (updater: (prev: BasicInfoEditState) => BasicInfoEditState) => void
-  contacts: SponsorContactRow[]
+  onSponsorshipStatusChange: (next: SponsorSponsorshipStatus) => void
+  sponsorshipStartDate?: DateValue
   canWrite: boolean
-  contactsProps: UseSponsorContactsReturn
-  columns: ColumnsType<SponsorContactRow>
 }
 
 /**
- * 후원사 상세 LNB의 “후원사 상세 정보” 탭 본문(기본 정보 + 담당자)입니다.
+ * 후원사 상세 LNB의 “후원사 상세 정보” 탭 본문(기본 정보 + 연도별 후원금).
+ * 담당자는 별도 LNB(`후원사 담당자 정보`)로 분리됨.
  */
 export function SponsorDetailPanel({
+  sponsorId,
   basicInfo,
   isEditing,
   onChange,
-  contacts,
+  onSponsorshipStatusChange,
+  sponsorshipStartDate,
   canWrite,
-  contactsProps,
-  columns,
 }: SponsorDetailPanelProps) {
-  const {
-    selectedKeys,
-    setSelectedKeys,
-    setRegisterModalOpen,
-    setDeleteModalOpen,
-    deleteModalOpen,
-    selectedNames,
-    handleDelete,
-  } = contactsProps
-
-  const handleRegisterClick = useCallback((): void => {
-    if (!canWrite) return
-    setRegisterModalOpen(true)
-  }, [canWrite, setRegisterModalOpen])
-
-  const handleDeleteClick = useCallback((): void => {
-    if (!canWrite || selectedKeys.length === 0) return
-    setDeleteModalOpen(true)
-  }, [canWrite, selectedKeys.length, setDeleteModalOpen])
-
-  const handleDeleteCancel = useCallback((): void => {
-    setDeleteModalOpen(false)
-  }, [setDeleteModalOpen])
-
   return (
     <Flex vertical gap="large">
       <SponsorBasicInfoSection
         value={basicInfo}
         isEditing={isEditing}
         onChange={onChange}
+        onSponsorshipStatusChange={onSponsorshipStatusChange}
         canWrite={canWrite}
       />
-      <SponsorContactsSection
-        contacts={contacts}
+      <YearlyBusinessPanel
+        sponsorId={sponsorId}
+        sponsorshipStartDate={sponsorshipStartDate}
         canWrite={canWrite}
-        selectedContactKeys={selectedKeys}
-        onSelectionChange={setSelectedKeys}
-        columns={columns}
-        onDeleteClick={handleDeleteClick}
-        onRegisterClick={handleRegisterClick}
-        deleteModalOpen={deleteModalOpen}
-        deleteTargetNames={selectedNames}
-        onDeleteCancel={handleDeleteCancel}
-        onDeleteConfirm={handleDelete}
       />
     </Flex>
   )

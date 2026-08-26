@@ -20,6 +20,12 @@ export interface InquiryResponse {
   programNameSnapshot?: string;
   /** 문의자 회원 ID */
   inquirerMemberId?: number;
+  /** 문의자 표시명 */
+  inquirerName?: string;
+  /** 문의자 전화번호 */
+  inquirerPhone?: string;
+  /** 문의자 이메일 */
+  inquirerEmail?: string;
   /** 문의 제목 */
   title?: string;
   /** 문의 본문 */
@@ -28,6 +34,8 @@ export interface InquiryResponse {
   status?: string;
   /** 담당 관리자 ID */
   assignedAdminId?: number;
+  /** 담당 관리자 표시명 */
+  assignedAdminName?: string;
   /** 답변 완료 시각 */
   answeredAt?: string;
   /** 문의 생성 시각 */

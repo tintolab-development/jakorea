@@ -9,7 +9,7 @@ import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton, CmsInput, CmsRadioGroup, CmsSelect } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsPhoneInput, CmsRadioGroup, CmsSelect } from '@/shared/ui'
 import {
   CmsDateTextInput,
   isValidCalendarDate,
@@ -201,7 +201,7 @@ export function AddStudentModal({
               name="contact"
               control={control}
               render={({ field }) => (
-                <CmsInput
+                <CmsPhoneInput
                   {...field}
                   value={field.value ?? ''}
                   inputSize="medium"

@@ -1,13 +1,17 @@
 /**
  * 대시보드 설정 모달 스타일
  * ContentModal + 섹션 제목, 바로가기 그리드, 프로그램별 아코디언
+ * 시안: 아코디언 카드 = 민트 1px 보더 · 8px 라운드 · 헤더 민트 틴트 · 본문 흰 배경
  */
 
-/* ContentModal + 대시보드 설정: 최대 높이 720px, 본문만 스크롤 */
+/* ContentModal + 대시보드 설정: 최대 높이 720px(뷰포트 안), 본문만 스크롤 */
 .content-modal.dashboard-settings-content-modal.ant-modal .ant-modal-content {
-  max-height: 720px;
+  box-sizing: border-box;
+  max-height: min(720px, calc(100vh - 48px));
+  max-height: min(720px, calc(100dvh - 48px));
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .content-modal.dashboard-settings-content-modal.ant-modal .ant-modal-body {
@@ -22,13 +26,14 @@
   flex-shrink: 0;
 }
 
-.content-modal.dashboard-settings-content-modal .teal-header-modal__body {
+.content-modal.dashboard-settings-content-modal.teal-header-modal .teal-header-modal__body {
   flex: 1 1 auto;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   max-height: none;
-  /* 헤더 타이틀 ↔ 본문 사이 세로 간격 */
-  padding-top: 30px;
+  padding-top: 30px !important;
+  padding-bottom: 16px !important;
 }
 
 .content-modal.dashboard-settings-content-modal .teal-header-modal__footer {
@@ -61,7 +66,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-12);
-  /* 바로가기 / 위젯 별 프로그램 섹션 제목·콘텐츠 공통 left inset 8px */
   padding-left: 8px;
   box-sizing: border-box;
 }
@@ -71,20 +75,21 @@
   font-size: 16px;
   font-style: normal;
   font-weight: 700;
-  line-height: 150%; /* 24px */
+  line-height: 150%;
 }
 
 .dashboard-settings-modal__shortcuts {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   align-content: start;
 }
 
 .dashboard-settings-modal__shortcuts .ant-checkbox-wrapper {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
+  min-width: 0;
   margin-inline-start: 0;
   color: var(--default-BK, #3d3d3d);
   font-size: 15px;
@@ -92,14 +97,19 @@
   line-height: 150%;
 }
 
-/* 셀렉트(체크박스) 영역 18×18 — 바로가기 + 아코디언 공통 */
+.dashboard-settings-modal__shortcuts .ant-checkbox-wrapper > span:last-child {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
 .dashboard-settings-modal__content .ant-checkbox-inner {
   width: 18px;
   height: 18px;
   border-radius: 4px;
 }
 
-/* Ant 기본 라벨 텍스트 패딩 제거 */
 .dashboard-settings-modal__content .ant-checkbox + span {
   padding-inline-start: 0;
   padding-inline-end: 0;
@@ -109,7 +119,6 @@
   inset-inline-start: 6px;
 }
 
-/* 18px 체크박스에서 체크 아이콘 위치/크기 보정 */
 .dashboard-settings-modal__content .ant-checkbox-checked .ant-checkbox-inner::after {
   inset-inline-start: 50%;
   inset-block-start: 50%;
@@ -120,7 +129,6 @@
   transform-origin: center;
 }
 
-/* indeterminate(부분 선택) 마크를 정중앙으로 보정 */
 .dashboard-settings-modal__content .ant-checkbox-indeterminate .ant-checkbox-inner::after {
   inset-inline-start: 50%;
   inset-block-start: 50%;
@@ -142,24 +150,18 @@
   background: var(--color-bg-base, #fff);
 }
 
-/* 프로그램별 아코디언 */
+/* 프로그램별 아코디언 — 시안: 민트 보더 카드 */
 .dashboard-settings-modal__program-collapse.ant-collapse {
   background: transparent;
+  border: none;
 }
 
 .dashboard-settings-modal__program-collapse > .ant-collapse-item {
   margin-bottom: 10px;
-  border: 1px solid var(--JA-mint-01, #01a1af);
-  border-radius: var(--radius-8, 8px);
-  overflow: hidden;
-  background-clip: padding-box;
-}
-
-/* Ant 기본 radius 규칙보다 우선: 첫 항목 포함 모든 아이템 코너 유지 */
-.dashboard-settings-modal__program-collapse > .ant-collapse-item,
-.dashboard-settings-modal__program-collapse > .ant-collapse-item:first-child,
-.dashboard-settings-modal__program-collapse > .ant-collapse-item:last-child {
+  border: 1px solid var(--JA-mint-01, #01a1af) !important;
   border-radius: var(--radius-8, 8px) !important;
+  overflow: hidden;
+  background: var(--color-bg-base, #fff);
 }
 
 .dashboard-settings-modal__program-collapse > .ant-collapse-item:last-child {
@@ -174,30 +176,22 @@
   min-height: 55px;
   padding: 16px !important;
   align-self: stretch;
-  /* 펼침 시에만 border가 생기면 box-sizing으로 콘텐츠가 1px 밀려 텍스트 흔들림 → 항상 1px 확보 */
   border-bottom: 1px solid transparent;
   background: var(
     --color-bg-mint,
     linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%),
     #fff
   ) !important;
-  transform: translateZ(0);
-  backface-visibility: hidden;
 }
 
-/* 닫힘 상태: 헤더 단독 박스도 하단 코너 라운드 유지 */
 .dashboard-settings-modal__program-collapse
   > .ant-collapse-item:not(.ant-collapse-item-active)
   > .ant-collapse-header {
   border-radius: var(--radius-8, 8px);
 }
 
-/* 펼침 상태: 헤더 상단만, 본문 하단만 라운드 */
 .dashboard-settings-modal__program-collapse > .ant-collapse-item-active > .ant-collapse-header {
   border-radius: var(--radius-8, 8px) var(--radius-8, 8px) 0 0;
-}
-
-.dashboard-settings-modal__program-collapse .ant-collapse-item-active > .ant-collapse-header {
   border-bottom-color: var(--JA-mint-01, #01a1af);
 }
 
@@ -205,7 +199,6 @@
   padding-inline-end: 0;
 }
 
-/* 아코디언 펼침 화살표: 래퍼는 고정, 회전은 svg만 (헤더 flex 재배치로 인한 흔들림 완화) */
 .dashboard-settings-modal__collapse-chevron {
   display: inline-flex;
   flex-shrink: 0;
@@ -215,8 +208,6 @@
   width: 20px;
   height: 20px;
   aspect-ratio: 1 / 1;
-  transform: translateZ(0);
-  transform-origin: center;
 }
 
 .dashboard-settings-modal__collapse-chevron > svg {
@@ -225,7 +216,7 @@
   height: 100%;
   transform: rotate(180deg);
   transform-origin: center;
-  transition: transform 0.2s ease;
+  transition: transform 0.15s ease;
 }
 
 .dashboard-settings-modal__collapse-chevron--expanded > svg {
@@ -267,24 +258,23 @@
 
 .dashboard-settings-modal__accordion-body {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   box-sizing: border-box;
   padding: 16px;
   align-items: center;
   align-self: stretch;
-  gap: 24px;
+  row-gap: 12px;
+  column-gap: 24px;
   min-height: 55px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  white-space: nowrap;
   background: var(--color-bg-base, #fff);
 }
 
 .dashboard-settings-modal__accordion-body .ant-checkbox-wrapper {
   display: inline-flex;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   margin-inline-start: 0;
   color: var(--default-BK, #3d3d3d);
   font-size: 15px;
@@ -293,10 +283,11 @@
 }
 
 .dashboard-settings-modal__accordion-body .ant-checkbox-wrapper > span:last-child {
-  overflow: hidden;
+  min-width: 0;
   color: var(--main-BK, #3d3d3d);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
   font-family: Pretendard, sans-serif;
   font-size: 15px;
   font-style: normal;
@@ -304,18 +295,23 @@
   line-height: 150%;
 }
 
-/* Ant Collapse 기본 상단 구분선(회색·검에 가깝게 보임) 제거 — 헤더 하단 민트만 사용 */
+/* 펼침 애니메이션 제거 — smooth scroll + motion 중첩이 버벅임 원인 */
 .dashboard-settings-modal__program-collapse .ant-collapse-content {
   border: none !important;
   border-top: none !important;
   background: var(--color-bg-base, #fff) !important;
   border-radius: 0 0 var(--radius-8, 8px) var(--radius-8, 8px);
-  overflow: hidden;
+  overflow: hidden !important;
 }
 
 .dashboard-settings-modal__program-collapse .ant-collapse-content-box {
   padding: 0 !important;
   border: none !important;
   background: var(--color-bg-base, #fff) !important;
-  border-radius: 0 0 var(--radius-8, 8px) var(--radius-8, 8px);
+}
+
+.dashboard-settings-modal__program-collapse .ant-collapse-content,
+.dashboard-settings-modal__program-collapse .ant-motion-collapse {
+  transition: none !important;
+  animation: none !important;
 }

@@ -3,7 +3,7 @@
  * Phase 4.3: 모집 종료 후 추가 배정 (FR-F02)
  */
 
-import { CmsRadio, ContentModal, CmsButton } from '@/shared/ui'
+import { CmsRadio, ContentModal, CmsButton, CmsPhoneInput } from '@/shared/ui'
 import { Form, Select, Input, Space } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useEffect } from 'react'
@@ -16,12 +16,10 @@ import { mockInstructors } from '@/data/mock/instructors'
 import { mockPrograms } from '@/data/mock/programs'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
+import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 
 const { Option } = Select
 const { TextArea } = Input
-
-// 전화번호 형식 검증 (한국 전화번호: 010-1234-5678, 01012345678, 02-123-4567 등)
-const phoneRegex = /^(\d{2,3})-?(\d{3,4})-?(\d{4})$/
 
 const assignmentSchema = z
   .object({
@@ -34,7 +32,7 @@ const assignmentSchema = z
         phone: z
           .string()
           .min(1, '전화번호를 입력해주세요')
-          .regex(phoneRegex, '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'),
+          .refine(isValidKoreanPhoneNumber, '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'),
         email: z.string().email('올바른 이메일 형식이 아닙니다') })
       .optional(),
     notes: z.string().optional() })
@@ -282,11 +280,17 @@ export function ManualAssignmentModal({
               )}
             </Form.Item>
             <Form.Item label="전화번호" required>
-              <Input
-                {...register('newInstructor.phone')}
-                placeholder="전화번호를 입력해주세요 (예: 010-1234-5678)"
-                status={errors.newInstructor?.phone ? 'error' : ''}
-                maxLength={20}
+              <Controller
+                name="newInstructor.phone"
+                control={control}
+                render={({ field }) => (
+                  <CmsPhoneInput
+                    {...field}
+                    value={field.value ?? ''}
+                    placeholder="전화번호를 입력해주세요 (예: 010-1234-5678)"
+                    status={errors.newInstructor?.phone ? 'error' : undefined}
+                  />
+                )}
               />
               {errors.newInstructor?.phone && (
                 <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>

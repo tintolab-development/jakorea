@@ -21,14 +21,20 @@ export {
   PFFormInlineRow,
   PFFormInlineSegment,
   PFFormInlineSeparator,
+  PFFormPeriodHyphen,
   PFFormPeriodPair,
   PFFormPeriodTilde,
 } from './pf-form-inline'
+export { PFFormResidentNumberInput } from './pf-form-resident-number-input'
+export { PFFormHomeAddressFields } from './pf-form-home-address-fields'
 export type {
   PFFormControlClusterProps,
   PFFormInlineRowProps,
   PFFormInlineSegmentProps,
   PFFormInlineSeparatorProps,
+  PFFormPeriodHyphenProps,
   PFFormPeriodPairProps,
   PFFormPeriodTildeProps,
 } from './pf-form-inline'
+export type { PFFormResidentNumberInputProps } from './pf-form-resident-number-input'
+export type { PFFormHomeAddressFieldsProps } from './pf-form-home-address-fields'

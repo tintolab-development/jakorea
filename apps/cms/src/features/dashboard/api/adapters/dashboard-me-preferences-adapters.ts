@@ -3,8 +3,13 @@
  */
 import type { DashboardMePreferencesRequest } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesRequest'
 import type { DashboardMePreferencesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesResponse'
+import { parseAssignedProgramTypes } from '@/data/mock/program-schedule-keys'
 import { useDashboardSettingsStore } from '@/features/dashboard/model/dashboard-settings-store'
-import { useDashboardWidgetOrderStore } from '@/features/dashboard/model/dashboard-widget-order-store'
+import {
+  stripRemovedDashboardWidgetIds,
+  stripRemovedDashboardWidgetWidths,
+  useDashboardWidgetOrderStore,
+} from '@/features/dashboard/model/dashboard-widget-order-store'
 import type { UserRole } from '@/types/user'
 
 const ME_SCHEMA_VERSION = 1
@@ -13,6 +18,11 @@ let cachedRevision: number | undefined
 
 export function getCachedMePreferencesRevision(): number | undefined {
   return cachedRevision
+}
+
+/** 409 재시도 시 GET layout을 덮어쓰지 않고 revision만 갱신 */
+export function setCachedMePreferencesRevision(revision: number | undefined): void {
+  cachedRevision = revision
 }
 
 function asBooleanRecord(value: unknown): Record<string, boolean> {
@@ -28,7 +38,10 @@ function asStringArrayRecord(value: unknown): Record<string, string[]> {
   if (value == null || typeof value !== 'object' || Array.isArray(value)) return {}
   const out: Record<string, string[]> = {}
   for (const [k, v] of Object.entries(value)) {
-    if (Array.isArray(v) && v.every(item => typeof item === 'string')) out[k] = v
+    if (!Array.isArray(v)) continue
+    if (v.every(item => typeof item === 'string' || typeof item === 'number')) {
+      out[k] = v.map(item => String(item))
+    }
   }
   return out
 }
@@ -67,6 +80,11 @@ export function applyMeDashboardPreferencesResponse(
   role: UserRole
 ): void {
   cachedRevision = dto.revision
+  if (Object.prototype.hasOwnProperty.call(dto, 'assignedProgramTypes')) {
+    useDashboardSettingsStore
+      .getState()
+      .setAssignedProgramTypes(parseAssignedProgramTypes(dto.assignedProgramTypes))
+  }
 
   const settings = dto.settings
   if (settings) {
@@ -75,10 +93,9 @@ export function applyMeDashboardPreferencesResponse(
         ...state.shortcutEnabled,
         ...asBooleanRecord(settings.shortcutVisibility),
       },
-      widgetProgramIds: {
-        ...state.widgetProgramIds,
-        ...asStringArrayRecord(settings.widgetProgramFilters),
-      },
+      widgetProgramIds: settings.widgetProgramFilters
+        ? asStringArrayRecord(settings.widgetProgramFilters)
+        : state.widgetProgramIds,
       inquiryNotificationReadProgramKeys: {
         ...state.inquiryNotificationReadProgramKeys,
         ...asBooleanRecord(settings.inquiryRowRead),
@@ -88,8 +105,8 @@ export function applyMeDashboardPreferencesResponse(
 
   const layout = dto.layout
   if (layout) {
-    const orderedWidgetIds = layout.orderedWidgetIds ?? []
-    const widgetWidths = asWidgetWidths(layout.widgetWidths)
+    const orderedWidgetIds = stripRemovedDashboardWidgetIds(layout.orderedWidgetIds ?? [])
+    const widgetWidths = stripRemovedDashboardWidgetWidths(asWidgetWidths(layout.widgetWidths)) ?? {}
     useDashboardWidgetOrderStore.setState(state => ({
       orderByRole: {
         ...state.orderByRole,
@@ -97,10 +114,10 @@ export function applyMeDashboardPreferencesResponse(
       },
       widthByRole: {
         ...state.widthByRole,
-        [role]: {
+        [role]: stripRemovedDashboardWidgetWidths({
           ...(state.widthByRole[role] ?? {}),
           ...widgetWidths,
-        },
+        }) ?? {},
       },
     }))
   }
