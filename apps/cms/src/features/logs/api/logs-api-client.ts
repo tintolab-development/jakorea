@@ -92,10 +92,7 @@ export async function fetchMemberLoginsRemote(
   params: Record<string, string>
 ): Promise<LogListPageResponseMemberLoginLogFrontendResponse> {
   return unwrapBody(
-    await logsRemoteApi.memberLoginHistory(toOrvalListParams<MemberLoginHistoryParams>(params), {
-      // 실패 시 mock으로 대체하므로 전역 「서버 오류」 모달을 띄우지 않습니다.
-      skipGlobalErrorAlert: true,
-    })
+    await logsRemoteApi.memberLoginHistory(toOrvalListParams<MemberLoginHistoryParams>(params))
   )
 }
 

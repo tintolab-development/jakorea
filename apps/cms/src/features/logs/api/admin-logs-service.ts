@@ -1,9 +1,5 @@
-import { listMockMemberLoginLogs } from '@/data/mock/member-login-logs'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
-import {
-  applyMemberLoginRetentionFromFilter,
-  filterMemberLoginLogsByRetention,
-} from '@/features/logs/lib/member-login-retention'
+import { applyMemberLoginRetentionFromFilter } from '@/features/logs/lib/member-login-retention'
 import {
   mapBugIssueLogListPageResponse,
   mapDownloadLogListPageResponse,
@@ -17,11 +13,7 @@ import {
   fetchSystemIssueLogsRemote,
   toLogsListQueryParams,
 } from '@/features/logs/api/logs-api-client'
-import {
-  LOG_LIST_PAGE_SIZE,
-  paginateLogList,
-  type LogListPage,
-} from '@/features/logs/api/log-list-page'
+import { LOG_LIST_PAGE_SIZE, type LogListPage } from '@/features/logs/api/log-list-page'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import type { BugIssueLog } from '@/types/bug-issue-log'
 import type { DownloadLog } from '@/types/download-log'
@@ -66,25 +58,11 @@ export async function getMemberLoginLogsPage(
   page = 0,
   size = LOG_LIST_PAGE_SIZE
 ): Promise<LogListPage<MemberLoginLog>> {
-  if (shouldUseLogsRemoteApi()) {
-    try {
-      const dto = await fetchMemberLoginsRemote(
-        toLogsListQueryParams(applyMemberLoginRetentionFromFilter(filters), page, size)
-      )
-      return mapMemberLoginLogListPageResponse(dto)
-    } catch {
-      return paginateLogList(
-        filterMemberLoginLogsByRetention(listMockMemberLoginLogs(filters)),
-        page,
-        size
-      )
-    }
-  }
-  return paginateLogList(
-    filterMemberLoginLogsByRetention(listMockMemberLoginLogs(filters)),
-    page,
-    size
+  assertLogsRemoteApiReady()
+  const dto = await fetchMemberLoginsRemote(
+    toLogsListQueryParams(applyMemberLoginRetentionFromFilter(filters), page, size)
   )
+  return mapMemberLoginLogListPageResponse(dto)
 }
 
 export async function getBugIssueLogsPage(

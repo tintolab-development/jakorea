@@ -8,6 +8,7 @@ import { bugIssueHistoryTablePageConfig } from '@/features/download/model/bug-is
 import { getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
 import { useBugIssueHistoryQuery } from '@/features/logs/hooks/use-bug-issue-history-query'
 import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
+import { LOGS_EMPTY_SEARCH_TEXT } from '@/features/logs/lib/logs-empty-copy'
 import { LogsQueryError } from '@/features/logs/ui/logs-query-error'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
@@ -15,17 +16,17 @@ import {
   useTablePage,
 } from '@/shared/components/table-system/model/use-table-page'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
+import { EmptyState } from '@/shared/ui'
 import type { BugIssueLog } from '@/types/bug-issue-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 
-const BUG_ISSUE_HISTORY_TABLE_SCROLL_X = 1100
+const BUG_ISSUE_HISTORY_TABLE_SCROLL_X = 980
 
 const TABLE_COL_WIDTH = {
   no: 88,
-  screenName: 230,
-  errorMessage: 400,
+  errorMessage: 520,
   userName: 150,
   occurredAt: 220,
 } as const
@@ -73,14 +74,6 @@ export default function BugIssueHistoryPage() {
           totalElements === 0 ? '-' : totalElements - index,
       },
       {
-        title: '화면명',
-        dataIndex: 'screenName',
-        key: 'screenName',
-        width: TABLE_COL_WIDTH.screenName,
-        align: 'center',
-        ellipsis: { showTitle: true },
-      },
-      {
         title: '에러 메시지',
         dataIndex: 'errorMessage',
         key: 'errorMessage',
@@ -89,7 +82,7 @@ export default function BugIssueHistoryPage() {
         ellipsis: { showTitle: true },
       },
       {
-        title: '사용자',
+        title: '사용자명',
         dataIndex: 'userName',
         key: 'userName',
         width: TABLE_COL_WIDTH.userName,
@@ -97,12 +90,12 @@ export default function BugIssueHistoryPage() {
         ellipsis: true,
       },
       {
-        title: '발생 일시',
+        title: '발생일시',
         dataIndex: 'occurredAt',
         key: 'occurredAt',
         width: TABLE_COL_WIDTH.occurredAt,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm'),
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
       },
     ],
     [totalElements]
@@ -142,6 +135,9 @@ export default function BugIssueHistoryPage() {
             columns={columns}
             dataSource={tableData}
             pagination={false}
+            locale={{
+              emptyText: <EmptyState description={LOGS_EMPTY_SEARCH_TEXT} />,
+            }}
           />
           <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
         </>
