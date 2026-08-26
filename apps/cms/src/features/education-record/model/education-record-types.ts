@@ -55,6 +55,8 @@ export type EducationRecordPendingFilters = {
   year: string
   /** 분기 (1 ~ 4 또는 `'ALL'`) */
   quarter: 'ALL' | EducationRecordQuarter
+  /** 사업 분야. 빈 문자열이면 전체 */
+  businessArea: string
   /** 시/도 이름 (예: `'서울특별시'`). 빈 문자열이면 전체 */
   sido: string
   /** 시/군/구 이름 (예: `'강남구'`). 빈 문자열이면 전체 */
@@ -67,6 +69,12 @@ export type EducationRecordPendingFilters = {
   title: string
   /** 교재명 검색어(국문 부분일치) */
   textbookName: string
+  /** 기관명 검색어(부분일치) */
+  institutionName: string
+  /** IPS. 빈 문자열이면 전체 */
+  ips: string
+  /** 교육 형태 (`online` / `offline` / `hybrid`). 빈 문자열이면 전체 */
+  educationType: string
 }
 
 export type EducationRecordTableContext = {

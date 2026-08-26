@@ -63,43 +63,6 @@
 }
 
 /*
- * IP Owned · Course Delivered By: 말줄임 없이 전체 노출(줄바꿈).
- * filter-table-layout 의 th/td height:54px !important 보다 구체성을 높여
- * wrap 헤더·셀이 잘리지 않게 한다.
- */
-.education-record-list-page__layout
-  .er-data-tab
-  .ant-table-wrapper.cms-data-table
-  .ant-table-thead
-  > tr
-  > th.er-data-tab__cell--wrap,
-.education-record-list-page__layout
-  .er-data-tab
-  .ant-table-wrapper.cms-data-table
-  .ant-table-tbody
-  > tr
-  > td.er-data-tab__cell--wrap,
-.er-data-tab .cms-data-table .ant-table-thead > tr > th.er-data-tab__cell--wrap,
-.er-data-tab .cms-data-table .ant-table-tbody > tr > td.er-data-tab__cell--wrap {
-  overflow: hidden;
-  text-overflow: clip;
-  white-space: normal;
-  height: auto !important;
-  min-height: 54px;
-  vertical-align: middle;
-  word-break: break-word;
-}
-
-.er-data-tab .cms-data-table .ant-table-thead > tr > th.er-data-tab__cell--wrap > *,
-.er-data-tab .cms-data-table .ant-table-tbody > tr > td.er-data-tab__cell--wrap > * {
-  display: block;
-  max-width: 100%;
-  white-space: normal;
-  overflow: hidden;
-  text-overflow: clip;
-}
-
-/*
  * 세로는 콘텐츠 높이만큼 카드를 늘리고(페이지 스크롤),
  * 가로는 AntD `.ant-table-content` 만 스크롤해 흰 카드 밖으로 열이 삐져나오지 않게 한다.
  */
