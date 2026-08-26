@@ -6,7 +6,7 @@
 **공통 갭:** [settlement-api-backend-gaps.md](./settlement-api-backend-gaps.md)  
 **UI 필드 SSOT (기본 정보·목록 전 열):** [settlement-payment-order-detail-ui-fields-backend-handoff.md](./settlement-payment-order-detail-ui-fields-backend-handoff.md)
 
-**Last updated:** 2026-08-26
+**Last updated:** 2026-08-26 (`nameEn` 발급 필드 · unmask)
 
 ---
 
@@ -349,7 +349,8 @@ GET /api/admin/settlements/statements?programId=42
 ### 3.8 지급조서 발급(원문) · 산출 내역서 unmask API — **P0**
 
 화면 산출 내역서는 §3.7대로 연락처·이메일·계좌를 **마스킹 표시**합니다.  
-**지급조서 발급 PDF·미리보기**와 산출 내역서 「개인정보 확인」은 **원문**이 필요합니다.
+**지급조서 발급 PDF·미리보기**와 산출 내역서 「개인정보 확인」은 **원문**이 필요합니다.  
+FE는 목 샘플로 채우지 않습니다 — DTO/unmask가 없으면 **공란**. `nameEn`은 발급 양식 필드(산출 내역서 UI에는 없음).
 
 회원 상세와 동일:
 
@@ -357,7 +358,7 @@ GET /api/admin/settlements/statements?programId=42
 |---|---|
 | **Method / Path** | `POST /api/admin/settlements/{settlementId}/privacy/unmask` |
 | **Body** | `{ "reason": string }` (1~500자, 감사 로그) |
-| **응답** | `SettlementFrontendResponse` — phone, email, address, bankName, accountNumber, accountHolder, gender, birthDate, **주민등록번호**(발급 양식) **전부 원문** |
+| **응답** | `SettlementFrontendResponse` — phone, email, address, bankName, accountNumber, accountHolder, gender, birthDate, **nameEn**, **주민등록번호**(발급 양식) **전부 원문** |
 
 상세·필드 표·bulk: [UI SSOT §1.2](./settlement-payment-order-detail-ui-fields-backend-handoff.md#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api)
 
