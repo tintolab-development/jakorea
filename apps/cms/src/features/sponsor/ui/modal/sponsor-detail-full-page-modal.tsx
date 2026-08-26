@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   addSponsorContact,
   deleteSponsorContacts,
+  shouldUseSponsorsRemoteApi,
   updateSponsorContact,
 } from '@/features/sponsor/api/admin-sponsors-service'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
@@ -16,10 +17,11 @@ import {
   mergeUpdatedContact,
   removeContactsById,
 } from '@/features/sponsor/lib/contact-query-cache'
-import { BulbOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import { BulbOutlined, TeamOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { useSponsorProgramHistoryFilter } from '@/features/sponsor/hooks/use-sponsor-program-history-filter'
+import { useContactsList } from '@/features/sponsor/hooks/use-contacts-list'
 import { useSponsorContacts } from '@/features/sponsor/hooks/use-sponsor-contacts'
 import { useSponsorDelete } from '@/features/sponsor/hooks/use-sponsor-delete'
 import { useSponsorDetail } from '@/features/sponsor/hooks/use-sponsor-detail'
@@ -28,6 +30,7 @@ import { SponsorContactRegisterModal } from '@/features/sponsor/ui/modal/sponsor
 import { SponsorDeleteBlockedModal } from '@/features/sponsor/ui/modal/sponsor-delete-blocked-modal'
 import { SponsorDeleteModal } from '@/features/sponsor/ui/modal/sponsor-delete-modal'
 import { SponsorDetailPanel } from '@/features/sponsor/ui/panels/sponsor-detail-panel'
+import { SponsorContactsPanel } from '@/features/sponsor/ui/panels/sponsor-contacts-panel'
 import { SponsorProgramHistoryPanel } from '@/features/sponsor/ui/panels/sponsor-program-history-panel'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -42,8 +45,9 @@ import './sponsor-detail-full-page-modal.css'
 
 const LNB_DETAIL = 'sponsor-detail'
 const LNB_PROGRAMS = 'sponsor-programs'
+const LNB_CONTACTS = 'sponsor-contacts'
 const SPONSOR_LNB_PARAM = 'sponsorLnb'
-const SPONSOR_DETAIL_LNB_KEYS = [LNB_DETAIL, LNB_PROGRAMS] as const
+const SPONSOR_DETAIL_LNB_KEYS = [LNB_DETAIL, LNB_PROGRAMS, LNB_CONTACTS] as const
 type SponsorDetailLnbKey = (typeof SPONSOR_DETAIL_LNB_KEYS)[number]
 
 function isSponsorDetailLnbKey(value: string | null): value is SponsorDetailLnbKey {
@@ -60,6 +64,11 @@ const SPONSOR_DETAIL_MODAL_SIDEBAR_ITEMS: DetailModalSidebarNavItem[] = [
     key: LNB_PROGRAMS,
     label: '프로그램 진행 이력',
     icon: <UnorderedListOutlined className="detail-fullpage-modal__lnb-icon" />,
+  },
+  {
+    key: LNB_CONTACTS,
+    label: '후원사 담당자 정보',
+    icon: <TeamOutlined className="detail-fullpage-modal__lnb-icon" />,
   },
 ]
 
@@ -112,7 +121,10 @@ function SponsorDetailFullPageModalInner({
   } = sponsorDetail
 
   const queryClient = useQueryClient()
-  const remoteContactActions = useMemo((): SponsorContactsRemoteActions => ({
+  const remoteEnabled = shouldUseSponsorsRemoteApi()
+  const remoteContactActions = useMemo((): SponsorContactsRemoteActions | undefined => {
+    if (!remoteEnabled) return undefined
+    return {
       onRegister: async (payload, contactType) => {
         try {
           const created = await addSponsorContact(sponsor.id, payload, contactType)
@@ -152,11 +164,13 @@ function SponsorDetailFullPageModalInner({
           throw error
         }
       },
-  }), [queryClient, setContacts, sponsor.id])
+    }
+  }, [queryClient, remoteEnabled, setContacts, sponsor.id])
 
+  const contactsList = useContactsList(sponsor.id, contacts, lnbKey === LNB_CONTACTS)
   const sponsorDelete = useSponsorDelete(sponsor, canWrite, onDeleteSponsor, onClose)
   const sponsorContacts = useSponsorContacts(
-    sponsorDetail.contacts,
+    contactsList.allContacts,
     sponsorDetail.setContacts,
     canWrite,
     remoteContactActions
@@ -164,7 +178,7 @@ function SponsorDetailFullPageModalInner({
   const { registerModalOpen, setRegisterModalOpen, handleRegister } = sponsorContacts
   const programHistory = useSponsorProgramHistoryFilter(sponsor.id)
   const { contactColumns, programHistoryColumns } = useSponsorDetailModalTableColumns({
-    contacts,
+    contacts: contactsList.allContacts,
     canWrite,
     sponsorContacts,
     filteredProgramHistoryRowCount: programHistory.filteredRows.length,
@@ -271,11 +285,15 @@ function SponsorDetailFullPageModalInner({
             onSponsorshipStatusChange={next => {
               void handleSponsorshipStatusChange(next)
             }}
-            contacts={contacts}
             sponsorshipStartDate={detail.sponsorshipStartDate}
+            canWrite={canWrite}
+          />
+        ) : lnbKey === LNB_CONTACTS ? (
+          <SponsorContactsPanel
             canWrite={canWrite}
             contactsProps={sponsorContacts}
             columns={contactColumns}
+            contactsList={contactsList}
           />
         ) : (
           <SponsorProgramHistoryPanel
@@ -300,7 +318,7 @@ function SponsorDetailFullPageModalInner({
         open={registerModalOpen}
         onCancel={handleCloseContactRegisterModal}
         onSubmit={handleRegister}
-        existingContactCount={contacts.length}
+        existingContactCount={contactsList.allContacts.length}
       />
     </DetailFullPageModal>
   )

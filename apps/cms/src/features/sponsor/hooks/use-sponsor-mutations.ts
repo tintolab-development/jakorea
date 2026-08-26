@@ -22,6 +22,7 @@ import type {
   SponsorManagementRow,
 } from '@/features/sponsor/model/sponsor-management.types'
 import {
+  applyCreatedToArrayLists,
   applyDeletedToArrayLists,
   applyUpdatedToArrayLists,
   invalidateArrayLists,
@@ -49,8 +50,12 @@ export function useSponsorMutations() {
 
   const createMutation = useMutation({
     mutationFn: createSponsor,
-    onSuccess: async () => {
-      await invalidateArrayLists(queryClient, listsKey)
+    onSuccess: async created => {
+      if (!created.id) {
+        await invalidateArrayLists(queryClient, listsKey)
+      } else {
+        applyCreatedToArrayLists(queryClient, listsKey, created, rowId)
+      }
       await queryClient.invalidateQueries({
         queryKey: dataManagementQueryKeys.sponsors.options(),
       })

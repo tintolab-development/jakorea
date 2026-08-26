@@ -3,39 +3,66 @@ import type {
   SponsorManagementRow,
   SponsorContactRow,
   SponsorProgramHistoryRow,
+  SponsorYearlyBusinessRow,
 } from '@/features/sponsor/model/sponsor-management.types'
 
-const DEFAULT_CONTACTS: SponsorContactRow[] = [
+/** LNB 상세 시드·정합 테스트 SSOT */
+export const SPONSOR_DETAIL_SEED_CONTACTS: readonly SponsorContactRow[] = [
   {
     id: 'sponsor-contact-1',
     name: '김제이',
+    department: '사회공헌팀',
     position: '책임',
+    officePhone: '',
     phone: '010-2431-0000',
     email: 'gwanl123@naver.com',
+    companyAddress: '',
+    memo: '',
     registeredAt: '2026-02-10T09:15:00+09:00',
     contactType: 'lead',
   },
   {
     id: 'sponsor-contact-2',
     name: '박제이',
+    department: '사회공헌팀',
     position: '선임',
+    officePhone: '',
     phone: '010-7353-0000',
     email: 'gwanl433@naver.com',
+    companyAddress: '',
+    memo: '',
     registeredAt: '2026-02-10T09:15:00+09:00',
     contactType: 'assistant',
   },
   {
     id: 'sponsor-contact-3',
     name: '강제이',
+    department: '사회공헌팀',
     position: '사원',
+    officePhone: '',
     phone: '010-3145-0000',
     email: 'gwanl213@naver.com',
+    companyAddress: '',
+    memo: '',
     registeredAt: '2026-02-10T09:15:00+09:00',
     contactType: 'assistant',
   },
 ]
 
-const DEFAULT_PROGRAM_HISTORIES: SponsorProgramHistoryRow[] = [
+/** 시안 누적 후원금·수혜자 수치를 맞춘 연도별 샘플 (상세 yearly 패널) */
+export const SPONSOR_DETAIL_SEED_YEARLY_BUSINESSES: readonly SponsorYearlyBusinessRow[] = [
+  {
+    id: 'sponsor-yearly-2026',
+    year: 2026,
+    donationAmount: 91_500_000,
+    beneficiaryCount: 915,
+    memo: '시안 샘플 누적값',
+    businessName: '2026년',
+    managerNameSnapshot: '홍길동',
+  },
+]
+
+export const SPONSOR_DETAIL_SEED_PROGRAM_HISTORIES: readonly SponsorProgramHistoryRow[] = [
   {
     id: 'sponsor-program-history-206',
     programId: 'economy-prog-001',
@@ -99,7 +126,7 @@ const DEFAULT_PROGRAM_HISTORIES: SponsorProgramHistoryRow[] = [
     lifecycleStatus: 'education_in_progress',
     managerName: '홍길동',
     participantCount: '3 / 30',
-    participantType: 'individual',
+    participantType: 'volunteer',
     educationTarget: 'adult',
   },
   {
@@ -142,8 +169,8 @@ export function buildSponsorManagementDetailView(
     businessNumber: '124-81-00998',
     executives: '전영현, 노태문',
     address: '경기도 수원시 영통구 삼성로 129(매탄동)',
-    contacts: DEFAULT_CONTACTS,
-    programHistories: DEFAULT_PROGRAM_HISTORIES,
-    yearlyBusinesses: [],
+    contacts: [...SPONSOR_DETAIL_SEED_CONTACTS],
+    programHistories: [...SPONSOR_DETAIL_SEED_PROGRAM_HISTORIES],
+    yearlyBusinesses: [...SPONSOR_DETAIL_SEED_YEARLY_BUSINESSES],
   }
 }

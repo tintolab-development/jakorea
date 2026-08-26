@@ -13,7 +13,9 @@ const EDUCATION_TARGET_LABEL: Record<SponsorProgramHistoryRow['educationTarget']
 }
 
 function renderParticipantType(_: unknown, row: SponsorProgramHistoryRow): string {
-  return row.participantType === 'school' ? '학교/기관' : '개인 학습자'
+  if (row.participantType === 'school') return '학교/기관'
+  if (row.participantType === 'volunteer') return '봉사자'
+  return '개인 학습자'
 }
 
 /**
@@ -62,18 +64,11 @@ export function buildProgramHistoryColumns(
       ),
     },
     {
-      title: '담당자명',
+      title: '후원사 담당자명',
       dataIndex: 'managerName',
       key: 'managerName',
-      width: 100,
+      width: 120,
       ellipsis: true,
-      align: 'center',
-    },
-    {
-      title: '참여자 모집 인원',
-      dataIndex: 'participantCount',
-      key: 'participantCount',
-      width: 130,
       align: 'center',
     },
     {

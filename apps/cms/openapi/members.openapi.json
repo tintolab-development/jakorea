@@ -13810,6 +13810,19 @@
           },
           "address": {
             "type": "string"
+          },
+          "totalDonationAmount": {
+            "type": "number"
+          },
+          "totalBeneficiaryCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "homepageUrl": {
+            "type": "string"
+          },
+          "logoFileId": {
+            "type": "string"
           }
         }
       },
@@ -14414,10 +14427,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -27731,6 +27744,19 @@
             "type": "string"
           },
           "address": {
+            "type": "string"
+          },
+          "totalDonationAmount": {
+            "type": "number"
+          },
+          "totalBeneficiaryCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "homepageUrl": {
+            "type": "string"
+          },
+          "logoFileId": {
             "type": "string"
           },
           "contacts": {

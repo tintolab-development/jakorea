@@ -22,9 +22,11 @@ import {
   deleteSponsorRemote,
   endSponsorRemote,
   fetchProgramHistoriesRemote,
+  fetchSponsorContactsRemote,
   fetchSponsorRemote,
   fetchSponsorsRemote,
   fetchYearlyBusinessesRemote,
+  type SponsorContactsQueryParams,
   updateSponsorContactRemote,
   updateSponsorRemote,
   updateYearlyBusinessRemote,
@@ -125,6 +127,15 @@ export async function endSponsorship(id: string): Promise<void> {
   await endSponsorRemote(id)
 }
 
+export async function getSponsorContacts(
+  sponsorId: string,
+  filters?: SponsorContactsQueryParams
+): Promise<SponsorContactRow[]> {
+  assertSponsorsRemoteReady()
+  const dtos = await fetchSponsorContactsRemote(sponsorId, filters)
+  return dtos.map(mapSponsorContactResponse).filter(row => row.id.length > 0)
+}
+
 export async function addSponsorContact(
   sponsorId: string,
   payload: SponsorContactRegisterPayload,
@@ -141,7 +152,14 @@ export async function addSponsorContact(
 export async function updateSponsorContact(row: SponsorContactRow): Promise<SponsorContactRow> {
   assertSponsorsRemoteReady()
   const dto = await updateSponsorContactRemote(row.id, toSponsorContactUpdateRequest(row))
-  return mapSponsorContactResponse(dto)
+  if (!dto || typeof dto !== 'object') return row
+  const mapped = mapSponsorContactResponse(dto)
+  return {
+    ...mapped,
+    id: mapped.id || row.id,
+    contactType:
+      dto.contactType != null || dto.primary != null ? mapped.contactType : row.contactType,
+  }
 }
 
 export async function deleteSponsorContacts(contactIds: string[]): Promise<void> {

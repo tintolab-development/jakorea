@@ -13,28 +13,36 @@ vi.mock('@/features/sponsor/api/sponsors-api-client', async importOriginal => {
   return {
     ...actual,
     fetchSponsorRemote: vi.fn(),
+    fetchSponsorContactsRemote: vi.fn(),
     fetchYearlyBusinessesRemote: vi.fn(),
     addYearlyBusinessRemote: vi.fn(),
     updateYearlyBusinessRemote: vi.fn(),
+    updateSponsorContactRemote: vi.fn(),
   }
 })
 
 import {
   addYearlyBusinessRemote,
+  fetchSponsorContactsRemote,
   fetchSponsorRemote,
   fetchYearlyBusinessesRemote,
+  updateSponsorContactRemote,
   updateYearlyBusinessRemote,
 } from '@/features/sponsor/api/sponsors-api-client'
 import {
+  getSponsorContacts,
   getSponsorDetail,
   getSponsorYearlyBusinesses,
   saveSponsorYearlyBusinesses,
+  updateSponsorContact,
 } from './admin-sponsors-service'
 
 const fetchSponsorRemoteMock = vi.mocked(fetchSponsorRemote)
+const fetchSponsorContactsRemoteMock = vi.mocked(fetchSponsorContactsRemote)
 const fetchYearlyBusinessesRemoteMock = vi.mocked(fetchYearlyBusinessesRemote)
 const addYearlyBusinessRemoteMock = vi.mocked(addYearlyBusinessRemote)
 const updateYearlyBusinessRemoteMock = vi.mocked(updateYearlyBusinessRemote)
+const updateSponsorContactRemoteMock = vi.mocked(updateSponsorContactRemote)
 
 describe('getSponsorDetail', () => {
   beforeEach(() => {
@@ -168,5 +176,64 @@ describe('saveSponsorYearlyBusinesses', () => {
       beneficiaryCount: 2,
       memo: '',
     })
+  })
+})
+
+describe('getSponsorContacts', () => {
+  beforeEach(() => {
+    fetchSponsorContactsRemoteMock.mockReset()
+  })
+
+  it('maps list responses and forwards filter params', async () => {
+    fetchSponsorContactsRemoteMock.mockResolvedValue([
+      {
+        id: 'c-1',
+        name: '김후원',
+        contactType: 'LEAD',
+        department: '기획',
+      },
+    ])
+
+    const rows = await getSponsorContacts('sp-1', { department: '기획' })
+
+    expect(fetchSponsorContactsRemoteMock).toHaveBeenCalledWith('sp-1', { department: '기획' })
+    expect(rows).toEqual([
+      expect.objectContaining({
+        id: 'c-1',
+        name: '김후원',
+        contactType: 'lead',
+        department: '기획',
+      }),
+    ])
+  })
+})
+
+describe('updateSponsorContact', () => {
+  beforeEach(() => {
+    updateSponsorContactRemoteMock.mockReset()
+  })
+
+  it('keeps the requested type when the patch response omits type fields', async () => {
+    updateSponsorContactRemoteMock.mockResolvedValue({
+      id: 'c-1',
+      name: '김후원',
+    })
+
+    const updated = await updateSponsorContact({
+      id: 'c-1',
+      name: '김후원',
+      department: '기획',
+      position: '매니저',
+      officePhone: '',
+      phone: '010',
+      email: '',
+      companyAddress: '',
+      memo: '',
+      registeredAt: '',
+      contactType: 'lead',
+    })
+
+    expect(updated.contactType).toBe('lead')
+    expect(updated.id).toBe('c-1')
   })
 })

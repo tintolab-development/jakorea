@@ -27,7 +27,12 @@ function pathId(id: string): number {
   return Number.isFinite(parsed) ? parsed : (id as unknown as number)
 }
 
-export async function fetchSponsorsRemote(params: SponsorsParams): Promise<SponsorResponse[]> {
+export async function fetchSponsorsRemote(
+  params: SponsorsParams & {
+    sponsorshipStartDateFrom?: string
+    sponsorshipStartDateTo?: string
+  }
+): Promise<SponsorResponse[]> {
   return unwrapApiBody(await dmApi.sponsors(params))
 }
 
@@ -36,18 +41,18 @@ export async function fetchSponsorRemote(id: string): Promise<SponsorDetailRespo
 }
 
 export async function createSponsorRemote(body: SponsorRequest): Promise<SponsorResponse> {
-  return unwrapApiBody(await dmApi.create3(body))
+  return unwrapApiBody(await dmApi.create4(body))
 }
 
 export async function updateSponsorRemote(
   id: string,
   body: SponsorRequest
 ): Promise<SponsorResponse> {
-  return unwrapApiBody(await dmApi.update2(pathId(id), body))
+  return unwrapApiBody(await dmApi.update3(pathId(id), body))
 }
 
 export async function deleteSponsorRemote(id: string): Promise<void> {
-  await dmApi.delete1(pathId(id))
+  await dmApi.delete2(pathId(id))
 }
 
 export async function bulkDeleteSponsorsRemote(ids: string[]): Promise<void> {
@@ -63,10 +68,38 @@ export async function endSponsorRemote(id: string): Promise<void> {
   await dmApi.end(pathId(id))
 }
 
+export type SponsorContactsQueryParams = {
+  department?: string
+  position?: string
+  name?: string
+}
+
+function unwrapSponsorContactList(payload: unknown): SponsorContactResponse[] {
+  const body = unwrapApiBody<
+    SponsorContactResponse[] | { content?: SponsorContactResponse[]; items?: SponsorContactResponse[] }
+  >(payload)
+  if (Array.isArray(body)) return body
+  if (body && typeof body === 'object') {
+    if (Array.isArray(body.content)) return body.content
+    if (Array.isArray(body.items)) return body.items
+  }
+  return []
+}
+
 export async function fetchSponsorContactsRemote(
-  sponsorId: string
+  sponsorId: string,
+  params?: SponsorContactsQueryParams
 ): Promise<SponsorContactResponse[]> {
-  return unwrapApiBody(await dmApi.contacts(pathId(sponsorId)))
+  const query = params
+    ? Object.fromEntries(
+        Object.entries(params).filter(([, value]) => value != null && String(value).trim() !== '')
+      )
+    : undefined
+  const payload = await dmApi.contacts(
+    pathId(sponsorId),
+    query && Object.keys(query).length > 0 ? { params: query } : undefined
+  )
+  return unwrapSponsorContactList(payload)
 }
 
 export async function addSponsorContactRemote(
@@ -122,7 +155,7 @@ export async function deleteYearlyBusinessRemote(yearlyBusinessId: string): Prom
 
 export async function fetchProgramHistoriesRemote(
   sponsorId: string,
-  params?: ProgramHistoriesParams
+  params?: ProgramHistoriesParams & { participantType?: string }
 ): Promise<PageResponseSponsorProgramHistoryResponse> {
   return unwrapApiBody(await dmApi.programHistories(pathId(sponsorId), params))
 }
