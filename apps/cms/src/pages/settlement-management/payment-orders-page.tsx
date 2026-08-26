@@ -31,13 +31,14 @@ export default function PaymentOrdersPage() {
     paymentOrdersRemote,
     remoteListQuery,
     remoteCalendarQuery,
+    listDateRangeReady,
   } = usePaymentOrdersListPage()
 
+  const listQueryLoading = !listDateRangeReady || remoteListQuery.isLoading
   const contentLoading =
     paymentOrdersRemote &&
-    ((viewMode === 'list' && remoteListQuery.isLoading) ||
-      (viewMode === 'calendar' &&
-        (remoteListQuery.isLoading || remoteCalendarQuery.isLoading)))
+    ((viewMode === 'list' && listQueryLoading) ||
+      (viewMode === 'calendar' && (listQueryLoading || remoteCalendarQuery.isLoading)))
 
   const contentError =
     paymentOrdersRemote &&

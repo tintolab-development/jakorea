@@ -5,6 +5,7 @@ import {
   getPaymentOrdersDefaultDateRangeParams,
   getPaymentOrdersMonthFilterRange,
   getPaymentOrdersOneMonthRangeFrom,
+  isPaymentOrdersListDateRangeReady,
   resolvePaymentOrdersCalendarFilterRange,
 } from './payment-orders-date-range'
 
@@ -55,5 +56,11 @@ describe('payment-orders-date-range', () => {
     const [from, to] = resolvePaymentOrdersCalendarFilterRange(null, dayjs('2025-11-20'))
     expect(from.format('YYYY-MM-DD')).toBe('2025-11-01')
     expect(to.format('YYYY-MM-DD')).toBe('2025-12-01')
+  })
+
+  it('출강일이 없거나 2025 시드면 목록 API를 아직 치지 않는다', () => {
+    expect(isPaymentOrdersListDateRangeReady(null, null)).toBe(false)
+    expect(isPaymentOrdersListDateRangeReady('2025-01-01', '2025-02-01')).toBe(false)
+    expect(isPaymentOrdersListDateRangeReady('2026-08-01', '2026-09-01')).toBe(true)
   })
 })

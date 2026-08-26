@@ -44,3 +44,20 @@ export function isSamePaymentOrdersDateRange(
   if (!a?.[0] || !a[1] || !b?.[0] || !b[1]) return false
   return a[0].isSame(b[0], 'day') && a[1].isSame(b[1], 'day')
 }
+
+/** 예전 시드 URL(2025) — 기본 기간으로 치환하기 전에는 목록 API를 치지 않는다. */
+export function isPaymentOrdersLegacyPlaceholderDateRange(
+  from: string | null,
+  to: string | null
+): boolean {
+  return Boolean(from && to && from.startsWith('2025-') && to.startsWith('2025-'))
+}
+
+/** 기본 출강일(또는 조회 기간)이 URL에 반영된 뒤에만 aggregates를 호출한다. */
+export function isPaymentOrdersListDateRangeReady(
+  from: string | null,
+  to: string | null
+): boolean {
+  if (!from || !to) return false
+  return !isPaymentOrdersLegacyPlaceholderDateRange(from, to)
+}

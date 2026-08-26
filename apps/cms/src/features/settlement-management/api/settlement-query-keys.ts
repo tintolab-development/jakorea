@@ -3,8 +3,8 @@ export const settlementQueryKeys = {
   paymentOrders: {
     all: () => [...settlementQueryKeys.all, 'paymentOrders'] as const,
     lists: () => [...settlementQueryKeys.paymentOrders.all(), 'list'] as const,
-    list: (searchParamsKey: string) =>
-      [...settlementQueryKeys.paymentOrders.lists(), searchParamsKey] as const,
+    list: (groupBy: 'program' | 'instructor', searchParamsKey: string) =>
+      [...settlementQueryKeys.paymentOrders.lists(), groupBy, searchParamsKey] as const,
     statements: () => [...settlementQueryKeys.paymentOrders.all(), 'statements'] as const,
     details: () => [...settlementQueryKeys.paymentOrders.all(), 'detail'] as const,
     detail: (type: 'program' | 'instructor', key: string, dateRangeKey = 'all') =>

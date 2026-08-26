@@ -30,6 +30,8 @@ import {
 } from '@/data/mock/payment-order-admin-list'
 import {
   getPaymentOrdersDefaultDateRangeParams,
+  isPaymentOrdersLegacyPlaceholderDateRange,
+  isPaymentOrdersListDateRangeReady,
   isSamePaymentOrdersDateRange,
   resolvePaymentOrdersCalendarFilterRange,
 } from './payment-orders-date-range'
@@ -122,7 +124,7 @@ export function usePaymentOrdersListPage() {
     const from = searchParams.get('po_from')
     const to = searchParams.get('po_to')
     const defaultRange = getPaymentOrdersDefaultDateRangeParams()
-    if (from && to && from.startsWith('2025-') && to.startsWith('2025-')) {
+    if (isPaymentOrdersLegacyPlaceholderDateRange(from, to)) {
       setSearchParams(
         prev => {
           const next = new URLSearchParams(prev)
@@ -162,7 +164,14 @@ export function usePaymentOrdersListPage() {
 
   const paymentOrdersRemote = shouldUseSettlementRemote('paymentOrders')
   const searchParamsKey = paymentOrdersListQuerySearchParamsKey(searchParams)
-  const remoteListQuery = usePaymentOrdersListQuery(searchParamsKey, paymentOrdersRemote)
+  const listDateRangeReady = isPaymentOrdersListDateRangeReady(
+    searchParams.get('po_from'),
+    searchParams.get('po_to')
+  )
+  const remoteListQuery = usePaymentOrdersListQuery(
+    searchParamsKey,
+    paymentOrdersRemote && listDateRangeReady
+  )
 
   const calendarRange = useMemo(
     () => calendarRangeFromFilter(appliedFromUrl.dateRange, dayjs()),
@@ -600,5 +609,6 @@ export function usePaymentOrdersListPage() {
     paymentOrdersRemote,
     remoteListQuery,
     remoteCalendarQuery,
+    listDateRangeReady,
   }
 }

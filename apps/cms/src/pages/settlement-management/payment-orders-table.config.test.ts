@@ -5,6 +5,7 @@ import {
   PAYMENT_ORDERS_DETAIL_TYPE_PARAM,
   PAYMENT_ORDERS_EXPOSURE_PARAM_KEY,
   parsePaymentOrdersFiltersFromUrl,
+  paymentOrdersListFilterQueryKey,
   paymentOrdersListQuerySearchParamsKey,
 } from './payment-orders-table.config'
 
@@ -36,6 +37,21 @@ describe('paymentOrdersListQuerySearchParamsKey', () => {
     )
     expect(paymentOrdersListQuerySearchParamsKey(params)).toBe(
       `${PAYMENT_ORDERS_EXPOSURE_PARAM_KEY}=program&po_from=2026-08-01&po_to=2026-08-31`
+    )
+  })
+
+  it('aggregates 캐시 키에서 노출 기준을 제외한다', () => {
+    const withProgram = new URLSearchParams(
+      `${PAYMENT_ORDERS_EXPOSURE_PARAM_KEY}=program&po_from=2026-08-01&po_to=2026-08-31`
+    )
+    const withInstructor = new URLSearchParams(
+      `${PAYMENT_ORDERS_EXPOSURE_PARAM_KEY}=instructor&po_from=2026-08-01&po_to=2026-08-31`
+    )
+    expect(paymentOrdersListFilterQueryKey(withProgram)).toBe(
+      paymentOrdersListFilterQueryKey(withInstructor)
+    )
+    expect(paymentOrdersListFilterQueryKey(withProgram)).toBe(
+      'po_from=2026-08-01&po_to=2026-08-31'
     )
   })
 })
