@@ -83,3 +83,15 @@
   font-weight: 500;
   line-height: 150%; /* 21px */
 }
+
+.payment-order-payment-reject__notify-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.payment-order-payment-reject__datetime-picker {
+  width: 100%;
+  max-width: 280px;
+}

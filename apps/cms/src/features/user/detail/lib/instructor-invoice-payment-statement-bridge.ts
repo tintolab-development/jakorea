@@ -19,6 +19,8 @@ function mapInstructorUiStatusToLineStatus(
   switch (status) {
     case 'payment_statement_verified':
       return 'confirmed'
+    case 'payment_statement_reapplication':
+      return 'reapplication'
     case 'account_paid':
       return 'rejected'
     case 'application_rejected':

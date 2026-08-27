@@ -15,6 +15,7 @@ export const PAYMENT_ORDER_LINE_STATUS_LABELS_FULL: Record<
   string
 > = {
   pending: '확인 대기 중',
+  reapplication: '지급조서 재신청',
   confirmed: '지급조서 확인 완료',
   correction: '지급 정정 요청',
   rejected: '계좌 지급 완료',

@@ -65,6 +65,10 @@ function paymentOrderStatusToInstructorUiStatus(
   switch (s) {
     case 'pending':
       return 'awaiting_confirmation'
+    case 'reapplication':
+      return 'payment_statement_reapplication'
+    case 'partial':
+      return 'partial_confirmation'
     case 'confirmed':
       return 'payment_statement_verified'
     case 'correction':
@@ -80,22 +84,7 @@ function paymentStatusShortLabelForCalendarPreview(
   s: PaymentOrderAdminProcessingStatus
 ): string {
   const uiStatus = paymentOrderStatusToInstructorUiStatus(s)
-  switch (uiStatus) {
-    case 'awaiting_confirmation':
-      return '확인 대기'
-    case 'partial_confirmation':
-      return '확인 중'
-    case 'payment_statement_verified':
-      return '확인 완료'
-    case 'account_paid':
-      return '계좌 지급'
-    case 'payment_correction_requested':
-      return '정정 요청'
-    case 'application_rejected':
-      return '신청 반려'
-    default:
-      return '확인 대기'
-  }
+  return paymentOrderStatusShortLabelFromUiStatus(uiStatus)
 }
 
 /** 지급조서 확인 캘린더 한정: 정정 요청은 핑크 대신 빨간 톤 */
@@ -110,12 +99,14 @@ function paymentOrderStatusShortLabelFromUiStatus(status: InstructorSettlementUi
   switch (status) {
     case 'awaiting_confirmation':
       return '확인 대기'
+    case 'payment_statement_reapplication':
+      return '재신청'
     case 'partial_confirmation':
-      return '확인 중'
+      return '일부 확인'
     case 'payment_statement_verified':
       return '확인 완료'
     case 'account_paid':
-      return '계좌 지급'
+      return '확인 완료'
     case 'payment_correction_requested':
       return '정정 요청'
     case 'application_rejected':

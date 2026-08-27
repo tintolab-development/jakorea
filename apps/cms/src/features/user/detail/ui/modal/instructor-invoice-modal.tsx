@@ -14,10 +14,13 @@ import { buildPaymentOrderStatementFromInstructorInvoice } from '@/features/user
 import {
   downloadPaymentStatementRemote,
   fetchSettlementDetailRemote,
-  rejectPaymentStatementRemote,
   resolvePaymentStatementIdForSettlement,
 } from '@/features/settlement-management/api/settlement-api-client'
-import { useConfirmPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
+import {
+  useConfirmPaymentStatementMutation,
+  useRejectPaymentStatementMutation,
+} from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
+import type { PaymentOrderRejectSubmitPayload } from '@/features/settlement/lib/payment-order-reject-notification'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import {
   mapSettlementDetailToInstructorInvoice,
@@ -41,6 +44,7 @@ export function InstructorInvoiceModal({
   onSettlementUpdated,
 }: InstructorInvoiceModalProps) {
   const confirmMutation = useConfirmPaymentStatementMutation()
+  const rejectMutation = useRejectPaymentStatementMutation()
   const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false)
   const [paymentConfirmDoneOpen, setPaymentConfirmDoneOpen] = useState(false)
   const [paymentRejectOpen, setPaymentRejectOpen] = useState(false)
@@ -138,16 +142,21 @@ export function InstructorInvoiceModal({
     }
   }
 
-  const handleRemoteReject = async (reason: string) => {
+  const handleRemoteReject = async (payload: PaymentOrderRejectSubmitPayload) => {
     const statementId = statementIdQuery.data
     if (statementId == null) {
       window.alert('지급조서 반려 API에 필요한 statementId가 없습니다.')
       return
     }
     try {
-      await rejectPaymentStatementRemote(statementId, { reason })
+      await rejectMutation.mutateAsync({
+        statementId,
+        reason: payload.reason,
+        notificationType: payload.notificationType,
+        scheduledNotificationAt: payload.scheduledNotificationAt,
+      })
       setPaymentRejectOpen(false)
-      setPaymentRejectReason(reason)
+      setPaymentRejectReason(payload.reason)
       setPaymentRejectDoneOpen(true)
       onSettlementUpdated?.()
     } catch (error) {
@@ -380,8 +389,9 @@ export function InstructorInvoiceModal({
       <PaymentOrderPaymentRejectionModal
         open={paymentRejectOpen}
         onCancel={() => setPaymentRejectOpen(false)}
-        onReject={reason => void handleRemoteReject(reason)}
+        onReject={payload => void handleRemoteReject(payload)}
         data={statementData}
+        confirmLoading={rejectMutation.isPending}
       />
       <PaymentOrderPaymentRejectionResultModal
         open={paymentRejectDoneOpen}

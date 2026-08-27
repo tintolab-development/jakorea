@@ -50,6 +50,7 @@ import { DsDemo, DsSection } from './section'
 
 const PAYMENT_ORDER_LINE_SAMPLES: PaymentOrderAdminLineProcessingStatus[] = [
   'pending',
+  'reapplication',
   'confirmed',
   'correction',
   'rejected',

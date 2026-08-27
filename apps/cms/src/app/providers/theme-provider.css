@@ -339,6 +339,8 @@
    */
   --color-payment-order-line-pending-text: var(--color-green);
   --color-payment-order-line-pending-bg: var(--color-bg-green);
+  --color-payment-order-line-reapplication-text: #c45c00;
+  --color-payment-order-line-reapplication-bg: rgba(196, 92, 0, 0.06);
   --color-payment-order-line-confirmed-text: var(--color-blue);
   --color-payment-order-line-confirmed-bg: #e6f2f7;
   --color-payment-order-line-correction-text: var(--color-red);
