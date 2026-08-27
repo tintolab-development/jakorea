@@ -22,9 +22,9 @@ import {
 import { toApiSignupPhone } from '../lib/helpers/to-api-phone'
 import { buildConfirmationRows, formatBirthDateInput } from '../lib/utils'
 import {
-  agreementItems,
   createInitialAgreementState,
   getAgreementDerived,
+  getAgreementItems,
   toggleAgreementState,
   toggleAllAgreementState,
 } from '../lib/agreement/agreement.logic'
@@ -226,7 +226,8 @@ export function useSignUp() {
     enabled: Boolean(selectedType && birthDateIso),
   })
 
-  const agreementDerived = getAgreementDerived(agreements)
+  const visibleAgreementItems = getAgreementItems(selectedType)
+  const agreementDerived = getAgreementDerived(agreements, visibleAgreementItems)
   const guardianAgreementDerived = getGuardianAgreementDerived(guardianAgreements)
   const passwordDerived = getPasswordDerived(password, passwordConfirm)
   const isStepTwoValid = isBirthStepValid(birthDate, gender)
@@ -354,7 +355,7 @@ export function useSignUp() {
   }
 
   const toggleAllAgreements = () => {
-    setAgreements(prev => toggleAllAgreementState(prev))
+    setAgreements(prev => toggleAllAgreementState(prev, visibleAgreementItems))
   }
 
   const toggleGuardianAgreement = (key: GuardianAgreementKey) => {
@@ -729,7 +730,7 @@ export function useSignUp() {
       },
     },
     agreement: {
-      items: agreementItems,
+      items: visibleAgreementItems,
       state: agreements,
       isAllAgreed: agreementDerived.isAllAgreed,
       isRequiredAgreed: agreementDerived.isRequiredAgreed,

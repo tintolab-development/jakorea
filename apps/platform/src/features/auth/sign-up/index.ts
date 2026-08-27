@@ -17,6 +17,7 @@ export type {
 export type { SignUpConsentFieldKey, SignUpConsentState } from './model/consent.types'
 export {
   agreementItems,
+  getAgreementItems,
   memberTypeOptions,
   MOCK_DUPLICATE_EMAIL,
   MOCK_VERIFIED_NAME,
