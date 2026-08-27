@@ -59,13 +59,10 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
             <tbody>
               <tr>
                 <td
-                  rowSpan={2}
-                  className="teacher-detail-modal__cell--label teacher-detail-modal__cell--name"
+                  colSpan={2}
+                  className="teacher-detail-modal__cell--label teacher-detail-modal__cell--row-label"
                 >
                   <span>성명</span>
-                </td>
-                <td className="teacher-detail-modal__cell--label teacher-detail-modal__cell--name-sub">
-                  <span>한글</span>
                 </td>
                 <td className="teacher-detail-modal__cell--input">
                   {detail.name}
@@ -82,16 +79,13 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
               </tr>
 
               <tr>
-                <td className="teacher-detail-modal__cell--label teacher-detail-modal__cell--name-sub">
-                  <span>영문</span>
-                </td>
-                <td className="teacher-detail-modal__cell--input teacher-detail-modal__name-eng">
-                  {detail.nameEn}
-                </td>
-                <td className="teacher-detail-modal__cell--label teacher-detail-modal__cell--label-right">
+                <td
+                  colSpan={2}
+                  className="teacher-detail-modal__cell--label teacher-detail-modal__cell--row-label"
+                >
                   <span>성별 및 병역사항</span>
                 </td>
-                <td className="teacher-detail-modal__cell--input">
+                <td colSpan={3} className="teacher-detail-modal__cell--input">
                   {inlineSegmentsWithDividers([detail.gender, detail.militaryStatus])}
                 </td>
               </tr>
