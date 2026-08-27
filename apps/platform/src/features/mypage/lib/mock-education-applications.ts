@@ -199,6 +199,7 @@ export function getMockEducationApplicationById(
  * @returns 제거 성공 여부
  */
 export function cancelMockEducationApplication(applicationId: string): boolean {
+  if (!shouldUsePlatformMockData()) return false
   const index = MOCK_EDUCATION_APPLICATIONS.findIndex(item => item.id === applicationId)
   if (index < 0) {
     return false
