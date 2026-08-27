@@ -194,23 +194,12 @@ export function AccountPaymentStatusDetailFullPageModal({
               title="기본 정보"
               className="account-payment-status-detail-fullpage-modal__detail-form-card"
             >
+              <DetailInfoForm.Row type="double">
+                <DetailInfoForm.Field label="성명" view={<span>{basic.nameKo}</span>} />
+                <DetailInfoForm.Field label="연락처" view={<span>{basic.phoneDisplay}</span>} />
+              </DetailInfoForm.Row>
               <DetailInfoForm.Row type="single">
-                <DetailInfoForm.NameBlock
-                  rows={[
-                    {
-                      subLabel: '한글',
-                      main: <span>{basic.nameKo}</span>,
-                      sideLabel: '연락처',
-                      side: <span>{basic.phoneDisplay}</span>,
-                    },
-                    {
-                      subLabel: '영문',
-                      main: <span>{basic.nameEn}</span>,
-                      sideLabel: '이메일',
-                      side: <span>{basic.emailDisplay}</span>,
-                    },
-                  ]}
-                />
+                <DetailInfoForm.Field label="이메일" view={<span>{basic.emailDisplay}</span>} />
               </DetailInfoForm.Row>
               <DetailInfoForm.Row type="double">
                 <DetailInfoForm.Field

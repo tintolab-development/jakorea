@@ -32,6 +32,8 @@ export function mapAccountPaymentListItemToRow(
     bankName: item.bankName,
     maskedAccountNo: item.maskedAccountNo,
     accountHolder: item.accountHolder,
+    /** 계좌 지급 memberId — 지급조서 instructorMemberId와 다를 수 있음(시안 카탈로그 분리). 이름 merge 금지 */
+    instructorMemberId: item.memberId,
     // 목록 API는 지급조서 CONFIRMED 건만 반환
     paymentOrderStatus: 'confirmed',
   }

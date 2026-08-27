@@ -36,6 +36,11 @@ export interface AccountPaymentRow {
   /** API accountPaymentId */
   accountPaymentId?: number
   settlementId?: number
+  /**
+   * API `memberId`. 지급조서 시안의 `instructorMemberId`와 숫자가 다를 수 있다
+   * (박틴토 170201 vs 169202). 한글명으로 두 화면 행을 merge하지 말 것.
+   */
+  instructorMemberId?: number
   no: number
   instructorName: string
   programName: string

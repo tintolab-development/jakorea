@@ -7,6 +7,7 @@ describe('mapAccountPaymentListItemToRow', () => {
     const payment: AccountPaymentListItemResponse = {
       accountPaymentId: 11,
       settlementId: 1001,
+      memberId: 169202,
       instructorName: '홍길동',
       netPaymentAmount: 915000,
       paymentStatus: 'WAITING_PAYMENT',
@@ -20,6 +21,8 @@ describe('mapAccountPaymentListItemToRow', () => {
     const row = mapAccountPaymentListItemToRow(payment, 0)
 
     expect(row.id).toBe('11')
+    expect(row.settlementId).toBe(1001)
+    expect(row.instructorMemberId).toBe(169202)
     expect(row.instructorName).toBe('홍길동')
     expect(row.programName).toBe('JA 경제교실')
     expect(row.institutionName).toBe('○○초등학교')
