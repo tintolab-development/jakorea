@@ -58,7 +58,7 @@ export function formatLectureSessionLabel(sessionOrdinal?: number): string {
 }
 
 export function formatWonAmountDisplay(amount?: number | null): string {
-  if (amount == null) return '—'
+  if (amount == null) return '-'
   return `${amount.toLocaleString('ko-KR')}원`
 }
 
@@ -81,7 +81,7 @@ export function formatProgramSessionProgressDisplay(input: {
   if (input.sessionCompleted != null && input.sessionTotal != null) {
     return `${input.sessionCompleted} / ${input.sessionTotal}`
   }
-  return '—'
+  return '-'
 }
 
 export function pickProgramSessionProgressFromListItems(
@@ -140,12 +140,12 @@ export function formatBusinessPeriodDisplay(input: {
   if (input.businessPeriodStart && input.businessPeriodEnd) {
     return `${input.formatDate(input.businessPeriodStart)} ~ ${input.formatDate(input.businessPeriodEnd)}`
   }
-  return '—'
+  return '-'
 }
 
 export function formatLectureFeeStandardTitle(title?: string): string {
   const trimmed = title?.trim()
-  return trimmed || '—'
+  return trimmed || '-'
 }
 
 export function formatBusinessIncomeEarnerLabel(label?: string): string {

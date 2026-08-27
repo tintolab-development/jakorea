@@ -1,52 +1,44 @@
 import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
 import type { AccountPaymentListItemResponse } from '@/shared/api/generated/settlement/schemas'
 import { mapPaymentStatusToAccountPaymentStatus } from '@/features/settlement-management/api/shared/settlement-status-mappers'
-import {
-  formatLectureSessionLabel,
-  type SettlementByIdMap,
-} from '@/features/settlement-management/api/account-payments/map-settlement-context'
+import { formatLectureSessionLabel } from '@/features/settlement-management/api/shared/map-frontend-fields'
 
-/** OpenAPI 목록 DTO에 아직 없는 필드 — 백엔드가 내려주면 정산 목록 join 없이 사용 */
-type AccountPaymentListItemExtras = AccountPaymentListItemResponse & {
-  programNameKo?: string
-  programName?: string
-  institutionName?: string
-  sessionOrdinal?: number
-  lectureDate?: string
+function resolveSessionLabel(item: AccountPaymentListItemResponse): string {
+  const label = item.sessionLabel?.trim()
+  if (label) return label
+  if (item.sessionOrdinal != null) return formatLectureSessionLabel(item.sessionOrdinal)
+  return '-'
 }
 
 export function mapAccountPaymentListItemToRow(
   item: AccountPaymentListItemResponse,
-  index: number,
-  settlementById?: SettlementByIdMap
+  index: number
 ): AccountPaymentRow {
   const paymentId = item.accountPaymentId
-  const extra = item as AccountPaymentListItemExtras
-  const settlement = item.settlementId != null ? settlementById?.get(item.settlementId) : undefined
 
   return {
     id: paymentId != null ? String(paymentId) : `ap-${index}`,
     accountPaymentId: paymentId,
     settlementId: item.settlementId,
     no: index + 1,
-    instructorName: item.instructorName ?? settlement?.instructorName ?? '-',
-    programName: extra.programNameKo ?? extra.programName ?? settlement?.programNameKo ?? '-',
-    institutionName: extra.institutionName?.trim() || settlement?.institutionName?.trim() || '-',
-    sessionLabel: formatLectureSessionLabel(extra.sessionOrdinal ?? settlement?.sessionOrdinal),
+    instructorName: item.instructorName?.trim() || '-',
+    programName: item.programNameKo?.trim() || item.programName?.trim() || '-',
+    institutionName: item.institutionName?.trim() || '-',
+    sessionLabel: resolveSessionLabel(item),
     accountPaymentStatus: mapPaymentStatusToAccountPaymentStatus(item.paymentStatus),
     amount: item.netPaymentAmount ?? 0,
-    lectureDate: extra.lectureDate ?? settlement?.lectureDate,
+    lectureDate: item.lectureDate ?? undefined,
     transferScheduledDate: item.scheduledPaymentDate ?? '',
     bankName: item.bankName,
     maskedAccountNo: item.maskedAccountNo,
     accountHolder: item.accountHolder,
+    // 목록 API는 지급조서 CONFIRMED 건만 반환
     paymentOrderStatus: 'confirmed',
   }
 }
 
 export function mapAccountPaymentListToRows(
-  items: AccountPaymentListItemResponse[],
-  settlementById?: SettlementByIdMap
+  items: AccountPaymentListItemResponse[]
 ): AccountPaymentRow[] {
-  return items.map((item, index) => mapAccountPaymentListItemToRow(item, index, settlementById))
+  return items.map((item, index) => mapAccountPaymentListItemToRow(item, index))
 }

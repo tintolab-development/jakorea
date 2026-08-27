@@ -253,7 +253,8 @@ export async function fetchAllPaymentStatementsRemote(): Promise<
 export async function fetchAllAccountPaymentsRemote(
   params: Omit<ListAccountPaymentsParams, 'page' | 'size'> = {}
 ): Promise<NonNullable<PageResponseAccountPaymentListItemResponse['items']>> {
-  const pageSize = 50
+  /** 시드 ≥32 · 테이블 전량 로드 UX — 왕복 축소 (잘림 방지를 위해 페이지 루프 유지) */
+  const pageSize = 100
   let page = 0
   const items: NonNullable<PageResponseAccountPaymentListItemResponse['items']> = []
 

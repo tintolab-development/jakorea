@@ -51,6 +51,8 @@ export function mapPaymentStatusToAccountPaymentStatus(
       return 'payment_correction_requested'
     case 'CONFIRMED':
       return 'partial_confirmation'
+    /** BE canonical 대기값. REQUESTED는 대기 버킷 alias(지급조서 REQUESTED와 이름 겹침 — 위장 매핑 금지, 동일 UI만) */
+    case 'WAITING_PAYMENT':
     case 'FAILED':
     case 'REQUESTED':
     default:
