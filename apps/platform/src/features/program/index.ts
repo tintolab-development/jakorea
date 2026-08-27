@@ -60,16 +60,14 @@ export {
   resolvePlatformCategory,
 } from './lib/map-from-cms'
 export {
-  CASE_INSTRUCTOR_FIXTURE,
-  CASE_VOLUNTEER_FIXTURE,
   CMS_PLATFORM_PROGRAM_FIXTURES,
-  DETAIL_CASE_FIXTURES,
   ECONOMY_REGISTRATION_FIXTURE,
   ECONOMY_REGISTRATION_FIXTURES,
   GENERAL_REGISTRATION_FIXTURES,
   GEMINI_RECRUITMENT_FIXTURES,
   TRAINED_TEACHERS_REGISTRATION_FIXTURES,
   UJAT_PARTICIPANT_FIXTURE,
+  UJAT_REGISTRATION_FIXTURES,
   UJAT_VOLUNTEER_FIXTURE,
   getCmsRegistrationFixtureById,
   getCmsRegistrationFixturesByCase,
@@ -99,6 +97,7 @@ export {
   educationTargetBadgeIconUrl,
 } from './lib/badge-config'
 export { ProgramBackButton } from './ui/back-button'
+export { ProgramInfoBody, ProgramInfoAside } from './ui/program-info-body'
 export { ProgramListItemRow } from './ui/list-item'
 export { ProgramSort } from './ui/program-sort'
 export { ProgramStatusBadges } from './ui/program-status-badges'

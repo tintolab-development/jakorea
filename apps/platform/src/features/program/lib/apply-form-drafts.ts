@@ -8,6 +8,7 @@
  */
 
 import { createGeminiVisitingTrainingApplicationFormInstitutionDraft } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-institution-draft'
+import { createGeminiVisitingTrainingApplicationFormInstructorDraft } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-instructor-draft'
 import { createProgramApplicationFormEconomyDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
 import {
   createProgramParticipantApplicationDraft,
@@ -61,6 +62,8 @@ function createSeedDraftForApplyCase(applyCase: ProgramApplyFormCase): WritingFo
       return createGeminiVisitingTrainingApplicationFormInstitutionDraft()
     case 'instructor':
       return createProgramApplicationFormInstructorDraft()
+    case 'instructor-gemini':
+      return createGeminiVisitingTrainingApplicationFormInstructorDraft()
     default: {
       const _exhaustive: never = applyCase
       return _exhaustive

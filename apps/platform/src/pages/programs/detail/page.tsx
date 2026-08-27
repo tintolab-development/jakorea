@@ -1,37 +1,18 @@
 import {
   getProgramIdFromPath,
   ProgramBackButton,
+  ProgramInfoBody,
   ProgramStatusBadges,
   programApplyPath,
   programApplyRequiredPath,
   PROGRAMS_PATH,
   useMockProgramById,
 } from '@/features/program'
-import arrowRightWhite16Url from '@/shared/assets/icons/arrow-right-white-16.svg'
 import { getDevAuthLoggedIn } from '@/shared/lib'
-import { PFButton, PFFileDownload, PFText } from '@/shared/ui'
+import { PFButton, PFText } from '@/shared/ui'
+import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
 import { useNavigate } from 'react-router-dom'
-
-/** CMS user-preview `user-page__top-fab` 아이콘과 동일 */
-function TopFabIcon() {
-  return (
-    <svg
-      className={styles.topFabIcon}
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      aria-hidden
-    >
-      <path
-        d="M9 3.825L9 16L7 16L7 3.825L1.4 9.425L-3.49691e-07 8L8 -3.49691e-07L16 8L14.6 9.425L9 3.825Z"
-        fill="white"
-      />
-    </svg>
-  )
-}
 
 export function ProgramDetailPage() {
   const navigate = useNavigate()
@@ -46,23 +27,20 @@ export function ProgramDetailPage() {
 
   if (!program) {
     return (
-      <section className={styles.page}>
-        <PFText as="p" typo="hd-md" color="black">
-          프로그램을 찾을 수 없어요
-        </PFText>
-        <PFButton variant="secondary" onClick={() => navigate(PROGRAMS_PATH)}>
-          목록으로
-        </PFButton>
+      <section className={[shell.page, styles.page].join(' ')}>
+        <div className={shell.inner}>
+          <PFText as="p" typo="hd-md" color="black">
+            프로그램을 찾을 수 없어요
+          </PFText>
+          <PFButton variant="secondary" onClick={() => navigate(PROGRAMS_PATH)}>
+            목록으로
+          </PFButton>
+        </div>
       </section>
     )
   }
 
   const handleBackToList = () => {
-    // 기획: 목록으로 = 뒤로가기. history 없으면 from 또는 /programs
-    if (window.history.length > 1) {
-      window.history.back()
-      return
-    }
     navigate(fromPath ?? PROGRAMS_PATH)
   }
 
@@ -76,279 +54,57 @@ export function ProgramDetailPage() {
     navigate(applyPath)
   }
 
-  const handleScrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  /** 상세는 고해상 우선, 없으면 목록용 썸네일 폴백 */
-  const detailBannerUrl =
-    program.detailImageUrl?.trim() || program.thumbnailUrl?.trim() || ''
-  const hasDetailImage = Boolean(detailBannerUrl)
-
   return (
-    <section className={styles.page}>
-      <div className={styles.back}>
-        <ProgramBackButton label="목록으로" onClick={handleBackToList} />
-      </div>
+    <section className={[shell.page, styles.page].join(' ')}>
+      <div className={shell.inner}>
+        <div className={styles.back}>
+          <ProgramBackButton label="목록으로" onClick={handleBackToList} />
+        </div>
 
-      <div className={styles.body}>
-        <article className={styles.detail}>
-          <header className={styles.header}>
-            <div className={styles.headerMain}>
-              <PFText as="span" typo="hl-sm" color="black">
-                {program.categoryLabel}
-              </PFText>
-              <PFText as="h1" typo="page-title" color="black" className={styles.title}>
-                {program.title}
-              </PFText>
-              <div className={styles.meta}>
-                <div className={styles.metaItem}>
-                  <PFText as="span" typo="bd-lg-rg" color="neutral-cool-600">
-                    프로그램 운영 기간
-                  </PFText>
-                  <PFText as="span" typo="hl-sm" color="black">
-                    {program.operatingPeriodLabel}
-                  </PFText>
-                </div>
-                <div className={styles.metaItem}>
-                  <PFText as="span" typo="bd-lg-rg" color="neutral-cool-600">
-                    후원사
-                  </PFText>
-                  <PFText as="span" typo="hl-sm" color="black">
-                    {program.sponsor}
-                  </PFText>
-                </div>
-              </div>
-            </div>
-            <div className={styles.badges}>
-              <ProgramStatusBadges
-                recruitmentStatus={program.recruitmentStatus}
-                educationTargetLabel={program.educationTargetLabel}
-                educationForm={program.educationForm}
-                educationFormLabel={program.educationFormLabel}
-                recruitmentRoleLabel={program.recruitmentRoleLabel}
-              />
-            </div>
-          </header>
-
-          {program.summary.trim() ? (
-            <div className={styles.summary}>
-              <PFText as="p" typo="bd-lg-rg" color="black" className={styles.summaryText}>
-                {program.summary}
-              </PFText>
-            </div>
-          ) : null}
-
-          <section className={styles.basicInfo}>
-            <PFText as="h2" typo="hl-sm" color="black">
-              기본정보
-            </PFText>
-            <div className={styles.infoFields}>
-              {(program.basicInfoFields.length > 0
-                ? program.basicInfoFields
-                : [
-                    { label: '사업 분야', value: program.businessFieldLabel },
-                    { label: '교육 형태', value: program.educationFormLabel },
-                    { label: '교육 대상', value: program.educationTargetGroupLabel },
-                    {
-                      label: '교육 대상 상세',
-                      value: program.educationTargetDetailLabel,
-                    },
-                    { label: '교육 장소', value: program.educationVenueLabel },
-                  ]
-              ).map(field => (
-                <div key={field.label} className={styles.infoItem}>
-                  <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
-                    {field.label}
-                  </PFText>
-                  <PFText as="span" typo="bd-md-md" color="black">
-                    {field.value}
-                  </PFText>
-                </div>
-              ))}
-            </div>
-            {program.sessions.length > 0 ? (
-              <ul className={styles.sessions}>
-                {program.sessions.map(session => (
-                  <li key={`${session.sessionLabel}-${session.title}`} className={styles.session}>
-                    <PFText as="p" typo="bd-md-sb" color="black" className={styles.sessionTitle}>
-                      <span className={styles.sessionLabel}>{session.sessionLabel}</span>{' '}
-                      {session.title}
+        <ProgramInfoBody
+          program={program}
+          showApplyCta
+          onApply={handleApply}
+          header={
+            <header className={styles.header}>
+              <div className={styles.headerMain}>
+                <PFText as="span" typo="hl-sm" color="black">
+                  {program.categoryLabel}
+                </PFText>
+                <PFText as="h1" typo="page-title" color="black" className={styles.title}>
+                  {program.title}
+                </PFText>
+                <div className={styles.meta}>
+                  <div className={styles.metaItem}>
+                    <PFText as="span" typo="bd-lg-rg" color="neutral-cool-600">
+                      프로그램 운영 기간
                     </PFText>
-                    {session.dateLabel ? (
-                      <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
-                        {session.dateLabel}
-                      </PFText>
-                    ) : null}
-                    <PFText as="p" typo="bd-md-rg" color="black">
-                      {session.description}
+                    <PFText as="span" typo="hl-sm" color="black">
+                      {program.operatingPeriodLabel}
                     </PFText>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            {program.eventSchedules.length > 0 ? (
-              <ul className={styles.sessions} aria-label="행사·세부 일정">
-                {program.eventSchedules.map(event => (
-                  <li
-                    key={`${event.scheduleLabel}-${event.name}-${event.dateLabel}`}
-                    className={styles.session}
-                  >
-                    <PFText as="p" typo="bd-md-sb" color="black" className={styles.sessionTitle}>
-                      <span className={styles.sessionLabel}>{event.scheduleLabel}</span>
-                      {event.name ? ` ${event.name}` : ''}
+                  </div>
+                  <div className={styles.metaItem}>
+                    <PFText as="span" typo="bd-lg-rg" color="neutral-cool-600">
+                      후원사
                     </PFText>
-                    {event.dateLabel && event.dateLabel !== '-' ? (
-                      <PFText as="p" typo="bd-md-rg" color="black">
-                        {event.dateLabel}
-                      </PFText>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </section>
-
-          <section className={styles.detailContent}>
-            <PFText as="h2" typo="hl-sm" color="black">
-              세부내용
-            </PFText>
-
-            <div className={styles.detailContentBody}>
-              {program.recruitmentPhases.length > 0 ? (
-                <div className={styles.recruitmentCard}>
-                  <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
-                    {program.recruitmentPhaseGroupLabel}
-                  </PFText>
-                  <div className={styles.recruitmentList}>
-                    {program.recruitmentPhases.map(phase => (
-                      <div key={phase.label} className={styles.infoBlock}>
-                        <PFText as="span" typo="bd-md-sb" color="black">
-                          {phase.label}
-                        </PFText>
-                        <PFText as="span" typo="bd-md-md" color="black">
-                          {phase.value}
-                        </PFText>
-                      </div>
-                    ))}
+                    <PFText as="span" typo="hl-sm" color="black">
+                      {program.sponsor}
+                    </PFText>
                   </div>
                 </div>
-              ) : null}
-
-              {program.educationSchedules.length > 0 ? (
-                <div className={styles.schedules}>
-                  {program.educationSchedules.map(schedule => (
-                    <div key={schedule.label} className={styles.scheduleCard}>
-                      <PFText as="span" typo="bd-md-sb" color="black">
-                        {schedule.label}
-                      </PFText>
-                      <PFText as="span" typo="bd-md-md" color="black">
-                        {schedule.value}
-                      </PFText>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-
-              {program.extraSections.length > 0 ? (
-                <div className={styles.extraSections}>
-                  {program.extraSections.map(section => (
-                    <section key={section.title} className={styles.extraSection}>
-                      <PFText as="h3" typo="bd-sm-rg" color="neutral-cool-600">
-                        {section.title}
-                      </PFText>
-                      <PFText as="p" typo="bd-md-md" color="black" className={styles.extraSectionBody}>
-                        {section.body}
-                      </PFText>
-                    </section>
-                  ))}
-                </div>
-              ) : null}
-
-              {program.contactValue.trim() ? (
-                <div className={styles.contact}>
-                  <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
-                    문의처
-                  </PFText>
-                  <PFText as="span" typo="bd-md-md" color="black">
-                    {program.contactValue}
-                  </PFText>
-                </div>
-              ) : null}
-
-              {program.applicationMethodValue.trim() ? (
-                <div className={styles.applicationMethod}>
-                  <PFText as="span" typo="bd-md-md" color="neutral-cool-600">
-                    {program.applicationMethodLabel}
-                  </PFText>
-                  <PFText as="span" typo="bd-lg-sb" color="black">
-                    {program.applicationMethodValue}
-                  </PFText>
-                </div>
-              ) : null}
-            </div>
-          </section>
-        </article>
-
-        <aside className={styles.media}>
-          <div
-            className={[
-              styles.banner,
-              hasDetailImage ? styles.bannerHasImage : styles.bannerNoImage,
-            ].join(' ')}
-          >
-            {hasDetailImage ? (
-              <img className={styles.bannerImage} src={detailBannerUrl} alt="" />
-            ) : null}
-          </div>
-
-          <button
-            type="button"
-            className={styles.applyButton}
-            disabled={!program.isRecruiting}
-            onClick={handleApply}
-          >
-            <span className={styles.applyCopy}>
-              <PFText as="span" typo="bd-lg-sb" color="white">
-                신청하기
-              </PFText>
-              <PFText as="span" typo="bd-sm-rg" color="white">
-                {program.applicationPeriodLabel}
-              </PFText>
-            </span>
-            <img
-              className={styles.applyArrow}
-              src={arrowRightWhite16Url}
-              alt=""
-              width={16}
-              height={16}
-            />
-          </button>
-
-          {program.attachments.length > 0 ? (
-            <ul className={styles.attachments}>
-              {program.attachments.map(attachment => (
-                <li key={attachment.name}>
-                  <PFFileDownload fileName={attachment.name} href={attachment.url} />
-                </li>
-              ))}
-            </ul>
-          ) : null}
-
-          {/*
-            Figma: 첨부·신청 블록 하단 기준
-            · 세로 gap 22px
-            · 컨테이너 우단 → FAB 우단 61px
-          */}
-          <button
-            type="button"
-            className={styles.topFab}
-            aria-label="Top"
-            onClick={handleScrollToTop}
-          >
-            <TopFabIcon />
-          </button>
-        </aside>
+              </div>
+              <div className={styles.badges}>
+                <ProgramStatusBadges
+                  recruitmentStatus={program.recruitmentStatus}
+                  educationTargetLabel={program.educationTargetLabel}
+                  educationForm={program.educationForm}
+                  educationFormLabel={program.educationFormLabel}
+                  recruitmentRoleLabel={program.recruitmentRoleLabel}
+                />
+              </div>
+            </header>
+          }
+        />
       </div>
     </section>
   )

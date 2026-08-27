@@ -1,13 +1,10 @@
 /**
- * map-from-cms 매퍼 · CMS 4유형 + 상세 케이스 시드 정합 검증.
+ * map-from-cms 매퍼 · CMS 등록 케이스 시드 정합 검증.
  */
 
 import assert from 'node:assert/strict'
 import {
-  CASE_INSTRUCTOR_FIXTURE,
-  CASE_VOLUNTEER_FIXTURE,
   CMS_PLATFORM_PROGRAM_FIXTURES,
-  DETAIL_CASE_FIXTURES,
   ECONOMY_REGISTRATION_FIXTURE,
   ECONOMY_REGISTRATION_FIXTURES,
   GENERAL_REGISTRATION_FIXTURES,
@@ -36,34 +33,32 @@ const RECRUITMENT_STATUS = {
 
 const EXPECTED_GENERAL_CASES: CmsRegistrationCaseKind[] = [
   'general-org-curriculum-single',
+  'general-org-curriculum-single-participant-choice',
   'general-org-curriculum-multi',
-  'general-ind-curriculum-single',
-  'general-ind-curriculum-multi',
+  'general-org-curriculum-multi-participant-choice',
   'general-org-schedule-single',
+  'general-org-schedule-single-participant-choice',
   'general-org-schedule-multi',
+  'general-org-schedule-multi-participant-choice',
+  'general-ind-curriculum-single',
+  'general-ind-curriculum-single-team',
+  'general-ind-curriculum-multi-individual',
+  'general-ind-curriculum-multi',
   'general-ind-schedule-single',
+  'general-ind-schedule-single-team',
   'general-ind-schedule-multi',
+  'general-ind-schedule-multi-team',
 ]
 
 function testCountsAndKinds() {
-  assert.equal(GENERAL_REGISTRATION_FIXTURES.length, 8)
-  assert.equal(ECONOMY_REGISTRATION_FIXTURES.length, 8)
+  assert.equal(GENERAL_REGISTRATION_FIXTURES.length, 16)
+  assert.equal(ECONOMY_REGISTRATION_FIXTURES.length, 2)
   assert.equal(TRAINED_TEACHERS_REGISTRATION_FIXTURES.length, 8)
-  assert.equal(GEMINI_RECRUITMENT_FIXTURES.length, 3)
-  assert.equal(DETAIL_CASE_FIXTURES.length, 4)
-  assert.equal(CMS_PLATFORM_PROGRAM_FIXTURES.length, 31)
+  assert.equal(GEMINI_RECRUITMENT_FIXTURES.length, 2)
+  assert.equal(CMS_PLATFORM_PROGRAM_FIXTURES.length, 30)
   assert.deepEqual(
     GENERAL_REGISTRATION_FIXTURES.map(f => f.registrationCase),
     EXPECTED_GENERAL_CASES
-  )
-  assert.deepEqual(
-    DETAIL_CASE_FIXTURES.map(f => f.id),
-    [
-      PROGRAM_DETAIL_CASE_SSOT_IDS.instructor,
-      PROGRAM_DETAIL_CASE_SSOT_IDS.volunteer,
-      PROGRAM_DETAIL_CASE_SSOT_IDS.ujatVolunteer,
-      PROGRAM_DETAIL_CASE_SSOT_IDS.ujatParticipant,
-    ]
   )
 }
 
@@ -105,8 +100,18 @@ function testPlatformCategoryMapping() {
       registrationKind: 'gemini',
       generalProgramAudience: 'organization',
       generalParticipantTypes: ['school_institution'],
+      category: 'school',
     }),
     'institution'
+  )
+  assert.equal(
+    resolvePlatformCategory({
+      registrationKind: 'gemini',
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['teacher_instructor'],
+      category: 'instructor',
+    }),
+    'instructor'
   )
   assert.equal(
     resolvePlatformCategory({
@@ -144,16 +149,13 @@ function testMappedCategoriesBySource() {
     assert.equal(list.find(p => p.id === f.id)?.category, 'instructor', f.id)
   }
   for (const f of GEMINI_RECRUITMENT_FIXTURES) {
-    assert.equal(list.find(p => p.id === f.id)?.category, 'institution', f.id)
+    const expected = f.id === PROGRAM_DETAIL_CASE_SSOT_IDS.instructor ? 'instructor' : 'institution'
+    assert.equal(list.find(p => p.id === f.id)?.category, expected, f.id)
   }
 
   assert.equal(
     list.find(p => p.id === PROGRAM_DETAIL_CASE_SSOT_IDS.instructor)?.category,
     'instructor'
-  )
-  assert.equal(
-    list.find(p => p.id === PROGRAM_DETAIL_CASE_SSOT_IDS.volunteer)?.category,
-    'youth'
   )
   assert.equal(
     list.find(p => p.id === PROGRAM_DETAIL_CASE_SSOT_IDS.ujatVolunteer)?.category,
@@ -171,28 +173,25 @@ function testMappedCategoriesBySource() {
 }
 
 function testTitlesAndIds() {
-  assert.ok(
-    mapCmsProgramToPlatformDetail(GENERAL_REGISTRATION_FIXTURES[0]!).title.startsWith(
-      '【유형·7】'
-    )
+  assert.equal(
+    mapCmsProgramToPlatformDetail(GENERAL_REGISTRATION_FIXTURES[0]!).title,
+    '일반 프로그램 (기관)_커리큘럼형_단일 회차'
   )
-  assert.ok(
-    mapCmsProgramToPlatformDetail(ECONOMY_REGISTRATION_FIXTURE).title.includes('HSBC')
+  assert.equal(
+    mapCmsProgramToPlatformDetail(ECONOMY_REGISTRATION_FIXTURE).title,
+    '1사1교 프로그램_교육형태고정'
   )
   assert.equal(
     TRAINED_TEACHERS_REGISTRATION_FIXTURES[0]!.id,
     'trained-teachers-prog-001'
   )
-  assert.ok(
-    TRAINED_TEACHERS_REGISTRATION_FIXTURES[0]!.title.includes('신한은행')
+  assert.equal(
+    TRAINED_TEACHERS_REGISTRATION_FIXTURES[0]!.title,
+    '교육받은 교사 프로그램 (커리큘럼형)_단일 회차'
   )
   assert.deepEqual(
     GEMINI_RECRUITMENT_FIXTURES.map(f => f.id),
-    [
-      'gvt-recruitment-scheduled',
-      'gvt-recruitment-in-progress',
-      'gvt-recruitment-ended',
-    ]
+    ['gemini-prog-institution', 'gemini-prog-instructor']
   )
 }
 
@@ -236,28 +235,13 @@ function testLifecycleMapping() {
 }
 
 function testDetailCaseSsotMapping() {
-  const instructor = mapCmsProgramToPlatformDetail(CASE_INSTRUCTOR_FIXTURE)
+  const instructor = mapCmsProgramToPlatformDetail(
+    GEMINI_RECRUITMENT_FIXTURES.find(f => f.id === PROGRAM_DETAIL_CASE_SSOT_IDS.instructor)!
+  )
   assert.equal(instructor.detailCase, 'instructor')
   assert.equal(instructor.recruitmentRoleLabel, '강사')
   assert.equal(instructor.category, 'instructor')
   assert.ok(instructor.recruitmentPhases.some(p => p.label === '강사 모집 기간'))
-  assert.ok(instructor.recruitmentPhases.some(p => p.label === '2차 면접 기간'))
-  assert.ok(instructor.basicInfoFields.some(f => f.label === '모집 구분' && f.value === '강사'))
-  assert.ok(instructor.basicInfoFields.some(f => f.label === '모집 소속'))
-  assert.equal(instructor.contactValue, '02-6085-6028 · instructor@jakorea.org')
-  assert.ok(instructor.extraSections.some(s => s.title === '추가 내용'))
-  assert.ok(instructor.extraSections.some(s => s.title === '기타사항'))
-  assert.ok(instructor.extraSections.some(s => s.title === '비고'))
-
-  const volunteer = mapCmsProgramToPlatformDetail(CASE_VOLUNTEER_FIXTURE)
-  assert.equal(volunteer.detailCase, 'volunteer')
-  assert.equal(volunteer.recruitmentRoleLabel, '봉사자')
-  assert.equal(volunteer.category, 'youth')
-  assert.ok(volunteer.recruitmentPhases.some(p => p.label === '봉사자 모집 기간'))
-  assert.ok(volunteer.recruitmentPhases.some(p => p.label === '2차 면접 기간'))
-  assert.equal(volunteer.sponsor, '한국씨티은행')
-  assert.equal(volunteer.recruitmentStatus, RECRUITMENT_STATUS.closed)
-  assert.equal(volunteer.isRecruiting, false)
 
   const ujatVol = mapCmsProgramToPlatformDetail(UJAT_VOLUNTEER_FIXTURE)
   assert.equal(ujatVol.detailCase, 'ujat-volunteer')
@@ -285,17 +269,14 @@ function testDetailCaseSsotMapping() {
   )
   assert.equal(gemini.detailCase, 'gemini')
   assert.equal(gemini.category, 'institution')
-  assert.equal(gemini.sponsor, 'Google')
-  assert.equal(gemini.educationForm, 'online')
-  assert.equal(gemini.title, 'Gemini Academy')
+  assert.equal(gemini.title, 'Gemini 프로그램_기관')
   assert.ok(gemini.recruitmentPhases.some(p => p.label === '연수 신청 기간'))
-  assert.ok(gemini.basicInfoFields.some(f => f.label === '교육 기수'))
   assert.equal(gemini.educationTargetDetailLabel, '특성화고등학교 3학년')
 
-  const jobdam = mapCmsProgramToPlatformDetail(
-    ECONOMY_REGISTRATION_FIXTURES.find(f => f.id === 'economy-prog-008')!
+  const economyChoice = mapCmsProgramToPlatformDetail(
+    ECONOMY_REGISTRATION_FIXTURES.find(f => f.id === 'economy-prog-participant-choice')!
   )
-  assert.equal(jobdam.sponsor, '한국씨티은행')
+  assert.equal(economyChoice.educationForm, 'participant_choice')
 
   const teamInd = mapCmsProgramToPlatformDetail(
     GENERAL_REGISTRATION_FIXTURES.find(f => f.id === 'general-prog-type-ind-curriculum-multi')!
@@ -305,6 +286,13 @@ function testDetailCaseSsotMapping() {
     GENERAL_REGISTRATION_FIXTURES.find(f => f.id === 'general-prog-type-ind-curriculum-single')!
   )
   assert.equal(soloInd.participationMethod, 'individual')
+
+  const orgChoice = mapCmsProgramToPlatformDetail(
+    GENERAL_REGISTRATION_FIXTURES.find(
+      f => f.id === 'general-prog-type-org-curriculum-single-participant-choice'
+    )!
+  )
+  assert.equal(orgChoice.educationForm, 'participant_choice')
 }
 
 function makeStubDetail(id: string, title: string): ProgramDetail {
@@ -444,7 +432,7 @@ function run() {
   testIndCurriculumScheduleCases()
   testMerge()
   console.log(
-    'map-from-cms: all checks passed (31 seeds, detail cases x5 SSOT, 4 CMS kinds + UJAT)'
+    'map-from-cms: all checks passed (30 seeds, 16 general + 2 economy + 8 TT + 2 gemini + 2 UJAT)'
   )
 }
 

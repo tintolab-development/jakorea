@@ -150,7 +150,14 @@ export function resolvePlatformCategory(
     Partial<Pick<CmsProgramLike, 'id'>>
 ): ProgramListItem['category'] {
   if (program.registrationKind === 'trainedTeachers') return 'instructor'
-  if (program.registrationKind === 'gemini') return 'institution'
+  if (program.registrationKind === 'gemini') {
+    if (program.category === 'instructor') return 'instructor'
+    const geminiTypes = program.generalParticipantTypes ?? []
+    if (geminiTypes.length === 1 && geminiTypes[0] === 'teacher_instructor') {
+      return 'instructor'
+    }
+    return 'institution'
+  }
   if (program.registrationKind === 'economy') return 'institution'
 
   if (program.registrationKind === 'ujat') {
@@ -165,6 +172,7 @@ export function resolvePlatformCategory(
     lifecycleStatus: program.lifecycleStatus,
     generalParticipantTypes: program.generalParticipantTypes,
     ujatProgressStatus: program.ujatProgressStatus,
+    category: program.category,
   })
   if (detailCase === 'instructor') return 'instructor'
   if (detailCase === 'volunteer') return 'youth'

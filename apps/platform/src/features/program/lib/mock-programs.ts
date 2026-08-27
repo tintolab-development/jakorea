@@ -48,7 +48,7 @@ function pickMockImagePair(programId: string): {
 
 /**
  * CMS 등록 케이스 fixture → Platform 상세.
- * 일반 8 + 1사1교 8 + 교육받은 교사 8 + Gemini featured 3
+ * 일반 16 + 1사1교 2 + 교육받은 교사 8 + Gemini 2 + UJAT 2
  */
 const SEED_PROGRAMS: ProgramDetail[] = mapCmsProgramsToPlatformDetails(
   CMS_PLATFORM_PROGRAM_FIXTURES,

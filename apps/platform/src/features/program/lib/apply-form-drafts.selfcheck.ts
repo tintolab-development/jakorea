@@ -6,14 +6,15 @@
 import assert from 'node:assert/strict'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
 import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-institution-draft'
+import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-instructor-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
 import {
-  CASE_VOLUNTEER_FIXTURE,
   ECONOMY_REGISTRATION_FIXTURES,
   GENERAL_REGISTRATION_FIXTURES,
   GEMINI_RECRUITMENT_FIXTURES,
+  UJAT_VOLUNTEER_FIXTURE,
 } from './cms-registration-fixtures.ts'
 import { mapCmsProgramToPlatformDetail } from './map-from-cms.ts'
 import { PROGRAM_DETAIL_CASE_SSOT_IDS } from './detail-case.ts'
@@ -29,7 +30,7 @@ function paragraphIds(programId: string, extra?: { participationMethod?: 'indivi
     GENERAL_REGISTRATION_FIXTURES.find(f => f.id === programId) ??
     ECONOMY_REGISTRATION_FIXTURES.find(f => f.id === programId) ??
     GEMINI_RECRUITMENT_FIXTURES.find(f => f.id === programId) ??
-    (programId === CASE_VOLUNTEER_FIXTURE.id ? CASE_VOLUNTEER_FIXTURE : null)
+    (programId === UJAT_VOLUNTEER_FIXTURE.id ? UJAT_VOLUNTEER_FIXTURE : null)
   assert.ok(fixture, `fixture missing: ${programId}`)
   const detail = mapCmsProgramToPlatformDetail(fixture)
   if (extra?.participationMethod) {
@@ -69,6 +70,10 @@ function testCaseToTemplateCode() {
   assert.equal(
     getApplicationTemplateCodeForApplyCase('institution-gemini'),
     'application-gemini-visiting-training-school'
+  )
+  assert.equal(
+    getApplicationTemplateCodeForApplyCase('instructor-gemini'),
+    'application-gemini-visiting-training-instructor'
   )
 }
 
@@ -176,6 +181,19 @@ function testGeminiDetailCaseRouting() {
   assert.equal(resolveProgramApplyFormCase(gemini), 'institution-gemini')
 }
 
+function testInstructorGemini() {
+  const { applyCase, templateCode, ids, detail } = paragraphIds(
+    PROGRAM_APPLY_FORM_CASE_SSOT_IDS.instructorGemini
+  )
+  assert.equal(detail.detailCase, 'instructor')
+  assert.equal(applyCase, 'instructor-gemini')
+  assert.equal(templateCode, 'application-gemini-visiting-training-instructor')
+  assert.deepEqual(ids, [
+    GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
+    GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.officialDocument,
+  ])
+}
+
 function run() {
   testCaseToTemplateCode()
   testIndividualGeneral()
@@ -185,8 +203,9 @@ function run() {
   testInstitutionEconomy()
   testInstitutionGemini()
   testGeminiDetailCaseRouting()
+  testInstructorGemini()
   console.log(
-    'apply-form-drafts: all checks passed (6 cases × CMS templateCode seed paragraphs)'
+    'apply-form-drafts: all checks passed (apply cases × CMS templateCode seed paragraphs)'
   )
 }
 

@@ -10,6 +10,7 @@ import {
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
 import { getDevAuthLoggedIn, resolveLoginRequiredPath } from '@/shared/lib'
 import { PFButton, PFText } from '@/shared/ui'
+import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
 import { useNavigate } from 'react-router-dom'
 
@@ -32,10 +33,7 @@ export function ProgramApplyPage() {
     setIsReady(true)
   }, [navigate, programId])
 
-  const draft = useMemo(
-    () => (program ? getMockApplyFormDraft(program) : null),
-    [program]
-  )
+  const draft = useMemo(() => (program ? getMockApplyFormDraft(program) : null), [program])
 
   if (!isReady || isLoading || !program || !draft) {
     return null
@@ -51,34 +49,28 @@ export function ProgramApplyPage() {
   }
 
   return (
-    <section className={styles.page}>
-      <div className={styles.back}>
-        <ProgramBackButton size="small" label="이전으로" onClick={handleBack} />
-      </div>
+    <section className={[shell.page, styles.page].join(' ')}>
+      <div className={shell.inner}>
+        <div className={styles.back}>
+          <ProgramBackButton size="large" label="이전으로" onClick={handleBack} />
+        </div>
 
-      <div className={styles.inner}>
-        <header className={styles.header}>
-          <PFText as="h1" typo="page-title" color="black" className={styles.pageTitle}>
-            프로그램 신청하기
-          </PFText>
-        </header>
+        <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
+          프로그램 신청하기
+        </PFText>
 
         <div className={styles.summary}>
-          <PFText as="h2" typo="bd-lg-sb" color="black">
+          <PFText as="h2" typo="hl-sm" color="black">
             {program.title}
           </PFText>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          <PFText as="p" typo="bd-md-md" color="primary-500">
             {program.applicationPeriodLabel}
           </PFText>
         </div>
 
         <div className={styles.form}>
           <FormTemplateHost surface="platformUser">
-            <FormTemplateRenderer
-              draft={draft}
-              interactionMode="user"
-              surface="platformUser"
-            />
+            <FormTemplateRenderer draft={draft} interactionMode="user" surface="platformUser" />
           </FormTemplateHost>
 
           <div className={styles.actions}>

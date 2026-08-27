@@ -1,55 +1,33 @@
 /**
  * 신청하기 페이지
  * - layout: full → ContentShell 없이 main 전폭
- * - .page: cool-50 바디 전체 배경
- * - .inner: 양식 단락 컬럼 max 1440
+ * - 공통 셸: program-page-shell (상하 100 / max 1440 / 좌우 ≥80)
  */
 .page {
-  display: flex;
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  /* main(flex:1) 높이 채워 헤더~푸터 바디 구간 배경 유지 */
-  flex: 1 0 auto;
-  flex-direction: column;
-  gap: var(--spacing-40);
-  align-self: stretch;
-  padding-block: var(--spacing-24) var(--spacing-80);
-  padding-inline: var(--page-padding-x);
   background: var(--color-neutral-cool-50, #f5f7f7);
-}
-
-/* 본문 컬럼 — 데스크탑 시안: 양식 단락 width 1440 */
-.inner {
-  display: flex;
-  box-sizing: border-box;
-  width: 100%;
-  max-width: var(--content-shell-max-width);
-  min-width: 0;
-  flex-direction: column;
-  margin-inline: auto;
 }
 
 .back {
   width: 100%;
-}
-
-.header {
-  margin-bottom: var(--spacing-32);
+  margin-bottom: var(--spacing-40);
 }
 
 .pageTitle {
   margin: 0;
+  margin-bottom: var(--spacing-40);
 }
 
 .summary {
+  margin-bottom: var(--spacing-24);
   display: flex;
+  padding: var(--Spacing-16, 16px) var(--Spacing-24, 24px);
   flex-direction: column;
-  gap: var(--spacing-8);
-  margin-bottom: var(--spacing-40);
-  padding: var(--spacing-24);
-  border-radius: var(--radius-16);
-  background: var(--color-neutral-cool-80);
+  justify-content: center;
+  align-items: flex-start;
+  gap: 4px;
+  align-self: stretch;
+  border-radius: var(--Radius-8, 8px);
+  background: var(--Color-netural-cool-100, #e6e9eb);
 }
 
 .form {
@@ -107,78 +85,4 @@
 .actions {
   display: flex;
   justify-content: center;
-}
-
-/* ── 양식 셸 (PFFormPage와 동일) ──
- * ≤1079: 상하 40 · 바깥 여백 max(20,(100%-520)/2)
- *   · .inner 375–520 (border-box, 좌우 20 패딩 포함)
- * 1080–1599: 좌우 80
- * ≥1600: fluid 1440
- */
-@media (--bp-below-pc) {
-  .page {
-    padding-block: 40px;
-    /* 바깥 여백: 최소 20, 뷰포트 > 560이면 (100%-520)/2 로 증가 */
-    padding-inline: max(20px, calc((100% - 520px) / 2));
-    gap: 0;
-  }
-
-  .back {
-    margin-bottom: var(--spacing-16);
-  }
-
-  .inner {
-    /* border-box: 520/375에 좌우 20 패딩 포함 (안쪽 가용 ≈ 480/335) */
-    width: 100%;
-    max-width: 520px;
-    min-width: min(100%, 375px);
-    padding-inline: 20px;
-  }
-
-  .header {
-    margin-bottom: var(--spacing-20);
-  }
-
-  /* PFFormPage 모바일 타이틀과 동일 — 완전 일치 토큰 없음 */
-  .header .pageTitle {
-    font-size: 24px;
-    font-weight: 700;
-    line-height: normal;
-    letter-spacing: -0.48px;
-  }
-}
-
-@media (--bp-pc-compact) {
-  .page {
-    gap: var(--spacing-74);
-    padding-block: var(--spacing-74) 127px;
-    padding-inline: 80px;
-  }
-
-  .inner {
-    width: 100%;
-    max-width: var(--content-shell-max-width);
-  }
-
-  .form {
-    gap: var(--spacing-60);
-  }
-}
-
-@media (--bp-pc-full-up) {
-  .page {
-    gap: var(--spacing-74);
-    padding-block: var(--spacing-74) 127px;
-    /* 1920: (100% - 1440) / 2 = 240 · 최소 80 */
-    padding-inline: max(80px, calc((100% - var(--content-shell-max-width)) / 2));
-  }
-
-  .inner {
-    width: 100%;
-    max-width: var(--content-shell-max-width);
-  }
-
-  .form {
-    gap: var(--spacing-60);
-  }
 }
