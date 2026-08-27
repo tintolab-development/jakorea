@@ -11,7 +11,6 @@ import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-
 import dayjs, { type Dayjs } from 'dayjs'
 import {
   ACCOUNT_PAYMENT_STATUS_LABELS,
-  MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET,
   mockAccountPaymentRows,
   formatAccountPaymentInstitutionDisplay,
   formatAccountPaymentSessionLabelDisplay,
@@ -20,8 +19,13 @@ import {
   type AccountPaymentTransferStatus,
 } from '@/data/mock/account-payments-list'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
+import { buildAccountPaymentExportRequest } from '@/features/settlement-management/api/account-payments/build-account-payment-export-request'
 import { useAccountPaymentsListQuery } from '@/features/settlement-management/hooks/use-account-payments-list-query'
-import { useMarkAccountPaymentPaidMutation } from '@/features/settlement-management/hooks/use-account-payment-mutations'
+import {
+  useBulkTransferExportMutation,
+  useMarkAccountPaymentPaidMutation,
+  useTaxReportExportMutation,
+} from '@/features/settlement-management/hooks/use-account-payment-mutations'
 import { useSettlementBudgetSummaryQuery } from '@/features/settlement-management/hooks/use-settlement-budget-summary-query'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
@@ -75,14 +79,6 @@ interface AppliedFilters {
   transferDateRange: [Dayjs, Dayjs] | null
 }
 
-/** 연도 탭 예산·완료 집계 — 전년도 12월 ~ 금년도 12월(말일) */
-function getAccountPaymentBudgetYearRange(reference: Dayjs = dayjs()): [Dayjs, Dayjs] {
-  const y = reference.year()
-  const start = dayjs(`${y - 1}-12-01`).startOf('day')
-  const end = dayjs(`${y}-12-31`).endOf('day')
-  return [start, end]
-}
-
 const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토']
 
 /** 계좌 지급 풀페이지 상세 — URL 동기화(뒤로가기로 목록 복귀) */
@@ -120,7 +116,7 @@ function filterRows(rows: AccountPaymentRow[], applied: AppliedFilters): Account
     if (qp && !row.programName.includes(qp)) return false
     if (applied.accountStatus !== 'all' && row.accountPaymentStatus !== applied.accountStatus)
       return false
-    // 목록 「이체 예정일」필터·요약카드3 = transferScheduledDate (출강일은 캘린더 전용)
+    // 목록 「이체 예정일」필터 = transferScheduledDate (캘린더 배치도 동일)
     if (!matchesDateRange(row.transferScheduledDate, applied.transferDateRange)) return false
     return true
   })
@@ -228,10 +224,8 @@ export default function AccountPaymentsPage() {
 
   const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
   const markPaidMutation = useMarkAccountPaymentPaidMutation()
-  const budgetSummaryQuery = useSettlementBudgetSummaryQuery(
-    selectedYearScoped,
-    accountPaymentsRemote
-  )
+  const bulkTransferExportMutation = useBulkTransferExportMutation()
+  const taxReportExportMutation = useTaxReportExportMutation()
 
   const accountFilterFields = useMemo((): FilterFieldConfig[] => {
     return [
@@ -312,6 +306,15 @@ export default function AccountPaymentsPage() {
     [applied]
   )
 
+  const budgetSummaryQuery = useSettlementBudgetSummaryQuery(
+    {
+      year: selectedYearScoped,
+      fromDate: listQueryFilters.fromDate,
+      toDate: listQueryFilters.toDate,
+    },
+    accountPaymentsRemote
+  )
+
   const accountPaymentsListQuery = useAccountPaymentsListQuery(
     listQueryFilters,
     accountPaymentsRemote
@@ -346,26 +349,20 @@ export default function AccountPaymentsPage() {
   }, [accountPayConfirmSelection])
 
   const completedTotalForSelectedYear = useMemo(() => {
-    const range = getAccountPaymentBudgetYearRange(dayjs(`${selectedYearScoped}-06-15`))
+    if (accountPaymentsRemote) return 0
     return accountPaymentRows
-      .filter(
-        r =>
-          r.accountPaymentStatus === 'account_paid' &&
-          matchesDateRange(r.transferScheduledDate, range)
-      )
+      .filter(r => r.accountPaymentStatus === 'account_paid')
       .reduce((s, r) => s + r.amount, 0)
-  }, [accountPaymentRows, selectedYearScoped])
+  }, [accountPaymentRows, accountPaymentsRemote])
 
+  /** 예산·완료·예정금 — remote면 budget-summary API만 (후원사 연간 기부금 합계 소스) */
   const annualBudgetAmount = accountPaymentsRemote
     ? budgetSummaryQuery.data?.annualBudgetAmount
-    : MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET
+    : undefined
 
   const completedTotalDisplay = useMemo(() => {
-    if (
-      accountPaymentsRemote &&
-      budgetSummaryQuery.data?.completedPaymentAmount != null
-    ) {
-      return budgetSummaryQuery.data.completedPaymentAmount
+    if (accountPaymentsRemote) {
+      return budgetSummaryQuery.data?.completedPaymentAmount ?? null
     }
     return completedTotalForSelectedYear
   }, [
@@ -374,20 +371,30 @@ export default function AccountPaymentsPage() {
     completedTotalForSelectedYear,
   ])
 
-  /** 설정된 이체 예정일 구간 + 해당 구간 이체 예정일의 지급예정(pending) 금액 합 — 목록 필터와 동일 행 기준 */
+  /** 기간 내 정산 예정금 = 이체 기간 ∩ CONFIRMED ∩ WAITING_PAYMENT (API expectedSettlementAmount) */
   const card3Meta = useMemo(() => {
     const range = applied.transferDateRange
     if (!range?.[0] || !range?.[1]) {
       return { labelDateRange: null as string | null, amount: null as number | null }
     }
+    const labelDateRange = formatSettlementPendingDateRangeOnly([range[0], range[1]])
+    if (accountPaymentsRemote) {
+      const apiAmount = budgetSummaryQuery.data?.expectedSettlementAmount
+      return {
+        labelDateRange,
+        amount: apiAmount != null ? apiAmount : null,
+      }
+    }
     const pendingSum = filteredRows
       .filter(r => r.accountPaymentStatus === 'awaiting_confirmation')
       .reduce((s, r) => s + r.amount, 0)
-    return {
-      labelDateRange: formatSettlementPendingDateRangeOnly([range[0], range[1]]),
-      amount: pendingSum,
-    }
-  }, [applied.transferDateRange, filteredRows])
+    return { labelDateRange, amount: pendingSum }
+  }, [
+    accountPaymentsRemote,
+    applied.transferDateRange,
+    budgetSummaryQuery.data?.expectedSettlementAmount,
+    filteredRows,
+  ])
 
   const handleSearch = useCallback(() => {
     setApplied({
@@ -512,12 +519,61 @@ export default function AccountPaymentsPage() {
     return picked
   }, [filteredRows, selectedRowKeys])
 
+  const notifyExportError = useCallback((error: unknown, fallback: string) => {
+    if (isGlobalApiErrorAlertShown(error)) return
+    cmsAlertModal.show({
+      title: '발급 불가',
+      content: getSettlementApiErrorMessage(error, fallback),
+    })
+  }, [])
+
+  const requestExportForKind = useCallback(
+    async (kind: 'bulk-transfer' | 'tax-report') => {
+      if (!accountPaymentsRemote) return
+      const body = buildAccountPaymentExportRequest({
+        kind,
+        fromDate: listQueryFilters.fromDate,
+        toDate: listQueryFilters.toDate,
+      })
+      try {
+        if (kind === 'bulk-transfer') {
+          await bulkTransferExportMutation.mutateAsync(body)
+        } else {
+          await taxReportExportMutation.mutateAsync(body)
+        }
+      } catch (error) {
+        notifyExportError(
+          error,
+          kind === 'bulk-transfer'
+            ? '대량이체 양식 발급 요청에 실패했습니다.'
+            : '세금신고 양식 발급 요청에 실패했습니다.'
+        )
+        throw error
+      }
+    },
+    [
+      accountPaymentsRemote,
+      bulkTransferExportMutation,
+      listQueryFilters.fromDate,
+      listQueryFilters.toDate,
+      notifyExportError,
+      taxReportExportMutation,
+    ]
+  )
+
   const openBulkTransferPreview = useCallback(() => {
     const rows = resolveToolbarFormIssueRows()
     if (rows === null) return
-    setIssuedFormPreviewRows(rows)
-    setBulkTransferPreviewOpen(true)
-  }, [resolveToolbarFormIssueRows])
+    void (async () => {
+      try {
+        await requestExportForKind('bulk-transfer')
+      } catch {
+        return
+      }
+      setIssuedFormPreviewRows(rows)
+      setBulkTransferPreviewOpen(true)
+    })()
+  }, [requestExportForKind, resolveToolbarFormIssueRows])
 
   const closeBulkTransferPreview = useCallback(() => {
     setBulkTransferPreviewOpen(false)
@@ -527,9 +583,16 @@ export default function AccountPaymentsPage() {
   const openTaxFilingPreview = useCallback(() => {
     const rows = resolveToolbarFormIssueRows()
     if (rows === null) return
-    setIssuedFormPreviewRows(rows)
-    setTaxFilingPreviewOpen(true)
-  }, [resolveToolbarFormIssueRows])
+    void (async () => {
+      try {
+        await requestExportForKind('tax-report')
+      } catch {
+        return
+      }
+      setIssuedFormPreviewRows(rows)
+      setTaxFilingPreviewOpen(true)
+    })()
+  }, [requestExportForKind, resolveToolbarFormIssueRows])
 
   const closeTaxFilingPreview = useCallback(() => {
     setTaxFilingPreviewOpen(false)
@@ -749,10 +812,18 @@ export default function AccountPaymentsPage() {
     const completed = filteredRows.filter(r => r.accountPaymentStatus === 'account_paid')
     if (completed.length === 0) {
       console.debug('accountPaymentsPage no completed rows for bulk transfer')
+      return
     }
-    setIssuedFormPreviewRows(completed)
-    setBulkTransferPreviewOpen(true)
-  }, [filteredRows])
+    void (async () => {
+      try {
+        await requestExportForKind('bulk-transfer')
+      } catch {
+        return
+      }
+      setIssuedFormPreviewRows(completed)
+      setBulkTransferPreviewOpen(true)
+    })()
+  }, [filteredRows, requestExportForKind])
 
   const filterLayoutClassName = 'account-payments-page__filter-table'
 
@@ -798,9 +869,9 @@ export default function AccountPaymentsPage() {
                   : annualBudgetAmount != null
                     ? annualBudgetAmount.toLocaleString('ko-KR')
                     : '-'
-                : annualBudgetAmount!.toLocaleString('ko-KR')}
+                : '-'}
             </span>
-            {(accountPaymentsRemote ? annualBudgetAmount != null : true) && (
+            {accountPaymentsRemote && annualBudgetAmount != null && (
               <span className="account-payments-page__card-amount-won">원</span>
             )}
           </div>
@@ -811,9 +882,21 @@ export default function AccountPaymentsPage() {
           </span>
           <div className="account-payments-page__card-amount-row">
             <span className="account-payments-page__card-amount-num">
-              {completedTotalDisplay.toLocaleString('ko-KR')}
+              {accountPaymentsRemote
+                ? budgetSummaryQuery.isLoading
+                  ? '…'
+                  : completedTotalDisplay != null
+                    ? completedTotalDisplay.toLocaleString('ko-KR')
+                    : '-'
+                : completedTotalDisplay != null
+                  ? completedTotalDisplay.toLocaleString('ko-KR')
+                  : '-'}
             </span>
-            <span className="account-payments-page__card-amount-won">원</span>
+            {(accountPaymentsRemote
+              ? completedTotalDisplay != null && !budgetSummaryQuery.isLoading
+              : completedTotalDisplay != null) && (
+              <span className="account-payments-page__card-amount-won">원</span>
+            )}
           </div>
         </div>
         <div
@@ -834,7 +917,13 @@ export default function AccountPaymentsPage() {
           </span>
           <div className="account-payments-page__card-amount-row">
             <span className="account-payments-page__card-amount-num">
-              {card3Meta.amount === null ? '-' : card3Meta.amount.toLocaleString('ko-KR')}
+              {card3Meta.labelDateRange === null
+                ? '-'
+                : accountPaymentsRemote && budgetSummaryQuery.isLoading
+                  ? '…'
+                  : card3Meta.amount === null
+                    ? '-'
+                    : card3Meta.amount.toLocaleString('ko-KR')}
             </span>
             {card3Meta.amount !== null && (
               <span className="account-payments-page__card-amount-won">원</span>
