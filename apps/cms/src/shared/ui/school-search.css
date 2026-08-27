@@ -79,7 +79,7 @@
   align-self: stretch;
   box-sizing: border-box;
   border-radius: 8px;
-  border: 1px solid var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
   background: rgba(61, 61, 61, 0.04);
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
   text-align: center;

@@ -116,7 +116,7 @@ export function AddressSearch({
   const confmKey = confmKeyProp ?? readJusoConfmKeyFromEnv()
   const countPerPage = 10
 
-  const { addresses, totalCount, loading, error, search, reset } = useJusoAddressSearch({
+  const { addresses, totalCount, loading, search, reset } = useJusoAddressSearch({
     confmKey,
     countPerPage,
     apiUrl: readJusoApiUrlFromEnv(),
@@ -187,11 +187,11 @@ export function AddressSearch({
   const showSuggestList = addresses.length > 0
   const trimmedKeyword = keyword.trim()
   const effectiveHasQueried = hasQueried && trimmedKeyword.length > 0
-  const showNoResultsMessage = effectiveHasQueried && !loading && !error && addresses.length === 0
+  const showNoResultsMessage = effectiveHasQueried && !loading && addresses.length === 0
   const showTip = trimmedKeyword.length === 0
 
   /** 검색결과 11건 이상일 때만 「검색결과가 많습니다」 안내 */
-  const showManyResultsNotice = effectiveHasQueried && !error && !loading && totalCount >= 11
+  const showManyResultsNotice = effectiveHasQueried && !loading && totalCount >= 11
   /** 4건 이상: 모달 max 800px · 3건 이하: compact 469 + 목록 333px */
   const isResultsTall = effectiveHasQueried && showSuggestList && !loading && totalCount >= 4
   /** 검색결과 3건 이하: 목록 max 333px */
@@ -208,11 +208,7 @@ export function AddressSearch({
 
   /** 3건 이하: 즉시 · 4건+: 목록 스크롤 끝 */
   const showPagination =
-    effectiveHasQueried &&
-    showSuggestList &&
-    !loading &&
-    !error &&
-    (isSparseResults || resultListAtEnd)
+    effectiveHasQueried && showSuggestList && !loading && (isSparseResults || resultListAtEnd)
 
   useEffect(() => {
     if (!open || !effectiveHasQueried || !showSuggestList) {
@@ -354,7 +350,7 @@ export function AddressSearch({
           <div
             className={[
               'address-search__results',
-              !error && !trimmedKeyword && !showSuggestList && !showNoResultsMessage
+              !trimmedKeyword && !showSuggestList && !showNoResultsMessage
                 ? 'address-search__results--idle'
                 : '',
               effectiveHasQueried && (showSuggestList || showNoResultsMessage)
@@ -365,11 +361,7 @@ export function AddressSearch({
               .filter(Boolean)
               .join(' ')}
           >
-            {error ? (
-              <div className="address-search__result-error">주소 검색에 실패했습니다.</div>
-            ) : (
-              <>
-                {showManyResultsNotice ? (
+            {showManyResultsNotice ? (
                   <div className="address-search__many-results-notice" role="status">
                     <p className="address-search__many-results-line1">
                       <strong className="address-search__many-results-em">
@@ -486,8 +478,6 @@ export function AddressSearch({
                     />
                   </div>
                 ) : null}
-              </>
-            )}
           </div>
         </div>
       </ContentModal>
