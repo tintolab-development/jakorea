@@ -9,13 +9,26 @@ describe('settlement mutation invalidate prefixes', () => {
   it('account payment lists/details/budgetSummary share accountPayments root', () => {
     const lists = settlementQueryKeys.accountPayments.lists()
     const details = settlementQueryKeys.accountPayments.details()
-    const budget = settlementQueryKeys.accountPayments.budgetSummary(2026)
+    const budget = settlementQueryKeys.accountPayments.budgetSummary(
+      2026,
+      '2026-08-01',
+      '2026-08-31'
+    )
 
     expect(isPrefixedBy(settlementQueryKeys.accountPayments.list('q'), lists)).toBe(true)
     expect(isPrefixedBy(settlementQueryKeys.accountPayments.detail('row-1'), details)).toBe(true)
     expect(isPrefixedBy(budget, settlementQueryKeys.accountPayments.all())).toBe(true)
     expect(isPrefixedBy(budget, lists)).toBe(false)
     expect(isPrefixedBy(budget, details)).toBe(false)
+    expect(budget).toEqual([
+      'cms',
+      'settlement',
+      'accountPayments',
+      'budgetSummary',
+      2026,
+      '2026-08-01',
+      '2026-08-31',
+    ])
   })
 
   it('paymentOrders.all() prefixes list, detail, and settlement calc', () => {
