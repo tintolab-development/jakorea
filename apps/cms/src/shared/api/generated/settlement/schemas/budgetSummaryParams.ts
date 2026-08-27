@@ -11,4 +11,12 @@ export type BudgetSummaryParams = {
  * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
  */
 year?: number;
+/**
+ * 이체 예정일 시작(YYYY-MM-DD). 계좌 지급 목록 필터와 동일. 있으면 year 기본 구간보다 우선.
+ */
+fromDate?: string;
+/**
+ * 이체 예정일 종료(YYYY-MM-DD). 계좌 지급 목록 필터와 동일. 있으면 year 기본 구간보다 우선.
+ */
+toDate?: string;
 };
