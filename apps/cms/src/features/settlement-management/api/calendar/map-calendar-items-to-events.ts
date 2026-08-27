@@ -10,8 +10,10 @@ import { mapStatementStatusToProcessingStatus } from '@/features/settlement-mana
 import type { SettlementCalendarItemResponse } from '@/shared/api/generated/settlement/schemas'
 
 const STATUS_PRIORITY: Record<PaymentOrderAdminProcessingStatus, number> = {
-  correction: 4,
-  application_rejected: 3,
+  correction: 6,
+  application_rejected: 5,
+  reapplication: 4,
+  partial: 3,
   pending: 2,
   confirmed: 1,
 }

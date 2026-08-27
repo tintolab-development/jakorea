@@ -49,6 +49,24 @@ describe('buildPaymentOrdersDetailListParams', () => {
     })
   })
 
+  it('상세 필터 search·statementStatus를 전달', () => {
+    expect(
+      buildPaymentOrdersDetailListParams({
+        type: 'program',
+        aggregateKey: '170302',
+        dateRange: { from: '2026-08-01', to: '2026-09-01' },
+        search: '박틴토',
+        statementStatus: 'REQUESTED',
+      })
+    ).toEqual({
+      programId: 170302,
+      fromDate: '2026-08-01',
+      toDate: '2026-09-01',
+      search: '박틴토',
+      statementStatus: 'REQUESTED',
+    })
+  })
+
   it('aggregateKey가 숫자가 아니면 빈 params', () => {
     expect(
       buildPaymentOrdersDetailListParams({

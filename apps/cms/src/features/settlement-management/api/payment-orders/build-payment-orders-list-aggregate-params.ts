@@ -1,15 +1,21 @@
 import type { PaymentOrderAdminProcessingStatus } from '@/data/mock/payment-order-admin-list'
-import type { ListSettlementAggregatesParams } from '@/shared/api/generated/settlement/schemas'
+import type {
+  ListSettlementAggregatesParams,
+  ListSettlementAggregatesStatementStatus,
+} from '@/shared/api/generated/settlement/schemas'
 import type { PaymentOrdersPendingFilters } from '@/pages/settlement-management/payment-orders-table.config'
+import { mapPendingItemBucketToApi } from '@/pages/settlement-management/payment-orders-pending-item-bucket'
 
 export type PaymentOrdersListFilterInput = Pick<
   PaymentOrdersPendingFilters,
-  'programName' | 'instructorName' | 'processingStatus' | 'dateRange'
->
+  'programName' | 'instructorName' | 'processingStatus' | 'pendingItemBucket' | 'dateRange'
+> & {
+  viewMode?: 'list' | 'calendar'
+}
 
 function mapUiProcessingStatusToStatementStatus(
   status: PaymentOrderAdminProcessingStatus
-): string {
+): ListSettlementAggregatesStatementStatus {
   switch (status) {
     case 'confirmed':
       return 'CONFIRMED'
@@ -17,6 +23,10 @@ function mapUiProcessingStatusToStatementStatus(
       return 'CORRECTION_REQUESTED'
     case 'application_rejected':
       return 'REJECTED'
+    case 'reapplication':
+      return 'REAPPLICATION'
+    case 'partial':
+      return 'PARTIAL'
     default:
       return 'REQUESTED'
   }
@@ -34,8 +44,12 @@ export function buildPaymentOrdersListAggregateParams(
     params.search = search
   }
 
-  if (filters.processingStatus !== 'all') {
+  const viewMode = filters.viewMode ?? 'list'
+  if (viewMode === 'calendar' && filters.processingStatus !== 'all') {
     params.statementStatus = mapUiProcessingStatusToStatementStatus(filters.processingStatus)
+  }
+  if (viewMode === 'list' && filters.pendingItemBucket !== 'all') {
+    params.pendingItemBucket = mapPendingItemBucketToApi(filters.pendingItemBucket)
   }
 
   if (filters.dateRange?.[0] && filters.dateRange[1]) {
@@ -45,3 +59,4 @@ export function buildPaymentOrdersListAggregateParams(
 
   return params
 }
+

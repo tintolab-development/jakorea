@@ -7,15 +7,19 @@ import {
   paymentOrdersListFilterQueryKey,
 } from '@/pages/settlement-management/payment-orders-table.config'
 
-export function usePaymentOrdersListQuery(searchParamsKey: string, enabled = true) {
+export function usePaymentOrdersListQuery(
+  searchParamsKey: string,
+  enabled = true,
+  viewMode: 'list' | 'calendar' = 'list'
+) {
   const remoteEnabled = useSettlementRemoteEnabled('paymentOrders', enabled)
   const filters = parsePaymentOrdersFiltersFromUrl(new URLSearchParams(searchParamsKey))
   const groupBy = filters.exposureMode
-  const filterKey = paymentOrdersListFilterQueryKey(new URLSearchParams(searchParamsKey))
+  const filterKey = `${paymentOrdersListFilterQueryKey(new URLSearchParams(searchParamsKey))}|${viewMode}`
 
   return useQuery({
     queryKey: settlementQueryKeys.paymentOrders.list(groupBy, filterKey),
-    queryFn: () => getPaymentOrdersListRemote(groupBy, filters),
+    queryFn: () => getPaymentOrdersListRemote(groupBy, { ...filters, viewMode }),
     enabled: remoteEnabled,
     staleTime: 30_000,
     retry: false,
