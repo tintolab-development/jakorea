@@ -1,9 +1,10 @@
 /**
- * 관리자 인증 API 계약 (Swagger v9)
+ * 관리자 인증 API 계약 (OpenAPI AuthTokenResponse / RefreshTokenRequest)
  * - POST `/api/admin/auth/login` → MFA challenge
  * - POST `/api/admin/auth/mfa/enrollment` → TOTP 등록·QR provisioning
- * - POST `/api/admin/auth/mfa/verify` → access/refresh token
- * - POST `/api/admin/auth/refresh` → token 갱신
+ * - POST `/api/admin/auth/mfa/verify` → AuthTokenResponse
+ * - POST `/api/admin/auth/refresh` → AuthTokenResponse (body: RefreshTokenRequest)
+ * - POST `/api/admin/auth/logout` → RefreshTokenRequest (access 만료여도 revoke 가능)
  */
 
 export interface AdminLoginRequestBody {
