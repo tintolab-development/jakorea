@@ -68,6 +68,8 @@ export interface UserConsentAgreementSectionProps {
   onConsentCrimeSnapshotSave?: (label: string, snapshot: MemberConsentCrimeDraftSnapshot) => void
   memberId?: number
   membersRemote?: boolean
+  /** 동의-only 미리보기 — 회원 기본정보 PII 주입 */
+  memberUser?: Omit<User, 'password'>
 }
 
 const DEFAULT_CAPTION =
@@ -516,6 +518,7 @@ export function renderConsentRow(
 type ActiveConsentView = {
   entry: MemberConsentTemplateEntry
   consentType?: string
+  filledDocumentAvailable?: boolean
 }
 
 type ActiveConsentWrite = {
@@ -538,6 +541,7 @@ export function UserConsentAgreementSection({
   onConsentCrimeSnapshotSave,
   memberId,
   membersRemote = false,
+  memberUser,
 }: UserConsentAgreementSectionProps) {
   const [activeView, setActiveView] = useState<ActiveConsentView | null>(null)
   const [activeWrite, setActiveWrite] = useState<ActiveConsentWrite | null>(null)
@@ -556,6 +560,7 @@ export function UserConsentAgreementSection({
           entry,
           consentType:
             document.consentType?.trim() || CONSENT_LABEL_TO_EDITABLE_TERMS_TYPE[label.trim()],
+          filledDocumentAvailable: document.filledDocumentAvailable,
         })
       }
     },
@@ -623,6 +628,8 @@ export function UserConsentAgreementSection({
           memberId={memberId}
           consentType={activeView.consentType}
           membersRemote={membersRemote}
+          filledDocumentAvailable={activeView.filledDocumentAvailable}
+          memberUser={memberUser}
           onClose={() => setActiveView(null)}
         />
       ) : null}

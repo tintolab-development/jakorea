@@ -60,7 +60,7 @@ FE SSOT: `member-basic-info-terms-patch.ts` · `user-consent-agreement-section.t
 ## API / state (align with backend)
 
 - Per-item: `agreedAt`, document id/version, expiry (1y / 10y / until withdraw).
-- **동의서 보기**: `consent-records.formResponseId` → `MemberConsentDocumentViewModal` — **제출본만** 표시(회원 기본정보 prefill 금지). API 미연동 시 empty state.
+- **동의서 보기**: 제출본(`filledDocumentAvailable`)이 있으면 filled-document API로 **제출 내용** 표시. **제출본 없음 + 동의**인 경우(플랫폼 가입 시 동의만 체크 등)는 seed draft + 회원 기본정보 PII로 **읽기 전용 미리보기**(「미리보기」배지). 동의서 **작성(write)** 모달의 기본정보 prefill은 금지 유지.
 - Payment statement: **first settlement** flag, **PII-expiry re-consent** flag.
 - CMS: mostly read + status; e-sign payload in separate API spec when available.
 
@@ -74,4 +74,4 @@ FE SSOT: `member-basic-info-terms-patch.ts` · `user-consent-agreement-section.t
 - `preview` 모드 + 슬롯 CSS로 잠그지 말 것 — 지급조서·라디오까지 막힘
 - 애매하면 코드 변경 전 사용자에게 확인
 
-**Last updated:** 2026-08-14
+**Last updated:** 2026-08-27
