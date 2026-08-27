@@ -52,12 +52,12 @@ export interface AccountPaymentRow {
   amount: number
   /**
    * 실제 출강일 ISO `YYYY-MM-DD`.
-   * 캘린더 일자 배치에 사용 (목록 「이체 예정일」필터와 분리).
+   * 교육 진행일 표시용 — 캘린더 배치 키로 쓰지 말 것.
    */
   lectureDate?: string
   /**
    * 이체 예정일 ISO `YYYY-MM-DD`.
-   * 목록 「이체 예정일」 열·필터·세 번째 요약 카드 집계에 사용.
+   * 목록 「이체 예정일」 열·필터·캘린더 배치·세 번째 요약 카드에 사용.
    */
   transferScheduledDate: string
   /** API 목록 — 정산 계좌 (상세·지급 확인 모달·대량이체) */
@@ -75,11 +75,18 @@ export interface AccountPaymentRow {
   paymentOrderStatus: Extract<PaymentOrderAdminProcessingStatus, 'confirmed'>
 }
 
-/** 계좌 지급 확인 — 캘린더에 쓰는 출강일 (없으면 이체 예정일) */
+/** 계좌 지급 확인 — 교육 진행일 표시용 (캘린더 배치 키로 쓰지 말 것) */
 export function resolveAccountPaymentAttendanceDate(row: AccountPaymentRow): string {
   const lecture = row.lectureDate?.trim()
   if (lecture) return lecture
   return row.transferScheduledDate
+}
+
+/** 계좌 지급 확인 — 캘린더 배치 키 = 이체 예정일(`scheduledPaymentDate`) */
+export function resolveAccountPaymentCalendarDate(row: AccountPaymentRow): string {
+  const scheduled = row.transferScheduledDate?.trim()
+  if (scheduled) return scheduled.slice(0, 10)
+  return ''
 }
 
 /** 계좌 지급 확인 — 목록/캘린더 `sessionLabel` UI (빈 값 → `-`, 차시 표기 유지) */
@@ -301,7 +308,10 @@ export function getMockAccountPaymentStatusDetail(row: AccountPaymentRow): Accou
   }
 }
 
-/** 당해 예산 총액 (카드1용 mock 상수 — 시안 109,150,000) */
+/**
+ * @deprecated 예산은 budget-summary API(`sponsor_yearly_business` 합계)만 사용.
+ * FE 화면에서 이 상수를 표시하지 말 것.
+ */
 export const MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET = 109_150_000
 
 const MOCK_ROW_COUNT = 32
@@ -309,7 +319,7 @@ const MOCK_ROW_COUNT = 32
 /**
  * 32건 — `paymentOrderStatus`는 전부 `confirmed`.
  * 상태: 상위 약 60% 대기 / 하위 약 40% 완료 (시안 리스트 패턴).
- * 이체일: 2026-02 중심, 출강일: 2026-01 (캘린더 검증용).
+ * 이체일: 2026-02 중심, 출강일: 2026-01 (교육 진행일 표시용; 캘린더는 이체일).
  */
 export const mockAccountPaymentRows: AccountPaymentRow[] = Array.from(
   { length: MOCK_ROW_COUNT },

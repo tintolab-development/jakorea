@@ -10,7 +10,7 @@ import dayjs from 'dayjs'
 import {
   formatAccountPaymentInstitutionDisplay,
   formatAccountPaymentSessionLabelDisplay,
-  resolveAccountPaymentAttendanceDate,
+  resolveAccountPaymentCalendarDate,
   type AccountPaymentRow,
 } from '@/data/mock/account-payments-list'
 import {
@@ -34,9 +34,9 @@ import '@/shared/components/calendar/styles/calendar.css'
 
 function pickAnchorDate(rows: AccountPaymentRow[]): Dayjs {
   if (rows.length === 0) return dayjs()
-  let min = dayjs(resolveAccountPaymentAttendanceDate(rows[0]))
+  let min = dayjs(resolveAccountPaymentCalendarDate(rows[0]))
   for (let i = 1; i < rows.length; i++) {
-    const d = dayjs(resolveAccountPaymentAttendanceDate(rows[i]))
+    const d = dayjs(resolveAccountPaymentCalendarDate(rows[i]))
     if (d.isBefore(min, 'day')) min = d
   }
   return min
@@ -125,7 +125,7 @@ function placeholderInvoiceForAccountPaymentCalendar(
 
 function accountPaymentRowToSettlementListRow(row: AccountPaymentRow): InstructorSettlementListRow {
   const status = accountPaymentStatusToUiStatus(row.accountPaymentStatus)
-  const calendarDate = resolveAccountPaymentAttendanceDate(row).slice(0, 10)
+  const calendarDate = resolveAccountPaymentCalendarDate(row)
   return {
     id: row.id,
     settlementId: row.settlementId ?? 0,
@@ -226,7 +226,8 @@ export function AccountPaymentsCalendarView({
   const programDates = useMemo(() => {
     const dates = new Set<string>()
     for (const row of filteredRows) {
-      dates.add(resolveAccountPaymentAttendanceDate(row).slice(0, 10))
+      const d = resolveAccountPaymentCalendarDate(row)
+      if (d) dates.add(d)
     }
     return dates
   }, [filteredRows])
