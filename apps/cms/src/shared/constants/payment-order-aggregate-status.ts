@@ -69,7 +69,7 @@ export function paymentOrderDetailAggregateStatusCssModifier(
   return status === 'application_rejected' ? 'application-rejected' : status
 }
 
-/** 계좌 지급 현황(rule): 화면 표기 4단계 */
+/** 계좌 지급 현황(rule): API·타입 호환용 4키 (목록 UI 필터는 LIST_FILTER 2종만) */
 export const ACCOUNT_PAYMENT_AGGREGATE_STATUSES = [
   'awaiting_confirmation',
   'partial_confirmation',
@@ -79,11 +79,28 @@ export const ACCOUNT_PAYMENT_AGGREGATE_STATUSES = [
 
 export type AccountPaymentAggregateStatus = (typeof ACCOUNT_PAYMENT_AGGREGATE_STATUSES)[number]
 
+/** 계좌 지급 확인 목록·필터 — Notion/시안 2종 */
+export const ACCOUNT_PAYMENT_LIST_FILTER_STATUSES = [
+  'awaiting_confirmation',
+  'account_paid',
+] as const
+
+export type AccountPaymentListFilterStatus =
+  (typeof ACCOUNT_PAYMENT_LIST_FILTER_STATUSES)[number]
+
 export const ACCOUNT_PAYMENT_AGGREGATE_LABELS: Record<AccountPaymentAggregateStatus, string> = {
-  awaiting_confirmation: '지급 대기 중',
+  awaiting_confirmation: '계좌 지급 대기 중',
   partial_confirmation: '확인 진행 중',
   account_paid: '계좌 지급 완료',
   payment_correction_requested: '지급 정정 요청',
+}
+
+/** 캘린더 hover·우측 목록 숏 라벨 (시안: 지급 대기 / 지급 완료) */
+export const ACCOUNT_PAYMENT_STATUS_SHORT_LABELS: Record<AccountPaymentAggregateStatus, string> = {
+  awaiting_confirmation: '지급 대기',
+  partial_confirmation: '확인 중',
+  account_paid: '지급 완료',
+  payment_correction_requested: '정정 요청',
 }
 
 const ACCOUNT_PAYMENT_TO_INSTRUCTOR_SETTLEMENT_STATUS: Record<
