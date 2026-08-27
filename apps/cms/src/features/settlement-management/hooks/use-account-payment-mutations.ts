@@ -39,12 +39,14 @@ export function useMarkAccountPaymentFailedMutation() {
   })
 }
 
+/** P1 export — 화면 Client Excel SSOT. 훅은 유지하되 account-payments UI에서 호출하지 않음. */
 export function useBulkTransferExportMutation() {
   return useMutation({
     mutationFn: (body: SettlementExportRequest) => requestBulkTransferExportRemote(body),
   })
 }
 
+/** P1 export — 화면 Client Excel SSOT. 훅은 유지하되 account-payments UI에서 호출하지 않음. */
 export function useTaxReportExportMutation() {
   return useMutation({
     mutationFn: (body: SettlementExportRequest) => requestTaxReportExportRemote(body),
@@ -55,5 +57,12 @@ function invalidateAccountPaymentCaches(queryClient: QueryClient) {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: settlementQueryKeys.accountPayments.lists() }),
     queryClient.invalidateQueries({ queryKey: settlementQueryKeys.accountPayments.details() }),
+    queryClient.invalidateQueries({
+      queryKey: [...settlementQueryKeys.accountPayments.all(), 'budgetSummary'],
+    }),
+    queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.lists() }),
+    queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.details() }),
+    queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.statements() }),
+    queryClient.invalidateQueries({ queryKey: settlementQueryKeys.calendar.all() }),
   ])
 }

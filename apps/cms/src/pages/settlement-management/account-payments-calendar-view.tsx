@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'rea
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import {
+  formatAccountPaymentInstitutionDisplay,
   formatAccountPaymentSessionLabelDisplay,
   resolveAccountPaymentAttendanceDate,
   type AccountPaymentRow,
@@ -50,15 +51,15 @@ function accountPaymentStatusToUiStatus(
 function accountPaymentStatusShortLabel(status: AccountPaymentRow['accountPaymentStatus']): string {
   switch (status) {
     case 'awaiting_confirmation':
-      return '확인 대기'
+      return '지급 대기'
     case 'partial_confirmation':
       return '확인 중'
     case 'account_paid':
-      return '계좌 지급'
+      return '지급 완료'
     case 'payment_correction_requested':
       return '정정 요청'
     default:
-      return '확인 대기'
+      return '지급 대기'
   }
 }
 
@@ -99,12 +100,12 @@ function placeholderInvoiceForAccountPaymentCalendar(
   return {
     programName: row.programName,
     sessionProgress: formatAccountPaymentSessionLabelDisplay(row.sessionLabel),
-    operationPeriod: '—',
+    operationPeriod: '-',
     paymentStatementStatus: status,
     expectedTransferDate: `${d.format('YYYY. MM. DD')}(${['일', '월', '화', '수', '목', '금', '토'][d.day()]})`,
-    lectureFeeBasis: '—',
+    lectureFeeBasis: '-',
     businessIncomeEarner: '해당 없음',
-    institutionName: row.institutionName,
+    institutionName: formatAccountPaymentInstitutionDisplay(row.institutionName),
     lectureDateSessions: `${formatAccountPaymentSessionLabelDisplay(row.sessionLabel)} · ${row.instructorName}`,
     lineItems: [
       {
@@ -131,7 +132,7 @@ function accountPaymentRowToSettlementListRow(row: AccountPaymentRow): Instructo
     no: row.no,
     programName: row.programName,
     instructorName: row.instructorName,
-    institutionName: row.institutionName,
+    institutionName: formatAccountPaymentInstitutionDisplay(row.institutionName),
     lectureDateDisplay: `${formatAccountPaymentSessionLabelDisplay(row.sessionLabel)} · ${row.instructorName}`,
     calendarDate,
     status,

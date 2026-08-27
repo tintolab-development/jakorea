@@ -6,16 +6,16 @@ function isPrefixedBy(key: readonly unknown[], prefix: readonly unknown[]): bool
 }
 
 describe('settlement mutation invalidate prefixes', () => {
-  it('account payment lists/details do not match exports', () => {
+  it('account payment lists/details/budgetSummary share accountPayments root', () => {
     const lists = settlementQueryKeys.accountPayments.lists()
     const details = settlementQueryKeys.accountPayments.details()
-    const exports = settlementQueryKeys.accountPayments.exports()
+    const budget = settlementQueryKeys.accountPayments.budgetSummary(2026)
 
     expect(isPrefixedBy(settlementQueryKeys.accountPayments.list('q'), lists)).toBe(true)
     expect(isPrefixedBy(settlementQueryKeys.accountPayments.detail('row-1'), details)).toBe(true)
-    expect(isPrefixedBy(exports, lists)).toBe(false)
-    expect(isPrefixedBy(exports, details)).toBe(false)
-    expect(isPrefixedBy(exports, settlementQueryKeys.accountPayments.all())).toBe(true)
+    expect(isPrefixedBy(budget, settlementQueryKeys.accountPayments.all())).toBe(true)
+    expect(isPrefixedBy(budget, lists)).toBe(false)
+    expect(isPrefixedBy(budget, details)).toBe(false)
   })
 
   it('payment order lists/details do not match settlement subresources', () => {

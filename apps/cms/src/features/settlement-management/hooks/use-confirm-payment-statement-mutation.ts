@@ -34,6 +34,11 @@ export function useConfirmPaymentStatementMutation() {
         queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.statements() }),
         queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.details() }),
         queryClient.invalidateQueries({ queryKey: settlementQueryKeys.calendar.all() }),
+        queryClient.invalidateQueries({ queryKey: settlementQueryKeys.accountPayments.lists() }),
+        queryClient.invalidateQueries({ queryKey: settlementQueryKeys.accountPayments.details() }),
+        queryClient.invalidateQueries({
+          queryKey: [...settlementQueryKeys.accountPayments.all(), 'budgetSummary'],
+        }),
       ])
     },
   })
