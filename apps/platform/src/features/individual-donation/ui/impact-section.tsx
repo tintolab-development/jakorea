@@ -1,20 +1,26 @@
 import { useState, type CSSProperties } from 'react'
 import { platformMediaQueries } from '@/shared/lib/breakpoints'
-import { useMediaQuery } from '@/shared/hooks'
+import { useMediaQuery, useShouldUsePlatformMockData } from '@/shared/hooks'
 import { PFCarouselButton, PFText } from '@/shared/ui'
 import {
   IMPACT_SECTION_TITLE,
   IMPACT_SLIDER_VISIBLE_COUNT,
 } from '../lib/constants'
-import { DONATION_IMPACT_ITEMS } from '../lib/impact-mock'
+import { getDonationImpactItems } from '../lib/impact-mock'
 import { DonationImpactCard } from './donation-impact-card'
 import styles from './impact-section.module.css'
 
 export function ImpactSection() {
+  useShouldUsePlatformMockData()
+  const items = getDonationImpactItems()
   const isPcUp = useMediaQuery(platformMediaQueries.pcUp)
   const [slideIndex, setSlideIndex] = useState(0)
 
-  const maxIndex = Math.max(0, DONATION_IMPACT_ITEMS.length - IMPACT_SLIDER_VISIBLE_COUNT)
+  if (items.length === 0) {
+    return null
+  }
+
+  const maxIndex = Math.max(0, items.length - IMPACT_SLIDER_VISIBLE_COUNT)
   const clampedIndex = Math.min(slideIndex, maxIndex)
   const canGoPrev = clampedIndex > 0
   const canGoNext = clampedIndex < maxIndex
@@ -40,7 +46,7 @@ export function ImpactSection() {
           <>
             <div className={styles.viewport}>
               <ul className={styles.track} style={trackStyle}>
-                {DONATION_IMPACT_ITEMS.map(item => (
+                {items.map(item => (
                   <li className={styles.slide} key={item.id}>
                     <DonationImpactCard item={item} />
                   </li>
@@ -67,7 +73,7 @@ export function ImpactSection() {
           </>
         ) : (
           <ul className={styles.list}>
-            {DONATION_IMPACT_ITEMS.map(item => (
+            {items.map(item => (
               <li className={styles.listItem} key={item.id}>
                 <DonationImpactCard item={item} />
               </li>

@@ -3,11 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { usePortalMeQuery } from '@/features/auth/sign-in'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
-import {
-  isAdminOnboardingRequired,
-  setAdminOnboardingRequired,
-  setDevAuthLoggedIn,
-} from '@/shared/lib'
+import { isAdminOnboardingRequired, setAdminOnboardingRequired } from '@/shared/lib'
 import { ADMIN_REGISTERED_NOTICE_PATH } from '../lib/constants'
 import { resolveAdminProvisionedOnboardingEntryPath } from '../lib/onboarding-step'
 import { requiresAdminRegisteredOnboarding } from '../lib/admin-registered-member'
@@ -51,7 +47,6 @@ export function useAdminRegisteredNoticeRedirect() {
 
     if (isAdminOnboardingRequired()) {
       setAdminOnboardingRequired(false)
-      setDevAuthLoggedIn(true)
     }
   }, [enabled, meQuery.data, meQuery.isError, meQuery.isPending, navigate])
 

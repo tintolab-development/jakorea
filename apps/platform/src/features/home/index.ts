@@ -5,6 +5,8 @@ export {
   HOME_HERO_SLIDES,
   HOME_PARTNER_LOGO_ROWS,
   HOME_YOUTUBE_URL,
+  getHomeAchievementHighlight,
+  getHomeAchievementStats,
 } from './lib/mock'
 export type { HomeAchievementStat, HomeHeroSlide, HomePartnerLogo } from './lib/mock'
 

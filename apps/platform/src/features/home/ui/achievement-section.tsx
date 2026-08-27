@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { useIntersectionObserver } from '@/shared/hooks/use-intersection-observer'
 import { usePrefersReducedMotion } from '@/shared/hooks/use-prefers-reduced-motion'
-import { HOME_ACHIEVEMENT_HIGHLIGHT, HOME_ACHIEVEMENT_STATS } from '../lib/mock'
+import { useShouldUsePlatformMockData } from '@/shared/hooks'
+import { getHomeAchievementHighlight, getHomeAchievementStats } from '../lib/mock'
 import { AnimatedStatNumber } from './animated-stat-number'
 import styles from './achievement-section.module.css'
 
 export function AchievementSection() {
+  useShouldUsePlatformMockData()
+  const stats = getHomeAchievementStats()
+  const highlight = getHomeAchievementHighlight()
   const sectionRef = useRef<HTMLElement>(null)
   const prefersReducedMotion = usePrefersReducedMotion()
   const isInView = useIntersectionObserver(sectionRef, {
@@ -20,6 +24,10 @@ export function AchievementSection() {
 
   const countEnabled = prefersReducedMotion || hasStarted
 
+  if (stats.length === 0 && !highlight) {
+    return null
+  }
+
   return (
     <section className={styles.section} ref={sectionRef}>
       <div className={styles.inner}>
@@ -28,8 +36,9 @@ export function AchievementSection() {
           <h2 className={styles.title}>함께 만들어온 배움의 여정</h2>
         </div>
 
+        {stats.length > 0 ? (
         <dl className={styles.statGrid}>
-          {HOME_ACHIEVEMENT_STATS.flatMap((stat, index) => {
+          {stats.flatMap((stat, index) => {
             const nodes = []
             if (index > 0) {
               nodes.push(
@@ -57,19 +66,22 @@ export function AchievementSection() {
             return nodes
           })}
         </dl>
+        ) : null}
 
+        {highlight ? (
         <div className={styles.highlight}>
-          <p className={styles.highlightLabel}>{HOME_ACHIEVEMENT_HIGHLIGHT.label}</p>
+          <p className={styles.highlightLabel}>{highlight.label}</p>
           <p className={styles.highlightValue}>
             <AnimatedStatNumber
-              value={HOME_ACHIEVEMENT_HIGHLIGHT.value}
+              value={highlight.value}
               className={styles.highlightNumber}
               enabled={countEnabled}
               immediate={prefersReducedMotion}
             />
-            <span className={styles.highlightUnit}>{HOME_ACHIEVEMENT_HIGHLIGHT.unit}</span>
+            <span className={styles.highlightUnit}>{highlight.unit}</span>
           </p>
         </div>
+        ) : null}
 
         <p className={styles.closing}>
           학생들이 <strong>스스로 미래를 설계</strong>하도록

@@ -20,7 +20,7 @@ const CATEGORY_TAB_ITEMS = getImpactStoryCategoryTabItems()
 export function ImpactStoriesPage() {
   const [params, setParams] = useState(readImpactStoriesListParams)
   const stories = useMockImpactStories()
-  const featuredStories = useMemo(() => getFeaturedImpactStories(), [])
+  const featuredStories = getFeaturedImpactStories()
 
   useEffect(() => {
     const onPopState = () => {

@@ -1,3 +1,4 @@
+import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 import type { PeopleMemberSection } from '../model/types'
 
 export const MOCK_PEOPLE_SECTIONS: PeopleMemberSection[] = [
@@ -100,3 +101,8 @@ export const MOCK_PEOPLE_SECTIONS: PeopleMemberSection[] = [
     ],
   },
 ]
+
+export function getMockPeopleSections(): PeopleMemberSection[] {
+  if (!shouldUsePlatformMockData()) return []
+  return MOCK_PEOPLE_SECTIONS
+}

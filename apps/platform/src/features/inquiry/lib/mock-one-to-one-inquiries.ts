@@ -1,3 +1,5 @@
+import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import type { OneToOneInquiryItem } from '../model/types'
 
 export const MOCK_ONE_TO_ONE_INQUIRIES: OneToOneInquiryItem[] = [
@@ -120,5 +122,7 @@ export const MOCK_ONE_TO_ONE_INQUIRIES: OneToOneInquiryItem[] = [
 ]
 
 export function useMockOneToOneInquiriesCatalog(): OneToOneInquiryItem[] {
+  useShouldUsePlatformMockData()
+  if (!shouldUsePlatformMockData()) return []
   return MOCK_ONE_TO_ONE_INQUIRIES
 }

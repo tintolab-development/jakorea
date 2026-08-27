@@ -10,6 +10,7 @@ import {
   subscribeMockEducationApplications,
   type EducationApplicationListParams,
 } from '@/features/mypage'
+import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import { PFPagination, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
@@ -25,6 +26,7 @@ export function EducationListContent({ params, onParamsChange }: EducationListCo
     getMockEducationApplicationsVersion,
     getMockEducationApplicationsVersion,
   )
+  const mockEnabled = useShouldUsePlatformMockData()
 
   const { items, totalPages, currentPage, totalElements } = useMemo(
     () =>
@@ -33,7 +35,7 @@ export function EducationListContent({ params, onParamsChange }: EducationListCo
         page: params.page,
         pageSize: EDUCATION_APPLICATION_PAGE_SIZE,
       }),
-    [applicationsVersion, params.page, params.tab],
+    [applicationsVersion, mockEnabled, params.page, params.tab],
   )
 
   return (

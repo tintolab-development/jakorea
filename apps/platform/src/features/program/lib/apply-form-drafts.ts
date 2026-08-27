@@ -18,6 +18,7 @@ import { createProgramApplicationFormInstitutionDraft } from '@jakorea/form-sche
 import { createProgramApplicationFormInstructorDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { createProgramApplicationFormVolunteerDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
+import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 import type { ProgramDetail, ProgramListItem } from '../model/types.ts'
 import {
   resolveProgramApplyFormCase,
@@ -84,7 +85,8 @@ export function getMockApplyFormCase(
 export function getMockApplyFormDraft(
   program: Pick<ProgramListItem | ProgramDetail, 'category' | 'id'> &
     Partial<Pick<ProgramDetail, 'detailCase' | 'participationMethod'>>
-): WritingFormDraft {
+): WritingFormDraft | null {
+  if (!shouldUsePlatformMockData()) return null
   const applyCase = resolveProgramApplyFormCase(program)
   return createSeedDraftForApplyCase(applyCase)
 }

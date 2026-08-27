@@ -18,7 +18,13 @@ export {
   setAdminOnboardingRequired,
 } from './admin-onboarding-session'
 export { queryClient } from './query-client'
-export { DEV_AUTH_CHANGE_EVENT, getDevAuthLoggedIn, setDevAuthLoggedIn } from './dev-auth'
+export {
+  DEV_AUTH_CHANGE_EVENT,
+  getDevAuthLoggedIn,
+  setDevAuthLoggedIn,
+  shouldUsePlatformMockData,
+  withPlatformMockData,
+} from './dev-auth'
 export {
   DEV_MEMBER_PROFILE_OPTIONS,
   getDevMemberProfile,

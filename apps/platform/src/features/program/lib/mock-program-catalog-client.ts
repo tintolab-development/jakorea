@@ -6,7 +6,7 @@
  */
 
 import type { CmsProgramLike } from '../model/cms-program.types'
-import { getDevAuthLoggedIn } from '@/shared/lib/dev-auth'
+import { getDevAuthLoggedIn, shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 
 /** tools/mock-program-catalog/constants 와 동일 */
 export const MOCK_PROGRAM_CATALOG_API_PATH = '/__dev__/mock-program-catalog'
@@ -52,11 +52,11 @@ async function requestMockProgramCatalog(): Promise<CmsProgramLike[]> {
 
 /**
  * CMS mock 등록 카탈로그.
- * mock 로그인·DEV 가 아니면 빈 배열 — 실 세션/비로그인 목록은 시드만 유지.
+ * DEV + mock 세션(비로그인·mock 로그인)에서만 조회. remote 실세션은 빈 배열.
  */
 export async function fetchMockProgramCatalog(): Promise<CmsProgramLike[]> {
   if (!import.meta.env.DEV) return []
-  if (!getDevAuthLoggedIn()) {
+  if (!shouldUsePlatformMockData() || !getDevAuthLoggedIn()) {
     clearMockProgramCatalogCache()
     return []
   }

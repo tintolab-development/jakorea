@@ -23,6 +23,7 @@ export {
   MOCK_MYPAGE_EMPLOYMENT_LABEL,
   MOCK_MYPAGE_PROGRAM_STATS,
   MOCK_MYPAGE_USER_NAME,
+  getMockMypageProgramStats,
   MYPAGE_PATH,
   MYPAGE_INQUIRIES_PATH,
   MYPAGE_SETTINGS_PATH,
@@ -69,6 +70,7 @@ export {
 export {
   MOCK_MYPAGE_SCHEDULE_EVENTS,
   formatMypageScheduleBarLabel,
+  getMockMypageScheduleEvents,
   getMypageScheduleDatesInMonth,
   getMypageScheduleEventsOnDate,
   syncSelectedDateToMonth,

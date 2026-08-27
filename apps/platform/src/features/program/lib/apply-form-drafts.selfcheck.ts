@@ -38,6 +38,7 @@ function paragraphIds(programId: string, extra?: { participationMethod?: 'indivi
   }
   const applyCase = resolveProgramApplyFormCase(detail)
   const draft = getMockApplyFormDraft(detail)
+  assert.ok(draft, `apply draft missing: ${programId}`)
   return {
     applyCase,
     templateCode: getApplicationTemplateCodeForApplyCase(applyCase),

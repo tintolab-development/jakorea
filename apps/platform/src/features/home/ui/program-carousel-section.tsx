@@ -1,11 +1,11 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
 import {
   PROGRAMS_PATH,
-  getMockPrograms,
   programDetailPath,
   type ProgramListItem,
+  useMockProgramsCatalog,
 } from '@/features/program'
 import { RECRUITMENT_STATUS_TONE_MAP } from '@/features/program/lib/badge-config'
 import { platformMediaQueries } from '@/shared/lib/breakpoints'
@@ -82,7 +82,7 @@ export function ProgramCarouselSection() {
   const visibleCount = isPcUp ? 3 : 1
   const [index, setIndex] = useState(0)
 
-  const programs = useMemo(() => getMockPrograms().slice(0, MAX_ITEMS), [])
+  const programs = useMockProgramsCatalog().slice(0, MAX_ITEMS)
   const maxIndex = Math.max(0, programs.length - visibleCount)
   /* 브레이크포인트 전환으로 index가 범위를 벗어나면 렌더 시점에 클램프 */
   const clampedIndex = Math.min(index, maxIndex)
