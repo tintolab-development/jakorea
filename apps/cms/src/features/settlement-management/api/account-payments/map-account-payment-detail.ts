@@ -24,6 +24,7 @@ import {
   formatWonAmountDisplay,
   mapCalculationDetailToBasisDetail,
   mapSettlementFrontendItemTypeToLineKind,
+  prepareSettlementFrontendItemsForStatement,
 } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
 
@@ -100,7 +101,7 @@ function buildBlocksFromFrontendSettlement(
   row: AccountPaymentRow,
   settlement: SettlementFrontendResponse
 ): PaymentOrderCalculationStatementSessionBlock[] {
-  const items = settlement.items ?? []
+  const items = prepareSettlementFrontendItemsForStatement(settlement.items)
   const lines = items.map(mapFrontendItemToCalcLine)
 
   if (lines.length === 0) {

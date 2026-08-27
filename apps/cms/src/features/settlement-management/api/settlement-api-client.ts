@@ -23,6 +23,7 @@ import type {
   SettlementFrontendResponse,
   SettlementStatusChangeRequest,
   SettlementAggregateResponse,
+  SettlementConfigUpdateRequest,
 } from '@/shared/api/generated/settlement/schemas'
 
 const settlementApi = getJAKoreaCMSBackendAPISettlementSubset()
@@ -168,6 +169,26 @@ export async function fetchSettlementExportHistoriesRemote(
 
 export async function fetchCurrentSettlementConfigRemote(): Promise<SettlementConfigResponse> {
   return unwrapApiBody(await settlementApi.currentConfig())
+}
+
+export async function updateCurrentSettlementConfigRemote(
+  body: SettlementConfigUpdateRequest
+): Promise<SettlementConfigResponse> {
+  return unwrapApiBody(await settlementApi.updateCurrentConfig(body))
+}
+
+export async function duplicateSettlementConfigItemRemote(
+  itemKind: 'wage' | 'payment' | 'deduction',
+  itemId: number
+): Promise<SettlementConfigResponse> {
+  return unwrapApiBody(await settlementApi.duplicateConfigItem(itemKind, itemId))
+}
+
+export async function deleteSettlementConfigItemRemote(
+  itemKind: 'wage' | 'payment' | 'deduction',
+  itemId: number
+): Promise<SettlementConfigResponse> {
+  return unwrapApiBody(await settlementApi.deleteConfigItem(itemKind, itemId))
 }
 
 export async function fetchSettlementCalendarRemote(
