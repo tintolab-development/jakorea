@@ -33,6 +33,13 @@ export function paymentOrdersListQuerySearchParamsKey(searchParams: URLSearchPar
   return next.toString()
 }
 
+/** aggregates 캐시 키 — 노출 기준은 query key의 groupBy로 분리한다. */
+export function paymentOrdersListFilterQueryKey(searchParams: URLSearchParams): string {
+  const next = new URLSearchParams(paymentOrdersListQuerySearchParamsKey(searchParams))
+  next.delete(PAYMENT_ORDERS_EXPOSURE_PARAM_KEY)
+  return next.toString()
+}
+
 export type ExposureMode = 'program' | 'instructor'
 
 /** 지급조서 처리 현황 — `all`은 URL·필터에서 미선택 */

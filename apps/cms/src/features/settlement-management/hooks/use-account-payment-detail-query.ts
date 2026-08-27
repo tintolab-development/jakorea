@@ -1,5 +1,4 @@
-import { useCallback } from 'react'
-import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query'
+import { queryOptions, useQuery } from '@tanstack/react-query'
 import { getAccountPaymentDetailRemote } from '@/features/settlement-management/api/account-payments/admin-account-payments-service'
 import { settlementQueryKeys } from '@/features/settlement-management/api/settlement-query-keys'
 import { useSettlementRemoteEnabled } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
@@ -35,17 +34,4 @@ export function useAccountPaymentDetailQuery(row: AccountPaymentRow | null, open
         }),
     enabled: remoteEnabled,
   })
-}
-
-export function usePrefetchAccountPaymentDetail() {
-  const queryClient = useQueryClient()
-  const remoteEnabled = useSettlementRemoteEnabled('accountPayments')
-
-  return useCallback(
-    (row: AccountPaymentRow) => {
-      if (!remoteEnabled || !row.id || row.settlementId == null) return
-      void queryClient.prefetchQuery(accountPaymentDetailQueryOptions(row))
-    },
-    [queryClient, remoteEnabled]
-  )
 }

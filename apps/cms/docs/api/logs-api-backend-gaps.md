@@ -2,7 +2,7 @@
 
 > **2026-08-26 SSOT**: 백엔드 Cursor 실행 프롬프트는  
 > [**logs-api-backend-cursor-prompt.md**](./logs-api-backend-cursor-prompt.md)  
-> 전환률 스냅샷(구버전): [logs-api-conversion-status-backend-handoff.md](./logs-api-conversion-status-backend-handoff.md)  
+> 전환률 · 화면별 계약 · 미적용 API 스펙 스냅샷: [**logs-api-conversion-status-backend-handoff.md**](./logs-api-conversion-status-backend-handoff.md)  
 > FE 연동: [logs-api-integration.md](./logs-api-integration.md)
 
 CMS LNB **보안 설정(로그 관리)** 4화면의 OpenAPI 대조입니다.
@@ -37,9 +37,10 @@ Notion **메일 발송 이력**은 기획 보류이며 OpenAPI에 없습니다.
 | **P0** | 목록 query `params` 가방 **required 제거**, 플랫 키만 바인딩 | FE는 `?fileName=` `?adminName=` 만 보냄 |
 | **P0** | 파일 다운로드 API가 `file-access` 행을 **자동 적재** | CMS는 POST하지 않음. 적재 없으면 빈 목록 |
 | **P0** | unmask 성공 시 `privacy-access` 감사 + `targetName` | 조회 대상 컬럼. 경로 `/api/admin/users/{id}/privacy/unmask` |
+| P1 | 네 목록 GET을 **Page 응답**으로 바꾸거나 `page`, `size`, `total` 추가 | 현재 무한 배열. 로그 적재 시 화면이 전체를 받음 |
 | P1 | `GET /api/admin/logs/{file-access\|privacy-access\|system-issues\|member-logins}/export` (필터 동일, **감사 fail-closed**) | 지금은 클라 테이블 dump. 개인정보·IP 포함 |
-| P2 | `GET /api/admin/logs/system-issues/{issueId}/stack-trace` | CMS UI가 상세를 열지 않음 |
-| P2 | `GET /api/admin/logs/mail-sends` (가칭) | Notion 메일 발송 이력(보류) |
+| P2 | `GET /api/admin/logs/system-issues/{issueId}/stack-trace` 또는 상세에 `stackTrace` 본문 포함 | OpenAPI 상세에 `stackTraceAvailable`만 있음. CMS UI는 상세를 열지 않음 |
+| P2 | `GET /api/admin/logs/mail-sends` (가칭) | Notion 메일 발송 이력(보류). 필터: 사용자, 기간 / 컬럼: No, 발생 화면, 에러 메시지, 사용자, 발생일시 |
 
 **요청하지 않는 것**
 
@@ -54,6 +55,15 @@ Notion **메일 발송 이력**은 기획 보류이며 OpenAPI에 없습니다.
 ### 1. `params` 가방 required 제거 (P0)
 
 플랫 키는 OpenAPI에 이미 있다. 그런데 `params: { [key: string]: string }` 가 **required**로 남아 있다. FE는 가방을 보내지 않고 `?fileName=` `?adminName=` 만 보낸다. Spring이 중첩 `params[fileName]`만 받으면 필터가 무시된다.
+
+프론트가 보내는 키(확정안):
+
+| 화면 | API 쿼리 키 |
+|------|-----------------|
+| file-access | `fileName`, `userName`, `from`, `to` (`YYYY-MM-DD`) |
+| privacy-access | `accessPurpose`, `accessorName`, `from`, `to` (+ 조회 대상이면 `targetName`) |
+| system-issues | `userName`, `from`, `to` (+ 선택 `status`, `severity`) |
+| member-logins | `adminName`/`name`, `loginId`, `from`, `to` |
 
 ### 2. 버그 목록 `id` vs 상세 `issueId` (P2)
 
@@ -75,7 +85,7 @@ DTO에 있음. Notion 컬럼에는 없음. CMS는 표시하지 않음.
 
 ## C. 확인만 하면 되는 것
 
-1. 목록이 Page인지 (`totalElements` = 화면 「총 N건」). size 기본 20, 최대 100.
+1. 목록이 Page인지 (`totalElements` = 화면 「총 N건」). size 기본 20, 최대 100. 세 목록이 정말 전체 dump인지, 서버 기본 기간/건수 제한이 있는지.
 2. file-access가 실제 파일 다운로드에서 자동 적재되는지.
 3. privacy-access가 unmask 성공 건만인지, 마스킹 화면 조회도 남는지.
 4. 회원 로그인 1개월 파기를 **서버**가 하는지.

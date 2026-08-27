@@ -213,6 +213,33 @@ LNB 3화면은 **mock fallback 없음**.
 - 행 hover detail prefetch는 **150ms debounce**
 - 등록 성공 시 목록 캐시 `applyCreatedToArrayLists` prepend (전량 invalidate 회피)
 
+### 상세 LNB
+
+| `sponsorLnb` | 패널 |
+|--------------|------|
+| `sponsor-detail` | 기본정보 + 연도별 후원금 |
+| `sponsor-programs` | 프로그램 진행 이력 |
+| `sponsor-contacts` | 후원사 담당자 정보 (필터·CRUD) |
+
+담당자 필드: 부서·직함·유형·담당자명·내선·연락처·이메일·회사 주소·비고·등록일시 (`department`, `position`, `officePhone`, `phone`/`mobilePhone`, `email`, `companyAddress`, `memo`).
+
+### 프로그램 진행 이력 필터
+
+| UI | API query | 비고 |
+|----|-----------|------|
+| 프로그램명 | `programName` | 서버 |
+| 진행년도 | `year` | 서버 |
+| 프로그램 진행 현황 | `lifecycleStatus` | 서버 |
+| 참여자 유형 | `participantType` | **OpenAPI 없음** — FE 전송 + 클라 보조 매칭. 갭 P2 |
+| 교육 대상 | `educationTarget` | 서버 |
+| 후원사 담당자명 | `managerName` | 서버 |
+
+### 성능 노트 (FE)
+
+- 후원 상태 드롭다운 open은 **셀 로컬 state** (columns deps에서 제외)
+- 행 hover detail prefetch는 **150ms debounce**
+- 등록 성공 시 목록 캐시 `applyCreatedToArrayLists` prepend (전량 invalidate 회피)
+
 ### 연도별 후원금 (상세 패널)
 
 - DTO: `businessYear`, `donationAmount`, `beneficiaryCount`, `memo`

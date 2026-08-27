@@ -42,8 +42,13 @@ export interface AccountPaymentRow {
   accountPaymentStatus: AccountPaymentTransferStatus
   amount: number
   /**
+   * 실제 출강일 ISO `YYYY-MM-DD`.
+   * 계좌 지급 확인 목록 필터(이체 예정일 라벨)·캘린더 일자에 사용.
+   */
+  lectureDate?: string
+  /**
    * 이체 예정일 ISO `YYYY-MM-DD`.
-   * 계좌 지급 확인 화면에서 이체 예정일 필터·세 번째 요약 카드(구간 내 지급예정 금액 합) 집계에 사용.
+   * 목록 「이체 예정일」 열·세 번째 요약 카드 연간 집계에 사용.
    */
   transferScheduledDate: string
   /** API 목록 — 정산 계좌 (상세·지급 확인 모달) */
@@ -57,7 +62,14 @@ export interface AccountPaymentRow {
   paymentOrderStatus: Extract<PaymentOrderAdminProcessingStatus, 'confirmed'>
 }
 
-/** 계좌 지급 확인 — 목록·캘린더 등 `sessionLabel` UI 표시(차시 → 회차) */
+/** 계좌 지급 확인 — 목록 필터·캘린더에 쓰는 출강일 (없으면 이체 예정일) */
+export function resolveAccountPaymentAttendanceDate(row: AccountPaymentRow): string {
+  const lecture = row.lectureDate?.trim()
+  if (lecture) return lecture
+  return row.transferScheduledDate
+}
+
+/** 계좌 지급 확인 — 목록/캘린더 등 `sessionLabel` UI 표시(차시 → 회차) */
 export function formatAccountPaymentSessionLabelDisplay(raw: string): string {
   return raw.replace(/차시/g, '회차')
 }
@@ -261,6 +273,8 @@ export const mockAccountPaymentRows: AccountPaymentRow[] = Array.from(
     ]
     const accountPaymentStatus: AccountPaymentTransferStatus = statusCycle[i % statusCycle.length]!
     const transferScheduledDate = isoDate(2026, 5, 2 + i * 2)
+    const now = new Date()
+    const lectureDate = isoDate(now.getFullYear(), now.getMonth() + 1, Math.min(1 + i * 2, 28))
     const sessionLabel = i % 3 === 0 ? `${2 + (i % 2)}차시` : `${2} ~ ${3 + (i % 2)}차시`
 
     return {
@@ -272,6 +286,7 @@ export const mockAccountPaymentRows: AccountPaymentRow[] = Array.from(
       sessionLabel,
       accountPaymentStatus,
       amount: amounts[i % amounts.length],
+      lectureDate,
       transferScheduledDate,
       paymentOrderStatus: 'confirmed',
     }

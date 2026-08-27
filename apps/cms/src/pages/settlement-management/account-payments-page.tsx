@@ -15,23 +15,27 @@ import {
   mockAccountPaymentRows,
   formatAccountPaymentSessionLabelDisplay,
   isPaymentOrderStatementConfirmedForAccountPayments,
+  resolveAccountPaymentAttendanceDate,
   type AccountPaymentRow,
   type AccountPaymentTransferStatus,
 } from '@/data/mock/account-payments-list'
-import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { useAccountPaymentsListQuery } from '@/features/settlement-management/hooks/use-account-payments-list-query'
-import { usePrefetchAccountPaymentDetail } from '@/features/settlement-management/hooks/use-account-payment-detail-query'
 import { useMarkAccountPaymentPaidMutation } from '@/features/settlement-management/hooks/use-account-payment-mutations'
 import { useSettlementBudgetSummaryQuery } from '@/features/settlement-management/hooks/use-settlement-budget-summary-query'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { ACCOUNT_PAYMENT_AGGREGATE_STATUSES } from '@/shared/constants/payment-order-aggregate-status'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui/cms-button'
+import {
+  FILTER_CONTROL_MAX_WIDTH_PX,
+  FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
+} from '@/shared/components/table-filter-group-field-width'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
 import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/features/program/general/ui/detail-modal/program-status/program-progress-tab.css'
 import './payment-orders-page.css'
 import './account-payments-page.css'
 import { AccountPaymentsCalendarView } from './account-payments-calendar-view'
+import { getPaymentOrdersDefaultDateRange } from './payment-orders-date-range'
 import {
   AccountPaymentConfirmationModal,
   buildAccountPaymentConfirmationPayloadForSelection,
@@ -62,8 +66,8 @@ interface AppliedFilters {
   transferDateRange: [Dayjs, Dayjs] | null
 }
 
-/** 기획: 전년도 12월 ~ 금년도 12월(말일) — 페이지 진입·초기 조회 기본 구간 */
-function getDefaultTransferDateRange(reference: Dayjs = dayjs()): [Dayjs, Dayjs] {
+/** 연도 탭 예산·완료 집계 — 전년도 12월 ~ 금년도 12월(말일) */
+function getAccountPaymentBudgetYearRange(reference: Dayjs = dayjs()): [Dayjs, Dayjs] {
   const y = reference.year()
   const start = dayjs(`${y - 1}-12-01`).startOf('day')
   const end = dayjs(`${y}-12-31`).endOf('day')
@@ -107,7 +111,8 @@ function filterRows(rows: AccountPaymentRow[], applied: AppliedFilters): Account
     if (qp && !row.programName.includes(qp)) return false
     if (applied.accountStatus !== 'all' && row.accountPaymentStatus !== applied.accountStatus)
       return false
-    if (!matchesDateRange(row.transferScheduledDate, applied.transferDateRange)) return false
+    if (!matchesDateRange(resolveAccountPaymentAttendanceDate(row), applied.transferDateRange))
+      return false
     return true
   })
 }
@@ -179,13 +184,13 @@ export default function AccountPaymentsPage() {
   const [draftProgram, setDraftProgram] = useState('')
   const [draftAccountStatus, setDraftAccountStatus] = useState<AppliedAccountStatus>('all')
   const [draftDateRange, setDraftDateRange] = useState<[Dayjs, Dayjs] | null>(() =>
-    getDefaultTransferDateRange()
+    getPaymentOrdersDefaultDateRange()
   )
   const [applied, setApplied] = useState<AppliedFilters>(() => ({
     instructorName: '',
     programName: '',
     accountStatus: 'all',
-    transferDateRange: getDefaultTransferDateRange(),
+    transferDateRange: getPaymentOrdersDefaultDateRange(),
   }))
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [accountPayConfirmSelection, setAccountPayConfirmSelection] = useState<
@@ -213,7 +218,6 @@ export default function AccountPaymentsPage() {
   )
 
   const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
-  const prefetchAccountPaymentDetail = usePrefetchAccountPaymentDetail()
   const markPaidMutation = useMarkAccountPaymentPaidMutation()
   const budgetSummaryQuery = useSettlementBudgetSummaryQuery(
     selectedYearScoped,
@@ -221,21 +225,20 @@ export default function AccountPaymentsPage() {
   )
 
   const accountFilterFields = useMemo((): FilterFieldConfig[] => {
-    const colWidth = '25%'
     return [
       {
         key: 'instructorName',
         type: 'search',
-        label: '강사명',
-        placeholder: '강사명을 입력하세요',
-        width: colWidth,
+        label: '신청자명',
+        placeholder: '신청자명을 입력하세요',
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
       {
         key: 'programName',
         type: 'search',
         label: '프로그램명',
         placeholder: '프로그램명을 입력하세요',
-        width: colWidth,
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
       {
         key: 'accountStatus',
@@ -243,13 +246,14 @@ export default function AccountPaymentsPage() {
         label: '계좌 지급 현황',
         placeholder: '전체',
         options: statusSelectOptions,
-        width: colWidth,
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
       {
         key: 'transferDateRange',
         type: 'dateRange',
         label: '이체 예정일',
-        width: colWidth,
+        dateRangeOneMonthFromStart: true,
+        width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
       },
     ]
   }, [])
@@ -328,7 +332,7 @@ export default function AccountPaymentsPage() {
   }, [accountPayConfirmSelection])
 
   const completedTotalForSelectedYear = useMemo(() => {
-    const range = getDefaultTransferDateRange(dayjs(`${selectedYearScoped}-06-15`))
+    const range = getAccountPaymentBudgetYearRange(dayjs(`${selectedYearScoped}-06-15`))
     return accountPaymentRows
       .filter(
         r =>
@@ -383,12 +387,6 @@ export default function AccountPaymentsPage() {
 
   const handleYearTabSelect = useCallback((y: number) => {
     setSelectedYear(y)
-    const range = getDefaultTransferDateRange(dayjs(`${y}-06-15`))
-    setDraftDateRange(range)
-    setApplied(prev => ({
-      ...prev,
-      transferDateRange: range,
-    }))
     setSelectedRowKeys([])
   }, [])
 
@@ -410,7 +408,7 @@ export default function AccountPaymentsPage() {
         align: 'center',
       },
       {
-        title: '강사명',
+        title: '신청자명',
         dataIndex: 'instructorName',
         key: 'instructorName',
         ellipsis: { showTitle: true },
@@ -430,6 +428,7 @@ export default function AccountPaymentsPage() {
         title: '참여 기관명',
         dataIndex: 'institutionName',
         key: 'institutionName',
+        ellipsis: { showTitle: true },
         width: 140,
         align: 'center',
       },
@@ -562,11 +561,7 @@ export default function AccountPaymentsPage() {
           window.alert('지급 완료 API에 필요한 accountPaymentId가 없습니다.')
           return
         }
-        void markPaidMutation
-          .mutateAsync([paymentId])
-          .catch(error => {
-            window.alert(getSettlementApiErrorMessage(error, '계좌 지급 완료 처리에 실패했습니다.'))
-          })
+        void markPaidMutation.mutateAsync([paymentId]).catch(() => {})
         return
       }
 
@@ -650,8 +645,7 @@ export default function AccountPaymentsPage() {
         <CmsButton
           variant="primary"
           size="large"
-          width="auto"
-          style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
+          width={CMS_ACTION_BUTTON_WIDTH}
           type="button"
           disabled={selectedRowKeys.length === 0}
           onClick={openAccountPaymentConfirmFromSelection}
@@ -692,9 +686,7 @@ export default function AccountPaymentsPage() {
           closeAccountPaymentConfirmModal()
           setAccountPaymentCompleteSuccessOpen(true)
         })
-        .catch(error => {
-          window.alert(getSettlementApiErrorMessage(error, '계좌 지급 완료 처리에 실패했습니다.'))
-        })
+        .catch(() => {})
       return
     }
 
@@ -848,11 +840,9 @@ export default function AccountPaymentsPage() {
               rowSelection={rowSelection}
               rowClassName={() => 'account-payments-page__table-row--clickable'}
               onRow={record => ({
-                onMouseEnter: () => prefetchAccountPaymentDetail(record),
                 onClick: e => {
                   const t = e.target as HTMLElement
                   if (t.closest('.ant-table-selection-column')) return
-                  prefetchAccountPaymentDetail(record)
                   openAccountPaymentDetail(record)
                 },
               })}

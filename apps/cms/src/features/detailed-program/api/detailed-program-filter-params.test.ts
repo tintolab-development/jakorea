@@ -37,4 +37,10 @@ describe('detailed-program-filter-params', () => {
       serializeDetailedProgramListFilters(filtersOnly)
     )
   })
+
+  it('sends program name as keyword', () => {
+    expect(
+      detailedProgramsParamsFromSearchParams(new URLSearchParams('dp_name=워크숍'))
+    ).toMatchObject({ keyword: '워크숍' })
+  })
 })

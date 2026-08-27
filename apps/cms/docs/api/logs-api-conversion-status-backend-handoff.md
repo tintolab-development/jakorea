@@ -2,7 +2,8 @@
 
 > **2026-08-26**: 이 문서는 2026-08-24 스냅샷입니다.  
 > 백엔드가 **지금 실행할 작업**은 [**logs-api-backend-cursor-prompt.md**](./logs-api-backend-cursor-prompt.md) 를 따르세요.  
-> FE는 `GET /member-logins` mock fallback을 제거했습니다. OpenAPI에 목록 4종 + Page 래퍼 + `targetName`이 이미 있습니다.
+> FE는 `GET /member-logins` mock fallback을 제거했습니다. OpenAPI에 목록 4종 + Page 래퍼 + `targetName`이 이미 있습니다.  
+> 전환률·요청 스펙의 상세 스냅샷은 본 문서입니다. 관련: [logs-api-integration.md](./logs-api-integration.md) · [logs-api-backend-gaps.md](./logs-api-backend-gaps.md)
 
 **대상 독자**: 백엔드  
 **작성일**: 2026-08-24  
