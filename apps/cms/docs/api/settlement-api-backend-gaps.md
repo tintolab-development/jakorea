@@ -297,20 +297,40 @@ A를 택하면 OpenAPI `AccountPaymentDetailResponse.settlement` `$ref`를 `Sett
 
 ### 9. 설정 CRUD·상세 저장
 
+> **2026-08-27 갱신:** OpenAPI v9 (`settlement.openapi.json`) 기준. 상세 핸드오프·v2 시드: [settlement-item-settings-backend-seed-handoff-2026-08-27.md](./settlement-item-settings-backend-seed-handoff-2026-08-27.md)
+
 | | |
 |---|---|
-| **UI** | 카드 삭제·복제·12종 `layout` 상세 모달 저장 |
-| **현재 API** | `GET /api/settlement-configs/current` **only** |
-| **프론트 임시 대응** | remote 시 조회만, 편집·삭제·복제 **비활성** |
-| **제안** | `PUT/PATCH /api/settlement-configs/current` + item detail schema (layout별 필드) |
+| **UI** | 카드 삭제·복제·13건 v2 카탈로그 `layout` 상세 모달 저장 |
+| **현재 API** | `GET/PUT/DELETE /api/admin/settlement-configs/current` + item duplicate/delete **OpenAPI 존재** |
+| **프론트 임시 대응** | remote 시 **GET만** 연동; 편집·삭제·복제 **readOnly** |
+| **BE 우선 작업** | v2 13건 seed + `paymentItemType` enum + `detailJson` layout 스키마 |
 
-**Config item 필드 갭**
+**OpenAPI v9 — 이미 있는 필드**
 
-| UI mock | API |
-|---------|-----|
-| `iconKey`, `emojiOverride` | 없음 |
-| `layout` (tier1, transport, …) | 없음 |
-| `basisHours`, `maxLimitWon`, `qualificationLines` | `WageItemResponse.amount`, `PaymentItemResponse.maxAmount` 등 flat |
+| 필드 | WageItem | PaymentItem | DeductionItem |
+|------|----------|-------------|---------------|
+| `layout` | O | O | O |
+| `detailJson` (string) | O | O | O |
+| `iconKey`, `emojiOverride` | O | O | O |
+| `basisHours`, `maxLimitWon` | O (wage) | O (`maxLimitWon`) | — |
+| `qualificationLines`, `remarkLines` | O (wage flat) | **없음** | **없음** |
+| `rateItems[]` | O (gemini) | — | — |
+
+**잔여 갭 (P0)**
+
+| UI mock / FE 필요 | API v9 |
+|-------------------|--------|
+| `paymentItemType` (6종 enum) | **없음** — `itemName`만으로 강사/학생 구분 불가 |
+| payment/deduction `qualificationLines`, `remarkLines` | flat 없음 → **detailJson 내부** 또는 DTO 확장 |
+| 상세 모달 API 매핑 | FE 미구현 — mock `getSettlementItemSettingDetail` 사용 |
+| v2 카탈로그 13건 DB seed | 구 v1 15건과 불일치 — [seed-v2.payload.json](./settlement-item-settings-seed-v2.payload.json) |
+| `maxAmount` vs `maxLimitWon` (payment) | 둘 다 존재 — SSOT `maxLimitWon` 동기화 규칙 필요 |
+
+**CRUD 가드 (OpenAPI 존재, FE 미연동)**
+
+- `POST .../items/{itemKind}/{itemId}/duplicate` — payment만 200
+- `DELETE .../items/{itemKind}/{itemId}` — payment만 200; wage/deduction → 409 기대
 
 ---
 

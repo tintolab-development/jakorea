@@ -1,5 +1,12 @@
 # 정산 항목 설정 더미 시드 요청 (BE)
 
+> **SUPERSEDED (2026-08-27):** 본 문서·[`settlement-item-settings-seed.payload.json`](./settlement-item-settings-seed.payload.json)은 **구 v1 (15건)** 이다. 사용하지 마라.
+>
+> **현행 SSOT:**
+> - API·시드 핸드오프: **[settlement-item-settings-backend-seed-handoff-2026-08-27.md](./settlement-item-settings-backend-seed-handoff-2026-08-27.md)**
+> - PUT payload v2: **[settlement-item-settings-seed-v2.payload.json](./settlement-item-settings-seed-v2.payload.json)**
+> - 산출·enum: **[settlement-item-settings-category-backend-cursor-prompt.md](./settlement-item-settings-category-backend-cursor-prompt.md)**
+
 > **2026-08-26 카탈로그 SSOT 이전:** 임금 6 · 지급 6 · 공제 1 및 산출 엔진 수정은 **[settlement-item-settings-category-backend-cursor-prompt.md](./settlement-item-settings-category-backend-cursor-prompt.md)** 를 사용하라. 본 문서 CASE-05~07·13(보조·다수인출강·단순인건비·회의참석비)과 `교통비 (1사1교)` 카드는 **구버전**이다.
 
 CMS **정산 관리 → 정산 항목 설정** 화면의 카드 목록·상세 모달을 FE mock과 동일하게 검증할 수 있도록, **current config 1건 + item 15건** 더미 시드를 요청합니다.

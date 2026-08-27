@@ -12,7 +12,7 @@ LNB 「정산 관리」 3화면(지급조서·계좌 지급·정산 항목 설�
 |-----|------|
 | `VITE_REAL_API_MODULES=...,paymentOrders` | 지급조서 확인 (리스트·상세·캘린더) |
 | `VITE_REAL_API_MODULES=...,accountPayments` | 계좌 지급 확인 (리스트·상세·캘린더·지급 완료) |
-| `VITE_REAL_API_MODULES=...,settlementConfigs` | 정산 항목 설정 (조회) |
+| `VITE_REAL_API_MODULES=...,settlementConfigs` | 정산 항목 설정 (v2 카탈로그 GET/PUT·지급 duplicate/delete) |
 
 실 API 호출 추가 조건: MFA 완료 후 유효 JWT (`hasRemoteAdminJwt()`).
 
