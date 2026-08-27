@@ -1,0 +1,94 @@
+.row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  align-self: stretch;
+  gap: var(--spacing-40);
+  border: none;
+  background: var(--color-neutral-white);
+  text-align: left;
+}
+
+.rowInteractive {
+  cursor: pointer;
+}
+
+.rowMuted {
+  opacity: 0.72;
+}
+
+.rowInteractive:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.thumbnailWrap {
+  width: 176px;
+  height: 220px;
+  flex-shrink: 0;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.thumbnailWrapNoImage {
+  background: lightgray;
+}
+
+.thumbnailWrapHasImage {
+  background: transparent;
+}
+
+.thumbnail {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 50%;
+}
+
+.content {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-20);
+  padding-block: var(--spacing-20);
+  overflow: hidden;
+}
+
+.aside {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-60);
+  padding-left: var(--spacing-32);
+  border-left: 1px solid var(--color-border-default);
+}
+
+@media (--bp-below-pc) {
+  .row {
+    flex-wrap: wrap;
+    gap: var(--spacing-24);
+  }
+
+  .thumbnailWrap {
+    width: 120px;
+    height: 150px;
+  }
+
+  .content {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-block: 0;
+  }
+
+  .aside {
+    width: 100%;
+    justify-content: flex-end;
+    padding-left: 0;
+    border-left: none;
+  }
+}

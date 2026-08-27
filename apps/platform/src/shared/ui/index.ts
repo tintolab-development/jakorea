@@ -29,6 +29,7 @@ export type {
   PFCategoryBadgeSize,
   PFCategoryBadgeVariant,
 } from './pf-category-badge'
+export { MediaListRow } from './media-list-row'
 export { PFMetaBadge } from './pf-meta-badge'
 export type { PFMetaBadgeProps } from './pf-meta-badge'
 export { PFStateBadge } from './pf-state-badge'
