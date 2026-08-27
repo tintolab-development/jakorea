@@ -45,3 +45,57 @@ describe('임금 항목 상세 mock (시안 6장)', () => {
     expect(gemini.geminiSession4Won).toBe(270_000)
   })
 })
+
+describe('지급·공제 항목 상세 mock (시안 6장)', () => {
+  it('교통비 p-1·p-2는 transport layout과 이용 수단·증빙 기본값을 갖는다', () => {
+    const instructor = getSettlementItemSettingDetail('p-1')
+    const student = getSettlementItemSettingDetail('p-2')
+
+    expect(instructor.layout).toBe('transport')
+    expect(instructor.transportCommuteMode).toBe('private_car')
+    expect(instructor.evidenceSubmission).toBe('not_required')
+    expect(instructor.qualificationLines[0]).toContain('네이버 지도')
+
+    expect(student.layout).toBe('transport')
+    expect(student.transportCommuteMode).toBe('public_transit')
+    expect(student.evidenceSubmission).toBe('required')
+    expect(student.qualificationLines[0]).toContain('대중교통')
+  })
+
+  it('식사비 p-4는 최대 한도 30,000과 1인 1식 기준이다', () => {
+    const meal = getSettlementItemSettingDetail('p-4')
+
+    expect(meal.layout).toBe('meal')
+    expect(meal.maxLimitWon).toBe(30_000)
+    expect(meal.qualificationLines).toEqual(['1인 1식 기준'])
+  })
+
+  it('활동비 p-6는 layout=meal, 최대 한도 50,000과 참여자 지원비 문구이다', () => {
+    const activity = getSettlementItemSettingDetail('p-6')
+
+    expect(activity.layout).toBe('meal')
+    expect(activity.maxLimitWon).toBe(50_000)
+    expect(activity.qualificationLines).toEqual(['참여자에게 지급되는 지원비'])
+  })
+
+  it('숙박비(1사1교) p-7은 lodging layout과 80,000 지급액이다', () => {
+    const lodging = getSettlementItemSettingDetail('p-7')
+
+    expect(lodging.layout).toBe('lodging')
+    expect(lodging.maxLimitWon).toBe(80_000)
+    expect(lodging.evidenceSubmission).toBe('not_required')
+  })
+
+  it('일용근로자 원천징수 d-1은 Notion 공제 수치를 갖는다', () => {
+    const withholding = getSettlementItemSettingDetail('d-1')
+
+    expect(withholding.layout).toBe('withholdingDailyWorker')
+    expect(withholding.qualificationLines).toEqual(['지급액이 125,000원 초과인 경우'])
+    expect(withholding.withholdingExclusionMaxWon).toBe(1_000)
+    expect(withholding.withholdingEarnedIncomeDeductionWon).toBe(150_000)
+    expect(withholding.withholdingTaxRateBusiness).toBe(3.3)
+    expect(withholding.withholdingTaxRateOther).toBe(8.8)
+    expect(withholding.withholdingTaxRatePrize).toBe(4.4)
+    expect(withholding.withholdingTaxRateInterview).toBe(22)
+  })
+})
