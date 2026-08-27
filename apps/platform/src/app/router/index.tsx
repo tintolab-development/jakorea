@@ -34,7 +34,6 @@ import {
   MypageInstructorApplyConsentPage,
   MypageInstructorApplyPage,
   MypageInquiriesPage,
-  MypageInquiriesWritePage,
   MypageSettingsPage,
 } from '@/pages/mypage'
 import {
@@ -132,7 +131,6 @@ export const router = createBrowserRouter([
     children: [
       { path: '/mypage/settings', element: <MypageSettingsPage /> },
       { path: '/mypage/inquiries', element: <MypageInquiriesPage /> },
-      { path: '/mypage/inquiries/write', element: <MypageInquiriesWritePage /> },
     ],
   },
   {
