@@ -21,6 +21,7 @@ import {
   isRemoteApiConfigured,
   resolveLoginRequiredPath,
 } from '@/shared/lib'
+import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
@@ -55,9 +56,10 @@ export function MypageEducationDetailPage() {
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
 
+  const mockEnabled = useShouldUsePlatformMockData()
   const application = useMemo(
     () => getMockEducationApplicationById(applicationId),
-    [applicationId],
+    [applicationId, mockEnabled],
   )
   const { program, isLoading: isProgramLoading } = useMockProgramById(
     application?.programId ?? '',
