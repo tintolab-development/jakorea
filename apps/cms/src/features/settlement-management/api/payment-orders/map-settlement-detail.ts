@@ -17,6 +17,10 @@ import {
   pickBusinessPeriodFromListItems,
   pickProgramSessionProgressFromListItems,
 } from '@/features/settlement-management/api/shared/map-frontend-fields'
+import {
+  formatPaymentOrderInstitutionDisplay,
+  sumCountablePaymentOrderLineAmounts,
+} from '@/features/settlement-management/api/payment-orders/payment-order-line-amounts'
 
 function statementIdBySettlementId(
   statements: PaymentStatementListItemResponse[]
@@ -51,7 +55,7 @@ function toProgramDetailInstructorRow(
     settlementId,
     statementId: resolveStatementId(item, statementMap),
     instructorName: item.instructorName ?? '-',
-    institutionName: item.institutionName?.trim() || '-',
+    institutionName: formatPaymentOrderInstitutionDisplay(item.institutionName),
     lectureDate: item.lectureDate ?? '',
     sessionOrdinal: item.sessionOrdinal ?? 0,
     processingStatus: mapStatementStatusToLineStatus(item.statementStatus),
@@ -72,7 +76,7 @@ function toInstructorDetailProgramRow(
     settlementId,
     statementId: resolveStatementId(item, statementMap),
     programName: item.programNameKo ?? '-',
-    institutionName: item.institutionName?.trim() || '-',
+    institutionName: formatPaymentOrderInstitutionDisplay(item.institutionName),
     lectureDate: item.lectureDate ?? '',
     sessionOrdinal: item.sessionOrdinal ?? 0,
     processingStatus: mapStatementStatusToLineStatus(item.statementStatus),
@@ -135,7 +139,7 @@ export function buildInstructorDetailFromSettlements(
     bankName: '-',
     accountNumber: '-',
     accountHolder: '-',
-    totalEstimatedAmount: row.estimatedAmount,
+    totalEstimatedAmount: sumCountablePaymentOrderLineAmounts(programRows),
     genderBirthDisplay: '-',
     programRows,
   }

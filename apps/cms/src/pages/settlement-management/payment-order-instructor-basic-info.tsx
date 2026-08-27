@@ -20,6 +20,8 @@ import '@/features/program/shared/ui/program-detail/applicant-list/applicant-ins
 export interface PaymentOrderInstructorBasicInfoProps {
   detail: PaymentOrderAdminInstructorDetail
   aggregateStatus: PaymentOrderDetailAggregateStatus
+  /** 라인 합산 오버라이드(반려·정정 제외). 없으면 detail.totalEstimatedAmount */
+  totalEstimatedAmount?: number
   personalInfoRevealed: boolean
   onPersonalInfoButtonClick: () => void
 }
@@ -75,9 +77,11 @@ function NameCell({
 export function PaymentOrderInstructorBasicInfo({
   detail,
   aggregateStatus,
+  totalEstimatedAmount,
   personalInfoRevealed,
   onPersonalInfoButtonClick,
 }: PaymentOrderInstructorBasicInfoProps) {
+  const displayTotalAmount = totalEstimatedAmount ?? detail.totalEstimatedAmount
   const maskedPhone = MASKING_POLICY.phone(detail.phone)
   const maskedEmail = MASKING_POLICY.email(detail.email)
   const maskedAccountLeft = [detail.bankName, MASKING_POLICY.accountNumber(detail.accountNumber)]
@@ -170,7 +174,7 @@ export function PaymentOrderInstructorBasicInfo({
             label="총 정산 신청 금액"
             view={
               <span className="payment-order-instructor-status-detail__total-amount-cell">
-                {formatWon(detail.totalEstimatedAmount)}
+                {formatWon(displayTotalAmount)}
               </span>
             }
           />
