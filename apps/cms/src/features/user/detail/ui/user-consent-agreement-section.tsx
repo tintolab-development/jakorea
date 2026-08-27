@@ -65,15 +65,13 @@ export interface UserConsentAgreementSectionProps {
     label: string,
     snapshot: MemberConsentAgreementDraftSnapshot
   ) => void
-  onConsentCrimeSnapshotSave?: (
-    label: string,
-    snapshot: MemberConsentCrimeDraftSnapshot
-  ) => void
+  onConsentCrimeSnapshotSave?: (label: string, snapshot: MemberConsentCrimeDraftSnapshot) => void
   memberId?: number
   membersRemote?: boolean
 }
 
-const DEFAULT_CAPTION = '*미동의 시 서비스 가입 및 프로그램 참여에 제한이 있을 수 있습니다.'
+const DEFAULT_CAPTION =
+  '*미동의 시 서비스 가입 및 프로그램 참여에 제한이 있을 수 있습니다. (마케팅 제공 동의 항목은 해당 없음)'
 
 export function resolveUserConsentAgreementPreset(
   user: Pick<User, 'role' | 'instructorMemberProfile' | 'affiliatedSchoolUserId'>
@@ -238,20 +236,26 @@ const CONSENT_ROWS_INDIVIDUAL_LIKE: ConsentRowSchema[] = [
   MARKETING_AND_PORTRAIT_ROW,
 ]
 
-/** 강사(순수·겸직) — 위 + 지급조서·교육진행자·행정정보·성범죄 (2열×4행) */
-const CONSENT_ROWS_INSTRUCTOR: ConsentRowSchema[] = [
+/**
+ * 개인 회원 — 등록(`add-user-individual`)과 동일 8항목
+ * (서비스·개인정보·마케팅·초상권 + 지급조서·교육진행자·행정정보·성범죄)
+ */
+const CONSENT_ROWS_INDIVIDUAL: ConsentRowSchema[] = [
   TERMS_AND_PRIVACY_ROW,
   MARKETING_AND_PORTRAIT_ROW,
   PAYMENT_AND_EDUCATOR_ROW,
   ADMIN_AND_CRIME_ROW,
 ]
 
+/** 강사(순수·겸직) — 개인과 동일 8항목 */
+const CONSENT_ROWS_INSTRUCTOR: ConsentRowSchema[] = CONSENT_ROWS_INDIVIDUAL
+
 const ADMIN_CONSENT_CAPTION = '* 미동의 시 서비스 가입 및 관리자 활동에 제한이 있을 수 있습니다.'
 
 /** 프리셋별 행·필드 구조 (표시 데이터와 분리) */
 export const CONSENT_PRESET_SCHEMA: ConsentPresetSchema = {
   admin: CONSENT_ROWS_ADMIN,
-  individual: CONSENT_ROWS_INDIVIDUAL_LIKE,
+  individual: CONSENT_ROWS_INDIVIDUAL,
   /** 교사(겸직 아님) — 강사 전용 동의(지급조서·서약·행정·성범죄) 미노출 */
   school_teacher: CONSENT_ROWS_INDIVIDUAL_LIKE,
   instructor_dual: CONSENT_ROWS_INSTRUCTOR,
@@ -585,8 +589,7 @@ export function UserConsentAgreementSection({
     onEditableConsentChange,
   }
   const formMode = editing ? 'edit' : 'view'
-  const writingCrime =
-    activeWrite != null && isMemberCrimeConsentField(activeWrite.entry.fieldKey)
+  const writingCrime = activeWrite != null && isMemberCrimeConsentField(activeWrite.entry.fieldKey)
 
   return (
     <div className="user-consent-agreement-section">
@@ -629,9 +632,7 @@ export function UserConsentAgreementSection({
           templateId={activeWrite.entry.templateId}
           modalTitle={activeWrite.entry.modalTitle}
           savedSnapshot={consentWriteSnapshots?.agreementByFieldKey[activeWrite.entry.fieldKey]}
-          onSnapshotSave={snapshot =>
-            onConsentAgreementSnapshotSave?.(activeWrite.label, snapshot)
-          }
+          onSnapshotSave={snapshot => onConsentAgreementSnapshotSave?.(activeWrite.label, snapshot)}
           onClose={closeWrite}
           onComplete={handleWriteComplete}
         />

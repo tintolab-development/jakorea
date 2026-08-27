@@ -37,11 +37,13 @@ Spec for consent UI in **member detail**, **registration modals**, and related f
 | Item | Individual | School teacher (non-dual) | Instructor (dual / only) | Admin |
 |------|------------|---------------------------|--------------------------|-------|
 | Terms, PII, Marketing, Portrait | ✓ | ✓ | ✓ | Terms/PII/Marketing/MFA per admin preset |
-| Payment statement | — | — | ✓ | — |
-| Educator / Admin joint / Crime | — | — | ✓ | — |
+| Payment statement | ✓ | — | ✓ | — |
+| Educator / Admin joint / Crime | ✓ | — | ✓ | — |
 
-**school_teacher** (겸직 아님): 일반 회원과 동일하게 **4항목만** 노출. 강사 전용 4항목(지급조서·교육진행자·행정정보·성범죄)은 숨김.  
-`CONSENT_PRESET_SCHEMA.school_teacher` = individual-like rows.
+**individual**: 등록(`add-user-individual`)과 동일 **8항목** 노출.  
+**school_teacher** (겸직 아님): **4항목만** 노출. 지급조서·교육진행자·행정정보·성범죄는 숨김.  
+`CONSENT_PRESET_SCHEMA.school_teacher` = individual-like(4) rows.  
+`CONSENT_PRESET_SCHEMA.individual` = instructor와 동일 8 rows.
 
 **ADMIN** preset may hide items — if code diverges, update both this doc and the component.
 
