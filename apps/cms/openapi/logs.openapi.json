@@ -1796,6 +1796,16 @@
             ],
             "description": "서버 로그 추적용 ID",
             "example": "8a0c72fa7d6c4ec19c3e13d2a1e54a1f"
+          },
+          "details": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "전이 충돌 등 부가 컨텍스트. 없으면 null입니다."
           }
         }
       },
@@ -31142,6 +31152,7 @@
       },
       "AccountPaymentListItemResponse": {
         "type": "object",
+        "description": "계좌 지급 확인 목록 행. 신청자명(instructorName)은 실명이고 계좌·예금주만 마스킹합니다.",
         "properties": {
           "accountPaymentId": {
             "type": "integer",
@@ -31156,10 +31167,12 @@
             "format": "int64"
           },
           "paymentStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "Canonical WAITING_PAYMENT | PAID | FAILED. 응답을 REQUESTED로 위장하지 않습니다."
           },
           "instructorName": {
-            "type": "string"
+            "type": "string",
+            "description": "신청자 실명. 서버에서 마스킹하지 않습니다."
           },
           "bankName": {
             "type": "string"
@@ -31175,8 +31188,12 @@
             "format": "int64"
           },
           "scheduledPaymentDate": {
-            "type": "string",
-            "format": "date"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "이체 예정일. 목록 날짜 필터(fromDate/toDate/year) 기준입니다."
           },
           "paidAt": {
             "type": "string",
@@ -31196,6 +31213,51 @@
           "memberId": {
             "type": "integer",
             "format": "int64"
+          },
+          "programNameKo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "프로그램명 (우선)"
+          },
+          "programName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "호환 필드. programNameKo와 동일 값입니다."
+          },
+          "institutionName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "참여 기관. 개인 프로그램은 null"
+          },
+          "sessionOrdinal": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "차시 번호. sessionLabel이 없으면 FE가 N차시로 표시합니다."
+          },
+          "sessionLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "차시 표시. 예: 2 ~ 3차시. 개인은 null",
+            "example": "2 ~ 3차시"
+          },
+          "lectureDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "캘린더 출강일. 이체 예정일이 아닙니다."
           },
           "availableActions": {
             "type": "array",
@@ -31234,12 +31296,15 @@
       },
       "AccountPaymentDetailResponse": {
         "type": "object",
+        "description": "계좌 지급 상세. settlement embed로 산출 테이블을 채우며 GET /settlements/{id}를 다시 치지 않습니다.",
         "properties": {
           "payment": {
             "$ref": "#/components/schemas/AccountPaymentListItemResponse"
           },
           "settlement": {
-            "$ref": "#/components/schemas/SettlementResponse"
+            "type": "null",
+            "$ref": "#/components/schemas/SettlementFrontendResponse",
+            "description": "GET /settlements/{id} 와 동일 계약(SettlementFrontendResponse). Gemini 등 정산 없음이면 null."
           }
         }
       },

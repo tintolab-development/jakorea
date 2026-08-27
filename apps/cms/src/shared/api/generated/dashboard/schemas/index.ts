@@ -308,6 +308,7 @@ export * from './emailRecoveryAccountResponse';
 export * from './emailRecoveryLookupRequest';
 export * from './emailRecoveryLookupResponse';
 export * from './errorDetail';
+export * from './errorDetailDetails';
 export * from './essays';
 export * from './existingApplicationResponse';
 export * from './expenseReceiptAdminItemResponse';
