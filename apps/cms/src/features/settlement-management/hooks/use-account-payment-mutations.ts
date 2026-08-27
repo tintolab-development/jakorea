@@ -1,11 +1,11 @@
-import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   bulkMarkAccountPaymentsPaidRemote,
   markAccountPaymentFailedRemote,
   requestBulkTransferExportRemote,
   requestTaxReportExportRemote,
 } from '@/features/settlement-management/api/settlement-api-client'
-import { settlementQueryKeys } from '@/features/settlement-management/api/settlement-query-keys'
+import { invalidateSettlementLedgerCaches } from '@/features/settlement-management/api/invalidate-settlement-ledger-caches'
 import type { SettlementExportRequest } from '@/shared/api/generated/settlement/schemas'
 
 const BULK_PAID_REASON = '계좌 지급 완료'
@@ -22,7 +22,7 @@ export function useMarkAccountPaymentPaidMutation() {
       })
     },
     onSuccess: async () => {
-      await invalidateAccountPaymentCaches(queryClient)
+      await invalidateSettlementLedgerCaches(queryClient)
     },
   })
 }
@@ -34,7 +34,7 @@ export function useMarkAccountPaymentFailedMutation() {
     mutationFn: (paymentId: number) =>
       markAccountPaymentFailedRemote(paymentId, { reason: '계좌 지급 실패' }),
     onSuccess: async () => {
-      await invalidateAccountPaymentCaches(queryClient)
+      await invalidateSettlementLedgerCaches(queryClient)
     },
   })
 }
@@ -53,16 +53,3 @@ export function useTaxReportExportMutation() {
   })
 }
 
-function invalidateAccountPaymentCaches(queryClient: QueryClient) {
-  return Promise.all([
-    queryClient.invalidateQueries({ queryKey: settlementQueryKeys.accountPayments.lists() }),
-    queryClient.invalidateQueries({ queryKey: settlementQueryKeys.accountPayments.details() }),
-    queryClient.invalidateQueries({
-      queryKey: [...settlementQueryKeys.accountPayments.all(), 'budgetSummary'],
-    }),
-    queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.lists() }),
-    queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.details() }),
-    queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.statements() }),
-    queryClient.invalidateQueries({ queryKey: settlementQueryKeys.calendar.all() }),
-  ])
-}

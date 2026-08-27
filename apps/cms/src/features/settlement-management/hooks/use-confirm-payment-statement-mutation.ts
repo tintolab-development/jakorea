@@ -1,13 +1,25 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { bulkConfirmPaymentStatementsRemote } from '@/features/settlement-management/api/settlement-api-client'
-import { settlementQueryKeys } from '@/features/settlement-management/api/settlement-query-keys'
+import {
+  bulkConfirmPaymentStatementsRemote,
+  rejectPaymentStatementRemote,
+} from '@/features/settlement-management/api/settlement-api-client'
+import { invalidateSettlementLedgerCaches } from '@/features/settlement-management/api/invalidate-settlement-ledger-caches'
+import type { PaymentOrderRejectNotificationType } from '@/features/settlement/lib/payment-order-reject-notification'
 
 export type ConfirmPaymentStatementsInput = {
   statementIds: number[]
   lectureFeePaymentScheduledDate?: string
 }
 
+export type RejectPaymentStatementInput = {
+  statementId: number
+  reason: string
+  notificationType: PaymentOrderRejectNotificationType
+  scheduledNotificationAt?: string
+}
+
 const BULK_CONFIRM_REASON = '지급조서 확인'
+const REJECT_REASON_FALLBACK = '신청 반려'
 
 export function useConfirmPaymentStatementMutation() {
   const queryClient = useQueryClient()
@@ -29,17 +41,26 @@ export function useConfirmPaymentStatementMutation() {
       })
     },
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.lists() }),
-        queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.statements() }),
-        queryClient.invalidateQueries({ queryKey: settlementQueryKeys.paymentOrders.details() }),
-        queryClient.invalidateQueries({ queryKey: settlementQueryKeys.calendar.all() }),
-        queryClient.invalidateQueries({ queryKey: settlementQueryKeys.accountPayments.lists() }),
-        queryClient.invalidateQueries({ queryKey: settlementQueryKeys.accountPayments.details() }),
-        queryClient.invalidateQueries({
-          queryKey: [...settlementQueryKeys.accountPayments.all(), 'budgetSummary'],
-        }),
-      ])
+      await invalidateSettlementLedgerCaches(queryClient)
+    },
+  })
+}
+
+export function useRejectPaymentStatementMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (input: RejectPaymentStatementInput) => {
+      await rejectPaymentStatementRemote(input.statementId, {
+        reason: input.reason.trim() || REJECT_REASON_FALLBACK,
+        notificationType: input.notificationType,
+        ...(input.scheduledNotificationAt
+          ? { scheduledNotificationAt: input.scheduledNotificationAt }
+          : {}),
+      })
+    },
+    onSuccess: async () => {
+      await invalidateSettlementLedgerCaches(queryClient)
     },
   })
 }

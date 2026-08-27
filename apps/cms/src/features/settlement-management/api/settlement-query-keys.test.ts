@@ -18,25 +18,10 @@ describe('settlement mutation invalidate prefixes', () => {
     expect(isPrefixedBy(budget, details)).toBe(false)
   })
 
-  it('payment order lists/details do not match settlement subresources', () => {
-    const lists = settlementQueryKeys.paymentOrders.lists()
-    const details = settlementQueryKeys.paymentOrders.details()
-    const settlement = settlementQueryKeys.paymentOrders.settlement(9)
-
-    expect(isPrefixedBy(settlementQueryKeys.paymentOrders.list('program', 'q'), lists)).toBe(true)
-    expect(isPrefixedBy(settlementQueryKeys.paymentOrders.list('instructor', 'q'), lists)).toBe(
-      true
-    )
-    expect(settlementQueryKeys.paymentOrders.list('program', 'q')).not.toEqual(
-      settlementQueryKeys.paymentOrders.list('instructor', 'q')
-    )
-    expect(isPrefixedBy(settlementQueryKeys.paymentOrders.detail('program', 'k'), details)).toBe(
-      true
-    )
-    expect(
-      isPrefixedBy(settlementQueryKeys.paymentOrders.detail('program', 'k', '2026-01-01_2026-01-31'), details)
-    ).toBe(true)
-    expect(isPrefixedBy(settlement, lists)).toBe(false)
-    expect(isPrefixedBy(settlement, details)).toBe(false)
+  it('paymentOrders.all() prefixes list, detail, and settlement calc', () => {
+    const all = settlementQueryKeys.paymentOrders.all()
+    expect(isPrefixedBy(settlementQueryKeys.paymentOrders.list('program', 'q'), all)).toBe(true)
+    expect(isPrefixedBy(settlementQueryKeys.paymentOrders.detail('program', 'k'), all)).toBe(true)
+    expect(isPrefixedBy(settlementQueryKeys.paymentOrders.settlement(170601), all)).toBe(true)
   })
 })

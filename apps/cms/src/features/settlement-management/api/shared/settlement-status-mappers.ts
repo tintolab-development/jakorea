@@ -15,6 +15,12 @@ export function mapStatementStatusToProcessingStatus(
       return 'correction'
     case 'REJECTED':
       return 'application_rejected'
+    case 'REAPPLICATION':
+    case 'RESUBMITTED':
+      return 'reapplication'
+    case 'PARTIAL':
+    case 'PARTIAL_CONFIRMED':
+      return 'partial'
     case 'REQUESTED':
     default:
       return 'pending'
@@ -34,6 +40,9 @@ export function mapStatementStatusToLineStatus(
       return 'application_rejected'
     case 'PAID':
       return 'rejected'
+    case 'REAPPLICATION':
+    case 'RESUBMITTED':
+      return 'reapplication'
     case 'REQUESTED':
     default:
       return 'pending'
@@ -62,5 +71,11 @@ export function mapPaymentStatusToAccountPaymentStatus(
 
 export function isPendingStatementStatus(status: string | undefined): boolean {
   const upper = status?.toUpperCase()
-  return upper === 'REQUESTED' || upper === undefined || upper === ''
+  return (
+    upper === 'REQUESTED' ||
+    upper === 'REAPPLICATION' ||
+    upper === 'RESUBMITTED' ||
+    upper === undefined ||
+    upper === ''
+  )
 }

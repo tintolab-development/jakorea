@@ -90,17 +90,12 @@ export async function downloadPaymentStatementRemote(
   return unwrapApiBody(await settlementApi.downloadPaymentStatement(settlementId))
 }
 
-/** settlement-api-backend-gaps §12 — PATCH .../statements/{statementId}/reject */
+/** settlement-api — PATCH .../statements/{statementId}/reject (notificationType OpenAPI 반영) */
 export async function rejectPaymentStatementRemote(
   statementId: number,
   body: SettlementStatusChangeRequest
 ): Promise<void> {
-  await customInstance({
-    url: `/api/admin/settlements/statements/${statementId}/reject`,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    data: body,
-  })
+  await settlementApi.rejectPaymentStatement(statementId, body)
 }
 
 export async function requestSettlementCorrectionRemote(
