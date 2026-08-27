@@ -86,66 +86,33 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동
 |---|---|
 | **화면** | 지급조서 확인 → 행 클릭 → 지급 현황 상세 |
 | **프론트 (2026-08-24)** | `GET /api/settlements?programId=` 또는 `?instructorMemberId=` + 목록 `fromDate`/`toDate` |
-| **statements** | **임시** — `GET /statements` 전량 fetch 후 settlementId join. **요청:** settlements DTO에 `statementId` embed → [§4 핸드오프](./settlement-payment-order-detail-backend-handoff.md#4-백엔드-수정-요청--get-settlements-목록에-statementid-포함-권장p1) |
+| **statements** | **임시** — `GET /statements` 전량 fetch 후 settlementId join. **P0:** settlements DTO에 `statementId` embed → [지급조서 확인 P0](./payment-orders-openapi-p0-backend-cursor-prompt.md) · [상세 핸드오프 §4](./settlement-payment-order-detail-backend-handoff.md#4-백엔드-수정-요청--get-settlements-목록에-statementid-포함-p0) |
 | **상세 핸드오프** | [settlement-payment-order-detail-backend-handoff.md](./settlement-payment-order-detail-backend-handoff.md) · [UI 필드 SSOT](./settlement-payment-order-detail-ui-fields-backend-handoff.md) |
 
-### P1 — `SettlementListItemResponse.statementId` *(권장)*
+### P0 — `SettlementListItemResponse.statementId`
 
 | | |
 |---|---|
 | **갭** | 라인 DTO에 `statementStatus`만 있고 **`statementId` 없음** → 상세 진입 시 `GET /statements` 2차 호출 |
 | **제안** | `GET /api/admin/settlements` 응답 item에 `statementId?: number` 추가 (신규 endpoint 불필요) |
-| **수용 후** | 프론트 statements join 제거 — [핸드오프 §4](./settlement-payment-order-detail-backend-handoff.md#4-백엔드-수정-요청--get-settlements-목록에-statementid-포함-권장p1) |
+| **수용 후** | 프론트 statements join 제거 — [P0 프롬프트](./payment-orders-openapi-p0-backend-cursor-prompt.md) · [핸드오프 §4](./settlement-payment-order-detail-backend-handoff.md#4-백엔드-수정-요청--get-settlements-목록에-statementid-포함-p0) |
 
 ---
 
 ## P0 — 지급조서 확인
 
-### 1. 프로그램별·강사별 집계 목록
+> **백엔드 복붙 SSOT (2026-08-27):** [payment-orders-openapi-p0-backend-cursor-prompt.md](./payment-orders-openapi-p0-backend-cursor-prompt.md) — **API + DB seed 한 문서.**  
+> 교차: [payment-orders-backend-seed-handoff-2026-08-27.md](./payment-orders-backend-seed-handoff-2026-08-27.md) · [payment-orders-seed-v1.spec.json](./payment-orders-seed-v1.spec.json)
+>
+> 집계 목록·일괄 confirm·리스트 `pendingItemBucket` / 캘린더 `statementStatus`·목록 가시성(Gemini·`PAID`·`NONE` 제외)·총액에서 반려·정정 제외·혼재 `PARTIAL`·reject 알림 스케줄·`statementId` embed·시안 시드 교체는 **위 프롬프트가 SSOT**. 본 절은 **잔여만** 둔다.
 
-| | |
-|---|---|
-| **화면** | `/settlement-management/payment-orders` (리스트 뷰) |
-| **UI 요구** | `PaymentOrderAdminProgramRow` / `PaymentOrderAdminInstructorRow` — 프로그램명·강사명·참여 수·지급 대기 건수·정산 예정금 **집계 행** |
-| **현재 API** | `GET /api/settlements` → `SettlementListItemResponse[]` (정산 **라인** 단위) |
-| **갭 유형** | 구조 불일치 |
-| **프론트 임시 대응** | 전체 settlements fetch 후 `programId` / `instructorMemberId`로 **클라이언트 집계** |
-| **제안** | `GET /api/settlements/aggregates?groupBy=program\|instructor` 또는 동일 필터를 지원하는 집계 endpoint |
+### 잔여
 
-**UI 필드 ↔ API (라인 기준)**
-
-| UI (집계 행) | API (라인) | 비고 |
-|--------------|------------|------|
-| `programName` | `programNameKo` | 집계 키: `programId` |
-| `instructorCount` | `instructorMemberId` distinct count | 클라이언트 계산 |
-| `pendingPaymentSettlementItemCount` | `statementStatus === REQUESTED` count | API pending 정의 합의 필요 |
-| `estimatedAmount` | `sum(netPaymentAmount)` | |
-| `settlementRelevantAttendanceDates` | `lectureDate[]` | |
-
----
-
-### 2. 지급조서 일괄 확인 + 이체 예정일
-
-| | |
-|---|---|
-| **화면** | 지급 현황 상세 → 「일괄 확인」 모달 |
-| **UI 요구** | 선택 라인 일괄 확인 + **강의비 지급 예정일** (`lectureFeePaymentScheduledDate`) |
-| **현재 API** | `PATCH /api/settlements/statements/{statementId}/confirm` — **단건**, body: `{ reason? }` only |
-| **갭 유형** | bulk API 없음, 예정일 필드 없음 |
-| **프론트 임시 대응** | `statementId` 순차 PATCH |
-| **제안** | `POST /api/settlements/statements/bulk-confirm` + `{ statementIds[], scheduledPaymentDate?, reason? }` |
-
----
-
-### 3. 목록·상세 서버 필터
-
-| | |
-|---|---|
-| **UI 필터** | 프로그램명·강사명 검색, 출강일 기간, 지급 대기 버킷(0 / 1~5 / 6~10 / 11+) |
-| **현재 API query** | `programId`, `instructorMemberId`, `statementStatus`, `paymentStatus`, `page`, `size` |
-| **갭 유형** | 필터 부족 |
-| **프론트 임시 대응** | 클라이언트 필터 |
-| **제안** | `search`, `fromDate`, `toDate`, `pendingItemBucket` 또는 집계 API와 함께 제공 |
+| 항목 | SSOT |
+|------|------|
+| 지급 현황 상세 **UI 필드** (기본 정보·목록 전 열·산출 모달) | [settlement-payment-order-detail-ui-fields-backend-handoff.md](./settlement-payment-order-detail-ui-fields-backend-handoff.md) |
+| 상세 scoped GET·산출 DTO | [settlement-payment-order-detail-backend-handoff.md](./settlement-payment-order-detail-backend-handoff.md) — `statementId` embed는 **P0 문서로 승격** |
+| 강사 PII embed·발급 unmask | 본 문서 상단 P0 이름/unmask 절 · UI SSOT §4.5 / §1.2 |
 
 ---
 

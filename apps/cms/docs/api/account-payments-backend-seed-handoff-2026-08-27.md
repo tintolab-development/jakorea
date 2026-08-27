@@ -13,6 +13,8 @@
 | **갭 상세** | [`settlement-api-backend-gaps.md`](./settlement-api-backend-gaps.md) §4~§5.2 · §7~§8 |
 | **연동 명세** | [`settlement-api-integration.md`](./settlement-api-integration.md) |
 | **OpenAPI P0 Cursor 프롬프트** | [`account-payments-openapi-p0-backend-cursor-prompt.md`](./account-payments-openapi-p0-backend-cursor-prompt.md) |
+| **원장 연동 BE 프롬프트** | [`settlement-ledger-link-p0-backend-cursor-prompt.md`](./settlement-ledger-link-p0-backend-cursor-prompt.md) |
+| **원장 DB Seed 업데이트** | [`settlement-ledger-link-db-seed-update-2026-08-27.md`](./settlement-ledger-link-db-seed-update-2026-08-27.md) |
 
 **모듈 플래그:** `VITE_REAL_API_MODULES=...,accountPayments`
 
@@ -33,7 +35,7 @@ flowchart TB
     Members[강사 Member + 계좌]
     Programs[Program + 출강]
     Settlements["Settlement statementStatus=CONFIRMED"]
-    Payments["AccountPayment paymentStatus REQUESTED or PAID"]
+    Payments["AccountPayment paymentStatus WAITING_PAYMENT or PAID"]
   end
   subgraph api [API 보완]
     ListExtras["list: programNameKo institutionName sessionOrdinal lectureDate"]

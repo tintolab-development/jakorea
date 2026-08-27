@@ -1,0 +1,199 @@
+{
+  "$schema_note": "Settlement/PaymentStatement local/staging seed spec for CMS 지급조서 확인. SSOT: payment-order-admin-list.ts (2026-08-27). Not a direct POST body — use to drive Flyway/seed scripts linking Member + Settlement(라인) + PaymentStatement.",
+  "seedLabel": "payment-orders-catalog-v1-2026-08",
+  "moduleFlag": "paymentOrders",
+  "companionSeedLabel": "account-payments-catalog-v1-2026-08",
+  "ledgerLinkDoc": "settlement-ledger-link-db-seed-update-2026-08-27.md",
+  "rules": {
+    "listVisibility": "Exclude Gemini programs, statementStatus=PAID, and NONE/NA. Include pending through confirmed plus reapplication, correction, rejected.",
+    "estimatedAmountExclude": ["REJECTED", "CORRECTION_REQUESTED"],
+    "pendingCountIncludes": ["REQUESTED", "REAPPLICATION", "RESUBMITTED"],
+    "mixedAggregateStatus": "PARTIAL",
+    "listFilter": "pendingItemBucket NONE | 1_5 | 6_10 | 11_PLUS (lectureDate range)",
+    "calendarFilter": "statementStatus (lectureDate, not transfer date)",
+    "instructorNameMasking": false,
+    "contactAndAccountMasking": "allowed",
+    "personalProgram": "institutionName empty/null → FE '-'",
+    "resubmission": "New settlement + new statementId. Keep previous row REJECTED.",
+    "calendarShortLabels": ["재신청", "확인 대기", "확인 완료", "정정 요청", "신청 반려", "일부 확인"],
+    "calendarPaidChip": "Do NOT seed PAID on this screen. Blue 지급 완료 / 계좌 지급 chips in the mockup belong to account-payments.",
+    "defaultDateWindow": "1st of current month through 1st of next month; place lectureDate inside"
+  },
+  "distribution": {
+    "programListMin": 30,
+    "instructorListMin": 20,
+    "pendingItemBucketExamples": {
+      "NONE": 0,
+      "1_5": [3, 5],
+      "6_10": 8,
+      "11_PLUS": 12
+    },
+    "excludeGeminiCount": 0,
+    "excludePaidCount": 0,
+    "scheduleChangeCancelCountMinPeople": 1
+  },
+  "requiredLinkedFieldsPerRow": {
+    "member": ["fullNameKo"],
+    "settlement": [
+      "settlementId",
+      "statementStatus",
+      "programNameKo",
+      "instructorName",
+      "institutionName?",
+      "sessionOrdinal",
+      "lectureDate",
+      "netPaymentAmount",
+      "items[] with calculationDetail for calc modal"
+    ],
+    "paymentStatement": ["statementId", "settlementId", "statementStatus"]
+  },
+  "listResponseExtrasRequested": [
+    "aggregateStatus|processingStatus including PARTIAL and REAPPLICATION",
+    "pendingPaymentSettlementItemCount",
+    "estimatedAmount",
+    "settlementRelevantAttendanceDates",
+    "SettlementListItemResponse.statementId"
+  ],
+  "rejectBody": {
+    "reason": "string",
+    "notificationType": ["IMMEDIATE", "ON_ANNOUNCEMENT", "MANUAL"],
+    "scheduledNotificationAt": "required when MANUAL"
+  },
+  "sampleRows": [
+    {
+      "feCase": "program-aggregate-elementary",
+      "programId": 170302,
+      "programName": "2026년 JA Korea 초등 경제교육",
+      "instructorCount": 15,
+      "aggregateStatus": "PARTIAL",
+      "pendingPaymentSettlementItemCount": 5,
+      "estimatedAmount": 2000000,
+      "note": "시안 대표 프로그램 · 확인 진행 중 · 버킷 1_5 · 출강 2026-08"
+    },
+    {
+      "feCase": "program-aggregate-hsbc",
+      "programId": 170301,
+      "programName": "HSBC/HKU Business Case Competition 2026 모집 안내",
+      "instructorCount": 9,
+      "aggregateStatus": "REQUESTED",
+      "pendingPaymentSettlementItemCount": 3,
+      "estimatedAmount": 915000,
+      "note": "버킷 1_5"
+    },
+    {
+      "feCase": "program-bucket-none",
+      "programId": 170303,
+      "aggregateStatus": "CONFIRMED",
+      "pendingPaymentSettlementItemCount": 0,
+      "estimatedAmount": 625000
+    },
+    {
+      "feCase": "program-bucket-6-10",
+      "programId": 170304,
+      "aggregateStatus": "REAPPLICATION",
+      "pendingPaymentSettlementItemCount": 8,
+      "estimatedAmount": 1200000
+    },
+    {
+      "feCase": "program-bucket-11-plus",
+      "programId": 170305,
+      "aggregateStatus": "REQUESTED",
+      "pendingPaymentSettlementItemCount": 12
+    },
+    {
+      "feCase": "instructor-kim-tinto",
+      "instructorMemberId": 170202,
+      "instructorName": "김틴토",
+      "programCount": 3,
+      "pendingPaymentSettlementItemCount": 5,
+      "estimatedAmount": 2000000,
+      "note": "계좌 지급 카탈로그 김틴토는 memberId 169201 — 이름 merge 금지"
+    },
+    {
+      "feCase": "instructor-park-tinto",
+      "instructorMemberId": 170201,
+      "instructorName": "박틴토",
+      "aggregateStatus": "PARTIAL",
+      "pendingPaymentSettlementItemCount": 2,
+      "estimatedAmount": 1845000,
+      "scheduleChangeCancelCount": 1,
+      "note": "계좌 지급 카탈로그 박틴토는 memberId 169202 — 이름 merge 금지"
+    },
+    {
+      "feCase": "detail-line-pending",
+      "settlementId": 170601,
+      "instructorMemberId": 170201,
+      "instructorName": "박틴토",
+      "institutionName": "강서초등학교",
+      "sessionOrdinal": 3,
+      "statementStatus": "REQUESTED",
+      "netPaymentAmount": 915000,
+      "note": "confirm → 계좌 지급에 같은 settlementId WAITING_PAYMENT"
+    },
+    {
+      "feCase": "detail-line-confirmed",
+      "instructorMemberId": 170202,
+      "instructorName": "김틴토",
+      "institutionName": "대구수성초등학교",
+      "sessionOrdinal": 2,
+      "statementStatus": "CONFIRMED",
+      "netPaymentAmount": 300000
+    },
+    {
+      "feCase": "detail-line-reapplication",
+      "instructorMemberId": 170203,
+      "instructorName": "최틴토",
+      "institutionName": "강서초등학교",
+      "sessionOrdinal": 1,
+      "statementStatus": "REAPPLICATION",
+      "netPaymentAmount": 315000,
+      "note": "신규 settlement. 구 REJECTED 행 별도 유지"
+    },
+    {
+      "feCase": "detail-line-correction",
+      "instructorName": "허틴토",
+      "institutionName": "진월초등학교",
+      "sessionOrdinal": 2,
+      "statementStatus": "CORRECTION_REQUESTED",
+      "netPaymentAmount": 480000,
+      "countsTowardEstimatedAmount": false
+    },
+    {
+      "feCase": "detail-line-rejected",
+      "instructorMemberId": 170201,
+      "instructorName": "박틴토",
+      "institutionName": "강서초등학교",
+      "sessionOrdinal": 3,
+      "statementStatus": "REJECTED",
+      "netPaymentAmount": 915000,
+      "rejectionReason": "제출 서류 미비",
+      "countsTowardEstimatedAmount": false,
+      "ui": "strikethrough amount"
+    },
+    {
+      "feCase": "detail-line-personal-program",
+      "instructorMemberId": 170205,
+      "instructorName": "이틴토",
+      "institutionName": null,
+      "sessionOrdinal": 1,
+      "statementStatus": "REQUESTED",
+      "netPaymentAmount": 15000,
+      "note": "개인 프로그램 · 기관명 '-'"
+    },
+    {
+      "feCase": "calc-park-tinto",
+      "settlementId": 170601,
+      "instructorMemberId": 170201,
+      "instructorName": "박틴토",
+      "programName": "2026년 JA Korea 초등 경제교육",
+      "lectureFeeStandardTitle": "특강 강의비",
+      "lectureFee": 915000,
+      "travel": 31500,
+      "lodging": 80000,
+      "meal": null,
+      "activity": null,
+      "withholdingRate": 0.088,
+      "scheduleChangeCancelCount": 1
+    }
+  ]
+}
