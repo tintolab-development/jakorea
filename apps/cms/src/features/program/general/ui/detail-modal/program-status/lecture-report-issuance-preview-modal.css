@@ -37,10 +37,22 @@
 
 .lecture-report-issuance-preview-modal__description {
   font-size: 15px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .lecture-report-issuance-preview-modal__actions {
   gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* 닫기·다운로드를 뷰포트(바디 패딩) 우측에 고정 — contents-max-width/A4 밴드에 묶이지 않음 */
+.lecture-report-issuance-preview-modal .full-page-modal__body-header {
+  max-width: none;
+  width: 100%;
+  align-self: stretch;
+  justify-content: space-between;
 }
 
 .lecture-report-issuance-preview-modal .full-page-modal__topbar {
