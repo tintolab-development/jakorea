@@ -70,9 +70,15 @@ LNB 「정산 관리」 3화면(지급조서·계좌 지급·정산 항목 설�
 | POST | `/api/settlements/exports/tax-report` | 세금신고 export |
 | GET | `/api/settlements/exports` | export 이력 |
 
-**캘린더:** `/api/settlements/calendar`가 아닌 **account-payments 목록** (`scheduledPaymentDate` 기준)
+**캘린더:** `/api/settlements/calendar`가 아닌 **account-payments 목록** — 일자 배치는 **출강일(`lectureDate`)**, 목록 필터·요약카드3은 **이체 예정일(`transferScheduledDate`)**.
+
+**목록 UI (mock/시안 2026-08):** 상태 필터·표기는 `계좌 지급 대기 중` / `계좌 지급 완료` 2종. 컬럼 `강의 진행 차시`. 개인 프로그램은 기관·차시 `-`.
+
+**대량이체 양식 SSOT:** 시안 입금은행~휴대폰 9열 (`bulk-transfer-fortune-data.ts`). Notion 「강사비+세액 행 교대」는 세금신고 양식과 혼동으로 채택하지 않음 — 세금신고는 `tax-filing-fortune-data.ts` 소득구분·소계.
 
 **409 `PAYMENT_STATEMENT_STATUS_CONFLICT`:** 지급조서가 `CONFIRMED`가 아닐 때. 서버 `message`를 모달에 그대로 표시 — **메시지 상세화는 BE 요청** ([갭 문서 §5.1](./settlement-api-backend-gaps.md#51--p0-서버-수정-요청--지급-완료-409-message-상세화)).
+
+**BE 시드·API 보완 핸드오프:** [account-payments-backend-seed-handoff-2026-08-27.md](./account-payments-backend-seed-handoff-2026-08-27.md) · [account-payments-seed-v1.spec.json](./account-payments-seed-v1.spec.json)
 
 ---
 

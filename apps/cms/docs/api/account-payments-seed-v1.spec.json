@@ -1,0 +1,126 @@
+{
+  "$schema_note": "AccountPayment local/staging seed spec for CMS 계좌 지급 확인. SSOT: account-payments-list.ts (2026-08-27). Not a direct POST body — use to drive Flyway/seed scripts linking Member + Settlement(CONFIRMED) + AccountPayment.",
+  "seedLabel": "account-payments-catalog-v1-2026-08",
+  "moduleFlag": "accountPayments",
+  "budgetSummary": {
+    "year": 2026,
+    "annualBudgetAmount": 109150000
+  },
+  "rules": {
+    "listVisibility": "Only settlements with statementStatus=CONFIRMED may appear as account payments on the CMS list.",
+    "paymentStatusForListUi": ["REQUESTED", "PAID"],
+    "avoidPaymentStatusOnSeed": ["CONFIRMED", "CORRECTION_REQUESTED"],
+    "instructorNameMasking": false,
+    "listFilterDateField": "scheduledPaymentDate",
+    "calendarDateField": "lectureDate",
+    "personalProgram": "institutionName and session empty or null → FE shows '-'",
+    "bulkTransferFormSsot": "Design 9 columns (deposit bank…mobile). Do NOT implement Notion lecture-fee+tax alternating rows for bulk transfer."
+  },
+  "distribution": {
+    "minCount": 32,
+    "awaitingRatioApprox": 0.6,
+    "paidRatioApprox": 0.4,
+    "transferMonth": "2026-02",
+    "lectureMonth": "2026-01",
+    "amountsPrimary": [2000000, 915000, 15000],
+    "personalProgramMin": 2,
+    "multiSessionLabelExample": "2 ~ 3차시"
+  },
+  "requiredLinkedFieldsPerRow": {
+    "member": ["fullNameKo", "settlementBankName", "settlementAccountNumber", "accountHolder", "mobile"],
+    "settlement": [
+      "settlementId",
+      "statementStatus=CONFIRMED",
+      "programNameKo",
+      "institutionName?",
+      "sessionOrdinal|lectureSessionDisplay",
+      "lectureDate",
+      "netPaymentAmount",
+      "items[] with calculationDetail for detail modal"
+    ],
+    "accountPayment": [
+      "accountPaymentId",
+      "settlementId",
+      "paymentStatus",
+      "instructorName",
+      "netPaymentAmount",
+      "scheduledPaymentDate",
+      "bankName",
+      "maskedAccountNo",
+      "accountHolder"
+    ]
+  },
+  "listResponseExtrasRequested": [
+    "programNameKo",
+    "institutionName",
+    "sessionOrdinal",
+    "lectureDate"
+  ],
+  "sampleRows": [
+    {
+      "feMockId": "account-pay-206",
+      "instructorName": "김틴토",
+      "programName": "HSBC/HKU Business Case Competition 2026 모집 안내",
+      "institutionName": "강서초등학교",
+      "sessionLabel": "2 ~ 3차시",
+      "paymentStatus": "REQUESTED",
+      "netPaymentAmount": 2000000,
+      "scheduledPaymentDate": "2026-02-24",
+      "lectureDate": "2026-01-05",
+      "bankName": "농협",
+      "note": "시안 대표 대기 건 · 이체일 2026.02.24"
+    },
+    {
+      "feMockId": "account-pay-205",
+      "instructorName": "박틴토",
+      "programName": "2026년 JA Korea 초등 경제교육",
+      "institutionName": "강서초등학교",
+      "sessionLabel": "2차시",
+      "paymentStatus": "REQUESTED",
+      "netPaymentAmount": 915000,
+      "scheduledPaymentDate": "2026-02-12",
+      "lectureDate": "2026-01-28",
+      "bankName": "농협",
+      "detailScenario": "강의비+교통+숙박+원천징수 items for fullpage detail"
+    },
+    {
+      "feMockId": "account-pay-personal-1",
+      "instructorName": "양가을",
+      "programName": "2026 기업 멘토링 데이 — 대학생 트랙",
+      "institutionName": null,
+      "sessionLabel": null,
+      "paymentStatus": "PAID",
+      "netPaymentAmount": 915000,
+      "scheduledPaymentDate": "2026-02-20",
+      "lectureDate": "2026-01-15",
+      "note": "개인 프로그램 → UI institution/session '-'"
+    }
+  ],
+  "apiFollowUps": [
+    {
+      "priority": "P0",
+      "id": "list-extras",
+      "summary": "AccountPaymentListItemResponse + list filters (fromDate/toDate on scheduledPaymentDate, name search)"
+    },
+    {
+      "priority": "P0",
+      "id": "detail-embed",
+      "summary": "GET account-payments/{id} settlement embed = SettlementFrontendResponse (gaps §5.2)"
+    },
+    {
+      "priority": "P0",
+      "id": "409-message",
+      "summary": "PAYMENT_STATEMENT_STATUS_CONFLICT message actionable (gaps §5.1)"
+    },
+    {
+      "priority": "P0",
+      "id": "budget-summary",
+      "summary": "budget-summary year fields annualBudgetAmount + completedPaymentAmount; seed 109150000 for 2026"
+    },
+    {
+      "priority": "P1",
+      "id": "export-downloadUrl",
+      "summary": "Optional: bulk-transfer/tax-report downloadUrl — FE currently Client Excel"
+    }
+  ]
+}

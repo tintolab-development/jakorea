@@ -151,16 +151,18 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동
 
 ## P0 — 계좌 지급 확인
 
+> **시드·API 일괄 핸드오프 (2026-08-27):** [account-payments-backend-seed-handoff-2026-08-27.md](./account-payments-backend-seed-handoff-2026-08-27.md) · [account-payments-seed-v1.spec.json](./account-payments-seed-v1.spec.json)  
+> OpenAPI v9에는 `budget-summary`·`bulk-paid` path가 이미 있음. 아래 §4·§5는 **응답 계약·시드·목록 extras·상세 embed**를 FE 시안과 맞추는 작업으로 해석.
+
 ### 4. 연간 예산 요약 카드
 
 | | |
 |---|---|
 | **화면** | `/settlement-management/account-payments` 상단 「{연도}년 예산 총액」 |
-| **UI mock** | `MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET` |
-| **현재 API** | **없음** |
-| **프론트 임시 대응** | remote 시 `—` 표시 |
-| **제안** | `GET /api/settlements/budget-summary?year=` |
-
+| **UI mock** | `MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET` (= **109_150_000**) |
+| **현재 API** | `GET /api/admin/settlements/budget-summary?year=` (OpenAPI 존재 · FE hook 연동) |
+| **프론트 임시 대응** | remote인데 응답 없으면 `—` |
+| **요청** | `annualBudgetAmount` · `completedPaymentAmount` 필드 확정 + year=2026 시드 109150000 |
 ---
 
 ### 5. 일괄 지급 완료
@@ -168,9 +170,8 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동
 | | |
 |---|---|
 | **UI** | 목록 다중 선택 → 「계좌 지급 완료」 |
-| **현재 API** | `PATCH /api/account-payments/{paymentId}/paid` **단건만** |
-| **제안** | `PATCH /api/account-payments/bulk-paid` `{ paymentIds[], reason? }` |
-
+| **현재 API** | `PATCH /api/admin/account-payments/bulk-paid` (OpenAPI·FE mutation 연동) |
+| **요청** | body `{ paymentIds[] }` 안정화 + §5.1 409 message · 시드 CONFIRMED만 200 |
 ---
 
 ### 5.1 ⭐ **P0 서버 수정 요청** — 지급 완료 409 `message` 상세화
