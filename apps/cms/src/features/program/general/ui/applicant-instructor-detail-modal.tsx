@@ -229,19 +229,14 @@ export function ApplicantInstructorDetailModal({
               <col className="applicant-instructor-detail-modal__basic-table-col-input-right" />
             </colgroup>
             <tbody>
-              {/* 1행: 성명(한글) | 값+배지 · 생년월일 | 값 */}
+              {/* 1행: 성명 | 값+배지 · 생년월일 | 값 */}
               <tr>
                 <td
-                  rowSpan={2}
-                  className="applicant-instructor-detail-modal__basic-table-cell applicant-instructor-detail-modal__basic-table-cell--label applicant-instructor-detail-modal__basic-table-cell--name"
+                  colSpan={2}
+                  className="applicant-instructor-detail-modal__basic-table-cell applicant-instructor-detail-modal__basic-table-cell--label applicant-instructor-detail-modal__basic-table-cell--row-label"
                 >
                   <span className="applicant-instructor-detail-modal__basic-table-label">
                     성명
-                  </span>
-                </td>
-                <td className="applicant-instructor-detail-modal__basic-table-cell applicant-instructor-detail-modal__basic-table-cell--label applicant-instructor-detail-modal__basic-table-cell--name-sub">
-                  <span className="applicant-instructor-detail-modal__basic-table-label">
-                    한글
                   </span>
                 </td>
                 <td className="applicant-instructor-detail-modal__basic-table-cell applicant-instructor-detail-modal__basic-table-cell--input applicant-instructor-detail-modal__basic-table-cell--before-divider">
@@ -256,22 +251,20 @@ export function ApplicantInstructorDetailModal({
                   <ProgramDetailTdSegmentWrap>{birthDisplay}</ProgramDetailTdSegmentWrap>
                 </td>
               </tr>
-              {/* 2행: 성명(영문) | 값 · 성별 및 병역사항 | 값 */}
+              {/* 2행: 성별 및 병역사항 */}
               <tr>
-                <td className="applicant-instructor-detail-modal__basic-table-cell applicant-instructor-detail-modal__basic-table-cell--label applicant-instructor-detail-modal__basic-table-cell--name-sub">
-                  <span className="applicant-instructor-detail-modal__basic-table-label">
-                    영문
-                  </span>
-                </td>
-                <td className="applicant-instructor-detail-modal__basic-table-cell applicant-instructor-detail-modal__basic-table-cell--input applicant-instructor-detail-modal__basic-table-cell--before-divider">
-                  {instructor.nameEnglish ?? '-'}
-                </td>
-                <td className="applicant-instructor-detail-modal__basic-table-cell applicant-instructor-detail-modal__basic-table-cell--label applicant-instructor-detail-modal__basic-table-cell--label-right applicant-instructor-detail-modal__basic-table-cell--divider-left">
+                <td
+                  colSpan={2}
+                  className="applicant-instructor-detail-modal__basic-table-cell applicant-instructor-detail-modal__basic-table-cell--label applicant-instructor-detail-modal__basic-table-cell--row-label"
+                >
                   <span className="applicant-instructor-detail-modal__basic-table-label">
                     성별 및 병역사항
                   </span>
                 </td>
-                <td className="applicant-instructor-detail-modal__basic-table-cell applicant-instructor-detail-modal__basic-table-cell--input">
+                <td
+                  colSpan={3}
+                  className="applicant-instructor-detail-modal__basic-table-cell applicant-instructor-detail-modal__basic-table-cell--input"
+                >
                   <ProgramDetailTdSegmentWrap>
                     {withProgramDetailTdDivider(
                       [instructor.gender, instructor.militaryStatus].filter(Boolean) as string[]

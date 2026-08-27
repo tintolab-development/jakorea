@@ -86,81 +86,50 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동
 |---|---|
 | **화면** | 지급조서 확인 → 행 클릭 → 지급 현황 상세 |
 | **프론트 (2026-08-24)** | `GET /api/settlements?programId=` 또는 `?instructorMemberId=` + 목록 `fromDate`/`toDate` |
-| **statements** | **임시** — `GET /statements` 전량 fetch 후 settlementId join. **요청:** settlements DTO에 `statementId` embed → [§4 핸드오프](./settlement-payment-order-detail-backend-handoff.md#4-백엔드-수정-요청--get-settlements-목록에-statementid-포함-권장p1) |
+| **statements** | **임시** — `GET /statements` 전량 fetch 후 settlementId join. **P0:** settlements DTO에 `statementId` embed → [지급조서 확인 P0](./payment-orders-openapi-p0-backend-cursor-prompt.md) · [상세 핸드오프 §4](./settlement-payment-order-detail-backend-handoff.md#4-백엔드-수정-요청--get-settlements-목록에-statementid-포함-p0) |
 | **상세 핸드오프** | [settlement-payment-order-detail-backend-handoff.md](./settlement-payment-order-detail-backend-handoff.md) · [UI 필드 SSOT](./settlement-payment-order-detail-ui-fields-backend-handoff.md) |
 
-### P1 — `SettlementListItemResponse.statementId` *(권장)*
+### P0 — `SettlementListItemResponse.statementId`
 
 | | |
 |---|---|
 | **갭** | 라인 DTO에 `statementStatus`만 있고 **`statementId` 없음** → 상세 진입 시 `GET /statements` 2차 호출 |
 | **제안** | `GET /api/admin/settlements` 응답 item에 `statementId?: number` 추가 (신규 endpoint 불필요) |
-| **수용 후** | 프론트 statements join 제거 — [핸드오프 §4](./settlement-payment-order-detail-backend-handoff.md#4-백엔드-수정-요청--get-settlements-목록에-statementid-포함-권장p1) |
+| **수용 후** | 프론트 statements join 제거 — [P0 프롬프트](./payment-orders-openapi-p0-backend-cursor-prompt.md) · [핸드오프 §4](./settlement-payment-order-detail-backend-handoff.md#4-백엔드-수정-요청--get-settlements-목록에-statementid-포함-p0) |
 
 ---
 
 ## P0 — 지급조서 확인
 
-### 1. 프로그램별·강사별 집계 목록
+> **백엔드 복붙 SSOT (2026-08-27):** [payment-orders-openapi-p0-backend-cursor-prompt.md](./payment-orders-openapi-p0-backend-cursor-prompt.md) — **API + DB seed 한 문서.**  
+> 교차: [payment-orders-backend-seed-handoff-2026-08-27.md](./payment-orders-backend-seed-handoff-2026-08-27.md) · [payment-orders-seed-v1.spec.json](./payment-orders-seed-v1.spec.json)
+>
+> 집계 목록·일괄 confirm·리스트 `pendingItemBucket` / 캘린더 `statementStatus`·목록 가시성(Gemini·`PAID`·`NONE` 제외)·총액에서 반려·정정 제외·혼재 `PARTIAL`·reject 알림 스케줄·`statementId` embed·시안 시드 교체는 **위 프롬프트가 SSOT**. 본 절은 **잔여만** 둔다.
 
-| | |
-|---|---|
-| **화면** | `/settlement-management/payment-orders` (리스트 뷰) |
-| **UI 요구** | `PaymentOrderAdminProgramRow` / `PaymentOrderAdminInstructorRow` — 프로그램명·강사명·참여 수·지급 대기 건수·정산 예정금 **집계 행** |
-| **현재 API** | `GET /api/settlements` → `SettlementListItemResponse[]` (정산 **라인** 단위) |
-| **갭 유형** | 구조 불일치 |
-| **프론트 임시 대응** | 전체 settlements fetch 후 `programId` / `instructorMemberId`로 **클라이언트 집계** |
-| **제안** | `GET /api/settlements/aggregates?groupBy=program\|instructor` 또는 동일 필터를 지원하는 집계 endpoint |
+### 잔여
 
-**UI 필드 ↔ API (라인 기준)**
-
-| UI (집계 행) | API (라인) | 비고 |
-|--------------|------------|------|
-| `programName` | `programNameKo` | 집계 키: `programId` |
-| `instructorCount` | `instructorMemberId` distinct count | 클라이언트 계산 |
-| `pendingPaymentSettlementItemCount` | `statementStatus === REQUESTED` count | API pending 정의 합의 필요 |
-| `estimatedAmount` | `sum(netPaymentAmount)` | |
-| `settlementRelevantAttendanceDates` | `lectureDate[]` | |
-
----
-
-### 2. 지급조서 일괄 확인 + 이체 예정일
-
-| | |
-|---|---|
-| **화면** | 지급 현황 상세 → 「일괄 확인」 모달 |
-| **UI 요구** | 선택 라인 일괄 확인 + **강의비 지급 예정일** (`lectureFeePaymentScheduledDate`) |
-| **현재 API** | `PATCH /api/settlements/statements/{statementId}/confirm` — **단건**, body: `{ reason? }` only |
-| **갭 유형** | bulk API 없음, 예정일 필드 없음 |
-| **프론트 임시 대응** | `statementId` 순차 PATCH |
-| **제안** | `POST /api/settlements/statements/bulk-confirm` + `{ statementIds[], scheduledPaymentDate?, reason? }` |
-
----
-
-### 3. 목록·상세 서버 필터
-
-| | |
-|---|---|
-| **UI 필터** | 프로그램명·강사명 검색, 출강일 기간, 지급 대기 버킷(0 / 1~5 / 6~10 / 11+) |
-| **현재 API query** | `programId`, `instructorMemberId`, `statementStatus`, `paymentStatus`, `page`, `size` |
-| **갭 유형** | 필터 부족 |
-| **프론트 임시 대응** | 클라이언트 필터 |
-| **제안** | `search`, `fromDate`, `toDate`, `pendingItemBucket` 또는 집계 API와 함께 제공 |
+| 항목 | SSOT |
+|------|------|
+| 지급 현황 상세 **UI 필드** (기본 정보·목록 전 열·산출 모달) | [settlement-payment-order-detail-ui-fields-backend-handoff.md](./settlement-payment-order-detail-ui-fields-backend-handoff.md) |
+| 상세 scoped GET·산출 DTO | [settlement-payment-order-detail-backend-handoff.md](./settlement-payment-order-detail-backend-handoff.md) — `statementId` embed는 **P0 문서로 승격** |
+| 강사 PII embed·발급 unmask | 본 문서 상단 P0 이름/unmask 절 · UI SSOT §4.5 / §1.2 |
 
 ---
 
 ## P0 — 계좌 지급 확인
+
+> **시드·API 일괄 핸드오프 (2026-08-27):** [account-payments-backend-seed-handoff-2026-08-27.md](./account-payments-backend-seed-handoff-2026-08-27.md) · [account-payments-seed-v1.spec.json](./account-payments-seed-v1.spec.json)  
+> OpenAPI v9에는 `budget-summary`·`bulk-paid` path가 이미 있음. 아래 §4·§5는 **응답 계약·시드·목록 extras·상세 embed**를 FE 시안과 맞추는 작업으로 해석.
 
 ### 4. 연간 예산 요약 카드
 
 | | |
 |---|---|
 | **화면** | `/settlement-management/account-payments` 상단 「{연도}년 예산 총액」 |
-| **UI mock** | `MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET` |
-| **현재 API** | **없음** |
-| **프론트 임시 대응** | remote 시 `—` 표시 |
-| **제안** | `GET /api/settlements/budget-summary?year=` |
-
+| **UI mock** | `MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET` (= **109_150_000**) |
+| **현재 API** | `GET /api/admin/settlements/budget-summary?year=` (OpenAPI 존재 · FE hook 연동) |
+| **프론트 임시 대응** | remote인데 응답 없으면 `—` |
+| **요청** | `annualBudgetAmount` · `completedPaymentAmount` 필드 확정 + year=2026 시드 109150000 |
 ---
 
 ### 5. 일괄 지급 완료
@@ -168,9 +137,8 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9, 351 paths — 2026-06-12 동
 | | |
 |---|---|
 | **UI** | 목록 다중 선택 → 「계좌 지급 완료」 |
-| **현재 API** | `PATCH /api/account-payments/{paymentId}/paid` **단건만** |
-| **제안** | `PATCH /api/account-payments/bulk-paid` `{ paymentIds[], reason? }` |
-
+| **현재 API** | `PATCH /api/admin/account-payments/bulk-paid` (OpenAPI·FE mutation 연동) |
+| **요청** | body `{ paymentIds[] }` 안정화 + §5.1 409 message · 시드 CONFIRMED만 200 |
 ---
 
 ### 5.1 ⭐ **P0 서버 수정 요청** — 지급 완료 409 `message` 상세화
@@ -297,20 +265,40 @@ A를 택하면 OpenAPI `AccountPaymentDetailResponse.settlement` `$ref`를 `Sett
 
 ### 9. 설정 CRUD·상세 저장
 
+> **2026-08-27 갱신:** OpenAPI v9 (`settlement.openapi.json`) 기준. 상세 핸드오프·v2 시드: [settlement-item-settings-backend-seed-handoff-2026-08-27.md](./settlement-item-settings-backend-seed-handoff-2026-08-27.md)
+
 | | |
 |---|---|
-| **UI** | 카드 삭제·복제·12종 `layout` 상세 모달 저장 |
-| **현재 API** | `GET /api/settlement-configs/current` **only** |
-| **프론트 임시 대응** | remote 시 조회만, 편집·삭제·복제 **비활성** |
-| **제안** | `PUT/PATCH /api/settlement-configs/current` + item detail schema (layout별 필드) |
+| **UI** | 카드 삭제·복제·13건 v2 카탈로그 `layout` 상세 모달 저장 |
+| **현재 API** | `GET/PUT/DELETE /api/admin/settlement-configs/current` + item duplicate/delete **OpenAPI 존재** |
+| **프론트 임시 대응** | remote 시 **GET만** 연동; 편집·삭제·복제 **readOnly** |
+| **BE 우선 작업** | v2 13건 seed + `paymentItemType` enum + `detailJson` layout 스키마 |
 
-**Config item 필드 갭**
+**OpenAPI v9 — 이미 있는 필드**
 
-| UI mock | API |
-|---------|-----|
-| `iconKey`, `emojiOverride` | 없음 |
-| `layout` (tier1, transport, …) | 없음 |
-| `basisHours`, `maxLimitWon`, `qualificationLines` | `WageItemResponse.amount`, `PaymentItemResponse.maxAmount` 등 flat |
+| 필드 | WageItem | PaymentItem | DeductionItem |
+|------|----------|-------------|---------------|
+| `layout` | O | O | O |
+| `detailJson` (string) | O | O | O |
+| `iconKey`, `emojiOverride` | O | O | O |
+| `basisHours`, `maxLimitWon` | O (wage) | O (`maxLimitWon`) | — |
+| `qualificationLines`, `remarkLines` | O (wage flat) | **없음** | **없음** |
+| `rateItems[]` | O (gemini) | — | — |
+
+**잔여 갭 (P0)**
+
+| UI mock / FE 필요 | API v9 |
+|-------------------|--------|
+| `paymentItemType` (6종 enum) | **없음** — `itemName`만으로 강사/학생 구분 불가 |
+| payment/deduction `qualificationLines`, `remarkLines` | flat 없음 → **detailJson 내부** 또는 DTO 확장 |
+| 상세 모달 API 매핑 | FE 미구현 — mock `getSettlementItemSettingDetail` 사용 |
+| v2 카탈로그 13건 DB seed | 구 v1 15건과 불일치 — [seed-v2.payload.json](./settlement-item-settings-seed-v2.payload.json) |
+| `maxAmount` vs `maxLimitWon` (payment) | 둘 다 존재 — SSOT `maxLimitWon` 동기화 규칙 필요 |
+
+**CRUD 가드 (OpenAPI 존재, FE 미연동)**
+
+- `POST .../items/{itemKind}/{itemId}/duplicate` — payment만 200
+- `DELETE .../items/{itemKind}/{itemId}` — payment만 200; wage/deduction → 409 기대
 
 ---
 

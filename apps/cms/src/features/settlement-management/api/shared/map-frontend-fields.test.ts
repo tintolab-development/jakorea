@@ -25,8 +25,8 @@ describe('formatWonAmountDisplay', () => {
     expect(formatWonAmountDisplay(915000)).toBe('915,000원')
   })
 
-  it('없으면 —', () => {
-    expect(formatWonAmountDisplay(undefined)).toBe('—')
+  it('없으면 -', () => {
+    expect(formatWonAmountDisplay(undefined)).toBe('-')
   })
 })
 

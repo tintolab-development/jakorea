@@ -5,6 +5,8 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ListSettlementAggregatesPendingItemBucket } from './listSettlementAggregatesPendingItemBucket';
+import type { ListSettlementAggregatesStatementStatus } from './listSettlementAggregatesStatementStatus';
 
 export type ListSettlementAggregatesParams = {
 /**
@@ -20,27 +22,35 @@ programId?: number;
  */
 instructorMemberId?: number;
 /**
- * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
+ * 캘린더 현황 필터. 리스트에서는 보내지 않습니다.
  */
-statementStatus?: string;
+statementStatus?: ListSettlementAggregatesStatementStatus;
 /**
  * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
  */
 paymentStatus?: string;
 /**
- * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ * 프로그램명 또는 신청자명 contains. 신청자명은 실명 기준입니다.
  */
 search?: string;
 /**
- * 조회 시작 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
+ * 출강일 시작. 이체 예정일이 아닙니다.
  */
 fromDate?: string;
 /**
- * 조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
+ * 출강일 종료. 이체 예정일이 아닙니다.
  */
 toDate?: string;
 /**
- * 조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
+ * 리스트 지급대기 건수 버킷. 캘린더에서는 보내지 않습니다.
  */
-pendingItemBucket?: string;
+pendingItemBucket?: ListSettlementAggregatesPendingItemBucket;
+/**
+ * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
+ */
+page?: number;
+/**
+ * 페이지 크기입니다. 화면별 기본 목록 개수와 일치시켜 호출합니다.
+ */
+size?: number;
 };

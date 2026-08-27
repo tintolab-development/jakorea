@@ -6,21 +6,60 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 계좌 지급 확인 목록 행. 신청자명(instructorName)은 실명이고 계좌·예금주만 마스킹합니다.
+ */
 export interface AccountPaymentListItemResponse {
   accountPaymentId?: number;
   batchId?: number;
   settlementId?: number;
+  /** Canonical WAITING_PAYMENT | PAID | FAILED. 응답을 REQUESTED로 위장하지 않습니다. */
   paymentStatus?: string;
+  /** 신청자 실명. 서버에서 마스킹하지 않습니다. */
   instructorName?: string;
   bankName?: string;
   maskedAccountNo?: string;
   accountHolder?: string;
   netPaymentAmount?: number;
-  scheduledPaymentDate?: string;
+  /**
+     * 이체 예정일. 목록 날짜 필터(fromDate/toDate/year) 기준입니다.
+     * @nullable
+     */
+  scheduledPaymentDate?: string | null;
   paidAt?: string;
   sourceType?: string;
   sourceId?: number;
   programId?: number;
   memberId?: number;
+  /**
+     * 프로그램명 (우선)
+     * @nullable
+     */
+  programNameKo?: string | null;
+  /**
+     * 호환 필드. programNameKo와 동일 값입니다.
+     * @nullable
+     */
+  programName?: string | null;
+  /**
+     * 참여 기관. 개인 프로그램은 null
+     * @nullable
+     */
+  institutionName?: string | null;
+  /**
+     * 차시 번호. sessionLabel이 없으면 FE가 N차시로 표시합니다.
+     * @nullable
+     */
+  sessionOrdinal?: number | null;
+  /**
+     * 차시 표시. 예: 2 ~ 3차시. 개인은 null
+     * @nullable
+     */
+  sessionLabel?: string | null;
+  /**
+     * 캘린더 출강일. 이체 예정일이 아닙니다.
+     * @nullable
+     */
+  lectureDate?: string | null;
   availableActions?: string[];
 }

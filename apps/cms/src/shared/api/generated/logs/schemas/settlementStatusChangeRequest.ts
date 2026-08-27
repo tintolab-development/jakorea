@@ -5,6 +5,7 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SettlementStatusChangeRequestNotificationType } from './settlementStatusChangeRequestNotificationType';
 
 /**
  * 정산/지급 상태 변경 요청
@@ -16,4 +17,12 @@ export interface SettlementStatusChangeRequest {
      * @maxLength 500
      */
   reason: string;
+  /** IMMEDIATE | ON_ANNOUNCEMENT | MANUAL */
+  notificationType?: SettlementStatusChangeRequestNotificationType;
+  /** MANUAL일 때 필수 ISO datetime */
+  scheduledNotificationAt?: string;
+  /** 지급조서 확인 시 강의비 이체 예정일 */
+  lectureFeePaymentScheduledDate?: string;
+  /** lectureFeePaymentScheduledDate와 동일. FE 호환 필드명 */
+  scheduledPaymentDate?: string;
 }

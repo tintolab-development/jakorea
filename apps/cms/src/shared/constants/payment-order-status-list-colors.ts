@@ -12,6 +12,7 @@ export const PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR: Record<
   string
 > = {
   pending: '#1E8C29',
+  reapplication: '#C45C00',
   confirmed: '#017EAF',
   correction: '#C32F4A',
   rejected: '#017EAF',
@@ -21,6 +22,7 @@ export const PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR: Record<
 /** 면 배경 */
 export const PAYMENT_ORDER_STATUS_LIST_BG: Record<PaymentOrderAdminLineProcessingStatus, string> = {
   pending: 'rgba(240, 121, 23, 0.06)',
+  reapplication: 'rgba(196, 92, 0, 0.06)',
   confirmed: '#F2F8F2',
   correction: 'rgba(195, 47, 74, 0.06)',
   rejected: 'linear-gradient(0deg, rgba(1, 126, 175, 0.10) 0%, rgba(1, 126, 175, 0.10) 100%), #FFF',
@@ -33,6 +35,7 @@ export const PAYMENT_ORDER_STATUS_LIST_BORDER: Record<
   string
 > = {
   pending: 'rgba(240, 121, 23, 0.10)',
+  reapplication: 'rgba(196, 92, 0, 0.10)',
   confirmed: 'rgba(30, 140, 41, 0.10)',
   correction: 'rgba(195, 47, 74, 0.10)',
   rejected: 'rgba(1, 126, 175, 0.10)',

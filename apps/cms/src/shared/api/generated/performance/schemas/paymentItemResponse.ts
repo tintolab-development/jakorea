@@ -5,9 +5,11 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { PaymentItemResponsePaymentItemType } from './paymentItemResponsePaymentItemType';
 
 export interface PaymentItemResponse {
   id?: number;
+  paymentItemType?: PaymentItemResponsePaymentItemType;
   itemName?: string;
   maxAmount?: number;
   taxableYn?: boolean;

@@ -6,10 +6,11 @@
  * OpenAPI spec version: v9
  */
 import type { WageItemRateResponse } from './wageItemRateResponse';
+import type { WageItemResponseWageItemType } from './wageItemResponseWageItemType';
 
 export interface WageItemResponse {
   id?: number;
-  wageItemType?: string;
+  wageItemType?: WageItemResponseWageItemType;
   name?: string;
   amount?: number;
   calculationUnit?: string;

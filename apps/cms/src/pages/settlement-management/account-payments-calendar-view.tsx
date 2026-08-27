@@ -8,8 +8,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'rea
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import {
+  formatAccountPaymentInstitutionDisplay,
   formatAccountPaymentSessionLabelDisplay,
-  resolveAccountPaymentAttendanceDate,
+  resolveAccountPaymentCalendarDate,
   type AccountPaymentRow,
 } from '@/data/mock/account-payments-list'
 import {
@@ -33,9 +34,9 @@ import '@/shared/components/calendar/styles/calendar.css'
 
 function pickAnchorDate(rows: AccountPaymentRow[]): Dayjs {
   if (rows.length === 0) return dayjs()
-  let min = dayjs(resolveAccountPaymentAttendanceDate(rows[0]))
+  let min = dayjs(resolveAccountPaymentCalendarDate(rows[0]))
   for (let i = 1; i < rows.length; i++) {
-    const d = dayjs(resolveAccountPaymentAttendanceDate(rows[i]))
+    const d = dayjs(resolveAccountPaymentCalendarDate(rows[i]))
     if (d.isBefore(min, 'day')) min = d
   }
   return min
@@ -50,15 +51,15 @@ function accountPaymentStatusToUiStatus(
 function accountPaymentStatusShortLabel(status: AccountPaymentRow['accountPaymentStatus']): string {
   switch (status) {
     case 'awaiting_confirmation':
-      return '확인 대기'
+      return '지급 대기'
     case 'partial_confirmation':
       return '확인 중'
     case 'account_paid':
-      return '계좌 지급'
+      return '지급 완료'
     case 'payment_correction_requested':
       return '정정 요청'
     default:
-      return '확인 대기'
+      return '지급 대기'
   }
 }
 
@@ -99,12 +100,12 @@ function placeholderInvoiceForAccountPaymentCalendar(
   return {
     programName: row.programName,
     sessionProgress: formatAccountPaymentSessionLabelDisplay(row.sessionLabel),
-    operationPeriod: '—',
+    operationPeriod: '-',
     paymentStatementStatus: status,
     expectedTransferDate: `${d.format('YYYY. MM. DD')}(${['일', '월', '화', '수', '목', '금', '토'][d.day()]})`,
-    lectureFeeBasis: '—',
+    lectureFeeBasis: '-',
     businessIncomeEarner: '해당 없음',
-    institutionName: row.institutionName,
+    institutionName: formatAccountPaymentInstitutionDisplay(row.institutionName),
     lectureDateSessions: `${formatAccountPaymentSessionLabelDisplay(row.sessionLabel)} · ${row.instructorName}`,
     lineItems: [
       {
@@ -124,14 +125,14 @@ function placeholderInvoiceForAccountPaymentCalendar(
 
 function accountPaymentRowToSettlementListRow(row: AccountPaymentRow): InstructorSettlementListRow {
   const status = accountPaymentStatusToUiStatus(row.accountPaymentStatus)
-  const calendarDate = resolveAccountPaymentAttendanceDate(row).slice(0, 10)
+  const calendarDate = resolveAccountPaymentCalendarDate(row)
   return {
     id: row.id,
     settlementId: row.settlementId ?? 0,
     no: row.no,
     programName: row.programName,
     instructorName: row.instructorName,
-    institutionName: row.institutionName,
+    institutionName: formatAccountPaymentInstitutionDisplay(row.institutionName),
     lectureDateDisplay: `${formatAccountPaymentSessionLabelDisplay(row.sessionLabel)} · ${row.instructorName}`,
     calendarDate,
     status,
@@ -225,7 +226,8 @@ export function AccountPaymentsCalendarView({
   const programDates = useMemo(() => {
     const dates = new Set<string>()
     for (const row of filteredRows) {
-      dates.add(resolveAccountPaymentAttendanceDate(row).slice(0, 10))
+      const d = resolveAccountPaymentCalendarDate(row)
+      if (d) dates.add(d)
     }
     return dates
   }, [filteredRows])

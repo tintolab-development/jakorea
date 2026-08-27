@@ -6,9 +6,16 @@
  * OpenAPI spec version: v9
  */
 import type { AccountPaymentListItemResponse } from './accountPaymentListItemResponse';
-import type { SettlementResponse } from './settlementResponse';
+import type { SettlementFrontendResponse } from './settlementFrontendResponse';
 
+/**
+ * 계좌 지급 상세. settlement embed로 산출 테이블을 채우며 GET /settlements/{id}를 다시 치지 않습니다.
+ */
 export interface AccountPaymentDetailResponse {
   payment?: AccountPaymentListItemResponse;
-  settlement?: SettlementResponse;
+  /**
+     * GET /settlements/{id} 와 동일 계약(SettlementFrontendResponse). Gemini 등 정산 없음이면 null.
+     * @nullable
+     */
+  settlement?: SettlementFrontendResponse;
 }

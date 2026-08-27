@@ -73,6 +73,7 @@ export function usePaymentOrderDetailFullPageModalState(
 
   const [lineAggregateStatus, setLineAggregateStatus] =
     useState<PaymentOrderDetailAggregateStatus>('na')
+  const [lineCountableAmount, setLineCountableAmount] = useState<number | null>(null)
   const [calcStatementOpen, setCalcStatementOpen] = useState(false)
   const [calcLineRow, setCalcLineRow] = useState<CalcLineRow | null>(null)
   const [calcStatementData, setCalcStatementData] =
@@ -86,6 +87,10 @@ export function usePaymentOrderDetailFullPageModalState(
 
   const handleAggregateChange = useCallback((status: PaymentOrderDetailAggregateStatus) => {
     setLineAggregateStatus(status)
+  }, [])
+
+  const handleCountableAmountChange = useCallback((amount: number) => {
+    setLineCountableAmount(amount)
   }, [])
 
   const mockDetail = useMemo(() => {
@@ -122,6 +127,7 @@ export function usePaymentOrderDetailFullPageModalState(
   useEffect(() => {
     if (isOpen) {
       setLineAggregateStatus('na')
+      setLineCountableAmount(null)
       setCalcStatementOpen(false)
       setCalcLineRow(null)
       setCalcStatementData(null)
@@ -230,6 +236,8 @@ export function usePaymentOrderDetailFullPageModalState(
     isOpen,
     lineAggregateStatus,
     handleAggregateChange,
+    lineCountableAmount,
+    handleCountableAmountChange,
     calcStatementOpen,
     calcStatementData,
     calcStatementLoading,

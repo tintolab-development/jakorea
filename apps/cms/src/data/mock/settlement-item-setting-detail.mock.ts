@@ -73,7 +73,7 @@ export interface SettlementItemSettingDetail {
   meetingAttendance02BasisHours?: number | null
   /** meetingAttendance(p-5): 산정 02 — 최대 한도(원) */
   meetingAttendance02MaxLimitWon?: number | null
-  /** withholdingDailyWorker(d-1): 수익 제외 — 원천징수세액 이하(원) 미징수 기준 */
+  /** withholdingDailyWorker(d-1): 소액 부징수 — 원천징수세액 이하(원) 미징수 기준 */
   withholdingExclusionMaxWon?: number | null
   /** withholdingDailyWorker(d-1): 근로소득공제비용(원) */
   withholdingEarnedIncomeDeductionWon?: number | null
@@ -217,10 +217,11 @@ const P1_DETAIL: SettlementItemSettingDetail = {
   basicFeeWon: null,
   longDistanceFeeWon: null,
   qualificationLines: [
-    '편도 30km 이상 이동 시에만 항목 노출',
-    '자차 기준 지급 — 네이버 지도 거리의 유류비 + 톨비를 왕복으로 자동 산출',
+    '네이버 지도를 기준으로, 입력된 강사 자택 주소 및 강의 장소 기준으로 거리 및 유류와 톨비가 고려된 금액 자동 산출',
   ],
-  remarkLines: ['별도 영수증 제출 없음. 세금 징수.'],
+  remarkLines: [
+    '실비 영수증이 없을 경우 강사 교통비를 지급하지 않는 것이 원칙이나, 팀별 판단에 따라 편도 교통비 영수증만으로도 왕복 교통비를 지급',
+  ],
   transportCommuteMode: 'private_car',
   evidenceSubmission: 'not_required',
 }
@@ -235,10 +236,10 @@ const P2_DETAIL: SettlementItemSettingDetail = {
   basicFeeWon: null,
   longDistanceFeeWon: null,
   qualificationLines: [
-    '편도 30km 이상 이동 시에만 항목 노출',
-    '대중교통 기준 지급',
+    '대중교통 이용비(KTX일반, 고속버스, 전세버스 등)',
+    '톨비의 경우, 별도 영수증 증빙 처리해서 산출',
   ],
-  remarkLines: ['증빙 자료(영수증) 제출 필요. 세금 징수하지 않음.'],
+  remarkLines: ['실비 영수증 필수 제출'],
   transportCommuteMode: 'public_transit',
   evidenceSubmission: 'required',
 }
@@ -266,21 +267,21 @@ const P4_DETAIL: SettlementItemSettingDetail = {
   maxLimitWon: 30_000,
   basicFeeWon: null,
   longDistanceFeeWon: null,
-  qualificationLines: ['1인 기준'],
+  qualificationLines: ['1인 1식 기준'],
   remarkLines: [],
   evidenceSubmission: 'required',
 }
 
-/** 활동비 p-6 — 식사비와 동형 */
+/** 활동비 p-6 — 식사비와 동형(layout=meal, 한도 50,000) */
 const P6_DETAIL: SettlementItemSettingDetail = {
-  layout: 'volunteerActivity',
+  layout: 'meal',
   basisUnit: '시간',
   basisHours: 1,
   compareKind: 'standard',
   maxLimitWon: 50_000,
   basicFeeWon: null,
   longDistanceFeeWon: null,
-  qualificationLines: ['활동비로 지원되는 비용 (1일 기준)'],
+  qualificationLines: ['참여자에게 지급되는 지원비'],
   remarkLines: [],
   evidenceSubmission: 'required',
 }
@@ -308,7 +309,7 @@ const D1_DETAIL: SettlementItemSettingDetail = {
   maxLimitWon: null,
   basicFeeWon: null,
   longDistanceFeeWon: null,
-  qualificationLines: ['1일 일용근로자의 수익이 125,000원 초과인 경우'],
+  qualificationLines: ['지급액이 125,000원 초과인 경우'],
   remarkLines: [],
   withholdingExclusionMaxWon: 1_000,
   withholdingEarnedIncomeDeductionWon: 150_000,

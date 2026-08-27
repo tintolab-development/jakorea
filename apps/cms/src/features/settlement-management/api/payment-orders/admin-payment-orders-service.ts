@@ -32,6 +32,10 @@ export type PaymentOrdersDetailContextParams = {
   aggregateKey: string
   /** 목록(지급조서 확인)에 조회 적용된 출강일 기간 — 상세 라인 API 스코프 */
   dateRange?: { from: string; to: string } | null
+  /** 상세 필터 「신청자명/프로그램명」 → settlements `search` */
+  search?: string | null
+  /** 상세 필터 「지급조서 처리 현황」 → `statementStatus` (all이면 생략) */
+  statementStatus?: string | null
 }
 
 export function buildPaymentOrdersDetailListParams(
@@ -46,6 +50,16 @@ export function buildPaymentOrdersDetailListParams(
   if (params.dateRange?.from && params.dateRange?.to) {
     listParams.fromDate = params.dateRange.from
     listParams.toDate = params.dateRange.to
+  }
+
+  const search = params.search?.trim()
+  if (search) {
+    listParams.search = search
+  }
+
+  const statementStatus = params.statementStatus?.trim()
+  if (statementStatus) {
+    listParams.statementStatus = statementStatus
   }
 
   return listParams
@@ -66,6 +80,7 @@ export async function getPaymentOrdersListRemote(
     programName: '',
     instructorName: '',
     processingStatus: 'all',
+    pendingItemBucket: 'all',
     dateRange: null,
   }
 ): Promise<PaymentOrdersListData> {

@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ErrorDetailDetails } from './errorDetailDetails';
 
 /**
  * 프론트 분기와 운영 추적을 위한 구조화 오류 정보
@@ -24,4 +25,9 @@ export interface ErrorDetail {
      * @nullable
      */
   traceId?: string | null;
+  /**
+     * 전이 충돌 등 부가 컨텍스트. 없으면 null입니다.
+     * @nullable
+     */
+  details?: ErrorDetailDetails;
 }

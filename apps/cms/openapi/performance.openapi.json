@@ -2816,6 +2816,17 @@
             "type": "integer",
             "format": "int64"
           },
+          "paymentItemType": {
+            "type": "string",
+            "enum": [
+              "TRANSPORT_INSTRUCTOR",
+              "TRANSPORT_STUDENT",
+              "MEAL",
+              "LODGING_GENERAL",
+              "LODGING_1C1S",
+              "ACTIVITY"
+            ]
+          },
           "itemName": {
             "type": "string"
           },
@@ -2924,7 +2935,15 @@
             "format": "int64"
           },
           "wageItemType": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "TIER1",
+              "TIER2",
+              "TIER3",
+              "SPECIAL_LECTURE",
+              "OTHER_LABOR",
+              "GEMINI"
+            ]
           },
           "itemName": {
             "type": "string"
@@ -3039,6 +3058,16 @@
             ],
             "description": "서버 로그 추적용 ID",
             "example": "8a0c72fa7d6c4ec19c3e13d2a1e54a1f"
+          },
+          "details": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "전이 충돌 등 부가 컨텍스트. 없으면 null입니다."
           }
         }
       },
@@ -3085,6 +3114,17 @@
           "id": {
             "type": "integer",
             "format": "int64"
+          },
+          "paymentItemType": {
+            "type": "string",
+            "enum": [
+              "TRANSPORT_INSTRUCTOR",
+              "TRANSPORT_STUDENT",
+              "MEAL",
+              "LODGING_GENERAL",
+              "LODGING_1C1S",
+              "ACTIVITY"
+            ]
           },
           "itemName": {
             "type": "string"
@@ -3198,7 +3238,15 @@
             "format": "int64"
           },
           "wageItemType": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "TIER1",
+              "TIER2",
+              "TIER3",
+              "SPECIAL_LECTURE",
+              "OTHER_LABOR",
+              "GEMINI"
+            ]
           },
           "name": {
             "type": "string"
@@ -4937,6 +4985,9 @@
           "requestedAmount": {
             "type": "integer",
             "format": "int64"
+          },
+          "evidenceSubmitted": {
+            "type": "boolean"
           }
         }
       },
@@ -10117,6 +10168,34 @@
             "example": "증빙 확인 완료",
             "maxLength": 500,
             "minLength": 2
+          },
+          "notificationType": {
+            "type": "string",
+            "description": "IMMEDIATE | ON_ANNOUNCEMENT | MANUAL",
+            "enum": [
+              "IMMEDIATE",
+              "ON_ANNOUNCEMENT",
+              "MANUAL"
+            ],
+            "example": "IMMEDIATE"
+          },
+          "scheduledNotificationAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "MANUAL일 때 필수 ISO datetime",
+            "example": "2026-08-28T09:15:00"
+          },
+          "lectureFeePaymentScheduledDate": {
+            "type": "string",
+            "format": "date",
+            "description": "지급조서 확인 시 강의비 이체 예정일",
+            "example": "2026-09-15"
+          },
+          "scheduledPaymentDate": {
+            "type": "string",
+            "format": "date",
+            "description": "lectureFeePaymentScheduledDate와 동일. FE 호환 필드명",
+            "example": "2026-09-15"
           }
         },
         "required": [
@@ -10405,10 +10484,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -15023,15 +15102,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessYear": {
-            "type": "integer",
-            "format": "int32"
+          "businessStartDate": {
+            "type": "string"
           },
           "businessEndDate": {
             "type": "string"
           },
-          "businessStartDate": {
-            "type": "string"
+          "businessYear": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -23979,7 +24058,8 @@
             "format": "int64"
           },
           "instructorName": {
-            "type": "string"
+            "type": "string",
+            "description": "신청자 실명. 서버에서 마스킹하지 않습니다."
           },
           "statementId": {
             "type": "integer",
@@ -24011,7 +24091,8 @@
             "type": "string"
           },
           "statementStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "REQUESTED | REAPPLICATION | CONFIRMED | CORRECTION_REQUESTED | REJECTED"
           },
           "paymentStatus": {
             "type": "string"
@@ -25030,14 +25111,16 @@
             "format": "int64"
           },
           "programName": {
-            "type": "string"
+            "type": "string",
+            "description": "프로그램명"
           },
           "instructorMemberId": {
             "type": "integer",
             "format": "int64"
           },
           "instructorName": {
-            "type": "string"
+            "type": "string",
+            "description": "신청자 실명. 서버에서 마스킹하지 않습니다."
           },
           "instructorCount": {
             "type": "integer",
@@ -25049,11 +25132,13 @@
           },
           "pendingPaymentSettlementItemCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "REQUESTED+REAPPLICATION 건수"
           },
           "estimatedAmount": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "총액. REJECTED·CORRECTION_REQUESTED 제외"
           },
           "settlementRelevantAttendanceDates": {
             "type": "array",
@@ -25061,6 +25146,26 @@
               "type": "string",
               "format": "date"
             }
+          },
+          "aggregateStatus": {
+            "type": "string",
+            "description": "CONFIRMED | REQUESTED | REAPPLICATION | PARTIAL | CORRECTION_REQUESTED | REJECTED",
+            "enum": [
+              "REQUESTED",
+              "REAPPLICATION",
+              "PARTIAL",
+              "CONFIRMED",
+              "CORRECTION_REQUESTED",
+              "REJECTED"
+            ]
+          },
+          "processingStatus": {
+            "type": "string",
+            "description": "aggregateStatus와 동일. FE 호환 필드"
+          },
+          "scheduleChangeCancelCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -32363,6 +32468,7 @@
       },
       "AccountPaymentListItemResponse": {
         "type": "object",
+        "description": "계좌 지급 확인 목록 행. 신청자명(instructorName)은 실명이고 계좌·예금주만 마스킹합니다.",
         "properties": {
           "accountPaymentId": {
             "type": "integer",
@@ -32377,10 +32483,12 @@
             "format": "int64"
           },
           "paymentStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "Canonical WAITING_PAYMENT | PAID | FAILED. 응답을 REQUESTED로 위장하지 않습니다."
           },
           "instructorName": {
-            "type": "string"
+            "type": "string",
+            "description": "신청자 실명. 서버에서 마스킹하지 않습니다."
           },
           "bankName": {
             "type": "string"
@@ -32396,8 +32504,12 @@
             "format": "int64"
           },
           "scheduledPaymentDate": {
-            "type": "string",
-            "format": "date"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "이체 예정일. 목록 날짜 필터(fromDate/toDate/year) 기준입니다."
           },
           "paidAt": {
             "type": "string",
@@ -32417,6 +32529,51 @@
           "memberId": {
             "type": "integer",
             "format": "int64"
+          },
+          "programNameKo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "프로그램명 (우선)"
+          },
+          "programName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "호환 필드. programNameKo와 동일 값입니다."
+          },
+          "institutionName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "참여 기관. 개인 프로그램은 null"
+          },
+          "sessionOrdinal": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "차시 번호. sessionLabel이 없으면 FE가 N차시로 표시합니다."
+          },
+          "sessionLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "차시 표시. 예: 2 ~ 3차시. 개인은 null",
+            "example": "2 ~ 3차시"
+          },
+          "lectureDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "캘린더 출강일. 이체 예정일이 아닙니다."
           },
           "availableActions": {
             "type": "array",
@@ -32455,12 +32612,15 @@
       },
       "AccountPaymentDetailResponse": {
         "type": "object",
+        "description": "계좌 지급 상세. settlement embed로 산출 테이블을 채우며 GET /settlements/{id}를 다시 치지 않습니다.",
         "properties": {
           "payment": {
             "$ref": "#/components/schemas/AccountPaymentListItemResponse"
           },
           "settlement": {
-            "$ref": "#/components/schemas/SettlementResponse"
+            "type": "null",
+            "$ref": "#/components/schemas/SettlementFrontendResponse",
+            "description": "GET /settlements/{id} 와 동일 계약(SettlementFrontendResponse). Gemini 등 정산 없음이면 null."
           }
         }
       },

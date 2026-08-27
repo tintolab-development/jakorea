@@ -1,6 +1,9 @@
 /**
  * 대량이체 양식 — Fortune Sheet 초기 데이터 및 동일 규칙의 표 행 생성
  * 목록 1건당 이체 1행(정산 금액 전액).
+ *
+ * SSOT: 시안 「대량이체 양식 미리보기」(입금은행~휴대폰 9열).
+ * Notion 5번 「강사비+세액 행 교대」문구는 세금신고 양식과 혼동으로 보이며 채택하지 않음.
  */
 
 import type { Cell, CellWithRowAndCol, Sheet } from '@fortune-sheet/core'
@@ -57,6 +60,17 @@ function mockPayoutMeta(instructorName: string, rowId: string) {
   return { bank, acctNum, mobile }
 }
 
+function payoutMetaFromRow(row: AccountPaymentRow) {
+  if (row.bankName && row.depositAccountNumber) {
+    return {
+      bank: row.bankName,
+      acctNum: row.depositAccountNumber,
+      mobile: row.recipientMobile ?? mockPayoutMeta(row.instructorName, row.id).mobile,
+    }
+  }
+  return mockPayoutMeta(row.instructorName, row.id)
+}
+
 function compareItems(a: AccountPaymentRow, b: AccountPaymentRow): number {
   const p = a.programName.localeCompare(b.programName, 'ko')
   if (p !== 0) return p
@@ -106,7 +120,7 @@ export function buildBulkTransferSheetRows(rows: AccountPaymentRow[]): BulkTrans
   const ordered = getCompletedRowsOrderedForBulkTransfer(rows)
   const lines: BulkTransferSheetRow[] = []
   for (const row of ordered) {
-    const { bank, acctNum, mobile } = mockPayoutMeta(row.instructorName, row.id)
+    const { bank, acctNum, mobile } = payoutMetaFromRow(row)
     lines.push({
       depositBank: bank,
       depositAccount: acctNum,

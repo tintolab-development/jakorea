@@ -153,7 +153,7 @@ export function PaymentOrderProgramSettlementTable({
         align: 'center',
       },
       {
-        title: '강사명',
+        title: '신청자명',
         dataIndex: 'instructorName',
         key: 'instructorName',
         ellipsis: { showTitle: true },
@@ -169,7 +169,7 @@ export function PaymentOrderProgramSettlementTable({
         align: 'center',
       },
       {
-        title: '강의 진행 일자',
+        title: '교육 진행 일자',
         key: 'lecture',
         width: 220,
         align: 'center',
@@ -181,7 +181,7 @@ export function PaymentOrderProgramSettlementTable({
         ),
       },
       {
-        title: '지급 조서 처리 현황',
+        title: '지급조서 처리 현황',
         key: 'processingStatus',
         width: 136,
         align: 'center',
@@ -205,7 +205,7 @@ export function PaymentOrderProgramSettlementTable({
         ),
       },
       {
-        title: '정산 예정 금액',
+        title: '정산 신청 금액',
         dataIndex: 'estimatedAmount',
         key: 'estimatedAmount',
         width: 140,

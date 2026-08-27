@@ -6,6 +6,8 @@ import {
 } from '@/shared/lib/extract-api-error-message'
 
 const DEDUPE_MS = 2_000
+/** BE 다운 시 병렬 쿼리가 동일 「네트워크 오류」Alert를 연쇄로 띄우지 않도록 */
+const NETWORK_DEDUPE_MS = 8_000
 const recentAlertKeys = new Map<string, number>()
 
 export type GlobalApiErrorAlertRequestConfig = {
@@ -54,21 +56,29 @@ function shouldSkipGlobalErrorAlert(
       : undefined
 
   // access token 만료 → refresh 시도 구간 (최초 401)은 Alert 생략
-  if (status === 401 && code === 'UNAUTHORIZED' && !config?._retry) {
+  if (
+    status === 401 &&
+    (code === 'UNAUTHORIZED' ||
+      code === 'TOKEN_EXPIRED' ||
+      code === 'ACCESS_TOKEN_EXPIRED') &&
+    !config?._retry
+  ) {
     return true
   }
 
   return false
 }
 
-function dedupeKey(method: string, url: string, message: string): string {
+function dedupeKey(method: string, url: string, message: string, httpStatus: number | null): string {
+  // 응답 없음(다운/CORS/타임아웃)은 URL별이 아니라 한 버킷으로 묶어 폭주 방지
+  if (httpStatus == null) return `NETWORK:${message}`
   return `${method}:${url}:${message}`
 }
 
-function shouldDedupe(key: string): boolean {
+function shouldDedupe(key: string, windowMs: number): boolean {
   const now = Date.now()
   const last = recentAlertKeys.get(key)
-  if (last != null && now - last < DEDUPE_MS) return true
+  if (last != null && now - last < windowMs) return true
   recentAlertKeys.set(key, now)
   return false
 }
@@ -104,8 +114,9 @@ export function showGlobalApiErrorAlert(
           fallback: error.message?.trim() || '서버에 연결할 수 없습니다.',
         })
 
-  const key = dedupeKey(method, url, content)
-  if (shouldDedupe(key)) return false
+  const key = dedupeKey(method, url, content, httpStatus)
+  const windowMs = httpStatus == null ? NETWORK_DEDUPE_MS : DEDUPE_MS
+  if (shouldDedupe(key, windowMs)) return false
 
   cmsAlertModal.show({
     title: resolveAlertTitle(httpStatus),

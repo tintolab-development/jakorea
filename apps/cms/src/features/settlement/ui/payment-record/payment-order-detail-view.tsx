@@ -52,6 +52,9 @@ type PaymentOrderDetailViewShared = {
   listPageDateRange: [Dayjs, Dayjs] | null
   lineAggregateStatus: PaymentOrderDetailAggregateStatus
   handleAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
+  /** rowsState 기준 반려·정정 제외 합산. null이면 detail.totalEstimatedAmount 사용 */
+  lineCountableAmount: number | null
+  handleCountableAmountChange: (amount: number) => void
   calcStatementOpen: boolean
   calcStatementData: PaymentOrderProgramCalculationStatement | null
   calcStatementLoading?: boolean
@@ -100,6 +103,8 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     listPageDateRange,
     lineAggregateStatus,
     handleAggregateChange,
+    lineCountableAmount,
+    handleCountableAmountChange,
     calcStatementOpen,
     calcStatementData,
     calcStatementLoading,
@@ -189,6 +194,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
           isOpen={isOpen}
           listPageDateRange={listPageDateRange}
           onAggregateChange={handleAggregateChange}
+          onCountableAmountChange={handleCountableAmountChange}
           onOpenCalculationStatement={openCalculationStatement}
           registerStatementCommitSink={registerStatementCommitSink}
           paymentOrdersRemote={paymentOrdersRemote}
@@ -200,6 +206,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
         <PaymentOrderInstructorBasicInfo
           detail={detail}
           aggregateStatus={lineAggregateStatus}
+          totalEstimatedAmount={lineCountableAmount ?? detail.totalEstimatedAmount}
           personalInfoRevealed={personalInfoRevealed}
           onPersonalInfoButtonClick={handlePrivacyToggleClick}
         />
@@ -209,6 +216,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
           isOpen={isOpen}
           listPageDateRange={listPageDateRange}
           onAggregateChange={handleAggregateChange}
+          onCountableAmountChange={handleCountableAmountChange}
           onOpenCalculationStatement={openCalculationStatement}
           registerStatementCommitSink={registerStatementCommitSink}
           paymentOrdersRemote={paymentOrdersRemote}

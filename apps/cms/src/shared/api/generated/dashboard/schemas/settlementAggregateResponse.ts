@@ -5,17 +5,27 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { SettlementAggregateResponseAggregateStatus } from './settlementAggregateResponseAggregateStatus';
 
 export interface SettlementAggregateResponse {
   groupBy?: string;
   aggregateKey?: number;
   programId?: number;
+  /** 프로그램명 */
   programName?: string;
   instructorMemberId?: number;
+  /** 신청자 실명. 서버에서 마스킹하지 않습니다. */
   instructorName?: string;
   instructorCount?: number;
   participationCount?: number;
+  /** REQUESTED+REAPPLICATION 건수 */
   pendingPaymentSettlementItemCount?: number;
+  /** 총액. REJECTED·CORRECTION_REQUESTED 제외 */
   estimatedAmount?: number;
   settlementRelevantAttendanceDates?: string[];
+  /** CONFIRMED | REQUESTED | REAPPLICATION | PARTIAL | CORRECTION_REQUESTED | REJECTED */
+  aggregateStatus?: SettlementAggregateResponseAggregateStatus;
+  /** aggregateStatus와 동일. FE 호환 필드 */
+  processingStatus?: string;
+  scheduleChangeCancelCount?: number;
 }
