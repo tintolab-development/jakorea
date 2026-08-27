@@ -50152,6 +50152,17 @@
             "type": "integer",
             "format": "int64"
           },
+          "paymentItemType": {
+            "type": "string",
+            "enum": [
+              "TRANSPORT_INSTRUCTOR",
+              "TRANSPORT_STUDENT",
+              "MEAL",
+              "LODGING_GENERAL",
+              "LODGING_1C1S",
+              "ACTIVITY"
+            ]
+          },
           "itemName": {
             "type": "string"
           },
@@ -50260,7 +50271,15 @@
             "format": "int64"
           },
           "wageItemType": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "TIER1",
+              "TIER2",
+              "TIER3",
+              "SPECIAL_LECTURE",
+              "OTHER_LABOR",
+              "GEMINI"
+            ]
           },
           "itemName": {
             "type": "string"
@@ -50422,6 +50441,17 @@
             "type": "integer",
             "format": "int64"
           },
+          "paymentItemType": {
+            "type": "string",
+            "enum": [
+              "TRANSPORT_INSTRUCTOR",
+              "TRANSPORT_STUDENT",
+              "MEAL",
+              "LODGING_GENERAL",
+              "LODGING_1C1S",
+              "ACTIVITY"
+            ]
+          },
           "itemName": {
             "type": "string"
           },
@@ -50534,7 +50564,15 @@
             "format": "int64"
           },
           "wageItemType": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "TIER1",
+              "TIER2",
+              "TIER3",
+              "SPECIAL_LECTURE",
+              "OTHER_LABOR",
+              "GEMINI"
+            ]
           },
           "name": {
             "type": "string"
@@ -52273,6 +52311,9 @@
           "requestedAmount": {
             "type": "integer",
             "format": "int64"
+          },
+          "evidenceSubmitted": {
+            "type": "boolean"
           }
         }
       },
@@ -57741,10 +57782,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
