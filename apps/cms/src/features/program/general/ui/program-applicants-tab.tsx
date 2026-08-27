@@ -16,8 +16,8 @@ import {
 import { getApplicantSchoolDetail } from '../lib/school-detail-mock'
 import { SchoolDetailModal } from './detail-modal/program-status/school-detail-modal'
 import { ApplicantInstructorDetailModal } from './applicant-instructor-detail-modal'
+import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import {
-  DeleteGuideModal,
   buildSchoolRejectMessageLines,
   buildSchoolApproveMessageLines,
   buildInstructorRejectMessageLines,

@@ -12,8 +12,8 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CmsRadio } from '@/shared/ui'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import {
-  DeleteGuideModal,
   buildInstructorRejectMessageLines,
   buildInstructorApproveMessageLines,
 } from './manager-delete-guide-modal'
