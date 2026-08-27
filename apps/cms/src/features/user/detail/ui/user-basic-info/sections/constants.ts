@@ -5,6 +5,11 @@ export const GENDER_EDIT_OPTIONS = [
   { value: '여성', label: '여성' },
 ]
 
+export const INDIVIDUAL_SCHOOL_ENROLLMENT_OPTIONS = [
+  { label: '재학 중', value: 'enrolled' },
+  { label: '해당 없음', value: 'not_enrolled' },
+] as const
+
 export const JA_EVALUATION_GRADE_OPTIONS = ['A', 'B', 'C', 'D'].map(v => ({
   value: v,
   label: v,

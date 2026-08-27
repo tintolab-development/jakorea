@@ -54,7 +54,7 @@ describe('resolveBasicInfoLayout — instructor', () => {
 })
 
 describe('resolveBasicInfoLayout — all_users', () => {
-  it('일반 회원은 META+PROFILE split + all_users variant를 유지한다', () => {
+  it('일반 회원은 META(가입일·소셜) + PROFILE split 카드를 사용한다', () => {
     const resolved = resolveBasicInfoLayout({
       bodyKey: 'all_users',
       instructorProfile: null,
