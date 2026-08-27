@@ -19124,15 +19124,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessYear": {
-            "type": "integer",
-            "format": "int32"
+          "businessStartDate": {
+            "type": "string"
           },
           "businessEndDate": {
             "type": "string"
           },
-          "businessStartDate": {
-            "type": "string"
+          "businessYear": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
