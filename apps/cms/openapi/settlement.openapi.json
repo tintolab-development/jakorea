@@ -5597,7 +5597,7 @@
           {
             "name": "year",
             "in": "query",
-            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "description": "금년도 예산·정산 완료 총액 연도. fromDate/toDate가 없으면 전년-12-01~당해-12-31을 예정금 구간으로 씁니다.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -5607,7 +5607,7 @@
           {
             "name": "fromDate",
             "in": "query",
-            "description": "이체 예정일 시작(YYYY-MM-DD). 계좌 지급 목록 필터와 동일. 있으면 year 기본 구간보다 우선.",
+            "description": "이체 예정일 시작. 기간 내 정산 예정금 합산 구간입니다.",
             "required": false,
             "schema": {
               "type": "string",
@@ -5617,7 +5617,7 @@
           {
             "name": "toDate",
             "in": "query",
-            "description": "이체 예정일 종료(YYYY-MM-DD). 계좌 지급 목록 필터와 동일. 있으면 year 기본 구간보다 우선.",
+            "description": "이체 예정일 종료. 기간 내 정산 예정금 합산 구간입니다.",
             "required": false,
             "schema": {
               "type": "string",
@@ -14780,8 +14780,8 @@
         "properties": {
           "status": {
             "type": "string",
-            "description": "정산 또는 지급 상태 필터",
-            "example": "READY",
+            "description": "지급 상태 필터. 대량이체·세금신고는 PAID만 허용합니다. 미지급(WAITING_PAYMENT/FAILED)은 발급 불가입니다.",
+            "example": "PAID",
             "maxLength": 80,
             "minLength": 0
           },
@@ -14802,13 +14802,13 @@
           "fromDate": {
             "type": "string",
             "format": "date",
-            "description": "조회 시작일",
+            "description": "이체 예정일 시작",
             "example": "2026-06-01"
           },
           "toDate": {
             "type": "string",
             "format": "date",
-            "description": "조회 종료일",
+            "description": "이체 예정일 종료",
             "example": "2026-06-30"
           },
           "reason": {
@@ -14843,10 +14843,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -33797,15 +33797,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
@@ -36868,7 +36868,7 @@
               "null"
             ],
             "format": "date",
-            "description": "이체 예정일. 목록 날짜 필터(fromDate/toDate/year) 기준입니다."
+            "description": "이체 예정일. 목록 필터와 캘린더 배치 기준입니다."
           },
           "paidAt": {
             "type": "string",
@@ -36932,7 +36932,7 @@
               "null"
             ],
             "format": "date",
-            "description": "캘린더 출강일. 이체 예정일이 아닙니다."
+            "description": "교육 진행 일자(표시용). 캘린더 배치는 scheduledPaymentDate(이체 예정일)입니다."
           },
           "availableActions": {
             "type": "array",
