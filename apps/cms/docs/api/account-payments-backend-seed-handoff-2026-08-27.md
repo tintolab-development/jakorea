@@ -141,7 +141,7 @@ flowchart TB
 
 | 필드 (제안) | UI |
 |-------------|-----|
-| `annualBudgetAmount` | `{year}년 예산 총액` — 시드 검증값 **109_150_000** |
+| `annualBudgetAmount` | `{year}년 예산 총액` — **후원사 관리 연도별 기부금 합계**(`sponsor_yearly_business`)와 동일. 예전 정산 전용 시드 109_150_000과 다를 수 있음 |
 | `completedPaymentAmount` | 해당 연도 `PAID` 합 |
 
 ### 3.6 Export (P1)

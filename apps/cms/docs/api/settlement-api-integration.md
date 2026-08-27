@@ -99,12 +99,12 @@ LNB 「정산 관리」 3화면(지급조서·계좌 지급·정산 항목 설�
 | PATCH | `/api/account-payments/{paymentId}/paid` | 지급 완료 (목록·상세) |
 | PATCH | `/api/account-payments/{paymentId}/failed` | 지급 실패 (hook만) |
 | PATCH | `/api/account-payments/bulk-paid` | 일괄 지급 완료 |
-| GET | `/api/settlements/budget-summary?year=` | 연간 예산 카드 |
-| POST | `/api/settlements/exports/bulk-transfer` | 대량이체 export (P1, FE Client Excel SSOT) |
-| POST | `/api/settlements/exports/tax-report` | 세금신고 export (P1) |
+| GET | `/api/settlements/budget-summary?year=&fromDate=&toDate=` | 요약 카드. **목록과 동일 이체 예정일**을 `fromDate`/`toDate`로 전달. `annualBudgetAmount`=후원사 연도별 기부금 합계, `expectedSettlementAmount`=기간∩CONFIRMED∩WAITING_PAYMENT |
+| POST | `/api/settlements/exports/bulk-transfer` | 대량이체 export — body `status: "PAID"`만 (미지급 포함 시 BE 거절). FE는 선택 건 PAID 검증 후 호출 + Client Excel 미리보기 |
+| POST | `/api/settlements/exports/tax-report` | 세금신고 export — 동일 `status: "PAID"` |
 | GET | `/api/settlements/exports` | export 이력 |
 
-**캘린더:** account-payments 목록 — 일자 배치는 **출강일(`lectureDate`)**, 목록 필터·요약카드는 **이체 예정일**.
+**캘린더:** account-payments 목록 — 일자 배치는 **이체 예정일(`scheduledPaymentDate`)**. `lectureDate`는 교육 진행일 표시용.
 
 **목록 UI:** 대기/완료 2종. 컬럼 `강의 진행 차시`. 개인 프로그램은 기관·차시 `-`.
 
