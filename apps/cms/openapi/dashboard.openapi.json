@@ -9561,6 +9561,34 @@
             "example": "증빙 확인 완료",
             "maxLength": 500,
             "minLength": 2
+          },
+          "notificationType": {
+            "type": "string",
+            "description": "IMMEDIATE | ON_ANNOUNCEMENT | MANUAL",
+            "enum": [
+              "IMMEDIATE",
+              "ON_ANNOUNCEMENT",
+              "MANUAL"
+            ],
+            "example": "IMMEDIATE"
+          },
+          "scheduledNotificationAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "MANUAL일 때 필수 ISO datetime",
+            "example": "2026-08-28T09:15:00"
+          },
+          "lectureFeePaymentScheduledDate": {
+            "type": "string",
+            "format": "date",
+            "description": "지급조서 확인 시 강의비 이체 예정일",
+            "example": "2026-09-15"
+          },
+          "scheduledPaymentDate": {
+            "type": "string",
+            "format": "date",
+            "description": "lectureFeePaymentScheduledDate와 동일. FE 호환 필드명",
+            "example": "2026-09-15"
           }
         },
         "required": [
@@ -23423,7 +23451,8 @@
             "format": "int64"
           },
           "instructorName": {
-            "type": "string"
+            "type": "string",
+            "description": "신청자 실명. 서버에서 마스킹하지 않습니다."
           },
           "statementId": {
             "type": "integer",
@@ -23455,7 +23484,8 @@
             "type": "string"
           },
           "statementStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "REQUESTED | REAPPLICATION | CONFIRMED | CORRECTION_REQUESTED | REJECTED"
           },
           "paymentStatus": {
             "type": "string"
@@ -24474,14 +24504,16 @@
             "format": "int64"
           },
           "programName": {
-            "type": "string"
+            "type": "string",
+            "description": "프로그램명"
           },
           "instructorMemberId": {
             "type": "integer",
             "format": "int64"
           },
           "instructorName": {
-            "type": "string"
+            "type": "string",
+            "description": "신청자 실명. 서버에서 마스킹하지 않습니다."
           },
           "instructorCount": {
             "type": "integer",
@@ -24493,11 +24525,13 @@
           },
           "pendingPaymentSettlementItemCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "REQUESTED+REAPPLICATION 건수"
           },
           "estimatedAmount": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "총액. REJECTED·CORRECTION_REQUESTED 제외"
           },
           "settlementRelevantAttendanceDates": {
             "type": "array",
@@ -24505,6 +24539,26 @@
               "type": "string",
               "format": "date"
             }
+          },
+          "aggregateStatus": {
+            "type": "string",
+            "description": "CONFIRMED | REQUESTED | REAPPLICATION | PARTIAL | CORRECTION_REQUESTED | REJECTED",
+            "enum": [
+              "REQUESTED",
+              "REAPPLICATION",
+              "PARTIAL",
+              "CONFIRMED",
+              "CORRECTION_REQUESTED",
+              "REJECTED"
+            ]
+          },
+          "processingStatus": {
+            "type": "string",
+            "description": "aggregateStatus와 동일. FE 호환 필드"
+          },
+          "scheduleChangeCancelCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

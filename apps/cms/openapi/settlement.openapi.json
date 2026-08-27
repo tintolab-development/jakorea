@@ -1432,7 +1432,7 @@
           "200": {
             "description": "요청 성공",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseSettlementBulkStatusChangeResponse"
                 }
@@ -1442,7 +1442,7 @@
           "400": {
             "description": "요청 값 검증 실패",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -1463,7 +1463,7 @@
           "401": {
             "description": "인증 필요",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -1484,7 +1484,7 @@
           "403": {
             "description": "권한 부족",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -1505,7 +1505,7 @@
           "404": {
             "description": "대상 리소스 없음",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -1526,7 +1526,7 @@
           "409": {
             "description": "비즈니스 상태 충돌 또는 중복 요청",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -2199,7 +2199,7 @@
           "200": {
             "description": "요청 성공",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseSettlementStatusChangeResponse"
                 }
@@ -2209,7 +2209,7 @@
           "400": {
             "description": "요청 값 검증 실패",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -2230,7 +2230,7 @@
           "401": {
             "description": "인증 필요",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -2251,7 +2251,7 @@
           "403": {
             "description": "권한 부족",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -2272,7 +2272,7 @@
           "404": {
             "description": "대상 리소스 없음",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -2293,7 +2293,7 @@
           "409": {
             "description": "비즈니스 상태 충돌 또는 중복 요청",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -2351,7 +2351,7 @@
           "200": {
             "description": "요청 성공",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseSettlementStatusChangeResponse"
                 }
@@ -2361,7 +2361,7 @@
           "400": {
             "description": "요청 값 검증 실패",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -2382,7 +2382,7 @@
           "401": {
             "description": "인증 필요",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -2403,7 +2403,7 @@
           "403": {
             "description": "권한 부족",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -2424,7 +2424,7 @@
           "404": {
             "description": "대상 리소스 없음",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -2445,7 +2445,7 @@
           "409": {
             "description": "비즈니스 상태 충돌 또는 중복 요청",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -3249,7 +3249,7 @@
           {
             "name": "statementStatus",
             "in": "query",
-            "description": "상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.",
+            "description": "라인 상태. REAPPLICATION/RESUBMITTED 모두 재신청",
             "required": false,
             "schema": {
               "type": "string"
@@ -3267,7 +3267,7 @@
           {
             "name": "search",
             "in": "query",
-            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "description": "프로그램명 또는 신청자명 contains. 신청자명은 실명 기준",
             "required": false,
             "schema": {
               "type": "string"
@@ -3276,7 +3276,7 @@
           {
             "name": "fromDate",
             "in": "query",
-            "description": "조회 시작 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.",
+            "description": "출강일 시작. 이체 예정일이 아닙니다.",
             "required": false,
             "schema": {
               "type": "string",
@@ -3286,7 +3286,7 @@
           {
             "name": "toDate",
             "in": "query",
-            "description": "조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.",
+            "description": "출강일 종료. 이체 예정일이 아닙니다.",
             "required": false,
             "schema": {
               "type": "string",
@@ -3329,7 +3329,7 @@
           "200": {
             "description": "요청 성공",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PageResponseSettlementListItemResponse"
                 }
@@ -3339,7 +3339,7 @@
           "400": {
             "description": "요청 값 검증 실패",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -3360,7 +3360,7 @@
           "401": {
             "description": "인증 필요",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -3381,7 +3381,7 @@
           "403": {
             "description": "권한 부족",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -3402,7 +3402,7 @@
           "404": {
             "description": "대상 리소스 없음",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -3423,7 +3423,7 @@
           "409": {
             "description": "비즈니스 상태 충돌 또는 중복 요청",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -3471,7 +3471,7 @@
           "200": {
             "description": "요청 성공",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SettlementFrontendResponse"
                 }
@@ -3481,7 +3481,7 @@
           "400": {
             "description": "요청 값 검증 실패",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -3502,7 +3502,7 @@
           "401": {
             "description": "인증 필요",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -3523,7 +3523,7 @@
           "403": {
             "description": "권한 부족",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -3544,7 +3544,7 @@
           "404": {
             "description": "대상 리소스 없음",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -3565,7 +3565,7 @@
           "409": {
             "description": "비즈니스 상태 충돌 또는 중복 요청",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -3929,7 +3929,7 @@
           "200": {
             "description": "요청 성공",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SettlementDocumentDownloadResponse"
                 }
@@ -3939,7 +3939,7 @@
           "400": {
             "description": "요청 값 검증 실패",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -3960,7 +3960,7 @@
           "401": {
             "description": "인증 필요",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -3981,7 +3981,7 @@
           "403": {
             "description": "권한 부족",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -4002,7 +4002,7 @@
           "404": {
             "description": "대상 리소스 없음",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -4023,7 +4023,7 @@
           "409": {
             "description": "비즈니스 상태 충돌 또는 중복 요청",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -5152,13 +5152,22 @@
               "type": "string",
               "format": "date"
             }
+          },
+          {
+            "name": "statementStatus",
+            "in": "query",
+            "description": "상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "요청 성공",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
@@ -5171,7 +5180,7 @@
           "400": {
             "description": "요청 값 검증 실패",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -5192,7 +5201,7 @@
           "401": {
             "description": "인증 필요",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -5213,7 +5222,7 @@
           "403": {
             "description": "권한 부족",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -5234,7 +5243,7 @@
           "404": {
             "description": "대상 리소스 없음",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -5255,7 +5264,7 @@
           "409": {
             "description": "비즈니스 상태 충돌 또는 중복 요청",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -5760,10 +5769,18 @@
           {
             "name": "statementStatus",
             "in": "query",
-            "description": "상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.",
+            "description": "캘린더 현황 필터. 리스트에서는 보내지 않습니다.",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "REQUESTED",
+                "REAPPLICATION",
+                "PARTIAL",
+                "CONFIRMED",
+                "CORRECTION_REQUESTED",
+                "REJECTED"
+              ]
             }
           },
           {
@@ -5778,7 +5795,7 @@
           {
             "name": "search",
             "in": "query",
-            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "description": "프로그램명 또는 신청자명 contains. 신청자명은 실명 기준입니다.",
             "required": false,
             "schema": {
               "type": "string"
@@ -5787,7 +5804,7 @@
           {
             "name": "fromDate",
             "in": "query",
-            "description": "조회 시작 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.",
+            "description": "출강일 시작. 이체 예정일이 아닙니다.",
             "required": false,
             "schema": {
               "type": "string",
@@ -5797,7 +5814,7 @@
           {
             "name": "toDate",
             "in": "query",
-            "description": "조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.",
+            "description": "출강일 종료. 이체 예정일이 아닙니다.",
             "required": false,
             "schema": {
               "type": "string",
@@ -5807,10 +5824,38 @@
           {
             "name": "pendingItemBucket",
             "in": "query",
-            "description": "조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.",
+            "description": "리스트 지급대기 건수 버킷. 캘린더에서는 보내지 않습니다.",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "NONE",
+                "1_5",
+                "6_10",
+                "11_PLUS"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "페이지 크기입니다. 화면별 기본 목록 개수와 일치시켜 호출합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
             }
           }
         ],
@@ -5818,7 +5863,7 @@
           "200": {
             "description": "요청 성공",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
@@ -5831,7 +5876,7 @@
           "400": {
             "description": "요청 값 검증 실패",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -5852,7 +5897,7 @@
           "401": {
             "description": "인증 필요",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -5873,7 +5918,7 @@
           "403": {
             "description": "권한 부족",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -5894,7 +5939,7 @@
           "404": {
             "description": "대상 리소스 없음",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -5915,7 +5960,7 @@
           "409": {
             "description": "비즈니스 상태 충돌 또는 중복 요청",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse"
                 },
@@ -14462,6 +14507,34 @@
             "example": "증빙 확인 완료",
             "maxLength": 500,
             "minLength": 2
+          },
+          "notificationType": {
+            "type": "string",
+            "description": "IMMEDIATE | ON_ANNOUNCEMENT | MANUAL",
+            "enum": [
+              "IMMEDIATE",
+              "ON_ANNOUNCEMENT",
+              "MANUAL"
+            ],
+            "example": "IMMEDIATE"
+          },
+          "scheduledNotificationAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "MANUAL일 때 필수 ISO datetime",
+            "example": "2026-08-28T09:15:00"
+          },
+          "lectureFeePaymentScheduledDate": {
+            "type": "string",
+            "format": "date",
+            "description": "지급조서 확인 시 강의비 이체 예정일",
+            "example": "2026-09-15"
+          },
+          "scheduledPaymentDate": {
+            "type": "string",
+            "format": "date",
+            "description": "lectureFeePaymentScheduledDate와 동일. FE 호환 필드명",
+            "example": "2026-09-15"
           }
         },
         "required": [
@@ -28324,7 +28397,8 @@
             "format": "int64"
           },
           "instructorName": {
-            "type": "string"
+            "type": "string",
+            "description": "신청자 실명. 서버에서 마스킹하지 않습니다."
           },
           "statementId": {
             "type": "integer",
@@ -28356,7 +28430,8 @@
             "type": "string"
           },
           "statementStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "REQUESTED | REAPPLICATION | CONFIRMED | CORRECTION_REQUESTED | REJECTED"
           },
           "paymentStatus": {
             "type": "string"
@@ -29375,14 +29450,16 @@
             "format": "int64"
           },
           "programName": {
-            "type": "string"
+            "type": "string",
+            "description": "프로그램명"
           },
           "instructorMemberId": {
             "type": "integer",
             "format": "int64"
           },
           "instructorName": {
-            "type": "string"
+            "type": "string",
+            "description": "신청자 실명. 서버에서 마스킹하지 않습니다."
           },
           "instructorCount": {
             "type": "integer",
@@ -29394,11 +29471,13 @@
           },
           "pendingPaymentSettlementItemCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "REQUESTED+REAPPLICATION 건수"
           },
           "estimatedAmount": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "총액. REJECTED·CORRECTION_REQUESTED 제외"
           },
           "settlementRelevantAttendanceDates": {
             "type": "array",
@@ -29406,6 +29485,26 @@
               "type": "string",
               "format": "date"
             }
+          },
+          "aggregateStatus": {
+            "type": "string",
+            "description": "CONFIRMED | REQUESTED | REAPPLICATION | PARTIAL | CORRECTION_REQUESTED | REJECTED",
+            "enum": [
+              "REQUESTED",
+              "REAPPLICATION",
+              "PARTIAL",
+              "CONFIRMED",
+              "CORRECTION_REQUESTED",
+              "REJECTED"
+            ]
+          },
+          "processingStatus": {
+            "type": "string",
+            "description": "aggregateStatus와 동일. FE 호환 필드"
+          },
+          "scheduleChangeCancelCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
