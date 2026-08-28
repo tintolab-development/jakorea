@@ -16,6 +16,10 @@ keyword?: string;
  */
 roleCode?: string;
 /**
+ * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
+ */
+status?: string;
+/**
  * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
  */
 page?: number;

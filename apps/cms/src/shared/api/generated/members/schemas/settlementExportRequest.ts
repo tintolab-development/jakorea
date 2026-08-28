@@ -11,7 +11,7 @@
  */
 export interface SettlementExportRequest {
   /**
-     * 정산 또는 지급 상태 필터
+     * 지급 상태 필터. 대량이체·세금신고는 PAID만 허용합니다. 미지급(WAITING_PAYMENT/FAILED)은 발급 불가입니다.
      * @minLength 0
      * @maxLength 80
      */
@@ -26,9 +26,9 @@ export interface SettlementExportRequest {
      * @minimum 1
      */
   instructorMemberId?: number;
-  /** 조회 시작일 */
+  /** 이체 예정일 시작 */
   fromDate?: string;
-  /** 조회 종료일 */
+  /** 이체 예정일 종료 */
   toDate?: string;
   /**
      * export 사유. 감사 로그에 저장됩니다.

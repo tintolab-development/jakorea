@@ -48143,6 +48143,15 @@
             }
           },
           {
+            "name": "status",
+            "in": "query",
+            "description": "상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "description": "페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.",
@@ -57939,10 +57948,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -61707,6 +61716,16 @@
             "type": "string",
             "format": "date-time"
           },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "회원 가입일(member.joined_at)"
+          },
+          "notificationResentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "승인/반려 결과 알림 재발송 시각"
+          },
           "rejectedReason": {
             "type": "string"
           },
@@ -61737,6 +61756,31 @@
             "items": {
               "$ref": "#/components/schemas/TermsAgreement"
             }
+          },
+          "socialAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberLinkedSocialAccountResponse"
+            }
+          }
+        }
+      },
+      "MemberLinkedSocialAccountResponse": {
+        "type": "object",
+        "description": "회원 연동 소셜 계정(CONNECTED provider만 노출)",
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "maskedProviderUserId": {
+            "type": "string"
+          },
+          "linkedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -61754,6 +61798,10 @@
           },
           "agreed": {
             "type": "boolean"
+          },
+          "agreedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -76845,15 +76893,15 @@
           },
           "email": {
             "type": "string",
-            "description": "마스킹된 로그인 이메일"
+            "description": "로그인 이메일"
           },
           "name": {
             "type": "string",
-            "description": "마스킹된 이름"
+            "description": "이름"
           },
           "phone": {
             "type": "string",
-            "description": "마스킹된 연락처"
+            "description": "연락처"
           },
           "status": {
             "type": "string"
@@ -79756,6 +79804,11 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "notificationResentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "관리자 권한 승인/반려 결과 알림 재발송 시각"
           },
           "socialAccounts": {
             "type": "array",

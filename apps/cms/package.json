@@ -94,6 +94,8 @@
     "filter:openapi:posts": "node scripts/filter-openapi-posts.mjs",
     "filter:openapi:settlement": "node scripts/filter-openapi-settlement.mjs",
     "filter:openapi:members": "node scripts/filter-openapi-members.mjs",
+    "patch:openapi:member-permission-p0": "node scripts/patch-openapi-member-permission-p0.mjs",
+    "generate:api:members": "pnpm patch:openapi:member-permission-p0 && pnpm filter:openapi:members && orval --config orval.config.ts --project members",
     "filter:openapi:notifications": "node scripts/filter-openapi-notifications.mjs",
     "filter:openapi:performance": "node scripts/filter-openapi-performance.mjs",
     "filter:openapi:forms-surveys": "node scripts/filter-openapi-forms-surveys.mjs",

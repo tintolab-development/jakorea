@@ -525,6 +525,7 @@ export * from './memberEnrollmentSummaryResponse';
 export * from './memberLectureAttendanceResponse';
 export * from './memberLectureReportResponse';
 export * from './memberLectureReportSubmitRequest';
+export * from './memberLinkedSocialAccountResponse';
 export * from './memberLoginLogFrontendResponse';
 export * from './memberLoginRequest';
 export * from './memberPiiAnonymizeRequest';
