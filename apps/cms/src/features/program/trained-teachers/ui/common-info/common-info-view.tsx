@@ -58,6 +58,7 @@ import {
   parseEducationScheduleLineToRange,
 } from '@/features/template/lib/format-education-schedule-line'
 import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
+import { typeSettingsPerScheduleHint } from '@/features/template/ui/form-set/registration-form/shared/type-settings-copy'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/template/ui/shared/paragraph-date-picker.css'
 import '@/features/template/ui/shared/paragraph-time-picker.css'
@@ -361,10 +362,7 @@ function TrainedTeachersTypeSettingsSection({
 }) {
   const isMulti = sessionRound === 'multi'
   const educationFormPerSchedule = commonInfo.educationFormScheduleDetail === 'perSchedule'
-  const perScheduleHint =
-    educationStructure === 'schedule'
-      ? '교육 일정 항목에서 차시 별로 입력해 주세요'
-      : '교육 진행 항목에서 회차 별로 입력해 주세요'
+  const perScheduleHint = typeSettingsPerScheduleHint(educationStructure)
 
   const educationFormView = educationFormPerSchedule ? (
     <div className="detail-info-form-inputs-wrapper">

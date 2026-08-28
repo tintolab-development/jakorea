@@ -204,7 +204,8 @@ export function buildScheduleProgressTimeSummary(
 
 export function resolveScheduleDetailsFormState(
   commonInfo: NonNullable<Program['generalCommonInfo']>,
-  sessionRound: GeneralProgramSessionRoundKind = 'single'
+  sessionRound: GeneralProgramSessionRoundKind = 'single',
+  options?: { participantOrganization?: boolean }
 ): {
   scheduleGroupCount: number
   scheduleDetails: GeneralProgramScheduleDetailFormValues[]
@@ -221,13 +222,15 @@ export function resolveScheduleDetailsFormState(
     const groupCount = 2
     return {
       scheduleGroupCount: groupCount,
-      scheduleCurriculumPreEducation: commonInfo.scheduleCurriculumPreEducation ?? false,
+      scheduleCurriculumPreEducation:
+        sessionRound === 'multi' ? (commonInfo.scheduleCurriculumPreEducation ?? false) : false,
       scheduleDetails: buildDefaultScheduleDetailsForEdit({
         sessionRound,
         scheduleGroupCount: groupCount,
         educationFormScheduleDetail: eduDetail,
         participationScheduleDetail: partDetail,
         ipsScheduleDetail: ipsDetail,
+        participantOrganization: options?.participantOrganization ?? true,
       }),
     }
   }
@@ -237,6 +240,7 @@ export function resolveScheduleDetailsFormState(
     const groupTimes = d.progressTimeSummary
       ? parseScheduleProgressTimeSummary(d.progressTimeSummary)
       : emptyScheduleGroupTimes(1)
+    const sessionIps = parseSessionIpsTypeSummary(d.ipsTypeSummary)
     return {
       scheduleLabel: d.scheduleLabel || padScheduleDetailLabel(i),
       blockKind,
@@ -247,14 +251,15 @@ export function resolveScheduleDetailsFormState(
       assignmentPeriod: d.assignmentPeriod ?? '',
       educationForm: educationFormValueFromLabel(d.educationFormLabel),
       participationMethod: participationMethodValueFromLabel(d.participationMethodLabel),
-      ipsCategory: '' as const,
-      ipsDetail: '',
+      ipsCategory: sessionIps.ipsCategory,
+      ipsDetail: sessionIps.ipsDetail,
     }
   })
 
   const scheduleGroupCount = Math.max(1, ...scheduleDetails.map(d => d.groupTimes.length))
   return {
-    scheduleCurriculumPreEducation: commonInfo.scheduleCurriculumPreEducation ?? false,
+    scheduleCurriculumPreEducation:
+      sessionRound === 'multi' ? (commonInfo.scheduleCurriculumPreEducation ?? false) : false,
     scheduleGroupCount,
     scheduleDetails: scheduleDetails.map(d => ({
       ...d,
@@ -805,6 +810,7 @@ export function programToGeneralCommonInfoEditValues(
     resolveCourseDeliveredFormValue(program.courseDeliveredBy) ||
     PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS[0]?.value ||
     'ja'
+  const participantFlags = participantFlagsFromProgram(program)
 
   return {
     mainTitle: program.mainTitle?.trim() ?? '',
@@ -818,7 +824,7 @@ export function programToGeneralCommonInfoEditValues(
     sponsorManagerContactId: resolveSponsorManagerContactId(program, sponsorManagementIds, context),
     venueKind: resolveVenueKind(program),
     venueDetail: commonInfo.venueDetail?.trim() || program.venue?.trim() || '',
-    ...participantFlagsFromProgram(program),
+    ...participantFlags,
     ...surveyFlagsFromProgram(program),
     educationProcess,
     ipOwned,
@@ -840,8 +846,15 @@ export function programToGeneralCommonInfoEditValues(
         ipsDetail: sessionIps.ipsDetail,
       }
     }),
-    ...resolveScheduleDetailsFormState(commonInfo, typeSettings.sessionRound),
-    educationScheduleMode: commonInfo.educationScheduleMode ?? 'date',
+    ...resolveScheduleDetailsFormState(commonInfo, typeSettings.sessionRound, {
+      participantOrganization: participantFlags.participantOrganization,
+    }),
+    educationScheduleMode:
+      typeSettings.educationStructure === 'schedule' &&
+      typeSettings.sessionRound === 'single' &&
+      !participantFlags.participantOrganization
+        ? 'date'
+        : (commonInfo.educationScheduleMode ?? 'date'),
     educationScheduleLines: [...(commonInfo.educationScheduleLines ?? [])],
   }
 }
@@ -1052,7 +1065,10 @@ export function generalCommonInfoEditValuesToProgramPatch(
               ? buildSessionIpsTypeSummary('prepare', 'none')
               : undefined,
       })),
-      scheduleCurriculumPreEducation: values.scheduleCurriculumPreEducation ?? false,
+      scheduleCurriculumPreEducation:
+        values.educationStructure === 'schedule' && values.sessionRound !== 'multi'
+          ? false
+          : (values.scheduleCurriculumPreEducation ?? false),
       scheduleDetails:
         values.educationStructure === 'schedule'
           ? (relabeledScheduleDetails ?? []).map(d => {
@@ -1070,6 +1086,21 @@ export function generalCommonInfoEditValuesToProgramPatch(
                     values.sessionRound === 'single'
                       ? undefined
                       : d.assignmentPeriod?.trim() || undefined,
+                  educationFormLabel:
+                    values.educationFormScheduleDetail === 'perSchedule' && d.educationForm
+                      ? educationFormLabelFromValue(d.educationForm)
+                      : undefined,
+                  participationMethodLabel:
+                    values.participationScheduleDetail === 'perSchedule' && d.participationMethod
+                      ? participationMethodLabelFromValue(d.participationMethod)
+                      : undefined,
+                  ipsTypeSummary:
+                    values.ipsScheduleDetail === 'perSchedule' && d.ipsCategory
+                      ? buildSessionIpsTypeSummary(
+                          d.ipsCategory as ProgramRegistrationIpsCategory,
+                          d.ipsDetail
+                        )
+                      : undefined,
                 }
               }
               return {
@@ -1093,7 +1124,12 @@ export function generalCommonInfoEditValuesToProgramPatch(
               }
             })
           : existingCommon.scheduleDetails,
-      educationScheduleMode: values.educationScheduleMode,
+      educationScheduleMode:
+        values.educationStructure === 'schedule' &&
+        values.sessionRound === 'single' &&
+        !values.participantOrganization
+          ? 'date'
+          : values.educationScheduleMode,
       educationScheduleLines: [...values.educationScheduleLines],
       wageGradeRows,
       paymentItems: paymentItemLabelsFromIds(values.wagePaymentItemIds) || existingCommon.paymentItems,
