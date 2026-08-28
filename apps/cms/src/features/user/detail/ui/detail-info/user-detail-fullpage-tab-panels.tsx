@@ -24,6 +24,7 @@ export function UserDetailFullpageTabPanels() {
     onOpenAssignmentSubmission,
     onOpenEnrollmentProgramDetail,
     onOpenVolunteerProgramDetail,
+    onBeforeNavigateToProgramDetail,
     onBulkDeleteHistory,
     onStudentCertificateBulkIssue,
     onVolunteerCertificateBulkIssue,
@@ -73,7 +74,10 @@ export function UserDetailFullpageTabPanels() {
       )}
       {tabState.lnb === 'history' &&
         (sections.historyTab.useAdminManagedProgramHistory ? (
-          <AdminManagedProgramHistory user={displayUser} />
+          <AdminManagedProgramHistory
+            user={displayUser}
+            onBeforeNavigateToProgramDetail={onBeforeNavigateToProgramDetail}
+          />
         ) : (
           <UserProgramsSection
             user={displayUser}

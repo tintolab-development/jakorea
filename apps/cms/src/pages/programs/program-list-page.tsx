@@ -17,6 +17,7 @@ import {
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { ProgramListView } from '@/features/program/general/ui/table/program-table-column-resolver'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
+import { resolveProgramAdminDetailInfoTabUrl } from '@/features/program/general/lib/resolve-program-admin-detail-url'
 import { isUjatProgramId } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import {
   buildUjatProgramDetailUrl,
@@ -61,7 +62,6 @@ import {
   usePrefetchCompanySchoolProgramDetail,
   useUpdateCompanySchoolProgram,
 } from '@/features/program/1c-1s/api/hooks'
-import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { companySchoolListParamsFromOverviewStatus } from '@/features/program/1c-1s/api/list-params'
 import type { OverviewStatusFilter } from './use-program-list-filters'
 
@@ -276,6 +276,24 @@ function ProgramListPageContent() {
     navigate(buildUjatProgramDetailUrl(pid, ujatLnb, tab), { replace: true })
   }, [isFullPageModalPath, navigate, searchParams])
 
+  // 루트 `/programs?programId=…` — 목록에 없으면 모달이 안 열림 → 유형별 목록 URL로 정규화
+  useEffect(() => {
+    if (pNorm !== '/programs') return
+    const pid = searchParams.get('programId')?.trim()
+    if (!pid) return
+    let cancelled = false
+    void (async () => {
+      const url = await resolveProgramAdminDetailInfoTabUrl(pid)
+      if (cancelled) return
+      const nextPath = url.split('?')[0] ?? ''
+      if (nextPath === '/programs' || nextPath === '') return
+      navigate(url, { replace: true })
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [pNorm, navigate, searchParams])
+
   const userPreviewSyncParams = useMemo(
     () => ({ userPreview: searchParams.get('userPreview') ?? undefined }),
     [searchParams]
@@ -336,25 +354,6 @@ function ProgramListPageContent() {
     searchParams,
     filteredPrograms,
     companySchoolDetailQuery.data,
-  ])
-
-  // 1사1교 remote: detail 확정 실패(404 등) 시 programId 쿼리 제거
-  useEffect(() => {
-    if (!isCompanySchoolPath || !companySchoolProgramIdFromUrl) return
-    if (!shouldUseCompanySchoolRemoteApi()) return
-    if (!companySchoolDetailQuery.isError || companySchoolDetailQuery.isFetching) return
-    const next = new URLSearchParams(searchParams)
-    if (!next.has('programId')) return
-    next.delete('programId')
-    setSearchParams(next, { replace: true })
-    setSelectedProgramForFullPageModal(null)
-  }, [
-    isCompanySchoolPath,
-    companySchoolProgramIdFromUrl,
-    companySchoolDetailQuery.isError,
-    companySchoolDetailQuery.isFetching,
-    searchParams,
-    setSearchParams,
   ])
 
   // Phase 0.2.1: 로그인 후 redirect 파라미터 대응 (교육/경제 목록에서는 상세 페이지로 가지 않고 풀페이지 모달만 사용)
@@ -644,6 +643,10 @@ function ProgramListPageContent() {
         config={programListConfig}
         onDisplayCountChange={handleDisplayCountChange}
         toolbarActionsAfterExcel={programListToolbarActionsAfterExcel}
+        disableUrlSync={
+          isCompanySchoolPath &&
+          (Boolean(companySchoolProgramIdFromUrl) || !!selectedProgramForFullPageModal)
+        }
       >
         {programListToolbarActions}
       </ProgramList>
