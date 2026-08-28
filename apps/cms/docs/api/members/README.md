@@ -32,6 +32,7 @@ CMS LNB 「회원 관리」(회원 목록 · 권한 승인 · 권한 설정) API
 | 문서 | 용도 |
 |------|------|
 | [**member-management-notion-parity-2026-08-28.md**](./member-management-notion-parity-2026-08-28.md) | **검증 리포트** — Notion CMS 기능정의서(회원 목록·권한 승인 73p) ↔ OpenAPI·FE 비즈니스 로직 대조 · ✅⚠️❌ · P0/P1 backlog |
+| [**member-management-fe-be-integration-handoff-2026-08-28.md**](./member-management-fe-be-integration-handoff-2026-08-28.md) | **BE seed → FE remote** 연동 체크리스트 · catalog parity · §7 smoke 결과 |
 | [**member-permission-management-fe-be-integration-2026-08-28.md**](./member-permission-management-fe-be-integration-2026-08-28.md) | 권한 승인·설정 P0 FE↔BE 연동 체크리스트 · seed smoke |
 | [**member-permission-management-backend-seed-handoff-2026-08-28.md**](./member-permission-management-backend-seed-handoff-2026-08-28.md) | 권한 승인·설정 BE seed SSOT (상세) |
 
