@@ -28,6 +28,14 @@ export function shouldDisableEducationSchedulePeriodMode(input: {
   return !input.participantOrganization && input.sessionRound === 'single'
 }
 
+/** 일반 커리큘럼형 — 일정 유형에 맞춰 캘린더 기간/시간 토글 ON 고정 (개인·기관 공통) */
+export function shouldLockEducationScheduleCalendarToggles(input: {
+  participantOrganization: boolean
+  educationStructure: 'curriculum' | 'schedule'
+}): boolean {
+  return input.educationStructure === 'curriculum'
+}
+
 export function padEventScheduleLabel(index: number): string {
   return `행사 일정 ${String(index + 1).padStart(2, '0')}`
 }
@@ -82,25 +90,19 @@ export type ScheduleEventBlockLayoutInput = {
   ipsScheduleDetail: GeneralProgramScheduleDetailKind
 }
 
-/** 일정형 행사 일정 블록 — 개인+복수는 유형 설정과 무관, 기관은 교육·참여·IPS 모두 일정 별 상이 */
+/** 일정형 행사 일정 블록 — 복수 회차(개인·기관)는 유형 설정과 무관 */
 export function shouldUseScheduleEventBlockLayout(
   input: ScheduleEventBlockLayoutInput
 ): boolean {
-  if (input.sessionRound !== 'multi') return false
-  if (!input.participantOrganization) return true
-  return isScheduleMultiAllPerSchedule(
-    input.sessionRound,
-    input.educationFormScheduleDetail,
-    input.participationScheduleDetail,
-    input.ipsScheduleDetail
-  )
+  return input.sessionRound === 'multi'
 }
 
-/** 행사 일정 블록 — 일정 별 상이 필드 배치 (교육·IPS 다음 과제·참여) */
+/** 행사 일정 블록 — 일정 별 상이 필드 배치 (교육·IPS 다음 과제·참여). 과제는 개인만 */
 export type ScheduleEventPerScheduleExtraPlan = {
   showEducation: boolean
   showParticipation: boolean
   showIps: boolean
+  showAssignment: boolean
   /** 교육 형태·참여 방식 모두 상이면 한 줄(double) */
   educationWithParticipation: boolean
 }
@@ -115,10 +117,12 @@ export function getScheduleEventPerScheduleExtraPlan(input: {
   const showParticipation =
     input.participationScheduleDetail === 'perSchedule' && !input.participantOrganization
   const showIps = input.ipsScheduleDetail === 'perSchedule'
+  const showAssignment = !input.participantOrganization
   return {
     showEducation,
     showParticipation,
     showIps,
+    showAssignment,
     educationWithParticipation: showEducation && showParticipation,
   }
 }
@@ -126,7 +130,7 @@ export function getScheduleEventPerScheduleExtraPlan(input: {
 export function hasScheduleEventPerScheduleExtraRows(
   plan: ScheduleEventPerScheduleExtraPlan
 ): boolean {
-  return plan.showEducation || plan.showParticipation || plan.showIps
+  return plan.showEducation || plan.showParticipation || plan.showIps || plan.showAssignment
 }
 
 /** 일정형 — 교육·IPS 모두 일정 별 상이면 세부 일정 블록에 교육 형태+IPS를 같은 행에 노출 */
@@ -257,6 +261,17 @@ export function relabelScheduleDetailFormRowsByKind(
       scheduleLabel: padScheduleDetailLabel(subIndex++),
     }
   })
+}
+
+/** 복수 회차 행사 일정 레이아웃 — 기존 세부 일정을 행사 일정으로 승격 */
+export function coerceScheduleDetailsToEventLayout(
+  details: GeneralProgramScheduleDetailFormValues[]
+): GeneralProgramScheduleDetailFormValues[] {
+  return relabelScheduleDetailFormRowsByKind(
+    details.map(d =>
+      isPreEducationScheduleBlock(d) ? d : { ...d, blockKind: 'event' as const }
+    )
+  )
 }
 
 export function applySchedulePreEducationBlock(

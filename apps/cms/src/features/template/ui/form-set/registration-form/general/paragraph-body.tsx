@@ -24,7 +24,10 @@ import { ProgramRegistrationEducationScheduleCurriculumParagraph } from '@/featu
 import { ProgramRegistrationEducationScheduleSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-schedule-settings-paragraph'
 import { ProgramRegistrationTypeSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/type-settings-paragraph'
 import { ProgramRegistrationWageInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/wage-info-paragraph'
-import { shouldDisableEducationSchedulePeriodMode } from '@/features/program/general/lib/schedule-detail-form'
+import {
+  shouldDisableEducationSchedulePeriodMode,
+  shouldLockEducationScheduleCalendarToggles,
+} from '@/features/program/general/lib/schedule-detail-form'
 
 export type ProgramRegistrationType = 'curriculum' | 'schedule'
 
@@ -256,6 +259,10 @@ export function renderProgramRegistrationParagraphBody(
             disablePeriodMode={shouldDisableEducationSchedulePeriodMode({
               participantOrganization: options.participant.organization,
               sessionRound: options.sessionRoundType,
+            })}
+            lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
+              participantOrganization: options.participant.organization,
+              educationStructure: options.programType,
             })}
           />
         )

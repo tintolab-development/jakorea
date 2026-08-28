@@ -4,12 +4,14 @@ import {
   applySchedulePreEducationBlock,
   buildDefaultCurriculumSessionsForEdit,
   buildDefaultScheduleDetailsForEdit,
+  coerceScheduleDetailsToEventLayout,
   getScheduleEventPerScheduleExtraPlan,
   hasScheduleEventPerScheduleExtraRows,
   inferScheduleDetailBlockKind,
   isIndividualAllPerScheduleLayout,
   PRE_EDUCATION_SCHEDULE_LABEL,
   shouldDisableEducationSchedulePeriodMode,
+  shouldLockEducationScheduleCalendarToggles,
   shouldUseScheduleEventBlockLayout,
   type ScheduleEventBlockLayoutInput,
 } from './schedule-detail-form'
@@ -43,14 +45,14 @@ describe('shouldUseScheduleEventBlockLayout', () => {
     ).toBe(true)
   })
 
-  it('기관 + 기본(일정 공통)이면 행사 일정 레이아웃을 쓰지 않는다', () => {
+  it('기관 + 복수 회차이면 유형 설정과 무관하게 행사 일정 레이아웃을 쓴다', () => {
     expect(
       shouldUseScheduleEventBlockLayout({
         sessionRound: 'multi',
         participantOrganization: true,
         ...COMMON,
       })
-    ).toBe(false)
+    ).toBe(true)
   })
 
   it('기관 + 교육 형태·참여·IPS 모두 일정 별 상이면 행사 일정 레이아웃을 쓴다', () => {
@@ -87,30 +89,64 @@ describe('buildDefaultScheduleDetailsForEdit', () => {
     expect(details[0]?.scheduleLabel).toBe('행사 일정 01')
   })
 
-  it('기관 + 일정 공통 복수 회차이면 세부 일정을 시드한다', () => {
+  it('기관 + 일정 공통 복수 회차이면 행사 일정을 시드한다', () => {
     const details = buildDefaultScheduleDetailsForEdit({
       sessionRound: 'multi',
       scheduleGroupCount: 2,
       participantOrganization: true,
       ...COMMON,
     })
-    expect(details[0]?.blockKind).toBe('sub')
+    expect(details[0]?.blockKind).toBe('event')
+    expect(details[0]?.scheduleLabel).toBe('행사 일정 01')
+  })
+})
+
+describe('coerceScheduleDetailsToEventLayout', () => {
+  it('세부 일정을 행사 일정으로 승격하고 사전 교육은 유지한다', () => {
+    const next = coerceScheduleDetailsToEventLayout([
+      {
+        scheduleLabel: '사전 교육',
+        blockKind: 'preEducation',
+        name: '사전 교육',
+        groupTimes: [{ startTime: '', endTime: '' }],
+      },
+      {
+        scheduleLabel: '세부 일정 01',
+        blockKind: 'sub',
+        name: '오리엔테이션',
+        groupTimes: [{ startTime: '', endTime: '' }],
+      },
+    ])
+    expect(next[0]?.blockKind).toBe('preEducation')
+    expect(next[1]?.blockKind).toBe('event')
+    expect(next[1]?.scheduleLabel).toBe('행사 일정 01')
+    expect(next[1]?.name).toBe('오리엔테이션')
   })
 })
 
 describe('getScheduleEventPerScheduleExtraPlan', () => {
-  it('일정 공통이면 extra 행이 없다', () => {
+  it('개인 + 일정 공통이면 과제 설정 extra만 연다', () => {
     const plan = getScheduleEventPerScheduleExtraPlan({
       participantOrganization: false,
       ...COMMON,
     })
-    expect(hasScheduleEventPerScheduleExtraRows(plan)).toBe(false)
+    expect(hasScheduleEventPerScheduleExtraRows(plan)).toBe(true)
     expect(plan).toEqual({
       showEducation: false,
       showParticipation: false,
       showIps: false,
+      showAssignment: true,
       educationWithParticipation: false,
     })
+  })
+
+  it('기관 + 일정 공통이면 extra 행이 없다', () => {
+    const plan = getScheduleEventPerScheduleExtraPlan({
+      participantOrganization: true,
+      ...COMMON,
+    })
+    expect(hasScheduleEventPerScheduleExtraRows(plan)).toBe(false)
+    expect(plan.showAssignment).toBe(false)
   })
 
   it('개인 + 교육 형태만 상이면 교육 형태 행만 연다', () => {
@@ -138,7 +174,7 @@ describe('getScheduleEventPerScheduleExtraPlan', () => {
     expect(plan.educationWithParticipation).toBe(false)
   })
 
-  it('기관이면 참여 방식이 상이해도 참여 방식 행을 열지 않는다', () => {
+  it('기관이면 참여 방식이 상이해도 참여 방식·과제 행을 열지 않는다', () => {
     const plan = getScheduleEventPerScheduleExtraPlan({
       participantOrganization: true,
       educationFormScheduleDetail: 'common',
@@ -146,6 +182,7 @@ describe('getScheduleEventPerScheduleExtraPlan', () => {
       ipsScheduleDetail: 'common',
     })
     expect(plan.showParticipation).toBe(false)
+    expect(plan.showAssignment).toBe(false)
   })
 
   it('개인 + 교육·참여가 모두 상이면 한 줄(double)로 연다', () => {
@@ -169,6 +206,26 @@ describe('getScheduleEventPerScheduleExtraPlan', () => {
     expect(plan.showIps).toBe(true)
     expect(plan.showEducation).toBe(false)
     expect(plan.showParticipation).toBe(false)
+    expect(plan.showAssignment).toBe(true)
+  })
+
+  it('기관이면 과제 설정 행을 열지 않는다', () => {
+    const plan = getScheduleEventPerScheduleExtraPlan({
+      participantOrganization: true,
+      ...ALL_PER_SCHEDULE,
+    })
+    expect(plan.showAssignment).toBe(false)
+    expect(plan.showEducation).toBe(true)
+    expect(plan.showIps).toBe(true)
+    expect(plan.showParticipation).toBe(false)
+  })
+
+  it('개인이면 과제 설정 행을 연다', () => {
+    const plan = getScheduleEventPerScheduleExtraPlan({
+      participantOrganization: false,
+      ...ALL_PER_SCHEDULE,
+    })
+    expect(plan.showAssignment).toBe(true)
   })
 })
 
@@ -332,6 +389,35 @@ describe('applyCurriculumPreEducationBlock', () => {
     const twice = applyCurriculumPreEducationBlock(once, true, 'single')
     expect(twice[0]?.sessionLabel).toBe(PRE_EDUCATION_SCHEDULE_LABEL)
     expect(twice[0]?.title).toBe('사전 워크숍')
+  })
+})
+
+describe('shouldLockEducationScheduleCalendarToggles', () => {
+  it('일반 커리큘럼형이면 개인·기관 모두 true', () => {
+    expect(
+      shouldLockEducationScheduleCalendarToggles({
+        participantOrganization: true,
+        educationStructure: 'curriculum',
+      })
+    ).toBe(true)
+    expect(
+      shouldLockEducationScheduleCalendarToggles({
+        participantOrganization: false,
+        educationStructure: 'curriculum',
+      })
+    ).toBe(true)
+    expect(
+      shouldLockEducationScheduleCalendarToggles({
+        participantOrganization: true,
+        educationStructure: 'schedule',
+      })
+    ).toBe(false)
+    expect(
+      shouldLockEducationScheduleCalendarToggles({
+        participantOrganization: false,
+        educationStructure: 'schedule',
+      })
+    ).toBe(false)
   })
 })
 

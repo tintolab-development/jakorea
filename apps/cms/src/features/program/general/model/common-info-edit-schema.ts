@@ -1075,9 +1075,13 @@ export function generalCommonInfoEditValuesToProgramPatch(
           title: s.title,
           description: s.description,
           assignmentEnabled:
-            values.sessionRound === 'single' ? false : (s.assignmentEnabled ?? false),
+            values.participantOrganization || values.sessionRound === 'single'
+              ? false
+              : (s.assignmentEnabled ?? false),
           assignmentPeriod:
-            values.sessionRound === 'single' ? undefined : s.assignmentPeriod,
+            values.participantOrganization || values.sessionRound === 'single'
+              ? undefined
+              : s.assignmentPeriod,
           educationFormLabel:
             values.educationFormScheduleDetail === 'perSchedule' && s.educationForm
               ? educationFormLabelFromValue(s.educationForm)
@@ -1131,9 +1135,11 @@ export function generalCommonInfoEditValuesToProgramPatch(
                   ...row,
                   scheduleDateLabel: d.scheduleDate?.trim() || undefined,
                   assignmentEnabled:
-                    values.sessionRound === 'single' ? false : d.assignmentEnabled,
+                    values.participantOrganization || values.sessionRound === 'single'
+                      ? false
+                      : d.assignmentEnabled,
                   assignmentPeriod:
-                    values.sessionRound === 'single'
+                    values.participantOrganization || values.sessionRound === 'single'
                       ? undefined
                       : d.assignmentPeriod?.trim() || undefined,
                   educationFormLabel:

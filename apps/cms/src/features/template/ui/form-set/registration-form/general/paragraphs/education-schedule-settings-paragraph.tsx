@@ -35,6 +35,8 @@ type EducationScheduleSettingsProps = {
   autoFillFromScheduleGroupTimes?: boolean
   /** 일반 개인·단일 회차 — 기간 지정 라디오·캘린더 기간 토글 비활성 */
   disablePeriodMode?: boolean
+  /** 일반 커리큘럼형 — 날짜 지정 시 시간 ON 고정, 기간 지정 시 기간 ON 고정 */
+  lockCalendarTogglesToScheduleMode?: boolean
 }
 
 export function ProgramRegistrationEducationScheduleSettingsParagraph({
@@ -43,6 +45,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   overlayKeyPrefix = 'generalRegistration.educationScheduleSettings',
   autoFillFromScheduleGroupTimes = false,
   disablePeriodMode = false,
+  lockCalendarTogglesToScheduleMode = false,
 }: EducationScheduleSettingsProps) {
   const scheduleMode = educationScheduleMode
   const lockDateMode = disablePeriodMode || autoFillFromScheduleGroupTimes
@@ -184,7 +187,8 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 presetMode={autoFillDatePicker ? 'date' : 'schedule'}
                 customizable={false}
                 showTimeToggle={!autoFillDatePicker}
-                showPeriodToggle={!lockDateMode}
+                showPeriodToggle={!lockDateMode && !lockCalendarTogglesToScheduleMode}
+                lockTimeToggleOn={lockCalendarTogglesToScheduleMode && !autoFillDatePicker}
                 suppressAutoTodayWhenEmpty
                 value={singleDate}
                 onChange={handleDateApply}
@@ -196,6 +200,8 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 mode="single"
                 presetMode="period"
                 customizable={false}
+                showTimeToggle={!lockCalendarTogglesToScheduleMode}
+                lockPeriodToggleOn={lockCalendarTogglesToScheduleMode}
                 suppressAutoTodayWhenEmpty
                 value={periodDate}
                 onChange={setPeriodDate}

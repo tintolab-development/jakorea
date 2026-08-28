@@ -331,4 +331,34 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     const reloaded = programToGeneralCommonInfoEditValues(merged, sponsorContext)
     expect(reloaded.scheduleDetails[0]?.name).toBe('사전 워크숍')
   })
+
+  it('기관 프로그램은 커리큘럼 회차 과제 설정을 저장하지 않는다', () => {
+    const program = baseProgram({
+      generalProgramEducationStructure: 'curriculum',
+      generalProgramSessionRound: 'multi',
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution'],
+    })
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.educationStructure = 'curriculum'
+    values.sessionRound = 'multi'
+    values.participantIndividual = false
+    values.participantOrganization = true
+    values.curriculumSessions = [
+      {
+        sessionLabel: '1회차',
+        title: '1',
+        description: '내용',
+        assignmentEnabled: true,
+        assignmentPeriod: '26년 4월 20일(월) ~ 26년 4월 27일(월)',
+        educationForm: 'online',
+        ipsCategory: 'prepare',
+        ipsDetail: 'none',
+      },
+    ]
+    const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
+    const saved = patch.generalCommonInfo?.curriculumSessions?.[0]
+    expect(saved?.assignmentEnabled).toBe(false)
+    expect(saved?.assignmentPeriod).toBeUndefined()
+  })
 })

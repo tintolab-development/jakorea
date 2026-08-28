@@ -152,6 +152,17 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
    * 기본 true.
    */
   showPeriodToggle?: boolean
+  /**
+   * true면 「시간」 토글을 ON으로 고정하고 비활성. `showTimeToggle`이 false면 무시.
+   * 기본 false — 다른 피커는 기존처럼 토글을 조작할 수 있음.
+   */
+  lockTimeToggleOn?: boolean
+  /**
+   * true면 「기간」 토글을 ON으로 고정하고 비활성. 푸터에 기간 토글을 강제 노출.
+   * `showPeriodToggle`이 false면 무시.
+   * 기본 false.
+   */
+  lockPeriodToggleOn?: boolean
 }
 
 export type ParagraphDatePickerProps =
@@ -192,6 +203,8 @@ interface ParagraphDatePickerSingleInnerProps {
   onOpenChange?: (open: boolean) => void
   showTimeToggle?: boolean
   showPeriodToggle?: boolean
+  lockTimeToggleOn?: boolean
+  lockPeriodToggleOn?: boolean
 }
 
 function ParagraphDatePickerSingleInner({
@@ -217,6 +230,8 @@ function ParagraphDatePickerSingleInner({
   onOpenChange,
   showTimeToggle = true,
   showPeriodToggle = true,
+  lockTimeToggleOn = false,
+  lockPeriodToggleOn = false,
 }: ParagraphDatePickerSingleInnerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
@@ -232,7 +247,7 @@ function ParagraphDatePickerSingleInner({
   const [calendarMonth, setCalendarMonth] = useState<Dayjs>(() =>
     findNextEnabledDate(value ?? dayjs(), disabledDate).startOf('month')
   )
-  const [periodOn, setPeriodOn] = useState(false)
+  const [periodOn, setPeriodOn] = useState(lockPeriodToggleOn && showPeriodToggle)
 
   useEffect(() => {
     if (showPeriodToggle) return
@@ -249,7 +264,9 @@ function ParagraphDatePickerSingleInner({
   const [surfaceRange, setSurfaceRange] = useState<[Dayjs, Dayjs] | null>(null)
   /** 마지막 [설정] 시 시간 토글이 켜져 있었는지 — 트리거에 날짜+시간 인풋 표시 */
   const [surfaceAppliedWithTime, setSurfaceAppliedWithTime] = useState(false)
-  const [timeOn, setTimeOn] = useState(false)
+  const [timeOn, setTimeOn] = useState(lockTimeToggleOn && showTimeToggle)
+  const timeToggleLocked = lockTimeToggleOn && showTimeToggle
+  const periodToggleLocked = lockPeriodToggleOn && showPeriodToggle
   const effectiveTimeOn = showTimeToggle ? timeOn : false
   const [invalidTimeRange, setInvalidTimeRange] = useState(false)
   const [singleHour, setSingleHour] = useState('12')
@@ -263,7 +280,17 @@ function ParagraphDatePickerSingleInner({
   const [endMer, setEndMer] = useState<'AM' | 'PM'>('AM')
 
   const showPeriodToggleInFooter =
-    showPeriodToggle && (customizable || presetMode === 'schedule')
+    (showPeriodToggle && (customizable || presetMode === 'schedule')) || periodToggleLocked
+
+  useEffect(() => {
+    if (!timeToggleLocked) return
+    setTimeOn(true)
+  }, [timeToggleLocked])
+
+  useEffect(() => {
+    if (!periodToggleLocked) return
+    setPeriodOn(true)
+  }, [periodToggleLocked])
 
   const isRangeCalendarMode = useMemo(() => {
     if (!showPeriodToggle) return false
@@ -431,6 +458,8 @@ function ParagraphDatePickerSingleInner({
     setSingleMer(tSingle.mer)
 
     setInvalidTimeRange(false)
+    if (timeToggleLocked) setTimeOn(true)
+    if (periodToggleLocked) setPeriodOn(true)
     setOpen(true)
   }
 
@@ -656,12 +685,16 @@ function ParagraphDatePickerSingleInner({
         invalidTimeRange={invalidTimeRange}
         showPeriodToggle={showPeriodToggleInFooter}
         showTimeToggle={showTimeToggle}
+        periodToggleDisabled={periodToggleLocked}
+        timeToggleDisabled={timeToggleLocked}
         periodOn={periodOn}
         onPeriodOnChange={next => {
+          if (periodToggleLocked) return
           setPeriodOn(next)
           setInvalidTimeRange(false)
         }}
         onTimeOnChange={next => {
+          if (timeToggleLocked) return
           setTimeOn(next)
           setInvalidTimeRange(false)
         }}
@@ -825,6 +858,8 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           onOpenChange={props.mode === 'single' ? props.onOpenChange : undefined}
           showTimeToggle={props.mode === 'single' ? (props.showTimeToggle ?? true) : true}
           showPeriodToggle={props.mode === 'single' ? (props.showPeriodToggle ?? true) : true}
+          lockTimeToggleOn={props.mode === 'single' ? Boolean(props.lockTimeToggleOn) : false}
+          lockPeriodToggleOn={props.mode === 'single' ? Boolean(props.lockPeriodToggleOn) : false}
         />
       )}
     </div>

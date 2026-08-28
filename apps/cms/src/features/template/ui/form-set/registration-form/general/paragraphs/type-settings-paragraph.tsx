@@ -13,7 +13,13 @@ import {
   ProgramRegistrationIpsTypeFields,
   type ProgramRegistrationIpsTypeValue,
 } from './program-registration-ips-type-fields'
-import { getProgramRegistrationEducationFormOptions } from './program-registration-education-form-options'
+import {
+  applyEducationFormTypeSettingsModeChange,
+  getProgramRegistrationEducationFormOptions,
+  resolveEducationFormTypeSettingsMode,
+  shouldShowEducationFormParticipantSelectionRadio,
+  type EducationFormTypeSettingsMode,
+} from './program-registration-education-form-options'
 import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { typeSettingsPerScheduleHint } from '@/features/template/ui/form-set/registration-form/shared/type-settings-copy'
 import './program-registration-paragraph.css'
@@ -89,6 +95,56 @@ function ScheduleDetailRadioRow({
   )
 }
 
+/** 일반(기관) 복수 회차 — 교육 형태: 일정 공통 | 일정 별 상이 | 참여자 선택 */
+export function EducationFormTypeSettingsRadioRow({
+  mode,
+  onModeChange,
+  commonDetailEdit,
+  perScheduleHint,
+}: {
+  mode: EducationFormTypeSettingsMode
+  onModeChange: (mode: EducationFormTypeSettingsMode) => void
+  commonDetailEdit?: ReactNode
+  perScheduleHint: string
+}) {
+  return (
+    <DetailInfoForm.Row type="single">
+      <DetailInfoForm.Field
+        label="교육 형태"
+        fullRow
+        edit={
+          <div className="detail-info-form-inputs-wrapper program-registration-paragraph__schedule-detail-row">
+            <CmsRadioGroup
+              size="large"
+              value={mode}
+              onChange={e => onModeChange(e.target.value as EducationFormTypeSettingsMode)}
+            >
+              <CmsRadio value="common">일정 공통</CmsRadio>
+              <CmsRadio value="perSchedule">일정 별 상이</CmsRadio>
+              <CmsRadio value="participant_selection">참여자 선택</CmsRadio>
+            </CmsRadioGroup>
+            {mode === 'common' && commonDetailEdit != null ? (
+              <>
+                <DetailInfoForm.InputsSeparator />
+                {commonDetailEdit}
+              </>
+            ) : null}
+            {mode === 'perSchedule' ? (
+              <>
+                <DetailInfoForm.InputsSeparator />
+                <span className="program-registration-paragraph__schedule-hint">
+                  {perScheduleHint}
+                </span>
+              </>
+            ) : null}
+          </div>
+        }
+        view="-"
+      />
+    </DetailInfoForm.Row>
+  )
+}
+
 export function ProgramRegistrationTypeSettingsParagraph({
   programType,
   onProgramTypeChange,
@@ -132,10 +188,18 @@ export function ProgramRegistrationTypeSettingsParagraph({
   }
 
   const showParticipationMethod = !participantOrganization
+  const showEducationFormParticipantSelectionRadio = shouldShowEducationFormParticipantSelectionRadio({
+    participantOrganization,
+    educationStructure: programType,
+    sessionRound: sessionRoundType,
+  })
   const perScheduleHint = typeSettingsPerScheduleHint({
     educationStructure: programType,
     sessionRound: sessionRoundType,
   })
+  const educationFormSelectOptions = getProgramRegistrationEducationFormOptions(
+    showEducationFormParticipantSelectionRadio ? false : participantOrganization
+  )
 
   /** 일정 공통·단일 회차 교육 형태 → 신청 폼 「희망 교육 형태」 노출 연동 */
   useEffect(() => {
@@ -199,23 +263,52 @@ export function ProgramRegistrationTypeSettingsParagraph({
       >
         {sessionRoundType === 'multi' ? (
           <>
-            <ScheduleDetailRadioRow
-              label="교육 형태"
-              value={educationFormScheduleDetail}
-              onChange={onEducationFormScheduleDetailChange}
-              perScheduleHint={perScheduleHint}
-              commonDetailEdit={
-                <CmsSelect
-                  inputSize="medium"
-                  withAllOption={false}
-                  placeholder="교육 형태"
-                  width={160}
-                  options={getProgramRegistrationEducationFormOptions(participantOrganization)}
-                  value={multiCommonEducationForm || undefined}
-                  onChange={v => setMultiCommonEducationForm(String(v ?? ''))}
-                />
-              }
-            />
+            {showEducationFormParticipantSelectionRadio ? (
+              <EducationFormTypeSettingsRadioRow
+                mode={resolveEducationFormTypeSettingsMode({
+                  educationFormScheduleDetail,
+                  educationForm: multiCommonEducationForm,
+                })}
+                onModeChange={next => {
+                  const applied = applyEducationFormTypeSettingsModeChange({
+                    next,
+                    currentForm: multiCommonEducationForm,
+                  })
+                  onEducationFormScheduleDetailChange(applied.educationFormScheduleDetail)
+                  setMultiCommonEducationForm(applied.educationForm)
+                }}
+                perScheduleHint={perScheduleHint}
+                commonDetailEdit={
+                  <CmsSelect
+                    inputSize="medium"
+                    withAllOption={false}
+                    placeholder="교육 형태"
+                    width={160}
+                    options={educationFormSelectOptions}
+                    value={multiCommonEducationForm || undefined}
+                    onChange={v => setMultiCommonEducationForm(String(v ?? ''))}
+                  />
+                }
+              />
+            ) : (
+              <ScheduleDetailRadioRow
+                label="교육 형태"
+                value={educationFormScheduleDetail}
+                onChange={onEducationFormScheduleDetailChange}
+                perScheduleHint={perScheduleHint}
+                commonDetailEdit={
+                  <CmsSelect
+                    inputSize="medium"
+                    withAllOption={false}
+                    placeholder="교육 형태"
+                    width={160}
+                    options={educationFormSelectOptions}
+                    value={multiCommonEducationForm || undefined}
+                    onChange={v => setMultiCommonEducationForm(String(v ?? ''))}
+                  />
+                }
+              />
+            )}
             {showParticipationMethod ? (
               <ScheduleDetailRadioRow
                 label="참여 방식"

@@ -265,6 +265,10 @@ export function ProgramRegistrationEducationCurriculumParagraph({
     'generalRegistration.educationCurriculum.preEducationScheduleLine',
     null
   )
+  const [preEducationScheduleName, setPreEducationScheduleName] = useProgramRegistrationOverlayKv(
+    'generalRegistration.educationCurriculum.preEducationScheduleName',
+    PRE_EDUCATION_SCHEDULE_LABEL
+  )
 
   const educationFormForSession = (sessionIndex: number) =>
     educationFormBySession[sessionIndex] ?? 'online'
@@ -435,10 +439,11 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                   edit={
                     <CmsInput
                       inputSize="medium"
-                      value={PRE_EDUCATION_SCHEDULE_LABEL}
-                      disabled
+                      value={preEducationScheduleName}
+                      placeholder="행사 일정명을 작성하세요"
                       width="100%"
                       style={{ minWidth: 0, flex: '1 1 0' }}
+                      onChange={event => setPreEducationScheduleName(event.target.value)}
                     />
                   }
                   view="-"
@@ -489,30 +494,13 @@ export function ProgramRegistrationEducationCurriculumParagraph({
 
   const renderPreEducationChartBlock = () => {
     if (!scheduleCurriculumPreEducation) return null
-    if (!participantOrganization) return renderIndividualPreEducationScheduleBlock()
-    return (
-      <ProgramRegistrationCurriculumChartSessionBlock
-        key="pre-education"
-        chartIndex={PRE_EDUCATION_SESSION_INDEX}
-        headingLabel={PRE_EDUCATION_SCHEDULE_LABEL}
-        onDeleteCurriculumChartSession={() => {}}
-        extraRows={
-          ipsScheduleDetail === 'perSchedule' ? (
-            <DetailInfoForm.Row type="single">
-              {renderLockedPreEducationIpsField({ fullRow: true })}
-            </DetailInfoForm.Row>
-          ) : null
-        }
-      />
-    )
+    return renderIndividualPreEducationScheduleBlock()
   }
 
   if (sessionRoundType === 'single') {
     const isSingleIpsPerChart = ipsScheduleDetail === 'perSchedule'
     const showChartSessionHeading =
-      participantOrganization ||
-      scheduleCurriculumPreEducation ||
-      curriculumChartSessionCount > 1
+      scheduleCurriculumPreEducation || curriculumChartSessionCount > 1
 
     if (isSingleIpsPerChart) {
       return (
@@ -751,54 +739,9 @@ export function ProgramRegistrationEducationCurriculumParagraph({
     return null
   }
 
-  const renderPreEducationExtraRows = (): ReactNode => {
-    if (educationFormScheduleDetail === 'perSchedule') {
-      return renderEducationFormPerScheduleRow(PRE_EDUCATION_SESSION_INDEX, { ipsLocked: true })
-    }
-    if (ipsScheduleDetail === 'perSchedule') {
-      return (
-        <DetailInfoForm.Row type="single">
-          {renderLockedPreEducationIpsField({ fullRow: true })}
-        </DetailInfoForm.Row>
-      )
-    }
-    return null
-  }
-
   return (
     <div className="program-registration-curriculum__sessions">
-      {scheduleCurriculumPreEducation ? (
-        !participantOrganization ? (
-          renderIndividualPreEducationScheduleBlock()
-        ) : (
-        <div key="pre-education" className="program-registration-curriculum__session-block">
-          <div className="program-registration-curriculum__session-heading">
-            ■ {PRE_EDUCATION_SCHEDULE_LABEL}
-          </div>
-          <div className="program-registration-curriculum__session-row">
-            <DetailInfoForm
-              title="교육 진행 (커리큘럼)"
-              hideHeader
-              mode="edit"
-              className="program-registration-paragraph"
-            >
-              <ProgramRegistrationMultiRoundClassRow
-                roundIndex={PRE_EDUCATION_SESSION_INDEX}
-                fieldLabel="교육 내용"
-                progressSession={progressSessionByRound[PRE_EDUCATION_SESSION_INDEX] ?? ''}
-                onProgressSessionChange={value =>
-                  updateProgramRegistrationOverlayKey<Record<number, string>>(
-                    'generalRegistration.educationCurriculum.progressSessionByRound',
-                    prev => ({ ...(prev ?? {}), [PRE_EDUCATION_SESSION_INDEX]: value })
-                  )
-                }
-              />
-              {renderPreEducationExtraRows()}
-            </DetailInfoForm>
-          </div>
-        </div>
-        )
-      ) : null}
+      {scheduleCurriculumPreEducation ? renderIndividualPreEducationScheduleBlock() : null}
       {Array.from({ length: curriculumSessionCount }, (_, i) => {
         const roundIndex = i + 1
         const progressSession = progressSessionByRound[roundIndex] ?? ''
@@ -827,7 +770,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                     )
                   }
                 />
-                {isAllPerLayout ? null : (
+                {isAllPerLayout || participantOrganization ? null : (
                   <ProgramRegistrationMultiRoundAssignmentFields
                     value={assignmentForRound(roundIndex)}
                     onChange={next => setAssignmentForRound(roundIndex, next)}

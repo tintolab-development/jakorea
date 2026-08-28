@@ -514,6 +514,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     const showEducation = eventExtraPlan.showEducation
     const showIps = eventExtraPlan.showIps
     const showParticipation = eventExtraPlan.showParticipation
+    const showAssignment = eventExtraPlan.showAssignment
     return (
       <>
         {showEducation && showIps ? (
@@ -535,9 +536,9 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
             {assignmentField(false)}
             {renderParticipationField(detailIndex)}
           </DetailInfoForm.Row>
-        ) : (
+        ) : showAssignment ? (
           <DetailInfoForm.Row type="single">{assignmentField(true)}</DetailInfoForm.Row>
-        )}
+        ) : null}
       </>
     )
   }
@@ -583,8 +584,17 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   const renderPerBlockLayoutRows = (detailIndex: number): ReactNode => {
     if (perBlockLayoutPlan === 'none') return null
     const assignment = assignmentForDetail(detailIndex)
+    const showAssignment = !participantOrganization
 
     if (perBlockLayoutPlan === 'assignment_education_then_ips') {
+      if (!showAssignment) {
+        return (
+          <DetailInfoForm.Row type="double">
+            {renderEducationFormField(detailIndex)}
+            {renderIpsFormField(detailIndex, { layout: 'inline' })}
+          </DetailInfoForm.Row>
+        )
+      }
       return (
         <>
           <DetailInfoForm.Row type="double">
@@ -608,6 +618,13 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     }
 
     if (perBlockLayoutPlan === 'assignment_with_education') {
+      if (!showAssignment) {
+        return (
+          <DetailInfoForm.Row type="single">
+            {renderEducationFormField(detailIndex, { fullRow: true })}
+          </DetailInfoForm.Row>
+        )
+      }
       return (
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -626,6 +643,13 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     }
 
     if (perBlockLayoutPlan === 'assignment_with_ips') {
+      if (!showAssignment) {
+        return (
+          <DetailInfoForm.Row type="single">
+            {renderIpsFormField(detailIndex, { fullRow: true })}
+          </DetailInfoForm.Row>
+        )
+      }
       return (
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -786,7 +810,6 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     ) : null
 
   const renderEventProgressScheduleField = (detailIndex: number) => {
-    const showProgressScheduleToggles = !participantOrganization
     const scheduleRange = overlayScheduleToRange(scheduleDateByDetail[detailIndex])
     const scheduleHasClock = Boolean(
       scheduleRange && educationScheduleRangeHasClock(scheduleRange)
@@ -795,37 +818,21 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
       <div className="detail-info-form-inputs-wrapper-no-gap">
         <ParagraphDatePicker
           mode="single"
-          presetMode={showProgressScheduleToggles ? 'schedule' : 'date'}
+          presetMode="schedule"
           customizable={false}
           suppressAutoTodayWhenEmpty
           value={scheduleRange?.[0] ?? null}
-          appliedSurfaceRange={
-            showProgressScheduleToggles
-              ? educationScheduleAppliedSurfaceRange(scheduleRange)
-              : undefined
-          }
-          appliedSurfaceWithTime={showProgressScheduleToggles ? scheduleHasClock : undefined}
-          onChange={next => {
-            if (showProgressScheduleToggles) return
+          appliedSurfaceRange={educationScheduleAppliedSurfaceRange(scheduleRange)}
+          appliedSurfaceWithTime={scheduleHasClock}
+          onChange={() => {}}
+          onRangeChange={([start, end]) =>
             updateProgramRegistrationOverlayKey<Record<number, string | null>>(
               'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso',
               prev => ({
                 ...(prev ?? {}),
-                [detailIndex]: next == null ? null : next.toISOString(),
+                [detailIndex]: formatEducationScheduleLineFromRange([start, end]),
               })
             )
-          }}
-          onRangeChange={
-            showProgressScheduleToggles
-              ? ([start, end]) =>
-                  updateProgramRegistrationOverlayKey<Record<number, string | null>>(
-                    'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso',
-                    prev => ({
-                      ...(prev ?? {}),
-                      [detailIndex]: formatEducationScheduleLineFromRange([start, end]),
-                    })
-                  )
-              : undefined
           }
           width="100%"
           placeholder="일정을 선택하세요"
