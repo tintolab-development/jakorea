@@ -61,16 +61,16 @@ interface UserListProps {
   adminPermissionChangeLoadingUserId?: string | null
 }
 
-function maskedPhone(phone: string | undefined): string {
+function displayPhone(phone: string | undefined, maskInList: boolean): string {
   const t = phone?.trim()
   if (!t) return '-'
-  return MASKING_POLICY.phone(t)
+  return maskInList ? MASKING_POLICY.phone(t) : t
 }
 
-function maskedEmail(email: string | undefined): string {
+function displayEmail(email: string | undefined, maskInList: boolean): string {
   const t = email?.trim()
   if (!t) return '-'
-  return MASKING_POLICY.email(t)
+  return maskInList ? MASKING_POLICY.email(t) : t
 }
 
 function displayMetric(n: number | undefined | null) {
@@ -173,6 +173,8 @@ function columnsForKind(
   }
 ): ColumnsType<Row> {
   const noCol = createNoColumn(options?.totalCount)
+  /** `GET /api/admin/members/all` — BE가 원문 반환(UNMASKED_VIEW 감사). FE 이중 마스킹 금지 */
+  const maskListPii = kind !== 'all'
 
   if (kind === 'institutions') {
     return [
@@ -239,7 +241,7 @@ function columnsForKind(
         dataIndex: 'phone',
         key: 'phone',
         align: 'center',
-        render: (phone: string | undefined) => maskedPhone(phone),
+        render: (phone: string | undefined) => displayPhone(phone, maskListPii),
       },
       {
         title: '이메일',
@@ -247,7 +249,7 @@ function columnsForKind(
         key: 'email',
         ellipsis: true,
         align: 'center',
-        render: (email: string | undefined) => maskedEmail(email),
+        render: (email: string | undefined) => displayEmail(email, maskListPii),
       },
       {
         title: 'JA 평가 등급',
@@ -291,7 +293,7 @@ function columnsForKind(
         dataIndex: 'phone',
         key: 'phone',
         align: 'center',
-        render: (phone: string | undefined) => maskedPhone(phone),
+        render: (phone: string | undefined) => displayPhone(phone, maskListPii),
       },
       {
         title: '이메일',
@@ -299,7 +301,7 @@ function columnsForKind(
         key: 'email',
         ellipsis: true,
         align: 'center',
-        render: (email: string | undefined) => maskedEmail(email),
+        render: (email: string | undefined) => displayEmail(email, maskListPii),
       },
       {
         title: '권한 유형',
@@ -355,7 +357,7 @@ function columnsForKind(
       dataIndex: 'phone',
       key: 'phone',
       align: 'center',
-      render: (phone: string | undefined) => maskedPhone(phone),
+      render: (phone: string | undefined) => displayPhone(phone, maskListPii),
     },
     {
       title: '이메일',
@@ -363,7 +365,7 @@ function columnsForKind(
       key: 'email',
       ellipsis: true,
       align: 'center',
-      render: (email: string | undefined) => maskedEmail(email),
+      render: (email: string | undefined) => displayEmail(email, maskListPii),
     },
     {
       title: '회원 유형',
