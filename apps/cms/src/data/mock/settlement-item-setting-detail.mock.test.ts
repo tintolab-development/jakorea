@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getSettlementItemSettingDetail } from './settlement-item-setting-detail.mock'
+import { getCatalogSettlementItemSettingDetailByWageType, getSettlementItemSettingDetail } from './settlement-item-setting-detail.mock'
 
 describe('임금 항목 상세 mock (시안 6장)', () => {
   it('1~3급은 가로 조건·산정 표(tier1)와 시안 한도·지급 요건을 갖는다', () => {
@@ -43,6 +43,13 @@ describe('임금 항목 상세 mock (시안 6장)', () => {
     expect(gemini.geminiSession2Won).toBe(170_000)
     expect(gemini.geminiSession3Won).toBe(220_000)
     expect(gemini.geminiSession4Won).toBe(270_000)
+  })
+
+  it('wageItemType TIER1 카탈로그는 w-1과 같다', () => {
+    expect(getCatalogSettlementItemSettingDetailByWageType('TIER1').maxLimitWon).toBe(500_000)
+    expect(getCatalogSettlementItemSettingDetailByWageType('tier1').qualificationLines).toHaveLength(
+      5
+    )
   })
 })
 

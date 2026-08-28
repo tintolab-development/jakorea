@@ -1,29 +1,64 @@
-import type { SettlementItemSettingDetail } from '@/data/mock/settlement-item-setting-detail.mock'
+import {
+  getCatalogSettlementItemSettingDetailByPaymentType,
+  getCatalogSettlementItemSettingDetailByWageType,
+  getCatalogSettlementItemSettingDetailForDeduction,
+  parseEditableLines,
+  type SettlementItemSettingDetail,
+} from '@/data/mock/settlement-item-setting-detail.mock'
 import type {
   DeductionItemResponse,
   PaymentItemResponse,
   WageItemResponse,
 } from '@/shared/api/generated/settlement/schemas'
 
-function parseDetailJson(raw: string | undefined): Record<string, unknown> {
-  if (!raw?.trim()) return {}
+function asRecord(value: unknown): Record<string, unknown> {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
+}
+
+function parseDetailJson(raw: unknown): Record<string, unknown> {
+  if (raw == null) return {}
+  if (typeof raw === 'object' && !Array.isArray(raw)) return raw as Record<string, unknown>
+  if (typeof raw !== 'string' || !raw.trim()) return {}
   try {
     const parsed: unknown = JSON.parse(raw)
-    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : {}
+    return asRecord(parsed)
   } catch {
     return {}
   }
 }
 
 function readStringArray(value: unknown): string[] {
+  if (typeof value === 'string' && value.trim()) {
+    return parseEditableLines(value)
+  }
   if (!Array.isArray(value)) return []
-  return value.filter((line): line is string => typeof line === 'string')
+  return value.filter((line): line is string => typeof line === 'string' && line.trim().length > 0)
+}
+
+function firstLines(...values: unknown[]): string[] {
+  for (const value of values) {
+    const lines = readStringArray(value)
+    if (lines.length > 0) return lines
+  }
+  return []
 }
 
 function readNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value.trim()) {
+    const n = Number(value.replace(/,/g, ''))
+    return Number.isFinite(n) ? n : null
+  }
+  return null
+}
+
+function firstNumber(...values: unknown[]): number | null {
+  for (const value of values) {
+    const n = readNumber(value)
+    if (n != null) return n
+  }
   return null
 }
 
@@ -36,7 +71,9 @@ function readEvidenceSubmission(
 function readTransportMode(
   value: unknown
 ): SettlementItemSettingDetail['transportCommuteMode'] {
-  if (value === 'private_car' || value === 'public_transit') return value
+  if (value === 'private_car' || value === 'public_transit' || value === 'user_choice') {
+    return value
+  }
   return undefined
 }
 
@@ -45,6 +82,39 @@ function normalizeLayout(layout: string | undefined): SettlementItemSettingDetai
   if (!normalized) return 'simple'
   if (normalized === 'volunteerActivity') return 'meal'
   return normalized as SettlementItemSettingDetail['layout']
+}
+
+function fillEmptyFromCatalog(
+  mapped: SettlementItemSettingDetail,
+  catalog: SettlementItemSettingDetail
+): SettlementItemSettingDetail {
+  return {
+    ...catalog,
+    ...mapped,
+    layout: mapped.layout === 'simple' ? catalog.layout : mapped.layout,
+    qualificationLines:
+      mapped.qualificationLines.length > 0 ? mapped.qualificationLines : catalog.qualificationLines,
+    remarkLines: mapped.remarkLines.length > 0 ? mapped.remarkLines : catalog.remarkLines,
+    maxLimitWon: mapped.maxLimitWon ?? catalog.maxLimitWon,
+    basicFeeWon: mapped.basicFeeWon ?? catalog.basicFeeWon,
+    longDistanceFeeWon: mapped.longDistanceFeeWon ?? catalog.longDistanceFeeWon,
+    transportCommuteMode: mapped.transportCommuteMode ?? catalog.transportCommuteMode,
+    evidenceSubmission: mapped.evidenceSubmission ?? catalog.evidenceSubmission,
+    geminiSession1Won: mapped.geminiSession1Won ?? catalog.geminiSession1Won,
+    geminiSession2Won: mapped.geminiSession2Won ?? catalog.geminiSession2Won,
+    geminiSession3Won: mapped.geminiSession3Won ?? catalog.geminiSession3Won,
+    geminiSession4Won: mapped.geminiSession4Won ?? catalog.geminiSession4Won,
+    withholdingExclusionMaxWon:
+      mapped.withholdingExclusionMaxWon ?? catalog.withholdingExclusionMaxWon,
+    withholdingEarnedIncomeDeductionWon:
+      mapped.withholdingEarnedIncomeDeductionWon ?? catalog.withholdingEarnedIncomeDeductionWon,
+    withholdingTaxRateBusiness:
+      mapped.withholdingTaxRateBusiness ?? catalog.withholdingTaxRateBusiness,
+    withholdingTaxRateOther: mapped.withholdingTaxRateOther ?? catalog.withholdingTaxRateOther,
+    withholdingTaxRatePrize: mapped.withholdingTaxRatePrize ?? catalog.withholdingTaxRatePrize,
+    withholdingTaxRateInterview:
+      mapped.withholdingTaxRateInterview ?? catalog.withholdingTaxRateInterview,
+  }
 }
 
 function geminiSessionsFromWageItem(
@@ -78,63 +148,106 @@ function geminiSessionsFromWageItem(
 }
 
 export function mapWageItemToSettingDetail(item: WageItemResponse): SettlementItemSettingDetail {
-  const detail = parseDetailJson(item.detailJson)
-  const layout = normalizeLayout(item.layout)
+  const extra = asRecord(item)
+  const detail = parseDetailJson(item.detailJson ?? extra.detail_json)
+  const layout = normalizeLayout(item.layout ?? (extra.layout as string | undefined))
   const compareKind =
     detail.compareKind === 'exceed' || detail.compareKind === 'below'
       ? detail.compareKind
       : 'standard'
 
+  const amount = readNumber(item.amount)
+  const maxLimitWon =
+    firstNumber(item.maxLimitWon, extra.max_limit_won, detail.maxLimitWon, detail.max_limit_won) ??
+    (amount != null && amount > 0 ? amount : null)
+
   const basisHours =
-    item.basisHours ??
+    firstNumber(item.basisHours, extra.basis_hours, detail.basisHours) ??
     (layout === 'transport' ? readNumber(detail.minDistanceKm ?? detail.minOneWayKm) : null) ??
     1
 
-  return {
+  const mapped: SettlementItemSettingDetail = {
     layout,
-    basisUnit: item.calculationUnit?.trim() || '전체',
+    basisUnit: item.calculationUnit?.trim() || (extra.calculation_unit as string | undefined)?.trim() || '전체',
     basisHours,
     compareKind,
-    maxLimitWon: item.maxLimitWon ?? null,
+    maxLimitWon,
     basicFeeWon: readNumber(detail.basicFeeWon),
     longDistanceFeeWon: readNumber(detail.longDistanceFeeWon),
-    qualificationLines: item.qualificationLines ?? [],
-    remarkLines: item.remarkLines ?? [],
+    qualificationLines: firstLines(
+      item.qualificationLines,
+      extra.qualification_lines,
+      detail.qualificationLines,
+      detail.qualification_lines
+    ),
+    remarkLines: firstLines(
+      item.remarkLines,
+      extra.remark_lines,
+      detail.remarkLines,
+      detail.remark_lines
+    ),
     ...geminiSessionsFromWageItem(item, detail),
   }
+
+  return fillEmptyFromCatalog(
+    mapped,
+    getCatalogSettlementItemSettingDetailByWageType(item.wageItemType)
+  )
 }
 
 export function mapPaymentItemToSettingDetail(item: PaymentItemResponse): SettlementItemSettingDetail {
-  const detail = parseDetailJson(item.detailJson)
-  const layout = normalizeLayout(item.layout)
-  const qualificationLines =
-    item.paymentItemType === 'ACTIVITY' && readStringArray(detail.qualificationLines).length === 0
-      ? ['참여자에게 지급되는 지원비']
-      : readStringArray(detail.qualificationLines)
+  const extra = asRecord(item)
+  const detail = parseDetailJson(item.detailJson ?? extra.detail_json)
+  const layout = normalizeLayout(item.layout ?? (extra.layout as string | undefined))
+  const qualificationLines = firstLines(
+    extra.qualificationLines,
+    extra.qualification_lines,
+    detail.qualificationLines,
+    detail.qualification_lines
+  )
+  const remarkLines = firstLines(
+    extra.remarkLines,
+    extra.remark_lines,
+    detail.remarkLines,
+    detail.remark_lines
+  )
 
   const minKm = readNumber(detail.minDistanceKm ?? detail.minOneWayKm)
 
-  return {
+  const mapped: SettlementItemSettingDetail = {
     layout,
     basisUnit: layout === 'transport' ? '거리' : layout === 'lodging' ? '일' : '시간',
     basisHours: layout === 'transport' ? (minKm ?? 30) : 1,
     compareKind: 'standard',
-    maxLimitWon: item.maxLimitWon ?? item.maxAmount ?? null,
+    maxLimitWon: firstNumber(item.maxLimitWon, item.maxAmount, extra.max_limit_won, detail.maxLimitWon),
     basicFeeWon: null,
     longDistanceFeeWon: null,
-    qualificationLines,
-    remarkLines: readStringArray(detail.remarkLines),
-    transportCommuteMode: readTransportMode(detail.transportCommuteMode),
-    evidenceSubmission: readEvidenceSubmission(detail.evidenceSubmission),
+    qualificationLines:
+      item.paymentItemType === 'ACTIVITY' && qualificationLines.length === 0
+        ? ['참여자에게 지급되는 지원비']
+        : qualificationLines,
+    remarkLines,
+    transportCommuteMode: readTransportMode(
+      detail.transportCommuteMode ?? extra.transportCommuteMode
+    ),
+    evidenceSubmission: readEvidenceSubmission(
+      detail.evidenceSubmission ?? extra.evidenceSubmission
+    ),
   }
+
+  return fillEmptyFromCatalog(
+    mapped,
+    getCatalogSettlementItemSettingDetailByPaymentType(item.paymentItemType)
+  )
 }
 
 export function mapDeductionItemToSettingDetail(
   item: DeductionItemResponse
 ): SettlementItemSettingDetail {
-  const detail = parseDetailJson(item.detailJson)
+  const extra = asRecord(item)
+  const detail = parseDetailJson(item.detailJson ?? extra.detail_json)
 
-  return {
+  const mapped: SettlementItemSettingDetail = {
     layout:
       normalizeLayout(item.layout) === 'withholdingDailyWorker'
         ? 'withholdingDailyWorker'
@@ -145,8 +258,13 @@ export function mapDeductionItemToSettingDetail(
     maxLimitWon: null,
     basicFeeWon: null,
     longDistanceFeeWon: null,
-    qualificationLines: readStringArray(detail.qualificationLines),
-    remarkLines: readStringArray(detail.remarkLines),
+    qualificationLines: firstLines(
+      extra.qualificationLines,
+      extra.qualification_lines,
+      detail.qualificationLines,
+      detail.qualification_lines
+    ),
+    remarkLines: firstLines(extra.remarkLines, extra.remark_lines, detail.remarkLines, detail.remark_lines),
     withholdingExclusionMaxWon: readNumber(detail.withholdingExclusionMaxWon),
     withholdingEarnedIncomeDeductionWon: readNumber(detail.withholdingEarnedIncomeDeductionWon),
     withholdingTaxRateBusiness: readNumber(detail.withholdingTaxRateBusiness),
@@ -154,4 +272,6 @@ export function mapDeductionItemToSettingDetail(
     withholdingTaxRatePrize: readNumber(detail.withholdingTaxRatePrize),
     withholdingTaxRateInterview: readNumber(detail.withholdingTaxRateInterview),
   }
+
+  return fillEmptyFromCatalog(mapped, getCatalogSettlementItemSettingDetailForDeduction())
 }

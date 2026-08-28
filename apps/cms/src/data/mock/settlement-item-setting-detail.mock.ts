@@ -447,6 +447,52 @@ export function getBaseSettlementItemSettingDetail(itemId: string): SettlementIt
   return defaultDetail()
 }
 
+export function getCatalogSettlementItemSettingDetailByWageType(
+  wageItemType: string | undefined
+): SettlementItemSettingDetail {
+  switch ((wageItemType ?? '').trim().toUpperCase()) {
+    case 'TIER1':
+      return getBaseSettlementItemSettingDetail('w-1')
+    case 'TIER2':
+      return getBaseSettlementItemSettingDetail('w-2')
+    case 'TIER3':
+      return getBaseSettlementItemSettingDetail('w-3')
+    case 'SPECIAL_LECTURE':
+      return getBaseSettlementItemSettingDetail('w-4')
+    case 'OTHER_LABOR':
+      return getBaseSettlementItemSettingDetail('w-5')
+    case 'GEMINI':
+      return getBaseSettlementItemSettingDetail('w-gemini')
+    default:
+      return defaultDetail()
+  }
+}
+
+export function getCatalogSettlementItemSettingDetailByPaymentType(
+  paymentItemType: string | undefined
+): SettlementItemSettingDetail {
+  switch ((paymentItemType ?? '').trim().toUpperCase()) {
+    case 'TRANSPORT_INSTRUCTOR':
+      return getBaseSettlementItemSettingDetail('p-1')
+    case 'TRANSPORT_STUDENT':
+      return getBaseSettlementItemSettingDetail('p-2')
+    case 'MEAL':
+      return getBaseSettlementItemSettingDetail('p-4')
+    case 'LODGING_GENERAL':
+      return getBaseSettlementItemSettingDetail('p-3')
+    case 'LODGING_1C1S':
+      return getBaseSettlementItemSettingDetail('p-7')
+    case 'ACTIVITY':
+      return getBaseSettlementItemSettingDetail('p-6')
+    default:
+      return defaultDetail()
+  }
+}
+
+export function getCatalogSettlementItemSettingDetailForDeduction(): SettlementItemSettingDetail {
+  return getBaseSettlementItemSettingDetail('d-1')
+}
+
 /**
  * 항목 상세 저장(목 데이터). API 연동 시 이 함수 본문만 교체하면 됨.
  */
