@@ -59,6 +59,17 @@ export function readTeacherDetailUrlContext(
   }
 }
 
+/**
+ * 브라우저 URL의 상세 `id`.
+ * react-router `params`는 transition 커밋을 기다리므로,
+ * "지금 상세가 열려 있어야 하는가"는 history(`location.search`)를 본다.
+ */
+export function readMemberDetailIdFromLocation(
+  search: string = typeof window !== 'undefined' ? window.location.search : ''
+): string | null {
+  return new URLSearchParams(search).get('id')?.trim() || null
+}
+
 export function readMemberDetailUrlContext(
   searchParams: URLSearchParams
 ): MemberDetailUrlContext {

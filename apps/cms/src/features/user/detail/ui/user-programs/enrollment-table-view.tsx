@@ -30,6 +30,7 @@ export function EnrollmentTableView(props: RendererProps) {
       searchParams,
       setSearchParams,
       context: enrollmentTableContext,
+      disableUrlSync: true,
     })
 
   const programHistoryColumns = useMemo(
