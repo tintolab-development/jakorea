@@ -54,43 +54,46 @@ export default function PaymentOrdersPage() {
 
   return (
     <div className="payment-orders-page">
-      <FilterTableLayout
-        className="payment-orders-page__filter-list-layout"
-        filterResponsiveWrap={false}
-        contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
-        fields={paymentOrdersFilterFields}
-        filters={{
-          exposureMode: pendingFilters.exposureMode,
-          programName: pendingFilters.programName,
-          instructorName: pendingFilters.instructorName,
-          processingStatus:
-            pendingFilters.processingStatus === 'all'
-              ? undefined
-              : pendingFilters.processingStatus,
-          dateRange: pendingFilters.dateRange,
-        }}
-        onFilterChange={handleFilterChange}
-        onSearch={handleSearch}
-        title={listTitle}
-        description={`총 ${total}건`}
-        contentLoading={Boolean(contentLoading)}
-        actions={
-          <ViewModeToggle
-            value={viewMode}
-            onChange={setViewMode}
-            options={paymentOrdersViewModeOptions}
-          />
-        }
-        excelExport={paymentOrdersExcelExport}
-      >
-        {contentError ? (
-          <div className="page-content-error" role="alert">
-            {contentError instanceof Error ? contentError.message : '목록을 불러오지 못했습니다.'}
-          </div>
-        ) : (
-          renderContent(viewMode)
-        )}
-      </FilterTableLayout>
+      {/* 계좌 지급·참여기관과 동일 — 흰 카드(content-wrapper) 안에 필터·목록/캘린더 */}
+      <div className="payment-orders-page__content-wrapper">
+        <FilterTableLayout
+          className="payment-orders-page__filter-list-layout"
+          filterResponsiveWrap={false}
+          contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
+          fields={paymentOrdersFilterFields}
+          filters={{
+            exposureMode: pendingFilters.exposureMode,
+            programName: pendingFilters.programName,
+            instructorName: pendingFilters.instructorName,
+            processingStatus:
+              pendingFilters.processingStatus === 'all'
+                ? undefined
+                : pendingFilters.processingStatus,
+            dateRange: pendingFilters.dateRange,
+          }}
+          onFilterChange={handleFilterChange}
+          onSearch={handleSearch}
+          title={listTitle}
+          description={`총 ${total}건`}
+          contentLoading={Boolean(contentLoading)}
+          actions={
+            <ViewModeToggle
+              value={viewMode}
+              onChange={setViewMode}
+              options={paymentOrdersViewModeOptions}
+            />
+          }
+          excelExport={paymentOrdersExcelExport}
+        >
+          {contentError ? (
+            <div className="page-content-error" role="alert">
+              {contentError instanceof Error ? contentError.message : '목록을 불러오지 못했습니다.'}
+            </div>
+          ) : (
+            renderContent(viewMode)
+          )}
+        </FilterTableLayout>
+      </div>
 
       <PaymentOrderDetailFullPageModal
         type={detailState?.type ?? 'program'}
