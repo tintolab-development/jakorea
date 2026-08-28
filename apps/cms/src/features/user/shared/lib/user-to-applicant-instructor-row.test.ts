@@ -4,6 +4,7 @@ import { userToApplicantInstructorRow } from './user-to-applicant-instructor-row
 
 vi.mock('@/features/user/api/member-remote-capabilities', () => ({
   isMembersRemoteEnabled: () => true,
+  isInstructorRoleRequestsRemoteEnabled: () => false,
 }))
 
 function baseUser(partial: Partial<Omit<User, 'password'>> = {}): Omit<User, 'password'> {
@@ -72,5 +73,43 @@ describe('userToApplicantInstructorRow', () => {
   it('remote에서 affiliation 값이 있으면 그대로 사용한다', () => {
     const row = userToApplicantInstructorRow(baseUser({ affiliation: '서울 JA' }))
     expect(row.affiliation).toBe('서울 JA')
+  })
+
+  it('instructorCmsProfile structured 필드를 이력서 row에 바인딩한다', () => {
+    const row = userToApplicantInstructorRow(
+      baseUser({
+        birthDate: '1994-04-04',
+        gender: 'F',
+        instructorCmsProfile: {
+          memberType: 'GENERAL',
+          affiliation: { organizationNames: [] },
+          homeAddress: { line: '서울' },
+          education: {
+            highestSchoolType: 'college4',
+            highestStatus: 'graduated',
+            college4: [{ schoolName: '한국대학교' }],
+          },
+          career: {
+            level: 'experienced',
+            rows: [{ companyName: 'JA', roleName: '강사', currentlyEmployed: false }],
+          },
+          jaKoreaActivities: [{ title: 'JA 프로그램' }],
+          licenses: [{ title: '강사 자격', acquiredYear: '2023' }],
+          awards: [{ title: '수상', acquiredYear: '2022' }],
+          essays: { freeWrite1: '지원동기', freeWrite2: '2', freeWrite3: '3', freeWrite4: '4' },
+          defaultFeeGrade: null,
+          defaultJaGrade: null,
+        },
+      })
+    )
+
+    expect(row.instructorCareerLevel).toBe('experienced')
+    expect(row.freeWriting1).toBe('지원동기')
+    expect(row.educations?.length).toBeGreaterThan(0)
+    expect(row.qualifications?.length).toBe(1)
+    expect(row.awards?.length).toBe(1)
+    expect(row.jaKoreaActivities?.length).toBe(1)
+    expect(row.careerDetails?.length).toBe(1)
+    expect(row.awards?.[0]?.name).toBe('수상')
   })
 })
