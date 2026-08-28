@@ -28,13 +28,29 @@ export const MEMBER_SEED_ID_RANGES = {
   adminProvisionedExcludeId: [172231, 172235] as const,
 } as const
 
-/** FE mock constant → BE memberId (showcase 연동·문서용) */
-export const MOCK_TO_BE_MEMBER_ID: Readonly<Record<string, number>> = {
-  'mock-instructor-jung-001': 172101, // 정멘토 ≈ IR-PENDING tier (instructor_only)
-  'mock-instructor-choi-001': 172107, // 최강사 ≈ IR-EXCLUDED-DUAL (겸직 — 권한승인 목록 제외)
-  'mock-instructor-kang-001': 172103, // 강선생 ≈ IR-REJECTED tier
+/** FE mock constant → BE memberId (directory 목록·상세 이력) */
+export const MOCK_TO_BE_DIRECTORY_MEMBER_ID: Readonly<Record<string, number>> = {
+  'mock-md-individual-171001': 171001,
+  'mock-instructor-kang-001': 171002,
+  'mock-instructor-jung-001': 171003,
+  'mock-instructor-choi-001': 171004,
+  'mock-md-instructor-revoked-171005': 171005,
+  'mock-md-admin-171601': 171601,
   'mock-school-seoul-001': 171501,
   'mock-school-jinwol-001': 171502,
+}
+
+/** FE mock constant → BE memberId (권한승인 큐 — directory id 와 다를 수 있음) */
+export const MOCK_TO_BE_PERMISSION_MEMBER_ID: Readonly<Record<string, number>> = {
+  'mock-instructor-jung-001': 172101,
+  'mock-instructor-choi-001': 172107,
+  'mock-instructor-kang-001': 172103,
+}
+
+/** @deprecated use MOCK_TO_BE_DIRECTORY_MEMBER_ID or MOCK_TO_BE_PERMISSION_MEMBER_ID */
+export const MOCK_TO_BE_MEMBER_ID: Readonly<Record<string, number>> = {
+  ...MOCK_TO_BE_DIRECTORY_MEMBER_ID,
+  ...MOCK_TO_BE_PERMISSION_MEMBER_ID,
 }
 
 export type MemberSeedProfileTier = 'full' | 'medium' | 'minimal'
@@ -281,12 +297,12 @@ export const ADMIN_APPROVAL_SEED_CASES: AdminApprovalSeedCase[] = [
 /** 회원 목록(kind) showcase — BE members/all·users·schools·admin-accounts */
 export const MEMBER_DIRECTORY_SEED_CASES = {
   allTab: [
-    { caseId: 'MD-INDIVIDUAL', memberId: 171001, roles: ['INDIVIDUAL'], signupType: 'SELF' },
-    { caseId: 'MD-SCHOOL-TEACHER', memberId: 171002, roles: ['SCHOOL_TEACHER'], signupType: 'SELF' },
-    { caseId: 'MD-INSTRUCTOR', memberId: 171003, roles: ['INSTRUCTOR'], signupType: 'SELF' },
-    { caseId: 'MD-INSTRUCTOR-DUAL', memberId: 171004, roles: ['SCHOOL_TEACHER', 'INSTRUCTOR'], signupType: 'SELF' },
-    { caseId: 'MD-INSTRUCTOR-REVOKED', memberId: 171005, roles: ['INSTRUCTOR_REVOKED'], signupType: 'SELF' },
-    { caseId: 'MD-ADMIN', adminAccountId: 171601, roles: ['ADMIN'], signupType: 'SELF' },
+    { caseId: 'MD-INDIVIDUAL', memberId: 171001, roles: ['INDIVIDUAL'], signupType: 'SELF', mockFeUserId: 'mock-md-individual-171001', keyword: '김개인' },
+    { caseId: 'MD-SCHOOL-TEACHER', memberId: 171002, roles: ['SCHOOL_TEACHER'], signupType: 'SELF', mockFeUserId: 'mock-instructor-kang-001', keyword: '강선생' },
+    { caseId: 'MD-INSTRUCTOR', memberId: 171003, roles: ['INSTRUCTOR'], signupType: 'SELF', mockFeUserId: 'mock-instructor-jung-001', keyword: '정멘토' },
+    { caseId: 'MD-INSTRUCTOR-DUAL', memberId: 171004, roles: ['SCHOOL_TEACHER', 'INSTRUCTOR'], signupType: 'SELF', mockFeUserId: 'mock-instructor-choi-001', keyword: '최강사' },
+    { caseId: 'MD-INSTRUCTOR-REVOKED', memberId: 171005, roles: ['INSTRUCTOR_REVOKED'], signupType: 'SELF', mockFeUserId: 'mock-md-instructor-revoked-171005', keyword: '박박탈' },
+    { caseId: 'MD-ADMIN', adminAccountId: 171601, roles: ['ADMIN'], signupType: 'SELF', mockFeUserId: 'mock-md-admin-171601', roleCode: 'MASTER' },
   ],
   schools: [
     {
