@@ -27,7 +27,7 @@ import {
   useSettlementItemSettingLayout,
 } from './settlement-item-setting-detail-source'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton, CmsNumericInput } from '@/shared/ui'
+import { CmsButton, CmsNumericInput, type CmsNumericInputProps } from '@/shared/ui'
 import { CmsInputIconClick } from '@/shared/ui/cms-input-iconclick'
 import {
   SettlementItemSettingDescriptionEditIcon,
@@ -46,6 +46,10 @@ import {
 const BASIS_UNIT_OPTIONS_SIMPLE = [{ value: '전체', label: '전체' }]
 
 const CONDITION_TEXTAREA_PLACEHOLDER = '내용을 입력해 주세요.'
+
+function SettlementItemBasisNumericInput(props: CmsNumericInputProps) {
+  return <CmsNumericInput allowClear={false} {...props} />
+}
 
 const SIMPLE_LABOR_EVIDENCE_RADIO_OPTIONS: ModalSpecTableRadioOption<SettlementItemEvidenceSubmission>[] =
   [
@@ -308,7 +312,7 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="integer"
                   inputSize="medium"
                   value={basisHoursStr}
@@ -321,7 +325,7 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
                   value={maxLimitStr}
@@ -496,7 +500,7 @@ function SettlementItemSettingDetailGeminiBody({ itemId }: { itemId: string }) {
             <ModalSpecTableRow key={row.key} label={row.label} labelVariant="basis">
               <div className="modal-spec-table__field-row">
                 <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                  <CmsNumericInput
+                  <SettlementItemBasisNumericInput
                     mode="currency"
                     inputSize="medium"
                     suffix="원"
@@ -583,7 +587,7 @@ function SettlementItemSettingDetailAssistantBody({ itemId }: { itemId: string }
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="integer"
                   inputSize="medium"
                   value={basisHoursStr}
@@ -596,7 +600,7 @@ function SettlementItemSettingDetailAssistantBody({ itemId }: { itemId: string }
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
                   suffix="원"
@@ -681,7 +685,7 @@ function SettlementItemSettingDetailMultiInstructorBody({ itemId }: { itemId: st
     <ModalSpecTableRow key={label} label={label} labelVariant="basis">
       <div className="modal-spec-table__field-row">
         <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-          <CmsNumericInput
+          <SettlementItemBasisNumericInput
             mode="currency"
             inputSize="medium"
             suffix="원"
@@ -706,7 +710,7 @@ function SettlementItemSettingDetailMultiInstructorBody({ itemId }: { itemId: st
           <ModalSpecTableRow label="기준 항목" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="integer"
                   inputSize="medium"
                   value={m01BasisStr}
@@ -733,7 +737,7 @@ function SettlementItemSettingDetailMultiInstructorBody({ itemId }: { itemId: st
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="integer"
                   inputSize="medium"
                   value={m02HoursStr}
@@ -839,7 +843,7 @@ function SettlementItemSettingDetailSimpleLaborBody({ itemId }: { itemId: string
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="integer"
                   inputSize="medium"
                   value={basisHoursStr}
@@ -852,7 +856,7 @@ function SettlementItemSettingDetailSimpleLaborBody({ itemId }: { itemId: string
           <ModalSpecTableRow label="단순인건비" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
                   suffix="원"
@@ -865,7 +869,7 @@ function SettlementItemSettingDetailSimpleLaborBody({ itemId }: { itemId: string
           <ModalSpecTableRow label="주휴수당" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
                   suffix="원"
@@ -971,7 +975,7 @@ function SettlementItemSettingDetailLodgingBody({ itemId }: { itemId: string }) 
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--lodging-basis-days">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="integer"
                   inputSize="medium"
                   value={basisDaysStr}
@@ -987,7 +991,7 @@ function SettlementItemSettingDetailLodgingBody({ itemId }: { itemId: string }) 
           >
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
                   suffix="원"
@@ -1089,7 +1093,7 @@ function SettlementItemSettingDetailMealBody({ itemId }: { itemId: string }) {
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
                   suffix="원"
@@ -1194,7 +1198,7 @@ function SettlementItemSettingDetailVolunteerActivityBody({ itemId }: { itemId: 
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
                   suffix="원"
@@ -1272,7 +1276,7 @@ function SettlementItemSettingDetailMeetingAttendanceBody({ itemId }: { itemId: 
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--meeting-attendance-hours">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="integer"
                   inputSize="medium"
                   value={m01HoursStr}
@@ -1286,7 +1290,7 @@ function SettlementItemSettingDetailMeetingAttendanceBody({ itemId }: { itemId: 
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
                   suffix="원"
@@ -1311,7 +1315,7 @@ function SettlementItemSettingDetailMeetingAttendanceBody({ itemId }: { itemId: 
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--meeting-attendance-hours">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="integer"
                   inputSize="medium"
                   value={m02HoursStr}
@@ -1325,7 +1329,7 @@ function SettlementItemSettingDetailMeetingAttendanceBody({ itemId }: { itemId: 
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
                   suffix="원"
@@ -1425,7 +1429,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
             <div className="modal-spec-table__field-row modal-spec-table__field-row--withholding-inline">
               <span className="modal-spec-table__suffix-text">원천징수세액이</span>
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
                   value={exclusionMaxStr}
@@ -1450,7 +1454,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
           <ModalSpecTableRow label="근로소득공제비용" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
                   suffix="원"
@@ -1475,7 +1479,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
           <ModalSpecTableRow label="사업소득" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="decimal"
                   inputSize="medium"
                   suffix="%"
@@ -1489,7 +1493,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
           <ModalSpecTableRow label="기타소득" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="decimal"
                   inputSize="medium"
                   suffix="%"
@@ -1503,7 +1507,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
           <ModalSpecTableRow label="상금 (기타소득)" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="decimal"
                   inputSize="medium"
                   suffix="%"
@@ -1526,7 +1530,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
           >
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="decimal"
                   inputSize="medium"
                   suffix="%"
@@ -1632,7 +1636,7 @@ function SettlementItemSettingDetailTransportBody({ itemId }: { itemId: string }
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--transport-km">
-                <CmsNumericInput
+                <SettlementItemBasisNumericInput
                   mode="integer"
                   inputSize="medium"
                   value={distanceKmStr}
@@ -1705,7 +1709,7 @@ function SettlementItemSettingDetailSimpleLayoutBody({ itemId }: { itemId: strin
       <section aria-label="최대 한도 금액">
         <div className="settlement-item-setting-detail-modal__fee-row settlement-item-setting-detail-modal__fee-row--simple">
           <div className="settlement-item-setting-detail-modal__fee-col">
-            <CmsNumericInput
+            <SettlementItemBasisNumericInput
               mode="currency"
               inputSize="medium"
               label="최대 한도 금액"
