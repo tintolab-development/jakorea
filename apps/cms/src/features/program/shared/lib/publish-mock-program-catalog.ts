@@ -56,6 +56,9 @@ export function mapProgramToMockCatalogEntry(program: Program): Record<string, u
           curriculumSessions: common.curriculumSessions,
           scheduleDetails: common.scheduleDetails,
           educationScheduleLines: common.educationScheduleLines,
+          educationScheduleMode: common.educationScheduleMode,
+          maxScheduleCount: common.participantRecruitmentInfo?.maxScheduleCount,
+          participationMethod: common.participationMethod,
         }
       : undefined,
     rounds: program.rounds?.map(round => ({

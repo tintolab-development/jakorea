@@ -16,13 +16,14 @@ export const PROGRAM_REGISTRATION_IDS = {
   educationScheduleSettings: 'program-registration-seed-education-schedule-settings',
 } as const
 
-/** 일반 프로그램 등록 폼 — 시드 단락(교육 진행 일정 설정은 상세 수정 전용, 등록 폼 비노출) */
+/** 일반 프로그램 등록 폼 — 시드 단락(교육 진행 일정 설정은 일정형+복수 회차에서만 숨김) */
 export const PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS = new Set<string>([
   PROGRAM_REGISTRATION_IDS.basicInfo,
   PROGRAM_REGISTRATION_IDS.businessKpi,
   PROGRAM_REGISTRATION_IDS.wageInfo,
   PROGRAM_REGISTRATION_IDS.typeSettings,
   PROGRAM_REGISTRATION_IDS.educationCurriculum,
+  PROGRAM_REGISTRATION_IDS.educationScheduleSettings,
 ])
 
 /** 1사 1교 프로그램 등록 폼 — 프로그램 유형 설정 단락 제외 */
@@ -120,18 +121,15 @@ export function createProgramRegistrationDraft(
         : '차시 별 정보를 입력해 주세요'
     )
   )
-  /** 일반: 교육 진행 일정 설정은 상세 수정 화면 전용 — 등록 폼 시드에서 제외 */
-  if (variant !== 'general') {
-    paragraphs.push(
-      createSeedParagraph(
-        PROGRAM_REGISTRATION_IDS.educationScheduleSettings,
-        PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.title,
-        variant !== 'economy'
-          ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.editDescription
-          : '교육이 실행되는 일정을 설정해 주세요.'
-      )
+  paragraphs.push(
+    createSeedParagraph(
+      PROGRAM_REGISTRATION_IDS.educationScheduleSettings,
+      PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.title,
+      variant !== 'economy'
+        ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.editDescription
+        : '교육이 실행되는 일정을 설정해 주세요.'
     )
-  }
+  )
   return normalizeWritingFormDraft({
     schemaVersion: 1,
     formSettings: { titleNumbering: 'numeric' },

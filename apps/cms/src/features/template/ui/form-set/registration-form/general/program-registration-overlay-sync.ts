@@ -11,6 +11,8 @@ export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY =
   'generalRegistration.basicInfo.localSponsorId' as const
 export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY =
   'generalRegistration.basicInfo.localManagerContactId' as const
+export const GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY =
+  'generalRegistration.educationScheduleSettings.scheduleLines' as const
 
 let overlayState: Record<string, unknown> = {}
 let overlayVersion = 0
@@ -29,6 +31,15 @@ export function readGeneralRegistrationOverlaySponsorContactId(): string {
   if (typeof raw === 'string' && raw.trim()) return raw.trim()
   if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
   return ''
+}
+
+export function readGeneralRegistrationOverlayScheduleLines(): string[] {
+  const raw = overlayState[GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]
+  if (!Array.isArray(raw)) return []
+  return raw
+    .filter((line): line is string => typeof line === 'string')
+    .map(line => line.trim())
+    .filter(Boolean)
 }
 
 function emitOverlay() {

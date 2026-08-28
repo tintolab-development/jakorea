@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type Dispatch,
   type SetStateAction,
 } from 'react'
@@ -65,11 +66,14 @@ import {
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
   getProgramRegistrationOverlayRecord,
+  getProgramRegistrationOverlayVersion,
   patchProgramRegistrationOverlay,
+  readGeneralRegistrationOverlayScheduleLines,
   readGeneralRegistrationOverlaySponsorContactId,
   readGeneralRegistrationOverlaySponsorId,
   replaceProgramRegistrationOverlay,
   resetProgramRegistrationOverlay,
+  subscribeProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { useCmsAlert } from '@/shared/ui'
 
@@ -275,6 +279,11 @@ export function useProgramRegistrationEditor(
   const [sponsorId, setSponsorId] = useState('')
   const [sponsorContactId, setSponsorContactId] = useState('')
   const [programTitleKo, setProgramTitleKo] = useState('')
+  const overlayVersion = useSyncExternalStore(
+    subscribeProgramRegistrationOverlay,
+    getProgramRegistrationOverlayVersion,
+    getProgramRegistrationOverlayVersion
+  )
 
   const {
     openWritingUserPreview,
@@ -286,10 +295,14 @@ export function useProgramRegistrationEditor(
   useEffect(() => {
     if (!active) return
     if (programRegistrationFormVariant === 'general') {
+      const hideScheduleSettings = programType === 'schedule' && sessionRoundType === 'multi'
       patchInstitutionApplicationProgramBridge({
         educationStructure: programType,
         sessionRound: sessionRoundType,
         educationScheduleMode,
+        educationScheduleLines: hideScheduleSettings
+          ? []
+          : readGeneralRegistrationOverlayScheduleLines(),
       })
       return
     }
@@ -310,7 +323,14 @@ export function useProgramRegistrationEditor(
       sessionRound: 'multi',
       educationScheduleMode: 'period',
     })
-  }, [active, programRegistrationFormVariant, programType, sessionRoundType, educationScheduleMode])
+  }, [
+    active,
+    overlayVersion,
+    programRegistrationFormVariant,
+    programType,
+    sessionRoundType,
+    educationScheduleMode,
+  ])
 
   const applyEditorStateSnapshot = useCallback((state: ProgramRegistrationEditorState) => {
     setParticipant(state.participant)
@@ -680,60 +700,66 @@ export function useProgramRegistrationEditor(
 
   const paragraphBodyOptions = useMemo(
     () =>
-      buildProgramRegistrationParagraphBodyOptions({
-        participant,
-        programType,
-        onProgramTypeChange,
-        onIndividualChange,
-        onOrganizationChange,
-        onTeacherInstructorChange,
-        onVolunteerChange,
-        sessionRoundType,
-        onSessionRoundTypeChange,
-        educationFormScheduleDetail,
-        onEducationFormScheduleDetailChange,
-        participationScheduleDetail,
-        onParticipationScheduleDetailChange,
-        ipsScheduleDetail,
-        onIpsScheduleDetailChange,
-        curriculumSessionCount: restrictCurriculumSessionStructure ? 1 : curriculumSessionCount,
-        onAddCurriculumSession,
-        onDeleteCurriculumSession,
-        curriculumChartSessionCount:
-          restrictCurriculumSessionStructure && programRegistrationFormVariant !== 'trainedTeachers'
-            ? 1
-            : curriculumChartSessionCount,
-        onAddCurriculumChartSession,
-        onDeleteCurriculumChartSession,
-        restrictCurriculumSessionStructure,
-        programRegistrationFormVariant,
-        scheduleCurriculumDetailCount,
-        onAddScheduleCurriculumDetail,
-        onDeleteScheduleCurriculumDetail,
-        scheduleCurriculumGroupCount,
-        onAddScheduleCurriculumGroup,
-        onDeleteScheduleCurriculumGroup,
-        scheduleCurriculumPreEducation,
-        onScheduleCurriculumPreEducationChange,
-        trainedTeachersTeacherTrainingEnabled,
-        onTrainedTeachersTeacherTrainingEnabledChange,
-        educationScheduleMode,
-        onEducationScheduleModeChange,
-        ...(programRegistrationFormVariant === 'general'
-          ? {
-              sponsorId,
-              onSponsorIdChange,
-              sponsorContactId,
-              onSponsorContactIdChange,
-              programTitleKo,
-              onProgramTitleKoChange,
-              /** 교육 진행 일정 설정은 상세 수정 전용 — 등록 폼·미리보기에서 숨김 */
-              hiddenParagraphIds: new Set<string>([
-                PROGRAM_REGISTRATION_IDS.educationScheduleSettings,
-              ]),
-            }
-          : {}),
-      }),
+      buildProgramRegistrationParagraphBodyOptions(
+        {
+          participant,
+          programType,
+          onProgramTypeChange,
+          onIndividualChange,
+          onOrganizationChange,
+          onTeacherInstructorChange,
+          onVolunteerChange,
+          sessionRoundType,
+          onSessionRoundTypeChange,
+          educationFormScheduleDetail,
+          onEducationFormScheduleDetailChange,
+          participationScheduleDetail,
+          onParticipationScheduleDetailChange,
+          ipsScheduleDetail,
+          onIpsScheduleDetailChange,
+          curriculumSessionCount: restrictCurriculumSessionStructure ? 1 : curriculumSessionCount,
+          onAddCurriculumSession,
+          onDeleteCurriculumSession,
+          curriculumChartSessionCount:
+            restrictCurriculumSessionStructure && programRegistrationFormVariant !== 'trainedTeachers'
+              ? 1
+              : curriculumChartSessionCount,
+          onAddCurriculumChartSession,
+          onDeleteCurriculumChartSession,
+          restrictCurriculumSessionStructure,
+          programRegistrationFormVariant,
+          scheduleCurriculumDetailCount,
+          onAddScheduleCurriculumDetail,
+          onDeleteScheduleCurriculumDetail,
+          scheduleCurriculumGroupCount,
+          onAddScheduleCurriculumGroup,
+          onDeleteScheduleCurriculumGroup,
+          scheduleCurriculumPreEducation,
+          onScheduleCurriculumPreEducationChange,
+          trainedTeachersTeacherTrainingEnabled,
+          onTrainedTeachersTeacherTrainingEnabledChange,
+          educationScheduleMode,
+          onEducationScheduleModeChange,
+          ...(programRegistrationFormVariant === 'general'
+            ? {
+                sponsorId,
+                onSponsorIdChange,
+                sponsorContactId,
+                onSponsorContactIdChange,
+                programTitleKo,
+                onProgramTitleKoChange,
+              }
+            : {}),
+        },
+        {
+          hiddenParagraphIds:
+            programRegistrationFormVariant === 'general' &&
+            programType === 'schedule' &&
+            sessionRoundType === 'multi'
+              ? new Set<string>([PROGRAM_REGISTRATION_IDS.educationScheduleSettings])
+              : undefined,
+        }
+      ),
     [
       curriculumChartSessionCount,
       curriculumSessionCount,
@@ -941,6 +967,12 @@ export function useProgramRegistrationEditor(
           variant: programRegistrationFormVariant,
           sponsorId: resolvedSponsorId || undefined,
           title: programTitleKo.trim() || undefined,
+          sessionRoundType,
+          educationScheduleMode,
+          educationScheduleLines:
+            programType === 'schedule' && sessionRoundType === 'multi'
+              ? []
+              : readGeneralRegistrationOverlayScheduleLines(),
         })
         resetProgramRegistrationOverlay()
         onRegistrationSaved(createdProgram)
@@ -968,6 +1000,8 @@ export function useProgramRegistrationEditor(
     programRegistrationFormVariant,
     programTitleKo,
     programType,
+    sessionRoundType,
+    educationScheduleMode,
     showAlert,
     sponsorId,
   ])
