@@ -48,6 +48,7 @@ import { NoticeDetailPage, NoticesPage } from '@/pages/notices'
 import { ResultDetailPage, ResultsPage } from '@/pages/results'
 import { TextbooksPage } from '@/pages/education/textbooks'
 import { DirectionsPage } from '@/pages/about/directions'
+import { IntroductionPage } from '@/pages/about/introduction'
 import { PeoplePage } from '@/pages/about/people'
 import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transparency'
 import { DesignSystemPage } from '@/pages/design-system'
@@ -59,12 +60,12 @@ import { TalentDonationApplyPage } from '@/pages/support/talent/apply'
 import { TemporaryPage } from '@/pages/temporary'
 import { CORPORATE_DONATION_PATH } from '@/features/corporate-donation'
 import { IMPACT_STORIES_PATH } from '@/features/impact-story'
+import { INTRODUCTION_PATH } from '@/features/introduction'
 import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
 import { TALENT_DONATION_APPLY_PATH, TALENT_DONATION_PATH } from '@/features/talent-donation'
 import {
   ABOUT_CAREERS_PATH,
   ABOUT_HISTORY_PATH,
-  ABOUT_INTRODUCTION_PATH,
   EDUCATION_CAREER_PATH,
   EDUCATION_DIGITAL_LITERACY_PATH,
   EDUCATION_ENTREPRENEURSHIP_PATH,
@@ -109,11 +110,15 @@ export const router = createBrowserRouter([
         path: '/about/transparency/audit-reports',
         element: <TransparencyReportsPage type="audit" />,
       },
-      { path: ABOUT_INTRODUCTION_PATH, element: <TemporaryPage /> },
       { path: ABOUT_HISTORY_PATH, element: <TemporaryPage /> },
       { path: ABOUT_CAREERS_PATH, element: <TemporaryPage /> },
       { path: IMPACT_STORIES_PATH, element: <ImpactStoriesPage /> },
     ],
+  },
+  {
+    /* 기관소개 — ContentShell 없는 풀블리드 (support와 동일 계열) */
+    element: <AppLayoutRoute layout="introduction" />,
+    children: [{ path: INTRODUCTION_PATH, element: <IntroductionPage /> }],
   },
   {
     element: <AppLayoutRoute layout="support" />,

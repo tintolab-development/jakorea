@@ -46,3 +46,14 @@
     margin-top: calc(-1 * var(--app-header-height));
   }
 }
+
+/* 기관소개 — ContentShell 없음, PC만 투명 헤더가 히어로 위에 겹침 */
+.mainIntroduction {
+  composes: main;
+}
+
+@media (--bp-pc-up) {
+  .mainIntroduction {
+    margin-top: calc(-1 * var(--app-header-height));
+  }
+}

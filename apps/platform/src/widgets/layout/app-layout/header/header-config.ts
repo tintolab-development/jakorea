@@ -1,6 +1,7 @@
 import { isNoticesPath, NOTICES_PATH } from '@/features/notice'
 import { isDirectionsPath, DIRECTIONS_PATH } from '@/features/directions'
 import { IMPACT_STORIES_PATH, isImpactStoriesPath } from '@/features/impact-story'
+import { INTRODUCTION_PATH, isIntroductionPath } from '@/features/introduction'
 import { isPeoplePath, PEOPLE_PATH } from '@/features/people'
 import { isProgramsPath, PROGRAMS_PATH } from '@/features/program'
 import { isResultsPath, RESULTS_PATH } from '@/features/result'
@@ -13,7 +14,6 @@ import { MYPAGE_PATH } from '@/features/mypage'
 import {
   ABOUT_CAREERS_PATH,
   ABOUT_HISTORY_PATH,
-  ABOUT_INTRODUCTION_PATH,
   EDUCATION_CAREER_PATH,
   EDUCATION_DIGITAL_LITERACY_PATH,
   EDUCATION_ENTREPRENEURSHIP_PATH,
@@ -42,7 +42,7 @@ export const navigationGroups = [
   {
     label: 'JA Korea',
     children: [
-      { label: '기관소개', href: ABOUT_INTRODUCTION_PATH },
+      { label: '기관소개', href: INTRODUCTION_PATH },
       { label: '투명경영', href: TRANSPARENCY_PATH },
       { label: '함께하는 사람들', href: PEOPLE_PATH },
       { label: '오시는 길', href: DIRECTIONS_PATH },
@@ -138,6 +138,7 @@ export function getActiveNavigationItem(pathname: string): NavigationItemLabel |
     isPeoplePath(pathname) ||
     isDirectionsPath(pathname) ||
     isTransparencyPath(pathname) ||
+    isIntroductionPath(pathname) ||
     isTemporaryPagePath(pathname)
   ) {
     return 'JA Korea'
