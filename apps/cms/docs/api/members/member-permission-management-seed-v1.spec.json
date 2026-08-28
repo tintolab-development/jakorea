@@ -1,6 +1,7 @@
 {
-  "$schema_note": "Member permission management (권한 승인 + 관리자 권한 설정) local/staging seed spec. SSOT with member-permission-management-backend-seed-handoff-2026-08-28.md. Not a direct POST body — drive Flyway/seed: Member + InstructorRoleRequest + AdminAccount(self-signup) + AdminRolePermission matrix.",
+  "$schema_note": "Member permission management (권한 승인 + 관리자 권한 설정) local/staging seed spec. SSOT with member-permission-management-backend-seed-handoff-2026-08-28.md. Parent spec: member-management-seed-v1.spec.json. FE catalog: apps/cms/src/data/mock/member-management-seed-catalog.ts. Not a direct POST body — drive Flyway/seed: Member + InstructorRoleRequest + AdminAccount(self-signup) + AdminRolePermission matrix.",
   "seedLabel": "member-permission-management-v1-2026-08",
+  "parentSeedLabel": "member-management-v1-2026-08",
   "moduleFlags": {
     "instructorRoleRequests": "VITE_REAL_API_MODULES=...,instructorRoleRequests",
     "adminApprovalRequests": "VITE_REAL_API_MODULES=...,adminApprovalRequests",
@@ -122,6 +123,35 @@
         "caseId": "IR-BULK-PENDING-C",
         "requestId": 172006,
         "requestStatus": "PENDING"
+      },
+      {
+        "caseId": "IR-EXCLUDED-DUAL",
+        "requestId": 172007,
+        "memberId": 172107,
+        "requestStatus": "PENDING",
+        "listIncluded": false,
+        "excludeReason": "INSTRUCTOR_DUAL_ACTIVE",
+        "mockFeUserId": "mock-instructor-choi-001"
+      },
+      {
+        "caseId": "IR-DIST-172008",
+        "requestId": 172008,
+        "requestStatus": "PENDING",
+        "profileTier": "medium"
+      },
+      {
+        "caseId": "IR-DIST-172009",
+        "requestId": 172009,
+        "requestStatus": "APPROVED",
+        "profileTier": "medium",
+        "socialProviders": ["GOOGLE"]
+      },
+      {
+        "caseId": "IR-DIST-172012",
+        "requestId": 172012,
+        "requestStatus": "REJECTED",
+        "profileTier": "medium",
+        "socialProviders": ["NAVER"]
       }
     ],
     "admin": [
@@ -162,6 +192,15 @@
         "caseId": "AA-BULK-PENDING-B",
         "adminAccountId": 172205,
         "status": "PENDING_VERIFICATION"
+      },
+      {
+        "caseId": "AA-PROVISIONED-NEG",
+        "adminAccountId": 172231,
+        "status": "ACTIVE",
+        "roleCode": "MASTER",
+        "registeredByAdmin": true,
+        "listIncluded": false,
+        "excludeReason": "ADMIN_CREATED_ACTIVE"
       }
     ],
     "adminPermissionsMatrix": {

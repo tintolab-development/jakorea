@@ -1,0 +1,327 @@
+{
+  "$schema_note": "CMS 회원 관리 전체 DB seed spec (목록·상세·권한승인). FE mock SSOT: apps/cms/src/data/mock/member-management-seed-catalog.ts. 권한승인 subset: member-permission-management-seed-v1.spec.json. Not a direct POST body — drive Flyway/LocalDemoMember*Fixtures.",
+  "seedLabel": "member-management-v1-2026-08",
+  "relatedSpecs": {
+    "permissionManagement": "member-permission-management-seed-v1.spec.json",
+    "feCatalogTs": "apps/cms/src/data/mock/member-management-seed-catalog.ts",
+    "notionParity": "member-management-notion-parity-2026-08-28.md"
+  },
+  "moduleFlags": {
+    "members": "VITE_REAL_API_MODULES=...,members",
+    "instructorRoleRequests": "VITE_REAL_API_MODULES=...,instructorRoleRequests",
+    "adminApprovalRequests": "VITE_REAL_API_MODULES=...,adminApprovalRequests",
+    "adminPermissions": "VITE_REAL_API_MODULES=...,adminPermissions"
+  },
+  "idRanges": {
+    "memberId": [171001, 171400],
+    "organizationId": [171501, 171550],
+    "adminAccountIdDirectory": [171601, 171650],
+    "instructorRoleRequestId": [172001, 172040],
+    "instructorMemberId": [172101, 172140],
+    "adminApprovalAccountId": [172201, 172230],
+    "adminProvisionedExcludeId": [172231, 172235]
+  },
+  "businessRules": {
+    "memberDirectoryAllTab": {
+      "rolesDisplayPriority": ["ADMIN", "INSTRUCTOR", "SCHOOL", "INDIVIDUAL"],
+      "dualLabel": "학교(교사), 강사",
+      "revokedLabel": "강사(권한박탈)",
+      "signupType": ["SELF", "ADMIN_REGISTERED"]
+    },
+    "instructorPermissionList": {
+      "include": "pure instructor role requests only (instructor_only profile at request time)",
+      "exclude": ["active SCHOOL_TEACHER without pure instructor", "instructor_dual active at request"],
+      "listMasking": true,
+      "requestedActivityTypeColumn": false
+    },
+    "adminPermissionList": {
+      "include": "self-signup approval queue only (ADMIN_SELF_SIGNUP_PENDING_VERIFICATION log)",
+      "exclude": "provisioned ACTIVE (ADMIN_CREATED_ACTIVE log)",
+      "listMasking": false
+    },
+    "schoolDelete": {
+      "rule": "registeredTeachersCount > 0 → 409, FE blocks before API",
+      "showcaseDeletableOrgId": 171503
+    },
+    "schoolWithTeachersOrgId": 171501
+  },
+  "statusMapping": {
+    "permissionApprovalUi": ["PENDING", "APPROVED", "REJECTED"],
+    "instructorRoleRequest": {
+      "toUi": {
+        "PENDING": "PENDING",
+        "APPROVED": "APPROVED",
+        "COMPLETED": "APPROVED",
+        "REJECTED": "REJECTED",
+        "REVOKED": "REJECTED"
+      },
+      "listQueryPassThrough": true
+    },
+    "adminAccountApproval": {
+      "toUi": {
+        "PENDING_VERIFICATION": "PENDING",
+        "ACTIVE": "APPROVED",
+        "REJECTED_VERIFICATION": "REJECTED"
+      },
+      "listQueryNormalize": {
+        "PENDING": "PENDING_VERIFICATION",
+        "APPROVED": "ACTIVE",
+        "REJECTED": "REJECTED_VERIFICATION"
+      }
+    }
+  },
+  "memberDirectoryShowcase": {
+    "allTab": [
+      { "caseId": "MD-INDIVIDUAL", "memberId": 171001, "roles": ["INDIVIDUAL"], "signupType": "SELF", "keyword": "김개인" },
+      { "caseId": "MD-SCHOOL-TEACHER", "memberId": 171002, "roles": ["SCHOOL_TEACHER"], "signupType": "SELF" },
+      { "caseId": "MD-INSTRUCTOR", "memberId": 171003, "roles": ["INSTRUCTOR"], "signupType": "SELF" },
+      { "caseId": "MD-INSTRUCTOR-DUAL", "memberId": 171004, "roles": ["SCHOOL_TEACHER", "INSTRUCTOR"], "signupType": "SELF" },
+      { "caseId": "MD-INSTRUCTOR-REVOKED", "memberId": 171005, "roles": ["INSTRUCTOR_REVOKED"], "signupType": "SELF" },
+      { "caseId": "MD-ADMIN", "adminAccountId": 171601, "roles": ["ADMIN"], "signupType": "SELF", "roleCode": "MASTER" }
+    ],
+    "schools": [
+      {
+        "caseId": "MD-SCHOOL-SEOUL",
+        "organizationId": 171501,
+        "name": "서울초등학교",
+        "regionSido": "서울",
+        "regionSigungu": "마포구",
+        "registeredTeacherCount": 3,
+        "programAttendanceCount": 2,
+        "mockFeUserId": "mock-school-seoul-001"
+      },
+      {
+        "caseId": "MD-SCHOOL-JINWOL",
+        "organizationId": 171502,
+        "name": "진월초등학교",
+        "regionSido": "서울",
+        "regionSigungu": "서초구",
+        "registeredTeacherCount": 1,
+        "programAttendanceCount": 1,
+        "mockFeUserId": "mock-school-jinwol-001"
+      },
+      {
+        "caseId": "MD-SCHOOL-NO-TEACHERS",
+        "organizationId": 171503,
+        "name": "교사없음테스트학교",
+        "regionSido": "경기",
+        "regionSigungu": "성남시",
+        "registeredTeacherCount": 0,
+        "deletable": true
+      }
+    ],
+    "instructorsList": {
+      "rolesExactAnyOf": "general+instructor,school_teacher+instructor",
+      "excludeRevokedFromInstructorTab": false,
+      "revokedUsesSeparateToken": "INSTRUCTOR_REVOKED"
+    },
+    "adminsList": {
+      "roleCodes": ["MASTER", "PM", "PARTNER", "VIEWER"],
+      "createdAtFilterSupported": false
+    }
+  },
+  "instructorRoleRequestShowcase": [
+    {
+      "caseId": "IR-PENDING-PORTAL-FULL",
+      "requestId": 172001,
+      "memberId": 172101,
+      "requestStatus": "PENDING",
+      "keywordSearchName": "최지원",
+      "profileTier": "full",
+      "listIncluded": true,
+      "requestedActivityType": "JA 강사단",
+      "socialProviders": ["KAKAO", "NAVER"],
+      "termsTypes": [
+        "PAYMENT_STATEMENT_PRE_CONSENT",
+        "FACILITATOR_PLEDGE",
+        "ADMINISTRATIVE_INFO_CONSENT",
+        "CRIMINAL_HISTORY_CHECK_CONSENT"
+      ],
+      "detailSnapshot": {
+        "name": "최지원",
+        "gender": "FEMALE",
+        "birthDate": "1992-04-18",
+        "joinedAt": "2026-07-01T09:00:00Z",
+        "profile": {
+          "memberType": "INDIVIDUAL",
+          "oneLineIntro": "경제·금융 교육 현장 경험을 바탕으로 학생 맞춤형 강의를 진행합니다.",
+          "homeAddress": { "line": "서울특별시 마포구 월드컵북로 400", "detail": "101동 1204호" },
+          "education": {
+            "highestSchoolType": "college4",
+            "highestStatus": "graduated",
+            "college4": {
+              "schoolName": "한국경제대학교",
+              "major": "경제학",
+              "enrollmentYear": "2012",
+              "graduationYear": "2016"
+            }
+          },
+          "career": {
+            "level": "experienced",
+            "summaryYears": 5,
+            "rows": [
+              {
+                "organizationName": "JA Korea",
+                "roleTitle": "강사",
+                "startYearMonth": "2020-03",
+                "isCurrent": true
+              }
+            ]
+          },
+          "licenses": [{ "name": "경제교육지도사 2급", "year": "2019", "issuer": "한국경제교육학회" }],
+          "awards": [{ "name": "우수강사상", "year": "2023", "issuer": "JA Korea" }],
+          "jaKoreaActivities": [
+            {
+              "periodStart": "2021-03",
+              "periodEnd": "2021-12",
+              "title": "JA 경제교육 봉사",
+              "note": "초등 5학년 대상"
+            }
+          ],
+          "essays": {
+            "freeWrite1": "학생들이 경제 개념을 일상과 연결해 이해하도록 돕는 것이 목표입니다."
+          }
+        },
+        "settlement": {
+          "bankName": "국민은행",
+          "accountHolder": "최*원",
+          "accountNumber": "123-****-789012",
+          "businessIncome": false
+        }
+      }
+    },
+    {
+      "caseId": "IR-APPROVED-RESEND",
+      "requestId": 172002,
+      "memberId": 172102,
+      "requestStatus": "APPROVED",
+      "profileTier": "full",
+      "listIncluded": true,
+      "feeGrade": "GRADE_2",
+      "jaGrade": "JA_A",
+      "notificationResentAt": "2026-08-15T14:30:00Z",
+      "socialProviders": ["GOOGLE"]
+    },
+    {
+      "caseId": "IR-REJECTED-RESET",
+      "requestId": 172003,
+      "memberId": 172103,
+      "requestStatus": "REJECTED",
+      "rejectedReason": "서류 미비",
+      "profileTier": "full",
+      "listIncluded": true,
+      "mockFeUserId": "mock-instructor-kang-001"
+    },
+    {
+      "caseId": "IR-BULK-PENDING",
+      "requestIds": [172004, 172005, 172006],
+      "requestStatus": "PENDING",
+      "profileTier": "medium",
+      "listIncluded": true
+    },
+    {
+      "caseId": "IR-EXCLUDED-DUAL",
+      "requestId": 172007,
+      "memberId": 172107,
+      "requestStatus": "PENDING",
+      "profileTier": "medium",
+      "listIncluded": false,
+      "excludeReason": "INSTRUCTOR_DUAL_ACTIVE",
+      "mockFeUserId": "mock-instructor-choi-001"
+    }
+  ],
+  "adminApprovalShowcase": [
+    {
+      "caseId": "AA-PENDING-MFA-TERMS",
+      "adminAccountId": 172201,
+      "status": "PENDING_VERIFICATION",
+      "roleCode": "VIEWER",
+      "keywordSearchName": "김승인대기",
+      "registeredByAdmin": false,
+      "mfaRequired": true,
+      "termsTypes": ["SERVICE_TERMS", "PRIVACY_COLLECTION", "MFA_SETUP_CONSENT", "MARKETING"],
+      "socialProviders": ["GOOGLE", "KAKAO"],
+      "listIncluded": true
+    },
+    {
+      "caseId": "AA-APPROVED-MASTER",
+      "adminAccountId": 172202,
+      "status": "ACTIVE",
+      "roleCode": "MASTER",
+      "listIncluded": true
+    },
+    {
+      "caseId": "AA-REJECTED",
+      "adminAccountId": 172203,
+      "status": "REJECTED_VERIFICATION",
+      "listIncluded": true
+    },
+    {
+      "caseId": "AA-BULK-PENDING",
+      "adminAccountIds": [172204, 172205],
+      "status": "PENDING_VERIFICATION",
+      "listIncluded": true
+    },
+    {
+      "caseId": "AA-PROVISIONED-NEG",
+      "adminAccountId": 172231,
+      "status": "ACTIVE",
+      "roleCode": "MASTER",
+      "registeredByAdmin": true,
+      "listIncluded": false,
+      "excludeReason": "ADMIN_CREATED_ACTIVE"
+    }
+  ],
+  "distribution": {
+    "instructorRoleRequests": {
+      "minCount": 12,
+      "pendingRatio": 0.34,
+      "approvedRatio": 0.5,
+      "rejectedRatio": 0.16,
+      "bulkPendingIds": [172004, 172005, 172006],
+      "distributionIds": [172008, 172009, 172010, 172011, 172012]
+    },
+    "adminApprovalRequests": {
+      "minCount": 10,
+      "pendingRatio": 0.3,
+      "approvedRatio": 0.5,
+      "rejectedRatio": 0.2,
+      "bulkPendingIds": [172204, 172205],
+      "distributionIds": [172206, 172207, 172208, 172209, 172210]
+    },
+    "memberDirectory": {
+      "individualMin": 20,
+      "schoolOrgMin": 10,
+      "instructorMin": 15,
+      "adminMin": 5
+    }
+  },
+  "apiGapsP1": [
+    "GET instructor-role-requests: requestedAtFrom/To, memberType",
+    "GET admin-approval-requests: requestedAtFrom/To",
+    "GET admin-accounts: createdAtFrom/To (관리자 목록 가입일 필터)",
+    "POST approve: scheduledNotificationAt",
+    "POST instructors/{id}/revoke, evaluation-grade — OpenAPI 등록"
+  ],
+  "smokeScenarios": [
+    "GET /api/admin/members/all?keyword=김&page=0&size=20",
+    "GET /api/admin/organizations/schools?keyword=서울",
+    "DELETE blocked: organizations/schools/171501 when teachers>0",
+    "GET /api/admin/instructor-role-requests?status=PENDING → 172001 포함, 172007 제외",
+    "GET /api/admin/instructor-role-requests/172001 → profile.education.highestSchoolType=college4",
+    "GET /api/admin/admin-approval-requests → 172231 제외",
+    "POST bulk-approve ids [172004,172005,172006]",
+    "POST reset-pending { reason } on 172003",
+    "POST resend-notification on 172002 (APPROVED only)"
+  ],
+  "localDemo": {
+    "profiles": ["local"],
+    "flag": "JA_LOCAL_DEMO_ENABLED=true",
+    "adminLogin": {
+      "email": "admin1@jakorea.org",
+      "password": "admin1234!",
+      "mfaCode": "000000",
+      "mfaVerifyBodyField": "verificationCode"
+    }
+  }
+}

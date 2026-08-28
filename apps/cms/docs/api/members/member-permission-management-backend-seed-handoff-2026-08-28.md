@@ -11,6 +11,7 @@
 | **목록 매퍼** | [`map-instructor-role-request-row.ts`](../../src/features/user/api/map-instructor-role-request-row.ts), [`map-admin-approval-request-row.ts`](../../src/features/user/api/map-admin-approval-request-row.ts) |
 | **상세 매퍼** | [`map-instructor-role-request-detail-to-user.ts`](../../src/features/user/api/map-instructor-role-request-detail-to-user.ts), [`map-admin-account-detail-to-user.ts`](../../src/features/user/api/map-admin-account-detail-to-user.ts) |
 | **시드 스펙 JSON** | [`member-permission-management-seed-v1.spec.json`](./member-permission-management-seed-v1.spec.json) |
+| **상위 seed (전체 회원관리)** | [`member-management-seed-v1.spec.json`](./member-management-seed-v1.spec.json) · [`member-management-backend-seed-handoff-2026-08-28.md`](./member-management-backend-seed-handoff-2026-08-28.md) |
 | **관련 기존 handoff** | [`portal-instructor-role-request-create-structured-handoff-2026-08-13.md`](../portal-instructor-role-request-create-structured-handoff-2026-08-13.md) (Portal CREATE·상세 스냅샷) |
 | **Cursor 프롬프트** | 본 문서 §12 (이 파일 하단) |
 
