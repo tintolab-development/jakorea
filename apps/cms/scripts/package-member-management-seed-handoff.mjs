@@ -25,6 +25,7 @@ const outDir = outArg ? path.resolve(outArg.slice('--out='.length)) : defaultOut
 /** @type {string[]} */
 const seedDocFiles = [
   'member-management-backend-seed-handoff-2026-08-28.md',
+  'member-management-be-seed-gap-fix-cursor-prompt-2026-08-28.md',
   'member-permission-management-backend-seed-handoff-2026-08-28.md',
   'member-management-seed-v1.spec.json',
   'member-detail-history-seed-v1.spec.json',
@@ -76,15 +77,17 @@ if (withOpenApi) {
 
 const readme = `# CMS 회원 관리 DB seed — BE 전달 패키지
 
-**Cursor 프롬프트:** \`member-management-backend-seed-handoff-2026-08-28.md\` 전체를 JABACK Cursor에 붙여넣기.
+**Cursor 프롬프트:** \`member-management-be-seed-gap-fix-cursor-prompt-2026-08-28.md\` 전체를 JABACK Cursor에 붙여넣기.
 
 | 파일 | 용도 |
 |------|------|
-| member-management-backend-seed-handoff-2026-08-28.md | **메인 Cursor prompt** — 전체 회원관리 seed |
+| member-management-be-seed-gap-fix-cursor-prompt-2026-08-28.md | **BE gap fix Cursor prompt** (directory·이력 smoke 실패 보완) |
+| member-management-backend-seed-handoff-2026-08-28.md | 메인 Cursor prompt — 전체 회원관리 seed |
+| member-detail-history-seed-v1.spec.json | 상세 이력 seed SSOT |
 | member-permission-management-backend-seed-handoff-2026-08-28.md | 권한승인·설정 상세 handoff |
 | member-management-seed-v1.spec.json | 기계 readable seed SSOT |
 | member-permission-management-seed-v1.spec.json | 권한승인 subset (172xxx) |
-| fe-mock/member-management-seed-catalog.ts | FE mock ↔ numeric id |
+| fe-mock/*.ts | FE mock ↔ numeric id |
 | member-management-notion-parity-2026-08-28.md | Notion 기획 검증 리포트 |
 
 Generated: ${date}

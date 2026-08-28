@@ -40,12 +40,13 @@ CMS LNB 「회원 관리」(회원 목록 · 권한 승인 · 권한 설정) API
 
 ## DB seed — 백엔드 Cursor 프롬프트
 
-> **BE에 붙여넣을 파일:** [`member-management-backend-seed-handoff-2026-08-28.md`](./member-management-backend-seed-handoff-2026-08-28.md)  
-> mock API numeric id·showcase case·Flyway 규칙·smoke checklist 포함.
+> **BE에 붙여넣을 파일 (gap 보완 · 2026-08-28):** [`member-management-be-seed-gap-fix-cursor-prompt-2026-08-28.md`](./member-management-be-seed-gap-fix-cursor-prompt-2026-08-28.md)  
+> 전체 seed SSOT: [`member-management-backend-seed-handoff-2026-08-28.md`](./member-management-backend-seed-handoff-2026-08-28.md)
 
 | 문서 / 스펙 | 용도 |
 |-------------|------|
-| [**member-management-backend-seed-handoff-2026-08-28.md**](./member-management-backend-seed-handoff-2026-08-28.md) | **Cursor prompt (메인)** — 회원 목록·학교·권한승인 전체 seed |
+| [**member-management-be-seed-gap-fix-cursor-prompt-2026-08-28.md**](./member-management-be-seed-gap-fix-cursor-prompt-2026-08-28.md) | **Cursor prompt (BE 전달)** — directory·상세 이력 gap 보완 · smoke 16/16 |
+| [**member-management-backend-seed-handoff-2026-08-28.md**](./member-management-backend-seed-handoff-2026-08-28.md) | Cursor prompt (메인) — 회원 목록·학교·권한승인 전체 seed |
 | [**member-management-seed-v1.spec.json**](./member-management-seed-v1.spec.json) | 기계 readable seed SSOT · id 범위 · showcase · smoke |
 | [**member-detail-history-seed-v1.spec.json**](./member-detail-history-seed-v1.spec.json) | **상세 이력** seed (171001–171005 · 171501 · 171601) |
 | [**member-permission-management-seed-v1.spec.json**](./member-permission-management-seed-v1.spec.json) | 권한승인 subset (172001–172231) |
