@@ -102,6 +102,20 @@ export {
   getApplicationPathByProgramId,
 } from './application-paths'
 export { mockUsers, getUserByEmail, getUsersByRole, validateLogin } from './users'
+export {
+  MEMBER_MANAGEMENT_SEED_LABEL,
+  MEMBER_SEED_ID_RANGES,
+  MOCK_TO_BE_MEMBER_ID,
+  SEED_IR_PENDING_PORTAL_FULL_PROFILE,
+  INSTRUCTOR_ROLE_REQUEST_SEED_CASES,
+  ADMIN_APPROVAL_SEED_CASES,
+  MEMBER_DIRECTORY_SEED_CASES,
+  getInstructorSeedCaseByRequestId,
+  getAdminSeedCaseByAccountId,
+  type InstructorRoleRequestSeedCase,
+  type AdminApprovalSeedCase,
+  type MemberSeedProfileTier,
+} from './member-management-seed-catalog'
 export { getVolunteerPrograms, mockVolunteerProgramsMap } from './volunteer-programs'
 export { getEducationPrograms, mockEducationProgramsMap } from './education-programs'
 export {

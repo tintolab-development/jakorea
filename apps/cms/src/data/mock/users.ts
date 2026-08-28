@@ -10,14 +10,14 @@ import { PROGRAM_LECTURE_HISTORY_DEMO_INSTRUCTOR_USER_ID } from './program-lectu
 /** 진월초등학교 — 고정 user id (소속 교사 mock·강사 `affiliatedSchoolUserId` 연결) */
 export const MOCK_SCHOOL_JINWOL_USER_ID = 'mock-school-jinwol-001'
 
-/** 최강사(instructor1) — 고정 CMS User.id (소속 교사 `linkedUserId`·딥링크 안정화) */
+/** 최강사(instructor1) — 고정 CMS User.id (소속 교사 `linkedUserId`·딥링크 안정화) · BE seed 172107 / IR-EXCLUDED-DUAL */
 export const MOCK_INSTRUCTOR_CHOI_USER_ID = 'mock-instructor-choi-001'
 
-/** 강사 mock 2·3 — 고정 id (소속 교사 `linkedUserId` 연동) */
+/** 강사 mock 2·3 — 고정 id (소속 교사 `linkedUserId` 연동) · BE seed 172101 / 172103 */
 export const MOCK_INSTRUCTOR_JUNG_USER_ID = 'mock-instructor-jung-001'
 export const MOCK_INSTRUCTOR_KANG_USER_ID = 'mock-instructor-kang-001'
 
-/** 학교(교사) 회원 목록 1~4행 — 고정 id (소속 교사·프로그램 신청 mock 연동) */
+/** 학교(교사) 회원 목록 1~4행 — 고정 id · BE org 171501 (서울초) / 171502 (진월초) — @see member-management-seed-catalog.ts */
 export const MOCK_SCHOOL_SEOUL_USER_ID = 'mock-school-seoul-001'
 export const MOCK_SCHOOL_BUSAN_USER_ID = 'mock-school-busan-001'
 export const MOCK_SCHOOL_DAEGU_USER_ID = 'mock-school-daegu-001'
