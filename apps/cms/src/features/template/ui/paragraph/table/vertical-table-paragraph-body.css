@@ -20,33 +20,25 @@
 }
 
 /* 외곽 1px 보더 안쪽에 맞춘 모서리(선택 행은 행 전체 박스 스트로크로 별도 처리) */
-.form-editor-vertical-table__row:first-child:not(
-    .form-editor-vertical-table__row--selected
-  )
+.form-editor-vertical-table__row:first-child:not(.form-editor-vertical-table__row--selected)
   .form-editor-vertical-table__stage:first-child
   .form-editor-vertical-table__th {
   border-top-left-radius: calc(var(--8, 8px) - 1px);
 }
 
-.form-editor-vertical-table__row:first-child:not(
-    .form-editor-vertical-table__row--selected
-  )
+.form-editor-vertical-table__row:first-child:not(.form-editor-vertical-table__row--selected)
   .form-editor-vertical-table__stage:last-child
   .form-editor-vertical-table__td {
   border-top-right-radius: calc(var(--8, 8px) - 1px);
 }
 
-.form-editor-vertical-table__row:last-child:not(
-    .form-editor-vertical-table__row--selected
-  )
+.form-editor-vertical-table__row:last-child:not(.form-editor-vertical-table__row--selected)
   .form-editor-vertical-table__stage:first-child
   .form-editor-vertical-table__th {
   border-bottom-left-radius: calc(var(--8, 8px) - 1px);
 }
 
-.form-editor-vertical-table__row:last-child:not(
-    .form-editor-vertical-table__row--selected
-  )
+.form-editor-vertical-table__row:last-child:not(.form-editor-vertical-table__row--selected)
   .form-editor-vertical-table__stage:last-child
   .form-editor-vertical-table__td {
   border-bottom-right-radius: calc(var(--8, 8px) - 1px);
@@ -332,78 +324,47 @@
 
 .form-editor-vertical-table__bottom-input {
   width: 100%;
+  --vt-bottom-text: var(--default-BK, #3d3d3d);
+  --vt-bottom-font: Pretendard, sans-serif;
+  --vt-bottom-size: 16px;
+  --vt-bottom-weight: 500;
+  --vt-bottom-lh: 150%;
 }
 
-/* 하단 설명(디스크립션) — 가로형 `.form-editor-horizontal-table__bottom-input` 과 동일 타이포 */
+/* 하단 설명(디스크립션) — 가로형 bottom-input 과 동일: 스펙은 루트, 자식 inherit */
 .form-editor-vertical-table__bottom-input.paragraph-input.paragraph-input--description {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  color: var(--vt-bottom-text);
+  font-family: var(--vt-bottom-font);
+  font-size: var(--vt-bottom-size);
   font-style: normal;
-  font-weight: 500;
-  line-height: 150%; /* 24px */
+  font-weight: var(--vt-bottom-weight);
+  line-height: var(--vt-bottom-lh);
 }
 
-.form-editor-vertical-table__bottom-input .paragraph-input__view-text,
-.form-editor-vertical-table__bottom-input .paragraph-input__placeholder,
 .form-editor-vertical-table__bottom-input
-  .paragraph-input--edit
-  .paragraph-input__shell
-  .ant-input,
-.form-editor-vertical-table__bottom-input
-  .paragraph-input--edit
-  .paragraph-input__shell
-  .ant-input::placeholder {
-  color: var(--default-BK, #3d3d3d) !important;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%; /* 24px */
-  -webkit-text-fill-color: var(--default-BK, #3d3d3d);
+  :is(
+    .paragraph-input__view-text,
+    .paragraph-input__placeholder,
+    .paragraph-input__shell .ant-input,
+    .paragraph-input__shell textarea.ant-input,
+    .paragraph-input__shell--focused .ant-input,
+    .paragraph-input__shell--focused textarea.ant-input
+  ) {
+  color: inherit !important;
+  -webkit-text-fill-color: var(--vt-bottom-text);
+  font: inherit !important;
+  line-height: inherit !important;
   opacity: 1 !important;
 }
 
-.form-editor-vertical-table__bottom-input.paragraph-input--view.paragraph-input--description:not(
-    .paragraph-input--filled
-  )
-  .paragraph-input__view-text {
-  color: var(--default-BK, #3d3d3d);
+.form-editor-vertical-table__bottom-input
+  :is(.paragraph-input__shell .ant-input, .paragraph-input__shell textarea.ant-input)::placeholder {
+  color: var(--vt-bottom-text);
   opacity: 1;
 }
 
-.form-editor-vertical-table__bottom-input.paragraph-input--view.paragraph-input--filled.paragraph-input--description
-  .paragraph-input__view-text {
-  color: var(--default-BK, #3d3d3d);
-  opacity: 1;
-}
-
-.form-editor-vertical-table__bottom-input.paragraph-input--edit.paragraph-input--filled
-  .paragraph-input__shell
-  .ant-input,
-.form-editor-vertical-table__bottom-input.paragraph-input--edit.paragraph-input--filled
-  .paragraph-input__shell
-  textarea.ant-input,
-.form-editor-vertical-table__bottom-input.paragraph-input--edit.paragraph-input--filled
-  .paragraph-input__shell--focused
-  .ant-input,
-.form-editor-vertical-table__bottom-input.paragraph-input--edit.paragraph-input--filled
-  .paragraph-input__shell--focused
-  textarea.ant-input {
-  color: var(--default-BK, #3d3d3d) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif !important;
-  font-size: 16px !important;
-  font-style: normal !important;
-  font-weight: 500 !important;
-  line-height: 150% !important;
-}
-
-.form-editor-vertical-table__bottom-input .paragraph-input__row,
-.form-editor-vertical-table__bottom-input .paragraph-input__main,
-.form-editor-vertical-table__bottom-input .paragraph-input__view-text,
-.form-editor-vertical-table__bottom-input .paragraph-input__shell {
+.form-editor-vertical-table__bottom-input
+  :is(.paragraph-input__row, .paragraph-input__main, .paragraph-input__view-text, .paragraph-input__shell) {
   width: 100%;
   max-width: 100%;
 }
