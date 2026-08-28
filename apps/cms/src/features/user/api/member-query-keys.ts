@@ -53,11 +53,15 @@ export const memberQueryKeys = {
     all: () => [...memberQueryKeys.all, 'instructorRoleRequests'] as const,
     list: (paramsKey: string) =>
       [...memberQueryKeys.instructorRoleRequests.all(), 'list', paramsKey] as const,
+    detail: (requestId: number) =>
+      [...memberQueryKeys.instructorRoleRequests.all(), 'detail', requestId] as const,
   },
   adminApprovalRequests: {
     all: () => [...memberQueryKeys.all, 'adminApprovalRequests'] as const,
     list: (paramsKey: string) =>
       [...memberQueryKeys.adminApprovalRequests.all(), 'list', paramsKey] as const,
+    detail: (adminAccountId: number) =>
+      [...memberQueryKeys.adminApprovalRequests.all(), 'detail', adminAccountId] as const,
   },
   adminPermissions: {
     all: () => [...memberQueryKeys.all, 'adminPermissions'] as const,

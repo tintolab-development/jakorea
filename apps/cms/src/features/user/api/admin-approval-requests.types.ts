@@ -1,12 +1,9 @@
-import type { PageResponseAdminAccountListItemResponse } from '@/shared/api/generated/members/schemas'
+import type {
+  ListAdminApprovalRequestsParams,
+  PageResponseAdminAccountListItemResponse,
+} from '@/shared/api/generated/members/schemas'
 
-/** Swagger `listAdminApprovalRequests` — `GET /api/admin/admin-approval-requests` */
-export type ListAdminApprovalRequestsParams = {
-  keyword?: string
-  roleCode?: string
-  page?: number
-  size?: number
-}
+export type { ListAdminApprovalRequestsParams }
 
 /** Swagger `approveAdminApprovalRequest` / `rejectAdminApprovalRequest` body */
 export type AdminAccountApprovalDecisionRequest = {
