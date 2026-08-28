@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { Application } from '@/types/domain'
-import { mergeMemberApplicationsWithProgramHistory } from './use-user-detail-applications'
+import {
+  mergeMemberApplicationsWithProgramHistory,
+  resolveEnrollmentSummarySubjectType,
+} from './use-user-detail-applications'
 
 function app(id: string, subjectType: Application['subjectType']): Application {
   return {
@@ -14,6 +17,20 @@ function app(id: string, subjectType: Application['subjectType']): Application {
     updatedAt: '2026-01-01T00:00:00Z',
   }
 }
+
+describe('resolveEnrollmentSummarySubjectType', () => {
+  it('수강 child → student만 보강', () => {
+    expect(resolveEnrollmentSummarySubjectType('enrollment', true)).toBe('student')
+  })
+
+  it('강의 child → instructor만 보강', () => {
+    expect(resolveEnrollmentSummarySubjectType('lecture', true)).toBe('instructor')
+  })
+
+  it('봉사 child → summary 보강 없음', () => {
+    expect(resolveEnrollmentSummarySubjectType('volunteer', true)).toBeNull()
+  })
+})
 
 describe('mergeMemberApplicationsWithProgramHistory', () => {
   it('강사는 신청(강사)과 참여(학생)를 나눈다', () => {

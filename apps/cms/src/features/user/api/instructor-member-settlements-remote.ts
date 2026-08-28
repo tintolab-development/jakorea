@@ -32,9 +32,12 @@ export async function fetchAllInstructorSettlementsRemote(
   return items
 }
 
+const SETTLEMENT_SUBRESOURCE_STALE_MS = 30_000
+
 export function instructorSettlementsQueryOptions(instructorMemberId: number) {
   return queryOptions({
     queryKey: memberQueryKeys.instructorSettlements(instructorMemberId),
+    staleTime: SETTLEMENT_SUBRESOURCE_STALE_MS,
     queryFn: () => fetchAllInstructorSettlementsRemote(instructorMemberId),
   })
 }
@@ -43,12 +46,17 @@ export function fetchInstructorSettlementsQuery(
   queryClient: QueryClient,
   instructorMemberId: number
 ) {
-  return queryClient.fetchQuery(instructorSettlementsQueryOptions(instructorMemberId))
+  return queryClient.ensureQueryData(instructorSettlementsQueryOptions(instructorMemberId))
 }
 
+/**
+ * 지급조서 ID join — BE에 instructorMemberId 스코프 API가 없어 전역 statements를 쓴다.
+ * staleTime + ensureQueryData로 탭 재진입 시 과호출을 막는다.
+ */
 export function instructorSettlementStatementJoinQueryOptions(instructorMemberId: number) {
   return queryOptions({
     queryKey: memberQueryKeys.instructorSettlementStatementJoin(instructorMemberId),
+    staleTime: SETTLEMENT_SUBRESOURCE_STALE_MS,
     queryFn: async (): Promise<Map<number, number>> => {
       const statements = await fetchAllPaymentStatementsRemote()
       const map = new Map<number, number>()
@@ -66,7 +74,7 @@ export function fetchInstructorSettlementStatementJoinQuery(
   queryClient: QueryClient,
   instructorMemberId: number
 ) {
-  return queryClient.fetchQuery(
+  return queryClient.ensureQueryData(
     instructorSettlementStatementJoinQueryOptions(instructorMemberId)
   )
 }
