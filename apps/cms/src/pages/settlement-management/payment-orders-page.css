@@ -27,6 +27,17 @@
   overflow: visible;
 }
 
+/* FilterTableLayout: 카드 내부 세로 플렉스 — 리스트·캘린더 공통 (account-payments-page.css 패턴) */
+.payment-orders-page__content-wrapper
+  > .payment-orders-page__filter-list-layout.filter-table-layout {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: visible;
+}
+
 /* FilterTableLayout: content-wrapper가 이미 카드이므로 이중 그림자·배경 제거 */
 .payment-orders-page__content-wrapper .payment-orders-page__filter-list-layout.filter-table-layout {
   background: transparent;
