@@ -138,6 +138,13 @@ export type { PFToggleProps, PFToggleVariant } from './pf-toggle'
 export { PFText } from './pf-text'
 export type { PFTextColor, PFTypography } from './pf-text'
 export { PFTextInput } from './pf-text-input'
+export { PFTextarea } from './pf-textarea'
+export type {
+  PFTextareaMessageStatus,
+  PFTextareaProps,
+  PFTextareaSize,
+  PFTextareaVariant,
+} from './pf-textarea'
 export { PFDateInput } from './pf-date-input'
 export type {
   PFDateInputMessageStatus,
