@@ -73,7 +73,7 @@ const scheduleGroupTimeSchema = z.object({
 
 const scheduleDetailFormSchema = z.object({
   scheduleLabel: z.string(),
-  blockKind: z.enum(['sub', 'event']).optional(),
+  blockKind: z.enum(['sub', 'event', 'preEducation']).optional(),
   name: z.string(),
   groupTimes: z.array(scheduleGroupTimeSchema),
   scheduleDate: z.string().optional(),
@@ -222,8 +222,7 @@ export function resolveScheduleDetailsFormState(
     const groupCount = 2
     return {
       scheduleGroupCount: groupCount,
-      scheduleCurriculumPreEducation:
-        sessionRound === 'multi' ? (commonInfo.scheduleCurriculumPreEducation ?? false) : false,
+      scheduleCurriculumPreEducation: commonInfo.scheduleCurriculumPreEducation ?? false,
       scheduleDetails: buildDefaultScheduleDetailsForEdit({
         sessionRound,
         scheduleGroupCount: groupCount,
@@ -251,15 +250,14 @@ export function resolveScheduleDetailsFormState(
       assignmentPeriod: d.assignmentPeriod ?? '',
       educationForm: educationFormValueFromLabel(d.educationFormLabel),
       participationMethod: participationMethodValueFromLabel(d.participationMethodLabel),
-      ipsCategory: sessionIps.ipsCategory,
-      ipsDetail: sessionIps.ipsDetail,
+      ipsCategory: blockKind === 'preEducation' ? 'prepare' : sessionIps.ipsCategory,
+      ipsDetail: blockKind === 'preEducation' ? 'none' : sessionIps.ipsDetail,
     }
   })
 
   const scheduleGroupCount = Math.max(1, ...scheduleDetails.map(d => d.groupTimes.length))
   return {
-    scheduleCurriculumPreEducation:
-      sessionRound === 'multi' ? (commonInfo.scheduleCurriculumPreEducation ?? false) : false,
+    scheduleCurriculumPreEducation: commonInfo.scheduleCurriculumPreEducation ?? false,
     scheduleGroupCount,
     scheduleDetails: scheduleDetails.map(d => ({
       ...d,
@@ -1065,16 +1063,34 @@ export function generalCommonInfoEditValuesToProgramPatch(
               ? buildSessionIpsTypeSummary('prepare', 'none')
               : undefined,
       })),
-      scheduleCurriculumPreEducation:
-        values.educationStructure === 'schedule' && values.sessionRound !== 'multi'
-          ? false
-          : (values.scheduleCurriculumPreEducation ?? false),
+      scheduleCurriculumPreEducation: values.scheduleCurriculumPreEducation ?? false,
       scheduleDetails:
         values.educationStructure === 'schedule'
           ? (relabeledScheduleDetails ?? []).map(d => {
               const row = {
                 scheduleLabel: d.scheduleLabel,
                 name: d.name.trim(),
+              }
+              if (
+                d.blockKind === 'preEducation' ||
+                inferScheduleDetailBlockKind(d.scheduleLabel) === 'preEducation'
+              ) {
+                return {
+                  ...row,
+                  scheduleLabel: '사전 교육',
+                  name: '사전 교육',
+                  scheduleDateLabel: d.scheduleDate?.trim() || undefined,
+                  assignmentEnabled: false,
+                  assignmentPeriod: undefined,
+                  educationFormLabel:
+                    values.educationFormScheduleDetail === 'perSchedule' && d.educationForm
+                      ? educationFormLabelFromValue(d.educationForm)
+                      : undefined,
+                  ipsTypeSummary:
+                    values.ipsScheduleDetail === 'perSchedule'
+                      ? buildSessionIpsTypeSummary('prepare', 'none')
+                      : undefined,
+                }
               }
               if (d.blockKind === 'event' || inferScheduleDetailBlockKind(d.scheduleLabel) === 'event') {
                 return {

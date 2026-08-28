@@ -16,14 +16,25 @@ import { padScheduleDetailLabel } from '@/features/program/general/model/common-
 type CommonInfoSetValue = UseFormSetValue<GeneralProgramCommonInfoEditFormValues>
 type CommonInfoGetValues = UseFormGetValues<GeneralProgramCommonInfoEditFormValues>
 
-export type ScheduleDetailBlockKind = 'sub' | 'event'
+export type ScheduleDetailBlockKind = 'sub' | 'event' | 'preEducation'
+
+export const PRE_EDUCATION_SCHEDULE_LABEL = '사전 교육'
 
 export function padEventScheduleLabel(index: number): string {
   return `행사 일정 ${String(index + 1).padStart(2, '0')}`
 }
 
 export function inferScheduleDetailBlockKind(scheduleLabel: string): ScheduleDetailBlockKind {
+  if (scheduleLabel.includes('사전 교육')) return 'preEducation'
   return scheduleLabel.includes('행사 일정') ? 'event' : 'sub'
+}
+
+export function isPreEducationScheduleBlock(detail: {
+  blockKind?: ScheduleDetailBlockKind
+  scheduleLabel?: string
+}): boolean {
+  if (detail.blockKind === 'preEducation') return true
+  return inferScheduleDetailBlockKind(detail.scheduleLabel ?? '') === 'preEducation'
 }
 
 export function isScheduleMultiAllPerSchedule(
@@ -62,7 +73,7 @@ export function shouldUseScheduleEventBlockLayout(
   )
 }
 
-/** 행사 일정 블록 — 과제 설정 다음에 붙는 「일정 별 상이」 행 */
+/** 행사 일정 블록 — 일정 별 상이 필드 배치 (교육·IPS 다음 과제·참여) */
 export type ScheduleEventPerScheduleExtraPlan = {
   showEducation: boolean
   showParticipation: boolean
@@ -153,9 +164,13 @@ export function createEmptyScheduleDetailBlock(
   const { blockKind, groupCount } = options
   return {
     scheduleLabel:
-      blockKind === 'event' ? padEventScheduleLabel(index) : padScheduleDetailLabel(index),
+      blockKind === 'preEducation'
+        ? PRE_EDUCATION_SCHEDULE_LABEL
+        : blockKind === 'event'
+          ? padEventScheduleLabel(index)
+          : padScheduleDetailLabel(index),
     blockKind,
-    name: '',
+    name: blockKind === 'preEducation' ? PRE_EDUCATION_SCHEDULE_LABEL : '',
     groupTimes: emptyScheduleGroupTimes(groupCount),
     scheduleDate: '',
     assignmentEnabled: false,
@@ -192,12 +207,88 @@ export function buildDefaultScheduleDetailsForEdit(input: {
 export function relabelScheduleDetailFormRowsByKind(
   details: GeneralProgramScheduleDetailFormValues[]
 ): GeneralProgramScheduleDetailFormValues[] {
-  const blockKind = details[0]?.blockKind ?? inferScheduleDetailBlockKind(details[0]?.scheduleLabel ?? '')
-  return details.map((d, i) => ({
-    ...d,
-    blockKind,
-    scheduleLabel: blockKind === 'event' ? padEventScheduleLabel(i) : padScheduleDetailLabel(i),
-  }))
+  let eventIndex = 0
+  let subIndex = 0
+  return details.map(d => {
+    const blockKind = d.blockKind ?? inferScheduleDetailBlockKind(d.scheduleLabel)
+    if (blockKind === 'preEducation') {
+      return {
+        ...d,
+        blockKind,
+        scheduleLabel: PRE_EDUCATION_SCHEDULE_LABEL,
+        name: PRE_EDUCATION_SCHEDULE_LABEL,
+        ipsCategory: 'prepare' as const,
+        ipsDetail: 'none',
+      }
+    }
+    if (blockKind === 'event') {
+      return {
+        ...d,
+        blockKind,
+        scheduleLabel: padEventScheduleLabel(eventIndex++),
+      }
+    }
+    return {
+      ...d,
+      blockKind,
+      scheduleLabel: padScheduleDetailLabel(subIndex++),
+    }
+  })
+}
+
+export function applySchedulePreEducationBlock(
+  details: GeneralProgramScheduleDetailFormValues[],
+  enabled: boolean,
+  options: { groupCount: number }
+): GeneralProgramScheduleDetailFormValues[] {
+  const withoutPre = details.filter(d => !isPreEducationScheduleBlock(d))
+  if (!enabled) {
+    return relabelScheduleDetailFormRowsByKind(withoutPre)
+  }
+
+  const existingPre = details.find(d => isPreEducationScheduleBlock(d))
+  const convertedFirst =
+    !existingPre && withoutPre[0]?.name?.trim() === PRE_EDUCATION_SCHEDULE_LABEL
+      ? withoutPre[0]
+      : undefined
+  const rest = convertedFirst ? withoutPre.slice(1) : withoutPre
+  const preSource =
+    existingPre ??
+    convertedFirst ??
+    createEmptyScheduleDetailBlock(0, {
+      blockKind: 'preEducation',
+      groupCount: options.groupCount,
+    })
+
+  return relabelScheduleDetailFormRowsByKind([
+    {
+      ...preSource,
+      blockKind: 'preEducation',
+      scheduleLabel: PRE_EDUCATION_SCHEDULE_LABEL,
+      name: PRE_EDUCATION_SCHEDULE_LABEL,
+      ipsCategory: 'prepare',
+      ipsDetail: 'none',
+    },
+    ...rest,
+  ])
+}
+
+export function scheduleDetailsPreEducationSyncEqual(
+  a: GeneralProgramScheduleDetailFormValues[],
+  b: GeneralProgramScheduleDetailFormValues[]
+): boolean {
+  if (a.length !== b.length) return false
+  return a.every((d, i) => {
+    const other = b[i]
+    return (
+      other != null &&
+      d.blockKind === other.blockKind &&
+      d.scheduleLabel === other.scheduleLabel &&
+      d.name === other.name &&
+      d.ipsCategory === other.ipsCategory &&
+      d.ipsDetail === other.ipsDetail
+    )
+  })
 }
 
 export function buildDefaultCurriculumSessionsForEdit(

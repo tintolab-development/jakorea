@@ -64,6 +64,7 @@ export function resolveEmployeeVolunteerSessionRows(program: Program): EmployeeV
     const count = Math.max(details.length, 1)
     for (let index = 0; index < count; index += 1) {
       const detail = details[index]
+      if (detail?.scheduleLabel?.includes('사전 교육')) continue
       const name = detail?.name?.trim()
       const scheduleLabel = detail?.scheduleLabel?.trim()
       const label = name || scheduleLabel || `세부 일정 ${String(index + 1).padStart(2, '0')}`

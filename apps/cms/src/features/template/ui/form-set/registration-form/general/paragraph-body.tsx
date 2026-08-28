@@ -83,7 +83,7 @@ export interface ProgramRegistrationParagraphBodyOptions {
   scheduleCurriculumGroupCount: number
   onAddScheduleCurriculumGroup: () => void
   onDeleteScheduleCurriculumGroup: (groupIndex: number) => void
-  /** 일정형(복수·일정 별 상이 조합) 카드 헤더 — 사전 교육 토글 */
+  /** 일정형 카드 헤더 — 사전 교육 토글 (단일·복수 회차) */
   scheduleCurriculumPreEducation: boolean
   onScheduleCurriculumPreEducationChange: (checked: boolean) => void
   /** 교육받은 교사 — 카드 헤더 교육 연수 토글 */

@@ -116,7 +116,7 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     expect(patch.generalProgramAudience).toBe('organization')
   })
 
-  it('일정형 단일 회차는 사전 교육을 저장하지 않는다', () => {
+  it('일정형 단일 회차도 사전 교육을 저장한다', () => {
     const program = baseProgram({
       generalProgramEducationStructure: 'schedule',
       generalProgramSessionRound: 'single',
@@ -126,7 +126,7 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     values.sessionRound = 'single'
     values.scheduleCurriculumPreEducation = true
     const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
-    expect(patch.generalCommonInfo?.scheduleCurriculumPreEducation).toBe(false)
+    expect(patch.generalCommonInfo?.scheduleCurriculumPreEducation).toBe(true)
   })
 
   it('행사 일정 블록의 일정 별 상이 교육·참여·IPS를 저장 후 다시 로드한다', () => {

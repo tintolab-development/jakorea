@@ -17,8 +17,8 @@ import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-tim
 import {
   getScheduleDetailPerBlockLayoutPlan,
   getScheduleEventPerScheduleExtraPlan,
-  hasScheduleEventPerScheduleExtraRows,
   isScheduleEducationAndIpsBothPerSchedule,
+  PRE_EDUCATION_SCHEDULE_LABEL,
   shouldUseScheduleEventBlockLayout,
 } from '@/features/program/general/lib/schedule-detail-form'
 import {
@@ -55,6 +55,8 @@ const EMPTY_SCHEDULE_EVENT_ASSIGNMENT: ScheduleEventAssignmentValue = {
   enabled: false,
   period: '',
 }
+
+const PRE_EDUCATION_DETAIL_INDEX = 0
 
 function reindexDetailRecordAfterDelete<T>(
   record: Record<number, T>,
@@ -205,7 +207,7 @@ export type ProgramRegistrationEducationScheduleCurriculumParagraphProps = {
   educationFormScheduleDetail: ProgramRegistrationScheduleDetailKind
   participationScheduleDetail: ProgramRegistrationScheduleDetailKind
   ipsScheduleDetail: ProgramRegistrationScheduleDetailKind
-  /** 복수 + IPS 일정 별 상이 시 카드 헤더「사전 교육」ON이면 IPS 유형을 Prepare / 해당 없음으로 고정·비활성 */
+  /** 카드 헤더「사전 교육」ON이면 일정 앞에 사전 교육 블록을 두고, 그 블록의 IPS만 Prepare로 고정 */
   scheduleCurriculumPreEducation?: boolean
 }
 
@@ -272,18 +274,20 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     )
   }
 
-  const ipsLockedForSchedulePreEducation = scheduleCurriculumPreEducation
-
-  const ipsTypeValueForDetail = (detailIndex: number): ProgramRegistrationIpsTypeValue =>
-    ipsLockedForSchedulePreEducation
+  const ipsTypeValueForDetail = (
+    detailIndex: number,
+    locked = false
+  ): ProgramRegistrationIpsTypeValue =>
+    locked
       ? IPS_PREPARE_NONE_VALUE
       : (ipsByDetailIndex[detailIndex] ?? { category: '', detail: '' })
 
   const setIpsForDetailUnlessLocked = (
     detailIndex: number,
-    next: ProgramRegistrationIpsTypeValue
+    next: ProgramRegistrationIpsTypeValue,
+    locked = false
   ) => {
-    if (ipsLockedForSchedulePreEducation) return
+    if (locked) return
     setIpsForDetail(detailIndex, next)
   }
 
@@ -483,37 +487,59 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   )
 
   const renderEventPerScheduleExtraRows = (detailIndex: number): ReactNode => {
-    if (!hasScheduleEventPerScheduleExtraRows(eventExtraPlan)) {
-      return null
-    }
+    const assignment = assignmentForDetail(detailIndex)
+    const assignmentField = (fullRow: boolean) => (
+      <DetailInfoForm.Field
+        label="과제 설정"
+        fullRow={fullRow}
+        view={
+          <CurriculumAssignmentSettingView
+            assignmentEnabled={assignment.enabled}
+            assignmentPeriod={assignment.period}
+          />
+        }
+        edit={
+          <ScheduleDetailAssignmentInputs
+            value={assignment}
+            onChange={next => setAssignmentForDetail(detailIndex, next)}
+          />
+        }
+      />
+    )
+    const showEducation = eventExtraPlan.showEducation
+    const showIps = eventExtraPlan.showIps
+    const showParticipation = eventExtraPlan.showParticipation
     return (
       <>
-        {eventExtraPlan.educationWithParticipation ? (
+        {showEducation && showIps ? (
           <DetailInfoForm.Row type="double">
             {renderEducationFormField(detailIndex)}
-            {renderParticipationField(detailIndex)}
+            {renderIpsFormField(detailIndex, { layout: 'inline' })}
           </DetailInfoForm.Row>
-        ) : eventExtraPlan.showEducation ? (
+        ) : showEducation ? (
           <DetailInfoForm.Row type="single">
             {renderEducationFormField(detailIndex, { fullRow: true })}
           </DetailInfoForm.Row>
-        ) : eventExtraPlan.showParticipation ? (
-          <DetailInfoForm.Row type="single">
-            {renderParticipationField(detailIndex, { fullRow: true })}
-          </DetailInfoForm.Row>
-        ) : null}
-        {eventExtraPlan.showIps ? (
+        ) : showIps ? (
           <DetailInfoForm.Row type="single">
             {renderIpsFormField(detailIndex, { fullRow: true })}
           </DetailInfoForm.Row>
         ) : null}
+        {showParticipation ? (
+          <DetailInfoForm.Row type="double">
+            {assignmentField(false)}
+            {renderParticipationField(detailIndex)}
+          </DetailInfoForm.Row>
+        ) : (
+          <DetailInfoForm.Row type="single">{assignmentField(true)}</DetailInfoForm.Row>
+        )}
       </>
     )
   }
 
   const renderIpsFormField = (
     detailIndex: number,
-    options?: { fullRow?: boolean; layout?: 'default' | 'inline' }
+    options?: { fullRow?: boolean; layout?: 'default' | 'inline'; disabled?: boolean }
   ) => (
     <DetailInfoForm.Field
       label="IPS 유형"
@@ -521,14 +547,33 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
       edit={
         <ProgramRegistrationIpsTypeFields
           layout={options?.layout}
-          value={ipsTypeValueForDetail(detailIndex)}
-          onChange={next => setIpsForDetailUnlessLocked(detailIndex, next)}
-          disabled={ipsLockedForSchedulePreEducation}
+          value={ipsTypeValueForDetail(detailIndex, options?.disabled)}
+          onChange={next => setIpsForDetailUnlessLocked(detailIndex, next, options?.disabled)}
+          disabled={options?.disabled}
         />
       }
       view="-"
     />
   )
+
+  const renderPreEducationPerScheduleExtraRows = (): ReactNode => {
+    if (eventExtraPlan.showIps) {
+      return (
+        <DetailInfoForm.Row type="double">
+          {renderEducationFormField(PRE_EDUCATION_DETAIL_INDEX)}
+          {renderIpsFormField(PRE_EDUCATION_DETAIL_INDEX, {
+            layout: 'inline',
+            disabled: true,
+          })}
+        </DetailInfoForm.Row>
+      )
+    }
+    return (
+      <DetailInfoForm.Row type="single">
+        {renderEducationFormField(PRE_EDUCATION_DETAIL_INDEX, { fullRow: true })}
+      </DetailInfoForm.Row>
+    )
+  }
 
   const renderPerBlockLayoutRows = (detailIndex: number): ReactNode => {
     if (perBlockLayoutPlan === 'none') return null
@@ -735,20 +780,108 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
       />
     ) : null
 
+  const renderEventProgressScheduleField = (detailIndex: number) => {
+    const showProgressScheduleToggles = !participantOrganization
+    const scheduleRange = overlayScheduleToRange(scheduleDateByDetail[detailIndex])
+    const scheduleHasClock = Boolean(
+      scheduleRange && educationScheduleRangeHasClock(scheduleRange)
+    )
+    return (
+      <div className="detail-info-form-inputs-wrapper-no-gap">
+        <ParagraphDatePicker
+          mode="single"
+          presetMode={showProgressScheduleToggles ? 'schedule' : 'date'}
+          customizable={false}
+          suppressAutoTodayWhenEmpty
+          value={scheduleRange?.[0] ?? null}
+          appliedSurfaceRange={
+            showProgressScheduleToggles
+              ? educationScheduleAppliedSurfaceRange(scheduleRange)
+              : undefined
+          }
+          appliedSurfaceWithTime={showProgressScheduleToggles ? scheduleHasClock : undefined}
+          onChange={next => {
+            if (showProgressScheduleToggles) return
+            updateProgramRegistrationOverlayKey<Record<number, string | null>>(
+              'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso',
+              prev => ({
+                ...(prev ?? {}),
+                [detailIndex]: next == null ? null : next.toISOString(),
+              })
+            )
+          }}
+          onRangeChange={
+            showProgressScheduleToggles
+              ? ([start, end]) =>
+                  updateProgramRegistrationOverlayKey<Record<number, string | null>>(
+                    'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso',
+                    prev => ({
+                      ...(prev ?? {}),
+                      [detailIndex]: formatEducationScheduleLineFromRange([start, end]),
+                    })
+                  )
+              : undefined
+          }
+          width="100%"
+          placeholder="일정을 선택하세요"
+        />
+      </div>
+    )
+  }
+
+  const renderPreEducationEventBlock = () =>
+    scheduleCurriculumPreEducation ? (
+      <div key="pre-education" className="program-registration-schedule-curriculum__block">
+        <div className="program-registration-schedule-curriculum__session-heading">
+          ■ {PRE_EDUCATION_SCHEDULE_LABEL}
+        </div>
+        <div className="program-registration-curriculum__session-row">
+          <div className="program-registration-schedule-curriculum__session-panel">
+            <DetailInfoForm
+              title="교육 진행 (일정형)"
+              hideHeader
+              mode="edit"
+              className="program-registration-paragraph"
+            >
+              <DetailInfoForm.Row type="double">
+                <DetailInfoForm.Field
+                  label="일정명"
+                  edit={
+                    <CmsInput
+                      inputSize="medium"
+                      value={PRE_EDUCATION_SCHEDULE_LABEL}
+                      placeholder={PRE_EDUCATION_SCHEDULE_LABEL}
+                      width="100%"
+                      style={{ minWidth: 0, flex: '1 1 0' }}
+                      disabled
+                      readOnly
+                    />
+                  }
+                  view="-"
+                />
+                <DetailInfoForm.Field
+                  label="진행 일정"
+                  edit={renderEventProgressScheduleField(PRE_EDUCATION_DETAIL_INDEX)}
+                  view="-"
+                />
+              </DetailInfoForm.Row>
+              {renderPreEducationPerScheduleExtraRows()}
+            </DetailInfoForm>
+          </div>
+        </div>
+      </div>
+    ) : null
+
   if (multiAllPer) {
+    const showEventHeadings = detailCount > 1 || scheduleCurriculumPreEducation
     return (
       <>
+        {renderPreEducationEventBlock()}
         {Array.from({ length: detailCount }, (_, i) => {
           const n = i + 1
-          const showProgressScheduleToggles = !participantOrganization
-          const scheduleRange = overlayScheduleToRange(scheduleDateByDetail[n])
-          const scheduleHasClock = Boolean(
-            scheduleRange && educationScheduleRangeHasClock(scheduleRange)
-          )
-          const assignment = assignmentByDetail[n] ?? EMPTY_SCHEDULE_EVENT_ASSIGNMENT
           return (
             <div key={n} className="program-registration-schedule-curriculum__block">
-              {detailCount > 1 ? (
+              {showEventHeadings ? (
                 <div className="program-registration-schedule-curriculum__session-heading">
                   ■ 행사 일정 {pad2(n)}
                 </div>
@@ -776,70 +909,8 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                       />
                       <DetailInfoForm.Field
                         label="진행 일정"
-                        edit={
-                          <div className="detail-info-form-inputs-wrapper-no-gap">
-                            <ParagraphDatePicker
-                              mode="single"
-                              presetMode={showProgressScheduleToggles ? 'schedule' : 'date'}
-                              customizable={false}
-                              suppressAutoTodayWhenEmpty
-                              value={scheduleRange?.[0] ?? null}
-                              appliedSurfaceRange={
-                                showProgressScheduleToggles
-                                  ? educationScheduleAppliedSurfaceRange(scheduleRange)
-                                  : undefined
-                              }
-                              appliedSurfaceWithTime={
-                                showProgressScheduleToggles ? scheduleHasClock : undefined
-                              }
-                              onChange={next => {
-                                if (showProgressScheduleToggles) return
-                                updateProgramRegistrationOverlayKey<Record<number, string | null>>(
-                                  'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso',
-                                  prev => ({
-                                    ...(prev ?? {}),
-                                    [n]: next == null ? null : next.toISOString(),
-                                  })
-                                )
-                              }}
-                              onRangeChange={
-                                showProgressScheduleToggles
-                                  ? ([start, end]) =>
-                                      updateProgramRegistrationOverlayKey<
-                                        Record<number, string | null>
-                                      >(
-                                        'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso',
-                                        prev => ({
-                                          ...(prev ?? {}),
-                                          [n]: formatEducationScheduleLineFromRange([start, end]),
-                                        })
-                                      )
-                                  : undefined
-                              }
-                              width="100%"
-                              placeholder="일정을 선택하세요"
-                            />
-                          </div>
-                        }
+                        edit={renderEventProgressScheduleField(n)}
                         view="-"
-                      />
-                    </DetailInfoForm.Row>
-                    <DetailInfoForm.Row type="single">
-                      <DetailInfoForm.Field
-                        label="과제 설정"
-                        fullRow
-                        view={
-                          <CurriculumAssignmentSettingView
-                            assignmentEnabled={assignment.enabled}
-                            assignmentPeriod={assignment.period}
-                          />
-                        }
-                        edit={
-                          <ScheduleDetailAssignmentInputs
-                            value={assignment}
-                            onChange={next => setAssignmentForDetail(n, next)}
-                          />
-                        }
                       />
                     </DetailInfoForm.Row>
                     {renderEventPerScheduleExtraRows(n)}
@@ -858,15 +929,16 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
 
   return (
     <>
+      {renderPreEducationEventBlock()}
       {Array.from({ length: detailCount }, (_, i) => {
         const n = i + 1
         return (
           <div key={n} className="program-registration-schedule-curriculum__block">
-            {detailCount > 1 && (
+            {detailCount > 1 || scheduleCurriculumPreEducation ? (
               <div className="program-registration-schedule-curriculum__session-heading">
                 ■ 세부 일정 {pad2(n)}
               </div>
-            )}
+            ) : null}
             <div className="program-registration-curriculum__session-row">
               <div className="program-registration-schedule-curriculum__session-panel">
                 <DetailInfoForm

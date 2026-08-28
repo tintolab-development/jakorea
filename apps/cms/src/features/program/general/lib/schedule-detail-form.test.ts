@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  applySchedulePreEducationBlock,
   buildDefaultScheduleDetailsForEdit,
   getScheduleEventPerScheduleExtraPlan,
   hasScheduleEventPerScheduleExtraRows,
+  inferScheduleDetailBlockKind,
+  PRE_EDUCATION_SCHEDULE_LABEL,
   shouldUseScheduleEventBlockLayout,
   type ScheduleEventBlockLayoutInput,
 } from './schedule-detail-form'
@@ -162,5 +165,74 @@ describe('getScheduleEventPerScheduleExtraPlan', () => {
     expect(plan.showIps).toBe(true)
     expect(plan.showEducation).toBe(false)
     expect(plan.showParticipation).toBe(false)
+  })
+})
+
+describe('applySchedulePreEducationBlock', () => {
+  it('켜면 사전 교육 블록을 앞에 추가하고 행사 일정 번호는 유지한다', () => {
+    const seeded = buildDefaultScheduleDetailsForEdit({
+      sessionRound: 'multi',
+      scheduleGroupCount: 1,
+      participantOrganization: false,
+      ...COMMON,
+    })
+    const next = applySchedulePreEducationBlock(seeded, true, { groupCount: 1 })
+    expect(next).toHaveLength(2)
+    expect(next[0]?.blockKind).toBe('preEducation')
+    expect(next[0]?.scheduleLabel).toBe(PRE_EDUCATION_SCHEDULE_LABEL)
+    expect(next[0]?.ipsCategory).toBe('prepare')
+    expect(next[0]?.ipsDetail).toBe('none')
+    expect(next[1]?.blockKind).toBe('event')
+    expect(next[1]?.scheduleLabel).toBe('행사 일정 01')
+  })
+
+  it('끄면 사전 교육 블록만 제거하고 행사 일정을 다시 번호를 매긴다', () => {
+    const seeded = buildDefaultScheduleDetailsForEdit({
+      sessionRound: 'multi',
+      scheduleGroupCount: 1,
+      participantOrganization: false,
+      ...COMMON,
+    })
+    const withPre = applySchedulePreEducationBlock(seeded, true, { groupCount: 1 })
+    const next = applySchedulePreEducationBlock(withPre, false, { groupCount: 1 })
+    expect(next).toHaveLength(1)
+    expect(next[0]?.blockKind).toBe('event')
+    expect(next[0]?.scheduleLabel).toBe('행사 일정 01')
+  })
+
+  it('이미 사전 교육이 있으면 중복 추가하지 않는다', () => {
+    const seeded = buildDefaultScheduleDetailsForEdit({
+      sessionRound: 'multi',
+      scheduleGroupCount: 1,
+      participantOrganization: false,
+      ...COMMON,
+    })
+    const once = applySchedulePreEducationBlock(seeded, true, { groupCount: 1 })
+    const twice = applySchedulePreEducationBlock(once, true, { groupCount: 1 })
+    expect(twice.filter(d => d.blockKind === 'preEducation')).toHaveLength(1)
+    expect(twice).toHaveLength(2)
+  })
+
+  it('단일 회차 세부 일정 앞에도 사전 교육 블록을 추가한다', () => {
+    const seeded = buildDefaultScheduleDetailsForEdit({
+      sessionRound: 'single',
+      scheduleGroupCount: 2,
+      participantOrganization: false,
+      ...COMMON,
+    })
+    expect(seeded[0]?.blockKind).toBe('sub')
+    const next = applySchedulePreEducationBlock(seeded, true, { groupCount: 2 })
+    expect(next).toHaveLength(2)
+    expect(next[0]?.blockKind).toBe('preEducation')
+    expect(next[1]?.blockKind).toBe('sub')
+    expect(next[1]?.scheduleLabel).toBe('세부 일정 01')
+  })
+})
+
+describe('inferScheduleDetailBlockKind', () => {
+  it('사전 교육 라벨을 구분한다', () => {
+    expect(inferScheduleDetailBlockKind('사전 교육')).toBe('preEducation')
+    expect(inferScheduleDetailBlockKind('행사 일정 01')).toBe('event')
+    expect(inferScheduleDetailBlockKind('세부 일정 01')).toBe('sub')
   })
 })

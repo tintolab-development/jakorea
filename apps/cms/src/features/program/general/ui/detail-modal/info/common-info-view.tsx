@@ -32,12 +32,15 @@ import {
   createEmptyScheduleDetailBlock,
   inferScheduleDetailBlockKind,
   isGeneralProgramMultiRoundForTypeSettings,
+  isPreEducationScheduleBlock,
   shouldUseScheduleEventBlockLayout,
   getScheduleDetailPerBlockLayoutPlan,
   getScheduleEventPerScheduleExtraPlan,
-  hasScheduleEventPerScheduleExtraRows,
   isScheduleEducationAndIpsBothPerSchedule,
   padEventScheduleLabel,
+  applySchedulePreEducationBlock,
+  scheduleDetailsPreEducationSyncEqual,
+  PRE_EDUCATION_SCHEDULE_LABEL,
   type ScheduleEventPerScheduleExtraPlan,
 } from '@/features/program/general/lib/schedule-detail-form'
 import {
@@ -1972,7 +1975,7 @@ function MultiRoundCurriculumSessionForm({
               </DetailInfoForm.Row>
             )
           ) : null}
-          {(showIpsOnlyPerRound || isPreEducationBlock) && !showIpsPerRoundWithEducation ? (
+          {showIpsOnlyPerRound && !showIpsPerRoundWithEducation ? (
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="IPS 유형"
@@ -2097,7 +2100,7 @@ function SingleRoundCurriculumSessionForm({
               }
             />
           </DetailInfoForm.Row>
-          {showIpsPerSession || isPreEducationBlock ? (
+          {showIpsPerSession ? (
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="IPS 유형"
@@ -2467,23 +2470,62 @@ function ScheduleEventPerScheduleExtraViewRows({
   educationFormLabel,
   participationMethodLabel,
   ipsTypeSummary,
+  isPreEducationBlock = false,
+  assignmentEnabled,
+  assignmentPeriod,
 }: {
   extraPlan: ScheduleEventPerScheduleExtraPlan
   educationFormLabel?: string
   participationMethodLabel?: string
   ipsTypeSummary?: string
+  isPreEducationBlock?: boolean
+  assignmentEnabled?: boolean
+  assignmentPeriod?: string
 }) {
-  if (!hasScheduleEventPerScheduleExtraRows(extraPlan)) {
-    return null
-  }
-  return (
-    <>
-      {extraPlan.educationWithParticipation ? (
+  if (isPreEducationBlock) {
+    if (extraPlan.showIps) {
+      return (
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="교육 형태" view={educationFormLabel?.trim() || '-'} />
           <DetailInfoForm.Field
-            label="참여 방식"
-            view={participationMethodLabel?.trim() || '-'}
+            label="IPS 유형"
+            view={<PipeSeparatedInlineView text={ipsTypeSummary} />}
+          />
+        </DetailInfoForm.Row>
+      )
+    }
+    return (
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="교육 형태"
+          fullRow
+          view={educationFormLabel?.trim() || '-'}
+        />
+      </DetailInfoForm.Row>
+    )
+  }
+
+  const assignmentField = (fullRow: boolean) => (
+    <DetailInfoForm.Field
+      label="과제 설정"
+      fullRow={fullRow}
+      view={
+        <CurriculumAssignmentSettingView
+          assignmentEnabled={assignmentEnabled}
+          assignmentPeriod={assignmentPeriod}
+        />
+      }
+    />
+  )
+
+  return (
+    <>
+      {extraPlan.showEducation && extraPlan.showIps ? (
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field label="교육 형태" view={educationFormLabel?.trim() || '-'} />
+          <DetailInfoForm.Field
+            label="IPS 유형"
+            view={<PipeSeparatedInlineView text={ipsTypeSummary} />}
           />
         </DetailInfoForm.Row>
       ) : extraPlan.showEducation ? (
@@ -2494,16 +2536,7 @@ function ScheduleEventPerScheduleExtraViewRows({
             view={educationFormLabel?.trim() || '-'}
           />
         </DetailInfoForm.Row>
-      ) : extraPlan.showParticipation ? (
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="참여 방식"
-            fullRow
-            view={participationMethodLabel?.trim() || '-'}
-          />
-        </DetailInfoForm.Row>
-      ) : null}
-      {extraPlan.showIps ? (
+      ) : extraPlan.showIps ? (
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="IPS 유형"
@@ -2512,6 +2545,17 @@ function ScheduleEventPerScheduleExtraViewRows({
           />
         </DetailInfoForm.Row>
       ) : null}
+      {extraPlan.showParticipation ? (
+        <DetailInfoForm.Row type="double">
+          {assignmentField(false)}
+          <DetailInfoForm.Field
+            label="참여 방식"
+            view={participationMethodLabel?.trim() || '-'}
+          />
+        </DetailInfoForm.Row>
+      ) : (
+        <DetailInfoForm.Row type="single">{assignmentField(true)}</DetailInfoForm.Row>
+      )}
     </>
   )
 }
@@ -2527,6 +2571,7 @@ function ScheduleEventDetailViewBlock({
   participationMethodLabel,
   ipsTypeSummary,
   showHeading = true,
+  isPreEducationBlock = false,
 }: {
   scheduleLabel: string
   name: string
@@ -2538,12 +2583,13 @@ function ScheduleEventDetailViewBlock({
   participationMethodLabel?: string
   ipsTypeSummary?: string
   showHeading?: boolean
+  isPreEducationBlock?: boolean
 }) {
   return (
     <div className="program-registration-schedule-curriculum__block">
       {showHeading ? (
         <div className="program-registration-schedule-curriculum__session-heading">
-          ■ {scheduleLabel}
+          ■ {isPreEducationBlock ? PRE_EDUCATION_SCHEDULE_LABEL : scheduleLabel}
         </div>
       ) : null}
       <div className="program-registration-schedule-curriculum__session-panel">
@@ -2554,22 +2600,13 @@ function ScheduleEventDetailViewBlock({
           className="program-registration-paragraph"
         >
           <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field label="일정명" view={name || '-'} />
+            <DetailInfoForm.Field
+              label="일정명"
+              view={isPreEducationBlock ? PRE_EDUCATION_SCHEDULE_LABEL : name || '-'}
+            />
             <DetailInfoForm.Field
               label="진행 일정"
               view={scheduleDateLabel?.trim() || '-'}
-            />
-          </DetailInfoForm.Row>
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="과제 설정"
-              fullRow
-              view={
-                <CurriculumAssignmentSettingView
-                  assignmentEnabled={assignmentEnabled}
-                  assignmentPeriod={assignmentPeriod}
-                />
-              }
             />
           </DetailInfoForm.Row>
           <ScheduleEventPerScheduleExtraViewRows
@@ -2577,6 +2614,9 @@ function ScheduleEventDetailViewBlock({
             educationFormLabel={educationFormLabel}
             participationMethodLabel={participationMethodLabel}
             ipsTypeSummary={ipsTypeSummary}
+            isPreEducationBlock={isPreEducationBlock}
+            assignmentEnabled={assignmentEnabled}
+            assignmentPeriod={assignmentPeriod}
           />
         </DetailInfoForm>
       </div>
@@ -2606,15 +2646,13 @@ function ScheduleEventPerScheduleExtraEditRows({
   )
   const sessionIpsCategory = editForm.watch(`scheduleDetails.${index}.ipsCategory`) ?? ''
   const sessionIpsDetail = editForm.watch(`scheduleDetails.${index}.ipsDetail`) ?? ''
+  const assignmentEnabled =
+    editForm.watch(`scheduleDetails.${index}.assignmentEnabled`) ?? false
 
-  if (!hasScheduleEventPerScheduleExtraRows(extraPlan)) {
-    return null
-  }
-
-  const educationField = (
+  const educationField = (fullRow?: boolean) => (
     <DetailInfoForm.Field
       label="교육 형태"
-      fullRow={!extraPlan.educationWithParticipation}
+      fullRow={fullRow}
       edit={
         <Controller
           name={`scheduleDetails.${index}.educationForm`}
@@ -2638,10 +2676,47 @@ function ScheduleEventPerScheduleExtraEditRows({
     />
   )
 
+  const ipsField = (options?: { fullRow?: boolean; layout?: 'default' | 'inline' }) => (
+    <DetailInfoForm.Field
+      label="IPS 유형"
+      fullRow={options?.fullRow}
+      edit={
+        <ProgramRegistrationIpsTypeFields
+          layout={options?.layout}
+          disabled={isPreEducationBlock}
+          value={
+            isPreEducationBlock
+              ? { category: 'prepare', detail: 'none' }
+              : { category: sessionIpsCategory, detail: sessionIpsDetail }
+          }
+          onChange={next => {
+            if (isPreEducationBlock) return
+            editForm.setValue(`scheduleDetails.${index}.ipsCategory`, next.category)
+            editForm.setValue(`scheduleDetails.${index}.ipsDetail`, next.detail)
+          }}
+        />
+      }
+      view="-"
+    />
+  )
+
+  if (isPreEducationBlock) {
+    if (extraPlan.showIps) {
+      return (
+        <DetailInfoForm.Row type="double">
+          {educationField()}
+          {ipsField({ layout: 'inline' })}
+        </DetailInfoForm.Row>
+      )
+    }
+    return (
+      <DetailInfoForm.Row type="single">{educationField(true)}</DetailInfoForm.Row>
+    )
+  }
+
   const participationField = (
     <DetailInfoForm.Field
       label="참여 방식"
-      fullRow={!extraPlan.educationWithParticipation}
       edit={
         <Controller
           name={`scheduleDetails.${index}.participationMethod`}
@@ -2662,45 +2737,95 @@ function ScheduleEventPerScheduleExtraEditRows({
     />
   )
 
+  const assignmentField = (fullRow: boolean) => (
+    <DetailInfoForm.Field
+      label="과제 설정"
+      fullRow={fullRow}
+      view={
+        <CurriculumAssignmentSettingView
+          assignmentEnabled={assignmentEnabled}
+          assignmentPeriod={editForm.watch(`scheduleDetails.${index}.assignmentPeriod`) ?? ''}
+        />
+      }
+      edit={
+        <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap program-registration-paragraph__assignment-row">
+          <Controller
+            name={`scheduleDetails.${index}.assignmentEnabled`}
+            control={editForm.control}
+            render={({ field }) => (
+              <CmsRadioGroup
+                size="large"
+                value={field.value ? 'yes' : 'no'}
+                onChange={e => {
+                  const enabled = e.target.value === 'yes'
+                  field.onChange(enabled)
+                  if (!enabled) {
+                    editForm.setValue(`scheduleDetails.${index}.assignmentPeriod`, '')
+                  }
+                }}
+              >
+                <CmsRadio value="yes">있음</CmsRadio>
+                <CmsRadio value="no">없음</CmsRadio>
+              </CmsRadioGroup>
+            )}
+          />
+          <DetailInfoForm.InputsSeparator />
+          <Controller
+            name={`scheduleDetails.${index}.assignmentPeriod`}
+            control={editForm.control}
+            render={({ field: periodField }) => {
+              const appliedRange = parseEducationScheduleLineToRange(periodField.value)
+              return (
+                <ParagraphDatePicker
+                  mode="single"
+                  presetMode="period"
+                  customizable={false}
+                  suppressAutoTodayWhenEmpty
+                  disabled={!assignmentEnabled}
+                  value={appliedRange?.[0] ?? null}
+                  onChange={() => {}}
+                  appliedSurfaceRange={appliedRange}
+                  onRangeChange={([start, end]) => {
+                    periodField.onChange(formatEducationScheduleLineFromRange([start, end]))
+                    if (!assignmentEnabled) {
+                      editForm.setValue(`scheduleDetails.${index}.assignmentEnabled`, true)
+                    }
+                  }}
+                  width={360}
+                  placeholder="제출 기한을 설정해 주세요"
+                />
+              )
+            }}
+          />
+        </div>
+      }
+    />
+  )
+
   return (
     <>
-      {extraPlan.educationWithParticipation ? (
+      {extraPlan.showEducation && extraPlan.showIps ? (
         <DetailInfoForm.Row type="double">
-          {educationField}
-          {participationField}
+          {educationField()}
+          {ipsField({ layout: 'inline' })}
         </DetailInfoForm.Row>
       ) : extraPlan.showEducation ? (
-        <DetailInfoForm.Row type="single">{educationField}</DetailInfoForm.Row>
-      ) : extraPlan.showParticipation ? (
-        <DetailInfoForm.Row type="single">{participationField}</DetailInfoForm.Row>
+        <DetailInfoForm.Row type="single">{educationField(true)}</DetailInfoForm.Row>
+      ) : extraPlan.showIps ? (
+        <DetailInfoForm.Row type="single">{ipsField({ fullRow: true })}</DetailInfoForm.Row>
       ) : null}
-      {extraPlan.showIps ? (
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="IPS 유형"
-            fullRow
-            edit={
-              <ProgramRegistrationIpsTypeFields
-                disabled={isPreEducationBlock}
-                value={
-                  isPreEducationBlock
-                    ? { category: 'prepare', detail: 'none' }
-                    : { category: sessionIpsCategory, detail: sessionIpsDetail }
-                }
-                onChange={next => {
-                  if (isPreEducationBlock) return
-                  editForm.setValue(`scheduleDetails.${index}.ipsCategory`, next.category)
-                  editForm.setValue(`scheduleDetails.${index}.ipsDetail`, next.detail)
-                }}
-              />
-            }
-            view="-"
-          />
+      {extraPlan.showParticipation ? (
+        <DetailInfoForm.Row type="double">
+          {assignmentField(false)}
+          {participationField}
         </DetailInfoForm.Row>
-      ) : null}
+      ) : (
+        <DetailInfoForm.Row type="single">{assignmentField(true)}</DetailInfoForm.Row>
+      )}
     </>
   )
 }
+
 
 function ScheduleEventDetailEditBlock({
   index,
@@ -2710,6 +2835,7 @@ function ScheduleEventDetailEditBlock({
   onRemove,
   isPreEducationBlock = false,
   showHeading = true,
+  canRemove = false,
 }: {
   index: number
   scheduleLabel: string
@@ -2718,10 +2844,8 @@ function ScheduleEventDetailEditBlock({
   onRemove: () => void
   isPreEducationBlock?: boolean
   showHeading?: boolean
+  canRemove?: boolean
 }) {
-  const assignmentEnabled =
-    editForm.watch(`scheduleDetails.${index}.assignmentEnabled`) ?? false
-  const assignmentPeriod = editForm.watch(`scheduleDetails.${index}.assignmentPeriod`) ?? ''
   const headingLabel = isPreEducationBlock ? '사전 교육' : scheduleLabel
   const showProgressScheduleToggles = !editForm.watch('participantOrganization')
 
@@ -2818,75 +2942,6 @@ function ScheduleEventDetailEditBlock({
                 view="-"
               />
             </DetailInfoForm.Row>
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="과제 설정"
-                fullRow
-                view={
-                  <CurriculumAssignmentSettingView
-                    assignmentEnabled={assignmentEnabled}
-                    assignmentPeriod={assignmentPeriod}
-                  />
-                }
-                edit={
-                  <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap program-registration-paragraph__assignment-row">
-                    <Controller
-                      name={`scheduleDetails.${index}.assignmentEnabled`}
-                      control={editForm.control}
-                      render={({ field }) => (
-                        <CmsRadioGroup
-                          size="large"
-                          value={field.value ? 'yes' : 'no'}
-                          onChange={e => {
-                            const enabled = e.target.value === 'yes'
-                            field.onChange(enabled)
-                            if (!enabled) {
-                              editForm.setValue(`scheduleDetails.${index}.assignmentPeriod`, '')
-                            }
-                          }}
-                        >
-                          <CmsRadio value="yes">있음</CmsRadio>
-                          <CmsRadio value="no">없음</CmsRadio>
-                        </CmsRadioGroup>
-                      )}
-                    />
-                    <DetailInfoForm.InputsSeparator />
-                    <Controller
-                      name={`scheduleDetails.${index}.assignmentPeriod`}
-                      control={editForm.control}
-                      render={({ field: periodField }) => {
-                        const appliedRange = parseEducationScheduleLineToRange(periodField.value)
-                        return (
-                          <ParagraphDatePicker
-                            mode="single"
-                            presetMode="period"
-                            customizable={false}
-                            suppressAutoTodayWhenEmpty
-                            disabled={!assignmentEnabled}
-                            value={appliedRange?.[0] ?? null}
-                            onChange={() => {}}
-                            appliedSurfaceRange={appliedRange}
-                            onRangeChange={([start, end]) => {
-                              periodField.onChange(
-                                formatEducationScheduleLineFromRange([start, end])
-                              )
-                              if (!assignmentEnabled) {
-                                editForm.setValue(
-                                  `scheduleDetails.${index}.assignmentEnabled`,
-                                  true
-                                )
-                              }
-                            }}
-                            width={360}
-                            placeholder="제출 기한을 설정해 주세요"
-                          />
-                        )
-                      }}
-                    />
-                  </div>
-                }
-              />
-            </DetailInfoForm.Row>
             <ScheduleEventPerScheduleExtraEditRows
               index={index}
               editForm={editForm}
@@ -2894,7 +2949,7 @@ function ScheduleEventDetailEditBlock({
             />
           </DetailInfoForm>
         </div>
-        {index > 0 ? (
+        {canRemove ? (
           <ItemDeleteButton
             className="item-delete-button program-registration-curriculum__session-delete"
             aria-label={`${scheduleLabel} 삭제`}
@@ -3331,7 +3386,7 @@ function ScheduleDetailEditBlock({
                 view="-"
               />
             </DetailInfoForm.Row>
-            {isSingleRound && (ipsPerSchedule || isPreEducationBlock) ? (
+            {isSingleRound && ipsPerSchedule ? (
               <DetailInfoForm.Row type="single">
                 {renderIpsFormField({ fullRow: true, disabled: isPreEducationBlock })}
               </DetailInfoForm.Row>
@@ -3382,22 +3437,7 @@ function ScheduleProgressEditSection({
   })
   const blockKind: 'sub' | 'event' = multiAllPer ? 'event' : 'sub'
   const scheduleCurriculumPreEducation =
-    isMultiRound && (editForm.watch('scheduleCurriculumPreEducation') ?? false)
-
-  useEffect(() => {
-    if (isMultiRound) return
-    if (editForm.getValues('scheduleCurriculumPreEducation') !== true) return
-    editForm.setValue('scheduleCurriculumPreEducation', false, { shouldDirty: true })
-  }, [editForm, isMultiRound])
-
-  useEffect(() => {
-    if (!scheduleCurriculumPreEducation) return
-    const details = editForm.getValues('scheduleDetails') ?? []
-    if (details.length === 0) return
-    editForm.setValue('scheduleDetails.0.name', '사전 교육', { shouldDirty: true })
-    editForm.setValue('scheduleDetails.0.ipsCategory', 'prepare', { shouldDirty: true })
-    editForm.setValue('scheduleDetails.0.ipsDetail', 'none', { shouldDirty: true })
-  }, [editForm, scheduleCurriculumPreEducation])
+    editForm.watch('scheduleCurriculumPreEducation') ?? false
 
   const { fields, append, remove } = useFieldArray({
     control: editForm.control,
@@ -3409,6 +3449,21 @@ function ScheduleProgressEditSection({
     PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
   )
   const effectiveScheduleGroupCount = isMultiRound ? 1 : scheduleGroupCount
+
+  useEffect(() => {
+    const details = editForm.getValues('scheduleDetails') ?? []
+    if (details.length === 0) return
+    const next = applySchedulePreEducationBlock(details, scheduleCurriculumPreEducation, {
+      groupCount: effectiveScheduleGroupCount,
+    })
+    if (scheduleDetailsPreEducationSyncEqual(details, next)) return
+    editForm.setValue('scheduleDetails', next, { shouldDirty: true })
+  }, [
+    editForm,
+    scheduleCurriculumPreEducation,
+    fields.length,
+    effectiveScheduleGroupCount,
+  ])
 
   const handleAddGroup = useCallback(() => {
     if (
@@ -3450,13 +3505,15 @@ function ScheduleProgressEditSection({
   )
 
   const handleAddDetail = useCallback(() => {
+    const details = editForm.getValues('scheduleDetails') ?? []
+    const eventCount = details.filter(d => !isPreEducationScheduleBlock(d)).length
     append(
-      createEmptyScheduleDetailBlock(fields.length, {
+      createEmptyScheduleDetailBlock(eventCount, {
         blockKind,
         groupCount: effectiveScheduleGroupCount,
       })
     )
-  }, [append, blockKind, effectiveScheduleGroupCount, fields.length])
+  }, [append, blockKind, editForm, effectiveScheduleGroupCount])
 
   const handleRemoveDetail = useCallback(
     (index: number) => {
@@ -3487,7 +3544,6 @@ function ScheduleProgressEditSection({
           onKeyDown={e => e.stopPropagation()}
           role="presentation"
         >
-          {isMultiRound ? (
             <Controller
               name="scheduleCurriculumPreEducation"
               control={editForm.control}
@@ -3499,7 +3555,6 @@ function ScheduleProgressEditSection({
                 />
               )}
             />
-          ) : null}
           {multiAllPer ? (
             <CmsButton
               type="button"
@@ -3589,9 +3644,23 @@ function ScheduleProgressEditSection({
           )
         const scheduleLabel =
           editForm.watch(`scheduleDetails.${index}.scheduleLabel`) ??
-          (detailBlockKind === 'event' ? padEventScheduleLabel(index) : padScheduleDetailLabel(index))
+          (detailBlockKind === 'preEducation'
+            ? PRE_EDUCATION_SCHEDULE_LABEL
+            : detailBlockKind === 'event'
+              ? padEventScheduleLabel(index)
+              : padScheduleDetailLabel(index))
+        const isPreEducationBlock = detailBlockKind === 'preEducation'
+        const hasEarlierEvent = fields.some((_, earlierIndex) => {
+          if (earlierIndex >= index) return false
+          const earlierKind =
+            editForm.watch(`scheduleDetails.${earlierIndex}.blockKind`) ??
+            inferScheduleDetailBlockKind(
+              editForm.watch(`scheduleDetails.${earlierIndex}.scheduleLabel`) ?? ''
+            )
+          return earlierKind === 'event'
+        })
 
-        if (detailBlockKind === 'event') {
+        if (detailBlockKind === 'event' || isPreEducationBlock) {
           return (
             <ScheduleEventDetailEditBlock
               key={field.id}
@@ -3600,10 +3669,9 @@ function ScheduleProgressEditSection({
               formMode={formMode}
               editForm={editForm}
               onRemove={() => handleRemoveDetail(index)}
-              isPreEducationBlock={scheduleCurriculumPreEducation && index === 0}
-              showHeading={
-                fields.length > 1 || (scheduleCurriculumPreEducation && index === 0)
-              }
+              isPreEducationBlock={isPreEducationBlock}
+              showHeading={fields.length > 1 || isPreEducationBlock}
+              canRemove={detailBlockKind === 'event' && hasEarlierEvent}
             />
           )
         }
@@ -3689,7 +3757,9 @@ function ScheduleProgressSection({
       bodyClassName="detail-common-info-view__section-body--schedule-curriculum"
     >
       {scheduleDetailsView.map(detail => {
-        const isEventSchedule = detail.scheduleLabel.includes('행사 일정')
+        const detailBlockKind = inferScheduleDetailBlockKind(detail.scheduleLabel)
+        const isPreEducationBlock = detailBlockKind === 'preEducation'
+        const isEventSchedule = detailBlockKind === 'event' || isPreEducationBlock
         if (isEventSchedule) {
           return (
             <ScheduleEventDetailViewBlock
@@ -3703,7 +3773,8 @@ function ScheduleProgressSection({
               educationFormLabel={detail.educationFormLabel}
               participationMethodLabel={detail.participationMethodLabel}
               ipsTypeSummary={detail.ipsTypeSummary}
-              showHeading={scheduleDetailsView.length > 1}
+              showHeading={scheduleDetailsView.length > 1 || isPreEducationBlock}
+              isPreEducationBlock={isPreEducationBlock}
             />
           )
         }

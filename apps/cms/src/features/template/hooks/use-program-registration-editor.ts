@@ -349,12 +349,6 @@ export function useProgramRegistrationEditor(
     educationScheduleMode,
   ])
 
-  useEffect(() => {
-    if (programType === 'schedule' && sessionRoundType === 'single') {
-      setScheduleCurriculumPreEducation(false)
-    }
-  }, [programType, sessionRoundType])
-
   const applyEditorStateSnapshot = useCallback((state: ProgramRegistrationEditorState) => {
     setParticipant(state.participant)
     setProgramType(state.programType)
@@ -366,11 +360,7 @@ export function useProgramRegistrationEditor(
     setCurriculumChartSessionCount(state.curriculumChartSessionCount)
     setScheduleCurriculumDetailCount(state.scheduleCurriculumDetailCount)
     setScheduleCurriculumGroupCount(state.scheduleCurriculumGroupCount)
-    setScheduleCurriculumPreEducation(
-      state.programType === 'schedule' && state.sessionRoundType === 'single'
-        ? false
-        : state.scheduleCurriculumPreEducation
-    )
+    setScheduleCurriculumPreEducation(state.scheduleCurriculumPreEducation)
     setTrainedTeachersTeacherTrainingEnabled(state.trainedTeachersTeacherTrainingEnabled)
     setEducationScheduleMode(state.educationScheduleMode)
     // editorState에 없고 overlay에만 남은 후원사(이전 이중 저장·number id 등)를 보강
@@ -757,16 +747,9 @@ export function useProgramRegistrationEditor(
     setScheduleCurriculumGroupCount(c => Math.max(1, c - 1))
   }, [])
 
-  const onScheduleCurriculumPreEducationChange = useCallback(
-    (checked: boolean) => {
-      if (programType === 'schedule' && sessionRoundType === 'single') {
-        setScheduleCurriculumPreEducation(false)
-        return
-      }
-      setScheduleCurriculumPreEducation(checked)
-    },
-    [programType, sessionRoundType]
-  )
+  const onScheduleCurriculumPreEducationChange = useCallback((checked: boolean) => {
+    setScheduleCurriculumPreEducation(checked)
+  }, [])
 
   const onTrainedTeachersTeacherTrainingEnabledChange = useCallback((checked: boolean) => {
     setTrainedTeachersTeacherTrainingEnabled(checked)
