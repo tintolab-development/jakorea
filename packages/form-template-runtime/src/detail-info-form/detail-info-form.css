@@ -4,7 +4,7 @@
  */
 
 .detail-info-form {
-  --detail-info-form-body-radius: 8px;
+  /* radius: FormTemplateHost --detail-info-form-body-radius (cmsAdmin 8 / platformUser 16); bare fallback below */
   width: 100%;
   min-width: 0;
 }
@@ -88,7 +88,7 @@
 
 .detail-info-form__body {
   border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: var(--detail-info-form-body-radius);
+  border-radius: var(--detail-info-form-body-radius, 8px);
   overflow: hidden;
   background: #fff;
   box-sizing: border-box;
