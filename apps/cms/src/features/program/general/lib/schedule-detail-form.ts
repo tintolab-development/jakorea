@@ -20,6 +20,14 @@ export type ScheduleDetailBlockKind = 'sub' | 'event' | 'preEducation'
 
 export const PRE_EDUCATION_SCHEDULE_LABEL = '사전 교육'
 
+/** 일반(개인) + 단일 회차 — 교육 진행 일정 유형에서 기간 지정 불가 */
+export function shouldDisableEducationSchedulePeriodMode(input: {
+  participantOrganization: boolean
+  sessionRound: 'single' | 'multi'
+}): boolean {
+  return !input.participantOrganization && input.sessionRound === 'single'
+}
+
 export function padEventScheduleLabel(index: number): string {
   return `행사 일정 ${String(index + 1).padStart(2, '0')}`
 }
@@ -48,6 +56,21 @@ export function isScheduleMultiAllPerSchedule(
     educationFormScheduleDetail === 'perSchedule' &&
     participationScheduleDetail === 'perSchedule' &&
     ipsScheduleDetail === 'perSchedule'
+  )
+}
+
+/** 개인 + 교육 형태·참여 방식·IPS 유형 모두 일정 별 상이 — 커리큘럼 회차: 수업 → 교육|IPS → 과제|참여 */
+export function isIndividualAllPerScheduleLayout(input: {
+  participantOrganization: boolean
+  educationFormScheduleDetail: GeneralProgramScheduleDetailKind
+  participationScheduleDetail: GeneralProgramScheduleDetailKind
+  ipsScheduleDetail: GeneralProgramScheduleDetailKind
+}): boolean {
+  return (
+    !input.participantOrganization &&
+    input.educationFormScheduleDetail === 'perSchedule' &&
+    input.participationScheduleDetail === 'perSchedule' &&
+    input.ipsScheduleDetail === 'perSchedule'
   )
 }
 
@@ -216,7 +239,7 @@ export function relabelScheduleDetailFormRowsByKind(
         ...d,
         blockKind,
         scheduleLabel: PRE_EDUCATION_SCHEDULE_LABEL,
-        name: PRE_EDUCATION_SCHEDULE_LABEL,
+        name: d.name.trim() || PRE_EDUCATION_SCHEDULE_LABEL,
         ipsCategory: 'prepare' as const,
         ipsDetail: 'none',
       }
@@ -265,7 +288,7 @@ export function applySchedulePreEducationBlock(
       ...preSource,
       blockKind: 'preEducation',
       scheduleLabel: PRE_EDUCATION_SCHEDULE_LABEL,
-      name: PRE_EDUCATION_SCHEDULE_LABEL,
+      name: preSource.name.trim() || PRE_EDUCATION_SCHEDULE_LABEL,
       ipsCategory: 'prepare',
       ipsDetail: 'none',
     },
@@ -291,18 +314,119 @@ export function scheduleDetailsPreEducationSyncEqual(
   })
 }
 
-export function buildDefaultCurriculumSessionsForEdit(
-  sessionRound: GeneralProgramSessionRoundKind
-): Array<{
+export type CurriculumSessionFormRow = {
   sessionLabel: string
   title: string
   description: string
-  assignmentEnabled: boolean
-  assignmentPeriod: string
-  educationForm: string
-  ipsCategory: 'inspire' | 'prepare' | 'succeed' | ''
-  ipsDetail: string
-}> {
+  assignmentEnabled?: boolean
+  assignmentPeriod?: string
+  educationForm?: string
+  participationMethod?: 'individual' | 'team'
+  ipsCategory?: 'inspire' | 'prepare' | 'succeed' | ''
+  ipsDetail?: string
+  /** 개인 커리큘럼 사전 교육 — 진행 일정 */
+  scheduleDate?: string
+}
+
+export function isPreEducationCurriculumSession(session: { sessionLabel?: string }): boolean {
+  return (session.sessionLabel ?? '').includes(PRE_EDUCATION_SCHEDULE_LABEL)
+}
+
+export function padCurriculumSessionLabel(
+  index: number,
+  sessionRound: GeneralProgramSessionRoundKind
+): string {
+  return sessionRound === 'multi' ? `${index + 1}회차` : `${index + 1}차시`
+}
+
+export function createEmptyCurriculumPreEducationSession(
+  _sessionRound: GeneralProgramSessionRoundKind
+): CurriculumSessionFormRow {
+  return {
+    sessionLabel: PRE_EDUCATION_SCHEDULE_LABEL,
+    title: PRE_EDUCATION_SCHEDULE_LABEL,
+    description: '',
+    assignmentEnabled: false,
+    assignmentPeriod: '',
+    educationForm: 'online',
+    ipsCategory: 'prepare',
+    ipsDetail: 'none',
+    scheduleDate: '',
+  }
+}
+
+export function relabelCurriculumSessionsByKind(
+  sessions: CurriculumSessionFormRow[],
+  sessionRound: GeneralProgramSessionRoundKind
+): CurriculumSessionFormRow[] {
+  let regularIndex = 0
+  return sessions.map(session => {
+    if (isPreEducationCurriculumSession(session)) {
+      return {
+        ...session,
+        sessionLabel: PRE_EDUCATION_SCHEDULE_LABEL,
+        assignmentEnabled: false,
+        assignmentPeriod: '',
+        ipsCategory: 'prepare' as const,
+        ipsDetail: 'none',
+      }
+    }
+    return {
+      ...session,
+      sessionLabel: padCurriculumSessionLabel(regularIndex++, sessionRound),
+    }
+  })
+}
+
+export function applyCurriculumPreEducationBlock(
+  sessions: CurriculumSessionFormRow[],
+  enabled: boolean,
+  sessionRound: GeneralProgramSessionRoundKind
+): CurriculumSessionFormRow[] {
+  const withoutPre = sessions.filter(session => !isPreEducationCurriculumSession(session))
+  if (!enabled) {
+    return relabelCurriculumSessionsByKind(withoutPre, sessionRound)
+  }
+
+  const existingPre = sessions.find(session => isPreEducationCurriculumSession(session))
+  return relabelCurriculumSessionsByKind(
+    [
+      existingPre
+        ? {
+            ...existingPre,
+            sessionLabel: PRE_EDUCATION_SCHEDULE_LABEL,
+            title: existingPre.title.trim() || PRE_EDUCATION_SCHEDULE_LABEL,
+            assignmentEnabled: false,
+            assignmentPeriod: '',
+            ipsCategory: 'prepare',
+            ipsDetail: 'none',
+          }
+        : createEmptyCurriculumPreEducationSession(sessionRound),
+      ...withoutPre,
+    ],
+    sessionRound
+  )
+}
+
+export function curriculumSessionsPreEducationSyncEqual(
+  a: CurriculumSessionFormRow[],
+  b: CurriculumSessionFormRow[]
+): boolean {
+  if (a.length !== b.length) return false
+  return a.every((session, index) => {
+    const other = b[index]
+    return (
+      other != null &&
+      session.sessionLabel === other.sessionLabel &&
+      session.ipsCategory === other.ipsCategory &&
+      session.ipsDetail === other.ipsDetail
+    )
+  })
+}
+
+export function buildDefaultCurriculumSessionsForEdit(
+  sessionRound: GeneralProgramSessionRoundKind
+): CurriculumSessionFormRow[] {
   if (sessionRound === 'multi') {
     return [1].map(n => ({
       sessionLabel: `${n}회차`,
@@ -311,6 +435,7 @@ export function buildDefaultCurriculumSessionsForEdit(
       assignmentEnabled: false,
       assignmentPeriod: '',
       educationForm: 'online',
+      participationMethod: 'individual' as const,
       ipsCategory: 'prepare' as const,
       ipsDetail: 'none',
     }))
@@ -322,6 +447,7 @@ export function buildDefaultCurriculumSessionsForEdit(
     assignmentEnabled: false,
     assignmentPeriod: '',
     educationForm: 'online',
+    participationMethod: 'individual' as const,
     ipsCategory: 'prepare' as const,
     ipsDetail: 'none',
   }))

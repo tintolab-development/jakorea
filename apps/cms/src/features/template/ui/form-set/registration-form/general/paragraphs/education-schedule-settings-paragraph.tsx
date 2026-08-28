@@ -33,6 +33,8 @@ type EducationScheduleSettingsProps = {
   overlayKeyPrefix?: string
   /** 일반 개인·일정형·단일 회차 — 날짜 선택 시 진행 시간 자동 반영, 기간/시간 토글 숨김 */
   autoFillFromScheduleGroupTimes?: boolean
+  /** 일반 개인·단일 회차 — 기간 지정 라디오·캘린더 기간 토글 비활성 */
+  disablePeriodMode?: boolean
 }
 
 export function ProgramRegistrationEducationScheduleSettingsParagraph({
@@ -40,8 +42,10 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   onEducationScheduleModeChange,
   overlayKeyPrefix = 'generalRegistration.educationScheduleSettings',
   autoFillFromScheduleGroupTimes = false,
+  disablePeriodMode = false,
 }: EducationScheduleSettingsProps) {
   const scheduleMode = educationScheduleMode
+  const lockDateMode = disablePeriodMode || autoFillFromScheduleGroupTimes
   const [singleDateIso, setSingleDateIso] = useProgramRegistrationOverlayKv<string | null>(
     `${overlayKeyPrefix}.singleDateIso`,
     null
@@ -122,10 +126,10 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   }, [periodDateIso, scheduleMode])
 
   useEffect(() => {
-    if (!autoFillFromScheduleGroupTimes) return
+    if (!lockDateMode) return
     if (scheduleMode === 'date') return
     onEducationScheduleModeChange('date')
-  }, [autoFillFromScheduleGroupTimes, onEducationScheduleModeChange, scheduleMode])
+  }, [lockDateMode, onEducationScheduleModeChange, scheduleMode])
 
   const autoFillDatePicker = autoFillFromScheduleGroupTimes && scheduleMode === 'date'
   const groupTimeSlotsKey = JSON.stringify(flattenGroupTimeSlotsByDetail(groupTimesByDetail))
@@ -155,15 +159,15 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
             <div className="program-registration-paragraph__schedule-inline">
               <CmsRadioGroup
                 size="large"
-                value={autoFillFromScheduleGroupTimes ? 'date' : scheduleMode}
+                value={lockDateMode ? 'date' : scheduleMode}
                 onChange={e => {
                   const next = e.target.value as ProgramRegistrationEducationScheduleMode
-                  if (autoFillFromScheduleGroupTimes && next === 'period') return
+                  if (lockDateMode && next === 'period') return
                   onEducationScheduleModeChange(next)
                 }}
               >
                 <CmsRadio value="date">날짜 지정</CmsRadio>
-                <CmsRadio value="period" disabled={autoFillFromScheduleGroupTimes}>
+                <CmsRadio value="period" disabled={lockDateMode}>
                   기간 지정
                 </CmsRadio>
               </CmsRadioGroup>
@@ -180,6 +184,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 presetMode={autoFillDatePicker ? 'date' : 'schedule'}
                 customizable={false}
                 showTimeToggle={!autoFillDatePicker}
+                showPeriodToggle={!lockDateMode}
                 suppressAutoTodayWhenEmpty
                 value={singleDate}
                 onChange={handleDateApply}

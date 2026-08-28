@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
+  applyCurriculumPreEducationBlock,
   applySchedulePreEducationBlock,
+  buildDefaultCurriculumSessionsForEdit,
   buildDefaultScheduleDetailsForEdit,
   getScheduleEventPerScheduleExtraPlan,
   hasScheduleEventPerScheduleExtraRows,
   inferScheduleDetailBlockKind,
+  isIndividualAllPerScheduleLayout,
   PRE_EDUCATION_SCHEDULE_LABEL,
+  shouldDisableEducationSchedulePeriodMode,
   shouldUseScheduleEventBlockLayout,
   type ScheduleEventBlockLayoutInput,
 } from './schedule-detail-form'
@@ -168,6 +172,37 @@ describe('getScheduleEventPerScheduleExtraPlan', () => {
   })
 })
 
+describe('isIndividualAllPerScheduleLayout', () => {
+  it('개인 + 교육·참여·IPS 모두 일정 별 상이면 true', () => {
+    expect(
+      isIndividualAllPerScheduleLayout({
+        participantOrganization: false,
+        ...ALL_PER_SCHEDULE,
+      })
+    ).toBe(true)
+  })
+
+  it('기관이면 false', () => {
+    expect(
+      isIndividualAllPerScheduleLayout({
+        participantOrganization: true,
+        ...ALL_PER_SCHEDULE,
+      })
+    ).toBe(false)
+  })
+
+  it('하나라도 일정 공통이면 false', () => {
+    expect(
+      isIndividualAllPerScheduleLayout({
+        participantOrganization: false,
+        educationFormScheduleDetail: 'perSchedule',
+        participationScheduleDetail: 'perSchedule',
+        ipsScheduleDetail: 'common',
+      })
+    ).toBe(false)
+  })
+})
+
 describe('applySchedulePreEducationBlock', () => {
   it('켜면 사전 교육 블록을 앞에 추가하고 행사 일정 번호는 유지한다', () => {
     const seeded = buildDefaultScheduleDetailsForEdit({
@@ -226,6 +261,100 @@ describe('applySchedulePreEducationBlock', () => {
     expect(next[0]?.blockKind).toBe('preEducation')
     expect(next[1]?.blockKind).toBe('sub')
     expect(next[1]?.scheduleLabel).toBe('세부 일정 01')
+  })
+
+  it('이미 있는 사전 교육 일정명은 다시 켜도 유지한다', () => {
+    const seeded = buildDefaultScheduleDetailsForEdit({
+      sessionRound: 'multi',
+      scheduleGroupCount: 1,
+      participantOrganization: false,
+      ...COMMON,
+    })
+    const withPre = applySchedulePreEducationBlock(seeded, true, { groupCount: 1 })
+    withPre[0]!.name = '오리엔테이션'
+    const next = applySchedulePreEducationBlock(withPre, true, { groupCount: 1 })
+    expect(next[0]?.blockKind).toBe('preEducation')
+    expect(next[0]?.name).toBe('오리엔테이션')
+  })
+})
+
+describe('applyCurriculumPreEducationBlock', () => {
+  it('켜면 사전 교육 세션을 앞에 추가하고 1회차는 유지한다', () => {
+    const seeded = buildDefaultCurriculumSessionsForEdit('multi')
+    const next = applyCurriculumPreEducationBlock(seeded, true, 'multi')
+    expect(next).toHaveLength(2)
+    expect(next[0]?.sessionLabel).toBe(PRE_EDUCATION_SCHEDULE_LABEL)
+    expect(next[0]?.title).toBe(PRE_EDUCATION_SCHEDULE_LABEL)
+    expect(next[0]?.ipsCategory).toBe('prepare')
+    expect(next[1]?.sessionLabel).toBe('1회차')
+  })
+
+  it('끄면 사전 교육만 제거하고 회차 번호를 다시 매긴다', () => {
+    const withPre = applyCurriculumPreEducationBlock(
+      buildDefaultCurriculumSessionsForEdit('multi'),
+      true,
+      'multi'
+    )
+    const next = applyCurriculumPreEducationBlock(withPre, false, 'multi')
+    expect(next).toHaveLength(1)
+    expect(next[0]?.sessionLabel).toBe('1회차')
+  })
+
+  it('이미 사전 교육이 있으면 중복 추가하지 않는다', () => {
+    const once = applyCurriculumPreEducationBlock(
+      buildDefaultCurriculumSessionsForEdit('multi'),
+      true,
+      'multi'
+    )
+    const twice = applyCurriculumPreEducationBlock(once, true, 'multi')
+    expect(twice.filter(s => s.sessionLabel === PRE_EDUCATION_SCHEDULE_LABEL)).toHaveLength(1)
+    expect(twice).toHaveLength(2)
+  })
+
+  it('단일 회차 차시 앞에도 사전 교육 세션을 추가한다', () => {
+    const next = applyCurriculumPreEducationBlock(
+      buildDefaultCurriculumSessionsForEdit('single'),
+      true,
+      'single'
+    )
+    expect(next).toHaveLength(2)
+    expect(next[0]?.sessionLabel).toBe(PRE_EDUCATION_SCHEDULE_LABEL)
+    expect(next[1]?.sessionLabel).toBe('1차시')
+  })
+
+  it('이미 있는 사전 교육 일정명은 다시 켜도 유지한다', () => {
+    const once = applyCurriculumPreEducationBlock(
+      buildDefaultCurriculumSessionsForEdit('single'),
+      true,
+      'single'
+    )
+    once[0]!.title = '사전 워크숍'
+    const twice = applyCurriculumPreEducationBlock(once, true, 'single')
+    expect(twice[0]?.sessionLabel).toBe(PRE_EDUCATION_SCHEDULE_LABEL)
+    expect(twice[0]?.title).toBe('사전 워크숍')
+  })
+})
+
+describe('shouldDisableEducationSchedulePeriodMode', () => {
+  it('일반 개인 + 단일 회차만 기간 지정을 막는다', () => {
+    expect(
+      shouldDisableEducationSchedulePeriodMode({
+        participantOrganization: false,
+        sessionRound: 'single',
+      })
+    ).toBe(true)
+    expect(
+      shouldDisableEducationSchedulePeriodMode({
+        participantOrganization: false,
+        sessionRound: 'multi',
+      })
+    ).toBe(false)
+    expect(
+      shouldDisableEducationSchedulePeriodMode({
+        participantOrganization: true,
+        sessionRound: 'single',
+      })
+    ).toBe(false)
   })
 })
 

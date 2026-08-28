@@ -179,4 +179,156 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     expect(reloaded.scheduleDetails[0]?.ipsCategory).toBe('prepare')
     expect(reloaded.scheduleDetails[0]?.ipsDetail).toBe('none')
   })
+
+  it('커리큘럼형 개인 사전 교육은 진행 일정을 저장 후 다시 로드한다', () => {
+    const program = baseProgram({
+      generalProgramEducationStructure: 'curriculum',
+      generalProgramSessionRound: 'single',
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+    })
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.educationStructure = 'curriculum'
+    values.sessionRound = 'single'
+    values.participantIndividual = true
+    values.participantOrganization = false
+    values.scheduleCurriculumPreEducation = true
+    values.educationFormScheduleDetail = 'perSchedule'
+    values.ipsScheduleDetail = 'perSchedule'
+    values.curriculumSessions = [
+      {
+        sessionLabel: '사전 교육',
+        title: '사전 워크숍',
+        description: '',
+        scheduleDate: '26년 4월 20일(월) 9:30 ~ 12:20',
+        assignmentEnabled: false,
+        assignmentPeriod: '',
+        educationForm: 'offline',
+        ipsCategory: 'prepare',
+        ipsDetail: 'none',
+      },
+      {
+        sessionLabel: '1차시',
+        title: '단원',
+        description: '내용',
+        assignmentEnabled: false,
+        assignmentPeriod: '',
+        educationForm: 'online',
+        ipsCategory: 'inspire',
+        ipsDetail: '',
+      },
+    ]
+    const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
+    const saved = patch.generalCommonInfo?.curriculumSessions?.[0]
+    expect(patch.generalCommonInfo?.scheduleCurriculumPreEducation).toBe(true)
+    expect(saved?.sessionLabel).toBe('사전 교육')
+    expect(saved?.title).toBe('사전 워크숍')
+    expect(saved?.scheduleDateLabel).toBe('26년 4월 20일(월) 9:30 ~ 12:20')
+    expect(saved?.educationFormLabel).toBe('오프라인')
+
+    const merged: Program = {
+      ...program,
+      ...patch,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        ...patch.generalCommonInfo,
+      },
+    }
+    const reloaded = programToGeneralCommonInfoEditValues(merged, sponsorContext)
+    expect(reloaded.curriculumSessions[0]?.scheduleDate).toBe('26년 4월 20일(월) 9:30 ~ 12:20')
+    expect(reloaded.curriculumSessions[0]?.educationForm).toBe('offline')
+    expect(reloaded.curriculumSessions[0]?.title).toBe('사전 워크숍')
+  })
+
+  it('커리큘럼형 복수 회차 개인 참여 방식을 회차별로 저장 후 다시 로드한다', () => {
+    const program = baseProgram({
+      generalProgramEducationStructure: 'curriculum',
+      generalProgramSessionRound: 'multi',
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+    })
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.educationStructure = 'curriculum'
+    values.sessionRound = 'multi'
+    values.participantIndividual = true
+    values.participantOrganization = false
+    values.educationFormScheduleDetail = 'perSchedule'
+    values.participationScheduleDetail = 'perSchedule'
+    values.ipsScheduleDetail = 'perSchedule'
+    values.curriculumSessions = [
+      {
+        sessionLabel: '1회차',
+        title: '1',
+        description: '내용',
+        assignmentEnabled: false,
+        assignmentPeriod: '',
+        educationForm: 'online',
+        participationMethod: 'team',
+        ipsCategory: 'inspire',
+        ipsDetail: '',
+      },
+    ]
+    const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
+    const saved = patch.generalCommonInfo?.curriculumSessions?.[0]
+    expect(saved?.educationFormLabel).toBe('온라인')
+    expect(saved?.participationMethodLabel).toBe('팀')
+    expect(saved?.ipsTypeSummary).toContain('Inspire')
+
+    const merged: Program = {
+      ...program,
+      ...patch,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        ...patch.generalCommonInfo,
+      },
+    }
+    const reloaded = programToGeneralCommonInfoEditValues(merged, sponsorContext)
+    expect(reloaded.curriculumSessions[0]?.participationMethod).toBe('team')
+    expect(reloaded.curriculumSessions[0]?.educationForm).toBe('online')
+  })
+
+  it('일정형 개인 사전 교육 일정명을 저장 후 다시 로드한다', () => {
+    const program = baseProgram({
+      generalProgramEducationStructure: 'schedule',
+      generalProgramSessionRound: 'multi',
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+    })
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.educationStructure = 'schedule'
+    values.sessionRound = 'multi'
+    values.participantIndividual = true
+    values.participantOrganization = false
+    values.scheduleCurriculumPreEducation = true
+    values.scheduleDetails = [
+      {
+        scheduleLabel: '사전 교육',
+        blockKind: 'preEducation',
+        name: '사전 워크숍',
+        groupTimes: [{ startTime: '', endTime: '' }],
+        scheduleDate: '26년 4월 20일(월)',
+        assignmentEnabled: false,
+        assignmentPeriod: '',
+        educationForm: 'online',
+        participationMethod: 'individual',
+        ipsCategory: 'prepare',
+        ipsDetail: 'none',
+      },
+    ]
+    const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
+    const saved = patch.generalCommonInfo?.scheduleDetails?.[0]
+    expect(saved?.scheduleLabel).toBe('사전 교육')
+    expect(saved?.name).toBe('사전 워크숍')
+
+    const merged: Program = {
+      ...program,
+      ...patch,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        ...patch.generalCommonInfo,
+      },
+    }
+    const reloaded = programToGeneralCommonInfoEditValues(merged, sponsorContext)
+    expect(reloaded.scheduleDetails[0]?.name).toBe('사전 워크숍')
+  })
 })

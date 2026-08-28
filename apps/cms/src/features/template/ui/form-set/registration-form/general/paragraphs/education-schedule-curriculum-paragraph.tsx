@@ -267,6 +267,11 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     {}
   )
 
+  const [preEducationName, setPreEducationName] = useProgramRegistrationOverlayKv(
+    'generalRegistration.educationScheduleCurriculum.preEducationName',
+    PRE_EDUCATION_SCHEDULE_LABEL
+  )
+
   const setIpsForDetail = (detailIndex: number, next: ProgramRegistrationIpsTypeValue) => {
     updateProgramRegistrationOverlayKey<Record<number, ProgramRegistrationIpsTypeValue>>(
       'generalRegistration.educationScheduleCurriculum.ipsByDetailIndex',
@@ -849,12 +854,11 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                   edit={
                     <CmsInput
                       inputSize="medium"
-                      value={PRE_EDUCATION_SCHEDULE_LABEL}
-                      placeholder={PRE_EDUCATION_SCHEDULE_LABEL}
+                      value={preEducationName}
+                      placeholder="행사 일정명을 작성하세요"
                       width="100%"
                       style={{ minWidth: 0, flex: '1 1 0' }}
-                      disabled
-                      readOnly
+                      onChange={event => setPreEducationName(event.target.value)}
                     />
                   }
                   view="-"

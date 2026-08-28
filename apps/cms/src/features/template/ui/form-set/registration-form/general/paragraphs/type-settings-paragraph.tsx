@@ -132,7 +132,10 @@ export function ProgramRegistrationTypeSettingsParagraph({
   }
 
   const showParticipationMethod = !participantOrganization
-  const perScheduleHint = typeSettingsPerScheduleHint(programType)
+  const perScheduleHint = typeSettingsPerScheduleHint({
+    educationStructure: programType,
+    sessionRound: sessionRoundType,
+  })
 
   /** 일정 공통·단일 회차 교육 형태 → 신청 폼 「희망 교육 형태」 노출 연동 */
   useEffect(() => {

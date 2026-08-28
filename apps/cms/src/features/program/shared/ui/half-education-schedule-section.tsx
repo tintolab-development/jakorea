@@ -1,3 +1,6 @@
+/**
+ * 상·하반기 교육 일정 블록 — 등록 양식·프로그램 상세 공통
+ */
 import { useMemo } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -26,8 +29,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
-import '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-first-half-education-schedule-paragraph.css'
-import './ujat-half-education-schedule.css'
+import './half-education-schedule-section.css'
 
 function ScheduleTextView({ text }: { text: string }) {
   if (!text || text === '-') return <>-</>
@@ -44,8 +46,8 @@ function ScheduleTextView({ text }: { text: string }) {
   )
 }
 
-function UjatHalfEducationScheduleSubheading({ children }: { children: string }) {
-  return <div className="ujat-half-education-schedule__subheading">{children}</div>
+function HalfEducationScheduleSubheading({ children }: { children: string }) {
+  return <div className="half-education-schedule__subheading">{children}</div>
 }
 function getUjatTextbookInstructorOptions() {
   return mockInstructors.slice(0, 40).map(instructor => ({
@@ -73,7 +75,7 @@ function getRowRegionOptions(
 function AddScheduleRowButton({ onClick }: { onClick: () => void }) {
   return (
     <CmsCircleAddButton
-      className="ujat-first-half-schedule__add-row-button"
+      className="half-education-schedule__add-row-button"
       aria-label="진행 일정 행 추가"
       onClick={e => {
         e.stopPropagation()
@@ -144,11 +146,11 @@ function UjatRegionDateMultiScheduleRows({
   }
 
   return (
-    <div className="ujat-first-half-schedule__schedule-rows">
+    <div className="half-education-schedule__schedule-rows">
       {rowIds.map((id, index) => (
         <div
           key={id}
-          className="detail-info-form-inputs-wrapper ujat-first-half-schedule__schedule-row"
+          className="detail-info-form-inputs-wrapper half-education-schedule__schedule-row"
         >
           <CmsSelect
             mode="multiple"
@@ -258,7 +260,7 @@ function TextbookEducationField({ half }: { half: UjatHalfSemesterKey }) {
   )
 
   return (
-    <div className="detail-info-form-inputs-wrapper ujat-half-education-schedule__textbook-row">
+    <div className="detail-info-form-inputs-wrapper half-education-schedule__textbook-row">
       <CmsRadioGroup
         size="large"
         value={mode}
@@ -298,8 +300,8 @@ function UjatPreEducationBlock({
   )
 
   return (
-    <div className="ujat-half-education-schedule__block ujat-half-education-schedule__block--first">
-      <UjatHalfEducationScheduleSubheading>■ 사전 교육</UjatHalfEducationScheduleSubheading>
+    <div className="half-education-schedule__block half-education-schedule__block--first">
+      <HalfEducationScheduleSubheading>■ 사전 교육</HalfEducationScheduleSubheading>
       <DetailInfoForm
         title="사전 교육"
         hideHeader
@@ -381,8 +383,8 @@ function UjatEventScheduleBlock({
   )
 
   return (
-    <div className="ujat-half-education-schedule__block">
-      <UjatHalfEducationScheduleSubheading>■ 행사 일정</UjatHalfEducationScheduleSubheading>
+    <div className="half-education-schedule__block">
+      <HalfEducationScheduleSubheading>■ 행사 일정</HalfEducationScheduleSubheading>
       <DetailInfoForm
         title="행사 일정"
         hideHeader
@@ -421,7 +423,7 @@ function UjatEventScheduleBlock({
                     })
                   }
                   placeholder={['시작일', '종료일']}
-                  className="ujat-first-half-schedule__range-picker"
+                  className="half-education-schedule__range-picker"
                 />
               ) : undefined
             }
@@ -459,8 +461,8 @@ function UjatClosingCeremonyBlock({
   )
 
   return (
-    <div className="ujat-half-education-schedule__block">
-      <UjatHalfEducationScheduleSubheading>■ 해단식</UjatHalfEducationScheduleSubheading>
+    <div className="half-education-schedule__block">
+      <HalfEducationScheduleSubheading>■ 해단식</HalfEducationScheduleSubheading>
       <DetailInfoForm
         title="해단식"
         hideHeader
@@ -511,7 +513,7 @@ function UjatClosingCeremonyBlock({
   )
 }
 
-export function UjatHalfEducationScheduleSection({
+export function HalfEducationScheduleSection({
   half,
   mode,
   display,
@@ -521,7 +523,7 @@ export function UjatHalfEducationScheduleSection({
   display: import('@/features/program/ujat/lib/ujat-half-education-schedule-display').UjatHalfEducationScheduleDisplay
 }) {
   return (
-    <div className="ujat-half-education-schedule-section">
+    <div className="half-education-schedule-section">
       <UjatPreEducationBlock half={half} mode={mode} viewRow={display.preEducation} />
       <UjatEventScheduleBlock half={half} mode={mode} viewRow={display.eventSchedule} />
       <UjatClosingCeremonyBlock half={half} mode={mode} viewRow={display.closingCeremony} />

@@ -58,7 +58,7 @@ import {
   parseEducationScheduleLineToRange,
 } from '@/features/template/lib/format-education-schedule-line'
 import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
-import { typeSettingsPerScheduleHint } from '@/features/template/ui/form-set/registration-form/shared/type-settings-copy'
+import { TYPE_SETTINGS_PER_SCHEDULE_HINT } from '@/features/template/ui/form-set/registration-form/shared/type-settings-copy'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/template/ui/shared/paragraph-date-picker.css'
 import '@/features/template/ui/shared/paragraph-time-picker.css'
@@ -97,9 +97,7 @@ function progressGroupLetter(index: number): string {
 function parseProgressGroups(summary: string | undefined): string[] {
   const trimmed = summary?.trim()
   if (!trimmed || trimmed === '-') return ['']
-  return trimmed
-    .split(/\s*\|\s*/)
-    .map(part => part.replace(/^그룹\s*\S+\s*:\s*/, '').trim())
+  return trimmed.split(/\s*\|\s*/).map(part => part.replace(/^그룹\s*\S+\s*:\s*/, '').trim())
 }
 
 /** 그룹별 시간 텍스트 배열 → progressTimeSummary (2개 이상일 때만 그룹 라벨) */
@@ -249,9 +247,7 @@ function KpiNumberInput({
       mode="integer"
       min={0}
       value={value == null ? '' : String(value)}
-      onValueChange={raw =>
-        onChange(raw === '' ? undefined : Number.parseInt(raw, 10))
-      }
+      onValueChange={raw => onChange(raw === '' ? undefined : Number.parseInt(raw, 10))}
     />
   )
 }
@@ -287,9 +283,7 @@ function TrainedTeachersKpiSection({
             isFormEdit ? (
               <KpiNumberInput
                 value={draft.kpiFinalParticipants}
-                onChange={next =>
-                  updateDraft(d => ({ ...d, kpiFinalParticipants: next }))
-                }
+                onChange={next => updateDraft(d => ({ ...d, kpiFinalParticipants: next }))}
               />
             ) : undefined
           }
@@ -309,9 +303,7 @@ function TrainedTeachersKpiSection({
                 <KpiNumberInput
                   width={120}
                   value={draft.kpiEducatedTeachers}
-                  onChange={next =>
-                    updateDraft(d => ({ ...d, kpiEducatedTeachers: next }))
-                  }
+                  onChange={next => updateDraft(d => ({ ...d, kpiEducatedTeachers: next }))}
                 />
               </div>
             ) : undefined
@@ -362,7 +354,7 @@ function TrainedTeachersTypeSettingsSection({
 }) {
   const isMulti = sessionRound === 'multi'
   const educationFormPerSchedule = commonInfo.educationFormScheduleDetail === 'perSchedule'
-  const perScheduleHint = typeSettingsPerScheduleHint(educationStructure)
+  const perScheduleHint = TYPE_SETTINGS_PER_SCHEDULE_HINT.byRound
 
   const educationFormView = educationFormPerSchedule ? (
     <div className="detail-info-form-inputs-wrapper">
@@ -674,7 +666,11 @@ function MultiRoundSessionBlock({
         >
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
-              label={isFormEdit ? `${session.sessionLabel.replace(/회차$/, '')}회차 수업` : '차시 및 교육 내용'}
+              label={
+                isFormEdit
+                  ? `${session.sessionLabel.replace(/회차$/, '')}회차 수업`
+                  : '차시 및 교육 내용'
+              }
               fullRow
               view={
                 <>
@@ -868,9 +864,7 @@ function TrainedTeachersCurriculumSection({
             key={session.sessionLabel || index}
             session={session}
             heading={isTeacherTrainingBlock ? TEACHER_TRAINING_HEADING : undefined}
-            ipsSummaryOverride={
-              isTeacherTrainingBlock ? TEACHER_TRAINING_IPS_SUMMARY : undefined
-            }
+            ipsSummaryOverride={isTeacherTrainingBlock ? TEACHER_TRAINING_IPS_SUMMARY : undefined}
             showEducationPerRound={showEducationPerRound}
             showIpsPerRound={showIpsPerRound}
             isFormEdit={isFormEdit}
@@ -883,9 +877,7 @@ function TrainedTeachersCurriculumSection({
             key={session.sessionLabel || index}
             session={session}
             heading={isTeacherTrainingBlock ? TEACHER_TRAINING_HEADING : undefined}
-            ipsSummaryOverride={
-              isTeacherTrainingBlock ? TEACHER_TRAINING_IPS_SUMMARY : undefined
-            }
+            ipsSummaryOverride={isTeacherTrainingBlock ? TEACHER_TRAINING_IPS_SUMMARY : undefined}
             showIpsPerSession={showIpsPerSession}
             isFormEdit={isFormEdit}
             showDelete={sessions.length >= 2}
@@ -1271,10 +1263,7 @@ function TrainedTeachersScheduleSection({
           [...d.scheduleDetails, { scheduleLabel: '', name: '' }],
           isMulti
         ),
-        progressGroupsByDetail: [
-          ...d.progressGroupsByDetail,
-          Array<string>(groupCount).fill(''),
-        ],
+        progressGroupsByDetail: [...d.progressGroupsByDetail, Array<string>(groupCount).fill('')],
       }
     })
 
@@ -1331,9 +1320,7 @@ function TrainedTeachersScheduleSection({
               detail={detail}
               heading={isTeacherTrainingBlock ? TEACHER_TRAINING_HEADING : undefined}
               nameOverride={isTeacherTrainingBlock ? TEACHER_TRAINING_HEADING : undefined}
-              ipsSummaryOverride={
-                isTeacherTrainingBlock ? TEACHER_TRAINING_IPS_SUMMARY : undefined
-              }
+              ipsSummaryOverride={isTeacherTrainingBlock ? TEACHER_TRAINING_IPS_SUMMARY : undefined}
               showEducationPerSchedule={showEducationPerSchedule}
               showIpsPerSchedule={showIpsPerSchedule}
               isFormEdit={isFormEdit}
@@ -1462,10 +1449,12 @@ export function TrainedTeachersCommonInfoView({
   // 수정 모드 진입 시 현재 표시값으로 draft 시드
   useEffect(() => {
     if (isEditMode) {
-      setDraft(seedDraft(
-        { ...resolveGeneralProgramCommonInfo(program), ...savedOverride?.commonInfo },
-        savedOverride?.educatedTeachers ?? program.educatedTeachers
-      ))
+      setDraft(
+        seedDraft(
+          { ...resolveGeneralProgramCommonInfo(program), ...savedOverride?.commonInfo },
+          savedOverride?.educatedTeachers ?? program.educatedTeachers
+        )
+      )
       return
     }
     setDraft(null)
@@ -1492,7 +1481,9 @@ export function TrainedTeachersCommonInfoView({
       educationJournalEnabled: draft.educationJournalEnabled,
       teacherTrainingEnabled: draft.teacherTrainingEnabled,
       curriculumSessions:
-        educationStructure === 'curriculum' ? draft.curriculumSessions : commonInfo.curriculumSessions,
+        educationStructure === 'curriculum'
+          ? draft.curriculumSessions
+          : commonInfo.curriculumSessions,
       scheduleDetails:
         educationStructure === 'schedule'
           ? draft.scheduleDetails.map((detail, index) => ({

@@ -146,6 +146,12 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
    * 기본 true — 다른 피커 동작 유지.
    */
   showTimeToggle?: boolean
+  /**
+   * false면 푸터 「기간」 토글 숨김 (`periodOn` 고정 false).
+   * `presetMode: 'schedule'`이어도 기간 선택 UI를 숨길 때 사용.
+   * 기본 true.
+   */
+  showPeriodToggle?: boolean
 }
 
 export type ParagraphDatePickerProps =
@@ -185,6 +191,7 @@ interface ParagraphDatePickerSingleInnerProps {
   presetDisplayText?: string
   onOpenChange?: (open: boolean) => void
   showTimeToggle?: boolean
+  showPeriodToggle?: boolean
 }
 
 function ParagraphDatePickerSingleInner({
@@ -209,6 +216,7 @@ function ParagraphDatePickerSingleInner({
   presetDisplayText,
   onOpenChange,
   showTimeToggle = true,
+  showPeriodToggle = true,
 }: ParagraphDatePickerSingleInnerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
@@ -225,6 +233,11 @@ function ParagraphDatePickerSingleInner({
     findNextEnabledDate(value ?? dayjs(), disabledDate).startOf('month')
   )
   const [periodOn, setPeriodOn] = useState(false)
+
+  useEffect(() => {
+    if (showPeriodToggle) return
+    setPeriodOn(false)
+  }, [showPeriodToggle])
   const [rangeStart, setRangeStart] = useState<Dayjs>(() =>
     findNextEnabledDate(value ?? dayjs(), disabledDate)
   )
@@ -249,14 +262,16 @@ function ParagraphDatePickerSingleInner({
   const [endMinute, setEndMinute] = useState('0')
   const [endMer, setEndMer] = useState<'AM' | 'PM'>('AM')
 
-  const showPeriodToggleInFooter = customizable || presetMode === 'schedule'
+  const showPeriodToggleInFooter =
+    showPeriodToggle && (customizable || presetMode === 'schedule')
 
   const isRangeCalendarMode = useMemo(() => {
+    if (!showPeriodToggle) return false
     if (customizable) return periodOn
     if (presetMode === 'date') return false
     if (presetMode === 'period') return true
     return periodOn
-  }, [customizable, presetMode, periodOn])
+  }, [customizable, presetMode, periodOn, showPeriodToggle])
 
   /**
    * 기본값: 오늘 — 단일 날짜 모드에서만 부모 `value`가 null이면 동기화.
@@ -350,7 +365,12 @@ function ParagraphDatePickerSingleInner({
       surfaceRange != null &&
       disabledDate != null &&
       (disabledDate(surfaceRange[0]) || disabledDate(surfaceRange[1]))
-    const useSurface = !!(surfaceRange && allowSurfaceRestore && !surfaceHasDisabledDate)
+    const useSurface = !!(
+      surfaceRange &&
+      allowSurfaceRestore &&
+      !surfaceHasDisabledDate &&
+      showPeriodToggle
+    )
 
     if (presetMode === 'date' && !customizable) {
       setPeriodOn(false)
@@ -400,7 +420,7 @@ function ParagraphDatePickerSingleInner({
         setPeriodOn(true)
         setTimeOn(false)
       } else {
-        setPeriodOn(presetMode === 'schedule' && preferPeriodModeInPopover)
+        setPeriodOn(showPeriodToggle && presetMode === 'schedule' && preferPeriodModeInPopover)
         setTimeOn(false)
       }
     }
@@ -804,6 +824,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           presetDisplayText={props.presetDisplayText}
           onOpenChange={props.mode === 'single' ? props.onOpenChange : undefined}
           showTimeToggle={props.mode === 'single' ? (props.showTimeToggle ?? true) : true}
+          showPeriodToggle={props.mode === 'single' ? (props.showPeriodToggle ?? true) : true}
         />
       )}
     </div>

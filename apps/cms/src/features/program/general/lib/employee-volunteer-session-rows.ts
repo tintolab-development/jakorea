@@ -80,9 +80,12 @@ export function resolveEmployeeVolunteerSessionRows(program: Program): EmployeeV
   }
 
   const sessions = commonInfo.curriculumSessions ?? []
-  const count = Math.max(sessions.length, 1)
+  const regularSessions = sessions.filter(
+    session => !session.sessionLabel?.includes('사전 교육')
+  )
+  const count = Math.max(regularSessions.length, 1)
   for (let index = 0; index < count; index += 1) {
-    const sessionLabel = sessions[index]?.sessionLabel?.trim()
+    const sessionLabel = regularSessions[index]?.sessionLabel?.trim()
     const label = sessionLabel || `${index + 1}회차 교육`
     rows.push({
       id: buildRoundId(index + 1),
