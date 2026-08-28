@@ -37,6 +37,7 @@ import {
   collectMemberConsentDisagreedRequiredLabels,
   hasMemberConsentIncompleteRequiredFields,
 } from '@/features/user/shared/lib/validate-member-consent-draft'
+import { mergePaymentStatementBasicInfo } from '@jakorea/form-schema/consent'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
@@ -47,21 +48,6 @@ const PAYMENT_STATEMENT_TEMPLATE_IDS = new Set([
   'agreement-third-party',
   'document-payment-order-pre-consent',
 ])
-
-const EMPTY_PAYMENT_BASIC_INFO: Partial<PaymentStatementBasicInfoAutofillValues> = {
-  nameKo: '',
-  nameEn: '',
-  residentFront: '',
-  residentBack: '',
-  affiliation: '',
-  noAffiliation: false,
-  addressRoad: '',
-  addressDetail: '',
-  bankName: '',
-  accountNumber: '',
-  accountHolder: '',
-  paymentPurpose: '',
-}
 
 export interface MemberConsentAgreementModalProps {
   open: boolean
@@ -109,7 +95,7 @@ export function MemberConsentAgreementModal({
     if (savedSnapshot?.draft) {
       const restored = cloneMemberConsentAgreementDraftSnapshot(savedSnapshot)
       setDraft(normalizeWritingFormDraft(restored.draft))
-      setPaymentBasicInfo(restored.paymentBasicInfo ?? {})
+      setPaymentBasicInfo(mergePaymentStatementBasicInfo(restored.paymentBasicInfo))
       setIsDraftLoading(false)
       return
     }
@@ -117,7 +103,7 @@ export function MemberConsentAgreementModal({
     let cancelled = false
     setIsDraftLoading(true)
     setDraft(null)
-    setPaymentBasicInfo({})
+    setPaymentBasicInfo(mergePaymentStatementBasicInfo())
 
     void loadWritingFormTemplateDraft(templateId)
       .then(saved => {
@@ -184,7 +170,7 @@ export function MemberConsentAgreementModal({
     }
     const snapshot: MemberConsentAgreementDraftSnapshot = {
       draft: normalizeWritingFormDraft(draft),
-      paymentBasicInfo: paymentBasicInfo ?? undefined,
+      paymentBasicInfo: mergePaymentStatementBasicInfo(paymentBasicInfo),
     }
     onSnapshotSave?.(cloneMemberConsentAgreementDraftSnapshot(snapshot))
     onComplete()
@@ -192,7 +178,7 @@ export function MemberConsentAgreementModal({
 
   const handlePaymentBasicInfoValuesChange = useCallback(
     (values: PaymentStatementBasicInfoAutofillValues) => {
-      setPaymentBasicInfo(values)
+      setPaymentBasicInfo(mergePaymentStatementBasicInfo(values))
     },
     []
   )
@@ -223,10 +209,7 @@ export function MemberConsentAgreementModal({
     if (!PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) return paragraphBodyOptions
     return {
       ...paragraphBodyOptions,
-      paymentStatementBasicInfoValues: {
-        ...EMPTY_PAYMENT_BASIC_INFO,
-        ...(paymentBasicInfo ?? {}),
-      },
+      paymentStatementBasicInfoValues: mergePaymentStatementBasicInfo(paymentBasicInfo),
       paymentStatementBasicInfoOnValuesChange: handlePaymentBasicInfoValuesChange,
     }
   }, [handlePaymentBasicInfoValuesChange, paragraphBodyOptions, paymentBasicInfo, templateId])

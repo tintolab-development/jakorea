@@ -48,6 +48,18 @@ describe('mapPaymentBasicInfo', () => {
       paymentPurpose: '강사비 또는 활동비 지급',
     })
   })
+
+  it('지급 목적이 비어 있으면 고정 문구를 넣는다', () => {
+    expect(
+      mapPaymentBasicInfo({
+        nameKo: '홍길동',
+        paymentPurpose: '',
+      })
+    ).toMatchObject({
+      nameKo: '홍길동',
+      paymentPurpose: '강사비 또는 활동비 지급',
+    })
+  })
 })
 
 describe('mapAgreementSnapshotToFilledDocument', () => {

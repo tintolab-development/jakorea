@@ -28,6 +28,7 @@ import {
 } from '@/features/user/shared/lib/build-member-consent-agree-only-preview-draft'
 import type { FilledDocumentResponse } from '@/shared/api/generated/members/schemas/filledDocumentResponse'
 import type { PaymentStatementBasicInfo } from '@/shared/api/generated/members/schemas/paymentStatementBasicInfo'
+import { PAYMENT_STATEMENT_DEFAULT_PURPOSE } from '@jakorea/form-schema/consent'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { downloadBlob } from '@/shared/utils/file-download'
@@ -88,7 +89,7 @@ function paymentInfoToAutofill(
     bankName: info.bankName ?? '',
     accountNumber: info.accountNumber ?? '',
     accountHolder: info.accountHolder ?? '',
-    paymentPurpose: info.paymentPurpose ?? '',
+    paymentPurpose: info.paymentPurpose?.trim() || PAYMENT_STATEMENT_DEFAULT_PURPOSE,
   }
 }
 

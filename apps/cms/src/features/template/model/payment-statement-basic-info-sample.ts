@@ -3,6 +3,7 @@
  * mock 강사(최강사) 스토리와 맞추고, BANK_OPTIONS/AFFILIATION_OPTIONS value 키와 일치시킨다.
  */
 
+import { PAYMENT_STATEMENT_DEFAULT_PURPOSE } from '@jakorea/form-schema/consent'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
 
 export const PAYMENT_STATEMENT_BASIC_INFO_SAMPLE_VALUES: PaymentStatementBasicInfoAutofillValues =
@@ -18,13 +19,13 @@ export const PAYMENT_STATEMENT_BASIC_INFO_SAMPLE_VALUES: PaymentStatementBasicIn
     bankName: 'kb',
     accountNumber: '123456789012',
     accountHolder: '최강사',
-    paymentPurpose: '강사비 또는 활동비 지급',
+    paymentPurpose: PAYMENT_STATEMENT_DEFAULT_PURPOSE,
   }
 
 /**
- * 지급조서 사전 동의서 authoring/작성 — 입력란은 비워 placeholder 노출, 지급 목적만 고정 문구.
+ * 지급조서 사전 동의서 authoring/작성 — 입력란은 비우고, 지급 목적만 고정 문구를 값으로 넣는다.
  */
 export const PAYMENT_STATEMENT_PRE_CONSENT_BASIC_INFO_AUTHORING_VALUES: Partial<PaymentStatementBasicInfoAutofillValues> =
   {
-    paymentPurpose: '강사비 또는 활동비 지급',
+    paymentPurpose: PAYMENT_STATEMENT_DEFAULT_PURPOSE,
   }

@@ -12,6 +12,7 @@ import type { FilledDocumentRequest } from '@/shared/api/generated/members/schem
 import type { JsonNode } from '@/shared/api/generated/members/schemas/jsonNode'
 import type { PaymentStatementBasicInfo } from '@/shared/api/generated/members/schemas/paymentStatementBasicInfo'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
+import { PAYMENT_STATEMENT_DEFAULT_PURPOSE } from '@jakorea/form-schema/consent'
 
 const AGREEMENT_TEMPLATE_CODE_BY_TERMS_TYPE: Record<string, string> = {
   PORTRAIT_RIGHTS: 'agreement-portrait',
@@ -76,7 +77,7 @@ export function mapPaymentBasicInfo(
     bankName: trimText(values.bankName),
     accountNumber: trimText(values.accountNumber),
     accountHolder: trimText(values.accountHolder),
-    paymentPurpose: trimText(values.paymentPurpose),
+    paymentPurpose: trimText(values.paymentPurpose) ?? PAYMENT_STATEMENT_DEFAULT_PURPOSE,
   }
   return mapped
 }
