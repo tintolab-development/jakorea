@@ -27,6 +27,37 @@ CMS LNB 「회원 관리」(회원 목록 · 권한 승인 · 권한 설정) API
 
 ---
 
+## Notion 기획 ↔ 구현 검증
+
+| 문서 | 용도 |
+|------|------|
+| [**member-management-notion-parity-2026-08-28.md**](./member-management-notion-parity-2026-08-28.md) | **검증 리포트** — Notion CMS 기능정의서(회원 목록·권한 승인 73p) ↔ OpenAPI·FE 비즈니스 로직 대조 · ✅⚠️❌ · P0/P1 backlog |
+| [**member-permission-management-fe-be-integration-2026-08-28.md**](./member-permission-management-fe-be-integration-2026-08-28.md) | 권한 승인·설정 P0 FE↔BE 연동 체크리스트 · seed smoke |
+| [**member-permission-management-backend-seed-handoff-2026-08-28.md**](./member-permission-management-backend-seed-handoff-2026-08-28.md) | 권한 승인·설정 BE seed SSOT (상세) |
+
+---
+
+## DB seed — 백엔드 Cursor 프롬프트
+
+> **BE에 붙여넣을 파일:** [`member-management-backend-seed-handoff-2026-08-28.md`](./member-management-backend-seed-handoff-2026-08-28.md)  
+> mock API numeric id·showcase case·Flyway 규칙·smoke checklist 포함.
+
+| 문서 / 스펙 | 용도 |
+|-------------|------|
+| [**member-management-backend-seed-handoff-2026-08-28.md**](./member-management-backend-seed-handoff-2026-08-28.md) | **Cursor prompt (메인)** — 회원 목록·학교·권한승인 전체 seed |
+| [**member-management-seed-v1.spec.json**](./member-management-seed-v1.spec.json) | 기계 readable seed SSOT · id 범위 · showcase · smoke |
+| [**member-permission-management-seed-v1.spec.json**](./member-permission-management-seed-v1.spec.json) | 권한승인 subset (172001–172231) |
+| FE catalog | [`member-management-seed-catalog.ts`](../../src/data/mock/member-management-seed-catalog.ts) — mock string id ↔ BE numeric id |
+
+```bash
+# seed handoff zip (Cursor prompt + spec JSON + FE catalog + 선택 OpenAPI)
+pnpm --filter cms package:member-management-seed-handoff -- --openapi
+```
+
+시드 라벨: `member-management-v1-2026-08`
+
+---
+
 ## 기타 members handoff
 
 | 문서 | 용도 |
@@ -62,4 +93,4 @@ pnpm --filter cms package:members-be-handoff -- --openapi
 pnpm --filter cms package:members-be-handoff -- --out=~/Desktop/jakorea-members-be-handoff
 ```
 
-**Last updated:** 2026-08-26 (SET-009 지급조서 원문·산출 내역서 unmask · pre-register 동의서 작성 본문 500)
+**Last updated:** 2026-08-28 (회원관리 DB seed Cursor prompt · Notion parity 검증)
