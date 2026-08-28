@@ -215,6 +215,77 @@ pnpm --filter cms package:member-management-seed-handoff -- --openapi
 
 ---
 
+## 11. 회원 상세 이력 seed (유형별 LNB)
+
+목록 seed(171001–171005)만으로는 **상세 → 프로젝트 참여 이력** 탭이 비거나 mock과 불일치한다.  
+아래를 **동일 Flyway fixture**에 포함하라.
+
+| 항목 | 값 |
+|------|-----|
+| **시드 라벨** | `member-detail-history-v1-2026-08` |
+| **기계 스펙** | `member-detail-history-seed-v1.spec.json` |
+| **FE catalog** | `member-detail-history-seed-catalog.ts` |
+| **5단계 demo SSOT** | `economy-prog-001~005` (`program-lecture-history-demo.ts`) |
+
+### 11.1 ID 범위 (이력 전용)
+
+| 리소스 | ID 범위 |
+|--------|---------|
+| Member application (`app-*`) | 173001–173400 |
+| Program-history participant (`ph-*` / `part-*`) | 173401–173800 |
+| School enrollment `historyRowId` | 174001–174100 |
+| Admin `program-roles` row | 174501–174550 |
+| Instructor settlement | 175001–175100 |
+
+### 11.2 유형별 showcase (필수)
+
+| caseId | memberId | FE mock user | LNB 탭 | applicationId | volunteer ph-* |
+|--------|----------|--------------|--------|---------------|----------------|
+| MH-MD-INDIVIDUAL | 171001 | mock-md-individual-171001 | 수강·봉사 | 173001–173005 | 173401–173405 |
+| MH-MD-SCHOOL-TEACHER | 171002 | mock-instructor-kang-001 | 수강·봉사 (강의 **없음**) | 173011–173015 | 173411–173415 |
+| MH-MD-INSTRUCTOR | 171003 | mock-instructor-jung-001 | 수강·강의·봉사·**정산** | 173021–173030 | 173421–173425 |
+| MH-MD-INSTRUCTOR-DUAL | 171004 | mock-instructor-choi-001 | 동일 + 정산 | 173031–173040 | 173431–173435 |
+| MH-MD-INSTRUCTOR-REVOKED | 171005 | mock-md-instructor-revoked-171005 | 수강·강의·봉사 (정산 없음) | 173041–173050 | 173441–173445 |
+
+**5단계 시나리오 (No.5→1):** 신청 대기 → 반려 → 교육 예정 → 진행 중 → 종료(강의보고서·수료증).
+
+### 11.3 학교·관리자 상세
+
+| caseId | 주체 | ID | API |
+|--------|------|-----|-----|
+| MH-SCHOOL-SEOUL | org 171501 | historyRowId 174001–174005 | `GET .../program-enrollment-history` |
+| MH-SCHOOL-JINWOL | org 171502 | 174011–174015 | 동일 |
+| MH-ADMIN-MASTER | admin 171601 | programRoleId 174501–174505 | `GET .../admin-accounts/171601/program-roles` |
+
+### 11.4 directory ↔ permission memberId (동일 FE mock, 다른 BE id)
+
+| FE mock | directory memberId | permission memberId |
+|---------|-------------------|---------------------|
+| mock-instructor-jung-001 | 171003 | 172101 |
+| mock-instructor-choi-001 | 171004 | 172107 |
+| mock-instructor-kang-001 | 171002 | 172103 |
+
+상세 이력 seed는 **directory memberId** 기준. 권한승인 상세는 **172xxx**.
+
+### 11.5 연계 handoff (필드·모달·정산)
+
+- REQ-001~016: [member-program-history-ui-api-parity-backend-handoff-2026-08-25.md](./member-program-history-ui-api-parity-backend-handoff-2026-08-25.md)
+- PH/SET: [instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md](./instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md)
+- 학교: [school-organization-program-enrollment-history-backend-handoff-2026-08-25.md](./school-organization-program-enrollment-history-backend-handoff-2026-08-25.md)
+- 관리자: [admin-member-managed-program-history-backend-handoff-2026-08-25.md](./admin-member-managed-program-history-backend-handoff-2026-08-25.md)
+
+### 11.6 Smoke (이력)
+
+1. `GET /api/admin/users/171001/applications` — 5건, `economy-prog-001` 포함
+2. `GET /api/admin/users/171001/program-history` — 봉사 5건, `managerName` non-empty
+3. `GET /api/admin/users/171002/applications` — student 5건, 강의 탭 API 호출 없음
+4. `GET /api/admin/users/171003/applications` — 10건 (수강+강의)
+5. `GET /api/admin/settlements?instructorMemberId=171003` — ≥1 row
+6. `GET /api/admin/organizations/schools/171501/program-enrollment-history` — 174001–174005
+7. `GET /api/admin/admin-accounts/171601/program-roles` — 174501–174505
+
+---
+
 ## 9. P1 (FE client filter 유지 — seed 불필요)
 
 - `requestedAtFrom/To`, `memberType` (강사 목록)
@@ -228,7 +299,9 @@ pnpm --filter cms package:member-management-seed-handoff -- --openapi
 | 파일 | 용도 |
 |------|------|
 | `apps/cms/docs/api/members/member-management-seed-v1.spec.json` | 기계 readable seed SSOT |
-| `apps/cms/src/data/mock/member-management-seed-catalog.ts` | FE mock ↔ numeric id |
+| `apps/cms/docs/api/members/member-detail-history-seed-v1.spec.json` | **상세 이력** seed SSOT |
+| `apps/cms/src/data/mock/member-management-seed-catalog.ts` | FE mock ↔ numeric id (목록·권한) |
+| `apps/cms/src/data/mock/member-detail-history-seed-catalog.ts` | FE mock ↔ 이력 id |
 | `apps/cms/docs/api/members/member-management-notion-parity-2026-08-28.md` | Notion 기획 검증 |
 | `apps/cms/src/features/user/api/lib/map-permission-approval-status.ts` | 상태 mapper |
 

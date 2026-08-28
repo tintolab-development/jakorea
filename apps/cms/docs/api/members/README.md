@@ -46,8 +46,9 @@ CMS LNB 「회원 관리」(회원 목록 · 권한 승인 · 권한 설정) API
 |-------------|------|
 | [**member-management-backend-seed-handoff-2026-08-28.md**](./member-management-backend-seed-handoff-2026-08-28.md) | **Cursor prompt (메인)** — 회원 목록·학교·권한승인 전체 seed |
 | [**member-management-seed-v1.spec.json**](./member-management-seed-v1.spec.json) | 기계 readable seed SSOT · id 범위 · showcase · smoke |
+| [**member-detail-history-seed-v1.spec.json**](./member-detail-history-seed-v1.spec.json) | **상세 이력** seed (171001–171005 · 171501 · 171601) |
 | [**member-permission-management-seed-v1.spec.json**](./member-permission-management-seed-v1.spec.json) | 권한승인 subset (172001–172231) |
-| FE catalog | [`member-management-seed-catalog.ts`](../../src/data/mock/member-management-seed-catalog.ts) — mock string id ↔ BE numeric id |
+| FE catalog | [`member-management-seed-catalog.ts`](../../src/data/mock/member-management-seed-catalog.ts) · [`member-detail-history-seed-catalog.ts`](../../src/data/mock/member-detail-history-seed-catalog.ts) |
 
 ```bash
 # seed handoff zip (Cursor prompt + spec JSON + FE catalog + 선택 OpenAPI)

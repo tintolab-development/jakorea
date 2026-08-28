@@ -27,6 +27,7 @@ const seedDocFiles = [
   'member-management-backend-seed-handoff-2026-08-28.md',
   'member-permission-management-backend-seed-handoff-2026-08-28.md',
   'member-management-seed-v1.spec.json',
+  'member-detail-history-seed-v1.spec.json',
   'member-permission-management-seed-v1.spec.json',
   'member-management-notion-parity-2026-08-28.md',
 ]
@@ -48,12 +49,18 @@ for (const name of seedDocFiles) {
 }
 
 const feCatalogSrc = path.join(cmsRoot, 'src/data/mock/member-management-seed-catalog.ts')
+const feHistoryCatalogSrc = path.join(cmsRoot, 'src/data/mock/member-detail-history-seed-catalog.ts')
 const feCatalogDestDir = path.join(outDir, 'fe-mock')
 fs.mkdirSync(feCatalogDestDir, { recursive: true })
 if (fs.existsSync(feCatalogSrc)) {
   fs.copyFileSync(feCatalogSrc, path.join(feCatalogDestDir, 'member-management-seed-catalog.ts'))
 } else {
   console.warn('Warn: member-management-seed-catalog.ts not found')
+}
+if (fs.existsSync(feHistoryCatalogSrc)) {
+  fs.copyFileSync(feHistoryCatalogSrc, path.join(feCatalogDestDir, 'member-detail-history-seed-catalog.ts'))
+} else {
+  console.warn('Warn: member-detail-history-seed-catalog.ts not found')
 }
 
 if (withOpenApi) {

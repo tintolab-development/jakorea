@@ -3,7 +3,9 @@
   "seedLabel": "member-management-v1-2026-08",
   "relatedSpecs": {
     "permissionManagement": "member-permission-management-seed-v1.spec.json",
+    "memberDetailHistory": "member-detail-history-seed-v1.spec.json",
     "feCatalogTs": "apps/cms/src/data/mock/member-management-seed-catalog.ts",
+    "feHistoryCatalogTs": "apps/cms/src/data/mock/member-detail-history-seed-catalog.ts",
     "notionParity": "member-management-notion-parity-2026-08-28.md"
   },
   "moduleFlags": {
@@ -20,6 +22,13 @@
     "instructorMemberId": [172101, 172140],
     "adminApprovalAccountId": [172201, 172230],
     "adminProvisionedExcludeId": [172231, 172235]
+  },
+  "memberDetailHistoryIdRanges": {
+    "memberApplicationId": [173001, 173400],
+    "memberProgramHistoryParticipantId": [173401, 173800],
+    "schoolEnrollmentHistoryRowId": [174001, 174100],
+    "adminProgramRoleId": [174501, 174550],
+    "instructorSettlementId": [175001, 175100]
   },
   "businessRules": {
     "memberDirectoryAllTab": {
