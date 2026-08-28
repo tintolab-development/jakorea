@@ -185,6 +185,7 @@ function buildGeneralCommonInfo(
       return {
         educationFormLabel,
         sponsorDisplayName: 'JA Korea',
+        educationScheduleMode: 'date',
         scheduleDetails: SCHEDULE_MULTI_DETAILS.map(row => ({ ...row })),
         educationScheduleLines: [...SCHEDULE_MULTI_LINES],
       }
@@ -192,6 +193,8 @@ function buildGeneralCommonInfo(
     return {
       educationFormLabel,
       sponsorDisplayName: 'JA Korea',
+      educationScheduleMode: 'date',
+      maxScheduleCount: 3,
       scheduleDetails: SCHEDULE_SINGLE_DETAILS.map(row => ({ ...row })),
       educationScheduleLines: [...SCHEDULE_SINGLE_LINES],
     }
@@ -201,6 +204,8 @@ function buildGeneralCommonInfo(
     return {
       educationFormLabel,
       sponsorDisplayName: 'JA Korea',
+      educationScheduleMode: 'period',
+      maxScheduleCount: 3,
       curriculumSessions: CURRICULUM_MULTI_SESSIONS.map(row => ({ ...row })),
       educationScheduleLines: [...DEFAULT_EDUCATION_SCHEDULE_LINES],
     }
@@ -209,6 +214,8 @@ function buildGeneralCommonInfo(
   return {
     educationFormLabel,
     sponsorDisplayName: 'JA Korea',
+    educationScheduleMode: 'period',
+    maxScheduleCount: 3,
     curriculumSessions: CURRICULUM_SINGLE_SESSIONS.map(row => ({ ...row })),
     educationScheduleLines: [...DEFAULT_EDUCATION_SCHEDULE_LINES],
   }

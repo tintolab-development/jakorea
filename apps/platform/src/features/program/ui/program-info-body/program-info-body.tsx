@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
-import type { ProgramDetail } from '../../model/types'
 import { PFText } from '@/shared/ui'
+import { canApplyToProgram } from '../../lib/badge-config'
+import type { ProgramDetail } from '../../model/types'
 import { ProgramInfoAside } from './program-info-aside'
 import styles from './program-info-body.module.css'
 
@@ -234,7 +235,7 @@ export function ProgramInfoBody({
         detailImageUrl={program.detailImageUrl}
         thumbnailUrl={program.thumbnailUrl}
         attachments={program.attachments}
-        isRecruiting={program.isRecruiting}
+        canApply={canApplyToProgram(program.recruitmentStatus)}
         applicationPeriodLabel={program.applicationPeriodLabel}
         showApplyCta={showApplyCta}
         showCancelCta={showCancelCta}

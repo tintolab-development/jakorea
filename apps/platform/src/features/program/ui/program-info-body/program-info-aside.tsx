@@ -9,6 +9,8 @@ type ProgramInfoAsideProps = {
   thumbnailUrl?: string
   attachments: ProgramAttachment[]
   isRecruiting?: boolean
+  /** 신청하기 활성 — 모집 중·모집 예정 */
+  canApply?: boolean
   applicationPeriodLabel?: string
   showApplyCta?: boolean
   showCancelCta?: boolean
@@ -22,6 +24,7 @@ export function ProgramInfoAside({
   thumbnailUrl,
   attachments,
   isRecruiting = false,
+  canApply = isRecruiting,
   applicationPeriodLabel = '',
   showApplyCta = false,
   showCancelCta = false,
@@ -51,7 +54,7 @@ export function ProgramInfoAside({
         <button
           type="button"
           className={styles.applyButton}
-          disabled={!isRecruiting}
+          disabled={!canApply}
           onClick={onApply}
         >
           <span className={styles.applyCopy}>

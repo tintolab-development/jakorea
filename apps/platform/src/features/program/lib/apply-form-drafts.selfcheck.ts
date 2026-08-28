@@ -143,6 +143,43 @@ function testInstitutionGeneral() {
   ])
 }
 
+function testScheduleSingleDateUsesRegisteredLines() {
+  const fixture = GENERAL_REGISTRATION_FIXTURES.find(
+    f => f.id === 'general-prog-type-ind-schedule-single'
+  )
+  assert.ok(fixture)
+  const detail = mapCmsProgramToPlatformDetail(fixture)
+  assert.equal(detail.educationStructure, 'schedule')
+  assert.equal(detail.sessionRound, 'single')
+  assert.equal(detail.educationScheduleMode, 'date')
+  assert.ok(detail.educationScheduleLines.length > 0)
+
+  const draft = getMockApplyFormDraft(detail)
+  const schedule = draft.paragraphs.find(
+    p => p.id === PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice
+  )
+  assert.ok(schedule)
+  assert.equal(schedule.kind, 'single_item')
+  if (schedule.kind !== 'single_item' || schedule.variant !== 'multiple_choice') {
+    assert.fail('scheduleChoice must be multiple_choice')
+    return
+  }
+  assert.deepEqual(
+    schedule.items.map(item => item.label),
+    detail.educationScheduleLines
+  )
+}
+
+function testScheduleMultiHidesScheduleChoice() {
+  const orgMulti = paragraphIds('general-prog-type-org-schedule-multi')
+  assert.equal(orgMulti.applyCase, 'institution-general')
+  assert.equal(orgMulti.ids.includes(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice), false)
+
+  const indMulti = paragraphIds('general-prog-type-ind-schedule-multi')
+  assert.equal(indMulti.applyCase, 'individual-general')
+  assert.equal(indMulti.ids.includes(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice), false)
+}
+
 function testInstitutionEconomy() {
   const { applyCase, templateCode, ids } = paragraphIds(
     PROGRAM_APPLY_FORM_CASE_SSOT_IDS.institutionEconomy
@@ -201,6 +238,8 @@ function run() {
   testIndividualTeam()
   testVolunteer()
   testInstitutionGeneral()
+  testScheduleSingleDateUsesRegisteredLines()
+  testScheduleMultiHidesScheduleChoice()
   testInstitutionEconomy()
   testInstitutionGemini()
   testGeminiDetailCaseRouting()

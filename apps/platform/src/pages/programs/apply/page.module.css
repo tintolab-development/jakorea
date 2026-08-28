@@ -26,7 +26,7 @@
   align-items: flex-start;
   gap: 4px;
   align-self: stretch;
-  border-radius: var(--Radius-8, 8px);
+  border-radius: var(--radius-12);
   background: var(--Color-netural-cool-100, #e6e9eb);
 }
 
@@ -80,6 +80,41 @@
   border-radius: 12px;
   font: inherit;
   resize: vertical;
+}
+
+.shortEssayItems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  width: 100%;
+  min-width: 0;
+}
+
+.shortEssayItem {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.multipleChoice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+  width: 100%;
+  min-width: 0;
+  padding: 0 8px;
+}
+
+.multipleChoiceItem {
+  max-width: 100%;
+  padding-left: 0;
+}
+
+.multipleChoiceItem :global(.typo-bd-md-md) {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
 }
 
 .actions {

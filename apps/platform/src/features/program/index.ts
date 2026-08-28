@@ -94,6 +94,7 @@ export {
   EDUCATION_FORM_ICON_MAP,
   EDUCATION_FORM_LABEL_MAP,
   RECRUITMENT_STATUS_TONE_MAP,
+  canApplyToProgram,
   educationTargetBadgeIconUrl,
 } from './lib/badge-config'
 export { ProgramBackButton } from './ui/back-button'

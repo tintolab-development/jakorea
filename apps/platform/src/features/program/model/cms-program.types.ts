@@ -64,6 +64,15 @@ export type CmsProgramCommonInfo = {
   /** 일정형 — 세부 일정 NN / 행사 일정 NN */
   scheduleDetails?: CmsScheduleDetail[]
   educationScheduleLines?: string[]
+  /**
+   * 교육 진행 일정 유형 — `date` 날짜 지정(개별일자) / `period` 기간 지정.
+   * 신청 폼 진행 희망 교육 일정 UI 분기.
+   */
+  educationScheduleMode?: 'date' | 'period'
+  /**
+   * 기간 지정 신청 — 희망 일정 지망 상한 (CMS participantRecruitmentInfo.maxScheduleCount).
+   */
+  maxScheduleCount?: number
   notes?: string
   /** 공통 정보 > 교육 장소 표시 라벨 (venueKind + venueDetail) */
   educationVenueLabel?: string

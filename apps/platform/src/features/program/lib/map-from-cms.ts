@@ -11,12 +11,14 @@ import type {
   ProgramBasicInfoField,
   ProgramDetail,
   ProgramDetailCase,
+  ProgramEducationScheduleMode,
   ProgramEducationStructure,
   ProgramEventSchedule,
   ProgramExtraSection,
   ProgramLabeledValue,
   ProgramListItem,
   ProgramSession,
+  ProgramSessionRound,
 } from '../model/types'
 import type {
   CmsEducationStructure,
@@ -519,6 +521,32 @@ function isUnavailableScheduleLine(line: string): boolean {
   return /불가일|진행\s*불가|배정\s*불가/.test(line)
 }
 
+function mapSessionRound(program: CmsProgramLike): ProgramSessionRound {
+  return program.generalProgramSessionRound === 'multi' ? 'multi' : 'single'
+}
+
+function mapEducationScheduleMode(program: CmsProgramLike): ProgramEducationScheduleMode {
+  return program.generalCommonInfo?.educationScheduleMode === 'period' ? 'period' : 'date'
+}
+
+function mapEducationScheduleLines(program: CmsProgramLike): string[] {
+  if (
+    program.generalProgramEducationStructure === 'schedule' &&
+    program.generalProgramSessionRound === 'multi'
+  ) {
+    return []
+  }
+  return (program.generalCommonInfo?.educationScheduleLines ?? [])
+    .map(line => line.trim())
+    .filter(line => line && !isUnavailableScheduleLine(line))
+}
+
+function mapMaxPreferredScheduleCount(program: CmsProgramLike): number {
+  const raw = program.generalCommonInfo?.maxScheduleCount
+  if (raw == null || raw < 1) return 3
+  return Math.min(raw, 10)
+}
+
 /**
  * 세부내용 「교육 일정」 카드.
  * - UJAT: ujatPublicEducationSchedules 우선 (기관 상·하반기 / 봉사 사전교육·진행·해단식)
@@ -804,6 +832,10 @@ export function mapCmsProgramToPlatformDetail(
       roleLabel,
     }),
     educationStructure,
+    sessionRound: mapSessionRound(program),
+    educationScheduleMode: mapEducationScheduleMode(program),
+    educationScheduleLines: mapEducationScheduleLines(program),
+    maxPreferredScheduleCount: mapMaxPreferredScheduleCount(program),
     sessions: mapSessions(program),
     eventSchedules: mapEventSchedules(program),
     recruitmentPhaseGroupLabel: recruitmentPhaseGroupLabel(detailCase),
