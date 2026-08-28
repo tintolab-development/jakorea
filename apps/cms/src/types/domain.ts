@@ -81,8 +81,12 @@ export interface GeneralProgramCurriculumSessionRow {
   assignmentPeriod?: string
   /** 복수 회차 · 교육 형태 일정 별 상이 — 회차별 표시 라벨 */
   educationFormLabel?: string
+  /** 복수 회차 · 참여 방식 일정 별 상이 — 회차별 표시 라벨 */
+  participationMethodLabel?: string
   /** 복수 회차 · IPS 일정 별 상이 — 회차별 `카테고리 | 세부` (일정 접두 없음) */
   ipsTypeSummary?: string
+  /** 개인 커리큘럼 사전 교육 — 진행 일정 (일정형과 동일 표기) */
+  scheduleDateLabel?: string
 }
 
 /** 일반 프로그램 — 교육 형태·참여·IPS 일정 공통/별 상이 */

@@ -7,7 +7,7 @@ import {
   UJAT_HALF_SEMESTER_TITLE,
   type UjatHalfSemesterKey,
 } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
-import { UjatHalfEducationScheduleSection } from '@/features/program/ujat/ui/detail-modal/info/ujat-half-education-schedule-section'
+import { HalfEducationScheduleSection } from '@/features/program/shared/ui/half-education-schedule-section'
 import './ujat-half-education-schedule.css'
 
 /** 프로그램 상세 — 등록 양식과 동일 블록(외곽 테두리 없음) */
@@ -31,7 +31,7 @@ export function UjatHalfEducationScheduleProgramView({
           {UJAT_HALF_SEMESTER_TITLE[half]}
         </h3>
       </div>
-      <UjatHalfEducationScheduleSection half={half} mode={mode} display={display} />
+      <HalfEducationScheduleSection half={half} mode={mode} display={display} />
     </section>
   )
 }

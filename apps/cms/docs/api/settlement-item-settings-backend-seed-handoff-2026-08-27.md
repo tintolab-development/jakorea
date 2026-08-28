@@ -148,6 +148,8 @@ flowchart LR
 
 ### 3.4 폐기 카탈로그 (seed 금지)
 
+서버 전달용 (구 항목 제거 + **기타 인건비 등 누락 v2 추가** + **PUT 저장 round-trip**): [`settlement-item-settings-obsolete-catalog-removal-backend-request-2026-08-28.md`](./settlement-item-settings-obsolete-catalog-removal-backend-request-2026-08-28.md)
+
 | 구 항목 | wageItemType / 비고 |
 |---------|---------------------|
 | 보조 강사비 | `ASSISTANT` |
@@ -397,6 +399,7 @@ API 저장: `detailJson = JSON.stringify(object)`. GET 시 동일 구조 parse.
 
 | 문서 | 용도 |
 |------|------|
+| [settlement-item-settings-obsolete-catalog-removal-backend-request-2026-08-28.md](./settlement-item-settings-obsolete-catalog-removal-backend-request-2026-08-28.md) | 구 v1 제거 + 기타 인건비 등 v2 누락 추가 + PUT persist P0 |
 | [settlement-item-settings-category-backend-cursor-prompt.md](./settlement-item-settings-category-backend-cursor-prompt.md) | 산출 엔진·enum·CRUD 가드 SSOT |
 | [settlement-item-settings-seed-v2.payload.json](./settlement-item-settings-seed-v2.payload.json) | PUT body 예시 (detailJson escaped) |
 | [settlement-api-backend-gaps.md](./settlement-api-backend-gaps.md) §9 | FE↔API 갭 추적 |

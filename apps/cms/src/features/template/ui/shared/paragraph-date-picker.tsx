@@ -146,6 +146,23 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
    * 기본 true — 다른 피커 동작 유지.
    */
   showTimeToggle?: boolean
+  /**
+   * false면 푸터 「기간」 토글 숨김 (`periodOn` 고정 false).
+   * `presetMode: 'schedule'`이어도 기간 선택 UI를 숨길 때 사용.
+   * 기본 true.
+   */
+  showPeriodToggle?: boolean
+  /**
+   * true면 「시간」 토글을 ON으로 고정하고 비활성. `showTimeToggle`이 false면 무시.
+   * 기본 false — 다른 피커는 기존처럼 토글을 조작할 수 있음.
+   */
+  lockTimeToggleOn?: boolean
+  /**
+   * true면 「기간」 토글을 ON으로 고정하고 비활성. 푸터에 기간 토글을 강제 노출.
+   * `showPeriodToggle`이 false면 무시.
+   * 기본 false.
+   */
+  lockPeriodToggleOn?: boolean
 }
 
 export type ParagraphDatePickerProps =
@@ -185,6 +202,9 @@ interface ParagraphDatePickerSingleInnerProps {
   presetDisplayText?: string
   onOpenChange?: (open: boolean) => void
   showTimeToggle?: boolean
+  showPeriodToggle?: boolean
+  lockTimeToggleOn?: boolean
+  lockPeriodToggleOn?: boolean
 }
 
 function ParagraphDatePickerSingleInner({
@@ -209,6 +229,9 @@ function ParagraphDatePickerSingleInner({
   presetDisplayText,
   onOpenChange,
   showTimeToggle = true,
+  showPeriodToggle = true,
+  lockTimeToggleOn = false,
+  lockPeriodToggleOn = false,
 }: ParagraphDatePickerSingleInnerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
@@ -224,7 +247,12 @@ function ParagraphDatePickerSingleInner({
   const [calendarMonth, setCalendarMonth] = useState<Dayjs>(() =>
     findNextEnabledDate(value ?? dayjs(), disabledDate).startOf('month')
   )
-  const [periodOn, setPeriodOn] = useState(false)
+  const [periodOn, setPeriodOn] = useState(lockPeriodToggleOn && showPeriodToggle)
+
+  useEffect(() => {
+    if (showPeriodToggle) return
+    setPeriodOn(false)
+  }, [showPeriodToggle])
   const [rangeStart, setRangeStart] = useState<Dayjs>(() =>
     findNextEnabledDate(value ?? dayjs(), disabledDate)
   )
@@ -236,7 +264,9 @@ function ParagraphDatePickerSingleInner({
   const [surfaceRange, setSurfaceRange] = useState<[Dayjs, Dayjs] | null>(null)
   /** 마지막 [설정] 시 시간 토글이 켜져 있었는지 — 트리거에 날짜+시간 인풋 표시 */
   const [surfaceAppliedWithTime, setSurfaceAppliedWithTime] = useState(false)
-  const [timeOn, setTimeOn] = useState(false)
+  const [timeOn, setTimeOn] = useState(lockTimeToggleOn && showTimeToggle)
+  const timeToggleLocked = lockTimeToggleOn && showTimeToggle
+  const periodToggleLocked = lockPeriodToggleOn && showPeriodToggle
   const effectiveTimeOn = showTimeToggle ? timeOn : false
   const [invalidTimeRange, setInvalidTimeRange] = useState(false)
   const [singleHour, setSingleHour] = useState('12')
@@ -249,14 +279,26 @@ function ParagraphDatePickerSingleInner({
   const [endMinute, setEndMinute] = useState('0')
   const [endMer, setEndMer] = useState<'AM' | 'PM'>('AM')
 
-  const showPeriodToggleInFooter = customizable || presetMode === 'schedule'
+  const showPeriodToggleInFooter =
+    (showPeriodToggle && (customizable || presetMode === 'schedule')) || periodToggleLocked
+
+  useEffect(() => {
+    if (!timeToggleLocked) return
+    setTimeOn(true)
+  }, [timeToggleLocked])
+
+  useEffect(() => {
+    if (!periodToggleLocked) return
+    setPeriodOn(true)
+  }, [periodToggleLocked])
 
   const isRangeCalendarMode = useMemo(() => {
+    if (!showPeriodToggle) return false
     if (customizable) return periodOn
     if (presetMode === 'date') return false
     if (presetMode === 'period') return true
     return periodOn
-  }, [customizable, presetMode, periodOn])
+  }, [customizable, presetMode, periodOn, showPeriodToggle])
 
   /**
    * 기본값: 오늘 — 단일 날짜 모드에서만 부모 `value`가 null이면 동기화.
@@ -350,7 +392,12 @@ function ParagraphDatePickerSingleInner({
       surfaceRange != null &&
       disabledDate != null &&
       (disabledDate(surfaceRange[0]) || disabledDate(surfaceRange[1]))
-    const useSurface = !!(surfaceRange && allowSurfaceRestore && !surfaceHasDisabledDate)
+    const useSurface = !!(
+      surfaceRange &&
+      allowSurfaceRestore &&
+      !surfaceHasDisabledDate &&
+      showPeriodToggle
+    )
 
     if (presetMode === 'date' && !customizable) {
       setPeriodOn(false)
@@ -400,7 +447,7 @@ function ParagraphDatePickerSingleInner({
         setPeriodOn(true)
         setTimeOn(false)
       } else {
-        setPeriodOn(presetMode === 'schedule' && preferPeriodModeInPopover)
+        setPeriodOn(showPeriodToggle && presetMode === 'schedule' && preferPeriodModeInPopover)
         setTimeOn(false)
       }
     }
@@ -411,6 +458,8 @@ function ParagraphDatePickerSingleInner({
     setSingleMer(tSingle.mer)
 
     setInvalidTimeRange(false)
+    if (timeToggleLocked) setTimeOn(true)
+    if (periodToggleLocked) setPeriodOn(true)
     setOpen(true)
   }
 
@@ -636,12 +685,16 @@ function ParagraphDatePickerSingleInner({
         invalidTimeRange={invalidTimeRange}
         showPeriodToggle={showPeriodToggleInFooter}
         showTimeToggle={showTimeToggle}
+        periodToggleDisabled={periodToggleLocked}
+        timeToggleDisabled={timeToggleLocked}
         periodOn={periodOn}
         onPeriodOnChange={next => {
+          if (periodToggleLocked) return
           setPeriodOn(next)
           setInvalidTimeRange(false)
         }}
         onTimeOnChange={next => {
+          if (timeToggleLocked) return
           setTimeOn(next)
           setInvalidTimeRange(false)
         }}
@@ -804,6 +857,9 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           presetDisplayText={props.presetDisplayText}
           onOpenChange={props.mode === 'single' ? props.onOpenChange : undefined}
           showTimeToggle={props.mode === 'single' ? (props.showTimeToggle ?? true) : true}
+          showPeriodToggle={props.mode === 'single' ? (props.showPeriodToggle ?? true) : true}
+          lockTimeToggleOn={props.mode === 'single' ? Boolean(props.lockTimeToggleOn) : false}
+          lockPeriodToggleOn={props.mode === 'single' ? Boolean(props.lockPeriodToggleOn) : false}
         />
       )}
     </div>

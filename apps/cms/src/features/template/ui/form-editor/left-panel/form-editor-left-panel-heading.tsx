@@ -170,14 +170,13 @@ export function withProgramRegistrationCurriculumTitleTrailing(
       ipsScheduleDetail: pr.ipsScheduleDetail,
     })
 
-    const preEducationToggle =
-      pr.sessionRoundType === 'multi' ? (
-        <CmsToggle
-          label="사전 교육"
-          checked={pr.scheduleCurriculumPreEducation}
-          onChange={pr.onScheduleCurriculumPreEducationChange}
-        />
-      ) : null
+    const preEducationToggle = (
+      <CmsToggle
+        label="사전 교육"
+        checked={pr.scheduleCurriculumPreEducation}
+        onChange={pr.onScheduleCurriculumPreEducationChange}
+      />
+    )
 
     if (isScheduleEventLayout) {
       return {
@@ -249,6 +248,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
           onKeyDown={e => e.stopPropagation()}
           role="presentation"
         >
+          {preEducationToggle}
           <CmsButton
             type="button"
             variant="secondary"

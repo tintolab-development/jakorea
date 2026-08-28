@@ -43,7 +43,7 @@ export function ProgramRegistrationIpsTypeFields({
     onChange({ ...value, detail: String(v ?? '') })
   }
 
-  let secondaryPlaceholder = 'IPS를 먼저 선택하세요'
+  let secondaryPlaceholder = 'IPS 유형을 먼저 선택하세요'
   let secondaryOptions: { value: string; label: string }[] = []
   let secondaryDisabled = true
 
