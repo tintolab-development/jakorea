@@ -1,16 +1,9 @@
-import type { InstructorRoleRequestListItemResponse } from '@/shared/api/generated/members/schemas'
-import type {
-  MemberPermissionApplicationRow,
-  MemberPermissionApplicationStatus,
-} from '@/types/member-permission-application'
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
-
-function mapRequestStatus(status?: string): MemberPermissionApplicationStatus {
-  const upper = (status ?? '').trim().toUpperCase()
-  if (upper === 'APPROVED' || upper === 'COMPLETED') return 'APPROVED'
-  if (upper === 'REJECTED' || upper === 'REVOKED') return 'REJECTED'
-  return 'PENDING'
-}
+import {
+  mapInstructorRoleRequestStatusToApplicationStatus,
+} from '@/features/user/api/lib/map-permission-approval-status'
+import type { InstructorRoleRequestListItemResponse } from '@/shared/api/generated/members/schemas'
+import type { MemberPermissionApplicationRow } from '@/types/member-permission-application'
 
 export function mapInstructorRoleRequestToRow(
   item: InstructorRoleRequestListItemResponse
@@ -39,7 +32,7 @@ export function mapInstructorRoleRequestToRow(
     email: item.maskedEmail?.trim() || '',
     memberCategory: 'INSTRUCTOR',
     applicationTypeLabel,
-    approvalStatus: mapRequestStatus(item.requestStatus),
+    approvalStatus: mapInstructorRoleRequestStatusToApplicationStatus(item.requestStatus),
     appliedAt: item.requestedAt ?? new Date().toISOString(),
   }
 }
