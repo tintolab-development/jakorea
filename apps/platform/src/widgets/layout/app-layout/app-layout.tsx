@@ -33,10 +33,12 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
   const isAuth = layout === 'auth'
   const isHome = layout === 'home'
   const isSupport = layout === 'support'
+  const isIntroduction = layout === 'introduction'
   /** 재능기부 신청 폼 — 히어로 오버레이(음수 margin·투명 헤더) 제외 */
   const isSupportHero = isSupport && !isTalentDonationApplyPath(pathname)
   const useContentShell = layout === 'default' || isHero
-  const transparentHeader = isMypageHome || isHero || isHome || isSupportHero
+  const transparentHeader =
+    isMypageHome || isHero || isHome || isSupportHero || isIntroduction
   /* 홈 PC만 반전 — 모바일은 header-mobile CSS에서 불투명·컬러 로고로 덮음 */
   const inverseHeader = isHome
 
@@ -84,7 +86,9 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
       ? styles.mainHome
       : isSupportHero
         ? styles.mainSupport
-        : styles.main
+        : isIntroduction
+          ? styles.mainIntroduction
+          : styles.main
 
   return (
     <div className={styles.layout}>

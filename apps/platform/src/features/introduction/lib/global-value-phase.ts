@@ -1,8 +1,9 @@
 import { GLOBAL_VALUE_COUNT } from './global-value-data'
 
 /**
- * Section scroll progress(0~1) → active value index(0~count-1).
- * 구간을 균등 분할하며, 경계에서 clamp로 안정화.
+ * Section scroll progress(0~1) → accordion frontier index(0~count-1).
+ * index < frontier → 접힘, index >= frontier → 펼침
+ * (진입 시 0 = 전체 펼침, 스크롤 다운 시 위에서부터 순차 접힘 / 업은 역순)
  */
 export function resolveActiveValueIndex(progress: number, count = GLOBAL_VALUE_COUNT): number {
   if (count <= 0) return 0

@@ -24,10 +24,12 @@ function ValueItem({
   item,
   isExpanded,
   isDesktopMotion,
+  isFrontier,
 }: {
   item: GlobalValueItem
   isExpanded: boolean
   isDesktopMotion: boolean
+  isFrontier?: boolean
 }) {
   const itemClassName = [
     styles.item,
@@ -35,35 +37,28 @@ function ValueItem({
   ].join(' ')
 
   return (
-    <article className={itemClassName} aria-current={isExpanded ? 'true' : undefined}>
-      <div className={styles.itemHeader}>
-        <PFText as="span" typo="bd-md-md" color="white" className={styles.number}>
-          {item.number}
-        </PFText>
-        <PFText as="p" typo="bd-lg-sb" color="white" className={styles.koreanCollapsed}>
+    <article
+      className={itemClassName}
+      aria-current={isDesktopMotion && isFrontier ? 'true' : undefined}
+    >
+      <div className={styles.contentLeft}>
+        <span className={styles.number}>{item.number}</span>
+        <h3 className={styles.english}>
+          <EnglishLines lines={item.englishTitleLines} />
+        </h3>
+      </div>
+      <div className={styles.contentRight}>
+        <img
+          className={styles.icon}
+          src={item.iconUrl}
+          alt=""
+          width={84}
+          height={84}
+          draggable={false}
+        />
+        <PFText as="p" typo="hd-sm" color="palette-ice" className={styles.korean}>
           {item.koreanTitle}
         </PFText>
-      </div>
-
-      <div className={styles.itemBody}>
-        <div className={styles.itemBodyInner}>
-          <PFText as="h3" typo="hl-lg-md" color="white" className={styles.english}>
-            <EnglishLines lines={item.englishTitleLines} />
-          </PFText>
-          <div className={styles.meta}>
-            <img
-              className={styles.icon}
-              src={item.iconUrl}
-              alt=""
-              width={84}
-              height={84}
-              draggable={false}
-            />
-            <PFText as="p" typo="bd-lg-sb" color="white" className={styles.korean}>
-              {item.koreanTitle}
-            </PFText>
-          </div>
-        </div>
       </div>
     </article>
   )
@@ -93,7 +88,7 @@ export function GlobalValuePanel({
       aria-label={GLOBAL_VALUE_SECTION_TITLE}
     >
       <div className={styles.inner}>
-        <PFText as="h2" typo="hd-sm" color="white" className={styles.title}>
+        <PFText as="h2" typo="page-title" color="white" className={styles.title}>
           {GLOBAL_VALUE_SECTION_TITLE}
         </PFText>
 
@@ -102,8 +97,9 @@ export function GlobalValuePanel({
             <ValueItem
               key={item.id}
               item={item}
-              isExpanded={!isDesktopMotion || index === activeValueIndex}
+              isExpanded={!isDesktopMotion || index >= activeValueIndex}
               isDesktopMotion={isDesktopMotion}
+              isFrontier={isDesktopMotion && index === activeValueIndex}
             />
           ))}
         </div>

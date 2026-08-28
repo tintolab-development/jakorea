@@ -3,7 +3,8 @@ import { HERO_SCROLL_TRIGGER_PX } from './hero-copy'
 /**
  * Desktop Hero 스크롤 phase.
  * Motion 1: intro → message
- * Motion 2: inspiring → vision → mission → exit
+ * Motion 2: inspiring → vision → mission
+ * (Mission → Value Push/Up 은 introduction-scroll-phase 의 push 구간)
  */
 export type HeroPhase =
   | 'intro'
@@ -30,8 +31,8 @@ export function resolveHeroPhase(scrollPx: number, scrollRange: number): HeroPha
   if (progress < 0.22) return 'message'
   if (progress < 0.42) return 'inspiring'
   if (progress < 0.58) return 'vision'
-  if (progress < 0.74) return 'mission'
-  return 'exit'
+  /* heroRange 끝까지 Mission Active — exit/Push는 오케스트레이터 push 구간 */
+  return 'mission'
 }
 
 export function isHeroPhaseAtLeast(phase: HeroPhase, target: HeroPhase): boolean {
@@ -53,12 +54,15 @@ export function getHeroPhaseScrollY(phase: HeroPhase, scrollRange: number): numb
     case 'mission':
       return range * 0.58
     case 'exit':
-      return range * 0.74
+      /* Push는 오케스트레이터가 heroRange 이후로 처리 */
+      return range
   }
 }
 
 export function getNextHeroPhase(phase: HeroPhase): HeroPhase | null {
+  if (phase === 'mission' || phase === 'exit') return null
   const index = PHASE_ORDER.indexOf(phase)
   if (index < 0 || index >= PHASE_ORDER.length - 1) return null
-  return PHASE_ORDER[index + 1] ?? null
+  const next = PHASE_ORDER[index + 1] ?? null
+  return next === 'exit' ? null : next
 }

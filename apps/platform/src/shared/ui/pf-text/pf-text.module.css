@@ -54,6 +54,10 @@
   color: var(--color-primary-800);
 }
 
+.colorPaletteIce {
+  color: var(--color-palette-ice);
+}
+
 .colorError {
   color: var(--color-status-error-default);
 }

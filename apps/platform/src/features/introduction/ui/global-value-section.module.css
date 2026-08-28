@@ -1,12 +1,3 @@
-.section {
-  position: relative;
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  box-sizing: border-box;
-  background-color: var(--color-primary-700);
-  color: var(--color-neutral-white);
-}
-
 .panel {
   display: flex;
   width: 100%;
@@ -18,20 +9,10 @@
   color: var(--color-neutral-white);
 }
 
-.sticky {
-  position: relative;
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
 .inner {
   display: flex;
   width: 100%;
-  max-width: var(--content-shell-max-width);
   min-width: 0;
-  margin-inline: auto;
   flex-direction: column;
   padding: var(--spacing-56) var(--page-padding-x) var(--spacing-64);
   box-sizing: border-box;
@@ -39,7 +20,7 @@
 
 .title {
   margin: 0 0 var(--spacing-40);
-  word-break: keep-all;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .list {
@@ -52,55 +33,28 @@
   display: flex;
   width: 100%;
   flex-direction: column;
-  border-bottom: 1px solid rgb(255 255 255 / 28%);
-  box-sizing: border-box;
-}
-
-.itemHeader {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-16);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
   box-sizing: border-box;
 }
 
 .number {
-  flex: 0 0 auto;
-}
-
-.koreanCollapsed {
-  display: none;
-  margin: 0;
-  min-width: 0;
-  text-align: right;
-  word-break: keep-all;
-}
-
-.itemBody {
-  display: grid;
-  width: 100%;
-  grid-template-rows: 1fr;
-  transition: none;
-}
-
-.itemBodyInner {
-  display: flex;
-  overflow: hidden;
-  min-height: 0;
-  flex-direction: column;
-  gap: var(--spacing-24);
-  padding-bottom: var(--spacing-40);
-  box-sizing: border-box;
+  color: var(--color-palette-ice);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .english {
   margin: 0;
+  color: var(--color-neutral-white);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 135%;
   text-transform: uppercase;
-  word-break: keep-all;
 }
 
-.meta {
+.contentRight {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -118,28 +72,36 @@
 
 .korean {
   margin: 0;
-  word-break: keep-all;
+}
+
+.contentLeft {
+  display: flex;
+  flex-direction: column;
 }
 
 /* —— Mobile: 정적 세로 리스트 (모션 없음) —— */
-.isStatic .itemHeader {
+.isStatic {
+  gap: var(--spacing-12);
   padding-top: var(--spacing-28);
-}
-
-.isStatic .koreanCollapsed {
-  display: none;
-}
-
-.isStatic .itemBodyInner {
-  padding-top: var(--spacing-12);
-  gap: var(--spacing-20);
+  padding-bottom: var(--spacing-40);
 }
 
 .isStatic .english {
+  margin-top: var(--spacing-12);
   font-size: 22px;
   font-weight: 500;
   line-height: 140%;
   letter-spacing: -0.22px;
+}
+
+.isStatic .contentRight {
+  gap: var(--spacing-16);
+}
+
+.isStatic .icon {
+  width: 72px;
+  height: 72px;
+  margin-top: var(--spacing-8);
 }
 
 .isStatic .korean {
@@ -153,131 +115,200 @@
   color: var(--color-primary-100);
 }
 
-.isStatic .icon {
-  width: 72px;
-  height: 72px;
-  margin-top: var(--spacing-8);
-}
-
 @media (--bp-pc-up) {
-  /* Desktop accordion은 IntroductionScroll frame 안에서 100% 채움 */
+  /*
+   * Desktop accordion: list 상단 고정.
+   * collapsed = min 72px + 콘텐츠(줄바꿈)에 따라 증가.
+   * expanded = 기본 콘텐츠 높이; collapsed가 있을 때 마지막 expanded만 남은 공간 사용.
+   */
   .isAccordion {
     height: 100%;
+    max-height: 100dvh;
     min-height: 0;
+    overflow: hidden;
   }
 
   .inner {
     height: auto;
     justify-content: flex-start;
-    padding: var(--spacing-64) var(--spacing-100) var(--spacing-56);
+    padding: var(--spacing-64) 0;
   }
 
   .isAccordion .inner {
+    display: flex;
     height: 100%;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding-top: var(--spacing-48);
+    padding-bottom: 0;
   }
 
   .title {
-    margin-bottom: var(--spacing-48);
+    padding: 0 var(--spacing-100);
+    margin-bottom: var(--spacing-32);
     flex: 0 0 auto;
   }
 
   .list {
     flex: 1 1 auto;
     min-height: 0;
+  }
+
+  .isAccordion .list {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
     justify-content: flex-start;
+    overflow: hidden;
   }
 
-  .itemHeader {
-    min-height: 56px;
-    padding-block: var(--spacing-16);
+  .item {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: var(--spacing-80);
+    min-width: 0;
+    box-sizing: border-box;
   }
 
-  .koreanCollapsed {
-    display: block;
-    opacity: 0;
-    max-width: 52%;
-    pointer-events: none;
-    transition:
-      opacity 400ms ease-in-out,
-      visibility 400ms ease-in-out;
-    visibility: hidden;
+  /* collapsed: 최소 높이 72px, 콘텐츠 줄바꿈 시 높이 자동 증가 */
+  .item.isCollapsed {
+    min-height: 72px;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: var(--spacing-80);
+    padding: var(--spacing-20) var(--spacing-100);
+    overflow: hidden;
   }
 
-  .isCollapsed .koreanCollapsed {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
+  /*
+   * expanded: 기본은 콘텐츠 고유 높이 (초기 다수 expanded 유지).
+   * flex:1을 전 expanded에 주지 않음.
+   */
+  .item.isExpanded {
+    flex: 0 0 auto;
+    align-items: stretch;
+    gap: var(--spacing-80);
+    margin: 0;
+    padding: var(--spacing-60) var(--spacing-100) var(--spacing-80);
   }
 
-  .isAccordion .itemBody {
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 400ms ease-in-out;
+  /*
+   * collapsed가 하나라도 있으면: 마지막 expanded(보통 05 Active)만
+   * list 남은 높이를 차지. 01~04 실제 collapsed 높이만큼 뺀 나머지가 05 영역.
+   * (초기 전체 expanded에는 .isCollapsed가 없어 이 규칙 미적용)
+   */
+  .isAccordion .list:has(.isCollapsed) .item.isExpanded:last-child {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
-  .isAccordion .isExpanded .itemBody {
-    grid-template-rows: 1fr;
+  .isAccordion .list:has(.isCollapsed) .item.isExpanded:last-child .contentLeft,
+  .isAccordion .list:has(.isCollapsed) .item.isExpanded:last-child .contentRight {
+    min-height: 0;
   }
 
-  .isExpanded .itemHeader {
-    padding-bottom: var(--spacing-12);
+  .isAccordion .list:has(.isCollapsed) .item.isExpanded:last-child .contentLeft {
+    justify-content: center;
+    overflow: hidden;
   }
 
-  .itemBodyInner {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-    align-items: start;
-    gap: var(--spacing-40) var(--spacing-56);
-    padding-top: 0;
-    padding-bottom: var(--spacing-48);
+  .isAccordion .list:has(.isCollapsed) .item.isExpanded:last-child .contentRight {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
   }
 
-  .isAccordion .itemBodyInner {
-    opacity: 0;
-    transform: translateY(12px);
+  .contentLeft {
+    flex: 2;
+    max-width: 50vw;
+    min-width: 0;
+    gap: var(--spacing-24);
+  }
+
+  .isExpanded .contentLeft {
+    gap: var(--spacing-32);
+  }
+
+  .contentRight {
+    flex: 1;
+    min-width: 0;
+    justify-content: space-between;
+    height: auto;
+    align-items: flex-start;
+  }
+
+  .number {
+    padding: 0 18px;
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 144%;
+    letter-spacing: -0.56px;
+  }
+
+  .isCollapsed .contentRight {
+    justify-content: center;
+    height: auto;
+  }
+
+  .isAccordion .english,
+  .isAccordion .korean,
+  .isAccordion .icon {
     transition:
       opacity 400ms ease-in-out,
       transform 400ms ease-in-out;
   }
 
-  .isAccordion .isExpanded .itemBodyInner {
+  .isCollapsed .english,
+  .isCollapsed .icon {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    position: absolute;
+    width: 0;
+    height: 0;
+    margin: 0;
+    overflow: hidden;
+    transform: translateY(8px);
+  }
+
+  .isExpanded .english,
+  .isExpanded .icon {
     opacity: 1;
+    visibility: visible;
     transform: translateY(0);
   }
 
   .english {
-    font-size: 28px;
-    font-weight: 500;
+    font-size: 52px;
     line-height: 140%;
-    letter-spacing: -0.28px;
+    letter-spacing: -1.56px;
   }
 
-  .meta {
-    gap: var(--spacing-24);
-    padding-top: var(--spacing-8);
+  .isExpanded .english {
+    overflow: hidden;
+  }
+
+  .isExpanded .icon {
+    width: 84px;
+    height: 84px;
+    flex: 0 0 auto;
   }
 
   .icon {
     width: 84px;
     height: 84px;
   }
-
-  .korean {
-    font-size: 18px;
-    font-weight: 600;
-    line-height: 150%;
-    letter-spacing: -0.18px;
-  }
-
-  .isAccordion .isCollapsed .itemBodyInner {
-    opacity: 0;
-    transform: translateY(8px);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .itemBody,
-  .itemBodyInner,
-  .koreanCollapsed {
+  .english,
+  .icon {
     transition: none;
   }
 }

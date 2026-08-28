@@ -42,6 +42,7 @@ export type PFTextColor =
   | 'primary-600'
   | 'primary-700'
   | 'primary-800'
+  | 'palette-ice'
   | 'error'
   | 'success'
   /** Figma Primary_GR_01 · CSS --color-gradient-primary-01 · .text-gradient-primary-01 */
@@ -102,6 +103,7 @@ const colorClassMap: Record<PFTextColor, string> = {
   'primary-600': styles.colorPrimary600,
   'primary-700': styles.colorPrimary700,
   'primary-800': styles.colorPrimary800,
+  'palette-ice': styles.colorPaletteIce,
   error: styles.colorError,
   success: styles.colorSuccess,
   /* 전역 유틸: shared/styles/text-gradient.css */

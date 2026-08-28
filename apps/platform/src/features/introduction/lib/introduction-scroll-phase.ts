@@ -11,27 +11,39 @@ import {
  * Desktop 기관소개 sticky track 단일 오케스트레이션.
  *
  * Scroll 단계 분리:
- * 1) Hero Motion 1·2 … Global Mission (heroPhase !== 'exit')
- * 2) Mission → Value Push/Up (heroPhase === 'exit', valueIndex 고정 0)
- *    — heroRange 내 exit 구간(progress ≥ 0.74). 이 동안 accordion 진행 없음.
- * 3) Value 01…05 accordion (heroRange 이후)
+ * 1) Hero Motion 1·2 … Global Mission (isFramePushed=false, Value 비가시)
+ * 2) Mission → Value Push/Up (isFramePushed=true, valueIndex 고정 0)
+ *    — heroRange 이후 전용 push 구간. accordion 진행 없음.
+ * 3) Value accordion (push 완료 이후)
+ *    — frontier=0 전체 펼침 → 스크롤 다운 시 위에서부터 순차 접힘
+ * 4) end hold (frontier=마지막, 05 expanded 유지)
  *
- * track 높이 비율: Hero(+Push) 520vh + Value accordion 500vh
+ * track 높이 비율:
+ * Hero 520vh + Push 100vh + Value accordion 500vh + end hold 80vh
  */
 export const INTRODUCTION_HERO_VH = 520
+/** Mission → Value Push/Up 전용 스크롤 (CSS 600ms와 별개로 accordion과 구간 분리) */
+export const INTRODUCTION_PUSH_VH = 100
 export const INTRODUCTION_VALUE_VH = 500
-export const INTRODUCTION_TRACK_VH = INTRODUCTION_HERO_VH + INTRODUCTION_VALUE_VH
+/** 05 Active 안착 후 sticky 해제·푸터 진입 전 여유 (UI 정렬과 무관) */
+export const INTRODUCTION_VALUE_HOLD_VH = 80
+export const INTRODUCTION_TRACK_VH =
+  INTRODUCTION_HERO_VH +
+  INTRODUCTION_PUSH_VH +
+  INTRODUCTION_VALUE_VH +
+  INTRODUCTION_VALUE_HOLD_VH
 
 export type IntroductionScrollState = {
   heroPhase: HeroPhase
   /**
    * Frame Track Push/Up 여부.
-   * true → translateY(-100vh). Mission 동안에는 반드시 false.
+   * true → translateY(-100vh). Mission Active 동안에는 반드시 false.
    */
   isFramePushed: boolean
   /**
-   * JA Global Value accordion index.
-   * Push 완료(heroRange 통과) 이후에만 0 초과로 진행.
+   * JA Global Value accordion frontier.
+   * index < frontier → 접힘 / index >= frontier → 펼침.
+   * Push 구간 완료 이후에만 0 초과로 진행.
    */
   activeValueIndex: number
 }
@@ -43,27 +55,62 @@ function heroScrollRange(totalScrollRange: number): number {
   )
 }
 
+function pushScrollRange(totalScrollRange: number): number {
+  return Math.max(
+    1,
+    totalScrollRange * (INTRODUCTION_PUSH_VH / INTRODUCTION_TRACK_VH),
+  )
+}
+
+function valueAccordionScrollRange(totalScrollRange: number): number {
+  return Math.max(
+    1,
+    totalScrollRange * (INTRODUCTION_VALUE_VH / INTRODUCTION_TRACK_VH),
+  )
+}
+
 export function resolveIntroductionScrollState(
   scrollPx: number,
   totalScrollRange: number,
 ): IntroductionScrollState {
   const range = Math.max(1, totalScrollRange)
   const heroRange = heroScrollRange(range)
+  const pushRange = pushScrollRange(range)
 
+  /* 1) Hero … Global Mission — Value Frame은 sticky 아래(클립) + 비가시 */
   if (scrollPx <= heroRange) {
     const heroPhase = resolveHeroPhase(scrollPx, heroRange)
-    const isFramePushed = heroPhase === 'exit'
     return {
       heroPhase,
-      isFramePushed,
-      // Push 구간에서는 01 Active만 — accordion은 heroRange 이후
+      isFramePushed: false,
       activeValueIndex: 0,
     }
   }
 
-  const valueRange = Math.max(1, range - heroRange)
-  const valueProgress = Math.min(1, Math.max(0, (scrollPx - heroRange) / valueRange))
+  /* 2) Push / Up — Frame Track 이동, accordion 고정(01 Active) */
+  if (scrollPx <= heroRange + pushRange) {
+    return {
+      // Frame 01에는 Mission UI 유지한 채 Track이 위로 이동
+      heroPhase: 'mission',
+      isFramePushed: true,
+      activeValueIndex: 0,
+    }
+  }
 
+  const valueRange = valueAccordionScrollRange(range)
+  const valueScrollPx = scrollPx - heroRange - pushRange
+
+  /* 4) end hold */
+  if (valueScrollPx >= valueRange) {
+    return {
+      heroPhase: 'exit',
+      isFramePushed: true,
+      activeValueIndex: GLOBAL_VALUE_COUNT - 1,
+    }
+  }
+
+  /* 3) Value accordion */
+  const valueProgress = Math.min(1, Math.max(0, valueScrollPx / valueRange))
   return {
     heroPhase: 'exit',
     isFramePushed: true,
@@ -77,32 +124,44 @@ export function getIntroductionScrollY(
 ): number {
   const range = Math.max(1, totalScrollRange)
   const heroRange = heroScrollRange(range)
+  const pushRange = pushScrollRange(range)
 
-  if (state.heroPhase !== 'exit') {
+  if (!state.isFramePushed && state.heroPhase !== 'exit') {
     return getHeroPhaseScrollY(state.heroPhase, heroRange)
   }
 
-  if (state.activeValueIndex <= 0) {
-    // Push 안착: exit 임계값 (01 Active, accordion 전)
-    return getHeroPhaseScrollY('exit', heroRange)
+  /* Push 안착(Value 01 Active, accordion 전) */
+  if (state.isFramePushed && state.activeValueIndex <= 0) {
+    return heroRange + pushRange * 0.5
   }
 
-  const valueRange = Math.max(1, range - heroRange)
+  const valueRange = valueAccordionScrollRange(range)
   const count = Math.max(1, GLOBAL_VALUE_COUNT)
   const progress = (state.activeValueIndex + 0.5) / count
-  return heroRange + valueRange * progress
+  return heroRange + pushRange + valueRange * progress
 }
 
-/** 화살표: Hero phase만 다음으로 (exit/Push 진입까지). Value 구간은 스크롤로만 */
+/**
+ * 화살표: Hero phase만 다음으로.
+ * Mission → Push 진입. Value 구간은 스크롤로만.
+ */
 export function getNextIntroductionScrollY(
   state: IntroductionScrollState,
   totalScrollRange: number,
 ): number | null {
-  if (state.heroPhase === 'exit') return null
+  if (state.isFramePushed || state.heroPhase === 'exit') return null
+
+  if (state.heroPhase === 'mission') {
+    const range = Math.max(1, totalScrollRange)
+    const heroRange = heroScrollRange(range)
+    const pushRange = pushScrollRange(range)
+    return heroRange + pushRange * 0.5
+  }
+
   const next = getNextHeroPhase(state.heroPhase)
-  if (!next) return null
+  if (!next || next === 'exit') return null
   return getIntroductionScrollY(
-    { heroPhase: next, isFramePushed: next === 'exit', activeValueIndex: 0 },
+    { heroPhase: next, isFramePushed: false, activeValueIndex: 0 },
     totalScrollRange,
   )
 }

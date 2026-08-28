@@ -7,9 +7,9 @@ import {
   type IntroductionScrollState,
 } from '../lib/introduction-scroll-phase'
 import { GlobalValuePanel } from './global-value-section'
-import valueStyles from './global-value-section.module.css'
 import { HeroStage } from './hero-section'
 import heroStyles from './hero-section.module.css'
+import styles from './introduction-scroll.module.css'
 
 const INITIAL_STATE: IntroductionScrollState = {
   heroPhase: 'intro',
@@ -20,7 +20,7 @@ const INITIAL_STATE: IntroductionScrollState = {
 /**
  * 기관소개 Desktop sticky 모션 오케스트레이터.
  * Frame Track: [Hero/Mission] + [JA Global Value] 세로 연속 → Push/Up translateY(-50%).
- * Mobile·reduced-motion 은 정적 Hero + 정적 Global Value 스택.
+ * Push 구간과 Value accordion 스크롤은 분리. Mobile·reduced-motion 은 정적 스택.
  */
 export function IntroductionScroll() {
   const trackRef = useRef<HTMLElement>(null)
@@ -101,7 +101,6 @@ export function IntroductionScroll() {
     activePhase === 'exit'
   const showVisionStack =
     activePhase === 'vision' || activePhase === 'mission' || activePhase === 'exit'
-  const missionActive = activePhase === 'mission' || activePhase === 'exit'
   const showArrow = isDesktopMotion && (activePhase === 'intro' || activePhase === 'message')
 
   const handleScrollArrowClick = () => {
@@ -123,48 +122,52 @@ export function IntroductionScroll() {
     })
   }
 
+  /** HeroStage 자손 셀렉터용 phase 클래스 (hero-section.module.css) */
+  const heroPhaseClassName = [
+    showMessage ? heroStyles.isRevealed : undefined,
+    showSplit ? heroStyles.isSplit : undefined,
+    activePhase === 'inspiring' ? heroStyles.phaseInspiring : undefined,
+    showVisionStack ? heroStyles.isVisionStack : undefined,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   /* —— Mobile / reduced-motion: 정적 스택 (media 확정 후에만) —— */
   if (mediaReady && !isDesktopMotion) {
     return (
-      <>
+      <div className={styles.stack}>
         <section
-          className={[
-            heroStyles.hero,
-            showMessage ? heroStyles.isRevealed : heroStyles.isInitial,
-          ]
-            .filter(Boolean)
-            .join(' ')}
+          className={[styles.stage, heroPhaseClassName].filter(Boolean).join(' ')}
           aria-label="기관소개 소개"
         >
-          <div className={heroStyles.sticky}>
+          <div className={styles.stageBody}>
             <HeroStage activePhase={activePhase} isDesktopMotion={false} />
           </div>
         </section>
-        <section className={valueStyles.section} aria-label="JA Global Value">
+        <section className={styles.valueStage} aria-label="JA Global Value">
           <GlobalValuePanel isDesktopMotion={false} />
         </section>
-      </>
+      </div>
     )
   }
 
   const rootClassName = [
-    heroStyles.hero,
-    heroStyles.isUnifiedTrack,
-    showMessage ? heroStyles.isRevealed : heroStyles.isInitial,
-    showSplit ? heroStyles.isSplit : undefined,
-    activePhase === 'inspiring' ? heroStyles.phaseInspiring : undefined,
-    showVisionStack ? heroStyles.isVisionStack : undefined,
-    missionActive ? heroStyles.isMissionActive : undefined,
-    isFramePushed ? heroStyles.isFramePushed : undefined,
+    styles.root,
+    styles.isMotionTrack,
+    isFramePushed ? styles.isFramePushed : undefined,
   ]
     .filter(Boolean)
     .join(' ')
 
   return (
     <section ref={trackRef} className={rootClassName} aria-label="기관소개">
-      <div className={heroStyles.sticky}>
-        <div className={heroStyles.frameTrack}>
-          <div className={heroStyles.frame}>
+      <div className={styles.sticky}>
+        <div className={styles.frameTrack}>
+          <div
+            className={[styles.frame, styles.frameHero, heroPhaseClassName]
+              .filter(Boolean)
+              .join(' ')}
+          >
             <HeroStage
               activePhase={activePhase}
               isDesktopMotion={isDesktopMotion}
@@ -174,7 +177,7 @@ export function IntroductionScroll() {
           </div>
           {isDesktopMotion ? (
             <div
-              className={heroStyles.frame}
+              className={[styles.frame, styles.frameValue].join(' ')}
               aria-hidden={!isFramePushed || undefined}
             >
               <GlobalValuePanel

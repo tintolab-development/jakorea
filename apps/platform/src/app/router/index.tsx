@@ -109,11 +109,15 @@ export const router = createBrowserRouter([
         path: '/about/transparency/audit-reports',
         element: <TransparencyReportsPage type="audit" />,
       },
-      { path: INTRODUCTION_PATH, element: <IntroductionPage /> },
       { path: ABOUT_HISTORY_PATH, element: <TemporaryPage /> },
       { path: ABOUT_CAREERS_PATH, element: <TemporaryPage /> },
       { path: IMPACT_STORIES_PATH, element: <ImpactStoriesPage /> },
     ],
+  },
+  {
+    /* 기관소개 — ContentShell 없는 풀블리드 (support와 동일 계열) */
+    element: <AppLayoutRoute layout="introduction" />,
+    children: [{ path: INTRODUCTION_PATH, element: <IntroductionPage /> }],
   },
   {
     element: <AppLayoutRoute layout="support" />,
