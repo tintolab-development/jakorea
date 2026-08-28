@@ -13,6 +13,7 @@ import {
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
 import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { TYPE_SETTINGS_PER_SCHEDULE_HINT } from '@/features/template/ui/form-set/registration-form/shared/type-settings-copy'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 type TrainedTeachersRegistrationTypeSettingsParagraphProps = {
@@ -60,7 +61,7 @@ function ScheduleDetailRadioRow({
               <>
                 <DetailInfoForm.InputsSeparator />
                 <span className="program-registration-paragraph__schedule-hint">
-                  교육 일정 항목에서 차시 별로 입력해 주세요
+                  {TYPE_SETTINGS_PER_SCHEDULE_HINT.byRound}
                 </span>
               </>
             ) : null}

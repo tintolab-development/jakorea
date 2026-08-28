@@ -1,4 +1,4 @@
-import { PFButton, PFChevronButton, PFText } from '@/shared/ui'
+import { PFChevronButton, PFText } from '@/shared/ui'
 import type { PFChevronButtonSize } from '@/shared/ui'
 import styles from './back-button.module.css'
 
@@ -13,11 +13,10 @@ export function ProgramBackButton({ label, onClick, size = 'large' }: ProgramBac
   const isSmall = size === 'small'
 
   return (
-    <PFButton
-      variant="text"
-      size="medium"
-      className={[styles.button, isSmall ? styles.buttonSmall : undefined].filter(Boolean).join(' ')}
-      data-pf-chevron-hover=""
+    <button
+      className={[styles.button, isSmall ? styles.buttonSmall : undefined]
+        .filter(Boolean)
+        .join(' ')}
       onClick={onClick}
     >
       <PFChevronButton size={size} direction="left" decorative />
@@ -29,6 +28,6 @@ export function ProgramBackButton({ label, onClick, size = 'large' }: ProgramBac
       >
         {label}
       </PFText>
-    </PFButton>
+    </button>
   )
 }

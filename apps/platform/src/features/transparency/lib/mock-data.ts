@@ -1,3 +1,4 @@
+import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 import type {
   ExpenseDetailGroup,
   FinanceSummary,
@@ -204,4 +205,35 @@ export const MOCK_EXPENSE_DETAIL_GROUPS: readonly ExpenseDetailGroup[] = [
 
 export function formatKrwAmount(amount: number) {
   return `${amount.toLocaleString('ko-KR')}원`
+}
+
+const EMPTY_FINANCE_SUMMARY: FinanceSummary = {
+  totalLabel: '',
+  totalAmount: 0,
+  slices: [],
+}
+
+export function getMockTransparencyPrinciples(): readonly TransparencyPrinciple[] {
+  if (!shouldUsePlatformMockData()) return []
+  return MOCK_TRANSPARENCY_PRINCIPLES
+}
+
+export function getMockRevenueSummary(): FinanceSummary {
+  if (!shouldUsePlatformMockData()) return EMPTY_FINANCE_SUMMARY
+  return MOCK_REVENUE_SUMMARY
+}
+
+export function getMockExpenseSummary(): FinanceSummary {
+  if (!shouldUsePlatformMockData()) return EMPTY_FINANCE_SUMMARY
+  return MOCK_EXPENSE_SUMMARY
+}
+
+export function getMockRevenueTableOrder(): readonly string[] {
+  if (!shouldUsePlatformMockData()) return []
+  return MOCK_REVENUE_TABLE_ORDER
+}
+
+export function getMockExpenseDetailGroups(): readonly ExpenseDetailGroup[] {
+  if (!shouldUsePlatformMockData()) return []
+  return MOCK_EXPENSE_DETAIL_GROUPS
 }

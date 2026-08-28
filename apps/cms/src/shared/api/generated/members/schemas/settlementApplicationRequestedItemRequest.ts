@@ -9,4 +9,5 @@
 export interface SettlementApplicationRequestedItemRequest {
   itemType?: string;
   requestedAmount?: number;
+  evidenceSubmitted?: boolean;
 }

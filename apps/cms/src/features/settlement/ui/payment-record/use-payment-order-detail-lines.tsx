@@ -10,6 +10,7 @@ import {
   mapSettlementDetailToInstructorPageCalculationStatement,
   mapSettlementDetailToProgramCalculationStatement,
 } from '@/features/settlement-management/api/payment-orders/map-settlement-detail-to-calculation-statement'
+import { getPaymentOrdersDetailContextRemote } from '@/features/settlement-management/api/payment-orders/admin-payment-orders-service'
 import { fetchSettlementDetailRemote } from '@/features/settlement-management/api/settlement-api-client'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { useConfirmPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
@@ -53,6 +54,7 @@ import {
   type AppliedLineStatus,
   type PaymentOrderCalculationStatementCommitPayload,
 } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
+import { sumCountablePaymentOrderLineAmounts } from '@/features/settlement-management/api/payment-orders/payment-order-line-amounts'
 import { renderLineProcessingStatusText } from '@/pages/settlement-management/payment-order-detail-aggregate-status'
 import { CmsButton } from '@/shared/ui'
 import {
@@ -84,12 +86,14 @@ interface DetailAppliedFilters {
 function filterDetailRows(
   rows: PaymentOrderDetailLineRow[],
   mode: 'program' | 'instructor',
-  applied: DetailAppliedFilters
+  applied: DetailAppliedFilters,
+  /** remote 조회 시 search·status·기간은 서버가 처리. 기관명만 클라이언트 보조 */
+  remoteServerFiltered: boolean
 ): PaymentOrderDetailLineRow[] {
   const keyword = applied.keyword.trim()
   const qInstitution = applied.institutionName.trim()
   return rows.filter(row => {
-    if (keyword) {
+    if (!remoteServerFiltered && keyword) {
       const keywordMatch =
         mode === 'program'
           ? (row as PaymentOrderAdminProgramDetailInstructorRow).instructorName.includes(keyword)
@@ -97,10 +101,31 @@ function filterDetailRows(
       if (!keywordMatch) return false
     }
     if (qInstitution && !row.institutionName.includes(qInstitution)) return false
-    if (applied.status !== 'all' && row.processingStatus !== applied.status) return false
-    if (!matchesDateRange(row.lectureDate, applied.dateRange)) return false
+    if (!remoteServerFiltered && applied.status !== 'all' && row.processingStatus !== applied.status) {
+      return false
+    }
+    if (!remoteServerFiltered && !matchesDateRange(row.lectureDate, applied.dateRange)) return false
     return true
   })
+}
+
+function mapLineStatusToStatementStatus(
+  status: AppliedLineStatus
+): string | null {
+  switch (status) {
+    case 'pending':
+      return 'REQUESTED'
+    case 'reapplication':
+      return 'REAPPLICATION'
+    case 'confirmed':
+      return 'CONFIRMED'
+    case 'correction':
+      return 'CORRECTION_REQUESTED'
+    case 'application_rejected':
+      return 'REJECTED'
+    default:
+      return null
+  }
 }
 
 type RemoteDetailProps = {
@@ -116,6 +141,8 @@ export type UsePaymentOrderDetailLinesControllerArgs = RemoteDetailProps &
         isOpen: boolean
         listPageDateRange: [Dayjs, Dayjs] | null
         onAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
+        /** 라인 상태 변경 시 반려·정정 제외 합산액 (신청자 상세 헤더용) */
+        onCountableAmountChange?: (amount: number) => void
         onOpenCalculationStatement: (row: PaymentOrderAdminProgramDetailInstructorRow) => void
         registerStatementCommitSink?: (
           sink: (payload: PaymentOrderCalculationStatementCommitPayload) => void
@@ -127,6 +154,7 @@ export type UsePaymentOrderDetailLinesControllerArgs = RemoteDetailProps &
         isOpen: boolean
         listPageDateRange: [Dayjs, Dayjs] | null
         onAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
+        onCountableAmountChange?: (amount: number) => void
         onOpenCalculationStatement: (row: PaymentOrderAdminInstructorDetailProgramRow) => void
         registerStatementCommitSink?: (
           sink: (payload: PaymentOrderCalculationStatementCommitPayload) => void
@@ -142,6 +170,7 @@ export function usePaymentOrderDetailLinesController(
     isOpen,
     listPageDateRange,
     onAggregateChange,
+    onCountableAmountChange,
     onOpenCalculationStatement,
     registerStatementCommitSink,
     paymentOrdersRemote = shouldUseSettlementRemote('paymentOrders'),
@@ -176,6 +205,9 @@ export function usePaymentOrderDetailLinesController(
   }>({ open: false, variant: 'single', selectedCount: 0 })
   const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
   const [issuanceQueue, setIssuanceQueue] = useState<PaymentStatementIssuancePayload[]>([])
+  const [filterFetching, setFilterFetching] = useState(false)
+  /** remote에서 조회 API로 search/status/기간을 이미 걸었으면 true */
+  const [remoteServerFiltered, setRemoteServerFiltered] = useState(false)
   const currentIssuancePayload = issuanceQueue[0] ?? null
 
   useEffect(() => {
@@ -184,6 +216,8 @@ export function usePaymentOrderDetailLinesController(
       setPaymentStatementIssueBlocked({ open: false, variant: 'single', selectedCount: 0 })
       setIssuanceViewOpen(false)
       setIssuanceQueue([])
+      setFilterFetching(false)
+      setRemoteServerFiltered(false)
       return
     }
 
@@ -204,6 +238,7 @@ export function usePaymentOrderDetailLinesController(
     setPaymentStatementIssueBlocked({ open: false, variant: 'single', selectedCount: 0 })
     setIssuanceViewOpen(false)
     setIssuanceQueue([])
+    setRemoteServerFiltered(false)
 
     if (mode === 'program') {
       setRowsState(
@@ -236,6 +271,10 @@ export function usePaymentOrderDetailLinesController(
   useEffect(() => {
     onAggregateChange(deriveAggregateFromLines(rowsState.map(r => r.processingStatus)))
   }, [rowsState, onAggregateChange])
+
+  useEffect(() => {
+    onCountableAmountChange?.(sumCountablePaymentOrderLineAmounts(rowsState))
+  }, [rowsState, onCountableAmountChange])
 
   const applyStatementCommit = useCallback(
     (payload: PaymentOrderCalculationStatementCommitPayload) => {
@@ -279,13 +318,66 @@ export function usePaymentOrderDetailLinesController(
   }, [registerStatementCommitSink, applyStatementCommit])
 
   const handleSearch = useCallback(() => {
-    setApplied({
+    const nextApplied: DetailAppliedFilters = {
       keyword: draftKeyword.trim(),
       institutionName: draftInstitutionName.trim(),
       status: draftStatus,
       dateRange: draftDateRange,
+    }
+    setApplied(nextApplied)
+
+    if (!paymentOrdersRemote || !contextAggregateKey) {
+      setRemoteServerFiltered(false)
+      return
+    }
+
+    const dateRange =
+      nextApplied.dateRange?.[0] && nextApplied.dateRange[1]
+        ? {
+            from: nextApplied.dateRange[0].format('YYYY-MM-DD'),
+            to: nextApplied.dateRange[1].format('YYYY-MM-DD'),
+          }
+        : null
+
+    setFilterFetching(true)
+    void getPaymentOrdersDetailContextRemote({
+      type: mode,
+      aggregateKey: contextAggregateKey,
+      dateRange,
+      search: nextApplied.keyword || null,
+      statementStatus: mapLineStatusToStatementStatus(nextApplied.status),
     })
-  }, [draftDateRange, draftInstitutionName, draftKeyword, draftStatus])
+      .then(data => {
+        if (mode === 'program') {
+          setRowsState(
+            resolvePaymentOrderProgramDetailLineRows(true, args.programRow, data)
+          )
+        } else {
+          setRowsState(
+            resolvePaymentOrderInstructorDetailLineRows(true, args.instructorRow, data)
+          )
+        }
+        setRemoteServerFiltered(true)
+        setSelectedRowKeys([])
+      })
+      .catch(error => {
+        window.alert(
+          getSettlementApiErrorMessage(error, '지급 현황 상세 목록을 불러오지 못했습니다.')
+        )
+      })
+      .finally(() => {
+        setFilterFetching(false)
+      })
+  }, [
+    draftDateRange,
+    draftInstitutionName,
+    draftKeyword,
+    draftStatus,
+    paymentOrdersRemote,
+    contextAggregateKey,
+    mode,
+    args,
+  ])
 
   const handleBatchConfirm = useCallback(
     (scheduledDate: Dayjs) => {
@@ -346,8 +438,8 @@ export function usePaymentOrderDetailLinesController(
   )
 
   const filteredRows = useMemo(
-    () => filterDetailRows(rowsState, mode, applied),
-    [rowsState, mode, applied]
+    () => filterDetailRows(rowsState, mode, applied, remoteServerFiltered && paymentOrdersRemote),
+    [rowsState, mode, applied, remoteServerFiltered, paymentOrdersRemote]
   )
 
   const programDetail = useMemo((): PaymentOrderAdminProgramDetail | null => {
@@ -635,7 +727,17 @@ export function usePaymentOrderDetailLinesController(
         key: 'estimatedAmount',
         width: w.amount,
         align: 'center',
-        render: (amount: number) => formatWon(amount),
+        render: (amount: number, row: PaymentOrderDetailLineRow) => (
+          <span
+            className={
+              row.processingStatus === 'application_rejected'
+                ? 'payment-order-detail-filter-table__amount--rejected'
+                : undefined
+            }
+          >
+            {formatWon(amount)}
+          </span>
+        ),
       },
       {
         title: '산출 내역',
@@ -689,13 +791,13 @@ export function usePaymentOrderDetailLinesController(
       { title: 'No.', dataIndex: 'no', key: 'no' },
       { title: nameTitle, dataIndex: 'name', key: 'name' },
       { title: '참여 기관명', dataIndex: 'institutionName', key: 'institutionName' },
-      { title: '강의 진행 일자', dataIndex: 'lectureDateSession', key: 'lectureDateSession' },
+      { title: '교육 진행 일자', dataIndex: 'lectureDateSession', key: 'lectureDateSession' },
       {
-        title: '지급 조서 처리 현황',
+        title: '지급조서 처리 현황',
         dataIndex: 'processingStatusLabel',
         key: 'processingStatusLabel',
       },
-      { title: '정산 예정 금액', dataIndex: 'estimatedAmountLabel', key: 'estimatedAmountLabel' },
+      { title: '정산 신청 금액', dataIndex: 'estimatedAmountLabel', key: 'estimatedAmountLabel' },
     ]
 
     return { columns, data }
@@ -718,6 +820,7 @@ export function usePaymentOrderDetailLinesController(
     filterFilters,
     onFilterCardChange,
     handleSearch,
+    filterFetching,
     columns,
     sectionTitle,
     filterClassName,

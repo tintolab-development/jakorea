@@ -6,8 +6,6 @@ export const FAQ_PAGE_SIZE = 8
 
 export const INQUIRY_PAGE_SIZE = 8
 
-export const MYPAGE_INQUIRIES_WRITE_PATH = '/mypage/inquiries/write'
-
 export const FAQ_CATEGORY_OPTIONS: readonly { value: FaqCategory | '전체'; label: string }[] = [
   { value: '전체', label: '전체' },
   { value: '프로그램', label: '프로그램' },
@@ -15,6 +13,17 @@ export const FAQ_CATEGORY_OPTIONS: readonly { value: FaqCategory | '전체'; lab
   { value: '정산', label: '정산' },
   { value: '회원가입', label: '회원가입' },
 ] as const
+
+export const INQUIRY_PROGRAM_OPTIONS = [
+  { value: '2026-ja-camp', label: '2026 JA 경제교육 캠프' },
+  { value: '2026-ujat', label: '2026 UJAT 봉사 프로그램' },
+  { value: '2025-settlement', label: '2025 하반기 강사 정산' },
+  { value: 'none', label: '해당 없음' },
+] as const
+
+export const INQUIRY_CATEGORY_OPTIONS = FAQ_CATEGORY_OPTIONS.filter(
+  option => option.value !== '전체',
+)
 
 export const INQUIRY_TAB_ITEMS = [
   { key: 'faq', label: 'FAQ' },

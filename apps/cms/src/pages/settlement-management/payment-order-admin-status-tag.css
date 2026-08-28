@@ -24,6 +24,10 @@
   color: var(--color-orange, #f07917);
 }
 
+.payment-order-admin__status-text--reapplication {
+  color: #c45c00;
+}
+
 .payment-order-admin__status-text--partial {
   color: var(--color-purple, #8457ce);
 }

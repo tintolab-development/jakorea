@@ -1,6 +1,11 @@
 import illustHouseUrl from '@/shared/assets/illustration/illust-house.svg'
 import illustPeopleUrl from '@/shared/assets/illustration/illust-people.svg'
-import type { AgreementItem, MemberTypeOption, GuardianAgreementItem } from '../model/sign-up.types'
+import type {
+  AgreementItem,
+  MemberType,
+  MemberTypeOption,
+  GuardianAgreementItem,
+} from '../model/sign-up.types'
 
 export const MIN_GENERAL_MEMBER_AGE = 14
 export const SIGN_UP_TOTAL_STEPS = 7
@@ -58,6 +63,27 @@ export const agreementItems: AgreementItem[] = [
     guide: '* 미동의 시 프로그램 참여가 불가능해요.',
   },
 ]
+
+export const teacherAgreementItems: AgreementItem[] = [
+  { key: 'service', required: true, label: '서비스 이용약관' },
+  { key: 'privacy', required: true, label: '개인정보 수집·이용 동의' },
+  {
+    key: 'teacherInfo',
+    required: true,
+    label: '교사회원 가입 및 학교/기관 정보 수집·이용 동의',
+  },
+  { key: 'marketing', required: false, label: '마케팅 정보 수신 동의' },
+  {
+    key: 'portrait',
+    required: false,
+    label: '초상권 수집·이용 동의',
+    guide: '* 미동의 시 프로그램 참여가 불가능해요.',
+  },
+]
+
+export function getAgreementItems(memberType: MemberType | null): AgreementItem[] {
+  return memberType === 'teacher' ? teacherAgreementItems : agreementItems
+}
 
 export const guardianAgreementItems: GuardianAgreementItem[] = [
   { key: 'service', required: true, label: '서비스 이용약관' },

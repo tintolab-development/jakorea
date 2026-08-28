@@ -43,11 +43,8 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
   const inverseHeader = isHome
 
   useEffect(() => {
-    const handleDevAuthChange = (event: Event) => {
-      const detail = (event as CustomEvent<{ isLoggedIn: boolean }>).detail
-      if (typeof detail?.isLoggedIn === 'boolean') {
-        setIsLoggedIn(detail.isLoggedIn)
-      }
+    const handleDevAuthChange = () => {
+      setIsLoggedIn(getDevAuthLoggedIn())
     }
 
     window.addEventListener(DEV_AUTH_CHANGE_EVENT, handleDevAuthChange)

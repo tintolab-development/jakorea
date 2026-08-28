@@ -8,6 +8,7 @@
  */
 
 import { createGeminiVisitingTrainingApplicationFormInstitutionDraft } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-institution-draft'
+import { createGeminiVisitingTrainingApplicationFormInstructorDraft } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-instructor-draft'
 import { createProgramApplicationFormEconomyDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
 import {
   createProgramParticipantApplicationDraft,
@@ -23,6 +24,10 @@ import {
   type ProgramApplyFormCase,
   type ProgramApplyFormCaseInput,
 } from './apply-form-case.ts'
+import {
+  applyScheduleParagraphsForProgram,
+  type ApplyScheduleProgramFields,
+} from './apply-form-schedule.ts'
 
 export type { ProgramApplyFormCase, ProgramApplyFormCaseInput }
 export {
@@ -61,6 +66,8 @@ function createSeedDraftForApplyCase(applyCase: ProgramApplyFormCase): WritingFo
       return createGeminiVisitingTrainingApplicationFormInstitutionDraft()
     case 'instructor':
       return createProgramApplicationFormInstructorDraft()
+    case 'instructor-gemini':
+      return createGeminiVisitingTrainingApplicationFormInstructorDraft()
     default: {
       const _exhaustive: never = applyCase
       return _exhaustive
@@ -77,11 +84,32 @@ export function getMockApplyFormCase(
 /**
  * 프로그램 → 신청 폼 draft (mock).
  * 케이스 해석 후 CMS templateCode와 동일한 시드 draft를 반환한다.
+ * 일반 개인·기관은 등록된 교육 진행 일정 유형에 따라 scheduleChoice를 숨기거나 선택지를 맞춘다.
  */
 export function getMockApplyFormDraft(
   program: Pick<ProgramListItem | ProgramDetail, 'category' | 'id'> &
-    Partial<Pick<ProgramDetail, 'detailCase' | 'participationMethod'>>
+    Partial<
+      Pick<ProgramDetail, 'detailCase' | 'participationMethod'> & ApplyScheduleProgramFields
+    >
 ): WritingFormDraft {
   const applyCase = resolveProgramApplyFormCase(program)
-  return createSeedDraftForApplyCase(applyCase)
+  const draft = createSeedDraftForApplyCase(applyCase)
+  if (
+    applyCase !== 'individual-general' &&
+    applyCase !== 'individual-team' &&
+    applyCase !== 'institution-general'
+  ) {
+    return draft
+  }
+  /** UJAT 기관 등은 일반 신청 시드를 쓰더라도 일반 일정 단락 규칙을 적용하지 않음 */
+  if (program.detailCase != null && program.detailCase !== 'general') {
+    return draft
+  }
+  return applyScheduleParagraphsForProgram(draft, {
+    educationStructure: program.educationStructure ?? 'curriculum',
+    sessionRound: program.sessionRound ?? 'single',
+    educationScheduleMode: program.educationScheduleMode ?? 'date',
+    educationScheduleLines: program.educationScheduleLines ?? [],
+    maxPreferredScheduleCount: program.maxPreferredScheduleCount ?? 1,
+  })
 }

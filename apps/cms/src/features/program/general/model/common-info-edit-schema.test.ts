@@ -115,4 +115,68 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     expect(patch.generalProgramSessionRound).toBe('multi')
     expect(patch.generalProgramAudience).toBe('organization')
   })
+
+  it('일정형 단일 회차는 사전 교육을 저장하지 않는다', () => {
+    const program = baseProgram({
+      generalProgramEducationStructure: 'schedule',
+      generalProgramSessionRound: 'single',
+    })
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.educationStructure = 'schedule'
+    values.sessionRound = 'single'
+    values.scheduleCurriculumPreEducation = true
+    const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
+    expect(patch.generalCommonInfo?.scheduleCurriculumPreEducation).toBe(false)
+  })
+
+  it('행사 일정 블록의 일정 별 상이 교육·참여·IPS를 저장 후 다시 로드한다', () => {
+    const program = baseProgram({
+      generalProgramEducationStructure: 'schedule',
+      generalProgramSessionRound: 'multi',
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+    })
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.educationStructure = 'schedule'
+    values.sessionRound = 'multi'
+    values.participantIndividual = true
+    values.participantOrganization = false
+    values.educationFormScheduleDetail = 'perSchedule'
+    values.participationScheduleDetail = 'perSchedule'
+    values.ipsScheduleDetail = 'perSchedule'
+    values.scheduleDetails = [
+      {
+        scheduleLabel: '행사 일정 01',
+        blockKind: 'event',
+        name: '오리엔테이션',
+        groupTimes: [{ startTime: '', endTime: '' }],
+        scheduleDate: '26년 4월 20일(월)',
+        assignmentEnabled: false,
+        assignmentPeriod: '',
+        educationForm: 'offline',
+        participationMethod: 'team',
+        ipsCategory: 'prepare',
+        ipsDetail: 'none',
+      },
+    ]
+    const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
+    const saved = patch.generalCommonInfo?.scheduleDetails?.[0]
+    expect(saved?.educationFormLabel).toBe('오프라인')
+    expect(saved?.participationMethodLabel).toBe('팀')
+    expect(saved?.ipsTypeSummary).toContain('Prepare')
+
+    const merged: Program = {
+      ...program,
+      ...patch,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        ...patch.generalCommonInfo,
+      },
+    }
+    const reloaded = programToGeneralCommonInfoEditValues(merged, sponsorContext)
+    expect(reloaded.scheduleDetails[0]?.educationForm).toBe('offline')
+    expect(reloaded.scheduleDetails[0]?.participationMethod).toBe('team')
+    expect(reloaded.scheduleDetails[0]?.ipsCategory).toBe('prepare')
+    expect(reloaded.scheduleDetails[0]?.ipsDetail).toBe('none')
+  })
 })

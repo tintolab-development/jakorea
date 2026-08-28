@@ -4,6 +4,12 @@ import type {
   PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
 import type { SettlementAggregateResponse } from '@/shared/api/generated/settlement/schemas'
+import { mapStatementStatusToProcessingStatus } from '@/features/settlement-management/api/shared/settlement-status-mappers'
+
+type AggregateItem = SettlementAggregateResponse & {
+  aggregateStatus?: string
+  processingStatus?: string
+}
 
 function deriveProcessingStatus(
   pendingCount: number,
@@ -11,6 +17,16 @@ function deriveProcessingStatus(
 ): PaymentOrderAdminProcessingStatus {
   if (participationCount > 0 && pendingCount <= 0) return 'confirmed'
   return 'pending'
+}
+
+function resolveAggregateProcessingStatus(
+  item: AggregateItem,
+  pendingCount: number,
+  participationCount: number
+): PaymentOrderAdminProcessingStatus {
+  const raw = item.aggregateStatus ?? item.processingStatus
+  if (raw) return mapStatementStatusToProcessingStatus(raw)
+  return deriveProcessingStatus(pendingCount, participationCount)
 }
 
 function referenceDateFromDates(dates: string[]): string {
@@ -33,7 +49,7 @@ export function mapAggregatesToProgramRows(
         aggregateKey: String(programId),
         programName: item.programName ?? `프로그램 ${programId}`,
         instructorCount: item.instructorCount ?? 0,
-        processingStatus: deriveProcessingStatus(pending, participation),
+        processingStatus: resolveAggregateProcessingStatus(item, pending, participation),
         estimatedAmount: item.estimatedAmount ?? 0,
         referenceDate: referenceDateFromDates(dates),
         settlementRelevantAttendanceDates: dates,
@@ -64,7 +80,7 @@ export function mapAggregatesToInstructorRows(
         aggregateKey: String(instructorMemberId),
         instructorName: item.instructorName ?? `강사 ${instructorMemberId}`,
         programCount: participation,
-        processingStatus: deriveProcessingStatus(pending, participation),
+        processingStatus: resolveAggregateProcessingStatus(item, pending, participation),
         estimatedAmount: item.estimatedAmount ?? 0,
         relatedProgramNames: [],
         referenceDate: referenceDateFromDates(dates),

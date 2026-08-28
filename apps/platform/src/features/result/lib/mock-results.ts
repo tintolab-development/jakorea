@@ -3,6 +3,8 @@
  * SSOT: apps/cms/src/data/mock/notices.ts (`mockProgramResultNotices`)
  */
 
+import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import type { ResultAttachment, ResultDetail, ResultListItem } from '../model/types'
 import { filterAndSortResults } from './filter-results'
 import {
@@ -240,15 +242,18 @@ const MOCK_RESULT_DETAILS = CMS_PROGRAM_RESULT_NOTICE_SEED.map(mapNoticeToResult
 )
 
 export function getMockResults(): ResultListItem[] {
+  if (!shouldUsePlatformMockData()) return []
   return MOCK_RESULT_DETAILS.map(toListItem)
 }
 
 export function getMockResultById(id: string): ResultListItem | null {
+  if (!shouldUsePlatformMockData()) return null
   const found = MOCK_RESULT_DETAILS.find(item => item.id === id)
   return found ? toListItem(found) : null
 }
 
 export function getMockResultDetailById(id: string): ResultDetail | null {
+  if (!shouldUsePlatformMockData()) return null
   const found = MOCK_RESULT_DETAILS.find(item => item.id === id)
   return found
     ? {
@@ -259,10 +264,12 @@ export function getMockResultDetailById(id: string): ResultDetail | null {
 }
 
 export function useMockResultsCatalog(): ResultListItem[] {
+  useShouldUsePlatformMockData()
   return getMockResults()
 }
 
 export function useMockResultDetail(id: string | null): ResultDetail | null {
+  useShouldUsePlatformMockData()
   if (!id) return null
   return getMockResultDetailById(id)
 }

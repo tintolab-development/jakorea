@@ -23,6 +23,7 @@ import type {
   SettlementFrontendResponse,
   SettlementStatusChangeRequest,
   SettlementAggregateResponse,
+  SettlementConfigUpdateRequest,
 } from '@/shared/api/generated/settlement/schemas'
 
 const settlementApi = getJAKoreaCMSBackendAPISettlementSubset()
@@ -89,17 +90,12 @@ export async function downloadPaymentStatementRemote(
   return unwrapApiBody(await settlementApi.downloadPaymentStatement(settlementId))
 }
 
-/** settlement-api-backend-gaps §12 — PATCH .../statements/{statementId}/reject */
+/** settlement-api — PATCH .../statements/{statementId}/reject (notificationType OpenAPI 반영) */
 export async function rejectPaymentStatementRemote(
   statementId: number,
   body: SettlementStatusChangeRequest
 ): Promise<void> {
-  await customInstance({
-    url: `/api/admin/settlements/statements/${statementId}/reject`,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    data: body,
-  })
+  await settlementApi.rejectPaymentStatement(statementId, body)
 }
 
 export async function requestSettlementCorrectionRemote(
@@ -170,6 +166,26 @@ export async function fetchCurrentSettlementConfigRemote(): Promise<SettlementCo
   return unwrapApiBody(await settlementApi.currentConfig())
 }
 
+export async function updateCurrentSettlementConfigRemote(
+  body: SettlementConfigUpdateRequest
+): Promise<SettlementConfigResponse> {
+  return unwrapApiBody(await settlementApi.updateCurrentConfig(body))
+}
+
+export async function duplicateSettlementConfigItemRemote(
+  itemKind: 'wage' | 'payment' | 'deduction',
+  itemId: number
+): Promise<SettlementConfigResponse> {
+  return unwrapApiBody(await settlementApi.duplicateConfigItem(itemKind, itemId))
+}
+
+export async function deleteSettlementConfigItemRemote(
+  itemKind: 'wage' | 'payment' | 'deduction',
+  itemId: number
+): Promise<SettlementConfigResponse> {
+  return unwrapApiBody(await settlementApi.deleteConfigItem(itemKind, itemId))
+}
+
 export async function fetchSettlementCalendarRemote(
   fromDate: string,
   toDate: string
@@ -232,7 +248,8 @@ export async function fetchAllPaymentStatementsRemote(): Promise<
 export async function fetchAllAccountPaymentsRemote(
   params: Omit<ListAccountPaymentsParams, 'page' | 'size'> = {}
 ): Promise<NonNullable<PageResponseAccountPaymentListItemResponse['items']>> {
-  const pageSize = 50
+  /** 시드 ≥32 · 테이블 전량 로드 UX — 왕복 축소 (잘림 방지를 위해 페이지 루프 유지) */
+  const pageSize = 100
   let page = 0
   const items: NonNullable<PageResponseAccountPaymentListItemResponse['items']> = []
 

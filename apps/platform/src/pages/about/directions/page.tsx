@@ -4,10 +4,12 @@ import {
   getMockDirections,
   KakaoMapEmbed,
 } from '@/features/directions'
+import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import { PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function DirectionsPage() {
+  useShouldUsePlatformMockData()
   const info = getMockDirections()
 
   return (
@@ -26,11 +28,17 @@ export function DirectionsPage() {
         </header>
 
         <div className={styles.mapSection}>
-          <KakaoMapEmbed html={info.kakaoMapHtml} />
+          {info ? <KakaoMapEmbed html={info.kakaoMapHtml} /> : null}
         </div>
 
         <div className={styles.infoSection}>
-          <DirectionsInfoSection info={info} />
+          {info ? (
+            <DirectionsInfoSection info={info} />
+          ) : (
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+              등록된 정보가 없습니다.
+            </PFText>
+          )}
         </div>
       </div>
     </section>

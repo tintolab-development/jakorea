@@ -15,6 +15,7 @@ import type {
 const UI_KEY_TO_TERMS_TYPES: Record<AgreementKey | GuardianAgreementKey, string[]> = {
   service: ['SERVICE_TERMS'],
   privacy: ['PRIVACY_COLLECTION', 'CHILD_PRIVACY_COLLECTION'],
+  teacherInfo: ['TEACHER_INFO_COLLECTION'],
   marketing: ['MARKETING'],
   portrait: ['PORTRAIT', 'PORTRAIT_RIGHTS', 'IMAGE_RIGHTS', 'RIGHTS_OF_PUBLICITY'],
   guardianLegal: ['GUARDIAN_CONSENT'],
@@ -40,6 +41,7 @@ function resolveUiKeyForTermsType(
   }
 
   const labelText = (label ?? '').trim()
+  if (labelText.includes('교사회원') || labelText.includes('학교/기관')) return 'teacherInfo'
   if (labelText.includes('초상권')) return 'portrait'
   if (labelText.includes('마케팅')) return 'marketing'
   if (labelText.includes('법정대리인') || labelText.includes('보호자')) return 'guardianLegal'

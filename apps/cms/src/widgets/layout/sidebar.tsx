@@ -1,11 +1,17 @@
 /** LNB: `getMenuItemsByRole` 결과를 Ant Design Menu로 렌더링. 헤더는 상단 고정. */
 
 import { Layout, Menu } from 'antd'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useMemo, useEffect, useCallback, type CSSProperties } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { invalidateMemberListQueries } from '@/features/user/api/invalidate-member-list-queries'
 import { getMenuItemsByRole } from '@/shared/config/menu-config'
-import { memberListHref, normalizeMemberListKind } from '@/shared/config/member-list-kinds'
+import {
+  isMemberListMenuHref,
+  memberListHref,
+  normalizeMemberListKind,
+} from '@/shared/config/member-list-kinds'
 import { MenuDropdownChevronIcon } from '@/shared/ui/icons'
 import './sidebar.css'
 import { Header } from './header'
@@ -15,6 +21,7 @@ const { Sider } = Layout
 export function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
+  const queryClient = useQueryClient()
   const { user } = useAuthStore()
 
   const menuItems = useMemo(() => {
@@ -183,7 +190,12 @@ export function Sidebar() {
           expandIcon={expandIcon}
           onClick={({ key }) => {
             if (typeof key !== 'string' || !key.startsWith('/')) return
+            const alreadyOnExactHref = `${location.pathname}${location.search}` === key
             navigate(key)
+            // 동일 유형 메뉴 재클릭은 URL이 안 바뀌어 observer remount가 없다.
+            if (alreadyOnExactHref && isMemberListMenuHref(key)) {
+              invalidateMemberListQueries(queryClient)
+            }
           }}
         />
       </div>

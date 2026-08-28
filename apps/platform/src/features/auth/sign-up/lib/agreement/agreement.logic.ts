@@ -1,13 +1,14 @@
-import type { AgreementKey, AgreementState } from '../../model/sign-up.types'
-import { agreementItems } from '../constants'
+import type { AgreementItem, AgreementKey, AgreementState } from '../../model/sign-up.types'
+import { agreementItems, getAgreementItems } from '../constants'
 import { isAllAgreed, isRequiredAgreed } from '../utils'
 
-export { agreementItems }
+export { agreementItems, getAgreementItems }
 
 export function createInitialAgreementState(): AgreementState {
   return {
     service: false,
     privacy: false,
+    teacherInfo: false,
     marketing: false,
     portrait: false,
   }
@@ -20,19 +21,24 @@ export function toggleAgreementState(
   return { ...agreements, [key]: !agreements[key] }
 }
 
-export function toggleAllAgreementState(agreements: AgreementState): AgreementState {
-  const next = !isAllAgreed(agreements, agreementItems)
-  return {
-    service: next,
-    privacy: next,
-    marketing: next,
-    portrait: next,
+export function toggleAllAgreementState(
+  agreements: AgreementState,
+  items: AgreementItem[] = agreementItems,
+): AgreementState {
+  const next = !isAllAgreed(agreements, items)
+  const nextState = { ...agreements }
+  for (const item of items) {
+    nextState[item.key] = next
   }
+  return nextState
 }
 
-export function getAgreementDerived(agreements: AgreementState) {
+export function getAgreementDerived(
+  agreements: AgreementState,
+  items: AgreementItem[] = agreementItems,
+) {
   return {
-    isAllAgreed: isAllAgreed(agreements, agreementItems),
-    isRequiredAgreed: isRequiredAgreed(agreements, agreementItems),
+    isAllAgreed: isAllAgreed(agreements, items),
+    isRequiredAgreed: isRequiredAgreed(agreements, items),
   }
 }

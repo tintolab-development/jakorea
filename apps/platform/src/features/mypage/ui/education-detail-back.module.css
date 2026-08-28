@@ -1,0 +1,15 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  width: fit-content;
+  min-height: auto;
+  padding: 0;
+}
+
+.icon {
+  display: block;
+  width: 8px;
+  height: 12px;
+  flex-shrink: 0;
+}

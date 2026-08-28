@@ -1,3 +1,5 @@
+import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import type {
   TextbookCategoryFilter,
   TextbookContent,
@@ -330,6 +332,7 @@ export const MOCK_THEME_SECTIONS: TextbookThemeSection[] = [
 ]
 
 export function getMockTextbookById(id: string): TextbookContent | undefined {
+  if (!shouldUsePlatformMockData()) return undefined
   return MOCK_TEXTBOOK_CONTENTS.find(item => item.id === id)
 }
 
@@ -353,9 +356,13 @@ export function filterAndSortTextbooks(
 }
 
 export function useMockTextbookCatalog() {
+  useShouldUsePlatformMockData()
+  if (!shouldUsePlatformMockData()) return []
   return MOCK_TEXTBOOK_CONTENTS
 }
 
 export function useMockThemeSections() {
+  useShouldUsePlatformMockData()
+  if (!shouldUsePlatformMockData()) return []
   return MOCK_THEME_SECTIONS
 }

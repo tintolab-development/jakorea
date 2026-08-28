@@ -9,3 +9,32 @@
 .member-consent-document-view-modal__actions {
   margin-left: auto;
 }
+
+/* 동의-only 미리보기 — TemplatePreviewModal 안내 줄과 동일 레이아웃 */
+.member-consent-document-view-modal__notice-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 24px 0;
+  box-sizing: border-box;
+}
+
+.member-consent-document-view-modal__notice {
+  width: 100%;
+  max-width: 1400px;
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.member-consent-document-view-modal .full-page-modal__title,
+.member-consent-document-view-modal .crime-consent-doc-modal__title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}

@@ -30,3 +30,11 @@ export type OneToOneInquiryItem = {
   answer?: string
   order: number
 }
+
+export type OneToOneInquiryWritePayload = {
+  programValue: string
+  programName: string
+  category: FaqCategory
+  title: string
+  content: string
+}

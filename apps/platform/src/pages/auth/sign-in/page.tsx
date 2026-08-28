@@ -102,7 +102,8 @@ export function SignInPage() {
       expiresAt: expiresAtFromExpiresInSeconds(input.expiresInSeconds),
     })
     setDevMemberProfile('individual')
-    setDevAuthLoggedIn(input.markLoggedIn !== false)
+    // remote 실세션은 토큰만으로 헤더 로그인 유지. mock 카탈로그 플래그는 켜지 않음.
+    setDevAuthLoggedIn(false)
   }
 
   const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {

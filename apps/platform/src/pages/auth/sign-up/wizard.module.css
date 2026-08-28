@@ -175,31 +175,38 @@
   display: flex;
   width: 100%;
   min-width: 0;
-  align-items: center;
+  align-items: flex-start;
   text-align: left;
+}
+
+/* PFToggle `.toggle`의 center보다 우선해 긴 약관명 첫 줄과 체크를 맞춘다 */
+button.agreementCheckButton {
+  align-items: flex-start;
 }
 
 .agreementText {
   display: flex;
   min-width: 0;
   flex: 1;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--spacing-8);
-  height: 24px;
+  min-height: 24px;
 }
 
 .agreementText > :first-child {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  height: 20px;
-  line-height: 20px;
+  height: 24px;
+  line-height: 24px;
   white-space: nowrap;
 }
 
 .agreementText > :last-child {
   min-width: 0;
   flex: 1;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 .required {

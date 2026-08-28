@@ -3,6 +3,9 @@
   align-items: center;
   gap: var(--spacing-16);
   padding-inline: 0;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
 }
 
 .buttonSmall {

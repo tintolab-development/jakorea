@@ -6,7 +6,11 @@ import dayjs from 'dayjs'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { genderBirthView, inlineSegmentsWithDividers, socialView } from '@/features/user/detail/ui/user-basic-info/display'
+import {
+  genderBirthView,
+  inlineSegmentsWithDividers,
+  socialView,
+} from '@/features/user/detail/ui/user-basic-info/display'
 import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import { isSocialAdminSocialApiRemoteEnabled } from '@/features/auth/api/social-auth-remote-capabilities'
 import { useAdminLinkedSocialAccounts } from '@/features/auth/hooks/use-admin-linked-social-accounts'
@@ -33,7 +37,8 @@ import {
 } from '@/features/auth/identity-verification'
 import { useIdentityVerification as useIdentityVerificationBase } from '@jakorea/identity-verification/react'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
-import { CmsButton, CmsInput, CmsRadioGroup, ContentModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsRadioGroup, ContentModal, useCmsAlert } from '@/shared/ui'
+import { MemberWithdrawGuideModal } from '@/features/user/shared/ui/member-withdraw-guide-modal'
 import { ProfilePasswordChangeModal } from '@/shared/ui/profile-password-change-modal'
 import type { User } from '@/types/user'
 import { formatDate } from '@/shared/utils'
@@ -181,7 +186,6 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
   const { linkedLabels, loading: loadingLinkedSocialAccounts } = useAdminLinkedSocialAccounts(open)
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
   const [passwordChangeModalOpen, setPasswordChangeModalOpen] = useState(false)
-  const [withdrawKeyword, setWithdrawKeyword] = useState('')
   const [withdrawing, setWithdrawing] = useState(false)
   const [marketingConsent, setMarketingConsent] = useState<MarketingConsentValue>('agree')
   const [marketingAgreedAt, setMarketingAgreedAt] = useState(SAMPLE_AGREED_AT)
@@ -242,18 +246,16 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
   }
 
   const handleOpenWithdrawModal = () => {
-    setWithdrawKeyword('')
     setWithdrawModalOpen(true)
   }
 
   const handleCloseWithdrawModal = () => {
     if (withdrawing) return
     setWithdrawModalOpen(false)
-    setWithdrawKeyword('')
   }
 
   const handleWithdraw = async () => {
-    if (!user || withdrawKeyword.trim() !== '탈퇴') {
+    if (!user) {
       return
     }
 
@@ -267,7 +269,6 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
       console.error('Failed to withdraw account:', error)
     } finally {
       setWithdrawing(false)
-      setWithdrawKeyword('')
     }
   }
 
@@ -317,7 +318,11 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
 
   const footer = (
     <div className="profile-edit-modal__footer">
-      <button type="button" className="profile-edit-modal__withdraw-button" onClick={handleOpenWithdrawModal}>
+      <button
+        type="button"
+        className="profile-edit-modal__withdraw-button"
+        onClick={handleOpenWithdrawModal}
+      >
         회원탈퇴
       </button>
       <div className="profile-edit-modal__footer-actions">
@@ -362,7 +367,10 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
         >
           <div className="profile-edit-modal__basic-info-stack">
             <div className="profile-edit-modal__basic-info-table profile-edit-modal__basic-info-table--top">
-              <EditableRow type="double" className="profile-edit-modal__row profile-edit-modal__row--tall">
+              <EditableRow
+                type="double"
+                className="profile-edit-modal__row profile-edit-modal__row--tall"
+              >
                 <EditableField
                   label="가입일"
                   readOnlyDisplay
@@ -384,7 +392,11 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
 
             <div className="profile-edit-modal__basic-info-table profile-edit-modal__basic-info-table--main">
               <EditableRow type="double" className="profile-edit-modal__row">
-                <EditableField label="성명" readOnlyDisplay view={<span>{user.name || '-'}</span>} />
+                <EditableField
+                  label="성명"
+                  readOnlyDisplay
+                  view={<span>{user.name || '-'}</span>}
+                />
                 <EditableField
                   label="성별 및 생년월일"
                   readOnlyDisplay
@@ -408,7 +420,11 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
                     />
                   }
                 />
-                <EditableField label="이메일" readOnlyDisplay view={<span>{user.email || '-'}</span>} />
+                <EditableField
+                  label="이메일"
+                  readOnlyDisplay
+                  view={<span>{user.email || '-'}</span>}
+                />
               </EditableRow>
 
               <EditableRow type="double" className="profile-edit-modal__row">
@@ -437,7 +453,10 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
           className="profile-edit-modal__section profile-edit-modal__section--terms"
         >
           <div className="profile-edit-modal__terms-table">
-            <EditableRow type="double" className="profile-edit-modal__terms-row profile-edit-modal__terms-row--standard">
+            <EditableRow
+              type="double"
+              className="profile-edit-modal__terms-row profile-edit-modal__terms-row--standard"
+            >
               <EditableField
                 label="서비스 이용약관"
                 readOnlyDisplay
@@ -446,11 +465,17 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
               <EditableField
                 label="개인정보 수집·이용 동의"
                 readOnlyDisplay
-                view={consentReadonlyContent(personalInfoTerms.agreed, personalInfoTerms.agreedAtDisplay)}
+                view={consentReadonlyContent(
+                  personalInfoTerms.agreed,
+                  personalInfoTerms.agreedAtDisplay
+                )}
               />
             </EditableRow>
 
-            <EditableRow type="single" className="profile-edit-modal__terms-row profile-edit-modal__terms-row--marketing">
+            <EditableRow
+              type="single"
+              className="profile-edit-modal__terms-row profile-edit-modal__terms-row--marketing"
+            >
               <DetailInfoForm.Field
                 label="마케팅 제공 동의"
                 labelWidth={200}
@@ -462,10 +487,14 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
                       size="medium"
                       options={MARKETING_RADIO_OPTIONS}
                       value={marketingConsent}
-                      onChange={event => handleMarketingChange(event.target.value as MarketingConsentValue)}
+                      onChange={event =>
+                        handleMarketingChange(event.target.value as MarketingConsentValue)
+                      }
                     />
                     <DetailInfoForm.TdDivider />
-                    <span className="user-consent-agreement-section__value-datetime">{marketingAgreedAt}</span>
+                    <span className="user-consent-agreement-section__value-datetime">
+                      {marketingAgreedAt}
+                    </span>
                   </span>
                 }
               />
@@ -479,46 +508,13 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
         onCancel={handleClosePasswordChangeModal}
       />
 
-      <ContentModal
+      <MemberWithdrawGuideModal
         open={withdrawModalOpen}
         onCancel={handleCloseWithdrawModal}
-        title="회원 탈퇴 안내"
-        width={600}
-        className="profile-withdraw-modal"
-        footer={
-          <>
-            <CmsButton variant="secondary" onClick={handleCloseWithdrawModal}>
-              취소
-            </CmsButton>
-            <CmsButton
-              variant="delete"
-              onClick={handleWithdraw}
-              loading={withdrawing}
-              disabled={withdrawKeyword.trim() !== '탈퇴'}
-            >
-              회원 탈퇴
-            </CmsButton>
-          </>
-        }
-      >
-        <div className="profile-withdraw-modal__content">
-          <p className="profile-withdraw-modal__description">
-            JA KOREA 서비스에서 탈퇴하시겠습니까?
-            <br />
-            탈퇴 시 회원님의 계정 정보, 이용 내역 및 저장된 데이터가 모두 영구 삭제됩니다.
-            <br />
-            삭제된 정보는 복구가 불가능합니다. 정말 탈퇴하시겠습니까?
-          </p>
-
-          <CmsInput
-            inputSize="large"
-            width="100%"
-            placeholder="탈퇴하시려면 해당란에 [탈퇴]를 입력해 주세요."
-            value={withdrawKeyword}
-            onChange={event => setWithdrawKeyword(event.target.value)}
-          />
-        </div>
-      </ContentModal>
+        onConfirm={() => void handleWithdraw()}
+        variant="self_withdraw"
+        confirmLoading={withdrawing}
+      />
     </ContentModal>
   )
 }

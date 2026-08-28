@@ -4,6 +4,7 @@
  */
 
 import { setAdminOnboardingRequired } from './admin-onboarding-session'
+import { emitDevAuthChange } from './auth-session-event'
 import { queryClient } from './query-client'
 
 export const PLATFORM_AUTH_TOKEN_KEY = 'platform_auth_token'
@@ -47,6 +48,8 @@ export function setAuthTokens(input: {
   } else if (input.expiresAt === null) {
     localStorage.removeItem(PLATFORM_AUTH_EXPIRES_AT_KEY)
   }
+
+  emitDevAuthChange(true)
 }
 
 /**
@@ -65,4 +68,6 @@ export function clearAuthTokens(options?: { clearQueryCache?: boolean }) {
   if (options?.clearQueryCache !== false) {
     queryClient.removeQueries({ queryKey: ['platform'] })
   }
+
+  emitDevAuthChange(false)
 }

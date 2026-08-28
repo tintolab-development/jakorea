@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   IMPACT_STORIES_PATH,
@@ -6,6 +5,7 @@ import {
   getMockImpactStories,
   impactStoryDetailPath,
   type ImpactStoryListItem,
+  useMockImpactStories,
 } from '@/features/impact-story'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
 import styles from './story-section.module.css'
@@ -62,14 +62,14 @@ function SubStoryCard({ story }: { story: ImpactStoryListItem }) {
 }
 
 export function StorySection() {
-  const { featured, subStories } = useMemo(() => {
-    const featuredStories = getFeaturedImpactStories()
-    const mainStory = featuredStories[0] ?? getMockImpactStories()[0] ?? null
-    const rest = getMockImpactStories()
-      .filter(story => story.id !== mainStory?.id)
-      .slice(0, SUB_STORY_COUNT)
-    return { featured: mainStory, subStories: rest }
-  }, [])
+  useMockImpactStories()
+  const featuredStories = getFeaturedImpactStories()
+  const mainStory = featuredStories[0] ?? getMockImpactStories()[0] ?? null
+  const rest = getMockImpactStories()
+    .filter(story => story.id !== mainStory?.id)
+    .slice(0, SUB_STORY_COUNT)
+  const featured = mainStory
+  const subStories = rest
 
   if (!featured) {
     return null

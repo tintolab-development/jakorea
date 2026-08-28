@@ -3,13 +3,12 @@
  */
 
 import { useEffect, useState } from 'react'
-import dayjs, { type Dayjs } from 'dayjs'
+import { type Dayjs } from 'dayjs'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
+import { defaultLectureFeePaymentScheduledDate } from '@/features/settlement/lib/third-tuesday-of-month'
 import './payment-order-batch-confirm-modal.css'
-
-const DEFAULT_SCHEDULED_DATE = dayjs('2026-02-17')
 
 export interface PaymentOrderBatchConfirmModalProps {
   open: boolean
@@ -26,14 +25,17 @@ export function PaymentOrderBatchConfirmModal({
   open,
   onCancel,
   selectedCount,
-  initialScheduledDate = DEFAULT_SCHEDULED_DATE,
+  initialScheduledDate,
   onConfirm,
 }: PaymentOrderBatchConfirmModalProps) {
-  const [scheduledDate, setScheduledDate] = useState<Dayjs | null>(initialScheduledDate)
+  const fallbackDate = defaultLectureFeePaymentScheduledDate()
+  const [scheduledDate, setScheduledDate] = useState<Dayjs | null>(
+    initialScheduledDate ?? fallbackDate
+  )
 
   useEffect(() => {
     if (open) {
-      setScheduledDate(initialScheduledDate ?? DEFAULT_SCHEDULED_DATE)
+      setScheduledDate(initialScheduledDate ?? defaultLectureFeePaymentScheduledDate())
     }
   }, [open, initialScheduledDate])
 

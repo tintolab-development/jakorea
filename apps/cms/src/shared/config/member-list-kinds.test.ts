@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { resolveRoleFilterFromMemberListParams } from './member-list-kinds'
+import {
+  isMemberListMenuHref,
+  memberListHref,
+  resolveRoleFilterFromMemberListParams,
+} from './member-list-kinds'
+
+describe('isMemberListMenuHref', () => {
+  it('회원 유형 LNB href만 true', () => {
+    expect(isMemberListMenuHref(memberListHref('all'))).toBe(true)
+    expect(isMemberListMenuHref(memberListHref('instructors'))).toBe(true)
+    expect(isMemberListMenuHref('/admin/permission-requests')).toBe(false)
+  })
+})
 
 describe('resolveRoleFilterFromMemberListParams', () => {
   it('institutions kind는 SCHOOL role 필터', () => {

@@ -1,6 +1,7 @@
 export { MypageHomePage } from './home/page'
+export { MypageEducationPage } from './education/page'
+export { MypageEducationDetailPage } from './education/detail/page'
 export { MypageInquiriesPage } from './inquiries/page'
-export { MypageInquiriesWritePage } from './inquiries/write/page'
 export { MypageInstructorApplyPage } from './instructor-apply/page'
 export { MypageInstructorApplyConsentPage } from './instructor-apply/consent/page'
 export { MypageSettingsPage } from './settings/page'

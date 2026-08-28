@@ -1,3 +1,4 @@
+import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 import whyImage01Url from '../image/why-image-01.png'
 import whyImage02Url from '../image/why-image-02.png'
 import ctaImageUrl from '../image/cta-image.png'
@@ -78,3 +79,8 @@ export const DONATION_IMPACT_ITEMS: readonly DonationImpactItem[] = [
     placeholderColor: '#c5e8eb',
   },
 ]
+
+export function getDonationImpactItems(): readonly DonationImpactItem[] {
+  if (!shouldUsePlatformMockData()) return []
+  return DONATION_IMPACT_ITEMS
+}

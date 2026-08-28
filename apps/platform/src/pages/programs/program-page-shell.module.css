@@ -1,0 +1,40 @@
+/**
+ * 참여하기 프로그램 상세·신청 공통 셸 (PFFormPage와 동일 PC 규칙)
+ * - 상하: 100px
+ * - 내용: max 1440 (--content-shell-max-width)
+ * - 좌우: compact 80 / full max(80, (100%-1440)/2)
+ * - ≤1079: 토큰 패딩만 (모바일 UI 추후)
+ */
+.page {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  flex: 1 0 auto;
+  flex-direction: column;
+  align-self: stretch;
+  padding-block: var(--spacing-100);
+  padding-inline: var(--page-padding-x);
+}
+
+.inner {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--content-shell-max-width);
+  min-width: 0;
+  flex-direction: column;
+  margin-inline: auto;
+}
+
+@media (--bp-pc-compact) {
+  .page {
+    padding-inline: 80px;
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .page {
+    padding-inline: max(80px, calc((100% - var(--content-shell-max-width)) / 2));
+  }
+}

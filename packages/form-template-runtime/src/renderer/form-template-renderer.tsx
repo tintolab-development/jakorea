@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type {
+  FormTitleNumberingStyle,
   WritingFormDraft,
   WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
@@ -56,10 +57,14 @@ function shouldHideParagraph(
 function buildParagraphEditableHeading(
   paragraph: WritingFormParagraph,
   titleIndex: number,
+  titleNumbering: FormTitleNumberingStyle,
 ) {
   const displayTitle = resolveParagraphDisplayTitle(paragraph)
   const visibleDescription = getVisibleParagraphDescription(paragraph.paragraphDescription)
-  const numberedPrefix = paragraph.participatesInTitleNumbering ? `${titleIndex + 1}. ` : null
+  const numberedPrefix =
+    paragraph.participatesInTitleNumbering && titleNumbering !== 'none'
+      ? `${titleIndex + 1}. `
+      : null
 
   return {
     ...paragraphCardStaticHeading(displayTitle, {
@@ -134,7 +139,11 @@ export function FormTemplateRenderer({
           <ParagraphCard
             key={paragraph.id}
             dataParagraphId={paragraph.id}
-            editableHeading={buildParagraphEditableHeading(paragraph, titleIndex)}
+            editableHeading={buildParagraphEditableHeading(
+              paragraph,
+              titleIndex,
+              draft.formSettings.titleNumbering,
+            )}
           >
             {body}
           </ParagraphCard>

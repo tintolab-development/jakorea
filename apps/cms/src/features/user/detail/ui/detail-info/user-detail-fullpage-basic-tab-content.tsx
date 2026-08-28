@@ -380,6 +380,7 @@ export function UserDetailFullpageBasicTabContent({
               }
               memberId={user.memberId}
               membersRemote={membersRemote}
+              memberUser={user}
             />
           ) : null}
           {instructorResumeApplicantRow ? (

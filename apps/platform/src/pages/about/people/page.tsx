@@ -1,12 +1,15 @@
 import {
   MemberSection,
-  MOCK_PEOPLE_SECTIONS,
+  getMockPeopleSections,
   orgChartUrl,
 } from '@/features/people'
+import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import { PFDivider, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function PeoplePage() {
+  useShouldUsePlatformMockData()
+  const sections = getMockPeopleSections()
   return (
     <section className={styles.page}>
       <div className={styles.pageBackground} aria-hidden="true" />
@@ -32,7 +35,7 @@ export function PeoplePage() {
         </div>
 
         <div className={styles.memberList}>
-          {MOCK_PEOPLE_SECTIONS.map((section, index) => (
+          {sections.map((section, index) => (
             <div
               key={section.id}
               className={

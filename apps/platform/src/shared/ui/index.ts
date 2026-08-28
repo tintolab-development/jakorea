@@ -29,6 +29,7 @@ export type {
   PFCategoryBadgeSize,
   PFCategoryBadgeVariant,
 } from './pf-category-badge'
+export { MediaListRow } from './media-list-row'
 export { PFMetaBadge } from './pf-meta-badge'
 export type { PFMetaBadgeProps } from './pf-meta-badge'
 export { PFStateBadge } from './pf-state-badge'
@@ -137,6 +138,13 @@ export type { PFToggleProps, PFToggleVariant } from './pf-toggle'
 export { PFText } from './pf-text'
 export type { PFTextColor, PFTypography } from './pf-text'
 export { PFTextInput } from './pf-text-input'
+export { PFTextarea } from './pf-textarea'
+export type {
+  PFTextareaMessageStatus,
+  PFTextareaProps,
+  PFTextareaSize,
+  PFTextareaVariant,
+} from './pf-textarea'
 export { PFDateInput } from './pf-date-input'
 export type {
   PFDateInputMessageStatus,

@@ -17,6 +17,7 @@ export type FormTemplateHostProps = {
 
 export function FormTemplateHost({ surface, children, className }: FormTemplateHostProps) {
   const rootClass = ['form-template-host', className].filter(Boolean).join(' ')
+  const borderRadius = surface === 'platformUser' ? 16 : 8
 
   return (
     <ConfigProvider
@@ -24,7 +25,7 @@ export function FormTemplateHost({ surface, children, className }: FormTemplateH
         token: {
           fontFamily: 'Pretendard, system-ui, sans-serif',
           colorPrimary: '#01a1af',
-          borderRadius: 8,
+          borderRadius,
         },
       }}
     >

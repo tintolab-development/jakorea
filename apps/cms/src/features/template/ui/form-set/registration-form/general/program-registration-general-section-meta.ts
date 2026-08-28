@@ -23,7 +23,7 @@ export const PROGRAM_REGISTRATION_GENERAL_SECTION_META = {
     title: '교육 진행 (일정형)',
     editDescription: '세부 일정 별 정보를 입력해 주세요',
     editDescriptionMultiRound: '회차 별 정보를 입력해 주세요',
-    /** 복수 회차 + 교육 형태·참여·IPS 모두 일정 별 상이 — 행사 일정 블록 */
+    /** 개인 + 복수 회차, 또는 기관 + 교육 형태·참여·IPS 모두 일정 별 상이 — 행사 일정 블록 */
     editDescriptionMultiRoundEvent: '행사 일정 별 정보를 입력해 주세요',
   },
   educationScheduleSettings: {

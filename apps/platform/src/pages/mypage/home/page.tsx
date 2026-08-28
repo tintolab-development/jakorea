@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
   getMypageLnbItems,
-  MOCK_MYPAGE_PROGRAM_STATS,
-  MOCK_MYPAGE_SCHEDULE_EVENTS,
+  getMockMypageProgramStats,
+  getMockMypageScheduleEvents,
+  MYPAGE_EDUCATION_PATH,
   MYPAGE_INQUIRIES_PATH,
   MYPAGE_PATH,
   showInstructorApplyCta,
@@ -38,10 +39,12 @@ export function MypageHomePage() {
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const lnbItems = getMypageLnbItems(member.profile)
   /** API 로그인 세션에서는 mock 통계·일정을 쓰지 않음 (실 API 연동 전 빈 값) */
-  const programStats = member.isRemoteSession ? EMPTY_PROGRAM_STATS : MOCK_MYPAGE_PROGRAM_STATS
+  const programStats = member.isRemoteSession
+    ? EMPTY_PROGRAM_STATS
+    : getMockMypageProgramStats()
   const scheduleEvents = member.isRemoteSession
     ? EMPTY_SCHEDULE_EVENTS
-    : MOCK_MYPAGE_SCHEDULE_EVENTS
+    : getMockMypageScheduleEvents()
 
   useEffect(() => {
     const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
@@ -59,6 +62,10 @@ export function MypageHomePage() {
   }, [navigate])
 
   const handleLnbItemSelect = (key: MypageLnbItemKey) => {
+    if (key === 'education') {
+      navigate(MYPAGE_EDUCATION_PATH)
+      return
+    }
     if (key === 'inquiries') {
       navigate(MYPAGE_INQUIRIES_PATH)
     }

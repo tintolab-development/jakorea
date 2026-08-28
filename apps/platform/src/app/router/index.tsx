@@ -34,7 +34,8 @@ import {
   MypageInstructorApplyConsentPage,
   MypageInstructorApplyPage,
   MypageInquiriesPage,
-  MypageInquiriesWritePage,
+  MypageEducationPage,
+  MypageEducationDetailPage,
   MypageSettingsPage,
 } from '@/pages/mypage'
 import {
@@ -81,8 +82,8 @@ export const router = createBrowserRouter([
     element: <AppLayoutRoute layout="default" />,
     children: [
       { path: '/programs', element: <ProgramsPage /> },
-      { path: '/programs/:programId', element: <ProgramDetailPage /> },
       { path: '/programs/:programId/apply/complete', element: <ProgramApplyCompletePage /> },
+      { path: '/mypage/education/:applicationId', element: <MypageEducationDetailPage /> },
       { path: '/notices/:noticeId', element: <NoticeDetailPage /> },
       { path: '/results/:resultId', element: <ResultDetailPage /> },
       { path: '/impact/:storyId', element: <ImpactStoryDetailPage /> },
@@ -136,8 +137,8 @@ export const router = createBrowserRouter([
     element: <AppLayoutRoute layout="mypage-subpage" />,
     children: [
       { path: '/mypage/settings', element: <MypageSettingsPage /> },
+      { path: '/mypage/education', element: <MypageEducationPage /> },
       { path: '/mypage/inquiries', element: <MypageInquiriesPage /> },
-      { path: '/mypage/inquiries/write', element: <MypageInquiriesWritePage /> },
     ],
   },
   {
@@ -197,6 +198,7 @@ export const router = createBrowserRouter([
         path: '/auth/find-password/identity/mock',
         element: <FindPasswordIdentityMockNicePage />,
       },
+      { path: '/programs/:programId', element: <ProgramDetailPage /> },
       { path: '/programs/:programId/apply', element: <ProgramApplyPage /> },
       { path: '/mypage/instructor-apply', element: <MypageInstructorApplyPage /> },
       {

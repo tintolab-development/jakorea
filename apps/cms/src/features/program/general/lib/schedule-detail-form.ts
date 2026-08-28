@@ -40,6 +40,61 @@ export function isScheduleMultiAllPerSchedule(
   )
 }
 
+export type ScheduleEventBlockLayoutInput = {
+  sessionRound: GeneralProgramSessionRoundKind
+  participantOrganization: boolean
+  educationFormScheduleDetail: GeneralProgramScheduleDetailKind
+  participationScheduleDetail: GeneralProgramScheduleDetailKind
+  ipsScheduleDetail: GeneralProgramScheduleDetailKind
+}
+
+/** 일정형 행사 일정 블록 — 개인+복수는 유형 설정과 무관, 기관은 교육·참여·IPS 모두 일정 별 상이 */
+export function shouldUseScheduleEventBlockLayout(
+  input: ScheduleEventBlockLayoutInput
+): boolean {
+  if (input.sessionRound !== 'multi') return false
+  if (!input.participantOrganization) return true
+  return isScheduleMultiAllPerSchedule(
+    input.sessionRound,
+    input.educationFormScheduleDetail,
+    input.participationScheduleDetail,
+    input.ipsScheduleDetail
+  )
+}
+
+/** 행사 일정 블록 — 과제 설정 다음에 붙는 「일정 별 상이」 행 */
+export type ScheduleEventPerScheduleExtraPlan = {
+  showEducation: boolean
+  showParticipation: boolean
+  showIps: boolean
+  /** 교육 형태·참여 방식 모두 상이면 한 줄(double) */
+  educationWithParticipation: boolean
+}
+
+export function getScheduleEventPerScheduleExtraPlan(input: {
+  educationFormScheduleDetail: GeneralProgramScheduleDetailKind
+  participationScheduleDetail: GeneralProgramScheduleDetailKind
+  ipsScheduleDetail: GeneralProgramScheduleDetailKind
+  participantOrganization: boolean
+}): ScheduleEventPerScheduleExtraPlan {
+  const showEducation = input.educationFormScheduleDetail === 'perSchedule'
+  const showParticipation =
+    input.participationScheduleDetail === 'perSchedule' && !input.participantOrganization
+  const showIps = input.ipsScheduleDetail === 'perSchedule'
+  return {
+    showEducation,
+    showParticipation,
+    showIps,
+    educationWithParticipation: showEducation && showParticipation,
+  }
+}
+
+export function hasScheduleEventPerScheduleExtraRows(
+  plan: ScheduleEventPerScheduleExtraPlan
+): boolean {
+  return plan.showEducation || plan.showParticipation || plan.showIps
+}
+
 /** 일정형 — 교육·IPS 모두 일정 별 상이면 세부 일정 블록에 교육 형태+IPS를 같은 행에 노출 */
 export function isScheduleEducationAndIpsBothPerSchedule(
   educationFormScheduleDetail: GeneralProgramScheduleDetailKind,
@@ -118,13 +173,15 @@ export function buildDefaultScheduleDetailsForEdit(input: {
   educationFormScheduleDetail: GeneralProgramScheduleDetailKind
   participationScheduleDetail: GeneralProgramScheduleDetailKind
   ipsScheduleDetail: GeneralProgramScheduleDetailKind
+  participantOrganization: boolean
 }): GeneralProgramScheduleDetailFormValues[] {
-  const blockKind: ScheduleDetailBlockKind = isScheduleMultiAllPerSchedule(
-    input.sessionRound,
-    input.educationFormScheduleDetail,
-    input.participationScheduleDetail,
-    input.ipsScheduleDetail
-  )
+  const blockKind: ScheduleDetailBlockKind = shouldUseScheduleEventBlockLayout({
+    sessionRound: input.sessionRound,
+    participantOrganization: input.participantOrganization,
+    educationFormScheduleDetail: input.educationFormScheduleDetail,
+    participationScheduleDetail: input.participationScheduleDetail,
+    ipsScheduleDetail: input.ipsScheduleDetail,
+  })
     ? 'event'
     : 'sub'
   const groupCount =
@@ -197,6 +254,7 @@ export function applyEducationStructureChangeToForm(
       educationFormScheduleDetail: values.educationFormScheduleDetail ?? 'common',
       participationScheduleDetail: values.participationScheduleDetail ?? 'common',
       ipsScheduleDetail: values.ipsScheduleDetail ?? 'common',
+      participantOrganization: values.participantOrganization,
     }), { shouldDirty: true })
     setValue('curriculumSessions', [], { shouldDirty: true })
     return
@@ -224,6 +282,7 @@ export function applySessionRoundChangeToForm(
       educationFormScheduleDetail: values.educationFormScheduleDetail ?? 'common',
       participationScheduleDetail: values.participationScheduleDetail ?? 'common',
       ipsScheduleDetail: values.ipsScheduleDetail ?? 'common',
+      participantOrganization: values.participantOrganization,
     }), { shouldDirty: true })
     return
   }
@@ -243,6 +302,7 @@ export function applyScheduleTypeSettingsDetailChangeToForm(
     educationFormScheduleDetail: values.educationFormScheduleDetail ?? 'common',
     participationScheduleDetail: values.participationScheduleDetail ?? 'common',
     ipsScheduleDetail: values.ipsScheduleDetail ?? 'common',
+    participantOrganization: values.participantOrganization,
   }), { shouldDirty: true })
 }
 

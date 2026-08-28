@@ -5,12 +5,33 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ListAccountPaymentsStatus } from './listAccountPaymentsStatus';
 
 export type ListAccountPaymentsParams = {
 /**
- * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
+ * REQUESTED는 대기 버킷 alias(WAITING_PAYMENT+FAILED). 응답 paymentStatus는 WAITING_PAYMENT입니다.
  */
-status?: string;
+status?: ListAccountPaymentsStatus;
+/**
+ * 이체 예정일 시작(scheduledPaymentDate). 출강일 lectureDate가 아닙니다.
+ */
+fromDate?: string;
+/**
+ * 이체 예정일 종료(scheduledPaymentDate). 출강일 lectureDate가 아닙니다.
+ */
+toDate?: string;
+/**
+ * 신청자명 contains. 실명 기준이며 서버에서 마스킹하지 않습니다.
+ */
+instructorName?: string;
+/**
+ * 프로그램명 contains (programNameKo).
+ */
+programName?: string;
+/**
+ * 이체일 기준 전년-12-01~당해-12-31. fromDate/toDate가 있으면 그 값 우선.
+ */
+year?: number;
 /**
  * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
  */

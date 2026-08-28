@@ -6,20 +6,18 @@
 import type { CmsProgramLike } from '../model/cms-program.types'
 import type { ProgramDetailCase } from '../model/types'
 
-/** 스크린샷·QA 기준 상세 케이스 고정 id */
+/** QA·mock 고정 id — 상세 케이스 분기 */
 export const PROGRAM_DETAIL_CASE_SSOT_IDS = {
-  instructor: 'case-instructor-recruitment',
-  volunteer: 'case-volunteer-recruitment',
-  ujatVolunteer: 'ujat-progress-volunteer-recruiting',
-  ujatParticipant: 'ujat-progress-participant-recruiting',
-  gemini: 'gvt-recruitment-in-progress',
+  instructor: 'gemini-prog-instructor',
+  ujatVolunteer: 'ujat-prog-volunteer',
+  ujatParticipant: 'ujat-prog-school',
+  gemini: 'gemini-prog-institution',
 } as const satisfies Record<string, string>
 
 export type ProgramDetailCaseSsotKey = keyof typeof PROGRAM_DETAIL_CASE_SSOT_IDS
 
 const SSOT_ID_TO_CASE: Record<string, ProgramDetailCase> = {
   [PROGRAM_DETAIL_CASE_SSOT_IDS.instructor]: 'instructor',
-  [PROGRAM_DETAIL_CASE_SSOT_IDS.volunteer]: 'volunteer',
   [PROGRAM_DETAIL_CASE_SSOT_IDS.ujatVolunteer]: 'ujat-volunteer',
   [PROGRAM_DETAIL_CASE_SSOT_IDS.ujatParticipant]: 'ujat-participant',
   [PROGRAM_DETAIL_CASE_SSOT_IDS.gemini]: 'gemini',
@@ -46,17 +44,22 @@ export function resolveProgramDetailCase(
     | 'lifecycleStatus'
     | 'generalParticipantTypes'
     | 'ujatProgressStatus'
+    | 'category'
   >
 ): ProgramDetailCase {
   const byId = SSOT_ID_TO_CASE[program.id]
   if (byId) return byId
 
-  if (program.registrationKind === 'gemini') return 'gemini'
+  if (program.registrationKind === 'gemini') {
+    if (program.category === 'instructor') return 'instructor'
+    const types = program.generalParticipantTypes ?? []
+    if (types.length === 1 && types[0] === 'teacher_instructor') return 'instructor'
+    return 'gemini'
+  }
   if (program.registrationKind === 'trainedTeachers') return 'instructor'
   if (program.registrationKind === 'ujat') {
     if (program.ujatProgressStatus === 'VOLUNTEER_RECRUITING') return 'ujat-volunteer'
     if (program.ujatProgressStatus === 'PARTICIPANT_RECRUITING') return 'ujat-participant'
-    // 교육·종료 등 — 목록엔 나오지만 기본은 기관 모집 필드 세트
     return 'ujat-participant'
   }
 

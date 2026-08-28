@@ -111,7 +111,7 @@ import {
   instructorProfileFormValuesToCmsSettlement,
 } from '@/features/user/api/map-instructor-cms-profile'
 import { SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL } from '@/features/user/detail/lib/school-teacher-employment-status'
-import { buildSchoolDeleteMessageLines } from '@/features/program/general/ui/manager-delete-guide-modal'
+import { buildMemberListDeleteGuideLines } from '@/features/user/shared/lib/member-withdraw-delete-guide'
 
 type UserListRow = Omit<User, 'password'>
 
@@ -157,33 +157,6 @@ function displayNameForUserDelete(kind: MemberListKind, u: UserListRow): string 
   const email = u.email?.trim()
   if (email) return email
   return '(이름 없음)'
-}
-
-function buildMemberDeleteGuideLines(names: string[], kind: MemberListKind): string[] {
-  const normalized = names.map(name => name.trim()).filter(Boolean)
-  if (normalized.length === 0) return []
-  if (kind === 'institutions' && normalized.length >= 2) {
-    return [
-      `선택한 ${normalized.length}개의 학교를 삭제하시겠습니까?`,
-      '삭제 시 즉시 삭제 처리 되며, 등록 및 관련된 정보는 모두 삭제됩니다.',
-      '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
-    ]
-  }
-  if (normalized.length >= 2) {
-    return [
-      `선택한 ${normalized.length}명의 회원을 삭제하시겠습니까?`,
-      '삭제 시 즉시 탈퇴 처리 되며, 등록 및 관련된 정보는 모두 삭제됩니다.',
-      '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
-    ]
-  }
-  if (kind === 'institutions') {
-    return buildSchoolDeleteMessageLines({ displayName: normalized[0] })
-  }
-  return [
-    `[${normalized[0]}] 회원을 삭제하시겠습니까?`,
-    '삭제 시 즉시 탈퇴 처리 되며, 등록 및 관련된 정보는 모두 삭제됩니다.',
-    '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
-  ]
 }
 
 /** 상세 > 탈퇴 확정 후 삭제 완료 모달에 쓰는 엔티티 라벨 */
@@ -382,7 +355,7 @@ export function UserListPage() {
   const memberDeleteGuide = useMemo(() => {
     if (deleteTargets.length === 0) return null
     const domain = memberDeleteGuideDomain(resolvedMemberListKind)
-    const lines = buildMemberDeleteGuideLines(
+    const lines = buildMemberListDeleteGuideLines(
       deleteTargets.map(target => displayNameForUserDelete(resolvedMemberListKind, target)),
       resolvedMemberListKind
     )

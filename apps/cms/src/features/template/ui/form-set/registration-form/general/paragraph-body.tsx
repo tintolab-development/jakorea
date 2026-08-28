@@ -21,6 +21,7 @@ import { ProgramRegistrationBasicInfoParagraph } from '@/features/template/ui/fo
 import { ProgramRegistrationBusinessKpiParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/business-kpi-paragraph'
 import { ProgramRegistrationEducationCurriculumParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-curriculum-paragraph'
 import { ProgramRegistrationEducationScheduleCurriculumParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-schedule-curriculum-paragraph'
+import { ProgramRegistrationEducationScheduleSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-schedule-settings-paragraph'
 import { ProgramRegistrationTypeSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/type-settings-paragraph'
 import { ProgramRegistrationWageInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/wage-info-paragraph'
 
@@ -235,8 +236,24 @@ export function renderProgramRegistrationParagraphBody(
         />
       )
     case PROGRAM_REGISTRATION_IDS.educationScheduleSettings:
-      /** 일반: 등록 폼 비노출(상세 수정만). 1사1교·교육받은 교사만 렌더 */
-      if (options == null || options.programRegistrationFormVariant === 'general') return null
+      if (options == null) return null
+      /** 일반 일정형 + 복수 회차 — 등록·상세와 동일하게 비노출 */
+      if (options.programRegistrationFormVariant === 'general') {
+        if (options.programType === 'schedule' && options.sessionRoundType === 'multi') {
+          return null
+        }
+        return (
+          <ProgramRegistrationEducationScheduleSettingsParagraph
+            educationScheduleMode={options.educationScheduleMode}
+            onEducationScheduleModeChange={options.onEducationScheduleModeChange}
+            autoFillFromScheduleGroupTimes={
+              options.programType === 'schedule' &&
+              options.sessionRoundType === 'single' &&
+              !options.participant.organization
+            }
+          />
+        )
+      }
       return options.programRegistrationFormVariant === 'trainedTeachers' ? (
         <TrainedTeachersRegistrationEducationScheduleSettingsParagraph
           educationScheduleMode={options.educationScheduleMode}

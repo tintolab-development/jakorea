@@ -77,6 +77,7 @@
 }
 
 .settlement-item-settings__card {
+  position: relative;
   display: flex;
   box-sizing: border-box;
   width: 100%;
@@ -84,24 +85,27 @@
   height: 108px;
   min-height: 108px;
   max-height: 108px;
-  padding: 26px 30px;
+  padding: 0;
   align-items: center;
-  gap: 24px;
+  gap: 0;
   border-radius: 12px;
   border: 1px solid #d4d4d4;
   background: var(--default-WT, #fff);
   overflow: hidden;
 }
 
+/* 카드(위젯) 전체가 클릭·포커스 영역 — 내부 hit에 패딩을 두어 히트 영역 = 카드 */
 .settlement-item-settings__card-hit {
   flex: 1 1 auto;
+  align-self: stretch;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
   display: flex;
   align-items: center;
   gap: 24px;
-  padding: 0;
+  box-sizing: border-box;
+  padding: 26px 30px;
   margin: 0;
   border: none;
   background: transparent;
@@ -109,16 +113,36 @@
   cursor: pointer;
   font: inherit;
   color: inherit;
+  border-radius: inherit;
 }
 
-.settlement-item-settings__card-hit:focus-visible {
+/* 지급 항목: 우측 ⋯ 메뉴 공간을 남기고 hit가 나머지를 채움 */
+.settlement-item-settings__card:has(.settlement-item-settings__card-more-wrap)
+  .settlement-item-settings__card-hit {
+  padding-right: 12px;
+}
+
+/* 전역 button:focus-visible(index.css) 내부 링 차단 — 포커스는 카드(위젯)에만 */
+.settlement-item-settings__card button.settlement-item-settings__card-hit:focus,
+.settlement-item-settings__card button.settlement-item-settings__card-hit:focus-visible {
+  outline: none !important;
+  box-shadow: none;
+}
+
+.settlement-item-settings__card:has(
+  > .settlement-item-settings__card-hit:focus-visible
+) {
   outline: 2px solid var(--JA-mint-01, #01a1af);
   outline-offset: 3px;
-  border-radius: 4px;
 }
 
 .settlement-item-settings__card-more-wrap {
+  position: relative;
+  z-index: 1;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding-right: 30px;
 }
 
 .settlement-item-settings__card-icon {

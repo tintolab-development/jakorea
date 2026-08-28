@@ -1,3 +1,4 @@
+import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 import type { TransparencyReport } from '../model/types'
 
 /** 회계감사 커버 팔레트 — 시안 딥틸 → 그린 그라디언트 순환 */
@@ -53,6 +54,16 @@ function buildAuditReports(): TransparencyReport[] {
 
 export const MOCK_ANNUAL_REPORTS: readonly TransparencyReport[] = buildAnnualReports()
 export const MOCK_AUDIT_REPORTS: readonly TransparencyReport[] = buildAuditReports()
+
+export function getMockAnnualReports(): readonly TransparencyReport[] {
+  if (!shouldUsePlatformMockData()) return []
+  return MOCK_ANNUAL_REPORTS
+}
+
+export function getMockAuditReports(): readonly TransparencyReport[] {
+  if (!shouldUsePlatformMockData()) return []
+  return MOCK_AUDIT_REPORTS
+}
 
 export function filterReports(
   reports: readonly TransparencyReport[],

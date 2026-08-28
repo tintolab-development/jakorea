@@ -139,15 +139,15 @@ OpenAPI `TermsAgreementRequest.termsSnapshotJson`은 **게시 약관 원장** �
 | 항목 | 개인 | 교사(비겸직) | 강사 | 강사겸교사 |
 |------|------|--------------|------|------------|
 | 초상권 `PORTRAIT_RIGHTS` | ✓ | ✓ | ✓ | ✓ |
-| 지급조서 `PAYMENT_STATEMENT_PRE_CONSENT` | — | — | ✓ | ✓ |
-| 교육진행자 `FACILITATOR_PLEDGE` | — | — | ✓ | ✓ |
-| 행정정보 `ADMINISTRATIVE_INFO_CONSENT` | — | — | ✓ | ✓ |
-| 성범죄 `CRIMINAL_HISTORY_CHECK_CONSENT` | — | — | ✓ | ✓ |
+| 지급조서 `PAYMENT_STATEMENT_PRE_CONSENT` | ✓ | — | ✓ | ✓ |
+| 교육진행자 `FACILITATOR_PLEDGE` | ✓ | — | ✓ | ✓ |
+| 행정정보 `ADMINISTRATIVE_INFO_CONSENT` | ✓ | — | ✓ | ✓ |
+| 성범죄 `CRIMINAL_HISTORY_CHECK_CONSENT` | ✓ | — | ✓ | ✓ |
 
-근거: `user-consent-agreement-section.tsx`. 교사 상세는 일반 회원과 같이 **4항목만**(서비스·개인정보·마케팅·초상권). 강사 전용 4종은 숨김.  
-**등록은 교사도 5종 작성 가능** → 상세에서 숨겨도 **원장은 유지**. 조회 API는 숨긴 항목의 `filledDocument`도 `memberId`로 반환해야 한다. FE가 안 그리는 것과 BE가 버리는 것을 혼동하지 말 것.
+근거: `user-consent-agreement-section.tsx`. **개인 상세 = 등록과 동일 8항목**. 교사(비겸직) 상세만 **4항목**(서비스·개인정보·마케팅·초상권).  
+**등록은 교사도 5종 작성 가능** → 교사 상세에서 숨겨도 **원장은 유지**. 조회 API는 숨긴 항목의 `filledDocument`도 `memberId`로 반환해야 한다. FE가 안 그리는 것과 BE가 버리는 것을 혼동하지 말 것.
 
-상세에서 동의서 **재작성·보기**는 위 표에 ✓인 항목만 CMS가 연다. PATCH도 노출된 선택 항목만 보낸다. 개인·교사 상세에서 지급조서 본문을 지우는 요청은 하지 않음.
+상세에서 동의서 **재작성·보기**는 위 표에 ✓인 항목만 CMS가 연다. PATCH도 노출된 선택 항목만 보낸다. 교사 상세에서 지급조서 본문을 지우는 요청은 하지 않음.
 
 #### BE 요청 요약
 

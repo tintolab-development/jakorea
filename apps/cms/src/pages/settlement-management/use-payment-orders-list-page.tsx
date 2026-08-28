@@ -29,6 +29,10 @@ import {
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
 import {
+  PAYMENT_ORDER_PENDING_ITEM_BUCKET_LABELS,
+  PAYMENT_ORDER_PENDING_ITEM_BUCKETS,
+} from './payment-orders-pending-item-bucket'
+import {
   getPaymentOrdersDefaultDateRangeParams,
   isPaymentOrdersLegacyPlaceholderDateRange,
   isPaymentOrdersListDateRangeReady,
@@ -80,6 +84,11 @@ const PROCESSING_STATUS_FILTER_OPTIONS: {
 }[] = (
   Object.entries(PAYMENT_ORDER_STATUS_LABELS_LIST) as [PaymentOrderAdminProcessingStatus, string][]
 ).map(([value, label]) => ({ value, label }))
+
+const PENDING_ITEM_BUCKET_FILTER_OPTIONS = PAYMENT_ORDER_PENDING_ITEM_BUCKETS.map(value => ({
+  value,
+  label: PAYMENT_ORDER_PENDING_ITEM_BUCKET_LABELS[value],
+}))
 
 /** 풀페이지 상세 — `replace: false`로 열어 뒤로가기 시 목록 복귀 */
 const PO_DETAIL_TYPE = PAYMENT_ORDERS_DETAIL_TYPE_PARAM
@@ -170,7 +179,8 @@ export function usePaymentOrdersListPage() {
   )
   const remoteListQuery = usePaymentOrdersListQuery(
     searchParamsKey,
-    paymentOrdersRemote && listDateRangeReady
+    paymentOrdersRemote && listDateRangeReady,
+    viewMode
   )
 
   const calendarRange = useMemo(
@@ -199,12 +209,12 @@ export function usePaymentOrdersListPage() {
   }, [paymentOrdersRemote, remoteListQuery.data?.instructorRows])
 
   const listProgram = useMemo(
-    () => filterPaymentProgramRows(sourceProgramRows, appliedFromUrl),
-    [sourceProgramRows, appliedFromUrl]
+    () => filterPaymentProgramRows(sourceProgramRows, appliedFromUrl, viewMode),
+    [sourceProgramRows, appliedFromUrl, viewMode]
   )
   const listInstructor = useMemo(
-    () => filterPaymentInstructorRows(sourceInstructorRows, appliedFromUrl),
-    [sourceInstructorRows, appliedFromUrl]
+    () => filterPaymentInstructorRows(sourceInstructorRows, appliedFromUrl, viewMode),
+    [sourceInstructorRows, appliedFromUrl, viewMode]
   )
 
   const detailState = useMemo((): PaymentOrdersDetailState => {
@@ -216,10 +226,46 @@ export function usePaymentOrdersListPage() {
     if (keyRaw) {
       if (t === 'program') {
         const data = sourceProgramRows.find(r => r.aggregateKey === keyRaw)
-        return data != null ? { type: 'program' as const, data } : null
+        if (data != null) return { type: 'program' as const, data }
+        const programId = Number(keyRaw)
+        if (!Number.isFinite(programId)) return null
+        /** 목록에 아직 없거나 필터 밖이어도 deep-link로 상세 API를 칠 수 있게 stub */
+        return {
+          type: 'program' as const,
+          data: {
+            no: 0,
+            programId,
+            aggregateKey: keyRaw,
+            programName: `프로그램 ${programId}`,
+            instructorCount: 0,
+            processingStatus: 'pending',
+            estimatedAmount: 0,
+            referenceDate: searchParams.get('po_from') ?? dayjs().format('YYYY-MM-DD'),
+            settlementRelevantAttendanceDates: [],
+            pendingPaymentSettlementItemCount: 0,
+          },
+        }
       }
       const data = sourceInstructorRows.find(r => r.aggregateKey === keyRaw)
-      return data != null ? { type: 'instructor' as const, data } : null
+      if (data != null) return { type: 'instructor' as const, data }
+      const instructorMemberId = Number(keyRaw)
+      if (!Number.isFinite(instructorMemberId)) return null
+      return {
+        type: 'instructor' as const,
+        data: {
+          no: 0,
+          instructorMemberId,
+          aggregateKey: keyRaw,
+          instructorName: `신청자 ${instructorMemberId}`,
+          programCount: 0,
+          processingStatus: 'pending',
+          estimatedAmount: 0,
+          relatedProgramNames: [],
+          referenceDate: searchParams.get('po_from') ?? dayjs().format('YYYY-MM-DD'),
+          settlementRelevantAttendanceDates: [],
+          pendingPaymentSettlementItemCount: 0,
+        },
+      }
     }
 
     if (noRaw == null || noRaw === '') return null
@@ -488,10 +534,31 @@ export function usePaymentOrdersListPage() {
       : {
           key: 'instructorName',
           type: 'search',
-          label: '강사명',
-          placeholder: '강사명을 입력하세요',
+          label: '신청자명',
+          placeholder: '신청자명을 입력하세요',
           width: FILTER_CONTROL_MAX_WIDTH_PX,
         }
+
+    const statusOrBucketFilter: FilterFieldConfig =
+      viewMode === 'calendar'
+        ? {
+            key: 'processingStatus',
+            type: 'select',
+            label: '지급조서 처리 현황',
+            placeholder: '전체',
+            options: PROCESSING_STATUS_FILTER_OPTIONS,
+            allowClear: true,
+            width: FILTER_CONTROL_MAX_WIDTH_PX,
+          }
+        : {
+            key: 'pendingItemBucket',
+            type: 'select',
+            label: '지급 대기 정산 항목',
+            placeholder: '전체',
+            options: PENDING_ITEM_BUCKET_FILTER_OPTIONS,
+            allowClear: true,
+            width: FILTER_CONTROL_MAX_WIDTH_PX,
+          }
 
     return [
       {
@@ -504,15 +571,7 @@ export function usePaymentOrdersListPage() {
         ],
       },
       nameFilter,
-      {
-        key: 'processingStatus',
-        type: 'select',
-        label: '지급조서 처리 현황',
-        placeholder: '전체',
-        options: PROCESSING_STATUS_FILTER_OPTIONS,
-        allowClear: true,
-        width: FILTER_CONTROL_MAX_WIDTH_PX,
-      },
+      statusOrBucketFilter,
       {
         key: 'dateRange',
         type: 'dateRange',
@@ -521,7 +580,7 @@ export function usePaymentOrdersListPage() {
         width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
       },
     ]
-  }, [pendingIsProgram])
+  }, [pendingIsProgram, viewMode])
 
   const listTitle = isProgram ? '프로그램별 정산 목록' : '신청자별 정산 목록'
 

@@ -69,6 +69,13 @@ export function affiliationLine(user: Omit<User, 'password'>): string {
 }
 
 /** 소속 td — 문자 `|` 대신 TdDivider, gap 12px */
+/** 개인 회원 — 현재 학교 재학 여부 */
+export function individualSchoolEnrollmentStatusView(user: Omit<User, 'password'>): string {
+  if (user.schoolEnrollmentStatus === 'NOT_ENROLLED') return '해당 없음'
+  if (user.schoolEnrollmentStatus === 'ENROLLED') return '재학 중'
+  return '재학 중'
+}
+
 export function affiliationView(user: Omit<User, 'password'>): ReactNode {
   if (user.affiliation) {
     return pipeSeparatedInlineView(user.affiliation)

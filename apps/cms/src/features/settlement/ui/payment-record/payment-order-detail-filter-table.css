@@ -148,3 +148,8 @@
   .anticon {
   color: var(--color-text-disabled) !important;
 }
+
+.payment-order-detail-filter-table__amount--rejected {
+  text-decoration: line-through;
+  color: var(--color-text-secondary, #8c8c8c);
+}
