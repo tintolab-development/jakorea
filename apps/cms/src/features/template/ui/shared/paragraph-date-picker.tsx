@@ -141,6 +141,11 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
   presetDisplayText?: string
   /** 모달(포털) 열림·닫힘 — 테이블 행 포커스 등 상위 동기화용 */
   onOpenChange?: (open: boolean) => void
+  /**
+   * false면 푸터 「시간」 토글 숨김 (`timeOn` 고정 false).
+   * 기본 true — 다른 피커 동작 유지.
+   */
+  showTimeToggle?: boolean
 }
 
 export type ParagraphDatePickerProps =
@@ -179,6 +184,7 @@ interface ParagraphDatePickerSingleInnerProps {
   dualEndPlaceholder?: string
   presetDisplayText?: string
   onOpenChange?: (open: boolean) => void
+  showTimeToggle?: boolean
 }
 
 function ParagraphDatePickerSingleInner({
@@ -202,6 +208,7 @@ function ParagraphDatePickerSingleInner({
   dualEndPlaceholder = '마감 없음',
   presetDisplayText,
   onOpenChange,
+  showTimeToggle = true,
 }: ParagraphDatePickerSingleInnerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
@@ -230,6 +237,7 @@ function ParagraphDatePickerSingleInner({
   /** 마지막 [설정] 시 시간 토글이 켜져 있었는지 — 트리거에 날짜+시간 인풋 표시 */
   const [surfaceAppliedWithTime, setSurfaceAppliedWithTime] = useState(false)
   const [timeOn, setTimeOn] = useState(false)
+  const effectiveTimeOn = showTimeToggle ? timeOn : false
   const [invalidTimeRange, setInvalidTimeRange] = useState(false)
   const [singleHour, setSingleHour] = useState('12')
   const [singleMinute, setSingleMinute] = useState('0')
@@ -411,7 +419,7 @@ function ParagraphDatePickerSingleInner({
       const sDay = rangeStart.isBefore(rangeEnd, 'day') ? rangeStart : rangeEnd
       const eDay = rangeStart.isBefore(rangeEnd, 'day') ? rangeEnd : rangeStart
 
-      if (timeOn) {
+      if (effectiveTimeOn) {
         const start = buildTime(sDay, parseNum(startHour, 12), parseNum(startMinute, 0), startMer)
         const end = buildTime(eDay, parseNum(endHour, 12), parseNum(endMinute, 0), endMer)
         if (!end.isAfter(start)) {
@@ -431,7 +439,7 @@ function ParagraphDatePickerSingleInner({
         setSurfaceRange([s, e])
         setSurfaceAppliedWithTime(false)
       }
-    } else if (timeOn) {
+    } else if (effectiveTimeOn) {
       const applied = buildTime(
         draft,
         parseNum(singleHour, 12),
@@ -571,7 +579,7 @@ function ParagraphDatePickerSingleInner({
         disabled={disabled}
         disabledDate={disabledDate}
         isRangeCalendarMode={isRangeCalendarMode}
-        timeOn={timeOn}
+        timeOn={effectiveTimeOn}
         calendarMonth={calendarMonth}
         onCalendarMonthChange={setCalendarMonth}
         draft={draft}
@@ -627,6 +635,7 @@ function ParagraphDatePickerSingleInner({
         }}
         invalidTimeRange={invalidTimeRange}
         showPeriodToggle={showPeriodToggleInFooter}
+        showTimeToggle={showTimeToggle}
         periodOn={periodOn}
         onPeriodOnChange={next => {
           setPeriodOn(next)
@@ -641,7 +650,7 @@ function ParagraphDatePickerSingleInner({
           setRangeStart(d)
           setRangeEnd(nextEnd)
           setRangeFocus('start')
-          if (timeOn) {
+          if (effectiveTimeOn) {
             const t1 = dayjsTimeParts(d)
             const t2 = dayjsTimeParts(nextEnd)
             setStartHour(t1.h)
@@ -794,6 +803,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           dualEndPlaceholder={props.dualEndPlaceholder}
           presetDisplayText={props.presetDisplayText}
           onOpenChange={props.mode === 'single' ? props.onOpenChange : undefined}
+          showTimeToggle={props.mode === 'single' ? (props.showTimeToggle ?? true) : true}
         />
       )}
     </div>

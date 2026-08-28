@@ -246,6 +246,11 @@ export function renderProgramRegistrationParagraphBody(
           <ProgramRegistrationEducationScheduleSettingsParagraph
             educationScheduleMode={options.educationScheduleMode}
             onEducationScheduleModeChange={options.onEducationScheduleModeChange}
+            autoFillFromScheduleGroupTimes={
+              options.programType === 'schedule' &&
+              options.sessionRoundType === 'single' &&
+              !options.participant.organization
+            }
           />
         )
       }

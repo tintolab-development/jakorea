@@ -44,7 +44,10 @@ import type {
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
-import { resolveProgramRegistrationCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
+import {
+  resolveProgramRegistrationCurriculumEditDescription,
+  resolveProgramRegistrationScheduleCurriculumEditDescription,
+} from '@/features/template/lib/program-registration-curriculum-description'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
@@ -123,6 +126,20 @@ function createDefaultRegistrationEditorState(
     sponsorContactId: '',
     programTitleKo: '',
     activeParagraphId: null,
+  }
+}
+
+function patchEducationCurriculumParagraph(
+  draft: WritingFormDraft,
+  patch: { paragraphTitle?: string; paragraphDescription: string }
+): WritingFormDraft {
+  return {
+    ...draft,
+    paragraphs: draft.paragraphs.map(p => {
+      if (p.id !== PROGRAM_REGISTRATION_IDS.educationCurriculum) return p
+      if (p.kind !== 'single_item' || p.variant !== 'horizontal_table') return p
+      return { ...(p as HorizontalTableParagraph), ...patch }
+    }),
   }
 }
 
@@ -332,6 +349,12 @@ export function useProgramRegistrationEditor(
     educationScheduleMode,
   ])
 
+  useEffect(() => {
+    if (programType === 'schedule' && sessionRoundType === 'single') {
+      setScheduleCurriculumPreEducation(false)
+    }
+  }, [programType, sessionRoundType])
+
   const applyEditorStateSnapshot = useCallback((state: ProgramRegistrationEditorState) => {
     setParticipant(state.participant)
     setProgramType(state.programType)
@@ -343,7 +366,11 @@ export function useProgramRegistrationEditor(
     setCurriculumChartSessionCount(state.curriculumChartSessionCount)
     setScheduleCurriculumDetailCount(state.scheduleCurriculumDetailCount)
     setScheduleCurriculumGroupCount(state.scheduleCurriculumGroupCount)
-    setScheduleCurriculumPreEducation(state.scheduleCurriculumPreEducation)
+    setScheduleCurriculumPreEducation(
+      state.programType === 'schedule' && state.sessionRoundType === 'single'
+        ? false
+        : state.scheduleCurriculumPreEducation
+    )
     setTrainedTeachersTeacherTrainingEnabled(state.trainedTeachersTeacherTrainingEnabled)
     setEducationScheduleMode(state.educationScheduleMode)
     // editorState에 없고 overlay에만 남은 후원사(이전 이중 저장·number id 등)를 보강
@@ -505,25 +532,81 @@ export function useProgramRegistrationEditor(
     setSingleItemListActiveItemId(null)
   }, [])
 
-  const onIndividualChange = useCallback((checked: boolean) => {
-    setParticipant(prev => {
+  const onIndividualChange = useCallback(
+    (checked: boolean) => {
       const next = applyGeneralParticipantAudienceSelection('individual', checked)
+      const nextParticipation = shouldResetParticipationScheduleDetailForAudience(next)
+        ? 'common'
+        : participationScheduleDetail
       if (shouldResetParticipationScheduleDetailForAudience(next)) {
         setParticipationScheduleDetail('common')
       }
-      return { ...prev, individual: next.individual, organization: next.organization }
-    })
-  }, [])
+      setParticipant(prev => ({
+        ...prev,
+        individual: next.individual,
+        organization: next.organization,
+      }))
+      if (programRegistrationFormVariant === 'general' && programType === 'schedule') {
+        setDraft(prev =>
+          patchEducationCurriculumParagraph(prev, {
+            paragraphDescription: resolveProgramRegistrationScheduleCurriculumEditDescription({
+              sessionRoundType,
+              participantOrganization: next.organization,
+              educationFormScheduleDetail,
+              participationScheduleDetail: nextParticipation,
+              ipsScheduleDetail,
+            }),
+          })
+        )
+      }
+    },
+    [
+      educationFormScheduleDetail,
+      ipsScheduleDetail,
+      participationScheduleDetail,
+      programRegistrationFormVariant,
+      programType,
+      sessionRoundType,
+    ]
+  )
 
-  const onOrganizationChange = useCallback((checked: boolean) => {
-    setParticipant(prev => {
+  const onOrganizationChange = useCallback(
+    (checked: boolean) => {
       const next = applyGeneralParticipantAudienceSelection('organization', checked)
+      const nextParticipation = shouldResetParticipationScheduleDetailForAudience(next)
+        ? 'common'
+        : participationScheduleDetail
       if (shouldResetParticipationScheduleDetailForAudience(next)) {
         setParticipationScheduleDetail('common')
       }
-      return { ...prev, individual: next.individual, organization: next.organization }
-    })
-  }, [])
+      setParticipant(prev => ({
+        ...prev,
+        individual: next.individual,
+        organization: next.organization,
+      }))
+      if (programRegistrationFormVariant === 'general' && programType === 'schedule') {
+        setDraft(prev =>
+          patchEducationCurriculumParagraph(prev, {
+            paragraphDescription: resolveProgramRegistrationScheduleCurriculumEditDescription({
+              sessionRoundType,
+              participantOrganization: next.organization,
+              educationFormScheduleDetail,
+              participationScheduleDetail: nextParticipation,
+              ipsScheduleDetail,
+            }),
+          })
+        )
+      }
+    },
+    [
+      educationFormScheduleDetail,
+      ipsScheduleDetail,
+      participationScheduleDetail,
+      programRegistrationFormVariant,
+      programType,
+      sessionRoundType,
+    ]
+  )
 
   const onTeacherInstructorChange = useCallback((checked: boolean) => {
     setParticipant(prev => ({ ...prev, teacherInstructor: checked }))
@@ -540,21 +623,30 @@ export function useProgramRegistrationEditor(
       if (value === 'single') setCurriculumChartSessionCount(1)
 
       if (programRegistrationFormVariant !== 'general') return
-      setDraft(prev => ({
-        ...prev,
-        paragraphs: prev.paragraphs.map(p => {
-          if (p.id !== PROGRAM_REGISTRATION_IDS.educationCurriculum) return p
-          if (p.kind !== 'single_item' || p.variant !== 'horizontal_table') return p
-          const ht = p as HorizontalTableParagraph
-          if (programType === 'schedule') return p
-          return {
-            ...ht,
-            paragraphDescription: resolveProgramRegistrationCurriculumEditDescription(value),
-          }
-        }),
-      }))
+      setDraft(prev =>
+        patchEducationCurriculumParagraph(prev, {
+          paragraphDescription:
+            programType === 'schedule'
+              ? resolveProgramRegistrationScheduleCurriculumEditDescription({
+                  sessionRoundType: value,
+                  participantOrganization: participant.organization,
+                  educationFormScheduleDetail,
+                  participationScheduleDetail,
+                  ipsScheduleDetail,
+                })
+              : resolveProgramRegistrationCurriculumEditDescription(value),
+        })
+      )
     },
-    [programRegistrationFormVariant, programType, restrictCurriculumSessionStructure]
+    [
+      educationFormScheduleDetail,
+      ipsScheduleDetail,
+      participant.organization,
+      participationScheduleDetail,
+      programRegistrationFormVariant,
+      programType,
+      restrictCurriculumSessionStructure,
+    ]
   )
 
   const onEducationFormScheduleDetailChange = useCallback(
@@ -618,31 +710,33 @@ export function useProgramRegistrationEditor(
     (next: ProgramRegistrationType) => {
       if (programRegistrationFormVariant !== 'general' && next !== 'curriculum') return
       setProgramType(next)
-      setDraft(prev => ({
-        ...prev,
-        paragraphs: prev.paragraphs.map(p => {
-          if (p.id !== PROGRAM_REGISTRATION_IDS.educationCurriculum) return p
-          if (p.kind !== 'single_item' || p.variant !== 'horizontal_table') return p
-          const ht = p as HorizontalTableParagraph
-          if (next === 'schedule') {
-            return {
-              ...ht,
-              paragraphTitle: '교육 진행 (일정형)',
-              paragraphDescription: '',
-            }
-          }
-          return {
-            ...ht,
-            paragraphTitle: '교육 진행 (커리큘럼)',
-            paragraphDescription:
-              programRegistrationFormVariant === 'general'
+      setDraft(prev =>
+        patchEducationCurriculumParagraph(prev, {
+          paragraphTitle:
+            next === 'schedule' ? '교육 진행 (일정형)' : '교육 진행 (커리큘럼)',
+          paragraphDescription:
+            next === 'schedule'
+              ? resolveProgramRegistrationScheduleCurriculumEditDescription({
+                  sessionRoundType,
+                  participantOrganization: participant.organization,
+                  educationFormScheduleDetail,
+                  participationScheduleDetail,
+                  ipsScheduleDetail,
+                })
+              : programRegistrationFormVariant === 'general'
                 ? resolveProgramRegistrationCurriculumEditDescription(sessionRoundType)
                 : '',
-          }
-        }),
-      }))
+        })
+      )
     },
-    [programRegistrationFormVariant]
+    [
+      educationFormScheduleDetail,
+      ipsScheduleDetail,
+      participant.organization,
+      participationScheduleDetail,
+      programRegistrationFormVariant,
+      sessionRoundType,
+    ]
   )
 
   const onAddScheduleCurriculumDetail = useCallback(() => {
@@ -663,9 +757,16 @@ export function useProgramRegistrationEditor(
     setScheduleCurriculumGroupCount(c => Math.max(1, c - 1))
   }, [])
 
-  const onScheduleCurriculumPreEducationChange = useCallback((checked: boolean) => {
-    setScheduleCurriculumPreEducation(checked)
-  }, [])
+  const onScheduleCurriculumPreEducationChange = useCallback(
+    (checked: boolean) => {
+      if (programType === 'schedule' && sessionRoundType === 'single') {
+        setScheduleCurriculumPreEducation(false)
+        return
+      }
+      setScheduleCurriculumPreEducation(checked)
+    },
+    [programType, sessionRoundType]
+  )
 
   const onTrainedTeachersTeacherTrainingEnabledChange = useCallback((checked: boolean) => {
     setTrainedTeachersTeacherTrainingEnabled(checked)
