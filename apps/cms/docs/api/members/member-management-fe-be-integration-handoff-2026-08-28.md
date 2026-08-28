@@ -27,23 +27,33 @@
 
 ---
 
-## 2. local BE smoke (§7) — 2026-08-28 실행
+## 2. local BE smoke (§7) — 2026-08-28 재실행 (seed 적재 후)
 
 ```bash
 pnpm --filter cms smoke:member-management-be
 # 또는: node apps/cms/scripts/member-management-be-smoke.mjs --base=http://localhost:8080
 ```
 
-**전제:** `SPRING_PROFILES_ACTIVE=local` + `JA_LOCAL_DEMO_ENABLED=true` + BE 3 contributor bootRun.
+**전제:** `SPRING_PROFILES_ACTIVE=local` + `JA_LOCAL_DEMO_ENABLED=true` + BE 3 contributor bootRun · `localhost:8080` UP.
 
 | # | 항목 | 결과 | 비고 |
 |---|------|------|------|
-| 11–15, 19 | Permission (IR/AA list·detail·roles) | ✅ **7/7 pass** | 172001 profile, 172007 제외, 172231 제외 |
-| 1–2 | Directory list (members/all, schools) | ❌ | keyword `김개인` 0건; schools 171501 없음 (1696xxx legacy) |
-| 4–10 | Detail history (applications, enrollment, program-roles) | ❌ | 171001 applications 0건; 171501/171601 NOT_FOUND |
+| 1–3 | Directory (members/all · schools · bulk-delete) | ✅ | 171001 · 171501 teachers=3 · delete blocked |
+| 4–10 | Detail history | ✅ | applications / program-history / enrollment / program-roles / settlements |
+| 11–15, 19 | Permission | ✅ | 172001∈ · 172007∉ · 172231∉ · roles |
 
-**해석:** 현재 연결된 local BE에는 **permission contributor만** handoff id대로 동작.  
-`LocalDemoMemberManagementSeedContributor` · `LocalDemoMemberDetailHistorySeedContributor` fixture는 **미적재 또는 id 불일치** — BE 재기동·Flyway 확인 필요.
+**결과: ✅ 16/16 passed** (2026-08-28 재연동)
+
+### BE 실계약 메모 (smoke 반영)
+
+| 항목 | handoff 기대 | 실제 local BE (GAP fix 후) | FE smoke |
+|------|--------------|---------------------------|----------|
+| schools bulk-delete 171501 | HTTP **409** | **409** + `SCHOOL_HAS_BUSINESS_HISTORY` | ✅ 409 단정 |
+| `users/171002/applications` | total **5** INDIVIDUAL `173011–015` | total **5** · ORGANIZATION 없음 | ✅ 엄격 단정 |
+| schools 171501 teachers | 3 | `affiliatedTeacherCount=3` | ✅ |
+| school enrollment 171501 | 5 (`174001–174005`) | 회원 API와 분리 · history API 유지 | ✅ |
+
+> **2026-08-28 GAP-A/B:** BE applications UNION 제거 · bulk-delete 409 확정. FE smoke §7-3/§7-6 엄격 복원 → **16/16**.
 
 ---
 
@@ -72,24 +82,21 @@ pnpm --filter cms smoke:member-management-be
 | 1 | `.env.local` — `VITE_REAL_API_MODULES=...,members,instructorRoleRequests,adminApprovalRequests,adminPermissions` | ✅ example 반영 |
 | 2 | Catalog ↔ spec JSON parity test | ✅ |
 | 3 | Permission smoke (§7-11~15, 19) | ✅ local BE |
-| 4 | Directory + detail history smoke (§7-1~10) | ⏳ BE seed 적재 후 재실행 |
+| 4 | Directory + detail history smoke (§7-1~10) | ✅ **16/16** (2026-08-28 seed 재적재 후) |
 | 5 | UI: 강사 승인 list 서버 마스킹 (이중 마스킹 없음) | ✅ (기존 PR) |
 | 6 | UI: memberProfile별 LNB 탭 (`memberTypeTabs` SSOT) | ✅ strategy |
 | 7 | Mutation bulk/reset/resend `{ reason }` | ✅ |
 
 ---
 
-## 5. BE 회신 요청 (directory·이력 gap)
+## 5. BE GAP-A/B 재검증 (2026-08-28)
 
-local smoke 실패 항목 — BE 확인 요청:
+| GAP | BE 조치 | FE 결과 |
+|-----|---------|---------|
+| **A** 171002 ORGANIZATION 혼입 | applications에서 school enrollment UNION 제거 | ✅ total=5 · 173011–015 · INDIVIDUAL only |
+| **B** bulk-delete 계약 | 단건 차단 → HTTP **409** | ✅ `SCHOOL_HAS_BUSINESS_HISTORY` |
 
-1. **`GET /api/admin/members/all?keyword=김개인`** → `memberId=171001` row 없음
-2. **`GET /api/admin/organizations/schools?keyword=서울`** → `organizationId=171501` 없음 (1696xxx만 존재)
-3. **`GET /api/admin/users/171001/applications`** → empty (detail history contributor)
-4. **`GET /api/admin/organizations/schools/171501/program-enrollment-history`** → `SCHOOL_ORGANIZATION_NOT_FOUND`
-5. **`GET /api/admin/admin-accounts/171601/program-roles`** → `ADMIN_ACCOUNT_NOT_FOUND`
-
-**기대:** 3 contributor idempotent upsert 후 §7-1~10 전부 pass.
+`pnpm --filter cms smoke:member-management-be` → **16/16** (§7-3/§7-6 엄격 단정).
 
 ---
 
