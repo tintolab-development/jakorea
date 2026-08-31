@@ -1,8 +1,11 @@
 import {
   AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID,
+  isIdTypeResidentOptionId,
+  joinIdTypeResidentInputValue,
+  splitIdTypeResidentInputValue,
   type IdTypeWithInputParagraph,
 } from '@jakorea/form-schema/writing-form'
-import { PFText, PFTextInput } from '@/shared/ui'
+import { PFFormResidentNumberInput, PFText, PFTextInput } from '@/shared/ui'
 import styles from './consent-form.module.css'
 
 const INPUT_PLACEHOLDER_BY_OPTION_ID: Record<string, string> = {
@@ -16,7 +19,7 @@ function placeholderForOption(optionId: string, fallback: string): string {
   return INPUT_PLACEHOLDER_BY_OPTION_ID[optionId] ?? fallback
 }
 
-/** CMS `IdTypeWithInputBody`와 동일 — 식별번호 유형(라디오) + 단일 텍스트 입력 */
+/** CMS `IdTypeWithInputBody`와 동일 — 주민등록번호는 앞·뒤 2칸 */
 export function PlatformIdTypeWithInputFields({
   paragraph,
   onChange,
@@ -33,6 +36,8 @@ export function PlatformIdTypeWithInputFields({
     : paragraph.selectedOptionId != null && options.some(o => o.id === paragraph.selectedOptionId)
       ? paragraph.selectedOptionId
       : (options[0]?.id ?? '')
+  const isResident = isIdTypeResidentOptionId(selectedId)
+  const residentParts = splitIdTypeResidentInputValue(paragraph.inputValue)
 
   const placeholder =
     selectedId !== ''
@@ -41,6 +46,17 @@ export function PlatformIdTypeWithInputFields({
           paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요'
         )
       : paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요'
+
+  const patchInputValue = (inputValue: string) => {
+    onChange({
+      ...paragraph,
+      selectedOptionId: lockResidentIdType
+        ? AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID
+        : paragraph.selectedOptionId,
+      inputValue,
+      inputPlaceholder: placeholder,
+    })
+  }
 
   return (
     <div className={styles.idTypeWithInput}>
@@ -76,23 +92,29 @@ export function PlatformIdTypeWithInputFields({
           </label>
         ))}
       </div>
-      <PFTextInput
-        variant="formPage"
-        size="large"
-        className={styles.idTypeWithInputInput}
-        placeholder={placeholder}
-        value={paragraph.inputValue}
-        onValueChange={value =>
-          onChange({
-            ...paragraph,
-            selectedOptionId: lockResidentIdType
-              ? AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID
-              : paragraph.selectedOptionId,
-            inputValue: value,
-            inputPlaceholder: placeholder,
-          })
-        }
-      />
+      {isResident ? (
+        <div className={styles.idTypeWithInputResident}>
+          <PFFormResidentNumberInput
+            frontValue={residentParts.front}
+            backValue={residentParts.back}
+            onFrontChange={value =>
+              patchInputValue(joinIdTypeResidentInputValue(value, residentParts.back))
+            }
+            onBackChange={value =>
+              patchInputValue(joinIdTypeResidentInputValue(residentParts.front, value))
+            }
+          />
+        </div>
+      ) : (
+        <PFTextInput
+          variant="formPage"
+          size="large"
+          className={styles.idTypeWithInputInput}
+          placeholder={placeholder}
+          value={paragraph.inputValue}
+          onValueChange={patchInputValue}
+        />
+      )}
     </div>
   )
 }

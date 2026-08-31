@@ -1,8 +1,9 @@
 import {
   buildPlatformConsentFillOptions,
   createConsentTemplateSeedDraft,
+  getMemberConsentInvalidNoticeSubjectContactAlertMessage,
   hasMemberConsentIncompleteRequiredFields,
-  hasMemberConsentInvalidPaymentStatementResidentNumber,
+  hasMemberConsentInvalidResidentNumberFormat,
   isCrimeConsentTemplate,
   normalizeMemberConsentWriteDraft,
   PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE,
@@ -105,8 +106,14 @@ export function SchemaConsentWriteForm({
       setAlertOpen(true)
       return
     }
+    const contactFormatMessage = getMemberConsentInvalidNoticeSubjectContactAlertMessage(state.draft)
+    if (contactFormatMessage != null) {
+      setAlertMessage(contactFormatMessage)
+      setAlertOpen(true)
+      return
+    }
     if (
-      hasMemberConsentInvalidPaymentStatementResidentNumber({
+      hasMemberConsentInvalidResidentNumberFormat(state.draft, {
         templateId,
         paymentStatementBasicInfo: state.paymentBasicInfo,
       })
