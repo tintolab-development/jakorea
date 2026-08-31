@@ -1,10 +1,15 @@
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
 import type { PermissionHeaderActionsProps } from './user-detail-fullpage-header-actions'
 
-type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'REVOKED'
 
-function normalizeApprovalStatus(status: string | undefined): ApprovalStatus {
+function normalizeApprovalStatus(
+  status: string | undefined,
+  isRevoked: boolean
+): ApprovalStatus {
+  if (isRevoked) return 'REVOKED'
   const raw = status?.trim()
   if (!raw) return 'PENDING'
   const upper = raw.toUpperCase()
@@ -27,7 +32,10 @@ export function PermissionHeaderActions({
     return null
   }
 
-  const approvalStatus = normalizeApprovalStatus(displayUser.permissionApprovalStatus)
+  const approvalStatus = normalizeApprovalStatus(
+    displayUser.permissionApprovalStatus,
+    permissionRole === 'instructor' && isInstructorPermissionRevoked(displayUser)
+  )
 
   return (
     <div className="info-section-buttons--wrapper">
