@@ -1,4 +1,3 @@
-import { useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { shouldUseRemoteApi } from './capabilities'
@@ -43,24 +42,6 @@ export function useProgramDetail(
     staleTime: dataScope === 'remote' ? 30_000 : Infinity,
     retry: shouldRetryQuery,
   })
-}
-
-export function usePrefetchProgramDetail() {
-  const queryClient = useQueryClient()
-  const dataScope = scope()
-
-  return useCallback(
-    (programId: string) => {
-      if (!programId || dataScope !== 'remote') return
-      void queryClient.prefetchQuery({
-        queryKey: queryKeys.detail(dataScope, programId),
-        queryFn: () => detail(programId),
-        staleTime: 30_000,
-        retry: shouldRetryQuery,
-      })
-    },
-    [queryClient, dataScope]
-  )
 }
 
 export function useCreateProgram() {

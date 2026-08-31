@@ -1,4 +1,3 @@
-import { useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
@@ -45,24 +44,6 @@ export function useTrainedTeacherProgramDetail(
     staleTime: 30_000,
     retry: shouldRetryTrainedTeacherQuery,
   })
-}
-
-export function usePrefetchTrainedTeacherProgramDetail() {
-  const queryClient = useQueryClient()
-  const remoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi()
-
-  return useCallback(
-    (programId: string) => {
-      if (!remoteEnabled || !programId) return
-      void queryClient.prefetchQuery({
-        queryKey: trainedTeacherQueryKeys.detail(programId),
-        queryFn: () => getTrainedTeacherProgram(programId),
-        staleTime: 30_000,
-        retry: shouldRetryTrainedTeacherQuery,
-      })
-    },
-    [queryClient, remoteEnabled]
-  )
 }
 
 export function useCreateTrainedTeacherProgram() {

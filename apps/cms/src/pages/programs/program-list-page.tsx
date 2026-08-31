@@ -59,7 +59,6 @@ import {
   useCompanySchoolProgramDetail,
   useCompanySchoolPrograms,
   useDeleteCompanySchoolPrograms,
-  usePrefetchCompanySchoolProgramDetail,
   useUpdateCompanySchoolProgram,
 } from '@/features/program/1c-1s/api/hooks'
 import { companySchoolListParamsFromOverviewStatus } from '@/features/program/1c-1s/api/list-params'
@@ -108,7 +107,6 @@ function ProgramListPageContent() {
     companySchoolListFilters,
     isCompanySchoolPath
   )
-  const prefetchCompanySchoolProgramDetail = usePrefetchCompanySchoolProgramDetail()
   const companySchoolProgramSource = isCompanySchoolPath
     ? (companySchoolListQuery.data ?? [])
     : programs
@@ -629,11 +627,6 @@ function ProgramListPageContent() {
         loading={isCompanySchoolPath ? companySchoolListQuery.isFetching : loading}
         headerTitle={headerTitle}
         onView={handleView}
-        onPrefetch={
-          isCompanySchoolPath
-            ? program => prefetchCompanySchoolProgramDetail(program.id)
-            : undefined
-        }
         onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
         selectedRowKeys={isScheduledFilter ? selectedRowKeys : undefined}
         showRowSelection={isScheduledFilter}
