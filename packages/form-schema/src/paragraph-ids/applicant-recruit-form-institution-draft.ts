@@ -46,7 +46,7 @@ export function createApplicantRecruitFormInstitutionDraft(): WritingFormDraft {
   const paragraphs: WritingFormParagraph[] = [
     createSeedHorizontalTable(
       APPLICANT_RECRUIT_FORM_INSTITUTION_IDS.participantRecruitInfo,
-      '참여자 모집 정보',
+      '참여 기관 모집 정보',
       '설명 입력'
     ),
     createSeedHorizontalTable(
