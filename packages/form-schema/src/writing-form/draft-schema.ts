@@ -2419,6 +2419,12 @@ export const AGREEMENT_NOTICE_PARAGRAPH_IDS = {
   systemSignature: 'agreement-notice-system-signature',
 } as const
 
+export const AGREEMENT_NOTICE_SUBJECT_ITEM_IDS = {
+  name: 'agreement-notice-subj-name',
+  birth: 'agreement-notice-subj-birth',
+  phone: 'agreement-notice-subj-phone',
+} as const
+
 /** 템플릿 고정 단락 — 삭제·복제·순서 변경 불가 */
 export const AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS = new Set<string>([
   AGREEMENT_NOTICE_PARAGRAPH_IDS.title,
@@ -2588,21 +2594,21 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         itemInputRows: 1,
         items: [
           {
-            id: 'agreement-notice-subj-name',
+            id: AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name,
             label: '성명',
             placeholder: '성명을 입력해 주세요',
             bodyText: '',
           },
           {
-            id: 'agreement-notice-subj-birth',
+            id: AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth,
             label: '생년월일',
-            placeholder: '생년월일 8자리를 입력해 주세요',
+            placeholder: '1991.01.01',
             bodyText: '',
           },
           {
-            id: 'agreement-notice-subj-phone',
+            id: AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone,
             label: '전화번호',
-            placeholder: '전화번호를 입력해 주세요',
+            placeholder: '010-1234-5678',
             bodyText: '',
           },
         ],

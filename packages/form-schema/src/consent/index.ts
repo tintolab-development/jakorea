@@ -1,6 +1,7 @@
 export * from './consent-template-map.js'
 export * from './member-consent-validation.js'
 export * from './normalize-member-consent-write-draft.js'
+export * from './notice-subject-contact.js'
 export * from './payment-statement-basic-info.js'
 export * from './payment-statement-resident-number.js'
 export * from './portrait-consent-cell.js'
