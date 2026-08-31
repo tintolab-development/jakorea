@@ -139,6 +139,10 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     'economyRegistration.basicInfo.detailedProgramId',
     DETAILED_PROGRAM_MAIN_VALUE
   )
+  const [publicProgramTitle, setPublicProgramTitle] = useProgramRegistrationOverlayKv(
+    'economyRegistration.basicInfo.publicProgramTitle',
+    REP_KO
+  )
 
   const [surveyItems] = useProgramRegistrationOverlayKv<
     Record<ProgramRegistrationSurveyItemId, boolean>
@@ -234,6 +238,8 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 inputSize="medium"
                 placeholder="모집 시 노출될 프로그램명을 입력하세요"
                 width="100%"
+                value={publicProgramTitle}
+                onChange={e => setPublicProgramTitle(e.target.value)}
               />
             }
             view="-"

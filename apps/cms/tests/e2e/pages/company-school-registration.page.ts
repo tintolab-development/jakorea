@@ -170,22 +170,9 @@ export class CompanySchoolRegistrationPage {
     await fillAllByPlaceholder(this.page, '교육 내용을 작성하세요', CURRICULUM_CONTENT)
 
     await clickSectionNavIfVisible(this.page, '교육 진행 일정 설정')
-    await checkRadioIfVisible(this.page, '날짜 지정')
     await fillParagraphDateByPlaceholder(
       this.page,
-      '일정을 선택하세요',
-      'single',
-      OPERATION_DATE_OPTS
-    )
-    await fillParagraphDateByPlaceholder(
-      this.page,
-      '날짜를 선택하세요',
-      'single',
-      OPERATION_DATE_OPTS
-    )
-    await fillParagraphDateByPlaceholder(
-      this.page,
-      '기간을 선택하세요',
+      '진행 기간을 선택하세요',
       'range',
       OPERATION_DATE_OPTS
     )
