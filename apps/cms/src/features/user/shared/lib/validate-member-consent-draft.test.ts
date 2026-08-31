@@ -13,6 +13,7 @@ import { normalizeMemberConsentWriteDraft } from '@/features/user/shared/lib/nor
 import {
   collectMemberConsentDisagreedRequiredLabels,
   hasMemberConsentIncompleteRequiredFields,
+  hasMemberConsentInvalidPaymentStatementResidentNumber,
 } from '@/features/user/shared/lib/validate-member-consent-draft'
 
 function withPersonalConsentCells(
@@ -229,5 +230,25 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-notice' })
     ).toBe(false)
+  })
+})
+
+describe('hasMemberConsentInvalidPaymentStatementResidentNumber', () => {
+  it('is false for non-payment-statement templates', () => {
+    expect(
+      hasMemberConsentInvalidPaymentStatementResidentNumber({
+        templateId: 'agreement-portrait',
+        paymentStatementBasicInfo: { residentFront: '123', residentBack: '1234567' },
+      })
+    ).toBe(false)
+  })
+
+  it('is true when payment-statement resident number format is invalid', () => {
+    expect(
+      hasMemberConsentInvalidPaymentStatementResidentNumber({
+        templateId: 'agreement-third-party',
+        paymentStatementBasicInfo: { residentFront: '991332', residentBack: '1234567' },
+      })
+    ).toBe(true)
   })
 })

@@ -638,6 +638,7 @@ export function UserConsentAgreementSection({
           open
           templateId={activeWrite.entry.templateId}
           modalTitle={activeWrite.entry.modalTitle}
+          memberName={memberUser?.name}
           savedSnapshot={consentWriteSnapshots?.agreementByFieldKey[activeWrite.entry.fieldKey]}
           onSnapshotSave={snapshot => onConsentAgreementSnapshotSave?.(activeWrite.label, snapshot)}
           onClose={closeWrite}

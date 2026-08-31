@@ -275,6 +275,7 @@ export function AddUserIndividual({
   const [activeConsentField, setActiveConsentField] = useState<MemberConsentFieldKey | null>(null)
   const allValues = Form.useWatch([], form) as AddUserIndividualFormValues | undefined
   const address = Form.useWatch('address', form) ?? ''
+  const memberName = Form.useWatch('name', form) ?? ''
   const schoolName = Form.useWatch('schoolName', form) ?? ''
   const affiliationNone = Form.useWatch('affiliationNone', form) === true
   const schoolEnrollmentStatus =
@@ -815,6 +816,7 @@ export function AddUserIndividual({
           open
           templateId={activeConsentEntry.templateId}
           modalTitle={activeConsentEntry.modalTitle}
+          memberName={memberName}
           savedSnapshot={consentWriteSnapshots.agreementByFieldKey[activeConsentField]}
           onSnapshotSave={snapshot =>
             onSaveConsentAgreementSnapshot?.(activeConsentField, snapshot)

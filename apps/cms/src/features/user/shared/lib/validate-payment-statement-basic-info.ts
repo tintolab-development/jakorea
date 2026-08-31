@@ -1,1 +1,5 @@
-export { isPaymentStatementBasicInfoIncomplete } from '@jakorea/form-schema/consent'
+export {
+  isPaymentStatementBasicInfoIncomplete,
+  isPaymentStatementResidentNumberFormatInvalid,
+  isValidPaymentStatementResidentNumberParts,
+} from '@jakorea/form-schema/consent'

@@ -1,6 +1,6 @@
 import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import crimeConsentDefaultImage from '@/assets/images/template/성범좌 경력 조회.png'
 import {
   AGREEMENT_CRIME_TEMPLATE_CODE,
@@ -14,7 +14,6 @@ import {
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
-import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import { TemplatePreviewModal } from '@/features/template/ui/modal/template-preview-modal'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
 import { useConsentFilledDocumentMutation } from '@/features/user/api/hooks/use-consent-filled-document-mutation'
@@ -26,6 +25,10 @@ import {
   shouldFetchSubmittedConsentDocument,
   type MemberConsentAgreeOnlyPreviewResult,
 } from '@/features/user/shared/lib/build-member-consent-agree-only-preview-draft'
+import {
+  MEMBER_CONSENT_VIEW_AUTO_PRIVACY_REASON,
+  memberConsentViewRequiresPrivacyReveal,
+} from '@/features/user/shared/lib/member-consent-view-privacy'
 import type { FilledDocumentResponse } from '@/shared/api/generated/members/schemas/filledDocumentResponse'
 import type { PaymentStatementBasicInfo } from '@/shared/api/generated/members/schemas/paymentStatementBasicInfo'
 import { PAYMENT_STATEMENT_DEFAULT_PURPOSE } from '@jakorea/form-schema/consent'
@@ -236,6 +239,7 @@ function MemberConsentAgreementDocumentView({
   isSyntheticPreview,
   isLoading,
   loadFailed,
+  memberUser,
   onClose,
 }: {
   open: boolean
@@ -246,6 +250,7 @@ function MemberConsentAgreementDocumentView({
   isSyntheticPreview: boolean
   isLoading: boolean
   loadFailed: boolean
+  memberUser?: Omit<User, 'password'>
   onClose: () => void
 }) {
   const agreementConfig = useMemo(() => resolveAgreementWritingFormConfig(templateId), [templateId])
@@ -259,13 +264,18 @@ function MemberConsentAgreementDocumentView({
   )
 
   const paymentValues = isSyntheticPreview ? synthetic?.paymentBasicInfo : submittedPayment
-  const participantName = isSyntheticPreview ? synthetic?.participantName : undefined
+  const participantName =
+    (isSyntheticPreview ? synthetic?.participantName : undefined)?.trim() ||
+    memberUser?.name?.trim() ||
+    undefined
 
   const paragraphBodyOptions = useMemo(() => {
     const base = agreementConfig?.paragraphBodyOptions
     return {
       ...(base ?? {}),
       paragraphInteractionMode: 'preview' as const,
+      paymentStatementDisplayMode: 'document' as const,
+      /** A4 보기: 대리작성 카드(shadow) 대신 날짜·서명 플랫 스택 — FormDocumentPreviewBody contentOnly에서도 처리 */
       ...(paymentValues != null ? { paymentStatementBasicInfoValues: paymentValues } : {}),
       ...(participantName != null && participantName !== ''
         ? { agreementSystemParticipantName: participantName }
@@ -289,145 +299,73 @@ function MemberConsentAgreementDocumentView({
     ? SUBMITTED_CONSENT_LOAD_FAILED_MESSAGE
     : NO_SUBMITTED_CONSENT_MESSAGE
 
-  /** 동의-only — TemplatePreviewModal A4 문서 미리보기(스크린샷과 동일 셸) */
-  if (isSyntheticPreview) {
-    if (isLoading) {
-      return (
-        <TealHeaderModal
-          open={open}
-          onCancel={onClose}
-          title=""
-          size="full"
-          hideHeader
-          zIndex={MEMBER_CONSENT_VIEW_MODAL_Z_INDEX}
-          className="full-page-modal member-consent-agreement-modal member-consent-document-view-modal"
-        >
-          <div className="member-consent-agreement-modal__loading">
-            <Spin tip="동의서를 불러오는 중입니다." />
-          </div>
-        </TealHeaderModal>
-      )
-    }
-    if (showEmpty || displayDraft == null) {
-      return (
-        <TealHeaderModal
-          open={open}
-          onCancel={onClose}
-          title=""
-          size="full"
-          hideHeader
-          zIndex={MEMBER_CONSENT_VIEW_MODAL_Z_INDEX}
-          className="full-page-modal member-consent-agreement-modal member-consent-document-view-modal"
-        >
-          <div className="full-page-modal__layout">
-            <header className="full-page-modal__topbar member-consent-agreement-modal__topbar">
-              <div className="full-page-modal__title member-consent-agreement-modal__title-wrap">
-                <span className="full-page-modal__title-text">{modalTitle}</span>
-              </div>
-              <button
-                type="button"
-                className="full-page-modal__close"
-                onClick={onClose}
-                aria-label="닫기"
-              >
-                <CloseOutlined />
-              </button>
-            </header>
-            <div className="full-page-modal__body">
-              <p className="member-consent-agreement-modal__error">{emptyMessage}</p>
-            </div>
-          </div>
-        </TealHeaderModal>
-      )
-    }
-
+  if (isLoading) {
     return (
-      <TemplatePreviewModal
+      <TealHeaderModal
         open={open}
-        onClose={onClose}
-        headerTitle={modalTitle}
-        draft={displayDraft}
-        updateParagraph={() => {}}
-        editorKind="agreement"
+        onCancel={onClose}
+        title=""
+        size="full"
+        hideHeader
         zIndex={MEMBER_CONSENT_VIEW_MODAL_Z_INDEX}
-        previewLayout="a4-document"
-        a4RenderMode={agreementConfig?.a4RenderMode ?? 'contentOnly'}
-        a4HiddenParagraphIds={agreementConfig?.a4HiddenParagraphIds}
-        a4ParagraphGapPx={agreementConfig?.a4ParagraphGapPx}
-        paragraphBodyOptions={paragraphBodyOptions}
-        hideParagraphRequiredChrome
-      />
+        className="full-page-modal member-consent-agreement-modal member-consent-document-view-modal"
+      >
+        <div className="member-consent-agreement-modal__loading">
+          <Spin tip="동의서를 불러오는 중입니다." />
+        </div>
+      </TealHeaderModal>
+    )
+  }
+
+  if (showEmpty || displayDraft == null) {
+    return (
+      <TealHeaderModal
+        open={open}
+        onCancel={onClose}
+        title=""
+        size="full"
+        hideHeader
+        zIndex={MEMBER_CONSENT_VIEW_MODAL_Z_INDEX}
+        className="full-page-modal member-consent-agreement-modal member-consent-document-view-modal"
+      >
+        <div className="full-page-modal__layout">
+          <header className="full-page-modal__topbar member-consent-agreement-modal__topbar">
+            <div className="full-page-modal__title member-consent-agreement-modal__title-wrap">
+              <span className="full-page-modal__title-text">{modalTitle}</span>
+            </div>
+            <button
+              type="button"
+              className="full-page-modal__close"
+              onClick={onClose}
+              aria-label="닫기"
+            >
+              <CloseOutlined />
+            </button>
+          </header>
+          <div className="full-page-modal__body">
+            <p className="member-consent-agreement-modal__error">{emptyMessage}</p>
+          </div>
+        </div>
+      </TealHeaderModal>
     )
   }
 
   return (
-    <TealHeaderModal
+    <TemplatePreviewModal
       open={open}
-      onCancel={onClose}
-      title=""
-      size="full"
-      hideHeader
+      onClose={onClose}
+      headerTitle={modalTitle}
+      draft={displayDraft}
+      updateParagraph={() => {}}
+      editorKind="agreement"
       zIndex={MEMBER_CONSENT_VIEW_MODAL_Z_INDEX}
-      className="full-page-modal member-consent-agreement-modal member-consent-document-view-modal"
-    >
-      <div className="full-page-modal__layout">
-        <header className="full-page-modal__topbar member-consent-agreement-modal__topbar">
-          <div className="full-page-modal__title member-consent-agreement-modal__title-wrap">
-            <span className="full-page-modal__title-text">{modalTitle}</span>
-          </div>
-          <button
-            type="button"
-            className="full-page-modal__close"
-            onClick={onClose}
-            aria-label="닫기"
-          >
-            <CloseOutlined />
-          </button>
-        </header>
-
-        <div className="full-page-modal__body">
-          <div className="full-page-modal__body-header member-consent-agreement-modal__body-header member-consent-document-view-modal__body-header">
-            <div className="full-page-modal__actions member-consent-agreement-modal__actions">
-              <CmsButton variant="secondary" size="medium" onClick={onClose}>
-                닫기
-              </CmsButton>
-            </div>
-          </div>
-
-          <div className="member-consent-agreement-modal__workspace">
-            {isLoading ? (
-              <div className="member-consent-agreement-modal__loading">
-                <Spin tip="동의서를 불러오는 중입니다." />
-              </div>
-            ) : showEmpty ? (
-              <p className="member-consent-agreement-modal__error">{emptyMessage}</p>
-            ) : displayDraft != null ? (
-              <div className="member-consent-agreement-modal__form-panel form-editor-left--paragraph-body-preview">
-                <FormEditorLeftPanel
-                  paragraphs={displayDraft.paragraphs}
-                  titleNumbering={displayDraft.formSettings.titleNumbering}
-                  selectedCardId={null}
-                  onSelectCard={() => {}}
-                  onReorderMiddle={() => {}}
-                  updateParagraph={() => {}}
-                  editorKind="agreement"
-                  singleItemListActiveItemId={null}
-                  paragraphInteractionMode="preview"
-                  showEditorChrome={false}
-                  structureLockedParagraphIds={agreementConfig?.structureLockedParagraphIds}
-                  hideDragHandleForParagraphIds={agreementConfig?.hideDragHandleForParagraphIds}
-                  hideParagraphRequiredChrome
-                  paragraphBodyOptions={paragraphBodyOptions}
-                />
-              </div>
-            ) : (
-              <p className="member-consent-agreement-modal__error">{emptyMessage}</p>
-            )}
-          </div>
-          <div className="full-page-modal__body-bottom" aria-hidden="true" />
-        </div>
-      </div>
-    </TealHeaderModal>
+      previewLayout="a4-document"
+      a4RenderMode={agreementConfig?.a4RenderMode ?? 'contentOnly'}
+      a4HiddenParagraphIds={agreementConfig?.a4HiddenParagraphIds}
+      a4ParagraphGapPx={agreementConfig?.a4ParagraphGapPx}
+      paragraphBodyOptions={paragraphBodyOptions}
+      hideParagraphRequiredChrome
+    />
   )
 }
 
@@ -453,88 +391,14 @@ export function MemberConsentDocumentViewModal({
   const useSubmittedPath = shouldFetchSubmittedConsentDocument(filledDocumentAvailable)
   const isSyntheticPreview = !useSubmittedPath
   const isCrime = templateId === AGREEMENT_CRIME_TEMPLATE_CODE
+  const requiresPrivacyReveal = memberConsentViewRequiresPrivacyReveal(templateId)
   const canFetchRemote = Boolean(
     useSubmittedPath && membersRemote && open && memberId != null && consentType?.trim()
   )
 
-  useEffect(() => {
-    if (!open) {
-      setFilled(null)
-      setLoadFailed(false)
-      setReasonOpen(false)
-      setSynthetic(null)
-      setSyntheticLoading(false)
-      mutation.reset()
-      return
-    }
-    if (canFetchRemote) {
-      setReasonOpen(true)
-      return
-    }
-    if (!isSyntheticPreview || isCrime || memberUser == null) {
-      setSynthetic(null)
-      setSyntheticLoading(false)
-      return
-    }
-
-    let cancelled = false
-    setSyntheticLoading(true)
-    void loadWritingFormTemplateDraft(templateId)
-      .then(saved => {
-        if (cancelled) return
-        const built = buildMemberConsentAgreeOnlyPreviewDraft(
-          templateId,
-          memberUser,
-          saved?.draft ?? null
-        )
-        setSynthetic(built)
-      })
-      .catch(() => {
-        if (cancelled) return
-        setSynthetic(buildMemberConsentAgreeOnlyPreviewDraft(templateId, memberUser, null))
-      })
-      .finally(() => {
-        if (!cancelled) setSyntheticLoading(false)
-      })
-
-    return () => {
-      cancelled = true
-    }
-    // open 시 합성/제출 경로만 분기. mutation identity 제외.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mutation identity
-  }, [
-    open,
-    canFetchRemote,
-    isSyntheticPreview,
-    isCrime,
-    templateId,
-    memberUser,
-  ])
-
-  useEffect(() => {
-    return () => {
-      if (evidenceObjectUrl) URL.revokeObjectURL(evidenceObjectUrl)
-    }
-  }, [evidenceObjectUrl])
-
-  const handleClose = useCallback(() => {
-    if (evidenceObjectUrl) {
-      URL.revokeObjectURL(evidenceObjectUrl)
-      setEvidenceObjectUrl(null)
-    }
-    setFilled(null)
-    setLoadFailed(false)
-    setReasonOpen(false)
-    setSynthetic(null)
-    setSyntheticLoading(false)
-    mutation.reset()
-    onClose()
-  }, [evidenceObjectUrl, mutation, onClose])
-
-  const handleRevealConfirm = useCallback(
+  const loadFilledDocument = useCallback(
     (reason: string) => {
       if (memberId == null || !consentType?.trim()) return
-      setReasonOpen(false)
       setLoadFailed(false)
       void mutation
         .mutateAsync({ memberId, consentType: consentType.trim(), reason })
@@ -570,14 +434,110 @@ export function MemberConsentDocumentViewModal({
     },
     [consentType, isCrime, memberId, mutation]
   )
+  const loadFilledDocumentRef = useRef(loadFilledDocument)
+  loadFilledDocumentRef.current = loadFilledDocument
+
+  useEffect(() => {
+    if (!open) {
+      setFilled(null)
+      setLoadFailed(false)
+      setReasonOpen(false)
+      setSynthetic(null)
+      setSyntheticLoading(false)
+      mutation.reset()
+      return
+    }
+    if (canFetchRemote) {
+      if (requiresPrivacyReveal) {
+        setReasonOpen(true)
+        return
+      }
+      setReasonOpen(false)
+      loadFilledDocumentRef.current(MEMBER_CONSENT_VIEW_AUTO_PRIVACY_REASON)
+      return
+    }
+    if (!isSyntheticPreview || isCrime || memberUser == null) {
+      setSynthetic(null)
+      setSyntheticLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setSyntheticLoading(true)
+    void loadWritingFormTemplateDraft(templateId)
+      .then(saved => {
+        if (cancelled) return
+        const built = buildMemberConsentAgreeOnlyPreviewDraft(
+          templateId,
+          memberUser,
+          saved?.draft ?? null
+        )
+        setSynthetic(built)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setSynthetic(buildMemberConsentAgreeOnlyPreviewDraft(templateId, memberUser, null))
+      })
+      .finally(() => {
+        if (!cancelled) setSyntheticLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+    // mutation.reset 의도적으로 deps 제외
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mutation identity
+  }, [
+    open,
+    canFetchRemote,
+    requiresPrivacyReveal,
+    isSyntheticPreview,
+    isCrime,
+    templateId,
+    memberUser,
+  ])
+
+  useEffect(() => {
+    return () => {
+      if (evidenceObjectUrl) URL.revokeObjectURL(evidenceObjectUrl)
+    }
+  }, [evidenceObjectUrl])
+
+  const handleClose = useCallback(() => {
+    if (evidenceObjectUrl) {
+      URL.revokeObjectURL(evidenceObjectUrl)
+      setEvidenceObjectUrl(null)
+    }
+    setFilled(null)
+    setLoadFailed(false)
+    setReasonOpen(false)
+    setSynthetic(null)
+    setSyntheticLoading(false)
+    mutation.reset()
+    onClose()
+  }, [evidenceObjectUrl, mutation, onClose])
+
+  const handleRevealConfirm = useCallback(
+    (reason: string) => {
+      setReasonOpen(false)
+      loadFilledDocument(reason)
+    },
+    [loadFilledDocument]
+  )
 
   const isLoading = canFetchRemote
-    ? reasonOpen || mutation.isPending
+    ? requiresPrivacyReveal
+      ? reasonOpen || mutation.isPending
+      : mutation.isPending || (filled == null && !loadFailed)
     : isSyntheticPreview && !isCrime
       ? syntheticLoading
       : false
   const remoteUnavailable =
-    canFetchRemote && !reasonOpen && !mutation.isPending && filled == null
+    canFetchRemote &&
+    requiresPrivacyReveal &&
+    !reasonOpen &&
+    !mutation.isPending &&
+    filled == null
 
   if (isCrime) {
     return (
@@ -619,6 +579,7 @@ export function MemberConsentDocumentViewModal({
             ? !syntheticLoading && synthetic == null
             : loadFailed || remoteUnavailable
         }
+        memberUser={memberUser}
         onClose={handleClose}
       />
       {reasonOpen ? (
