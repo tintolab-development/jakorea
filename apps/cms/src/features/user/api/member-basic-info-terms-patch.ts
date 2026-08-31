@@ -2,6 +2,10 @@ import type { TermsAgreementRequest } from '@/shared/api/generated/members/schem
 import type { TermsAgreementRequestTermsType } from '@/shared/api/generated/members/schemas/termsAgreementRequestTermsType'
 import type { TermsAgreementRow } from '@/shared/api/generated/members/schemas/termsAgreementRow'
 import { ADMIN_PRE_REGISTER_TERMS_VERSION } from '@/features/user/api/build-pre-register-terms-agreements'
+import {
+  areTermsTypesEquivalent,
+  normalizeTermsTypeAliasGroup,
+} from '@/features/user/api/terms-document-type-alias'
 
 /**
  * 회원 기본정보 PATCH로 **수정 불가**인 필수 약관.
@@ -78,12 +82,12 @@ export function upsertEditableTermsAgreementInDraft(
   const base = (existing ?? []).filter(
     row => !isMemberBasicInfoImmutableTermsType(row.termsType)
   )
-  const prev = base.find(row => row.termsType === termsType)
-  const without = base.filter(row => row.termsType !== termsType)
+  const prev = base.find(row => areTermsTypesEquivalent(row.termsType ?? '', termsType))
+  const without = base.filter(row => !areTermsTypesEquivalent(row.termsType ?? '', termsType))
   return [
     ...without,
     {
-      termsType,
+      termsType: prev?.termsType ?? termsType,
       version: prev?.version?.trim() || ADMIN_PRE_REGISTER_TERMS_VERSION,
       required: false,
       agreed,
@@ -97,19 +101,22 @@ export function mergeTermsAgreementRowsFromPatch(
   patchRows: TermsAgreementRequest[],
   agreedAtIso = new Date().toISOString()
 ): TermsAgreementRow[] {
-  const existingByType = new Map(
-    (existing ?? [])
-      .filter(row => row.termsType?.trim())
-      .map(row => [row.termsType!.trim(), row])
-  )
+  const existingByType = new Map<string, TermsAgreementRow>()
+  for (const row of existing ?? []) {
+    const termsType = row.termsType?.trim()
+    if (!termsType) continue
+    existingByType.set(normalizeTermsTypeAliasGroup(termsType), row)
+  }
+
   const overlay = new Map<string, TermsAgreementRow>()
   for (const row of patchRows) {
     const termsType = row.termsType?.trim()
     if (!termsType) continue
-    const prev = existingByType.get(termsType)
+    const aliasKey = normalizeTermsTypeAliasGroup(termsType)
+    const prev = existingByType.get(aliasKey)
     const agreedChanged = prev == null || Boolean(prev.agreed) !== Boolean(row.agreed)
-    overlay.set(termsType, {
-      termsType,
+    overlay.set(aliasKey, {
+      termsType: prev?.termsType ?? termsType,
       termsVersion: row.version,
       required: row.required,
       agreed: row.agreed,
@@ -125,8 +132,9 @@ export function mergeTermsAgreementRowsFromPatch(
       merged.push(row)
       continue
     }
-    seen.add(key)
-    const next = overlay.get(key)
+    const aliasKey = normalizeTermsTypeAliasGroup(key)
+    seen.add(aliasKey)
+    const next = overlay.get(aliasKey)
     merged.push(next ? { ...row, ...next } : row)
   }
   for (const [key, row] of overlay) {
@@ -142,6 +150,6 @@ export function resolveEditableConsentAgreedFromDraft(
 ): boolean {
   const termsType = CONSENT_LABEL_TO_EDITABLE_TERMS_TYPE[label.trim()]
   if (!termsType || !draft?.length) return fallbackAgreed
-  const hit = draft.find(row => row.termsType === termsType)
+  const hit = draft.find(row => areTermsTypesEquivalent(row.termsType ?? '', termsType))
   return hit != null ? Boolean(hit.agreed) : fallbackAgreed
 }

@@ -37,6 +37,29 @@ describe('member-basic-info-terms-patch', () => {
     ])
   })
 
+  it('GET CONSENT 행에 PRE_CONSENT 라벨 upsert 시 중복 행을 만들지 않는다', () => {
+    const next = upsertEditableTermsAgreementInDraft(
+      [
+        {
+          termsType: 'PAYMENT_STATEMENT_CONSENT',
+          version: '2.0',
+          required: false,
+          agreed: false,
+        },
+      ],
+      '지급조서 사전 동의서',
+      true
+    )
+    expect(next).toEqual([
+      {
+        termsType: 'PAYMENT_STATEMENT_CONSENT',
+        version: '2.0',
+        required: false,
+        agreed: true,
+      },
+    ])
+  })
+
   it('없는 선택 동의는 기본 version으로 추가한다', () => {
     const next = upsertEditableTermsAgreementInDraft(
       undefined,
