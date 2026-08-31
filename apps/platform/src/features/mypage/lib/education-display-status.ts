@@ -74,3 +74,11 @@ export function getEducationDisplayStatusTone(status: EducationDisplayStatus): E
 export function canCancelEducationApplication(status: EducationDisplayStatus): boolean {
   return status === 'waiting_result' || status === 'document_passed'
 }
+
+/**
+ * 신청 내용 탭 실 UI — 결과 대기 / 서류 합격만.
+ * 신청 반려 등은 placeholder.
+ */
+export function canShowEducationApplicationContent(status: EducationDisplayStatus): boolean {
+  return status === 'waiting_result' || status === 'document_passed'
+}

@@ -52,3 +52,23 @@ export function buildEducationApplicationListPath(params: EducationApplicationLi
   const query = searchParams.toString()
   return query ? `${MYPAGE_EDUCATION_PATH}?${query}` : MYPAGE_EDUCATION_PATH
 }
+
+export type EducationDetailLocationState = {
+  educationListPath?: string
+}
+
+export function isEducationApplicationListPath(path: string) {
+  const [pathname] = path.split('?')
+  return pathname === MYPAGE_EDUCATION_PATH
+}
+
+export function resolveEducationListBackPath(state: unknown) {
+  if (state && typeof state === 'object' && 'educationListPath' in state) {
+    const listPath = (state as EducationDetailLocationState).educationListPath
+    if (typeof listPath === 'string' && isEducationApplicationListPath(listPath)) {
+      return listPath
+    }
+  }
+
+  return MYPAGE_EDUCATION_PATH
+}

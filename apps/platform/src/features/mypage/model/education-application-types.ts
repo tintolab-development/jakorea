@@ -31,6 +31,10 @@ export type EducationApplicationListItem = {
   hasInterview?: boolean
   /** 관리자 배정 면접일 표시 문구 (예: 2026년 04월 12일(일) 14시) */
   interviewAtLabel?: string
+  /** 신청 내용 — 자기소개 및 지원동기 */
+  selfIntroMotivation?: string
+  /** 신청 내용 — 진행 희망 교육 일정 표시 문구 */
+  preferredEducationScheduleLabel?: string
 }
 
 export type EducationApplicationListParams = {

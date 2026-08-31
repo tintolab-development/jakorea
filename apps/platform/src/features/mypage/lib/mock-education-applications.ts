@@ -25,6 +25,11 @@ const DISPLAY_STATUS_CYCLE: readonly EducationDisplayStatus[] = [
 
 const cancelledApplicationIds = new Set<string>()
 
+const MOCK_SELF_INTRO_MOTIVATION =
+  '저는 경제와 금융에 관심이 많아 JA Korea 프로그램에 지원하게 되었습니다. 이번 교육을 통해 실무에 가까운 경험을 쌓고, 앞으로의 진로를 구체화하는 데 도움이 되고 싶습니다. 성실히 참여하며 배운 내용을 주변에 나누는 역할도 해보고 싶습니다.'
+
+const MOCK_PREFERRED_EDUCATION_SCHEDULE = '2026년 04월 20일(월) 9:30 ~ 12:20'
+
 function educationApplicationId(programId: string) {
   return `edu-app:${programId}`
 }
@@ -52,6 +57,11 @@ function toEducationApplication(
   if (displayStatus === 'document_passed') {
     item.hasInterview = true
     item.interviewAtLabel = '2026년 04월 12일(일) 14시'
+  }
+
+  if (displayStatus === 'waiting_result' || displayStatus === 'document_passed') {
+    item.selfIntroMotivation = MOCK_SELF_INTRO_MOTIVATION
+    item.preferredEducationScheduleLabel = MOCK_PREFERRED_EDUCATION_SCHEDULE
   }
 
   return item
