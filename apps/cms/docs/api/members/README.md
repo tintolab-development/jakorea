@@ -65,6 +65,8 @@ pnpm --filter cms package:member-management-seed-handoff -- --openapi
 
 | 문서 | 용도 |
 |------|------|
+| [**members-all-list-email-phone-masking-backend-request-2026-08-31.md**](./members-all-list-email-phone-masking-backend-request-2026-08-31.md) | **백엔드 전달** — `GET /api/admin/members/all` 연락처·이메일 **원문 노출** → 정책 마스킹 재적용 (P0) |
+| [**member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md**](./member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md) | **백엔드 전달** — 상세 수정 `PAYMENT_STATEMENT_CONSENT` current **404** · 성범죄 동의서 파일 업로드 **401** (P0) |
 | [**member-pre-register-filled-document-500-backend-request-2026-08-26.md**](./member-pre-register-filled-document-500-backend-request-2026-08-26.md) | **백엔드 전달** — 회원·강사 신규 등록에서 동의서 작성 후 pre-register **HTTP 500** (P0) |
 | [**member-consent-filled-document-backend-handoff-2026-08-25.md**](./member-consent-filled-document-backend-handoff-2026-08-25.md) | **백엔드 전달** — 회원 동의서 5종 작성 본문 저장·조회 (`WritingFormDraft` · 지급조서 sidecar · 성범죄 파일) · UI 기준 저장 항목 · **개인·교사·강사·강사겸교사** (P1) |
 | [**portal-identity-onboarding-backend-request-2026-08-18.md**](./portal-identity-onboarding-backend-request-2026-08-18.md) | **백엔드 전달** — Portal 본인인증·온보딩 403/500 · CMS↔Portal 소속 동기화 · 비밀번호/409 메시지 (P0/P1) |
