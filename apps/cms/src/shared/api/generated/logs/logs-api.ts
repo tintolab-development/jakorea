@@ -129,7 +129,7 @@ const updateSystemIssueStatus = (
  * @summary 버그/이슈 이력 목록 조회
  */
 const systemIssueLogs = (
-    params?: SystemIssueLogsParams,
+    params: SystemIssueLogsParams,
  options?: SecondParameter<typeof customInstance<LogListPageResponseBugIssueLogFrontendResponse>>,) => {
       return customInstance<LogListPageResponseBugIssueLogFrontendResponse>(
       {url: `/api/admin/logs/system-issues`, method: 'GET',
@@ -238,7 +238,7 @@ const systemIssueDetail = (
  * @summary 개인정보 조회 이력 조회
  */
 const privacyAccessLogs = (
-    params?: PrivacyAccessLogsParams,
+    params: PrivacyAccessLogsParams,
  options?: SecondParameter<typeof customInstance<LogListPageResponsePersonalInfoAccessLogFrontendResponse>>,) => {
       return customInstance<LogListPageResponsePersonalInfoAccessLogFrontendResponse>(
       {url: `/api/admin/logs/privacy-access`, method: 'GET',
@@ -293,7 +293,7 @@ const privacyAccessLogs = (
  * @summary 관리자 로그인 이력 조회
  */
 const memberLoginHistory = (
-    params?: MemberLoginHistoryParams,
+    params: MemberLoginHistoryParams,
  options?: SecondParameter<typeof customInstance<LogListPageResponseMemberLoginLogFrontendResponse>>,) => {
       return customInstance<LogListPageResponseMemberLoginLogFrontendResponse>(
       {url: `/api/admin/logs/member-logins`, method: 'GET',
@@ -348,7 +348,7 @@ const memberLoginHistory = (
  * @summary 파일 다운로드 이력 조회
  */
 const fileAccessLogs = (
-    params?: FileAccessLogsParams,
+    params: FileAccessLogsParams,
  options?: SecondParameter<typeof customInstance<LogListPageResponseDownloadLogFrontendResponse>>,) => {
       return customInstance<LogListPageResponseDownloadLogFrontendResponse>(
       {url: `/api/admin/logs/file-access`, method: 'GET',

@@ -813,6 +813,7 @@ export function HorizontalTableParagraphBody({
       className={[
         'form-editor-body',
         'form-editor-horizontal-table-wrap',
+        canvasInteractive ? 'form-editor-horizontal-table-wrap--canvas-interactive' : '',
         isPaymentStatementPreConsentP1
           ? 'form-editor-horizontal-table-wrap--payment-pre-consent-p1'
           : '',
@@ -1065,6 +1066,7 @@ export function HorizontalTableParagraphBody({
                 if (!bottomConsentInteractive) return
                 onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
               }}
+              disabled={!bottomConsentInteractive}
               style={bottomConsentInteractive ? undefined : { pointerEvents: 'none' }}
             >
               <CmsRadio value="agree">동의</CmsRadio>

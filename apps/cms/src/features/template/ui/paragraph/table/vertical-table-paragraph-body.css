@@ -50,9 +50,13 @@
   flex-direction: row;
   align-items: stretch;
   align-self: stretch;
-  cursor: pointer;
+  cursor: default;
   box-sizing: border-box;
   border: none;
+}
+
+.form-editor-vertical-table-wrap--canvas-interactive .form-editor-vertical-table__row {
+  cursor: pointer;
 }
 
 /* 행 구분은 셀 border-bottom만 사용 */

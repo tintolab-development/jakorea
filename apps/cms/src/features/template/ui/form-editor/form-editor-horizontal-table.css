@@ -112,10 +112,14 @@
   flex-direction: row;
   align-items: stretch;
   align-self: stretch;
-  cursor: pointer;
+  cursor: default;
   box-sizing: border-box;
   /* 선택 시 전면 민트 보더와 동일 두께를 유지해 가로·세로 흔들림 방지 */
   border: 1px solid transparent;
+}
+
+.form-editor-horizontal-table-wrap--canvas-interactive .form-editor-horizontal-table__row {
+  cursor: pointer;
 }
 
 .form-editor-horizontal-table__row:not(:first-child) {

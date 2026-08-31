@@ -25,7 +25,7 @@ export interface SettlementListItemResponse {
   sessionTotal?: number;
   programSessionProgressDisplay?: string;
   calculationStatus?: string;
-  /** REQUESTED | REAPPLICATION | CONFIRMED | CORRECTION_REQUESTED | REJECTED */
+  /** 지급조서 상태. REQUESTED | REAPPLICATION | CONFIRMED | CORRECTION_REQUESTED | REJECTED */
   statementStatus?: string;
   paymentStatus?: string;
   grossAmount?: number;

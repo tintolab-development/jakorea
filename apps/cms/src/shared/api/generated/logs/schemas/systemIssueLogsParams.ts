@@ -8,31 +8,35 @@
 
 export type SystemIssueLogsParams = {
 /**
+ * 쿼리 파라미터입니다. 요청값 출처: userName/from/to/page/size
+ */
+params: {[key: string]: string};
+/**
  * 사용자명 부분 검색
  */
 userName?: string;
 /**
- * 현재 지원 상태: OPEN 또는 RESOLVED. CMS 필터 UI에는 없음
+ * 현재 지원 상태: OPEN 또는 RESOLVED
  */
 status?: string;
 /**
- * 심각도. CMS 필터 UI에는 없음
+ * 심각도
  */
 severity?: string;
 /**
- * 조회 시작일 YYYY-MM-DD (Asia/Seoul 00:00:00)
+ * 조회 시작일 YYYY-MM-DD 또는 ISO-8601
  */
 from?: string;
 /**
- * 조회 종료일 YYYY-MM-DD (Asia/Seoul 해당일 끝)
+ * 조회 종료일 YYYY-MM-DD 또는 ISO-8601
  */
 to?: string;
 /**
  * 0-base 페이지, 기본 0
  */
-page?: number;
+page?: string;
 /**
  * 페이지 크기, 기본 20, 최대 100
  */
-size?: number;
+size?: string;
 };

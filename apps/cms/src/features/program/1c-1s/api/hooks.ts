@@ -1,4 +1,3 @@
-import { useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { shouldUseCompanySchoolRemoteApi } from './capabilities'
@@ -56,24 +55,6 @@ export function useCompanySchoolProgramDetail(
     staleTime: 30_000,
     retry: shouldRetryCompanySchoolQuery,
   })
-}
-
-export function usePrefetchCompanySchoolProgramDetail() {
-  const queryClient = useQueryClient()
-  const remoteEnabled = shouldUseCompanySchoolRemoteApi()
-
-  return useCallback(
-    (programId: string) => {
-      if (!remoteEnabled || !programId) return
-      void queryClient.prefetchQuery({
-        queryKey: companySchoolQueryKeys.detail(programId),
-        queryFn: () => getCompanySchoolProgram(programId),
-        staleTime: 30_000,
-        retry: shouldRetryCompanySchoolQuery,
-      })
-    },
-    [queryClient, remoteEnabled]
-  )
 }
 
 export function useCreateCompanySchoolProgram() {

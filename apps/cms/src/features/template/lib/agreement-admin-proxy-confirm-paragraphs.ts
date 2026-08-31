@@ -69,6 +69,28 @@ export function isAgreementAdminProxyConfirmHostId(paragraphId: string): boolean
   return AGREEMENT_ADMIN_PROXY_CONFIRM_HOST_IDS.has(paragraphId)
 }
 
+/** 대리작성 확인 카드에 합쳐져 숨겨지는 날짜·서명 단락 ID 전체 */
+export function getAllAgreementAdminProxyConfirmHiddenIds(): Set<string> {
+  const out = new Set<string>()
+  for (const ids of Object.values(AGREEMENT_ADMIN_PROXY_CONFIRM_HIDDEN_IDS_BY_HOST)) {
+    for (const id of ids) out.add(id)
+  }
+  return out
+}
+
+/**
+ * A4 contentOnly — 대리작성 카드(shadow) 대신 날짜·서명 플랫 스택을 쓰기 위해
+ * proxy용 숨김 ID만 제거하고 확인 카드 플래그를 끈다.
+ */
+export function resolveAgreementA4DocumentHiddenParagraphIds(
+  hiddenParagraphIds: ReadonlySet<string> | undefined
+): ReadonlySet<string> | undefined {
+  if (hiddenParagraphIds == null) return undefined
+  const proxyHidden = getAllAgreementAdminProxyConfirmHiddenIds()
+  const next = new Set([...hiddenParagraphIds].filter(id => !proxyHidden.has(id)))
+  return next.size > 0 ? next : undefined
+}
+
 /** 템플릿별 숨김 단락(날짜·서명) ID 집합 */
 export function resolveAgreementAdminProxyConfirmHiddenIds(templateId: string): Set<string> {
   const hosts = TEMPLATE_HOST_IDS[templateId] ?? []

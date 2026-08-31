@@ -1,5 +1,10 @@
 import {
+  formatConsentBirthDateInput,
+  formatConsentPhoneInput,
+} from '@jakorea/form-schema/consent'
+import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
+  AGREEMENT_NOTICE_SUBJECT_ITEM_IDS,
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
   normalizeWritingFormDraft,
   type VerticalTableRow,
@@ -21,13 +26,9 @@ export type MemberConsentMemberContext = {
   portraitAffiliationSelectOptions?: ReadonlyArray<{ value: string; label: string }>
 }
 
-const NOTICE_SUBJECT_NAME_ITEM_ID = 'agreement-notice-subj-name'
-const NOTICE_SUBJECT_BIRTH_ITEM_ID = 'agreement-notice-subj-birth'
-const NOTICE_SUBJECT_PHONE_ITEM_ID = 'agreement-notice-subj-phone'
-
 function birthDateToNoticeValue(birthDate: string | undefined): string {
   const digits = birthDate?.replace(/\D/g, '') ?? ''
-  if (digits.length === 8) return digits
+  if (digits.length === 8) return formatConsentBirthDateInput(digits)
   return ''
 }
 
@@ -89,14 +90,14 @@ function fillNoticeSubjectParagraph(
   return {
     ...paragraph,
     items: (paragraph.items ?? []).map(item => {
-      if (item.id === NOTICE_SUBJECT_NAME_ITEM_ID) {
+      if (item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name) {
         return { ...item, bodyText: name }
       }
-      if (item.id === NOTICE_SUBJECT_BIRTH_ITEM_ID) {
+      if (item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth) {
         return { ...item, bodyText: birth }
       }
-      if (item.id === NOTICE_SUBJECT_PHONE_ITEM_ID) {
-        return { ...item, bodyText: phone }
+      if (item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone) {
+        return { ...item, bodyText: formatConsentPhoneInput(phone) }
       }
       return item
     }),

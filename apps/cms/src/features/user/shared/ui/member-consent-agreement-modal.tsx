@@ -5,14 +5,12 @@ import {
   buildAgreementConsentFillParagraphBodyOptions,
   resolveAgreementConsentFillInteractionMode,
 } from '@/features/template/lib/build-agreement-consent-fill-options'
-import {
-  extractAgreementDraftAuthorName,
-  resolveAgreementUserModeAuthorDisplayName,
-} from '@/features/template/lib/extract-agreement-draft-author-name'
+import { resolveAgreementUserModeAuthorDisplayName } from '@/features/template/lib/extract-agreement-draft-author-name'
 import { loadWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
 import {
   ensureAgreementNoticeConfirmationClosing,
+  normalizeNoticeIdTypeResidentInputInDraft,
   normalizeWritingFormDraft,
   overlayAgreementNoticeSeedHorizontalTable,
   type WritingFormDraft,
@@ -35,7 +33,10 @@ import {
 import { normalizeMemberConsentWriteDraft } from '@/features/user/shared/lib/normalize-member-consent-write-draft'
 import {
   collectMemberConsentDisagreedRequiredLabels,
+  getMemberConsentInvalidNoticeSubjectContactAlertMessage,
   hasMemberConsentIncompleteRequiredFields,
+  hasMemberConsentInvalidResidentNumberFormat,
+  PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE,
 } from '@/features/user/shared/lib/validate-member-consent-draft'
 import { mergePaymentStatementBasicInfo } from '@jakorea/form-schema/consent'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -53,6 +54,8 @@ export interface MemberConsentAgreementModalProps {
   open: boolean
   templateId: string
   modalTitle: string
+  /** 등록·상세 기본정보 성명 — 서명/(작성자) SSOT. 비어 있으면 `(작성자)` */
+  memberName?: string
   /** 신규 등록 세션 — 이전 작성완료 draft 복원 */
   savedSnapshot?: MemberConsentAgreementDraftSnapshot | null
   onSnapshotSave?: (snapshot: MemberConsentAgreementDraftSnapshot) => void
@@ -71,6 +74,7 @@ export function MemberConsentAgreementModal({
   open,
   templateId,
   modalTitle,
+  memberName,
   savedSnapshot,
   onSnapshotSave,
   onClose,
@@ -94,7 +98,9 @@ export function MemberConsentAgreementModal({
 
     if (savedSnapshot?.draft) {
       const restored = cloneMemberConsentAgreementDraftSnapshot(savedSnapshot)
-      setDraft(normalizeWritingFormDraft(restored.draft))
+      setDraft(
+        normalizeNoticeIdTypeResidentInputInDraft(normalizeWritingFormDraft(restored.draft))
+      )
       setPaymentBasicInfo(mergePaymentStatementBasicInfo(restored.paymentBasicInfo))
       setIsDraftLoading(false)
       return
@@ -156,20 +162,37 @@ export function MemberConsentAgreementModal({
       return
     }
 
-    if (
-      hasMemberConsentIncompleteRequiredFields(draft, {
-        templateId,
-        paymentStatementBasicInfo: paymentBasicInfo ?? undefined,
-      })
-    ) {
+    const consentOptions = {
+      templateId,
+      paymentStatementBasicInfo: paymentBasicInfo ?? undefined,
+    }
+
+    if (hasMemberConsentIncompleteRequiredFields(draft, consentOptions)) {
       showAlert({
         title: '안내',
         content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
       })
       return
     }
+
+    const contactFormatMessage = getMemberConsentInvalidNoticeSubjectContactAlertMessage(draft)
+    if (contactFormatMessage != null) {
+      showAlert({
+        title: '안내',
+        content: contactFormatMessage,
+      })
+      return
+    }
+
+    if (hasMemberConsentInvalidResidentNumberFormat(draft, consentOptions)) {
+      showAlert({
+        title: '안내',
+        content: PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE,
+      })
+      return
+    }
     const snapshot: MemberConsentAgreementDraftSnapshot = {
-      draft: normalizeWritingFormDraft(draft),
+      draft: normalizeNoticeIdTypeResidentInputInDraft(normalizeWritingFormDraft(draft)),
       paymentBasicInfo: mergePaymentStatementBasicInfo(paymentBasicInfo),
     }
     onSnapshotSave?.(cloneMemberConsentAgreementDraftSnapshot(snapshot))
@@ -183,16 +206,9 @@ export function MemberConsentAgreementModal({
     []
   )
 
-  const syncedAuthorName = useMemo(() => {
-    if (PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) {
-      return paymentBasicInfo?.nameKo?.trim() ?? ''
-    }
-    return extractAgreementDraftAuthorName(templateId, draft).trim()
-  }, [draft, paymentBasicInfo?.nameKo, templateId])
-
   const authorDisplayName = useMemo(
-    () => resolveAgreementUserModeAuthorDisplayName(syncedAuthorName),
-    [syncedAuthorName]
+    () => resolveAgreementUserModeAuthorDisplayName(memberName),
+    [memberName]
   )
 
   const paragraphBodyOptions = useMemo(

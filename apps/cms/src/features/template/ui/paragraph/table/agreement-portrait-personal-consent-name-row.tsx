@@ -51,6 +51,7 @@ export function AgreementPortraitPersonalConsentNameRow({
   const { noAffiliation, affiliation } = portraitPersonalConsentAffiliationState(
     row.cells[1] ?? ''
   )
+  const affiliationDisplay = noAffiliation ? NO_AFFILIATION : affiliation
 
   return (
     <div
@@ -70,21 +71,22 @@ export function AgreementPortraitPersonalConsentNameRow({
           </span>
         </div>
         <div className="form-editor-vertical-table__td" role="gridcell">
-          <div className="agreement-portrait-personal-consent-name-row__name-shell">
-            <CmsInput
-              inputSize="medium"
-              width="100%"
-              value={nameValue}
-              placeholder={NAME_PLACEHOLDER}
-              readOnly={!interactive}
-              disabled={!interactive}
-              onChange={e => {
-                if (!interactive) return
-                onNameChange(e.target.value)
-              }}
-              onFocus={() => onSelectRow?.()}
-            />
-          </div>
+          {interactive ? (
+            <div className="agreement-portrait-personal-consent-name-row__name-shell">
+              <CmsInput
+                inputSize="medium"
+                width="100%"
+                value={nameValue}
+                placeholder={NAME_PLACEHOLDER}
+                onChange={e => onNameChange(e.target.value)}
+                onFocus={() => onSelectRow?.()}
+              />
+            </div>
+          ) : (
+            <span className="form-editor-vertical-table__cell-text form-editor-vertical-table__cell-text--body">
+              {nameValue}
+            </span>
+          )}
         </div>
       </div>
 
@@ -98,35 +100,38 @@ export function AgreementPortraitPersonalConsentNameRow({
           className="form-editor-vertical-table__td agreement-portrait-personal-consent-name-row__affiliation-td"
           role="gridcell"
         >
-          <div className="agreement-portrait-personal-consent-name-row__affiliation">
-            <div className="agreement-portrait-personal-consent-name-row__affiliation-input-shell">
-              <CmsInput
-                inputSize="medium"
-                width="100%"
-                value={noAffiliation ? '' : affiliation}
-                placeholder={AFFILIATION_PLACEHOLDER}
-                disabled={noAffiliation || !interactive}
-                readOnly={!interactive}
+          {interactive ? (
+            <div className="agreement-portrait-personal-consent-name-row__affiliation">
+              <div className="agreement-portrait-personal-consent-name-row__affiliation-input-shell">
+                <CmsInput
+                  inputSize="medium"
+                  width="100%"
+                  value={noAffiliation ? '' : affiliation}
+                  placeholder={AFFILIATION_PLACEHOLDER}
+                  disabled={noAffiliation}
+                  onChange={e => {
+                    if (noAffiliation) return
+                    onAffiliationChange(e.target.value)
+                  }}
+                  onFocus={() => onSelectRow?.()}
+                />
+              </div>
+              <DividerVertical />
+              <CmsCheckbox
+                checkboxSize="large"
+                checked={noAffiliation}
                 onChange={e => {
-                  if (!interactive || noAffiliation) return
-                  onAffiliationChange(e.target.value)
+                  onAffiliationChange(e.target.checked ? NO_AFFILIATION : '')
                 }}
-                onFocus={() => onSelectRow?.()}
-              />
+              >
+                {NO_AFFILIATION}
+              </CmsCheckbox>
             </div>
-            <DividerVertical />
-            <CmsCheckbox
-              checkboxSize="large"
-              checked={noAffiliation}
-              disabled={!interactive}
-              onChange={e => {
-                if (!interactive) return
-                onAffiliationChange(e.target.checked ? NO_AFFILIATION : '')
-              }}
-            >
-              {NO_AFFILIATION}
-            </CmsCheckbox>
-          </div>
+          ) : (
+            <span className="form-editor-vertical-table__cell-text form-editor-vertical-table__cell-text--body">
+              {affiliationDisplay}
+            </span>
+          )}
         </div>
       </div>
     </div>

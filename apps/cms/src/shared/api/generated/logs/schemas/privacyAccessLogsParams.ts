@@ -8,6 +8,10 @@
 
 export type PrivacyAccessLogsParams = {
 /**
+ * 쿼리 파라미터입니다. 요청값 출처: accessPurpose/accessorName/targetName/from/to/page/size
+ */
+params: {[key: string]: string};
+/**
  * 조회 목적 부분 검색
  */
 accessPurpose?: string;
@@ -16,23 +20,23 @@ accessPurpose?: string;
  */
 accessorName?: string;
 /**
- * 열람 대상 표시명 부분 검색
+ * 개인정보 조회 대상자명 부분 검색
  */
 targetName?: string;
 /**
- * 조회 시작일 YYYY-MM-DD (Asia/Seoul 00:00:00)
+ * 조회 시작일 YYYY-MM-DD 또는 ISO-8601
  */
 from?: string;
 /**
- * 조회 종료일 YYYY-MM-DD (Asia/Seoul 해당일 끝)
+ * 조회 종료일 YYYY-MM-DD 또는 ISO-8601
  */
 to?: string;
 /**
  * 0-base 페이지, 기본 0
  */
-page?: number;
+page?: string;
 /**
  * 페이지 크기, 기본 20, 최대 100
  */
-size?: number;
+size?: string;
 };

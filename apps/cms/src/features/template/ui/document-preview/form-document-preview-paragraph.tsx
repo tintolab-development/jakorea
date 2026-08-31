@@ -16,6 +16,7 @@ import type {
   FileAttachmentParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
+  AGREEMENT_NOTICE_PARAGRAPH_IDS,
   isAgreementLockedSystemParagraph,
   normalizeHorizontalTableParagraph,
   type HorizontalTableParagraph,
@@ -52,9 +53,12 @@ import { UjatJournalEducationInfo } from '@/features/template/ui/paragraph/singl
 import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { FormParagraphSectionDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
+import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/basic-info-paragraph'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
+import { applyConsentShortEssayItemInput } from '@jakorea/form-schema/consent'
 import './form-document-preview-body.css'
 
 function noopOnParagraphChange<T>(_next: T): void {}
@@ -120,20 +124,40 @@ function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoi
   const allowMultiple = paragraph.allowMultiple ?? false
   const singleId = paragraph.selectedPreviewSingleId ?? null
   const multi = new Set(paragraph.selectedPreviewMultipleIds ?? [])
+
+  if (allowMultiple) {
+    return (
+      <div className="form-document-preview-multiple-choice">
+        {items.map(item => {
+          const checked = multi.has(item.id)
+          return (
+            <div key={item.id} className="form-document-preview-multiple-choice__row">
+              <span className="form-document-preview-multiple-choice__mark" aria-hidden>
+                {checked ? '☑' : '☐'}
+              </span>
+              <span>{item.label}</span>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
   return (
-    <div className="form-document-preview-multiple-choice">
-      {items.map(item => {
-        const checked = allowMultiple ? multi.has(item.id) : singleId === item.id
-        const mark = allowMultiple ? (checked ? '☑' : '☐') : checked ? '●' : '○'
-        return (
-          <div key={item.id} className="form-document-preview-multiple-choice__row">
-            <span className="form-document-preview-multiple-choice__mark" aria-hidden>
-              {mark}
-            </span>
-            <span>{item.label}</span>
-          </div>
-        )
-      })}
+    <div className="form-editor-body">
+      <CmsRadioGroup
+        className="form-editor-table-bottom-consent"
+        size="large"
+        value={singleId ?? undefined}
+        disabled
+        style={{ pointerEvents: 'none' }}
+      >
+        {items.map(item => (
+          <CmsRadio key={item.id} value={item.id}>
+            {item.label}
+          </CmsRadio>
+        ))}
+      </CmsRadioGroup>
     </div>
   )
 }
@@ -178,7 +202,11 @@ function DocumentTextInputBlockReadonly({
           <th scope="row">{safeTrim(item.label) || fallbackLabel}</th>
         </tr>
         <tr>
-          <td>{safeTrim(item.bodyText) || item.placeholder || fallbackText}</td>
+          <td>
+            {safeTrim(applyConsentShortEssayItemInput(item.id, item.bodyText)) ||
+              item.placeholder ||
+              fallbackText}
+          </td>
         </tr>
       </tbody>
     </table>
@@ -246,7 +274,11 @@ function DocumentShortEssayReadonly({
               {item.label ?? `Title ${String(index + 1).padStart(2, '0')}`}
             </div>
           ) : null}
-          <div>{safeTrim(item.bodyText) || item.placeholder || ph}</div>
+          <div>
+            {safeTrim(applyConsentShortEssayItemInput(item.id, item.bodyText)) ||
+              item.placeholder ||
+              ph}
+          </div>
         </div>
       ))}
     </div>
@@ -297,24 +329,42 @@ function renderBody(
         />
       )
     case 'agreement_explanation_text': {
+      if (
+        paragraphBodyOptions?.agreementAdminProxyConfirm === true &&
+        isAgreementAdminProxyConfirmHostId(p.id)
+      ) {
+        const consentText = 'bodyText' in p ? String(p.bodyText ?? '') : ''
+        return (
+          <AgreementAdminProxyConfirmBlock
+            consentText={consentText}
+            memberName={paragraphBodyOptions.agreementSystemParticipantName ?? ''}
+            now={paragraphBodyOptions.agreementSystemNow}
+          />
+        )
+      }
       const ph = safeTrim(p.bodyPlaceholder) || '텍스트를 작성해 주세요'
       const body = safeTrim(p.bodyText)
+      const isNoticeInstitutionEmpty =
+        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution && !body
+      const display = isNoticeInstitutionEmpty ? '-' : body || ph
+      const filled = Boolean(body) || isNoticeInstitutionEmpty
       return (
         <div className="form-editor-body explanation-text">
           <div
             className={
-              body
+              filled
                 ? 'form-document-preview-paragraph__body-text form-document-preview-paragraph__body-text--explanation-filled'
                 : 'form-document-preview-paragraph__body-text form-document-preview-paragraph__body-text--explanation-placeholder'
             }
           >
-            {body || ph}
+            {display}
           </div>
           {p.showBottomConsent === true || p.id === 'agreement-portrait-intro' ? (
             <CmsRadioGroup
               className="form-editor-table-bottom-consent"
               size="large"
               value={p.bottomConsent ?? 'agree'}
+              disabled
               style={{ pointerEvents: 'none' }}
             >
               <CmsRadio value="agree">동의</CmsRadio>
@@ -391,11 +441,26 @@ function renderBody(
         />
       )
     case 'vertical_table':
+      if (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord) {
+        return (
+          <BasicInfoParagraph
+            values={paragraphBodyOptions?.paymentStatementBasicInfoValues}
+            displayMode={
+              paragraphBodyOptions?.paymentStatementDisplayMode ??
+              (renderMode === 'contentOnly' ? 'document' : 'editor')
+            }
+            onlyPaymentPurposeLocked={
+              paragraphBodyOptions?.paymentStatementBasicInfoOnlyPaymentPurposeLocked
+            }
+          />
+        )
+      }
       return (
         <VerticalTableParagraphBody
           paragraph={p}
           onChange={noopOnParagraphChange}
           isEditMode={false}
+          tableCanvasInteractive={false}
         />
       )
     case 'multiple_choice':
@@ -429,6 +494,8 @@ function renderBody(
             onChange={noopOnParagraphChange}
             isEditMode={false}
             displayMode={renderMode === 'contentOnly' ? 'document' : 'authoring'}
+            participantName={paragraphBodyOptions?.agreementSystemParticipantName}
+            now={paragraphBodyOptions?.agreementSystemNow}
           />
         )
       }
@@ -517,7 +584,14 @@ function renderBody(
       return <StaticDescriptionLines paragraph={p} />
     case 'id_type_with_input':
       if (p.kind !== 'single_item' || p.variant !== 'id_type_with_input') return null
-      return <IdTypeWithInput paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+      return (
+        <IdTypeWithInput
+          paragraph={p}
+          onChange={noopOnParagraphChange}
+          isEditMode={false}
+          documentMode
+        />
+      )
     case 'closing': {
       const c = p as ClosingParagraph
       if (
@@ -531,6 +605,12 @@ function renderBody(
             now={paragraphBodyOptions.agreementSystemNow}
           />
         )
+      }
+      if (
+        renderMode === 'contentOnly' &&
+        c.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
+      ) {
+        return null
       }
       return (
         <div className="form-document-preview-paragraph__body-text">{safeTrim(c.body) || ' '}</div>
@@ -566,7 +646,14 @@ export function FormDocumentPreviewParagraph({
   isAuthoringSyncFocused = false,
 }: FormDocumentPreviewParagraphProps) {
   const displayTitle = getFormParagraphDisplayTitle(allParagraphs, paragraph, titleNumbering)
-  const viewModel = getDocumentPreviewParagraphViewModel(paragraph, displayTitle, renderMode)
+  const paragraphIndex = allParagraphs.findIndex(item => item.id === paragraph.id)
+  const nextParagraph = paragraphIndex >= 0 ? (allParagraphs[paragraphIndex + 1] ?? null) : null
+  const viewModel = getDocumentPreviewParagraphViewModel(
+    paragraph,
+    displayTitle,
+    renderMode,
+    nextParagraph
+  )
   const { title, description } = readOnlyTitleBlock(displayTitle, viewModel.description)
 
   if (
@@ -641,6 +728,8 @@ export function FormDocumentPreviewParagraph({
   if (renderMode === 'contentOnly') {
     const isFileAttachment =
       paragraph.kind === 'single_item' && paragraph.variant === 'file_attachment'
+    const isNoticeStackDivider =
+      paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
 
     return (
       <div
@@ -648,9 +737,19 @@ export function FormDocumentPreviewParagraph({
           'form-document-preview-paragraph',
           'form-document-preview-paragraph--content-only',
           isFileAttachment ? 'form-document-preview-paragraph--file-attachment' : '',
-          viewModel.isClosing ? 'form-document-preview-paragraph--content-only-closing' : '',
+          isNoticeStackDivider
+            ? 'form-document-preview-paragraph--content-only-stack-divider'
+            : viewModel.isClosing
+              ? 'form-document-preview-paragraph--content-only-closing'
+              : '',
+          !isNoticeStackDivider && viewModel.isConfirmText && !viewModel.isClosing
+            ? 'form-document-preview-paragraph--content-only-confirm'
+            : '',
           viewModel.isClosingSignature
             ? 'form-document-preview-paragraph--content-only-closing-signature'
+            : '',
+          viewModel.isConfirmTextRule
+            ? 'form-document-preview-paragraph--content-only-confirm-rule'
             : '',
           overflow ? 'form-document-preview-paragraph--overflow' : '',
           isAuthoringSyncFocused ? 'form-document-preview-paragraph--authoring-sync-focus' : '',

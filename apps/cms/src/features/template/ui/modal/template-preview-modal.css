@@ -292,6 +292,8 @@
   width: 100%;
   padding-bottom: 16px;
   box-sizing: border-box;
+  pointer-events: none;
+  cursor: default;
 }
 
 .template-preview-modal__a4-text-content .form-editor-left {
@@ -385,4 +387,9 @@
   min-height: auto;
   overflow: visible;
   padding-right: 0;
+}
+
+.template-preview-modal--card-layout .paragraph-card__slot {
+  pointer-events: none;
+  cursor: default;
 }

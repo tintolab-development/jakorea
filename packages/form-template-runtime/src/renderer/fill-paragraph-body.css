@@ -15,6 +15,27 @@
   width: 100%;
 }
 
+.form-template-id-type-with-input__resident {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.form-template-id-type-with-input__resident-input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.form-template-id-type-with-input__dash {
+  flex-shrink: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
 .form-template-fill-multiple-choice {
   display: flex;
   width: 100%;

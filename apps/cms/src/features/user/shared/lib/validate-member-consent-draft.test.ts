@@ -12,7 +12,10 @@ import {
 import { normalizeMemberConsentWriteDraft } from '@/features/user/shared/lib/normalize-member-consent-write-draft'
 import {
   collectMemberConsentDisagreedRequiredLabels,
+  getMemberConsentInvalidNoticeSubjectContactAlertMessage,
   hasMemberConsentIncompleteRequiredFields,
+  hasMemberConsentInvalidIdTypeResidentNumber,
+  hasMemberConsentInvalidPaymentStatementResidentNumber,
 } from '@/features/user/shared/lib/validate-member-consent-draft'
 
 function withPersonalConsentCells(
@@ -229,5 +232,141 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-notice' })
     ).toBe(false)
+  })
+})
+
+describe('hasMemberConsentInvalidPaymentStatementResidentNumber', () => {
+  it('is false for non-payment-statement templates', () => {
+    expect(
+      hasMemberConsentInvalidPaymentStatementResidentNumber({
+        templateId: 'agreement-portrait',
+        paymentStatementBasicInfo: { residentFront: '123', residentBack: '1234567' },
+      })
+    ).toBe(false)
+  })
+
+  it('is true when payment-statement resident number format is invalid', () => {
+    expect(
+      hasMemberConsentInvalidPaymentStatementResidentNumber({
+        templateId: 'agreement-third-party',
+        paymentStatementBasicInfo: { residentFront: '991332', residentBack: '1234567' },
+      })
+    ).toBe(true)
+  })
+})
+
+function withNoticeResidentInput(draft: WritingFormDraft, inputValue: string): WritingFormDraft {
+  return {
+    ...draft,
+    paragraphs: draft.paragraphs.map(paragraph => {
+      if (paragraph.id !== 'agreement-notice-table') return paragraph
+      if (paragraph.kind !== 'single_item' || paragraph.variant !== 'horizontal_table') {
+        return paragraph
+      }
+      if (paragraph.idTypeWithInput == null) return paragraph
+      return {
+        ...paragraph,
+        idTypeWithInput: {
+          ...paragraph.idTypeWithInput,
+          inputValue,
+        },
+      }
+    }),
+  }
+}
+
+describe('hasMemberConsentInvalidIdTypeResidentNumber', () => {
+  it('is false when the notice resident number is empty', () => {
+    const draft = normalizeWritingFormDraft(createAgreementNoticeDraft())
+    expect(hasMemberConsentInvalidIdTypeResidentNumber(draft)).toBe(false)
+  })
+
+  it('is false when YYMMDD + 7 digits are valid', () => {
+    const draft = withNoticeResidentInput(
+      normalizeWritingFormDraft(createAgreementNoticeDraft()),
+      '970721-1234567'
+    )
+    expect(hasMemberConsentInvalidIdTypeResidentNumber(draft)).toBe(false)
+  })
+
+  it('is true when both parts are filled but the date is invalid', () => {
+    const draft = withNoticeResidentInput(
+      normalizeWritingFormDraft(createAgreementNoticeDraft()),
+      '991332-1234567'
+    )
+    expect(hasMemberConsentInvalidIdTypeResidentNumber(draft)).toBe(true)
+  })
+
+  it('is true when the entered value is incomplete', () => {
+    const draft = withNoticeResidentInput(
+      normalizeWritingFormDraft(createAgreementNoticeDraft()),
+      '970721-123456'
+    )
+    expect(hasMemberConsentInvalidIdTypeResidentNumber(draft)).toBe(true)
+  })
+})
+
+function withNoticeSubjectContact(
+  draft: WritingFormDraft,
+  birth: string,
+  phone: string
+): WritingFormDraft {
+  return {
+    ...draft,
+    paragraphs: draft.paragraphs.map(paragraph => {
+      if (paragraph.id !== 'agreement-notice-subject') return paragraph
+      if (paragraph.kind !== 'single_item' || paragraph.variant !== 'short_essay') {
+        return paragraph
+      }
+      return {
+        ...paragraph,
+        items: (paragraph.items ?? []).map(item => ({
+          ...item,
+          bodyText:
+            item.id === 'agreement-notice-subj-birth'
+              ? birth
+              : item.id === 'agreement-notice-subj-phone'
+                ? phone
+                : item.bodyText,
+        })),
+      }
+    }),
+  }
+}
+
+describe('getMemberConsentInvalidNoticeSubjectContactAlertMessage', () => {
+  it('is null when birth and phone are empty or valid', () => {
+    const empty = normalizeWritingFormDraft(createAgreementNoticeDraft())
+    expect(getMemberConsentInvalidNoticeSubjectContactAlertMessage(empty)).toBeNull()
+
+    const valid = withNoticeSubjectContact(empty, '1991.01.01', '010-1234-5678')
+    expect(getMemberConsentInvalidNoticeSubjectContactAlertMessage(valid)).toBeNull()
+    expect(
+      getMemberConsentInvalidNoticeSubjectContactAlertMessage(
+        withNoticeSubjectContact(empty, '19910101', '01012345678')
+      )
+    ).toBeNull()
+  })
+
+  it('returns birth alert when the date is invalid', () => {
+    const draft = withNoticeSubjectContact(
+      normalizeWritingFormDraft(createAgreementNoticeDraft()),
+      '1991.13.01',
+      '010-1234-5678'
+    )
+    expect(getMemberConsentInvalidNoticeSubjectContactAlertMessage(draft)).toBe(
+      '올바른 생년월일을 입력해 주세요.'
+    )
+  })
+
+  it('returns phone alert when the number is invalid', () => {
+    const draft = withNoticeSubjectContact(
+      normalizeWritingFormDraft(createAgreementNoticeDraft()),
+      '1991.01.01',
+      '010-123'
+    )
+    expect(getMemberConsentInvalidNoticeSubjectContactAlertMessage(draft)).toBe(
+      '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'
+    )
   })
 })

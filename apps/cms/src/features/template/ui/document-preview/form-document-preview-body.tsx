@@ -7,6 +7,7 @@ import type {
   FormDocumentPreviewParagraphGapResolver,
   FormDocumentPreviewRenderMode,
 } from '@/features/template/lib/a4-document-preview'
+import { resolveAgreementA4DocumentHiddenParagraphIds } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
 import { FormDocumentPreviewParagraph } from '@/features/template/ui/document-preview/form-document-preview-paragraph'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import { AgreementSheetClosingFooter } from '@/features/template/ui/paragraph/explanation/agreement-sheet-closing-footer'
@@ -47,7 +48,18 @@ export function FormDocumentPreviewBody({
   agreementClosingFooter,
 }: FormDocumentPreviewBodyProps) {
   const useCustomGaps = paragraphGapPx != null
-  const hiddenParagraphIds = paragraphBodyOptions?.hiddenParagraphIds
+  /** A4: 대리작성 shadow 카드 대신 날짜·서명 플랫 스택 */
+  const resolvedParagraphBodyOptions: RenderFormParagraphBodyOptions | undefined =
+    renderMode === 'contentOnly' && paragraphBodyOptions != null
+      ? {
+          ...paragraphBodyOptions,
+          agreementAdminProxyConfirm: false,
+          hiddenParagraphIds: resolveAgreementA4DocumentHiddenParagraphIds(
+            paragraphBodyOptions.hiddenParagraphIds
+          ),
+        }
+      : paragraphBodyOptions
+  const hiddenParagraphIds = resolvedParagraphBodyOptions?.hiddenParagraphIds
   const visibleParagraphs =
     hiddenParagraphIds == null
       ? paragraphs
@@ -63,14 +75,21 @@ export function FormDocumentPreviewBody({
     return paragraphGapPx(paragraph, index, visibleParagraphs.slice(0, index))
   }
 
+  /** A4 페이지 분할 시 귀하는 전체 문서의 마지막 단락이 있는 페이지에만 노출 */
+  const lastDocumentParagraphId = visibleAllParagraphs[visibleAllParagraphs.length - 1]?.id
+  const isLastDocumentPage =
+    lastDocumentParagraphId == null ||
+    visibleParagraphs.some(paragraph => paragraph.id === lastDocumentParagraphId)
+
+  const showSubmitButton =
+    agreementClosingFooter?.showSubmitButton ?? renderMode !== 'contentOnly'
   const closingFooter =
-    editorKind === 'agreement' ? (
+    editorKind === 'agreement' && isLastDocumentPage ? (
       <AgreementSheetClosingFooter
         onSubmit={agreementClosingFooter?.onSubmit}
         submitDisabled={agreementClosingFooter?.submitDisabled}
-        showSubmitButton={
-          agreementClosingFooter?.showSubmitButton ?? renderMode !== 'contentOnly'
-        }
+        showSubmitButton={showSubmitButton}
+        variant={showSubmitButton ? 'sheet' : 'document'}
       />
     ) : null
 
@@ -93,7 +112,7 @@ export function FormDocumentPreviewBody({
           titleNumbering={titleNumbering}
           editorKind={editorKind}
           overflow={overflowParagraphIds?.has(p.id) ?? false}
-          paragraphBodyOptions={paragraphBodyOptions}
+          paragraphBodyOptions={resolvedParagraphBodyOptions}
           renderMode={renderMode}
           style={useCustomGaps ? { marginTop: getGapBefore(p, index) } : undefined}
           isAuthoringSyncFocused={

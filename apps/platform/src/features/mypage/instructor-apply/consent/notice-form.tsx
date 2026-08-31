@@ -12,6 +12,7 @@ import {
   createDefaultIdTypeWithInputOptions,
 } from '@jakorea/form-schema/writing-form'
 import { applyKoreanPhoneInputChange } from '@jakorea/domain/shared/korean-phone'
+import { formatConsentBirthDateInput } from '@jakorea/form-schema/consent'
 import { ConsentWriteRadioGroup } from './consent-radio'
 import {
   NOTICE_CONFIRMATION,
@@ -110,11 +111,13 @@ export function NoticeConsentForm({
               <PFTextInput
                 variant="formPage"
                 size="large"
-                placeholder="생년월일 8자리"
+                placeholder="1991.01.01"
                 inputMode="numeric"
-                maxLength={8}
+                maxLength={10}
                 value={draft.birthDate}
-                onValueChange={value => patch('birthDate', value.replace(/\D/g, '').slice(0, 8))}
+                onValueChange={value =>
+                  patch('birthDate', formatConsentBirthDateInput(value))
+                }
               />
             </PFFormField>
           </PFFormFieldRow>
