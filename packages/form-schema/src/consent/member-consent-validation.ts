@@ -6,8 +6,15 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '../writing-form/draft-schema.js'
+import {
+  isIdTypeResidentInputFilled,
+  isIdTypeResidentOptionId,
+} from '../writing-form/id-type-resident-input.js'
 import type { PaymentStatementBasicInfoValues } from './payment-statement-basic-info.js'
-import { isPaymentStatementResidentNumberFormatInvalid } from './payment-statement-resident-number.js'
+import {
+  isIdTypeResidentNumberFormatInvalid,
+  isPaymentStatementResidentNumberFormatInvalid,
+} from './payment-statement-resident-number.js'
 import {
   portraitPersonalConsentAffiliationState,
   portraitPersonalConsentNameValue,
@@ -85,6 +92,9 @@ function isIdTypeWithInputComplete(paragraph: WritingFormParagraph): boolean {
   if (nested == null) return true
   if (!nested.answerRequired && !nested.requiredMark) return true
   if (nested.selectedOptionId == null || nested.selectedOptionId === '') return false
+  if (isIdTypeResidentOptionId(nested.selectedOptionId)) {
+    return isIdTypeResidentInputFilled(nested.inputValue)
+  }
   return nested.inputValue.trim() !== ''
 }
 
@@ -233,4 +243,38 @@ export function hasMemberConsentInvalidPaymentStatementResidentNumber(
   const templateId = options?.templateId
   if (templateId == null || !PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) return false
   return isPaymentStatementResidentNumberFormatInvalid(options?.paymentStatementBasicInfo)
+}
+
+function collectIdTypeWithInputBlocks(draft: WritingFormDraft) {
+  const blocks: { selectedOptionId: string | null; inputValue: string }[] = []
+  for (const paragraph of draft.paragraphs) {
+    if (paragraph.kind !== 'single_item') continue
+    if (paragraph.variant === 'id_type_with_input') {
+      blocks.push(paragraph)
+      continue
+    }
+    if (paragraph.variant === 'horizontal_table' && paragraph.idTypeWithInput != null) {
+      blocks.push(paragraph.idTypeWithInput)
+    }
+  }
+  return blocks
+}
+
+/** 행정정보 공동이용 — 주민등록번호 라디오 + 입력값이 있는데 형식이 잘못된 경우 */
+export function hasMemberConsentInvalidIdTypeResidentNumber(draft: WritingFormDraft): boolean {
+  return collectIdTypeWithInputBlocks(draft).some(block => {
+    if (!isIdTypeResidentOptionId(block.selectedOptionId)) return false
+    return isIdTypeResidentNumberFormatInvalid(block.inputValue)
+  })
+}
+
+/** 작성완료 — 지급조서 또는 행정정보 식별번호 주민등록번호 형식 오류 */
+export function hasMemberConsentInvalidResidentNumberFormat(
+  draft: WritingFormDraft,
+  options?: MemberConsentDraftValidationOptions
+): boolean {
+  return (
+    hasMemberConsentInvalidPaymentStatementResidentNumber(options) ||
+    hasMemberConsentInvalidIdTypeResidentNumber(draft)
+  )
 }

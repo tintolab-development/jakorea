@@ -1,4 +1,5 @@
 export * from './draft-schema.js'
+export * from './id-type-resident-input.js'
 export * from './paragraph-converters.js'
 export * from './paragraph-factories.js'
 export * from './paragraph-guards.js'

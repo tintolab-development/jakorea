@@ -1,6 +1,6 @@
 import type { PaymentStatementBasicInfoValues } from './payment-statement-basic-info.js'
 
-/** 지급조서 주민등록번호 형식 오류 — 작성완료 시 Alert 본문 */
+/** 주민등록번호 형식 오류 — 작성완료 시 Alert 본문 (지급조서·행정정보 식별번호 공통) */
 export const PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE =
   '올바른 주민등록번호 형식이 아닙니다.'
 
@@ -45,5 +45,17 @@ export function isPaymentStatementResidentNumberFormatInvalid(
   const front = digitsOnly(values.residentFront)
   const back = digitsOnly(values.residentBack)
   if (front === '' || back === '') return false
+  return !isValidPaymentStatementResidentNumberParts(front, back)
+}
+
+/**
+ * 행정정보 식별번호(주민등록번호) — 입력값이 있는데 앞 6(생년월일)+뒤 7이 아니면 true.
+ * 완전 공란은 형식 오류가 아니다.
+ */
+export function isIdTypeResidentNumberFormatInvalid(raw: string | undefined): boolean {
+  const digits = digitsOnly(raw)
+  if (digits === '') return false
+  const front = digits.slice(0, 6)
+  const back = digits.slice(6, 13)
   return !isValidPaymentStatementResidentNumberParts(front, back)
 }

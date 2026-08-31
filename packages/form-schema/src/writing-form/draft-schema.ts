@@ -2402,6 +2402,9 @@ export const LECTURE_REPORT_SEED_PARAGRAPH_IDS = new Set<string>([
 export const LECTURE_REPORT_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
   LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.title,
 ])
+/** 행정정보 공동이용 — 이용사무(이용목적) 작성 진입 기본값 */
+export const AGREEMENT_NOTICE_DEFAULT_PURPOSE = '범죄경력 유무 조회'
+
 /** 동의 양식 > 행정정보 공동이용 사전동의서 — 시드 단락 id */
 export const AGREEMENT_NOTICE_PARAGRAPH_IDS = {
   title: 'agreement-notice-title',
@@ -2558,7 +2561,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         paragraphDescription: '',
         participatesInTitleNumbering: true,
         bodyPlaceholder: '이용 목적을 입력해 주세요',
-        bodyText: '범죄경력 유무 조회',
+        bodyText: AGREEMENT_NOTICE_DEFAULT_PURPOSE,
         answerRequired: false,
       },
       tableSeed,
