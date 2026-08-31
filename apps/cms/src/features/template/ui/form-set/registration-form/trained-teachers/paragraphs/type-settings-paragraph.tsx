@@ -6,6 +6,7 @@ import type { RadioChangeEvent } from 'antd'
 import type {
   ProgramRegistrationScheduleDetailKind,
   ProgramRegistrationSessionRoundType,
+  ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import {
@@ -17,6 +18,8 @@ import { TYPE_SETTINGS_PER_SCHEDULE_HINT } from '@/features/template/ui/form-set
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 type TrainedTeachersRegistrationTypeSettingsParagraphProps = {
+  programType: ProgramRegistrationType
+  onProgramTypeChange: (value: ProgramRegistrationType) => void
   sessionRoundType: ProgramRegistrationSessionRoundType
   onSessionRoundTypeChange: (value: ProgramRegistrationSessionRoundType) => void
   educationFormScheduleDetail: ProgramRegistrationScheduleDetailKind
@@ -74,6 +77,8 @@ function ScheduleDetailRadioRow({
 }
 
 export function TrainedTeachersRegistrationTypeSettingsParagraph({
+  programType,
+  onProgramTypeChange,
   sessionRoundType,
   onSessionRoundTypeChange,
   educationFormScheduleDetail,
@@ -111,11 +116,13 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
           <DetailInfoForm.Field
             label="교육 진행 구조"
             edit={
-              <CmsRadioGroup size="large" value="curriculum" onChange={() => {}}>
+              <CmsRadioGroup
+                size="large"
+                value={programType}
+                onChange={e => onProgramTypeChange(e.target.value as ProgramRegistrationType)}
+              >
                 <CmsRadio value="curriculum">커리큘럼형</CmsRadio>
-                <CmsRadio value="schedule" disabled>
-                  일정형
-                </CmsRadio>
+                <CmsRadio value="schedule">일정형</CmsRadio>
               </CmsRadioGroup>
             }
             view="-"
