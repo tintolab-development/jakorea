@@ -161,7 +161,15 @@ function resolveMergedDetailAddressDetail(
   return fetchedOk || listOk || fetchedDetail || listDetail || undefined
 }
 
-/** 자택 주소 — 상세 GET(비마스킹) 우선, 마스킹이면 목록 값 */
+function addressWhitespaceTokenCount(value: string): number {
+  return value.trim().split(/\s+/).filter(Boolean).length
+}
+
+/**
+ * 자택 주소 — 상세 GET(비마스킹) 우선.
+ * 단, 상세 GET이 시·군·구(토큰 ≤2)로만 잘린 마스킹이고 목록에 더 긴 도로명이 있으면
+ * 목록 값을 유지해 블러 꼬리가 사라지지 않게 한다.
+ */
 function resolveMergedDetailAddress(
   listUser: Omit<User, 'password'>,
   fetched: Omit<User, 'password'>
@@ -171,6 +179,15 @@ function resolveMergedDetailAddress(
   const fetchedOk =
     fetchedAddr && !isInstructorMaskedPlaceholder(fetchedAddr) ? fetchedAddr : undefined
   const listOk = listAddr && !isInstructorMaskedPlaceholder(listAddr) ? listAddr : undefined
+  if (fetchedOk && listOk) {
+    if (
+      addressWhitespaceTokenCount(fetchedOk) <= 2 &&
+      addressWhitespaceTokenCount(listOk) > addressWhitespaceTokenCount(fetchedOk)
+    ) {
+      return listOk
+    }
+    return fetchedOk
+  }
   return fetchedOk || listOk || undefined
 }
 
