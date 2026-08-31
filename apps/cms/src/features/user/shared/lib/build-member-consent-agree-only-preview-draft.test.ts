@@ -57,8 +57,8 @@ describe('buildMemberConsentAgreeOnlyPreviewDraft', () => {
     if (subject?.kind !== 'single_item' || subject.variant !== 'short_essay') return
     const byId = Object.fromEntries((subject.items ?? []).map(i => [i.id, i.bodyText]))
     expect(byId['agreement-notice-subj-name']).toBe('홍길동')
-    expect(byId['agreement-notice-subj-birth']).toBe('19900115')
-    expect(byId['agreement-notice-subj-phone']).toBe('01012345678')
+    expect(byId['agreement-notice-subj-birth']).toBe('1990.01.15')
+    expect(byId['agreement-notice-subj-phone']).toBe('010-1234-5678')
   })
 
   it('지급조서 — paymentBasicInfo autofill', () => {
