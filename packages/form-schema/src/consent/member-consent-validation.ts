@@ -7,6 +7,7 @@ import {
   type WritingFormParagraph,
 } from '../writing-form/draft-schema.js'
 import type { PaymentStatementBasicInfoValues } from './payment-statement-basic-info.js'
+import { isPaymentStatementResidentNumberFormatInvalid } from './payment-statement-resident-number.js'
 import {
   portraitPersonalConsentAffiliationState,
   portraitPersonalConsentNameValue,
@@ -223,4 +224,13 @@ export function hasMemberConsentIncompleteRequiredFields(
   }
 
   return false
+}
+
+/** 지급조서 작성완료 — 필수 값은 채워졌으나 주민등록번호 형식이 잘못된 경우 */
+export function hasMemberConsentInvalidPaymentStatementResidentNumber(
+  options?: MemberConsentDraftValidationOptions
+): boolean {
+  const templateId = options?.templateId
+  if (templateId == null || !PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) return false
+  return isPaymentStatementResidentNumberFormatInvalid(options?.paymentStatementBasicInfo)
 }
