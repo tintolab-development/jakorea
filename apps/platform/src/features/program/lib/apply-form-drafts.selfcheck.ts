@@ -127,11 +127,13 @@ function testVolunteer() {
 }
 
 function testInstitutionGeneral() {
-  const { applyCase, templateCode, ids } = paragraphIds(
+  const { applyCase, templateCode, ids, detail } = paragraphIds(
     PROGRAM_APPLY_FORM_CASE_SSOT_IDS.institutionGeneral
   )
   assert.equal(applyCase, 'institution-general')
   assert.equal(templateCode, 'application-participant-school')
+  assert.equal(detail.educationScheduleMode, 'date')
+  assert.equal(detail.educationScheduleLines.length, 2)
   assert.deepEqual(ids, [
     PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.personalInfoCollection,
     PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent,

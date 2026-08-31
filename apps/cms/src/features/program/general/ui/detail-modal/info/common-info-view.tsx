@@ -46,6 +46,7 @@ import {
   padCurriculumSessionLabel,
   padEventScheduleLabel,
   scheduleDetailsPreEducationSyncEqual,
+  shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
   shouldLockEducationScheduleCalendarToggles,
   PRE_EDUCATION_SCHEDULE_LABEL,
@@ -3638,7 +3639,7 @@ function ScheduleDetailEditBlock({
           >
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
-                label="일정명"
+                label={groupCount > 1 ? '일정명' : '일정 상세'}
                 fullRow
                 edit={
                   <Controller
@@ -3649,7 +3650,11 @@ function ScheduleDetailEditBlock({
                         {...field}
                         value={field.value ?? ''}
                         inputSize="medium"
-                        placeholder="세부 일정명을 작성하세요"
+                        placeholder={
+                          groupCount > 1
+                            ? '세부 일정명을 작성하세요'
+                            : '일정 상세 내용을 작성하세요'
+                        }
                         width="100%"
                         style={{ minWidth: 0, flex: '1 1 0' }}
                       />
@@ -3719,6 +3724,11 @@ function ScheduleProgressEditSection({
   const blockKind: 'sub' | 'event' = multiAllPer ? 'event' : 'sub'
   const scheduleCurriculumPreEducation =
     editForm.watch('scheduleCurriculumPreEducation') ?? false
+  const educationScheduleMode = editForm.watch('educationScheduleMode') ?? 'date'
+  const allowProgressGroupAdd = shouldAllowScheduleProgressGroupAdd({
+    sessionRound,
+    educationScheduleMode,
+  })
 
   const { fields, append, remove } = useFieldArray({
     control: editForm.control,
@@ -3726,7 +3736,7 @@ function ScheduleProgressEditSection({
   })
 
   const scheduleGroupCount = Math.min(
-    Math.max(1, editForm.watch('scheduleGroupCount') ?? 2),
+    Math.max(1, editForm.watch('scheduleGroupCount') ?? 1),
     PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
   )
   const effectiveScheduleGroupCount = isMultiRound ? 1 : scheduleGroupCount
@@ -3766,6 +3776,7 @@ function ScheduleProgressEditSection({
     if (
       isMultiRound ||
       multiAllPer ||
+      !allowProgressGroupAdd ||
       scheduleGroupCount >= PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
     ) {
       return
@@ -3781,7 +3792,7 @@ function ScheduleProgressEditSection({
       })),
       { shouldDirty: true }
     )
-  }, [editForm, isMultiRound, multiAllPer, scheduleGroupCount])
+  }, [allowProgressGroupAdd, editForm, isMultiRound, multiAllPer, scheduleGroupCount])
 
   const handleRemoveGroup = useCallback(
     (groupIndex: number) => {
@@ -3863,7 +3874,7 @@ function ScheduleProgressEditSection({
             >
               강의 행사 일정 추가
             </CmsButton>
-          ) : isMultiRound ? (
+          ) : isMultiRound || !allowProgressGroupAdd ? (
             <CmsButton
               type="button"
               variant="secondary"

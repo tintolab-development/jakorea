@@ -204,7 +204,7 @@ function buildGeneralCommonInfo(
     return {
       educationFormLabel,
       sponsorDisplayName: 'JA Korea',
-      educationScheduleMode: 'period',
+      educationScheduleMode: 'date',
       maxScheduleCount: 3,
       curriculumSessions: CURRICULUM_MULTI_SESSIONS.map(row => ({ ...row })),
       educationScheduleLines: [...DEFAULT_EDUCATION_SCHEDULE_LINES],
@@ -214,7 +214,7 @@ function buildGeneralCommonInfo(
   return {
     educationFormLabel,
     sponsorDisplayName: 'JA Korea',
-    educationScheduleMode: 'period',
+    educationScheduleMode: 'date',
     maxScheduleCount: 3,
     curriculumSessions: CURRICULUM_SINGLE_SESSIONS.map(row => ({ ...row })),
     educationScheduleLines: [...DEFAULT_EDUCATION_SCHEDULE_LINES],

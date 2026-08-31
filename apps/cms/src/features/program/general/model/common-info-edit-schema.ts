@@ -136,7 +136,7 @@ export const generalProgramCommonInfoEditSchema = z
     ipsDetail: z.string().optional(),
     participationMethod: z.enum(['individual', 'team']).optional(),
     curriculumSessions: z.array(curriculumSessionSchema),
-    scheduleGroupCount: z.coerce.number().min(1).max(4).default(2),
+    scheduleGroupCount: z.coerce.number().min(1).max(4).default(1),
     scheduleDetails: z.array(scheduleDetailFormSchema),
     scheduleCurriculumPreEducation: z.boolean().optional(),
     educationScheduleMode: z.enum(['date', 'period']).default('date'),
@@ -223,7 +223,7 @@ export function resolveScheduleDetailsFormState(
 
   const raw = commonInfo.scheduleDetails ?? []
   if (raw.length === 0) {
-    const groupCount = 2
+    const groupCount = 1
     return {
       scheduleGroupCount: groupCount,
       scheduleCurriculumPreEducation: commonInfo.scheduleCurriculumPreEducation ?? false,
