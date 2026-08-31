@@ -16,6 +16,7 @@ import type {
   FileAttachmentParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
+  AGREEMENT_NOTICE_PARAGRAPH_IDS,
   isAgreementLockedSystemParagraph,
   normalizeHorizontalTableParagraph,
   type HorizontalTableParagraph,
@@ -57,6 +58,7 @@ import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-stat
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
+import { applyConsentShortEssayItemInput } from '@jakorea/form-schema/consent'
 import './form-document-preview-body.css'
 
 function noopOnParagraphChange<T>(_next: T): void {}
@@ -122,20 +124,39 @@ function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoi
   const allowMultiple = paragraph.allowMultiple ?? false
   const singleId = paragraph.selectedPreviewSingleId ?? null
   const multi = new Set(paragraph.selectedPreviewMultipleIds ?? [])
+
+  if (allowMultiple) {
+    return (
+      <div className="form-document-preview-multiple-choice">
+        {items.map(item => {
+          const checked = multi.has(item.id)
+          return (
+            <div key={item.id} className="form-document-preview-multiple-choice__row">
+              <span className="form-document-preview-multiple-choice__mark" aria-hidden>
+                {checked ? '☑' : '☐'}
+              </span>
+              <span>{item.label}</span>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
   return (
-    <div className="form-document-preview-multiple-choice">
-      {items.map(item => {
-        const checked = allowMultiple ? multi.has(item.id) : singleId === item.id
-        const mark = allowMultiple ? (checked ? '☑' : '☐') : checked ? '●' : '○'
-        return (
-          <div key={item.id} className="form-document-preview-multiple-choice__row">
-            <span className="form-document-preview-multiple-choice__mark" aria-hidden>
-              {mark}
-            </span>
-            <span>{item.label}</span>
-          </div>
-        )
-      })}
+    <div className="form-editor-body">
+      <CmsRadioGroup
+        className="form-editor-table-bottom-consent"
+        size="large"
+        value={singleId ?? undefined}
+        style={{ pointerEvents: 'none' }}
+      >
+        {items.map(item => (
+          <CmsRadio key={item.id} value={item.id}>
+            {item.label}
+          </CmsRadio>
+        ))}
+      </CmsRadioGroup>
     </div>
   )
 }
@@ -180,7 +201,11 @@ function DocumentTextInputBlockReadonly({
           <th scope="row">{safeTrim(item.label) || fallbackLabel}</th>
         </tr>
         <tr>
-          <td>{safeTrim(item.bodyText) || item.placeholder || fallbackText}</td>
+          <td>
+            {safeTrim(applyConsentShortEssayItemInput(item.id, item.bodyText)) ||
+              item.placeholder ||
+              fallbackText}
+          </td>
         </tr>
       </tbody>
     </table>
@@ -248,7 +273,11 @@ function DocumentShortEssayReadonly({
               {item.label ?? `Title ${String(index + 1).padStart(2, '0')}`}
             </div>
           ) : null}
-          <div>{safeTrim(item.bodyText) || item.placeholder || ph}</div>
+          <div>
+            {safeTrim(applyConsentShortEssayItemInput(item.id, item.bodyText)) ||
+              item.placeholder ||
+              ph}
+          </div>
         </div>
       ))}
     </div>
@@ -314,16 +343,20 @@ function renderBody(
       }
       const ph = safeTrim(p.bodyPlaceholder) || '텍스트를 작성해 주세요'
       const body = safeTrim(p.bodyText)
+      const isNoticeInstitutionEmpty =
+        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution && !body
+      const display = isNoticeInstitutionEmpty ? '-' : body || ph
+      const filled = Boolean(body) || isNoticeInstitutionEmpty
       return (
         <div className="form-editor-body explanation-text">
           <div
             className={
-              body
+              filled
                 ? 'form-document-preview-paragraph__body-text form-document-preview-paragraph__body-text--explanation-filled'
                 : 'form-document-preview-paragraph__body-text form-document-preview-paragraph__body-text--explanation-placeholder'
             }
           >
-            {body || ph}
+            {display}
           </div>
           {p.showBottomConsent === true || p.id === 'agreement-portrait-intro' ? (
             <CmsRadioGroup

@@ -28,19 +28,35 @@
   width: 280px;
 }
 
-.id-type-with-input__input .cms-input__control {
-  width: 100%;
-  min-width: 120px;
+.id-type-with-input__resident {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-width: 0;
+  width: 360px;
+  max-width: 100%;
 }
 
-.id-type-with-input__value-text {
-  color: var(--default-BK, #3d3d3d);
+.id-type-with-input__resident-input.cms-input {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+}
+
+.id-type-with-input__dash {
+  flex-shrink: 0;
+  color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
-  white-space: nowrap;
+}
+
+.id-type-with-input__input .cms-input__control {
+  width: 100%;
+  min-width: 120px;
 }
 
 /* 문서 모드 — ●/○ 텍스트 레이블 (A4 미리보기) */

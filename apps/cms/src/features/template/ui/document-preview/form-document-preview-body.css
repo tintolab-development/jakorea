@@ -43,12 +43,24 @@
   margin-bottom: 8px;
 }
 
+/* 양식 미리보기 — 단락 설명(서약 조항 본문 등). 카드·작성 화면 설명 14px는 유지 */
+.form-document-preview-paragraph--content-only
+  .form-document-preview-paragraph__description-text {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  opacity: 1;
+}
+
 .form-document-preview-paragraph__title-row {
   position: relative;
   display: inline-flex;
   align-items: flex-start;
   min-width: 0;
-  padding-left: 8px;
+  padding-left: 0;
 }
 
 .form-document-preview-paragraph__required {
@@ -145,10 +157,11 @@
 
 .form-document-preview-paragraph__title-text {
   font-family: Pretendard, sans-serif;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
   line-height: 150%;
-  color: var(--color-text-primary, #1f1f1f);
+  color: var(--main-BK, #3d3d3d);
   white-space: pre-wrap;
 }
 
@@ -160,9 +173,14 @@
   white-space: pre-wrap;
 }
 
-/* 설명글_텍스트형 본문 — placeholder만 회색, 내용 있을 때 main-BK · 긴 텍스트 줄바꿈 */
+/* 설명글_텍스트형 본문 — 양식 미리보기 공통 서식, placeholder만 회색 */
 .form-document-preview-paragraph__body-text--explanation-placeholder,
 .form-document-preview-paragraph__body-text--explanation-filled {
+  font-family: Pretendard, sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;

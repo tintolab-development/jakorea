@@ -1,6 +1,9 @@
-import { CmsInput, CmsRadio } from '@/shared/ui'
+import { CmsInput, CmsNumericInput, CmsRadio } from '@/shared/ui'
 import {
   AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID,
+  isIdTypeResidentOptionId,
+  joinIdTypeResidentInputValue,
+  splitIdTypeResidentInputValue,
   type IdTypeWithInputParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -40,12 +43,15 @@ export function IdTypeWithInputBody({
         options.some(o => o.id === paragraph.selectedOptionId)
       ? paragraph.selectedOptionId
       : (options[0]?.id ?? null)
+  const isResident = isIdTypeResidentOptionId(selectedId)
+  const residentParts = splitIdTypeResidentInputValue(paragraph.inputValue)
 
   const ph =
     selectedId != null
       ? placeholderForOption(selectedId, paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요')
       : paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요'
   const radiosDisabled = documentMode || !isEditMode || lockResidentIdType
+  const inputsDisabled = documentMode || !isEditMode
 
   const setSelected = (nextId: string) => {
     onChange({
@@ -56,6 +62,18 @@ export function IdTypeWithInputBody({
         paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요'
       ),
       inputValue: '',
+    })
+  }
+
+  const patchInputValue = (inputValue: string) => {
+    if (!isEditMode) return
+    onChange({
+      ...paragraph,
+      selectedOptionId: lockResidentIdType
+        ? AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID
+        : paragraph.selectedOptionId,
+      inputValue,
+      inputPlaceholder: ph,
     })
   }
 
@@ -81,10 +99,40 @@ export function IdTypeWithInputBody({
           </CmsRadio>
         ))}
       </CmsRadio.Group>
-      {documentMode ? (
-        <span className="id-type-with-input__value-text">
-          {paragraph.inputValue.trim()}
-        </span>
+      {isResident ? (
+        <div className="id-type-with-input__resident">
+          <CmsNumericInput
+            className="id-type-with-input__resident-input"
+            mode="numericText"
+            inputSize="large"
+            width="100%"
+            value={residentParts.front}
+            placeholder="주민등록 앞 6자리"
+            disabled={inputsDisabled}
+            maxLength={6}
+            aria-label="주민등록번호 앞자리"
+            onValueChange={value =>
+              patchInputValue(joinIdTypeResidentInputValue(value, residentParts.back))
+            }
+          />
+          <span className="id-type-with-input__dash" aria-hidden>
+            -
+          </span>
+          <CmsNumericInput
+            className="id-type-with-input__resident-input"
+            mode="numericText"
+            inputSize="large"
+            width="100%"
+            value={residentParts.back}
+            placeholder="주민등록 뒤 7자리"
+            disabled={inputsDisabled}
+            maxLength={7}
+            aria-label="주민등록번호 뒷자리"
+            onValueChange={value =>
+              patchInputValue(joinIdTypeResidentInputValue(residentParts.front, value))
+            }
+          />
+        </div>
       ) : (
         <CmsInput
           className="id-type-with-input__input"
@@ -92,18 +140,8 @@ export function IdTypeWithInputBody({
           width={280}
           value={paragraph.inputValue}
           placeholder={ph}
-          disabled={!isEditMode}
-          onChange={e => {
-            if (!isEditMode) return
-            onChange({
-              ...paragraph,
-              selectedOptionId: lockResidentIdType
-                ? AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID
-                : paragraph.selectedOptionId,
-              inputValue: e.target.value,
-              inputPlaceholder: ph,
-            })
-          }}
+          disabled={inputsDisabled}
+          onChange={e => patchInputValue(e.target.value)}
         />
       )}
     </div>
