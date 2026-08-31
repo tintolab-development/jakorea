@@ -9,6 +9,23 @@ export const GENERAL_RECRUIT_TAB_LABELS: Record<GeneralRecruitTabKey, string> = 
   volunteers: '봉사자 모집 정보',
 }
 
+export function generalRecruitTabItems(options: {
+  showInstructor: boolean
+  showVolunteer: boolean
+  /** 일반(기관)은 「참여 기관 모집 정보」 */
+  institutionsLabel?: string
+}): { key: GeneralRecruitTabKey; label: string }[] {
+  const institutionsLabel = options.institutionsLabel ?? GENERAL_RECRUIT_TAB_LABELS.institutions
+  return GENERAL_RECRUIT_TAB_KEYS.filter(key => {
+    if (key === 'instructors') return options.showInstructor
+    if (key === 'volunteers') return options.showVolunteer
+    return true
+  }).map(key => ({
+    key,
+    label: key === 'institutions' ? institutionsLabel : GENERAL_RECRUIT_TAB_LABELS[key],
+  }))
+}
+
 export function normalizeGeneralRecruitTab(
   tab: string | null | undefined,
   options: { showInstructor: boolean; showVolunteer: boolean }
@@ -16,15 +33,4 @@ export function normalizeGeneralRecruitTab(
   if (tab === 'instructors' && options.showInstructor) return 'instructors'
   if (tab === 'volunteers' && options.showVolunteer) return 'volunteers'
   return 'institutions'
-}
-
-export function generalRecruitTabItems(options: {
-  showInstructor: boolean
-  showVolunteer: boolean
-}): { key: GeneralRecruitTabKey; label: string }[] {
-  return GENERAL_RECRUIT_TAB_KEYS.filter(key => {
-    if (key === 'instructors') return options.showInstructor
-    if (key === 'volunteers') return options.showVolunteer
-    return true
-  }).map(key => ({ key, label: GENERAL_RECRUIT_TAB_LABELS[key] }))
 }

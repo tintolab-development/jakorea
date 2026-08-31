@@ -400,6 +400,9 @@ export class GeneralProgramEditPage {
     await this.updateRecruitmentTab(programId, '참여자 모집 정보', 'institutions', () =>
       this.fillRecruitParticipantFields()
     )
+    await this.updateRecruitmentTab(programId, '참여 기관 모집 정보', 'institutions', () =>
+      this.fillRecruitParticipantFields()
+    )
     await this.updateRecruitmentTab(programId, '강사 모집 정보', 'instructors', () =>
       this.fillRecruitInstructorFields()
     )
@@ -510,6 +513,7 @@ export class GeneralProgramEditPage {
       '비고란을 작성하세요 (없으면 -로 입력)',
       EDIT_REMARK
     )
+    await fillByPlaceholderIfVisible(this.page, '비고란을 작성하세요', EDIT_REMARK)
 
     await fillByPlaceholderIfVisible(this.page, '프로그램 설명을 작성하세요', EDIT_DESCRIPTION)
     await fillByPlaceholderIfVisible(this.page, '모집 안내를 작성하세요', EDIT_RECRUIT_GUIDE)

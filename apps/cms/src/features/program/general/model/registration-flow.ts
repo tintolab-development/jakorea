@@ -39,7 +39,7 @@ export const GENERAL_PROGRAM_RECRUIT_TAB_KEYS = [
 export type GeneralProgramRecruitTabKey = (typeof GENERAL_PROGRAM_RECRUIT_TAB_KEYS)[number]
 
 export const GENERAL_PROGRAM_RECRUIT_TAB_LABELS: Record<GeneralProgramRecruitTabKey, string> = {
-  'recruit-participant-school': '참여자 모집 정보',
+  'recruit-participant-school': '참여 기관 모집 정보',
   'recruit-participant-individual': '참여자 모집 정보',
   'recruit-instructor': '강사 모집 정보',
   'recruit-volunteer': '봉사자 모집 정보',

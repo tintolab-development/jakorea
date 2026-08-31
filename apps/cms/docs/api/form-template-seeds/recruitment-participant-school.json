@@ -14,7 +14,7 @@
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
-        "paragraphTitle": "참여자 모집 정보",
+        "paragraphTitle": "참여 기관 모집 정보",
         "paragraphDescription": "설명 입력",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",

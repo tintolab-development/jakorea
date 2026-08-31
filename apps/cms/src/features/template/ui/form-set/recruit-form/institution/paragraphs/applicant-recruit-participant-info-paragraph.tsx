@@ -33,11 +33,6 @@ const NEED_OR_NOT_OPTIONS = [
   { label: '불필요', value: 'none' },
 ] as const
 
-const CERTIFICATE_OPTIONS = [
-  { label: '제공', value: 'provide' },
-  { label: '미제공', value: 'none' },
-] as const
-
 const MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 const inquiryColumnStyle: CSSProperties = {
   display: 'flex',
@@ -109,29 +104,6 @@ function NeedOrNotRadioGroup({
   )
 }
 
-function CertificateRadioGroup({
-  value,
-  onChange,
-}: {
-  value: string
-  onChange: (next: string) => void
-}) {
-  return (
-    <CmsRadioGroup
-      size="large"
-      value={value}
-      onChange={e => onChange(String(e.target.value))}
-      className={RECRUITMENT_RADIO_CLASS}
-    >
-      {CERTIFICATE_OPTIONS.map(option => (
-        <CmsRadio key={option.value} value={option.value} size="large">
-          {option.label}
-        </CmsRadio>
-      ))}
-    </CmsRadioGroup>
-  )
-}
-
 export type ApplicantRecruitParticipantInfoParagraphProps = {
   /**
    * 학교/기관 대상 프로그램일 때만 최대 강사·학급·일정·차시 입력 노출.
@@ -177,11 +149,6 @@ export function ApplicantRecruitParticipantInfoParagraph({
     APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.studentListRequired,
     defaults?.studentListRequired ?? 'need'
   )
-  const [certificateProvided, setCertificateProvided] = useApplicantRecruitInstitutionOverlayKv<string>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.certificateProvided,
-    'provide'
-  )
-
   const [maxInstructors, setMaxInstructors] = useApplicantRecruitInstitutionOverlayKv<
     number | undefined
   >(
@@ -507,6 +474,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
   }
 
   const isTrainedTeachers = layoutVariant === 'trainedTeachers'
+  const isGeneral = layoutVariant === 'general'
 
   return (
     <div className="applicant-recruit-participant-info-paragraph__forms">
@@ -604,16 +572,20 @@ export function ApplicantRecruitParticipantInfoParagraph({
               />
             </DetailInfoForm.Row>
 
-            {showMaxScheduleCountField || showMaxSessionsPerDayField ? (
+            {(isGeneral && showInstitutionApplicationLimits) ||
+            showMaxScheduleCountField ||
+            showMaxSessionsPerDayField ? (
               <DetailInfoForm.Row
                 type={
-                  showMaxScheduleCountField && showMaxSessionsPerDayField ? 'double' : 'single'
+                  isGeneral || (showMaxScheduleCountField && showMaxSessionsPerDayField)
+                    ? 'double'
+                    : 'single'
                 }
               >
-                {showMaxScheduleCountField ? (
+                {isGeneral || showMaxScheduleCountField ? (
                   <DetailInfoForm.Field
                     label="신청 가능 최대 일정 수"
-                    fullRow={!showMaxSessionsPerDayField}
+                    fullRow={!isGeneral && !showMaxSessionsPerDayField}
                     edit={
                       <NumberWithSuffixRow
                         placeholder="최대값 입력"
@@ -625,10 +597,10 @@ export function ApplicantRecruitParticipantInfoParagraph({
                     view="-"
                   />
                 ) : null}
-                {showMaxSessionsPerDayField ? (
+                {isGeneral || showMaxSessionsPerDayField ? (
                   <DetailInfoForm.Field
                     label="신청 가능 1일 최대 차시"
-                    fullRow={!showMaxScheduleCountField}
+                    fullRow={!isGeneral && !showMaxScheduleCountField}
                     edit={
                       <NumberWithSuffixRow
                         placeholder="최대값 입력"
@@ -684,16 +656,26 @@ export function ApplicantRecruitParticipantInfoParagraph({
           <DetailInfoForm.Field
             label="교육 대상"
             edit={
-              <CmsSelect
-                mode="multiple"
-                inputSize="medium"
-                width={240}
-                withAllOption={false}
-                placeholder="교육 대상을 선택하세요"
-                options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
-                value={targetLevels}
-                onChange={v => setTargetLevels(Array.isArray(v) ? v.map(String) : [])}
-              />
+              isGeneral ? (
+                <CmsSelect
+                  inputSize="medium"
+                  width={240}
+                  options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+                  value={targetLevels[0] ?? ''}
+                  onChange={v => setTargetLevels(v ? [String(v)] : [])}
+                />
+              ) : (
+                <CmsSelect
+                  mode="multiple"
+                  inputSize="medium"
+                  width={240}
+                  withAllOption={false}
+                  placeholder="교육 대상을 선택하세요"
+                  options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+                  value={targetLevels}
+                  onChange={v => setTargetLevels(Array.isArray(v) ? v.map(String) : [])}
+                />
+              )
             }
             view="-"
           />
@@ -705,22 +687,6 @@ export function ApplicantRecruitParticipantInfoParagraph({
             view="-"
           />
         </DetailInfoForm.Row>
-
-        {isTrainedTeachers ? null : (
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="수료증 발급 여부"
-              fullRow
-              edit={
-                <CertificateRadioGroup
-                  value={certificateProvided}
-                  onChange={setCertificateProvided}
-                />
-              }
-              view="-"
-            />
-          </DetailInfoForm.Row>
-        )}
 
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
