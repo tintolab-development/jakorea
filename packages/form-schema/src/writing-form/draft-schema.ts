@@ -2471,7 +2471,8 @@ const AGREEMENT_NOTICE_CONFIRMATION_CLOSING: ClosingParagraph = {
   paragraphTitle: '',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
-  body: '위와 같은 행정정보 공동이용에 대한 내용을 모두 확인했습니다.',
+  /** 작성·미리보기에서 문구 없음. A4는 본문·날짜/서명 사이 구분선으로만 사용 */
+  body: '',
 }
 
 const AGREEMENT_NOTICE_TABLE_FIRST_ROW: [string, string, string, string] = [
@@ -2640,7 +2641,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
   }
 }
 
-/** 구 저장본에 confirmationClosing이 없으면 systemDate 앞에 삽입. 제목형 작성 기간은 항상 off. */
+/** 구 저장본에 confirmationClosing이 없으면 systemDate 앞에 삽입. 제목형 작성 기간은 항상 off. 확인 문구는 비운다. */
 export function ensureAgreementNoticeConfirmationClosing(
   draft: WritingFormDraft
 ): WritingFormDraft {
@@ -2652,6 +2653,14 @@ export function ensureAgreementNoticeConfirmationClosing(
       p.showWritingPeriodOnForm
     ) {
       return { ...p, showWritingPeriodOnForm: false }
+    }
+    if (
+      p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing &&
+      p.kind === 'description' &&
+      p.variant === 'closing' &&
+      p.body !== ''
+    ) {
+      return { ...p, body: '' }
     }
     return p
   })
