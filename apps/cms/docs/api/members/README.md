@@ -66,6 +66,7 @@ pnpm --filter cms package:member-management-seed-handoff -- --openapi
 | 문서 | 용도 |
 |------|------|
 | [**member-pre-register-filled-document-500-backend-request-2026-08-26.md**](./member-pre-register-filled-document-500-backend-request-2026-08-26.md) | **백엔드 전달** — 회원·강사 신규 등록에서 동의서 작성 후 pre-register **HTTP 500** (P0) |
+| [**member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md**](./member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md) | **백엔드 전달** — 상세 PATCH `PAYMENT_STATEMENT_CONSENT` current **404** · 성범죄 파일 upload **401** (P0) |
 | [**member-consent-filled-document-backend-handoff-2026-08-25.md**](./member-consent-filled-document-backend-handoff-2026-08-25.md) | **백엔드 전달** — 회원 동의서 5종 작성 본문 저장·조회 (`WritingFormDraft` · 지급조서 sidecar · 성범죄 파일) · UI 기준 저장 항목 · **개인·교사·강사·강사겸교사** (P1) |
 | [**portal-identity-onboarding-backend-request-2026-08-18.md**](./portal-identity-onboarding-backend-request-2026-08-18.md) | **백엔드 전달** — Portal 본인인증·온보딩 403/500 · CMS↔Portal 소속 동기화 · 비밀번호/409 메시지 (P0/P1) |
 | [**admin-register-signup-type-portal-profile-backend-request-2026-08-14.md**](./admin-register-signup-type-portal-profile-backend-request-2026-08-14.md) | **백엔드 전달** — 가입유형 플래그 · 개인 학년(grade) · Portal 주소/소속 GET·PATCH (P0/P1) |
@@ -96,4 +97,4 @@ pnpm --filter cms package:members-be-handoff -- --openapi
 pnpm --filter cms package:members-be-handoff -- --out=~/Desktop/jakorea-members-be-handoff
 ```
 
-**Last updated:** 2026-08-28 (회원관리 DB seed Cursor prompt · Notion parity 검증)
+**Last updated:** 2026-08-31 (회원 동의 current 404 · crime upload 401 BE 요청)
