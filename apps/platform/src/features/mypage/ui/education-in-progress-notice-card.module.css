@@ -1,0 +1,116 @@
+.card {
+  display: flex;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: var(--spacing-28);
+  width: 100%;
+  min-width: 0;
+  padding: var(--spacing-28);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-24);
+  background: var(--color-neutral-white);
+}
+
+.card:hover {
+  border-color: var(--color-primary-500);
+}
+
+.upper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  min-width: 0;
+}
+
+.title {
+  display: block;
+  width: 100%;
+  margin: 0 0 var(--spacing-12);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview {
+  display: -webkit-box;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+  width: 100%;
+  min-width: 0;
+}
+
+.authorBlock {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.author {
+  display: block;
+  margin: 0 0 2px;
+}
+
+.dateRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.date,
+.readStatus {
+  display: inline;
+  margin: 0;
+}
+
+.dot {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  flex-shrink: 0;
+  margin: 0 var(--spacing-8);
+  border-radius: 50%;
+  background: var(--color-neutral-cool-500);
+  vertical-align: middle;
+}
+
+.stats {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.statIcon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.statCount {
+  display: inline;
+  margin: 0;
+}

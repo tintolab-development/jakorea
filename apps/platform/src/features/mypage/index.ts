@@ -15,6 +15,10 @@ export type {
   EducationDisplayStatus,
   EducationDisplayStatusTone,
 } from './model/education-application-types'
+export type {
+  EducationInProgressFile,
+  EducationInProgressNotice,
+} from './model/education-in-progress-notice-types'
 export { EDUCATION_APPLICATION_PAGE_SIZE } from './model/education-application-types'
 export {
   INSTRUCTOR_APPLY_PATH,
@@ -40,6 +44,10 @@ export {
   subscribeMockEducationApplications,
 } from './lib/mock-education-applications'
 export {
+  getMockEducationInProgressFiles,
+  getMockEducationInProgressNotices,
+} from './lib/mock-education-in-progress-notices'
+export {
   compareEducationApplicationItems,
   listEducationApplications,
   matchesEducationApplicationTab,
@@ -53,16 +61,20 @@ export {
   getEducationDisplayStatusLabel,
   getEducationDisplayStatusTone,
   resolveEducationApplicationTab,
+  canShowEducationApplicationContent,
 } from './lib/education-display-status'
 export {
   DEFAULT_EDUCATION_APPLICATION_LIST_PARAMS,
   buildEducationApplicationListPath,
   readEducationApplicationListParams,
+  resolveEducationListBackPath,
 } from './lib/education-list-params'
 export { EducationApplicationListItemRow } from './ui/application-list-item'
+export { EducationApplicationContent } from './ui/education-application-content'
 export { EducationCancelConfirm } from './ui/education-cancel-confirm'
 export { EducationDetailBack } from './ui/education-detail-back'
 export { EducationDetailHeader } from './ui/education-detail-header'
+export { EducationInProgressNoticePanel } from './ui/education-in-progress-notice-panel'
 export {
   DocumentPassBanner,
   shouldShowDocumentPassBanner,
