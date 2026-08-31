@@ -13,6 +13,7 @@ import type { FilledDocumentRequestSchemaJson } from '@/shared/api/generated/mem
 import type { PaymentStatementBasicInfo } from '@/shared/api/generated/members/schemas/paymentStatementBasicInfo'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 import { PAYMENT_STATEMENT_DEFAULT_PURPOSE } from '@jakorea/form-schema/consent'
+import { normalizeNoticeIdTypeResidentInputInDraft } from '@/features/template/model/writing-form-draft.schema'
 
 const AGREEMENT_TEMPLATE_CODE_BY_TERMS_TYPE: Record<string, string> = {
   PORTRAIT_RIGHTS: 'agreement-portrait',
@@ -88,7 +89,9 @@ export function mapAgreementSnapshotToFilledDocument(
 ): FilledDocumentRequest {
   const templateCode = AGREEMENT_TEMPLATE_CODE_BY_TERMS_TYPE[termsType]
   const request: FilledDocumentRequest = {
-    schemaJson: snapshot.draft as unknown as FilledDocumentRequestSchemaJson,
+    schemaJson: normalizeNoticeIdTypeResidentInputInDraft(
+      snapshot.draft
+    ) as unknown as FilledDocumentRequestSchemaJson,
   }
   if (templateCode) request.templateCode = templateCode
   if (templateCode === 'agreement-third-party') {

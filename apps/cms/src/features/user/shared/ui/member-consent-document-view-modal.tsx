@@ -9,6 +9,7 @@ import {
 import { loadWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import {
   ensureAgreementNoticeConfirmationClosing,
+  normalizeNoticeIdTypeResidentInputInDraft,
   normalizeWritingFormDraft,
   overlayAgreementNoticeSeedHorizontalTable,
   type WritingFormDraft,
@@ -70,7 +71,9 @@ export interface MemberConsentDocumentViewModalProps {
 function filledSchemaToDraft(schemaJson: unknown): WritingFormDraft | null {
   if (schemaJson == null || typeof schemaJson !== 'object') return null
   try {
-    return normalizeWritingFormDraft(schemaJson as WritingFormDraft)
+    return normalizeNoticeIdTypeResidentInputInDraft(
+      normalizeWritingFormDraft(schemaJson as WritingFormDraft)
+    )
   } catch {
     return null
   }

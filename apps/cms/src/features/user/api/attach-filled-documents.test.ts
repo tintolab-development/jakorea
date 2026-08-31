@@ -4,7 +4,11 @@ import {
   mapAgreementSnapshotToFilledDocument,
   mapPaymentBasicInfo,
 } from './attach-filled-documents'
-import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import {
+  createAgreementNoticeDraft,
+  normalizeWritingFormDraft,
+  type WritingFormDraft,
+} from '@/features/template/model/writing-form-draft.schema'
 import type { MemberRegisterConsentWriteSnapshots } from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import { ADMIN_PRE_REGISTER_TERMS_VERSION } from './build-pre-register-terms-agreements'
 
@@ -79,6 +83,37 @@ describe('mapAgreementSnapshotToFilledDocument', () => {
     })
     expect(filled.templateCode).toBe('agreement-portrait')
     expect(filled.paymentBasicInfo).toBeUndefined()
+  })
+
+  it('행정정보 주민등록번호는 schemaJson inputValue 한 칸으로 합친다', () => {
+    const draft = normalizeWritingFormDraft(createAgreementNoticeDraft())
+    const withResident: WritingFormDraft = {
+      ...draft,
+      paragraphs: draft.paragraphs.map(paragraph => {
+        if (paragraph.id !== 'agreement-notice-table') return paragraph
+        if (paragraph.kind !== 'single_item' || paragraph.variant !== 'horizontal_table') {
+          return paragraph
+        }
+        if (paragraph.idTypeWithInput == null) return paragraph
+        return {
+          ...paragraph,
+          idTypeWithInput: {
+            ...paragraph.idTypeWithInput,
+            inputValue: '9707211234567',
+          },
+        }
+      }),
+    }
+
+    const filled = mapAgreementSnapshotToFilledDocument('ADMINISTRATIVE_INFO_CONSENT', {
+      draft: withResident,
+    })
+    const schema = filled.schemaJson as unknown as WritingFormDraft
+    const table = schema.paragraphs.find(paragraph => paragraph.id === 'agreement-notice-table')
+    expect(table?.kind === 'single_item' && table.variant === 'horizontal_table').toBe(true)
+    if (table?.kind === 'single_item' && table.variant === 'horizontal_table') {
+      expect(table.idTypeWithInput?.inputValue).toBe('970721-1234567')
+    }
   })
 })
 

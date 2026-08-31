@@ -10,6 +10,7 @@ import { loadWritingFormTemplateDraft } from '@/features/template/lib/writing-fo
 import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
 import {
   ensureAgreementNoticeConfirmationClosing,
+  normalizeNoticeIdTypeResidentInputInDraft,
   normalizeWritingFormDraft,
   overlayAgreementNoticeSeedHorizontalTable,
   type WritingFormDraft,
@@ -32,8 +33,9 @@ import {
 import { normalizeMemberConsentWriteDraft } from '@/features/user/shared/lib/normalize-member-consent-write-draft'
 import {
   collectMemberConsentDisagreedRequiredLabels,
+  getMemberConsentInvalidNoticeSubjectContactAlertMessage,
   hasMemberConsentIncompleteRequiredFields,
-  hasMemberConsentInvalidPaymentStatementResidentNumber,
+  hasMemberConsentInvalidResidentNumberFormat,
   PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE,
 } from '@/features/user/shared/lib/validate-member-consent-draft'
 import { mergePaymentStatementBasicInfo } from '@jakorea/form-schema/consent'
@@ -96,7 +98,9 @@ export function MemberConsentAgreementModal({
 
     if (savedSnapshot?.draft) {
       const restored = cloneMemberConsentAgreementDraftSnapshot(savedSnapshot)
-      setDraft(normalizeWritingFormDraft(restored.draft))
+      setDraft(
+        normalizeNoticeIdTypeResidentInputInDraft(normalizeWritingFormDraft(restored.draft))
+      )
       setPaymentBasicInfo(mergePaymentStatementBasicInfo(restored.paymentBasicInfo))
       setIsDraftLoading(false)
       return
@@ -171,7 +175,16 @@ export function MemberConsentAgreementModal({
       return
     }
 
-    if (hasMemberConsentInvalidPaymentStatementResidentNumber(consentOptions)) {
+    const contactFormatMessage = getMemberConsentInvalidNoticeSubjectContactAlertMessage(draft)
+    if (contactFormatMessage != null) {
+      showAlert({
+        title: '안내',
+        content: contactFormatMessage,
+      })
+      return
+    }
+
+    if (hasMemberConsentInvalidResidentNumberFormat(draft, consentOptions)) {
       showAlert({
         title: '안내',
         content: PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE,
@@ -179,7 +192,7 @@ export function MemberConsentAgreementModal({
       return
     }
     const snapshot: MemberConsentAgreementDraftSnapshot = {
-      draft: normalizeWritingFormDraft(draft),
+      draft: normalizeNoticeIdTypeResidentInputInDraft(normalizeWritingFormDraft(draft)),
       paymentBasicInfo: mergePaymentStatementBasicInfo(paymentBasicInfo),
     }
     onSnapshotSave?.(cloneMemberConsentAgreementDraftSnapshot(snapshot))
