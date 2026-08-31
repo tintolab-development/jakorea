@@ -24,7 +24,7 @@ const agreementConfig = {
 
 const portraitConfig = {
   ...agreementConfig,
-  modalTitle: '초상권 수집/이용 동의',
+  modalTitle: '초상권 수집·이용 동의',
   paragraphBodyOptions: AGREEMENT_PORTRAIT_PARAGRAPH_BODY_OPTIONS,
 }
 
