@@ -22,7 +22,7 @@ export interface AccountPaymentListItemResponse {
   accountHolder?: string;
   netPaymentAmount?: number;
   /**
-     * 이체 예정일. 목록 날짜 필터(fromDate/toDate/year) 기준입니다.
+     * 이체 예정일. 목록 필터와 캘린더 배치 기준입니다.
      * @nullable
      */
   scheduledPaymentDate?: string | null;
@@ -57,7 +57,7 @@ export interface AccountPaymentListItemResponse {
      */
   sessionLabel?: string | null;
   /**
-     * 캘린더 출강일. 이체 예정일이 아닙니다.
+     * 교육 진행 일자(표시용). 캘린더 배치는 scheduledPaymentDate(이체 예정일)입니다.
      * @nullable
      */
   lectureDate?: string | null;
