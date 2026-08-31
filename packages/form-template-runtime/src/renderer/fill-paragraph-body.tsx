@@ -1,4 +1,5 @@
 import { Checkbox, Input, Radio } from 'antd'
+import { applyConsentShortEssayItemInput } from '@jakorea/form-schema/consent'
 import type {
   AgreementExplanationTextParagraph,
   MultipleChoiceParagraph,
@@ -235,7 +236,8 @@ function ShortEssayFill({
             placeholder={item.placeholder || fallbackPlaceholder}
             disabled={readonly}
             rows={rows}
-            onChange={nextValue => {
+            onChange={nextRaw => {
+              const nextValue = applyConsentShortEssayItemInput(item.id, nextRaw)
               onUpdateParagraph?.(paragraph.id, current => {
                 if (
                   current.kind !== 'single_item' ||
