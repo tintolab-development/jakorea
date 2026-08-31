@@ -149,6 +149,7 @@ function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoi
         className="form-editor-table-bottom-consent"
         size="large"
         value={singleId ?? undefined}
+        disabled
         style={{ pointerEvents: 'none' }}
       >
         {items.map(item => (
@@ -363,6 +364,7 @@ function renderBody(
               className="form-editor-table-bottom-consent"
               size="large"
               value={p.bottomConsent ?? 'agree'}
+              disabled
               style={{ pointerEvents: 'none' }}
             >
               <CmsRadio value="agree">동의</CmsRadio>
@@ -604,6 +606,12 @@ function renderBody(
           />
         )
       }
+      if (
+        renderMode === 'contentOnly' &&
+        c.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
+      ) {
+        return null
+      }
       return (
         <div className="form-document-preview-paragraph__body-text">{safeTrim(c.body) || ' '}</div>
       )
@@ -720,6 +728,8 @@ export function FormDocumentPreviewParagraph({
   if (renderMode === 'contentOnly') {
     const isFileAttachment =
       paragraph.kind === 'single_item' && paragraph.variant === 'file_attachment'
+    const isNoticeStackDivider =
+      paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
 
     return (
       <div
@@ -727,12 +737,19 @@ export function FormDocumentPreviewParagraph({
           'form-document-preview-paragraph',
           'form-document-preview-paragraph--content-only',
           isFileAttachment ? 'form-document-preview-paragraph--file-attachment' : '',
-          viewModel.isClosing ? 'form-document-preview-paragraph--content-only-closing' : '',
-          viewModel.isConfirmText && !viewModel.isClosing
+          isNoticeStackDivider
+            ? 'form-document-preview-paragraph--content-only-stack-divider'
+            : viewModel.isClosing
+              ? 'form-document-preview-paragraph--content-only-closing'
+              : '',
+          !isNoticeStackDivider && viewModel.isConfirmText && !viewModel.isClosing
             ? 'form-document-preview-paragraph--content-only-confirm'
             : '',
           viewModel.isClosingSignature
             ? 'form-document-preview-paragraph--content-only-closing-signature'
+            : '',
+          viewModel.isConfirmTextRule
+            ? 'form-document-preview-paragraph--content-only-confirm-rule'
             : '',
           overflow ? 'form-document-preview-paragraph--overflow' : '',
           isAuthoringSyncFocused ? 'form-document-preview-paragraph--authoring-sync-focus' : '',

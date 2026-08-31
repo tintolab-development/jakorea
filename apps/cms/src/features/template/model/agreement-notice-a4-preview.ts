@@ -16,6 +16,13 @@ export const getAgreementNoticeA4ParagraphGap: FormDocumentPreviewParagraphGapRe
   index,
   pageParagraphs
 ) => {
+  const previous = index > 0 ? pageParagraphs[index - 1] : undefined
+  if (
+    paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing ||
+    previous?.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
+  ) {
+    return 0
+  }
   const fallback = AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS.has(paragraph.id) ? 32 : 16
   return getAgreementClosingStackGapBefore(paragraph, index, pageParagraphs, fallback)
 }

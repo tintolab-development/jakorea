@@ -98,6 +98,33 @@
   min-width: 0;
 }
 
+/* 행정정보 공동이용 A4 — 마지막 본문과 날짜·서명 사이 구분선
+   custom-gaps가 인라인 marginTop: 0을 넣으므로 위 여백은 padding으로 둔다 */
+.form-document-preview-paragraph--content-only-stack-divider {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  padding: 40px 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.form-document-preview-paragraph--content-only-stack-divider::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: var(--table-line, #e0e0e0);
+}
+
+.form-document-preview-paragraph--content-only-stack-divider
+  .form-document-preview-paragraph__content-slot {
+  display: none;
+}
+
 /* 동의 A4 하단 확인 문구(closing / untitled explanation) — 카드 크롬 없이 텍스트만 */
 .form-document-preview-paragraph--content-only-closing,
 .form-document-preview-paragraph--content-only-confirm {
@@ -128,6 +155,24 @@
 .form-document-preview-paragraph--content-only-closing-signature
   .form-document-preview-paragraph__body-text {
   font-size: 24px;
+}
+
+/* 지급조서 최종확인·교육진행자 서약·초상권 확인 — 텍스트 위 구분선
+   custom-gaps가 인라인 marginTop: 0을 넣으므로 위 여백은 padding으로 둔다 */
+.form-document-preview-paragraph--content-only-closing.form-document-preview-paragraph--content-only-confirm-rule,
+.form-document-preview-paragraph--content-only-confirm.form-document-preview-paragraph--content-only-confirm-rule {
+  padding-top: 40px;
+}
+
+.form-document-preview-paragraph--content-only-confirm-rule::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 1px;
+  flex-shrink: 0;
+  align-self: stretch;
+  background: var(--table-line, #e0e0e0);
+  margin-bottom: 40px;
 }
 
 .form-document-preview-paragraph--overflow .paragraph-card__slot {

@@ -1066,6 +1066,7 @@ export function HorizontalTableParagraphBody({
                 if (!bottomConsentInteractive) return
                 onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
               }}
+              disabled={!bottomConsentInteractive}
               style={bottomConsentInteractive ? undefined : { pointerEvents: 'none' }}
             >
               <CmsRadio value="agree">동의</CmsRadio>

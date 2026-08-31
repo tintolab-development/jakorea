@@ -1,8 +1,11 @@
-import type {
-  TitleWithPeriodParagraph,
-  WritingFormDraft,
-  WritingFormParagraph,
+import {
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
+  type TitleWithPeriodParagraph,
+  type WritingFormDraft,
+  type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
 
 export type FormDocumentPreviewRenderMode = 'card' | 'contentOnly'
 
@@ -20,6 +23,8 @@ export interface FormDocumentPreviewParagraphViewModel {
   isClosing: boolean
   /** closing 또는 제목 없는 동의 확인 문구 — A4 우측 볼드 스펙 */
   isConfirmText: boolean
+  /** 확인 문구 위에 table-line 구분선 (지급조서 최종확인·서약 위반·초상권 확인) */
+  isConfirmTextRule: boolean
   isClosingSignature: boolean
 }
 
@@ -62,6 +67,19 @@ export function isAgreementDocumentSignatureParagraph(
   )
 }
 
+const AGREEMENT_A4_CONFIRM_TEXT_RULE_IDS = new Set<string>([
+  PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.violationClosing,
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS.confirmationClosing,
+])
+
+/** 문서 미리보기 — 확인 문구 위에 구분선을 그리는 단락 */
+export function isAgreementA4ConfirmTextRuleParagraph(
+  paragraph: WritingFormParagraph
+): boolean {
+  return AGREEMENT_A4_CONFIRM_TEXT_RULE_IDS.has(paragraph.id)
+}
+
 /**
  * 동의 A4 closing 스택(확인문구 → 날짜 → 서명)은 요소 margin-bottom이 SSOT.
  * 스택 내부 전환(confirm→date, date→signature)만 gap을 0으로 둔다.
@@ -75,6 +93,7 @@ export function getAgreementClosingStackGapBefore(
   if (index < 1) return fallback
   const previous = pageParagraphs[index - 1]
   if (previous == null) return fallback
+  if (isAgreementA4ConfirmTextRuleParagraph(paragraph)) return 0
   if (
     isAgreementDocumentConfirmTextParagraph(previous, paragraph) &&
     isAgreementDocumentDateParagraph(paragraph)
@@ -150,6 +169,7 @@ export function getDocumentPreviewParagraphViewModel(
     showWritingPeriod: renderMode !== 'contentOnly',
     isClosing,
     isConfirmText,
+    isConfirmTextRule: isAgreementA4ConfirmTextRuleParagraph(paragraph),
     isClosingSignature: isClosing && paragraph.id.includes('closing-signature'),
   }
 }
