@@ -813,6 +813,7 @@ export function HorizontalTableParagraphBody({
       className={[
         'form-editor-body',
         'form-editor-horizontal-table-wrap',
+        canvasInteractive ? 'form-editor-horizontal-table-wrap--canvas-interactive' : '',
         isPaymentStatementPreConsentP1
           ? 'form-editor-horizontal-table-wrap--payment-pre-consent-p1'
           : '',

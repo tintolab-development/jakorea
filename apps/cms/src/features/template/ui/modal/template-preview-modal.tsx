@@ -66,8 +66,8 @@ export interface TemplatePreviewModalProps {
 }
 
 /**
- * 작성 화면과 별도로, 응답자(user) 관점 레이아웃으로 단락을 렌더하는 풀페이지 미리보기.
- * 설문 A4: 읽기 전용 문서 표현 + 높이 기준 페이지 분할.
+ * 작성 화면과 별도로, 응답자 관점 레이아웃으로 단락을 렌더하는 풀페이지 미리보기.
+ * 문서·카드 본문은 읽기 전용(클릭·행 선택·입력 없음). 설문 A4는 높이 기준 페이지 분할.
  */
 export function TemplatePreviewModal({
   open,
@@ -339,7 +339,7 @@ export function TemplatePreviewModal({
                 updateParagraph={updateParagraph}
                 editorKind={editorKind}
                 singleItemListActiveItemId={null}
-                paragraphInteractionMode="user"
+                paragraphInteractionMode="preview"
                 showEditorChrome={false}
                 paragraphBodyOptions={paragraphBodyOptions}
                 hideParagraphRequiredChrome={hideParagraphRequiredChrome}

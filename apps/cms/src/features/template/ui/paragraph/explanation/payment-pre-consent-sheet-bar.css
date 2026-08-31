@@ -35,23 +35,33 @@
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
 }
 
-.explanation-system--document .payment-pre-consent-fixed-block--document {
+.explanation-system--document .payment-pre-consent-fixed-block,
+.explanation-system--document .payment-pre-consent-fixed-block--document,
+.explanation-system--document .payment-pre-consent-fixed-block--disabled,
+.explanation-system--document .payment-pre-consent-fixed-block--white {
   justify-content: flex-end;
+  align-items: flex-end;
   min-height: 0;
-  padding-left: 0;
-  padding-right: 0;
+  padding: 0;
   gap: 0;
-  border: 0;
+  border: none;
+  border-radius: 0;
+  outline: none;
   background: transparent;
+  background-image: none;
   box-shadow: none;
   color: #000;
   font-size: 20px;
-  font-weight: 400;
+  font-weight: 700;
   line-height: 150%;
+  text-align: right;
 }
 
 .explanation-system--document
   .payment-pre-consent-fixed-block--document
+  .explanation-system-signature-document,
+.explanation-system--document
+  .payment-pre-consent-fixed-block
   .explanation-system-signature-document {
   justify-content: flex-end;
 }

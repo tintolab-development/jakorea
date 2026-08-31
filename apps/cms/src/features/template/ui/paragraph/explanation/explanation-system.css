@@ -26,31 +26,74 @@
 
 .explanation-system--document .explanation-system-pill {
   padding: 0;
+  border: none;
   border-radius: 0;
+  outline: none;
   background: transparent;
+  background-image: none;
   box-shadow: none;
   color: #000;
   text-align: right;
+  font-family: Pretendard, sans-serif;
   font-size: 20px;
-  line-height: 150%;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 30px */
+}
+
+.explanation-system--document-date {
+  margin-bottom: 10px;
+}
+
+.explanation-system--document-signature {
+  margin-bottom: 40px;
 }
 
 .explanation-system-signature-document {
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 120px;
+  gap: 0;
   width: 100%;
 }
 
+.explanation-system-signature-document__label {
+  color: #000;
+  font-family: Pretendard, sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%; /* 36px */
+}
+
 .explanation-system-signature-document__name {
+  box-sizing: border-box;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  flex: 0 0 160px;
+  margin-right: 10px;
+  overflow: hidden;
   color: #000;
   text-align: right;
   font-family: Pretendard, sans-serif;
   font-size: 24px;
   font-style: normal;
   font-weight: 400;
-  line-height: 150%;
+  line-height: 150%; /* 36px */
+}
+
+.explanation-system-signature-document__participant {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #000;
+  font-family: Pretendard, sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 36px */
 }
 
 .explanation-system-signature-document__mark {
@@ -60,5 +103,5 @@
   font-size: 20px;
   font-style: normal;
   font-weight: 400;
-  line-height: 150%;
+  line-height: 150%; /* 30px */
 }

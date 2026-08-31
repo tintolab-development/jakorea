@@ -8,6 +8,9 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  /* 문서 미리보기 — 단락·표 행 선택·폼 컨트롤 클릭 불가 */
+  pointer-events: none;
+  cursor: default;
 }
 
 .form-document-preview-body--custom-gaps {
@@ -83,14 +86,31 @@
   min-width: 0;
 }
 
-.form-document-preview-paragraph--content-only-closing .form-document-preview-paragraph__body-text {
+/* 동의 A4 하단 확인 문구(closing / untitled explanation) — 카드 크롬 없이 텍스트만 */
+.form-document-preview-paragraph--content-only-closing,
+.form-document-preview-paragraph--content-only-confirm {
+  margin-bottom: 40px;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+}
+
+.form-document-preview-paragraph--content-only-closing .form-document-preview-paragraph__body-text,
+.form-document-preview-paragraph--content-only-confirm .form-document-preview-paragraph__body-text,
+.form-document-preview-paragraph--content-only-confirm
+  .form-document-preview-paragraph__body-text--explanation-filled {
   color: #000;
   text-align: right;
   font-family: Pretendard, sans-serif;
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
-  line-height: 150%;
+  line-height: 150%; /* 30px */
+  background: transparent;
+  box-shadow: none;
+  border: none;
 }
 
 .form-document-preview-paragraph--content-only-closing-signature
@@ -107,6 +127,20 @@
   .form-document-preview-paragraph__content-slot {
   max-height: var(--form-document-preview-overflow-max, 1650px);
   overflow-y: auto;
+}
+
+/* 넘침 단락만 스크롤 허용 — 자식 컨트롤·행 선택은 계속 차단 */
+.form-document-preview-paragraph--overflow {
+  pointer-events: auto;
+}
+
+.form-document-preview-paragraph--overflow * {
+  pointer-events: none;
+}
+
+.form-document-preview-paragraph--overflow .paragraph-card__slot,
+.form-document-preview-paragraph--overflow .form-document-preview-paragraph__content-slot {
+  pointer-events: auto;
 }
 
 .form-document-preview-paragraph__title-text {

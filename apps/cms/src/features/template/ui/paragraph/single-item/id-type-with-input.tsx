@@ -45,10 +45,7 @@ export function IdTypeWithInputBody({
     selectedId != null
       ? placeholderForOption(selectedId, paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요')
       : paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요'
-  const inputValueForView = documentMode ? '' : paragraph.inputValue
-  const inputPlaceholderForView = documentMode ? '' : ph
   const radiosDisabled = documentMode || !isEditMode || lockResidentIdType
-  const inputDisabled = documentMode || !isEditMode
 
   const setSelected = (nextId: string) => {
     onChange({
@@ -84,25 +81,31 @@ export function IdTypeWithInputBody({
           </CmsRadio>
         ))}
       </CmsRadio.Group>
-      <CmsInput
-        className="id-type-with-input__input"
-        inputSize="large"
-        width={280}
-        value={inputValueForView}
-        placeholder={inputPlaceholderForView}
-        disabled={inputDisabled}
-        onChange={e => {
-          if (!isEditMode) return
-          onChange({
-            ...paragraph,
-            selectedOptionId: lockResidentIdType
-              ? AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID
-              : paragraph.selectedOptionId,
-            inputValue: e.target.value,
-            inputPlaceholder: ph,
-          })
-        }}
-      />
+      {documentMode ? (
+        <span className="id-type-with-input__value-text">
+          {paragraph.inputValue.trim()}
+        </span>
+      ) : (
+        <CmsInput
+          className="id-type-with-input__input"
+          inputSize="large"
+          width={280}
+          value={paragraph.inputValue}
+          placeholder={ph}
+          disabled={!isEditMode}
+          onChange={e => {
+            if (!isEditMode) return
+            onChange({
+              ...paragraph,
+              selectedOptionId: lockResidentIdType
+                ? AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID
+                : paragraph.selectedOptionId,
+              inputValue: e.target.value,
+              inputPlaceholder: ph,
+            })
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -112,10 +115,12 @@ export function IdTypeWithInput({
   paragraph,
   onChange,
   isEditMode,
+  documentMode = false,
 }: {
   paragraph: IdTypeWithInputParagraph
   onChange: (next: IdTypeWithInputParagraph) => void
   isEditMode: boolean
+  documentMode?: boolean
 }) {
   return (
     <div className="form-editor-body">
@@ -123,6 +128,7 @@ export function IdTypeWithInput({
         paragraph={paragraph}
         onChange={onChange}
         isEditMode={isEditMode}
+        documentMode={documentMode}
       />
     </div>
   )

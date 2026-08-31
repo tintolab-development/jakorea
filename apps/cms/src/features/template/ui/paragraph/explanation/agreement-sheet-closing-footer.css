@@ -19,6 +19,23 @@
   text-align: center;
 }
 
+/* A4 contentOnly — 서명 영역 스펙 (우측 정렬 볼드) */
+.agreement-sheet-closing-footer--document {
+  align-items: flex-end;
+  padding-bottom: 0;
+}
+
+.agreement-sheet-closing-footer--document .agreement-sheet-closing-footer__recipient {
+  margin: 0;
+  color: #000;
+  text-align: right;
+  font-family: Pretendard, sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 36px */
+}
+
 .agreement-sheet-closing-footer__submit.cms-button.ant-btn.cms-button--large {
   width: 240px;
   min-width: 240px;

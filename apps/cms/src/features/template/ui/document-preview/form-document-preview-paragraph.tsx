@@ -52,6 +52,8 @@ import { UjatJournalEducationInfo } from '@/features/template/ui/paragraph/singl
 import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { FormParagraphSectionDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
+import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/basic-info-paragraph'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
@@ -297,6 +299,19 @@ function renderBody(
         />
       )
     case 'agreement_explanation_text': {
+      if (
+        paragraphBodyOptions?.agreementAdminProxyConfirm === true &&
+        isAgreementAdminProxyConfirmHostId(p.id)
+      ) {
+        const consentText = 'bodyText' in p ? String(p.bodyText ?? '') : ''
+        return (
+          <AgreementAdminProxyConfirmBlock
+            consentText={consentText}
+            memberName={paragraphBodyOptions.agreementSystemParticipantName ?? ''}
+            now={paragraphBodyOptions.agreementSystemNow}
+          />
+        )
+      }
       const ph = safeTrim(p.bodyPlaceholder) || '텍스트를 작성해 주세요'
       const body = safeTrim(p.bodyText)
       return (
@@ -391,11 +406,26 @@ function renderBody(
         />
       )
     case 'vertical_table':
+      if (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord) {
+        return (
+          <BasicInfoParagraph
+            values={paragraphBodyOptions?.paymentStatementBasicInfoValues}
+            displayMode={
+              paragraphBodyOptions?.paymentStatementDisplayMode ??
+              (renderMode === 'contentOnly' ? 'document' : 'editor')
+            }
+            onlyPaymentPurposeLocked={
+              paragraphBodyOptions?.paymentStatementBasicInfoOnlyPaymentPurposeLocked
+            }
+          />
+        )
+      }
       return (
         <VerticalTableParagraphBody
           paragraph={p}
           onChange={noopOnParagraphChange}
           isEditMode={false}
+          tableCanvasInteractive={false}
         />
       )
     case 'multiple_choice':
@@ -429,6 +459,8 @@ function renderBody(
             onChange={noopOnParagraphChange}
             isEditMode={false}
             displayMode={renderMode === 'contentOnly' ? 'document' : 'authoring'}
+            participantName={paragraphBodyOptions?.agreementSystemParticipantName}
+            now={paragraphBodyOptions?.agreementSystemNow}
           />
         )
       }
@@ -517,7 +549,14 @@ function renderBody(
       return <StaticDescriptionLines paragraph={p} />
     case 'id_type_with_input':
       if (p.kind !== 'single_item' || p.variant !== 'id_type_with_input') return null
-      return <IdTypeWithInput paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+      return (
+        <IdTypeWithInput
+          paragraph={p}
+          onChange={noopOnParagraphChange}
+          isEditMode={false}
+          documentMode
+        />
+      )
     case 'closing': {
       const c = p as ClosingParagraph
       if (
@@ -566,7 +605,14 @@ export function FormDocumentPreviewParagraph({
   isAuthoringSyncFocused = false,
 }: FormDocumentPreviewParagraphProps) {
   const displayTitle = getFormParagraphDisplayTitle(allParagraphs, paragraph, titleNumbering)
-  const viewModel = getDocumentPreviewParagraphViewModel(paragraph, displayTitle, renderMode)
+  const paragraphIndex = allParagraphs.findIndex(item => item.id === paragraph.id)
+  const nextParagraph = paragraphIndex >= 0 ? (allParagraphs[paragraphIndex + 1] ?? null) : null
+  const viewModel = getDocumentPreviewParagraphViewModel(
+    paragraph,
+    displayTitle,
+    renderMode,
+    nextParagraph
+  )
   const { title, description } = readOnlyTitleBlock(displayTitle, viewModel.description)
 
   if (
@@ -649,6 +695,9 @@ export function FormDocumentPreviewParagraph({
           'form-document-preview-paragraph--content-only',
           isFileAttachment ? 'form-document-preview-paragraph--file-attachment' : '',
           viewModel.isClosing ? 'form-document-preview-paragraph--content-only-closing' : '',
+          viewModel.isConfirmText && !viewModel.isClosing
+            ? 'form-document-preview-paragraph--content-only-confirm'
+            : '',
           viewModel.isClosingSignature
             ? 'form-document-preview-paragraph--content-only-closing-signature'
             : '',
