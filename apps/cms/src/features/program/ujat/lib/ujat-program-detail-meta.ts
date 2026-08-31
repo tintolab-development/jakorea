@@ -44,8 +44,9 @@ export function getUjatVolunteerInterviewEnabled(_program: Program): boolean {
 
 /** 레거시 URL `tab` → 현행 키 */
 export const UJAT_SURVEY_LEGACY_TAB_MAP: Record<string, string> = {
-  'survey-student-satisfaction': 'survey-satisfaction',
-  'survey-teacher-satisfaction': 'survey-satisfaction',
+  'survey-student-satisfaction': 'survey-volunteer-satisfaction',
+  'survey-teacher-satisfaction': 'survey-school-satisfaction',
+  'survey-satisfaction': 'survey-volunteer-satisfaction',
 }
 
 /** 공통 정보 > 설문 진행 항목 기준 LNB 2depth (항목 1개여도 2depth) */

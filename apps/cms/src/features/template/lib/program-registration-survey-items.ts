@@ -1,5 +1,6 @@
 /**
- * 프로그램 등록 양식 — 설문 진행 항목 (일반·UJAT·1사1교 공통 3종)
+ * 프로그램 등록 양식 — 설문 진행 항목 (일반·1사1교 공통 3종)
+ * UJAT 4종은 `features/program/ujat/lib/registration-survey-items.ts`
  */
 
 export const PROGRAM_REGISTRATION_SURVEY_ITEM_IDS = [

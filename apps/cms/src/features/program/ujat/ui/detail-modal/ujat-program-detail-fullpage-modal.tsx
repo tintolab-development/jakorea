@@ -135,8 +135,11 @@ import {
 } from '@/data/mock/ujat-survey-poll-responses-mock'
 import { useClipboard } from '@/features/template/hooks/use-clipboard'
 import {
+  defaultSatisfactionAudienceForSurveyTab,
   getSatisfactionAudienceLabel,
+  getSatisfactionAudienceTabsForSurveyTab,
   getSatisfactionDeleteModalSubject,
+  isUjatSatisfactionSurveyTab,
   UJAT_SATISFACTION_TEMPLATE_BY_AUDIENCE,
   type UjatRegisteredSurvey,
   type UjatSatisfactionAudienceKey,
@@ -700,6 +703,19 @@ export function UjatProgramDetailFullPageModal({
     }
     return resolved
   }, [open, searchParams, activeLnb, interviewEnabled, surveyKeys])
+
+  const satisfactionAudienceTabs = useMemo(
+    () => getSatisfactionAudienceTabsForSurveyTab(activeTab),
+    [activeTab]
+  )
+
+  useEffect(() => {
+    if (!isUjatSatisfactionSurveyTab(activeTab)) return
+    const allowed = new Set(satisfactionAudienceTabs.map(tab => tab.key))
+    if (!allowed.has(activeSatisfactionAudience)) {
+      setActiveSatisfactionAudience(defaultSatisfactionAudienceForSurveyTab(activeTab))
+    }
+  }, [activeTab, activeSatisfactionAudience, satisfactionAudienceTabs])
 
   const eduInstitutionIdRaw = open ? searchParams.get(UJAT_EDU_INST_ID_PARAM) : null
   const eduInstitutionHalf =
@@ -2031,7 +2047,7 @@ export function UjatProgramDetailFullPageModal({
                   ) : null}
                 </div>
               )
-            ) : activeTab === 'survey-satisfaction' ? (
+            ) : isUjatSatisfactionSurveyTab(activeTab) ? (
               <UjatSatisfactionSurveyView
                 surveysByAudience={satisfactionSurveysByAudience}
                 activeAudience={activeSatisfactionAudience}
@@ -2043,6 +2059,7 @@ export function UjatProgramDetailFullPageModal({
                 onDownloadClick={() => setSatisfactionDownloadModalOpen(true)}
                 resultsExportRef={satisfactionResultsExportRef}
                 resultsResponses={satisfactionResponses}
+                audienceTabs={satisfactionAudienceTabs}
               />
             ) : activeTab === 'survey-lecture-eval' ? (
               <UjatLectureEvalSurveyView

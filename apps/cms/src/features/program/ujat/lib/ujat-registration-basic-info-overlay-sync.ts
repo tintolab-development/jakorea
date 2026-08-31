@@ -3,6 +3,7 @@ import type { Program } from '@/types/domain'
 import {
   createUjatRegistrationBasicInfoOverlayDefaults,
   createUjatSurveyItemsDefault,
+  UJAT_BASIC_INFO_PUBLIC_TITLE_DEFAULT,
   UJAT_DETAILED_PROGRAM_UJAT_LABEL,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
@@ -55,10 +56,15 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
     'ujat.basicInfo.repKo': program.mainTitle?.trim() || defaults.repKo,
     'ujat.basicInfo.repEn': program.titleEn?.trim() || defaults.repEn,
     'ujat.basicInfo.programManagementName': program.title?.trim() || defaults.programManagementName,
+    'ujat.basicInfo.publicProgramTitle':
+      program.generalCommonInfo?.announcementTitle?.trim() ||
+      UJAT_BASIC_INFO_PUBLIC_TITLE_DEFAULT,
     'ujat.basicInfo.detailedProgramId': detailedProgramId,
     'ujat.basicInfo.operationRangeSeal': operationRangeSeal,
     'ujat.basicInfo.businessField': program.businessArea ?? defaults.businessField,
     'ujat.basicInfo.sponsorId': program.sponsorId ?? defaults.sponsorId,
+    'ujat.basicInfo.sponsorContactId': defaults.sponsorContactId,
+    'ujat.basicInfo.sponsorManagerName': program.generalCommonInfo?.sponsorManagerLine ?? '',
     'ujat.basicInfo.ipOwned': reverseIpOwned(program.ipOwned),
     'ujat.basicInfo.courseDeliveredBy': reverseIpOwned(program.courseDeliveredBy),
     'ujat.basicInfo.ipsCategory': reverseIps(program.ips),
@@ -69,6 +75,11 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
     'ujat.basicInfo.participant.teacher': defaults.participantTeacher,
     'ujat.basicInfo.participant.volunteer': defaults.participantVolunteer,
     'ujat.basicInfo.surveyItems': createUjatSurveyItemsDefault(),
+    'ujat.kpi.participantCount': program.generalCommonInfo?.kpi?.finalParticipants ?? null,
+    'ujat.kpi.instructor': null,
+    'ujat.kpi.volunteer': program.generalCommonInfo?.kpi?.volunteerCount ?? null,
+    'ujat.kpi.dispatchedSchool': program.generalCommonInfo?.kpi?.finalSchools ?? null,
+    'ujat.kpi.dispatchedClass': program.generalCommonInfo?.kpi?.finalClasses ?? null,
     ...buildUjatWageOverlayPatchFromPaymentItemIds(resolveUjatPaymentItemIdsFromProgram(program)),
     ...buildUjatHalfEducationScheduleOverlayDefaults('h1'),
     ...buildUjatHalfEducationScheduleOverlayDefaults('h2'),

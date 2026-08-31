@@ -43,3 +43,27 @@ export function getSatisfactionDeleteModalSubject(audience: UjatSatisfactionAudi
 export function getSatisfactionAudienceTabs(): typeof UJAT_SATISFACTION_AUDIENCE_TABS {
   return UJAT_SATISFACTION_AUDIENCE_TABS
 }
+
+export function isUjatSatisfactionSurveyTab(tab: string): boolean {
+  return (
+    tab === 'survey-satisfaction' ||
+    tab === 'survey-volunteer-satisfaction' ||
+    tab === 'survey-school-satisfaction'
+  )
+}
+
+export function getSatisfactionAudienceTabsForSurveyTab(
+  tab: string
+): readonly { key: UjatSatisfactionAudienceKey; label: string }[] {
+  if (tab === 'survey-volunteer-satisfaction') {
+    return UJAT_SATISFACTION_AUDIENCE_TABS.filter(item => item.key !== 'teacher')
+  }
+  if (tab === 'survey-school-satisfaction') {
+    return UJAT_SATISFACTION_AUDIENCE_TABS.filter(item => item.key === 'teacher')
+  }
+  return UJAT_SATISFACTION_AUDIENCE_TABS
+}
+
+export function defaultSatisfactionAudienceForSurveyTab(tab: string): UjatSatisfactionAudienceKey {
+  return getSatisfactionAudienceTabsForSurveyTab(tab)[0]?.key ?? 'teacher'
+}
