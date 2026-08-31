@@ -1,9 +1,12 @@
 import type { ConsentValue } from '@jakorea/domain/instructor/consent'
+import { applyKoreanPhoneInputChange } from '@jakorea/domain/shared/korean-phone'
 import {
+  applyConsentShortEssayItemInput,
   type PlatformConsentFillOptions,
 } from '@jakorea/form-schema/consent'
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
+  AGREEMENT_NOTICE_SUBJECT_ITEM_IDS,
   type HorizontalTableParagraph,
   type MultipleChoiceParagraph,
   type TableBottomConsent,
@@ -216,7 +219,33 @@ export function PlatformConsentParagraphBody({
                 size="large"
                 value={item.bodyText}
                 placeholder={item.placeholder || paragraph.bodyPlaceholder || '답변을 입력해 주세요'}
-                onValueChange={value =>
+                inputMode={
+                  item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth ||
+                  item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone
+                    ? 'numeric'
+                    : undefined
+                }
+                maxLength={
+                  item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth
+                    ? 10
+                    : item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone
+                      ? 13
+                      : undefined
+                }
+                type={item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone ? 'tel' : undefined}
+                autoComplete={
+                  item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone ? 'tel' : undefined
+                }
+                onChange={event => {
+                  const nextValue =
+                    item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone
+                      ? applyKoreanPhoneInputChange(
+                          item.bodyText,
+                          event.target.value,
+                          event.target.selectionStart
+                        ).formatted
+                      : applyConsentShortEssayItemInput(item.id, event.target.value)
+                  event.target.value = nextValue
                   onUpdateParagraph(paragraph.id, current => {
                     if (
                       current.kind !== 'single_item' ||
@@ -228,11 +257,11 @@ export function PlatformConsentParagraphBody({
                     return {
                       ...current,
                       items: (current.items ?? []).map(entry =>
-                        entry.id === item.id ? { ...entry, bodyText: value } : entry
+                        entry.id === item.id ? { ...entry, bodyText: nextValue } : entry
                       ),
                     }
                   })
-                }
+                }}
               />
             </PFFormField>
           </PFFormFieldRow>
