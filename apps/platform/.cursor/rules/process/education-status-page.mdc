@@ -139,13 +139,28 @@ alwaysApply: false
 - 상세 **최하단** 노출 (`세부내용` 밖). 미기재 시 **비노출**
 - 어드민: 참여자 모집 정보 > 상세 정보 > 지원 방법
 
+## 신청 내용 탭
+
+노출: `waiting_result` | `document_passed` 만 실 UI.  
+`rejected` 등 그 외 신청-계열 상태는 placeholder.  
+컴포넌트: [`EducationApplicationContent`](apps/platform/src/features/mypage/ui/education-application-content.tsx)  
+분기: `canShowEducationApplicationContent`
+
+| 블록 | 규칙 | 스타일 |
+|------|------|--------|
+| **자기소개 및 지원동기** | 미기재 시 비노출 (`selfIntroMotivation`) | 타이틀 `bd-sm-rg` cool-600 · mb 8 / 본문 `bd-md-md` black · **line-height 170%** |
+| **진행 희망 교육 일정** | 미기재 시 비노출 (`preferredEducationScheduleLabel`) | 카드 cool-50 · padding 20 · radius 16 · gap 8 / 타이틀 `bd-md-sb` / 일정 `bd-md-md` |
+
+섹션 간 gap: 32. Mock: [`mock-education-applications.ts`](apps/platform/src/features/mypage/lib/mock-education-applications.ts). API 연동 후속.
+
 ### 구현 범위 vs 후속
 
 | 구현됨 | 후속 |
 |--------|------|
-| 공통 헤더·배너·프로그램 신청 상태 2탭 | 신청 내용 실 UI |
+| 공통 헤더·배너·프로그램 신청 상태 2탭 | 신청 반려용 신청 내용 UI |
 | ProgramInfoBody 재사용 + 취소 확인·이력 제거(mock) | 취소 API 연동 |
 | 빈 필드·첨부·지원방법 비노출 / 교육 커리큘럼 라벨 | 진행중/완료/포기 탭 UI |
+| 신청 내용 (결과 대기·서류 합격) mock UI | 신청 내용 API 연동 |
 | 비-applied 상태 placeholder | |
 
 ## 금지
@@ -163,5 +178,6 @@ alwaysApply: false
 - 행 UI: [`application-list-item.tsx`](apps/platform/src/features/mypage/ui/application-list-item.tsx)
 - Body: [`program-info-body/`](apps/platform/src/features/program/ui/program-info-body/)
 - 취소: `canCancelEducationApplication` · `EducationCancelConfirm` · `cancelMockEducationApplication`
+- 신청 내용: `EducationApplicationContent` · `canShowEducationApplicationContent`
 
-**Last updated:** 2026-08-27
+**Last updated:** 2026-08-31
