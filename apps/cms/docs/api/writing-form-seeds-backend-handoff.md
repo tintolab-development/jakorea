@@ -79,10 +79,10 @@
 | templateCode | templateName | Payload | 시드 JSON | 단락 수 |
 |--------------|--------------|---------|-----------|--------:|
 | `agreement-third-party` | 지급조서 사전 동의서 | A | [agreement-third-party.json](./form-template-seeds/agreement-third-party.json) | 14 |
-| `agreement-crime` | 성범죄 경력조회 동의서 | D | [agreement-crime.json](./form-template-seeds/agreement-crime.json) | 0 |
+| `agreement-crime` | 성범죄 경력조회 및 아동학대 관련 범죄전력조회 동의서 | D | [agreement-crime.json](./form-template-seeds/agreement-crime.json) | 0 |
 | `agreement-notice` | 행정정보 공동이용 사전 동의서 | A | [agreement-notice.json](./form-template-seeds/agreement-notice.json) | 9 |
 | `agreement-expense` | 교육진행자 동의 서약서 | A | [agreement-expense.json](./form-template-seeds/agreement-expense.json) | 9 |
-| `agreement-portrait` | 초상권 수집/이용 동의 | A | [agreement-portrait.json](./form-template-seeds/agreement-portrait.json) | 8 |
+| `agreement-portrait` | 초상권 수집·이용 동의 | A | [agreement-portrait.json](./form-template-seeds/agreement-portrait.json) | 8 |
 
 ## 단락 id 요약
 
@@ -364,7 +364,7 @@
 | `payment-statement-pre-consent-seed-tail-signature` | description | system | 서명란 유형 |
 | `payment-statement-pre-consent-seed-closing-recipient` | description | closing |  |
 
-### `agreement-crime` — 성범죄 경력조회 동의서
+### `agreement-crime` — 성범죄 경력조회 및 아동학대 관련 범죄전력조회 동의서
 
 > 정적 A4 문서 + 파일 교체 UI. schemaJson paragraphs 빈 배열 허용.
 
@@ -398,7 +398,7 @@ _(paragraphs 없음)_
 | `agreement-expense-pledge-system-date` | description | system | 날짜 유형 |
 | `agreement-expense-pledge-system-signature` | description | system | 서명란 유형 |
 
-### `agreement-portrait` — 초상권 수집/이용 동의
+### `agreement-portrait` — 초상권 수집·이용 동의
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|

@@ -1,4 +1,5 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import type { FileObjectResponse } from '@/shared/api/generated/members/schemas/fileObjectResponse'
 import type { FileUploadConfirmRequest } from '@/shared/api/generated/members/schemas/fileUploadConfirmRequest'
 import type { FileUploadPrepareRequest } from '@/shared/api/generated/members/schemas/fileUploadPrepareRequest'
@@ -18,6 +19,53 @@ export type UploadConsentEvidenceFileInput = {
   memberId?: number
 }
 
+function getHttpStatus(error: unknown): number | undefined {
+  if (!error || typeof error !== 'object' || !('response' in error)) return undefined
+  const response = (error as { response?: unknown }).response
+  if (!response || typeof response !== 'object' || !('status' in response)) return undefined
+  const status = (response as { status?: unknown }).status
+  return typeof status === 'number' ? status : undefined
+}
+
+function rethrowConsentUploadError(error: unknown, context: 'prepare' | 'confirm' | 'crime-current'): never {
+  const status = getHttpStatus(error)
+  if (context === 'crime-current') {
+    if (status === 404) {
+      throw new Error(
+        '성범죄 경력 조회 동의 약관 문서가 게시되어 있지 않습니다. 약관 문서 관리를 확인해 주세요.'
+      )
+    }
+    if (status === 401) {
+      throw new Error(
+        '성범죄 동의서 업로드 준비에 실패했습니다. 공개 약관 문서 API가 관리자 토큰을 거절하지 않는지 확인해 주세요.'
+      )
+    }
+  }
+  if (context === 'prepare') {
+    if (status === 401) {
+      throw new Error(
+        '관리자 파일 업로드 인증에 실패했습니다. 로그인 상태를 확인하거나 백엔드 파일 API 권한을 확인해 주세요.'
+      )
+    }
+    if (status === 403) {
+      throw new Error('파일 업로드 권한이 없습니다. 관리자 계정 권한을 확인해 주세요.')
+    }
+  }
+  if (context === 'confirm' && status === 401) {
+    throw new Error('파일 업로드 확인(confirm) 인증에 실패했습니다. 다시 시도해 주세요.')
+  }
+  throw error instanceof Error ? error : new Error('성범죄 동의서 파일 업로드에 실패했습니다.')
+}
+
+/** S3·파일 API 미연결 시 stub id 반환. `VITE_REAL_API_MODULES`에 `files` 포함 시 실 업로드. */
+export function shouldMockConsentFileUpload(): boolean {
+  return !isRealApiModuleEnabled('files')
+}
+
+function createStubConsentFileObjectId(fileSize: number): number {
+  return 900_000_001 + (fileSize % 1000)
+}
+
 function parseFileObjectId(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value) && value >= 1) return value
   if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
@@ -35,8 +83,8 @@ async function fetchCrimeTermsDocumentId(): Promise<number | null> {
     })
     const doc = unwrapApiBody<TermsDocumentResponse>(payload)
     return parseFileObjectId(doc.id)
-  } catch {
-    return null
+  } catch (error) {
+    rethrowConsentUploadError(error, 'crime-current')
   }
 }
 
@@ -102,6 +150,10 @@ export async function uploadConsentEvidenceFile(
     throw new Error('성범죄 동의서 파일을 업로드할 수 없습니다. 약관 문서 ID를 확인하세요.')
   }
 
+  if (shouldMockConsentFileUpload()) {
+    return createStubConsentFileObjectId(fileSize)
+  }
+
   const prepareBody: FileUploadPrepareRequest = {
     ownerDomain: CONSENT_OWNER_DOMAIN,
     ownerType: CONSENT_OWNER_TYPE,
@@ -112,13 +164,19 @@ export async function uploadConsentEvidenceFile(
     fileSize,
   }
 
-  const prepared = unwrapApiBody<FileUploadUrlResponse>(
-    await customInstance<FileUploadUrlResponse>({
-      url: '/api/admin/files/upload-requests',
-      method: 'POST',
-      data: prepareBody,
-    })
-  )
+  let prepared: FileUploadUrlResponse
+  try {
+    prepared = unwrapApiBody<FileUploadUrlResponse>(
+      await customInstance<FileUploadUrlResponse>({
+        url: '/api/admin/files/upload-requests',
+        method: 'POST',
+        data: prepareBody,
+      })
+    )
+  } catch (error) {
+    rethrowConsentUploadError(error, 'prepare')
+  }
+
   const fileObjectId = parseFileObjectId(prepared.fileObjectId)
   if (fileObjectId == null) {
     throw new Error('파일 객체 ID를 받지 못했습니다.')
@@ -130,12 +188,17 @@ export async function uploadConsentEvidenceFile(
     fileSize,
     contentType,
   }
-  const confirmed = unwrapApiBody<FileObjectResponse>(
-    await customInstance<FileObjectResponse>({
-      url: confirmPathFor(fileObjectId, prepared.confirmPath),
-      method: 'POST',
-      data: confirmBody,
-    })
-  )
+  let confirmed: FileObjectResponse
+  try {
+    confirmed = unwrapApiBody<FileObjectResponse>(
+      await customInstance<FileObjectResponse>({
+        url: confirmPathFor(fileObjectId, prepared.confirmPath),
+        method: 'POST',
+        data: confirmBody,
+      })
+    )
+  } catch (error) {
+    rethrowConsentUploadError(error, 'confirm')
+  }
   return parseFileObjectId(confirmed.fileObjectId) ?? fileObjectId
 }

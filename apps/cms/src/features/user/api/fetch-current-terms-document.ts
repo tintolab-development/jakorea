@@ -1,4 +1,5 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { resolveTermsTypesForCurrentLookup } from '@/features/user/api/terms-document-type-alias'
 import { customInstance } from '@/shared/api/orval-mutator'
 import type { TermsDocumentResponse } from '@/shared/api/generated/members/schemas/termsDocumentResponse'
 
@@ -7,15 +8,12 @@ export type CurrentTermsDocumentMeta = {
   required?: boolean
 }
 
-export async function fetchCurrentTermsDocumentMeta(
+async function fetchCurrentTermsDocumentMetaByType(
   termsType: string
 ): Promise<CurrentTermsDocumentMeta | null> {
-  const normalized = termsType.trim()
-  if (!normalized) return null
-
   try {
     const payload = await customInstance<TermsDocumentResponse>({
-      url: `/api/public/terms-documents/${encodeURIComponent(normalized)}/current`,
+      url: `/api/public/terms-documents/${encodeURIComponent(termsType)}/current`,
       method: 'GET',
     })
     const doc = unwrapApiBody<TermsDocumentResponse>(payload)
@@ -28,6 +26,19 @@ export async function fetchCurrentTermsDocumentMeta(
   } catch {
     return null
   }
+}
+
+export async function fetchCurrentTermsDocumentMeta(
+  termsType: string
+): Promise<CurrentTermsDocumentMeta | null> {
+  const candidates = resolveTermsTypesForCurrentLookup(termsType)
+  if (candidates.length === 0) return null
+
+  for (const candidate of candidates) {
+    const meta = await fetchCurrentTermsDocumentMetaByType(candidate)
+    if (meta != null) return meta
+  }
+  return null
 }
 
 export async function fetchCurrentTermsDocumentsMetaMap(

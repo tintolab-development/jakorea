@@ -95,7 +95,7 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
     }
   },
   'agreement-portrait': () => {
-    const title = resolveRowTitle('agreement-portrait', '초상권 수집/이용 동의')
+    const title = resolveRowTitle('agreement-portrait', '초상권 수집·이용 동의')
     return {
       initialDraft: createAgreementPortraitDraft,
       defaultActiveParagraphId: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.title,

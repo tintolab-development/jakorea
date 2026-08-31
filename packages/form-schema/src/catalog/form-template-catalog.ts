@@ -21,31 +21,33 @@ export const WRITING_FORM_SECTION_CATALOG: readonly WritingFormSectionCatalogEnt
   {
     key: 'registration',
     title: '등록 양식',
-    description: '프로그램 등록 시 수정/편집이 가능한 양식입니다.',
+    description: '모든 항목의 추가 및 삭제, 수정이 불가한 양식입니다.',
     category: 'REGISTRATION',
   },
   {
     key: 'application',
     title: '모집 양식',
-    description: '프로그램 등록 시 수정/편집이 가능한 양식입니다.',
+    description: '모든 항목의 추가 및 삭제, 수정이 불가한 양식입니다.',
     category: 'RECRUITMENT',
   },
   {
     key: 'application_form',
     title: '신청 양식',
-    description: '프로그램 등록 시 수정/편집이 가능한 양식입니다.',
+    description:
+      '기존 항목의 삭제가 불가하며, 일부 텍스트만 수정이 가능합니다. 필요한 항목은 직접 추가 가능한 양식입니다.',
     category: 'APPLICATION',
   },
   {
     key: 'survey',
     title: '설문 양식',
-    description: '프로그램 등록 시 수정·편집이 가능한 양식입니다.',
+    description: '모든 항목의 추가 및 삭제, 수정이 가능한 양식입니다.',
     category: 'SURVEY',
   },
   {
     key: 'agreement',
     title: '동의 양식',
-    description: '모든 화면에 동일한 구조로 노출되는 양식입니다.',
+    description:
+      '모든 항목의 추가 및 삭제가 불가하며, 일부 텍스트만 수정이 가능합니다. (*성범죄 경력조회 동의서는 수정이 불가합니다.)',
     category: 'AGREEMENT',
   },
 ] as const
@@ -199,7 +201,7 @@ export const TEMPLATE_CODE_CATALOG: Record<string, TemplateCodeCatalogEntry> = {
     variant: 'default',
   },
   'agreement-crime': {
-    templateName: '성범죄 경력조회 동의서',
+    templateName: '성범죄 경력조회 및 아동학대 관련 범죄전력조회 동의서',
     category: 'AGREEMENT',
     variant: 'default',
   },
@@ -214,7 +216,7 @@ export const TEMPLATE_CODE_CATALOG: Record<string, TemplateCodeCatalogEntry> = {
     variant: 'default',
   },
   'agreement-portrait': {
-    templateName: '초상권 수집/이용 동의',
+    templateName: '초상권 수집·이용 동의',
     category: 'AGREEMENT',
     variant: 'default',
   },
@@ -267,7 +269,10 @@ export interface IssuanceTemplateCodeCatalogEntry {
   category: IssuanceFormCategory
 }
 
-/** 발급 양식 templateCode(SSOT) ↔ API category */
+/**
+ * 발급 양식 templateCode(SSOT) ↔ API category.
+ * 시드/레거시 코드도 유지한다. 목록 노출은 `ISSUANCE_FORM_LIST_TEMPLATE_CODES`만.
+ */
 export const ISSUANCE_TEMPLATE_CODE_CATALOG: Record<string, IssuanceTemplateCodeCatalogEntry> = {
   'issuance-1': { templateName: 'UJAT 결과리포트', category: 'REPORT' },
   'issuance-2': { templateName: 'UJAT 교육계획서', category: 'REPORT' },
@@ -286,8 +291,35 @@ export const ISSUANCE_TEMPLATE_CODE_CATALOG: Record<string, IssuanceTemplateCode
 }
 
 /**
+ * Notion 발급 양식 목록 노출 순서 (보고 5 + 서류 5).
+ * 제외: issuance-1, document-payment-order-pre-consent, document-1, document-2
+ */
+export const ISSUANCE_FORM_LIST_TEMPLATE_CODES = [
+  'issuance-2',
+  'issuance-ujat-edu-journal',
+  'issuance-3',
+  'issuance-4',
+  'issuance-5',
+  'document-payment-order-issue',
+  'document-participation-certificate',
+  'document-3',
+  'document-4',
+  'document-5',
+] as const
+
+export type IssuanceFormListTemplateCode = (typeof ISSUANCE_FORM_LIST_TEMPLATE_CODES)[number]
+
+const ISSUANCE_FORM_LIST_TEMPLATE_CODE_SET = new Set<string>(ISSUANCE_FORM_LIST_TEMPLATE_CODES)
+
+export function isIssuanceFormListTemplateCode(templateCode?: string): boolean {
+  if (templateCode == null || templateCode === '') return false
+  return ISSUANCE_FORM_LIST_TEMPLATE_CODE_SET.has(templateCode)
+}
+
+/**
  * Payload D — `settingsJson` only (schemaJson null / empty paragraphs 허용).
  * UI는 `settingsJson`만 소비한다. `schemaJson.paragraphs`로 그리지 않는다.
+ * `document-2`(휴가 인증서)는 목록 비노출·시드/레거시용.
  */
 export const CERTIFICATE_ISSUANCE_TEMPLATE_CODES = [
   'document-2',

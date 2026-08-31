@@ -1,6 +1,6 @@
 {
   "templateCode": "agreement-crime",
-  "templateName": "성범죄 경력조회 동의서",
+  "templateName": "성범죄 경력조회 및 아동학대 관련 범죄전력조회 동의서",
   "formType": "WRITING",
   "category": "AGREEMENT",
   "schemaJson": {
