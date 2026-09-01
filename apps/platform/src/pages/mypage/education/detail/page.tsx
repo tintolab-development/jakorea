@@ -268,7 +268,11 @@ export function MypageEducationDetailPage() {
           />
 
           {inProgressSection === 'notice' ? (
-            <EducationInProgressNoticePanel program={program} />
+            <EducationInProgressNoticePanel
+              program={program}
+              selfIntroMotivation={application.selfIntroMotivation}
+              preferredEducationScheduleLabel={application.preferredEducationScheduleLabel}
+            />
           ) : (
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
               준비 중입니다.
