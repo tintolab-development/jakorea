@@ -153,15 +153,28 @@ alwaysApply: false
 
 섹션 간 gap: 32. Mock: [`mock-education-applications.ts`](apps/platform/src/features/mypage/lib/mock-education-applications.ts). API 연동 후속.
 
+## 안내사항 상세 모달 (진행중)
+
+- 목록 카드 클릭 → [`EducationInProgressNoticeDetailModal`](apps/platform/src/features/mypage/ui/education-in-progress-notice-detail-modal.tsx)
+- `PFModal` `size="lg"`(960) · `mobilePlacement="full"`(≤1079)
+- PC 좌우 `PFCarouselButton`으로 이전/다음 안내 (끝에서 disabled). 모바일에서는 숨김
+- 열면 해당 건 `read: true` (목록·모달 동기)
+- **작성자만** 더보기(`isAuthor`) → 수정하기(준비 중) / 삭제하기 → 확인 모달 후 mock 목록에서 제거·상세 닫기
+- 삭제 확인: [`EducationNoticeDeleteConfirm`](apps/platform/src/features/mypage/ui/education-notice-delete-confirm.tsx) — 「안내사항을 삭제할까요?」 / 취소·삭제하기
+- 첨부 1건: 클립 + 파일명 + 다운로드. 2건 이상: `{n}개의 첨부파일` 목록(chevron으로 접기)
+- 하단 stats는 카드와 동일 [`EducationNoticeStats`](apps/platform/src/features/mypage/ui/education-notice-stats.tsx)
+- 반응 목록·피커 mock (즉시 토글). 댓글 전송·반응 API 후속
+
 ### 구현 범위 vs 후속
 
 | 구현됨 | 후속 |
 |--------|------|
 | 공통 헤더·배너·프로그램 신청 상태 2탭 | 신청 반려용 신청 내용 UI |
 | ProgramInfoBody 재사용 + 취소 확인·이력 제거(mock) | 취소 API 연동 |
-| 빈 필드·첨부·지원방법 비노출 / 교육 커리큘럼 라벨 | 진행중/완료/포기 탭 UI |
+| 빈 필드·첨부·지원방법 비노출 / 교육 커리큘럼 라벨 | 교육 일정·설문·만족도 탭 |
 | 신청 내용 (결과 대기·서류 합격) mock UI | 신청 내용 API 연동 |
-| 비-applied 상태 placeholder | |
+| 안내사항 목록 + 상세 모달(캐러셀·첨부·삭제 확인·반응 mock) | 댓글/반응 API · 수정 · 삭제 API |
+| 비-applied 상태 placeholder | 진행 완료 안내사항 탭 |
 
 ## 금지
 
@@ -179,5 +192,6 @@ alwaysApply: false
 - Body: [`program-info-body/`](apps/platform/src/features/program/ui/program-info-body/)
 - 취소: `canCancelEducationApplication` · `EducationCancelConfirm` · `cancelMockEducationApplication`
 - 신청 내용: `EducationApplicationContent` · `canShowEducationApplicationContent`
+- 안내사항: `EducationInProgressNoticePanel` · `EducationInProgressNoticeDetailModal` · `EducationNoticeStats` · `EducationProgramInfoModal`
 
-**Last updated:** 2026-08-31
+**Last updated:** 2026-09-01 (프로그램 정보 팝업)
