@@ -59,6 +59,17 @@ function toEducationApplication(
     item.interviewAtLabel = '2026년 04월 12일(일) 14시'
   }
 
+  if (displayStatus === 'withdrawn') {
+    const withdrawnWave = Math.floor(index / DISPLAY_STATUS_CYCLE.length)
+    item.withdrawalPhase =
+      withdrawnWave % 2 === 0 ? 'before_education' : 'during_education'
+    if (item.withdrawalPhase === 'during_education') {
+      item.lastParticipatedSession = 3
+    }
+    item.selfIntroMotivation = MOCK_SELF_INTRO_MOTIVATION
+    item.preferredEducationScheduleLabel = MOCK_PREFERRED_EDUCATION_SCHEDULE
+  }
+
   if (
     displayStatus === 'waiting_result' ||
     displayStatus === 'document_passed' ||

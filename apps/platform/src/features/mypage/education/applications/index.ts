@@ -4,6 +4,7 @@ export type {
   EducationApplicationListItem,
   EducationDisplayStatus,
   EducationDisplayStatusTone,
+  EducationWithdrawalPhase,
 } from './model/types'
 export { EDUCATION_APPLICATION_PAGE_SIZE } from './model/types'
 export {
@@ -30,7 +31,17 @@ export {
   getEducationDisplayStatusTone,
   resolveEducationApplicationTab,
   canShowEducationApplicationContent,
+  isWithdrawnBeforeEducation,
+  isWithdrawnDuringEducation,
+  resolveEducationWithdrawalPhase,
+  filterItemsUpToLastParticipatedSession,
 } from './lib/display-status'
+export {
+  buildInProgressDetailTabItems,
+  buildWithdrawnDuringDetailTabItems,
+  resolveEducationScheduleTabLabel,
+} from './lib/detail-tabs'
+export type { EducationActivitySection, EducationDetailTabItem } from './lib/detail-tabs'
 export {
   DEFAULT_EDUCATION_APPLICATION_LIST_PARAMS,
   buildEducationApplicationListPath,
