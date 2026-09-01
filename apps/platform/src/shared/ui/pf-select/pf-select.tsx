@@ -12,6 +12,7 @@ import {
 import { createPortal } from 'react-dom'
 import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
 import chevronDownGrayUrl from '@/shared/assets/icons/chevron-down-gray.svg'
+import { PFOptionList, type PFOptionListOption } from '../pf-option-list'
 import { PFText } from '../pf-text'
 import cancelIconUrl from '../pf-text-input/icons/cancel.svg'
 import styles from './pf-select.module.css'
@@ -20,11 +21,7 @@ export type PFSelectSize = 'medium' | 'large' | 'xlarge'
 export type PFSelectVariant = 'default' | 'formPage'
 export type PFSelectMessageStatus = 'neutral' | 'success' | 'error'
 
-export type PFSelectOption = {
-  value: string
-  label: string
-  disabled?: boolean
-}
+export type PFSelectOption = PFOptionListOption
 
 export type PFSelectProps = {
   size?: PFSelectSize
@@ -259,41 +256,16 @@ export function PFSelect({
 
   const listbox =
     isOpen && listboxStyle ? (
-      <ul
+      <PFOptionList
         ref={listboxRef}
-        className={styles.listbox}
         id={listboxId}
         role="listbox"
+        options={options}
+        selectedValue={currentValue}
         aria-labelledby={selectId}
         style={listboxStyle}
-      >
-        {options.map(option => {
-          const isSelected = option.value === currentValue
-          const optionClassName = [
-            styles.option,
-            'typo-bd-sm-md',
-            isSelected ? styles.optionSelected : undefined,
-            option.disabled ? styles.optionDisabled : undefined,
-          ]
-            .filter(Boolean)
-            .join(' ')
-
-          return (
-            <li key={option.value} role="presentation">
-              <button
-                type="button"
-                role="option"
-                className={optionClassName}
-                aria-selected={isSelected}
-                disabled={option.disabled}
-                onClick={() => handleSelect(option.value, option.disabled)}
-              >
-                {option.label}
-              </button>
-            </li>
-          )
-        })}
-      </ul>
+        onSelect={nextValue => handleSelect(nextValue)}
+      />
     ) : null
 
   return (
