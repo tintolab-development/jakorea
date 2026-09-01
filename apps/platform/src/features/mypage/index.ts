@@ -18,6 +18,12 @@ export type {
 export type {
   EducationInProgressFile,
   EducationInProgressNotice,
+  EducationNoticeReactionSummary,
+  EducationNoticeReactionUser,
+} from './model/education-in-progress-notice-types'
+export {
+  getFirstNoticeAttachment,
+  getNoticeAttachments,
 } from './model/education-in-progress-notice-types'
 export { EDUCATION_APPLICATION_PAGE_SIZE } from './model/education-application-types'
 export {
@@ -75,6 +81,9 @@ export { EducationCancelConfirm } from './ui/education-cancel-confirm'
 export { EducationDetailBack } from './ui/education-detail-back'
 export { EducationDetailHeader } from './ui/education-detail-header'
 export { EducationInProgressNoticePanel } from './ui/education-in-progress-notice-panel'
+export { EducationProgramInfoModal } from './ui/education-program-info-modal'
+export { EducationInProgressNoticeDetailModal } from './ui/education-in-progress-notice-detail-modal'
+export { EducationNoticeStats } from './ui/education-notice-stats'
 export {
   DocumentPassBanner,
   shouldShowDocumentPassBanner,

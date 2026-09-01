@@ -3,22 +3,24 @@ import {
   formatEducationNoticePublishedAt,
   resolveEducationNoticeTitle,
 } from '../lib/education-in-progress-notice-format'
-import noticeMetaCommentUrl from '../assets/icon/notice-meta-comment.svg'
-import noticeMetaEyeUrl from '../assets/icon/notice-meta-eye.svg'
-import noticeMetaReactionUrl from '../assets/icon/notice-meta-reaction.svg'
 import { PFText } from '@/shared/ui'
+import { EducationNoticeStats } from './education-notice-stats'
 import styles from './education-in-progress-notice-card.module.css'
 
 type EducationInProgressNoticeCardProps = {
   notice: EducationInProgressNotice
+  onClick?: () => void
 }
 
-export function EducationInProgressNoticeCard({ notice }: EducationInProgressNoticeCardProps) {
+export function EducationInProgressNoticeCard({
+  notice,
+  onClick,
+}: EducationInProgressNoticeCardProps) {
   const title = resolveEducationNoticeTitle(notice.title, notice.content)
   const publishedAtLabel = formatEducationNoticePublishedAt(notice.publishedAt)
 
   return (
-    <article className={styles.card}>
+    <button type="button" className={styles.card} onClick={onClick}>
       <div className={styles.upper}>
         <PFText as="p" typo="hl-sm" color="black" className={styles.title}>
           {title}
@@ -49,27 +51,12 @@ export function EducationInProgressNoticeCard({ notice }: EducationInProgressNot
           </div>
         </div>
 
-        <div className={styles.stats} aria-label="조회·댓글·반응">
-          <span className={styles.stat}>
-            <img className={styles.statIcon} src={noticeMetaEyeUrl} alt="" aria-hidden="true" />
-            <PFText as="span" typo="bd-sm-rg" color="neutral-cool-500" className={styles.statCount}>
-              {notice.viewCount}
-            </PFText>
-          </span>
-          <span className={styles.stat}>
-            <img className={styles.statIcon} src={noticeMetaCommentUrl} alt="" aria-hidden="true" />
-            <PFText as="span" typo="bd-sm-rg" color="neutral-cool-500" className={styles.statCount}>
-              {notice.commentCount}
-            </PFText>
-          </span>
-          <span className={styles.stat}>
-            <img className={styles.statIcon} src={noticeMetaReactionUrl} alt="" aria-hidden="true" />
-            <PFText as="span" typo="bd-sm-rg" color="neutral-cool-500" className={styles.statCount}>
-              {notice.reactionCount}
-            </PFText>
-          </span>
-        </div>
+        <EducationNoticeStats
+          viewCount={notice.viewCount}
+          commentCount={notice.commentCount}
+          reactionCount={notice.reactionCount}
+        />
       </div>
-    </article>
+    </button>
   )
 }

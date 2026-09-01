@@ -11,10 +11,17 @@
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-24);
   background: var(--color-neutral-white);
+  cursor: pointer;
+  text-align: left;
 }
 
 .card:hover {
   border-color: var(--color-primary-500);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
 }
 
 .upper {
@@ -88,29 +95,4 @@
   border-radius: 50%;
   background: var(--color-neutral-cool-500);
   vertical-align: middle;
-}
-
-.stats {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: var(--spacing-12);
-}
-
-.stat {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-4);
-}
-
-.statIcon {
-  display: block;
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-}
-
-.statCount {
-  display: inline;
-  margin: 0;
 }

@@ -100,28 +100,16 @@
   top: calc(100% + 4px);
   right: 0;
   z-index: 2;
-  display: flex;
   min-width: 128px;
-  flex-direction: column;
-  padding: var(--spacing-8) 0;
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-16);
-  background: var(--color-neutral-white);
-  box-shadow: var(--shadow-card-sm);
 }
 
-.menuItem {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  padding: var(--spacing-8) var(--spacing-16);
-  border: 0;
-  background: transparent;
-  color: var(--color-neutral-black);
-  cursor: pointer;
-  text-align: left;
-}
+.row:hover {
+  border-radius: var(--Radius-16, 16px);
+  border: 2px solid var(--Color-primary-500_resilient_turquoise, #01a1af);
+  background: var(--Color-netural-white, #fff);
 
-.menuItem:hover {
-  background: var(--color-element-hover);
+  /* shadow/hover */
+  box-shadow:
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
 }

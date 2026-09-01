@@ -1,28 +1,34 @@
 import { useMemo, useState } from 'react'
+import type { ProgramDetail } from '@/features/program'
 import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no-bg.svg'
+import type { EducationInProgressNotice } from '../model/education-in-progress-notice-types'
 import {
   getMockEducationInProgressFiles,
   getMockEducationInProgressNotices,
 } from '../lib/mock-education-in-progress-notices'
 import { EducationInProgressFileRow } from './education-in-progress-file-row'
 import { EducationInProgressNoticeCard } from './education-in-progress-notice-card'
+import { EducationInProgressNoticeDetailModal } from './education-in-progress-notice-detail-modal'
+import { EducationProgramInfoModal } from './education-program-info-modal'
 import { PFAlertModal, PFButton, PFSearchInput, PFText } from '@/shared/ui'
 import styles from './education-in-progress-notice-panel.module.css'
 
 type EducationInProgressNoticePanelProps = {
-  programId: string
+  program: ProgramDetail
 }
 
 export function EducationInProgressNoticePanel({
-  programId,
+  program,
 }: EducationInProgressNoticePanelProps) {
+  const programId = program.id
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false)
+  const [isProgramInfoOpen, setIsProgramInfoOpen] = useState(false)
   const [fileQuery, setFileQuery] = useState('')
-
-  const notices = useMemo(
-    () => getMockEducationInProgressNotices(programId),
-    [programId],
+  const [notices, setNotices] = useState<EducationInProgressNotice[]>(() =>
+    getMockEducationInProgressNotices(programId),
   )
+  const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(null)
+
   const files = useMemo(() => getMockEducationInProgressFiles(programId), [programId])
 
   const filteredFiles = useMemo(() => {
@@ -35,6 +41,18 @@ export function EducationInProgressNoticePanel({
     setIsComingSoonOpen(true)
   }
 
+  const openNoticeDetail = (noticeId: string) => {
+    setNotices(prev =>
+      prev.map(notice => (notice.id === noticeId ? { ...notice, read: true } : notice)),
+    )
+    setSelectedNoticeId(noticeId)
+  }
+
+  const deleteNotice = (noticeId: string) => {
+    setNotices(prev => prev.filter(notice => notice.id !== noticeId))
+    setSelectedNoticeId(null)
+  }
+
   const hasNotices = notices.length > 0
   const hasFiles = files.length > 0
   const hasFileQuery = fileQuery.trim().length > 0
@@ -44,7 +62,11 @@ export function EducationInProgressNoticePanel({
       {hasNotices ? (
         <div className={styles.noticeList}>
           {notices.map(notice => (
-            <EducationInProgressNoticeCard key={notice.id} notice={notice} />
+            <EducationInProgressNoticeCard
+              key={notice.id}
+              notice={notice}
+              onClick={() => openNoticeDetail(notice.id)}
+            />
           ))}
         </div>
       ) : (
@@ -102,7 +124,7 @@ export function EducationInProgressNoticePanel({
         )}
 
         <div className={styles.footer}>
-          <PFButton variant="text" onClick={openComingSoon}>
+          <PFButton variant="text" onClick={() => setIsProgramInfoOpen(true)}>
             프로그램 정보
           </PFButton>
           <span className={styles.actionDivider} aria-hidden="true" />
@@ -111,6 +133,29 @@ export function EducationInProgressNoticePanel({
           </PFButton>
         </div>
       </div>
+
+      <EducationInProgressNoticeDetailModal
+        open={selectedNoticeId !== null}
+        notices={notices}
+        files={files}
+        noticeId={selectedNoticeId}
+        onClose={() => setSelectedNoticeId(null)}
+        onNoticeChange={openNoticeDetail}
+        onDelete={deleteNotice}
+        onReactionCountChange={(noticeId, reactionCount) => {
+          setNotices(prev =>
+            prev.map(notice =>
+              notice.id === noticeId ? { ...notice, reactionCount } : notice,
+            ),
+          )
+        }}
+      />
+
+      <EducationProgramInfoModal
+        open={isProgramInfoOpen}
+        program={program}
+        onClose={() => setIsProgramInfoOpen(false)}
+      />
 
       <PFAlertModal
         open={isComingSoonOpen}

@@ -268,7 +268,7 @@ export function MypageEducationDetailPage() {
           />
 
           {inProgressSection === 'notice' ? (
-            <EducationInProgressNoticePanel programId={program.id} />
+            <EducationInProgressNoticePanel program={program} />
           ) : (
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
               준비 중입니다.

@@ -6,7 +6,7 @@ import {
 } from '../lib/education-in-progress-notice-format'
 import fileDocumentUrl from '../assets/icon/file-document.svg'
 import moreVerticalUrl from '../assets/icon/more-vertical.svg'
-import { PFText } from '@/shared/ui'
+import { PFOptionList, PFText } from '@/shared/ui'
 import styles from './education-in-progress-file-row.module.css'
 
 type EducationInProgressFileRowProps = {
@@ -51,6 +51,11 @@ export function EducationInProgressFileRow({
     onComingSoon()
   }
 
+  const fileMenuOptions = [
+    { value: 'download', label: '다운로드' },
+    { value: 'view-original', label: '원문보기' },
+  ]
+
   return (
     <div className={styles.row}>
       <div className={styles.icon} aria-hidden="true">
@@ -89,24 +94,13 @@ export function EducationInProgressFileRow({
           <img className={styles.menuIcon} src={moreVerticalUrl} alt="" aria-hidden="true" />
         </button>
         {isMenuOpen ? (
-          <div className={styles.menu} id={menuId} role="menu">
-            <button
-              type="button"
-              className={`typo-bd-sm-md ${styles.menuItem}`}
-              role="menuitem"
-              onClick={handleMenuAction}
-            >
-              다운로드
-            </button>
-            <button
-              type="button"
-              className={`typo-bd-sm-md ${styles.menuItem}`}
-              role="menuitem"
-              onClick={handleMenuAction}
-            >
-              원문보기
-            </button>
-          </div>
+          <PFOptionList
+            id={menuId}
+            className={styles.menu}
+            role="menu"
+            options={fileMenuOptions}
+            onSelect={handleMenuAction}
+          />
         ) : null}
       </div>
     </div>
