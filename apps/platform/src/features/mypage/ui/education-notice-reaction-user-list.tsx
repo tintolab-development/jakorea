@@ -36,7 +36,7 @@ export function EducationNoticeReactionUserList({
               <span className={styles.headerEmoji} aria-hidden>
                 {item.renderIcon(`${clipBaseId}-h-${index}`)}
               </span>
-              <PFText as="span" typo="bd-md-md" className={styles.headerCount}>
+              <PFText as="span" typo="bd-sm-md" className={styles.headerCount}>
                 {reaction.count}
               </PFText>
             </div>
