@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { AdminActionKind, AdminPolicyScreen, AdminRoleCode } from './admin-role-policy'
 import {
+  ADMIN_ACCESS_DENIED_ALERT_CONTENT,
+  ADMIN_ACCESS_DENIED_ALERT_TITLE,
   adminRoleCodeToLegacyAdminLevel,
   canAdminAction,
+  isAdminAccessDeniedAlert,
   isSecurityLogPath,
   parseAdminRoleCode,
   resolveAdminPolicyScreen,
@@ -163,5 +166,22 @@ describe('resolveAdminRoleCodeFromUser 타입 스모크', () => {
   it('비관리자는 null', () => {
     const user = { role: 'INSTRUCTOR' } as Pick<User, 'role'>
     expect(resolveAdminRoleCodeFromUser(user)).toBeNull()
+  })
+})
+
+describe('isAdminAccessDeniedAlert', () => {
+  it('권한 안내 카피만 인식한다', () => {
+    expect(
+      isAdminAccessDeniedAlert({
+        title: ADMIN_ACCESS_DENIED_ALERT_TITLE,
+        content: ADMIN_ACCESS_DENIED_ALERT_CONTENT,
+      })
+    ).toBe(true)
+    expect(
+      isAdminAccessDeniedAlert({
+        title: '안내',
+        content: '현재 계정에 필요한 권한 또는 접근 범위가 없습니다.',
+      })
+    ).toBe(false)
   })
 })
