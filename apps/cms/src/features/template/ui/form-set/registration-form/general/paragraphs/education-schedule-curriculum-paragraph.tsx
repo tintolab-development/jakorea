@@ -266,6 +266,10 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     'generalRegistration.educationScheduleCurriculum.participationByDetail',
     {}
   )
+  const [eventNameByDetail] = useProgramRegistrationOverlayKv<Record<number, string>>(
+    'generalRegistration.educationScheduleCurriculum.eventNameByDetail',
+    {}
+  )
 
   const [preEducationName, setPreEducationName] = useProgramRegistrationOverlayKv(
     'generalRegistration.educationScheduleCurriculum.preEducationName',
@@ -397,6 +401,10 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     )
     updateProgramRegistrationOverlayKey(
       'generalRegistration.educationScheduleCurriculum.participationByDetail',
+      prev => reindexDetailRecordAfterDelete((prev as Record<number, string>) ?? {}, detailIndex)
+    )
+    updateProgramRegistrationOverlayKey(
+      'generalRegistration.educationScheduleCurriculum.eventNameByDetail',
       prev => reindexDetailRecordAfterDelete((prev as Record<number, string>) ?? {}, detailIndex)
     )
     onDeleteScheduleCurriculumDetail(detailIndex)
@@ -914,6 +922,13 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                             placeholder="행사 일정명을 작성하세요"
                             width="100%"
                             style={{ minWidth: 0, flex: '1 1 0' }}
+                            value={eventNameByDetail[n] ?? ''}
+                            onChange={event =>
+                              updateProgramRegistrationOverlayKey<Record<number, string>>(
+                                'generalRegistration.educationScheduleCurriculum.eventNameByDetail',
+                                prev => ({ ...(prev ?? {}), [n]: event.target.value })
+                              )
+                            }
                           />
                         }
                         view="-"
@@ -967,6 +982,13 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                           inputSize="medium"
                           placeholder="세부 일정명을 작성하세요"
                           width="100%"
+                          value={eventNameByDetail[n] ?? ''}
+                          onChange={event =>
+                            updateProgramRegistrationOverlayKey<Record<number, string>>(
+                              'generalRegistration.educationScheduleCurriculum.eventNameByDetail',
+                              prev => ({ ...(prev ?? {}), [n]: event.target.value })
+                            )
+                          }
                         />
                       }
                       view="-"

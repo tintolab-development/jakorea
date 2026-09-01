@@ -79,6 +79,7 @@ import {
   subscribeProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { useCmsAlert } from '@/shared/ui'
+import { hasIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
 
 export type ProgramRegistrationParticipantSelection = {
   individual: boolean
@@ -1095,8 +1096,51 @@ export function useProgramRegistrationEditor(
     setSingleItemListActiveItemId(itemId)
   }, [])
 
+  const hasIncompleteRequiredFields = useCallback(() => {
+    if (programRegistrationFormVariant !== 'general') return false
+    return hasIncompleteGeneralProgramRegistrationRequiredFields(
+      getProgramRegistrationOverlayRecord(),
+      {
+        participant,
+        programType,
+        sessionRoundType,
+        educationFormScheduleDetail,
+        participationScheduleDetail,
+        ipsScheduleDetail,
+        curriculumSessionCount,
+        curriculumChartSessionCount,
+        scheduleCurriculumDetailCount,
+        scheduleCurriculumGroupCount,
+        scheduleCurriculumPreEducation,
+        educationScheduleMode,
+        sponsorId,
+        sponsorContactId,
+        programTitleKo,
+      }
+    )
+  }, [
+    curriculumChartSessionCount,
+    curriculumSessionCount,
+    educationFormScheduleDetail,
+    educationScheduleMode,
+    ipsScheduleDetail,
+    overlayVersion,
+    participant,
+    participationScheduleDetail,
+    programRegistrationFormVariant,
+    programTitleKo,
+    programType,
+    scheduleCurriculumDetailCount,
+    scheduleCurriculumGroupCount,
+    scheduleCurriculumPreEducation,
+    sessionRoundType,
+    sponsorContactId,
+    sponsorId,
+  ])
+
   return {
     draft,
+    programRegistrationFormVariant,
     isDraftLoading,
     activeParagraphId,
     singleItemListActiveItemId,
@@ -1125,6 +1169,7 @@ export function useProgramRegistrationEditor(
     programType,
     sessionRoundType,
     educationScheduleMode,
+    hasIncompleteRequiredFields,
   }
 }
 
