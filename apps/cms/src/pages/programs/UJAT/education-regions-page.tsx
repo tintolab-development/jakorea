@@ -9,6 +9,8 @@ import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { guardAdminAction } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { shouldUseUjatEducationRegionsRemoteApi } from '@/features/program/ujat/api/education-regions/capabilities'
 import {
   useCreateUjatEducationRegion,
@@ -62,6 +64,7 @@ function coerceRadioBoolean(raw: unknown): boolean {
 
 export default function UjatEducationRegionsPage() {
   const { showAlert } = useCmsAlert()
+  const roleCode = useSessionAdminRoleCode()
   const remoteEnabled = shouldUseUjatEducationRegionsRemoteApi()
   const listQuery = useUjatEducationRegionsList()
   const createMutation = useCreateUjatEducationRegion()
@@ -185,6 +188,7 @@ export default function UjatEducationRegionsPage() {
 
   const handleReorder = useCallback(
     (reorderedVisible: UjatEducationRegion[]) => {
+      if (!guardAdminAction({ roleCode, action: 'write' })) return
       if (editingId) return
       const visibleIds = reorderedVisible.map(row => row.id)
       const hiddenIds = rows.filter(row => !visibleIds.includes(row.id)).map(row => row.id)
@@ -204,7 +208,7 @@ export default function UjatEducationRegionsPage() {
         void listQuery.refetch()
       })
     },
-    [editingId, listQuery, reorderMutation, rows, showAlert]
+    [editingId, listQuery, reorderMutation, roleCode, rows, showAlert]
   )
 
   const handleRegister = useCallback(
@@ -353,6 +357,7 @@ export default function UjatEducationRegionsPage() {
                 variant="default"
                 size="medium"
                 width={100}
+                adminAction="delete"
                 loading={
                   deleteMutation.isPending && deleteTarget?.id === record.id
                 }
@@ -367,6 +372,7 @@ export default function UjatEducationRegionsPage() {
                 variant="secondary"
                 size="medium"
                 width={100}
+                adminAction="write"
                 loading={isEditing ? updateMutation.isPending : false}
                 disabled={isEditing ? !editDraft.name.trim() : false}
                 onClick={e => {
@@ -401,6 +407,7 @@ export default function UjatEducationRegionsPage() {
     <CmsButton
       variant="secondary"
       width={160}
+      adminAction="write"
       loading={createMutation.isPending}
       onClick={() => setRegisterOpen(true)}
     >
