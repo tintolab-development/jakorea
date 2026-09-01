@@ -7,6 +7,7 @@ import {
   rejectInstructorRoleRequestRemote,
   resetInstructorRoleRequestPendingRemote,
   resendInstructorRoleNotificationRemote,
+  revokeInstructorPermissionRemote,
 } from '@/features/user/api/members-api-client'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import type { InstructorPermissionApprovePayload } from '@/features/user/permission-management/instructor-permission-approve-modal'
@@ -102,12 +103,34 @@ export function useInstructorRoleRequestMutations() {
   const resetPendingMutation = useMutation({
     mutationFn: async (input: { requestId: number; reason: string }) => {
       await resetInstructorRoleRequestPendingRemote(input.requestId, {
-        reason: input.reason.trim() || 'CMS 강사 권한 승인 취소',
+        reason: input.reason.trim() || 'CMS 강사 권한 재검토',
       })
     },
     onSuccess: async (_data, variables) => {
       await invalidateLists()
       await invalidateDetail(variables.requestId)
+    },
+  })
+
+  /** APPROVED 건 「승인 취소」 — reset-pending 금지, memberId 기준 revoke */
+  const revokeMutation = useMutation({
+    mutationFn: async (input: {
+      memberId: number
+      reason: string
+      /** 상세 캐시 무효화용 (신청 row는 APPROVED 이력으로 남을 수 있음) */
+      requestId?: number
+    }) => {
+      const reason = input.reason.trim() || 'CMS 강사 권한 승인 취소'
+      await revokeInstructorPermissionRemote(input.memberId, {
+        reason,
+        revokeReason: reason,
+      })
+    },
+    onSuccess: async (_data, variables) => {
+      await invalidateLists()
+      if (variables.requestId != null) {
+        await invalidateDetail(variables.requestId)
+      }
     },
   })
 
@@ -124,12 +147,15 @@ export function useInstructorRoleRequestMutations() {
     approveMutation,
     rejectMutation,
     resetPendingMutation,
+    revokeMutation,
     resendNotificationMutation,
     getApproveError: (error: unknown) =>
       getMemberApiErrorMessage(error, '강사 권한 승인에 실패했습니다.'),
     getRejectError: (error: unknown) =>
       getMemberApiErrorMessage(error, '강사 권한 반려에 실패했습니다.'),
     getResetPendingError: (error: unknown) =>
+      getMemberApiErrorMessage(error, '강사 권한 재검토(대기 전환)에 실패했습니다.'),
+    getRevokeError: (error: unknown) =>
       getMemberApiErrorMessage(error, '강사 권한 승인 취소에 실패했습니다.'),
     getResendNotificationError: (error: unknown) =>
       getMemberApiErrorMessage(error, '알림 재발송에 실패했습니다.'),

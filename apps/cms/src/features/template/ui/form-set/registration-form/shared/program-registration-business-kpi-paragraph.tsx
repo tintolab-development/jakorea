@@ -3,6 +3,11 @@ import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
+export type ProgramRegistrationOverlayKvHook = <T>(
+  key: string,
+  defaultValue: T
+) => [T, (next: T) => void]
+
 export type ProgramRegistrationBusinessKpiProgressItem = {
   label: string
   disabled?: boolean
@@ -13,6 +18,8 @@ export type ProgramRegistrationBusinessKpiProgressItem = {
 export type ProgramRegistrationBusinessKpiParagraphProps = {
   /** Overlay key prefix (default: 'generalRegistration.kpi') */
   overlayKeyPrefix?: string
+  /** Overlay 구독 훅 — 기본은 일반/1사1교 공용 스토어. UJAT는 전용 훅을 넘긴다. */
+  useOverlayKv?: ProgramRegistrationOverlayKvHook
   /** 교육진행자 최종 인원 — 강사 입력란 */
   instructorDisabled?: boolean
   instructorPlaceholder?: string
@@ -69,14 +76,16 @@ function KpiProgressItemInput({
   disabled,
   placeholder,
   showSeparator,
+  useOverlayKv,
 }: {
   overlayKey: string
   label: string
   disabled?: boolean
   placeholder?: string
   showSeparator: boolean
+  useOverlayKv: ProgramRegistrationOverlayKvHook
 }) {
-  const [value, setValue] = useProgramRegistrationOverlayKv<number | null>(overlayKey, null)
+  const [value, setValue] = useOverlayKv<number | null>(overlayKey, null)
   return (
     <div className="program-registration-paragraph__instructor-kpi-group">
       {showSeparator ? <DetailInfoForm.InputsSeparator /> : null}
@@ -93,6 +102,7 @@ function KpiProgressItemInput({
 
 export function ProgramRegistrationBusinessKpiParagraph({
   overlayKeyPrefix = 'generalRegistration.kpi',
+  useOverlayKv = useProgramRegistrationOverlayKv,
   instructorDisabled = false,
   instructorPlaceholder = '목표값 입력',
   volunteerDisabled = false,
@@ -103,23 +113,23 @@ export function ProgramRegistrationBusinessKpiParagraph({
   dispatchedClassPlaceholder = '목표값 입력',
   educationProgressItems,
 }: ProgramRegistrationBusinessKpiParagraphProps = {}) {
-  const [participantCount, setParticipantCount] = useProgramRegistrationOverlayKv<number | null>(
+  const [participantCount, setParticipantCount] = useOverlayKv<number | null>(
     `${overlayKeyPrefix}.participantCount`,
     null
   )
-  const [instructor, setInstructor] = useProgramRegistrationOverlayKv<number | null>(
+  const [instructor, setInstructor] = useOverlayKv<number | null>(
     `${overlayKeyPrefix}.instructor`,
     null
   )
-  const [volunteer, setVolunteer] = useProgramRegistrationOverlayKv<number | null>(
+  const [volunteer, setVolunteer] = useOverlayKv<number | null>(
     `${overlayKeyPrefix}.volunteer`,
     null
   )
-  const [dispatchedSchool, setDispatchedSchool] = useProgramRegistrationOverlayKv<number | null>(
+  const [dispatchedSchool, setDispatchedSchool] = useOverlayKv<number | null>(
     `${overlayKeyPrefix}.dispatchedSchool`,
     null
   )
-  const [dispatchedClass, setDispatchedClass] = useProgramRegistrationOverlayKv<number | null>(
+  const [dispatchedClass, setDispatchedClass] = useOverlayKv<number | null>(
     `${overlayKeyPrefix}.dispatchedClass`,
     null
   )
@@ -207,6 +217,7 @@ export function ProgramRegistrationBusinessKpiParagraph({
                     disabled={item.disabled}
                     placeholder={item.placeholder}
                     showSeparator={index > 0}
+                    useOverlayKv={useOverlayKv}
                   />
                 )
               })}

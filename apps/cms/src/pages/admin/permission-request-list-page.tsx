@@ -31,6 +31,11 @@ import { UserDetailFullPageModal } from '@/pages/users/user-detail-fullpage-moda
 import type { UserDetailPermissionRole } from '@/pages/users/user-detail-fullpage-modal'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 import { updateMockUserById } from '@/data/mock/users'
+import { applyInstructorPermissionRevokedToUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
+import {
+  isInstructorPermissionRevoked,
+} from '@/features/user/shared/lib/member-list-display'
+import { markInstructorPermissionRevoked } from '@/features/user/shared/lib/revoked-instructor-overlay'
 import {
   isAdminApprovalRequestsRemoteEnabled,
   isInstructorRoleRequestsRemoteEnabled,
@@ -112,6 +117,18 @@ type PermissionStatusResetConfirmState = {
 
 type PermissionListTabKey = 'instructor' | 'admin'
 
+function resolveInstructorMemberIdForRevoke(
+  userId: string,
+  detailUser: Omit<User, 'password'> | null,
+  detailTargetRow: MemberPermissionApplicationRow | null,
+  listRef: React.RefObject<MembersPermissionListHandle | null>
+): number | undefined {
+  return (
+    detailUser?.memberId ??
+    detailTargetRow?.memberId ??
+    listRef.current?.getRowForUser(userId)?.memberId
+  )
+}
 function resolvePermissionDetailRequestId(
   permissionRole: UserDetailPermissionRole,
   userId: string,
@@ -138,10 +155,12 @@ export function PermissionRequestListPage() {
     approveMutation,
     rejectMutation,
     resetPendingMutation,
+    revokeMutation,
     resendNotificationMutation,
     getApproveError,
     getRejectError,
     getResetPendingError,
+    getRevokeError,
     getResendNotificationError,
   } = useInstructorRoleRequestMutations()
   const {
@@ -183,6 +202,10 @@ export function PermissionRequestListPage() {
   const [detailTargetRow, setDetailTargetRow] = useState<MemberPermissionApplicationRow | null>(
     null
   )
+  /** revoke 직후 React 리렌더용 — BE 신청 row는 APPROVED 이력으로 남을 수 있음 */
+  const [revokedInstructorSessionKeys, setRevokedInstructorSessionKeys] = useState(
+    () => new Set<string>()
+  )
 
   const detailInstructorRequestId =
     permissionRole === 'instructor' ? detailTargetRow?.requestId : undefined
@@ -203,20 +226,36 @@ export function PermissionRequestListPage() {
   const detailUser = useMemo((): Omit<User, 'password'> | null => {
     if (!detailOpen || !detailTargetRow || !permissionRole) return null
 
+    const withRevokedSession = (user: Omit<User, 'password'>): Omit<User, 'password'> => {
+      const sessionRevoked =
+        revokedInstructorSessionKeys.has(user.id) ||
+        (user.memberId != null && revokedInstructorSessionKeys.has(String(user.memberId)))
+      if (sessionRevoked || isInstructorPermissionRevoked(user)) {
+        return applyInstructorPermissionRevokedToUser(user)
+      }
+      return user
+    }
+
     if (permissionRole === 'instructor') {
       if (instructorRemote) {
         if (instructorDetailQuery.isLoading) return null
         if (instructorDetailQuery.data) {
-          return mapInstructorRoleRequestDetailToUser(instructorDetailQuery.data, {
-            fallbackId: detailTargetRow.userId,
-          })
+          return withRevokedSession(
+            mapInstructorRoleRequestDetailToUser(instructorDetailQuery.data, {
+              fallbackId: detailTargetRow.userId,
+            })
+          )
         }
         if (instructorDetailQuery.isError) {
-          return mapPermissionApplicationRowToDetailUser(detailTargetRow, 'instructor')
+          return withRevokedSession(
+            mapPermissionApplicationRowToDetailUser(detailTargetRow, 'instructor')
+          )
         }
         return null
       }
-      return mapPermissionApplicationRowToDetailUser(detailTargetRow, 'instructor')
+      return withRevokedSession(
+        mapPermissionApplicationRowToDetailUser(detailTargetRow, 'instructor')
+      )
     }
 
     if (adminRemote) {
@@ -244,6 +283,7 @@ export function PermissionRequestListPage() {
     instructorDetailQuery.isLoading,
     instructorRemote,
     permissionRole,
+    revokedInstructorSessionKeys,
   ])
 
   useEffect(() => {
@@ -620,22 +660,68 @@ export function PermissionRequestListPage() {
   const handleConfirmPermissionResetToPending = useCallback(
     async (payload: { cancellationReason: string; notifyTiming: 'immediate' | 'manual' }) => {
       if (!permissionStatusResetConfirm) return
-      const { userId, permissionRole } = permissionStatusResetConfirm
-      const reason = payload.cancellationReason.trim() || 'CMS 권한 승인 취소'
+      const { userId, permissionRole, fromStatus } = permissionStatusResetConfirm
+      const reason =
+        payload.cancellationReason.trim() ||
+        (fromStatus === 'APPROVED' ? 'CMS 강사 권한 승인 취소' : 'CMS 강사 권한 재검토')
 
       if (permissionRole === 'instructor' && instructorRemote) {
-        const requestId =
-          detailUser?.instructorRoleRequestId ??
-          instructorListRef.current?.getRequestIdForUser(userId)
-        if (requestId == null) {
-          handleError(new Error('승인 취소할 권한 신청 ID를 찾지 못했습니다.'))
-          return
-        }
-        try {
-          await resetPendingMutation.mutateAsync({ requestId, reason })
-        } catch (error) {
-          handleError(error, { defaultMessage: getResetPendingError(error) })
-          return
+        if (fromStatus === 'APPROVED') {
+          const memberId = resolveInstructorMemberIdForRevoke(
+            userId,
+            detailUser,
+            detailTargetRow,
+            instructorListRef
+          )
+          if (memberId == null) {
+            handleError(new Error('승인 취소할 회원 memberId를 찾지 못했습니다.'))
+            return
+          }
+          try {
+            const requestId =
+              detailUser?.instructorRoleRequestId ??
+              detailTargetRow?.requestId ??
+              instructorListRef.current?.getRequestIdForUser(userId)
+            await revokeMutation.mutateAsync({
+              memberId,
+              reason,
+              requestId: requestId ?? undefined,
+            })
+            const revokedSnapshot = applyInstructorPermissionRevokedToUser({
+              id: userId,
+              memberId,
+              email: detailUser?.email ?? '-',
+              name: detailUser?.name ?? '-',
+              role: 'INSTRUCTOR',
+              isActive: true,
+              createdAt: detailUser?.createdAt ?? new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            })
+            markInstructorPermissionRevoked(revokedSnapshot)
+            setRevokedInstructorSessionKeys(prev => {
+              const next = new Set(prev)
+              next.add(userId)
+              next.add(String(memberId))
+              return next
+            })
+          } catch (error) {
+            handleError(error, { defaultMessage: getRevokeError(error) })
+            return
+          }
+        } else {
+          const requestId =
+            detailUser?.instructorRoleRequestId ??
+            instructorListRef.current?.getRequestIdForUser(userId)
+          if (requestId == null) {
+            handleError(new Error('재검토할 권한 신청 ID를 찾지 못했습니다.'))
+            return
+          }
+          try {
+            await resetPendingMutation.mutateAsync({ requestId, reason })
+          } catch (error) {
+            handleError(error, { defaultMessage: getResetPendingError(error) })
+            return
+          }
         }
       } else if (permissionRole === 'admin' && adminRemote) {
         const adminAccountId =
@@ -650,33 +736,60 @@ export function PermissionRequestListPage() {
           handleError(error, { defaultMessage: getAdminResetPendingError(error) })
           return
         }
+      } else if (permissionRole === 'instructor') {
+        if (fromStatus === 'APPROVED') {
+          const baseUser =
+            detailUser ??
+            (detailTargetRow
+              ? mapPermissionApplicationRowToDetailUser(detailTargetRow, 'instructor')
+              : null)
+          if (!baseUser) {
+            handleError(new Error('승인 취소할 회원 정보를 찾지 못했습니다.'))
+            return
+          }
+          const revoked = applyInstructorPermissionRevokedToUser(baseUser)
+          updateMockUserById(userId, {
+            ...revoked,
+            permissionApprovalStatus: 'APPROVED',
+          })
+          markInstructorPermissionRevoked(revoked)
+          setRevokedInstructorSessionKeys(prev => {
+            const next = new Set(prev)
+            next.add(userId)
+            if (revoked.memberId != null) next.add(String(revoked.memberId))
+            return next
+          })
+        } else {
+          updateMockUserById(userId, {
+            permissionApprovalStatus: 'PENDING',
+            permissionApprovalHandledAt: undefined,
+            permissionNotificationResentAt: undefined,
+          })
+          instructorListRef.current?.applyInstructorPermissionPending(userId)
+        }
       } else {
         updateMockUserById(userId, {
           permissionApprovalStatus: 'PENDING',
           permissionApprovalHandledAt: undefined,
           permissionNotificationResentAt: undefined,
         })
-      }
-
-      if (permissionRole === 'instructor') {
-        if (!instructorRemote) {
-          instructorListRef.current?.applyInstructorPermissionPending(userId)
-        }
-      } else if (!adminRemote) {
         adminListRef.current?.applyInstructorPermissionPending(userId)
       }
+
       setPermissionStatusResetConfirm(null)
     },
     [
       adminRemote,
       adminResetPendingMutation,
-      detailUser?.adminAccountId,
-      detailUser?.instructorRoleRequestId,
+      detailTargetRow,
+      detailUser,
       getAdminResetPendingError,
       getResetPendingError,
+      getRevokeError,
       instructorRemote,
       permissionStatusResetConfirm,
       resetPendingMutation,
+      revokeMutation,
     ]
   )
 

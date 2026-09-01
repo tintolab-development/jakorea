@@ -29,6 +29,7 @@ export type UjatSatisfactionSurveyViewProps = {
   onDownloadClick: () => void
   resultsExportRef?: RefObject<HTMLDivElement | null>
   resultsResponses?: UjatSurveyPollRawResponse[]
+  audienceTabs?: readonly { key: UjatSatisfactionAudienceKey; label: string }[]
 }
 
 export function UjatSatisfactionSurveyView({
@@ -42,8 +43,9 @@ export function UjatSatisfactionSurveyView({
   onDownloadClick,
   resultsExportRef,
   resultsResponses,
+  audienceTabs: audienceTabsProp,
 }: UjatSatisfactionSurveyViewProps) {
-  const audienceTabs = getSatisfactionAudienceTabs()
+  const audienceTabs = audienceTabsProp ?? getSatisfactionAudienceTabs()
   const activeSurvey: UjatRegisteredSurvey | undefined = surveysByAudience[activeAudience]
 
   const trailingActions =

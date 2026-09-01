@@ -209,6 +209,8 @@ export type ProgramRegistrationEducationScheduleCurriculumParagraphProps = {
   ipsScheduleDetail: ProgramRegistrationScheduleDetailKind
   /** 카드 헤더「사전 교육」ON이면 일정 앞에 사전 교육 블록을 두고, 그 블록의 IPS만 Prepare로 고정 */
   scheduleCurriculumPreEducation?: boolean
+  /** 사전 교육/교육 연수 블록 헤딩 라벨 (기본: 사전 교육) */
+  preEducationBlockLabel?: string
 }
 
 export function ProgramRegistrationEducationScheduleCurriculumParagraph({
@@ -223,6 +225,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   participationScheduleDetail,
   ipsScheduleDetail,
   scheduleCurriculumPreEducation = false,
+  preEducationBlockLabel = PRE_EDUCATION_SCHEDULE_LABEL,
 }: ProgramRegistrationEducationScheduleCurriculumParagraphProps) {
   const detailCount = Math.max(1, scheduleDetailCount)
   const groupCount =
@@ -273,7 +276,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
 
   const [preEducationName, setPreEducationName] = useProgramRegistrationOverlayKv(
     'generalRegistration.educationScheduleCurriculum.preEducationName',
-    PRE_EDUCATION_SCHEDULE_LABEL
+    preEducationBlockLabel
   )
 
   const setIpsForDetail = (detailIndex: number, next: ProgramRegistrationIpsTypeValue) => {
@@ -853,7 +856,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     scheduleCurriculumPreEducation ? (
       <div key="pre-education" className="program-registration-schedule-curriculum__block">
         <div className="program-registration-schedule-curriculum__session-heading">
-          ■ {PRE_EDUCATION_SCHEDULE_LABEL}
+          ■ {preEducationBlockLabel}
         </div>
         <div className="program-registration-curriculum__session-row">
           <div className="program-registration-schedule-curriculum__session-panel">
@@ -975,12 +978,16 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                 >
                   <DetailInfoForm.Row type="single">
                     <DetailInfoForm.Field
-                      label="일정명"
+                      label={groupCount > 1 ? '일정명' : '일정 상세'}
                       fullRow
                       edit={
                         <CmsInput
                           inputSize="medium"
-                          placeholder="세부 일정명을 작성하세요"
+                          placeholder={
+                            groupCount > 1
+                              ? '세부 일정명을 작성하세요'
+                              : '일정 상세 내용을 작성하세요'
+                          }
                           width="100%"
                           value={eventNameByDetail[n] ?? ''}
                           onChange={event =>

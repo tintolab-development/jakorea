@@ -15,6 +15,10 @@ import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-
 import { isAdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
 import { useLoginAttempts } from '@/features/auth/hooks/use-login-attempts'
 import { LOGIN_POLICY } from '@/shared/constants/login-policy'
+import {
+  DEV_LOGIN_QA_ACCOUNTS,
+  DEV_LOGIN_QA_PASSWORD,
+} from '@/features/auth/lib/dev-login-accounts'
 import { AuthFormLabel } from '@/features/auth/ui/auth-form-label'
 import { AuthLogoLink } from '@/features/auth/ui/auth-logo-link'
 import { LoginUtilityLinks } from '@/features/auth/ui/login-utility-links'
@@ -22,17 +26,6 @@ import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
 import './login-page.css'
 
 const { Text } = Typography
-
-const TEST_ACCOUNTS = {
-  admin: {
-    email: 'admin1@jakorea.org',
-    password: 'admin1234!',
-  },
-  adminRegistered: {
-    email: '123@jakorea.org',
-    password: '!Tinto05270527',
-  },
-}
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -245,34 +238,27 @@ export function LoginPage() {
           />
           <LoginSocialSection />
 
-          {import.meta.env.DEV && (
-            <div className="login-dev-quick">
-              <Space size="small" wrap>
+          <div className="login-dev-quick">
+            <Text type="secondary" className="login-dev-quick__label">
+              임시 로그인 (DEV)
+            </Text>
+            <Space size="small" wrap>
+              {DEV_LOGIN_QA_ACCOUNTS.map(account => (
                 <Button
+                  key={account.key}
                   size="small"
                   onClick={() => {
                     form.setFieldsValue({
-                      email: TEST_ACCOUNTS.admin.email,
-                      password: TEST_ACCOUNTS.admin.password,
+                      email: account.email,
+                      password: DEV_LOGIN_QA_PASSWORD,
                     })
                   }}
                 >
-                  어드민 계정정보 자동 입력
+                  {account.label}
                 </Button>
-                <Button
-                  size="small"
-                  onClick={() => {
-                    form.setFieldsValue({
-                      email: TEST_ACCOUNTS.adminRegistered.email,
-                      password: TEST_ACCOUNTS.adminRegistered.password,
-                    })
-                  }}
-                >
-                  어드민 가입계정 자동 입력
-                </Button>
-              </Space>
-            </div>
-          )}
+              ))}
+            </Space>
+          </div>
         </div>
       </div>
 

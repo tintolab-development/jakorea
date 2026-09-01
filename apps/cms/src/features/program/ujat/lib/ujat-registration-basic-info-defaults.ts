@@ -1,9 +1,12 @@
 import type { ProgramRegistrationIpsCategory } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
-import {
-  initialProgramRegistrationSurveyItems,
-  type ProgramRegistrationSurveyItemId,
-} from '@/features/template/lib/program-registration-survey-items'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
+import {
+  createUjatSurveyItemsDefault,
+  type UjatSurveyRowId,
+} from '@/features/program/ujat/lib/registration-survey-items'
+
+export type { UjatSurveyRowId }
+export { createUjatSurveyItemsDefault }
 
 export const UJAT_REGISTRATION_TEMPLATE_ID = 'registration-ujat' as const
 
@@ -11,6 +14,7 @@ export const UJAT_BASIC_INFO_REP_KO_DEFAULT = '대학생경제교육봉사단'
 export const UJAT_BASIC_INFO_REP_EN_DEFAULT = 'University Students JA Team'
 export const UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT =
   'JA Korea 초등 경제교육 대상 학교 및 대학생경제교육봉사단 모집'
+export const UJAT_BASIC_INFO_PUBLIC_TITLE_DEFAULT = UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT
 
 export const UJAT_DETAILED_PROGRAM_UJAT_VALUE = '__ujat_volunteer_core__' as const
 export const UJAT_DETAILED_PROGRAM_UJAT_LABEL = '대학생경제교육봉사단'
@@ -23,18 +27,13 @@ export function resolveUjatDefaultSponsorId(sponsors: readonly SponsorManagement
   return sponsors.find(s => s.name === '제이에이코리아')?.id ?? UJAT_SPONSOR_ALL_VALUE
 }
 
-export type UjatSurveyRowId = ProgramRegistrationSurveyItemId
-
-export function createUjatSurveyItemsDefault(): Record<UjatSurveyRowId, boolean> {
-  return initialProgramRegistrationSurveyItems(true)
-}
-
 export const UJAT_SURVEY_ITEMS_DEFAULT = createUjatSurveyItemsDefault()
 
 export type UjatRegistrationBasicInfoOverlayDefaults = {
   repKo: string
   repEn: string
   programManagementName: string
+  publicProgramTitle: string
   detailedProgramId: string
   operationRangeSeal: { start: string; end: string } | null
   participantIndividual: boolean
@@ -43,6 +42,8 @@ export type UjatRegistrationBasicInfoOverlayDefaults = {
   participantVolunteer: boolean
   businessField: string
   sponsorId: string
+  sponsorContactId: string
+  sponsorManagerName: string
   ipOwned: string
   courseDeliveredBy: string
   ipsCategory: ProgramRegistrationIpsCategory
@@ -58,6 +59,7 @@ export function createUjatRegistrationBasicInfoOverlayDefaults(
     repKo: UJAT_BASIC_INFO_REP_KO_DEFAULT,
     repEn: UJAT_BASIC_INFO_REP_EN_DEFAULT,
     programManagementName: UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT,
+    publicProgramTitle: UJAT_BASIC_INFO_PUBLIC_TITLE_DEFAULT,
     detailedProgramId: UJAT_DETAILED_PROGRAM_UJAT_VALUE,
     operationRangeSeal: null,
     participantIndividual: false,
@@ -66,6 +68,8 @@ export function createUjatRegistrationBasicInfoOverlayDefaults(
     participantVolunteer: true,
     businessField: 'economy_finance',
     sponsorId: resolveUjatDefaultSponsorId(sponsors),
+    sponsorContactId: UJAT_SPONSOR_ALL_VALUE,
+    sponsorManagerName: '',
     ipOwned: 'ja',
     courseDeliveredBy: 'ja',
     ipsCategory: 'prepare',

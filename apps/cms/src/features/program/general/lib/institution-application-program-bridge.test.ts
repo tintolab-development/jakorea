@@ -16,7 +16,7 @@ describe('resolveInstitutionApplicationProgramBridge', () => {
       generalProgramSessionRound: 'single',
     } as Parameters<typeof resolveInstitutionApplicationProgramBridge>[0])
 
-    expect(bridge.educationScheduleMode).toBe('period')
+    expect(bridge.educationScheduleMode).toBe('date')
     expect(bridge.educationScheduleLines).toEqual([
       '26년 4월 20일(월) 9:30 ~ 12:20',
       '26년 4월 27일(월) 13:00 ~ 15:50',
@@ -36,7 +36,7 @@ describe('shouldShowInstitutionApplicationScheduleParagraph', () => {
     ).toBe(false)
   })
 
-  it('일정형 + 단일 회차이면 단락을 노출한다', () => {
+  it('일정형 + 단일 회차 + 기간 지정이면 단락을 노출한다', () => {
     expect(
       shouldShowInstitutionApplicationScheduleParagraph({
         educationStructure: 'schedule',
@@ -45,6 +45,36 @@ describe('shouldShowInstitutionApplicationScheduleParagraph', () => {
         preEducationNoticeRequired: true,
       })
     ).toBe(true)
+  })
+
+  it('날짜 지정 + 고유 일자 이틀이면 단락을 노출한다', () => {
+    expect(
+      shouldShowInstitutionApplicationScheduleParagraph({
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+        educationScheduleMode: 'date',
+        educationScheduleLines: [
+          '26년 4월 20일(월) 9:30 ~ 12:20',
+          '26년 4월 27일(월) 13:00 ~ 15:50',
+        ],
+        preEducationNoticeRequired: true,
+      })
+    ).toBe(true)
+  })
+
+  it('날짜 지정 + 고유 일자 하루이면 단락을 숨긴다', () => {
+    expect(
+      shouldShowInstitutionApplicationScheduleParagraph({
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+        educationScheduleMode: 'date',
+        educationScheduleLines: [
+          '26년 4월 20일(월) 09:30 ~ 12:20',
+          '26년 4월 20일(월) 13:00 ~ 15:50',
+        ],
+        preEducationNoticeRequired: true,
+      })
+    ).toBe(false)
   })
 })
 
@@ -67,6 +97,33 @@ describe('shouldShowInstitutionApplicationPreferredScheduleParagraph', () => {
         educationStructure: 'schedule',
         sessionRound: 'multi',
         educationScheduleMode: 'period',
+        preEducationNoticeRequired: true,
+      })
+    ).toBe(false)
+  })
+
+  it('커리큘럼 단일 + 기간 지정이면 희망 일정 본문을 노출한다', () => {
+    expect(
+      shouldShowInstitutionApplicationPreferredScheduleParagraph({
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+        educationScheduleMode: 'period',
+        educationScheduleLines: ['26년 4월 20일(월) ~ 26년 4월 27일(월)'],
+        preEducationNoticeRequired: true,
+      })
+    ).toBe(true)
+  })
+
+  it('날짜 지정 + 고유 일자 하루이면 희망 일정 본문도 숨긴다', () => {
+    expect(
+      shouldShowInstitutionApplicationPreferredScheduleParagraph({
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+        educationScheduleMode: 'date',
+        educationScheduleLines: [
+          '26년 4월 20일(월) 09:30 ~ 12:20',
+          '26년 4월 20일(월) 13:00 ~ 15:50',
+        ],
         preEducationNoticeRequired: true,
       })
     ).toBe(false)

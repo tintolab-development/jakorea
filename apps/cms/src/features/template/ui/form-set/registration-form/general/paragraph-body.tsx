@@ -178,6 +178,8 @@ export function renderProgramRegistrationParagraphBody(
       return options == null ? null : options.programRegistrationFormVariant ===
         'trainedTeachers' ? (
         <TrainedTeachersRegistrationTypeSettingsParagraph
+          programType={options.programType}
+          onProgramTypeChange={options.onProgramTypeChange}
           sessionRoundType={options.sessionRoundType}
           onSessionRoundTypeChange={options.onSessionRoundTypeChange}
           educationFormScheduleDetail={options.educationFormScheduleDetail}
@@ -203,11 +205,29 @@ export function renderProgramRegistrationParagraphBody(
     case PROGRAM_REGISTRATION_IDS.educationCurriculum:
       return options == null ? null : options.programRegistrationFormVariant ===
         'trainedTeachers' ? (
-        <TrainedTeachersRegistrationEducationCurriculumParagraph
-          teacherTrainingEnabled={options.trainedTeachersTeacherTrainingEnabled}
-          curriculumSessionCount={options.curriculumChartSessionCount}
-          onDeleteCurriculumSession={options.onDeleteCurriculumChartSession}
-        />
+        options.programType === 'schedule' ? (
+          <ProgramRegistrationEducationScheduleCurriculumParagraph
+            key={`tt-schedule-curriculum-${options.sessionRoundType}-${options.educationFormScheduleDetail}-${options.ipsScheduleDetail}`}
+            scheduleDetailCount={options.scheduleCurriculumDetailCount}
+            onDeleteScheduleCurriculumDetail={options.onDeleteScheduleCurriculumDetail}
+            scheduleGroupCount={options.scheduleCurriculumGroupCount}
+            onDeleteScheduleCurriculumGroup={options.onDeleteScheduleCurriculumGroup}
+            ipsPerSchedule={options.ipsScheduleDetail === 'perSchedule'}
+            sessionRoundType={options.sessionRoundType}
+            participantOrganization={options.participant.organization}
+            educationFormScheduleDetail={options.educationFormScheduleDetail}
+            participationScheduleDetail={options.participationScheduleDetail}
+            ipsScheduleDetail={options.ipsScheduleDetail}
+            scheduleCurriculumPreEducation={options.trainedTeachersTeacherTrainingEnabled}
+            preEducationBlockLabel="교육 연수"
+          />
+        ) : (
+          <TrainedTeachersRegistrationEducationCurriculumParagraph
+            teacherTrainingEnabled={options.trainedTeachersTeacherTrainingEnabled}
+            curriculumSessionCount={options.curriculumChartSessionCount}
+            onDeleteCurriculumSession={options.onDeleteCurriculumChartSession}
+          />
+        )
       ) : options.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationEducationCurriculumParagraph />
       ) : options.programType === 'schedule' ? (
@@ -268,10 +288,12 @@ export function renderProgramRegistrationParagraphBody(
         )
       }
       return options.programRegistrationFormVariant === 'trainedTeachers' ? (
-        <TrainedTeachersRegistrationEducationScheduleSettingsParagraph
-          educationScheduleMode={options.educationScheduleMode}
-          onEducationScheduleModeChange={options.onEducationScheduleModeChange}
-        />
+        options.programType === 'schedule' && options.sessionRoundType === 'multi' ? null : (
+          <TrainedTeachersRegistrationEducationScheduleSettingsParagraph
+            educationScheduleMode={options.educationScheduleMode}
+            onEducationScheduleModeChange={options.onEducationScheduleModeChange}
+          />
+        )
       ) : options.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationEducationScheduleSettingsParagraph
           educationScheduleMode={options.educationScheduleMode}
