@@ -37,6 +37,7 @@ import rChevronUpGray22Url from '@/shared/assets/icons/r-chevron-up-gray-22.svg'
 import clipBlackUrl from '@/shared/assets/icons/clip-black.svg'
 import fileDownloadGrayUrl from '@/shared/assets/icons/file-download-gray.svg'
 import jaSendGrayUrl from '@/shared/assets/icons/ja-send-gray.svg'
+import jaSendMintUrl from '@/shared/assets/icons/ja-send-mint.svg'
 import closeIconUrl from '@/shared/ui/pf-modal/icons/close.svg'
 import { downloadAttachment } from '@/shared/lib/download-attachment'
 import { PFAlertModal, PFCarouselButton, PFModal, PFOptionList, PFText } from '@/shared/ui'
@@ -353,6 +354,8 @@ export function EducationInProgressNoticeDetailModal({
     onCommentCountChange?.(result.noticeId, result.commentCount)
   }
 
+  const canSubmitComment = comment.trim().length > 0
+
   return (
     <>
       <PFModal
@@ -629,10 +632,16 @@ export function EducationInProgressNoticeDetailModal({
                 type="button"
                 className={styles.sendButton}
                 aria-label="댓글 전송"
-                disabled={comment.trim().length === 0}
+                disabled={!canSubmitComment}
                 onClick={handleCommentSubmit}
               >
-                <img src={jaSendGrayUrl} alt="" width={40} height={40} aria-hidden="true" />
+                <img
+                  src={canSubmitComment ? jaSendMintUrl : jaSendGrayUrl}
+                  alt=""
+                  width={40}
+                  height={40}
+                  aria-hidden="true"
+                />
               </button>
               <div className={styles.reactionAnchor} ref={reactionPickerRef}>
                 <button

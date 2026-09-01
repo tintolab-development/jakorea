@@ -360,7 +360,6 @@
 
 .sendButton:disabled {
   cursor: default;
-  opacity: 0.4;
 }
 
 .emojiButton {
