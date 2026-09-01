@@ -17,7 +17,6 @@ import { useLoginAttempts } from '@/features/auth/hooks/use-login-attempts'
 import { LOGIN_POLICY } from '@/shared/constants/login-policy'
 import {
   DEV_LOGIN_QA_ACCOUNTS,
-  DEV_LOGIN_QA_PASSWORD,
 } from '@/features/auth/lib/dev-login-accounts'
 import { AuthFormLabel } from '@/features/auth/ui/auth-form-label'
 import { AuthLogoLink } from '@/features/auth/ui/auth-logo-link'
@@ -251,7 +250,7 @@ export function LoginPage() {
                     onClick={() => {
                       form.setFieldsValue({
                         email: account.email,
-                        password: DEV_LOGIN_QA_PASSWORD,
+                        password: account.password,
                       })
                     }}
                   >
