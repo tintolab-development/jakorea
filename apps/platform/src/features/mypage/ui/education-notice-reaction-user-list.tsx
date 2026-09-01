@@ -7,22 +7,22 @@ import type {
 import { PFText } from '@/shared/ui'
 import styles from './education-notice-reaction-user-list.module.css'
 
+const HEADER_LIMIT = 5
+
 type EducationNoticeReactionUserListProps = {
   reactions: EducationNoticeReactionSummary[]
   users: EducationNoticeReactionUser[]
-  headerLimit?: number
   className?: string
 }
 
 export function EducationNoticeReactionUserList({
   reactions,
   users,
-  headerLimit = 5,
   className,
 }: EducationNoticeReactionUserListProps) {
   const clipBaseId = useId().replace(/:/g, '')
-  const headerItems = reactions.slice(0, headerLimit)
-  const hasMoreHeader = reactions.length > headerLimit
+  const headerItems = reactions.slice(0, HEADER_LIMIT)
+  const hasMoreHeader = reactions.length > HEADER_LIMIT
   const rootClassName = [styles.root, className].filter(Boolean).join(' ')
 
   return (

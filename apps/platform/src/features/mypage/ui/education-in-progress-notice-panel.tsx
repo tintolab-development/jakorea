@@ -149,6 +149,13 @@ export function EducationInProgressNoticePanel({
             ),
           )
         }}
+        onCommentCountChange={(noticeId, commentCount) => {
+          setNotices(prev =>
+            prev.map(notice =>
+              notice.id === noticeId ? { ...notice, commentCount } : notice,
+            ),
+          )
+        }}
       />
 
       <EducationProgramInfoModal

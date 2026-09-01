@@ -1,11 +1,29 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { getReactionEmojiTypeForBarIndex, REACTION_EMOJI_TYPE_TO_INDEX } from '@jakorea/ui'
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react'
+import { createPortal } from 'react-dom'
+import {
+  getPlatformReactionEmojiIndex,
+  getPlatformReactionEmojiTypeForIndex,
+} from '../lib/platform-reaction-emojis'
 import type {
   EducationInProgressFile,
   EducationInProgressNotice,
 } from '../model/education-in-progress-notice-types'
 import { getNoticeAttachments } from '../model/education-in-progress-notice-types'
 import { formatEducationNoticePublishedAt } from '../lib/education-in-progress-notice-format'
+import {
+  addNoticeComment,
+  deleteNoticeComment,
+  getNoticeComments,
+  updateNoticeComment,
+} from '../lib/mock-education-in-progress-notice-comments'
 import {
   getNoticeReactions,
   getNoticeReactionUsers,
@@ -22,6 +40,8 @@ import jaSendGrayUrl from '@/shared/assets/icons/ja-send-gray.svg'
 import closeIconUrl from '@/shared/ui/pf-modal/icons/close.svg'
 import { downloadAttachment } from '@/shared/lib/download-attachment'
 import { PFAlertModal, PFCarouselButton, PFModal, PFOptionList, PFText } from '@/shared/ui'
+import { EducationNoticeCommentDeleteConfirm } from './education-notice-comment-delete-confirm'
+import { EducationNoticeCommentList } from './education-notice-comment-list'
 import { EducationNoticeDeleteConfirm } from './education-notice-delete-confirm'
 import { EducationNoticeReactionEmojiPicker } from './education-notice-reaction-emoji-picker'
 import { EducationNoticeReactionUserList } from './education-notice-reaction-user-list'
@@ -37,12 +57,46 @@ type EducationInProgressNoticeDetailModalProps = {
   onNoticeChange: (noticeId: string) => void
   onDelete: (noticeId: string) => void
   onReactionCountChange?: (noticeId: string, reactionCount: number) => void
+  onCommentCountChange?: (noticeId: string, commentCount: number) => void
 }
 
 const AUTHOR_MENU_OPTIONS = [
   { value: 'edit', label: '수정하기' },
   { value: 'delete', label: '삭제하기' },
 ]
+
+const REACTION_LIST_HEIGHT_PX = 249
+const REACTION_LIST_MIN_HEIGHT_PX = 160
+const REACTION_PICKER_HEIGHT_PX = 56
+const REACTION_POPOVER_GAP_PX = 8
+const REACTION_POPOVER_Z_INDEX = 1100
+
+function computeReactionPopoverStyle(
+  anchor: HTMLElement,
+  align: 'left' | 'right',
+  preferredHeight: number,
+  minHeight: number,
+  options?: { constrainHeight?: boolean }
+): CSSProperties {
+  const rect = anchor.getBoundingClientRect()
+  const viewportHeight = window.innerHeight
+  const viewportWidth = window.innerWidth
+  const spaceAbove = Math.max(0, rect.top - REACTION_POPOVER_GAP_PX)
+  const spaceBelow = Math.max(0, viewportHeight - rect.bottom - REACTION_POPOVER_GAP_PX)
+  const openUpward = spaceAbove >= minHeight || spaceAbove >= spaceBelow
+  const available = openUpward ? spaceAbove : spaceBelow
+  const height = Math.min(preferredHeight, Math.max(minHeight, available || minHeight))
+
+  return {
+    position: 'fixed',
+    top: openUpward ? undefined : rect.bottom + REACTION_POPOVER_GAP_PX,
+    bottom: openUpward ? viewportHeight - rect.top + REACTION_POPOVER_GAP_PX : undefined,
+    left: align === 'left' ? rect.left : undefined,
+    right: align === 'right' ? viewportWidth - rect.right : undefined,
+    ...(options?.constrainHeight === false ? undefined : { maxHeight: height }),
+    zIndex: REACTION_POPOVER_Z_INDEX,
+  }
+}
 
 export function EducationInProgressNoticeDetailModal({
   open,
@@ -53,16 +107,24 @@ export function EducationInProgressNoticeDetailModal({
   onNoticeChange,
   onDelete,
   onReactionCountChange,
+  onCommentCountChange,
 }: EducationInProgressNoticeDetailModalProps) {
   const [comment, setComment] = useState('')
   const [isAuthorMenuOpen, setIsAuthorMenuOpen] = useState(false)
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+  const [commentToDeleteId, setCommentToDeleteId] = useState<string | null>(null)
   const [isAttachmentListOpen, setIsAttachmentListOpen] = useState(false)
+  const [isCommentListOpen, setIsCommentListOpen] = useState(false)
   const [reactionPanel, setReactionPanel] = useState<'list' | 'picker' | null>(null)
   const [reactionTick, setReactionTick] = useState(0)
+  const [commentTick, setCommentTick] = useState(0)
+  const [listPopoverStyle, setListPopoverStyle] = useState<CSSProperties | null>(null)
+  const [pickerPopoverStyle, setPickerPopoverStyle] = useState<CSSProperties | null>(null)
   const reactionListRef = useRef<HTMLDivElement>(null)
+  const reactionListPopoverRef = useRef<HTMLDivElement>(null)
   const reactionPickerRef = useRef<HTMLDivElement>(null)
+  const reactionPickerPopoverRef = useRef<HTMLDivElement>(null)
   const authorMenuRef = useRef<HTMLDivElement>(null)
   const authorMenuId = useId()
 
@@ -75,21 +137,27 @@ export function EducationInProgressNoticeDetailModal({
 
   const reactions = useMemo(
     () => (notice ? getNoticeReactions(notice.id) : []),
-    [notice, reactionTick],
+    [notice, reactionTick]
   )
   const reactionUsers = useMemo(
     () => (notice ? getNoticeReactionUsers(notice.id) : []),
-    [notice, reactionTick],
+    [notice, reactionTick]
+  )
+  const comments = useMemo(
+    () => (notice ? getNoticeComments(notice.id) : []),
+    [notice, commentTick]
   )
   const myReactionType = reactionUsers.find(
-    row => row.authorName === MOCK_MYPAGE_USER_NAME,
+    row => row.authorName === MOCK_MYPAGE_USER_NAME
   )?.emojiType
   const selectedEmojiIndex =
-    myReactionType != null ? (REACTION_EMOJI_TYPE_TO_INDEX[myReactionType] ?? null) : null
+    myReactionType != null ? getPlatformReactionEmojiIndex(myReactionType) : null
 
   useEffect(() => {
     setIsAttachmentListOpen(false)
     setReactionPanel(null)
+    setIsCommentListOpen(false)
+    setCommentToDeleteId(null)
     if (!open) {
       setComment('')
       setIsAuthorMenuOpen(false)
@@ -104,7 +172,9 @@ export function EducationInProgressNoticeDetailModal({
       const target = event.target
       if (!(target instanceof Node)) return
       if (reactionListRef.current?.contains(target)) return
+      if (reactionListPopoverRef.current?.contains(target)) return
       if (reactionPickerRef.current?.contains(target)) return
+      if (reactionPickerPopoverRef.current?.contains(target)) return
       setReactionPanel(null)
     }
 
@@ -117,6 +187,63 @@ export function EducationInProgressNoticeDetailModal({
     return () => {
       window.removeEventListener('mousedown', handlePointerDown)
       window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [reactionPanel])
+
+  useLayoutEffect(() => {
+    if (reactionPanel !== 'list') {
+      setListPopoverStyle(null)
+      return
+    }
+
+    const updatePosition = () => {
+      const anchor = reactionListRef.current
+      if (!anchor) return
+      setListPopoverStyle(
+        computeReactionPopoverStyle(
+          anchor,
+          'left',
+          REACTION_LIST_HEIGHT_PX,
+          REACTION_LIST_MIN_HEIGHT_PX
+        )
+      )
+    }
+
+    updatePosition()
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, true)
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition, true)
+    }
+  }, [reactionPanel])
+
+  useLayoutEffect(() => {
+    if (reactionPanel !== 'picker') {
+      setPickerPopoverStyle(null)
+      return
+    }
+
+    const updatePosition = () => {
+      const anchor = reactionPickerRef.current
+      if (!anchor) return
+      setPickerPopoverStyle(
+        computeReactionPopoverStyle(
+          anchor,
+          'right',
+          REACTION_PICKER_HEIGHT_PX,
+          REACTION_PICKER_HEIGHT_PX,
+          { constrainHeight: false }
+        )
+      )
+    }
+
+    updatePosition()
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, true)
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition, true)
     }
   }, [reactionPanel])
 
@@ -185,11 +312,45 @@ export function EducationInProgressNoticeDetailModal({
   }
 
   const handleReactionEmojiSelect = (index: number) => {
-    const emojiType = getReactionEmojiTypeForBarIndex(index)
+    const emojiType = getPlatformReactionEmojiTypeForIndex(index)
     if (!emojiType) return
     const { reactionCount } = toggleNoticeReaction(notice.id, emojiType, MOCK_MYPAGE_USER_NAME)
     setReactionTick(tick => tick + 1)
     onReactionCountChange?.(notice.id, reactionCount)
+    if (reactionCount === 0 && reactionPanel === 'list') setReactionPanel(null)
+  }
+
+  const handleReactionListToggle = () => {
+    if (notice.reactionCount <= 0) return
+    setReactionPanel(panel => (panel === 'list' ? null : 'list'))
+  }
+
+  const handleCommentListToggle = () => {
+    setIsCommentListOpen(open => !open)
+  }
+
+  const handleCommentSubmit = () => {
+    const content = comment.trim()
+    if (!content) return
+    const { commentCount } = addNoticeComment(notice.id, MOCK_MYPAGE_USER_NAME, content)
+    setComment('')
+    setCommentTick(tick => tick + 1)
+    setIsCommentListOpen(true)
+    onCommentCountChange?.(notice.id, commentCount)
+  }
+
+  const handleCommentUpdate = (commentId: string, content: string) => {
+    updateNoticeComment(commentId, content)
+    setCommentTick(tick => tick + 1)
+  }
+
+  const handleCommentDeleteConfirm = () => {
+    if (!commentToDeleteId) return
+    const result = deleteNoticeComment(commentToDeleteId)
+    setCommentToDeleteId(null)
+    if (!result) return
+    setCommentTick(tick => tick + 1)
+    onCommentCountChange?.(result.noticeId, result.commentCount)
   }
 
   return (
@@ -290,7 +451,12 @@ export function EducationInProgressNoticeDetailModal({
                     aria-label="닫기"
                     onClick={onClose}
                   >
-                    <img className={styles.closeIcon} src={closeIconUrl} alt="" aria-hidden="true" />
+                    <img
+                      className={styles.closeIcon}
+                      src={closeIconUrl}
+                      alt=""
+                      aria-hidden="true"
+                    />
                   </button>
                 </div>
               </header>
@@ -311,7 +477,12 @@ export function EducationInProgressNoticeDetailModal({
                       height={24}
                       aria-hidden="true"
                     />
-                    <PFText as="span" typo="bd-md-sb" color="black" className={styles.attachmentName}>
+                    <PFText
+                      as="span"
+                      typo="bd-md-sb"
+                      color="black"
+                      className={styles.attachmentName}
+                    >
                       {singleAttachment.fileName}
                     </PFText>
                   </span>
@@ -344,14 +515,14 @@ export function EducationInProgressNoticeDetailModal({
                       type="button"
                       className={styles.attachmentToggle}
                       aria-expanded={isAttachmentListOpen}
-                      aria-label={isAttachmentListOpen ? '첨부파일 목록 닫기' : '첨부파일 목록 열기'}
+                      aria-label={
+                        isAttachmentListOpen ? '첨부파일 목록 닫기' : '첨부파일 목록 열기'
+                      }
                       onClick={() => setIsAttachmentListOpen(open => !open)}
                     >
                       <img
                         className={styles.attachmentChevron}
-                        src={
-                          isAttachmentListOpen ? rChevronUpGray22Url : rChevronDownGray22Url
-                        }
+                        src={isAttachmentListOpen ? rChevronUpGray22Url : rChevronDownGray22Url}
                         alt=""
                         width={22}
                         height={22}
@@ -408,19 +579,37 @@ export function EducationInProgressNoticeDetailModal({
                 commentCount={notice.commentCount}
                 reactionCount={notice.reactionCount}
                 reactionExpanded={reactionPanel === 'list'}
-                onReactionClick={() =>
-                  setReactionPanel(panel => (panel === 'list' ? null : 'list'))
+                commentExpanded={isCommentListOpen}
+                onCommentClick={handleCommentListToggle}
+                onReactionClick={
+                  notice.reactionCount > 0 ? handleReactionListToggle : undefined
                 }
               />
-              {reactionPanel === 'list' ? (
-                <div className={styles.reactionListPopover}>
-                  <EducationNoticeReactionUserList
-                    reactions={reactions}
-                    users={reactionUsers}
-                  />
-                </div>
-              ) : null}
+              {reactionPanel === 'list' && listPopoverStyle
+                ? createPortal(
+                    <div
+                      ref={reactionListPopoverRef}
+                      className={styles.reactionListPopover}
+                      style={listPopoverStyle}
+                    >
+                      <EducationNoticeReactionUserList
+                        reactions={reactions}
+                        users={reactionUsers}
+                      />
+                    </div>,
+                    document.body
+                  )
+                : null}
             </div>
+            {isCommentListOpen ? (
+              <EducationNoticeCommentList
+                className={styles.footerComments}
+                comments={comments}
+                currentUserName={MOCK_MYPAGE_USER_NAME}
+                onUpdate={handleCommentUpdate}
+                onDeleteRequest={setCommentToDeleteId}
+              />
+            ) : null}
             <div className={styles.commentRow}>
               <input
                 className={styles.commentInput}
@@ -429,14 +618,21 @@ export function EducationInProgressNoticeDetailModal({
                 placeholder="댓글을 입력해 주세요"
                 aria-label="댓글을 입력해 주세요"
                 onChange={event => setComment(event.target.value)}
+                onKeyDown={event => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    handleCommentSubmit()
+                  }
+                }}
               />
               <button
                 type="button"
                 className={styles.sendButton}
                 aria-label="댓글 전송"
-                onClick={() => setIsComingSoonOpen(true)}
+                disabled={comment.trim().length === 0}
+                onClick={handleCommentSubmit}
               >
-                <img src={jaSendGrayUrl} alt="" width={24} height={24} aria-hidden="true" />
+                <img src={jaSendGrayUrl} alt="" width={40} height={40} aria-hidden="true" />
               </button>
               <div className={styles.reactionAnchor} ref={reactionPickerRef}>
                 <button
@@ -444,9 +640,7 @@ export function EducationInProgressNoticeDetailModal({
                   className={styles.emojiButton}
                   aria-label="이모지 반응"
                   aria-expanded={reactionPanel === 'picker'}
-                  onClick={() =>
-                    setReactionPanel(panel => (panel === 'picker' ? null : 'picker'))
-                  }
+                  onClick={() => setReactionPanel(panel => (panel === 'picker' ? null : 'picker'))}
                 >
                   <img
                     className={styles.emojiIcon}
@@ -457,14 +651,21 @@ export function EducationInProgressNoticeDetailModal({
                     aria-hidden="true"
                   />
                 </button>
-                {reactionPanel === 'picker' ? (
-                  <div className={styles.reactionPickerPopover}>
-                    <EducationNoticeReactionEmojiPicker
-                      selectedIndex={selectedEmojiIndex}
-                      onSelect={handleReactionEmojiSelect}
-                    />
-                  </div>
-                ) : null}
+                {reactionPanel === 'picker' && pickerPopoverStyle
+                  ? createPortal(
+                      <div
+                        ref={reactionPickerPopoverRef}
+                        className={styles.reactionPickerPopover}
+                        style={pickerPopoverStyle}
+                      >
+                        <EducationNoticeReactionEmojiPicker
+                          selectedIndex={selectedEmojiIndex}
+                          onSelect={handleReactionEmojiSelect}
+                        />
+                      </div>,
+                      document.body
+                    )
+                  : null}
               </div>
             </div>
           </footer>
@@ -475,6 +676,12 @@ export function EducationInProgressNoticeDetailModal({
         open={isDeleteConfirmOpen}
         onCancel={() => setIsDeleteConfirmOpen(false)}
         onConfirm={handleDeleteConfirm}
+      />
+
+      <EducationNoticeCommentDeleteConfirm
+        open={commentToDeleteId !== null}
+        onCancel={() => setCommentToDeleteId(null)}
+        onConfirm={handleCommentDeleteConfirm}
       />
 
       <PFAlertModal

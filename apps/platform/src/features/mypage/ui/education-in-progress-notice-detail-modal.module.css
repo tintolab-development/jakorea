@@ -293,18 +293,23 @@
   flex-shrink: 0;
 }
 
-.reactionListPopover {
-  position: absolute;
-  left: 0;
-  bottom: calc(100% + var(--spacing-8));
-  z-index: 20;
+.footerComments {
+  width: 100%;
 }
 
+.reactionListPopover,
 .reactionPickerPopover {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + var(--spacing-8));
-  z-index: 20;
+  box-sizing: border-box;
+}
+
+.reactionListPopover {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.reactionListPopover > * {
+  min-height: 0;
 }
 
 .commentRow {
@@ -351,6 +356,11 @@
   border: 0;
   background: transparent;
   cursor: pointer;
+}
+
+.sendButton:disabled {
+  cursor: default;
+  opacity: 0.4;
 }
 
 .emojiButton {

@@ -15,7 +15,7 @@ const MOCK_NOTICES: EducationInProgressNotice[] = [
     publishedAt: '2026-01-15T15:00:00',
     read: false,
     viewCount: 12,
-    commentCount: 2,
+    commentCount: 6,
     reactionCount: 10,
     isAuthor: true,
   },
@@ -42,7 +42,7 @@ const MOCK_NOTICES: EducationInProgressNotice[] = [
     read: true,
     viewCount: 12,
     commentCount: 2,
-    reactionCount: 10,
+    reactionCount: 0,
   },
 ]
 

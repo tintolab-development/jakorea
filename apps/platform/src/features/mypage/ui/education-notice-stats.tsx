@@ -11,6 +11,8 @@ type EducationNoticeStatsProps = {
   className?: string
   onReactionClick?: () => void
   reactionExpanded?: boolean
+  onCommentClick?: () => void
+  commentExpanded?: boolean
 }
 
 export function EducationNoticeStats({
@@ -20,6 +22,8 @@ export function EducationNoticeStats({
   className,
   onReactionClick,
   reactionExpanded = false,
+  onCommentClick,
+  commentExpanded = false,
 }: EducationNoticeStatsProps) {
   const rootClassName = [styles.stats, className].filter(Boolean).join(' ')
 
@@ -31,12 +35,27 @@ export function EducationNoticeStats({
           {viewCount}
         </PFText>
       </span>
-      <span className={styles.stat}>
-        <img className={styles.statIcon} src={noticeIconCommentUrl} alt="" aria-hidden="true" />
-        <PFText as="span" typo="bd-sm-md" className={styles.statCount}>
-          {commentCount}
-        </PFText>
-      </span>
+      {onCommentClick ? (
+        <button
+          type="button"
+          className={[styles.stat, styles.statButton].join(' ')}
+          aria-label="댓글 목록"
+          aria-expanded={commentExpanded}
+          onClick={onCommentClick}
+        >
+          <img className={styles.statIcon} src={noticeIconCommentUrl} alt="" aria-hidden="true" />
+          <PFText as="span" typo="bd-sm-md" className={styles.statCount}>
+            {commentCount}
+          </PFText>
+        </button>
+      ) : (
+        <span className={styles.stat}>
+          <img className={styles.statIcon} src={noticeIconCommentUrl} alt="" aria-hidden="true" />
+          <PFText as="span" typo="bd-sm-md" className={styles.statCount}>
+            {commentCount}
+          </PFText>
+        </span>
+      )}
       {onReactionClick ? (
         <button
           type="button"

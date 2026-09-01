@@ -22,6 +22,15 @@ export type EducationNoticeReactionUser = {
   noticeId: string
   authorName: string
   emojiType: string
+  reactedAt: string
+}
+
+export type EducationNoticeComment = {
+  id: string
+  noticeId: string
+  authorName: string
+  content: string
+  createdAt: string
 }
 
 export type EducationInProgressFile = {

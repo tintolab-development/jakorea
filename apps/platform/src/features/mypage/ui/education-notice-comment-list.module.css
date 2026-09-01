@@ -1,0 +1,108 @@
+.list {
+  display: flex;
+  width: 100%;
+  max-height: 220px;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  overflow-y: auto;
+}
+
+.item {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.top {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+}
+
+.meta {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.author,
+.date {
+  margin: 0;
+}
+
+.moreWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.moreButton {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.moreButton:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.moreMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  min-width: 140px;
+}
+
+.content {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.editInput {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 72px;
+  padding: var(--spacing-12) var(--spacing-16);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-white);
+  color: var(--color-neutral-black);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  resize: vertical;
+}
+
+.editInput:focus {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 1px;
+}
+
+.editActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-8);
+}

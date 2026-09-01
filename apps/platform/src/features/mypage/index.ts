@@ -18,6 +18,7 @@ export type {
 export type {
   EducationInProgressFile,
   EducationInProgressNotice,
+  EducationNoticeComment,
   EducationNoticeReactionSummary,
   EducationNoticeReactionUser,
 } from './model/education-in-progress-notice-types'

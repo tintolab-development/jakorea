@@ -2,7 +2,7 @@
   display: flex;
   box-sizing: border-box;
   width: 267px;
-  height: 290px;
+  max-height: 100%;
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--color-border-default);
@@ -15,15 +15,19 @@
 
 .header {
   display: flex;
+  min-width: 0;
   flex-shrink: 0;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--spacing-8);
+  overflow: hidden;
   padding: var(--spacing-16);
   border-bottom: 1px solid var(--color-neutral-cool-100);
 }
 
 .headerStat {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 4px;
 }
@@ -48,10 +52,14 @@
   color: var(--color-neutral-cool-500);
 }
 
+.ellipsis {
+  flex-shrink: 0;
+}
+
 .body {
   display: flex;
+  max-height: calc((24px * 5) + (var(--spacing-12) * 4) + (var(--spacing-12) * 2));
   min-height: 0;
-  flex: 1 1 auto;
   flex-direction: column;
   gap: var(--spacing-12);
   overflow-y: auto;
@@ -60,6 +68,8 @@
 
 .row {
   display: flex;
+  min-height: 24px;
+  flex-shrink: 0;
   align-items: center;
   gap: var(--spacing-8);
 }

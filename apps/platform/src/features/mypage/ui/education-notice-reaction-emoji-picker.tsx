@@ -1,5 +1,5 @@
 import { useId } from 'react'
-import { REACTION_EMOJI_ITEMS } from '@jakorea/ui'
+import { PLATFORM_REACTION_EMOJI_ITEMS } from '../lib/platform-reaction-emojis'
 import styles from './education-notice-reaction-emoji-picker.module.css'
 
 type EducationNoticeReactionEmojiPickerProps = {
@@ -18,7 +18,7 @@ export function EducationNoticeReactionEmojiPicker({
 
   return (
     <div className={rootClassName} role="toolbar" aria-label="이모티콘 선택">
-      {REACTION_EMOJI_ITEMS.map((item, index) => (
+      {PLATFORM_REACTION_EMOJI_ITEMS.map((item, index) => (
         <button
           key={item.label}
           type="button"
