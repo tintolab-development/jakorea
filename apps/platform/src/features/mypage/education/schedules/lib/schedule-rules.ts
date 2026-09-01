@@ -56,10 +56,14 @@ export function canSubmitEducationAbsenceReason(
   return attendance === 'absent'
 }
 
+export type EducationAssignmentStatusTone = 'submitted' | 'unsubmitted'
 export type EducationAssignmentGuideTone = 'default' | 'feedback'
 
 export type EducationAssignmentGuide = {
-  /** 본문 (접두 포함) */
+  /** 상태 라벨 (대괄호 없음). 없으면 본문만 */
+  statusLabel?: string
+  statusTone?: EducationAssignmentStatusTone
+  /** 안내 본문 (상태 라벨 제외) */
   message: string
   tone: EducationAssignmentGuideTone
   /** primary CTA 라벨 */
@@ -76,8 +80,7 @@ function isDeadlinePassed(submitEndAt: string, now: Date): boolean {
 
 /**
  * 과제 안내 문구·버튼 상태.
- * 접두: 제출 완료 → [과제 제출 완료], 미제출(마감 후 등) → [미제출]
- * 단, 마감 전 미제출·피드백 안내는 접두 없음(기획·스크린샷).
+ * 상태 라벨(과제 제출 완료 / 미제출)은 UI에서 톤만 다르게 렌더 — 대괄호 없음.
  */
 export function resolveEducationAssignmentGuide(
   status: EducationAssignmentSubmitStatus,
@@ -98,7 +101,9 @@ export function resolveEducationAssignmentGuide(
 
   if (status === 'revision_submitted') {
     return {
-      message: '[과제 제출 완료] 과제 수정 제출이 완료되었어요',
+      statusLabel: '과제 제출 완료',
+      statusTone: 'submitted',
+      message: '과제 수정 제출이 완료되었어요',
       tone: 'default',
       submitLabel: '과제 제출하기',
       submitDisabled: true,
@@ -109,7 +114,9 @@ export function resolveEducationAssignmentGuide(
   if (status === 'submitted') {
     if (closed) {
       return {
-        message: '[과제 제출 완료] 과제 제출기한이 마감되었어요',
+        statusLabel: '과제 제출 완료',
+        statusTone: 'submitted',
+        message: '과제 제출기한이 마감되었어요',
         tone: 'default',
         submitLabel: '과제 제출하기',
         submitDisabled: true,
@@ -117,7 +124,9 @@ export function resolveEducationAssignmentGuide(
       }
     }
     return {
-      message: '[과제 제출 완료] 제출한 과제는 마감 전까지는 수정 제출이 가능해요',
+      statusLabel: '과제 제출 완료',
+      statusTone: 'submitted',
+      message: '제출한 과제는 마감 전까지는 수정 제출이 가능해요',
       tone: 'default',
       submitLabel: '과제 제출하기',
       submitDisabled: false,
@@ -128,7 +137,9 @@ export function resolveEducationAssignmentGuide(
   // not_submitted
   if (closed) {
     return {
-      message: '[미제출] 과제 제출기한이 마감되었어요',
+      statusLabel: '미제출',
+      statusTone: 'unsubmitted',
+      message: '과제 제출기한이 마감되었어요',
       tone: 'default',
       submitLabel: '과제 제출하기',
       submitDisabled: false,

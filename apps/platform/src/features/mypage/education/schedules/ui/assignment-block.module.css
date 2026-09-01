@@ -34,6 +34,17 @@
   gap: var(--spacing-8);
 }
 
+.messageRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spacing-8);
+  margin: 0;
+}
+
+.statusLabel,
 .message,
 .messageFeedback,
 .period {

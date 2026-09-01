@@ -35,14 +35,33 @@ export function EducationScheduleAssignmentBlock({
       >
         <div className={styles.top}>
           <div className={styles.main}>
-            <PFText
-              as="p"
-              typo="hl-sm"
-              color="black"
-              className={guide.tone === 'feedback' ? styles.messageFeedback : styles.message}
+            <p
+              className={[
+                styles.messageRow,
+                guide.tone === 'feedback' ? styles.messageFeedback : undefined,
+              ]
+                .filter(Boolean)
+                .join(' ')}
             >
-              {guide.message}
-            </PFText>
+              {guide.statusLabel ? (
+                <PFText
+                  as="span"
+                  typo="hl-sm"
+                  color={guide.statusTone === 'submitted' ? 'primary-700' : 'neutral-cool-500'}
+                  className={styles.statusLabel}
+                >
+                  {guide.statusLabel}
+                </PFText>
+              ) : null}
+              <PFText
+                as="span"
+                typo="hl-sm"
+                color="black"
+                className={styles.message}
+              >
+                {guide.message}
+              </PFText>
+            </p>
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.period}>
               {assignment.periodLabel}
             </PFText>
