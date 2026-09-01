@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-4);
-  padding: 6px var(--spacing-20);
+  padding: 6px var(--spacing-24);
   border-radius: var(--radius-16);
   cursor: pointer;
   transition:
@@ -21,11 +21,7 @@
 .button:disabled {
   border: 1px solid rgb(61 61 61 / 10%);
   background:
-    linear-gradient(
-      0deg,
-      var(--color-neutral-warm-200) 0%,
-      var(--color-neutral-warm-200) 100%
-    ),
+    linear-gradient(0deg, var(--color-neutral-warm-200) 0%, var(--color-neutral-warm-200) 100%),
     var(--color-neutral-white);
   color: var(--color-neutral-warm-400);
   cursor: not-allowed;
@@ -77,11 +73,7 @@
 .secondary {
   border: 1px solid var(--color-primary-500);
   background:
-    linear-gradient(
-      0deg,
-      var(--color-element-hover) 0%,
-      var(--color-element-hover) 100%
-    ),
+    linear-gradient(0deg, var(--color-element-hover) 0%, var(--color-element-hover) 100%),
     var(--color-neutral-white);
   color: var(--color-primary-500);
 }
