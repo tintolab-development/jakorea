@@ -5,7 +5,6 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { NotificationTestSendRequestTemplateParameters } from './notificationTestSendRequestTemplateParameters';
 
 export interface NotificationTestSendRequest {
   title?: string;
@@ -14,14 +13,4 @@ export interface NotificationTestSendRequest {
   recipientContact?: string;
   templateCode?: string;
   templateId?: number;
-  providerTemplateId?: string;
-  providerFlowId?: string;
-  messagePurpose?: string;
-  scheduledDateTime?: string;
-  confirmBeforeSend?: boolean;
-  templateParameters?: NotificationTestSendRequestTemplateParameters;
-  messageType?: string;
-  attachmentIds?: string[];
-  clientReference?: string;
-  flowId?: string;
 }

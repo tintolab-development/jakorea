@@ -11,5 +11,4 @@ export interface TermsAgreement {
   version?: string;
   required?: boolean;
   agreed?: boolean;
-  agreedAt?: string;
 }

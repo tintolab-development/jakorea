@@ -11,7 +11,4 @@ import type { NotificationDeliveryResponse } from './notificationDeliveryRespons
 export interface NotificationDeliveryListResponse {
   items?: NotificationDeliveryResponse[];
   params?: NotificationDeliveryListResponseParams;
-  totalCount?: number;
-  page?: number;
-  size?: number;
 }

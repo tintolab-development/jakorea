@@ -7,9 +7,7 @@
  */
 import type {
   ApiResponseBulkActionResponse,
-  ApiResponseNotificationDeliveryOperationResponse,
   ApiResponseNotificationEventCatalogMutationResponse,
-  ApiResponseNotificationEventChannelTemplateMutationResponse,
   ApiResponseNotificationTemplateMutationResponse,
   ApiResponseNotificationTestSendResponse,
   ArchiveNotificationTemplateParams,
@@ -20,8 +18,6 @@ import type {
   NotificationDeliveryListResponse,
   NotificationEventCatalogResponse,
   NotificationEventCatalogUpdateRequest,
-  NotificationEventChannelTemplateListResponse,
-  NotificationEventChannelTemplateUpsertRequest,
   NotificationTemplateListResponse,
   NotificationTemplateUpsertRequest,
   NotificationTestSendRequest
@@ -48,7 +44,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 프론트 조회 키: `put_admin_notification-event-catalog_eventType`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
- * - 외부 연동 확인: NHN_NOTIFICATION_HUB 연동 검증 필요
+ * - 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요
  * - 스테이징 점검 기준: REQUIRED
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.
  * - 이 API는 일반 사용자 화면용이 아니라 관리자/QA/운영자가 시스템 상태를 확인할 때 사용하는 API입니다. 일반 화면 개발 시에는 직접 호출하지 않습니다.
@@ -93,62 +89,6 @@ const updateNotificationEventCatalog = (
 
 /**
  * ### 이 API가 하는 일
- * - 알림 이벤트 외부 채널 템플릿 바인딩 저장
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `PUT /api/admin/notification-event-catalog/{eventType}/channel-templates/{channelType}`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
- * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
- * - 프론트 조회 키: 화면별 조회 키 정책에 따름
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 준비 상태 정보 없음
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 스테이징 기본 검증 대상
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: NOTIFICATION_POLICY_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: V50 validates channel/template compatibility before binding
- * @summary 알림 이벤트 외부 채널 템플릿 바인딩 저장
- */
-const upsertNotificationEventChannelTemplate = (
-    eventType: string,
-    channelType: string,
-    notificationEventChannelTemplateUpsertRequest: NotificationEventChannelTemplateUpsertRequest,
- options?: SecondParameter<typeof customInstance<ApiResponseNotificationEventChannelTemplateMutationResponse>>,) => {
-      return customInstance<ApiResponseNotificationEventChannelTemplateMutationResponse>(
-      {url: `/api/admin/notification-event-catalog/${eventType}/channel-templates/${channelType}`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: notificationEventChannelTemplateUpsertRequest
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
  * - 알림 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 알림/발송관리 (`null`)
@@ -161,7 +101,7 @@ const upsertNotificationEventChannelTemplate = (
  * - 프론트 조회 키: `get_admin_notification-templates`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
- * - 외부 연동 확인: NHN_NOTIFICATION_HUB 연동 검증 필요
+ * - 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요
  * - 스테이징 점검 기준: REQUIRED
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
@@ -216,7 +156,7 @@ const listNotificationTemplates = (
  * - 프론트 조회 키: `post_admin_notification-templates`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
- * - 외부 연동 확인: NHN_NOTIFICATION_HUB 연동 검증 필요
+ * - 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요
  * - 스테이징 점검 기준: REQUIRED
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
@@ -314,110 +254,6 @@ const bulkArchiveNotificationTemplates = (
 
 /**
  * ### 이 API가 하는 일
- * - NHN Notification Hub 확인 후 발송 승인
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `POST /api/admin/notification-deliveries/{deliveryId}/confirm`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
- * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
- * - 프론트 조회 키: 화면별 조회 키 정책에 따름
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 준비 상태 정보 없음
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 스테이징 기본 검증 대상
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: NOTIFICATION_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: V44 NHN Notification Hub migration; confirmBeforeSend 메시지 승인
- * @summary NHN Notification Hub 확인 후 발송 승인
- */
-const confirmNotificationDelivery = (
-    deliveryId: number,
- options?: SecondParameter<typeof customInstance<ApiResponseNotificationDeliveryOperationResponse>>,) => {
-      return customInstance<ApiResponseNotificationDeliveryOperationResponse>(
-      {url: `/api/admin/notification-deliveries/${deliveryId}/confirm`, method: 'POST'
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
- * - NHN Notification Hub 예약/대기 발송 취소
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `POST /api/admin/notification-deliveries/{deliveryId}/cancel`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
- * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
- * - 프론트 조회 키: 화면별 조회 키 정책에 따름
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 준비 상태 정보 없음
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 스테이징 기본 검증 대상
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: NOTIFICATION_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: V44 NHN Notification Hub migration; provider messageId 기반 취소
- * @summary NHN Notification Hub 예약/대기 발송 취소
- */
-const cancelNotificationDelivery = (
-    deliveryId: number,
- options?: SecondParameter<typeof customInstance<ApiResponseNotificationDeliveryOperationResponse>>,) => {
-      return customInstance<ApiResponseNotificationDeliveryOperationResponse>(
-      {url: `/api/admin/notification-deliveries/${deliveryId}/cancel`, method: 'POST'
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
  * - POST /api/admin/notification-deliveries/test-send
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 알림/발송관리 (`null`)
@@ -430,7 +266,7 @@ const cancelNotificationDelivery = (
  * - 프론트 조회 키: `post_admin_notification-deliveries_test-send`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
- * - 외부 연동 확인: NHN_NOTIFICATION_HUB 연동 검증 필요
+ * - 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요
  * - 스테이징 점검 기준: REQUIRED
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
@@ -540,7 +376,7 @@ const archiveNotificationTemplate = (
  * - 프론트 조회 키: `patch_admin_notification-templates_templateId`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
- * - 외부 연동 확인: NHN_NOTIFICATION_HUB 연동 검증 필요
+ * - 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요
  * - 스테이징 점검 기준: REQUIRED
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
@@ -597,7 +433,7 @@ const updateNotificationTemplate = (
  * - 프론트 조회 키: `get_admin_notification-event-catalog`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
- * - 외부 연동 확인: NHN_NOTIFICATION_HUB 연동 검증 필요
+ * - 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요
  * - 스테이징 점검 기준: REQUIRED
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.
  * - 이 API는 일반 사용자 화면용이 아니라 관리자/QA/운영자가 시스템 상태를 확인할 때 사용하는 API입니다. 일반 화면 개발 시에는 직접 호출하지 않습니다.
@@ -639,58 +475,6 @@ const notificationEventCatalog = (
 
 /**
  * ### 이 API가 하는 일
- * - 알림 이벤트 외부 채널 템플릿 바인딩 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `GET /api/admin/notification-event-catalog/{eventType}/channel-templates`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
- * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
- * - 프론트 조회 키: 화면별 조회 키 정책에 따름
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 준비 상태 정보 없음
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 스테이징 기본 검증 대상
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: NOTIFICATION_POLICY_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
- * ### Swagger에서 확인할 때
- * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: V50 cross-channel runtime binding management
- * @summary 알림 이벤트 외부 채널 템플릿 바인딩 조회
- */
-const notificationEventChannelTemplates = (
-    eventType: string,
- options?: SecondParameter<typeof customInstance<NotificationEventChannelTemplateListResponse>>,) => {
-      return customInstance<NotificationEventChannelTemplateListResponse>(
-      {url: `/api/admin/notification-event-catalog/${eventType}/channel-templates`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
  * - 알림 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 알림/발송관리 (`null`)
@@ -703,7 +487,7 @@ const notificationEventChannelTemplates = (
  * - 프론트 조회 키: `get_admin_notification-deliveries`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
- * - 외부 연동 확인: NHN_NOTIFICATION_HUB 연동 검증 필요
+ * - 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요
  * - 스테이징 점검 기준: REQUIRED
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
@@ -758,7 +542,7 @@ const listNotificationDeliveries = (
  * - 프론트 조회 키: `get_admin_notification-deliveries_deliveryId`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
- * - 외부 연동 확인: NHN_NOTIFICATION_HUB 연동 검증 필요
+ * - 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요
  * - 스테이징 점검 기준: REQUIRED
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
@@ -798,18 +582,14 @@ const getNotificationDelivery = (
       options);
     }
 
-return {updateNotificationEventCatalog,upsertNotificationEventChannelTemplate,listNotificationTemplates,createNotificationTemplate,bulkArchiveNotificationTemplates,confirmNotificationDelivery,cancelNotificationDelivery,testSendNotification,archiveNotificationTemplate,updateNotificationTemplate,notificationEventCatalog,notificationEventChannelTemplates,listNotificationDeliveries,getNotificationDelivery}};
+return {updateNotificationEventCatalog,listNotificationTemplates,createNotificationTemplate,bulkArchiveNotificationTemplates,testSendNotification,archiveNotificationTemplate,updateNotificationTemplate,notificationEventCatalog,listNotificationDeliveries,getNotificationDelivery}};
 export type UpdateNotificationEventCatalogResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['updateNotificationEventCatalog']>>>
-export type UpsertNotificationEventChannelTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['upsertNotificationEventChannelTemplate']>>>
 export type ListNotificationTemplatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['listNotificationTemplates']>>>
 export type CreateNotificationTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['createNotificationTemplate']>>>
 export type BulkArchiveNotificationTemplatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['bulkArchiveNotificationTemplates']>>>
-export type ConfirmNotificationDeliveryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['confirmNotificationDelivery']>>>
-export type CancelNotificationDeliveryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['cancelNotificationDelivery']>>>
 export type TestSendNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['testSendNotification']>>>
 export type ArchiveNotificationTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['archiveNotificationTemplate']>>>
 export type UpdateNotificationTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['updateNotificationTemplate']>>>
 export type NotificationEventCatalogResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['notificationEventCatalog']>>>
-export type NotificationEventChannelTemplatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['notificationEventChannelTemplates']>>>
 export type ListNotificationDeliveriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['listNotificationDeliveries']>>>
 export type GetNotificationDeliveryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['getNotificationDelivery']>>>
