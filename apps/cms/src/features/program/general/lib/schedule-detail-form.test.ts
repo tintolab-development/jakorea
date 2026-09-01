@@ -10,6 +10,7 @@ import {
   inferScheduleDetailBlockKind,
   isIndividualAllPerScheduleLayout,
   PRE_EDUCATION_SCHEDULE_LABEL,
+  shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
   shouldLockEducationScheduleCalendarToggles,
   shouldUseScheduleEventBlockLayout,
@@ -422,7 +423,7 @@ describe('shouldLockEducationScheduleCalendarToggles', () => {
 })
 
 describe('shouldDisableEducationSchedulePeriodMode', () => {
-  it('일반 개인 + 단일 회차만 기간 지정을 막는다', () => {
+  it('개인 대상이면 회차와 무관하게 기간 지정을 막는다', () => {
     expect(
       shouldDisableEducationSchedulePeriodMode({
         participantOrganization: false,
@@ -434,11 +435,40 @@ describe('shouldDisableEducationSchedulePeriodMode', () => {
         participantOrganization: false,
         sessionRound: 'multi',
       })
-    ).toBe(false)
+    ).toBe(true)
     expect(
       shouldDisableEducationSchedulePeriodMode({
         participantOrganization: true,
         sessionRound: 'single',
+      })
+    ).toBe(false)
+    expect(
+      shouldDisableEducationSchedulePeriodMode({
+        participantOrganization: true,
+        sessionRound: 'multi',
+      })
+    ).toBe(false)
+  })
+})
+
+describe('shouldAllowScheduleProgressGroupAdd', () => {
+  it('일정형 단일 회차 + 날짜 지정만 진행 그룹 추가를 허용한다', () => {
+    expect(
+      shouldAllowScheduleProgressGroupAdd({
+        sessionRound: 'single',
+        educationScheduleMode: 'date',
+      })
+    ).toBe(true)
+    expect(
+      shouldAllowScheduleProgressGroupAdd({
+        sessionRound: 'single',
+        educationScheduleMode: 'period',
+      })
+    ).toBe(false)
+    expect(
+      shouldAllowScheduleProgressGroupAdd({
+        sessionRound: 'multi',
+        educationScheduleMode: 'date',
       })
     ).toBe(false)
   })

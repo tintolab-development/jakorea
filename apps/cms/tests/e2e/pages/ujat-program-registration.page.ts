@@ -121,7 +121,9 @@ export class UjatProgramRegistrationPage {
     )
 
     await checkCheckboxIfVisible(this.page, '설문조사')
-    await checkCheckboxIfVisible(this.page, '만족도조사')
+    await checkCheckboxIfVisible(this.page, '봉사단 만족도조사')
+    await checkCheckboxIfVisible(this.page, '학교 만족도조사')
+    await checkCheckboxIfVisible(this.page, '강의평가')
 
     await clickSectionNavIfVisible(this.page, '교육 진행 (커리큘럼)')
     await fillAllByPlaceholder(this.page, '단원명을 입력하세요', CURRICULUM_UNIT)

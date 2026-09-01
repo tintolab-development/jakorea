@@ -8,6 +8,7 @@ import {
   INTERVIEW_METHOD_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
+import { resolveUjatAnnouncementTitle } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import {
   getUjatVolunteerNoticeExposureReadLabel,
@@ -121,7 +122,7 @@ export function UjatRecruitVolunteerInfoProgramView({
         }
       : undefined
   )
-  const publicTitle = program.mainTitle?.trim() || program.title
+  const publicTitle = resolveUjatAnnouncementTitle(program)
   const volunteerTarget = program.volunteerTarget ?? '대학(원)생'
   const volunteerTargetDetail = program.volunteerTargetDetail ?? '-'
   const notes = resolveVolunteerNotesDisplay(program)

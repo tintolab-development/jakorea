@@ -36,4 +36,4 @@ export type MypageProgramStats = {
   completed: number
 }
 
-export type { MypageScheduleEvent, MypageScheduleEventType } from './schedule-types'
+export type { MypageScheduleEvent, MypageScheduleEventType } from '../home/model/schedule-types'

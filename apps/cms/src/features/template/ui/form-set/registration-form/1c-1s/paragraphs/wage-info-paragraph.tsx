@@ -20,7 +20,7 @@ const PAYMENT_ID_LODGING_1C1S = 'p-7'
 const WAGE_FEE_ROWS = [
   {
     feeLabel: '1급 강사비',
-    distanceLabel: '1급 강사 장거리비',
+    distanceLabel: '1급 장거리비',
     feeKey: 'economyRegistration.wageInfo.grade1Fee',
     distanceKey: 'economyRegistration.wageInfo.grade1DistanceFee',
     maxText: '최대 500,000원',
@@ -28,7 +28,7 @@ const WAGE_FEE_ROWS = [
   },
   {
     feeLabel: '2급 강사비',
-    distanceLabel: '2급 강사 장거리비',
+    distanceLabel: '2급 장거리비',
     feeKey: 'economyRegistration.wageInfo.grade2Fee',
     distanceKey: 'economyRegistration.wageInfo.grade2DistanceFee',
     maxText: '최대 400,000원',
@@ -36,7 +36,7 @@ const WAGE_FEE_ROWS = [
   },
   {
     feeLabel: '3급 강사비',
-    distanceLabel: '3급 강사 장거리비',
+    distanceLabel: '3급 장거리비',
     feeKey: 'economyRegistration.wageInfo.grade3Fee',
     distanceKey: 'economyRegistration.wageInfo.grade3DistanceFee',
     maxText: '최대 300,000원',

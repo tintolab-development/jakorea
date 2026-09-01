@@ -21,7 +21,7 @@ const defaults: ProgramRegistrationEditorState = {
   scheduleCurriculumDetailCount: 1,
   scheduleCurriculumGroupCount: 1,
   scheduleCurriculumPreEducation: false,
-  trainedTeachersTeacherTrainingEnabled: true,
+  trainedTeachersTeacherTrainingEnabled: false,
   educationScheduleMode: 'date',
   sponsorId: '',
   sponsorContactId: '',

@@ -1,0 +1,19 @@
+[shell_environment_policy]
+inherit = "core"
+
+[shell_environment_policy.set]
+MAX_THINKING_TOKENS = "10000"
+CLAUDE_AUTOCOMPACT_PCT_OVERRIDE = "50"
+
+[mcp_servers.figma_official]
+url = "https://mcp.figma.com/mcp"
+
+[mcp_servers.notion]
+url = "https://mcp.notion.com/mcp"
+
+[mcp_servers.playwright]
+command = "npx"
+args = [
+    "-y",
+    "@playwright/mcp@latest",
+]

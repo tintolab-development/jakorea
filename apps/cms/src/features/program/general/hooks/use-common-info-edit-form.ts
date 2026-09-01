@@ -64,7 +64,7 @@ const EMPTY_DEFAULTS: GeneralProgramCommonInfoEditFormValues = {
   ipsDetail: '',
   participationMethod: 'individual',
   curriculumSessions: [],
-  scheduleGroupCount: 2,
+  scheduleGroupCount: 1,
   scheduleDetails: [],
   scheduleCurriculumPreEducation: false,
   educationScheduleMode: 'date',

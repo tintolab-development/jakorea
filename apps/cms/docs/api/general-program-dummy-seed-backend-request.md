@@ -5,7 +5,7 @@ CMS `/programs/general` **목록 · 상세(풀페이지 모달) · LNB · 모집
 | 항목 | 값 |
 |------|-----|
 | **작성일** | 2026-07-21 |
-| **갱신** | 2026-07-23 — FE mock 필드 추출 · CASE별 시드 레시피 상세화 · 하위 상태 부록 |
+| **갱신** | 2026-08-31 — 8종 기본 `educationScheduleMode=date` · CASE-25 FE mock · 날짜 1일 숨김·기간 갭 시드 |
 | **대상** | 일반 프로그램만 (UJAT / 1사1교 / Gemini **제외**) |
 | **FE SSOT** | [general-program-type-variant-spec.md](../../.cursor/rules/process/general-program-type-variant-spec.md) · [`variant.ts`](../../src/features/program/general/lib/variant.ts) · [`general-programs.ts`](../../src/data/mock/general-programs.ts) · [`detail-common-info-display.ts`](../../src/features/program/general/lib/detail-common-info-display.ts) · [`detail-meta.ts`](../../src/features/program/general/lib/detail-meta.ts) |
 
@@ -45,8 +45,8 @@ P3 갭     CASE-25 ~ CASE-27   (FE mock 없음 — 기관 신청 브리지)     
 
 | CASE | 우선 | FE `programId` | title (권장 / FE mock) | audience | structure | session | 한 줄 목적 |
 |------|------|----------------|------------------------|----------|-----------|---------|------------|
-| **CASE-01** | P0 | `general-prog-type-org-curriculum-single` | `일반 프로그램 (기관)_커리큘럼형_단일 회차` | org | curriculum | single | 기관 상세 SSOT · 모집 한도 · FULL LNB |
-| **CASE-02** | P0 | `general-prog-type-org-curriculum-multi` | `일반 프로그램 (기관)_커리큘럼형_복수 회차` | org | curriculum | multi | 회차·과제 · 최대일정+1일최대차시 |
+| **CASE-01** | P0 | `general-prog-type-org-curriculum-single` | `일반 프로그램 (기관)_커리큘럼형_단일 회차` | org | curriculum | single | 기관 상세 SSOT · **날짜 지정** · FULL LNB |
+| **CASE-02** | P0 | `general-prog-type-org-curriculum-multi` | `일반 프로그램 (기관)_커리큘럼형_복수 회차` | org | curriculum | multi | 회차·과제 · **날짜 지정** |
 | **CASE-03** | P0 | `general-prog-type-ind-curriculum-single` | `일반 프로그램 (개인)_커리큘럼형_단일 회차` | ind | curriculum | single | 개인 LNB · 출석/과제/게시글 · 면접 on |
 | **CASE-04** | P0 | `general-prog-type-ind-curriculum-multi` | `일반 프로그램 (개인)_커리큘럼형_복수 회차` | ind | curriculum | multi | 개인 + 복수 회차 |
 | **CASE-05** | P0 | `general-prog-type-org-schedule-single` | `일반 프로그램 (기관)_일정형_단일 회차` | org | schedule | single | 일정형 공통정보 · date 기본(한도 숨김 대조) |
@@ -69,7 +69,7 @@ P3 갭     CASE-25 ~ CASE-27   (FE mock 없음 — 기관 신청 브리지)     
 | **CASE-22** | P2 | `general-prog-in-progress-3` | `【진행·캘린더·C】기관·봉사자 면접 QA` | org | curriculum | single | 기관+봉사 면접 2depth |
 | **CASE-23** | P2 | `general-prog-completed-1` | `【완료·캘린더·A】SAP 함께 성장JA` | org | — | — | 봉사 있으나 면접 없음 |
 | **CASE-24** | P2 | `general-prog-in-progress-1` | `【진행·캘린더·A】Growth to Professional 2026` | org | curriculum | multi | 만족도 교사\|학생 (봉사없음) |
-| **CASE-25** | P3 | *(FE 없음)* | `【브리지】기관 · 일정형단일 · 기간지정 · 최대일정수` | org | schedule | single | FE mock **갭** |
+| **CASE-25** | P3 | `general-prog-type-org-schedule-single-period` | `【유형·28】…일정형_단일 회차 · 기간 지정` | org | schedule | single | 기간 지정 · 지망 UI · 진행 그룹 없음 |
 | **CASE-26** | P3 | *(FE 없음)* | `【브리지】기관 · 교육형태 참여자선택` | org | — | — | 희망 교육 형태 FE mock **갭** |
 | **CASE-27** | P3 | *(FE 없음)* | `【브리지】기관 · 사전안내 불필요` | org | — | — | 안내 단락 숨김 FE mock **갭** |
 
@@ -97,9 +97,9 @@ P3 갭     CASE-25 ~ CASE-27   (FE mock 없음 — 기관 신청 브리지)     
 | 진행「참여자」+ **출석·과제·게시글** | **individual만** | 03,04,07,08,19–21 |
 | 모집 — 학생 명단·최대 학급·배정 강사 한도 | organization (기관 모집) | org CASE |
 | 모집 — 참여자「면접 유무」·서류/면접 일정 | individual + interview | 19,20 vs 21 |
-| 모집 — **최대 일정 수** | org + `educationScheduleMode=period` + (curriculum any \| schedule+single) | 01,02,25 |
-| 모집 — **1일 최대 차시** | org + curriculum + **multi** + `period` | 02,09 |
-| 기관 신청 — **희망 일정 단락 숨김** | org + schedule + **multi** | **06** |
+| 모집 — **최대 일정 수** | org + `educationScheduleMode=period` + (curriculum any \| schedule+single) | 25, 커리큘럼 기간 시드 |
+| 모집 — **1일 최대 차시** | org + curriculum + **multi** + `period` | `org-curriculum-multi-period` |
+| 기관 신청 — **희망 일정 단락 숨김** | org + schedule + **multi**, 또는 **날짜 지정 + 고유 일자 ≤1** | **06**, `*-date-one-day` |
 | 기관 신청 — **희망 교육 형태** | org + 교육형태「참여자 선택」 | **26** (갭) |
 | 기관 신청 — 안내 사항 숨김 | `preEducationNoticeRequired=false` | **27** (갭) |
 | 설문 LNB full | keys = survey+satisfaction+lecture_evaluation | 01–09,10–12 … |
@@ -150,9 +150,9 @@ P3 갭     CASE-25 ~ CASE-27   (FE mock 없음 — 기관 신청 브리지)     
 | 유형 필드 | `audience=organization`, `structure=curriculum`, `session=single` |
 | types | `school_institution` + `teacher_instructor` + `volunteer` |
 | 면접·설문 | volunteer interview `true`, survey **full** |
-| 모집 한도 (mock) | `educationScheduleMode=period`, `maxScheduleCount=3`, `maxSessionsPerDay=8`, `maxClassCount=4`, `maxAssignableInstructors=2`, `studentListRequired=required`, `preEducationNoticeRequired=true` |
+| 모집 한도 (mock) | `educationScheduleMode=date`, `maxScheduleCount=3`, `maxSessionsPerDay=8`, `maxClassCount=4`, `maxAssignableInstructors=2`, `studentListRequired=required`, `preEducationNoticeRequired=true` |
 | 공통정보 핵심 | `educationFormLabel=온라인`, `ipsTypeSummary=일정 공통 \| Prepare \| 해당없음`, curriculumSessions 2차시 |
-| **상세에서 확인** | 「기관 신청 목록」·「참여 기관」·강사/봉사 LNB(봉사 면접 2depth)·설문 full · 모집 한도·최대 일정 수 · 커리큘럼 차시 공통정보 |
+| **상세에서 확인** | 「기관 신청 목록」·「참여 기관」·강사/봉사 LNB(봉사 면접 2depth)·설문 full · **날짜 지정 체크박스(이틀)** · 커리큘럼 차시 공통정보 |
 
 ```json
 {
@@ -167,7 +167,7 @@ P3 갭     CASE-25 ~ CASE-27   (FE mock 없음 — 기관 신청 브리지)     
   "generalSurveyMenuKeys": ["survey", "satisfaction", "lecture_evaluation"],
   "generalCommonInfo": {
     "educationFormLabel": "온라인",
-    "educationScheduleMode": "period",
+    "educationScheduleMode": "date",
     "participantRecruitmentInfo": {
       "preEducationNoticeRequired": true,
       "maxScheduleCount": 3,
@@ -191,7 +191,7 @@ P3 갭     CASE-25 ~ CASE-27   (FE mock 없음 — 기관 신청 브리지)     
 | `status` / `lifecycleStatus` | `active` / `education_in_progress` |
 | 필드 | org + curriculum + **multi**, `rounds` ≥ 2 |
 | 공통정보 | CASE-01 모집 한도 상속 + curriculumSessions **회차** 단위(1회차·2회차, assignmentEnabled) |
-| **상세에서 확인** | 회차별 커리큘럼·과제 UI · 모집 **최대 일정 수 + 1일 최대 차시** · 기관 신청 폼 일정당 차시 상한 |
+| **상세에서 확인** | 회차별 커리큘럼·과제 UI · **날짜 지정 체크박스** · 기관 신청 폼 |
 
 ```json
 {
@@ -205,7 +205,7 @@ P3 갭     CASE-25 ~ CASE-27   (FE mock 없음 — 기관 신청 브리지)     
   "generalVolunteerInterviewEnabled": true,
   "generalSurveyMenuKeys": ["survey", "satisfaction", "lecture_evaluation"],
   "generalCommonInfo": {
-    "educationScheduleMode": "period",
+    "educationScheduleMode": "date",
     "participantRecruitmentInfo": {
       "maxScheduleCount": 3,
       "maxSessionsPerDay": 8,
@@ -371,7 +371,7 @@ P3 갭     CASE-25 ~ CASE-27   (FE mock 없음 — 기관 신청 브리지)     
     "educationFormScheduleDetail": "perSchedule",
     "ipsScheduleDetail": "perSchedule",
     "participationScheduleDetail": "common",
-    "educationScheduleMode": "period",
+    "educationScheduleMode": "date",
     "curriculumSessions": [
       { "sessionLabel": "1회차", "educationFormLabel": "온라인", "ipsTypeSummary": "Prepare | 해당없음" },
       { "sessionLabel": "2회차", "educationFormLabel": "오프라인", "ipsTypeSummary": "Prepare | 해당없음" }
@@ -629,7 +629,7 @@ FE 캘린더/QA mock id를 참고용으로 적습니다. 스테이징 title은 F
 
 ---
 
-## 6. P3 갭 케이스 (CASE-25 ~ 27) — FE mock 없음, BE 신규 요청
+## 6. P3 갭 케이스 (CASE-25 ~ 27)
 
 유형 8종만으로는 안 열리는 **기관 신청 브리지** UI입니다.  
 스펙: [general-program-institution-application-bridge-spec.md](../../.cursor/rules/process/general-program-institution-application-bridge-spec.md)
@@ -638,10 +638,18 @@ FE 캘린더/QA mock id를 참고용으로 적습니다. 스테이징 title은 F
 
 | 항목 | 값 |
 |------|-----|
-| 왜 필요? | CASE-05는 보통 `date`라서 **최대 일정 수**가 안 열림 |
+| FE mock id | `general-prog-type-org-schedule-single-period` |
+| 왜 필요? | CASE-05는 `date`라서 **최대 일정 수**가 안 열림 |
 | 필드 | org + schedule + single + **`educationScheduleMode=period`** + `maxScheduleCount` (예: 3) |
 | types | CASE-01과 동일 FULL 권장 |
-| **상세/신청** | 모집「신청 가능 최대 일정 수」· 신청 폼 희망 일정 지망 블록 |
+| **상세/신청** | 모집「신청 가능 최대 일정 수」· 신청 폼 희망 일정 지망 블록 · 진행 그룹 추가 없음 |
+
+관련 FE 시드(날짜/기간 갭):
+
+- `general-prog-type-org-curriculum-single-period` / `…-multi-period`
+- `general-prog-type-org-curriculum-single-date-one-day` / `…-org-schedule-single-date-one-day` (신청란 숨김)
+- `general-prog-type-org-schedule-single-no-groups`
+- `general-prog-type-org-*-ips-pre-edu`
 
 ```json
 {
@@ -732,9 +740,9 @@ FE 캘린더/QA mock id를 참고용으로 적습니다. 스테이징 title은 F
 | curriculum | multi | `period` | O | O | **O** |
 | schedule | single | `period` | O | O | X |
 | schedule | multi | (any) | **단락 전체 숨김** | — | — |
-| (any applicable) | — | `date` | 힌트만 / 한도 숨김 | X | X |
+| (any applicable) | — | `date` | 예정일 체크박스 / **고유 일자 ≤1이면 단락 숨김** | X | X |
 
-대표 시드: CASE-01·02(period), CASE-05(date 대조), CASE-06(숨김), CASE-25(period+schedule single 갭).
+대표 시드: CASE-01·02·05(`date`), CASE-06(숨김), CASE-25(`period`+schedule single).
 
 ---
 
@@ -907,4 +915,4 @@ GENERAL_VOLUNTEER_APPLICATION_QA
 | *(없음)* | 25, 26, 27 |
 | `general-prog-scheduled-1` | 참고(번호 없음) |
 
-**Last updated:** 2026-07-23
+**Last updated:** 2026-08-31

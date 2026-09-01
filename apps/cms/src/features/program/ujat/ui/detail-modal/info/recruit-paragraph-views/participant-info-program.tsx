@@ -9,6 +9,7 @@ import {
   TARGET_LEVEL_LABEL,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
+import { resolveUjatAnnouncementTitle } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import { ProgramDetailContactReadRow } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
 import { detailInfoFormSectionTitleHeaderProps } from '@/features/template/lib/writing-form-paragraph-description'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
@@ -83,7 +84,7 @@ export function UjatRecruitParticipantInfoProgramView({
   ) : (
     '-'
   )
-  const publicTitle = program.mainTitle?.trim() || program.title
+  const publicTitle = resolveUjatAnnouncementTitle(program)
   const notes = resolveParticipantNotesDisplay(program)
 
   const formMode = isEdit && form ? 'edit' : 'view'

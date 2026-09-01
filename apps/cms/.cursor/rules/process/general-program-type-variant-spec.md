@@ -62,6 +62,12 @@ API 연동 전 mock·상세 LNB 분기는 `Program.generalProgramAudience`, `gen
 - 기관_일정형_단일 회차 공통 정보 스크린샷 mock: `detail-common-info-display.ts` (`GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_*`, id `general-prog-type-org-schedule-single`)
 - 기관_커리큘럼형_복수 회차 — 교육 진행: `■ N회차` + `차시 및 교육 내용` (`GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_*`, id `general-prog-type-org-curriculum-multi`)
 - 기관_커리큘럼형_복수 회차 + 교육 형태·IPS 일정 별 상이 — 유형 설정에 일정 공통/별 상이, 회차별 교육 형태·IPS (`GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_EDU_IPS_PER_SCHEDULE_*`, id `general-prog-type-org-curriculum-multi-edu-ips-per-schedule`)
+- 일정 모드 갭 시드 (`general-programs.ts` `SCHEDULE_GAP_TYPE_SEEDS`):
+  - 날짜 지정 1일: `…-curriculum-single-date-one-day`, `…-schedule-single-date-one-day`
+  - 기간 지정: `…-curriculum-single-period`, `…-curriculum-multi-period`, `…-schedule-single-period`
+  - 진행 그룹 없음: `…-schedule-single-no-groups`
+  - IPS 일정 별 상이 + 사전 교육: `…-*-ips-pre-edu`
+- 8종 기본 `educationScheduleMode`는 **날짜 지정(`date`)**. 기간 지정은 위 갭 시드(기관만).
 - 유형 확인용 mock 프로그램명은 위 표기명을 **title** 로 사용한다 (헤더·목록). 공고용명은 `generalCommonInfo.announcementTitle`.
 
 ## Related
@@ -69,4 +75,4 @@ API 연동 전 mock·상세 LNB 분기는 `Program.generalProgramAudience`, `gen
 - [mock-data.md](../data/mock-data.md)
 - [program-detail-fullpage-modal-tabs-spec.md](./program-detail-fullpage-modal-tabs-spec.md)
 
-**Last updated:** 2026-05-29
+**Last updated:** 2026-08-31

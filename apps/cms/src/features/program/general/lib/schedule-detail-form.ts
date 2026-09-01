@@ -20,12 +20,21 @@ export type ScheduleDetailBlockKind = 'sub' | 'event' | 'preEducation'
 
 export const PRE_EDUCATION_SCHEDULE_LABEL = '사전 교육'
 
-/** 일반(개인) + 단일 회차 — 교육 진행 일정 유형에서 기간 지정 불가 */
+/** 일반(개인) — 교육 진행 일정 유형에서 기간 지정 불가 (학교/기관만 허용) */
 export function shouldDisableEducationSchedulePeriodMode(input: {
   participantOrganization: boolean
-  sessionRound: 'single' | 'multi'
+  /** 호환용. 기간 지정은 회차와 무관하게 개인 대상이면 비활성 */
+  sessionRound?: 'single' | 'multi'
 }): boolean {
-  return !input.participantOrganization && input.sessionRound === 'single'
+  return !input.participantOrganization
+}
+
+/** 일정형 — 진행 그룹 구분 추가는 단일 회차 + 날짜 지정만 */
+export function shouldAllowScheduleProgressGroupAdd(input: {
+  sessionRound: 'single' | 'multi'
+  educationScheduleMode: 'date' | 'period'
+}): boolean {
+  return input.sessionRound === 'single' && input.educationScheduleMode === 'date'
 }
 
 /** 일반 커리큘럼형 — 일정 유형에 맞춰 캘린더 기간/시간 토글 ON 고정 (개인·기관 공통) */
@@ -476,7 +485,7 @@ export function applyEducationStructureChangeToForm(
   if (nextStructure === 'schedule') {
     const values = getValues()
     const scheduleGroupCount =
-      values.sessionRound === 'multi' ? 1 : (values.scheduleGroupCount ?? 2)
+      values.sessionRound === 'multi' ? 1 : (values.scheduleGroupCount ?? 1)
     if (values.sessionRound === 'multi') {
       setValue('scheduleGroupCount', 1, { shouldDirty: true })
     }
@@ -504,7 +513,7 @@ export function applySessionRoundChangeToForm(
 ) {
   const values = getValues()
   if (values.educationStructure === 'schedule') {
-    const scheduleGroupCount = nextRound === 'multi' ? 1 : (values.scheduleGroupCount ?? 2)
+    const scheduleGroupCount = nextRound === 'multi' ? 1 : (values.scheduleGroupCount ?? 1)
     if (nextRound === 'multi') {
       setValue('scheduleGroupCount', 1, { shouldDirty: true })
     }

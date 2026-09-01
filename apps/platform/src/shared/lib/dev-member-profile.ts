@@ -1,4 +1,4 @@
-import type { PlatformMemberProfile } from '@/features/mypage/model/types'
+import type { PlatformMemberProfile } from '@/features/mypage'
 
 const DEV_MEMBER_PROFILE_STORAGE_KEY = 'platform:dev:member-profile'
 

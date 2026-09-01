@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
+  buildInProgressDetailTabItems,
+  buildWithdrawnDuringDetailTabItems,
   canCancelEducationApplication,
   canShowEducationApplicationContent,
   cancelMockEducationApplication,
@@ -11,11 +13,17 @@ import {
   EducationDetailBack,
   EducationDetailHeader,
   EducationInProgressNoticePanel,
+  EducationSchedulePanel,
+  EducationSurveyEmptyPanel,
   DocumentPassBanner,
   getMockEducationApplicationById,
+  isWithdrawnBeforeEducation,
+  isWithdrawnDuringEducation,
   MYPAGE_EDUCATION_PATH,
   resolveEducationListBackPath,
+  resolveEducationScheduleTabLabel,
   shouldShowDocumentPassBanner,
+  type EducationActivitySection,
   type EducationDisplayStatus,
 } from '@/features/mypage'
 import { ProgramInfoBody, useMockProgramById } from '@/features/program'
@@ -30,8 +38,7 @@ import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 type AppliedSection = 'program' | 'application'
-type InProgressSection = 'notice' | 'schedule' | 'survey' | 'satisfaction' | 'settlement'
-type DetailSection = AppliedSection | InProgressSection
+type DetailSection = AppliedSection | EducationActivitySection
 
 const PROGRAM_APPLICATION_STATUSES = new Set<EducationDisplayStatus>([
   'waiting_result',
@@ -39,24 +46,18 @@ const PROGRAM_APPLICATION_STATUSES = new Set<EducationDisplayStatus>([
   'rejected',
 ])
 
+const ACTIVITY_STATUSES = new Set<EducationDisplayStatus>(['in_progress', 'completed'])
+
 const APPLIED_SECTION_TAB_ITEMS = [
   { key: 'program', label: '프로그램 정보' },
   { key: 'application', label: '신청 내용' },
-] as const
-
-const IN_PROGRESS_SECTION_TAB_ITEMS = [
-  { key: 'notice', label: '안내사항' },
-  { key: 'schedule', label: '교육일정' },
-  { key: 'survey', label: '설문조사' },
-  { key: 'satisfaction', label: '만족도조사' },
-  { key: 'settlement', label: '정산현황' },
 ] as const
 
 function isAppliedSection(value: string): value is AppliedSection {
   return value === 'program' || value === 'application'
 }
 
-function isInProgressSection(value: string): value is InProgressSection {
+function isActivitySection(value: string): value is EducationActivitySection {
   return (
     value === 'notice' ||
     value === 'schedule' ||
@@ -71,14 +72,19 @@ function readAppliedSection(search = window.location.search): AppliedSection {
   return value === 'application' ? 'application' : 'program'
 }
 
-function readInProgressSection(search = window.location.search): InProgressSection {
+function readActivitySection(
+  search: string,
+  allowed: readonly EducationActivitySection[],
+  fallback: EducationActivitySection,
+): EducationActivitySection {
   const value = new URLSearchParams(search).get('section')
-  return value && isInProgressSection(value) ? value : 'notice'
+  if (value && isActivitySection(value) && allowed.includes(value)) return value
+  return fallback
 }
 
 function readSection(search = window.location.search): DetailSection {
   const value = new URLSearchParams(search).get('section')
-  if (value && isInProgressSection(value)) return value
+  if (value && isActivitySection(value)) return value
   if (value === 'application') return 'application'
   return 'program'
 }
@@ -107,10 +113,44 @@ export function MypageEducationDetailPage() {
     application?.programId ?? '',
   )
 
+  const isWithdrawnBefore = application ? isWithdrawnBeforeEducation(application) : false
+  const isWithdrawnDuring = application ? isWithdrawnDuringEducation(application) : false
   const isProgramApplicationStatus = application
-    ? PROGRAM_APPLICATION_STATUSES.has(application.displayStatus)
+    ? PROGRAM_APPLICATION_STATUSES.has(application.displayStatus) || isWithdrawnBefore
     : false
-  const isInProgressStatus = application?.displayStatus === 'in_progress'
+  const isActivityStatus = application
+    ? ACTIVITY_STATUSES.has(application.displayStatus)
+    : false
+
+  const activityTabOptions = useMemo(
+    () =>
+      program
+        ? {
+            detailCase: program.detailCase,
+            surveyConfigured: program.surveyConfigured,
+            satisfactionConfigured: program.satisfactionConfigured,
+          }
+        : null,
+    [program],
+  )
+
+  const inProgressTabItems = useMemo(
+    () => (activityTabOptions ? buildInProgressDetailTabItems(activityTabOptions) : []),
+    [activityTabOptions],
+  )
+  const withdrawnDuringTabItems = useMemo(
+    () => (activityTabOptions ? buildWithdrawnDuringDetailTabItems(activityTabOptions) : []),
+    [activityTabOptions],
+  )
+
+  const inProgressKeys = useMemo(
+    () => inProgressTabItems.map(item => item.key),
+    [inProgressTabItems],
+  )
+  const withdrawnDuringKeys = useMemo(
+    () => withdrawnDuringTabItems.map(item => item.key),
+    [withdrawnDuringTabItems],
+  )
 
   useEffect(() => {
     const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
@@ -136,24 +176,53 @@ export function MypageEducationDetailPage() {
   }, [])
 
   useEffect(() => {
-    if (isInProgressStatus && !isInProgressSection(section)) {
-      setSection(readInProgressSection())
+    if (isWithdrawnDuring) {
+      const fallback = withdrawnDuringKeys[0] ?? 'schedule'
+      if (!isActivitySection(section) || !withdrawnDuringKeys.includes(section)) {
+        setSection(fallback)
+      }
+      return
+    }
+    if (isActivityStatus) {
+      const fallback = inProgressKeys[0] ?? 'notice'
+      if (!isActivitySection(section) || !inProgressKeys.includes(section)) {
+        setSection(fallback)
+      }
+      return
     }
     if (isProgramApplicationStatus && !isAppliedSection(section)) {
       setSection(readAppliedSection())
     }
-  }, [isInProgressStatus, isProgramApplicationStatus, section])
+  }, [
+    isActivityStatus,
+    isProgramApplicationStatus,
+    isWithdrawnDuring,
+    section,
+    inProgressKeys,
+    withdrawnDuringKeys,
+  ])
 
   const handleBack = () => {
     navigate(resolveEducationListBackPath(location.state), { replace: true })
   }
 
   const handleSectionChange = (next: string) => {
-    const nextSection = isInProgressStatus
-      ? readInProgressSection(`?section=${next}`)
-      : next === 'application'
-        ? 'application'
-        : 'program'
+    let nextSection: DetailSection
+    if (isWithdrawnDuring) {
+      nextSection = readActivitySection(
+        `?section=${next}`,
+        withdrawnDuringKeys,
+        withdrawnDuringKeys[0] ?? 'schedule',
+      )
+    } else if (isActivityStatus) {
+      nextSection = readActivitySection(
+        `?section=${next}`,
+        inProgressKeys,
+        inProgressKeys[0] ?? 'notice',
+      )
+    } else {
+      nextSection = next === 'application' ? 'application' : 'program'
+    }
     setSection(nextSection)
     const nextPath = buildDetailPath(applicationId, nextSection)
     const currentPath = `${window.location.pathname}${window.location.search}`
@@ -207,7 +276,57 @@ export function MypageEducationDetailPage() {
   const showBanner = shouldShowDocumentPassBanner(application)
   const showCancelCta = canCancelEducationApplication(application.displayStatus)
   const appliedSection = isAppliedSection(section) ? section : 'program'
-  const inProgressSection = isInProgressSection(section) ? section : 'notice'
+  const activitySection = isActivitySection(section)
+    ? section
+    : isWithdrawnDuring
+      ? (withdrawnDuringKeys[0] ?? 'schedule')
+      : (inProgressKeys[0] ?? 'notice')
+
+  const renderApplicationOrPlaceholder = () =>
+    canShowEducationApplicationContent(application.displayStatus) ? (
+      <EducationApplicationContent
+        selfIntroMotivation={application.selfIntroMotivation}
+        preferredEducationScheduleLabel={application.preferredEducationScheduleLabel}
+      />
+    ) : (
+      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
+        신청 내용 화면은 준비 중입니다.
+      </PFText>
+    )
+
+  const renderActivityBody = (active: EducationActivitySection) => {
+    if (active === 'notice' && isActivityStatus) {
+      return (
+        <EducationInProgressNoticePanel
+          program={program}
+          selfIntroMotivation={application.selfIntroMotivation}
+          preferredEducationScheduleLabel={application.preferredEducationScheduleLabel}
+        />
+      )
+    }
+    if (active === 'schedule') {
+      return (
+        <EducationSchedulePanel
+          programId={program.id}
+          lastParticipatedSession={
+            isWithdrawnDuring ? application.lastParticipatedSession : undefined
+          }
+          listTitle={resolveEducationScheduleTabLabel(program.detailCase)}
+        />
+      )
+    }
+    if (active === 'survey') {
+      return <EducationSurveyEmptyPanel kind="survey" />
+    }
+    if (active === 'satisfaction') {
+      return <EducationSurveyEmptyPanel kind="satisfaction" />
+    }
+    return (
+      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
+        준비 중입니다.
+      </PFText>
+    )
+  }
 
   return (
     <section className={styles.page}>
@@ -244,36 +363,35 @@ export function MypageEducationDetailPage() {
               showCancelCta={showCancelCta}
               onCancel={() => setIsCancelConfirmOpen(true)}
             />
-          ) : canShowEducationApplicationContent(application.displayStatus) ? (
-            <EducationApplicationContent
-              selfIntroMotivation={application.selfIntroMotivation}
-              preferredEducationScheduleLabel={application.preferredEducationScheduleLabel}
-            />
           ) : (
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
-              신청 내용 화면은 준비 중입니다.
-            </PFText>
+            renderApplicationOrPlaceholder()
           )}
         </>
-      ) : isInProgressStatus ? (
+      ) : isWithdrawnDuring ? (
         <>
           <PFTabs
             className={styles.tabs}
-            items={[...IN_PROGRESS_SECTION_TAB_ITEMS]}
-            value={inProgressSection}
+            items={withdrawnDuringTabItems}
+            value={activitySection}
+            onChange={handleSectionChange}
+            variant="pill"
+            size="large"
+            ariaLabel="활동 포기 교육 상세 탭"
+          />
+          {renderActivityBody(activitySection)}
+        </>
+      ) : isActivityStatus ? (
+        <>
+          <PFTabs
+            className={styles.tabs}
+            items={inProgressTabItems}
+            value={activitySection}
             onChange={handleSectionChange}
             variant="pill"
             size="large"
             ariaLabel="진행중 교육 상세 탭"
           />
-
-          {inProgressSection === 'notice' ? (
-            <EducationInProgressNoticePanel program={program} />
-          ) : (
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
-              준비 중입니다.
-            </PFText>
-          )}
+          {renderActivityBody(activitySection)}
         </>
       ) : (
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>

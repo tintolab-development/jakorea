@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import dayjs from 'dayjs'
 import {
   buildEducationScheduleLinesFromDateAndGroupTimes,
+  countUniqueEducationScheduleCalendarDays,
   educationScheduleAppliedSurfaceRange,
   flattenGroupTimeSlotsByDetail,
   parseEducationScheduleLineToRange,
@@ -91,6 +92,40 @@ describe('parseEducationScheduleLineToRange', () => {
     expect(range?.[0].format('YYYY-MM-DD HH:mm')).toBe('2026-04-20 00:00')
     expect(range?.[1].format('YYYY-MM-DD HH:mm')).toBe('2026-04-20 00:00')
     expect(educationScheduleAppliedSurfaceRange(range)).toBeNull()
+  })
+})
+
+describe('countUniqueEducationScheduleCalendarDays', () => {
+  it('같은 날 슬롯 두 줄은 하루로 센다', () => {
+    expect(
+      countUniqueEducationScheduleCalendarDays([
+        '26년 4월 20일(월) 09:30 ~ 12:20',
+        '26년 4월 20일(월) 13:00 ~ 15:50',
+      ])
+    ).toBe(1)
+  })
+
+  it('다른 날 두 줄은 이틀로 센다', () => {
+    expect(
+      countUniqueEducationScheduleCalendarDays([
+        '26년 4월 20일(월) 9:30 ~ 12:20',
+        '26년 4월 27일(월) 13:00 ~ 15:50',
+      ])
+    ).toBe(2)
+  })
+
+  it('기간 줄은 시작일만 센다', () => {
+    expect(
+      countUniqueEducationScheduleCalendarDays([
+        '26년 4월 20일(월) ~ 26년 4월 27일(월)',
+        '26년 5월 20일(수) ~ 26년 5월 27일(수)',
+      ])
+    ).toBe(2)
+  })
+
+  it('빈 목록은 0이다', () => {
+    expect(countUniqueEducationScheduleCalendarDays([])).toBe(0)
+    expect(countUniqueEducationScheduleCalendarDays(undefined)).toBe(0)
   })
 })
 
