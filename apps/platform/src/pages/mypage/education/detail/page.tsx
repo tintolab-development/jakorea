@@ -14,6 +14,7 @@ import {
   EducationDetailHeader,
   EducationInProgressNoticePanel,
   EducationSchedulePanel,
+  EducationSurveyEmptyPanel,
   DocumentPassBanner,
   getMockEducationApplicationById,
   isWithdrawnBeforeEducation,
@@ -313,6 +314,12 @@ export function MypageEducationDetailPage() {
           listTitle={resolveEducationScheduleTabLabel(program.detailCase)}
         />
       )
+    }
+    if (active === 'survey') {
+      return <EducationSurveyEmptyPanel kind="survey" />
+    }
+    if (active === 'satisfaction') {
+      return <EducationSurveyEmptyPanel kind="satisfaction" />
     }
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>

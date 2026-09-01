@@ -24,6 +24,7 @@ export type {
   EducationNoticeReactionUser,
   EducationScheduleItem,
   EducationScheduleProgressStatus,
+  EducationSurveyEmptyKind,
 } from './education'
 export {
   getFirstNoticeAttachment,
@@ -91,6 +92,7 @@ export {
   EducationInProgressNoticeDetailModal,
   EducationNoticeStats,
   EducationSchedulePanel,
+  EducationSurveyEmptyPanel,
   DocumentPassBanner,
   shouldShowDocumentPassBanner,
 } from './education'

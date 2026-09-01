@@ -88,3 +88,5 @@ export {
   EducationSchedulePanel,
   EducationScheduleRow,
 } from './schedules'
+export type { EducationSurveyEmptyKind } from './surveys'
+export { EducationSurveyEmptyPanel } from './surveys'
