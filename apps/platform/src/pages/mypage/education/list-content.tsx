@@ -46,7 +46,13 @@ export function EducationListContent({ params, onParamsChange }: EducationListCo
             <EducationApplicationListItemRow
               key={item.id}
               item={item}
-              onClick={() => navigate(educationApplicationDetailPath(item.id))}
+              onClick={() =>
+                navigate(educationApplicationDetailPath(item.id), {
+                  state: {
+                    educationListPath: `${window.location.pathname}${window.location.search}`,
+                  },
+                })
+              }
             />
           ))}
         </div>

@@ -98,7 +98,7 @@ export {
   educationTargetBadgeIconUrl,
 } from './lib/badge-config'
 export { ProgramBackButton } from './ui/back-button'
-export { ProgramInfoBody, ProgramInfoAside } from './ui/program-info-body'
+export { ProgramInfoBody, ProgramInfoAside, ProgramInfoDetail } from './ui/program-info-body'
 export { ProgramListItemRow } from './ui/list-item'
 export { ProgramSort } from './ui/program-sort'
 export { ProgramStatusBadges } from './ui/program-status-badges'

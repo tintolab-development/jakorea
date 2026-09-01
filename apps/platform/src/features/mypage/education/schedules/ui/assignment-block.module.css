@@ -1,0 +1,135 @@
+.block {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+  gap: var(--spacing-16);
+  padding: 20px;
+  border-radius: var(--radius-16, 16px);
+  background: var(--color-neutral-cool-50, #f5f7f7);
+}
+
+.blockSubmitted {
+  background: var(--color-element-hover, rgba(1, 161, 175, 0.06));
+}
+
+.top {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-16);
+}
+
+.main {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 240px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+}
+
+.messageRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spacing-8);
+  margin: 0;
+}
+
+.statusLabel,
+.message,
+.messageFeedback,
+.period {
+  margin: 0;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  flex-shrink: 0;
+  background: var(--color-border-default, #d9d9d9);
+}
+
+.files {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: var(--spacing-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  box-sizing: border-box;
+  display: flex;
+  width: 240px;
+  height: 32px;
+  min-width: 0;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: var(--radius-999, 999px);
+  overflow: hidden;
+}
+
+.chipFile {
+  background: var(--color-element-default-blue, rgba(0, 105, 114, 0.1));
+}
+
+.chipUrl {
+  background: var(--color-neutral-white, #fff);
+}
+
+.chipIcon {
+  display: block;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.chipLabel {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  margin: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chipRemove {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.chipRemove img {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-8);
+}

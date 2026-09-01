@@ -259,6 +259,11 @@ function buildTypeFixture(args: TypeSeedArgs): CmsRegistrationFixture {
     generalProgramEducationStructure: args.educationStructure,
     generalProgramSessionRound: args.sessionRound,
     generalCommonInfo: commonInfo,
+    ...(args.idSuffix === 'org-curriculum-multi'
+      ? {
+          attachmentFileNames: ['프로그램 안내문.pdf', '개인정보 수집이용 동의서.pdf'],
+        }
+      : {}),
   }
 }
 

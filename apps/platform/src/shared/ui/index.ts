@@ -153,6 +153,12 @@ export type {
   PFDateInputSize,
   PFDateInputVariant,
 } from './pf-date-input'
+export { PFOptionList } from './pf-option-list'
+export type {
+  PFOptionListOption,
+  PFOptionListProps,
+  PFOptionListRole,
+} from './pf-option-list'
 export { PFSelect } from './pf-select'
 export type {
   PFSelectMessageStatus,

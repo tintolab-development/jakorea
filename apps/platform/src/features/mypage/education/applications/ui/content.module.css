@@ -1,0 +1,47 @@
+.root {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-32);
+}
+
+.empty {
+  margin: 0;
+  padding-block: var(--spacing-40);
+}
+
+.intro {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.introTitle {
+  margin: 0 0 var(--spacing-8);
+}
+
+.introBody {
+  margin: 0;
+  line-height: 170%;
+  white-space: pre-line;
+}
+
+.schedule {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  justify-content: center;
+  gap: var(--spacing-8);
+  padding: var(--spacing-20);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+}
+
+.scheduleValue {
+  margin: 0;
+}

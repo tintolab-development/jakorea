@@ -149,6 +149,18 @@ export type ProgramDetail = ProgramListItem & {
   /** 빈 문자열이면 상세에서 비노출 */
   applicationMethodValue: string
   attachments: ProgramAttachment[]
+  /**
+   * 교육현황 상세 — 설문조사 탭 노출.
+   * `false`면 프로그램에 설문 항목 미설정 → 탭 비노출.
+   * 미지정·`true`면 진행 중 내용이 없어도 탭 유지.
+   */
+  surveyConfigured?: boolean
+  /**
+   * 교육현황 상세 — 만족도조사 탭 노출.
+   * `false`면 프로그램에 만족도 항목 미설정 → 탭 비노출.
+   * 미지정·`true`면 진행 중 내용이 없어도 탭 유지.
+   */
+  satisfactionConfigured?: boolean
 }
 
 export type ProgramsListParams = {
