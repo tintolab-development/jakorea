@@ -275,6 +275,32 @@ describe('applySavedBasicInfoPatchToUser', () => {
     ])
   })
 
+  it('상세 GET이 시·군·구로만 잘리면 목록의 더 긴 도로명을 유지한다', () => {
+    const list = baseUser({
+      id: 'individual-uuid',
+      role: 'INDIVIDUAL',
+      name: '홍길동',
+      email: 'hong@example.com',
+      schoolInfo: undefined,
+      detailAddress: '서울특별시 금천구 독산로 123',
+      detailAddressDetail: '101호',
+    })
+    const fetched = baseUser({
+      id: 'individual-uuid',
+      role: 'INDIVIDUAL',
+      name: '홍길동',
+      email: 'hong@example.com',
+      schoolInfo: undefined,
+      detailAddress: '서울특별시 금천구',
+      detailAddressDetail: undefined,
+    })
+
+    const merged = mergeListUserWithFetchedDetail(list, fetched)
+
+    expect(merged.detailAddress).toBe('서울특별시 금천구 독산로 123')
+    expect(merged.detailAddressDetail).toBe('101호')
+  })
+
   it('자택 주소 상세 저장 시 이전 상세를 남기지 않는다', () => {
     const user = baseUser({
       id: 'individual-uuid',

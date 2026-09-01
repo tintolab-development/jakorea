@@ -56,6 +56,13 @@ describe('normalizeMemberConsentWriteDraft', () => {
       ])
     )
 
+    const institution = draft.paragraphs.find(p => p.id === 'agreement-notice-institution')
+    expect(
+      institution?.kind === 'single_item' &&
+        institution.variant === 'agreement_explanation_text' &&
+        institution.bodyText
+    ).toBe('')
+
     const purpose = draft.paragraphs.find(p => p.id === 'agreement-notice-purpose')
     expect(
       purpose?.kind === 'single_item' &&
@@ -74,5 +81,39 @@ describe('normalizeMemberConsentWriteDraft', () => {
         table.variant === 'horizontal_table' &&
         table.idTypeWithInput?.inputValue
     ).toBe('')
+  })
+
+  it('resets notice institution to empty and purpose to the default on write entry', () => {
+    const base = normalizeWritingFormDraft(createAgreementNoticeDraft())
+    const dirty: typeof base = {
+      ...base,
+      paragraphs: base.paragraphs.map(paragraph => {
+        if (paragraph.kind !== 'single_item' || paragraph.variant !== 'agreement_explanation_text') {
+          return paragraph
+        }
+        if (paragraph.id === 'agreement-notice-institution') {
+          return { ...paragraph, bodyText: '저장된 기관명' }
+        }
+        if (paragraph.id === 'agreement-notice-purpose') {
+          return { ...paragraph, bodyText: '다른 목적' }
+        }
+        return paragraph
+      }),
+    }
+
+    const draft = normalizeMemberConsentWriteDraft(dirty, 'agreement-notice')
+    const institution = draft.paragraphs.find(p => p.id === 'agreement-notice-institution')
+    const purpose = draft.paragraphs.find(p => p.id === 'agreement-notice-purpose')
+
+    expect(
+      institution?.kind === 'single_item' &&
+        institution.variant === 'agreement_explanation_text' &&
+        institution.bodyText
+    ).toBe('')
+    expect(
+      purpose?.kind === 'single_item' &&
+        purpose.variant === 'agreement_explanation_text' &&
+        purpose.bodyText
+    ).toBe('범죄경력 유무 조회')
   })
 })

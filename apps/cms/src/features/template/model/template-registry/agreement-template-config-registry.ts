@@ -21,6 +21,10 @@ import {
   getAgreementPortraitA4ParagraphGap,
 } from '@/features/template/model/agreement-portrait-a4-preview'
 import {
+  AGREEMENT_EXPENSE_A4_HIDDEN_PARAGRAPH_IDS,
+  getAgreementExpenseA4ParagraphGap,
+} from '@/features/template/model/agreement-expense-a4-preview'
+import {
   createPaymentStatementPreConsentDraft,
   PAYMENT_STATEMENT_PRE_CONSENT_IDS,
   PAYMENT_STATEMENT_PRE_CONSENT_SEED_PARAGRAPH_IDS,
@@ -67,7 +71,9 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       structureLockedParagraphIds: EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS,
       hideDragHandleForParagraphIds: EDUCATOR_FACILITATOR_PLEDGE_HIDDEN_DRAG_HANDLE_IDS,
       previewLayout: 'a4-document',
+      a4HiddenParagraphIds: AGREEMENT_EXPENSE_A4_HIDDEN_PARAGRAPH_IDS,
       a4RenderMode: 'contentOnly',
+      a4ParagraphGapPx: getAgreementExpenseA4ParagraphGap,
       paragraphBodyOptions: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_BODY_OPTIONS,
     }
   },
@@ -89,7 +95,7 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
     }
   },
   'agreement-portrait': () => {
-    const title = resolveRowTitle('agreement-portrait', '초상권 수집/이용 동의')
+    const title = resolveRowTitle('agreement-portrait', '초상권 수집·이용 동의')
     return {
       initialDraft: createAgreementPortraitDraft,
       defaultActiveParagraphId: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.title,

@@ -2402,6 +2402,9 @@ export const LECTURE_REPORT_SEED_PARAGRAPH_IDS = new Set<string>([
 export const LECTURE_REPORT_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
   LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.title,
 ])
+/** 행정정보 공동이용 — 이용사무(이용목적) 작성 진입 기본값 */
+export const AGREEMENT_NOTICE_DEFAULT_PURPOSE = '범죄경력 유무 조회'
+
 /** 동의 양식 > 행정정보 공동이용 사전동의서 — 시드 단락 id */
 export const AGREEMENT_NOTICE_PARAGRAPH_IDS = {
   title: 'agreement-notice-title',
@@ -2414,6 +2417,12 @@ export const AGREEMENT_NOTICE_PARAGRAPH_IDS = {
   confirmationClosing: 'agreement-notice-confirmation-closing',
   systemDate: 'agreement-notice-system-date',
   systemSignature: 'agreement-notice-system-signature',
+} as const
+
+export const AGREEMENT_NOTICE_SUBJECT_ITEM_IDS = {
+  name: 'agreement-notice-subj-name',
+  birth: 'agreement-notice-subj-birth',
+  phone: 'agreement-notice-subj-phone',
 } as const
 
 /** 템플릿 고정 단락 — 삭제·복제·순서 변경 불가 */
@@ -2462,7 +2471,8 @@ const AGREEMENT_NOTICE_CONFIRMATION_CLOSING: ClosingParagraph = {
   paragraphTitle: '',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
-  body: '위와 같은 행정정보 공동이용에 대한 내용을 모두 확인했습니다.',
+  /** 작성·미리보기에서 문구 없음. A4는 본문·날짜/서명 사이 구분선으로만 사용 */
+  body: '',
 }
 
 const AGREEMENT_NOTICE_TABLE_FIRST_ROW: [string, string, string, string] = [
@@ -2558,7 +2568,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         paragraphDescription: '',
         participatesInTitleNumbering: true,
         bodyPlaceholder: '이용 목적을 입력해 주세요',
-        bodyText: '범죄경력 유무 조회',
+        bodyText: AGREEMENT_NOTICE_DEFAULT_PURPOSE,
         answerRequired: false,
       },
       tableSeed,
@@ -2585,21 +2595,21 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         itemInputRows: 1,
         items: [
           {
-            id: 'agreement-notice-subj-name',
+            id: AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name,
             label: '성명',
             placeholder: '성명을 입력해 주세요',
             bodyText: '',
           },
           {
-            id: 'agreement-notice-subj-birth',
+            id: AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth,
             label: '생년월일',
-            placeholder: '생년월일 8자리를 입력해 주세요',
+            placeholder: '1991.01.01',
             bodyText: '',
           },
           {
-            id: 'agreement-notice-subj-phone',
+            id: AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone,
             label: '전화번호',
-            placeholder: '전화번호를 입력해 주세요',
+            placeholder: '010-1234-5678',
             bodyText: '',
           },
         ],
@@ -2631,7 +2641,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
   }
 }
 
-/** 구 저장본에 confirmationClosing이 없으면 systemDate 앞에 삽입. 제목형 작성 기간은 항상 off. */
+/** 구 저장본에 confirmationClosing이 없으면 systemDate 앞에 삽입. 제목형 작성 기간은 항상 off. 확인 문구는 비운다. */
 export function ensureAgreementNoticeConfirmationClosing(
   draft: WritingFormDraft
 ): WritingFormDraft {
@@ -2643,6 +2653,14 @@ export function ensureAgreementNoticeConfirmationClosing(
       p.showWritingPeriodOnForm
     ) {
       return { ...p, showWritingPeriodOnForm: false }
+    }
+    if (
+      p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing &&
+      p.kind === 'description' &&
+      p.variant === 'closing' &&
+      p.body !== ''
+    ) {
+      return { ...p, body: '' }
     }
     return p
   })

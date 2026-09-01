@@ -1,0 +1,146 @@
+.shell {
+  display: flex;
+  align-items: stretch;
+  gap: var(--spacing-80);
+  width: 100%;
+  min-width: 0;
+  min-height: 560px;
+}
+
+.noticeEmpty {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--spacing-48);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-24);
+}
+
+.noticeEmptyContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.illustration {
+  display: block;
+  width: 100px;
+  height: 100px;
+  margin-bottom: var(--spacing-16);
+}
+
+.noticeTitle {
+  display: block;
+  margin: 0 0 var(--spacing-8);
+}
+
+.noticeDescription {
+  display: block;
+  margin: 0;
+}
+
+.noticeList {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.files {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 360px;
+  min-width: 0;
+}
+
+.search {
+  flex-shrink: 0;
+  width: 100%;
+  margin-bottom: var(--spacing-16);
+}
+
+.filesEmpty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.filesEmptyTitle {
+  display: block;
+  margin: 0 0 var(--spacing-8);
+}
+
+.filesEmptyDescription {
+  display: block;
+  margin: 0;
+}
+
+.filesList {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.searchEmpty {
+  display: block;
+  margin: 0;
+  padding: var(--spacing-24) 0;
+  text-align: center;
+}
+
+.footer {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--spacing-16);
+}
+
+.actionDivider {
+  width: 1px;
+  height: 16px;
+  flex-shrink: 0;
+  margin: 0 var(--spacing-8);
+  background: var(--color-neutral-black-10);
+}
+
+@media (--bp-pc-full-up) {
+  .noticeEmpty {
+    padding: 0 20px;
+  }
+}
+
+@media (--bp-below-pc) {
+  .shell {
+    flex-direction: column;
+    gap: var(--spacing-40);
+    min-height: 0;
+  }
+
+  .noticeEmpty {
+    min-height: 320px;
+    padding: var(--spacing-80) var(--spacing-40);
+  }
+
+  .noticeList {
+    max-height: 480px;
+  }
+
+  .files {
+    width: 100%;
+    min-height: 320px;
+  }
+}

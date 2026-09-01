@@ -36,6 +36,7 @@ export const programParticipantRecruitmentSaveSchema = z.object({
   contactPhone: optionalString,
   contactEmail: optionalString,
   oneLineIntroduction: optionalString,
+  participantRecruitmentNotesNotApplicable: z.enum(['applicable', 'not_applicable']).nullish(),
 })
 
 export const programInstructorRecruitmentSaveSchema = z.object({

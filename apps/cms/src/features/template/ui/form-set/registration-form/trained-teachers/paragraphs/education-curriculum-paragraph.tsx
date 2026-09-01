@@ -19,10 +19,9 @@ type TrainedTeachersRegistrationEducationCurriculumParagraphProps = {
 }
 
 function TrainedTeachersTeacherTrainingTable() {
-  const [trainingScheduleIso, setTrainingScheduleIso] = useProgramRegistrationOverlayKv<string | null>(
-    'trainedTeachersRegistration.educationCurriculum.trainingScheduleIso',
-    null
-  )
+  const [trainingScheduleIso, setTrainingScheduleIso] = useProgramRegistrationOverlayKv<
+    string | null
+  >('trainedTeachersRegistration.educationCurriculum.trainingScheduleIso', null)
   const trainingSchedule = trainingScheduleIso ? dayjs(trainingScheduleIso) : null
   const setTrainingSchedule = (next: Dayjs | null) => {
     setTrainingScheduleIso(next == null ? null : next.toISOString())
@@ -32,12 +31,14 @@ function TrainedTeachersTeacherTrainingTable() {
     'trainedTeachersRegistration.educationCurriculum.trainingEducationForm',
     'online'
   )
-  const [trainingIpsType, setTrainingIpsType] = useProgramRegistrationOverlayKv<
-    ProgramRegistrationIpsTypeValue
-  >('trainedTeachersRegistration.educationCurriculum.trainingIpsType', {
-    category: 'prepare',
-    detail: 'none',
-  })
+  const [trainingIpsType, setTrainingIpsType] =
+    useProgramRegistrationOverlayKv<ProgramRegistrationIpsTypeValue>(
+      'trainedTeachersRegistration.educationCurriculum.trainingIpsType',
+      {
+        category: 'prepare',
+        detail: 'none',
+      }
+    )
 
   return (
     <DetailInfoForm
@@ -99,32 +100,7 @@ function TrainedTeachersTeacherTrainingTable() {
 }
 
 function TrainedTeachersTeacherTrainingSection({ enabled }: { enabled: boolean }) {
-  if (!enabled) {
-    return (
-      <DetailInfoForm
-        title="교재 배송 안내"
-        hideHeader
-        mode="edit"
-        className="program-registration-paragraph"
-      >
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="교재 배송 안내"
-            fullRow
-            edit={
-              <CmsInput
-                inputSize="medium"
-                placeholder="교육 연수 없이 교재 배송 후 교사가 교육을 진행합니다."
-                width="100%"
-                disabled
-              />
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
-      </DetailInfoForm>
-    )
-  }
+  if (!enabled) return null
 
   return (
     <div className="program-registration-curriculum__session-block">

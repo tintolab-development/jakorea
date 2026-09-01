@@ -43,7 +43,7 @@ import {
   buildProgramProgressHistoryDeleteGuide,
 } from '@/shared/ui'
 import { buildProgressYearSelectOptions } from '@/shared/utils'
-import { getProgramAdminDetailInfoTabUrl } from '@/features/program/general/lib/program-admin-detail-url'
+import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
 import '@/features/program/general/ui/program-list.css'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -126,9 +126,14 @@ function resolveManagedPrograms(user: AdminUser): Program[] {
 
 export interface AdminManagedProgramHistoryProps {
   user: AdminUser
+  /** 프로그램 상세로 이탈하기 직전 — 회원 상세 URL sync 억제 */
+  onBeforeNavigateToProgramDetail?: () => void
 }
 
-export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryProps) {
+export function AdminManagedProgramHistory({
+  user,
+  onBeforeNavigateToProgramDetail,
+}: AdminManagedProgramHistoryProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -239,6 +244,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
     searchParams,
     setSearchParams,
     context: tableContext,
+    disableUrlSync: true,
   })
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
@@ -405,11 +411,14 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
         }
         const programId = record.id?.trim()
         if (!programId) return
-        navigate(getProgramAdminDetailInfoTabUrl(programId))
+        navigateToProgramAdminDetail(navigate, programId, {
+          onBeforeNavigate: onBeforeNavigateToProgramDetail,
+          queryClient,
+        })
       },
       style: { cursor: 'pointer' as const },
     }),
-    [navigate]
+    [navigate, onBeforeNavigateToProgramDetail, queryClient]
   )
 
   return (

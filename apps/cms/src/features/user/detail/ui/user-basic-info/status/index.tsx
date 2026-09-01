@@ -3,6 +3,7 @@ import type { User } from '@/types/user'
 import type { MemberPermissionApplicationStatus } from '@/types/member-permission-application'
 import { CmsButton } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
 
 export function schoolTeacherEmploymentBadgeModifier(label: string): 'active' | 'muted' {
   const t = label.trim()
@@ -62,6 +63,13 @@ function permissionApprovalStatusTextClass(status: User['permissionApprovalStatu
 }
 
 export function permissionApprovalStatusTextView(user: Omit<User, 'password'>) {
+  if (isInstructorPermissionRevoked(user)) {
+    return (
+      <span className="user-basic-info-section__permission-approval-status user-basic-info-section__permission-approval-status--rejected">
+        권한 박탈
+      </span>
+    )
+  }
   const status = normalizePermissionApprovalStatus(user.permissionApprovalStatus)
   if (status === 'APPROVED') {
     return <span className={permissionApprovalStatusTextClass(status)}>승인 완료</span>
@@ -84,6 +92,13 @@ function permissionApprovalStatusListToneClass(user: Omit<User, 'password'>) {
 }
 
 export function permissionApprovalStatusListToneView(user: Omit<User, 'password'>) {
+  if (isInstructorPermissionRevoked(user)) {
+    return (
+      <span className="user-basic-info-section__permission-approval-status-list-tone user-basic-info-section__permission-approval-status-list-tone--rejected">
+        권한 박탈
+      </span>
+    )
+  }
   const status = normalizePermissionApprovalStatus(user.permissionApprovalStatus)
   if (status === 'APPROVED') {
     return <span className={permissionApprovalStatusListToneClass(user)}>승인 완료</span>
@@ -121,7 +136,7 @@ export function PermissionApprovalStatusWithResend({
   const status = normalizePermissionApprovalStatus(user.permissionApprovalStatus)
   const tone = permissionApprovalStatusListToneView(user)
 
-  if (status === 'PENDING') {
+  if (status === 'PENDING' || isInstructorPermissionRevoked(user)) {
     return tone
   }
 

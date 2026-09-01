@@ -3,6 +3,7 @@
  * 게시글 상세 모달 — 댓글 카드, 이모지/반응 뷰어 연동
  */
 
+import { REACTION_EMOJI_TYPES } from '@jakorea/ui'
 import type { UUID } from '../../types'
 import type { ProgramPostComment, ProgramPostReaction, ProgramPostReactionUser } from '../../types/domain'
 import { mockProgramPosts } from './program-posts'
@@ -43,27 +44,7 @@ function buildComments(): ProgramPostComment[] {
 }
 
 const REACTION_ROLE_LABELS = ['학생', '관리자', '강사', '대표 강사', '담당교사'] as const
-/** 이모지 바(Figma 순)와 동일 — 댓글·반응 집계에서 공통 키로 사용 */
-export const REACTION_EMOJI_TYPES = [
-  'smile',
-  'laugh',
-  'loveFace',
-  'surprised',
-  'cry',
-  'angry',
-  'scream',
-  'heart',
-  'clap',
-  'thumbsUp',
-  'check',
-] as const
-
-export function getReactionEmojiTypeForBarIndex(index: number): string | undefined {
-  if (!Number.isInteger(index) || index < 0 || index >= REACTION_EMOJI_TYPES.length) {
-    return undefined
-  }
-  return REACTION_EMOJI_TYPES[index]
-}
+export { REACTION_EMOJI_TYPES, getReactionEmojiTypeForBarIndex } from '@jakorea/ui'
 
 /** postId별 반응 사용자 목록 생성 (합 = reactionCount) */
 function buildReactionUsers(): ProgramPostReactionUser[] {

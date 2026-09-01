@@ -101,6 +101,56 @@ export function resolveMemberDetailRestoreHint(options: {
   }
 }
 
+export type MemberDetailOpenIdentity = {
+  ids?: readonly string[]
+  memberId?: number
+  organizationId?: number
+  adminAccountId?: number
+}
+
+export function memberDetailOpenIdentityFromUser(
+  user: Pick<User, 'id' | 'memberId' | 'organizationId' | 'adminAccountId'>
+): MemberDetailOpenIdentity {
+  return {
+    ids: [user.id],
+    memberId: user.memberId,
+    organizationId: user.organizationId,
+    adminAccountId: user.adminAccountId,
+  }
+}
+
+/**
+ * 목록 uuid와 canonical `admin-account-{id}` / `organization-{id}`가
+ * 같은 회원 상세를 가리키면 true — URL 복원 effect의 재GET 방지.
+ */
+export function isSameMemberDetailIdentity(
+  open: MemberDetailOpenIdentity | null | undefined,
+  targetId: string,
+  hint: Pick<MemberDetailRestoreHint, 'memberId' | 'organizationId' | 'adminAccountId'>
+): boolean {
+  if (!open) return false
+  const trimmed = targetId.trim()
+  if (!trimmed) return false
+  if (open.ids?.some(id => id === trimmed)) return true
+
+  const targetAdmin = hint.adminAccountId ?? parseAdminAccountIdFromUserId(trimmed)
+  if (targetAdmin != null && open.adminAccountId != null && targetAdmin === open.adminAccountId) {
+    return true
+  }
+
+  const targetOrg = hint.organizationId ?? parseOrganizationIdFromUserId(trimmed)
+  if (targetOrg != null && open.organizationId != null && targetOrg === open.organizationId) {
+    return true
+  }
+
+  const targetMember = hint.memberId ?? parseMemberIdFromUserId(trimmed)
+  if (targetMember != null && open.memberId != null && targetMember === open.memberId) {
+    return true
+  }
+
+  return false
+}
+
 export function canResolveMemberIdForDetailRestore(
   userId: string,
   hint: Pick<

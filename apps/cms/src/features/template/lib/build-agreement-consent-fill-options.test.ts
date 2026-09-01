@@ -24,7 +24,7 @@ const agreementConfig = {
 
 const portraitConfig = {
   ...agreementConfig,
-  modalTitle: '초상권 수집/이용 동의',
+  modalTitle: '초상권 수집·이용 동의',
   paragraphBodyOptions: AGREEMENT_PORTRAIT_PARAGRAPH_BODY_OPTIONS,
 }
 
@@ -121,7 +121,11 @@ describe('buildAgreementConsentFillParagraphBodyOptions', () => {
     expect(options?.agreementNoticeIdTypeInteractive).toBe(true)
     expect(options?.agreementNoticeSubjectPrefilledReadOnly).toBe(false)
     expect(options?.agreementConsentFillInteractiveParagraphIds).toEqual(
-      new Set(['agreement-notice-subject'])
+      new Set([
+        'agreement-notice-institution',
+        'agreement-notice-purpose',
+        'agreement-notice-subject',
+      ])
     )
     expect(options?.hiddenParagraphIds).toEqual(
       new Set(['agreement-notice-system-date', 'agreement-notice-system-signature'])

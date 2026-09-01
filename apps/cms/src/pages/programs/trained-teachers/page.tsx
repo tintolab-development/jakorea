@@ -37,7 +37,6 @@ import { useProgramListActions } from '@/pages/programs/use-program-list-actions
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import {
   useDeleteTrainedTeacherPrograms,
-  usePrefetchTrainedTeacherProgramDetail,
   useTrainedTeacherProgramDetail,
   useUpdateTrainedTeacherProgram,
 } from '@/features/program/trained-teachers/api/hooks'
@@ -108,8 +107,6 @@ function TrainedTeachersProgramPageContent() {
     programIdFromUrl ?? selectedProgramForFullPageModal?.id,
     Boolean(programIdFromUrl ?? selectedProgramForFullPageModal?.id)
   )
-  const prefetchTrainedTeacherProgramDetail = usePrefetchTrainedTeacherProgramDetail()
-
   const detailData = detailQuery.data ?? null
   const detailProgram =
     detailData ??
@@ -380,7 +377,6 @@ function TrainedTeachersProgramPageContent() {
         loading={listQuery.isFetching}
         headerTitle={headerTitle}
         onView={handleView}
-        onPrefetch={program => prefetchTrainedTeacherProgramDetail(program.id)}
         onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
         selectedRowKeys={isScheduledFilter ? selectedRowKeys : undefined}
         showRowSelection={isScheduledFilter}

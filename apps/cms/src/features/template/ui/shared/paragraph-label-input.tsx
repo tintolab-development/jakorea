@@ -7,6 +7,8 @@ import './paragraph-label-input.css'
 export interface ParagraphLabelInputProps extends Omit<CmsTextAreaProps, 'label'> {
   /** 상단 라벨(앞에 · 구분자가 붙습니다) */
   label?: ReactNode
+  /** 있으면 textarea 대신 이 컨트롤을 렌더 (생년월일·전화번호 등) */
+  control?: ReactNode
 }
 
 function cn(...parts: Array<string | false | null | undefined>): string {
@@ -20,6 +22,7 @@ export function ParagraphLabelInput({
   width = '100%',
   /** 단일항목 주관식 등 — `rows={1}`은 한 줄 입력형; 기본은 여러 줄 `CmsTextArea` */
   rows = 5,
+  control,
   ...rest
 }: ParagraphLabelInputProps) {
   const uid = useId()
@@ -35,13 +38,15 @@ export function ParagraphLabelInput({
           {label}
         </label>
       ) : null}
-      <CmsTextArea
-        {...rest}
-        id={controlId}
-        width={width}
-        className="paragraph-label-input__textarea"
-        rows={rows ? rows : 1}
-      />
+      {control ?? (
+        <CmsTextArea
+          {...rest}
+          id={controlId}
+          width={width}
+          className="paragraph-label-input__textarea"
+          rows={rows ? rows : 1}
+        />
+      )}
     </div>
   )
 }

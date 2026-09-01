@@ -98,6 +98,10 @@ import {
 } from '@/features/user/api/members-api-client'
 import { fetchAllAccountsDirectoryPage } from '@/features/user/api/fetch-all-accounts-directory-page'
 import {
+  applyAdminPermissionVariantToUser,
+  resolveAdminAccountIdForPermissionPatch,
+} from '@/features/user/api/apply-admin-permission-variant'
+import {
   collectAdminAccountIds,
   collectMemberIds,
   collectOrganizationIds,
@@ -124,7 +128,6 @@ import { probeMemberDetailAsUser } from '@/features/user/api/probe-member-detail
 import {
   fetchAdminMemberDetailAsUser,
   isAdminMemberDetailRole,
-  parseAdminAccountIdFromUserId,
   resolveAdminAccountIdForDetail,
   shouldUseAdminAccountDetailApi,
 } from '@/features/user/api/fetch-admin-member-detail'
@@ -423,13 +426,13 @@ export type PatchUserBasicInfoInput = Partial<
   individualSchoolRegionSigungu?: string
 }
 
-/** 코멘트 전용 저장 시 상세 GET·코멘트 목록 GET을 줄이기 위한 힌트 */
+/** 코멘트·권한 유형 전용 저장 시 상세 GET을 줄이기 위한 힌트 */
 export type PatchUserBasicInfoOptions = {
   knownRole?: UserRole
   memberId?: number
   organizationId?: number
   existingCommentId?: number
-  /** 코멘트만 저장 후 이 객체를 기준으로 반환 (추가 상세 GET 생략) */
+  /** 코멘트·권한 유형만 저장 후 이 객체를 기준으로 반환 (추가 상세 GET 생략) */
   baseUser?: Omit<User, 'password'>
 }
 
@@ -479,7 +482,11 @@ async function patchAdminUserBasicInfoRemote(
     existing.adminAccountId ?? (await resolveAdminAccountIdForDetail(userId))
 
   if (isAdminPermissionVariantOnlyPatch(patch)) {
-    return patchAdminPermissionVariantRemote(userId, patch.listMetrics!.adminPermissionVariant!)
+    return patchAdminPermissionVariantRemote(
+      userId,
+      patch.listMetrics!.adminPermissionVariant!,
+      options
+    )
   }
 
   const memberId = options?.memberId ?? existing.memberId
@@ -709,50 +716,54 @@ async function resolveAdminAccountIdForMemberUser(
  */
 async function patchAdminPermissionVariantRemote(
   userId: UUID,
-  variant: AdminPermissionTagVariant
+  variant: AdminPermissionTagVariant,
+  options?: PatchUserBasicInfoOptions
 ): Promise<Omit<User, 'password'>> {
   try {
-    let existing: Omit<User, 'password'> | null = null
-    try {
-      existing = await getUserById(userId, { role: 'ADMIN' })
-    } catch {
-      existing = null
+    let existing: Omit<User, 'password'> | null = options?.baseUser ?? null
+    if (!existing) {
+      try {
+        existing = await getUserById(userId, { role: 'ADMIN' })
+      } catch {
+        existing = null
+      }
     }
 
-    let adminId: number
-    const adminIdFromUserId = parseAdminAccountIdFromUserId(userId)
-    if (existing?.adminAccountId != null && existing.adminAccountId > 0) {
-      adminId = existing.adminAccountId
-    } else if (adminIdFromUserId != null) {
-      adminId = adminIdFromUserId
-    } else if (existing) {
-      adminId = await resolveAdminAccountIdForMemberUser(existing)
-    } else {
-      // 목록 행이 member 상세에 없어도, id 레지스트리·숫자 id 로 admin account PATCH 시도
-      let registeredId: number | null = null
-      try {
-        registeredId = resolveMemberIdForApi(userId)
-      } catch {
-        registeredId = null
-      }
-      const raw = String(userId).replace(/^(admin-|member-|admin-account-)/, '')
-      const numeric = Number(raw)
-      if (registeredId != null && registeredId > 0) {
-        adminId = registeredId
-      } else if (Number.isFinite(numeric) && numeric > 0) {
-        adminId = Math.trunc(numeric)
+    let adminId = resolveAdminAccountIdForPermissionPatch({ userId, existing })
+    if (adminId == null) {
+      if (existing) {
+        adminId = await resolveAdminAccountIdForMemberUser(existing)
       } else {
-        const page = await fetchAdminsPageRemote({ page: 0, size: 100 })
-        const match = (page.items ?? []).find(item => {
-          const uuid = item.uuid?.trim()
-          if (!uuid) return false
-          return uuid === userId || uuid === raw || `admin-${uuid}` === userId
-        })
-        if (match?.adminAccountId == null) {
-          throw new Error('관리자 계정(adminId)을 찾지 못해 권한 유형을 변경할 수 없습니다.')
+        // 목록 행이 member 상세에 없어도, id 레지스트리·숫자 id 로 admin account PATCH 시도
+        let registeredId: number | null = null
+        try {
+          registeredId = resolveMemberIdForApi(userId)
+        } catch {
+          registeredId = null
         }
-        adminId = match.adminAccountId
+        const raw = String(userId).replace(/^(admin-|member-|admin-account-)/, '')
+        const numeric = Number(raw)
+        if (registeredId != null && registeredId > 0) {
+          adminId = registeredId
+        } else if (Number.isFinite(numeric) && numeric > 0) {
+          adminId = Math.trunc(numeric)
+        } else {
+          const page = await fetchAdminsPageRemote({ page: 0, size: 100 })
+          const match = (page.items ?? []).find(item => {
+            const uuid = item.uuid?.trim()
+            if (!uuid) return false
+            return uuid === userId || uuid === raw || `admin-${uuid}` === userId
+          })
+          if (match?.adminAccountId == null) {
+            throw new Error('관리자 계정(adminId)을 찾지 못해 권한 유형을 변경할 수 없습니다.')
+          }
+          adminId = match.adminAccountId
+        }
       }
+    }
+
+    if (adminId == null) {
+      throw new Error('관리자 계정(adminId)을 찾지 못해 권한 유형을 변경할 수 없습니다.')
     }
 
     const roleCode = adminPermissionFeeGradeToRoleCode(variant)
@@ -761,26 +772,15 @@ async function patchAdminPermissionVariantRemote(
       reason: `CMS 관리자 회원 권한 유형 변경 (${roleCode})`,
     })
 
+    if (existing) {
+      return applyAdminPermissionVariantToUser(existing, variant, adminId)
+    }
+
     const refreshed = await fetchAdminMemberDetailAsUser(userId, {
       adminAccountId: adminId,
-      memberId: existing?.memberId,
-      email: existing?.email,
     })
 
-    return {
-      ...refreshed,
-      registeredByAdmin: Boolean(
-        existing?.registeredByAdmin ?? refreshed.registeredByAdmin
-      ),
-      identitySelfSignupCompletedAfterAdminRegistration: Boolean(
-        existing?.identitySelfSignupCompletedAfterAdminRegistration ??
-          refreshed.identitySelfSignupCompletedAfterAdminRegistration
-      ),
-      listMetrics: {
-        ...refreshed.listMetrics,
-        adminPermissionVariant: variant,
-      },
-    }
+    return applyAdminPermissionVariantToUser(refreshed, variant, adminId)
   } catch (error) {
     throw new Error(getMemberApiErrorMessage(error, '관리자 권한 유형 변경에 실패했습니다.'))
   }
@@ -794,7 +794,11 @@ export async function patchUserBasicInfo(
 ): Promise<Omit<User, 'password'>> {
   if (isMembersRemoteEnabled()) {
     if (isAdminPermissionVariantOnlyPatch(patch) && isAdminPermissionVariantPatchRemoteEnabled()) {
-      return patchAdminPermissionVariantRemote(userId, patch.listMetrics!.adminPermissionVariant!)
+      return patchAdminPermissionVariantRemote(
+        userId,
+        patch.listMetrics!.adminPermissionVariant!,
+        options
+      )
     }
     if (isMemberBasicInfoPatchRemoteEnabled()) {
       return patchUserBasicInfoRemote(userId, patch, options)

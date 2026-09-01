@@ -1,0 +1,9 @@
+.applicant-recruit-individual-participant-info-paragraph__forms {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.applicant-recruit-individual-participant-info-paragraph__forms .detail-info-form {
+  margin: 0;
+}

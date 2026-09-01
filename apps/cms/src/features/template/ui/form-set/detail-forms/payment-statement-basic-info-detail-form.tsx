@@ -11,6 +11,10 @@ import { AddressSearch } from '@/shared/ui/address-search'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import {
+  mergePaymentStatementBasicInfo,
+  PAYMENT_STATEMENT_DEFAULT_PURPOSE,
+} from '@jakorea/form-schema/consent'
 import './payment-statement-basic-info-detail-form.css'
 
 /** 발급·미리보기에서 채울 값. CMS 템플릿 편집기에서는 비워 두고 placeholder만 노출할 수 있음 */
@@ -29,20 +33,7 @@ export type PaymentStatementBasicInfoAutofillValues = {
   paymentPurpose: string
 }
 
-const EMPTY: PaymentStatementBasicInfoAutofillValues = {
-  nameKo: '',
-  nameEn: '',
-  residentFront: '',
-  residentBack: '',
-  affiliation: '',
-  noAffiliation: false,
-  addressRoad: '',
-  addressDetail: '',
-  bankName: '',
-  accountNumber: '',
-  accountHolder: '',
-  paymentPurpose: '',
-}
+const EMPTY: PaymentStatementBasicInfoAutofillValues = mergePaymentStatementBasicInfo()
 
 /** 발급·미리보기 목 데이터 등 레거시 코드값 표시용 */
 const LEGACY_BANK_LABELS: Record<string, string> = {
@@ -97,12 +88,21 @@ export function PaymentStatementBasicInfoDetailForm({
   onValuesChange,
 }: PaymentStatementBasicInfoDetailFormProps) {
   const isDocumentMode = displayMode === 'document'
-  const merged = useMemo(() => ({ ...EMPTY, ...valuesProp }), [valuesProp])
+  const merged = useMemo(
+    () => mergePaymentStatementBasicInfo({ ...EMPTY, ...valuesProp }),
+    [valuesProp]
+  )
   const editable = onlyPaymentPurposeLocked && !isDocumentMode
   const [local, setLocal] = useState<PaymentStatementBasicInfoAutofillValues>(() => merged)
   useEffect(() => {
     if (editable) setLocal(merged)
   }, [editable, merged])
+
+  useEffect(() => {
+    if (!editable || !onValuesChange) return
+    if ((valuesProp?.paymentPurpose ?? '').trim()) return
+    onValuesChange(merged)
+  }, [editable, merged, onValuesChange, valuesProp?.paymentPurpose])
 
   const v = editable ? local : merged
   const allAutofillLocked = !editable
@@ -323,7 +323,7 @@ export function PaymentStatementBasicInfoDetailForm({
             <CmsInput
               disabled
               inputSize="large"
-              placeholder="강사비 또는 활동비 지급"
+              placeholder={PAYMENT_STATEMENT_DEFAULT_PURPOSE}
               value={v.paymentPurpose}
               width="100%"
               aria-label="지급 목적 (고정 문구)"

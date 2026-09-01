@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { useInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
-import { DEFAULT_GENERAL_EDUCATION_SCHEDULE_LINES_MOCK } from '@/features/program/general/lib/detail-common-info-display'
 import {
   useGeneralApplicationOverlayKv,
   updateGeneralApplicationOverlayKey,
@@ -19,8 +18,7 @@ export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
     const fromBridge = bridge.educationScheduleLines
       ?.map(line => line.trim())
       .filter(Boolean)
-    if (fromBridge?.length) return fromBridge
-    return [...DEFAULT_GENERAL_EDUCATION_SCHEDULE_LINES_MOCK]
+    return fromBridge ?? []
   }, [bridge.educationScheduleLines])
 
   const [selectedLines] = useGeneralApplicationOverlayKv<string[]>(

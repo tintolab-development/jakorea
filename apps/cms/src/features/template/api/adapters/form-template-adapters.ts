@@ -1,6 +1,7 @@
 import {
   ISSUANCE_FORM_SECTION_CATALOG,
   ISSUANCE_TEMPLATE_CODE_CATALOG,
+  isIssuanceFormListTemplateCode,
   resolveIssuanceFormCategory,
   resolveWritingFormCategory,
   TEMPLATE_CODE_CATALOG,
@@ -111,6 +112,10 @@ function groupIssuanceItemsByCategory(
   for (const item of items) {
     const code = item.templateCode?.trim()
     if (code == null || code === '') continue
+    // Notion 목록 비노출 코드(시드/레거시)는 UI 목록에 합치지 않음
+    if (!isIssuanceFormListTemplateCode(code) && ISSUANCE_TEMPLATE_CODE_CATALOG[code] != null) {
+      continue
+    }
     const category = resolveIssuanceFormCategory(code, item.category)
     if (category == null) continue
     const list = grouped.get(category) ?? []

@@ -30,10 +30,22 @@ const CATEGORY_TO_PARTICIPANT: Record<ProgramCategory, GeneralProgramParticipant
   volunteer: 'volunteer',
 }
 
-/** 교육 진행 예정일 — 유형 mock 공통 기본 일정 (날짜 지정 형식) */
+/** 교육 진행 예정일 — 기간 지정 형식 */
+export const DEFAULT_GENERAL_EDUCATION_SCHEDULE_PERIOD_LINES_MOCK = [
+  '26년 4월 20일(월) ~ 26년 4월 27일(월)',
+  '26년 5월 20일(수) ~ 26년 5월 27일(수)',
+] as const
+
+/** 교육 진행 예정일 — 날짜 지정 이틀 (커리큘럼 8종 기본) */
 export const DEFAULT_GENERAL_EDUCATION_SCHEDULE_LINES_MOCK = [
-  '26년 4월 20일(월) 09:30 ~ 12:20',
+  '26년 4월 20일(월) 9:30 ~ 12:20',
   '26년 4월 27일(월) 13:00 ~ 15:50',
+] as const
+
+/** 날짜 지정 — 고유 일자가 하루(같은 날 슬롯 2개) */
+export const GENERAL_EDUCATION_SCHEDULE_ONE_DAY_LINES_MOCK = [
+  '26년 4월 20일(월) 09:30 ~ 12:20',
+  '26년 4월 20일(월) 13:00 ~ 15:50',
 ] as const
 
 function resolveParticipantTypes(program: Program): GeneralProgramParticipantType[] {
@@ -69,9 +81,30 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_VARIANT: GeneralProgramVariant
 export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_ID =
   'general-prog-type-org-schedule-single' as const
 
-/** 기관_일정형_복수 회차 — 행사 일정·과제 설정 스크린샷 mock id */
+/** 기관_일정형_복수 회차 — 행사 일정 스크린샷 mock id */
 export const GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_ID =
   'general-prog-type-org-schedule-multi' as const
+
+export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_DATE_ONE_DAY_ID =
+  'general-prog-type-org-curriculum-single-date-one-day' as const
+export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_PERIOD_ID =
+  'general-prog-type-org-curriculum-single-period' as const
+export const GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_PERIOD_ID =
+  'general-prog-type-org-curriculum-multi-period' as const
+export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_PERIOD_ID =
+  'general-prog-type-org-schedule-single-period' as const
+export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_DATE_ONE_DAY_ID =
+  'general-prog-type-org-schedule-single-date-one-day' as const
+export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_NO_GROUPS_ID =
+  'general-prog-type-org-schedule-single-no-groups' as const
+export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_IPS_PRE_EDU_ID =
+  'general-prog-type-org-curriculum-single-ips-pre-edu' as const
+export const GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_IPS_PRE_EDU_ID =
+  'general-prog-type-org-curriculum-multi-ips-pre-edu' as const
+export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_IPS_PRE_EDU_ID =
+  'general-prog-type-org-schedule-single-ips-pre-edu' as const
+export const GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_IPS_PRE_EDU_ID =
+  'general-prog-type-org-schedule-multi-ips-pre-edu' as const
 
 export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_VARIANT: GeneralProgramVariant = {
   audience: 'organization',
@@ -91,6 +124,7 @@ export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_COMMON_INFO_MOCK: NonNullable<
   venueDetail: '-',
   educationFormLabel: '온라인',
   ipsTypeSummary: '일정 공통 | Succeed | Competition (대회+시상)',
+  educationScheduleMode: 'date',
   scheduleDetails: [
     {
       scheduleLabel: '세부 일정 01',
@@ -151,11 +185,8 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK: NonNullable
         '올바른 면접 태도에 대해 알아보고, 직접 면접 체험을 해보는 시간을 갖습니다.',
     },
   ],
-  educationScheduleMode: 'period',
-  educationScheduleLines: [
-    '26년 4월 20일(월) 9:30 ~ 12:20',
-    '26년 4월 27일(월) 13:00 ~ 15:50',
-  ],
+  educationScheduleMode: 'date',
+  educationScheduleLines: [...DEFAULT_GENERAL_EDUCATION_SCHEDULE_LINES_MOCK],
   wageGradeRows: [
     { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 450,000원' },
     { grade: '2급 강사비', pricing: '1시간 당 | 기본 : 350,000원' },
@@ -223,7 +254,7 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK: NonNullable
   ],
 }
 
-/** 스크린샷·유형 mock — 기관_일정형_복수 회차 (교육 형태·참여·IPS 일정 별 상이 → 행사 일정 + 과제 설정) */
+/** 스크린샷·유형 mock — 기관_일정형_복수 회차 (교육 형태·참여·IPS 일정 별 상이 → 행사 일정) */
 export const GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_COMMON_INFO_MOCK: NonNullable<
   Program['generalCommonInfo']
 > = {
@@ -237,15 +268,11 @@ export const GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_COMMON_INFO_MOCK: NonNullable<
       scheduleLabel: '행사 일정 01',
       name: '',
       scheduleDateLabel: '26년 4월 20일(월)',
-      assignmentEnabled: false,
-      assignmentPeriod: '',
     },
     {
       scheduleLabel: '행사 일정 02',
       name: '',
       scheduleDateLabel: '',
-      assignmentEnabled: false,
-      assignmentPeriod: '',
     },
   ],
   educationScheduleLines: [
@@ -262,16 +289,12 @@ const MULTI_ROUND_CURRICULUM_SESSIONS_MOCK: NonNullable<
     title: '2',
     description:
       '채용 공고 읽기, 이력서 작성하기 등 취업에 필요한 단계들을 알아봅니다.',
-    assignmentEnabled: true,
-    assignmentPeriod: '26년 4월 20일(월) ~ 26년 4월 27일(월)',
   },
   {
     sessionLabel: '2회차',
     title: '2',
     description:
       '올바른 면접 태도에 대해 알아보고, 직접 면접 체험을 해보는 시간을 갖습니다.',
-    assignmentEnabled: true,
-    assignmentPeriod: '26년 4월 20일(월) ~ 26년 4월 27일(월)',
   },
 ]
 
@@ -295,8 +318,6 @@ const MULTI_ROUND_PER_SCHEDULE_CURRICULUM_SESSIONS_MOCK: NonNullable<
     title: '2',
     description:
       '채용 공고 읽기, 이력서 작성하기 등 취업에 필요한 단계들을 알아봅니다.',
-    assignmentEnabled: true,
-    assignmentPeriod: '26년 4월 20일(월) ~ 26년 4월 27일(월)',
     educationFormLabel: '온라인',
     ipsTypeSummary: 'Prepare | 해당없음',
   },
@@ -305,8 +326,6 @@ const MULTI_ROUND_PER_SCHEDULE_CURRICULUM_SESSIONS_MOCK: NonNullable<
     title: '2',
     description:
       '올바른 면접 태도에 대해 알아보고, 직접 면접 체험을 해보는 시간을 갖습니다.',
-    assignmentEnabled: true,
-    assignmentPeriod: '26년 4월 20일(월) ~ 26년 4월 27일(월)',
     educationFormLabel: '오프라인',
     ipsTypeSummary: 'Prepare | 해당없음',
   },
@@ -324,6 +343,150 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_EDU_IPS_PER_SCHEDULE_COMMON_IN
   curriculumSessions: MULTI_ROUND_PER_SCHEDULE_CURRICULUM_SESSIONS_MOCK,
 }
 
+const CURRICULUM_PRE_EDUCATION_SESSION_MOCK = {
+  sessionLabel: '사전 교육',
+  title: '사전 교육',
+  description: '',
+  educationFormLabel: '온라인',
+  ipsTypeSummary: 'Prepare | 해당없음',
+}
+
+export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_DATE_ONE_DAY_COMMON_INFO_MOCK: NonNullable<
+  Program['generalCommonInfo']
+> = {
+  ...GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK,
+  educationScheduleMode: 'date',
+  educationScheduleLines: [...GENERAL_EDUCATION_SCHEDULE_ONE_DAY_LINES_MOCK],
+}
+
+export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_PERIOD_COMMON_INFO_MOCK: NonNullable<
+  Program['generalCommonInfo']
+> = {
+  ...GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK,
+  educationScheduleMode: 'period',
+  educationScheduleLines: [...DEFAULT_GENERAL_EDUCATION_SCHEDULE_PERIOD_LINES_MOCK],
+}
+
+export const GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_PERIOD_COMMON_INFO_MOCK: NonNullable<
+  Program['generalCommonInfo']
+> = {
+  ...GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_COMMON_INFO_MOCK,
+  educationScheduleMode: 'period',
+  educationScheduleLines: [...DEFAULT_GENERAL_EDUCATION_SCHEDULE_PERIOD_LINES_MOCK],
+}
+
+export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_PERIOD_COMMON_INFO_MOCK: NonNullable<
+  Program['generalCommonInfo']
+> = {
+  ...GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_COMMON_INFO_MOCK,
+  educationScheduleMode: 'period',
+  educationScheduleLines: [...DEFAULT_GENERAL_EDUCATION_SCHEDULE_PERIOD_LINES_MOCK],
+  scheduleDetails: [
+    {
+      scheduleLabel: '세부 일정 01',
+      name: '오리엔테이션',
+    },
+    {
+      scheduleLabel: '세부 일정 02',
+      name: '온라인 워크숍',
+    },
+  ],
+}
+
+export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_DATE_ONE_DAY_COMMON_INFO_MOCK: NonNullable<
+  Program['generalCommonInfo']
+> = {
+  ...GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_COMMON_INFO_MOCK,
+  educationScheduleMode: 'date',
+  educationScheduleLines: [...GENERAL_EDUCATION_SCHEDULE_ONE_DAY_LINES_MOCK],
+}
+
+export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_NO_GROUPS_COMMON_INFO_MOCK: NonNullable<
+  Program['generalCommonInfo']
+> = {
+  ...GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_COMMON_INFO_MOCK,
+  educationScheduleMode: 'date',
+  educationScheduleLines: [...DEFAULT_GENERAL_EDUCATION_SCHEDULE_LINES_MOCK],
+  scheduleDetails: [
+    {
+      scheduleLabel: '세부 일정 01',
+      name: '',
+    },
+    {
+      scheduleLabel: '세부 일정 02',
+      name: '',
+    },
+  ],
+}
+
+export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_IPS_PRE_EDU_COMMON_INFO_MOCK: NonNullable<
+  Program['generalCommonInfo']
+> = {
+  ...GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK,
+  educationScheduleMode: 'date',
+  ipsScheduleDetail: 'perSchedule',
+  ipsTypeSummary: '일정 별 상이 | Prepare | 해당없음',
+  scheduleCurriculumPreEducation: true,
+  curriculumSessions: [
+    CURRICULUM_PRE_EDUCATION_SESSION_MOCK,
+    ...(GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK.curriculumSessions ?? []).map(
+      session => ({
+        ...session,
+        ipsTypeSummary: session.ipsTypeSummary ?? 'Prepare | 해당없음',
+      })
+    ),
+  ],
+}
+
+export const GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_IPS_PRE_EDU_COMMON_INFO_MOCK: NonNullable<
+  Program['generalCommonInfo']
+> = {
+  ...GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_EDU_IPS_PER_SCHEDULE_COMMON_INFO_MOCK,
+  educationScheduleMode: 'date',
+  scheduleCurriculumPreEducation: true,
+  curriculumSessions: [
+    CURRICULUM_PRE_EDUCATION_SESSION_MOCK,
+    ...(MULTI_ROUND_PER_SCHEDULE_CURRICULUM_SESSIONS_MOCK ?? []),
+  ],
+}
+
+export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_IPS_PRE_EDU_COMMON_INFO_MOCK: NonNullable<
+  Program['generalCommonInfo']
+> = {
+  ...GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_COMMON_INFO_MOCK,
+  educationScheduleMode: 'date',
+  ipsScheduleDetail: 'perSchedule',
+  ipsTypeSummary: '일정 별 상이 | Succeed | Competition (대회+시상)',
+  scheduleCurriculumPreEducation: true,
+  scheduleDetails: [
+    {
+      scheduleLabel: '사전 교육',
+      name: '사전 교육',
+      educationFormLabel: '온라인',
+      ipsTypeSummary: 'Prepare | 해당없음',
+    },
+    ...(GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_COMMON_INFO_MOCK.scheduleDetails ?? []),
+  ],
+}
+
+export const GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_IPS_PRE_EDU_COMMON_INFO_MOCK: NonNullable<
+  Program['generalCommonInfo']
+> = {
+  ...GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_COMMON_INFO_MOCK,
+  educationScheduleMode: 'date',
+  scheduleCurriculumPreEducation: true,
+  educationScheduleLines: [],
+  scheduleDetails: [
+    {
+      scheduleLabel: '사전 교육',
+      name: '사전 교육',
+      educationFormLabel: '온라인',
+      ipsTypeSummary: 'Prepare | 해당없음',
+    },
+    ...(GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_COMMON_INFO_MOCK.scheduleDetails ?? []),
+  ],
+}
+
 function buildCurriculumSessionsFromRounds(
   program: Program,
   variant: GeneralProgramVariant | null
@@ -333,6 +496,7 @@ function buildCurriculumSessionsFromRounds(
     variant?.educationStructure === 'curriculum' && variant.sessionRound === 'multi'
 
   if (isMulti) {
+    const includeAssignment = variant?.audience !== 'organization'
     return rounds.map((r, i) => ({
       sessionLabel: `${i + 1}회차`,
       title: '2',
@@ -340,8 +504,12 @@ function buildCurriculumSessionsFromRounds(
         r.curriculum?.includes('|')
           ? r.curriculum.split('|').slice(1).join('|').trim()
           : (r.curriculum?.replace(/^\d+회차\s*/, '').trim() ?? '-'),
-      assignmentEnabled: true,
-      assignmentPeriod: '26년 4월 20일(월) ~ 26년 4월 27일(월)',
+      ...(includeAssignment
+        ? {
+            assignmentEnabled: true,
+            assignmentPeriod: '26년 4월 20일(월) ~ 26년 4월 27일(월)',
+          }
+        : {}),
     }))
   }
 
@@ -447,6 +615,31 @@ export function resolveGeneralProgramCommonInfo(
   if (program.id === GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_EDU_IPS_PER_SCHEDULE_ID) {
     return GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_EDU_IPS_PER_SCHEDULE_COMMON_INFO_MOCK
   }
+
+  const extraCommonInfoById: Record<string, NonNullable<Program['generalCommonInfo']>> = {
+    [GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_DATE_ONE_DAY_ID]:
+      GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_DATE_ONE_DAY_COMMON_INFO_MOCK,
+    [GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_PERIOD_ID]:
+      GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_PERIOD_COMMON_INFO_MOCK,
+    [GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_PERIOD_ID]:
+      GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_PERIOD_COMMON_INFO_MOCK,
+    [GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_PERIOD_ID]:
+      GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_PERIOD_COMMON_INFO_MOCK,
+    [GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_DATE_ONE_DAY_ID]:
+      GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_DATE_ONE_DAY_COMMON_INFO_MOCK,
+    [GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_NO_GROUPS_ID]:
+      GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_NO_GROUPS_COMMON_INFO_MOCK,
+    [GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_IPS_PRE_EDU_ID]:
+      GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_IPS_PRE_EDU_COMMON_INFO_MOCK,
+    [GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_IPS_PRE_EDU_ID]:
+      GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_IPS_PRE_EDU_COMMON_INFO_MOCK,
+    [GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_IPS_PRE_EDU_ID]:
+      GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_IPS_PRE_EDU_COMMON_INFO_MOCK,
+    [GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_IPS_PRE_EDU_ID]:
+      GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_IPS_PRE_EDU_COMMON_INFO_MOCK,
+  }
+  const extra = extraCommonInfoById[program.id]
+  if (extra) return extra
 
   const variant = resolveGeneralProgramVariantFromProgram(program)
 

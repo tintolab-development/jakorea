@@ -23,7 +23,7 @@ import type {
   DashboardRecruitmentsParams,
   NotificationReadAllResponse,
   NotificationUnreadCountResponse,
-  NotificationsParams,
+  Notifications1Params,
   PageResponse,
 } from '@/shared/api/generated/dashboard/schemas'
 
@@ -119,14 +119,14 @@ export async function readDashboardShortcutBadgeRemote(
 
 /** Swagger: GET /api/admin/notifications */
 export async function fetchAdminNotificationsRemote(
-  params?: NotificationsParams
+  params?: Notifications1Params
 ): Promise<PageResponse> {
-  return unwrapBody(await dashboardRemoteApi.notifications(params))
+  return unwrapBody(await dashboardRemoteApi.notifications1(params))
 }
 
 /** Swagger: PATCH /api/admin/notifications/{recipientId}/read */
 export async function markAdminNotificationReadRemote(recipientId: string): Promise<void> {
-  await dashboardRemoteApi.markRead1(Number(recipientId))
+  await dashboardRemoteApi.markRead2(Number(recipientId))
 }
 
 /** Swagger: PATCH /api/admin/notifications/read-all */
@@ -136,7 +136,7 @@ export async function markAllAdminNotificationsReadRemote(): Promise<Notificatio
 
 /** Swagger: PATCH /api/admin/notifications/{recipientId}/hidden */
 export async function hideAdminNotificationRemote(recipientId: string): Promise<void> {
-  await dashboardRemoteApi.hide(Number(recipientId))
+  await dashboardRemoteApi.hide1(Number(recipientId))
 }
 
 /** 위젯 programIds 필터 → 대시보드 목록 query (flat). OpenAPI `params` 맵 래핑은 제거됨. */

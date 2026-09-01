@@ -24,6 +24,10 @@ import { ProgramRegistrationEducationScheduleCurriculumParagraph } from '@/featu
 import { ProgramRegistrationEducationScheduleSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-schedule-settings-paragraph'
 import { ProgramRegistrationTypeSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/type-settings-paragraph'
 import { ProgramRegistrationWageInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/wage-info-paragraph'
+import {
+  shouldDisableEducationSchedulePeriodMode,
+  shouldLockEducationScheduleCalendarToggles,
+} from '@/features/program/general/lib/schedule-detail-form'
 
 export type ProgramRegistrationType = 'curriculum' | 'schedule'
 
@@ -83,7 +87,7 @@ export interface ProgramRegistrationParagraphBodyOptions {
   scheduleCurriculumGroupCount: number
   onAddScheduleCurriculumGroup: () => void
   onDeleteScheduleCurriculumGroup: (groupIndex: number) => void
-  /** 일정형(복수·일정 별 상이 조합) 카드 헤더 — 사전 교육 토글 */
+  /** 카드 헤더 — 사전 교육 토글 (일정형·커리큘럼형) */
   scheduleCurriculumPreEducation: boolean
   onScheduleCurriculumPreEducationChange: (checked: boolean) => void
   /** 교육받은 교사 — 카드 헤더 교육 연수 토글 */
@@ -174,6 +178,8 @@ export function renderProgramRegistrationParagraphBody(
       return options == null ? null : options.programRegistrationFormVariant ===
         'trainedTeachers' ? (
         <TrainedTeachersRegistrationTypeSettingsParagraph
+          programType={options.programType}
+          onProgramTypeChange={options.onProgramTypeChange}
           sessionRoundType={options.sessionRoundType}
           onSessionRoundTypeChange={options.onSessionRoundTypeChange}
           educationFormScheduleDetail={options.educationFormScheduleDetail}
@@ -199,11 +205,29 @@ export function renderProgramRegistrationParagraphBody(
     case PROGRAM_REGISTRATION_IDS.educationCurriculum:
       return options == null ? null : options.programRegistrationFormVariant ===
         'trainedTeachers' ? (
-        <TrainedTeachersRegistrationEducationCurriculumParagraph
-          teacherTrainingEnabled={options.trainedTeachersTeacherTrainingEnabled}
-          curriculumSessionCount={options.curriculumChartSessionCount}
-          onDeleteCurriculumSession={options.onDeleteCurriculumChartSession}
-        />
+        options.programType === 'schedule' ? (
+          <ProgramRegistrationEducationScheduleCurriculumParagraph
+            key={`tt-schedule-curriculum-${options.sessionRoundType}-${options.educationFormScheduleDetail}-${options.ipsScheduleDetail}`}
+            scheduleDetailCount={options.scheduleCurriculumDetailCount}
+            onDeleteScheduleCurriculumDetail={options.onDeleteScheduleCurriculumDetail}
+            scheduleGroupCount={options.scheduleCurriculumGroupCount}
+            onDeleteScheduleCurriculumGroup={options.onDeleteScheduleCurriculumGroup}
+            ipsPerSchedule={options.ipsScheduleDetail === 'perSchedule'}
+            sessionRoundType={options.sessionRoundType}
+            participantOrganization={options.participant.organization}
+            educationFormScheduleDetail={options.educationFormScheduleDetail}
+            participationScheduleDetail={options.participationScheduleDetail}
+            ipsScheduleDetail={options.ipsScheduleDetail}
+            scheduleCurriculumPreEducation={options.trainedTeachersTeacherTrainingEnabled}
+            preEducationBlockLabel="교육 연수"
+          />
+        ) : (
+          <TrainedTeachersRegistrationEducationCurriculumParagraph
+            teacherTrainingEnabled={options.trainedTeachersTeacherTrainingEnabled}
+            curriculumSessionCount={options.curriculumChartSessionCount}
+            onDeleteCurriculumSession={options.onDeleteCurriculumChartSession}
+          />
+        )
       ) : options.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationEducationCurriculumParagraph />
       ) : options.programType === 'schedule' ? (
@@ -233,6 +257,7 @@ export function renderProgramRegistrationParagraphBody(
           educationFormScheduleDetail={options.educationFormScheduleDetail}
           participationScheduleDetail={options.participationScheduleDetail}
           ipsScheduleDetail={options.ipsScheduleDetail}
+          scheduleCurriculumPreEducation={options.scheduleCurriculumPreEducation}
         />
       )
     case PROGRAM_REGISTRATION_IDS.educationScheduleSettings:
@@ -251,14 +276,24 @@ export function renderProgramRegistrationParagraphBody(
               options.sessionRoundType === 'single' &&
               !options.participant.organization
             }
+            disablePeriodMode={shouldDisableEducationSchedulePeriodMode({
+              participantOrganization: options.participant.organization,
+              sessionRound: options.sessionRoundType,
+            })}
+            lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
+              participantOrganization: options.participant.organization,
+              educationStructure: options.programType,
+            })}
           />
         )
       }
       return options.programRegistrationFormVariant === 'trainedTeachers' ? (
-        <TrainedTeachersRegistrationEducationScheduleSettingsParagraph
-          educationScheduleMode={options.educationScheduleMode}
-          onEducationScheduleModeChange={options.onEducationScheduleModeChange}
-        />
+        options.programType === 'schedule' && options.sessionRoundType === 'multi' ? null : (
+          <TrainedTeachersRegistrationEducationScheduleSettingsParagraph
+            educationScheduleMode={options.educationScheduleMode}
+            onEducationScheduleModeChange={options.onEducationScheduleModeChange}
+          />
+        )
       ) : options.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationEducationScheduleSettingsParagraph
           educationScheduleMode={options.educationScheduleMode}

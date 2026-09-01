@@ -19,7 +19,6 @@ import {
   mapMemberApplicationHistoryItems,
   filterApplicationsBySubjectType,
 } from '@/features/user/api/map-member-application-history'
-import { enrichMemberApplicationsWithEnrollmentSummaries } from '@/features/user/api/enrich-member-applications-with-enrollment'
 import {
   mapMemberProgramHistoryItems,
   mapMemberProgramHistoryToEnrollmentApplications,
@@ -38,23 +37,25 @@ import type { Program } from '@/types/domain'
 import type { SchoolAffiliatedTeacherRow } from '@/types/user'
 
 const MEMBER_DETAIL_LIST_SIZE = 50
+/** history LNB 탭 전환 시 동일 memberId 재GET 방지 (전역 30s와 동일) */
+const MEMBER_DETAIL_SUBRESOURCE_STALE_MS = 30_000
 
 type MemberDetailSubresourceQueryOptions = {
-  /** true면 useQuery 자동 fetch 비활성 — 탭 진입 effect에서 fetchQuery로 1회만 호출 */
+  /** true면 useQuery 자동 fetch 비활성 — 탭 진입 effect에서 ensureQueryData로 1회만 호출 */
   manualFetch?: boolean
 }
 
 export function memberApplicationsQueryOptions(memberId: number, userId: string) {
   return queryOptions({
     queryKey: memberQueryKeys.applications(memberId),
-    staleTime: 0,
+    staleTime: MEMBER_DETAIL_SUBRESOURCE_STALE_MS,
+    // enrollment-summary N+1은 활성 history child(수강/강의)에서만 보강한다.
     queryFn: async (): Promise<Application[]> => {
       const res = await fetchMemberApplicationsRemote(memberId, {
         page: 0,
         size: MEMBER_DETAIL_LIST_SIZE,
       })
-      const mapped = mapMemberApplicationHistoryItems(res.items, userId)
-      return enrichMemberApplicationsWithEnrollmentSummaries(memberId, mapped)
+      return mapMemberApplicationHistoryItems(res.items, userId)
     },
     meta: {
       errorMessage: (error: unknown) =>
@@ -66,7 +67,7 @@ export function memberApplicationsQueryOptions(memberId: number, userId: string)
 export function memberProgramHistoryQueryOptions(memberId: number, userId: string) {
   return queryOptions({
     queryKey: memberQueryKeys.programHistory(memberId),
-    staleTime: 0,
+    staleTime: MEMBER_DETAIL_SUBRESOURCE_STALE_MS,
     queryFn: async (): Promise<{
       volunteerHistories: UserHistory[]
       enrollmentFromHistory: Application[]
@@ -101,7 +102,7 @@ export function schoolOrganizationProgramEnrollmentHistoryQueryOptions(
       filtersKey,
       membersRemote ? '' : organizationUserId
     ),
-    staleTime: 0,
+    staleTime: MEMBER_DETAIL_SUBRESOURCE_STALE_MS,
     queryFn: async (): Promise<Application[]> => {
       if (!membersRemote) {
         return fetchSchoolOrganizationProgramEnrollmentHistoryMock(organizationUserId)
@@ -125,7 +126,7 @@ export function fetchMemberApplicationsQuery(
   memberId: number,
   userId: string
 ) {
-  return queryClient.fetchQuery(memberApplicationsQueryOptions(memberId, userId))
+  return queryClient.ensureQueryData(memberApplicationsQueryOptions(memberId, userId))
 }
 
 export function fetchMemberProgramHistoryQuery(
@@ -133,7 +134,7 @@ export function fetchMemberProgramHistoryQuery(
   memberId: number,
   userId: string
 ) {
-  return queryClient.fetchQuery(memberProgramHistoryQueryOptions(memberId, userId))
+  return queryClient.ensureQueryData(memberProgramHistoryQueryOptions(memberId, userId))
 }
 
 export function fetchSchoolOrganizationProgramEnrollmentHistoryQuery(
@@ -142,7 +143,7 @@ export function fetchSchoolOrganizationProgramEnrollmentHistoryQuery(
   organizationUserId: string,
   params?: ListSchoolOrganizationProgramEnrollmentHistoryParams
 ) {
-  return queryClient.fetchQuery(
+  return queryClient.ensureQueryData(
     schoolOrganizationProgramEnrollmentHistoryQueryOptions(
       organizationId,
       organizationUserId,
@@ -180,7 +181,9 @@ export function fetchMemberCommentsQuery(
   screenCode = MEMBER_DETAIL_SCREEN_CODE,
   target: AdminCommentResourceTarget = 'member'
 ) {
-  return queryClient.fetchQuery(memberCommentsQueryOptions(resourceId, screenCode, target))
+  return queryClient.ensureQueryData(
+    memberCommentsQueryOptions(resourceId, screenCode, target)
+  )
 }
 
 export function useMemberCommentsQuery(
@@ -226,7 +229,7 @@ export function fetchAffiliatedTeachersQuery(
   params: { memberId?: number; organizationId?: number }
 ) {
   if (params.organizationId != null || params.memberId != null) {
-    return queryClient.fetchQuery(affiliatedTeachersQueryOptions(params))
+    return queryClient.ensureQueryData(affiliatedTeachersQueryOptions(params))
   }
   return Promise.resolve([] as SchoolAffiliatedTeacherRow[])
 }
@@ -319,6 +322,7 @@ export function useMemberAdminProgramsQuery(
     queryKey: useAdminAccountPath
       ? memberQueryKeys.adminAccountPrograms(adminAccountId!)
       : memberQueryKeys.adminPrograms(memberId ?? 0),
+    staleTime: MEMBER_DETAIL_SUBRESOURCE_STALE_MS,
     enabled: Boolean(
       enabled &&
         isMembersRemoteEnabled() &&

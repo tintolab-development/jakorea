@@ -6,6 +6,8 @@ import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import {
   canResolveMemberIdForDetailRestore,
   findUserInMemberListQueries,
+  isSameMemberDetailIdentity,
+  memberDetailOpenIdentityFromUser,
   parseMemberIdFromUserId,
   resolveMemberDetailRestoreHint,
 } from './resolve-member-detail-restore-hint'
@@ -119,6 +121,28 @@ describe('resolveMemberDetailRestoreHint — school organization', () => {
     expect(hint.organizationId).toBe(12)
     expect(hint.role).toBe('SCHOOL')
     expect(canResolveMemberIdForDetailRestore('organization-12', hint)).toBe(true)
+  })
+})
+
+describe('isSameMemberDetailIdentity', () => {
+  it('목록 uuid와 canonical admin-account id를 같은 상세로 본다', () => {
+    const open = memberDetailOpenIdentityFromUser({
+      id: 'uuid-admin',
+      adminAccountId: 171601,
+    })
+    expect(
+      isSameMemberDetailIdentity(open, 'admin-account-171601', { adminAccountId: 171601 })
+    ).toBe(true)
+  })
+
+  it('organization canonical id를 같은 학교 상세로 본다', () => {
+    const open = memberDetailOpenIdentityFromUser({
+      id: 'uuid-school',
+      organizationId: 12,
+    })
+    expect(
+      isSameMemberDetailIdentity(open, 'organization-12', { organizationId: 12 })
+    ).toBe(true)
   })
 })
 

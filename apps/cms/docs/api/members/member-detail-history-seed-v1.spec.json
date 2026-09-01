@@ -1,0 +1,168 @@
+{
+  "$schema_note": "CMS 회원 상세 이력 DB seed spec (유형별 LNB 탭·applications·program-history·school enrollment·admin program-roles). FE SSOT: member-detail-history-seed-catalog.ts. Parent: member-management-seed-v1.spec.json. Related handoffs: member-program-history-ui-api-parity (REQ), instructor settlement (PH/SET), school enrollment, admin managed history (ADM).",
+  "seedLabel": "member-detail-history-v1-2026-08",
+  "parentSeedLabel": "member-management-v1-2026-08",
+  "relatedSpecs": {
+    "memberManagement": "member-management-seed-v1.spec.json",
+    "feCatalogTs": "apps/cms/src/data/mock/member-detail-history-seed-catalog.ts",
+    "demoPrograms": "economy-prog-001 through economy-prog-005",
+    "fiveStageDemo": "apps/cms/src/data/mock/program-lecture-history-demo.ts"
+  },
+  "idRanges": {
+    "memberApplicationId": [173001, 173400],
+    "memberProgramHistoryParticipantId": [173401, 173800],
+    "schoolEnrollmentHistoryRowId": [174001, 174100],
+    "adminProgramRoleId": [174501, 174550],
+    "instructorSettlementId": [175001, 175100]
+  },
+  "fiveStageScenario": {
+    "programs": ["economy-prog-001", "economy-prog-002", "economy-prog-003", "economy-prog-004", "economy-prog-005"],
+    "stages": [
+      { "no": 5, "label": "신청 결과 대기", "applicationStatus": "submitted" },
+      { "no": 4, "label": "반려", "applicationStatus": "rejected" },
+      { "no": 3, "label": "교육 예정", "applicationStatus": "reviewing" },
+      { "no": 2, "label": "교육 진행 중", "applicationStatus": "approved", "progressStatus": "IN_PROGRESS" },
+      { "no": 1, "label": "프로그램 종료", "applicationStatus": "approved", "progressStatus": "REPORT_SUBMITTED", "lectureReport": true }
+    ],
+    "managerNames": ["이순신 매니저", "홍길동 매니저", "김담당 매니저", "박운영 매니저", "최지원 매니저"]
+  },
+  "memberTypeTabs": {
+    "individual": ["enrollment", "volunteer"],
+    "school_teacher": ["enrollment", "volunteer"],
+    "instructor_only": ["enrollment", "lecture", "volunteer", "settlement"],
+    "instructor_dual": ["enrollment", "lecture", "volunteer", "settlement"],
+    "instructor_revoked": ["enrollment", "lecture", "volunteer"],
+    "school_organization": ["schoolEnrollment"],
+    "admin_account": ["adminProgramRoles"]
+  },
+  "memberDetailHistoryShowcase": [
+    {
+      "caseId": "MH-MD-INDIVIDUAL",
+      "parentCaseId": "MD-INDIVIDUAL",
+      "memberId": 171001,
+      "mockFeUserId": "mock-md-individual-171001",
+      "keyword": "김개인",
+      "memberProfile": "individual",
+      "tabs": ["enrollment", "volunteer"],
+      "applicationIds": [173001, 173002, 173003, 173004, 173005],
+      "volunteerParticipantIds": [173401, 173402, 173403, 173404, 173405],
+      "apis": [
+        "GET /api/admin/users/171001/applications",
+        "GET /api/admin/users/171001/program-history?role=VOLUNTEER"
+      ]
+    },
+    {
+      "caseId": "MH-MD-SCHOOL-TEACHER",
+      "parentCaseId": "MD-SCHOOL-TEACHER",
+      "memberId": 171002,
+      "mockFeUserId": "mock-instructor-kang-001",
+      "keyword": "강선생",
+      "memberProfile": "school_teacher",
+      "tabs": ["enrollment", "volunteer"],
+      "lectureTabExcluded": true,
+      "applicationIds": [173011, 173012, 173013, 173014, 173015],
+      "volunteerParticipantIds": [173411, 173412, 173413, 173414, 173415]
+    },
+    {
+      "caseId": "MH-MD-INSTRUCTOR",
+      "parentCaseId": "MD-INSTRUCTOR",
+      "memberId": 171003,
+      "mockFeUserId": "mock-instructor-jung-001",
+      "keyword": "정멘토",
+      "memberProfile": "instructor_only",
+      "tabs": ["enrollment", "lecture", "volunteer", "settlement"],
+      "enrollmentApplicationIds": [173021, 173022, 173023, 173024, 173025],
+      "lectureApplicationIds": [173026, 173027, 173028, 173029, 173030],
+      "volunteerParticipantIds": [173421, 173422, 173423, 173424, 173425],
+      "settlementIds": [175001, 175002, 175003],
+      "settlementApi": "GET /api/admin/settlements?instructorMemberId=171003"
+    },
+    {
+      "caseId": "MH-MD-INSTRUCTOR-DUAL",
+      "parentCaseId": "MD-INSTRUCTOR-DUAL",
+      "memberId": 171004,
+      "mockFeUserId": "mock-instructor-choi-001",
+      "keyword": "최강사",
+      "memberProfile": "instructor_dual",
+      "tabs": ["enrollment", "lecture", "volunteer", "settlement"],
+      "enrollmentApplicationIds": [173031, 173032, 173033, 173034, 173035],
+      "lectureApplicationIds": [173036, 173037, 173038, 173039, 173040],
+      "volunteerParticipantIds": [173431, 173432, 173433, 173434, 173435],
+      "settlementIds": [175011, 175012, 175013]
+    },
+    {
+      "caseId": "MH-MD-INSTRUCTOR-REVOKED",
+      "parentCaseId": "MD-INSTRUCTOR-REVOKED",
+      "memberId": 171005,
+      "mockFeUserId": "mock-md-instructor-revoked-171005",
+      "keyword": "박박탈",
+      "memberProfile": "instructor_revoked",
+      "tabs": ["enrollment", "lecture", "volunteer"],
+      "settlementTabExcluded": true,
+      "enrollmentApplicationIds": [173041, 173042, 173043, 173044, 173045],
+      "lectureApplicationIds": [173046, 173047, 173048, 173049, 173050],
+      "volunteerParticipantIds": [173441, 173442, 173443, 173444, 173445],
+      "note": "권한박탈 후에도 과거 이력 조회 가능 — roles contains INSTRUCTOR_REVOKED"
+    }
+  ],
+  "schoolEnrollmentShowcase": [
+    {
+      "caseId": "MH-SCHOOL-SEOUL",
+      "organizationId": 171501,
+      "mockFeUserId": "mock-school-seoul-001",
+      "historyRowIds": [174001, 174002, 174003, 174004, 174005],
+      "programIds": ["economy-prog-001", "economy-prog-002", "economy-prog-003", "economy-prog-004", "economy-prog-005"],
+      "api": "GET /api/admin/organizations/schools/171501/program-enrollment-history",
+      "certificateBulkIssueHidden": true
+    },
+    {
+      "caseId": "MH-SCHOOL-JINWOL",
+      "organizationId": 171502,
+      "mockFeUserId": "mock-school-jinwol-001",
+      "historyRowIds": [174011, 174012, 174013, 174014, 174015],
+      "programIds": ["economy-prog-001", "economy-prog-002", "economy-prog-003", "economy-prog-004", "economy-prog-005"]
+    }
+  ],
+  "adminProgramRoleShowcase": [
+    {
+      "caseId": "MH-ADMIN-MASTER",
+      "adminAccountId": 171601,
+      "mockFeUserId": "mock-md-admin-171601",
+      "loginEmail": "admin1@jakorea.org",
+      "programRoleIds": [174501, 174502, 174503, 174504, 174505],
+      "programIds": ["economy-prog-001", "economy-prog-002", "economy-prog-003", "economy-prog-004", "economy-prog-005"],
+      "roles": ["OWNER", "OWNER", "PARTNER", "ASSISTANT", "OWNER"],
+      "api": "GET /api/admin/admin-accounts/171601/program-roles"
+    }
+  ],
+  "crossReferences": {
+    "permissionVsDirectory": {
+      "mock-instructor-jung-001": { "directoryMemberId": 171003, "permissionMemberId": 172101 },
+      "mock-instructor-choi-001": { "directoryMemberId": 171004, "permissionMemberId": 172107 },
+      "mock-instructor-kang-001": { "directoryMemberId": 171002, "permissionMemberId": 172103 }
+    },
+    "relatedHandoffs": [
+      "member-program-history-ui-api-parity-backend-handoff-2026-08-25.md",
+      "instructor-member-detail-program-history-settlement-backend-handoff-2026-08-25.md",
+      "school-organization-program-enrollment-history-backend-handoff-2026-08-25.md",
+      "admin-member-managed-program-history-backend-handoff-2026-08-25.md"
+    ]
+  },
+  "smokeScenarios": [
+    "GET /api/admin/users/171001/applications → 5 enrollment rows, economy-prog-001~005",
+    "GET /api/admin/users/171001/program-history → 5 volunteer rows (173401–173405)",
+    "GET /api/admin/users/171002/applications → 5 student rows, lecture tab N/A",
+    "GET /api/admin/users/171003/applications → 10 rows (5 enrollment + 5 lecture)",
+    "GET /api/admin/settlements?instructorMemberId=171003 → ≥1 settlement row",
+    "GET /api/admin/users/171005/applications → revoked instructor histories visible",
+    "GET /api/admin/organizations/schools/171501/program-enrollment-history → 174001–174005",
+    "GET /api/admin/admin-accounts/171601/program-roles → 174501–174505 linked to economy-prog-*"
+  ],
+  "fixtureRules": {
+    "applications": "5 rows per tab scope; link programId to economy-prog-001~005; managerName from fiveStageScenario",
+    "volunteerProgramHistory": "role=VOLUNTEER; participantId 1734xx; managerName required (REQ-005)",
+    "schoolEnrollment": "historyRowId 174xxx; progressYear from program; businessArea + educationGrade optional",
+    "adminProgramRoles": "programRoleId 1745xx; ADM-002~005 fields per admin handoff",
+    "settlements": "instructorMemberId 171003/171004; link payment-orders seed if available (175xxx)"
+  }
+}

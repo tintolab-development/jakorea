@@ -229,6 +229,8 @@ export function MemberProgramLectureHistory({
     searchParams,
     setSearchParams,
     context: tableContext,
+    /** 회원 상세 lnb/id 쿼리와 테이블 sync 충돌·navigate 레이스 방지 */
+    disableUrlSync: true,
   })
 
   const displayRowCount = displayedCount

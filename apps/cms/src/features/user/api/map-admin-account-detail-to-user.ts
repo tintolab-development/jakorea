@@ -2,6 +2,9 @@ import type { AdminAccountApprovalDetailResponse } from '@/shared/api/generated/
 import type { AdminTermsAgreementResponse } from '@/shared/api/generated/members/schemas/adminTermsAgreementResponse'
 import type { TermsAgreementRow } from '@/shared/api/generated/members/schemas/termsAgreementRow'
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
+import {
+  mapAdminAccountStatusToUserApprovalStatus,
+} from '@/features/user/api/lib/map-permission-approval-status'
 import { roleCodeToAdminPermissionVariant } from '@/features/user/api/admin-approval-role'
 import {
   resolveIdentitySelfSignupCompletedAfterAdminRegistration,
@@ -57,6 +60,10 @@ export function mapAdminAccountDetailToUser(
   const normalizedBirthDate = toApiBirthDate(detail.birthDate)
   const termsAgreements = mapAdminTermsAgreementsToRows(detail.termsAgreements)
 
+  const permissionApprovalStatus = mapAdminAccountStatusToUserApprovalStatus(detail.status)
+  const permissionApprovalHandledAt = detail.verifiedAt ?? detail.updatedAt ?? undefined
+  const permissionNotificationResentAt = detail.notificationResentAt ?? undefined
+
   return {
     id: resolveCanonicalUserDetailId(
       { id: options?.fallbackId, memberId, adminAccountId: adminAccountId ?? undefined },
@@ -86,6 +93,9 @@ export function mapAdminAccountDetailToUser(
     }),
     identitySelfSignupCompletedAfterAdminRegistration:
       resolveIdentitySelfSignupCompletedAfterAdminRegistration({ role, adminAccountId }),
+    permissionApprovalStatus,
+    permissionApprovalHandledAt,
+    permissionNotificationResentAt,
     listMetrics: permissionVariant ? { adminPermissionVariant: permissionVariant } : undefined,
     ...(termsAgreements ? { termsAgreements } : {}),
   }

@@ -10,15 +10,24 @@ import { PROGRAM_LECTURE_HISTORY_DEMO_INSTRUCTOR_USER_ID } from './program-lectu
 /** 진월초등학교 — 고정 user id (소속 교사 mock·강사 `affiliatedSchoolUserId` 연결) */
 export const MOCK_SCHOOL_JINWOL_USER_ID = 'mock-school-jinwol-001'
 
-/** 최강사(instructor1) — 고정 CMS User.id (소속 교사 `linkedUserId`·딥링크 안정화) */
+/** 최강사(instructor1) — 고정 CMS User.id (소속 교사 `linkedUserId`·딥링크 안정화) · BE seed 172107 / IR-EXCLUDED-DUAL */
 export const MOCK_INSTRUCTOR_CHOI_USER_ID = 'mock-instructor-choi-001'
 
-/** 강사 mock 2·3 — 고정 id (소속 교사 `linkedUserId` 연동) */
+/** 강사 mock 2·3 — 고정 id (소속 교사 `linkedUserId` 연동) · BE seed 172101 / 172103 */
 export const MOCK_INSTRUCTOR_JUNG_USER_ID = 'mock-instructor-jung-001'
 export const MOCK_INSTRUCTOR_KANG_USER_ID = 'mock-instructor-kang-001'
 
-/** 학교(교사) 회원 목록 1~4행 — 고정 id (소속 교사·프로그램 신청 mock 연동) */
+/** 학교(교사) 회원 목록 1~4행 — 고정 id · BE org 171501 (서울초) / 171502 (진월초) — @see member-management-seed-catalog.ts */
 export const MOCK_SCHOOL_SEOUL_USER_ID = 'mock-school-seoul-001'
+
+/** BE directory seed MD-INDIVIDUAL (171001) — 상세 수강·봉사 이력 showcase */
+export const MOCK_MD_INDIVIDUAL_USER_ID = 'mock-md-individual-171001'
+
+/** BE directory seed MD-INSTRUCTOR-REVOKED (171005) */
+export const MOCK_MD_INSTRUCTOR_REVOKED_USER_ID = 'mock-md-instructor-revoked-171005'
+
+/** BE directory seed MD-ADMIN (171601) — admin1@jakorea.org */
+export const MOCK_MD_ADMIN_USER_ID = 'mock-md-admin-171601'
 export const MOCK_SCHOOL_BUSAN_USER_ID = 'mock-school-busan-001'
 export const MOCK_SCHOOL_DAEGU_USER_ID = 'mock-school-daegu-001'
 export const MOCK_SCHOOL_INCHEON_USER_ID = 'mock-school-incheon-001'
@@ -47,14 +56,20 @@ function generatePastDate(daysAgo: number = 30): string {
 
 const mockAdmins: User[] = [
   {
-    id: generateUUID(),
+    id: MOCK_MD_ADMIN_USER_ID,
     email: 'admin1@jakorea.org',
     password: 'admin1234!', // Mock 데이터용
     name: '김관리',
     nameEn: 'Kim Gwan-ri',
     role: 'ADMIN',
     adminLevel: 'MASTER',
-    programRoles: { 'program-1': 'OWNER' },
+    programRoles: {
+      'economy-prog-001': 'OWNER',
+      'economy-prog-002': 'OWNER',
+      'economy-prog-003': 'PARTNER',
+      'economy-prog-004': 'ASSISTANT',
+      'economy-prog-005': 'OWNER',
+    },
     isActive: true,
     lastLoginAt: generatePastDate(1),
     createdAt: generatePastDate(365),
@@ -258,7 +273,7 @@ const mockInstructors: User[] = [
     permissionApprovalStatus: 'REJECTED',
     instructorId: 'instructor-3-fixed-id-for-testing',
     interviewStatus: 'PENDING', // 면접 대기 중
-    participationHistory: 0, // 참여이력 없음
+    participationHistory: 5,
     isActive: true,
     lastLoginAt: generatePastDate(10),
     createdAt: generatePastDate(30),
@@ -267,7 +282,7 @@ const mockInstructors: User[] = [
     gender: '남성',
     birthDate: '1988-12-01',
     detailAddress: '대전광역시 유성구 과학로 555',
-    affiliation: '경제교육 강사협회 | 준회원',
+    affiliation: '서울초등학교 | 교사',
     instructorInfo: {
       bankName: '우리은행',
       accountHolder: '강선생',
@@ -1250,6 +1265,62 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
 // ============================================
 
 const extraMockUsers: User[] = [
+  // BE seed MD-INDIVIDUAL (171001) — 김개인 · 수강·봉사 5단계 이력
+  {
+    id: MOCK_MD_INDIVIDUAL_USER_ID,
+    email: 'individual-md-171001@jakorea.org',
+    password: 'individual123!',
+    name: '김개인',
+    nameEn: 'Kim Gae-in',
+    role: 'INDIVIDUAL',
+    permissionApprovalStatus: 'APPROVED',
+    isActive: true,
+    lastLoginAt: generatePastDate(3),
+    createdAt: generatePastDate(90),
+    updatedAt: generatePastDate(3),
+    phone: '010-1710-0101',
+    birthDate: '2007-03-12',
+    gender: '여성',
+    detailAddress: '서울특별시 마포구 상암동 100',
+    affiliation: '서울 OO중학교 | 2학년',
+    socialAccounts: ['카카오'],
+    participationHistory: 5,
+  },
+  // BE seed MD-INSTRUCTOR-REVOKED (171005) — 박박탈 · 권한박탈 후 이력 유지
+  {
+    id: MOCK_MD_INSTRUCTOR_REVOKED_USER_ID,
+    email: 'instructor-revoked-171005@jakorea.org',
+    password: 'instructor123!',
+    name: '박박탈',
+    nameEn: 'Park Revoked',
+    role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'REJECTED',
+    instructorMemberProfile: 'instructor_only',
+    instructorId: 'instructor-revoked-171005',
+    interviewStatus: 'APPROVED',
+    participationHistory: 5,
+    isActive: true,
+    lastLoginAt: generatePastDate(14),
+    createdAt: generatePastDate(400),
+    updatedAt: generatePastDate(14),
+    phone: '010-1710-0505',
+    gender: '남성',
+    birthDate: '1982-06-30',
+    detailAddress: '경기도 성남시 분당구 정자동 200',
+    affiliation: 'JA Korea | (권한박탈)',
+    instructorInfo: {
+      bankName: '국민은행',
+      accountHolder: '박박탈',
+      accountNumber: '123-000-171005',
+      isBusinessIncome: false,
+    },
+    listMetrics: {
+      instructorFeeGradeLabel: '2급 강사비',
+      permissionApplicationTypeLabel: 'JA 강사단',
+      settlementStatusLabel: '정산 불가',
+      jaEvaluationGrade: 'D',
+    },
+  },
   // 프로그램 강의 이력 UI 개발용 (고정 ID — mock 신청 5건 연결)
   {
     id: PROGRAM_LECTURE_HISTORY_DEMO_INSTRUCTOR_USER_ID,

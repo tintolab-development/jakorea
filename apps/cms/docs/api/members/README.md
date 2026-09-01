@@ -27,10 +27,46 @@ CMS LNB 「회원 관리」(회원 목록 · 권한 승인 · 권한 설정) API
 
 ---
 
+## Notion 기획 ↔ 구현 검증
+
+| 문서 | 용도 |
+|------|------|
+| [**member-management-notion-parity-2026-08-28.md**](./member-management-notion-parity-2026-08-28.md) | **검증 리포트** — Notion CMS 기능정의서(회원 목록·권한 승인 73p) ↔ OpenAPI·FE 비즈니스 로직 대조 · ✅⚠️❌ · P0/P1 backlog |
+| [**member-management-fe-be-integration-handoff-2026-08-28.md**](./member-management-fe-be-integration-handoff-2026-08-28.md) | **BE seed → FE remote** 연동 체크리스트 · catalog parity · §7 smoke 결과 |
+| [**member-permission-management-fe-be-integration-2026-08-28.md**](./member-permission-management-fe-be-integration-2026-08-28.md) | 권한 승인·설정 P0 FE↔BE 연동 체크리스트 · seed smoke |
+| [**member-permission-management-backend-seed-handoff-2026-08-28.md**](./member-permission-management-backend-seed-handoff-2026-08-28.md) | 권한 승인·설정 BE seed SSOT (상세) |
+
+---
+
+## DB seed — 백엔드 Cursor 프롬프트
+
+> **BE에 붙여넣을 파일 (gap 보완 · 2026-08-28):** [`member-management-be-seed-gap-fix-cursor-prompt-2026-08-28.md`](./member-management-be-seed-gap-fix-cursor-prompt-2026-08-28.md)  
+> 전체 seed SSOT: [`member-management-backend-seed-handoff-2026-08-28.md`](./member-management-backend-seed-handoff-2026-08-28.md)
+
+| 문서 / 스펙 | 용도 |
+|-------------|------|
+| [**member-management-be-seed-gap-fix-cursor-prompt-2026-08-28.md**](./member-management-be-seed-gap-fix-cursor-prompt-2026-08-28.md) | **Cursor prompt (BE 전달)** — directory·상세 이력 gap 보완 · smoke 16/16 |
+| [**member-management-backend-seed-handoff-2026-08-28.md**](./member-management-backend-seed-handoff-2026-08-28.md) | Cursor prompt (메인) — 회원 목록·학교·권한승인 전체 seed |
+| [**member-management-seed-v1.spec.json**](./member-management-seed-v1.spec.json) | 기계 readable seed SSOT · id 범위 · showcase · smoke |
+| [**member-detail-history-seed-v1.spec.json**](./member-detail-history-seed-v1.spec.json) | **상세 이력** seed (171001–171005 · 171501 · 171601) |
+| [**member-permission-management-seed-v1.spec.json**](./member-permission-management-seed-v1.spec.json) | 권한승인 subset (172001–172231) |
+| FE catalog | [`member-management-seed-catalog.ts`](../../src/data/mock/member-management-seed-catalog.ts) · [`member-detail-history-seed-catalog.ts`](../../src/data/mock/member-detail-history-seed-catalog.ts) |
+
+```bash
+# seed handoff zip (Cursor prompt + spec JSON + FE catalog + 선택 OpenAPI)
+pnpm --filter cms package:member-management-seed-handoff -- --openapi
+```
+
+시드 라벨: `member-management-v1-2026-08`
+
+---
+
 ## 기타 members handoff
 
 | 문서 | 용도 |
 |------|------|
+| [**members-all-list-email-phone-masking-backend-request-2026-08-31.md**](./members-all-list-email-phone-masking-backend-request-2026-08-31.md) | **백엔드 전달** — `GET /api/admin/members/all` 연락처·이메일 **원문 노출** → 정책 마스킹 재적용 (P0) |
+| [**member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md**](./member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md) | **백엔드 전달** — 상세 PATCH `PAYMENT_STATEMENT_CONSENT` current **404** · 성범죄 파일 upload **401** (P0) |
 | [**member-pre-register-filled-document-500-backend-request-2026-08-26.md**](./member-pre-register-filled-document-500-backend-request-2026-08-26.md) | **백엔드 전달** — 회원·강사 신규 등록에서 동의서 작성 후 pre-register **HTTP 500** (P0) |
 | [**member-consent-filled-document-backend-handoff-2026-08-25.md**](./member-consent-filled-document-backend-handoff-2026-08-25.md) | **백엔드 전달** — 회원 동의서 5종 작성 본문 저장·조회 (`WritingFormDraft` · 지급조서 sidecar · 성범죄 파일) · UI 기준 저장 항목 · **개인·교사·강사·강사겸교사** (P1) |
 | [**portal-identity-onboarding-backend-request-2026-08-18.md**](./portal-identity-onboarding-backend-request-2026-08-18.md) | **백엔드 전달** — Portal 본인인증·온보딩 403/500 · CMS↔Portal 소속 동기화 · 비밀번호/409 메시지 (P0/P1) |
@@ -62,4 +98,4 @@ pnpm --filter cms package:members-be-handoff -- --openapi
 pnpm --filter cms package:members-be-handoff -- --out=~/Desktop/jakorea-members-be-handoff
 ```
 
-**Last updated:** 2026-08-26 (SET-009 지급조서 원문·산출 내역서 unmask · pre-register 동의서 작성 본문 500)
+**Last updated:** 2026-08-31 (회원 동의 current 404 · crime upload 401 BE 요청)

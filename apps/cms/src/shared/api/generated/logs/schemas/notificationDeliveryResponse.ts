@@ -22,4 +22,15 @@ export interface NotificationDeliveryResponse {
   failedReason?: string;
   providerRequestId?: string;
   providerMessageId?: string;
+  scheduledAt?: string;
+  cancelledAt?: string;
+  confirmedAt?: string;
+  providerStatusUpdatedAt?: string;
+  providerChannelType?: string;
+  sendStatus?: string;
+  receiptStatus?: string;
+  deliveredAt?: string;
+  openedAt?: string;
+  providerResultCode?: string;
+  providerResultMessage?: string;
 }

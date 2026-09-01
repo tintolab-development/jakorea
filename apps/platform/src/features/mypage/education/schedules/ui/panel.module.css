@@ -1,0 +1,41 @@
+.shell {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-20);
+}
+
+.header {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-12);
+  padding-left: 8px;
+}
+
+.count {
+  margin: 0;
+}
+
+.list {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.pagination {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  padding-top: var(--spacing-8);
+}
+
+.empty {
+  margin: 0;
+  padding-block: var(--spacing-40);
+}

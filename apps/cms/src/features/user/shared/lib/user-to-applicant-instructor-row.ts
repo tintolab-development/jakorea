@@ -3,7 +3,7 @@ import type { User } from '@/types/user'
 import { composeUserDetailAddressLine } from '@/features/user/detail/ui/user-basic-info/display'
 import { formatDate } from '@/shared/utils'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
-import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { isMembersRemoteEnabled, isInstructorRoleRequestsRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import {
   formatInstructorEducationLevelDisplay,
@@ -14,6 +14,11 @@ import dayjs from 'dayjs'
 
 const REMOTE_RESUME_PLACEHOLDER_EDUCATION = '-'
 const REMOTE_RESUME_PLACEHOLDER_SCHOOL = '-'
+
+/** members remote 또는 권한 승인 강사 탭 remote — mock placeholder·하드코딩 이력서 샘플 비활성 */
+function isInstructorResumeRemoteMode(): boolean {
+  return isMembersRemoteEnabled() || isInstructorRoleRequestsRemoteEnabled()
+}
 
 function mapApprovalStatus(status: string | undefined): ApplicantInstructorRow['approvalStatus'] {
   const upper = status?.trim().toUpperCase()
@@ -95,19 +100,19 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
     user.listMetrics?.instructorCareerYearsLabel?.trim() || user.instructorCareerText?.trim()
   const careerYears = parseCareerYearsFromLabel(careerLabel)
   const years = careerYears > 0 ? careerYears : (user.participationHistory ?? 0)
-  const membersRemote = isMembersRemoteEnabled()
-  const affiliation = user.affiliation?.trim() || (membersRemote ? '-' : 'JA 강사')
+  const remoteResume = isInstructorResumeRemoteMode()
+  const affiliation = user.affiliation?.trim() || (remoteResume ? '-' : 'JA 강사')
   const rawEducationLevel = user.listMetrics?.highestEducationLabel?.trim()
   const { levelPart: rawEducationLevelPart, schoolName: schoolFromLabel } =
     splitHighestEducationLabel(rawEducationLevel)
   const educationLevel =
     (rawEducationLevelPart
       ? formatInstructorEducationLevelDisplay(rawEducationLevelPart)
-      : undefined) || (membersRemote ? REMOTE_RESUME_PLACEHOLDER_EDUCATION : '4년제 졸업')
+      : undefined) || (remoteResume ? REMOTE_RESUME_PLACEHOLDER_EDUCATION : '4년제 졸업')
   const educationSchoolName =
     schoolFromLabel && !isInstructorMaskedPlaceholder(schoolFromLabel)
       ? schoolFromLabel
-      : membersRemote
+      : remoteResume
         ? REMOTE_RESUME_PLACEHOLDER_SCHOOL
         : '-*대학교'
   /** API `profile.essays.freeWrite1` 또는 legacy `selfIntroduction` */
@@ -122,7 +127,7 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
       ? careerLabel
       : years > 0
         ? `${years}년`
-        : membersRemote
+        : remoteResume
           ? '-'
           : '3년'
 
@@ -143,17 +148,17 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
     affiliation,
     approvalStatus: mapApprovalStatus(user.instructorApprovalStatus),
     schoolName: user.schoolInfo?.schoolName ?? user.affiliatedSchoolName ?? '-',
-    nameEnglish: user.nameEn ?? (membersRemote ? '-' : 'Park Tinto'),
-    birthDate: user.birthDate ? formatDate(user.birthDate) : membersRemote ? '-' : '1990.09.15',
+    nameEnglish: user.nameEn ?? (remoteResume ? '-' : 'Park Tinto'),
+    birthDate: user.birthDate ? formatDate(user.birthDate) : remoteResume ? '-' : '1990.09.15',
     gender: (() => {
       const display = toDisplayGender(user.gender)
       if (display !== '-') return display
-      return membersRemote ? '-' : '남성'
+      return remoteResume ? '-' : '남성'
     })(),
     bankName: user.instructorInfo?.bankName ?? '',
     accountNumber: user.instructorInfo?.accountNumber ?? '',
     accountHolder: user.instructorInfo?.accountHolder ?? '',
-    evaluationGrade: grade || (membersRemote ? '-' : 'A'),
+    evaluationGrade: grade || (remoteResume ? '-' : 'A'),
     teachingExperience,
     oneLineIntro: user.bio?.trim() ? user.bio : '-',
     businessIncomeEarnerStatus:
@@ -163,7 +168,7 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
           ? '해당 없음'
           : '해당 없음',
     lectureFeeBasisDisplay:
-      user.listMetrics?.instructorFeeGradeLabel?.trim() || (membersRemote ? '-' : '특강 강사비 | 915,000원'),
+      user.listMetrics?.instructorFeeGradeLabel?.trim() || (remoteResume ? '-' : '특강 강사비 | 915,000원'),
     settlementStatusLabel: user.listMetrics?.settlementStatusLabel?.trim() || undefined,
     freeWriting1: freeWriting1FromApi,
     freeWriting2: '',
@@ -173,7 +178,7 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
     jaKoreaActivities: [],
     educations: educationsFromSummary,
     qualifications,
-    awards: membersRemote
+    awards: remoteResume
       ? []
       : [
           { year: '2024', name: 'OO교육원 웹마스터 915기 교육 수료' },

@@ -415,15 +415,39 @@ export function detailEmailDisplay(user: Omit<User, 'password'>, revealed: boole
 
 /**
  * 자택 주소 표시.
- * - 개인정보 상세보기 전: BE가 시·군·구(또는 그 이하)로 잘라 준 값은 그대로 노출.
- *   토큰 2개 이하(예: `서울특별시`, `서울특별시 관악구`)는 추가 블러하지 않음
- *   → 시 단위만 올 때 글자 단위 블러로 “안 보이는” 현상 방지.
- * - 도로명·상세가 더 붙으면(토큰 3+) 앞 2토큰만 노출, 이후 CSS blur.
+ * - 개인정보 상세보기 전:
+ *   - `detailAddress` + `detailAddressDetail`이 나뉘어 있으면 본문은 그대로(또는 본문 토큰 3+면 앞 2만),
+ *     상세·나머지 토큰은 항상 CSS blur — 시·군·구(≤2토큰)만 있어도 상세가 있으면 블러 꼬리 유지.
+ *   - 한 줄로만 오면 토큰 3+일 때 앞 2 / 이후 블러. 토큰 2개 이하는 BE 시·군·구 마스킹으로 보고 그대로.
  * - 상세보기 후: 원문 전체.
  */
 export function detailAddressView(user: Omit<User, 'password'>, revealed: boolean): ReactNode {
   const raw = addressLine(user)
   if (raw === '-' || revealed) return raw
+
+  const main =
+    user.role === 'SCHOOL'
+      ? user.schoolInfo?.address?.trim() ?? ''
+      : user.detailAddress?.trim() ?? ''
+  const detail =
+    user.role === 'SCHOOL'
+      ? user.schoolInfo?.addressDetail?.trim() ?? ''
+      : user.detailAddressDetail?.trim() ?? ''
+  const detailOk =
+    detail.length > 0 && !isInstructorMaskedPlaceholder(detail) ? detail : ''
+
+  if (detailOk) {
+    const mainParts = main.split(/\s+/).filter(Boolean)
+    if (mainParts.length > 2) {
+      const head = mainParts.slice(0, 2).join(' ')
+      const restMain = mainParts.slice(2).join(' ')
+      const tail = [restMain, detailOk].filter(Boolean).join(' ')
+      return createAddressPrivacyView(head, tail)
+    }
+    const head = mainParts.length > 0 ? mainParts.join(' ') : raw
+    return createAddressPrivacyView(head, detailOk)
+  }
+
   const parts = raw.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return '-'
   // BE 마스킹 응답(시 / 시군구) — FE에서 재블러하지 않음
@@ -431,17 +455,22 @@ export function detailAddressView(user: Omit<User, 'password'>, revealed: boolea
 
   const head = parts.slice(0, 2).join(' ')
   const tail = parts.slice(2).join(' ')
+  return createAddressPrivacyView(head, tail)
+}
+
+function createAddressPrivacyView(head: string, tail: string): ReactNode {
+  const clear = head.trim()
+  const blur = tail.trim()
+  if (!blur) return clear || '-'
   return createElement(
     'span',
     { className: 'user-basic-info-section__address-privacy' },
-    createElement('span', null, head),
-    tail
-      ? createElement(
-          'span',
-          { className: 'user-basic-info-section__address-privacy__blur', 'aria-hidden': true },
-          ` ${tail}`
-        )
-      : null
+    createElement('span', null, clear),
+    createElement(
+      'span',
+      { className: 'user-basic-info-section__address-privacy__blur', 'aria-hidden': true },
+      ` ${blur}`
+    )
   )
 }
 

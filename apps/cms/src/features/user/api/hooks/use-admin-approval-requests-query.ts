@@ -27,6 +27,7 @@ export function useAdminApprovalRequestsQuery(
       serializeAdminApprovalRequestParams(queryParams)
     ),
     enabled: enabled && remote,
+    staleTime: 30_000,
     queryFn: async () => {
       const page = await fetchAdminApprovalRequestsPageRemote(queryParams)
       const rows = (page.items ?? []).map(mapAdminApprovalRequestToRow)

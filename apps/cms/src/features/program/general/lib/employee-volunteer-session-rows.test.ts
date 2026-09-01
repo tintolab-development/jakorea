@@ -69,4 +69,22 @@ describe('resolveEmployeeVolunteerSessionRows', () => {
 
     expect(rows.map(row => row.label)).toEqual(['오리엔테이션', '국내대회'])
   })
+
+  it('복수 일정형 사전 교육 블록은 합성 사전교육 행과 중복하지 않는다', () => {
+    const rows = resolveEmployeeVolunteerSessionRows(
+      baseProgram({
+        generalProgramSessionRound: 'multi',
+        generalProgramEducationStructure: 'schedule',
+        generalCommonInfo: {
+          scheduleCurriculumPreEducation: true,
+          scheduleDetails: [
+            { scheduleLabel: '사전 교육', name: '사전 교육' },
+            { scheduleLabel: '행사 일정 01', name: '오리엔테이션' },
+          ],
+        },
+      })
+    )
+
+    expect(rows.map(row => row.label)).toEqual(['사전교육', '오리엔테이션'])
+  })
 })

@@ -10,6 +10,7 @@ import {
   readGeneralProgramDetailRoute,
 } from './general-program-detail-route'
 import { getProgramAdminDetailUrlFromPathname } from './program-admin-detail-url'
+import { getProgramAdminDetailInfoTabUrl } from './program-admin-detail-url'
 
 describe('general-program-detail-route', () => {
   it('reads lnb/tab from search params', () => {
@@ -103,6 +104,24 @@ describe('general-program-detail-route', () => {
 
     expect(url).toBe(
       '/programs/company-school?programId=company-school-remote-1&lnb=info&tab=info'
+    )
+  })
+
+  it('routes economy programs to the company-school list path', () => {
+    expect(getProgramAdminDetailInfoTabUrl('economy-prog-001')).toBe(
+      '/programs/company-school?programId=economy-prog-001&lnb=info&tab=info'
+    )
+  })
+
+  it('routes trained-teachers programs to the trained-teachers list path', () => {
+    expect(getProgramAdminDetailInfoTabUrl('trained-teachers-prog-001')).toBe(
+      '/programs/trained-teachers?programId=trained-teachers-prog-001&lnb=info&tab=info'
+    )
+  })
+
+  it('falls back unknown numeric ids to general (not /programs root)', () => {
+    expect(getProgramAdminDetailInfoTabUrl('167001')).toBe(
+      '/programs/general?programId=167001&lnb=info&tab=info'
     )
   })
 })

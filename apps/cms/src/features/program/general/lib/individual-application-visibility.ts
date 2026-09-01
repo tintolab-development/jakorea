@@ -24,6 +24,9 @@ export function isGeneralIndividualTeamParticipationProgram(program: Program | n
   if (common.scheduleDetails?.some(detail => detail.participationMethodLabel === TEAM_PARTICIPATION_LABEL)) {
     return true
   }
+  if (common.curriculumSessions?.some(session => session.participationMethodLabel === TEAM_PARTICIPATION_LABEL)) {
+    return true
+  }
   return false
 }
 

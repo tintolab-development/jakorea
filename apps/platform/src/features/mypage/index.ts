@@ -14,22 +14,40 @@ export type {
   EducationApplicationListItem,
   EducationDisplayStatus,
   EducationDisplayStatusTone,
-} from './model/education-application-types'
-export { EDUCATION_APPLICATION_PAGE_SIZE } from './model/education-application-types'
+  EducationWithdrawalPhase,
+  EducationActivitySection,
+  EducationDetailTabItem,
+  EducationInProgressFile,
+  EducationInProgressNotice,
+  EducationNoticeComment,
+  EducationNoticeReactionSummary,
+  EducationNoticeReactionUser,
+  EducationScheduleItem,
+  EducationScheduleProgressStatus,
+  EducationSurveyEmptyKind,
+} from './education'
+export {
+  getFirstNoticeAttachment,
+  getNoticeAttachments,
+  EDUCATION_APPLICATION_PAGE_SIZE,
+  EDUCATION_SCHEDULE_PAGE_SIZE,
+} from './education'
 export {
   INSTRUCTOR_APPLY_PATH,
   instructorApplyConsentPath,
-  MOCK_MYPAGE_AFFILIATION,
-  MOCK_MYPAGE_EMPLOYMENT_LABEL,
-  MOCK_MYPAGE_PROGRAM_STATS,
   MOCK_MYPAGE_USER_NAME,
-  getMockMypageProgramStats,
   MYPAGE_PATH,
   MYPAGE_INQUIRIES_PATH,
   MYPAGE_SETTINGS_PATH,
   MYPAGE_EDUCATION_PATH,
   educationApplicationDetailPath,
 } from './lib/constants'
+export {
+  MOCK_MYPAGE_AFFILIATION,
+  MOCK_MYPAGE_EMPLOYMENT_LABEL,
+  MOCK_MYPAGE_PROGRAM_STATS,
+  getMockMypageProgramStats,
+} from './home'
 export {
   EDUCATION_APPLICATION_TAB_ITEMS,
   MOCK_EDUCATION_APPLICATIONS,
@@ -38,13 +56,11 @@ export {
   getMockEducationApplications,
   getMockEducationApplicationsVersion,
   subscribeMockEducationApplications,
-} from './lib/mock-education-applications'
-export {
+  getMockEducationInProgressFiles,
+  getMockEducationInProgressNotices,
   compareEducationApplicationItems,
   listEducationApplications,
   matchesEducationApplicationTab,
-} from './lib/education-application-list'
-export {
   EDUCATION_DISPLAY_STATUS_LABEL,
   EDUCATION_DISPLAY_STATUS_SORT_ORDER,
   EDUCATION_DISPLAY_STATUS_TONE,
@@ -53,20 +69,33 @@ export {
   getEducationDisplayStatusLabel,
   getEducationDisplayStatusTone,
   resolveEducationApplicationTab,
-} from './lib/education-display-status'
-export {
+  canShowEducationApplicationContent,
+  isWithdrawnBeforeEducation,
+  isWithdrawnDuringEducation,
+  resolveEducationWithdrawalPhase,
+  filterItemsUpToLastParticipatedSession,
+  buildInProgressDetailTabItems,
+  buildWithdrawnDuringDetailTabItems,
+  resolveEducationScheduleTabLabel,
   DEFAULT_EDUCATION_APPLICATION_LIST_PARAMS,
   buildEducationApplicationListPath,
   readEducationApplicationListParams,
-} from './lib/education-list-params'
-export { EducationApplicationListItemRow } from './ui/application-list-item'
-export { EducationCancelConfirm } from './ui/education-cancel-confirm'
-export { EducationDetailBack } from './ui/education-detail-back'
-export { EducationDetailHeader } from './ui/education-detail-header'
-export {
+  resolveEducationListBackPath,
+  EducationApplicationListItemRow,
+  EducationApplicationContent,
+  EducationApplicationInfoModal,
+  EducationCancelConfirm,
+  EducationDetailBack,
+  EducationDetailHeader,
+  EducationInProgressNoticePanel,
+  EducationProgramInfoModal,
+  EducationInProgressNoticeDetailModal,
+  EducationNoticeStats,
+  EducationSchedulePanel,
+  EducationSurveyEmptyPanel,
   DocumentPassBanner,
   shouldShowDocumentPassBanner,
-} from './ui/document-pass-banner'
+} from './education'
 export {
   MOCK_MYPAGE_SCHEDULE_EVENTS,
   formatMypageScheduleBarLabel,
@@ -75,7 +104,7 @@ export {
   getMypageScheduleEventsOnDate,
   syncSelectedDateToMonth,
   toDateKey,
-} from './lib/mock-schedule-events'
+} from './home'
 export { getMypageLnbItems } from './lib/lnb-config'
 export {
   getSettingsLnbItems,

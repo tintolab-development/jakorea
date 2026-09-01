@@ -11,6 +11,9 @@ export const memberQueryKeys = {
     [...memberQueryKeys.schoolsListAll(), filtersKey] as const,
   detail: (memberId: number) => [...memberQueryKeys.all, 'detail', memberId] as const,
   detailByUuid: (uuid: string) => [...memberQueryKeys.all, 'detailByUuid', uuid] as const,
+  /** 목록 uuid vs canonical id가 달라도 동일 리소스 GET을 공유 */
+  detailResource: (kind: 'admin' | 'org' | 'member' | 'uuid', id: string | number) =>
+    [...memberQueryKeys.all, 'detailResource', kind, id] as const,
   instructorProfile: (memberId: number) =>
     [...memberQueryKeys.all, 'instructorProfile', memberId] as const,
   consentRecords: (memberId: number) => [...memberQueryKeys.all, 'consentRecords', memberId] as const,
@@ -27,6 +30,8 @@ export const memberQueryKeys = {
   ) => [...memberQueryKeys.all, 'comments', target, resourceId, screenCode ?? ''] as const,
   applications: (memberId: number) =>
     [...memberQueryKeys.all, 'applications', memberId] as const,
+  enrollmentSummary: (memberId: number, applicationId: number) =>
+    [...memberQueryKeys.all, 'enrollmentSummary', memberId, applicationId] as const,
   programHistory: (memberId: number) =>
     [...memberQueryKeys.all, 'programHistory', memberId] as const,
   affiliatedTeachers: (memberId: number) =>
@@ -53,11 +58,15 @@ export const memberQueryKeys = {
     all: () => [...memberQueryKeys.all, 'instructorRoleRequests'] as const,
     list: (paramsKey: string) =>
       [...memberQueryKeys.instructorRoleRequests.all(), 'list', paramsKey] as const,
+    detail: (requestId: number) =>
+      [...memberQueryKeys.instructorRoleRequests.all(), 'detail', requestId] as const,
   },
   adminApprovalRequests: {
     all: () => [...memberQueryKeys.all, 'adminApprovalRequests'] as const,
     list: (paramsKey: string) =>
       [...memberQueryKeys.adminApprovalRequests.all(), 'list', paramsKey] as const,
+    detail: (adminAccountId: number) =>
+      [...memberQueryKeys.adminApprovalRequests.all(), 'detail', adminAccountId] as const,
   },
   adminPermissions: {
     all: () => [...memberQueryKeys.all, 'adminPermissions'] as const,

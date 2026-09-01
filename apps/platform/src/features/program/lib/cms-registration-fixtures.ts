@@ -204,7 +204,7 @@ function buildGeneralCommonInfo(
     return {
       educationFormLabel,
       sponsorDisplayName: 'JA Korea',
-      educationScheduleMode: 'period',
+      educationScheduleMode: 'date',
       maxScheduleCount: 3,
       curriculumSessions: CURRICULUM_MULTI_SESSIONS.map(row => ({ ...row })),
       educationScheduleLines: [...DEFAULT_EDUCATION_SCHEDULE_LINES],
@@ -214,7 +214,7 @@ function buildGeneralCommonInfo(
   return {
     educationFormLabel,
     sponsorDisplayName: 'JA Korea',
-    educationScheduleMode: 'period',
+    educationScheduleMode: 'date',
     maxScheduleCount: 3,
     curriculumSessions: CURRICULUM_SINGLE_SESSIONS.map(row => ({ ...row })),
     educationScheduleLines: [...DEFAULT_EDUCATION_SCHEDULE_LINES],
@@ -259,6 +259,11 @@ function buildTypeFixture(args: TypeSeedArgs): CmsRegistrationFixture {
     generalProgramEducationStructure: args.educationStructure,
     generalProgramSessionRound: args.sessionRound,
     generalCommonInfo: commonInfo,
+    ...(args.idSuffix === 'org-curriculum-multi'
+      ? {
+          attachmentFileNames: ['프로그램 안내문.pdf', '개인정보 수집이용 동의서.pdf'],
+        }
+      : {}),
   }
 }
 

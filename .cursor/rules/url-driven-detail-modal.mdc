@@ -1,0 +1,153 @@
+---
+description: URL 구동 풀페이지 상세 모달 — 1클릭 오픈 보장 · URL 쓰기 최소화 (두 번 클릭·주소 튐·모달 튕김 방지)
+globs:
+  - "apps/**/pages/**/*.{ts,tsx}"
+  - "apps/**/features/**/detail/**/*.{ts,tsx}"
+  - "apps/**/lib/*url*.{ts,tsx}"
+  - "apps/**/lib/navigate-*.{ts,tsx}"
+alwaysApply: false
+---
+
+# URL 구동 풀페이지 상세 모달 — 1클릭 오픈 · URL 쓰기 최소화
+
+목록/이력 행을 클릭해 **URL 파라미터(`?id=` · `?programId=`)로 여는 풀페이지 상세**에 적용한다.
+
+## 막으려는 증상
+
+| 증상 | 실제 원인 |
+| --- | --- |
+| 한 번 클릭하면 URL만 바뀌고 목록에 머묾, 두 번 눌러야 열림 | react-router가 `setSearchParams`를 transition으로 커밋 → `params.id` 반영이 한 커밋 늦고, 그 사이 "URL에 id 없으면 닫기" effect가 방금 연 모달을 닫음 |
+| 주소가 다른 URL로 바뀌었다가 한 번 더 바뀜 | 낙관적 쓰기 후 정정 쓰기를 무조건 실행(값이 같아도 `replaceState` 발생), 또는 임시 경로로 navigate 후 실제 경로로 재 navigate |
+| 뒤로가기를 두 번 눌러야 목록으로 감 | 오픈 과정에서 `push`를 2회 실행 |
+| 상세 진입 직후 모달이 사라짐 | 상세 GET 실패 시 URL만 남고 ref/모달 상태가 어긋남, 또는 모달 내부 테이블의 URL sync가 상세 파라미터를 덮어씀 |
+| 모달이 두 번 열리는 것처럼 깜빡임 | 로딩 셸과 본 모달을 **다른 컴포넌트**로 분기 렌더 → antd 포털이 교체되며 오픈 애니메이션이 두 번 재생 |
+
+## 필수 규칙
+
+### 1. 즉시 판단은 `window.location.search`로 읽는다
+
+`useSearchParams`/`useQueryParams`의 `params`는 **한 커밋 늦을 수 있다**. "URL에 식별자가 없으면 모달을 닫는다"처럼 **열자마자 실행되는 판단**은 브라우저 URL을 동기로 읽어라.
+
+```ts
+// ❌ BAD — params.id가 아직 비어 있어 방금 연 모달을 닫는다
+useLayoutEffect(() => {
+  if (params.id) return
+  closeDrawer()
+}, [params.id])
+```
+
+```ts
+// ✅ GOOD — 브라우저 URL이 SSOT (readMemberDetailIdFromLocation 등 동기 리더 사용)
+useLayoutEffect(() => {
+  if (readMemberDetailIdFromLocation()) return
+  closeDrawer()
+})
+```
+
+동기 리더는 도메인별 `*-url-context.ts`에 두고 재사용한다 (예: `features/user/detail/lib/teacher-detail-url-context.ts`).
+
+### 2. 오픈 1회당 `push`는 1회, 정정은 `replace`, 값이 같으면 쓰지 않는다
+
+- 행 클릭 직후 낙관적 파라미터 기록 → **`push` 1회**
+- 상세 GET 응답의 canonical id 반영 → **`replace`** (`push` 금지, 뒤로가기 1회로 목록 복귀)
+- 적용 결과 쿼리스트링이 현재와 **같으면 쓰기를 생략**한다. react-router는 값이 같아도 `replaceState`를 실행해 주소창이 한 번 더 깜빡인다.
+
+```ts
+// ✅ GOOD — 결과가 달라질 때만 replace (CMS: @/shared/lib/search-params-diff)
+if (!replace || searchWithUpdatesDiffersFromLocation(urlUpdates)) {
+  setParams(urlUpdates, { replace })
+}
+```
+
+`push`는 뒤로가기 엔트리가 목적이므로 생략하지 않는다. 중복 제거는 **`replace` 경로에만** 적용한다.
+
+### 3. 낙관적 navigate 후 정정 navigate 금지 — 목적지를 확정한 뒤 1회 이동
+
+프로그램 유형처럼 목적지 경로가 id만으로 결정되지 않으면, **경로를 resolve한 다음** `navigate`를 호출한다. 임시 경로(`/programs?programId=…`)로 먼저 보내고 나중에 `replace`로 고치면 주소가 두 번 바뀌고 중간 화면이 노출된다.
+
+- resolve 결과는 React Query에 캐시하고, 목록/이력을 불러올 때 prefetch해 대기 시간을 없앤다 (`prefetchProgramAdminNavigation` 패턴).
+- 이동 로직은 `lib/navigate-*.ts`로 분리해 호출부마다 재구현하지 않는다.
+
+### 4. "이미 열려 있나"는 open 상태로만 판단한다
+
+닫힌 뒤에도 값이 남는 **데이터 ref**(`drawerUserRef` 등)로 판단하면 재오픈이 막힌다. 반드시 실제 open 플래그(`drawerOpenRef.current`)를 본다.
+
+### 5. 모달 내부 테이블은 URL sync를 끈다
+
+풀페이지 상세 안의 이력 테이블은 `useTablePage({ disableUrlSync: true })`. 켜 두면 페이지·필터 파라미터가 상세 파라미터를 덮어써 모달이 닫히거나 주소가 계속 바뀐다.
+
+### 6. 다른 리소스 상세로 떠날 때는 현재 상세의 URL sync를 억제한다
+
+이력 행 → 다른 도메인 상세로 이동하기 **직전에** close intent 플래그(`detailCloseIntentRef.current = true`)를 세워, 떠나는 상세의 URL 정규화 effect가 새 주소를 덮어쓰지 못하게 한다. 이동 함수에는 `onBeforeNavigate` 훅을 두고 부모가 이 억제를 주입한다.
+
+### 7. 로딩 상태는 **같은 모달 인스턴스** 안에서 표현한다
+
+상세 GET 대기 중 로딩 셸을 별도 컴포넌트로 렌더하고 응답 후 본 모달로 교체하면, antd Modal 포털이 갈려 마스크 페이드·zoom-in이 두 번 재생된다(모달이 두 번 열리는 것처럼 깜빡임).
+
+```tsx
+// ❌ BAD — 포털 2개: 로딩 셸 unmount → 본 모달 mount
+{detailOpen && detailUser == null ? (
+  <DetailFullPageModal open loading title="강사 신청 상세" onClose={close} />
+) : (
+  <UserDetailFullPageModal open={detailUser != null} user={detailUser} onClose={close} />
+)}
+```
+
+```tsx
+// ✅ GOOD — 인스턴스 1개, 내부에서 loading만 토글
+<UserDetailFullPageModal open={detailOpen} user={detailUser} onClose={close} />
+```
+
+상세 모달 컴포넌트가 `user == null`이면 스스로 스피너 셸(`DetailFullPageModal loading`)을 렌더하고, 응답 후 같은 위치에서 사이드바·본문만 채운다. 분기해서 렌더할 때는 **동일 컴포넌트 타입이 같은 위치**에 오도록 유지한다.
+
+### 8. 상세 GET 실패 시 URL과 ref를 함께 원복한다
+
+실패 경로에서 상세 관련 쿼리 파라미터 전체를 `replace`로 지우고, pending/opened ref도 초기화한다. URL만 남기거나 ref만 남기면 다음 클릭이 "이미 열림"으로 무시된다.
+
+## 검증 (필수)
+
+새 상세 오픈 경로를 만들거나 위 규칙에 해당하는 코드를 수정하면 **URL 쓰기 횟수를 실측**한다. `history` 후킹으로 push/replace를 수집하는 진단 스펙을 임시로 돌리고, 확인 후 지운다.
+
+```ts
+await page.addInitScript(() => {
+  const w = window as unknown as { __writes?: string[] }
+  w.__writes = []
+  const push = history.pushState.bind(history)
+  const replace = history.replaceState.bind(history)
+  history.pushState = (...a: Parameters<typeof history.pushState>) => {
+    const r = push(...a)
+    w.__writes!.push(`PUSH ${location.pathname}${location.search}`)
+    return r
+  }
+  history.replaceState = (...a: Parameters<typeof history.replaceState>) => {
+    const r = replace(...a)
+    w.__writes!.push(`REPL ${location.pathname}${location.search}`)
+    return r
+  }
+})
+```
+
+기대값: **행 클릭 1회 → PUSH 1회**(+ 식별자가 실제로 달라질 때만 REPL 1회), 탭 전환은 REPL 1회, 다른 상세 진입은 목적지 경로로 PUSH 1회.
+
+깜빡임(규칙 7)은 **포털 신원**으로 검증한다. 같은 커밋에서 unmount+mount 되면 개수는 1로 유지되므로 개수 비교로는 잡히지 않는다 — `.ant-modal-root`에 스탬프를 찍고 새 엘리먼트가 생기는지 본다.
+
+영구 회귀 스펙:
+- 1클릭 오픈 + 뒤로가기 1회 닫힘 — [member-detail-single-click-open.spec.ts](../../apps/cms/tests/e2e/flows/members/member-detail-single-click-open.spec.ts)
+- 모달 포털 1개 (회원 목록·권한 승인) — [detail-modal-single-portal.spec.ts](../../apps/cms/tests/e2e/flows/members/detail-modal-single-portal.spec.ts)
+
+## 리뷰 체크리스트
+
+- [ ] 모달을 닫는 effect가 `params`가 아니라 브라우저 URL을 읽는가
+- [ ] 오픈 경로에 `push`가 1회만 있고, canonical 정정은 `replace`인가
+- [ ] 결과가 동일한 URL 쓰기를 건너뛰는가
+- [ ] navigate가 목적지 확정 후 1회만 호출되는가 (임시 경로 경유 없음)
+- [ ] 모달 내부 테이블에 `disableUrlSync: true`가 있는가
+- [ ] 로딩 셸이 본 모달과 **같은 인스턴스**인가 (포털 교체 없음)
+- [ ] 상세 GET 실패 시 URL 파라미터·ref가 모두 원복되는가
+- [ ] `history` 후킹으로 쓰기 횟수를 실측했는가
+
+## 관련
+
+- 목록 필터 URL 동기화: [cms-admin-ui/list-filter-url-sync.mdc](./cms-admin-ui/list-filter-url-sync.mdc)
+- CMS 테이블 스택: [apps/cms/.cursor/rules/tables/list-page-table-stack.md](../../apps/cms/.cursor/rules/tables/list-page-table-stack.md)
+- E2E 규약: [playwright-e2e.mdc](./playwright-e2e.mdc)

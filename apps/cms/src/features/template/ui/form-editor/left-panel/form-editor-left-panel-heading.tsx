@@ -38,7 +38,10 @@ import { GEMINI_VISITING_TRAINING_RECRUIT_FORM_SEED_PARAGRAPH_IDS } from '@/feat
 import { UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-recruit-form-institution-draft'
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
-import { shouldUseScheduleEventBlockLayout } from '@/features/program/general/lib/schedule-detail-form'
+import {
+  shouldAllowScheduleProgressGroupAdd,
+  shouldUseScheduleEventBlockLayout,
+} from '@/features/program/general/lib/schedule-detail-form'
 import { resolveProgramRegistrationScheduleCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
@@ -119,6 +122,97 @@ export function withProgramRegistrationCurriculumTitleTrailing(
     return heading
   }
   if (pr.programRegistrationFormVariant === 'trainedTeachers') {
+    const teacherTrainingToggle = (
+      <CmsToggle
+        label="교사 연수"
+        checked={pr.trainedTeachersTeacherTrainingEnabled}
+        onChange={pr.onTrainedTeachersTeacherTrainingEnabledChange}
+      />
+    )
+
+    if (pr.programType === 'schedule') {
+      const isScheduleEventLayout = shouldUseScheduleEventBlockLayout({
+        sessionRound: pr.sessionRoundType,
+        participantOrganization: pr.participant.organization,
+        educationFormScheduleDetail: pr.educationFormScheduleDetail,
+        participationScheduleDetail: pr.participationScheduleDetail,
+        ipsScheduleDetail: pr.ipsScheduleDetail,
+      })
+      const scheduleDescription = resolveProgramRegistrationScheduleCurriculumEditDescription({
+        sessionRoundType: pr.sessionRoundType,
+        participantOrganization: pr.participant.organization,
+        educationFormScheduleDetail: pr.educationFormScheduleDetail,
+        participationScheduleDetail: pr.participationScheduleDetail,
+        ipsScheduleDetail: pr.ipsScheduleDetail,
+      })
+      const allowProgressGroupAdd = shouldAllowScheduleProgressGroupAdd({
+        sessionRound: pr.sessionRoundType,
+        educationScheduleMode: pr.educationScheduleMode,
+      })
+      const addScheduleLabel = isScheduleEventLayout
+        ? '강의 행사 일정 추가'
+        : '강의 세부 일정 추가'
+
+      return {
+        ...heading,
+        descriptionValue: scheduleDescription,
+        titleTrailing: (
+          <div
+            className="program-registration-paragraph__card-title-actions"
+            onClick={e => e.stopPropagation()}
+            onKeyDown={e => e.stopPropagation()}
+            role="presentation"
+          >
+            {teacherTrainingToggle}
+            {pr.sessionRoundType === 'multi' || !allowProgressGroupAdd || isScheduleEventLayout ? (
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="medium"
+                width={160}
+                icon={<PlusOutlined aria-hidden />}
+                onClick={e => {
+                  e.stopPropagation()
+                  pr.onAddScheduleCurriculumDetail()
+                }}
+              >
+                {addScheduleLabel}
+              </CmsButton>
+            ) : (
+              <>
+                <CmsButton
+                  type="button"
+                  variant="secondary"
+                  size="medium"
+                  width={160}
+                  icon={<PlusOutlined aria-hidden />}
+                  onClick={e => {
+                    e.stopPropagation()
+                    pr.onAddScheduleCurriculumDetail()
+                  }}
+                >
+                  {addScheduleLabel}
+                </CmsButton>
+                <CmsButton
+                  type="button"
+                  variant="secondary"
+                  size="medium"
+                  width={160}
+                  icon={<PlusOutlined aria-hidden />}
+                  onClick={e => {
+                    e.stopPropagation()
+                    pr.onAddScheduleCurriculumGroup()
+                  }}
+                >
+                  진행 그룹 추가
+                </CmsButton>
+              </>
+            )}
+          </div>
+        ),
+      }
+    }
+
     const curriculumChartSessionAtMax =
       pr.curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
     return {
@@ -130,11 +224,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
           onKeyDown={e => e.stopPropagation()}
           role="presentation"
         >
-          <CmsToggle
-            label="교육 연수"
-            checked={pr.trainedTeachersTeacherTrainingEnabled}
-            onChange={pr.onTrainedTeachersTeacherTrainingEnabledChange}
-          />
+          {teacherTrainingToggle}
           <CmsButton
             type="button"
             variant="secondary"
@@ -170,14 +260,13 @@ export function withProgramRegistrationCurriculumTitleTrailing(
       ipsScheduleDetail: pr.ipsScheduleDetail,
     })
 
-    const preEducationToggle =
-      pr.sessionRoundType === 'multi' ? (
-        <CmsToggle
-          label="사전 교육"
-          checked={pr.scheduleCurriculumPreEducation}
-          onChange={pr.onScheduleCurriculumPreEducationChange}
-        />
-      ) : null
+    const preEducationToggle = (
+      <CmsToggle
+        label="사전 교육"
+        checked={pr.scheduleCurriculumPreEducation}
+        onChange={pr.onScheduleCurriculumPreEducationChange}
+      />
+    )
 
     if (isScheduleEventLayout) {
       return {
@@ -209,7 +298,12 @@ export function withProgramRegistrationCurriculumTitleTrailing(
       }
     }
 
-    if (pr.sessionRoundType === 'multi') {
+    const allowProgressGroupAdd = shouldAllowScheduleProgressGroupAdd({
+      sessionRound: pr.sessionRoundType,
+      educationScheduleMode: pr.educationScheduleMode,
+    })
+
+    if (pr.sessionRoundType === 'multi' || !allowProgressGroupAdd) {
       return {
         ...heading,
         descriptionValue: scheduleDescription,
@@ -249,6 +343,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
           onKeyDown={e => e.stopPropagation()}
           role="presentation"
         >
+          {preEducationToggle}
           <CmsButton
             type="button"
             variant="secondary"

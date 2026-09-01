@@ -6,8 +6,9 @@ import { ProgramRegistrationBusinessKpiParagraph } from '@/features/template/ui/
 export function OneCOneSRegistrationBusinessKpiParagraph() {
   return (
     <ProgramRegistrationBusinessKpiParagraph
+      overlayKeyPrefix="economyRegistration.kpi"
       volunteerDisabled
-      volunteerPlaceholder="해당 없음"
+      volunteerPlaceholder="해당없음"
     />
   )
 }

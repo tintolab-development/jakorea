@@ -242,7 +242,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     category: 'agreement',
     rendererKey: 'crime-consent',
     usesCrimeConsentModal: true,
-    previewHeaderTitleFallback: '성범죄 경력조회 동의서',
+    previewHeaderTitleFallback: '성범죄 경력조회 및 아동학대 관련 범죄전력조회 동의서',
   },
   'agreement-notice': {
     id: 'agreement-notice',
@@ -275,7 +275,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     suppressUserPreviewStrip: true,
     selfManagedPreview: true,
     previewStrategy: 'a4-content-only',
-    previewHeaderTitleFallback: '초상권 수집/이용 동의',
+    previewHeaderTitleFallback: '초상권 수집·이용 동의',
   },
 }
 

@@ -22,6 +22,8 @@ import {
   generalRecruitTabItems,
   type GeneralRecruitTabKey,
 } from '@/features/program/general/lib/recruitment-tabs'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { GeneralProgramParticipantRecruitmentInfoView } from './participant-recruitment-info-view'
 import { GeneralProgramInstructorRecruitmentInfoView } from './instructor-recruitment-info-view'
 import { GeneralProgramVolunteerRecruitmentInfoView } from './volunteer-recruitment-info-view'
@@ -165,6 +167,10 @@ export function GeneralProgramRecruitmentView({
           items={generalRecruitTabItems({
             showInstructor: showInstructorTab,
             showVolunteer: showVolunteerTab,
+            institutionsLabel:
+              isGeneralIndividualProgram(program) || isTrainedTeachersDetailProgram(program)
+                ? '참여자 모집 정보'
+                : '참여 기관 모집 정보',
           })}
           trailing={
             showHeaderActions ? (

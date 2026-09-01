@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
@@ -63,6 +63,8 @@ type ProgramRegistrationBasicInfoParagraphProps = {
   hideEducationPlace?: boolean
   /** true면 하단 테이블에 IPS 유형 행 추가 (교육받은 교사 등록 폼) */
   includeFooterIpsType?: boolean
+  /** 참여자 유형 편집 슬롯 — 지정 시 기본 체크박스 그룹 대신 렌더 (교육받은 교사 잠금 UI) */
+  participantTypesEdit?: ReactNode
   /** controlled — 부모(editor)에서 등록 완료 스냅샷으로 전달 */
   sponsorId?: string
   onSponsorIdChange?: (sponsorId: string) => void
@@ -81,6 +83,7 @@ export function ProgramRegistrationBasicInfoParagraph({
   onVolunteerChange,
   hideEducationPlace = false,
   includeFooterIpsType = false,
+  participantTypesEdit,
   sponsorId: sponsorIdProp,
   onSponsorIdChange,
   sponsorContactId: sponsorContactIdProp,
@@ -344,28 +347,30 @@ export function ProgramRegistrationBasicInfoParagraph({
           <DetailInfoForm.Field
             label="참여자 유형"
             edit={
-              <div className="detail-info-form-inputs-wrapper">
-                <GeneralParticipantAudienceCheckboxGroup
-                  individual={participant.individual}
-                  organization={participant.organization}
-                  onIndividualChange={onIndividualChange}
-                  onOrganizationChange={onOrganizationChange}
-                />
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={participant.teacherInstructor === true}
-                  onChange={e => onTeacherInstructorChange(e.target.checked)}
-                >
-                  {participantTypeLabel('teacher_instructor')}
-                </CmsCheckbox>
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={participant.volunteer === true}
-                  onChange={e => onVolunteerChange(e.target.checked)}
-                >
-                  {participantTypeLabel('volunteer')}
-                </CmsCheckbox>
-              </div>
+              participantTypesEdit ?? (
+                <div className="detail-info-form-inputs-wrapper">
+                  <GeneralParticipantAudienceCheckboxGroup
+                    individual={participant.individual}
+                    organization={participant.organization}
+                    onIndividualChange={onIndividualChange}
+                    onOrganizationChange={onOrganizationChange}
+                  />
+                  <CmsCheckbox
+                    checkboxSize="large"
+                    checked={participant.teacherInstructor === true}
+                    onChange={e => onTeacherInstructorChange(e.target.checked)}
+                  >
+                    {participantTypeLabel('teacher_instructor')}
+                  </CmsCheckbox>
+                  <CmsCheckbox
+                    checkboxSize="large"
+                    checked={participant.volunteer === true}
+                    onChange={e => onVolunteerChange(e.target.checked)}
+                  >
+                    {participantTypeLabel('volunteer')}
+                  </CmsCheckbox>
+                </div>
+              )
             }
             view="-"
           />

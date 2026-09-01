@@ -182,9 +182,14 @@ export function InstructorPaymentTab({
 
   const invalidateSettlements = useCallback(async () => {
     if (instructorMemberId == null) return
-    await queryClient.invalidateQueries({
-      queryKey: memberQueryKeys.instructorSettlements(instructorMemberId),
-    })
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: memberQueryKeys.instructorSettlements(instructorMemberId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: memberQueryKeys.instructorSettlementStatementJoin(instructorMemberId),
+      }),
+    ])
   }, [instructorMemberId, queryClient])
 
   const openInvoice = useCallback((row: InstructorSettlementListRow) => {

@@ -12,14 +12,14 @@ alwaysApply: false
 
 - 로그인 회원이 **신청한 교육 프로그램**만 노출
 - API: `GET /api/portal/me/program-applications` (연동 시 `statusGroup`, `page`, `size`)
-- Mock: [`mock-education-applications.ts`](apps/platform/src/features/mypage/lib/mock-education-applications.ts)
+- Mock: [`mock-education-applications.ts`](apps/platform/src/features/mypage/education/applications/lib/mock-applications.ts)
 
 ### 정렬
 
 1. **모집현황**: 모집 중 → 모집 예정 → 모집 완료 (`recruiting` → `scheduled` → `closed`)
 2. **진행 상태**: 결과 대기 → 서류 합격 → 진행중 → 진행 완료 → 활동 포기 → 신청 반려
 
-구현: [`education-application-list.ts`](apps/platform/src/features/mypage/lib/education-application-list.ts)
+구현: [`education-application-list.ts`](apps/platform/src/features/mypage/education/applications/lib/list.ts)
 
 ### 페이지네이션
 
@@ -47,7 +47,7 @@ alwaysApply: false
 `MediaListRow` — 썸네일 | 기본정보+태그 | 진행상태
 
 - 태그: `ProgramStatusBadges` — 모집 완료(`closed`) → 회색(`disabled`)
-- 진행 상태 색: [`education-display-status.ts`](apps/platform/src/features/mypage/lib/education-display-status.ts)
+- 진행 상태 색: [`education-display-status.ts`](apps/platform/src/features/mypage/education/applications/lib/display-status.ts)
 
 | 상태 | 색 |
 |------|-----|
@@ -66,7 +66,7 @@ alwaysApply: false
 
 ### 공통 헤더
 
-- 뒤로가기: 라벨 `교육현황`, 아이콘 `chevron-left-gray7A`, gap 14px, `hl-sm` — [`EducationDetailBack`](apps/platform/src/features/mypage/ui/education-detail-back.tsx)
+- 뒤로가기: 라벨 `교육현황`, 아이콘 `chevron-left-gray7A`, gap 14px, `hl-sm` — [`EducationDetailBack`](apps/platform/src/features/mypage/education/applications/ui/detail-back.tsx)
 - 페이지 상단 여백 100px
 - 프로그램명: 공고용 프로그램명 (`ProgramDetail.title`), `hl-lg`, mt 30 / mb 4
 - 진행 상태: `hd-lg`, 목록과 동일 톤
@@ -76,18 +76,34 @@ alwaysApply: false
 
 - `displayStatus === 'document_passed'` **그리고** `hasInterview` + `interviewAtLabel`
 - 2차 면접일 안내 (관리자 배정일). 클릭 액션 없음
-- [`DocumentPassBanner`](apps/platform/src/features/mypage/ui/document-pass-banner.tsx)
+- **활동 포기**(`withdrawn`)에서는 **비노출** (`shouldShowDocumentPassBanner`)
+- [`DocumentPassBanner`](apps/platform/src/features/mypage/education/applications/ui/document-pass-banner.tsx)
 
-### 상세 탭 분기 (기획)
+### 상세 탭 분기 (기획 · SSOT)
 
 | 진행 상태 | 탭 |
 |-----------|-----|
 | 결과 대기 / 서류 합격 / 신청 반려 | 프로그램 정보 / 신청 내용 |
-| 진행 중 / 진행 완료 | 안내사항 / 교육 일정 / 설문조사 / 만족도조사 (미설정 항목 탭 비노출). 봉사현황은 교육 일정→배정현황, UJAT는 배정·출결 |
-| 활동 포기 (교육 전) | 프로그램 정보 / 신청 내용 |
-| 활동 포기 (교육 중) | 교육 일정 / 설문 / 만족도 (포기 이후 일정 비노출) |
+| **진행 중 / 진행 완료** | 안내사항 / 교육 일정 / 설문조사 / 만족도조사 / **정산 현황** |
+| **활동 포기 (교육 전)** `before_education` | 프로그램 정보 / 신청 내용. 상태만 `활동 포기`, 합격 배너·신청 취소 비노출 |
+| **활동 포기 (교육 중)** `during_education` | 교육 일정 / 설문조사 / 만족도조사 / **정산 현황** (**안내사항 비노출**). `lastParticipatedSession` 이하만 노출 |
 
-탭 여백: top 48 / bottom 56. section query: `?section=program|application`
+#### 진행·완료 탭 세부
+
+- **설문조사·만족도조사**: 진행 중 내용이 없어도 **탭 유지**. 단 프로그램 등록 시 해당 항목을 **설정하지 않은** 경우(`surveyConfigured` / `satisfactionConfigured === false`) 탭 **비노출**
+- **교육 일정** 라벨 (`resolveEducationScheduleTabLabel`):
+  - 봉사(`volunteer`) → **배정현황**
+  - UJAT(`ujat-volunteer` / `ujat-participant`) → **배정 및 출결 현황**
+  - 그 외 → **교육일정**
+- 구현: [`detail-tabs.ts`](apps/platform/src/features/mypage/education/applications/lib/detail-tabs.ts)
+
+탭 여백: top 48 / bottom 56. section query: `?section=program|application|notice|schedule|survey|satisfaction|settlement`
+
+### 활동 포기 필드
+
+- `withdrawalPhase`: `before_education` | `during_education`
+- `lastParticipatedSession`: 진행 중 포기 시 마지막 참여 회차(1-based). 예: 10회차 중 3회차까지 → `3`
+- 헬퍼: `isWithdrawnBeforeEducation` · `isWithdrawnDuringEducation` · `filterItemsUpToLastParticipatedSession`
 
 ## 프로그램 정보 탭 (일반 · `PROGRAM_APPLICATION_STATUSES`)
 
@@ -139,14 +155,97 @@ alwaysApply: false
 - 상세 **최하단** 노출 (`세부내용` 밖). 미기재 시 **비노출**
 - 어드민: 참여자 모집 정보 > 상세 정보 > 지원 방법
 
+## 교육일정 탭 (진행중 · 진행완료 · 진행중 포기)
+
+컴포넌트: [`EducationSchedulePanel`](apps/platform/src/features/mypage/education/schedules/ui/panel.tsx)  
+규칙·문구: [`schedule-rules.ts`](apps/platform/src/features/mypage/education/schedules/lib/schedule-rules.ts)
+
+### 목록
+
+- 헤더: `{탭라벨} N건` (교육일정 / 배정현황 / 배정 및 출결 현황)
+- 페이지당 `EDUCATION_SCHEDULE_PAGE_SIZE`(7) · `PFPagination`
+- 진행중 포기: `filterItemsUpToLastParticipatedSession` — `sessionNumber <= lastParticipatedSession`
+
+### 일정 행
+
+| 요소 | 규칙 |
+|------|------|
+| 진행 태그 | `진행 완료` / `진행 예정` — 교육일(로컬 일) 지나면 예정→완료 |
+| 교육 진행일 | `YYYY년 MM월 DD일(요일)` |
+| 회차/일정명 | 커리큘럼형 회차명 · 일정형 일정명 (`title`) |
+| 출석 | 출석 / 지각 / 결석 / 사유 불참(+사유). **미진행(예정)은 비노출** |
+| 결석 사유 제출하기 | **진행 예정** 또는 **결석**만. 클릭 → 팝업(현재 준비 중) |
+
+### 과제 안내
+
+- 과제 있고 **제출 시작일 이후**만 영역 노출. 진행 예정이라도 시작일 전이면 비노출
+- 문구·버튼: `resolveEducationAssignmentGuide`
+  - 상태 라벨(`과제 제출 완료` · `미제출`)은 **대괄호 없이** 별도 톤(제출=primary-700 / 미제출=cool-500)
+  - 미제출+마감전: `기한 내에 과제를 제출해 주세요` (상태 라벨 없음)
+  - 제출완료+마감전: 라벨 + `제출한 과제는 마감 전까지는 수정 제출이 가능해요`
+  - 마감: 라벨(제출완료|미제출) + `과제 제출기한이 마감되었어요`
+  - 피드백: `담당자의 과제 피드백이 있어요` + 피드백 확인 / 수정 제출하기
+  - 수정제출완료: 라벨 + `과제 수정 제출이 완료되었어요` · 제출 버튼 disabled
+  - 제출 완료 시 파일 목록 위 구분선(`--color-border-default`)
+- 제출 완료+마감 or 수정제출완료 → 과제 제출하기 **disabled**
+- 과제 제출·피드백·결석 사유 팝업: UI 후속(현재 준비 중 alert)
+
+## 설문조사 · 만족도조사 탭 (빈 상태)
+
+컴포넌트: [`EducationSurveyEmptyPanel`](apps/platform/src/features/mypage/education/surveys/ui/empty-panel.tsx)  
+`kind: 'survey' | 'satisfaction'` — 동일 레이아웃(`illust-cross` · 600px · center · `background: cool-50` · **100vw full-bleed** · 푸터까지), 카피만 분기.
+
+| kind | 타이틀 | 설명 |
+|------|--------|------|
+| survey | 진행 중인 설문조사가 없어요 | 참여할 프로그램의 설문조사가 생기면 이곳에서 확인할 수 있어요 |
+| satisfaction | 진행 중인 만족도조사가 없어요 | 참여할 프로그램의 만족도조사가 생기면 이곳에서 확인할 수 있어요 |
+
+목록·응답 API 후속.
+
+## 신청 내용 탭
+
+노출: `waiting_result` | `document_passed` 만 실 UI.  
+`rejected` 등 그 외 신청-계열 상태는 placeholder.  
+컴포넌트: [`EducationApplicationContent`](apps/platform/src/features/mypage/education/applications/ui/content.tsx)  
+분기: `canShowEducationApplicationContent`
+
+| 블록 | 규칙 | 스타일 |
+|------|------|--------|
+| **자기소개 및 지원동기** | 미기재 시 비노출 (`selfIntroMotivation`) | 타이틀 `bd-sm-rg` cool-600 · mb 8 / 본문 `bd-md-md` black · **line-height 170%** |
+| **진행 희망 교육 일정** | 미기재 시 비노출 (`preferredEducationScheduleLabel`) | 카드 cool-50 · padding 20 · radius 16 · gap 8 / 타이틀 `bd-md-sb` / 일정 `bd-md-md` |
+
+섹션 간 gap: 32. Mock: [`mock-education-applications.ts`](apps/platform/src/features/mypage/education/applications/lib/mock-applications.ts). API 연동 후속.
+
+## 신청 정보 팝업 (진행중 안내사항 탭)
+
+- 우측 하단 **신청 정보** → [`EducationApplicationInfoModal`](apps/platform/src/features/mypage/education/applications/ui/application-info-modal.tsx)
+- 제목 `신청 정보` · `PFModal` `size="md"` · `mobilePlacement="full"`
+- 본문: 신청 내용 탭과 동일 `EducationApplicationContent` (자기소개·진행 희망 일정)
+- 긴 본문 스크롤 시 헤더(타이틀·닫기) 고정 — body만 overflow
+
+## 안내사항 상세 모달 (진행중)
+
+- 목록 카드 클릭 → [`EducationInProgressNoticeDetailModal`](apps/platform/src/features/mypage/education/notices/ui/detail-modal.tsx)
+- `PFModal` `size="lg"`(960) · `mobilePlacement="full"`(≤1079)
+- PC 좌우 `PFCarouselButton`으로 이전/다음 안내 (끝에서 disabled). 모바일에서는 숨김
+- 열면 해당 건 `read: true` (목록·모달 동기)
+- **작성자만** 더보기(`isAuthor`) → 수정하기(준비 중) / 삭제하기 → 확인 모달 후 mock 목록에서 제거·상세 닫기
+- 삭제 확인: [`EducationNoticeDeleteConfirm`](apps/platform/src/features/mypage/education/notices/ui/delete-confirm.tsx) — 「안내사항을 삭제할까요?」 / 취소·삭제하기
+- 첨부 1건: 클립 + 파일명 + 다운로드. 2건 이상: `{n}개의 첨부파일` 목록(chevron으로 접기)
+- 하단 stats는 카드와 동일 [`EducationNoticeStats`](apps/platform/src/features/mypage/education/notices/ui/stats.tsx)
+- 반응 목록·피커 mock (즉시 토글). 댓글 전송·반응 API 후속
+
 ### 구현 범위 vs 후속
 
 | 구현됨 | 후속 |
 |--------|------|
-| 공통 헤더·배너·프로그램 신청 상태 2탭 | 신청 내용 실 UI |
+| 공통 헤더·배너·프로그램 신청 상태 2탭 | 신청 반려용 신청 내용 UI |
 | ProgramInfoBody 재사용 + 취소 확인·이력 제거(mock) | 취소 API 연동 |
-| 빈 필드·첨부·지원방법 비노출 / 교육 커리큘럼 라벨 | 진행중/완료/포기 탭 UI |
-| 비-applied 상태 placeholder | |
+| 빈 필드·첨부·지원방법 비노출 / 교육 커리큘럼 라벨 | 교육 일정·설문·만족도 탭 |
+| 신청 내용 (결과 대기·서류 합격) mock UI | 신청 내용 API 연동 |
+| 안내사항 · 프로그램/신청 정보 팝업 · 교육일정 목록 · **설문·만족도 빈 상태** | 결석/과제/피드백 팝업 · 설문 목록 UI · 정산 · API |
+| **활동 포기** 상세 분기(교육 전/중) · 탭 SSOT | 교육일정·설문 UI + 회차 필터 연동 |
+| 비-applied 상태 placeholder | 진행 완료 안내사항 탭 |
 
 ## 금지
 
@@ -160,8 +259,13 @@ alwaysApply: false
 
 - 목록: [`pages/mypage/education/`](apps/platform/src/pages/mypage/education/)
 - 상세: [`pages/mypage/education/detail/`](apps/platform/src/pages/mypage/education/detail/)
-- 행 UI: [`application-list-item.tsx`](apps/platform/src/features/mypage/ui/application-list-item.tsx)
+- 행 UI: [`application-list-item.tsx`](apps/platform/src/features/mypage/education/applications/ui/list-item.tsx)
 - Body: [`program-info-body/`](apps/platform/src/features/program/ui/program-info-body/)
 - 취소: `canCancelEducationApplication` · `EducationCancelConfirm` · `cancelMockEducationApplication`
+- 신청 내용: `EducationApplicationContent` · `canShowEducationApplicationContent`
+- 활동 포기: `withdrawalPhase` · `lastParticipatedSession` · `isWithdrawnBeforeEducation` · `isWithdrawnDuringEducation`
+- 안내사항: `EducationInProgressNoticePanel` · `EducationInProgressNoticeDetailModal` · `EducationNoticeStats` · `EducationProgramInfoModal` · `EducationApplicationInfoModal`
+- 교육일정: `EducationSchedulePanel` · `resolveEducationAssignmentGuide` · `filterItemsUpToLastParticipatedSession`
+- 설문·만족도 빈 상태: `EducationSurveyEmptyPanel`
 
-**Last updated:** 2026-08-27
+**Last updated:** 2026-09-01 (설문·만족도 빈 상태)

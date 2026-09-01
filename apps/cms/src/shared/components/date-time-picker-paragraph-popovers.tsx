@@ -59,6 +59,10 @@ export type ParagraphDatePickerPopoverProps = {
   invalidTimeRange: boolean
   showPeriodToggle: boolean
   showTimeToggle?: boolean
+  /** 기간 토글 ON 고정(비활성). 기본 false. */
+  periodToggleDisabled?: boolean
+  /** 시간 토글 ON 고정(비활성). 기본 false. */
+  timeToggleDisabled?: boolean
   periodOn: boolean
   onPeriodOnChange: (next: boolean) => void
   onTimeOnChange: (next: boolean) => void
@@ -107,6 +111,8 @@ export function ParagraphDatePickerPopover({
   invalidTimeRange,
   showPeriodToggle,
   showTimeToggle = true,
+  periodToggleDisabled = false,
+  timeToggleDisabled = false,
   periodOn,
   onPeriodOnChange,
   onTimeOnChange,
@@ -310,7 +316,7 @@ export function ParagraphDatePickerPopover({
                           onPeriodToggleOn?.(draft, nextEnd)
                         }
                       }}
-                      disabled={disabled}
+                      disabled={disabled || periodToggleDisabled}
                     />
                   ) : null}
                   {showTimeToggle ? (
@@ -327,7 +333,7 @@ export function ParagraphDatePickerPopover({
                           })
                         }
                       }}
-                      disabled={disabled}
+                      disabled={disabled || timeToggleDisabled}
                     />
                   ) : null}
                 </div>

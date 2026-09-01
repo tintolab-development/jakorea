@@ -29,13 +29,21 @@ export function resolveUjatBusinessKpiDisplay(
   program: Program,
   overlayInput?: Record<string, unknown>
 ): UjatBusinessKpiDisplay {
+  const overlay = overlayInput ?? resolveUjatRegistrationBasicInfoOverlay()
   const kpi = program.generalCommonInfo?.kpi
+  const overlayNumber = (key: string): number | undefined => {
+    const v = overlay[key]
+    return typeof v === 'number' && Number.isFinite(v) ? v : undefined
+  }
   return {
-    finalParticipants: kpi?.finalParticipants ?? program.approvedStudentCount ?? 0,
-    volunteerCount: kpi?.volunteerCount ?? program.generalVolunteers ?? 0,
-    finalSchools: kpi?.finalSchools ?? program.participatingSchoolCount ?? 0,
-    finalClasses: kpi?.finalClasses ?? 0,
-    hasVolunteerRecruitment: resolveUjatHasVolunteerRecruitment(overlayInput),
+    finalParticipants:
+      overlayNumber('ujat.kpi.participantCount') ?? kpi?.finalParticipants ?? program.approvedStudentCount ?? 0,
+    volunteerCount:
+      overlayNumber('ujat.kpi.volunteer') ?? kpi?.volunteerCount ?? program.generalVolunteers ?? 0,
+    finalSchools:
+      overlayNumber('ujat.kpi.dispatchedSchool') ?? kpi?.finalSchools ?? program.participatingSchoolCount ?? 0,
+    finalClasses: overlayNumber('ujat.kpi.dispatchedClass') ?? kpi?.finalClasses ?? 0,
+    hasVolunteerRecruitment: resolveUjatHasVolunteerRecruitment(overlay),
   }
 }
 

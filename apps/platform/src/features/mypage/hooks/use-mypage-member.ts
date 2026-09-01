@@ -8,8 +8,8 @@ import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import {
   MOCK_MYPAGE_AFFILIATION,
   MOCK_MYPAGE_EMPLOYMENT_LABEL,
-  MOCK_MYPAGE_USER_NAME,
-} from '../lib/constants'
+} from '../home/lib/mock-stats'
+import { MOCK_MYPAGE_USER_NAME } from '../lib/constants'
 import {
   mapPortalMemberToPlatformProfile,
   resolvePortalDisplayName,

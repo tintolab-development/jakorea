@@ -11,6 +11,14 @@ export interface NotificationTemplateResponse {
   channelType?: string;
   templateCode?: string;
   providerTemplateCode?: string;
+  providerFlowId?: string;
+  messagePurpose?: string;
+  smsMessageType?: string;
+  providerSenderKey?: string;
+  providerSenderProfileType?: string;
+  providerSenderPhoneNumber?: string;
+  providerSenderEmailAddress?: string;
+  providerStatsKeyId?: string;
   titleTemplate?: string;
   contentTemplate?: string;
   useYn?: boolean;

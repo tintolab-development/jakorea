@@ -46,6 +46,7 @@ export const REAL_API_MODULE_KEYS = [
   'geminiPerformance',
   'applications',
   'programProgress',
+  'files',
 ] as const
 export type RealApiModule = (typeof REAL_API_MODULE_KEYS)[number]
 

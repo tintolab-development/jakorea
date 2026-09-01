@@ -30,6 +30,7 @@ Admin 구현 스택: [`apps/admin/.cursor/rules`](../../../admin/.cursor/rules/R
 
 - [FSD structure](./architecture/fsd-structure.md) — Feature-Sliced Design  
 - [Routing](./architecture/routing.md) — React Router and route naming  
+- **[URL 구동 풀페이지 상세 모달](../../../../.cursor/rules/url-driven-detail-modal.mdc)** — 1클릭 오픈 보장·URL 쓰기 최소화 (두 번 클릭·주소 튐 방지, 모노레포 공통)  
 
 ## Coding
 

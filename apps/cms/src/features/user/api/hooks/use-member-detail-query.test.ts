@@ -32,6 +32,10 @@ vi.mock('@/features/user/api/fetch-admin-member-detail', () => ({
   fetchAdminMemberDetailAsUser: vi.fn(),
   isAdminMemberDetailRole: vi.fn(() => false),
   shouldUseAdminAccountDetailApi: vi.fn(() => false),
+  parseAdminAccountIdFromUserId: (userId: string) => {
+    const match = userId.match(/^admin-account-(\d+)$/)
+    return match ? Number(match[1]) : undefined
+  },
 }))
 
 vi.mock('@/features/user/api/map-school-organization-to-user', () => ({
@@ -97,5 +101,31 @@ describe('memberDetailQueryOptions shell GET routing', () => {
     expect(fetchInstructorMemberDetailRemote).toHaveBeenCalledWith(99)
     expect(fetchTeacherMemberDetailRemote).not.toHaveBeenCalled()
     expect(user.id).toBe('instructor-1')
+  })
+})
+
+describe('memberDetailQueryKey cache identity', () => {
+  it('uuid와 admin-account-{id}가 같은 adminAccountId면 queryKey가 같다', () => {
+    const fromList = memberDetailQueryOptions('uuid-admin', {
+      role: 'ADMIN',
+      adminAccountId: 171601,
+    })
+    const fromCanonical = memberDetailQueryOptions('admin-account-171601', {
+      role: 'ADMIN',
+      adminAccountId: 171601,
+    })
+    expect(fromList.queryKey).toEqual(fromCanonical.queryKey)
+  })
+
+  it('organizationId가 같으면 userId가 달라도 queryKey가 같다', () => {
+    const fromList = memberDetailQueryOptions('uuid-school', {
+      role: 'SCHOOL',
+      organizationId: 171601,
+    })
+    const fromCanonical = memberDetailQueryOptions('organization-171601', {
+      role: 'SCHOOL',
+      organizationId: 171601,
+    })
+    expect(fromList.queryKey).toEqual(fromCanonical.queryKey)
   })
 })

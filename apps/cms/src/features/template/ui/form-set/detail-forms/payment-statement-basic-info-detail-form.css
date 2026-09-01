@@ -110,3 +110,11 @@
   width: 100%;
   min-width: 0;
 }
+
+/* A4 document — 카드형 radius/shadow 제거 (셀 border는 유지) */
+.form-document-preview-paragraph--content-only
+  .payment-statement-basic-info-detail-form
+  .detail-info-form__body {
+  border-radius: 0;
+  box-shadow: none;
+}

@@ -8,6 +8,7 @@ import { shouldShowInstitutionApplicationEducationFormatField } from '@/features
 import { shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph } from '@/features/program/general/lib/institution-application-form-visibility'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
+import { countUniqueEducationScheduleCalendarDays } from '@/features/template/lib/format-education-schedule-line'
 import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import type {
   GeneralProgramEducationStructure,
@@ -150,13 +151,17 @@ export function shouldShowInstitutionApplicationPreferredScheduleParagraph(
   )
 }
 
-/** 진행 희망 교육 일정 단락 카드 노출 — 일정형 + 복수 회차는 숨김 */
+/** 진행 희망 교육 일정 단락 카드 노출 — 일정형 + 복수 회차, 날짜 지정 고유 일자 ≤1일 숨김 */
 export function shouldShowInstitutionApplicationScheduleParagraph(
   bridge: InstitutionApplicationProgramBridge
 ): boolean {
-  return !(
-    bridge.educationStructure === 'schedule' && bridge.sessionRound === 'multi'
-  )
+  if (bridge.educationStructure === 'schedule' && bridge.sessionRound === 'multi') {
+    return false
+  }
+  if (bridge.educationScheduleMode !== 'period') {
+    return countUniqueEducationScheduleCalendarDays(bridge.educationScheduleLines) > 1
+  }
+  return true
 }
 
 export function getInstitutionApplicationFormHiddenParagraphIds(

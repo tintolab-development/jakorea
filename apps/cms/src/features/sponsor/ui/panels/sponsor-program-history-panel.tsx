@@ -5,7 +5,7 @@ import type { TableRowSelection } from 'antd/es/table/interface'
 import { useNavigate } from 'react-router-dom'
 import type { UseProgramHistoryFilterReturn } from '@/features/sponsor/hooks/use-program-history-filter'
 import type { SponsorProgramHistoryRow } from '@/features/sponsor/model/sponsor-management.types'
-import { getProgramAdminDetailInfoTabUrl } from '@/features/program/general/lib/program-admin-detail-url'
+import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import {
   CmsButton,
@@ -192,7 +192,7 @@ export function SponsorProgramHistoryPanel({
         }
         const programId = record.programId?.trim()
         if (!programId) return
-        navigate(getProgramAdminDetailInfoTabUrl(programId))
+        navigateToProgramAdminDetail(navigate, programId)
       },
       style: { cursor: 'pointer' as const },
     }),

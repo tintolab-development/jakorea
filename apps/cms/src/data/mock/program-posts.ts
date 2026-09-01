@@ -69,8 +69,7 @@ function buildPostsForHSBCGangseo(): ProgramPost[] {
       programId: HSBC_ECONOMY_PROGRAM_ID,
       schoolId: GANGSEO_SCHOOL_ID as UUID,
       authorName: 'JA KOREA 알림',
-      content:
-        '1회차 수업 하루 전입니다. 내일 진행될 단원 내용을 미리 준비해 주시기 바랍니다!',
+      content: '1회차 수업 하루 전입니다. 내일 진행될 단원 내용을 미리 준비해 주시기 바랍니다!',
       read: true,
       viewCount: 12,
       reactionCount: 10,
@@ -130,8 +129,7 @@ function buildGeneralOrgSchool1ScreenshotPosts(): ProgramPost[] {
       programId,
       schoolId: GENERAL_ORG_SCHOOL_1_ID as UUID,
       authorName: 'JA KOREA 알림',
-      content:
-        '1회차 수업 하루 전입니다. 내일 진행될 단원 내용을 미리 준비해 주시기 바랍니다!',
+      content: '1회차 수업 하루 전입니다. 내일 진행될 단원 내용을 미리 준비해 주시기 바랍니다!',
       read: true,
       viewCount: 12,
       reactionCount: 10,
@@ -177,7 +175,8 @@ function buildPostsForSchools(): ProgramPost[] {
     for (let i = 0; i < postCount; i++) {
       const publishedAt = date(20 - schoolIdx * 2 - i, 14 + (i % 3), i * 5)
       const isRead = schoolIdx === 0 ? [0, 2].includes(i) : i === 0
-      const postType: ProgramPost['postType'] = i % 3 === 0 ? 'notice' : i % 3 === 1 ? 'schedule' : undefined
+      const postType: ProgramPost['postType'] =
+        i % 3 === 0 ? 'notice' : i % 3 === 1 ? 'schedule' : undefined
       const contentIndex = i % contentsForSchool.length
       posts.push({
         id: `post-${String(idSeq).padStart(3, '0')}` as UUID,
@@ -216,7 +215,7 @@ function buildPosts(): ProgramPost[] {
   const contents = [
     '2026년 1학기 경제금융교육 일정이 확정되었습니다. 참여 학교 담당교사님께서는 첨부된 일정표를 확인해 주시기 바랍니다.',
     '강사 대기실 위치가 변경되었습니다. 당일 안내도는 첨부 파일을 참고해 주세요. 문의사항은 담당 매니저에게 연락 부탁드립니다.',
-    '최근 과제 제출과 관련하여 다른 반 친구의 과제를 그대로 베끼거나, GPT 등에 답을 맡기는 사례가 많다는 소식을 전해 들었습니다.\n\n틴토고등학교 학생 여러분, 과제를 스스로 성실히 수행하는 학생이 되어 주시기 바랍니다.\n\n앞으로 타인의 글을 베끼거나 대신 작성한 것으로 확인되는 과제는 0점 처리하며 재제출이 필요합니다.',
+    '최근 과제 제출 과정에서 일부 학생들이 다른 반 친구의 과제를 그대로 따라 쓰거나, 인터넷 자료 또는 GPT와 같은 인공지능 도구의 답변을 충분한 이해 없이 그대로 복사하여 제출하는 사례가 있다는 이야기를 전달받았습니다. 과제는 단순히 정답을 제출하기 위한 활동이 아니라, 수업 시간에 배운 내용을 스스로 정리하고 생각을 확장하며 자신의 힘으로 문제를 해결해보는 중요한 학습 과정입니다. 다른 사람의 결과물을 그대로 베끼거나 인공지능이 작성한 답변을 자신의 생각처럼 제출하는 것은 과제의 의미를 잃게 만들 뿐 아니라, 스스로 성장할 수 있는 기회를 놓치게 하는 행동입니다. 물론 과제를 하다 보면 내용이 어렵거나, 시간이 부족하거나, 어떻게 시작해야 할지 막막할 수 있습니다. 그럴 때 친구와 의견을 나누거나 선생님께 질문하고, 참고 자료나 인공지능 도구의 도움을 받을 수는 있습니다. 하지만 중요한 것은 그 내용을 그대로 가져오는 것이 아니라, 스스로 이해하고 정리한 뒤 자신의 생각과 표현으로 완성하는 것입니다. 틴토고등학교 학생 여러분, 우리는 결과보다 과정의 가치를 소중히 여기는 태도를 가져야 합니다. 조금 부족하더라도 자신의 힘으로 고민하고 작성한 과제는 충분히 의미가 있습니다. 반대로 겉으로 보기에는 완성도가 높아 보여도, 스스로 이해하지 못한 내용을 그대로 제출한 과제는 진정한 배움으로 이어지기 어렵습니다. 앞으로 과제를 제출할 때에는 다른 사람의 과제를 그대로 베끼지 않고, GPT 등 인공지능 도구의 답변도 자신의 생각 없이 그대로 복사하지 않도록 주의해주시기 바랍니다. 도움을 받았다면 반드시 내용을 충분히 이해하고, 자신의 언어로 다시 정리하며, 필요한 경우 참고했다는 사실을 분명히 하는 태도가 필요합니다. 정직하게 배우고, 주도적으로 고민하며, 스스로의 힘으로 성장해가는 학생이 진정으로 멋진 학생입니다. 틴토고등학교 여러분 모두가 책임감 있는 학습 태도를 바탕으로 과제를 성실히 수행하고, 정직하고 주도적인 배움을 실천하는 학생이 되기를 바랍니다. 최근 과제 제출 과정에서 일부 학생들이 다른 반 친구의 과제를 그대로 따라 쓰거나, 인터넷 자료 또는 GPT와 같은 인공지능 도구의 답변을 충분한 이해 없이 그대로 복사하여 제출하는 사례가 있다는 이야기를 전달받았습니다. 과제는 단순히 정답을 제출하기 위한 활동이 아니라, 수업 시간에 배운 내용을 스스로 정리하고 생각을 확장하며 자신의 힘으로 문제를 해결해보는 중요한 학습 과정입니다. 다른 사람의 결과물을 그대로 베끼거나 인공지능이 작성한 답변을 자신의 생각처럼 제출하는 것은 과제의 의미를 잃게 만들 뿐 아니라, 스스로 성장할 수 있는 기회를 놓치게 하는 행동입니다. 물론 과제를 하다 보면 내용이 어렵거나, 시간이 부족하거나, 어떻게 시작해야 할지 막막할 수 있습니다. 그럴 때 친구와 의견을 나누거나 선생님께 질문하고, 참고 자료나 인공지능 도구의 도움을 받을 수는 있습니다. 하지만 중요한 것은 그 내용을 그대로 가져오는 것이 아니라, 스스로 이해하고 정리한 뒤 자신의 생각과 표현으로 완성하는 것입니다. 틴토고등학교 학생 여러분, 우리는 결과보다 과정의 가치를 소중히 여기는 태도를 가져야 합니다. 조금 부족하더라도 자신의 힘으로 고민하고 작성한 과제는 충분히 의미가 있습니다. 반대로 겉으로 보기에는 완성도가 높아 보여도, 스스로 이해하지 못한 내용을 그대로 제출한 과제는 진정한 배움으로 이어지기 어렵습니다. 앞으로 과제를 제출할 때에는 다른 사람의 과제를 그대로 베끼지 않고, GPT 등 인공지능 도구의 답변도 자신의 생각 없이 그대로 복사하지 않도록 주의해주시기 바랍니다. 도움을 받았다면 반드시 내용을 충분히 이해하고, 자신의 언어로 다시 정리하며, 필요한 경우 참고했다는 사실을 분명히 하는 태도가 필요합니다. 정직하게 배우고, 주도적으로 고민하며, 스스로의 힘으로 성장해가는 학생이 진정으로 멋진 학생입니다. 틴토고등학교 여러분 모두가 책임감 있는 학습 태도를 바탕으로 과제를 성실히 수행하고, 정직하고 주도적인 배움을 실천하는 학생이 되기를 바랍니다.',
     '2회차 강의가 다음 주 금요일로 예정되어 있습니다. 교재 미배송 학교는 연락 주시면 재발송 도와드리겠습니다.',
     '만족도 설문 링크가 발송되었습니다. 참여해 주신 모든 분들께 감사드립니다.',
     '1회차 강의가 잘 마무리되었습니다. 2회차에서는 기업과 경제적 개념을 다룰 예정이오니 미리 교재 2장을 읽어 오시면 좋겠습니다. 수업 전 질문이 있으시면 게시판에 남겨 주시면 강의 중 참고하겠습니다.',
@@ -232,10 +231,16 @@ function buildPosts(): ProgramPost[] {
     const postCount = idx === 0 ? 5 : idx < 4 ? 2 : 1
     for (let i = 0; i < postCount; i++) {
       const publishedAt = date(30 - idx * 5 - i * 2, 14 + i, i * 10)
-      const isRead =
-        idx === 0 ? [1, 3].includes(i) : i === 1 && idx === 1
-      const postTypeByIndex: ProgramPost['postType'][] = ['notice', 'schedule', undefined, 'notice', 'schedule']
-      const postType: ProgramPost['postType'] = idx === 0 ? postTypeByIndex[i] : i === 0 ? 'notice' : i === 1 ? 'schedule' : undefined
+      const isRead = idx === 0 ? [1, 3].includes(i) : i === 1 && idx === 1
+      const postTypeByIndex: ProgramPost['postType'][] = [
+        'notice',
+        'schedule',
+        undefined,
+        'notice',
+        'schedule',
+      ]
+      const postType: ProgramPost['postType'] =
+        idx === 0 ? postTypeByIndex[i] : i === 0 ? 'notice' : i === 1 ? 'schedule' : undefined
       const contentIndexForFirstProgram = [0, 1, 2, 3, 8]
       const contentIndex = idx === 0 ? contentIndexForFirstProgram[i] : (idx + i) % contents.length
       posts.push({
@@ -322,8 +327,7 @@ function buildPostsForUjatInstitutions(): ProgramPost[] {
         },
         {
           authorName: '담당 매니저',
-          content:
-            '1회차 수업 하루 전입니다. 내일 진행될 단원 내용을 미리 준비해 주시기 바랍니다!',
+          content: '1회차 수업 하루 전입니다. 내일 진행될 단원 내용을 미리 준비해 주시기 바랍니다!',
           read: true,
           viewCount: 12,
           reactionCount: 10,
@@ -451,7 +455,8 @@ function buildPostsForUjatInstitutions(): ProgramPost[] {
         },
         {
           authorName: '한○○ 봉사자님',
-          content: '6월 교육 일정 관련하여 사전 협의 요청드립니다. 가능한 시간대를 댓글로 알려 주세요.',
+          content:
+            '6월 교육 일정 관련하여 사전 협의 요청드립니다. 가능한 시간대를 댓글로 알려 주세요.',
           read: false,
           viewCount: 5,
           reactionCount: 1,
@@ -481,8 +486,7 @@ function buildPostsForUjatInstitutions(): ProgramPost[] {
         },
         {
           authorName: '최○○ 봉사자님',
-          content:
-            '다음 주 금요일 1회차 교육을 진행할 예정입니다. 학급별 인원 확인 부탁드립니다.',
+          content: '다음 주 금요일 1회차 교육을 진행할 예정입니다. 학급별 인원 확인 부탁드립니다.',
           read: false,
           viewCount: 5,
           reactionCount: 3,
@@ -586,8 +590,12 @@ mockProgramPosts.forEach(post => {
     byProgramAndSchool.set(key, schoolList)
   }
 })
-byProgramId.forEach(list => list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()))
-byProgramAndSchool.forEach(list => list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()))
+byProgramId.forEach(list =>
+  list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+)
+byProgramAndSchool.forEach(list =>
+  list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+)
 
 /** 프로그램 ID로 게시글 목록 조회 (최신순, 프로그램 전체 공지 + 학교별 공지 모두 포함) */
 export function getProgramPostsByProgramId(programId: UUID): ProgramPost[] {
@@ -595,7 +603,10 @@ export function getProgramPostsByProgramId(programId: UUID): ProgramPost[] {
 }
 
 /** 프로그램 + 참여기관(학교) ID로 해당 학교 게시글만 조회 (학교 상세 게시글 탭용) */
-export function getProgramPostsByProgramIdAndSchoolId(programId: UUID, schoolId: string): ProgramPost[] {
+export function getProgramPostsByProgramIdAndSchoolId(
+  programId: UUID,
+  schoolId: string
+): ProgramPost[] {
   const directKey = `${programId}:${schoolId}`
   const direct = byProgramAndSchool.get(directKey) ?? []
   if (direct.length > 0) return direct.slice()

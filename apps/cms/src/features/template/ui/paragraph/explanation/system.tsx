@@ -37,9 +37,9 @@ export function ExplanationSystem({
   onChange: (next: SystemParagraph) => void
   isEditMode: boolean
   displayMode?: AgreementSystemBodyDisplayMode
-  /** write 모드 서명란 — 사용자 이름 */
+  /** write·document 모드 서명란 — 사용자 이름 */
   participantName?: string
-  /** write 모드 날짜(미주입 시 `new Date()`) */
+  /** write·document 모드 날짜(미주입 시 `new Date()`) */
   now?: Date
 }) {
   const preset = paragraph.systemPreset
@@ -47,36 +47,52 @@ export function ExplanationSystem({
     return null
   }
 
+  const trimmedName = (participantName ?? '').trim()
   const bodyText =
     preset === 'agreement_date'
       ? displayMode === 'write' || displayMode === 'document'
         ? formatKoreanFullDate(now ?? new Date())
         : AUTHORING_DATE_LABEL
       : displayMode === 'write'
-        ? `동의자 : ${(participantName ?? '').trim() || '(작성자)'} (서명)`
+        ? `동의자 : ${trimmedName || '(작성자)'} (서명)`
         : AUTHORING_SIGNATURE_LABEL
 
   const documentSignatureBody =
     preset === 'agreement_signature' && displayMode === 'document' ? (
       <div className="explanation-system-signature-document">
-        <span className="explanation-system-signature-document__name">동의자</span>
+        <span className="explanation-system-signature-document__label">동의자</span>
+        <span className="explanation-system-signature-document__name">
+          {trimmedName ? (
+            <span className="explanation-system-signature-document__participant">{trimmedName}</span>
+          ) : null}
+        </span>
         <span className="explanation-system-signature-document__mark">(서명)</span>
       </div>
     ) : null
 
   const usePreConsentSheetBar = isPaymentStatementPreConsentSheetBarSystemParagraph(paragraph)
+  const isDocument = displayMode === 'document'
+  const documentModifier =
+    isDocument && preset === 'agreement_date'
+      ? 'explanation-system--document-date'
+      : isDocument && preset === 'agreement_signature'
+        ? 'explanation-system--document-signature'
+        : ''
 
   if (usePreConsentSheetBar) {
     const barClass =
       displayMode === 'document' ? 'payment-pre-consent-fixed-block--document' : undefined
     const useDocumentSignatureLayout =
       preset === 'agreement_signature' && displayMode === 'document' && documentSignatureBody != null
-    const isDocument = displayMode === 'document'
     /* 작성 모드: `form-editor-body` 래퍼는 슬롯·리스트 gap과 여백이 겹쳐 보이므로 layout에서 제외(display: contents).
        문서 모드: `.explanation-system--document` 조상은 인쇄용 스타일에 필요 */
     return (
       <div
-        className={isDocument ? 'explanation-system--document' : undefined}
+        className={
+          isDocument
+            ? ['explanation-system--document', documentModifier].filter(Boolean).join(' ')
+            : undefined
+        }
         style={!isDocument ? { display: 'contents' } : undefined}
       >
         <div className="explanation-system-row">
@@ -90,7 +106,11 @@ export function ExplanationSystem({
 
   return (
     <div
-      className={['form-editor-body', displayMode === 'document' ? 'explanation-system--document' : '']
+      className={[
+        'form-editor-body',
+        isDocument ? 'explanation-system--document' : '',
+        documentModifier,
+      ]
         .filter(Boolean)
         .join(' ')}
     >

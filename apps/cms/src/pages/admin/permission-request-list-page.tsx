@@ -2,10 +2,9 @@
  * 권한 승인 — 강사·관리자 탭, 회원 권한 신청 목록
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
-import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import '@/shared/ui/detail-fullpage-modal.css'
 import type { User } from '@/types/user'
 import type { MemberPermissionApplicationRow } from '@/types/member-permission-application'
@@ -15,7 +14,9 @@ import {
 } from '@/features/user/permission-management/members-permission-list'
 import { mapPermissionApplicationRowToDetailUser } from '@/features/user/permission-management/lib/map-permission-application-row-to-detail-user'
 import { mapInstructorRoleRequestDetailToUser } from '@/features/user/api/map-instructor-role-request-detail-to-user'
-import { fetchInstructorRoleRequestDetailRemote } from '@/features/user/api/members-api-client'
+import { mapAdminAccountDetailToUser } from '@/features/user/api/map-admin-account-detail-to-user'
+import { useInstructorRoleRequestDetailQuery } from '@/features/user/api/hooks/use-instructor-role-request-detail-query'
+import { useAdminApprovalRequestDetailQuery } from '@/features/user/api/hooks/use-admin-approval-request-detail-query'
 import {
   InstructorPermissionApproveModal,
   type InstructorPermissionApprovePayload,
@@ -30,6 +31,11 @@ import { UserDetailFullPageModal } from '@/pages/users/user-detail-fullpage-moda
 import type { UserDetailPermissionRole } from '@/pages/users/user-detail-fullpage-modal'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 import { updateMockUserById } from '@/data/mock/users'
+import { applyInstructorPermissionRevokedToUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
+import {
+  isInstructorPermissionRevoked,
+} from '@/features/user/shared/lib/member-list-display'
+import { markInstructorPermissionRevoked } from '@/features/user/shared/lib/revoked-instructor-overlay'
 import {
   isAdminApprovalRequestsRemoteEnabled,
   isInstructorRoleRequestsRemoteEnabled,
@@ -37,8 +43,6 @@ import {
 import { useInstructorRoleRequestMutations } from '@/features/user/api/hooks/use-instructor-role-request-mutations'
 import { useAdminApprovalRequestMutations } from '@/features/user/api/hooks/use-admin-approval-request-mutations'
 import { handleError } from '@/shared/utils/error-handler'
-import { resendInstructorRoleNotificationRemote } from '@/features/user/api/members-api-client'
-import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import './permission-request-page.css'
 
 const INSTRUCTOR_PERMISSION_APPROVE_MODAL_Z = 1150
@@ -79,7 +83,13 @@ type InstructorRejectModalState =
       displayName: string
       source: 'list' | 'detail'
     }
-  | { variant: 'bulk'; userIds: string[]; requestIds?: number[]; memberCount: number; source: 'list' }
+  | {
+      variant: 'bulk'
+      userIds: string[]
+      requestIds?: number[]
+      memberCount: number
+      source: 'list'
+    }
 
 type AdminApproveModalState = InstructorApproveModalState
 type AdminRejectModalState = InstructorRejectModalState
@@ -105,6 +115,18 @@ type PermissionStatusResetConfirmState = {
 
 type PermissionListTabKey = 'instructor' | 'admin'
 
+function resolveInstructorMemberIdForRevoke(
+  userId: string,
+  detailUser: Omit<User, 'password'> | null,
+  detailTargetRow: MemberPermissionApplicationRow | null,
+  listRef: React.RefObject<MembersPermissionListHandle | null>
+): number | undefined {
+  return (
+    detailUser?.memberId ??
+    detailTargetRow?.memberId ??
+    listRef.current?.getRowForUser(userId)?.memberId
+  )
+}
 function resolvePermissionDetailRequestId(
   permissionRole: UserDetailPermissionRole,
   userId: string,
@@ -112,9 +134,7 @@ function resolvePermissionDetailRequestId(
   listRef: React.RefObject<MembersPermissionListHandle | null>
 ): number | undefined {
   if (permissionRole === 'instructor') {
-    return (
-      detailUser?.instructorRoleRequestId ?? listRef.current?.getRequestIdForUser(userId)
-    )
+    return detailUser?.instructorRoleRequestId ?? listRef.current?.getRequestIdForUser(userId)
   }
   if (permissionRole === 'admin') {
     return detailUser?.adminAccountId ?? listRef.current?.getRequestIdForUser(userId)
@@ -128,13 +148,27 @@ export function PermissionRequestListPage() {
   const adminListRef = useRef<MembersPermissionListHandle>(null)
   const instructorRemote = isInstructorRoleRequestsRemoteEnabled()
   const adminRemote = isAdminApprovalRequestsRemoteEnabled()
-  const { approveMutation, rejectMutation, getApproveError, getRejectError } =
-    useInstructorRoleRequestMutations()
+  const {
+    approveMutation,
+    rejectMutation,
+    resetPendingMutation,
+    revokeMutation,
+    resendNotificationMutation,
+    getApproveError,
+    getRejectError,
+    getResetPendingError,
+    getRevokeError,
+    getResendNotificationError,
+  } = useInstructorRoleRequestMutations()
   const {
     approveMutation: adminApproveMutation,
     rejectMutation: adminRejectMutation,
+    resetPendingMutation: adminResetPendingMutation,
+    resendNotificationMutation: adminResendNotificationMutation,
     getApproveError: getAdminApproveError,
     getRejectError: getAdminRejectError,
+    getResetPendingError: getAdminResetPendingError,
+    getResendNotificationError: getAdminResendNotificationError,
   } = useAdminApprovalRequestMutations()
 
   const urlPermissionRole = useMemo((): UserDetailPermissionRole | null => {
@@ -162,42 +196,121 @@ export function PermissionRequestListPage() {
   const [permissionStatusResetConfirm, setPermissionStatusResetConfirm] =
     useState<PermissionStatusResetConfirmState | null>(null)
   const [activeListTab, setActiveListTab] = useState<PermissionListTabKey>('instructor')
-  /** 권한 승인 상세 — 강사는 request detail GET, 관리자는 목록 스텁 */
-  const [detailUser, setDetailUser] = useState<Omit<User, 'password'> | null>(null)
+  const [detailTargetRow, setDetailTargetRow] = useState<MemberPermissionApplicationRow | null>(
+    null
+  )
+  /** revoke 직후 React 리렌더용 — BE 신청 row는 APPROVED 이력으로 남을 수 있음 */
+  const [revokedInstructorSessionKeys, setRevokedInstructorSessionKeys] = useState(
+    () => new Set<string>()
+  )
+
+  const detailInstructorRequestId =
+    permissionRole === 'instructor' ? detailTargetRow?.requestId : undefined
+  const detailAdminAccountId =
+    permissionRole === 'admin'
+      ? (detailTargetRow?.requestId ?? detailTargetRow?.adminId)
+      : undefined
+
+  const instructorDetailQuery = useInstructorRoleRequestDetailQuery(
+    detailInstructorRequestId,
+    detailOpen && permissionRole === 'instructor'
+  )
+  const adminDetailQuery = useAdminApprovalRequestDetailQuery(
+    detailAdminAccountId,
+    detailOpen && permissionRole === 'admin'
+  )
+
+  const detailUser = useMemo((): Omit<User, 'password'> | null => {
+    if (!detailOpen || !detailTargetRow || !permissionRole) return null
+
+    const withRevokedSession = (user: Omit<User, 'password'>): Omit<User, 'password'> => {
+      const sessionRevoked =
+        revokedInstructorSessionKeys.has(user.id) ||
+        (user.memberId != null && revokedInstructorSessionKeys.has(String(user.memberId)))
+      if (sessionRevoked || isInstructorPermissionRevoked(user)) {
+        return applyInstructorPermissionRevokedToUser(user)
+      }
+      return user
+    }
+
+    if (permissionRole === 'instructor') {
+      if (instructorRemote) {
+        if (instructorDetailQuery.isLoading) return null
+        if (instructorDetailQuery.data) {
+          return withRevokedSession(
+            mapInstructorRoleRequestDetailToUser(instructorDetailQuery.data, {
+              fallbackId: detailTargetRow.userId,
+            })
+          )
+        }
+        if (instructorDetailQuery.isError) {
+          return withRevokedSession(
+            mapPermissionApplicationRowToDetailUser(detailTargetRow, 'instructor')
+          )
+        }
+        return null
+      }
+      return withRevokedSession(
+        mapPermissionApplicationRowToDetailUser(detailTargetRow, 'instructor')
+      )
+    }
+
+    if (adminRemote) {
+      if (adminDetailQuery.isLoading) return null
+      if (adminDetailQuery.data) {
+        return mapAdminAccountDetailToUser(adminDetailQuery.data, {
+          fallbackId: detailTargetRow.userId,
+        })
+      }
+      if (adminDetailQuery.isError) {
+        return mapPermissionApplicationRowToDetailUser(detailTargetRow, 'admin')
+      }
+      return null
+    }
+    return mapPermissionApplicationRowToDetailUser(detailTargetRow, 'admin')
+  }, [
+    adminDetailQuery.data,
+    adminDetailQuery.isError,
+    adminDetailQuery.isLoading,
+    adminRemote,
+    detailOpen,
+    detailTargetRow,
+    instructorDetailQuery.data,
+    instructorDetailQuery.isError,
+    instructorDetailQuery.isLoading,
+    instructorRemote,
+    permissionRole,
+    revokedInstructorSessionKeys,
+  ])
+
+  useEffect(() => {
+    if (instructorDetailQuery.isError) {
+      handleError(instructorDetailQuery.error, {
+        defaultMessage: '권한 신청 상세를 불러오지 못했습니다. 목록 정보로 표시합니다.',
+      })
+    }
+  }, [instructorDetailQuery.error, instructorDetailQuery.isError])
+
+  useEffect(() => {
+    if (adminDetailQuery.isError) {
+      handleError(adminDetailQuery.error, {
+        defaultMessage: '관리자 권한 신청 상세를 불러오지 못했습니다. 목록 정보로 표시합니다.',
+      })
+    }
+  }, [adminDetailQuery.error, adminDetailQuery.isError])
 
   const basicInfoEntrySource = useMemo(() => {
     if (!permissionRole) return undefined
     return permissionRole === 'admin' ? ('admin' as const) : ('instructor' as const)
   }, [permissionRole])
 
-  const applyDetailRow = useCallback(
-    async (row: MemberPermissionApplicationRow, role: UserDetailPermissionRole) => {
-      const stub = mapPermissionApplicationRowToDetailUser(row, role)
-
-      if (role !== 'instructor' || row.requestId == null || !isInstructorRoleRequestsRemoteEnabled()) {
-        setDetailUser(stub)
-        return
-      }
-
-      setDetailUser(null)
-      try {
-        const detail = await fetchInstructorRoleRequestDetailRemote(row.requestId)
-        setDetailUser(
-          mapInstructorRoleRequestDetailToUser(detail, { fallbackId: row.userId })
-        )
-      } catch (error) {
-        handleError(error, {
-          defaultMessage: '권한 신청 상세를 불러오지 못했습니다. 목록 정보로 표시합니다.',
-        })
-        setDetailUser(stub)
-      }
-    },
-    []
-  )
+  const applyDetailRow = useCallback((row: MemberPermissionApplicationRow) => {
+    setDetailTargetRow(row)
+  }, [])
 
   const handleOpenUserDetail = useCallback(
     (userId: string, role: UserDetailPermissionRole, row: MemberPermissionApplicationRow) => {
-      void applyDetailRow(row, role)
+      applyDetailRow(row)
       setSearchParams(
         prev => {
           const next = new URLSearchParams(prev)
@@ -214,30 +327,23 @@ export function PermissionRequestListPage() {
   const handleResolveDetailRow = useCallback(
     (row: MemberPermissionApplicationRow) => {
       if (!urlPermissionRole) return
-      void applyDetailRow(row, urlPermissionRole)
+      applyDetailRow(row)
     },
     [applyDetailRow, urlPermissionRole]
   )
 
   const handleCloseDetail = useCallback(() => {
-    setDetailUser(null)
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev)
-      next.delete(PR_DETAIL_USER)
-      next.delete(PR_DETAIL_ROLE)
-      return next
-    }, { replace: true })
+    setDetailTargetRow(null)
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.delete(PR_DETAIL_USER)
+        next.delete(PR_DETAIL_ROLE)
+        return next
+      },
+      { replace: true }
+    )
   }, [setSearchParams])
-
-  const syncDetailUserIfOpened = useCallback(
-    (userId: string) => {
-      if (!detailOpen || !detailUserId || detailUserId !== userId || !permissionRole) return
-      const listRef = permissionRole === 'instructor' ? instructorListRef : adminListRef
-      const row = listRef.current?.getRowForUser(userId)
-      if (row) applyDetailRow(row, permissionRole)
-    },
-    [detailOpen, detailUserId, permissionRole, applyDetailRow]
-  )
 
   const handlePermissionApprove = useCallback(
     (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
@@ -268,7 +374,12 @@ export function PermissionRequestListPage() {
         setAdminApproveModal({
           variant: 'single',
           userId: ctx.userId,
-          requestId: resolvePermissionDetailRequestId('admin', ctx.userId, detailUser, adminListRef),
+          requestId: resolvePermissionDetailRequestId(
+            'admin',
+            ctx.userId,
+            detailUser,
+            adminListRef
+          ),
           displayName: name,
           source: 'detail',
         })
@@ -290,17 +401,20 @@ export function PermissionRequestListPage() {
       if (!instructorApproveModal) return
 
       const finishSingle = (userId: string, displayName: string, source: 'list' | 'detail') => {
-        syncDetailUserIfOpened(userId)
-        instructorListRef.current?.applyInstructorPermissionApproved(userId)
+        if (!instructorRemote) {
+          instructorListRef.current?.applyInstructorPermissionApproved(userId)
+        }
         instructorListRef.current?.clearRowSelection()
         setInstructorApproveModal(null)
         setInstructorApprovedComplete({ variant: 'single', displayName, source })
       }
 
       const finishBulk = (userIds: string[], memberCount: number, source: 'list') => {
-        userIds.forEach(uid => {
-          instructorListRef.current?.applyInstructorPermissionApproved(uid)
-        })
+        if (!instructorRemote) {
+          userIds.forEach(uid => {
+            instructorListRef.current?.applyInstructorPermissionApproved(uid)
+          })
+        }
         instructorListRef.current?.clearRowSelection()
         setInstructorApproveModal(null)
         setInstructorApprovedComplete({ variant: 'bulk', memberCount, source })
@@ -351,29 +465,22 @@ export function PermissionRequestListPage() {
       })
       finishBulk(userIds, memberCount, source)
     },
-    [
-      instructorApproveModal,
-      instructorRemote,
-      approveMutation,
-      getApproveError,
-      syncDetailUserIfOpened,
-    ]
+    [instructorApproveModal, instructorRemote, approveMutation, getApproveError]
   )
 
   const handleAdminApproveModalConfirm = useCallback(
     async (payload: InstructorPermissionApprovePayload) => {
       if (!adminApproveModal) return
       const approvedPermissionVariant = (
-        payload.feeGrade === 'partner' || payload.feeGrade === 'viewer' ? payload.feeGrade : 'manager'
+        payload.feeGrade === 'partner' || payload.feeGrade === 'viewer'
+          ? payload.feeGrade
+          : 'manager'
       ) as AdminPermissionTagVariant
 
-      const finishSingle = (
-        userId: string,
-        displayName: string,
-        source: 'list' | 'detail'
-      ) => {
-        syncDetailUserIfOpened(userId)
-        adminListRef.current?.applyInstructorPermissionApproved(userId)
+      const finishSingle = (userId: string, displayName: string, source: 'list' | 'detail') => {
+        if (!adminRemote) {
+          adminListRef.current?.applyInstructorPermissionApproved(userId)
+        }
         adminListRef.current?.clearRowSelection()
         setAdminApproveModal(null)
         setAdminApprovedComplete({
@@ -384,17 +491,20 @@ export function PermissionRequestListPage() {
         })
       }
 
-      const finishBulk = (
-        userIds: string[],
-        memberCount: number,
-        source: 'list'
-      ) => {
-        userIds.forEach(uid => {
-          adminListRef.current?.applyInstructorPermissionApproved(uid)
-        })
+      const finishBulk = (userIds: string[], memberCount: number, source: 'list') => {
+        if (!adminRemote) {
+          userIds.forEach(uid => {
+            adminListRef.current?.applyInstructorPermissionApproved(uid)
+          })
+        }
         adminListRef.current?.clearRowSelection()
         setAdminApproveModal(null)
-        setAdminApprovedComplete({ variant: 'bulk', memberCount, source, approvedPermissionVariant })
+        setAdminApprovedComplete({
+          variant: 'bulk',
+          memberCount,
+          source,
+          approvedPermissionVariant,
+        })
       }
 
       if (adminRemote) {
@@ -445,13 +555,7 @@ export function PermissionRequestListPage() {
       })
       finishBulk(userIds, memberCount, source)
     },
-    [
-      adminApproveModal,
-      adminRemote,
-      adminApproveMutation,
-      getAdminApproveError,
-      syncDetailUserIfOpened,
-    ]
+    [adminApproveModal, adminRemote, adminApproveMutation, getAdminApproveError]
   )
 
   const handleInstructorApprovedCompleteClose = useCallback(() => {
@@ -491,7 +595,12 @@ export function PermissionRequestListPage() {
         setAdminRejectModal({
           variant: 'single',
           userId: ctx.userId,
-          requestId: resolvePermissionDetailRequestId('admin', ctx.userId, detailUser, adminListRef),
+          requestId: resolvePermissionDetailRequestId(
+            'admin',
+            ctx.userId,
+            detailUser,
+            adminListRef
+          ),
           displayName: name,
           source: 'detail',
         })
@@ -526,23 +635,139 @@ export function PermissionRequestListPage() {
   )
 
   const handleConfirmPermissionResetToPending = useCallback(
-    (_payload: { cancellationReason: string; notifyTiming: 'immediate' | 'manual' }) => {
-    if (!permissionStatusResetConfirm) return
-    const { userId, permissionRole } = permissionStatusResetConfirm
-    updateMockUserById(userId, {
-      permissionApprovalStatus: 'PENDING',
-      permissionApprovalHandledAt: undefined,
-      permissionNotificationResentAt: undefined,
-    })
-    syncDetailUserIfOpened(userId)
-    if (permissionRole === 'instructor') {
-      instructorListRef.current?.applyInstructorPermissionPending(userId)
-    } else {
-      adminListRef.current?.applyInstructorPermissionPending(userId)
-    }
-    setPermissionStatusResetConfirm(null)
+    async (payload: { cancellationReason: string; notifyTiming: 'immediate' | 'manual' }) => {
+      if (!permissionStatusResetConfirm) return
+      const { userId, permissionRole, fromStatus } = permissionStatusResetConfirm
+      const reason =
+        payload.cancellationReason.trim() ||
+        (fromStatus === 'APPROVED' ? 'CMS 강사 권한 승인 취소' : 'CMS 강사 권한 재검토')
+
+      if (permissionRole === 'instructor' && instructorRemote) {
+        if (fromStatus === 'APPROVED') {
+          const memberId = resolveInstructorMemberIdForRevoke(
+            userId,
+            detailUser,
+            detailTargetRow,
+            instructorListRef
+          )
+          if (memberId == null) {
+            handleError(new Error('승인 취소할 회원 memberId를 찾지 못했습니다.'))
+            return
+          }
+          try {
+            const requestId =
+              detailUser?.instructorRoleRequestId ??
+              detailTargetRow?.requestId ??
+              instructorListRef.current?.getRequestIdForUser(userId)
+            await revokeMutation.mutateAsync({
+              memberId,
+              reason,
+              requestId: requestId ?? undefined,
+            })
+            const revokedSnapshot = applyInstructorPermissionRevokedToUser({
+              id: userId,
+              memberId,
+              email: detailUser?.email ?? '-',
+              name: detailUser?.name ?? '-',
+              role: 'INSTRUCTOR',
+              isActive: true,
+              createdAt: detailUser?.createdAt ?? new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            })
+            markInstructorPermissionRevoked(revokedSnapshot)
+            setRevokedInstructorSessionKeys(prev => {
+              const next = new Set(prev)
+              next.add(userId)
+              next.add(String(memberId))
+              return next
+            })
+          } catch (error) {
+            handleError(error, { defaultMessage: getRevokeError(error) })
+            return
+          }
+        } else {
+          const requestId =
+            detailUser?.instructorRoleRequestId ??
+            instructorListRef.current?.getRequestIdForUser(userId)
+          if (requestId == null) {
+            handleError(new Error('재검토할 권한 신청 ID를 찾지 못했습니다.'))
+            return
+          }
+          try {
+            await resetPendingMutation.mutateAsync({ requestId, reason })
+          } catch (error) {
+            handleError(error, { defaultMessage: getResetPendingError(error) })
+            return
+          }
+        }
+      } else if (permissionRole === 'admin' && adminRemote) {
+        const adminAccountId =
+          detailUser?.adminAccountId ?? adminListRef.current?.getRequestIdForUser(userId)
+        if (adminAccountId == null) {
+          handleError(new Error('승인 취소할 관리자 신청 ID를 찾지 못했습니다.'))
+          return
+        }
+        try {
+          await adminResetPendingMutation.mutateAsync({ adminAccountId, reason })
+        } catch (error) {
+          handleError(error, { defaultMessage: getAdminResetPendingError(error) })
+          return
+        }
+      } else if (permissionRole === 'instructor') {
+        if (fromStatus === 'APPROVED') {
+          const baseUser =
+            detailUser ??
+            (detailTargetRow
+              ? mapPermissionApplicationRowToDetailUser(detailTargetRow, 'instructor')
+              : null)
+          if (!baseUser) {
+            handleError(new Error('승인 취소할 회원 정보를 찾지 못했습니다.'))
+            return
+          }
+          const revoked = applyInstructorPermissionRevokedToUser(baseUser)
+          updateMockUserById(userId, {
+            ...revoked,
+            permissionApprovalStatus: 'APPROVED',
+          })
+          markInstructorPermissionRevoked(revoked)
+          setRevokedInstructorSessionKeys(prev => {
+            const next = new Set(prev)
+            next.add(userId)
+            if (revoked.memberId != null) next.add(String(revoked.memberId))
+            return next
+          })
+        } else {
+          updateMockUserById(userId, {
+            permissionApprovalStatus: 'PENDING',
+            permissionApprovalHandledAt: undefined,
+            permissionNotificationResentAt: undefined,
+          })
+          instructorListRef.current?.applyInstructorPermissionPending(userId)
+        }
+      } else {
+        updateMockUserById(userId, {
+          permissionApprovalStatus: 'PENDING',
+          permissionApprovalHandledAt: undefined,
+          permissionNotificationResentAt: undefined,
+        })
+        adminListRef.current?.applyInstructorPermissionPending(userId)
+      }
+
+      setPermissionStatusResetConfirm(null)
     },
-    [permissionStatusResetConfirm, syncDetailUserIfOpened]
+    [
+      adminRemote,
+      adminResetPendingMutation,
+      detailTargetRow,
+      detailUser,
+      getAdminResetPendingError,
+      getResetPendingError,
+      getRevokeError,
+      instructorRemote,
+      permissionStatusResetConfirm,
+      resetPendingMutation,
+      revokeMutation,
+    ]
   )
 
   const handleCancelPermissionResetToPending = useCallback(() => {
@@ -554,16 +779,19 @@ export function PermissionRequestListPage() {
       if (!instructorRejectModal) return
 
       const finishSingle = (userId: string) => {
-        syncDetailUserIfOpened(userId)
-        instructorListRef.current?.applyInstructorPermissionRejected(userId)
+        if (!instructorRemote) {
+          instructorListRef.current?.applyInstructorPermissionRejected(userId)
+        }
         instructorListRef.current?.clearRowSelection()
         setInstructorRejectModal(null)
       }
 
       const finishBulk = (userIds: string[]) => {
-        userIds.forEach(uid => {
-          instructorListRef.current?.applyInstructorPermissionRejected(uid)
-        })
+        if (!instructorRemote) {
+          userIds.forEach(uid => {
+            instructorListRef.current?.applyInstructorPermissionRejected(uid)
+          })
+        }
         instructorListRef.current?.clearRowSelection()
         setInstructorRejectModal(null)
       }
@@ -613,7 +841,7 @@ export function PermissionRequestListPage() {
       })
       finishBulk(userIds)
     },
-    [instructorRejectModal, instructorRemote, rejectMutation, getRejectError, syncDetailUserIfOpened]
+    [instructorRejectModal, instructorRemote, rejectMutation, getRejectError]
   )
 
   const handleAdminRejectModalConfirm = useCallback(
@@ -621,16 +849,19 @@ export function PermissionRequestListPage() {
       if (!adminRejectModal) return
 
       const finishSingle = (userId: string) => {
-        syncDetailUserIfOpened(userId)
-        adminListRef.current?.applyInstructorPermissionRejected(userId)
+        if (!adminRemote) {
+          adminListRef.current?.applyInstructorPermissionRejected(userId)
+        }
         adminListRef.current?.clearRowSelection()
         setAdminRejectModal(null)
       }
 
       const finishBulk = (userIds: string[]) => {
-        userIds.forEach(uid => {
-          adminListRef.current?.applyInstructorPermissionRejected(uid)
-        })
+        if (!adminRemote) {
+          userIds.forEach(uid => {
+            adminListRef.current?.applyInstructorPermissionRejected(uid)
+          })
+        }
         adminListRef.current?.clearRowSelection()
         setAdminRejectModal(null)
       }
@@ -683,13 +914,15 @@ export function PermissionRequestListPage() {
       })
       finishBulk(userIds)
     },
-    [adminRejectModal, adminRemote, adminRejectMutation, getAdminRejectError, syncDetailUserIfOpened]
+    [adminRejectModal, adminRemote, adminRejectMutation, getAdminRejectError]
   )
 
   const handlePermissionResendNotification = useCallback(
     async (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
-      if (ctx.permissionRole === 'instructor' && isInstructorRoleRequestsRemoteEnabled()) {
-        const requestId = instructorListRef.current?.getRequestIdForUser(ctx.userId)
+      if (ctx.permissionRole === 'instructor' && instructorRemote) {
+        const requestId =
+          detailUser?.instructorRoleRequestId ??
+          instructorListRef.current?.getRequestIdForUser(ctx.userId)
         if (requestId == null) {
           handleError(new Error('알림 재발송할 권한 신청 ID를 찾지 못했습니다.'), {
             context: 'permissionRequestList.resendNotification.missingRequestId',
@@ -697,29 +930,44 @@ export function PermissionRequestListPage() {
           return
         }
         try {
-          await resendInstructorRoleNotificationRemote(requestId)
-          updateMockUserById(ctx.userId, {
-            permissionNotificationResentAt: new Date().toISOString(),
-          })
+          await resendNotificationMutation.mutateAsync(requestId)
         } catch (error) {
-          handleError(error, {
-            defaultMessage: getMemberApiErrorMessage(error, '알림 재발송에 실패했습니다.'),
-          })
+          handleError(error, { defaultMessage: getResendNotificationError(error) })
         }
         return
       }
 
-      // 관리자 승인 알림 재발송 API는 Orval members subset에 없음 — 로컬 시각만 갱신
+      if (ctx.permissionRole === 'admin' && adminRemote) {
+        const adminAccountId =
+          detailUser?.adminAccountId ?? adminListRef.current?.getRequestIdForUser(ctx.userId)
+        if (adminAccountId == null) {
+          handleError(new Error('알림 재발송할 관리자 신청 ID를 찾지 못했습니다.'), {
+            context: 'permissionRequestList.resendNotification.missingAdminId',
+          })
+          return
+        }
+        try {
+          await adminResendNotificationMutation.mutateAsync(adminAccountId)
+        } catch (error) {
+          handleError(error, { defaultMessage: getAdminResendNotificationError(error) })
+        }
+        return
+      }
+
       updateMockUserById(ctx.userId, {
         permissionNotificationResentAt: new Date().toISOString(),
       })
-      if (ctx.permissionRole === 'admin') {
-        handleError(new Error('관리자 권한 알림 재발송 API는 아직 제공되지 않습니다.'), {
-          context: 'permissionRequestList.resendNotification.adminApiMissing',
-        })
-      }
     },
-    []
+    [
+      adminRemote,
+      adminResendNotificationMutation,
+      detailUser?.adminAccountId,
+      detailUser?.instructorRoleRequestId,
+      getAdminResendNotificationError,
+      getResendNotificationError,
+      instructorRemote,
+      resendNotificationMutation,
+    ]
   )
 
   const detailPermissionRole = permissionRole ?? undefined
@@ -739,130 +987,123 @@ export function PermissionRequestListPage() {
 
       {activeListTab === 'instructor' ? (
         <MembersPermissionList
-                ref={instructorListRef}
-                memberType="instructor"
-                detailUserId={permissionRole === 'instructor' ? detailUserId : null}
-                onResolveDetailRow={
-                  permissionRole === 'instructor' ? handleResolveDetailRow : undefined
-                }
-                onOpenUserDetail={handleOpenUserDetail}
-                onInstructorApproveRequest={payload => {
-                  setAdminApproveModal(null)
-                  setAdminRejectModal(null)
-                  setInstructorRejectModal(null)
-                  setInstructorApproveModal(
-                    payload.mode === 'single'
-                      ? {
-                          variant: 'single',
-                          userId: payload.userId,
-                          requestId: payload.requestId,
-                          displayName: payload.displayName,
-                          source: 'list',
-                        }
-                      : {
-                          variant: 'bulk',
-                          userIds: payload.userIds,
-                          requestIds: payload.requestIds,
-                          memberCount: payload.memberCount,
-                          source: 'list',
-                        }
-                  )
-                }}
-                onInstructorRejectRequest={payload => {
-                  const nextReject: InstructorRejectModalState =
-                    payload.mode === 'single'
-                      ? {
-                          variant: 'single',
-                          userId: payload.userId,
-                          requestId: payload.requestId,
-                          displayName: payload.displayName,
-                          source: 'list',
-                        }
-                      : {
-                          variant: 'bulk',
-                          userIds: payload.userIds,
-                          requestIds: payload.requestIds,
-                          memberCount: payload.memberCount,
-                          source: 'list',
-                        }
-                  setAdminApproveModal(null)
-                  setAdminRejectModal(null)
-                  setInstructorApproveModal(null)
-                  setInstructorRejectModal(nextReject)
-                }}
-              />
+          ref={instructorListRef}
+          memberType="instructor"
+          detailUserId={permissionRole === 'instructor' ? detailUserId : null}
+          onResolveDetailRow={permissionRole === 'instructor' ? handleResolveDetailRow : undefined}
+          onOpenUserDetail={handleOpenUserDetail}
+          onInstructorApproveRequest={payload => {
+            setAdminApproveModal(null)
+            setAdminRejectModal(null)
+            setInstructorRejectModal(null)
+            setInstructorApproveModal(
+              payload.mode === 'single'
+                ? {
+                    variant: 'single',
+                    userId: payload.userId,
+                    requestId: payload.requestId,
+                    displayName: payload.displayName,
+                    source: 'list',
+                  }
+                : {
+                    variant: 'bulk',
+                    userIds: payload.userIds,
+                    requestIds: payload.requestIds,
+                    memberCount: payload.memberCount,
+                    source: 'list',
+                  }
+            )
+          }}
+          onInstructorRejectRequest={payload => {
+            const nextReject: InstructorRejectModalState =
+              payload.mode === 'single'
+                ? {
+                    variant: 'single',
+                    userId: payload.userId,
+                    requestId: payload.requestId,
+                    displayName: payload.displayName,
+                    source: 'list',
+                  }
+                : {
+                    variant: 'bulk',
+                    userIds: payload.userIds,
+                    requestIds: payload.requestIds,
+                    memberCount: payload.memberCount,
+                    source: 'list',
+                  }
+            setAdminApproveModal(null)
+            setAdminRejectModal(null)
+            setInstructorApproveModal(null)
+            setInstructorRejectModal(nextReject)
+          }}
+        />
       ) : (
         <MembersPermissionList
-                ref={adminListRef}
-                memberType="admin"
-                detailUserId={permissionRole === 'admin' ? detailUserId : null}
-                onResolveDetailRow={
-                  permissionRole === 'admin' ? handleResolveDetailRow : undefined
-                }
-                onOpenUserDetail={handleOpenUserDetail}
-                onAdminApproveRequest={payload => {
-                  setInstructorApproveModal(null)
-                  setInstructorRejectModal(null)
-                  setAdminRejectModal(null)
-                  setAdminApproveModal(
-                    payload.mode === 'single'
-                      ? {
-                          variant: 'single',
-                          userId: payload.userId,
-                          requestId: payload.requestId,
-                          displayName: payload.displayName,
-                          source: 'list',
-                        }
-                      : {
-                          variant: 'bulk',
-                          userIds: payload.userIds,
-                          requestIds: payload.requestIds,
-                          memberCount: payload.memberCount,
-                          source: 'list',
-                        }
-                  )
-                }}
-                onAdminRejectRequest={payload => {
-                  const nextReject: AdminRejectModalState =
-                    payload.mode === 'single'
-                      ? {
-                          variant: 'single',
-                          userId: payload.userId,
-                          requestId: payload.requestId,
-                          displayName: payload.displayName,
-                          source: 'list',
-                        }
-                      : {
-                          variant: 'bulk',
-                          userIds: payload.userIds,
-                          requestIds: payload.requestIds,
-                          memberCount: payload.memberCount,
-                          source: 'list',
-                        }
-                  setInstructorApproveModal(null)
-                  setInstructorRejectModal(null)
-                  setAdminApproveModal(null)
-                  setAdminRejectModal(nextReject)
-                }}
-              />
-      )}
-
-      {detailOpen && detailUser == null ? (
-        <DetailFullPageModal open onClose={handleCloseDetail} title="강사 신청 상세" loading />
-      ) : (
-        <UserDetailFullPageModal
-          open={detailOpen && detailUser != null && permissionRole != null}
-          user={detailUser}
-          onClose={handleCloseDetail}
-          basicInfoEntrySource={basicInfoEntrySource}
-          mode="permission"
-          permissionRole={detailPermissionRole}
-          onPermissionApprove={handlePermissionApprove}
-          onPermissionReject={handlePermissionReject}
-          onPermissionResetToPending={handlePermissionResetToPending}
-          onPermissionResendNotification={handlePermissionResendNotification}
+          ref={adminListRef}
+          memberType="admin"
+          detailUserId={permissionRole === 'admin' ? detailUserId : null}
+          onResolveDetailRow={permissionRole === 'admin' ? handleResolveDetailRow : undefined}
+          onOpenUserDetail={handleOpenUserDetail}
+          onAdminApproveRequest={payload => {
+            setInstructorApproveModal(null)
+            setInstructorRejectModal(null)
+            setAdminRejectModal(null)
+            setAdminApproveModal(
+              payload.mode === 'single'
+                ? {
+                    variant: 'single',
+                    userId: payload.userId,
+                    requestId: payload.requestId,
+                    displayName: payload.displayName,
+                    source: 'list',
+                  }
+                : {
+                    variant: 'bulk',
+                    userIds: payload.userIds,
+                    requestIds: payload.requestIds,
+                    memberCount: payload.memberCount,
+                    source: 'list',
+                  }
+            )
+          }}
+          onAdminRejectRequest={payload => {
+            const nextReject: AdminRejectModalState =
+              payload.mode === 'single'
+                ? {
+                    variant: 'single',
+                    userId: payload.userId,
+                    requestId: payload.requestId,
+                    displayName: payload.displayName,
+                    source: 'list',
+                  }
+                : {
+                    variant: 'bulk',
+                    userIds: payload.userIds,
+                    requestIds: payload.requestIds,
+                    memberCount: payload.memberCount,
+                    source: 'list',
+                  }
+            setInstructorApproveModal(null)
+            setInstructorRejectModal(null)
+            setAdminApproveModal(null)
+            setAdminRejectModal(nextReject)
+          }}
         />
       )}
+
+      {/* 상세 GET 대기 중에도 같은 모달 인스턴스가 스피너를 보여준다 (포털 교체 시 오픈 애니메이션 2회 재생) */}
+      <UserDetailFullPageModal
+        open={detailOpen && permissionRole != null}
+        user={detailUser}
+        onClose={handleCloseDetail}
+        basicInfoEntrySource={basicInfoEntrySource}
+        mode="permission"
+        permissionRole={detailPermissionRole}
+        onPermissionApprove={handlePermissionApprove}
+        onPermissionReject={handlePermissionReject}
+        onPermissionResetToPending={handlePermissionResetToPending}
+        onPermissionResendNotification={handlePermissionResendNotification}
+      />
 
       {instructorApproveModal ? (
         <InstructorPermissionApproveModal

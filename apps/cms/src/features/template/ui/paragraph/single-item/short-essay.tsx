@@ -1,11 +1,13 @@
 import { useEffect, useRef } from 'react'
-import type {
-  ShortEssayParagraph,
-  SubjectiveParagraph,
+import {
+  AGREEMENT_NOTICE_SUBJECT_ITEM_IDS,
+  type ShortEssayParagraph,
+  type SubjectiveParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { ParagraphLabelInput } from '@/features/template/ui/shared/paragraph-label-input'
+import { CmsDateTextInput, CmsPhoneInput } from '@/shared/ui'
 import './short-essay.css'
 
 /** 주관식형 (short_essay) — 단락 바디 슬롯 */
@@ -133,6 +135,9 @@ export function ShortEssay({
           )
         }
 
+        const isBirth = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth
+        const isPhone = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone
+
         return (
         <div key={item.id} className="short-essay-item-row">
           <ParagraphLabelInput
@@ -146,6 +151,30 @@ export function ShortEssay({
               handleItemClick(item.id)
             }}
             onChange={isBodyInteractive ? e => updateItemBodyText(item.id, e.target.value) : undefined}
+            control={
+              isBirth ? (
+                <CmsDateTextInput
+                  id={`short-essay-${item.id}`}
+                  inputSize="large"
+                  width="100%"
+                  value={item.bodyText}
+                  placeholder={item.placeholder ?? '1991.01.01'}
+                  maxLength={10}
+                  disabled={!isBodyInteractive}
+                  onValueChange={value => updateItemBodyText(item.id, value)}
+                />
+              ) : isPhone ? (
+                <CmsPhoneInput
+                  id={`short-essay-${item.id}`}
+                  inputSize="large"
+                  width="100%"
+                  value={item.bodyText}
+                  placeholder={item.placeholder ?? '010-1234-5678'}
+                  disabled={!isBodyInteractive}
+                  onChange={event => updateItemBodyText(item.id, event.target.value)}
+                />
+              ) : undefined
+            }
           />
           {isCardSelected && index > 0 ? (
             <ItemDeleteButton
