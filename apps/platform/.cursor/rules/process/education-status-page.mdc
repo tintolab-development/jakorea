@@ -76,18 +76,34 @@ alwaysApply: false
 
 - `displayStatus === 'document_passed'` **그리고** `hasInterview` + `interviewAtLabel`
 - 2차 면접일 안내 (관리자 배정일). 클릭 액션 없음
+- **활동 포기**(`withdrawn`)에서는 **비노출** (`shouldShowDocumentPassBanner`)
 - [`DocumentPassBanner`](apps/platform/src/features/mypage/education/applications/ui/document-pass-banner.tsx)
 
-### 상세 탭 분기 (기획)
+### 상세 탭 분기 (기획 · SSOT)
 
 | 진행 상태 | 탭 |
 |-----------|-----|
 | 결과 대기 / 서류 합격 / 신청 반려 | 프로그램 정보 / 신청 내용 |
-| 진행 중 / 진행 완료 | 안내사항 / 교육 일정 / 설문조사 / 만족도조사 (미설정 항목 탭 비노출). 봉사현황은 교육 일정→배정현황, UJAT는 배정·출결 |
-| 활동 포기 (교육 전) | 프로그램 정보 / 신청 내용 |
-| 활동 포기 (교육 중) | 교육 일정 / 설문 / 만족도 (포기 이후 일정 비노출) |
+| **진행 중 / 진행 완료** | 안내사항 / 교육 일정 / 설문조사 / 만족도조사 / **정산 현황** |
+| **활동 포기 (교육 전)** `before_education` | 프로그램 정보 / 신청 내용. 상태만 `활동 포기`, 합격 배너·신청 취소 비노출 |
+| **활동 포기 (교육 중)** `during_education` | 교육 일정 / 설문조사 / 만족도조사 / **정산 현황** (**안내사항 비노출**). `lastParticipatedSession` 이하만 노출 |
 
-탭 여백: top 48 / bottom 56. section query: `?section=program|application`
+#### 진행·완료 탭 세부
+
+- **설문조사·만족도조사**: 진행 중 내용이 없어도 **탭 유지**. 단 프로그램 등록 시 해당 항목을 **설정하지 않은** 경우(`surveyConfigured` / `satisfactionConfigured === false`) 탭 **비노출**
+- **교육 일정** 라벨 (`resolveEducationScheduleTabLabel`):
+  - 봉사(`volunteer`) → **배정현황**
+  - UJAT(`ujat-volunteer` / `ujat-participant`) → **배정 및 출결 현황**
+  - 그 외 → **교육일정**
+- 구현: [`detail-tabs.ts`](apps/platform/src/features/mypage/education/applications/lib/detail-tabs.ts)
+
+탭 여백: top 48 / bottom 56. section query: `?section=program|application|notice|schedule|survey|satisfaction|settlement`
+
+### 활동 포기 필드
+
+- `withdrawalPhase`: `before_education` | `during_education`
+- `lastParticipatedSession`: 진행 중 포기 시 마지막 참여 회차(1-based). 예: 10회차 중 3회차까지 → `3`
+- 헬퍼: `isWithdrawnBeforeEducation` · `isWithdrawnDuringEducation` · `filterItemsUpToLastParticipatedSession`
 
 ## 프로그램 정보 탭 (일반 · `PROGRAM_APPLICATION_STATUSES`)
 
@@ -139,6 +155,39 @@ alwaysApply: false
 - 상세 **최하단** 노출 (`세부내용` 밖). 미기재 시 **비노출**
 - 어드민: 참여자 모집 정보 > 상세 정보 > 지원 방법
 
+## 교육일정 탭 (진행중 · 진행완료 · 진행중 포기)
+
+컴포넌트: [`EducationSchedulePanel`](apps/platform/src/features/mypage/education/schedules/ui/panel.tsx)  
+규칙·문구: [`schedule-rules.ts`](apps/platform/src/features/mypage/education/schedules/lib/schedule-rules.ts)
+
+### 목록
+
+- 헤더: `{탭라벨} N건` (교육일정 / 배정현황 / 배정 및 출결 현황)
+- 페이지당 `EDUCATION_SCHEDULE_PAGE_SIZE`(7) · `PFPagination`
+- 진행중 포기: `filterItemsUpToLastParticipatedSession` — `sessionNumber <= lastParticipatedSession`
+
+### 일정 행
+
+| 요소 | 규칙 |
+|------|------|
+| 진행 태그 | `진행 완료` / `진행 예정` — 교육일(로컬 일) 지나면 예정→완료 |
+| 교육 진행일 | `YYYY년 MM월 DD일(요일)` |
+| 회차/일정명 | 커리큘럼형 회차명 · 일정형 일정명 (`title`) |
+| 출석 | 출석 / 지각 / 결석 / 사유 불참(+사유). **미진행(예정)은 비노출** |
+| 결석 사유 제출하기 | **진행 예정** 또는 **결석**만. 클릭 → 팝업(현재 준비 중) |
+
+### 과제 안내
+
+- 과제 있고 **제출 시작일 이후**만 영역 노출. 진행 예정이라도 시작일 전이면 비노출
+- 문구·버튼: `resolveEducationAssignmentGuide`
+  - 미제출+마감전: `기한 내에 과제를 제출해 주세요`
+  - 제출완료+마감전: `[과제 제출 완료] 제출한 과제는 마감 전까지는 수정 제출이 가능해요`
+  - 마감: `[과제 제출 완료|미제출] 과제 제출기한이 마감되었어요`
+  - 피드백: `담당자의 과제 피드백이 있어요` + 피드백 확인 / 수정 제출하기
+  - 수정제출완료: `[과제 제출 완료] 과제 수정 제출이 완료되었어요` · 제출 버튼 disabled
+- 제출 완료+마감 or 수정제출완료 → 과제 제출하기 **disabled**
+- 과제 제출·피드백·결석 사유 팝업: UI 후속(현재 준비 중 alert)
+
 ## 신청 내용 탭
 
 노출: `waiting_result` | `document_passed` 만 실 UI.  
@@ -180,7 +229,8 @@ alwaysApply: false
 | ProgramInfoBody 재사용 + 취소 확인·이력 제거(mock) | 취소 API 연동 |
 | 빈 필드·첨부·지원방법 비노출 / 교육 커리큘럼 라벨 | 교육 일정·설문·만족도 탭 |
 | 신청 내용 (결과 대기·서류 합격) mock UI | 신청 내용 API 연동 |
-| 안내사항 · 프로그램 정보 팝업 · **신청 정보 팝업** | 댓글/반응 API · 수정 · 삭제 API |
+| 안내사항 · 프로그램/신청 정보 팝업 · **교육일정 목록(과제·출석 mock)** | 결석/과제/피드백 팝업 · 설문·정산 UI · API |
+| **활동 포기** 상세 분기(교육 전/중) · 탭 SSOT | 교육일정·설문 UI + 회차 필터 연동 |
 | 비-applied 상태 placeholder | 진행 완료 안내사항 탭 |
 
 ## 금지
@@ -199,6 +249,8 @@ alwaysApply: false
 - Body: [`program-info-body/`](apps/platform/src/features/program/ui/program-info-body/)
 - 취소: `canCancelEducationApplication` · `EducationCancelConfirm` · `cancelMockEducationApplication`
 - 신청 내용: `EducationApplicationContent` · `canShowEducationApplicationContent`
+- 활동 포기: `withdrawalPhase` · `lastParticipatedSession` · `isWithdrawnBeforeEducation` · `isWithdrawnDuringEducation`
 - 안내사항: `EducationInProgressNoticePanel` · `EducationInProgressNoticeDetailModal` · `EducationNoticeStats` · `EducationProgramInfoModal` · `EducationApplicationInfoModal`
+- 교육일정: `EducationSchedulePanel` · `resolveEducationAssignmentGuide` · `filterItemsUpToLastParticipatedSession`
 
-**Last updated:** 2026-09-01 (신청 정보 팝업)
+**Last updated:** 2026-09-01 (교육일정 탭)
