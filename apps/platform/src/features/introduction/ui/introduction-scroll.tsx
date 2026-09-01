@@ -4,6 +4,7 @@ import { usePrefersReducedMotion } from '@/shared/hooks/use-prefers-reduced-moti
 import {
   getNextIntroductionScrollY,
   resolveIntroductionScrollState,
+  resolveWorldwideRevealProgress,
   type IntroductionScrollState,
 } from '../lib/introduction-scroll-phase'
 import { GlobalValuePanel } from './global-value-section'
@@ -19,16 +20,19 @@ const INITIAL_STATE: IntroductionScrollState = {
 
 /**
  * 기관소개 Desktop sticky 모션 오케스트레이터.
- * Frame Track: [Hero/Mission] + [JA Global Value] 세로 연속 → Push/Up translateY(-50%).
- * Push 구간과 Value accordion 스크롤은 분리. Mobile·reduced-motion 은 정적 스택.
+ * Frame Track: [Hero/Mission] + [JA Global Value panel(list + Worldwide 형제)].
+ * Accordion 후 hold 구간에서 panel을 translateY 해 Worldwide를 연속 노출.
+ * Mobile·reduced-motion 은 정적 스택 (.list 다음 Worldwide).
  */
 export function IntroductionScroll() {
   const trackRef = useRef<HTMLElement>(null)
+  const valueContentRef = useRef<HTMLDivElement>(null)
   const prefersReducedMotion = usePrefersReducedMotion()
   const isPcUp = useMediaQuery('(min-width: 1080px)')
   const [mediaReady, setMediaReady] = useState(false)
   const [scrollState, setScrollState] = useState<IntroductionScrollState>(INITIAL_STATE)
   const scrollStateRef = useRef<IntroductionScrollState>(INITIAL_STATE)
+  const [worldwideRevealPx, setWorldwideRevealPx] = useState(0)
 
   useEffect(() => {
     setMediaReady(true)
@@ -49,11 +53,13 @@ export function IntroductionScroll() {
     if (!isDesktopMotion) {
       scrollStateRef.current = INITIAL_STATE
       setScrollState(INITIAL_STATE)
+      setWorldwideRevealPx(0)
       return
     }
 
     scrollStateRef.current = INITIAL_STATE
     setScrollState(INITIAL_STATE)
+    setWorldwideRevealPx(0)
 
     const track = trackRef.current
     if (!track) return
@@ -67,14 +73,22 @@ export function IntroductionScroll() {
       const next = resolveIntroductionScrollState(scrollPx, scrollRange)
       const prev = scrollStateRef.current
       if (
-        next.heroPhase === prev.heroPhase &&
-        next.isFramePushed === prev.isFramePushed &&
-        next.activeValueIndex === prev.activeValueIndex
+        next.heroPhase !== prev.heroPhase ||
+        next.isFramePushed !== prev.isFramePushed ||
+        next.activeValueIndex !== prev.activeValueIndex
       ) {
-        return
+        scrollStateRef.current = next
+        setScrollState(next)
       }
-      scrollStateRef.current = next
-      setScrollState(next)
+
+      const revealProgress = resolveWorldwideRevealProgress(scrollPx, scrollRange)
+      const content = valueContentRef.current
+      const viewport = content?.parentElement
+      const maxReveal = Math.max(
+        0,
+        (content?.offsetHeight ?? 0) - (viewport?.clientHeight ?? 0),
+      )
+      setWorldwideRevealPx(Math.round(maxReveal * revealProgress))
     }
 
     const handleScroll = () => {
@@ -145,7 +159,7 @@ export function IntroductionScroll() {
           </div>
         </section>
         <section className={styles.valueStage} aria-label="JA Global Value">
-          <GlobalValuePanel isDesktopMotion={false} />
+          <GlobalValuePanel isDesktopMotion={false} withWorldwide />
         </section>
       </div>
     )
@@ -180,10 +194,23 @@ export function IntroductionScroll() {
               className={[styles.frame, styles.frameValue].join(' ')}
               aria-hidden={!isFramePushed || undefined}
             >
-              <GlobalValuePanel
-                activeValueIndex={activeValueIndex}
-                isDesktopMotion
-              />
+              {/*
+                list + Worldwide 동일 panel 형제 (그라데이션 연속).
+                accordion 이후 hold 스크롤로 valueContent translateY → Worldwide 노출.
+              */}
+              <div
+                ref={valueContentRef}
+                className={styles.valueContent}
+                style={{
+                  transform: `translate3d(0, -${worldwideRevealPx}px, 0)`,
+                }}
+              >
+                <GlobalValuePanel
+                  activeValueIndex={activeValueIndex}
+                  isDesktopMotion
+                  withWorldwide
+                />
+              </div>
             </div>
           ) : null}
         </div>

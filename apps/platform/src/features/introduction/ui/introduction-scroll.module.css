@@ -29,7 +29,7 @@
   position: relative;
   display: flex;
   width: 100%;
-  min-height: 100svh;
+  min-height: auto;
   flex-direction: column;
   box-sizing: border-box;
 }
@@ -74,10 +74,15 @@
   background-color: var(--color-primary-700);
 }
 
+.valueContent {
+  width: 100%;
+  will-change: transform;
+}
+
 @media (--bp-pc-up) {
-  /* Hero 520vh + Push 100vh + Value accordion 500vh + end hold 80vh */
+  /* Hero 520 + Push 100 + Value 500 + hold/reveal 200 = 1320vh */
   .root.isMotionTrack {
-    height: 1200vh;
+    height: 1320vh;
   }
 
   .sticky {
@@ -137,10 +142,26 @@
     pointer-events: auto;
     transition: visibility 0s linear 0s;
   }
+
+  /* Desktop accordion: .inner 만 100vh 뷰포트, Worldwide는 그 아래(translate로 노출) */
+  .valueContent {
+    display: flex;
+    height: auto;
+    min-height: 100%;
+    flex-direction: column;
+  }
+
+  .stageBody {
+    min-height: 100svh;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .frameTrack {
     transition: none;
+  }
+
+  .valueContent {
+    will-change: auto;
   }
 }

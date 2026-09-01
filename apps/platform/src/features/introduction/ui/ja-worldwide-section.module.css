@@ -1,0 +1,388 @@
+.section {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-neutral-white);
+  margin-top: var(--spacing-56);
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: cover;
+  background-image: url('../image/illustration/worldwide-bg.svg');
+}
+
+.inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  max-width: 1440px;
+  min-width: 0;
+  margin: 0 auto;
+  flex-direction: column;
+  align-items: center;
+  /* padding: var(--spacing-40) 0 var(--spacing-48); */
+  padding: 0 0 var(--spacing-48);
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-20);
+  padding: 0 var(--spacing-20);
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--color-palette-ice);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.stat {
+  margin: 0;
+  color: var(--color-neutral-white);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.globalLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-8);
+  width: 100%;
+  padding: 13px var(--spacing-28);
+  border-radius: var(--radius-12);
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--color-neutral-white);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.globalLink:hover,
+.globalLink:focus-visible {
+  background: rgba(61, 61, 61, 0.5);
+  outline: none;
+}
+
+.globalLinkIcon {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.mapWrap {
+  position: relative;
+  width: 100%;
+  max-width: 1440px;
+  min-width: 0;
+  margin-top: 3.6458vw;
+  /* margin-top: var(--spacing-50); */
+}
+
+.mapScroll {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.map {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.region {
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  outline: none;
+  transition: color 0.2s ease;
+}
+
+.region path,
+.region polygon {
+  fill: currentColor;
+  pointer-events: auto;
+}
+
+.regionActive {
+  color: var(--color-palette-green);
+}
+
+.regionLink {
+  position: absolute;
+  left: var(--region-link-x);
+  top: var(--region-link-y);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  border-radius: var(--radius-12);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-neutral-white);
+  padding: 9px var(--spacing-24);
+  color: var(--color-neutral-black);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  text-decoration: none;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+}
+
+.regionLinkActive {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.regionLink:focus-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* Mobile 전용 CTA — Desktop에서는 미사용 */
+.mobileRegionAction {
+  display: none;
+}
+
+.guide {
+  display: block;
+  width: 100%;
+  padding: 0 var(--spacing-20);
+  text-align: center;
+  opacity: 0.7;
+}
+
+.description {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--spacing-32) var(--spacing-20);
+  background-color: rgba(205, 244, 247, 0.1);
+}
+
+.descriptionText {
+  margin: 0 auto;
+  color: var(--color-palette-ice);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 140%;
+}
+
+.awardsWrap {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+  margin-top: var(--spacing-12);
+}
+
+.awardsItem {
+  width: 40px;
+  height: 40px;
+}
+
+@media (--bp-pc-up) {
+  .section {
+    margin-top: 24.6354vw;
+  }
+
+  .background {
+    inset: 0;
+    width: auto;
+    height: auto;
+    transform: none;
+    background-size: contain;
+  }
+
+  .inner {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .header {
+    gap: var(--spacing-28);
+    padding: 0;
+  }
+
+  .eyebrow {
+    font-size: 28px;
+    line-height: 144%;
+    letter-spacing: -0.56px;
+  }
+
+  .stat {
+    font-size: 80px;
+    line-height: 140%;
+    letter-spacing: -1.6px;
+  }
+
+  .globalLink {
+    width: max-content;
+    padding: 9px var(--spacing-24);
+    font-size: 16px;
+  }
+
+  .regionLink {
+    font-size: 16px;
+  }
+
+  .guide {
+    position: absolute;
+    bottom: 7.2916vw;
+    padding: 0;
+  }
+
+  .description {
+    padding: var(--spacing-40) var(--page-padding-x);
+  }
+
+  .descriptionText {
+    max-width: 900px;
+    margin: 0 auto;
+    font-size: 20px;
+    line-height: 160%;
+    letter-spacing: -0.4px;
+    text-align: center;
+    word-break: keep-all;
+  }
+
+  .awardsWrap {
+    gap: var(--spacing-20);
+    position: absolute;
+    bottom: 44px;
+    left: calc(100% - 64px);
+  }
+
+  .awardsItem {
+    width: 67px;
+    height: 67px;
+  }
+}
+
+@media (--bp-below-pc) {
+  /*
+   * worldwide-bg.svg = 1920×1080.
+   * section height(CTA)와 분리: 고정 decorative 레이어 + 좌우 crop.
+   * cover / 100% auto 사용 금지.
+   */
+
+  .background {
+    inset: auto;
+    top: 0;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translateX(-50%);
+    background-color: transparent;
+    background-size: 1200px auto;
+    background-position: top center;
+    background-repeat: no-repeat;
+  }
+
+  .mapWrap {
+    max-width: 840px;
+    margin-top: var(--spacing-16);
+  }
+
+  .mapScroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .mapScroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .map {
+    width: 840px;
+    min-width: 840px;
+    max-width: none;
+    flex-shrink: 0;
+  }
+
+  .regionLink {
+    display: none;
+  }
+
+  .mobileRegionAction {
+    display: block;
+    width: 100%;
+    margin-bottom: var(--spacing-20);
+    padding: 0 var(--spacing-20);
+    box-sizing: border-box;
+  }
+
+  .mobileRegionLink {
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-8);
+    box-sizing: border-box;
+    padding: var(--spacing-12) var(--spacing-20);
+    border-radius: var(--radius-12);
+    border: 1px solid var(--color-border-default);
+    background: var(--color-neutral-white);
+    color: var(--color-neutral-black);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 150%;
+    letter-spacing: -0.16px;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .mobileRegionLink:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
+  }
+
+  .mobileRegionLinkIcon {
+    display: block;
+    flex: 0 0 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .region,
+  .regionLink,
+  .globalLink {
+    transition: none;
+  }
+}
