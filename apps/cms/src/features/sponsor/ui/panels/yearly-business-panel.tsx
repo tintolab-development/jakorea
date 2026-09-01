@@ -186,7 +186,7 @@ export function YearlyBusinessPanel({
             variant="primary"
             size="medium"
             onClick={() => void handleToggleEdit()}
-            disabled={!canWrite || isSaving}
+            disabled={isSaving}
           >
             {isEditing ? '수정 완료' : '후원정보 수정'}
           </CmsButton>

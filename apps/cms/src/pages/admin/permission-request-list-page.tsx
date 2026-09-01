@@ -38,6 +38,8 @@ import {
 import { useInstructorRoleRequestMutations } from '@/features/user/api/hooks/use-instructor-role-request-mutations'
 import { useAdminApprovalRequestMutations } from '@/features/user/api/hooks/use-admin-approval-request-mutations'
 import { handleError } from '@/shared/utils/error-handler'
+import { guardAdminAction } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import './permission-request-page.css'
 
 const INSTRUCTOR_PERMISSION_APPROVE_MODAL_Z = 1150
@@ -126,6 +128,7 @@ function resolvePermissionDetailRequestId(
 }
 
 export function PermissionRequestListPage() {
+  const roleCode = useSessionAdminRoleCode()
   const [searchParams, setSearchParams] = useSearchParams()
   const instructorListRef = useRef<MembersPermissionListHandle>(null)
   const adminListRef = useRef<MembersPermissionListHandle>(null)
@@ -308,6 +311,7 @@ export function PermissionRequestListPage() {
   const handlePermissionApprove = useCallback(
     (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
       if (ctx.permissionRole === 'instructor') {
+        if (!guardAdminAction({ roleCode, action: 'approve' })) return
         const name = detailUser?.name?.trim() || '회원'
         setAdminApproveModal(null)
         setAdminRejectModal(null)
@@ -327,6 +331,15 @@ export function PermissionRequestListPage() {
         return
       }
       if (ctx.permissionRole === 'admin') {
+        if (
+          !guardAdminAction({
+            roleCode,
+            action: 'approve',
+            screen: 'admin-permission-approval',
+          })
+        ) {
+          return
+        }
         const name = detailUser?.name?.trim() || '회원'
         setInstructorApproveModal(null)
         setInstructorRejectModal(null)
@@ -353,7 +366,7 @@ export function PermissionRequestListPage() {
       })
       handleCloseDetail()
     },
-    [detailUser, handleCloseDetail]
+    [detailUser, handleCloseDetail, roleCode]
   )
 
   const handleInstructorApproveModalConfirm = useCallback(
@@ -529,6 +542,7 @@ export function PermissionRequestListPage() {
   const handlePermissionReject = useCallback(
     (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
       if (ctx.permissionRole === 'instructor') {
+        if (!guardAdminAction({ roleCode, action: 'approve' })) return
         const name = detailUser?.name?.trim() || '회원'
         setAdminApproveModal(null)
         setAdminRejectModal(null)
@@ -548,6 +562,15 @@ export function PermissionRequestListPage() {
         return
       }
       if (ctx.permissionRole === 'admin') {
+        if (
+          !guardAdminAction({
+            roleCode,
+            action: 'approve',
+            screen: 'admin-permission-approval',
+          })
+        ) {
+          return
+        }
         const name = detailUser?.name?.trim() || '회원'
         setInstructorApproveModal(null)
         setInstructorRejectModal(null)
@@ -574,7 +597,7 @@ export function PermissionRequestListPage() {
       })
       handleCloseDetail()
     },
-    [detailUser, handleCloseDetail]
+    [detailUser, handleCloseDetail, roleCode]
   )
 
   const handlePermissionResetToPending = useCallback(

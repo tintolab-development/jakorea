@@ -37,6 +37,9 @@ import {
   InstructorFeeGradeSelect,
 } from './instructor-fee-ja-edit'
 import { formatDate } from '@/shared/utils'
+import { RestrictedPiiClickable } from '@/features/user/detail/ui/restricted-pii-clickable'
+import { canAdminAction } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 
 function instructorBusinessIncomeView(user: BasicInfoSectionContext['user']) {
   const businessIncome =
@@ -167,6 +170,8 @@ export function InstructorMetaSection(ctx: BasicInfoSectionContext) {
 
 export function InstructorSection(ctx: BasicInfoSectionContext) {
   const { user, scheduleChangeCount, personalInfoRevealed, viewContext } = ctx
+  const roleCode = useSessionAdminRoleCode()
+  const canRevealAccount = canAdminAction({ roleCode, action: 'piiAccount' })
   const isInstructorPermissionDetail =
     viewContext.permissionView && viewContext.permissionRole === 'instructor'
   const canEditFeeJa = canEditInstructorFeeJaFields(ctx)
@@ -210,7 +215,11 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         <EditableField
           label="정산 계좌 정보"
           readOnlyDisplay
-          view={<span>{instructorBankView(user, personalInfoRevealed)}</span>}
+          view={
+            <RestrictedPiiClickable action="piiAccount">
+              <span>{instructorBankView(user, personalInfoRevealed && canRevealAccount)}</span>
+            </RestrictedPiiClickable>
+          }
         />
       </EditableRow>
 

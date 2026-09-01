@@ -85,6 +85,7 @@ import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { applyPrivacyUnmaskResponseToUser } from '@/features/user/api/apply-privacy-unmask-to-user'
+import { stripRestrictedPiiForSessionUser } from '@/features/user/api/strip-restricted-pii'
 import { parseAdminAccountIdFromUserId } from '@/features/user/api/fetch-admin-member-detail'
 import {
   applySavedBasicInfoPatchToUser,
@@ -444,10 +445,14 @@ export function useUserDetailController({
   const handlePrivacyUnmasked = useCallback(
     (payload: unknown, role: User['role'] | undefined) => {
       if (!displayUser) return
-      const merged = applyPrivacyUnmaskResponseToUser(
+      const merged = stripRestrictedPiiForSessionUser(
+        applyPrivacyUnmaskResponseToUser(
+          displayUser,
+          payload,
+          role ?? displayUser.role
+        ),
         displayUser,
-        payload,
-        role ?? displayUser.role
+        useAuthStore.getState().user
       )
       if (displayUser.memberId != null) {
         queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
@@ -860,7 +865,11 @@ export function useUserDetailController({
         if (!result.ok) return
         const unmaskedUser =
           result.payload !== undefined
-            ? applyPrivacyUnmaskResponseToUser(displayUser, result.payload, displayUser.role)
+            ? stripRestrictedPiiForSessionUser(
+                applyPrivacyUnmaskResponseToUser(displayUser, result.payload, displayUser.role),
+                displayUser,
+                useAuthStore.getState().user
+              )
             : displayUser
         setEditUnmaskConfirmOpen(false)
         startBasicInfoEdit(unmaskedUser)

@@ -33,8 +33,8 @@ import {
 } from '@/features/user/api/member-remote-capabilities'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { useAuthStore } from '@/features/auth/model/auth-store'
+import { guardAdminAction } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import type { UserDetailPermissionRole } from '@/pages/users/user-detail-fullpage-modal'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -141,8 +141,7 @@ export const MembersPermissionList = forwardRef<
   },
   ref
 ) {
-  const { user } = useAuthStore()
-  const canWrite = canPerformWriteAction(user)
+  const roleCode = useSessionAdminRoleCode()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const instructorListParams = useMemo(
@@ -308,10 +307,21 @@ export const MembersPermissionList = forwardRef<
     [selectedRowKeys]
   )
 
+  const guardListApproveAction = useCallback(() => {
+    if (memberType === 'admin') {
+      return guardAdminAction({
+        roleCode,
+        action: 'approve',
+        screen: 'admin-permission-approval',
+      })
+    }
+    return guardAdminAction({ roleCode, action: 'approve' })
+  }, [memberType, roleCode])
+
   const bulkApprove = useCallback(() => {
     const keys = selectedKeysSnapshot()
-    if (!canWrite || keys.length === 0) return
-
+    if (keys.length === 0) return
+    if (!guardListApproveAction()) return
     const pendingRows = resolvePendingRowsForKeys(keys)
     const hasNonPendingInSelection = pendingRows.length !== keys.length
     const isBulkSelection = keys.length >= 2
@@ -372,7 +382,7 @@ export const MembersPermissionList = forwardRef<
       return
     }
   }, [
-    canWrite,
+    guardListApproveAction,
     memberType,
     onInstructorApproveRequest,
     onAdminApproveRequest,
@@ -382,7 +392,8 @@ export const MembersPermissionList = forwardRef<
 
   const bulkReject = useCallback(() => {
     const keys = selectedKeysSnapshot()
-    if (!canWrite || keys.length === 0) return
+    if (keys.length === 0) return
+    if (!guardListApproveAction()) return
 
     const rejectableRows = resolveRejectableRowsForKeys(keys)
     const pendingRows = rejectableRows.filter(r => r.approvalStatus === 'PENDING')
@@ -457,7 +468,7 @@ export const MembersPermissionList = forwardRef<
       return
     }
   }, [
-    canWrite,
+    guardListApproveAction,
     memberType,
     onInstructorRejectRequest,
     onAdminRejectRequest,
@@ -628,7 +639,7 @@ export const MembersPermissionList = forwardRef<
             className="cms-button--action"
             width={CMS_ACTION_BUTTON_WIDTH}
             onClick={bulkReject}
-            disabled={!canWrite || selectedRowKeys.length === 0}
+            disabled={selectedRowKeys.length === 0}
           >
             신청 반려
           </CmsButton>
@@ -637,7 +648,7 @@ export const MembersPermissionList = forwardRef<
             className="cms-button--action"
             width={CMS_ACTION_BUTTON_WIDTH}
             onClick={bulkApprove}
-            disabled={!canWrite || selectedRowKeys.length === 0}
+            disabled={selectedRowKeys.length === 0}
           >
             신청 승인
           </CmsButton>
@@ -661,20 +672,16 @@ export const MembersPermissionList = forwardRef<
           },
           style: { cursor: onOpenUserDetail ? 'pointer' : undefined },
         })}
-        rowSelection={
-          canWrite
-            ? {
-                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                selectedRowKeys,
-                onChange: keys => {
-                  const next = keys.map(k => String(k))
-                  selectedRowKeysRef.current = next
-                  setSelectedRowKeys(next)
-                },
-                preserveSelectedRowKeys: false,
-              }
-            : undefined
-        }
+        rowSelection={{
+          columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+          selectedRowKeys,
+          onChange: keys => {
+            const next = keys.map(k => String(k))
+            selectedRowKeysRef.current = next
+            setSelectedRowKeys(next)
+          },
+          preserveSelectedRowKeys: false,
+        }}
         pagination={false}
       />
 
