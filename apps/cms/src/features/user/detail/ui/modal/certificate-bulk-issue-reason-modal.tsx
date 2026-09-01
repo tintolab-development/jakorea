@@ -4,18 +4,27 @@
  */
 
 import { useEffect, useState } from 'react'
-import { message } from 'antd'
+import { CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import './certificate-bulk-issue-reason-modal.css'
 
 const REASON_OPTIONS = [
   { value: 'institution_submission', label: '기관 제출용' },
-  { value: 'company_submission', label: '회사 제출용' },
-  { value: 'school_submission', label: '학교 제출용' },
-  { value: 'financial_institution_submission', label: '금융기관 제출용' },
+  { value: 'education_completion_proof', label: '교육 이수 증빙용' },
+  { value: 'personal_archive', label: '개인 보관용' },
 ]
+
+export type CertificateIssueReasonValue =
+  | 'institution_submission'
+  | 'education_completion_proof'
+  | 'personal_archive'
+
+export function getCertificateIssueReasonLabel(value: string): string | undefined {
+  return REASON_OPTIONS.find(option => option.value === value)?.label
+}
 
 export interface CertificateBulkIssueReasonModalProps {
   open: boolean
@@ -24,6 +33,8 @@ export interface CertificateBulkIssueReasonModalProps {
   applicationIds: readonly string[]
   /** 제목·설명에 들어가는 발급 문서명 (기본: 수료증/참여인증서) */
   certificateDocumentLabel?: string
+  /** 지정 시 발급 클릭 후 사유와 함께 호출 */
+  onIssue: (reason: CertificateIssueReasonValue, reasonLabel: string) => void
 }
 
 export function CertificateBulkIssueReasonModal({
@@ -31,8 +42,10 @@ export function CertificateBulkIssueReasonModal({
   onCancel,
   applicationIds,
   certificateDocumentLabel = '수료증/참여인증서',
+  onIssue,
 }: CertificateBulkIssueReasonModalProps) {
   void applicationIds
+  const { showAlert } = useCmsAlert()
   const [reason, setReason] = useState<string | undefined>(undefined)
 
   useEffect(() => {
@@ -41,10 +54,15 @@ export function CertificateBulkIssueReasonModal({
 
   const handleIssue = () => {
     if (reason == null || String(reason).trim() === '') {
-      message.warning('발급 사유를 선택해 주세요.')
+      showAlert({ title: '안내', content: CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE })
       return
     }
-    window.alert('준비 중입니다.')
+    const reasonLabel = getCertificateIssueReasonLabel(reason)
+    if (reasonLabel == null) {
+      showAlert({ title: '안내', content: CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE })
+      return
+    }
+    onIssue(reason as CertificateIssueReasonValue, reasonLabel)
     onCancel()
   }
 
@@ -53,21 +71,24 @@ export function CertificateBulkIssueReasonModal({
       open={open}
       onCancel={onCancel}
       title={`${certificateDocumentLabel} 발급 사유`}
-      description={`${certificateDocumentLabel} 발급 사유를 선택해 주세요. 선택한 사유는 발급 문서에 기입됩니다.`}
-      width={560}
+      description={`${certificateDocumentLabel} 발급 사유를 선택해 주세요.\n선택한 사유는 발급 문서에 기입됩니다.`}
+      width={600}
       footer={
         <>
-          <CmsButton variant="secondary" size="large" width={120} onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" width={120} onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="large" width={120} onClick={handleIssue}>
+          <CmsButton variant="primary" size="medium" width={120} onClick={handleIssue}>
             발급
           </CmsButton>
         </>
       }
     >
       <div className="certificate-bulk-issue-reason-modal__field">
-        <div className="certificate-bulk-issue-reason-modal__label" id="certificate-issue-reason-label">
+        <div
+          className="certificate-bulk-issue-reason-modal__label"
+          id="certificate-issue-reason-label"
+        >
           발급 사유{' '}
           <span className="certificate-bulk-issue-reason-modal__required" aria-hidden>
             *
@@ -79,8 +100,9 @@ export function CertificateBulkIssueReasonModal({
           value={reason}
           onChange={v => setReason(v as string)}
           options={REASON_OPTIONS}
-          inputSize="large"
+          inputSize="medium"
           width="100%"
+          withAllOption={false}
         />
       </div>
     </ContentModal>

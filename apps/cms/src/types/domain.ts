@@ -45,14 +45,198 @@ export type ProgramType = 'online' | 'offline' | 'hybrid'
 // 프로그램 진행 형태
 export type ProgramFormat = 'workshop' | 'seminar' | 'course' | 'lecture' | 'other'
 
-// 프로그램 카테고리 (학교 프로그램 vs 개인 프로그램)
-export type ProgramCategory = 'school' | 'individual'
+// 프로그램 참여자 유형 (목록 필터·테이블과 동일 4값)
+export type ProgramCategory = 'school' | 'individual' | 'instructor' | 'volunteer'
+
+/** 일반 프로그램 등록 폼 — 참여자 유형 (복수 선택) */
+export type GeneralProgramParticipantType =
+  | 'individual'
+  | 'school_institution'
+  | 'teacher_instructor'
+  | 'volunteer'
+
+/** 일반 프로그램 등록 폼 — 설문 진행 항목 키 (등록 양식·상세 LNB 공통 3종) */
+export type GeneralProgramSurveyMenuKey =
+  | 'survey'
+  | 'satisfaction'
+  | 'lecture_evaluation'
+
+/** 일반 프로그램 대분류 — 등록 폼 참여자 유형 [기관] / [개인] */
+export type GeneralProgramAudienceKind = 'organization' | 'individual'
+
+/** 일반 프로그램 중분류 — 등록 폼 교육 진행 구조 [커리큘럼형] / [일정형] */
+export type GeneralProgramEducationStructure = 'curriculum' | 'schedule'
+
+/** 일반 프로그램 소분류 — 등록 폼 수업 회차 유형 [단일 회차] / [복수 회차] */
+export type GeneralProgramSessionRoundKind = 'single' | 'multi'
+
+/** 일반 프로그램 상세 공통 정보 — 커리큘럼 차시 (등록 폼·조회 mock) */
+export interface GeneralProgramCurriculumSessionRow {
+  sessionLabel: string
+  /** 단일 회차: 단원명. 복수 회차: 진행 차시 수(표시 시 N차시) */
+  title: string
+  description: string
+  /** 복수 회차 — 과제 설정 */
+  assignmentEnabled?: boolean
+  assignmentPeriod?: string
+  /** 복수 회차 · 교육 형태 일정 별 상이 — 회차별 표시 라벨 */
+  educationFormLabel?: string
+  /** 복수 회차 · 참여 방식 일정 별 상이 — 회차별 표시 라벨 */
+  participationMethodLabel?: string
+  /** 복수 회차 · IPS 일정 별 상이 — 회차별 `카테고리 | 세부` (일정 접두 없음) */
+  ipsTypeSummary?: string
+  /** 개인 커리큘럼 사전 교육 — 진행 일정 (일정형과 동일 표기) */
+  scheduleDateLabel?: string
+}
+
+/** 일반 프로그램 — 교육 형태·참여·IPS 일정 공통/별 상이 */
+export type GeneralProgramScheduleDetailKind = 'common' | 'perSchedule'
+
+/** 일반 프로그램 상세 — 일정형 세부 일정 (등록 폼·조회 mock) */
+export interface GeneralProgramScheduleDetailRow {
+  /** `세부 일정 01` / `행사 일정 01` */
+  scheduleLabel: string
+  /** 일정명 */
+  name: string
+  /** `그룹 A : 09:30 ~ 09:40 | 그룹 B : …` — 세부 일정(단일·복수 공통) */
+  progressTimeSummary?: string
+  /** 복수 — 진행 일정 표시 */
+  scheduleDateLabel?: string
+  /** 복수 행사 일정 — 과제 설정 */
+  assignmentEnabled?: boolean
+  assignmentPeriod?: string
+  educationFormLabel?: string
+  participationMethodLabel?: string
+  ipsTypeSummary?: string
+}
+
+/** 일반 프로그램 캘린더 — 설문·과제 등 보조 일정 */
+export interface GeneralProgramCalendarScheduleRow {
+  id: string
+  title: string
+  startDate?: DateValue
+  endDate?: DateValue
+  dueDate?: DateValue
+  startTime?: string
+  endTime?: string
+}
+
+/** 일반 프로그램 상세 공통 정보 확장 (등록 폼 저장값 mock/API 연동 전) */
+export interface GeneralProgramCommonInfoExtension {
+  /** 공고용 프로그램명 — 미설정 시 `Program.title` */
+  announcementTitle?: string
+  /** 세부 프로그램명 */
+  detailedProgramName?: string
+  sponsorManagerLine?: string
+  /** 교육 장소 상세 (기관 안/밖 뒤 `|` 구분) */
+  venueDetail?: string
+  /** 후원사 표시명 mock — `sponsorId` resolve 전 스크린샷·데모용 (복수 시 `, ` 구분) */
+  sponsorDisplayName?: string
+  /** 후원사 관리 목록 id — `/sponsor?sponsorId=` 링크용 (레거시·주 후원사) */
+  sponsorManagementId?: string
+  /** 후원사 관리 목록 id — 다중 선택 */
+  sponsorManagementIds?: string[]
+  educationFormLabel?: string
+  /** 참여 방식 — 개인 대상 · 일정 공통 (등록 폼·상세 조회 mock) */
+  participationMethod?: 'individual' | 'team'
+  ipsTypeSummary?: string
+  educationFormScheduleDetail?: GeneralProgramScheduleDetailKind
+  participationScheduleDetail?: GeneralProgramScheduleDetailKind
+  ipsScheduleDetail?: GeneralProgramScheduleDetailKind
+  /** 교육 진행(커리큘럼·일정형) — 사전 교육 토글 */
+  scheduleCurriculumPreEducation?: boolean
+  curriculumSessions?: GeneralProgramCurriculumSessionRow[]
+  /** 일정형 — 세부 일정 블록 */
+  scheduleDetails?: GeneralProgramScheduleDetailRow[]
+  educationScheduleLines?: string[]
+  wageGradeRows?: Array<{ grade: string; pricing: string }>
+  paymentItems?: string
+  deductionItems?: string
+  kpi?: {
+    finalParticipants: number
+    instructorCount: number
+    volunteerCount: number
+    finalSchools: number
+    finalClasses: number
+  }
+  /** 모집 정보 — 참여자 모집 (등록 양식·상세 조회 mock) */
+  participantRecruitmentInfo?: GeneralProgramParticipantRecruitmentInfo
+  /** 모집 정보 — 강사 모집 (등록 양식·상세 조회 mock) */
+  instructorRecruitmentInfo?: GeneralProgramInstructorRecruitmentInfo
+  /** 모집 정보 — 봉사자 모집 (등록 양식·상세 조회 mock) */
+  volunteerRecruitmentInfo?: GeneralProgramVolunteerRecruitmentInfo
+  /** 봉사자 모집 — 면접 진행 가능 일정 (등록 양식·상세 조회 mock) */
+  volunteerInterviewScheduleInfo?: GeneralProgramVolunteerInterviewScheduleInfo
+  /** 교육 진행 일정 설정 — `date` 날짜 지정 · `period` 기간 지정(기획: 날짜 선택(기간)) */
+  educationScheduleMode?: 'date' | 'period'
+  /** 교육받은 교사 — 교육일지 설정 (있음/없음) */
+  educationJournalEnabled?: boolean
+  /** 교육받은 교사 — 교육 연수 토글. ON이면 첫 진행 항목 타이틀·일정명이 교육 연수로 치환(IPS Prepare 고정) */
+  teacherTrainingEnabled?: boolean
+  /** 일반 프로그램 캘린더 — 설문조사 시작/종료 등 */
+  calendarSurveySchedules?: GeneralProgramCalendarScheduleRow[]
+  /** 일반 프로그램 캘린더 — 과제 제출 마감 등 */
+  calendarAssignmentSchedules?: GeneralProgramCalendarScheduleRow[]
+}
+
+/** 일반 프로그램 — 참여자 모집 정보 (프로그램 등록 참여자 모집 양식 필드) */
+export interface GeneralProgramParticipantRecruitmentInfo {
+  announcementPublished?: boolean
+  preEducationNoticeRequired?: boolean
+  /** 수료증 발급 여부 — 모집 양식 */
+  certificateIssuanceProvided?: boolean
+  maxAssignableInstructors?: number
+  /** 기관 신청 시 선택 가능한 최대 학급 수 상한 */
+  maxClassCount?: number
+  maxSessionsPerDay?: number
+  maxScheduleCount?: number
+  /** 표시용 — 운영·모집 기간·합격 발표 (요일 포함) */
+  operationPeriodLabel?: string
+  recruitmentPeriodLabel?: string
+  finalAnnouncementLabel?: string
+  contactOrganizationName?: string
+  /** 개인 참여자 모집 — 면접 유무 (등록 양식·상세 mock) */
+  interviewEnabled?: boolean
+  /** 비고 해당 없음 — true면 공고 비노출·관리자 상세에는 '-' */
+  notesNotApplicable?: boolean
+}
+
+/** 일반 프로그램 — 강사 모집 정보 (프로그램 등록 강사 모집 양식 필드) */
+export interface GeneralProgramInstructorRecruitmentInfo {
+  announcementPublished?: boolean
+  /** 표시용 — 운영·모집 기간 (요일 포함) */
+  operationPeriodLabel?: string
+  recruitmentPeriodLabel?: string
+  contactOrganizationName?: string
+}
+
+/** 일반 프로그램 — 봉사자 모집 정보 (프로그램 등록 봉사자 모집 양식 필드) */
+export interface GeneralProgramVolunteerRecruitmentInfo {
+  announcementPublished?: boolean
+  /** UJAT 하반기 — 모집 공고 노출 시점 (`start-day` | `one-day-before` | `one-week-before`) */
+  noticeExposureTiming?: string
+  /** 비고 해당 없음 — true면 공고 비노출·관리자 상세에는 '-' */
+  notesNotApplicable?: boolean
+  /** 표시용 — 운영·모집 기간 (요일 포함) */
+  operationPeriodLabel?: string
+  recruitmentPeriodLabel?: string
+  contactOrganizationName?: string
+}
+
+/** 일반 프로그램 — 봉사자 면접 진행 가능 일정 */
+export interface GeneralProgramVolunteerInterviewScheduleInfo {
+  recurringUnavailable?: string
+  specificUnavailableDates?: string
+  /** 직접 추가 불가일 — ISO `YYYY-MM-DD` */
+  specificUnavailableDateIsos?: string[]
+  availableTimeSlots?: string
+}
 
 // IPS 분류
 export type IPSClassification = 'Prepare' | 'Succeed' | 'Inspire'
 
 // 대상 구분
-export type TargetLevel = 'elementary' | 'middle' | 'high'
+export type TargetLevel = 'elementary' | 'middle' | 'high' | 'university' | 'adult'
 
 // 기관 구분
 export type InstitutionType = 'inside_school' | 'outside_school'
@@ -66,7 +250,7 @@ export interface ApplicationPath {
   programId: UUID
   pathType: ApplicationPathType
   googleFormUrl?: string // 구글폼 링크 (pathType이 'google_form'일 때)
-  guideMessage?: string // 신청 경로별 안내 문구
+  guideText?: string // 신청 경로별 안내 문구
   isActive: boolean // 활성화 여부
   createdAt: DateValue
   updatedAt: DateValue
@@ -90,6 +274,16 @@ export type ProgramLifecycleStatus =
   | 'document_processing_completed' // 봉사자 모집 완료
   | 'participant_instructor_recruitment_completed' // 참여자&교육자 모집 완료
 
+/**
+ * UJAT 프로그램 진행 현황 (목록 5종) — 모집 신청 현황(`ProgramLifecycleStatus`)과 별도
+ */
+export type UjatProgramProgressStatus =
+  | 'EDUCATION_SCHEDULED' // 프로그램 진행 예정
+  | 'PARTICIPANT_RECRUITING' // 참여자 모집 중
+  | 'VOLUNTEER_RECRUITING' // 봉사자 모집 중
+  | 'EDUCATION_IN_PROGRESS' // 프로그램 진행 중
+  | 'PROGRAM_ENDED' // 프로그램 진행 완료
+
 // 프로그램
 export interface Program {
   id: UUID
@@ -105,7 +299,13 @@ export interface Program {
   applicationStartDate?: DateValue // 신청 시작일
   applicationEndDate?: DateValue // 신청 종료일
   status: Status
-  lifecycleStatus?: ProgramLifecycleStatus // 상세 진행 상태 (모집 예정~진행 완료)
+  lifecycleStatus?: ProgramLifecycleStatus // 모집 신청 현황(참여자·강사·봉사자 모집 등)
+  /** UJAT 전용 프로그램 진행 현황(목록 5종) */
+  ujatProgressStatus?: UjatProgramProgressStatus
+  /** UJAT 목록 — 상반기 봉사자 모집 인원(현재) */
+  ujatFirstHalfVolunteerCount?: number
+  /** UJAT 목록 — 하반기 봉사자 모집 인원(현재) */
+  ujatSecondHalfVolunteerCount?: number
   settlementRuleId?: UUID // 정산 규칙 참조
   applicationPathId?: UUID // 신청 경로 참조 (V3 Phase 7)
   // 엑셀 데이터 기반 추가 필드 - 기본 교육실적 정보
@@ -117,7 +317,9 @@ export interface Program {
   schoolId?: UUID // 학교명 (기관) - Application을 통해 연결
   district?: string // 시군구 - School.region에서 추출
   ips?: IPSClassification // IPS 분류 (Prepare/Succeed/Inspire)
-  targetLevel?: TargetLevel // 대상 구분 (초/중/고)
+  targetLevel?: TargetLevel // 대상 구분 (초/중/고/대학생/성인) — 목록·레거시 호환용(첫 번째 값)
+  /** 교육 대상 다중 선택 (모집 정보) */
+  targetLevels?: TargetLevel[]
   institutionType?: InstitutionType // 기관 구분 (학교 안/밖)
   // 프로그램 설정 정보
   ipOwned?: string // IP Owned (기본값: "JA")
@@ -184,15 +386,19 @@ export interface Program {
   /** 최종 합격자 발표 */
   finalPassAnnouncementDate?: DateValue
   finalPassAnnouncementMethod?: string
-  /** 강사 모집 대상 (강사 정보 탭) */
+  /** 강사 모집 대상 (강사 정보 탭) — 레거시 단일/쉼표 구분 문자열 */
   instructorTarget?: string
+  /** 강사 모집 대상 다중 선택 */
+  instructorTargets?: string[]
   /** 강사 모집 대상 상세 */
   instructorTargetDetail?: string
   /** 봉사자 모집 기간 */
   volunteerApplicationStartDate?: DateValue
   volunteerApplicationEndDate?: DateValue
-  /** 봉사자 모집 대상 (봉사자 정보 탭) */
+  /** 봉사자 모집 대상 (봉사자 정보 탭) — 레거시 단일/쉼표 구분 문자열 */
   volunteerTarget?: string
+  /** 봉사자 모집 대상 다중 선택 */
+  volunteerTargets?: string[]
   /** 봉사자 모집 대상 상세 */
   volunteerTargetDetail?: string
   /** 지원 방법 (강사/봉사자 상세정보 탭) */
@@ -204,6 +410,27 @@ export interface Program {
   surveyFormTemplateId?: UUID // 설문 폼 템플릿 ID
   satisfactionFormTemplateId?: UUID // 만족도 조사 폼 템플릿 ID
   lectureReportFormTemplateId?: UUID // 강의보고서 폼 템플릿 ID
+  /** 일반 프로그램 상세 — 등록 폼 참여자 유형 (복수, API 연동 전 mock) */
+  generalParticipantTypes?: GeneralProgramParticipantType[]
+  /** 일반 프로그램 — 봉사자 선발 시 면접 단계 LNB 노출 여부 */
+  generalVolunteerInterviewEnabled?: boolean
+  /** 일반 프로그램 — 개인 참여자 선발 시 면접 단계 LNB 노출 여부 */
+  generalParticipantInterviewEnabled?: boolean
+  /** 일반 프로그램 — 설문 관리 LNB 2뎁스 키 */
+  generalSurveyMenuKeys?: GeneralProgramSurveyMenuKey[]
+  /** 일반 프로그램 유형 — 대분류 (기관/개인) */
+  generalProgramAudience?: GeneralProgramAudienceKind
+  /** 일반 프로그램 유형 — 중분류 (커리큘럼형/일정형) */
+  generalProgramEducationStructure?: GeneralProgramEducationStructure
+  /** 일반 프로그램 유형 — 소분류 (단일/복수 회차) */
+  generalProgramSessionRound?: GeneralProgramSessionRoundKind
+  /** 일반 프로그램 상세 공통 정보 확장 필드 */
+  generalCommonInfo?: GeneralProgramCommonInfoExtension
+  /** 일반 프로그램 캘린더 — 시간대 사용 여부 (false면 종일) */
+  scheduleTimeEnabled?: boolean
+  /** 일반 프로그램 캘린더 — 일정 시작·종료 시각 (HH:mm) */
+  startTime?: string
+  endTime?: string
   createdAt: DateValue
   updatedAt: DateValue
   /** 등록자 표시명 (목록/상세 표시용, API·mock에서 채움) */
@@ -363,7 +590,14 @@ export interface MatchingHistory {
 }
 
 // 정산 항목 타입
-export type SettlementItemType = 'instructor_fee' | 'transportation' | 'accommodation' | 'other'
+export type SettlementItemType =
+  | 'instructor_fee'
+  | 'transportation'
+  | 'accommodation'
+  | 'meal'
+  | 'activity'
+  | 'withholding'
+  | 'other'
 
 // 정산 항목
 export interface SettlementItem {
@@ -623,6 +857,10 @@ export interface UserHistory {
   finalStatus: FinalStatus
   /** CMS 봉사·참여 이력 목록 필터/표시용 (API 연동 시) */
   managerName?: string
+  /** API program-history 응답 programName (programService 폴백 전) */
+  programName?: string
+  /** API program-history participantId */
+  participantId?: number
   // 강사인 경우
   paymentStatus?: PaymentStatus
   paymentAmount?: number
@@ -690,6 +928,8 @@ export interface ProgramPost {
   attachmentCount: number
   /** 게시글 상태 태그 (예: [공지사항], [일정 알림]) */
   postType?: 'notice' | 'schedule'
+  /** 공개 범위 (all, teacher, student, instructor, volunteer) */
+  audience?: string[]
   publishedAt: DateValue
   createdAt: DateValue
   updatedAt: DateValue

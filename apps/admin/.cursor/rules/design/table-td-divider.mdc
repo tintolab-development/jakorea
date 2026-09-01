@@ -1,0 +1,25 @@
+---
+description: Admin 값 셀 디바이더 — form-template-runtime (공통 원칙 cms-admin-ui)
+globs:
+  - apps/admin/src/**/*.tsx
+alwaysApply: false
+---
+
+# Admin 값 셀 디바이더 (어댑터)
+
+**원칙:** [cms-admin-ui/table-td-divider.mdc](../../../../.cursor/rules/cms-admin-ui/table-td-divider.mdc)
+
+```tsx
+import { DetailInfoForm, DetailInfoFormTdDivider } from '@jakorea/form-template-runtime'
+
+<>
+  {segmentA}
+  <DetailInfoForm.TdDivider />
+  {segmentB}
+</>
+// 또는 <DetailInfoFormTdDivider />
+```
+
+program-detail 전용 CMS divider 대신 **공유 패키지**만 사용.
+
+**Last updated:** 2026-08-06

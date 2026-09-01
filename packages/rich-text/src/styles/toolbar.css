@@ -1,0 +1,74 @@
+/**
+ * 툴바 Figma 스펙 토큰 — node 5714-10743
+ * CMS·Platform 툴바 CSS에서 var(--rt-toolbar-*) 로 참조.
+ */
+.rich-text-editor {
+  --rt-toolbar-control-height: 32px;
+  --rt-toolbar-icon-size: 16px;
+  --rt-toolbar-chevron-size: 16px;
+  --rt-toolbar-gap: 8px;
+  --rt-toolbar-row-gap: 8px;
+  --rt-toolbar-padding: 8px;
+  --rt-toolbar-trigger-gap: 4px;
+  --rt-toolbar-text-color: var(--main-BK, #3D3D3D);
+  --rt-toolbar-font-family: Pretendard;
+  --rt-toolbar-label-font-size: 15px;
+  --rt-toolbar-label-font-weight: 500;
+  --rt-toolbar-label-line-height: 150%;
+  --rt-toolbar-hover-bg: #ebebeb;
+  --rt-toolbar-active-bg: #e6f4f1;
+  --rt-toolbar-active-color: #00897b;
+  --rt-toolbar-chevron-color: #85969d;
+  --rt-toolbar-control-radius: 8px;
+}
+
+.rt-toolbar-icon {
+  display: block;
+  flex-shrink: 0;
+  width: var(--rt-toolbar-icon-size, 16px);
+  height: var(--rt-toolbar-icon-size, 16px);
+}
+
+.rt-toolbar-chevron {
+  display: block;
+  flex-shrink: 0;
+  width: var(--rt-toolbar-chevron-size, 16px);
+  height: var(--rt-toolbar-chevron-size, 16px);
+  aspect-ratio: 1 / 1;
+}
+
+/* 드롭다운 트리거 내부 — 아이콘·텍스트·chevron 간격 */
+.rt-toolbar-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rt-toolbar-trigger-gap, 4px);
+}
+
+.rt-toolbar-trigger > * {
+  margin: 0;
+}
+
+/* B/I/U/S·줄간격·위첨자·이모지 등 아이콘 전용 컨트롤 */
+.rt-toolbar-icon-control {
+  display: inline-flex;
+  box-sizing: border-box;
+  height: var(--rt-toolbar-control-height, 32px);
+  padding: 0 8px;
+  justify-content: center;
+  align-items: center;
+  border-radius: var(--rt-toolbar-control-radius, 8px);
+}
+
+.rt-toolbar-font-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--rt-toolbar-icon-size, 16px);
+  height: var(--rt-toolbar-icon-size, 16px);
+  color: var(--rt-toolbar-text-color, var(--main-BK, #3D3D3D));
+  font-family: var(--rt-toolbar-font-family, Pretendard), var(--font-family-primary, sans-serif);
+  font-size: var(--rt-toolbar-icon-size, 16px);
+  font-weight: 600;
+  line-height: 1;
+}

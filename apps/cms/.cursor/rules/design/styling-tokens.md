@@ -6,7 +6,9 @@ category: design
 
 # Design tokens (CSS variables)
 
-**Definition file:** `src/app/providers/theme-provider.css`
+**공유 원칙 (CMS·Admin):** [cms-admin-ui/styling-tokens.mdc](../../../../.cursor/rules/cms-admin-ui/styling-tokens.mdc)
+
+**Definition file (CMS):** `src/app/providers/theme-provider.css`
 
 ## Priority
 
@@ -53,4 +55,4 @@ Always prefer tokens for **color, spacing, typography, radius, shadow**. Do not 
 - [color-palette.md](./color-palette.md)  
 - [color-system.md](./color-system.md)  
 
-**Last updated:** 2026-04-21
+**Last updated:** 2026-08-06

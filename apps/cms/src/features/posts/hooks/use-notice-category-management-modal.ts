@@ -5,13 +5,13 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import type { InputRef } from 'antd'
-import { message } from 'antd'
 import type { Notice } from '@/data/mock/notices'
 import {
   countByCategoryLabel,
   createNoticeCategoryId,
   hasDuplicateCategoryName,
 } from '@/features/posts/model/notice-category-domain'
+import type { NoticeCategoryRemoteActions } from '@/features/posts/hooks/use-admin-notice-categories'
 import type { NoticeCategoryRow } from '@/features/posts/model/admin-notice-management.types'
 
 export type UseNoticeCategoryManagementModalParams = {
@@ -22,6 +22,7 @@ export type UseNoticeCategoryManagementModalParams = {
   notices: readonly Notice[]
   /** 메인 모달 닫기(상위) */
   onClose: () => void
+  remoteActions?: NoticeCategoryRemoteActions
 }
 
 export type UseNoticeCategoryManagementModalResult = {
@@ -32,6 +33,7 @@ export type UseNoticeCategoryManagementModalResult = {
   setEditDraft: (v: string) => void
   newDraft: string
   setNewDraft: (v: string) => void
+  composeOpen: boolean
   deleteBlockedOpen: boolean
   deleteConfirmOpen: boolean
   pendingDeleteRow: NoticeCategoryRow | null
@@ -45,7 +47,7 @@ export type UseNoticeCategoryManagementModalResult = {
   confirmDeleteCategory: () => void
   cancelNew: () => void
   submitNew: () => void
-  focusNewRow: () => void
+  openCompose: () => void
 }
 
 export function useNoticeCategoryManagementModal({
@@ -54,10 +56,12 @@ export function useNoticeCategoryManagementModal({
   onCategoriesChange,
   notices,
   onClose,
+  remoteActions,
 }: UseNoticeCategoryManagementModalParams): UseNoticeCategoryManagementModalResult {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState('')
   const [newDraft, setNewDraft] = useState('')
+  const [composeOpen, setComposeOpen] = useState(false)
   const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [pendingDeleteRow, setPendingDeleteRow] = useState<NoticeCategoryRow | null>(null)
@@ -68,6 +72,7 @@ export function useNoticeCategoryManagementModal({
     setEditingId(null)
     setEditDraft('')
     setNewDraft('')
+    setComposeOpen(false)
     setDeleteBlockedOpen(false)
     setDeleteConfirmOpen(false)
     setPendingDeleteRow(null)
@@ -87,6 +92,8 @@ export function useNoticeCategoryManagementModal({
   }, [onClose, resetEphemeralUi])
 
   const startEdit = useCallback((row: NoticeCategoryRow) => {
+    setComposeOpen(false)
+    setNewDraft('')
     setEditingId(row.id)
     setEditDraft(row.name)
     queueMicrotask(() => editInputRef.current?.focus())
@@ -97,30 +104,31 @@ export function useNoticeCategoryManagementModal({
     setEditDraft('')
   }, [])
 
-  const submitEdit = useCallback(() => {
+  const submitEdit = useCallback(async () => {
     if (editingId == null) return
     const trimmed = editDraft.trim()
     if (trimmed === '') {
-      message.warning('카테고리명을 입력해주세요.')
       return
     }
     if (hasDuplicateCategoryName(categories, trimmed, editingId)) {
-      message.warning('이미 같은 이름의 카테고리가 있습니다.')
+      return
+    }
+    if (remoteActions) {
+      await remoteActions.onUpdate(editingId, trimmed)
+      cancelEdit()
       return
     }
     onCategoriesChange(
       categories.map(c => (c.id === editingId ? { ...c, name: trimmed } : c))
     )
-    message.success('카테고리가 수정되었습니다.')
     cancelEdit()
-  }, [cancelEdit, categories, editDraft, editingId, onCategoriesChange])
+  }, [cancelEdit, categories, editDraft, editingId, onCategoriesChange, remoteActions])
 
   const removeCategory = useCallback(
     (id: string) => {
       onCategoriesChange(categories.filter(c => c.id !== id))
       if (editingId === id) cancelEdit()
-      message.success('카테고리가 삭제되었습니다.')
-    },
+      },
     [cancelEdit, categories, editingId, onCategoriesChange]
   )
 
@@ -142,36 +150,49 @@ export function useNoticeCategoryManagementModal({
     setPendingDeleteRow(null)
   }, [])
 
-  const confirmDeleteCategory = useCallback(() => {
+  const confirmDeleteCategory = useCallback(async () => {
     if (pendingDeleteRow == null) return
+    if (remoteActions) {
+      await remoteActions.onDelete(pendingDeleteRow.id)
+      setDeleteConfirmOpen(false)
+      setPendingDeleteRow(null)
+      return
+    }
     removeCategory(pendingDeleteRow.id)
     setDeleteConfirmOpen(false)
     setPendingDeleteRow(null)
-  }, [pendingDeleteRow, removeCategory])
+  }, [pendingDeleteRow, remoteActions, removeCategory])
 
   const cancelNew = useCallback(() => {
     setNewDraft('')
+    setComposeOpen(false)
   }, [])
 
-  const submitNew = useCallback(() => {
+  const submitNew = useCallback(async () => {
     const trimmed = newDraft.trim()
     if (trimmed === '') {
-      message.warning('카테고리명을 입력해주세요.')
       return
     }
     if (hasDuplicateCategoryName(categories, trimmed)) {
-      message.warning('이미 같은 이름의 카테고리가 있습니다.')
+      return
+    }
+    if (remoteActions) {
+      await remoteActions.onCreate(trimmed)
+      setNewDraft('')
+      setComposeOpen(false)
       return
     }
     const id = createNoticeCategoryId()
     onCategoriesChange([...categories, { id, name: trimmed }])
     setNewDraft('')
-    message.success('카테고리가 등록되었습니다.')
-  }, [categories, newDraft, onCategoriesChange])
+    setComposeOpen(false)
+  }, [categories, newDraft, onCategoriesChange, remoteActions])
 
-  const focusNewRow = useCallback(() => {
-    newInputRef.current?.focus()
-  }, [])
+  const openCompose = useCallback(() => {
+    cancelEdit()
+    setComposeOpen(true)
+    queueMicrotask(() => newInputRef.current?.focus())
+  }, [cancelEdit])
 
   const closeDeleteBlocked = useCallback(() => {
     setDeleteBlockedOpen(false)
@@ -185,6 +206,7 @@ export function useNoticeCategoryManagementModal({
     setEditDraft,
     newDraft,
     setNewDraft,
+    composeOpen,
     deleteBlockedOpen,
     deleteConfirmOpen,
     pendingDeleteRow,
@@ -198,6 +220,6 @@ export function useNoticeCategoryManagementModal({
     confirmDeleteCategory,
     cancelNew,
     submitNew,
-    focusNewRow,
+    openCompose,
   }
 }

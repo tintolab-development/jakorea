@@ -4,7 +4,7 @@
  */
 
 import type { ReactNode } from 'react'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import './view-mode-toggle.css'
 
 export type ViewMode = 'list' | 'calendar'
@@ -36,14 +36,14 @@ export function ViewModeToggle<V extends string = ViewMode>({
 
   return (
     <div className={['view-mode-toggle', className].filter(Boolean).join(' ')}>
-      <AppButton
-        variant="cancel"
-        size="filter-wide"
+      <CmsButton
+        variant="secondary"
+        size="large" style={{ minWidth: 180 }}
         icon={target.icon}
         onClick={() => onChange(target.value)}
       >
         {target.label}
-      </AppButton>
+      </CmsButton>
     </div>
   )
 }

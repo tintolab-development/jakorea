@@ -1,0 +1,18 @@
+.schedule-confirm-confirmed-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.schedule-confirm-confirmed-detail__section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.schedule-confirm-confirmed-detail__form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

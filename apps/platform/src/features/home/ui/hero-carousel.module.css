@@ -1,0 +1,282 @@
+.hero {
+  position: relative;
+  width: 100%;
+  /* 모바일: 헤더가 히어로 밖(불투명) — 뷰포트에서 띠배너·헤더 제외 */
+  height: clamp(420px, calc(100svh - 168px), 560px);
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+
+.slideActive {
+  opacity: 1;
+}
+
+.slideImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 26, 32, 0.45) 0%,
+    rgba(10, 26, 32, 0.15) 40%,
+    rgba(10, 26, 32, 0.5) 100%
+  );
+}
+
+/*
+ * 문구 위치 (1920 시안)
+ * - 좌: 240px
+ * - 헤더 하단 → JA KOREA: 340px
+ * - 컨트롤 하단 → 히어로 하단: 261px
+ * - 카피 최대 폭: 1920 - 240 - 969 = 711px
+ */
+.inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  max-width: 1920px;
+  height: 100%;
+  margin-inline: auto;
+  /* 모바일: 헤더 비겹침 — 상단 여유만 */
+  padding: var(--spacing-40) var(--spacing-20) var(--spacing-32);
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: var(--spacing-32);
+  box-sizing: border-box;
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: min(711px, 100%);
+  text-align: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide {
+    transition: none;
+  }
+}
+
+.eyebrow {
+  margin: 0 0 var(--spacing-8);
+  color: var(--color-neutral-white);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 140%;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 var(--spacing-12);
+  color: var(--color-neutral-white);
+  font-family: var(--font-family-base);
+  font-size: 28px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 136%;
+  letter-spacing: -0.56px;
+}
+
+.titleLine {
+  display: block;
+}
+
+.description {
+  margin: 0;
+  color: var(--color-neutral-cool-300);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--spacing-16);
+}
+
+.controlsMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.playToggle {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border: 1.2px solid rgba(255, 255, 255, 0.85);
+  border-radius: var(--radius-999);
+  background: transparent;
+  color: var(--color-neutral-white);
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+@media (--bp-pc-up) {
+  .playToggle {
+    width: 40px;
+    height: 40px;
+    border-color: var(--color-border-default);
+  }
+}
+
+.playToggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.playToggle:focus-visible {
+  outline: 2px solid var(--color-neutral-white);
+  outline-offset: 2px;
+}
+
+.counter {
+  display: flex;
+  padding: var(--spacing-2);
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-4);
+  color: rgba(255, 255, 255, 0.55);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 160%;
+}
+
+.counterCurrent {
+  color: var(--color-neutral-white);
+}
+
+.counterDivider,
+.counterTotal {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+@media (--bp-pc-up) {
+  .counter {
+    color: var(--color-neutral-warm-600);
+  }
+
+  .counterDivider,
+  .counterTotal {
+    color: var(--color-neutral-warm-600);
+  }
+}
+
+.progressTrack {
+  position: relative;
+  display: block;
+  width: min(120px, 32vw);
+  max-width: 100%;
+  height: 4px;
+  flex-shrink: 0;
+  overflow: hidden;
+  /* #E7EBEF · opacity 0.3 — 요소 opacity 대신 배경에만 적용해 fill이 함께 흐려지지 않게 함 */
+  background: rgba(231, 235, 239, 0.3);
+}
+
+.progressFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--color-neutral-white-60);
+  transition: width 400ms ease;
+}
+
+/* PC · 공통 타이포 (compact/full) */
+@media (--bp-pc-up) {
+  .eyebrow {
+    margin-bottom: var(--spacing-12);
+    font-size: clamp(28px, 3vw, 38px);
+    font-weight: 300;
+    letter-spacing: -0.76px;
+    text-transform: none;
+  }
+
+  .title {
+    margin-bottom: var(--spacing-16);
+    font-size: clamp(36px, 4.5vw, 64px);
+    line-height: 132%;
+    letter-spacing: -1.92px;
+  }
+
+  .description {
+    font-size: clamp(16px, 1.5vw, 20px);
+  }
+
+  .controls {
+    gap: var(--spacing-24);
+  }
+
+  .progressTrack {
+    width: 169px;
+  }
+}
+
+/* PC compact · 1080~1599 — 시안 비율 축소 */
+@media (--bp-pc-compact) {
+  .hero {
+    height: clamp(720px, 90svh, 960px);
+  }
+
+  .inner {
+    padding-top: calc(var(--app-header-height) + clamp(120px, 22vh, 280px));
+    padding-right: clamp(40px, 5vw, 80px);
+    padding-bottom: clamp(100px, 16vh, 200px);
+    padding-left: clamp(48px, 12.5vw, 180px);
+    gap: 50px;
+  }
+}
+
+/*
+ * PC full · 1600~ — 첫 폴드 1920×1080
+ * 히어로 = 1080 − 띠배너(112) = 968
+ * 하단 261 + 헤더(100) + 카피·컨트롤(~320) 기준
+ * 헤더↔JA KOREA 여유 ≈ 968 − 100 − 320 − 261 ≈ 287
+ * (시안 340은 띠배너 포함 1080 안에 타이포·하단 261과 동시 충족 불가 → 가용 높이로 맞춤)
+ */
+@media (--bp-pc-full-up) {
+  .hero {
+    height: calc(var(--home-fold-height, 1080px) - var(--home-strip-height, 112px));
+  }
+
+  .inner {
+    padding-top: calc(var(--app-header-height) + 287px);
+    padding-right: var(--spacing-60);
+    padding-bottom: 261px;
+    padding-left: 240px;
+    gap: 50px;
+    justify-content: flex-start;
+  }
+}

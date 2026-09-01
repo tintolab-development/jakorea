@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Table, Empty } from 'antd'
+import { Table } from 'antd'
 import type { Application } from '@/types/domain'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { EmptyState } from '@/shared/ui'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { userProgramsEnrollmentStubTableConfig } from '../user-programs-stub-table.config'
 import { createProgramHistoryColumns } from '../detail-info/user-detail-program-history-columns'
@@ -17,6 +18,7 @@ export function EnrollmentTableView(props: RendererProps) {
     onOpenLectureAttendance,
     onOpenAssignment,
     onRowClick,
+    progressStatusReadOnly = false,
   } = props
   const { enrollmentSectionTitle, enrollmentEmptyDescription } = programsHistoryConfig
   const [searchParams, setSearchParams] = useSearchParams()
@@ -28,6 +30,7 @@ export function EnrollmentTableView(props: RendererProps) {
       searchParams,
       setSearchParams,
       context: enrollmentTableContext,
+      disableUrlSync: true,
     })
 
   const programHistoryColumns = useMemo(
@@ -36,8 +39,9 @@ export function EnrollmentTableView(props: RendererProps) {
         onProgressStatusChange,
         onOpenLectureAttendance,
         onOpenAssignmentSubmission: onOpenAssignment,
+        progressStatusReadOnly,
       }),
-    [onProgressStatusChange, onOpenLectureAttendance, onOpenAssignment]
+    [onProgressStatusChange, onOpenLectureAttendance, onOpenAssignment, progressStatusReadOnly]
   )
 
   return (
@@ -50,6 +54,10 @@ export function EnrollmentTableView(props: RendererProps) {
       onSearch={handleEnrollmentSearchStub}
       title={enrollmentSectionTitle}
       description={`총 ${displayedCount.toLocaleString()}건`}
+      excelExport={{
+        columns: programHistoryColumns,
+        data: enrollmentTableRows,
+      }}
     >
       <div className="user-detail-modal__program-tab">
         {loading ? (
@@ -77,7 +85,7 @@ export function EnrollmentTableView(props: RendererProps) {
           />
         ) : (
           <div className="user-detail-modal__program-tab-empty">
-            <Empty description={enrollmentEmptyDescription} />
+            <EmptyState description={enrollmentEmptyDescription} />
           </div>
         )}
       </div>

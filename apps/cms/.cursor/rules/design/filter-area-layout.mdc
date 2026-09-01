@@ -1,0 +1,100 @@
+---
+description: CMS 목록·테이블 상단 필터 영역(FilterTableLayout / TableFilterGroup) 공통 규격
+alwaysApply: false
+category: design
+---
+
+# 필터 영역 공통 규격 (CMS)
+
+**공유 치수 SSOT (CMS·Admin):** [cms-admin-ui/filter-area-dimensions.mdc](../../../../.cursor/rules/cms-admin-ui/filter-area-dimensions.mdc) · [list-filter-url-sync](../../../../.cursor/rules/cms-admin-ui/list-filter-url-sync.mdc)
+
+아래는 **CMS 구현 경로**와 **addressRegion·프로그램 1뎁스 등 CMS 전용** 규칙.
+
+**토큰:** `apps/cms/src/shared/components/filter-controls-common.css`  
+**레이아웃:** `TableFilterGroup` · `FilterTableLayout` · `UnifiedFilterCard`
+
+## 치수
+
+| 항목 | 값 | 토큰/상수 |
+|------|-----|-----------|
+| 단일 검색·셀렉트 폭 | **240px** (공유 SSOT) | `--filter-control-width` · `--filter-control-max-width` · `FILTER_CONTROL_MAX_WIDTH_PX` |
+| 컨트롤 높이 | 44px (≤768px: 40px) | `--filter-control-height` |
+| 필터 칸 사이 gap | 12px | `--filter-field-gap` |
+| 레이블·컨트롤 gap | 6px | `--filter-label-control-gap` |
+| 조회 버튼 | 160×44px | `table-filter-group__search-button` |
+| 분리형 `dateRange`·`selectPair` 열 | 500px | `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` (2×240+20) |
+| **`addressRegion` 열 전체** | **235.5px** | `FILTER_ADDRESS_REGION_FIELD_WIDTH_PX` |
+| **`addressRegion` 하위 셀렉트 각** | **114.75px** | `FILTER_ADDRESS_REGION_SEGMENT_WIDTH_PX` |
+| **`addressRegion` 하위 gap** | **6px** | `FILTER_ADDRESS_REGION_PAIR_GAP_PX` |
+
+## FilterFieldConfig.width
+
+- **단일** `search` / `select`: `width: FILTER_CONTROL_MAX_WIDTH_PX` (240)
+- **`radio`**: 폭 지정하지 않음 — 옵션 콘텐츠 허그. Col·필드가 240으로 늘어나면 다음 필터와 시각 갭이 과다해짐(칸 사이는 `--filter-field-gap` 12px만)
+- **`dateRange`** (시작·종료 분리 UI): `width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` (500)
+- **`selectPair`**: `width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` (500), 내부 gap 12px
+- **`addressRegion`**: `width: FILTER_ADDRESS_REGION_FIELD_WIDTH_PX` (235.5), 하위 각 114.75px · gap 6px
+- **`%` 비율 폭**: 행 가로를 채우며 컨트롤이 240px 상한을 넘을 수 있음 → **프로그램 관리 1뎁스·일반 목록 필터에 사용 금지**
+- **`flex: '1 1 0'` 등 grow**: Col만 늘고 컨트롤은 240px에서 멈춰 **칸 사이 빈 갭**이 과다 → **픽셀 `width` 사용**
+
+상수 정의: `apps/cms/src/shared/components/table-filter-group-field-width.ts`
+
+## 프로그램 관리 1뎁스
+
+경로: `/programs/general` · `/programs/company-school` · `/programs/ujat` · `/programs/gemini/visiting-training`
+
+- 래퍼: `program-list-page` (+ overview 위젯 화면은 `program-list-page--overview`)
+- 필드 정의: `program-list-filter-fields.ts` · Gemini `model/*/filter-fields.ts`
+- `FilterTableLayout`: 필드 4개 이상이어도 **`filterResponsiveWrap={false}`** — merged-auto-fill이 Col만 늘리며 갭이 과다해지는 것 방지
+- **금지:** `program-list.css` 등에서 `%` 열·컨트롤에 `width/max-width: 100%`·`flex: 1 1 0`로 행 전체 stretch
+
+## Gemini 프로그램 필터
+
+| 화면 | 경로 | 필드 정의 | 필드 구성 (폭) |
+|------|------|-----------|----------------|
+| 실적 관리 | `/programs/gemini/performance` | `gemini/model/performance/filter-fields.ts` | 강사 240 · 연수방식 240 · 연수장소 240 · 연수일 500 |
+| 찾아가는 연수 · 모집 공고 | `/programs/gemini/visiting-training` | `gemini/model/recruitment/filter-fields.ts` | 공고명 240 · 상태 240 · 연수 요청 가능기간 500 |
+| 찾아가는 연수 · 승인 연수 | `?tab=approved` | `gemini/model/approved/filter-fields.ts` | 기관명 240 · 기관 소재지 **235.5** · 진행 현황 240 · 공문 240 · 연수일 500 |
+
+## `addressRegion` (기관 소재지) 필드 규격
+
+**용도:** 레이블 1개 + 시/도·시/군/구 셀렉트 2개를 한 필터 칸으로 묶음.
+
+| 항목 | 규격 |
+|------|------|
+| `FilterFieldConfig.type` | `'addressRegion'` |
+| `width` | `FILTER_ADDRESS_REGION_FIELD_WIDTH_PX` (**235.5** = 114.75×2 + 6) |
+| 하위 시/도·시/군/구 셀렉트 각 | **114.75px** (`FILTER_ADDRESS_REGION_SEGMENT_WIDTH_PX`) |
+| 하위 셀렉트 사이 gap | **6px** (`FILTER_ADDRESS_REGION_PAIR_GAP_PX`) |
+| 마크업 클래스 | `table-filter-group__address-region-selects` |
+| `addressRegion.sidoKey` / `sigunguKey` | 필터 state 키 (예: `institutionSido`, `institutionSigungu`) |
+| `addressRegion.sidoOptions` | `INSTITUTION_SIDO_FILTER_OPTIONS` (`shared/config/institution-address-region-data.ts`) |
+| `addressRegion.getSigunguOptions` | `getInstitutionSigunguSelectOptions` (동일 파일) |
+| `addressRegion.sidoPlaceholder` | `'시/도'` |
+| `addressRegion.sigunguPlaceholder` | `'시/군/구'` |
+
+**공통 팩토리** (`shared/config/institution-address-region-filter-field.ts`)
+
+- `createInstitutionAddressRegionFilterField()` — 기관 소재지
+- `createHomeAddressRegionFilterField({ label })` — 자택 주소지/소재지
+
+**적용 화면**
+
+- 회원 목록(학교): `pages/users/user-list-filter-fields.ts`
+- Gemini 승인 연수·기관/강사 신청 탭: `gemini/model/approved/*`, `gemini/ui/detail/institution-application-tab.tsx`
+- 일반 프로그램 상세: `application-filter-fields.ts`, `participating-institutions-filter-fields.ts`
+- 실적 관리(자체 시/도 데이터): `education-record-filter-fields.ts` — 열 폭만 `FILTER_ADDRESS_REGION_FIELD_WIDTH_PX` 동일
+
+**상태 연동:** 시/도 변경 시 시/군/구는 **빈 문자열로 초기화** (`onFilterChange`에서 `institutionSigungu: ''`).
+
+**금지:** `addressRegion`에 500px·12px gap(`selectPair` 규격) 적용 — 하위 셀렉트가 240px로 늘어남.
+
+## 회귀 체크
+
+- [ ] 검색·셀렉트 한 칸이 240px에서 멈추는지 (넓은 화면에서도 늘어나지 않음)
+- [ ] 칸 사이 12px · 조회 버튼과 필드 baseline 정렬
+- [ ] **`radio`**: Col/grid-cell이 콘텐츠 허그(240으로 안 늘어남) · 옵션 gap 16px · 다음 필터와 칸 갭 12px
+- [ ] dateRange 두 칸 합 500px 이내
+- [ ] addressRegion: 시/도·시/군/구 각 114.75px, 사이 6px, 열 합 235.5px
+
+**Last updated:** 2026-07-16

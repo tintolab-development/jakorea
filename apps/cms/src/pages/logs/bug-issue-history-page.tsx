@@ -1,49 +1,67 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
-import { getBugIssueLogs } from '@/entities/download-log/api/bug-issue-log-service'
 import { bugIssueHistoryFilterFields } from '@/features/download/model/bug-issue-history-filter-fields'
 import { bugIssueHistoryTablePageConfig } from '@/features/download/model/bug-issue-history-table.config'
+import { getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
+import { useBugIssueHistoryQuery } from '@/features/logs/hooks/use-bug-issue-history-query'
+import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
+import { LOGS_EMPTY_SEARCH_TEXT } from '@/features/logs/lib/logs-empty-copy'
+import { LogsQueryError } from '@/features/logs/ui/logs-query-error'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
+import {
+  EMPTY_TABLE_PAGE_CONTEXT,
+  useTablePage,
+} from '@/shared/components/table-system/model/use-table-page'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
+import { EmptyState } from '@/shared/ui'
 import type { BugIssueLog } from '@/types/bug-issue-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 
-const BUG_ISSUE_HISTORY_TABLE_SCROLL_X = 1100
+const BUG_ISSUE_HISTORY_TABLE_SCROLL_X = 980
 
 const TABLE_COL_WIDTH = {
   no: 88,
-  screenName: 230,
-  errorMessage: 400,
+  errorMessage: 520,
   userName: 150,
   occurredAt: 220,
 } as const
 
 export default function BugIssueHistoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [rows, setRows] = useState<BugIssueLog[]>([])
+  const searchParamsKey = searchParams.toString()
+  const remoteEnabled = useLogsRemoteQueryEnabled()
+  const {
+    rows,
+    totalElements,
+    isLoading,
+    isError,
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useBugIssueHistoryQuery(searchParams)
 
-  useEffect(() => {
-    const load = async () => {
-      const result = await getBugIssueLogs()
-      setRows(result)
-    }
-    void load()
-  }, [])
-
-  const { pendingFilters, handleFilterChange, applySearch, tableData, displayedCount } = useTablePage(
+  const { pendingFilters, handleFilterChange, applySearch, tableData } = useTablePage(
     bugIssueHistoryTablePageConfig,
     {
       data: rows,
       searchParams,
       setSearchParams,
-      context: {},
+      context: EMPTY_TABLE_PAGE_CONTEXT,
     }
   )
+
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: searchParamsKey,
+  })
 
   const columns = useMemo<ColumnsType<BugIssueLog>>(
     () => [
@@ -53,18 +71,10 @@ export default function BugIssueHistoryPage() {
         width: TABLE_COL_WIDTH.no,
         align: 'center',
         render: (_: unknown, __: BugIssueLog, index: number) =>
-          tableData.length === 0 ? '-' : tableData.length - index,
+          totalElements === 0 ? '-' : totalElements - index,
       },
       {
-        title: '발생 화면',
-        dataIndex: 'screenName',
-        key: 'screenName',
-        width: TABLE_COL_WIDTH.screenName,
-        align: 'center',
-        ellipsis: true,
-      },
-      {
-        title: '에러 메세지',
+        title: '에러 메시지',
         dataIndex: 'errorMessage',
         key: 'errorMessage',
         width: TABLE_COL_WIDTH.errorMessage,
@@ -72,7 +82,7 @@ export default function BugIssueHistoryPage() {
         ellipsis: { showTitle: true },
       },
       {
-        title: '사용자',
+        title: '사용자명',
         dataIndex: 'userName',
         key: 'userName',
         width: TABLE_COL_WIDTH.userName,
@@ -88,7 +98,7 @@ export default function BugIssueHistoryPage() {
         render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
       },
     ],
-    [tableData.length]
+    [totalElements]
   )
 
   return (
@@ -102,18 +112,36 @@ export default function BugIssueHistoryPage() {
       onFilterChange={handleFilterChange}
       onSearch={applySearch}
       title="버그/이슈 이력"
-      description={`총 ${displayedCount.toLocaleString()}건`}
+      description={`총 ${totalElements.toLocaleString()}건`}
+      contentLoading={remoteEnabled && isLoading}
+      excelExport={{
+        columns,
+        data: tableData,
+      }}
     >
-      <Table<BugIssueLog>
-        rowKey="id"
-        className="cms-data-table"
-        rowHoverable={false}
-        tableLayout="fixed"
-        scroll={{ x: BUG_ISSUE_HISTORY_TABLE_SCROLL_X }}
-        columns={columns}
-        dataSource={tableData}
-        pagination={false}
-      />
+      {!remoteEnabled ? (
+        <LogsQueryError message="로그 관리 API를 사용하려면 관리자 로그인이 필요합니다." />
+      ) : isError ? (
+        <LogsQueryError
+          message={getLogsApiErrorMessage(error, '버그/이슈 이력을 불러오지 못했습니다.')}
+        />
+      ) : (
+        <>
+          <Table<BugIssueLog>
+            rowKey="id"
+            className="cms-data-table"
+            tableLayout="fixed"
+            scroll={{ x: BUG_ISSUE_HISTORY_TABLE_SCROLL_X }}
+            columns={columns}
+            dataSource={tableData}
+            pagination={false}
+            locale={{
+              emptyText: <EmptyState description={LOGS_EMPTY_SEARCH_TEXT} />,
+            }}
+          />
+          <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
+        </>
+      )}
     </FilterTableLayout>
   )
 }

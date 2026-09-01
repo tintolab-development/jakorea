@@ -5,24 +5,23 @@
 export type SettlementItemSettingCompareKind = 'standard' | 'exceed' | 'below'
 
 /**
- * tier1: 1급(시간·라디오·3열 금액·자격 152)
- * specialLecture: 특강 강사비(w-4) — 조건 표만(지급 요건 80px·비고 128px)
- * assistantInstructor: 보조 강사비(w-5) — 조건(80·128px) + 산정 기준(시간·한도)
- * simpleLabor: 단순인건비(w-7) — 조건 + 산정(단순인건비·주휴·증빙 라디오)
- * multiInstructor: 다수인출강비(w-6) — 산정 기준 01·02 (인원 구간별 한도)
- * simple: 기타(산정 셀렉트·한도 등)
- * transport: 교통비(p-1·p-2) — 조건·산정 동일, p-2는 조건 행 최소 104px(modal-spec-table modifier)
- * lodging: 숙박비(p-3·p-7) — 조건(104px)·산정(일·금액·증빙), p-7은 산정 행 라벨「지급액」
- * meal: 식사비(p-4) — 조건(104px)·산정(시간·한도·증빙)
- * meetingAttendance: 회의참석비(p-5) — 산정 기준 01·02(시간 이하/초과·각 한도)
- * volunteerActivity: 자원봉사자 활동비(p-6) — 식사비와 동형(조건 104px·시간·한도·증빙)
- * withholdingDailyWorker: 일용근로자 원천징수세액(d-1) — 조건·근로소득공제·소득세율
+ * tier1: 1~3급 강사비 — 산정 단위(시간)·한도·자격
+ * specialLecture: 특강 강사비(w-4)·기타 인건비(w-5) — 조건 가로 표만
+ * gemini: 제미나이 강사비 — 조건 가로 표 + 1~4차시 고정액
+ * assistantInstructor / simpleLabor / multiInstructor / meetingAttendance: 구 카탈로그 layout (모달 컴포넌트 잔존)
+ * simple: 미지 id fallback
+ * transport: 강사 교통비(p-1)·학생 교통비(p-2)
+ * lodging: 숙박비(p-3·p-7)
+ * meal: 식사비(p-4)
+ * volunteerActivity: 활동비(p-6) — 식사비와 동형
+ * withholdingDailyWorker: 일용근로자 원천징수세액(d-1)
  */
 export type SettlementItemTransportCommuteMode = 'private_car' | 'public_transit' | 'user_choice'
 
 export type SettlementItemSettingDetailLayout =
   | 'tier1'
   | 'specialLecture'
+  | 'gemini'
   | 'assistantInstructor'
   | 'simpleLabor'
   | 'multiInstructor'
@@ -74,7 +73,7 @@ export interface SettlementItemSettingDetail {
   meetingAttendance02BasisHours?: number | null
   /** meetingAttendance(p-5): 산정 02 — 최대 한도(원) */
   meetingAttendance02MaxLimitWon?: number | null
-  /** withholdingDailyWorker(d-1): 수익 제외 — 원천징수세액 이하(원) 미징수 기준 */
+  /** withholdingDailyWorker(d-1): 소액 부징수 — 원천징수세액 이하(원) 미징수 기준 */
   withholdingExclusionMaxWon?: number | null
   /** withholdingDailyWorker(d-1): 근로소득공제비용(원) */
   withholdingEarnedIncomeDeductionWon?: number | null
@@ -86,6 +85,11 @@ export interface SettlementItemSettingDetail {
   withholdingTaxRatePrize?: number | null
   /** withholdingDailyWorker(d-1): 소득세율 — 면접비·지원금·경품 기타소득(%) */
   withholdingTaxRateInterview?: number | null
+  /** gemini(w-gemini): 1~4차시 고정액(원) */
+  geminiSession1Won?: number | null
+  geminiSession2Won?: number | null
+  geminiSession3Won?: number | null
+  geminiSession4Won?: number | null
 }
 
 /** 저장된 상세(페이지 세션 동안 유지, 새로고침 시 초기화) */
@@ -104,7 +108,7 @@ const W1_DETAIL: SettlementItemSettingDetail = {
     '전·현직 장관(급) 및 대학총장(급)',
     '전·현직 국회의원, 대기업 총수, 국영기업체',
     '정부 출연 연구기관장, 기업·기관, 단체의 장',
-    '사회 통념상 상기 자격에 준하는 자로서 교육운영상 사무총장이 인정하는 자',
+    '사회 통념상 상기 자격에 준하는 자로서 교육운영본부 사무총장이 인정하는 자',
   ],
   remarkLines: [
     '유급의 내부직원에게는 지급 불가',
@@ -127,7 +131,7 @@ const W2_DETAIL: SettlementItemSettingDetail = {
     '대학교의 조교수 및 부교수 이상, 연구기관의 연구위원급',
     '판검사 및 변호사, 공인회계사 등 전문자격증을 가진 자',
     '언론인(부장급 이상)',
-    '사회 통념상 상기 자격에 준하는 자로서 교육운영상 사무총장이 인정하는 자',
+    '사회 통념상 상기 자격에 준하는 자로서 교육운영본부 사무총장이 인정하는 자',
   ],
   remarkLines: [
     '유급의 내부직원에게는 지급 불가',
@@ -148,7 +152,7 @@ const W3_DETAIL: SettlementItemSettingDetail = {
     '해당분야 최고의 전문가',
     '4급 이상 공무원, 박사학위 소지 5급 이하 공무원 및 전직 재단 임원',
     '대학교의 조교수·강사, 연구기관의 연구원 등',
-    '사회 통념상 상기 자격에 준하는 자로서 교육운영상 사무총장이 인정하는 자',
+    '사회 통념상 상기 자격에 준하는 자로서 교육운영본부 사무총장이 인정하는 자',
   ],
   remarkLines: [
     '유급의 내부직원에게는 지급 불가',
@@ -171,22 +175,9 @@ const W4_DETAIL: SettlementItemSettingDetail = {
   ],
 }
 
-/** 보조 강사비 — 조건(짧은 지급 요건 행) + 산정 기준은 1급과 동일 패턴 */
+/** 기타 인건비(w-5) — 특강과 동일 layout(조건 가로 표만). 시안은 빈 입력 + placeholder */
 const W5_DETAIL: SettlementItemSettingDetail = {
-  layout: 'assistantInstructor',
-  basisUnit: '시간',
-  basisHours: 1,
-  compareKind: 'standard',
-  maxLimitWon: 50_000,
-  basicFeeWon: null,
-  longDistanceFeeWon: null,
-  qualificationLines: ['각종 실기 실습 보조 요원'],
-  remarkLines: ['매해 최저임금 반영하여 지급'],
-}
-
-/** 다수인출강비(w-6) */
-const W6_DETAIL: SettlementItemSettingDetail = {
-  layout: 'multiInstructor',
+  layout: 'specialLecture',
   basisUnit: '전체',
   basisHours: 1,
   compareKind: 'standard',
@@ -195,32 +186,26 @@ const W6_DETAIL: SettlementItemSettingDetail = {
   longDistanceFeeWon: null,
   qualificationLines: [],
   remarkLines: [],
-  multiInstructor01Basis: 1,
-  multiInstructor01MaxUnder5: 500_000,
-  multiInstructor01Max6to10: 720_000,
-  multiInstructor01Max11plus: 950_000,
-  multiInstructor02BasisHours: 1,
-  multiInstructor02MaxUnder5: 750_000,
-  multiInstructor02Max6to10: 1_000_000,
-  multiInstructor02Max11plus: 1_200_000,
 }
 
-/** 단순인건비(w-7) */
-const W7_DETAIL: SettlementItemSettingDetail = {
-  layout: 'simpleLabor',
-  basisUnit: '시간',
+/** 제미나이 강사비 — 조건 가로 표 + 1~4차시 고정액 */
+const W_GEMINI_DETAIL: SettlementItemSettingDetail = {
+  layout: 'gemini',
+  basisUnit: '차시',
   basisHours: 1,
   compareKind: 'standard',
   maxLimitWon: null,
   basicFeeWon: null,
   longDistanceFeeWon: null,
-  simpleLaborWon: 82_560,
-  weeklyHolidayAllowanceWon: 82_560,
-  qualificationLines: [
-    '1인/1일(1일 8시간 기준) 월 60시간, 1개월 이상 근무시 4대보험 가입 필수',
+  qualificationLines: ['제미나이 프로그램에서 사용되는 강사 임금'],
+  remarkLines: [
+    '실적보고서를 기반으로 차시 산출하여 금액 산정',
+    '별도의 지급조서 작성 및 확인 절차 없이 계좌 지급 대상 목록으로 노출 및 처리',
   ],
-  remarkLines: ['매해 최저임금 반영하여 지급'],
-  evidenceSubmission: 'not_required',
+  geminiSession1Won: 0,
+  geminiSession2Won: 170_000,
+  geminiSession3Won: 220_000,
+  geminiSession4Won: 270_000,
 }
 
 const P1_DETAIL: SettlementItemSettingDetail = {
@@ -232,18 +217,16 @@ const P1_DETAIL: SettlementItemSettingDetail = {
   basicFeeWon: null,
   longDistanceFeeWon: null,
   qualificationLines: [
-    '교통비(KTX일반, 고속버스, 전세버스, 주유비 등)',
-    '자가용 이용 시 네이버 지도를 기준으로, 입력된 강사 자택 주소 및 강의 장소 기준으로 거리 및 유가가 고려된 금액 자동 산출',
-    '톨비의 경우, 별도 영수증 증빙 처리해서 산출',
+    '네이버 지도를 기준으로, 입력된 강사 자택 주소 및 강의 장소 기준으로 거리 및 유류와 톨비가 고려된 금액 자동 산출',
   ],
   remarkLines: [
     '실비 영수증이 없을 경우 강사 교통비를 지급하지 않는 것이 원칙이나, 팀별 판단에 따라 편도 교통비 영수증만으로도 왕복 교통비를 지급',
   ],
-  transportCommuteMode: 'user_choice',
-  evidenceSubmission: 'required',
+  transportCommuteMode: 'private_car',
+  evidenceSubmission: 'not_required',
 }
 
-/** 교통비 (1사1교) p-2 — 산정 UI는 p-1과 동일, 조건 행 최소 높이 104px(별도 CSS) */
+/** 학생 교통비 p-2 */
 const P2_DETAIL: SettlementItemSettingDetail = {
   layout: 'transport',
   basisUnit: '거리',
@@ -253,13 +236,12 @@ const P2_DETAIL: SettlementItemSettingDetail = {
   basicFeeWon: null,
   longDistanceFeeWon: null,
   qualificationLines: [
-    '자가용 이용 시 네이버 지도를 기준으로, 입력된 강사 자택 주소 및 강의 장소 기준으로 거리·유류·톨비가 반영된 금액을 자동 산출합니다.',
+    '대중교통 이용비(KTX일반, 고속버스, 전세버스 등)',
+    '톨비의 경우, 별도 영수증 증빙 처리해서 산출',
   ],
-  remarkLines: [
-    '실비 영수증이 없을 경우 강사 교통비를 지급하지 않는 것이 원칙이나, 팀별 판단에 따라 편도 교통비 영수증만으로도 왕복 교통비를 지급할 수 있습니다.',
-  ],
-  transportCommuteMode: 'private_car',
-  evidenceSubmission: 'not_required',
+  remarkLines: ['실비 영수증 필수 제출'],
+  transportCommuteMode: 'public_transit',
+  evidenceSubmission: 'required',
 }
 
 /** 숙박비 p-3 — 조건(지급 요건·비고, 행 104px) + 산정(일·최대 한도·증빙) */
@@ -285,45 +267,26 @@ const P4_DETAIL: SettlementItemSettingDetail = {
   maxLimitWon: 30_000,
   basicFeeWon: null,
   longDistanceFeeWon: null,
-  qualificationLines: ['1인 기준'],
+  qualificationLines: ['1인 1식 기준'],
   remarkLines: [],
   evidenceSubmission: 'required',
 }
 
-/** 회의참석비 p-5 */
-const P5_DETAIL: SettlementItemSettingDetail = {
-  layout: 'meetingAttendance',
-  basisUnit: '전체',
-  basisHours: 1,
-  compareKind: 'standard',
-  maxLimitWon: null,
-  basicFeeWon: null,
-  longDistanceFeeWon: null,
-  qualificationLines: [],
-  remarkLines: [],
-  meetingAttendance01BasisHours: 2,
-  meetingAttendance01MaxLimitWon: 150_000,
-  meetingAttendance02BasisHours: 2,
-  meetingAttendance02MaxLimitWon: 200_000,
-}
-
-/** 자원봉사자 활동비 p-6 */
+/** 활동비 p-6 — 식사비와 동형(layout=meal, 한도 50,000) */
 const P6_DETAIL: SettlementItemSettingDetail = {
-  layout: 'volunteerActivity',
+  layout: 'meal',
   basisUnit: '시간',
   basisHours: 1,
   compareKind: 'standard',
   maxLimitWon: 50_000,
   basicFeeWon: null,
   longDistanceFeeWon: null,
-  qualificationLines: [
-    '자원봉사자에게 지급되는 교통비, 식사비 등의 활동비(1일 기준)',
-  ],
+  qualificationLines: ['참여자에게 지급되는 지원비'],
   remarkLines: [],
   evidenceSubmission: 'required',
 }
 
-/** 숙박비 (1사1교) p-7 — UI는 p-3과 동일, 지급 요건·지급액(8만) 기본값만 다름 */
+/** 숙박비 (1사1교) p-7 — 1일 8만 고정 · 영수증 없음 · 세금 징수 */
 const P7_DETAIL: SettlementItemSettingDetail = {
   layout: 'lodging',
   basisUnit: '일',
@@ -333,8 +296,8 @@ const P7_DETAIL: SettlementItemSettingDetail = {
   basicFeeWon: null,
   longDistanceFeeWon: null,
   qualificationLines: ['숙박비 고정 지급'],
-  remarkLines: [],
-  evidenceSubmission: 'required',
+  remarkLines: ['영수증 제출 없음. 세금 징수.'],
+  evidenceSubmission: 'not_required',
 }
 
 /** 일용근로자 원천징수세액 d-1 */
@@ -346,7 +309,7 @@ const D1_DETAIL: SettlementItemSettingDetail = {
   maxLimitWon: null,
   basicFeeWon: null,
   longDistanceFeeWon: null,
-  qualificationLines: ['1일 일용근로자의 수익이 125,000원 초과인 경우'],
+  qualificationLines: ['지급액이 125,000원 초과인 경우'],
   remarkLines: [],
   withholdingExclusionMaxWon: 1_000,
   withholdingEarnedIncomeDeductionWon: 150_000,
@@ -425,18 +388,11 @@ export function getBaseSettlementItemSettingDetail(itemId: string): SettlementIt
       remarkLines: [...W5_DETAIL.remarkLines],
     }
   }
-  if (itemId === 'w-6') {
+  if (itemId === 'w-gemini') {
     return {
-      ...W6_DETAIL,
-      qualificationLines: [...W6_DETAIL.qualificationLines],
-      remarkLines: [...W6_DETAIL.remarkLines],
-    }
-  }
-  if (itemId === 'w-7') {
-    return {
-      ...W7_DETAIL,
-      qualificationLines: [...W7_DETAIL.qualificationLines],
-      remarkLines: [...W7_DETAIL.remarkLines],
+      ...W_GEMINI_DETAIL,
+      qualificationLines: [...W_GEMINI_DETAIL.qualificationLines],
+      remarkLines: [...W_GEMINI_DETAIL.remarkLines],
     }
   }
   if (itemId === 'p-1') {
@@ -467,13 +423,6 @@ export function getBaseSettlementItemSettingDetail(itemId: string): SettlementIt
       remarkLines: [...P4_DETAIL.remarkLines],
     }
   }
-  if (itemId === 'p-5') {
-    return {
-      ...P5_DETAIL,
-      qualificationLines: [...P5_DETAIL.qualificationLines],
-      remarkLines: [...P5_DETAIL.remarkLines],
-    }
-  }
   if (itemId === 'p-6') {
     return {
       ...P6_DETAIL,
@@ -496,6 +445,52 @@ export function getBaseSettlementItemSettingDetail(itemId: string): SettlementIt
     }
   }
   return defaultDetail()
+}
+
+export function getCatalogSettlementItemSettingDetailByWageType(
+  wageItemType: string | undefined
+): SettlementItemSettingDetail {
+  switch ((wageItemType ?? '').trim().toUpperCase()) {
+    case 'TIER1':
+      return getBaseSettlementItemSettingDetail('w-1')
+    case 'TIER2':
+      return getBaseSettlementItemSettingDetail('w-2')
+    case 'TIER3':
+      return getBaseSettlementItemSettingDetail('w-3')
+    case 'SPECIAL_LECTURE':
+      return getBaseSettlementItemSettingDetail('w-4')
+    case 'OTHER_LABOR':
+      return getBaseSettlementItemSettingDetail('w-5')
+    case 'GEMINI':
+      return getBaseSettlementItemSettingDetail('w-gemini')
+    default:
+      return defaultDetail()
+  }
+}
+
+export function getCatalogSettlementItemSettingDetailByPaymentType(
+  paymentItemType: string | undefined
+): SettlementItemSettingDetail {
+  switch ((paymentItemType ?? '').trim().toUpperCase()) {
+    case 'TRANSPORT_INSTRUCTOR':
+      return getBaseSettlementItemSettingDetail('p-1')
+    case 'TRANSPORT_STUDENT':
+      return getBaseSettlementItemSettingDetail('p-2')
+    case 'MEAL':
+      return getBaseSettlementItemSettingDetail('p-4')
+    case 'LODGING_GENERAL':
+      return getBaseSettlementItemSettingDetail('p-3')
+    case 'LODGING_1C1S':
+      return getBaseSettlementItemSettingDetail('p-7')
+    case 'ACTIVITY':
+      return getBaseSettlementItemSettingDetail('p-6')
+    default:
+      return defaultDetail()
+  }
+}
+
+export function getCatalogSettlementItemSettingDetailForDeduction(): SettlementItemSettingDetail {
+  return getBaseSettlementItemSettingDetail('d-1')
 }
 
 /**

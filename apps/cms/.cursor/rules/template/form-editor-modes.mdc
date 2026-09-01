@@ -1,0 +1,54 @@
+---
+description: /template 양식의 view·edit·write 모드와 설명글 단락 예외
+globs:
+  - "apps/cms/src/features/template/**/*.{ts,tsx}"
+  - "apps/cms/src/pages/templates/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# 양식 표시 모드 (view / edit / write)
+
+`/template`(템플릿) 경로로 **생성·수정**되는 양식은 이후 사용자에게 **배포**되어 **응답 데이터**를 받는다. 단락·필드 UI는 아래 세 모드를 구분해 설계한다.
+
+| 모드 | 의미 | CMS에서 대략 해당하는 상황 |
+|------|------|------------------------------|
+| **view** | 읽기·미선택 상태 | 양식 편집 중 해당 단락/카드 **미선택** · **미리보기** |
+| **edit** | 작성자가 양식 정의를 고침 | 편집 중 단락 **선택** 또는 **포커스** |
+| **write** | 배포된 양식에 응답자가 값을 입력 | LMS·응답 화면 등 **최종 사용자 입력** (CMS 에디터 밖) |
+
+## 사용자 모드 vs `userPreview` URL 쿼리
+
+- **사용자 모드(제품 용어):** 템플릿 **편집 authoring**이 불가능한 상태 — 제목·설명 수정, 단락 순서 변경, 단락 추가·삭제 등 **구조 편집**을 할 수 없고, **배포된 양식 필드에 내용만 등록(입력)** 할 수 있는 모드에 가깝다. (`form` 본문은 편집기의 view/write에 가까운 조합으로 구현될 수 있음.)
+- **`userPreview=1` 쿼리:** `TEMPLATE_USER_PREVIEW_ACTIVE` 값으로, `TemplateWritingPreview` **풀모달 미리보기**를 URL·뒤로가기와 **동기화**하기 위한 기술적 플래그다. **사용자 모드와 동의어가 아니다.** 동일 모달 안에서 authoring 크롬을 숨긴 채 필드 입력만 가능하게 보일 수는 있으나, 용어·기획 문서에서는 위「사용자 모드」정의를 쓴다.
+
+## 코드와의 대응 (현재 CMS 템플릿 에디터)
+
+- 좌측 카드·단락 본문에 넘기는 `isEditMode` / `isParagraphSelected` 류 플래그는 **authoring 맥락에서의 view ↔ edit**에 가깝다. **write**는 별도 앱·라우트에서 동일 스키마를 소비할 때 구현한다.
+- 새 단락을 만들 때 **세 모드를 모두 고려할 필요는 없고**, “CMS에서는 view/edit만”, “응답 앱에서는 write”처럼 **렌더 진입점**을 나눈다.
+
+## 설명글(description) 단락
+
+**설명글**은 사용자 입력을 받지 않고 **양식에 대한 안내 문구**만 제공한다.
+
+- **write 모드는 존재하지 않는다.** (응답 스키마에 값을 쌓지 않음)
+- 설명글 계열 UI는 **view / edit(작성자 편집)** 만 다루면 된다.
+
+관련 구현: `paragraph/explanation/*`, `kind === 'description'` 단락, `ParagraphInput`의 `paragraph-input--view` / `paragraph-input--edit`.
+
+## 로그인 사용자 자동 반영 필드 (템플릿 편집 `/templates`)
+
+`/templates`에서 폼을 편집할 때, 실제 사용 시 로그인 사용자 정보로 채워지는 필드는 입력 UI를 그대로 노출하지 않는다.
+
+- 대상 예: 기관/주소/담당 교사 정보처럼 런타임(실사용)에서 자동 매핑되는 필드
+- 템플릿 편집 화면에서는 `DetailInfoForm.Field`에 `readOnlyDisplay`를 사용한다.
+- 안내 문구는 아래 고정 문구를 사용한다.
+  - `로그인 사용자 정보가 자동으로 반영됩니다.`
+- 스타일은 공통 힌트 클래스(`form-editor-template-field-hint-text`)를 우선 사용한다.
+- 별도 데이터 입력 UX는 실사용(write) 화면에서 구성한다.
+
+## 함께 볼 것
+
+- [template-management.md](../coding/template-management.md) — 템플릿 기능 경계
+- [agreement-consent-fill-interaction.mdc](./agreement-consent-fill-interaction.mdc) — **회원 동의서 작성**: `preview`/`user` 착오, 양식 잠금 vs 응답 입력
+- [ujat-program-new-registration-programs-url.md](../process/ujat-program-new-registration-programs-url.md) — `/programs/ujat?new` 부트스트랩 및 **사용자 모드 vs `userPreview`**
+- [paragraph-card-slots.mdc](./paragraph-card-slots.mdc) — 카드 슬롯·헤더

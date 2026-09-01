@@ -1,0 +1,80 @@
+---
+description: Admin 상세·단건 화면 — 로딩 스피너를 empty보다 먼저 (TanStack Query)
+globs:
+  - apps/admin/src/pages/**/*.{tsx,css}
+  - apps/admin/src/features/**/ui/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# 상세 로딩 전 empty 플래시 금지 (Admin)
+
+CMS 미러: [`apps/cms/.../detail-loading-before-empty.mdc`](../../../cms/.cursor/rules/design/detail-loading-before-empty.mdc)
+
+비동기 로드가 끝나기 전에 「없음」/에러 문구가 먼저 보이면 안 된다.
+
+## TanStack Query v5
+
+| 상태 | 필드 | UI |
+|------|------|-----|
+| 최초 로드 (데이터 없음 + fetch) | `query.isLoading` | **스피너** |
+| 로드 완료 후 데이터 없음 | `!query.data` (및 `!isLoading`) | empty / 에러 카드 |
+| 뮤테이션 중 | `mutation.isPending` | `CmsButton loading` · Confirm `confirmLoading` |
+| 목록 테이블 최초 로드 | `listQuery.isLoading` | `Table` / SortableTable `loading` |
+
+백그라운드 refetch만으로 목록 전체를 잠글 필요가 없으면 `isFetching`을 Table loading에 섞지 않는다 (기본은 `isLoading`).
+
+## 올바른 순서
+
+```tsx
+// ❌ BAD — 텍스트 only · loading 과 !data 병합
+if (query.isLoading || !data) {
+  return <div className="admin-list-card">콘텐츠를 불러오는 중…</div>
+}
+
+// ✅ GOOD
+if (query.isLoading) {
+  return (
+    <div className="feature-page">
+      <PageContentLoading variant="viewport" />
+    </div>
+  )
+}
+if (!data) {
+  return (
+    <div className="feature-page">
+      <div className="admin-list-card page-content-error" role="alert">
+        콘텐츠를 불러오지 못했습니다.
+      </div>
+    </div>
+  )
+}
+```
+
+## UX 규격 (Admin path)
+
+| 표면 | 구현 |
+|------|------|
+| 페이지 단위 | `PageContentLoading` `variant="viewport"` |
+| 카드 슬롯·인라인 | `PageContentLoading` `variant="default"` |
+| 필터 아래 테이블 슬롯 | `variant="table-slot"` 또는 Table `loading` |
+| 목록 테이블 | `loading={listQuery.isLoading}` |
+| 버튼 | `loading={mutation.isPending}` ([button-loading-only](../../../cms/.cursor/rules/design/button-loading-only.mdc) 전역 CMS/Admin) |
+
+구현:
+
+- 컴포넌트: [`shared/ui/page-content-loading.tsx`](../../../src/shared/ui/page-content-loading.tsx)
+- CSS: [`shared/ui/page-content-loading.css`](../../../src/shared/ui/page-content-loading.css)
+
+## 금지
+
+- 로딩 전용 UI를 텍스트 문자열만 사용
+- `isLoading || !data` 한 분기로 스피너와 empty 혼동 (error 시 로딩 고착)
+- 상세 로드 중 `return null` (빈 화면)
+
+## 체크리스트
+
+- [ ] 단건 페이지: isLoading → Spin, 이후 !data → empty/error
+- [ ] 목록: Table loading ← `listQuery.isLoading`
+- [ ] 저장/삭제: CmsButton / Confirm ← `isPending`
+
+**Last updated:** 2026-08-06

@@ -1,0 +1,54 @@
+.pageTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-24);
+}
+
+/* illust-book.svg 내부 PNG(399×399)에 여백이 커서, 슬롯은 문의내역과 동일(90×72)하게 두고 확대 */
+.pageIconWrap {
+  display: flex;
+  width: 90px;
+  height: 72px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.pageIcon {
+  display: block;
+  width: 90px;
+  height: 90px;
+  flex-shrink: 0;
+  transform: scale(1.55);
+  transform-origin: center center;
+}
+
+.pageTitle {
+  margin: 0;
+}
+
+.tabs {
+  margin-top: var(--spacing-50);
+  margin-bottom: var(--spacing-60);
+}
+
+.list {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-40);
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--spacing-100);
+}
+
+.empty {
+  margin: 0;
+  padding-block: var(--spacing-40);
+  text-align: center;
+}

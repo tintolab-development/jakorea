@@ -1,0 +1,31 @@
+/* 설명글_텍스트형 — 본문 + 하단 동의 라디오 */
+.explanation-text.form-editor-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* 지급조서 사전 동의서 — 「개인정보 수집‧이용 및 제공 동의서」 본문(static-body, \\n + pre-line) */
+.explanation-text__static-body {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 30px */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* 사전 동의서 고정 동의·최종 확인 문구 바: `payment-pre-consent-sheet-bar.css` */
+
+/* 구조 잠금 설명글_텍스트형 본문 — 단락 공통 CmsInput(large, disabled, 100%) */
+.explanation-text__disabled-input.cms-input {
+  width: 100%;
+  align-self: stretch;
+}

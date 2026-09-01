@@ -1,0 +1,272 @@
+.participant-applications,
+.general-instructor-applications {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: visible;
+  box-sizing: border-box;
+
+  /*
+   * 필터 칸 gap·기본 상한 — FilterFieldConfig.width는 TableFilterGroup이 적용
+   * --application-filter-* 는 봉사자 심사 전용 그리드(volunteer-screening.css)에서만 사용
+   */
+  --filter-field-gap: 12px;
+  --table-filter-field-gap: 12px;
+  --filter-control-width: 240px;
+  --filter-control-max-width: 240px;
+  --application-filter-column-width: 240px;
+  --application-filter-address-segment-width: 120px;
+  --application-filter-address-pair-gap: 12px;
+  --application-filter-address-region-width: calc(
+    2 * var(--application-filter-address-segment-width) +
+      var(--application-filter-address-pair-gap)
+  );
+}
+
+/* 필터 ↔ 테이블 구분선 — applicant-details 기본 16px 덮어씀 */
+.participant-applications
+  .applicant-details
+  .applicant-details__filter-table-layout
+  .filter-table-layout__divider,
+.general-instructor-applications
+  .applicant-details
+  .applicant-details__filter-table-layout
+  .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+/* 필터 행: 칸 사이 12px (TableFilterGroup fields-inner gap) */
+.participant-applications
+  .applicant-details
+  .table-filter-group__container,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__container {
+  gap: var(--filter-field-gap);
+}
+
+.participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner.ant-row,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner.ant-row {
+  gap: var(--filter-field-gap);
+}
+
+/*
+ * 테이블 셀 패딩 (승인 현황 th·td 좌우 16px, 진행 희망 교육 일정 th/td 16px)
+ * ant-table-wrapper.cms-data-table + detail-fullpage-modal 체인으로 cms-data-table·applicants-detail(24px) 덮어씀
+ */
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.status-dropdown-cell__cell-status,
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.applicant-details__th-sessions {
+  padding: 12px 16px !important;
+}
+
+/* 승인 현황: 텍스트 표기 + 드롭다운 트리거 폭 조정 */
+.participant-applications .applicant-details .status-dropdown-cell__status-trigger {
+  width: auto !important;
+  min-width: 100px !important;
+  max-width: 148px !important;
+}
+
+.participant-applications
+  .applicant-details
+  .status-dropdown-cell__status-trigger--open {
+  width: auto !important;
+  min-width: 100px !important;
+  max-width: 148px !important;
+}
+
+/* 신청 기관명 · 기관 소재지 · 진행 희망 교육 일정 — cms-data-table--fluid 에서 minWidth prop만으로는 미적용 */
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.applicant-details__th-school-name,
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell.applicant-details__td-school-name,
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.applicant-details__th-region,
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell.applicant-details__td-region {
+  min-width: 185px;
+}
+
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.applicant-details__th-sessions,
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell.applicant-details__td-sessions {
+  min-width: 360px;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.status-dropdown-cell__cell-status,
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.ant-table-cell.status-dropdown-cell__cell-status {
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+.participant-applications
+  .applicant-details
+  .status-dropdown-cell__status-trigger
+  .approval-status-text,
+.participant-applications
+  .applicant-details
+  .status-dropdown-cell__dropdown-item
+  .approval-status-text {
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell.applicant-details__td-sessions {
+  padding: 10px 16px !important;
+}
+
+/* 진행 희망 교육 일정 — 텍스트 블록은 셀 중앙, 블록 내 일정·외 n개는 좌측 정렬 */
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell.applicant-details__td-sessions--center {
+  text-align: center !important;
+  vertical-align: middle;
+}
+
+.participant-applications
+  .applicant-details
+  .applicant-details__td-sessions--center
+  .applicant-details__sessions-cell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  max-width: 100%;
+}
+
+.participant-applications
+  .applicant-details
+  .applicant-details__td-sessions--center
+  .applicant-details__session-line {
+  justify-content: flex-start;
+  width: auto;
+}
+
+.participant-applications
+  .applicant-details
+  .applicant-details__td-sessions--center
+  .general-detail-session-line {
+  display: inline-flex;
+  justify-content: flex-start;
+}
+
+.participant-applications
+  .applicant-details
+  .applicant-details__td-sessions--center
+  .applicant-details__session-more {
+  text-align: left;
+}
+
+.applicant-schedule-item-title-row .applicant-schedule-item-approval {
+  flex-shrink: 0;
+}
+
+/* 개인 1차 서류 심사 — 봉사자 doc1과 동일 5열 그리드(240px·gap 12px) */
+.participant-applications
+  .general-participant-doc1-screening__filter-layout.filter-table-layout
+  .table-filter-group__fields-rows
+  > .table-filter-group__fields-row-with-action {
+  display: grid !important;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 12px;
+  align-items: end;
+  grid-template-columns:
+    repeat(5, minmax(0, var(--application-filter-column-width, 240px))) minmax(0, 1fr) 160px !important;
+}
+
+.participant-applications
+  .general-participant-doc1-screening__filter-layout.filter-table-layout
+  .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-grid-row {
+  display: contents;
+}
+
+.participant-applications
+  .general-participant-doc1-screening__filter-layout.filter-table-layout
+  .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-shell--inline {
+  grid-column: 7;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  justify-self: end;
+}

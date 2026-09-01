@@ -14,6 +14,7 @@ import {
   type PaymentOrderAdminProcessingStatus,
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
+import { getPaymentOrdersMonthFilterRange } from '@/pages/settlement-management/payment-orders-date-range'
 import {
   settlementCalendarPrimaryTitle,
   type InstructorSettlementInvoiceDetail,
@@ -27,9 +28,8 @@ import {
   settlementEventStatusColorPair,
   type CalendarItem,
 } from '@/shared/components/calendar'
-import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
+import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import '@/shared/components/calendar/styles/calendar.css'
-import '@/shared/components/program-calendar.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -65,6 +65,10 @@ function paymentOrderStatusToInstructorUiStatus(
   switch (s) {
     case 'pending':
       return 'awaiting_confirmation'
+    case 'reapplication':
+      return 'payment_statement_reapplication'
+    case 'partial':
+      return 'partial_confirmation'
     case 'confirmed':
       return 'payment_statement_verified'
     case 'correction':
@@ -80,22 +84,7 @@ function paymentStatusShortLabelForCalendarPreview(
   s: PaymentOrderAdminProcessingStatus
 ): string {
   const uiStatus = paymentOrderStatusToInstructorUiStatus(s)
-  switch (uiStatus) {
-    case 'awaiting_confirmation':
-      return '확인 대기'
-    case 'partial_confirmation':
-      return '확인 중'
-    case 'payment_statement_verified':
-      return '확인 완료'
-    case 'account_paid':
-      return '계좌 지급'
-    case 'payment_correction_requested':
-      return '정정 요청'
-    case 'application_rejected':
-      return '신청 반려'
-    default:
-      return '확인 대기'
-  }
+  return paymentOrderStatusShortLabelFromUiStatus(uiStatus)
 }
 
 /** 지급조서 확인 캘린더 한정: 정정 요청은 핑크 대신 빨간 톤 */
@@ -110,12 +99,14 @@ function paymentOrderStatusShortLabelFromUiStatus(status: InstructorSettlementUi
   switch (status) {
     case 'awaiting_confirmation':
       return '확인 대기'
+    case 'payment_statement_reapplication':
+      return '재신청'
     case 'partial_confirmation':
-      return '확인 중'
+      return '일부 확인'
     case 'payment_statement_verified':
       return '확인 완료'
     case 'account_paid':
-      return '계좌 지급'
+      return '확인 완료'
     case 'payment_correction_requested':
       return '정정 요청'
     case 'application_rejected':
@@ -128,7 +119,7 @@ function paymentOrderStatusShortLabelFromUiStatus(status: InstructorSettlementUi
 /** 지급조서 확인 캘린더 한정: tooltip 상태 문구 축약 */
 function renderPaymentOrdersEventsTooltipContent({ events: dayEvents }: { events: CalendarItem[] }) {
   return (
-    <div className="program-calendar-schedule-panel">
+    <div className="settlement-preview-tooltip">
       {dayEvents.map(ev => {
         const row = settlementRowFromCalendarItem(ev)
         const colors = paymentOrderCalendarStatusColorPair(row.status)
@@ -141,8 +132,8 @@ function renderPaymentOrdersEventsTooltipContent({ events: dayEvents }: { events
               <span style={{ color: colors.text, fontWeight: 700, fontSize: '14px' }}>
                 {paymentOrderStatusShortLabelFromUiStatus(row.status)}
               </span>
-              <span className="program-calendar-schedule-panel__text">
-                <span className="program-calendar-schedule-panel__sep">|</span> +
+              <span className="settlement-preview-tooltip__text">
+                <span className="settlement-preview-tooltip__sep">|</span> +
                 {row.scheduledAmount.toLocaleString()}원
               </span>
             </div>
@@ -208,6 +199,8 @@ function paymentEventToSettlementListRow(
 
   return {
     id: ev.id,
+    /** 집계 캘린더 행 — 단건 settlementId 없음 */
+    settlementId: 0,
     no: isProgram ? programRow.no : (ev.sourceInstructorRow?.no ?? 0),
     programName: programNameForRow,
     instructorName: isProgram
@@ -335,16 +328,17 @@ export type PaymentOrdersCalendarDetailClick =
   | { exposure: 'program'; row: PaymentOrderAdminProgramRow }
   | { exposure: 'instructor'; row: PaymentOrderAdminInstructorRow }
 
-/** 상단 기간 필터 `dateRangeOneMonthFromStart`와 동일: 해당 월 1일 ~ 다음달 전날 */
+/** 상단 기간 필터 `dateRangeOneMonthFromStart`와 동일: 해당 월 1일 ~ 익월 1일 */
 function oneMonthRangeMatchingFilter(month: Dayjs): [Dayjs, Dayjs] {
-  const start = month.startOf('month')
-  return [start, start.add(1, 'month').subtract(1, 'day')]
+  return getPaymentOrdersMonthFilterRange(month)
 }
 
 export interface PaymentOrdersCalendarViewProps {
   exposure: PaymentOrdersCalendarExposure
   programRows: PaymentOrderAdminProgramRow[]
   instructorRows: PaymentOrderAdminInstructorRow[]
+  /** API 캘린더 이벤트 — 있으면 mock 집계 대신 사용 */
+  eventsOverride?: PaymentOrderCalendarEvent[]
   /** URL·조회에 적용된 기간(실제 출강일). 없으면 데이터 앵커 월을 표시 */
   filterDateRange: [Dayjs, Dayjs] | null
   /** 캘린더 헤더 네비·날짜 선택 시 기간 필터·URL과 동일하게 맞출 때 호출 */
@@ -397,17 +391,21 @@ export function PaymentOrdersCalendarView({
   exposure,
   programRows,
   instructorRows,
+  eventsOverride,
   filterDateRange,
   onFilterDateRangeApply,
   onPaymentStatusDetailClick,
 }: PaymentOrdersCalendarViewProps) {
   const events = useMemo(() => {
+    if (eventsOverride) {
+      return filterEventsByDateRange(eventsOverride, filterDateRange)
+    }
     const raw =
       exposure === 'program'
         ? eventsFromPrograms(programRows)
         : eventsFromInstructors(instructorRows)
     return filterEventsByDateRange(raw, filterDateRange)
-  }, [exposure, programRows, instructorRows, filterDateRange])
+  }, [eventsOverride, exposure, programRows, instructorRows, filterDateRange])
 
   const eventById = useMemo(() => new Map(events.map(e => [e.id, e] as const)), [events])
 
@@ -555,21 +553,21 @@ export function PaymentOrdersCalendarView({
           eventsTooltipScope="full-day"
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}
-        previewTooltipContent={renderPaymentOrdersEventsTooltipContent}
+          previewTooltipContent={renderPaymentOrdersEventsTooltipContent}
           tooltipOverlayClassName="payment-orders-calendar-tooltip-overlay"
         />
       </div>
       <div className="calendar-sub-right-list">
         <CalendarSubRightSettlementList
-          key={`${exposure}-${selectedDate.format('YYYY-MM-DD')}`}
-          selectedDate={selectedDate}
-          rows={uniqueSettlementRows}
-          selectedRowKeys={selectedRowKeys}
-          onSelectionChange={setSelectedRowKeys}
-          onRowClick={handleSettlementRowClick}
-          resolveRowColors={resolveSettlementRowColors}
-          resolveBadgeLabel={resolveSettlementBadgeLabel}
-        />
+            key={`${exposure}-${selectedDate.format('YYYY-MM-DD')}`}
+            selectedDate={selectedDate}
+            rows={uniqueSettlementRows}
+            selectedRowKeys={selectedRowKeys}
+            onSelectionChange={setSelectedRowKeys}
+            onRowClick={handleSettlementRowClick}
+            resolveRowColors={resolveSettlementRowColors}
+            resolveBadgeLabel={resolveSettlementBadgeLabel}
+          />
       </div>
     </div>
   )

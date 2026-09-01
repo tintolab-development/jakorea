@@ -1,0 +1,47 @@
+---
+description: CMS /templates — 프로그램 등록형 폼 CmsSelect 옵션은 template-form-select-options 단일 출처
+globs:
+  - "apps/cms/src/pages/templates/**/*.{ts,tsx}"
+  - "apps/cms/src/features/template/ui/form-set/**/*.{ts,tsx}"
+  - "apps/cms/src/features/template/lib/template-form-select-options.ts"
+  - "apps/cms/src/features/template/lib/template-registration-payment-item-options.ts"
+alwaysApply: false
+---
+
+# 템플릿 폼 셀렉트 옵션 (`template-form-select-options.ts`)
+
+**CMS re-export:** `apps/cms/src/features/template/lib/template-form-select-options.ts`
+
+**upstream (단일 출처):** `@jakorea/domain` — 교육 대상(=모집 대상), 참여자 유형은 domain 패키지에서 정의하고 CMS 파일은 re-export만 한다. CMS 전용 옵션(세부 프로그램명, 사업 분야, IPS 등)은 이 파일에 유지한다.
+
+`/templates` 경로에서 쓰는 **일반·경제 프로그램 등록폼** 등 동일 도메인 셀렉트는 여기서 import·스프레드한다. 라벨·값(value)을 파일마다 하드코딩하지 않는다.
+
+## 고정 옵션(기획 스펙)
+
+| 도메인 | 상수 | 비고 |
+|--------|------|------|
+| 세부 프로그램명 | `withDetailedProgramNoneOption(…)` | 관리 목록 mock/API 배열 뒤에 **`해당없음`** (`TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE`) |
+| 프로그램 진행 현황 | `TEMPLATE_FORM_PROGRAM_PROGRESS_OPTIONS` | 진행 예정 / 진행 중 / 진행 완료 |
+| 교육 대상(=모집 대상) | `TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS` | `@jakorea/domain/recruitment/education-target` re-export |
+| 참여자 유형 | `TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS` | `@jakorea/domain/recruitment/participant-type` re-export |
+| 사업 분야(일반) | `TEMPLATE_FORM_BUSINESS_AREA_OPTIONS` | 진로취업·경제금융·기업가정신·디지털 리터러시 |
+| 사업 분야(경제 전용) | `TEMPLATE_FORM_ECONOMY_BUSINESS_FIELD_OPTIONS` | 단일 `경제교육` |
+| 후원사 / 담당자 | (해당 없음) | 후원사 관리 mock·API에서 `{ value, label }[]` 조합 |
+| 교육 과정 | `TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS` | Traditional / Digital / Blended (영문 라벨) |
+| IP Owned | `TEMPLATE_FORM_IP_OWNED_OPTIONS` | JA / Partner / Jointly |
+| Course Delivered By | `TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS` | JA / Partner / Jointly |
+| Partner Involvement | `TEMPLATE_FORM_PARTNER_INVOLVEMENT_OPTIONS` | Yes / No |
+| IPS 1차 | `PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS` (`program-registration-ips-options.ts`) | Inspire / Prepare / Succeed 순서 고정 |
+| IPS 2차 | `PROGRAM_REGISTRATION_IPS_*_OPTIONS` (동일 파일) | Succeed·Inspire·Prepare 분기 — **일반 프로그램 등록폼 정의를 변경할 때는 이 파일과 타입 필드 컴포넌트를 함께 검토** |
+
+## 재수출
+
+`program-registration-ips-options.ts`는 교육 과정·IP·Course Delivered를 위 단일 출처에서 re-export한다. IPS 2차 옵션만 그 파일에 남긴다.
+
+## 신규 `/templates` 화면
+
+동일 스펙 셀렉트가 필요하면 **반드시** `template-form-select-options`를 import하고, 예외적으로 다른 값이 필요하면 기획·API와 먼저 맞춘 뒤 이 파일(또는 IPS 전용 파일)을 확장한다.
+
+## 임금 정보 — 지급 항목 (별도 규칙)
+
+정산 mock(`settlement-item-settings`)에서 파생하는 **지급 항목** 옵션은 이 파일이 아니라 **`getTemplateRegistrationPaymentItemOptions()`** (`template-registration-payment-item-options.ts`)를 단일 출처로 쓴다. 상세는 **`template/templates-wage-payment-items.mdc`**를 본다.

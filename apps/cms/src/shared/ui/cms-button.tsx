@@ -7,6 +7,7 @@ import { Button } from 'antd'
 import type { ButtonProps } from 'antd'
 import type { CSSProperties, ReactNode } from 'react'
 import './cms-button.css'
+import './button-loading-only.css'
 
 type CmsButtonPropsOmit =
   | 'size'
@@ -19,9 +20,15 @@ type CmsButtonPropsOmit =
   | 'className'
   | 'style'
 
-export type CmsButtonVariant = 'primary' | 'secondary' | 'default' | 'delete'
+export type CmsButtonVariant = 'primary' | 'secondary' | 'default' | 'cancel' | 'delete'
 
 export type CmsButtonSize = 'large' | 'medium' | 'small'
+
+/** 승인·반려·취소 등 CMS 관리 액션 버튼 공통 폭(px) */
+export const CMS_ACTION_BUTTON_WIDTH = 140
+
+/** 「수료증/참여인증서 발급」 버튼 공통 폭(px) */
+export const CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH = 210
 
 export interface CmsButtonProps extends Omit<ButtonProps, CmsButtonPropsOmit> {
   variant?: CmsButtonVariant
@@ -48,39 +55,78 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
       style,
       disabled,
       type = 'button',
+      loading,
       ...rest
     },
     ref
   ) => {
     const hasIcon = icon != null
+    const resolvedWidth = width == null ? undefined : typeof width === 'number' ? `${width}px` : width
+    /**
+     * 고정 폭: width/min/max를 동일 값으로 덮어 size·has-icon 기본 min-width를 깬다.
+     * fluid(`auto`/`max-content`/`fit-content`): max-content 기준으로 긴 라벨이 잘리지 않게 한다.
+     * (`auto`에 min=max=auto를 넣으면 has-icon 180 고정·정렬이 깨질 수 있음)
+     */
+    const isFluidWidth =
+      resolvedWidth === 'auto' ||
+      resolvedWidth === 'max-content' ||
+      resolvedWidth === 'fit-content' ||
+      resolvedWidth === 'min-content'
     const widthStyle: CSSProperties | undefined =
-      width != null ? { width: typeof width === 'number' ? `${width}px` : width } : undefined
+      resolvedWidth == null
+        ? undefined
+        : isFluidWidth
+          ? {
+              width: resolvedWidth === 'auto' ? 'max-content' : resolvedWidth,
+              minWidth: 'fit-content',
+              maxWidth: 'none',
+            }
+          : { width: resolvedWidth, minWidth: resolvedWidth, maxWidth: resolvedWidth }
 
     const antdSize = size === 'large' ? 'large' : size === 'small' ? 'small' : 'middle'
+    const isLoading = Boolean(loading)
 
     const cn = [
       'cms-button',
+      'btn-loading-only',
       `cms-button--${variant}`,
       `cms-button--${size}`,
       hasIcon && 'cms-button--has-icon',
+      isLoading && 'cms-button--loading-only',
       className,
     ]
       .filter(Boolean)
       .join(' ')
 
+    const antType: ButtonProps['type'] =
+      variant === 'primary' ? 'primary' : variant === 'delete' ? 'default' : 'default'
+
+    /**
+     * Ant DefaultLoadingIcon: `icon` 없으면 CSSMotion(width 애니메이션) →
+     * 스피너 absolute 중앙 정렬이 깨짐. 로딩 중 더미 icon으로 existIcon 경로 사용.
+     */
+    const antdIcon = isLoading ? <span className="cms-button__loading-slot" aria-hidden /> : undefined
+
     return (
       <Button
         ref={ref}
-        type="default"
+        type={antType}
         htmlType={type}
+        danger={variant === 'delete'}
         size={antdSize}
         className={cn}
         disabled={disabled}
+        loading={loading}
+        icon={antdIcon}
         style={{ outline: 'none', ...widthStyle, ...style }}
         {...rest}
       >
-        {hasIcon ? <span className="cms-button__icon">{icon}</span> : null}
-        {children != null ? <span className="cms-button__label">{children}</span> : null}
+        {children != null || hasIcon ? (
+          <span className="btn-loading-only__content">
+            {hasIcon ? <span className="cms-button__icon">{icon}</span> : null}
+            {children != null ? <span className="cms-button__label">{children}</span> : null}
+          </span>
+        ) : null}
       </Button>
     )
   }

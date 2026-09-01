@@ -3,14 +3,136 @@
  * 성공/에러/알림 메시지 중앙 관리
  */
 
+/** 폼 제출 — 필수 항목 미완 시 AlertModal 본문 (필드명 미안내) */
+export const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE = '필수 항목을 모두 작성해주세요'
+
+/** 회원 신규 등록 — 약관·동의 미완료 시 AlertModal 본문 */
+export const REQUIRED_TERMS_AGREEMENT_ALERT_MESSAGE = '필수 약관에 동의해주세요'
+
+/** 강사 신규 등록 — 동의서 작성 전 기본 정보 미작성 시 AlertModal 본문 */
+export const INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE =
+  '기본 정보를 먼저 작성 해주세요.'
+
+/** 성범죄 경력조회 동의서 — 제출 시 문서 미첨부 AlertModal 본문 */
+export const CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE =
+  '동의서 파일을 첨부해 주세요.'
+
 /** 미구현 기능 `window.alert` 공통 안내 (프로그램 상세 미리보기, 대시보드 위젯 더보기 등) */
 export const FEATURE_COMING_SOON_ALERT_MESSAGE = '준비 중입니다.'
 
 /** 참여 강사진 — 활동확인서 발급 버튼 미구현 시 `window.alert` */
 export const ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE = '준비중'
 
-/** 참여 기관 학생 명단 — 정보 수정 버튼 미구현 시 `window.alert` */
+/** 참여 기관 학생 명단 — 정보 수정 버튼 미구현 시 AlertModal 본문 */
 export const STUDENT_LIST_INFO_EDIT_COMING_SOON_ALERT_MESSAGE = '준비중'
+
+/** 참여 학생 목록 — 수정 모드 중 필터·다른 액션 시 AlertModal 본문 */
+export const STUDENT_LIST_EDIT_MODE_BLOCKED_ALERT_MESSAGE =
+  '학생 정보 수정 중에는 이용할 수 없습니다. 정보 수정을 완료한 후 다시 시도해 주세요.'
+
+/** 참여 학생 목록 — 초상권 동의 확인: 미선택 시 AlertModal 본문 */
+export const STUDENT_PORTRAIT_CONSENT_SELECT_ONE_ALERT_MESSAGE =
+  '초상권 동의서를 확인할 학생을 1명 이상 선택해 주세요.'
+
+/** 참여 학생 목록 — 초상권 동의 확인: 선택 행 전원 미제출 시 AlertModal 본문 */
+export const STUDENT_PORTRAIT_CONSENT_NOT_SUBMITTED_ALERT_MESSAGE =
+  '선택한 학생 중 교사가 제출한 초상권 동의서가 없습니다.'
+
+/** 참여 학생 목록 — 초상권 동의 PDF 생성 실패 */
+export const STUDENT_PORTRAIT_CONSENT_DOWNLOAD_FAILED_ALERT_MESSAGE =
+  '초상권 동의서 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+
+/** 참여 학생 목록 — 수료증/참여인증서 발급: 미선택 시 AlertModal 본문 */
+export const STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE =
+  '발급할 학생을 1명 선택해 주세요.'
+
+/** 참여 학생 목록 — 수료증/참여인증서 발급: 다수 선택 시 AlertModal 본문 */
+export const STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE =
+  '수료증/참여인증서는 한 번에 1명만 발급할 수 있습니다.\n학생 1명만 선택한 뒤 다시 시도해 주세요.'
+
+/** 참여 강사 목록 — 활동인증서 발급: 미선택 시 AlertModal 본문 */
+export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE =
+  '발급할 강사를 1명 선택해 주세요.'
+
+/** 참여 강사 목록 — 활동인증서 발급: 다수 선택 시 AlertModal 본문 */
+export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE =
+  '활동인증서는 한 번에 1명만 발급할 수 있습니다.\n강사 1명만 선택한 뒤 다시 시도해 주세요.'
+
+/** 참여 강사 목록 — 강사 추가 등록: 미선택 시 AlertModal 본문 */
+export const PARTICIPATING_INSTRUCTOR_ADD_SELECT_ALERT_MESSAGE =
+  '추가 등록할 강사를 선택해 주세요.'
+
+/** 참여 강사 목록 — 강사 추가 등록: 등록 완료 시 AlertModal 본문 */
+export const PARTICIPATING_INSTRUCTOR_ADD_COMPLETE_ALERT_MESSAGE =
+  '강사 추가 등록이 완료되었습니다.'
+
+/** 참여 봉사자 목록 — 활동확인서 발급: 미선택 시 AlertModal 본문 */
+export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_VOLUNTEER_ALERT_MESSAGE =
+  '발급할 봉사자를 1명 선택해 주세요.'
+
+/** 참여 봉사자 목록 — 활동확인서 발급: 다수 선택 시 AlertModal 본문 */
+export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_VOLUNTEER_ALERT_MESSAGE =
+  '활동확인서는 한 번에 1명만 발급할 수 있습니다.\n봉사자 1명만 선택한 뒤 다시 시도해 주세요.'
+
+/** 참여 봉사자 목록 — 봉사자 추가 등록: 미선택 시 AlertModal 본문 */
+export const PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE =
+  '추가 등록할 회원을 선택해 주세요.'
+
+/** 참여 봉사자 목록 — 봉사자 추가 등록: 등록 완료 시 AlertModal 본문 */
+export const PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE =
+  '봉사자 추가 등록이 완료되었습니다.'
+
+/** 참여 봉사자 목록 — 임직원 자원봉사자 등록: 기관 미선택 시 AlertModal 본문 */
+export const PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_SELECT_INSTITUTION_ALERT_MESSAGE =
+  '자원봉사자를 배정할 기관을 선택해 주세요.'
+
+/** 참여 봉사자 목록 — 임직원 자원봉사자 등록: 인원 수 미입력 시 AlertModal 본문 */
+export const PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COUNTS_REQUIRED_ALERT_MESSAGE =
+  '일정별 신규·재참여 자원봉사자 수를 모두 입력해 주세요.\n배정된 자원봉사자가 없는 경우, 0으로 입력해 주세요.'
+
+/** 참여 봉사자 목록 — 임직원 자원봉사자 등록: 등록 완료 시 AlertModal 본문 */
+export const PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COMPLETE_ALERT_MESSAGE =
+  '임직원 자원봉사자 등록이 완료되었습니다.'
+
+/** 참여 강사 상세 — 이미 활동 포기 처리된 강사 재시도 시 AlertModal 본문 */
+export const PARTICIPATING_INSTRUCTOR_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE =
+  '이미 활동 포기 처리된 강사입니다.'
+
+/** 참여 기관 상세 — 이미 활동 포기 처리된 기관 재시도 시 AlertModal 본문 */
+export const PARTICIPATING_INSTITUTION_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE =
+  '이미 활동 포기 처리된 기관입니다.'
+
+/** 수료증/참여인증서·활동인증서 발급 사유 모달 — 사유 미선택 시 AlertModal 본문 */
+export const CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE = '발급 사유를 선택해 주세요.'
+
+/** 참여 기관 강사 배정 현황 — 배정 취소: 미선택 시 AlertModal 본문 */
+export const INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE =
+  '배정 취소할 강사를 선택해 주세요.'
+
+/** 참여 강사 배정 현황 — 배정 취소: 미선택 시 AlertModal 본문 */
+export const INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE =
+  '배정 취소할 기관을 선택해 주세요.'
+
+/** 참여 기관 강사 배정 — 승인 미완료 강사는 선택 배정 시 1명만 가능 */
+export const INSTRUCTOR_ASSIGN_SELECT_UNAPPROVED_SINGLE_ONLY_ALERT_MESSAGE =
+  '프로그램 참여 승인이 필요한 강사는 한 번에 한 명씩 선택 배정해 주세요.'
+
+/** 참여 강사 배정 현황 — 선택 배정: 미선택 시 AlertModal 본문 */
+export const INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE =
+  '배정할 강사를 선택해 주세요.'
+
+/** 참여 강사 배정 현황 — 선택 배정: 미선택 시 AlertModal 본문 */
+export const INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE = '배정할 기관을 선택해 주세요.'
+
+/** 참여 봉사자 배정 현황 — 배정 취소: 미선택 시 AlertModal 본문 */
+export const VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE =
+  '배정 취소할 기관을 선택해 주세요.'
+
+/** 참여 봉사자 배정 현황 — 선택 배정: 미선택 시 AlertModal 본문 */
+export const VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE = '배정할 기관을 선택해 주세요.'
+
+/** 일반 프로그램 상세 — 설문 관리 LNB: 등록된 설문 항목 없을 때 AlertModal 본문 */
+export const GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE = '등록된 설문 항목이 없습니다.'
 
 export const MESSAGES = {
   success: {
@@ -175,6 +297,7 @@ export const MESSAGES = {
     permissionRequestSubmitFailed: '권한 요청 제출에 실패했습니다.',
     downloadQuotaLoadFailed: '다운로드 쿼터 조회에 실패했습니다.',
     performanceStatsLoadFailed: '실적 통계를 불러오는 중 오류가 발생했습니다.',
+    performanceRecordsLoadFailed: '실적 목록을 불러오는 중 오류가 발생했습니다.',
     scheduleLoadFailed: '일정 정보를 불러오는 중 오류가 발생했습니다.',
     favoriteProgramsLoadFailed: '관심 프로그램을 불러오는 중 오류가 발생했습니다.',
     favoriteProgramRemoveFailed: '관심 프로그램 해제 중 오류가 발생했습니다.',

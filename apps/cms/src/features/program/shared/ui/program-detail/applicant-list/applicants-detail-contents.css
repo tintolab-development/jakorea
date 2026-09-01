@@ -1,0 +1,282 @@
+/* 탭 + 본문 — CmsTextTabs (탭 왼쪽, trailing 액션 오른쪽) */
+.applicant-contents__tabs-wrap {
+  margin-bottom: 24px;
+}
+
+.applicant-contents__tabs.cms-text-tabs .cms-text-tabs__row {
+  margin-bottom: 0;
+}
+
+.applicant-contents__panel {
+  margin-top: 0;
+}
+
+.applicant-contents__header-actions {
+  flex-shrink: 0;
+}
+
+.applicant-contents__header-only-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 24px;
+}
+
+.applicant-contents__header-actions .cms-button {
+  border-radius: 8px !important;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.header-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  margin-right: 12px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.title-wrapper .ant-tag {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Instructor Layout */
+.instructor-info-layout {
+  display: flex;
+  gap: 32px;
+}
+
+.instructor-profile {
+  width: 258px;
+  flex-shrink: 0;
+}
+
+.profile-placeholder {
+  width: 258px;
+  height: 336px;
+  background: #f5f5f5;
+  border: 1px solid #d9d9d9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #bfbfbf;
+}
+
+.profile-placeholder img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.instructor-table {
+  flex: 1;
+}
+
+/* Native Info Table */
+.native-info-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #f0f0f0;
+}
+
+.native-info-table th,
+.native-info-table td {
+  border: 1px solid #f0f0f0;
+  padding: 12px 16px;
+  font-size: 14px;
+}
+
+.native-info-table th {
+  background: #fafafa;
+  font-weight: 500;
+  text-align: left;
+  width: 140px;
+}
+
+.native-info-table td {
+  background: #fff;
+}
+
+/* Radio Grid for Preferred Schools */
+.radio-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 4px;
+}
+
+.radio-item {
+  padding: 8px;
+}
+
+.extra-tab-content {
+  padding: 24px 0;
+}
+
+.resume-placeholder {
+  padding: 100px 0;
+  text-align: center;
+}
+
+/* ========== 강사 기본정보 탭: 학력/경력/자격/수상/자기소개 (기본정보 표 제외) ========== */
+.applicant-info-section--instructor {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 32px 0 0;
+}
+
+.applicant-info-section--instructor:has(.applicant-general-instructor-basic-info) {
+  gap: 32px;
+  padding-top: 0;
+}
+
+/* general 강사 상세 — 탭 trailing 버튼 영역 ↔ 관리자 코멘트: 16px */
+.detail-fullpage-modal.general-program-detail-fullpage-modal
+  .applicant-contents:has(.applicant-general-instructor-basic-info)
+  .applicant-contents__tabs.cms-text-tabs
+  .cms-text-tabs__row,
+.applicant-contents:has(.applicant-general-instructor-basic-info)
+  .applicant-contents__tabs.cms-text-tabs
+  .cms-text-tabs__row {
+  padding-bottom: 16px;
+}
+
+.applicant-info-section--instructor:has(.applicant-general-instructor-basic-info)
+  .applicant-instructor-resume {
+  gap: 32px;
+}
+
+.instructor-resume-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.instructor-resume-section-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.instructor-resume-section-count {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  color: #01a1af;
+  margin-left: 8px;
+}
+
+.instructor-resume-divider {
+  height: 1px;
+  background: #f0f0f0;
+}
+
+/* `.instructor-resume-card` 외곽선 — `user/detail/ui/instructor-resume/resume.css` SSOT (DetailInfoForm 중첩 시 이중선 방지 포함) */
+
+.instructor-resume-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 0;
+}
+
+.instructor-resume-row-left {
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 140%;
+  color: #8c8c8c;
+  min-width: 0;
+}
+
+.instructor-resume-row--timeline .instructor-resume-row-left {
+  min-width: 170px;
+}
+
+.instructor-resume-row-left--single-year {
+  min-width: 40px !important;
+}
+
+.instructor-resume-row-right {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  word-break: break-word;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 140%;
+  color: #262626;
+}
+
+.instructor-resume-row-right--with-divider .instructor-resume-emphasis {
+  font-weight: 700;
+}
+
+.instructor-resume-role {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  margin-left: 4px;
+}
+
+.instructor-resume-empty {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.applicant-contents__tab-placeholder {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+.applicant-contents__tab-placeholder + .applicant-contents__tab-placeholder {
+  margin-top: 8px;
+}

@@ -1,0 +1,16 @@
+---
+description: Platform 정적 이미지·아이콘 보관 4계층 규칙
+alwaysApply: true
+category: architecture
+---
+
+# Image assets (4 tiers)
+
+새 SVG/PNG 추가 시 아래 **한 곳만** 선택한다. page/feature가 widget·shared 내부 `image/`·`assets/` 경로를 직접 import하지 말고, 해당 레이어 `index.ts` barrel export를 사용한다.
+
+1. **`shared/ui/{component}/icons/`** — 해당 UI primitive 전용
+2. **`shared/assets/{icons|illustration|brand}/`** — 앱 전역 재사용 (2개 이상 feature/widget)
+3. **`widgets|features/{name}/image/{icon|logo|illustration|background}/`** — 단일 widget/feature 전용 (colocated `image/`)
+4. **CSS `background-image` only** — 해당 컴포넌트 `image/background/` + 상대 `url()` in module CSS
+
+승격: feature/widget 전용 → 여러 곳에서 쓰이면 `shared/assets/`로 올린다.

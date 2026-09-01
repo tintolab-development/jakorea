@@ -14,7 +14,7 @@ export interface UseSponsorContactsReturn {
   deleteModalOpen: boolean
   setDeleteModalOpen: (open: boolean) => void
   selectedNames: string[]
-  handleRegister: (payload: SponsorContactRegisterPayload) => void
+  handleRegister: (payload: SponsorContactRegisterPayload) => void | Promise<void>
   handleDelete: () => void
   handleTypeChange: (rowId: string, nextType: SponsorContactRow['contactType']) => void
 }
@@ -22,10 +22,20 @@ export interface UseSponsorContactsReturn {
 /**
  * 후원사 담당자 테이블의 선택·드롭다운·등록/삭제 모달 상태와 파생 이름·변경 핸들러를 제공합니다.
  */
+export type SponsorContactsRemoteActions = {
+  onRegister: (
+    payload: SponsorContactRegisterPayload,
+    contactType: SponsorContactRow['contactType']
+  ) => Promise<void>
+  onDelete: (ids: string[]) => Promise<void>
+  onTypeChange: (row: SponsorContactRow, nextType: SponsorContactRow['contactType']) => Promise<void>
+}
+
 export function useSponsorContacts(
   contacts: SponsorContactRow[],
   setContacts: React.Dispatch<React.SetStateAction<SponsorContactRow[]>>,
-  canWrite: boolean
+  canWrite: boolean,
+  remoteActions?: SponsorContactsRemoteActions
 ): UseSponsorContactsReturn {
   const [selectedKeys, setSelectedKeysState] = useState<Key[]>([])
   const [openDropdownId, setOpenDropdownIdState] = useState<string | null>(null)
@@ -56,6 +66,19 @@ export function useSponsorContacts(
 
   const handleTypeChange = useCallback(
     (rowId: string, nextType: SponsorContactRow['contactType']): void => {
+      const row = contacts.find(c => c.id === rowId)
+      if (!row) return
+      if (row.contactType === 'lead' && nextType === 'assistant') {
+        const leadCount = contacts.filter(c => c.contactType === 'lead').length
+        if (leadCount <= 1) return
+      }
+      if (remoteActions) {
+        void remoteActions
+          .onTypeChange(row, nextType)
+          .then(() => setOpenDropdownId(null))
+          .catch(() => undefined)
+        return
+      }
       setContacts(prev => {
         const target = prev.find(c => c.id === rowId)
         if (target?.contactType === 'lead' && nextType === 'assistant') {
@@ -72,12 +95,18 @@ export function useSponsorContacts(
       })
       setOpenDropdownId(null)
     },
-    [setContacts, setOpenDropdownId]
+    [contacts, remoteActions, setContacts, setOpenDropdownId]
   )
 
   const handleRegister = useCallback(
-    (payload: SponsorContactRegisterPayload): void => {
+    async (payload: SponsorContactRegisterPayload): Promise<void> => {
       if (!canWrite) return
+      if (remoteActions) {
+        const contactType = contacts.length === 0 ? ('lead' as const) : payload.contactType
+        await remoteActions.onRegister(payload, contactType)
+        setRegisterModalOpenState(false)
+        return
+      }
       setContacts(prev => {
         const contactType = prev.length === 0 ? ('lead' as const) : payload.contactType
         const base =
@@ -90,9 +119,13 @@ export function useSponsorContacts(
         const nextContact: SponsorContactRow = {
           id: `contact-${Date.now()}-${nextIndex}`,
           name: payload.name,
+          department: payload.department,
           position: payload.position,
+          officePhone: payload.officePhone,
           phone: payload.phone,
           email: payload.email,
+          companyAddress: payload.companyAddress,
+          memo: payload.memo,
           registeredAt: new Date().toISOString(),
           contactType,
         }
@@ -100,18 +133,29 @@ export function useSponsorContacts(
       })
       setRegisterModalOpenState(false)
     },
-    [canWrite, setContacts]
+    [canWrite, contacts.length, remoteActions, setContacts]
   )
 
   const handleDelete = useCallback((): void => {
     if (!canWrite || selectedKeys.length === 0) return
+    if (remoteActions) {
+      const ids = selectedKeys.map(k => String(k))
+      void remoteActions
+        .onDelete(ids)
+        .then(() => {
+          setSelectedKeysState([])
+          setDeleteModalOpenState(false)
+        })
+        .catch(() => undefined)
+      return
+    }
     const selectedSet = new Set(selectedKeys.map(key => String(key)))
     setContacts(prev =>
       normalizeSponsorContactsSingleLead(prev.filter(contact => !selectedSet.has(contact.id)))
     )
     setSelectedKeysState([])
     setDeleteModalOpenState(false)
-  }, [canWrite, selectedKeys, setContacts])
+  }, [canWrite, remoteActions, selectedKeys, setContacts])
 
   return {
     selectedKeys,

@@ -1,0 +1,46 @@
+/**
+ * 필터 영역 공통 토큰 — CMS `filter-controls-common.css` 미러
+ * @see apps/cms/src/shared/components/filter-controls-common.css
+ * @see apps/cms/.cursor/rules/design/filter-area-layout.mdc
+ */
+
+:root {
+  --filter-control-width: 240px;
+  --filter-control-max-width: 240px;
+  /** 분리형 기간(시작·종료 두 칸): 구분자(~) 포함 가운데 간격 */
+  --filter-control-range-split-between: 20px;
+  /** 필터 칸 사이 gap */
+  --filter-field-gap: 12px;
+  --filter-control-height: 44px;
+  --filter-control-min-width: 180px;
+  --filter-label-height: 27px;
+  --filter-label-control-gap: var(--spacing-6, 6px);
+  --filter-area-label-color: var(--main-BK, #3d3d3d);
+  --filter-area-label-font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  --filter-area-label-font-size: 14px;
+  --filter-area-label-font-weight: 500;
+  --filter-area-label-line-height: 150%;
+  --filter-search-button-width: 160px;
+}
+
+@media (max-width: 1200px) {
+  :root {
+    --filter-control-width: 200px;
+    --filter-control-min-width: 160px;
+  }
+}
+
+@media (max-width: 992px) {
+  :root {
+    --filter-control-width: 180px;
+    --filter-control-min-width: 140px;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --filter-control-width: 100%;
+    --filter-control-height: 40px;
+    --filter-control-min-width: 0;
+  }
+}

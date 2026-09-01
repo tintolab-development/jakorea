@@ -1,0 +1,8 @@
+@import '../project-info-form-shared.css';
+
+.project-info-detail-info-section__frame .detail-info-form__body {
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+}

@@ -6,10 +6,11 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Space, Typography, List, Tag } from 'antd'
+import { Badge, Card, Space, Typography, List, Tag } from 'antd'
+import type { BadgeProps } from 'antd'
 import { SessionFormatBadge } from '@/shared/components/session-format-badge'
 import { CalendarOutlined } from '@ant-design/icons'
-import { EmptyState, StatusDisplay, SingleCTA } from '@/shared/ui'
+import { EmptyState, SingleCTA } from '@/shared/ui'
 import { mockSchedules, mockProgramsMap, mockApplications } from '@/data/mock'
 import dayjs from 'dayjs'
 import type { Schedule } from '@/types/domain'
@@ -28,7 +29,7 @@ const scheduleStatusLabels: Record<ScheduleStatus, string> = {
 }
 
 // 일정 상태 색상
-const scheduleStatusColors: Record<ScheduleStatus, string> = {
+const scheduleStatusColors: Record<ScheduleStatus, BadgeProps['color']> = {
   SCH_01: 'blue',
   SCH_02: 'processing',
   SCH_03: 'success',
@@ -182,11 +183,10 @@ export function MyScheduleListPage() {
                             {programName}
                           </Text>
                         </Space>
-                        <StatusDisplay
-                          status={status}
-                          statusLabels={scheduleStatusLabels}
-                          statusColors={scheduleStatusColors}
-                        />
+                        <Space>
+                          <Badge color={scheduleStatusColors[status]} />
+                          <Text>{scheduleStatusLabels[status]}</Text>
+                        </Space>
                       </Space>
 
                       {/* 일정 정보 */}

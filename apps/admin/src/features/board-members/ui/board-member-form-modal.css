@@ -1,0 +1,40 @@
+/* 구성원 등록 모달 */
+
+.board-member-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  padding: 24px 30px 32px;
+}
+
+.board-member-form-modal .teal-header-modal__footer {
+  margin-top: 30px;
+}
+
+.board-member-form-modal__form {
+  width: 100%;
+}
+
+/* DetailInfoForm edit 기본 margin/align 원복 — 단 RadioGroup flex 레이아웃은 유지 */
+.board-member-form-modal .detail-info-form__field-content--edit > * {
+  margin-block: 0 !important;
+  width: 100%;
+  min-width: 0;
+}
+
+.board-member-form-modal .detail-info-form__field-content--edit > .cms-input,
+.board-member-form-modal .detail-info-form__field-content--edit > .ant-select {
+  display: block;
+}
+
+/* 공개 여부 라디오: app-radio gap(12px) 유지 — display:block 으로 덮어쓰지 않음 */
+.board-member-form-modal .detail-info-form__field-content--edit > .app-radio-group.ant-radio-group {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: auto;
+  max-width: 100%;
+}
+
+.board-member-form-modal .app-radio-group .ant-radio-wrapper {
+  margin-inline-end: 0;
+}

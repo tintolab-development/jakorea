@@ -62,9 +62,9 @@
 ### 모노레포 구조
 
 - **Turborepo + pnpm workspace** 구조 유지
-- `apps/lms`에서만 작업
-- `packages/@jakorea/ui`, `packages/@jakorea/utils` 활용 가능
-- 다른 앱(`admin`, `platform`)에 영향 주지 않기
+- 요청 대상 앱(`apps/cms`, `apps/admin`, `apps/platform`)에서만 작업
+- `packages/@jakorea/ui`, `packages/@jakorea/utils` 등 공유 패키지 활용 가능
+- 요청과 무관한 다른 앱에 영향 주지 않기
 
 ---
 
@@ -222,7 +222,7 @@
   - 계층 구조: 중요한 정보는 더 진한 색상, 보조 정보는 연한 색상
   - 접근성: 색상만으로 정보를 전달하지 않도록 텍스트/아이콘과 함께 사용
 - **색상 토큰 관리**:
-  - 전역 CSS 변수로 색상 토큰 정의 (`apps/lms/src/index.css`)
+  - 전역 CSS 변수로 색상 토큰 정의 (각 앱 `src/index.css` 등)
   - M3 색상 시스템 준수
   - 커스텀 색상은 M3 색상 톤과 조화롭게 선택
 

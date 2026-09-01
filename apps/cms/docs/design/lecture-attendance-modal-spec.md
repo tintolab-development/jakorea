@@ -121,7 +121,7 @@
 
 - [persona.md](../../../.cursor/rules/process/persona.md) — 디자이너/기획/PM 요청 해석
 - [teal-header-modal](../../../src/shared/ui/teal-header-modal.tsx) — 청록 헤더 모달
-- [school-detail-modal.tsx](../../../src/features/program/ui/school-detail-modal.tsx) — 강의 출석 내역 열 렌더링 및 클릭 연동 위치
+- [school-detail-modal.tsx](../../../src/features/program/general/ui/school-detail-modal.tsx) — 강의 출석 내역 열 렌더링 및 클릭 연동 위치
 - [school-detail-modal-spec.md](./school-detail-modal-spec.md), [school-detail-modal-student-list-edit-spec.md](./school-detail-modal-student-list-edit-spec.md)
 
 ---

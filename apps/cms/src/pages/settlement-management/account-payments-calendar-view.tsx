@@ -8,7 +8,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'rea
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import {
+  formatAccountPaymentInstitutionDisplay,
   formatAccountPaymentSessionLabelDisplay,
+  resolveAccountPaymentCalendarDate,
   type AccountPaymentRow,
 } from '@/data/mock/account-payments-list'
 import {
@@ -24,17 +26,17 @@ import {
   CalendarSubRightSettlementList,
   settlementEventStatusColorPair,
   settlementRowFromCalendarItem,
+  useCalendarMiniState,
   type CalendarItem,
 } from '@/shared/components/calendar'
-import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
+import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import '@/shared/components/calendar/styles/calendar.css'
-import '@/shared/components/program-calendar.css'
 
 function pickAnchorDate(rows: AccountPaymentRow[]): Dayjs {
   if (rows.length === 0) return dayjs()
-  let min = dayjs(rows[0].transferScheduledDate)
+  let min = dayjs(resolveAccountPaymentCalendarDate(rows[0]))
   for (let i = 1; i < rows.length; i++) {
-    const d = dayjs(rows[i].transferScheduledDate)
+    const d = dayjs(resolveAccountPaymentCalendarDate(rows[i]))
     if (d.isBefore(min, 'day')) min = d
   }
   return min
@@ -49,21 +51,21 @@ function accountPaymentStatusToUiStatus(
 function accountPaymentStatusShortLabel(status: AccountPaymentRow['accountPaymentStatus']): string {
   switch (status) {
     case 'awaiting_confirmation':
-      return '확인 대기'
+      return '지급 대기'
     case 'partial_confirmation':
       return '확인 중'
     case 'account_paid':
-      return '계좌 지급'
+      return '지급 완료'
     case 'payment_correction_requested':
       return '정정 요청'
     default:
-      return '확인 대기'
+      return '지급 대기'
   }
 }
 
 function renderAccountPaymentEventsTooltipContent({ events: dayEvents }: { events: CalendarItem[] }) {
   return (
-    <div className="program-calendar-schedule-panel">
+    <div className="settlement-preview-tooltip">
       {dayEvents.map(ev => {
         const row = settlementRowFromCalendarItem(ev)
         const colors = settlementEventStatusColorPair(row.status)
@@ -78,8 +80,8 @@ function renderAccountPaymentEventsTooltipContent({ events: dayEvents }: { event
               <span style={{ color: colors.text, fontWeight: 700, fontSize: '14px' }}>
                 {accountPaymentStatusShortLabel(accountStatus)}
               </span>
-              <span className="program-calendar-schedule-panel__text">
-                <span className="program-calendar-schedule-panel__sep">|</span> +
+              <span className="settlement-preview-tooltip__text">
+                <span className="settlement-preview-tooltip__sep">|</span> +
                 {row.scheduledAmount.toLocaleString()}원
               </span>
             </div>
@@ -98,12 +100,12 @@ function placeholderInvoiceForAccountPaymentCalendar(
   return {
     programName: row.programName,
     sessionProgress: formatAccountPaymentSessionLabelDisplay(row.sessionLabel),
-    operationPeriod: '—',
+    operationPeriod: '-',
     paymentStatementStatus: status,
     expectedTransferDate: `${d.format('YYYY. MM. DD')}(${['일', '월', '화', '수', '목', '금', '토'][d.day()]})`,
-    lectureFeeBasis: '—',
+    lectureFeeBasis: '-',
     businessIncomeEarner: '해당 없음',
-    institutionName: row.institutionName,
+    institutionName: formatAccountPaymentInstitutionDisplay(row.institutionName),
     lectureDateSessions: `${formatAccountPaymentSessionLabelDisplay(row.sessionLabel)} · ${row.instructorName}`,
     lineItems: [
       {
@@ -123,13 +125,14 @@ function placeholderInvoiceForAccountPaymentCalendar(
 
 function accountPaymentRowToSettlementListRow(row: AccountPaymentRow): InstructorSettlementListRow {
   const status = accountPaymentStatusToUiStatus(row.accountPaymentStatus)
-  const calendarDate = row.transferScheduledDate.slice(0, 10)
+  const calendarDate = resolveAccountPaymentCalendarDate(row)
   return {
     id: row.id,
+    settlementId: row.settlementId ?? 0,
     no: row.no,
     programName: row.programName,
     instructorName: row.instructorName,
-    institutionName: row.institutionName,
+    institutionName: formatAccountPaymentInstitutionDisplay(row.institutionName),
     lectureDateDisplay: `${formatAccountPaymentSessionLabelDisplay(row.sessionLabel)} · ${row.instructorName}`,
     calendarDate,
     status,
@@ -223,7 +226,8 @@ export function AccountPaymentsCalendarView({
   const programDates = useMemo(() => {
     const dates = new Set<string>()
     for (const row of filteredRows) {
-      dates.add(row.transferScheduledDate.slice(0, 10))
+      const d = resolveAccountPaymentCalendarDate(row)
+      if (d) dates.add(d)
     }
     return dates
   }, [filteredRows])
@@ -247,6 +251,12 @@ export function AccountPaymentsCalendarView({
 
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => anchor)
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => anchor.startOf('month'))
+  const {
+    selectedDate: miniSelectedDate,
+    currentMonth: miniCurrentMonth,
+    onSelectDate: onMiniSelectDate,
+    onMonthChange: onMiniMonthChange,
+  } = useCalendarMiniState(anchor)
   const isFirstFilteredRowsEffect = useRef(true)
 
   useEffect(() => {
@@ -314,15 +324,13 @@ export function AccountPaymentsCalendarView({
   return (
     <div className="calendar-set">
       <div className="calendar-sub-left">
-        <div className="calendar-mini">
-          <CalendarMini
-            currentMonth={currentMonth}
-            selectedDate={selectedDate}
-            onMonthChange={onMonthChange}
-            onSelectDate={onSelectDate}
-            programDates={programDates}
-          />
-        </div>
+        <CalendarMini
+          currentMonth={miniCurrentMonth}
+          selectedDate={miniSelectedDate}
+          onMonthChange={onMiniMonthChange}
+          onSelectDate={onMiniSelectDate}
+          programDates={programDates}
+        />
         <CalendarSearch
           keyword={calendarSearchKeyword}
           options={programFilterOptions}
@@ -332,23 +340,25 @@ export function AccountPaymentsCalendarView({
           onOptionToggle={handleProgramFilterChange}
         />
       </div>
-      <CalendarMain
-        mode="month"
-        hideModeToggle
-        onModeChange={() => {}}
-        events={calendarMainEvents}
-        currentMonth={currentMonth}
-        selectedDate={selectedDate}
-        onSelectDate={onSelectDate}
-        onMonthChange={onMonthChange}
-        onTodayClick={onTodayClick}
-        selectedRowKeys={selectedRowKeys}
-        overrideEventColorMap={overrideEventColorMap}
-        eventsTooltipScope="full-day"
-        eventsTooltipTrigger="cell"
-        formatEventsOverflowText={n => `외 ${n}개의 항목`}
-        previewTooltipContent={renderAccountPaymentEventsTooltipContent}
-      />
+      <div className="calendar-main-container">
+        <CalendarMain
+          mode="month"
+          hideModeToggle
+          onModeChange={() => {}}
+          events={calendarMainEvents}
+          currentMonth={currentMonth}
+          selectedDate={selectedDate}
+          onSelectDate={onSelectDate}
+          onMonthChange={onMonthChange}
+          onTodayClick={onTodayClick}
+          selectedRowKeys={selectedRowKeys}
+          overrideEventColorMap={overrideEventColorMap}
+          eventsTooltipScope="full-day"
+          eventsTooltipTrigger="cell"
+          formatEventsOverflowText={n => `외 ${n}개의 항목`}
+          previewTooltipContent={renderAccountPaymentEventsTooltipContent}
+        />
+      </div>
       <div className="calendar-sub-right-list">
         <CalendarSubRightSettlementList
           key={selectedDate.format('YYYY-MM-DD')}

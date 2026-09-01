@@ -1,17 +1,14 @@
 /**
- * 확인 모달 컴포넌트
- * Phase 2.1: 공통 확인 다이얼로그
- *
- * 삭제 기능 사용 시:
- * - danger={true} 필수
- * - warningMessage로 경고 메시지 표시
- * - confirmText="삭제", cancelText="취소" 권장
+ * 확인·취소 모달 — ContentModal + CmsButton (Ant Design Modal.confirm 대체)
  */
 
-import { Modal } from 'antd'
-import { ExclamationCircleOutlined } from '@ant-design/icons'
+import { ContentModal } from './content-modal'
+import { CmsButton } from './cms-button'
+import './confirm-modal.css'
 
-interface ConfirmModalProps {
+const DEFAULT_WIDTH = 600
+
+export interface ConfirmModalProps {
   open: boolean
   title: string
   content: string
@@ -22,6 +19,11 @@ interface ConfirmModalProps {
   danger?: boolean
   /** 삭제 시 표시할 경고 메시지 (예: "삭제된 항목은 복구할 수 없습니다.") */
   warningMessage?: string
+  /** 모달 너비(px). 기본 600 */
+  width?: number
+  zIndex?: number
+  /** 확인 버튼 로딩 (비동기 확인 중) */
+  confirmLoading?: boolean
 }
 
 export function ConfirmModal({
@@ -34,31 +36,44 @@ export function ConfirmModal({
   cancelText = '취소',
   danger = false,
   warningMessage,
+  width = DEFAULT_WIDTH,
+  zIndex = 1001,
+  confirmLoading = false,
 }: ConfirmModalProps) {
   return (
-    <Modal
+    <ContentModal
       open={open}
-      title={
-        <span>
-          <ExclamationCircleOutlined
-            style={{ color: danger ? '#ff4d4f' : '#1890ff', marginRight: 8 }}
-          />
-          {title}
-        </span>
-      }
-      onOk={onConfirm}
       onCancel={onCancel}
-      okText={confirmText}
-      cancelText={cancelText}
-      okButtonProps={{ danger }}
-      zIndex={1001}
+      title={title}
+      width={width}
+      zIndex={zIndex}
+      className="confirm-modal"
+      footer={
+        <>
+          <CmsButton
+            variant="secondary"
+            size="medium"
+            type="button"
+            onClick={onCancel}
+            disabled={confirmLoading}
+          >
+            {cancelText}
+          </CmsButton>
+          <CmsButton
+            variant={danger ? 'delete' : 'primary'}
+            size="medium"
+            type="button"
+            onClick={onConfirm}
+            loading={confirmLoading}
+            disabled={confirmLoading}
+          >
+            {confirmText}
+          </CmsButton>
+        </>
+      }
     >
-      <p>{content}</p>
-      {warningMessage && (
-        <p style={{ color: '#ff4d4f', fontSize: '12px', marginTop: 8, marginBottom: 0 }}>
-          {warningMessage}
-        </p>
-      )}
-    </Modal>
+      <p className="confirm-modal__content">{content}</p>
+      {warningMessage ? <p className="confirm-modal__warning">{warningMessage}</p> : null}
+    </ContentModal>
   )
 }

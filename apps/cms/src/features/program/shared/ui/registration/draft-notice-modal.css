@@ -1,0 +1,48 @@
+/**
+ * 임시저장 이력 안내 — ContentModal / TealHeaderModal 갭 오버라이드
+ * TealHeaderModal 기본: body margin-top 16px · gap 16px
+ * ContentModal description 시: body padding-top 16px
+ * → 헤더↔디스크립션 12px, 디스크립션↔바디 20px 로 맞춤
+ */
+
+.registration-draft-notice-modal.content-modal .teal-header-modal__body,
+.registration-draft-notice-modal.content-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  margin-top: 12px;
+  padding-top: 0 !important;
+  gap: 20px;
+}
+
+.registration-draft-notice-modal .content-modal__description {
+  margin: 0;
+}
+
+.registration-draft-notice-modal__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px 20px;
+  border-radius: 8px;
+  background: var(--color-brand-primary-overlay-10, rgba(1, 161, 175, 0.1));
+  text-align: center;
+}
+
+.registration-draft-notice-modal__title {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--JA-gray-01, #1a1a1a);
+  word-break: break-word;
+  text-align: center;
+}
+
+.registration-draft-notice-modal__radios {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+}

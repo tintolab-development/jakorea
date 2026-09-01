@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Space, message } from 'antd'
+import { Space } from 'antd'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
-import { AddressSearch, CmsButton, CmsInput, CmsRadioGroup, ContentModal } from '@/shared/ui'
+import { AddressSearch, CmsBusinessNumberInput, CmsButton, CmsInput, CmsRadioGroup, ContentModal } from '@/shared/ui'
 import type { SponsorOrganizationKind } from '@/types/domain'
 
 export interface SponsorRegisterModalProps {
@@ -58,17 +58,18 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
   const handleSubmit = useCallback((): void => {
     const name = form.nameDisplayKo.trim()
     if (!name) {
-      message.warning('후원사명(국문)을 입력해 주세요.')
       return
     }
 
     const now = new Date().toISOString()
     const id = `sponsor-new-${Date.now()}`
+    const address = [form.district.trim(), form.detailAddress.trim()].filter(Boolean).join(' ')
     const row: SponsorManagementRow = {
       id,
       name,
       nameEn: form.nameDisplayEn.trim() || undefined,
       description: buildDescription(form),
+      contactInfo: address || undefined,
       createdAt: now,
       updatedAt: now,
       organizationKind: form.organizationKind,
@@ -156,10 +157,10 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
             label="사업자번호"
             view={noopView}
             edit={
-              <CmsInput
+              <CmsBusinessNumberInput
                 value={form.businessNumber}
                 onChange={e => setField('businessNumber', e.target.value)}
-                placeholder="전체"
+                placeholder="000-00-00000"
                 inputSize="medium"
                 width="100%"
               />

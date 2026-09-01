@@ -6,6 +6,9 @@
 import { Form, Input, Select, Switch, Space } from 'antd'
 import type { AdminLevel, ProgramRole, UserRole } from '@/types/user'
 import { getRoleLabel, getAdminLevelLabel, getProgramRoleLabel } from '@/shared/ui'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
+import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
 
 const { Option } = Select
@@ -24,51 +27,43 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
   const [form] = Form.useForm()
 
   const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields()
-      const request: CreateUserRequest = {
-        email: values.email,
-        password: values.password,
-        name: values.name,
-        phone: values.phone,
-        role: values.role,
-        isActive: values.isActive ?? true,
-      }
-
-      // 관리자 권한 설정
-      if (values.role === 'ADMIN') {
-        request.adminLevel = values.adminLevel || 'ADMIN'
-        request.programRole = values.programRole || 'ASSISTANT'
-      }
-
-      // 학교 정보 설정
-      if (values.role === 'SCHOOL' && values.schoolName) {
-        request.schoolInfo = {
-          schoolName: values.schoolName,
-          address: values.schoolAddress || '',
-          position: values.position,
-        }
-      }
-
-      // 강사 정보 설정
-      if (values.role === 'INSTRUCTOR' && values.bankName) {
-        request.instructorInfo = {
-          bankName: values.bankName,
-          accountNumber: values.accountNumber,
-          accountHolder: values.accountHolder,
-          isBusinessIncome: values.isBusinessIncome ?? false,
-        }
-      }
-
-      await onSubmit(request)
-      form.resetFields()
-    } catch (error) {
-      // Form validation error는 무시 (이미 표시됨)
-      if (error && typeof error === 'object' && 'errorFields' in error) {
-        return
-      }
-      throw error
+    const values = form.getFieldsValue()
+    const request: CreateUserRequest = {
+      email: values.email,
+      password: values.password,
+      name: values.name,
+      phone: values.phone,
+      role: values.role,
+      isActive: values.isActive ?? true,
     }
+
+    // 관리자 권한 설정
+    if (values.role === 'ADMIN') {
+      request.adminLevel = values.adminLevel || 'ADMIN'
+      request.programRole = values.programRole || 'ASSISTANT'
+    }
+
+    // 학교 정보 설정
+    if (values.role === 'SCHOOL' && values.schoolName) {
+      request.schoolInfo = {
+        schoolName: values.schoolName,
+        address: values.schoolAddress || '',
+        position: values.position,
+      }
+    }
+
+    // 강사 정보 설정
+    if (values.role === 'INSTRUCTOR' && values.bankName) {
+      request.instructorInfo = {
+        bankName: values.bankName,
+        accountNumber: values.accountNumber,
+        accountHolder: values.accountHolder,
+        isBusinessIncome: values.isBusinessIncome ?? false,
+      }
+    }
+
+    await onSubmit(request)
+    form.resetFields()
   }
 
   const handleCancel = () => {
@@ -83,10 +78,6 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
       <Form.Item
         name="email"
         label="이메일"
-        rules={[
-          { required: true, message: '이메일을 입력해주세요.' },
-          { type: 'email', message: '올바른 이메일 형식이 아닙니다.' },
-        ]}
       >
         <Input placeholder="이메일을 입력하세요" />
       </Form.Item>
@@ -94,10 +85,6 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
       <Form.Item
         name="password"
         label="비밀번호"
-        rules={[
-          { required: true, message: '비밀번호를 입력해주세요.' },
-          { min: 8, message: '비밀번호는 최소 8자 이상이어야 합니다.' },
-        ]}
       >
         <Input.Password placeholder="비밀번호를 입력하세요" />
       </Form.Item>
@@ -105,7 +92,6 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
       <Form.Item
         name="name"
         label="이름"
-        rules={[{ required: true, message: '이름을 입력해주세요.' }]}
       >
         <Input placeholder="이름을 입력하세요" />
       </Form.Item>
@@ -115,18 +101,19 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
         label="전화번호"
         rules={[
           {
-            pattern: /^010-\d{4}-\d{4}$/,
-            message: '010-XXXX-XXXX 형식으로 입력해주세요.',
+            validator: (_, value?: string) =>
+              !value?.trim() || isValidKoreanPhoneNumber(value)
+                ? Promise.resolve()
+                : Promise.reject(new Error('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')),
           },
         ]}
       >
-        <Input placeholder="010-1234-5678" />
+        <CmsPhoneInput placeholder="010-1234-5678" />
       </Form.Item>
 
       <Form.Item
         name="role"
         label="권한"
-        rules={[{ required: true, message: '권한을 선택해주세요.' }]}
       >
         <Select placeholder="권한 선택">
           {roleOptions.map(role => (
@@ -142,7 +129,6 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
           <Form.Item
             name="adminLevel"
             label="관리자 권한 레벨"
-            rules={[{ required: true, message: '관리자 권한 레벨을 선택해주세요.' }]}
           >
             <Select placeholder="관리자 권한 레벨 선택">
               {adminLevelOptions.map(adminLevel => (
@@ -155,7 +141,6 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
           <Form.Item
             name="programRole"
             label="프로그램 역할"
-            rules={[{ required: true, message: '프로그램 역할을 선택해주세요.' }]}
           >
             <Select placeholder="프로그램 역할 선택">
               {programRoleOptions.map(programRole => (
@@ -173,7 +158,6 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
           <Form.Item
             name="schoolName"
             label="학교명"
-            rules={[{ required: true, message: '학교명을 입력해주세요.' }]}
           >
             <Input placeholder="학교명을 입력하세요" />
           </Form.Item>
@@ -191,8 +175,8 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
           <Form.Item name="bankName" label="은행명">
             <Input placeholder="은행명을 입력하세요" />
           </Form.Item>
-          <Form.Item name="accountNumber" label="계좌번호">
-            <Input placeholder="계좌번호를 입력하세요" />
+          <Form.Item name="accountNumber" label="계좌번호" trigger="onValueChange">
+            <CmsNumericInput mode="numericText" placeholder="계좌번호를 입력하세요" />
           </Form.Item>
           <Form.Item name="accountHolder" label="예금주">
             <Input placeholder="예금주를 입력하세요" />

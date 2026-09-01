@@ -1,0 +1,55 @@
+.ujat-volunteer-doc-passed {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.filter-table-layout.ujat-volunteer-doc-passed__filter-layout {
+  --filter-field-gap: 12px;
+  --table-filter-field-gap: 12px;
+  --ujat-doc-passed-filter-col-width: min(
+    var(--filter-control-max-width, 240px),
+    calc((100% - 3 * var(--filter-field-gap)) / 4)
+  );
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.filter-table-layout.ujat-volunteer-doc-passed__filter-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.ujat-volunteer-doc-passed__table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.ujat-volunteer-doc-passed
+  .clickable-table
+  .ant-table-tbody
+  > tr.ant-table-row:hover:not(.ant-table-row-selected):not(.cms-data-table__row--disabled)
+  > td {
+  background: var(--color-table-row-hover, rgba(1, 161, 175, 0.06)) !important;
+}
+
+.ujat-volunteer-doc-passed__center-cell {
+  text-align: center !important;
+}
+
+.ujat-volunteer-doc-passed__calendar-container {
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+/* 캘린더 카드 box-shadow가 좌우에서 잘리지 않도록(리스트 뷰 테이블 가로 스크롤은 table-wrap 유지) */
+.ujat-volunteer-doc-passed:has(.ujat-volunteer-doc-passed__calendar-container) {
+  overflow-x: visible;
+}

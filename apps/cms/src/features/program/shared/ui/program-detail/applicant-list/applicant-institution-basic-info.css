@@ -1,0 +1,213 @@
+/**
+ * 신청 기관 상세 - 기본 정보 / 안내 사항 / 강의 회차
+ * applicant-instructor-basic-info 스타일 참고
+ */
+
+.applicant-institution-basic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-top: 32px;
+}
+
+.applicant-institution-basic-info__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/** 기본 정보 — 프로그램 승인 현황 테이블과 나머지 필드 테이블 분리 */
+.applicant-institution-basic-info__basic-info-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  /* StatusDropdown 열림 시 자식 min-content 가 섹션 가로를 키우지 않도록 */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.applicant-institution-basic-info__title {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  color: #3d3d3d;
+}
+
+.applicant-institution-basic-info__manager-comment {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.applicant-institution-basic-info__manager-comment-content {
+  display: flex;
+  padding: 20px 24px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 12px;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/**
+ * 외곽: applicant-instructor-basic-info와 동일 — border + radius로 곡선까지 테두리 유지.
+ * 셀 바깥 한 줄은 제거해 래퍼와 이중선·모서리 잘림 방지.
+ */
+.applicant-institution-basic-info__table-wrap {
+  border: 1px solid #d4d4d4;
+  border-radius: 8px;
+  /* clip: 모서리만 자르고 스크롤포트는 만들지 않음 — StatusDropdown 열림 시 가로 밀림 방지 */
+  overflow: clip;
+  background: #fff;
+  /* flex/grid 조상에서 콘텐츠 min-content 로 표 폭이 커지지 않게 고정 */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* 신청 양식 수정 슬롯: 테이블 td 안에서 detail-info-form 한 줄 래퍼가 폭을 채우도록 */
+.applicant-institution-basic-info__cell--value
+  > .detail-info-form-inputs-wrapper-no-gap {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.applicant-institution-basic-info__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.applicant-institution-basic-info__table tbody tr {
+  min-height: 48px;
+}
+
+.applicant-institution-basic-info__table .applicant-institution-basic-info__cell {
+  padding: 12px 16px;
+  vertical-align: middle;
+  border: 1px solid #e0e0e0;
+  box-sizing: border-box;
+}
+
+.applicant-institution-basic-info__table
+  tbody
+  tr:first-child
+  .applicant-institution-basic-info__cell {
+  border-top: none;
+}
+
+.applicant-institution-basic-info__table
+  tbody
+  tr:last-child
+  .applicant-institution-basic-info__cell {
+  border-bottom: none;
+}
+
+.applicant-institution-basic-info__table
+  tbody
+  tr
+  .applicant-institution-basic-info__cell:last-child {
+  border-right: none;
+}
+
+.applicant-institution-basic-info__table
+  tbody
+  tr
+  .applicant-institution-basic-info__cell:first-child {
+  border-left: none;
+}
+
+.applicant-institution-basic-info__cell--label {
+  background: var(--BG-header);
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 140%;
+}
+
+.applicant-institution-basic-info__cell--value {
+  background: #fff;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%;
+}
+
+/* 프로그램 승인 현황: 승인·참여 반려 + 알림 발송 (한 줄) */
+.applicant-institution-basic-info__approval-status-row {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.applicant-institution-basic-info__approval-status-vbar {
+  width: 1px;
+  height: 13px;
+  box-sizing: border-box;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.applicant-institution-basic-info__approval-notification-sent-at {
+  font-family: Pretendard, var(--font-family-primary, 'Pretendard'), sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
+}
+
+/* 강의 회차 별 교육 희망 날짜 및 시간 (참여 기관과 동일 표시 방식) */
+.applicant-institution-basic-info__session-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.applicant-institution-basic-info__session-value
+  .applicant-institution-basic-info__session-divider {
+  width: 1px;
+  height: 13px;
+  box-sizing: border-box;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+/* 성범죄 경력 조회서: 버튼 → 파일명 한 줄, 수직 중앙 (시안과 동일 정렬만) */
+.applicant-institution-basic-info__attachment-file-select {
+  width: 100%;
+}
+
+.applicant-institution-basic-info__attachment-file-select .file-select-field {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.applicant-institution-basic-info__attachment-file-select .file-select-field__actions {
+  order: 1;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.applicant-institution-basic-info__attachment-file-select .file-select-field__names {
+  order: 2;
+  flex: 1;
+  min-width: 0;
+}

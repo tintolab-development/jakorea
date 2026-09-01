@@ -1,0 +1,100 @@
+---
+description: CMS·Admin 공통 — CmsButton 용도별 사이즈 (툴바·모달 푸터 large 140×44 · FileSelect medium)
+globs:
+  - apps/cms/src/**/*.{tsx,css}
+  - apps/admin/src/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# CmsButton 용도별 사이즈 (CMS · Admin)
+
+**size 토큰 수치 (Figma):**
+
+| size | 치수 | padding | gap | radius | font |
+|------|------|---------|-----|--------|------|
+| **large** | **140×44** | 6×16 | 6 | 8 | 16/600 |
+| medium | 120×40 | 6×14 | 10 | 6 | 14/600 |
+| small | 100×32 | 6×12 | 4 | 6 | 12/600 |
+| large + icon | **180×44** | 6 16 6 10 | 6 | 8 | 16 |
+
+텍스트 전용 large 시안(flex 스펙):
+
+```
+display: flex;
+width: 140px;
+height: 44px;
+padding: 6px 16px;
+flex-direction: column; /* 라벨 only — 아이콘 있으면 row */
+justify-content: center;
+align-items: center;
+gap: 6px;
+```
+
+---
+
+## 용도 매핑 (**필수**)
+
+| 위치 | size | 예시 |
+|------|------|------|
+| **목록·카드 툴바** (등록 / 선택 삭제 / 취소 / 저장 / 수정) | **large** | `table-header-actions--wrapper` · `admin-list-toolbar` |
+| **모달 푸터** (취소 / 등록 / 저장 / 삭제 / 확인) | **large** | `content-modal__footer-actions` · Confirm · Alert · 등록 모달 |
+| **필터 조회** | large + 폭 **160** | `admin-filter-area__search-button` · [filter-area-dimensions](./filter-area-dimensions.mdc) |
+| **FileSelectField** 「파일 추가」 | **medium** | `FileSelectField` 내부 고정 secondary medium |
+| **테이블 행 관리 버튼** | medium + 폭 예: 88 | 열 안 「수정」 |
+| 뷰 토글·엑셀(아이콘) | large + icon (180) | CMS 툴바 캘린더/엑셀 |
+
+### 금지
+
+- 모달 푸터·목록 툴바에 `size="medium"`(120×40) 사용 — 시안 large
+- 화면별 `!important`로 large 를 120×40으로 덮어쓰기
+- FileSelect 버튼만 별도로 large 확대
+
+---
+
+## CSS 강제 레이어 (의도적)
+
+props 만 large여도 CSS가 medium으로 덮으면 회귀한다. 공유 구현:
+
+| 영역 | 선택자 | 강제 |
+|------|--------|------|
+| 모달 푸터 | `.content-modal__footer-actions .cms-button…` | 140×44 · padding 6×16 |
+| 목록 툴바 (Admin) | `.table-header-actions--wrapper .cms-button…` | 동일 large |
+
+**예외 클래스** (고정 폭 해제):
+
+- `.cms-button--footer-auto` — 모달 푸터 가변 폭
+- `.cms-button--toolbar-auto` — 툴바 가변 폭 (아이콘·긴 라벨 등)
+
+구현 path:
+
+| 앱 | 모달 푸터 | 툴바 |
+|----|-----------|------|
+| Admin | `shared/ui/content-modal.css` | `shared/ui/table-header-label.css` |
+| CMS | `shared/ui/content-modal.css` | `FilterTableLayout` / 툴바 규약 · large props |
+
+---
+
+## 마크업 체크
+
+```tsx
+// 목록 툴바
+<div className="table-header-actions--wrapper">
+  <CmsButton variant="delete" size="large">선택 삭제</CmsButton>
+  <CmsButton variant="primary" size="large">○○ 등록</CmsButton>
+</div>
+
+// 모달 푸터
+footer={
+  <>
+    <CmsButton variant="secondary" size="large">취소</CmsButton>
+    <CmsButton variant="primary" size="large">등록</CmsButton>
+  </>
+}
+```
+
+디자인 시스템 쇼케이스:
+
+- Admin `/design-system` · Buttons / List layout / Modals
+- CMS `/design-system` · Buttons
+
+**Last updated:** 2026-08-06

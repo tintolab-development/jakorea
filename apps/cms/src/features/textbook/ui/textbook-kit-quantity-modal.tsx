@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CmsButton, ContentModal } from '@/shared/ui'
+import { CmsButton, CmsNumericInput, ContentModal } from '@/shared/ui'
 import './textbook-kit-quantity-modal.css'
 
 const KIT_LEVELS = [
@@ -13,14 +13,15 @@ const KIT_LEVELS = [
 type KitLevelKey = (typeof KIT_LEVELS)[number]['key']
 export type TextbookKitQuantityValues = Record<KitLevelKey, string>
 
-const createDefaultQuantities = (): TextbookKitQuantityValues =>
-  KIT_LEVELS.reduce(
-    (acc, level) => {
-      acc[level.key] = level.defaultValue
-      return acc
-    },
-    {} as TextbookKitQuantityValues
-  )
+export const DEFAULT_KIT_QUANTITIES: TextbookKitQuantityValues = KIT_LEVELS.reduce(
+  (acc, level) => {
+    acc[level.key] = level.defaultValue
+    return acc
+  },
+  {} as TextbookKitQuantityValues
+)
+
+const createDefaultQuantities = (): TextbookKitQuantityValues => ({ ...DEFAULT_KIT_QUANTITIES })
 
 export interface TextbookKitQuantityModalProps {
   open: boolean
@@ -56,10 +57,15 @@ export function TextbookKitQuantityModal({
       wrapClassName="textbook-kit-quantity-modal-wrap"
       footer={
         <div className="textbook-kit-quantity-modal__footer">
-          <CmsButton variant="secondary" type="button" onClick={onCancel}>
+          <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" type="button" onClick={() => onConfirm(quantities)}>
+          <CmsButton
+            variant="primary"
+            size="large"
+            type="button"
+            onClick={() => onConfirm(quantities)}
+          >
             확인
           </CmsButton>
         </div>
@@ -70,14 +76,15 @@ export function TextbookKitQuantityModal({
           <div className="textbook-kit-quantity-modal__row" key={level.key}>
             <div className="textbook-kit-quantity-modal__th">{level.label}</div>
             <div className="textbook-kit-quantity-modal__td">
-              <input
+              <CmsNumericInput
                 className="textbook-kit-quantity-modal__input"
-                type="number"
-                inputMode="numeric"
+                mode="integer"
                 min={0}
+                inputSize="medium"
+                width={190}
+                aria-label={`${level.label} 키트 수량`}
                 value={quantities[level.key]}
-                onChange={event => {
-                  const nextValue = event.target.value.replace(/[^\d]/g, '')
+                onValueChange={nextValue => {
                   setQuantities(prev => ({ ...prev, [level.key]: nextValue }))
                 }}
               />

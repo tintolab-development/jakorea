@@ -1,5 +1,10 @@
 .table-filter-group__container {
   --table-filter-field-gap: var(--filter-field-gap, 12px);
+  --table-filter-field-min-width: 240px;
+  --table-filter-field-max-width: 240px;
+  --filter-address-region-segment-width: 114.75px;
+  --filter-control-width: var(--table-filter-field-max-width);
+  --filter-control-max-width: var(--table-filter-field-max-width);
   display: flex;
   justify-content: flex-start;
   gap: var(--table-filter-field-gap);
@@ -32,9 +37,77 @@
 }
 
 .table-filter-group__grid-cell {
+  flex: 0 0 auto;
+  min-width: var(--table-filter-field-min-width, 240px);
+  width: var(--table-filter-field-max-width, 240px);
+  max-width: var(--table-filter-field-max-width, 240px);
+  box-sizing: border-box;
+}
+
+/* 라디오 grid-cell — 기본 240px 대신 콘텐츠 허그 (칸 사이 gap 12px) */
+.table-filter-group__grid-cell.table-filter-group__grid-cell--radio,
+.table-filter-group__grid-cell:has(> .table-filter-group__field--radio) {
+  min-width: 0;
+  width: max-content;
+  max-width: none;
+}
+
+.table-filter-group__grid-cell.table-filter-group__grid-cell--pct-width {
   min-width: 0;
   width: 100%;
   max-width: 100%;
+}
+
+.table-filter-group__grid-cell.table-filter-group__grid-cell--pair-field:not(
+    .table-filter-group__grid-cell--address-region
+  ):not(.table-filter-group__grid-cell--pct-width):not(.table-filter-group__grid-cell--explicit-width) {
+  width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  min-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  max-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+}
+
+.table-filter-group__grid-cell.table-filter-group__grid-cell--address-region:not(
+    .table-filter-group__grid-cell--pct-width
+  ):not(.table-filter-group__grid-cell--explicit-width) {
+  width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  );
+  min-width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  );
+  max-width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  );
+}
+
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width):not(
+    .table-filter-group__grid-cell--explicit-width
+  ):has(.cms-datepicker--range-split) {
+  width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
+  min-width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
+  max-width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
+}
+
+/* FilterFieldConfig.width — responsive wrap(grid-cell) 경로 (픽셀·절대 폭) */
+.table-filter-group__grid-cell--explicit-width:not(.table-filter-group__grid-cell--pct-width) {
+  flex: 0 0 auto;
+  width: min(100%, var(--filter-field-width));
+  max-width: min(100%, var(--filter-field-width));
+  min-width: 0;
+}
+
+/* % 행 비율 — wrap 컨테이너 대비 한 번만 해석 */
+.table-filter-group__grid-cell--explicit-width.table-filter-group__grid-cell--pct-width {
+  flex: 0 0 auto;
+  width: min(100%, var(--filter-field-width));
+  max-width: min(100%, var(--filter-field-width));
+  min-width: 0;
   box-sizing: border-box;
 }
 
@@ -92,121 +165,624 @@
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: flex-end;
-  gap: var(--table-filter-field-gap);
+  justify-content: flex-start;
+  column-gap: var(--table-filter-field-gap);
+  row-gap: var(--table-filter-field-gap);
 }
 
+/* Col은 콘텐츠 너비만 — 행 전체를 채우며 gap이 벌어지지 않음 (gap 12px만 유지) */
 .table-filter-group__fields-inner.ant-row > .ant-col {
-  min-width: 0;
+  flex: 0 0 auto;
+  width: auto;
 }
 
-/*
- * `width: '25%'` 등 퍼센트 Col — 안쪽 컨트롤만 260px로 맞추면 래퍼(.ant-col)가 더 넓게 남음.
- * 래퍼도 동일 토큰 상한(날짜·이중 셀렉트는 별도 상한).
- */
+.table-filter-group__fields-inner.ant-row > .ant-col:not(.table-filter-group__col--radio):not(
+    .table-filter-group__col--explicit-width
+  ):not(.table-filter-group__col--pct-width):not(.table-filter-group__col--pair-field):not(
+    :has(.cms-datepicker--range-split)
+  ) {
+  min-width: var(--table-filter-field-min-width, 240px);
+  max-width: var(--table-filter-field-max-width, 240px);
+}
+
+.table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--pair-field:not(.table-filter-group__col--address-region):not(
+    .table-filter-group__col--pct-width
+  ):not(.table-filter-group__col--explicit-width) {
+  min-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  max-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+}
+
+.table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--address-region:not(.table-filter-group__col--pct-width):not(
+    .table-filter-group__col--explicit-width
+  ) {
+  min-width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  );
+  max-width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  );
+}
+
+.table-filter-group__fields-inner.ant-row
+  > .ant-col:not(.table-filter-group__col--pct-width):not(.table-filter-group__col--explicit-width):has(
+    .cms-datepicker--range-split
+  ) {
+  min-width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
+  max-width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
+}
+
+.table-filter-group__fields-inner.ant-row > .ant-col.table-filter-group__col--radio,
+.table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--explicit-width:not(.table-filter-group__col--pct-width) {
+  min-width: 0;
+  max-width: none;
+}
+
+/* 라디오 Col — 명시 width가 있어도 콘텐츠 허그(다음 필터와 --filter-field-gap 12px만 유지) */
+.table-filter-group__fields-inner.ant-row > .ant-col.table-filter-group__col--radio {
+  flex: 0 0 auto !important;
+  width: auto !important;
+}
+
+/* % Col — width prop은 레이아웃 힌트만, 실제 칸 폭은 컨트롤·field 래퍼 기준 */
 .table-filter-group__fields-inner.ant-row > .ant-col.table-filter-group__col--pct-width {
-  max-width: min(100%, var(--filter-control-max-width, 260px));
+  min-width: 0;
+  max-width: none;
   box-sizing: border-box;
 }
 
-.table-filter-group__fields-inner.ant-row
-  > .ant-col.table-filter-group__col--pct-width.table-filter-group__col--wide {
-  max-width: min(
-    100%,
-    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px))
+/* 필드 — 레이블(27px) + gap 6px + 컨트롤(44px) 세로 스택 */
+.table-filter-group__field,
+.table-filter-group__grid-cell .table-filter-group__field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--filter-label-control-gap, 6px);
+  min-height: calc(
+    var(--filter-label-height, 27px) + var(--filter-label-control-gap, 6px) + var(--filter-control-height, 44px)
   );
+  box-sizing: border-box;
 }
 
-.table-filter-group__fields-inner.ant-row
-  > .ant-col.table-filter-group__col--pct-width.table-filter-group__col--date-range {
-  max-width: min(
-    100%,
-    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
-  );
+.table-filter-group__label {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: var(--filter-label-height, 27px);
+  height: var(--filter-label-height, 27px);
+  margin: 0;
 }
 
-.table-filter-group__fields-inner .unified-filter-card__field {
+.table-filter-group__radio-control {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: var(--filter-control-height, 44px);
+  height: var(--filter-control-height, 44px);
   min-width: 0;
+  max-width: 100%;
+}
+
+.table-filter-group__fields-inner .table-filter-group__field {
+  min-width: var(--table-filter-field-min-width, 240px);
+  width: var(--table-filter-field-max-width, 240px);
+  max-width: var(--table-filter-field-max-width, 240px);
+}
+
+.table-filter-group__fields-inner .ant-col.table-filter-group__col--radio .table-filter-group__field {
+  min-width: 0;
+  width: max-content;
+  max-width: none;
+}
+
+.table-filter-group__grid-cell.table-filter-group__grid-cell--radio .table-filter-group__field,
+.table-filter-group__grid-cell:has(> .table-filter-group__field--radio) .table-filter-group__field {
+  min-width: 0;
+  width: max-content;
+  max-width: none;
+}
+
+/* % Col — field 래퍼: 단일 필드 260px, pair·기간은 아래 전용 규칙 */
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width.table-filter-group__col--pair-field:not(
+    .table-filter-group__col--address-region
+  )
+  .table-filter-group__field,
+.table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--pair-field:not(
+    .table-filter-group__grid-cell--address-region
+  )
+  .table-filter-group__field {
+  min-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  max-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width.table-filter-group__col--address-region
+  .table-filter-group__field,
+.table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--address-region
+  .table-filter-group__field {
+  min-width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  );
+  width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  );
+  max-width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  );
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width:has(.cms-datepicker--range-split)
+  .table-filter-group__field,
+.table-filter-group__grid-cell--pct-width:has(.cms-datepicker--range-split) .table-filter-group__field {
+  min-width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
+  width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
+  max-width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pair-field:not(.table-filter-group__col--address-region):not(
+    .table-filter-group__col--pct-width
+  ):not(.table-filter-group__col--explicit-width)
+  .table-filter-group__field,
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--address-region:not(.table-filter-group__col--pct-width):not(
+    .table-filter-group__col--explicit-width
+  )
+  .table-filter-group__field,
+.table-filter-group__fields-inner
+  .ant-col:not(.table-filter-group__col--pct-width):not(.table-filter-group__col--explicit-width):has(
+    .cms-datepicker--range-split
+  )
+  .table-filter-group__field {
   width: 100%;
   max-width: 100%;
 }
 
-/*
- * 필터 컨트롤 상한: filter-controls-common 의 --filter-control-max-width(260px)와 동일.
- * width 100% + max-width min(100%, 260px) → 좁은 열/뷰포트에서는 100%만큼만, 넓은 열에서는 260px에서 멈춤.
- */
-.table-filter-group__container .labeled-search-input {
-  max-width: min(100%, var(--filter-control-max-width, 260px));
-  width: 100%;
+/* 필터 컨트롤: 단일 셀렉트만 240px — pair·addressRegion 내부는 세그먼트 규칙 */
+.table-filter-group__container .labeled-search-input,
+.table-filter-group__fields-inner
+  .table-filter-group__field--select:not(:has(.table-filter-group__address-region-selects)):not(
+    :has(.table-filter-group__select-pair-selects)
+  )
+  > .cms-select,
+.table-filter-group__grid-cell
+  .table-filter-group__field--select:not(:has(.table-filter-group__address-region-selects)):not(
+    :has(.table-filter-group__select-pair-selects)
+  )
+  > .cms-select {
+  min-width: var(--filter-control-max-width, 240px) !important;
+  width: var(--filter-control-max-width, 240px) !important;
+  max-width: var(--filter-control-max-width, 240px) !important;
   box-sizing: border-box;
 }
 
-/* unified-filter-card의 전역 select min-width(280px)가 table-filter-group에서 gap을 먹지 않도록 무효화 */
-.table-filter-group__fields-inner .unified-filter-card__field--select,
-.table-filter-group__fields-inner .cms-select,
-.table-filter-group__fields-inner .ant-select,
-.table-filter-group__grid-cell .unified-filter-card__field--select,
-.table-filter-group__grid-cell .cms-select,
-.table-filter-group__grid-cell .ant-select {
+.table-filter-group__fields-inner
+  .table-filter-group__field--select:not(:has(.table-filter-group__address-region-selects)):not(
+    :has(.table-filter-group__select-pair-selects)
+  )
+  > .cms-select
+  > .ant-select,
+.table-filter-group__grid-cell
+  .table-filter-group__field--select:not(:has(.table-filter-group__address-region-selects)):not(
+    :has(.table-filter-group__select-pair-selects)
+  )
+  > .cms-select
+  > .ant-select {
   min-width: 0 !important;
   width: 100% !important;
-  max-width: min(100%, var(--filter-control-max-width, 260px)) !important;
+  max-width: 100% !important;
 }
 
-/* 단일 날짜: 컨트롤 하나당 상한 */
+.table-filter-group__fields-inner .table-filter-group__field--select:has(.table-filter-group__select-pair-selects),
+.table-filter-group__grid-cell .table-filter-group__field--select:has(.table-filter-group__select-pair-selects) {
+  min-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px)) !important;
+  width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px)) !important;
+  max-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px)) !important;
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--explicit-width.table-filter-group__col--pair-field:not(
+    .table-filter-group__col--pct-width
+  )
+  .table-filter-group__field--select:has(.table-filter-group__select-pair-selects),
+.table-filter-group__grid-cell--explicit-width.table-filter-group__grid-cell--pair-field:not(
+    .table-filter-group__grid-cell--pct-width
+  )
+  .table-filter-group__field--select:has(.table-filter-group__select-pair-selects) {
+  max-width: min(100%, var(--filter-field-width)) !important;
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--explicit-width.table-filter-group__col--pair-field:not(
+    .table-filter-group__col--pct-width
+  )
+  .table-filter-group__select-pair-selects,
+.table-filter-group__grid-cell--explicit-width.table-filter-group__grid-cell--pair-field:not(
+    .table-filter-group__grid-cell--pct-width
+  )
+  .table-filter-group__select-pair-selects {
+  width: 100%;
+  max-width: min(100%, var(--filter-field-width));
+  gap: var(--filter-field-gap, 12px);
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--explicit-width.table-filter-group__col--pair-field:not(
+    .table-filter-group__col--pct-width
+  )
+  .table-filter-group__select-pair-selects
+  > .cms-select,
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--explicit-width.table-filter-group__col--pair-field:not(
+    .table-filter-group__col--pct-width
+  )
+  .table-filter-group__select-pair-selects
+  > .ant-select,
+.table-filter-group__grid-cell--explicit-width.table-filter-group__grid-cell--pair-field:not(
+    .table-filter-group__grid-cell--pct-width
+  )
+  .table-filter-group__select-pair-selects
+  > .cms-select,
+.table-filter-group__grid-cell--explicit-width.table-filter-group__grid-cell--pair-field:not(
+    .table-filter-group__grid-cell--pct-width
+  )
+  .table-filter-group__select-pair-selects
+  > .ant-select {
+  flex: 0 0 var(--filter-field-pair-segment-width, var(--filter-control-max-width, 240px)) !important;
+  width: var(--filter-field-pair-segment-width, var(--filter-control-max-width, 240px)) !important;
+  min-width: var(--filter-field-pair-segment-width, var(--filter-control-max-width, 240px)) !important;
+  max-width: var(--filter-field-pair-segment-width, var(--filter-control-max-width, 240px)) !important;
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--explicit-width.table-filter-group__col--pair-field.table-filter-group__col--address-region:not(
+    .table-filter-group__col--pct-width
+  )
+  .table-filter-group__field--select:has(.table-filter-group__address-region-selects),
+.table-filter-group__grid-cell--explicit-width.table-filter-group__grid-cell--pair-field.table-filter-group__grid-cell--address-region:not(
+    .table-filter-group__grid-cell--pct-width
+  )
+  .table-filter-group__field--select:has(.table-filter-group__address-region-selects) {
+  min-width: min(100%, var(--filter-field-width)) !important;
+  width: min(100%, var(--filter-field-width)) !important;
+  max-width: min(100%, var(--filter-field-width)) !important;
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--explicit-width.table-filter-group__col--pair-field.table-filter-group__col--address-region:not(
+    .table-filter-group__col--pct-width
+  )
+  .table-filter-group__address-region-selects,
+.table-filter-group__grid-cell--explicit-width.table-filter-group__grid-cell--pair-field.table-filter-group__grid-cell--address-region:not(
+    .table-filter-group__grid-cell--pct-width
+  )
+  .table-filter-group__address-region-selects {
+  width: 100%;
+  max-width: min(100%, var(--filter-field-width));
+  gap: var(--filter-address-region-pair-gap, 6px);
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--explicit-width.table-filter-group__col--pair-field.table-filter-group__col--address-region:not(
+    .table-filter-group__col--pct-width
+  )
+  .table-filter-group__address-region-selects
+  > .cms-select,
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--explicit-width.table-filter-group__col--pair-field.table-filter-group__col--address-region:not(
+    .table-filter-group__col--pct-width
+  )
+  .table-filter-group__address-region-selects
+  > .ant-select,
+.table-filter-group__grid-cell--explicit-width.table-filter-group__grid-cell--pair-field.table-filter-group__grid-cell--address-region:not(
+    .table-filter-group__grid-cell--pct-width
+  )
+  .table-filter-group__address-region-selects
+  > .cms-select,
+.table-filter-group__grid-cell--explicit-width.table-filter-group__grid-cell--pair-field.table-filter-group__grid-cell--address-region:not(
+    .table-filter-group__grid-cell--pct-width
+  )
+  .table-filter-group__address-region-selects
+  > .ant-select {
+  flex: 0 0
+    var(--filter-field-pair-segment-width, var(--filter-address-region-segment-width, 114.75px)) !important;
+  width: var(--filter-field-pair-segment-width, var(--filter-address-region-segment-width, 114.75px)) !important;
+  min-width: var(--filter-field-pair-segment-width, var(--filter-address-region-segment-width, 114.75px)) !important;
+  max-width: var(--filter-field-pair-segment-width, var(--filter-address-region-segment-width, 114.75px)) !important;
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width.table-filter-group__col--pair-field
+  .table-filter-group__field--select:has(.table-filter-group__select-pair-selects),
+.table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--pair-field
+  .table-filter-group__field--select:has(.table-filter-group__select-pair-selects) {
+  max-width: 100% !important;
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width.table-filter-group__col--pair-field:not(
+    .table-filter-group__col--address-region
+  )
+  .table-filter-group__select-pair-selects,
+.table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--pair-field:not(
+    .table-filter-group__grid-cell--address-region
+  )
+  .table-filter-group__select-pair-selects {
+  width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  min-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  max-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  gap: var(--filter-field-gap, 12px);
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width.table-filter-group__col--address-region
+  .table-filter-group__address-region-selects,
+.table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--address-region
+  .table-filter-group__address-region-selects {
+  width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  );
+  min-width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  );
+  max-width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  );
+  gap: var(--filter-field-gap, 12px);
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width.table-filter-group__col--pair-field:not(
+    .table-filter-group__col--address-region
+  )
+  .table-filter-group__select-pair-selects
+  > .cms-select,
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width.table-filter-group__col--pair-field:not(
+    .table-filter-group__col--address-region
+  )
+  .table-filter-group__select-pair-selects
+  > .ant-select,
+.table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--pair-field:not(
+    .table-filter-group__grid-cell--address-region
+  )
+  .table-filter-group__select-pair-selects
+  > .cms-select,
+.table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--pair-field:not(
+    .table-filter-group__grid-cell--address-region
+  )
+  .table-filter-group__select-pair-selects
+  > .ant-select {
+  flex: 0 0 var(--filter-control-max-width, 240px) !important;
+  width: var(--filter-control-max-width, 240px) !important;
+  min-width: var(--filter-control-max-width, 240px) !important;
+  max-width: var(--filter-control-max-width, 240px) !important;
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width.table-filter-group__col--address-region
+  .table-filter-group__address-region-selects
+  > .cms-select,
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width.table-filter-group__col--address-region
+  .table-filter-group__address-region-selects
+  > .ant-select,
+.table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--address-region
+  .table-filter-group__address-region-selects
+  > .cms-select,
+.table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--address-region
+  .table-filter-group__address-region-selects
+  > .ant-select {
+  flex: 0 0 var(--filter-address-region-segment-width, 114.75px) !important;
+  width: var(--filter-address-region-segment-width, 114.75px) !important;
+  min-width: var(--filter-address-region-segment-width, 114.75px) !important;
+  max-width: var(--filter-address-region-segment-width, 114.75px) !important;
+}
+
+/* 단일 날짜: 컨트롤 하나당 260px 고정 (% Col 포함) */
 .table-filter-group__fields-inner .cms-datepicker:not(.cms-datepicker--range-split),
 .table-filter-group__grid-cell .cms-datepicker:not(.cms-datepicker--range-split) {
-  max-width: min(100%, var(--filter-control-max-width, 260px));
-  width: 100%;
+  min-width: var(--filter-control-max-width, 240px);
+  max-width: var(--filter-control-max-width, 240px);
+  width: var(--filter-control-max-width, 240px);
   box-sizing: border-box;
 }
 
-/*
- * 기간(분리 UI): 바깥 래퍼는 두 칸 + 구분자까지 — 전체를 260px로 씌우면 칸마다 반으로 찌그러짐.
- * 각 세그먼트는 아래에서 max 260px, 래퍼는 min(100%, 2×260 + gutter).
- */
+/* 기간(분리 UI): 래퍼 2×260 + 구분자, 각 세그먼트 260px 고정 (% Col 포함) */
 .table-filter-group__fields-inner .cms-datepicker.cms-datepicker--range-split,
 .table-filter-group__grid-cell .cms-datepicker.cms-datepicker--range-split {
-  max-width: min(
-    100%,
-    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
+  min-width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
-  width: 100%;
+  max-width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
+  width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
   box-sizing: border-box;
 }
 
 .table-filter-group__container .cms-datepicker--range-split .cms-datepicker__segment {
-  max-width: min(100%, var(--filter-control-max-width, 260px));
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 0 0 var(--filter-control-max-width, 240px) !important;
+  min-width: var(--filter-control-max-width, 240px) !important;
+  max-width: var(--filter-control-max-width, 240px) !important;
+  width: var(--filter-control-max-width, 240px) !important;
 }
 
-.table-filter-group__fields-inner .app-multi-select,
-.table-filter-group__grid-cell .app-multi-select {
-  max-width: min(100%, var(--filter-control-max-width, 260px));
-  width: 100%;
+/* `width="100%"` 등 explicit-width 클래스가 붙어도 시작·종료 각 260px 유지 */
+.table-filter-group__container
+  .cms-datepicker--range-split.cms-datepicker--explicit-width
+  .cms-datepicker__segment {
+  flex: 0 0 var(--filter-control-max-width, 240px) !important;
+  min-width: var(--filter-control-max-width, 240px) !important;
+  max-width: var(--filter-control-max-width, 240px) !important;
+  width: var(--filter-control-max-width, 240px) !important;
+}
+
+.table-filter-group__container .cms-datepicker--range-split.cms-datepicker--explicit-width {
+  width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  ) !important;
+  max-width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  ) !important;
+}
+
+.table-filter-group__fields-inner .cms-select--multiple-ui,
+.table-filter-group__grid-cell .cms-select--multiple-ui {
+  min-width: var(--filter-control-max-width, 240px);
+  max-width: var(--filter-control-max-width, 240px);
+  width: var(--filter-control-max-width, 240px);
   box-sizing: border-box;
 }
 
-.table-filter-group__grid-cell .unified-filter-card__field {
-  min-width: 0;
+.table-filter-group__grid-cell .table-filter-group__field {
+  min-width: var(--table-filter-field-min-width, 240px);
+  width: var(--table-filter-field-max-width, 240px);
+  max-width: var(--table-filter-field-max-width, 240px);
+}
+
+.table-filter-group__grid-cell--pair-field:not(.table-filter-group__grid-cell--address-region):not(
+    .table-filter-group__grid-cell--pct-width
+  ):not(.table-filter-group__grid-cell--explicit-width)
+  .table-filter-group__field,
+.table-filter-group__grid-cell--address-region:not(.table-filter-group__grid-cell--pct-width):not(
+    .table-filter-group__grid-cell--explicit-width
+  )
+  .table-filter-group__field,
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width):not(
+    .table-filter-group__grid-cell--explicit-width
+  ):has(.cms-datepicker--range-split)
+  .table-filter-group__field {
   width: 100%;
   max-width: 100%;
 }
 
-/* table-filter-group 라디오는 좁은 폭에서도 항상 가로 정렬 유지 */
+/* 픽셀·절대 폭 — inner가 명시 폭까지 */
+.table-filter-group__grid-cell--explicit-width:not(.table-filter-group__grid-cell--pct-width)
+  .labeled-search-input,
+.table-filter-group__grid-cell--explicit-width:not(.table-filter-group__grid-cell--pct-width)
+  .table-filter-group__field:not(:has(.table-filter-group__select-pair-selects)) {
+  width: 100%;
+  max-width: min(100%, var(--filter-field-width));
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--explicit-width:not(.table-filter-group__col--pct-width):not(
+    .table-filter-group__col--pair-field
+  )
+  .labeled-search-input,
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--explicit-width:not(.table-filter-group__col--pct-width):not(
+    .table-filter-group__col--pair-field
+  )
+  .table-filter-group__field:not(:has(.table-filter-group__select-pair-selects)),
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--explicit-width:not(.table-filter-group__col--pct-width):not(
+    .table-filter-group__col--pair-field
+  )
+  .cms-select {
+  max-width: min(100%, var(--filter-field-width)) !important;
+}
+
+/* % Col: 바깥 검색 래퍼·CmsInput만 240px — affix까지 240 고정하면
+ * control padding(14×2) 안에서 넘쳐 clear가 테두리에 잘림 */
 .table-filter-group__container
-  .unified-filter-card__field--radio
-  .app-radio-group.ant-radio-group {
-  flex-wrap: nowrap;
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
+  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
+  .labeled-search-input,
+.table-filter-group__container
+  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
+  .labeled-search-input__input,
+.table-filter-group__container
+  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
+  .labeled-search-input
+  .cms-input,
+.table-filter-group__container
+  .table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field)
+  .labeled-search-input,
+.table-filter-group__container
+  .table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field)
+  .labeled-search-input__input,
+.table-filter-group__container
+  .table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field)
+  .labeled-search-input
+  .cms-input {
+  min-width: var(--filter-control-max-width, 240px) !important;
+  width: var(--filter-control-max-width, 240px) !important;
+  max-width: var(--filter-control-max-width, 240px) !important;
+  box-sizing: border-box;
 }
 
 .table-filter-group__container
-  .unified-filter-card__field--radio
+  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
+  .labeled-search-input
+  .cms-input
+  .cms-input__inner
+  .ant-input-affix-wrapper,
+.table-filter-group__container
+  .table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field)
+  .labeled-search-input
+  .cms-input
+  .cms-input__inner
+  .ant-input-affix-wrapper,
+.table-filter-group__container
+  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
+  .labeled-search-input
+  .cms-input
+  .cms-input__inner
+  .ant-input,
+.table-filter-group__container
+  .table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field)
+  .labeled-search-input
+  .cms-input
+  .cms-input__inner
+  .ant-input {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* table-filter-group 라디오 — 시안 래퍼(44px · padding 0 16 0 4 · 옵션 gap 16).
+ * Col은 콘텐츠 허그. 칸 사이(사용 여부↔다음 필터)는 Row --filter-field-gap 12px */
+.table-filter-group__container
+  .table-filter-group__field--radio
+  .table-filter-group__radio-control
+  .app-radio-group.ant-radio-group {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  height: var(--filter-control-height, 44px);
+  min-width: 0;
+  max-width: none;
+  width: max-content;
+  padding: 0 16px 0 4px;
+  box-sizing: border-box;
+  gap: 16px;
+  overflow: visible;
+}
+
+.table-filter-group__container
+  .table-filter-group__field--radio
+  .table-filter-group__radio-control
   .app-radio-group.ant-radio-group
   .ant-radio-wrapper {
   min-width: 0;
@@ -214,7 +790,8 @@
 }
 
 .table-filter-group__container
-  .unified-filter-card__field--radio
+  .table-filter-group__field--radio
+  .table-filter-group__radio-control
   .app-radio-group.ant-radio-group
   .ant-radio-wrapper
   > span:last-child {
@@ -237,10 +814,96 @@
   min-width: 0;
 }
 
-.table-filter-group__select-pair-selects > .cms-select,
-.table-filter-group__address-region-selects > .cms-select {
-  flex: 1 1 0;
-  min-width: 0;
+.table-filter-group__address-region-selects {
+  gap: var(--filter-address-region-pair-gap, 6px);
+}
+
+.table-filter-group__fields-inner
+  .ant-col:not(.table-filter-group__col--explicit-width)
+  .table-filter-group__field--select:has(.table-filter-group__address-region-selects),
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--explicit-width)
+  .table-filter-group__field--select:has(.table-filter-group__address-region-selects) {
+  min-width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  ) !important;
+  width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  ) !important;
+  max-width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  ) !important;
+}
+
+.table-filter-group__fields-inner
+  .ant-col:not(.table-filter-group__col--pct-width)
+  .table-filter-group__select-pair-selects,
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width)
+  .table-filter-group__select-pair-selects {
+  width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  min-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  max-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+}
+
+.table-filter-group__fields-inner
+  .ant-col:not(.table-filter-group__col--pct-width):not(.table-filter-group__col--explicit-width)
+  .table-filter-group__address-region-selects,
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width):not(
+    .table-filter-group__grid-cell--explicit-width
+  )
+  .table-filter-group__address-region-selects {
+  width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  );
+  min-width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  );
+  max-width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+  );
+}
+
+.table-filter-group__fields-inner
+  .ant-col:not(.table-filter-group__col--pct-width)
+  .table-filter-group__select-pair-selects
+  > .cms-select,
+.table-filter-group__fields-inner
+  .ant-col:not(.table-filter-group__col--pct-width)
+  .table-filter-group__select-pair-selects
+  > .ant-select,
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width)
+  .table-filter-group__select-pair-selects
+  > .cms-select,
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width)
+  .table-filter-group__select-pair-selects
+  > .ant-select {
+  flex: 0 0 var(--filter-control-max-width, 240px) !important;
+  width: var(--filter-control-max-width, 240px) !important;
+  min-width: var(--filter-control-max-width, 240px) !important;
+  max-width: var(--filter-control-max-width, 240px) !important;
+}
+
+.table-filter-group__fields-inner
+  .ant-col:not(.table-filter-group__col--pct-width):not(.table-filter-group__col--explicit-width)
+  .table-filter-group__address-region-selects
+  > .cms-select,
+.table-filter-group__fields-inner
+  .ant-col:not(.table-filter-group__col--pct-width):not(.table-filter-group__col--explicit-width)
+  .table-filter-group__address-region-selects
+  > .ant-select,
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width):not(
+    .table-filter-group__grid-cell--explicit-width
+  )
+  .table-filter-group__address-region-selects
+  > .cms-select,
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width):not(
+    .table-filter-group__grid-cell--explicit-width
+  )
+  .table-filter-group__address-region-selects
+  > .ant-select {
+  flex: 0 0 var(--filter-address-region-segment-width, 114.75px) !important;
+  width: var(--filter-address-region-segment-width, 114.75px) !important;
+  min-width: var(--filter-address-region-segment-width, 114.75px) !important;
+  max-width: var(--filter-address-region-segment-width, 114.75px) !important;
 }
 
 /*
@@ -264,7 +927,7 @@
 
 /*
  * merged 상단: grid 대신 flex-wrap — 트랙 수 추정 없이 카드 inline-size에 맞춰 줄 수가 늘고 줄어듦
- * (각 칸 폭은 페이지/토큰에서 min(100%, 260px)로 맞춤)
+ * (각 칸 폭은 260px 고정)
  */
 .table-filter-group__fields-grid-row.table-filter-group__fields-grid-row--merged-auto-fill {
   display: flex;
@@ -278,12 +941,22 @@
   box-sizing: border-box;
 }
 
-.table-filter-group__fields-grid-row--merged-auto-fill > .table-filter-group__grid-cell {
+.table-filter-group__fields-grid-row--merged-auto-fill
+  > .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--explicit-width) {
   flex: 0 0 auto;
-  width: min(100%, var(--filter-control-max-width, 260px));
-  max-width: min(100%, var(--filter-control-max-width, 260px));
-  min-width: 0;
+  width: var(--filter-control-max-width, 240px);
+  max-width: var(--filter-control-max-width, 240px);
+  min-width: var(--filter-control-max-width, 240px);
   box-sizing: border-box;
+}
+
+.table-filter-group__fields-grid-row--merged-auto-fill
+  > .table-filter-group__grid-cell.table-filter-group__grid-cell--radio,
+.table-filter-group__fields-grid-row--merged-auto-fill
+  > .table-filter-group__grid-cell:has(> .table-filter-group__field--radio) {
+  width: max-content;
+  min-width: 0;
+  max-width: none;
 }
 
 /* 필터 전부 + 조회: 한 flex-wrap(문의일·조회도 상단과 동일 줄바꿈 규칙) */
@@ -299,12 +972,50 @@
   box-sizing: border-box;
 }
 
-.table-filter-group__merged-inline-wrap > .table-filter-group__grid-cell {
+.table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--explicit-width) {
   flex: 0 0 auto;
-  width: min(100%, var(--filter-control-max-width, 260px));
-  max-width: min(100%, var(--filter-control-max-width, 260px));
-  min-width: 0;
+  width: var(--filter-control-max-width, 240px);
+  max-width: var(--filter-control-max-width, 240px);
+  min-width: var(--filter-control-max-width, 240px);
   box-sizing: border-box;
+}
+
+.table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell.table-filter-group__grid-cell--radio,
+.table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell:has(> .table-filter-group__field--radio) {
+  width: max-content;
+  min-width: 0;
+  max-width: none;
+}
+
+.table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--explicit-width):has(
+    .table-filter-group__select-pair-selects
+  ),
+.table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--explicit-width):has(
+    .cms-datepicker--range-split
+  ) {
+  width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  max-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  min-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+}
+
+.table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--explicit-width):has(
+    .cms-datepicker--range-split
+  ) {
+  width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
+  max-width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
+  min-width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
 }
 
 .table-filter-group__merged-inline-wrap__search {

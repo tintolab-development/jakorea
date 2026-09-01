@@ -4,8 +4,6 @@
  */
 
 import { useState, useCallback } from 'react'
-import { message } from 'antd'
-import { MESSAGES } from '@/shared/constants'
 import { createPermissionRequest } from '@/entities/permission-request/api/permission-request-service'
 import type { CreatePermissionRequestInput, PermissionRequest } from '@/types/permission-request'
 
@@ -25,10 +23,8 @@ export function usePermissionRequest(): UsePermissionRequestResult {
       setSubmitting(true)
       try {
         const request = await createPermissionRequest(input)
-        message.success(MESSAGES.success.permissionRequestSubmitted)
         return request
       } catch (error: any) {
-        message.error(error.message || '권한 요청 제출에 실패했습니다.')
         return null
       } finally {
         setSubmitting(false)

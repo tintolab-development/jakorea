@@ -1,8 +1,10 @@
 /**
  * 테이블용 상태 드롭다운 셀 공통 스타일
  * 디자인 스펙: 외곽 트리거 136px (padding 8 + 태그 120 + padding 8), 태그 radius 4px,
- * 활성 시 민트 border + 그림자, 드롭다운 패널 136px·#D4D4D4 border
+ * 활성 시 민트 border + 그림자, 드롭다운 패널 136px·#D4D4D4 border, 메뉴 padding·gap 8px
+ * tag-100: 외곽 116px (1 + 7 + 100 + 7 + 1, border-box), 트리거·메뉴 padding 7px·gap 8px
  * 지급 조서 라인: 외곽 176px (8 + 태그 160 + 8), 패널·메뉴 padding·gap 8px 동일
+ * hug: 트리거·패널 배지 밀착(가로 padding 0), placement bottomLeft
  */
 
 /* 테이블 td에 적용 시: 상하·좌우 패딩 0, overflow visible */
@@ -18,17 +20,29 @@
   vertical-align: middle;
 }
 
+/*
+ * cms-data-table 본문 td는 `padding: 10px 16px !important`(shared/cms-data-table.css)로
+ * 위 셀의 상하 0을 덮어씀 → tag-160 등 트리거(8px + 배지 ~33px + 8px) + 상하 20px 가 54px 행을 넘김.
+ * 상태 드롭다운 열만 상하 패딩을 제거해 행 높이 54px 스펙과 맞춤(좌우는 기존·열 타입별 규칙 유지).
+ */
+.cms-data-table .ant-table-tbody > tr > td.status-dropdown-cell__cell-status {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 .status-dropdown-cell__status-empty {
   color: var(--color-text-tertiary, #8c8c8c);
 }
 
 /* 트리거: 닫힘·열림 동일 외곽 136×(8+태그+8), 태그 높이 ≈33px → 총 ≈49px
- * inline-flex: 테이블 셀에서 text-align:center 와 함께 가로 중앙 정렬(tag-132와 동일 원리) */
+ * inline-flex: 테이블 셀에서 text-align:center 와 함께 가로 중앙 정렬 */
 .status-dropdown-cell__status-trigger {
   box-sizing: border-box;
   cursor: pointer;
   display: inline-flex;
   vertical-align: middle;
+  /* 로딩 시 "…" 를 absolute 로 두기 위해 — flex 자식이 되면 배지+말줄임 묶음이 재중앙 정렬되며 배지가 흔들림 */
+  position: relative;
   width: 136px;
   min-width: 136px;
   max-width: 136px;
@@ -75,26 +89,29 @@
   text-align: center;
 }
 
-/* 테이블 행 hover 시 상태 배지/태그 보더가 도드라져 보이지 않도록 투명 처리 */
+/* 테이블 행 hover 시 상태 배지/태그 보더가 도드라져 보이지 않도록 — 박스 크기 유지 */
 .ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .app-status-badge,
 .ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .status-badge,
-.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .program-managers-tab__role-badge,
-.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .school-detail-fullpage-view__role-tag,
-.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .assignment-submission-modal__team-role-tag,
 .ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .sponsor-contact-type-badge {
   border: 1px solid transparent !important;
   border-color: transparent !important;
+  box-sizing: border-box !important;
 }
 
 /* 권한/상태에 따라 트리거 없이 배지만 렌더되는 셀도 동일 처리 */
 .ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .app-status-badge,
 .ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .status-badge,
-.ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .program-managers-tab__role-badge,
-.ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .school-detail-fullpage-view__role-tag,
-.ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .assignment-submission-modal__team-role-tag,
 .ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .sponsor-contact-type-badge {
   border: 1px solid transparent !important;
   border-color: transparent !important;
+  box-sizing: border-box !important;
+}
+
+/* tag-160: 행 hover 시 트리거 외곽선도 동일 박스 유지 (배지 우측 밀림 방지) */
+.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger--tag-160:not(.status-dropdown-cell__status-trigger--open) {
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 
 /* 열림(open) 상태 트리거의 민트 외곽선도 hover 시 숨김 */
@@ -171,115 +188,219 @@
 /* 열림: 민트 테두리 + 그림자 (디자인 스펙) */
 .status-dropdown-cell__status-trigger--open {
   background: #fff;
-  border: 1px solid var(--JA-mint-01, #01a1af);
+  border: 1px solid var(--color-brand-primary);
   border-radius: 6px;
   box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1);
 }
 
 /* --------------------------------------------------------------------------
- * 132×33 태그 변형: border-box 래퍼 150px = 1px border + 8px pad + 132 태그 + 8px pad + 1px border
- * 드롭다운 패널도 동일 가로 여백 — 기본 overlay(136px) 규칙과 충돌하지 않도록 :not(--tag-132) 사용
+ * 100×32 편집 가능 상태 배지: border-box 래퍼 116px = 1px border + 7px pad + 100 태그 + 7px pad + 1px
+ * 재직·권한·교재배송·서류평가 시안 4종 — 트리거·패널 padding 모두 7px 로 통일
  * -------------------------------------------------------------------------- */
-.status-dropdown-cell__cell-status--tag-132 {
+.status-dropdown-cell__cell-status--tag-100 {
   text-align: center !important;
   vertical-align: middle !important;
+}
+
+.ant-table-tbody > tr > td.status-dropdown-cell__cell-status--tag-100 {
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.cms-data-table .ant-table-thead > tr > th.ant-table-cell.status-dropdown-cell__header--tag-100 {
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+  box-sizing: border-box !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
 /*
- * 본문 열: display:flex 를 td에 두면 table 레이아웃이 깨져 th 세로선과 어긋남 → table-cell 유지, 트리거만 inline-flex 로 중앙
+ * tag-100: border-box 116px = 1px border + 7px pad + 100 배지 + 7px pad + 1px
+ * 닫힘·열림 패딩을 동일하게 유지 — open 때만 7px로 바꾸면 배지/행이 가로로 밀림
  */
-.ant-table-tbody > tr > td.status-dropdown-cell__cell-status--tag-132 {
-  width: 150px !important;
-  min-width: 150px !important;
-  max-width: 150px !important;
-  box-sizing: border-box !important;
-  text-align: center !important;
-  vertical-align: middle !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-
-/* thead: cms-data-table 기본 th 패딩(16px)과 본문(0) 불일치 시 경계 틀어짐 */
-.cms-data-table .ant-table-thead > tr > th.ant-table-cell.status-dropdown-cell__header--tag-132 {
-  width: 150px !important;
-  min-width: 150px !important;
-  max-width: 150px !important;
-  box-sizing: border-box !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-
-.status-dropdown-cell__status-trigger--tag-132 {
+.status-dropdown-cell__status-trigger--tag-100 {
   box-sizing: border-box;
   display: inline-flex;
   vertical-align: middle;
-  width: 150px;
-  min-width: 150px;
-  max-width: 150px;
-  padding: 8px;
+  width: 116px;
+  min-width: 116px;
+  max-width: 116px;
+  padding: 7px;
   justify-content: center;
   align-items: center;
+  flex-shrink: 0;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: transparent;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
 }
 
-.status-dropdown-cell__status-trigger--tag-132.status-dropdown-cell__status-trigger--open {
+/* tag-100: ant-dropdown 래퍼 고정 — 트리거 중앙·호버 시 가로 밀림 방지 */
+.status-dropdown-cell__cell-status--tag-100 .ant-dropdown-trigger {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 116px;
+  margin-inline: auto;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+.status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
   display: inline-flex !important;
   box-sizing: border-box !important;
-  width: 150px !important;
-  min-width: 150px !important;
-  max-width: 150px !important;
-  padding: 8px !important;
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+  padding: 7px !important;
   justify-content: center !important;
   align-items: center !important;
 }
 
-/* 닫힌 상태: hover·focus 시에도 열림과 동일 1px 테두리 상자 유지 → 테두리/그림자 변화로 인한 밀림 방지 */
-.status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open):hover,
-.status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open):focus-visible {
-  border: 1px solid transparent;
+/* tag-100 + style.width: 배지 변수만 쓰고 트리거 외곽은 116px 고정 유지 */
+.status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__trigger--cell-style {
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+}
+
+.status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__trigger--cell-style.status-dropdown-cell__status-trigger--open {
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+}
+
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover,
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):focus-visible {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: transparent !important;
   box-shadow: none;
   background: transparent;
   outline: none;
 }
 
-.status-dropdown-cell__status-trigger--tag-132 .program-managers-tab__role-badge,
-.status-dropdown-cell__status-trigger--tag-132 .school-detail-fullpage-view__role-tag,
-.status-dropdown-cell__status-trigger--tag-132 .assignment-submission-modal__team-role-tag {
-  width: 132px !important;
-  min-width: 132px !important;
-  max-width: 132px !important;
-  height: 33px !important;
-  min-height: 33px !important;
-  max-height: 33px !important;
+/* tag-100 트리거 내부 배지 — editable-status-badge.css 정본(column·gap·max-width) 유지 */
+.status-dropdown-cell__status-trigger--tag-100 .editable-status-badge {
+  margin: 0 !important;
+  flex-shrink: 0;
 }
 
-.status-dropdown-cell__dropdown-overlay--tag-132 {
-  width: 150px !important;
-  min-width: 150px !important;
-  max-width: 150px !important;
+.status-dropdown-cell__status-trigger--tag-100 .editable-status-badge__label--muted,
+.status-dropdown-cell__dropdown-overlay--tag-100 .editable-status-badge__label--muted {
+  opacity: 0.4 !important;
 }
 
-.status-dropdown-cell__dropdown-overlay--tag-132 .ant-dropdown-menu {
+.status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.status-dropdown-cell__badge--cell-style,
+.status-dropdown-cell__dropdown-overlay--tag-100
+  .status-dropdown-cell__dropdown-item
+  .editable-status-badge.status-dropdown-cell__badge--cell-style {
+  width: var(--sdcb-badge-w, 100px) !important;
+  min-width: var(--sdcb-badge-minw, 100px) !important;
+  max-width: var(--sdcb-badge-maxw, 200px) !important;
+}
+
+/* tag-100: 호버·행 hover 시 톤 보더 유지 — transparent 전환으로 인한 1px 시각 흔들림 방지 */
+.status-dropdown-cell__status-trigger--tag-100 .editable-status-badge.editable-status-badge--blue,
+.ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.editable-status-badge--blue,
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+  .editable-status-badge.editable-status-badge--blue {
+  border-color: var(--editable-badge-blue-border) !important;
+}
+
+.status-dropdown-cell__status-trigger--tag-100 .editable-status-badge.editable-status-badge--gray,
+.ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.editable-status-badge--gray,
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+  .editable-status-badge.editable-status-badge--gray {
+  border-color: var(--editable-badge-gray-border) !important;
+}
+
+.status-dropdown-cell__status-trigger--tag-100 .editable-status-badge.editable-status-badge--green,
+.ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.editable-status-badge--green,
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+  .editable-status-badge.editable-status-badge--green {
+  border-color: var(--editable-badge-green-border) !important;
+}
+
+.status-dropdown-cell__status-trigger--tag-100 .editable-status-badge.editable-status-badge--green-overlay,
+.ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.editable-status-badge--green-overlay,
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+  .editable-status-badge.editable-status-badge--green-overlay {
+  border-color: var(--editable-badge-green-border) !important;
+}
+
+.status-dropdown-cell__status-trigger--tag-100 .editable-status-badge.editable-status-badge--red,
+.ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.editable-status-badge--red,
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+  .editable-status-badge.editable-status-badge--red {
+  border-color: var(--editable-badge-red-border) !important;
+}
+
+.status-dropdown-cell__dropdown-overlay--tag-100 {
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+}
+
+.status-dropdown-cell__dropdown-overlay--tag-100.status-dropdown-cell__dropdown-overlay--cell-style {
+  display: flex;
+  justify-content: center;
+}
+
+.status-dropdown-cell__dropdown-overlay--tag-100 .ant-dropdown-menu {
   box-sizing: border-box;
-  min-width: 150px !important;
-  width: 150px !important;
-  max-width: 150px !important;
+  min-width: 116px !important;
+  width: 116px !important;
+  max-width: 116px !important;
   border-radius: 6px;
   border: 1px solid #d4d4d4;
   background: #fff;
   box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1);
-  padding: 8px;
+  padding: 7px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
 }
 
-.status-dropdown-cell__dropdown-overlay--tag-132 .ant-dropdown-menu-item {
+.status-dropdown-cell__dropdown-overlay--tag-100.status-dropdown-cell__dropdown-overlay--cell-style
+  .ant-dropdown-menu {
+  margin-inline: auto;
+}
+
+.status-dropdown-cell__dropdown-overlay--tag-100 .ant-dropdown-menu-item {
   margin: 0;
   width: 100%;
   height: auto;
   min-height: 0;
-  padding: 0;
+  padding: 0 !important;
   border-radius: 6px;
   background: transparent !important;
   display: flex;
@@ -287,23 +408,91 @@
   justify-content: center;
 }
 
-.status-dropdown-cell__dropdown-overlay--tag-132 .ant-dropdown-menu-item:last-child {
+.status-dropdown-cell__dropdown-overlay--tag-100 .ant-dropdown-menu-item .ant-dropdown-menu-title-content {
+  display: flex !important;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+.status-dropdown-cell__dropdown-overlay--tag-100.status-dropdown-cell__dropdown-overlay--cell-style
+  .status-dropdown-cell__dropdown-item {
+  display: inline-flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.status-dropdown-cell__dropdown-overlay--tag-100 .ant-dropdown-menu-item:last-child {
   margin-bottom: 0;
 }
 
-.status-dropdown-cell__dropdown-overlay--tag-132 .ant-dropdown-menu-item:hover {
+.status-dropdown-cell__dropdown-overlay--tag-100 .ant-dropdown-menu-item:hover {
   background: transparent !important;
 }
 
-.status-dropdown-cell__dropdown-overlay--tag-132 .program-managers-tab__role-badge,
-.status-dropdown-cell__dropdown-overlay--tag-132 .school-detail-fullpage-view__role-tag,
-.status-dropdown-cell__dropdown-overlay--tag-132 .assignment-submission-modal__team-role-tag {
-  width: 132px !important;
-  min-width: 132px !important;
-  max-width: 132px !important;
-  height: 33px !important;
-  min-height: 33px !important;
-  max-height: 33px !important;
+/* 현재 선택(활성) — 트리거 open과 동일 민트 링. disabled 흐림 방지 */
+.status-dropdown-cell__dropdown-overlay .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active,
+.status-dropdown-cell__dropdown-overlay
+  .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active.ant-dropdown-menu-item-disabled {
+  opacity: 1 !important;
+  cursor: default;
+  background: transparent !important;
+}
+
+.status-dropdown-cell__dropdown-overlay
+  .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active
+  .status-dropdown-cell__dropdown-item--active {
+  display: inline-flex;
+  box-sizing: border-box;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px var(--color-brand-primary, var(--JA-mint-01, #01a1af));
+}
+
+.status-dropdown-cell__dropdown-overlay
+  .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active
+  .editable-status-badge,
+.status-dropdown-cell__dropdown-overlay
+  .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active
+  .app-status-badge,
+.status-dropdown-cell__dropdown-overlay
+  .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active
+  .status-badge {
+  opacity: 1 !important;
+}
+
+
+/* 편집 가능 상태 배지 — 고정 레이아웃·style 지정 시 톤 보더 유지 */
+.ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger:not(.status-dropdown-cell__status-trigger--tag-100):not(
+    .status-dropdown-cell__trigger--cell-style
+  )
+  .editable-status-badge,
+.ant-table-tbody
+  > tr:hover
+  > td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-100):not(
+    :has(.status-dropdown-cell__trigger--cell-style)
+  )
+  .editable-status-badge {
+  border: 1px solid transparent !important;
+  border-color: transparent !important;
+  box-sizing: border-box !important;
+}
+
+.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open) {
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.status-dropdown-cell__dropdown-item .editable-status-badge {
+  pointer-events: none;
+  margin: 0;
+  transition: none !important;
+}
+
+.ant-table-tbody > tr > td.status-dropdown-cell__cell-status .editable-status-badge {
+  transition: none !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -344,6 +533,10 @@
   padding: 8px 13px;
   justify-content: center;
   align-items: center;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
 }
 
 .status-dropdown-cell__status-trigger--tag-160.status-dropdown-cell__status-trigger--open {
@@ -584,26 +777,36 @@
 }
 
 .status-dropdown-cell__status-updating {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  inset-inline-end: 8px;
   flex-shrink: 0;
   color: var(--color-text-tertiary, #8c8c8c);
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
   line-height: 150%;
+  pointer-events: none;
+  z-index: 1;
 }
 
-/* 권한·역할 등 커스텀 태그(span) — default(136px 래퍼)만. tag132·tag160·paymentOrderLine는 전용 블록 */
-.status-dropdown-cell__status-trigger:not(.status-dropdown-cell__status-trigger--tag-132):not(
-    .status-dropdown-cell__status-trigger--tag-160
-  ):not(.status-dropdown-cell__status-trigger--payment-order-line)
+.status-dropdown-cell__status-trigger--tag-160 .status-dropdown-cell__status-updating {
+  inset-inline-end: 13px;
+}
+
+/* 권한·역할 등 커스텀 태그(span) — default(136px 래퍼)만. tag160·paymentOrderLine는 전용 블록 */
+.status-dropdown-cell__status-trigger:not(.status-dropdown-cell__status-trigger--tag-160):not(
+    .status-dropdown-cell__status-trigger--payment-order-line
+  )
   .program-managers-tab__role-badge,
-.status-dropdown-cell__status-trigger:not(.status-dropdown-cell__status-trigger--tag-132):not(
-    .status-dropdown-cell__status-trigger--tag-160
-  ):not(.status-dropdown-cell__status-trigger--payment-order-line)
+.status-dropdown-cell__status-trigger:not(.status-dropdown-cell__status-trigger--tag-160):not(
+    .status-dropdown-cell__status-trigger--payment-order-line
+  )
   .school-detail-fullpage-view__role-tag,
-.status-dropdown-cell__status-trigger:not(.status-dropdown-cell__status-trigger--tag-132):not(
-    .status-dropdown-cell__status-trigger--tag-160
-  ):not(.status-dropdown-cell__status-trigger--payment-order-line)
+.status-dropdown-cell__status-trigger:not(.status-dropdown-cell__status-trigger--tag-160):not(
+    .status-dropdown-cell__status-trigger--payment-order-line
+  )
   .assignment-submission-modal__team-role-tag {
   box-sizing: border-box;
   width: 120px;
@@ -713,8 +916,8 @@
   min-height: 33px;
 }
 
-/* 드롭다운 패널 (tag-132·tag-160·payment-order-line는 위 전용 블록 — 여기 136px 규칙이 덮어쓰면 태그가 메뉴에 끼어 보임) */
-.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-132):not(
+/* 드롭다운 패널 (tag-160·payment-order-line·hug는 위/아래 전용 블록 — 여기 136px 규칙이 덮어쓰면 태그가 메뉴에 끼어 보임) */
+.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
     .status-dropdown-cell__dropdown-overlay--tag-160
   ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line) {
   width: 136px !important;
@@ -722,7 +925,7 @@
   max-width: 136px !important;
 }
 
-.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-132):not(
+.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
     .status-dropdown-cell__dropdown-overlay--tag-160
   ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line)
   .ant-dropdown-menu {
@@ -741,7 +944,7 @@
   gap: 8px;
 }
 
-.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-132):not(
+.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
     .status-dropdown-cell__dropdown-overlay--tag-160
   ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line)
   .ant-dropdown-menu-item {
@@ -757,23 +960,24 @@
   justify-content: center;
 }
 
-.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-132):not(
+.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
     .status-dropdown-cell__dropdown-overlay--tag-160
   ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line)
   .ant-dropdown-menu-item:last-child {
   margin-bottom: 0;
 }
 
-.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-132):not(
+.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
     .status-dropdown-cell__dropdown-overlay--tag-160
   ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line)
   .ant-dropdown-menu-item:hover {
   background: transparent !important;
 }
 
-/* `style.width` = 배지 폭; 패널은 트리거와 맞춤 = 배지 + 좌우 padding 8px×2 (기본 136 = 120+16) */
+/* `style.width` = 배지 폭; 패널은 트리거와 맞춤 = 배지 + 좌우 chrome 16px (기본 136 = 120+16)
+ * tag-100은 고정 116px(1+7+100+7+1) — cell-style calc로 덮어쓰지 않음(단위 누락 시 ~110px 수축 방지) */
 .status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style:not(
-    .status-dropdown-cell__dropdown-overlay--tag-132
+    .status-dropdown-cell__dropdown-overlay--tag-100
   ) {
   width: calc(var(--sdcb-overlay-w) + 16px) !important;
   min-width: calc(var(--sdcb-overlay-minw) + 16px) !important;
@@ -781,7 +985,7 @@
 }
 
 .status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style:not(
-    .status-dropdown-cell__dropdown-overlay--tag-132
+    .status-dropdown-cell__dropdown-overlay--tag-100
   )
   .ant-dropdown-menu {
   box-sizing: border-box;
@@ -841,4 +1045,54 @@
   background: #f2f3f5 !important;
   color: #464646 !important;
   border: 1px solid rgba(126, 138, 150, 0.06) !important;
+}
+
+/* popupRender 래퍼 — 폭 측정이 깨져 bottom* placement 가 어긋나는 것 방지 */
+.status-dropdown-cell__popup-root {
+  display: inline-block;
+  width: max-content;
+  max-width: max-content;
+  vertical-align: top;
+  box-sizing: border-box;
+}
+
+/*
+ * 인라인 tag100 셸 — 폼·상세·교재명 행 등.
+ * 닫힘/열림 모두 레이아웃 기여 = 116×48 고정. 조상 flex/table 이 min-content 로 커지는 것을 차단.
+ * 패널 스펙은 테이블 tag100 과 동일(padding 7·gap 8).
+ */
+.status-dropdown-cell__inline-tag100 {
+  display: inline-flex;
+  box-sizing: border-box;
+  width: 116px;
+  min-width: 116px;
+  max-width: 116px;
+  height: 48px;
+  min-height: 48px;
+  max-height: 48px;
+  flex: 0 0 116px;
+  justify-content: center;
+  align-items: center;
+  vertical-align: middle;
+  position: relative;
+  overflow: visible;
+}
+
+.status-dropdown-cell__inline-tag100 .ant-dropdown-trigger,
+.status-dropdown-cell__inline-tag100 .status-dropdown-cell__status-trigger--tag-100,
+.status-dropdown-cell__inline-tag100
+  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
+  box-sizing: border-box !important;
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+  padding: 7px !important;
+  margin: 0 !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+/* 셸 안 트리거 그림자는 레이아웃/페인트 overflow 유발 — 패널 그림자로 충분 */
+.status-dropdown-cell__inline-tag100 .status-dropdown-cell__status-trigger--open {
+  box-shadow: none !important;
 }

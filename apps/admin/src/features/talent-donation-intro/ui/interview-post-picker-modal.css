@@ -1,0 +1,25 @@
+.talent-intro-post-picker.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  padding: 24px 30px 32px;
+}
+
+.talent-intro-post-picker .teal-header-modal__body {
+  gap: 16px;
+}
+
+.talent-intro-post-picker__filter {
+  width: 100%;
+  align-items: flex-end;
+}
+
+.talent-intro-post-picker__title-field {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.talent-intro-post-picker__title-field .cms-input {
+  width: 100%;
+}
+
+.talent-intro-post-picker__table {
+  width: 100%;
+}

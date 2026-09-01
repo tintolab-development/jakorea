@@ -17,6 +17,7 @@ const SCREENSHOT_LEADING: Array<{
   organizationKind: SponsorOrganizationKind
   sponsorshipStatus: SponsorSponsorshipStatus
 }> = [
+  { name: '제이에이코리아', organizationKind: 'foundation', sponsorshipStatus: 'active' },
   { name: '스타벅스', organizationKind: 'corporate', sponsorshipStatus: 'active' },
   { name: '삼성꿈장학재단', organizationKind: 'foundation', sponsorshipStatus: 'active' },
   { name: '한국청소년활동진흥원', organizationKind: 'foundation', sponsorshipStatus: 'active' },
@@ -114,6 +115,7 @@ const FILLER_BASE = [
 const KIND_CYCLE: SponsorOrganizationKind[] = ['corporate', 'foundation']
 
 const SPONSOR_ENGLISH_NAME_MAP: Record<string, string> = {
+  제이에이코리아: 'JA KOREA',
   스타벅스: 'STARBUCKS',
   삼성꿈장학재단: 'SAMSUNG DREAM SCHOLARSHIP FOUNDATION',
   한국청소년활동진흥원: 'KOREA YOUTH ACTIVITY PROMOTION AGENCY',
@@ -127,6 +129,7 @@ const SPONSOR_ENGLISH_NAME_MAP: Record<string, string> = {
   KB국민은행: 'KB KOOKMIN BANK',
   한화생명: 'HANWHA LIFE',
   '아름다운 재단': 'BEAUTIFUL FOUNDATION',
+  '한국씨티은행': 'CITI BANK',
 }
 
 function resolveSponsorNameEn(name: string, index: number): string {
@@ -195,6 +198,15 @@ function buildMockSponsorManagementList(): SponsorManagementRow[] {
       })
     )
   }
+
+  rows.push(
+    createRow(130, {
+      name: '한국씨티은행',
+      organizationKind: 'corporate',
+      sponsorshipStatus: 'active',
+      sponsorshipStartDate: START_SCREENSHOT,
+    })
+  )
 
   return rows
 }

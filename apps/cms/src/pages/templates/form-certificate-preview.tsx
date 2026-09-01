@@ -1,5 +1,5 @@
 import { Fragment, useRef, type CSSProperties, type RefObject } from 'react'
-import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template/ui/template-custom-fields-form'
+import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template/ui/template-management/template-custom-fields-form'
 import templateCertificateBg from '@/assets/images/template/templatge-background.png'
 import templateEducation from '@/assets/images/template/template-education.png'
 import templateLogo from '@/assets/images/template/template-logo.png'
@@ -27,6 +27,12 @@ const P = 'form-certificate-preview'
 const FRAME_ACTIVE = `${P}__region--frame-active`
 const FRAME_DIMMED = `${P}__region--dimmed`
 const HANDLE_DOT = `${P}__region--has-dot`
+// 커스텀 필드 노출 범위와 동일하게 좌측 편집 닷/프레임도 세 필드만 유지
+const CERTIFICATE_EDIT_FIELD_NAMES = new Set(['certificateBackground', 'titleName', 'bodyContent'])
+
+function shouldShowCertificateEditChrome(fieldName: string): boolean {
+  return CERTIFICATE_EDIT_FIELD_NAMES.has(fieldName)
+}
 
 export type { CertificateCanvasRegion } from './form-certificate-preview-mapping'
 export { TEMPLATE_FIELD_TO_CANVAS_REGION, CANVAS_REGION_TO_FIELD_NAME }
@@ -55,6 +61,8 @@ export interface FormCertificatePreviewProps {
   chairmanNameDisplay?: string
   /** 우측 참여자 정보 — 줄당 한 행, 6행까지(디폴트 샘플) */
   participantInfo?: string
+  /** 발급일자 — 미지정 시 오늘 날짜 */
+  issueDate?: Date
   /** 참여자 표 행 표시(체크박스와 동기화). 미지정 시 전 행 표시 */
   participantRowVisibility?: boolean[]
   /** 하단 푸터 — 우측 기관 주소·연락처 필드와 동기화 */
@@ -93,6 +101,7 @@ export function FormCertificatePreview({
   bodyContent = DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES.bodyContent,
   chairmanNameDisplay = DEFAULT_CERTIFICATE_CHAIRMAN_NAME,
   participantInfo = DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES.participantInfo,
+  issueDate = new Date(),
   participantRowVisibility,
   orgAddress = DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES.orgAddress,
   orgPhone = DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES.orgPhone,
@@ -102,14 +111,17 @@ export function FormCertificatePreview({
   className,
   canvasRef,
 }: FormCertificatePreviewProps) {
-  const issueDate = new Date()
   const logoSrc = orgLogoPreviewSrc ?? templateLogo
   const educationSrc = orgLogo02PreviewSrc ?? templateEducation
   const certificateBgSrc = certificateBackgroundPreviewSrc ?? templateCertificateBg
   const stampSrc = chairmanSealPreviewSrc ?? templateStamp
 
+  const previewActiveFieldName =
+    activeFieldName != null && shouldShowCertificateEditChrome(activeFieldName)
+      ? activeFieldName
+      : null
   const { region, confirmLines, participantValues, rowVisibility } = useCertificatePreviewModel({
-    activeFieldName,
+    activeFieldName: previewActiveFieldName,
     bodyContent,
     participantInfo,
     participantRowVisibility,
@@ -124,9 +136,16 @@ export function FormCertificatePreview({
     chairmanNameParts.length > 0 ? `회장 ${chairmanNameDisplay.trim()}` : '회장'
 
   const bgField = CANVAS_REGION_TO_FIELD_NAME.canvas
+  const showBackgroundEditChrome = shouldShowCertificateEditChrome(bgField)
+  const showTitleEditChrome = shouldShowCertificateEditChrome(CANVAS_REGION_TO_FIELD_NAME.title)
+  const showBodyEditChrome = shouldShowCertificateEditChrome('bodyContent')
+  const showLogoEditChrome = shouldShowCertificateEditChrome(CANVAS_REGION_TO_FIELD_NAME.logo)
+  const showEducationEditChrome = shouldShowCertificateEditChrome(CANVAS_REGION_TO_FIELD_NAME.education)
+  const showChairmanEditChrome = shouldShowCertificateEditChrome(CANVAS_REGION_TO_FIELD_NAME.chairmanName)
+  const showStampEditChrome = shouldShowCertificateEditChrome(CANVAS_REGION_TO_FIELD_NAME.stamp)
 
   const previewRootRef = useRef<HTMLDivElement>(null)
-  useScrollActiveFieldIntoView(previewRootRef, activeFieldName)
+  useScrollActiveFieldIntoView(previewRootRef, previewActiveFieldName)
 
   const titleTextColor = fieldTextColors?.titleName
   const bodyTextColor = fieldTextColors?.bodyContent
@@ -138,31 +157,39 @@ export function FormCertificatePreview({
       <div className={`${P}__bg`}>
         <div
           ref={canvasRef}
-          className={cn(`${P}__canvas`, HANDLE_DOT, region === 'canvas' && FRAME_ACTIVE)}
+          className={cn(
+            `${P}__canvas`,
+            showBackgroundEditChrome && HANDLE_DOT,
+            showBackgroundEditChrome && region === 'canvas' && FRAME_ACTIVE
+          )}
           style={canvasBgStyle}
           data-template-field="certificateBackground"
         >
           <div
-            role="button"
-            tabIndex={0}
+            role={showBackgroundEditChrome ? 'button' : undefined}
+            tabIndex={showBackgroundEditChrome ? 0 : undefined}
             className={cn(`${P}__canvas-bg`, shouldDim(region, 'canvas') && FRAME_DIMMED)}
             aria-label="수료증 배경 편집"
-            {...getRegionActivationHandlers(bgField, onRegionClick)}
+            {...(showBackgroundEditChrome
+              ? getRegionActivationHandlers(bgField, onRegionClick)
+              : {})}
           />
           <span className={cn(`${P}__tag`, shouldDim(region, 'decor') && FRAME_DIMMED)}>
             26-JA-00000
           </span>
           <span
-            role="button"
-            tabIndex={0}
+            role={showLogoEditChrome ? 'button' : undefined}
+            tabIndex={showLogoEditChrome ? 0 : undefined}
             className={cn(
               `${P}__logo-wrap`,
-              HANDLE_DOT,
-              region === 'logo' && FRAME_ACTIVE,
+              showLogoEditChrome && HANDLE_DOT,
+              showLogoEditChrome && region === 'logo' && FRAME_ACTIVE,
               shouldDim(region, 'logo') && FRAME_DIMMED
             )}
             data-template-field="orgLogo"
-            {...getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.logo, onRegionClick)}
+            {...(showLogoEditChrome
+              ? getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.logo, onRegionClick)
+              : {})}
           >
             <img
               src={logoSrc}
@@ -172,16 +199,18 @@ export function FormCertificatePreview({
             />
           </span>
           <span
-            role="button"
-            tabIndex={0}
+            role={showEducationEditChrome ? 'button' : undefined}
+            tabIndex={showEducationEditChrome ? 0 : undefined}
             className={cn(
               `${P}__education-wrap`,
-              HANDLE_DOT,
-              region === 'education' && FRAME_ACTIVE,
+              showEducationEditChrome && HANDLE_DOT,
+              showEducationEditChrome && region === 'education' && FRAME_ACTIVE,
               shouldDim(region, 'education') && FRAME_DIMMED
             )}
             data-template-field="orgLogo02"
-            {...getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.education, onRegionClick)}
+            {...(showEducationEditChrome
+              ? getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.education, onRegionClick)
+              : {})}
           >
             <img
               src={educationSrc}
@@ -193,17 +222,19 @@ export function FormCertificatePreview({
             />
           </span>
           <h1
-            role="button"
-            tabIndex={0}
+            role={showTitleEditChrome ? 'button' : undefined}
+            tabIndex={showTitleEditChrome ? 0 : undefined}
             className={cn(
               `${P}__title`,
-              HANDLE_DOT,
-              region === 'title' && FRAME_ACTIVE,
+              showTitleEditChrome && HANDLE_DOT,
+              showTitleEditChrome && region === 'title' && FRAME_ACTIVE,
               shouldDim(region, 'title') && FRAME_DIMMED
             )}
             data-template-field="titleName"
             style={titleTextColor ? { color: titleTextColor } : undefined}
-            {...getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.title, onRegionClick)}
+            {...(showTitleEditChrome
+              ? getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.title, onRegionClick)
+              : {})}
           >
             {titleText}
           </h1>
@@ -212,21 +243,24 @@ export function FormCertificatePreview({
             rowVisibility={rowVisibility}
             participantValues={participantValues}
             participantTextColor={participantTextColor}
-            onRegionClick={onRegionClick}
+            onRegionClick={undefined}
+            showEditChrome={false}
           />
           <p
-            role="button"
-            tabIndex={0}
+            role={showBodyEditChrome ? 'button' : undefined}
+            tabIndex={showBodyEditChrome ? 0 : undefined}
             className={cn(
               `${P}__confirm`,
-              HANDLE_DOT,
-              region === 'confirm' && FRAME_ACTIVE,
+              showBodyEditChrome && HANDLE_DOT,
+              showBodyEditChrome && region === 'confirm' && FRAME_ACTIVE,
               shouldDim(region, 'confirm') && FRAME_DIMMED
             )}
             aria-label="본문 내용 편집"
             data-template-field="bodyContent"
             style={bodyTextColor ? { color: bodyTextColor } : undefined}
-            {...getRegionActivationHandlers('bodyContent', onRegionClick)}
+            {...(showBodyEditChrome
+              ? getRegionActivationHandlers('bodyContent', onRegionClick)
+              : {})}
           >
             {confirmLines.map((line, i) => (
               <Fragment key={`confirm-line-${i}`}>
@@ -245,18 +279,20 @@ export function FormCertificatePreview({
             사단법인 제이에이코리아
           </p>
           <p
-            role="button"
-            tabIndex={0}
+            role={showChairmanEditChrome ? 'button' : undefined}
+            tabIndex={showChairmanEditChrome ? 0 : undefined}
             className={cn(
               `${P}__chairman-name`,
-              HANDLE_DOT,
-              region === 'chairmanName' && FRAME_ACTIVE,
+              showChairmanEditChrome && HANDLE_DOT,
+              showChairmanEditChrome && region === 'chairmanName' && FRAME_ACTIVE,
               shouldDim(region, 'chairmanName') && FRAME_DIMMED
             )}
             aria-label={chairmanAriaLabel}
             data-template-field="chairmanName"
             style={chairmanTextColor ? { color: chairmanTextColor } : undefined}
-            {...getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.chairmanName, onRegionClick)}
+            {...(showChairmanEditChrome
+              ? getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.chairmanName, onRegionClick)
+              : {})}
           >
             <span className={`${P}__chairman-name-part`}>회장</span>
             {chairmanNameParts.map((ch, i) => (
@@ -266,16 +302,18 @@ export function FormCertificatePreview({
             ))}
           </p>
           <span
-            role="button"
-            tabIndex={0}
+            role={showStampEditChrome ? 'button' : undefined}
+            tabIndex={showStampEditChrome ? 0 : undefined}
             className={cn(
               `${P}__stamp-wrap`,
-              HANDLE_DOT,
-              region === 'stamp' && FRAME_ACTIVE,
+              showStampEditChrome && HANDLE_DOT,
+              showStampEditChrome && region === 'stamp' && FRAME_ACTIVE,
               shouldDim(region, 'stamp') && FRAME_DIMMED
             )}
             data-template-field="chairmanSeal"
-            {...getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.stamp, onRegionClick)}
+            {...(showStampEditChrome
+              ? getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.stamp, onRegionClick)
+              : {})}
           >
             <img
               src={stampSrc}
@@ -293,7 +331,8 @@ export function FormCertificatePreview({
             orgFax={orgFax}
             orgWebsite={orgWebsite}
             fieldTextColors={fieldTextColors}
-            onRegionClick={onRegionClick}
+            onRegionClick={undefined}
+            showEditChrome={false}
           />
         </div>
       </div>

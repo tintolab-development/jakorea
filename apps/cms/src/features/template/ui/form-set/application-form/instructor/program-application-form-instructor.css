@@ -1,0 +1,229 @@
+.program-application-form-instructor__file-cell {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* DetailInfoForm 값 칸 — edit/view 슬롯 flex 오버라이드 후에도 업로드 버튼이 보이도록 */
+.detail-info-form__field-content--edit > .program-application-form-instructor__file-cell,
+.detail-info-form__field-content--view > .program-application-form-instructor__file-cell {
+  display: flex;
+  margin-block: 0;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+}
+
+.program-application-form-instructor__file-cell
+  .program-application-form-instructor__file-upload-trigger.paragraph-file-upload {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.program-application-form-instructor__file-cell
+  .program-application-form-instructor__file-upload-trigger
+  .paragraph-file-upload__content {
+  width: auto;
+}
+
+.program-application-form-instructor__file-attached {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 200px;
+}
+
+.program-application-form-instructor__file-attached-icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--main-BK, #3d3d3d);
+}
+
+.program-application-form-instructor__mock-file-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--main-BK, #3d3d3d);
+  word-break: break-all;
+  min-width: 0;
+}
+
+.program-application-form-instructor__available-schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.program-application-form-instructor__available-schedule--readonly-preview {
+  pointer-events: none;
+}
+
+.program-application-form-instructor__available-schedule-top {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+/** 캘린더 열 실측 높이(`--program-reg-schedule-calendar-height`)에 맞춤 — 등록/모집 설정별 우측 내용 높이 상이 */
+.program-application-form-instructor__schedule-side {
+  flex: 1 1 0;
+  min-width: 0;
+  align-self: flex-start;
+  box-sizing: border-box;
+  display: grid;
+  padding: 16px;
+  row-gap: 12px;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  min-height: var(--program-reg-schedule-calendar-height, auto);
+  max-height: var(--program-reg-schedule-calendar-height, none);
+  overflow: hidden;
+}
+
+.program-application-form-instructor__schedule-side .program-application-form-instructor__session-grid {
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  max-width: none;
+}
+
+.program-application-form-instructor__schedule-side .program-application-schedule-template-hint {
+  min-height: 0;
+  height: 100%;
+  align-self: stretch;
+}
+
+.program-application-form-instructor__schedule-side .schedule-setting-blocked {
+  min-height: 0;
+}
+
+.program-application-form-instructor__calendar-wrap {
+  flex: 0 0 360px;
+  flex-shrink: 0;
+  width: 360px;
+  min-width: 360px;
+  max-width: 360px;
+}
+
+.program-application-form-instructor__session-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 310px);
+  column-gap: 12px;
+  row-gap: 12px;
+  align-content: start;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.program-application-form-instructor__session-grid-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* 세션 슬롯 — `ParagraphChip` + 2줄 라벨(학교·교시|시간) */
+.program-application-form-instructor__session-chip.paragraph-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  box-sizing: border-box;
+  width: 310px;
+  max-width: 310px;
+  min-width: 310px;
+  min-height: auto;
+  height: auto;
+  padding: 12px 14px;
+  text-align: left;
+  white-space: normal;
+  font-weight: 500;
+}
+
+.program-application-form-instructor__session-chip.paragraph-chip--selected {
+  font-weight: 500;
+}
+
+.program-application-form-instructor__session-card-line {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.program-application-form-instructor__session-card-line--primary {
+  color: var(--default-BK, #3d3d3d);
+}
+
+.program-application-form-instructor__session-card-line--secondary {
+  color: rgba(61, 61, 61, 0.65);
+}
+
+.program-application-form-instructor__session-chip.paragraph-chip--selected
+  .program-application-form-instructor__session-card-line--primary {
+  color: var(--color-mint-01, #01a1af);
+}
+
+.program-application-form-instructor__session-chip.paragraph-chip--selected
+  .program-application-form-instructor__session-card-line--secondary {
+  color: rgba(61, 61, 61, 0.65);
+}
+
+/**
+ * DetailInfoForm 값 칸 — `field-content--edit > *`의 display:flex를 덮고
+ * 인라인 줄바꿈 + `DetailInfoForm.TdDivider`(detail-info-form-inputs-separator)로 구간 구분
+ */
+.program-application-form-instructor__field-summary-wrap {
+  font-size: 0;
+  text-align: left;
+}
+
+.program-application-form-instructor__field-summary-wrap > .form-editor-template-field-hint-text {
+  display: block;
+}
+
+.program-application-form-instructor__field-summary-wrap
+  > .form-editor-template-field-hint-text
+  + .program-application-form-instructor__summary-text--placeholder {
+  display: block;
+  margin-top: 8px;
+}
+
+.detail-info-form__field-content--edit > .program-application-form-instructor__field-summary-wrap,
+.detail-info-form__field-content--view > .program-application-form-instructor__field-summary-wrap {
+  display: block;
+  margin-block: 0;
+  width: 100%;
+  min-width: 0;
+  line-height: 0;
+}
+
+.program-application-form-instructor__summary-inline-text {
+  display: inline;
+  font-size: 14px;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  vertical-align: middle;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}

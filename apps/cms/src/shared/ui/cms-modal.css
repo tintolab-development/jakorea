@@ -1,0 +1,137 @@
+/**
+ * 공통 모달 (CmsModal)
+ * ContentModal(흰 카드형) 셸 — TealHeaderModal 기본 청록 헤더를 명시적으로 해제
+ */
+
+/* 뷰포트 정중앙 */
+.cms-modal-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+}
+
+.cms-modal-wrap::before {
+  display: none !important;
+  content: none !important;
+}
+
+.cms-modal-wrap .ant-modal.cms-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+  max-width: calc(100vw - 32px) !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+}
+
+.cms-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 26px 30px 34px;
+  flex-shrink: 0;
+  overflow: visible;
+  background: #fff;
+}
+
+.cms-modal.content-modal.teal-header-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+/* TealHeaderModal 기본 청록 헤더 → 흰 카드형 헤더 */
+.cms-modal.content-modal.teal-header-modal .teal-header-modal__header {
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  background: #fff !important;
+  border-top: none;
+  border-bottom: none;
+  padding: 0;
+  align-items: center;
+}
+
+.cms-modal.content-modal.teal-header-modal .teal-header-modal__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--default-BK, #3d3d3d) !important;
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.cms-modal.content-modal.teal-header-modal .teal-header-modal__close {
+  color: var(--color-text-secondary, #8c8c8c) !important;
+}
+
+.cms-modal.content-modal.teal-header-modal .teal-header-modal__close:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--color-text-secondary, #8c8c8c) !important;
+}
+
+.cms-modal.content-modal.teal-header-modal .teal-header-modal__body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+  width: 100%;
+  gap: 0;
+  margin-top: 0;
+  padding: 30px 0 0;
+  box-sizing: border-box;
+}
+
+.cms-modal.content-modal.teal-header-modal .teal-header-modal__footer {
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: flex-end;
+  margin-top: 30px;
+  padding: 0;
+  border-top: none;
+  background: #fff;
+}
+
+.cms-modal.content-modal .content-modal__footer-actions {
+  gap: 8px;
+}
+
+.cms-modal__content {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-wrap;
+}

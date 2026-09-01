@@ -1,6 +1,6 @@
 # JaKorea Monorepo
 
-Turborepo + pnpm 기반의 JaKorea 모노레포입니다. `apps/` 아래에 `admin`, `lms`, `platform` 3개의 Vite + TypeScript 애플리케이션이 들어 있습니다.
+Turborepo + pnpm 기반의 JaKorea 모노레포입니다. `apps/` 아래에 `admin`, `cms`, `platform` 3개의 Vite + TypeScript 애플리케이션이 들어 있습니다.
 
 ## 사전 준비
 
@@ -21,7 +21,7 @@ pnpm install
 | ----------------- | ------------------------------------------- |
 | `pnpm dev`        | 필요한 모든 앱을 watch 모드로 기동          |
 | `pnpm admin`      | 관리 콘솔(Admin)만 단독으로 기동            |
-| `pnpm lms`        | 플랫폼 어드민(CMS)만 단독으로 기동           |
+| `pnpm cms`        | 플랫폼 어드민(CMS)만 단독으로 기동           |
 | `pnpm platform`   | 사용자용 플랫폼만 단독으로 기동             |
 | `pnpm build`      | 모든 앱 빌드                                |
 | `pnpm lint`       | ESLint 검사                                 |
@@ -39,7 +39,7 @@ pnpm install
 | Workspace       | Dev command                     | 설명                               |
 | --------------- | --------------------------------| ---------------------------------- |
 | `admin`         | `pnpm --filter admin dev`       | 관리 콘솔 React 앱                 |
-| `lms`           | `pnpm --filter lms dev`         | 학습 관리자(CMS) React 앱          |
+| `cms`           | `pnpm --filter cms dev`         | 플랫폼 어드민(CMS) React 앱        |
 | `platform`      | `pnpm --filter platform dev`    | 사용자용 플랫폼 React 앱           |
 | `@jakorea/ui`   | `pnpm --filter @jakorea/ui dev` | UI 컴포넌트 패키지 TypeScript 감시 |
 | `@jakorea/utils`| `pnpm --filter @jakorea/utils dev` | 공통 유틸 패키지 TypeScript 감시 |
@@ -64,21 +64,23 @@ pnpm install
 - **로컬 실행**: `pnpm admin` (또는 `pnpm --filter admin dev`) → 기본 포트 `5173`.
 - **빌드/미리보기**: `pnpm --filter admin build`, `pnpm --filter admin preview`.
 - **품질 검사**: `pnpm --filter admin lint`, `pnpm --filter admin typecheck`.
+- **Vercel**: Root Directory `apps/admin`, Production Branch `development`. 상세는 [`apps/admin/docs/vercel.md`](./apps/admin/docs/vercel.md).
 
 ### CMS (플랫폼 어드민)
 
-- **위치**: `apps/lms`
-- **환경 변수 예시**:
+- **위치**: `apps/cms`
+- **환경 변수 예시**: `apps/cms/.env.example`을 참고해 `apps/cms/.env` 또는 `.env.local`에 값을 채웁니다.
 
   ```bash
-  # apps/lms/.env.local
-  VITE_API_BASE_URL=https://api.dev.jakorea.local
-  VITE_SSO_CLIENT_ID=jakorea-platform-admin-dev
+  # apps/cms/.env.local
+  VITE_API_BASE_URL=
+  VITE_OAUTH_REDIRECT_ORIGIN=http://localhost:3000
   ```
 
-- **로컬 실행**: `pnpm lms` (또는 `pnpm --filter lms dev`) → 기본 포트 `5173`.
-- **빌드/미리보기**: `pnpm --filter lms build`, `pnpm --filter lms preview`.
-- **품질 검사**: `pnpm --filter lms lint`, `pnpm --filter lms typecheck`.
+- **로컬 실행**: `pnpm cms` (또는 `pnpm --filter cms dev`) → 기본 포트 `3000`.
+- **빌드/미리보기**: `pnpm --filter cms build`, `pnpm --filter cms preview`.
+- **품질 검사**: `pnpm --filter cms lint`, `pnpm --filter cms typecheck`.
+- **Vercel**: Root Directory `apps/cms`, Production Branch `development`. 상세는 [`apps/cms/docs/vercel.md`](./apps/cms/docs/vercel.md).
 
 ### Platform (사용자용 플랫폼)
 
@@ -94,6 +96,7 @@ pnpm install
 - **로컬 실행**: `pnpm platform` (또는 `pnpm --filter platform dev`) → 기본 포트 `5173`.
 - **빌드/미리보기**: `pnpm --filter platform build`, `pnpm --filter platform preview`.
 - **품질 검사**: `pnpm --filter platform lint`, `pnpm --filter platform typecheck`.
+- **Vercel**: Root Directory `apps/platform`, Production Branch `development`. 상세는 [`apps/platform/docs/vercel.md`](./apps/platform/docs/vercel.md).
 
 ## 구조
 
@@ -109,12 +112,9 @@ jakorea/
 │
 ├── apps/
 │   ├── admin/              # 관리 콘솔 애플리케이션
-│   ├── cms/                # CMS (Automation) 애플리케이션
+│   ├── cms/                # CMS (플랫폼 어드민) 애플리케이션
 │   │   ├── .cursor/rules/  # CMS 전용 규칙
 │   │   └── docs/           # CMS 문서 (로드맵, 브리핑 등)
-│   ├── lms/                # 학습 관리자(LMS) 애플리케이션
-│   │   ├── .cursor/rules/   # LMS 전용 규칙
-│   │   └── docs/           # LMS 문서 (진행 상황, 분석 등)
 │   └── platform/           # 사용자용 플랫폼 애플리케이션
 │
 └── packages/

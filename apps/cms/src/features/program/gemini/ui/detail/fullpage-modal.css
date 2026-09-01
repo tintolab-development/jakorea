@@ -1,0 +1,16 @@
+.gemini-recruitment-detail-fullpage-modal .detail-fullpage-modal__content {
+  padding: 0 60px 48px;
+}
+
+.gemini-recruitment-detail__header-actions {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  padding: 16px 0;
+  box-sizing: border-box;
+}
+
+.gemini-recruitment-detail__placeholder {
+  min-height: 320px;
+}

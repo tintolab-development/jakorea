@@ -4,16 +4,13 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Tabs } from 'antd'
-import TemplateFormTab from './template-form-tab'
-import { FormTab } from './form-tab'
-import { IssuanceFormTab } from './issuance-form-tab'
 import { TemplateCreateModal } from '@/features/template/ui/modal/template-create-modal'
 import './template-list-page.css'
 import './template-form-tab.css'
 import { CmsButton } from '@/shared/ui'
+import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 
 const FORM_MANAGEMENT_BASE = '/templates/form-management'
 
@@ -22,9 +19,10 @@ type FormManagementQuery = {
   mode?: string
   type?: string
   id?: string
+  userPreview?: string
+  /** 양식 테스트 > 테이블 데모 상세 키 */
+  ftDemo?: string
 }
-// const KAKAO_NOTIFICATION = '/templates/kakao-notification'
-// const EMAIL_MANAGEMENT = '/templates/email-management'
 
 export function TemplateListPage() {
   const location = useLocation()
@@ -32,22 +30,38 @@ export function TemplateListPage() {
   const { params, setParams } = useQueryParams<FormManagementQuery>()
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
-  const formTabItems = useMemo(
+  const baseFormTabItems = useMemo(
     () => [
       { key: 'template-form', label: '작성 양식', path: FORM_MANAGEMENT_BASE },
       { key: 'issuance-form', label: '발급 양식', path: FORM_MANAGEMENT_BASE },
-      { key: 'form-test', label: '양식 테스트', path: FORM_MANAGEMENT_BASE },
     ],
     []
   )
 
   const isFormManagementSection = location.pathname.startsWith(FORM_MANAGEMENT_BASE)
+  const isFormTestTablePath = location.pathname.startsWith('/templates/form-test/')
+  const formTabItems = useMemo(
+    () => [
+      ...baseFormTabItems,
+      { key: 'form-test', label: '양식 테스트', path: FORM_MANAGEMENT_BASE },
+    ],
+    [baseFormTabItems]
+  )
+  const showFormTopTabs = isFormManagementSection || isFormTestTablePath
   const activeFormTabFromPath = 'template-form'
 
   const tabParam = params.tab
-  const activeKey = tabParam || activeFormTabFromPath
+  const activeKey = isFormTestTablePath
+    ? 'form-test'
+    : tabParam || activeFormTabFromPath
 
   useEffect(() => {
+    if (isFormTestTablePath) {
+      if (tabParam !== 'form-test') {
+        setParams({ tab: 'form-test' })
+      }
+      return
+    }
     if (!isFormManagementSection) return
 
     const validKeys = new Set(formTabItems.map(t => t.key))
@@ -64,14 +78,24 @@ export function TemplateListPage() {
     formTabItems,
     tabParam,
     isFormManagementSection,
+    isFormTestTablePath,
   ])
 
   const handleFormTabChange = (key: string) => {
-    const updates: Partial<FormManagementQuery> = { tab: key }
-    if (key !== 'template-form') {
-      updates.mode = undefined
-      updates.type = undefined
-      updates.id = undefined
+    if (isFormTestTablePath) {
+      const sp = new URLSearchParams()
+      sp.set('tab', key)
+      navigate(`${FORM_MANAGEMENT_BASE}?${sp.toString()}`, { replace: true })
+      return
+    }
+    const updates: Partial<FormManagementQuery> = {
+      tab: key,
+      // 탭 이동 시 작성·발급 상세 모달·신규 작성용 쿼리 제거 (탭 간 mode/id 누수 방지)
+      mode: undefined,
+      type: undefined,
+      id: undefined,
+      userPreview: undefined,
+      ftDemo: undefined,
     }
     setParams(updates)
 
@@ -83,56 +107,56 @@ export function TemplateListPage() {
 
   return (
     <>
-      {isFormManagementSection && (
+      {showFormTopTabs && (
         <>
-          <Tabs
+          <CmsTextTabs
             className="template-list-page__tabs"
+            variant="list"
             activeKey={activeKey}
             onChange={handleFormTabChange}
             items={formTabItems.map(t => ({ key: t.key, label: t.label }))}
-            tabBarExtraContent={
-              activeKey === 'template-form' ? (
+            trailing={
+              isFormManagementSection && activeKey === 'template-form' ? (
                 <CmsButton type="button" onClick={() => setCreateModalOpen(true)}>
                   + 신규 템플릿
                 </CmsButton>
               ) : null
             }
-            style={{ marginBottom: 20 }}
           />
-          <TemplateCreateModal
-            open={createModalOpen}
-            onCancel={() => setCreateModalOpen(false)}
-            onDirectRegister={target => {
-              setCreateModalOpen(false)
-              setParams({
-                tab: 'template-form',
-                mode: 'new',
-                type: target,
-                id: undefined,
-              })
-            }}
-            onDuplicateSuccess={newTemplateId => {
-              setCreateModalOpen(false)
-              setParams({
-                mode: 'edit',
-                id: newTemplateId,
-                type: undefined,
-              })
-            }}
-          />
+          {isFormManagementSection && (
+            <TemplateCreateModal
+              open={createModalOpen}
+              onCancel={() => setCreateModalOpen(false)}
+              onDirectRegister={target => {
+                setCreateModalOpen(false)
+                setParams(
+                  {
+                    tab: 'template-form',
+                    mode: 'new',
+                    type: target,
+                    id: undefined,
+                    userPreview: undefined,
+                  },
+                  { replace: false }
+                )
+              }}
+              onDuplicateSuccess={newTemplateId => {
+                setCreateModalOpen(false)
+                setParams(
+                  {
+                    mode: 'edit',
+                    id: newTemplateId,
+                    type: undefined,
+                    userPreview: undefined,
+                  },
+                  { replace: false }
+                )
+              }}
+            />
+          )}
         </>
       )}
-      {isFormManagementSection ? (
-        activeKey === 'issuance-form' ? (
-          <IssuanceFormTab />
-        ) : activeKey === 'form-test' ? (
-          <FormTab />
-        ) : (
-          <TemplateFormTab />
-        )
-      ) : (
-        <div />
-      )}
+      <Outlet />
     </>
   )
 }

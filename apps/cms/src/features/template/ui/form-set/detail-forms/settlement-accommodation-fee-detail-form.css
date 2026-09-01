@@ -1,0 +1,56 @@
+.settlement-accommodation-fee-detail-form {
+  width: 100%;
+  min-width: 0;
+}
+
+.settlement-accommodation-fee-detail-form .detail-info-form__body {
+  width: 100%;
+}
+
+.settlement-accommodation-fee-detail-form .detail-info-form__field {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  box-sizing: border-box;
+}
+
+.settlement-accommodation-fee-detail-form .detail-info-form__row--single .detail-info-form__field {
+  height: auto;
+  min-height: 64px;
+  max-height: none;
+}
+
+.settlement-accommodation-fee-detail-form .detail-info-form__field-label,
+.settlement-accommodation-fee-detail-form .detail-info-form__field-content {
+  padding-block: 10px;
+  padding-inline: 16px;
+}
+
+.settlement-accommodation-fee-detail-form__suffix {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.settlement-accommodation-fee-detail-form__suffix-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.settlement-accommodation-fee-detail-form__radios.app-radio-group {
+  gap: 16px;
+}
+
+.settlement-accommodation-fee-detail-form__view-muted {
+  color: #85969d;
+  opacity: 0.6;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}

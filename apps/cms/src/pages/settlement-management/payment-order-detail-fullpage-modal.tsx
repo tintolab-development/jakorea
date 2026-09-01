@@ -11,6 +11,7 @@ import {
   PaymentOrderDetailView,
   type PaymentOrderDetailViewProps,
 } from '@/features/settlement/ui/payment-record'
+import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { usePaymentOrderDetailFullPageModalState } from './use-payment-order-detail-fullpage-modal'
 
 export type PaymentOrderDetailFullPageModalProps = {
@@ -23,11 +24,44 @@ export type PaymentOrderDetailFullPageModalProps = {
   listPageDateRange: [Dayjs, Dayjs] | null
 }
 
-export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPageModalProps) {
-  const { canRender, sharedViewProps, viewBranch } = usePaymentOrderDetailFullPageModalState(props)
+function resolveDetailContentError(
+  detailLoading: boolean,
+  detailError: unknown,
+  hasDetail: boolean
+): string | null {
+  if (detailLoading) return null
+  if (detailError) {
+    return detailError instanceof Error ? detailError.message : '상세를 불러오지 못했습니다.'
+  }
+  if (!hasDetail) return '상세를 불러오지 못했습니다.'
+  return null
+}
 
-  if (!canRender || !viewBranch) {
+export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPageModalProps) {
+  const { isOpen, onClose } = props
+  const { detailLoading, detailError, sharedViewProps, viewBranch } =
+    usePaymentOrderDetailFullPageModalState(props)
+
+  if (!isOpen) {
     return null
+  }
+
+  const contentError = resolveDetailContentError(
+    detailLoading,
+    detailError,
+    Boolean(viewBranch?.detail)
+  )
+
+  if (!viewBranch) {
+    return (
+      <DetailFullPageModal
+        open={isOpen}
+        onClose={onClose}
+        title="지급 현황 상세"
+        loading={detailLoading}
+        error={contentError}
+      />
+    )
   }
 
   return (
@@ -35,6 +69,8 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
       {...({
         ...sharedViewProps,
         ...viewBranch,
+        contentLoading: detailLoading,
+        contentError,
       } as PaymentOrderDetailViewProps)}
     />
   )

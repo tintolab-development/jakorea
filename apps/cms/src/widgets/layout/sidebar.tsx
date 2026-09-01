@@ -1,12 +1,18 @@
 /** LNB: `getMenuItemsByRole` 결과를 Ant Design Menu로 렌더링. 헤더는 상단 고정. */
 
 import { Layout, Menu } from 'antd'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useState, useMemo, useEffect, type CSSProperties } from 'react'
+import { useState, useMemo, useEffect, useCallback, type CSSProperties } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { getMenuItemsByRole, isProgramManagementLnbPath } from '@/shared/config/menu-config'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
-import { memberListHref, normalizeMemberListKind } from '@/shared/config/member-list-kinds'
+import { invalidateMemberListQueries } from '@/features/user/api/invalidate-member-list-queries'
+import { getMenuItemsByRole } from '@/shared/config/menu-config'
+import {
+  isMemberListMenuHref,
+  memberListHref,
+  normalizeMemberListKind,
+} from '@/shared/config/member-list-kinds'
+import { MenuDropdownChevronIcon } from '@/shared/ui/icons'
 import './sidebar.css'
 import { Header } from './header'
 
@@ -15,6 +21,7 @@ const { Sider } = Layout
 export function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
+  const queryClient = useQueryClient()
   const { user } = useAuthStore()
 
   const menuItems = useMemo(() => {
@@ -26,17 +33,24 @@ export function Sidebar() {
     const keys: string[] = []
 
     // ADMIN: 프로그램 관리 그룹 (/programs/education, /programs/:id 등)
+    const isGeminiProgramScope =
+      user?.role === 'ADMIN' && path.startsWith('/programs/gemini')
     const isProgramMgmt =
       user?.role === 'ADMIN' &&
-      path.startsWith('/programs') &&
-      !path.startsWith('/programs/my') &&
-      !path.startsWith('/programs/favorites')
+      ((path.startsWith('/programs') &&
+        !path.startsWith('/programs/my') &&
+        !path.startsWith('/programs/favorites')) ||
+        isGeminiProgramScope)
     if (isProgramMgmt) {
       keys.push('programs-group')
     }
 
-    if (user?.role === 'ADMIN' && path.startsWith('/templates')) {
-      keys.push('templates-group')
+    if (isGeminiProgramScope) {
+      keys.push('gemini-program-group')
+    }
+
+    if (user?.role === 'ADMIN' && path.startsWith('/message-management')) {
+      keys.push('message-management-group')
     }
 
     if (
@@ -70,6 +84,10 @@ export function Sidebar() {
 
     if (user?.role === 'ADMIN' && path.startsWith('/logs')) {
       keys.push('logs-group')
+    }
+
+    if (user?.role === 'ADMIN' && path.startsWith('/admin/notifications')) {
+      keys.push('notification-messages-group')
     }
 
     if (path.startsWith('/settlement-management')) {
@@ -109,6 +127,7 @@ export function Sidebar() {
       'volunteer',
       'general',
       'company-school',
+      'trained-teachers',
       'ujat',
       'gemini',
       'education',
@@ -126,14 +145,11 @@ export function Sidebar() {
     }
 
     if (user?.role === 'ADMIN' && path.startsWith('/templates/')) {
-      if (path.startsWith('/templates/form-management')) {
+      if (path.startsWith('/templates/form-test/')) {
         return ['/templates/form-management']
       }
-      if (path.startsWith('/templates/kakao-notification')) {
-        return ['/templates/kakao-notification']
-      }
-      if (path.startsWith('/templates/email-management')) {
-        return ['/templates/email-management']
+      if (path.startsWith('/templates/form-management')) {
+        return ['/templates/form-management']
       }
     }
 
@@ -154,6 +170,11 @@ export function Sidebar() {
     color: 'var(--color-sidebar-text)',
   }
 
+  const expandIcon = useCallback(
+    ({ isOpen }: { isOpen?: boolean }) => <MenuDropdownChevronIcon open={!!isOpen} />,
+    []
+  )
+
   return (
     <Sider width={sidebarWidth} className="sidebar-container" style={sidebarChrome}>
       <Header />
@@ -166,22 +187,15 @@ export function Sidebar() {
           className="sidebar-menu"
           style={sidebarChrome}
           items={menuItems}
+          expandIcon={expandIcon}
           onClick={({ key }) => {
-            // 기존: if (typeof key === 'string' && key.startsWith('/')) navigate(key)
             if (typeof key !== 'string' || !key.startsWith('/')) return
-            if (isProgramManagementLnbPath(key)) {
-              window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
-              return
-            }
-            if (
-              key === '/templates/form-management' ||
-              key === '/templates/kakao-notification' ||
-              key === '/templates/email-management'
-            ) {
-              window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
-              return
-            }
+            const alreadyOnExactHref = `${location.pathname}${location.search}` === key
             navigate(key)
+            // 동일 유형 메뉴 재클릭은 URL이 안 바뀌어 observer remount가 없다.
+            if (alreadyOnExactHref && isMemberListMenuHref(key)) {
+              invalidateMemberListQueries(queryClient)
+            }
           }}
         />
       </div>

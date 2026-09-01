@@ -4,10 +4,11 @@
  * Task 2.4.1: file 타입 지원 추가
  */
 
-import { Form, Input, InputNumber, Select, Checkbox, Upload, Button, message } from 'antd'
+import { Form, Input, Select, Checkbox, Upload, Button } from 'antd'
 import { UploadOutlined } from '@ant-design/icons'
-import { MESSAGES } from '@/shared/constants'
 import type { UploadFile } from 'antd/es/upload/interface'
+import { CmsDateTextInput } from '@/shared/ui/date-text-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import type { FormFieldDef } from '@/types/form-template'
 
 const { TextArea } = Input
@@ -65,9 +66,12 @@ export function DynamicFormFields({
               />
             )}
             {field.type === 'number' && (
-              <InputNumber
-                value={(val as number) ?? undefined}
-                onChange={v => update(field.id, v)}
+              <CmsNumericInput
+                mode="decimal"
+                value={val === undefined || val === null ? '' : String(val)}
+                onValueChange={rawValue =>
+                  update(field.id, rawValue === '' ? undefined : Number(rawValue))
+                }
                 placeholder={field.placeholder}
                 style={{ width: '100%' }}
               />
@@ -88,10 +92,13 @@ export function DynamicFormFields({
               </Checkbox>
             )}
             {field.type === 'date' && (
-              <Input
-                type="date"
+              <CmsDateTextInput
                 value={(val as string) ?? ''}
-                onChange={e => update(field.id, e.target.value || undefined)}
+                onValueChange={next =>
+                  update(field.id, next === '' ? undefined : next.replace(/\./g, '-'))
+                }
+                placeholder={field.placeholder ?? 'YYYY.MM.DD'}
+                width="100%"
               />
             )}
             {field.type === 'file' && (
@@ -101,7 +108,6 @@ export function DynamicFormFields({
                 beforeUpload={file => {
                   const maxSize = field.fileMaxSize ?? DEFAULT_FILE_MAX_SIZE
                   if (file.size > maxSize) {
-                    message.error(MESSAGES.warning.fileSizeMax5MB)
                     return false
                   }
                   update(field.id, file)

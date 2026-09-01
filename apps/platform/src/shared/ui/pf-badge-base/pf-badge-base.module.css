@@ -1,0 +1,17 @@
+.root {
+  display: inline-flex;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  align-items: center;
+  border-radius: var(--radius-999);
+  vertical-align: middle;
+}
+
+/* typography line-height(150~160%)가 pill 내부 텍스트를 위로 밀어 올림 */
+.root:global(.typo-bd-md-sb),
+.root:global(.typo-bd-sm-sb),
+.root:global(.typo-label-md),
+.root:global(.typo-caption-sb) {
+  line-height: 1;
+}

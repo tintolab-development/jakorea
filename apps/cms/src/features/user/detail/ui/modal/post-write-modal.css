@@ -44,7 +44,7 @@
   gap: 10px;
 }
 
-.post-write-modal__footer-actions .app-button--large {
+.post-write-modal__footer-actions .cms-button--large {
   width: 120px;
   min-width: 120px;
   height: 40px;
@@ -127,7 +127,7 @@
   border-color: var(--color-modal-header, #01a1af);
 }
 
-/* 게시글 내용: 높이 280px 고정, padding 상하 12 / 좌 16 / 우 14, border-radius 6px */
+/* 게시글 내용: 높이 280px 고정, padding 상하 12 / 좌 16 / 우 14 */
 .post-write-modal__textarea.post-write-modal__textarea,
 .post-write-modal__textarea.ant-input {
   width: 100% !important;
@@ -136,8 +136,9 @@
   max-height: 280px !important;
   resize: none !important;
   padding: 12px 14px 12px 16px !important;
-  border-radius: 6px;
-  border-color: var(--color-border-light, #e8e8e8);
+  border-radius: 8px;
+  border: 1px solid #c4cdd1;
+  background: #fff;
   box-sizing: border-box;
 }
 
@@ -159,64 +160,74 @@
   line-height: 150%;
 }
 
-/* 첨부 파일: 132px 고정, 좌측 라벨 포함 래퍼 보더 */
+/* 첨부 파일 — file-attachment 패턴: 내용 높이 auto, 좌측 라벨 + 우측 본문 */
 .post-write-modal__attachment {
   width: 100%;
-  height: 132px;
-  min-height: 132px;
-  max-height: 132px;
-  border: 1px solid #d9d9d9;
-  border-radius: 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 12px;
   box-sizing: border-box;
   overflow: hidden;
+  background: var(--main-WT, #fff);
 }
 
 .post-write-modal__attachment-row {
-  height: 100%;
   display: flex;
   align-items: stretch;
+  min-height: 0;
 }
 
-/* 좌측: 120px, 전체 높이 채움, #EDF0F2 배경 */
 .post-write-modal__attachment-label {
   flex-shrink: 0;
   width: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-text-label, #3d3d3d);
-  background: #edf0f2;
+  padding: 12px 16px;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 150%;
+  color: var(--main-BK, #3d3d3d);
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  );
 }
 
-/* 우측: 파일 목록 영역, 스크린샷 기준 내부 패딩 16px */
 .post-write-modal__attachment-body {
   flex: 1;
   min-width: 0;
-  height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  gap: 10px;
+  padding: 12px;
   box-sizing: border-box;
-  overflow: hidden;
 }
 
 .post-write-modal__file-select.file-select-field {
-  flex: 1 1 auto;
-  min-height: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.post-write-modal__file-select .file-select-field__names {
-  flex: 1 1 auto;
+  width: 100%;
 }
 
 .post-write-modal__file-select .file-select-field__actions {
-  margin-top: auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.post-write-modal__file-select:not(.file-select-field--empty) .file-select-field__actions {
+  margin-top: 0;
+}
+
+.post-write-modal__file-select .file-select-field__guide {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
 }
 
 .post-write-modal__file-select.file-select-field--edit .file-select-field__btn:not(:disabled) {

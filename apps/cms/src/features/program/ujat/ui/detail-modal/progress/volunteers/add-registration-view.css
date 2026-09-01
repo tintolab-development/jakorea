@@ -1,0 +1,260 @@
+/**
+ * 프로그램 상세 풀페이지 우측 — 봉사자 추가 등록(신청 폼, 스크린샷 레이아웃)
+ */
+
+.ujat-volunteer-add-registration--embed {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow-x: clip;
+  background: var(--main-WT, #fff);
+}
+
+.ujat-volunteer-add-registration__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+  padding-top: 30px;
+  overflow-x: clip;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.ujat-volunteer-add-registration__form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.ujat-volunteer-add-registration__section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ujat-volunteer-add-registration__section > .detail-info-form__header.form-paragraph-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ujat-volunteer-add-registration__section
+  > .detail-info-form__header.form-paragraph-section-header
+  .detail-info-form__title {
+  margin: 0;
+}
+
+.ujat-volunteer-add-registration__section
+  > .detail-info-form__header.form-paragraph-section-header
+  .detail-info-form__title
+  .detail-info-form__field-required {
+  margin-left: 2px;
+}
+
+/* 템플릿 가로 테이블(개인정보·제3자) — 카드 헤더 없이 본문만 */
+.ujat-volunteer-add-registration__template-block {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ujat-volunteer-add-registration__template-block .form-editor-horizontal-table-wrap,
+.ujat-volunteer-add-registration__template-block .form-editor-horizontal-table {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.ujat-volunteer-add-registration__template-block .form-editor-horizontal-table {
+  overflow: hidden;
+}
+
+.ujat-volunteer-add-registration__template-block .form-editor-horizontal-table__shell {
+  border-radius: 8px;
+}
+
+.ujat-volunteer-add-registration__template-block .form-editor-horizontal-table__th,
+.ujat-volunteer-add-registration__template-block .form-editor-horizontal-table__td {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ujat-volunteer-add-registration__template-block .form-editor-horizontal-table__field-box {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ujat-volunteer-add-registration__terms-consent-heading.detail-info-form > .detail-info-form__body {
+  border: none;
+  background: transparent;
+  overflow: visible;
+}
+
+.ujat-volunteer-add-registration__terms-consent-heading .detail-info-form__header {
+  margin-bottom: 10px;
+}
+
+.ujat-volunteer-add-registration__terms-consent-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ujat-volunteer-add-registration__terms-consent-form-stack > .detail-info-form {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ujat-volunteer-add-registration__terms-consent-form-stack .detail-info-form__field-content--edit {
+  align-items: center;
+}
+
+.ujat-volunteer-add-registration__consent-actions {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ujat-volunteer-add-registration__consent-actions.ant-space {
+  align-items: center;
+}
+
+.ujat-volunteer-add-registration__consent-empty-half {
+  display: block;
+  width: 100%;
+  min-height: 1px;
+}
+
+/* 기본 정보 — 임시 배정 기관 확인 상세와 동일 섹션·form-stack */
+.ujat-volunteer-add-registration__section--basic-info {
+  gap: 10px;
+}
+
+.ujat-volunteer-add-registration__section--basic-info > .detail-info-form__title {
+  margin: 0;
+}
+
+.ujat-volunteer-add-registration__section--basic-info
+  > .detail-info-form__title
+  .detail-info-form__field-required {
+  margin-left: 2px;
+}
+
+.ujat-volunteer-add-registration__basic-info-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ujat-volunteer-add-registration__basic-info-form-stack > .detail-info-form {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* 기본 정보 격자 — 고정 width 입력·2열 행이 영역을 넘지 않도록 */
+.ujat-volunteer-add-registration__section--basic-info .detail-info-form-inputs-wrapper-no-gap {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ujat-volunteer-add-registration__section--basic-info
+  .detail-info-form-inputs-wrapper-no-gap
+  > .cms-input,
+.ujat-volunteer-add-registration__section--basic-info
+  .detail-info-form-inputs-wrapper-no-gap
+  > .cms-select,
+.ujat-volunteer-add-registration__section--basic-info .detail-info-form__field-content > .cms-input,
+.ujat-volunteer-add-registration__section--basic-info
+  .detail-info-form__field-content
+  > .cms-select,
+.ujat-volunteer-add-registration__section--basic-info
+  .detail-info-form__field-content
+  .cms-input--explicit-width,
+.ujat-volunteer-add-registration__section--basic-info
+  .detail-info-form__field-content
+  .cms-select--explicit-width {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
+  width: 100% !important;
+}
+
+.ujat-volunteer-add-registration__section--basic-info
+  .detail-info-form__field-content
+  .cms-radio-group {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.ujat-volunteer-add-registration__section--basic-info
+  .detail-info-form__row--double
+  > .detail-info-form__field {
+  min-width: 0;
+}
+
+/* 약관·기타 — DetailInfoForm 단독 래핑(선택) */
+.ujat-volunteer-add-registration__section:not(.ujat-volunteer-add-registration__section--basic-info)
+  > .detail-info-form {
+  background: var(--main-WT, #fff);
+  border-radius: 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  overflow: hidden;
+}
+
+.ujat-volunteer-add-registration--embed .ujat-volunteer-add-registration__consent-actions {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ujat-volunteer-add-registration__footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0 24px;
+  background: var(--main-WT, #fff);
+  box-sizing: border-box;
+}
+
+.program-detail-fullpage-modal__content:has(.ujat-volunteer-add-registration--embed) {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.program-detail-fullpage-modal__content:has(.ujat-volunteer-add-registration--embed)
+  > .program-detail-fullpage-modal__info-tab {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}

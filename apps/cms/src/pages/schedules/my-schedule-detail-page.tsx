@@ -6,9 +6,11 @@
 
 import { useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { Card, Space, Typography, Descriptions, Tag, Result, Spin, Alert } from 'antd'
+import { Badge, Card, Space, Typography, Tag, Result, Spin, Alert } from 'antd'
+import type { BadgeProps } from 'antd'
 import { SessionFormatBadge } from '@/shared/components/session-format-badge'
-import { StatusDisplay, SingleCTA } from '@/shared/ui'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { SingleCTA } from '@/shared/ui'
 import { mockSchedulesMap, mockProgramsMap, mockApplications } from '@/data/mock'
 import dayjs from 'dayjs'
 import type { Schedule } from '@/types/domain'
@@ -27,7 +29,7 @@ const scheduleStatusLabels: Record<ScheduleStatus | string, string> = {
 }
 
 // 일정 상태 색상
-const scheduleStatusColors: Record<ScheduleStatus | string, string> = {
+const scheduleStatusColors: Record<ScheduleStatus, BadgeProps['color']> = {
   SCH_01: 'blue',
   SCH_02: 'processing',
   SCH_03: 'success',
@@ -131,15 +133,13 @@ export function MyScheduleDetailPage() {
         {/* 일정 상태 요약 영역 (최상단, 가장 강조) - Phase 5.6 */}
         <Card>
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-            <StatusDisplay
-              status={status}
-              statusLabels={scheduleStatusLabels}
-              statusColors={scheduleStatusColors}
-            />
+            <Space>
+              <Badge color={scheduleStatusColors[status]} />
+              <Text>{scheduleStatusLabels[status]}</Text>
+            </Space>
             {/* SCH_04(취소) 또는 변경 이슈가 있는 경우 reason_public 표시 - Phase 5.6 */}
             {(status as string) === 'SCH_04' && (
               <Alert
-                message="일정이 취소되었습니다"
                 description={(schedule as any).reasonPublic || '사유를 확인할 수 없습니다.'}
                 type="error"
                 showIcon
@@ -150,38 +150,54 @@ export function MyScheduleDetailPage() {
         </Card>
 
         {/* 일정 핵심 정보 영역 */}
-        <Card title="일정 정보">
-          <Descriptions column={1} bordered>
-            <Descriptions.Item label="프로그램명">
-              <Text strong>{programName}</Text>
-            </Descriptions.Item>
-            <Descriptions.Item label="참여 역할">
-              <Tag color="blue">{role}</Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="일정 제목">{schedule.title}</Descriptions.Item>
-            <Descriptions.Item label="일자">
-              {scheduleDate.format('YYYY년 MM월 DD일')}
-            </Descriptions.Item>
-            <Descriptions.Item label="시간">
-              {schedule.startTime} - {schedule.endTime}
-            </Descriptions.Item>
-            {schedule.location && (
-              <Descriptions.Item label="장소">
-                <Text>{schedule.location}</Text>
-              </Descriptions.Item>
-            )}
-            {schedule.onlineLink && (
-              <Descriptions.Item label="진행 방식">
-                <SessionFormatBadge isOnline />
-                {canJoinOnline && (
-                  <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
-                    (온라인 참여 링크는 아래 버튼을 통해 접속하실 수 있습니다)
-                  </Text>
-                )}
-              </Descriptions.Item>
-            )}
-          </Descriptions>
-        </Card>
+        <DetailInfoForm title="일정 정보" mode="view">
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field label="프로그램명" view={<Text strong>{programName}</Text>} fullRow />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field label="참여 역할" view={<Tag color="blue">{role}</Tag>} fullRow />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field label="일정 제목" view={schedule.title} fullRow />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="일자"
+              view={scheduleDate.format('YYYY년 MM월 DD일')}
+              fullRow
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="시간"
+              view={`${schedule.startTime} - ${schedule.endTime}`}
+              fullRow
+            />
+          </DetailInfoForm.Row>
+          {schedule.location ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="장소" view={schedule.location} fullRow />
+            </DetailInfoForm.Row>
+          ) : null}
+          {schedule.onlineLink ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="진행 방식"
+                fullRow
+                view={
+                  <>
+                    <SessionFormatBadge isOnline />
+                    {canJoinOnline ? (
+                      <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
+                        (온라인 참여 링크는 아래 버튼을 통해 접속하실 수 있습니다)
+                      </Text>
+                    ) : null}
+                  </>
+                }
+              />
+            </DetailInfoForm.Row>
+          ) : null}
+        </DetailInfoForm>
 
         {/* 참여 안내 / 준비 정보 영역 (조건부) */}
         {program?.description && (

@@ -10,18 +10,32 @@ import { PROGRAM_LECTURE_HISTORY_DEMO_INSTRUCTOR_USER_ID } from './program-lectu
 /** 진월초등학교 — 고정 user id (소속 교사 mock·강사 `affiliatedSchoolUserId` 연결) */
 export const MOCK_SCHOOL_JINWOL_USER_ID = 'mock-school-jinwol-001'
 
-/** 최강사(instructor1) — 고정 CMS User.id (소속 교사 `linkedUserId`·딥링크 안정화) */
+/** 최강사(instructor1) — 고정 CMS User.id (소속 교사 `linkedUserId`·딥링크 안정화) · BE seed 172107 / IR-EXCLUDED-DUAL */
 export const MOCK_INSTRUCTOR_CHOI_USER_ID = 'mock-instructor-choi-001'
 
-/** 강사 mock 2·3 — 고정 id (소속 교사 `linkedUserId` 연동) */
+/** 강사 mock 2·3 — 고정 id (소속 교사 `linkedUserId` 연동) · BE seed 172101 / 172103 */
 export const MOCK_INSTRUCTOR_JUNG_USER_ID = 'mock-instructor-jung-001'
 export const MOCK_INSTRUCTOR_KANG_USER_ID = 'mock-instructor-kang-001'
 
-/** 학교(교사) 회원 목록 1~4행 — 고정 id (소속 교사·프로그램 신청 mock 연동) */
+/** 학교(교사) 회원 목록 1~4행 — 고정 id · BE org 171501 (서울초) / 171502 (진월초) — @see member-management-seed-catalog.ts */
 export const MOCK_SCHOOL_SEOUL_USER_ID = 'mock-school-seoul-001'
+
+/** BE directory seed MD-INDIVIDUAL (171001) — 상세 수강·봉사 이력 showcase */
+export const MOCK_MD_INDIVIDUAL_USER_ID = 'mock-md-individual-171001'
+
+/** BE directory seed MD-INSTRUCTOR-REVOKED (171005) */
+export const MOCK_MD_INSTRUCTOR_REVOKED_USER_ID = 'mock-md-instructor-revoked-171005'
+
+/** BE directory seed MD-ADMIN (171601) — admin1@jakorea.org */
+export const MOCK_MD_ADMIN_USER_ID = 'mock-md-admin-171601'
 export const MOCK_SCHOOL_BUSAN_USER_ID = 'mock-school-busan-001'
 export const MOCK_SCHOOL_DAEGU_USER_ID = 'mock-school-daegu-001'
 export const MOCK_SCHOOL_INCHEON_USER_ID = 'mock-school-incheon-001'
+
+/** 소속 교사 — 교사(겸직x) 프로그램 참여 이력 mock (`mock-aff-link-001` 한서울) */
+export const MOCK_AFFILIATED_TEACHER_SCHOOL_ONLY_USER_ID = 'mock-aff-link-001' as const
+/** 소속 교사 — 교사(겸직 o) 프로그램 참여 이력 mock (`mock-aff-link-002` 김마포) */
+export const MOCK_AFFILIATED_TEACHER_DUAL_USER_ID = 'mock-aff-link-002' as const
 
 function generateUUID(): string {
   // 새로고침마다 동일한 mock ID를 보장해 URL 딥링크(id=...)를 안정적으로 복원한다.
@@ -42,14 +56,20 @@ function generatePastDate(daysAgo: number = 30): string {
 
 const mockAdmins: User[] = [
   {
-    id: generateUUID(),
+    id: MOCK_MD_ADMIN_USER_ID,
     email: 'admin1@jakorea.org',
-    password: 'admin123!', // Mock 데이터용
+    password: 'admin1234!', // Mock 데이터용
     name: '김관리',
     nameEn: 'Kim Gwan-ri',
     role: 'ADMIN',
     adminLevel: 'MASTER',
-    programRoles: { 'program-1': 'OWNER' },
+    programRoles: {
+      'economy-prog-001': 'OWNER',
+      'economy-prog-002': 'OWNER',
+      'economy-prog-003': 'PARTNER',
+      'economy-prog-004': 'ASSISTANT',
+      'economy-prog-005': 'OWNER',
+    },
     isActive: true,
     lastLoginAt: generatePastDate(1),
     createdAt: generatePastDate(365),
@@ -59,7 +79,12 @@ const mockAdmins: User[] = [
     birthDate: '1980-05-12',
     detailAddress: '서울특별시 강남구 테헤란로 123',
     affiliation: 'JAKorea | 총괄 관리자',
-    socialAccounts: ['구글'],
+    socialAccounts: ['카카오', '네이버', '구글'],
+    termsAgreements: [
+      { termsType: 'SERVICE_TERMS', agreed: true, agreedAt: '2026-01-15T09:15:42.000Z' },
+      { termsType: 'PERSONAL_INFO_COLLECTION', agreed: true, agreedAt: '2026-01-15T09:15:42.000Z' },
+      { termsType: 'MARKETING', agreed: true, agreedAt: '2026-01-15T09:15:42.000Z' },
+    ],
     adminComment: '전사 관리자 운영 기준 확인 후 권한 변경 바랍니다.',
     listMetrics: {
       adminPermissionVariant: 'manager',
@@ -121,6 +146,31 @@ const mockAdmins: User[] = [
       managedProgramCount: 1,
     },
   },
+  {
+    id: generateUUID(),
+    email: 'admin.pending@jakorea.org',
+    password: 'admin123!',
+    name: '승인대기관리자',
+    nameEn: 'Pending Admin',
+    role: 'ADMIN',
+    permissionApprovalStatus: 'PENDING',
+    adminLevel: 'GENERAL',
+    programRoles: {},
+    isActive: true,
+    createdAt: generatePastDate(3),
+    updatedAt: generatePastDate(3),
+    phone: '02-1234-5005',
+    gender: '여성',
+    birthDate: '1990-07-20',
+    detailAddress: '서울특별시 마포구 상암동 100',
+    affiliation: 'JAKorea | 승인 대기',
+    adminComment: '관리자 승인 대기 로그인 안내 UI 테스트용 계정입니다.',
+    listMetrics: {
+      adminPermissionVariant: 'viewer',
+      managedProgramInProgressCount: 0,
+      managedProgramCount: 0,
+    },
+  },
 ]
 
 // ============================================
@@ -152,7 +202,7 @@ const mockInstructors: User[] = [
     bio: '안녕하세요, 경제교육 전문 강사 최강사입니다.',
     birthDate: '1985-03-20',
     gender: '남성',
-    affiliation: '경제교육연구소 | 수석강사',
+    affiliation: '진월초등학교, 제미나이 강사단',
     socialAccounts: ['구글', '카카오'],
     instructorInfo: {
       bankName: '국민은행',
@@ -161,7 +211,8 @@ const mockInstructors: User[] = [
       isBusinessIncome: false,
     },
     listMetrics: {
-      instructorTypeLabel: '1급 강사비',
+      instructorFeeGradeLabel: '1급 강사비',
+      permissionApplicationTypeLabel: '제미나이 강사단',
       settlementStatusLabel: '계좌 지급 완료',
       jaEvaluationGrade: 'A',
       employmentStatusLabel: '재직 중',
@@ -201,7 +252,7 @@ const mockInstructors: User[] = [
       isBusinessIncome: true,
     },
     listMetrics: {
-      instructorTypeLabel: '2급 강사비',
+      instructorFeeGradeLabel: '2급 강사비',
       permissionApplicationTypeLabel: '특강 강사',
       settlementStatusLabel: '확인 대기 중',
       jaEvaluationGrade: 'B',
@@ -222,7 +273,7 @@ const mockInstructors: User[] = [
     permissionApprovalStatus: 'REJECTED',
     instructorId: 'instructor-3-fixed-id-for-testing',
     interviewStatus: 'PENDING', // 면접 대기 중
-    participationHistory: 0, // 참여이력 없음
+    participationHistory: 5,
     isActive: true,
     lastLoginAt: generatePastDate(10),
     createdAt: generatePastDate(30),
@@ -231,7 +282,7 @@ const mockInstructors: User[] = [
     gender: '남성',
     birthDate: '1988-12-01',
     detailAddress: '대전광역시 유성구 과학로 555',
-    affiliation: '경제교육 강사협회 | 준회원',
+    affiliation: '서울초등학교 | 교사',
     instructorInfo: {
       bankName: '우리은행',
       accountHolder: '강선생',
@@ -239,7 +290,8 @@ const mockInstructors: User[] = [
       isBusinessIncome: false,
     },
     listMetrics: {
-      instructorTypeLabel: '3급 강사비',
+      instructorFeeGradeLabel: '3급 강사비',
+      permissionApplicationTypeLabel: 'JA 강사단',
       jaEvaluationGrade: 'C',
       employmentStatusLabel: '재직 중',
       instructorAssignedGrade: '5학년 담임',
@@ -725,6 +777,7 @@ const mockIndividuals: User[] = [
     createdAt: generatePastDate(60),
     updatedAt: generatePastDate(1),
     phone: '010-1111-2222',
+    id1365: '0915123456',
     birthDate: '2008-01-15',
     gender: '남성',
     detailAddress: '서울특별시 강남구 역삼동 123-45',
@@ -765,11 +818,20 @@ const mockIndividuals: User[] = [
     createdAt: generatePastDate(30),
     updatedAt: generatePastDate(7),
     phone: '010-3333-4444',
-    birthDate: '2005-07-22',
+    birthDate: '2015-09-15',
     gender: '남성',
     detailAddress: '광주광역시 북구 오룡동 77',
-    affiliation: 'OO대학교 | 2학년',
+    affiliation: 'OO초등학교 | 4학년',
     socialAccounts: ['구글'],
+    under14: true,
+    guardianConsentRequired: true,
+    guardianInfo: {
+      guardianName: '한보호',
+      relation: '부',
+      phone: '010-5555-6666',
+      consentStatus: 'AGREED',
+      consentedAt: generatePastDate(30),
+    },
   },
 ]
 
@@ -777,6 +839,7 @@ const mockIndividuals: User[] = [
  * 소속 교사 `linkedUserId` 전용 (`mock-aff-link-001` ~ `015`)
  * 학교 `schoolInfo.affiliatedTeachers` 행은 동일 `linkedUserId`의 본 레코드와 표시를 맞춤(이름·연락처·이메일·학년·재직·가입일=createdAt 동일 `generatePastDate` 인자).
  * 역할은 INSTRUCTOR + `school_teacher` 또는 `instructor_dual`만 연결한다. 순수 강사(`instructor_only`)는 학교 소속이 아니므로 목록에 `linkedUserId`를 두지 않는다.
+ * 프로그램 참여 이력 mock: `mock-aff-link-001`(교사·겸직x), `mock-aff-link-002`(교사·겸직 o) — `affiliated-teacher-program-history-demo.ts`
  */
 const mockAffiliatedTeacherLinkUsers: User[] = [
   {
@@ -790,7 +853,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     instructorId: 'instructor-mock-aff-link-001',
     instructorMemberProfile: 'school_teacher',
     interviewStatus: 'APPROVED',
-    participationHistory: 0,
+    participationHistory: 5,
     isActive: true,
     lastLoginAt: generatePastDate(11),
     createdAt: generatePastDate(121),
@@ -799,6 +862,7 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     birthDate: '1990-01-15',
     gender: '남성',
     detailAddress: '서울특별시 마포구',
+    affiliatedSchoolUserId: MOCK_SCHOOL_SEOUL_USER_ID,
     affiliatedSchoolName: '서울초등학교',
     listMetrics: {
       employmentStatusLabel: '재직 중',
@@ -815,9 +879,9 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     role: 'INSTRUCTOR',
     permissionApprovalStatus: 'APPROVED',
     instructorId: 'instructor-mock-aff-link-002',
-    instructorMemberProfile: 'school_teacher',
+    instructorMemberProfile: 'instructor_dual',
     interviewStatus: 'APPROVED',
-    participationHistory: 0,
+    participationHistory: 5,
     isActive: true,
     lastLoginAt: generatePastDate(12),
     createdAt: generatePastDate(122),
@@ -826,10 +890,20 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
     birthDate: '1991-02-20',
     gender: '여성',
     detailAddress: '서울특별시 마포구',
+    affiliatedSchoolUserId: MOCK_SCHOOL_SEOUL_USER_ID,
     affiliatedSchoolName: '서울초등학교',
+    instructorInfo: {
+      bankName: '신한은행',
+      accountHolder: '김마포',
+      accountNumber: '110-123-456789',
+      isBusinessIncome: false,
+    },
     listMetrics: {
       employmentStatusLabel: '재직 중',
       instructorAssignedGrade: '5학년',
+      instructorFeeGradeLabel: '2급 강사비',
+      permissionApplicationTypeLabel: 'JA 강사단',
+      jaEvaluationGrade: 'B',
     },
     socialAccounts: ['구글'],
   },
@@ -1191,6 +1265,62 @@ const mockAffiliatedTeacherLinkUsers: User[] = [
 // ============================================
 
 const extraMockUsers: User[] = [
+  // BE seed MD-INDIVIDUAL (171001) — 김개인 · 수강·봉사 5단계 이력
+  {
+    id: MOCK_MD_INDIVIDUAL_USER_ID,
+    email: 'individual-md-171001@jakorea.org',
+    password: 'individual123!',
+    name: '김개인',
+    nameEn: 'Kim Gae-in',
+    role: 'INDIVIDUAL',
+    permissionApprovalStatus: 'APPROVED',
+    isActive: true,
+    lastLoginAt: generatePastDate(3),
+    createdAt: generatePastDate(90),
+    updatedAt: generatePastDate(3),
+    phone: '010-1710-0101',
+    birthDate: '2007-03-12',
+    gender: '여성',
+    detailAddress: '서울특별시 마포구 상암동 100',
+    affiliation: '서울 OO중학교 | 2학년',
+    socialAccounts: ['카카오'],
+    participationHistory: 5,
+  },
+  // BE seed MD-INSTRUCTOR-REVOKED (171005) — 박박탈 · 권한박탈 후 이력 유지
+  {
+    id: MOCK_MD_INSTRUCTOR_REVOKED_USER_ID,
+    email: 'instructor-revoked-171005@jakorea.org',
+    password: 'instructor123!',
+    name: '박박탈',
+    nameEn: 'Park Revoked',
+    role: 'INSTRUCTOR',
+    permissionApprovalStatus: 'REJECTED',
+    instructorMemberProfile: 'instructor_only',
+    instructorId: 'instructor-revoked-171005',
+    interviewStatus: 'APPROVED',
+    participationHistory: 5,
+    isActive: true,
+    lastLoginAt: generatePastDate(14),
+    createdAt: generatePastDate(400),
+    updatedAt: generatePastDate(14),
+    phone: '010-1710-0505',
+    gender: '남성',
+    birthDate: '1982-06-30',
+    detailAddress: '경기도 성남시 분당구 정자동 200',
+    affiliation: 'JA Korea | (권한박탈)',
+    instructorInfo: {
+      bankName: '국민은행',
+      accountHolder: '박박탈',
+      accountNumber: '123-000-171005',
+      isBusinessIncome: false,
+    },
+    listMetrics: {
+      instructorFeeGradeLabel: '2급 강사비',
+      permissionApplicationTypeLabel: 'JA 강사단',
+      settlementStatusLabel: '정산 불가',
+      jaEvaluationGrade: 'D',
+    },
+  },
   // 프로그램 강의 이력 UI 개발용 (고정 ID — mock 신청 5건 연결)
   {
     id: PROGRAM_LECTURE_HISTORY_DEMO_INSTRUCTOR_USER_ID,
@@ -1214,15 +1344,15 @@ const extraMockUsers: User[] = [
     detailAddress: '서울특별시 강남구 테헤란로',
     affiliation: 'JA 강사 | 강의 이력 데모',
     instructorInfo: {
-      bankName: '국민은행',
+      bankName: '농협',
       accountHolder: '박틴토',
-      accountNumber: '110-123-456789',
+      accountNumber: '123456-12-123456',
       isBusinessIncome: false,
     },
     listMetrics: {
-      instructorTypeLabel: '1급 강사비',
+      instructorFeeGradeLabel: '1급 강사비',
       permissionApplicationTypeLabel: '제미나이 강사단',
-      settlementStatusLabel: '확인 진행중',
+      settlementStatusLabel: '확인 진행 중',
       employmentStatusLabel: '재직 중',
       instructorAssignedGrade: '1학년',
     },
@@ -1275,7 +1405,8 @@ const extraMockUsers: User[] = [
     detailAddress: '경기도 용인시 수지구 200',
     affiliation: '신규 강사 지원',
     listMetrics: {
-      instructorTypeLabel: '2급 강사비',
+      instructorFeeGradeLabel: '2급 강사비',
+      permissionApplicationTypeLabel: 'JA 강사단',
     },
   },
   // 관리자 등록 강사 (직접 가입 완료 전)
@@ -1310,7 +1441,7 @@ const extraMockUsers: User[] = [
     },
     adminComment: '관리자 등록 강사 데모 계정',
     listMetrics: {
-      instructorTypeLabel: '1급 강사비',
+      instructorFeeGradeLabel: '1급 강사비',
       permissionApplicationTypeLabel: 'JA 강사단',
       settlementStatusLabel: '확인 대기 중',
       jaEvaluationGrade: 'B',
@@ -1340,7 +1471,8 @@ const extraMockUsers: User[] = [
     detailAddress: '서울특별시 마포구 망원동 300',
     affiliation: '경제교육연구소 | 수석강사',
     listMetrics: {
-      instructorTypeLabel: '3급 강사비',
+      instructorFeeGradeLabel: '3급 강사비',
+      permissionApplicationTypeLabel: '특강 강사',
     },
   },
   // 스크린샷/UI 예시용 회원 (상세 모달 스펙: 최틴토, Choi Tinto)
@@ -1356,6 +1488,7 @@ const extraMockUsers: User[] = [
     createdAt: '2025-09-15T09:00:00.000Z',
     updatedAt: '2025-09-15T09:00:00.000Z',
     phone: '010-0000-0000',
+    id1365: '1365987654',
     detailAddress: '서울특별시 강서구 화곡동',
     birthDate: '2010-09-15',
     gender: '여성',

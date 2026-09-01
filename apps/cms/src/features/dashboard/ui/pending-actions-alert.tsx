@@ -4,9 +4,10 @@
  * Phase 3: 성능 최적화 (데이터 중앙화)
  */
 
-import { Alert, Space, Button } from 'antd'
+import { Alert, Space } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { DollarOutlined, FileTextOutlined, CalendarOutlined } from '@ant-design/icons'
+import { CmsButton } from '@/shared/ui'
 import { useDashboardData } from '../model/use-dashboard-data'
 
 interface PendingActionsAlertProps {
@@ -58,7 +59,7 @@ export function PendingActionsAlert({ onNavigate }: PendingActionsAlertProps) {
   if (scheduleConflictCount > 0) {
     alerts.push({
       type: 'error',
-      message: `일정 중복 경고 ${scheduleConflictCount}건`,
+      message: `일정 충돌 ${scheduleConflictCount}건`,
       description: '중복된 일정이 감지되었습니다.',
       path: '/programs/education/schedule',
       icon: <CalendarOutlined />,
@@ -79,9 +80,9 @@ export function PendingActionsAlert({ onNavigate }: PendingActionsAlertProps) {
           description={alert.description}
           icon={alert.icon}
           action={
-            <Button size="small" onClick={() => handleNavigate(alert.path)}>
+            <CmsButton variant="default" size="small" onClick={() => handleNavigate(alert.path)}>
               확인하기
-            </Button>
+            </CmsButton>
           }
           showIcon
           closable
@@ -91,4 +92,3 @@ export function PendingActionsAlert({ onNavigate }: PendingActionsAlertProps) {
     </Space>
   )
 }
-

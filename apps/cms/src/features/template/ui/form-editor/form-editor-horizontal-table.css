@@ -1,0 +1,871 @@
+/**
+ * 작성 양식 직접 등록 — 가로형 테이블 그리드·셀·하단 영역
+ * @see form-editor.css (진입점)
+ *
+ * 섹션
+ * 1. Wrap tokens + layout
+ * 2. Dimension actions (행·열 추가)
+ * 3. Table shell / corner radius
+ * 4. Rows (구분·선택·포커스)
+ * 5. Cells (th/td)
+ * 6. Field cells (인풋·셀렉트·피커·주관식)
+ * 7. Choice fields (단일·다중)
+ * 8. Cell edit / view text
+ * 9. Bottom (설명·동의 라디오)
+ * 10. Agreement column width overrides
+ * 11. Payment pre-consent typography overrides
+ */
+
+/* -------------------------------------------------------------------------- */
+/* 1. Wrap tokens + layout                                                    */
+/* -------------------------------------------------------------------------- */
+
+.form-editor-horizontal-table-wrap {
+  --ht-color-text: var(--main-BK, #3d3d3d);
+  --ht-color-text-muted: var(--gray-85969-d, #85969d);
+  --ht-color-line: var(--table-line, #e0e0e0);
+  --ht-color-mint: var(--color-mint-01, #01a1af);
+  --ht-color-surface: var(--main-WT, #fff);
+  --ht-font: Pretendard, sans-serif;
+  --ht-font-size: 16px;
+  --ht-line-height: 150%;
+  --ht-radius-cell: calc(var(--8, 8px) - 1px);
+  --ht-radius-control: var(--8, 8px);
+  --ht-field-max-width: 249px;
+  --ht-field-min-width: 120px;
+  --ht-field-height: 40px;
+
+  width: 100%;
+  max-width: none;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 2. Dimension actions                                                       */
+/* -------------------------------------------------------------------------- */
+
+.form-editor-horizontal-table-dimension-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 행 추가 / 열 추가 — 140×44, 민트 채우기 + 연한 테두리 */
+.form-editor-horizontal-table-dimension-actions__btn.cms-button.ant-btn {
+  width: 140px;
+  height: 44px;
+  border-radius: var(--8, 8px);
+}
+
+.form-editor-horizontal-table-dimension-actions__btn.cms-button.ant-btn.cms-button--primary:not(
+    :disabled
+  ):not(.ant-btn-disabled) {
+  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
+  background: var(--color-mint-01, #01a1af) !important;
+  color: var(--main-WT, #fff) !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 3. Layout / shell                                                          */
+/* -------------------------------------------------------------------------- */
+
+.form-editor-horizontal-table {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--ht-color-line);
+  background: var(--ht-color-surface);
+  /* 셀 선택 시 box-shadow가 잘리지 않도록 */
+  overflow: visible;
+}
+
+/* 테이블 외곽 radius와 그리드 스트로크 정합 */
+.form-editor-horizontal-table__row--header .form-editor-horizontal-table__th:first-child {
+  border-top-left-radius: var(--ht-radius-cell);
+}
+
+.form-editor-horizontal-table__row--header .form-editor-horizontal-table__th:last-child {
+  border-top-right-radius: var(--ht-radius-cell);
+}
+
+.form-editor-horizontal-table__row:not(.form-editor-horizontal-table__row--header):last-child
+  .form-editor-horizontal-table__td:first-child {
+  border-bottom-left-radius: var(--ht-radius-cell);
+}
+
+.form-editor-horizontal-table__row:not(.form-editor-horizontal-table__row--header):last-child
+  .form-editor-horizontal-table__td:last-child {
+  border-bottom-right-radius: var(--ht-radius-cell);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 4. Rows                                                                    */
+/* -------------------------------------------------------------------------- */
+
+.form-editor-horizontal-table__row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  align-self: stretch;
+  cursor: default;
+  box-sizing: border-box;
+  /* 선택 시 전면 민트 보더와 동일 두께를 유지해 가로·세로 흔들림 방지 */
+  border: 1px solid transparent;
+}
+
+.form-editor-horizontal-table-wrap--canvas-interactive .form-editor-horizontal-table__row {
+  cursor: pointer;
+}
+
+.form-editor-horizontal-table__row:not(:first-child) {
+  border-top-color: var(--ht-color-line);
+}
+
+.form-editor-horizontal-table__row--header {
+  background:
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%), #fff;
+}
+
+/*
+ * 선택된 행 — 외곽 민트 스트로크 + 섀도우만(셀 단위 보더·섀도우 없음)
+ * `.row:not(:first-child)`의 border-top(특이도 0,2,0)보다 높여야 상단 민트 스트로크가 적용됨
+ */
+.form-editor-horizontal-table__row.form-editor-horizontal-table__row--selected {
+  position: relative;
+  z-index: 2;
+  border-radius: var(--ht-radius-control);
+  border-color: var(--ht-color-mint);
+  box-shadow: 0 4px 24px 0 rgba(0, 89, 97, 0.2);
+}
+
+.form-editor-horizontal-table__row--header.form-editor-horizontal-table__row--selected {
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  );
+}
+
+.form-editor-horizontal-table__row.form-editor-horizontal-table__row--selected:not(
+    .form-editor-horizontal-table__row--header
+  ) {
+  background: var(--ht-color-surface);
+}
+
+.form-editor-horizontal-table__row:focus {
+  outline: none;
+}
+
+.form-editor-horizontal-table__row:focus-visible {
+  outline: 2px solid var(--ht-color-mint);
+  outline-offset: 2px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 5. Cells                                                                   */
+/* -------------------------------------------------------------------------- */
+
+.form-editor-horizontal-table__th,
+.form-editor-horizontal-table__td {
+  display: flex;
+  min-width: 80px;
+  min-height: 54px;
+  padding: 12px 20px;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex: 1 0 0;
+  align-self: stretch;
+  box-sizing: border-box;
+  text-align: center;
+  cursor: inherit;
+}
+
+/* 열 구분 — 텍스트형·필드형 공통(첫 열 제외 왼쪽 세로선) */
+.form-editor-horizontal-table__th + .form-editor-horizontal-table__th,
+.form-editor-horizontal-table__td + .form-editor-horizontal-table__td {
+  border-left: 1px solid var(--ht-color-line);
+}
+
+.form-editor-horizontal-table__td--field,
+.form-editor-horizontal-table__td--field-subjective {
+  align-items: center;
+}
+
+.form-editor-horizontal-table__td--field {
+  justify-content: center;
+}
+
+.form-editor-horizontal-table__cell-input-shell--field {
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* 단일·다중: 셸은 셀 너비를 채우되 옵션 그룹은 중앙 정렬 */
+.form-editor-horizontal-table__td--field
+  > .form-editor-horizontal-table__cell-input-shell--field-choices {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-height: 0;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 0;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 6. Field cells                                                             */
+/* -------------------------------------------------------------------------- */
+
+.form-editor-horizontal-table__field-box {
+  display: flex;
+  height: var(--ht-field-height);
+  min-width: var(--ht-field-min-width);
+  max-width: var(--ht-field-max-width);
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 0;
+  align-self: center;
+  border-radius: var(--ht-radius-control);
+  border: 1px solid var(--ht-color-line);
+  background: var(--ht-color-surface);
+}
+
+.form-editor-horizontal-table__field-box--text {
+  padding: 0 12px 0 14px;
+}
+
+/* 주관식형: 기본 높이는 다른 필드와 맞추고, 입력 내용이 길 때만 확장 */
+.form-editor-horizontal-table__field-box--subjective {
+  height: auto;
+  min-height: var(--ht-field-height);
+  align-items: center;
+  padding: 7px 12px 7px 14px;
+}
+
+.form-editor-horizontal-table__cell-input-shell--field-subjective {
+  align-items: center;
+  align-self: center;
+  width: 100%;
+  max-width: var(--ht-field-max-width);
+}
+
+.form-editor-horizontal-table__field-subjective-input.ant-input,
+.form-editor-horizontal-table__field-text-input.ant-input {
+  flex: 1 0 0;
+  min-width: 0;
+  min-height: 24px !important;
+  padding: 0 !important;
+  margin: 0;
+  text-align: left;
+  color: var(--ht-color-text);
+  font-family: var(--ht-font);
+  font-size: var(--ht-font-size);
+  font-style: normal;
+  font-weight: 500;
+  line-height: var(--ht-line-height);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  resize: none;
+}
+
+.form-editor-horizontal-table__field-text-input.ant-input {
+  height: auto !important;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  overflow: hidden;
+}
+
+.form-editor-horizontal-table__field-subjective-input.ant-input::placeholder,
+.form-editor-horizontal-table__field-text-input.ant-input::placeholder {
+  color: var(--ht-color-text);
+  opacity: 0.45;
+}
+
+.form-editor-horizontal-table__field-subjective-input.ant-input:focus,
+.form-editor-horizontal-table__field-subjective-input.ant-input-focused,
+.form-editor-horizontal-table__field-text-input.ant-input:focus,
+.form-editor-horizontal-table__field-text-input.ant-input-focused {
+  box-shadow: none !important;
+}
+
+.form-editor-horizontal-table__field-box--dropdown.ant-select .ant-select-selector {
+  padding: 0 12px 0 14px !important;
+}
+
+/* 드롭다운 — 박스는 .ant-select 루트 */
+.form-editor-horizontal-table__field-box.ant-select {
+  min-width: var(--ht-field-min-width);
+  max-width: var(--ht-field-max-width);
+  align-self: center;
+}
+
+.form-editor-horizontal-table__field-box.ant-select .ant-select-selector {
+  height: 38px !important;
+  min-height: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.form-editor-horizontal-table__field-box.ant-select .ant-select-selection-item,
+.form-editor-horizontal-table__field-box.ant-select .ant-select-selection-placeholder {
+  display: flex;
+  align-items: center;
+  color: var(--ht-color-text);
+  font-family: var(--ht-font);
+  font-size: var(--ht-font-size);
+  font-style: normal;
+  font-weight: 500;
+  line-height: var(--ht-line-height);
+}
+
+.form-editor-horizontal-table__field-box.ant-select .ant-select-selection-placeholder {
+  opacity: 0.45;
+}
+
+.form-editor-horizontal-table__field-box.ant-select.ant-select-focused .ant-select-selector,
+.form-editor-horizontal-table__field-box.ant-select:hover .ant-select-selector {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.form-editor-horizontal-table__field-box.ant-select .ant-select-arrow {
+  color: var(--ht-color-text);
+}
+
+/* 날짜·시간 피커 — 루트가 박스 */
+.form-editor-horizontal-table__field-box.ant-picker {
+  min-width: var(--ht-field-min-width);
+  max-width: var(--ht-field-max-width);
+  padding: 0 12px;
+  align-self: center;
+  border: 1px solid var(--ht-color-line) !important;
+  background: var(--ht-color-surface) !important;
+  box-shadow: none !important;
+}
+
+.form-editor-horizontal-table__field-box.ant-picker .ant-picker-input > input {
+  color: var(--ht-color-text);
+  font-family: var(--ht-font);
+  font-size: var(--ht-font-size);
+  font-weight: 500;
+  line-height: var(--ht-line-height);
+}
+
+.form-editor-horizontal-table__field-box.ant-picker.ant-picker-focused,
+.form-editor-horizontal-table__field-box.ant-picker:hover {
+  border-color: var(--ht-color-line) !important;
+}
+
+.form-editor-horizontal-table__field-select,
+.form-editor-horizontal-table__field-date,
+.form-editor-horizontal-table__field-datetime,
+.form-editor-horizontal-table__field-time {
+  width: 100%;
+  min-width: 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 7. Choice fields                                                           */
+/* -------------------------------------------------------------------------- */
+
+.form-editor-horizontal-table__field-radios.ant-radio-group,
+.form-editor-horizontal-table__field-radios.app-radio-group.ant-radio-group,
+.form-editor-horizontal-table__field-checks {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 16px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.5 !important;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+/* 가로형 테이블 안에서는 선택 옵션 중앙 정렬 */
+.form-editor-horizontal-table .form-editor-horizontal-table__field-radios.ant-radio-group,
+.form-editor-horizontal-table
+  .form-editor-horizontal-table__field-radios.app-radio-group.ant-radio-group,
+.form-editor-horizontal-table .form-editor-horizontal-table__field-checks {
+  justify-content: center !important;
+  text-align: center;
+}
+
+.form-editor-horizontal-table__field-radios .ant-radio-wrapper,
+.form-editor-horizontal-table__field-check-label {
+  --ht-choice-row-h: 24px;
+  height: var(--ht-choice-row-h);
+  flex: 0 0 auto !important;
+  max-width: none;
+  min-width: 0;
+  min-height: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  align-self: center;
+  box-sizing: border-box;
+  font-family: var(--ht-font);
+  font-size: var(--ht-font-size);
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--ht-color-text);
+}
+
+.form-editor-horizontal-table__field-check-label {
+  gap: 8px;
+}
+
+.form-editor-horizontal-table__field-radios .ant-radio-wrapper-checked {
+  color: var(--ht-color-mint);
+}
+
+.form-editor-horizontal-table__field-radios .ant-radio,
+.form-editor-horizontal-table__field-checks .ant-checkbox {
+  align-self: center;
+}
+
+.form-editor-horizontal-table__field-radios .ant-radio {
+  top: 0;
+}
+
+/* 라디오·체크 — ant 기본 전환·스케일 애니메이션 제거 */
+.form-editor-horizontal-table__field-radios .ant-radio,
+.form-editor-horizontal-table__field-radios .ant-radio .ant-radio-inner,
+.form-editor-horizontal-table__field-radios .ant-radio .ant-radio-inner::after,
+.form-editor-horizontal-table__field-checks .ant-checkbox,
+.form-editor-horizontal-table__field-checks .ant-checkbox .ant-checkbox-inner,
+.form-editor-horizontal-table__field-checks .ant-checkbox .ant-checkbox-inner::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+.form-editor-horizontal-table__field-radios .ant-radio .ant-radio-inner,
+.form-editor-horizontal-table__field-checks .ant-checkbox .ant-checkbox-inner {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--ht-color-line);
+  background: var(--ht-color-surface);
+  box-sizing: border-box;
+}
+
+.form-editor-horizontal-table__field-radios .ant-radio .ant-radio-inner {
+  border-radius: 100px;
+}
+
+.form-editor-horizontal-table__field-checks .ant-checkbox .ant-checkbox-inner {
+  border-radius: var(--4, 4px);
+}
+
+.form-editor-horizontal-table__field-radios .ant-radio-checked .ant-radio-inner {
+  border-color: var(--ht-color-mint);
+  background: var(--ht-color-surface);
+}
+
+.form-editor-horizontal-table__field-radios .ant-radio-checked .ant-radio-inner::after {
+  width: 10px !important;
+  height: 10px !important;
+  margin-block-start: 0 !important;
+  margin-inline-start: 0 !important;
+  border: none !important;
+  border-radius: 100px !important;
+  background-color: var(--ht-color-mint) !important;
+  transform: translate(-50%, -50%) scale(1) !important;
+}
+
+.form-editor-horizontal-table__field-check-label.ant-checkbox-wrapper {
+  margin: 0;
+}
+
+.form-editor-horizontal-table__field-checks .ant-checkbox-checked .ant-checkbox-inner {
+  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  background-color: var(--ht-color-mint);
+}
+
+.form-editor-horizontal-table__field-checks .ant-checkbox-checked .ant-checkbox-inner::after {
+  width: 12px;
+  height: 10px;
+  border: none !important;
+  transform: none !important;
+  inset-inline-start: 50%;
+  top: 50%;
+  margin-top: -5px;
+  margin-inline-start: -6px;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='10' viewBox='0 0 12 10' fill='none'%3E%3Cpath d='M10.1883 0.252684C10.4627 -0.0572855 10.9367 -0.0859769 11.2469 0.188231C11.5568 0.462613 11.5855 0.93661 11.3113 1.24682L4.43633 9.02417C4.29397 9.18512 4.08969 9.2771 3.87481 9.2771C3.65992 9.2771 3.45564 9.18512 3.31328 9.02417L0.188283 5.48901C-0.0859598 5.17876 -0.057344 4.70478 0.252736 4.43042C0.563086 4.15609 1.037 4.1855 1.31133 4.49585L3.87383 7.39526L10.1883 0.252684Z' fill='white'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 12px 10px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 8. Cell edit / view text                                                   */
+/* -------------------------------------------------------------------------- */
+
+.form-editor-horizontal-table__cell-input-shell {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-editor-horizontal-table__cell-input-shell .ant-input,
+.form-editor-horizontal-table__cell-input-shell textarea.ant-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  height: auto !important;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  color: var(--ht-color-text);
+  -webkit-text-fill-color: var(--ht-color-text);
+  text-align: center;
+  font-family: var(--ht-font);
+  font-size: var(--ht-font-size);
+  font-style: normal;
+  font-weight: 500;
+  line-height: var(--ht-line-height);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  resize: none;
+  overflow: hidden;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.form-editor-horizontal-table__cell-input-shell--header .ant-input {
+  font-weight: 700;
+}
+
+.form-editor-horizontal-table__cell-input-shell--header .ant-input::placeholder,
+.form-editor-horizontal-table__cell-input-shell--body .ant-input::placeholder {
+  color: var(--ht-color-text-muted);
+  -webkit-text-fill-color: var(--ht-color-text-muted);
+  opacity: 1;
+}
+
+.form-editor-horizontal-table__cell-input-shell--header .ant-input::placeholder {
+  font-weight: 700;
+}
+
+.form-editor-horizontal-table__cell-input-shell--body .ant-input::placeholder {
+  font-weight: 500;
+}
+
+.form-editor-horizontal-table__cell-input-shell .ant-input:focus,
+.form-editor-horizontal-table__cell-input-shell .ant-input-focused {
+  box-shadow: none !important;
+}
+
+.form-editor-horizontal-table__cell-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  font-family: var(--ht-font);
+  font-size: var(--ht-font-size);
+  font-style: normal;
+  line-height: var(--ht-line-height);
+  text-align: center;
+  overflow: visible;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.form-editor-horizontal-table__cell-text--header {
+  color: var(--ht-color-text);
+  font-weight: 700;
+}
+
+.form-editor-horizontal-table__cell-text--body {
+  font-weight: 500;
+  color: var(--ht-color-text);
+}
+
+.form-editor-horizontal-table__cell-text--header.form-editor-horizontal-table__cell-text--placeholder {
+  color: var(--ht-color-text-muted);
+  font-weight: 700;
+}
+
+.form-editor-horizontal-table__cell-text--body.form-editor-horizontal-table__cell-text--placeholder {
+  color: var(--ht-color-text-muted);
+  opacity: 1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 9. Bottom                                                                  */
+/* -------------------------------------------------------------------------- */
+
+.form-editor-horizontal-table__bottom {
+  margin: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 테이블 하단 동의 라디오 — 세로형 paragraph/table 과 동일 스펙 */
+.form-editor-table-bottom-consent.app-radio-group {
+  box-sizing: border-box;
+  width: 203px;
+  min-width: 203px;
+  height: 40px;
+  min-height: 40px;
+  flex-wrap: nowrap !important;
+  gap: 16px !important;
+  align-items: center;
+}
+
+.form-editor-horizontal-table__bottom-input.paragraph-input.paragraph-input--description {
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--ht-font);
+  font-size: var(--ht-font-size);
+  font-style: normal;
+  font-weight: 500;
+  line-height: var(--ht-line-height);
+}
+
+.form-editor-horizontal-table__bottom-input
+  :is(
+    .paragraph-input__view-text,
+    .paragraph-input__placeholder,
+    .paragraph-input__shell .ant-input,
+    .paragraph-input__shell textarea.ant-input,
+    .paragraph-input__shell--focused .ant-input,
+    .paragraph-input__shell--focused textarea.ant-input
+  ) {
+  color: inherit !important;
+  -webkit-text-fill-color: var(--default-BK, #3d3d3d);
+  font: inherit !important;
+  line-height: inherit !important;
+  opacity: 1 !important;
+}
+
+.form-editor-horizontal-table__bottom-input
+  :is(.paragraph-input__shell .ant-input, .paragraph-input__shell textarea.ant-input)::placeholder {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 1;
+}
+
+/* 하단 텍스트 — 기본 투명, 포커스 시에만 민트 하단 스트로크 */
+.form-editor-horizontal-table__bottom-input.paragraph-input--edit .paragraph-input__shell {
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.form-editor-horizontal-table__bottom-input.paragraph-input--edit .paragraph-input__shell--focused {
+  border-bottom-color: var(--paragraph-input-mint, var(--ht-color-mint));
+}
+
+/* 다중 줄 본문이 한 줄 폭 측정값에 끌려 끝없이 늘어나지 않도록 */
+.form-editor-horizontal-table__bottom-input
+  :is(.paragraph-input__row, .paragraph-input__main, .paragraph-input__view-text, .paragraph-input__shell) {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 10. Agreement column width overrides                                       */
+/* -------------------------------------------------------------------------- */
+
+/* 행정정보 공동이용 사전 동의서 — 연번 컬럼 100×54 (1·3번째) */
+[data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__row
+  > :is(:nth-child(1), :nth-child(3)) {
+  flex: 0 0 100px;
+  min-width: 100px;
+  max-width: 100px;
+}
+
+[data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__cell-paragraph-input.paragraph-input {
+  width: 100%;
+}
+
+[data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__cell-paragraph-input
+  :is(
+    .paragraph-input__row,
+    .paragraph-input__main,
+    .paragraph-input__view-text,
+    .paragraph-input__shell
+  ) {
+  width: 100%;
+  max-width: 100%;
+  justify-content: center;
+}
+
+[data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__cell-paragraph-input
+  :is(.paragraph-input__view-text, .paragraph-input__placeholder, .ant-input) {
+  text-align: center;
+  width: 100% !important;
+  max-width: 100%;
+}
+
+/* 초상권 동의서(1번) — 4열 표 항목 컬럼 */
+[data-paragraph-id='agreement-portrait-personal-consent-table']
+  .form-editor-horizontal-table__row
+  > :is(:nth-child(1), :nth-child(3)) {
+  flex: 0 0 120px;
+  min-width: 120px;
+  max-width: 120px;
+}
+
+/* 초상권 동의서(2/3번) — 2열 표 좌측 항목 */
+:is(
+    [data-paragraph-id='agreement-portrait-delegated-consent-table'],
+    [data-paragraph-id='agreement-portrait-usage-table']
+  )
+  .form-editor-horizontal-table__row
+  > :nth-child(1) {
+  flex: 0 0 180px;
+  min-width: 180px;
+  max-width: 180px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 11. Payment pre-consent typography                                         */
+/* -------------------------------------------------------------------------- */
+
+.form-editor-horizontal-table-wrap--payment-pre-consent-p1,
+.form-editor-horizontal-table-wrap--payment-pre-consent-p2,
+.form-editor-horizontal-table-wrap--payment-pre-consent-third-party {
+  --ht-pay-text: var(--ht-color-text);
+  --ht-pay-align: center;
+  --ht-pay-font: var(--ht-font);
+  --ht-pay-lh: var(--ht-line-height);
+  --ht-pay-body-size: 16px;
+  --ht-pay-body-weight: 500;
+  --ht-pay-header-size: 16px;
+  --ht-pay-header-weight: 500;
+}
+
+/* p1 — 보유기간 열만 20/700 (셀 변수 override) */
+.form-editor-horizontal-table-wrap--payment-pre-consent-p1
+  .form-editor-horizontal-table__td--field:nth-child(3) {
+  --ht-pay-body-size: 20px;
+  --ht-pay-body-weight: 700;
+}
+
+/* p2 — 항목·보유기간(1·3열)만 20/700 */
+.form-editor-horizontal-table-wrap--payment-pre-consent-p2
+  .form-editor-horizontal-table__td--field:is(:nth-child(1), :nth-child(3)) {
+  --ht-pay-body-size: 20px;
+  --ht-pay-body-weight: 700;
+}
+
+/* p3·p4 — 본문 기본 20/700, 항목 열(2번째)만 16/500 */
+.form-editor-horizontal-table-wrap--payment-pre-consent-third-party {
+  --ht-pay-body-size: 20px;
+  --ht-pay-body-weight: 700;
+}
+
+.form-editor-horizontal-table-wrap--payment-pre-consent-third-party
+  .form-editor-horizontal-table__td--field:nth-child(2) {
+  --ht-pay-body-size: 16px;
+  --ht-pay-body-weight: 500;
+}
+
+/* 스펙은 셀에 1회 */
+.form-editor-horizontal-table-wrap[class*='--payment-pre-consent']
+  .form-editor-horizontal-table__td--field {
+  color: var(--ht-pay-text);
+  text-align: var(--ht-pay-align);
+  font-family: var(--ht-pay-font);
+  font-size: var(--ht-pay-body-size);
+  font-style: normal;
+  font-weight: var(--ht-pay-body-weight);
+  line-height: var(--ht-pay-lh);
+}
+
+/* 자식은 inherit */
+.form-editor-horizontal-table-wrap[class*='--payment-pre-consent']
+  .form-editor-horizontal-table__td--field
+  :is(.form-editor-horizontal-table__cell-text--body, .form-editor-horizontal-table__cell-textarea) {
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  line-height: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.form-editor-horizontal-table-wrap--payment-pre-consent-third-party
+  .form-editor-horizontal-table__td--field
+  .form-editor-horizontal-table__cell-text--body.form-editor-horizontal-table__cell-text--placeholder {
+  color: inherit;
+  font-weight: inherit;
+  opacity: 0.45;
+}
+
+/* 헤더: 행에 스펙 → 자식 inherit */
+.form-editor-horizontal-table-wrap:is(
+    .form-editor-horizontal-table-wrap--payment-pre-consent-p2,
+    .form-editor-horizontal-table-wrap--payment-pre-consent-third-party
+  )
+  .form-editor-horizontal-table__row--header {
+  color: var(--ht-pay-text);
+  text-align: var(--ht-pay-align);
+  font-family: var(--ht-pay-font);
+  font-size: var(--ht-pay-header-size);
+  font-style: normal;
+  font-weight: var(--ht-pay-header-weight);
+  line-height: var(--ht-pay-lh);
+}
+
+.form-editor-horizontal-table-wrap:is(
+    .form-editor-horizontal-table-wrap--payment-pre-consent-p2,
+    .form-editor-horizontal-table-wrap--payment-pre-consent-third-party
+  )
+  .form-editor-horizontal-table__row--header
+  :is(
+    .form-editor-horizontal-table__cell-text--header,
+    .form-editor-horizontal-table__cell-input-shell--header .ant-input
+  ) {
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  line-height: inherit;
+}
+
+.form-editor-horizontal-table-wrap--payment-pre-consent-third-party
+  .form-editor-horizontal-table__row--header
+  :is(
+    .form-editor-horizontal-table__cell-text--header.form-editor-horizontal-table__cell-text--placeholder,
+    .form-editor-horizontal-table__cell-input-shell--header .ant-input::placeholder
+  ) {
+  font-weight: inherit;
+}

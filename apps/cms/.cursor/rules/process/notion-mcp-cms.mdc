@@ -1,0 +1,76 @@
+---
+description: JA Korea Notion planning and implementation workflow (CMS 기준 페이지 포함)
+alwaysApply: true
+---
+
+# CMS Notion MCP 기준
+
+`apps/cms` 관련 작업에서 **Notion MCP**를 쓸 때는 아래를 **단일 기준**으로 한다. Platform·다른 프로젝트 Notion 페이지와 혼동하지 않는다.
+
+전체 JA Korea Notion URL/ID 매핑은 저장소 **[`.cursor/notion-map.md`](../../../../../.cursor/notion-map.md)** 를 먼저 읽고, 워크스페이스 전체 검색은 하지 않는다.
+
+## 기준 페이지
+
+| 항목 | 값 |
+|---|---|
+| 제목 | 1️⃣ CMS 어드민 기능정의서 |
+| URL | https://app.notion.com/p/tintolab/CMS-33af3e2a77d080748112df7c8b1adfe0 |
+| Page ID | `33af3e2a-77d0-8074-8112-df7c8b1adfe0` |
+
+하위 인라인 DB **CMS 어드민 기능정의서** (`collection://33af3e2a-77d0-8153-a119-000b7b801259`)가 스펙·요구사항의 1차 소스다.
+
+1. CMS 기능·화면·스펙을 Notion에서 확인할 때 **위 페이지/DB ID로** `notion-fetch` 한다 (전체 검색 금지).
+2. 상위 **JA코리아** 워크스페이스 루트나 다른 DB(회의록·자료 등)를 CMS 스펙 기준으로 쓰지 않는다. 유저가 다른 URL을 명시할 때만 예외.
+
+# Sources of truth
+
+- Notion is the source of truth for requirements, screen definitions, policies, exceptions, and QA acceptance criteria.
+- The local repository and GitHub are the source of truth for implementation.
+- Never assume that a Notion development status proves that the code is implemented.
+- Never assume that existing code matches the latest Notion specification.
+
+# Before modifying code
+
+1. Identify the target screen, feature, or Planning ID.
+2. Read the relevant Notion page using the Notion MCP.
+3. Inspect the related local code.
+4. Compare the Notion specification with the current implementation.
+5. Report:
+   - implemented requirements
+   - partially implemented requirements
+   - missing requirements
+   - conflicting requirements
+   - affected files
+   - risks
+6. Present an implementation plan before making broad changes.
+
+# During implementation
+
+- Preserve the existing project architecture and coding conventions.
+- Do not modify unrelated files.
+- Do not remove existing comments without a clear reason.
+- Do not replace existing business terminology with inferred terminology.
+- Handle loading, empty, error, permission, and validation states.
+- Check frontend, backend, API, types, database, and tests where relevant.
+
+# After implementation
+
+1. Run formatting.
+2. Run lint.
+3. Run type checking.
+4. Run relevant unit and integration tests.
+5. Summarize all changed files.
+6. List requirements that could not be verified.
+7. Compare the final implementation with the Notion specification again.
+
+# Notion write policy
+
+- Reading Notion is allowed.
+- Never update a Notion page, database property, status, or comment without explicit user approval.
+- Before any Notion write operation, show:
+  - target page
+  - property or content to change
+  - current value
+  - proposed value
+
+**Last updated:** 2026-07-24

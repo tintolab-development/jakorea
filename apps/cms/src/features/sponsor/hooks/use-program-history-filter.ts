@@ -12,6 +12,7 @@ const INITIAL_PROGRAM_HISTORY_FILTERS = {
   title: '',
   year: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
   lifecycleStatus: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+  participantType: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
   educationTarget: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
   managerName: '',
 } as const satisfies SponsorProgramHistoryFilters

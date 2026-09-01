@@ -3,15 +3,17 @@
  */
 
 import { useMemo, type ReactNode } from 'react'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { withProgramDetailTdDivider } from '@/features/program/ui/program-detail-td-divider'
+import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import type {
   PaymentOrderAdminLineProcessingStatus,
+  PaymentOrderCalculationLineKind,
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderCalculationBasisDetail } from './payment-order-calculation-basis-detail'
 import './payment-order-program-calculation-statement-modal.css'
 
 export const PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH = 1200
@@ -27,6 +29,8 @@ export interface PaymentOrderCalculationTableRow {
   description: string
   amount: number
   lineId: string
+  kind: PaymentOrderCalculationLineKind
+  basisDetail?: PaymentOrderCalculationBasisDetail
   amountDisplayOverride?: string
 }
 
@@ -48,6 +52,8 @@ export function buildPaymentOrderCalculationTableRows(
         description: line.description,
         amount: line.amount,
         lineId: line.id,
+        kind: line.kind,
+        basisDetail: line.basisDetail,
         amountDisplayOverride: line.amountDisplayOverride,
       })
     })
@@ -75,17 +81,19 @@ function formatLectureSessionSegment(
 }
 
 export function getPaymentOrderCalculationColumns(options?: {
+  onBasisDetailClick?: (row: PaymentOrderCalculationTableRow) => void
+  /** @deprecated use onBasisDetailClick */
   onDetailClick?: () => void
   /** 강의 진행 일자 열의 세션 구간: `round`이면 차시 → 회차 (계좌 지급 현황 상세 등) */
   lectureSessionSegmentLabel?: 'session' | 'round'
 }): ColumnsType<PaymentOrderCalculationTableRow> {
-  const onDetailClick = () => {
-    window.alert('준비 중입니다.')
-    if (options?.onDetailClick) {
-      options.onDetailClick()
+  const handleBasisDetailClick = (row: PaymentOrderCalculationTableRow) => {
+    if (options?.onBasisDetailClick) {
+      options.onBasisDetailClick(row)
       return
     }
-    message.info('산정 기준 상세는 추후 연결됩니다.')
+    options?.onDetailClick?.()
+    window.alert('준비 중입니다.')
   }
 
   const sessionLabelMode = options?.lectureSessionSegmentLabel ?? 'session'
@@ -161,13 +169,13 @@ export function getPaymentOrderCalculationColumns(options?: {
       key: 'detail',
       width: 176,
       align: 'center',
-      render: () => (
+      render: (_: unknown, row: PaymentOrderCalculationTableRow) => (
         <div className="payment-order-calc-statement-modal__detail-btn-wrap">
           <CmsButton
             variant="default"
             style={{ width: '160px' }}
             size="large"
-            onClick={onDetailClick}
+            onClick={() => handleBasisDetailClick(row)}
           >
             상세 보기
           </CmsButton>
@@ -189,8 +197,15 @@ export interface PaymentOrderCalculationBreakdownTableProps {
   /** 산출 내역 헤더 우측 (예: 신청 반려/확인 처리, 지급 완료 처리) */
   headerActions?: ReactNode
   onDownloadPaymentStatement?: () => void
+  /**
+   * 지급조서 발급 비활성(확인 완료·계좌 지급 완료 외).
+   * 미전달 시 버튼 활성 — 호출부에서 조건 검증.
+   */
+  paymentStatementIssueDisabled?: boolean
   /** 계좌 지급 현황 상세 등: 산출 내역 강의 진행 일자 열에서 차시 대신 회차 표기 */
   lectureSessionSegmentLabel?: 'session' | 'round'
+  /** 산정 기준 상세 모달 열기 */
+  onBasisDetailClick?: (row: PaymentOrderCalculationTableRow) => void
 }
 
 export function PaymentOrderCalculationBreakdownTable({
@@ -200,12 +215,14 @@ export function PaymentOrderCalculationBreakdownTable({
   processingStatus,
   headerActions,
   onDownloadPaymentStatement,
+  paymentStatementIssueDisabled = false,
   lectureSessionSegmentLabel = 'session',
+  onBasisDetailClick,
 }: PaymentOrderCalculationBreakdownTableProps) {
   const tableRows = useMemo(() => buildPaymentOrderCalculationTableRows(blocks), [blocks])
   const columns = useMemo(
-    () => getPaymentOrderCalculationColumns({ lectureSessionSegmentLabel }),
-    [lectureSessionSegmentLabel]
+    () => getPaymentOrderCalculationColumns({ lectureSessionSegmentLabel, onBasisDetailClick }),
+    [lectureSessionSegmentLabel, onBasisDetailClick]
   )
   const hideHeaderActionsStatuses: PaymentOrderAdminLineProcessingStatus[] = [
     'confirmed',
@@ -217,12 +234,12 @@ export function PaymentOrderCalculationBreakdownTable({
     (processingStatus === undefined || !hideHeaderActionsStatuses.includes(processingStatus))
 
   const handleDownload = () => {
-    window.alert('준비 중입니다.')
+    if (paymentStatementIssueDisabled) return
     if (onDownloadPaymentStatement) {
       onDownloadPaymentStatement()
       return
     }
-    message.info('지급조서 발급은 추후 연결됩니다.')
+    window.alert('준비 중입니다.')
   }
 
   return (
@@ -276,6 +293,12 @@ export function PaymentOrderCalculationBreakdownTable({
                   size="large"
                   style={{ width: '160px' }}
                   icon={<DownloadOutlined />}
+                  disabled={paymentStatementIssueDisabled}
+                  title={
+                    paymentStatementIssueDisabled
+                      ? '지급조서 확인 완료 또는 계좌 지급 완료 건만 발급할 수 있습니다.'
+                      : undefined
+                  }
                   onClick={handleDownload}
                 >
                   지급조서 발급

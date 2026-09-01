@@ -81,9 +81,11 @@ function buildIndividualProgramsItem(
   }
 }
 
-function buildInstructorProgramsItem(user: SidebarUser): DetailModalSidebarNavItem {
-  const programsLabel = '프로그램 참여 이력'
-  const programsIcon = LNB_ICONS.programs
+function buildInstructorProgramsItem(
+  user: SidebarUser,
+  programsLabel: string,
+  programsIcon: ReactNode
+): DetailModalSidebarNavItem {
   const instructorProfile = user ? resolveInstructorMemberProfile(user) : null
 
   if (instructorProfile === 'instructor_only') {
@@ -132,7 +134,7 @@ function buildDefaultProgramsItem(
   }
 }
 
-/** 학교 상세: LNB 부모 «프로그램 참여 이력» — 하위 «프로그램 수강 이력»(기존 본문) */
+/** 학교 상세: LNB 1뎁스 «프로젝트 수강 이력» */
 function buildSchoolProgramsItem(
   _user: SidebarUser,
   _programsLabel: string,
@@ -140,15 +142,14 @@ function buildSchoolProgramsItem(
 ): DetailModalSidebarNavItem {
   return {
     key: 'history',
-    label: '프로그램 참여 이력',
+    label: '프로젝트 수강 이력',
     icon: programsIcon,
-    children: [{ key: 'enrollment', label: PROGRAM_SIDEBAR_CHILD_LABELS.enrollmentIndividual }],
   }
 }
 
 const sidebarStrategyMap: Record<UserRole, BuildSidebarProgramsItemStrategy> = {
   INDIVIDUAL: buildIndividualProgramsItem,
-  INSTRUCTOR: (user, _programsLabel, _programsIcon) => buildInstructorProgramsItem(user),
+  INSTRUCTOR: buildInstructorProgramsItem,
   SCHOOL: buildSchoolProgramsItem,
   ADMIN: buildDefaultProgramsItem,
 }
@@ -162,7 +163,9 @@ function buildProgramsItem(
   role: UserRole | undefined
 ): DetailModalSidebarNavItem {
   let programsLabel = '프로그램 참여 이력'
-  if (role === 'ADMIN') {
+  if (role === 'INDIVIDUAL' || role === 'INSTRUCTOR') {
+    programsLabel = '프로젝트 참여 이력'
+  } else if (role === 'ADMIN') {
     programsLabel = '프로그램 담당 이력'
   }
   const programsIcon = LNB_ICONS.programs

@@ -42,7 +42,7 @@
 | 제목 | **강사진 추가** | 헤더 청록 배경, 흰색 텍스트 |
 | 바디 높이 | 830px | 헤더 제외, min-height |
 | 닫기 | 헤더 우측 X + 마스크 클릭 | 기존 TealHeaderModal 동작 |
-| 푸터 | 닫기(보조) / 추가(주요, 청록) | AppButton variant="cancel" / variant="primary" modalTeal |
+| 푸터 | 닫기(보조) / 추가(주요, 청록) | `CmsButton` variant="secondary" / variant="primary" |
 
 ### 3.2 기본 정보 영역 치수
 
@@ -124,5 +124,8 @@
 
 ---
 
-**문서 버전**: 1.0  
+**문서 버전**: 1.1
+
 **작성 기준**: 스크린샷·계획서(강사진 추가 모달 위임), persona 기획·디자이너·개발자 역할별 위임 반영
+
+**마지막 업데이트**: 2026-07-15

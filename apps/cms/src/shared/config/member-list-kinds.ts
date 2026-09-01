@@ -4,6 +4,7 @@
  * 별칭: school→institutions, instructor→instructors, admin→admins
  */
 import type { UserRole } from '@/types/user'
+import { parseLegacyRoleFilterParam } from '@/features/user/api/map-member-role'
 
 export const MEMBER_LIST_KINDS = [
   'all',
@@ -71,7 +72,7 @@ export function memberListKindToPendingRole(kind: MemberListKind): UserRole | 'A
   }
 }
 
-export function pendingRoleToMemberListKind(role: UserRole | 'ALL'): MemberListKind {
+export function pendingRoleToMemberListKind(role: string): MemberListKind {
   if (role === 'ALL') return 'all'
   if (role === 'INDIVIDUAL') return 'individual'
   if (role === 'SCHOOL') return 'institutions'
@@ -96,9 +97,8 @@ export function resolveRoleFilterFromMemberListParams(params: {
       if (r !== undefined) return r
     }
   }
-  if (params.role && params.role !== 'ALL') {
-    return params.role as UserRole
-  }
+  const legacyRole = parseLegacyRoleFilterParam(params.role)
+  if (legacyRole) return legacyRole
   return undefined
 }
 
@@ -137,6 +137,11 @@ export function userRoleToBasicInfoEntrySource(
 
 export function memberListHref(kind: MemberListKind): string {
   return `/users/list?kind=${kind}`
+}
+
+/** LNB 회원 목록 3뎁스 키(`/users/list?kind=…`)인지 */
+export function isMemberListMenuHref(href: string): boolean {
+  return href.split('?')[0] === '/users/list'
 }
 
 /** 회원 목록 페이지 상단 제목 */

@@ -1,0 +1,20 @@
+.bar {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.filters {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.resetButton {
+  flex: 0 0 auto;
+  margin-left: auto;
+}

@@ -1,5 +1,8 @@
 .app-layout {
   min-height: 100vh;
+  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   width: 100%;
   overflow: hidden;
   /* 전체 레이아웃 스크롤 방지 */
@@ -11,6 +14,7 @@
   margin-left: var(--sidebar-width);
   /* 사이드바 너비만큼 왼쪽 마진 추가 */
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   /* 메인 레이아웃 스크롤 방지 */
 }
@@ -23,15 +27,28 @@
   padding: 32px;
   background: transparent;
   min-height: calc(100vh - 64px);
+  min-height: calc(100dvh - 64px);
   margin-top: 64px;
   /* 헤더 높이만큼 상단 마진 추가 */
   overflow-y: auto;
   /* 콘텐츠 영역만 스크롤 가능 */
   height: calc(100vh - 64px);
+  height: calc(100dvh - 64px);
   /* 헤더 높이를 제외한 전체 높이 */
+}
+
+/* calendar-set — layout-content 가로·세로 스크롤 + sticky 기준 (프로그램 목록·FilterTableLayout 캘린더 공통) */
+.layout-content:has(.calendar-set),
+.layout-content:has(.calendar-split-card-layout) {
+  overflow-x: auto;
 }
 
 .layout-content.layout-content--templates {
   --cms-layout-content-padding-top: 16px;
   padding-top: 16px;
+}
+
+.layout-content-outlet {
+  width: 100%;
+  min-width: 0;
 }

@@ -1,0 +1,58 @@
+/**
+ * 공통 안내 모달 (AlertModal)
+ * 스펙: 600px 폭, 패딩·타이포·본문 줄바꿈(\n)
+ */
+
+.alert-modal.content-modal.ant-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  /* flex-start면 ant-modal-body·헤더가 내용 폭으로 줄어듦 → stretch로 가로 100% */
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 26px 30px 34px 30px;
+  flex-shrink: 0;
+}
+
+.alert-modal.content-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.alert-modal.content-modal .teal-header-modal__header {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 제목 행: 닫기 버튼 제외 영역이 남는 가로를 차지 */
+.alert-modal.content-modal .teal-header-modal__title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* TealHeaderModal 푸터 기본이 center라 버튼만 좁게 잡히면 가운데로 보임 → 전폭 + 우측 정렬 */
+.alert-modal.content-modal .teal-header-modal__footer {
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: flex-end;
+}
+
+.alert-modal__content {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-wrap;
+}

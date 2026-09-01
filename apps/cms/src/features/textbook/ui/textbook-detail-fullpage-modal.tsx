@@ -1,23 +1,40 @@
 import { useEffect, useState } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { BookOutlined } from '@ant-design/icons'
-import { message } from 'antd'
 import { CmsButton, CmsCheckbox, CmsInput, CmsRadio, CmsSelect } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
+import {
+  buildSearchParams,
+  makeBreadcrumbItem,
+} from '@/shared/lib/detail-fullpage-query-stack'
+import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
 import {
   DetailModalSidebar,
   type DetailModalSidebarNavItem,
 } from '@/shared/ui/detail-modal-sidebar'
 import {
-  TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS,
   type TextbookBusinessArea,
 } from '@/features/textbook/model/textbook-business-areas'
-import type { TextbookEducationTarget } from '@/features/textbook/model/textbook-education-targets'
+import { useTextbookBusinessAreaSelectOptions } from '@/features/textbook/hooks/use-business-areas-query'
+import { useTextbookDetailQuery } from '@/features/textbook/hooks/use-textbook-detail-query'
+import { useDataManagementRemoteEnabled } from '@/features/data-management/hooks/use-data-management-remote-enabled'
 import type {
   TextbookCreateInput,
   TextbookEducationStage,
   TextbookRow,
 } from '@/features/textbook/model/textbook.types'
+import {
+  getStageAllLabel,
+  getStageOptionLabels,
+  isEducationStageGradeSelected,
+  isEducationStageMasterChecked,
+  normalizeEducationStages,
+  summarizeEducationStages,
+  toggleEducationStageAll,
+  toggleEducationStageGrade,
+} from '@/features/textbook/lib/textbook-education-stages'
 import './textbook-detail-fullpage-modal.css'
 
 const TEXTBOOK_DETAIL_LNB_ITEMS: DetailModalSidebarNavItem[] = [
@@ -30,46 +47,92 @@ const TEXTBOOK_DETAIL_LNB_ITEMS: DetailModalSidebarNavItem[] = [
 
 export interface TextbookDetailFullPageModalProps {
   open: boolean
-  textbook: TextbookRow | null
+  textbookId: string | null
+  /** 목록 행 — 본문 선표시용이 아니라 셸 식별·mock 폴백용 */
+  listTextbook: TextbookRow | null
   mode: 'view' | 'edit'
   onClose: () => void
   onEdit: () => void
   onSave: (payload: TextbookCreateInput) => void
 }
 
-export function TextbookDetailFullPageModal({
+export function TextbookDetailFullPageModal(props: TextbookDetailFullPageModalProps) {
+  if (!props.open || !props.textbookId) return null
+  return <TextbookDetailFullPageModalInner key={props.textbookId} {...props} textbookId={props.textbookId} />
+}
+
+type TextbookDetailFullPageModalInnerProps = Omit<TextbookDetailFullPageModalProps, 'textbookId'> & {
+  textbookId: string
+}
+
+function TextbookDetailFullPageModalInner({
   open,
-  textbook,
+  textbookId,
+  listTextbook,
   mode,
   onClose,
   onEdit,
   onSave,
-}: TextbookDetailFullPageModalProps) {
-  const [editForm, setEditForm] = useState<TextbookEditForm | null>(null)
+}: TextbookDetailFullPageModalInnerProps) {
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const remoteEnabled = useDataManagementRemoteEnabled('textbooks', open)
+  const { options: businessAreaOptions } = useTextbookBusinessAreaSelectOptions()
+  const detailQuery = useTextbookDetailQuery(textbookId, open)
+  const textbook = detailQuery.data ?? (remoteEnabled ? null : listTextbook)
+  const isDetailLoading = remoteEnabled && isAwaitingFirstQueryData(detailQuery)
+  const isDetailError = remoteEnabled && detailQuery.isError
+  const [editForm, setEditForm] = useState<TextbookEditForm | null>(() =>
+    textbook ? toEditForm(textbook) : null
+  )
 
   useEffect(() => {
-    if (!open || !textbook) return
+    if (!textbook) {
+      setEditForm(null)
+      return
+    }
     setEditForm(toEditForm(textbook))
-  }, [open, textbook])
+  }, [textbook])
 
   const isEditMode = mode === 'edit'
-  if (!open || !textbook) return null
-  if (!editForm) return null
+  const titleSource = textbook ?? listTextbook
+  const title = titleSource
+    ? `${titleSource.businessArea}_${titleSource.textbookName}`
+    : '교재 상세'
+  const headerBreadcrumbItems = [
+    makeBreadcrumbItem(
+      '교재 관리',
+      location.pathname,
+      buildSearchParams(searchParams, { delete: ['textbookId', 'textbookMode'] })
+    ),
+    { label: title },
+  ]
 
   const handleSave = () => {
+    if (!editForm) return
     const payload = toSubmitPayload(editForm)
     if (!payload) {
-      message.warning('교육 대상을 1개 이상 선택해 주세요.')
       return
     }
     onSave(payload)
   }
 
+  const showBody = Boolean(textbook && editForm) && !isDetailLoading && !isDetailError
+
   return (
     <DetailFullPageModal
       open={open}
       onClose={onClose}
-      title={`${textbook.businessArea}_${textbook.textbookName}`}
+      title={title}
+      loading={isDetailLoading}
+      error={
+        isDetailError
+          ? '상세를 불러오지 못했습니다.'
+          : !isDetailLoading && !textbook
+            ? '교재를 찾을 수 없습니다.'
+            : null
+      }
+      headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className="textbook-detail-fullpage-modal"
       sidebar={
         <DetailModalSidebar
@@ -83,13 +146,16 @@ export function TextbookDetailFullPageModal({
         />
       }
       contentExtra={
-        <div className="textbook-detail-fullpage-modal__header-actions">
-          <CmsButton variant="primary" size="medium" onClick={isEditMode ? handleSave : onEdit}>
-            {isEditMode ? '저장' : '정보 수정'}
-          </CmsButton>
-        </div>
+        showBody ? (
+          <div className="textbook-detail-fullpage-modal__header-actions">
+            <CmsButton variant="primary" size="medium" onClick={isEditMode ? handleSave : onEdit}>
+              {isEditMode ? '저장' : '정보 수정'}
+            </CmsButton>
+          </div>
+        ) : null
       }
     >
+      {showBody && textbook && editForm ? (
       <div className="textbook-detail-fullpage-modal__root">
         <section
           className="textbook-detail-fullpage-modal__basic-info-section"
@@ -169,7 +235,7 @@ export function TextbookDetailFullPageModal({
                           : prev
                       )
                     }
-                    options={TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS}
+                    options={businessAreaOptions}
                     style={{ width: 220 }}
                   />
                 }
@@ -222,18 +288,7 @@ export function TextbookDetailFullPageModal({
                         if (!prev) return prev
                         return {
                           ...prev,
-                          educationStages: prev.educationStages.map(current => {
-                            if (current.key !== stage.key) return current
-                            const nextSelected = !current.selected
-                            return {
-                              ...current,
-                              selected: nextSelected,
-                              grades: current.grades?.map(grade => ({
-                                ...grade,
-                                selected: nextSelected,
-                              })),
-                            }
-                          }),
+                          educationStages: toggleEducationStageAll(prev.educationStages, stage.key),
                         }
                       })
                     }}
@@ -242,25 +297,11 @@ export function TextbookDetailFullPageModal({
                         if (!prev) return prev
                         return {
                           ...prev,
-                          educationStages: prev.educationStages.map(current => {
-                            if (current.key !== stage.key) return current
-                            const nextGrades = current.grades?.map(grade =>
-                              grade.label === label
-                                ? { ...grade, selected: !grade.selected }
-                                : grade
-                            )
-                            const hasSelectedOption =
-                              nextGrades?.some(grade => grade.selected) ?? false
-                            const allSelected =
-                              (nextGrades?.length ?? 0) > 0 &&
-                              (nextGrades?.every(grade => grade.selected) ?? false)
-                            return {
-                              ...current,
-                              selected:
-                                allSelected || (stage.key === 'kindergarten' && hasSelectedOption),
-                              grades: nextGrades,
-                            }
-                          }),
+                          educationStages: toggleEducationStageGrade(
+                            prev.educationStages,
+                            stage.key,
+                            label
+                          ),
                         }
                       })
                     }}
@@ -271,6 +312,7 @@ export function TextbookDetailFullPageModal({
           ))}
         </DetailInfoForm>
       </div>
+      ) : null}
     </DetailFullPageModal>
   )
 }
@@ -287,23 +329,22 @@ function EducationStageView({
   onToggleOption?: (label: string) => void
 }) {
   const optionLabels = getStageOptionLabels(stage.key)
-  const gradeSelectedMap = new Map((stage.grades ?? []).map(grade => [grade.label, grade.selected]))
   const allLabel = getStageAllLabel(stage.key)
+  const masterChecked = isEducationStageMasterChecked(stage)
 
   return (
     <div className="textbook-detail-fullpage-modal__stage">
       {editable ? (
-        <CmsCheckbox checked={stage.selected} onChange={onToggleAll} checkboxSize="medium">
+        <CmsCheckbox checked={masterChecked} onChange={onToggleAll} checkboxSize="medium">
           {allLabel}
         </CmsCheckbox>
       ) : (
-        <CmsCheckbox checked={stage.selected} disabled checkboxSize="medium">
+        <CmsCheckbox checked={masterChecked} disabled checkboxSize="medium">
           {allLabel}
         </CmsCheckbox>
       )}
       {optionLabels.map(label => {
-        const selected =
-          gradeSelectedMap.get(label) ?? (stage.key === 'kindergarten' && stage.selected)
+        const selected = isEducationStageGradeSelected(stage, label)
         return (
           <span key={label}>
             {editable ? (
@@ -340,90 +381,35 @@ function toEditForm(textbook: TextbookRow): TextbookEditForm {
     textbookNameEn: textbook.textbookNameEn,
     businessArea: textbook.businessArea,
     useStatus: textbook.useStatus,
-    educationStages: textbook.educationStages.map(stage => ({
-      ...stage,
-      grades:
-        stage.grades?.map(grade => ({ ...grade })) ??
-        (stage.key === 'kindergarten'
-          ? ['유아', '유치원생'].map(label => ({
-              label,
-              selected: stage.selected,
-            }))
-          : undefined),
-    })),
-  }
-}
-
-function toSubmitPayload(form: TextbookEditForm): TextbookCreateInput | null {
-  const selectedStage =
-    form.educationStages.find(stage => stage.selected) ??
-    form.educationStages.find(stage => (stage.grades ?? []).some(grade => grade.selected)) ??
-    null
-
-  if (!selectedStage) return null
-
-  const selectedGrades =
-    selectedStage?.grades?.filter(grade => grade.selected).map(grade => grade.label) ?? []
-  const grade =
-    selectedGrades.length === 0 || selectedGrades.length >= 2 ? '전학년' : selectedGrades[0]
-
-  return {
-    textbookName: form.textbookName.trim(),
-    textbookNameEn: form.textbookNameEn.trim(),
-    businessArea: form.businessArea,
-    useStatus: form.useStatus,
-    educationTarget: mapStageKeyToEducationTarget(selectedStage?.key ?? 'elementary'),
-    grade,
-    educationStages: form.educationStages.map(stage => ({
+    educationStages: normalizeEducationStages(
+      textbook.educationStages,
+      textbook.educationTarget,
+      textbook.grade
+    ).map(stage => ({
       ...stage,
       grades: stage.grades?.map(grade => ({ ...grade })),
     })),
   }
 }
 
-function mapStageKeyToEducationTarget(
-  stageKey: TextbookEducationStage['key']
-): TextbookEducationTarget {
-  switch (stageKey) {
-    case 'kindergarten':
-      return '유아'
-    case 'elementary':
-      return '초등학교'
-    case 'middle':
-      return '중학교'
-    case 'high':
-      return '고등학교'
-    case 'university':
-      return '대학교'
-    default:
-      return '초등학교'
-  }
-}
+function toSubmitPayload(form: TextbookEditForm): TextbookCreateInput | null {
+  const summary = summarizeEducationStages(form.educationStages)
+  const hasSelection = form.educationStages.some(
+    stage => stage.selected || (stage.grades ?? []).some(grade => grade.selected)
+  )
+  if (!hasSelection) return null
 
-function getStageAllLabel(stageKey: TextbookEducationStage['key']): string {
-  switch (stageKey) {
-    case 'elementary':
-    case 'middle':
-    case 'high':
-      return '전학년'
-    default:
-      return '전체'
-  }
-}
-
-function getStageOptionLabels(stageKey: TextbookEducationStage['key']): string[] {
-  switch (stageKey) {
-    case 'kindergarten':
-      return ['유아', '유치원생']
-    case 'elementary':
-      return ['1학년', '2학년', '3학년', '4학년', '5학년', '6학년']
-    case 'middle':
-    case 'high':
-      return ['1학년', '2학년', '3학년']
-    case 'university':
-      return []
-    default:
-      return []
+  return {
+    textbookName: form.textbookName.trim(),
+    textbookNameEn: form.textbookNameEn.trim(),
+    businessArea: form.businessArea,
+    useStatus: form.useStatus,
+    educationTarget: summary.educationTarget,
+    grade: summary.grade,
+    educationStages: form.educationStages.map(stage => ({
+      ...stage,
+      grades: stage.grades?.map(grade => ({ ...grade })),
+    })),
   }
 }
 

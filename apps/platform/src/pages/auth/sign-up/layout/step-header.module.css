@@ -1,0 +1,6 @@
+@media (--bp-below-pc) {
+  .title {
+    font-size: 26px;
+    line-height: 140%;
+  }
+}

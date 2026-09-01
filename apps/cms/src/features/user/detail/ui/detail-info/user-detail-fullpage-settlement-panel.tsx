@@ -1,4 +1,4 @@
-import { Empty } from 'antd'
+import { EmptyState } from '@/shared/ui'
 import type { User } from '@/types/user'
 import { InstructorPaymentTab } from '@/features/user/detail/ui/instructor-payment-tab'
 
@@ -12,7 +12,13 @@ export function UserDetailFullpageSettlementPanel({
   showInstructorPayment,
 }: UserDetailFullpageSettlementPanelProps) {
   if (showInstructorPayment) {
-    return <InstructorPaymentTab instructorUserId={user.id} instructorName={user.name} />
+    return (
+      <InstructorPaymentTab
+        instructorUserId={user.id}
+        instructorName={user.name}
+        instructorMemberId={user.memberId}
+      />
+    )
   }
-  return <Empty description="정산 현황은 강사 회원에서만 제공됩니다." />
+  return <EmptyState description="정산 현황은 강사 회원에서만 제공됩니다." />
 }

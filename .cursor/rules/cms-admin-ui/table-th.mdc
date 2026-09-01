@@ -1,0 +1,37 @@
+---
+description: CMS·Admin 공통 — 테이블 th / 라벨 셀 배경 (--BG-header)
+globs:
+  - apps/cms/src/**/*.{tsx,css}
+  - apps/admin/src/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# 테이블 th · 라벨 셀 배경 (공통)
+
+목록 `thead` · DetailInfoForm 라벨 셀 배경·보더.
+
+```css
+border-right: 1px solid var(--table-line, #e0e0e0);
+border-bottom: 1px solid var(--table-line, #e0e0e0);
+background: var(--BG-header);
+/* --BG-header =
+   linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%), #fff
+*/
+```
+
+## 토큰
+
+| 변수 | 값 |
+|------|-----|
+| `--BG-header` | 위 gradient + `#fff` (form-template-runtime · CMS·Admin theme 정합) |
+| `--table-th-bg` | `var(--BG-header)` |
+| `--table-line` | `#e0e0e0` / `var(--color-border)` |
+
+화면별 th `background: #f5f6f7` 등 단색 하드코딩 금지.
+
+## 관련
+
+- [cms-data-table.mdc](./cms-data-table.mdc)
+- [styling-tokens.mdc](./styling-tokens.mdc)
+
+**Last updated:** 2026-08-06

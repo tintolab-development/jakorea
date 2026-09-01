@@ -1,0 +1,17 @@
+---
+description: Admin 테이블 th — theme path (공통 스펙 cms-admin-ui table-th)
+globs:
+  - apps/admin/src/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# Admin 테이블 th (어댑터)
+
+**스펙:** [cms-admin-ui/table-th.mdc](../../../../.cursor/rules/cms-admin-ui/table-th.mdc)
+
+## Admin 정의·적용
+
+- 정의: `theme-provider.css`
+- 적용: `cms-data-table.css` · `table-th.css` · DetailInfoForm 라벨
+
+**Last updated:** 2026-08-06

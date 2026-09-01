@@ -1,0 +1,193 @@
+/* JA Korea 소개 관리 — 시안 상세 폼 카드
+ * 목록 카드·툴바 갭: list-table-layout.css / table-header-label.css
+ * - card padding 20px · toolbar→table 16px · title↔desc 10px · actions 8px
+ * - 툴바 타이틀 + 액션 동일 라인 (세로 중앙)
+ * - 테이블 행 min-height 54px (Worldwide / horizontal-table 동일)
+ */
+
+.ja-korea-intro-card .admin-list-toolbar {
+  align-items: center;
+}
+
+.ja-korea-intro-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.ja-korea-intro-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ja-korea-intro-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ja-korea-intro-section-title__marker {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  background: var(--default-BK, #3d3d3d);
+}
+
+.ja-korea-intro-section-title__text {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+/*
+ * DetailInfoForm 테이블 행 — 시안 min-height 54px
+ */
+.ja-korea-intro-card .detail-info-form__field {
+  min-height: 54px;
+  --detail-info-label-w: 160px;
+  grid-template-columns: 160px minmax(0, 1fr);
+}
+
+.ja-korea-intro-card .detail-info-form__field-label {
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  min-height: 54px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+}
+
+.ja-korea-intro-card .detail-info-form__field-content {
+  min-height: 54px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: left;
+}
+
+/* 다줄 textarea 수정 시에만 상단 정렬 (콘텐츠에 맞게 행 확장) */
+.ja-korea-intro-card .detail-info-form__field-content--edit:has(.cms-textarea) {
+  align-items: flex-start;
+}
+
+.ja-korea-intro-card .ja-korea-intro-preline {
+  white-space: pre-line;
+  width: 100%;
+  min-width: 0;
+}
+
+.ja-korea-intro-card .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
+  resize: none;
+}
+
+/*
+ * td 안 중첩 테이블 (콘텐츠 01/02)
+ * 규격: apps/admin/.cursor/rules/design/detail-info-nested-table.mdc
+ * 바깥 값 셀 padding 20px, 내부 셀 min-height 54px
+ */
+.ja-korea-intro-card .detail-info-form__field-content:has(.ja-korea-intro-nested-table) {
+  display: flex;
+  padding: 20px;
+  justify-content: stretch;
+  align-items: stretch;
+  gap: 0;
+  min-height: 0;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.ja-korea-intro-card
+  .detail-info-form__field-content:has(.ja-korea-intro-nested-table)
+  > .ja-korea-intro-nested-table {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  margin-block: 0;
+  align-self: stretch;
+  align-items: stretch;
+}
+
+.ja-korea-intro-card
+  .detail-info-form__field-content:has(.ja-korea-intro-nested-table)
+  > .ja-korea-intro-nested-table--content,
+.ja-korea-intro-nested-table--content {
+  display: flex;
+  flex-direction: column;
+}
+
+.ja-korea-intro-nested-table {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--radius-8, 8px);
+  overflow: hidden;
+  background: #fff;
+}
+
+.ja-korea-intro-nested-table__cell {
+  display: grid;
+  grid-template-columns: minmax(120px, 140px) minmax(0, 1fr);
+  align-items: stretch;
+  min-width: 0;
+  min-height: 54px;
+  box-sizing: border-box;
+}
+
+.ja-korea-intro-nested-table__cell + .ja-korea-intro-nested-table__cell {
+  border-top: 1px solid var(--table-line, #e0e0e0);
+}
+
+.ja-korea-intro-nested-table__label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 54px;
+  padding: 12px 16px;
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  );
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  text-align: center;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.ja-korea-intro-nested-table__value {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 54px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%;
+}
+
+.ja-korea-intro-nested-table__value--textarea {
+  align-items: flex-start;
+}
+
+.ja-korea-intro-nested-table__value > * {
+  width: 100%;
+  min-width: 0;
+}

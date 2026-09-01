@@ -1,0 +1,197 @@
+---
+description: Platform 마이페이지 교육현황 목록·상세·탭·정렬·상태 표시 기획 (SSOT)
+globs: apps/platform/src/features/mypage/**/*,apps/platform/src/pages/mypage/education/**/*,apps/platform/src/features/program/ui/program-info-body/**
+alwaysApply: false
+---
+
+# 교육현황 (Platform Mypage)
+
+`apps/platform` **마이페이지 → 교육현황** 구현 시 본 문서를 SSOT로 따른다.
+
+## 목록 (`/mypage/education`)
+
+- 로그인 회원이 **신청한 교육 프로그램**만 노출
+- API: `GET /api/portal/me/program-applications` (연동 시 `statusGroup`, `page`, `size`)
+- Mock: [`mock-education-applications.ts`](apps/platform/src/features/mypage/lib/mock-education-applications.ts)
+
+### 정렬
+
+1. **모집현황**: 모집 중 → 모집 예정 → 모집 완료 (`recruiting` → `scheduled` → `closed`)
+2. **진행 상태**: 결과 대기 → 서류 합격 → 진행중 → 진행 완료 → 활동 포기 → 신청 반려
+
+구현: [`education-application-list.ts`](apps/platform/src/features/mypage/lib/education-application-list.ts)
+
+### 페이지네이션
+
+- **10건/페이지** — `EDUCATION_APPLICATION_PAGE_SIZE`
+- URL query: `?tab=&page=`
+
+### 목록 탭
+
+| 탭 | key | 포함 상태 |
+|----|-----|-----------|
+| 전체 | `all` | 전체 |
+| 신청한 프로그램 | `applied` | 승인/반려 처리 **전** — `waiting_result`, `document_passed` |
+| 진행중인 프로그램 | `in_progress` | 승인 이후 종료 **전** — `in_progress` |
+| 종료된 프로그램 | `completed` | `completed`, `withdrawn`, `rejected` |
+
+종료 판정 (API 연동 시 백엔드 canonical):
+
+- 활동 포기
+- 신청 후 승인 반려
+- 만족도조사 **있음** → 참여(설문) 완료
+- 만족도조사 **없음** → 마지막 교육 일정까지 진행 완료
+
+### 목록 행 UI
+
+`MediaListRow` — 썸네일 | 기본정보+태그 | 진행상태
+
+- 태그: `ProgramStatusBadges` — 모집 완료(`closed`) → 회색(`disabled`)
+- 진행 상태 색: [`education-display-status.ts`](apps/platform/src/features/mypage/lib/education-display-status.ts)
+
+| 상태 | 색 |
+|------|-----|
+| 결과 대기, 서류 합격 | 주황 `--color-element-orange` |
+| 진행중 | 파랑 `--color-element-blue` |
+| 진행 완료, 활동 포기 | 회색 `--color-neutral-cool-500` |
+| 신청 반려 | 빨강 `--color-status-error-default` |
+
+### 행 클릭
+
+- **`/mypage/education/:applicationId`** (`educationApplicationDetailPath`)
+- 신청 `id` 기준 (programId 아님)
+- 레이아웃: `default` (LNB 없음 — 참여하기 상세와 동일)
+
+## 상세 (`/mypage/education/:applicationId`)
+
+### 공통 헤더
+
+- 뒤로가기: 라벨 `교육현황`, 아이콘 `chevron-left-gray7A`, gap 14px, `hl-sm` — [`EducationDetailBack`](apps/platform/src/features/mypage/ui/education-detail-back.tsx)
+- 페이지 상단 여백 100px
+- 프로그램명: 공고용 프로그램명 (`ProgramDetail.title`), `hl-lg`, mt 30 / mb 4
+- 진행 상태: `hd-lg`, 목록과 동일 톤
+- 교육 대상 / 교육 형태: 아이콘 + `bd-md-sb` primary-700 (대상↔형태 gap 16)
+
+### 서류 합격 배너
+
+- `displayStatus === 'document_passed'` **그리고** `hasInterview` + `interviewAtLabel`
+- 2차 면접일 안내 (관리자 배정일). 클릭 액션 없음
+- [`DocumentPassBanner`](apps/platform/src/features/mypage/ui/document-pass-banner.tsx)
+
+### 상세 탭 분기 (기획)
+
+| 진행 상태 | 탭 |
+|-----------|-----|
+| 결과 대기 / 서류 합격 / 신청 반려 | 프로그램 정보 / 신청 내용 |
+| 진행 중 / 진행 완료 | 안내사항 / 교육 일정 / 설문조사 / 만족도조사 (미설정 항목 탭 비노출). 봉사현황은 교육 일정→배정현황, UJAT는 배정·출결 |
+| 활동 포기 (교육 전) | 프로그램 정보 / 신청 내용 |
+| 활동 포기 (교육 중) | 교육 일정 / 설문 / 만족도 (포기 이후 일정 비노출) |
+
+탭 여백: top 48 / bottom 56. section query: `?section=program|application`
+
+## 프로그램 정보 탭 (일반 · `PROGRAM_APPLICATION_STATUSES`)
+
+참여하기 상세 **header 아래**와 동일 body — [`ProgramInfoBody`](apps/platform/src/features/program/ui/program-info-body/).  
+`showApplyCta={false}`. 교육현황에서만 아래 취소·aside 규칙 적용.
+
+### Aside (우측 · 모바일 상단)
+
+| 요소 | 규칙 |
+|------|------|
+| **썸네일** | `detailImageUrl` → 없으면 `thumbnailUrl`. 없으면 플레이스홀더 |
+| **신청 취소하기** | `canCancelEducationApplication` — **결과 대기·서류 합격만** 노출. 승인/반려 **이후**(반려·진행중·완료·포기 등) **비노출** |
+| 취소 동작 | 확인 모달 → 확정 시 신청 **삭제(이력 미잔존)** → 교육현황 목록으로. Mock: `cancelMockEducationApplication`. API 연동 후속 |
+| **첨부파일** | 파일명 클릭 시 다운로드 (`PFFileDownload`). **첨부 없으면 비노출** |
+
+### 상단 정보 (본문)
+
+| 블록 | 규칙 | 어드민 출처 |
+|------|------|-------------|
+| **프로그램 설명** | 미기재 시 **비노출** (`summary`) | 모집 정보 > 유형별 상세 정보 > 프로그램 설명 |
+| **기본 정보** | 항목 값이 길거나 너비가 줄면 **아래 줄로 wrap** (`infoFields` flex-wrap). 빈 값 항목 **비노출** | 아래 표 |
+| └ 사업 분야 | | 공통 정보 > 기본 정보 > 사업 분야 |
+| └ 교육 형태 | | 공통 정보 > 프로그램 유형 설정 > 교육 형태 |
+| └ 교육 대상 | | 모집 정보 > 참여자 모집 정보 > 교육 대상 |
+| └ 교육 대상 상세 | | 모집 정보 > 참여자 모집 정보 > 교육 대상(상세) |
+| └ 교육 장소 | | 공통 정보 > 기본 정보 > 교육 장소 |
+| └ 교육 커리큘럼 | `sessions` / `eventSchedules` 블록. 없으면 비노출 | 공통 정보 > 교육 진행(커리큘럼/일정) |
+
+> 강사·봉사·UJAT·Gemini 등 케이스별 `basicInfoFields` 라벨 세트는 `mapBasicInfoFields` SSOT. **일반(참여자)** 기본은 위 6항목.
+
+### 세부 내용
+
+| 블록 | 규칙 | 어드민 출처 |
+|------|------|-------------|
+| **모집 및 선별 기간** | 그룹 라벨은 프로그램 유형별 (`recruitmentPhaseGroupLabel` / 기간 명칭 상이) | |
+| └ 참여자 모집 기간 등 | 유형별 명칭 (참여자/강사/봉사자/기관/연수 신청 기간 등) | 참여자 모집 정보 > 모집 기간 |
+| └ 1차 서류 합격자 발표 | **면접 있는 경우만** | 참여자 모집 정보 > 1차 서류 합격자 발표 |
+| └ 2차 면접 기간 | **면접 있는 경우만** | 참여자 모집 정보 > 2차 면접 기간 |
+| └ 최종 합격자 발표 | | 참여자 모집 정보 > 최종 합격자 발표 |
+| **교육 일정** | `educationSchedules` 카드. 없으면 비노출 | 공통 정보 > 교육 진행 일정 설정 |
+| **모집안내** | 미기재 시 비노출 | 참여자 모집 정보 > 상세 정보 > 모집 안내 |
+| **추가 내용** | 미기재 시 비노출 | 참여자 모집 정보 > 상세 정보 > 추가 내용 |
+| **학습 지원 내용** | 미기재 시 비노출 (일반·UJAT 기관·Gemini 등 케이스) | 참여자 모집 정보 > 상세 정보 > 학습 지원 내용 |
+| **비고** | 미기재 시 비노출 | 참여자 모집 정보 > 비고 |
+| **문의처** | 미기재 시 비노출 | 참여자 모집 정보 > 문의처 |
+
+### 지원 방법
+
+- 상세 **최하단** 노출 (`세부내용` 밖). 미기재 시 **비노출**
+- 어드민: 참여자 모집 정보 > 상세 정보 > 지원 방법
+
+## 신청 내용 탭
+
+노출: `waiting_result` | `document_passed` 만 실 UI.  
+`rejected` 등 그 외 신청-계열 상태는 placeholder.  
+컴포넌트: [`EducationApplicationContent`](apps/platform/src/features/mypage/ui/education-application-content.tsx)  
+분기: `canShowEducationApplicationContent`
+
+| 블록 | 규칙 | 스타일 |
+|------|------|--------|
+| **자기소개 및 지원동기** | 미기재 시 비노출 (`selfIntroMotivation`) | 타이틀 `bd-sm-rg` cool-600 · mb 8 / 본문 `bd-md-md` black · **line-height 170%** |
+| **진행 희망 교육 일정** | 미기재 시 비노출 (`preferredEducationScheduleLabel`) | 카드 cool-50 · padding 20 · radius 16 · gap 8 / 타이틀 `bd-md-sb` / 일정 `bd-md-md` |
+
+섹션 간 gap: 32. Mock: [`mock-education-applications.ts`](apps/platform/src/features/mypage/lib/mock-education-applications.ts). API 연동 후속.
+
+## 안내사항 상세 모달 (진행중)
+
+- 목록 카드 클릭 → [`EducationInProgressNoticeDetailModal`](apps/platform/src/features/mypage/ui/education-in-progress-notice-detail-modal.tsx)
+- `PFModal` `size="lg"`(960) · `mobilePlacement="full"`(≤1079)
+- PC 좌우 `PFCarouselButton`으로 이전/다음 안내 (끝에서 disabled). 모바일에서는 숨김
+- 열면 해당 건 `read: true` (목록·모달 동기)
+- **작성자만** 더보기(`isAuthor`) → 수정하기(준비 중) / 삭제하기 → 확인 모달 후 mock 목록에서 제거·상세 닫기
+- 삭제 확인: [`EducationNoticeDeleteConfirm`](apps/platform/src/features/mypage/ui/education-notice-delete-confirm.tsx) — 「안내사항을 삭제할까요?」 / 취소·삭제하기
+- 첨부 1건: 클립 + 파일명 + 다운로드. 2건 이상: `{n}개의 첨부파일` 목록(chevron으로 접기)
+- 하단 stats는 카드와 동일 [`EducationNoticeStats`](apps/platform/src/features/mypage/ui/education-notice-stats.tsx)
+- 반응 목록·피커 mock (즉시 토글). 댓글 전송·반응 API 후속
+
+### 구현 범위 vs 후속
+
+| 구현됨 | 후속 |
+|--------|------|
+| 공통 헤더·배너·프로그램 신청 상태 2탭 | 신청 반려용 신청 내용 UI |
+| ProgramInfoBody 재사용 + 취소 확인·이력 제거(mock) | 취소 API 연동 |
+| 빈 필드·첨부·지원방법 비노출 / 교육 커리큘럼 라벨 | 교육 일정·설문·만족도 탭 |
+| 신청 내용 (결과 대기·서류 합격) mock UI | 신청 내용 API 연동 |
+| 안내사항 목록 + 상세 모달(캐러셀·첨부·삭제 확인·반응 mock) | 댓글/반응 API · 수정 · 삭제 API |
+| 비-applied 상태 placeholder | 진행 완료 안내사항 탭 |
+
+## 금지
+
+- ❌ 탭/정렬/상태 라벨을 페이지에 하드코딩 — shared lib 사용
+- ❌ 목록 행을 공개 `/programs/:id`로 보냄 (상세는 mypage education detail)
+- ❌ 참여하기와 다른 모집·진행상태 색 규칙 임의 적용
+- ❌ 승인/반려 **이후**에 신청 취소 버튼 노출
+- ❌ Platform에 CMS schema와 다른 프로그램 정보 필드를 하드코딩 (맵핑은 `map-from-cms` / `ProgramInfoBody`)
+
+## 관련
+
+- 목록: [`pages/mypage/education/`](apps/platform/src/pages/mypage/education/)
+- 상세: [`pages/mypage/education/detail/`](apps/platform/src/pages/mypage/education/detail/)
+- 행 UI: [`application-list-item.tsx`](apps/platform/src/features/mypage/ui/application-list-item.tsx)
+- Body: [`program-info-body/`](apps/platform/src/features/program/ui/program-info-body/)
+- 취소: `canCancelEducationApplication` · `EducationCancelConfirm` · `cancelMockEducationApplication`
+- 신청 내용: `EducationApplicationContent` · `canShowEducationApplicationContent`
+- 안내사항: `EducationInProgressNoticePanel` · `EducationInProgressNoticeDetailModal` · `EducationNoticeStats` · `EducationProgramInfoModal`
+
+**Last updated:** 2026-09-01 (프로그램 정보 팝업)

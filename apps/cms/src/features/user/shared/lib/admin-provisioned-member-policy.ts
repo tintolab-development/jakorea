@@ -1,4 +1,5 @@
 import type { User } from '@/types/user'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 
 /** 회원 상세 기본 정보 `DetailInfoForm` description에 붙는 문구 (별표 포함) */
 export const ADMIN_REGISTERED_MEMBER_DETAIL_CAPTION = '*관리자에 의해 등록된 회원입니다'
@@ -10,7 +11,8 @@ type UserLike = Pick<User, 'registeredByAdmin' | 'identitySelfSignupCompletedAft
 type PermissionApprovalUserLike = Pick<User, 'permissionApprovalStatus' | 'role'>
 type CurrentUserLike = Pick<User, 'role' | 'adminLevel'>
 type AdminMemberEditTargetLike = UserLike & Pick<User, 'role'>
-
+type InstructorRestrictedEditUserLike = UserLike &
+  Pick<User, 'role' | 'roles' | 'instructorMemberProfile'>
 type SchoolUserLike = UserLike &
   Pick<User, 'role' | 'schoolInfo'> & {
     schoolInfo?: { affiliatedTeachers?: { linkedUserId?: string }[] }
@@ -22,6 +24,27 @@ type SchoolUserLike = UserLike &
  */
 export function shouldShowCmsMemberInfoEditButton(user: UserLike): boolean {
   return Boolean(user.registeredByAdmin && !user.identitySelfSignupCompletedAfterAdminRegistration)
+}
+
+/**
+ * 어드민 등록 강사·교사겸강사(`instructor_only` / `instructor_dual`)가 본인인증 완료 후 —
+ * [정보 수정]은 노출하되 강사비 등급·JA 평가 등급만 수정 가능한 대상인지.
+ * 순수 교사(`school_teacher`)는 기본 정보·약관만 노출하므로 제외.
+ */
+export function isCmsInstructorFeeJaRestrictedEditTarget(
+  user: InstructorRestrictedEditUserLike
+): boolean {
+  if (!user.registeredByAdmin) return false
+  if (!user.identitySelfSignupCompletedAfterAdminRegistration) return false
+  if (user.role !== 'INSTRUCTOR') return false
+  return resolveInstructorMemberProfile(user) !== 'school_teacher'
+}
+
+/** 전체 기본정보 수정 또는 강사·교사 등급 제한 수정 — 헤더 [정보 수정] 노출 */
+export function shouldShowCmsMemberInfoEditButtonOrInstructorRestricted(
+  user: InstructorRestrictedEditUserLike
+): boolean {
+  return shouldShowCmsMemberInfoEditButton(user) || isCmsInstructorFeeJaRestrictedEditTarget(user)
 }
 
 /** 직접 등록으로 취급되는지: 처음부터 직접 가입이거나, 관리자 등록 후 본인 직접 가입을 마친 경우 */
@@ -87,6 +110,19 @@ export function canEditAdminMemberInfo(
   if (targetUser.role !== 'ADMIN') return false
   if (!isMasterAdminUser(currentUser)) return false
   return shouldShowCmsMemberInfoEditButton(targetUser)
+}
+
+/**
+ * 관리자 회원(`role === 'ADMIN'`) 상세 — [정보 수정] 진입.
+ * 관리자 등록 회원이면 CMS 관리자 전원 노출(마스터는 전체 기본정보, 그 외는 코멘트·권한 유형만).
+ */
+export function canStartAdminMemberProfileEdit(
+  currentUser: CurrentUserLike | null | undefined,
+  targetUser: AdminMemberEditTargetLike
+): boolean {
+  if (targetUser.role !== 'ADMIN') return false
+  if (!shouldShowCmsMemberInfoEditButton(targetUser)) return false
+  return canAccessAdminCommentInAdminDetail(currentUser)
 }
 
 /** 소속 교사 중 CMS 회원과 연동된 행이 하나라도 있으면 true (해당 학교명으로 가입·연동된 교사) */

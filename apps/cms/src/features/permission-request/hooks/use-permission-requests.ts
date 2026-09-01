@@ -4,12 +4,11 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { message } from 'antd'
-import { MESSAGES } from '@/shared/constants'
 import {
   getPermissionRequests,
   reviewPermissionRequest,
 } from '@/entities/permission-request/api/permission-request-service'
+import { handleError } from '@/shared/utils/error-handler'
 import type { PermissionRequest, ReviewPermissionRequestInput } from '@/types/permission-request'
 
 interface UsePermissionRequestsOptions {
@@ -47,8 +46,7 @@ export function usePermissionRequests(
     } catch (err) {
       const error = err instanceof Error ? err : new Error('권한 요청 목록 조회에 실패했습니다.')
       setError(error)
-      message.error(error.message)
-    } finally {
+      } finally {
       setLoading(false)
     }
   }, [status])
@@ -63,18 +61,11 @@ export function usePermissionRequests(
     async (input: ReviewPermissionRequestInput) => {
       try {
         // Phase 0.5.2: 승인 시 임시 권한 부여
-        const { temporaryPermission } = await reviewPermissionRequest({ ...input, approved: true })
-
-        if (temporaryPermission) {
-          const expiresAt = new Date(temporaryPermission.expiresAt).toLocaleDateString('ko-KR')
-          message.success(MESSAGES.info.permissionRequestApprovedWithExpiry(expiresAt))
-        } else {
-          message.success(MESSAGES.success.permissionRequestApproved)
-        }
+        await reviewPermissionRequest({ ...input, approved: true })
 
         await fetchRequests()
-      } catch (err: any) {
-        message.error(err.message || '권한 요청 승인에 실패했습니다.')
+      } catch (err: unknown) {
+        handleError(err)
       }
     },
     [fetchRequests]
@@ -84,10 +75,9 @@ export function usePermissionRequests(
     async (input: ReviewPermissionRequestInput) => {
       try {
         await reviewPermissionRequest({ ...input, approved: false })
-        message.success(MESSAGES.success.permissionRequestRejected)
         await fetchRequests()
-      } catch (err: any) {
-        message.error(err.message || '권한 요청 거부에 실패했습니다.')
+      } catch (err: unknown) {
+        handleError(err, { context: 'usePermissionRequests.rejectRequest' })
       }
     },
     [fetchRequests]

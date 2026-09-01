@@ -3,7 +3,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react'
-import { Table, Input, Empty, Checkbox, Calendar } from 'antd'
+import { Table, Input, Checkbox, Calendar } from 'antd'
 import {
   LeftOutlined,
   RightOutlined,
@@ -15,9 +15,9 @@ import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 const CAL_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-import { AppButton } from '@/shared/ui/app-button'
-import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
-import type { SettlementStatusKey } from '@/shared/components/settlement-status-badge'
+import { CmsButton, EmptyState } from '@/shared/ui'
+import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
+import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -245,7 +245,9 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
           <StatusDropdownCell<SettlementRowStatus>
             status={record.status}
             statusOptions={SETTLEMENT_ROW_STATUS_KEYS}
-            renderBadge={s => <SettlementStatusBadge status={s as SettlementStatusKey} />}
+            renderBadge={s => (
+              <InstructorPaymentStatusBadge status={s as InstructorSettlementUiStatus} />
+            )}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={s => handleStatusChange(record.id, s)}
             isOpen={openStatusDropdownId === record.id}
@@ -303,32 +305,32 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
             allowClear
           />
           {viewMode === 'list' ? (
-            <AppButton
-              variant="cancel"
-              size="middle"
+            <CmsButton
+              variant="secondary"
+              size="medium"
               className="settlement-tab__btn-view-toggle"
               onClick={() => setViewMode('calendar')}
             >
               <CalendarOutlined style={{ marginRight: 4 }} />
               캘린더 뷰로 보기
-            </AppButton>
+            </CmsButton>
           ) : (
-            <AppButton
-              variant="cancel"
-              size="middle"
+            <CmsButton
+              variant="secondary"
+              size="medium"
               className="settlement-tab__btn-view-toggle"
               onClick={() => setViewMode('list')}
             >
               <UnorderedListOutlined style={{ marginRight: 4 }} />
               리스트 뷰로 보기
-            </AppButton>
+            </CmsButton>
           )}
-          <AppButton variant="primary" size="middle">
+          <CmsButton variant="primary" size="medium">
             지급조서 발급
-          </AppButton>
-          <AppButton variant="primary" size="middle" className="settlement-tab__btn-settle">
+          </CmsButton>
+          <CmsButton variant="primary" size="medium" className="settlement-tab__btn-settle">
             강의료 정산
-          </AppButton>
+          </CmsButton>
         </div>
       </div>
 
@@ -395,7 +397,7 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
               })}
             />
           ) : (
-            <Empty description="정산 내역이 없습니다." />
+            <EmptyState description="정산 내역이 없습니다." />
           )}
         </div>
       )}

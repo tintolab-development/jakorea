@@ -8,7 +8,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { Application } from '@/types/domain'
 import type { UserRole } from '@/types/user'
 import type { ApplicationFormData } from '@/entities/application/model/schema'
-import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { handleError } from '@/shared/utils/error-handler'
 
 interface UseApplicationReviewResult {
   applications: Application[]
@@ -72,19 +72,18 @@ export function useApplicationReview(): UseApplicationReviewResult {
 
   const openDrawer = useCallback(
     async (application: Application) => {
-      // 먼저 선택된 신청을 설정하여 drawer가 즉시 표시되도록 함
-      setSelectedApplication(application)
-      setDrawerOpen(true)
-
-      // 그 다음 최신 데이터를 가져옴 (비동기로 실행)
-      try {
-        await fetchApplicationById(application.id)
-      } catch (error) {
-        // 에러가 발생해도 기존 데이터로 표시 (이미 setSelectedApplication으로 설정됨)
-        console.error('신청 상세 정보를 가져오는 중 오류가 발생했습니다:', error)
+      // 목록 행 선표시 없이 상세 GET 완료 후 드로어 오픈
+      await fetchApplicationById(application.id)
+      const selected = useApplicationStore.getState().selectedApplication
+      if (selected?.id === application.id) {
+        setDrawerOpen(true)
+        return
       }
+      handleError(new Error('신청 상세를 불러오지 못했습니다.'), {
+        defaultMessage: '신청 상세를 불러오지 못했습니다.',
+      })
     },
-    [fetchApplicationById, setSelectedApplication]
+    [fetchApplicationById]
   )
 
   const closeDrawer = useCallback(() => {
@@ -107,11 +106,9 @@ export function useApplicationReview(): UseApplicationReviewResult {
       try {
         if (editingApplication) {
           await updateApplication(editingApplication.id, data)
-          showSuccessMessage('신청이 수정되었습니다')
-        } else {
+          } else {
           await createApplication(data)
-          showSuccessMessage('신청이 등록되었습니다')
-        }
+          }
         closeForm()
         fetchApplications()
       } catch (error) {
@@ -141,7 +138,6 @@ export function useApplicationReview(): UseApplicationReviewResult {
 
     try {
       await deleteApplication(applicationToDelete.id)
-      showSuccessMessage('신청이 삭제되었습니다')
       closeDeleteConfirm()
       const { selectedApplication } = useApplicationStore.getState()
       if (selectedApplication?.id === applicationToDelete.id) {
@@ -159,8 +155,7 @@ export function useApplicationReview(): UseApplicationReviewResult {
     async (application: Application, status: Application['status'], reason?: string) => {
       try {
         await updateStatus(application.id, status, reason)
-        showSuccessMessage(`상태가 "${status}"로 변경되었습니다`)
-      } catch (error) {
+        } catch (error) {
         handleError(error, {
           defaultMessage: '상태 변경 중 오류가 발생했습니다',
           context: 'ApplicationStatusChange',

@@ -1,0 +1,51 @@
+{
+  "name": "@jakorea/form-schema",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -w -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@jakorea/domain": "workspace:*",
+    "dayjs": "^1.11.13"
+  },
+  "exports": {
+    "./writing-form": {
+      "types": "./dist/writing-form/index.d.ts",
+      "import": "./dist/writing-form/index.js"
+    },
+    "./template-registry": {
+      "types": "./dist/template-registry/index.d.ts",
+      "import": "./dist/template-registry/index.js"
+    },
+    "./catalog": {
+      "types": "./dist/catalog/index.d.ts",
+      "import": "./dist/catalog/index.js"
+    },
+    "./surface": {
+      "types": "./dist/surface/index.d.ts",
+      "import": "./dist/surface/index.js"
+    },
+    "./paragraph-ids": {
+      "types": "./dist/paragraph-ids/index.d.ts",
+      "import": "./dist/paragraph-ids/index.js"
+    },
+    "./paragraph-ids/*": {
+      "types": "./dist/paragraph-ids/*.d.ts",
+      "import": "./dist/paragraph-ids/*.js"
+    },
+    "./consent": {
+      "types": "./dist/consent/index.d.ts",
+      "import": "./dist/consent/index.js"
+    }
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3"
+  }
+}

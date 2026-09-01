@@ -5,10 +5,11 @@
  * §3.1 학교 신청 프로세스 - 신청서 작성
  */
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Form, Input, InputNumber, Button, Space, Upload, message, Alert } from 'antd'
+import { Form, Input, Space, Upload, Alert, Button } from 'antd'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { UploadOutlined, DownloadOutlined } from '@ant-design/icons'
 import { downloadBlob } from '@/shared/utils/file-download'
 import { schoolApplicationSchema, type SchoolApplicationFormData } from '@/entities/application/model/schema'
@@ -16,6 +17,8 @@ import type { Program, Application } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { UploadFile } from 'antd/es/upload/interface'
 import { MESSAGES } from '@/shared/constants'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { fieldValidationHelp, handleError, unknownErrorText } from '@/shared/utils/error-handler'
 
 const { TextArea } = Input
 
@@ -33,8 +36,7 @@ const UPLOAD_POLICY = {
   studentList: {
     allowedExtensions: ['.xlsx', '.xls'],
     maxSize: 5 * 1024 * 1024, // 5MB
-  },
-}
+  } }
 
 export function SchoolApplicationForm({
   program,
@@ -42,12 +44,14 @@ export function SchoolApplicationForm({
   applicationPath, // 향후 사용 예정
   onSubmit,
   onCancel,
-  loading,
-}: SchoolApplicationFormProps) {
+  loading }: SchoolApplicationFormProps) {
   // 향후 applicationPath 사용 예정
   void applicationPath
   const { user } = useAuthStore()
   const isEditMode = !!application
+  const [uploadAlert, setUploadAlert] = useState<{ type: 'error' | 'warning' | 'info'; text: string } | null>(
+    null
+  )
 
   const {
     register,
@@ -55,8 +59,7 @@ export function SchoolApplicationForm({
     formState: { errors },
     setValue,
     watch,
-    reset,
-  } = useForm<SchoolApplicationFormData>({
+    reset } = useForm<SchoolApplicationFormData>({
     resolver: zodResolver(schoolApplicationSchema),
     defaultValues: {
       programId: program.id,
@@ -65,9 +68,7 @@ export function SchoolApplicationForm({
       status: application?.status || 'submitted',
       schoolName: user?.schoolInfo?.schoolName || '',
       address: user?.schoolInfo?.address || '',
-      notes: application?.notes || '',
-    },
-  })
+      notes: application?.notes || '' } })
 
   // 수정 모드: Application 데이터로 폼 초기화
   useEffect(() => {
@@ -79,8 +80,7 @@ export function SchoolApplicationForm({
         status: application.status,
         schoolName: user?.schoolInfo?.schoolName || '',
         address: user?.schoolInfo?.address || '',
-        notes: application.notes || '',
-      })
+        notes: application.notes || '' })
     }
   }, [application, user, reset])
 
@@ -90,9 +90,8 @@ export function SchoolApplicationForm({
       const blob = await fileUploadService.createSampleStudentListBlob()
       const filename = `참여학생명단_샘플_${new Date().toISOString().split('T')[0]}.xlsx`
       downloadBlob(blob, filename)
-      message.success(MESSAGES.success.downloaded)
-    } catch {
-      message.error(MESSAGES.error.download)
+    } catch (error) {
+      handleError(error, { context: 'schoolApplicationForm.sampleDownload' })
     }
   }
 
@@ -100,11 +99,11 @@ export function SchoolApplicationForm({
   const handleFileUpload = async (file: File) => {
     const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
     if (!UPLOAD_POLICY.studentList.allowedExtensions.includes(fileExtension)) {
-      message.error(MESSAGES.warning.fileType)
+      setUploadAlert({ type: 'error', text: MESSAGES.warning.fileType })
       return false
     }
     if (file.size > UPLOAD_POLICY.studentList.maxSize) {
-      message.error(MESSAGES.warning.fileSizeMax5MB)
+      setUploadAlert({ type: 'error', text: MESSAGES.warning.fileSizeMax5MB })
       return false
     }
 
@@ -113,18 +112,24 @@ export function SchoolApplicationForm({
       const parseResult = await fileUploadService.parseStudentList(file)
 
       if (parseResult.errors.length > 0) {
-        message.warning(MESSAGES.warning.parseWarning(parseResult.errors.join(', ')))
+        setUploadAlert({
+          type: 'warning',
+          text: MESSAGES.warning.parseWarning(parseResult.errors.join(', ')),
+        })
       }
       if (parseResult.totalCount === 0) {
-        message.error(MESSAGES.warning.studentInfoNotFound)
+        setUploadAlert({ type: 'error', text: MESSAGES.warning.studentInfoNotFound })
         return false
       }
 
       setValue('studentListFile', file)
-      message.success(MESSAGES.info.studentsFound(parseResult.totalCount))
+      setUploadAlert({ type: 'info', text: MESSAGES.info.studentsFound(parseResult.totalCount) })
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : '엑셀 파일 파싱에 실패했습니다.'
-      message.error(msg)
+      handleError(error, { context: 'schoolApplicationForm.parseStudentList' })
+      setUploadAlert({
+        type: 'error',
+        text: unknownErrorText(error, '엑셀 파일 파싱에 실패했습니다.'),
+      })
       return false
     }
 
@@ -151,7 +156,7 @@ export function SchoolApplicationForm({
       <Form.Item
         label="학교명"
         validateStatus={errors.schoolName ? 'error' : ''}
-        help={errors.schoolName?.message}
+        help={fieldValidationHelp(errors.schoolName)}
         required
       >
         <Input {...register('schoolName')} placeholder="학교명을 입력해주세요" />
@@ -160,42 +165,48 @@ export function SchoolApplicationForm({
       <Form.Item
         label="주소"
         validateStatus={errors.address ? 'error' : ''}
-        help={errors.address?.message}
+        help={fieldValidationHelp(errors.address)}
         required
       >
         <Input {...register('address')} placeholder="학교 주소를 입력해주세요" />
       </Form.Item>
 
-      <Form.Item label="대상 학년" validateStatus={errors.targetGrade ? 'error' : ''} help={errors.targetGrade?.message}>
+      <Form.Item label="대상 학년" validateStatus={errors.targetGrade ? 'error' : ''} help={fieldValidationHelp(errors.targetGrade)}>
         <Input {...register('targetGrade')} placeholder="예: 3학년" />
       </Form.Item>
 
-      <Form.Item label="학급 수" validateStatus={errors.classCount ? 'error' : ''} help={errors.classCount?.message}>
-        <InputNumber
+      <Form.Item label="학급 수" validateStatus={errors.classCount ? 'error' : ''} help={fieldValidationHelp(errors.classCount)}>
+        <CmsNumericInput
+          mode="integer"
           min={1}
+          value={String(watch('classCount') ?? '')}
           placeholder="학급 수를 입력해주세요"
           style={{ width: '100%' }}
-          onChange={value => setValue('classCount', value as number)}
+          onValueChange={value => setValue('classCount', value === '' ? undefined : Number(value))}
         />
       </Form.Item>
 
       <Form.Item
         label="학급별 인원"
         validateStatus={errors.studentsPerClass ? 'error' : ''}
-        help={errors.studentsPerClass?.message}
+        help={fieldValidationHelp(errors.studentsPerClass)}
       >
-        <InputNumber
+        <CmsNumericInput
+          mode="integer"
           min={1}
+          value={String(watch('studentsPerClass') ?? '')}
           placeholder="학급별 인원을 입력해주세요"
           style={{ width: '100%' }}
-          onChange={value => setValue('studentsPerClass', value as number)}
+          onValueChange={value =>
+            setValue('studentsPerClass', value === '' ? undefined : Number(value))
+          }
         />
       </Form.Item>
 
       <Form.Item
         label="강사 대기장소"
         validateStatus={errors.instructorWaitingRoom ? 'error' : ''}
-        help={errors.instructorWaitingRoom?.message}
+        help={fieldValidationHelp(errors.instructorWaitingRoom)}
       >
         <Input {...register('instructorWaitingRoom')} placeholder="강사 대기장소를 입력해주세요" />
       </Form.Item>
@@ -204,7 +215,7 @@ export function SchoolApplicationForm({
       <Form.Item
         label="참여학생 리스트 (엑셀)"
         validateStatus={errors.studentListFile ? 'error' : ''}
-        help={errors.studentListFile?.message || '엑셀 파일(.xlsx, .xls)을 업로드해주세요. (최대 5MB)'}
+        help={fieldValidationHelp(errors.studentListFile) || '엑셀 파일(.xlsx, .xls)을 업로드해주세요. (최대 5MB)'}
         required={false}
       >
         <Space direction="vertical" style={{ width: '100%' }}>
@@ -219,22 +230,26 @@ export function SchoolApplicationForm({
                       {
                         uid: '1',
                         name: studentListFile.name,
-                        size: studentListFile.size,
-                      } as UploadFile,
+                        size: studentListFile.size } as UploadFile,
                     ]
                   : []
               }
-              onRemove={() => setValue('studentListFile', undefined)}
+              onRemove={() => {
+                setValue('studentListFile', undefined)
+                setUploadAlert(null)
+              }}
             >
               <Button icon={<UploadOutlined />}>엑셀 파일 선택</Button>
             </Upload>
+            {uploadAlert ? (
+              <Alert type={uploadAlert.type} description={uploadAlert.text} showIcon />
+            ) : null}
             <Button type="link" icon={<DownloadOutlined />} onClick={handleSampleDownload}>
               샘플 양식 다운로드
             </Button>
           </Space>
           <Alert
             type="info"
-            message="학생 명단 엑셀 파일을 업로드해주세요"
             description="엑셀 파일에는 '이름'(필수), '학년', '반', '번호' 컬럼을 포함해주세요. 샘플 양식을 다운로드하여 형식을 확인할 수 있습니다."
             showIcon
             style={{ marginTop: 0 }}
@@ -248,10 +263,12 @@ export function SchoolApplicationForm({
 
       <Form.Item>
         <Space>
-          <Button type="primary" htmlType="submit" loading={loading}>
+          <CmsButton type="submit" loading={loading}>
             {isEditMode ? '수정하기' : '신청하기'}
-          </Button>
-          <Button onClick={onCancel}>취소</Button>
+          </CmsButton>
+          <CmsButton variant="secondary" onClick={onCancel}>
+            취소
+          </CmsButton>
         </Space>
       </Form.Item>
     </Form>

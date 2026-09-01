@@ -1,8 +1,8 @@
-import { Modal } from 'antd'
-import { ProgramForm } from '@/features/program/ui/program-form'
+import { ContentModal } from '@/shared/ui'
+import { ProgramForm } from '@/features/program/general/ui/program-form'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
-import { EnrollmentStatusDetailModal } from '@/features/program/ui/enrollment-status-detail-modal'
-import { InstructorRecruitmentDetailModal } from '@/features/program/ui/instructor-recruitment-detail-modal'
+import { EnrollmentStatusDetailModal } from '@/features/program/general/ui/enrollment-status-detail-modal'
+import { InstructorRecruitmentDetailModal } from '@/features/program/general/ui/instructor-recruitment-detail-modal'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import type { Program } from '@/types/domain'
 import type { ProgramFormData } from '@/entities/program/model/schema'
@@ -67,13 +67,11 @@ export function ProgramListModals({
         onCancel={onCancelInstructorModal}
       />
 
-      <Modal
+      <ContentModal
         open={formModalOpen}
         title={isEditingMode ? '프로그램 수정' : '프로그램 등록'}
         onCancel={onFormCancel}
-        footer={null}
         width={LAYOUT_CONSTANTS.widths.modal.xlarge}
-        destroyOnClose
         zIndex={1001}
       >
         <ProgramForm
@@ -83,7 +81,7 @@ export function ProgramListModals({
           onCancel={onFormCancel}
           loading={formLoading}
         />
-      </Modal>
+      </ContentModal>
 
       <ConfirmModal
         open={deleteModalOpen}

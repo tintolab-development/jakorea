@@ -1,0 +1,97 @@
+.cardLink {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.cardLink:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 4px;
+  border-radius: var(--radius-24);
+}
+
+.card {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  /* Spacing/12 — 이미지 ↔ 텍스트 (임팩트 스토리 StoryCard와 동일) */
+  gap: var(--spacing-12);
+}
+
+.thumbnail {
+  position: relative;
+  width: 100%;
+  height: auto;
+  flex-shrink: 0;
+  overflow: hidden;
+  aspect-ratio: 335 / 214;
+  border-radius: var(--radius-24);
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.badge {
+  position: absolute;
+  top: var(--spacing-16);
+  left: var(--spacing-16);
+  z-index: 1;
+}
+
+.meta {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  padding-inline: var(--spacing-8);
+  box-sizing: border-box;
+}
+
+.title {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  word-break: keep-all;
+}
+
+.date {
+  margin: 0;
+}
+
+@media (--bp-below-pc) {
+  .title {
+    font-size: 16px;
+    line-height: 160%;
+    letter-spacing: 0;
+  }
+  .date {
+    font-size: 14px;
+    line-height: normal;
+    letter-spacing: 0;
+  }
+  .badge {
+    height: 26px;
+    font-size: 13px;
+  }
+}
+@media (--bp-pc-up) {
+  .thumbnail {
+    aspect-ratio: 461 / 256;
+  }
+  .meta {
+    padding-inline: var(--spacing-16);
+  }
+}

@@ -1,0 +1,54 @@
+---
+description: URL(mode=edit)로 여는 템플릿 풀페이지 모달 — selectedTemplate 동기화·mask 잔여 방지
+globs:
+  - "apps/cms/src/features/template/**/*.{ts,tsx}"
+  - "apps/cms/src/pages/templates/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# URL 연동 템플릿 모달 열기/닫기
+
+`params.mode === 'edit'`로 풀페이지 모달을 열고, `selectedTemplate`으로 **일반 vs 인증서(또는 특수) 모달**을 갈라 쓸 때 적용한다.
+
+## 증상 (회귀 신호)
+
+- 상세 진입 후 목록으로 돌아오면 **클릭이 안 먹힘**
+- DOM에 `ant-modal-mask` / `ant-modal-wrap`가 **닫힌 뒤에도** 남음
+- 한 프레임 동안 잘못된 모달(일반 셸)이 잠깐 보임
+
+## 원인
+
+`isPreviewOpen`(URL)만 true이고 `selectedTemplate`이 아직 `null`인 한 프레임에  
+`open={isPreviewOpen && !isSpecial}`가 true → **일반 모달이 먼저 열림** → 이어서 특수 모달로 전환 → Ant Design **mask가 쌓임**.
+
+## 필수 규칙
+
+1. **열 때** — `setSelectedTemplate(row)`를 URL `setParams({ mode: 'edit', id })` **이전 또는 같은 핸들러에서 동기**로 호출한다. URL만 바꾸고 `useEffect`에만 맡기지 않는다.
+2. **닫을 때** — `setSelectedTemplate(null)`을 URL clear **이전 또는 같은 핸들러에서 동기**로 호출한다.
+3. **분기 `open`** — 행이 준비되기 전에는 어떤 풀페이지 모달도 열지 않는다.
+
+```tsx
+// ❌ BAD — selectedTemplate null이면 일반 모달이 한 프레임 열림
+open={isPreviewOpen && !isCertificateIssuance}
+open={isPreviewOpen && isCertificateIssuance}
+
+// ✅ GOOD — 작성 탭(template-form-tab)과 동일 패턴
+open={isPreviewOpen && selectedTemplate != null && !isCertificateIssuance}
+open={isPreviewOpen && selectedTemplate != null && isCertificateIssuance}
+```
+
+4. **중첩 미리보기** — 부모 상세 `open === false`이면 자식 미리보기 모달도 닫는다 (`open={parentOpen && childOpen}` 또는 `useEffect`로 reset).
+5. **같은 진입에서 두 `TealHeaderModal`/`Modal`을 번갈아 열지 말 것** — 타입 판별이 끝나기 전 `open`을 true로 두지 않는다.
+
+## 참고 구현
+
+- 작성: `template-form-tab.tsx` — `open={isPreviewOpen && !isCrimeConsentDetail && selectedTemplate != null}`
+- 발급: `issuance-form-tab.tsx` — `openTemplatePreview`에서 row 동기 설정 + `selectedTemplate != null` 가드
+- 인증서 미리보기: `form-template-fullpage-modal.tsx` — `open && certificatePreviewOpen`
+
+## Related
+
+- [template-management.md](../coding/template-management.md)
+- [form-editor-modes.mdc](./form-editor-modes.mdc)
+
+**Last updated:** 2026-07-10

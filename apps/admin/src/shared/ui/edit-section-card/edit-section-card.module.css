@@ -1,0 +1,27 @@
+.card {
+  background: var(--color-bg-base, #fff);
+  border-radius: var(--radius-8, 8px);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.title {
+  margin: 0 !important;
+  color: var(--color-text-heading, #22404b);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

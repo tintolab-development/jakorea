@@ -1,0 +1,305 @@
+/**
+ * 공지사항 등록·수정 모달
+ * 시안 패딩: content 26 / 30 / 34 · 타이틀↔본문 24 · 블록 gap 24 · 내용↔첨부·첨부↔푸터 30
+ * 첨부만 th/td · 나머지 vertical 폼
+ */
+
+/* 뷰포트 정중앙 */
+.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.notice-form-modal) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.notice-form-modal)
+  .ant-modal.teal-header-modal--large.notice-form-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+  width: min(1400px, calc(100vw - 32px)) !important;
+  max-width: min(1400px, calc(100vw - 32px)) !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+}
+
+/*
+ * 셸 패딩 시안: top 26 · sides 30 · bottom 34
+ * (content-modal 공통 스펙)
+ */
+.content-modal.notice-form-modal.teal-header-modal--large .ant-modal-content,
+.notice-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  padding: 26px 30px 34px !important;
+  border-radius: 12px;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+  max-height: min(880px, calc(100vh - 48px));
+  max-height: min(880px, calc(100dvh - 48px));
+  min-height: 0;
+  height: auto;
+  overflow: hidden;
+}
+
+.content-modal.notice-form-modal.teal-header-modal--large .ant-modal-body,
+.notice-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 타이틀 ↔ 본문 24px (content-modal 기본 always 16px 오버라이드) */
+.notice-form-modal.content-modal.content-modal--title-body-gap-always .teal-header-modal__body,
+.notice-form-modal.content-modal .teal-header-modal__body {
+  padding-top: 24px !important;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: 100%;
+  align-items: stretch;
+}
+
+/* 본문(첨부) ↔ 푸터 30px */
+.notice-form-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  margin-top: 30px !important;
+}
+
+.notice-form-modal .content-modal__footer-actions {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+/* 푸터: 좌 삭제 · 우 취소/저장·등록 */
+.notice-form-modal__footer {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.notice-form-modal__footer-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.notice-form-modal__form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* 라벨 — vertical 14px · 필수 * */
+.notice-form-modal__label {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 10px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.notice-form-modal__required {
+  color: var(--color-red, #c32f4a);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* 상단 1행 → 제목 24px */
+.notice-form-modal__filter-wrap {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.notice-form-modal__filter-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.notice-form-modal__filter-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 0 0 auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.notice-form-modal__filter-field .notice-form-modal__label {
+  margin-bottom: 10px;
+}
+
+.notice-form-modal__filter-field--datetime {
+  width: 280px;
+  max-width: 280px;
+}
+
+.notice-form-modal__filter-field--radio {
+  width: 200px;
+  max-width: 200px;
+}
+
+/* 제목 → 내용 24px */
+.notice-form-modal__section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 24px;
+  min-width: 0;
+}
+
+/* 내용 → 첨부 30px */
+.notice-form-modal__section--editor {
+  flex-shrink: 0;
+  margin-bottom: 30px;
+}
+
+.notice-form-modal__editor-host {
+  width: 100%;
+  height: 369px;
+  min-height: 369px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.notice-form-modal__editor-host .rich-text-editor {
+  height: 100%;
+  min-height: inherit;
+  border-radius: 0;
+}
+
+/* 첨부만 테이블 — CMS th 180 + body */
+.notice-form-modal__attachment {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+  border-top: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  border-left: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.notice-form-modal__attachment-label {
+  display: flex;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 180px;
+  min-width: 180px;
+  padding: 10px;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  background: #edf0f2;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.notice-form-modal__attachment-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 12px 16px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  box-sizing: border-box;
+}
+
+.notice-form-modal__file-field.file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 8px;
+  width: 100%;
+}
+
+.notice-form-modal__file-field .file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.notice-form-modal__file-field .file-select-field__guide {
+  flex: 1 1 200px;
+  min-width: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.notice-form-modal__file-field .file-select-field__guide-line {
+  display: block;
+}
+
+.notice-form-modal__file-field .file-select-field__name {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+@media (max-width: 768px) {
+  .notice-form-modal__filter-field--datetime,
+  .notice-form-modal__filter-field--radio {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .notice-form-modal__attachment {
+    flex-direction: column;
+  }
+
+  .notice-form-modal__attachment-label {
+    width: 100%;
+    min-width: 0;
+    border-right: none;
+  }
+}

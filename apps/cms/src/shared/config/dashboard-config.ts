@@ -7,7 +7,7 @@ import type { User, UserRole } from '@/types/user'
 import {
   type ProgramScheduleKind,
   getProgramScheduleKindsForAdminUser,
-} from '@/data/mock'
+} from '@/data/mock/program-schedule-categories'
 
 /**
  * 대시보드 위젯 타입
@@ -25,7 +25,7 @@ export type DashboardWidgetType =
   | 'notification-widget' // 알림 위젯
   | 'customer-inquiry-status-widget' // 고객 문의 현황 위젯
   | 'program-schedule-general-widget' // 일반 프로그램 일정
-  | 'program-schedule-economy-widget' // 1사1교 프로그램 일정
+  | 'program-schedule-company-school-widget' // 1사1교 프로그램 일정
   | 'program-schedule-ujat-widget' // UJAT 프로그램 일정
   | 'program-schedule-gemini-widget' // Gemini 프로그램 일정
   | 'unified-activity-feed' // 통합 활동 피드
@@ -42,6 +42,7 @@ export type DashboardWidgetType =
   | 'menu-shortcut-widget' // 메뉴 바로가기 위젯
   | 'recruitment-status-widget' // 모집 신청 현황 위젯
   | 'kpi-achievement-widget' // 사업 별 KPI 대비 달성률 위젯
+  | 'log-alerts-widget' // MASTER 전용 로그 알림
 
 /** 슬롯 인라인 height(px). colSpan(12=50%, 24=100%)별. 미지정 시 SortableWidgetSlot·meta.height 규칙 */
 export type DashboardWidgetSlotHeightPx = Partial<Record<12 | 24, number>>
@@ -73,8 +74,8 @@ function programScheduleKindToWidgetType(kind: ProgramScheduleKind): DashboardWi
   switch (kind) {
     case 'general':
       return 'program-schedule-general-widget'
-    case 'economy':
-      return 'program-schedule-economy-widget'
+    case 'company_school':
+      return 'program-schedule-company-school-widget'
     case 'ujat':
       return 'program-schedule-ujat-widget'
     case 'gemini':
@@ -113,21 +114,28 @@ export function buildAdminDashboardWidgets(scheduleKinds: ProgramScheduleKind[])
 }
 
 /**
- * 로그인 사용자 기준 대시보드 위젯 (관리자는 ACL로 프로그램 일정 위젯 유형 필터)
+ * 로그인 사용자 기준 대시보드 위젯 (관리자는 assignedProgramTypes 또는 ACL로 일정 유형 필터)
+ * 로그 알림 위젯은 백엔드 v9에서 API가 제거되어 홈에 붙이지 않는다.
  */
-export function getDashboardWidgetsForUser(user: Omit<User, 'password'> | null): DashboardWidgetConfig[] {
+export function getDashboardWidgetsForUser(
+  user: Omit<User, 'password'> | null,
+  assignedProgramTypes?: ProgramScheduleKind[] | null
+): DashboardWidgetConfig[] {
   if (!user?.role) {
     return []
   }
   if (user.role !== 'ADMIN') {
     return getDashboardWidgetsByRole(user.role)
   }
-  const kinds = getProgramScheduleKindsForAdminUser(user)
+  const kinds =
+    assignedProgramTypes != null
+      ? assignedProgramTypes
+      : getProgramScheduleKindsForAdminUser(user)
   return buildAdminDashboardWidgets(kinds).sort((a, b) => (a.order || 0) - (b.order || 0))
 }
 
 /**
- * 권한별 대시보드 위젯 구성 (ADMIN은 ACL 없이 마스터와 동일한 4종 일정 포함 — 기본 순서·폴백용)
+ * 권한별 대시보드 위젯 구성 (ADMIN 폴백 — 일반 프로그램 일정만)
  */
 const dashboardWidgets: Record<Exclude<UserRole, 'ADMIN'>, DashboardWidgetConfig[]> = {
   // 강사: 본인 활동 요약
@@ -168,7 +176,7 @@ export function getDashboardWidgetsByRole(userRole: UserRole | null): DashboardW
   }
 
   if (userRole === 'ADMIN') {
-    return buildAdminDashboardWidgets(['general', 'economy', 'ujat', 'gemini']).sort(
+    return buildAdminDashboardWidgets(['general']).sort(
       (a, b) => (a.order || 0) - (b.order || 0)
     )
   }

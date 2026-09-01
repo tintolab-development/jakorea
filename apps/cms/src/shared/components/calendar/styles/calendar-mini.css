@@ -1,16 +1,44 @@
 .calendar-mini {
+  --calendar-mini-width: 300px;
+  --calendar-mini-height: 332px;
+  --calendar-mini-padding: 20px;
+  --calendar-mini-header-height: 28px;
+  --calendar-mini-header-gap: 16px;
+  --calendar-mini-weekday-height: 20px;
+  --calendar-mini-week-rows: 6; /* CalendarMini가 월별로 inline override */
+  --calendar-mini-grid-height: calc(
+    var(--calendar-mini-height) - 2 * var(--calendar-mini-padding) - var(--calendar-mini-header-height) -
+      var(--calendar-mini-header-gap)
+  );
+  --calendar-mini-body-height: calc(var(--calendar-mini-grid-height) - var(--calendar-mini-weekday-height));
+  --calendar-mini-row-height: calc(var(--calendar-mini-body-height) / var(--calendar-mini-week-rows));
+  --calendar-mini-cell-size: min(40px, calc(var(--calendar-mini-row-height) - 8px));
+
+  box-sizing: border-box;
+  width: var(--calendar-mini-width);
+  height: var(--calendar-mini-height);
+  min-width: var(--calendar-mini-width);
+  max-width: var(--calendar-mini-width);
+  min-height: var(--calendar-mini-height);
+  max-height: var(--calendar-mini-height);
+  padding: var(--calendar-mini-padding);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--color-bg-base);
-  border-radius: 12px;
-  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
-  padding: 20px;
-  max-height: 330px;
+  border-radius: var(--calendar-mini-shell-radius, var(--calendar-shell-radius, 12px));
+  border: var(--calendar-shell-border, 1px solid #d4d4d4);
+  box-shadow: var(--calendar-shell-shadow, none);
 }
 
 .calendar-mini-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-16);
+  height: var(--calendar-mini-header-height);
+  min-height: var(--calendar-mini-header-height);
+  margin-bottom: var(--calendar-mini-header-gap);
 }
 
 .calendar-mini-title {
@@ -18,6 +46,7 @@
   font-weight: 500;
   color: var(--color-text-label);
   font-family: var(--font-family-number);
+  line-height: 130%;
 }
 
 .calendar-mini-nav-btn {
@@ -34,18 +63,26 @@
   color: var(--color-text-label);
 }
 
+.calendar-mini > .ant-picker-calendar {
+  flex: 0 0 var(--calendar-mini-grid-height);
+  height: var(--calendar-mini-grid-height);
+  min-height: var(--calendar-mini-grid-height);
+  max-height: var(--calendar-mini-grid-height);
+}
+
 .calendar-mini-cell {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 0;
   cursor: pointer;
   border-radius: 4px;
   position: relative;
-  width: 30px;
-  height: 30px;
-  margin: 4px;
+  width: var(--calendar-mini-cell-size);
+  height: var(--calendar-mini-cell-size);
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .calendar-mini table tr:hover {
@@ -54,13 +91,13 @@
 
 .calendar-mini-cell--has-schedule {
   display: flex;
-  width: 30px;
-  height: 30px;
-  padding-top: 1px;
+  width: var(--calendar-mini-cell-size);
+  height: var(--calendar-mini-cell-size);
+  padding-top: 0;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 0;
   border-radius: 4px;
   background: #e0f3f5;
   box-sizing: border-box;
@@ -68,9 +105,9 @@
 
 .calendar-mini-cell--selected {
   background-color: var(--color-brand-primary) !important;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  border-radius: var(--8, 8px);
+  width: var(--calendar-mini-cell-size);
+  height: var(--calendar-mini-cell-size);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -92,23 +129,52 @@
 
 .calendar-mini .ant-picker-calendar {
   background: transparent;
+  height: 100%;
 }
 
 .calendar-mini .ant-picker-calendar-mini {
   border: none;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-mini .ant-picker-calendar-mini .ant-picker-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-mini .ant-picker-calendar-mini .ant-picker-panel .ant-picker-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .calendar-mini .ant-picker-calendar-mini .ant-picker-content {
-  height: auto !important;
-  min-height: 0;
+  height: var(--calendar-mini-grid-height) !important;
+  min-height: var(--calendar-mini-grid-height);
+  max-height: var(--calendar-mini-grid-height);
+  table-layout: fixed;
+  width: 100%;
 }
 
-.calendar-mini .ant-picker-date-panel,
-.calendar-mini .ant-picker-panel {
-  height: auto;
+.calendar-mini .ant-picker-date-panel {
+  height: var(--calendar-mini-grid-height);
 }
 
-.calendar-mini .ant-picker-content tbody tr:not(:has(.ant-picker-cell-in-view)) {
+.calendar-mini .ant-picker-content tbody {
+  height: var(--calendar-mini-body-height);
+  overflow: hidden;
+}
+
+/* Ant Calendar는 항상 6행 tbody — countMiniCalendarWeekRows(4~6) 초과 행 숨김 */
+.calendar-mini[data-week-rows='4'] .ant-picker-content tbody tr:nth-child(n + 5),
+.calendar-mini[data-week-rows='5'] .ant-picker-content tbody tr:nth-child(n + 6),
+.calendar-mini[data-week-rows='6'] .ant-picker-content tbody tr:nth-child(n + 7) {
   display: none;
 }
 
@@ -120,8 +186,21 @@
   display: none;
 }
 
+.calendar-mini .ant-picker-content thead tr {
+  height: var(--calendar-mini-weekday-height);
+}
+
+.calendar-mini .ant-picker-content tbody tr {
+  height: var(--calendar-mini-row-height);
+  min-height: var(--calendar-mini-row-height);
+  max-height: var(--calendar-mini-row-height);
+}
+
 .calendar-mini .ant-picker-cell {
   padding: 0;
+  height: var(--calendar-mini-row-height);
+  min-height: var(--calendar-mini-row-height);
+  vertical-align: middle;
 }
 
 .calendar-mini .ant-picker-cell-in-view {
@@ -131,6 +210,10 @@
 .calendar-mini .ant-picker-calendar-date {
   border: none;
   padding: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .calendar-mini .ant-picker-calendar-date-value,
@@ -140,7 +223,35 @@
 
 .calendar-mini .ant-picker-cell:not(.ant-picker-cell-in-view) {
   pointer-events: none;
-  visibility: hidden;
+}
+
+.calendar-mini-cell--other-month .calendar-mini-date {
+  color: rgba(61, 61, 61, 0.35);
+}
+
+.calendar-mini-cell--sunday:not(.calendar-mini-cell--selected):not(.calendar-mini-cell--other-month)
+  .calendar-mini-date {
+  color: #c32f4a;
+}
+
+.calendar-mini-cell--saturday:not(.calendar-mini-cell--selected):not(.calendar-mini-cell--other-month)
+  .calendar-mini-date {
+  color: #017eaf;
+}
+
+.calendar-mini .ant-picker-cell-disabled,
+.calendar-mini .ant-picker-cell-disabled::before,
+.calendar-mini .ant-picker-cell-disabled .ant-picker-calendar-date,
+.calendar-mini .ant-picker-cell-disabled .calendar-mini-cell {
+  background: transparent !important;
+}
+
+.calendar-mini .ant-picker-cell-disabled .calendar-mini-cell {
+  cursor: not-allowed;
+}
+
+.calendar-mini .ant-picker-cell-disabled .calendar-mini-date {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
 }
 
 .calendar-mini .ant-picker-calendar .ant-picker-date-panel .ant-picker-content th {
@@ -151,5 +262,7 @@
   font-style: normal;
   font-weight: 500;
   line-height: 12px;
-  padding-bottom: 8px;
+  height: var(--calendar-mini-weekday-height);
+  padding: 0 0 8px;
+  box-sizing: border-box;
 }

@@ -3,41 +3,45 @@
  */
 
 import { useCallback, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { message } from 'antd'
+import { useParams } from 'react-router-dom'
 import dayjs from 'dayjs'
+import { Spin } from 'antd'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
-import { NoticeAttachmentDownloadIcon } from '@/features/posts/ui/notice-attachment-download-icon'
-import { getAdminNoticeById } from '@/features/posts/api/admin-notice-mock-store'
-import { deleteNotice } from '@/features/posts/api/admin-notice-service'
+import { AttachmentDownloadIcon } from '@/shared/ui'
+import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
+import { shouldUseNoticesRemoteApi } from '@/features/posts/api/notices/admin-notices-service'
+import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
+import { useLeaveDeletedDetail } from '@/features/posts/hooks/use-leave-deleted-detail'
+import { useNoticeDetailQuery } from '@/features/posts/hooks/use-notice-detail-query'
+import { useNoticeMutations } from '@/features/posts/hooks/use-notice-mutations'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import { NoticeFormModal } from '@/features/posts/ui/notice-form-modal'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { CmsButton } from '@/shared/ui'
+import { ActionResultModal, CmsButton } from '@/shared/ui'
 import { downloadFile } from '@/shared/lib/file-download'
-import { ToastUiMarkdownViewer } from '@/shared/components/toast-ui-markdown-viewer'
+import { RichTextViewer } from '@/shared/rich-text'
 import './admin-notice-detail-page.css'
 
 export function AdminNoticeDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
+  const remoteEnabled = shouldUseNoticesRemoteApi()
+  const { detailEnabled, goList, leaveToList, runDeleteThenLeave } = useLeaveDeletedDetail(
+    '/admin/posts/notices',
+    id ? postsQueryKeys.notices.detail(id) : undefined
+  )
+  const detailQuery = useNoticeDetailQuery(id, { enabled: detailEnabled })
+  const { deleteMutation } = useNoticeMutations()
 
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  /** mock 스토어 갱신 후 동일 id 재조회용 */
-  const [storeTick, setStoreTick] = useState(0)
+  const [actionResultOpen, setActionResultOpen] = useState(false)
+  const [actionResultTitle, setActionResultTitle] = useState('')
+  const [actionResultMessage, setActionResultMessage] = useState('')
 
-  const notice = useMemo(() => {
-    void storeTick
-    return id ? getAdminNoticeById(id) : undefined
-  }, [id, storeTick])
-
-  const goList = useCallback(() => {
-    navigate('/admin/posts/notices')
-  }, [navigate])
+  const notice = detailQuery.data
 
   const handleDelete = useCallback(() => {
     if (!canWrite || !id) return
@@ -47,14 +51,14 @@ export function AdminNoticeDetailPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!id) return
     try {
-      await deleteNotice(id)
-      message.success('공지사항이 삭제되었습니다.')
+      await runDeleteThenLeave(() => deleteMutation.mutateAsync(id))
       setDeleteConfirmOpen(false)
-      goList()
-    } catch {
-      message.error('공지사항을 삭제할 수 없습니다.')
+    } catch (error) {
+      setActionResultTitle('공지 삭제 실패')
+      setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
+      setActionResultOpen(true)
     }
-  }, [id, goList])
+  }, [deleteMutation, id, runDeleteThenLeave])
 
   const handleEdit = useCallback(() => {
     if (!canWrite) return
@@ -64,6 +68,26 @@ export function AdminNoticeDetailPage() {
   const handleAttachmentClick = useCallback((fileName: string, fileUrl?: string) => {
     downloadFile(fileName, fileUrl)
   }, [])
+
+  const attachmentItems = useMemo(() => {
+    if (!notice?.hasAttachment) return []
+    if (remoteEnabled) return []
+    return notice.attachments?.length ? notice.attachments : [{ name: '첨부파일.pdf' }]
+  }, [notice?.attachments, notice?.hasAttachment, remoteEnabled])
+
+  if (detailQuery.isLoading) {
+    return (
+      <div className="admin-notice-detail-page">
+        <div
+          className="page-content-loading page-content-loading--viewport"
+          role="status"
+          aria-label="공지 불러오는 중"
+        >
+          <Spin size="large" />
+        </div>
+      </div>
+    )
+  }
 
   if (!notice) {
     return (
@@ -82,11 +106,6 @@ export function AdminNoticeDetailPage() {
 
   const dateStr = dayjs(notice.createdAt).format('YYYY년 M월 D일 HH:mm:ss')
   const isPublic = notice.status === 'published'
-  const attachmentItems = notice.hasAttachment
-    ? notice.attachments?.length
-      ? notice.attachments
-      : [{ name: '첨부파일.pdf' }]
-    : []
 
   return (
     <div className="admin-notice-detail-page">
@@ -96,76 +115,100 @@ export function AdminNoticeDetailPage() {
         onConfirm={handleConfirmDelete}
         preset="notice"
       />
-      {notice ? (
-        <NoticeFormModal
-          open={editModalOpen}
-          mode="edit"
-          notice={notice}
-          onCancel={() => setEditModalOpen(false)}
-          onSuccess={() => setStoreTick(t => t + 1)}
-          onDeleted={goList}
-        />
-      ) : null}
+      <NoticeFormModal
+        open={editModalOpen}
+        mode="edit"
+        notice={notice}
+        onCancel={() => setEditModalOpen(false)}
+        onSuccess={() => {
+          setEditModalOpen(false)
+        }}
+        onDeleted={leaveToList}
+      />
+      <ActionResultModal
+        open={actionResultOpen}
+        title={actionResultTitle}
+        body={actionResultMessage}
+        onClose={() => setActionResultOpen(false)}
+      />
       <div className="admin-notice-detail-page__inner">
         <div className="admin-notice-detail-page__card">
-          <div className="admin-notice-detail-page__top-row">
-            <span
-              className={
-                isPublic
-                  ? 'admin-notice-detail-page__badge admin-notice-detail-page__badge--public'
-                  : 'admin-notice-detail-page__badge admin-notice-detail-page__badge--private'
-              }
-            >
-              {isPublic ? '공개' : '비공개'}
-            </span>
-            <span className="admin-notice-detail-page__views">
-              <EyeOutlined className="admin-notice-detail-page__views-icon" aria-hidden />
-              {notice.viewCount.toLocaleString('ko-KR')}
-            </span>
+          <div className="admin-notice-detail-page__header">
+            <div className="admin-notice-detail-page__top-row">
+              <div className="admin-notice-detail-page__top-badges">
+                <span
+                  className={
+                    isPublic
+                      ? 'admin-notice-detail-page__badge admin-notice-detail-page__badge--public'
+                      : 'admin-notice-detail-page__badge admin-notice-detail-page__badge--private'
+                  }
+                >
+                  {isPublic ? '공개' : '비공개'}
+                </span>
+                {notice.category ? (
+                  <span className="admin-notice-detail-page__category">{notice.category}</span>
+                ) : null}
+              </div>
+              <span className="admin-notice-detail-page__views">
+                <EyeOutlined className="admin-notice-detail-page__views-icon" aria-hidden />
+                {notice.viewCount.toLocaleString('ko-KR')}
+              </span>
+            </div>
+            <h1 className="admin-notice-detail-page__title">{notice.title}</h1>
+            <div className="admin-notice-detail-page__meta">
+              <span className="admin-notice-detail-page__meta-text">{dateStr}</span>
+              {notice.author ? (
+                <>
+                  <span className="admin-notice-detail-page__meta-divider" aria-hidden />
+                  <span className="admin-notice-detail-page__meta-text">{notice.author}</span>
+                </>
+              ) : null}
+            </div>
           </div>
-          <h1 className="admin-notice-detail-page__title">{notice.title}</h1>
-          <div className="admin-notice-detail-page__meta">
-            <span className="admin-notice-detail-page__meta-text">{dateStr}</span>
-            <span className="admin-notice-detail-page__meta-divider" aria-hidden />
-            <span className="admin-notice-detail-page__meta-text">{notice.author}</span>
-          </div>
+          <hr className="admin-notice-detail-page__section-divider" />
           {attachmentItems.length > 0 ? (
             <div className="admin-notice-detail-page__attachments">
               <div className="admin-notice-detail-page__attachments-head">
                 <PaperClipOutlined className="admin-notice-detail-page__clip" aria-hidden />
-                첨부파일
+                <span>첨부파일</span>
               </div>
               <ul className="admin-notice-detail-page__attachments-list">
-                {attachmentItems.map((att, index) => (
-                  <li key={`${att.name}-${index}`}>
+                {attachmentItems.map((item, index) => (
+                  <li key={`${item.name}-${index}`}>
                     <button
                       type="button"
                       className="admin-notice-detail-page__file"
-                      onClick={() => handleAttachmentClick(att.name, att.fileUrl)}
+                      onClick={() => handleAttachmentClick(item.name, item.fileUrl)}
                     >
-                      <NoticeAttachmentDownloadIcon className="admin-notice-detail-page__file-icon" />
-                      <span className="admin-notice-detail-page__file-name">{att.name}</span>
+                      <span className="admin-notice-detail-page__file-name">{item.name}</span>
+                      <AttachmentDownloadIcon className="admin-notice-detail-page__file-icon" />
                     </button>
                   </li>
                 ))}
               </ul>
             </div>
-          ) : (
-            <hr className="admin-notice-detail-page__section-divider" aria-hidden />
-          )}
+          ) : notice.hasAttachment && remoteEnabled ? (
+            <div className="admin-notice-detail-page__attachments">
+              <div className="admin-notice-detail-page__attachments-head">
+                <PaperClipOutlined className="admin-notice-detail-page__clip" aria-hidden />
+                <span>첨부파일</span>
+              </div>
+              <p className="admin-notice-detail-page__attachment-hint">첨부파일이 있습니다.</p>
+            </div>
+          ) : null}
           <div className="admin-notice-detail-page__body">
-            <ToastUiMarkdownViewer markdown={notice.content} />
+            <RichTextViewer content={notice.content} />
           </div>
         </div>
         <div className="admin-notice-detail-page__actions">
-          <CmsButton variant="secondary" size="medium" onClick={goList}>
+          <CmsButton variant="secondary" size="large" onClick={goList}>
             목록
           </CmsButton>
           <div className="admin-notice-detail-page__actions-right">
-            <CmsButton variant="delete" size="medium" onClick={handleDelete} disabled={!canWrite}>
+            <CmsButton variant="delete" size="large" onClick={handleDelete} disabled={!canWrite}>
               삭제
             </CmsButton>
-            <CmsButton variant="primary" size="medium" onClick={handleEdit} disabled={!canWrite}>
+            <CmsButton variant="primary" size="large" onClick={handleEdit} disabled={!canWrite}>
               수정
             </CmsButton>
           </div>

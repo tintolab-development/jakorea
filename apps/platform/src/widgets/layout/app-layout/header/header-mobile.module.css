@@ -1,0 +1,74 @@
+.header {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  height: 56px;
+  padding: 0 10px 0 16px;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border-default);
+  background: var(--color-neutral-white);
+}
+
+@media (--bp-pc-up) {
+  .header {
+    display: none;
+  }
+}
+
+.headerTransparent {
+  position: relative;
+  z-index: 2;
+  /* 홈 모바일 시안: 불투명 흰 헤더 (PC 헤더는 header-desktop 담당) */
+  background: var(--color-neutral-white);
+  border-bottom-color: var(--color-border-default);
+}
+
+.headerInverse {
+  border-bottom-color: var(--color-border-default);
+}
+
+/* inverse prop이 와도 모바일은 컬러 로고·아이콘 유지 */
+.headerInverse .logo,
+.headerInverse .menuIcon {
+  filter: none;
+}
+
+.logoLink {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  text-decoration: none;
+}
+
+.logo {
+  display: block;
+  /* 시안: JA Korea + Member of JA Worldwide 한 줄 — 195 뷰박스 비율 유지 */
+  width: min(168px, 52vw);
+  height: auto;
+  flex-shrink: 0;
+  aspect-ratio: 195 / 60;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.menuButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.menuButton:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.menuIcon {
+  display: block;
+  width: 24px;
+  height: 24px;
+}

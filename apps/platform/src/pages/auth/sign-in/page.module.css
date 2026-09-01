@@ -1,0 +1,112 @@
+.intro {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-left: var(--spacing-8);
+  text-align: left;
+}
+
+.illustration {
+  width: 84px;
+  height: 84px;
+  align-self: flex-start;
+}
+
+.form {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-32);
+  margin-top: var(--spacing-40);
+}
+
+.inputGroup {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-28);
+}
+
+.submitButton {
+  width: 100%;
+}
+
+.formError {
+  margin-top: calc(var(--spacing-12) * -1);
+}
+
+.accountLinks {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--spacing-24);
+}
+
+.accountLinkItem {
+  display: inline-flex;
+  align-items: center;
+}
+
+.accountLinkSeparator {
+  width: 1px;
+  height: 15px;
+  background: var(--color-border-default);
+}
+
+.socialSection {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-24);
+  margin-top: var(--spacing-48);
+}
+
+.socialDivider {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--spacing-16);
+}
+
+.socialDividerLine {
+  height: 1px;
+  flex: 1;
+  background: var(--color-border-default);
+}
+
+.socialIcons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-16);
+}
+
+.socialButton {
+  display: inline-flex;
+  width: 54px;
+  height: 54px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-999);
+  background: transparent;
+}
+
+.mockSection {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-24);
+  margin-top: var(--spacing-48);
+}
+
+.mockLoginColumn {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}

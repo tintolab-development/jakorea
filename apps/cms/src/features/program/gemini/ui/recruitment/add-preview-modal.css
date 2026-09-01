@@ -1,0 +1,53 @@
+.gemini-recruitment-add-preview-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gemini-recruitment-add-preview-modal__hint {
+  margin: 0;
+  color: var(--color-text-secondary, #767676);
+  font-size: 14px;
+}
+
+.gemini-recruitment-add-preview-modal__article {
+  padding: 24px;
+  border: 1px solid var(--color-border, #e8e8e8);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.gemini-recruitment-add-preview-modal__title {
+  margin: 0 0 20px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.gemini-recruitment-add-preview-modal__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+}
+
+.gemini-recruitment-add-preview-modal__row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 12px;
+  margin: 0;
+}
+
+.gemini-recruitment-add-preview-modal__label {
+  margin: 0;
+  color: var(--color-text-secondary, #767676);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.gemini-recruitment-add-preview-modal__value {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}

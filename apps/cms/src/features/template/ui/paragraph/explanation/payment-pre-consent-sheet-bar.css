@@ -1,0 +1,135 @@
+/* 지급조서 사전 동의서 — DnD 단락이 아닌 고정 시트 블록 */
+
+.payment-pre-consent-fixed-block {
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  padding: 20px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  align-self: stretch;
+  border-radius: var(--16, 16px);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  font-family: Pretendard;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+  text-align: left;
+}
+
+.payment-pre-consent-fixed-block--white {
+  background: var(--main-WT, #fff);
+  color: var(--main-BK, #3d3d3d);
+  /* 단일 문구 블록 — 하위 flex gap이 여백으로 겹쳐 보이지 않게 */
+  gap: 0;
+}
+
+.payment-pre-consent-fixed-block--disabled {
+  background: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%),
+    #fff
+  );
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+}
+
+.explanation-system--document .payment-pre-consent-fixed-block,
+.explanation-system--document .payment-pre-consent-fixed-block--document,
+.explanation-system--document .payment-pre-consent-fixed-block--disabled,
+.explanation-system--document .payment-pre-consent-fixed-block--white {
+  justify-content: flex-end;
+  align-items: flex-end;
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+  border: none;
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  background-image: none;
+  box-shadow: none;
+  color: #000;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 150%;
+  text-align: right;
+}
+
+.explanation-system--document
+  .payment-pre-consent-fixed-block--document
+  .explanation-system-signature-document,
+.explanation-system--document
+  .payment-pre-consent-fixed-block
+  .explanation-system-signature-document {
+  justify-content: flex-end;
+}
+
+/* 아래 고정 블록들은 단락 카드처럼 보이지 않도록 카드 크롬을 제거한다. */
+[data-paragraph-id='payment-statement-pre-consent-seed-mid-consent-line'].form-editor-card,
+[data-paragraph-id='payment-statement-pre-consent-seed-mid-date'].form-editor-card,
+[data-paragraph-id='payment-statement-pre-consent-seed-mid-signature'].form-editor-card,
+[data-paragraph-id='payment-statement-pre-consent-seed-final-confirm'].form-editor-card,
+[data-paragraph-id='payment-statement-pre-consent-seed-tail-date'].form-editor-card,
+[data-paragraph-id='payment-statement-pre-consent-seed-tail-signature'].form-editor-card,
+[data-paragraph-id='payment-statement-pre-consent-seed-closing-recipient'].form-editor-card {
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* 작성 화면에서는 문서 출력용 수신자 문구를 렌더하지 않아, 빈 카드가 리스트 gap을 하나 더 만들지 않게 한다. */
+[data-paragraph-id='payment-statement-pre-consent-seed-closing-recipient'].form-editor-card {
+  display: none;
+}
+
+[data-paragraph-id='payment-statement-pre-consent-seed-mid-consent-line'].form-editor-card
+  .paragraph-card__header,
+[data-paragraph-id='payment-statement-pre-consent-seed-mid-date'].form-editor-card
+  .paragraph-card__header,
+[data-paragraph-id='payment-statement-pre-consent-seed-mid-signature'].form-editor-card
+  .paragraph-card__header,
+[data-paragraph-id='payment-statement-pre-consent-seed-final-confirm'].form-editor-card
+  .paragraph-card__header,
+[data-paragraph-id='payment-statement-pre-consent-seed-tail-date'].form-editor-card
+  .paragraph-card__header,
+[data-paragraph-id='payment-statement-pre-consent-seed-tail-signature'].form-editor-card
+  .paragraph-card__header,
+[data-paragraph-id='payment-statement-pre-consent-seed-closing-recipient'].form-editor-card
+  .paragraph-card__header,
+[data-paragraph-id='payment-statement-pre-consent-seed-mid-consent-line'].form-editor-card
+  .paragraph-card__footer,
+[data-paragraph-id='payment-statement-pre-consent-seed-mid-date'].form-editor-card
+  .paragraph-card__footer,
+[data-paragraph-id='payment-statement-pre-consent-seed-mid-signature'].form-editor-card
+  .paragraph-card__footer,
+[data-paragraph-id='payment-statement-pre-consent-seed-final-confirm'].form-editor-card
+  .paragraph-card__footer,
+[data-paragraph-id='payment-statement-pre-consent-seed-tail-date'].form-editor-card
+  .paragraph-card__footer,
+[data-paragraph-id='payment-statement-pre-consent-seed-tail-signature'].form-editor-card
+  .paragraph-card__footer,
+[data-paragraph-id='payment-statement-pre-consent-seed-closing-recipient'].form-editor-card
+  .paragraph-card__footer {
+  display: none;
+}
+
+[data-paragraph-id='payment-statement-pre-consent-seed-mid-consent-line'].form-editor-card
+  .paragraph-card__slot,
+[data-paragraph-id='payment-statement-pre-consent-seed-mid-date'].form-editor-card
+  .paragraph-card__slot,
+[data-paragraph-id='payment-statement-pre-consent-seed-mid-signature'].form-editor-card
+  .paragraph-card__slot,
+[data-paragraph-id='payment-statement-pre-consent-seed-final-confirm'].form-editor-card
+  .paragraph-card__slot,
+[data-paragraph-id='payment-statement-pre-consent-seed-tail-date'].form-editor-card
+  .paragraph-card__slot,
+[data-paragraph-id='payment-statement-pre-consent-seed-tail-signature'].form-editor-card
+  .paragraph-card__slot,
+[data-paragraph-id='payment-statement-pre-consent-seed-closing-recipient'].form-editor-card
+  .paragraph-card__slot {
+  margin-top: 0;
+  gap: 0;
+}

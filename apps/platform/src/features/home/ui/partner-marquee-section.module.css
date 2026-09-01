@@ -1,0 +1,360 @@
+.section {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding-top: var(--spacing-48);
+  flex-direction: column;
+  gap: 0;
+  /* 홈 achievements 밴드 배경이 비치도록 투명 */
+  background: transparent;
+  overflow-x: clip;
+  overflow-y: hidden;
+}
+
+@media (--bp-pc-up) {
+  .section {
+    /* 배경 중단 솔리드 + 하단 포토 구역 */
+    display: grid;
+    min-height: 0;
+    height: 100%;
+    /* 밴드 row-gap(260)이 클로징 ↔ Partners 간격을 담당 */
+    padding-top: 0;
+    /* 헤더 · 로고 롤링 · CTA(포토 구역) */
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+}
+
+.header {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  padding-inline: var(--spacing-20);
+  flex-direction: column;
+  /* eyebrow ↔ title */
+  gap: var(--spacing-8);
+  /* 헤더 ↔ 로고 */
+  margin-bottom: var(--spacing-32);
+  text-align: center;
+}
+
+@media (--bp-pc-up) {
+  .header {
+    gap: var(--spacing-16);
+    margin-bottom: var(--spacing-80);
+  }
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--color-primary-600);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 144%;
+  letter-spacing: 0.02em;
+}
+
+@media (--bp-pc-up) {
+  .eyebrow {
+    font-size: 26px;
+    letter-spacing: -0.52px;
+  }
+}
+
+.title {
+  margin: 0;
+  color: var(--color-neutral-cool-80);
+  font-family: var(--font-family-base);
+  font-size: 22px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 144%;
+  letter-spacing: -0.44px;
+}
+
+@media (--bp-pc-up) {
+  .title {
+    font-size: 46px;
+    letter-spacing: -0.92px;
+  }
+}
+
+/* 모바일: 2열 고정 그리드 */
+.logoGrid {
+  display: grid;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 0 var(--spacing-20);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-12);
+  list-style: none;
+}
+
+@media (--bp-pc-up) {
+  .logoGrid {
+    display: none;
+  }
+}
+
+.marqueeArea {
+  display: none;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-20);
+  overflow: hidden;
+}
+
+@media (--bp-pc-up) {
+  .marqueeArea {
+    display: flex;
+  }
+}
+
+.marqueeRow {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.marqueeTrack {
+  --marquee-gap: var(--spacing-20);
+
+  display: flex;
+  width: max-content;
+  max-width: none;
+  gap: var(--marquee-gap);
+  animation: marquee 36s linear infinite;
+}
+
+.marqueeTrackReverse {
+  animation-direction: reverse;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-50% - var(--marquee-gap) / 2));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marqueeTrack {
+    animation: none;
+  }
+}
+
+.logoGroup {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  gap: var(--marquee-gap);
+  list-style: none;
+}
+
+.logoChip {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 72px;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-white);
+}
+
+@media (--bp-pc-up) {
+  .logoChip {
+    width: 300px;
+    height: 110px;
+  }
+}
+
+.logoImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* 로고 이미지 수급 전 텍스트 placeholder */
+.logoText {
+  overflow: hidden;
+  color: var(--color-neutral-cool-700);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (--bp-pc-up) {
+  .logoText {
+    font-size: 17px;
+  }
+}
+
+.cta {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: var(--spacing-48);
+  padding-top: 0;
+  padding-bottom: var(--spacing-64);
+  flex-direction: column;
+  justify-content: center;
+  /* 밴드 하단 포토 영역이 비치도록 투명 */
+  background: transparent;
+}
+
+@media (--bp-pc-up) {
+  .cta {
+    /* 배경 하단 포토 구역을 채우며 CTA 수직 정렬 */
+    min-height: 0;
+    margin-top: var(--spacing-200);
+    padding-bottom: var(--spacing-100);
+  }
+}
+
+.ctaInner {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  max-width: var(--content-shell-max-width);
+  margin-inline: auto;
+  padding-inline: var(--spacing-20);
+  flex-direction: column;
+  gap: var(--spacing-24);
+}
+
+@media (--bp-pc-up) {
+  .ctaInner {
+    padding-inline: var(--spacing-40);
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-32);
+  }
+}
+
+.ctaCopy {
+  margin: 0;
+  min-width: 0;
+  color: var(--color-neutral-white);
+  font-family: var(--font-family-base);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 144%;
+  letter-spacing: -0.4px;
+  text-align: center;
+}
+
+@media (--bp-pc-up) {
+  .ctaCopy {
+    font-size: 36px;
+    letter-spacing: -0.72px;
+    text-align: left;
+  }
+}
+
+.ctaActions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  gap: var(--spacing-12);
+}
+
+@media (--bp-pc-up) {
+  .ctaActions {
+    width: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--spacing-20);
+  }
+}
+
+.ctaPrimaryLink,
+.ctaSecondaryLink {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  align-items: center;
+  align-self: stretch;
+  justify-content: space-between;
+  padding: var(--spacing-12) var(--spacing-40) var(--spacing-12) var(--spacing-32);
+  border-radius: var(--radius-999);
+  text-decoration: none;
+}
+
+@media (--bp-pc-up) {
+  .ctaPrimaryLink,
+  .ctaSecondaryLink {
+    width: auto;
+    justify-content: flex-start;
+    padding: var(--spacing-20) var(--spacing-40) var(--spacing-20) var(--spacing-32);
+  }
+}
+
+.ctaPrimaryLink {
+  border-radius: var(--radius-999);
+  background: linear-gradient(
+    90deg,
+    var(--color-primary-700) -11.94%,
+    var(--color-primary-500) 71.52%
+  );
+}
+
+.ctaSecondaryLink {
+  background: #defafd;
+}
+
+.ctaLabel {
+  display: block;
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (--bp-pc-up) {
+  .ctaLabel {
+    width: 200px;
+    flex: 0 0 200px;
+  }
+}
+
+.ctaIcon {
+  display: block;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+@media (--bp-pc-up) {
+  .ctaIcon {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.ctaPrimaryLink:focus-visible,
+.ctaSecondaryLink:focus-visible {
+  outline: 2px solid var(--color-neutral-white);
+  outline-offset: 2px;
+}

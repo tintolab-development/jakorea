@@ -6,6 +6,11 @@
 export const COL_SPAN_FULL = 24
 export const COL_SPAN_HALF = 12
 
+export function areWidgetIdListsEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false
+  return a.every((id, i) => id === b[i])
+}
+
 /** 100% 위젯 위 드롭 시 중앙 밴드 계산에 사용하는 비율(빈 공간 드롭 분할 판정에 사용) */
 export const FULL_WIDTH_CENTER_RATIO = 0.4
 

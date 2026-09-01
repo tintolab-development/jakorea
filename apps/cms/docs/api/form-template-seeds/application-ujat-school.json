@@ -1,0 +1,306 @@
+{
+  "templateCode": "application-ujat-school",
+  "templateName": "UJAT_참여 기관 신청 폼",
+  "formType": "WRITING",
+  "category": "APPLICATION",
+  "schemaJson": {
+    "schemaVersion": 1,
+    "formSettings": {
+      "titleNumbering": "none"
+    },
+    "paragraphs": [
+      {
+        "id": "ujat-program-application-institution-seed-personal-info",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "개인정보 수집·이용",
+        "paragraphDescription": "설명 입력",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "field",
+        "columnHeaders": [
+          "수집 항목",
+          "수집·이용 목적",
+          "보유기간"
+        ],
+        "dataRows": [
+          [
+            "",
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          }
+        ],
+        "fieldDataRows": [
+          [
+            {
+              "kind": "text",
+              "value": "이름, 연락처, 학교명, 학교 주소, 이메일 등"
+            },
+            {
+              "kind": "text",
+              "value": "JA 프로그램의 참가자 선발 및 프로그램 진행에 필요한 정보 안내"
+            },
+            {
+              "kind": "text",
+              "value": "- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 프로그램 종료로부터 1년 보관 후 폐기"
+            }
+          ]
+        ],
+        "bottomText": "위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.",
+        "showBottomText": true,
+        "showBottomConsent": true,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "ujat-program-application-institution-seed-third-party",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "개인정보 제3자 정보 제공·이용 동의",
+        "paragraphDescription": "설명 입력",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "field",
+        "columnHeaders": [
+          "제공받는 곳",
+          "수집 항목",
+          "수집·이용 목적",
+          "제공받는 자의 보유기간"
+        ],
+        "dataRows": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          }
+        ],
+        "fieldDataRows": [
+          [
+            {
+              "kind": "text",
+              "value": "제공받는 곳을 입력해 주세요"
+            },
+            {
+              "kind": "text",
+              "value": "이름, 학교명, 학교주소, 개인 연락처, e-mail"
+            },
+            {
+              "kind": "text",
+              "value": "JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내"
+            },
+            {
+              "kind": "text",
+              "value": "5년"
+            }
+          ]
+        ],
+        "bottomText": "위의 개인정보 제3자 정보 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.",
+        "showBottomText": true,
+        "showBottomConsent": true,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "ujat-program-application-institution-seed-application-region",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "신청 지역",
+        "paragraphDescription": "설명 입력",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "ujat-program-application-institution-seed-basic-info",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "기본 정보",
+        "paragraphDescription": "설명 입력",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "ujat-program-application-institution-seed-grade-application-info",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "학년 별 신청 정보",
+        "paragraphDescription": "학교에서 신청하는 모든 신청 학년 별 학급 수 및 반 별 학생 수를 작성해주세요.",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "ujat-program-application-institution-seed-grade-class-time",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "학년 별 수업 시간",
+        "paragraphDescription": "신청 학년 별 수업 진행 시간을 작성해주세요.",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "ujat-program-application-institution-seed-preferred-education-schedule",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "진행 희망 교육 일정",
+        "paragraphDescription": "* 금요일 1교시~4교시에 진행되며, 4교시 모두 교육 진행이 가능해야 합니다.\n* 참여 가능한 모든 일정을 선택해 주시면, 선택해 주신 일정 중에서 조정하여 교육이 진행될 예정입니다.",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "ujat-program-application-institution-seed-submit-confirmation",
+        "kind": "single_item",
+        "variant": "multiple_choice",
+        "requiredMark": true,
+        "paragraphTitle": "상기 내용 모두 확인하였으며 현재 답변으로 제출합니다.",
+        "paragraphDescription": "*신청 학년 정보 및 교육 일정은 추후 수정이 가능하며, 교육자 배정 과정에서 조정될 수 있습니다.",
+        "participatesInTitleNumbering": true,
+        "answerRequired": true,
+        "allowMultiple": false,
+        "items": [
+          {
+            "id": "ujat-program-application-institution-submit-confirmation-yes",
+            "label": "네, 상기 내용 모두 확인하였으며, 2026년 JA Korea 초등 경제교육 대상 학교에 지원합니다."
+          }
+        ],
+        "selectedPreviewSingleId": null,
+        "selectedPreviewMultipleIds": []
+      }
+    ]
+  },
+  "extensionJson": {
+    "overlay": {},
+    "editorState": {},
+    "uiState": {}
+  },
+  "settingsJson": null,
+  "_apiStorageNote": "DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장"
+}

@@ -1,0 +1,544 @@
+.full-page-modal.ant-modal {
+  --full-page-modal-padding-x: 52px;
+  --full-page-modal-padding-top: 32px;
+  --full-page-modal-padding-bottom: 52px;
+  /* 1920 = pad(52) + left(1404) + gap(32) + right(380) + pad(52) */
+  --full-page-modal-layout-max-width: 1920px;
+  --full-page-modal-left-column-width: 1404px;
+  --full-page-modal-contents-gap: 32px;
+  --full-page-modal-right-column-width: 380px;
+  --full-page-modal-contents-max-width: calc(
+    var(--full-page-modal-layout-max-width) - 2 * var(--full-page-modal-padding-x)
+  );
+}
+
+.full-page-modal .teal-header-modal__body {
+  padding: 0;
+  margin-top: 0;
+  gap: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.full-page-modal__layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #f4f6f6;
+}
+
+.full-page-modal__sub-header {
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.full-page-modal__topbar {
+  display: flex;
+  height: 64px;
+  box-sizing: border-box;
+  padding: 16px 52px;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.04);
+}
+
+.full-page-modal__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 26px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+}
+
+.full-page-modal__title-text {
+  line-height: 1;
+}
+
+.full-page-modal__title-edit-row {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.full-page-modal__title-input {
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 0;
+  max-width: min(100vw - 260px, 100%);
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  appearance: none;
+  color: var(--main-BK, #3d3d3d);
+  font-family: inherit;
+  font-size: inherit;
+  font-style: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  field-sizing: content;
+}
+
+.full-page-modal__title-input--editing:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.full-page-modal__title-input--editing {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  padding-bottom: 0;
+  border-bottom: none;
+  background-color: transparent;
+  background-image: linear-gradient(var(--color-mint-01, #01a1af), var(--color-mint-01, #01a1af));
+  background-size: 100% 2px;
+  background-position: left bottom;
+  background-repeat: no-repeat;
+}
+
+.full-page-modal__title-edit-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.full-page-modal__title-edit-btn:hover {
+  background: rgba(61, 61, 61, 0.06);
+}
+
+.full-page-modal__title-icon {
+  display: block;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.full-page-modal__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #6f7f86;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.full-page-modal__body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  /* 하단 여백은 padding이 아니라 ::after 스페이서로 둠 — flex:1 자식이 스크롤 영역을
+     패딩까지 덮어써서 하단 패딩이 안 보이는 문제 방지 */
+  padding: var(--full-page-modal-padding-top) var(--full-page-modal-padding-x) 0;
+  flex-direction: column;
+  /* 좌 52px body 패딩 기준 — 콘텐츠 밴드를 가운데로 밀지 않음 */
+  align-items: flex-start;
+  gap: 16px;
+  background: #f4f6f6;
+  overflow-y: auto;
+  box-sizing: border-box;
+  /* 우측 미세 공백(스크롤바 reserved gutter) 방지: 양식 상세 풀페이지는 가로 폭 우선 */
+}
+
+/* 하단 52px 스페이서 — ::after 대신 실제 DOM 요소로 보장 */
+.full-page-modal__body-bottom {
+  flex: 0 0 var(--full-page-modal-padding-bottom);
+  width: 100%;
+  pointer-events: none;
+}
+
+.full-page-modal__body-header {
+  display: flex;
+  align-self: flex-start;
+  width: 100%;
+  max-width: var(--full-page-modal-contents-max-width);
+  margin-inline: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.full-page-modal__body-header-leading {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.full-page-modal__description {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 27px */
+  opacity: 0.6;
+}
+
+.full-page-modal__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* 자연 높이로 키워서 부모 `.full-page-modal__body`(overflow-y: auto)가 세로 스크롤을 담당.
+   stretch: 좌·우 열을 동일 높이로 맞춰 우측 커스텀 필드 카드가 좌측 양식 길이만큼 늘어남(sticky 없음) */
+.full-page-modal__contents {
+  display: flex;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  min-height: auto;
+  width: 100%;
+  max-width: var(--full-page-modal-contents-max-width);
+  margin-inline: 0;
+  align-items: stretch;
+  gap: var(--full-page-modal-contents-gap);
+  box-sizing: border-box;
+}
+
+/* draft 로딩: 2열 대신 본문 전체에서 스피너 가로·세로 중앙 */
+.full-page-modal__contents:has(.form-draft-loading) {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+}
+
+.full-page-modal__contents:has(.form-draft-loading) .full-page-modal__left {
+  max-width: none;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 100%;
+}
+
+.full-page-modal__contents:has(.form-draft-loading) .full-page-modal__right-wrap {
+  display: none;
+}
+
+.full-page-modal__left > .form-draft-loading {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 100%;
+}
+
+.full-page-modal__left {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: min(
+    var(--full-page-modal-left-column-width),
+    calc(100% - var(--full-page-modal-right-column-width) - var(--full-page-modal-contents-gap))
+  );
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.full-page-modal .form-editor-left {
+  flex: none;
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  overflow: visible;
+  scrollbar-gutter: auto;
+  padding-right: 0;
+}
+
+.full-page-modal__right-wrap {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  width: var(--full-page-modal-right-column-width);
+  flex: 0 0 var(--full-page-modal-right-column-width);
+  min-height: 0;
+}
+
+.full-page-modal__right {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 0;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--main-WT, #fff);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* TemplateCustomFieldsForm — 카드 스펙은 컴포넌트 루트에만 적용 */
+.full-page-modal__right:has(> .template-custom-fields-form) {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.full-page-modal__nav-title {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+  padding-bottom: 16px;
+  display: block;
+}
+
+/* children 슬롯 위 구분선 — children 유무와 관계없이 항상 표시 */
+.template-modal-nav__children-divider {
+  align-self: stretch;
+  width: 100%;
+  height: 1px;
+  border: none;
+  margin: 32px 0;
+  flex-shrink: 0;
+  background: var(--table-header-line, #ddd);
+}
+
+.template-modal-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.template-modal-nav-item {
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  height: 44px;
+  min-width: 120px;
+  padding: 0 12px 0 14px;
+  align-items: center;
+  text-align: left;
+  gap: 8px;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  cursor: pointer;
+}
+
+.template-modal-nav-item:hover {
+  background: var(--BG-hover, rgba(1, 161, 175, 0.06));
+}
+
+.template-modal-nav-item--selected {
+  border: 1px solid var(--color-mint-01, #01a1af);
+}
+
+.template-modal-nav-item__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.template-modal-nav-item__handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: #b4b4b4;
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.template-modal-nav-item__handle .anticon {
+  font-size: 14px;
+}
+
+.template-modal-nav-item__handle:active {
+  cursor: grabbing;
+}
+
+/* 문서 다운로드 버튼 — secondary 기본 스펙에서 width·padding 오버라이드 */
+.full-page-modal__download-btn.cms-button.ant-btn {
+  width: 180px;
+  padding: 6px 16px 6px 10px !important;
+}
+
+/* 양식 테스트 —————————————————————————————————————
+   핵심 구조:
+   ┌ body (overflow-y: auto, flex column)
+   │  ├ body-header
+   │  ├ contents (flex: left 가변 + gap 32 + right 380)
+   │  │   ├ left  (폭에 맞춰 미리보기 scale → 행 높이 확정)
+   │  │   └ right-wrap (좌측과 동일 높이, right + form 이 꽉 채움)
+   │  └ body-bottom 52px 스페이서 ← 스크롤 끝에서 보임
+   ————————————————————————————————————————————————— */
+
+/*
+ * 인증서·수료증: 기본 flex 레이아웃 유지
+ * left(가변) + gap(32) + right(380) — 좌측이 남는 폭을 채워 우측과 32px 갭만 남김
+ * 미리보기 스케일은 FormCertificateEditScaleViewport가 좌측 폭에 맞춤
+ */
+.form-template-fullpage-modal .full-page-modal__contents {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: stretch;
+  gap: var(--full-page-modal-contents-gap);
+  min-height: auto;
+}
+
+.form-template-fullpage-modal .full-page-modal__contents:has(.form-draft-loading) {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+}
+
+.form-template-fullpage-modal .full-page-modal__left {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: min(
+    var(--full-page-modal-left-column-width),
+    calc(100% - var(--full-page-modal-right-column-width) - var(--full-page-modal-contents-gap))
+  );
+}
+
+.form-template-fullpage-modal .full-page-modal__contents:has(.form-draft-loading) .full-page-modal__left {
+  max-width: none;
+  width: 100%;
+}
+
+.form-template-fullpage-modal .full-page-modal__contents:has(.form-draft-loading) .full-page-modal__right-wrap {
+  display: none;
+}
+
+.form-template-fullpage-modal .form-certificate-preview {
+  width: 100%;
+}
+
+.form-template-fullpage-modal .full-page-modal__right-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 var(--full-page-modal-right-column-width);
+  width: var(--full-page-modal-right-column-width);
+  min-width: 0;
+  align-self: stretch;
+}
+
+.form-template-fullpage-modal .full-page-modal__right {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  min-height: 0;
+  position: relative;
+  top: auto;
+}
+
+/* 템플릿 등록 사용자 모드 — 미리보기와 동일 청록 헤더·회색 본문 */
+.full-page-modal--registration-user-mode .full-page-modal__topbar {
+  background: var(--color-mint-01, #01a1af);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.04);
+}
+
+.full-page-modal--registration-user-mode .full-page-modal__title,
+.full-page-modal--registration-user-mode .full-page-modal__title-text,
+.full-page-modal--registration-user-mode .full-page-modal__title-input {
+  color: var(--main-WT, #fff);
+}
+
+.full-page-modal--registration-user-mode .full-page-modal__title-icon,
+.full-page-modal--registration-user-mode .full-page-modal__title-edit-btn {
+  display: none;
+}
+
+.full-page-modal--registration-user-mode .full-page-modal__title-input--editing {
+  background-image: linear-gradient(var(--main-WT, #fff), var(--main-WT, #fff));
+}
+
+/* 본문 상단 액션 — 편집 모드와 동일 위치, 회색 배경 위 CmsButton 스펙 */
+.full-page-modal--registration-user-mode .full-page-modal__body-header .cms-button--secondary:not(:disabled):not(.ant-btn-disabled) {
+  background-image: none !important;
+  background-color: var(--main-WT, #fff) !important;
+}
+
+/* 하단 CTA — 양식 최하단 단락 아래 32px, 본문 스크롤 흐름(고정 float 없음) */
+.full-page-modal--registration-user-mode .full-page-modal__footer-cta {
+  flex-shrink: 0;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
+  max-width: var(--full-page-modal-contents-max-width);
+  margin-inline: 0;
+  margin-top: 32px;
+  box-sizing: border-box;
+}
+
+.full-page-modal--registration-user-mode .full-page-modal__footer-cta-btn.cms-button.ant-btn {
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.08);
+}
+
+.full-page-modal--registration-user-mode .full-page-modal__footer-cta-btn .cms-button__label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.full-page-modal--registration-user-mode .full-page-modal__footer-cta-btn .anticon {
+  font-size: 12px;
+}

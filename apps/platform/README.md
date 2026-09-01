@@ -1,73 +1,57 @@
-# React + TypeScript + Vite
+# JaKorea Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Vite + React + TypeScript + **CSS Modules** 기반 공개 플랫폼 앱. 모바일 퍼스트 반응형(~1079 / 1080+ / 1600+)을 기본으로 한다.
 
-Currently, two official plugins are available:
+## 개발
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+pnpm --filter platform dev
+pnpm --filter platform build
+pnpm --filter platform typecheck
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Vercel (`development` Production)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+모노레포에서 **Root Directory = `apps/platform`**, Production Branch = **`development`**.  
+설정·환경 변수 체크리스트: [docs/vercel.md](./docs/vercel.md)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 디렉터리 구조
+
+```txt
+apps/platform/
+├── .cursor/rules/          # CSS Modules·반응형 Cursor 규칙
+└── src/
+    ├── app/                # App, providers, router
+    ├── pages/              # 라우트 단위 페이지
+    ├── widgets/            # 레이아웃·헤더·푸터 등
+    ├── features/           # 비즈니스 기능
+    ├── entities/           # 도메인 모델
+    └── shared/
+        ├── styles/         # 전역 tokens, reset
+        ├── ui/
+        ├── hooks/
+        └── lib/
 ```
+
+## 컴포넌트 패턴
+
+파일·폴더 **kebab-case**, export **PascalCase**:
+
+```txt
+home-page/
+  home-page.tsx          # export function HomePage
+  home-page.module.css
+  index.ts
+```
+
+상세 규칙: `.cursor/rules/README.md`
+
+## 스타일
+
+| 구분 | 위치 |
+|------|------|
+| 전역 토큰·리셋 | `src/shared/styles/` |
+| 컴포넌트 스코프 | `*.module.css` (colocated) |
+| 경로 alias | `@/` → `src/` |
+
+Breakpoint 토큰: `src/shared/styles/tokens.css`

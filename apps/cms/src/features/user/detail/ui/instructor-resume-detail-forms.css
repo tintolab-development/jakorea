@@ -1,0 +1,9 @@
+/* DetailInfoForm description 슬롯 — 내부 `.instructor-resume-section-count` 타이포가 적용되도록 래퍼만 초기화 */
+.instructor-resume-detail-forms__form .detail-info-form__description {
+  margin: 0;
+  opacity: 1;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+}

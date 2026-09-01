@@ -1,0 +1,39 @@
+.page {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  margin-inline: auto;
+  padding-top: var(--spacing-100);
+  padding-bottom: var(--spacing-80);
+  padding-inline: var(--page-padding-x);
+}
+
+.tabs {
+  margin-top: var(--spacing-48);
+  margin-bottom: var(--spacing-56);
+}
+
+.empty {
+  margin: var(--spacing-40) 0 var(--spacing-24);
+}
+
+.placeholder {
+  margin: 0;
+  padding-block: var(--spacing-40);
+}
+
+@media (--bp-pc-up) {
+  .page {
+    padding-inline: 80px;
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .page {
+    width: 100%;
+    max-width: var(--content-shell-max-width);
+    padding-inline: 0;
+    overflow: visible;
+  }
+}

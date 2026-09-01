@@ -1,0 +1,24 @@
+/**
+ * 섹션 헤더 — `detail-info-form__header`·`__title` 타이포 공유
+ * 좌: 타이틀 + 하단 설명(2px) / 우: `detail-info-form__header-trailing`
+ */
+
+.form-paragraph-section-header.detail-info-form__header {
+  align-items: flex-start;
+}
+
+.form-paragraph-section-header__lead.detail-info-form__header-lead {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.form-paragraph-section-header__description {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.form-paragraph-section-header__required {
+  margin-left: 2px;
+}

@@ -1,0 +1,167 @@
+.tabs {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-8);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  text-align: center;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ── underline ── */
+
+.underline {
+  gap: 0;
+}
+
+.underline .tab {
+  flex: 1 0 0;
+  height: 52px;
+  padding: var(--spacing-12) var(--spacing-20);
+  color: var(--color-neutral-cool-500);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+  border-bottom: 2px solid transparent;
+}
+
+.underline.bordered .tab {
+  border-bottom-color: var(--color-border-default);
+}
+
+.underline .tab.active {
+  color: var(--color-primary-500);
+}
+
+.underline.isolated .tab.active,
+.underline.bordered .tab.active {
+  border-bottom-color: var(--color-primary-500);
+}
+
+/* ── pill ── */
+
+.pill {
+  padding: 10px;
+  gap: var(--spacing-12);
+  border-radius: 120px;
+  background: var(--color-neutral-cool-80);
+}
+
+.pill .tab {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: var(--spacing-12) var(--spacing-20);
+  border-radius: var(--radius-999);
+  color: var(--color-neutral-cool-500);
+}
+
+.pill.large .tab {
+  height: 60px;
+  flex-basis: 220px;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.24px;
+}
+
+.pill.medium .tab {
+  height: 52px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+}
+
+.pill .tab.active {
+  background: var(--color-neutral-white);
+  box-shadow:
+    0 2px 10px 0 rgb(19 59 75 / 3%),
+    0 4px 27px 0 rgb(13 35 44 / 5%);
+  color: var(--color-primary-500);
+}
+
+/**
+ * category — 상단 카테고리 배지 탭
+ * Active: element-default-gray bg + primary-700 text
+ * Inactive: transparent + neutral-black-30 text
+ * Gap between tabs: 20px
+ */
+.category {
+  width: auto;
+  justify-content: center;
+  gap: var(--spacing-20);
+}
+
+.category .tab {
+  flex: 0 0 auto;
+  height: 60px;
+  padding: 0 var(--spacing-28);
+  gap: var(--spacing-12);
+  border-radius: 131px;
+  background: transparent;
+  color: var(--color-neutral-black-30);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.24px;
+}
+
+.category .tab.active {
+  gap: 10px;
+  background: var(--color-element-default-gray);
+  color: var(--color-primary-700);
+}
+
+.category .tab:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ── badge (underline only) ── */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  padding: 2px var(--spacing-8);
+  border-radius: var(--radius-999);
+  background: var(--color-element-default-gray);
+  color: var(--color-neutral-cool-500);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 160%;
+  letter-spacing: 0;
+}
+
+.tab.active .badge {
+  background: var(--color-primary-500);
+  color: var(--color-neutral-white);
+}
+
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

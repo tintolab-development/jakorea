@@ -1,0 +1,109 @@
+/**
+ * 일반 프로그램 — 강사 유형 신청 상세
+ */
+
+.applicant-general-instructor-basic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  min-width: 0;
+}
+
+.applicant-general-instructor-basic-info__name-badge {
+  margin-left: 8px;
+}
+
+.applicant-general-instructor-basic-info__employment-dropdown {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* 트리거 패딩·크롬은 StatusDropdownCell tag100 + INLINE_TAG100 셸 — 열림 시 행 높이만 고정 */
+.applicant-general-instructor-basic-info
+  .detail-info-form__field:has(.applicant-general-instructor-basic-info__employment-dropdown),
+.applicant-general-instructor-basic-info
+  .detail-info-form__field:has(.status-dropdown-cell__status-trigger--open) {
+  min-height: 56px;
+}
+
+.applicant-general-instructor-basic-info
+  .detail-info-form__field:has(.applicant-general-instructor-basic-info__employment-dropdown)
+  .detail-info-form__field-content {
+  overflow: visible;
+}
+
+.applicant-general-instructor-basic-info__form-error {
+  color: #c32f4a;
+  font-size: 13px;
+  line-height: 150%;
+  margin-bottom: -8px;
+}
+
+.applicant-general-instructor-basic-info__field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+/* DetailInfoForm 편집 슬롯의 align-items: center(교차축 중앙) 오버라이드 */
+.detail-info-form__field-content--edit > .applicant-general-instructor-basic-info__field-stack {
+  align-self: stretch;
+  align-items: flex-start;
+}
+
+.applicant-general-instructor-basic-info__field-error {
+  color: #c32f4a;
+  font-size: 13px;
+  line-height: 150%;
+}
+
+.applicant-general-instructor-basic-info__full-width-control {
+  width: 100%;
+  max-width: 280px;
+}
+
+.applicant-general-instructor-basic-info__lecture-fee-edit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  width: 100%;
+}
+
+.applicant-general-instructor-basic-info__lecture-fee-radios,
+.applicant-general-instructor-basic-info__business-income-radios {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.applicant-general-instructor-basic-info__lecture-fee-amount-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.applicant-general-instructor-basic-info__lecture-fee-measure {
+  width: 120px;
+  min-width: 120px;
+}
+
+.applicant-general-instructor-basic-info__lecture-fee-amount {
+  width: 120px;
+  min-width: 120px;
+}
+
+/* 자택 주소: 읍·면·동(또는 구) 이후 가우시안 블러 */
+.applicant-general-instructor-basic-info__address-blur {
+  display: inline-block;
+  filter: blur(5px);
+  -webkit-filter: blur(5px);
+  user-select: none;
+  -webkit-user-select: none;
+  vertical-align: baseline;
+}

@@ -1,0 +1,102 @@
+.badge {
+  composes: root from '../pf-badge-base/pf-badge-base.module.css';
+}
+
+.large {
+  height: 36px;
+  padding: var(--spacing-6) var(--spacing-12);
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.small {
+  padding: var(--spacing-10) var(--spacing-12);
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+}
+
+.largeWithIcon {
+  height: 32px;
+  padding: 0 16px 0 12px;
+  align-items: center;
+  gap: var(--spacing-6);
+}
+
+.smallWithIcon {
+  height: 32px;
+  padding: 0 14px 0 10px;
+  align-items: center;
+  gap: var(--spacing-6);
+}
+
+.primary {
+  background: var(--color-primary-500);
+  color: var(--color-neutral-white);
+}
+
+.secondary {
+  background: var(--color-element-default-blue);
+  color: var(--color-primary-700);
+}
+
+.closed {
+  background: var(--color-neutral-cool-400);
+  color: var(--color-neutral-white);
+}
+
+.iconPrimary {
+  background: var(--color-element-default-blue);
+  color: var(--color-primary-700);
+}
+
+.iconSecondary {
+  background: var(--color-element-default-gray);
+  color: var(--color-primary-700);
+}
+
+.iconSlot {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.iconSlot :is(img, svg) {
+  display: block;
+}
+
+.label {
+  min-width: 0;
+  line-height: 1;
+}
+
+/* Mobile · ~1079 — Caption/semibold compact pill */
+@media (--bp-below-pc) {
+  .large,
+  .small {
+    height: 24px;
+    min-width: 40px;
+    padding: 0 var(--spacing-8);
+    gap: var(--spacing-6);
+    font-family: var(--font-family-base);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .largeWithIcon,
+  .smallWithIcon {
+    height: 24px;
+    min-width: 40px;
+    padding: 0 var(--spacing-8);
+    gap: var(--spacing-6);
+    font-family: var(--font-family-base);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+  }
+}

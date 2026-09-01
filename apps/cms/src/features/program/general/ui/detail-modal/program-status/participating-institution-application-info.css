@@ -1,0 +1,81 @@
+/**
+ * 참여 기관 신청 정보 — 기관 신청 상세와 동일 격자·정렬 (applicant-institution-basic-info 재사용)
+ */
+
+.participating-institution-application-info {
+  margin-top: 0;
+}
+
+.participating-institution-application-info .applicant-institution-basic-info__section {
+  margin-top: 0;
+}
+
+/*
+ * 교재 배송 StatusDropdown 행:
+ * - 인라인 배지: STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME (116×48 고정 셸)
+ * - 표 래퍼 width/max-width/min-width:0 — 열림 시 overview 표만 가로로 커지던 회귀 차단
+ */
+.participating-institution-application-info__table-wrap--overview {
+  contain: inline-size;
+}
+
+.participating-institution-application-info__table-wrap--overview
+  tbody
+  > tr:has(.status-dropdown-cell__status-trigger) {
+  height: 54px;
+  min-height: 54px;
+  max-height: 54px;
+}
+
+.participating-institution-application-info__table-wrap--overview
+  tbody
+  > tr:has(.status-dropdown-cell__status-trigger)
+  .applicant-institution-basic-info__cell {
+  padding-top: 0;
+  padding-bottom: 0;
+  vertical-align: middle;
+  overflow: clip;
+}
+
+.participating-institution-application-info__textbook-value {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: clip;
+}
+
+.participating-institution-application-info__textbook-value .program-detail-td-segment-wrap {
+  flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 100%;
+  overflow: clip;
+}
+
+.participating-institution-application-info__schedule-empty {
+  text-align: center;
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+}
+
+.participating-institution-application-info__session-status {
+  font-family: 'Pretendard', sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 24px */
+}
+
+.participating-institution-application-info__session-status--completed {
+  color: var(--color-blue, #017eaf);
+}
+
+.participating-institution-application-info__session-status--pending {
+  color: var(--color-green, #1e8c29);
+}
+
+.participating-institution-application-info__session-status--not_planned {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+}

@@ -1,0 +1,106 @@
+.application-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.application-view.program-detail-fullpage-modal__info-tab {
+  padding-bottom: 0;
+}
+
+/* content 하단 52px 패딩이 회색 미리보기 아래 흰 여백으로 노출됨 */
+.detail-fullpage-modal__content:has(.application-view) {
+  padding-bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.application-view__tabs {
+  flex-shrink: 0;
+}
+
+/* 풀페이지 모달 기본(32px) 대신 신청 정보 탭만 하단 10px */
+.program-detail-fullpage-modal .application-view .cms-text-tabs__row {
+  padding-bottom: 10px;
+}
+
+.application-view__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  margin-left: calc(-1 * var(--detail-fullpage-padding-x, 52px));
+  margin-right: calc(-1 * var(--detail-fullpage-padding-x, 52px));
+  padding: 32px var(--detail-fullpage-padding-x, 52px) 0;
+  background: #eeeff1;
+}
+
+.application-view__body-bottom {
+  flex: 0 0 52px;
+  width: 100%;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.application-view__notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.application-view__notice-text {
+  margin: 0;
+  color: var(--color-mint-01, #01a1af);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 27px */
+  height: 27px;
+  flex: 1 0 0;
+}
+
+.application-view__preview-panel--readonly {
+  pointer-events: none;
+  cursor: default;
+}
+
+.application-view__preview-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* draft 로딩: 미리보기 본문(회색) 영역 중앙에 스피너 */
+.application-view__preview-panel--loading {
+  flex: 1 1 auto;
+  align-items: stretch;
+  justify-content: center;
+  min-height: calc(100dvh - 280px);
+}
+
+.application-view__preview-panel--loading .form-draft-loading {
+  flex: 1 1 auto;
+  min-height: 100%;
+}
+
+.application-view__preview-panel .form-editor-left {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  gap: 16px;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  min-height: auto;
+  overflow: visible;
+  padding-right: 0;
+}

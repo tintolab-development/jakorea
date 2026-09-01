@@ -14,6 +14,8 @@ export const ADMIN_NOTICE_CATEGORY_FILTER_OPTIONS: {
   { label: '시스템', value: '시스템' },
   { label: '봉사단', value: '봉사단' },
   { label: '강사단', value: '강사단' },
+  { label: '최종 합격 발표', value: '최종 합격 발표' },
+  { label: '서류 심사 결과', value: '서류 심사 결과' },
 ]
 
 /** 등록/편집 폼용: 실제 카테고리만 */

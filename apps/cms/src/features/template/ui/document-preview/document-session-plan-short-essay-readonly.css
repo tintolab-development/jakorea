@@ -1,0 +1,19 @@
+.session-plan-short-essay-block__footer--document-readonly {
+  align-items: flex-start;
+}
+
+.document-session-plan-short-essay-readonly__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  min-height: 40px;
+  box-sizing: border-box;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

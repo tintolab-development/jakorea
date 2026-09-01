@@ -2,6 +2,52 @@
  * 실적 관리 목록 페이지용 pending 필터 · 테이블 컨텍스트 · 합계 탭 타입
  */
 
+/** 실적 관리 목록 테이블 1행 (mock Program · API PerformanceRecord 공통 뷰) */
+export type EducationRecordRow = {
+  id: string
+  educationMonth?: string
+  /** mock: startDate 기반 월 표시용 */
+  startDate?: string
+  businessArea?: string
+  sponsorNameEn?: string
+  sponsorNameKo?: string
+  titleEn?: string
+  mainTitle?: string
+  title?: string
+  textbookName?: string
+  textbookNameEn?: string
+  schoolOrOrganizationName?: string
+  district?: string
+  /** 필터용 파생 — 시/도 */
+  sido?: string
+  si?: string
+  gun?: string
+  gu?: string
+  targetLevel?: string
+  ipOwned?: string
+  courseDeliveredBy?: string
+  partnerInvolvement?: boolean | string
+  institutionType?: string
+  ips?: string
+  programCategory?: string
+  programChannel?: string
+  educationType?: string
+  educationHours?: number
+  classCount?: number
+  maleParticipants?: number
+  femaleParticipants?: number
+  totalParticipants?: number
+  generalVolunteers?: number
+  staffVolunteers?: number
+  returningVolunteers?: number
+  generalTeachers?: number
+  educatedTeachers?: number
+  instructors?: number
+  managerName?: string
+  /** 피벗 집계용 — mock schoolId */
+  schoolId?: string
+}
+
 export type EducationRecordQuarter = 1 | 2 | 3 | 4
 
 export type EducationRecordPendingFilters = {
@@ -9,6 +55,8 @@ export type EducationRecordPendingFilters = {
   year: string
   /** 분기 (1 ~ 4 또는 `'ALL'`) */
   quarter: 'ALL' | EducationRecordQuarter
+  /** 사업 분야. 빈 문자열이면 전체 */
+  businessArea: string
   /** 시/도 이름 (예: `'서울특별시'`). 빈 문자열이면 전체 */
   sido: string
   /** 시/군/구 이름 (예: `'강남구'`). 빈 문자열이면 전체 */
@@ -21,6 +69,12 @@ export type EducationRecordPendingFilters = {
   title: string
   /** 교재명 검색어(국문 부분일치) */
   textbookName: string
+  /** 기관명 검색어(부분일치) */
+  institutionName: string
+  /** IPS. 빈 문자열이면 전체 */
+  ips: string
+  /** 교육 형태 (`online` / `offline` / `hybrid`). 빈 문자열이면 전체 */
+  educationType: string
 }
 
 export type EducationRecordTableContext = {

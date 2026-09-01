@@ -64,9 +64,43 @@
   max-width: 100%;
 }
 
+.payment-order-calc-statement-modal__name-cell {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .payment-order-calc-statement-modal__basic--instructor
   .detail-info-form
   .payment-order-admin__status-text {
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.payment-order-calc-statement-modal__basic--instructor
+  .detail-info-form__body
+  > .detail-info-form__row--double:first-child
+  .detail-info-form__field-content {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.payment-order-calc-statement-modal__basic--instructor
+  .detail-info-form__body
+  > .detail-info-form__row--double
+  > .detail-info-form__field--full-row
+  .detail-info-form__field-content {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.payment-order-calc-statement-modal__basic--instructor
+  .payment-order-calc-statement-modal__processing-status-label--application-rejected {
+  color: var(--color-red, #c32f4a);
+  text-align: center;
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
@@ -87,9 +121,9 @@
   max-width: 100%;
 }
 
-/* 모달 헤더(산출 내역서) 아래 — 기본 정보 레이블과 첫 테이블 사이 24px */
+/* 모달 헤더(산출 내역서) 아래 — 기본 정보 레이블과 첫 테이블 사이 16px */
 .payment-order-calc-statement-modal__basic-heading {
-  margin: 0 0 24px;
+  margin: 0 0 16px;
   padding: 0 8px;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
@@ -219,7 +253,7 @@
 
 /* 항목 타이틀: 기본 정보, 산출 내역 상세 */
 .payment-order-calc-statement-modal__section-title {
-  margin: 0 0 12px;
+  margin: 0 0 16px;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 18px;
@@ -272,50 +306,6 @@
   display: flex;
   gap: 8px;
   flex-shrink: 0;
-}
-
-/* 산출 내역서 모달 — 산출 내역 상세 헤더: 신청 반려·확인 처리 120×40 */
-.payment-order-calc-statement-modal
-  .payment-order-calc-statement-modal__detail-actions
-  .app-button.app-button--large.ant-btn,
-.payment-order-calc-statement-modal
-  .payment-order-calc-statement-modal__detail-actions
-  .app-button.app-button--large.ant-btn-lg {
-  box-sizing: border-box !important;
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
-  height: 40px !important;
-  min-height: 40px !important;
-  max-height: 40px !important;
-  padding: 0 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
-}
-
-/* 신청 반려 라벨 타이포 */
-.payment-order-calc-statement-modal
-  .payment-order-calc-statement-modal__detail-actions
-  .app-button--danger.app-button--large.ant-btn-dangerous {
-  color: var(--color-red, #c32f4a) !important;
-  border-color: var(--color-red, #c32f4a) !important;
-  font-family: Pretendard, sans-serif !important;
-  font-size: 14px !important;
-  font-style: normal !important;
-  font-weight: 600 !important;
-  line-height: 150% !important;
-}
-
-.payment-order-calc-statement-modal
-  .payment-order-calc-statement-modal__detail-actions
-  .app-button--danger.app-button--large.ant-btn-dangerous:hover:not(:disabled),
-.payment-order-calc-statement-modal
-  .payment-order-calc-statement-modal__detail-actions
-  .app-button--danger.app-button--large.ant-btn-dangerous:focus-visible:not(:disabled) {
-  color: var(--color-red, #c32f4a) !important;
-  border-color: color-mix(in srgb, var(--color-red, #c32f4a) 88%, #000) !important;
 }
 
 /* 산출 내역 상세 테이블 보더 */
@@ -454,7 +444,7 @@
   padding-inline: 16px !important;
   box-sizing: border-box;
   border-inline-end: 1px solid var(--table-line);
-  border-top: none;
+  border-top: 1px solid var(--table-line);
   text-align: center;
   vertical-align: middle;
   color: var(--default-BK, #3d3d3d);
@@ -500,7 +490,9 @@
 
 .payment-order-calc-statement-modal__summary-row .ant-table-cell {
   background: #f0f7f8 !important;
-  border-color: rgba(0, 0, 0, 0.06) !important;
+  border-top: 1px solid var(--table-line) !important;
+  border-inline-end-color: var(--table-line) !important;
+  border-bottom-color: var(--table-line) !important;
 }
 
 /* 합계 행: 라벨·수식은 공통 타이포, 합계 금액은 민트색만 유지 */

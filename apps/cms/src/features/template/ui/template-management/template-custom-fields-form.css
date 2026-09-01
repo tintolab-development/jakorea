@@ -1,0 +1,371 @@
+.template-custom-fields-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px 24px 24px 24px;
+  gap: 0;
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  box-sizing: border-box;
+  border-radius: var(--16, 16px);
+  background: var(--main-WT, #fff);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* 섹션 = 제목 + 버튼 목록 */
+.template-custom-fields-form__section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  align-self: stretch;
+  width: 100%;
+}
+
+.template-custom-fields-form__section .full-page-modal__nav-title {
+  margin-bottom: 0;
+  text-align: left;
+}
+
+/* 버튼 목록 — 버튼 간 8px */
+.template-custom-fields-form__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  align-self: stretch;
+}
+
+/* 버튼 스펙 */
+.template-custom-fields-form__btn {
+  display: flex;
+  height: 44px;
+  min-width: 120px;
+  padding: 0 12px 0 14px;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* 버튼 텍스트 스펙 */
+.template-custom-fields-form__btn-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+}
+
+.template-custom-fields-form__btn:hover {
+  background: var(--BG-hover, rgba(1, 161, 175, 0.06));
+}
+
+.template-custom-fields-form__btn:focus-visible {
+  outline: 2px solid var(--color-mint-01, #01a1af);
+  outline-offset: 2px;
+}
+
+.template-custom-fields-form__btn--active {
+  border-color: var(--color-mint-01, #01a1af);
+  background: var(--BG-hover, rgba(1, 161, 175, 0.06));
+}
+
+/* 하단 인풋 — 상단 버튼과 동일 44px·테두리·라운드 */
+.template-custom-fields-form__secondary-input-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  align-self: stretch;
+}
+
+/* 인풋·텍스트영역 아래 8px — 흑백 텍스트 색 닷 */
+.template-custom-fields-form__text-color-dots {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+.template-custom-fields-form__text-color-dot {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.template-custom-fields-form__text-color-dot:focus-visible {
+  outline: 2px solid var(--color-mint-01, #01a1af);
+  outline-offset: 2px;
+}
+
+.template-custom-fields-form__text-color-dot--black {
+  background: #000;
+  border-color: rgba(0, 0, 0, 0.35);
+}
+
+.template-custom-fields-form__text-color-dot--white {
+  background: #fff;
+  border-color: var(--table-line, #e0e0e0);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.template-custom-fields-form__text-color-dot--selected {
+  box-shadow:
+    0 0 0 2px var(--main-WT, #fff),
+    0 0 0 4px var(--color-mint-01, #01a1af);
+}
+
+.template-custom-fields-form__secondary-input.ant-input,
+.template-custom-fields-form__secondary-input-wrap .ant-input {
+  height: 44px;
+  min-width: 120px;
+  width: 100%;
+  padding: 0 12px 0 14px;
+  box-sizing: border-box;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: #000;
+}
+
+.template-custom-fields-form__secondary-input.ant-input::placeholder,
+.template-custom-fields-form__secondary-input-wrap .ant-input::placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-weight: 500;
+}
+
+.template-custom-fields-form__secondary-input.ant-input:disabled,
+.template-custom-fields-form__secondary-input-wrap .ant-input:disabled {
+  cursor: not-allowed;
+  background: var(--main-WT, #fff);
+  color: var(--main-BK, #3d3d3d);
+  opacity: 0.55;
+}
+
+/* 본문·참여자 정보 — 여러 줄 */
+.template-custom-fields-form__secondary-textarea.ant-input,
+.template-custom-fields-form__secondary-input-wrap .ant-input-textarea textarea {
+  min-width: 120px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px 10px 14px;
+  box-sizing: border-box;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: #000;
+}
+
+.template-custom-fields-form__secondary-textarea.ant-input::placeholder,
+.template-custom-fields-form__secondary-input-wrap .ant-input-textarea textarea::placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-weight: 500;
+}
+
+.template-custom-fields-form__secondary-textarea.ant-input:disabled,
+.template-custom-fields-form__secondary-input-wrap .ant-input-textarea textarea:disabled {
+  cursor: not-allowed;
+  background: var(--main-WT, #fff);
+  color: var(--main-BK, #3d3d3d);
+  opacity: 0.55;
+}
+
+/* 참여자 정보 — 행별 표시(체크박스 20×20, 행 간격 8px) */
+.template-custom-fields-form__participant-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  align-self: stretch;
+}
+
+.template-custom-fields-form__participant-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.template-custom-fields-form__participant-check-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+}
+
+.template-custom-fields-form__participant-checkbox.ant-checkbox-wrapper {
+  align-items: center;
+}
+
+.template-custom-fields-form__participant-checkbox .ant-checkbox-inner {
+  width: 20px;
+  height: 20px;
+}
+
+.template-custom-fields-form__participant-checkbox .ant-checkbox {
+  top: 0;
+}
+
+/* 기관 로고 / 수료증 배경 — 1:1 썸네일 + 우측(파일 변경 → 8px gap → 안내 문구, 버튼과 좌측 정렬) */
+.template-custom-fields-form__logo-upload {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  align-self: stretch;
+}
+
+.template-custom-fields-form__logo-thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 100px;
+  height: 100px;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  overflow: hidden;
+}
+
+/* 1:1 박스 안에 전체 이미지가 보이도록 비율 유지·축소(contain). cover는 잘림 발생 */
+.template-custom-fields-form__logo-thumb-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+}
+
+.template-custom-fields-form__logo-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/*
+ * CmsButton secondary + large 기반 — 시안(120×40, padding 6px 16px).
+ * 로딩 시 Ant가 .ant-btn-icon을 추가하므로 idle/loading 사이 정렬 변화가 없도록 항상 row로 통일.
+ */
+.template-custom-fields-form__logo-file-btn.cms-button.cms-button--secondary.ant-btn-default {
+  box-sizing: border-box;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 6px 16px !important;
+  border-radius: var(--8, 8px) !important;
+  border: 1px solid var(--color-mint-01, #01a1af) !important;
+  background:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+    #fff !important;
+  color: var(--color-mint-01, #01a1af) !important;
+  text-align: center !important;
+  font-family: Pretendard, sans-serif !important;
+  font-size: 14px !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+  line-height: 150% !important;
+}
+
+/* app-button 전역 :has(.ant-btn-icon) 및 로딩 마크업과 동일 축 유지 */
+.template-custom-fields-form__logo-file-btn.cms-button.ant-btn:has(.ant-btn-icon),
+.template-custom-fields-form__logo-file-btn.cms-button.ant-btn.ant-btn-loading {
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.template-custom-fields-form__logo-file-btn.cms-button.cms-button--secondary.ant-btn-default:hover:not(:disabled) {
+  background:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+    #fff !important;
+  border-color: color-mix(in srgb, var(--color-mint-01, #01a1af) 88%, #000) !important;
+  color: color-mix(in srgb, var(--color-mint-01, #01a1af) 88%, #000) !important;
+}
+
+.template-custom-fields-form__logo-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  color: var(--main-BK, #3d3d3d);
+  text-align: left;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
+  opacity: 0.6;
+}
+
+.template-custom-fields-form__logo-hint p {
+  margin: 0;
+}
+
+/* 두 섹션 사이 구분선 — 위 32px (커스텀 필드 마지막 버튼 하단), 아래 32px (타이틀명 제목 상단) */
+.template-custom-fields-form__divider {
+  display: block;
+  width: 100%;
+  height: 1px;
+  margin: 32px 0;
+  flex-shrink: 0;
+  border: none;
+  background: var(--table-header-line, #ddd);
+}

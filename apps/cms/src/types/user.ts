@@ -6,6 +6,24 @@
 
 import type { UUID, DateValue } from './index'
 
+export interface TermsAgreementRow {
+  termsType?: string
+  termsVersion?: string
+  required?: boolean
+  agreed?: boolean
+  agreedAt?: string
+  actorType?: string
+  sourceFlow?: string
+}
+
+export interface UserGuardianInfo {
+  guardianName?: string
+  relation?: string
+  phone?: string
+  consentStatus?: string
+  consentedAt?: string
+}
+
 // ===== 역할 정의 =====
 
 // 프론트 사용자 역할 (§2.1)
@@ -43,12 +61,30 @@ export interface SchoolAffiliatedTeacherRow {
   joinedAt: DateValue
   /** 연결된 CMS 회원 id — 있으면 행 클릭 시 해당 회원 상세로 이동 */
   linkedUserId?: UUID
+  /** remote: `PATCH …/affiliated-teachers/{teacherMemberId}/employment-status` 용 */
+  teacherMemberId?: number
+}
+
+/** 학교 상세 소속 교사 행 → 교사 상세 drill-down */
+export interface AffiliatedTeacherLinkTarget {
+  userId: string
+  teacherMemberId?: number
+  name?: string
+  assignedGrade?: string
 }
 
 // ===== 사용자 인터페이스 =====
 
 export interface User {
   id: UUID
+  /** 백엔드 회원 숫자 ID — remote API 연동 시 목록·상세에서 채움 */
+  memberId?: number
+  /** 학교 organization canonical id — 학교 목록/상세/소속 교사 API */
+  organizationId?: number
+  /** admin-accounts API numeric id — 관리자 회원 상세·권한 유형 변경 */
+  adminAccountId?: number
+  /** 강사 권한 신청 requestId — 권한 승인 상세·privacy unmask */
+  instructorRoleRequestId?: number
   email: string
   password: string // Mock 데이터용 (실제로는 해시된 값)
   name: string
@@ -56,6 +92,11 @@ export interface User {
   profileImageUrl?: string
   phone?: string
   role: UserRole
+  /**
+   * 서버 회원 `roles[]`.
+   * 교사(`SCHOOL_TEACHER` 단독) vs 교사 겸 강사(`INSTRUCTOR` + `SCHOOL_TEACHER`) SSOT.
+   */
+  roles?: string[]
 
   // 관리자 전용 (§2.2)
   adminLevel?: AdminLevel
@@ -63,6 +104,8 @@ export interface User {
   programRoles?: Record<string, ProgramRole>
 
   // 개인(참여자) 전용 (§2.1)
+  /** 1365 자원봉사 포털 ID — 회원 관리 등록 시 저장 */
+  id1365?: string
   // - 프로그램 신청(개인)
   // - 신청내역/진행상황 확인
   // - 일정 확인, 과제 제출
@@ -72,6 +115,8 @@ export interface User {
   schoolInfo?: {
     schoolName: string
     address: string
+    /** 상세 주소 — 표시 시 address 뒤에만 이어 붙임 */
+    addressDetail?: string
     position?: string // 담당자 직책
     /** CMS mock/상세 — 소속 교사 목록 */
     affiliatedTeachers?: SchoolAffiliatedTeacherRow[]
@@ -134,13 +179,17 @@ export interface User {
 
   /**
    * 관리자 등록 후 본인 직접 가입(추가 절차)을 완료한 경우. true이면 CMS에서 **직접 등록**과 동일하게 취급한다.
-   * 기본정보 일괄 수정은 불가(읽기 전용)·관리자 코멘트(및 관리자 회원의 권한 유형)는 CMS 관리자 전원 예외, 강사(INSTRUCTOR)는 강사비 등급도 예외.
+   * API `identityVerified === true`로도 정규화된다.
+   * 기본정보 일괄 수정은 불가(읽기 전용). 관리자 코멘트는 별도 [코멘트 작성].
+   * 강사·교사(`role === 'INSTRUCTOR'`)는 강사비·JA 평가 등급만 [정보 수정] 예외.
    */
   identitySelfSignupCompletedAfterAdminRegistration?: boolean
 
   // 추가 프로필 정보
   bio?: string
   detailAddress?: string
+  /** 자택 주소 상세 — API `homeAddressDetail` / 개인 `addressDetail` */
+  detailAddressDetail?: string
   zipCode?: string
 
   // 회원 상세 모달 표시용 (선택)
@@ -148,12 +197,45 @@ export interface User {
   birthDate?: DateValue
   gender?: string
   affiliation?: string
+  /** 개인 회원 — API `enrollmentStatus` (`ENROLLED` | `NOT_ENROLLED`) */
+  schoolEnrollmentStatus?: 'ENROLLED' | 'NOT_ENROLLED'
   socialAccounts?: string[]
+  /** 플랫폼 가입 시 서버가 판정한 만 14세 미만 여부 */
+  under14?: boolean
+  guardianConsentRequired?: boolean
+  /** 만 14세 미만 플랫폼 가입자의 법정대리인 인증 정보 */
+  guardianInfo?: UserGuardianInfo
+
+  /** 약관·동의 이력 — `/me` API 연동 시 채움 */
+  termsAgreements?: TermsAgreementRow[]
+
+  /** 강사 instructor-profile — 경력 텍스트 (remote) */
+  instructorCareerText?: string
+  /** 강사 instructor-profile — 자기소개 (remote) */
+  instructorSelfIntroduction?: string
+  /** 강사 instructor-profile — 승인 상태 (remote) */
+  instructorApprovalStatus?: string
+  /** 강사 상세 `certifications[]` — 자격·면허 (remote) */
+  instructorCertifications?: InstructorCertificationItem[]
+  /** BE `profile` — CMS 강사 구조체 (§3.8) */
+  instructorCmsProfile?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsProfileProposal
+  /** BE `settlement` — 정산 계좌 구조체 */
+  instructorCmsSettlement?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsSettlement
 
   /**
    * 회원 목록 테이블 전용 지표 (API가 내려주면 표시, 없으면 '-' 또는 기존 필드로 추론)
    */
   listMetrics?: UserListRowMetrics
+}
+
+/** 강사 상세·이력서 — 자격증/면허 한 건 */
+export interface InstructorCertificationItem {
+  id?: number
+  name: string
+  issuer?: string
+  certificateNumber?: string
+  issuedDate?: string
+  expiresDate?: string
 }
 
 /** 목록 화면 열별 부가 데이터 */
@@ -164,11 +246,15 @@ export interface UserListRowMetrics {
   institutionProgramAttendanceCount?: number
   /** 학교(기관): 등록된 교사 수 */
   institutionRegisteredTeacherCount?: number
-  /** 강사: 유형 라벨 */
+  /**
+   * @deprecated 강사비 등급이 저장되던 구 필드. 신규 코드는 `instructorFeeGradeLabel`을 사용한다.
+   */
   instructorTypeLabel?: string
+  /** 강사: 강사비 등급 */
+  instructorFeeGradeLabel?: string
   /**
    * 회원·권한 UI 전용 강사 신청/소속 구분 (예: JA 강사단, 특강 강사, 제미나이 강사단).
-   * 정산의 강사비 등급(`instructorTypeLabel`)과 별도 — 없으면 클라이언트가 소속·경력 문구로 추론 가능.
+   * 정산의 강사비 등급과 별도 — 없으면 클라이언트가 소속·경력 문구로 추론 가능.
    */
   permissionApplicationTypeLabel?: string
   /** 강사: JA 평가 등급 */

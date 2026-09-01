@@ -1,0 +1,53 @@
+---
+description: Admin 목록 조합 — admin-list-card + useListFilterUrl (공통 의도는 cms-admin-ui)
+globs:
+  - apps/admin/src/pages/**/*.{tsx,css}
+  - apps/admin/src/features/**/ui/**/*sortable*.{tsx,css}
+  - apps/admin/src/features/**/ui/**/*panel*.{tsx,css}
+alwaysApply: false
+---
+
+# Admin 목록 페이지 조합 (어댑터)
+
+**의도 SSOT:**
+
+- [list-filter-url-sync.mdc](../../../../.cursor/rules/cms-admin-ui/list-filter-url-sync.mdc)
+- [list-table-shell.mdc](../../../../.cursor/rules/cms-admin-ui/list-table-shell.mdc)
+- [filter-area-dimensions.mdc](../../../../.cursor/rules/cms-admin-ui/filter-area-dimensions.mdc)
+
+CMS `FilterTableLayout` / `useTablePage` / `TableFilterGroup` **사용 금지**.
+
+## Admin 스택
+
+1. **필터 카드:** `admin-list-card` + `admin-filter-area` ([filter-area-layout](../design/filter-area-layout.mdc))
+2. **URL:** `useListFilterUrl` + `useTableSearch` (`@/shared/lib`)  
+   - `paramConfig` · `parseApplied` · `syncPendingFromUrl`  
+   - 조회 `applySearch()` · 즉시 반영은 `patchSearchParams`  
+   - 접두어 예: `sb_`, `pu_`, `h_`, `a_`, `c_`
+3. **테이블 카드:** `admin-list-toolbar` + Ant `Table` `className="cms-data-table …"` ([table-implementation](../tables/table-implementation.mdc))
+4. **데이터:** feature `api/hooks`. applied 필터는 searchParams 파생.  
+   **조회 API 연결:** `useXxxList(applied)` + queryKey filter — [list-filter-query-api](../data/list-filter-query-api.mdc) (URL만 동기화하고 list GET에 params 안 넘기지 말 것).
+
+```tsx
+const { pendingFilters, setPendingFilters, applied, applySearch } = useListFilterUrl({…})
+
+<div className="…-page">
+  <div className="admin-list-card">
+    <div className="admin-filter-area">…pending + 조회…</div>
+  </div>
+  <div className="admin-list-card">
+    <div className="admin-list-toolbar">…</div>
+    <Table className="cms-data-table" dataSource={…} />
+  </div>
+</div>
+```
+
+필터 없으면 필터 카드 생략 가능.
+
+## 금지
+
+- 조회 후 필터를 로컬 state만으로 유지
+- 필터 live-apply
+- CMS 스택 복사 import
+
+**Last updated:** 2026-08-06

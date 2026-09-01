@@ -43,49 +43,145 @@
   min-width: 0;
 }
 
-/* 재직 현황: StatusDropdownCell + AppStatusBadge — 100×32 (드롭다운은 body 포털이므로 섹션 부모 미사용) */
-.school-affiliated-teachers-section__employment-badge.app-status-badge {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  box-sizing: border-box;
-  width: 100px;
-  min-width: 100px;
-  max-width: 100px;
-  height: 32px;
-  min-height: 32px;
-  max-height: 32px;
-  margin: 0;
-  padding: 6px 12px;
-  gap: 4px;
-  border-radius: 6px;
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 150%;
+/*
+ * 재직 현황(tag-100) — sponsor-page 패턴: 셀·트리거 치수 고정 + 행 hover 중앙 유지
+ * (공통 status-dropdown-cell.css 만으로는 cms-data-table--fluid + 행 hover 시 가로 밀림)
+ */
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.status-dropdown-cell__cell-status--tag-100,
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.status-dropdown-cell__cell-status--tag-100 {
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
 }
 
-.school-affiliated-teachers-section__employment-badge--active.app-status-badge {
-  border: 1px solid rgba(1, 126, 175, 0.1);
-  background: #e6f2f7;
-  color: var(--color-blue, #017eaf);
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
+  td.status-dropdown-cell__cell-status--tag-100
+  .ant-dropdown-trigger {
+  display: inline-flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 116px !important;
+  margin-inline: auto !important;
+  box-sizing: border-box !important;
+  vertical-align: middle !important;
 }
 
-.school-affiliated-teachers-section__employment-badge--muted.app-status-badge {
-  border: 1px solid rgba(61, 61, 61, 0.1);
-  background: #f2f3f5;
-  color: var(--main-bk, #3d3d3d);
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
+  .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open),
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
+  .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover,
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
+  .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):focus-visible,
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open) {
+  display: inline-flex !important;
+  box-sizing: border-box !important;
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+  padding: 7px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  margin-inline: auto !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  outline: none !important;
+}
+
+/* 행·트리거 hover 시 배지 border 유지 — transparent 전환 1px 흔들림 방지 */
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.editable-status-badge--blue,
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
+  .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+  .editable-status-badge.editable-status-badge--blue {
+  border-color: var(--editable-badge-blue-border) !important;
+}
+
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.editable-status-badge--gray,
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
+  .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+  .editable-status-badge.editable-status-badge--gray {
+  border-color: var(--editable-badge-gray-border) !important;
+}
+
+/* 휴직·전근 — 재직 현황 배지 제외, 행 나머지 td 텍스트만 연하게 (opacity 0.4) */
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
+  .ant-table-tbody
+  > tr.school-affiliated-teachers-section__row--muted-text
+  > td:not(.status-dropdown-cell__cell-status--tag-100),
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
+  .ant-table-tbody
+  > tr.school-affiliated-teachers-section__row--muted-text:hover
+  > td:not(.status-dropdown-cell__cell-status--tag-100) {
+  color: rgba(61, 61, 61, 0.4) !important;
+}
+
+/* 드롭다운 열림 시 행 hover가 트리거 mint 외곽을 지우는 공통 규칙 보정 */
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
+  border-color: var(--JA-mint-01, #01a1af) !important;
+  box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1) !important;
+  background: #fff !important;
 }
 
 /* 드롭다운 열림 시 행 높이 흔들림 완화 */
 .school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+}
+
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status) {
-  height: 53px;
-  min-height: 53px;
-  max-height: 53px;
+  height: 54px;
+  min-height: 54px;
+  max-height: 54px;
   overflow: visible;
 }

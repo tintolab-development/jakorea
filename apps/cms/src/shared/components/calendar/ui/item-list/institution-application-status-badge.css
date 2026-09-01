@@ -1,0 +1,33 @@
+@import './calendar-outline-status-badge.css';
+
+.institution-application-status-badge {
+  /* 셸: .calendar-outline-status-badge — 색상만 상태별 */
+  border-color: currentColor;
+  color: rgba(61, 61, 61, 0.8);
+}
+
+.institution-application-status-badge--temp_assigned {
+  color: rgba(61, 61, 61, 0.8);
+}
+
+.institution-application-status-badge--temp_rejected,
+.institution-application-status-badge--application_rejected {
+  color: var(--color-red, #c32f4a);
+}
+
+.institution-application-status-badge--evaluation_pending,
+.institution-application-status-badge--institution_checking {
+  color: var(--color-green, #1e8c29);
+}
+
+.institution-application-status-badge--institution_confirmed {
+  color: var(--color-blue, #017eaf);
+}
+
+.institution-application-status-badge--approval_completed {
+  color: var(--main-BK, #3d3d3d);
+}
+
+.institution-application-status-badge--revision_requested {
+  color: var(--color-purple, #8457ce);
+}

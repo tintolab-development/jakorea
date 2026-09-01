@@ -1,0 +1,150 @@
+.income-expense-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.income-expense-summary__heading {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+/* ── 수입 / 지출그래프 요약 2칸 ── */
+.income-expense-summary__simple {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.income-expense-summary__cell {
+  display: flex;
+  align-items: stretch;
+  min-height: 54px;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+}
+
+.income-expense-summary__cell:last-child {
+  border-right: none;
+}
+
+.income-expense-summary__label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  flex-shrink: 0;
+  background: var(--table-th-bg, #f5f6f7);
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+  text-align: center;
+}
+
+.income-expense-summary__value {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  padding: 10px 20px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* ── 지출 테이블 요약 매트릭스 (시안) ──
+ * 구분(좁) | 직접사업비 합계 | 이외비용 합계 | 지출총계(mint)
+ */
+.income-expense-summary__matrix-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.income-expense-summary__matrix {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.income-expense-summary__col--label {
+  width: 140px;
+}
+
+.income-expense-summary__col--data,
+.income-expense-summary__col--total {
+  width: auto;
+}
+
+.income-expense-summary__matrix th,
+.income-expense-summary__matrix td {
+  box-sizing: border-box;
+  height: 54px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.income-expense-summary__matrix th:last-child,
+.income-expense-summary__matrix td:last-child {
+  border-right: none;
+}
+
+.income-expense-summary__matrix tbody tr:last-child th,
+.income-expense-summary__matrix tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.income-expense-summary__matrix thead th {
+  background: var(--table-th-bg, #f5f6f7);
+  font-weight: 700;
+}
+
+.income-expense-summary__matrix tbody th {
+  background: var(--table-th-bg, #f5f6f7);
+  font-weight: 700;
+  width: 140px;
+}
+
+/* 시안: 지출총계 열 — th 만 mint, td 숫자는 main-BK bold */
+.income-expense-summary__matrix thead th.income-expense-summary__matrix-total {
+  color: var(--color-mint-01, #01a1af);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.income-expense-summary__matrix tbody td.income-expense-summary__matrix-total {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}

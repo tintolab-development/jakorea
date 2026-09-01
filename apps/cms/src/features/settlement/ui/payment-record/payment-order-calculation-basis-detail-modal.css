@@ -1,0 +1,60 @@
+/**
+ * 산출 내역서 — 산정 기준 상세 read-only 모달
+ */
+
+.payment-order-calculation-basis-detail-modal.content-modal.ant-modal .ant-modal-content {
+  width: 800px !important;
+  max-width: min(800px, calc(100vw - 32px));
+}
+
+/* 모달 타이틀 ↔ 본문 30px (content-modal 기본 16px 대체) */
+.payment-order-calculation-basis-detail-modal.content-modal.content-modal--title-body-gap-always
+  .teal-header-modal__body {
+  padding-top: 30px;
+}
+
+.payment-order-calculation-basis-detail-modal .modal-spec-table {
+  border-radius: 8px;
+}
+
+.payment-order-calculation-basis-detail-modal__value {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.payment-order-calculation-basis-detail-modal__section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.payment-order-calculation-basis-detail-modal__section-label {
+  margin: 0 0 10px;
+  padding: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.payment-order-calculation-basis-detail-modal__file-link {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #2563eb;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.payment-order-calculation-basis-detail-modal__file-link:hover {
+  color: #1d4ed8;
+}

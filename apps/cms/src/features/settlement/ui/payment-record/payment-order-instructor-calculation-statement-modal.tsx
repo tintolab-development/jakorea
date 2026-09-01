@@ -1,5 +1,5 @@
 /**
- * 정산 관리 > 지급 현황 상세(강사) — 산출 내역서 모달
+ * 산출 내역서 모달 — 신청자형 기본정보 (신청자별 정산 목록에서 연 때)
  */
 
 import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
@@ -10,6 +10,11 @@ export interface PaymentOrderInstructorCalculationStatementModalProps {
   open: boolean
   onCancel: () => void
   data: PaymentOrderProgramCalculationStatement | null
+  loading?: boolean
+  loadError?: unknown
+  paymentOrdersRemote?: boolean
+  statementId?: number | null
+  detailContextQuery?: import('@/features/settlement-management/hooks/use-payment-orders-detail-query').PaymentOrdersDetailContextQueryResult
   onStatementLineCommitted?: (payload: PaymentOrderCalculationStatementCommitPayload) => void
   onAfterRejectResultClosed?: () => void
 }
@@ -20,6 +25,7 @@ export function PaymentOrderInstructorCalculationStatementModal(
   return (
     <PaymentOrderCalculationStatementModalImpl
       {...props}
+      entryKind="instructor"
       entryClassName="payment-order-calc-statement-modal--entry-instructor"
     />
   )

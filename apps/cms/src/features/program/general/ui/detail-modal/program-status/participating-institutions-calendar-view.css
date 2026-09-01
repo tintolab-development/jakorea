@@ -1,0 +1,57 @@
+/**
+ * 참여 기관·강사 캘린더 — 우측 day-list 텍스트만.
+ * shell·sticky·popover shell: `calendar.css` (`CalendarSplitCardLayout` `pageScroll`).
+ */
+
+.participating-institutions-calendar-day-list__title {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.participating-institutions-calendar-day-list__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.participating-institutions-calendar-day-list__meta-part {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.participating-institutions-calendar-day-list__meta-part--session {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.participating-institutions-calendar-day-list__meta-sep {
+  display: inline-block;
+  width: 1px;
+  height: 13px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
+}

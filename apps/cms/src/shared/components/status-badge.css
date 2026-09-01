@@ -6,7 +6,7 @@
   box-sizing: border-box;
   margin: 0;
   font-style: normal;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 150%;
   white-space: nowrap;
 }
@@ -36,7 +36,7 @@
   font-size: 14px;
 }
 
-/* ----- programEnrollment 액센트 (스크린샷 톤) ----- */
+/* ----- programEnrollment 액센트 (7단계 진행 현황 텍스트·배지 공통, CMS 전역 SSOT) ----- */
 .status-badge--variant-text.status-badge--program-enrollment-waiting-result,
 .status-badge--variant-badge.status-badge--program-enrollment-waiting-result {
   --status-accent: var(--color-orange, #f07917);
@@ -148,7 +148,13 @@
   border-color: color-mix(in srgb, var(--status-accent) 10%, transparent);
 }
 
-/* ----- instructor settlement (강사 정산 현황 7종 — 시안·programEnrollment/settlement 토큰 정렬) ----- */
+/* ----- instructor settlement (강사 정산 현황 8종 — shared/constants/instructor-settlement-status.ts) ----- */
+.status-badge--variant-text.status-badge--instructor-settlement-reapplication,
+.status-badge--variant-badge.status-badge--instructor-settlement-reapplication {
+  --status-accent: #c45c00;
+  color: var(--status-accent);
+}
+
 .status-badge--variant-text.status-badge--instructor-settlement-awaiting,
 .status-badge--variant-badge.status-badge--instructor-settlement-awaiting {
   --status-accent: var(--color-orange, #f07917);
@@ -187,10 +193,11 @@
 
 .status-badge--variant-text.status-badge--instructor-settlement-correction,
 .status-badge--variant-badge.status-badge--instructor-settlement-correction {
-  --status-accent: var(--color-red, #c32f4a);
+  --status-accent: #e8007c;
   color: var(--status-accent);
 }
 
+.status-badge--variant-badge.status-badge--instructor-settlement-reapplication,
 .status-badge--variant-badge.status-badge--instructor-settlement-awaiting,
 .status-badge--variant-badge.status-badge--instructor-settlement-partial,
 .status-badge--variant-badge.status-badge--instructor-settlement-statement-verified,

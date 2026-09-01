@@ -18,13 +18,18 @@ export type InstructorLnbPrepareClickContext = 'history-top' | 'history-child' |
 
 export type UserDetailUrlSyncUser = Pick<
   User,
-  'id' | 'role' | 'name' | 'instructorMemberProfile' | 'affiliatedSchoolUserId' | 'affiliatedSchoolName' | 'schoolInfo'
+  | 'id'
+  | 'role'
+  | 'name'
+  | 'instructorMemberProfile'
+  | 'affiliatedSchoolUserId'
+  | 'affiliatedSchoolName'
+  | 'schoolInfo'
 >
 
 export function programsHistoryHasChildMenu(user: UserDetailUrlSyncUser): boolean {
   if (user.role === 'INDIVIDUAL') return true
   if (user.role === 'INSTRUCTOR') return true
-  if (user.role === 'SCHOOL') return true
   return false
 }
 
@@ -47,6 +52,40 @@ export function clampProgramsChildForUser(
     return child
   }
   return 'enrollment'
+}
+
+/** URL(`lnb`, `programsChild`) → 회원 상세 LNB 탭 상태 */
+export function resolveMemberDetailTabStateFromUrl(params: {
+  searchParams: URLSearchParams
+  displayUser: UserDetailUrlSyncUser
+  programsChildQueryKey: string
+  mode: 'default' | 'permission'
+}): TabState {
+  const { searchParams, displayUser, programsChildQueryKey, mode } = params
+
+  if (mode === 'permission') {
+    return { lnb: 'detail-info' }
+  }
+
+  const rawLnb = searchParams.get('lnb')
+  const isInstructor = displayUser.role === 'INSTRUCTOR'
+  const hasChildMenu = programsHistoryHasChildMenu(displayUser)
+  const paymentLnbAllowed = instructorDetailShowsPaymentStatusLnb(displayUser)
+
+  const nextLnb: UserDetailLnbKey =
+    rawLnb === 'history'
+      ? 'history'
+      : rawLnb === 'payment-status' && isInstructor && paymentLnbAllowed
+        ? 'payment-status'
+        : 'detail-info'
+
+  if (nextLnb === 'history' && hasChildMenu) {
+    const parsed = parseProgramsChildParam(searchParams.get(programsChildQueryKey))
+    const nextChild = parsed ? clampProgramsChildForUser(displayUser, parsed) : 'enrollment'
+    return { lnb: 'history', child: nextChild }
+  }
+
+  return { lnb: nextLnb }
 }
 
 /**
@@ -119,40 +158,76 @@ export function ManagedProgramCountDisplay({
   )
 }
 
-function instructorDetailTitleSchoolName(user: Pick<User, 'affiliatedSchoolName' | 'schoolInfo'>): string {
+function instructorDetailTitleSchoolName(
+  user: Pick<User, 'affiliatedSchoolName' | 'schoolInfo'>
+): string | undefined {
   const fromField = user.affiliatedSchoolName?.trim()
-  if (fromField) return fromField
-  return user.schoolInfo?.schoolName?.trim() || '-'
+  if (fromField && fromField !== '-') return fromField
+  const fromSchool = user.schoolInfo?.schoolName?.trim()
+  if (fromSchool && fromSchool !== '-') return fromSchool
+  return undefined
 }
 
-export function userDetailModalTitle(user: Pick<
-  User,
-  | 'name'
-  | 'role'
-  | 'instructorMemberProfile'
-  | 'affiliatedSchoolUserId'
-  | 'affiliatedSchoolName'
-  | 'schoolInfo'
-  | 'listMetrics'
-  | 'programRoles'
->): string {
-  const displayName = user.name
+/** 회원 상세 풀페이지 타이틀 — `강사 상세 (홍길동)` 형식 */
+function formatUserDetailModalTitle(kindLabel: string, subject: string): string {
+  return `${kindLabel} (${subject})`
+}
+
+export type UserDetailModalTitleOptions = {
+  mode?: 'default' | 'permission'
+  permissionRole?: 'instructor' | 'admin'
+}
+
+export function userDetailModalTitle(
+  user: Pick<
+    User,
+    | 'name'
+    | 'role'
+    | 'instructorMemberProfile'
+    | 'affiliatedSchoolUserId'
+    | 'affiliatedSchoolName'
+    | 'schoolInfo'
+    | 'listMetrics'
+    | 'programRoles'
+  >,
+  options?: UserDetailModalTitleOptions
+): string {
+  const displayName = user.name?.trim() || '-'
+  if (options?.mode === 'permission') {
+    if (options.permissionRole === 'instructor') {
+      return formatUserDetailModalTitle('강사 신청 상세', displayName)
+    }
+    if (options.permissionRole === 'admin') {
+      return formatUserDetailModalTitle('관리자 신청 상세', displayName)
+    }
+  }
   switch (user.role) {
     case 'ADMIN':
-      return `관리자 상세_${displayName}`
+      return formatUserDetailModalTitle('관리자 상세', displayName)
     case 'INSTRUCTOR': {
       const profile = resolveInstructorMemberProfile(user)
       if (profile === 'school_teacher' || profile === 'instructor_dual') {
-        const school = instructorDetailTitleSchoolName(user)
-        return `교사 상세_${school}_${displayName}`
+        return formatUserDetailModalTitle('교사 상세', displayName)
       }
-      return `강사 상세_${displayName}`
+      return formatUserDetailModalTitle('강사 상세', displayName)
     }
     case 'SCHOOL':
-      return `학교 상세_${displayName}`
+      return formatUserDetailModalTitle('학교 상세', displayName)
     default:
-      return `회원 상세_${displayName}`
+      return formatUserDetailModalTitle('회원 상세', displayName)
   }
+}
+
+/** 상세 GET 첫 응답 전 타이틀 — 회원명을 모르므로 종류만 표기 */
+export function userDetailModalLoadingTitle(
+  mode: 'default' | 'permission',
+  permissionRole?: 'instructor' | 'admin'
+): string {
+  if (mode === 'permission') {
+    if (permissionRole === 'admin') return '관리자 신청 상세'
+    return '강사 신청 상세'
+  }
+  return '회원 상세'
 }
 
 export function userDetailSidebarNavAriaLabel(
@@ -178,3 +253,20 @@ export function userDetailSidebarNavAriaLabel(
 }
 
 export { instructorDetailTitleSchoolName }
+
+type UserDetailSubjectSource = Pick<User, 'id' | 'memberId' | 'adminAccountId'>
+
+/** 목록 id·uuid·`admin-account-{id}` 혼용 시에도 동일 회원이면 편집 상태를 유지하기 위한 안정 키 */
+export function resolveUserDetailSubjectKey(
+  user: UserDetailSubjectSource | null | undefined
+): string | null {
+  if (!user) return null
+  if (user.adminAccountId != null && user.adminAccountId > 0) {
+    return `admin-account:${user.adminAccountId}`
+  }
+  if (user.memberId != null && user.memberId > 0) {
+    return `member:${user.memberId}`
+  }
+  const id = user.id?.trim()
+  return id ? `id:${id}` : null
+}

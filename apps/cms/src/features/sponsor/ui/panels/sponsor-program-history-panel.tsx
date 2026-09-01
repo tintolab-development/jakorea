@@ -2,8 +2,10 @@ import { useCallback, useMemo, useState, type MouseEvent } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { TableRowSelection } from 'antd/es/table/interface'
+import { useNavigate } from 'react-router-dom'
 import type { UseProgramHistoryFilterReturn } from '@/features/sponsor/hooks/use-program-history-filter'
 import type { SponsorProgramHistoryRow } from '@/features/sponsor/model/sponsor-management.types'
+import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import {
   CmsButton,
@@ -30,6 +32,13 @@ const LIFECYCLE_OPTIONS = [
   { label: '프로그램 진행 완료', value: 'education_completed' },
 ] as const
 
+const PARTICIPANT_TYPE_OPTIONS = [
+  { label: '전체', value: SPONSOR_PROGRAM_HISTORY_FILTER_ALL },
+  { label: '학교/기관', value: 'school' },
+  { label: '개인 학습자', value: 'individual' },
+  { label: '봉사자', value: 'volunteer' },
+] as const
+
 const EDUCATION_TARGET_OPTIONS = [
   { label: '전체', value: SPONSOR_PROGRAM_HISTORY_FILTER_ALL },
   { label: '초등학생', value: 'elementary' },
@@ -45,7 +54,7 @@ const programHistoryFilterFields: FilterFieldConfig[] = [
     type: 'search',
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
-    width: '20%',
+    width: '16%',
   },
   {
     key: 'year',
@@ -53,7 +62,7 @@ const programHistoryFilterFields: FilterFieldConfig[] = [
     label: '진행년도',
     placeholder: '전체',
     options: buildProgressYearSelectOptions(SPONSOR_PROGRAM_HISTORY_FILTER_ALL),
-    width: '20%',
+    width: '14%',
   },
   {
     key: 'lifecycleStatus',
@@ -61,7 +70,15 @@ const programHistoryFilterFields: FilterFieldConfig[] = [
     label: '프로그램 진행 현황',
     placeholder: '전체',
     options: [...LIFECYCLE_OPTIONS],
-    width: '20%',
+    width: '16%',
+  },
+  {
+    key: 'participantType',
+    type: 'select',
+    label: '참여자 유형',
+    placeholder: '전체',
+    options: [...PARTICIPANT_TYPE_OPTIONS],
+    width: '14%',
   },
   {
     key: 'educationTarget',
@@ -69,14 +86,14 @@ const programHistoryFilterFields: FilterFieldConfig[] = [
     label: '교육 대상',
     placeholder: '전체',
     options: [...EDUCATION_TARGET_OPTIONS],
-    width: '20%',
+    width: '14%',
   },
   {
     key: 'managerName',
     type: 'search',
-    label: '담당자명',
-    placeholder: '담당자명을 입력하세요',
-    width: '20%',
+    label: '후원사 담당자명',
+    placeholder: '후원사 담당자명을 입력하세요',
+    width: '16%',
   },
 ]
 
@@ -84,6 +101,10 @@ export type SponsorProgramHistoryPanelProps = UseProgramHistoryFilterReturn & {
   columns: ColumnsType<SponsorProgramHistoryRow>
   canWrite: boolean
   onRemoveProgramHistories: (ids: string[]) => void
+  /** 실 API 모드 — 삭제 API 없음 */
+  deleteDisabled?: boolean
+  totalCount?: number
+  loading?: boolean
 }
 
 /**
@@ -99,7 +120,11 @@ export function SponsorProgramHistoryPanel({
   columns,
   canWrite,
   onRemoveProgramHistories,
+  deleteDisabled = false,
+  totalCount,
+  loading = false,
 }: SponsorProgramHistoryPanelProps) {
+  const navigate = useNavigate()
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteBlockedModalOpen, setDeleteBlockedModalOpen] = useState(false)
 
@@ -125,9 +150,9 @@ export function SponsorProgramHistoryPanel({
   }, [canWrite, selectedKeys, setSelectedKeys])
 
   const handleDeleteProgramHistory = useCallback((): void => {
-    if (!canWrite || selectedKeys.length === 0) return
+    if (!canWrite || selectedKeys.length === 0 || deleteDisabled) return
     setDeleteModalOpen(true)
-  }, [canWrite, selectedKeys.length])
+  }, [canWrite, deleteDisabled, selectedKeys.length])
 
   const handleDeleteCancel = useCallback((): void => {
     setDeleteModalOpen(false)
@@ -154,7 +179,7 @@ export function SponsorProgramHistoryPanel({
   }, [onRemoveProgramHistories, selectedKeys, selectedRows, setSelectedKeys])
 
   const programHistoryTableOnRow = useCallback(
-    (_record: SponsorProgramHistoryRow) => ({
+    (record: SponsorProgramHistoryRow) => ({
       onClick: (e: MouseEvent<HTMLElement>) => {
         const el = e.target as HTMLElement
         if (
@@ -165,15 +190,13 @@ export function SponsorProgramHistoryPanel({
         ) {
           return
         }
-        // TODO(program-detail): 행 클릭 시 프로그램 상세 페이지 연결 — 임시 비활성화
-        // const programId = _record.programId?.trim()
-        // if (!programId) return
-        // navigate(getProgramAdminDetailInfoTabUrl(programId))
-        window.alert('준비 중입니다.')
+        const programId = record.programId?.trim()
+        if (!programId) return
+        navigateToProgramAdminDetail(navigate, programId)
       },
       style: { cursor: 'pointer' as const },
     }),
-    []
+    [navigate]
   )
 
   return (
@@ -185,28 +208,35 @@ export function SponsorProgramHistoryPanel({
           title: pendingFilters.title,
           year: pendingFilters.year,
           lifecycleStatus: pendingFilters.lifecycleStatus,
+          participantType: pendingFilters.participantType,
           educationTarget: pendingFilters.educationTarget,
           managerName: pendingFilters.managerName,
         }}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="프로그램 진행 이력"
-        description={`총 ${filteredRows.length.toLocaleString()}건`}
+        description={`총 ${(totalCount ?? filteredRows.length).toLocaleString()}건`}
         actions={
           <CmsButton
             variant="delete"
             onClick={handleDeleteProgramHistory}
-            disabled={!canWrite || selectedKeys.length === 0}
+            disabled={!canWrite || selectedKeys.length === 0 || deleteDisabled}
+            title={deleteDisabled ? '실 API 연동 시 프로그램 진행 이력 삭제는 지원되지 않습니다.' : undefined}
           >
             이력 삭제
           </CmsButton>
         }
+        excelExport={{
+          columns,
+          data: filteredRows,
+        }}
       >
         <Table<SponsorProgramHistoryRow>
           rowKey="id"
           className="cms-data-table"
           columns={columns}
           dataSource={filteredRows}
+          loading={loading}
           pagination={false}
           scroll={{ x: 'max-content' }}
           rowSelection={rowSelection}

@@ -1,24 +1,44 @@
 /**
  * 정산 관리 > 계좌 지급 확인 — 행 클릭 시 [계좌 지급 현황 상세] 풀페이지 모달
- *  */
+ */
 
 import { useMemo, useState } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
+import {
+  buildSearchParams,
+  makeBreadcrumbItem,
+} from '@/shared/lib/detail-fullpage-query-stack'
 import {
   DetailModalSidebar,
   type DetailModalSidebarNavItem,
 } from '@/shared/ui/detail-modal-sidebar'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { withProgramDetailTdDivider } from '@/features/program/ui/program-detail-td-divider'
-import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
+import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
+import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
 import { getMockAccountPaymentStatusDetail } from '@/data/mock/account-payments-list'
-import '@/features/program/program-detail/ui/applicant-list/applicant-instructor-basic-info.css'
+import { useAccountPaymentDetailQuery } from '@/features/settlement-management/hooks/use-account-payment-detail-query'
+import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
+import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
+import {
+  buildPaymentStatementIssuanceFileNameFromCalculation,
+  buildPaymentStatementIssuanceViewOptionsFromCalculation,
+  mapAccountPaymentStatusDetailToIssuanceInput,
+} from '@/features/settlement/lib/payment-order-calculation-statement-issuance-view'
+import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import './payment-order-admin-status-tag.css'
 import '@/features/settlement/ui/payment-record/payment-order-program-calculation-statement-modal.css'
 import { PaymentOrderStatusDetailLnbIcon } from './payment-order-status-detail-lnb-icon'
 import { PaymentOrderCalculationBreakdownTable } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
+import {
+  PaymentOrderCalculationBasisDetailModal,
+  usePaymentOrderCalculationBasisDetailModal,
+} from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail-modal'
+import { computePaymentOrderCalculationSubtotalBeforeWithholding } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import {
   AccountPaymentConfirmationModal,
   buildAccountPaymentSingleConfirmationPayload,
@@ -54,12 +74,63 @@ export function AccountPaymentStatusDetailFullPageModal({
   row,
   onAccountPaymentCompleted,
 }: AccountPaymentStatusDetailFullPageModalProps) {
-  const detail = useMemo(() => (row ? getMockAccountPaymentStatusDetail(row) : null), [row])
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
+  const detailQuery = useAccountPaymentDetailQuery(row, open && accountPaymentsRemote)
+
+  const mockDetail = useMemo(
+    () => (row && !accountPaymentsRemote ? getMockAccountPaymentStatusDetail(row) : null),
+    [row, accountPaymentsRemote]
+  )
+  const detail = accountPaymentsRemote ? (detailQuery.data ?? null) : mockDetail
+  const detailLoading = accountPaymentsRemote && open && isAwaitingFirstQueryData(detailQuery)
+  const detailError = accountPaymentsRemote ? detailQuery.error : null
+
   const [paymentCompleteConfirmOpen, setPaymentCompleteConfirmOpen] = useState(false)
+  const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
+  const basisDetailContext = useMemo(() => {
+    const subtotalBeforeWithholding = detail
+      ? computePaymentOrderCalculationSubtotalBeforeWithholding(detail.blocks)
+      : 0
+    return {
+      lectureFeeStandardTitle: detail?.basic.lectureFeeStandardTitle,
+      withholdingDailySalaryTotalWon:
+        subtotalBeforeWithholding > 0 ? subtotalBeforeWithholding : undefined,
+    }
+  }, [detail])
+
+  const {
+    basisDetailOpen,
+    selectedBasisDetail,
+    handleBasisDetailClick,
+    closeBasisDetailModal,
+  } = usePaymentOrderCalculationBasisDetailModal(open, basisDetailContext)
 
   const singlePaymentConfirmPayload = useMemo(
     () => (detail ? buildAccountPaymentSingleConfirmationPayload(detail) : null),
     [detail]
+  )
+
+  const issuanceInput = useMemo(
+    () => (detail ? mapAccountPaymentStatusDetailToIssuanceInput(detail) : null),
+    [detail]
+  )
+
+  const issuanceParagraphBodyOptions = useMemo(
+    () =>
+      issuanceInput
+        ? buildPaymentStatementIssuanceViewOptionsFromCalculation(issuanceInput)
+        : undefined,
+    [issuanceInput]
+  )
+
+  const issuanceFileName = useMemo(
+    () =>
+      issuanceInput
+        ? buildPaymentStatementIssuanceFileNameFromCalculation(issuanceInput)
+        : undefined,
+    [issuanceInput]
   )
 
   const sidebarItems = useMemo<DetailModalSidebarNavItem[]>(
@@ -73,18 +144,36 @@ export function AccountPaymentStatusDetailFullPageModal({
     []
   )
 
-  if (!open || !row || !detail) {
+  if (!open || !row) {
     return null
   }
 
-  const { basic } = detail
+  const { basic } = detail ?? { basic: null }
+  const title = '계좌 지급 현황 상세'
+  const headerBreadcrumbItems = [
+    makeBreadcrumbItem(
+      '계좌 지급 확인',
+      location.pathname,
+      buildSearchParams(searchParams, { delete: ['ap_detail'] })
+    ),
+    { label: title },
+  ]
 
   return (
     <>
       <DetailFullPageModal
         open={open}
         onClose={onClose}
-        title="계좌 지급 현황 상세"
+        title={title}
+        loading={detailLoading}
+        error={
+          !detailLoading && (detailError || !detail)
+            ? detailError instanceof Error
+              ? detailError.message
+              : '상세를 불러오지 못했습니다.'
+            : null
+        }
+        headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
         className="account-payment-status-detail-fullpage-modal"
         sidebar={
           <DetailModalSidebar
@@ -98,29 +187,19 @@ export function AccountPaymentStatusDetailFullPageModal({
           />
         }
       >
+        {detail && basic ? (
         <div className="account-payment-status-detail-fullpage-modal__root">
           <div className="account-payment-status-detail-fullpage-modal__basic-stack">
             <DetailInfoForm
               title="기본 정보"
               className="account-payment-status-detail-fullpage-modal__detail-form-card"
             >
+              <DetailInfoForm.Row type="double">
+                <DetailInfoForm.Field label="성명" view={<span>{basic.nameKo}</span>} />
+                <DetailInfoForm.Field label="연락처" view={<span>{basic.phoneDisplay}</span>} />
+              </DetailInfoForm.Row>
               <DetailInfoForm.Row type="single">
-                <DetailInfoForm.NameBlock
-                  rows={[
-                    {
-                      subLabel: '한글',
-                      main: <span>{basic.nameKo}</span>,
-                      sideLabel: '연락처',
-                      side: <span>{basic.phoneDisplay}</span>,
-                    },
-                    {
-                      subLabel: '영문',
-                      main: <span>{basic.nameEn}</span>,
-                      sideLabel: '이메일',
-                      side: <span>{basic.emailDisplay}</span>,
-                    },
-                  ]}
-                />
+                <DetailInfoForm.Field label="이메일" view={<span>{basic.emailDisplay}</span>} />
               </DetailInfoForm.Row>
               <DetailInfoForm.Row type="double">
                 <DetailInfoForm.Field
@@ -221,21 +300,24 @@ export function AccountPaymentStatusDetailFullPageModal({
               formulaLabel={detail.formulaLabel}
               totalAmount={detail.totalAmount}
               lectureSessionSegmentLabel="round"
+              onBasisDetailClick={handleBasisDetailClick}
+              onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
               headerActions={
-                basic.accountPaymentStatus === 'account_paid' ? undefined : (
-                  <AppButton
+                row.accountPaymentStatus === 'account_paid' ? undefined : (
+                  <CmsButton
                     variant="primary"
-                    size="filter"
-                    modalTeal
+                    size="large"
+                    width={160}
                     onClick={() => setPaymentCompleteConfirmOpen(true)}
                   >
                     지급 완료 처리
-                  </AppButton>
+                  </CmsButton>
                 )
               }
             />
           </div>
         </div>
+        ) : null}
       </DetailFullPageModal>
 
       <AccountPaymentConfirmationModal
@@ -246,6 +328,19 @@ export function AccountPaymentStatusDetailFullPageModal({
           setPaymentCompleteConfirmOpen(false)
         }}
         data={paymentCompleteConfirmOpen ? singlePaymentConfirmPayload : null}
+      />
+      <PaymentStatementIssuanceViewModal
+        open={issuanceViewOpen && Boolean(issuanceParagraphBodyOptions)}
+        onClose={() => setIssuanceViewOpen(false)}
+        paragraphBodyOptions={issuanceParagraphBodyOptions}
+        fileName={issuanceFileName}
+        zIndex={1500}
+      />
+      <PaymentOrderCalculationBasisDetailModal
+        open={basisDetailOpen}
+        onCancel={closeBasisDetailModal}
+        detail={selectedBasisDetail}
+        zIndex={1200}
       />
     </>
   )

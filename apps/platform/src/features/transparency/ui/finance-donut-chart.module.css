@@ -1,0 +1,154 @@
+.chart {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  margin: 0;
+}
+
+.chartArea {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  /* Figma: 도넛 544 + 좌우 콜아웃 선·라벨 여유 */
+  max-width: 1200px;
+  margin-inline: auto;
+  user-select: none;
+}
+
+.chartArea :global(.recharts-wrapper),
+.chartArea :global(.recharts-wrapper:focus),
+.chartArea :global(.recharts-wrapper:focus-visible),
+.chartArea :global(.recharts-surface),
+.chartArea :global(.recharts-surface:focus),
+.chartArea :global(svg),
+.chartArea :global(.recharts-sector),
+.chartArea :global(.recharts-pie-sector) {
+  outline: none !important;
+}
+
+@media (--bp-below-pc) {
+  .chartArea {
+    width: min(100%, 320px);
+    height: min(calc(100vw - 2 * var(--spacing-20)), 320px);
+    max-width: 320px;
+  }
+}
+
+.center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-4);
+  pointer-events: none;
+  text-align: center;
+}
+
+.centerTotal {
+  margin: 0;
+  color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
+  font-size: 48px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  text-align: center;
+}
+
+.centerLabel {
+  color: var(--color-neutral-cool-500);
+  text-align: center;
+  font-family: var(--font-family-base);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.calloutName {
+  font-family: var(--font-family-base);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  fill: rgb(0 0 0 / 70%);
+}
+
+.calloutPercent {
+  font-family: var(--font-family-base);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  fill: var(--color-neutral-black);
+}
+
+.calloutAmount {
+  font-family: var(--font-family-base);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  fill: var(--color-neutral-black);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-8) var(--spacing-20);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-6);
+}
+
+.legendDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 모바일: 콜아웃 숨김 + 중앙 수치 축소 */
+@media (--bp-below-pc) {
+  .callout {
+    display: none;
+  }
+
+  .centerTotal {
+    width: 100%;
+    max-width: 70%;
+    color: var(--color-neutral-black);
+    font-size: clamp(16px, 4.6vw, 22px);
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .centerLabel {
+    width: 100%;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .legend {
+    gap: var(--spacing-8) var(--spacing-12);
+  }
+
+  .legendDot {
+    width: 12px;
+    height: 12px;
+  }
+}

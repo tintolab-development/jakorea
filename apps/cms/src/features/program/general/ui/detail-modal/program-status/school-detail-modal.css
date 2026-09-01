@@ -1,0 +1,529 @@
+/**
+ * 학교 상세 정보 모달
+ * 명세: docs/design/school-detail-modal-spec.md
+ * 뱃지 스펙: 교재 현황·정산 현황 — 프로그램 진행현황 탭과 동일
+ */
+
+.school-detail-modal {
+  width: 100%;
+}
+
+/* 탭과 같은 레벨에 필터·조회 (renderTabBar로 탭 바 + 필터 한 줄) */
+.school-detail-modal__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+.school-detail-modal__top .school-detail-modal__tabs-nav {
+  flex: 1;
+  min-width: 0;
+}
+
+.school-detail-modal__top .school-detail-modal__tabs-nav .ant-tabs-nav {
+  margin-bottom: 0;
+}
+
+/* 수강 신청 학교 상세(applicant): 반려/승인을 탭과 같은 레벨에 배치 */
+.school-detail-modal__top-actions {
+  flex-shrink: 0;
+}
+
+.school-detail-modal__tabs .ant-tabs-content-holder {
+  margin-top: var(--spacing-20);
+}
+
+.school-detail-modal__tab-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.school-detail-modal__filter-label {
+  margin-right: 4px;
+}
+
+.school-detail-modal__filter-input {
+  width: 120px;
+}
+
+.school-detail-modal__filter-select {
+  width: 120px;
+}
+
+/* 학생 명단 탭: 탭 20px 하위 디바이더 */
+.school-detail-modal__tab-divider-wrap {
+  margin-top: 20px;
+}
+
+.school-detail-modal__tab-divider {
+  height: 0;
+  border-bottom: 1px solid var(--color-border-light, #e8e8e8);
+}
+
+/* 게시글 탭 (비활성화 시 플레이스홀더) */
+.school-detail-modal__posts {
+  padding: var(--spacing-20, 20px) 0;
+}
+.school-detail-modal__posts-placeholder {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+.school-detail-modal__basic {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.school-detail-modal__basic-header-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.school-detail-modal__instructor-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-label);
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.school-detail-modal__instructor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+/* 강사진 수정 모드 안내 문구 */
+.school-detail-modal__instructor-edit-notice {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--color-text-body);
+  line-height: 1.5;
+}
+
+.school-detail-modal__instructor-role-radios {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.school-detail-modal__textbook-status-radios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* description: 12px, font-weight 500 (헤더와 같은 줄) */
+.school-detail-modal__notice {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: #3d3d3d;
+  opacity: 0.6;
+  line-height: 1.5;
+}
+
+.school-detail-modal__instructor-section {
+  margin-top: 0;
+}
+
+.school-detail-modal__instructor-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+/* 강사진 정보 테이블: 행 높이 60px( border-box, antd 패딩 덮어씀 — 40px 버튼+패딩 합산 방지) */
+.school-detail-modal__instructor-table .ant-table-thead > tr > th.ant-table-cell,
+.school-detail-modal__instructor-table .ant-table-tbody > tr > td.ant-table-cell {
+  box-sizing: border-box !important;
+  height: 60px !important;
+  min-height: 60px !important;
+  max-height: 60px !important;
+  padding-block: 10px !important;
+  padding-inline: 16px !important;
+  line-height: 1.25 !important;
+  vertical-align: middle;
+}
+
+.school-detail-modal__instructor-table .ant-table-thead > tr > th.ant-table-cell {
+  background: #edf0f2;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-label);
+  text-align: center;
+}
+
+/* 체크박스 열 고정 너비 */
+.school-detail-modal__instructor-table .ant-table-thead > tr > th:first-child,
+.school-detail-modal__instructor-table .ant-table-tbody > tr > td:first-child {
+  width: 48px;
+  min-width: 48px;
+  max-width: 48px;
+}
+
+/* 학생 정보 테이블 헤더: 총 N건 + 수정·학생 등록 버튼 */
+.school-detail-modal__student-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-16);
+}
+
+.school-detail-modal__student-table-heading {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.school-detail-modal__student-table-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--default-BK, #3d3d3d);
+  line-height: 1.4;
+}
+
+.school-detail-modal__student-table-header .school-detail-modal__table-description {
+  font-size: 14px;
+  font-weight: 500;
+  color: #3d3d3d;
+  opacity: 0.6;
+  line-height: 1.5;
+}
+
+.school-detail-modal__student-table-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 강의 출석 내역 td 텍스트 스펙 (링크 버튼) */
+.school-detail-modal__link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--color-blue);
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: none;
+  text-decoration-thickness: auto;
+  text-underline-offset: auto;
+  text-underline-position: from-font;
+  cursor: pointer;
+  outline: none;
+  box-shadow: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.school-detail-modal__link-button:hover {
+  color: var(--color-link-hover, #296075);
+}
+
+.school-detail-modal__link-button:focus,
+.school-detail-modal__link-button:active {
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.school-detail-modal__link-button--disabled {
+  color: var(--color-text-secondary, #8c8c8c);
+  text-decoration: underline;
+  cursor: default;
+}
+
+.school-detail-modal__cell-input {
+  width: 100%;
+}
+
+/*
+ * 참여 학생 목록 컬럼 min-width: 48,64,160,170,130,170,255,255,200,110(px)
+ * 합계 1617 — TS `STUDENT_LIST_TABLE_SCROLL_X` 와 동기화
+ */
+.school-detail-modal__student-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.school-detail-modal__student-table col:nth-child(1),
+.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(1),
+.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(1) {
+  width: 48px !important;
+  min-width: 48px !important;
+}
+
+.school-detail-modal__student-table col:nth-child(2),
+.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(2),
+.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(2) {
+  width: 64px !important;
+  min-width: 64px !important;
+}
+
+.school-detail-modal__student-table col:nth-child(3),
+.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(3),
+.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(3) {
+  width: 160px !important;
+  min-width: 160px !important;
+}
+
+.school-detail-modal__student-table col:nth-child(4),
+.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(4),
+.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(4) {
+  width: 170px !important;
+  min-width: 170px !important;
+}
+
+.school-detail-modal__student-table col:nth-child(5),
+.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(5),
+.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(5) {
+  width: 130px !important;
+  min-width: 130px !important;
+}
+
+.school-detail-modal__student-table col:nth-child(6),
+.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(6),
+.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(6) {
+  width: 170px !important;
+  min-width: 170px !important;
+}
+
+.school-detail-modal__student-table col:nth-child(7),
+.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(7),
+.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(7) {
+  width: 255px !important;
+  min-width: 255px !important;
+}
+
+.school-detail-modal__student-table col:nth-child(8),
+.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(8),
+.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(8) {
+  width: 255px !important;
+  min-width: 255px !important;
+}
+
+.school-detail-modal__student-table col:nth-child(9),
+.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(9),
+.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(9) {
+  width: 200px !important;
+  min-width: 200px !important;
+}
+
+.school-detail-modal__student-table col:nth-child(10),
+.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(10),
+.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(10) {
+  width: 110px !important;
+  min-width: 110px !important;
+}
+
+.school-detail-modal__student-table .school-detail-modal__student-table-gender-select {
+  width: 100% !important;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.school-detail-modal__student-table .ant-table-container {
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--radius-6, 6px);
+  overflow: hidden;
+}
+
+.school-detail-modal__student-table .ant-table-thead > tr > th::before {
+  display: none !important;
+}
+
+/* 본문·헤더 셀: 높이 60px 고정(antd .ant-table-cell 기본 패딩·line-height 보정) */
+.school-detail-modal__student-table .ant-table-thead > tr > th.ant-table-cell,
+.school-detail-modal__student-table .ant-table-tbody > tr > td.ant-table-cell {
+  box-sizing: border-box !important;
+  height: 60px !important;
+  min-height: 60px !important;
+  max-height: 60px !important;
+  padding-block: 10px !important;
+  padding-inline: 16px !important;
+  line-height: 1.25 !important;
+  vertical-align: middle;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.school-detail-modal__student-table .ant-table-thead > tr > th.ant-table-cell {
+  background: #edf0f2;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-label);
+  text-align: center;
+}
+
+.school-detail-modal__student-table .ant-table-thead > tr > th:last-child,
+.school-detail-modal__student-table .ant-table-tbody > tr > td:last-child {
+  border-right: none !important;
+}
+
+.school-detail-modal__student-table .ant-table-thead > tr > th.ant-table-cell-scrollbar {
+  border-right: none !important;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  padding: 0 !important;
+}
+
+.school-detail-modal__student-table .ant-table-thead > tr > th.ant-table-selection-column,
+.school-detail-modal__student-table .ant-table-tbody > tr > td.ant-table-selection-column {
+  padding-inline: 8px !important;
+}
+
+.school-detail-modal__instructor-table .ant-table-thead > tr > th.ant-table-selection-column,
+.school-detail-modal__instructor-table .ant-table-tbody > tr > td.ant-table-selection-column {
+  padding-inline: 8px !important;
+}
+
+.school-detail-modal__student-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none !important;
+}
+
+/* index.css ant-table-rows — 격자 테이블과 라운드 충돌 방지 */
+.school-detail-modal__student-table .ant-table-tbody > tr:first-child > td:first-child,
+.school-detail-modal__student-table .ant-table-tbody > tr:first-child > td:last-child,
+.school-detail-modal__student-table .ant-table-tbody > tr:hover > td:first-child,
+.school-detail-modal__student-table .ant-table-tbody > tr:hover > td:last-child {
+  border-radius: 0 !important;
+}
+
+/* 기본 정보 수정 모드: 버튼·폼 컨트롤 */
+.school-detail-modal__basic-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+/* 신청자 목록용: 반려 / 승인 버튼 */
+.school-detail-modal__basic-actions--approval {
+  gap: var(--spacing-8);
+}
+
+/* 인풋: 영역 내 자연스럽게 (overflow 방지) */
+.school-detail-modal__form-input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.school-detail-modal__form-input--flex {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 세로 디바이더: 1×13, default-BK @ 50% (양옆 간격은 form-row gap 12px) */
+.school-detail-modal__divider-v {
+  width: 1px;
+  height: 13px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
+}
+
+/* 수정 가능 필드 row 정렬: 라디오/인풋 한 줄 + 디바이더 */
+.school-detail-modal__form-row-with-divider {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.school-detail-modal__form-row-with-divider .school-detail-modal__form-input--flex,
+.school-detail-modal__form-row-with-divider .school-detail-modal__form-textarea {
+  flex: 1;
+  min-width: 0;
+}
+
+.school-detail-modal__form-row-with-divider--textarea {
+  align-items: flex-start;
+}
+
+.school-detail-modal__form-row-with-divider--textarea .school-detail-modal__form-textarea {
+  resize: vertical;
+}
+
+.school-detail-modal__form-select {
+  width: 100%;
+}
+
+.school-detail-modal__form-row-two {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.school-detail-modal__form-row-two .school-detail-modal__form-input {
+  width: 80px;
+}
+
+.school-detail-modal__form-unit {
+  font-size: 14px;
+  color: var(--color-text-secondary, #8c8c8c);
+  margin-right: 8px;
+}
+
+.school-detail-modal__form-suffix {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.school-detail-modal__form-suffix .school-detail-modal__form-input {
+  width: 100px;
+}
+
+.school-detail-modal__form-textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 담당 교사: 가로 정렬 [문의처|divider|Tel|divider|E-mail], 디바이더 1px×13px */
+.school-detail-modal__form-teacher {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.school-detail-modal__form-teacher-segment {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.school-detail-modal__form-teacher-label {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-label, #3d3d3d);
+}
+
+.school-detail-modal__form-teacher-segment .school-detail-modal__form-input {
+  flex: 1;
+  min-width: 0;
+}

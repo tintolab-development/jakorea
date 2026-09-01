@@ -1,0 +1,43 @@
+.comment-list__item {
+  display: flex;
+  gap: var(--spacing-12, 12px);
+  padding: var(--spacing-16, 16px) var(--spacing-20, 20px);
+}
+
+.comment-list__avatar {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+}
+
+.comment-list__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.comment-list__header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+  margin-bottom: 4px;
+}
+
+.comment-list__author {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary, #3d3d3d);
+}
+
+.comment-list__date {
+  font-size: 13px;
+  color: var(--color-text-muted, #8c8c8c);
+}
+
+.comment-list__content {
+  font-size: 14px;
+  color: var(--color-text-primary, #3d3d3d);
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

@@ -1,0 +1,63 @@
+.half-education-schedule-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.half-education-schedule__subheading {
+  margin-bottom: 4px;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.half-education-schedule__block + .half-education-schedule__block {
+  margin-top: 0;
+}
+
+.half-education-schedule__textbook-row {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.half-education-schedule__schedule-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.detail-info-form-inputs-wrapper.half-education-schedule__schedule-row {
+  flex-wrap: nowrap;
+  align-items: center;
+  width: 100%;
+}
+
+.half-education-schedule__range-picker {
+  max-width: 480px;
+}
+
+.half-education-schedule__add-row-button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 14px;
+  border: 1px solid rgba(1, 161, 175, 0.1);
+  fill: var(
+    --color-bg-mint,
+    linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%),
+    #fff
+  );
+  stroke-width: 1px;
+  stroke: rgba(1, 161, 175, 0.1);
+  background: transparent;
+  cursor: pointer;
+}
+
+.half-education-schedule__add-row-button svg {
+  display: block;
+}

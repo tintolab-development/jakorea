@@ -1,0 +1,193 @@
+{
+  "templateCode": "issuance-4",
+  "templateName": "정산 신청서",
+  "formType": "ISSUANCE",
+  "category": "ISSUANCE",
+  "schemaJson": {
+    "schemaVersion": 1,
+    "formSettings": {
+      "titleNumbering": "numeric"
+    },
+    "paragraphs": [
+      {
+        "id": "settlement-application-seed-title",
+        "kind": "description",
+        "variant": "survey_title_with_period",
+        "requiredMark": true,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "surveyTitle": "JA KOREA 정산 신청서",
+        "surveyDescription": "",
+        "periodMode": "immediate",
+        "startAt": null,
+        "endAt": null,
+        "showWritingPeriodOnForm": true,
+        "startPeriodMode": "immediate",
+        "endPeriodMode": "immediate",
+        "endPeriodPresetLabel": null
+      },
+      {
+        "id": "settlement-application-seed-table-basic",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "기본 정보",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "성명",
+            ""
+          ],
+          [
+            "영문 성명",
+            ""
+          ],
+          [
+            "주민등록번호",
+            ""
+          ],
+          [
+            "소속",
+            ""
+          ],
+          [
+            "자택 주소",
+            ""
+          ],
+          [
+            "정산 계좌 정보",
+            "은행 · 계좌번호 · 예금주"
+          ],
+          [
+            "지급 목적",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "settlement-application-seed-table-calc-info",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "강의비 산출 내역",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "강의비 유형",
+            ""
+          ],
+          [
+            "강사비 책정",
+            ""
+          ],
+          [
+            "사업소득자 여부",
+            ""
+          ],
+          [
+            "교육 진행 차시",
+            ""
+          ],
+          [
+            "총 강의비",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "settlement-application-seed-table-transport",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "교통비 신청",
+        "paragraphDescription": "강의 과정에서 발생한 교통비에 한해 신청해 주세요",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "* 자택과 출강지 간 편도 거리 30km 이상인 경우에 한해 신청 가능합니다. 유류비·통행료는 실비를 원칙으로 하되, 총 산정 교통비는 자동 계산 값을 따릅니다.",
+        "showBottomText": true,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "settlement-application-seed-table-accommodation",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "숙박비 신청",
+        "paragraphDescription": "사전 협의가 완료된 건에 한해 지급됩니다. 협의되지 않은 숙박비는 지급 대상에서 제외됩니다.",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "* 숙박비는 건당 80,000원으로 고정합니다.",
+        "showBottomText": true,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      }
+    ]
+  },
+  "extensionJson": {
+    "overlay": {},
+    "editorState": {},
+    "uiState": {}
+  },
+  "settingsJson": null,
+  "_apiStorageNote": "DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장",
+  "_feSubcategoryNote": "FE 목록 서브분류: REPORT (ISSUANCE_TEMPLATE_CODE_CATALOG). BE category enum은 ISSUANCE 단일 vs REPORT/DOCUMENT 분리 확인 필요.",
+  "_payload": "A"
+}

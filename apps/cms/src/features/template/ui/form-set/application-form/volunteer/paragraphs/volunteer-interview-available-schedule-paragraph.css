@@ -1,0 +1,102 @@
+.volunteer-interview-available-schedule {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.volunteer-interview-available-schedule__schedule-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.volunteer-interview-available-schedule__block-title.detail-info-form--text-bold {
+  margin-bottom: -8px;
+}
+
+.volunteer-interview-available-schedule__card-title-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  max-width: min(520px, 100%);
+}
+
+.volunteer-interview-available-schedule__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+}
+
+.volunteer-interview-available-schedule__summary-hint {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  text-align: center;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+  opacity: 0.6;
+  padding-bottom: 12px;
+}
+
+.volunteer-interview-available-schedule__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  width: 100%;
+  border-radius: var(--4, 4px);
+  background: rgba(61, 61, 61, 0.04);
+  text-align: center;
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 27px */
+}
+
+.volunteer-interview-available-schedule__time-slots {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.volunteer-interview-available-schedule__time-slot {
+  padding: 0 12px;
+}
+
+.volunteer-interview-available-schedule__exception-row {
+  display: flex;
+  align-items: stretch;
+  column-gap: 8px;
+  width: 100%;
+}
+
+.volunteer-interview-available-schedule__exception-row
+  .volunteer-interview-available-schedule__schedule-block {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.volunteer-interview-available-schedule__exception-delete-cell {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  align-self: stretch;
+  margin-top: 20px;
+}

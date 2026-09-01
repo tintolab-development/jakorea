@@ -7,7 +7,7 @@ import { DownloadOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
 import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
 import {
   TAX_FILING_SHEET_COLUMN_COUNT,
@@ -45,18 +45,17 @@ export function TaxFilingPreviewModal({ open, onCancel, rows }: TaxFilingPreview
       className="tax-filing-preview-modal"
       footer={
         <>
-          <AppButton variant="cancel" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="large" onClick={onCancel}>
             닫기
-          </AppButton>
-          <AppButton
+          </CmsButton>
+          <CmsButton
             variant="primary"
             size="large"
-            modalTeal
             icon={<DownloadOutlined />}
             onClick={() => void handleDownload()}
           >
             엑셀 다운로드
-          </AppButton>
+          </CmsButton>
         </>
       }
     >

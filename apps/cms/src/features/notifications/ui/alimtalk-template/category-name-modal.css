@@ -1,0 +1,47 @@
+/**
+ * 카테고리 추가/수정 — padding 24 30 32, 타이틀·본문·푸터 갭 30
+ * 추가: 600×320 고정
+ */
+.category-name-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  box-sizing: border-box;
+  width: 600px;
+  height: auto;
+  max-height: none;
+  padding: 24px 30px 32px;
+  border-radius: 12px;
+  overflow: visible;
+}
+
+.category-name-modal--add.content-modal.teal-header-modal.ant-modal {
+  width: 600px !important;
+}
+
+.category-name-modal--add.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  min-height: 320px;
+}
+
+.category-name-modal.teal-header-modal--bounded .ant-modal-content {
+  max-height: none;
+}
+
+.category-name-modal .teal-header-modal__body,
+.category-name-modal.teal-header-modal--bounded .teal-header-modal__body,
+.category-name-modal.teal-header-modal--bounded .ant-modal-body {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.category-name-modal.content-modal.content-modal--title-body-gap-always .teal-header-modal__body {
+  padding-top: 30px;
+}
+
+.category-name-modal .content-modal__footer-actions {
+  gap: 8px;
+}
+
+.category-name-modal .content-modal__footer-actions .cms-button.ant-btn.cms-button--footer-auto {
+  width: auto !important;
+  min-width: 140px !important;
+  padding-left: 20px;
+  padding-right: 20px;
+}

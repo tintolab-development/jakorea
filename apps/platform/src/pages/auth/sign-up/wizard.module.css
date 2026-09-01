@@ -1,0 +1,458 @@
+.memberTypeCards {
+  display: flex;
+  width: 100%;
+  gap: var(--spacing-8);
+  margin-bottom: var(--spacing-40);
+}
+
+.memberTypeCard {
+  display: flex;
+  width: 236px;
+  min-height: 277px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--spacing-16);
+  padding: var(--spacing-24);
+  border: 2px solid transparent;
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+  text-align: left;
+  cursor: pointer;
+}
+
+.memberTypeCardSelected {
+  border-color: var(--color-border-focus);
+  background: var(--color-element-hover);
+}
+
+.memberTypeImage {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.memberTypeText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.memberTypeDescription {
+  display: flex;
+  flex-direction: column;
+}
+
+.memberTypeDescription p {
+  margin: 0;
+}
+
+.memberTypeDescription p:first-child {
+  margin-bottom: 10px;
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  margin-bottom: var(--spacing-40);
+}
+
+.stepContent {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-32);
+  margin-bottom: var(--spacing-40);
+}
+
+.genderField {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.fieldLabel {
+  padding-left: var(--spacing-8);
+  color: var(--color-neutral-warm-600);
+}
+
+.genderOptions {
+  display: flex;
+  width: 100%;
+  gap: var(--spacing-12);
+}
+
+.teacherBirthGuide {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  gap: 10px;
+  margin-top: var(--spacing-40);
+  padding: var(--spacing-8) 0 0 var(--spacing-8);
+  border-top: 1px solid rgba(61, 61, 61, 0.1);
+}
+
+.teacherGeneralSignUpLink {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-neutral-black);
+  cursor: pointer;
+}
+
+.teacherGeneralSignUpArrow {
+  width: 13px;
+  height: 12px;
+  flex: 0 0 auto;
+}
+
+.identityModule {
+  display: flex;
+  align-self: stretch;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-24);
+  border-radius: var(--radius-8);
+  background: var(--color-neutral-white-60);
+  text-align: center;
+}
+
+.identityModule p {
+  margin: 0;
+}
+
+.termsContent {
+  width: 100%;
+}
+
+.allAgreementButton {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  margin-bottom: var(--spacing-24);
+  padding: var(--Spacing-16, 16px) var(--Spacing-20, 20px);
+  border: 0;
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-cool-50);
+  color: var(--color-neutral-cool-700);
+  text-align: left;
+}
+
+.allAgreementButtonChecked {
+  background: var(--color-element-hover);
+  color: var(--color-primary-600);
+}
+
+.agreementList {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  padding: 0 16px;
+}
+
+.agreementItem {
+  position: relative;
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr max-content;
+  align-items: center;
+  column-gap: 24px;
+}
+
+.agreementCheckButton {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  text-align: left;
+}
+
+/* PFToggle `.toggle`의 center보다 우선해 긴 약관명 첫 줄과 체크를 맞춘다 */
+button.agreementCheckButton {
+  align-items: flex-start;
+}
+
+.agreementText {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+  min-height: 24px;
+}
+
+.agreementText > :first-child {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 24px;
+  line-height: 24px;
+  white-space: nowrap;
+}
+
+.agreementText > :last-child {
+  min-width: 0;
+  flex: 1;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.required {
+  color: var(--color-primary-500);
+}
+
+.optional {
+  color: var(--color-neutral-cool-400);
+}
+
+.termsViewButton {
+  flex-shrink: 0;
+  align-self: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-neutral-warm-400);
+}
+
+.agreementGuide {
+  grid-column: 1 / -1;
+  margin: var(--spacing-8) 0 0 78px;
+}
+
+@media (--bp-below-pc) {
+  .agreementGuide {
+    margin: var(--spacing-8) 0 0 64px;
+  }
+}
+
+.optionalGuide {
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-8);
+  margin: var(--spacing-56) 0 var(--spacing-8);
+  padding: var(--spacing-8);
+  text-align: center;
+}
+
+.termsActions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.termsActions + .termsActions {
+  gap: var(--spacing-8);
+}
+
+.guardianConfirmContent {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  margin-bottom: var(--spacing-40);
+}
+
+.emailContent {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-64);
+  box-sizing: border-box;
+}
+
+.emailField {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.emailInputRow {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  align-items: flex-end;
+  gap: var(--spacing-12);
+  box-sizing: border-box;
+}
+
+.emailInputControl {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* PFTextInput.xlarge .field 와 동일 높이 트랙 */
+.emailButtonControl {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: stretch;
+  width: auto;
+  height: 54px;
+}
+
+.emailButtonControl .duplicateCheckButton {
+  width: 100%;
+  /* pf-button.xlarge height:53px 를 인풋 field(54px)에 맞춤 */
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  padding: 0 var(--spacing-28);
+  box-sizing: border-box;
+}
+
+.emailMessage {
+  margin: 0;
+  padding-left: var(--spacing-8);
+  font-family: var(--font-family-base);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+.emailMessageSuccess {
+  color: var(--color-status-success-light);
+}
+
+.emailMessageError {
+  color: var(--color-status-error-default);
+}
+
+@media (--bp-below-pc) {
+  .emailInputRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-8);
+  }
+
+  .emailInputControl {
+    flex: none;
+    width: 100%;
+  }
+
+  .emailButtonControl {
+    width: 100%;
+    height: auto;
+  }
+
+  .emailButtonControl .duplicateCheckButton {
+    width: 100%;
+    height: 53px !important;
+    min-height: 53px !important;
+    max-height: none !important;
+  }
+}
+
+.passwordContent {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  margin-bottom: var(--spacing-40);
+}
+
+.profileContent {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  margin-bottom: var(--spacing-40);
+}
+
+.schoolStatusField,
+.addressField {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.schoolStatusOptions {
+  display: flex;
+  width: 100%;
+  gap: var(--spacing-12);
+}
+
+.inlineRequiredMark {
+  color: var(--color-red);
+}
+
+.addressSearchRow {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  align-items: stretch;
+  gap: var(--spacing-12);
+  box-sizing: border-box;
+}
+
+.addressSearchRow > :first-child {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.addressSearchRow > :last-child {
+  flex: 0 0 auto;
+}
+
+@media (--bp-below-pc) {
+  .addressSearchRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-8);
+  }
+
+  .addressSearchRow > :first-child,
+  .addressSearchRow > :last-child {
+    flex: none;
+    width: 100%;
+  }
+}
+
+.confirmReview {
+  margin-bottom: var(--spacing-40);
+}
+
+.confirmSubmitMessage {
+  margin: var(--spacing-16) 0 0;
+}
+
+.stepMessage {
+  width: 100%;
+  margin: calc(var(--spacing-24) * -1) 0 var(--spacing-24);
+  padding-left: var(--spacing-8);
+}
+
+.signInGuide {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-12);
+}
+
+.signInLink {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+

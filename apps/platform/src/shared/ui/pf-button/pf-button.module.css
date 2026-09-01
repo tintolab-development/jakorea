@@ -1,0 +1,158 @@
+.button {
+  display: inline-flex;
+  min-width: 89px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-4);
+  padding: 6px var(--spacing-20);
+  border-radius: var(--radius-16);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  border: 1px solid rgb(61 61 61 / 10%);
+  background:
+    linear-gradient(
+      0deg,
+      var(--color-neutral-warm-200) 0%,
+      var(--color-neutral-warm-200) 100%
+    ),
+    var(--color-neutral-white);
+  color: var(--color-neutral-warm-400);
+  cursor: not-allowed;
+}
+
+.small {
+  height: 30px;
+  border-radius: var(--radius-8);
+}
+
+.medium {
+  height: 38px;
+}
+
+/* Platform 양식 페이지 내부 전용 — 동의서 작성 등 */
+.formPage {
+  display: flex;
+  box-sizing: border-box;
+  width: 120px;
+  height: 40px;
+  padding: 6px 16px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-8, 8px);
+}
+
+.large {
+  height: 42px;
+}
+
+.xlarge {
+  min-width: 160px;
+  height: 53px;
+  padding: 13px var(--spacing-28);
+}
+
+.primary {
+  border: 1px solid rgb(61 61 61 / 10%);
+  background: var(--color-primary-500);
+  color: var(--color-neutral-white);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--color-primary-400);
+}
+
+.secondary {
+  border: 1px solid var(--color-primary-500);
+  background:
+    linear-gradient(
+      0deg,
+      var(--color-element-hover) 0%,
+      var(--color-element-hover) 100%
+    ),
+    var(--color-neutral-white);
+  color: var(--color-primary-500);
+}
+
+.secondary:hover:not(:disabled) {
+  background:
+    linear-gradient(
+      0deg,
+      var(--color-element-hover-strong) 0%,
+      var(--color-element-hover-strong) 100%
+    ),
+    var(--color-neutral-white);
+}
+
+.tertiary {
+  border: 1px solid var(--color-border-default);
+  background: var(--color-neutral-white);
+  color: var(--color-neutral-black);
+}
+
+.tertiary:hover:not(:disabled) {
+  border-color: var(--color-primary-500);
+  color: var(--color-primary-500);
+}
+
+.tertiarySelected {
+  border: 1px solid var(--color-border-focus);
+  background: var(--color-neutral-white);
+  color: var(--color-border-focus);
+}
+
+.text {
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-neutral-black);
+}
+
+.text:hover:not(:disabled) {
+  background: var(--color-element-hover);
+  color: var(--color-primary-500);
+}
+
+.textSelected {
+  color: var(--color-primary-500);
+}
+
+.text:disabled {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-neutral-warm-400);
+}
+
+@media (--bp-below-pc) {
+  .button.small {
+    font-size: 11px;
+  }
+
+  .button.medium {
+    font-size: 12px;
+  }
+
+  .button.formPage {
+    font-size: 12px;
+  }
+
+  .button.large {
+    font-size: 14px;
+  }
+
+  .button.xlarge {
+    font-size: 16px;
+  }
+}

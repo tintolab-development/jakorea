@@ -1,0 +1,196 @@
+/**
+ * UJAT 봉사자 1차 서류 심사 — 필터·정렬 공통 상수
+ */
+
+import type { SecondInterviewScreeningStatus } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
+
+import {
+  getUjatEducationRegionSortOrderMap,
+  getUjatVolunteerPreferredRegionLabels,
+  UJAT_DEFAULT_EDUCATION_REGIONS,
+} from '@/features/program/ujat/lib/ujat-education-regions'
+
+/** 기본 희망 교육 활동 지역 라벨 — 런타임 목록은 `getUjatVolunteerPreferredRegionLabels()` */
+export const UJAT_VOLUNTEER_PREFERRED_REGIONS = UJAT_DEFAULT_EDUCATION_REGIONS.map(
+  row => row.label
+)
+
+export type UjatVolunteerPreferredRegion = string
+
+/** @deprecated `getUjatEducationRegionSortOrderMap()` */
+export function getUjatVolunteerRegionSortOrderMap(): Record<string, number> {
+  return getUjatEducationRegionSortOrderMap()
+}
+
+/** @deprecated 런타임 정렬은 `getUjatEducationRegionSortOrderMap()` 사용 */
+export const UJAT_VOLUNTEER_REGION_SORT_ORDER: Record<string, number> = Object.fromEntries(
+  UJAT_VOLUNTEER_PREFERRED_REGIONS.map((label, index) => [label, index])
+)
+
+export { getUjatVolunteerPreferredRegionLabels }
+
+export const UJAT_VOLUNTEER_GRADE_OPTIONS = [
+  '1학년',
+  '2학년',
+  '3학년',
+  '4학년',
+  '휴학생',
+  '졸업유예',
+] as const
+
+export type UjatVolunteerGrade = (typeof UJAT_VOLUNTEER_GRADE_OPTIONS)[number]
+
+export type UjatVolunteerApplicationType = 'new' | 'ujat-graduate'
+
+export const UJAT_VOLUNTEER_APPLICATION_TYPE_LABELS: Record<UjatVolunteerApplicationType, string> = {
+  new: '신규 봉사자',
+  'ujat-graduate': 'UJAT 수료자 봉사자',
+}
+
+export type UjatDocumentScreeningStatus = 'pass' | 'fail' | 'pending'
+
+export const UJAT_DOCUMENT_SCREENING_STATUS_LABELS: Record<UjatDocumentScreeningStatus, string> = {
+  pending: '신청 및 대기 중',
+  fail: '서류 불합격',
+  pass: '서류 합격',
+}
+
+/** 담당자 평가 (○ / △ / X / 미검토) */
+export type UjatManagerEvaluation = 'pass' | 'neutral' | 'fail' | 'unreviewed'
+
+export const UJAT_MANAGER_EVALUATION_ORDER: readonly UjatManagerEvaluation[] = [
+  'pass',
+  'neutral',
+  'fail',
+  'unreviewed',
+] as const
+
+export const UJAT_MANAGER_EVALUATION_LABELS: Record<UjatManagerEvaluation, string> = {
+  pass: '○',
+  neutral: '△',
+  fail: 'X',
+  unreviewed: '미검토',
+}
+
+export type UjatVolunteerRecruitHalf = 'h1' | 'h2'
+
+/** 면접일 배정 현황 (1차 서류 합격자 목록) */
+export type UjatInterviewAssignmentStatus = 'waiting' | 'assigned' | 'withdrawn'
+
+export const UJAT_INTERVIEW_ASSIGNMENT_STATUS_LABELS: Record<UjatInterviewAssignmentStatus, string> = {
+  waiting: '배정 대기',
+  assigned: '배정 완료',
+  withdrawn: '활동 포기',
+}
+
+/** 2차 면접 심사 현황 (2차 면접 대상자 목록) */
+export type UjatSecondInterviewScreeningStatus = SecondInterviewScreeningStatus
+
+/** 2차 면접 일괄 합격 모달 — 합격 유형 선택 */
+export type UjatInterview2BulkPassType =
+  | 'pass'
+  | 'reserve1'
+  | 'reserve2'
+  | 'reserve3'
+  | 'reserve4'
+
+export const UJAT_INTERVIEW2_BULK_PASS_TYPE_OPTIONS: readonly {
+  value: UjatInterview2BulkPassType
+  label: string
+}[] = [
+  { value: 'pass', label: '합격' },
+  { value: 'reserve1', label: '예비합격 1' },
+  { value: 'reserve2', label: '예비합격 2' },
+  { value: 'reserve3', label: '예비합격 3' },
+  { value: 'reserve4', label: '예비합격 4' },
+] as const
+
+/** 서술형 1~4번 컬럼 (신청서 문항과 동일 제목) */
+export type UjatEssayColumnKey =
+  | 'essayIntro'
+  | 'essayEducationExperience'
+  | 'essayNecessity'
+  | 'essayJaExperience'
+
+export const UJAT_VOLUNTEER_ESSAY_COLUMN_TITLES: Record<UjatEssayColumnKey, string> = {
+  essayIntro: '1. 자기소개 및 지원동기',
+  essayEducationExperience: '2. 교육봉사, 강사 아르바이트 등 교육 진행 경험',
+  essayNecessity:
+    '3. 초등학생 대상 경제 교육의 필요성에 대해 본인의 생각을 자유롭게 작성',
+  essayJaExperience:
+    '4. 초·중·고 당시 학교에서 JA Korea 경제금융교육을 들은 경험 혹은 진행하는 프로그램에 지원하여 참여한 경험',
+}
+
+/** 서술형 1~4번 컬럼 고정 너비 */
+export const UJAT_ESSAY_COLUMN_WIDTH = 624
+
+export const UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS: Record<UjatEssayColumnKey, number> = {
+  essayIntro: UJAT_ESSAY_COLUMN_WIDTH,
+  essayEducationExperience: UJAT_ESSAY_COLUMN_WIDTH,
+  essayNecessity: UJAT_ESSAY_COLUMN_WIDTH,
+  essayJaExperience: UJAT_ESSAY_COLUMN_WIDTH,
+}
+
+export const UJAT_ESSAY_COLUMN_MIN_WIDTHS: Record<UjatEssayColumnKey, number> = {
+  essayIntro: UJAT_ESSAY_COLUMN_WIDTH,
+  essayEducationExperience: UJAT_ESSAY_COLUMN_WIDTH,
+  essayNecessity: UJAT_ESSAY_COLUMN_WIDTH,
+  essayJaExperience: UJAT_ESSAY_COLUMN_WIDTH,
+}
+
+/** UJAT 수료자 봉사자 — 서술형 1~4번 미작성 표기 */
+export const UJAT_GRADUATE_ESSAY_CELL_PLACEHOLDER = '-'
+
+export function formatUjatVolunteerEssayCellValue(
+  applicationType: UjatVolunteerApplicationType,
+  value: string | undefined
+): string {
+  if (applicationType === 'ujat-graduate') {
+    return UJAT_GRADUATE_ESSAY_CELL_PLACEHOLDER
+  }
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : '-'
+}
+
+/** 지원 경로 — 신청서 선택지 (기타는 직접 입력) */
+export const UJAT_VOLUNTEER_APPLICATION_ROUTE_OPTIONS = [
+  '인스타그램',
+  '학교 안내 및 에브리타임',
+  '링커리어',
+  '올콘',
+  '캠퍼스픽',
+  '기타',
+] as const
+
+export type UjatVolunteerApplicationRoute = (typeof UJAT_VOLUNTEER_APPLICATION_ROUTE_OPTIONS)[number]
+
+export const UJAT_VOLUNTEER_APPLICATION_ROUTE_OTHER: UjatVolunteerApplicationRoute = '기타'
+
+export function formatUjatVolunteerApplicationRoute(
+  route: string,
+  routeOther?: string
+): string {
+  if (route === UJAT_VOLUNTEER_APPLICATION_ROUTE_OTHER) {
+    const custom = routeOther?.trim()
+    return custom || route
+  }
+  return route
+}
+
+export function formatUjatVolunteerBirthDateAndAge(birthDate: string, age: number): string {
+  if (!birthDate?.trim()) return '—'
+  if (!age) return birthDate
+  return `${birthDate} (만 ${age}세)`
+}
+
+/** 개인정보 마스킹 시 대학교명 — ex) **대학교 */
+export function formatUjatVolunteerUniversityDisplay(
+  universityName: string,
+  maskSensitive: boolean
+): string {
+  if (!maskSensitive) return universityName
+  if (universityName.startsWith('**')) return universityName
+  const idx = universityName.indexOf('대학교')
+  if (idx >= 0) return `**${universityName.slice(idx)}`
+  return `**${universityName}`
+}

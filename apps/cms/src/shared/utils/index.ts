@@ -8,6 +8,7 @@ export * from './certificate-download'
 export * from './error-handler'
 export * from './permissions'
 export * from './date'
+export { formatNumberDisplay } from '../lib/numeric-input'
 export * from './lecture-attendance-display'
 export * from './progress-year-select-options'
 

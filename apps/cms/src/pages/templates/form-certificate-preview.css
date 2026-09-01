@@ -496,3 +496,84 @@
   overflow: visible;
 }
 
+/*
+ * 인증서/수료증 풀페이지 미리보기 — 작성 양식 미리보기(template-preview-modal)와 동일 밴드(1404px)·스크롤·네비
+ * 디자인 캔버스 1208×1682px → 표시 너비 var(--template-preview-content-max-width)
+ */
+.form-certificate-user-preview-modal.template-preview-modal {
+  --template-preview-paragraph-column-max: 1400px;
+  --template-preview-content-max-width: 1550px;
+  --template-preview-notice-text-width: 1400px;
+  --template-preview-notice-to-a4-gap: 16px;
+  --template-preview-a4-design-page-width: 1208px;
+  --template-preview-a4-display-width: var(--template-preview-content-max-width, 1404px);
+  --template-preview-a4-width: var(--template-preview-a4-display-width);
+  --template-preview-a4-scale: calc(
+    var(--template-preview-a4-display-width) / var(--template-preview-a4-design-page-width)
+  );
+}
+
+.form-certificate-user-preview-modal .template-preview-modal__notice {
+  justify-content: center;
+}
+
+.form-certificate-user-preview-modal .template-preview-modal__notice-text-wrap {
+  width: var(--template-preview-notice-text-width, 1400px);
+  flex: 0 0 auto;
+}
+
+/* 작성 미리보기 A4 본문과 동일: 세로 스크롤·하단 고정 네비 여유 */
+.form-certificate-user-preview-modal.template-preview-modal:has(.template-preview-modal__a4-stage) .template-preview-modal__body {
+  overflow-y: auto;
+  min-height: 0;
+  padding-bottom: calc(52px + 64px);
+  gap: var(--template-preview-notice-to-a4-gap, 16px);
+}
+
+.form-certificate-user-preview-modal .template-preview-modal__pages {
+  flex: 0 0 auto;
+  min-height: auto;
+}
+
+.form-certificate-user-preview-modal .template-preview-modal__a4-stage {
+  width: var(--template-preview-a4-width, 1404px);
+  flex: 0 0 auto;
+}
+
+.form-certificate-user-preview-modal .template-preview-modal__a4-frame {
+  aspect-ratio: 1208 / 1682;
+  width: var(--template-preview-a4-width, 1404px);
+  height: calc(var(--template-preview-a4-width, 1404px) * 1682 / 1208);
+}
+
+.form-certificate-user-preview-modal .template-preview-modal__a4-scale-inner {
+  width: var(--template-preview-a4-design-page-width, 1208px);
+  height: 1682px;
+}
+
+.form-certificate-user-preview-modal .form-certificate-preview {
+  width: 1208px;
+}
+
+/*
+ * 미리보기: 회색·radius 제거 + 1208×1682 용지 안을 캔버스(1144 기준)로 가득 채움
+ * (가로 scale 후 세로 초과분은 overflow로 클립 — 좌우 흰 여백 없음)
+ */
+.form-certificate-user-preview-modal .form-certificate-preview__bg {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-certificate-user-preview-modal .form-certificate-preview__canvas {
+  flex-shrink: 0;
+  max-width: none;
+  transform: scale(calc(1208 / 1144));
+  transform-origin: center center;
+}
+

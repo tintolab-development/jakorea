@@ -1,7 +1,7 @@
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
-import { SCHEDULE_COLORS } from '@/features/program/ui/program-schedule-colors'
+import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import {
   calendarItemForScheduleSource,
   getItemsForDate,

@@ -1,0 +1,73 @@
+/**
+ * 정산 항목 상세 모달 — Tossface 이모지 임시 선택기
+ */
+
+/* Ant Popover 기본 inner 패딩 제거 후, 아래 루트에서 동일 패딩 적용 */
+.settlement-item-tossface-picker-popover .ant-popover-inner {
+  padding: 0;
+}
+
+.settlement-item-tossface-picker-popover .ant-popover-inner-content {
+  padding: 0;
+}
+
+.settlement-item-tossface-picker {
+  box-sizing: border-box;
+  width: min(252px, calc(100vw - 48px));
+  max-width: 100%;
+  padding: 12px;
+  margin: 0;
+}
+
+.settlement-item-tossface-picker__grid {
+  display: grid;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.settlement-item-tossface-picker__cell {
+  box-sizing: border-box;
+  margin: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  padding: 4px;
+  border: 1px solid var(--color-border-secondary, #e8e8e8);
+  border-radius: 8px;
+  background: #fafafa;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+}
+
+.settlement-item-tossface-picker__cell:hover {
+  border-color: var(--color-primary-teal, #47a9ad);
+  background: #f0fafb;
+}
+
+.settlement-item-tossface-picker__reset {
+  box-sizing: border-box;
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  width: 100%;
+  border: 1px dashed var(--color-border-secondary, #d9d9d9);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.settlement-item-tossface-picker__reset:hover {
+  border-color: var(--color-primary-teal, #47a9ad);
+  color: var(--color-primary-teal, #47a9ad);
+}

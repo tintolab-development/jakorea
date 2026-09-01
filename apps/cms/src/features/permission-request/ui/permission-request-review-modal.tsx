@@ -4,8 +4,11 @@
  * 시니어 개발자 관점: 컴포넌트 분리
  */
 
+import { CmsButton, CmsRadio, ContentModal } from '@/shared/ui'
 import { useState } from 'react'
-import { Modal, Form, Input, DatePicker, Radio, Button, Space, Descriptions, Tag } from 'antd'
+import { Form, Input, DatePicker, Space, Tag } from 'antd'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { formatDateDot, formatDateTimeDot } from '@/shared/utils'
 import type { PermissionRequest, ReviewPermissionRequestInput } from '@/types/permission-request'
 import dayjs from 'dayjs'
 
@@ -23,22 +26,19 @@ interface PermissionRequestReviewModalProps {
 const actionLabels: Record<PermissionRequest['requestedAction'], string> = {
   VIEW: '조회',
   DOWNLOAD: '다운로드',
-  EDIT: '수정',
-}
+  EDIT: '수정' }
 
 const roleLabels: Record<PermissionRequest['requestedRole'], string> = {
   OWNER: '소유자',
   PARTNER: '파트너',
-  ASSISTANT: '어시스턴트',
-}
+  ASSISTANT: '어시스턴트' }
 
 export function PermissionRequestReviewModal({
   open,
   request,
   onApprove,
   onReject,
-  onCancel,
-}: PermissionRequestReviewModalProps) {
+  onCancel }: PermissionRequestReviewModalProps) {
   const [form] = Form.useForm()
   const [action, setAction] = useState<'approve' | 'reject'>('approve')
   const [submitting, setSubmitting] = useState(false)
@@ -55,10 +55,8 @@ export function PermissionRequestReviewModal({
         grantedPeriod: values.grantedPeriod
           ? {
               startDate: values.grantedPeriod[0].toISOString(),
-              endDate: values.grantedPeriod[1].toISOString(),
-            }
-          : undefined,
-      }
+              endDate: values.grantedPeriod[1].toISOString() }
+          : undefined }
 
       if (action === 'approve') {
         await onApprove(input)
@@ -81,48 +79,72 @@ export function PermissionRequestReviewModal({
     onCancel()
   }
 
+  const footer = (
+    <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+      <CmsButton variant="default" onClick={handleCancel} disabled={submitting}>
+        취소
+      </CmsButton>
+      <CmsButton
+        variant={action === 'reject' ? 'delete' : 'primary'}
+        type="submit"
+        form="permission-review-form"
+        loading={submitting}
+      >
+        {action === 'approve' ? '승인' : '거부'}
+      </CmsButton>
+    </Space>
+  )
+
   return (
-    <Modal
+    <ContentModal
       open={open}
       title="권한 요청 검토"
       onCancel={handleCancel}
-      footer={null}
-      width={700}
-      destroyOnHidden
+      footer={footer}
+      size="default"
     >
-      <Descriptions column={1} bordered style={{ marginBottom: 24 }}>
-        <Descriptions.Item label="요청자">{request.requesterName}</Descriptions.Item>
-        <Descriptions.Item label="프로그램">{request.programName}</Descriptions.Item>
-        <Descriptions.Item label="요청 역할">
-          <Tag>{roleLabels[request.requestedRole]}</Tag>
-        </Descriptions.Item>
-        <Descriptions.Item label="요청 권한">
-          <Tag>{actionLabels[request.requestedAction]}</Tag>
-        </Descriptions.Item>
-        <Descriptions.Item label="요청 사유">
-          <div style={{ whiteSpace: 'pre-wrap' }}>{request.reason}</div>
-        </Descriptions.Item>
-        {request.requestedPeriod && (
-          <Descriptions.Item label="요청 기간">
-            {new Date(request.requestedPeriod.startDate).toLocaleDateString('ko-KR')} ~{' '}
-            {new Date(request.requestedPeriod.endDate).toLocaleDateString('ko-KR')}
-          </Descriptions.Item>
-        )}
-        <Descriptions.Item label="요청일">
-          {new Date(request.createdAt).toLocaleString('ko-KR')}
-        </Descriptions.Item>
-      </Descriptions>
+      <div style={{ marginBottom: 24 }}>
+        <DetailInfoForm title="요청 정보" hideHeader mode="view">
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field label="요청자" view={request.requesterName} />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field label="프로그램" view={request.programName} />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field label="요청 역할" view={<Tag>{roleLabels[request.requestedRole]}</Tag>} />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field label="요청 권한" view={<Tag>{actionLabels[request.requestedAction]}</Tag>} />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field label="요청 사유" view={<div style={{ whiteSpace: 'pre-wrap' }}>{request.reason}</div>} />
+          </DetailInfoForm.Row>
+          {request.requestedPeriod && (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="요청 기간"
+                view={`${formatDateDot(request.requestedPeriod.startDate)} ~ ${formatDateDot(request.requestedPeriod.endDate)}`}
+              />
+            </DetailInfoForm.Row>
+          )}
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field label="요청일" view={formatDateTimeDot(request.createdAt)} />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
+      </div>
 
       <Form
+        id="permission-review-form"
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
       >
         <Form.Item label="처리 결정" required>
-          <Radio.Group value={action} onChange={(e) => setAction(e.target.value)}>
-            <Radio value="approve">승인</Radio>
-            <Radio value="reject">거부</Radio>
-          </Radio.Group>
+          <CmsRadio.Group value={action} onChange={(e) => setAction(e.target.value)}>
+            <CmsRadio value="approve">승인</CmsRadio>
+            <CmsRadio value="reject">거부</CmsRadio>
+          </CmsRadio.Group>
         </Form.Item>
 
         {action === 'approve' && (
@@ -142,7 +164,6 @@ export function PermissionRequestReviewModal({
         <Form.Item
           label={action === 'approve' ? '승인 메모 (선택사항)' : '거부 사유'}
           name="reviewComment"
-          rules={action === 'reject' ? [{ required: true, message: '거부 사유를 입력해주세요.' }] : []}
         >
           <TextArea
             rows={3}
@@ -151,23 +172,7 @@ export function PermissionRequestReviewModal({
             showCount
           />
         </Form.Item>
-
-        <Form.Item>
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button onClick={handleCancel} disabled={submitting}>
-              취소
-            </Button>
-            <Button
-              type="primary"
-              danger={action === 'reject'}
-              htmlType="submit"
-              loading={submitting}
-            >
-              {action === 'approve' ? '승인' : '거부'}
-            </Button>
-          </Space>
-        </Form.Item>
       </Form>
-    </Modal>
+    </ContentModal>
   )
 }

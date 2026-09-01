@@ -1,0 +1,37 @@
+.hero {
+  margin-bottom: var(--spacing-40);
+}
+
+.heroTitle {
+  display: block;
+  margin: 0;
+}
+
+.heroFirstLine {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-24);
+}
+
+.heroSecondLine {
+  display: block;
+}
+
+.heroIcon {
+  display: block;
+  width: 47px;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.categories {
+  margin-bottom: var(--spacing-60);
+}
+
+.list {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 40px;
+}

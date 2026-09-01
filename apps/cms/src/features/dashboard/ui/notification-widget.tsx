@@ -4,12 +4,14 @@
  * Row 방식: 상태 태그 | 타이틀 | 타임스탬프
  */
 
-import { Card, Button, Typography, Space, Empty, Tag } from 'antd'
+import { Card, Typography, Space, Tag } from 'antd'
+import { EmptyState } from '@/shared/ui'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 import { type Notification, type NotificationType } from '../api/notification-service'
 import { useNotifications } from '../hooks/use-notifications'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
+import { LoadingButton } from '@/shared/ui'
 import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import '@/shared/ui/widget-more-button.css'
 import './notification-widget.css'
@@ -90,20 +92,20 @@ export function NotificationWidget() {
       }
       extra={
         hasMoreNotifications ? (
-          <Button
+          <LoadingButton
             type="link"
             size="small"
             onClick={() => window.alert(WIDGET_MORE_ALERT_MESSAGE)}
             className="widget-more-button"
           >
             더보기
-          </Button>
+          </LoadingButton>
         ) : null
       }
     >
       {displayNotifications.length === 0 ? (
         <div className="notification-widget__empty">
-          <Empty description="새로운 알림이 없습니다" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <EmptyState description="새로운 알림이 없습니다" />
         </div>
       ) : (
         <div className="notification-widget__list">
@@ -120,13 +122,12 @@ export function NotificationWidget() {
                   style={{
                     backgroundColor: tagColor.bg,
                     color: tagColor.text,
-                    border: 'none',
-                  }}
+                    border: 'none' }}
                 >
                   {getNotificationTypeLabel(notification.type)}
                 </Tag>
                 <Text className="notification-item__title">
-                  {notification.message || notification.title}
+                  {notification.body || notification.title}
                 </Text>
                 <Text type="secondary" className="notification-item__timestamp">
                   {formatTimestamp(notification.createdAt)}

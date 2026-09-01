@@ -1,0 +1,171 @@
+/**
+ * 강의 출석 내역 모달
+ * 스펙(스크린샷): width 800, 설명↔표 30px, 4열 키-값 표(라벨 #F5F6F7), 결석 빨강·미진행 회색
+ */
+
+.lecture-attendance-modal .teal-header-modal__body {
+  gap: 30px;
+  min-width: 0;
+  /* overflow-y:auto 단독 지정 시 overflow-x도 auto로 계산되어 가로 스크롤이 생김 */
+  overflow-x: hidden;
+}
+
+.lecture-attendance-modal__table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: var(--radius-8, 8px);
+  background: #fff;
+}
+
+.lecture-attendance-modal__grid {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.lecture-attendance-modal__col-label {
+  width: 14%;
+}
+
+.lecture-attendance-modal__col-value {
+  width: 36%;
+}
+
+.lecture-attendance-modal__grid th,
+.lecture-attendance-modal__grid td {
+  padding: 12px 16px;
+  vertical-align: middle;
+  border: 1px solid var(--color-border, #e0e0e0);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  line-height: 150%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.lecture-attendance-modal__grid th {
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-weight: 700;
+  background: #f5f6f7;
+}
+
+.lecture-attendance-modal__grid td {
+  color: var(--default-BK, #3d3d3d);
+  text-align: left;
+  font-weight: 500;
+  background: #fff;
+}
+
+/* 바깥 테두리는 wrap에서 — 셀 이중선 제거 */
+.lecture-attendance-modal__table-wrap .lecture-attendance-modal__grid {
+  border: none;
+}
+
+.lecture-attendance-modal__table-wrap .lecture-attendance-modal__grid th,
+.lecture-attendance-modal__table-wrap .lecture-attendance-modal__grid td {
+  border-color: var(--color-border, #e0e0e0);
+}
+
+.lecture-attendance-modal__table-wrap .lecture-attendance-modal__grid tr:first-child > * {
+  border-top: none;
+}
+
+.lecture-attendance-modal__table-wrap .lecture-attendance-modal__grid tr:last-child > * {
+  border-bottom: none;
+}
+
+.lecture-attendance-modal__table-wrap .lecture-attendance-modal__grid tr > *:first-child {
+  border-left: none;
+}
+
+.lecture-attendance-modal__table-wrap .lecture-attendance-modal__grid tr > *:last-child {
+  border-right: none;
+}
+
+/* 출석률: n / n건 + (강의 진행 회차 기준) — 셀 폭 내로 유지 */
+.lecture-attendance-modal__rate-wrap {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.lecture-attendance-modal__rate-count {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.lecture-attendance-modal__rate-note {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.lecture-attendance-modal__status-text {
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.lecture-attendance-modal__status-text--attended,
+.lecture-attendance-modal__status-text--late {
+  color: var(--default-BK, #3d3d3d);
+}
+
+.lecture-attendance-modal__status-text--absent {
+  color: var(--color-red, #c32f4a);
+}
+
+.lecture-attendance-modal__status-text--not_held {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lecture-attendance-modal__session-radios.app-radio-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  max-width: 100%;
+}
+
+.lecture-attendance-modal__session-radios .app-radio {
+  margin-inline-end: 0;
+}
+
+/* 푸터 — 닫기/취소 120×40 */
+.lecture-attendance-modal
+  .content-modal__footer-actions
+  .lecture-attendance-modal__footer-btn--close.cms-button.ant-btn {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+}

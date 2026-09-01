@@ -1,0 +1,31 @@
+---
+description: Personal information, authorization, and masking requirements
+globs:
+  - "**/*member*"
+  - "**/*user*"
+  - "**/*profile*"
+  - "**/*application*"
+  - "**/*organization*"
+  - "**/*volunteer*"
+  - "**/*instructor*"
+alwaysApply: false
+---
+
+# Privacy rules
+
+- Never attempt to reconstruct original personal data from masked values.
+- List APIs must not expose unnecessary original personal information.
+- Separate display/list responses from editable detail responses.
+- Original values may only be retrieved from an authorized detail endpoint.
+- Frontend visibility checks never replace server-side authorization.
+- Check whether sensitive-data access requires an audit log.
+- Do not log passwords, tokens, resident numbers, phone numbers,
+  email addresses, or other sensitive values.
+- Confirm masking rules separately for:
+  - list screen
+  - detail screen
+  - edit screen
+  - export
+  - audit log
+
+**Last updated:** 2026-07-24

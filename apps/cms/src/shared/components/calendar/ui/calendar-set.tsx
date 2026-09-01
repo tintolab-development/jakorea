@@ -1,11 +1,12 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Spin } from 'antd'
-import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { Program } from '@/types/domain'
-import { buildResolvedScheduleColorMapForPrograms } from '@/features/program/ui/program-schedule-colors'
+import { buildResolvedScheduleColorMapForPrograms } from '@/features/program/shared/ui/program-schedule-colors'
+import { useCalendarNavigationState } from '../lib/use-calendar-navigation-state'
+import { useCalendarMiniState } from '../lib/use-calendar-mini-state'
 import { CalendarMain } from './calendar-main'
 import { CalendarMini } from './calendar-mini'
 import { CalendarSearch } from './calendar-search'
@@ -19,36 +20,6 @@ interface CalendarSetMainProps {
   items: Program[]
   loading?: boolean
   onItemClick: (item: Program) => void
-}
-
-function useCalendarUIState() {
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
-  const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
-  const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
-
-  const handleDateSelect = useCallback((date: Dayjs) => {
-    setSelectedDate(date)
-    setCurrentMonth(prevMonth =>
-      date.isSame(prevMonth, 'month') ? prevMonth : date.startOf('month')
-    )
-  }, [])
-
-  const handleMonthChange = useCallback((month: Dayjs) => {
-    setCurrentMonth(month)
-  }, [])
-
-  const onModeChange = useCallback((mode: 'month' | 'week') => {
-    setCalendarMode(mode)
-  }, [])
-
-  return {
-    selectedDate,
-    currentMonth,
-    calendarMode,
-    handleDateSelect,
-    handleMonthChange,
-    onModeChange,
-  }
 }
 
 function useCalendarFilter(items: Program[]) {
@@ -157,11 +128,17 @@ function CalendarSetMain({ items, loading, onItemClick }: CalendarSetMainProps) 
   const {
     selectedDate,
     currentMonth,
-    calendarMode,
-    handleDateSelect,
-    handleMonthChange,
+    mode: calendarMode,
+    onSelectDate: handleMainDateSelect,
+    onMonthChange: handleMainMonthChange,
     onModeChange,
-  } = useCalendarUIState()
+  } = useCalendarNavigationState('month')
+  const {
+    selectedDate: miniSelectedDate,
+    currentMonth: miniCurrentMonth,
+    onSelectDate: handleMiniDateSelect,
+    onMonthChange: handleMiniMonthChange,
+  } = useCalendarMiniState()
   const {
     calendarSearchKeyword,
     calendarProgramSelection,
@@ -190,15 +167,13 @@ function CalendarSetMain({ items, loading, onItemClick }: CalendarSetMainProps) 
   return (
     <div className="calendar-set">
       <div className="calendar-sub-left">
-        <div className="calendar-mini">
-          <CalendarMini
-            currentMonth={currentMonth}
-            selectedDate={selectedDate}
-            onMonthChange={handleMonthChange}
-            onSelectDate={handleDateSelect}
-            programDates={programDates}
-          />
-        </div>
+        <CalendarMini
+          currentMonth={miniCurrentMonth}
+          selectedDate={miniSelectedDate}
+          onMonthChange={handleMiniMonthChange}
+          onSelectDate={handleMiniDateSelect}
+          programDates={programDates}
+        />
         <CalendarSearch
           keyword={calendarSearchKeyword}
           options={programFilterOptions}
@@ -214,8 +189,8 @@ function CalendarSetMain({ items, loading, onItemClick }: CalendarSetMainProps) 
           selectedDate={selectedDate}
           currentMonth={currentMonth}
           mode={calendarMode}
-          onSelectDate={handleDateSelect}
-          onMonthChange={handleMonthChange}
+          onSelectDate={handleMainDateSelect}
+          onMonthChange={handleMainMonthChange}
           onModeChange={onModeChange}
           onItemClick={onItemClick}
         />

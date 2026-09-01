@@ -1,0 +1,176 @@
+.direct-unavailable-date-add-button {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.direct-unavailable-date-add-button--chips {
+  display: contents;
+}
+
+.direct-unavailable-date-add-button__selected-dates {
+  display: flex;
+  padding: 4px 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--4, 4px);
+  border: 1px solid rgba(195, 47, 74, 0.1);
+  background: var(
+    --color-bg-red,
+    linear-gradient(0deg, rgba(195, 47, 74, 0.1) 0%, rgba(195, 47, 74, 0.1) 100%),
+    #fff
+  );
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
+}
+
+.direct-unavailable-date-add-button__selected-date-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  order: 1;
+  flex: 0 0 100%;
+  margin-top: 10px;
+  gap: 8px;
+}
+
+.direct-unavailable-date-add-button__selected-date-chip {
+  display: flex;
+  padding: 4px 8px 4px 12px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--4, 4px);
+  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  background: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.1) 0%, rgba(61, 61, 61, 0.1) 100%),
+    #fff
+  );
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+  height: 32px;
+  box-sizing: border-box;
+}
+
+.direct-unavailable-date-add-button__selected-date-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.direct-unavailable-date-add-button__selected-date-remove svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.direct-unavailable-date-modal__description {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%; /* 24px */
+}
+
+.direct-unavailable-date-modal .content-modal__description {
+  margin-bottom: 28px;
+}
+
+.direct-unavailable-date-modal__body {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.direct-unavailable-date-modal__calendar {
+  flex: 0 0 300px;
+  box-sizing: border-box;
+  min-height: 0;
+}
+
+.direct-unavailable-date-modal__selected {
+  flex: 0 0 220px;
+  width: 220px;
+  box-sizing: border-box;
+  min-height: 0;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.direct-unavailable-date-modal__chip {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+
+  overflow: hidden;
+  color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+}
+
+.direct-unavailable-date-modal__chip-remove {
+  width: 15.833px;
+  height: 15.833px;
+  aspect-ratio: 1 / 1;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  fill: var(--gray-bdc-6-c-9, #bdc6c9);
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.direct-unavailable-date-modal__chip-remove svg {
+  width: 15.833px;
+  height: 15.833px;
+  aspect-ratio: 1 / 1;
+  display: block;
+}
+
+.direct-unavailable-date-modal__selected-empty {
+  color: rgba(61, 61, 61, 0.5);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.direct-unavailable-date-modal__footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  width: 100%;
+}

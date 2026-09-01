@@ -1,0 +1,44 @@
+/* 기업후원 안내 관리 — 단일 흰 카드 (개인후원 동일 레이아웃)
+ * 짧은 콘텐츠는 흰 카드가 영역을 채우고, 길면 layout-content가 스크롤
+ */
+.corporate-guide-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  overflow: visible;
+  flex-shrink: 0;
+  min-height: calc(100vh - var(--header-height, 64px) - 64px);
+}
+
+.corporate-guide-page > .corporate-guide-card.admin-list-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  height: auto;
+  max-height: none;
+  margin-bottom: 0;
+  overflow: visible !important;
+}
+
+.corporate-guide-page .corporate-guide-section {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.corporate-guide-page .corporate-guide-section .admin-list-toolbar {
+  flex-shrink: 0;
+  align-items: center;
+  margin-bottom: var(--admin-list-toolbar-to-table-gap, 16px);
+}

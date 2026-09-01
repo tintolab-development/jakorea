@@ -8,6 +8,7 @@ import type { Notice } from '@/data/mock/notices'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
+import type { NoticeCategoryRemoteActions } from '@/features/posts/hooks/use-admin-notice-categories'
 import { useNoticeCategoryManagementModal } from '@/features/posts/hooks/use-notice-category-management-modal'
 import type { NoticeCategoryRow } from '@/features/posts/model/admin-notice-management.types'
 import { NoticeCategoryDeleteBlockedModal } from '@/features/posts/ui/notice-category-management/notice-category-delete-blocked-modal'
@@ -26,6 +27,7 @@ export type NoticeCategoryManagementModalProps = {
   categories: NoticeCategoryRow[]
   onCategoriesChange: (next: NoticeCategoryRow[]) => void
   notices: readonly Notice[]
+  remoteActions?: NoticeCategoryRemoteActions
 }
 
 export function NoticeCategoryManagementModal({
@@ -34,6 +36,7 @@ export function NoticeCategoryManagementModal({
   categories,
   onCategoriesChange,
   notices,
+  remoteActions,
 }: NoticeCategoryManagementModalProps) {
   const ctrl = useNoticeCategoryManagementModal({
     open,
@@ -41,6 +44,7 @@ export function NoticeCategoryManagementModal({
     onCategoriesChange,
     notices,
     onClose: onCancel,
+    remoteActions,
   })
 
   const {
@@ -137,7 +141,7 @@ export function NoticeCategoryManagementModal({
       <CmsButton variant="secondary" size="large" type="button" onClick={ctrl.handleClose}>
         닫기
       </CmsButton>
-      <CmsButton variant="primary" size="large" type="button" onClick={ctrl.focusNewRow}>
+      <CmsButton variant="primary" size="large" type="button" onClick={ctrl.openCompose}>
         카테고리 추가
       </CmsButton>
     </>
@@ -165,50 +169,54 @@ export function NoticeCategoryManagementModal({
               columns={columns}
               dataSource={categories}
               locale={{ emptyText: '등록된 카테고리가 없습니다.' }}
-              summary={() => (
-                <Table.Summary>
-                  <Table.Summary.Row className="notice-category-management-modal__summary">
-                    <Table.Summary.Cell index={0} align="center">
-                      <div className="notice-category-management-modal__compose">
-                        <CmsInput
-                          ref={ctrl.newInputRef}
-                          inputSize="medium"
-                          width="100%"
-                          placeholder="카테고리명을 입력해주세요"
-                          value={ctrl.newDraft}
-                          onChange={e => ctrl.setNewDraft(e.target.value)}
-                          onPressEnter={ctrl.submitNew}
-                          aria-label="새 카테고리명"
-                        />
-                      </div>
-                    </Table.Summary.Cell>
-                    <Table.Summary.Cell index={1} align="center">
-                      <div className="notice-category-management-modal__actions">
-                        <CmsButton
-                          type="button"
-                          variant="default"
-                          size="medium"
-                          width={80}
-                          className="notice-category-management-modal__action-btn"
-                          onClick={ctrl.cancelNew}
-                        >
-                          취소
-                        </CmsButton>
-                        <CmsButton
-                          type="button"
-                          variant="secondary"
-                          size="medium"
-                          width={80}
-                          className="notice-category-management-modal__action-btn"
-                          onClick={ctrl.submitNew}
-                        >
-                          등록
-                        </CmsButton>
-                      </div>
-                    </Table.Summary.Cell>
-                  </Table.Summary.Row>
-                </Table.Summary>
-              )}
+              summary={
+                ctrl.composeOpen
+                  ? () => (
+                      <Table.Summary>
+                        <Table.Summary.Row className="notice-category-management-modal__summary">
+                          <Table.Summary.Cell index={0} align="center">
+                            <div className="notice-category-management-modal__compose">
+                              <CmsInput
+                                ref={ctrl.newInputRef}
+                                inputSize="medium"
+                                width="100%"
+                                placeholder="카테고리명을 입력해주세요"
+                                value={ctrl.newDraft}
+                                onChange={e => ctrl.setNewDraft(e.target.value)}
+                                onPressEnter={ctrl.submitNew}
+                                aria-label="새 카테고리명"
+                              />
+                            </div>
+                          </Table.Summary.Cell>
+                          <Table.Summary.Cell index={1} align="center">
+                            <div className="notice-category-management-modal__actions">
+                              <CmsButton
+                                type="button"
+                                variant="default"
+                                size="medium"
+                                width={80}
+                                className="notice-category-management-modal__action-btn"
+                                onClick={ctrl.cancelNew}
+                              >
+                                취소
+                              </CmsButton>
+                              <CmsButton
+                                type="button"
+                                variant="secondary"
+                                size="medium"
+                                width={80}
+                                className="notice-category-management-modal__action-btn"
+                                onClick={ctrl.submitNew}
+                              >
+                                등록
+                              </CmsButton>
+                            </div>
+                          </Table.Summary.Cell>
+                        </Table.Summary.Row>
+                      </Table.Summary>
+                    )
+                  : undefined
+              }
             />
           </div>
         </div>

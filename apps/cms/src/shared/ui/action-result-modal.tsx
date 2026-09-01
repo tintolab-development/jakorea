@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { CmsButton } from './cms-button'
 import { ContentModal } from './content-modal'
+import './action-result-modal.css'
 
 export interface ActionResultModalProps {
   open: boolean
@@ -9,7 +10,7 @@ export interface ActionResultModalProps {
   /** 완료·결과 안내 제목 (예: 회원 삭제 완료) */
   title: string
   /** 본문 */
-  message: ReactNode
+  body: ReactNode
   /** 기본값 확인 */
   confirmLabel?: string
 }
@@ -17,31 +18,32 @@ export interface ActionResultModalProps {
 /**
  * 등록·삭제 등 작업 완료 안내 공통 모달.
  * 제목·본문은 호출부에서 조합(`action-result-messages` 등).
+ * 시안: 600 × hug · padding 24/30/32
  */
 export function ActionResultModal({
   open,
   title,
-  message,
+  body,
   onClose,
   zIndex,
   confirmLabel = '확인',
 }: ActionResultModalProps) {
-  const renderedMessage =
-    typeof message === 'string' ? (
+  const renderedBody =
+    typeof body === 'string' ? (
       (() => {
-        const match = message.match(/^\[[^\]]+\]/)
-        if (!match) return message
+        const match = body.match(/^\[[^\]]+\]/)
+        if (!match) return body
         const namePart = match[0]
-        const rest = message.slice(namePart.length)
+        const rest = body.slice(namePart.length)
         return (
           <>
-            <span style={{ fontWeight: 600 }}>{namePart}</span>
+            <span className="action-result-modal__body-name">{namePart}</span>
             {rest}
           </>
         )
       })()
     ) : (
-      message
+      body
     )
 
   return (
@@ -49,15 +51,16 @@ export function ActionResultModal({
       open={open}
       onCancel={onClose}
       title={title}
-      width={420}
+      width={600}
       zIndex={zIndex}
+      className="action-result-modal"
       footer={
-        <CmsButton variant="secondary" width={70} type="button" onClick={onClose}>
+        <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>
           {confirmLabel}
         </CmsButton>
       }
     >
-      <span style={{ fontSize: '16px', lineHeight: '150%' }}>{renderedMessage}</span>
+      <div className="action-result-modal__body">{renderedBody}</div>
     </ContentModal>
   )
 }

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "installCommand": "cd ../.. && HUSKY=0 pnpm install",
+  "buildCommand": "cd ../.. && pnpm turbo run build --filter=platform",
+  "outputDirectory": "dist",
+  "ignoreCommand": "cd ../.. && npx turbo-ignore platform --fallback=HEAD^1",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -1,0 +1,184 @@
+.header {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-left: var(--spacing-8);
+}
+
+.content {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-20);
+  margin-bottom: var(--spacing-40);
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.actionsTerms {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.identityModule {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-24);
+  border-radius: var(--radius-8);
+  background: var(--color-neutral-white-60);
+  text-align: center;
+}
+
+.identityModule p {
+  margin: 0;
+}
+
+.statusMessage {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  margin-bottom: var(--spacing-40);
+}
+
+.confirmReview {
+  margin-bottom: var(--spacing-40);
+}
+
+.genderField,
+.schoolStatusField,
+.addressField {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.fieldLabel {
+  padding-left: var(--spacing-8);
+  color: var(--color-neutral-warm-600);
+}
+
+.genderOptions,
+.schoolStatusOptions {
+  display: flex;
+  width: 100%;
+  gap: var(--spacing-12);
+}
+
+.inlineRequiredMark {
+  color: var(--color-error);
+}
+
+.addressSearchRow {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  align-items: stretch;
+  gap: var(--spacing-12);
+  box-sizing: border-box;
+}
+
+.addressSearchRow > :first-child {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.addressSearchRow > :last-child {
+  flex: 0 0 auto;
+}
+
+@media (--bp-below-pc) {
+  .addressSearchRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-8);
+  }
+
+  .addressSearchRow > :first-child,
+  .addressSearchRow > :last-child {
+    flex: none;
+    width: 100%;
+  }
+}
+
+.gradeField {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.gradeSelectWrap {
+  position: relative;
+  width: 100%;
+}
+
+.gradeSelect {
+  width: 100%;
+  height: 56px;
+  padding: 0 var(--spacing-40) 0 var(--spacing-16);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-8);
+  background: var(--color-neutral-white);
+  appearance: none;
+}
+
+.gradeSelectArrow {
+  position: absolute;
+  top: 50%;
+  right: var(--spacing-16);
+  width: 12px;
+  height: 12px;
+  transform: translateY(-50%) rotate(90deg);
+  pointer-events: none;
+}
+
+.passwordInputsContainer {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-20);
+}
+
+.message {
+  margin: 0 0 var(--spacing-16);
+}
+
+.submitError {
+  margin: 0 0 var(--spacing-8);
+}
+
+.completeIntro {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--spacing-56);
+  text-align: center;
+}
+
+.completeIllustration {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+}
+
+.completeTitle {
+  margin: var(--spacing-24) 0 0;
+}
+
+.completeDescription {
+  margin: var(--spacing-16) 0 0;
+}

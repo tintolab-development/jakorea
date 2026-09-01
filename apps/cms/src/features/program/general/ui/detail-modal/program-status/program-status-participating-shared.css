@@ -1,0 +1,396 @@
+/**
+ * 프로그램 진행 현황 — 참여 기관 / 참여 강사 / 참여 봉사자 공통 레이아웃
+ *
+ * - 캐논 BEM: `program-status-participating`, `program-status-participating__*`
+ * - 호환: `participating-institutions-section__*` (정산·풀페이지), `program-progress-tab__*` (구 진행현황 카드)
+ * - 기관 전용(회차 셀·드롭다운): participating-institutions-section.css
+ * - 강사 전용(정산·캘린더 카드): participating-institutions-section.css 하단
+ * - 필터 Row·탭 카드: program-progress-tab.css
+ */
+
+.program-status-participating,
+.participating-institutions-section {
+  width: 100%;
+  min-width: 0;
+}
+
+/* TableFilterGroup — Col은 콘텐츠 너비, 필터 간 gap 12px (table-filter-group 공통) */
+.program-status-participating
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col:not(.table-filter-group__col--radio),
+.participating-institutions-section
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col:not(.table-filter-group__col--radio) {
+  flex: 0 0 auto !important;
+  width: auto;
+  min-width: 0;
+}
+
+.program-status-participating
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--radio,
+.participating-institutions-section
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--radio {
+  flex: 0 0 auto !important;
+  min-width: 0;
+  max-width: none;
+}
+
+/* 참여 기관/강사 필터: 반응형 너비 분배 (갭 12px 유지) */
+@media (max-width: 1280px) {
+  .program-status-participating .table-filter-group__container,
+  .participating-institutions-section .table-filter-group__container {
+    flex-wrap: wrap;
+  }
+
+  .program-status-participating .table-filter-group__fields-container,
+  .participating-institutions-section .table-filter-group__fields-container {
+    flex: 1 1 100%;
+    max-width: 100%;
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+
+  .program-status-participating .table-filter-group__fields-inner.ant-row,
+  .participating-institutions-section .table-filter-group__fields-inner.ant-row {
+    flex-wrap: wrap !important;
+  }
+
+  .program-status-participating
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col:not(.table-filter-group__col--radio),
+  .participating-institutions-section
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col:not(.table-filter-group__col--radio) {
+    flex: 0 0 auto !important;
+    width: auto;
+    min-width: 0;
+  }
+
+  .program-status-participating
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col.table-filter-group__col--radio,
+  .participating-institutions-section
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col.table-filter-group__col--radio {
+    flex: 0 0 auto !important;
+  }
+
+  .program-status-participating .table-filter-group__fields-inner.ant-row > .ant-col:nth-child(3n),
+  .participating-institutions-section .table-filter-group__fields-inner.ant-row > .ant-col:nth-child(3n) {
+    margin-right: 0 !important;
+  }
+}
+
+@media (max-width: 960px) {
+  .program-status-participating
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col:not(.table-filter-group__col--radio),
+  .participating-institutions-section
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col:not(.table-filter-group__col--radio) {
+    flex: 0 0 auto !important;
+    width: auto;
+  }
+
+  .program-status-participating
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col.table-filter-group__col--radio,
+  .participating-institutions-section
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col.table-filter-group__col--radio {
+    flex: 0 0 auto !important;
+  }
+
+  .program-status-participating .table-filter-group__fields-inner.ant-row > .ant-col:nth-child(3n),
+  .participating-institutions-section .table-filter-group__fields-inner.ant-row > .ant-col:nth-child(3n) {
+    margin-right: 12px !important;
+  }
+
+  .program-status-participating .table-filter-group__fields-inner.ant-row > .ant-col:nth-child(2n),
+  .participating-institutions-section .table-filter-group__fields-inner.ant-row > .ant-col:nth-child(2n) {
+    margin-right: 0 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .program-status-participating
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col:not(.table-filter-group__col--radio),
+  .participating-institutions-section
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col:not(.table-filter-group__col--radio) {
+    flex: 0 0 auto !important;
+    width: auto;
+    margin-right: 0 !important;
+  }
+
+  .program-status-participating
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col.table-filter-group__col--radio,
+  .participating-institutions-section
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col.table-filter-group__col--radio {
+    flex: 0 0 auto !important;
+    margin-right: 0 !important;
+  }
+
+  .program-status-participating .table-filter-group__shell-actions,
+  .participating-institutions-section .table-filter-group__shell-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* 필터 ↔ 목록 사이 풀폭 구분선 — `Divider`(app-divider) 또는 단독 div 동일 스펙 */
+.program-status-participating__divider,
+.participating-institutions-section__divider {
+  box-sizing: border-box;
+  margin: 32px 0 0;
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 100%;
+  height: 1px;
+  min-height: 1px;
+  border: 0;
+  background: #c4cdd1;
+  background-color: #c4cdd1;
+}
+
+/* `@/shared/components/divider` 의 `.app-divider` 배경(`--color-border`)보다 우선 */
+.app-divider.participating-institutions-section__divider,
+.app-divider.program-status-participating__divider {
+  background: #c4cdd1;
+  background-color: #c4cdd1;
+}
+
+.program-status-participating__below-divider,
+.participating-institutions-section__below-divider {
+  margin-top: 32px;
+  min-width: 0;
+}
+
+.program-status-participating__calendar-wrap,
+.participating-institutions-section__calendar-wrap,
+.applicant-details__calendar-wrap,
+.general-volunteer-doc-passed__calendar-container {
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+  min-height: 900px;
+}
+
+/*
+ * 일반 프로그램 상세 풀페이지 모달 — 캘린더 뷰
+ * 레이아웃·shell·sticky: `CalendarSplitCardLayout` `pageScroll` + `filter-table-layout--calendar-view` + `calendar.css`
+ */
+.general-program-detail--calendar-view {
+  overflow-x: visible;
+  box-sizing: border-box;
+}
+
+.general-program-detail__calendar-page-bottom-spacer,
+.applicant-details__calendar-page-bottom-spacer,
+.participating-institutions-section__page-bottom-spacer {
+  display: block;
+  width: 100%;
+  height: var(--detail-fullpage-padding-bottom, 52px);
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* TODO 추후 삭제 */
+/* 목록 상단: 제목 + (총 N건) + 우측 버튼 — FilterTableLayout·index.css 공통 클래스 + program-progress-tab 레거시 */
+.participating-institutions-section__below-divider > .table-header-actions,
+.payment-orders-page__content-wrapper .table-header-actions {
+  gap: var(--spacing-16);
+  margin-bottom: var(--spacing-16);
+  width: 100%;
+}
+
+.program-status-participating__table-header,
+.program-progress-tab__table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-16);
+  margin-bottom: var(--spacing-16);
+}
+
+.program-status-participating__table-heading,
+.program-progress-tab__table-heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-8);
+}
+
+.program-status-participating__table-title,
+.program-progress-tab__table-title {
+  color: var(--color-text-primary, #3d3d3d);
+  font-family: var(--font-family-primary, Pretendard), sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.program-status-participating__table-description,
+.program-progress-tab__table-description {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+  opacity: 0.6;
+}
+
+.program-status-participating__table-actions,
+.program-progress-tab__table-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  flex-shrink: 0;
+}
+
+.program-status-participating__table-wrap,
+.participating-institutions-section__table-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* scroll.x 테이블: 부모가 내용만큼만 넓어지면 스크롤 영역 clientWidth가 커져 가로 스크롤이 안 보임 → 래퍼·Ant 컨테이너 폭 고정 */
+.program-status-participating__table-wrap .ant-table-wrapper,
+.participating-institutions-section__table-wrap .ant-table-wrapper {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.program-status-participating__table-wrap .ant-table-container,
+.participating-institutions-section__table-wrap .ant-table-container {
+  width: 100%;
+  min-width: 0;
+}
+
+.program-status-participating__table-wrap .ant-table-content,
+.participating-institutions-section__table-wrap .ant-table-content {
+  max-width: 100%;
+  overflow-x: auto !important;
+}
+
+.program-status-participating__table--clickable .ant-table-tbody > tr,
+.participating-institutions-section__table--clickable .ant-table-tbody > tr {
+  cursor: pointer;
+}
+
+/* 정산관리 페이지 공통 컨테이너/헤더 레이아웃 */
+.payment-orders-page .table-description {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.payment-orders-page__content-wrapper > .participating-institutions-section {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: visible;
+}
+
+.payment-orders-page__content-wrapper .participating-institutions-section__filters {
+  flex-shrink: 0;
+}
+
+.payment-orders-page__content-wrapper .participating-institutions-section__divider {
+  flex-shrink: 0;
+}
+
+.payment-orders-page__content-wrapper .participating-institutions-section__below-divider {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.payment-orders-page__content-wrapper .table-header-actions {
+  flex-shrink: 0;
+}
+
+.payment-orders-page__content-wrapper .participating-institutions-section__table-wrap {
+  flex: 0 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+/* StatusDropdownCell 사용 시 행/셀 53px 고정 (정산 상세 override의 기준 규칙) */
+.participating-institutions-section
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status) {
+  height: 53px;
+  min-height: 53px;
+  max-height: 53px;
+  overflow: visible;
+}
+
+.participating-institutions-section
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-160):not(
+    .status-dropdown-cell__cell-status--payment-order-line
+  ) {
+  width: 136px;
+  min-width: 136px;
+  max-width: 136px;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 0;
+  padding-right: 0;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.participating-institutions-section
+  .status-dropdown-cell__status-trigger--open:not(.status-dropdown-cell__status-trigger--tag-160):not(
+    .status-dropdown-cell__status-trigger--payment-order-line
+  ):not(.status-dropdown-cell__trigger--cell-style) {
+  box-sizing: border-box !important;
+  width: 136px !important;
+  min-width: 136px !important;
+  max-width: 136px !important;
+}
+
+.participating-institutions-section
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 53px !important;
+  min-height: 53px !important;
+  max-height: 53px !important;
+}
+
+.participating-institutions-section
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* 참여 봉사자 탭(플레이스홀더) — 이후 목록·필터와 동일 셸 */
+.program-status-participating__placeholder {
+  margin-top: var(--spacing-8);
+  color: var(--color-text-secondary, #666);
+  font-family: Pretendard, sans-serif;
+  font-size: var(--font-size-14, 14px);
+  line-height: 150%;
+}

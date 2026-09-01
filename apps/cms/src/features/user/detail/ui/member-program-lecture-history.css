@@ -41,6 +41,17 @@
   background: transparent;
 }
 
+.member-program-lecture-history__table-description {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.member-program-lecture-history__table-description .detail-info-form-inputs-separator {
+  margin: 0;
+}
+
 .member-program-lecture-history__toolbar-actions-buttons {
   display: flex;
   gap: 8px;

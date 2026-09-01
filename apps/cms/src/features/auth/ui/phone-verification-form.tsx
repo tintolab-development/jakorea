@@ -3,11 +3,11 @@
  * Phase 0.1.3 수정: 회원가입 시 휴대폰 본인인증
  */
 
-import { Form, Input, Button, message, Space } from 'antd'
+import { Form, Input, Space } from 'antd'
 import { MobileOutlined, SafetyOutlined } from '@ant-design/icons'
 import { useState, useMemo } from 'react'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
-import { MESSAGES } from '@/shared/constants'
+import { LoadingButton } from '@/shared/ui'
 import type { OtpSendRequest, OtpVerifyRequest } from '@/types/mfa'
 
 interface PhoneVerificationFormProps {
@@ -27,8 +27,7 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
     verifying,
     sendOtpCode,
     verifyOtpCode,
-    reset: resetOtp,
-  } = useOtpVerification()
+    reset: resetOtp } = useOtpVerification()
 
   // 임시 userId 생성 (회원가입 전이므로, 전화번호 기반으로 고정)
   // 전화번호가 변경되면 새로운 tempUserId 생성
@@ -41,7 +40,6 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
   // 본인인증 버튼 클릭 (OTP 발송)
   const handleSendOtp = async () => {
     if (!phoneNumber || phoneNumber.length < 13) {
-      message.warning(MESSAGES.warning.invalidPhone)
       return
     }
 
@@ -49,13 +47,11 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
       // OTP 발송
       await sendOtpCode({
         userId: tempUserId,
-        phoneNumber: phoneNumber,
-      } as OtpSendRequest)
+        phoneNumber: phoneNumber } as OtpSendRequest)
       
       setOtpSent(true)
-      message.success(MESSAGES.success.codeSent)
-    } catch (error: any) {
-      message.error(error?.message || MESSAGES.error.codeSend)
+    } catch (error: unknown) {
+      console.debug('phoneVerificationForm sendOtp failed', error)
     }
   }
 
@@ -67,22 +63,19 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
       // OTP 검증
       const verified = await verifyOtpCode({
         userId: tempUserId,
-        otpCode: values.otpCode,
-      } as OtpVerifyRequest)
+        otpCode: values.otpCode } as OtpVerifyRequest)
 
       if (verified) {
         setVerified(true)
-        message.success(MESSAGES.success.authenticated)
         onVerified(phoneNumber)
       } else {
-        message.error(MESSAGES.error.invalidCode)
+        console.debug('phoneVerificationForm otp not verified')
       }
-    } catch (error: any) {
-      if (error?.errorFields) {
-        // Form validation error
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'errorFields' in error) {
         return
       }
-      message.error(error?.message || MESSAGES.error.authentication)
+      console.debug('phoneVerificationForm verifyOtp failed', error)
     }
   }
 
@@ -109,7 +102,7 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
     <div>
       <Form form={form} layout="vertical" size="middle">
         {!otpSent ? (
-          <Button
+          <LoadingButton
             type="default"
             block
             icon={<MobileOutlined />}
@@ -118,16 +111,16 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
             disabled={disabled || !phoneNumber || phoneNumber.length < 13}
           >
             본인인증
-          </Button>
+          </LoadingButton>
         ) : (
           <>
             <Form.Item
               name="otpCode"
               label="인증번호"
               rules={[
-                { required: true, message: '인증번호를 입력해주세요.' },
-                { len: 6, message: '인증번호는 6자리입니다.' },
-                { pattern: /^\d+$/, message: '인증번호는 숫자만 입력 가능합니다.' },
+                { required: true },
+                { len: 6 },
+                { pattern: /^\d+$/ },
               ]}
             >
               <Input
@@ -138,7 +131,7 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
               />
             </Form.Item>
             <Space direction="vertical" style={{ width: '100%' }} size="small">
-              <Button
+              <LoadingButton
                 type="primary"
                 block
                 onClick={handleVerifyOtp}
@@ -146,10 +139,10 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
                 disabled={disabled}
               >
                 인증번호 확인
-              </Button>
-              <Button block onClick={handleReset} disabled={verifying || disabled}>
+              </LoadingButton>
+              <LoadingButton block onClick={handleReset} disabled={verifying || disabled}>
                 다시 시작
-              </Button>
+              </LoadingButton>
             </Space>
           </>
         )}

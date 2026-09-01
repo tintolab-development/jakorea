@@ -1,0 +1,52 @@
+{
+  "name": "@jakorea/location",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -w -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    "./sido-sigungu": {
+      "types": "./dist/sido-sigungu/index.d.ts",
+      "import": "./dist/sido-sigungu/index.js"
+    },
+    "./juso": {
+      "types": "./dist/juso/index.d.ts",
+      "import": "./dist/juso/index.js"
+    },
+    "./juso/react": {
+      "types": "./dist/juso/react/index.d.ts",
+      "import": "./dist/juso/react/index.js"
+    },
+    "./neis": {
+      "types": "./dist/neis/index.d.ts",
+      "import": "./dist/neis/index.js"
+    },
+    "./neis/react": {
+      "types": "./dist/neis/react/index.d.ts",
+      "import": "./dist/neis/react/index.js"
+    },
+    "./career-net": {
+      "types": "./dist/career-net/index.d.ts",
+      "import": "./dist/career-net/index.js"
+    },
+    "./career-net/react": {
+      "types": "./dist/career-net/react/index.d.ts",
+      "import": "./dist/career-net/react/index.js"
+    }
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.5",
+    "react": "^19.2.0",
+    "typescript": "~5.9.3"
+  }
+}

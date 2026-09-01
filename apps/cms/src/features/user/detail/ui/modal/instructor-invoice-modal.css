@@ -1,5 +1,10 @@
 /* 산출 내역서: 시안 패딩(1400×880), 표·푸터 레이아웃 */
 
+/* ContentModal 공통 content 패딩과 분리 — 헤더/바디/푸터에 패딩 분배 */
+.instructor-invoice-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  padding: 0;
+}
+
 /* 고정 높이 880px, 본문 스크롤 */
 .instructor-invoice-modal.teal-header-modal--large .ant-modal-content {
   height: 880px;
@@ -9,31 +14,26 @@
 }
 
 /* 헤더: 상단 26px · 좌우 30px (타이틀~상단 여백) */
-.instructor-invoice-modal.plain-header-modal.teal-header-modal .teal-header-modal__header {
+.instructor-invoice-modal.content-modal.teal-header-modal .teal-header-modal__header {
   height: auto;
   min-height: 0;
+  max-height: none;
   padding: 26px 30px 24px;
   box-sizing: border-box;
 }
 
 /* 본문: 좌우 30px, 섹션 간 30px — 상단은 헤더 하단과 맞춤 */
-.instructor-invoice-modal.plain-header-modal .teal-header-modal__body {
+.instructor-invoice-modal.content-modal .teal-header-modal__body {
   padding: 0 30px 0;
   gap: 30px;
 }
 
-/* 하단 푸터: 표~닫기 30px, 하단 34px, 닫기 우측 */
+/* 하단 푸터: 표~닫기 30px, 하단 34px — ContentModal 푸터 medium 120×40 유지 */
 .instructor-invoice-modal .teal-header-modal__footer {
   justify-content: flex-end;
+  margin-top: 0;
   padding: 30px 30px 34px;
   box-sizing: border-box;
-}
-
-.instructor-invoice-modal .teal-header-modal__footer .ant-btn,
-.instructor-invoice-modal .teal-header-modal__footer button {
-  width: auto;
-  min-width: auto;
-  height: auto;
 }
 
 /* 산출내역 상세 테이블 헤더 */

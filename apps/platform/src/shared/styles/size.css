@@ -1,0 +1,57 @@
+:root {
+  /* spacing*/
+  --spacing-2: 2px;
+  --spacing-4: 4px;
+  --spacing-6: 6px;
+  --spacing-8: 8px;
+  --spacing-10: 10px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-28: 28px;
+  --spacing-32: 32px;
+  --spacing-36: 36px;
+  --spacing-40: 40px;
+  --spacing-44: 44px;
+  --spacing-48: 48px;
+  --spacing-50: 50px;
+  --spacing-52: 52px;
+  --spacing-56: 56px;
+  --spacing-60: 60px;
+  --spacing-64: 64px;
+  --spacing-68: 68px;
+  --spacing-72: 72px;
+  --spacing-74: 74px;
+  --spacing-76: 76px;
+  --spacing-80: 80px;
+  --spacing-84: 84px;
+  --spacing-88: 88px;
+  --spacing-92: 92px;
+  --spacing-96: 96px;
+  --spacing-100: 100px;
+  --spacing-104: 104px;
+  --spacing-108: 108px;
+  --spacing-112: 112px;
+  --spacing-116: 116px;
+  --spacing-120: 120px;
+  --spacing-150: 150px;
+  --spacing-200: 200px;
+
+  /* radius */
+  --radius-4: 4px;
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --radius-16: 16px;
+  --radius-24: 24px;
+  --radius-999: 999px;
+
+  /* width*/
+  --width-page-sm: 480px;
+  --width-popup-sm: 440px;
+  --width-popup-md: 600px;
+  --width-popup-lg: 960px;
+
+  /* auth layout (login / sign-up / find-* ) */
+  --auth-page-padding-x: var(--spacing-20);
+}

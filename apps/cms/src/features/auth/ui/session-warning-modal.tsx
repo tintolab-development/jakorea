@@ -1,19 +1,18 @@
 /**
- * 세션 만료 경고 모달
- * Phase 0.5.5: 세션/접근 통제 UX (NFR-SEC-AUT-02)
- * 세션 만료 5분 전 경고 및 세션 연장 기능
+ * 세션 만료 경고 모달 — ContentModal 셸
+ * X/마스크 클릭 시 세션 연장(안전한 기본 동작). zIndex 4000.
  */
 
-import { Modal, Button, Typography, Space } from 'antd'
+import { Typography } from 'antd'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
+import { CmsButton, ContentModal } from '@/shared/ui'
 import { useSessionTimeout } from '../hooks/use-session-timeout'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 
 const { Text, Paragraph } = Typography
 
-/**
- * 세션 만료 경고 모달 컴포넌트
- */
+const SESSION_WARNING_Z_INDEX = 4000
+
 export function SessionWarningModal() {
   const { showWarning, countdown, extendSession } = useSessionTimeout()
   const { logout } = useAuthStore()
@@ -25,45 +24,35 @@ export function SessionWarningModal() {
   const minutes = Math.floor(countdown / 60)
   const seconds = countdown % 60
 
-  const handleExtend = () => {
-    extendSession()
-  }
-
-  const handleLogout = () => {
-    logout()
-  }
-
   return (
-    <Modal
-      title={
-        <Space>
-          <ExclamationCircleOutlined style={{ color: '#faad14' }} />
-          <span>세션 만료 경고</span>
-        </Space>
-      }
+    <ContentModal
       open={showWarning}
-      closable={false}
-      maskClosable={false}
-      footer={[
-        <Button key="extend" type="primary" onClick={handleExtend}>
-          세션 연장
-        </Button>,
-        <Button key="logout" onClick={handleLogout}>
-          로그아웃
-        </Button>,
-      ]}
-      centered
+      onCancel={extendSession}
+      zIndex={SESSION_WARNING_Z_INDEX}
+      title="세션 만료 경고"
+      width={600}
+      titlePrefix={<ExclamationCircleOutlined style={{ color: '#faad14' }} />}
+      footer={
+        <>
+          <CmsButton variant="primary" size="medium" type="button" onClick={extendSession}>
+            세션 연장
+          </CmsButton>
+          <CmsButton variant="secondary" size="medium" type="button" onClick={() => logout()}>
+            로그아웃
+          </CmsButton>
+        </>
+      }
     >
       <Paragraph>
         <Text strong>
           {minutes}분 {String(seconds).padStart(2, '0')}초 후 자동으로 로그아웃됩니다.
         </Text>
       </Paragraph>
-      <Paragraph type="secondary">
+      <Paragraph type="secondary" style={{ marginBottom: 0 }}>
         비활성 상태가 {Math.floor(countdown / 60)}분 이상 지속되어 세션이 만료됩니다.
         <br />
-        계속 사용하시려면 '세션 연장' 버튼을 클릭하세요.
+        계속 사용하시려면 &apos;세션 연장&apos; 버튼을 클릭하세요.
       </Paragraph>
-    </Modal>
+    </ContentModal>
   )
 }

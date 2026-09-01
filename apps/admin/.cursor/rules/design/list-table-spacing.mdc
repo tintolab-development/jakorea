@@ -1,0 +1,60 @@
+---
+description: Admin 목록 갭 — admin-list-card (공통 수치는 cms-admin-ui list-table-shell)
+globs:
+  - apps/admin/src/pages/**/*.{tsx,css}
+  - apps/admin/src/features/**/ui/**/*.{tsx,css}
+  - apps/admin/src/shared/ui/table-header-label.css
+  - apps/admin/src/shared/ui/list-table-layout.css
+alwaysApply: false
+---
+
+# Admin 목록 테이블·버튼 갭 (어댑터)
+
+**수치:** 공유 SSOT → [list-table-shell.mdc](../../../../.cursor/rules/cms-admin-ui/list-table-shell.mdc)
+
+## Admin path · 토큰
+
+| CSS 변수 | 값 (shell과 동일) |
+|----------|-------------------|
+| `--admin-list-card-padding` | 20px |
+| `--admin-list-card-radius` | 12px |
+| `--admin-list-toolbar-to-table-gap` | 16px |
+| `--admin-list-title-desc-gap` | 10px |
+| `--admin-list-toolbar-actions-gap` | 8px |
+
+정의: [`list-table-layout.css`](../../../src/shared/ui/list-table-layout.css)  
+라벨·액션: [`table-header-label.css`](../../../src/shared/ui/table-header-label.css)
+
+## 마크업
+
+```tsx
+<div className="admin-list-card">
+  <div className="admin-list-toolbar">
+    <div className="table-header-title--wrapper">
+      <span className="table-title">… 목록</span>
+      <span className="table-description">총 N건</span>
+    </div>
+    <div className="table-header-actions--wrapper">{/* CmsButton size="large" */}</div>
+  </div>
+  {/* table */}
+</div>
+```
+
+### 툴바 버튼 사이즈
+
+목록·카드 툴바(등록 / 선택 삭제 / 취소 / 저장) = **`size="large"` (140×44)**  
+→ [cms-button-action-sizes](../../../../.cursor/rules/cms-admin-ui/cms-button-action-sizes.mdc) · Admin 어댑터 [cms-button-action-sizes.mdc](./cms-button-action-sizes.mdc)
+
+CSS 강제: `table-header-label.css` `.table-header-actions--wrapper .cms-button`
+
+## 금지
+
+- `apps/cms/...` 직접 import
+- 화면 CSS에 카드 padding/shadow 하드코딩
+
+## 관련
+
+- [list-page-composition.mdc](../coding/list-page-composition.mdc)
+- [table-implementation.mdc](../tables/table-implementation.mdc)
+
+**Last updated:** 2026-08-06

@@ -1,0 +1,103 @@
+.user-info-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+@media (max-width: 1280px) {
+  .user-info-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .user-info-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* —— 미리보기 세로 테이블 (design: vertical-table 토큰 정렬) —— */
+.user-info-preview-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--8, 8px);
+  overflow: hidden;
+  background: var(--main-WT, #fff);
+}
+
+.user-info-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border: none;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.user-info-preview-table--one-tier .user-info-preview-table__th {
+  width: 28%;
+}
+
+.user-info-preview-table--two-tier .user-info-preview-table__th {
+  width: 18%;
+}
+
+.user-info-preview-table__th {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: middle;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 150%;
+  color: var(--main-BK, #3d3d3d);
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #f3f5f6
+  );
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  box-sizing: border-box;
+}
+
+.user-info-preview-table tr:last-child .user-info-preview-table__th,
+.user-info-preview-table tr:last-child .user-info-preview-table__td {
+  border-bottom: none;
+}
+
+.user-info-preview-table__td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: middle;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--main-BK, #3d3d3d);
+  background: var(--main-WT, #fff);
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  box-sizing: border-box;
+}
+
+.user-info-preview-table__th:last-child,
+.user-info-preview-table__td:last-child {
+  border-right: none;
+}
+
+.user-info-preview-table__th--empty,
+.user-info-preview-table__td--empty {
+  border-right: none;
+}
+
+.user-info-preview-table__td--empty {
+  background: var(--main-WT, #fff);
+}
+
+.user-info-preview-table__empty {
+  margin: 0;
+  padding: 12px 0;
+  font-size: 15px;
+  color: var(--gray-85969-d, #85969d);
+}

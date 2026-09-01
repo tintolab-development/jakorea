@@ -1,0 +1,135 @@
+.page {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  overflow: visible;
+}
+
+/**
+ * 결과 확인 히어로 배경 — result_gradient.png (1920×1000)
+ * 헤더 영역까지 확장 (transparent header / layout: hero)
+ */
+.pageBackground {
+  position: absolute;
+  top: calc(-1 * (var(--app-header-height) + var(--content-padding-block)));
+  left: 50%;
+  z-index: 0;
+  width: 100vw;
+  height: 1000px;
+  pointer-events: none;
+  background-color: transparent;
+  background-image: url('../../assets/background_gradient/result_gradient.png');
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover;
+  transform: translateX(-50%);
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  padding-inline: var(--page-padding-x);
+}
+
+.hero {
+  margin-bottom: var(--spacing-32);
+}
+
+.heroTitle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  text-align: center;
+}
+
+.heroLine {
+  display: block;
+}
+
+.tabs {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-bottom: var(--spacing-60);
+  overflow-x: auto;
+}
+
+.toolbar {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  justify-content: flex-end;
+  margin-bottom: var(--spacing-24);
+}
+
+.search {
+  width: 360px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.searchField {
+  width: 100%;
+  max-width: 100%;
+}
+
+.list {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.empty {
+  margin: 0;
+  padding: var(--spacing-40) 0;
+}
+
+.pagination {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-top: var(--spacing-40);
+}
+
+@media (--bp-below-pc) {
+  .heroTitle {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .tabs {
+    justify-content: flex-start;
+  }
+
+  .toolbar {
+    justify-content: stretch;
+  }
+
+  .search {
+    width: 100%;
+  }
+
+  .pagination {
+    margin-top: var(--spacing-32);
+  }
+}
+
+@media (--bp-pc-up) {
+  .content {
+    padding-inline: 80px;
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .content {
+    padding-inline: 0;
+  }
+}

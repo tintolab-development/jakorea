@@ -7,62 +7,48 @@
  */
 
 import type { ColumnsType } from 'antd/es/table'
-import type { Program, Sponsor } from '@/types/domain'
-import type { EducationRecordProgramRegion } from '../lib/education-record-region'
+import {
+  formatEducationRecordEducationType,
+  formatEducationRecordInstitutionType,
+  formatEducationRecordTargetLevel,
+} from '../lib/education-record-labels'
+import type { EducationRecordRow } from '../model/education-record-types'
 
-const TARGET_LEVEL_LABELS: Record<string, string> = {
-  elementary: '초',
-  middle: '중',
-  high: '고',
-}
-
-const INSTITUTION_TYPE_LABELS: Record<string, string> = {
-  inside_school: '학교 안',
-  outside_school: '학교 밖',
-}
-
-const PROGRAM_TYPE_LABELS: Record<string, string> = {
-  online: '온라인',
-  offline: '오프라인',
-  hybrid: '온/오프라인',
-}
-
-export type EducationRecordColumnDeps = {
-  sponsors: Sponsor[]
-  sponsorMap: Map<string, Sponsor>
-  /** Program → 학교·지역 정보 Map (없으면 `district`로 fallback) */
-  programRegionMap: Map<string, EducationRecordProgramRegion>
-}
-
-export function createEducationRecordColumns({
-  sponsors,
-  sponsorMap,
-  programRegionMap,
-}: EducationRecordColumnDeps): ColumnsType<Program> {
-  const getSponsorNameKo = (id?: string) => {
-    if (!id) return '-'
-    const sponsor = sponsorMap.get(id) ?? sponsors.find(s => s.id === id)
-    return sponsor?.name || '-'
+function formatEducationMonth(record: EducationRecordRow): string {
+  if (record.educationMonth) {
+    const parts = record.educationMonth.trim().split('-')
+    if (parts.length >= 2) {
+      const month = Number(parts[1])
+      if (month >= 1 && month <= 12) return `${month}월`
+    }
+    const digits = record.educationMonth.replace(/\D/g, '')
+    if (digits.length >= 6) {
+      const month = Number(digits.slice(4, 6))
+      if (month >= 1 && month <= 12) return `${month}월`
+    }
   }
-  const getSponsorNameEn = (id?: string) => {
-    if (!id) return '-'
-    const sponsor = sponsorMap.get(id) ?? sponsors.find(s => s.id === id)
-    return sponsor?.nameEn || '-'
+  if (record.startDate) {
+    const parsed = new Date(record.startDate)
+    if (!Number.isNaN(parsed.getTime())) return `${parsed.getMonth() + 1}월`
   }
+  return '-'
+}
 
+function formatPartnerInvolvement(value?: boolean | string): string {
+  if (value === true || value === 'Yes' || value === 'YES') return 'Yes'
+  if (value === false || value === 'No' || value === 'NO') return 'No'
+  if (value == null || value === '') return 'No'
+  return String(value)
+}
+
+export function createEducationRecordColumns(): ColumnsType<EducationRecordRow> {
   return [
     {
       title: '교육 월',
-      dataIndex: 'startDate',
       key: 'educationMonth',
       width: 90,
       align: 'center',
-      render: (date?: string) => {
-        if (!date) return '-'
-        const parsed = new Date(date)
-        if (Number.isNaN(parsed.getTime())) return '-'
-        return `${parsed.getMonth() + 1}월`
-      },
+      render: (_: unknown, record: EducationRecordRow) => formatEducationMonth(record),
     },
     {
       title: '사업분야',
@@ -73,34 +59,34 @@ export function createEducationRecordColumns({
       render: (value?: string) => value || '-',
     },
     {
-      title: '후원사명(영문)',
-      dataIndex: 'sponsorId',
-      key: 'sponsorNameEn',
-      width: 220,
-      align: 'center',
-      render: (sponsorId: string) => getSponsorNameEn(sponsorId),
-    },
-    {
-      title: '대표 프로그램명(영문)',
-      dataIndex: 'titleEn',
-      key: 'titleEn',
-      width: 260,
+      title: '후원사명(국문)',
+      dataIndex: 'sponsorNameKo',
+      key: 'sponsorNameKo',
+      width: 200,
       align: 'center',
       render: (value?: string) => value || '-',
     },
     {
-      title: '후원사명(국문)',
-      dataIndex: 'sponsorId',
-      key: 'sponsorNameKo',
-      width: 200,
+      title: '후원사명(영문)',
+      dataIndex: 'sponsorNameEn',
+      key: 'sponsorNameEn',
+      width: 220,
       align: 'center',
-      render: (sponsorId: string) => getSponsorNameKo(sponsorId),
+      render: (value?: string) => value || '-',
     },
     {
       title: '대표 프로그램명(국문)',
       dataIndex: 'mainTitle',
       key: 'mainTitle',
       width: 240,
+      align: 'center',
+      render: (value?: string) => value || '-',
+    },
+    {
+      title: '대표 프로그램명(영문)',
+      dataIndex: 'titleEn',
+      key: 'titleEn',
+      width: 260,
       align: 'center',
       render: (value?: string) => value || '-',
     },
@@ -129,24 +115,20 @@ export function createEducationRecordColumns({
       render: (value?: string) => value || '-',
     },
     {
-      title: '학교명 (기관)',
+      title: '기관명',
+      dataIndex: 'schoolOrOrganizationName',
       key: 'schoolName',
       width: 220,
       align: 'center',
-      render: (_: unknown, record: Program) => {
-        const info = programRegionMap.get(record.id)
-        return info?.schoolName || '-'
-      },
+      render: (value?: string) => value || '-',
     },
     {
       title: '시군구',
+      dataIndex: 'district',
       key: 'district',
       width: 140,
       align: 'center',
-      render: (_: unknown, record: Program) => {
-        const info = programRegionMap.get(record.id)
-        return info?.region || record.district || '-'
-      },
+      render: (value?: string) => value || '-',
     },
     {
       title: '대상 구분',
@@ -154,28 +136,22 @@ export function createEducationRecordColumns({
       key: 'targetLevel',
       width: 110,
       align: 'center',
-      render: (value?: string) => (value ? (TARGET_LEVEL_LABELS[value] ?? value) : '-'),
+      render: (value?: string) => formatEducationRecordTargetLevel(value),
     },
     {
       title: 'IP Owned',
       dataIndex: 'ipOwned',
       key: 'ipOwned',
-      width: 110,
+      width: 130,
       align: 'center',
-      ellipsis: false,
-      onHeaderCell: () => ({ className: 'er-data-tab__cell--wrap' }),
-      onCell: () => ({ className: 'er-data-tab__cell--wrap' }),
       render: (value?: string) => value || 'JA',
     },
     {
       title: 'Course Delivered By',
       dataIndex: 'courseDeliveredBy',
       key: 'courseDeliveredBy',
-      width: 190,
+      width: 210,
       align: 'center',
-      ellipsis: false,
-      onHeaderCell: () => ({ className: 'er-data-tab__cell--wrap' }),
-      onCell: () => ({ className: 'er-data-tab__cell--wrap' }),
       render: (value?: string) => value || '-',
     },
     {
@@ -184,7 +160,7 @@ export function createEducationRecordColumns({
       key: 'partnerInvolvement',
       width: 190,
       align: 'center',
-      render: (value?: boolean) => (value ? 'Yes' : 'No'),
+      render: (value?: boolean | string) => formatPartnerInvolvement(value),
     },
     {
       title: '기관 구분',
@@ -192,7 +168,7 @@ export function createEducationRecordColumns({
       key: 'institutionType',
       width: 120,
       align: 'center',
-      render: (value?: string) => (value ? (INSTITUTION_TYPE_LABELS[value] ?? value) : '-'),
+      render: (value?: string) => formatEducationRecordInstitutionType(value),
     },
     {
       title: 'IPS',
@@ -208,7 +184,7 @@ export function createEducationRecordColumns({
       key: 'programCategory',
       width: 170,
       align: 'center',
-      render: (value: string | null | undefined, record: Program) =>
+      render: (value: string | null | undefined, record: EducationRecordRow) =>
         record.ips === 'Succeed' ? value || '-' : '-',
     },
     {
@@ -217,34 +193,32 @@ export function createEducationRecordColumns({
       key: 'programChannel',
       width: 200,
       align: 'center',
-      render: (value: string | null | undefined, record: Program) =>
+      render: (value: string | null | undefined, record: EducationRecordRow) =>
         record.ips === 'Inspire' ? value || '-' : '-',
     },
     {
       title: '교육 형태',
-      dataIndex: 'type',
-      key: 'type',
+      dataIndex: 'educationType',
+      key: 'educationType',
       width: 130,
       align: 'center',
-      render: (value: string) => PROGRAM_TYPE_LABELS[value] ?? value ?? '-',
+      render: (value?: string) => formatEducationRecordEducationType(value),
     },
     {
       title: '교육시간',
-      dataIndex: 'educationTime',
-      key: 'educationTime',
+      dataIndex: 'educationHours',
+      key: 'educationHours',
       width: 110,
       align: 'center',
       render: (value?: number) => (value != null ? `${value}시간` : '-'),
     },
     {
       title: '학급수',
+      dataIndex: 'classCount',
       key: 'classCount',
       width: 100,
       align: 'center',
-      render: (_: unknown, record: Program) => {
-        const count = record.rounds?.[0]?.classCount
-        return count != null ? count : '-'
-      },
+      render: (value?: number) => (value != null ? value : '-'),
     },
     {
       title: '남',

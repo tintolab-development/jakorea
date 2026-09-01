@@ -1,11 +1,36 @@
 .calendar-main {
-  background: var(--color-bg-base);
-  border-radius: var(--16, 16px);
+  box-sizing: border-box;
+  min-width: var(--calendar-main-month-min-width, calc(116px * 7 + 42px));
+  min-height: var(--calendar-main-month-min-height, calc(124px * 6 + 37px + 50px + 32px));
   background: var(--main-WT, #fff);
-  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  border-radius: var(--calendar-shell-radius, 12px);
+  border: var(--calendar-shell-border, 1px solid #d4d4d4);
+  box-shadow: var(--calendar-shell-shadow, none);
   display: flex;
   flex-direction: column;
+  gap: var(--calendar-main-header-body-gap, 10px);
   padding: 16px 20px;
+}
+
+.calendar-main:has(.calendar-week--time-grid) {
+  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px));
+  min-height: var(
+    --calendar-main-week-min-height,
+    calc(1344px + 40px + 50px + 32px)
+  );
+  flex-shrink: 0;
+  max-width: none;
+  align-items: flex-start;
+}
+
+.calendar-main:has(.calendar-week--time-grid) .calendar-header {
+  width: 100%;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
+.calendar-main:has(.calendar-week--time-grid) .calendar-week--time-grid {
+  overflow: hidden;
 }
 
 /* header */

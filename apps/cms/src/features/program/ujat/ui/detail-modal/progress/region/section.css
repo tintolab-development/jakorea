@@ -1,0 +1,13 @@
+.ujat-education-progress-region-assignment {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-education-progress-region-assignment
+  .ujat-institution-application-region-tabs.cms-text-tabs
+  .cms-text-tabs__row {
+  margin-bottom: 0;
+}

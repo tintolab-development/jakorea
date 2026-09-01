@@ -256,7 +256,7 @@
   box-sizing: border-box !important;
 }
 
-.settlement-detail__view-btn.app-button--primary {
+.settlement-detail__view-btn.cms-button--primary {
   background: var(--JA-mint-01, #01A1AF) !important;
   border-color: var(--JA-mint-01, #01A1AF) !important;
   color: #fff !important;

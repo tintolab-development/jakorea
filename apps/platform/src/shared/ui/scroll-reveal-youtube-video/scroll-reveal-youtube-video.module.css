@@ -1,0 +1,122 @@
+.section {
+  --reveal-radius: 18px;
+  --reveal-mask-width: clamp(320px, 72vw, 960px);
+  --reveal-mask-height: clamp(160px, 18vw, 280px);
+  --reveal-duration: 3200ms;
+  --reveal-easing: cubic-bezier(0.22, 1, 0.36, 1);
+  /* opacity는 짧게 — 커튼(width)이 보이도록 */
+  --reveal-fade-duration: 480ms;
+
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+  padding: 120px 0;
+  overflow: hidden;
+  background: var(--color-neutral-white);
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  max-width: var(--reveal-mask-width);
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 20px;
+  text-align: center;
+  white-space: pre-line;
+  opacity: 0;
+  transform: translateY(50px);
+  transition:
+    opacity var(--reveal-duration) var(--reveal-easing),
+    transform var(--reveal-duration) var(--reveal-easing);
+}
+
+/*
+ * clip-path inset(... round)는 브라우저에서 보간이 깨져 fade만 남음.
+ * 트랙은 최종 크기 고정, 마스크 width 0→100% 로 중앙 커튼 + border-radius 유지.
+ */
+.maskTrack {
+  position: relative;
+  width: var(--reveal-mask-width);
+  height: var(--reveal-mask-height);
+  margin: 0 auto;
+}
+
+.mask {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  overflow: hidden;
+  border-radius: var(--reveal-radius);
+  background: var(--color-neutral-black);
+  opacity: 0;
+  transform: translateX(-50%);
+  transition:
+    width var(--reveal-duration) var(--reveal-easing),
+    opacity var(--reveal-fade-duration) var(--reveal-easing);
+}
+
+.iframeWrap {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--reveal-mask-width);
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+.iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(90vw, 1100px);
+  aspect-ratio: 16 / 9;
+  height: auto;
+  min-height: 100%;
+  border: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.isInView .title {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.isInView .mask {
+  width: 100%;
+  opacity: 1;
+}
+
+.reducedMotion .title {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.reducedMotion .mask {
+  width: 100%;
+  opacity: 1;
+  transition: none;
+}
+
+@media (--bp-below-pc) {
+  .section {
+    --reveal-radius: var(--radius-16);
+    --reveal-mask-width: calc(100vw - 40px);
+    --reveal-mask-height: clamp(180px, 52vw, 260px);
+    --reveal-duration: 2800ms;
+    padding: 96px 0;
+    gap: var(--spacing-32);
+  }
+
+  .title {
+    padding-inline: var(--spacing-20);
+  }
+}

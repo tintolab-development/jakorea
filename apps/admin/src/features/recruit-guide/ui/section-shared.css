@@ -1,0 +1,114 @@
+/**
+ * 채용 안내 섹션 공통 스타일
+ */
+
+.recruit-guide-preline {
+  display: block;
+  width: 100%;
+  white-space: pre-line;
+  word-break: keep-all;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: center;
+}
+
+.recruit-guide-thumb {
+  width: 120px;
+  height: 128px;
+  flex-shrink: 0;
+  aspect-ratio: 740 / 790;
+  margin: 0 auto;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--color-bg-secondary, #f7f7f7);
+  border: 1px solid var(--table-line, #e0e0e0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recruit-guide-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recruit-guide-thumb--empty {
+  color: var(--color-text-tertiary, #9e9e9e);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.recruit-guide-section .cms-data-table .ant-table-thead > tr > th,
+.recruit-guide-section .cms-data-table .ant-table-tbody > tr > td {
+  text-align: center !important;
+  vertical-align: middle;
+}
+
+.recruit-guide-banner-table .ant-table-thead > tr > th.recruit-guide-col--image,
+.recruit-guide-banner-table .ant-table-tbody > tr > td.recruit-guide-col--image {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+}
+
+.recruit-guide-culture-table .ant-table-thead > tr > th.recruit-guide-col--label,
+.recruit-guide-culture-table .ant-table-tbody > tr > td.recruit-guide-col--label {
+  width: 180px !important;
+  min-width: 160px !important;
+  max-width: 220px !important;
+}
+
+.recruit-guide-culture-table .ant-table-tbody > tr > td.recruit-guide-col--text {
+  text-align: left !important;
+}
+
+.recruit-guide-section .recruit-guide-col--text .recruit-guide-inline-field--readonly textarea.ant-input {
+  text-align: left;
+}
+
+.recruit-guide-section .recruit-guide-inline-field {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.recruit-guide-section .recruit-guide-inline-field .cms-input__control,
+.recruit-guide-section .recruit-guide-inline-field .cms-textarea__control {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.recruit-guide-section .recruit-guide-inline-field--readonly .cms-input__control,
+.recruit-guide-section .recruit-guide-inline-field--readonly .cms-textarea__control {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: default;
+}
+
+.recruit-guide-section .recruit-guide-inline-field--readonly .ant-input,
+.recruit-guide-section .recruit-guide-inline-field--readonly textarea.ant-input {
+  cursor: default;
+  color: var(--default-BK, #3d3d3d) !important;
+  font-weight: 500;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.recruit-guide-section .recruit-guide-inline-field--edit .cms-textarea--fixed-rows
+  .cms-textarea__inner
+  textarea.ant-input {
+  resize: none !important;
+  overflow-y: auto;
+}
+
+.recruit-guide-section .cms-data-table .ant-table-tbody > tr {
+  transition: none;
+}

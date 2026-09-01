@@ -12,12 +12,17 @@ import {
   type UserDetailStrategySectionConfig,
 } from '@/features/user/detail/strategies'
 import { resolveUserDetailBasicTabCaption } from '@/features/user/shared/lib/admin-provisioned-member-policy'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { openPortal1365Main } from '@/shared/constants'
 
 export interface UseUserDetailFullpageDerivedParams {
   displayUser: Omit<User, 'password'> | null
   tabState: TabState
   applications: Application[]
   enrollmentApplications: Application[]
+  /** 강사 권한 신청 상세 — 역할이 INDIVIDUAL이어도 강사 상세 섹션 구성 */
+  mode?: 'default' | 'permission'
+  permissionRole?: 'instructor' | 'admin'
 }
 
 export interface UserDetailFullpageDerived {
@@ -33,18 +38,37 @@ export function useUserDetailFullpageDerived({
   tabState,
   applications,
   enrollmentApplications,
+  mode = 'default',
+  permissionRole,
 }: UseUserDetailFullpageDerivedParams): UserDetailFullpageDerived | null {
   return useMemo(() => {
     if (!displayUser) return null
 
     const strategyCtx = { displayUser, applications, enrollmentApplications }
-    const strategy = roleStrategyMap[displayUser.role]
+    const strategyRole =
+      mode === 'permission' && permissionRole === 'instructor'
+        ? 'INSTRUCTOR'
+        : mode === 'permission' && permissionRole === 'admin'
+          ? 'ADMIN'
+          : displayUser.role
+    const strategy = roleStrategyMap[strategyRole]
     const rawSections = strategy.getSections(strategyCtx)
+    const remote1365 =
+      isMembersRemoteEnabled() && displayUser.id1365?.trim()
+        ? {
+            maskedLabel: displayUser.id1365.trim(),
+            fullLabel: displayUser.id1365.trim(),
+            onOpen: openPortal1365Main,
+          }
+        : isMembersRemoteEnabled()
+          ? undefined
+          : rawSections.basicTab.externalId1365
     const sections: UserDetailStrategySectionConfig = {
       ...rawSections,
       basicTab: {
         ...rawSections.basicTab,
         caption: resolveUserDetailBasicTabCaption(displayUser, rawSections.basicTab.caption),
+        externalId1365: remote1365,
       },
     }
     const enrollmentTableRows = strategy.getEnrollmentRows(strategyCtx)
@@ -59,5 +83,13 @@ export function useUserDetailFullpageDerived({
       enrollmentTableRows,
       resolvedProgramsChild,
     }
-  }, [displayUser, tabState.lnb, tabState.child, applications, enrollmentApplications])
+  }, [
+    displayUser,
+    tabState.lnb,
+    tabState.child,
+    applications,
+    enrollmentApplications,
+    mode,
+    permissionRole,
+  ])
 }

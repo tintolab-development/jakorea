@@ -7,8 +7,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Card, List, Typography, Tag, Space, Empty, Tabs, Button, Divider, Modal } from 'antd'
-import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
+import { Card, List, Typography, Tag, Space, Tabs, Divider } from 'antd'
+import { CmsButton, LoadingButton, LabeledSearchInput, EmptyState, ContentModal } from '@/shared/ui'
 import { CalendarOutlined, PushpinFilled, EyeOutlined, FileOutlined } from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
@@ -120,7 +120,9 @@ export function NoticeListPage() {
         {/* 목록 영역 */}
         <Card styles={{ body: { padding: 0 } }}>
           {filteredNotices.length === 0 ? (
-            <Empty description="검색 결과가 없습니다." style={{ padding: '40px 0' }} />
+            <div style={{ padding: '40px 0' }}>
+              <EmptyState description="검색 결과가 없습니다." />
+            </div>
           ) : (
             <List
               itemLayout="horizontal"
@@ -168,7 +170,7 @@ export function NoticeListPage() {
                         <Divider type="vertical" />
                         <Text type="secondary" style={{ fontSize: 13 }}>
                           <CalendarOutlined style={{ marginRight: 4 }} />
-                          {dayjs(notice.createdAt).format('YYYY-MM-DD')}
+                          {dayjs(notice.createdAt).format('YYYY.MM.DD')}
                         </Text>
                       </Space>
                     }
@@ -181,37 +183,39 @@ export function NoticeListPage() {
       </Space>
 
       {/* 공지사항 상세 Modal */}
-      <Modal
-        title={
-          <div style={{ paddingRight: 24 }}>
-            <Space size="small" style={{ marginBottom: 4, display: 'flex' }}>
-              <Tag color="blue">{selectedNotice?.category}</Tag>
-              {selectedNotice?.isImportant && <Tag color="red">필독</Tag>}
-            </Space>
-            <Title level={4} style={{ margin: 0 }}>
-              {selectedNotice?.title}
-            </Title>
-          </div>
-        }
+      <ContentModal
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         width={800}
-        footer={[
-          <Button key="close" type="primary" onClick={() => setModalOpen(false)}>
+        title={selectedNotice?.title ?? '공지사항'}
+        titleContent={
+          selectedNotice ? (
+            <div style={{ paddingRight: 24 }}>
+              <Space size="small" style={{ marginBottom: 4, display: 'flex' }}>
+                <Tag color="blue">{selectedNotice.category}</Tag>
+                {selectedNotice.isImportant ? <Tag color="red">필독</Tag> : null}
+              </Space>
+              <Title level={4} style={{ margin: 0 }}>
+                {selectedNotice.title}
+              </Title>
+            </div>
+          ) : undefined
+        }
+        footer={
+          <CmsButton variant="primary" size="medium" onClick={() => setModalOpen(false)}>
             확인
-          </Button>,
-        ]}
-        centered
+          </CmsButton>
+        }
       >
-        {selectedNotice && (
-          <div style={{ padding: '12px 0' }}>
+        {selectedNotice ? (
+          <div>
             <Space
               split={<Divider type="vertical" />}
               style={{ color: '#8c8c8c', marginBottom: 16 }}
             >
               <Text type="secondary">{selectedNotice.author}</Text>
               <Text type="secondary">
-                {dayjs(selectedNotice.createdAt).format('YYYY-MM-DD HH:mm')}
+                {dayjs(selectedNotice.createdAt).format('YYYY.MM.DD HH:mm')}
               </Text>
               <Text type="secondary">조회수 {selectedNotice.viewCount.toLocaleString()}</Text>
             </Space>
@@ -230,7 +234,7 @@ export function NoticeListPage() {
               {selectedNotice.content}
             </div>
 
-            {selectedNotice.hasAttachment && (
+            {selectedNotice.hasAttachment ? (
               <>
                 <Divider style={{ margin: '24px 0' }} />
                 <Card
@@ -242,15 +246,17 @@ export function NoticeListPage() {
                   }
                   styles={{ body: { padding: '8px 12px' } }}
                 >
-                  <Button type="link" icon={<FileOutlined />} style={{ padding: 0 }}>
+                  <LoadingButton type="link" icon={<FileOutlined />} style={{ padding: 0 }}>
                     [공지] {selectedNotice.category}_관련_서식.pdf (1.2MB)
-                  </Button>
+                  </LoadingButton>
                 </Card>
               </>
-            )}
+            ) : null}
           </div>
+        ) : (
+          <div />
         )}
-      </Modal>
+      </ContentModal>
 
       <style>{`
         .notice-list-item:hover {

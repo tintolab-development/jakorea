@@ -1,0 +1,20 @@
+/* JA 봉사 프로그램 진행 경험 여부 — 라디오 가로 정렬 */
+.paragraph-card[data-paragraph-id='program-volunteer-application-seed-ja-experience']
+  .multiple-choice-body {
+  border: none;
+  padding: 0;
+}
+
+.paragraph-card[data-paragraph-id='program-volunteer-application-seed-ja-experience']
+  .multiple-choice-radio-group.app-radio-group {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  width: auto;
+}
+
+.paragraph-card[data-paragraph-id='program-volunteer-application-seed-ja-experience']
+  .multiple-choice-row {
+  padding: 0;
+}

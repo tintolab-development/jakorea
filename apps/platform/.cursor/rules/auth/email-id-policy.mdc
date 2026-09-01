@@ -1,0 +1,140 @@
+---
+description: Platform 회원 이메일 ID 형식·금칙어·중복·정규화 정책
+globs: apps/platform/src/**/auth/**,apps/platform/src/shared/lib/email-id/**
+alwaysApply: false
+---
+
+# Platform 이메일 ID 정책
+
+회원가입·로그인·비밀번호 찾기 등 **사용자 auth**에서 이메일을 ID로 사용할 때 따른다.  
+구현은 [`apps/platform/src/shared/lib/email-id/`](../../../src/shared/lib/email-id/)를 **단일 진입점**으로 사용한다.
+
+## 기본 정책
+
+- 회원가입 및 로그인 아이디는 **이메일 주소 형식**을 사용한다.
+- 이메일은 로그인, 본인 확인, 비밀번호 재설정, 주요 알림 발송에 사용될 수 있다.
+- **동일 이메일 중복 가입 불가**.
+- 이메일은 **대소문자 구분하지 않음** (`User@Test.com` = `user@test.com`).
+- 저장·비교 시 **`normalizeEmailId`로 소문자 정규화** (앞뒤 공백 제거 포함).
+
+## 입력 규칙
+
+### 허용 조건
+
+- 전체 길이: 최대 **254자**
+- `@` 앞 local-part: 최대 **64자**
+- `@`는 **정확히 1개**
+- 도메인에 **최소 1개의 `.`**, TLD **최소 2자** (`.com`, `.kr`, `.org` 등)
+- 앞뒤 공백 자동 제거, **내부 공백 불가**
+
+### 허용 문자
+
+- local-part: 영문 대소문자, 숫자, `.`, `_`, `+`, `-`
+- domain: 영문, 숫자, `.`, `-`
+
+### 허용 예시
+
+- `user@example.com`
+- `user.name@example.com`
+- `user_name@example.co.kr`
+- `user-name@example.com`
+- `user+service@example.com`
+
+### 거부 예시
+
+| 유형 | 예시 |
+|------|------|
+| 형식 아님 | `user`, `user@`, `@example.com` |
+| `@` 2개 이상 | `user@@example.com` |
+| 공백 | `user name@example.com` |
+| 도메인 오류 | `user@example`, `user@.com`, `user@example..com` |
+| 연속 `.` | `user..name@example.com` |
+| local-part `.` 시작/끝 | `.user@example.com`, `user.@example.com` |
+
+## local-part 금칙어
+
+주로 **@ 앞 local-part** 기준으로 검사한다 (`admin@example.com` → `admin`).
+
+### 예약어 (단독 사용 제한 — 완전 일치)
+
+`admin`, `administrator`, `root`, `system`, `manager`, `master`, `owner`, `operator`, `support`, `help`, `cs`, `customer`, `service`, `official`, `notice`, `noreply`, `no-reply`, `security`, `privacy`, `abuse`, `webmaster`, `postmaster`
+
+코드: `EMAIL_ID_RESERVED_LOCAL_PARTS` in `constants.ts`
+
+### 사칭 가능 단어 (compact local-part 포함 검사)
+
+서비스·회사·브랜드명 혼동 방지. `-`, `_`, `.`, `+` 제거 후 토큰 일치·포함 검사.
+
+- 예: `jakorea`, `ja-korea`, `jakorea-official`
+- 내부 운영 계정은 **관리자 등록**으로 별도 관리
+
+코드: `EMAIL_ID_BRAND_TOKENS`
+
+### 부적절 표현
+
+욕설·혐오·성적·차별·범죄 조장 등 **명백한 부적절 표현**만 제한.  
+아이디 단계에서는 과도한 검사 지양 — 운영 예약어 + 명백한 표현 중심.
+
+코드: `EMAIL_ID_INAPPROPRIATE_TOKENS` (운영에서 확장)
+
+### 닉네임·이름
+
+이메일 외 노출 영역(닉네임, 이름) 금칙어는 **별도 validator**로 분리 검토 (`validateDisplayName` 등).
+
+## 중복 확인
+
+- `normalizeEmailId` 기준으로 비교
+- Gmail `.` 제거, `+alias` 제거 등 **서비스별 특수 규칙 기본 미적용**
+  - `user.name@gmail.com` ≠ `username@gmail.com`
+  - `user+test@gmail.com` ≠ `user@gmail.com`
+
+## 권장 검증 순서
+
+`validateEmailId`가 아래 순서를 따른다:
+
+1. 앞뒤 공백 제거
+2. 내부 공백 확인
+3. 소문자 변환
+4. 빈 값 확인
+5. 이메일 형식 (`@` 1개, local/domain 분리)
+6. 길이 제한 (전체 254, local 64)
+7. 허용 문자
+8. local-part 금칙어
+9. local-part·domain 형식 (연속 `.`, TLD 등)
+10. (별도) 중복 이메일 확인
+11. 가입 또는 인증 메일 발송
+
+## 사용자 안내 문구
+
+`EMAIL_ID_MESSAGES`와 **동일 문구**를 UI·API 에러에 사용한다.
+
+| code | 문구 |
+|------|------|
+| empty | 이메일을 입력해 주세요. |
+| invalid_format | 이메일 형식에 맞게 입력해 주세요. |
+| duplicate | 이미 가입된 이메일이에요. 로그인하거나 다른 이메일을 입력해 주세요. |
+| forbidden | 사용할 수 없는 이메일이에요. 다른 이메일을 입력해 주세요. |
+| length_exceeded | 이메일은 최대 254자까지 입력할 수 있어요. |
+| whitespace | 이메일에는 공백을 사용할 수 없어요. |
+
+## 구현 가이드
+
+```ts
+import { normalizeEmailId, validateEmailId, EMAIL_ID_MESSAGES } from '@/shared/lib/email-id'
+
+const result = validateEmailId(rawInput)
+if (!result.ok) {
+  showError(result.message)
+  return
+}
+const emailForStorage = result.normalized
+```
+
+- auth 화면·mock·향후 API 연동 시 **직접 regex 작성 금지** — `validateEmailId` 사용
+- 하위 호환: `isValidEmail` (sign-up utils)는 `isValidEmailId`에 위임
+- CMS `@jakorea.org` 관리자 로그인 정책과 **별도**
+
+## 범위外
+
+- Gmail dot/plus 정규화 (필요 시 별도 정책 추가)
+- 실제 DB/API 중복 확인 (mock → API 교체 시 `normalizeEmailId` 유지)

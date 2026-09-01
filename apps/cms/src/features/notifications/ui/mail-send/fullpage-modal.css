@@ -1,0 +1,227 @@
+.mail-send-fullpage-modal.teal-header-modal--full .teal-header-modal__body {
+  padding: 0 !important;
+  margin-top: 0 !important;
+  gap: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  overflow-x: clip;
+  width: 100%;
+  background: #f4f6f6;
+}
+
+@supports not (overflow-x: clip) {
+  .mail-send-fullpage-modal.teal-header-modal--full .teal-header-modal__body {
+    overflow-x: visible;
+  }
+}
+
+.mail-send-fullpage-modal__shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  background: #f4f6f6;
+  --mail-form-title-row-height: 64px;
+}
+
+.mail-send-fullpage-modal__title-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  background: var(--color-mint-01, #01a1af);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.04);
+  padding: 16px 52px;
+}
+
+.mail-send-fullpage-modal__title-text {
+  color: var(--main-WT, #fff);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 26px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mail-send-fullpage-modal__title-close {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--main-WT, #fff);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mail-send-fullpage-modal__title-close .anticon {
+  font-size: 16px;
+}
+
+.mail-send-fullpage-modal__body {
+  display: flex;
+  width: 100%;
+  padding: 32px 52px 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 32px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0;
+  box-sizing: border-box;
+  background: #f4f6f6;
+  scroll-padding-bottom: 52px;
+}
+
+.mail-send-fullpage-modal__notice {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+}
+
+.mail-send-fullpage-modal__notice-text {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.mail-send-fullpage-modal__notice-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.mail-send-fullpage-modal__layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  width: 100%;
+  min-height: 0;
+  padding-bottom: 52px;
+  box-sizing: border-box;
+}
+
+.mail-send-fullpage-modal__main {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mail-send-fullpage__widget {
+  display: flex;
+  flex: 0 0 auto;
+  padding: 20px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  align-self: stretch;
+  box-sizing: border-box;
+  border-radius: 16px;
+  background: var(--main-WT, #fff);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+}
+
+.mail-send-fullpage__widget > * {
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.mail-send-fullpage__section-title {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.mail-send-fullpage__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.mail-send-fullpage__section-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mail-send-fullpage__required {
+  margin-left: 2px;
+  color: var(--color-danger, #c32f4a);
+}
+
+.mail-send-fullpage-modal .detail-info-form__field-content--edit > .mail-send-fullpage__timing {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+}
+
+.mail-send-fullpage__timing .app-radio-group.ant-radio-group {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+}
+
+.mail-send-fullpage__timing-divider {
+  flex: 0 0 1px;
+  width: 1px;
+  height: 16px;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.2;
+}
+
+.mail-send-fullpage-modal .mail-send-fullpage__timing .cms-datepicker.cms-datepicker--large {
+  flex: 1 1 0;
+  min-width: 120px;
+  width: auto;
+}
+
+.mail-send-fullpage-modal .detail-info-form__field-content--edit > * {
+  display: block;
+  margin-block: 0 !important;
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+}

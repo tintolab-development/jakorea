@@ -1,7 +1,6 @@
 /**
  * 헤더 컴포넌트 (사이드바 상단)
  * Phase 1.1: Ant Design Header
- * Phase 4.1.1: 사용자 정보 및 로그아웃 버튼 추가
  * 유저 로그인 정보는 MainHeader(콘텐츠 상단)로 이동, 여기서는 로고만 표시
  */
 
@@ -25,31 +24,6 @@ export function Header() {
           className="sidebar-logo"
         />
       </div>
-      {/* 유저 로그인 정보: 헤더(MainHeader)로 이동 – 임시 주석 처리 */}
-      {/* {user && (
-        <div className="header-user-section">
-          <div className="header-user-card">
-            <div className="header-user-top">
-              <div className="header-user-avatar">
-                <RoleBadge role={user.role} adminLevel={user.adminLevel} size="small" variant="tag" />
-              </div>
-              <Dropdown menu={{ items: userMenuItems }} placement="bottomLeft" trigger={['click']}>
-                <Button type="link" className="header-account-button">
-                  계정 관리
-                </Button>
-              </Dropdown>
-            </div>
-            <div className="header-user-text">
-              <Text strong className="header-user-name">
-                {user.name}
-              </Text>
-              <Text type="secondary" className="header-user-email">
-                {user.email}
-              </Text>
-            </div>
-          </div>
-        </div>
-      )} */}
     </AntHeader>
   )
 }

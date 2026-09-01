@@ -1,0 +1,60 @@
+import type { Program } from '@/types/domain'
+
+/** UJAT 참여자(학교) 모집 폼 양식 편집기 — 필드 미리보기용 mock Program */
+export const UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM: Program = {
+  id: 'ujat-institution-recruit-template-preview',
+  sponsorId: 'sponsor-preview',
+  title: '2026년 JA Korea 초등 경제교육',
+  mainTitle: '2026년 JA Korea 초등 경제교육 대상 학교',
+  type: 'offline',
+  format: 'course',
+  category: 'school',
+  description: 'JA Korea 초등 경제교육 프로그램은 초등학생들에게 경제·금융 개념을 체험 중심으로 전달하는 프로그램입니다.',
+  recruitmentGuide:
+    '1. 신청 자격: 해당 지역 초등학교\n2. 신청 방법: 홈페이지 온라인 신청\n3. 선발: 선착순 및 서류 심사',
+  learningSupportContent: '교재, 교구, 강사 파견, 수업 지원 자료 제공',
+  district: '경기, 광주, 대구, 대전, 부산, 서울, 인천, 전북 지역 초등학교',
+  contactPhone: '02-6085-6028',
+  contactEmail: 'ujat@jakorea.org',
+  applicationStartDate: '2025-12-08T00:00:00.000Z',
+  applicationEndDate: '2026-01-16T00:00:00.000Z',
+  resultAnnouncementDate: '2026-01-26T00:00:00.000Z',
+  resultAnnouncementMethod: '홈페이지 공지 및 담당교사 개별 안내',
+  oneLineIntroduction: '면접 일정은 개별 안내 예정',
+  startDate: '2026-04-03T00:00:00.000Z',
+  endDate: '2026-11-20T00:00:00.000Z',
+  targetLevel: 'elementary',
+  generalCommonInfo: {
+    participantRecruitmentInfo: {
+      notesNotApplicable: false,
+    },
+  },
+  rounds: [
+    {
+      id: 'preview-round-1',
+      programId: 'ujat-institution-recruit-template-preview',
+      roundNumber: 1,
+      startDate: '2026-04-03T00:00:00.000Z',
+      endDate: '2026-06-19T00:00:00.000Z',
+      capacity: 30,
+      status: 'active',
+      deliveryType: 'offline',
+      curriculum: '36',
+    },
+    {
+      id: 'preview-round-2',
+      programId: 'ujat-institution-recruit-template-preview',
+      roundNumber: 2,
+      startDate: '2026-09-11T00:00:00.000Z',
+      endDate: '2026-11-20T00:00:00.000Z',
+      capacity: 30,
+      status: 'active',
+      deliveryType: 'offline',
+      curriculum: '36',
+    },
+  ],
+  status: 'active',
+  lifecycleStatus: 'recruiting_students',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+}

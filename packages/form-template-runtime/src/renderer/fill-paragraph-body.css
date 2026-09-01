@@ -1,0 +1,132 @@
+.form-template-id-type-with-input {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-template-id-type-with-input__radios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.form-template-id-type-with-input__input {
+  width: 100%;
+}
+
+.form-template-id-type-with-input__resident {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.form-template-id-type-with-input__resident-input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.form-template-id-type-with-input__dash {
+  flex-shrink: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.form-template-fill-multiple-choice {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-template-fill-multiple-choice__radios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 0 8px;
+}
+
+.form-template-fill-multiple-choice--stack {
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0 8px;
+}
+
+.form-template-fill-multiple-choice__check {
+  display: flex;
+  align-items: center;
+  margin-inline-end: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  white-space: normal;
+}
+
+.form-template-fill-explanation-text {
+  width: 100%;
+  font-size: 16px;
+  line-height: 150%;
+}
+
+.form-template-fill-short-essay,
+.form-template-fill-short-essay-items {
+  width: 100%;
+}
+
+/* Platform 신청·문의 textarea와 동일 계열 — antd Input 한 줄 박스와 구분 */
+textarea.form-template-fill-short-essay {
+  display: block;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 160px;
+  padding: 16px;
+  border: 1px solid var(--color-neutral-cool-200, var(--color-border-default, #e6e9eb));
+  /* FormTemplateHost: cmsAdmin 8px / platformUser 16px */
+  border-radius: var(--detail-info-form-body-radius, 8px);
+  resize: vertical;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--color-neutral-black, #3d3d3d);
+  background: var(--color-neutral-white, #fff);
+}
+
+textarea.form-template-fill-short-essay::placeholder {
+  color: var(--gray-85969-d, #85969d);
+}
+
+textarea.form-template-fill-short-essay:hover:not(:disabled),
+textarea.form-template-fill-short-essay:focus {
+  border-color: var(--color-border-focus, var(--color-mint-01, #01a1af));
+  outline: none;
+}
+
+textarea.form-template-fill-short-essay:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.form-template-fill-short-essay-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 8px;
+}
+
+.form-template-fill-short-essay-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-template-fill-short-essay-item__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--default-BK, #3d3d3d);
+}

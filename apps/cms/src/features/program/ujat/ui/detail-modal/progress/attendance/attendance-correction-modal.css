@@ -1,0 +1,160 @@
+.ujat-attendance-correction-modal-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.ujat-attendance-correction-modal-wrap::before {
+  display: none !important;
+  content: none !important;
+}
+
+.ujat-attendance-correction-modal-wrap .ant-modal.ujat-attendance-correction-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+  width: min(600px, calc(100vw - 32px)) !important;
+  max-width: min(600px, calc(100vw - 32px)) !important;
+  box-sizing: border-box !important;
+}
+
+.content-modal.ujat-attendance-correction-modal.ant-modal .ant-modal-content,
+.content-modal.ujat-attendance-correction-modal.teal-header-modal .ant-modal-content {
+  display: flex;
+  width: 600px;
+  height: auto;
+  min-height: 400px;
+  max-height: none;
+  padding: 26px 30px 34px 30px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.content-modal.ujat-attendance-correction-modal .ant-modal-body {
+  flex: 0 0 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.content-modal.ujat-attendance-correction-modal .teal-header-modal__body {
+  flex: 0 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 0;
+  margin-top: 0;
+  gap: 0;
+  overflow: visible;
+  padding-top: 16px;
+}
+
+.content-modal.ujat-attendance-correction-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 16px;
+}
+
+.content-modal.ujat-attendance-correction-modal .content-modal__description {
+  margin: 0;
+  width: 100%;
+}
+
+.content-modal.ujat-attendance-correction-modal .teal-header-modal__footer {
+  width: 100%;
+  margin-top: 30px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.ujat-attendance-correction-modal__form {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 30px;
+  margin-top: 16px;
+}
+
+.ujat-attendance-correction-modal__field {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.ujat-attendance-correction-modal__label {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-attendance-correction-modal__status-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+}
+
+.ujat-attendance-correction-modal__status-select {
+  flex: 0 0 160px;
+  width: 160px;
+  min-width: 160px;
+}
+
+.ujat-attendance-correction-modal__time-field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ujat-attendance-correction-modal__time-field .cms-datepicker {
+  width: 100%;
+}
+
+.ujat-attendance-correction-modal__time-field--hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.ujat-attendance-correction-modal__reason-field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ujat-attendance-correction-modal__footer {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.ujat-attendance-correction-modal__field .cms-select {
+  width: 100%;
+}

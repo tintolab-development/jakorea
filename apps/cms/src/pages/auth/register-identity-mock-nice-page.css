@@ -1,0 +1,74 @@
+.register-identity-mock-nice {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 24px;
+  background: var(--Color-netural-cool-50, #f5f7f7);
+}
+
+.register-identity-mock-nice__card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 360px;
+  padding: 24px;
+  border-radius: var(--radius-8, 8px);
+  background: #fff;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 8%);
+}
+
+.register-identity-mock-nice__badge {
+  margin: 0;
+  color: var(--gray-85969-d, #85969d);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: center;
+}
+
+.register-identity-mock-nice__title {
+  margin: 0;
+  color: var(--Color-netural-black, #3d3d3d);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 150%;
+  text-align: center;
+}
+
+.register-identity-mock-nice__description,
+.register-identity-mock-nice__meta {
+  margin: 0;
+  color: var(--Color-netural-black, #3d3d3d);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 160%;
+  text-align: center;
+}
+
+.register-identity-mock-nice__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.register-identity-mock-nice__field-label {
+  color: var(--Color-netural-black, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.register-identity-mock-nice__field-input.ant-input {
+  background: var(--Color-netural-cool-50, #f5f7f7);
+  color: var(--Color-netural-black, #3d3d3d);
+  cursor: default;
+}
+
+.register-identity-mock-nice__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}

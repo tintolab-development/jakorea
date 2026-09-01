@@ -8,7 +8,18 @@ import prettier from 'eslint-config-prettier'
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/.turbo/**', '**/node_modules/**']
+    ignores: [
+      '**/dist/**',
+      '**/.turbo/**',
+      '**/node_modules/**',
+      '**/playwright-report/**',
+      '**/test-results/**',
+      '**/blob-report/**',
+      '**/.playwright-mcp/**',
+      '**/playwright/.auth/**',
+      '**/tests/e2e/.auth/**',
+      '**/src/shared/api/generated/**',
+    ],
   },
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
@@ -59,6 +70,29 @@ export default tseslint.config(
       // 일반 규칙 완화
       'no-case-declarations': 'warn' // case 블록 선언 경고로 변경
     }
+  },
+  {
+    files: ['apps/cms/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'antd',
+              importNames: ['message'],
+              message:
+                'antd `message` is not allowed in CMS. Do not use toasts; use modals/inline UI or @/shared/utils/error-handler (logging only). See apps/cms/.cursor/rules/libraries/no-antd-message.mdc',
+            },
+            {
+              name: '@/shared/ui/cms-message',
+              message:
+                'cms-message was removed. Do not show toast messages in CMS.',
+            },
+          ],
+        },
+      ],
+    },
   },
   {
     files: ['packages/**/*.{ts,tsx}'],

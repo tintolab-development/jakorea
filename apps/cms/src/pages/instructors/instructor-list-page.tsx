@@ -7,19 +7,22 @@
  */
 
 import { useEffect, useState, useMemo } from 'react'
+import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
-import { Modal, Drawer } from 'antd'
+import { Drawer } from 'antd'
+import { ContentModal } from '@/shared/ui'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { PlusOutlined } from '@ant-design/icons'
 import { InstructorList } from '@/features/instructor/ui/instructor-list'
 import { InstructorForm } from '@/features/instructor/ui/instructor-form'
 import { InstructorDetail } from '@/features/instructor/ui/instructor-detail'
 import { useInstructorStore } from '@/features/instructor/model/instructor-store'
 import { PermissionButton } from '@/shared/components'
-import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
+import { LAYOUT_CONSTANTS, MESSAGES } from '@/shared/constants'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import type { InstructorFormData } from '@/entities/instructor/model/schema'
 import type { Instructor } from '@/types/domain'
-import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { handleError } from '@/shared/utils/error-handler'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
@@ -137,6 +140,43 @@ export function InstructorListPage() {
     }
   )
 
+  const instructorExcelColumns = useMemo<
+    ColumnsType<{
+      name: string
+      email: string
+      phone: string
+      pillar: string
+      specialty: string
+      status: string
+      createdAt: string
+    }>
+  >(
+    () => [
+      { title: '이름', dataIndex: 'name', key: 'name' },
+      { title: '이메일', dataIndex: 'email', key: 'email' },
+      { title: '연락처', dataIndex: 'phone', key: 'phone' },
+      { title: '강사단', dataIndex: 'pillar', key: 'pillar' },
+      { title: '전문분야', dataIndex: 'specialty', key: 'specialty' },
+      { title: '상태', dataIndex: 'status', key: 'status' },
+      { title: '등록일', dataIndex: 'createdAt', key: 'createdAt' },
+    ],
+    []
+  )
+
+  const instructorExcelData = useMemo(
+    () =>
+      filteredInstructors.map(instructor => ({
+        name: instructor.name,
+        email: instructor.contactEmail ?? '',
+        phone: instructor.contactPhone ?? '',
+        pillar: instructor.instructorType ?? '',
+        specialty: instructor.specialty?.join(', ') ?? '',
+        status: 'ACTIVE',
+        createdAt: String(instructor.createdAt ?? ''),
+      })),
+    [filteredInstructors]
+  )
+
   const handleNewClick = () => {
     openFormModal()
   }
@@ -146,11 +186,9 @@ export function InstructorListPage() {
     try {
       if (editingInstructor && editingInstructor.id) {
         await updateInstructor(editingInstructor.id, data)
-        showSuccessMessage(MESSAGES.success.updated)
-      } else {
+        } else {
         await createInstructor(data)
-        showSuccessMessage(MESSAGES.success.created)
-      }
+        }
       closeFormModal()
       fetchInstructors()
     } catch (error) {
@@ -195,7 +233,6 @@ export function InstructorListPage() {
           : deletingInstructor.id
 
       await deleteInstructor(instructorId)
-      showSuccessMessage(MESSAGES.success.deleted)
       if (selectedInstructor?.id === instructorId) {
         closeDrawer()
         setSelectedInstructor(null)
@@ -242,6 +279,10 @@ export function InstructorListPage() {
             강사 등록
           </PermissionButton>
         }
+        excelExport={{
+          columns: instructorExcelColumns,
+          data: instructorExcelData,
+        }}
       >
         <div className="program-list-content-wrapper__table">
           <InstructorList data={filteredInstructors} loading={loading} onView={handleView} />
@@ -268,13 +309,11 @@ export function InstructorListPage() {
         )}
       </Drawer>
 
-      <Modal
+      <ContentModal
         open={formModalOpen}
         title={isEditingMode ? '강사 수정' : '강사 등록'}
         onCancel={handleFormCancel}
-        footer={null}
         width={LAYOUT_CONSTANTS.widths.modal.medium}
-        destroyOnClose
       >
         <InstructorForm
           key={editingInstructor?.id || 'new'}
@@ -283,30 +322,27 @@ export function InstructorListPage() {
           onCancel={handleFormCancel}
           loading={formLoading}
         />
-      </Modal>
+      </ContentModal>
 
-      <Modal
+      <ConfirmModal
         open={deleteModalOpen}
         title="강사 삭제 확인"
-        onOk={handleDeleteConfirm}
+        content={
+          deletingInstructor
+            ? `정말로 다음 강사를 삭제하시겠습니까?\n\n${
+                'name' in deletingInstructor && deletingInstructor.name
+                  ? deletingInstructor.name
+                  : '이 강사'
+              }`
+            : ''
+        }
+        onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
-        confirmLoading={deleteLoading}
-        okText="삭제"
+        confirmText="삭제"
         cancelText="취소"
-        okButtonProps={{ danger: true }}
-      >
-        {deletingInstructor && (
-          <>
-            <p>정말로 다음 강사를 삭제하시겠습니까?</p>
-            <p style={{ fontWeight: 'bold', margin: '16px 0' }}>
-              {'name' in deletingInstructor && deletingInstructor.name
-                ? deletingInstructor.name
-                : '이 강사'}
-            </p>
-            <p style={{ color: '#ff4d4f', fontSize: '12px' }}>삭제된 강사는 복구할 수 없습니다.</p>
-          </>
-        )}
-      </Modal>
+        danger
+        warningMessage="삭제된 강사는 복구할 수 없습니다."
+      />
     </div>
   )
 }

@@ -3,17 +3,18 @@
  * Phase 5.2.4: 본인 정산 정보 - 월별 정산 관리
  */
 
+import { CmsRadio, LoadingButton, EmptyState } from '@/shared/ui'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Card, Space, Button, Radio, Table, Tag, Select, Statistic, Empty } from 'antd'
+import { Card, Space, Table, Tag, Select, Statistic } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
-import { settlementStatusStatusConfig } from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/ui/status-badge'
+import { getStatusConfigAccentColor, settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/components/status-badge'
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
-import { useProgramService } from '@/features/program/hooks/use-program-service'
+import { useProgramService } from '@/features/program/general/hooks/use-program-service'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { Settlement, SettlementStatus } from '@/types/domain'
 import type { ColumnsType } from 'antd/es/table'
@@ -30,7 +31,7 @@ export function MyMonthlySettlementPage() {
 
   // 뷰 모드 (리스트/캘린더)
   const viewMode = (params.view as ViewMode) || 'list'
-  
+
   // 선택된 월 (YYYY-MM 형식)
   const selectedPeriod = params.period || dayjs().format('YYYY-MM')
 
@@ -111,9 +112,9 @@ export function MyMonthlySettlementPage() {
       key: 'id',
       width: 200,
       render: (id: string, record: Settlement) => (
-        <Button type="link" onClick={() => handleViewSettlement(record)} style={{ padding: 0 }}>
+        <LoadingButton type="link" onClick={() => handleViewSettlement(record)} style={{ padding: 0 }}>
           {id.slice(-8)}
-        </Button>
+        </LoadingButton>
       ),
     },
     {
@@ -136,7 +137,11 @@ export function MyMonthlySettlementPage() {
       key: 'status',
       width: 120,
       render: (status: SettlementStatus) => (
-        <StatusBadge status={status} statusConfig={settlementStatusStatusConfig} />
+        <StatusBadge
+          domain="custom"
+          label={settlementStatusStatusConfig[status].label}
+          accentColor={getStatusConfigAccentColor(settlementStatusStatusConfig[status].color)}
+        />
       ),
     },
     {
@@ -152,7 +157,7 @@ export function MyMonthlySettlementPage() {
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 150,
-      render: (date: string | Date) => dayjs(date).format('YYYY-MM-DD'),
+      render: (date: string | Date) => dayjs(date).format('YYYY.MM.DD'),
       sorter: (a, b) => {
         const dateA = typeof a.createdAt === 'string' ? new Date(a.createdAt) : a.createdAt
         const dateB = typeof b.createdAt === 'string' ? new Date(b.createdAt) : b.createdAt
@@ -181,18 +186,18 @@ export function MyMonthlySettlementPage() {
         <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
           {/* <h1 style={{ margin: 0 }}>월별 정산 관리</h1> */}
           <Space>
-            <Radio.Group
+            <CmsRadio.Group
               value={viewMode}
               onChange={e => handleViewModeChange(e.target.value)}
               buttonStyle="solid"
             >
-              <Radio.Button value="list">
+              <CmsRadio.Button value="list">
                 <UnorderedListOutlined /> 리스트
-              </Radio.Button>
-              <Radio.Button value="calendar">
+              </CmsRadio.Button>
+              <CmsRadio.Button value="calendar">
                 <CalendarOutlined /> 캘린더
-              </Radio.Button>
-            </Radio.Group>
+              </CmsRadio.Button>
+            </CmsRadio.Group>
           </Space>
         </Space>
 
@@ -222,7 +227,7 @@ export function MyMonthlySettlementPage() {
                 title="총 정산 금액"
                 value={monthlyStats.totalAmount}
                 suffix="원"
-                formatter={(value) => `${Number(value).toLocaleString('ko-KR')}`}
+                formatter={value => `${Number(value).toLocaleString('ko-KR')}`}
               />
               <Statistic
                 title="대기"
@@ -256,7 +261,7 @@ export function MyMonthlySettlementPage() {
         {viewMode === 'list' && (
           <Card title={`${dayjs(selectedPeriod).format('YYYY년 MM월')} 정산 목록`}>
             {settlements.length === 0 ? (
-              <Empty description="해당 월의 정산 내역이 없습니다" />
+              <EmptyState description="해당 월의 정산 내역이 없습니다" />
             ) : (
               <Table
                 columns={columns}
@@ -287,4 +292,3 @@ export function MyMonthlySettlementPage() {
     </div>
   )
 }
-

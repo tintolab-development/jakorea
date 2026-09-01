@@ -4,7 +4,10 @@
  */
 
 import { useMemo } from 'react'
-import { mockSettlements, mockApplications, mockSchedules, mockPrograms } from '@/data/mock'
+import { mockSettlements } from '@/data/mock/settlements'
+import { mockApplications } from '@/data/mock/applications'
+import { mockSchedules } from '@/data/mock/schedules'
+import { mockPrograms } from '@/data/mock/programs'
 import dayjs from 'dayjs'
 
 export interface DashboardStats {
@@ -46,6 +49,13 @@ export interface DashboardStats {
     thisWeekSchedules: number
     nextWeekSchedules: number
   }
+}
+
+/**
+ * 활성 프로그램 건수만 — 홈 툴바용. O(n²) 일정 충돌·월별 집계를 돌리지 않음.
+ */
+export function useActiveProgramCount(): number {
+  return useMemo(() => mockPrograms.filter(p => p.status === 'active').length, [])
 }
 
 /**

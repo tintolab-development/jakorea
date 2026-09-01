@@ -8,8 +8,7 @@ Turborepo + pnpm 기반의 JaKorea 모노레포입니다.
 jakorea/
 ├── apps/              # 애플리케이션
 │   ├── admin/         # 관리 콘솔
-│   ├── cms/           # CMS (Automation)
-│   ├── lms/           # 학습 관리 시스템
+│   ├── cms/           # CMS (플랫폼 어드민)
 │   └── platform/      # 사용자용 플랫폼
 ├── packages/           # 공유 패키지
 │   ├── ui/            # 공유 UI 컴포넌트
@@ -39,9 +38,6 @@ pnpm install
 # CMS 개발 서버
 pnpm --filter cms dev
 
-# LMS 개발 서버
-pnpm --filter lms dev
-
 # Admin 개발 서버
 pnpm --filter admin dev
 
@@ -65,14 +61,30 @@ pnpm format       # Prettier 포맷팅
 
 ## 📝 규칙 구조
 
-각 프로젝트는 독립적인 `.cursor/rules`를 가질 수 있습니다:
+| 위치 | 역할 |
+|------|------|
+| `.cursor/rules/` | 모노레포 공통 |
+| **`.cursor/rules/cms-admin-ui/`** | **CMS · Admin 공유 UI SSOT** (필터 치수·URL 동기화 의도·테이블 셸 등) |
+| `apps/cms/.cursor/rules/` | CMS 전용 (스택·도메인 process/*) |
+| `apps/admin/.cursor/rules/` | Admin 전용 (스택 어댑터 · CMS import 금지) |
+| `apps/platform/.cursor/rules/` | Platform 전용 |
 
-- `.cursor/rules/`: 모노레포 공통 규칙
-- `apps/cms/.cursor/rules/`: CMS 전용 규칙
-- `apps/lms/.cursor/rules/`: LMS 전용 규칙
-- `apps/admin/.cursor/rules/`: Admin 전용 규칙
+공유 UI 스펙 변경 시 **cms-admin-ui 폴더만** 수정하고, 앱 룰은 구현 path·훅 이름(어댑터)만 유지한다.
 
-Cursor는 가장 가까운 규칙을 자동으로 사용합니다.
+인덱스: [cms-admin-ui/README.md](./cms-admin-ui/README.md)
+
+## Admin Platform Kit (신규 어드민 재사용)
+
+CMS 통째 복제 없이 **셸 Kit + 도메인 분리**로 신규 관리자를 구축할 때의 기준 문서:
+
+→ [`docs/admin-platform-kit/`](../docs/admin-platform-kit/README.md)
+
+- L0 of record: `apps/admin` 셸 (`shared/ui` · layout · list hooks)
+- 스펙 SSOT: `cms-admin-ui`
+- 아키텍처·Cursor 교차검증: `05-frontend-architecture-cursor-crosscheck.md`
+- **이 레포 앱별 적용**: `06-jakorea-monorepo-adoption.md`
+- P2 패키지 승격 범위: `04-package-promotion-scope.md`
+
 
 
 

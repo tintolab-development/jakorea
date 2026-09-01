@@ -1,26 +1,37 @@
 import type { InstructorMemberProfile, User } from '@/types/user'
+import { inferInstructorMemberProfileFromRoles } from '@/features/user/api/map-member-role'
+
+type InstructorProfileResolveUser = Pick<
+  User,
+  'role' | 'roles' | 'instructorMemberProfile'
+>
 
 /**
  * CMS 회원 상세 UI 분기 — INSTRUCTOR 전용.
- * API `instructorMemberProfile`가 오면 우선, 없으면 `affiliatedSchoolUserId`로 겸직 추론.
+ * SSOT는 서버 `roles[]`:
+ * - `SCHOOL_TEACHER` 단독 → 교사
+ * - `SCHOOL_TEACHER` + `INSTRUCTOR` → 교사 겸 강사
+ * - `INSTRUCTOR` 단독 → 순수 강사
+ * roles가 없으면(mock·URL) 저장된 `instructorMemberProfile`만 사용.
  */
 export function resolveInstructorMemberProfile(
-  user: Pick<User, 'role' | 'instructorMemberProfile' | 'affiliatedSchoolUserId'>
+  user: InstructorProfileResolveUser
 ): InstructorMemberProfile | null {
+  const fromRoles = inferInstructorMemberProfileFromRoles(user.roles)
+  if (fromRoles) return fromRoles
+
   if (user.role !== 'INSTRUCTOR') return null
-  if (user.instructorMemberProfile) return user.instructorMemberProfile
-  if (user.affiliatedSchoolUserId) return 'instructor_dual'
-  return 'instructor_only'
+  return user.instructorMemberProfile ?? 'instructor_only'
 }
 
-export function isInstructorSchoolTeacherProfile(user: Pick<User, 'role' | 'instructorMemberProfile' | 'affiliatedSchoolUserId'>): boolean {
+export function isInstructorSchoolTeacherProfile(user: InstructorProfileResolveUser): boolean {
   return resolveInstructorMemberProfile(user) === 'school_teacher'
 }
 
-export function isInstructorDualProfile(user: Pick<User, 'role' | 'instructorMemberProfile' | 'affiliatedSchoolUserId'>): boolean {
+export function isInstructorDualProfile(user: InstructorProfileResolveUser): boolean {
   return resolveInstructorMemberProfile(user) === 'instructor_dual'
 }
 
-export function isInstructorOnlyProfile(user: Pick<User, 'role' | 'instructorMemberProfile' | 'affiliatedSchoolUserId'>): boolean {
+export function isInstructorOnlyProfile(user: InstructorProfileResolveUser): boolean {
   return resolveInstructorMemberProfile(user) === 'instructor_only'
 }

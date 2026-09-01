@@ -1,0 +1,41 @@
+---
+description: CMS·Admin 공통 — 상세 값 셀 문자 | 금지, 디바이더 컴포넌트
+globs:
+  - apps/cms/src/**/*.tsx
+  - apps/admin/src/**/*.tsx
+alwaysApply: false
+---
+
+# 값 셀 세그먼트 구분 (디바이더) — 공통 원칙
+
+상세·기본정보 테이블 `td` 값 영역에서 여러 항목을 한 줄에 나열할 때  
+**문자 `|`(파이프)를 JSX·문자열로 넣지 않는다.** 시각 구분은 디바이더 컴포넌트만.
+
+## 금지
+
+```tsx
+// ❌
+value={`${name} | ${phone}`}
+<span>{a} | {b}</span>
+// ❌ CSS content: '|' 흉내
+```
+
+## 사용 (의도)
+
+- 세그먼트는 **항목별 노드**로 분리 렌더
+- mock/레거시에 `|` 가 박혀 있으면 `split` 후 디바이더로 **재조립**. 화면에 `|` 그대로 출력 금지
+
+## 예외
+
+- 테이블 **밖** 일반 문장·라벨·로그·API/mock 원문 필드
+- 목록 `cms-data-table` 에 단일 텍스트만 표시
+- 승인 현황 전용 vbar 등 **명시 스펙**이 있는 컴포넌트
+
+## 앱 구현 (import 경로 다름)
+
+| 앱 | 사용 |
+|----|------|
+| **CMS** | `withProgramDetailTdDivider` · `DetailInfoForm.TdDivider` 등 — [cms table-td-divider](../../../apps/cms/.cursor/rules/design/table-td-divider.mdc) |
+| **Admin** | `@jakorea/form-template-runtime` 의 `DetailInfoForm.TdDivider` / `DetailInfoFormTdDivider` — [admin table-td-divider](../../../apps/admin/.cursor/rules/design/table-td-divider.mdc) |
+
+**Last updated:** 2026-08-06

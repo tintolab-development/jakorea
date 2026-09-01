@@ -5,21 +5,21 @@
 /* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
 import { useEffect, useMemo } from 'react'
-import { Form, Select, Input, Button, Space, message, Alert, Typography } from 'antd'
+import { Form, Select, Input, Space, Alert, Typography } from 'antd'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { applicationSchema, type ApplicationFormData } from '@/entities/application/model/schema'
-import { MESSAGES } from '@/shared/constants/messages'
 import type { Application } from '@/types/domain'
 import { mockPrograms, mockSchools, mockInstructors } from '@/data/mock'
 import { mockUsers } from '@/data/mock/users'
 import type { ApplicationSubjectType } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
+import { fieldValidationHelp } from '@/shared/utils/error-handler'
 import {
   isApplicationAvailable,
-  getApplicationUnavailableReason,
-} from '@/features/program/lib/program-helpers'
+  getApplicationUnavailableReason } from '@/features/program/general/lib/program-helpers'
 
 const { Option } = Select
 const { Text } = Typography
@@ -37,16 +37,14 @@ const subjectTypeLabels: Record<ApplicationSubjectType, string> = {
   school: '학교',
   student: '학생',
   instructor: '강사',
-  volunteer: '봉사자',
-}
+  volunteer: '봉사자' }
 
 export function ApplicationForm({
   application,
   programId,
   onSubmit,
   onCancel,
-  loading,
-}: ApplicationFormProps) {
+  loading }: ApplicationFormProps) {
   const { user } = useAuthStore()
   const userRole = user?.role
   const isAdmin = userRole === 'ADMIN'
@@ -65,8 +63,7 @@ export function ApplicationForm({
         subjectType: 'instructor',
         subjectId: user.instructorId,
         subjectName: user.name,
-        eligibilitySubjectType: 'instructor',
-      }
+        eligibilitySubjectType: 'instructor' }
     }
 
     if (userRole === 'INDIVIDUAL') {
@@ -74,8 +71,7 @@ export function ApplicationForm({
         subjectType: 'student',
         subjectId: user.id,
         subjectName: user.name,
-        eligibilitySubjectType: 'student',
-      }
+        eligibilitySubjectType: 'student' }
     }
 
     if (userRole === 'SCHOOL') {
@@ -83,8 +79,7 @@ export function ApplicationForm({
         subjectType: 'school',
         subjectId: user.id,
         subjectName: user.name,
-        eligibilitySubjectType: 'school',
-      }
+        eligibilitySubjectType: 'school' }
     }
 
     return null
@@ -95,8 +90,7 @@ export function ApplicationForm({
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
-  } = useForm<ApplicationFormData>({
+    watch } = useForm<ApplicationFormData>({
     resolver: zodResolver(applicationSchema),
     defaultValues: application
       ? {
@@ -105,14 +99,12 @@ export function ApplicationForm({
           subjectType: application.subjectType,
           subjectId: application.subjectId,
           status: application.status,
-          notes: application.notes || '',
-        }
+          notes: application.notes || '' }
       : {
           status: 'submitted',
           programId: programId || undefined, // 모달에서 전달받은 programId 설정
           // subjectType은 아래 useEffect에서 역할 기반으로 설정
-        },
-  })
+        } })
 
   const selectedProgramId = watch('programId')
   const selectedSubjectType = watch('subjectType')
@@ -179,16 +171,15 @@ export function ApplicationForm({
         const program = mockPrograms.find(p => p.id === data.programId)
         const eligibilityType = data.subjectType === 'volunteer' ? 'instructor' : data.subjectType
         if (program && !isApplicationAvailable(program, eligibilityType)) {
-          const reason = getApplicationUnavailableReason(program, eligibilityType)
-          message.error(reason || MESSAGES.warning.cannotApply)
+          const _reason = getApplicationUnavailableReason(program, eligibilityType)
+          void _reason
           return
         }
       }
 
       await onSubmit(data)
-      message.success(application ? MESSAGES.success.updated : MESSAGES.success.created)
-    } catch {
-      message.error(application ? MESSAGES.error.update : MESSAGES.error.create)
+    } catch (error) {
+      console.debug('applicationForm submit failed', error)
     }
   }
 
@@ -200,20 +191,17 @@ export function ApplicationForm({
       case 'school':
         return mockSchools.map(school => ({
           value: school.id,
-          label: school.name,
-        }))
+          label: school.name }))
       case 'instructor':
         return mockInstructors.map(instructor => ({
           value: instructor.id,
-          label: instructor.name,
-        }))
+          label: instructor.name }))
       case 'volunteer':
         return mockUsers
           .filter(u => u.role === 'INDIVIDUAL')
           .map(volunteer => ({
             value: volunteer.id,
-            label: volunteer.name,
-          }))
+            label: volunteer.name }))
       case 'student':
         // 학생은 별도 목록이 없으므로 빈 배열 (실제로는 학생 목록이 필요)
         return []
@@ -229,7 +217,7 @@ export function ApplicationForm({
           <Alert
             type="warning"
             showIcon
-            message={
+            description={
               <Space direction="vertical" size={4}>
                 <Text strong>이 프로그램은 현재 신청할 수 없습니다</Text>
                 <Text type="secondary">
@@ -254,7 +242,7 @@ export function ApplicationForm({
           <Alert
             type={applicationPath.isActive ? 'info' : 'warning'}
             showIcon
-            message={
+            description={
               <Space direction="vertical" size={4}>
                 <Text strong>
                   이 프로그램의 신청 경로:{' '}
@@ -266,8 +254,8 @@ export function ApplicationForm({
                     구글폼 열기
                   </a>
                 )}
-                {applicationPath.guideMessage && (
-                  <Text type="secondary">{applicationPath.guideMessage}</Text>
+                {applicationPath.guideText && (
+                  <Text type="secondary">{applicationPath.guideText}</Text>
                 )}
               </Space>
             }
@@ -277,7 +265,7 @@ export function ApplicationForm({
       <Form.Item
         label="프로그램"
         validateStatus={errors.programId ? 'error' : ''}
-        help={errors.programId?.message}
+        help={fieldValidationHelp(errors.programId)}
         required
       >
         <Select
@@ -333,7 +321,7 @@ export function ApplicationForm({
         <Form.Item
           label="신청 주체 타입"
           validateStatus={errors.subjectType ? 'error' : ''}
-          help={errors.subjectType?.message}
+          help={fieldValidationHelp(errors.subjectType)}
           required
         >
           <Select
@@ -368,7 +356,7 @@ export function ApplicationForm({
           label="신청 주체"
           validateStatus={errors.subjectId ? 'error' : ''}
           help={
-            errors.subjectId?.message ||
+            fieldValidationHelp(errors.subjectId) ||
             (selectedSubjectType === 'student' ? '학생은 수동으로 입력해주세요' : '')
           }
           required
@@ -420,7 +408,7 @@ export function ApplicationForm({
         <Form.Item
           label="상태"
           validateStatus={errors.status ? 'error' : ''}
-          help={errors.status?.message}
+          help={fieldValidationHelp(errors.status)}
           required
         >
           <Select
@@ -443,10 +431,12 @@ export function ApplicationForm({
 
       <Form.Item>
         <Space>
-          <Button type="primary" htmlType="submit" loading={loading}>
+          <CmsButton type="submit" loading={loading}>
             {application ? '수정' : '등록'}
-          </Button>
-          <Button onClick={onCancel}>취소</Button>
+          </CmsButton>
+          <CmsButton variant="secondary" onClick={onCancel}>
+            취소
+          </CmsButton>
         </Space>
       </Form.Item>
     </Form>

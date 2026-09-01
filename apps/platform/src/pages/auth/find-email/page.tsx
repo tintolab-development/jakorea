@@ -1,0 +1,39 @@
+import { PFButton, PFText } from '@/shared/ui'
+import styles from './page.module.css'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
+
+export function FindEmailPage() {
+  const navigate = useNavigate()
+  const handleFindEmail = () => {
+    // TODO: 통신사 본인인증 연동 후 이메일 조회
+    navigate('/auth/find-email/complete')
+  }
+
+  return (
+    <section>
+        <div className={styles.header}>
+          <PFText as="h1" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
+            가입한 이메일을 찾아드릴게요
+          </PFText>
+          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
+            본인 확인 후 가입한 이메일을 확인할 수 있어요
+          </PFText>
+        </div>
+
+        <div className={styles.content}>
+          <div className={styles.identityModule}>
+            <PFText as="p" typo="bd-sm-rg" color="neutral-warm-500">
+              통신사 본인인증 모듈 영역
+              <br />
+              수신: 이름·휴대폰번호·생년월일·CI/DI·인증토큰·인증일시
+            </PFText>
+          </div>
+
+          <PFButton size="xlarge" className={styles.submitButton} onClick={handleFindEmail}>
+            본인인증 후 이메일 찾기
+          </PFButton>
+        </div>
+    </section>
+  )
+}

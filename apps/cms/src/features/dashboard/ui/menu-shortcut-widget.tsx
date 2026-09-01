@@ -11,13 +11,13 @@ import {
   BookOutlined,
   BugOutlined,
   CloudDownloadOutlined,
+  ControlOutlined,
   CustomerServiceOutlined,
   ExperimentOutlined,
   FileDoneOutlined,
   HeartOutlined,
   IdcardOutlined,
   LineChartOutlined,
-  MailOutlined,
   NotificationOutlined,
   ProfileOutlined,
   QuestionCircleOutlined,
@@ -32,24 +32,24 @@ import {
   UserOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { useMemo } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
-import { getMenuShortcutBadgeCounts } from '../api/admin-dashboard-service'
 import {
-  SHORTCUT_ITEMS,
-  isShortcutItemEnabled,
-  useDashboardSettingsStore,
-} from '../model/dashboard-settings-store'
+  getMenuShortcutBadgeCounts,
+  readDashboardShortcutBadge,
+  shouldUseDashboardRemoteApi,
+} from '../api/admin-dashboard-service'
+import { dashboardQueryKeys } from '../api/dashboard-query-keys'
+import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
+import { useDashboardShortcuts } from '../hooks/use-dashboard-shortcuts'
+import { useDashboardShortcutBadges } from '../hooks/use-dashboard-shortcut-badges'
+import { resolveDashboardShortcutItems } from '../lib/resolve-dashboard-shortcut-items'
 import './menu-shortcut-widget.css'
 
 /** 배지 표시용: 99 초과 시 "99+" */
 function formatBadgeCount(count: number): string {
   return count >= 99 ? '99+' : String(count)
-}
-
-/** 메뉴 바로가기에서 라우터 이동 대신 준비 중 안내할 프로그램 관련 id (`programs-` 접두) */
-function isProgramShortcutItemId(id: string): boolean {
-  return id.startsWith('programs-')
 }
 
 const SHORTCUT_ICON_MAP: Record<string, React.ReactNode> = {
@@ -62,6 +62,7 @@ const SHORTCUT_ICON_MAP: Record<string, React.ReactNode> = {
   'users-instructor': <IdcardOutlined />,
   'users-admin': <UserOutlined />,
   'permission-requests': <SafetyCertificateOutlined />,
+  'admin-permission-settings': <ControlOutlined />,
   'settlement-payment-orders': <FileDoneOutlined />,
   'settlement-account-payments': <AccountBookOutlined />,
   'settlement-item-settings': <SettingOutlined />,
@@ -73,7 +74,6 @@ const SHORTCUT_ICON_MAP: Record<string, React.ReactNode> = {
   textbooks: <ReadOutlined />,
   'programs-detail': <ShopOutlined />,
   performance: <LineChartOutlined />,
-  'email-history': <MailOutlined />,
   'file-download-history': <CloudDownloadOutlined />,
   'privacy-query-history': <SafetyOutlined />,
   'bug-issue-history': <BugOutlined />,
@@ -81,16 +81,34 @@ const SHORTCUT_ICON_MAP: Record<string, React.ReactNode> = {
 
 export function MenuShortcutWidget() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const shortcutEnabled = useDashboardSettingsStore(s => s.shortcutEnabled)
   const badgeCounts = useDashboardSettingsStore(s => s.shortcutBadgeCounts)
   const setShortcutBadgeCount = useDashboardSettingsStore(s => s.setShortcutBadgeCount)
+  const useRemoteShortcuts = shouldUseDashboardRemoteApi()
+  const { data: apiShortcuts } = useDashboardShortcuts(useRemoteShortcuts)
+  const { data: remoteBadgeCounts } = useDashboardShortcutBadges(useRemoteShortcuts)
 
-  const visibleItems = SHORTCUT_ITEMS.filter(item => isShortcutItemEnabled(shortcutEnabled, item.id))
+  const { mutate: markShortcutRead } = useMutation({
+    mutationFn: (shortcutId: string) => readDashboardShortcutBadge(shortcutId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.shortcutBadges('remote') })
+    },
+  })
+
+  const visibleItems = useMemo(
+    () => resolveDashboardShortcutItems(apiShortcuts, shortcutEnabled),
+    [apiShortcuts, shortcutEnabled]
+  )
+
+  const liveBadgeCounts = useMemo(() => {
+    if (useRemoteShortcuts) {
+      return remoteBadgeCounts ?? {}
+    }
+    return getMenuShortcutBadgeCounts()
+  }, [useRemoteShortcuts, remoteBadgeCounts])
 
   if (visibleItems.length === 0) return null
-
-  /** 목/API 집계. 스토어에 0이면 해당 메뉴는 읽음 처리로 배지 숨김 */
-  const liveBadgeCounts = getMenuShortcutBadgeCounts()
 
   return (
     <Card
@@ -105,18 +123,18 @@ export function MenuShortcutWidget() {
         <div className="menu-shortcut-widget__grid">
           {visibleItems.map(item => {
             const live = liveBadgeCounts[item.id] ?? 0
-            const count = badgeCounts[item.id] === 0 ? 0 : live
+            const count = useRemoteShortcuts ? live : badgeCounts[item.id] === 0 ? 0 : live
             return (
               <button
                 key={item.id}
                 type="button"
                 className="menu-shortcut-widget__item"
                 onClick={() => {
-                  if (isProgramShortcutItemId(item.id) || item.id === 'template-management') {
-                    window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
-                    return
+                  if (useRemoteShortcuts) {
+                    markShortcutRead(item.id)
+                  } else {
+                    setShortcutBadgeCount(item.id, 0)
                   }
-                  setShortcutBadgeCount(item.id, 0)
                   navigate(item.path)
                 }}
               >

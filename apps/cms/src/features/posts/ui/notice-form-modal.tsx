@@ -1,17 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Form, message } from 'antd'
+import { Form } from 'antd'
 import type { Notice } from '@/data/mock/notices'
-import { getNoticeCategorySelectOptions } from '@/features/posts/api/admin-notice-category-mock-store'
+import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import {
-  buildNoticeCreateBody,
-  buildNoticeUpdateBody,
   noticeInitialAttachmentNames,
   noticeToFormValues,
-  type NoticeFormFieldValues,
-} from '@/features/posts/model/notice-form-mapper'
-import { createAdminNotice, updateAdminNotice } from '@/features/posts/api/admin-notice-mock-store'
-import { deleteNotice } from '@/features/posts/api/admin-notice-service'
+  type NoticeFormFieldValues } from '@/features/posts/model/notice-form-mapper'
+import { useNoticeCategoriesQuery } from '@/features/posts/hooks/use-notice-categories-query'
+import { useNoticeMutations } from '@/features/posts/hooks/use-notice-mutations'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
+import { RichTextEditor } from '@/shared/rich-text'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import {
@@ -20,10 +18,8 @@ import {
   CmsInput,
   CmsSelect,
   CmsRadioGroup,
-  FileSelectField,
-} from '@/shared/ui'
+  FileSelectField } from '@/shared/ui'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
-import '@toast-ui/editor/dist/toastui-editor.css'
 import './notice-register-modal.css'
 
 export type NoticeFormModalMode = 'create' | 'edit'
@@ -51,11 +47,13 @@ export function NoticeFormModal({
   notice,
   onCancel,
   onSuccess,
-  onDeleted,
-}: NoticeFormModalProps) {
+  onDeleted }: NoticeFormModalProps) {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
+  const { createMutation, updateMutation, deleteMutation } = useNoticeMutations()
+  const categoriesQuery = useNoticeCategoriesQuery(open)
   const [form] = Form.useForm<FormValues>()
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [existingAttachmentNames, setExistingAttachmentNames] = useState<string[]>([])
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
@@ -73,7 +71,11 @@ export function NoticeFormModal({
     [open, mode, notice?.id]
   )
 
-  const { editorHostRef, getMarkdown } = useNoticeWysiwygEditor(open, initialMarkdown, editorResetKey)
+  const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
+    open,
+    initialMarkdown,
+    editorResetKey
+  )
 
   /* 모달이 열릴 때마다 폼·첨부 세션 초기화(등록↔수정·다른 공지 전환) */
   /* eslint-disable react-hooks/set-state-in-effect -- open/mode/notice 변경 시 의도적 초기화 */
@@ -88,8 +90,7 @@ export function NoticeFormModal({
         category: undefined,
         visibility: 'public',
         pinTop: 'off',
-        title: '',
-      })
+        title: '' })
       setExistingAttachmentNames([])
       setNewFiles([])
     }
@@ -101,8 +102,10 @@ export function NoticeFormModal({
     [existingAttachmentNames, newFiles]
   )
 
-  /** 카테고리 관리·저장소와 동기화된 옵션 (모달이 열릴 때마다 최신 목록) */
-  const categorySelectOptions = useMemo(() => getNoticeCategorySelectOptions(), [open])
+  const categorySelectOptions = useMemo(
+    () => (categoriesQuery.data ?? []).map(row => ({ label: row.name, value: row.name })),
+    [categoriesQuery.data]
+  )
 
   const handleCancel = () => {
     form.resetFields()
@@ -119,20 +122,18 @@ export function NoticeFormModal({
   const handleConfirmDelete = async () => {
     if (!notice) return
     try {
-      await deleteNotice(notice.id)
-      message.success('공지사항이 삭제되었습니다.')
+      await deleteMutation.mutateAsync(notice.id)
       setDeleteConfirmOpen(false)
       handleCancel()
       onDeleted?.()
-    } catch {
-      message.error('공지사항을 삭제할 수 없습니다.')
+    } catch (error) {
+      setErrorMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
     }
   }
 
   const handleAttachmentAdd = (files: File[]) => {
     const ok = files.filter(f => {
       if (f.size > ATTACHMENT_MAX_BYTES) {
-        message.error('파일은 최대 20MB까지 업로드 가능합니다.')
         return false
       }
       return true
@@ -150,15 +151,13 @@ export function NoticeFormModal({
     }
   }
 
-  const handleFinish = (values: FormValues) => {
+  const handleFinish = async (values: FormValues) => {
     if (mode === 'edit' && !notice) {
-      message.error('수정할 공지를 찾을 수 없습니다.')
       return
     }
 
     const md = getMarkdown().trim()
     if (!md) {
-      message.warning('공지사항 내용을 입력해 주세요.')
       return
     }
 
@@ -174,25 +173,26 @@ export function NoticeFormModal({
       author: authorName,
     }
 
-    if (mode === 'create') {
-      const created = createAdminNotice(buildNoticeCreateBody(base))
-      message.success('공지사항이 등록되었습니다.')
-      onSuccess?.(created)
-    } else {
-      const updated = updateAdminNotice(notice!.id, buildNoticeUpdateBody(notice!, base))
-      if (updated) {
-        message.success('공지사항이 수정되었습니다.')
-        onSuccess?.(updated)
+    try {
+      if (mode === 'create') {
+        const created = await createMutation.mutateAsync(base)
+        onSuccess?.(created)
       } else {
-        message.error('공지사항을 수정할 수 없습니다.')
-        return
+        const updated = await updateMutation.mutateAsync({
+          id: notice!.id,
+          existing: notice!,
+          params: base,
+        })
+        onSuccess?.(updated)
       }
+      setErrorMessage(null)
+      form.resetFields()
+      setExistingAttachmentNames([])
+      setNewFiles([])
+      onCancel()
+    } catch (error) {
+      setErrorMessage(getPostsApiErrorMessage(error, '저장에 실패했습니다.'))
     }
-
-    form.resetFields()
-    setExistingAttachmentNames([])
-    setNewFiles([])
-    onCancel()
   }
 
   const modalTitle = mode === 'create' ? '공지사항 등록' : '공지사항 수정'
@@ -252,7 +252,6 @@ export function NoticeFormModal({
                 name="category"
                 label="카테고리"
                 className="notice-register-modal__filter-field notice-register-modal__filter-field--category"
-                rules={[{ required: true, message: '카테고리를 선택해 주세요.' }]}
               >
                 <CmsSelect
                   placeholder="카테고리 선택"
@@ -265,7 +264,6 @@ export function NoticeFormModal({
                 name="visibility"
                 label="공개 여부"
                 className="notice-register-modal__filter-field"
-                rules={[{ required: true }]}
               >
                 <CmsRadioGroup
                   size="large"
@@ -279,7 +277,6 @@ export function NoticeFormModal({
                 name="pinTop"
                 label="상단 고정"
                 className="notice-register-modal__filter-field"
-                rules={[{ required: true }]}
               >
                 <CmsRadioGroup
                   size="large"
@@ -296,15 +293,22 @@ export function NoticeFormModal({
             name="title"
             label="제목"
             className="notice-register-modal__section"
-            rules={[{ required: true, message: '제목을 입력해 주세요.' }]}
           >
             <CmsInput placeholder="제목을 입력해주세요" inputSize="large" width="100%" />
           </Form.Item>
 
           <div className="notice-register-modal__section notice-register-modal__section--editor">
             <div className="notice-register-modal__editor-label">내용</div>
-            <div ref={editorHostRef} className="notice-register-modal__editor-host" />
+            <div className="notice-register-modal__editor-host">
+              <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+            </div>
           </div>
+
+          {errorMessage ? (
+            <p className="notice-register-modal__error" role="alert">
+              {errorMessage}
+            </p>
+          ) : null}
 
           <div className="notice-register-modal__attachment">
             <div className="notice-register-modal__attachment-label">첨부 파일</div>
@@ -312,8 +316,12 @@ export function NoticeFormModal({
               <FileSelectField
                 className="notice-register-modal__file-field"
                 multiple
+                disabled={!canWrite}
                 buttonLabel="파일 추가"
+                accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.hwp,.hwpx,.ppt,.pptx"
                 fileNames={attachmentDisplayNames}
+                currentTotalBytes={newFiles.reduce((sum, file) => sum + file.size, 0)}
+                maxTotalBytes={ATTACHMENT_MAX_BYTES}
                 onFilesChange={handleAttachmentAdd}
                 onRemoveFile={handleAttachmentRemove}
                 guideLines={[

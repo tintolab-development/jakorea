@@ -1,0 +1,79 @@
+/**
+ * 강사 일괄 승인 안내 — 안내 박스(바디) 시안
+ */
+
+.instructor-bulk-approve-modal.permission-modal .permission-modal__info-callout {
+  display: flex;
+  margin-top: 20px;
+  padding: 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  box-sizing: border-box;
+  height: 80px;
+  min-height: 80px;
+  border-radius: var(--6, 6px);
+  background: var(--BG-hover, rgba(1, 161, 175, 0.06));
+}
+
+.instructor-bulk-approve-modal__callout-text {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.instructor-bulk-approve-modal__callout-em {
+  color: var(--color-mint-01, #01a1af);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+/* 본문 타이포 16px 통일 (PermissionModal 기본 라벨 14px 보정) */
+.instructor-bulk-approve-modal.permission-modal .permission-modal__message,
+.instructor-bulk-reject-modal.permission-modal .permission-modal__message,
+.participant-approve-modal.permission-modal .permission-modal__message,
+.participant-reject-modal.permission-modal .permission-modal__message,
+.participant-cancel-approval-modal.permission-modal .permission-modal__message,
+.participant-cancel-reject-modal.permission-modal .permission-modal__message,
+.applicant-notification-resend-modal.permission-modal .permission-modal__message,
+.instructor-cancel-reject-modal.permission-modal .permission-modal__message {
+  font-size: 16px;
+  line-height: 150%;
+}
+
+.instructor-bulk-approve-modal.permission-modal .permission-modal__manual-summary,
+.instructor-bulk-reject-modal.permission-modal .permission-modal__manual-summary {
+  font-size: 16px;
+  line-height: 150%;
+}
+
+.instructor-bulk-approve-modal.permission-modal .permission-modal__field-error,
+.instructor-bulk-reject-modal.permission-modal .permission-modal__field-error {
+  font-size: 16px;
+  line-height: 150%;
+}
+
+.instructor-bulk-approve-modal.permission-modal .app-radio-group--large,
+.instructor-bulk-approve-modal.permission-modal .app-radio-group--large .ant-radio-wrapper,
+.instructor-bulk-approve-modal.permission-modal .app-radio--large.ant-radio-wrapper,
+.instructor-bulk-reject-modal.permission-modal .app-radio-group--large,
+.instructor-bulk-reject-modal.permission-modal .app-radio-group--large .ant-radio-wrapper,
+.instructor-bulk-reject-modal.permission-modal .app-radio--large.ant-radio-wrapper,
+.applicant-notification-resend-modal.permission-modal .app-radio-group--large,
+.applicant-notification-resend-modal.permission-modal .app-radio-group--large .ant-radio-wrapper,
+.applicant-notification-resend-modal.permission-modal .app-radio--large.ant-radio-wrapper,
+.instructor-cancel-reject-modal.permission-modal .app-radio-group--large,
+.instructor-cancel-reject-modal.permission-modal .app-radio-group--large .ant-radio-wrapper,
+.instructor-cancel-reject-modal.permission-modal .app-radio--large.ant-radio-wrapper {
+  font-size: 16px;
+  line-height: 150%;
+}

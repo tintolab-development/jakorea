@@ -1,0 +1,125 @@
+.activity-withdraw-schedule-modal-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.activity-withdraw-schedule-modal-wrap::before {
+  display: none !important;
+  content: none !important;
+}
+
+.activity-withdraw-schedule-modal-wrap .ant-modal.activity-withdraw-schedule-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+  width: min(600px, calc(100vw - 32px)) !important;
+  max-width: min(600px, calc(100vw - 32px)) !important;
+  box-sizing: border-box !important;
+}
+
+.content-modal.activity-withdraw-schedule-modal.ant-modal .ant-modal-content,
+.content-modal.activity-withdraw-schedule-modal.teal-header-modal .ant-modal-content {
+  display: flex;
+  width: 600px;
+  min-height: 320px;
+  padding: 26px 30px 34px 30px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.content-modal.activity-withdraw-schedule-modal .ant-modal-body {
+  flex: 0 0 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.content-modal.activity-withdraw-schedule-modal .teal-header-modal__body {
+  flex: 0 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 0;
+  margin-top: 0;
+  gap: 0;
+  overflow: visible;
+  padding-top: 16px;
+}
+
+.content-modal.activity-withdraw-schedule-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 16px;
+}
+
+.content-modal.activity-withdraw-schedule-modal .content-modal__description {
+  margin: 0;
+  width: 100%;
+}
+
+.content-modal.activity-withdraw-schedule-modal .teal-header-modal__footer {
+  width: 100%;
+  margin-top: 30px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.activity-withdraw-schedule-modal__form {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 16px;
+}
+
+.activity-withdraw-schedule-modal__field {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.activity-withdraw-schedule-modal__label {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.activity-withdraw-schedule-modal__footer {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.activity-withdraw-schedule-modal__field .cms-select {
+  width: 100%;
+}

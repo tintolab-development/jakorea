@@ -6,10 +6,8 @@
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { message } from 'antd'
 import { register } from '@/entities/user/api/register-service'
 import type { RegisterRequest, RegisterResponse } from '@/types/register'
-import { MESSAGES } from '@/shared/constants'
 
 interface UseRegisterOptions {
   /** 로그인 페이지로 이동 시 넘길 redirect 쿼리 (예: /programs/:id/apply) */
@@ -35,7 +33,6 @@ export function useRegister(options: UseRegisterOptions = {}): UseRegisterReturn
 
     try {
       const response = await register(request)
-      message.success(MESSAGES.success.registerCompleted)
       const loginUrl = redirectPath
         ? `/login?redirect=${encodeURIComponent(redirectPath)}`
         : '/login'
@@ -44,7 +41,6 @@ export function useRegister(options: UseRegisterOptions = {}): UseRegisterReturn
     } catch (err) {
       const errObj = err instanceof Error ? err : new Error('회원가입에 실패했습니다.')
       setError(errObj)
-      message.error(errObj.message)
       throw errObj
     } finally {
       setLoading(false)

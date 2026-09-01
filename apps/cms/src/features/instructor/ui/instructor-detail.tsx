@@ -4,6 +4,7 @@
  * 강사단 관리: 강의 진행 및 정산 현황 추가
  */
 
+import { CmsRadio } from '@/shared/ui'
 import { useEffect, useState, useMemo } from 'react'
 import {
   Card,
@@ -17,17 +18,17 @@ import {
   Select,
   Collapse,
   Statistic,
-  Radio,
   Row,
   Col,
   Modal,
 } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { Instructor } from '@/types/domain'
+import { formatInstructorSettlementAccountParts } from '@/features/user/detail/ui/user-basic-info/display'
 import type { Settlement, Matching, Program } from '@/types/domain'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
-import { StatusBadge } from '@/shared/ui/status-badge'
-import { settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/components/status-badge'
+import { getStatusConfigAccentColor, settlementStatusStatusConfig } from '@/shared/constants/status'
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
 import { programService } from '@/entities/program/api/program-service'
 import { mockMatchings, mockSchedules } from '@/data/mock'
@@ -194,6 +195,17 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
     setDrawerOpen(true)
   }
 
+  const settlementAccountParts = formatInstructorSettlementAccountParts({
+    bankName: instructor.bankName,
+    accountNumber: instructor.bankAccount,
+    accountHolder: instructor.accountHolder,
+  })
+  const settlementAccountDisplay = settlementAccountParts
+    ? settlementAccountParts.left && settlementAccountParts.holder
+      ? `${settlementAccountParts.left} | ${settlementAccountParts.holder}`
+      : settlementAccountParts.left || settlementAccountParts.holder || '-'
+    : null
+
   const settlementColumns: ColumnsType<Settlement> = [
     {
       title: '기간',
@@ -329,17 +341,9 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
             {instructor.rating && (
               <Descriptions.Item label="평점">{instructor.rating.toFixed(1)}/5.0</Descriptions.Item>
             )}
-            {(instructor.bankName || instructor.bankAccount) && (
-              <Descriptions.Item label="정산 계좌">
-                {instructor.bankName && <span>{instructor.bankName} </span>}
-                {instructor.bankAccount && (
-                  <span>
-                    {instructor.bankAccount.replace(/(\d{4})(\d{4})(\d+)/, '$1-****-****')}
-                  </span>
-                )}
-                {instructor.accountHolder && <span> ({instructor.accountHolder})</span>}
-              </Descriptions.Item>
-            )}
+            {settlementAccountDisplay ? (
+              <Descriptions.Item label="정산 계좌">{settlementAccountDisplay}</Descriptions.Item>
+            ) : null}
             <Descriptions.Item label="등록일">
               {new Date(instructor.createdAt).toLocaleDateString('ko-KR')}
             </Descriptions.Item>
@@ -446,19 +450,18 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
                   options={availablePeriods}
                 />
               </Space>
-              <Radio.Group
+              <CmsRadio.Group
                 value={viewMode}
                 onChange={e => setViewMode(e.target.value)}
                 buttonStyle="solid"
-                size="small"
               >
-                <Radio.Button value="list">
+                <CmsRadio.Button value="list">
                   <UnorderedListOutlined /> 목록
-                </Radio.Button>
-                <Radio.Button value="calendar">
+                </CmsRadio.Button>
+                <CmsRadio.Button value="calendar">
                   <CalendarOutlined /> 캘린더
-                </Radio.Button>
-              </Radio.Group>
+                </CmsRadio.Button>
+              </CmsRadio.Group>
             </Space>
           </Card>
 
@@ -609,9 +612,9 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
           setDrawerOpen(false)
           setSelectedSettlement(null)
         }}
-        width={640}
+        width={800}
         zIndex={1001}
-        destroyOnClose
+        destroyOnHidden
         footer={
           <Space>
             <Button
@@ -640,8 +643,11 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
             <Descriptions.Item label="정산 ID">{selectedSettlement.id}</Descriptions.Item>
             <Descriptions.Item label="상태">
               <StatusBadge
-                status={selectedSettlement.status}
-                statusConfig={settlementStatusStatusConfig}
+                domain="custom"
+                label={settlementStatusStatusConfig[selectedSettlement.status].label}
+                accentColor={getStatusConfigAccentColor(
+                  settlementStatusStatusConfig[selectedSettlement.status].color
+                )}
               />
             </Descriptions.Item>
             <Descriptions.Item label="기간">{selectedSettlement.period}</Descriptions.Item>

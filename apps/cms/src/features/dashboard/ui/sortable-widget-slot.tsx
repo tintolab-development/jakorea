@@ -3,10 +3,11 @@
  * 위젯/상단블록을 바깥에서만 감싸고, 핸들에서만 드래그 가능. 기존 위젯 UI는 수정하지 않음.
  * Col을 Sortable 노드로 두어 그리드에서 위젯(셀) 단위로만 드래그되도록 함.
  *
- * 너비 리사이즈: 우측 엣지 드래그 핸들 → 20px 이상 드래그 시 50%(12) ↔ 100%(24) 스냅
+ * 너비 리사이즈: 우측 엣지 드래그 → pointerup에서 50%(12) ↔ 100%(24) 1회 스냅
  */
 
 import React, {
+  memo,
   useRef,
   useLayoutEffect,
   useCallback,
@@ -18,6 +19,7 @@ import { DASHBOARD_SLOT_HEIGHT_HALF_PX } from '@/shared/config/dashboard-config'
 import { Col } from 'antd'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { resolveResizeSnap } from '@/features/dashboard/lib/resize-snap'
 
 export interface SortableWidgetSlotProps {
   id: string
@@ -29,7 +31,7 @@ export interface SortableWidgetSlotProps {
   /** 위젯 고정 높이(px). 미지정 시 338px */
   height?: number
   /** 너비 변경 콜백 (12=50%, 24=100%). 미지정 시 리사이즈 핸들 미노출 */
-  onResizeWidth?: (newColSpan: 12 | 24) => void
+  onResizeWidth?: (widgetId: string, newColSpan: 12 | 24) => void
 }
 
 interface HandleRect {
@@ -38,9 +40,6 @@ interface HandleRect {
   width: number
   height: number
 }
-
-/** 스냅 트리거 최소 드래그 거리 (px) */
-const RESIZE_THRESHOLD = 20
 
 function DashboardWidgetResizeWidthIcon({ maskId }: { maskId: string }) {
   return (
@@ -82,7 +81,7 @@ function DashboardWidgetResizeWidthIcon({ maskId }: { maskId: string }) {
   )
 }
 
-export function SortableWidgetSlot({
+function SortableWidgetSlotInner({
   id,
   children,
   colSpan = 24,
@@ -100,7 +99,6 @@ export function SortableWidgetSlot({
     isDragging,
   } = useSortable({
     id,
-    // 부드러운 switching 전환 애니메이션
     transition: {
       duration: 180,
       easing: 'cubic-bezier(0.2, 0, 0, 1)',
@@ -110,16 +108,19 @@ export function SortableWidgetSlot({
   const colRef = useRef<HTMLDivElement | null>(null)
   const slotRef = useRef<HTMLDivElement | null>(null)
   const [handleRect, setHandleRect] = useState<HandleRect | null>(null)
-  /** setHandleRect와 동일 값이면 스킵 — measureHandle이 매번 새 객체를 만들어 무한 렌더 방지 */
   const handleRectSnapshotRef = useRef<HandleRect | null>(null)
 
-  // --- 너비 리사이즈 드래그 상태 (ref: stale closure 방지) ---
   const colSpanRef = useRef(colSpan)
-  colSpanRef.current = colSpan
   const isResizingRef = useRef(false)
   const resizeStartXRef = useRef(0)
+  const resizeLastXRef = useRef(0)
   const [isResizing, setIsResizing] = useState(false)
+  const [previewColSpan, setPreviewColSpan] = useState<12 | 24 | null>(null)
   const resizeIconMaskId = useId().replace(/:/g, '')
+
+  useLayoutEffect(() => {
+    colSpanRef.current = colSpan
+  }, [colSpan])
 
   const setColRef = useCallback(
     (el: HTMLDivElement | null) => {
@@ -129,7 +130,6 @@ export function SortableWidgetSlot({
     [setNodeRef]
   )
 
-  // 자식 내부 .widget-drag-handle 위치 측정(슬롯 div 기준) → 그 위에 투명 오버레이
   const measureHandle = useCallback(() => {
     if (!hasBuiltInHandle || !slotRef.current) return
     const slot = slotRef.current
@@ -143,6 +143,7 @@ export function SortableWidgetSlot({
     }
     const sr = slot.getBoundingClientRect()
     const hr = handle.getBoundingClientRect()
+    if (hr.width <= 0 || hr.height <= 0) return
     const next: HandleRect = {
       top: hr.top - sr.top,
       left: hr.left - sr.left,
@@ -164,23 +165,31 @@ export function SortableWidgetSlot({
   }, [hasBuiltInHandle])
 
   useLayoutEffect(() => {
+    if (isDragging) return
     measureHandle()
     const t = setTimeout(measureHandle, 100)
     return () => clearTimeout(t)
-  }, [measureHandle])
+  }, [measureHandle, isDragging])
 
-  // children을 deps에 넣지 않음(매 렌더 새 참조 → 무한 루프). 슬롯 크기·자식 레이아웃 변화만 감시.
   useLayoutEffect(() => {
     const slot = slotRef.current
-    if (!slot || !hasBuiltInHandle) return
+    if (!slot || !hasBuiltInHandle || isDragging) return
     const ro = new ResizeObserver(() => {
       measureHandle()
     })
     ro.observe(slot)
-    return () => ro.disconnect()
-  }, [hasBuiltInHandle, measureHandle])
+    // lazy 위젯은 스켈레톤→실위젯 교체 시 슬롯 크기가 그대로라 ResizeObserver가 안 돈다.
+    // 핸들(.widget-drag-handle)이 생긴 뒤에야 그랩 오버레이를 붙인다.
+    const mo = new MutationObserver(() => {
+      measureHandle()
+    })
+    mo.observe(slot, { childList: true, subtree: true })
+    return () => {
+      ro.disconnect()
+      mo.disconnect()
+    }
+  }, [hasBuiltInHandle, measureHandle, isDragging])
 
-  // --- 리사이즈 핸들 포인터 이벤트 ---
   const handleResizePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (!onResizeWidth) return
@@ -188,35 +197,39 @@ export function SortableWidgetSlot({
       e.preventDefault()
       isResizingRef.current = true
       resizeStartXRef.current = e.clientX
+      resizeLastXRef.current = e.clientX
       setIsResizing(true)
+      setPreviewColSpan(colSpanRef.current === 12 || colSpanRef.current === 24 ? colSpanRef.current : 24)
       e.currentTarget.setPointerCapture(e.pointerId)
       document.body.style.cursor = 'grabbing'
     },
     [onResizeWidth]
   )
 
-  const handleResizePointerMove = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!isResizingRef.current || !onResizeWidth) return
-      const delta = e.clientX - resizeStartXRef.current
-      if (delta > RESIZE_THRESHOLD && colSpanRef.current !== 24) {
-        // 오른쪽으로 충분히 드래그 → 100%로 확장
-        onResizeWidth(24)
-        resizeStartXRef.current = e.clientX
-      } else if (delta < -RESIZE_THRESHOLD && colSpanRef.current !== 12) {
-        // 왼쪽으로 충분히 드래그 → 50%로 축소
-        onResizeWidth(12)
-        resizeStartXRef.current = e.clientX
+  const handleResizePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isResizingRef.current) return
+    resizeLastXRef.current = e.clientX
+    const startSpan: 12 | 24 = colSpanRef.current === 12 ? 12 : 24
+    const next = resolveResizeSnap(startSpan, e.clientX - resizeStartXRef.current)
+    setPreviewColSpan(prev => (prev === next ? prev : next))
+  }, [])
+
+  const handleResizeEnd = useCallback(
+    (e?: React.PointerEvent<HTMLDivElement>) => {
+      if (!isResizingRef.current) return
+      const clientX = e?.clientX ?? resizeLastXRef.current
+      const startSpan: 12 | 24 = colSpanRef.current === 12 ? 12 : 24
+      const next = resolveResizeSnap(startSpan, clientX - resizeStartXRef.current)
+      isResizingRef.current = false
+      setIsResizing(false)
+      setPreviewColSpan(null)
+      document.body.style.cursor = ''
+      if (onResizeWidth && next !== startSpan) {
+        onResizeWidth(id, next)
       }
     },
-    [onResizeWidth]
+    [id, onResizeWidth]
   )
-
-  const handleResizeEnd = useCallback(() => {
-    isResizingRef.current = false
-    setIsResizing(false)
-    document.body.style.cursor = ''
-  }, [])
 
   const setGrabbedClass = useCallback((grabbed: boolean) => {
     const slot = slotRef.current
@@ -226,7 +239,7 @@ export function SortableWidgetSlot({
 
   const handleGrabPointerDown = useCallback(() => {
     setGrabbedClass(true)
-  }, [])
+  }, [setGrabbedClass])
 
   const handleGrabPointerUp = useCallback(() => {
     setGrabbedClass(false)
@@ -237,11 +250,25 @@ export function SortableWidgetSlot({
     setGrabbedClass(false)
   }, [isDragging, setGrabbedClass])
 
-  // noScaleRectSortingStrategy에서 scaleX/scaleY=1로 고정되므로 그대로 사용
-  // flex-basis/max-width transition: span 변경(너비 리사이즈) 시 부드러운 애니메이션
-  const resizeTransition = onResizeWidth
-    ? 'flex-basis 0.35s cubic-bezier(0.2, 0, 0, 1), max-width 0.35s cubic-bezier(0.2, 0, 0, 1)'
-    : null
+  useEffect(() => {
+    const clear = () => setGrabbedClass(false)
+    window.addEventListener('pointerup', clear)
+    window.addEventListener('pointercancel', clear)
+    window.addEventListener('blur', clear)
+    document.addEventListener('visibilitychange', clear)
+    return () => {
+      window.removeEventListener('pointerup', clear)
+      window.removeEventListener('pointercancel', clear)
+      window.removeEventListener('blur', clear)
+      document.removeEventListener('visibilitychange', clear)
+      setGrabbedClass(false)
+    }
+  }, [setGrabbedClass])
+
+  const resizeTransition =
+    onResizeWidth && !isResizing
+      ? 'flex-basis 0.35s cubic-bezier(0.2, 0, 0, 1), max-width 0.35s cubic-bezier(0.2, 0, 0, 1)'
+      : null
 
   const colStyle: React.CSSProperties = {
     transition: resizeTransition ?? undefined,
@@ -255,8 +282,10 @@ export function SortableWidgetSlot({
   }
 
   const slotHeight =
-    colSpan === 12 ? DASHBOARD_SLOT_HEIGHT_HALF_PX : (height !== undefined ? height : 'auto')
+    colSpan === 12 ? DASHBOARD_SLOT_HEIGHT_HALF_PX : height !== undefined ? height : 'auto'
   const slotStyle: React.CSSProperties = { height: slotHeight }
+  const showResizePreview =
+    isResizing && previewColSpan != null && previewColSpan !== (colSpan === 12 ? 12 : 24)
 
   return (
     <Col
@@ -264,73 +293,89 @@ export function SortableWidgetSlot({
       span={colSpan}
       style={colStyle}
       data-dashboard-slot-id={id}
+      data-dragging={isDragging ? 'true' : undefined}
     >
       <div style={motionStyle}>
         <div
           ref={slotRef}
-          className={`dashboard-widget-slot${onResizeWidth ? ' dashboard-widget-slot--resizable-width' : ''}`}
+          className={`dashboard-widget-slot${onResizeWidth ? ' dashboard-widget-slot--resizable-width' : ''}${
+            showResizePreview
+              ? previewColSpan === 24
+                ? ' dashboard-widget-slot--resize-preview-full'
+                : ' dashboard-widget-slot--resize-preview-half'
+              : ''
+          }`}
           style={slotStyle}
           data-col-span={colSpan}
         >
-        {!hasBuiltInHandle && (
-          <div
-            ref={setActivatorNodeRef}
-            className="widget-drag-handle dashboard-widget-slot__handle"
-            aria-label="위젯 드래그 핸들"
-            onPointerDownCapture={handleGrabPointerDown}
-            onPointerUp={handleGrabPointerUp}
-            onPointerCancel={handleGrabPointerUp}
-            onLostPointerCapture={handleGrabPointerUp}
-            {...listeners}
-            {...attributes}
-          >
-            <span className="widget-drag-handle-bar" />
-            <span className="widget-drag-handle-bar" />
-          </div>
-        )}
-        {hasBuiltInHandle && handleRect && (
-          <div
-            ref={setActivatorNodeRef}
-            className="dashboard-widget-slot__handle-overlay"
-            aria-label="위젯 드래그 핸들"
-            style={{
-              position: 'absolute',
-              top: handleRect.top,
-              left: handleRect.left,
-              width: handleRect.width,
-              height: handleRect.height,
-              cursor: 'grab',
-              zIndex: 1,
-            }}
-            onPointerDownCapture={handleGrabPointerDown}
-            onPointerUp={handleGrabPointerUp}
-            onPointerCancel={handleGrabPointerUp}
-            onLostPointerCapture={handleGrabPointerUp}
-            {...listeners}
-            {...attributes}
-          />
-        )}
-        {/* 너비 리사이즈 드래그 핸들 (우측 엣지) */}
-        {onResizeWidth && (
-          <div
-            className={`dashboard-widget-resize-handle${isResizing ? ' dashboard-widget-resize-handle--active' : ''}`}
-            onPointerDown={handleResizePointerDown}
-            onPointerMove={handleResizePointerMove}
-            onPointerUp={handleResizeEnd}
-            onPointerCancel={handleResizeEnd}
-            onLostPointerCapture={handleResizeEnd}
-            role="separator"
-            aria-label="너비 조절 (드래그)"
-            title="너비 조절: 좌우로 드래그하면 50% / 100%로 변경됩니다"
-          >
-            <span className="dashboard-widget-resize-handle__icon-wrap">
-              <DashboardWidgetResizeWidthIcon maskId={`dw-resize-mask-${resizeIconMaskId}`} />
-            </span>
-          </div>
-        )}
+          {!hasBuiltInHandle && (
+            <div
+              ref={setActivatorNodeRef}
+              className="widget-drag-handle dashboard-widget-slot__handle"
+              aria-label="위젯 드래그 핸들"
+              onPointerDownCapture={handleGrabPointerDown}
+              onPointerUp={handleGrabPointerUp}
+              onPointerCancel={handleGrabPointerUp}
+              onLostPointerCapture={handleGrabPointerUp}
+              {...listeners}
+              {...attributes}
+            >
+              <span className="widget-drag-handle-bar" />
+              <span className="widget-drag-handle-bar" />
+            </div>
+          )}
           {children}
+          {hasBuiltInHandle && handleRect && (
+            <div
+              ref={setActivatorNodeRef}
+              className="dashboard-widget-slot__handle-overlay"
+              aria-label="위젯 드래그 핸들"
+              style={{
+                position: 'absolute',
+                top: handleRect.top,
+                left: handleRect.left,
+                width: handleRect.width,
+                height: handleRect.height,
+                cursor: 'grab',
+              }}
+              onPointerDownCapture={handleGrabPointerDown}
+              onPointerUp={handleGrabPointerUp}
+              onPointerCancel={handleGrabPointerUp}
+              onLostPointerCapture={handleGrabPointerUp}
+              {...listeners}
+              {...attributes}
+            />
+          )}
+          {onResizeWidth && (
+            <div
+              className={`dashboard-widget-resize-handle${isResizing ? ' dashboard-widget-resize-handle--active' : ''}`}
+              onPointerDown={handleResizePointerDown}
+              onPointerMove={handleResizePointerMove}
+              onPointerUp={handleResizeEnd}
+              onPointerCancel={handleResizeEnd}
+              onLostPointerCapture={handleResizeEnd}
+              role="separator"
+              aria-label="너비 조절 (드래그)"
+              title="너비 조절: 좌우로 드래그하면 50% / 100%로 변경됩니다"
+            >
+              <span className="dashboard-widget-resize-handle__icon-wrap">
+                <DashboardWidgetResizeWidthIcon maskId={`dw-resize-mask-${resizeIconMaskId}`} />
+              </span>
+            </div>
+          )}
+          {showResizePreview && (
+            <div
+              className={`dashboard-widget-resize-preview dashboard-widget-resize-preview--${
+                previewColSpan === 24 ? 'full' : 'half'
+              }`}
+              aria-hidden
+            />
+          )}
         </div>
       </div>
     </Col>
   )
 }
+
+export const SortableWidgetSlot = memo(SortableWidgetSlotInner)
+SortableWidgetSlot.displayName = 'SortableWidgetSlot'

@@ -1,56 +1,262 @@
+/*
+ * CMS 캘린더는 제한적 반응형 — 열 min-width 도달 후 가로 축소 대신 부모에서 overflow-x 스크롤.
+ * sticky는 layout-content(세로 스크롤) 기준 — 중간 overflow:auto 래퍼 금지(열 정렬·sticky 깨짐).
+ */
+/*
+ * 가로 스크롤은 layout-content만 — 중간 래퍼에 overflow-x:auto를 두면
+ * overflow-y가 auto로 계산되어 sticky가 layout-content 기준으로 동작하지 않음.
+ */
+.layout-content:has(.calendar-set),
+.layout-content:has(.calendar-split-card-layout) {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.program-list-calendar-view-container {
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+}
+
 .calendar-set {
   --calendar-set-sticky-top: calc(40px + var(--cms-layout-content-padding-top, 0px));
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-24);
+  /* 3열 좌측 하단 — CalendarSearch 프로그램명·체크 목록 */
+  --calendar-search-height: 391px;
+  --calendar-sub-right-list-height: 743px;
+  --calendar-sub-right-list-min-width: 280px;
+  --calendar-sub-right-list-max-width: 400px;
+  /*
+   * grid 3열: 좌 300px · 중앙 minmax(min, 1fr) · 우 minmax(280px, 400px).
+   * 가로 확장 시 우측이 400px까지 먼저 채워지고, 이후 남는 공간은 1fr(메인)이 흡수.
+   * 축소 시 우측은 280px까지 줄어든 뒤 가로 스크롤.
+   */
+  display: grid;
+  grid-template-columns:
+    var(--calendar-sub-left-width, 300px)
+    minmax(var(--calendar-main-month-min-width, calc(116px * 7 + 42px)), 1fr)
+    minmax(
+      var(--calendar-sub-right-list-min-width, 280px),
+      var(--calendar-sub-right-list-max-width, 400px)
+    );
+  align-items: start;
+  gap: var(--calendar-set-column-gap, var(--spacing-24));
   width: 100%;
+  min-width: var(--calendar-set-min-width-3col-month);
   min-height: 600px;
   margin-top: 16px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/* 3열 — grid-area로 mini|main|list 카드 행 상단 flush */
+.calendar-set:has(.calendar-sub-left) {
+  grid-template-areas: 'sub-left main sub-right';
+}
+
+.calendar-set--with-toolbar:has(.calendar-sub-left) {
+  grid-template-areas:
+    'toolbar toolbar toolbar'
+    'sub-left main sub-right';
+  grid-template-rows: auto auto;
+  row-gap: var(--spacing-16);
+}
+
+.calendar-set__toolbar {
+  grid-area: toolbar;
+  min-width: 0;
+}
+
+.calendar-set:has(.calendar-sub-left) > .calendar-sub-left {
+  grid-area: sub-left;
+}
+
+.calendar-set:has(.calendar-sub-left) > .calendar-main-container,
+.calendar-set:has(.calendar-sub-left) > .calendar-main {
+  grid-area: main;
+}
+
+.calendar-set:has(.calendar-sub-left) > .calendar-sub-right-list {
+  grid-area: sub-right;
+}
+
+/* 미니·검색 없음 — 메인 + 우측 2열 (정산 캘린더 등) */
+.calendar-set:not(:has(.calendar-sub-left)) {
+  grid-template-columns:
+    minmax(var(--calendar-main-month-min-width, calc(116px * 7 + 42px)), 1fr)
+    minmax(
+      var(--calendar-sub-right-list-min-width, 280px),
+      var(--calendar-sub-right-list-max-width, 400px)
+    );
+  min-width: var(--calendar-set-min-width-2col-month);
+}
+
+.calendar-set:has(.calendar-week--time-grid) {
+  grid-template-columns:
+    var(--calendar-sub-left-width, 300px)
+    minmax(var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px)), 1fr)
+    minmax(
+      var(--calendar-sub-right-list-min-width, 280px),
+      var(--calendar-sub-right-list-max-width, 400px)
+    );
+  min-width: var(--calendar-set-min-width-3col-week);
+}
+
+.calendar-set:has(.calendar-week--time-grid):not(:has(.calendar-sub-left)) {
+  grid-template-columns:
+    minmax(var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px)), 1fr)
+    minmax(
+      var(--calendar-sub-right-list-min-width, 280px),
+      var(--calendar-sub-right-list-max-width, 400px)
+    );
+  min-width: var(--calendar-set-min-width-2col-week);
+}
+
+.calendar-set > .calendar-sub-left,
+.calendar-set > .calendar-main-container,
+.calendar-set > .calendar-main,
+.calendar-set > .calendar-sub-right-list {
+  align-self: start;
+  margin-top: 0;
+}
+
+/*
+ * 3열 카드 shell 상단 정렬 — mini · main · list padding-top 20px 통일.
+ */
+.calendar-set:has(.calendar-sub-left) > .calendar-main-container > .calendar-main,
+.calendar-set:has(.calendar-sub-left) > .calendar-main {
+  padding-top: var(--calendar-mini-padding, 20px);
+}
+
+/*
+ * 3열 sticky — layout-content 세로 스크롤 시 좌(미니·검색)·우(리스트)만 동일 top.
+ * 중앙 메인 캘린더는 일반 흐름(스크롤되어 위로 사라짐).
+ */
+.calendar-set:has(.calendar-sub-left) > .calendar-sub-left,
+.calendar-set:has(.calendar-sub-left) > .calendar-sub-right-list {
+  position: sticky;
+  top: var(--calendar-set-sticky-top);
+  z-index: 2;
+}
+
+.calendar-set:has(.calendar-sub-left) > .calendar-main-container,
+.calendar-set:has(.calendar-sub-left) > .calendar-main {
+  position: static;
+  z-index: auto;
 }
 
 .calendar-sub-left {
-  position: sticky;
-  top: var(--calendar-set-sticky-top);
-  left: 0;
-  z-index: 2;
-  flex: 0 0 300px;
-  width: 300px;
-  min-width: 300px;
-  max-width: 300px;
+  width: var(--calendar-sub-left-width, 300px);
+  min-width: var(--calendar-sub-left-width, 300px);
+  max-width: var(--calendar-sub-left-width, 300px);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-16);
-  align-self: flex-start;
   box-sizing: border-box;
   overflow: visible;
-  /* 가로 스크롤 시 뒤 콘텐츠가 비치지 않도록 */
-  background: var(--color-bg-tertiary);
-  scroll-margin-top: 40px;
+  /* 미니·검색은 각각 `.calendar-mini` / `.calendar-search` 흰 shell — 열 배경색 없음 */
+  background: transparent;
 }
 
 .calendar-main-container {
-  flex: 1 1 auto;
-  min-width: 0;
+  width: 100%;
+  min-width: var(--calendar-main-month-min-width, calc(116px * 7 + 42px));
+  min-height: var(--calendar-main-month-min-height, calc(124px * 6 + 37px + 50px + 32px));
+  box-sizing: border-box;
+}
+
+.calendar-main-container:has(.calendar-week--time-grid) {
+  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px));
+  min-height: var(
+    --calendar-main-week-min-height,
+    calc(1344px + 40px + 50px + 32px)
+  );
+  flex-shrink: 0;
+}
+
+.calendar-set-scroll-host:has(.calendar-set .calendar-week--time-grid) {
+  min-width: var(--calendar-set-min-width-2col-week);
+}
+
+.calendar-set:has(.calendar-week--time-grid) > .calendar-main-container,
+.calendar-set:has(.calendar-week--time-grid) > .calendar-main {
+  flex-shrink: 0;
+  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px));
+  max-width: none;
+}
+
+.calendar-set:not(:has(.calendar-sub-left)) > .calendar-main-container,
+.calendar-set:not(:has(.calendar-sub-left)) > .calendar-main {
+  position: sticky;
+  top: var(--calendar-set-sticky-top);
+  z-index: 1;
+}
+
+.calendar-main-container > .calendar-main {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .calendar-sub-right-list {
   position: sticky;
-  /*
-   * layout-content(overflow-y:auto) 안에서 sticky top은 스크롤포트 기준이라,
-   * 본문 padding-top과 어긋나면 상단이 잘릴 수 있음 → 레이아웃 변수와 요청 여백 합산(.calendar-set --calendar-set-sticky-top).
-   * .layout-content 밖(모달 등)에서는 변수 미설정 시 상단 inset만 적용.
-   */
   top: var(--calendar-set-sticky-top);
-  right: 0;
-  flex: 0 0 auto;
-  width: 400px;
-  max-width: 400px;
-  height: 736px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  flex-shrink: 0;
+  height: var(--calendar-sub-right-list-height);
+  min-height: var(--calendar-sub-right-list-height);
+  max-height: var(--calendar-sub-right-list-height);
   display: flex;
   flex-direction: column;
-  align-self: flex-start;
   box-sizing: border-box;
-  overflow: visible;
+  overflow: hidden;
   z-index: 2;
-  scroll-margin-top: 40px;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.calendar-sub-right-list > .calendar-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+}
+
+/*
+ * 풀페이지 모달 페이지 스크롤 — 2열 calendar-set에서 중앙 메인은 일반 흐름, 우측 리스트만 sticky.
+ * `detail-fullpage-modal.css` — 조상 overflow-x: clip 연동 필수.
+ */
+.calendar-set--page-scroll {
+  --calendar-set-sticky-top: 16px;
+  margin-top: 0;
+}
+
+.calendar-set--page-scroll:not(:has(.calendar-sub-left)) > .calendar-main-container,
+.calendar-set--page-scroll:not(:has(.calendar-sub-left)) > .calendar-main {
+  position: static;
+  z-index: auto;
+}
+
+.calendar-set--page-scroll:not(:has(.calendar-sub-left)) > .calendar-sub-right-list {
+  position: sticky;
+  top: var(--calendar-set-sticky-top);
+  align-self: flex-start;
+  flex-shrink: 0;
+  /* 높이 743px — `.calendar-sub-right-list` 공통 토큰 그대로, 뷰포트 clamp 없음 */
+  height: var(--calendar-sub-right-list-height);
+  min-height: var(--calendar-sub-right-list-height);
+  max-height: var(--calendar-sub-right-list-height);
+}
+
+.calendar-sub-right-list > .calendar-list--with-toolbar {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
 }

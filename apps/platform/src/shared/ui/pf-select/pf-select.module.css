@@ -1,0 +1,223 @@
+.root {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.label {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: var(--spacing-4);
+  overflow: hidden;
+  padding-left: var(--spacing-8);
+  color: var(--color-neutral-warm-600);
+}
+
+.labelText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.requiredMark {
+  overflow: hidden;
+  flex: 0 0 auto;
+  color: var(--color-red);
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.control {
+  position: relative;
+  width: 100%;
+}
+
+.field {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-self: stretch;
+  align-items: center;
+  gap: var(--spacing-8);
+  box-sizing: border-box;
+  padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) 14px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white);
+}
+
+.field:hover:not(.disabled),
+.field.open:not(.disabled),
+.field:focus-within:not(.disabled) {
+  border-color: var(--color-border-focus);
+  background: var(--color-neutral-white);
+}
+
+.field.error {
+  border-color: var(--color-border-error-strong);
+  background: var(--color-neutral-white);
+}
+
+.field.disabled {
+  border-color: var(--color-border-default);
+  background: var(--color-neutral-warm-100);
+}
+
+.medium {
+  height: 40px;
+}
+
+.large {
+  height: 44px;
+}
+
+.xlarge {
+  height: 54px;
+}
+
+.trigger {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  box-sizing: border-box;
+  padding: var(--spacing-12) 52px var(--spacing-12) 14px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.trigger:disabled {
+  cursor: not-allowed;
+}
+
+.field.completed.open:not(.disabled) .trigger {
+  padding-right: 72px;
+}
+
+.value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.valuePlaceholder {
+  color: var(--color-neutral-warm-500);
+}
+
+.valueFilled {
+  color: var(--color-neutral-black);
+}
+
+/* Platform 양식 페이지 전용 — 타이포만 분기 (.field radius-16 유지) */
+.formPageValue {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.formPageValuePlaceholder {
+  color: var(--gray-85969-d, #85969d);
+}
+
+.formPageValueFilled {
+  color: var(--main-BK, #3d3d3d);
+}
+
+.formPageValueDisabled {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+}
+
+.trailing {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  margin-left: auto;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--spacing-4);
+  pointer-events: none;
+}
+
+.clearButton {
+  display: none;
+  width: var(--spacing-24);
+  height: var(--spacing-24);
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/*
+ * clear는 열린 상태에서만 노출.
+ * 닫힌 채 hover 시 X가 쉐브론 자리를 가로채면 "클릭해도 안 열림"(실제로는 clear)으로 보임.
+ */
+.field.completed.open:not(.disabled) .clearButton {
+  display: inline-flex;
+}
+
+.clearIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.chevronButton {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.chevron {
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+.message {
+  margin: 0;
+  padding-left: var(--spacing-8);
+  font-family: var(--font-family-base);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+.messageNeutral {
+  color: var(--color-neutral-warm-500);
+}
+
+.messageSuccess {
+  color: var(--color-status-success-light);
+}
+
+.messageError {
+  color: var(--color-status-error-default);
+}

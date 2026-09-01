@@ -23,6 +23,8 @@ export interface DeleteGuideModalProps {
   requiredConfirmInput?: string
   confirmInputPlaceholder?: string
   zIndex?: number
+  /** 확인 버튼 로딩 (비동기 탈퇴 등) */
+  confirmLoading?: boolean
 }
 
 function renderLineWithEmphasis(line: string) {
@@ -58,6 +60,7 @@ export function DeleteGuideModal({
   requiredConfirmInput,
   confirmInputPlaceholder = DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   zIndex = 2500,
+  confirmLoading = false,
 }: DeleteGuideModalProps) {
   const [confirmInput, setConfirmInput] = useState('')
   const needsTypedConfirm = Boolean(requiredConfirmInput)
@@ -77,15 +80,17 @@ export function DeleteGuideModal({
       zIndex={zIndex}
       footer={
         <>
-          <CmsButton variant="secondary" type="button" onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
             취소
           </CmsButton>
           <CmsButton
             variant={confirmVariant}
+            size="medium"
             type="button"
-            disabled={!canConfirm}
+            disabled={!canConfirm || confirmLoading}
+            loading={confirmLoading}
             onClick={() => {
-              if (canConfirm) onConfirm()
+              if (canConfirm && !confirmLoading) onConfirm()
             }}
           >
             {confirmText}

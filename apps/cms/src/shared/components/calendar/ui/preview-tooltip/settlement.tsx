@@ -1,4 +1,4 @@
-import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
+import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import {
   INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT,
   INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE,
@@ -37,7 +37,7 @@ export function renderSettlementEventsTooltipContent({
   colorMap: Map<string | number, ScheduleColorPair>
 }) {
   return (
-    <div className="program-calendar-schedule-panel">
+    <div className="settlement-preview-tooltip">
       {dayEvents.map(ev => {
         const row = settlementRowFromCalendarItem(ev)
         const colors = settlementEventStatusColorPair(row.status)
@@ -50,8 +50,8 @@ export function renderSettlementEventsTooltipContent({
               <span style={{ color: colors.text, fontWeight: 700, fontSize: '14px' }}>
                 {INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[row.status]}
               </span>
-              <span className="program-calendar-schedule-panel__text">
-                <span className="program-calendar-schedule-panel__sep">|</span> +
+              <span className="settlement-preview-tooltip__text">
+                <span className="settlement-preview-tooltip__sep">|</span> +
                 {row.scheduledAmount.toLocaleString()}원
               </span>
             </div>

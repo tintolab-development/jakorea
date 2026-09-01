@@ -17,7 +17,6 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
           name="category"
           label="카테고리"
           className="faq-form-modal__field faq-form-modal__field--category"
-          rules={[{ required: true, message: '카테고리를 선택해주세요.' }]}
         >
           <CmsSelect
             placeholder="전체"
@@ -31,7 +30,6 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
           label="공개 여부"
           className="faq-form-modal__field faq-form-modal__field--visibility"
           initialValue="public"
-          rules={[{ required: true }]}
         >
           <CmsRadioGroup
             size="large"
@@ -45,7 +43,6 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
       <Form.Item
         name="question"
         label="제목 (질문)"
-        rules={[{ required: true, message: '제목을 입력해주세요.' }]}
       >
         <CmsInput
           placeholder="제목을 입력해주세요"
@@ -57,11 +54,10 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
       <Form.Item
         name="answer"
         label="내용 (답변)"
-        rules={[{ required: true, message: '내용(답변)을 입력해주세요.' }]}
       >
         <CmsTextArea
           placeholder="내용(답변)을 입력해주세요."
-          inputSize="medium"
+          inputSize="large"
           width="100%"
           maxLength={5000}
         />

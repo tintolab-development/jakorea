@@ -1,0 +1,48 @@
+.cta {
+  display: flex;
+  width: 100%;
+  padding: var(--spacing-12) var(--spacing-16) var(--spacing-12) var(--spacing-8);
+  align-items: center;
+  gap: var(--spacing-12);
+  align-self: stretch;
+  border: 0;
+  border-radius: var(--radius-16);
+  background: var(--color-primary-500);
+  box-shadow: var(--shadow-card-sm);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+}
+
+.cta:hover {
+  filter: brightness(1.02);
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  min-width: 0;
+}
+
+.title,
+.subtitle {
+  display: block;
+}
+
+.subtitle {
+  opacity: 0.9;
+}
+
+.cta:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}

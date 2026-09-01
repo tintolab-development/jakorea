@@ -30,8 +30,9 @@ One row; filters apply on **Search** click. Suggested mapping to URL query (`sch
 Checkbox | No. | Institution | Region | Session schedule summary | Grade | Classes | Students | Textbook status | Teacher | Instructor
 
 - Allocate width / `minWidth`; **overflow-x: auto** on wrapper.  
-- **Session column:** if ≤3 sessions, list all; if ≥4, show **2** lines then **“+ N more sessions”** (N = total − 2).  
-- Textbook: `StatusDropdownCell` + `TextbookStatusBadge`; classes `textbook-status-dropdown-cell` / `textbook-status-dropdown-trigger`. Exclude row navigation when clicking dropdown/checkbox.
+- **Region column (`기관 소재지`):** list/calendar display only through the **구 / 면 / 읍** administrative unit (strip road names, dong, and detail address). Use `formatInstitutionRegionForTableDisplay` from `@/shared/lib/format-institution-region-display`. Full address stays in detail views and filters.  
+- **Session column:** fixed **360px** (`PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH`); `th`/`td` both use `participating-institutions-section__th-sessions` / `__td-sessions` with `max-width` so the column does not grow when `scroll.x` exceeds the column sum. If ≤3 sessions, list all; if ≥4, show **2** lines then **“+ N more sessions”** (N = total − 2).  
+- Textbook: `StatusDropdownCell` + `TextbookStatusBadge`; column **`width: 136`**; badge only **`style={PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE}`** (100×30). Exclude row navigation when clicking dropdown/checkbox.
 
 ## Row behavior
 
@@ -46,4 +47,4 @@ Checkbox | No. | Institution | Region | Session schedule summary | Grade | Class
 - [ ] Styles aligned with program progress / applicants tabs  
 - [ ] Horizontal scroll + session truncation rules  
 
-**Last updated:** 2026-04-21
+**Last updated:** 2026-06-05

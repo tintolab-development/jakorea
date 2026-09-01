@@ -1,0 +1,1 @@
+export { IndividualDonationPage } from './page'

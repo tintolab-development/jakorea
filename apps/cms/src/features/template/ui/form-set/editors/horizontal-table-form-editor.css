@@ -1,0 +1,35 @@
+/* 양식 테스트 등 페이지에 삽입 시 — 풀페이지 모달과 동일한 좌·우 폭 */
+.horizontal-table-form-editor--embedded {
+  width: 100%;
+}
+
+.horizontal-table-form-editor--embedded .horizontal-table-form-editor__contents {
+  align-items: stretch;
+  min-height: min(720px, calc(100vh - 280px));
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.horizontal-table-form-editor--embedded .full-page-modal__left {
+  min-height: inherit;
+}
+
+.horizontal-table-form-editor--embedded .full-page-modal__right-wrap {
+  align-self: stretch;
+  min-height: 0;
+}
+
+/* 테스트 탭: 우측 커스텀 필드 패널만 독립 스크롤로 고정해
+   th/td 선택 시 내용 길이에 따른 외부 레이아웃 흔들림을 방지 */
+.horizontal-table-form-editor--embedded .full-page-modal__right {
+  min-height: 0;
+  overflow-y: auto;
+  /* 내부 스크롤은 유지하되 스크롤바 UI는 숨김 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge legacy */
+}
+
+.horizontal-table-form-editor--embedded .full-page-modal__right::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}

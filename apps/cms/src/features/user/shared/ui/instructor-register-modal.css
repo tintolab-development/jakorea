@@ -9,93 +9,213 @@
   gap: 32px;
 }
 
-.instructor-register-modal__hyphen {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 8px;
-  color: var(--default-BK, #3d3d3d);
-  flex-shrink: 0;
+.instructor-register-modal__basic-info .detail-info-form__title::after,
+.instructor-register-modal__consent-heading > .detail-info-form__header .detail-info-form__title::after,
+.instructor-register-career > .detail-info-form__header .detail-info-form__title::after {
+  content: '*';
+  margin-left: 2px;
+  color: var(--color-error, #ff4d4f);
 }
 
-.instructor-register-modal__consent-actions {
+.instructor-register-modal__affiliation-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+/** 정산 계좌 — 은행명(120)·계좌번호(240)·예금주명(240) 고정폭 */
+.instructor-register-modal__settlement-account {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.instructor-register-modal__bank-account-pair {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.instructor-register-modal__ja-grade {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+
+.instructor-register-modal__grade-section .detail-info-form__field-content--edit {
+  align-items: center;
+}
+
+.instructor-register-modal__fee-grade-select {
+  flex: 1 1 0;
+  min-width: 0;
   width: 100%;
 }
 
-.instructor-register-modal__consent-actions.ant-space {
-  align-items: center;
+.instructor-register-modal__fee-grade-select .cms-select {
+  width: 100%;
 }
 
-/** 정보 제공 동의: 값 영역 전체를 세로 중앙 (라디오·구분선·버튼·안내) */
-.instructor-register-modal__consent-section .detail-info-form__field-content--edit {
-  align-items: center;
-}
-
-.instructor-register-modal__consent-guide {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.6;
-  max-width: 420px;
-}
-
-.instructor-register-modal__consent-guide p {
-  margin: 0;
-}
-
-.instructor-register-modal__consent-submit-inline {
+.instructor-register-modal__ja-grade-field {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
+  min-width: 0;
+}
+
+/** DetailInfoForm 편집 슬롯에서 CmsInput width 100%가 실제로 꽉 차도록 */
+.instructor-register-modal__full-width-input {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.instructor-register-modal__full-width-input .cms-input {
+  width: 100%;
+}
+
+.instructor-register-modal__consent-heading.detail-info-form > .detail-info-form__body {
+  border: none;
+  background: transparent;
+  overflow: visible;
+}
+
+.instructor-register-modal__consent-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.instructor-register-modal__consent-form-stack > .detail-info-form {
+  width: 100%;
+  min-width: 0;
+}
+
+.instructor-register-modal__consent-block .detail-info-form__field {
+  min-height: 50px;
+}
+
+.instructor-register-modal__consent-block .detail-info-form__field-label,
+.instructor-register-modal__consent-block .detail-info-form__field-content {
+  min-height: 50px;
+  box-sizing: border-box;
+  padding-block: 5px;
+}
+
+/** 동의서 작성(라디오 + 버튼) 셀 — DetailInfoForm 기본 상하 12px */
+.instructor-register-modal__consent-block
+  .detail-info-form__field:has(.instructor-register-modal__consent-document) {
+  min-height: auto;
+}
+
+.instructor-register-modal__consent-block
+  .detail-info-form__field:has(.instructor-register-modal__consent-document)
+  .detail-info-form__field-label,
+.instructor-register-modal__consent-block
+  .detail-info-form__field:has(.instructor-register-modal__consent-document)
+  .detail-info-form__field-content {
+  min-height: auto;
+  padding-block: 12px;
+}
+
+.instructor-register-modal__consent-form-stack .detail-info-form__field-content--edit {
+  align-items: center;
+}
+
+.instructor-register-modal__consent-document {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 8px;
 }
 
 .instructor-register-modal__consent-status {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1;
-  color: var(--JA-mint-01, #01a1af);
-}
-
-/** 동의서 미제출·제출 전 — 초상권 등 안내 문구와 톤 맞춤 */
-.instructor-register-modal__consent-status--pending {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
   color: var(--default-BK, #3d3d3d);
-  opacity: 0.6;
-  font-weight: 600;
 }
 
-/** 동적 행 삭제: 회색 원 + 흰색 X — 행 flex 끝(우측) 정렬 */
-.instructor-register-modal__row-delete-circle {
+.instructor-register-modal__consent-sep {
+  flex-shrink: 0;
+  color: #d0d0d0;
+  font-weight: 400;
+  padding: 0 2px;
+  user-select: none;
+}
+
+/** 경력·활동·자격·수상 — 라벨 1칸 통합 + 스택 행 */
+.instructor-register-modal__period {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.instructor-register-modal__period .cms-datepicker {
+  flex-shrink: 0;
+  width: 140px;
+  min-width: 140px;
+}
+
+.instructor-register-modal__tilde {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 21px;
-  height: 21px;
-  margin-left: auto;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: #8c8c8c;
-  color: #fff;
-  cursor: pointer;
+  padding: 0 4px;
+  color: var(--default-BK, #3d3d3d);
   flex-shrink: 0;
-  line-height: 1;
-  vertical-align: middle;
 }
 
-.instructor-register-modal__row-delete-circle:hover {
-  background: #737373;
+.instructor-register-modal__inline-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  min-width: 0;
 }
 
-.instructor-register-modal__row-delete-circle:focus-visible {
-  outline: 2px solid var(--JA-mint-01, #01a1af);
-  outline-offset: 2px;
+.instructor-register-modal__multi-row > .detail-info-form__field > .detail-info-form__field-content--edit {
+  padding: 0;
+  align-items: stretch;
 }
 
-.instructor-register-modal__row-delete-circle-icon {
-  font-size: 10px;
-  color: inherit;
+.instructor-register-modal__multi-row
+  > .detail-info-form__field
+  > .detail-info-form__field-content--edit
+  > .instructor-register-modal__field-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  margin-block: 0;
+}
+
+.instructor-register-modal__field-stack-row {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.instructor-register-modal__field-stack-row:last-child {
+  border-bottom: none;
+}
+
+/** 연도 단독 피커(자격·수상)도 줄어들지 않도록 */
+.instructor-register-modal__field-stack-row > .cms-datepicker {
+  flex-shrink: 0;
+  width: 140px;
+  min-width: 140px;
 }

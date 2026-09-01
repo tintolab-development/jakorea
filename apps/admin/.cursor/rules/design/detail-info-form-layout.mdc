@@ -1,0 +1,78 @@
+---
+description: Admin DetailInfoForm 다블록 레이아웃 — form-template-runtime (CMS 미러)
+globs:
+  - apps/admin/src/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# DetailInfoForm — 다블록 레이아웃 (Admin)
+
+컴포넌트는 **`@jakorea/form-template-runtime`** 의 `DetailInfoForm`을 사용한다 (CMS 로컬 경로 import 금지).  
+관련 공통: [table-th](../../../../.cursor/rules/cms-admin-ui/table-th.mdc) · [table-td-divider](../../../../.cursor/rules/cms-admin-ui/table-td-divider.mdc).  
+CMS 다블록 관례: [`apps/cms/.../detail-info-form-layout.mdc`](../../../cms/.cursor/rules/design/detail-info-form-layout.mdc).
+
+## 표준 구조
+
+섹션 제목(툴바) + 본문 격자를 나눌 때:
+
+- 바깥 셸: 목록 카드/섹션 카드 (`admin-list-card` 또는 feature section card)
+- 본문: 하나 이상의 `DetailInfoForm`  
+  - 첫 블록: `title` (필요 시)  
+  - 이어지는 블록: 동일 제목 반복 대신 `hideHeader` (헤더 중복 방지)
+
+```tsx
+import { DetailInfoForm } from '@jakorea/form-template-runtime'
+
+<div className="feature-section">
+  {/* 툴바: table-header-* 또는 section toolbar */}
+  <DetailInfoForm title="교육 프로그램 관리" hideHeader mode={mode}>
+    <DetailInfoForm.Row type="single">
+      <DetailInfoForm.Field label="…" view={…} edit={…} />
+    </DetailInfoForm.Row>
+  </DetailInfoForm>
+</div>
+```
+
+admin 폼 화면 예: intro / worldwide / main-content section cards — 대부분 `hideHeader` + 외부 제목.
+
+## 간격·스타일
+
+| ✅ 사용 | ❌ 금지 |
+|--------|--------|
+| `DetailInfoForm` 기본 body 테두리·radius (패키지 CSS) | colocated에서 `__body` border 재정의 |
+| 블록 간 gap 필요 시 기존 섹션 래퍼 / `--spacing-16` | 임시 flex 갭을 매번 새로 하드코딩 |
+| Field `view` / `edit` 슬롯 | 테이블 td 안에 detail form 중첩 ([detail-info-nested-table.mdc](./detail-info-nested-table.mdc)) |
+
+## 값 셀 여러 항목
+
+문자 `|` 금지 → [table-td-divider.mdc](./table-td-divider.mdc)  
+(`DetailInfoForm.TdDivider` / `DetailInfoFormTdDivider`)
+
+## 흰 카드 fill · view/edit · UI shift
+
+단건 문서 폼(카드 1장·수정 모드 전환): **[detail-document-form-card.mdc](./detail-document-form-card.mdc)** (`alwaysApply` · 필수)
+
+- 흰 카드 **viewport 남은 높이 fill**
+- 툴바 **`table-title` 필수** (수정 버튼 레벨)
+- view↔edit **컨트롤 유지** · span↔input 스왑 금지 · 모드 전환용 `autoSize` 금지
+- view 행 **`min-height: 54px`** (강제 tall 금지)  
+- edit **`rows` 고정 + `fixed-rows`**
+
+## FileSelectField (첨부·이미지)
+
+등록 모달·Field edit 에 파일 선택 넣을 때:
+
+→ **[file-select-detail-form](../../../../.cursor/rules/cms-admin-ui/file-select-detail-form.mdc)**  
+(DetailInfoForm edit 자식 `display:flex; align-items:center`가 FileSelect를 깨뜨림 — 모달 스코프 override 필수)
+
+예: `features/hero-banner/ui/form-modal` · `reports-disclosure/ui/report-form-modal`
+
+## 체크리스트
+
+- [ ] `apps/cms` 또는 CMS 상대경로로 DetailInfoForm import 없음  
+- [ ] nested table은 Field 값에 **전용** 격자 (DetailInfoForm 중첩 금지)  
+- [ ] th/라벨 배경 `var(--BG-header)` ([table-th.mdc](./table-th.mdc))
+- [ ] 단건 폼이면 [detail-document-form-card.mdc](./detail-document-form-card.mdc) §0·완료 체크리스트 병행
+- [ ] FileSelect 행이면 edit 슬롯 layout override + 버튼 medium
+
+**Last updated:** 2026-08-06

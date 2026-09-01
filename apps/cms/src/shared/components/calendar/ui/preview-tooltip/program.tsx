@@ -2,8 +2,9 @@ import type { ReactNode } from 'react'
 import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
-} from '@/features/program/ui/program-schedule-colors'
+} from '@/features/program/shared/ui/program-schedule-colors'
 import type { CalendarItem } from '../../model/calendar-item'
+import { getInstructorTooltipSessionLabel } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-calendar-session'
 
 import './program-preview.css'
 
@@ -26,16 +27,18 @@ function calendarItemsToPopoverRows(
 
 function getProgramPreviewRowParts(
   item: Record<string, unknown> | null | undefined
-): { title: string; location: string; countLabel: string } | null {
+): { title: string; location: string; countLabel: string; sessionLabel?: string } | null {
   if (!item) return null
   const summary = item.calendarInstitutionSummary as
     | { applicantCount: number; regionDisplay: string }
     | undefined
   if (summary && typeof item.schoolName === 'string') {
+    const sessionLabel = getInstructorTooltipSessionLabel(item)
     return {
       title: item.schoolName,
       location: summary.regionDisplay || '-',
       countLabel: `신청 : ${summary.applicantCount}명`,
+      ...(sessionLabel ? { sessionLabel } : {}),
     }
   }
   if (typeof item.schoolName === 'string' && 'region' in item && item.region != null) {
@@ -77,7 +80,7 @@ type ProgramPreviewTooltipBodyProps = {
   selectedIds?: ReadonlySet<string | number>
 }
 
-/** `CalendarMain` / `ProgramCalendar` 툴팁 본문 — 신청자 일정 요약 행 */
+/** `CalendarMain` 툴팁 본문 — 신청자 일정 요약 행 */
 export function ProgramPreviewTooltipBody({
   events,
   colorMap,
@@ -117,6 +120,14 @@ export function ProgramPreviewTooltipBody({
               |
             </span>
             <span className="program-preview-item__text">{parts.countLabel}</span>
+            {parts.sessionLabel ? (
+              <>
+                <span className="program-preview-item__sep" aria-hidden>
+                  |
+                </span>
+                <span className="program-preview-item__text">{parts.sessionLabel}</span>
+              </>
+            ) : null}
           </div>
         )
       })}
@@ -139,7 +150,7 @@ export function renderProgramApplicantPreviewTooltipContent({
 }
 
 /**
- * `ProgramCalendar`의 `previewTooltipContent`에 넘기면 이벤트 모드 툴팁 본문을 렌더합니다.
+ * `CalendarMain`의 `previewTooltipContent`에 넘기면 이벤트 모드 툴팁 본문을 렌더합니다.
  * (미전달 시에는 툴팁이 열리지 않습니다.)
  */
 export function renderProgramCalendarEventsDefaultTooltipContent({
@@ -150,4 +161,77 @@ export function renderProgramCalendarEventsDefaultTooltipContent({
   colorMap: Map<string | number, ScheduleColorPair>
 }): ReactNode {
   return <ProgramPreviewTooltipBody events={events} colorMap={colorMap} />
+}
+
+export type GeneralProgramCalendarPreviewRow = {
+  id: string | number
+  programTitle: string
+  scheduleContent: string
+  timeLabel: string
+}
+
+function isGeneralProgramCalendarPreviewRow(
+  value: unknown
+): value is GeneralProgramCalendarPreviewRow {
+  if (value == null || typeof value !== 'object') return false
+  return (
+    'programTitle' in value &&
+    'scheduleContent' in value &&
+    'timeLabel' in value &&
+    'originalItem' in value
+  )
+}
+
+function resolveGeneralProgramCalendarPreviewRow(
+  item: CalendarItem
+): GeneralProgramCalendarPreviewRow | null {
+  const original = item.original
+  if (!isGeneralProgramCalendarPreviewRow(original)) return null
+  return {
+    id: item.id,
+    programTitle: original.programTitle,
+    scheduleContent: original.scheduleContent,
+    timeLabel: original.timeLabel,
+  }
+}
+
+/** 일반 프로그램 목록 캘린더 — 이벤트 모드 셀 툴팁 (제목 + 일정 내용 | 시간) */
+export function renderGeneralProgramCalendarPreviewTooltipContent({
+  events,
+  colorMap,
+}: {
+  events: CalendarItem[]
+  colorMap: Map<string | number, ScheduleColorPair>
+}): ReactNode {
+  return (
+    <div className="program-preview">
+      {events.map(item => {
+        const event = resolveGeneralProgramCalendarPreviewRow(item)
+        const colors = colorMap.get(item.id) ?? SCHEDULE_COLORS[0]
+        if (!event) {
+          return (
+            <div key={String(item.id)} className="program-preview-item program-preview-item--stack">
+              <span className="program-preview-item__title" style={{ color: colors.text }}>
+                {item.title ?? '-'}
+              </span>
+            </div>
+          )
+        }
+        return (
+          <button
+            key={String(item.id)}
+            type="button"
+            className="program-preview-item program-preview-item--stack"
+          >
+            <span className="program-preview-item__title" style={{ color: colors.text }}>
+              {event.programTitle}
+            </span>
+            <span className="program-preview-item__desc">
+              {event.scheduleContent} | {event.timeLabel}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
 }

@@ -13,14 +13,11 @@ import {
   Typography,
   Tag,
   Space,
-  Empty,
   Tabs,
-  Button,
   Divider,
-  Modal,
   Descriptions,
 } from 'antd'
-import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
+import { CmsButton, LabeledSearchInput, EmptyState, ContentModal, InquiryModal } from '@/shared/ui'
 import {
   PlusOutlined,
   ClockCircleOutlined,
@@ -31,7 +28,6 @@ import {
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
-import { InquiryModal } from '@/shared/ui'
 import dayjs from 'dayjs'
 import { mockInquiries, type Inquiry } from '@/data/mock/inquiries'
 
@@ -86,14 +82,14 @@ export function InquiryPage() {
               답변드립니다.
             </Text>
           </div>
-          <Button
-            type="primary"
+          <CmsButton
+            variant="primary"
             icon={<PlusOutlined />}
             onClick={() => setWriteModalOpen(true)}
             size="large"
           >
             새 문의 작성
-          </Button>
+          </CmsButton>
         </div>
 
         {/* 검색 및 필터 */}
@@ -139,7 +135,9 @@ export function InquiryPage() {
         {/* 목록 영역 */}
         <Card styles={{ body: { padding: 0 } }}>
           {filteredInquiries.length === 0 ? (
-            <Empty description="문의 내역이 없습니다." style={{ padding: '60px 0' }} />
+            <div style={{ padding: '60px 0' }}>
+              <EmptyState description="문의 내역이 없습니다." />
+            </div>
           ) : (
             <List
               itemLayout="horizontal"
@@ -203,37 +201,39 @@ export function InquiryPage() {
       </Space>
 
       {/* 문의 상세 Modal */}
-      <Modal
-        title={
-          <div>
-            <div style={{ marginBottom: 4 }}>
-              <Tag bordered={false} style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}>
-                {selectedInquiry?.category}
-              </Tag>
-              <Tag
-                color={selectedInquiry?.status === 'ANSWERED' ? 'success' : 'default'}
-                style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}
-              >
-                {selectedInquiry?.status === 'ANSWERED' ? '답변완료' : '답변대기'}
-              </Tag>
-            </div>
-            <Title level={4} style={{ margin: 0 }}>
-              {selectedInquiry?.title}
-            </Title>
-          </div>
-        }
+      <ContentModal
         open={detailModalOpen}
         onCancel={() => setDetailModalOpen(false)}
         width={800}
-        footer={[
-          <Button key="close" onClick={() => setDetailModalOpen(false)}>
+        title={selectedInquiry?.title ?? '문의 상세'}
+        titleContent={
+          selectedInquiry ? (
+            <div>
+              <div style={{ marginBottom: 4 }}>
+                <Tag bordered={false} style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}>
+                  {selectedInquiry.category}
+                </Tag>
+                <Tag
+                  color={selectedInquiry.status === 'ANSWERED' ? 'success' : 'default'}
+                  style={{ fontSize: LAYOUT_CONSTANTS.fontSizes.sm }}
+                >
+                  {selectedInquiry.status === 'ANSWERED' ? '답변완료' : '답변대기'}
+                </Tag>
+              </div>
+              <Title level={4} style={{ margin: 0 }}>
+                {selectedInquiry.title}
+              </Title>
+            </div>
+          ) : undefined
+        }
+        footer={
+          <CmsButton variant="secondary" size="medium" onClick={() => setDetailModalOpen(false)}>
             닫기
-          </Button>,
-        ]}
-        centered
+          </CmsButton>
+        }
       >
-        {selectedInquiry && (
-          <div style={{ padding: '12px 0' }}>
+        {selectedInquiry ? (
+          <div>
             <Descriptions bordered size="small" column={2} style={{ marginBottom: 24 }}>
               <Descriptions.Item label="문의 유형">{selectedInquiry.category}</Descriptions.Item>
               <Descriptions.Item label="작성일시">
@@ -304,8 +304,10 @@ export function InquiryPage() {
               </div>
             )}
           </div>
+        ) : (
+          <div />
         )}
-      </Modal>
+      </ContentModal>
 
       {/* 새 문의 작성 Modal */}
       <InquiryModal

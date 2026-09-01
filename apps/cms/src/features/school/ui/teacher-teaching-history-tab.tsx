@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react'
-import { Table, Empty } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   type TeachingHistoryRow,
@@ -11,13 +11,14 @@ import {
   type TeachingSettlementStatus,
 } from '@/data/mock/school-detail'
 import { StatusBadge } from '@/shared/components/status-badge'
-import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
+import { EmptyState } from '@/shared/ui'
+import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER } from '@/shared/constants/status'
-import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
+import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 
 const PROGRAM_STATUS_KEYS: TeachingProgramStatus[] = PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER
 const SETTLEMENT_STATUS_KEYS: TeachingSettlementStatus[] = ['na', 'pending', 'partial', 'completed']
@@ -106,7 +107,9 @@ export function TeacherTeachingHistoryTab({ initialData }: TeacherTeachingHistor
             <StatusDropdownCell<TeachingSettlementStatus>
               status={record.settlementStatus}
               statusOptions={SETTLEMENT_STATUS_KEYS}
-              renderBadge={s => <SettlementStatusBadge status={s as SettlementStatusKey} />}
+              renderBadge={s => (
+                <InstructorPaymentStatusBadge status={s as InstructorSettlementUiStatus} />
+              )}
               isItemDisabled={(cur, opt) => cur === opt}
               onChange={s => handleSettlementStatusChange(record.id, s)}
               isOpen={openSettlementDropdownId === record.id}
@@ -151,7 +154,7 @@ export function TeacherTeachingHistoryTab({ initialData }: TeacherTeachingHistor
           className="teacher-detail-modal__teaching-table cms-data-table"
         />
       ) : (
-        <Empty description="프로그램 강의 이력이 없습니다." />
+        <EmptyState description="프로그램 강의 이력이 없습니다." />
       )}
     </div>
   )

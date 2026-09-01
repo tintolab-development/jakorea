@@ -1,4 +1,8 @@
 import type { WritingTemplateCategory } from '@/features/template/model/template-create.types'
+import {
+  duplicateFormTemplateVersionRemote,
+  shouldUseFormsSurveysRemoteApi,
+} from '@/features/template/api/admin-form-templates-service'
 
 export interface DuplicateWritingTemplateParams {
   sourceTemplateId: string
@@ -11,13 +15,22 @@ export interface DuplicateWritingTemplateResult {
 
 /**
  * 작성 양식(신청/설문/동의) 템플릿 복제.
- * TODO(api): 실제 복제 API 연동 후 응답의 새 템플릿 id를 반환할 것.
- * 스텁은 UI·URL 연동 검증용으로 원본 id를 그대로 반환한다.
+ * formsSurveys API 활성 시 versions/copy 호출, 그 외 스텁(원본 id 반환).
  */
 export async function duplicateWritingTemplate(
   params: DuplicateWritingTemplateParams
 ): Promise<DuplicateWritingTemplateResult> {
-  // TODO(api): 작성 양식 복제 API 연동 — 응답의 새 템플릿 id로 교체
+  if (shouldUseFormsSurveysRemoteApi()) {
+    try {
+      const newTemplateId = await duplicateFormTemplateVersionRemote({
+        sourceTemplateCode: params.sourceTemplateId,
+      })
+      return { newTemplateId }
+    } catch (error) {
+      console.warn('[form-templates] remote duplicate failed; using stub fallback', error)
+    }
+  }
+
   await new Promise<void>(resolve => {
     setTimeout(resolve, 150)
   })

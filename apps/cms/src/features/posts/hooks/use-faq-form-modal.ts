@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Form, message } from 'antd'
+import { Form } from 'antd'
 import type { FormInstance } from 'antd/es/form'
-import { getFaqCategorySelectOptions } from '@/features/posts/api/admin-faq-category-mock-store'
-import { createFaq, deleteFaq, updateFaq } from '@/features/posts/api/admin-faq-service'
+import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
+import { useFaqCategoriesQuery } from '@/features/posts/hooks/use-faq-categories-query'
+import { useFaqMutations } from '@/features/posts/hooks/use-faq-mutations'
 import type {
   FaqFormFieldValues,
   FaqFormModalProps,
 } from '@/features/posts/model/faq-form-types'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { handleError } from '@/shared/utils/error-handler'
 
 export type UseFaqFormModalResult = {
   form: FormInstance<FaqFormFieldValues>
@@ -38,6 +40,7 @@ export function useFaqFormModal({
   const canWrite = canPerformWriteAction(user)
   const [form] = Form.useForm<FaqFormFieldValues>()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const { createMutation, updateMutation, deleteMutation } = useFaqMutations()
 
   const isEdit = mode === 'edit' && faq != null
   const isBroken = mode === 'edit' && open && !faq
@@ -68,7 +71,11 @@ export function useFaqFormModal({
     }
   }, [open])
 
-  const categoryOptions = useMemo(() => getFaqCategorySelectOptions(), [open])
+  const categoriesQuery = useFaqCategoriesQuery(open)
+  const categoryOptions = useMemo(
+    () => (categoriesQuery.data ?? []).map(row => ({ label: row.name, value: row.name })),
+    [categoriesQuery.data]
+  )
 
   const handleSubmit = useCallback(async () => {
     if (!canWrite) return
@@ -76,7 +83,6 @@ export function useFaqFormModal({
       const v = await form.validateFields()
       const answer = v.answer.trim()
       if (!answer) {
-        message.warning('내용(답변)을 입력해주세요.')
         return
       }
 
@@ -85,17 +91,19 @@ export function useFaqFormModal({
       const status = v.visibility === 'public' ? 'published' : 'draft'
 
       if (isEdit && faq) {
-        const updated = await updateFaq(faq.id, {
-          category,
-          question: v.question.trim(),
-          answer,
-          author,
-          status,
+        const updated = await updateMutation.mutateAsync({
+          id: faq.id,
+          patch: {
+            category,
+            question: v.question.trim(),
+            answer,
+            author,
+            status,
+          },
         })
-        message.success('FAQ가 수정되었습니다.')
         onSuccess?.(updated)
       } else {
-        const created = await createFaq({
+        const created = await createMutation.mutateAsync({
           category,
           question: v.question.trim(),
           answer,
@@ -103,7 +111,6 @@ export function useFaqFormModal({
           status,
           createdAt: new Date().toISOString(),
         })
-        message.success('FAQ가 등록되었습니다.')
         onSuccess?.(created)
       }
       onCancel()
@@ -111,15 +118,22 @@ export function useFaqFormModal({
       if (err && typeof err === 'object' && 'errorFields' in err) {
         return
       }
-      const msg =
-        err instanceof Error
-          ? err.message === 'NOT_FOUND'
-            ? 'FAQ를 찾을 수 없습니다.'
-            : err.message
-          : '요청에 실패했습니다.'
-      message.error(msg)
+      handleError(err, {
+        context: 'useFaqFormModal.handleSubmit',
+        defaultMessage: getPostsApiErrorMessage(err, '저장에 실패했습니다.'),
+      })
     }
-  }, [canWrite, form, isEdit, faq, onCancel, onSuccess, user?.name])
+  }, [
+    canWrite,
+    createMutation,
+    form,
+    isEdit,
+    faq,
+    onCancel,
+    onSuccess,
+    updateMutation,
+    user?.name,
+  ])
 
   const handleRequestDelete = useCallback(() => {
     if (!canWrite || !faq) return
@@ -129,15 +143,17 @@ export function useFaqFormModal({
   const handleConfirmDelete = useCallback(async () => {
     if (!faq) return
     try {
-      await deleteFaq(faq.id)
-      message.success('FAQ가 삭제되었습니다.')
+      await deleteMutation.mutateAsync(faq.id)
       setDeleteConfirmOpen(false)
       onDeleted?.()
       onCancel()
-    } catch {
-      message.error('FAQ 삭제에 실패했습니다.')
+    } catch (err) {
+      handleError(err, {
+        context: 'useFaqFormModal.handleConfirmDelete',
+        defaultMessage: getPostsApiErrorMessage(err, '삭제에 실패했습니다.'),
+      })
     }
-  }, [faq, onCancel, onDeleted])
+  }, [deleteMutation, faq, onCancel, onDeleted])
 
   const modalTitle = isEdit ? 'FAQ 수정' : 'FAQ 등록'
   const submitLabel = isEdit ? '수정' : '등록'

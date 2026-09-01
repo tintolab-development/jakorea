@@ -4,7 +4,7 @@
  */
 
 interface WidgetTitleWithHandleProps {
-  children: React.ReactNode
+  children?: React.ReactNode
 }
 
 export function WidgetTitleWithHandle({ children }: WidgetTitleWithHandleProps) {

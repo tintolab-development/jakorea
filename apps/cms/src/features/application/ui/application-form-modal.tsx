@@ -4,13 +4,13 @@
  * FSD: features/application으로 이동 (shared는 features 미참조)
  */
 
-import { Modal } from 'antd'
+import { ContentModal } from '@/shared/ui'
 import { ApplicationForm } from '@/features/application/ui/application-form'
 import { useApplicationStore } from '@/features/application/model/application-store'
 import { useAuth } from '@/shared/lib/auth/auth-context'
 import type { ApplicationFormData } from '@/entities/application/model/schema'
-import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
 import { MESSAGES } from '@/shared/constants'
+import { handleError } from '@/shared/utils/error-handler'
 
 interface ApplicationFormModalProps {
   programId: string
@@ -54,7 +54,6 @@ export function ApplicationFormModal({
         notes: applicationData.notes,
       })
 
-      showSuccessMessage(MESSAGES.success.applicationCompletedModal)
       onSuccess?.()
     } catch (error) {
       handleError(error, {
@@ -66,13 +65,11 @@ export function ApplicationFormModal({
   }
 
   return (
-    <Modal
+    <ContentModal
       title={`프로그램 신청 - ${programTitle}`}
       open={open}
       onCancel={onClose}
-      footer={null}
-      width={700}
-      destroyOnHidden
+      size="default"
       zIndex={1001}
     >
       <ApplicationForm
@@ -81,6 +78,6 @@ export function ApplicationFormModal({
         onCancel={onClose}
         loading={loading}
       />
-    </Modal>
+    </ContentModal>
   )
 }

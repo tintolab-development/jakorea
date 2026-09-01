@@ -1,0 +1,190 @@
+.ujat-doc-viewer-modal {
+  --ujat-doc-viewer-a4-design-page-width: 1464px;
+  --ujat-doc-viewer-a4-display-width: 1404px;
+  --ujat-doc-viewer-a4-scale: calc(
+    var(--ujat-doc-viewer-a4-display-width) / var(--ujat-doc-viewer-a4-design-page-width)
+  );
+}
+
+.ujat-doc-viewer-modal__title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ujat-doc-viewer-modal__file-name {
+  color: var(--main-WT, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(1040px, calc(100vw - 520px));
+}
+
+.ujat-doc-viewer-modal__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 11px;
+  border: 1px solid var(--main-WT, #fff);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--main-WT, #fff);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ujat-doc-viewer-modal__description {
+  font-size: 15px;
+}
+
+.ujat-doc-viewer-modal__actions {
+  gap: 8px;
+}
+
+.ujat-doc-viewer-modal .full-page-modal__topbar {
+  background: var(--color-mint-01, #01a1af);
+}
+
+.ujat-doc-viewer-modal .full-page-modal__title {
+  color: var(--main-WT, #fff);
+}
+
+.ujat-doc-viewer-modal .full-page-modal__close {
+  color: var(--main-WT, #fff);
+}
+
+.ujat-doc-viewer-modal__workspace {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  min-height: 0;
+  padding: 4px 0 0;
+  box-sizing: border-box;
+}
+
+.ujat-doc-viewer-modal__page {
+  position: relative;
+  width: var(--ujat-doc-viewer-a4-display-width);
+  aspect-ratio: 65 / 92;
+  height: calc(var(--ujat-doc-viewer-a4-display-width) * 92 / 65);
+  background: #fff;
+  box-shadow: none;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.ujat-doc-viewer-modal__page .a4-document-page-layout {
+  transform: scale(var(--ujat-doc-viewer-a4-scale));
+  transform-origin: top left;
+}
+
+.ujat-doc-viewer-modal__page-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 20px;
+  min-height: 48px;
+  padding: 10px 16px;
+  border-radius: var(--16, 16px);
+  background: rgba(34, 64, 75, 0.5);
+  z-index: 1200;
+  flex-shrink: 0;
+}
+
+.ujat-doc-viewer-modal__page-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 0;
+  color: #fff;
+  padding: 0;
+  transition: opacity 0.15s;
+}
+
+.ujat-doc-viewer-modal__page-nav-btn:hover:not(:disabled) {
+  opacity: 0.86;
+}
+
+.ujat-doc-viewer-modal__page-nav-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.ujat-doc-viewer-modal__page-indicator {
+  font-size: 20px;
+  font-weight: 500;
+  color: #fff;
+  min-width: 64px;
+  text-align: center;
+}
+
+.ujat-assignment-feedback-modal__form {
+  margin-top: 30px;
+}
+
+.ujat-assignment-feedback-modal__form .detail-info-form__field {
+  --detail-info-label-w: 120px !important;
+  min-height: 124px;
+}
+
+.ujat-assignment-feedback-modal__form--view .detail-info-form__field {
+  min-height: 52px;
+}
+
+.ujat-assignment-feedback-modal__form--view .detail-info-form__field-content {
+  padding: 12px 16px;
+}
+
+.ujat-assignment-feedback-modal__form .detail-info-form__field-content--edit {
+  padding: 12px 16px;
+  align-items: stretch;
+}
+
+.ujat-assignment-feedback-modal__form .detail-info-form__field-content--edit > * {
+  width: 100%;
+  margin-block: 0;
+  align-items: stretch;
+}
+
+.ujat-assignment-feedback-modal__textarea,
+.ujat-assignment-feedback-modal__textarea .cms-textarea__control {
+  width: 100%;
+}
+
+.ujat-assignment-feedback-modal__feedback-content {
+  width: 100%;
+  font-size: 16px;
+  font-weight: 500;
+  color: #3d3d3d;
+  line-height: 150%;
+  white-space: pre-wrap;
+}
+
+.ujat-assignment-feedback-modal__form:not(.ujat-assignment-feedback-modal__form--view)
+  .ujat-assignment-feedback-modal__feedback-content {
+  min-height: 96px;
+}
+
+.ujat-doc-viewer-modal__pdf-host {
+  position: fixed;
+  left: -20000px;
+  top: 0;
+  width: 1464px;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  z-index: -1;
+}

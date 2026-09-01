@@ -5,18 +5,23 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Card, Table, Space, Empty, Tabs, Button, Modal, Descriptions } from 'antd'
+import { Card, Table, Space, Tabs } from 'antd'
 import { EyeOutlined } from '@ant-design/icons'
+import { ContentModal, EmptyState, LoadingButton } from '@/shared/ui'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { useProgramService } from '@/features/program/hooks/use-program-service'
-import { applicationStatusStatusConfig } from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/ui/status-badge'
+import { useProgramService } from '@/features/program/general/hooks/use-program-service'
+import {
+  applicationStatusStatusConfig,
+  getStatusConfigAccentColor,
+} from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/components/status-badge'
 import { applicationService } from '@/entities/application/api/application-service'
-import dayjs from 'dayjs'
+import { formatDateDot, formatDateTimeDot } from '@/shared/utils'
 import type { Application, ApplicationStatus } from '@/types/domain'
-import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
+import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 
 const statusTabs: Array<{ key: ApplicationStatus | 'all'; label: string }> = [
   { key: 'all', label: '전체' },
@@ -122,13 +127,13 @@ export function MyProgramApplicationsPage() {
       render: (programId: string) => {
         const program = getProgramByIdSync(programId)
         return program ? (
-          <Button
+          <LoadingButton
             type="link"
             onClick={() => handleViewProgram(programId)}
             style={{ padding: 0, fontWeight: 500 }}
           >
             {program.title}
-          </Button>
+          </LoadingButton>
         ) : (
           '-'
         )
@@ -139,7 +144,7 @@ export function MyProgramApplicationsPage() {
       dataIndex: 'submittedAt',
       key: 'submittedAt',
       width: 150,
-      render: (date: string) => dayjs(date).format('YYYY-MM-DD'),
+      render: (date: string) => formatDateDot(date),
     },
     {
       title: '상태',
@@ -147,7 +152,11 @@ export function MyProgramApplicationsPage() {
       key: 'status',
       width: 120,
       render: (status: ApplicationStatus) => (
-        <StatusBadge status={status} statusConfig={applicationStatusStatusConfig} />
+        <StatusBadge
+          domain="custom"
+          label={applicationStatusStatusConfig[status].label}
+          accentColor={getStatusConfigAccentColor(applicationStatusStatusConfig[status].color)}
+        />
       ),
     },
     {
@@ -155,16 +164,16 @@ export function MyProgramApplicationsPage() {
       dataIndex: 'reviewedAt',
       key: 'reviewedAt',
       width: 150,
-      render: (date: string | undefined) => (date ? dayjs(date).format('YYYY-MM-DD') : '-'),
+      render: (date: string | undefined) => (date ? formatDateDot(date) : '-'),
     },
     {
       title: '작업',
       key: 'action',
       width: 100,
       render: (_: unknown, record: Application) => (
-        <Button type="link" icon={<EyeOutlined />} onClick={() => handleView(record)}>
+        <LoadingButton type="link" icon={<EyeOutlined />} onClick={() => handleView(record)}>
           상세
-        </Button>
+        </LoadingButton>
       ),
     },
   ]
@@ -178,7 +187,7 @@ export function MyProgramApplicationsPage() {
       <div>
         <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
         <Card>
-          <Empty description="신청 내역을 조회할 수 없습니다." />
+          <EmptyState description="신청 내역을 조회할 수 없습니다." />
         </Card>
       </div>
     )
@@ -208,7 +217,7 @@ export function MyProgramApplicationsPage() {
             ),
             children:
               filteredApplications.length === 0 ? (
-                <Empty description="신청한 프로그램이 없습니다." />
+                <EmptyState description="신청한 프로그램이 없습니다." />
               ) : (
                 <Table
                   columns={columns}
@@ -226,47 +235,74 @@ export function MyProgramApplicationsPage() {
         />
       </Card>
 
-      <Modal
+      <ContentModal
         title="신청 상세"
         open={detailModalOpen}
         onCancel={() => {
           setDetailModalOpen(false)
           setSelectedApplication(null)
         }}
-        footer={null}
-        width={560}
-        destroyOnClose
+        width={600}
       >
-        {selectedApplication && (
-          <Descriptions column={1} bordered size="small">
-            <Descriptions.Item label="프로그램">
-              {getProgramByIdSync(selectedApplication.programId)?.title ?? '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label="상태">
-              <StatusBadge
-                status={selectedApplication.status}
-                statusConfig={applicationStatusStatusConfig}
+        {selectedApplication ? (
+          <DetailInfoForm title="신청 상세" mode="view" hideHeader>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="프로그램"
+                view={getProgramByIdSync(selectedApplication.programId)?.title ?? '-'}
+                fullRow
               />
-            </Descriptions.Item>
-            <Descriptions.Item label="신청일">
-              {dayjs(selectedApplication.submittedAt).format('YYYY-MM-DD HH:mm')}
-            </Descriptions.Item>
-            <Descriptions.Item label="검토일">
-              {selectedApplication.reviewedAt
-                ? dayjs(selectedApplication.reviewedAt).format('YYYY-MM-DD HH:mm')
-                : '-'}
-            </Descriptions.Item>
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="상태"
+                fullRow
+                view={
+                  <StatusBadge
+                    domain="custom"
+                    label={applicationStatusStatusConfig[selectedApplication.status].label}
+                    accentColor={getStatusConfigAccentColor(
+                      applicationStatusStatusConfig[selectedApplication.status].color
+                    )}
+                  />
+                }
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="신청일"
+                view={formatDateTimeDot(selectedApplication.submittedAt)}
+                fullRow
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="검토일"
+                view={
+                  selectedApplication.reviewedAt
+                    ? formatDateTimeDot(selectedApplication.reviewedAt)
+                    : '-'
+                }
+                fullRow
+              />
+            </DetailInfoForm.Row>
             {selectedApplication.rejectionReason ? (
-              <Descriptions.Item label="반려 사유">
-                {selectedApplication.rejectionReason}
-              </Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="반려 사유"
+                  view={selectedApplication.rejectionReason}
+                  fullRow
+                />
+              </DetailInfoForm.Row>
             ) : null}
             {selectedApplication.notes ? (
-              <Descriptions.Item label="비고">{selectedApplication.notes}</Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="비고" view={selectedApplication.notes} fullRow />
+              </DetailInfoForm.Row>
             ) : null}
-          </Descriptions>
-        )}
-      </Modal>
+          </DetailInfoForm>
+        ) : null}
+      </ContentModal>
     </div>
   )
 }

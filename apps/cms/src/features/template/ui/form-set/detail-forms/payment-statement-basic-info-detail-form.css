@@ -1,0 +1,120 @@
+/* 지급조서 기본 정보 — DetailInfoForm 본문이 단락 카드 안에서 폭을 채우도록 */
+.payment-statement-basic-info-detail-form {
+  width: 100%;
+  min-width: 0;
+}
+
+.payment-statement-basic-info-detail-form .detail-info-form__body {
+  width: 100%;
+}
+
+/* 각 행(라벨+값) 높이 64px — large 인풋 44px 기준 세로 패딩 10px */
+.payment-statement-basic-info-detail-form .detail-info-form__field {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  box-sizing: border-box;
+}
+
+.payment-statement-basic-info-detail-form .detail-info-form__field-label,
+.payment-statement-basic-info-detail-form .detail-info-form__field-content {
+  padding-block: 10px;
+  padding-inline: 16px;
+}
+
+/* 앞·뒤 2칸이 half-cell(라벨 200px 제외) 안에 들어가도록 고정 240px 기본폭 대신 flex 분배 */
+.payment-statement-basic-info-detail-form__resident {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.payment-statement-basic-info-detail-form__resident > .cms-input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.payment-statement-basic-info-detail-form__dash {
+  flex-shrink: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* 단락 전용 디바이더 (DetailInfoForm.InputsSeparator) */
+.payment-statement-basic-info-detail-form .detail-info-form-inputs-separator {
+  width: 1px;
+  height: 13px;
+  opacity: 0.5;
+  background: var(--main-BK, #3d3d3d);
+}
+
+.payment-statement-basic-info-detail-form__address.detail-info-form-inputs-wrapper,
+.payment-statement-basic-info-detail-form__account.detail-info-form-inputs-wrapper,
+.payment-statement-basic-info-detail-form__affiliation.detail-info-form-inputs-wrapper {
+  align-items: center;
+}
+
+.payment-statement-basic-info-detail-form .detail-info-form__field-content--edit
+  > .payment-statement-basic-info-detail-form__address {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.payment-statement-basic-info-detail-form .detail-info-form__field:has(.payment-statement-basic-info-detail-form__address),
+.payment-statement-basic-info-detail-form .detail-info-form__field:has(.payment-statement-basic-info-detail-form__account) {
+  height: auto;
+  min-height: 64px;
+  max-height: none;
+}
+
+.payment-statement-basic-info-detail-form__address,
+.payment-statement-basic-info-detail-form__account {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.payment-statement-basic-info-detail-form__account > .cms-input,
+.payment-statement-basic-info-detail-form__account > .cms-numeric-input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.payment-statement-basic-info-detail-form__address > .address-search__trigger-wrap,
+.payment-statement-basic-info-detail-form__address > .cms-input {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+}
+
+.payment-statement-basic-info-detail-form__address > .detail-info-form-inputs-separator {
+  flex: 0 0 auto;
+}
+
+.payment-statement-basic-info-detail-form__address > .address-search__trigger-wrap .cms-input {
+  width: 100%;
+  min-width: 0;
+}
+
+/* A4 document — 카드형 radius/shadow 제거 (셀 border는 유지) */
+.form-document-preview-paragraph--content-only
+  .payment-statement-basic-info-detail-form
+  .detail-info-form__body {
+  border-radius: 0;
+  box-shadow: none;
+}

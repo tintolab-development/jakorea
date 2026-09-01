@@ -1,0 +1,45 @@
+.agreement-sheet-closing-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  /* 버튼 아래 여백 80 — 시트 끝 */
+  padding-bottom: 80px;
+}
+
+.agreement-sheet-closing-footer__recipient {
+  margin: 60px 0 16px;
+  color: var(--Color-netural-cool-500, #85969d);
+  font-family: Pretendard, sans-serif;
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 144%;
+  text-align: center;
+}
+
+/* A4 contentOnly — 서명 영역 스펙 (우측 정렬 볼드) */
+.agreement-sheet-closing-footer--document {
+  align-items: flex-end;
+  padding-bottom: 0;
+}
+
+.agreement-sheet-closing-footer--document .agreement-sheet-closing-footer__recipient {
+  margin: 0;
+  color: #000;
+  text-align: right;
+  font-family: Pretendard, sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 36px */
+}
+
+.agreement-sheet-closing-footer__submit.cms-button.ant-btn.cms-button--large {
+  width: 240px;
+  min-width: 240px;
+  max-width: 240px;
+  height: 52px;
+  padding: 0 16px !important;
+}

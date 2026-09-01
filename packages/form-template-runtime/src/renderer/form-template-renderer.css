@@ -1,0 +1,28 @@
+.form-template-preview-text {
+  padding: 0 8px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  white-space: pre-wrap;
+}
+
+.form-template-preview-text--muted {
+  opacity: 0.5;
+}
+
+.form-template-preview-lines {
+  margin: 0;
+  padding: 0 8px 0 24px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.form-template-preview-placeholder {
+  padding: 8px;
+  font-size: 14px;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
+}

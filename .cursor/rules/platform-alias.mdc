@@ -1,0 +1,17 @@
+---
+description: JaKorea Platform은 사용자 홈페이지를 의미하며 관련 요청은 apps/platform 범위로 해석한다
+alwaysApply: true
+---
+
+# JaKorea Platform 별칭
+
+## 지시 해석
+
+- **JaKorea Platform**은 **사용자 홈페이지**를 의미한다.
+- 사용자가 "사용자 홈페이지"라고 지칭하면 기본 작업 대상은 `apps/platform/`이다.
+- 예: "사용자 홈페이지 로그인 화면 수정"은 JaKorea Platform의 로그인 화면, 즉 `apps/platform/` 안의 로그인 관련 화면을 수정하는 요청으로 해석한다.
+
+## 경계
+
+- `apps/cms/`는 관리자 CMS이며, "사용자 홈페이지" 요청의 기본 대상이 아니다.
+- 요청이 CMS와 Platform 양쪽에 걸치는지 불명확하면 코드 변경 전에 사용자에게 확인한다.

@@ -1,0 +1,217 @@
+{
+  "templateCode": "registration-ujat",
+  "templateName": "UJAT 프로그램 등록 폼",
+  "formType": "WRITING",
+  "category": "REGISTRATION",
+  "schemaJson": {
+    "schemaVersion": 1,
+    "formSettings": {
+      "titleNumbering": "numeric"
+    },
+    "paragraphs": [
+      {
+        "id": "ujat-reg-basic",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "answerRequired": true,
+        "participatesInTitleNumbering": true,
+        "paragraphTitle": "기본 정보",
+        "paragraphDescription": "",
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "idTypeWithInput": null
+      },
+      {
+        "id": "ujat-reg-business-kpi",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "answerRequired": true,
+        "participatesInTitleNumbering": true,
+        "paragraphTitle": "사업 KPI 목표",
+        "paragraphDescription": "",
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "idTypeWithInput": null
+      },
+      {
+        "id": "ujat-reg-payment",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "answerRequired": true,
+        "participatesInTitleNumbering": true,
+        "paragraphTitle": "임금 정보",
+        "paragraphDescription": "",
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "idTypeWithInput": null
+      },
+      {
+        "id": "ujat-reg-first-half-education-schedule",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "answerRequired": true,
+        "participatesInTitleNumbering": true,
+        "paragraphTitle": "상반기 교육 일정",
+        "paragraphDescription": "행사 일정 별 정보를 입력해 주세요",
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "idTypeWithInput": null
+      },
+      {
+        "id": "ujat-reg-second-half-education-schedule",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "answerRequired": true,
+        "participatesInTitleNumbering": true,
+        "paragraphTitle": "하반기 교육 일정",
+        "paragraphDescription": "행사 일정 별 정보를 입력해 주세요",
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "idTypeWithInput": null
+      },
+      {
+        "id": "ujat-reg-education-schedule-settings",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "answerRequired": true,
+        "participatesInTitleNumbering": true,
+        "paragraphTitle": "교육 진행 일정 설정",
+        "paragraphDescription": "교육이 진행되는 일정을 설정해 주세요.",
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "idTypeWithInput": null
+      },
+      {
+        "id": "ujat-reg-education-class-capacity-by-region",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "answerRequired": true,
+        "participatesInTitleNumbering": true,
+        "paragraphTitle": "지역 별 교육 진행 가능 학급 및 봉사단 수",
+        "paragraphDescription": "지역 별로 상반기/하반기 교육 진행 가능한 최대 학급 수와 봉사단 수를 설정해 주세요.",
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "idTypeWithInput": null
+      }
+    ]
+  },
+  "extensionJson": {
+    "overlay": {},
+    "editorState": {},
+    "uiState": {}
+  },
+  "settingsJson": null,
+  "_apiStorageNote": "DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장"
+}

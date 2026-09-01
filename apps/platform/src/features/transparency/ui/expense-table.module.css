@@ -1,0 +1,511 @@
+.table {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+  font-family: var(--font-family-base);
+}
+
+.colCategory,
+.colRatio {
+  width: 0;
+  min-width: 0;
+}
+
+.colArea {
+  width: auto;
+}
+
+.colAmount {
+  width: 36%;
+}
+
+.headCell {
+  box-sizing: border-box;
+  height: 78px;
+  padding: var(--spacing-24) var(--spacing-48);
+  overflow: hidden;
+  background: #fff;
+  color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.headCell:first-child {
+  border-radius: 40px 0 0 40px;
+}
+
+.headCell:last-child {
+  border-radius: 0 40px 40px 0;
+}
+
+.groupCell {
+  box-sizing: border-box;
+  padding: var(--spacing-32) var(--spacing-32);
+  overflow: hidden;
+  border-right: 1px solid var(--color-border-default);
+  color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+  text-align: center;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+.cell {
+  box-sizing: border-box;
+  min-height: 78px;
+  height: auto;
+  padding: var(--spacing-24) var(--spacing-32);
+  overflow: hidden;
+  border-bottom: 1px solid var(--color-neutral-cool-100);
+  color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.ratioCell,
+.amountCell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.groupFirstRow .cell {
+  padding-top: var(--spacing-32);
+}
+
+.groupLastRow .cell {
+  padding-bottom: var(--spacing-32);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.groupStartRow .cell,
+.groupStartRow .groupCell {
+  border-top: 1px solid var(--color-border-default);
+}
+
+.subtotalCell {
+  overflow: hidden;
+  border-bottom: none;
+  color: var(--color-primary-500);
+  font-family: var(--font-family-base);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.24px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subtotalCell.ratioCell,
+.subtotalCell.amountCell {
+  text-align: right;
+}
+
+.groupLastRow .subtotalCell {
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.totalRow .cell {
+  padding-block: var(--spacing-32);
+  border-bottom: 1px solid var(--color-border-default);
+  background: var(--color-neutral-cool-80);
+}
+
+.totalLabel {
+  border-right: 1px solid var(--color-border-default);
+  text-align: center;
+}
+
+.pcOnly {
+  display: none;
+}
+
+.pcOnlyInline {
+  display: none;
+}
+
+.mobileOnlyInline {
+  display: inline;
+}
+
+.mobilePercent {
+  display: block;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.amountValue {
+  display: block;
+  color: var(--color-neutral-cool-500);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.groupHeadingRow {
+  display: table-row;
+}
+
+.groupHeadingCell {
+  padding: var(--spacing-16) var(--spacing-12) var(--spacing-8);
+  border-bottom: 1px solid var(--color-neutral-black-10);
+  color: var(--color-neutral-black);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 150%;
+  text-align: left;
+}
+
+.areaCell {
+  min-width: 0;
+  text-align: left;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+  white-space: normal;
+}
+
+.headArea {
+  text-align: left;
+  border-radius: 16px 0 0 16px;
+}
+
+.headMetrics {
+  text-align: right;
+  border-radius: 0 16px 16px 0;
+}
+
+.metricsCell {
+  text-align: right;
+}
+
+.totalRow .cell {
+  background: transparent;
+  color: #2b6173;
+}
+
+.totalRow .amountValue,
+.totalRow .mobilePercent {
+  color: #2b6173;
+}
+
+.totalRow .amountValue {
+  font-weight: 600;
+}
+
+.subtotalCell .amountValue,
+.subtotalCell .mobilePercent {
+  color: var(--color-primary-500);
+}
+
+.subtotalCell .amountValue {
+  font-weight: 600;
+}
+
+@media (--bp-pc-up) {
+  .table {
+    table-layout: fixed;
+  }
+
+  .colCategory {
+    width: 18%;
+    min-width: 18%;
+  }
+
+  .colArea {
+    width: 42%;
+    min-width: 42%;
+  }
+
+  .colRatio {
+    width: 20%;
+    min-width: 20%;
+  }
+
+  .colAmount {
+    width: 20%;
+    min-width: 20%;
+  }
+
+  .pcOnly {
+    display: table-cell;
+  }
+
+  .pcOnlyInline {
+    display: inline;
+  }
+
+  .mobileOnlyInline,
+  .mobilePercent {
+    display: none;
+  }
+
+  .groupHeadingRow {
+    display: none;
+  }
+
+  .groupCell {
+    display: table-cell;
+  }
+
+  .headArea,
+  .headMetrics,
+  .areaCell {
+    text-align: center;
+    border-radius: 0;
+  }
+
+  .headCell:first-child {
+    border-radius: 40px 0 0 40px;
+  }
+
+  .headCell:last-child {
+    border-radius: 0 40px 40px 0;
+  }
+
+  .amountValue {
+    display: inline;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  .cell {
+    white-space: nowrap;
+  }
+
+  .totalRow .cell {
+    background: var(--color-neutral-cool-80);
+    color: inherit;
+  }
+
+  .totalRow .amountValue {
+    color: inherit;
+  }
+}
+
+@media (--bp-below-pc) {
+  .groupCell,
+  .pcOnly {
+    display: none;
+  }
+
+  .table,
+  .table :global(thead),
+  .table :global(tbody) {
+    display: block;
+    width: 100%;
+  }
+
+  .table :global(colgroup) {
+    display: none;
+  }
+
+  .headRow,
+  .table :global(tbody) tr {
+    display: flex;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-12);
+  }
+
+  .table :global(tbody) tr {
+    border-bottom: 1px solid var(--color-neutral-black-10);
+  }
+
+  .headRow,
+  .totalRow {
+    border-bottom: none;
+  }
+
+  .headRow {
+    padding: var(--spacing-8) var(--spacing-12);
+    border-radius: var(--radius-8);
+    background: var(--color-neutral-white);
+  }
+
+  .headCell {
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    overflow: visible;
+    background: transparent;
+    color: var(--color-neutral-black);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 140%;
+    letter-spacing: 0;
+    white-space: nowrap;
+    border-radius: 0;
+  }
+
+  .headArea,
+  .areaCell {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+    text-align: left;
+  }
+
+  .headMetrics,
+  .metricsCell {
+    flex: 0 0 auto;
+    width: auto;
+    margin-left: auto;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  .groupHeadingCell {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .headCell,
+  .cell,
+  .groupCell {
+    min-height: 0;
+    font-size: 14px;
+  }
+
+  .cell,
+  .groupLastRow .cell,
+  .groupLastRow .subtotalCell,
+  .totalRow .cell,
+  .groupHeadingCell {
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  .cell {
+    padding: var(--spacing-8) var(--spacing-12);
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .areaCell {
+    color: var(--color-neutral-black);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 140%;
+    letter-spacing: 0;
+  }
+
+  .metricsCell {
+    vertical-align: top;
+    white-space: nowrap;
+  }
+
+  .mobilePercent {
+    color: var(--color-neutral-black);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: normal;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .amountValue {
+    color: var(--color-neutral-cool-600);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: normal;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .groupHeadingCell {
+    padding: var(--spacing-16) var(--spacing-12) var(--spacing-8);
+    border-bottom: none;
+    color: var(--color-primary-800);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: normal;
+  }
+
+  .groupFirstRow .cell {
+    padding-top: var(--spacing-8);
+  }
+
+  .groupLastRow .cell {
+    padding-bottom: var(--spacing-8);
+  }
+
+  .groupStartRow .cell,
+  .groupStartRow .groupCell {
+    border-top: none;
+  }
+
+  .subtotalCell {
+    color: var(--color-primary-500);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 140%;
+    letter-spacing: 0;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .subtotalCell.amountCell {
+    text-align: right;
+  }
+
+  .subtotalCell .mobilePercent,
+  .subtotalCell .amountValue {
+    color: var(--color-primary-500);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 140%;
+  }
+
+  .totalRow .cell {
+    padding-block: var(--spacing-12);
+    overflow: visible;
+    background: transparent;
+    color: var(--color-primary-700);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 140%;
+  }
+
+  .totalRow .mobilePercent,
+  .totalRow .amountValue {
+    color: var(--color-primary-700);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 140%;
+  }
+
+  .totalLabel {
+    border-right: none;
+  }
+}

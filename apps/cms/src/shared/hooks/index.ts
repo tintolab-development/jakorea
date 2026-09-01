@@ -9,8 +9,7 @@ export {
   useCanAccessAny,
   useCanAccessAll,
   useCanAccessPath,
-  useRequirePermission,
-} from './use-can-access'
+  useRequirePermission } from './use-can-access'
 export { useTableWithQuery } from './use-table-with-query'
 export { useTableSearch } from './use-table-search'
 export type {
@@ -19,33 +18,56 @@ export type {
   TableSearchParamRuleParam,
   TableSearchSetSearchParams,
   UseTableSearchOptions,
-  UseTableSearchReturn,
-} from './use-table-search'
+  UseTableSearchReturn } from './use-table-search'
 export { useListFilters } from './use-list-filters'
 export type { UseListFiltersOptions, UseListFiltersReturn, FilterConfig } from './use-list-filters'
 export { useModalState } from './use-modal-state'
 export type { UseModalStateOptions, UseModalStateReturn } from './use-modal-state'
 export { useBreadcrumb } from './use-breadcrumb'
 export type { UseBreadcrumbReturn } from './use-breadcrumb'
-export { useNeisSchoolSearch } from './use-neis-school-search'
+export { useNeisSchoolSearch } from '@jakorea/location/neis/react'
 export type {
   UseNeisSchoolSearchOptions,
   UseNeisSchoolSearchReturn,
   NeisSchoolItem,
   NeisSchoolRow,
-} from './use-neis-school-search'
+} from '@jakorea/location/neis'
+export { filterNeisSchoolsByRegion } from '@jakorea/location/neis'
+export { useCareerNetUniversitySearch } from '@jakorea/location/career-net/react'
+export type {
+  UseCareerNetUniversitySearchOptions,
+  UseCareerNetUniversitySearchReturn,
+  CareerNetUniversityItem,
+} from '@jakorea/location/career-net'
+export { filterCareerNetUniversitiesBySigungu } from '@jakorea/location/career-net'
 export {
-  useJusoAddressSearch,
-  JUSO_BUSINESS_ADDR_LINK_API_URL,
-  readJusoConfmKeyFromEnv,
-} from './use-juso-address-search'
+  getSidoMatchTokens,
+  matchesSidoInText,
+  SIDO_MATCH_TOKENS,
+} from '@jakorea/location/sido-sigungu'
+export { useJusoAddressSearch } from '@jakorea/location/juso/react'
+export { JUSO_BUSINESS_ADDR_LINK_API_URL } from '@jakorea/location/juso'
 export type {
   UseJusoAddressSearchOptions,
   UseJusoAddressSearchReturn,
   JusoAddressItem,
   JusoAddressRow,
-} from './use-juso-address-search'
+} from '@jakorea/location/juso'
+export {
+  readJusoConfmKeyFromEnv,
+  readJusoApiUrlFromEnv,
+  readNeisApiKeyFromEnv,
+  readCareerNetApiKeyFromEnv,
+  getCmsJusoMissingKeyMessage,
+  getCmsNeisMissingKeyMessage,
+  getCmsCareerNetMissingKeyMessage,
+} from '@/shared/lib/location-env'
 export { useObjectUrlFromFile } from './use-object-url-from-file'
 export { useFormInputsWidth } from './use-form-inputs-width'
 export type { FormInputsWidthOptions } from './use-form-inputs-width'
 export { useDeleteGuideMessages } from './use-delete-guide-messages'
+export { useTableExcelExport } from './use-table-excel-export'
+export type {
+  TableExcelExporter,
+  UseTableExcelExportOptions,
+} from './use-table-excel-export'

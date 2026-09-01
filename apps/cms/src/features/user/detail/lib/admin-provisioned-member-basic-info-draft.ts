@@ -1,16 +1,26 @@
 import type { User } from '@/types/user'
 import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
+import { buildInstructorRegisterCertifications, type InstructorRegisterLicenseRow } from '@/features/user/api/map-instructor-register-extras'
+import type {
+  InstructorCmsProfileProposal,
+  InstructorCmsSettlement,
+} from '@/features/user/api/types/instructor-cms-profile-proposal'
 import {
   getAdminPermissionVariant,
   type AdminPermissionTagVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
+import {
+  filterEditableTermsAgreementsForBasicInfoPatch,
+  termsAgreementRowsToRequests,
+} from '@/features/user/api/member-basic-info-terms-patch'
 
 /** `user.affiliation` 저장 시 기관·학년 구분에 사용 (목·API와 동일) */
 export const USER_AFFILIATION_PIPE_SEP = ' | ' as const
 
 export type AdminProvisionedMemberBasicInfoDraft = {
   name: string
-  nameEn: string
   phone: string
   email: string
   detailAddress: string
@@ -18,6 +28,19 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   affiliationInstitution: string
   /** 담당·소속 학년 */
   affiliationGrade: string
+  /** 개인 회원 — 현재 학교 재학 여부 (등록 폼과 동일) */
+  schoolEnrollmentStatus?: 'enrolled' | 'not_enrolled' | ''
+  /** 재학 중 CMS 학교 PK */
+  schoolOrganizationId?: number | null
+  schoolProvider?: string
+  schoolExternalCode?: string
+  schoolLevel?: string
+  schoolAddress?: string
+  schoolZipcode?: string
+  schoolRegionSido?: string
+  schoolRegionSigungu?: string
+  /** 1365 자원봉사 ID */
+  id1365?: string
   gender: string
   birthDate: string
   socialAccount: string
@@ -28,7 +51,7 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   institutionAddressSearch?: string
   /** 상세 주소(동·호 등) */
   institutionAddressDetail?: string
-  /** 강사 — 강사비 등급(목: listMetrics.instructorTypeLabel) */
+  /** 강사 — 강사비 등급 */
   instructorFeeGrade?: string
   /** 강사 — 정산 계좌 정보 */
   instructorBankName?: string
@@ -52,6 +75,18 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   highestEducationLevel?: string
   /** 강사 — 최종 졸업 학교명 */
   highestEducationSchoolName?: string
+  /** 강사 — 자격 및 면허 (상세 수정 저장용) */
+  licenseRows?: InstructorRegisterLicenseRow[]
+  /** BE §3.8 — CMS 강사 profile (상세 수정 저장) */
+  instructorCmsProfile?: InstructorCmsProfileProposal
+  /** BE §3.8 — CMS 강사 settlement */
+  instructorCmsSettlement?: InstructorCmsSettlement
+  /** 약관·동의 수정 — PATCH `termsAgreements` */
+  termsAgreements?: TermsAgreementRequest[]
+  /** 이번 수정 세션에서 재작성한 동의서 본문 */
+  consentWriteSnapshots?: import('@/features/user/shared/lib/member-register-consent-write-snapshot').MemberRegisterConsentWriteSnapshots
+  /** 강사 상세 — 이번 수정 세션에서 약관·동의를 변경했을 때만 PATCH에 termsAgreements 포함 */
+  consentTermsDirty?: boolean
   /** 관리자 — 권한 유형 태그 */
   adminPermissionVariant?: AdminPermissionTagVariant | ''
 }
@@ -79,13 +114,42 @@ export function composeUserAffiliation(institution: string, grade: string): stri
   return undefined
 }
 
-function splitAddressForDraft(address: string | undefined): {
+export function individualEnrollmentStatusToDraft(
+  status: User['schoolEnrollmentStatus'] | undefined,
+  affiliationGrade: string
+): 'enrolled' | 'not_enrolled' {
+  if (status === 'NOT_ENROLLED') return 'not_enrolled'
+  if (status === 'ENROLLED') return 'enrolled'
+  if (affiliationGrade.trim()) return 'enrolled'
+  return 'enrolled'
+}
+
+export function composeIndividualAffiliationFromDraft(
+  draft: Pick<
+    AdminProvisionedMemberBasicInfoDraft,
+    'schoolEnrollmentStatus' | 'affiliationInstitution' | 'affiliationGrade'
+  >
+): string | undefined {
+  if (draft.schoolEnrollmentStatus === 'not_enrolled') {
+    return draft.affiliationInstitution.trim() || undefined
+  }
+  return composeUserAffiliation(draft.affiliationInstitution, draft.affiliationGrade)
+}
+
+function splitAddressForDraft(
+  address: string | undefined,
+  addressDetail?: string | undefined
+): {
   detailAddressSearch: string
   detailAddressDetail: string
 } {
-  const t = (address ?? '').trim()
-  if (!t) return { detailAddressSearch: '', detailAddressDetail: '' }
-  return { detailAddressSearch: t, detailAddressDetail: '' }
+  const main = (address ?? '').trim()
+  const detail = (addressDetail ?? '').trim()
+  if (detail) {
+    return { detailAddressSearch: main, detailAddressDetail: detail }
+  }
+  if (!main) return { detailAddressSearch: '', detailAddressDetail: '' }
+  return { detailAddressSearch: main, detailAddressDetail: '' }
 }
 
 function splitHighestEducationForDraft(highestEducationLabel: string | undefined): {
@@ -114,7 +178,6 @@ function birthDateToInputValue(birthDate: User['birthDate']): string {
 
 const EMPTY_ADMIN_PROVISIONED_DRAFT: AdminProvisionedMemberBasicInfoDraft = {
   name: '',
-  nameEn: '',
   phone: '',
   email: '',
   detailAddress: '',
@@ -130,12 +193,11 @@ const EMPTY_ADMIN_PROVISIONED_DRAFT: AdminProvisionedMemberBasicInfoDraft = {
 export function userToSchoolInstitutionEditDraft(
   user: Omit<User, 'password'>
 ): AdminProvisionedMemberBasicInfoDraft {
-  const addr = user.schoolInfo?.address ?? ''
   return {
     ...EMPTY_ADMIN_PROVISIONED_DRAFT,
     schoolName: user.schoolInfo?.schoolName ?? user.name ?? '',
-    institutionAddressSearch: addr,
-    institutionAddressDetail: '',
+    institutionAddressSearch: user.schoolInfo?.address?.trim() ?? '',
+    institutionAddressDetail: user.schoolInfo?.addressDetail?.trim() ?? '',
     adminComment: user.adminComment ?? '',
   }
 }
@@ -164,7 +226,8 @@ export function userToAdminCommentOnlyDraft(user: Omit<User, 'password'>): Admin
   return {
     ...EMPTY_ADMIN_PROVISIONED_DRAFT,
     adminComment: user.adminComment ?? '',
-    instructorFeeGrade: user.role === 'INSTRUCTOR' ? user.listMetrics?.instructorTypeLabel ?? '' : '',
+    instructorFeeGrade:
+      user.role === 'INSTRUCTOR' ? user.listMetrics?.instructorFeeGradeLabel ?? '' : '',
     adminPermissionVariant: user.role === 'ADMIN' ? getAdminPermissionVariant(user) : '',
   }
 }
@@ -173,23 +236,29 @@ export function userToAdminProvisionedBasicDraft(
   user: Omit<User, 'password'>
 ): AdminProvisionedMemberBasicInfoDraft {
   const { affiliationInstitution, affiliationGrade } = splitUserAffiliationForDraft(user.affiliation)
-  const { detailAddressSearch, detailAddressDetail } = splitAddressForDraft(user.detailAddress)
+  const { detailAddressSearch, detailAddressDetail } = splitAddressForDraft(
+    user.detailAddress,
+    user.detailAddressDetail
+  )
   const { highestEducationLevel, highestEducationSchoolName } = splitHighestEducationForDraft(
     user.role === 'INSTRUCTOR' ? user.listMetrics?.highestEducationLabel : undefined
   )
   return {
     name: user.name ?? '',
-    nameEn: user.nameEn ?? '',
     phone: user.phone ?? '',
     email: user.email ?? '',
     detailAddress: user.detailAddress ?? '',
     affiliationInstitution,
     affiliationGrade,
-    gender: user.gender ?? '',
+    gender: (() => {
+      const display = toDisplayGender(user.gender)
+      return display === '-' ? '' : display
+    })(),
     birthDate: birthDateToInputValue(user.birthDate),
     socialAccount: user.socialAccounts?.[0] ?? '',
     adminComment: user.adminComment ?? '',
-    instructorFeeGrade: user.role === 'INSTRUCTOR' ? user.listMetrics?.instructorTypeLabel ?? '' : '',
+    instructorFeeGrade:
+      user.role === 'INSTRUCTOR' ? user.listMetrics?.instructorFeeGradeLabel ?? '' : '',
     instructorBankName: user.role === 'INSTRUCTOR' ? user.instructorInfo?.bankName ?? '' : '',
     instructorAccountNumber: user.role === 'INSTRUCTOR' ? user.instructorInfo?.accountNumber ?? '' : '',
     instructorAccountHolder: user.role === 'INSTRUCTOR' ? user.instructorInfo?.accountHolder ?? '' : '',
@@ -203,7 +272,12 @@ export function userToAdminProvisionedBasicDraft(
         : '',
     highestEducationLabel: user.role === 'INSTRUCTOR' ? user.listMetrics?.highestEducationLabel ?? '' : '',
     instructorCareerSummaryLabel:
-      user.role === 'INSTRUCTOR' ? user.listMetrics?.instructorCareerSummaryLabel ?? '' : '',
+      user.role === 'INSTRUCTOR'
+        ? user.listMetrics?.instructorCareerSummaryLabel?.trim() ||
+          user.listMetrics?.instructorCareerYearsLabel?.trim() ||
+          user.instructorCareerText?.trim() ||
+          ''
+        : '',
     jaEvaluationGrade: user.role === 'INSTRUCTOR' ? user.listMetrics?.jaEvaluationGrade ?? '' : '',
     bio: user.role === 'INSTRUCTOR' ? user.bio ?? '' : '',
     adminPermissionVariant: user.role === 'ADMIN' ? getAdminPermissionVariant(user) : '',
@@ -211,6 +285,23 @@ export function userToAdminProvisionedBasicDraft(
     detailAddressDetail,
     highestEducationLevel,
     highestEducationSchoolName,
+    ...(user.role === 'INDIVIDUAL'
+      ? {
+          schoolEnrollmentStatus: individualEnrollmentStatusToDraft(
+            user.schoolEnrollmentStatus,
+            affiliationGrade
+          ),
+          id1365: user.id1365 ?? '',
+        }
+      : {}),
+    ...((user.role === 'INDIVIDUAL' || user.role === 'ADMIN' || user.role === 'INSTRUCTOR')
+      ? {
+          termsAgreements: filterEditableTermsAgreementsForBasicInfoPatch(
+            termsAgreementRowsToRequests(user.termsAgreements)
+          ),
+          consentTermsDirty: false,
+        }
+      : {}),
   }
 }
 
@@ -232,10 +323,10 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
   Pick<
     User,
     | 'name'
-    | 'nameEn'
     | 'phone'
     | 'email'
     | 'detailAddress'
+    | 'detailAddressDetail'
     | 'affiliation'
     | 'gender'
     | 'birthDate'
@@ -246,15 +337,17 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
 > {
   const social = draft.socialAccount.trim()
   const adminTrimmed = draft.adminComment.trim()
-  const affiliation = composeUserAffiliation(draft.affiliationInstitution, draft.affiliationGrade)
-  const detailAddress = composeDetailAddressFromDraft(draft)
+  const affiliation = composeIndividualAffiliationFromDraft(draft)
+  const detailAddressSearch = (draft.detailAddressSearch ?? '').trim()
+  const detailAddressDetail = (draft.detailAddressDetail ?? '').trim()
+  const detailAddressFallback = (draft.detailAddress ?? '').trim()
   const adminPermissionVariant = (draft.adminPermissionVariant ?? '').trim()
   return {
     name: draft.name.trim(),
-    nameEn: draft.nameEn.trim() || undefined,
     phone: draft.phone.trim() || undefined,
     email: draft.email.trim(),
-    detailAddress: detailAddress || undefined,
+    detailAddress: detailAddressSearch || detailAddressFallback || undefined,
+    detailAddressDetail,
     affiliation,
     gender: draft.gender.trim() || undefined,
     birthDate: draft.birthDate.trim() || undefined,
@@ -267,6 +360,92 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
         ? { adminPermissionVariant }
         : undefined,
   }
+}
+
+function draftToIndividualAffiliationPatch(
+  draft: AdminProvisionedMemberBasicInfoDraft
+): Pick<
+  PatchUserBasicInfoInput,
+  | 'schoolEnrollmentStatus'
+  | 'individualSchoolName'
+  | 'individualGrade'
+  | 'individualSchoolOrganizationId'
+  | 'individualSchoolProvider'
+  | 'individualSchoolExternalCode'
+  | 'individualSchoolLevel'
+  | 'individualSchoolAddress'
+  | 'individualSchoolZipcode'
+  | 'individualSchoolRegionSido'
+  | 'individualSchoolRegionSigungu'
+> {
+  const enrollment = draft.schoolEnrollmentStatus
+  if (enrollment !== 'enrolled' && enrollment !== 'not_enrolled') {
+    return {}
+  }
+  const enrolled = enrollment === 'enrolled'
+  const grade = enrolled ? draft.affiliationGrade.trim() : ''
+  const schoolName = enrolled ? draft.affiliationInstitution.trim() : ''
+
+  if (!enrolled) {
+    return {
+      schoolEnrollmentStatus: 'NOT_ENROLLED',
+      individualSchoolName: '',
+      individualSchoolOrganizationId: null,
+    }
+  }
+
+  return {
+    schoolEnrollmentStatus: 'ENROLLED',
+    individualSchoolName: schoolName,
+    ...(grade ? { individualGrade: grade } : {}),
+    ...(draft.schoolOrganizationId != null && Number.isFinite(draft.schoolOrganizationId)
+      ? { individualSchoolOrganizationId: draft.schoolOrganizationId }
+      : {
+          individualSchoolOrganizationId: null,
+          ...(draft.schoolProvider?.trim()
+            ? { individualSchoolProvider: draft.schoolProvider.trim() }
+            : {}),
+          ...(draft.schoolExternalCode?.trim()
+            ? { individualSchoolExternalCode: draft.schoolExternalCode.trim() }
+            : {}),
+          ...(draft.schoolLevel?.trim() ? { individualSchoolLevel: draft.schoolLevel.trim() } : {}),
+          ...(draft.schoolAddress?.trim()
+            ? { individualSchoolAddress: draft.schoolAddress.trim() }
+            : {}),
+          ...(draft.schoolZipcode?.trim()
+            ? { individualSchoolZipcode: draft.schoolZipcode.trim() }
+            : {}),
+          ...(draft.schoolRegionSido?.trim()
+            ? { individualSchoolRegionSido: draft.schoolRegionSido.trim() }
+            : {}),
+          ...(draft.schoolRegionSigungu?.trim()
+            ? { individualSchoolRegionSigungu: draft.schoolRegionSigungu.trim() }
+            : {}),
+        }),
+  }
+}
+
+/** 관리자 등록 개인 — 기본정보 + 선택 동의만 PATCH */
+export function draftToAdminProvisionedIndividualBasicInfoPatch(
+  draft: AdminProvisionedMemberBasicInfoDraft
+): PatchUserBasicInfoInput {
+  const base = draftToBasicInfoPatch(draft)
+  const termsAgreements = filterEditableTermsAgreementsForBasicInfoPatch(draft.termsAgreements)
+  return {
+    ...base,
+    ...draftToIndividualAffiliationPatch(draft),
+    ...(termsAgreements ? { termsAgreements } : {}),
+    ...(draft.consentWriteSnapshots
+      ? { consentWriteSnapshots: draft.consentWriteSnapshots }
+      : {}),
+  }
+}
+
+/** 관리자 계정 상세 — 기본정보 + 선택 동의(MARKETING) PATCH */
+export function draftToAdminAccountBasicInfoPatch(
+  draft: AdminProvisionedMemberBasicInfoDraft
+): PatchUserBasicInfoInput {
+  return draftToAdminProvisionedIndividualBasicInfoPatch(draft)
 }
 
 /** 학교 계정 — 본인 가입 완료 후 등: 기본 정보는 잠금일 때 `adminComment`만 patch */
@@ -284,7 +463,21 @@ export function draftToAdminCommentAndInstructorFeePatch(
   const feeGrade = (draft.instructorFeeGrade ?? '').trim()
   return {
     adminComment: adminTrimmed ? adminTrimmed : undefined,
-    listMetrics: feeGrade ? { instructorTypeLabel: feeGrade } : undefined,
+    listMetrics: feeGrade ? { instructorFeeGradeLabel: feeGrade } : undefined,
+  }
+}
+
+/** 어드민 등록 강사 — 본인인증 완료 후 제한 수정: 강사비 등급·JA 평가 등급만 */
+export function draftToInstructorFeeAndJaGradePatch(
+  draft: AdminProvisionedMemberBasicInfoDraft
+): PatchUserBasicInfoInput {
+  const feeGrade = (draft.instructorFeeGrade ?? '').trim()
+  const jaGrade = (draft.jaEvaluationGrade ?? '').trim()
+  return {
+    listMetrics: {
+      ...(feeGrade ? { instructorFeeGradeLabel: feeGrade } : {}),
+      ...(jaGrade ? { jaEvaluationGrade: jaGrade } : {}),
+    },
   }
 }
 
@@ -309,6 +502,7 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
   const accountNumber = (draft.instructorAccountNumber ?? '').trim()
   const accountHolder = (draft.instructorAccountHolder ?? '').trim()
   const bio = (draft.bio ?? '').trim()
+  const certifications = buildInstructorRegisterCertifications(draft.licenseRows)
   return {
     ...base,
     ...(bio ? { bio } : {}),
@@ -318,8 +512,21 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
       ...(accountHolder ? { accountHolder } : {}),
       ...(businessIncome !== undefined ? { isBusinessIncome: businessIncome } : {}),
     } as NonNullable<User['instructorInfo']>,
+    ...(certifications != null ? { instructorCertifications: certifications } : {}),
+    ...(draft.instructorCmsProfile ? { instructorCmsProfile: draft.instructorCmsProfile } : {}),
+    ...(draft.instructorCmsSettlement ? { instructorCmsSettlement: draft.instructorCmsSettlement } : {}),
+    ...(() => {
+      if (!draft.consentTermsDirty) return {}
+      const termsAgreements = filterEditableTermsAgreementsForBasicInfoPatch(draft.termsAgreements)
+      return {
+        ...(termsAgreements ? { termsAgreements } : {}),
+        ...(draft.consentWriteSnapshots
+          ? { consentWriteSnapshots: draft.consentWriteSnapshots }
+          : {}),
+      }
+    })(),
     listMetrics: {
-      ...(feeGrade ? { instructorTypeLabel: feeGrade } : {}),
+      ...(feeGrade ? { instructorFeeGradeLabel: feeGrade } : {}),
       ...(jaGrade ? { jaEvaluationGrade: jaGrade } : {}),
       ...(highestEducation ? { highestEducationLabel: highestEducation } : {}),
       ...(careerSummary ? { instructorCareerSummaryLabel: careerSummary } : {}),

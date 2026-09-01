@@ -9,34 +9,56 @@ import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
 export type PersonalInfoAccessHistoryPendingFilters = {
   accessPurpose: string
   accessorName: string
-  dateRange: [Dayjs, Dayjs] | null
+  dateRange: PersonalInfoAccessHistoryPendingDateRange
 }
 
-function dayjsPairEqual(a: [Dayjs, Dayjs] | null, b: [Dayjs, Dayjs] | null): boolean {
+type PersonalInfoAccessHistoryPendingDateRange =
+  | [Dayjs, Dayjs]
+  | [Dayjs | null, Dayjs | null]
+  | null
+
+function dayjsPairEqual(
+  a: PersonalInfoAccessHistoryPendingDateRange,
+  b: PersonalInfoAccessHistoryPendingDateRange
+): boolean {
   if (a == null && b == null) return true
   if (a == null || b == null) return false
-  return a[0].valueOf() === b[0].valueOf() && a[1].valueOf() === b[1].valueOf()
+  return (a[0]?.valueOf() ?? null) === (b[0]?.valueOf() ?? null) &&
+    (a[1]?.valueOf() ?? null) === (b[1]?.valueOf() ?? null)
 }
 
-function filterLogs(data: PersonalInfoAccessLog[], searchParams: URLSearchParams): PersonalInfoAccessLog[] {
-  const accessPurpose = (searchParams.get('pia_purpose') ?? '').trim().toLowerCase()
-  const accessorName = (searchParams.get('pia_accessor') ?? '').trim().toLowerCase()
-  const from = searchParams.get('pia_from')
-  const to = searchParams.get('pia_to')
+function normalizeDateRangePickerValue(value: unknown): PersonalInfoAccessHistoryPendingDateRange {
+  if (!Array.isArray(value) || value.length < 2) return null
+  const start = (value[0] ?? null) as Dayjs | null
+  const end = (value[1] ?? null) as Dayjs | null
+  if (start == null && end == null) return null
+  return [start, end]
+}
 
-  return data
-    .filter(row => {
-      if (accessPurpose && !row.accessPurpose.toLowerCase().includes(accessPurpose)) return false
-      if (accessorName && !row.accessorName.toLowerCase().includes(accessorName)) return false
-      if (from && to) {
-        const accessedAt = dayjs(row.accessedAt)
-        const start = dayjs(from).startOf('day')
-        const end = dayjs(to).endOf('day')
-        if (accessedAt.isBefore(start) || accessedAt.isAfter(end)) return false
-      }
-      return true
-    })
-    .sort((a, b) => dayjs(b.accessedAt).valueOf() - dayjs(a.accessedAt).valueOf())
+const urlDateRangeSyncState = { hadCompleteInUrl: false }
+
+function resolvePendingDateRangeFromUrl(args: {
+  from: string | null
+  to: string | null
+  prev: PersonalInfoAccessHistoryPendingDateRange
+}): PersonalInfoAccessHistoryPendingDateRange {
+  const { from, to, prev } = args
+  if (from && to) {
+    urlDateRangeSyncState.hadCompleteInUrl = true
+    return [dayjs(from), dayjs(to)]
+  }
+  if (urlDateRangeSyncState.hadCompleteInUrl) {
+    urlDateRangeSyncState.hadCompleteInUrl = false
+    return null
+  }
+  return prev ?? null
+}
+
+/** 서버 필터를 신뢰하고 조회 일시 내림차순만 맞춥니다. */
+function sortLogs(data: PersonalInfoAccessLog[]): PersonalInfoAccessLog[] {
+  return [...data].sort(
+    (a, b) => dayjs(b.accessedAt).valueOf() - dayjs(a.accessedAt).valueOf()
+  )
 }
 
 const tanstackColumns: ColumnDef<PersonalInfoAccessLog>[] = [{ accessorKey: 'id', id: 'id' }]
@@ -91,9 +113,13 @@ export const personalInfoAccessHistoryTablePageConfig: TablePageConfig<
       const accessorName = searchParams.get('pia_accessor') ?? ''
       const from = searchParams.get('pia_from')
       const to = searchParams.get('pia_to')
-      const dateRange = from && to ? ([dayjs(from), dayjs(to)] as [Dayjs, Dayjs]) : null
 
       setPendingFilters(prev => {
+        const dateRange = resolvePendingDateRangeFromUrl({
+          from,
+          to,
+          prev: prev.dateRange,
+        })
         const next: PersonalInfoAccessHistoryPendingFilters = {
           accessPurpose,
           accessorName,
@@ -118,11 +144,7 @@ export const personalInfoAccessHistoryTablePageConfig: TablePageConfig<
     getBaseCount: ({ filteredData }) => filteredData.length,
     onFilterChange: ({ prev, key, value }) => {
       if (key === 'dateRange') {
-        const range = Array.isArray(value) ? value : null
-        if (range?.[0] && range?.[1]) {
-          return { ...prev, dateRange: [range[0], range[1]] }
-        }
-        return { ...prev, dateRange: null }
+        return { ...prev, dateRange: normalizeDateRangePickerValue(value) }
       }
       if (key === 'accessPurpose' || key === 'accessorName') {
         return { ...prev, [key]: String(value ?? '') }
@@ -130,9 +152,9 @@ export const personalInfoAccessHistoryTablePageConfig: TablePageConfig<
       return { ...prev, [key]: value } as PersonalInfoAccessHistoryPendingFilters
     },
   },
-  filterFn: ({ data, searchParams }) => {
-    const filtered = filterLogs(data, searchParams)
-    return { dataForTable: filtered, filteredData: filtered }
+  filterFn: ({ data }) => {
+    const sorted = sortLogs(data)
+    return { dataForTable: sorted, filteredData: sorted }
   },
   getSearchSync: () => ({
     paramConfig: searchSyncRules,

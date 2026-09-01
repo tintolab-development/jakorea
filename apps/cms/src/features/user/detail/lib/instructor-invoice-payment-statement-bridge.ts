@@ -10,8 +10,8 @@ import type {
 import type {
   InstructorSettlementInvoiceDetail,
   InstructorSettlementUiStatus,
-} from '@/data/mock/instructor-member-settlements'
-import { getInstructorSettlementInvoiceStatusPresentation } from '@/data/mock/instructor-member-settlements'
+} from '@/features/user/detail/model/instructor-settlement-types'
+import { getInstructorSettlementInvoiceStatusPresentation } from '@/shared/constants/instructor-settlement-status'
 
 function mapInstructorUiStatusToLineStatus(
   status: InstructorSettlementUiStatus
@@ -19,6 +19,8 @@ function mapInstructorUiStatusToLineStatus(
   switch (status) {
     case 'payment_statement_verified':
       return 'confirmed'
+    case 'payment_statement_reapplication':
+      return 'reapplication'
     case 'account_paid':
       return 'rejected'
     case 'application_rejected':

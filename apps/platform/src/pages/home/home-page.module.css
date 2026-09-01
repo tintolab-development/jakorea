@@ -1,0 +1,91 @@
+.page {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  overflow-x: clip;
+}
+
+/*
+ * YouTube 소개 + 스토리 — 시안상 한 밴드
+ * 배경: home-youtube-section-bg.png (1920×2110), 하단으로 페이드
+ * 모바일: YouTube 숨김 · 흰 배경만
+ */
+.youtubeStoryBand {
+  width: 100%;
+  align-self: stretch;
+  background-color: var(--color-neutral-white);
+}
+
+@media (--bp-pc-up) {
+  .youtubeStoryBand {
+    background-image: url('../../assets/background_gradient/home-youtube-section-bg.png');
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-size: 100% auto;
+  }
+}
+
+.youtubeReveal.youtubeReveal {
+  display: none;
+  background: transparent;
+  padding-bottom: 0;
+}
+
+@media (--bp-pc-up) {
+  .youtubeReveal.youtubeReveal {
+    /* block이면 gap 무시 — flex column 유지 */
+    display: flex;
+    flex-direction: column;
+    --reveal-mask-width: min(1440px, calc(100vw - 80px));
+    --reveal-mask-height: min(360px, calc((100vw - 80px) / 4));
+    gap: 40px;
+  }
+
+  .youtubeReveal.youtubeReveal iframe {
+    width: var(--reveal-mask-width);
+  }
+}
+
+/*
+ * Achievements + 파트너 + CTA — 시안 배경 1920×2064 과 1:1
+ * 상단 기하/아크 · 중단 솔리드 · 하단 포토 구역에 UI 배정
+ */
+.achievementsBand {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-self: stretch;
+  flex-direction: column;
+  overflow-x: clip;
+  background-color: var(--color-primary-800);
+  background-image: url('../../assets/background_gradient/home-achievements-section-bg.png');
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: 100% auto;
+}
+
+@media (--bp-pc-up) {
+  .achievementsBand {
+    /* 뷰포트 폭 기준 배경 높이와 동일 — UI가 배경 구역에 맞춰 배분 */
+    aspect-ratio: 1920 / 2064;
+    background-size: 100% 100%;
+    /* Achievements(auto) · Partners+CTA(잔여) — 클로징 ↔ Partners 헤더 260px */
+    display: grid;
+    grid-template-rows: auto 1fr;
+    row-gap: 260px;
+  }
+
+  /* max-content 마퀴가 밴드/페이지 폭을 밀어내지 않도록 */
+  .achievementsBand > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+/* 고해상도: 기존 스펙 유지, 상단만 조금 더 여유 */
+@media (--bp-pc-full-up) {
+  .youtubeReveal.youtubeReveal {
+    padding-top: 180px;
+  }
+}

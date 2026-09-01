@@ -5,11 +5,16 @@
 /* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
 import { useEffect, useMemo } from 'react'
-import { Form, Input, Select, Button, Space } from 'antd'
+import { Form, Input, Select, Space } from 'antd'
+import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { instructorSchema, type InstructorFormData } from '@/entities/instructor/model/schema'
 import type { Instructor } from '@/types/domain'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { fieldValidationHelp } from '@/shared/utils/error-handler'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -91,7 +96,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
     if (instructor) {
       return {
         name: instructor.name,
-        contactPhone: instructor.contactPhone || '',
+        contactPhone: formatKoreanPhoneNumber(instructor.contactPhone || ''),
         contactEmail: instructor.contactEmail || '',
         region: instructor.region,
         specialty: instructor.specialty || [],
@@ -121,7 +126,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
     if (instructor) {
       reset({
         name: instructor.name,
-        contactPhone: instructor.contactPhone || '',
+        contactPhone: formatKoreanPhoneNumber(instructor.contactPhone || ''),
         contactEmail: instructor.contactEmail || '',
         region: instructor.region,
         specialty: instructor.specialty || [],
@@ -159,7 +164,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
       <Form.Item
         label="이름"
         validateStatus={errors.name ? 'error' : ''}
-        help={errors.name?.message}
+        help={fieldValidationHelp(errors.name)}
       >
         <Controller name="name" control={control} render={({ field }) => <Input {...field} />} />
       </Form.Item>
@@ -167,19 +172,19 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
       <Form.Item
         label="연락처"
         validateStatus={errors.contactPhone ? 'error' : ''}
-        help={errors.contactPhone?.message}
+        help={fieldValidationHelp(errors.contactPhone)}
       >
         <Controller
           name="contactPhone"
           control={control}
-          render={({ field }) => <Input {...field} />}
+          render={({ field }) => <CmsPhoneInput {...field} />}
         />
       </Form.Item>
 
       <Form.Item
         label="이메일"
         validateStatus={errors.contactEmail ? 'error' : ''}
-        help={errors.contactEmail?.message}
+        help={fieldValidationHelp(errors.contactEmail)}
       >
         <Controller
           name="contactEmail"
@@ -191,7 +196,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
       <Form.Item
         label="지역"
         validateStatus={errors.region ? 'error' : ''}
-        help={errors.region?.message}
+        help={fieldValidationHelp(errors.region)}
         required
       >
         <Controller
@@ -212,7 +217,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
       <Form.Item
         label="전문분야"
         validateStatus={errors.specialty ? 'error' : ''}
-        help={errors.specialty?.message}
+        help={fieldValidationHelp(errors.specialty)}
         required
       >
         <Controller
@@ -251,14 +256,14 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
           name="rating"
           control={control}
           render={({ field }) => (
-            <Input
-              type="number"
+            <CmsNumericInput
+              mode="decimal"
               min={0}
               max={5}
-              step={0.1}
-              {...field}
-              value={field.value ?? ''}
-              onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+              precision={1}
+              value={field.value == null ? '' : String(field.value)}
+              onBlur={field.onBlur}
+              onValueChange={value => field.onChange(value === '' ? undefined : Number(value))}
             />
           )}
         />
@@ -267,7 +272,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
       <Form.Item
         label="은행명"
         validateStatus={errors.bankName ? 'error' : ''}
-        help={errors.bankName?.message}
+        help={fieldValidationHelp(errors.bankName)}
       >
         <Controller
           name="bankName"
@@ -287,12 +292,20 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
       <Form.Item
         label="계좌번호"
         validateStatus={errors.bankAccount ? 'error' : ''}
-        help={errors.bankAccount?.message}
+        help={fieldValidationHelp(errors.bankAccount)}
       >
         <Controller
           name="bankAccount"
           control={control}
-          render={({ field }) => <Input {...field} placeholder="'-' 없이 숫자만 입력" />}
+          render={({ field }) => (
+            <CmsNumericInput
+              mode="numericText"
+              value={field.value ?? ''}
+              onBlur={field.onBlur}
+              onValueChange={field.onChange}
+              placeholder="'-' 없이 숫자만 입력"
+            />
+          )}
         />
       </Form.Item>
 
@@ -306,10 +319,12 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
 
       <Form.Item>
         <Space>
-          <Button type="primary" htmlType="submit" loading={loading}>
+          <CmsButton type="submit" loading={loading}>
             {instructor ? '수정' : '등록'}
-          </Button>
-          <Button onClick={onCancel}>취소</Button>
+          </CmsButton>
+          <CmsButton variant="secondary" onClick={onCancel}>
+            취소
+          </CmsButton>
         </Space>
       </Form.Item>
     </Form>

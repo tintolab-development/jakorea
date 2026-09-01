@@ -1,11 +1,14 @@
 /**
- * 문의하기 모달 컴포넌트
+ * 문의하기 모달 — ContentModal 셸 + 폼
  */
 
-import { Modal, Form, Input, Select, Button, message } from 'antd'
+import { Form, Input, Select } from 'antd'
 import { SendOutlined } from '@ant-design/icons'
 import { useState } from 'react'
-import { MESSAGES } from '@/shared/constants'
+import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
+import { ContentModal } from '@/shared/ui/content-modal'
+import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 
 const { TextArea } = Input
 const { Option } = Select
@@ -34,13 +37,11 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
       // TODO: API 연동 필요
       console.log('Submitting inquiry:', values)
       // await submitInquiry(values)
-      message.success(MESSAGES.success.inquirySubmitted)
       form.resetFields()
       onSuccess?.()
       onCancel()
     } catch (e) {
       console.error('Failed to submit inquiry:', e)
-      message.error(MESSAGES.error.inquirySubmitFailed)
     } finally {
       setSubmitting(false)
     }
@@ -52,25 +53,32 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
   }
 
   return (
-    <Modal
+    <ContentModal
       open={open}
       title="문의하기"
       onCancel={handleCancel}
-      footer={null}
-      width={700}
-      destroyOnHidden
+      width={800}
+      footer={
+        <>
+          <CmsButton variant="secondary" size="medium" type="button" onClick={handleCancel}>
+            취소
+          </CmsButton>
+          <CmsButton
+            variant="primary"
+            size="medium"
+            type="button"
+            icon={<SendOutlined />}
+            loading={submitting}
+            className="cms-button--footer-auto"
+            onClick={() => form.submit()}
+          >
+            문의 접수
+          </CmsButton>
+        </>
+      }
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-        style={{ marginTop: 24 }}
-      >
-        <Form.Item
-          label="문의 유형"
-          name="category"
-          rules={[{ required: true, message: '문의 유형을 선택해주세요' }]}
-        >
+      <Form form={form} layout="vertical" onFinish={handleSubmit}>
+        <Form.Item label="문의 유형" name="category">
           <Select placeholder="문의 유형을 선택하세요">
             <Option value="활동">활동 관련 (배정, 일정 등)</Option>
             <Option value="봉사시간">봉사시간 관련 (1365 연계 등)</Option>
@@ -81,19 +89,11 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
           </Select>
         </Form.Item>
 
-        <Form.Item
-          label="제목"
-          name="title"
-          rules={[{ required: true, message: '제목을 입력해주세요' }]}
-        >
+        <Form.Item label="제목" name="title">
           <Input placeholder="문의 제목을 입력하세요" />
         </Form.Item>
 
-        <Form.Item
-          label="문의 내용"
-          name="content"
-          rules={[{ required: true, message: '문의 내용을 입력해주세요' }]}
-        >
+        <Form.Item label="문의 내용" name="content">
           <TextArea
             rows={6}
             placeholder="문의 내용을 상세히 입력해주세요"
@@ -106,19 +106,22 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
           <Input type="email" placeholder="답변 받을 이메일 주소 (선택사항)" />
         </Form.Item>
 
-        <Form.Item label="연락처 전화번호 (선택)" name="contactPhone">
-          <Input placeholder="답변 받을 전화번호 (선택사항)" />
-        </Form.Item>
-
-        <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <Button onClick={handleCancel}>취소</Button>
-            <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={submitting}>
-              문의 접수
-            </Button>
-          </div>
+        <Form.Item
+          label="연락처 전화번호 (선택)"
+          name="contactPhone"
+          style={{ marginBottom: 0 }}
+          rules={[
+            {
+              validator: (_, value?: string) =>
+                !value?.trim() || isValidKoreanPhoneNumber(value)
+                  ? Promise.resolve()
+                  : Promise.reject(new Error('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')),
+            },
+          ]}
+        >
+          <CmsPhoneInput placeholder="답변 받을 전화번호 (선택사항)" />
         </Form.Item>
       </Form>
-    </Modal>
+    </ContentModal>
   )
 }

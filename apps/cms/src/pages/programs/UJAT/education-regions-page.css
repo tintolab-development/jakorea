@@ -1,0 +1,6 @@
+/* 교육 지역 관리 — 인라인 수정 시 사용 여부 라디오 가로 일렬 */
+.ujat-education-regions-page__active-radios.app-radio-group {
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 16px;
+}

@@ -1,0 +1,46 @@
+.info {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-4);
+  align-self: stretch;
+  text-align: left;
+}
+
+.title {
+  margin: 0;
+  width: 100%;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  text-align: left;
+}
+
+.periodLine {
+  width: 100%;
+  margin: 0;
+  display: flex;
+  gap: var(--spacing-12);
+  text-align: left;
+}
+
+.status {
+  white-space: nowrap;
+}
+
+.statusPending {
+  color: var(--color-element-orange);
+}
+
+.statusProgress {
+  color: var(--color-element-blue);
+}
+
+.statusCompleted {
+  color: var(--color-neutral-cool-500);
+}
+
+.statusRejected {
+  color: var(--color-status-error-default);
+}

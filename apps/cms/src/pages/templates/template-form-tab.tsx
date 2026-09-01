@@ -1,53 +1,54 @@
 import { useCallback, useEffect, useMemo } from 'react'
-import { TemplateListCard } from '@/features/template/ui/template-list-card'
-import './template-form-tab.css'
-import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
-import { TemplateModalLeftContent } from '@/features/template/ui/template-modal-left-content'
-import { TemplateModalRightNavigation } from '@/features/template/ui/template-modal-right-navigation'
-import { BasicInfoCurriculumSection } from '@/features/template/ui/basic-info-curriculum-section'
-import { EducationCurriculumSection } from '@/features/template/ui/education-curriculum-section'
-import { KpiGoalsCurriculumSection } from '@/features/template/ui/kpi-goals-curriculum-section'
-import { TemplateTable } from '@/features/template/ui/template-table'
-import { WageInfoCurriculumSection } from '@/features/template/ui/wage-info-curriculum-section'
-import { useTemplateModal } from '@/features/template/hooks/use-template-modal'
-import { writingSections } from '@/features/template/model/template.schema'
+import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import type { TemplateRow } from '@/features/template/model/template.schema'
+import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
+import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
+import {
+  lookupTemplateRegistry,
+  resolvePreviewHeaderTitle,
+} from '@/features/template/model/template-registry/template-registry'
+import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import {
   buildRightNavigationConfig,
   buildTemplateConfig,
 } from '@/features/template/lib/build-template-config'
+import { useTemplateModal } from '@/features/template/hooks/use-template-modal'
+import { useTemplateEditorVm } from '@/features/template/hooks/use-template-editor-vm'
+import { useTemplatePreviewController } from '@/features/template/hooks/use-template-preview-controller'
+import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
+import { TemplateListCard } from '@/features/template/ui/template-management/template-list-card'
+import { TemplateTable } from '@/features/template/ui/template-management/template-table'
+import { TemplatePreviewModal } from '@/features/template/ui/template-management/template-preview-modal'
+import { CrimeRecordConsentDocumentFullpageModal } from '@/features/template/ui/template-management/crime-record-consent-document-fullpage-modal'
+import {
+  AgreementWritingFormShell,
+} from '@/features/template/ui/form-set/editors/new-agreement-form'
+import NewAgreementForm from '@/features/template/ui/form-set/editors/new-agreement-form'
+import NewHorizontalTableForm from '@/features/template/ui/form-set/editors/new-horizontal-table-form'
+import NewSurveyForm from '@/features/template/ui/form-set/editors/new-survey-form'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
-import NewAgreementForm from '@/features/template/ui/form-set/new-agreement-form'
-import NewSurveyForm from '@/features/template/ui/form-set/new-survey-form'
+import './template-form-tab.css'
 
 type TemplateFormTabQuery = {
   mode?: string
   type?: string
   id?: string
+  userPreview?: string
 }
 
 export default function TemplateFormTab() {
   const { params, setParams } = useQueryParams<TemplateFormTabQuery>()
+  const { sections: writingSections, isLoading: isWritingSectionsLoading } = useWritingFormSections()
   const isPreviewOpen = params.mode === 'edit'
+  const { closeWritingUserPreview, isWritingUserPreviewOpen } = useTemplateWritingPreview()
 
-  const curriculumSections = useMemo(
-    () => ({
-      '기본 정보': <BasicInfoCurriculumSection />,
-      '사업 KPI 목표': <KpiGoalsCurriculumSection />,
-      '임금 정보': <WageInfoCurriculumSection />,
-      '교육 커리큘럼': <EducationCurriculumSection />,
-    }),
-    []
-  )
   const buildBaseLeftContentConfig = useCallback(
     (selectedTemplate: Parameters<typeof buildTemplateConfig>[0]['selectedTemplate']) =>
       buildTemplateConfig({
         selectedTemplate,
         orderedLeftContentConfig: [],
-        curriculumSections,
       }).baseLeftContentConfig,
-    [curriculumSections]
+    []
   )
 
   const {
@@ -62,15 +63,21 @@ export default function TemplateFormTab() {
     buildBaseLeftContentConfig,
   })
 
+  const templateId = selectedTemplate?.id
+  const registryEntry = useMemo(() => lookupTemplateRegistry(templateId), [templateId])
+
   const handleOpenTemplatePreview = useCallback(
     (row: TemplateRow) => {
-      setParams({ mode: 'edit', id: row.id, type: undefined })
+      setParams(
+        { mode: 'edit', id: row.id, type: undefined, userPreview: undefined },
+        { replace: false }
+      )
     },
     [setParams]
   )
 
   const handleCloseTemplatePreview = useCallback(() => {
-    setParams({ mode: undefined, id: undefined, type: undefined })
+    setParams({ mode: undefined, id: undefined, type: undefined, userPreview: undefined })
   }, [setParams])
 
   useEffect(() => {
@@ -78,14 +85,92 @@ export default function TemplateFormTab() {
       closeTemplatePreview()
       return
     }
-    const row = findWritingTemplateRowByDefinitionId(params.id)
-    if (row) openTemplatePreview(row)
-  }, [params.mode, params.id, closeTemplatePreview, openTemplatePreview])
+    const normalizedId = params.id.trim()
+    const row = findWritingTemplateRowByDefinitionId(normalizedId, writingSections)
+    if (row) {
+      openTemplatePreview(row)
+      return
+    }
+    // 신규 create/copy 직후 목록 반영 전에도 에디터 진입 가능하도록 임시 row 사용
+    openTemplatePreview({
+      id: normalizedId,
+      templateName: normalizedId,
+      variant: 'default',
+      key: `pending-${normalizedId}`,
+      no: 0,
+      creator: '-',
+      createdAt: '-',
+      updatedAt: '-',
+    })
+  }, [params.mode, params.id, closeTemplatePreview, openTemplatePreview, writingSections])
 
   const rightNavigationConfig = useMemo(
     () => buildRightNavigationConfig(orderedLeftContentConfig),
     [orderedLeftContentConfig]
   )
+
+  const editorVm = useTemplateEditorVm({
+    isPreviewOpen,
+    templateId,
+    templateName: selectedTemplate?.templateName,
+    registryEntry,
+    onTemplateDraftSaveConfirmed: handleCloseTemplatePreview,
+  })
+
+  const { handlePreview } = useTemplatePreviewController({
+    params,
+    setParams,
+    isPreviewOpen,
+    selectedTemplate,
+    registryEntry,
+    isWritingUserPreviewOpen,
+    editorVm,
+  })
+
+  const agreementWritingFormConfig = useMemo(
+    () =>
+      params.mode === 'edit' ? resolveAgreementWritingFormConfig(params.id) : null,
+    [params.mode, params.id]
+  )
+
+  const suppressInactiveUserPreviewStrip = useMemo(() => {
+    if (params.mode !== 'edit' || params.id == null || params.id.trim() === '') return false
+    const entry = lookupTemplateRegistry(params.id.trim())
+    return entry?.suppressUserPreviewStrip === true
+  }, [params.mode, params.id])
+
+  useWritingUserPreviewUrlAuxiliarySync(
+    params,
+    setParams,
+    isWritingUserPreviewOpen,
+    closeWritingUserPreview,
+    { suppressInactiveUserPreviewStrip }
+  )
+
+  const rendererContext = useMemo(
+    () => ({
+      registryEntry: editorVm.registryEntry,
+      editorVm,
+      generic: {
+        orderedLeftContentConfig,
+        activeCardId,
+        setActiveCardId,
+        applyOrderedCards,
+        rightNavigationConfig,
+      },
+    }),
+    [
+      editorVm,
+      orderedLeftContentConfig,
+      activeCardId,
+      setActiveCardId,
+      applyOrderedCards,
+      rightNavigationConfig,
+    ]
+  )
+
+  const isCrimeConsentDetail =
+    isPreviewOpen && registryEntry?.usesCrimeConsentModal === true
 
   if (params.mode === 'new' && params.type === 'survey') {
     return <NewSurveyForm />
@@ -93,43 +178,51 @@ export default function TemplateFormTab() {
   if (params.mode === 'new' && params.type === 'agreement') {
     return <NewAgreementForm />
   }
+  if (params.mode === 'new' && params.type === 'horizontal_table') {
+    return <NewHorizontalTableForm />
+  }
+
+  if (agreementWritingFormConfig != null) {
+    return (
+      <AgreementWritingFormShell
+        {...agreementWritingFormConfig}
+        templateCode={params.id?.trim()}
+        onTemplateDraftSaveConfirmed={handleCloseTemplatePreview}
+        onClose={handleCloseTemplatePreview}
+      />
+    )
+  }
 
   return (
     <>
       <div className="template-form-tab__content">
-        {writingSections.map(section => (
-          <TemplateListCard
-            key={section.key}
-            title={section.title}
-            description={section.description}
-          >
-            <TemplateTable rows={section.rows} onPreview={handleOpenTemplatePreview} />
-          </TemplateListCard>
-        ))}
+        {isWritingSectionsLoading ? (
+          <p className="template-form-tab__loading">양식 목록을 불러오는 중입니다.</p>
+        ) : (
+          writingSections.map(section => (
+            <TemplateListCard
+              key={section.key}
+              title={section.title}
+              description={section.description}
+            >
+              <TemplateTable rows={section.rows} onPreview={handleOpenTemplatePreview} />
+            </TemplateListCard>
+          ))
+        )}
       </div>
 
-      <TemplateFullpageModal
-        open={isPreviewOpen}
+      <CrimeRecordConsentDocumentFullpageModal
+        open={isCrimeConsentDetail}
         onClose={handleCloseTemplatePreview}
-        title={selectedTemplate?.templateName ?? '양식 미리보기'}
-        description="해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
-        templateTabType="writing"
-        leftContent={
-          <TemplateModalLeftContent
-            config={orderedLeftContentConfig}
-            selectedCardId={activeCardId}
-            onSelectCard={setActiveCardId}
-            onReorderCards={cards => applyOrderedCards(cards.map(card => card.id))}
-          />
-        }
-        rightNavigation={
-          <TemplateModalRightNavigation
-            config={rightNavigationConfig}
-            selectedItemId={activeCardId}
-            onSelectItem={setActiveCardId}
-            onReorderItems={items => applyOrderedCards(items.map(item => item.id))}
-          />
-        }
+      />
+
+      <TemplatePreviewModal
+        open={isPreviewOpen && !isCrimeConsentDetail && selectedTemplate != null}
+        onClose={handleCloseTemplatePreview}
+        title={resolvePreviewHeaderTitle(registryEntry, selectedTemplate?.templateName)}
+        onPreview={handlePreview}
+        onSave={editorVm.handleSave}
+        rendererContext={rendererContext}
       />
     </>
   )

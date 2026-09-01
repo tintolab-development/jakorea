@@ -1,0 +1,1 @@
+export { TalentDonationPage } from './page'

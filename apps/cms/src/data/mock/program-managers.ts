@@ -14,13 +14,17 @@ export interface ProgramManagerRow {
   phone: string
   email: string
   registeredAt: string
+  /** remote assignment의 adminId (mock에는 없음) */
+  adminId?: number
+  /** remote 삭제 가능 여부 — false면 선택·삭제 비활성 */
+  removableYn?: boolean
 }
 
-/** UI 표시용 권한 라벨 (시안: PM / 파트너 / 보조) */
+/** UI 표시용 권한 라벨 (시안: PM / 파트너 / 뷰어) */
 export const PROGRAM_ROLE_LABELS: Record<ProgramRole, string> = {
   OWNER: 'PM',
   PARTNER: '파트너',
-  ASSISTANT: '보조',
+  ASSISTANT: '뷰어',
 }
 
 /** @deprecated {@link MAX_PM_PER_PROGRAM} 사용 권장 (엔티티 정책과 동일 값) */
@@ -176,13 +180,51 @@ const MOCK_MANAGERS_PROG_002: ProgramManagerRow[] = [
   },
 ]
 
+/** UJAT 프로그램 상세 담당자 정보 — 스크린샷 기준 3건 */
+const MOCK_MANAGERS_UJAT: ProgramManagerRow[] = [
+  {
+    id: 'mgr-ujat-1',
+    no: 3,
+    name: '김제이',
+    role: 'OWNER',
+    phone: '010-1234-0000',
+    email: 'gwanl***@naver.com',
+    registeredAt: '2026.02.10 09:15',
+  },
+  {
+    id: 'mgr-ujat-2',
+    no: 2,
+    name: '박제이',
+    role: 'PARTNER',
+    phone: '010-5678-0000',
+    email: 'park***@naver.com',
+    registeredAt: '2026.02.09 14:30',
+  },
+  {
+    id: 'mgr-ujat-3',
+    no: 1,
+    name: '강제이',
+    role: 'ASSISTANT',
+    phone: '010-9012-0000',
+    email: 'kang***@naver.com',
+    registeredAt: '2026.02.08 11:00',
+  },
+]
+
 const MOCK_PROGRAM_MANAGERS_BY_ID: Record<string, ProgramManagerRow[]> = {
   'prog-001': MOCK_MANAGERS_PROG_001,
   'prog-002': MOCK_MANAGERS_PROG_002,
 }
 
+function isUjatProgramManagerId(programId: string): boolean {
+  return programId.startsWith('ujat-progress-')
+}
+
 /** programId에 맞는 담당자 목록 (행 단위 복사본 — 탭 state 오염 방지) */
 export function getMockProgramManagers(programId: string): ProgramManagerRow[] {
+  if (isUjatProgramManagerId(programId)) {
+    return MOCK_MANAGERS_UJAT.map(r => ({ ...r }))
+  }
   const rows = MOCK_PROGRAM_MANAGERS_BY_ID[programId] ?? MOCK_PROGRAM_MANAGERS
   return rows.map(r => ({ ...r }))
 }

@@ -8,7 +8,6 @@ import type { Application, Program } from '@/types/domain'
 import type { UUID } from '@/types'
 import { mockApplications } from '@/data/mock/applications'
 import { schoolService } from '@/entities/school/api/school-service'
-import dayjs from 'dayjs'
 
 export interface DuplicateCheckResult {
   isDuplicate: boolean
@@ -30,9 +29,7 @@ function checkCase1(
     return {
       isDuplicate: true,
       case: 'case1',
-      message: '동일한 프로그램에 이미 신청한 이력이 있습니다.',
-      existingApplication: existingApp,
-    }
+      existingApplication: existingApp }
   }
 
   return null
@@ -62,17 +59,11 @@ function checkCase2(
 
   if (schoolPrograms.length > 0) {
     const existingApp = schoolPrograms[0]
-    const programStartDate = dayjs(program.startDate).format('MM.DD')
-    const targetLevel = program.targetLevel
-      ? { elementary: '초등학교', middle: '중학교', high: '고등학교' }[program.targetLevel] || ''
-      : ''
 
     return {
       isDuplicate: true,
       case: 'case2',
-      message: `아래와 같이 해당 학교명으로 신청된 이력이 있습니다.\n[${school.name} / ${targetLevel} 대상 / ${programStartDate} 진행 희망]\n추가 신청하시겠습니까?`,
-      existingApplication: existingApp,
-    }
+      existingApplication: existingApp }
   }
 
   return null
@@ -97,6 +88,5 @@ export function checkDuplicateApplication(
   }
 
   return {
-    isDuplicate: false,
-  }
+    isDuplicate: false }
 }

@@ -1,0 +1,317 @@
+/**
+ * 프로그램 소개 관리 — 단건 문서 폼 카드
+ * @see apps/admin/.cursor/rules/design/detail-document-form-card.mdc
+ * @see .cursor/rules/cms-admin-ui/file-select-detail-form.mdc
+ */
+
+.program-intro-card.admin-list-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+}
+
+.program-intro-card .admin-list-toolbar {
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.program-intro-card__body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.program-intro-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.program-intro-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.program-intro-section-title__marker {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  background: var(--default-BK, #3d3d3d);
+}
+
+.program-intro-section-title__text {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.program-intro-card .detail-info-form__field {
+  min-height: 54px;
+  height: auto;
+  --detail-info-label-w: 200px;
+  grid-template-columns: 200px minmax(0, 1fr);
+}
+
+.program-intro-card .detail-info-form__field-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  min-height: 54px;
+  height: auto;
+  padding: 10px 16px;
+  box-sizing: border-box;
+  align-self: stretch;
+}
+
+.program-intro-card .detail-info-form__field-label-text {
+  text-align: center;
+  width: 100%;
+}
+
+/* 시안 td(값 셀) — 텍스트 좌측 · 세로(column) 가운데 · 줄 수에 따라 높이 확장 */
+.program-intro-card .detail-info-form__field-content,
+.program-intro-card .detail-info-form__field-content--edit {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  min-height: 54px;
+  height: auto;
+  padding: 10px 16px;
+  align-items: center;
+  align-content: center;
+  justify-content: flex-start;
+  gap: 12px;
+  flex: 1 0 0;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+/* 수정 중 FileSelect만 상단 정렬 (다줄 가이드) */
+.program-intro-card .detail-info-form__field-content--edit:has(.file-select-field) {
+  align-items: flex-start;
+  align-content: flex-start;
+}
+
+/* DetailInfoForm edit 자식 */
+.program-intro-card .detail-info-form__field-content--edit > * {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+  /* 셀이 더 높을 때 세로 가운데 (package margin-block:auto 패턴) */
+  margin-block: auto !important;
+  align-self: center;
+  height: fit-content;
+}
+
+/* 이미지 파일명: 아이콘 + 텍스트 가로(row) 정렬 */
+.program-intro-card .detail-info-form__field-content--edit > .program-intro-file-view {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+}
+
+.program-intro-card .detail-info-form__field-content--edit > .file-select-field {
+  margin-block: 0 !important;
+  align-self: stretch;
+  height: auto;
+}
+
+.program-intro-card .file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.program-intro-card .file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.program-intro-card .program-intro-inline-field {
+  width: 100%;
+  min-width: 0;
+  height: fit-content;
+}
+
+.program-intro-card .program-intro-inline-field .cms-input__control,
+.program-intro-card .program-intro-inline-field .cms-textarea__control {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+  border-width: 1px;
+  border-style: solid;
+  transition: none !important;
+}
+
+.program-intro-card .program-intro-inline-field .ant-input,
+.program-intro-card .program-intro-inline-field textarea.ant-input {
+  text-align: left !important;
+  transition: none !important;
+}
+
+.program-intro-card .program-intro-inline-field--readonly .cms-input__control,
+.program-intro-card .program-intro-inline-field--readonly .cms-textarea__control {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: default;
+  padding: 0 !important;
+  min-height: 0 !important;
+  height: fit-content !important;
+}
+
+.program-intro-card .program-intro-inline-field--readonly .cms-input__control:hover,
+.program-intro-card .program-intro-inline-field--readonly .cms-textarea__control:hover {
+  border-color: transparent !important;
+}
+
+.program-intro-card .program-intro-inline-field--readonly .ant-input,
+.program-intro-card .program-intro-inline-field--readonly textarea.ant-input {
+  cursor: default;
+  color: var(--default-BK, #3d3d3d) !important;
+  font-weight: 500;
+}
+
+.program-intro-card
+  .program-intro-inline-field.cms-textarea--fixed-rows
+  .cms-textarea__inner
+  textarea.ant-input {
+  resize: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box;
+}
+
+/*
+ * 조회 textarea: 텍스트 높이만 차지 → td 안에서 column(세로) 가운데 정렬 가능
+ */
+.program-intro-card .program-intro-inline-field--readonly.cms-textarea {
+  display: block;
+  height: fit-content;
+}
+
+.program-intro-card
+  .program-intro-inline-field--readonly.cms-textarea
+  .cms-textarea__control,
+.program-intro-card
+  .program-intro-inline-field--readonly.cms-textarea
+  .cms-textarea__inner {
+  display: block;
+  min-height: 0 !important;
+  height: fit-content !important;
+  align-items: unset;
+}
+
+.program-intro-card
+  .program-intro-inline-field--readonly.cms-textarea
+  .cms-textarea__inner
+  textarea.ant-input {
+  display: block;
+  resize: none !important;
+  overflow: hidden !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  padding: 0 !important;
+  line-height: 150% !important;
+  field-sizing: content;
+}
+
+/* rows-1 expandable 이 다시 넣는 좌우 패딩·고정 높이 무력화 */
+.program-intro-card
+  .program-intro-inline-field--readonly.cms-textarea--rows-1
+  .cms-textarea__inner
+  textarea.ant-input,
+.program-intro-card
+  .program-intro-inline-field--readonly.cms-textarea--expandable-single-row
+  .cms-textarea__inner
+  textarea.ant-input {
+  padding: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  line-height: 150% !important;
+}
+
+.program-intro-card
+  .program-intro-inline-field--readonly.cms-input--medium
+  .cms-input__control {
+  height: auto;
+  min-height: 1.5em;
+}
+
+.program-intro-file-view {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  line-height: 0;
+}
+
+.program-intro-file-view__icon {
+  flex-shrink: 0;
+  display: block;
+  width: 24px;
+  height: 24px;
+  aspect-ratio: 1 / 1;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.program-intro-file-view__name {
+  flex: 0 1 auto;
+  display: block;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.program-intro-preline {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  white-space: pre-line;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: left;
+}
+
+.program-intro-file-empty {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%;
+  opacity: 0.6;
+}

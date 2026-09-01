@@ -1,0 +1,23 @@
+/** @deprecated 레이아웃은 editable-status-badge.css — 이 파일은 textbook-delivery-info 래퍼만 유지 */
+
+/** 교재명·키트 요약 + 배송 상태 배지 (한 줄 가로 정렬, 배지 앞 12px) */
+.textbook-delivery-info {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* PipeSeparatedValues 래퍼 width:100% — 배지가 줄바꿈되지 않도록 내용 너비만 사용 */
+.textbook-delivery-info > .detail-info-form-inputs-wrapper-no-gap {
+  width: auto;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.textbook-delivery-info > .editable-status-badge {
+  align-self: center;
+}

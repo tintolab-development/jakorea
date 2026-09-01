@@ -5,8 +5,9 @@
  * 모달: 화면 정중앙 고정
  */
 
-/* 풀페이지 모달: 래퍼가 flex center가 아니라 전체 채움 (아래 :has(.teal-header-modal) 규칙보다 우선하도록 별도 유지) */
-.ant-modal-wrap:has(.teal-header-modal--full) {
+/* 풀페이지 모달: 래퍼가 flex center가 아니라 전체 채움 (아래 :has(.teal-header-modal) 규칙보다 우선하도록 별도 유지)
+ * open=false 시 Ant가 wrap에 inline `display: none`을 넣는데, 아래 `flex !important`가 덮어쓰면 닫히지 않음 */
+.ant-modal-wrap:has(.teal-header-modal--full):not([style*='display: none']) {
   display: flex !important;
   align-items: stretch !important;
   justify-content: flex-start !important;
@@ -27,7 +28,7 @@
   box-sizing: border-box;
 }
 
-.teal-header-modal--full .ant-modal-content {
+.teal-header-modal.teal-header-modal--full .ant-modal-content {
   max-width: 100%;
   width: 100%;
   max-height: 100vh;
@@ -35,10 +36,11 @@
   display: flex;
   flex-direction: column;
   border-radius: 0;
+  box-shadow: none;
   box-sizing: border-box;
 }
 
-.teal-header-modal--full .ant-modal-body {
+.teal-header-modal.teal-header-modal--full .ant-modal-body {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
@@ -51,6 +53,9 @@
   min-height: 0;
   overflow-y: auto;
   max-height: none;
+  /* 풀페이지(등록·미리보기): 기본 margin-top 16px 제거 — 청록 헤더가 뷰포트 상단부터 */
+  margin-top: 0;
+  gap: 0;
 }
 
 /* 헤더 숨김(풀페이지 모달 등): 바디가 최상단부터 채움 */
@@ -64,8 +69,11 @@
   background: rgba(0, 0, 0, 0.3) !important;
 }
 
-/* 모달 래퍼: 화면 정중앙 — 풀페이지는 :has(.teal-header-modal--full) 블록이 stretch를 담당 (이 규칙이 덮어쓰면 좌우 여백만 남음) */
-.ant-modal-wrap:has(.teal-header-modal):not(:has(.teal-header-modal--full)) {
+/* 모달 래퍼: 화면 정중앙 — 풀페이지는 :has(.teal-header-modal--full) 블록이 stretch를 담당 (이 규칙이 덮어쓰면 좌우 여백만 남음)
+ * open=false 시 Ant inline `display: none`을 flex !important가 덮으면 닫힘 순간에 레이아웃이 밀림 */
+.ant-modal-wrap:has(.teal-header-modal):not(:has(.teal-header-modal--full)):not(
+    [style*='display: none']
+  ) {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -76,7 +84,9 @@
  * 과거 `centered` + 위 flex를 동시에 쓸 때 Ant Design의 `ant-modal-centered::before`(수직 정렬용)가
  * flex 아이템으로 남아 대화상자가 밀리는 경우를 막음. (TealHeaderModal은 이제 centered=false 권장)
  */
-.ant-modal-wrap.ant-modal-centered:has(.teal-header-modal):not(:has(.teal-header-modal--full))::before {
+.ant-modal-wrap.ant-modal-centered:has(.teal-header-modal):not(
+    :has(.teal-header-modal--full)
+  )::before {
   display: none !important;
   content: none !important;
 }
@@ -100,7 +110,7 @@
 }
 
 .teal-header-modal .ant-modal-content {
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-12, 12px);
   overflow: hidden;
   box-shadow: var(--shadow-modal);
   padding: 0;
@@ -110,14 +120,15 @@
   padding: 0;
 }
 
-/* large: 모달 전체(헤더+바디+푸터) 최대 높이, 바디만 스크롤 */
-.teal-header-modal--large .ant-modal-content {
-  max-height: var(--max-height-modal-scroll);
+/* 일반 모달: 전체 셸 최대 880px, 헤더·푸터 고정, 본문만 스크롤 */
+.teal-header-modal--bounded .ant-modal-content {
+  max-height: min(var(--max-height-modal-scroll), calc(100vh - 48px));
+  max-height: min(var(--max-height-modal-scroll), calc(100dvh - 48px));
   display: flex;
   flex-direction: column;
 }
 
-.teal-header-modal--large .ant-modal-body {
+.teal-header-modal--bounded .ant-modal-body {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -125,18 +136,18 @@
   overflow: hidden;
 }
 
-.teal-header-modal--large .teal-header-modal__header {
+.teal-header-modal--bounded .teal-header-modal__header {
   flex-shrink: 0;
 }
 
-.teal-header-modal--large .teal-header-modal__body {
+.teal-header-modal--bounded .teal-header-modal__body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   max-height: none;
 }
 
-.teal-header-modal--large .teal-header-modal__footer {
+.teal-header-modal--bounded .teal-header-modal__footer {
   flex-shrink: 0;
 }
 
@@ -257,7 +268,6 @@
 /* 바디 */
 .teal-header-modal__body {
   display: flex;
-  padding-top: 16px !important;
   flex-direction: column;
   align-items: center;
   gap: 16px;
@@ -265,11 +275,12 @@
   background: var(--color-bg-base);
   width: 100%;
   box-sizing: border-box;
+  margin-top: 16px;
 }
 
 .teal-header-modal__body--scrollable {
   overflow-y: auto;
-  max-height: var(--max-height-modal-scroll);
+  max-height: none;
 }
 
 /* 푸터(선택): 버튼 위 여백(테이블 겹침 방지), 버튼 justify center, 버튼 스펙 120×40, 버튼 사이 갭 8px */
@@ -282,9 +293,12 @@
   background: var(--color-bg-base);
 }
 
-/* 아이콘+라벨은 가로 한 줄(AppButton·Ant 기본). column+고정 120×40은 아이콘을 위·텍스트를 아래로 밀고 잘림 유발 */
-.teal-header-modal__footer .ant-btn,
-.teal-header-modal__footer button {
+/*
+ * CmsButton이 아닌 Ant 기본 버튼만 레거시 120×40 스펙 적용.
+ * CmsButton은 size(large/medium/small) 스펙을 그대로 쓴다.
+ */
+.teal-header-modal__footer .ant-btn:not(.cms-button),
+.teal-header-modal__footer button:not(.cms-button) {
   display: inline-flex;
   flex-direction: row;
   justify-content: center;
@@ -297,10 +311,18 @@
   box-sizing: border-box;
 }
 
-/* 푸터 취소(기본) 버튼 배경: 연한 청록 + #FFF — Ant Design 오버라이드 예외 */
-.teal-header-modal__footer .ant-btn-default,
-.teal-header-modal__footer button:not([class*='primary']) {
+/* 푸터 취소(기본) 버튼 배경 — CmsButton variant 스타일은 건드리지 않음 */
+.teal-header-modal__footer .ant-btn-default:not(.cms-button),
+.teal-header-modal__footer button:not(.cms-button):not([class*='primary']) {
   background:
     linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
     var(--color-bg-base);
+}
+
+/* 모달 내 라디오 — Ant 기본 전환·스케일 애니메이션 제거 */
+.teal-header-modal .ant-radio,
+.teal-header-modal .ant-radio .ant-radio-inner,
+.teal-header-modal .ant-radio .ant-radio-inner::after {
+  transition: none !important;
+  animation: none !important;
 }

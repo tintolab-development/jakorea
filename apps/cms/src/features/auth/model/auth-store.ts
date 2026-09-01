@@ -6,8 +6,26 @@
 import { create } from 'zustand'
 import type { User, LoginRequest } from '@/types/user'
 import type { MfaState } from '@/types/mfa'
-import { login as loginApi, validateToken } from '@/entities/user/api/auth-service'
+import {
+  CMS_REMOTE_SESSION_PREFIX,
+  login as loginApi,
+  validateToken,
+  type LoginOptions,
+} from '@/entities/user/api/auth-service'
 import { updateMockUserById } from '@/data/mock/users'
+import type { AuthTokenResponse } from '@/features/auth/model/admin-login-api.types'
+import { fetchAdminAuthLogout } from '@/features/auth/api/admin-auth-fetcher'
+import { AUTH_REFRESH_TOKEN_KEY, refreshAccessTokenSession } from '@/shared/instance/axios-instance'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import { clearDashboardQueryCache } from '@/features/dashboard/api/clear-dashboard-query-cache'
+import { clearDataManagementQueryCache } from '@/features/data-management/api/clear-data-management-query-cache'
+import { clearLogsQueryCache } from '@/features/logs/api/clear-logs-query-cache'
+import { clearPostsQueryCache } from '@/features/posts/api/clear-posts-query-cache'
+import { clearSettlementQueryCache } from '@/features/settlement-management/api/clear-settlement-query-cache'
+import { clearMemberQueryCache } from '@/features/user/api/clear-member-query-cache'
+import { clearPerformanceQueryCache } from '@/features/education-record/api/clear-performance-query-cache'
+import { clearProgramQueryCache } from '@/features/program/shared/api/clear-query-cache'
+import { flushSocialPendingLinks } from '@/features/auth/social-auth/flush-pending-links'
 
 function elevateAdminToMaster(user: Omit<User, 'password'>): Omit<User, 'password'> {
   if (user.role !== 'ADMIN') return user
@@ -23,17 +41,25 @@ interface AuthState {
   isAuthenticated: boolean
   mfaState: MfaState | null // Phase 0.5.1: MFA 상태
   requiresMfa: boolean // Phase 0.5.1: MFA 필요 여부
+  /** MFA verify 등에서 내려온 임시 비밀번호 변경 필요 플래그 */
+  passwordChangeRequired: boolean
   // Phase 2: checkAuth 중복 호출 방지를 위한 내부 상태
   _isCheckingAuth: boolean
   _checkAuthPromise: Promise<void> | null
 
   // Actions
-  login: (request: LoginRequest) => Promise<{ requiresMfa: boolean; mfaState?: MfaState } | void>
+  login: (
+    request: LoginRequest,
+    options?: LoginOptions
+  ) => Promise<{ requiresMfa: boolean; mfaState?: MfaState } | void>
   logout: () => void
   checkAuth: () => Promise<void>
   updateUser: (userData: Partial<Omit<User, 'password'>>) => void
   clearError: () => void
-  setMfaVerified: () => void // Phase 0.5.1: MFA 인증 완료 처리
+  setMfaVerified: () => void // Phase 0.5.1: MFA 인증 완료 처리 (Mock TOTP)
+  completeAdminAuth: (tokens: AuthTokenResponse) => void // 실 API MFA 검증 후 JWT 저장
+  applySocialAuthTokens: (tokens: AuthTokenResponse) => void // 실 API 소셜 SSO 토큰 저장
+  clearPasswordChangeRequired: () => void
   setAuth: (authData: { user: Omit<User, 'password'>; token: string; expiresAt: string }) => void // Phase 0.1.3: 인증 상태 직접 설정
   refreshToken: () => Promise<boolean> // Phase 0.5: 토큰 갱신 Mock 로직
   checkSessionExpiry: () => boolean // Phase 0.5: 세션 만료 확인
@@ -41,6 +67,31 @@ interface AuthState {
 
 const TOKEN_STORAGE_KEY = 'auth_token'
 const TOKEN_EXPIRY_KEY = 'auth_expires_at'
+const PASSWORD_CHANGE_REQUIRED_KEY = 'auth_password_change_required'
+
+function tokenExpiresAtFromResponse(tokens: AuthTokenResponse): string {
+  if (tokens.expiresInSeconds && tokens.expiresInSeconds > 0) {
+    return new Date(Date.now() + tokens.expiresInSeconds * 1000).toISOString()
+  }
+  return new Date(Date.now() + 3600 * 1000).toISOString()
+}
+
+function persistAuthTokens(
+  user: Omit<User, 'password'>,
+  tokens: AuthTokenResponse
+): { token: string; expiresAt: string } {
+  const accessToken = tokens.accessToken
+  const expiresAt = tokenExpiresAtFromResponse(tokens)
+
+  if (typeof window !== 'undefined' && window.localStorage) {
+    localStorage.setItem(TOKEN_STORAGE_KEY, accessToken)
+    localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt)
+    localStorage.setItem('auth_user', JSON.stringify(user))
+    localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, tokens.refreshToken)
+  }
+
+  return { token: accessToken, expiresAt }
+}
 
 // localStorage에서 인증 상태 복원
 const loadAuthFromStorage = (): Partial<AuthState> => {
@@ -70,6 +121,7 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
           token,
           expiresAt,
           isAuthenticated: true,
+          passwordChangeRequired: localStorage.getItem(PASSWORD_CHANGE_REQUIRED_KEY) === '1',
         }
       } catch {
         // JSON 파싱 실패 시 초기화
@@ -78,6 +130,7 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
           token: null,
           expiresAt: null,
           isAuthenticated: false,
+          passwordChangeRequired: false,
         }
       }
     }
@@ -88,6 +141,7 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
     token: null,
     expiresAt: null,
     isAuthenticated: false,
+    passwordChangeRequired: false,
   }
 }
 
@@ -104,14 +158,15 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     error: null,
     mfaState: null, // Phase 0.5.1: MFA 상태
     requiresMfa: false, // Phase 0.5.1: MFA 필요 여부
+    passwordChangeRequired: initialState.passwordChangeRequired ?? false,
     _isCheckingAuth: false, // Phase 2: checkAuth 중복 호출 방지
     _checkAuthPromise: null, // Phase 2: checkAuth Promise 저장
 
-    login: async (request: LoginRequest) => {
+    login: async (request: LoginRequest, options?: LoginOptions) => {
       set({ loading: true, error: null })
 
       try {
-        const response = await loginApi(request)
+        const response = await loginApi(request, options)
 
         // MFA 필요 시 MFA 상태만 설정하고 인증은 완료하지 않음
         if (response.requiresMfa && response.mfaState) {
@@ -164,7 +219,6 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     setMfaVerified: () => {
       const state = get()
       if (state.user) {
-        // MFA 완료 후 토큰 생성 및 저장
         const token = `mock-jwt-token-${state.user.id}-${Date.now()}`
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
 
@@ -189,25 +243,137 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       }
     },
 
+    completeAdminAuth: (tokens: AuthTokenResponse) => {
+      const state = get()
+      if (!state.user) return
+
+      const normalizedUser = elevateAdminToMaster(state.user)
+      const { token, expiresAt } = persistAuthTokens(normalizedUser, tokens)
+      const passwordChangeRequired = tokens.passwordChangeRequired === true
+
+      if (typeof window !== 'undefined' && window.localStorage) {
+        if (passwordChangeRequired) {
+          localStorage.setItem(PASSWORD_CHANGE_REQUIRED_KEY, '1')
+        } else {
+          localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_KEY)
+        }
+      }
+
+      set({
+        user: normalizedUser,
+        token,
+        expiresAt,
+        isAuthenticated: true,
+        mfaState: state.mfaState
+          ? {
+              ...state.mfaState,
+              isVerified: true,
+            }
+          : null,
+        requiresMfa: false,
+        passwordChangeRequired,
+      })
+
+      clearDashboardQueryCache()
+      clearLogsQueryCache()
+      clearDataManagementQueryCache()
+      clearPostsQueryCache()
+      clearSettlementQueryCache()
+      clearMemberQueryCache()
+      clearPerformanceQueryCache()
+      clearProgramQueryCache()
+      void flushSocialPendingLinks()
+    },
+
+    clearPasswordChangeRequired: () => {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_KEY)
+      }
+      set({ passwordChangeRequired: false })
+    },
+
+    applySocialAuthTokens: (tokens: AuthTokenResponse) => {
+      const placeholderUser: Omit<User, 'password'> = {
+        id: 'social-sso-pending',
+        email: '',
+        name: '관리자',
+        role: 'ADMIN',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      const normalizedUser = elevateAdminToMaster(placeholderUser)
+      const { token, expiresAt } = persistAuthTokens(normalizedUser, tokens)
+
+      set({
+        user: normalizedUser,
+        token,
+        expiresAt,
+        isAuthenticated: true,
+        loading: false,
+        error: null,
+        mfaState: null,
+        requiresMfa: false,
+      })
+
+      clearDashboardQueryCache()
+      clearLogsQueryCache()
+      clearDataManagementQueryCache()
+      clearPostsQueryCache()
+      clearSettlementQueryCache()
+      clearMemberQueryCache()
+      clearPerformanceQueryCache()
+      clearProgramQueryCache()
+      void flushSocialPendingLinks()
+    },
+
     logout: () => {
-      // localStorage 정리
+      const refreshToken =
+        typeof window !== 'undefined' && window.localStorage
+          ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)
+          : null
+
+      // Authorization 없이 refreshToken body만으로 서버 세션 무효화 (로컬 clear 전에 요청 시작)
+      let remoteLogout: Promise<void> | undefined
+      if (isRealApiModuleEnabled('adminAuth') && refreshToken) {
+        remoteLogout = fetchAdminAuthLogout({ refreshToken })
+      }
+
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.removeItem(TOKEN_STORAGE_KEY)
         localStorage.removeItem(TOKEN_EXPIRY_KEY)
         localStorage.removeItem('auth_user')
+        localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY)
+        localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_KEY)
       }
 
       set({
+        passwordChangeRequired: false,
         user: null,
         token: null,
         expiresAt: null,
         isAuthenticated: false,
         error: null,
-        mfaState: null, // Phase 0.5.1: MFA 상태 초기화
-        requiresMfa: false, // Phase 0.5.1: MFA 필요 여부 초기화
-        _isCheckingAuth: false, // Phase 2: checkAuth 상태 초기화
-        _checkAuthPromise: null, // Phase 2: checkAuth Promise 초기화
+        mfaState: null,
+        requiresMfa: false,
+        _isCheckingAuth: false,
+        _checkAuthPromise: null,
       })
+
+      if (remoteLogout) {
+        void remoteLogout.catch(error => {
+          console.warn('Remote logout failed:', error)
+        })
+      }
+
+      clearDashboardQueryCache()
+      clearLogsQueryCache()
+      clearDataManagementQueryCache()
+      clearPostsQueryCache()
+      clearSettlementQueryCache()
+      clearMemberQueryCache()
+      clearPerformanceQueryCache()
+      clearProgramQueryCache()
     },
 
     checkAuth: async () => {
@@ -223,8 +389,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         return
       }
 
-      const token = localStorage.getItem(TOKEN_STORAGE_KEY)
-      const expiresAt = localStorage.getItem(TOKEN_EXPIRY_KEY)
+      let token = localStorage.getItem(TOKEN_STORAGE_KEY)
+      let expiresAt = localStorage.getItem(TOKEN_EXPIRY_KEY)
       const userStr = localStorage.getItem('auth_user')
 
       if (!token || !expiresAt || !userStr) {
@@ -232,26 +398,33 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         return
       }
 
-      // Phase 0.5: 세션 만료 확인 (약간의 여유 시간 추가: 30초)
-      const now = new Date()
-      const expiryTime = new Date(expiresAt)
-      const bufferTime = 30 * 1000 // 30초 버퍼
-
-      if (expiryTime.getTime() <= now.getTime() + bufferTime) {
-        // 만료된 경우 로그아웃
-        get().logout()
-        return
-      }
-
-      // checkAuth 실행 중 플래그 설정
       const checkAuthPromise = (async () => {
         try {
-          // Phase 0.5: 토큰 갱신 필요 여부 확인 (만료 1시간 전)
+          const now = new Date()
+          let expiryTime = new Date(expiresAt)
+          const bufferTime = 30 * 1000 // 30초 버퍼
+
+          // access 만료(버퍼 포함) 시 refresh 시도 후 실패하면 logout
+          if (expiryTime.getTime() <= now.getTime() + bufferTime) {
+            const refreshed = await get().refreshToken()
+            if (!refreshed) {
+              get().logout()
+              return
+            }
+            token = localStorage.getItem(TOKEN_STORAGE_KEY)
+            expiresAt = localStorage.getItem(TOKEN_EXPIRY_KEY)
+            if (!token || !expiresAt) {
+              get().logout()
+              return
+            }
+            expiryTime = new Date(expiresAt)
+          }
+
+          // 만료 1시간 전 선제 갱신 (백그라운드)
           const timeUntilExpiry = expiryTime.getTime() - now.getTime()
           const oneHour = 60 * 60 * 1000
 
           if (timeUntilExpiry < oneHour && timeUntilExpiry > 0) {
-            // 자동 토큰 갱신 시도 (백그라운드)
             get()
               .refreshToken()
               .catch(() => {
@@ -267,12 +440,10 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             // JSON 파싱 실패 시 validateToken 호출
           }
 
-          // validateToken 호출 (네트워크 오류 등에 대비해 재시도 로직 포함)
           let user: Omit<User, 'password'> | null = null
           try {
             user = await validateToken(token)
           } catch (error) {
-            // validateToken 실패 시 저장된 사용자 정보 사용 (간헐적 네트워크 오류 대응)
             console.warn('Token validation failed, using stored user:', error)
             if (storedUser && storedUser.isActive) {
               user = storedUser
@@ -281,7 +452,6 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
           if (user && user.isActive) {
             const normalizedUser = elevateAdminToMaster(user)
-            // localStorage 업데이트
             localStorage.setItem('auth_user', JSON.stringify(normalizedUser))
 
             set({
@@ -291,15 +461,12 @@ export const useAuthStore = create<AuthState>()((set, get) => {
               isAuthenticated: true,
             })
           } else {
-            // 사용자가 없거나 비활성화된 경우에만 로그아웃
-            // 단, 저장된 사용자 정보가 있고 활성화되어 있으면 유지
             if (!storedUser || !storedUser.isActive) {
               console.warn('User not found or inactive, logging out')
               get().logout()
             } else {
               const normalizedStoredUser = elevateAdminToMaster(storedUser)
               localStorage.setItem('auth_user', JSON.stringify(normalizedStoredUser))
-              // 저장된 사용자 정보로 상태 유지
               set({
                 user: normalizedStoredUser,
                 token,
@@ -309,7 +476,6 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             }
           }
         } catch (error) {
-          // 예상치 못한 오류 발생 시에도 저장된 사용자 정보로 복구 시도
           console.error('Unexpected error in checkAuth:', error)
           try {
             const storedUser = JSON.parse(userStr)
@@ -378,24 +544,41 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         mfaState: null,
         requiresMfa: false,
       })
+      void flushSocialPendingLinks()
     },
 
-    // Phase 0.5: 토큰 갱신 Mock 로직
+    // Phase 0.5: 토큰 갱신 — adminAuth 실 API는 axios single-flight와 동일 경로
     refreshToken: async (): Promise<boolean> => {
       const state = get()
-      if (!state.user || !state.token) {
+      if (!state.user) {
+        return false
+      }
+
+      if (isRealApiModuleEnabled('adminAuth')) {
+        const ok = await refreshAccessTokenSession()
+        if (!ok) {
+          return false
+        }
+        const token = localStorage.getItem(TOKEN_STORAGE_KEY)
+        const expiresAt = localStorage.getItem(TOKEN_EXPIRY_KEY)
+        if (token && expiresAt) {
+          set({ token, expiresAt })
+        }
+        return true
+      }
+
+      if (!state.token) {
         return false
       }
 
       try {
-        // Mock: 토큰 갱신 시뮬레이션
         await new Promise(resolve => setTimeout(resolve, 300))
 
-        // 새 토큰 생성
-        const newToken = `mock-jwt-token-${state.user.id}-${Date.now()}`
-        const newExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24시간 후
+        const newToken = state.token.startsWith(CMS_REMOTE_SESSION_PREFIX)
+          ? `${CMS_REMOTE_SESSION_PREFIX}${state.user.id}-${Date.now()}`
+          : `mock-jwt-token-${state.user.id}-${Date.now()}`
+        const newExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
 
-        // localStorage 업데이트
         if (typeof window !== 'undefined' && window.localStorage) {
           localStorage.setItem(TOKEN_STORAGE_KEY, newToken)
           localStorage.setItem(TOKEN_EXPIRY_KEY, newExpiresAt)
@@ -413,7 +596,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       }
     },
 
-    // Phase 0.5: 세션 만료 확인
+    // Phase 0.5: 세션 만료 확인 — 만료 시 refresh 시도 후 실패하면 logout
     checkSessionExpiry: (): boolean => {
       const state = get()
       if (!state.expiresAt) {
@@ -425,7 +608,21 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       const bufferTime = 30 * 1000 // 30초 버퍼
 
       if (expiryTime.getTime() <= now.getTime() + bufferTime) {
-        // 만료된 경우 로그아웃
+        const refreshToken =
+          typeof window !== 'undefined' && window.localStorage
+            ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)
+            : null
+
+        if (refreshToken) {
+          // 동기 API라 refresh는 fire-and-forget; 실패 시 logout
+          void get()
+            .refreshToken()
+            .then(ok => {
+              if (!ok) get().logout()
+            })
+          return false
+        }
+
         get().logout()
         return true
       }

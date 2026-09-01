@@ -1,0 +1,90 @@
+/**
+ * 행·열 헤더가 교차하는 격자 테이블
+ * 타이포·색·선은 detail-info-form 격자와 동일 계열
+ */
+
+.cross-table {
+  --cross-table-label-w: 200px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+/* DetailInfoForm __body 가 외곽선·radius 제공 — 이중 테두리 방지 */
+.detail-info-form__body > .detail-info-form__row--custom > .cross-table {
+  border: none;
+  border-radius: 0;
+}
+
+/** DetailInfoForm Field `labelWidth={240}` 과 동일 */
+.cross-table--wide {
+  --cross-table-label-w: 240px;
+}
+
+.cross-table__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.cross-table__label-col {
+  width: var(--cross-table-label-w, 200px);
+}
+
+.cross-table__cell--corner,
+.cross-table__cell--row-header {
+  width: var(--cross-table-label-w, 200px);
+  min-width: var(--cross-table-label-w, 200px);
+  max-width: var(--cross-table-label-w, 200px);
+}
+
+.cross-table__cell {
+  padding: 12px 16px;
+  font-size: 16px;
+  line-height: 140%;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  vertical-align: middle;
+  box-sizing: border-box;
+  border: 1px solid var(--table-line, #e0e0e0);
+}
+
+.cross-table thead tr:first-child .cross-table__cell {
+  border-top: none;
+}
+
+.cross-table tbody tr:last-child .cross-table__cell {
+  border-bottom: none;
+}
+
+.cross-table__cell:first-child {
+  border-left: none;
+}
+
+.cross-table__cell:last-child {
+  border-right: none;
+}
+
+.cross-table__cell--corner {
+  background: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%),
+    #fff
+  );
+  font-weight: 700;
+}
+
+.cross-table__cell--column-header,
+.cross-table__cell--row-header {
+  background: var(--BG-header);
+  font-weight: 700;
+}
+
+.cross-table__cell--data {
+  background: #fff;
+  font-weight: 500;
+}

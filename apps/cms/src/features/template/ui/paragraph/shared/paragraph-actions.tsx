@@ -1,35 +1,153 @@
+import type { MouseEvent } from 'react'
 import { CopyOutlined, DeleteOutlined } from '@ant-design/icons'
+import { FormEditorPlusIcon } from '@/features/template/ui/shared/form-editor-plus-icon'
 import { CmsButton } from '@/shared/ui/cms-button'
 
-export function FormParagraphCardActions() {
+export type FormParagraphCardActionHandlers = {
+  onAdd?: () => void
+  onDuplicate?: () => void
+  onDelete?: () => void
+  onAddItem?: () => void
+}
+
+export type FormParagraphCardActionsProps = FormParagraphCardActionHandlers & {
+  disabled?: boolean
+  /** true면 「단락 추가」만 비활성 (`disabled`와 함께 적용) */
+  addDisabled?: boolean
+  /** true면 「단락 복제」만 비활성 (`disabled`와 함께 적용) — 기본 템플릿 고정 단락 등 */
+  duplicateDisabled?: boolean
+  /** true면 「단락 삭제」만 비활성 (`disabled`와 함께 적용) */
+  deleteDisabled?: boolean
+}
+
+function stopCardClick(e: MouseEvent<HTMLElement>) {
+  e.stopPropagation()
+}
+
+export function FormParagraphCardActions({
+  onAdd,
+  onDuplicate,
+  onDelete,
+  onAddItem,
+  disabled = false,
+  addDisabled = false,
+  duplicateDisabled = false,
+  deleteDisabled = false,
+}: FormParagraphCardActionsProps = {}) {
+  const addOff = disabled || addDisabled
+  const dupOff = disabled || duplicateDisabled
+  const delOff = disabled || deleteDisabled
   return (
-    <div className="form-editor-card__actions">
-      <CmsButton variant="primary" type="button" disabled>
-        + 단락 추가
+    <>
+      {onAddItem ? (
+        <CmsButton
+          variant="primary"
+          type="button"
+          disabled={addOff}
+          onClick={e => {
+            stopCardClick(e)
+            onAddItem()
+          }}
+        >
+          + 항목 추가
+        </CmsButton>
+      ) : null}
+      <CmsButton
+        variant="secondary"
+        type="button"
+        size="large"
+        icon={<FormEditorPlusIcon />}
+        disabled={addOff}
+        onClick={e => {
+          stopCardClick(e)
+          onAdd?.()
+        }}
+      >
+        단락 추가
       </CmsButton>
-      <CmsButton variant="secondary" type="button" icon={<CopyOutlined />} disabled>
+      <CmsButton
+        variant="secondary"
+        type="button"
+        size="large"
+        icon={<CopyOutlined />}
+        disabled={dupOff}
+        onClick={e => {
+          stopCardClick(e)
+          onDuplicate?.()
+        }}
+      >
         단락 복제
       </CmsButton>
-      <CmsButton variant="secondary" type="button" icon={<DeleteOutlined />} disabled>
+      <CmsButton
+        variant="secondary"
+        type="button"
+        size="large"
+        icon={<DeleteOutlined />}
+        disabled={delOff}
+        onClick={e => {
+          stopCardClick(e)
+          onDelete?.()
+        }}
+      >
         단락 삭제
       </CmsButton>
-    </div>
+    </>
   )
 }
 
-/** 기본 양식 MVP — 단락 추가/복제/삭제는 추후 API 연동 시 활성화 */
-export function FormParagraphCardActionsMinimal() {
+export function FormParagraphCardActionsMinimal({
+  onAdd,
+  onDuplicate,
+  onDelete,
+  disabled = false,
+  addDisabled = false,
+  duplicateDisabled = false,
+  deleteDisabled = false,
+}: FormParagraphCardActionsProps = {}) {
+  const addOff = disabled || addDisabled
+  const dupOff = disabled || duplicateDisabled
+  const delOff = disabled || deleteDisabled
   return (
-    <div className="form-editor-card__actions form-editor-card__actions--minimal">
-      <CmsButton variant="primary" type="button" disabled>
-        + 단락 추가
+    <>
+      <CmsButton
+        variant="secondary"
+        type="button"
+        size="large"
+        icon={<FormEditorPlusIcon />}
+        disabled={addOff}
+        onClick={e => {
+          stopCardClick(e)
+          onAdd?.()
+        }}
+      >
+        단락 추가
       </CmsButton>
-      <CmsButton variant="secondary" type="button" disabled>
+      <CmsButton
+        variant="secondary"
+        type="button"
+        size="large"
+        icon={<CopyOutlined />}
+        disabled={dupOff}
+        onClick={e => {
+          stopCardClick(e)
+          onDuplicate?.()
+        }}
+      >
         단락 복제
       </CmsButton>
-      <CmsButton variant="secondary" type="button" icon={<DeleteOutlined />} disabled>
+      <CmsButton
+        variant="secondary"
+        type="button"
+        size="large"
+        icon={<DeleteOutlined />}
+        disabled={delOff}
+        onClick={e => {
+          stopCardClick(e)
+          onDelete?.()
+        }}
+      >
         단락 삭제
       </CmsButton>
-    </div>
+    </>
   )
 }

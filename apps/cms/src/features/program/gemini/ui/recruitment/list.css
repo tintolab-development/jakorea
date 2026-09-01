@@ -1,0 +1,25 @@
+.gemini-recruitment-list__status {
+  display: inline-block;
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.gemini-recruitment-list__status--scheduled {
+  color: var(--color-green, #1e8c29);
+}
+
+.gemini-recruitment-list__status--in-progress {
+  color: var(--color-blue, #017eaf);
+}
+
+.gemini-recruitment-list__status--ended {
+  color: var(--color-red, #c32f4a);
+}
+
+.gemini-recruitment-list__status--draft {
+  color: var(--color-gray-600, #6b7280);
+}

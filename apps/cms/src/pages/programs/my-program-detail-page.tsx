@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, Descriptions, Tag, Button, Table, Space, Empty, Spin, message } from 'antd'
+import { Card, Tag, Table, Space, Spin } from 'antd'
 import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
 import {
   HeartOutlined,
@@ -14,7 +14,7 @@ import {
   CalendarOutlined,
   FormOutlined,
 } from '@ant-design/icons'
-import { SatisfactionSurveyModal } from '@/features/program/ui/satisfaction-survey-modal'
+import { SatisfactionSurveyModal } from '@/features/program/general/ui/satisfaction-survey-modal'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   getMyProgramDetail,
@@ -29,9 +29,12 @@ import {
   commonStatusStatusConfig,
   getCommonStatusLabel,
   getCommonStatusColor,
+  getStatusConfigAccentColor,
 } from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/ui/status-badge'
-import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
+import { StatusBadge } from '@/shared/components/status-badge'
+import { LAYOUT_CONSTANTS } from '@/shared/constants'
+import { CmsButton, EmptyState } from '@/shared/ui'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import dayjs from 'dayjs'
 
 export function MyProgramDetailPage() {
@@ -39,26 +42,27 @@ export function MyProgramDetailPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const [program, setProgram] = useState<MyProgram | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [favorite, setFavorite] = useState(false) // 찜하기 상태 (Mock)
   const [satisfactionModalOpen, setSatisfactionModalOpen] = useState(false)
 
   const loadProgram = useCallback(async () => {
     const userId = user?.instructorId || user?.id
-    if (!id || !userId) return
+    if (!id || !userId) {
+      setLoading(false)
+      return
+    }
 
     setLoading(true)
     try {
       const data = await getMyProgramDetail(userId, id)
       if (!data) {
-        message.error(MESSAGES.error.programNotFound)
         navigate('/programs/my/active')
         return
       }
       setProgram(data)
     } catch (error) {
       console.error('프로그램 로드 실패:', error)
-      message.error(MESSAGES.error.programLoadFailed)
     } finally {
       setLoading(false)
     }
@@ -79,10 +83,17 @@ export function MyProgramDetailPage() {
   )
 
   useEffect(() => {
-    if (id && user?.instructorId) {
-      loadProgram()
+    if (!id) {
+      setLoading(false)
+      return
     }
-  }, [id, user?.instructorId, loadProgram])
+    const userId = user?.instructorId || user?.id
+    if (userId) {
+      void loadProgram()
+      return
+    }
+    setLoading(false)
+  }, [id, user?.instructorId, user?.id, loadProgram])
 
   useEffect(() => {
     const userId = user?.instructorId || user?.id
@@ -98,15 +109,12 @@ export function MyProgramDetailPage() {
     try {
       if (favorite) {
         await removeFavoriteProgram(userId, id)
-        message.success(MESSAGES.success.removedFromFavorites)
       } else {
         await addFavoriteProgram(userId, id)
-        message.success(MESSAGES.success.addedToFavorites)
       }
       setFavorite(!favorite)
     } catch (error) {
       console.error('관심 프로그램 토글 실패:', error)
-      message.error(MESSAGES.error.favoriteProgramProcessFailed)
     }
   }
 
@@ -138,7 +146,11 @@ export function MyProgramDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
+      <div
+        className="page-content-loading page-content-loading--viewport"
+        role="status"
+        aria-label="프로그램 불러오는 중"
+      >
         <Spin size="large" />
       </div>
     )
@@ -147,14 +159,15 @@ export function MyProgramDetailPage() {
   if (!program) {
     return (
       <div>
-        <Button
+        <CmsButton
+          variant="default"
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/programs/my/active')}
           style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg }}
         >
           목록으로
-        </Button>
-        <Empty description="프로그램 정보를 찾을 수 없습니다." />
+        </CmsButton>
+        <EmptyState description="프로그램 정보를 찾을 수 없습니다." />
       </div>
     )
   }
@@ -171,7 +184,7 @@ export function MyProgramDetailPage() {
       title: '일정 날짜',
       dataIndex: 'date',
       key: 'date',
-      render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm'),
+      render: (date: string) => dayjs(date).format('YYYY.MM.DD HH:mm'),
     },
     {
       title: '장소',
@@ -183,7 +196,16 @@ export function MyProgramDetailPage() {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <StatusBadge status={status} statusConfig={commonStatusStatusConfig} />
+        <StatusBadge
+          domain="custom"
+          label={
+            commonStatusStatusConfig[status as keyof typeof commonStatusStatusConfig]?.label ??
+            status
+          }
+          accentColor={getStatusConfigAccentColor(
+            commonStatusStatusConfig[status as keyof typeof commonStatusStatusConfig]?.color
+          )}
+        />
       ),
     },
   ]
@@ -197,54 +219,71 @@ export function MyProgramDetailPage() {
           justifyContent: 'space-between',
         }}
       >
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/programs/my/active')}>
+        <CmsButton
+          variant="default"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate('/programs/my/active')}
+        >
           목록으로
-        </Button>
+        </CmsButton>
         <Space>
-          <Button onClick={() => navigate(`/programs/my/${program.id}/history`)}>
+          <CmsButton
+            variant="default"
+            onClick={() => navigate(`/programs/my/${program.id}/history`)}
+          >
             이력/현황 보기
-          </Button>
+          </CmsButton>
           {canSubmitSatisfaction && (
-            <Button
-              type="primary"
+            <CmsButton
+              variant="primary"
               icon={<FormOutlined />}
               onClick={() => setSatisfactionModalOpen(true)}
             >
               만족도 조사
-            </Button>
+            </CmsButton>
           )}
-          <Button
+          <CmsButton
+            variant="default"
             icon={favorite ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
             onClick={handleToggleFavorite}
           >
             {favorite ? '관심 해제' : '관심 등록'}
-          </Button>
+          </CmsButton>
         </Space>
       </Space>
 
       <Card title={program.title} style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg }}>
-        <Descriptions bordered column={{ xs: 1, sm: 2, lg: 3 }}>
-          <Descriptions.Item label="상태">
-            <Tag color={status.color}>{status.label}</Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="카테고리">
-            <ProgramCategoryBadge category={program.category} />
-          </Descriptions.Item>
-          <Descriptions.Item label="진행 기간">
-            {dayjs(program.startDate).format('YYYY-MM-DD')} ~{' '}
-            {dayjs(program.endDate).format('YYYY-MM-DD')}
-          </Descriptions.Item>
-          <Descriptions.Item label="매칭일">
-            {dayjs(program.matchedAt).format('YYYY-MM-DD')}
-          </Descriptions.Item>
-          <Descriptions.Item label="매칭 ID">{program.matchingId}</Descriptions.Item>
-          <Descriptions.Item label="일정 수">{program.schedules.length}개</Descriptions.Item>
-          {program.description && (
-            <Descriptions.Item label="설명" span={3}>
-              {program.description}
-            </Descriptions.Item>
-          )}
-        </Descriptions>
+        <DetailInfoForm title="프로그램 정보" mode="view" hideHeader>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="상태"
+              view={<Tag color={status.color}>{status.label}</Tag>}
+            />
+            <DetailInfoForm.Field
+              label="카테고리"
+              view={<ProgramCategoryBadge category={program.category} />}
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="진행 기간"
+              view={`${dayjs(program.startDate).format('YYYY.MM.DD')} ~ ${dayjs(program.endDate).format('YYYY.MM.DD')}`}
+            />
+            <DetailInfoForm.Field
+              label="매칭일"
+              view={dayjs(program.matchedAt).format('YYYY.MM.DD')}
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field label="매칭 ID" view={program.matchingId} />
+            <DetailInfoForm.Field label="일정 수" view={`${program.schedules.length}개`} />
+          </DetailInfoForm.Row>
+          {program.description ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="설명" view={program.description} fullRow />
+            </DetailInfoForm.Row>
+          ) : null}
+        </DetailInfoForm>
       </Card>
 
       <Card
@@ -263,7 +302,7 @@ export function MyProgramDetailPage() {
             pagination={false}
           />
         ) : (
-          <Empty description="등록된 일정이 없습니다." />
+          <EmptyState description="등록된 일정이 없습니다." />
         )}
       </Card>
 
@@ -275,7 +314,6 @@ export function MyProgramDetailPage() {
           onCancel={() => setSatisfactionModalOpen(false)}
           onSuccess={() => {
             // 만족도 조사 제출 후 처리
-            message.success(MESSAGES.success.satisfactionSurveySubmitted)
             setSatisfactionModalOpen(false)
           }}
         />

@@ -1,0 +1,344 @@
+{
+  "templateCode": "application-participant-school",
+  "templateName": "일반_참여 기관 신청 폼",
+  "formType": "WRITING",
+  "category": "APPLICATION",
+  "schemaJson": {
+    "schemaVersion": 1,
+    "formSettings": {
+      "titleNumbering": "none"
+    },
+    "paragraphs": [
+      {
+        "id": "program-application-institution-seed-personal-info",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "개인정보 수집·이용",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "field",
+        "columnHeaders": [
+          "수집 항목",
+          "수집·이용 목적",
+          "보유기간"
+        ],
+        "dataRows": [
+          [
+            "",
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          }
+        ],
+        "fieldDataRows": [
+          [
+            {
+              "kind": "text",
+              "value": "이름, 학교명, 학교 소재지, 개인 연락처, 이메일"
+            },
+            {
+              "kind": "text",
+              "value": "JA 프로그램의 참가자 선발 및 프로그램 진행에 필요한 정보 안내"
+            },
+            {
+              "kind": "text",
+              "value": "- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 프로그램 종료로부터 1년 보관 후 폐기"
+            }
+          ]
+        ],
+        "bottomText": "위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.",
+        "showBottomText": true,
+        "showBottomConsent": true,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-application-institution-seed-third-party",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "개인정보 제3자 정보 제공·이용 동의",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "field",
+        "columnHeaders": [
+          "제공받는 곳",
+          "수집 항목",
+          "수집·이용 목적",
+          "제공받는 자의 보유기간"
+        ],
+        "dataRows": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [
+          {
+            "kind": "text",
+            "placeholder": "제공받는 곳을 입력해 주세요"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          }
+        ],
+        "fieldDataRows": [
+          [
+            {
+              "kind": "text",
+              "value": ""
+            },
+            {
+              "kind": "text",
+              "value": "이름, 학교명, 학교 소재지, 개인 연락처, 이메일"
+            },
+            {
+              "kind": "text",
+              "value": "JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내"
+            },
+            {
+              "kind": "text",
+              "value": "5년"
+            }
+          ]
+        ],
+        "bottomText": "위의 개인정보 제3자 정보 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.",
+        "showBottomText": true,
+        "showBottomConsent": true,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-application-institution-seed-basic-info",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "기본 정보",
+        "paragraphDescription": "설명 입력",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-application-institution-seed-guidance",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "안내 사항",
+        "paragraphDescription": "강사님들에게 제공 또는 요청할 사전 정보를 작성해 주세요.",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "field",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ],
+          [
+            "",
+            ""
+          ],
+          [
+            "",
+            ""
+          ],
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          },
+          {
+            "kind": "subjective",
+            "placeholder": "답변을 입력해 주세요"
+          }
+        ],
+        "fieldDataRows": [
+          [
+            {
+              "kind": "text",
+              "value": "강의 공간 내 컴퓨터 여부\n강의 공간 내 사용 가능한 컴퓨터가 있다면 몇대 있는지, USB 사용 가능 여부 등의 안내사항을 작성해 주세요."
+            },
+            {
+              "kind": "subjective",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "value": "대기 장소 안내\n강사님들이 대기할 수 있는 장소를 상세히 작성해 주세요. (ex. 본관 2층 3학년 연구실)"
+            },
+            {
+              "kind": "subjective",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "value": "식사 가능 여부 및 안내\n강사님들의 식사 방법과 관련하여 안내사항을 작성해 주세요. (ex. 식사 불가, 인당 4500원 지불 후 급식실에서 식사 가능 등)"
+            },
+            {
+              "kind": "subjective",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "value": "기타 특이사항(주차, 전달사항 등)\n주차 안내나 기타 전달사항이 있다면 작성해 주세요."
+            },
+            {
+              "kind": "subjective",
+              "value": ""
+            }
+          ]
+        ],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-application-institution-seed-sex-offense-consent-submission",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "성범죄 경력 조회 동의서 제출 요청",
+        "paragraphDescription": "강사님들의 성범죄 경력 조회 동의서 제출이 필요하신 경우, 동의서 제출을 요청해 주세요. 미요청 시 전달되지 않습니다.",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-application-institution-seed-sex-offense-consent-inquiry",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "성범죄 경력 조회 동의서 조회 방식",
+        "paragraphDescription": "성범죄 경력 조회 동의서의 조회 방식을 선택해 주세요. 범죄경력회보서의 온라인 제출을 희망하는 경우, 기관 ID와 검증번호를 함께 전달해 주세요.\nJA 시스템 내에서 확인 선택 시, 프로그램 및 배정 정보와 함께 JA 홈페이지 상세에서 동의서 확인이 가능합니다. (조회 동의서만 제공하며, 실제 조회는 별도로 진행해 주셔야 합니다.)",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-application-institution-seed-schedule",
+        "kind": "single_item",
+        "variant": "multiple_choice",
+        "requiredMark": true,
+        "paragraphTitle": "진행 희망 교육 일정",
+        "paragraphDescription": "프로그램 등록/모집 폼 설정값에 따라 노출 내용이 상이합니다.",
+        "participatesInTitleNumbering": true,
+        "answerRequired": true,
+        "allowMultiple": true,
+        "items": [
+          {
+            "id": "institution-schedule-slot-1",
+            "label": "26년 4월 20일(일) 9:30 ~ 12:20"
+          },
+          {
+            "id": "institution-schedule-slot-2",
+            "label": "26년 4월 27일(월) 13:00 ~ 15:50"
+          }
+        ],
+        "selectedPreviewSingleId": null,
+        "selectedPreviewMultipleIds": []
+      }
+    ]
+  },
+  "extensionJson": {
+    "overlay": {},
+    "editorState": {},
+    "uiState": {}
+  },
+  "settingsJson": null,
+  "_apiStorageNote": "DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장"
+}

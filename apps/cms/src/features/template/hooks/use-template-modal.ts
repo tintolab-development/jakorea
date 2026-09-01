@@ -3,7 +3,7 @@ import {
   mergeLeftCardOrderByDragIds,
   normalizeLeftCardOrder,
   type TemplateModalLeftCardConfig,
-} from '@/features/template/ui/template-modal-left-content'
+} from '@/features/template/ui/template-management/template-modal-left-content'
 import type { TemplateRow } from '@/features/template/model/template.schema'
 
 interface UseTemplateModalParams {

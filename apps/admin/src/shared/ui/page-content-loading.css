@@ -1,0 +1,36 @@
+/**
+ * 페이지·목록 본문 로딩/에러 — 레이아웃 Content 기준 중앙 정렬
+ * CMS page-content-loading 미러. Admin 토큰: --header-height · content padding 32
+ */
+
+.page-content-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 48px 0;
+  min-height: 320px;
+}
+
+/* 헤더 + Content 상·하 패딩(32+32) 제외 뷰포트 높이 */
+.page-content-loading--viewport {
+  min-height: calc(
+    100vh - var(--header-height, 64px) - var(--admin-layout-content-padding-y, 32px) * 2
+  );
+}
+
+/* 필터·툴바 영역 대략 280px 제외 (목록 슬롯) */
+.page-content-loading--table-slot {
+  min-height: calc(
+    100vh - var(--header-height, 64px) - var(--admin-layout-content-padding-y, 32px) * 2 - 280px
+  );
+}
+
+.page-content-error {
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--color-gray-02, #7d7d7d);
+  font-size: 16px;
+  line-height: 150%;
+}

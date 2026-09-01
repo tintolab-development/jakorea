@@ -1,0 +1,36 @@
+/**
+ * 그라디언트 텍스트 필 (background-clip)
+ *
+ * Figma: Primary_GR_01 / _02 / _03
+ * CSS 토큰: --color-gradient-primary-0*
+ * 유틸: .text-gradient-primary-0*
+ * PFText: color="gradient-primary-0*"
+ *
+ * typo-* 와 조합:
+ *   className="typo-page-title text-gradient-primary-01"
+ *   <PFText typo="page-title" color="gradient-primary-01" />
+ */
+
+.text-gradient-primary-01 {
+  background-image: var(--color-gradient-primary-01);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-primary-02 {
+  background-image: var(--color-gradient-primary-02);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-primary-03 {
+  background-image: var(--color-gradient-primary-03);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}

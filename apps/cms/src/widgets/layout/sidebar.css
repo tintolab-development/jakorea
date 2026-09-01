@@ -4,13 +4,16 @@
  * 선택 그룹 행은 `var(--color-sidebar-item-selected)` 를 베이스 위에 얹음
  */
 
-/* ---- 레이아웃 · Sider ---- */
+/* ---- 레이아웃 · Sider (로고 고정 · 메뉴 목록만 스크롤 — detail-fullpage-modal LNB와 동일) ---- */
 .sidebar-container.ant-layout-sider,
 .sidebar-container {
   position: fixed !important;
   left: 0;
   top: 0;
   height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100vh !important;
+  max-height: 100dvh !important;
   overflow: hidden;
   z-index: 100;
   display: flex !important;
@@ -19,50 +22,61 @@
   color: var(--color-sidebar-text) !important;
 }
 
+.sidebar-container.ant-layout-sider > .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
 .sidebar-container .sidebar-header {
+  flex-shrink: 0;
   background: var(--color-sidebar-bg) !important;
   color: var(--color-sidebar-text) !important;
   /* border-bottom: 1px solid rgba(255, 255, 255, 0.12); */
 }
 
+/* 메뉴 스크롤 컨테이너 — LNB 패널 안쪽 가장자리에 스크롤바 노출 */
 .sidebar-menu-wrapper {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  flex: 1 1 0;
   min-height: 0;
-  height: calc(100vh - var(--sidebar-header-height, 120px));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  /* 서브메뉴 펼침으로 스크롤바가 생겨도 행·화살표가 좌측으로 밀리지 않도록 거터 고정 */
+  scrollbar-gutter: stable;
   background: var(--color-sidebar-bg) !important;
   color: var(--color-sidebar-text) !important;
 }
 
-/* ---- 메뉴 루트 ---- */
-.sidebar-menu {
-  width: 100%;
-  border-right: 0;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  min-height: 0;
-  height: 100% !important;
-  background: var(--color-sidebar-bg) !important;
-  color: var(--color-sidebar-text) !important;
-}
-
-.sidebar-menu::-webkit-scrollbar {
+.sidebar-menu-wrapper::-webkit-scrollbar {
   width: var(--spacing-6);
 }
 
-.sidebar-menu::-webkit-scrollbar-track {
+.sidebar-menu-wrapper::-webkit-scrollbar-track {
   background: var(--color-sidebar-bg);
 }
 
-.sidebar-menu::-webkit-scrollbar-thumb {
+.sidebar-menu-wrapper::-webkit-scrollbar-thumb {
   background: var(--color-sidebar-scrollbar-thumb);
   border-radius: var(--radius-3);
 }
 
-.sidebar-menu::-webkit-scrollbar-thumb:hover {
+.sidebar-menu-wrapper::-webkit-scrollbar-thumb:hover {
   background: var(--color-sidebar-scrollbar-thumb-hover);
+}
+
+/* ---- 메뉴 루트 (목록은 래퍼 높이에 맞춰 자연 높이, 스크롤은 wrapper만) ---- */
+.sidebar-menu {
+  width: 100%;
+  border-right: 0;
+  overflow: visible !important;
+  background: var(--color-sidebar-bg) !important;
+  color: var(--color-sidebar-text) !important;
 }
 
 .sidebar-menu.ant-menu {
@@ -463,12 +477,48 @@
   font-size: 18px !important;
 }
 
+/* ---- 드롭다운 쉐브론 (시안: 20×20 / aspect-ratio 1/1 / 행 세로 중앙) ---- */
 .sidebar-menu .ant-menu-submenu-arrow {
-  flex-shrink: 0;
-  width: 14px;
-  min-width: 14px;
-  text-align: center;
+  inset-inline-end: 18px !important;
+  width: 20px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
+  aspect-ratio: 1 / 1;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
   color: var(--color-sidebar-text) !important;
+  /* 행(column) 세로 가운데 — antd open 시 transform 덮어쓰기 방지 */
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+}
+
+.sidebar-menu .ant-menu-submenu-arrow::before,
+.sidebar-menu .ant-menu-submenu-arrow::after {
+  display: none !important;
+  content: none !important;
+}
+
+.sidebar-menu .ant-menu-submenu-arrow svg {
+  width: 20px !important;
+  height: 20px !important;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  display: block;
+}
+
+/*
+ * antd는 open 시 화살표 transform을 translateY(-0.2*size)로 교체해
+ * 세로 중앙이 깨짐 → 항상 translateY(-50%) 유지, 방향은 SVG rotate로 처리
+ */
+.sidebar-menu
+  .ant-menu-submenu-open.ant-menu-submenu-inline
+  > .ant-menu-submenu-title
+  > .ant-menu-submenu-arrow {
+  transform: translateY(-50%) !important;
 }
 
 /* ---- 2뎁스(루트 바로 하위)만: 불릿↔텍스트 8px, 닷 3x3 ---- */

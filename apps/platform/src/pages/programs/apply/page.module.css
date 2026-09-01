@@ -1,0 +1,123 @@
+/**
+ * 신청하기 페이지
+ * - layout: full → ContentShell 없이 main 전폭
+ * - 공통 셸: program-page-shell (상하 100 / max 1440 / 좌우 ≥80)
+ */
+.page {
+  background: var(--color-neutral-cool-50, #f5f7f7);
+}
+
+.back {
+  width: 100%;
+  margin-bottom: var(--spacing-40);
+}
+
+.pageTitle {
+  margin: 0;
+  margin-bottom: var(--spacing-40);
+}
+
+.summary {
+  margin-bottom: var(--spacing-24);
+  display: flex;
+  padding: var(--Spacing-16, 16px) var(--Spacing-24, 24px);
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 4px;
+  align-self: stretch;
+  border-radius: var(--radius-12);
+  background: var(--Color-netural-cool-100, #e6e9eb);
+}
+
+.form {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-60);
+}
+
+.fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  margin-bottom: var(--spacing-8);
+}
+
+.required {
+  color: var(--color-error);
+}
+
+.radio,
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.label {
+  display: block;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: var(--spacing-16);
+  border: 1px solid var(--color-neutral-cool-200);
+  border-radius: 12px;
+  font: inherit;
+  resize: vertical;
+}
+
+.shortEssayItems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  width: 100%;
+  min-width: 0;
+}
+
+.shortEssayItem {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.multipleChoice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+  width: 100%;
+  min-width: 0;
+  padding: 0 8px;
+}
+
+.multipleChoiceItem {
+  max-width: 100%;
+  padding-left: 0;
+}
+
+.multipleChoiceItem :global(.typo-bd-md-md) {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+}

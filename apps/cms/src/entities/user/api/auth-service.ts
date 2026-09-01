@@ -5,17 +5,108 @@
 
 import type { LoginRequest, LoginResponse, User } from '@/types/user'
 import type { MfaState } from '@/types/mfa'
-import { validateLogin, getUserByPhone } from '@/data/mock/users'
-import { createTotpMfaState } from '@/data/mock/mfa'
+import { fetchAdminLogin } from '@/features/auth/api/admin-login-fetcher'
+import type { AdminMfaChallengeResponse } from '@/features/auth/model/admin-login-api.types'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
-/**
- * 로그인 API
- * Phase 0.5.1: MFA 지원 추가
- */
-export async function login(
+/** 로그인 화면에서 명시적으로 선택하는 경로 (미지정 시 `VITE_REAL_API_MODULES` 규칙) */
+export type LoginMode = 'mock' | 'api'
+
+export interface LoginOptions {
+  mode?: LoginMode
+}
+import { validateLogin, getUserByPhone, mockUsers } from '@/data/mock/users'
+import { createTotpMfaState } from '@/data/mock/mfa'
+import { SocialAccountNotLinkedError } from '@/features/auth/errors/social-account-not-linked-error'
+import { AdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
+
+/** 실 API 세션 토큰 접두사 — `validateToken`·auth-store 갱신 시 mock JWT 와 구분 */
+export const CMS_REMOTE_SESSION_PREFIX = 'cms-remote-'
+
+/** MFA 완료 후 저장된 실 JWT(accessToken) 여부 — mock·pending 세션 제외 */
+export function hasRemoteAdminJwt(): boolean {
+  if (typeof window === 'undefined') return false
+  const token = localStorage.getItem('auth_token')
+  if (!token || token.startsWith('mock-jwt-token-') || token.startsWith(CMS_REMOTE_SESSION_PREFIX)) {
+    return false
+  }
+  return token.split('.').length >= 3
+}
+
+/** DEV 우회·mock credential 로그인 세션 (`mock-jwt-token-…`) */
+export function isMockAdminSession(): boolean {
+  if (typeof window === 'undefined') return false
+  const token = localStorage.getItem('auth_token')
+  return Boolean(token?.startsWith('mock-jwt-token-'))
+}
+
+function buildPendingAdminUser(email: string): Omit<User, 'password'> {
+  const now = new Date().toISOString()
+  return {
+    id: `pending-admin-${email}`,
+    email,
+    name: email.split('@')[0] ?? '관리자',
+    role: 'ADMIN',
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+    lastLoginAt: now,
+    programRoles: {},
+  }
+}
+
+function buildMfaStateFromChallenge(
+  email: string,
+  challenge: AdminMfaChallengeResponse
+): MfaState {
+  return {
+    method: 'totp',
+    isRequired: true,
+    isVerified: false,
+    accountLabel: email,
+    lastSentAt: null,
+    failedAttempts: 0,
+    isLocked: false,
+    lockUntil: null,
+    challengeUuid: challenge.challengeUuid,
+    mfaMethod: challenge.mfaMethod,
+    challengeExpiresAt: challenge.expiresAt,
+    totpSecret: challenge.totpSecret,
+    otpauthUri: challenge.otpauthUri,
+    qrDataUrl: challenge.qrDataUrl,
+  }
+}
+
+async function loginWithRemoteApi(
   request: LoginRequest
 ): Promise<LoginResponse & { requiresMfa?: boolean; mfaState?: MfaState }> {
-  // Mock: 실제 API 호출 대신 지연 시간 시뮬레이션
+  if (!isRemoteApiConfigured()) {
+    throw new Error(
+      'API 서버가 설정되지 않았습니다. `.env`에 `VITE_API_SERVER` 또는 `VITE_API_BASE_URL`을 설정하세요.'
+    )
+  }
+
+  const challenge = await fetchAdminLogin(request)
+  const user = buildPendingAdminUser(request.email)
+  const mfaState = buildMfaStateFromChallenge(request.email, challenge)
+
+  return {
+    user,
+    token: '',
+    expiresAt: challenge.expiresAt,
+    requiresMfa: true,
+    mfaState,
+  }
+}
+
+async function loginWithMock(
+  request: LoginRequest
+): Promise<LoginResponse & { requiresMfa?: boolean; mfaState?: MfaState }> {
+  if (import.meta.env.DEV) {
+    console.info('[CMS auth] Mock 로그인 — 브라우저 Network 에는 요청이 없습니다.')
+  }
+
   await new Promise(resolve => setTimeout(resolve, 500))
 
   const user = validateLogin(request.email, request.password)
@@ -24,7 +115,10 @@ export async function login(
     throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.')
   }
 
-  // 관리자는 MFA 필요
+  if (user.role === 'ADMIN' && user.permissionApprovalStatus === 'PENDING') {
+    throw new AdminLoginApprovalPendingError()
+  }
+
   const requiresMfa = user.role === 'ADMIN'
   let mfaState: MfaState | undefined
 
@@ -32,11 +126,9 @@ export async function login(
     mfaState = createTotpMfaState(user.id, user.email)
   }
 
-  // Mock JWT 토큰 생성 (MFA 완료 전에는 임시 토큰)
   const token = `mock-jwt-token-${user.id}-${Date.now()}`
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24시간 후
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
 
-  // password를 제외한 전체 user 객체 반환 (adminLevel 포함)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { password, ...userWithoutPassword } = user
 
@@ -54,11 +146,58 @@ export async function login(
 }
 
 /**
+ * 로그인 API
+ * Phase 0.5.1: MFA 지원 추가
+ * - `options.mode === 'api'`: 실 `fetchAdminLogin` (원격 URL 필요)
+ * - `options.mode === 'mock'`: mock(`validateLogin` + MFA)
+ * - 미지정: `VITE_REAL_API_MODULES`에 `adminAuth`가 있을 때만 실 API
+ */
+export async function login(
+  request: LoginRequest,
+  options?: LoginOptions
+): Promise<LoginResponse & { requiresMfa?: boolean; mfaState?: MfaState }> {
+  if (options?.mode === 'api') {
+    return loginWithRemoteApi(request)
+  }
+
+  if (options?.mode === 'mock') {
+    return loginWithMock(request)
+  }
+
+  if (isRealApiModuleEnabled('adminAuth')) {
+    return loginWithRemoteApi(request)
+  }
+
+  return loginWithMock(request)
+}
+
+/**
  * 토큰 검증
  */
 export async function validateToken(token: string): Promise<Omit<User, 'password'> | null> {
-  // Mock: 토큰에서 사용자 ID 추출
   await new Promise(resolve => setTimeout(resolve, 100))
+
+  if (typeof window === 'undefined') return null
+  const userStr = localStorage.getItem('auth_user')
+  if (!userStr) return null
+
+  let user: Omit<User, 'password'> | null = null
+  try {
+    user = JSON.parse(userStr) as Omit<User, 'password'>
+  } catch {
+    return null
+  }
+
+  if (!user?.isActive) return null
+
+  // 실 JWT(accessToken) — mock 접두사가 아니면 localStorage 사용자 신뢰
+  if (!token.startsWith('mock-jwt-token-') && !token.startsWith(CMS_REMOTE_SESSION_PREFIX)) {
+    return user
+  }
+
+  if (token.startsWith(CMS_REMOTE_SESSION_PREFIX)) {
+    return user
+  }
 
   const match = token.match(/mock-jwt-token-(.+?)-/)
   if (!match) {
@@ -66,14 +205,14 @@ export async function validateToken(token: string): Promise<Omit<User, 'password
   }
 
   const userId = match[1]
-  const user = mockUsers.find(u => u.id === userId)
+  const mockUser = mockUsers.find(u => u.id === userId)
 
-  if (!user || !user.isActive) {
+  if (!mockUser || !mockUser.isActive) {
     return null
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password, ...userWithoutPassword } = user
+  const { password, ...userWithoutPassword } = mockUser
   return userWithoutPassword
 }
 
@@ -93,9 +232,6 @@ export async function getCurrentUser(): Promise<Omit<User, 'password'> | null> {
 
   return validateToken(token)
 }
-
-// Mock users import
-import { mockUsers } from '@/data/mock/users'
 
 /**
  * 소셜 로그인 제공자 타입
@@ -186,19 +322,10 @@ export async function loginWithSocial(
   const socialId = `${provider}-${socialToken}`
 
   // 기존 매핑 확인
-  let userId = socialUserMap.get(socialId)
+  const userId = socialUserMap.get(socialId)
 
   if (!userId) {
-    // 새 사용자 생성 또는 기존 사용자 매칭 (Mock)
-    // 여기서는 첫 번째 개인 사용자를 매칭 (실제로는 소셜 정보로 사용자 찾기)
-    const existingUser = mockUsers.find(u => u.role === 'INDIVIDUAL' && u.isActive)
-
-    if (existingUser) {
-      userId = existingUser.id
-      socialUserMap.set(socialId, userId)
-    } else {
-      throw new Error('소셜 로그인에 실패했습니다. 계정이 없습니다.')
-    }
+    throw new SocialAccountNotLinkedError()
   }
 
   const user = mockUsers.find(u => u.id === userId)

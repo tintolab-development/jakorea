@@ -6,12 +6,22 @@ import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
 import {
+  DEFAULT_MEMBER_LIST_KIND,
   memberListKindToPendingRole,
+  memberListKindToUserRole,
   normalizeMemberListKind,
   pendingRoleToMemberListKind,
   resolveRoleFilterFromMemberListParams,
   type MemberListKind,
 } from '@/shared/config/member-list-kinds'
+import { parseLegacyRoleFilterParam } from '@/features/user/api/map-member-role'
+import {
+  accountTypeForDirectoryRoleFilter,
+  instructorListRolesExactAnyOf,
+  parseAllTabRoleFilterParam,
+  rolesExactAnyOfForAllTabRoleFilter,
+  type AllTabRoleFilterValue,
+} from '@/features/user/api/map-roles-exact-any-of'
 import {
   INSTITUTION_SIDO_VALUES,
   LEGACY_INSTITUTION_LOCATION_TO_SIDO_SIGUNGU,
@@ -22,7 +32,7 @@ export type UserListRow = Omit<User, 'password'>
 
 export type UserListQueryParams = Record<string, string | undefined> & {
   kind?: string
-  role?: UserRole | 'ALL'
+  role?: UserRole | AllTabRoleFilterValue | 'ALL'
   search?: string
   id?: string
   lnb?: string
@@ -33,29 +43,43 @@ export type UserListQueryParams = Record<string, string | undefined> & {
   institutionLocation?: string
   institutionSido?: string
   institutionSigungu?: string
+  /** @deprecated 구 북마크 호환 — `jaEvaluationGrade`로 이관 */
   instructorType?: string
+  jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: string
 }
 
 export type UserListApiFilters = {
   role?: UserRole
+  /** 전체 회원 탭 — `GET /api/admin/members/all` */
+  listAllAccounts?: boolean
   search?: string
   createdAtFrom?: string
   createdAtTo?: string
+  /** 학교 목록 API — 시/도 */
+  regionSido?: string
+  /** 학교 목록 API — 시/군/구 */
+  regionSigungu?: string
+  /** mock·레거시 호환 — remote institutions는 region* 사용 */
   institutionLocation?: string
-  instructorType?: string
+  jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
-  instructorListPureOnly?: boolean
+  /** `listMembers` exact-set allowlist 직렬화 */
+  rolesExactAnyOf?: string
+  /** 전체 회원 디렉터리 — MEMBER / ADMIN_ACCOUNT */
+  accountType?: 'MEMBER' | 'ADMIN_ACCOUNT'
+  /** 전체 회원 탭 유형 필터 — `/members/all` 클라이언트 매칭용 */
+  allTabRoleFilter?: AllTabRoleFilterValue | 'ALL'
 }
 
 export type UserListPendingFilters = {
   search: string
-  role: UserRole | 'ALL'
+  role: AllTabRoleFilterValue | UserRole | 'ALL'
   institutionSido: string
   institutionSigungu: string
-  instructorType: string
+  jaEvaluationGrade: string
   settlementStatus: string
   adminPermissionVariant: string
   createdAtRange: [Dayjs | null, Dayjs | null] | null
@@ -69,7 +93,7 @@ export type UserListStoreFilters = Partial<{
   createdAtFrom?: string
   createdAtTo?: string
   institutionLocation?: string
-  instructorType?: string
+  jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
 }>
@@ -119,14 +143,19 @@ export function parseInstitutionRegionFromUserListParams(params: UserListQueryPa
   return { institutionSido: '', institutionSigungu: '' }
 }
 
-export function pendingRoleFromParams(params: UserListQueryParams): UserRole | 'ALL' {
-  if (params.kind !== undefined && params.kind !== '') {
-    return memberListKindToPendingRole(normalizeMemberListKind(params.kind))
+export function pendingRoleFromParams(
+  params: UserListQueryParams
+): AllTabRoleFilterValue | UserRole | 'ALL' {
+  const kind =
+    params.kind !== undefined && params.kind !== ''
+      ? normalizeMemberListKind(params.kind)
+      : DEFAULT_MEMBER_LIST_KIND
+
+  if (kind === 'all') {
+    return parseAllTabRoleFilterParam(params.role)
   }
-  if (params.role && params.role !== 'ALL') {
-    return params.role as UserRole
-  }
-  return 'ALL'
+
+  return memberListKindToPendingRole(kind)
 }
 
 export function pendingToApiFilters(
@@ -135,22 +164,26 @@ export function pendingToApiFilters(
     | 'search'
     | 'institutionSido'
     | 'institutionSigungu'
-    | 'instructorType'
+    | 'jaEvaluationGrade'
     | 'settlementStatus'
     | 'adminPermissionVariant'
     | 'createdAtRange'
   >,
   listKind: MemberListKind
-): Omit<UserListApiFilters, 'role' | 'instructorListPureOnly'> {
-  const api: Omit<UserListApiFilters, 'role' | 'instructorListPureOnly'> = {}
+): Omit<UserListApiFilters, 'role' | 'rolesExactAnyOf'> {
+  const api: Omit<UserListApiFilters, 'role' | 'rolesExactAnyOf'> = {}
   if (pending.search) api.search = pending.search
   if (listKind === 'institutions') {
-    const loc = buildInstitutionLocationFilterToken(pending.institutionSido, pending.institutionSigungu).trim()
+    const s = pending.institutionSido.trim()
+    const g = pending.institutionSigungu.trim()
+    if (s) api.regionSido = s
+    if (g) api.regionSigungu = g
+    const loc = buildInstitutionLocationFilterToken(s, g).trim()
     if (loc) api.institutionLocation = loc
   }
   if (listKind === 'instructors') {
-    const it = pending.instructorType.trim()
-    if (it) api.instructorType = it
+    const grade = pending.jaEvaluationGrade.trim()
+    if (grade) api.jaEvaluationGrade = grade
     const ss = pending.settlementStatus.trim()
     if (ss) api.settlementStatus = ss
   }
@@ -179,18 +212,32 @@ export function buildListQueryApiFilters(params: UserListQueryParams): UserListA
   }
   if (kind === 'institutions') {
     const { institutionSido, institutionSigungu } = parseInstitutionRegionFromUserListParams(params)
+    if (institutionSido) api.regionSido = institutionSido
+    if (institutionSigungu) api.regionSigungu = institutionSigungu
     const loc = buildInstitutionLocationFilterToken(institutionSido, institutionSigungu).trim()
     if (loc) api.institutionLocation = loc
   }
   if (kind === 'instructors') {
-    const it = params.instructorType?.trim()
-    if (it) api.instructorType = it
+    const grade = (params.jaEvaluationGrade ?? params.instructorType)?.trim()
+    if (grade) api.jaEvaluationGrade = grade
     const ss = params.settlementStatus?.trim()
     if (ss) api.settlementStatus = ss
+    api.rolesExactAnyOf = instructorListRolesExactAnyOf()
   }
   if (kind === 'admins') {
     const apv = parseAdminPermissionVariantParam(params.adminPermissionVariant)
     if (apv) api.adminPermissionVariant = apv
+  }
+  if (kind === 'individual') {
+    api.rolesExactAnyOf = rolesExactAnyOfForAllTabRoleFilter('INDIVIDUAL')
+  }
+  if (kind === 'all') {
+    api.listAllAccounts = true
+    const allTabRole = parseAllTabRoleFilterParam(params.role)
+    api.allTabRoleFilter = allTabRole
+    const accountType = accountTypeForDirectoryRoleFilter(allTabRole)
+    if (accountType) api.accountType = accountType
+    return api
   }
   const role = resolveRoleFilterFromMemberListParams({
     kind: params.kind,
@@ -199,7 +246,6 @@ export function buildListQueryApiFilters(params: UserListQueryParams): UserListA
   return {
     ...api,
     ...(role ? { role } : {}),
-    ...(kind === 'instructors' ? { instructorListPureOnly: true as const } : {}),
   }
 }
 
@@ -220,7 +266,10 @@ export function userListPendingFiltersFromParams(params: UserListQueryParams): U
     role: pendingRoleFromParams(params),
     institutionSido: region.institutionSido,
     institutionSigungu: region.institutionSigungu,
-    instructorType: kind === 'instructors' ? (params.instructorType ?? '').trim() : '',
+    jaEvaluationGrade:
+      kind === 'instructors'
+        ? (params.jaEvaluationGrade ?? params.instructorType ?? '').trim()
+        : '',
     settlementStatus: kind === 'instructors' ? (params.settlementStatus ?? '').trim() : '',
     adminPermissionVariant:
       kind === 'admins' ? parseAdminPermissionVariantParam(params.adminPermissionVariant) : '',
@@ -228,14 +277,27 @@ export function userListPendingFiltersFromParams(params: UserListQueryParams): U
   }
 }
 
-function applyUserListSearchToParams(nextParams: URLSearchParams, filters: UserListPendingFilters): void {
-  const nextKind = normalizeMemberListKind(pendingRoleToMemberListKind(filters.role))
+export function applyUserListSearchToParams(
+  nextParams: URLSearchParams,
+  filters: UserListPendingFilters
+): void {
+  const currentKind = normalizeMemberListKind(nextParams.get('kind'))
+  const stayOnAllList = currentKind === 'all'
+  const nextKind = stayOnAllList
+    ? 'all'
+    : normalizeMemberListKind(pendingRoleToMemberListKind(filters.role))
 
   if (filters.search?.trim()) nextParams.set('search', filters.search.trim())
   else nextParams.delete('search')
 
   nextParams.set('kind', nextKind)
-  nextParams.delete('role')
+
+  if (nextKind === 'all') {
+    if (filters.role && filters.role !== 'ALL') nextParams.set('role', filters.role)
+    else nextParams.delete('role')
+  } else {
+    nextParams.delete('role')
+  }
 
   if (nextKind === 'institutions') {
     nextParams.delete('institutionLocation')
@@ -252,14 +314,16 @@ function applyUserListSearchToParams(nextParams: URLSearchParams, filters: UserL
   }
 
   if (nextKind === 'instructors') {
-    const it = filters.instructorType.trim()
-    if (it) nextParams.set('instructorType', it)
-    else nextParams.delete('instructorType')
+    nextParams.delete('instructorType')
+    const grade = filters.jaEvaluationGrade.trim()
+    if (grade) nextParams.set('jaEvaluationGrade', grade)
+    else nextParams.delete('jaEvaluationGrade')
     const ss = filters.settlementStatus.trim()
     if (ss) nextParams.set('settlementStatus', ss)
     else nextParams.delete('settlementStatus')
   } else {
     nextParams.delete('instructorType')
+    nextParams.delete('jaEvaluationGrade')
     nextParams.delete('settlementStatus')
   }
 
@@ -312,7 +376,7 @@ export function createUserListTablePageConfig(opts: {
         role: 'ALL',
         institutionSido: '',
         institutionSigungu: '',
-        instructorType: '',
+        jaEvaluationGrade: '',
         settlementStatus: '',
         adminPermissionVariant: '',
         createdAtRange: null,
@@ -340,7 +404,7 @@ export function createUserListTablePageConfig(opts: {
             institutionSigungu: value === undefined || value === null ? '' : String(value),
           }
         }
-        if (key === 'instructorType' || key === 'settlementStatus') {
+        if (key === 'jaEvaluationGrade' || key === 'settlementStatus') {
           return {
             ...prev,
             [key]: value === undefined || value === null ? '' : String(value),
@@ -362,10 +426,13 @@ export function createUserListTablePageConfig(opts: {
     getSearchSync: () => ({
       paramConfig,
       tableConfig: {},
-      afterApplyParams: (_nextParams, filters) => {
-        const nextKind = normalizeMemberListKind(pendingRoleToMemberListKind(filters.role))
+      afterApplyParams: (nextParams, filters) => {
+        const nextKind = normalizeMemberListKind(nextParams.get('kind'))
         const api = pendingToApiFilters(filters, nextKind)
-        const roleForStore = filters.role === 'ALL' ? undefined : (filters.role as UserRole)
+        const roleForStore =
+          nextKind === 'all'
+            ? parseLegacyRoleFilterParam(filters.role === 'ALL' ? undefined : filters.role)
+            : memberListKindToUserRole(nextKind)
         opts.setFilters({ ...api, role: roleForStore })
       },
     }),

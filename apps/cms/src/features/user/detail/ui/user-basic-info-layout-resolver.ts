@@ -10,6 +10,7 @@ export const BasicInfoSectionTypes = {
   ALL_USERS: 'ALL_USERS',
   INSTITUTION: 'INSTITUTION',
   ADMIN: 'ADMIN',
+  SCHOOL_TEACHER: 'SCHOOL_TEACHER',
 } as const
 
 export type BasicInfoSectionType = (typeof BasicInfoSectionTypes)[keyof typeof BasicInfoSectionTypes]
@@ -22,27 +23,29 @@ export const BasicInfoLayout = {
 
 export type BasicInfoLayout = (typeof BasicInfoLayout)[keyof typeof BasicInfoLayout]
 
-export type InstructorSectionVariant = 'school_teacher' | 'instructor'
+export type SplitSectionVariant = 'all_users' | 'school_teacher' | 'instructor' | 'admin'
 
 export type BasicInfoLayoutResolved =
   | {
       layout: typeof BasicInfoLayout.SPLIT_CARD
       sections: readonly [typeof BasicInfoSectionTypes.META, typeof BasicInfoSectionTypes.PROFILE]
-      instructorSectionVariant: InstructorSectionVariant
+      splitSectionVariant: SplitSectionVariant
     }
   | {
       layout: typeof BasicInfoLayout.SINGLE_CARD
       sections: readonly [
         | typeof BasicInfoSectionTypes.ALL_USERS
         | typeof BasicInfoSectionTypes.INSTITUTION
-        | typeof BasicInfoSectionTypes.ADMIN,
+        | typeof BasicInfoSectionTypes.ADMIN
+        | typeof BasicInfoSectionTypes.SCHOOL_TEACHER,
       ]
     }
 
-function resolveInstructorSectionVariant(
+/** 강사·교사 겸 강사 기본 정보 — 스크린샷 2카드(instructor) 레이아웃 */
+export function usesInstructorMemberBasicInfoLayout(
   instructorProfile: InstructorMemberProfile | null | undefined
-): InstructorSectionVariant {
-  return instructorProfile === 'school_teacher' ? 'school_teacher' : 'instructor'
+): boolean {
+  return instructorProfile !== 'school_teacher'
 }
 
 /**
@@ -58,11 +61,20 @@ export function resolveBasicInfoLayout({
   bodyKey: BasicInfoBodyKey
   instructorProfile: InstructorMemberProfile | null | undefined
 }): BasicInfoLayoutResolved {
+  /** 순수 교사 — 가입일 카드 + 성명·연락처·소속 카드 (2단 split) */
+  if (instructorProfile === 'school_teacher') {
+    return {
+      layout: BasicInfoLayout.SPLIT_CARD,
+      sections: [BasicInfoSectionTypes.META, BasicInfoSectionTypes.PROFILE],
+      splitSectionVariant: 'school_teacher',
+    }
+  }
+
   if (bodyKey === 'instructor') {
     return {
       layout: BasicInfoLayout.SPLIT_CARD,
       sections: [BasicInfoSectionTypes.META, BasicInfoSectionTypes.PROFILE],
-      instructorSectionVariant: resolveInstructorSectionVariant(instructorProfile),
+      splitSectionVariant: 'instructor',
     }
   }
 
@@ -75,13 +87,15 @@ export function resolveBasicInfoLayout({
 
   if (bodyKey === 'admin') {
     return {
-      layout: BasicInfoLayout.SINGLE_CARD,
-      sections: [BasicInfoSectionTypes.ADMIN],
+      layout: BasicInfoLayout.SPLIT_CARD,
+      sections: [BasicInfoSectionTypes.META, BasicInfoSectionTypes.PROFILE],
+      splitSectionVariant: 'admin',
     }
   }
 
   return {
-    layout: BasicInfoLayout.SINGLE_CARD,
-    sections: [BasicInfoSectionTypes.ALL_USERS],
+    layout: BasicInfoLayout.SPLIT_CARD,
+    sections: [BasicInfoSectionTypes.META, BasicInfoSectionTypes.PROFILE],
+    splitSectionVariant: 'all_users',
   }
 }

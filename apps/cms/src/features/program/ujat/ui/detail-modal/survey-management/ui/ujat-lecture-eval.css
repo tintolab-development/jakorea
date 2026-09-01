@@ -1,0 +1,278 @@
+.ujat-lecture-eval-survey {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  position: relative;
+}
+
+.ujat-lecture-eval-survey__submit-trailing.cms-button.ant-btn.cms-button--large,
+.ujat-lecture-eval-survey__download-trailing.cms-button.ant-btn.cms-button--large {
+  min-width: 180px;
+}
+
+.ujat-lecture-eval-survey__download-trailing.cms-button.ant-btn.cms-button--no-label-ellipsis {
+  width: max-content !important;
+  min-width: fit-content;
+  max-width: none;
+  height: 44px;
+  flex-shrink: 0;
+  padding: 6px 16px 6px 10px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.ujat-lecture-eval-survey__download-trailing.cms-button .cms-button__label {
+  overflow: visible;
+  text-overflow: unset;
+  max-width: none;
+}
+
+.ujat-lecture-eval-survey__results {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.ujat-lecture-eval-survey__pdf-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.36);
+  backdrop-filter: blur(2px);
+}
+
+.ujat-lecture-eval-survey__pdf-loading-card {
+  display: flex;
+  min-width: 280px;
+  padding: 28px 32px;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+}
+
+.ujat-lecture-eval-survey__pdf-loading-title {
+  margin: 4px 0 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.ujat-lecture-eval-survey__pdf-loading-description {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 140%;
+  opacity: 0.7;
+}
+
+.ujat-survey-pre-start-state .ujat-survey-pre-start-state__preview-button.cms-button.ant-btn.cms-button--large {
+  min-width: 180px;
+}
+
+.ujat-survey-pre-start-state,
+.ujat-survey-submitted-state {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+}
+
+.ujat-survey-submitted-state__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  max-width: 480px;
+  text-align: center;
+}
+
+.ujat-survey-submitted-state__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--ja-mint-01, #01a1af);
+  color: #fff;
+  font-size: 36px;
+}
+
+.ujat-survey-submitted-state__texts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ujat-survey-submitted-state__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--gray-900, #1a1a1a);
+}
+
+.ujat-survey-submitted-state__description {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--gray-600, #7d7d7d);
+  white-space: pre-line;
+}
+
+.ujat-survey-submitted-state__edit-button.cms-button.ant-btn.cms-button--large {
+  min-width: 180px;
+}
+
+/* 강의평가 제출 완료 — Figma 탭 하위 페이지 */
+.ujat-lecture-eval-survey .ujat-survey-submitted-state.ujat-lecture-eval-submitted {
+  display: flex;
+  flex: 1 0 0;
+  align-self: stretch;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  min-height: 0;
+  padding: 152px 52px 52px 52px;
+  justify-content: flex-start;
+}
+
+.ujat-lecture-eval-survey .ujat-lecture-eval-submitted .ujat-survey-submitted-state__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  max-width: none;
+  width: auto;
+  text-align: center;
+}
+
+.ujat-lecture-eval-survey .ujat-lecture-eval-submitted .ujat-survey-submitted-state__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+}
+
+.ujat-lecture-eval-submitted-icon {
+  width: 50.762px;
+  height: 50.762px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+}
+
+.ujat-lecture-eval-survey .ujat-lecture-eval-submitted .ujat-survey-submitted-state__texts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.ujat-lecture-eval-survey .ujat-lecture-eval-submitted .ujat-survey-submitted-state__title {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+}
+
+.ujat-lecture-eval-survey .ujat-lecture-eval-submitted .ujat-survey-submitted-state__description {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 120%;
+  opacity: 0.7;
+}
+
+.ujat-lecture-eval-survey
+  .ujat-lecture-eval-submitted
+  .ujat-survey-submitted-state__edit-button.cms-button.ant-btn {
+  display: flex;
+  width: 180px;
+  height: 44px;
+  min-width: 180px;
+  min-height: 44px;
+  margin-top: 28px;
+  padding: 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: var(--JA-mint-01, #01a1af) !important;
+  color: #fff !important;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 120%;
+}
+
+.ujat-lecture-eval-survey
+  .ujat-lecture-eval-submitted
+  .ujat-survey-submitted-state__edit-button.cms-button.ant-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ujat-lecture-eval-form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  background: #f4f6f6;
+}
+
+.ujat-lecture-eval-form__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px 0 24px;
+}
+
+.ujat-lecture-eval-form__scroll .form-editor-left {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  gap: 16px;
+}
+
+.ujat-lecture-eval-form__footer {
+  flex-shrink: 0;
+  padding: 16px 24px 24px;
+  background: #f4f6f6;
+}
+
+.ujat-lecture-eval-form__submit-button.cms-button.ant-btn.cms-button--large {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: block;
+}
+
+.ujat-survey-poll-results__section--pdf-page {
+  background: #fff;
+  padding: 24px;
+}

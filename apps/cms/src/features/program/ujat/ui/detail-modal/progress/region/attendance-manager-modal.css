@@ -1,0 +1,99 @@
+.ujat-region-attendance-manager-modal-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.ujat-region-attendance-manager-modal-wrap::before {
+  display: none !important;
+  content: none !important;
+}
+
+.ujat-region-attendance-manager-modal-wrap .ant-modal.ujat-region-attendance-manager-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+  width: min(1000px, calc(100vw - 32px)) !important;
+  max-width: min(1000px, calc(100vw - 32px)) !important;
+  box-sizing: border-box !important;
+}
+
+.content-modal.ujat-region-attendance-manager-modal.ant-modal .ant-modal-content,
+.content-modal.ujat-region-attendance-manager-modal.teal-header-modal .ant-modal-content {
+  display: flex;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 320px;
+  max-height: calc(100vh - 48px);
+  padding: 26px 30px 34px;
+  flex-direction: column;
+  align-items: stretch;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.content-modal.ujat-region-attendance-manager-modal .teal-header-modal__body {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin-top: 0;
+  padding-top: 16px;
+  overflow: hidden;
+}
+
+.content-modal.ujat-region-attendance-manager-modal .teal-header-modal__footer {
+  width: 100%;
+  margin-top: 30px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.ujat-region-attendance-manager-modal__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin-top: 16px;
+}
+
+.ujat-region-attendance-manager-modal__form {
+  width: 100%;
+}
+
+.ujat-region-attendance-manager-modal__form .detail-info-form__field-content--edit {
+  padding: 6px 12px;
+}
+
+.ujat-region-attendance-manager-modal__form .detail-info-form__field-content--edit > * {
+  width: 100%;
+}
+
+.ujat-region-attendance-manager-modal__row--single-item > .detail-info-form__field {
+  flex: 0 0 50%;
+}
+
+.ujat-region-attendance-manager-modal__footer {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}

@@ -1,0 +1,109 @@
+/**
+ * 7:3 split-card 좌측 CalendarMain — 그리드·일정 칩 레이아웃만.
+ * 요일 헤더는 `calendar-antd-override.css` 공통 (3열과 동일 SUN/MON 표기).
+ * 선택/호버/오늘/타월 셀 상호작용은 `calendar-cell.css` 단일 소스 (페이지에서 재정의 금지).
+ */
+
+.calendar-split-card--left .ant-picker-content table {
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  min-width: calc(var(--calendar-cell-min-width, 116px) * 7);
+}
+
+.calendar-split-card--left .ant-picker-content thead th,
+.calendar-split-card--left .ant-picker-content tbody td {
+  min-width: var(--calendar-cell-min-width, 116px);
+  width: calc(100% / 7);
+}
+
+.calendar-split-card--left .ant-picker-content tbody tr {
+  height: var(--calendar-cell-min-height, 124px);
+}
+
+.calendar-split-card--left .ant-picker-cell {
+  width: calc(100% / 7);
+  max-width: calc(100% / 7);
+  min-width: var(--calendar-cell-min-width, 116px);
+  min-height: var(--calendar-cell-min-height, 124px);
+  border: none;
+  padding: 0;
+  vertical-align: top;
+  box-sizing: border-box;
+}
+
+.calendar-split-card--left .ant-picker-cell .ant-picker-cell-inner {
+  text-align: left !important;
+}
+
+.calendar-split-card-main .calendar-cell {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--calendar-cell-min-height, 124px);
+  height: var(--calendar-cell-min-height, 124px);
+  max-height: var(--calendar-cell-min-height, 124px);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.calendar-split-card-main .calendar-cell-events {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  align-items: stretch;
+  text-align: left;
+  width: 100%;
+}
+
+.calendar-split-card-main .calendar-event {
+  font-size: 11px;
+  padding: 4px 6px;
+  height: auto;
+  min-height: 24px;
+  align-items: center;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #595959;
+  box-sizing: border-box;
+  text-align: left;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.calendar-split-card-main .calendar-event--selected {
+  color: #096dd9;
+}
+
+.calendar-split-card-main .calendar-event-more {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.5;
+  margin-top: 2px;
+  cursor: default;
+  text-align: left;
+}
+
+.calendar-split-card-main .calendar-event-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  min-width: 0;
+}

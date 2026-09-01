@@ -1,0 +1,42 @@
+.badge {
+  composes: root from '../pf-badge-base/pf-badge-base.module.css';
+}
+
+.large {
+  height: 32px;
+  padding: 0 var(--spacing-12);
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.small {
+  width: 80px;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0 var(--spacing-12);
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.progress {
+  background: var(--color-primary-500);
+  color: var(--color-neutral-white);
+}
+
+.success {
+  background: var(--color-neutral-warm-200);
+  color: var(--color-neutral-warm-600);
+}
+
+.error {
+  background: var(--color-status-error-default);
+  color: var(--color-neutral-white);
+}
+
+.disabled {
+  background: var(--color-neutral-warm-100);
+  color: var(--color-neutral-warm-400);
+}

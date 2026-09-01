@@ -1,13 +1,14 @@
 /**
  * 정산 관리 > 지급조서 확인 페이지 — 프로그램별·강사별 정산 목록
- * 필터: FilterTableLayout(TableFilterGroup) · 헤더·뷰 전환: ViewModeController (참여기관 섹션과 동일 패턴)
+ * 필터·툴바(제목·뷰 전환·엑셀): FilterTableLayout
  */
 
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { ViewModeController } from '@/shared/components/view-mode'
+import { ViewModeToggle } from '@/shared/components/view-mode'
 import '@/shared/components/list-page/list-page-layout.css'
-import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
-import '@/features/program/ui/detail-modal/program-status/program-progress-tab.css'
+import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
+import '@/features/program/general/ui/detail-modal/program-status/program-progress-tab.css'
+import './payment-orders-page.css'
 import { PaymentOrderDetailFullPageModal } from './payment-order-detail-fullpage-modal'
 import { usePaymentOrdersListPage } from './use-payment-orders-list-page'
 
@@ -15,7 +16,6 @@ export default function PaymentOrdersPage() {
   const {
     viewMode,
     setViewMode,
-    exposureMode,
     detailState,
     closeDetail,
     appliedFromUrl,
@@ -24,35 +24,76 @@ export default function PaymentOrdersPage() {
     handleFilterChange,
     paymentOrdersFilterFields,
     paymentOrdersViewModeOptions,
-    renderHeader,
+    listTitle,
+    total,
+    paymentOrdersExcelExport,
     renderContent,
+    paymentOrdersRemote,
+    remoteListQuery,
+    remoteCalendarQuery,
+    listDateRangeReady,
   } = usePaymentOrdersListPage()
 
+  const listQueryLoading = !listDateRangeReady || remoteListQuery.isLoading
+  const contentLoading =
+    paymentOrdersRemote &&
+    ((viewMode === 'list' && listQueryLoading) ||
+      (viewMode === 'calendar' && (listQueryLoading || remoteCalendarQuery.isLoading)))
+
+  const contentError =
+    paymentOrdersRemote &&
+    (viewMode === 'list'
+      ? remoteListQuery.isError
+        ? remoteListQuery.error
+        : null
+      : remoteListQuery.isError
+        ? remoteListQuery.error
+        : remoteCalendarQuery.isError
+          ? remoteCalendarQuery.error
+          : null)
+
   return (
-    <>
-      <FilterTableLayout
-        fields={paymentOrdersFilterFields}
-        filters={{
-          exposureMode,
-          programName: pendingFilters.programName,
-          instructorName: pendingFilters.instructorName,
-          pendingPaymentBucket:
-            pendingFilters.pendingPaymentBucket === 'all'
-              ? undefined
-              : pendingFilters.pendingPaymentBucket,
-          dateRange: pendingFilters.dateRange,
-        }}
-        onFilterChange={handleFilterChange}
-        onSearch={handleSearch}
-      >
-        <ViewModeController
-          value={viewMode}
-          onChange={setViewMode}
-          options={paymentOrdersViewModeOptions}
-          renderHeader={renderHeader}
-          renderContent={mode => <div>{renderContent(mode)}</div>}
-        />
-      </FilterTableLayout>
+    <div className="payment-orders-page">
+      {/* 계좌 지급·참여기관과 동일 — 흰 카드(content-wrapper) 안에 필터·목록/캘린더 */}
+      <div className="payment-orders-page__content-wrapper">
+        <FilterTableLayout
+          className="payment-orders-page__filter-list-layout"
+          filterResponsiveWrap={false}
+          contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
+          fields={paymentOrdersFilterFields}
+          filters={{
+            exposureMode: pendingFilters.exposureMode,
+            programName: pendingFilters.programName,
+            instructorName: pendingFilters.instructorName,
+            processingStatus:
+              pendingFilters.processingStatus === 'all'
+                ? undefined
+                : pendingFilters.processingStatus,
+            dateRange: pendingFilters.dateRange,
+          }}
+          onFilterChange={handleFilterChange}
+          onSearch={handleSearch}
+          title={listTitle}
+          description={`총 ${total}건`}
+          contentLoading={Boolean(contentLoading)}
+          actions={
+            <ViewModeToggle
+              value={viewMode}
+              onChange={setViewMode}
+              options={paymentOrdersViewModeOptions}
+            />
+          }
+          excelExport={paymentOrdersExcelExport}
+        >
+          {contentError ? (
+            <div className="page-content-error" role="alert">
+              {contentError instanceof Error ? contentError.message : '목록을 불러오지 못했습니다.'}
+            </div>
+          ) : (
+            renderContent(viewMode)
+          )}
+        </FilterTableLayout>
+      </div>
 
       <PaymentOrderDetailFullPageModal
         type={detailState?.type ?? 'program'}
@@ -61,6 +102,6 @@ export default function PaymentOrdersPage() {
         data={detailState?.data ?? null}
         listPageDateRange={appliedFromUrl.dateRange}
       />
-    </>
+    </div>
   )
 }

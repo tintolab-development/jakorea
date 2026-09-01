@@ -1,0 +1,98 @@
+/* 하단 일자·회장 마무리 — 카드 셸·본문 타이포(햄버거 핸들은 hideDragHandleForParagraphIds로 비노출, pinnedTail로 순서 고정) */
+
+.paragraph-card:is(
+  [data-paragraph-id='payment-statement-seed-closing-date'],
+  [data-paragraph-id='payment-statement-seed-closing-signature']
+) {
+  --ps-closing-text: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  --ps-closing-size: 24px;
+  --ps-closing-weight: 700;
+  --ps-closing-lh: 140%;
+
+  border-radius: var(--16, 16px);
+  background-color: #fff;
+  background-image: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%)
+  );
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+}
+
+.paragraph-card:is(
+    [data-paragraph-id='payment-statement-seed-closing-date'],
+    [data-paragraph-id='payment-statement-seed-closing-signature']
+  )
+  .paragraph-input--closing-body.paragraph-input--title {
+  color: var(--ps-closing-text);
+  font-family: Pretendard, sans-serif;
+  font-size: var(--ps-closing-size);
+  font-style: normal;
+  font-weight: var(--ps-closing-weight);
+  line-height: var(--ps-closing-lh);
+}
+
+.paragraph-card:is(
+    [data-paragraph-id='payment-statement-seed-closing-date'],
+    [data-paragraph-id='payment-statement-seed-closing-signature']
+  )
+  .paragraph-input--closing-body.paragraph-input--title
+  :is(
+    .paragraph-input__leading,
+    .paragraph-input__view-text,
+    .paragraph-input__placeholder,
+    .paragraph-input__shell .ant-input,
+    .paragraph-input__shell textarea.ant-input,
+    .paragraph-input__shell--focused .ant-input,
+    .paragraph-input__shell--focused textarea.ant-input
+  ) {
+  color: inherit !important;
+  -webkit-text-fill-color: var(--ps-closing-text);
+  font: inherit !important;
+  line-height: inherit !important;
+  opacity: 1 !important;
+}
+
+.paragraph-card:is(
+    [data-paragraph-id='payment-statement-seed-closing-date'],
+    [data-paragraph-id='payment-statement-seed-closing-signature']
+  )
+  .paragraph-input--closing-body.paragraph-input--title
+  :is(.ant-input, textarea.ant-input)::placeholder {
+  color: var(--ps-closing-text);
+  opacity: 1;
+}
+
+/* 지급조서(발급용) — 단락 「설명 입력」(설명글_텍스트형 본문 --explanation-body 제외) */
+.paragraph-input--description:not(.paragraph-input--explanation-body) {
+  --ps-desc-text: var(--gray-85969-d, #85969d);
+  --ps-desc-size: 16px;
+  --ps-desc-weight: 500;
+  --ps-desc-lh: 150%;
+  --ps-desc-opacity: 0.6;
+}
+
+.paragraph-input--description:not(.paragraph-input--explanation-body).paragraph-input--view
+  :is(.paragraph-input__view-text, .paragraph-input__placeholder, .paragraph-input__leading),
+.paragraph-input--edit.paragraph-input--description:not(.paragraph-input--explanation-body)
+  :is(
+    .paragraph-input__shell .ant-input,
+    .paragraph-input__shell textarea.ant-input,
+    .paragraph-input__shell--focused .ant-input,
+    .paragraph-input__shell--focused textarea.ant-input,
+    .paragraph-input__leading
+  ) {
+  color: var(--ps-desc-text) !important;
+  -webkit-text-fill-color: var(--ps-desc-text);
+  font-family: Pretendard, sans-serif !important;
+  font-size: var(--ps-desc-size) !important;
+  font-style: normal !important;
+  font-weight: var(--ps-desc-weight) !important;
+  line-height: var(--ps-desc-lh) !important;
+  opacity: var(--ps-desc-opacity) !important;
+}
+
+.paragraph-input--edit.paragraph-input--description:not(.paragraph-input--explanation-body)
+  :is(.ant-input, textarea.ant-input)::placeholder {
+  color: var(--ps-desc-text);
+  opacity: var(--ps-desc-opacity);
+}

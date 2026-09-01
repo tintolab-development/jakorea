@@ -38,5 +38,6 @@ export const router = createBrowserRouter([
 
 - [fsd-structure.md](./fsd-structure.md)  
 - [table-management.md](../tables/table-management.md) — URL sync for filters  
+- [url-driven-detail-modal.mdc](../../../../../.cursor/rules/url-driven-detail-modal.mdc) — `?id=` / `?programId=`로 여는 풀페이지 상세: 1클릭 오픈·URL 쓰기 최소화  
 
 **Last updated:** 2026-04-21

@@ -14,8 +14,7 @@ import { mockInstructorsMap } from '@/data/mock'
 import {
   smsProvider,
   emailProvider,
-  kakaoProvider,
-} from './notification-providers'
+  kakaoProvider } from './notification-providers'
 
 export type NotificationChannel = 'SMS' | 'EMAIL' | 'KAKAO'
 
@@ -41,8 +40,7 @@ export interface NotificationRecord {
 const channelLabels: Record<NotificationChannel, string> = {
   SMS: '문자',
   EMAIL: '이메일',
-  KAKAO: '카카오',
-}
+  KAKAO: '카카오' }
 
 // Mock: 알림 발송 상태 저장 (실제로는 DB에 저장)
 const notificationStatusMap = new Map<UUID, ApplicationNotificationStatus>()
@@ -93,8 +91,7 @@ export async function getNotificationStatus(
     applicationId,
     notificationSent: hasSent,
     sentAt: last?.sentAt,
-    sentBy: last?.sentBy,
-  }
+    sentBy: last?.sentBy }
 }
 
 /**
@@ -140,8 +137,7 @@ export async function sendApplicationNotification(
       content,
       sentAt,
       status,
-      sentBy,
-    }
+      sentBy }
     const history = notificationHistoryMap.get(application.id) || []
     history.push(record)
     notificationHistoryMap.set(application.id, history)
@@ -150,8 +146,7 @@ export async function sendApplicationNotification(
         applicationId: application.id,
         notificationSent: true,
         sentAt,
-        sentBy,
-      })
+        sentBy })
     }
     return record
   }
@@ -162,7 +157,7 @@ export async function sendApplicationNotification(
       appendRecord('FAILED')
       throw new Error('수신자 연락처(휴대폰)를 찾을 수 없습니다.')
     }
-    const res = await smsProvider.send({ to: phone, message: `${title}\n${content}` })
+    const res = await smsProvider.send({ to: phone, body: content })
     if (!res.success) {
       appendRecord('FAILED')
       throw new Error(res.error ?? '문자 발송에 실패했습니다.')
@@ -179,8 +174,7 @@ export async function sendApplicationNotification(
     const res = await emailProvider.send({
       to: email,
       subject: title,
-      body: content,
-    })
+      body: content })
     if (!res.success) {
       appendRecord('FAILED')
       throw new Error(res.error ?? '이메일 발송에 실패했습니다.')
@@ -194,7 +188,7 @@ export async function sendApplicationNotification(
       appendRecord('FAILED')
       throw new Error('카카오 알림 발송을 위한 수신자 연락처를 찾을 수 없습니다.')
     }
-    const res = await kakaoProvider.send({ to: phone, message: `${title}\n${content}` })
+    const res = await kakaoProvider.send({ to: phone, body: content })
     if (!res.success) {
       appendRecord('FAILED')
       throw new Error(res.error ?? '카카오 알림 발송에 실패했습니다.')
@@ -220,8 +214,7 @@ export async function updateNotificationStatus(
     applicationId,
     notificationSent,
     sentAt: notificationSent ? new Date().toISOString() : existing?.sentAt,
-    sentBy: sentBy ?? existing?.sentBy,
-  })
+    sentBy: sentBy ?? existing?.sentBy })
 }
 
 export { channelLabels }

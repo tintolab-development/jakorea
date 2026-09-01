@@ -4,80 +4,13 @@
 
 import type { CSSProperties } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
-import {
-  ProgramDetailTdDivider,
-  withProgramDetailTdDivider,
-} from '@/features/program/ui/program-detail-td-divider'
-import type {
-  PaymentOrderAdminLineProcessingStatus,
-  PaymentOrderCalculationStatementProgramBasicInfo,
-} from '@/data/mock/payment-order-admin-list'
+import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
+import type { PaymentOrderCalculationStatementProgramBasicInfo } from '@/data/mock/payment-order-admin-list'
+import { PaymentOrderCalculationStatementProcessingStatusView } from './payment-order-calculation-statement-processing-status-view'
 
 export interface PaymentOrderCalculationStatementProgramBasicSectionProps {
   basic: PaymentOrderCalculationStatementProgramBasicInfo
   style?: CSSProperties
-}
-
-function processingStatusCssModifier(status: PaymentOrderAdminLineProcessingStatus): string {
-  return status === 'application_rejected' ? 'application-rejected' : status
-}
-
-function sendNotiPlaceholder() {
-  window.alert('준비중')
-}
-
-function ProcessingStatusView({
-  basic,
-}: {
-  basic: PaymentOrderCalculationStatementProgramBasicInfo
-}) {
-  const statusMod = processingStatusCssModifier(basic.processingStatusClass)
-
-  if (basic.processingStatusClass === 'application_rejected' || basic.processingStatusClass === 'rejected') {
-    const isApplicationRejected = basic.processingStatusClass === 'application_rejected'
-    return (
-      <div className="payment-order-calc-statement-modal__processing-status-row payment-order-calc-statement-modal__processing-status-row--pd-divider">
-        {isApplicationRejected ? (
-          <span className="payment-order-calc-statement-modal__processing-status-label--application-rejected">
-            신청 반려
-          </span>
-        ) : (
-          <span className="payment-order-admin__status-text payment-order-admin__status-text--rejected">
-            {basic.processingStatusDisplay}
-          </span>
-        )}
-        <ProgramDetailTdDivider />
-        <span className="payment-order-calc-statement-modal__processing-status-detail">
-          사유 : {basic.processingRejectionReason ?? '-'}
-        </span>
-        <ProgramDetailTdDivider />
-        <SendNotiButton onClick={sendNotiPlaceholder} />
-      </div>
-    )
-  }
-
-  if (basic.processingStatusClass === 'confirmed') {
-    return (
-      <div className="payment-order-calc-statement-modal__processing-status-row payment-order-calc-statement-modal__processing-status-row--pd-divider">
-        <span className="payment-order-admin__status-text payment-order-admin__status-text--confirmed">
-          {basic.processingStatusDisplay}
-        </span>
-        <ProgramDetailTdDivider />
-        <span className="payment-order-calc-statement-modal__processing-status-detail">
-          이체 예정일 : {basic.lectureFeePaymentScheduledDateDisplay ?? '-'}
-        </span>
-      </div>
-    )
-  }
-
-  return (
-    <span
-      className={`payment-order-admin__status-text payment-order-admin__status-text--${statusMod}`}
-    >
-      {basic.processingStatusDisplay}
-    </span>
-  )
 }
 
 export function PaymentOrderCalculationStatementProgramBasicSection({
@@ -121,7 +54,7 @@ export function PaymentOrderCalculationStatementProgramBasicSection({
           <DetailInfoForm.Field
             label="지급 조서 처리 현황"
             fullRow
-            view={<ProcessingStatusView basic={basic} />}
+            view={<PaymentOrderCalculationStatementProcessingStatusView basic={basic} />}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">

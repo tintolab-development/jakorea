@@ -1,0 +1,519 @@
+/**
+ * 교육기관 상세 풀페이지 인라인 뷰
+ * 테이블·섹션 타이틀 UI는 project-info-form-shared.css 재사용 (네이티브 table)
+ */
+
+@import '../../../../shared/ui/program-detail/project-info/project-info-form-shared.css';
+
+/* 교육기관 상세: 본문 하단은 content 패딩 52px — flex 체인은 게시글 탭에만 */
+.school-detail-fullpage-view {
+  width: 100%;
+}
+
+.school-detail-fullpage-view:has(.school-detail-fullpage-view__posts-tab-wrap) {
+  display: flex;
+  flex-direction: column;
+}
+
+.school-detail-fullpage-view__tabs-row {
+  flex-shrink: 0;
+}
+
+/* 관리자 코멘트: 기본 정보 상단. 시안 1546×64 기준, padding 20/24, 폭 반응형 */
+.school-detail-fullpage-view__admin-comment-box {
+  width: 100%;
+  max-width: 1546px;
+  box-sizing: border-box;
+  min-height: 64px;
+  padding: 20px 24px;
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 6px;
+  background: var(--color-bg-base, #fff);
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.school-detail-fullpage-view__admin-comment-box--empty {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+}
+
+/* 기본 정보 — 진행·교재 / 기관·신청 2개 테이블 박스 + 간격 (시안) */
+.school-detail-fullpage-view__basic-info-tables {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.school-detail-fullpage-view__basic-info-table-wrap {
+  margin-bottom: 0;
+}
+
+/*
+ * 기본 정보 상단 테이블 — 교재명 행(StatusDropdownCell): 54px 고정
+ * Ant Table(참여 기관 목록)과 동일 — td 상하 패딩 0 + 트리거, 메뉴는 body 포털
+ * overflow:clip — hidden 스크롤포트로 인한 열림 시 가로 밀림 방지
+ */
+.school-detail-fullpage-view__basic-info-tables
+  .school-detail-fullpage-view__basic-info-table-wrap:first-child {
+  overflow: clip;
+}
+
+.school-detail-fullpage-view__basic-info-tables
+  .school-detail-fullpage-view__basic-info-table-wrap:first-child
+  tbody
+  > tr:has(.status-dropdown-cell__status-trigger) {
+  height: 54px;
+  min-height: 54px;
+  max-height: 54px;
+  overflow: visible;
+}
+
+.school-detail-fullpage-view__basic-info-tables
+  .school-detail-fullpage-view__basic-info-table-wrap:first-child
+  tbody
+  > tr:has(.status-dropdown-cell__status-trigger)
+  > th,
+.school-detail-fullpage-view__basic-info-tables
+  .school-detail-fullpage-view__basic-info-table-wrap:first-child
+  tbody
+  > tr:has(.status-dropdown-cell__status-trigger)
+  > td {
+  padding-top: 0;
+  padding-bottom: 0;
+  vertical-align: middle;
+  /* clip: visible 이면 열림 크롬이 표 min-content 를 키워 우측 테두리가 밀림 */
+  overflow: clip;
+  box-sizing: border-box;
+}
+
+.school-detail-fullpage-view__basic-info-tables
+  .school-detail-fullpage-view__basic-info-table-wrap:first-child
+  tbody
+  > tr:has(.status-dropdown-cell__status-trigger--open)
+  > th,
+.school-detail-fullpage-view__basic-info-tables
+  .school-detail-fullpage-view__basic-info-table-wrap:first-child
+  tbody
+  > tr:has(.status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+}
+
+.school-detail-fullpage-view .program-detail-fullpage-modal__info-tab {
+  padding: 0;
+}
+
+.school-detail-fullpage-view__application-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* 교육 일지 탭: 탭 ↔ 섹션 제목 32px */
+.school-detail-fullpage-view .school-detail-fullpage-view__tabs-row.cms-text-tabs--detail .cms-text-tabs__row {
+  padding-bottom: 32px;
+}
+
+.school-detail-fullpage-view__journal-tab {
+  padding-top: 0;
+}
+
+.school-detail-fullpage-view__content {
+  padding-left: 0;
+  padding-right: 0;
+  width: 100%;
+}
+
+.school-detail-fullpage-view:has(.school-detail-fullpage-view__posts-tab-wrap)
+  .school-detail-fullpage-view__content {
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * 게시글 탭 높이:
+ * - detail-fullpage-modal__content 가 이미 padding-bottom: 52px
+ * - 헤더(~108px) + 탭 행(padding 포함 ~80px) ≈ 188px → 패널이 content 안쪽을 채움
+ * - min-height 로 절대 접히지 않게 함
+ */
+.school-detail-fullpage-view__posts-tab-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: calc(100dvh - 188px - var(--detail-fullpage-padding-bottom, 52px));
+  min-height: 480px;
+  box-sizing: border-box;
+}
+
+.school-detail-fullpage-view__posts-tab-wrap .enrollment-program-detail-modal__posts-tab {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  max-height: none;
+  align-self: stretch;
+}
+
+.school-detail-fullpage-view__posts-tab-wrap
+  .enrollment-program-detail-modal__posts-tab-column--left,
+.school-detail-fullpage-view__posts-tab-wrap
+  .enrollment-program-detail-modal__posts-tab-column--right {
+  align-self: stretch;
+  height: auto;
+  min-height: 100%;
+}
+
+/* 교재명 행: 교재명·수량·상태(태그/드롭다운) 한 줄 정렬 — StatusDropdown 트리거가 block처럼 줄바꿈되지 않도록 */
+.school-detail-fullpage-view__textbook-value-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  min-width: 0;
+  gap: 0;
+}
+
+.school-detail-fullpage-view__textbook-value-row__segment {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.school-detail-fullpage-view__textbook-value-row__status {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* 배정된 강사 목록 > 담당 교육 진행 일정: 디바이더 컴포넌트 사용 + 디바이더 좌우 10px */
+.school-detail-fullpage-view__assigned-datetime-cell {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.school-detail-fullpage-view__assigned-datetime-cell .school-detail-fullpage-view__td-divider {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+/* 프로그램 승인 현황 셀 — 가로(row) 정렬 */
+.school-detail-fullpage-view__approval-cell {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.school-detail-fullpage-view__approval-cell .school-detail-fullpage-view__td-divider {
+  flex-shrink: 0;
+}
+
+/* 필드 td 내 세로 디바이더: w1 h13, default-BK @ 50% */
+.school-detail-fullpage-view__td-divider {
+  display: inline-block;
+  width: 1px;
+  height: 13px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
+  vertical-align: middle;
+}
+
+/* td 내 디바이더 양옆 12px gap (기본 정보·안내 사항·담당 교사 등 공통) */
+.school-detail-fullpage-view
+  .program-detail-info-tab__table-wrapper
+  .program-detail-info-tab__table
+  td
+  .school-detail-fullpage-view__td-divider {
+  margin-left: 12px;
+  margin-right: 12px;
+}
+
+.school-detail-fullpage-view__guidance-block
+  .program-detail-info-tab__table
+  td
+  .school-detail-fullpage-view__td-divider {
+  margin-left: 12px;
+  margin-right: 12px;
+}
+
+/* 강의 회차별·안내 사항 테이블 — 2열(라벨 th | 값 td), 좌측 200px */
+.school-detail-fullpage-view__guidance-table tbody th,
+.school-detail-fullpage-view__sessions-table tbody th {
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+}
+
+/* 강의 회차별 테이블 td 내 디바이더( | ) 양옆 12px */
+.school-detail-fullpage-view__sessions-table td .school-detail-fullpage-view__td-divider {
+  margin-left: 12px;
+  margin-right: 12px;
+}
+
+.school-detail-fullpage-view__sessions-empty {
+  padding: var(--spacing-16);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-13);
+  text-align: center;
+}
+
+/* n차시 강의 td 내 상태: 텍스트만, 대표색 + Pretendard 16px bold */
+.school-detail-fullpage-view__session-status {
+  font-family: 'Pretendard', sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 24px */
+}
+
+/* 진행 완료 */
+.school-detail-fullpage-view__session-status--completed {
+  color: var(--color-blue, #017eaf);
+}
+
+/* 진행 대기 */
+.school-detail-fullpage-view__session-status--pending {
+  color: var(--color-green, #1e8c29);
+}
+
+/* 미진행 희망: 대표색 */
+.school-detail-fullpage-view__session-status--not_planned {
+  color: var(--color-text-tertiary);
+}
+
+.school-detail-fullpage-view__placeholder {
+  margin: 0;
+  padding: var(--spacing-24);
+  color: var(--color-text-secondary);
+}
+
+.school-detail-fullpage-view__instructor-list {
+  margin: 0;
+  padding-left: var(--spacing-24);
+  list-style: disc;
+}
+
+.school-detail-fullpage-view__instructor-list li {
+  margin-bottom: var(--spacing-8);
+  color: var(--color-text-primary);
+}
+
+/* ========== 강사 배정 현황 탭 ========== */
+.school-detail-fullpage-view__instructor-tab {
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* 테이블 헤더(타이틀 영역)와 테이블 간 gap 16px — height:100% 전역 규칙으로 세로 팽창 방지 */
+.school-detail-fullpage-view__instructor-tab .table-header-actions {
+  height: auto;
+  margin-bottom: var(--spacing-16);
+}
+
+.school-detail-fullpage-view__instructor-section {
+  width: 100%;
+}
+
+.school-detail-fullpage-view__instructor-section--waiting {
+  margin-top: 0;
+}
+
+/* 배정된 강사 / 배정 대기 강사 테이블 — 래퍼 공통 */
+.school-detail-fullpage-view__instructor-section .participating-institutions-section__table-wrap {
+  width: 100%;
+  min-width: 0;
+}
+
+/* cms-data-table 자체 외곽 보더와 중복 — 테이블 있을 때 래퍼 보더 제거 */
+.school-detail-fullpage-view__instructor-section
+  .participating-institutions-section__table-wrap:has(.cms-data-table) {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* 목록 없음 — 테이블 대신 200px 높이 블록, 문구 가로·세로 중앙 정렬 */
+.school-detail-fullpage-view__instructor-section
+  .participating-institutions-section__table-wrap:has(
+    .school-detail-fullpage-view__instructor-list-empty
+  ) {
+  border-radius: 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: rgba(61, 61, 61, 0.02);
+}
+
+.school-detail-fullpage-view__instructor-list-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 200px;
+  box-sizing: border-box;
+  padding: 24px;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.5;
+  white-space: normal;
+  word-break: keep-all;
+}
+
+/* 배정 대기 강사 목록 — 테이블 영역 개별 스크롤, 최대 높이 365px */
+.school-detail-fullpage-view__instructor-section
+  .participating-institutions-section__table-wrap.school-detail-fullpage-view__assignment-table-scroll:has(
+    .cms-data-table
+  ),
+.school-detail-fullpage-view__instructor-section
+  .participating-institutions-section__table-wrap.school-detail-fullpage-view__waiting-table-scroll:has(
+    .cms-data-table
+  ) {
+  max-height: 365px;
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: #fff;
+}
+
+.school-detail-fullpage-view__instructor-section
+  .participating-institutions-section__table-wrap.school-detail-fullpage-view__assignment-table-scroll:has(
+    .cms-data-table
+  )
+  .cms-data-table
+  .ant-table-container,
+.school-detail-fullpage-view__instructor-section
+  .participating-institutions-section__table-wrap.school-detail-fullpage-view__waiting-table-scroll:has(
+    .cms-data-table
+  )
+  .cms-data-table
+  .ant-table-container {
+  border: none;
+  border-radius: 0;
+}
+
+.school-detail-fullpage-view__instructor-section
+  .participating-institutions-section__table-wrap.school-detail-fullpage-view__assignment-table-scroll:has(
+    .cms-data-table
+  )
+  .ant-table-thead
+  > tr
+  > th,
+.school-detail-fullpage-view__instructor-section
+  .participating-institutions-section__table-wrap.school-detail-fullpage-view__waiting-table-scroll:has(
+    .cms-data-table
+  )
+  .ant-table-thead
+  > tr
+  > th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--table-header-bg, #fafafa);
+}
+
+.school-detail-fullpage-view__waiting-table-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 24px;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.5;
+  word-break: keep-all;
+}
+
+/* 역할 컬럼 — StatusDropdownCell 사용 시 행/셀 고정 (교재 배송현황 드롭다운과 동일) */
+.school-detail-fullpage-view .ant-table-tbody > tr:has(td.status-dropdown-cell__cell-status) {
+  height: 53px;
+  min-height: 53px;
+  max-height: 53px;
+  overflow: visible;
+}
+
+.school-detail-fullpage-view
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-160) {
+  width: 136px;
+  min-width: 136px;
+  max-width: 136px;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.school-detail-fullpage-view
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 53px !important;
+  min-height: 53px !important;
+  max-height: 53px !important;
+}
+
+.school-detail-fullpage-view
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* 역할 tag160: 열 160px (공통과 동일 스펙 — 뷰 단에서 행 높이·호버 규칙과 함께 쓰일 때 정렬 유지) */
+.school-detail-fullpage-view
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status--tag-160)
+  > td.status-dropdown-cell__cell-status--tag-160 {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.school-detail-fullpage-view__assignment-status--unavailable {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
+}
+
+/* 배정 불가 행: 셀 텍스트 전부 default-BK @ 60% */
+.school-detail-fullpage-view__waiting-row--unavailable.ant-table-row > td {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
+}
+
+/* 강의보고서 관리 — 강의보고서 열 버튼 중앙 정렬 */
+.school-detail-fullpage-view__instructor-section
+  .participating-instructor-lecture-reports-section__report-cell-inner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}

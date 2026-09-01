@@ -1,0 +1,36 @@
+---
+description: CMS /templates — middle 단락 추가·복제·삭제 공통(설명글 텍스트형 삽입·id 재발급)
+globs:
+  - "apps/cms/src/features/template/ui/form-editor/form-editor-left-panel.tsx"
+  - "apps/cms/src/features/template/lib/writing-form-middle-paragraph-mutations.ts"
+  - "apps/cms/src/features/template/hooks/use-writing-form-middle-paragraph-actions.ts"
+  - "apps/cms/src/features/template/hooks/use-writing-form-editor-with-user-preview.ts"
+  - "apps/cms/src/pages/templates/**/*.{ts,tsx}"
+  - "apps/cms/src/features/template/ui/form-set/new-survey-form.tsx"
+  - "apps/cms/src/features/template/ui/form-set/new-agreement-form.tsx"
+alwaysApply: false
+---
+
+# Middle 단락 액션 (단락 추가 / 복제 / 삭제)
+
+## 동작 정의
+
+- **단락 추가** (`FormParagraphCardActions`의「단락 추가」): 클릭한 단락 **바로 뒤**(middle 영역)에 **설명글 텍스트형** `agreement_explanation_text` 단락을 삽입한다. **제목(head) 카드**에서 누르면 middle **맨 앞**에 삽입(`insertMiddleParagraphAfter`가 `afterId === head.id` 처리). **마무리(closing)** 카드에서는 middle **마지막** 뒤에 삽입(`getLastMiddleParagraphId` + `onAddAfter`). 기본값은 `createAgreementExplanationTextParagraphForInsert`와 동일해야 한다.
+- **단락 복제**: 제목·placeholder·항목 등 **내용은 유지**하고, **단락 id 및 하위 id**(객관식·척도·단문 항목·테이블 클론 등)는 **새로 발급**한다. 로직은 `cloneWritingFormParagraphWithNewParagraphId` / `duplicateMiddleParagraph`에 둔다.
+- **단락 삭제**: 해당 단락을 middle에서 제거한다. **middle은 최소 1개** 유지(`removeMiddleParagraph`가 `null`이면 경고만).
+
+## head / middle / pinnedTail
+
+- 배열 분해는 **`getWritingFormHeadMiddlePinnedTail`** 과 동일한 규칙을 따른다 (설문: 첫·끝 고정 / 동의: 하단 3단 고정 등).
+- **고정(head·pinnedTail) 단락**에는 middle 액션이 적용되지 않으며, `insertMiddleParagraphAfter` 등이 `null`을 반환한다.
+
+## 공통 적용 (CMS `/templates` 작성·설문 에디터)
+
+- `FormEditorLeftPanel`에 **`middleParagraphActions`** (`onAddAfter` / `onDuplicate` / `onDelete`)를 넘긴다.
+- 로컬 `setDraft` + `setActiveParagraphId`를 묶은 훅: **`useWritingFormMiddleParagraphActions`**. `useWritingFormEditorWithUserPreview`를 쓰는 화면은 반환값 `middleParagraphActions`를 그대로 전달한다.
+- **예외 (의도적 분리)**: **가로형 테이블 전용 에디터** `horizontal-table-form-editor.tsx` + **`useHorizontalTableFormDraft`** 는 테이블 단락 전용 middle 동작을 유지한다. 여기를 일반 설문 훅으로 바꾸지 않는다.
+
+## 신규 `/templates` 화면 체크리스트
+
+- `FormEditorLeftPanel`를 쓰고 **작성 크롬**(`showEditorChrome !== false`)이면, 설문·동의와 동일하게 **`useWritingFormMiddleParagraphActions`**(또는 위 훅을 포함한 상위 훅)으로 `middleParagraphActions`를 연결한다.
+- 미리보기 전용(크롬 숨김)이면 생략 가능하다.

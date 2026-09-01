@@ -89,10 +89,14 @@ const convertEducationType = (type: string): 'online' | 'offline' | 'hybrid' => 
 }
 
 // 대상 구분 변환
-const convertTargetLevel = (level: string): 'elementary' | 'middle' | 'high' | undefined => {
+const convertTargetLevel = (
+  level: string
+): 'elementary' | 'middle' | 'high' | 'university' | 'adult' | undefined => {
   if (level === '초') return 'elementary'
   if (level === '중') return 'middle'
   if (level === '고') return 'high'
+  if (level === '대학생') return 'university'
+  if (level === '성인') return 'adult'
   return undefined
 }
 

@@ -3,6 +3,8 @@
 > **참고**: 이 문서는 `MVP_ROADMAP_V4.md`의 Phase 4-7에 대한 상세 작업 계획입니다.  
 > **작성 일자**: 2024-12-19  
 > **작성자**: 시니어 PM + 기획자 협업
+>
+> **현행 UI 기준 (2026-07-15)**: Legacy UI 삭제가 완료되었습니다. 버튼은 `CmsButton`/`LoadingButton`, 상태는 Current domain badges, 강사 정산은 `InstructorPaymentStatusBadge`, 권한 승인·반려는 `PermissionModal`, 편집 상태 셀은 `StatusDropdownCell` generic style/default를 사용합니다.
 
 ## 📋 문서 구조
 
@@ -139,8 +141,8 @@
   - `useRequireRole(role)`: 특정 권한 필요 훅
   - `useRequireAnyRole(roles)`: 여러 권한 중 하나 필요 훅
 - [ ] 권한 표시 컴포넌트
-  - `RoleBadge` 컴포넌트
-  - 권한별 색상 및 아이콘
+  - ~~`RoleBadge` 컴포넌트~~ → **제거됨** (antd Tag 레거시). 역할 문구는 `getRoleLabel` / `getAdminLevelLabel` / `getProgramRoleLabel` (`@/shared/ui/role-labels`)만 유지
+  - 권한별 색상 및 아이콘 — 신규 UI는 `EditableStatusBadge` 또는 Current domain badge 사용
 
 **산출물:**
 
@@ -412,7 +414,7 @@
   - 상태 전이 로직
   - 상태별 안내 메시지
 - [ ] 신청 상태 표시 컴포넌트
-  - `InterviewStatusBadge` 컴포넌트
+  - ~~`InterviewStatusBadge` 컴포넌트~~ → **제거됨** (프로덕션 미사용·antd Tag 레거시). 신규는 Current domain `*StatusBadge` / `EditableStatusBadge` 사용
   - 상태별 색상 및 아이콘
   - 봉사자의 경우 **봉사시간 연계 필요 여부** 등 추가 태그 표시
 

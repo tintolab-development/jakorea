@@ -5,36 +5,123 @@
   gap: var(--spacing-8, 8px);
 }
 
-/* 교사/강사: 가입일 카드 + 성명 카드 — 32px 간격, 각각 독립 `detail-info-form__body`(둥근 테두리) */
+/* 교사/강사: 가입일 카드 + 성명 카드 — 16px 간격, 각각 독립 `detail-info-form__body`(둥근 테두리) */
 .user-basic-info-section__split-cards {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 16px;
   width: 100%;
   min-width: 0;
 }
 
-/* 일반 교사 기본 정보 — 재직 현황 (소속 교사 목록 배지 톤과 정렬) */
-.user-basic-info-section__teacher-employment-badge.app-status-badge {
-  width: auto;
-  min-width: 120px;
-  max-width: 100%;
-  height: auto;
+.user-basic-info-section__inline-segments {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.user-basic-info-section__inline-segments .detail-info-form-inputs-separator {
+  margin: 0;
+}
+
+/*
+ * 교사 상세(강사 겸직 아님) — 재직 현황 행은 다른 기본정보 행과 동일 높이.
+ * (과거 tag100 트리거 클리핑 방지용 min-height:56px 제거)
+ */
+
+/* 강사·교사 겸 강사·순수 교사 — 성명+일정변경 배지 행 높이 */
+.user-basic-info-section--instructor-profile-card .detail-info-form__name-block,
+.user-basic-info-section--school-teacher-profile-card .detail-info-form__name-block {
+  grid-template-rows: 56px 56px;
+}
+
+.user-basic-info-section--instructor-profile-card
+  .detail-info-form__name-block-cell,
+.user-basic-info-section--school-teacher-profile-card
+  .detail-info-form__name-block-cell {
+  min-height: 0;
+}
+
+.user-basic-info-section--instructor-profile-card
+  .detail-info-form__name-block-cell--r1,
+.user-basic-info-section--school-teacher-profile-card
+  .detail-info-form__name-block-cell--r1 {
+  overflow: visible;
+}
+
+.user-basic-info-section__teacher-employment-dropdown {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/*
+ * 상세 인라인 재직 태그 — 전역 INLINE_TAG100(116×48)은 테이블 밀림 방지용.
+ * 회원 상세에서는 배지 100×32에 맞춰 셸·트리거 여백을 줄인다.
+ */
+.user-basic-info-section__teacher-employment-dropdown.status-dropdown-cell__inline-tag100 {
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+  height: 32px;
   min-height: 32px;
-  padding: 6px 12px;
-  white-space: nowrap;
+  max-height: 32px;
+  flex: 0 0 100px;
 }
 
-.user-basic-info-section__teacher-employment-badge--active.app-status-badge {
-  border: 1px solid rgba(1, 126, 175, 0.1);
-  background: #e6f2f7;
-  color: var(--color-blue, #017eaf);
+.user-basic-info-section__teacher-employment-dropdown
+  .ant-dropdown-trigger,
+.user-basic-info-section__teacher-employment-dropdown
+  .status-dropdown-cell__status-trigger--tag-100,
+.user-basic-info-section__teacher-employment-dropdown
+  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
+  box-sizing: border-box !important;
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
-.user-basic-info-section__teacher-employment-badge--muted.app-status-badge {
-  border: 1px solid rgba(61, 61, 61, 0.1);
-  background: #f2f3f5;
-  color: var(--main-bk, #3d3d3d);
+/* 트리거 패딩·크롬은 StatusDropdownCell tag100 + 상세 전용 압축 셸 */
+.user-basic-info-section__teacher-employment-dropdown
+  .user-basic-info-section__teacher-employment-badge.app-status-badge,
+.user-basic-info-section__teacher-employment-dropdown
+  .status-dropdown-cell__status-trigger
+  .app-status-badge.status-dropdown-cell__badge--cell-style {
+  box-sizing: border-box;
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  margin: 0 !important;
+  padding: 6px 12px !important;
+}
+
+/* 강사 소속 — 복수 소속 콤마 나열 + 교사 겸직 재직 태그 인라인 */
+.user-basic-info-section__affiliation-multi {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+
+.user-basic-info-section__affiliation-multi-item {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.user-basic-info-section__affiliation-multi-sep {
+  white-space: pre;
 }
 
 /* 권한 승인 현황(상세) — 목록·회원 권한 승인 페이지와 동일 색/타이포 */
@@ -201,23 +288,31 @@
   vertical-align: baseline;
 }
 
-/* 관리자 상세 — 권한 유형 값 셀(r1) 가로·세로 중앙
- * 태그 기본 `margin-inline: auto`는 flex 부모 `justify-content`와 겹치면 한쪽으로 밀릴 수 있어 0으로 둠 */
-.user-basic-info-section__admin-name-block.detail-info-form__name-block
-  .detail-info-form__name-block-cell--r1 {
-  justify-content: left;
+/* 관리자 상세 — 권한 유형 인라인 (테이블 tag160·이중 패딩 없음) */
+.user-basic-info-section__admin-permission-inline {
+  display: inline-flex;
+  box-sizing: border-box;
   align-items: center;
+  vertical-align: middle;
+  position: relative;
+  overflow: visible;
 }
 
-.user-basic-info-section__admin-name-block.detail-info-form__name-block
-  .detail-info-form__name-block-cell--r1
-  .user-list-admin-perm-tag {
+.user-basic-info-section__admin-permission-inline .user-list-admin-perm-tag {
   margin-inline: 0;
 }
 
-/* 조회 슬롯만 상단 정렬 — `--edit` 값 셀에는 적용되지 않음 */
-.user-basic-info-section .detail-info-form__field-content--view {
-  align-items: flex-start;
+.user-basic-info-section__admin-permission-inline .ant-dropdown-trigger,
+.user-basic-info-section__admin-permission-inline .status-dropdown-cell__status-trigger {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  justify-content: center;
+  align-items: center;
+}
+
+.user-basic-info-section__admin-permission-inline .status-dropdown-cell__status-trigger--open {
+  box-shadow: none !important;
 }
 
 /* 관리자 담당 프로그램 수 — `DetailInfoForm.Separator` 포함 한 줄 정렬 */

@@ -1,0 +1,22 @@
+@import '../../../../shared/ui/program-detail/project-info/project-info-form-shared.css';
+
+.participating-instructor-settlement-section__summary.program-detail-fullpage-modal__info-tab-block {
+  margin-top: 0;
+  margin-bottom: 32px;
+}
+
+.participating-instructor-settlement-section__summary
+  .program-detail-info-tab__table-wrapper--top {
+  margin-bottom: 0;
+}
+
+.participating-instructor-settlement-section__amount-dash {
+  color: var(--default-BK, #3d3d3d);
+}
+
+.participating-instructor-settlement-section__payment-statement-cell-inner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}

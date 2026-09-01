@@ -5,10 +5,11 @@
  */
 
 import { useMemo } from 'react'
-import { Card, Tabs, Table, Select, Button, Space } from 'antd'
+import { Card, Tabs, Table, Select, Space } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { FilterDropdownProps } from 'antd/es/table/interface'
 import { FilterFilled } from '@ant-design/icons'
+import { CmsButton } from '@/shared/ui'
 import {
   mockProgramProgressByTab,
   PROGRAM_PROGRESS_TAB_LABELS,
@@ -46,10 +47,11 @@ function ProgramProgressStatusFilterDropdown({
         }}
       />
       <Space size="small" className="program-progress-tabs-table__status-filter-actions">
-        <Button type="primary" size="small" onClick={() => confirm()}>
+        <CmsButton variant="primary" size="small" onClick={() => confirm()}>
           적용
-        </Button>
-        <Button
+        </CmsButton>
+        <CmsButton
+          variant="default"
           size="small"
           onClick={() => {
             clearFilters?.()
@@ -57,7 +59,7 @@ function ProgramProgressStatusFilterDropdown({
           }}
         >
           초기화
-        </Button>
+        </CmsButton>
       </Space>
     </div>
   )

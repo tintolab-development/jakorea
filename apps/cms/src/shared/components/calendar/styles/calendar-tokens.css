@@ -1,0 +1,82 @@
+/*
+ * CalendarMain 그리드·컨테이너 치수 — calendar.css 최상단 import (layout·main보다 먼저).
+ * 모든 CalendarMain 배치 래퍼 + .calendar-main-container + .calendar-main 자체.
+ */
+.calendar-set,
+.calendar-split-card-layout,
+.calendar-split-card--left,
+.calendar-main-container,
+.calendar-main {
+  --calendar-cell-min-width: 116px;
+  --calendar-cell-min-height: 124px;
+  --calendar-week-hour-px: 56px;
+  --calendar-week-total-px: calc(24 * var(--calendar-week-hour-px));
+  /* 시간 라벨(오전/오후 + N시) 좌측 정렬 — header-title 좌측과 맞춤 */
+  --calendar-week-gutter-width: 72px;
+  --calendar-week-gutter-gap: 20px;
+  --calendar-week-columns-min-width: calc(var(--calendar-cell-min-width) * 7);
+  --calendar-week-time-grid-min-width: calc(
+    var(--calendar-week-gutter-width) + var(--calendar-week-gutter-gap) +
+      var(--calendar-week-columns-min-width)
+  );
+  --calendar-month-week-count: 6;
+  --calendar-month-grid-min-width: calc(var(--calendar-cell-min-width) * 7);
+  --calendar-month-grid-min-height: calc(var(--calendar-cell-min-height) * var(--calendar-month-week-count));
+  --calendar-main-weekday-header-min-height: 37px;
+  --calendar-main-header-min-height: 50px;
+  --calendar-main-header-body-gap: 10px;
+  --calendar-main-horizontal-padding: 40px;
+  --calendar-main-vertical-padding: 32px;
+  --calendar-week-time-grid-header-min-height: 40px;
+  /* calendar-main·split-card shell 좌우 border 합 — 콘텐츠 박스가 격자 min-width를 수용하도록 */
+  --calendar-shell-horizontal-border-width: 2px;
+  --calendar-main-content-horizontal-inset: calc(
+    var(--calendar-main-horizontal-padding) + var(--calendar-shell-horizontal-border-width)
+  );
+  --calendar-main-month-min-width: calc(
+    var(--calendar-month-grid-min-width) + var(--calendar-main-content-horizontal-inset)
+  );
+  --calendar-main-month-min-height: calc(
+    var(--calendar-month-grid-min-height) +
+      var(--calendar-main-weekday-header-min-height) +
+      var(--calendar-main-header-min-height) +
+      var(--calendar-main-vertical-padding)
+  );
+  --calendar-main-week-min-width: calc(
+    var(--calendar-week-time-grid-min-width) + var(--calendar-main-content-horizontal-inset)
+  );
+  --calendar-main-week-min-height: calc(
+    var(--calendar-week-total-px) + var(--calendar-week-time-grid-header-min-height) +
+      var(--calendar-main-header-min-height) + var(--calendar-main-vertical-padding)
+  );
+  /* 3열 calendar-set · 2열 split-card — 가로 축소 시 열 겹침 방지용 합산 min-width */
+  --calendar-sub-left-width: 300px;
+  --calendar-set-column-gap: var(--spacing-24, 24px);
+  --calendar-split-card-column-gap: 16px;
+  --calendar-set-min-width-3col-month: calc(
+    var(--calendar-sub-left-width) + var(--calendar-set-column-gap) +
+      var(--calendar-main-month-min-width) + var(--calendar-set-column-gap) +
+      var(--calendar-sub-right-list-min-width, 280px)
+  );
+  --calendar-set-min-width-2col-month: calc(
+    var(--calendar-main-month-min-width) + var(--calendar-set-column-gap) +
+      var(--calendar-sub-right-list-min-width, 280px)
+  );
+  --calendar-set-min-width-3col-week: calc(
+    var(--calendar-sub-left-width) + var(--calendar-set-column-gap) +
+      var(--calendar-main-week-min-width) + var(--calendar-set-column-gap) +
+      var(--calendar-sub-right-list-min-width, 280px)
+  );
+  --calendar-set-min-width-2col-week: calc(
+    var(--calendar-main-week-min-width) + var(--calendar-set-column-gap) +
+      var(--calendar-sub-right-list-min-width, 280px)
+  );
+  --calendar-split-card-min-width-month: calc(
+    var(--calendar-main-month-min-width) + var(--calendar-split-card-column-gap) +
+      var(--calendar-sub-right-list-min-width, 280px)
+  );
+  --calendar-split-card-min-width-week: calc(
+    var(--calendar-main-week-min-width) + var(--calendar-split-card-column-gap) +
+      var(--calendar-sub-right-list-min-width, 280px)
+  );
+}

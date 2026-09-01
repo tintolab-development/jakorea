@@ -1,0 +1,270 @@
+/**
+ * 일반 프로그램 봉사자 상세 — DetailInfoForm 레이아웃
+ */
+
+.general-volunteer-applicant-detail {
+  --general-volunteer-detail-table-line: var(--table-line, #e0e0e0);
+  --general-volunteer-detail-label-bg: #f5f6f7;
+  --general-volunteer-detail-value-bg: #fff;
+  --general-volunteer-detail-label-w: 200px;
+  --general-volunteer-detail-grid-pair-label-w: 220px;
+  --general-volunteer-detail-field-label-color: var(--default-BK, #3d3d3d);
+  --general-volunteer-detail-field-label-font-family: Pretendard, sans-serif;
+  --general-volunteer-detail-field-label-font-size: 16px;
+  --general-volunteer-detail-field-label-font-weight: 700;
+  --general-volunteer-detail-field-label-line-height: 140%;
+  width: 100%;
+  min-width: 0;
+}
+
+.general-volunteer-applicant-detail .program-detail-info-tab__table th,
+.general-volunteer-applicant-detail
+  .general-volunteer-applicant-detail__table--grid
+  .applicant-instructor-basic-info__cell--label,
+.general-volunteer-applicant-detail
+  .general-volunteer-applicant-detail__table--horizontal
+  .general-volunteer-applicant-detail__horizontal-label {
+  color: var(--general-volunteer-detail-field-label-color);
+  text-align: center;
+  font-family: var(--general-volunteer-detail-field-label-font-family);
+  font-size: var(--general-volunteer-detail-field-label-font-size);
+  font-weight: var(--general-volunteer-detail-field-label-font-weight);
+  line-height: var(--general-volunteer-detail-field-label-line-height);
+}
+
+.general-volunteer-applicant-detail__header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.general-volunteer-applicant-detail__body {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.general-volunteer-applicant-basic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  --detail-info-label-w: 220px;
+}
+
+.general-volunteer-applicant-basic-info > .detail-info-form:first-child .detail-info-form__field-content {
+  justify-content: flex-start;
+}
+
+.general-volunteer-applicant-basic-info
+  .detail-info-form__field-content
+  .ujat-doc-screening-status-text {
+  text-align: left;
+}
+
+.general-volunteer-applicant-basic-info__id1365-cell {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-8, 8px);
+}
+
+.general-volunteer-applicant-basic-info .applicant-instructor-basic-info__name-badge {
+  margin-left: 8px;
+}
+
+.general-volunteer-applicant-essay-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.general-volunteer-applicant-essay-sections__item {
+  width: 100%;
+  min-width: 0;
+}
+
+.general-volunteer-applicant-manager-evaluation .detail-info-form__field-content {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.general-volunteer-applicant-manager-evaluation
+  .detail-info-form__field-content
+  > .status-dropdown-cell__inline-tag100 {
+  flex: 0 0 116px;
+}
+
+.general-volunteer-applicant-detail .program-detail-info-tab__table-wrapper {
+  border: 1px solid var(--general-volunteer-detail-table-line);
+  border-radius: 6px;
+  background: var(--general-volunteer-detail-value-bg);
+}
+
+.general-volunteer-applicant-detail .program-detail-info-tab__table {
+  border-color: var(--general-volunteer-detail-table-line);
+}
+
+.general-volunteer-applicant-detail .program-detail-info-tab__table th,
+.general-volunteer-applicant-detail .program-detail-info-tab__table td {
+  border-color: var(--general-volunteer-detail-table-line);
+  padding: 12px 16px;
+  min-height: 48px;
+  box-sizing: border-box;
+}
+
+.general-volunteer-applicant-detail .program-detail-info-tab__table th {
+  width: var(--general-volunteer-detail-label-w) !important;
+  min-width: var(--general-volunteer-detail-label-w) !important;
+  max-width: var(--general-volunteer-detail-label-w) !important;
+  background: var(--general-volunteer-detail-label-bg) !important;
+}
+
+.general-volunteer-applicant-detail .program-detail-info-tab__table td {
+  background: var(--general-volunteer-detail-value-bg);
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%;
+  min-width: 0 !important;
+}
+
+.general-volunteer-applicant-detail__table-wrapper--vertical
+  .general-volunteer-applicant-detail__table--vertical.program-detail-info-tab__table--basic
+  th {
+  width: var(--general-volunteer-detail-grid-pair-label-w) !important;
+  min-width: var(--general-volunteer-detail-grid-pair-label-w) !important;
+  max-width: var(--general-volunteer-detail-grid-pair-label-w) !important;
+}
+
+.general-volunteer-applicant-detail .general-volunteer-applicant-detail__grid-table-wrap {
+  border: 1px solid var(--general-volunteer-detail-table-line);
+  border-radius: 6px;
+  overflow: clip;
+  background: var(--general-volunteer-detail-value-bg);
+}
+
+.general-volunteer-applicant-detail .general-volunteer-applicant-detail__table--grid {
+  table-layout: fixed;
+}
+
+.general-volunteer-applicant-detail
+  .general-volunteer-applicant-detail__table--grid
+  col.col-pair-label {
+  width: var(--general-volunteer-detail-grid-pair-label-w);
+}
+
+.general-volunteer-applicant-detail
+  .general-volunteer-applicant-detail__table--grid
+  .applicant-instructor-basic-info__cell {
+  border-color: var(--general-volunteer-detail-table-line);
+  padding: 12px 16px;
+  font-size: 16px;
+  line-height: 140%;
+}
+
+.general-volunteer-applicant-detail
+  .general-volunteer-applicant-detail__table--grid
+  .applicant-instructor-basic-info__cell--label {
+  background: var(--general-volunteer-detail-label-bg);
+}
+
+.general-volunteer-applicant-detail
+  .general-volunteer-applicant-detail__table--grid
+  .applicant-instructor-basic-info__cell--value {
+  background: var(--general-volunteer-detail-value-bg);
+  color: var(--default-BK, #3d3d3d);
+  font-weight: 500;
+  text-align: left;
+}
+
+.general-volunteer-applicant-detail__table-wrapper--horizontal {
+  overflow-x: auto;
+}
+
+.general-volunteer-applicant-detail__table--horizontal {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.general-volunteer-applicant-detail__table--horizontal
+  .general-volunteer-applicant-detail__horizontal-label {
+  width: var(--general-volunteer-detail-label-w) !important;
+  min-width: var(--general-volunteer-detail-label-w) !important;
+  max-width: var(--general-volunteer-detail-label-w) !important;
+  background: var(--general-volunteer-detail-label-bg) !important;
+}
+
+.general-volunteer-applicant-detail__table--horizontal
+  .general-volunteer-applicant-detail__horizontal-value {
+  text-align: left;
+  vertical-align: middle;
+  width: auto;
+}
+
+.general-volunteer-applicant-manager-evaluation
+  .general-volunteer-applicant-detail__table--horizontal
+  th,
+.general-volunteer-applicant-manager-evaluation
+  .general-volunteer-applicant-detail__table--horizontal
+  td {
+  height: 54px;
+  min-height: 54px;
+  max-height: 54px;
+  box-sizing: border-box;
+}
+
+.general-volunteer-applicant-manager-evaluation
+  .general-volunteer-applicant-detail__table--horizontal
+  .general-volunteer-applicant-detail__horizontal-value {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  text-align: left !important;
+  vertical-align: middle;
+}
+
+.general-volunteer-applicant-interview-availability__empty {
+  margin: 0;
+  padding: 0 8px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+}
+
+.general-volunteer-applicant-interview-availability__slot--assigned {
+  color: var(--color-mint-01, #01a1af);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.general-volunteer-applicant-interview-evaluation
+  .general-volunteer-applicant-detail__table--grid
+  .applicant-instructor-basic-info__cell--label {
+  color: var(--general-volunteer-detail-field-label-color);
+  text-align: center;
+  font-family: var(--general-volunteer-detail-field-label-font-family);
+  font-size: var(--general-volunteer-detail-field-label-font-size);
+  font-weight: var(--general-volunteer-detail-field-label-font-weight);
+  line-height: var(--general-volunteer-detail-field-label-line-height);
+}
+
+.general-volunteer-applicant-detail .general-volunteer-interview2__score-value {
+  color: var(--color-mint-01, #01a1af);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}

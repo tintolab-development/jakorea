@@ -4,23 +4,44 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "pnpm run build:workspace-deps",
+    "prebuild": "pnpm run build:workspace-deps",
+    "build:workspace-deps": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/rich-text --filter @jakorea/location --filter @jakorea/domain --filter @jakorea/form-schema --filter @jakorea/form-template-runtime --filter @jakorea/identity-verification build",
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint . --max-warnings=-1",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "test": "node --experimental-strip-types --experimental-transform-types src/features/program/lib/map-from-cms.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/program/lib/apply-form-drafts.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/auth/sign-up/lib/agreement/agreement.logic.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/auth/sign-up/lib/profile/profile.logic.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/auth/sign-up/lib/helpers/to-api-phone.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/auth/sign-in/lib/get-login-api-error-message.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/mypage/instructor-apply/api/map-create-request.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/mypage/settings/lib/map-view.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/mypage/settings/lib/map-edit.selfcheck.ts",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ant-design/icons": "^5.5.1",
+    "@jakorea/domain": "workspace:*",
+    "@jakorea/form-schema": "workspace:*",
+    "@jakorea/form-template-runtime": "workspace:*",
+    "@jakorea/identity-verification": "workspace:*",
+    "@jakorea/location": "workspace:*",
+    "@jakorea/rich-text": "workspace:*",
     "@jakorea/ui": "workspace:*",
     "@jakorea/utils": "workspace:*",
+    "@tanstack/react-query": "^5.62.2",
+    "@tiptap/core": "^3.25.0",
+    "@tiptap/pm": "^3.25.0",
+    "@tiptap/react": "^3.25.0",
+    "antd": "^5.28.0",
+    "axios": "^1.7.9",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.1.3",
+    "recharts": "^2.12.7"
   },
   "devDependencies": {
+    "@csstools/postcss-global-data": "^3.0.0",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "postcss-custom-media": "^11.0.6",
     "typescript": "~5.9.3",
     "vite": "^7.2.4"
   }

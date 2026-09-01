@@ -1,0 +1,26 @@
+.template-list-card {
+  display: flex;
+  width: 100%;
+  padding: 18px 20px 20px 20px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  border-radius: var(--16, 16px);
+  background: var(--main-WT, #fff);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+}
+
+.template-list-card__header {
+  display: flex;
+  align-items: flex-end;
+}
+
+.template-list-card__header--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.template-list-card__header--inline .info-section-description {
+  padding: 0;
+}

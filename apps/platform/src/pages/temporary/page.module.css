@@ -1,0 +1,31 @@
+.page {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  padding-inline: var(--page-padding-x);
+  padding-bottom: var(--spacing-120);
+}
+
+.hero {
+  display: flex;
+  max-width: 720px;
+  flex-direction: column;
+  gap: 16px;
+  padding-block: 48px 80px;
+}
+
+.title {
+  margin: 0;
+}
+
+.description {
+  margin: 0;
+}
+
+@media (--bp-pc-up) {
+  .hero {
+    gap: 20px;
+    padding-block: 64px 120px;
+  }
+}

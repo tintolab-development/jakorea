@@ -1,0 +1,21 @@
+.gemini-institution-application-tab__schedule-cell {
+  text-align: left !important;
+}
+
+.gemini-institution-application-tab__schedule {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.5;
+}
+
+.gemini-institution-application-tab__schedule-line {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.gemini-institution-application-tab__schedule-preference {
+  margin-right: 4px;
+  white-space: nowrap;
+}

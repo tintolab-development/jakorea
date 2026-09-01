@@ -1,0 +1,13 @@
+{
+  "plugins": {
+    "figma": {
+      "enabled": true
+    },
+    "notion-workspace": {
+      "enabled": true
+    },
+    "linear": {
+      "enabled": true
+    }
+  }
+}

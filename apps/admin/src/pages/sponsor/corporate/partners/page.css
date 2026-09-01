@@ -1,0 +1,51 @@
+.corporate-partners-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.corporate-partners-page__filter-card {
+  margin-bottom: var(--spacing-24, 24px);
+}
+
+.corporate-partners-page__thumb-wrap {
+  display: inline-flex;
+  flex: 1 0 0;
+  width: 250px;
+  height: 91.667px;
+  aspect-ratio: 30 / 11;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--color-border, #e0e0e0);
+  background: var(--color-bg-secondary, #f7f7f7);
+  cursor: pointer;
+}
+
+.corporate-partners-page__thumb.ant-image,
+.corporate-partners-page__thumb-wrap .ant-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.corporate-partners-page__thumb-wrap .ant-image-img,
+.corporate-partners-page__thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* 공개 여부 Switch — DS mint-01 (#01A1AF) */
+.corporate-partners-page .ant-switch-checked {
+  background: var(--color-mint-01, #01a1af) !important;
+}
+
+.corporate-partner-table .ant-table-tbody > tr > td {
+  vertical-align: middle;
+  text-align: center;
+}
+
+.corporate-partner-table .ant-table-thead > tr > th {
+  text-align: center;
+}

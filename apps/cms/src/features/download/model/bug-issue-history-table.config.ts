@@ -8,32 +8,56 @@ import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
 
 export type BugIssueHistoryPendingFilters = {
   userName: string
-  dateRange: [Dayjs, Dayjs] | null
+  dateRange: BugIssueHistoryPendingDateRange
 }
 
-function dayjsPairEqual(a: [Dayjs, Dayjs] | null, b: [Dayjs, Dayjs] | null): boolean {
+type BugIssueHistoryPendingDateRange =
+  | [Dayjs, Dayjs]
+  | [Dayjs | null, Dayjs | null]
+  | null
+
+function dayjsPairEqual(
+  a: BugIssueHistoryPendingDateRange,
+  b: BugIssueHistoryPendingDateRange
+): boolean {
   if (a == null && b == null) return true
   if (a == null || b == null) return false
-  return a[0].valueOf() === b[0].valueOf() && a[1].valueOf() === b[1].valueOf()
+  return (a[0]?.valueOf() ?? null) === (b[0]?.valueOf() ?? null) &&
+    (a[1]?.valueOf() ?? null) === (b[1]?.valueOf() ?? null)
 }
 
-function filterLogs(data: BugIssueLog[], searchParams: URLSearchParams): BugIssueLog[] {
-  const userName = (searchParams.get('bil_user') ?? '').trim().toLowerCase()
-  const from = searchParams.get('bil_from')
-  const to = searchParams.get('bil_to')
+function normalizeDateRangePickerValue(value: unknown): BugIssueHistoryPendingDateRange {
+  if (!Array.isArray(value) || value.length < 2) return null
+  const start = (value[0] ?? null) as Dayjs | null
+  const end = (value[1] ?? null) as Dayjs | null
+  if (start == null && end == null) return null
+  return [start, end]
+}
 
-  return data
-    .filter(row => {
-      if (userName && !row.userName.toLowerCase().includes(userName)) return false
-      if (from && to) {
-        const occurredAt = dayjs(row.occurredAt)
-        const start = dayjs(from).startOf('day')
-        const end = dayjs(to).endOf('day')
-        if (occurredAt.isBefore(start) || occurredAt.isAfter(end)) return false
-      }
-      return true
-    })
-    .sort((a, b) => dayjs(b.occurredAt).valueOf() - dayjs(a.occurredAt).valueOf())
+const urlDateRangeSyncState = { hadCompleteInUrl: false }
+
+function resolvePendingDateRangeFromUrl(args: {
+  from: string | null
+  to: string | null
+  prev: BugIssueHistoryPendingDateRange
+}): BugIssueHistoryPendingDateRange {
+  const { from, to, prev } = args
+  if (from && to) {
+    urlDateRangeSyncState.hadCompleteInUrl = true
+    return [dayjs(from), dayjs(to)]
+  }
+  if (urlDateRangeSyncState.hadCompleteInUrl) {
+    urlDateRangeSyncState.hadCompleteInUrl = false
+    return null
+  }
+  return prev ?? null
+}
+
+/** 서버 필터를 신뢰하고 발생 일시 내림차순만 맞춥니다. */
+function sortLogs(data: BugIssueLog[]): BugIssueLog[] {
+  return [...data].sort(
+    (a, b) => dayjs(b.occurredAt).valueOf() - dayjs(a.occurredAt).valueOf()
+  )
 }
 
 const tanstackColumns: ColumnDef<BugIssueLog>[] = [{ accessorKey: 'id', id: 'id' }]
@@ -79,9 +103,13 @@ export const bugIssueHistoryTablePageConfig: TablePageConfig<
       const userName = searchParams.get('bil_user') ?? ''
       const from = searchParams.get('bil_from')
       const to = searchParams.get('bil_to')
-      const dateRange = from && to ? ([dayjs(from), dayjs(to)] as [Dayjs, Dayjs]) : null
 
       setPendingFilters(prev => {
+        const dateRange = resolvePendingDateRangeFromUrl({
+          from,
+          to,
+          prev: prev.dateRange,
+        })
         const next: BugIssueHistoryPendingFilters = {
           userName,
           dateRange,
@@ -100,11 +128,7 @@ export const bugIssueHistoryTablePageConfig: TablePageConfig<
     getBaseCount: ({ filteredData }) => filteredData.length,
     onFilterChange: ({ prev, key, value }) => {
       if (key === 'dateRange') {
-        const range = Array.isArray(value) ? value : null
-        if (range?.[0] && range[1]) {
-          return { ...prev, dateRange: [range[0], range[1]] }
-        }
-        return { ...prev, dateRange: null }
+        return { ...prev, dateRange: normalizeDateRangePickerValue(value) }
       }
       if (key === 'userName') {
         return { ...prev, userName: String(value ?? '') }
@@ -112,9 +136,9 @@ export const bugIssueHistoryTablePageConfig: TablePageConfig<
       return { ...prev, [key]: value } as BugIssueHistoryPendingFilters
     },
   },
-  filterFn: ({ data, searchParams }) => {
-    const filtered = filterLogs(data, searchParams)
-    return { dataForTable: filtered, filteredData: filtered }
+  filterFn: ({ data }) => {
+    const sorted = sortLogs(data)
+    return { dataForTable: sorted, filteredData: sorted }
   },
   getSearchSync: () => ({
     paramConfig: searchSyncRules,

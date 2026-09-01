@@ -296,7 +296,8 @@
 
 .post-read-status-popup__action-btn {
   display: flex;
-  width: 80px;
+  min-width: 80px;
+  width: auto;
   height: 32px;
   padding: 0 12px;
   flex-direction: column;
@@ -315,6 +316,7 @@
   line-height: 150%;
   cursor: pointer;
   text-align: center;
+  white-space: nowrap;
 }
 
 .post-read-status-popup__action-btn--primary {

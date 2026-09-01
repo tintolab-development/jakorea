@@ -1,0 +1,212 @@
+.root {
+  position: relative;
+  display: inline-block;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 163px;
+  max-width: 100%;
+  vertical-align: top;
+}
+
+/* in-flow: height 0 이어도 max-content 너비 계산에 포함 → 열림 시 옵션과 트리거 폭 정렬 */
+.widthSizer {
+  display: block;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.widthSizerTrigger {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-20);
+  padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) var(--spacing-24);
+  border: 1px solid transparent;
+}
+
+.widthSizerOption {
+  box-sizing: border-box;
+  /* 메뉴 option + 좌우 1px border 박스와 동일 측정 */
+  padding: var(--spacing-12) var(--spacing-24);
+  border-inline: 1px solid transparent;
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  text-align: center;
+}
+
+.trigger {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-20);
+  padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) var(--spacing-24);
+  border: 1px solid var(--color-primary-100);
+  border-radius: var(--radius-999);
+  background: var(--color-element-hover);
+  cursor: pointer;
+  outline: none;
+  /* radius 보간(999→24)은 열림 순간에 박스가 흔들리는 것처럼 보임 → 즉시 전환 */
+  transition: none;
+}
+
+.trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.open .trigger {
+  position: relative;
+  z-index: 11;
+  border: 1px solid var(--color-primary-100);
+  border-bottom-color: transparent;
+  border-radius: var(--radius-24) var(--radius-24) 0 0;
+}
+
+.label {
+  flex: 0 0 auto;
+  color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
+
+.trailing {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.value {
+  flex: 0 0 auto;
+  color: var(--color-primary-500);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  white-space: nowrap;
+}
+
+.chevron {
+  display: block;
+  flex: 0 0 auto;
+  width: 12px;
+  height: 8px;
+  transition: transform 220ms ease;
+}
+
+.open .chevron {
+  transform: rotate(180deg);
+}
+
+.menuWrapper {
+  position: absolute;
+  top: 100%;
+  /* 트리거와 좌우 외곽을 동일하게 맞춤 — width%만으로 어긋나는 경우 방지 */
+  right: 0;
+  left: 0;
+  z-index: 10;
+  display: grid;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: auto;
+  min-width: 100%;
+  grid-template-rows: 0fr;
+  margin-top: -1px;
+  pointer-events: none;
+  /* 열림/닫힘 높이 보간은 옵션 텍스트가 위아래로 밀리는 것처럼 보임 → opacity만 전환 */
+  transition: none;
+}
+
+.menuWrapperOpen {
+  grid-template-rows: 1fr;
+  pointer-events: auto;
+}
+
+.menu {
+  display: flex;
+  overflow: hidden;
+  min-width: 100%;
+  min-height: 0;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* 열림 시점 1px border 추가 시 옵션 box가 2px 수축·1px 우측 시프트 → 항상 동일 보더 박스 유지 */
+  border: 1px solid transparent;
+  border-radius: 0 0 var(--radius-24) var(--radius-24);
+  background: var(--color-neutral-cool-80);
+  opacity: 0;
+  transition: opacity 140ms ease, border-color 140ms ease;
+}
+
+.menuWrapperOpen .menu {
+  border-color: var(--color-primary-100);
+  opacity: 1;
+}
+
+.menu li:not(:last-child) .option {
+  border-bottom: 1px solid var(--color-element-hover);
+}
+
+.option {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: var(--spacing-12) var(--spacing-24);
+  border: 0;
+  background: var(--color-neutral-cool-80);
+  color: var(--color-neutral-cool-700);
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.option:hover:not(:disabled) {
+  background: var(--color-neutral-cool-80);
+}
+
+.option.selected {
+  font-weight: 600;
+}
+
+.option:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron,
+  .menu {
+    transition: none;
+  }
+}

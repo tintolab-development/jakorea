@@ -1,0 +1,19 @@
+/**
+ * CMS 템플릿 surface 전용 디자인 토큰
+ * — CMS theme-provider.css 중 runtime CSS가 참조하는 항목만 발췌
+ * — Platform embed 시 FormTemplateHost에서만 스코프
+ */
+.form-template-host {
+  --default-BK: #3d3d3d;
+  --main-BK: #3d3d3d;
+  --main-WT: #ffffff;
+  --table-line: #e0e0e0;
+  --JA-mint-01: #01a1af;
+  --color-mint-01: #01a1af;
+  --color-red: #c32f4a;
+  --color-text-secondary: #8c8c8c;
+  --gray-85969-d: #85969d;
+  /** DetailInfoForm 라벨(th) 배경 — fallback 없이 var()만 쓰는 곳이 있어 필수 */
+  --BG-header: linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%), #fff;
+  --16: 16px;
+}

@@ -20,6 +20,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  gap: 32px;
   flex: 1;
   min-height: 0;
 }
@@ -29,7 +30,7 @@
   padding: 24px;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0;
+  gap: 24px;
   flex: 0 1 auto;
   align-self: stretch;
   width: 100%;
@@ -45,13 +46,29 @@
   box-sizing: border-box;
 }
 
+.admin-faq-detail-page__header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  flex-shrink: 0;
+}
+
 .admin-faq-detail-page__top-row {
   display: flex;
   justify-content: flex-start;
   align-items: center;
   width: 100%;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
+}
+
+.admin-faq-detail-page__top-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .admin-faq-detail-page__badge {
@@ -66,7 +83,7 @@
   border-radius: 30px;
   overflow: hidden;
   color: var(--default-WT, #fff);
-  text-align: right;
+  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: Pretendard, var(--font-family-primary, sans-serif);
@@ -95,7 +112,7 @@
   font-size: 16px;
   font-style: normal;
   font-weight: 700;
-  line-height: 150%;
+  line-height: 150%; /* 24px */
 }
 
 .admin-faq-detail-page__title {
@@ -134,22 +151,18 @@
   background-color: #85969d;
 }
 
-/* 첨부 없음: 디스크립션 ↔ 본문 사이 가로 구분선, 위·아래 각 24px */
+/* 상단 텍스트 영역 ↔ 본문 사이 가로 구분선 — 카드 gap 24px가 위·아래 간격 */
 .admin-faq-detail-page__section-divider {
-  margin: 24px 0;
+  margin: 0;
   width: 100%;
   height: 0;
   border: 0;
   border-top: 1px solid rgba(61, 61, 61, 0.12);
-}
-
-.admin-faq-detail-page__section-divider + .admin-faq-detail-page__body {
-  margin-top: 0;
+  flex-shrink: 0;
 }
 
 .admin-faq-detail-page__attachments {
-  margin-top: 24px;
-  margin-bottom: 0;
+  margin: 0;
   width: 100%;
   box-sizing: border-box;
   padding: 16px;
@@ -208,15 +221,12 @@
   word-break: break-all;
 }
 
-/* 첨부 있음: 첨부 블록 하단 ↔ 본문 24px — ToastUiMarkdownViewer 래퍼 */
-.admin-faq-detail-page__attachments + .admin-faq-detail-page__body {
-  margin-top: 24px;
-}
-
 .admin-faq-detail-page__body {
-  margin-top: 24px;
+  margin: 0;
   width: 100%;
   min-width: 0;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .admin-faq-detail-page__actions {
@@ -224,9 +234,11 @@
   justify-content: space-between;
   align-items: center;
   align-self: stretch;
-  margin-top: 32px;
+  margin: 0;
+  padding: 0;
   gap: 16px;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .admin-faq-detail-page__actions-right {

@@ -248,7 +248,7 @@
   padding: 0;
 }
 
-.admin-inquiry-detail-modal__body-viewer .toastui-editor-contents {
+.admin-inquiry-detail-modal__body-viewer .rich-text-content {
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
@@ -267,8 +267,8 @@
   padding: 12px 14px;
 }
 
-.admin-inquiry-detail-modal__body-viewer .toastui-editor-contents,
-.admin-inquiry-detail-modal__answer-viewer .toastui-editor-contents {
+.admin-inquiry-detail-modal__body-viewer .rich-text-content,
+.admin-inquiry-detail-modal__answer-viewer .rich-text-content {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary, sans-serif);
   font-size: 16px;
@@ -277,14 +277,14 @@
   line-height: 150%;
 }
 
-.admin-inquiry-detail-modal__body-viewer .toastui-editor-contents p,
-.admin-inquiry-detail-modal__body-viewer .toastui-editor-contents li,
-.admin-inquiry-detail-modal__body-viewer .toastui-editor-contents td,
-.admin-inquiry-detail-modal__body-viewer .toastui-editor-contents th,
-.admin-inquiry-detail-modal__answer-viewer .toastui-editor-contents p,
-.admin-inquiry-detail-modal__answer-viewer .toastui-editor-contents li,
-.admin-inquiry-detail-modal__answer-viewer .toastui-editor-contents td,
-.admin-inquiry-detail-modal__answer-viewer .toastui-editor-contents th {
+.admin-inquiry-detail-modal__body-viewer .rich-text-content p,
+.admin-inquiry-detail-modal__body-viewer .rich-text-content li,
+.admin-inquiry-detail-modal__body-viewer .rich-text-content td,
+.admin-inquiry-detail-modal__body-viewer .rich-text-content th,
+.admin-inquiry-detail-modal__answer-viewer .rich-text-content p,
+.admin-inquiry-detail-modal__answer-viewer .rich-text-content li,
+.admin-inquiry-detail-modal__answer-viewer .rich-text-content td,
+.admin-inquiry-detail-modal__answer-viewer .rich-text-content th {
   margin: 0;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary, sans-serif);
@@ -298,4 +298,11 @@
   padding: 24px;
   text-align: center;
   color: var(--color-text-secondary, #8c8c8c);
+}
+
+.admin-inquiry-detail-modal__loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 240px;
 }

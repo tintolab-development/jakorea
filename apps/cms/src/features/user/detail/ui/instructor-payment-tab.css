@@ -26,10 +26,6 @@
   flex-direction: column;
 }
 
-.instructor-payment-tab__divider-wrapper {
-  padding: 14px 52px 32px 52px;
-}
-
 .instructor-payment-tab__toolbar {
   display: flex;
   align-items: center;
@@ -130,41 +126,6 @@
   width: 100%;
 }
 
-.instructor-payment-tab__settlement-text {
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
-  text-align: center;
-}
-
-.instructor-payment-tab__settlement-text--awaiting {
-  color: #f07917;
-}
-
-.instructor-payment-tab__settlement-text--partial {
-  color: #8457ce;
-}
-
-.instructor-payment-tab__settlement-text--statement-verified {
-  color: #1e8c29;
-}
-
-.instructor-payment-tab__settlement-text--account-paid {
-  color: #017eaf;
-}
-
-.instructor-payment-tab__settlement-text--na {
-  color: #333333;
-}
-
-.instructor-payment-tab__settlement-text--rejected {
-  color: #c32f4a;
-}
-
-.instructor-payment-tab__settlement-text--correction {
-  color: #c32f4a;
-}
-
 /* 산출 내역 열: 버튼 셀 가운데 정렬 */
 .instructor-payment-tab__detail-action-cell {
   display: flex;
@@ -191,54 +152,29 @@
 }
 
 .instructor-payment-tab__calendar-view-container {
-  flex: 1 1 0;
-  min-height: 0;
+  flex: 0 0 auto;
+  width: 100%;
   max-width: 100%;
   display: flex;
   flex-direction: column;
-}
-
-/* 공유 applicant-calendar 레이아웃을 패널 높이에 맞춤(기본 좌측 스크롤; --no-inner-scroll 예외) */
-.instructor-payment-tab__calendar-view-container .applicant-calendar-layout,
-.instructor-payment-tab__calendar-view-container .calendar-layout {
-  flex: 1 1 0;
-  min-height: 0;
-  height: 100%;
-}
-
-.instructor-payment-tab__calendar-view-container .applicant-calendar-main,
-.instructor-payment-tab__calendar-view-container .calendar-main-container {
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.instructor-payment-tab__calendar-view-container .applicant-calendar-right,
-.instructor-payment-tab__calendar-view-container .calendar-sub-right-list {
-  min-height: 0;
+  box-sizing: border-box;
 }
 
 /**
- * 정산 캘린더 뷰: 좌측 월 그리드에 세로 스크롤 없음(높이는 내용 기준, 바깥·모달 본문 스크롤).
- * 기본 규칙(.…calendar-view-container .applicant-calendar-*)보다 구체적으로 두어 덮어씀.
+ * 정산 캘린더: 공통 `calendar-tokens` · `calendar-main-container`(min 852×863px) ·
+ * `calendar-sub-right-list`(743px) 치수 유지. 좌측 그리드 **내부** 세로 스크롤 없음 —
+ * `--no-inner-scroll` 시 모달 본문(`detail-fullpage-modal__main`) 스크롤.
  */
-.instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll {
-  flex: 0 0 auto;
-  min-height: 0;
-}
-
 .instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll
-  .applicant-calendar-layout,
-.instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll
-  .calendar-layout {
+  .calendar-set {
   flex: 0 0 auto;
   min-height: 0;
   height: auto;
 }
 
 .instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll
-  .applicant-calendar-main,
+  .calendar-main-container,
 .instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll
-  .calendar-main-container {
-  overflow-y: visible;
-  min-height: 0;
+  .calendar-main {
+  overflow: visible;
 }

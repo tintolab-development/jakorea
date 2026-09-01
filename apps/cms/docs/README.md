@@ -105,6 +105,9 @@
 | 문서 | 설명 |
 |------|------|
 | [certificate-template-implementation-summary.md](implementation/certificate-template-implementation-summary.md) | 수료증 템플릿 구현 |
+| [template-form-draft-local-save.md](implementation/template-form-draft-local-save.md) | 템플릿 양식 임시저장 구현 가이드 |
+| [form-surface-refactoring-guide.md](implementation/form-surface-refactoring-guide.md) | 템플릿 편집 ↔ 응답 작성 폼 리팩터링 가이드 (surface/JSON/로컬 renderer) |
+| [rich-text-editor-tiptap-migration.md](implementation/rich-text-editor-tiptap-migration.md) | Rich Text 에디터·뷰어 마이그레이션 (Toast UI → Tiptap) |
 | [instructor-settlement-payment-statement-issue-rules.md](features/instructor-settlement-payment-statement-issue-rules.md) | 강사 정산 지급명세 이슈 규칙 |
 | [instructor-fee-budget-criteria.md](settlement/instructor-fee-budget-criteria.md) | 강사 수당·예산 기준 |
 
@@ -140,6 +143,40 @@
 
 | 문서 | 설명 |
 |------|------|
+| [programs-api-conversion-roadmap.md](api/programs-api-conversion-roadmap.md) | 프로그램 관리 **미전환 카테고리 순차 로드맵** (Cat1–6 SSOT) |
+| [programs-api-backend-gaps-consolidated.md](api/programs-api-backend-gaps-consolidated.md) | 프로그램 Cat1–6 **백엔드 통합 핸드오프** (API 부재·계약 미비·적용 가이드) |
+| [programs-seed-case-api-coverage-backend-handoff-2026-07-30.md](api/programs-seed-case-api-coverage-backend-handoff-2026-07-30.md) | **시드 CASE(166401…)** 기준 API 적용률 · 더미 잔존 BE 핸드오프 (2026-07-30) |
+| [**be-handoff-program-dummy-seeds/**](api/be-handoff-program-dummy-seeds/README-BE.md) | **프로그램 더미 시드 zip 패키지** — FE mock 기준 BE 시드 요청 (유형별 레시피) |
+| [education-records-dummy-seed-backend-request.md](api/education-records-dummy-seed-backend-request.md) | **실적 관리**(`/education-records`) FE mock 30건 DB 시드 요청 |
+| [education-records-api-backend-cursor-prompt.md](api/education-records-api-backend-cursor-prompt.md) | **실적 관리** 목록·합계·엑셀 필터·집계 규칙 **BE Cursor 프롬프트** |
+| [dashboard-settings-dummy-seed-backend-request.md](api/dashboard-settings-dummy-seed-backend-request.md) | **대시보드 설정** FE mock 바로가기 24건·기본 layout DB 시드 요청 |
+| [**e2e-backend-fixes-index.md**](api/e2e-backend-fixes-index.md) | **E2E 관측** 백엔드 수정 요청 인덱스 (programs · members · adminAuth) |
+| [**members/**](api/members/README.md) | **회원 관리 API** — handoff · 연동 · E2E pre-register · gaps · 상세 미존 endpoint |
+| [e2e-programs-create-database-error-handoff.md](api/e2e-programs-create-database-error-handoff.md) | 일반 프로그램 등록 `DATABASE_ERROR` (P0) |
+| [e2e-admin-auth-mfa-concurrency-handoff.md](api/e2e-admin-auth-mfa-concurrency-handoff.md) | MFA 병렬 challenge (P2) |
+| [forms-surveys-api-integration.md](api/forms-surveys-api-integration.md) | 템플릿 양식 API 연동 명세 |
+| [**templates-api-conversion-status-backend-handoff.md**](api/templates-api-conversion-status-backend-handoff.md) | 템플릿 관리 **전환률 · 미적용 API (백엔드 핸드오프 SSOT)** |
+| [forms-surveys-api-migration-guide.md](api/forms-surveys-api-migration-guide.md) | 템플릿 양식 API **PHASE별 마이그레이션 가이드** |
+| [forms-surveys-api-backend-gaps.md](api/forms-surveys-api-backend-gaps.md) | 템플릿 양식 백엔드 갭 요약 (상세는 위 SSOT) |
+| [logs-api-integration.md](api/logs-api-integration.md) | 보안 설정(로그 관리) API 연동 명세 |
+| [**logs-api-conversion-status-backend-handoff.md**](api/logs-api-conversion-status-backend-handoff.md) | 보안 설정(로그 관리) **전환률 · 미적용 API (백엔드 핸드오프 SSOT)** |
+| [logs-api-backend-gaps.md](api/logs-api-backend-gaps.md) | 보안 설정(로그 관리) 백엔드 갭 요약 (상세는 위 SSOT) |
+| [data-management-api-integration.md](api/data-management-api-integration.md) | 데이터 관리(후원사·교재·세부 프로그램) API 연동 명세 |
+| [data-management-api-backend-gaps.md](api/data-management-api-backend-gaps.md) | 데이터 관리 **백엔드 갭 요청** |
+| [template-create-api-backend-handoff.md](api/template-create-api-backend-handoff.md) | 템플릿 관리 **신규 템플릿 생성** API·로직 갭 (BE 전달용) |
+| [programs-detail-api-conversion-status.md](api/programs-detail-api-conversion-status.md) | 일반 프로그램 상세 LNB Phase·완료율 SSOT |
+| [programs-company-school-api-backend-handoff.md](api/programs-company-school-api-backend-handoff.md) | 1사1교 CRUD 전환 계약·gate (Cat1) |
+| [programs-company-school-detail-api-conversion-status.md](api/programs-company-school-detail-api-conversion-status.md) | 1사1교 상세 LNB Phase·완료율 SSOT (Cat1) |
+| [programs-ujat-api-backend-handoff.md](api/programs-ujat-api-backend-handoff.md) | UJAT 프로그램 CRUD 전환 계약·gate (Cat2) |
+| [programs-ujat-detail-api-conversion-status.md](api/programs-ujat-detail-api-conversion-status.md) | UJAT 상세 LNB Phase·완료율 SSOT (Cat2) |
+| [programs-ujat-education-regions-api-backend-handoff.md](api/programs-ujat-education-regions-api-backend-handoff.md) | UJAT 교육 지역 BE 계약 (Cat3) |
+| [programs-ujat-education-regions-api-conversion-status.md](api/programs-ujat-education-regions-api-conversion-status.md) | UJAT 교육 지역 Phase SSOT (Cat3) |
+| [programs-trained-teachers-api-backend-handoff.md](api/programs-trained-teachers-api-backend-handoff.md) | 교육받은 교사 BE 계약 (Cat4) |
+| [programs-trained-teachers-api-conversion-status.md](api/programs-trained-teachers-api-conversion-status.md) | 교육받은 교사 Phase SSOT (Cat4) |
+| [programs-gemini-visiting-training-api-backend-handoff.md](api/programs-gemini-visiting-training-api-backend-handoff.md) | Gemini 찾아가는 연수 BE 계약 (Cat5) |
+| [programs-gemini-visiting-training-api-conversion-status.md](api/programs-gemini-visiting-training-api-conversion-status.md) | Gemini 찾아가는 연수 Phase SSOT (Cat5) |
+| [programs-gemini-performance-api-backend-handoff.md](api/programs-gemini-performance-api-backend-handoff.md) | Gemini 실적 관리 BE 계약 (Cat6) |
+| [programs-gemini-performance-api-conversion-status.md](api/programs-gemini-performance-api-conversion-status.md) | Gemini 실적 관리 Phase SSOT (Cat6) |
 | [api-spec-mock-detailed.md](api/api-spec-mock-detailed.md) | API 명세 상세 |
 | [api-spec-mock-extended.md](api/api-spec-mock-extended.md) | API 명세 확장 |
 
@@ -149,6 +186,11 @@
 
 | 문서 | 설명 |
 |------|------|
+| [cms-shared-ssot-migration.md](design-system/cms-shared-ssot-migration.md) | CMS shared SSOT·공통화 마이그레이션 로드맵 (Platform 제외) |
+| [wave4-teal-header-review-gate.md](design-system/wave4-teal-header-review-gate.md) | Wave4 TealHeader→ContentModal 카드 이관 게이트 (full 커스텀 유지) |
+| [dashboard-widget-catalog-audit.md](design-system/dashboard-widget-catalog-audit.md) | 대시보드 홈 위젯 DS 카탈로그·Not catalogued 추림 |
+| [css-override-audit.md](design-system/css-override-audit.md) | feature/shared CSS override 감사 (Phase 4) |
+| [numeric-input-ux-audit.md](design-system/numeric-input-ux-audit.md) | 숫자 입력 UX 감사 |
 | [add-instructor-modal-spec.md](design/add-instructor-modal-spec.md) | 강사 추가 모달 |
 | [applicant-instructor-detail-modal-spec.md](design/applicant-instructor-detail-modal-spec.md) | 지원 강사 상세 모달 |
 | [dashboard-program-progress-improvement.md](design/dashboard-program-progress-improvement.md) | 대시보드 프로그램 진행 개선 |
@@ -168,15 +210,25 @@
 |------|------|
 | [ia-members.md](members/ia-members.md) | IA 멤버 |
 | [CLEANUP_BENEFITS.md](claude-prompt/CLEANUP_BENEFITS.md) | 정리 이점 |
-| [CLEANUP_DEPRECATED_CODE.md](claude-prompt/CLEANUP_DEPRECATED_CODE.md) | Deprecated 코드 정리 |
+| [CLEANUP_DEPRECATED_CODE.md](claude-prompt/CLEANUP_DEPRECATED_CODE.md) | Deprecated 코드·Legacy UI 삭제 기록과 Current 대체 |
 | [POLICY_TO_AUDIT.md](claude-prompt/POLICY_TO_AUDIT.md) | 감사 정책 |
 
 ---
 
-## 8. 기타
+## 8. Mock 데이터 목록
 
 | 문서 | 설명 |
 |------|------|
+| [sponsor-list.md](data/sponsor-list.md) | 후원사 관리 목록 mock (132건) |
+| [textbook-list.md](data/textbook-list.md) | 교재 관리 목록 mock (22건) |
+
+---
+
+## 9. 기타
+
+| 문서 | 설명 |
+|------|------|
+| [e2e/playwright-flows.md](e2e/playwright-flows.md) | Playwright E2E 플로우별 headless / UI / headed 실행 스크립트 |
 | [test-accounts.md](test-accounts.md) | 테스트 계정 |
 | [INSTRUCTOR_SETTLEMENT_DATA_CHECK.md](check/INSTRUCTOR_SETTLEMENT_DATA_CHECK.md) | 강사 정산 데이터 점검 |
 | [LOGO_PATH_GUIDE.md](../public/logo/LOGO_PATH_GUIDE.md) | 로고 경로 가이드 |
@@ -185,7 +237,7 @@
 
 ---
 
-## 9. Cursor 스킬
+## 10. Cursor 스킬
 
 | 문서 | 설명 |
 |------|------|
@@ -194,4 +246,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-04-21
+**마지막 업데이트**: 2026-07-20

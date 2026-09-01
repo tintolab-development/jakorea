@@ -1,0 +1,252 @@
+.program-registration-paragraph .detail-info-form__body {
+  gap: 0;
+}
+
+.program-registration-paragraph .detail-info-form__field {
+  min-height: 60px;
+}
+
+/* 교육 진행 예정일 — 항목 수만큼만 행 높이 (min-height·세로 중앙 정렬 여백 방지) */
+.program-registration-paragraph .detail-info-form__field:has(.education-schedule-preview-lines) {
+  min-height: 0;
+}
+
+.program-registration-paragraph .detail-info-form__field-label,
+.program-registration-paragraph .detail-info-form__field-content {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/* 라디오 활성화 시 Ant 기본 전환·스케일 애니메이션 제거 — 즉시 선택 상태 반영 */
+.program-registration-paragraph .ant-radio,
+.program-registration-paragraph .ant-radio .ant-radio-inner,
+.program-registration-paragraph .ant-radio .ant-radio-inner::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+.program-registration-paragraph__schedule-preview-placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.program-registration-paragraph__schedule-hint {
+  color: var(--gray-85969-d, #85969d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+}
+
+.program-registration-curriculum__session-heading {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 24px */
+}
+
+.program-registration-curriculum__session-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.program-registration-curriculum__sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.program-registration-curriculum__session-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.program-registration-curriculum__session-row > .program-registration-paragraph,
+.program-registration-curriculum__session-row
+  > .program-registration-schedule-curriculum__session-panel {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.program-registration-curriculum__session-delete {
+  align-self: center;
+  flex-shrink: 0;
+}
+
+/* 과제 설정 — 있음/없음 + 제출 기한 피커 한 줄 고정 */
+.program-registration-paragraph__assignment-row {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.program-registration-paragraph__assignment-row > .app-radio-group {
+  flex-shrink: 0;
+}
+
+.program-registration-paragraph__assignment-row > .detail-info-form-inputs-separator {
+  flex-shrink: 0;
+}
+
+.program-registration-paragraph__assignment-row > .paragraph-date-picker {
+  flex: 1 1 0;
+  min-width: 200px;
+}
+
+/**
+ * 복수 회차 — 교육 형태·참여·IPS: 라디오 + 구분선 + 셀렉트(들) 한 줄
+ * IPS는 `ProgramRegistrationIpsTypeFields` 루트가 또 `detail-info-form-inputs-wrapper`라
+ * 전역 `width: 100%` + 바깥 줄 `flex-wrap: wrap` 때문에 줄바꿈되던 것을 막음
+ */
+.program-registration-paragraph
+  .detail-info-form-inputs-wrapper.program-registration-paragraph__schedule-detail-row {
+  flex-wrap: nowrap;
+  align-items: center;
+  min-width: 0;
+}
+
+/* 사업 KPI — 교육진행자 최종 인원: 강사/봉사자 라벨+입력 한 줄 */
+.program-registration-paragraph
+  .detail-info-form-inputs-wrapper.program-registration-paragraph__instructor-kpi-row {
+  flex-wrap: nowrap;
+  gap: 16px;
+  width: auto;
+  min-width: 0;
+}
+
+/* 디바이더 내장 margin(12px)과 래퍼 gap 중복 방지 — 간격은 래퍼 gap만 사용 */
+.program-registration-paragraph__instructor-kpi-row > .detail-info-form-inputs-separator {
+  margin: 0;
+}
+
+.program-registration-paragraph__instructor-kpi-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.program-registration-paragraph__schedule-detail-row > .app-radio-group {
+  flex-shrink: 0;
+}
+
+.program-registration-paragraph__schedule-detail-row > .detail-info-form-inputs-separator {
+  flex-shrink: 0;
+}
+
+.program-registration-paragraph__schedule-detail-row > .detail-info-form-inputs-wrapper {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.program-registration-paragraph__schedule-detail-row
+  > .detail-info-form-inputs-wrapper
+  > .cms-select {
+  min-width: 0;
+}
+
+/* double 행 IPS 칸 — 셀렉트 넘침·하단 잘림 방지 */
+.program-registration-paragraph
+  .detail-info-form__row--double
+  .detail-info-form-inputs-wrapper.program-registration-paragraph__schedule-detail-row {
+  flex-wrap: nowrap;
+  width: 100%;
+  min-width: 0;
+}
+
+.program-registration-paragraph
+  .detail-info-form__field-content--edit
+  > .detail-info-form-inputs-wrapper.program-registration-paragraph__schedule-detail-row {
+  width: 100%;
+  min-width: 0;
+}
+
+.program-registration-paragraph
+  .detail-info-form__row--double
+  > .detail-info-form__field--edit {
+  grid-template-rows: minmax(min-content, 1fr);
+}
+
+.program-registration-paragraph
+  .detail-info-form__row--double
+  .program-registration-paragraph__schedule-detail-row
+  > .cms-select:first-child {
+  flex-shrink: 0;
+}
+
+.program-registration-paragraph
+  .detail-info-form__row--double
+  .program-registration-paragraph__schedule-detail-row
+  > .cms-select:last-child {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* 프로그램 등록 — 교육 진행(일정형) 카드 헤더 우측 버튼 묶음 */
+.program-registration-paragraph__card-title-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  max-width: min(520px, 100%);
+}
+
+/* 교육 진행 (일정형) — 세부 일정 블록 */
+.program-registration-schedule-curriculum__block {
+  margin-bottom: 20px;
+}
+
+.program-registration-schedule-curriculum__block:last-child {
+  margin-bottom: 0;
+}
+
+.program-registration-schedule-curriculum__session-heading {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  margin-bottom: 8px;
+}
+
+/* 레이아웃 래퍼만 — 테두리·radius는 다른 단락과 동일하게 DetailInfoForm body 사용 */
+.program-registration-schedule-curriculum__session-panel {
+  width: 100%;
+  min-width: 0;
+}
+
+.program-registration-schedule-curriculum__time-groups {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.program-registration-schedule-curriculum__time-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.program-registration-schedule-curriculum__time-group-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

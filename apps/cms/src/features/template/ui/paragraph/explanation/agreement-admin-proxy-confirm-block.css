@@ -1,0 +1,109 @@
+/* 관리자 대리 작성 — 마무리 확인 2단 카드 */
+
+.agreement-admin-proxy-confirm {
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  padding: 20px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  align-self: stretch;
+  border-radius: var(--16, 16px);
+  background: var(--main-WT, #fff);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+}
+
+.agreement-admin-proxy-confirm__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
+}
+
+.agreement-admin-proxy-confirm__row--end {
+  justify-content: flex-end;
+}
+
+.agreement-admin-proxy-confirm__consent,
+.agreement-admin-proxy-confirm__date,
+.agreement-admin-proxy-confirm__guidance,
+.agreement-admin-proxy-confirm__name {
+  margin: 0;
+  font-family: Pretendard, sans-serif;
+  font-style: normal;
+  line-height: 150%;
+}
+
+.agreement-admin-proxy-confirm__consent {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--Color-netural-black, #3d3d3d);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+.agreement-admin-proxy-confirm__date {
+  flex: 0 0 auto;
+  color: var(--Color-netural-cool-700, #41494d);
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: -0.18px;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.agreement-admin-proxy-confirm__guidance {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: -0.16px;
+}
+
+.agreement-admin-proxy-confirm__name {
+  flex: 0 0 auto;
+  color: var(--Color-netural-black, #3d3d3d);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* A4 contentOnly — 카드 크롬 제거 (텍스트만) */
+.form-document-preview-paragraph--content-only .agreement-admin-proxy-confirm {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* 작성·미리보기 — 바깥 단락 카드 크롬 제거 (안쪽 confirm 블록만 카드로 보이게, 이중 border 방지) */
+.paragraph-card.agreement-admin-proxy-confirm-card,
+.paragraph-card.agreement-admin-proxy-confirm-card.paragraph-card--active,
+.form-editor-card.agreement-admin-proxy-confirm-card {
+  padding: 0;
+  border: none;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.form-editor-card.agreement-admin-proxy-confirm-card .paragraph-card__header,
+.form-editor-card.agreement-admin-proxy-confirm-card .paragraph-card__footer,
+.paragraph-card.agreement-admin-proxy-confirm-card .paragraph-card__header,
+.paragraph-card.agreement-admin-proxy-confirm-card .paragraph-card__footer {
+  display: none;
+}
+
+.form-editor-card.agreement-admin-proxy-confirm-card .paragraph-card__slot,
+.paragraph-card.agreement-admin-proxy-confirm-card .paragraph-card__slot {
+  margin-top: 0;
+  gap: 0;
+}

@@ -1,0 +1,16 @@
+/* 신규 설문 — 풀페이지 좌측 작업 영역 */
+.new-survey-form .new-survey-form__workspace {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 20px 24px 24px;
+  border-radius: 16px;
+  background: var(--main-WT, #fff);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+}
+
+.new-survey-form .new-survey-form__nav-shell {
+  width: 100%;
+  min-height: 120px;
+}

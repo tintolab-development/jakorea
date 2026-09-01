@@ -1,0 +1,2007 @@
+{
+  "meta": {
+    "domain": "sponsors",
+    "ssot": "apps/cms/src/data/mock/sponsor-management-list.ts",
+    "detailSsot": "apps/cms/src/data/mock/sponsor-management-detail.ts",
+    "note": "LNB 후원사 관리 목록. sponsors.ts(프로그램 폼 30건)와 병합하지 말 것 — 이름 교집합만 링크.",
+    "upsertKeys": [
+      "nameKoNormalized",
+      "businessRegistrationNumber"
+    ],
+    "childSeedOrder": [
+      "contacts",
+      "yearlyBusinesses",
+      "programHistories"
+    ]
+  },
+  "rows": [
+    {
+      "seedKey": "sponsor-list-001",
+      "suggestedNumericId": 800001,
+      "nameKo": "제이에이코리아",
+      "nameEn": "JA KOREA",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-30T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-002",
+      "suggestedNumericId": 800002,
+      "nameKo": "스타벅스",
+      "nameEn": "STARBUCKS",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-30T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-003",
+      "suggestedNumericId": 800003,
+      "nameKo": "삼성꿈장학재단",
+      "nameEn": "SAMSUNG DREAM SCHOLARSHIP FOUNDATION",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-30T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-004",
+      "suggestedNumericId": 800004,
+      "nameKo": "한국청소년활동진흥원",
+      "nameEn": "KOREA YOUTH ACTIVITY PROMOTION AGENCY",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-30T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-005",
+      "suggestedNumericId": 800005,
+      "nameKo": "현대 자동차",
+      "nameEn": "HYUNDAI MOTOR",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-30T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-006",
+      "suggestedNumericId": 800006,
+      "nameKo": "SK하이닉스",
+      "nameEn": "SK HYNIX",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-30T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-007",
+      "suggestedNumericId": 800007,
+      "nameKo": "LG화학",
+      "nameEn": "LG CHEM",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-30T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-008",
+      "suggestedNumericId": 800008,
+      "nameKo": "네이버",
+      "nameEn": "NAVER",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-30T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-009",
+      "suggestedNumericId": 800009,
+      "nameKo": "카카오",
+      "nameEn": "KAKAO",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-30T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-010",
+      "suggestedNumericId": 800010,
+      "nameKo": "포스코홀딩스",
+      "nameEn": "POSCO HOLDINGS",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-30T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-011",
+      "suggestedNumericId": 800011,
+      "nameKo": "신한금융그룹",
+      "nameEn": "SHINHAN FINANCIAL GROUP",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-30T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-012",
+      "suggestedNumericId": 800012,
+      "nameKo": "KB국민은행",
+      "nameEn": "KB KOOKMIN BANK",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-30T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-013",
+      "suggestedNumericId": 800013,
+      "nameKo": "한화생명",
+      "nameEn": "HANWHA LIFE",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-30T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-014",
+      "suggestedNumericId": 800014,
+      "nameKo": "아름다운 재단",
+      "nameEn": "BEAUTIFUL FOUNDATION",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-30T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-014",
+      "suggestedNumericId": 800015,
+      "nameKo": "삼성전자",
+      "nameEn": "SPONSOR 014",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-14T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-015",
+      "suggestedNumericId": 800016,
+      "nameKo": "LG전자",
+      "nameEn": "LG",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-15T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-016",
+      "suggestedNumericId": 800017,
+      "nameKo": "SK텔레콤",
+      "nameEn": "SK",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-16T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-017",
+      "suggestedNumericId": 800018,
+      "nameKo": "KT",
+      "nameEn": "KT",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-17T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-018",
+      "suggestedNumericId": 800019,
+      "nameKo": "토스",
+      "nameEn": "SPONSOR 018",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-18T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-019",
+      "suggestedNumericId": 800020,
+      "nameKo": "쿠팡",
+      "nameEn": "SPONSOR 019",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-19T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-020",
+      "suggestedNumericId": 800021,
+      "nameKo": "배달의민족",
+      "nameEn": "SPONSOR 020",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-20T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-021",
+      "suggestedNumericId": 800022,
+      "nameKo": "롯데",
+      "nameEn": "SPONSOR 021",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-21T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-022",
+      "suggestedNumericId": 800023,
+      "nameKo": "신세계",
+      "nameEn": "SPONSOR 022",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-22T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-023",
+      "suggestedNumericId": 800024,
+      "nameKo": "GS리테일",
+      "nameEn": "GS",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-23T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-024",
+      "suggestedNumericId": 800025,
+      "nameKo": "한화시스템",
+      "nameEn": "SPONSOR 024",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-24T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-025",
+      "suggestedNumericId": 800026,
+      "nameKo": "두산",
+      "nameEn": "SPONSOR 025",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-25T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-026",
+      "suggestedNumericId": 800027,
+      "nameKo": "기아",
+      "nameEn": "SPONSOR 026",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-26T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-027",
+      "suggestedNumericId": 800028,
+      "nameKo": "CJ그룹",
+      "nameEn": "CJ",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-27T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-028",
+      "suggestedNumericId": 800029,
+      "nameKo": "현대모비스",
+      "nameEn": "SPONSOR 028",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-28T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-029",
+      "suggestedNumericId": 800030,
+      "nameKo": "LG디스플레이",
+      "nameEn": "LG",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-01T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-030",
+      "suggestedNumericId": 800031,
+      "nameKo": "SK바이오사이언스",
+      "nameEn": "SK",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-02T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-031",
+      "suggestedNumericId": 800032,
+      "nameKo": "코웨이",
+      "nameEn": "SPONSOR 031",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-03T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-032",
+      "suggestedNumericId": 800033,
+      "nameKo": "아모레퍼시픽",
+      "nameEn": "SPONSOR 032",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-04T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-033",
+      "suggestedNumericId": 800034,
+      "nameKo": "한진",
+      "nameEn": "SPONSOR 033",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-05T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-034",
+      "suggestedNumericId": 800035,
+      "nameKo": "대한항공",
+      "nameEn": "SPONSOR 034",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-06T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-035",
+      "suggestedNumericId": 800036,
+      "nameKo": "GS칼텍스",
+      "nameEn": "GS",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-07T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-036",
+      "suggestedNumericId": 800037,
+      "nameKo": "S-Oil",
+      "nameEn": "S-OIL",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-08T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-037",
+      "suggestedNumericId": 800038,
+      "nameKo": "한국타이어",
+      "nameEn": "SPONSOR 037",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-09T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-038",
+      "suggestedNumericId": 800039,
+      "nameKo": "LX하우시스",
+      "nameEn": "LX",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-10T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-039",
+      "suggestedNumericId": 800040,
+      "nameKo": "DB손해보험",
+      "nameEn": "DB",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-11T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-040",
+      "suggestedNumericId": 800041,
+      "nameKo": "메리츠화재",
+      "nameEn": "SPONSOR 040",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-12T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-041",
+      "suggestedNumericId": 800042,
+      "nameKo": "현대해상",
+      "nameEn": "SPONSOR 041",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-13T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-042",
+      "suggestedNumericId": 800043,
+      "nameKo": "삼성물산",
+      "nameEn": "SPONSOR 042",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-14T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-043",
+      "suggestedNumericId": 800044,
+      "nameKo": "SK스퀘어",
+      "nameEn": "SK",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-15T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-044",
+      "suggestedNumericId": 800045,
+      "nameKo": "LG유플러스",
+      "nameEn": "LG",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-16T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-045",
+      "suggestedNumericId": 800046,
+      "nameKo": "KT&G",
+      "nameEn": "KT&G",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-17T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-046",
+      "suggestedNumericId": 800047,
+      "nameKo": "농협은행",
+      "nameEn": "SPONSOR 046",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-18T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-047",
+      "suggestedNumericId": 800048,
+      "nameKo": "우리금융지주",
+      "nameEn": "SPONSOR 047",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-19T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-048",
+      "suggestedNumericId": 800049,
+      "nameKo": "하나금융지주",
+      "nameEn": "SPONSOR 048",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-20T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-049",
+      "suggestedNumericId": 800050,
+      "nameKo": "미래에셋증권",
+      "nameEn": "SPONSOR 049",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-21T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-050",
+      "suggestedNumericId": 800051,
+      "nameKo": "NH투자증권",
+      "nameEn": "NH",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-22T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-051",
+      "suggestedNumericId": 800052,
+      "nameKo": "교보증권",
+      "nameEn": "SPONSOR 051",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-23T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-052",
+      "suggestedNumericId": 800053,
+      "nameKo": "대웅제약",
+      "nameEn": "SPONSOR 052",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-24T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-053",
+      "suggestedNumericId": 800054,
+      "nameKo": "셀트리온",
+      "nameEn": "SPONSOR 053",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-25T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-054",
+      "suggestedNumericId": 800055,
+      "nameKo": "유한양행",
+      "nameEn": "SPONSOR 054",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-26T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-055",
+      "suggestedNumericId": 800056,
+      "nameKo": "한미반도체",
+      "nameEn": "SPONSOR 055",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-27T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-056",
+      "suggestedNumericId": 800057,
+      "nameKo": "동원그룹",
+      "nameEn": "SPONSOR 056",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-28T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-057",
+      "suggestedNumericId": 800058,
+      "nameKo": "빙그레",
+      "nameEn": "SPONSOR 057",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-01T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-058",
+      "suggestedNumericId": 800059,
+      "nameKo": "매일유업",
+      "nameEn": "SPONSOR 058",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-02T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-059",
+      "suggestedNumericId": 800060,
+      "nameKo": "오뚜기",
+      "nameEn": "SPONSOR 059",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-03T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-060",
+      "suggestedNumericId": 800061,
+      "nameKo": "풀무원",
+      "nameEn": "SPONSOR 060",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-04T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-061",
+      "suggestedNumericId": 800062,
+      "nameKo": "SPC그룹",
+      "nameEn": "SPC",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-05T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-062",
+      "suggestedNumericId": 800063,
+      "nameKo": "나이키코리아",
+      "nameEn": "SPONSOR 062",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-06T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-063",
+      "suggestedNumericId": 800064,
+      "nameKo": "아디다스코리아",
+      "nameEn": "SPONSOR 063",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-07T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-064",
+      "suggestedNumericId": 800065,
+      "nameKo": "유니클로",
+      "nameEn": "SPONSOR 064",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-08T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-065",
+      "suggestedNumericId": 800066,
+      "nameKo": "이랜드",
+      "nameEn": "SPONSOR 065",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-09T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-066",
+      "suggestedNumericId": 800067,
+      "nameKo": "무신사",
+      "nameEn": "SPONSOR 066",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-10T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-067",
+      "suggestedNumericId": 800068,
+      "nameKo": "컬리",
+      "nameEn": "SPONSOR 067",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-11T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-068",
+      "suggestedNumericId": 800069,
+      "nameKo": "올리브영",
+      "nameEn": "SPONSOR 068",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-12T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-069",
+      "suggestedNumericId": 800070,
+      "nameKo": "다이소",
+      "nameEn": "SPONSOR 069",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-13T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-070",
+      "suggestedNumericId": 800071,
+      "nameKo": "이마트24",
+      "nameEn": "24",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-14T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-071",
+      "suggestedNumericId": 800072,
+      "nameKo": "BGF리테일",
+      "nameEn": "BGF",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-15T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-072",
+      "suggestedNumericId": 800073,
+      "nameKo": "SK이터닉스",
+      "nameEn": "SK",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-16T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-073",
+      "suggestedNumericId": 800074,
+      "nameKo": "한국전력",
+      "nameEn": "SPONSOR 073",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-17T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-074",
+      "suggestedNumericId": 800075,
+      "nameKo": "한국가스공사",
+      "nameEn": "SPONSOR 074",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-18T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-075",
+      "suggestedNumericId": 800076,
+      "nameKo": "한국수력원자력",
+      "nameEn": "SPONSOR 075",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-19T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-076",
+      "suggestedNumericId": 800077,
+      "nameKo": "코레일",
+      "nameEn": "SPONSOR 076",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-20T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-077",
+      "suggestedNumericId": 800078,
+      "nameKo": "한국도로공사",
+      "nameEn": "SPONSOR 077",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-21T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-078",
+      "suggestedNumericId": 800079,
+      "nameKo": "LH",
+      "nameEn": "LH",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-22T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-079",
+      "suggestedNumericId": 800080,
+      "nameKo": "SH공사",
+      "nameEn": "SH",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-23T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-080",
+      "suggestedNumericId": 800081,
+      "nameKo": "인천국제공항공사",
+      "nameEn": "SPONSOR 080",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-24T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-081",
+      "suggestedNumericId": 800082,
+      "nameKo": "한국토지주택공사",
+      "nameEn": "SPONSOR 081",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-25T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-082",
+      "suggestedNumericId": 800083,
+      "nameKo": "한국농어촌공사",
+      "nameEn": "SPONSOR 082",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-26T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-083",
+      "suggestedNumericId": 800084,
+      "nameKo": "한국수자원공사",
+      "nameEn": "SPONSOR 083",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-27T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-084",
+      "suggestedNumericId": 800085,
+      "nameKo": "한국석유공사",
+      "nameEn": "SPONSOR 084",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-28T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-085",
+      "suggestedNumericId": 800086,
+      "nameKo": "한국남부발전",
+      "nameEn": "SPONSOR 085",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-01T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-086",
+      "suggestedNumericId": 800087,
+      "nameKo": "한국중부발전",
+      "nameEn": "SPONSOR 086",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-02T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-087",
+      "suggestedNumericId": 800088,
+      "nameKo": "한국서부발전",
+      "nameEn": "SPONSOR 087",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-03T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-088",
+      "suggestedNumericId": 800089,
+      "nameKo": "한국동서발전",
+      "nameEn": "SPONSOR 088",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-04T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-089",
+      "suggestedNumericId": 800090,
+      "nameKo": "한국남동발전",
+      "nameEn": "SPONSOR 089",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-05T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-090",
+      "suggestedNumericId": 800091,
+      "nameKo": "삼성전자 (2)",
+      "nameEn": "SPONSOR 090",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-06T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-091",
+      "suggestedNumericId": 800092,
+      "nameKo": "LG전자 (2)",
+      "nameEn": "LG",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-07T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-092",
+      "suggestedNumericId": 800093,
+      "nameKo": "SK텔레콤 (2)",
+      "nameEn": "SK",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-08T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-093",
+      "suggestedNumericId": 800094,
+      "nameKo": "KT (2)",
+      "nameEn": "KT",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-09T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-094",
+      "suggestedNumericId": 800095,
+      "nameKo": "토스 (2)",
+      "nameEn": "SPONSOR 094",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-10T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-095",
+      "suggestedNumericId": 800096,
+      "nameKo": "쿠팡 (2)",
+      "nameEn": "SPONSOR 095",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-11T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-096",
+      "suggestedNumericId": 800097,
+      "nameKo": "배달의민족 (2)",
+      "nameEn": "SPONSOR 096",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-12T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-097",
+      "suggestedNumericId": 800098,
+      "nameKo": "롯데 (2)",
+      "nameEn": "SPONSOR 097",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-13T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-098",
+      "suggestedNumericId": 800099,
+      "nameKo": "신세계 (2)",
+      "nameEn": "SPONSOR 098",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-14T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-099",
+      "suggestedNumericId": 800100,
+      "nameKo": "GS리테일 (2)",
+      "nameEn": "GS",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-15T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-100",
+      "suggestedNumericId": 800101,
+      "nameKo": "한화시스템 (2)",
+      "nameEn": "SPONSOR 100",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-16T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-101",
+      "suggestedNumericId": 800102,
+      "nameKo": "두산 (2)",
+      "nameEn": "SPONSOR 101",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-17T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-102",
+      "suggestedNumericId": 800103,
+      "nameKo": "기아 (2)",
+      "nameEn": "SPONSOR 102",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-18T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-103",
+      "suggestedNumericId": 800104,
+      "nameKo": "CJ그룹 (2)",
+      "nameEn": "CJ",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-19T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-104",
+      "suggestedNumericId": 800105,
+      "nameKo": "현대모비스 (2)",
+      "nameEn": "SPONSOR 104",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-20T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-105",
+      "suggestedNumericId": 800106,
+      "nameKo": "LG디스플레이 (2)",
+      "nameEn": "LG",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-21T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-106",
+      "suggestedNumericId": 800107,
+      "nameKo": "SK바이오사이언스 (2)",
+      "nameEn": "SK",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-22T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-107",
+      "suggestedNumericId": 800108,
+      "nameKo": "코웨이 (2)",
+      "nameEn": "SPONSOR 107",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-23T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-108",
+      "suggestedNumericId": 800109,
+      "nameKo": "아모레퍼시픽 (2)",
+      "nameEn": "SPONSOR 108",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-24T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-109",
+      "suggestedNumericId": 800110,
+      "nameKo": "한진 (2)",
+      "nameEn": "SPONSOR 109",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-25T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-110",
+      "suggestedNumericId": 800111,
+      "nameKo": "대한항공 (2)",
+      "nameEn": "SPONSOR 110",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-26T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-111",
+      "suggestedNumericId": 800112,
+      "nameKo": "GS칼텍스 (2)",
+      "nameEn": "GS",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-27T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-112",
+      "suggestedNumericId": 800113,
+      "nameKo": "S-Oil (2)",
+      "nameEn": "S-OIL",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-28T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-113",
+      "suggestedNumericId": 800114,
+      "nameKo": "한국타이어 (2)",
+      "nameEn": "SPONSOR 113",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-01T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-114",
+      "suggestedNumericId": 800115,
+      "nameKo": "LX하우시스 (2)",
+      "nameEn": "LX",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-02T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-115",
+      "suggestedNumericId": 800116,
+      "nameKo": "DB손해보험 (2)",
+      "nameEn": "DB",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-03T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-116",
+      "suggestedNumericId": 800117,
+      "nameKo": "메리츠화재 (2)",
+      "nameEn": "SPONSOR 116",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-04T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-117",
+      "suggestedNumericId": 800118,
+      "nameKo": "현대해상 (2)",
+      "nameEn": "SPONSOR 117",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-05T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-118",
+      "suggestedNumericId": 800119,
+      "nameKo": "삼성물산 (2)",
+      "nameEn": "SPONSOR 118",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-06T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-119",
+      "suggestedNumericId": 800120,
+      "nameKo": "SK스퀘어 (2)",
+      "nameEn": "SK",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-07T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-120",
+      "suggestedNumericId": 800121,
+      "nameKo": "LG유플러스 (2)",
+      "nameEn": "LG",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-08T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-121",
+      "suggestedNumericId": 800122,
+      "nameKo": "KT&G (2)",
+      "nameEn": "KT&G",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-09T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-122",
+      "suggestedNumericId": 800123,
+      "nameKo": "농협은행 (2)",
+      "nameEn": "SPONSOR 122",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-10T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-123",
+      "suggestedNumericId": 800124,
+      "nameKo": "우리금융지주 (2)",
+      "nameEn": "SPONSOR 123",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-11T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-124",
+      "suggestedNumericId": 800125,
+      "nameKo": "하나금융지주 (2)",
+      "nameEn": "SPONSOR 124",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-12T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-125",
+      "suggestedNumericId": 800126,
+      "nameKo": "미래에셋증권 (2)",
+      "nameEn": "SPONSOR 125",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-13T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-126",
+      "suggestedNumericId": 800127,
+      "nameKo": "NH투자증권 (2)",
+      "nameEn": "NH",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-14T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-127",
+      "suggestedNumericId": 800128,
+      "nameKo": "교보증권 (2)",
+      "nameEn": "SPONSOR 127",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "ended",
+      "sponsorshipStartDate": "2026-03-15T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-128",
+      "suggestedNumericId": 800129,
+      "nameKo": "대웅제약 (2)",
+      "nameEn": "SPONSOR 128",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-16T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-129",
+      "suggestedNumericId": 800130,
+      "nameKo": "셀트리온 (2)",
+      "nameEn": "SPONSOR 129",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-17T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-130",
+      "suggestedNumericId": 800131,
+      "nameKo": "유한양행 (2)",
+      "nameEn": "SPONSOR 130",
+      "organizationKind": "foundation",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-18T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    },
+    {
+      "seedKey": "sponsor-list-131",
+      "suggestedNumericId": 800132,
+      "nameKo": "한국씨티은행",
+      "nameEn": "CITI BANK",
+      "organizationKind": "corporate",
+      "sponsorshipStatus": "active",
+      "sponsorshipStartDate": "2026-03-30T00:00:00.000Z",
+      "programCount": 13,
+      "mainContact": {
+        "name": "홍길동",
+        "phone": "010-5678-2342"
+      }
+    }
+  ],
+  "detailSamples": [
+    {
+      "seedKey": "sponsor-list-001",
+      "suggestedNumericId": 800001,
+      "nameKo": "제이에이코리아",
+      "businessNumber": "124-81-00998",
+      "executives": "전영현, 노태문",
+      "address": "경기도 수원시 영통구 삼성로 129(매탄동)",
+      "contacts": [
+        {
+          "seedKey": "sponsor-contact-1",
+          "name": "김제이",
+          "position": "책임",
+          "phone": "010-2431-0000",
+          "email": "gwanl123@naver.com",
+          "contactType": "lead",
+          "registeredAt": "2026-02-10T09:15:00+09:00"
+        },
+        {
+          "seedKey": "sponsor-contact-2",
+          "name": "박제이",
+          "position": "선임",
+          "phone": "010-7353-0000",
+          "email": "gwanl433@naver.com",
+          "contactType": "assistant",
+          "registeredAt": "2026-02-10T09:15:00+09:00"
+        },
+        {
+          "seedKey": "sponsor-contact-3",
+          "name": "강제이",
+          "position": "사원",
+          "phone": "010-3145-0000",
+          "email": "gwanl213@naver.com",
+          "contactType": "assistant",
+          "registeredAt": "2026-02-10T09:15:00+09:00"
+        }
+      ],
+      "yearlyBusinesses": [
+        {
+          "seedKey": "sponsor-yearly-2026",
+          "businessYear": 2026,
+          "donationAmount": 91500000,
+          "beneficiaryCount": 915,
+          "memo": "시안 샘플 누적값",
+          "businessName": "2026년",
+          "managerNameSnapshot": "홍길동"
+        }
+      ],
+      "programHistories": [
+        {
+          "seedKey": "sponsor-program-history-206",
+          "programIdHint": "economy-prog-001",
+          "title": "HSBC/HKU Business Case Competition 2026 도전 안내",
+          "year": 2026,
+          "lifecycleStatus": "planned",
+          "managerName": "홍길동",
+          "participantCount": "0 / 30",
+          "participantType": "school",
+          "educationTarget": "elementary"
+        },
+        {
+          "seedKey": "sponsor-program-history-205",
+          "programIdHint": "economy-prog-002",
+          "title": "2026 JA Korea 대학생경제캠프 ULT 36기 모집",
+          "year": 2026,
+          "lifecycleStatus": "education_in_progress",
+          "managerName": "홍길동",
+          "participantCount": "30 / 30",
+          "participantType": "individual",
+          "educationTarget": "college"
+        },
+        {
+          "seedKey": "sponsor-program-history-204",
+          "programIdHint": "economy-prog-003",
+          "title": "EY한영_JA Kova Growth to Professional 2026 대학생 자기 탐진",
+          "year": 2026,
+          "lifecycleStatus": "planned",
+          "managerName": "홍길동",
+          "participantCount": "30 / 30",
+          "participantType": "individual",
+          "educationTarget": "college"
+        },
+        {
+          "seedKey": "sponsor-program-history-203",
+          "programIdHint": "economy-prog-004",
+          "title": "2026년 JA Korea 초등 경제교육 모집 안내",
+          "year": 2026,
+          "lifecycleStatus": "planned",
+          "managerName": "홍길동",
+          "participantCount": "10 / 30",
+          "participantType": "school",
+          "educationTarget": "elementary"
+        },
+        {
+          "seedKey": "sponsor-program-history-202",
+          "programIdHint": "economy-prog-005",
+          "title": "2026 SAP-함께 성장하JA 참여 고등학생 모집 안내 (IT, SW 멘토링)",
+          "year": 2026,
+          "lifecycleStatus": "education_in_progress",
+          "managerName": "홍길동",
+          "participantCount": "30 / 30",
+          "participantType": "individual",
+          "educationTarget": "high"
+        },
+        {
+          "seedKey": "sponsor-program-history-201",
+          "programIdHint": "economy-prog-006",
+          "title": "2026 SAP-JA Korea Global Career Discovery 원데이 취업 멘토링",
+          "year": 2026,
+          "lifecycleStatus": "education_in_progress",
+          "managerName": "홍길동",
+          "participantCount": "3 / 30",
+          "participantType": "volunteer",
+          "educationTarget": "adult"
+        },
+        {
+          "seedKey": "sponsor-program-history-200",
+          "programIdHint": "economy-prog-007",
+          "title": "2026년 JA Korea 경제금융 교육 전문가단 모집",
+          "year": 2026,
+          "lifecycleStatus": "education_completed",
+          "managerName": "홍길동",
+          "participantCount": "3 / 30",
+          "participantType": "school",
+          "educationTarget": "middle"
+        },
+        {
+          "seedKey": "sponsor-program-history-199",
+          "programIdHint": "economy-prog-008",
+          "title": "2026 한국지멘스-JA Korea 특별반 JOB 참가자 모집",
+          "year": 2026,
+          "lifecycleStatus": "education_completed",
+          "managerName": "홍길동",
+          "participantCount": "2 / 30",
+          "participantType": "school",
+          "educationTarget": "high"
+        }
+      ]
+    }
+  ]
+}

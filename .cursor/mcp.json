@@ -1,16 +1,14 @@
 {
   "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/Users/tintolab/Desktop/arbeiten/jakorea"
-      ]
+    "figma_official": {
+      "url": "https://mcp.figma.com/mcp"
     },
-    "git": {
+    "notion": {
+      "url": "https://mcp.notion.com/mcp"
+    },
+    "playwright": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-git", "/Users/tintolab/Desktop/arbeiten/jakorea"]
+      "args": ["-y", "@playwright/mcp@latest"]
     }
   }
 }

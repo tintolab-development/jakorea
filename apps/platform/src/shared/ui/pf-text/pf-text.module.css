@@ -1,0 +1,67 @@
+.root {
+  display: inline;
+}
+
+.colorInherit {
+  color: inherit;
+}
+
+.colorBlack {
+  color: var(--color-neutral-black);
+}
+
+.colorWhite {
+  color: var(--color-neutral-white);
+}
+
+.colorNeutralCool500 {
+  color: var(--color-neutral-cool-500);
+}
+
+.colorNeutralCool600 {
+  color: var(--color-neutral-cool-600);
+}
+
+.colorNeutralCool700 {
+  color: var(--color-neutral-cool-700);
+}
+
+.colorNeutralWarm500 {
+  color: var(--color-neutral-warm-500);
+}
+
+.colorNeutralWarm600 {
+  color: var(--color-neutral-warm-600);
+}
+
+.colorPrimary400 {
+  color: var(--color-primary-400);
+}
+
+.colorPrimary500 {
+  color: var(--color-primary-500);
+}
+
+.colorPrimary600 {
+  color: var(--color-primary-600);
+}
+
+.colorPrimary700 {
+  color: var(--color-primary-700);
+}
+
+.colorPrimary800 {
+  color: var(--color-primary-800);
+}
+
+.colorPaletteIce {
+  color: var(--color-palette-ice);
+}
+
+.colorError {
+  color: var(--color-status-error-default);
+}
+
+.colorSuccess {
+  color: var(--color-status-success-default);
+}

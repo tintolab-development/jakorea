@@ -1,0 +1,19 @@
+.participating-instructor-application-info {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* 소속 재직은 StatusDropdownCell tag100 + INLINE_TAG100 셸 — 열림 시 행 높이만 고정 */
+.participating-instructor-application-info
+  .detail-info-form__field:has(.applicant-general-instructor-basic-info__employment-dropdown),
+.participating-instructor-application-info
+  .detail-info-form__field:has(.status-dropdown-cell__status-trigger--open) {
+  min-height: 56px;
+}
+
+.participating-instructor-application-info
+  .detail-info-form__field:has(.applicant-general-instructor-basic-info__employment-dropdown)
+  .detail-info-form__field-content {
+  overflow: visible;
+}

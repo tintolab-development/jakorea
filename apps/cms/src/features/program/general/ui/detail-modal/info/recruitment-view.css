@@ -1,0 +1,57 @@
+.recruitment-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.recruitment-view__tabs {
+  flex-shrink: 0;
+}
+
+.recruitment-view__body {
+  display: flex;
+  flex-direction: column;
+  padding-top: 4px;
+  min-width: 0;
+}
+
+.recruitment-view__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+  flex-shrink: 0;
+}
+
+/* 참여자 모집 정보 — 사용자 페이지 미리보기 (140×44, JA-mint-01) */
+.recruitment-view
+  .recruitment-view__preview-btn.cms-button.ant-btn {
+  display: flex;
+  width: 140px;
+  min-width: 140px;
+  height: 44px;
+  min-height: 44px;
+  padding: 6px 16px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--8, 8px);
+  box-sizing: border-box;
+  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
+  background: var(--color-mint-01, #01a1af) !important;
+  color: var(--main-WT, #fff) !important;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.recruitment-view
+  .recruitment-view__preview-btn.cms-button--primary.ant-btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-mint-01, #01a1af) 88%, #000) !important;
+  border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
+  color: var(--main-WT, #fff) !important;
+}

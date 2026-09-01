@@ -1,0 +1,422 @@
+/**
+ * 교재 관리 목록
+ * 고정: 체크 60 · No. 80 · 사용 100 · 썸네일 120
+ * 가변(min→화면 잔여폭): 교재명 220 · 사업 140 · 대상 120 · 효과 200 · 등록 180
+ * 좁은 화면 min 1220 가로 스크롤 · 썸네일 88×125 · 행 157
+ */
+
+.education-textbooks-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.education-textbooks-page__filter-card {
+  margin-bottom: var(--spacing-24, 24px);
+}
+
+.education-textbooks-page__filter {
+  width: 100%;
+}
+
+.education-textbooks-page__table-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow: auto;
+}
+
+/* 사용 여부 Switch — DS mint-01 */
+.education-textbooks-page .ant-switch-checked {
+  background: var(--color-mint-01, #01a1af) !important;
+}
+
+.education-textbooks-page .ant-switch {
+  min-width: 40px;
+}
+
+/* 공통 열 폭 CSS 변수 — cms-data-table 선택/No./사용 과 동일 */
+.education-textbooks-table.cms-data-table {
+  --table-selection-column-width: 60px;
+  --table-no-column-width: 80px;
+  --table-usage-column-width: 100px;
+}
+
+/*
+ * 테이블 = 컨테이너 100%.
+ * 고정 열(1~4)만 px 락. 가변 열(5~9)은 min만 두고 잔여폭 분배.
+ * (antd col 인라인 width 덮어쓰기 위해 !important)
+ */
+.education-textbooks-table.cms-data-table {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.education-textbooks-table.cms-data-table table {
+  table-layout: fixed !important;
+  width: 100% !important;
+  min-width: 1220px !important;
+  max-width: none !important;
+}
+
+.education-textbooks-table.cms-data-table .ant-table,
+.education-textbooks-table.cms-data-table .ant-table-container,
+.education-textbooks-table.cms-data-table .ant-table-content {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* 고정: 체크 60 · No 80 · 사용 100 · 썸네일 120 */
+.education-textbooks-table.cms-data-table colgroup > col:nth-child(1),
+.education-textbooks-table.cms-data-table col.ant-table-selection-col {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+}
+
+.education-textbooks-table.cms-data-table colgroup > col:nth-child(2),
+.education-textbooks-table.cms-data-table col.ant-table-selection-col + col {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+.education-textbooks-table.cms-data-table colgroup > col:nth-child(3) {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+}
+
+.education-textbooks-table.cms-data-table colgroup > col:nth-child(4) {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+}
+
+/*
+ * 가변 열 — antd 가 넣는 px width 를 auto 로 풀어 잔여폭 흡수
+ * min 비율 seed: 220 / 140 / 120 / 200 / 180
+ */
+.education-textbooks-table.cms-data-table colgroup > col:nth-child(5) {
+  width: auto !important;
+  min-width: 220px !important;
+  max-width: none !important;
+}
+
+.education-textbooks-table.cms-data-table colgroup > col:nth-child(6) {
+  width: auto !important;
+  min-width: 140px !important;
+  max-width: none !important;
+}
+
+.education-textbooks-table.cms-data-table colgroup > col:nth-child(7) {
+  width: auto !important;
+  min-width: 120px !important;
+  max-width: none !important;
+}
+
+.education-textbooks-table.cms-data-table colgroup > col:nth-child(8) {
+  width: auto !important;
+  min-width: 200px !important;
+  max-width: none !important;
+}
+
+.education-textbooks-table.cms-data-table colgroup > col:nth-child(9) {
+  width: auto !important;
+  min-width: 180px !important;
+  max-width: none !important;
+}
+
+/*
+ * 행 높이: 썸네일 125 + 상하 패딩 16×2 = 157
+ * cms-data-table 기본 54px 재정의
+ */
+.education-textbooks-table.cms-data-table .ant-table-tbody > tr > td,
+.education-textbooks-table.cms-data-table .ant-table-tbody > tr:hover > td {
+  height: 157px !important;
+  min-height: 157px !important;
+  max-height: 157px !important;
+  padding: 10px 16px !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+  overflow: hidden;
+}
+
+/* 체크 60 */
+.education-textbooks-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-selection-column,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-selection-column,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.ant-table-selection-column {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  padding: 12px 4px 12px 8px !important;
+  box-sizing: border-box !important;
+}
+
+/* No. 80 — 순번 열 (드래그 순서 열 없음) */
+.education-textbooks-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.cms-table-col--no,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.cms-table-col--no,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.cms-table-col--no {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+  padding: 10px 8px !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+}
+
+/* 사용 여부 100 */
+.education-textbooks-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.cms-table-col--usage,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.cms-table-col--usage,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.cms-table-col--usage,
+.education-textbooks-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.education-textbooks-page__active-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.education-textbooks-page__active-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.education-textbooks-page__active-col {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+}
+
+/**
+ * 썸네일 th · td 동일 스펙 (시안 width 120)
+ * ※ td 에 display:flex 금지 — table-cell 깨져 열 너비/헤더 정렬 붕괴
+ */
+.education-textbooks-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.education-textbooks-page__thumb-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.education-textbooks-page__thumb-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.education-textbooks-page__thumb-col {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  vertical-align: middle !important;
+  overflow: hidden !important;
+  text-align: center !important;
+}
+
+.education-textbooks-page__thumb-cell {
+  display: flex;
+  box-sizing: border-box;
+  width: 120px;
+  max-width: 120px;
+  height: 157px;
+  padding: 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin: 0 auto;
+}
+
+.education-textbooks-page__thumb-wrap {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  width: 88px;
+  height: 125px;
+  aspect-ratio: 88 / 125;
+  overflow: hidden;
+  border-radius: 4px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--color-bg-secondary, #f7f7f7);
+  box-sizing: border-box;
+}
+
+.education-textbooks-page__thumb.ant-image,
+.education-textbooks-page__thumb-wrap .ant-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.education-textbooks-page__thumb-wrap .ant-image-img,
+.education-textbooks-page__thumb {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  display: block;
+}
+
+.education-textbooks-page__thumb-empty {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary, #8c8c8c);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* 가변 열 — min 확보 후 화면 너비에 맞게 확장 */
+.education-textbooks-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.education-textbooks-page__title-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.education-textbooks-page__title-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.education-textbooks-page__title-col {
+  width: auto !important;
+  min-width: 220px !important;
+  max-width: none !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+}
+
+.education-textbooks-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.education-textbooks-page__field-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.education-textbooks-page__field-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.education-textbooks-page__field-col {
+  width: auto !important;
+  min-width: 140px !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+}
+
+.education-textbooks-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.education-textbooks-page__target-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.education-textbooks-page__target-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.education-textbooks-page__target-col {
+  width: auto !important;
+  min-width: 120px !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+}
+
+.education-textbooks-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.education-textbooks-page__effect-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.education-textbooks-page__effect-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.education-textbooks-page__effect-col {
+  width: auto !important;
+  min-width: 200px !important;
+  max-width: none !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+}
+
+.education-textbooks-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.education-textbooks-page__date-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.education-textbooks-page__date-col,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.education-textbooks-page__date-col {
+  width: auto !important;
+  min-width: 180px !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+}
+
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.education-textbooks-page__title-col
+  .ant-table-cell-content,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.education-textbooks-page__field-col
+  .ant-table-cell-content,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.education-textbooks-page__target-col
+  .ant-table-cell-content,
+.education-textbooks-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.education-textbooks-page__effect-col
+  .ant-table-cell-content {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.education-textbooks-table .ant-table-tbody > tr {
+  cursor: pointer;
+}

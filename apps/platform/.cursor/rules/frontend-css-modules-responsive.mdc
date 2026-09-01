@@ -1,0 +1,387 @@
+---
+description: Frontend responsive UI implementation rules optimized for CSS Modules
+globs:
+  - "src/**/*.{tsx,ts,jsx,js}"
+  - "src/**/*.module.css"
+  - "src/**/*.module.scss"
+alwaysApply: true
+---
+
+# Frontend CSS Modules Responsive Rules
+
+You are a senior frontend engineer specializing in scalable responsive UI with React, TypeScript, and CSS Modules.
+
+## Core Principles
+
+- Use CSS Modules as the default styling method.
+- Do not use inline styles unless the value is dynamic and cannot be expressed safely with CSS variables or class composition.
+- Prefer semantic, reusable layout classes over one-off visual hacks.
+- Keep JSX structure simple and make responsiveness primarily controlled by CSS.
+- **Structure before breakpoints** — define layout roles in markup, then adapt with Platform media aliases.
+- Avoid adding JavaScript viewport checks unless layout behavior truly requires runtime measurement.
+- Implement mobile-first responsive design by default.
+- Treat **PC compact (middle · 1080~1599)** as a real band: verify at 1280, not only at 1600+.
+- Preserve existing UI behavior and component APIs unless explicitly asked to refactor them.
+
+## File Structure
+
+For each component, prefer this structure (kebab-case files, PascalCase export):
+
+```txt
+home-page/
+  home-page.tsx
+  home-page.module.css
+  index.ts
+```
+
+```tsx
+// home-page.tsx
+export function HomePage() { ... }
+```
+
+When modifying an existing component, follow the existing project structure instead of forcing a new one.
+
+## CSS Modules Naming
+
+**Class names use camelCase.** File and folder names stay kebab-case (`home-page.module.css`); selectors inside modules use camelCase (`heroTitle`, `sortOptionActive`).
+
+Use clear class names that describe structure or role, not visual appearance only.
+
+Good:
+
+```css
+.container {}
+.header {}
+.content {}
+.actions {}
+.cardList {}
+.thumbnailWrap {}
+.primaryButton {}
+.sortOptionActive {}
+```
+
+Avoid:
+
+```css
+.sort-option-active {}  /* kebab-case — Platform convention is camelCase */
+.bigRedBox {}
+.marginTop20 {}
+.flexDiv {}
+```
+
+In TSX, prefer dot access: `styles.sortOptionActive` (not `styles['sort-option-active']`).
+
+## React Class Usage
+
+Use CSS Modules imports like this:
+
+```tsx
+import styles from './home-page.module.css';
+
+export function HomePage() {
+  return <section className={styles.container}>...</section>;
+}
+```
+
+For conditional classes, prefer a small utility such as `clsx` if already available:
+
+```tsx
+className={clsx(styles.card, isActive && styles.active)}
+```
+
+If no class utility exists, use array filtering:
+
+```tsx
+className={[styles.card, isActive ? styles.active : null].filter(Boolean).join(' ')}
+```
+
+Do not concatenate CSS Module class names manually in fragile ways.
+
+## Responsive Strategy
+
+### UI structure first (before breakpoints)
+
+Design the **layout roles in markup**, then adapt with CSS. Do not invent extra breakpoints to paper over unclear structure.
+
+1. **Own concerns by layer** (FSD-lite):
+   - `widgets/layout` (shell, header, footer, auth shell) — chrome, page gutters, nav mode
+   - `pages/*` — page grid, section rhythm, max-width shells
+   - `features/*` — local composition (list ↔ detail, filter ↔ table)
+   - `shared/ui` — fluid primitives only; avoid page-band forks unless the primitive is layout chrome
+2. **One DOM tree** — stack ↔ row, drawer ↔ sidebar, 1-col ↔ multi-col via CSS. Do not mount duplicate mobile/desktop trees unless interaction truly differs (e.g. separate desktop nav component already in the codebase).
+3. **Class names = layout roles** (`shell`, `main`, `aside`, `toolbar`, `content`, `actions`) so media queries change composition, not random visual patches.
+4. **Fluid metrics first** — `width: min(...)`, `clamp()`, token gutters (`--page-padding-x`), `minmax`, `auto-fit` should absorb most size variance inside a band before adding another `@media`.
+
+### Breakpoint bands (Platform 3-tier only)
+
+```css
+/* Mobile · ~1079 */
+/* PC compact (middle) · 1080~1599 */
+/* PC full · 1600~ */
+```
+
+Platform layout uses `--layout-min-width: 375px` on `html`, `body`, and `#root` (see `shared/styles/tokens.css`, `reset.css`). Do not repeat `min-width: 375px` on individual components unless a local exception is required.
+
+Use **postcss-custom-media** aliases from `shared/styles/breakpoints.css`:
+
+| Alias | Range | When to use |
+|-------|--------|-------------|
+| `--bp-below-pc` | ~1079 | Mobile-only overrides (rare if base is mobile-first) |
+| `--bp-pc-up` | 1080~ | **Default PC fork** — shared layout for compact + full |
+| `--bp-pc-compact` | 1080~1599 | **Middle only** — when compact must differ from full |
+| `--bp-pc-full-up` | 1600~ | Wide-only enhancement (extra columns, larger shell use) |
+
+JS hooks: `shared/lib/breakpoints.ts` (`platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`). Do **not** invent intermediate widths (768 / 1024 / 1360 등).
+
+### Decision ladder (pick the smallest fork)
+
+1. Same structure, density/type/spacing only → tokens / `clamp` / base styles — **no new media query**.
+2. Structure changes for all PC (stack→row, show sidebar, denser toolbar) → **`@media (--bp-pc-up)`**.
+3. Compact PC needs a different composition than full (column count, side panel width, denser nav) → add **`@media (--bp-pc-compact)`** (and optionally pair with `--bp-pc-full-up`).
+4. Only the wide canvas gains something → **`@media (--bp-pc-full-up)`** alone.
+5. Prefer `--bp-pc-up` + optional `--bp-pc-full-up` over sprinkling `--bp-pc-compact` for every tweak.
+
+### Middle band (PC compact · 1080~1599)
+
+Treat **middle as a first-class layout band**, not a leftover between mobile and “real” desktop.
+
+**Do**
+
+- Start from mobile base, then lift shared PC behavior with `--bp-pc-up`.
+- At **1280** (canonical middle check width), verify: no horizontal scroll, shell gutters, primary nav/content split, tables/filters usable, cards not over-stretched or crushed.
+- Use `--bp-pc-compact` when full-width rules would break middle UI — e.g. 4-col grids that need 2–3 cols, side panels that should stay narrower, toolbars that wrap vs stay single-row.
+- Keep page shells fluid: `width: min(100%, var(--content-max-width))` (or the shell token already used by that page). Let middle inherit PC padding from tokens (`--page-padding-x` under `--bp-pc-up`).
+
+**Do not**
+
+- Patch middle with one-off `min-width: 1200px` / `1360px` queries.
+- Encode “tablet” as a fourth band; below 1080 stays mobile layout.
+- Duplicate full-desktop fixed widths that only look correct at 1600+.
+- Move middle fixes into JS `matchMedia` when CSS composition can express them.
+
+Mobile-first example (Platform aliases — not 768):
+
+```css
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+}
+
+@media (--bp-pc-up) {
+  .container {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+/* Middle-only: avoid over-wide aside on compact PC */
+@media (--bp-pc-compact) {
+  .aside {
+    flex: 0 0 min(320px, 34%);
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .aside {
+    flex: 0 0 360px;
+  }
+}
+```
+
+### Auth layout (`layout: 'auth'`)
+
+Auth routes (sign-in, sign-up, find-email/password, admin-registered, etc.) are wrapped by `AuthPageShell` in `AppLayout`:
+
+- Outer: full width, centered, `padding-inline: var(--auth-page-padding-x)` (20px)
+- Inner: `max-width: var(--width-page-sm)` (480px), `width: 100%`; below PC: `padding-top: 40px`, `padding-bottom: 56px` (PC: `padding-block: 100px`)
+- Page intro copy: `authPageCopyClass('title' | 'description')` in [`auth-page-copy.module.css`](apps/platform/src/widgets/layout/auth-page-shell/auth-page-copy.module.css)
+  - Title margin: PC top 48 / bottom 16; mobile top 40 / bottom 8
+  - Description margin-bottom: PC 48; mobile 40
+  - Below PC font-size: title 28px, description 16px
+  - Illustration above title: also pass `authPageCopy.titleAfterMedia` (clears title margin-top). If the next block already has top margin (e.g. sign-in form), pass `authPageCopy.descriptionTight`
+- Do **not** add per-page `.title` / `.description` margin overrides for auth intro copy.
+
+Do **not** reintroduce per-page `.page` / `.container` 480px wrappers on auth screens.
+
+### Sign-up wizard step layout
+
+Each sign-up step inside `SignUpLayout` must use [`SignUpStepLayout`](apps/platform/src/pages/auth/sign-up/layout/sign-up-step-layout.tsx): **title → description → body (`children`) → actions**. Use `StepHeader` only via `SignUpStepLayout`; do not pass `titleClassName` / `descriptionClassName` for spacing.
+
+## Layout Rules
+
+- Prefer `flex`, `grid`, `gap`, `minmax`, `clamp`, `max-width`, and `width: min(...)` for responsive layouts.
+- Avoid fixed widths unless the design requires them.
+- Avoid magic pixel offsets.
+- Use `box-sizing: border-box` assumption, but do not redefine global resets inside module files unless necessary.
+- For responsive grids, prefer:
+
+```css
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+```
+
+## Typography Rules
+
+Use responsive typography with `clamp()` when appropriate:
+
+```css
+.title {
+  font-size: clamp(24px, 4vw, 40px);
+  line-height: 1.2;
+}
+```
+
+Do not reduce readability on mobile. Keep body text generally at 14px or larger unless the design clearly requires smaller metadata text.
+
+## Spacing Rules
+
+Prefer tokens and parent `gap` over per-breakpoint margin patches:
+
+```css
+.section {
+  padding: var(--page-padding-y) var(--page-padding-x);
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+}
+```
+
+`--page-padding-*` / `--section-gap` already step up under `--bp-pc-up` in `tokens.css`. Add local media queries only when a section needs rhythm beyond those tokens.
+
+Use `gap` instead of margin between repeated child elements whenever possible.
+
+## CSS Variables
+
+Use local or global CSS variables for repeated values:
+
+```css
+.container {
+  --card-radius: 16px;
+  --card-padding: 16px;
+
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+}
+```
+
+If a design token system exists, use the existing variables instead of creating new arbitrary values.
+
+## CSS Modules Composition
+
+Use `composes` only when it improves clarity and avoids duplication. Do not overuse it.
+
+```css
+.baseButton {
+  border: 0;
+  border-radius: 8px;
+}
+
+.primaryButton {
+  composes: baseButton;
+  background: var(--color-primary);
+}
+```
+
+## Accessibility
+
+- Do not remove focus styles.
+- Add clear `:focus-visible` states for interactive elements.
+- Maintain sufficient touch target size, usually at least 44px height for primary touch controls.
+- Ensure responsive changes do not reorder meaningful content in a confusing way.
+
+Example:
+
+```css
+.button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+```
+
+## Images and Media
+
+Use responsive media rules:
+
+```css
+.image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+```
+
+For fixed-ratio cards:
+
+```css
+.thumbnail {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+```
+
+## Overflow Handling
+
+- Prevent accidental horizontal scroll.
+- Use `min-width: 0` for flex/grid children containing long text.
+- Use text truncation only when content loss is acceptable.
+
+```css
+.content {
+  min-width: 0;
+}
+
+.title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+```
+
+## What To Avoid
+
+Avoid:
+
+- Inline style objects for normal layout or spacing.
+- Deep selector chains.
+- Styling by global tag selectors inside CSS Modules.
+- JavaScript-driven responsiveness when CSS can solve it.
+- Large monolithic CSS Module files that style unrelated components.
+- Using `!important` unless overriding third-party styles is unavoidable.
+- Hardcoding desktop-first styles and patching mobile later.
+- Ad-hoc middle widths (`768`, `1024`, `1200`, `1360`) outside Platform aliases.
+- Treating PC compact as “broken desktop” and only testing at 1600+.
+- Forking markup per breakpoint when a single role-based tree + CSS is enough.
+
+## Refactoring Rules
+
+When refactoring existing responsive CSS:
+
+1. Identify layout roles (shell / main / aside / toolbar / content / actions).
+2. Preserve class names where possible to reduce risk.
+3. Collapse redundant queries: prefer `--bp-pc-up`, then add compact/full only if needed.
+4. Convert desktop-first media queries to mobile-first only when it is safe.
+5. Replace repeated margins with parent `gap` where possible.
+6. Replace fixed widths with fluid width, `max-width`, `minmax`, or `clamp`.
+7. Test at Platform bands: **390** (mobile), **1280** (PC compact / middle), **1600** (PC full).
+
+## Output Requirements
+
+When generating or modifying code:
+
+- Provide complete replacement files when possible.
+- Include both the component file and its CSS Module file when styling changes are needed.
+- Do not omit imports.
+- Do not use placeholder comments like `// existing code here` unless explicitly requested.
+- Keep the final implementation directly copy-pasteable.

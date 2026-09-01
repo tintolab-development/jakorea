@@ -1,0 +1,147 @@
+.ujat-region-assignment-table__scroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ujat-region-assignment-table {
+  --cross-table-label-w: 100px;
+  --ujat-region-assignment-volunteer-col-w: 160px;
+  --ujat-region-assignment-corner-divider: 1px solid
+    var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  width: max-content;
+  min-width: 100%;
+}
+
+.ujat-region-assignment-table .cross-table__table {
+  width: max-content;
+  min-width: 100%;
+}
+
+.ujat-region-assignment-table__volunteer-col {
+  width: var(--ujat-region-assignment-volunteer-col-w, 160px);
+}
+
+.ujat-region-assignment-table__corner-days,
+.ujat-region-assignment-table__corner-axis-top,
+.ujat-region-assignment-table__corner-axis-bottom,
+.ujat-region-assignment-table__days-cell,
+.ujat-region-assignment-table__name-cell {
+  width: var(--cross-table-label-w, 100px);
+  min-width: var(--cross-table-label-w, 100px);
+  max-width: var(--cross-table-label-w, 100px);
+}
+
+.ujat-region-assignment-table__corner-axis-top,
+.ujat-region-assignment-table__corner-axis-bottom,
+.ujat-region-assignment-table__name-cell {
+  width: var(--ujat-region-assignment-volunteer-col-w, 160px);
+  min-width: var(--ujat-region-assignment-volunteer-col-w, 160px);
+  max-width: var(--ujat-region-assignment-volunteer-col-w, 160px);
+}
+
+.ujat-region-assignment-table thead .cross-table__cell {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.ujat-region-assignment-table__corner-days {
+  white-space: nowrap;
+  border-right: var(--ujat-region-assignment-corner-divider) !important;
+}
+
+.ujat-region-assignment-table__days-cell {
+  border-right: var(--ujat-region-assignment-corner-divider) !important;
+}
+
+.ujat-region-assignment-table__corner-axis-top,
+.ujat-region-assignment-table__corner-axis-bottom {
+  white-space: nowrap;
+}
+
+/* 교육 진행일 ↔ 기관명 및 소재지 사이 */
+.ujat-region-assignment-table__corner-axis-top {
+  border-bottom: var(--ujat-region-assignment-corner-divider) !important;
+}
+
+.ujat-region-assignment-table__institution-header {
+  white-space: nowrap;
+}
+
+.ujat-region-assignment-table .cross-table__cell--column-header {
+  white-space: nowrap;
+}
+
+.ujat-region-assignment-table__name-cell {
+  font-weight: 600;
+}
+
+/* 활동 포기자 — 행 전체 연한 빨간 배경 (스크린샷: #FFF0F0) */
+.ujat-region-assignment-table__row--withdrawn > .cross-table__cell {
+  background: #fff0f0 !important;
+}
+
+.ujat-region-assignment-table__row--withdrawn .ujat-region-assignment-table__name-cell {
+  color: var(--color-red, #ff4d4f);
+}
+
+.ujat-region-assignment-table__data-cell {
+  min-width: 120px;
+}
+
+.ujat-region-assignment-table__data-cell--blocked {
+  background: rgba(255, 77, 79, 0.06);
+}
+
+.ujat-region-assignment-table__row--withdrawn .ujat-region-assignment-table__data-cell--blocked {
+  background: #fff0f0 !important;
+}
+
+.ujat-region-assignment-table__assignment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ujat-region-assignment-table__attendance-badge {
+  display: flex;
+  width: 44px;
+  height: 20px;
+  padding: 2px 0;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  border-radius: 50px;
+  background: var(--color-mint-01, #01a1af);
+  color: var(--main-WT, #fff);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.ujat-region-assignment-table__class-label--solo {
+  color: var(--color-mint-01, #01a1af);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.ujat-region-assignment-table__class-label--invalid {
+  color: var(--color-red, #ff4d4f);
+  font-weight: 700;
+}
+
+.ujat-region-assignment-table__empty {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.45;
+}

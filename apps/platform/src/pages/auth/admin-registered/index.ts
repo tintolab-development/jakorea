@@ -1,0 +1,8 @@
+export { AdminRegisteredBirthPage } from './birth'
+export { AdminRegisteredChangePasswordPage } from './change-password'
+export { AdminRegisteredCompletePage } from './complete'
+export { AdminRegisteredConfirmPage } from './confirm'
+export { AdminRegisteredEditPage } from './edit'
+export { AdminRegisteredIdentityPage } from './identity'
+export { AdminRegisteredNoticePage } from './notice'
+export { AdminRegisteredOnboardingLayout } from './onboarding-layout'

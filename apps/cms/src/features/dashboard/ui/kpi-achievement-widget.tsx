@@ -3,42 +3,56 @@
  * 프로그램별 KPI(최종 달성 인원, 파견 학교 수, 파견 학급 수) 바 차트 + 달성/KPI/달성률
  */
 
-import { Card, Button, Empty, Typography } from 'antd'
-import { useEffect, useState } from 'react'
+import { Card, Typography } from 'antd'
+import { useNavigate } from 'react-router-dom'
 import {
-  getKpiAchievementList,
   type ProgramKpiItem,
   type KpiMetric,
 } from '../api/admin-dashboard-service'
+import { LoadingButton, EmptyState } from '@/shared/ui'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
+import { useKpiAchievementList } from '../hooks/use-kpi-achievement-list'
+import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
-import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
+import { kpiEducationRecordsPath } from '../lib/dashboard-widget-links'
 import '@/shared/ui/widget-more-button.css'
 import './kpi-achievement-widget.css'
 
 const { Text } = Typography
 const WIDGET_KEY = 'kpi-achievement-widget'
 const EMPTY_IDS: string[] = []
-const kpiAchievementCache = new Map<string, ProgramKpiItem[]>()
 
-/** 목표 대비 달성률(%) — 초과 달성이어도 표시는 최대 100% (진행 바·뱃지·접근성 라벨 공통) */
-function getRate(achieved: number, target: number): number {
-  if (target <= 0) return 0
+/** 목표 대비 달성률(%) — achieved null이면 0 (표시는 '-') */
+function getRate(achieved: number | null, target: number): number {
+  if (achieved == null || target <= 0) return 0
   return Math.min(100, Math.round((achieved / target) * 100))
 }
 
-function isAchieved(achieved: number, target: number): boolean {
-  return target > 0 && achieved >= target
+function isAchieved(achieved: number | null, target: number): boolean {
+  return achieved != null && target > 0 && achieved >= target
+}
+
+function formatAchievedValue(achieved: number | null): string {
+  return achieved == null ? '-' : String(achieved)
 }
 
 function KpiBarRow({ kpi }: { kpi: KpiMetric }) {
+  const disabled = kpi.applicable === false
   const rate = getRate(kpi.achieved, kpi.target)
   const achieved = isAchieved(kpi.achieved, kpi.target)
-  // 바 그래프 채움: 달성률(%)만큼만 색상 표시 (예: 80% 달성 시 80%만 채움)
-  const barPercent = kpi.target > 0 ? Math.min(100, (kpi.achieved / kpi.target) * 100) : 0
+  const barPercent =
+    !disabled && kpi.achieved != null && kpi.target > 0
+      ? Math.min(100, (kpi.achieved / kpi.target) * 100)
+      : 0
 
   return (
-    <div className="kpi-achievement-widget__kpi-row">
+    <div
+      className={
+        disabled
+          ? 'kpi-achievement-widget__kpi-row kpi-achievement-widget__kpi-row--disabled'
+          : 'kpi-achievement-widget__kpi-row'
+      }
+    >
       <div className="kpi-achievement-widget__kpi-label">
         <span className="kpi-achievement-widget__kpi-label-main">{kpi.label}</span>
         <span className="kpi-achievement-widget__kpi-label-unit">(단위: {kpi.description})</span>
@@ -47,7 +61,7 @@ function KpiBarRow({ kpi }: { kpi: KpiMetric }) {
         <div
           className="kpi-achievement-widget__bar-bg"
           role="img"
-          aria-label={`${kpi.label} ${rate}%`}
+          aria-label={`${kpi.label} ${disabled ? '해당 없음' : kpi.achieved == null ? '미제공' : `${rate}%`}`}
         >
           <div
             className={`kpi-achievement-widget__bar-fill ${achieved ? 'kpi-achievement-widget__bar-fill--achieved' : 'kpi-achievement-widget__bar-fill--under'}`}
@@ -56,12 +70,12 @@ function KpiBarRow({ kpi }: { kpi: KpiMetric }) {
         </div>
         <div className="kpi-achievement-widget__values">
           <span className="kpi-achievement-widget__achieved-kpi">
-            {kpi.achieved}/{kpi.target}
+            {disabled ? '-/-' : `${formatAchievedValue(kpi.achieved)}/${kpi.target}`}
           </span>
           <span
             className={`kpi-achievement-widget__rate-badge ${achieved ? 'kpi-achievement-widget__rate-badge--achieved' : 'kpi-achievement-widget__rate-badge--under'}`}
           >
-            {rate}%
+            {disabled || kpi.achieved == null ? '-' : `${rate}%`}
           </span>
         </div>
       </div>
@@ -69,54 +83,38 @@ function KpiBarRow({ kpi }: { kpi: KpiMetric }) {
   )
 }
 
-function ProgramKpiCard({ item }: { item: ProgramKpiItem }) {
+function ProgramKpiCard({
+  item,
+  onOpenRecords,
+}: {
+  item: ProgramKpiItem
+  onOpenRecords: (title: string) => void
+}) {
   return (
-    <div className="kpi-achievement-widget__card" key={item.programId}>
+    <button
+      type="button"
+      className="kpi-achievement-widget__card"
+      onClick={() => onOpenRecords(item.programTitle)}
+    >
       <div className="kpi-achievement-widget__card-title">{item.programTitle}</div>
       <div className="kpi-achievement-widget__kpi-list">
         {item.kpis.map(kpi => (
           <KpiBarRow key={kpi.key} kpi={kpi} />
         ))}
       </div>
-    </div>
+    </button>
   )
 }
 
 export function KpiAchievementWidget() {
+  const navigate = useNavigate()
   const allowedProgramIds =
     useDashboardSettingsStore(s => s.widgetProgramIds[WIDGET_KEY]) ?? EMPTY_IDS
-  const [list, setList] = useState<ProgramKpiItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const allowedProgramIdsKey = allowedProgramIds.join(',')
-
-  useEffect(() => {
-    const cached = kpiAchievementCache.get(allowedProgramIdsKey)
-    if (cached) {
-      setList(cached)
-      setLoading(false)
-      return
-    }
-
-    let cancelled = false
-    setLoading(true)
-    const options =
-      allowedProgramIds.length > 0 ? { programIds: allowedProgramIds } : undefined
-    getKpiAchievementList(options)
-      .then(data => {
-        if (!cancelled) {
-          kpiAchievementCache.set(allowedProgramIdsKey, data)
-          setList(data)
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [allowedProgramIds.length, allowedProgramIds, allowedProgramIdsKey])
+  const { data: list = [], isLoading: loading, isError } = useKpiAchievementList(allowedProgramIds)
 
   const totalCount = list.length
+  const morePath =
+    list.length === 1 ? kpiEducationRecordsPath(list[0]?.programTitle) : kpiEducationRecordsPath()
 
   return (
     <Card
@@ -130,27 +128,30 @@ export function KpiAchievementWidget() {
         </WidgetTitleWithHandle>
       }
       extra={
-        <Button
+        <LoadingButton
           type="link"
           size="small"
-          onClick={() => window.alert(WIDGET_MORE_ALERT_MESSAGE)}
+          onClick={() => navigate(morePath)}
           className="widget-more-button"
         >
           더보기
-        </Button>
+        </LoadingButton>
       }
     >
-      {loading ? (
+      {isError ? (
+        <DashboardWidgetQueryError />
+      ) : loading ? (
         <div className="kpi-achievement-widget__loading" />
       ) : list.length === 0 ? (
-        <Empty
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="표시할 KPI 데이터가 없습니다"
-        />
+        <EmptyState description="표시할 KPI 데이터가 없습니다" />
       ) : (
         <div className="kpi-achievement-widget__scroll">
           {list.map(item => (
-            <ProgramKpiCard key={item.programId} item={item} />
+            <ProgramKpiCard
+              key={item.programId}
+              item={item}
+              onOpenRecords={title => navigate(kpiEducationRecordsPath(title))}
+            />
           ))}
         </div>
       )}

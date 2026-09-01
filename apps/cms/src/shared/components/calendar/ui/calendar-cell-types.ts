@@ -1,6 +1,10 @@
 import type { Key, ReactNode } from 'react'
 import type { Dayjs } from 'dayjs'
-import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
+import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
+import type {
+  BuildCalendarMonthCellRows,
+  RenderCalendarMonthEventContent,
+} from '../model/calendar-month-cell-row'
 import type { CalendarItem } from '../lib/calendar-helpers'
 
 export type CalendarEventsConfig = {
@@ -14,6 +18,10 @@ export type CalendarEventsConfig = {
   eventsTooltipScope: 'trigger-only' | 'full-day'
   formatEventsOverflowText?: (hiddenCount: number) => string
   eventsTooltipTrigger: 'event-strip' | 'cell'
+  /** 월간 셀 strip 목록. 미지정 시 dayEvents 1:1 */
+  buildMonthCellRows?: BuildCalendarMonthCellRows
+  /** 월간 strip 내부 UI. shell(`.calendar-event`·색상)은 공통, 내용만 페이지별 */
+  renderMonthEventContent?: RenderCalendarMonthEventContent
 }
 
 export type CalendarCellProps = {

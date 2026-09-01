@@ -4,15 +4,23 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Form, Input, Button, Card, message, Typography, Space, Alert, Spin } from 'antd'
+import { Form, Input, Card, Typography, Space, Alert, Spin } from 'antd'
 import { SafetyOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { LoadingButton } from '@/shared/ui/loading-button'
 import { useMfa } from '@/features/auth/hooks/use-mfa'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
 import { getTotpProvisioning } from '@/entities/user/api/mfa-service'
-import { OTP_POLICY, OTP_LENGTH } from '@/shared/constants/mfa-policy'
-import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
+import {
+  OTP_POLICY,
+  OTP_LENGTH,
+  ADMIN_MFA_LOCAL_TEST_CODE,
+  isAdminLocalTestMfa,
+} from '@/shared/constants/mfa-policy'
+import { LAYOUT_CONSTANTS } from '@/shared/constants'
+import { unknownErrorText } from '@/shared/utils/error-handler'
+import { resolvePostAuthRedirectPath } from '@/shared/utils/post-auth-redirect'
 import type { TotpProvisioning } from '@/types/mfa'
 import './mfa-page.css'
 
@@ -20,8 +28,9 @@ const { Text, Title } = Typography
 
 export function MfaPage() {
   const navigate = useNavigate()
-  const { user, setMfaVerified } = useAuthStore()
-  const { mfaState, initializeMfa, completeMfa } = useMfa()
+  const { user, setMfaVerified, mfaState: authMfaState } = useAuthStore()
+  const { mfaState: localMfaState, initializeMfa, completeMfa } = useMfa()
+  const mfaState = authMfaState ?? localMfaState
   const { verifying, failedAttempts, isLocked, lockUntil, verifyTotpCode } = useOtpVerification()
   const [form] = Form.useForm()
   const [otpCode, setOtpCode] = useState('')
@@ -30,20 +39,41 @@ export function MfaPage() {
   const [provisioningError, setProvisioningError] = useState<string | null>(null)
   const verifyInFlightRef = useRef(false)
 
+  const isRemoteMfa = Boolean(mfaState?.challengeUuid)
+  const isLocalTestMfa =
+    isRemoteMfa &&
+    isAdminLocalTestMfa(mfaState?.mfaMethod) &&
+    !provisioning &&
+    !provisioningLoading
+
   const loadProvisioning = useCallback(async () => {
     if (!user?.email) return
+
     setProvisioningLoading(true)
     setProvisioningError(null)
     try {
-      const p = await getTotpProvisioning(user.email)
+      const p = await getTotpProvisioning(user.email, {
+        challengeUuid: mfaState?.challengeUuid,
+        mfaMethod: mfaState?.mfaMethod,
+        totpSecret: mfaState?.totpSecret,
+        otpauthUri: mfaState?.otpauthUri,
+        qrDataUrl: mfaState?.qrDataUrl,
+      })
       setProvisioning(p)
     } catch (e: unknown) {
-      setProvisioningError(e instanceof Error ? e.message : 'QR 정보를 불러오지 못했습니다.')
+      setProvisioningError(unknownErrorText(e, 'QR 정보를 불러오지 못했습니다.'))
       setProvisioning(null)
     } finally {
       setProvisioningLoading(false)
     }
-  }, [user?.email])
+  }, [
+    user?.email,
+    mfaState?.challengeUuid,
+    mfaState?.mfaMethod,
+    mfaState?.totpSecret,
+    mfaState?.otpauthUri,
+    mfaState?.qrDataUrl,
+  ])
 
   useEffect(() => {
     if (!user) {
@@ -68,11 +98,9 @@ export function MfaPage() {
     const effectiveCode = (code ?? otpCode).trim()
     if (verifyInFlightRef.current || verifying) return
     if (!user?.email || !effectiveCode || effectiveCode.length !== OTP_LENGTH) {
-      message.error(MESSAGES.error.enterOtpCode)
       return
     }
     if (!/^\d+$/.test(effectiveCode)) {
-      message.error(MESSAGES.error.enterOtpCode)
       return
     }
 
@@ -80,21 +108,23 @@ export function MfaPage() {
     try {
       const verified = await verifyTotpCode({
         email: user.email,
-        otpCode: effectiveCode,
-      })
+        otpCode: effectiveCode })
 
       if (verified) {
         completeMfa()
         setMfaVerified()
-        message.success(MESSAGES.success.authenticated)
-        navigate('/')
+        navigate(
+          resolvePostAuthRedirectPath({
+            passwordChangeRequired: useAuthStore.getState().passwordChangeRequired,
+            fallbackPath: '/',
+          }),
+          { replace: true }
+        )
       } else {
-        message.error(MESSAGES.error.invalidCode)
         form.setFieldsValue({ otpCode: '' })
         setOtpCode('')
       }
     } catch (error: unknown) {
-      message.error(error instanceof Error ? error.message : MESSAGES.error.authenticationFailed)
       form.setFieldsValue({ otpCode: '' })
       setOtpCode('')
     } finally {
@@ -148,42 +178,53 @@ export function MfaPage() {
         {lockMessage && (
           <Alert
             type="error"
-            message={lockMessage}
+            description={lockMessage}
             style={{ marginBottom: LAYOUT_CONSTANTS.margins.xl }}
             showIcon
           />
         )}
 
-        {provisioningError && (
-          <Alert type="warning" message={provisioningError} style={{ marginBottom: 16 }} showIcon />
+        {isLocalTestMfa && (
+          <Alert
+            type="info"
+            description={`테스트 코드 ${ADMIN_MFA_LOCAL_TEST_CODE} 을 입력하세요.`}
+            style={{ marginBottom: 16 }}
+            showIcon
+          />
         )}
 
-        <div style={{ textAlign: 'center', marginBottom: 24, minHeight: 220 }}>
-          {provisioningLoading ? (
-            <Spin tip="QR 코드 생성 중…" />
-          ) : provisioning ? (
-            <>
-              <img src={provisioning.qrDataUrl} alt="TOTP QR" width={220} height={220} />
-              <div style={{ marginTop: 12 }}>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  수동 입력 키 (Base32)
-                </Text>
-                <br />
-                <Text code copyable={{ text: provisioning.manualSecret }} style={{ fontSize: 12 }}>
-                  {provisioning.manualSecret}
-                </Text>
-              </div>
-            </>
-          ) : null}
-        </div>
+        {provisioningError && (
+          <Alert type="warning" description={provisioningError} style={{ marginBottom: 16 }} showIcon />
+        )}
+
+        {!isLocalTestMfa && (
+          <div style={{ textAlign: 'center', marginBottom: 24, minHeight: 220 }}>
+            {provisioningLoading ? (
+              <Spin tip="QR 코드 생성 중…" />
+            ) : provisioning ? (
+              <>
+                <img src={provisioning.qrDataUrl} alt="TOTP QR" width={220} height={220} />
+                <div style={{ marginTop: 12 }}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    수동 입력 키 (Base32)
+                  </Text>
+                  <br />
+                  <Text code copyable={{ text: provisioning.manualSecret }} style={{ fontSize: 12 }}>
+                    {provisioning.manualSecret}
+                  </Text>
+                </div>
+              </>
+            ) : null}
+          </div>
+        )}
 
         <Form form={form} layout="vertical" onFinish={handleVerify}>
           <Form.Item
             label="인증번호"
             name="otpCode"
             rules={[
-              { required: true, message: MESSAGES.validation.otpRequired },
-              { len: OTP_LENGTH, message: MESSAGES.validation.otpLength(OTP_LENGTH) },
+              { required: true },
+              { len: OTP_LENGTH },
             ]}
           >
             <Input.OTP
@@ -205,9 +246,8 @@ export function MfaPage() {
           </div>
 
           <Space direction="vertical" style={{ width: '100%' }} size="middle">
-            <Button
-              type="primary"
-              htmlType="submit"
+            <LoadingButton
+              type="primary" htmlType="submit"
               block
               size="large"
               loading={verifying}
@@ -215,19 +255,19 @@ export function MfaPage() {
               icon={<SafetyOutlined />}
             >
               인증하기
-            </Button>
+            </LoadingButton>
 
-            <Button
+            <LoadingButton
               type="default"
               onClick={() => void loadProvisioning()}
               block
               size="large"
               loading={provisioningLoading}
-              disabled={isLocked}
+              disabled={isLocked || isLocalTestMfa}
               icon={<ReloadOutlined />}
             >
               QR 코드 다시 불러오기
-            </Button>
+            </LoadingButton>
           </Space>
         </Form>
 

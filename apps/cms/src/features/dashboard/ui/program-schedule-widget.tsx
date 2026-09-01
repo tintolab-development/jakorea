@@ -4,16 +4,18 @@
  * - 월간: 월 그리드 + 우측 일정 리스트 / 주간: 주간 그리드 셀 내 이벤트
  */
 
-import { Card, List, Button, Empty, Popover } from 'antd'
+import { Card, List, Popover } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useState, useMemo, useRef, useLayoutEffect, Fragment, type ReactElement } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { LoadingButton, EmptyState } from '@/shared/ui'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import dayjs, { type Dayjs } from 'dayjs'
 import {
   mockSchedules,
-  getEconomyPrograms,
+  getCompanySchoolPrograms,
   getUjatPrograms,
-  buildEconomySchedulesForVisibleRange,
+  buildCompanySchoolSchedulesForVisibleRange,
   buildGeneralSchedulesForVisibleRange,
   buildGeminiSchedulesForVisibleRange,
   buildUjatSchedulesForVisibleRange,
@@ -29,14 +31,19 @@ import {
   SCHEDULE_COLORS,
   buildResolvedScheduleColorMapForPrograms,
   type ScheduleColorPair,
-} from '@/features/program/ui/program-schedule-colors'
-import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
+} from '@/features/program/shared/ui/program-schedule-colors'
+import { programScheduleEventPath } from '../lib/dashboard-widget-links'
 import { SegmentedTab } from '@/shared/ui'
 import '@/shared/ui/widget-more-button.css'
-import '@/shared/components/program-calendar.css'
 import './program-schedule-widget.css'
 import type { User } from '@/types/user'
 import { filterProgramsByACL } from '@/features/permission-request/lib/program-acl'
+import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
+import { useDashboardProgramSchedules } from '../hooks/use-dashboard-program-schedules'
+import { useDashboardProgramOptions } from '../hooks/use-dashboard-program-options'
+import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
+import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
+import { useCompanySchoolPrograms } from '@/features/program/1c-1s/api/hooks'
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
 
@@ -71,13 +78,37 @@ function getEventTypeLabel(type: ScheduleEvent['type']) {
 }
 
 function resolveWidgetProgram(programId: string, variant: ProgramScheduleKind): Program | undefined {
-  if (variant === 'economy') {
-    return programService.getByIdSync(programId) ?? getEconomyPrograms().find(p => p.id === programId)
+  if (variant === 'company_school') {
+    return programService.getByIdSync(programId) ?? getCompanySchoolPrograms().find(p => p.id === programId)
   }
   if (variant === 'ujat') {
     return programService.getByIdSync(programId) ?? getUjatPrograms().find(p => p.id === programId)
   }
   return programService.getByIdSync(programId)
+}
+
+function programsFromOptions(
+  options: { id: string; title: string }[],
+  user: Omit<User, 'password'> | null | undefined
+): Program[] {
+  const base: Program[] = options.map(o => ({
+    id: o.id,
+    title: o.title,
+    sponsorId: '',
+    type: 'offline',
+    format: 'workshop',
+    category: 'school',
+    rounds: [],
+    startDate: '',
+    endDate: '',
+    status: 'active',
+    createdAt: '',
+    updatedAt: '',
+  }))
+  if (!user || user.role !== 'ADMIN' || user.adminLevel === 'MASTER') {
+    return base
+  }
+  return filterProgramsByACL(base, user)
 }
 
 /** 빈 배열 = 전체, 선택 id → 해당 id만 */
@@ -97,8 +128,8 @@ function getCategoryProgramIdSet(variant: ProgramScheduleKind): Set<string> {
   switch (variant) {
     case 'general':
       return new Set(getGeneralEducationPrograms().map(p => p.id))
-    case 'economy':
-      return new Set(getEconomyPrograms().map(p => p.id))
+    case 'company_school':
+      return new Set(getCompanySchoolPrograms().map(p => p.id))
     case 'ujat':
       return new Set(getUjatPrograms().map(p => p.id))
     case 'gemini':
@@ -110,8 +141,8 @@ function getProgramsForRecruitment(variant: ProgramScheduleKind): Program[] {
   switch (variant) {
     case 'general':
       return getGeneralEducationPrograms()
-    case 'economy':
-      return getEconomyPrograms()
+    case 'company_school':
+      return getCompanySchoolPrograms()
     case 'ujat':
       return getUjatPrograms()
     case 'gemini':
@@ -149,8 +180,8 @@ function buildDynamicSchedulesForVisibleRange(
   switch (variant) {
     case 'general':
       return buildGeneralSchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
-    case 'economy':
-      return buildEconomySchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
+    case 'company_school':
+      return buildCompanySchoolSchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
     case 'ujat':
       return buildUjatSchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
     case 'gemini':
@@ -208,14 +239,22 @@ function ScheduleWidgetWeekCellPreview({
       {dayEvents.map(ev => {
         const colorPair = scheduleColorMap.get(ev.programId) ?? SCHEDULE_COLORS[0]
         return (
-          <button
+          <div
             key={ev.id}
-            type="button"
+            role="button"
+            tabIndex={0}
             className="program-calendar-cell-preview__item"
             onClick={e => {
               e.preventDefault()
               e.stopPropagation()
               onEventClick?.(ev)
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                e.stopPropagation()
+                onEventClick?.(ev)
+              }
             }}
           >
             <span
@@ -227,12 +266,15 @@ function ScheduleWidgetWeekCellPreview({
             <span className="program-calendar-cell-preview__desc">
               {getEventTypeLabel(ev.type)} | {ev.time}
             </span>
-          </button>
+          </div>
         )
       })}
     </div>
   )
 }
+
+const EVENT_PREVIEW_POPOVER_CLASS =
+  'program-calendar-cell-preview-popover program-schedule-widget__event-preview-popover'
 
 /** 태그(배지·일정 카드) 기준 상단 고정 미리보기 — 본문은 공통 popover 클래스로 스크롤 가능 */
 function ProgramScheduleEventPreviewPopover({
@@ -240,18 +282,21 @@ function ProgramScheduleEventPreviewPopover({
   variant,
   onEventClick,
   children,
+  placement = 'top',
 }: {
   dayEvents: ScheduleEvent[]
   variant: ProgramScheduleKind
   onEventClick?: (ev: ScheduleEvent) => void
   children: ReactElement
+  placement?: 'top' | 'bottom'
 }) {
   return (
     <Popover
       arrow={false}
       trigger="hover"
-      placement="top"
-      overlayClassName="program-calendar-cell-preview-popover program-schedule-widget__event-preview-popover"
+      placement={placement}
+      overlayClassName={EVENT_PREVIEW_POPOVER_CLASS}
+      classNames={{ root: EVENT_PREVIEW_POPOVER_CLASS }}
       mouseEnterDelay={0.12}
       mouseLeaveDelay={0.08}
       getPopupContainer={() => document.body}
@@ -380,9 +425,10 @@ export function ProgramScheduleWidget({
   variant,
   widgetKey,
   title,
-  viewAllPath: _viewAllPath,
+  viewAllPath,
   user,
 }: ProgramScheduleWidgetProps) {
+  const navigate = useNavigate()
   const { cardRef, halfColumn } = useDashboardHalfColumnSlot()
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
@@ -390,17 +436,51 @@ export function ProgramScheduleWidget({
 
   const selectedMockProgramIds = useDashboardSettingsStore(s => s.widgetProgramIds[widgetKey])
 
-  const categoryProgramIdSet = useMemo(() => getCategoryProgramIdSet(variant), [variant])
+  const useRemoteSchedules = shouldUseDashboardRemoteApi()
+  const useCompanySchoolProgramsRemote =
+    variant === 'company_school' && shouldUseCompanySchoolRemoteApi()
+  const companySchoolProgramsQuery = useCompanySchoolPrograms({}, useCompanySchoolProgramsRemote)
+  const { data: remoteProgramOptions = [] } = useDashboardProgramOptions(widgetKey, useRemoteSchedules)
+
+  const categoryProgramIdSet = useMemo(() => {
+    if (useRemoteSchedules && remoteProgramOptions.length > 0) {
+      return new Set(remoteProgramOptions.map(p => p.id))
+    }
+    if (useCompanySchoolProgramsRemote && companySchoolProgramsQuery.data) {
+      return new Set(companySchoolProgramsQuery.data.map(p => p.id))
+    }
+    return getCategoryProgramIdSet(variant)
+  }, [
+    useRemoteSchedules,
+    remoteProgramOptions,
+    useCompanySchoolProgramsRemote,
+    companySchoolProgramsQuery.data,
+    variant,
+  ])
 
   const allowedProgramIdSet = useMemo(
     () => allowedIdsFromWidgetSelection(variant, selectedMockProgramIds),
     [variant, selectedMockProgramIds]
   )
 
-  const programsForRecruitment = useMemo(
-    () => getProgramsForRecruitmentForUser(variant, user),
-    [variant, user]
-  )
+  const programsForRecruitment = useMemo(() => {
+    if (useRemoteSchedules && remoteProgramOptions.length > 0) {
+      return programsFromOptions(remoteProgramOptions, user)
+    }
+    if (useCompanySchoolProgramsRemote && companySchoolProgramsQuery.data) {
+      const base = companySchoolProgramsQuery.data
+      if (!user || user.role !== 'ADMIN' || user.adminLevel === 'MASTER') return base
+      return filterProgramsByACL(base, user)
+    }
+    return getProgramsForRecruitmentForUser(variant, user)
+  }, [
+    useRemoteSchedules,
+    remoteProgramOptions,
+    useCompanySchoolProgramsRemote,
+    companySchoolProgramsQuery.data,
+    variant,
+    user,
+  ])
 
   const visibleDateRange = useMemo(() => {
     if (viewMode === 'week') {
@@ -412,7 +492,20 @@ export function ProgramScheduleWidget({
     return Array.from({ length: 35 }, (_, i) => start.add(i, 'day'))
   }, [currentMonth, viewMode])
 
+  const scheduleDateFrom = visibleDateRange[0]?.format('YYYY-MM-DD')
+  const scheduleDateTo = visibleDateRange[visibleDateRange.length - 1]?.format('YYYY-MM-DD')
+  const { data: remoteScheduleEvents = [], isError: scheduleQueryError } = useDashboardProgramSchedules({
+    programIds: selectedMockProgramIds,
+    dateFrom: scheduleDateFrom,
+    dateTo: scheduleDateTo,
+    programType: variant,
+    enabled: useRemoteSchedules,
+  })
+
   const schedulesByDate = useMemo(() => {
+    if (useRemoteSchedules) {
+      return {} as Record<string, Schedule[]>
+    }
     const grouped: Record<string, Schedule[]> = {}
     const visibleKeys = visibleDateRange.map(d => d.format('YYYY-MM-DD'))
     const dynamic = buildDynamicSchedulesForVisibleRange(variant, visibleKeys, allowedProgramIdSet)
@@ -430,9 +523,37 @@ export function ProgramScheduleWidget({
     })
 
     return grouped
-  }, [allowedProgramIdSet, categoryProgramIdSet, variant, visibleDateRange])
+  }, [useRemoteSchedules, allowedProgramIdSet, categoryProgramIdSet, variant, visibleDateRange])
 
   const eventsByDate = useMemo(() => {
+    if (useRemoteSchedules) {
+      const out: Record<string, ScheduleEvent[]> = {}
+      for (const d of visibleDateRange) {
+        out[d.format('YYYY-MM-DD')] = []
+      }
+      for (const ev of remoteScheduleEvents) {
+        const dateKey = dayjs(ev.startAt).format('YYYY-MM-DD')
+        if (!out[dateKey]) out[dateKey] = []
+        out[dateKey].push({
+          id: ev.id,
+          type: ev.type,
+          title: ev.title,
+          time: ev.time,
+          programId: ev.programId,
+          programTitle: ev.programTitle,
+          lifecycleStatus: ev.lifecycleStatus,
+        })
+      }
+      for (const key of Object.keys(out)) {
+        out[key].sort((a, b) => {
+          const timeA = a.time === '24:00' ? '23:59' : a.time
+          const timeB = b.time === '24:00' ? '23:59' : b.time
+          return timeA.localeCompare(timeB)
+        })
+      }
+      return out
+    }
+
     const out: Record<string, ScheduleEvent[]> = {}
     visibleDateRange.forEach(d => {
       out[d.format('YYYY-MM-DD')] = buildEventsForDate(
@@ -446,6 +567,8 @@ export function ProgramScheduleWidget({
     })
     return out
   }, [
+    useRemoteSchedules,
+    remoteScheduleEvents,
     visibleDateRange,
     schedulesByDate,
     allowedProgramIdSet,
@@ -497,11 +620,11 @@ export function ProgramScheduleWidget({
   }
 
   const handleViewAll = () => {
-    window.alert(WIDGET_MORE_ALERT_MESSAGE)
+    navigate(viewAllPath)
   }
 
-  const handleEventClick = (_event: ScheduleEvent) => {
-    window.alert(WIDGET_MORE_ALERT_MESSAGE)
+  const handleEventClick = (event: ScheduleEvent) => {
+    navigate(programScheduleEventPath(variant, event.programId))
   }
 
   const headerTitle =
@@ -716,30 +839,33 @@ export function ProgramScheduleWidget({
                           dayEvents={dayEvents}
                           variant={variant}
                           onEventClick={handleEventClick}
+                          placement="bottom"
                         >
-                          <div
-                            className="program-schedule-widget__week-event-card"
-                            style={{
-                              backgroundColor: pair.bg,
-                              border: `1px solid ${pair.border}`,
-                            }}
-                            role="button"
-                            tabIndex={0}
-                            onClick={e => {
-                              e.stopPropagation()
-                              handleEventClick(ev)
-                            }}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault()
+                          <div className="program-schedule-widget__week-event-preview-host">
+                            <div
+                              className="program-schedule-widget__week-event-card"
+                              style={{
+                                backgroundColor: pair.bg,
+                                border: `1px solid ${pair.border}`,
+                              }}
+                              role="button"
+                              tabIndex={0}
+                              onClick={e => {
                                 e.stopPropagation()
                                 handleEventClick(ev)
-                              }
-                            }}
-                          >
-                            <div className="program-schedule-widget__week-event-title">{ev.programTitle}</div>
-                            <div className="program-schedule-widget__week-event-time">
-                              {getEventTypeLabel(ev.type)} | {ev.time}
+                              }}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  handleEventClick(ev)
+                                }
+                              }}
+                            >
+                              <div className="program-schedule-widget__week-event-title">{ev.programTitle}</div>
+                              <div className="program-schedule-widget__week-event-time">
+                                {getEventTypeLabel(ev.type)} | {ev.time}
+                              </div>
                             </div>
                           </div>
                         </ProgramScheduleEventPreviewPopover>
@@ -754,36 +880,48 @@ export function ProgramScheduleWidget({
                           dayEvents={dayEvents}
                           variant={variant}
                           onEventClick={handleEventClick}
+                          placement="bottom"
                         >
-                          <div
-                            className="program-schedule-widget__week-event-card program-schedule-widget__week-event-card--color-only"
-                            style={{
-                              backgroundColor: pair.bg,
-                              border: `1px solid ${pair.border}`,
-                            }}
-                            role="button"
-                            tabIndex={0}
-                            onClick={e => {
-                              e.stopPropagation()
-                              const ev = dayEvents.find(x => x.programId === pid)
-                              if (ev) handleEventClick(ev)
-                            }}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault()
+                          <div className="program-schedule-widget__week-event-preview-host">
+                            <div
+                              className="program-schedule-widget__week-event-card program-schedule-widget__week-event-card--color-only"
+                              style={{
+                                backgroundColor: pair.bg,
+                                border: `1px solid ${pair.border}`,
+                              }}
+                              role="button"
+                              tabIndex={0}
+                              onClick={e => {
                                 e.stopPropagation()
                                 const ev = dayEvents.find(x => x.programId === pid)
                                 if (ev) handleEventClick(ev)
-                              }
-                            }}
-                          />
+                              }}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  const ev = dayEvents.find(x => x.programId === pid)
+                                  if (ev) handleEventClick(ev)
+                                }
+                              }}
+                            />
+                          </div>
                         </ProgramScheduleEventPreviewPopover>
                       )
                     })}
                   {dayEvents.length > 2 && (
-                    <div className="program-schedule-widget__week-event-more">
-                      외 {dayEvents.length - 2}개의 항목
-                    </div>
+                    <ProgramScheduleEventPreviewPopover
+                      dayEvents={dayEvents}
+                      variant={variant}
+                      onEventClick={handleEventClick}
+                      placement="bottom"
+                    >
+                      <div className="program-schedule-widget__week-event-preview-host">
+                        <div className="program-schedule-widget__week-event-more">
+                          외 {dayEvents.length - 2}개의 항목
+                        </div>
+                      </div>
+                    </ProgramScheduleEventPreviewPopover>
                   )}
                 </div>
               )}
@@ -797,11 +935,9 @@ export function ProgramScheduleWidget({
   const eventListSection = (
     <div className="program-schedule-widget__events">
       {selectedDateEvents.length === 0 ? (
-        <Empty
-          description="해당 날짜에 일정이 없습니다"
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          className="program-schedule-widget__empty"
-        />
+        <div className="program-schedule-widget__empty">
+          <EmptyState description="해당 날짜에 일정이 없습니다" />
+        </div>
       ) : (
         <List
           dataSource={selectedDateEvents}
@@ -844,6 +980,7 @@ export function ProgramScheduleWidget({
   return (
     <Card
       ref={cardRef}
+      bordered={false}
       title={
         <div className="program-schedule-widget__head-row">
           <div className="program-schedule-widget__head-left">
@@ -873,7 +1010,7 @@ export function ProgramScheduleWidget({
           <div className="program-schedule-widget__head-right">
             <div className="program-schedule-widget__view-mode-switch">
               <SegmentedTab
-                size="small"
+                size="medium"
                 value={viewMode}
                 onChange={v => {
                   const mode = v as 'month' | 'week'
@@ -888,35 +1025,39 @@ export function ProgramScheduleWidget({
                 ]}
               />
             </div>
-            <Button
+            <LoadingButton
               type="link"
               size="small"
               onClick={handleViewAll}
               className="widget-more-button program-schedule-widget__head-more"
             >
               더보기
-            </Button>
+            </LoadingButton>
           </div>
         </div>
       }
       className={cardClassName}
     >
-      <div className="program-schedule-widget__content">
-        {viewMode === 'month' ? (
-          <div className="program-schedule-widget__body program-schedule-widget__body--month">
-            <div className="program-calendar-main program-schedule-widget__calendar-main">
-              {renderMonthGrid()}
+      {scheduleQueryError ? (
+        <DashboardWidgetQueryError />
+      ) : (
+        <div className="program-schedule-widget__content">
+          {viewMode === 'month' ? (
+            <div className="program-schedule-widget__body program-schedule-widget__body--month">
+              <div className="program-schedule-widget__calendar-main">
+                {renderMonthGrid()}
+              </div>
+              {eventListSection}
             </div>
-            {eventListSection}
-          </div>
-        ) : (
-          <div className="program-schedule-widget__body program-schedule-widget__body--week">
-            <div className="program-calendar-main program-schedule-widget__calendar-main">
-              {renderWeekView()}
+          ) : (
+            <div className="program-schedule-widget__body program-schedule-widget__body--week">
+              <div className="program-schedule-widget__calendar-main">
+                {renderWeekView()}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </Card>
   )
 }

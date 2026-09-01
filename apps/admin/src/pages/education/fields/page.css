@@ -1,0 +1,226 @@
+/**
+ * 사업분야 관리
+ */
+
+.education-fields-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: calc(100vh - var(--header-height, 64px) - 64px);
+  height: calc(100vh - var(--header-height, 64px) - 64px);
+}
+
+.education-fields-card.admin-list-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.education-fields-page .admin-list-toolbar {
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.education-fields-page__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  overflow: auto;
+}
+
+.education-fields-page__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.education-fields-page__section-title {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.education-fields-page__section-title::before {
+  content: '■ ';
+}
+
+.education-fields-page__intro-form .detail-info-form__field {
+  min-height: 54px;
+  --detail-info-label-w: 160px;
+  grid-template-columns: 160px minmax(0, 1fr);
+}
+
+/* 소개글 th(메인 텍스트) — 텍스트 중앙 정렬 */
+.education-fields-page__intro-form .detail-info-form__field-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  min-height: 54px;
+  height: 100%;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  align-self: stretch;
+}
+
+.education-fields-page__intro-form .detail-info-form__field-label-text {
+  text-align: center;
+  width: 100%;
+}
+
+/* 조회·수정 모두 border 1px 슬롯 유지 (색만 변경) */
+.education-fields-page .education-fields-inline-field .cms-input__control,
+.education-fields-page .education-fields-inline-field .cms-textarea__control {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+  border-width: 1px;
+  border-style: solid;
+  /* 수정 모드 전환 시 border/배경 fade 제거 */
+  transition: none !important;
+}
+
+.education-fields-page .education-fields-inline-field .ant-input,
+.education-fields-page .education-fields-inline-field textarea.ant-input {
+  transition: none !important;
+}
+
+.education-fields-page .education-fields-inline-field--readonly .cms-input__control,
+.education-fields-page .education-fields-inline-field--readonly .cms-textarea__control {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: default;
+}
+
+.education-fields-page .education-fields-inline-field--readonly .cms-input__control:hover,
+.education-fields-page .education-fields-inline-field--readonly .cms-textarea__control:hover {
+  border-color: transparent !important;
+}
+
+.education-fields-page .education-fields-inline-field--readonly .ant-input,
+.education-fields-page .education-fields-inline-field--readonly textarea.ant-input {
+  cursor: default;
+  color: var(--default-BK, #3d3d3d) !important;
+  font-weight: 500;
+}
+
+.education-fields-page .education-fields-inline-field--edit .cms-input__control,
+.education-fields-page .education-fields-inline-field--edit .cms-textarea__control {
+  border-width: 1px;
+}
+
+/*
+ * fixed-rows: resize 핸들·세로 드래그 팽창 금지 (조회/수정 동일).
+ * cms-textarea 기본 `resize: vertical` 을 덮음.
+ */
+.education-fields-page
+  .education-fields-inline-field.cms-textarea--fixed-rows
+  .cms-textarea__inner
+  textarea.ant-input {
+  resize: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box;
+}
+
+/*
+ * 조회: autoSize(1~2줄) + 컨트롤 세로 패딩 제거 → 셀 vertical-align 으로 세로 중앙.
+ * 수정(fixed-rows): 2줄 슬롯 고정 (15px × 1.5 × 2 = 3em).
+ */
+.education-fields-table
+  .education-fields-inline-field--readonly.cms-textarea--medium
+  .cms-textarea__control {
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.education-fields-table
+  .education-fields-inline-field--edit.cms-textarea--fixed-rows.cms-textarea--medium
+  .cms-textarea__inner
+  textarea.ant-input {
+  height: 3em !important;
+  min-height: 3em !important;
+  max-height: 3em !important;
+}
+
+/* 조회 = 가로 중앙 / 수정 = 좌측 */
+.education-fields-table
+  .education-fields-inline-field--readonly
+  .cms-input__inner
+  .ant-input,
+.education-fields-table
+  .education-fields-inline-field--readonly
+  .cms-textarea__inner
+  textarea.ant-input {
+  text-align: center !important;
+  resize: none !important;
+}
+
+.education-fields-table
+  .education-fields-inline-field--edit
+  .cms-input__inner
+  .ant-input,
+.education-fields-table
+  .education-fields-inline-field--edit
+  .cms-textarea__inner
+  textarea.ant-input {
+  text-align: left !important;
+}
+
+.education-fields-page .ant-switch-checked {
+  background: var(--color-mint-01, #01a1af) !important;
+}
+
+.education-fields-table.cms-data-table .ant-table {
+  table-layout: fixed;
+}
+
+.education-fields-table .ant-table-tbody > tr {
+  transition: none;
+}
+
+/*
+ * 2줄 textarea가 cms-data-table 기본(height 54px · nowrap)에 잘리지 않도록.
+ * hover 규칙도 동일 — report-list와 같은 패턴.
+ */
+.education-fields-table.cms-data-table .ant-table-tbody > tr > td,
+.education-fields-table.cms-data-table .ant-table-tbody > tr:hover > td {
+  height: auto !important;
+  min-height: 54px;
+  vertical-align: middle !important;
+  white-space: normal !important;
+  overflow: visible;
+}
+
+/* 행 높이보다 짧은 인풋·텍스트영역 — 셀 안 세로 중앙 */
+.education-fields-table .ant-table-tbody > tr > td .cms-textarea,
+.education-fields-table .ant-table-tbody > tr > td .cms-input {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+}
+
+.education-fields-table
+  .education-fields-inline-field--readonly.cms-input--medium
+  .cms-input__control {
+  height: auto;
+  min-height: 1.5em;
+  padding-top: 0;
+  padding-bottom: 0;
+}

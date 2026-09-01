@@ -2,23 +2,35 @@
  * 지급 현황 상세 — 필터·구분선·목록 테이블 래퍼·산출 내역 버튼
  * (`PaymentOrderDetailFilterTable` — mode program / instructor 공통)
  */
-.payment-order-detail-filter-table__filters .unified-filter-card .ant-card-body {
-  padding: 0 !important;
+
+/* 필터 — TableFilterGroup 공통 치수(240 · gap 12 · dateRange 500) */
+.payment-order-detail-filter-table__filters.filter-table-layout .table-filter-group__container {
+  --filter-field-gap: 12px;
+  --table-filter-field-gap: 12px;
+  gap: var(--filter-field-gap);
+  align-items: flex-end;
 }
 
-/* 필터 ↔ 목록 사이: 공용 Divider + 상·하 각 32px (`filter-table-layout__divider` 와 동일) */
-.payment-order-detail-filter-table__section-divider-wrap {
-  padding: 32px 0;
-  width: 100%;
+.payment-order-detail-filter-table__filters.filter-table-layout
+  .table-filter-group__fields-container {
+  flex: 1 1 auto;
   min-width: 0;
-  box-sizing: border-box;
 }
 
-/* 구분선 아래 블록: participating 공통 `margin-top: 32px` 는 위 래퍼 패딩과 중복되므로 제거 */
-.payment-order-detail-filter-table .payment-order-detail-filter-table__below-divider.participating-institutions-section__below-divider {
-  margin-top: 0;
+.payment-order-detail-filter-table__filters.filter-table-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col,
+.payment-order-detail-filter-table__filters.filter-table-layout
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell {
+  flex: 0 0 auto !important;
+  min-width: 0;
+  max-width: none;
 }
 
+.payment-order-detail-filter-table__filters.filter-table-layout .filter-table-layout__filter {
+  flex-shrink: 0;
+}
 /* 강사 별 / 프로그램 별 정산 목록: 본문·헤더 셀 가운데 정렬 (내부 flex·문구 포함) */
 .payment-order-detail-filter-table
   .cms-data-table.ant-table-wrapper
@@ -43,9 +55,21 @@
   justify-content: center;
 }
 
+/*
+ * 산출 내역 「상세 보기」: CmsButton은 display:flex(블록)라 text-align만으로는
+ * 셀 가운데 정렬이 안 됨 → 고정 폭 + margin auto
+ */
+.payment-order-detail-filter-table
+  .payment-order-detail-filter-table__breakdown-btn--140x40.cms-button.cms-button--large.ant-btn,
+.payment-order-detail-filter-table
+  .payment-order-detail-filter-table__breakdown-btn--180.cms-button.cms-button--large.ant-btn {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
 /* 프로그램 별 정산 목록(강사 상세): 산출 내역 상세 보기 140×40 */
 .payment-order-detail-filter-table
-  .payment-order-detail-filter-table__breakdown-btn--140x40.app-button.app-button--large.ant-btn {
+  .payment-order-detail-filter-table__breakdown-btn--140x40.cms-button.cms-button--large.ant-btn {
   width: 140px !important;
   min-width: 140px !important;
   max-width: 140px !important;
@@ -59,7 +83,7 @@
 
 /* 강사 별 정산 목록(프로그램 상세): 산출 내역 상세 보기 180px 유지 */
 .payment-order-detail-filter-table
-  .payment-order-detail-filter-table__breakdown-btn--180.app-button.app-button--large.ant-btn {
+  .payment-order-detail-filter-table__breakdown-btn--180.cms-button.cms-button--large.ant-btn {
   width: 180px !important;
   min-width: 180px !important;
   max-width: 180px !important;
@@ -103,11 +127,11 @@
 
 /* 「일괄 확인」과 동일한 disabled 톤 — primary·지급조서 발급(cancel disabled 와 정렬) */
 .payment-order-detail-filter-table
-  .participating-institutions-section__table-actions
-  .app-button--primary.app-button--filter-wide.ant-btn-primary:disabled,
+  .info-section-buttons--wrapper
+  .cms-button--primary.cms-button--large.ant-btn-primary:disabled,
 .payment-order-detail-filter-table
-  .participating-institutions-section__table-actions
-  .app-button--primary.app-button--filter-wide.ant-btn-primary.ant-btn-disabled {
+  .info-section-buttons--wrapper
+  .cms-button--primary.cms-button--large.ant-btn-primary.ant-btn-disabled {
   background: var(--color-bg-disabled) !important;
   border-color: var(--color-border-light) !important;
   color: var(--color-text-disabled) !important;
@@ -115,12 +139,17 @@
 }
 
 .payment-order-detail-filter-table
-  .participating-institutions-section__table-actions
-  .app-button--primary.app-button--filter-wide.ant-btn-primary:disabled
+  .info-section-buttons--wrapper
+  .cms-button--primary.cms-button--large.ant-btn-primary:disabled
   .anticon,
 .payment-order-detail-filter-table
-  .participating-institutions-section__table-actions
-  .app-button--primary.app-button--filter-wide.ant-btn-primary.ant-btn-disabled
+  .info-section-buttons--wrapper
+  .cms-button--primary.cms-button--large.ant-btn-primary.ant-btn-disabled
   .anticon {
   color: var(--color-text-disabled) !important;
+}
+
+.payment-order-detail-filter-table__amount--rejected {
+  text-decoration: line-through;
+  color: var(--color-text-secondary, #8c8c8c);
 }

@@ -2,10 +2,12 @@
  * 교사 회원 상세 모달 — 기본 정보 탭
  */
 
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { formatDate } from '@/shared/utils'
 import type { TeacherDetailData } from '@/data/mock/school-detail'
+import { inlineSegmentsWithDividers } from '@/features/user/detail/ui/user-basic-info/display'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 
 export interface TeacherBasicInfoTabProps {
   detail: TeacherDetailData
@@ -20,21 +22,21 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
           회원 본인 및 관리자만 작성/수정이 가능합니다.
         </span>
         <div className="teacher-detail-modal__actions-buttons">
-          <AppButton
+          <CmsButton
             variant="default"
-            size="middle"
+            size="medium"
             className="teacher-detail-modal__btn-withdraw"
             onClick={onWithdraw}
           >
             탈퇴
-          </AppButton>
-          <AppButton
+          </CmsButton>
+          <CmsButton
             variant="default"
-            size="middle"
+            size="medium"
             className="teacher-detail-modal__btn-edit"
           >
             수정
-          </AppButton>
+          </CmsButton>
         </div>
       </div>
 
@@ -57,13 +59,10 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
             <tbody>
               <tr>
                 <td
-                  rowSpan={2}
-                  className="teacher-detail-modal__cell--label teacher-detail-modal__cell--name"
+                  colSpan={2}
+                  className="teacher-detail-modal__cell--label teacher-detail-modal__cell--row-label"
                 >
                   <span>성명</span>
-                </td>
-                <td className="teacher-detail-modal__cell--label teacher-detail-modal__cell--name-sub">
-                  <span>한글</span>
                 </td>
                 <td className="teacher-detail-modal__cell--input">
                   {detail.name}
@@ -75,22 +74,19 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                   <span>주민등록번호</span>
                 </td>
                 <td className="teacher-detail-modal__cell--input">
-                  {detail.residentNumber} | 만 {detail.age}세
+                  {inlineSegmentsWithDividers([detail.residentNumber, `만 ${detail.age}세`])}
                 </td>
               </tr>
 
               <tr>
-                <td className="teacher-detail-modal__cell--label teacher-detail-modal__cell--name-sub">
-                  <span>영문</span>
-                </td>
-                <td className="teacher-detail-modal__cell--input teacher-detail-modal__name-eng">
-                  {detail.nameEn}
-                </td>
-                <td className="teacher-detail-modal__cell--label teacher-detail-modal__cell--label-right">
+                <td
+                  colSpan={2}
+                  className="teacher-detail-modal__cell--label teacher-detail-modal__cell--row-label"
+                >
                   <span>성별 및 병역사항</span>
                 </td>
-                <td className="teacher-detail-modal__cell--input">
-                  {detail.gender} | {detail.militaryStatus}
+                <td colSpan={3} className="teacher-detail-modal__cell--input">
+                  {inlineSegmentsWithDividers([detail.gender, detail.militaryStatus])}
                 </td>
               </tr>
 
@@ -126,7 +122,7 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                   <span>소속 및 강사 경력</span>
                 </td>
                 <td className="teacher-detail-modal__cell--input">
-                  {detail.schoolName} | {detail.instructorExperience}
+                  {inlineSegmentsWithDividers([detail.schoolName, detail.instructorExperience])}
                 </td>
               </tr>
 
@@ -138,7 +134,9 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                   <span>정산 계좌 정보</span>
                 </td>
                 <td colSpan={3} className="teacher-detail-modal__cell--input">
-                  {detail.bankName} {detail.accountNumber} | {detail.accountHolder}
+                  {renderDetailInfoPipeSeparated(
+                    `${detail.bankName} ${detail.accountNumber} | ${detail.accountHolder}`
+                  )}
                 </td>
               </tr>
             </tbody>
@@ -160,7 +158,7 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                 <span>연동된 소셜 계정</span>
               </td>
               <td className="teacher-detail-modal__cell--input">
-                {detail.socialAccounts.join(' | ')}
+                {inlineSegmentsWithDividers(detail.socialAccounts)}
               </td>
               <td className="teacher-detail-modal__cell--label">
                 <span>가입일</span>
@@ -174,13 +172,19 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                 <span>개인정보 수집 동의</span>
               </td>
               <td className="teacher-detail-modal__cell--input">
-                {detail.personalInfoConsentDate} | {detail.personalInfoConsent ? '동의' : '미동의'}
+                {inlineSegmentsWithDividers([
+                  detail.personalInfoConsentDate,
+                  detail.personalInfoConsent ? '동의' : '미동의',
+                ])}
               </td>
               <td className="teacher-detail-modal__cell--label">
                 <span>마케팅 제공 동의</span>
               </td>
               <td className="teacher-detail-modal__cell--input">
-                {detail.marketingConsentDate} | {detail.marketingConsent ? '동의' : '미동의'}
+                {inlineSegmentsWithDividers([
+                  detail.marketingConsentDate,
+                  detail.marketingConsent ? '동의' : '미동의',
+                ])}
               </td>
             </tr>
           </tbody>
@@ -204,7 +208,7 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                     <span>최종 학력</span>
                   </td>
                   <td colSpan={3} className="teacher-detail-modal__cell--input">
-                    {detail.education} | {detail.university}
+                    {inlineSegmentsWithDividers([detail.education, detail.university])}
                   </td>
                 </tr>
                 <tr>

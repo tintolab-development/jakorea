@@ -1,0 +1,28 @@
+.ujat-program-application-grade-info-paragraph__block {
+  display: flex;
+  align-items: stretch;
+  column-gap: 8px;
+}
+
+.ujat-program-application-grade-info-paragraph__block
+  + .ujat-program-application-grade-info-paragraph__block {
+  margin-top: 16px;
+}
+
+.ujat-program-application-grade-info-paragraph__block-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ujat-program-application-grade-info-paragraph__delete-cell {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  align-self: stretch;
+  margin-top: 20px;
+}
+
+.ujat-program-application-grade-info-paragraph__student-inputs-row {
+  flex-wrap: wrap;
+  align-items: center;
+}

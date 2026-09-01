@@ -3,44 +3,27 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import type { SchoolAffiliatedTeacherRow, SchoolTeacherEmploymentStatus } from '@/types/user'
-import { AppButton } from '@/shared/ui/app-button'
+import type { AffiliatedTeacherLinkTarget, SchoolAffiliatedTeacherRow, SchoolTeacherEmploymentStatus } from '@/types/user'
+import { CmsButton } from '@/shared/ui'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
-import { formatDate } from '@/shared/utils'
+import { formatDateSpaced } from '@/shared/utils'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
-  AppStatusBadge,
+  SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
+  SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS,
+  isSchoolTeacherEmploymentMutedStatus,
+  SchoolTeacherEmploymentStatusBadge,
+} from '@/features/user/detail/lib/school-teacher-employment-status'
+import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
 } from '@/shared/components'
 import './school-affiliated-teachers-section.css'
-
-/** 재직 현황 드롭다운 선택지 — 탈퇴(WITHDRAWN)는 목록에서 제외, 데이터에만 남을 수 있음 */
-const SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS = [
-  'ACTIVE',
-  'ON_LEAVE',
-  'TRANSFERRED',
-] as const satisfies readonly SchoolTeacherEmploymentStatus[]
-
-const EMPLOYMENT_BADGE_LABEL: Record<SchoolTeacherEmploymentStatus, string> = {
-  ACTIVE: '재직중',
-  ON_LEAVE: '휴직',
-  TRANSFERRED: '전근',
-  WITHDRAWN: '탈퇴',
-}
-
-function SchoolTeacherEmploymentStatusBadge({ status }: { status: SchoolTeacherEmploymentStatus }) {
-  const variant = status === 'ACTIVE' ? 'active' : 'muted'
-  return (
-    <AppStatusBadge
-      label={EMPLOYMENT_BADGE_LABEL[status]}
-      className={`school-affiliated-teachers-section__employment-badge school-affiliated-teachers-section__employment-badge--${variant}`}
-    />
-  )
-}
 
 export interface SchoolAffiliatedTeachersSectionProps {
   rows: SchoolAffiliatedTeacherRow[]
@@ -49,7 +32,7 @@ export interface SchoolAffiliatedTeachersSectionProps {
   /** 선택 교사 일괄 탈퇴 — 미지정 시 안내만 표시 */
   onWithdrawSelected?: (teacherIds: string[]) => void
   /** `linkedUserId`가 있는 행 클릭 시 해당 CMS 회원 상세로 이동 */
-  onLinkedUserClick?: (linkedUserId: string) => void
+  onLinkedUserClick?: (target: AffiliatedTeacherLinkTarget) => void
   /** 재직 현황 변경 시 (API 연동 시 저장 로직 연결) */
   onEmploymentStatusChange?: (
     teacherId: string,
@@ -61,15 +44,6 @@ function isCheckboxClickTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false
   return Boolean(target.closest('.ant-checkbox-wrapper, .ant-checkbox'))
 }
-
-const EMPLOYMENT_BADGE_CELL_STYLE = {
-  width: 100,
-  minWidth: 100,
-  maxWidth: 100,
-  height: 32,
-  minHeight: 32,
-  maxHeight: 32,
-} as const
 
 export function SchoolAffiliatedTeachersSection({
   rows,
@@ -158,22 +132,25 @@ export function SchoolAffiliatedTeachersSection({
         title: '재직 현황',
         dataIndex: 'employmentStatus',
         key: 'employmentStatus',
-        width: 118,
+        width: 116,
         align: 'center',
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
+        onCell: () => ({
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+          onClick: (e: React.MouseEvent<HTMLTableCellElement>) => e.stopPropagation(),
+        }),
         render: (_: unknown, record: Row) => (
-          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
-            <StatusDropdownCell<SchoolTeacherEmploymentStatus>
-              status={record.employmentStatus}
-              statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
-              renderBadge={s => <SchoolTeacherEmploymentStatusBadge status={s} />}
-              isItemDisabled={(cur, opt) => cur === opt}
-              onChange={next => handleEmploymentStatusChange(record.id, next)}
-              isOpen={openEmploymentDropdownId === record.id}
-              onOpenChange={open => setOpenEmploymentDropdownId(open ? record.id : null)}
-              style={EMPLOYMENT_BADGE_CELL_STYLE}
-            />
-          </div>
+          <StatusDropdownCell<SchoolTeacherEmploymentStatus>
+            status={record.employmentStatus}
+            statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
+            renderBadge={s => <SchoolTeacherEmploymentStatusBadge status={s} />}
+            isItemDisabled={(cur, opt) => cur === opt}
+            onChange={next => handleEmploymentStatusChange(record.id, next)}
+            isOpen={openEmploymentDropdownId === record.id}
+            onOpenChange={open => setOpenEmploymentDropdownId(open ? record.id : null)}
+            style={SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE}
+            tagLayout="tag100"
+          />
         ),
       },
       {
@@ -182,7 +159,7 @@ export function SchoolAffiliatedTeachersSection({
         key: 'joinedAt',
         width: TABLE_COLUMN_WIDTHS.date,
         align: 'center',
-        render: (d: Row['joinedAt']) => formatDate(d),
+        render: (d: Row['joinedAt']) => formatDateSpaced(d),
       },
     ],
     [rows.length, openEmploymentDropdownId, handleEmploymentStatusChange, personalInfoRevealed]
@@ -193,11 +170,16 @@ export function SchoolAffiliatedTeachersSection({
   }
 
   const handleRowClick = (record: Row) => {
-    if (!record.linkedUserId) {
-      message.info('연결된 회원 정보가 없습니다.')
-      return
-    }
-    onLinkedUserClick?.(record.linkedUserId)
+    const targetId =
+      record.linkedUserId?.trim() ||
+      (record.teacherMemberId != null ? String(record.teacherMemberId) : '')
+    if (!targetId) return
+    onLinkedUserClick?.({
+      userId: targetId,
+      teacherMemberId: record.teacherMemberId,
+      name: record.name,
+      assignedGrade: record.assignedGrade,
+    })
   }
 
   return (
@@ -208,22 +190,21 @@ export function SchoolAffiliatedTeachersSection({
           <div className="detail-info-form__description">{`총 ${rows.length}건`}</div>
         </div>
         <div className="school-affiliated-teachers-section__header-end">
-          <AppButton
-            variant="danger"
-            size="filter"
-            dangerFillOnHover
+          <CmsButton
+            variant="delete"
+            size="medium"
             disabled={selectedRowKeys.length === 0}
             onClick={handleWithdraw}
           >
             회원 탈퇴
-          </AppButton>
+          </CmsButton>
         </div>
       </header>
       <DetailInfoForm title="소속 교사 목록" hideHeader className="school-affiliated-teachers-section__form">
         <DetailInfoForm.Row type="custom">
           <div className="school-affiliated-teachers-section__body">
             <Table
-              className="cms-data-table cms-data-table--fluid"
+              className="cms-data-table cms-data-table--fluid school-affiliated-teachers-section__table"
               rowSelection={{
                 columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                 selectedRowKeys,
@@ -237,12 +218,15 @@ export function SchoolAffiliatedTeachersSection({
               scroll={TABLE_CONFIG.scroll}
               rowKey="id"
               onRow={record => ({
+                className: isSchoolTeacherEmploymentMutedStatus(record.employmentStatus)
+                  ? 'school-affiliated-teachers-section__row--muted-text'
+                  : undefined,
                 onClick: e => {
                   if (isCheckboxClickTarget(e.target)) return
                   handleRowClick(record)
                 },
                 style:
-                  record.linkedUserId && onLinkedUserClick
+                  (record.linkedUserId || record.teacherMemberId != null) && onLinkedUserClick
                     ? { cursor: 'pointer' }
                     : undefined,
               })}

@@ -4,8 +4,8 @@
  * 시니어 개발자 관점: 컴포넌트 분리
  */
 
-import { Modal, Form, Input, DatePicker, Select, Button, Space, message } from 'antd'
-import { MESSAGES } from '@/shared/constants'
+import { Form, Input, DatePicker, Select, Space } from 'antd'
+import { CmsButton, ContentModal } from '@/shared/ui'
 import { usePermissionRequest } from '../hooks/use-permission-request'
 import type { ProgramRole, PermissionAction } from '@/types/permission-request'
 import type { UUID } from '@/types'
@@ -35,8 +35,7 @@ export function PermissionRequestModal({
   programName,
   requestedAction,
   onCancel,
-  onSuccess,
-}: PermissionRequestModalProps) {
+  onSuccess }: PermissionRequestModalProps) {
   const [form] = Form.useForm()
   const { submitting, submitRequest } = usePermissionRequest()
 
@@ -52,10 +51,8 @@ export function PermissionRequestModal({
         requestedPeriod: values.requestedPeriod
           ? {
               startDate: values.requestedPeriod[0].toISOString(),
-              endDate: values.requestedPeriod[1].toISOString(),
-            }
-          : undefined,
-      })
+              endDate: values.requestedPeriod[1].toISOString() }
+          : undefined })
 
       if (result) {
         form.resetFields()
@@ -67,8 +64,7 @@ export function PermissionRequestModal({
       if (error && typeof error === 'object' && 'errorFields' in error) {
         return
       }
-      message.error(MESSAGES.error.permissionRequestSubmitFailed)
-    }
+      }
   }
 
   const handleCancel = () => {
@@ -79,19 +75,28 @@ export function PermissionRequestModal({
   const actionLabels: Record<PermissionAction, string> = {
     VIEW: '조회',
     DOWNLOAD: '다운로드',
-    EDIT: '수정',
-  }
+    EDIT: '수정' }
+
+  const footer = (
+    <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+      <CmsButton variant="default" onClick={handleCancel} disabled={submitting}>
+        취소
+      </CmsButton>
+      <CmsButton type="submit" form="permission-request-form" loading={submitting}>
+        요청 제출
+      </CmsButton>
+    </Space>
+  )
 
   return (
-    <Modal
+    <ContentModal
       open={open}
       title="권한 요청"
       onCancel={handleCancel}
-      footer={null}
-      width={600}
-      destroyOnHidden
+      footer={footer}
+      size="compact"
     >
-      <Form form={form} layout="vertical" onFinish={handleSubmit}>
+      <Form id="permission-request-form" form={form} layout="vertical" onFinish={handleSubmit}>
         <Form.Item label="프로그램">
           <Input value={programName} disabled />
         </Form.Item>
@@ -103,7 +108,6 @@ export function PermissionRequestModal({
         <Form.Item
           label="요청 역할"
           name="requestedRole"
-          rules={[{ required: true, message: '요청할 역할을 선택해주세요.' }]}
         >
           <Select placeholder="역할을 선택하세요" options={roleOptions} />
         </Form.Item>
@@ -111,7 +115,6 @@ export function PermissionRequestModal({
         <Form.Item
           label="요청 사유"
           name="reason"
-          rules={[{ required: true, message: '요청 사유를 입력해주세요.' }]}
         >
           <TextArea
             rows={4}
@@ -132,18 +135,7 @@ export function PermissionRequestModal({
             disabledDate={current => current && current < dayjs().startOf('day')}
           />
         </Form.Item>
-
-        <Form.Item>
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button onClick={handleCancel} disabled={submitting}>
-              취소
-            </Button>
-            <Button type="primary" htmlType="submit" loading={submitting}>
-              요청 제출
-            </Button>
-          </Space>
-        </Form.Item>
       </Form>
-    </Modal>
+    </ContentModal>
   )
 }

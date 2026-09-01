@@ -3,14 +3,12 @@
  */
 
 import { useEffect, useState } from 'react'
-import dayjs, { type Dayjs } from 'dayjs'
-import { message } from 'antd'
+import { type Dayjs } from 'dayjs'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
-import { AppDatePicker } from '@/shared/ui/app-datepicker'
+import { CmsButton } from '@/shared/ui'
+import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
+import { defaultLectureFeePaymentScheduledDate } from '@/features/settlement/lib/third-tuesday-of-month'
 import './payment-order-batch-confirm-modal.css'
-
-const DEFAULT_SCHEDULED_DATE = dayjs('2026-02-17')
 
 export interface PaymentOrderBatchConfirmModalProps {
   open: boolean
@@ -27,26 +25,28 @@ export function PaymentOrderBatchConfirmModal({
   open,
   onCancel,
   selectedCount,
-  initialScheduledDate = DEFAULT_SCHEDULED_DATE,
+  initialScheduledDate,
   onConfirm,
 }: PaymentOrderBatchConfirmModalProps) {
-  const [scheduledDate, setScheduledDate] = useState<Dayjs | null>(initialScheduledDate)
+  const fallbackDate = defaultLectureFeePaymentScheduledDate()
+  const [scheduledDate, setScheduledDate] = useState<Dayjs | null>(
+    initialScheduledDate ?? fallbackDate
+  )
 
   useEffect(() => {
     if (open) {
-      setScheduledDate(initialScheduledDate ?? DEFAULT_SCHEDULED_DATE)
+      setScheduledDate(initialScheduledDate ?? defaultLectureFeePaymentScheduledDate())
     }
   }, [open, initialScheduledDate])
 
   const handleConfirm = () => {
     if (scheduledDate == null || !scheduledDate.isValid()) {
-      message.warning('강의비 지급 예정일을 선택해 주세요.')
       return
     }
     if (onConfirm) {
       onConfirm(scheduledDate)
     } else {
-      message.success('지급조서 확인 완료 처리는 추후 API와 연동됩니다.')
+      console.debug('paymentOrderBatchConfirmModal onConfirm not provided')
     }
     onCancel()
   }
@@ -60,12 +60,12 @@ export function PaymentOrderBatchConfirmModal({
       className="payment-order-batch-confirm-modal"
       footer={
         <>
-          <AppButton variant="cancel" size="middle" onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             취소
-          </AppButton>
-          <AppButton variant="primary" size="tableAction" onClick={handleConfirm}>
+          </CmsButton>
+          <CmsButton variant="primary" size="large" width={160} onClick={handleConfirm}>
             지급조서 확인 완료
-          </AppButton>
+          </CmsButton>
         </>
       }
     >
@@ -82,10 +82,11 @@ export function PaymentOrderBatchConfirmModal({
         </p>
         <div className="payment-order-batch-confirm-modal__field">
           <span className="payment-order-batch-confirm-modal__label">강의비 지급 예정일</span>
-          <AppDatePicker
+          <CmsDatePicker
             className="payment-order-batch-confirm-modal__datepicker"
             value={scheduledDate}
             onChange={d => setScheduledDate(d)}
+            inputSize="medium"
             allowClear={false}
           />
         </div>

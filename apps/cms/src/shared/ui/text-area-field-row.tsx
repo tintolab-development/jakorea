@@ -1,10 +1,8 @@
 import type { ReactNode } from 'react'
-import { Input } from 'antd'
 import { Controller } from 'react-hook-form'
 import type { FieldPath, FieldValues, UseFormReturn } from 'react-hook-form'
+import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import './text-area-field-row.css'
-
-const { TextArea } = Input
 
 export type TextAreaFieldRowProps<TFieldValues extends FieldValues> = {
   label: string
@@ -12,10 +10,11 @@ export type TextAreaFieldRowProps<TFieldValues extends FieldValues> = {
   isFormEdit: boolean
   form: UseFormReturn<TFieldValues> | undefined
   name: FieldPath<TFieldValues>
-  rows: number
+  /** 모집 양식 상세 정보와 동일: 1행 시작 + 세로 확장. 기본 1 */
+  rows?: number
   placeholder: string
   readContent: ReactNode
-  /** 기본: `text-area-field-row__content-textarea` (`text-area-field-row.css`) */
+  /** 기본: `text-area-field-row__field` (`text-area-field-row.css`) */
   textareaClassName?: string
   readContentWrapperClassName?: string
 }
@@ -30,12 +29,11 @@ export function TextAreaFieldRow<TFieldValues extends FieldValues>({
   isFormEdit,
   form,
   name,
-  rows,
+  rows = 1,
   placeholder,
   readContent,
-  textareaClassName = 'text-area-field-row__content-textarea',
-  readContentWrapperClassName = 'text-area-field-row__content-block',
-}: TextAreaFieldRowProps<TFieldValues>) {
+  textareaClassName = 'text-area-field-row__field',
+  readContentWrapperClassName = 'text-area-field-row__content-block' }: TextAreaFieldRowProps<TFieldValues>) {
   return (
     <tr>
       <th>
@@ -49,17 +47,19 @@ export function TextAreaFieldRow<TFieldValues extends FieldValues>({
             control={form.control}
             render={({ field, fieldState }) => (
               <>
-                <TextArea
+                <CmsTextArea
                   {...field}
                   value={typeof field.value === 'string' ? field.value : String(field.value ?? '')}
+                  inputSize="medium"
+                  width="100%"
                   rows={rows}
                   placeholder={placeholder}
                   className={textareaClassName}
                   status={fieldState.error ? 'error' : undefined}
                 />
-                {fieldState.error?.message && (
+                {fieldState.error && (
                   <span className="text-area-field-row__field-error">
-                    {fieldState.error.message}
+                    {fieldState.error ? '입력값을 확인해주세요.' : null}
                   </span>
                 )}
               </>

@@ -1,0 +1,117 @@
+.ujat-region-assignment-download-modal-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.ujat-region-assignment-download-modal-wrap::before {
+  display: none !important;
+  content: none !important;
+}
+
+.ujat-region-assignment-download-modal-wrap .ant-modal.ujat-region-assignment-download-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+  width: min(600px, calc(100vw - 32px)) !important;
+  max-width: min(600px, calc(100vw - 32px)) !important;
+  box-sizing: border-box !important;
+}
+
+.content-modal.ujat-region-assignment-download-modal.ant-modal .ant-modal-content,
+.content-modal.ujat-region-assignment-download-modal.teal-header-modal .ant-modal-content {
+  display: flex;
+  width: 600px;
+  max-width: min(600px, calc(100vw - 32px));
+  min-height: 300px;
+  height: auto;
+  padding: 24px 30px 32px;
+  flex-direction: column;
+  align-items: stretch;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.content-modal.ujat-region-assignment-download-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.content-modal.ujat-region-assignment-download-modal .teal-header-modal__body {
+  flex: 0 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+  min-height: 0;
+  margin-top: 0;
+  padding-top: 16px;
+  gap: 30px;
+  overflow: visible;
+}
+
+.content-modal.ujat-region-assignment-download-modal .teal-header-modal__footer {
+  width: 100%;
+  margin-top: 30px;
+  padding: 0;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.ujat-region-assignment-download-modal__form {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 0;
+}
+
+.ujat-region-assignment-download-modal__field {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.ujat-region-assignment-download-modal__label {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-region-assignment-download-modal__field .cms-select {
+  width: 100%;
+}
+
+.ujat-region-assignment-download-modal__footer {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}

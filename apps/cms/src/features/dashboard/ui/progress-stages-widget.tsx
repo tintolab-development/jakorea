@@ -122,6 +122,7 @@ export function ProgressStagesWidget({
       if (isFirst) {
         elements.push(
           <DividerVertical
+            key={`arrow-divider-${item.key}`}
             height={60}
             className="program-progress-widget__divider-vertical--wrapper"
           />

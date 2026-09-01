@@ -66,11 +66,16 @@
 }
 
 /* ----- size (폭·타이포는 `cms-input`과 동일, 높이는 min-height) ----- */
+/*
+ * 멀티라인: 패딩은 textarea에 둔다.
+ * 컨트롤만 패딩하고 textarea는 0이면 Ant `.ant-input-textarea` 래퍼·resize와
+ * 겹칠 때 글자가 테두리에 붙어 보인다. (rows=1은 아래 전용 규칙)
+ */
 .cms-textarea--large .cms-textarea__control {
   width: 240px;
   min-width: 120px;
   min-height: 44px;
-  padding: 8px 12px 8px 14px;
+  padding: 0;
 }
 
 .cms-textarea--large.cms-textarea--explicit-width .cms-textarea__control {
@@ -82,7 +87,7 @@
   width: 240px;
   min-width: 120px;
   min-height: 40px;
-  padding: 6px 12px 6px 14px;
+  padding: 0;
 }
 
 .cms-textarea--medium.cms-textarea--explicit-width .cms-textarea__control {
@@ -94,7 +99,7 @@
   width: 200px;
   min-width: 100px;
   min-height: 32px;
-  padding: 4px 10px 4px 12px;
+  padding: 0;
 }
 
 .cms-textarea--small.cms-textarea--explicit-width .cms-textarea__control {
@@ -104,34 +109,141 @@
 
 .cms-textarea--large .cms-textarea__inner textarea.ant-input {
   font-size: 16px;
+  padding: 8px 14px !important;
 }
 
 .cms-textarea--medium .cms-textarea__inner textarea.ant-input {
   font-size: 15px;
+  padding: 6px 14px !important;
 }
 
 .cms-textarea--small .cms-textarea__inner textarea.ant-input {
   font-size: 14px;
+  padding: 4px 12px !important;
 }
 
 .cms-textarea__inner textarea.ant-input {
+  box-sizing: border-box;
   flex: 1 1 auto;
   min-width: 0;
+  width: 100%;
   margin: 0;
-  padding: 0 !important;
+  /* size별 padding이 우선. 여기는 Ant 기본만 리셋 */
   border: none !important;
   box-shadow: none !important;
   background: transparent !important;
+  font-family: Pretendard, sans-serif;
   font-weight: 500;
   line-height: 150%;
   color: var(--main-BK, #3d3d3d);
   resize: vertical;
   overflow: auto;
+  /* CmsInput과 동일 — Ant 토큰 패딩 무력화 */
+  --ant-input-padding-block: 0;
+  --ant-input-padding-inline: 0;
+  --ant-padding-sm: 0;
+  --ant-input-padding-block-sm: 0;
+  --ant-input-padding-inline-sm: 0;
+  --ant-input-padding-block-lg: 0;
+  --ant-input-padding-inline-lg: 0;
 }
 
+/* placeholder 타이포 스펙 (인풋 값과 동일 Pretendard·500·150%) */
 .cms-textarea__inner textarea.ant-input::placeholder {
+  overflow: hidden;
   color: var(--gray-85969-d, #85969d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  font-style: normal;
   font-weight: 500;
+  line-height: 150%;
+}
+
+/*
+ * rows=1 공통: `CmsInput`과 동일한 박스 높이·가로 패딩 체계.
+ * 값·placeholder 세로 중앙 — line-height를 콘텐츠 높이와 동일하게 맞춤(textarea는 ::placeholder에 align-content 미적용).
+ * 한 줄 말줄임·resize 비활성은 `cms-textarea--rows-1-single-line`에만 적용.
+ */
+.cms-textarea--rows-1 .cms-textarea__control {
+  align-items: center;
+  padding: 0;
+  overflow: visible;
+}
+
+.cms-textarea--rows-1 .cms-textarea__inner {
+  align-items: center;
+}
+
+.cms-textarea--rows-1.cms-textarea--large .cms-textarea__inner textarea.ant-input {
+  box-sizing: border-box;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 12px 0 14px !important;
+  line-height: 44px;
+}
+
+.cms-textarea--rows-1.cms-textarea--medium .cms-textarea__inner textarea.ant-input {
+  box-sizing: border-box;
+  min-height: 40px;
+  height: 40px;
+  padding: 0 12px 0 14px !important;
+  line-height: 40px;
+}
+
+.cms-textarea--rows-1.cms-textarea--small .cms-textarea__inner textarea.ant-input {
+  box-sizing: border-box;
+  min-height: 32px;
+  height: 32px;
+  padding: 0 10px 0 12px !important;
+  line-height: 32px;
+}
+
+.cms-textarea--rows-1 .cms-textarea__inner textarea.ant-input::placeholder {
+  line-height: inherit;
+}
+
+/* `expandableFromSingleRow`: 한 줄 높이로 시작하되 세로 리사이즈·여러 줄 허용 */
+.cms-textarea--expandable-single-row.cms-textarea--large .cms-textarea__inner textarea.ant-input {
+  height: auto;
+  min-height: 44px;
+  resize: vertical;
+  overflow: auto;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+.cms-textarea--expandable-single-row.cms-textarea--medium .cms-textarea__inner textarea.ant-input {
+  height: auto;
+  min-height: 40px;
+  resize: vertical;
+  overflow: auto;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+.cms-textarea--expandable-single-row.cms-textarea--small .cms-textarea__inner textarea.ant-input {
+  height: auto;
+  min-height: 32px;
+  resize: vertical;
+  overflow: auto;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+.cms-textarea--expandable-single-row .cms-textarea__inner textarea.ant-input::placeholder {
+  white-space: normal;
+}
+
+.cms-textarea--rows-1-single-line .cms-textarea__inner textarea.ant-input {
+  resize: none;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cms-textarea--rows-1-single-line .cms-textarea__inner textarea.ant-input::placeholder {
+  white-space: nowrap;
 }
 
 .cms-textarea__control--disabled .cms-textarea__inner textarea.ant-input {

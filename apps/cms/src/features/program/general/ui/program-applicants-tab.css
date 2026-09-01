@@ -1,0 +1,279 @@
+/**
+ * 프로그램 상세 - 신청자 목록 탭 (신청 학교 / 신청 강사)
+ * 진행 현황 탭과 동일 패턴: 카드, 서브 탭, 필터, 조회, 테이블
+ */
+
+.program-applicants-tab {
+    width: 100%;
+}
+
+.program-applicants-tab__card {
+    background: var(--color-bg-base);
+    border-radius: var(--radius-8);
+    border: 1px solid var(--color-border-light);
+}
+
+.program-applicants-tab__card .ant-card-body {
+    padding: var(--spacing-16) var(--spacing-24) var(--spacing-24);
+}
+
+.program-applicants-tab__top {
+    margin-bottom: 0;
+}
+
+.program-applicants-tab__bar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-16);
+    flex-wrap: wrap;
+}
+
+.program-applicants-tab__tabs {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+    padding: var(--spacing-4);
+    border-radius: var(--radius-8);
+    box-sizing: border-box;
+    background: var(--color-bg-tab);
+}
+
+.program-applicants-tab__tab-btn {
+    height: 42px;
+    padding: 0 var(--spacing-16);
+    border: 1px solid transparent;
+    border-radius: var(--radius-8);
+    background: var(--color-bg-tab);
+    color: var(--color-text-tab);
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-500);
+    cursor: pointer;
+    line-height: 1.4;
+    transition:
+        color 0.2s,
+        border-color 0.2s,
+        background 0.2s;
+    text-align: center;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.program-applicants-tab__tab-btn:hover {
+    color: var(--color-tab-active);
+}
+
+.program-applicants-tab__tab-btn--active {
+    border: 1.5px solid var(--color-tab-active);
+    background: var(--color-bg-base);
+    color: var(--color-tab-active);
+    font-weight: var(--font-weight-600);
+}
+
+.program-applicants-tab__filters {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    overflow: visible;
+}
+
+.program-applicants-tab__filters .ant-row.program-applicants-tab__filter-row {
+    width: 100%;
+    align-items: center;
+    flex-wrap: nowrap;
+    min-width: 0;
+    gap: 0;
+}
+
+.program-applicants-tab__filter-field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--filter-label-control-gap, var(--spacing-6, 6px));
+    height: var(--filter-control-height, 44px);
+    min-height: var(--filter-control-height, 44px);
+    overflow: visible;
+}
+
+.program-applicants-tab__filter-label {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    min-height: 0;
+    height: auto;
+}
+
+.program-applicants-tab__filter-col {
+    min-width: 160px;
+}
+
+.program-applicants-tab__filter-col .ant-select {
+    width: var(--filter-control-width, 180px) !important;
+    min-width: 120px;
+    height: var(--filter-control-height, 44px) !important;
+}
+
+.program-applicants-tab__filter-col .ant-select .ant-select-selector {
+    height: var(--filter-control-height, 44px) !important;
+    min-height: var(--filter-control-height, 44px) !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+.program-applicants-tab__filter-col--btn {
+    padding-inline-start: 12px !important;
+}
+
+.program-applicants-tab__divider {
+    height: 0;
+    border: none;
+    border-top: 1px solid #e8e8e8;
+    margin: 16px 0 0;
+}
+
+.program-applicants-tab__below-divider {
+    padding-top: 16px;
+    margin-top: 0;
+}
+
+.program-applicants-tab__table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-16);
+}
+
+.program-applicants-tab__table-heading {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.program-applicants-tab__table-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-8, 8px);
+    flex-shrink: 0;
+}
+
+/* 선택 반려 / 선택 승인 등 — Large 140×44 */
+.program-applicants-tab__table-actions .cms-button.ant-btn {
+    width: 140px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+    height: 44px !important;
+    padding: 6px 16px !important;
+    gap: 6px;
+    border-radius: var(--radius-8, 8px);
+    font-size: 16px;
+}
+
+.program-applicants-tab__table-title {
+    color: var(--default-BK, #3d3d3d);
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 140%;
+}
+
+.program-applicants-tab__table-description {
+    color: #3d3d3d;
+    opacity: 0.6;
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-500);
+    line-height: 150%;
+}
+
+.program-applicants-tab__table {
+    margin-top: 0;
+}
+
+.program-applicants-tab__table .ant-table-thead>tr>th,
+.program-applicants-tab__table .ant-table-tbody>tr>td {
+    text-align: center;
+    vertical-align: middle;
+    border-right: 1px solid var(--color-border-light);
+}
+
+.program-applicants-tab__table .ant-table-thead>tr>th:last-child,
+.program-applicants-tab__table .ant-table-tbody>tr>td:last-child {
+    border-right: none;
+}
+
+.program-applicants-tab__table .ant-table-tbody>tr>td {
+    background: #fff;
+}
+
+.program-applicants-tab__table .ant-table-thead>tr>th {
+    background: #edf0f2;
+    font-size: 14px;
+    font-weight: 700;
+    color: #262626;
+}
+
+/* 결재 현황 드롭다운: 셀/트리거 클릭 시 행 클릭(상세 모달) 방지 */
+/* 프로그램 승인 현황: shared StatusDropdownCell 사용 — participating-institutions-section과 동일 스타일 */
+.program-applicants-tab .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status) {
+  height: 53px;
+  min-height: 53px;
+  max-height: 53px;
+  overflow: visible;
+}
+
+.program-applicants-tab .ant-table-thead
+  > tr
+  > th.status-dropdown-cell__cell-status,
+.program-applicants-tab .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  width: 136px;
+  min-width: 136px;
+  max-width: 136px;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.program-applicants-tab .status-dropdown-cell__status-trigger--open {
+  box-sizing: border-box !important;
+  width: 136px !important;
+  min-width: 136px !important;
+  max-width: 136px !important;
+}
+
+.program-applicants-tab .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 53px !important;
+  min-height: 53px !important;
+  max-height: 53px !important;
+}
+
+.program-applicants-tab .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+@media (max-width: 1200px) {
+    .program-applicants-tab__filters .ant-row.program-applicants-tab__filter-row {
+        flex-wrap: wrap;
+    }
+
+    .program-applicants-tab__filter-col {
+        flex: 1 1 120px !important;
+        max-width: none;
+    }
+}

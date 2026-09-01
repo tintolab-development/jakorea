@@ -1,0 +1,298 @@
+.section {
+  width: 100%;
+  padding-block: var(--spacing-48);
+  /* 홈 YouTube+스토리 밴드 배경이 비치도록 투명 */
+  background: transparent;
+}
+
+@media (--bp-pc-up) {
+  .section {
+    padding-block: var(--spacing-100);
+  }
+}
+
+.inner {
+  display: flex;
+  width: 100%;
+  max-width: var(--content-shell-max-width);
+  margin-inline: auto;
+  padding-inline: var(--spacing-20);
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-24);
+}
+
+@media (--bp-pc-up) {
+  .inner {
+    padding-inline: var(--spacing-40);
+    gap: 0;
+  }
+
+  .featured {
+    /* 피처드 ↔ 하단 3카드 */
+    margin-bottom: var(--spacing-100);
+  }
+
+  .subGrid {
+    /* 하단 3카드 ↔ 전체보기 */
+    margin-bottom: var(--spacing-80);
+  }
+}
+
+/* 모바일 전용 섹션 타이틀 (YouTube 카피 이관) */
+.mobileTitle {
+  width: 100%;
+  margin: 0 0 var(--spacing-8);
+  color: var(--color-neutral-black, #3d3d3d);
+  text-align: center;
+  font-family: var(--font-family-base);
+  font-size: 22px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 135%;
+  letter-spacing: -0.44px;
+}
+
+@media (--bp-pc-up) {
+  .mobileTitle {
+    display: none;
+  }
+}
+
+.featured {
+  display: none;
+  flex-direction: column;
+  gap: var(--spacing-20);
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (--bp-pc-up) {
+  .featured {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-64);
+  }
+}
+
+.featured:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 4px;
+  border-radius: var(--radius-16);
+}
+
+.featuredMedia {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-16);
+  overflow: hidden;
+}
+
+@media (--bp-pc-up) {
+  .featuredMedia {
+    width: 44%;
+    flex-shrink: 0;
+  }
+}
+
+.featuredBody {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.featuredCategory {
+  margin: 0;
+}
+
+.featuredTitle {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  /* Figma 피처드 타이틀 44/700/144% — DS에 동일 토큰 없음 */
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 144%;
+  letter-spacing: 0;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.featured:hover .featuredTitle {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.featuredDate {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-24);
+}
+
+@media (--bp-pc-up) {
+  .subGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--spacing-40);
+  }
+}
+
+.subCard {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-self: stretch;
+  gap: var(--spacing-12);
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (--bp-pc-up) {
+  .subCard {
+    gap: var(--spacing-20);
+  }
+}
+
+.subCard:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 4px;
+  border-radius: var(--radius-12);
+}
+
+.subCardMedia {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-16);
+  overflow: hidden;
+  align-self: stretch;
+}
+
+@media (--bp-pc-up) {
+  .subCardMedia {
+    width: 100%;
+    height: 255px;
+    aspect-ratio: auto;
+    border-radius: var(--radius-12);
+  }
+}
+
+.subCardBadge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: inline-flex;
+  height: 26px;
+  padding: 0 10px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 999px;
+  font-family: var(--font-family-base);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+@media (--bp-pc-up) {
+  .subCardBadge {
+    top: 17px;
+    left: 17px;
+    height: auto;
+    padding: var(--spacing-4) var(--spacing-12);
+    font-size: inherit;
+    line-height: 1;
+  }
+}
+
+.subCardTitle {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-neutral-black, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 145%;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+@media (--bp-pc-up) {
+  .subCardTitle {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+}
+
+.viewAllRow {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-top: var(--spacing-8);
+}
+
+@media (--bp-pc-up) {
+  .viewAllRow {
+    margin-top: 0;
+  }
+}
+
+.viewAllLink {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  flex: 1 0 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0 28px;
+  border: 1px solid var(--color-border-default, #d9d9d9);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white, #fff);
+  color: var(--color-primary-800, #22404d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+@media (--bp-pc-up) {
+  .viewAllLink {
+    width: 160px;
+    min-width: 160px;
+    height: 53px;
+    flex: 0 0 auto;
+    padding: 13px var(--spacing-28);
+    color: var(--color-neutral-black);
+    font-size: 18px;
+    line-height: 150%;
+    letter-spacing: -0.18px;
+  }
+}
+
+.viewAllLink:hover {
+  border-color: var(--color-primary-500);
+  color: var(--color-primary-500);
+}
+
+.viewAllLink:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}

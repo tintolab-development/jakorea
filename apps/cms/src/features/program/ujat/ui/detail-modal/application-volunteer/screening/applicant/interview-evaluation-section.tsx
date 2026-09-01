@@ -1,0 +1,72 @@
+import { useMemo } from 'react'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+import { formatInterviewSummary } from '../interview-assign/schedule-utils'
+import { parseUjatInterviewDateLabel } from '../shared/interview-calendar-events'
+import { computeUjatInterviewTotalScore } from '../interview2/display'
+
+function formatScoreValue(score: number | null | undefined): string {
+  return score != null ? String(score) : '-'
+}
+
+function formatAssignedInterviewScheduleDisplay(applicant: UjatVolunteerApplicantRow): string {
+  const dateLabel = applicant.assignedInterviewDateLabel
+  const time = applicant.assignedInterviewTime
+  if (!dateLabel || !time) return '—'
+  const date = parseUjatInterviewDateLabel(dateLabel)
+  if (!date) return `${dateLabel} ${time}`
+  return formatInterviewSummary(date, time)
+}
+
+export interface InterviewEvaluationSectionProps {
+  applicant: UjatVolunteerApplicantRow
+}
+
+export function InterviewEvaluationSection({
+  applicant,
+}: InterviewEvaluationSectionProps) {
+  const scheduleDisplay = useMemo(
+    () => formatAssignedInterviewScheduleDisplay(applicant),
+    [applicant]
+  )
+
+  const remarkDisplay = applicant.interviewEvaluationRemark?.trim()
+    ? applicant.interviewEvaluationRemark
+    : '-'
+  const totalScore = useMemo(() => computeUjatInterviewTotalScore(applicant), [applicant])
+
+  return (
+    <section className="ujat-volunteer-applicant-interview-evaluation">
+      <DetailInfoForm title="면접 평가" mode="view">
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="면접 일정"
+            fullRow
+            readOnlyDisplay
+            view={scheduleDisplay}
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="담당자 A 점수"
+            readOnlyDisplay
+            view={formatScoreValue(applicant.managerAScore)}
+          />
+          <DetailInfoForm.Field
+            label="담당자 B 점수"
+            readOnlyDisplay
+            view={formatScoreValue(applicant.managerBScore)}
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field label="비고" readOnlyDisplay view={remarkDisplay} />
+          <DetailInfoForm.Field
+            label="점수 총합"
+            readOnlyDisplay
+            view={formatScoreValue(totalScore)}
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+    </section>
+  )
+}

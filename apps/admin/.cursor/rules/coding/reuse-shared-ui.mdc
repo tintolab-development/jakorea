@@ -1,0 +1,35 @@
+---
+description: Admin shared UI 재사용 — 신규 컴포넌트 남발 금지 (CMS custom-ui 미러)
+globs:
+  - apps/admin/src/**/*.{tsx,ts,css}
+alwaysApply: false
+---
+
+# Prefer shared admin controls (`Cms*` · 기존 feature UI)
+
+CMS [`custom-ui-priority.md`](../../../cms/.cursor/rules/coding/custom-ui-priority.md) 의 의도를 Admin에 이식한다.  
+**CMS 경로 import 금지** — 스펙·컴포넌트는 admin `shared/ui` 에 포트한 뒤 사용한다.
+
+## 필수
+
+1. 새 화면·모달·필터를 만들기 전에 아래를 검색한다.
+   - `apps/admin/src/shared/ui`
+   - 기존 feature `ui/*` (예: strip-banner, popup form-modal / sortable-table)
+   - 목록 페이지: `pages/main/strip-banners`, `popups`, `hero-banners`
+2. 동등 `Cms*` / 공용 패턴이 있으면 **재사용**한다. 의미 없이 비슷만 한 래퍼·CSS를 새로 만들지 않는다.
+3. 표준 교체: `CmsButton`, `CmsInput`, `CmsSelect`, `CmsTextArea`, `CmsRadio(Group)`, `CmsDatePicker`, `CmsDateRangePicker`, `CmsPeriodDatePicker`, `CmsTextTabs`, `ContentModal`, `ConfirmModal`, `useCmsAlert`.
+4. 목록 필터·테이블 셸: [list-page-composition.mdc](./list-page-composition.mdc) · [cms-admin-ui](../../../../.cursor/rules/cms-admin-ui/README.md) · `cms-data-table`.
+5. CMS에만 있는 DS 컴포넌트(예: `CmsTextTabs`)가 필요하면 **admin `shared/ui`로 포트**한 뒤 쓴다. feature 전용 임시 탭·버튼 파생을 만들지 않는다.
+6. `apps/cms` / `@/…` CMS path alias로 컴포넌트·CSS를 가져오지 않는다.
+7. 도메인 테이블 컬럼·필터 조립은 feature `ui/*`에 둔다. **1회성 전용 컴포넌트를 `shared`에 승격하지 않는다.**
+
+## 허용 예외
+
+| 영역 | 허용 | 비고 |
+|------|------|------|
+| 목록 공개/사용 토글 | antd `Switch` | strip/popup 관례. admin에 CmsToggle 없을 때 새로 만들지 말고 Switch 유지 |
+| Drag 정렬 | dnd-kit + 기존 sortable-table 패턴 | 시안·스펙에 드래그가 있을 때만 |
+
+동등 래퍼가 없고 확장 범위 밖이면 raw Ant + `// TODO(custom-ui): …`.
+
+**Last updated:** 2026-08-06

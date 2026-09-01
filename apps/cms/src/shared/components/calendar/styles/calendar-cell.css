@@ -1,7 +1,15 @@
+/*
+ * CalendarMain 월간 셀 상호작용 단일 소스.
+ * 7:3 split-card에서도 동일 — calendar-split-card-main.css에 --selected/--today/--hover 재정의 금지.
+ */
 .calendar-cell {
   display: flex;
   flex-direction: column;
-  height: var(--calendar-cell-height, 128px);
+  width: 100%;
+  min-width: var(--calendar-cell-min-width, 116px);
+  min-height: var(--calendar-cell-min-height, 124px);
+  height: var(--calendar-cell-min-height, 124px);
+  max-height: var(--calendar-cell-min-height, 124px);
   padding: 8px;
   overflow: hidden;
   background: var(--main-WT, #fff);
@@ -14,27 +22,51 @@
 }
 
 /*
- * Ant Calendar 월간 그리드: 셀마다 right+bottom으로 1px만 그어 이웃과 이중선이 나오지 않게 함.
- * 첫 열·첫 행에만 left / top 추가.
+ * Ant Calendar 월간 그리드: td에 right+bottom 1px — nested .calendar-cell min-width가
+ * td를 넘치면 금~토 등 구분선이 가려지므로 선은 td에만 둔다.
  * (대시보드 위젯 등은 program-schedule-widget.css에서 별도 처리)
  */
-.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody td .calendar-cell {
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody td {
   border-right: 1px solid var(--table-line, #e0e0e0);
   border-bottom: 1px solid var(--table-line, #e0e0e0);
+  padding: 0;
+  vertical-align: top;
+  box-sizing: border-box;
 }
 
-.calendar-main
-  .ant-picker-calendar-mini
-  .ant-picker-content
-  tbody
-  tr
-  td:first-child
-  .calendar-cell {
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody td:first-child {
   border-left: 1px solid var(--table-line, #e0e0e0);
 }
 
-.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr:first-child .calendar-cell {
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr:first-child td {
   border-top: 1px solid var(--table-line, #e0e0e0);
+}
+
+/* clip·서브픽셀 라운딩 시 마지막 열(토) 우측·금~토 구분선 유지 */
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody td:last-child {
+  border-right: 1px solid var(--table-line, #e0e0e0);
+}
+
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody td .calendar-cell {
+  border: none;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr:first-child td:first-child {
+  border-top-left-radius: var(--radius-8, 8px);
+}
+
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr:first-child td:last-child {
+  border-top-right-radius: var(--radius-8, 8px);
+}
+
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr:last-child td:first-child {
+  border-bottom-left-radius: var(--radius-8, 8px);
+}
+
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr:last-child td:last-child {
+  border-bottom-right-radius: var(--radius-8, 8px);
 }
 
 .calendar-main
@@ -144,14 +176,66 @@
 }
 
 .calendar-event-title {
-  font-size: 12px;
+  font-size: 13px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 500;
+  line-height: 130%; /* 16.9px */
+  color: var(--main-BK, #3d3d3d);
+}
+
+.calendar-event-title--with-divider {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  line-height: 130%;
+}
+
+/* split-card-main의 `.calendar-event-title { display: block; }` 오버라이드를 다시 flex로 고정 */
+.calendar-split-card-main .calendar-event-title.calendar-event-title--with-divider {
+  display: flex;
+  align-items: center;
+}
+
+.calendar-event-title__left {
+  flex: 0 0 auto;
+  min-width: 0;
+  color: inherit;
+  line-height: 130%;
+}
+
+.calendar-event-title__divider {
+  flex: 0 0 auto;
+  display: inline-block;
+  width: 0;
+  height: 12px;
+  margin: 0 6px;
+  border-left: 1px solid var(--main-BK, #3d3d3d);
+  opacity: 0.6;
+}
+
+.calendar-event-title__right {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--main-BK, #3d3d3d);
+  opacity: 0.6;
+  line-height: 130%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .calendar-event-more {
-  font-size: 12px;
+  overflow: hidden;
   color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%; /* 15.6px */
   opacity: 0.5;
+  text-align: left;
 }

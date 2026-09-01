@@ -15,7 +15,7 @@
   margin-bottom: 48px;
 }
 
-/* 기본 정보 제목과 개인정보 버튼 한 줄 (native `<button>` — AppButton htmlType=button, size=filter → 160×44) */
+/* 기본 정보 제목과 개인정보 버튼 한 줄 (PersonalInfoRevealButton 내부 CmsButton size=large, width=160 → 160×44) */
 .payment-order-instructor-status-detail__basic-header {
   display: flex;
   align-items: center;
@@ -59,18 +59,43 @@
   width: 100%;
 }
 
+.payment-order-instructor-status-detail__name-cell {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.payment-order-instructor-status-detail__detail-form .detail-info-form__field {
+  min-height: 50px;
+}
+
+.payment-order-instructor-status-detail__detail-form .detail-info-form__field-label {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  min-height: 50px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.payment-order-instructor-status-detail__detail-form .detail-info-form__field-content {
+  min-height: 50px;
+  padding-top: 0;
+  padding-bottom: 0;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.payment-order-instructor-status-detail__basic-split-gap {
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .payment-order-instructor-status-detail__total-amount-cell {
   font-weight: 700;
 }
 
-/* 기본 정보 표와 집계 표 사이: `.applicant-instructor-basic-info` flex gap 16px */
-.payment-order-instructor-status-detail__aggregate-row .applicant-instructor-basic-info__cell {
-  vertical-align: middle;
-}
-
-/* 집계 지급조서 처리 현황 값: 좌측 정렬 + 열 최소 너비(표 깨짐·겹침 방지) */
-.payment-order-instructor-status-detail__aggregate-row
-  .payment-order-instructor-status-detail__aggregate-status-value {
+.payment-order-instructor-status-detail__aggregate-status-value {
   text-align: left;
   min-width: 140px;
   overflow-wrap: break-word;

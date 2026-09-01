@@ -1,0 +1,17 @@
+.static-description-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.static-description-lines__line {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 30px */
+}

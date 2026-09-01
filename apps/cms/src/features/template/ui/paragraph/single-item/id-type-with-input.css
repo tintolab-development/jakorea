@@ -1,0 +1,74 @@
+/* 동의 양식 — 식별번호 유형(라디오) + 단일 텍스트 입력
+ * 행정정보 공동이용 사전 동의서: 라디오 4종과 입력창을 한 줄(가로) 배치
+ * 텍스트 인풋은 CmsInput(large) — hover/focus/disabled/placeholder는 cms-input.css 스펙 */
+
+.id-type-with-input {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.id-type-with-input__radios {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.id-type-with-input__radio {
+  margin-inline-end: 0;
+}
+
+/* CmsInput large 기본 240px → 식별번호 입력은 280px 고정 */
+.id-type-with-input__input.cms-input {
+  flex: 0 0 auto;
+  width: 280px;
+}
+
+.id-type-with-input__resident {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-width: 0;
+  width: 360px;
+  max-width: 100%;
+}
+
+.id-type-with-input__resident-input.cms-input {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+}
+
+.id-type-with-input__dash {
+  flex-shrink: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.id-type-with-input__input .cms-input__control {
+  width: 100%;
+  min-width: 120px;
+}
+
+/* 문서 모드 — ●/○ 텍스트 레이블 (A4 미리보기) */
+.id-type-with-input__doc-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+}

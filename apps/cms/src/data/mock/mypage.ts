@@ -4,7 +4,13 @@
  */
 
 import type { MyPageData, PrimaryStatus, UserHistory } from '../../types/domain'
-import { mockTodos, mockSchedules, mockApplications, mockProgramsMap, mockUsers } from './index'
+import { mockTodos, mockSchedules, mockApplications, mockProgramsMap } from './index'
+import { mockUsers } from './users'
+import { affiliatedTeacherVolunteerHistories } from './affiliated-teacher-program-history-demo'
+import {
+  createMemberDetailVolunteerHistories,
+  MEMBER_DETAIL_HISTORY_SEED_CASES,
+} from './member-detail-history-seed-catalog'
 import dayjs from 'dayjs'
 
 const getDate = (daysAgo: number): string => {
@@ -251,6 +257,16 @@ export const mockUserHistories: UserHistory[] = [
         updatedAt: getDate(30 + i * 30),
       }))
     : []),
+  ...affiliatedTeacherVolunteerHistories,
+  ...MEMBER_DETAIL_HISTORY_SEED_CASES.flatMap(seedCase =>
+    seedCase.tabs.includes('volunteer')
+      ? createMemberDetailVolunteerHistories(
+          seedCase.mockFeUserId,
+          seedCase.feVolunteerIdPrefix,
+          seedCase.volunteerParticipantIdStart
+        )
+      : []
+  ),
 ]
 
 export const mockUserHistoriesMap = new Map(mockUserHistories.map(history => [history.id, history]))

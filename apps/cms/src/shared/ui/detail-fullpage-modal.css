@@ -14,6 +14,8 @@
   --detail-fullpage-header-padding-x: 52px;
   --detail-fullpage-header-padding-bottom: 16px;
   --detail-fullpage-section-gap: 32px;
+  /* UJAT 등 긴 1뎁스 라벨(예: 상·하반기 봉사자 신청 목록) 한 줄 — scrollbar-gutter 여유 포함 */
+  --detail-fullpage-lnb-width: 300px;
   /* TealHeaderModal 공통 규칙(teal-header-modal.css)의 radius-8보다 후단에서 4면 직각 고정 */
   border-radius: 0 !important;
 }
@@ -23,11 +25,12 @@
 }
 
 /**
- * TealHeaderModal 기본 `.teal-header-modal__body`에 `padding-top: 16px !important`가 있어
+ * TealHeaderModal 기본 `.teal-header-modal__body`의 `margin-top: 16px` 등으로
  * 풀페이지(LNB+메인)가 뷰포트 상단부터 붙지 않음 — 동일 셀에서 제거.
  */
 .detail-fullpage-modal .teal-header-modal__body {
   padding: 0 !important;
+  margin-top: 0 !important;
   gap: 0;
   height: 100%;
   display: flex;
@@ -63,7 +66,8 @@
   max-width: 100%;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  /* clip: StatusDropdown 열림 시 hidden 스크롤포트로 인한 가로 밀림 방지 */
+  overflow-x: clip;
   overflow-y: auto;
   background: var(--color-bg-base);
 
@@ -84,8 +88,8 @@
 
 .detail-fullpage-modal__header-top {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-end;
+  justify-content: flex-start;
   gap: var(--spacing-16);
   min-width: 0;
 }
@@ -98,14 +102,92 @@
   font-weight: 700;
   line-height: 120%;
   color: var(--default-BK, #3d3d3d);
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-fullpage-modal__header-trailing {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.detail-fullpage-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: min(100%, 680px);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 14px;
+  font-style: normal;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.detail-fullpage-breadcrumb__item {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 4px;
+}
+
+.detail-fullpage-breadcrumb__button,
+.detail-fullpage-breadcrumb__text {
+  display: inline-block;
+  max-width: 200px;
+  overflow: hidden;
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: inherit;
+  font-size: inherit;
+  font-style: inherit;
+  font-weight: 500;
+  line-height: inherit;
+}
+
+.detail-fullpage-breadcrumb__button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.detail-fullpage-breadcrumb__button:hover {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.detail-fullpage-breadcrumb__text--current {
+  color: #7d7d7d;
+  font-weight: 700;
+}
+
+.detail-fullpage-breadcrumb__separator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+}
+
+.detail-fullpage-breadcrumb__separator svg {
+  display: block;
+  width: 6px;
+  height: 9px;
 }
 
 .detail-fullpage-modal__close {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  align-self: center;
   width: 32px;
   height: 32px;
   padding: 0;
@@ -119,6 +201,7 @@
     background 0.2s,
     color 0.2s;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .detail-fullpage-modal__close:hover {
@@ -134,7 +217,7 @@
   width: 100%;
   box-sizing: border-box;
   padding: 0 var(--detail-fullpage-padding-x, 52px) var(--detail-fullpage-padding-bottom, 52px);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /**
@@ -143,15 +226,37 @@
  * `clip`은 가로만 막고 스크롤 컨테이너를 만들지 않아 sticky가 `__main` 기준으로 동작함.
  */
 .detail-fullpage-modal__content:has(
-  .instructor-payment-tab__calendar-view-container--no-inner-scroll
-) {
+    .instructor-payment-tab__calendar-view-container--no-inner-scroll
+  ),
+.detail-fullpage-modal__content:has(.calendar-set--page-scroll) {
   overflow-x: clip;
+  padding-bottom: 0;
+}
+
+/*
+ * split-card 캘린더 — grid min-width(852+280)는 __main 가로 스크롤로 처리.
+ * __content clip은 초과 폭을 잘라 7:3이 깨지므로 visible 유지(세로 sticky는 __main 기준).
+ */
+.detail-fullpage-modal__content:has(.calendar-split-card-layout--page-scroll) {
+  overflow-x: visible;
+  padding-bottom: 0;
+}
+
+/*
+ * 캘린더 grid min-width(메인 852px + 우 280px) 초과 시 가로 스크롤 — scrollport는 __main.
+ * __content만 clip(sticky 조상 방지), __main은 auto(program-list layout-content와 동일).
+ */
+.detail-fullpage-modal__main:has(.calendar-set--page-scroll),
+.detail-fullpage-modal__main:has(.calendar-split-card-layout--page-scroll) {
+  overflow-x: auto;
 }
 
 @supports not (overflow-x: clip) {
   .detail-fullpage-modal__content:has(
-    .instructor-payment-tab__calendar-view-container--no-inner-scroll
-  ) {
+      .instructor-payment-tab__calendar-view-container--no-inner-scroll
+    ),
+  .detail-fullpage-modal__content:has(.calendar-set--page-scroll),
+  .detail-fullpage-modal__content:has(.calendar-split-card-layout--page-scroll) {
     overflow-x: visible;
   }
 }
@@ -200,19 +305,27 @@
   min-height: 200px;
 }
 
-/* LNB — 메인 열과 동일 높이로 스트레치(기본 바디 상단 패딩 제거 후에도 세로 가득) */
+/* LNB — 메인 열과 동일 높이로 스트레치; 로고 고정·메뉴 목록만 내부 스크롤 */
 .detail-fullpage-modal__lnb {
   flex-shrink: 0;
   align-self: stretch;
-  width: 240px;
+  width: var(--detail-fullpage-lnb-width, 300px);
+  min-width: var(--detail-fullpage-lnb-width, 300px);
+  box-sizing: border-box;
   background: #f5f6f7;
   display: flex;
   flex-direction: column;
-  padding: 0 20px;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
 }
 
 .detail-fullpage-modal__lnb-brand {
-  padding: 30px 24px 30px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px 16px 30px;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -226,10 +339,21 @@
   object-fit: contain;
 }
 
+/* 메뉴 스크롤 — LNB 패널 오른쪽 가장자리(컨테이너 안쪽)에 스크롤바 노출 */
+.detail-fullpage-modal__lnb-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
 .detail-fullpage-modal__lnb-list {
   list-style: none;
   margin: 0;
-  padding: var(--spacing-8) 0 20px;
+  padding: var(--spacing-8) 16px 20px;
 }
 
 .detail-fullpage-modal__lnb-list > li {
@@ -245,7 +369,7 @@
   display: flex;
   align-items: center;
   width: 100%;
-  padding: 10px 18px 10px 0;
+  padding: 10px 0;
   text-align: left;
   border: none;
   background: transparent;
@@ -304,7 +428,8 @@
 }
 
 .detail-fullpage-modal__lnb-item-label {
-  flex: 1;
+  flex: 1 1 auto;
+  white-space: nowrap;
 }
 
 .detail-fullpage-modal__lnb-item-arrow {
@@ -326,6 +451,10 @@
   overflow: hidden;
   transition: grid-template-rows 0.2s ease;
   pointer-events: none;
+}
+
+.detail-fullpage-modal__lnb-children-wrap--no-transition {
+  transition: none;
 }
 
 .detail-fullpage-modal__lnb-children-wrap--open {
@@ -381,6 +510,11 @@
   gap: 8px;
 }
 
+.detail-fullpage-modal__lnb-child-label {
+  flex: 1;
+  min-width: 0;
+}
+
 .detail-fullpage-modal__lnb-child-dot {
   width: 4px;
   height: 4px;
@@ -415,6 +549,18 @@
   line-height: 120%;
 }
 
+/* 활성 시 font-weight 변경으로 라벨 너비가 달라지지 않도록 굵은 글자 폭 예약 */
+.detail-fullpage-modal__lnb-child-label::before {
+  content: attr(data-text);
+  display: block;
+  height: 0;
+  overflow: hidden;
+  font-weight: 700;
+  pointer-events: none;
+  user-select: none;
+  visibility: hidden;
+}
+
 .detail-fullpage-modal__lnb-child--active .detail-fullpage-modal__lnb-child-dot {
   background-color: var(--JA-mint-01, #01a1af);
 }
@@ -435,40 +581,62 @@
   background-color: var(--JA-mint-01, #01a1af);
 }
 
+/**
+ * 풀페이지 상세: FilterTableLayout 카드 패딩·그림자 제거.
+ * 목록(layout-content 회색 배경 + 카드)과 달리 본문이 흰 배경이라 shadow·이중선이 두껍게 보일 수 있음.
+ */
 .detail-fullpage-modal .filter-table-layout {
+  background: transparent;
+  box-shadow: none !important;
+  border-radius: 0;
+  margin-bottom: 0;
   padding: 0 !important;
 }
 
+.detail-fullpage-modal .filter-table-layout__divider::before {
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: #c4cdd1;
+  background: transparent;
+  box-shadow: none;
+}
+
 /**
- * UnifiedFilterCard: `FilterFieldConfig.width`(% 등) 사용 시 Col 래퍼만 넓어지는 문제 방지.
- * `table-filter-group`의 pct-width Col과 동일 토큰(`--filter-control-max-width` 등)으로 래퍼 상한 정렬.
+ * TableFilterGroup: `FilterFieldConfig.width`(% 등) 사용 시 Col 래퍼만 넓어지는 문제 방지.
+ * pct-width Col과 동일 토큰(`--filter-control-max-width` 등)으로 래퍼 상한 정렬.
  */
 .detail-fullpage-modal
-  .unified-filter-card__fields-inner
-  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio) {
-  max-width: min(100%, var(--filter-control-max-width, 260px));
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--explicit-width:not(.table-filter-group__col--radio):not(
+    .table-filter-group__col--pct-width
+  ) {
+  max-width: min(100%, var(--filter-control-max-width, 240px));
   box-sizing: border-box;
 }
 
 .detail-fullpage-modal
-  .unified-filter-card__fields-inner
-  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio):has(
-    .app-datepicker--range-split
-  ) {
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--explicit-width:not(.table-filter-group__col--radio):not(
+    .table-filter-group__col--pct-width
+  ):has(.cms-datepicker--range-split) {
   max-width: min(
     100%,
-    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
+    calc(
+      2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    )
   );
 }
 
 .detail-fullpage-modal
-  .unified-filter-card__fields-inner
-  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio):has(
-    .unified-filter-card__address-region-selects
-  ) {
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--explicit-width:not(.table-filter-group__col--radio):not(
+    .table-filter-group__col--pct-width
+  ):has(.table-filter-group__address-region-selects) {
   max-width: min(
     100%,
-    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px))
+    calc(
+      2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    )
   );
 }
 

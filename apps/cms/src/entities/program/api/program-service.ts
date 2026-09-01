@@ -7,12 +7,102 @@
 
 import type { Program, ProgramRound } from '@/types/domain'
 import { mockPrograms, mockProgramsMap } from '@/data/mock'
-import { getEconomyProgramById } from '@/data/mock/economy-programs'
+import { getCompanySchoolProgramById } from '@/data/mock/economy-programs'
+import { getGeneralProgramById } from '@/data/mock/general-programs'
+import { getTrainedTeachersProgramById } from '@/data/mock/trained-teachers-programs'
+import {
+  COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
+  findGeneralRegistrationLocalSaveProgramById,
+  readCompanySchoolRegistrationLocalSavePrograms,
+  TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
+} from '@/features/program/general/lib/registration-local-save'
+import {
+  mockUjatElementaryListPrograms,
+  mockUjatElementaryListProgramsMap,
+} from '@/data/mock/ujat-programs-list-mock'
+import {
+  findUjatRegistrationLocalSaveProgramById,
+  readUjatRegistrationLocalSavePrograms,
+} from '@/features/program/ujat/lib/ujat-registration-local-save'
+import { applyUjatRecruitInstitutionTemplateDefaults } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
+import { applyUjatRecruitVolunteerTemplateDefaults } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
+import { applyUjatRegistrationTemplateDefaults } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import { isUjatProgramId } from '@/features/program/ujat/lib/ujat-program-detail-meta'
+import { UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import type { UserRole } from '@/types/user'
 import { updateUserProgramRole } from '@/entities/user/api/user-service'
 
+function isCompanySchoolProgramId(id: string): boolean {
+  return (
+    id.startsWith('economy-prog-') ||
+    id.startsWith('company-school-prog-') ||
+    id.startsWith(COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)
+  )
+}
+
+function isTrainedTeachersProgramId(id: string): boolean {
+  return (
+    id.startsWith('trained-teachers-prog-') ||
+    id.startsWith(TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)
+  )
+}
+
 function resolveProgramFromStores(id: string): Program | undefined {
-  return mockProgramsMap.get(id) ?? getEconomyProgramById(id)
+  const isGeneralProgramId = id.startsWith('general-prog-')
+  if (isGeneralProgramId) {
+    return (
+      getGeneralProgramById(id) ??
+      findGeneralRegistrationLocalSaveProgramById(id) ??
+      mockProgramsMap.get(id) ??
+      getCompanySchoolProgramById(id) ??
+      mockUjatElementaryListProgramsMap.get(id) ??
+      findUjatRegistrationLocalSaveProgramById(id)
+    )
+  }
+
+  if (isCompanySchoolProgramId(id)) {
+    return (
+      getCompanySchoolProgramById(id) ??
+      mockProgramsMap.get(id) ??
+      getGeneralProgramById(id) ??
+      findGeneralRegistrationLocalSaveProgramById(id) ??
+      mockUjatElementaryListProgramsMap.get(id) ??
+      findUjatRegistrationLocalSaveProgramById(id)
+    )
+  }
+
+  if (isTrainedTeachersProgramId(id)) {
+    return (
+      getTrainedTeachersProgramById(id) ??
+      mockProgramsMap.get(id) ??
+      getCompanySchoolProgramById(id) ??
+      getGeneralProgramById(id) ??
+      findGeneralRegistrationLocalSaveProgramById(id) ??
+      mockUjatElementaryListProgramsMap.get(id) ??
+      findUjatRegistrationLocalSaveProgramById(id)
+    )
+  }
+
+  return (
+    mockProgramsMap.get(id) ??
+    getTrainedTeachersProgramById(id) ??
+    getCompanySchoolProgramById(id) ??
+    getGeneralProgramById(id) ??
+    findGeneralRegistrationLocalSaveProgramById(id) ??
+    mockUjatElementaryListProgramsMap.get(id) ??
+    findUjatRegistrationLocalSaveProgramById(id)
+  )
+}
+
+/** UJAT 모집·등록 폼 템플릿 localStorage 저장본을 프로그램 mock 필드에 병합 */
+function withUjatRecruitTemplateDefaults(program: Program): Program {
+  const base =
+    isUjatProgramId(program.id) || program.id.startsWith(UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)
+      ? applyUjatRegistrationTemplateDefaults(program)
+      : program
+  return applyUjatRecruitVolunteerTemplateDefaults(
+    applyUjatRecruitInstitutionTemplateDefaults(base)
+  )
 }
 
 export const programService = {
@@ -24,7 +114,16 @@ export const programService = {
   getAll: async (userRole?: UserRole | null, userId?: string): Promise<Program[]> => {
     // userId는 향후 매칭 정보 기반 필터링에 사용 예정
     void userId
-    const allPrograms = [...mockPrograms]
+    const basePrograms = [...mockPrograms, ...mockUjatElementaryListPrograms]
+    const localUjat = readUjatRegistrationLocalSavePrograms().filter(
+      lp => !basePrograms.some(b => b.id === lp.id)
+    )
+    const localCompanySchool = readCompanySchoolRegistrationLocalSavePrograms().filter(
+      lp => !basePrograms.some(b => b.id === lp.id) && !localUjat.some(b => b.id === lp.id)
+    )
+    const allPrograms = [...basePrograms, ...localUjat, ...localCompanySchool].map(
+      withUjatRecruitTemplateDefaults
+    )
 
     // 권한별 필터링 적용
     // 관리자는 전체 조회, 강사/봉사자는 본인이 담당한 프로그램만 조회
@@ -43,7 +142,7 @@ export const programService = {
     if (!program) {
       throw new Error(`Program not found: ${id}`)
     }
-    return Promise.resolve(program)
+    return Promise.resolve(withUjatRecruitTemplateDefaults(program))
   },
 
   create: async (
@@ -155,7 +254,7 @@ export const programService = {
    * @returns 프로그램 배열
    */
   getAllSync: (): Program[] => {
-    return [...mockPrograms]
+    return [...mockPrograms, ...mockUjatElementaryListPrograms]
   },
 
   /**
@@ -164,7 +263,9 @@ export const programService = {
    * @returns 해당 후원사의 프로그램 배열
    */
   getBySponsorId: async (sponsorId: string): Promise<Program[]> => {
-    const programs = mockPrograms.filter(p => p.sponsorId === sponsorId)
+    const programs = [...mockPrograms, ...mockUjatElementaryListPrograms].filter(
+      p => p.sponsorId === sponsorId
+    )
     return Promise.resolve(programs)
   },
 }

@@ -1,0 +1,133 @@
+/**
+ * 학교 검색(ContentModal 내부): 필터·결과 테이블·페이지네이션
+ */
+
+.school-search__trigger-wrap {
+  display: block;
+  min-width: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.school-search__trigger-wrap .cms-input {
+  width: 100%;
+  pointer-events: none;
+}
+
+.school-search__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.school-search__filter-row {
+  width: 100%;
+}
+
+.school-search__keyword-wrap {
+  flex: 1 1 200px;
+  min-width: 160px;
+}
+
+.school-search__search-btn {
+  flex: 0 0 auto;
+}
+
+.school-search__guide {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+  margin: 0;
+}
+
+.school-search__results {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.school-search__status {
+  margin: 0;
+  font-size: 14px;
+  line-height: 150%;
+  color: var(--gray-02, #767676);
+}
+
+.school-search__result-error {
+  margin: 0;
+  font-size: 14px;
+  line-height: 150%;
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+.school-search__result-error p {
+  margin: 0;
+}
+
+.school-search__result-empty {
+  display: flex;
+  flex-direction: column;
+  height: 180px;
+  padding: 40px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  background: rgba(61, 61, 61, 0.04);
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-line;
+}
+
+.school-search__results--no-results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.school-search__keyword-hit {
+  color: var(--JA-mint-01, #01a1af);
+  font-weight: 700;
+}
+
+.school-search__table.cms-data-table {
+  width: 100%;
+}
+
+/* 모달 테이블: clip 대신 열 폭으로 맞춤 — 선택 버튼이 잘리지 않게 */
+.school-search__table.cms-data-table .ant-table-container {
+  overflow: hidden;
+}
+
+.school-search__table.cms-data-table .ant-table-thead > tr > th.school-search__col-select,
+.school-search__table.cms-data-table .ant-table-tbody > tr > td.school-search__col-select {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  padding-inline: 10px !important;
+  box-sizing: border-box;
+}
+
+.school-search__table.cms-data-table .school-search__col-select .cms-button {
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+}
+
+.school-search__pagination {
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+}

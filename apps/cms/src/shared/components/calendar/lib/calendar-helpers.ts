@@ -4,8 +4,9 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { DateValue } from '@/types'
 import type { Program } from '@/types/domain'
-import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
+import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import { CALENDAR_ITEM_TYPE, type CalendarItem } from '../model/calendar-item'
+import type { CalendarMainEventInput } from '../model/calendar-main-event-input'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -21,9 +22,7 @@ export function dateValueToCalendarString(value: DateValue): string {
   return typeof value === 'string' ? value : value.toISOString()
 }
 
-export function mapEventsToItems(
-  events: Array<Pick<CalendarItem, 'id' | 'title' | 'startDate' | 'endDate'> & { originalItem?: unknown }>
-): CalendarItem[] {
+export function mapEventsToItems(events: CalendarMainEventInput[]): CalendarItem[] {
   return events.map(event => ({
     id: event.id,
     title: event.title,

@@ -23,12 +23,22 @@ export function UserDetailFullpageTabPanels() {
     onOpenLectureAttendance,
     onOpenAssignmentSubmission,
     onOpenEnrollmentProgramDetail,
+    onOpenVolunteerProgramDetail,
+    onBeforeNavigateToProgramDetail,
+    onBulkDeleteHistory,
+    onStudentCertificateBulkIssue,
+    onVolunteerCertificateBulkIssue,
+    progressStatusReadOnly,
     basicInfoEditing,
+    basicInfoEditScope,
     basicInfoDraft,
     onBasicInfoDraftChange,
     adminPermissionVariantPatching,
     onPatchAdminPermissionVariantFromDetailView,
+    onTeacherEmploymentStatusChange,
     onPermissionResendNotification,
+    onOpenJaGradeEvaluation,
+    scheduleChangeCount,
   } = useUserDetailFullpageShell()
 
   const { sections, strategy, enrollmentTableRows, resolvedProgramsChild } = derived
@@ -45,17 +55,29 @@ export function UserDetailFullpageTabPanels() {
           personalInfoRevealed={personalInfoRevealed}
           instructorResumeApplicantRow={instructorResumeApplicantRow}
           onNavigateToLinkedUser={onNavigateToLinkedUser}
-          memberInfoEditing={basicInfoEditing}
+          memberInfoEditing={
+            basicInfoEditing &&
+            (basicInfoEditScope === 'profile' || basicInfoEditScope === 'instructor_fee_ja')
+          }
+          memberInfoEditScope={
+            basicInfoEditScope === 'instructor_fee_ja' ? 'instructor_fee_ja' : 'profile'
+          }
           memberInfoDraft={basicInfoDraft}
           onMemberInfoDraftChange={onBasicInfoDraftChange}
           adminPermissionVariantPatching={adminPermissionVariantPatching}
           onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
+          onEmploymentStatusChange={onTeacherEmploymentStatusChange}
           onPermissionResendNotification={onPermissionResendNotification}
+          onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
+          scheduleChangeCount={scheduleChangeCount}
         />
       )}
       {tabState.lnb === 'history' &&
         (sections.historyTab.useAdminManagedProgramHistory ? (
-          <AdminManagedProgramHistory user={displayUser} />
+          <AdminManagedProgramHistory
+            user={displayUser}
+            onBeforeNavigateToProgramDetail={onBeforeNavigateToProgramDetail}
+          />
         ) : (
           <UserProgramsSection
             user={displayUser}
@@ -71,6 +93,11 @@ export function UserDetailFullpageTabPanels() {
             onOpenLectureAttendance={onOpenLectureAttendance}
             onOpenAssignment={onOpenAssignmentSubmission}
             onRowClick={onOpenEnrollmentProgramDetail}
+            onOpenVolunteerProgramDetail={onOpenVolunteerProgramDetail}
+            onBulkDeleteHistory={onBulkDeleteHistory}
+            onStudentCertificateBulkIssue={onStudentCertificateBulkIssue}
+            onVolunteerCertificateBulkIssue={onVolunteerCertificateBulkIssue}
+            progressStatusReadOnly={progressStatusReadOnly}
           />
         ))}
       {tabState.lnb === 'payment-status' && (

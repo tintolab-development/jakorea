@@ -1,0 +1,555 @@
+/* 테이블 세로형(텍스트형·주관식형 공통) — 작성 양식 직접 등록 */
+.form-editor-vertical-table-wrap {
+  width: 100%;
+  max-width: 1404px;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-editor-vertical-table {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  /* 셀 선택 그림자는 바깥으로 */
+  overflow: visible;
+}
+
+/* 외곽 1px 보더 안쪽에 맞춘 모서리(선택 행은 행 전체 박스 스트로크로 별도 처리) */
+.form-editor-vertical-table__row:first-child:not(.form-editor-vertical-table__row--selected)
+  .form-editor-vertical-table__stage:first-child
+  .form-editor-vertical-table__th {
+  border-top-left-radius: calc(var(--8, 8px) - 1px);
+}
+
+.form-editor-vertical-table__row:first-child:not(.form-editor-vertical-table__row--selected)
+  .form-editor-vertical-table__stage:last-child
+  .form-editor-vertical-table__td {
+  border-top-right-radius: calc(var(--8, 8px) - 1px);
+}
+
+.form-editor-vertical-table__row:last-child:not(.form-editor-vertical-table__row--selected)
+  .form-editor-vertical-table__stage:first-child
+  .form-editor-vertical-table__th {
+  border-bottom-left-radius: calc(var(--8, 8px) - 1px);
+}
+
+.form-editor-vertical-table__row:last-child:not(.form-editor-vertical-table__row--selected)
+  .form-editor-vertical-table__stage:last-child
+  .form-editor-vertical-table__td {
+  border-bottom-right-radius: calc(var(--8, 8px) - 1px);
+}
+
+/* 행에 투명 border를 두면 행마다 위·아래 1px씩 쌓여 행 사이에 흰 줄이 보임 → 기본은 무테두리 */
+.form-editor-vertical-table__row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  align-self: stretch;
+  cursor: default;
+  box-sizing: border-box;
+  border: none;
+}
+
+.form-editor-vertical-table-wrap--canvas-interactive .form-editor-vertical-table__row {
+  cursor: pointer;
+}
+
+/* 행 구분은 셀 border-bottom만 사용 */
+
+/* 행 선택: 스트로크는 box-shadow 링(레이아웃에 칸 안 뜀) + 바깥 포커스 그림자 */
+.form-editor-vertical-table__row.form-editor-vertical-table__row--selected {
+  position: relative;
+  z-index: 2;
+  border-radius: var(--8, 8px);
+  background: var(--main-WT, #fff);
+  box-shadow:
+    0 0 0 1px var(--color-mint-01, #01a1af),
+    0 4px 24px 0 rgba(0, 89, 97, 0.2);
+  overflow: hidden;
+}
+
+.form-editor-vertical-table__stage {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  flex: 1 1 0;
+  min-width: 0;
+  align-self: stretch;
+}
+
+/* 스테이지 우측 선은 마지막 td의 border-right로만 그림(stage+td 이중 방지) */
+
+/* th 텍스트 스펙 — 본문 인풋 40px 기준 세로 패딩 정렬 */
+.form-editor-vertical-table__th {
+  display: flex;
+  width: 200px;
+  min-width: 180px;
+  min-height: 54px;
+  padding: 7px 20px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border-right: 1px solid var(--table-header-line, #ddd);
+  border-bottom: 1px solid var(--table-header-line, #ddd);
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  );
+  cursor: inherit;
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+/* td 텍스트 스펙 · 좌측 정렬 — 인풋 40px + 세로 7px 패딩 */
+.form-editor-vertical-table__td {
+  display: flex;
+  min-width: 100px;
+  min-height: 54px;
+  padding: 7px 16px;
+  align-items: center;
+  gap: 16px;
+  flex: 1 0 0;
+  align-self: stretch;
+  box-sizing: border-box;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  cursor: inherit;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: left;
+}
+
+/* 파일첨부형 — 가이드 문구 여러 줄 대비 */
+.form-editor-vertical-table__td--file-upload {
+  align-items: flex-start;
+}
+
+.form-editor-vertical-table__td--file-upload .paragraph-file-upload {
+  width: 100%;
+}
+
+/* 테이블 외곽선과 겹쳐 이중으로 보이지 않게 */
+.form-editor-vertical-table__row:last-child .form-editor-vertical-table__th,
+.form-editor-vertical-table__row:last-child .form-editor-vertical-table__td {
+  border-bottom: none;
+}
+
+.form-editor-vertical-table__stage:last-child .form-editor-vertical-table__td {
+  border-right: none;
+}
+
+.form-editor-vertical-table__cell-input-shell {
+  width: 100%;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.form-editor-vertical-table__cell-input-shell--header {
+  justify-content: center;
+  text-align: center;
+}
+
+.form-editor-vertical-table__cell-input-shell--body {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+/* 단일·다중 선택: td 전체 높이까지 셸이 닿아 빈 영역 클릭 시에도 행 선택 가능 */
+.form-editor-vertical-table__td > .form-editor-vertical-table__cell-input-shell--body-choice {
+  align-self: stretch;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.form-editor-vertical-table__cell-input-shell--header .ant-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 40px;
+  min-height: 40px;
+  text-align: center;
+  color: var(--main-BK, #3d3d3d) !important;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  -webkit-text-fill-color: var(--main-BK, #3d3d3d);
+}
+
+.form-editor-vertical-table__cell-input-shell--header .ant-input::placeholder {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  opacity: 0.45;
+}
+
+/* 본문 입력값 main-BK · placeholder만 회색 — 긴 텍스트는 줄바꿈(단줄 Input 잘림 방지) */
+.form-editor-vertical-table__cell-input-shell--body .ant-input,
+.form-editor-vertical-table__cell-input-shell--body textarea.ant-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: auto !important;
+  min-height: 24px;
+  text-align: left;
+  color: var(--main-BK, #3d3d3d);
+  -webkit-text-fill-color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  resize: none;
+  overflow: hidden;
+}
+
+.form-editor-vertical-table__cell-input-shell--body .ant-input::placeholder {
+  color: var(--gray-85969-d, #85969d);
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  opacity: 1;
+  text-align: left;
+}
+
+/* 주관식형 — td 안 bordered 인풋 영역(스펙) */
+.form-editor-vertical-table__cell-input-shell--body-subjective {
+  display: flex;
+  height: 40px;
+  min-height: 40px;
+  min-width: 120px;
+  padding: 0 12px 0 14px;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 0;
+  box-sizing: border-box;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+}
+
+.form-editor-vertical-table__cell-input-shell--body-subjective .ant-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  line-height: 22px;
+}
+
+.form-editor-vertical-table__cell-input-shell--body-subjective .form-editor-vertical-table__cell-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.form-editor-vertical-table__cell-text {
+  width: 100%;
+  overflow: visible;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.form-editor-vertical-table__cell-text--header {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+/* th 플레이스홀더(빈 항목명): .cell-text--placeholder가 나중에 선언돼 회색으로 덮이던 것 보정 — 텍스트형 비선택(미리보기) 동일 */
+.form-editor-vertical-table__cell-text--header.form-editor-vertical-table__cell-text--placeholder {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.form-editor-vertical-table__cell-text--body {
+  color: var(--main-BK, #3d3d3d);
+  text-align: left;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-wrap;
+}
+
+/* 빈 셀 placeholder만 회색 (내용 있으면 --body의 main-BK) */
+.form-editor-vertical-table__cell-text--placeholder {
+  color: var(--gray-85969-d, #85969d);
+}
+
+.form-editor-vertical-table__cell-text--body.form-editor-vertical-table__cell-text--placeholder {
+  color: var(--gray-85969-d, #85969d);
+}
+
+.form-editor-vertical-table__bottom {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-editor-vertical-table__bottom-input {
+  width: 100%;
+  --vt-bottom-text: var(--default-BK, #3d3d3d);
+  --vt-bottom-font: Pretendard, sans-serif;
+  --vt-bottom-size: 16px;
+  --vt-bottom-weight: 500;
+  --vt-bottom-lh: 150%;
+}
+
+/* 하단 설명(디스크립션) — 가로형 bottom-input 과 동일: 스펙은 루트, 자식 inherit */
+.form-editor-vertical-table__bottom-input.paragraph-input.paragraph-input--description {
+  color: var(--vt-bottom-text);
+  font-family: var(--vt-bottom-font);
+  font-size: var(--vt-bottom-size);
+  font-style: normal;
+  font-weight: var(--vt-bottom-weight);
+  line-height: var(--vt-bottom-lh);
+}
+
+.form-editor-vertical-table__bottom-input
+  :is(
+    .paragraph-input__view-text,
+    .paragraph-input__placeholder,
+    .paragraph-input__shell .ant-input,
+    .paragraph-input__shell textarea.ant-input,
+    .paragraph-input__shell--focused .ant-input,
+    .paragraph-input__shell--focused textarea.ant-input
+  ) {
+  color: inherit !important;
+  -webkit-text-fill-color: var(--vt-bottom-text);
+  font: inherit !important;
+  line-height: inherit !important;
+  opacity: 1 !important;
+}
+
+.form-editor-vertical-table__bottom-input
+  :is(.paragraph-input__shell .ant-input, .paragraph-input__shell textarea.ant-input)::placeholder {
+  color: var(--vt-bottom-text);
+  opacity: 1;
+}
+
+.form-editor-vertical-table__bottom-input
+  :is(.paragraph-input__row, .paragraph-input__main, .paragraph-input__view-text, .paragraph-input__shell) {
+  width: 100%;
+  max-width: 100%;
+}
+
+.form-editor-vertical-table__bottom-input.paragraph-input--edit .paragraph-input__shell {
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.form-editor-vertical-table__bottom-input.paragraph-input--edit .paragraph-input__shell--focused {
+  border-bottom-color: var(--paragraph-input-mint, var(--color-mint-01, #01a1af));
+}
+
+/* 하단 설명 — 동의 여부 라디오 (203×40, 두 옵션 사이 16px) */
+.form-editor-table-bottom-consent.app-radio-group {
+  box-sizing: border-box;
+  width: 203px;
+  min-width: 203px;
+  height: 40px;
+  min-height: 40px;
+  flex-wrap: nowrap !important;
+  gap: 16px !important;
+  align-items: center;
+}
+
+/* 날짜/시간형 — 피커 박스(가로형 필드형과 동일 톤, 세로형 전용 너비) */
+.form-editor-vertical-table__field-box.form-editor-vertical-table__field-box--picker.ant-picker {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  border: 1px solid var(--table-line, #e0e0e0) !important;
+  background: var(--main-WT, #fff) !important;
+  box-shadow: none !important;
+}
+
+.form-editor-vertical-table__field-box.ant-picker:not(.ant-picker-disabled) {
+  cursor: pointer;
+}
+
+/* 아이콘 좌측 · 텍스트 우측: suffix의 margin-inline-start:auto + 루트 justify-content 무력화 */
+.form-editor-vertical-table__field-box.ant-picker .ant-picker-suffix {
+  order: 0;
+  margin: 0 !important;
+  margin-inline: 0 !important;
+  margin-inline-start: 0 !important;
+  margin-inline-end: 0 !important;
+  padding: 0;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-85969-d, #85969d);
+}
+
+.form-editor-vertical-table__field-box.ant-picker .ant-picker-input {
+  order: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.form-editor-vertical-table__field-box.ant-picker .ant-picker-input > input {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.form-editor-vertical-table__field-box.ant-picker .ant-picker-input > input::placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-weight: 500;
+}
+
+.form-editor-vertical-table__field-box.ant-picker:not(.ant-picker-disabled) .ant-picker-input > input {
+  cursor: pointer;
+  caret-color: transparent;
+}
+
+.form-editor-vertical-table__field-box.ant-picker .ant-picker-active-bar {
+  display: none;
+}
+
+.form-editor-vertical-table__field-box.ant-picker.ant-picker-focused,
+.form-editor-vertical-table__field-box.ant-picker:hover {
+  border-color: var(--table-line, #e0e0e0) !important;
+}
+
+.form-editor-vertical-table__field-box.ant-picker.ant-picker-disabled {
+  background: var(--main-WT, #fff) !important;
+  opacity: 1;
+}
+
+.form-editor-vertical-table__field-box.ant-picker.ant-picker-disabled .ant-picker-input > input {
+  color: var(--main-BK, #3d3d3d);
+  cursor: default;
+  caret-color: transparent;
+}
+
+.form-editor-vertical-table__field-box.ant-picker.ant-picker-disabled .ant-picker-input > input::placeholder {
+  color: var(--gray-85969-d, #85969d);
+  opacity: 1;
+}
+
+.form-editor-vertical-table__dt-picker-inner {
+  width: 100%;
+  min-width: 0;
+}
+
+.form-editor-vertical-table__dt-picker--full {
+  /* 1단(t가 매우 넓을 때) rc-picker flex가 input을 0으로 줄이는 경우 클릭이 먹지 않는 현상 방지 */
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: min(280px, 100%) !important;
+  flex: 1 1 auto;
+}
+
+/* Ant DatePicker 대신 ParagraphDatePicker — 세로표 td 안에서 동일 폭·최소 클릭 영역 */
+.form-editor-vertical-table__cell-input-shell--body-dt-full
+  .paragraph-date-picker.form-editor-vertical-table__dt-paragraph-date-picker.form-editor-vertical-table__dt-picker--full {
+  flex: 1 1 auto;
+  min-width: min(280px, 100%);
+  max-width: 100%;
+}
+
+/* 너비 여유 있을 때 최대 221px, 좁은 2단 td에서는 같은 행 안에서 줄어듦 */
+.form-editor-vertical-table__dt-picker--fixed {
+  flex: 1 1 0;
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: 221px !important;
+}
+
+.form-editor-vertical-table__cell-input-shell--body-dt-full {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 40px;
+}
+
+.form-editor-vertical-table__cell-input-shell--body-dt-composite {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 40px;
+  justify-content: flex-start;
+}
+
+.form-editor-vertical-table__dt-composite {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 40px;
+}
+
+.form-editor-vertical-table__dt-divider-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0 16px;
+  box-sizing: border-box;
+}

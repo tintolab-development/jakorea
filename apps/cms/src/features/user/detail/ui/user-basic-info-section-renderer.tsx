@@ -4,14 +4,16 @@ import {
   type BasicInfoLayoutResolved,
 } from './user-basic-info-layout-resolver'
 import type { BasicInfoSectionContext } from './user-basic-info/sections/types'
-import { AllUsersSection } from './user-basic-info/sections/all-users-section'
+import {
+  AllUsersMetaSection,
+  AllUsersSection,
+} from './user-basic-info/sections/all-users-section'
 import { InstitutionSection } from './user-basic-info/sections/institution-section'
 import {
   SchoolTeacherMetaSection,
-  SchoolTeacherSection,
+  SchoolTeacherProfileSection,
 } from './user-basic-info/sections/school-teacher-section'
 import { InstructorMetaSection, InstructorSection } from './user-basic-info/sections/instructor-section'
-import { AdminSection } from './user-basic-info/sections/admin-section'
 
 export type BasicInfoSectionRenderContext = BasicInfoSectionContext
 
@@ -26,27 +28,35 @@ export function renderResolvedBasicInfoSections({
     const [metaSection, profileSection] = resolution.sections
     return {
       meta:
-        metaSection === BasicInfoSectionTypes.META
-          ? resolution.instructorSectionVariant === 'school_teacher'
-            ? SchoolTeacherMetaSection(shared)
-            : InstructorMetaSection(shared)
-          : null,
+        metaSection === BasicInfoSectionTypes.META ? (
+          resolution.splitSectionVariant === 'all_users' ? (
+            <AllUsersMetaSection {...shared} />
+          ) : resolution.splitSectionVariant === 'school_teacher' ? (
+            <SchoolTeacherMetaSection {...shared} />
+          ) : (
+            <InstructorMetaSection {...shared} />
+          )
+        ) : null,
       profile:
-        profileSection === BasicInfoSectionTypes.PROFILE
-          ? resolution.instructorSectionVariant === 'school_teacher'
-            ? SchoolTeacherSection(shared)
-            : InstructorSection(shared)
-          : null,
+        profileSection === BasicInfoSectionTypes.PROFILE ? (
+          resolution.splitSectionVariant === 'all_users' ? (
+            <AllUsersSection {...shared} />
+          ) : resolution.splitSectionVariant === 'school_teacher' ? (
+            <SchoolTeacherProfileSection {...shared} />
+          ) : (
+            <InstructorSection {...shared} />
+          )
+        ) : null,
     }
   }
 
   const [section] = resolution.sections
   return {
     single:
-      section === BasicInfoSectionTypes.ALL_USERS
-        ? AllUsersSection(shared)
-        : section === BasicInfoSectionTypes.INSTITUTION
-          ? InstitutionSection(shared)
-          : AdminSection(shared),
+      section === BasicInfoSectionTypes.ALL_USERS ? (
+        <AllUsersSection {...shared} />
+      ) : section === BasicInfoSectionTypes.INSTITUTION ? (
+        <InstitutionSection {...shared} />
+      ) : null,
   }
 }

@@ -1,0 +1,32 @@
+/**
+ * 기업 후원 상담 신청 관리 목록
+ */
+
+.corp-consultations-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.corp-consultations-page__filter-card {
+  margin-bottom: var(--spacing-24, 24px);
+}
+
+.corp-consultations-page__filter {
+  width: 100%;
+}
+
+.corp-consultations-page__table-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow: auto;
+}
+
+.corp-consultations-page__status--pending {
+  color: var(--color-mint-01, #01a1af);
+  font-weight: 600;
+}
+
+.corp-consultations-page__status--confirmed {
+  color: var(--default-BK, #3d3d3d);
+  font-weight: 500;
+}

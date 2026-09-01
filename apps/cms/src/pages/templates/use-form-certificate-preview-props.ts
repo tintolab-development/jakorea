@@ -10,7 +10,7 @@ type ModalState = ReturnType<typeof useFormTemplateCertificateModalState>
 /**
  * 양식 모달 상태에서 좌측 미리보기(interactive)와 PDF용 클론(pdfExport)에 동일 데이터를 공급합니다.
  */
-export function useFormCertificatePreviewProps(state: ModalState) {
+export function useFormCertificatePreviewProps(state: ModalState, issueDate?: Date) {
   return useMemo(() => {
     const common: Omit<FormCertificatePreviewProps, 'activeFieldName' | 'onRegionClick' | 'className'> = {
       orgLogoPreviewSrc: state.orgLogoPreviewSrc,
@@ -21,12 +21,12 @@ export function useFormCertificatePreviewProps(state: ModalState) {
       bodyContent: state.stringPreviewValues.bodyContent,
       chairmanNameDisplay: state.stringPreviewValues.chairmanName,
       participantInfo: state.stringPreviewValues.participantInfo,
+      issueDate,
       participantRowVisibility: state.participantRowVisibility,
       orgAddress: state.stringPreviewValues.orgAddress,
       orgPhone: state.stringPreviewValues.orgPhone,
       orgFax: state.stringPreviewValues.orgFax,
       orgWebsite: state.stringPreviewValues.orgWebsite,
-      fieldTextColors: state.fieldTextColors,
     }
 
     const interactive: FormCertificatePreviewProps = {
@@ -49,8 +49,8 @@ export function useFormCertificatePreviewProps(state: ModalState) {
     state.chairmanSealPreviewSrc,
     state.stringPreviewValues,
     state.participantRowVisibility,
-    state.fieldTextColors,
     state.activeFieldName,
     state.setActiveFieldName,
+    issueDate,
   ])
 }

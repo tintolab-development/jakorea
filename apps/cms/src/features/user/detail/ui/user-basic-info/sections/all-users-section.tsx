@@ -1,20 +1,45 @@
+import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput, CmsSelect } from '@/shared/ui'
+import {
+  CmsInput,
+  CmsRadioGroup,
+  CmsSelect,
+  SchoolSearch,
+  type SchoolSearchSelection,
+  type SchoolSearchSelectMeta,
+} from '@/shared/ui'
+import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import { affiliationLine, detailAddressView, formatGenderBirthLine } from '../display'
+import {
+  affiliationView,
+  detailAddressView,
+  genderBirthView,
+  individualSchoolEnrollmentStatusView,
+  socialView,
+} from '../display'
 import { useBasicInfoEditing } from '../use-basic-info-editing'
 import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
-import { NameBlockField } from '../fields/name-block-field'
 import { ContactInfoFieldsRow, FullWidthAddressEdit, Id1365View } from './shared'
 import {
   GENDER_EDIT_OPTIONS,
   INDIVIDUAL_AFFILIATION_FIELDS_WIDTH,
+  INDIVIDUAL_SCHOOL_ENROLLMENT_OPTIONS,
   individualAffiliationGradeSelectOptions,
 } from './constants'
 import type { BasicInfoSectionContext } from './types'
 import { formatDate } from '@/shared/utils'
-import { socialLine } from '../display'
+
+/** 개인 회원 — 가입일·소셜 (상단 분리 카드) */
+export function AllUsersMetaSection(ctx: BasicInfoSectionContext) {
+  const { user } = ctx
+  return (
+    <EditableRow type="double">
+      <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
+      <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
+    </EditableRow>
+  )
+}
 
 export function AllUsersSection(ctx: BasicInfoSectionContext) {
   const {
@@ -34,81 +59,118 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
     cmsMayEditBasicProfileFields,
   })
   const d = memberInfoDraft
+  const isEnrolled = (d?.schoolEnrollmentStatus ?? 'enrolled') !== 'not_enrolled'
+
+  const handleSchoolSelect = (selection: SchoolSearchSelection, meta: SchoolSearchSelectMeta) => {
+    if (selection.source === 'neis') {
+      const school = selection.item
+      onMemberInfoDraftChange?.({
+        affiliationInstitution: school.schulNm.trim(),
+        schoolProvider: 'NEIS',
+        schoolExternalCode: school.sdSchulCode.trim(),
+        schoolLevel: school.schulKndScNm.trim(),
+        schoolAddress: school.orgRdnma.trim(),
+        schoolZipcode: school.orgRdnzc.trim(),
+        schoolRegionSido: meta.regionSido,
+        schoolRegionSigungu: meta.regionSigungu,
+        schoolOrganizationId: null,
+      })
+      return
+    }
+
+    const univ = selection.item
+    const schoolName = univ.campusName
+      ? `${univ.schoolName.trim()} (${univ.campusName.trim()})`
+      : univ.schoolName.trim()
+    onMemberInfoDraftChange?.({
+      affiliationInstitution: schoolName,
+      schoolProvider: 'CAREER_NET',
+      schoolExternalCode: univ.seq.trim(),
+      schoolLevel: univ.schoolGubun.trim() || univ.schoolType.trim(),
+      schoolAddress: univ.address.trim(),
+      schoolZipcode: '',
+      schoolRegionSido: meta.regionSido || univ.region.trim(),
+      schoolRegionSigungu: meta.regionSigungu,
+      schoolOrganizationId: null,
+    })
+  }
+
+  const handleEnrollmentStatusChange = (next: 'enrolled' | 'not_enrolled') => {
+    if (next === 'not_enrolled') {
+      onMemberInfoDraftChange?.({
+        schoolEnrollmentStatus: next,
+        affiliationInstitution: '',
+        affiliationGrade: '',
+        schoolOrganizationId: null,
+        schoolProvider: undefined,
+        schoolExternalCode: undefined,
+        schoolLevel: undefined,
+        schoolAddress: undefined,
+        schoolZipcode: undefined,
+        schoolRegionSido: undefined,
+        schoolRegionSigungu: undefined,
+      })
+      return
+    }
+    onMemberInfoDraftChange?.({ schoolEnrollmentStatus: next })
+  }
+
+  const nameWithBadge = (nameNode: ReactNode) => (
+    <span className="user-basic-info-section__name-with-badge">
+      {nameNode}
+      {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
+        <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
+      ) : null}
+    </span>
+  )
 
   return (
     <>
-      <NameBlockField
-        rows={[
-          {
-            subLabel: '한글',
-            main: editing.canEditBasic ? (
-              <span className="user-basic-info-section__name-with-badge">
-                <CmsInput
-                  value={d?.name ?? ''}
-                  onChange={e => onMemberInfoDraftChange?.({ name: e.target.value })}
-                  inputSize="medium"
-                  width="100%"
-                  aria-label="한글 성명"
-                />
-                {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
-                  <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
-                ) : null}
-              </span>
-            ) : (
-              <span className="user-basic-info-section__name-with-badge">
-                {user.name}
-                {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
-                  <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
-                ) : null}
-              </span>
-            ),
-            sideLabel: '1365 ID',
-            side: (
-              <Id1365View
-                personalInfoRevealed={personalInfoRevealed}
-                externalId1365={externalId1365}
-              />
-            ),
-          },
-          {
-            subLabel: '영문',
-            main: editing.canEditBasic ? (
-              <CmsInput
-                value={d?.nameEn ?? ''}
-                onChange={e => onMemberInfoDraftChange?.({ nameEn: e.target.value })}
+      <EditableRow type="double">
+        <EditableField
+          label="성명"
+          readOnlyDisplay={editing.isReadOnlyDisplay}
+          view={nameWithBadge(user.name)}
+          edit={nameWithBadge(
+            <CmsInput
+              value={d?.name ?? ''}
+              onChange={e => onMemberInfoDraftChange?.({ name: e.target.value })}
+              inputSize="medium"
+              width="100%"
+              placeholder="한글 성명"
+              aria-label="성명"
+            />
+          )}
+        />
+        <EditableField
+          label="성별 및 생년월일"
+          readOnlyDisplay={editing.isReadOnlyDisplay}
+          view={genderBirthView(user)}
+          edit={
+            <span className="user-basic-info-section__inline-controls">
+              <CmsSelect
+                value={d?.gender || undefined}
+                onChange={v => onMemberInfoDraftChange?.({ gender: v != null ? String(v) : '' })}
+                options={GENDER_EDIT_OPTIONS}
+                placeholder="성별"
                 inputSize="medium"
-                width="100%"
-                placeholder="영문 성명"
+                width={120}
               />
-            ) : (
-              <span>{user.nameEn ?? '-'}</span>
-            ),
-            sideLabel: '성별 및 생년월일',
-            side: editing.canEditBasic ? (
-              <span className="user-basic-info-section__inline-controls">
-                <CmsSelect
-                  value={d?.gender || undefined}
-                  onChange={v => onMemberInfoDraftChange?.({ gender: v != null ? String(v) : '' })}
-                  options={GENDER_EDIT_OPTIONS}
-                  placeholder="성별"
-                  inputSize="medium"
-                  width={120}
-                />
-                <CmsInput
-                  value={d?.birthDate ?? ''}
-                  onChange={e => onMemberInfoDraftChange?.({ birthDate: e.target.value })}
-                  inputSize="medium"
-                  width={160}
-                  placeholder="YYYY-MM-DD"
-                  aria-label="생년월일"
-                />
-              </span>
-            ) : (
-              <span>{formatGenderBirthLine(user)}</span>
-            ),
-          },
-        ]}
-      />
+              <CmsDateTextInput
+                value={(d?.birthDate ?? '').replace(/-/g, '.')}
+                onValueChange={value =>
+                  onMemberInfoDraftChange?.({ birthDate: value.replace(/\./g, '-') })
+                }
+                inputSize="medium"
+                width={160}
+                placeholder="YYYY-MM-DD"
+                maxLength={10}
+                aria-label="생년월일"
+              />
+            </span>
+          }
+        />
+      </EditableRow>
 
       <ContactInfoFieldsRow
         user={user}
@@ -122,7 +184,77 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
 
       <EditableRow type="double">
         <EditableField
-          label="자택 주소"
+          label="현재 학교 재학 여부"
+          readOnlyDisplay={editing.isReadOnlyDisplay}
+          view={<span>{individualSchoolEnrollmentStatusView(user)}</span>}
+          edit={
+            <CmsRadioGroup
+              options={[...INDIVIDUAL_SCHOOL_ENROLLMENT_OPTIONS]}
+              size="large"
+              value={d?.schoolEnrollmentStatus || 'enrolled'}
+              onChange={event =>
+                handleEnrollmentStatusChange(event.target.value as 'enrolled' | 'not_enrolled')
+              }
+            />
+          }
+        />
+        <EditableField
+          label="소속"
+          readOnlyDisplay={editing.isReadOnlyDisplay}
+          view={affiliationView(user)}
+          edit={
+            isEnrolled ? (
+              <span className="detail-info-form-inputs-wrapper-no-gap">
+                <SchoolSearch
+                  value={d?.affiliationInstitution ?? ''}
+                  onChange={nextSchoolName =>
+                    onMemberInfoDraftChange?.({
+                      affiliationInstitution: nextSchoolName,
+                      schoolOrganizationId: null,
+                      schoolProvider: undefined,
+                      schoolExternalCode: undefined,
+                      schoolLevel: undefined,
+                      schoolAddress: undefined,
+                      schoolZipcode: undefined,
+                      schoolRegionSido: undefined,
+                      schoolRegionSigungu: undefined,
+                    })
+                  }
+                  onSelect={handleSchoolSelect}
+                  placeholder="학교명"
+                  inputSize="medium"
+                  width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+                />
+                <DetailInfoForm.InputsSeparator />
+                <CmsSelect
+                  placeholder="학년"
+                  value={d?.affiliationGrade || undefined}
+                  onChange={v =>
+                    onMemberInfoDraftChange?.({ affiliationGrade: v != null ? String(v) : '' })
+                  }
+                  options={individualAffiliationGradeSelectOptions(d?.affiliationGrade)}
+                  inputSize="medium"
+                  width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+                  aria-label="소속 학년"
+                />
+              </span>
+            ) : (
+              <CmsInput
+                placeholder="소속"
+                value={d?.affiliationInstitution ?? ''}
+                onChange={e => onMemberInfoDraftChange?.({ affiliationInstitution: e.target.value })}
+                inputSize="medium"
+                width="100%"
+                aria-label="소속"
+              />
+            )
+          }
+        />
+      </EditableRow>
+
+      <EditableRow type="double">
+        <EditableField
+          label="자택 주소지"
           readOnlyDisplay={editing.isReadOnlyDisplay}
           view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
           edit={
@@ -131,44 +263,30 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
               onSearchChange={next => onMemberInfoDraftChange?.({ detailAddressSearch: next })}
               detailValue={d?.detailAddressDetail ?? ''}
               onDetailChange={next => onMemberInfoDraftChange?.({ detailAddressDetail: next })}
-              detailAriaLabel="자택 주소 상세"
+              detailAriaLabel="자택 주소지 상세"
             />
           }
         />
         <EditableField
-          label="소속"
+          label="1365 ID"
           readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={<span>{affiliationLine(user)}</span>}
+          view={
+            <Id1365View
+              personalInfoRevealed={personalInfoRevealed}
+              externalId1365={externalId1365}
+            />
+          }
           edit={
-            <span className="detail-info-form-inputs-wrapper-no-gap">
-              <CmsInput
-                placeholder="학교명"
-                value={d?.affiliationInstitution ?? ''}
-                onChange={e => onMemberInfoDraftChange?.({ affiliationInstitution: e.target.value })}
-                inputSize="medium"
-                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
-                aria-label="소속 기관(학교명)"
-              />
-              <DetailInfoForm.InputsSeparator />
-              <CmsSelect
-                placeholder="학년"
-                value={d?.affiliationGrade || undefined}
-                onChange={v =>
-                  onMemberInfoDraftChange?.({ affiliationGrade: v != null ? String(v) : '' })
-                }
-                options={individualAffiliationGradeSelectOptions(d?.affiliationGrade)}
-                inputSize="medium"
-                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
-                aria-label="소속 학년"
-              />
-            </span>
+            <CmsInput
+              placeholder="1365 ID"
+              value={d?.id1365 ?? ''}
+              onChange={e => onMemberInfoDraftChange?.({ id1365: e.target.value })}
+              inputSize="medium"
+              width="100%"
+              aria-label="1365 ID"
+            />
           }
         />
-      </EditableRow>
-
-      <EditableRow type="double">
-        <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
-        <EditableField label="연동된 소셜 계정" readOnlyDisplay view={<span>{socialLine(user)}</span>} />
       </EditableRow>
     </>
   )

@@ -1,0 +1,81 @@
+---
+description: CMS TanStack Query 캐시·인증 경계 (루트 공통 정책 보완)
+globs: apps/cms/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# TanStack Query 캐시 관리 (CMS)
+
+모노레포 공통 정책(필수):
+
+[`.cursor/rules/backend-response-cache-policy.mdc`](../../../../../.cursor/rules/backend-response-cache-policy.mdc)
+
+운영 워크플로·매트릭스·키/뮤테이션 가이드:
+
+[`.cursor/skills/tanstack-query-backend-cache/SKILL.md`](../../../../../.cursor/skills/tanstack-query-backend-cache/SKILL.md)
+
+이 파일은 **CMS 전용** 보완만 담는다. Platform은 동일 루트 Rule/Skill을 쓰되 키 루트는 `['platform', …]`.
+
+## QueryClient
+
+- 싱글톤: [`apps/cms/src/shared/lib/query-client.ts`](../../../src/shared/lib/query-client.ts)
+- Provider만 이 인스턴스 사용. auth·feature의 `removeQueries`/`invalidateQueries`도 동일 client.
+
+## Query key (CMS)
+
+1. **루트**: `['cms', …]` — 신규 팩토리 필수. 레거시 `form-templates` / `general-programs*` / `users` 는 해당 도메인 수정 시 마이그레이션.
+2. **대시보드 인증 경계**: `dashboardQueryKeys.scope('remote' | 'mock')` + `useDashboardQueryScope()` (token 구독).
+3. **필터·페이지**: 요청 조건을 key에 포함.
+4. 팩토리만 사용 — 페이지에 문자열 배열 리터럴 금지.
+
+## enabled (대시보드)
+
+| 패턴 | enabled |
+|------|---------|
+| mock·remote 분기 | `baseEnabled` + scope in key |
+| 실 API 전용 | `useDashboardRemoteQueryEnabled(baseEnabled)` |
+| mock 전용 | `baseEnabled` + scope `'mock'` |
+
+`shouldUseDashboardRemoteApi()`만 queryFn에 두고 key/enabled에 안 넣으면 MFA·로그아웃 직후 stale 노출 위험.
+
+## 인증 경계 — 필수 정리
+
+`logout` / `completeAdminAuth` / `applySocialAuthTokens` 에서 사용자 스코프 캐시 제거:
+
+```ts
+clearDashboardQueryCache()
+clearLogsQueryCache()
+clearDataManagementQueryCache()
+clearPostsQueryCache()
+clearSettlementQueryCache()
+clearMemberQueryCache()
+clearPerformanceQueryCache()
+// 도메인 추가 시 clear 헬퍼도 auth-store에 반드시 연결
+```
+
+누락되기 쉬운 도메인: notifications, form-templates, general-programs / applications / progress, legacy `['users']`.
+
+## Mutation 후 invalidate
+
+- 필터 없는 `invalidateQueries()` 금지.
+- 대시보드 preferences: `dashboardQueryKeys.all`.
+- 가능하면 mutation 응답으로 detail `setQueryData` 후 list/count만 invalidate.
+
+## retry·staleTime
+
+- 전역·클래스별 값은 루트 정책 + skill matrix를 따른다.
+- 대시보드 실 API 위젯: `retry: false` 유지(403/500을 stale로 가리지 않음).
+- 알림 count: `staleTime 30s`.
+
+## 금지
+
+- 로그아웃 후 이전 사용자 응답 재사용
+- mock fallback을 queryFn 실패 시 조용히 성공 데이터로 반환
+- 의미 다른 캐시를 한 key에 합침
+
+## 신규 훅 체크리스트
+
+- [ ] `['cms', …]` 팩토리 사용
+- [ ] 클래스(A–G)에 맞는 staleTime/gcTime
+- [ ] mutation 동기화 범위 명시
+- [ ] 인증 전환 시 clear 헬퍼 연결 여부 검토

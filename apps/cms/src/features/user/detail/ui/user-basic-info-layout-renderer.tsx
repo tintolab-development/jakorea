@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { BasicInfoLayout, type BasicInfoLayoutResolved } from './user-basic-info-layout-resolver'
+import {
+  BasicInfoLayout,
+  type BasicInfoLayoutResolved,
+} from './user-basic-info-layout-resolver'
 import { renderResolvedBasicInfoSections } from './user-basic-info-section-renderer'
 import type { BasicInfoSectionRenderContext } from './user-basic-info-section-renderer'
 
@@ -36,7 +39,16 @@ export function BasicInfoLayoutRenderer({
         <DetailInfoForm
           title="기본 정보 — 성명·연락처 등"
           hideHeader
-          className="user-basic-info-section user-basic-info-section--school-teacher-profile-card"
+          className={[
+            'user-basic-info-section',
+            resolution.splitSectionVariant === 'instructor'
+              ? 'user-basic-info-section--instructor-profile-card'
+              : resolution.splitSectionVariant === 'school_teacher'
+                ? 'user-basic-info-section--school-teacher-profile-card'
+                : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
           mode={mode}
         >
           {rendered.profile ?? null}

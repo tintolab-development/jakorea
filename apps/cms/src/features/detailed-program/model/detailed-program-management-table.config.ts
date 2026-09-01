@@ -10,23 +10,7 @@ import type {
 } from './detailed-program-management.types'
 
 function parseUsage(raw: string | null): DetailedProgramUsageFilter {
-  if (raw === 'active' || raw === 'inactive') return raw
-  return 'ALL'
-}
-
-function filterRows(
-  data: DetailedProgramManagementRow[],
-  searchParams: URLSearchParams
-): DetailedProgramManagementRow[] {
-  const nameQ = (searchParams.get('dp_name') ?? '').trim().toLowerCase()
-  const usage = parseUsage(searchParams.get('dp_use'))
-
-  return data.filter(row => {
-    if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
-    if (usage === 'active' && !row.active) return false
-    if (usage === 'inactive' && row.active) return false
-    return true
-  })
+  return raw === 'inactive' ? 'inactive' : 'active'
 }
 
 const tanstackColumns: ColumnDef<DetailedProgramManagementRow>[] = [
@@ -36,17 +20,17 @@ const tanstackColumns: ColumnDef<DetailedProgramManagementRow>[] = [
 const searchSyncRules: readonly TableSearchParamRule<DetailedProgramManagementPendingFilters>[] = [
   {
     kind: 'param',
+    filterKey: 'usageStatus',
+    paramKey: 'dp_use',
+    condition: () => true,
+    transform: v => String(v),
+  },
+  {
+    kind: 'param',
     filterKey: 'programName',
     paramKey: 'dp_name',
     condition: f => (f.programName ?? '').trim().length > 0,
     transform: v => String(v).trim(),
-  },
-  {
-    kind: 'param',
-    filterKey: 'usageStatus',
-    paramKey: 'dp_use',
-    condition: f => f.usageStatus !== 'ALL',
-    transform: v => String(v),
   },
 ]
 
@@ -64,7 +48,7 @@ export const detailedProgramManagementTablePageConfig: TablePageConfig<
   filters: {
     initialPending: {
       programName: '',
-      usageStatus: 'ALL',
+      usageStatus: 'active',
     },
 
     syncPendingFromUrl: ({ searchParams, setPendingFilters }) => {
@@ -81,17 +65,15 @@ export const detailedProgramManagementTablePageConfig: TablePageConfig<
 
     hasActiveFilters: ({ searchParams }) => {
       if ((searchParams.get('dp_name') ?? '').trim()) return true
-      if (parseUsage(searchParams.get('dp_use')) !== 'ALL') return true
+      if (parseUsage(searchParams.get('dp_use')) !== 'active') return true
       return false
     },
 
     getBaseCount: ({ filteredData }) => filteredData.length,
   },
 
-  filterFn: ({ data, searchParams }) => {
-    const filtered = filterRows(data, searchParams)
-    return { dataForTable: filtered, filteredData: filtered }
-  },
+  /** 서버 필터만 사용 — 클라 이중 필터 없음 */
+  filterFn: ({ data }) => ({ dataForTable: data, filteredData: data }),
 
   getSearchSync: (_context: DetailedProgramManagementTableContext) => ({
     paramConfig: searchSyncRules,

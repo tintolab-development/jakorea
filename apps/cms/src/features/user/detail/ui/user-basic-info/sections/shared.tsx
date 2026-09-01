@@ -7,7 +7,7 @@ import { detailEmailDisplay, detailPhoneDisplay } from '../display'
 import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
 
-const ID1365_NOT_REGISTERED_LABEL = '등록되지 않음'
+const ID1365_NOT_REGISTERED_LABEL = '-'
 
 function resolve1365DisplayText(
   personalInfoRevealed: boolean,
@@ -36,7 +36,6 @@ export function Id1365View({
   return (
     <span className="user-basic-info-section__id1365-cell">
       <span>{label1365}</span>
-      <DetailInfoForm.InputsSeparator />
       {externalId1365?.onOpen ? (
         <CmsButton size="medium" onClick={externalId1365.onOpen}>
           1365 바로가기
@@ -82,6 +81,30 @@ export function AddressSearchDetailInputs({
         aria-label={detailAriaLabel}
       />
     </>
+  )
+}
+
+/** 연락처·이메일 조회 전용 행 — 수정 슬롯이 없는 섹션(강사 등)에서 사용 */
+export function ContactInfoViewRow({
+  user,
+  personalInfoRevealed,
+}: {
+  user: Omit<User, 'password'>
+  personalInfoRevealed: boolean
+}) {
+  return (
+    <EditableRow type="double">
+      <EditableField
+        label="연락처"
+        readOnlyDisplay
+        view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
+      />
+      <EditableField
+        label="이메일"
+        readOnlyDisplay
+        view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
+      />
+    </EditableRow>
   )
 }
 

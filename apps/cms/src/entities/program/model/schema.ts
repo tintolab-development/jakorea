@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod'
+import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 
 export const programRoundSchema = z.object({
   roundNumber: z.number().min(1, '회차 번호를 입력해주세요'),
@@ -34,7 +35,7 @@ export const programSchema = z.object({
   schoolId: z.string().optional(),
   district: z.string().optional(),
   ips: z.enum(['Prepare', 'Succeed', 'Inspire']).optional(),
-  targetLevel: z.enum(['elementary', 'middle', 'high']).optional(),
+  targetLevel: z.enum(['elementary', 'middle', 'high', 'university', 'adult']).optional(),
   institutionType: z.enum(['inside_school', 'outside_school']).optional(),
   // 프로그램 설정 정보
   ipOwned: z.string().optional(),
@@ -58,7 +59,13 @@ export const programSchema = z.object({
   venue: z.string().optional(), // 진행 장소
   curriculum: z.string().optional(), // 커리큘럼
   contactEmail: z.string().email('올바른 이메일 형식이 아닙니다').optional().or(z.literal('')),
-  contactPhone: z.string().optional(), // 문의처 연락처
+  contactPhone: z
+    .string()
+    .optional()
+    .refine(
+      value => !value?.trim() || isValidKoreanPhoneNumber(value),
+      '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'
+    ),
   oneLineIntroduction: z.string().optional(), // 한 줄 소개
   keyVisualImage: z.string().url('올바른 URL 형식이 아닙니다').optional().or(z.literal('')),
   // 프로그램별 폼 업로드 (기획 요구사항)

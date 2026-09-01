@@ -84,7 +84,17 @@
 }
 
 /* 프로그램 카드: 가로 441px 고정, 세로는 KPI 행에 맞춤(하단 여백 없음). 긴 목록은 목록만 스크롤 */
+.kpi-achievement-widget__kpi-row--disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 .kpi-achievement-widget__card {
+  appearance: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
   flex-shrink: 0;
   width: 441px;
   max-width: 100%;

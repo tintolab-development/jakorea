@@ -1,0 +1,223 @@
+{
+  "templateCode": "agreement-notice",
+  "templateName": "행정정보 공동이용 사전 동의서",
+  "formType": "WRITING",
+  "category": "AGREEMENT",
+  "schemaJson": {
+    "schemaVersion": 1,
+    "formSettings": {
+      "titleNumbering": "numeric"
+    },
+    "paragraphs": [
+      {
+        "id": "agreement-notice-title",
+        "kind": "description",
+        "variant": "survey_title_with_period",
+        "requiredMark": true,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "surveyTitle": "행정정보 공동이용 사전동의서",
+        "surveyDescription": "",
+        "periodMode": "immediate",
+        "startAt": null,
+        "endAt": null,
+        "showWritingPeriodOnForm": false
+      },
+      {
+        "id": "agreement-notice-institution",
+        "kind": "single_item",
+        "variant": "agreement_explanation_text",
+        "requiredMark": false,
+        "paragraphTitle": "이용기관 명칭",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "bodyPlaceholder": "이용기관 명칭을 입력해 주세요",
+        "bodyText": "",
+        "answerRequired": false
+      },
+      {
+        "id": "agreement-notice-purpose",
+        "kind": "single_item",
+        "variant": "agreement_explanation_text",
+        "requiredMark": false,
+        "paragraphTitle": "이용사무(이용목적)",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "bodyPlaceholder": "이용 목적을 입력해 주세요",
+        "bodyText": "범죄경력 유무 조회",
+        "answerRequired": false
+      },
+      {
+        "id": "agreement-notice-table",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": false,
+        "paragraphTitle": "공동이용 행정정보(구비서류)",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "연번",
+          "행정정보명",
+          "연번",
+          "행정정보명"
+        ],
+        "dataRows": [
+          [
+            "1",
+            "성범죄경력 및 아동학대관련 범죄전력 조회",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "※ 이용기관은 본인이 동의한 위 공동이용 행정정보를 확인하기 위해 「개인정보 보호법」 시행령 제19조에 따라 주민등록번호, 여권번호, 운전면허의 면허번호 또는 외국인등록번호가 포함된 행정정보를 처리할 수 있습니다.\n이용기관이 요청하는 경우 기재하여 주십시오(필요시 기재사항)",
+        "showBottomText": true,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "idTypeWithInput": {
+          "id": "agreement-notice-id-type",
+          "kind": "single_item",
+          "variant": "id_type_with_input",
+          "requiredMark": false,
+          "paragraphTitle": "",
+          "paragraphDescription": "",
+          "participatesInTitleNumbering": true,
+          "options": [
+            {
+              "id": "agreement-notice-id-resident",
+              "label": "주민등록번호"
+            },
+            {
+              "id": "agreement-notice-id-passport",
+              "label": "여권번호"
+            },
+            {
+              "id": "agreement-notice-id-driver",
+              "label": "운전면허번호"
+            },
+            {
+              "id": "agreement-notice-id-alien",
+              "label": "외국인등록번호"
+            }
+          ],
+          "selectedOptionId": "agreement-notice-id-resident",
+          "inputPlaceholder": "주민등록번호를 입력해 주세요",
+          "inputValue": "",
+          "answerRequired": false
+        },
+        "answerRequired": false
+      },
+      {
+        "id": "agreement-notice-consent-static",
+        "kind": "description",
+        "variant": "static_description_lines",
+        "requiredMark": false,
+        "paragraphTitle": "정보주체(본인) 동의사항",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "lines": [
+          "○ 본인은 위 사무의 처리를 위하여 「전자정부법」 제36조에 따른 행정정보 공동이용을 통해 이용기관의 업무처리담당자가 전자적으로 본인의 구비서류(공동이용 행정정보)를 확인하는 것에 동의합니다.",
+          "* 만일, 본인이 위 행정정보 이용에 대해 동의를 하지 아니할 경우에도 불이익은 없습니다. 다만, 동의하지 아니한 경우에는 본인이 해당 구비서류를 제출하여야 합니다."
+        ]
+      },
+      {
+        "id": "agreement-notice-subject",
+        "kind": "single_item",
+        "variant": "short_essay",
+        "requiredMark": true,
+        "paragraphTitle": "대상자 본인",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "answerRequired": true,
+        "showItemTitle": true,
+        "itemInputRows": 1,
+        "items": [
+          {
+            "id": "agreement-notice-subj-name",
+            "label": "성명",
+            "placeholder": "성명을 입력해 주세요",
+            "bodyText": ""
+          },
+          {
+            "id": "agreement-notice-subj-birth",
+            "label": "생년월일",
+            "placeholder": "1991.01.01",
+            "bodyText": ""
+          },
+          {
+            "id": "agreement-notice-subj-phone",
+            "label": "전화번호",
+            "placeholder": "010-1234-5678",
+            "bodyText": ""
+          }
+        ],
+        "bodyPlaceholder": "답변을 입력해 주세요",
+        "bodyText": ""
+      },
+      {
+        "id": "agreement-notice-confirmation-closing",
+        "kind": "description",
+        "variant": "closing",
+        "requiredMark": false,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "body": ""
+      },
+      {
+        "id": "agreement-notice-system-date",
+        "kind": "description",
+        "variant": "system",
+        "systemPreset": "agreement_date",
+        "requiredMark": false,
+        "paragraphTitle": "날짜 유형",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false
+      },
+      {
+        "id": "agreement-notice-system-signature",
+        "kind": "description",
+        "variant": "system",
+        "systemPreset": "agreement_signature",
+        "requiredMark": false,
+        "paragraphTitle": "서명란 유형",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false
+      }
+    ]
+  },
+  "extensionJson": {
+    "overlay": {},
+    "editorState": {},
+    "uiState": {}
+  },
+  "settingsJson": null,
+  "_apiStorageNote": "DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장"
+}

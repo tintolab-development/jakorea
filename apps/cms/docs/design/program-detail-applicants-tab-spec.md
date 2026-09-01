@@ -2,7 +2,7 @@
 
 **대상**: 프로그램 상세 페이지 > **신청자 목록** 탭  
 **참조 시안**: 스크린샷 (프로그램 상세 신청자 목록 — 신청 학교 탭 / **신청 강사 탭**: 필터 학교명·강사명·결재 현황, 강의 신청 강사 목록 총 N건 테이블)  
-**기존 참고 UI**: [ProgramProgressTab](../../../src/features/program/ui/program-progress-tab.tsx) — 서브 탭·필터·조회 버튼·테이블·건수 표시 패턴 재사용
+**기존 참고 UI**: [ProgramProgressTab](../../../src/features/program/general/ui/detail-modal/program-status/program-progress-tab.tsx) — 서브 탭·필터·조회 버튼·테이블·건수 표시 패턴 재사용
 
 ---
 
@@ -95,7 +95,7 @@
 | `approved`     | 승인 완료 | 회색 테두리 + 회색 텍스트, 흰색 배경     |
 
 - 뱃지: box-sizing border-box, padding 6px 10px, border 1px solid, border-radius 6px, font-size 14px, font-weight 600.
-- 색상은 디자인 토큰 우선: primary(파란), error(빨강), default/neutral(회색). 기존 `SettlementStatusBadge` / `TextbookStatusBadge` 패턴 참고하여 **결재 현황 전용 뱃지 컴포넌트** 추가 권장.
+- 색상은 디자인 토큰 우선: primary(파란), error(빨강), default/neutral(회색). Current domain badge인 `ApprovalStatusBadge` (`TextbookStatusBadge variant="approval"` 래퍼)를 재사용한다.
 
 ---
 
@@ -166,7 +166,7 @@
 ### 5.2 UI 컴포넌트 재사용
 
 - [ ] **Card, 서브 탭, Select 필터, 조회 버튼, 테이블 상단 "N건" 헤더**: `ProgramProgressTab` 및 `program-progress-tab.css` 스타일 참고하여 동일 패턴으로 구현 (필요 시 `program-applicants-tab.css` 신규 생성).
-- [ ] **결재 현황**: `ApprovalStatusBadge`(가칭) 신규 컴포넌트 구현. `pending` / `rejected` / `approved` 3종, 위 3.3 스타일 적용.
+- [ ] **결재 현황**: Current `ApprovalStatusBadge` 재사용. `pending` / `rejected` / `approved` 3종, 위 3.3 스타일 적용.
 
 ### 5.3 데이터·필터
 
@@ -198,12 +198,13 @@
 ## 6. 참조 문서·코드
 
 - [persona.md](../../../.cursor/rules/process/persona.md) — 역할별 요청 해석 (디자이너/기획/PM → 개발 위임 표현)
-- [program-progress-tab.tsx](../../../src/features/program/ui/program-progress-tab.tsx) — 서브 탭·필터·조회·테이블·건수 패턴
-- [use-program-progress-params.ts](../../../src/features/program/hooks/use-program-progress-params.ts) — subTab·필터·URL 동기화
+- [program-progress-tab.tsx](../../../src/features/program/general/ui/detail-modal/program-status/program-progress-tab.tsx) — 서브 탭·필터·조회·테이블·건수 패턴
+- [use-program-progress-params.ts](../../../src/features/program/general/hooks/use-program-progress-params.ts) — subTab·필터·URL 동기화
 - [school-detail-modal-spec.md](./school-detail-modal-spec.md) — 명세 문서 양식 참고
 - [table-management.md](../../../.cursor/rules/tables/table-management.md) — 테이블 구현 규칙
 
 ---
 
-**문서 버전**: 1.1  
-**마지막 업데이트**: 2026-02-11 (신청 강사 탭 상세 명세·구현 위임 체크리스트 추가)
+**문서 버전**: 1.2
+
+**마지막 업데이트**: 2026-07-15 (Current 결재 현황 배지 기준 반영)

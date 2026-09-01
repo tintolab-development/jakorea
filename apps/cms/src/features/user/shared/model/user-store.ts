@@ -21,11 +21,15 @@ import {
   patchUserBasicInfo,
   type CreateUserRequest,
   type PatchUserBasicInfoInput,
+  type PatchUserBasicInfoOptions,
 } from '@/entities/user/api/user-service'
+import { queryClient } from '@/shared/lib/query-client'
+import { fetchMemberDetailQuery, memberDetailQueryKey } from '@/features/user/api/hooks/use-member-detail-query'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { matchesUserInstitutionLocation } from '@/entities/user/lib/matches-institution-location'
 import {
+  matchesInstructorJaEvaluationGradeFilter,
   matchesInstructorSettlementFilter,
-  matchesInstructorTypeFilter,
 } from '@/entities/user/lib/matches-instructor-list-filters'
 import {
   getAdminPermissionVariant,
@@ -43,7 +47,7 @@ interface UserFilters {
   createdAtFrom?: string
   createdAtTo?: string
   institutionLocation?: string
-  instructorType?: string
+  jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
 }
@@ -65,9 +69,29 @@ interface UserStore {
 
   // Actions
   fetchUsers: (filters?: UserFilters) => Promise<void>
-  fetchUserById: (userId: UserId) => Promise<void>
+  fetchUserById: (
+    userId: UserId,
+    options?: {
+      memberId?: number
+      organizationId?: number
+      role?: UserRole
+      adminAccountId?: number
+      email?: string
+      instructorMemberProfile?: UserWithoutPassword['instructorMemberProfile']
+      roles?: string[]
+    }
+  ) => Promise<UserWithoutPassword | null>
   createUser: (request: CreateUserRequest) => Promise<UserWithoutPassword>
-  deleteUser: (userId: UserId) => Promise<void>
+  deleteUser: (
+    userId: UserId,
+    options?: {
+      memberId?: number
+      adminAccountId?: number
+      organizationId?: number
+      role?: UserRole
+      email?: string
+    }
+  ) => Promise<void>
   changeUserRole: (
     userId: UserId,
     newRole: UserRole,
@@ -75,7 +99,11 @@ interface UserStore {
     programRole?: ProgramRole
   ) => Promise<void>
   changeUserStatus: (userId: UserId, isActive: boolean) => Promise<void>
-  patchUserBasicInfo: (userId: UserId, patch: PatchUserBasicInfoInput) => Promise<UserWithoutPassword>
+  patchUserBasicInfo: (
+    userId: UserId,
+    patch: PatchUserBasicInfoInput,
+    options?: PatchUserBasicInfoOptions
+  ) => Promise<UserWithoutPassword>
   setSelectedUserId: (userId: UserId | null) => void
   setFilters: (filters: Partial<UserFilters>) => void
   clearFilters: () => void
@@ -127,8 +155,8 @@ export const selectFilteredUserIds = (
       }
     }
 
-    if (filters.instructorType?.trim()) {
-      if (!matchesInstructorTypeFilter(user, filters.instructorType)) {
+    if (filters.jaEvaluationGrade?.trim()) {
+      if (!matchesInstructorJaEvaluationGradeFilter(user, filters.jaEvaluationGrade)) {
         return false
       }
     }
@@ -202,26 +230,36 @@ export const useUserStore = create<UserStore>((set, get) => ({
     }
   },
 
-  fetchUserById: async userId => {
+  fetchUserById: async (userId, options) => {
     set({ loading: true, error: null })
     try {
-      const user = await getUserById(userId)
+      const state = get()
+      // 상세 본문은 GET 응답만 사용 — 목록/store 힌트와 merge하지 않음
+      // remote: React Query ensureQueryData로 동일 member 재GET(탭 전환·StrictMode) 억제
+      const user = isMembersRemoteEnabled()
+        ? await fetchMemberDetailQuery(queryClient, userId, options)
+        : await getUserById(userId, options)
       if (!user) {
         set({ loading: false })
-        return
+        return null
       }
 
-      // usersById에 추가/업데이트
-      const state = get()
+      // usersById에 추가/업데이트 — 요청 키·canonical id 모두 저장
+      const nextUsersById = {
+        ...state.usersById,
+        [userId]: user,
+        ...(user.id !== userId ? { [user.id]: user } : {}),
+      }
+      const nextUserIds = state.userIds.includes(user.id)
+        ? state.userIds
+        : [...state.userIds, user.id]
+
       set({
-        usersById: {
-          ...state.usersById,
-          [userId]: user,
-        },
-        // userIds에 없으면 추가
-        userIds: state.userIds.includes(userId) ? state.userIds : [...state.userIds, userId],
+        usersById: nextUsersById,
+        userIds: nextUserIds,
         loading: false,
       })
+      return user
     } catch (err) {
       const error = err instanceof Error ? err : new Error('사용자 정보를 불러오는데 실패했습니다.')
       set({ error, loading: false })
@@ -254,10 +292,10 @@ export const useUserStore = create<UserStore>((set, get) => ({
     }
   },
 
-  deleteUser: async userId => {
+  deleteUser: async (userId, options) => {
     set({ loading: true, error: null })
     try {
-      await deleteUser(userId)
+      await deleteUser(userId, 'CMS 관리자 회원 삭제', options)
       const state = get()
 
       // usersById에서 제거
@@ -368,15 +406,30 @@ export const useUserStore = create<UserStore>((set, get) => ({
     }
   },
 
-  patchUserBasicInfo: async (userId, patch) => {
+  patchUserBasicInfo: async (userId, patch, options) => {
     set({ loading: true, error: null })
     try {
-      const updatedUser = await patchUserBasicInfo(userId, patch)
+      const updatedUser = await patchUserBasicInfo(userId, patch, options)
       const state = get()
+      if (isMembersRemoteEnabled()) {
+        const hint = {
+          role: updatedUser.role,
+          memberId: updatedUser.memberId,
+          organizationId: updatedUser.organizationId,
+          adminAccountId: updatedUser.adminAccountId,
+          instructorMemberProfile: updatedUser.instructorMemberProfile,
+          roles: updatedUser.roles,
+        }
+        queryClient.setQueryData(memberDetailQueryKey(updatedUser.id, hint), updatedUser)
+        if (userId !== updatedUser.id) {
+          queryClient.setQueryData(memberDetailQueryKey(userId, hint), updatedUser)
+        }
+      }
       set({
         usersById: {
           ...state.usersById,
           [userId]: updatedUser,
+          ...(updatedUser.id !== userId ? { [updatedUser.id]: updatedUser } : {}),
         },
         loading: false,
       })

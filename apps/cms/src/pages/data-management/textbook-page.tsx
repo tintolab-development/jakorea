@@ -1,50 +1,53 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
-import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ContentModal, DeleteGuideModal } from '@/shared/ui'
-import {
-  createTextbook,
-  deleteTextbooks,
-  listTextbooksFromStore,
-  updateTextbook,
-} from '@/features/textbook/api/textbook-service'
+import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
+import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
+import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
+import { useTextbookListQuery } from '@/features/textbook/hooks/use-textbook-list-query'
+import { usePrefetchTextbookDetail } from '@/features/textbook/hooks/use-textbook-detail-query'
+import { useTextbookMutations } from '@/features/textbook/hooks/use-textbook-mutations'
+import { useMaterialKitQuantitiesQuery } from '@/features/textbook/hooks/use-material-kit-quantities-query'
+import { useMaterialKitQuantitiesMutation } from '@/features/textbook/hooks/use-material-kit-quantities-mutation'
+import { useDataManagementRemoteEnabled } from '@/features/data-management/hooks/use-data-management-remote-enabled'
 import {
   TextbookRegisterModal,
   type TextbookRegisterPayload,
 } from '@/features/textbook/ui/textbook-register-modal'
 import {
   TextbookKitQuantityModal,
+  DEFAULT_KIT_QUANTITIES,
   type TextbookKitQuantityValues,
 } from '@/features/textbook/ui/textbook-kit-quantity-modal'
 import { TextbookDetailFullPageModal } from '@/features/textbook/ui/textbook-detail-fullpage-modal'
-import { TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS } from '@/features/textbook/model/textbook-business-areas'
+import { BusinessAreaManagementModal } from '@/features/textbook/ui/business-area-management-modal'
+import { useTextbookBusinessAreaSelectOptions } from '@/features/textbook/hooks/use-business-areas-query'
 import { TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS } from '@/features/textbook/model/textbook-education-targets'
-import type { TextbookRow, TextbookUseStatus } from '@/features/textbook/model/textbook.types'
-import '@/pages/programs/program-list-page.css'
-import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
+import {
+  parseTextbookUseStatus,
+  type TextbookListFilters,
+} from '@/features/textbook/api/textbook-filter-params'
+import type { TextbookRow } from '@/features/textbook/model/textbook.types'
 import './textbook-page.css'
 
-type TextbookFilters = {
-  businessArea: string
-  educationTarget: string
-  grade: string
-  textbookName: string
-  useStatus: TextbookUseStatus
-}
+type TextbookFilters = TextbookListFilters
+
+const DEFAULT_TB_USE = 'USED' as const
+const TB_USE_PARAM = 'tb_use'
 
 const TEXTBOOK_TABLE_SCROLL_X = 1280
 
 const TEXTBOOK_COL_WIDTH = {
-  no: 80,
   businessArea: 150,
   educationTarget: 150,
   grade: 130,
@@ -55,19 +58,11 @@ const TEXTBOOK_COL_WIDTH = {
 } as const
 
 const INITIAL_FILTERS: TextbookFilters = {
+  useStatus: DEFAULT_TB_USE,
+  textbookName: '',
   businessArea: 'ALL',
   educationTarget: 'ALL',
   grade: 'ALL',
-  textbookName: '',
-  useStatus: 'ALL',
-}
-
-const DEFAULT_KIT_QUANTITIES: TextbookKitQuantityValues = {
-  kindergarten: '24',
-  elementary: '24',
-  middle: '24',
-  high: '32',
-  university: '32',
 }
 
 type FilterOption = { label: string; value: string }
@@ -101,21 +96,65 @@ function gradeOptionsByEducationTarget(educationTarget: string): FilterOption[] 
 }
 
 export default function TextbookPage() {
+  const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [rows, setRows] = useState<TextbookRow[]>(() => listTextbooksFromStore())
-  const [pendingFilters, setPendingFilters] = useState<TextbookFilters>(INITIAL_FILTERS)
-  const [appliedFilters, setAppliedFilters] = useState<TextbookFilters>(INITIAL_FILTERS)
+  const tbUseParam = searchParams.get(TB_USE_PARAM)
+  const initialUseStatus = parseTextbookUseStatus(tbUseParam)
+
+  const [pendingFilters, setPendingFilters] = useState<TextbookFilters>(() => ({
+    ...INITIAL_FILTERS,
+    useStatus: initialUseStatus,
+  }))
+  const [appliedFilters, setAppliedFilters] = useState<TextbookFilters>(() => ({
+    ...INITIAL_FILTERS,
+    useStatus: initialUseStatus,
+  }))
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  const [selectedTextbook, setSelectedTextbook] = useState<TextbookRow | null>(null)
-  const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [registerModalOpen, setRegisterModalOpen] = useState(false)
   const [kitQuantityModalOpen, setKitQuantityModalOpen] = useState(false)
+  const [businessAreaModalOpen, setBusinessAreaModalOpen] = useState(false)
   const [kitQuantityChangeConfirmOpen, setKitQuantityChangeConfirmOpen] = useState(false)
-  const [kitQuantities, setKitQuantities] =
+  const { options: businessAreaSelectOptions } = useTextbookBusinessAreaSelectOptions()
+  const remoteKitEnabled = useDataManagementRemoteEnabled('textbooks', true)
+  const kitQuantitiesQuery = useMaterialKitQuantitiesQuery(
+    remoteKitEnabled && kitQuantityModalOpen
+  )
+  const kitQuantitiesMutation = useMaterialKitQuantitiesMutation()
+  const [localKitQuantities, setLocalKitQuantities] =
     useState<TextbookKitQuantityValues>(DEFAULT_KIT_QUANTITIES)
+  const kitQuantities = remoteKitEnabled
+    ? (kitQuantitiesQuery.data ?? DEFAULT_KIT_QUANTITIES)
+    : localKitQuantities
   const [pendingKitQuantities, setPendingKitQuantities] =
     useState<TextbookKitQuantityValues | null>(null)
+  const [kitSaveError, setKitSaveError] = useState<string | null>(null)
+
+  /** 최초 진입 시 `tb_use` 없으면 사용(USED)으로 URL 고정 */
+  useEffect(() => {
+    if (tbUseParam === 'USED' || tbUseParam === 'UNUSED') return
+    setSearchParams(
+      prev => {
+        if (prev.get(TB_USE_PARAM) === 'USED' || prev.get(TB_USE_PARAM) === 'UNUSED') return prev
+        const next = new URLSearchParams(prev)
+        next.set(TB_USE_PARAM, DEFAULT_TB_USE)
+        return next
+      },
+      { replace: true }
+    )
+  }, [tbUseParam, setSearchParams])
+
+  useEffect(() => {
+    const useStatus = parseTextbookUseStatus(tbUseParam)
+    setPendingFilters(prev => (prev.useStatus === useStatus ? prev : { ...prev, useStatus }))
+    setAppliedFilters(prev => (prev.useStatus === useStatus ? prev : { ...prev, useStatus }))
+  }, [tbUseParam])
+
+  const listQuery = useTextbookListQuery(appliedFilters, true)
+  const isInitialListLoading = isDataManagementListLoading(listQuery)
+  const isListFetching = listQuery.isFetching
+  const { createMutation, updateMutation, deleteMutation } = useTextbookMutations()
+  const rows = listQuery.data ?? []
 
   const gradeOptions = useMemo(
     () => gradeOptionsByEducationTarget(pendingFilters.educationTarget),
@@ -125,12 +164,30 @@ export default function TextbookPage() {
   const textbookFilterFields: FilterFieldConfig[] = useMemo(
     () => [
       {
+        key: 'useStatus',
+        type: 'radio',
+        label: '사용 여부',
+        width: '16%',
+        defaultValue: DEFAULT_TB_USE,
+        options: [
+          { label: '사용', value: 'USED' },
+          { label: '미사용', value: 'UNUSED' },
+        ],
+      },
+      {
+        key: 'textbookName',
+        type: 'search',
+        label: '교재명',
+        placeholder: '교재명',
+        width: '20%',
+      },
+      {
         key: 'businessArea',
         type: 'select',
         label: '사업 분야',
         placeholder: '전체',
         width: '16%',
-        options: [{ label: '전체', value: 'ALL' }, ...TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS],
+        options: [{ label: '전체', value: 'ALL' }, ...businessAreaSelectOptions],
       },
       {
         key: 'educationTarget',
@@ -149,41 +206,17 @@ export default function TextbookPage() {
         withAllOption: false,
         options: gradeOptions,
       },
-      {
-        key: 'textbookName',
-        type: 'search',
-        label: '교재명',
-        placeholder: '교재명',
-        width: '24%',
-      },
-      {
-        key: 'useStatus',
-        type: 'select',
-        label: '사용 여부',
-        placeholder: '전체',
-        width: '16%',
-        options: [
-          { label: '전체', value: 'ALL' },
-          { label: '사용', value: 'USED' },
-          { label: '미사용', value: 'UNUSED' },
-        ],
-      },
     ],
-    [gradeOptions]
+    [businessAreaSelectOptions, gradeOptions]
   )
 
   const detailTextbookId = searchParams.get('textbookId')
   const detailMode = searchParams.get('textbookMode') === 'edit' ? 'edit' : 'view'
-
-  useEffect(() => {
-    if (!detailTextbookId) {
-      setDetailModalOpen(false)
-      return
-    }
-    const target = rows.find(row => row.id === detailTextbookId) ?? null
-    setSelectedTextbook(target)
-    setDetailModalOpen(target != null)
-  }, [detailTextbookId, rows])
+  const prefetchTextbookDetail = usePrefetchTextbookDetail()
+  const listTextbook = useMemo(
+    () => (detailTextbookId ? (rows.find(row => row.id === detailTextbookId) ?? null) : null),
+    [detailTextbookId, rows]
+  )
 
   const setDetailRoute = useCallback(
     (id: string | null, mode: 'view' | 'edit' = 'view') => {
@@ -200,36 +233,14 @@ export default function TextbookPage() {
     [searchParams, setSearchParams]
   )
 
-  const filteredRows = useMemo(() => {
-    const keyword = appliedFilters.textbookName.trim().toLowerCase()
-    return rows.filter(row => {
-      if (
-        appliedFilters.businessArea !== 'ALL' &&
-        row.businessArea !== appliedFilters.businessArea
-      ) {
-        return false
-      }
-      if (
-        appliedFilters.educationTarget !== 'ALL' &&
-        row.educationTarget !== appliedFilters.educationTarget
-      ) {
-        return false
-      }
-      if (appliedFilters.grade !== 'ALL' && row.grade !== appliedFilters.grade) {
-        return false
-      }
-      if (appliedFilters.useStatus !== 'ALL' && row.useStatus !== appliedFilters.useStatus) {
-        return false
-      }
-      if (keyword.length > 0 && !row.textbookName.toLowerCase().includes(keyword)) {
-        return false
-      }
-      return true
-    })
-  }, [appliedFilters, rows])
+  const filteredRows = rows
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
     setPendingFilters(prev => {
+      if (key === 'useStatus') {
+        const useStatus = value === 'UNUSED' ? 'UNUSED' : 'USED'
+        return { ...prev, useStatus }
+      }
       const nextValue = (value ?? (key === 'textbookName' ? '' : 'ALL')) as string
       if (key === 'educationTarget') {
         const nextGradeOptions = gradeOptionsByEducationTarget(nextValue).map(opt => opt.value)
@@ -249,7 +260,15 @@ export default function TextbookPage() {
 
   const handleSearch = useCallback(() => {
     setAppliedFilters(pendingFilters)
-  }, [pendingFilters])
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.set(TB_USE_PARAM, pendingFilters.useStatus)
+        return next
+      },
+      { replace: true }
+    )
+  }, [pendingFilters, setSearchParams])
 
   const handleDeleteSelected = useCallback(() => {
     if (selectedRowKeys.length === 0) return
@@ -260,40 +279,53 @@ export default function TextbookPage() {
     const selectedIds = new Set(selectedRowKeys.map(key => String(key)))
     if (selectedIds.size === 0) return
     try {
-      await deleteTextbooks(Array.from(selectedIds))
-      setRows(listTextbooksFromStore())
+      await deleteMutation.mutateAsync(Array.from(selectedIds))
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
-      message.success(`선택한 ${selectedIds.size}건의 교재가 삭제되었습니다.`)
-    } catch {
-      message.error('교재 삭제에 실패했습니다.')
+    } catch (error) {
+      console.debug(
+        'textbookPage bulkDelete failed',
+        getDataManagementApiErrorMessage(error, '삭제에 실패했습니다.')
+      )
     }
-  }, [selectedRowKeys])
+  }, [deleteMutation, selectedRowKeys])
 
   const handleRegisterSubmit = useCallback(async (payload: TextbookRegisterPayload) => {
     try {
-      await createTextbook(payload)
-      message.success('교재가 등록되었습니다.')
-      setRows(listTextbooksFromStore())
+      await createMutation.mutateAsync(payload)
       setRegisterModalOpen(false)
-    } catch {
-      message.error('교재 등록에 실패했습니다.')
+    } catch (error) {
+      console.debug(
+        'textbookPage register failed',
+        getDataManagementApiErrorMessage(error, '등록에 실패했습니다.')
+      )
     }
-  }, [])
+  }, [createMutation])
 
   const handleKitQuantityConfirm = useCallback((nextValues: TextbookKitQuantityValues) => {
     setPendingKitQuantities(nextValues)
     setKitQuantityChangeConfirmOpen(true)
   }, [])
 
-  const handleConfirmKitQuantityChange = useCallback(() => {
+  const handleConfirmKitQuantityChange = useCallback(async () => {
     if (pendingKitQuantities == null) return
-    setKitQuantities(pendingKitQuantities)
+    setKitSaveError(null)
+    if (remoteKitEnabled) {
+      try {
+        await kitQuantitiesMutation.mutateAsync(pendingKitQuantities)
+      } catch (error) {
+        setKitSaveError(
+          getDataManagementApiErrorMessage(error, '키트 수량 저장에 실패했습니다.')
+        )
+        return
+      }
+    } else {
+      setLocalKitQuantities(pendingKitQuantities)
+    }
     setPendingKitQuantities(null)
     setKitQuantityChangeConfirmOpen(false)
     setKitQuantityModalOpen(false)
-    message.success('키트 수량이 변경되었습니다.')
-  }, [pendingKitQuantities])
+  }, [kitQuantitiesMutation, pendingKitQuantities, remoteKitEnabled])
 
   const { deleteGuideTitle, deleteGuideLines } = useMemo(() => {
     const n = selectedRowKeys.length
@@ -323,10 +355,27 @@ export default function TextbookPage() {
       {
         title: 'No.',
         key: 'no',
-        width: TEXTBOOK_COL_WIDTH.no,
+        width: TABLE_COLUMN_WIDTHS.index,
+        className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
         render: (_: unknown, __: TextbookRow, index: number) =>
           filteredRows.length === 0 ? '—' : filteredRows.length - index,
+      },
+      {
+        title: '사용 여부',
+        dataIndex: 'useStatus',
+        key: 'useStatus',
+        width: TEXTBOOK_COL_WIDTH.useStatus,
+        align: 'center',
+        render: (status: TextbookRow['useStatus']) => (status === 'USED' ? '사용' : '미사용'),
+      },
+      {
+        title: '교재명',
+        dataIndex: 'textbookName',
+        key: 'textbookName',
+        width: TEXTBOOK_COL_WIDTH.textbookName,
+        align: 'center',
+        ellipsis: { showTitle: true },
       },
       {
         title: '사업 분야',
@@ -353,22 +402,6 @@ export default function TextbookPage() {
         ellipsis: true,
       },
       {
-        title: '교재명',
-        dataIndex: 'textbookName',
-        key: 'textbookName',
-        width: TEXTBOOK_COL_WIDTH.textbookName,
-        align: 'center',
-        ellipsis: { showTitle: true },
-      },
-      {
-        title: '사용 여부',
-        dataIndex: 'useStatus',
-        key: 'useStatus',
-        width: TEXTBOOK_COL_WIDTH.useStatus,
-        align: 'center',
-        render: (status: TextbookRow['useStatus']) => (status === 'USED' ? '사용' : '미사용'),
-      },
-      {
         title: '등록자',
         dataIndex: 'registrant',
         key: 'registrant',
@@ -382,7 +415,7 @@ export default function TextbookPage() {
         key: 'registeredAt',
         width: TEXTBOOK_COL_WIDTH.registeredAt,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm'),
       },
     ],
     [filteredRows.length]
@@ -408,35 +441,50 @@ export default function TextbookPage() {
         }}
         onSubmit={handleRegisterSubmit}
       />
+      <BusinessAreaManagementModal
+        open={businessAreaModalOpen}
+        onCancel={() => setBusinessAreaModalOpen(false)}
+        onSaved={() => {
+          void queryClient.invalidateQueries({
+            queryKey: dataManagementQueryKeys.textbooks.businessAreas(),
+          })
+          void queryClient.invalidateQueries({
+            queryKey: dataManagementQueryKeys.textbooks.lists(),
+          })
+        }}
+      />
       <TextbookDetailFullPageModal
-        open={detailModalOpen}
-        textbook={selectedTextbook}
+        open={Boolean(detailTextbookId)}
+        textbookId={detailTextbookId}
+        listTextbook={listTextbook}
         mode={detailMode}
         onClose={() => {
           setDetailRoute(null)
         }}
         onEdit={() => {
-          if (!selectedTextbook) return
-          setDetailRoute(selectedTextbook.id, 'edit')
+          if (!detailTextbookId) return
+          setDetailRoute(detailTextbookId, 'edit')
         }}
         onSave={async payload => {
-          if (!selectedTextbook) return
+          if (!detailTextbookId) return
           if (
             !payload.textbookName.trim() ||
             !payload.textbookNameEn?.trim() ||
             !payload.businessArea
           ) {
-            message.warning('필수 항목을 모두 입력해 주세요.')
             return
           }
           try {
-            const updated = await updateTextbook(selectedTextbook.id, payload)
-            setRows(listTextbooksFromStore())
-            setSelectedTextbook(updated)
+            const updated = await updateMutation.mutateAsync({
+              id: detailTextbookId,
+              input: payload,
+            })
             setDetailRoute(updated.id, 'view')
-            message.success('교재 정보가 수정되었습니다.')
-          } catch {
-            message.error('교재 수정에 실패했습니다.')
+          } catch (error) {
+            console.debug(
+              'textbookPage detail update failed',
+              getDataManagementApiErrorMessage(error, '수정에 실패했습니다.')
+            )
           }
         }}
       />
@@ -451,6 +499,7 @@ export default function TextbookPage() {
         onCancel={() => {
           setKitQuantityChangeConfirmOpen(false)
           setPendingKitQuantities(null)
+          setKitSaveError(null)
         }}
         title="키트수량 변경"
         width={600}
@@ -469,7 +518,12 @@ export default function TextbookPage() {
             >
               취소
             </CmsButton>
-            <CmsButton variant="primary" type="button" onClick={handleConfirmKitQuantityChange}>
+            <CmsButton
+              variant="primary"
+              type="button"
+              onClick={handleConfirmKitQuantityChange}
+              disabled={kitQuantitiesMutation.isPending}
+            >
               확인
             </CmsButton>
           </div>
@@ -480,6 +534,9 @@ export default function TextbookPage() {
           <br />
           <strong>신규로 진행되는 프로그램부터 적용됩니다.</strong>
         </p>
+        {kitSaveError ? (
+          <p className="textbook-kit-quantity-change-modal__error">{kitSaveError}</p>
+        ) : null}
       </ContentModal>
       <FilterTableLayout
         bordered={false}
@@ -489,6 +546,7 @@ export default function TextbookPage() {
         onSearch={handleSearch}
         title="교재 목록"
         description={`총 ${filteredRows.length.toLocaleString()}건`}
+        contentLoading={isInitialListLoading}
         actions={
           <>
             <CmsButton
@@ -501,6 +559,9 @@ export default function TextbookPage() {
             <CmsButton variant="secondary" onClick={() => setKitQuantityModalOpen(true)}>
               키트 수량 관리
             </CmsButton>
+            <CmsButton variant="secondary" onClick={() => setBusinessAreaModalOpen(true)}>
+              사업 분야 관리
+            </CmsButton>
             <CmsButton
               variant="primary"
               onClick={() => {
@@ -511,6 +572,10 @@ export default function TextbookPage() {
             </CmsButton>
           </>
         }
+        excelExport={{
+          columns,
+          data: filteredRows,
+        }}
       >
         <Table<TextbookRow>
           rowKey="id"
@@ -519,6 +584,7 @@ export default function TextbookPage() {
           scroll={{ x: TEXTBOOK_TABLE_SCROLL_X }}
           columns={columns}
           dataSource={filteredRows}
+          loading={isListFetching && !isInitialListLoading}
           pagination={false}
           rowSelection={{
             columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
@@ -527,6 +593,7 @@ export default function TextbookPage() {
             preserveSelectedRowKeys: false,
           }}
           onRow={record => ({
+            onMouseEnter: () => prefetchTextbookDetail(record.id),
             onClick: event => {
               const target = event.target as HTMLElement
               if (
@@ -535,10 +602,11 @@ export default function TextbookPage() {
               ) {
                 return
               }
+              prefetchTextbookDetail(record.id)
               setDetailRoute(record.id, 'view')
             },
+            style: { cursor: 'pointer' },
           })}
-          rowClassName="textbook-page__row"
         />
       </FilterTableLayout>
     </div>

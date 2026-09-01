@@ -1,7 +1,7 @@
 /**
  * 프로그램 진행 현황 배지 (교재 현황 배지와 동일 베이스 사용)
  * 라벨: status.ts programLifecycleStatusConfig 연동 (참여자/강사/봉사자 모집 예정·중·완료)
- * 경제 교육 페이지: 3단계 라벨 (프로그램 진행 예정/중/완료) 및 스크린샷 색상 적용
+ * 4탭 위젯 목록(/programs/general·1사1교): 3단계 라벨 (프로그램 진행 예정/중/완료)
  */
 
 import type { CSSProperties } from 'react'
@@ -17,18 +17,18 @@ import { AppStatusBadge } from './app-status-badge'
 import './app-status-badge.css'
 import './program-lifecycle-status-badge.css'
 
-const ECONOMY_PHASE_MODIFIER: Record<ProgramProgressPhaseKey, string> = {
-  scheduled: 'program-lifecycle-status-badge--economy-scheduled',
-  inProgress: 'program-lifecycle-status-badge--economy-in-progress',
-  completed: 'program-lifecycle-status-badge--economy-completed',
+const LIST_PHASE_MODIFIER: Record<ProgramProgressPhaseKey, string> = {
+  scheduled: 'program-lifecycle-status-badge--list-phase-scheduled',
+  inProgress: 'program-lifecycle-status-badge--list-phase-in-progress',
+  completed: 'program-lifecycle-status-badge--list-phase-completed',
 }
 
-function getEconomyDisplayLabel(status: ProgramLifecycleStatus): string {
+function getListPhaseDisplayLabel(status: ProgramLifecycleStatus): string {
   return PROGRAM_PROGRESS_PHASE_LABELS[getProgramProgressPhase(status)]
 }
 
-function getEconomyModifier(status: ProgramLifecycleStatus): string {
-  return ECONOMY_PHASE_MODIFIER[getProgramProgressPhase(status)]
+function getListPhaseModifier(status: ProgramLifecycleStatus): string {
+  return LIST_PHASE_MODIFIER[getProgramProgressPhase(status)]
 }
 
 export interface ProgramLifecycleStatusBadgeProps {
@@ -50,10 +50,21 @@ export function ProgramLifecycleStatusBadge({
 }: ProgramLifecycleStatusBadgeProps) {
   const location = useLocation()
   const p = location.pathname.replace(/\/$/, '') || '/'
-  const isEconomyPage = p === '/programs/economy-education' || p === '/programs/company-school' || p.startsWith('/programs/company-school/')
+  const isOverviewListPage =
+    p === '/programs/economy-education' ||
+    p === '/programs/company-school' ||
+    p.startsWith('/programs/company-school/') ||
+    p === '/programs/general' ||
+    p.startsWith('/programs/general/') ||
+    p === '/programs/trained-teachers' ||
+    p.startsWith('/programs/trained-teachers/')
 
-  const label = isEconomyPage ? getEconomyDisplayLabel(status) : getProgramLifecycleLabel(status)
-  const modifier = isEconomyPage ? getEconomyModifier(status) : `program-lifecycle-status-badge--${status.replace(/_/g, '-')}`
+  const label = isOverviewListPage
+    ? getListPhaseDisplayLabel(status)
+    : getProgramLifecycleLabel(status)
+  const modifier = isOverviewListPage
+    ? getListPhaseModifier(status)
+    : `program-lifecycle-status-badge--${status.replace(/_/g, '-')}`
   const variantClass = variant === 'table' ? ' program-lifecycle-status-badge--table' : ''
 
   return (

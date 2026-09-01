@@ -1,0 +1,59 @@
+.layout {
+  /* 홈 첫 폴드 시안 1920×1080 · 띠배너 2개(56×2) 기본 */
+  --home-fold-height: 1080px;
+  --home-strip-height: calc(2 * 56px);
+
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-width: 0;
+}
+
+.main {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: stretch;
+  margin-inline: auto;
+}
+
+.mainMypage {
+  composes: main;
+  align-items: stretch;
+  overflow: visible;
+}
+
+/* 홈 — 모바일은 헤더 아래 배치, PC만 투명 헤더가 히어로 위에 겹침 */
+.mainHome {
+  composes: main;
+}
+
+@media (--bp-pc-up) {
+  .mainHome {
+    margin-top: calc(-1 * var(--app-header-height));
+  }
+}
+
+/* 후원 — ContentShell 없음, PC만 투명 헤더가 히어로 위에 겹침 */
+.mainSupport {
+  composes: main;
+}
+
+@media (--bp-pc-up) {
+  .mainSupport {
+    margin-top: calc(-1 * var(--app-header-height));
+  }
+}
+
+/* 기관소개 — ContentShell 없음, PC만 투명 헤더가 히어로 위에 겹침 */
+.mainIntroduction {
+  composes: main;
+}
+
+@media (--bp-pc-up) {
+  .mainIntroduction {
+    margin-top: calc(-1 * var(--app-header-height));
+  }
+}

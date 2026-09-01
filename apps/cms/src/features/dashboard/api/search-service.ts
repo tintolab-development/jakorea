@@ -6,7 +6,7 @@
 
 import type { UUID } from '@/types'
 import { mockPrograms, mockSchedules, mockMatchings, mockUsers, mockSchools, mockInstructors } from '@/data/mock'
-import { getProgramAdminDetailUrlDefault } from '@/features/program/lib/program-admin-detail-url'
+import { getProgramAdminDetailUrlDefault } from '@/features/program/general/lib/program-admin-detail-url'
 
 export type SearchResultType = 'program' | 'schedule' | 'user' | 'school' | 'instructor' | 'application'
 

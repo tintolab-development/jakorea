@@ -10,8 +10,13 @@ import dayjs from 'dayjs'
 import type { CalendarMode } from 'antd/es/calendar/generateCalendar'
 import type { Settlement } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
-import { settlementStatusStatusConfig, getSettlementStatusLabel, getSettlementStatusColor } from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/ui/status-badge'
+import {
+  settlementStatusStatusConfig,
+  getSettlementStatusLabel,
+  getSettlementStatusColor,
+  getStatusConfigAccentColor,
+} from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/components/status-badge'
 import { domainColorsHex } from '@/shared/constants/colors'
 import './settlement-calendar.css'
 
@@ -32,7 +37,10 @@ export function SettlementCalendar({
   const currentDate = useMemo(() => {
     if (selectedPeriod) {
       const [year, month] = selectedPeriod.split('-').map(Number)
-      return dayjs().year(year).month(month - 1).date(1)
+      return dayjs()
+        .year(year)
+        .month(month - 1)
+        .date(1)
     }
     return dayjs().date(1)
   }, [selectedPeriod])
@@ -81,11 +89,21 @@ export function SettlementCalendar({
                 </div>
                 <div className="settlement-popover-item">
                   <span className="settlement-popover-label">프로그램:</span>
-                  <span>{program ? program.title : `프로그램 정보 오류 (ID: ${settlement.programId.slice(-8)})`}</span>
+                  <span>
+                    {program
+                      ? program.title
+                      : `프로그램 정보 오류 (ID: ${settlement.programId.slice(-8)})`}
+                  </span>
                 </div>
                 <div className="settlement-popover-item">
                   <span className="settlement-popover-label">상태:</span>
-                  <StatusBadge status={settlement.status} statusConfig={settlementStatusStatusConfig} />
+                  <StatusBadge
+                    domain="custom"
+                    label={settlementStatusStatusConfig[settlement.status].label}
+                    accentColor={getStatusConfigAccentColor(
+                      settlementStatusStatusConfig[settlement.status].color
+                    )}
+                  />
                 </div>
                 <div className="settlement-popover-item">
                   <span className="settlement-popover-label">금액:</span>
@@ -203,4 +221,3 @@ export function SettlementCalendar({
     </div>
   )
 }
-

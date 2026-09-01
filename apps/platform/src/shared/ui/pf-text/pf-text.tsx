@@ -1,0 +1,133 @@
+import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react'
+import styles from './pf-text.module.css'
+
+export type PFTypography =
+  | 'page-title'
+  | 'page-title-md'
+  | 'page-title-sm'
+  | 'hd-lg'
+  | 'hd-md'
+  | 'hd-sm'
+  | 'hl-lg'
+  | 'hl-lg-md'
+  | 'hl-sm'
+  | 'bd-lg-rg'
+  | 'bd-lg-sb'
+  | 'bd-md-rg'
+  | 'bd-md-md'
+  | 'bd-md-sb'
+  | 'bd-md-bd'
+  | 'bd-sm-rg'
+  | 'bd-sm-md'
+  | 'bd-sm-sb'
+  | 'label-md'
+  | 'caption-rg'
+  | 'caption-sb'
+  /** 양식 단락 타이틀 (Headline/Small 스펙, 양식 시맨틱) */
+  | 'form-section-title'
+  /** 양식 격자 제목 셀 (16/700/140%) */
+  | 'form-field-label'
+
+export type PFTextColor =
+  | 'inherit'
+  | 'black'
+  | 'white'
+  | 'neutral-cool-500'
+  | 'neutral-cool-600'
+  | 'neutral-cool-700'
+  | 'neutral-warm-500'
+  | 'neutral-warm-600'
+  | 'primary-400'
+  | 'primary-500'
+  | 'primary-600'
+  | 'primary-700'
+  | 'primary-800'
+  | 'palette-ice'
+  | 'error'
+  | 'success'
+  /** Figma Primary_GR_01 · CSS --color-gradient-primary-01 · .text-gradient-primary-01 */
+  | 'gradient-primary-01'
+  /** Figma Primary_GR_02 · CSS --color-gradient-primary-02 · .text-gradient-primary-02 */
+  | 'gradient-primary-02'
+  /** Figma Primary_GR_03 · CSS --color-gradient-primary-03 · .text-gradient-primary-03 */
+  | 'gradient-primary-03'
+
+type PFTextOwnProps<T extends ElementType> = {
+  as?: T
+  typo?: PFTypography
+  color?: PFTextColor
+  className?: string
+  children: ReactNode
+}
+
+type PFTextProps<T extends ElementType> = PFTextOwnProps<T> &
+  Omit<ComponentPropsWithoutRef<T>, keyof PFTextOwnProps<T>>
+
+const typographyClassMap: Record<PFTypography, string> = {
+  'page-title': 'typo-page-title',
+  'page-title-md': 'typo-page-title-md',
+  'page-title-sm': 'typo-page-title-sm',
+  'hd-lg': 'typo-hd-lg',
+  'hd-md': 'typo-hd-md',
+  'hd-sm': 'typo-hd-sm',
+  'hl-lg': 'typo-hl-lg',
+  'hl-lg-md': 'typo-hl-lg-md',
+  'hl-sm': 'typo-hl-sm',
+  'bd-lg-rg': 'typo-bd-lg-rg',
+  'bd-lg-sb': 'typo-bd-lg-sb',
+  'bd-md-rg': 'typo-bd-md-rg',
+  'bd-md-md': 'typo-bd-md-md',
+  'bd-md-sb': 'typo-bd-md-sb',
+  'bd-md-bd': 'typo-bd-md-bd',
+  'bd-sm-rg': 'typo-bd-sm-rg',
+  'bd-sm-md': 'typo-bd-sm-md',
+  'bd-sm-sb': 'typo-bd-sm-sb',
+  'label-md': 'typo-label-md',
+  'caption-rg': 'typo-caption-rg',
+  'caption-sb': 'typo-caption-sb',
+  'form-section-title': 'typo-form-section-title',
+  'form-field-label': 'typo-form-field-label',
+}
+
+const colorClassMap: Record<PFTextColor, string> = {
+  inherit: styles.colorInherit,
+  black: styles.colorBlack,
+  white: styles.colorWhite,
+  'neutral-cool-500': styles.colorNeutralCool500,
+  'neutral-cool-600': styles.colorNeutralCool600,
+  'neutral-cool-700': styles.colorNeutralCool700,
+  'neutral-warm-500': styles.colorNeutralWarm500,
+  'neutral-warm-600': styles.colorNeutralWarm600,
+  'primary-400': styles.colorPrimary400,
+  'primary-500': styles.colorPrimary500,
+  'primary-600': styles.colorPrimary600,
+  'primary-700': styles.colorPrimary700,
+  'primary-800': styles.colorPrimary800,
+  'palette-ice': styles.colorPaletteIce,
+  error: styles.colorError,
+  success: styles.colorSuccess,
+  /* 전역 유틸: shared/styles/text-gradient.css */
+  'gradient-primary-01': 'text-gradient-primary-01',
+  'gradient-primary-02': 'text-gradient-primary-02',
+  'gradient-primary-03': 'text-gradient-primary-03',
+}
+
+export function PFText<T extends ElementType = 'span'>({
+  as,
+  typo = 'bd-md-rg',
+  color = 'inherit',
+  className,
+  children,
+  ...props
+}: PFTextProps<T>) {
+  const Component = as ?? 'span'
+  const textClassName = [styles.root, typographyClassMap[typo], colorClassMap[color], className]
+    .filter(Boolean)
+    .join(' ')
+
+  return (
+    <Component className={textClassName} {...props}>
+      {children}
+    </Component>
+  )
+}

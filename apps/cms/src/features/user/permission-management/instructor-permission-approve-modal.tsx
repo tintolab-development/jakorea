@@ -83,7 +83,7 @@ export function InstructorPermissionApproveModal(
       open={open}
       onCancel={onCancel}
       title={title}
-      width={520}
+      width={600}
       className="instructor-permission-approve-modal"
       zIndex={zIndex}
       footer={

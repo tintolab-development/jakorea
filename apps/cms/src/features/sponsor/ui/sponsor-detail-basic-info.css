@@ -9,15 +9,33 @@
   height: 57px !important;
   min-height: 57px !important;
   box-sizing: border-box !important;
+  display: flex !important;
   align-items: center !important;
-}
-
-/* 후원 상태(StatusDropdownCell) 트리거의 고정 패딩/높이가 행 높이를 밀지 않도록 동일 높이로 맞춤 */
-.sponsor-detail-basic-info__status-row
-  .detail-info-form__field-content
-  .status-dropdown-cell__status-trigger {
-  min-height: 57px !important;
-  height: 57px !important;
+  /* tag100 셸(48px)이 12px 패딩 안에서 잘려 위로 붙지 않도록 행 전체에서 중앙 */
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+}
+
+/*
+ * 수정 슬롯 `.detail-info-form__field-content--edit > *` 가 display:flex·margin-block:auto 로
+ * 인라인 셸을 블록화해 배지가 셀 상단에 붙음 → 셸을 행 교차축 중앙에 고정
+ */
+.sponsor-detail-basic-info__status-row
+  .detail-info-form__field-content--edit
+  > .status-dropdown-cell__inline-tag100 {
+  display: inline-flex !important;
+  align-items: center !important;
+  align-self: center;
+  margin-block: 0 !important;
+  height: 48px;
+  min-height: 48px;
+  max-height: 48px;
+}
+
+.sponsor-detail-basic-info__status-row
+  .detail-info-form__field-content
+  .status-dropdown-cell__status-trigger--tag-100 {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
 }

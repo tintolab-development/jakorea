@@ -4,12 +4,16 @@
  */
 /* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
-import { Form, Input, Select, Button, Space } from 'antd'
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import { Form, Input, Select, Space } from 'antd'
+import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useMemo } from 'react'
 import { schoolSchema, type SchoolFormData } from '@/entities/school/model/schema'
 import type { School } from '@/types/domain'
+import { fieldValidationHelp } from '@/shared/utils/error-handler'
 
 const { Option } = Select
 
@@ -49,7 +53,7 @@ export function SchoolForm({ school, onSubmit, onCancel, loading }: SchoolFormPr
         region: school.region,
         address: school.address || '',
         contactPerson: school.contactPerson,
-        contactPhone: school.contactPhone || '',
+        contactPhone: formatKoreanPhoneNumber(school.contactPhone || ''),
         contactEmail: school.contactEmail || '',
       }
     }
@@ -74,7 +78,7 @@ export function SchoolForm({ school, onSubmit, onCancel, loading }: SchoolFormPr
         region: school.region,
         address: school.address || '',
         contactPerson: school.contactPerson,
-        contactPhone: school.contactPhone || '',
+        contactPhone: formatKoreanPhoneNumber(school.contactPhone || ''),
         contactEmail: school.contactEmail || '',
       })
     } else {
@@ -99,7 +103,7 @@ export function SchoolForm({ school, onSubmit, onCancel, loading }: SchoolFormPr
       <Form.Item
         label="학교명"
         validateStatus={errors.name ? 'error' : ''}
-        help={errors.name?.message}
+        help={fieldValidationHelp(errors.name)}
       >
         <Controller name="name" control={control} render={({ field }) => <Input {...field} />} />
       </Form.Item>
@@ -107,7 +111,7 @@ export function SchoolForm({ school, onSubmit, onCancel, loading }: SchoolFormPr
       <Form.Item
         label="지역"
         validateStatus={errors.region ? 'error' : ''}
-        help={errors.region?.message}
+        help={fieldValidationHelp(errors.region)}
         required
       >
         <Controller
@@ -132,7 +136,7 @@ export function SchoolForm({ school, onSubmit, onCancel, loading }: SchoolFormPr
       <Form.Item
         label="담당자"
         validateStatus={errors.contactPerson ? 'error' : ''}
-        help={errors.contactPerson?.message}
+        help={fieldValidationHelp(errors.contactPerson)}
       >
         <Controller
           name="contactPerson"
@@ -141,18 +145,22 @@ export function SchoolForm({ school, onSubmit, onCancel, loading }: SchoolFormPr
         />
       </Form.Item>
 
-      <Form.Item label="연락처">
+      <Form.Item
+        label="연락처"
+        validateStatus={errors.contactPhone ? 'error' : ''}
+        help={fieldValidationHelp(errors.contactPhone)}
+      >
         <Controller
           name="contactPhone"
           control={control}
-          render={({ field }) => <Input {...field} />}
+          render={({ field }) => <CmsPhoneInput {...field} />}
         />
       </Form.Item>
 
       <Form.Item
         label="이메일"
         validateStatus={errors.contactEmail ? 'error' : ''}
-        help={errors.contactEmail?.message}
+        help={fieldValidationHelp(errors.contactEmail)}
       >
         <Controller
           name="contactEmail"
@@ -163,10 +171,12 @@ export function SchoolForm({ school, onSubmit, onCancel, loading }: SchoolFormPr
 
       <Form.Item>
         <Space>
-          <Button type="primary" htmlType="submit" loading={loading}>
+          <CmsButton type="submit" loading={loading}>
             {school ? '수정' : '등록'}
-          </Button>
-          <Button onClick={onCancel}>취소</Button>
+          </CmsButton>
+          <CmsButton variant="secondary" onClick={onCancel}>
+            취소
+          </CmsButton>
         </Space>
       </Form.Item>
     </Form>

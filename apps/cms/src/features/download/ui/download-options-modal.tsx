@@ -1,11 +1,11 @@
 /**
- * 다운로드 옵션 모달 컴포넌트
- * Phase 0.5.3: 다운로드 보호 UX
- * 시니어 개발자 관점: 컴포넌트 분리
+ * 다운로드 옵션 모달 — ContentModal 셸
  */
 
+import { CmsButton, CmsRadio } from '@/shared/ui'
+import { ContentModal } from '@/shared/ui/content-modal'
 import { useState, useEffect } from 'react'
-import { Modal, Form, Radio, Input, Button, Space, Alert, Typography, message } from 'antd'
+import { Form, Input, Alert, Typography } from 'antd'
 import { useDownloadOptions } from '../hooks/use-download-options'
 import { useDownloadQuota } from '../hooks/use-download-quota'
 import type { DownloadOptions, DownloadTargetType } from '@/types/download'
@@ -22,7 +22,6 @@ interface DownloadOptionsModalProps {
   rowCount: number
   onCancel: () => void
   onDownload: (options: DownloadOptions) => Promise<void>
-  /** OWNER/MASTER 등 기존 권한 보유 시 원본 다운로드 허용 */
   canDownloadOriginalOverride?: boolean
 }
 
@@ -51,13 +50,11 @@ export function DownloadOptionsModal({
 
   useEffect(() => {
     if (open) {
-      // 모달이 열릴 때만 초기값 설정
       form.setFieldsValue({
-        maskingEnabled: true, // 기본값으로 초기화
+        maskingEnabled: true,
         reason: '',
       })
     } else {
-      // 모달이 닫힐 때만 리셋
       resetOptions()
       form.resetFields()
     }
@@ -68,10 +65,8 @@ export function DownloadOptionsModal({
     try {
       const values = await form.validateFields()
 
-      // 다운로드 가능 여부 체크 (행수/쿼터/레이트리밋)
       const checkResult = canDownload(rowCount)
       if (!checkResult.allowed) {
-        message.warning(checkResult.reason ?? '다운로드할 수 없습니다.')
         return
       }
 
@@ -82,15 +77,13 @@ export function DownloadOptionsModal({
       }
 
       await onDownload(downloadOptions)
-      
-      // 다운로드 기록
+
       recordDownload(rowCount)
 
       form.resetFields()
       resetOptions()
       onCancel()
     } catch (error) {
-      // Form validation error는 무시
       if (error && typeof error === 'object' && 'errorFields' in error) {
         return
       }
@@ -109,74 +102,90 @@ export function DownloadOptionsModal({
   const downloadCheck = canDownload(rowCount)
 
   return (
-    <Modal
+    <ContentModal
       open={open}
       title="다운로드 옵션"
       onCancel={handleCancel}
-      footer={null}
       width={600}
-      destroyOnHidden
+      footer={
+        <>
+          <CmsButton
+            variant="secondary"
+            size="medium"
+            type="button"
+            onClick={handleCancel}
+            disabled={downloading}
+          >
+            취소
+          </CmsButton>
+          <CmsButton
+            variant="primary"
+            size="medium"
+            type="button"
+            loading={downloading}
+            disabled={!downloadCheck.allowed}
+            onClick={() => form.submit()}
+          >
+            다운로드
+          </CmsButton>
+        </>
+      }
     >
-      {programName && (
+      {programName ? (
         <div style={{ marginBottom: 16 }}>
           <Text strong>프로그램: </Text>
           <Text>{programName}</Text>
         </div>
-      )}
+      ) : null}
 
       <div style={{ marginBottom: 16 }}>
         <Text strong>다운로드 행수: </Text>
         <Text>{rowCount.toLocaleString()}행</Text>
       </div>
 
-      {!downloadCheck.allowed && (
+      {!downloadCheck.allowed ? (
         <Alert
           type="error"
-          message={downloadCheck.reason}
+          description={downloadCheck.reason}
           style={{ marginBottom: 16 }}
           showIcon
         />
-      )}
+      ) : null}
 
-      {downloadCheck.quota && (
+      {downloadCheck.quota ? (
         <Alert
           type="info"
-          message={
+          description={
             <div>
-              <div>일일 다운로드: {downloadCheck.quota.todayDownloads.toLocaleString()} / {downloadCheck.quota.dailyQuota.toLocaleString()}</div>
+              <div>
+                일일 다운로드: {downloadCheck.quota.todayDownloads.toLocaleString()} /{' '}
+                {downloadCheck.quota.dailyQuota.toLocaleString()}
+              </div>
               <div>남은 쿼터: {downloadCheck.quota.remainingQuota.toLocaleString()}행</div>
             </div>
           }
           style={{ marginBottom: 16 }}
           showIcon
         />
-      )}
+      ) : null}
 
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-      >
-        <Form.Item
-          label="데이터 형식"
-          name="maskingEnabled"
-          rules={[{ required: true, message: '데이터 형식을 선택해주세요.' }]}
-        >
-          <Radio.Group>
-            <Radio value={true}>마스킹 적용 (기본)</Radio>
-            <Radio value={false} disabled={!allowOriginal}>
+      <Form form={form} layout="vertical" onFinish={handleSubmit}>
+        <Form.Item label="데이터 형식" name="maskingEnabled">
+          <CmsRadio.Group>
+            <CmsRadio value={true}>마스킹 적용 (기본)</CmsRadio>
+            <CmsRadio value={false} disabled={!allowOriginal}>
               원본 데이터
               {!allowOriginal && ' (권한 필요)'}
-            </Radio>
-          </Radio.Group>
+            </CmsRadio>
+          </CmsRadio.Group>
         </Form.Item>
 
-        {!maskingEnabled && (
+        {!maskingEnabled ? (
           <Form.Item
             label="다운로드 사유"
             name="reason"
-            rules={[{ required: true, message: '원본 데이터 다운로드 사유를 입력해주세요.' }]}
             tooltip="원본 데이터 다운로드는 권한 승인이 필요합니다"
+            style={{ marginBottom: 0 }}
           >
             <TextArea
               rows={4}
@@ -185,24 +194,8 @@ export function DownloadOptionsModal({
               showCount
             />
           </Form.Item>
-        )}
-
-        <Form.Item>
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button onClick={handleCancel} disabled={downloading}>
-              취소
-            </Button>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={downloading}
-              disabled={!downloadCheck.allowed}
-            >
-              다운로드
-            </Button>
-          </Space>
-        </Form.Item>
+        ) : null}
       </Form>
-    </Modal>
+    </ContentModal>
   )
 }

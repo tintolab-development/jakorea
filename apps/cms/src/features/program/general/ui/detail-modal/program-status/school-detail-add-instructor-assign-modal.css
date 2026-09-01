@@ -1,0 +1,178 @@
+/**
+ * 학교 상세정보 – 강사 배정 안내 모달
+ * 스펙(스크린샷): width 800 · 패딩 26/30/34 · 섹션 간격 30px
+ * 교육 배정일: 외곽 보더 박스 안 1열 칩 리스트(선택/미선택/비활성)
+ */
+
+.school-detail-add-instructor-assign-modal.ant-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 800px;
+  max-width: 800px;
+}
+
+.school-detail-add-instructor-assign-modal.ant-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.school-detail-add-instructor-assign-modal .teal-header-modal__header {
+  flex-shrink: 0;
+}
+
+.school-detail-add-instructor-assign-modal .teal-header-modal__body {
+  flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: var(--color-bg-base);
+  /* description ↔ form 30px (스크린샷) */
+  gap: 30px;
+  /* overflow-y:auto 단독 시 overflow-x도 auto → 가로 스크롤 방지 */
+  overflow-x: hidden;
+}
+
+.school-detail-add-instructor-assign-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  justify-content: flex-end;
+  margin-top: 30px;
+  padding-top: 0;
+  gap: var(--spacing-12);
+}
+
+.school-detail-add-instructor-assign-modal__body {
+  width: 100%;
+  max-width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* assign-guide-modal 등 body 내 커스텀 description 호환 */
+.school-detail-add-instructor-assign-modal__description {
+  margin: 0 0 30px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.school-detail-add-instructor-assign-modal__form {
+  width: 100%;
+  max-width: 100%;
+}
+
+.school-detail-add-instructor-assign-modal__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.school-detail-add-instructor-assign-modal__form.ant-form-vertical
+  .ant-form-item.school-detail-add-instructor-assign-modal__field {
+  margin-bottom: 0 !important;
+}
+
+.school-detail-add-instructor-assign-modal__field {
+  margin-bottom: 0 !important;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.school-detail-add-instructor-assign-modal__field-label {
+  margin-bottom: 8px;
+  color: var(--color-text-label);
+  font-family: Pretendard, sans-serif;
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-500);
+  line-height: 150%;
+}
+
+.school-detail-add-instructor-assign-modal__field .ant-form-item-label {
+  padding-bottom: 0;
+  margin-bottom: 8px;
+}
+
+.school-detail-add-instructor-assign-modal__field .ant-form-item-label > label {
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-500);
+  color: var(--color-text-label);
+  height: auto;
+}
+
+.school-detail-add-instructor-assign-modal__role-radios {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  min-height: 40px;
+}
+
+.school-detail-add-instructor-assign-modal__role-radios .ant-radio-wrapper {
+  margin-inline-end: 0;
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-500);
+  color: var(--color-text-heading);
+}
+
+.school-detail-add-instructor-assign-modal__role-radios .ant-radio-checked .ant-radio-inner {
+  border-color: var(--color-modal-header);
+  background-color: #fff;
+}
+
+.school-detail-add-instructor-assign-modal__role-radios .ant-radio-checked .ant-radio-inner::after {
+  background-color: var(--color-modal-header);
+}
+
+.school-detail-add-instructor-assign-modal__select {
+  width: 100%;
+}
+
+.school-detail-add-instructor-assign-modal__select.cms-select,
+.school-detail-add-instructor-assign-modal__field .cms-select {
+  width: 100%;
+  min-width: 0;
+}
+
+/* 교육 배정일 선택 — 1열 리스트 (스크린샷) */
+.school-detail-add-instructor-assign-modal__session-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 16px;
+  border-radius: var(--radius-8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: #fff;
+  align-self: stretch;
+  overflow: hidden;
+}
+
+.school-detail-add-instructor-assign-modal__session-empty {
+  margin: 0;
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-500);
+  color: var(--color-text-secondary, #8c8c8c);
+  line-height: 150%;
+}

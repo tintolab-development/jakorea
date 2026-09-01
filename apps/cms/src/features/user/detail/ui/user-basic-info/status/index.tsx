@@ -103,7 +103,7 @@ function permissionApprovalHistoryTimestamp(user: Omit<User, 'password'>) {
 function permissionApprovalHistoryTimestampLabel(user: Omit<User, 'password'>) {
   const target = permissionApprovalHistoryTimestamp(user)
   if (!target) return '-'
-  return dayjs(target).format('YYYY.MM.DD HH:mm:ss')
+  return dayjs(target).format('YYYY.MM.DD HH:mm')
 }
 
 export function PermissionApprovalStatusWithResend({
@@ -145,7 +145,7 @@ export function PermissionApprovalStatusWithResend({
     <span className="user-basic-info-section__permission-approval-meta">
       <span className="user-basic-info-section__permission-approval-dropdown-wrap">
         {tone}
-        <DetailInfoForm.TdDivider />
+        <DetailInfoForm.InputsSeparator />
         {resend}
       </span>
       <span className="user-basic-info-section__permission-approval-timestamp">

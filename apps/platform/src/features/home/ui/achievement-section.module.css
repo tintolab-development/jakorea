@@ -1,0 +1,346 @@
+.section {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  /* 시안 1920: top 150 · side 502 (= content 916 중앙 정렬) */
+  padding-top: var(--spacing-80);
+  padding-bottom: var(--spacing-48);
+  padding-inline: var(--spacing-20);
+  flex-direction: column;
+  /* 홈 achievements 밴드 배경이 비치도록 투명 */
+  background: transparent;
+  overflow-x: clip;
+  overflow-y: hidden;
+}
+
+@media (--bp-pc-up) {
+  .section {
+    /* 배경 상단 기하·아크 구역 */
+    min-height: 0;
+    height: 100%;
+    padding-top: var(--spacing-150);
+    padding-bottom: 0;
+    padding-inline: var(--spacing-40);
+    justify-content: flex-start;
+  }
+}
+
+/* 고해상도: 기존 스펙 유지, 상단만 조금 더 여유 */
+@media (--bp-pc-full-up) {
+  .section {
+    padding-top: 210px;
+  }
+}
+
+.inner {
+  display: flex;
+  width: 100%;
+  max-width: 916px;
+  margin-inline: auto;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-48);
+  text-align: center;
+}
+
+@media (--bp-pc-up) {
+  .inner {
+    gap: var(--spacing-64);
+  }
+
+  /* 타이틀 ↔ 통계 행 시안 82 (inner gap 64 상쇄) */
+  .header {
+    margin-bottom: calc(82px - var(--spacing-64));
+  }
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--color-primary-600);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 144%;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media (--bp-pc-up) {
+  .eyebrow {
+    font-size: 26px;
+    letter-spacing: -0.52px;
+    text-transform: none;
+  }
+}
+
+.title {
+  margin: 0;
+  color: var(--color-neutral-white);
+  font-family: var(--font-family-base);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 144%;
+  letter-spacing: -0.48px;
+}
+
+@media (--bp-pc-up) {
+  .title {
+    font-size: 46px;
+    letter-spacing: -0.92px;
+  }
+}
+
+.statGrid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-32);
+  width: 100%;
+  margin: 0;
+}
+
+@media (--bp-pc-up) {
+  .statGrid {
+    flex-direction: row;
+    width: auto;
+    /* 통계 ↔ 디바이더 사이갭 */
+    gap: 72.5px;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.statDivider {
+  display: none;
+  width: 1px;
+  height: 120px;
+  flex-shrink: 0;
+  opacity: 0.14;
+  background: var(--color-border-success-light);
+}
+
+@media (--bp-pc-up) {
+  .statDivider {
+    display: block;
+  }
+}
+
+.stat {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+@media (--bp-pc-up) {
+  .stat {
+    width: 228px;
+    flex-shrink: 0;
+  }
+}
+
+.statLabel {
+  margin: 0;
+  color: var(--color-primary-100);
+  text-align: center;
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.14px;
+}
+
+@media (--bp-pc-up) {
+  .statLabel {
+    font-size: 20px;
+    letter-spacing: -0.2px;
+  }
+}
+
+.statValue {
+  display: flex;
+  margin: 0;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--spacing-4);
+  color: var(--color-neutral-white);
+  text-align: center;
+}
+
+.statNumber {
+  font-family: var(--font-family-base);
+  font-size: 36px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+  letter-spacing: -0.36px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (--bp-pc-up) {
+  .statNumber {
+    font-size: 56px;
+    letter-spacing: -0.56px;
+  }
+}
+
+.statUnit {
+  font-family: var(--font-family-base);
+  font-size: 22px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 140%;
+  letter-spacing: -0.44px;
+}
+
+@media (--bp-pc-up) {
+  .statUnit {
+    font-size: 37px;
+    letter-spacing: -0.74px;
+  }
+}
+
+.highlight {
+  position: relative;
+  display: inline-flex;
+  box-sizing: border-box;
+  padding: var(--spacing-40) var(--spacing-20) 0;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0;
+  transform: none;
+}
+
+/* 모바일 시안: 통계 ↔ 하이라이트 곡선 디바이더 */
+.highlight::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: min(220px, 70vw);
+  height: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 20%,
+    rgba(255, 255, 255, 0.35) 80%,
+    transparent 100%
+  );
+  opacity: 0.8;
+}
+
+@media (--bp-pc-up) {
+  .highlight {
+    padding: 51px 60px 0;
+    /* 레이아웃(통계·클로징·파트너 갭)에 영향 없이 시각적으로만 50px 하향 */
+    transform: translateY(50px);
+  }
+
+  .highlight::before {
+    display: none;
+  }
+}
+
+.highlightLabel {
+  margin: 0;
+  color: var(--color-primary-100);
+  text-align: center;
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.14px;
+}
+
+@media (--bp-pc-up) {
+  .highlightLabel {
+    font-size: 24px;
+    letter-spacing: -0.24px;
+  }
+}
+
+.highlightValue {
+  display: flex;
+  margin: 0;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--spacing-6);
+  color: var(--color-neutral-white);
+  text-align: center;
+}
+
+.highlightNumber {
+  font-family: var(--font-family-base);
+  font-size: 40px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+  letter-spacing: -0.4px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (--bp-pc-up) {
+  .highlightNumber {
+    font-size: 62px;
+    letter-spacing: -0.62px;
+  }
+}
+
+.highlightUnit {
+  font-family: var(--font-family-base);
+  font-size: 28px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 140%;
+  letter-spacing: -0.28px;
+}
+
+@media (--bp-pc-up) {
+  .highlightUnit {
+    font-size: 48px;
+    letter-spacing: -0.48px;
+  }
+}
+
+.closing {
+  margin: 0;
+  margin-top: var(--spacing-8);
+  color: var(--color-primary-100);
+  text-align: center;
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 300;
+  line-height: 155%;
+}
+
+@media (--bp-pc-up) {
+  .closing {
+    /* 하이라이트 ↔ 디스크립션 58px (inner gap 상쇄) */
+    margin-top: calc(58px - var(--spacing-64));
+    font-size: 22px;
+  }
+}
+
+.closing strong {
+  color: var(--color-primary-200);
+  font-family: var(--font-family-base);
+  font-size: inherit;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 155%;
+}

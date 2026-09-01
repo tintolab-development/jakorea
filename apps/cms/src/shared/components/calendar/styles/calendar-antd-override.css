@@ -7,6 +7,9 @@
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .calendar-main .ant-picker-calendar .ant-picker-panel {
@@ -21,18 +24,66 @@
 
 .calendar-main .ant-picker-cell {
   padding: 0;
+  vertical-align: top;
+}
+
+.calendar-main .ant-picker-cell .ant-picker-cell-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--calendar-cell-min-height, 124px);
+  height: var(--calendar-cell-min-height, 124px);
+  max-height: var(--calendar-cell-min-height, 124px);
+  box-sizing: border-box;
 }
 
 .calendar-main .ant-picker-calendar-date-value {
   display: none;
 }
 
-.calendar-main .ant-picker-content table {
-  table-layout: fixed;
+/* fullCellRender 사용 시 기본 date-content는 비어 있거나 보조용이므로 숨김 */
+.calendar-main .ant-picker-calendar-date-content {
+  display: none;
 }
 
-/* 월간 뷰: 요일 행 (SUN, MON, …) — thead에는 padding이 먹지 않으므로 th에 적용 */
-.calendar-main .ant-picker-calendar-mini .ant-picker-content thead th {
+.calendar-main .ant-picker-content table {
+  table-layout: fixed;
+  width: 100%;
+  min-width: calc(var(--calendar-cell-min-width, 116px) * 7);
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.calendar-main .ant-picker-content thead th,
+.calendar-main .ant-picker-content tbody td {
+  min-width: var(--calendar-cell-min-width, 116px);
+  width: calc(100% / 7);
+}
+
+.calendar-main .ant-picker-content tbody tr {
+  height: var(--calendar-cell-min-height, 124px);
+}
+
+.calendar-main .ant-picker-calendar-mini .ant-picker-content {
+  height: auto !important;
+  min-height: 0;
+}
+
+.calendar-main .ant-picker-body,
+.calendar-main .ant-picker-panel {
+  overflow: visible;
+  max-height: none;
+}
+
+/* 월간 뷰: 요일 행 (SUN, MON, …) — CalendarMain 공통 (3열·split-card 동일) */
+.calendar-main
+  .ant-picker-calendar-mini
+  .ant-picker-content
+  thead
+  th {
   padding: 12px 0 8px 0;
   color: var(--gray-85969-d, #85969d);
   text-align: center;

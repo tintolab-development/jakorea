@@ -1,0 +1,149 @@
+{
+  "templateCode": "issuance-3",
+  "templateName": "강의보고서",
+  "formType": "ISSUANCE",
+  "category": "ISSUANCE",
+  "schemaJson": {
+    "schemaVersion": 1,
+    "formSettings": {
+      "titleNumbering": "numeric"
+    },
+    "paragraphs": [
+      {
+        "id": "lecture-report-title",
+        "kind": "description",
+        "variant": "survey_title_with_period",
+        "requiredMark": true,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "surveyTitle": "JA KOREA 「강의명」 강의보고서",
+        "surveyDescription": "",
+        "periodMode": "immediate",
+        "startAt": null,
+        "endAt": null,
+        "showWritingPeriodOnForm": true
+      },
+      {
+        "id": "lecture-report-program-progress",
+        "kind": "single_item",
+        "variant": "lecture_report_program_progress",
+        "requiredMark": true,
+        "paragraphTitle": "프로그램 진행 정보",
+        "paragraphDescription": "설명 입력",
+        "participatesInTitleNumbering": true,
+        "answerRequired": true,
+        "programName": "",
+        "finalInstructorCount": "",
+        "institutionName": "",
+        "institutionLocation": "",
+        "educationDate": "",
+        "sessionTime": "",
+        "sessionIndex": "",
+        "educationTarget": "",
+        "classLabel": "",
+        "studentCount": ""
+      },
+      {
+        "id": "lecture-report-education-content",
+        "kind": "single_item",
+        "variant": "session_plan_short_essay",
+        "answerRequired": true,
+        "requiredMark": true,
+        "paragraphTitle": "교육 내용",
+        "paragraphDescription": "설명 입력",
+        "participatesInTitleNumbering": true,
+        "showItemTitle": true,
+        "items": [
+          {
+            "id": "lecture-report-education-content-item-1",
+            "label": "Q1. 주요 학습 내용 및 핵심 개념은 무엇이었나요?",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          },
+          {
+            "id": "lecture-report-education-content-item-2",
+            "label": "Q2. 강의 진행 내용 (ex: 교재/활동 내용, 교구재 활용 방식 등)",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          }
+        ],
+        "bodyPlaceholder": "자유롭게 작성해 주세요",
+        "bodyText": ""
+      },
+      {
+        "id": "lecture-report-education-operation",
+        "kind": "single_item",
+        "variant": "session_plan_short_essay",
+        "answerRequired": true,
+        "requiredMark": true,
+        "paragraphTitle": "교육 운영",
+        "paragraphDescription": "설명 입력",
+        "participatesInTitleNumbering": true,
+        "showItemTitle": true,
+        "items": [
+          {
+            "id": "lecture-report-education-operation-item-1",
+            "label": "Q1. 전반적인 학생들의 교육 참여도는 어떠했나요?",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          },
+          {
+            "id": "lecture-report-education-operation-item-2",
+            "label": "Q2. 교육 콘텐츠 난이도 적합성은 어떠했나요?",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          },
+          {
+            "id": "lecture-report-education-operation-item-3",
+            "label": "Q3. 강의 진행 중 이슈 및 특이사항이 있었나요?",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          }
+        ],
+        "bodyPlaceholder": "자유롭게 작성해 주세요",
+        "bodyText": ""
+      },
+      {
+        "id": "lecture-report-overall-evaluation",
+        "kind": "single_item",
+        "variant": "session_plan_short_essay",
+        "answerRequired": true,
+        "requiredMark": true,
+        "paragraphTitle": "강의 종합 평가 및 개선점",
+        "paragraphDescription": "ex) 강의 총평, 잘 된 점, 아쉬운 점, 개선 방향 등",
+        "participatesInTitleNumbering": true,
+        "showItemTitle": false,
+        "items": [
+          {
+            "id": "lecture-report-overall-evaluation-item-1",
+            "label": "",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          }
+        ],
+        "bodyPlaceholder": "자유롭게 작성해 주세요",
+        "bodyText": ""
+      },
+      {
+        "id": "lecture-report-education-photos",
+        "kind": "single_item",
+        "variant": "file_attachment",
+        "answerRequired": true,
+        "requiredMark": true,
+        "paragraphTitle": "교육 사진",
+        "paragraphDescription": "교육 장면 사진을 2장 이상 첨부해 주세요",
+        "participatesInTitleNumbering": true
+      }
+    ]
+  },
+  "extensionJson": {
+    "overlay": {},
+    "editorState": {},
+    "uiState": {}
+  },
+  "settingsJson": null,
+  "_apiStorageNote": "DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장",
+  "_feSubcategoryNote": "FE 목록 서브분류: REPORT (ISSUANCE_TEMPLATE_CODE_CATALOG). BE category enum은 ISSUANCE 단일 vs REPORT/DOCUMENT 분리 확인 필요.",
+  "_payload": "A"
+}

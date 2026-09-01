@@ -1,37 +1,67 @@
 /**
  * 실적 관리 목록 페이지
- * - 루트: 페이지 외곽
- * - filter-card: 공통 필터 + 구분선 + 탭 nav + 본문을 감싸는 카드(흰 배경, 패딩, shadow)
+ * - 루트: viewport 남은 높이를 채움 (layout-content 헤더 64 + padding 32×2)
+ * - filter-card: 공통 필터 + 구분선 + 탭 nav + 본문을 감싸는 카드(흰 배경 fill)
  * - tab 네비게이션: inactive `#7D7D7D`, active `#01A1AF` 하단 2px mint 보더
  */
 
 .education-record-list-page {
   width: 100%;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  /* layout-content: height calc(100dvh-64px), padding 32 top/bottom */
+  min-height: calc(100dvh - 64px - 32px - 32px);
+  height: auto;
 }
 
-.education-record-list-page__filter-card {
-  width: 100%;
+.education-record-list-page__layout.filter-table-layout {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
   min-width: 0;
-  background: var(--color-bg-base, #fff);
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 0 16px 0 var(--shadow-card-soft);
-  margin-bottom: var(--spacing-24, 24px);
+  min-height: unset;
+  height: auto;
+  overflow: visible;
+  margin-bottom: 0;
 }
 
-.education-record-list-page__filter {
-  width: 100%;
+.education-record-list-page__layout .filter-table-layout__table {
+  display: block;
+  flex: 1 0 auto;
   min-width: 0;
+  min-height: unset;
+  height: auto;
+  overflow: visible;
 }
 
-.education-record-list-page__filter .unified-filter-card {
-  margin-bottom: 0 !important;
-  padding: 0 !important;
+/*
+ * 합계 탭: 흰 배경 카드가 뷰포트에 고정되면 본문이 회색 영역으로 빠져 나간다.
+ * 카드는 콘텐츠 높이 미만으로 줄어들지 않고, 짧으면 남은 화면을 채운다.
+ */
+.education-record-list-page--summary {
+  height: auto;
 }
 
-.education-record-list-page__divider {
-  padding: 32px 0;
+.education-record-list-page__layout--summary.filter-table-layout {
+  flex: 1 0 auto;
+  min-height: unset;
+  height: auto;
+  overflow: visible;
+}
+
+.education-record-list-page__layout--summary .filter-table-layout__table {
+  display: block;
+  flex: 1 0 auto;
+  min-height: unset;
+  height: auto;
+  overflow: visible;
+}
+
+.education-record-list-page__remote-notice {
+  margin-bottom: 16px;
+  flex: 0 0 auto;
 }
 
 .education-record-list-page__top-nav {
@@ -41,7 +71,6 @@
   gap: var(--spacing-12, 12px);
   width: 100%;
   min-width: 0;
-  margin-bottom: var(--spacing-16, 16px);
 }
 
 .education-record-list-page__top-nav-actions {
@@ -74,7 +103,8 @@
   font-size: 18px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%; /* 27px */
+  line-height: 150%;
+  /* 27px */
   cursor: pointer;
   box-sizing: border-box;
   transition:

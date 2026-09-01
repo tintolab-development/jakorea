@@ -5,8 +5,7 @@ export {
   FORM_INPUTS_2_WIDTHS,
   FORM_INPUTS_3_WIDTHS,
   FORM_INPUTS_4_WIDTHS,
-  FORM_INPUTS_5_WIDTHS,
-} from './constants/form-input-widths'
+  FORM_INPUTS_5_WIDTHS } from './constants/form-input-widths'
 
 export const audienceOptions: Array<{ value: TemplateAudience; label: string }> = [
   { value: 'ADMIN_INTERNAL', label: '운영(내부)' },
@@ -30,9 +29,7 @@ export const defaultSampleValues: Record<string, string> = {
   location: '서울시 마포구 OO학교',
   link: 'https://example.com',
   startDate: '2026-01-09',
-  endDate: '2026-02-27',
-  message: '안내드립니다.',
-}
+  endDate: '2026-02-27' }
 
 export const commonVariables = [
   'name',

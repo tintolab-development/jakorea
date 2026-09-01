@@ -33,14 +33,14 @@
 }
 
 /* 취소 120×40 · 확인은 `size="tableAction"` → 160×40 (app-button.css) */
-.payment-order-batch-confirm-modal .content-modal__footer-actions .app-button--cancel {
+.payment-order-batch-confirm-modal .content-modal__footer-actions .cms-button--secondary {
   width: 120px;
   min-width: 120px;
   height: 40px;
   box-sizing: border-box;
 }
 
-.payment-order-batch-confirm-modal .content-modal__footer-actions .app-button--primary.app-button--tableAction {
+.payment-order-batch-confirm-modal .content-modal__footer-actions .cms-button--primary.cms-button--large {
   width: 160px !important;
   min-width: 160px !important;
   height: 40px !important;

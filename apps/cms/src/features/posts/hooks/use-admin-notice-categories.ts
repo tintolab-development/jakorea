@@ -1,34 +1,30 @@
-/**
- * 공지 카테고리 목록 — mock 저장소와 React 상태 동기화
- * 다른 페이지에서도 동일 훅으로 필터·폼과 목록 소스를 맞출 수 있음
- */
-
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import {
-  listNoticeCategoryRows,
-  replaceNoticeCategoryRows,
-} from '@/features/posts/api/admin-notice-category-mock-store'
+  useNoticeCategoriesQuery,
+  useNoticeCategoryMutations,
+} from '@/features/posts/hooks/use-notice-categories-query'
 import type { NoticeCategoryRow } from '@/features/posts/model/admin-notice-management.types'
+
+export type NoticeCategoryRemoteActions = {
+  onCreate: (name: string) => Promise<void>
+  onUpdate: (id: string, name: string) => Promise<void>
+  onDelete: (id: string) => Promise<void>
+}
 
 export type UseAdminNoticeCategoriesResult = {
   categoryRows: NoticeCategoryRow[]
-  /** 필터·테이블 context용 라벨 배열 */
   allowedCategoryLabels: readonly string[]
-  /** 필터 유효성 검사용 */
   allowedCategorySet: ReadonlySet<string>
-  /** 저장소 반영 + 로컬 state 갱신 */
-  replaceCategories: (next: NoticeCategoryRow[]) => void
+  remoteActions: NoticeCategoryRemoteActions
 }
 
-export function useAdminNoticeCategories(): UseAdminNoticeCategoriesResult {
-  const [categoryRows, setCategoryRows] = useState<NoticeCategoryRow[]>(() =>
-    listNoticeCategoryRows()
-  )
+const EMPTY_CATEGORY_ROWS: NoticeCategoryRow[] = []
 
-  const replaceCategories = useCallback((next: NoticeCategoryRow[]) => {
-    replaceNoticeCategoryRows(next)
-    setCategoryRows(listNoticeCategoryRows())
-  }, [])
+export function useAdminNoticeCategories(): UseAdminNoticeCategoriesResult {
+  const categoriesQuery = useNoticeCategoriesQuery()
+  const { createMutation, updateMutation, deleteMutation } = useNoticeCategoryMutations()
+
+  const categoryRows = categoriesQuery.data ?? EMPTY_CATEGORY_ROWS
 
   const allowedCategoryLabels = useMemo(
     () => categoryRows.map(r => r.name),
@@ -40,10 +36,36 @@ export function useAdminNoticeCategories(): UseAdminNoticeCategoriesResult {
     [allowedCategoryLabels]
   )
 
+  const onCreate = useCallback(
+    async (name: string) => {
+      await createMutation.mutateAsync(name)
+    },
+    [createMutation.mutateAsync]
+  )
+
+  const onUpdate = useCallback(
+    async (id: string, name: string) => {
+      await updateMutation.mutateAsync({ id, name })
+    },
+    [updateMutation.mutateAsync]
+  )
+
+  const onDelete = useCallback(
+    async (id: string) => {
+      await deleteMutation.mutateAsync(id)
+    },
+    [deleteMutation.mutateAsync]
+  )
+
+  const remoteActions = useMemo(
+    () => ({ onCreate, onUpdate, onDelete }),
+    [onCreate, onDelete, onUpdate]
+  )
+
   return {
     categoryRows,
     allowedCategoryLabels,
     allowedCategorySet,
-    replaceCategories,
+    remoteActions,
   }
 }

@@ -11,33 +11,34 @@ import {
   type Key,
   type MouseEvent,
 } from 'react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Table, message } from 'antd'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import type { Notice } from '@/data/mock/notices'
-import { listAdminNotices } from '@/features/posts/api/admin-notice-mock-store'
-import { deleteNotices } from '@/features/posts/api/admin-notice-service'
+import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { useAdminNoticeCategories } from '@/features/posts/hooks/use-admin-notice-categories'
+import { useNoticeListQuery } from '@/features/posts/hooks/use-notice-list-query'
+import { useNoticeMutations } from '@/features/posts/hooks/use-notice-mutations'
 import { buildAdminNoticeManagementFilterFields } from '@/features/posts/model/admin-notice-management-filter-fields'
 import { adminNoticeManagementTablePageConfig } from '@/features/posts/model/admin-notice-management-table.config'
-import type {
-  AdminNoticeTableContext,
-  NoticeCategoryRow,
-} from '@/features/posts/model/admin-notice-management.types'
+import type { AdminNoticeTableContext } from '@/features/posts/model/admin-notice-management.types'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { CmsButton } from '@/shared/ui'
+import {
+  ActionResultModal,
+  CmsButton,
+} from '@/shared/ui'
 import { NoticePinnedIcon } from '@/features/posts/ui/notice-pinned-icon'
 import { NoticeCategoryManagementModal } from '@/features/posts/ui/notice-category-management-modal'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import { NoticeFormModal } from '@/features/posts/ui/notice-form-modal'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 import './admin-notice-list-page.css'
 
 /** 고정 레이아웃 기준 최소 가로 스크롤 (체크박스 열 제외 본문 컬럼 합 + 여유) */
@@ -53,43 +54,30 @@ const NOTICE_LIST_COL_WIDTH = {
   views: 108,
 } as const
 
-const ADMIN_NOTICES_LIST_PATH = '/admin/posts/notices'
-
 export function AdminNoticeListPage() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const navigate = useNavigate()
-  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const [rows, setRows] = useState<Notice[]>(() => listAdminNotices())
-
-  /** mock 단일 저장소와 목록 로컬 state 동기화 — 상세에서 수정·삭제 후 복귀, 다른 탭 조작 등 */
-  const syncRowsFromStore = useCallback(() => {
-    setRows(listAdminNotices())
-  }, [])
-
-  useEffect(() => {
-    if (location.pathname === ADMIN_NOTICES_LIST_PATH) {
-      syncRowsFromStore()
-    }
-  }, [location.pathname, syncRowsFromStore])
+  const listQuery = useNoticeListQuery(searchParams, true)
+  const { bulkDeleteMutation } = useNoticeMutations()
+  const rows = listQuery.data ?? []
+  const contentLoading = listQuery.isLoading
+  const contentError = listQuery.isError
+    ? getPostsApiErrorMessage(listQuery.error, '공지사항 목록을 불러오지 못했습니다.')
+    : null
 
   const {
     categoryRows,
     allowedCategoryLabels,
     allowedCategorySet,
-    replaceCategories: replaceNoticeCategories,
+    remoteActions: noticeCategoryRemoteActions,
   } = useAdminNoticeCategories()
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
-
-  const handleNoticeCategoriesChange = useCallback(
-    (next: NoticeCategoryRow[]) => {
-      replaceNoticeCategories(next)
-      syncRowsFromStore()
-    },
-    [replaceNoticeCategories, syncRowsFromStore]
-  )
+  const [actionResultOpen, setActionResultOpen] = useState(false)
+  const [actionResultTitle, setActionResultTitle] = useState('')
+  const [actionResultMessage, setActionResultMessage] = useState('')
 
   const tablePageContext: AdminNoticeTableContext = useMemo(
     () => ({
@@ -142,15 +130,15 @@ export function AdminNoticeListPage() {
       return
     }
     try {
-      await deleteNotices(ids)
-      message.success(`선택한 ${ids.length}건의 공지사항이 삭제되었습니다.`)
-      setRows(listAdminNotices())
+      await bulkDeleteMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setBulkDeleteConfirmOpen(false)
-    } catch {
-      message.error('공지사항 삭제에 실패했습니다.')
+    } catch (error) {
+      setActionResultTitle('공지 삭제 실패')
+      setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
+      setActionResultOpen(true)
     }
-  }, [selectedRowKeys])
+  }, [bulkDeleteMutation, selectedRowKeys])
 
   const handleRegister = useCallback(() => {
     if (!canWrite) return
@@ -217,7 +205,7 @@ export function AdminNoticeListPage() {
         key: 'createdAt',
         width: NOTICE_LIST_COL_WIDTH.datetime,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm'),
       },
       {
         title: '조회수',
@@ -249,14 +237,23 @@ export function AdminNoticeListPage() {
         open={categoryModalOpen}
         onCancel={() => setCategoryModalOpen(false)}
         categories={categoryRows}
-        onCategoriesChange={handleNoticeCategoriesChange}
+        onCategoriesChange={() => {}}
         notices={rows}
+        remoteActions={noticeCategoryRemoteActions}
       />
       <NoticeFormModal
         open={registerModalOpen}
         mode="create"
         onCancel={() => setRegisterModalOpen(false)}
-        onSuccess={() => setRows(listAdminNotices())}
+        onSuccess={() => {
+          setRegisterModalOpen(false)
+        }}
+      />
+      <ActionResultModal
+        open={actionResultOpen}
+        title={actionResultTitle}
+        body={actionResultMessage}
+        onClose={() => setActionResultOpen(false)}
       />
       <FilterTableLayout
         bordered={false}
@@ -272,6 +269,7 @@ export function AdminNoticeListPage() {
         onSearch={handleSearch}
         title="공지사항 목록"
         description={`총 ${displayedCount.toLocaleString()}건`}
+        contentLoading={contentLoading}
         actions={
           <>
             <CmsButton
@@ -289,39 +287,49 @@ export function AdminNoticeListPage() {
             </CmsButton>
           </>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
-        <Table<Notice>
-          rowKey="id"
-          className="cms-data-table admin-notice-list-page__table"
-          tableLayout="fixed"
-          scroll={{ x: NOTICE_LIST_TABLE_SCROLL_X }}
-          columns={columns}
-          dataSource={tableData}
-          pagination={false}
-          onRow={record => ({
-            className: 'admin-notice-list-page__row--clickable',
-            onClick: (e: MouseEvent) => {
-              const el = e.target as HTMLElement
-              if (
-                el.closest('.ant-checkbox-wrapper') ||
-                el.closest('.ant-table-selection-column')
-              ) {
-                return
-              }
-              navigate(`/admin/posts/notices/${record.id}`)
-            },
-          })}
-          rowSelection={
-            canWrite
-              ? {
-                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                  selectedRowKeys,
-                  onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
-                  preserveSelectedRowKeys: false,
+        {contentError ? (
+          <div className="page-content-error" role="alert">
+            {contentError}
+          </div>
+        ) : (
+          <Table<Notice>
+            rowKey="id"
+            className="cms-data-table admin-notice-list-page__table"
+            tableLayout="fixed"
+            scroll={{ x: NOTICE_LIST_TABLE_SCROLL_X }}
+            columns={columns}
+            dataSource={tableData}
+            pagination={false}
+            onRow={record => ({
+              className: 'admin-notice-list-page__row--clickable',
+              onClick: (e: MouseEvent) => {
+                const el = e.target as HTMLElement
+                if (
+                  el.closest('.ant-checkbox-wrapper') ||
+                  el.closest('.ant-table-selection-column')
+                ) {
+                  return
                 }
-              : undefined
-          }
-        />
+                navigate(`/admin/posts/notices/${record.id}`)
+              },
+            })}
+            rowSelection={
+              canWrite
+                ? {
+                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                    selectedRowKeys,
+                    onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
+                    preserveSelectedRowKeys: false,
+                  }
+                : undefined
+            }
+          />
+        )}
       </FilterTableLayout>
     </div>
   )

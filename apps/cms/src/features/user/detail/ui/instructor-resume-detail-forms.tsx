@@ -5,32 +5,25 @@
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
-  INSTRUCTOR_RESUME_NO_DATA,
   InstructorResumeAwardsCardBody,
   InstructorResumeCareerCardBody,
   InstructorResumeEducationCardBody,
   InstructorResumeFreeWritingSections,
+  InstructorResumeJaKoreaCardBody,
   InstructorResumeQualificationsCardBody,
   instructorAwardsSectionDescription,
   instructorCareerSectionDescription,
   instructorEducationSectionDescription,
+  instructorJaKoreaSectionDescription,
   instructorQualificationsSectionDescription,
-} from '@/features/program/program-detail/ui/applicant-list/instructor-resume-blocks'
-import '@/features/program/program-detail/ui/applicant-list/applicant-instructor-resume.css'
+} from '@/features/user/detail/ui/instructor-resume/blocks'
+import '@/features/user/detail/ui/instructor-resume/resume.css'
+import './instructor-resume-detail-forms.css'
 
-function resumeSectionDescriptionNode(text: string) {
-  const empty = text === INSTRUCTOR_RESUME_NO_DATA
-  return (
-    <span
-      className={
-        empty
-          ? 'instructor-resume-detail-forms__description instructor-resume-detail-forms__description--empty'
-          : 'instructor-resume-detail-forms__description'
-      }
-    >
-      {text}
-    </span>
-  )
+function resumeSectionDescription(text: string) {
+  const trimmed = text.trim()
+  if (!trimmed) return undefined
+  return <span className="instructor-resume-section-count">{trimmed}</span>
 }
 
 export function InstructorResumeDetailForms({
@@ -42,7 +35,8 @@ export function InstructorResumeDetailForms({
     <>
       <DetailInfoForm
         title="학력사항"
-        message={resumeSectionDescriptionNode(instructorEducationSectionDescription(instructor))}
+        className="instructor-resume-detail-forms__form"
+        description={resumeSectionDescription(instructorEducationSectionDescription(instructor))}
       >
         <DetailInfoForm.Row type="custom">
           <InstructorResumeEducationCardBody d={instructor} />
@@ -50,17 +44,26 @@ export function InstructorResumeDetailForms({
       </DetailInfoForm>
       <DetailInfoForm
         title="경력사항"
-        className="detail-info-form--gap"
-        message={resumeSectionDescriptionNode(instructorCareerSectionDescription(instructor))}
+        className="detail-info-form--gap instructor-resume-detail-forms__form"
+        description={resumeSectionDescription(instructorCareerSectionDescription(instructor))}
       >
         <DetailInfoForm.Row type="custom">
           <InstructorResumeCareerCardBody d={instructor} />
         </DetailInfoForm.Row>
       </DetailInfoForm>
       <DetailInfoForm
+        title="JA Korea 활동 경험"
+        className="detail-info-form--gap instructor-resume-detail-forms__form"
+        description={resumeSectionDescription(instructorJaKoreaSectionDescription(instructor))}
+      >
+        <DetailInfoForm.Row type="custom">
+          <InstructorResumeJaKoreaCardBody d={instructor} />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+      <DetailInfoForm
         title="자격 및 면허"
-        className="detail-info-form--gap"
-        message={resumeSectionDescriptionNode(
+        className="detail-info-form--gap instructor-resume-detail-forms__form"
+        description={resumeSectionDescription(
           instructorQualificationsSectionDescription(instructor)
         )}
       >
@@ -70,8 +73,8 @@ export function InstructorResumeDetailForms({
       </DetailInfoForm>
       <DetailInfoForm
         title="수상 및 수료 내역"
-        className="detail-info-form--gap"
-        message={resumeSectionDescriptionNode(instructorAwardsSectionDescription(instructor))}
+        className="detail-info-form--gap instructor-resume-detail-forms__form"
+        description={resumeSectionDescription(instructorAwardsSectionDescription(instructor))}
       >
         <DetailInfoForm.Row type="custom">
           <InstructorResumeAwardsCardBody d={instructor} />

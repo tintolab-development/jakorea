@@ -3,7 +3,10 @@
  * Phase 5.1.1: 관리자 대시보드
  */
 
-import { mockPrograms, mockApplications, mockMatchings, mockSettlements } from '@/data/mock'
+import { mockPrograms } from '@/data/mock/programs'
+import { mockApplications } from '@/data/mock/applications'
+import { mockMatchings } from '@/data/mock/matchings'
+import { mockSettlements } from '@/data/mock/settlements'
 
 /**
  * 전체 통계 데이터

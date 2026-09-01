@@ -1,0 +1,59 @@
+.mail-send-recipient-manual-modal.content-modal.teal-header-modal.ant-modal {
+  width: 600px !important;
+}
+
+.mail-send-recipient-manual-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  display: flex;
+  box-sizing: border-box;
+  width: 600px;
+  max-height: 880px;
+  padding: 26px 30px 34px 30px;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+}
+
+.mail-send-recipient-manual-modal.content-modal.teal-header-modal.ant-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 30px;
+  width: 100%;
+  padding: 0;
+  min-height: 0;
+}
+
+.mail-send-recipient-manual-modal .teal-header-modal__header,
+.mail-send-recipient-manual-modal .teal-header-modal__body,
+.mail-send-recipient-manual-modal .teal-header-modal__footer {
+  width: 100%;
+  align-self: stretch;
+}
+
+.mail-send-recipient-manual-modal .teal-header-modal__body {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.mail-send-recipient-manual-modal .teal-header-modal__footer {
+  margin-top: 0;
+}
+
+.mail-send-recipient-manual-modal__table.cms-data-table .ant-table-container {
+  max-height: 400px;
+}
+
+.mail-send-recipient-manual-modal__table.cms-data-table .ant-table-body {
+  max-height: 346px;
+}
+
+.mail-send-recipient-manual-modal__row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}

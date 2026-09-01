@@ -1,0 +1,110 @@
+/**
+ * Headless 에디터 chrome — 앱별 테마는 `--rt-*` CSS 변수로 오버라이드.
+ */
+
+.rich-text-editor {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  border: 1px solid var(--rt-border, #e0e0e0);
+  border-radius: var(--rt-radius, 8px);
+  background: var(--rt-background, #fff);
+  overflow: hidden;
+}
+
+.rich-text-editor__toolbar {
+  display: flex;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  align-items: flex-start;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-bottom: 1px solid var(--rt-toolbar-border, var(--table-line, #e0e0e0));
+  border-top-left-radius: var(--rt-radius, 8px);
+  border-top-right-radius: var(--rt-radius, 8px);
+  background: var(--rt-toolbar-bg, var(--main-WT, #fff));
+}
+
+.rich-text-editor__toolbar > * {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.rich-text-editor__body {
+  display: flex;
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  align-items: stretch;
+  align-self: stretch;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--rt-body-min-height, 200px);
+  height: var(--rt-body-height, auto);
+  max-height: var(--rt-body-max-height, none);
+  box-sizing: border-box;
+  padding: 0;
+  overflow: auto;
+  cursor: text;
+  border-bottom-left-radius: var(--rt-radius, 8px);
+  border-bottom-right-radius: var(--rt-radius, 8px);
+}
+
+.rich-text-editor__content {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  box-sizing: border-box;
+  cursor: text;
+}
+
+.rich-text-editor__body .tiptap {
+  flex: 1;
+  align-self: stretch;
+  min-width: 0;
+  min-height: 100%;
+  padding: 0;
+  outline: none;
+  cursor: text;
+}
+
+.rich-text-editor__body .ProseMirror {
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: var(--rt-body-padding, 16px);
+  outline: none;
+  cursor: text;
+}
+
+.rich-text-editor__body .tiptap p.is-empty::before,
+.rich-text-editor__body .ProseMirror p.is-empty::before {
+  color: var(--rt-placeholder-color, var(--text-placeholder, #999));
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.rich-text-editor__body .tiptap.rich-text-editor--is-empty::before {
+  color: var(--rt-placeholder-color, var(--text-placeholder, #999));
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.rich-text-editor__body--loading {
+  padding: var(--rt-body-padding, 16px);
+  color: var(--rt-placeholder-color, var(--text-placeholder, #999));
+}

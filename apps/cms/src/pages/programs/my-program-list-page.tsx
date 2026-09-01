@@ -6,9 +6,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Tag, Button, Table, Empty, message } from 'antd'
+import { Table } from 'antd'
+import { EmptyState, LoadingButton } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
-import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
+import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -23,10 +24,14 @@ import {
 } from '@/entities/program/api/favorite-program-service'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { MESSAGES } from '@/shared/constants'
 import dayjs from 'dayjs'
-import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/ui/status-badge'
+import { formatDateDot, formatDateRangeDot } from '@/shared/utils'
+import {
+  getCommonStatusLabel,
+  getCommonStatusColor,
+  getStatusConfigAccentColor,
+} from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/components/status-badge'
 
 export function MyProgramListPage() {
   const { user } = useAuthStore()
@@ -132,10 +137,8 @@ export function MyProgramListPage() {
     try {
       if (isFavorite) {
         await removeFavoriteProgram(userId, programId)
-        message.success(MESSAGES.success.removedFromFavorites)
       } else {
         await addFavoriteProgram(userId, programId)
-        message.success(MESSAGES.success.addedToFavorites)
       }
 
       // 상태 업데이트
@@ -150,7 +153,6 @@ export function MyProgramListPage() {
       })
     } catch (error) {
       console.error('관심 프로그램 토글 실패:', error)
-      message.error(MESSAGES.error.favoriteProgramProcessFailed)
     }
   }
 
@@ -199,13 +201,13 @@ export function MyProgramListPage() {
       fixed: 'left' as const,
       render: (title: string, record: MyProgram) => (
         <div>
-          <Button
+          <LoadingButton
             type="link"
             onClick={() => handleViewProgram(record)}
             style={{ padding: 0, fontWeight: 500 }}
           >
             {title}
-          </Button>
+          </LoadingButton>
         </div>
       ),
     },
@@ -216,9 +218,13 @@ export function MyProgramListPage() {
       width: 120,
       render: (category: string) => (
         <StatusBadge
-          status={category as keyof typeof programCategoryStatusConfig}
-          statusConfig={programCategoryStatusConfig}
-          showIcon={false}
+          domain="custom"
+          label={
+            programCategoryStatusConfig[category as keyof typeof programCategoryStatusConfig].label
+          }
+          accentColor={getStatusConfigAccentColor(
+            programCategoryStatusConfig[category as keyof typeof programCategoryStatusConfig].color
+          )}
         />
       ),
     },
@@ -240,13 +246,19 @@ export function MyProgramListPage() {
         if (statusKey in programStatusStatusConfig) {
           return (
             <StatusBadge
-              status={statusKey as keyof typeof programStatusStatusConfig}
-              statusConfig={programStatusStatusConfig}
-              showIcon={false}
+              domain="custom"
+              label={programStatusStatusConfig[statusKey].label}
+              accentColor={getStatusConfigAccentColor(programStatusStatusConfig[statusKey].color)}
             />
           )
         }
-        return <Tag color={status.color}>{status.label}</Tag>
+        return (
+          <StatusBadge
+            domain="custom"
+            label={status.label}
+            accentColor={getStatusConfigAccentColor(status.color)}
+          />
+        )
       },
     },
     {
@@ -254,11 +266,7 @@ export function MyProgramListPage() {
       key: 'period',
       width: 200,
       render: (_, record) => {
-        const start =
-          typeof record.startDate === 'string' ? dayjs(record.startDate) : dayjs(record.startDate)
-        const end =
-          typeof record.endDate === 'string' ? dayjs(record.endDate) : dayjs(record.endDate)
-        return `${start.format('YYYY-MM-DD')} ~ ${end.format('YYYY-MM-DD')}`
+        return formatDateRangeDot(record.startDate, record.endDate)
       },
     },
     {
@@ -266,7 +274,7 @@ export function MyProgramListPage() {
       dataIndex: 'matchedAt',
       key: 'matchedAt',
       width: 150,
-      render: (date: string) => dayjs(date).format('YYYY-MM-DD'),
+      render: (date: string) => formatDateDot(date),
     },
     {
       title: '일정 수',
@@ -280,7 +288,7 @@ export function MyProgramListPage() {
       width: 100,
       fixed: 'right' as const,
       render: (_, record) => (
-        <Button
+        <LoadingButton
           type="text"
           icon={
             favorites.has(record.id) ? (
@@ -299,7 +307,7 @@ export function MyProgramListPage() {
     return (
       <div>
         <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
-        <Empty description="강사 정보가 없습니다." />
+        <EmptyState description="강사 정보가 없습니다." />
       </div>
     )
   }
@@ -308,7 +316,9 @@ export function MyProgramListPage() {
     <div>
       <h1 style={{ ...PAGE_HEADER_STYLE, marginBottom: 24 }}>{categoryName}</h1>
 
-      <UnifiedFilterCard
+      <FilterTableLayout
+        showTitle={false}
+        hideExcelDownload
         fields={[
           {
             key: 'search',
@@ -349,20 +359,21 @@ export function MyProgramListPage() {
           setPendingFilters(prev => ({ ...prev, [key]: value || undefined }))
         }}
         onSearch={handleSearch}
-      />
-
-      <Table
-        columns={columns}
-        dataSource={programs}
-        rowKey="id"
         loading={loading}
-        pagination={{
-          defaultPageSize: 10,
-          showSizeChanger: true,
-          showTotal: total => `총 ${total}개`,
-        }}
-        scroll={{ x: 1200 }}
-      />
+      >
+        <Table
+          columns={columns}
+          dataSource={programs}
+          rowKey="id"
+          loading={loading}
+          pagination={{
+            defaultPageSize: 10,
+            showSizeChanger: true,
+            showTotal: total => `총 ${total}개`,
+          }}
+          scroll={{ x: 1200 }}
+        />
+      </FilterTableLayout>
     </div>
   )
 }

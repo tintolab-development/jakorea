@@ -6,10 +6,11 @@
 
 import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { Result, Button, Card, Typography, Space } from 'antd'
+import { Result, Card, Typography, Space } from 'antd'
+import { CmsButton } from '@/shared/ui'
 import { CheckCircleOutlined, FileSearchOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { useProgramStore } from '@/features/program/model/program-store'
+import { useProgramStore } from '@/features/program/general/model/program-store'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import dayjs from 'dayjs'
 
@@ -55,17 +56,16 @@ export function ProgramApplicationCompletePage() {
         title="신청이 완료되었습니다"
         subTitle="관리자 검토 후 결과를 안내해 드립니다."
         extra={[
-          <Button
+          <CmsButton
             key="list"
-            type="primary"
             icon={<FileSearchOutlined />}
             onClick={() => navigate(getApplicationListPath())}
           >
             신청 내역 확인
-          </Button>,
-          <Button key="home" onClick={() => navigate(getRedirectPathByRole(user))}>
+          </CmsButton>,
+          <CmsButton key="home" variant="default" onClick={() => navigate(getRedirectPathByRole(user))}>
             홈으로 이동
-          </Button>,
+          </CmsButton>,
         ]}
       />
 

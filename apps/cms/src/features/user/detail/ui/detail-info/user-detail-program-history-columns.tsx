@@ -2,12 +2,11 @@ import type { MenuProps } from 'antd'
 import { Dropdown } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Application } from '@/types/domain'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { StatusBadge } from '@/shared/components/status-badge'
 import { lectureAttendanceHasAtLeastOne } from '@/shared/utils'
-import { programService } from '@/entities/program/api/program-service'
+import { resolveApplicationEnrollmentDisplayStatus, resolveMemberProgramTitle } from '@/features/user/detail/lib/member-program-history-display'
 import {
-  getEffectiveEnrollmentDisplayStatus,
   PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER,
   type ProgramEnrollmentDisplayStatus,
 } from '@/shared/constants/status'
@@ -16,12 +15,14 @@ export interface CreateProgramHistoryColumnsParams {
   onProgressStatusChange: (app: Application, displayStatus: ProgramEnrollmentDisplayStatus) => void
   onOpenLectureAttendance: (record: Application) => void
   onOpenAssignmentSubmission: (record: Application) => void
+  progressStatusReadOnly?: boolean
 }
 
 export function createProgramHistoryColumns({
   onProgressStatusChange,
   onOpenLectureAttendance,
   onOpenAssignmentSubmission,
+  progressStatusReadOnly = false,
 }: CreateProgramHistoryColumnsParams): ColumnsType<Application> {
   return [
     {
@@ -36,35 +37,33 @@ export function createProgramHistoryColumns({
       dataIndex: 'programId',
       key: 'programId',
       align: 'center',
-      render: (programId: string) => {
-        const program = programService.getByIdSync(programId)
-        return program ? program.title : programId
-      },
+      render: (programId: string, record: Application) =>
+        resolveMemberProgramTitle(programId, record),
     },
     {
       title: '모집 신청 현황',
       key: 'progressDisplay',
       align: 'center',
       render: (_: unknown, record: Application) => {
-        const program = programService.getByIdSync(record.programId)
-        const displayStatus = getEffectiveEnrollmentDisplayStatus(
-          record.status,
-          record.progressStatus,
-          program?.lifecycleStatus,
-          record.rejectionKind
-        )
-        const menuItems: MenuProps['items'] = PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER.map(key => ({
-          key,
-          label: <StatusBadge domain="programEnrollment" status={key} variant="badge" />,
-          onClick: () => onProgressStatusChange(record, key),
-        }))
+        const displayStatus = resolveApplicationEnrollmentDisplayStatus(record)
+        const menuItems: MenuProps['items'] = progressStatusReadOnly
+          ? undefined
+          : PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER.map(key => ({
+              key,
+              label: <StatusBadge domain="programEnrollment" status={key} variant="badge" />,
+              onClick: () => onProgressStatusChange(record, key),
+            }))
         return (
           <span className="user-detail-modal__progress-cell" onClick={e => e.stopPropagation()}>
-            <Dropdown menu={{ items: menuItems }} trigger={['click']}>
-              <span className="user-detail-modal__progress-dropdown-trigger">
-                <StatusBadge domain="programEnrollment" status={displayStatus} variant="badge" />
-              </span>
-            </Dropdown>
+            {progressStatusReadOnly ? (
+              <StatusBadge domain="programEnrollment" status={displayStatus} variant="badge" />
+            ) : (
+              <Dropdown menu={{ items: menuItems }} trigger={['click']}>
+                <span className="user-detail-modal__progress-dropdown-trigger">
+                  <StatusBadge domain="programEnrollment" status={displayStatus} variant="badge" />
+                </span>
+              </Dropdown>
+            )}
           </span>
         )
       },
@@ -99,14 +98,14 @@ export function createProgramHistoryColumns({
       align: 'center',
       render: (_: unknown, record: Application) => (
         <span className="user-detail-modal__assignment-cell" onClick={e => e.stopPropagation()}>
-          <AppButton
-            variant="viewDetails"
+          <CmsButton
+            variant="default"
             size="small"
             disabled={!record.hasAssignmentSubmission}
             onClick={() => onOpenAssignmentSubmission(record)}
           >
             내역 보기
-          </AppButton>
+          </CmsButton>
         </span>
       ),
     },

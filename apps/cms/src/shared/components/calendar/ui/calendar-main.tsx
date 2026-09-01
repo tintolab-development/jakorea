@@ -9,10 +9,11 @@ import type { Program } from '@/types/domain'
 import {
   type ScheduleColorPair,
   buildResolvedScheduleColorMapForPrograms,
-} from '@/features/program/ui/program-schedule-colors'
-import { useApplicantCalendarColorMaps } from '@/features/program/program-detail/ui/applicant-list/applicant-calendar-schedule-helpers'
+} from '@/features/program/shared/ui/program-schedule-colors'
+import { useApplicantCalendarColorMaps } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-calendar-schedule-helpers'
 import { SegmentedTab } from '@/shared/ui/segmented-tab'
 import '@/shared/ui/overlay-popover.css'
+import '../styles/calendar.css'
 import { CalendarBody } from './calendar-body'
 import { WeekView } from './week-view'
 import {
@@ -29,6 +30,20 @@ import {
   uniqueScheduleSourcesForDay,
   type CalendarItem,
 } from '../lib/calendar-helpers'
+import type { CalendarMainEventInput } from '../model/calendar-main-event-input'
+import type {
+  BuildCalendarMonthCellRows,
+  RenderCalendarMonthEventContent,
+} from '../model/calendar-month-cell-row'
+import {
+  goToTodayState,
+  resolveWeekViewHeaderTitle,
+  shiftCalendarViewByStep,
+  syncViewAnchorOnModeChange,
+  type CalendarViewMode,
+} from '../lib/calendar-navigation'
+
+export type { CalendarMainEventInput } from '../model/calendar-main-event-input'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -87,7 +102,7 @@ export type CalendarMainScheduleProps = CalendarMainItemsProps
 export type CalendarMainProgramProps = CalendarMainItemsProps
 
 export type CalendarMainEventsProps = CalendarMainSharedProps & {
-  events: Parameters<typeof mapEventsToItems>[0]
+  events: CalendarMainEventInput[]
   selectedRowKeys?: React.Key[]
   previewTooltipContent?: (args: {
     events: CalendarItem[]
@@ -98,6 +113,10 @@ export type CalendarMainEventsProps = CalendarMainSharedProps & {
   eventsTooltipScope?: 'trigger-only' | 'full-day'
   formatEventsOverflowText?: (hiddenCount: number) => string
   eventsTooltipTrigger?: 'event-strip' | 'cell'
+  /** 월간 셀 strip 목록 — 페이지별 (UJAT 지원자·슬롯 묶음 등) */
+  buildMonthCellRows?: BuildCalendarMonthCellRows
+  /** 월간 strip 내부 UI — shell(`.calendar-event`)은 공통 */
+  renderMonthEventContent?: RenderCalendarMonthEventContent
   items?: undefined
   onItemClick?: undefined
 }
@@ -110,6 +129,7 @@ function isEventsProps(p: CalendarMainProps): p is CalendarMainEventsProps {
 
 function useCalendarNavigation({
   currentMonth,
+  selectedDate,
   mode,
   onSelectDate,
   onMonthChange,
@@ -117,6 +137,7 @@ function useCalendarNavigation({
   weekDates,
 }: {
   currentMonth: Dayjs
+  selectedDate: Dayjs
   mode: 'month' | 'week'
   onSelectDate: (date: Dayjs) => void
   onMonthChange: (month: Dayjs) => void
@@ -124,24 +145,27 @@ function useCalendarNavigation({
   weekDates: Dayjs[]
 }) {
   const handleToday = () => {
-    const today = dayjs()
+    const { selectedDate: today, viewAnchor } = goToTodayState(mode)
     onTodayClick?.()
     onSelectDate(today)
+    onMonthChange(viewAnchor)
   }
 
   const handlePrev = () => {
-    if (mode === 'week') onMonthChange(currentMonth.subtract(1, 'week'))
-    else onMonthChange(currentMonth.subtract(1, 'month'))
+    const next = shiftCalendarViewByStep(mode, currentMonth, -1)
+    onSelectDate(next.selectedDate)
+    onMonthChange(next.viewAnchor)
   }
 
   const handleNext = () => {
-    if (mode === 'week') onMonthChange(currentMonth.add(1, 'week'))
-    else onMonthChange(currentMonth.add(1, 'month'))
+    const next = shiftCalendarViewByStep(mode, currentMonth, 1)
+    onSelectDate(next.selectedDate)
+    onMonthChange(next.viewAnchor)
   }
 
   const headerTitle =
     mode === 'week'
-      ? weekDates[0].format('YYYY. MM')
+      ? resolveWeekViewHeaderTitle(selectedDate, weekDates)
       : currentMonth.format('YYYY.MM')
 
   return { handleToday, handlePrev, handleNext, headerTitle }
@@ -333,6 +357,8 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
           eventsTooltipScope: props.eventsTooltipScope ?? 'trigger-only',
           formatEventsOverflowText: props.formatEventsOverflowText,
           eventsTooltipTrigger: props.eventsTooltipTrigger ?? 'event-strip',
+          buildMonthCellRows: props.buildMonthCellRows,
+          renderMonthEventContent: props.renderMonthEventContent,
         }
       : undefined
 
@@ -343,12 +369,21 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
 
     const { handleToday, handlePrev, handleNext, headerTitle } = useCalendarNavigation({
       currentMonth,
+      selectedDate,
       mode,
       onSelectDate,
       onMonthChange,
       onTodayClick,
       weekDates,
     })
+
+    const handleModeChange = useCallback(
+      (nextMode: CalendarViewMode) => {
+        onMonthChange(syncViewAnchorOnModeChange(nextMode, selectedDate))
+        onModeChange(nextMode)
+      },
+      [selectedDate, onMonthChange, onModeChange]
+    )
 
     const renderMonthCell = useCallback(
       (date: Dayjs) =>
@@ -397,7 +432,7 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
           <CalendarHeader
             headerTitle={headerTitle}
             mode={mode}
-            onModeChange={onModeChange}
+            onModeChange={handleModeChange}
             onToday={handleToday}
             onPrev={handlePrev}
             onNext={handleNext}

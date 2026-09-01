@@ -11,7 +11,38 @@
   gap: 0;
 }
 
-/* FilterTableLayout: 카드 내부 세로 플렉스(필터 → 구분선 → 툴바 → 본문) — 리스트 뷰만 */
+/* content-wrapper = 흰 카드 — 내부 FilterTableLayout 이중 카드 제거 (payment-orders-page.css 패턴) */
+.payment-orders-page__content-wrapper .account-payments-page__filter-table.filter-table-layout {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.payment-orders-page__content-wrapper
+  .account-payments-page__filter-table.filter-table-layout
+  .table-filter-group__container {
+  --filter-field-gap: 12px;
+  --table-filter-field-gap: 12px;
+  margin-bottom: 0;
+}
+
+.payment-orders-page__content-wrapper
+  .account-payments-page__filter-table
+  .filter-table-layout__table {
+  flex: 0 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+.payment-orders-page__content-wrapper
+  .account-payments-page__filter-table
+  .filter-table-layout__divider {
+  padding: var(--spacing-32) 0;
+}
+
+/* FilterTableLayout: 카드 내부 세로 플렉스 — 리스트·캘린더 공통 */
 .account-payments-page.payment-orders-page
   .payment-orders-page__content-wrapper
   > .account-payments-page__filter-table.filter-table-layout {
@@ -21,33 +52,6 @@
   flex-direction: column;
   width: 100%;
   overflow: visible;
-}
-
-/*
- * 캘린더 뷰: 경제교육 프로그램 목록 캘린더와 동일 — FilterTableLayout(흰 카드) 밖에 툴바·캘린더만 둠
- */
-
-.account-payments-page__calendar-toolbar.table-header-actions {
-  height: auto;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 16px;
-  min-width: 0;
-  margin-bottom: var(--spacing-16, 16px);
-}
-
-.account-payments-page__calendar-toolbar .table-header-title--wrapper {
-  flex: 1;
-  min-width: 0;
-}
-
-.account-payments-page__calendar-toolbar-actions {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--spacing-8, 8px);
-  flex-shrink: 0;
 }
 
 /* 요약 위젯(3카드) 상단 — 탭과 요약 사이 16px (education-record-list-page__top-nav 과 동일 역할) */
@@ -226,7 +230,8 @@
 }
 
 .account-payments-page__status-text--awaiting-confirmation {
-  color: var(--color-orange, #f07917);
+  /* 시안: 계좌 지급 대기 중 — 초록 */
+  color: var(--color-green, #1e8c29);
   font-weight: 500;
 }
 
@@ -236,7 +241,8 @@
 }
 
 .account-payments-page__status-text--account-paid {
-  color: var(--color-blue, #017eaf);
+  /* 시안: 계좌 지급 완료 — 청록 */
+  color: var(--JA-mint-01, #01a1af);
   font-weight: 500;
 }
 

@@ -6,23 +6,32 @@
 import { useMemo, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 import './admin-permission-tag.css'
 import './user-list.css'
-import type { User, UserRole } from '@/types/user'
+import type { User } from '@/types/user'
 import {
   ADMIN_PERMISSION_TAG_LABEL,
   type AdminPermissionTagVariant,
   getAdminPermissionVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
-import { getRoleLabel } from '@/shared/ui'
-import { formatDate } from '@/shared/utils'
+import { formatDateDot } from '@/shared/utils'
+import {
+  getAllMemberListRoleTypeLabel,
+  getMemberSignupTypeLabel,
+} from '@/features/user/shared/lib/member-list-display'
 import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { type MemberListKind, DEFAULT_MEMBER_LIST_KIND } from '@/shared/config/member-list-kinds'
-import { getInstructorTypeDisplayLabel } from '@/entities/user/lib/matches-instructor-list-filters'
 import { ManagedProgramCountDisplay } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
+import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
+import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
+import {
+  INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
+  INSTRUCTOR_SETTLEMENT_STATUS_ORDER,
+  type InstructorSettlementUiStatus,
+} from '@/shared/constants/instructor-settlement-status'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -41,6 +50,8 @@ interface UserListProps {
   selectedRowKeys?: React.Key[]
   onSelectionChange?: (keys: React.Key[]) => void
   pagination?: boolean
+  /** 회원 목록 — 가입일 내림차순 기준 No. 역순 (맨 아래 = 1) */
+  totalCount?: number
   /** URL `kind`와 동일 — 컬럼 세트 결정 */
   listKind?: MemberListKind
   onAdminPermissionChange?: (ctx: {
@@ -50,23 +61,16 @@ interface UserListProps {
   adminPermissionChangeLoadingUserId?: string | null
 }
 
-const ROLE_LABELS: Record<UserRole, string> = {
-  INDIVIDUAL: '개인',
-  SCHOOL: '학교(교사)',
-  INSTRUCTOR: '강사',
-  ADMIN: '관리자',
-}
-
-function maskedPhone(phone: string | undefined): string {
+function displayPhone(phone: string | undefined, maskInList: boolean): string {
   const t = phone?.trim()
   if (!t) return '-'
-  return MASKING_POLICY.phone(t)
+  return maskInList ? MASKING_POLICY.phone(t) : t
 }
 
-function maskedEmail(email: string | undefined): string {
+function displayEmail(email: string | undefined, maskInList: boolean): string {
   const t = email?.trim()
   if (!t) return '-'
-  return MASKING_POLICY.email(t)
+  return maskInList ? MASKING_POLICY.email(t) : t
 }
 
 function displayMetric(n: number | undefined | null) {
@@ -74,31 +78,17 @@ function displayMetric(n: number | undefined | null) {
   return String(n)
 }
 
-function instructorTypeLabel(record: Row): string {
-  const label = getInstructorTypeDisplayLabel(record)
-  return label || '-'
-}
-
-function settlementStatusTextClass(statusLabel?: string): string {
+function resolveSettlementUiStatus(
+  statusLabel?: string
+): InstructorSettlementUiStatus | null {
   const normalized = statusLabel?.trim()
-  switch (normalized) {
-    case '확인 대기 중':
-      return 'user-list__settlement-status user-list__settlement-status--awaiting-confirmation'
-    case '확인 진행중':
-      return 'user-list__settlement-status user-list__settlement-status--partially-confirmed'
-    case '지급조서 확인 완료':
-      return 'user-list__settlement-status user-list__settlement-status--payment-statement-verified'
-    case '계좌 지급 완료':
-      return 'user-list__settlement-status user-list__settlement-status--account-paid'
-    case '해당 없음':
-      return 'user-list__settlement-status user-list__settlement-status--none'
-    case '신청 반려':
-      return 'user-list__settlement-status user-list__settlement-status--application-rejected'
-    case '지급 정정 요청':
-      return 'user-list__settlement-status user-list__settlement-status--payment-correction-requested'
-    default:
-      return 'user-list__settlement-status'
+  if (!normalized || normalized === '-') return null
+  for (const status of INSTRUCTOR_SETTLEMENT_STATUS_ORDER) {
+    if (INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status] === normalized) return status
   }
+  // 구 mock·라벨 호환
+  if (normalized === '확인 진행중') return 'partial_confirmation'
+  return null
 }
 
 const ADMIN_PERMISSION_OPTIONS: { value: AdminPermissionTagVariant; label: string }[] = [
@@ -154,6 +144,21 @@ function AdminPermissionDropdownCell({
   )
 }
 
+function createNoColumn(reverseFromTotal?: number): ColumnsType<Row>[0] {
+  return {
+    title: 'No.',
+    key: 'no',
+    width: 80,
+    align: 'center',
+    render: (_: unknown, __: Row, index: number) => {
+      if (reverseFromTotal != null && reverseFromTotal > 0) {
+        return reverseFromTotal - index
+      }
+      return index + 1
+    },
+  }
+}
+
 function columnsForKind(
   kind: MemberListKind,
   options?: {
@@ -164,15 +169,12 @@ function columnsForKind(
     adminPermissionChangeLoadingUserId?: string | null
     openAdminPermissionDropdownUserId?: string | null
     setOpenAdminPermissionDropdownUserId?: (id: string | null) => void
+    totalCount?: number
   }
 ): ColumnsType<Row> {
-  const noCol: ColumnsType<Row>[0] = {
-    title: 'No.',
-    key: 'no',
-    width: 80,
-    align: 'center',
-    render: (_: unknown, __: Row, index: number) => index + 1,
-  }
+  const noCol = createNoColumn(options?.totalCount)
+  /** `GET /api/admin/members/all` — BE가 원문 반환(UNMASKED_VIEW 감사). FE 이중 마스킹 금지 */
+  const maskListPii = kind !== 'all'
 
   if (kind === 'institutions') {
     return [
@@ -189,7 +191,13 @@ function columnsForKind(
         key: 'address',
         ellipsis: true,
         align: 'center',
-        render: (_: unknown, r: Row) => r.schoolInfo?.address?.trim() || '-',
+        render: (_: unknown, r: Row) => {
+          const parts = [
+            r.schoolInfo?.address?.trim(),
+            r.schoolInfo?.addressDetail?.trim(),
+          ].filter(Boolean)
+          return parts.length > 0 ? parts.join(' ') : '-'
+        },
       },
       {
         title: '프로그램 수강 횟수',
@@ -213,7 +221,7 @@ function columnsForKind(
         key: 'createdAt',
         width: 200,
         align: 'center',
-        render: (d: string) => formatDate(new Date(d)),
+        render: (d: string) => formatDateDot(d),
       },
     ]
   }
@@ -233,7 +241,7 @@ function columnsForKind(
         dataIndex: 'phone',
         key: 'phone',
         align: 'center',
-        render: (phone: string | undefined) => maskedPhone(phone),
+        render: (phone: string | undefined) => displayPhone(phone, maskListPii),
       },
       {
         title: '이메일',
@@ -241,29 +249,23 @@ function columnsForKind(
         key: 'email',
         ellipsis: true,
         align: 'center',
-        render: (email: string | undefined) => maskedEmail(email),
-      },
-      {
-        title: '강사 유형',
-        key: 'instructorType',
-        align: 'center',
-        render: (_: unknown, r: Row) => instructorTypeLabel(r),
+        render: (email: string | undefined) => displayEmail(email, maskListPii),
       },
       {
         title: 'JA 평가 등급',
         key: 'jaGrade',
         align: 'center',
-        render: (_: unknown, r: Row) => r.listMetrics?.jaEvaluationGrade?.trim() || '-',
+        render: (_: unknown, r: Row) =>
+          formatJaEvaluationGradeCellDisplay(r.listMetrics?.jaEvaluationGrade),
       },
       {
-        title: '정산현황',
+        title: '정산 현황',
         key: 'settlement',
         align: 'center',
         render: (_: unknown, r: Row) => {
-          const statusLabel = r.listMetrics?.settlementStatusLabel?.trim()
-          return (
-            <span className={settlementStatusTextClass(statusLabel)}>{statusLabel || '-'}</span>
-          )
+          const status = resolveSettlementUiStatus(r.listMetrics?.settlementStatusLabel)
+          if (!status) return '-'
+          return <InstructorSettlementStatusText status={status} />
         },
       },
       {
@@ -271,7 +273,7 @@ function columnsForKind(
         dataIndex: 'createdAt',
         key: 'createdAt',
         align: 'center',
-        render: (d: string) => formatDate(new Date(d)),
+        render: (d: string) => formatDateDot(d),
       },
     ]
   }
@@ -291,7 +293,7 @@ function columnsForKind(
         dataIndex: 'phone',
         key: 'phone',
         align: 'center',
-        render: (phone: string | undefined) => maskedPhone(phone),
+        render: (phone: string | undefined) => displayPhone(phone, maskListPii),
       },
       {
         title: '이메일',
@@ -299,7 +301,7 @@ function columnsForKind(
         key: 'email',
         ellipsis: true,
         align: 'center',
-        render: (email: string | undefined) => maskedEmail(email),
+        render: (email: string | undefined) => displayEmail(email, maskListPii),
       },
       {
         title: '권한 유형',
@@ -336,7 +338,7 @@ function columnsForKind(
         dataIndex: 'createdAt',
         key: 'createdAt',
         align: 'center',
-        render: (d: string) => formatDate(new Date(d)),
+        render: (d: string) => formatDateDot(d),
       },
     ]
   }
@@ -355,7 +357,7 @@ function columnsForKind(
       dataIndex: 'phone',
       key: 'phone',
       align: 'center',
-      render: (phone: string | undefined) => maskedPhone(phone),
+      render: (phone: string | undefined) => displayPhone(phone, maskListPii),
     },
     {
       title: '이메일',
@@ -363,22 +365,26 @@ function columnsForKind(
       key: 'email',
       ellipsis: true,
       align: 'center',
-      render: (email: string | undefined) => maskedEmail(email),
+      render: (email: string | undefined) => displayEmail(email, maskListPii),
     },
     {
       title: '회원 유형',
-      dataIndex: 'role',
       key: 'role',
       align: 'center',
-      render: (role: UserRole, record: Row) =>
-        ROLE_LABELS[role] ?? getRoleLabel(role, record.adminLevel),
+      render: (_: unknown, record: Row) => getAllMemberListRoleTypeLabel(record),
+    },
+    {
+      title: '가입 유형',
+      key: 'signupType',
+      align: 'center',
+      render: (_: unknown, record: Row) => getMemberSignupTypeLabel(record),
     },
     {
       title: '가입일',
       dataIndex: 'createdAt',
       key: 'createdAt',
       align: 'center',
-      render: (d: string) => formatDate(new Date(d)),
+      render: (d: string) => formatDateDot(d),
     },
   ]
 }
@@ -391,6 +397,7 @@ export function UserList({
   onSelectionChange,
   pagination = true,
   listKind = DEFAULT_MEMBER_LIST_KIND,
+  totalCount,
   onAdminPermissionChange,
   adminPermissionChangeLoadingUserId,
 }: UserListProps) {
@@ -404,9 +411,11 @@ export function UserList({
         adminPermissionChangeLoadingUserId,
         openAdminPermissionDropdownUserId,
         setOpenAdminPermissionDropdownUserId,
+        totalCount,
       }),
     [
       listKind,
+      totalCount,
       onAdminPermissionChange,
       adminPermissionChangeLoadingUserId,
       openAdminPermissionDropdownUserId,

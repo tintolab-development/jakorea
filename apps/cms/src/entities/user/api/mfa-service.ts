@@ -8,15 +8,20 @@ import type {
   OtpSendResponse,
   OtpVerifyRequest,
   OtpVerifyResponse,
-  TotpProvisioning,
-} from '@/types/mfa'
-import { generateURI, verify } from 'otplib'
+  TotpProvisioning } from '@/types/mfa'
+import { generateSecret, generateURI, verify } from 'otplib'
 import QRCode from 'qrcode'
 import { TOTP_ISSUER } from '@/shared/constants/totp'
 import { getTotpSecretByEmail } from '@/data/mock/totp-secrets'
-import { OTP_POLICY } from '@/shared/constants/mfa-policy'
+import {
+  ADMIN_MFA_METHOD,
+  isAdminLocalTestMfa,
+  OTP_POLICY,
+} from '@/shared/constants/mfa-policy'
 import { generateMockOtp, verifyMockOtp } from '@/data/mock/mfa'
 import { saveSmsLog, updateSmsLogStatus, getSmsLogByOtp } from '@/data/mock/sms-logs'
+import { fetchAdminMfaEnrollment, fetchAdminMfaVerify } from '@/features/auth/api/admin-auth-fetcher'
+import type { AuthTokenResponse } from '@/features/auth/model/admin-login-api.types'
 
 // Mock: 사용자별 OTP 저장 (실제로는 백엔드에서 관리)
 const userOtpMap = new Map<string, { otp: string; expiresAt: string }>()
@@ -58,7 +63,7 @@ export async function sendOtp(request: OtpSendRequest): Promise<OtpSendResponse>
   if (!checkAndIncrementDailyCount(request.userId)) {
     return {
       success: false,
-      message: `일일 인증번호 발송 제한(${OTP_POLICY.maxDailyAttempts}회)을 초과했습니다. 내일 다시 시도해주세요.`,
+      detail: `일일 인증번호 발송 제한(${OTP_POLICY.maxDailyAttempts}회)을 초과했습니다. 내일 다시 시도해주세요.`,
       sentAt: new Date().toISOString(),
       expiresAt: new Date().toISOString(),
     }
@@ -80,8 +85,7 @@ export async function sendOtp(request: OtpSendRequest): Promise<OtpSendResponse>
     sentAt,
     expiresAt,
     status: 'SENT',
-    deliveryStatus: 'PENDING',
-  })
+    deliveryStatus: 'PENDING' })
 
   // Mock: SMS 발송 시뮬레이션 (비동기로 전송 상태 업데이트)
   setTimeout(() => {
@@ -103,7 +107,7 @@ export async function sendOtp(request: OtpSendRequest): Promise<OtpSendResponse>
 
   return {
     success: true,
-    message: '인증번호가 발송되었습니다.',
+    detail: '인증번호가 발송되었습니다.',
     sentAt,
     expiresAt,
   }
@@ -121,7 +125,7 @@ export async function verifyOtp(request: OtpVerifyRequest): Promise<OtpVerifyRes
   if (!storedOtp) {
     return {
       success: false,
-      message: '인증번호가 발송되지 않았습니다.',
+      detail: '인증번호가 발송되지 않았습니다.',
       verified: false,
       failedAttempts: 0,
       isLocked: false,
@@ -134,7 +138,7 @@ export async function verifyOtp(request: OtpVerifyRequest): Promise<OtpVerifyRes
     userOtpMap.delete(request.userId)
     return {
       success: false,
-      message: '인증번호가 만료되었습니다. 다시 발송해주세요.',
+      detail: '인증번호가 만료되었습니다. 다시 발송해주세요.',
       verified: false,
       failedAttempts: 0,
       isLocked: false,
@@ -150,8 +154,7 @@ export async function verifyOtp(request: OtpVerifyRequest): Promise<OtpVerifyRes
     userId: request.userId,
     inputOtp: request.otpCode,
     storedOtp: storedOtp.otp,
-    smsLogId: smsLog?.id,
-  })
+    smsLogId: smsLog?.id })
 
   const isValid = verifyMockOtp(request.otpCode, storedOtp.otp)
 
@@ -168,7 +171,7 @@ export async function verifyOtp(request: OtpVerifyRequest): Promise<OtpVerifyRes
 
     return {
       success: true,
-      message: '인증이 완료되었습니다.',
+      detail: '인증이 완료되었습니다.',
       verified: true,
       failedAttempts: 0,
       isLocked: false,
@@ -184,7 +187,7 @@ export async function verifyOtp(request: OtpVerifyRequest): Promise<OtpVerifyRes
   // 실패 시 실패 횟수 증가 (실제로는 백엔드에서 관리)
   return {
     success: false,
-    message: '인증번호가 올바르지 않습니다.',
+    detail: '인증번호가 올바르지 않습니다.',
     verified: false,
     failedAttempts: 1, // Mock: 실제로는 백엔드에서 관리
     isLocked: false,
@@ -192,9 +195,93 @@ export async function verifyOtp(request: OtpVerifyRequest): Promise<OtpVerifyRes
   }
 }
 
-/** Microsoft Authenticator 등 표준 앱용 TOTP QR·수동 키 (Mock) */
-export async function getTotpProvisioning(email: string): Promise<TotpProvisioning> {
+export interface GetTotpProvisioningOptions {
+  challengeUuid?: string
+  mfaMethod?: string
+  totpSecret?: string
+  otpauthUri?: string
+  qrDataUrl?: string
+}
+
+const TOTP_QR_SIZE = 220
+
+async function buildTotpProvisioningFromSecret(
+  email: string,
+  secret: string,
+  otpauthUri?: string
+): Promise<TotpProvisioning> {
+  const resolvedUri =
+    otpauthUri ?? generateURI({ issuer: TOTP_ISSUER, label: email, secret })
+  // 백엔드 qrDataUrl은 여백·해상도가 제각각일 수 있어 URI 기준으로 항상 220×220 재생성
+  const resolvedQr = await QRCode.toDataURL(resolvedUri, {
+    margin: 0,
+    width: TOTP_QR_SIZE,
+  })
+
+  return {
+    otpauthUri: resolvedUri,
+    qrDataUrl: resolvedQr,
+    manualSecret: secret,
+  }
+}
+
+async function getRemoteTotpProvisioning(
+  email: string,
+  challengeUuid: string,
+  preset?: Pick<GetTotpProvisioningOptions, 'totpSecret' | 'otpauthUri' | 'qrDataUrl'>
+): Promise<TotpProvisioning> {
+  if (preset?.totpSecret || preset?.otpauthUri) {
+    const secret = preset.totpSecret ?? generateSecret()
+    return buildTotpProvisioningFromSecret(email, secret, preset.otpauthUri)
+  }
+
+  // otpauthUri 없이 이미지만 온 경우 — 재생성 불가, 원본 사용(표시 크기는 CSS)
+  if (preset?.qrDataUrl) {
+    return {
+      otpauthUri: '',
+      qrDataUrl: preset.qrDataUrl,
+      manualSecret: '',
+    }
+  }
+
+  let setupResult = await fetchAdminMfaEnrollment({
+    mfaMethod: ADMIN_MFA_METHOD.TOTP,
+    enabled: true,
+    challengeUuid,
+  })
+
+  let secret = setupResult.totpSecret
+  if (!secret) {
+    secret = generateSecret()
+    setupResult = await fetchAdminMfaEnrollment({
+      mfaMethod: ADMIN_MFA_METHOD.TOTP,
+      enabled: true,
+      challengeUuid,
+      totpSecret: secret,
+    })
+    secret = setupResult.totpSecret ?? secret
+  }
+
+  return buildTotpProvisioningFromSecret(email, secret, setupResult.otpauthUri)
+}
+
+/** Microsoft Authenticator 등 표준 앱용 TOTP QR·수동 키 */
+export async function getTotpProvisioning(
+  email: string,
+  options?: GetTotpProvisioningOptions
+): Promise<TotpProvisioning | null> {
   await new Promise(resolve => setTimeout(resolve, 200))
+
+  if (options?.challengeUuid) {
+    try {
+      return await getRemoteTotpProvisioning(email, options.challengeUuid, options)
+    } catch (error) {
+      if (isAdminLocalTestMfa(options.mfaMethod)) {
+        return null
+      }
+      throw error
+    }
+  }
 
   const secret = getTotpSecretByEmail(email)
   if (!secret) {
@@ -203,25 +290,50 @@ export async function getTotpProvisioning(email: string): Promise<TotpProvisioni
     )
   }
 
-  const otpauthUri = generateURI({
-    issuer: TOTP_ISSUER,
-    label: email,
-    secret,
-  })
-  const qrDataUrl = await QRCode.toDataURL(otpauthUri, { margin: 2, width: 220 })
-
-  return { otpauthUri, qrDataUrl, manualSecret: secret }
+  return buildTotpProvisioningFromSecret(email, secret)
 }
 
-/** TOTP 6자리 검증 (Mock — 시크릿은 클라이언트 mock 맵) */
-export async function verifyTotp(email: string, otpCode: string): Promise<OtpVerifyResponse> {
+/** TOTP 6자리 검증 — challengeUuid 있으면 실 API mfa/verify (API 로그인) */
+export async function verifyTotp(
+  email: string,
+  otpCode: string,
+  options?: { challengeUuid?: string }
+): Promise<OtpVerifyResponse & { tokens?: AuthTokenResponse }> {
+  if (options?.challengeUuid) {
+    try {
+      const tokens = await fetchAdminMfaVerify({
+        challengeUuid: options.challengeUuid,
+        verificationCode: otpCode,
+      })
+      return {
+        success: true,
+        detail: '인증이 완료되었습니다.',
+        verified: true,
+        failedAttempts: 0,
+        isLocked: false,
+        lockUntil: null,
+        tokens,
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'MFA 인증에 실패했습니다.'
+      return {
+        success: false,
+        detail: message,
+        verified: false,
+        failedAttempts: 1,
+        isLocked: false,
+        lockUntil: null,
+      }
+    }
+  }
+
   await new Promise(resolve => setTimeout(resolve, 300))
 
   const secret = getTotpSecretByEmail(email)
   if (!secret) {
     return {
       success: false,
-      message: '인증 설정을 찾을 수 없습니다.',
+      detail: '인증 설정을 찾을 수 없습니다.',
       verified: false,
       failedAttempts: 0,
       isLocked: false,
@@ -232,13 +344,12 @@ export async function verifyTotp(email: string, otpCode: string): Promise<OtpVer
   const result = await verify({
     secret,
     token: otpCode,
-    epochTolerance: 30,
-  })
+    epochTolerance: 30 })
 
   if (result.valid) {
     return {
       success: true,
-      message: '인증이 완료되었습니다.',
+      detail: '인증이 완료되었습니다.',
       verified: true,
       failedAttempts: 0,
       isLocked: false,
@@ -248,7 +359,7 @@ export async function verifyTotp(email: string, otpCode: string): Promise<OtpVer
 
   return {
     success: false,
-    message: '인증번호가 올바르지 않습니다.',
+    detail: '인증번호가 올바르지 않습니다.',
     verified: false,
     failedAttempts: 1,
     isLocked: false,

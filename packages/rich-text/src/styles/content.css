@@ -1,0 +1,173 @@
+/**
+ * Rich text 본문 타이포 — 구 `.toastui-editor-contents` 대체.
+ * 에디터·뷰어 공통 (ProseMirror `.rich-text-content`)
+ */
+
+.rich-text-content {
+  box-sizing: border-box;
+  color: var(--rt-content-color, var(--default-BK, #3d3d3d));
+  font-family: var(--rt-content-font-family, Pretendard, var(--font-family-primary, sans-serif));
+  font-size: var(--rt-content-font-size, 18px);
+  font-style: normal;
+  font-weight: 500;
+  line-height: var(--rt-content-line-height, 170%);
+  outline: none;
+}
+
+.rich-text-content p,
+.rich-text-content li,
+.rich-text-content td,
+.rich-text-content th {
+  color: var(--rt-content-color, var(--default-BK, #3d3d3d));
+  font-family: var(--rt-content-font-family, Pretendard, var(--font-family-primary, sans-serif));
+  font-size: var(--rt-content-font-size, 18px);
+  font-weight: 500;
+  line-height: var(--rt-content-line-height, 170%);
+}
+
+.rich-text-content h1,
+.rich-text-content h2,
+.rich-text-content h3 {
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.rich-text-content h1 {
+  font-size: 1.75em;
+}
+
+.rich-text-content h2 {
+  font-size: 1.4em;
+}
+
+.rich-text-content h3 {
+  font-size: 1.2em;
+}
+
+.rich-text-content strong,
+.rich-text-content b {
+  font-weight: 700;
+}
+
+.rich-text-content em,
+.rich-text-content i {
+  /* Pretendard has no italic face; CMS/Admin `:root { font-synthesis: none }` would hide it. */
+  font-style: italic;
+  font-synthesis: style;
+}
+
+.rich-text-content u {
+  text-decoration: underline;
+}
+
+.rich-text-content s,
+.rich-text-content strike,
+.rich-text-content del {
+  text-decoration: line-through;
+}
+
+.rich-text-content ul,
+.rich-text-content ol {
+  margin: 0.4em 0;
+  padding-left: 1.5em;
+}
+
+.rich-text-content ul {
+  list-style: disc;
+}
+
+.rich-text-content ol {
+  list-style: decimal;
+}
+
+.rich-text-content hr {
+  margin: 12px 0;
+  border: none;
+  border-top: 1px solid var(--rt-table-border, var(--border-default, #e0e0e0));
+}
+
+.rich-text-content a {
+  color: var(--rt-link-color, var(--primary, #00897b));
+  text-decoration: underline;
+}
+
+.rich-text-content mark {
+  border-radius: 2px;
+  padding: 0 2px;
+  background-color: #fff9c4;
+}
+
+.rich-text-content blockquote {
+  margin: 8px 0;
+  padding: 4px 0 4px 16px;
+  border-left: 4px solid var(--rt-blockquote-border, var(--primary, #01a1af));
+  color: var(--rt-content-color, var(--default-BK, #3d3d3d));
+}
+
+.rich-text-content sup {
+  font-size: 0.75em;
+  vertical-align: super;
+}
+
+.rich-text-content [data-type='emoji'] img,
+.rich-text-content .emoji {
+  display: inline;
+  width: 1.1em;
+  height: 1.1em;
+  vertical-align: -0.1em;
+}
+
+.rich-text-editor__body .ProseMirror-dropcursor {
+  color: var(--rt-dropcursor, #01a1af);
+}
+
+.rich-text-content img,
+.rich-text-content .rich-text-content__image {
+  max-width: 100%;
+  height: auto;
+}
+
+/* tiptap-extension-resize-image 래퍼 */
+.rich-text-editor__body .ProseMirror [data-resize-image-ui],
+.rich-text-editor__body .ProseMirror .image-resizer {
+  max-width: 100%;
+}
+
+.rich-text-content__youtube,
+.rich-text-content iframe.rich-text-content__youtube,
+.rich-text-content div[data-youtube-video] iframe {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  min-height: 200px;
+  border: 0;
+  border-radius: 8px;
+  margin: 8px 0;
+}
+
+.rich-text-content table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.rich-text-content th,
+.rich-text-content td {
+  border: 1px solid var(--rt-table-border, var(--border-default, #e0e0e0));
+  padding: 8px;
+}
+
+.rich-text-viewer {
+  box-sizing: border-box;
+  width: 100%;
+  max-height: 403px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.rich-text-viewer .rich-text-content {
+  min-height: 0;
+}

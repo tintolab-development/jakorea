@@ -6,11 +6,16 @@
 
 import type { ProgramFile, UUID } from '../../types'
 import { mockPrograms } from './programs'
-import { mockProgramPosts } from './program-posts'
+import {
+  GENERAL_PARTICIPATING_SCHOOLS_PROGRAM_ID,
+  mockProgramPosts,
+  UJAT_EDUCATION_IN_PROGRESS_PROGRAM_ID,
+} from './program-posts'
 
 /** HSBC/HKU Business Case Competition 2026 + 강서초등학교 게시글 첨부파일 */
 const HSBC_ECONOMY_PROGRAM_ID = 'economy-prog-001' as UUID
 const POST_HSBC_GS_002 = 'post-hsbc-gs-002' as UUID
+const POST_GENERAL_ORG_SCHOOL1_002 = 'post-general-org-school1-002' as UUID
 
 function date(daysAgo: number): string {
   const d = new Date()
@@ -88,6 +93,195 @@ function buildFiles(): ProgramFile[] {
     }
   })
 
+  // UJAT — 시안용 명시 첨부 (자동 생성 파일 대체)
+  const UJAT_PROGRAM_ID = 'ujat-progress-education-in-progress' as UUID
+  const ujatExplicitPostIds = new Set<UUID>([
+    'post-ujat-gwangju-jinwol-2',
+    'post-ujat-gwangju-jinwol-4',
+    'post-ujat-gwangju-jinwol-5',
+    'post-ujat-seoul-5-1',
+    'post-ujat-seoul-3-1',
+    'post-ujat-seoul-4-2',
+    'post-ujat-seoul-2-2',
+  ] as UUID[])
+  const withoutUjatExplicitAutoFiles = files.filter(
+    f => !f.postId || !ujatExplicitPostIds.has(f.postId)
+  )
+  files.length = 0
+  files.push(...withoutUjatExplicitAutoFiles)
+
+  const ujatGwangjuLectureAt = new Date(2026, 0, 10, 10, 0, 0).toISOString()
+  const ujatGwangjuVolunteerAt = new Date(2026, 0, 3, 16, 30, 0).toISOString()
+  const ujatGwangjuScheduleAt = new Date(2025, 11, 20, 11, 0, 0).toISOString()
+  const ujatSeoul5NoticeAt = new Date(2026, 0, 14, 14, 0, 0).toISOString()
+  const ujatSeoul3NoticeAt = new Date(2026, 0, 12, 14, 0, 0).toISOString()
+  const ujatSeoul4VolunteerAt = new Date(2026, 0, 14, 9, 30, 0).toISOString()
+  const ujatSeoul2NoticeAt = new Date(2026, 0, 6, 10, 0, 0).toISOString()
+
+  files.push(
+    {
+      id: 'pfile-ujat-gwangju-001' as UUID,
+      programId: UJAT_PROGRAM_ID,
+      postId: 'post-ujat-gwangju-jinwol-2' as UUID,
+      fileName: '(2026) JA Korea 초등 경제교육 강사단 지침 및 일정표',
+      fileType: 'pdf',
+      fileSize: 18 * 1024 * 1024,
+      fileUrl: '#mock-file-ujat-gwangju-001',
+      uploadedAt: ujatGwangjuLectureAt,
+      createdAt: ujatGwangjuLectureAt,
+      updatedAt: ujatGwangjuLectureAt,
+    },
+    {
+      id: 'pfile-ujat-gwangju-002' as UUID,
+      programId: UJAT_PROGRAM_ID,
+      postId: 'post-ujat-gwangju-jinwol-2' as UUID,
+      fileName: '2회차 강의 자료_모의 면접 체크리스트',
+      fileType: 'xlsx',
+      fileSize: 2 * 1024 * 1024,
+      fileUrl: '#mock-file-ujat-gwangju-002',
+      uploadedAt: ujatGwangjuLectureAt,
+      createdAt: ujatGwangjuLectureAt,
+      updatedAt: ujatGwangjuLectureAt,
+    },
+    {
+      id: 'pfile-ujat-gwangju-003' as UUID,
+      programId: UJAT_PROGRAM_ID,
+      postId: 'post-ujat-gwangju-jinwol-4' as UUID,
+      fileName: '4월 17일 학급 이동 동선 안내도',
+      fileType: 'png',
+      fileSize: 840 * 1024,
+      fileUrl: '#mock-file-ujat-gwangju-003',
+      uploadedAt: ujatGwangjuVolunteerAt,
+      createdAt: ujatGwangjuVolunteerAt,
+      updatedAt: ujatGwangjuVolunteerAt,
+    },
+    {
+      id: 'pfile-ujat-gwangju-004' as UUID,
+      programId: UJAT_PROGRAM_ID,
+      postId: 'post-ujat-gwangju-jinwol-5' as UUID,
+      fileName: '진월초등학교_4월 교육 일정표',
+      fileType: 'pdf',
+      fileSize: 3 * 1024 * 1024,
+      fileUrl: '#mock-file-ujat-gwangju-004',
+      uploadedAt: ujatGwangjuScheduleAt,
+      createdAt: ujatGwangjuScheduleAt,
+      updatedAt: ujatGwangjuScheduleAt,
+    },
+    {
+      id: 'pfile-ujat-seoul5-001' as UUID,
+      programId: UJAT_PROGRAM_ID,
+      postId: 'post-ujat-seoul-5-1' as UUID,
+      fileName: '서울신동초_1학기 교육 안내문',
+      fileType: 'pdf',
+      fileSize: 12 * 1024 * 1024,
+      fileUrl: '#mock-file-ujat-seoul5-001',
+      uploadedAt: ujatSeoul5NoticeAt,
+      createdAt: ujatSeoul5NoticeAt,
+      updatedAt: ujatSeoul5NoticeAt,
+    },
+    {
+      id: 'pfile-ujat-seoul5-002' as UUID,
+      programId: UJAT_PROGRAM_ID,
+      postId: 'post-ujat-seoul-5-1' as UUID,
+      fileName: '교재 배송 확인서_서울신동초',
+      fileType: 'xlsx',
+      fileSize: 1 * 1024 * 1024,
+      fileUrl: '#mock-file-ujat-seoul5-002',
+      uploadedAt: ujatSeoul5NoticeAt,
+      createdAt: ujatSeoul5NoticeAt,
+      updatedAt: ujatSeoul5NoticeAt,
+    },
+    {
+      id: 'pfile-ujat-seoul3-001' as UUID,
+      programId: UJAT_PROGRAM_ID,
+      postId: 'post-ujat-seoul-3-1' as UUID,
+      fileName: '서울숭인초_교육 일정표_2026_1학기',
+      fileType: 'pdf',
+      fileSize: 5 * 1024 * 1024,
+      fileUrl: '#mock-file-ujat-seoul3-001',
+      uploadedAt: ujatSeoul3NoticeAt,
+      createdAt: ujatSeoul3NoticeAt,
+      updatedAt: ujatSeoul3NoticeAt,
+    },
+    {
+      id: 'pfile-ujat-seoul4-001' as UUID,
+      programId: UJAT_PROGRAM_ID,
+      postId: 'post-ujat-seoul-4-2' as UUID,
+      fileName: '1회차 수업_학급별 인원 현황',
+      fileType: 'xls',
+      fileSize: 512 * 1024,
+      fileUrl: '#mock-file-ujat-seoul4-001',
+      uploadedAt: ujatSeoul4VolunteerAt,
+      createdAt: ujatSeoul4VolunteerAt,
+      updatedAt: ujatSeoul4VolunteerAt,
+    },
+    {
+      id: 'pfile-ujat-seoul2-001' as UUID,
+      programId: UJAT_PROGRAM_ID,
+      postId: 'post-ujat-seoul-2-2' as UUID,
+      fileName: '프로그램 참여 신청 서류 안내',
+      fileType: 'pdf',
+      fileSize: 2 * 1024 * 1024,
+      fileUrl: '#mock-file-ujat-seoul2-001',
+      uploadedAt: ujatSeoul2NoticeAt,
+      createdAt: ujatSeoul2NoticeAt,
+      updatedAt: ujatSeoul2NoticeAt,
+    }
+  )
+
+  // 일반 프로그램 참여 기관 상세 — 강서초등학교 게시글·파일 사이드바 시안
+  const generalOrgUploadedAt = new Date(2026, 0, 15, 10, 0, 0).toISOString()
+  const generalOrgVolunteerAt = new Date(2026, 5, 21, 14, 0, 0).toISOString()
+  const generalOrgExcelAt = new Date(2026, 5, 12, 11, 0, 0).toISOString()
+  files.push(
+    {
+      id: 'pfile-general-org-001' as UUID,
+      programId: GENERAL_PARTICIPATING_SCHOOLS_PROGRAM_ID,
+      postId: POST_GENERAL_ORG_SCHOOL1_002,
+      fileName: '(2026) JA Korea 경제금융교육 강사단 지침 및 일정표',
+      fileType: 'pdf',
+      fileSize: 18 * 1024 * 1024,
+      fileUrl: '#mock-file-general-org-001',
+      uploadedAt: generalOrgUploadedAt,
+      createdAt: generalOrgUploadedAt,
+      updatedAt: generalOrgUploadedAt,
+    },
+    {
+      id: 'pfile-general-org-002' as UUID,
+      programId: GENERAL_PARTICIPATING_SCHOOLS_PROGRAM_ID,
+      postId: POST_GENERAL_ORG_SCHOOL1_002,
+      fileName: '2회차 강의 자료_모의 면접 체크리스트',
+      fileType: 'xlsx',
+      fileSize: 2 * 1024 * 1024,
+      fileUrl: '#mock-file-general-org-002',
+      uploadedAt: new Date(2026, 0, 10, 10, 0, 0).toISOString(),
+      createdAt: new Date(2026, 0, 10, 10, 0, 0).toISOString(),
+      updatedAt: new Date(2026, 0, 10, 10, 0, 0).toISOString(),
+    },
+    {
+      id: 'pfile-general-org-003' as UUID,
+      programId: GENERAL_PARTICIPATING_SCHOOLS_PROGRAM_ID,
+      fileName: '6월 자원봉사자 프로그램 참여자 모집 안내',
+      fileType: 'png',
+      fileSize: 3 * 1024 * 1024,
+      fileUrl: '#mock-file-general-org-003',
+      uploadedAt: generalOrgVolunteerAt,
+      createdAt: generalOrgVolunteerAt,
+      updatedAt: generalOrgVolunteerAt,
+    },
+    {
+      id: 'pfile-general-org-004' as UUID,
+      programId: GENERAL_PARTICIPATING_SCHOOLS_PROGRAM_ID,
+      fileName: '엑셀 (Excel) 활동 샘플',
+      fileType: 'xls',
+      fileSize: 1 * 1024 * 1024,
+      fileUrl: '#mock-file-general-org-004',
+      uploadedAt: generalOrgExcelAt,
+      createdAt: generalOrgExcelAt,
+      updatedAt: generalOrgExcelAt,
+    }
+  )
+
   // HSBC/HKU Business Case Competition 2026 모집 안내_강서초등학교 — 김틴토 강사님 게시글 첨부 2개
   const hsbcUploadedAt = new Date(2026, 0, 10, 10, 0, 0).toISOString()
   files.push(
@@ -134,7 +328,15 @@ byProgramId.forEach(list =>
 
 /** 프로그램 ID로 파일 목록 조회 (최신순) */
 export function getProgramFilesByProgramId(programId: UUID): ProgramFile[] {
-  return (byProgramId.get(programId) ?? []).slice()
+  const list = byProgramId.get(programId) ?? []
+  if (list.length > 0) return list.slice()
+  if (programId.startsWith('general-prog')) {
+    return (byProgramId.get(GENERAL_PARTICIPATING_SCHOOLS_PROGRAM_ID) ?? []).slice()
+  }
+  if (programId.startsWith('ujat-progress-')) {
+    return (byProgramId.get(UJAT_EDUCATION_IN_PROGRESS_PROGRAM_ID) ?? []).slice()
+  }
+  return []
 }
 
 export const mockProgramFilesMap = new Map(mockProgramFiles.map(f => [f.id, f]))

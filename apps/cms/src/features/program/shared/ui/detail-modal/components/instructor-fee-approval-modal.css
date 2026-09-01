@@ -1,0 +1,226 @@
+/**
+ * 강사비 책정 및 승인 안내 — 600×474 시안
+ */
+
+.instructor-fee-approval-modal.teal-header-modal.ant-modal {
+  max-width: 600px;
+}
+
+.instructor-fee-approval-modal.content-modal.ant-modal .ant-modal-content,
+.instructor-fee-approval-modal.teal-header-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  box-sizing: border-box;
+  width: 600px !important;
+  max-width: 600px;
+  min-height: 474px;
+  height: 474px;
+  padding: 24px 30px 24px !important;
+  border-radius: var(--16, 16px);
+  background: #fff;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35) !important;
+  overflow: visible !important;
+}
+
+.instructor-fee-approval-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  width: 100%;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+.instructor-fee-approval-modal .teal-header-modal__header {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 100%;
+  height: auto;
+  min-height: 36px;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+}
+
+.instructor-fee-approval-modal .teal-header-modal__title {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 24px;
+  line-height: 150%;
+}
+
+.instructor-fee-approval-modal .teal-header-modal__close {
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+.instructor-fee-approval-modal .teal-header-modal__body {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 0 !important;
+  align-items: stretch;
+  min-height: 0;
+  overflow: visible;
+}
+
+.instructor-fee-approval-modal.content-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 0 !important;
+}
+
+.instructor-fee-approval-modal .content-modal__description {
+  margin: 0;
+  align-self: stretch;
+  width: 100%;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.instructor-fee-approval-modal__content {
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+  align-self: stretch;
+  width: 100%;
+}
+
+.instructor-fee-approval-modal__field {
+  display: flex;
+  flex-direction: column;
+}
+
+.instructor-fee-approval-modal__field + .instructor-fee-approval-modal__field {
+  margin-top: 24px;
+}
+
+.instructor-fee-approval-modal__label {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  padding: 0 8px;
+  margin-bottom: 6px;
+}
+
+.instructor-fee-approval-modal__radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding-left: 8px;
+}
+
+.instructor-fee-approval-modal__program-select {
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 12px;
+}
+
+.instructor-fee-approval-modal__program-select.cms-select--explicit-width {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+.instructor-fee-approval-modal__amount-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 12px;
+}
+
+.instructor-fee-approval-modal__measure-select {
+  flex: 0 0 140px;
+  min-width: 140px;
+  max-width: 140px;
+}
+
+.instructor-fee-approval-modal__amount-field {
+  display: flex;
+  flex: 1 1 0;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.instructor-fee-approval-modal__amount-input {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.instructor-fee-approval-modal__amount-input.cms-input--explicit-width {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+.instructor-fee-approval-modal__amount-unit {
+  flex-shrink: 0;
+  overflow: hidden;
+  color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.instructor-fee-approval-modal__field-error {
+  display: block;
+  margin-top: 8px;
+  padding-left: 8px;
+  font-size: 14px;
+  color: var(--color-red, #ff4d4f);
+}
+
+.instructor-fee-approval-modal__manual-anchor {
+  display: inline-flex;
+  align-items: center;
+}
+
+.instructor-fee-approval-modal__manual-summary {
+  color: var(--color-text-secondary, #595959);
+  font-weight: 400;
+}
+
+.instructor-fee-approval-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 100%;
+  margin-top: 30px;
+  padding: 0 !important;
+  background: transparent;
+  justify-content: flex-end;
+}
+
+.instructor-fee-approval-modal.content-modal .teal-header-modal__footer {
+  margin-top: 30px;
+}
+
+.instructor-fee-approval-modal .content-modal__footer-actions {
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.ant-modal-wrap:has(.instructor-fee-approval-modal) {
+  overflow: visible;
+}
+
+.ant-modal-wrap:has(.instructor-fee-approval-modal) .ant-modal {
+  overflow: visible;
+}

@@ -1,0 +1,122 @@
+.root {
+  position: relative;
+  display: inline-flex;
+  max-width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.trigger {
+  display: flex;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: 100%;
+  height: 48px;
+  align-items: center;
+  gap: var(--spacing-20);
+  padding: 0 var(--spacing-16) 0 var(--spacing-20);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-warm-100);
+  color: var(--color-neutral-black);
+  cursor: pointer;
+}
+
+.trigger:hover {
+  filter: brightness(0.98);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.label {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  color: var(--color-neutral-black);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icon {
+  display: block;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  aspect-ratio: 1 / 1;
+  transition: transform 0.15s ease;
+}
+
+.iconOpen {
+  transform: rotate(180deg);
+}
+
+.panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + var(--spacing-8));
+  right: 0;
+  display: flex;
+  width: max(100%, 320px);
+  max-width: min(360px, 100vw - 32px);
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: var(--spacing-8);
+  list-style: none;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white);
+  box-shadow: 0 4px 12px 0 rgb(34 64 77 / 10%);
+}
+
+.panelItem {
+  min-width: 0;
+  width: 100%;
+}
+
+.fileLink {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-16);
+  overflow: hidden;
+  border-radius: var(--radius-12);
+  background: transparent;
+  color: var(--color-neutral-black);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.fileLink:hover {
+  background: var(--color-neutral-warm-100);
+}
+
+.fileLink:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: -2px;
+}
+
+.fileName {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  color: var(--color-neutral-black);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.downloadIcon {
+  display: block;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  aspect-ratio: 1 / 1;
+}

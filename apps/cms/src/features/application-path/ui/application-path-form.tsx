@@ -5,12 +5,14 @@
 /* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
 import React from 'react'
-import { Form, Select, Input, Button, Space, Switch } from 'antd'
+import { Form, Select, Input, Space, Switch } from 'antd'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { applicationPathSchema, type ApplicationPathFormData } from '@/entities/application-path/model/schema'
 import type { ApplicationPath } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
+import { fieldValidationHelp } from '@/shared/utils/error-handler'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -25,37 +27,31 @@ interface ApplicationPathFormProps {
 
 const pathTypeLabels: Record<ApplicationPath['pathType'], string> = {
   google_form: '구글폼',
-  internal: '자동화 프로그램',
-}
+  internal: '자동화 프로그램' }
 
 export function ApplicationPathForm({
   path,
   onSubmit,
   onCancel,
   loading,
-  fixedProgramId,
-}: ApplicationPathFormProps) {
+  fixedProgramId }: ApplicationPathFormProps) {
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
-  } = useForm<ApplicationPathFormData>({
+    watch } = useForm<ApplicationPathFormData>({
     resolver: zodResolver(applicationPathSchema),
     defaultValues: path
       ? {
           programId: path.programId,
           pathType: path.pathType,
           googleFormUrl: path.googleFormUrl || '',
-          guideMessage: path.guideMessage || '',
-          isActive: path.isActive,
-        }
+          guideText: path.guideText || '',
+          isActive: path.isActive }
       : {
           programId: fixedProgramId || '',
-          isActive: true,
-        },
-  })
+          isActive: true } })
 
   // fixedProgramId가 있으면 초기값 설정
   React.useEffect(() => {
@@ -80,7 +76,7 @@ export function ApplicationPathForm({
       <Form.Item
         label="프로그램"
         validateStatus={errors.programId ? 'error' : ''}
-        help={errors.programId?.message}
+        help={fieldValidationHelp(errors.programId)}
         required
       >
         <Select
@@ -102,7 +98,7 @@ export function ApplicationPathForm({
       <Form.Item
         label="신청 경로"
         validateStatus={errors.pathType ? 'error' : ''}
-        help={errors.pathType?.message}
+        help={fieldValidationHelp(errors.pathType)}
         required
       >
         <Select
@@ -125,7 +121,7 @@ export function ApplicationPathForm({
         <Form.Item
           label="구글폼 링크"
           validateStatus={errors.googleFormUrl ? 'error' : ''}
-          help={errors.googleFormUrl?.message}
+          help={fieldValidationHelp(errors.googleFormUrl)}
           required
         >
           <Input
@@ -138,11 +134,11 @@ export function ApplicationPathForm({
 
       <Form.Item
         label="안내 문구"
-        validateStatus={errors.guideMessage ? 'error' : ''}
-        help={errors.guideMessage?.message}
+        validateStatus={errors.guideText ? 'error' : ''}
+        help={fieldValidationHelp(errors.guideText)}
       >
         <TextArea
-          {...register('guideMessage')}
+          {...register('guideText')}
           rows={4}
           placeholder="신청 경로별 안내 문구를 입력하세요"
         />
@@ -162,10 +158,12 @@ export function ApplicationPathForm({
 
       <Form.Item>
         <Space>
-          <Button type="primary" htmlType="submit" loading={loading}>
+          <CmsButton type="submit" loading={loading}>
             {path ? '수정' : '등록'}
-          </Button>
-          <Button onClick={onCancel}>취소</Button>
+          </CmsButton>
+          <CmsButton variant="secondary" onClick={onCancel}>
+            취소
+          </CmsButton>
         </Space>
       </Form.Item>
     </Form>

@@ -8,6 +8,8 @@ import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
 
 export type MembersPermissionTableContext = {
   memberType: 'instructor' | 'admin'
+  /** remote 목록 — keyword·승인현황은 서버 필터, 클라이언트 filterFn에서 제외 */
+  remoteEnabled?: boolean
 }
 
 type ApprovalStatusFilter = MemberPermissionApplicationRow['approvalStatus'] | 'ALL'
@@ -44,7 +46,8 @@ const tanstackColumns: ColumnDef<MemberPermissionApplicationRow>[] = [
 function filterRowsBySearchParams(
   data: MemberPermissionApplicationRow[],
   searchParams: URLSearchParams,
-  memberType: MembersPermissionTableContext['memberType']
+  memberType: MembersPermissionTableContext['memberType'],
+  remoteEnabled?: boolean
 ): MemberPermissionApplicationRow[] {
   const p = urlPrefix(memberType)
   const q = (searchParams.get(`${p}_search`) ?? '').trim().toLowerCase()
@@ -55,13 +58,13 @@ function filterRowsBySearchParams(
   const toStr = searchParams.get(`${p}_to`)
 
   let list = data
-  if (q) {
+  if (!remoteEnabled && q) {
     list = list.filter(r => r.name.toLowerCase().includes(q))
   }
   if (role !== 'ALL') {
     list = list.filter(r => r.memberCategory === role)
   }
-  if (approvalStatus !== 'ALL') {
+  if (!remoteEnabled && approvalStatus !== 'ALL') {
     list = list.filter(r => r.approvalStatus === approvalStatus)
   }
   if (fromStr && toStr) {
@@ -206,7 +209,12 @@ export const membersPermissionTablePageConfig: TablePageConfig<
   },
 
   filterFn: ({ context, data, searchParams }) => {
-    const filtered = filterRowsBySearchParams(data, searchParams, context.memberType)
+    const filtered = filterRowsBySearchParams(
+      data,
+      searchParams,
+      context.memberType,
+      context.remoteEnabled
+    )
     return { dataForTable: filtered, filteredData: filtered }
   },
 

@@ -1,0 +1,61 @@
+.filter-table-layout.general-volunteer-interview2__filter-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.general-volunteer-interview2__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.general-volunteer-interview2__toolbar-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.general-volunteer-interview2__toolbar-title {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.general-volunteer-interview2__toolbar-count {
+  color: var(--sub-BK, #767676);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.general-volunteer-interview2__table-wrap .general-volunteer-interview2__score-value {
+  color: var(--color-mint-01, #01a1af);
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.general-volunteer-interview2__calendar-container {
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+.general-volunteer-interview2__calendar-container:has(.calendar-week--time-grid) {
+  min-width: var(--calendar-split-card-min-width-week);
+  flex-shrink: 0;
+}
+
+.general-volunteer-interview2:has(.general-volunteer-interview2__calendar-container) {
+  overflow-x: visible;
+}
+
+.general-volunteer-interview2:has(.calendar-week--time-grid) {
+  overflow-x: visible;
+}
