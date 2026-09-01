@@ -4,6 +4,9 @@ export type {
   EducationApplicationListItem,
   EducationDisplayStatus,
   EducationDisplayStatusTone,
+  EducationWithdrawalPhase,
+  EducationActivitySection,
+  EducationDetailTabItem,
 } from './applications'
 export {
   EDUCATION_APPLICATION_PAGE_SIZE,
@@ -26,6 +29,13 @@ export {
   getEducationDisplayStatusTone,
   resolveEducationApplicationTab,
   canShowEducationApplicationContent,
+  isWithdrawnBeforeEducation,
+  isWithdrawnDuringEducation,
+  resolveEducationWithdrawalPhase,
+  filterItemsUpToLastParticipatedSession,
+  buildInProgressDetailTabItems,
+  buildWithdrawnDuringDetailTabItems,
+  resolveEducationScheduleTabLabel,
   DEFAULT_EDUCATION_APPLICATION_LIST_PARAMS,
   buildEducationApplicationListPath,
   readEducationApplicationListParams,
@@ -56,3 +66,25 @@ export {
   EducationInProgressNoticeDetailModal,
   EducationNoticeStats,
 } from './notices'
+export type {
+  EducationAssignmentSubmitStatus,
+  EducationScheduleAssignment,
+  EducationScheduleAssignmentFile,
+  EducationScheduleAssignmentSubmissionKind,
+  EducationScheduleAttendanceStatus,
+  EducationScheduleItem,
+  EducationScheduleProgressStatus,
+} from './schedules'
+export {
+  EDUCATION_SCHEDULE_PAGE_SIZE,
+  canSubmitEducationAbsenceReason,
+  EDUCATION_SCHEDULE_ATTENDANCE_LABEL,
+  EDUCATION_SCHEDULE_PROGRESS_LABEL,
+  resolveEducationAssignmentGuide,
+  resolveEducationScheduleProgressStatus,
+  shouldShowEducationAssignment,
+  formatEducationScheduleHeldAt,
+  getMockEducationSchedules,
+  EducationSchedulePanel,
+  EducationScheduleRow,
+} from './schedules'
