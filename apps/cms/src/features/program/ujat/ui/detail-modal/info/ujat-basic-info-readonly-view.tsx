@@ -60,7 +60,10 @@ export function UjatBasicInfoReadonlyView({
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="프로그램 관리명" view={display.programManagementName} />
-          <DetailInfoForm.Field label="세부 프로그램명" view={display.detailedProgramName} />
+          <DetailInfoForm.Field label="공고용 프로그램명" view={display.publicProgramTitle} />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field label="세부 프로그램명" fullRow view={display.detailedProgramName} />
         </DetailInfoForm.Row>
       </DetailInfoForm>
 

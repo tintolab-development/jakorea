@@ -42,7 +42,7 @@ const env = {
     ...process.env,
 }
 
-const base = (env.VITE_API_SERVER ?? 'https://4c95-183-102-114-192.ngrok-free.app').replace(
+const base = (env.VITE_API_SERVER ?? 'https://d3r1iaa0sy4tcq.cloudfront.net').replace(
     /\/+$/,
     ''
 )

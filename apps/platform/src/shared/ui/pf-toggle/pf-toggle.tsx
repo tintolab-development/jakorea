@@ -1,8 +1,8 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
-import checkOffLargeUrl from '@/shared/assets/icons/check-off-large.svg'
-import checkOffSmallUrl from '@/shared/assets/icons/check-off-small.svg'
-import checkOnLargeUrl from '@/shared/assets/icons/check-on-large.svg'
-import checkOnSmallUrl from '@/shared/assets/icons/check-on-small.svg'
+import checkGrayLargeUrl from '@/shared/assets/icons/check-gray-large.svg'
+import checkGraySmallUrl from '@/shared/assets/icons/check-gray-small.svg'
+import checkDarkMintLargeUrl from '@/shared/assets/icons/check-dark-mint-large.svg'
+import checkMintSmallUrl from '@/shared/assets/icons/check-mint-small.svg'
 import { PFText } from '../pf-text/pf-text'
 import styles from './pf-toggle.module.css'
 
@@ -43,13 +43,13 @@ const variantClassNameMap = {
 
 const iconMap = {
   'check-large': {
-    on: checkOnLargeUrl,
-    off: checkOffLargeUrl,
+    on: checkDarkMintLargeUrl,
+    off: checkGrayLargeUrl,
     className: styles.iconCheckLarge,
   },
   'check-small': {
-    on: checkOnSmallUrl,
-    off: checkOffSmallUrl,
+    on: checkMintSmallUrl,
+    off: checkGraySmallUrl,
     className: styles.iconCheckSmall,
   },
 } as const

@@ -32,8 +32,28 @@ import {
   buildGeneralOrgScheduleSingleProgramSeedFields,
   GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_EDU_IPS_PER_SCHEDULE_ID,
   GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_ID,
+  GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_IPS_PRE_EDU_ID,
+  GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_PERIOD_ID,
+  GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_DATE_ONE_DAY_ID,
   GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID,
+  GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_IPS_PRE_EDU_ID,
+  GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_PERIOD_ID,
+  GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_IPS_PRE_EDU_ID,
+  GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_DATE_ONE_DAY_ID,
   GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_ID,
+  GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_IPS_PRE_EDU_ID,
+  GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_NO_GROUPS_ID,
+  GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_PERIOD_ID,
+  GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_IPS_PRE_EDU_COMMON_INFO_MOCK,
+  GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_PERIOD_COMMON_INFO_MOCK,
+  GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_DATE_ONE_DAY_COMMON_INFO_MOCK,
+  GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_IPS_PRE_EDU_COMMON_INFO_MOCK,
+  GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_PERIOD_COMMON_INFO_MOCK,
+  GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_IPS_PRE_EDU_COMMON_INFO_MOCK,
+  GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_DATE_ONE_DAY_COMMON_INFO_MOCK,
+  GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_IPS_PRE_EDU_COMMON_INFO_MOCK,
+  GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_NO_GROUPS_COMMON_INFO_MOCK,
+  GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_PERIOD_COMMON_INFO_MOCK,
 } from '@/features/program/general/lib/detail-common-info-display'
 import {
   mockApplicationPeriod,
@@ -561,6 +581,7 @@ function buildIndividualTypeCommonInfo(
           '2026년 4월 20일(월) 09:30 ~ 12:20',
           '2026년 4월 27일(월) 13:00 ~ 15:50',
         ],
+        educationScheduleMode: 'date' as const,
       }
     }
     return {
@@ -583,6 +604,7 @@ function buildIndividualTypeCommonInfo(
         '2026년 4월 27일(월) 09:30 ~ 12:20',
         '2026년 4월 27일(월) 13:00 ~ 15:50',
       ],
+      educationScheduleMode: 'date',
     }
   }
 
@@ -611,6 +633,7 @@ function buildIndividualTypeCommonInfo(
         '2026년 4월 20일(월) 9:30 ~ 12:20',
         '2026년 4월 27일(월) 13:00 ~ 15:50',
       ],
+      educationScheduleMode: 'date',
     }
   }
 
@@ -634,6 +657,7 @@ function buildIndividualTypeCommonInfo(
       '2026년 4월 20일(월) 9:30 ~ 12:20',
       '2026년 4월 27일(월) 13:00 ~ 15:50',
     ],
+    educationScheduleMode: 'date',
   }
 }
 
@@ -920,6 +944,156 @@ function buildOrgCurriculumMultiEduIpsPerScheduleSeed(): GeneralProgramSeed {
   }
 }
 
+type ScheduleGapSeedSpec = {
+  id: string
+  row: number
+  titleSuffix: string
+  educationStructure: GeneralProgramEducationStructure
+  sessionRound: GeneralProgramSessionRoundKind
+  commonInfo: NonNullable<Program['generalCommonInfo']>
+}
+
+function buildScheduleGapTypeSeed(spec: ScheduleGapSeedSpec): GeneralProgramSeed {
+  const variant: GeneralProgramVariant = {
+    audience: 'organization',
+    educationStructure: spec.educationStructure,
+    sessionRound: spec.sessionRound,
+  }
+  const variantTitle = buildGeneralProgramVariantTitle(variant)
+  const kpi = spec.commonInfo.kpi
+  return {
+    id: spec.id,
+    capacity: 30,
+    sponsorId: SPONSOR_ID,
+    title: formatTypeCaseTitle(spec.row, `${variantTitle} · ${spec.titleSuffix}`),
+    mainTitle: '한국씨티은행-JA Korea 특별한 JOB담',
+    titleEn: 'Shining Future',
+    type: 'online',
+    format: spec.educationStructure === 'schedule' ? 'workshop' : 'course',
+    category: 'school' as ProgramCategory,
+    description: `유형 mock — ${variantTitle} (${spec.titleSuffix})`,
+    startDate: '2025-12-08T00:00:00+09:00',
+    endDate: '2026-12-30T23:59:59+09:00',
+    ...mockApplicationPeriod('closed', 2),
+    status: 'active',
+    lifecycleStatus: 'education_in_progress' as ProgramLifecycleStatus,
+    businessArea: '진로취업',
+    targetLevel: 'high' as TargetLevel,
+    approvedStudentCount: kpi?.finalParticipants ?? 30,
+    instructors: kpi?.instructorCount ?? 80,
+    instructorCapacity: kpi?.instructorCount ?? 80,
+    generalVolunteers: kpi?.volunteerCount ?? 80,
+    participatingSchoolCount: kpi?.finalSchools ?? 100,
+    scheduleTimeEnabled: false,
+    institutionType: 'inside_school',
+    educationProcess: 'Traditional (Paper)',
+    ipOwned: 'Jointly',
+    courseDeliveredBy: 'JA',
+    partnerInvolvement: false,
+    ips: 'Prepare',
+    createdAt: '2025-12-08T09:15:00+09:00',
+    updatedAt: '2025-12-08T17:55:00+09:00',
+    createdByName: '홍길동',
+    updatedByName: '이순신',
+    generalParticipantTypes: [
+      ...FULL_LNB_PARTICIPANT_TYPES.organization,
+    ] as GeneralProgramParticipantType[],
+    generalVolunteerInterviewEnabled: true,
+    interviewStartDate: getDate(48),
+    interviewEndDate: getDate(38),
+    interviewMethod: '대면 면접',
+    generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
+    generalProgramAudience: variant.audience,
+    generalProgramEducationStructure: variant.educationStructure,
+    generalProgramSessionRound: variant.sessionRound,
+    sessionRoundForRounds: variant.sessionRound,
+    generalCommonInfo: spec.commonInfo,
+  }
+}
+
+const SCHEDULE_GAP_TYPE_SEEDS: GeneralProgramSeed[] = [
+  buildScheduleGapTypeSeed({
+    id: GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_DATE_ONE_DAY_ID,
+    row: 25,
+    titleSuffix: '날짜 지정 1일',
+    educationStructure: 'curriculum',
+    sessionRound: 'single',
+    commonInfo: GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_DATE_ONE_DAY_COMMON_INFO_MOCK,
+  }),
+  buildScheduleGapTypeSeed({
+    id: GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_PERIOD_ID,
+    row: 26,
+    titleSuffix: '기간 지정',
+    educationStructure: 'curriculum',
+    sessionRound: 'single',
+    commonInfo: GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_PERIOD_COMMON_INFO_MOCK,
+  }),
+  buildScheduleGapTypeSeed({
+    id: GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_PERIOD_ID,
+    row: 27,
+    titleSuffix: '기간 지정',
+    educationStructure: 'curriculum',
+    sessionRound: 'multi',
+    commonInfo: GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_PERIOD_COMMON_INFO_MOCK,
+  }),
+  buildScheduleGapTypeSeed({
+    id: GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_PERIOD_ID,
+    row: 28,
+    titleSuffix: '기간 지정',
+    educationStructure: 'schedule',
+    sessionRound: 'single',
+    commonInfo: GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_PERIOD_COMMON_INFO_MOCK,
+  }),
+  buildScheduleGapTypeSeed({
+    id: GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_DATE_ONE_DAY_ID,
+    row: 29,
+    titleSuffix: '날짜 지정 1일',
+    educationStructure: 'schedule',
+    sessionRound: 'single',
+    commonInfo: GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_DATE_ONE_DAY_COMMON_INFO_MOCK,
+  }),
+  buildScheduleGapTypeSeed({
+    id: GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_NO_GROUPS_ID,
+    row: 30,
+    titleSuffix: '진행 그룹 없음',
+    educationStructure: 'schedule',
+    sessionRound: 'single',
+    commonInfo: GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_NO_GROUPS_COMMON_INFO_MOCK,
+  }),
+  buildScheduleGapTypeSeed({
+    id: GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_IPS_PRE_EDU_ID,
+    row: 31,
+    titleSuffix: 'IPS 일정 별 상이·사전 교육',
+    educationStructure: 'curriculum',
+    sessionRound: 'single',
+    commonInfo: GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_IPS_PRE_EDU_COMMON_INFO_MOCK,
+  }),
+  buildScheduleGapTypeSeed({
+    id: GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_IPS_PRE_EDU_ID,
+    row: 32,
+    titleSuffix: 'IPS 일정 별 상이·사전 교육',
+    educationStructure: 'curriculum',
+    sessionRound: 'multi',
+    commonInfo: GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_IPS_PRE_EDU_COMMON_INFO_MOCK,
+  }),
+  buildScheduleGapTypeSeed({
+    id: GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_IPS_PRE_EDU_ID,
+    row: 33,
+    titleSuffix: 'IPS 일정 별 상이·사전 교육',
+    educationStructure: 'schedule',
+    sessionRound: 'single',
+    commonInfo: GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_IPS_PRE_EDU_COMMON_INFO_MOCK,
+  }),
+  buildScheduleGapTypeSeed({
+    id: GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_IPS_PRE_EDU_ID,
+    row: 34,
+    titleSuffix: 'IPS 일정 별 상이·사전 교육',
+    educationStructure: 'schedule',
+    sessionRound: 'multi',
+    commonInfo: GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_IPS_PRE_EDU_COMMON_INFO_MOCK,
+  }),
+]
+
 function buildLnbVolunteerFields(
   matrix: LnbMatrixConfig
 ): Pick<
@@ -1117,6 +1291,7 @@ const GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
   ...REALISTIC_GENERAL_PROGRAM_SEEDS,
   ...TYPE_VARIANT_GENERAL_PROGRAM_SEEDS,
   buildOrgCurriculumMultiEduIpsPerScheduleSeed(),
+  ...SCHEDULE_GAP_TYPE_SEEDS,
   ...LNB_GENERAL_PROGRAM_SEEDS,
 ]
 

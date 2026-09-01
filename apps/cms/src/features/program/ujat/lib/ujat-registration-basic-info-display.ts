@@ -10,8 +10,11 @@ import {
   type UjatSurveyRowId,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
 import {
-  PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
-} from '@/features/template/lib/program-registration-survey-items'
+  readUjatSurveyItems,
+  resolveUjatSurveyItemsText,
+  UJAT_REGISTRATION_SURVEY_ITEM_LABELS,
+  UJAT_SURVEY_MENU_KEY_BY_ITEM,
+} from '@/features/program/ujat/lib/registration-survey-items'
 import {
   readUjatWagePaymentItemValuesFromOverlay,
   resolveUjatWageDeductionLabel,
@@ -32,8 +35,6 @@ import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '@/features/template/u
 
 type OperationRangeSeal = { start?: string | null; end?: string | null } | null
 
-const SURVEY_LABELS: Record<UjatSurveyRowId, string> = PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS
-
 function overlayString(overlay: Record<string, unknown>, key: string): string | undefined {
   const v = overlay[key]
   return typeof v === 'string' ? v : undefined
@@ -44,6 +45,11 @@ function overlayBoolean(overlay: Record<string, unknown>, key: string, fallback:
   return typeof v === 'boolean' ? v : fallback
 }
 
+function overlayNullableNumber(overlay: Record<string, unknown>, key: string): number | undefined {
+  const v = overlay[key]
+  return typeof v === 'number' && Number.isFinite(v) ? v : undefined
+}
+
 function readOperationRangeSeal(overlay: Record<string, unknown>): OperationRangeSeal {
   const v = overlay['ujat.basicInfo.operationRangeSeal']
   if (!v || typeof v !== 'object') return null
@@ -51,28 +57,7 @@ function readOperationRangeSeal(overlay: Record<string, unknown>): OperationRang
 }
 
 function readSurveyItems(overlay: Record<string, unknown>): Record<UjatSurveyRowId, boolean> {
-  const raw = overlay['ujat.basicInfo.surveyItems']
-  if (!raw || typeof raw !== 'object') return createUjatSurveyItemsDefault()
-  const o = raw as Record<string, unknown>
-  const defaults = createUjatSurveyItemsDefault()
-  const legacySatisfaction =
-    o.satisfaction === true ||
-    o.volunteer_satisfaction === true ||
-    o.school_satisfaction === true ||
-    o.student_satisfaction === true ||
-    o.teacher_satisfaction === true
-
-  return {
-    survey: typeof o.survey === 'boolean' ? o.survey : defaults.survey,
-    satisfaction:
-      typeof o.satisfaction === 'boolean'
-        ? o.satisfaction
-        : legacySatisfaction
-          ? true
-          : defaults.satisfaction,
-    lecture_evaluation:
-      typeof o.lecture_evaluation === 'boolean' ? o.lecture_evaluation : defaults.lecture_evaluation,
-  }
+  return readUjatSurveyItems(overlay['ujat.basicInfo.surveyItems'], createUjatSurveyItemsDefault())
 }
 
 function optionLabel(
@@ -139,10 +124,7 @@ function resolveParticipantTypes(overlay: Record<string, unknown>, defaults: Ret
 }
 
 function resolveSurveyItemsText(surveyItems: Record<UjatSurveyRowId, boolean>): string {
-  const labels = (Object.keys(SURVEY_LABELS) as UjatSurveyRowId[])
-    .filter(id => surveyItems[id])
-    .map(id => SURVEY_LABELS[id])
-  return labels.length > 0 ? labels.join(', ') : '-'
+  return resolveUjatSurveyItemsText(surveyItems)
 }
 
 export type UjatSurveyMenuItem = { key: string; label: string }
@@ -155,15 +137,31 @@ export function resolveUjatSurveyMenuItems(program?: Program): UjatSurveyMenuIte
   const items: UjatSurveyMenuItem[] = []
 
   if (surveyItems.survey) {
-    items.push({ key: 'survey-poll', label: SURVEY_LABELS.survey })
+    items.push({
+      key: UJAT_SURVEY_MENU_KEY_BY_ITEM.survey,
+      label: UJAT_REGISTRATION_SURVEY_ITEM_LABELS.survey,
+    })
   }
 
-  if (surveyItems.satisfaction) {
-    items.push({ key: 'survey-satisfaction', label: SURVEY_LABELS.satisfaction })
+  if (surveyItems.volunteer_satisfaction) {
+    items.push({
+      key: UJAT_SURVEY_MENU_KEY_BY_ITEM.volunteer_satisfaction,
+      label: UJAT_REGISTRATION_SURVEY_ITEM_LABELS.volunteer_satisfaction,
+    })
+  }
+
+  if (surveyItems.school_satisfaction) {
+    items.push({
+      key: UJAT_SURVEY_MENU_KEY_BY_ITEM.school_satisfaction,
+      label: UJAT_REGISTRATION_SURVEY_ITEM_LABELS.school_satisfaction,
+    })
   }
 
   if (surveyItems.lecture_evaluation) {
-    items.push({ key: 'survey-lecture-eval', label: SURVEY_LABELS.lecture_evaluation })
+    items.push({
+      key: UJAT_SURVEY_MENU_KEY_BY_ITEM.lecture_evaluation,
+      label: UJAT_REGISTRATION_SURVEY_ITEM_LABELS.lecture_evaluation,
+    })
   }
 
   return items
@@ -173,6 +171,7 @@ export type UjatRegistrationBasicInfoDisplay = {
   repKo: string
   repEn: string
   programManagementName: string
+  publicProgramTitle: string
   detailedProgramName: string
   operationRange: string
   participantTypes: string
@@ -209,6 +208,9 @@ export function resolveUjatRegistrationBasicInfoDisplay(
   const programManagementName =
     overlayString(overlay, 'ujat.basicInfo.programManagementName')?.trim() ||
     defaults.programManagementName
+  const publicProgramTitle =
+    overlayString(overlay, 'ujat.basicInfo.publicProgramTitle')?.trim() ||
+    defaults.publicProgramTitle
   const detailedProgramId =
     overlayString(overlay, 'ujat.basicInfo.detailedProgramId') ?? defaults.detailedProgramId
   const businessField =
@@ -229,17 +231,22 @@ export function resolveUjatRegistrationBasicInfoDisplay(
 
   const operationSeal = readOperationRangeSeal(overlay)
   const surveyItems = readSurveyItems(overlay)
+  const sponsorManager =
+    overlayString(overlay, 'ujat.basicInfo.sponsorManagerName')?.trim() ||
+    program.generalCommonInfo?.sponsorManagerLine?.trim() ||
+    '-'
 
   return {
     repKo,
     repEn,
     programManagementName,
+    publicProgramTitle,
     detailedProgramName: resolveDetailedProgramName(detailedProgramId),
     operationRange: resolveOperationRange(operationSeal, program),
     participantTypes: resolveParticipantTypes(overlay, defaults),
     businessField: optionLabel(TEMPLATE_FORM_BUSINESS_AREA_OPTIONS, businessField),
     sponsorName: resolveSponsorName(sponsorId, sponsorName, sponsors),
-    sponsorManager: '-',
+    sponsorManager,
     surveyItems: resolveSurveyItemsText(surveyItems),
     educationCourse: optionLabel([...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS], educationCourse),
     ipOwned: optionLabel([...TEMPLATE_FORM_IP_OWNED_OPTIONS], ipOwned),
@@ -305,6 +312,21 @@ export function applyUjatRegistrationOverlayToProgram(
   const paymentItemIds = readUjatWagePaymentItemValuesFromOverlay(overlayInput)
   const paymentItemsLabel = ujatPaymentItemLabelsFromIds(paymentItemIds)
   const deductionItemsLabel = resolveUjatWageDeductionLabel(paymentItemIds)
+  const announcementTitle =
+    overlayString(overlayInput, 'ujat.basicInfo.publicProgramTitle')?.trim() ||
+    program.generalCommonInfo?.announcementTitle?.trim() ||
+    title
+  const sponsorManagerLine =
+    overlayString(overlayInput, 'ujat.basicInfo.sponsorManagerName')?.trim() ||
+    program.generalCommonInfo?.sponsorManagerLine
+  const overlayKpi = {
+    finalParticipants: overlayNullableNumber(overlayInput, 'ujat.kpi.participantCount'),
+    instructorCount: overlayNullableNumber(overlayInput, 'ujat.kpi.instructor'),
+    volunteerCount: overlayNullableNumber(overlayInput, 'ujat.kpi.volunteer'),
+    finalSchools: overlayNullableNumber(overlayInput, 'ujat.kpi.dispatchedSchool'),
+    finalClasses: overlayNullableNumber(overlayInput, 'ujat.kpi.dispatchedClass'),
+  }
+  const prevKpi = program.generalCommonInfo?.kpi
 
   return {
     ...program,
@@ -325,8 +347,26 @@ export function applyUjatRegistrationOverlayToProgram(
       ...program.generalCommonInfo,
       paymentItems: paymentItemsLabel,
       deductionItems: deductionItemsLabel,
+      announcementTitle,
+      sponsorManagerLine,
+      kpi: {
+        finalParticipants: overlayKpi.finalParticipants ?? prevKpi?.finalParticipants ?? 0,
+        instructorCount: overlayKpi.instructorCount ?? prevKpi?.instructorCount ?? 0,
+        volunteerCount: overlayKpi.volunteerCount ?? prevKpi?.volunteerCount ?? 0,
+        finalSchools: overlayKpi.finalSchools ?? prevKpi?.finalSchools ?? 0,
+        finalClasses: overlayKpi.finalClasses ?? prevKpi?.finalClasses ?? 0,
+      },
     },
   }
+}
+
+/** 모집 공고용 프로그램명 — 등록 폼 `공고용 프로그램명` 우선 */
+export function resolveUjatAnnouncementTitle(program: Program): string {
+  return (
+    program.generalCommonInfo?.announcementTitle?.trim() ||
+    program.mainTitle?.trim() ||
+    program.title
+  )
 }
 
 export function applyUjatRegistrationTemplateDefaults(program: Program): Program {

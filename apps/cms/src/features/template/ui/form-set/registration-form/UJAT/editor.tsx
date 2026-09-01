@@ -30,6 +30,7 @@ export function UjatProgramRegistrationEditorLeftColumn({
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
       paragraphBodyOptions={vm.paragraphBodyOptions}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
+      hideParagraphRequiredChrome
     />
   )
 }

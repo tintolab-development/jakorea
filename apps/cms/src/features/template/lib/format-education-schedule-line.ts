@@ -161,6 +161,23 @@ export function parseStoredEducationScheduleRange(
   return parsed.isValid() ? [parsed, parsed] : null
 }
 
+/**
+ * 교육 진행 예정일 줄의 고유 달력일 수.
+ * 같은 날 AM/PM 슬롯은 하루로 보고, 기간 줄은 시작일만 센다.
+ */
+export function countUniqueEducationScheduleCalendarDays(
+  lines: readonly string[] | undefined
+): number {
+  if (!lines?.length) return 0
+  const seen = new Set<string>()
+  for (const line of lines) {
+    const range = parseEducationScheduleLineToRange(line)
+    if (!range) continue
+    seen.add(range[0].format('YYYY-MM-DD'))
+  }
+  return seen.size
+}
+
 /** 같은 날 예정일 줄에서 날짜만 중복 없이 추출 (기간 지정 여러 날은 제외) */
 export function uniqueSameDayDatesFromScheduleLines(lines: string[]): Dayjs[] {
   const seen = new Set<string>()
