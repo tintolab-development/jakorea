@@ -111,6 +111,7 @@ import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-err
 import { mockUserHistories } from '@/data/mock/mypage'
 import { revokeInstructorPermission } from '@/entities/user/api/user-service'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
+import { guardAdminAction, resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
 
 const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
 
@@ -1263,9 +1264,17 @@ export function useUserDetailController({
   )
 
   const openJaGradeEvaluation = useCallback(() => {
+    if (
+      !guardAdminAction({
+        roleCode: resolveAdminRoleCodeFromUser(currentUser),
+        action: 'write',
+      })
+    ) {
+      return
+    }
     if (!displayUser || displayUser.role !== 'INSTRUCTOR') return
     setJaGradeEvaluationOpen(true)
-  }, [displayUser])
+  }, [currentUser, displayUser])
 
   const closeJaGradeEvaluation = useCallback(() => {
     setJaGradeEvaluationOpen(false)
@@ -1273,6 +1282,14 @@ export function useUserDetailController({
 
   const completeJaGradeEvaluation = useCallback(
     async ({ grade }: { grade: string; totalScore: number }) => {
+      if (
+        !guardAdminAction({
+          roleCode: resolveAdminRoleCodeFromUser(currentUser),
+          action: 'write',
+        })
+      ) {
+        return
+      }
       if (!displayUser) {
         throw new Error('강사 정보가 없어 평가 등급을 반영할 수 없습니다.')
       }
@@ -1318,6 +1335,7 @@ export function useUserDetailController({
       onMemberBasicInfoSaved?.(mergedUser)
     },
     [
+      currentUser,
       displayUser,
       onMemberBasicInfoSaved,
       patchMemberBasicInfo,
