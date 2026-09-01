@@ -3,8 +3,8 @@ export const settlementQueryKeys = {
   paymentOrders: {
     all: () => [...settlementQueryKeys.all, 'paymentOrders'] as const,
     lists: () => [...settlementQueryKeys.paymentOrders.all(), 'list'] as const,
-    list: (searchParamsKey: string) =>
-      [...settlementQueryKeys.paymentOrders.lists(), searchParamsKey] as const,
+    list: (groupBy: 'program' | 'instructor', searchParamsKey: string) =>
+      [...settlementQueryKeys.paymentOrders.lists(), groupBy, searchParamsKey] as const,
     statements: () => [...settlementQueryKeys.paymentOrders.all(), 'statements'] as const,
     details: () => [...settlementQueryKeys.paymentOrders.all(), 'detail'] as const,
     detail: (type: 'program' | 'instructor', key: string, dateRangeKey = 'all') =>
@@ -20,11 +20,14 @@ export const settlementQueryKeys = {
     details: () => [...settlementQueryKeys.accountPayments.all(), 'detail'] as const,
     detail: (rowId: string) =>
       [...settlementQueryKeys.accountPayments.details(), rowId] as const,
-    settlement: (settlementId: number) =>
-      [...settlementQueryKeys.accountPayments.all(), 'settlement', settlementId] as const,
-    budgetSummary: (year: number) =>
-      [...settlementQueryKeys.accountPayments.all(), 'budgetSummary', year] as const,
-    exports: () => [...settlementQueryKeys.accountPayments.all(), 'exports'] as const,
+    budgetSummary: (year: number, fromDate?: string, toDate?: string) =>
+      [
+        ...settlementQueryKeys.accountPayments.all(),
+        'budgetSummary',
+        year,
+        fromDate ?? '',
+        toDate ?? '',
+      ] as const,
   },
   calendar: {
     all: () => [...settlementQueryKeys.all, 'calendar'] as const,

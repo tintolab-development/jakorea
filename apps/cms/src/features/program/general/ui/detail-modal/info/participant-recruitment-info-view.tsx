@@ -14,7 +14,6 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import {
   parseTargetLevelsSelectValue,
   TARGET_LEVEL_LABEL,
-  INTERVIEW_METHOD_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
@@ -24,20 +23,17 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
-import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
+import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import {
   ProgramDetailContactReadRow,
   ProgramDetailDateMethodReadRow,
-  ProgramDetailInterviewReadRow,
 } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
-import {
-  resolveGeneralProgramParticipantRecruitmentDisplay,
-  resolveParticipantRecruitmentInterviewEnabled,
-} from '@/features/program/general/lib/participant-recruitment-display'
+import { resolveGeneralProgramParticipantRecruitmentDisplay } from '@/features/program/general/lib/participant-recruitment-display'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import dayjs from 'dayjs'
@@ -59,17 +55,7 @@ const NEED_OR_NOT_OPTIONS = [
   { value: 'not_required' as const, label: '불필요' },
 ]
 
-const PARTICIPANT_INTERVIEW_OPTIONS = [
-  { value: 'yes' as const, label: '필요' },
-  { value: 'no' as const, label: '불필요' },
-] as const
-
 const RECRUITMENT_RADIO_CLASS = 'program-detail-info-tab__recruitment-radio'
-
-const CERTIFICATE_OPTIONS = [
-  { value: 'provided' as const, label: '제공' },
-  { value: 'not_provided' as const, label: '미제공' },
-]
 
 const FORM_CLASS = 'program-registration-paragraph'
 
@@ -188,11 +174,8 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   const isCompanySchool = isCompanySchoolRecruitmentProgram(program)
   // 교육받은 교사 — 공고 게시|학생 명단 1행, 사전 안내·수료증 비노출 (기존 유형 렌더 불변)
   const isTrainedTeachers = isTrainedTeachersDetailProgram(program)
-  const editInterviewValue = form?.watch('participantRecruitmentInterviewEnabled')
-  const interviewEnabled = resolveParticipantRecruitmentInterviewEnabled(
-    program,
-    isEdit && form ? editInterviewValue : undefined
-  )
+  const isGeneralOrg = !isIndividual && !isCompanySchool && !isTrainedTeachers
+  const recruitmentSectionTitle = isGeneralOrg ? '참여 기관 모집 정보' : '참여자 모집 정보'
 
   const studentListField = (
     <DetailInfoForm.Field
@@ -222,7 +205,6 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   const recruitmentPeriodField = (
     <DetailInfoForm.Field
       label="참여자 모집 기간"
-      fullRow={isIndividual && !interviewEnabled}
       view={display.recruitmentPeriodLabel}
       edit={
         isEdit && form ? (
@@ -251,112 +233,9 @@ export function GeneralProgramParticipantRecruitmentInfoView({
     />
   )
 
-  const documentPassField = (
-    <DetailInfoForm.Field
-      label="1차 서류 합격자 발표"
-      view={
-        <ProgramDetailDateMethodReadRow
-          dateIso={display.documentPassAnnouncementDate}
-          method={display.documentPassAnnouncementMethod}
-        />
-      }
-      edit={
-        isEdit && form ? (
-          <div className="program-detail-info-tab__result-row">
-            <Controller
-              name="documentPassAnnouncementDate"
-              control={form.control}
-              render={({ field }) => (
-                <ParagraphDatePicker
-                  mode="single"
-                  presetMode="date"
-                  customizable={false}
-                  value={toDayjs(field.value)}
-                  onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                  placeholder="합격자 발표일"
-                  width={190}
-                />
-              )}
-            />
-            <DetailInfoForm.InputsSeparator />
-            <Controller
-              name="documentPassAnnouncementMethod"
-              control={form.control}
-              render={({ field }) => (
-                <CmsInput
-                  {...field}
-                  value={field.value ?? ''}
-                  placeholder="발표 방법 안내"
-                  inputSize="medium"
-                  width="100%"
-                  className="program-detail-info-tab__result-method-input"
-                />
-              )}
-            />
-          </div>
-        ) : undefined
-      }
-    />
-  )
-
-  const interviewPeriodField = (
-    <DetailInfoForm.Field
-      label="2차 면접 기간"
-      view={
-        <ProgramDetailInterviewReadRow
-          start={display.interviewStartDate}
-          end={display.interviewEndDate}
-          method={display.interviewMethod}
-        />
-      }
-      edit={
-        isEdit && form ? (
-          <div className="program-detail-info-tab__result-row">
-            <Controller
-              name="interviewStartDate"
-              control={form.control}
-              render={({ field }) => (
-                <ParagraphDatePicker
-                  mode="range"
-                  value={[
-                    toDayjs(field.value as string | Date | undefined),
-                    toDayjs(form.watch('interviewEndDate') as string | Date | undefined),
-                  ]}
-                  onChange={([start, end]) => {
-                    field.onChange(start ? start.toISOString() : undefined)
-                    form.setValue('interviewEndDate', end ? end.toISOString() : undefined)
-                  }}
-                  placeholder={['면접 시작일', '면접 종료일']}
-                  width="100%"
-                  style={{ width: '100%', flex: '1 1 0', minWidth: 0 }}
-                />
-              )}
-            />
-            <DetailInfoForm.InputsSeparator />
-            <Controller
-              name="interviewMethod"
-              control={form.control}
-              render={({ field }) => (
-                <CmsSelect
-                  inputSize="medium"
-                  width={140}
-                  value={field.value ?? undefined}
-                  options={INTERVIEW_METHOD_OPTIONS}
-                  onChange={v => field.onChange(v ?? undefined)}
-                  placeholder="면접 유형"
-                />
-              )}
-            />
-          </div>
-        ) : undefined
-      }
-    />
-  )
-
   const finalPassField = (
     <DetailInfoForm.Field
       label="최종 합격자 발표"
-      fullRow={isIndividual && !interviewEnabled}
       view={
         isIndividual ? (
           <ProgramDetailDateMethodReadRow
@@ -407,8 +286,8 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   )
 
   return (
-    <section className="participant-recruitment-info-view" aria-label="참여자 모집 정보">
-      <FormParagraphSectionHeader title="참여자 모집 정보" surface="responseEntry" titleAligned />
+    <section className="participant-recruitment-info-view" aria-label={recruitmentSectionTitle}>
+      <FormParagraphSectionHeader title={recruitmentSectionTitle} surface="responseEntry" titleAligned />
       <div className="participant-recruitment-info-view__forms">
         <DetailInfoForm
           title="참여자 모집 정보(설정)"
@@ -416,10 +295,10 @@ export function GeneralProgramParticipantRecruitmentInfoView({
           mode={formMode}
           className={FORM_CLASS}
         >
-          <DetailInfoForm.Row type={isIndividual || isTrainedTeachers ? 'double' : 'single'}>
+          <DetailInfoForm.Row type={isTrainedTeachers ? 'double' : 'single'}>
             <DetailInfoForm.Field
               label="공고 게시 여부"
-              fullRow={!isIndividual && !isTrainedTeachers}
+              fullRow={!isTrainedTeachers}
               view={display.announcementPublishedLabel}
               edit={
                 isEdit && form ? (
@@ -436,34 +315,6 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                 ) : undefined
               }
             />
-            {isIndividual ? (
-              <DetailInfoForm.Field
-                label="참여자 면접 유무"
-                view={display.interviewEnabledLabel ?? '-'}
-                edit={
-                  isEdit && form ? (
-                    <Controller
-                      name="participantRecruitmentInterviewEnabled"
-                      control={form.control}
-                      render={({ field }) => (
-                        <CmsRadioGroup
-                          size="large"
-                          value={field.value ?? undefined}
-                          onChange={e => field.onChange(e.target.value)}
-                          className={RECRUITMENT_RADIO_CLASS}
-                        >
-                          {PARTICIPANT_INTERVIEW_OPTIONS.map(option => (
-                            <CmsRadio key={option.value} value={option.value} size="large">
-                              {option.label}
-                            </CmsRadio>
-                          ))}
-                        </CmsRadioGroup>
-                      )}
-                    />
-                  ) : undefined
-                }
-              />
-            ) : null}
             {isTrainedTeachers ? studentListField : null}
           </DetailInfoForm.Row>
 
@@ -529,18 +380,21 @@ export function GeneralProgramParticipantRecruitmentInfoView({
               </DetailInfoForm.Row>
 
               {!isCompanySchool &&
-              (display.showMaxScheduleCountField || display.showMaxSessionsPerDayField) ? (
+              (isGeneralOrg ||
+                display.showMaxScheduleCountField ||
+                display.showMaxSessionsPerDayField) ? (
                 <DetailInfoForm.Row
                   type={
-                    display.showMaxScheduleCountField && display.showMaxSessionsPerDayField
+                    isGeneralOrg ||
+                    (display.showMaxScheduleCountField && display.showMaxSessionsPerDayField)
                       ? 'double'
                       : 'single'
                   }
                 >
-                  {display.showMaxScheduleCountField ? (
+                  {isGeneralOrg || display.showMaxScheduleCountField ? (
                     <DetailInfoForm.Field
                       label="신청 가능 최대 일정 수"
-                      fullRow={!display.showMaxSessionsPerDayField}
+                      fullRow={!isGeneralOrg && !display.showMaxSessionsPerDayField}
                       view={display.maxScheduleCountLabel}
                       edit={
                         isEdit && form ? (
@@ -554,10 +408,10 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                       }
                     />
                   ) : null}
-                  {display.showMaxSessionsPerDayField ? (
+                  {isGeneralOrg || display.showMaxSessionsPerDayField ? (
                     <DetailInfoForm.Field
                       label="신청 가능 1일 최대 차시"
-                      fullRow={!display.showMaxScheduleCountField}
+                      fullRow={!isGeneralOrg && !display.showMaxScheduleCountField}
                       view={display.maxSessionsPerDayLabel}
                       edit={
                         isEdit && form ? (
@@ -635,19 +489,30 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                   <Controller
                     name="targetLevels"
                     control={form.control}
-                    render={({ field }) => (
-                      <CmsSelect
-                        mode="multiple"
-                        inputSize="medium"
-                        width={240}
-                        withAllOption={false}
-                        value={field.value ?? []}
-                        options={TARGET_LEVEL_OPTIONS}
-                        onChange={v => field.onChange(parseTargetLevelsSelectValue(v))}
-                        placeholder="교육 대상을 선택하세요"
-                        className="program-detail-info-tab__target-select"
-                      />
-                    )}
+                    render={({ field }) =>
+                      isIndividual || isGeneralOrg ? (
+                        <CmsSelect
+                          inputSize="medium"
+                          width={240}
+                          options={TARGET_LEVEL_OPTIONS}
+                          value={field.value?.[0] ?? ''}
+                          onChange={v => field.onChange(v ? [String(v)] : [])}
+                          className="program-detail-info-tab__target-select"
+                        />
+                      ) : (
+                        <CmsSelect
+                          mode="multiple"
+                          inputSize="medium"
+                          width={240}
+                          withAllOption={false}
+                          value={field.value ?? []}
+                          options={TARGET_LEVEL_OPTIONS}
+                          onChange={v => field.onChange(parseTargetLevelsSelectValue(v))}
+                          placeholder="교육 대상을 선택하세요"
+                          className="program-detail-info-tab__target-select"
+                        />
+                      )
+                    }
                   />
                 ) : undefined
               }
@@ -676,52 +541,11 @@ export function GeneralProgramParticipantRecruitmentInfoView({
             />
           </DetailInfoForm.Row>
 
-          {!isIndividual && !isCompanySchool && !isTrainedTeachers ? (
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="수료증 발급 여부"
-                fullRow
-                view={display.certificateIssuanceLabel}
-                edit={
-                  isEdit && form ? (
-                    <Controller
-                      name="participantRecruitmentCertificateProvided"
-                      control={form.control}
-                      render={({ field }) => (
-                        <CmsRadio.Group
-                          {...field}
-                          size="large"
-                          value={field.value ?? undefined}
-                          onChange={e => field.onChange(e.target.value)}
-                          options={CERTIFICATE_OPTIONS}
-                          className={RECRUITMENT_RADIO_CLASS}
-                        />
-                      )}
-                    />
-                  ) : undefined
-                }
-              />
-            </DetailInfoForm.Row>
-          ) : null}
-
           {isIndividual ? (
-            interviewEnabled ? (
-              <>
-                <DetailInfoForm.Row type="double">
-                  {recruitmentPeriodField}
-                  {documentPassField}
-                </DetailInfoForm.Row>
-                <DetailInfoForm.Row type="double">
-                  {interviewPeriodField}
-                  {finalPassField}
-                </DetailInfoForm.Row>
-              </>
-            ) : (
-              <DetailInfoForm.Row type="double">
-                {recruitmentPeriodField}
-                {finalPassField}
-              </DetailInfoForm.Row>
-            )
+            <DetailInfoForm.Row type="double">
+              {recruitmentPeriodField}
+              {finalPassField}
+            </DetailInfoForm.Row>
           ) : (
             <DetailInfoForm.Row type="double">
               {recruitmentPeriodField}
@@ -803,22 +627,66 @@ export function GeneralProgramParticipantRecruitmentInfoView({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="비고"
+              fullRow
               view={display.notes}
               edit={
                 isEdit && form ? (
-                  <Controller
-                    name="oneLineIntroduction"
-                    control={form.control}
-                    render={({ field }) => (
-                      <CmsInput
-                        {...field}
-                        value={field.value ?? ''}
-                        placeholder="비고란을 작성하세요 (없으면 -로 입력)"
-                        inputSize="medium"
-                        className="program-detail-info-tab__notes-input"
+                  isIndividual || isGeneralOrg ? (
+                    <div className={MAX_SUFFIX_CLASS}>
+                      <Controller
+                        name="participantRecruitmentNotesNotApplicable"
+                        control={form.control}
+                        render={({ field }) => (
+                          <CmsCheckbox
+                            checkboxSize="medium"
+                            checked={field.value === 'not_applicable'}
+                            onChange={e => {
+                              const checked = e.target.checked
+                              field.onChange(checked ? 'not_applicable' : 'applicable')
+                              if (checked) {
+                                form.setValue('oneLineIntroduction', '', { shouldDirty: true })
+                              }
+                            }}
+                          >
+                            해당 없음
+                          </CmsCheckbox>
+                        )}
                       />
-                    )}
-                  />
+                      <DetailInfoForm.InputsSeparator />
+                      <Controller
+                        name="oneLineIntroduction"
+                        control={form.control}
+                        render={({ field }) => (
+                          <CmsInput
+                            {...field}
+                            value={field.value ?? ''}
+                            disabled={
+                              form.watch('participantRecruitmentNotesNotApplicable') ===
+                              'not_applicable'
+                            }
+                            placeholder="비고란을 작성하세요"
+                            inputSize="medium"
+                            style={{ flex: '1 1 0', minWidth: 0 }}
+                            className="program-detail-info-tab__notes-input"
+                          />
+                        )}
+                      />
+                    </div>
+                  ) : (
+                    <Controller
+                      name="oneLineIntroduction"
+                      control={form.control}
+                      render={({ field }) => (
+                        <CmsInput
+                          {...field}
+                          value={field.value ?? ''}
+                          placeholder="비고란을 작성하세요 (없으면 -로 입력)"
+                          inputSize="medium"
+                          className="program-detail-info-tab__notes-input"
+                        />
+                      )}
+                    />
+                  )
                 ) : undefined
               }
             />

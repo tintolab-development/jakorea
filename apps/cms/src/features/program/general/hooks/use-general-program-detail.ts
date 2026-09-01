@@ -1,5 +1,5 @@
-import { useCallback, useMemo } from 'react'
-import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo } from 'react'
+import { queryOptions, useQuery } from '@tanstack/react-query'
 import {
   fetchGeneralProgramRemoteById,
   getGeneralProgramMockById,
@@ -24,19 +24,6 @@ export function generalProgramDetailQueryOptions(programId: string) {
     staleTime: 30_000,
     retry: false,
   })
-}
-
-export function usePrefetchGeneralProgramDetail() {
-  const queryClient = useQueryClient()
-  const remoteEnabled = useGeneralProgramsRemoteEnabled()
-
-  return useCallback(
-    (programId: string) => {
-      if (!remoteEnabled || !programId) return
-      void queryClient.prefetchQuery(generalProgramDetailQueryOptions(programId))
-    },
-    [queryClient, remoteEnabled]
-  )
 }
 
 /**

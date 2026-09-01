@@ -1,15 +1,10 @@
-import { useEffect, useRef, type MutableRefObject } from 'react'
+import { useEffect, useMemo, useRef, type MutableRefObject } from 'react'
 import type { SetURLSearchParams } from 'react-router-dom'
-import type { Dispatch, SetStateAction } from 'react'
 import {
   programsHistoryHasChildMenu,
-  parseProgramsChildParam,
-  clampProgramsChildForUser,
-  instructorDetailShowsPaymentStatusLnb,
-  type UserDetailLnbKey,
+  resolveMemberDetailTabStateFromUrl,
   type UserDetailProgramsChildKey,
   type UserDetailUrlSyncUser,
-  type TabState,
 } from './user-detail-fullpage-helpers'
 import { memberDetailUrlParamsFromUser } from './teacher-detail-url-context'
 
@@ -18,6 +13,7 @@ import { memberDetailUrlParamsFromUser } from './teacher-detail-url-context'
  * - 목록에서 열 때 부모가 `id`를 넣기 전/후 틱에 `useSearchParams`에 `id`가 없을 수 있음 → 열림 직후 한 번만 id 보강.
  * - 부모가 닫기 위해 `id`를 지우면 searchParams가 먼저 갱신되고, 이 effect는 아직 `open===true`인 틱에 돌 수 있음.
  *   이때 `id`를 다시 넣으면 URL이 복구되어 모달이 닫히지 않는다 → **이미 열린 상태에서 id만 비었으면** 보강하지 않는다.
+ * - LNB 탭 상태는 `useUserDetailController`의 layout effect가 URL에서 동기화한다.
  */
 export function useUserDetailUrlSync(params: {
   open: boolean
@@ -25,7 +21,6 @@ export function useUserDetailUrlSync(params: {
   mode: 'default' | 'permission'
   searchParams: URLSearchParams
   setSearchParams: SetURLSearchParams
-  setTabState: Dispatch<SetStateAction<TabState>>
   programsChildQueryKey: string
   /** 목록 상세 닫기 중 — URL에 id·lnb를 다시 쓰지 않음 */
   detailCloseIntentRef?: MutableRefObject<boolean>
@@ -36,12 +31,24 @@ export function useUserDetailUrlSync(params: {
     mode,
     searchParams,
     setSearchParams,
-    setTabState,
     programsChildQueryKey,
     detailCloseIntentRef,
   } = params
 
   const detailUrlSyncSeenOpenRef = useRef(false)
+
+  /** URLSearchParams 객체 identity 변경으로 effect가 과다 실행되지 않도록 동기화 관련 키만 직렬화 */
+  const urlSyncKey = useMemo(() => {
+    const id = searchParams.get('id') ?? ''
+    const lnb = searchParams.get('lnb') ?? ''
+    const child = searchParams.get(programsChildQueryKey) ?? ''
+    const memberParams = displayUser
+      ? Object.entries(memberDetailUrlParamsFromUser(displayUser))
+          .map(([k, v]) => `${k}=${v ?? ''}`)
+          .join('&')
+      : ''
+    return `${id}|${lnb}|${child}|${memberParams}`
+  }, [searchParams, programsChildQueryKey, displayUser])
 
   useEffect(() => {
     if (!open || !displayUser) {
@@ -63,7 +70,6 @@ export function useUserDetailUrlSync(params: {
     detailUrlSyncSeenOpenRef.current = true
 
     if (mode === 'permission') {
-      setTabState({ lnb: 'detail-info' })
       return
     }
 
@@ -79,31 +85,15 @@ export function useUserDetailUrlSync(params: {
       sp.set('id', displayUser.id)
     }
 
-    const rawLnb = sp.get('lnb')
-    const isInstructor = displayUser.role === 'INSTRUCTOR'
+    const tabFromUrl = resolveMemberDetailTabStateFromUrl({
+      searchParams: sp,
+      displayUser,
+      programsChildQueryKey,
+      mode,
+    })
+    const nextLnb = tabFromUrl.lnb
     const hasChildMenu = programsHistoryHasChildMenu(displayUser)
-    const paymentLnbAllowed = instructorDetailShowsPaymentStatusLnb(displayUser)
-
-    const nextLnb: UserDetailLnbKey =
-      rawLnb === 'history'
-        ? 'history'
-        : rawLnb === 'payment-status' && isInstructor && paymentLnbAllowed
-          ? 'payment-status'
-          : 'detail-info'
-
-    let nextChild: UserDetailProgramsChildKey = 'enrollment'
-    if (nextLnb === 'history' && hasChildMenu) {
-      const parsed = parseProgramsChildParam(sp.get(programsChildQueryKey))
-      nextChild = parsed
-        ? clampProgramsChildForUser(displayUser, parsed)
-        : 'enrollment'
-    }
-
-    setTabState(
-      nextLnb === 'history' && hasChildMenu
-        ? { lnb: 'history', child: nextChild }
-        : { lnb: nextLnb }
-    )
+    const nextChild: UserDetailProgramsChildKey = tabFromUrl.child ?? 'enrollment'
 
     const nextParams = new URLSearchParams(sp)
     let urlDirty = false
@@ -144,7 +134,7 @@ export function useUserDetailUrlSync(params: {
     if (urlDirty) {
       setSearchParams(nextParams, { replace: true })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- urlSyncKey가 searchParams SSOT
   }, [
     open,
     displayUser?.id,
@@ -152,9 +142,8 @@ export function useUserDetailUrlSync(params: {
     displayUser?.instructorMemberProfile,
     displayUser?.affiliatedSchoolUserId,
     mode,
-    searchParams,
+    urlSyncKey,
     setSearchParams,
-    setTabState,
     programsChildQueryKey,
   ])
 }

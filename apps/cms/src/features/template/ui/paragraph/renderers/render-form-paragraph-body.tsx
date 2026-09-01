@@ -1,5 +1,4 @@
 import {
-  AGREEMENT_NOTICE_PARAGRAPH_IDS,
   FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID,
   normalizeHorizontalTableParagraph,
   normalizeVerticalTableParagraph,
@@ -327,16 +326,13 @@ export function renderFormParagraphBody(
           p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm) &&
         structureLocked &&
         options?.agreementAdminProxyConfirm !== true
-      const isAgreementNoticeFixedExplanationText =
-        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution ||
-        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose
       const shouldRenderDisabledPlaceholder =
         structureLocked &&
         (p.paragraphTitle?.trim().length ?? 0) > 0 &&
         !isBodyInteractive &&
-        (paragraphInteractionMode === 'authoring' || isAgreementNoticeFixedExplanationText)
+        paragraphInteractionMode === 'authoring'
       /* 구조 잠금 + 라벨 있는 설명글_텍스트형 — 단락 공통 `ExplanationText`의 Disabled CmsInput.
-         행정정보 1·2(이용기관 명칭/이용사무): authoring·fill 모두 시드 고정. */
+         행정정보 이용기관·이용사무는 fill에서 입력 가능(interactive id). */
       let explanationBodyDisplayMode: ExplanationTextBodyDisplayMode = 'input'
       if (isPaymentPreConsentIntro || isPaymentPreConsentWhiteSheetBar) {
         explanationBodyDisplayMode = 'static-body'

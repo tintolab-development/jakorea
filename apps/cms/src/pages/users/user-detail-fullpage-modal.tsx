@@ -7,11 +7,9 @@ import { useCallback, useMemo, type MutableRefObject } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
+import { buildSearchParams, makeBreadcrumbItem } from '@/shared/lib/detail-fullpage-query-stack'
 import {
-  buildSearchParams,
-  makeBreadcrumbItem,
-} from '@/shared/lib/detail-fullpage-query-stack'
-import {
+  userDetailModalLoadingTitle,
   userDetailModalTitle,
   userDetailSidebarNavAriaLabel,
 } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
@@ -159,6 +157,7 @@ export function UserDetailFullPageModal({
       onOpenAssignmentSubmission: actions.openAssignmentSubmission,
       onOpenEnrollmentProgramDetail: actions.openEnrollmentProgramDetail,
       onOpenVolunteerProgramDetail: actions.openVolunteerProgramDetail,
+      onBeforeNavigateToProgramDetail: actions.prepareLeaveMemberDetailForProgramNavigation,
       onBulkDeleteHistory: actions.handleBulkDeleteHistory,
       onStudentCertificateBulkIssue: actions.handleStudentCertificateBulkIssue,
       onVolunteerCertificateBulkIssue: actions.handleVolunteerCertificateBulkIssue,
@@ -235,6 +234,7 @@ export function UserDetailFullPageModal({
     actions.openAssignmentSubmission,
     actions.openEnrollmentProgramDetail,
     actions.openVolunteerProgramDetail,
+    actions.prepareLeaveMemberDetailForProgramNavigation,
     actions.handleBulkDeleteHistory,
     actions.handleStudentCertificateBulkIssue,
     actions.handleVolunteerCertificateBulkIssue,
@@ -244,17 +244,20 @@ export function UserDetailFullPageModal({
     onMemberBasicInfoSaved,
   ])
 
-  if (!shell) {
+  if (!open) {
     return null
   }
 
-  const { displayUser } = shell
-  const title = userDetailModalTitle(displayUser, { mode, permissionRole })
+  const displayUser = shell?.displayUser ?? null
+  const title = displayUser
+    ? userDetailModalTitle(displayUser, { mode, permissionRole })
+    : userDetailModalLoadingTitle(mode, permissionRole)
   const activeSidebarItem = derived.sidebarItems.find(item => item.key === state.tabState.lnb)
   const activeChildItem = activeSidebarItem?.children?.find(
     child => child.key === state.tabState.child
   )
   const headerBreadcrumbItems = (() => {
+    if (!displayUser) return []
     const listParams = buildSearchParams(searchParams, {
       delete: [
         'id',
@@ -273,11 +276,7 @@ export function UserDetailFullPageModal({
     }
 
     const detailParams = buildSearchParams(searchParams, {
-      delete: [
-        'lnb',
-        USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
-        USER_BASIC_INFO_ENTRY_QUERY_KEY,
-      ],
+      delete: ['lnb', USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY, USER_BASIC_INFO_ENTRY_QUERY_KEY],
       set: {
         id: displayUser.id,
         lnb: 'detail-info',
@@ -309,6 +308,10 @@ export function UserDetailFullPageModal({
     return items
   })()
 
+  /**
+   * 상세 GET 첫 응답 전에도 **같은 모달 인스턴스**를 유지한다.
+   * 로딩 셸을 별도 컴포넌트로 렌더하면 포털이 교체되며 오픈 애니메이션이 두 번 재생된다.
+   */
   return (
     <UserDetailFullpageShellProvider value={shell}>
       {state.personalInfoRevealModal}
@@ -317,38 +320,45 @@ export function UserDetailFullPageModal({
         open={open}
         onClose={onClose}
         title={title}
-        headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
+        loading={shell == null}
+        headerTrailing={
+          shell ? <DetailFullpageBreadcrumb items={headerBreadcrumbItems} /> : undefined
+        }
         sidebar={
-          <DetailModalSidebar
-            navAriaLabel={userDetailSidebarNavAriaLabel(mode, displayUser)}
-            items={derived.sidebarItems}
-            activeKey={state.tabState.lnb}
-            activeChildKey={derived.sidebarActiveChildKey}
-            expandedGroupKeys={derived.sidebarExpandedGroupKeys}
-            onSelectTop={actions.handleSidebarSelectTop}
-            onSelectChild={actions.handleSidebarSelectChild}
-          />
+          shell && displayUser ? (
+            <DetailModalSidebar
+              navAriaLabel={userDetailSidebarNavAriaLabel(mode, displayUser)}
+              items={derived.sidebarItems}
+              activeKey={state.tabState.lnb}
+              activeChildKey={derived.sidebarActiveChildKey}
+              expandedGroupKeys={derived.sidebarExpandedGroupKeys}
+              onSelectTop={actions.handleSidebarSelectTop}
+              onSelectChild={actions.handleSidebarSelectChild}
+            />
+          ) : null
         }
         header={
-          <UserDetailFullPageHeaderActions
-            mode={mode}
-            permissionRole={permissionRole}
-            displayUser={displayUser}
-            tabState={state.tabState}
-            personalInfoRevealed={state.personalInfoRevealed}
-            onRequestPersonalInfoReveal={actions.openPersonalInfoRevealConfirm}
-            onPermissionApprove={onPermissionApprove}
-            onPermissionReject={onPermissionReject}
-            onPermissionResetToPending={onPermissionResetToPending}
-            onWithdraw={onWithdraw}
-            onOpenWithdrawConfirm={actions.openWithdrawConfirm}
-          />
+          shell && displayUser ? (
+            <UserDetailFullPageHeaderActions
+              mode={mode}
+              permissionRole={permissionRole}
+              displayUser={displayUser}
+              tabState={state.tabState}
+              personalInfoRevealed={state.personalInfoRevealed}
+              onRequestPersonalInfoReveal={actions.openPersonalInfoRevealConfirm}
+              onPermissionApprove={onPermissionApprove}
+              onPermissionReject={onPermissionReject}
+              onPermissionResetToPending={onPermissionResetToPending}
+              onWithdraw={onWithdraw}
+              onOpenWithdrawConfirm={actions.openWithdrawConfirm}
+            />
+          ) : null
         }
       >
-        <UserDetailFullpageTabPanels />
+        {shell ? <UserDetailFullpageTabPanels /> : null}
       </UserDetailLayout>
 
-      <UserDetailFullpageModalsStack />
+      {shell ? <UserDetailFullpageModalsStack /> : null}
     </UserDetailFullpageShellProvider>
   )
 }

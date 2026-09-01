@@ -70,4 +70,78 @@ describe('mapInstructorRoleRequestDetailToUser', () => {
       },
     ])
   })
+
+  it('joinedAt·notificationResentAt·등급·social·terms agreedAt를 매핑한다', () => {
+    const user = mapInstructorRoleRequestDetailToUser({
+      requestId: 172002,
+      memberId: 172102,
+      status: 'APPROVED',
+      requestedAt: '2026-03-01T00:00:00Z',
+      joinedAt: '2025-01-15T00:00:00Z',
+      decidedAt: '2026-08-10T09:00:00Z',
+      notificationResentAt: '2026-08-15T14:30:00Z',
+      name: '승인자',
+      profile: {
+        memberType: 'GENERAL',
+        defaultFeeGrade: 'GRADE_2',
+        defaultJaGrade: 'JA_A',
+      },
+      socialAccounts: [{ provider: 'GOOGLE', status: 'CONNECTED' }],
+      termsAgreements: [
+        {
+          termsType: 'FACILITATOR_PLEDGE',
+          version: '1.0',
+          required: false,
+          agreed: true,
+          agreedAt: '2026-03-01T01:00:00Z',
+        },
+      ],
+    })
+
+    expect(user.createdAt).toBe('2025-01-15T00:00:00Z')
+    expect(user.permissionNotificationResentAt).toBe('2026-08-15T14:30:00Z')
+    expect(user.socialAccounts).toEqual(['GOOGLE'])
+    expect(user.listMetrics?.instructorFeeGradeLabel).toBeTruthy()
+    expect(user.listMetrics?.jaEvaluationGrade).toBe('JA_A')
+    expect(user.termsAgreements?.[0]?.agreedAt).toBe('2026-03-01T01:00:00Z')
+  })
+
+  it('structured profile(education/career/essays/licenses)를 instructorCmsProfile에 매핑한다', () => {
+    const user = mapInstructorRoleRequestDetailToUser({
+      requestId: 172001,
+      memberId: 172101,
+      status: 'PENDING',
+      name: '최지원',
+      profile: {
+        memberType: 'GENERAL',
+        education: {
+          highestSchoolType: 'college4',
+          highestStatus: 'graduated',
+        },
+        career: { level: 'experienced', rows: [] },
+        essays: { freeWrite1: '지원동기 본문' },
+        licenses: [{ title: '자격증' }],
+        awards: [{ title: '수상' }],
+        jaKoreaActivities: [{ title: 'JA' }],
+      },
+      socialAccounts: [
+        { provider: 'KAKAO', status: 'CONNECTED' },
+        { provider: 'NAVER', status: 'CONNECTED' },
+      ],
+      termsAgreements: [
+        { termsType: 'FACILITATOR_PLEDGE', agreed: true },
+        { termsType: 'PAYMENT_STATEMENT_PRE_CONSENT', agreed: true },
+        { termsType: 'ADMINISTRATIVE_INFO_CONSENT', agreed: true },
+        { termsType: 'CRIMINAL_HISTORY_CHECK_CONSENT', agreed: true },
+      ],
+    })
+
+    expect(user.instructorCmsProfile?.education.highestSchoolType).toBe('college4')
+    expect(user.instructorCmsProfile?.career.level).toBe('experienced')
+    expect(user.instructorCmsProfile?.essays.freeWrite1).toBe('지원동기 본문')
+    expect(user.instructorCmsProfile?.licenses).toHaveLength(1)
+    expect(user.socialAccounts).toEqual(['KAKAO', 'NAVER'])
+    expect(user.termsAgreements).toHaveLength(4)
+    expect(user.instructorSelfIntroduction).toBe('지원동기 본문')
+  })
 })

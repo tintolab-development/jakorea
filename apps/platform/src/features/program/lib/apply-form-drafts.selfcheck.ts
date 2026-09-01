@@ -6,14 +6,15 @@
 import assert from 'node:assert/strict'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
 import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-institution-draft'
+import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-instructor-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
 import {
-  CASE_VOLUNTEER_FIXTURE,
   ECONOMY_REGISTRATION_FIXTURES,
   GENERAL_REGISTRATION_FIXTURES,
   GEMINI_RECRUITMENT_FIXTURES,
+  UJAT_VOLUNTEER_FIXTURE,
 } from './cms-registration-fixtures.ts'
 import { mapCmsProgramToPlatformDetail } from './map-from-cms.ts'
 import { PROGRAM_DETAIL_CASE_SSOT_IDS } from './detail-case.ts'
@@ -29,7 +30,7 @@ function paragraphIds(programId: string, extra?: { participationMethod?: 'indivi
     GENERAL_REGISTRATION_FIXTURES.find(f => f.id === programId) ??
     ECONOMY_REGISTRATION_FIXTURES.find(f => f.id === programId) ??
     GEMINI_RECRUITMENT_FIXTURES.find(f => f.id === programId) ??
-    (programId === CASE_VOLUNTEER_FIXTURE.id ? CASE_VOLUNTEER_FIXTURE : null)
+    (programId === UJAT_VOLUNTEER_FIXTURE.id ? UJAT_VOLUNTEER_FIXTURE : null)
   assert.ok(fixture, `fixture missing: ${programId}`)
   const detail = mapCmsProgramToPlatformDetail(fixture)
   if (extra?.participationMethod) {
@@ -37,6 +38,7 @@ function paragraphIds(programId: string, extra?: { participationMethod?: 'indivi
   }
   const applyCase = resolveProgramApplyFormCase(detail)
   const draft = getMockApplyFormDraft(detail)
+  assert.ok(draft, `apply draft missing: ${programId}`)
   return {
     applyCase,
     templateCode: getApplicationTemplateCodeForApplyCase(applyCase),
@@ -69,6 +71,10 @@ function testCaseToTemplateCode() {
   assert.equal(
     getApplicationTemplateCodeForApplyCase('institution-gemini'),
     'application-gemini-visiting-training-school'
+  )
+  assert.equal(
+    getApplicationTemplateCodeForApplyCase('instructor-gemini'),
+    'application-gemini-visiting-training-instructor'
   )
 }
 
@@ -137,6 +143,43 @@ function testInstitutionGeneral() {
   ])
 }
 
+function testScheduleSingleDateUsesRegisteredLines() {
+  const fixture = GENERAL_REGISTRATION_FIXTURES.find(
+    f => f.id === 'general-prog-type-ind-schedule-single'
+  )
+  assert.ok(fixture)
+  const detail = mapCmsProgramToPlatformDetail(fixture)
+  assert.equal(detail.educationStructure, 'schedule')
+  assert.equal(detail.sessionRound, 'single')
+  assert.equal(detail.educationScheduleMode, 'date')
+  assert.ok(detail.educationScheduleLines.length > 0)
+
+  const draft = getMockApplyFormDraft(detail)
+  const schedule = draft.paragraphs.find(
+    p => p.id === PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice
+  )
+  assert.ok(schedule)
+  assert.equal(schedule.kind, 'single_item')
+  if (schedule.kind !== 'single_item' || schedule.variant !== 'multiple_choice') {
+    assert.fail('scheduleChoice must be multiple_choice')
+    return
+  }
+  assert.deepEqual(
+    schedule.items.map(item => item.label),
+    detail.educationScheduleLines
+  )
+}
+
+function testScheduleMultiHidesScheduleChoice() {
+  const orgMulti = paragraphIds('general-prog-type-org-schedule-multi')
+  assert.equal(orgMulti.applyCase, 'institution-general')
+  assert.equal(orgMulti.ids.includes(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice), false)
+
+  const indMulti = paragraphIds('general-prog-type-ind-schedule-multi')
+  assert.equal(indMulti.applyCase, 'individual-general')
+  assert.equal(indMulti.ids.includes(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice), false)
+}
+
 function testInstitutionEconomy() {
   const { applyCase, templateCode, ids } = paragraphIds(
     PROGRAM_APPLY_FORM_CASE_SSOT_IDS.institutionEconomy
@@ -176,17 +219,33 @@ function testGeminiDetailCaseRouting() {
   assert.equal(resolveProgramApplyFormCase(gemini), 'institution-gemini')
 }
 
+function testInstructorGemini() {
+  const { applyCase, templateCode, ids, detail } = paragraphIds(
+    PROGRAM_APPLY_FORM_CASE_SSOT_IDS.instructorGemini
+  )
+  assert.equal(detail.detailCase, 'instructor')
+  assert.equal(applyCase, 'instructor-gemini')
+  assert.equal(templateCode, 'application-gemini-visiting-training-instructor')
+  assert.deepEqual(ids, [
+    GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
+    GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.officialDocument,
+  ])
+}
+
 function run() {
   testCaseToTemplateCode()
   testIndividualGeneral()
   testIndividualTeam()
   testVolunteer()
   testInstitutionGeneral()
+  testScheduleSingleDateUsesRegisteredLines()
+  testScheduleMultiHidesScheduleChoice()
   testInstitutionEconomy()
   testInstitutionGemini()
   testGeminiDetailCaseRouting()
+  testInstructorGemini()
   console.log(
-    'apply-form-drafts: all checks passed (6 cases × CMS templateCode seed paragraphs)'
+    'apply-form-drafts: all checks passed (apply cases × CMS templateCode seed paragraphs)'
   )
 }
 

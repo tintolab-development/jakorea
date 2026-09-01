@@ -1,0 +1,52 @@
+.header {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.title {
+  margin: 30px 0 var(--spacing-4);
+  width: 100%;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.status {
+  margin: 0 0 var(--spacing-20);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-16);
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.metaIcon {
+  display: block;
+  flex-shrink: 0;
+}
+
+.statusPending {
+  color: var(--color-element-orange);
+}
+
+.statusProgress {
+  color: var(--color-element-blue);
+}
+
+.statusCompleted {
+  color: var(--color-neutral-cool-500);
+}
+
+.statusRejected {
+  color: var(--color-status-error-default);
+}

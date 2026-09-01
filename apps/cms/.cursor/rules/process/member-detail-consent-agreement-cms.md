@@ -37,11 +37,13 @@ Spec for consent UI in **member detail**, **registration modals**, and related f
 | Item | Individual | School teacher (non-dual) | Instructor (dual / only) | Admin |
 |------|------------|---------------------------|--------------------------|-------|
 | Terms, PII, Marketing, Portrait | ✓ | ✓ | ✓ | Terms/PII/Marketing/MFA per admin preset |
-| Payment statement | — | — | ✓ | — |
-| Educator / Admin joint / Crime | — | — | ✓ | — |
+| Payment statement | ✓ | — | ✓ | — |
+| Educator / Admin joint / Crime | ✓ | — | ✓ | — |
 
-**school_teacher** (겸직 아님): 일반 회원과 동일하게 **4항목만** 노출. 강사 전용 4항목(지급조서·교육진행자·행정정보·성범죄)은 숨김.  
-`CONSENT_PRESET_SCHEMA.school_teacher` = individual-like rows.
+**individual**: 등록(`add-user-individual`)과 동일 **8항목** 노출.  
+**school_teacher** (겸직 아님): **4항목만** 노출. 지급조서·교육진행자·행정정보·성범죄는 숨김.  
+`CONSENT_PRESET_SCHEMA.school_teacher` = individual-like(4) rows.  
+`CONSENT_PRESET_SCHEMA.individual` = instructor와 동일 8 rows.
 
 **ADMIN** preset may hide items — if code diverges, update both this doc and the component.
 
@@ -58,7 +60,7 @@ FE SSOT: `member-basic-info-terms-patch.ts` · `user-consent-agreement-section.t
 ## API / state (align with backend)
 
 - Per-item: `agreedAt`, document id/version, expiry (1y / 10y / until withdraw).
-- **동의서 보기**: `consent-records.formResponseId` → `MemberConsentDocumentViewModal` — **제출본만** 표시(회원 기본정보 prefill 금지). API 미연동 시 empty state.
+- **동의서 보기**: 제출본(`filledDocumentAvailable`)이 있으면 filled-document API로 **제출 내용** 표시. **제출본 없음 + 동의**인 경우(플랫폼 가입 시 동의만 체크 등)는 seed draft + 회원 기본정보 PII로 **읽기 전용 미리보기**(「미리보기」배지). 동의서 **작성(write)** 모달의 기본정보 prefill은 금지 유지.
 - Payment statement: **first settlement** flag, **PII-expiry re-consent** flag.
 - CMS: mostly read + status; e-sign payload in separate API spec when available.
 
@@ -72,4 +74,4 @@ FE SSOT: `member-basic-info-terms-patch.ts` · `user-consent-agreement-section.t
 - `preview` 모드 + 슬롯 CSS로 잠그지 말 것 — 지급조서·라디오까지 막힘
 - 애매하면 코드 변경 전 사용자에게 확인
 
-**Last updated:** 2026-08-14
+**Last updated:** 2026-08-27

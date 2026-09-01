@@ -1,4 +1,5 @@
-import { Input, Radio } from 'antd'
+import { Checkbox, Input, Radio } from 'antd'
+import { applyConsentShortEssayItemInput } from '@jakorea/form-schema/consent'
 import type {
   AgreementExplanationTextParagraph,
   MultipleChoiceParagraph,
@@ -44,13 +45,41 @@ function MultipleChoiceFill({
   readonly: boolean
   onUpdateParagraph?: FormUpdateParagraph
 }) {
-  const description = paragraph.paragraphDescription?.trim() ?? ''
+  const allowMultiple = paragraph.allowMultiple === true
+  const selectedIds = paragraph.selectedPreviewMultipleIds ?? []
+
+  if (allowMultiple) {
+    return (
+      <div className="form-template-fill-multiple-choice form-template-fill-multiple-choice--stack">
+        {paragraph.items.map(item => (
+          <Checkbox
+            key={item.id}
+            className="form-template-fill-multiple-choice__check"
+            checked={selectedIds.includes(item.id)}
+            disabled={readonly}
+            onChange={event => {
+              const checked = event.target.checked
+              onUpdateParagraph?.(paragraph.id, current => {
+                if (current.kind !== 'single_item' || current.variant !== 'multiple_choice') {
+                  return current
+                }
+                const prev = current.selectedPreviewMultipleIds ?? []
+                const next = checked
+                  ? [...prev.filter(id => id !== item.id), item.id]
+                  : prev.filter(id => id !== item.id)
+                return { ...current, selectedPreviewMultipleIds: next }
+              })
+            }}
+          >
+            {item.label}
+          </Checkbox>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="form-template-fill-multiple-choice">
-      {description ? (
-        <p className="form-template-fill-multiple-choice__description">{description}</p>
-      ) : null}
       <Radio.Group
         className="form-template-fill-multiple-choice__radios app-radio-group app-radio-group--large"
         size="large"
@@ -107,6 +136,59 @@ function AgreementExplanationTextFill({
   )
 }
 
+function resolveShortEssayRows(
+  paragraph: Extract<
+    WritingFormParagraph,
+    { kind: 'single_item'; variant: 'short_essay' | 'session_plan_short_essay' }
+  >
+): 1 | 5 {
+  if (
+    paragraph.variant === 'short_essay' &&
+    'itemInputRows' in paragraph &&
+    paragraph.itemInputRows === 1
+  ) {
+    return 1
+  }
+  return 5
+}
+
+function ShortEssayTextControl({
+  value,
+  placeholder,
+  disabled,
+  rows,
+  onChange,
+}: {
+  value: string
+  placeholder: string
+  disabled: boolean
+  rows: 1 | 5
+  onChange: (next: string) => void
+}) {
+  if (rows === 1) {
+    return (
+      <Input
+        size="large"
+        value={value}
+        placeholder={placeholder}
+        disabled={disabled}
+        onChange={event => onChange(event.target.value)}
+      />
+    )
+  }
+
+  return (
+    <textarea
+      className="form-template-fill-short-essay"
+      value={value}
+      placeholder={placeholder}
+      disabled={disabled}
+      rows={rows}
+      onChange={event => onChange(event.target.value)}
+    />
+  )
+}
+
 function ShortEssayFill({
   paragraph,
   readonly,
@@ -120,23 +202,17 @@ function ShortEssayFill({
   onUpdateParagraph?: FormUpdateParagraph
 }) {
   const items = paragraph.items ?? []
+  const rows = resolveShortEssayRows(paragraph)
+  const fallbackPlaceholder = paragraph.bodyPlaceholder || '답변을 입력해 주세요'
 
   if (items.length === 0) {
     return (
-      <Input.TextArea
-        className="form-template-fill-short-essay"
+      <ShortEssayTextControl
         value={paragraph.bodyText}
-        placeholder={paragraph.bodyPlaceholder || '답변을 입력해 주세요'}
+        placeholder={fallbackPlaceholder}
         disabled={readonly}
-        autoSize={{
-          minRows:
-            paragraph.variant === 'short_essay' && 'itemInputRows' in paragraph
-              ? (paragraph.itemInputRows ?? 1)
-              : 1,
-          maxRows: 8,
-        }}
-        onChange={event => {
-          const next = event.target.value
+        rows={rows}
+        onChange={next => {
           onUpdateParagraph?.(paragraph.id, current =>
             current.kind === 'single_item' &&
             (current.variant === 'short_essay' || current.variant === 'session_plan_short_essay')
@@ -155,13 +231,13 @@ function ShortEssayFill({
           {paragraph.showItemTitle && (item.label?.trim() ?? '') ? (
             <span className="form-template-fill-short-essay-item__label">{item.label}</span>
           ) : null}
-          <Input
-            size="large"
+          <ShortEssayTextControl
             value={item.bodyText}
-            placeholder={item.placeholder || paragraph.bodyPlaceholder || '답변을 입력해 주세요'}
+            placeholder={item.placeholder || fallbackPlaceholder}
             disabled={readonly}
-            onChange={event => {
-              const nextValue = event.target.value
+            rows={rows}
+            onChange={nextRaw => {
+              const nextValue = applyConsentShortEssayItemInput(item.id, nextRaw)
               onUpdateParagraph?.(paragraph.id, current => {
                 if (
                   current.kind !== 'single_item' ||
@@ -172,6 +248,7 @@ function ShortEssayFill({
                 }
                 return {
                   ...current,
+                  bodyText: current.items?.[0]?.id === item.id ? nextValue : current.bodyText,
                   items: (current.items ?? []).map(entry =>
                     entry.id === item.id ? { ...entry, bodyText: nextValue } : entry
                   ),

@@ -9,6 +9,7 @@ import { CMS_PLATFORM_PROGRAM_FIXTURES } from './cms-registration-fixtures'
 import { mapCmsProgramsToPlatformDetails } from './map-from-cms'
 import { mergeSeedAndCatalogPrograms } from './merge-seed-catalog'
 import { fetchMockProgramCatalog } from './mock-program-catalog-client'
+import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 
 /**
  * mock 이미지 페어 — 동일 프로그램 비주얼을 해상도별로 분리.
@@ -48,27 +49,30 @@ function pickMockImagePair(programId: string): {
 
 /**
  * CMS 등록 케이스 fixture → Platform 상세.
- * 일반 8 + 1사1교 8 + 교육받은 교사 8 + Gemini featured 3
+ * 일반 16 + 1사1교 2 + 교육받은 교사 8 + Gemini 2 + UJAT 2
  */
 const SEED_PROGRAMS: ProgramDetail[] = mapCmsProgramsToPlatformDetails(
   CMS_PLATFORM_PROGRAM_FIXTURES,
   pickMockImagePair
 )
 
-/** 시드 전용 동기 조회 (비로그인·초기 페인트) */
+/** 시드 전용 동기 조회 (비로그인·초기 페인트). remote 실세션은 빈 목록. */
 export function getMockPrograms(): ProgramListItem[] {
+  if (!shouldUsePlatformMockData()) return []
   return SEED_PROGRAMS
 }
 
 export function getMockProgramById(id: string): ProgramDetail | undefined {
+  if (!shouldUsePlatformMockData()) return undefined
   return SEED_PROGRAMS.find(program => program.id === id)
 }
 
 /**
  * mock 로그인 시 CMS catalog 를 merge 한 목록.
- * 비로그인·실패 시 시드만 반환.
+ * 비로그인·실패 시 시드만 반환. remote 실세션은 빈 목록.
  */
 export async function loadMockPrograms(): Promise<ProgramDetail[]> {
+  if (!shouldUsePlatformMockData()) return []
   const catalogLike = await fetchMockProgramCatalog()
   if (catalogLike.length === 0) return [...SEED_PROGRAMS]
 

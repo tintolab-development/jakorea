@@ -2,6 +2,7 @@
 
 **작성일:** 2026-08-25  
 **우선순위:** P1 (등록은 boolean만으로 가능 · 상세 「동의서 보기」 복원 불가)  
+**후속 P0:** FE가 옵션 A(`filledDocument`)를 실어 보내면 pre-register가 **HTTP 500** — [member-pre-register-filled-document-500-backend-request-2026-08-26.md](./member-pre-register-filled-document-500-backend-request-2026-08-26.md)  
 **요청 대상:** Members API · consent-records · (택1) form-responses  
 **관련 FE:** `member-register-consent-write-snapshot.ts` · `map-pre-register-request.ts` · `use-form-response-draft-query.ts` · `member-consent-template-map.ts`  
 **관련 정책:** `.cursor/rules/terms-and-consent-policy.mdc`  
@@ -138,15 +139,15 @@ OpenAPI `TermsAgreementRequest.termsSnapshotJson`은 **게시 약관 원장** �
 | 항목 | 개인 | 교사(비겸직) | 강사 | 강사겸교사 |
 |------|------|--------------|------|------------|
 | 초상권 `PORTRAIT_RIGHTS` | ✓ | ✓ | ✓ | ✓ |
-| 지급조서 `PAYMENT_STATEMENT_PRE_CONSENT` | — | — | ✓ | ✓ |
-| 교육진행자 `FACILITATOR_PLEDGE` | — | — | ✓ | ✓ |
-| 행정정보 `ADMINISTRATIVE_INFO_CONSENT` | — | — | ✓ | ✓ |
-| 성범죄 `CRIMINAL_HISTORY_CHECK_CONSENT` | — | — | ✓ | ✓ |
+| 지급조서 `PAYMENT_STATEMENT_PRE_CONSENT` | ✓ | — | ✓ | ✓ |
+| 교육진행자 `FACILITATOR_PLEDGE` | ✓ | — | ✓ | ✓ |
+| 행정정보 `ADMINISTRATIVE_INFO_CONSENT` | ✓ | — | ✓ | ✓ |
+| 성범죄 `CRIMINAL_HISTORY_CHECK_CONSENT` | ✓ | — | ✓ | ✓ |
 
-근거: `user-consent-agreement-section.tsx`. 교사 상세는 일반 회원과 같이 **4항목만**(서비스·개인정보·마케팅·초상권). 강사 전용 4종은 숨김.  
-**등록은 교사도 5종 작성 가능** → 상세에서 숨겨도 **원장은 유지**. 조회 API는 숨긴 항목의 `filledDocument`도 `memberId`로 반환해야 한다. FE가 안 그리는 것과 BE가 버리는 것을 혼동하지 말 것.
+근거: `user-consent-agreement-section.tsx`. **개인 상세 = 등록과 동일 8항목**. 교사(비겸직) 상세만 **4항목**(서비스·개인정보·마케팅·초상권).  
+**등록은 교사도 5종 작성 가능** → 교사 상세에서 숨겨도 **원장은 유지**. 조회 API는 숨긴 항목의 `filledDocument`도 `memberId`로 반환해야 한다. FE가 안 그리는 것과 BE가 버리는 것을 혼동하지 말 것.
 
-상세에서 동의서 **재작성·보기**는 위 표에 ✓인 항목만 CMS가 연다. PATCH도 노출된 선택 항목만 보낸다. 개인·교사 상세에서 지급조서 본문을 지우는 요청은 하지 않음.
+상세에서 동의서 **재작성·보기**는 위 표에 ✓인 항목만 CMS가 연다. PATCH도 노출된 선택 항목만 보낸다. 교사 상세에서 지급조서 본문을 지우는 요청은 하지 않음.
 
 #### BE 요청 요약
 

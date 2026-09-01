@@ -15,6 +15,15 @@ import type { User } from '@/types/user'
 
 export type UseInfiniteUserListFilters = GetUsersPageParams
 
+/** mock 경로 레거시 키 — remote 전환 전 `['users','list']` */
+const MOCK_MEMBER_LIST_QUERY_KEY = ['users', 'list'] as const
+
+/**
+ * Class C 목록. 동일 LNB 재클릭은 sidebar에서 `invalidateMemberListQueries`로 강제 갱신한다.
+ * `refetchOnMount: 'always'`는 필터 조회·탭 왕복마다 page0을 재치므로 쓰지 않는다.
+ */
+const MEMBER_LIST_STALE_TIME_MS = 30_000
+
 /** 목록 재진입 시 캐시된 2페이지 이상을 refetch하지 않도록 첫 페이지만 남긴다. */
 export function keepFirstInfiniteQueryPage<T>(
   data: InfiniteData<T> | undefined
@@ -36,16 +45,16 @@ export function useInfiniteUserList(filters: UseInfiniteUserListFilters) {
     ? listNamespace === 'schools'
       ? memberQueryKeys.schoolsList(filtersKey)
       : memberQueryKeys.list(filtersKey)
-    : (['users', 'list', filters] as const)
+    : ([...MOCK_MEMBER_LIST_QUERY_KEY, filters] as const)
 
-  // useInfiniteQuery보다 먼저 두어, refetchOnMount가 캐시된 2페이지를 모두 치지 않게 한다.
+  // useInfiniteQuery보다 먼저 두어, remount 시 캐시된 2페이지를 모두 치지 않게 한다.
   useLayoutEffect(() => {
     const key =
       listNamespace === 'schools'
         ? memberQueryKeys.schoolsList(filtersKey)
         : listNamespace === 'members'
           ? memberQueryKeys.list(filtersKey)
-          : (['users', 'list', filters] as const)
+          : ([...MOCK_MEMBER_LIST_QUERY_KEY, filters] as const)
     queryClient.setQueryData<InfiniteData<GetUsersPageResult>>(key, keepFirstInfiniteQueryPage)
     // filters 참조는 매 렌더 달라질 수 있어 직렬화된 식별자만 의존한다.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- queryKey 안정성은 filtersKey + listNamespace
@@ -62,7 +71,7 @@ export function useInfiniteUserList(filters: UseInfiniteUserListFilters) {
       if (lastPage.nextPageParam !== undefined) return lastPage.nextPageParam
       return allPages.length
     },
-    staleTime: 30_000,
+    staleTime: MEMBER_LIST_STALE_TIME_MS,
   })
 
   const users = useMemo(() => {

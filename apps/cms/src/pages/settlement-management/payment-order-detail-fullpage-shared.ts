@@ -13,6 +13,7 @@ export const KO_DOW = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 export const LINE_STATUS_OPTIONS: readonly PaymentOrderAdminLineProcessingStatus[] = [
   'pending',
+  'reapplication',
   'confirmed',
   'correction',
   'application_rejected',
@@ -34,9 +35,7 @@ export function resolveDetailInitialDateRange(
 
 export const lineStatusSelectOptions: { value: AppliedLineStatus; label: string }[] = [
   { value: 'all', label: '전체' },
-  ...(
-    Object.keys(PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS) as PaymentOrderAdminLineProcessingStatus[]
-  ).map(key => ({
+  ...LINE_STATUS_OPTIONS.map(key => ({
     value: key,
     label: PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS[key],
   })),
@@ -65,13 +64,18 @@ export function deriveAggregateFromLines(
 
   if (statuses.every(s => s === 'application_rejected')) return 'application_rejected'
   if (statuses.every(s => s === 'confirmed')) return 'confirmed'
-  if (statuses.every(s => s === 'pending')) return 'pending'
+  if (statuses.every(s => s === 'pending' || s === 'reapplication')) return 'pending'
   return 'partial'
 }
 
 export function formatWon(amount: number): string {
   return `${amount.toLocaleString('ko-KR')}원`
 }
+
+export {
+  formatPaymentOrderInstitutionDisplay,
+  sumCountablePaymentOrderLineAmounts,
+} from '@/features/settlement-management/api/payment-orders/payment-order-line-amounts'
 
 /** 산출 내역서에서 확인 처리·신청 반려 후 목록 테이블 행과 동기화 */
 export interface PaymentOrderCalculationStatementCommitPayload {

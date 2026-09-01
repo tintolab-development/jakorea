@@ -78,6 +78,16 @@
   letter-spacing: -0.24px;
 }
 
+/* Figma: Headline/Large/medium · PFText typo="hl-lg-md" · 24px / 500 / 150% */
+.typo-hl-lg-md {
+  font-family: var(--font-family-base);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.24px;
+}
+
 .typo-hl-sm {
   font-family: var(--font-family-base);
   font-size: 20px;

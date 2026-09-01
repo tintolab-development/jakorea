@@ -1,9 +1,8 @@
 /**
- * 삭제 안내 문구 조합 및 담당자 삭제 모달
+ * 프로그램 도메인 삭제·승인 안내 문구 및 담당자 삭제 모달
  * 모달 UI는 `@/shared/ui/delete-guide-modal` (공통)
+ * 회원 탈퇴/학교(회원관리) 삭제는 `@/features/user/shared/lib/member-withdraw-delete-guide`
  */
-
-export { DeleteGuideModal, type DeleteGuideModalProps } from '@/shared/ui/delete-guide-modal'
 
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 
@@ -35,7 +34,7 @@ export function buildManagerMessageLines(names: string[]): string[] {
   ]
 }
 
-/** 학교 삭제 문구 생성 */
+/** 학교 삭제 문구 생성 (프로그램 참여 학교) */
 export function buildSchoolMessageLines(names: string[]): string[] {
   if (names.length === 0) return []
   if (names.length === 1) {
@@ -139,52 +138,6 @@ export function buildInstructorApproveMessageLines(count: number): string[] {
     `선택한 ${count}건의 강사 신청을 승인하시겠습니까?`,
     '승인 시 해당 강사들의 신청 상태가 [승인 완료]로 변경됩니다.',
     '정말로 승인하시겠습니까?',
-  ]
-}
-
-/** 회원 삭제 안내 문구 생성 (회원관리 > 전체 회원) */
-export function buildMemberDeleteMessageLines(
-  singleUser: { name: string; email: string } | null,
-  bulkCount: number
-): string[] {
-  if (bulkCount > 1) {
-    return [
-      `선택한 ${bulkCount}명의 회원을 삭제하시겠습니까?`,
-      '삭제된 회원은 복구할 수 없습니다.',
-      '정말로 삭제하시겠습니까?',
-    ]
-  }
-  if (singleUser) {
-    return [
-      `[${singleUser.name}] (${singleUser.email}) 회원을 삭제하시겠습니까?`,
-      '삭제된 회원은 복구할 수 없습니다.',
-      '정말로 삭제하시겠습니까?',
-    ]
-  }
-  return []
-}
-
-/** 회원 탈퇴 안내 문구 (회원 상세 > 탈퇴) */
-export function buildMemberWithdrawMessageLines(params: { displayName: string } | null): string[] {
-  if (!params) return []
-  const name = params.displayName.trim()
-  if (!name) return []
-  return [
-    `[${name}] 회원을 탈퇴 처리하시겠습니까?`,
-    '탈퇴 처리 시 등록 및 관련된 정보는 모두 탈퇴됩니다.',
-    '탈퇴된 목록 및 정보는 되돌릴 수 없습니다. 정말 탈퇴하시겠습니까?',
-  ]
-}
-
-/** 회원 상세 > [학교 삭제] 확인 모달 본문 */
-export function buildSchoolDeleteMessageLines(params: { displayName: string } | null): string[] {
-  if (!params) return []
-  const name = params.displayName.trim()
-  if (!name) return []
-  return [
-    `[${name}]를 삭제하시겠습니까?`,
-    '삭제 시 즉시 탈퇴 처리 되며, 등록 및 관련된 정보는 모두 삭제됩니다.',
-    '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
   ]
 }
 

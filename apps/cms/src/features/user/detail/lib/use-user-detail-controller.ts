@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, createElement, type MutableRefObject } from 'react'
+import { useState, useEffect, useLayoutEffect, useCallback, useMemo, createElement, type MutableRefObject } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
@@ -15,6 +15,7 @@ import {
   programsHistoryHasChildMenu,
   clampProgramsChildForUser,
   instructorDetailLnbClickShowsPrepareMessage,
+  resolveMemberDetailTabStateFromUrl,
   resolveUserDetailSubjectKey,
   type TabState,
   type UserDetailLnbKey,
@@ -39,7 +40,7 @@ import type { UseUserDetailModalsResult } from './use-user-detail-modals'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { User, SchoolTeacherEmploymentStatus } from '@/types/user'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
-import { getProgramAdminDetailInfoTabUrl } from '@/features/program/general/lib/program-admin-detail-url'
+import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
 import type {
   PatchUserBasicInfoInput,
   PatchUserBasicInfoOptions,
@@ -103,6 +104,7 @@ import {
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { updateTeacherMemberEmploymentStatusAndRefresh } from '@/features/user/api/update-teacher-member-employment-status'
+import { invalidateMemberDetailHistoryQueries } from '@/features/user/api/invalidate-member-detail-history-queries'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { mockUserHistories } from '@/data/mock/mypage'
@@ -236,17 +238,9 @@ export function useUserDetailController({
       organizationId: schoolOrganizationId,
       currentUser,
     })
-  }, [
-    detailTabResourceFetchKey,
-    membersRemote,
-    displayUser,
-    mode,
-    basicTabSections.showConsentAgreement,
-    basicTabSections.showSchoolAffiliatedTeachers,
-    schoolOrganizationId,
-    currentUser,
-    queryClient,
-  ])
+    // displayUser 객체 identity 변경(저장·unmask)으로 consent/comments/teachers 재GET 방지
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- detailTabResourceFetchKey가 primitive SSOT
+  }, [detailTabResourceFetchKey, membersRemote, mode, queryClient])
 
   const settlementTabResourceFetchKey =
     shouldLoadPaymentStatusTab &&
@@ -264,18 +258,46 @@ export function useUserDetailController({
       showInstructorPayment: basicTabSections.showInstructorPayment,
       instructorMemberId: displayUser.memberId,
     })
-  }, [
-    settlementTabResourceFetchKey,
-    membersRemote,
-    basicTabSections.showInstructorPayment,
-    displayUser?.memberId,
-    queryClient,
-  ])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- settlementTabResourceFetchKey가 primitive SSOT
+  }, [settlementTabResourceFetchKey, membersRemote, queryClient])
 
   useEffect(() => {
     if (open) return
     setTabState({ lnb: 'detail-info' })
   }, [open])
+
+  useLayoutEffect(() => {
+    if (!open || !displayUser) return
+    if (detailCloseIntentRef?.current) return
+
+    const urlId = searchParams.get('id')?.trim()
+    if (urlId && displayUser.id && urlId !== displayUser.id) return
+
+    setTabState(prev => {
+      const next = resolveMemberDetailTabStateFromUrl({
+        searchParams,
+        displayUser,
+        programsChildQueryKey,
+        mode,
+      })
+      if (prev.lnb === next.lnb && prev.child === next.child) {
+        return prev
+      }
+      return next
+    })
+  }, [
+    open,
+    displayUser?.id,
+    displayUser?.role,
+    displayUser?.instructorMemberProfile,
+    displayUser?.affiliatedSchoolUserId,
+    mode,
+    searchParams.get('id'),
+    searchParams.get('lnb'),
+    searchParams.get(programsChildQueryKey),
+    programsChildQueryKey,
+    detailCloseIntentRef,
+  ])
 
   const {
     applications: memberApplications,
@@ -349,6 +371,9 @@ export function useUserDetailController({
   const refetchApplications = useCallback(async () => {
     if (isSchoolDetail) {
       if (membersRemote && schoolOrganizationId != null && displayUser?.id) {
+        await invalidateMemberDetailHistoryQueries(queryClient, {
+          organizationId: schoolOrganizationId,
+        })
         await fetchSchoolOrganizationProgramEnrollmentHistoryQuery(
           queryClient,
           schoolOrganizationId,
@@ -359,12 +384,18 @@ export function useUserDetailController({
       await refetchSchoolEnrollment()
       return
     }
+    if (membersRemote && displayUser?.memberId != null) {
+      await invalidateMemberDetailHistoryQueries(queryClient, {
+        memberId: displayUser.memberId,
+      })
+    }
     await refetchMemberApplications()
   }, [
     isSchoolDetail,
     membersRemote,
     schoolOrganizationId,
     displayUser?.id,
+    displayUser?.memberId,
     queryClient,
     refetchMemberApplications,
     refetchSchoolEnrollment,
@@ -400,7 +431,6 @@ export function useUserDetailController({
     mode,
     searchParams,
     setSearchParams,
-    setTabState,
     programsChildQueryKey,
     detailCloseIntentRef,
   })
@@ -693,11 +723,18 @@ export function useUserDetailController({
     [handleCertificateBulkIssue]
   )
 
+  const prepareLeaveMemberDetailForProgramNavigation = useCallback(() => {
+    if (detailCloseIntentRef) detailCloseIntentRef.current = true
+  }, [detailCloseIntentRef])
+
   const openVolunteerProgramDetail = useCallback(
     (history: UserHistory) => {
-      navigate(getProgramAdminDetailInfoTabUrl(history.programId))
+      navigateToProgramAdminDetail(navigate, history.programId, {
+        onBeforeNavigate: prepareLeaveMemberDetailForProgramNavigation,
+        queryClient,
+      })
     },
-    [navigate]
+    [navigate, prepareLeaveMemberDetailForProgramNavigation, queryClient]
   )
 
   const openWithdrawConfirm = useCallback(() => {
@@ -1062,14 +1099,19 @@ export function useUserDetailController({
             })
           )
         }
-        if (displayUser.memberId != null) {
-          queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
-        }
-        queryClient.setQueryData(
-          [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
-          merged
-        )
       }
+      if (displayUser.memberId != null) {
+        queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
+        if (basicInfoEditScope === 'profile' || basicInfoEditScope === 'instructor_fee_ja') {
+          void queryClient.invalidateQueries({
+            queryKey: memberQueryKeys.consentRecords(displayUser.memberId),
+          })
+        }
+      }
+      queryClient.setQueryData(
+        [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
+        merged
+      )
       setBasicInfoEditing(false)
       setBasicInfoEditScope('none')
       setBasicInfoDraft(null)
@@ -1106,9 +1148,17 @@ export function useUserDetailController({
       if (nextPermission === current) return
       setAdminPermissionVariantPatching(true)
       try {
-        const updated = await patchMemberBasicInfo(displayUser.id, {
-          listMetrics: { adminPermissionVariant: nextPermission },
-        })
+        const updated = await patchMemberBasicInfo(
+          displayUser.id,
+          {
+            listMetrics: { adminPermissionVariant: nextPermission },
+          },
+          {
+            knownRole: 'ADMIN',
+            memberId: displayUser.memberId,
+            baseUser: displayUser,
+          }
+        )
         onMemberBasicInfoSaved?.(updated)
       } catch (error) {
         handleError(error, { defaultMessage: '관리자 권한 유형 변경에 실패했습니다.' })
@@ -1340,9 +1390,12 @@ export function useUserDetailController({
 
   const openEnrollmentProgramDetail = useCallback(
     (record: Application) => {
-      navigate(getProgramAdminDetailInfoTabUrl(record.programId))
+      navigateToProgramAdminDetail(navigate, record.programId, {
+        onBeforeNavigate: prepareLeaveMemberDetailForProgramNavigation,
+        queryClient,
+      })
     },
-    [navigate]
+    [navigate, prepareLeaveMemberDetailForProgramNavigation, queryClient]
   )
 
   const sidebarItems = useMemo(
@@ -1438,6 +1491,7 @@ export function useUserDetailController({
       closeAssignmentSubmissionModal: modals.assignment.close,
       openEnrollmentProgramDetail,
       openVolunteerProgramDetail,
+      prepareLeaveMemberDetailForProgramNavigation,
       handleBulkDeleteHistory,
       handleStudentCertificateBulkIssue,
       handleVolunteerCertificateBulkIssue,

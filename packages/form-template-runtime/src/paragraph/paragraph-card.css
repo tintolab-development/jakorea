@@ -225,21 +225,23 @@
 }
 
 /* 카드 헤더 — `ParagraphInput`에 `titleClassName`으로 붙는 placeholder 톤 */
+.paragraph-card__title-block .paragraph-input.paragraph-card__title--placeholder {
+  --pc-ph-color: var(--gray-85969-d, #85969d);
+  --pc-ph-weight: 700;
+}
+
 .paragraph-card__title-block
   .paragraph-input.paragraph-card__title--placeholder
-  .paragraph-input__view-text,
-.paragraph-card__title-block
-  .paragraph-input.paragraph-card__title--placeholder
-  .paragraph-input__placeholder {
-  color: var(--gray-85969-d, #85969d);
-  font-weight: 700;
+  :is(.paragraph-input__view-text, .paragraph-input__placeholder) {
+  color: var(--pc-ph-color);
+  font-weight: var(--pc-ph-weight);
 }
 
 .paragraph-card__title-block
   .paragraph-input.paragraph-card__title--placeholder.paragraph-input--edit
   .paragraph-input__shell
   .ant-input::placeholder {
-  color: var(--gray-85969-d, #85969d);
+  color: var(--pc-ph-color);
 }
 
 .paragraph-card__required {

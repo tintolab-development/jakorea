@@ -11,5 +11,6 @@ export interface NotificationEventCatalogUpdateRequest {
   alimtalkEnabledYn?: boolean;
   smsEnabledYn?: boolean;
   emailEnabledYn?: boolean;
+  marketingConsentRequiredYn?: boolean;
   useYn?: boolean;
 }

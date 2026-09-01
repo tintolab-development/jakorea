@@ -1,5 +1,10 @@
 import {
+  formatConsentBirthDateInput,
+  formatConsentPhoneInput,
+} from '@jakorea/form-schema/consent'
+import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
+  AGREEMENT_NOTICE_SUBJECT_ITEM_IDS,
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
   normalizeWritingFormDraft,
   type VerticalTableRow,
@@ -21,13 +26,9 @@ export type MemberConsentMemberContext = {
   portraitAffiliationSelectOptions?: ReadonlyArray<{ value: string; label: string }>
 }
 
-const NOTICE_SUBJECT_NAME_ITEM_ID = 'agreement-notice-subj-name'
-const NOTICE_SUBJECT_BIRTH_ITEM_ID = 'agreement-notice-subj-birth'
-const NOTICE_SUBJECT_PHONE_ITEM_ID = 'agreement-notice-subj-phone'
-
 function birthDateToNoticeValue(birthDate: string | undefined): string {
   const digits = birthDate?.replace(/\D/g, '') ?? ''
-  if (digits.length === 8) return digits
+  if (digits.length === 8) return formatConsentBirthDateInput(digits)
   return ''
 }
 
@@ -89,21 +90,23 @@ function fillNoticeSubjectParagraph(
   return {
     ...paragraph,
     items: (paragraph.items ?? []).map(item => {
-      if (item.id === NOTICE_SUBJECT_NAME_ITEM_ID) {
+      if (item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name) {
         return { ...item, bodyText: name }
       }
-      if (item.id === NOTICE_SUBJECT_BIRTH_ITEM_ID) {
+      if (item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth) {
         return { ...item, bodyText: birth }
       }
-      if (item.id === NOTICE_SUBJECT_PHONE_ITEM_ID) {
-        return { ...item, bodyText: phone }
+      if (item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone) {
+        return { ...item, bodyText: formatConsentPhoneInput(phone) }
       }
       return item
     }),
   }
 }
 
-/** @deprecated 회원 동의서 작성 — 기본정보 prefill 사용 안 함. 조회용 context 빌더만 유지 */
+/**
+ * 동의-only 보기 미리보기용. 동의서 **작성(write)** 모달에서는 사용하지 않는다.
+ */
 export function applyMemberPortraitConsentPrefill(
   draft: WritingFormDraft,
   ctx: MemberConsentMemberContext
@@ -115,7 +118,10 @@ export function applyMemberPortraitConsentPrefill(
   }
 }
 
-/** @deprecated 회원 동의서 작성 — 기본 「동의」 자동 선택 사용 안 함 */
+/**
+ * 동의-only 보기 미리보기용 — 미선택 multiple_choice·표 하단 동의에 「동의」선택.
+ * 동의서 **작성(write)** 모달에서는 사용하지 않는다.
+ */
 export function applyEducatorFacilitatorPledgeDefaultAgree(
   draft: WritingFormDraft
 ): WritingFormDraft {
@@ -123,22 +129,30 @@ export function applyEducatorFacilitatorPledgeDefaultAgree(
   return {
     ...normalized,
     paragraphs: normalized.paragraphs.map(paragraph => {
-      if (paragraph.kind !== 'single_item' || paragraph.variant !== 'multiple_choice') {
-        return paragraph
+      let next = paragraph
+
+      if ('showBottomConsent' in next && next.showBottomConsent === true && next.bottomConsent == null) {
+        next = { ...next, bottomConsent: 'agree' }
       }
-      if (paragraph.selectedPreviewSingleId != null && paragraph.selectedPreviewSingleId !== '') {
-        return paragraph
+
+      if (next.kind !== 'single_item' || next.variant !== 'multiple_choice') {
+        return next
       }
-      const agree = paragraph.items.find(
+      if (next.selectedPreviewSingleId != null && next.selectedPreviewSingleId !== '') {
+        return next
+      }
+      const agree = next.items.find(
         item => item.label.trim() === '동의' || item.id.includes('-agree')
       )
-      if (agree == null) return paragraph
-      return { ...paragraph, selectedPreviewSingleId: agree.id }
+      if (agree == null) return next
+      return { ...next, selectedPreviewSingleId: agree.id }
     }),
   }
 }
 
-/** @deprecated 회원 동의서 작성 — 기본정보 prefill 사용 안 함 */
+/**
+ * 동의-only 보기 미리보기용. 동의서 **작성(write)** 모달에서는 사용하지 않는다.
+ */
 export function applyMemberNoticeConsentPrefill(
   draft: WritingFormDraft,
   ctx: MemberConsentMemberContext
@@ -152,9 +166,12 @@ export function applyMemberNoticeConsentPrefill(
 
 const USER_AFFILIATION_PIPE_SEP = ' | ' as const
 
-/** 회원 상세 — 동의서 보기 모달용 회원 컨텍스트 */
+/** 회원 상세 — 동의서 보기(동의-only 미리보기)용 회원 컨텍스트 */
 export function buildMemberConsentContextFromUser(
-  user: Pick<User, 'name' | 'schoolEnrollmentStatus' | 'affiliation'>
+  user: Pick<User, 'name' | 'schoolEnrollmentStatus' | 'affiliation'> & {
+    birthDate?: string
+    phone?: string
+  }
 ): MemberConsentMemberContext {
   const enrolled = user.schoolEnrollmentStatus === 'ENROLLED'
   const affiliationRaw = user.affiliation?.trim() ?? ''
@@ -166,6 +183,8 @@ export function buildMemberConsentContextFromUser(
 
   return {
     name: user.name?.trim() ?? '',
+    birthDate: user.birthDate,
+    phone: user.phone,
     schoolEnrollmentStatus: enrolled ? 'enrolled' : 'not_enrolled',
     schoolName: enrolled ? primaryAffiliation || undefined : undefined,
     grade: enrolled && affiliationSuffix ? affiliationSuffix : undefined,

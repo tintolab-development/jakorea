@@ -11,7 +11,7 @@
 import type { ProgramDetail, ProgramListItem } from '../model/types.ts'
 import { PROGRAM_DETAIL_CASE_SSOT_IDS } from './detail-case.ts'
 
-/** 신청 폼 6케이스 (+ 강사 등 CMS 템플릿 유지용) */
+/** 신청 폼 6케이스 (+ 강사 · Gemini 강사) */
 export type ProgramApplyFormCase =
   | 'individual-general'
   | 'individual-team'
@@ -19,8 +19,8 @@ export type ProgramApplyFormCase =
   | 'institution-general'
   | 'institution-economy'
   | 'institution-gemini'
-  /** 6케이스 밖 — CMS `application-instructor` */
   | 'instructor'
+  | 'instructor-gemini'
 
 /** CMS APPLICATION templateCode (form-schema / CMS catalog SSOT) */
 export type ProgramApplicationTemplateCode =
@@ -30,6 +30,7 @@ export type ProgramApplicationTemplateCode =
   | 'application-economy'
   | 'application-gemini-visiting-training-school'
   | 'application-instructor'
+  | 'application-gemini-visiting-training-instructor'
 
 export type ProgramApplyFormCaseInput = Pick<ProgramListItem | ProgramDetail, 'category' | 'id'> &
   Partial<Pick<ProgramDetail, 'detailCase' | 'participationMethod'>>
@@ -38,10 +39,11 @@ export type ProgramApplyFormCaseInput = Pick<ProgramListItem | ProgramDetail, 'c
 export const PROGRAM_APPLY_FORM_CASE_SSOT_IDS = {
   individualGeneral: 'general-prog-type-ind-curriculum-single',
   individualTeam: 'general-prog-type-ind-curriculum-multi',
-  individualVolunteer: PROGRAM_DETAIL_CASE_SSOT_IDS.volunteer,
+  individualVolunteer: PROGRAM_DETAIL_CASE_SSOT_IDS.ujatVolunteer,
   institutionGeneral: 'general-prog-type-org-curriculum-single',
   institutionEconomy: 'economy-prog-001',
   institutionGemini: PROGRAM_DETAIL_CASE_SSOT_IDS.gemini,
+  instructorGemini: PROGRAM_DETAIL_CASE_SSOT_IDS.instructor,
 } as const satisfies Record<string, string>
 
 const APPLY_CASE_TO_TEMPLATE_CODE: Record<
@@ -55,6 +57,7 @@ const APPLY_CASE_TO_TEMPLATE_CODE: Record<
   'institution-economy': 'application-economy',
   'institution-gemini': 'application-gemini-visiting-training-school',
   instructor: 'application-instructor',
+  'instructor-gemini': 'application-gemini-visiting-training-instructor',
 }
 
 const SSOT_ID_TO_APPLY_CASE: Record<string, ProgramApplyFormCase> = {
@@ -64,8 +67,7 @@ const SSOT_ID_TO_APPLY_CASE: Record<string, ProgramApplyFormCase> = {
   [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.institutionGeneral]: 'institution-general',
   [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.institutionEconomy]: 'institution-economy',
   [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.institutionGemini]: 'institution-gemini',
-  [PROGRAM_DETAIL_CASE_SSOT_IDS.instructor]: 'instructor',
-  [PROGRAM_DETAIL_CASE_SSOT_IDS.ujatVolunteer]: 'individual-volunteer',
+  [PROGRAM_APPLY_FORM_CASE_SSOT_IDS.instructorGemini]: 'instructor-gemini',
   [PROGRAM_DETAIL_CASE_SSOT_IDS.ujatParticipant]: 'institution-general',
 }
 
@@ -73,8 +75,12 @@ function isEconomyProgramId(id: string): boolean {
   return id.startsWith('economy-') || id.includes('economy')
 }
 
+function isGeminiInstructorProgramId(id: string): boolean {
+  return id === PROGRAM_DETAIL_CASE_SSOT_IDS.instructor || id.includes('gemini-prog-instructor')
+}
+
 function isGeminiProgramId(id: string): boolean {
-  return id.startsWith('gvt-recruitment-')
+  return id.startsWith('gemini-prog-')
 }
 
 /**
@@ -92,13 +98,16 @@ export function resolveProgramApplyFormCase(
   if (
     detailCase === 'volunteer' ||
     detailCase === 'ujat-volunteer' ||
-    program.id === PROGRAM_DETAIL_CASE_SSOT_IDS.volunteer ||
     program.id === PROGRAM_DETAIL_CASE_SSOT_IDS.ujatVolunteer
   ) {
     return 'individual-volunteer'
   }
 
-  if (detailCase === 'instructor' || program.id === PROGRAM_DETAIL_CASE_SSOT_IDS.instructor) {
+  if (isGeminiInstructorProgramId(program.id) || (detailCase === 'instructor' && isGeminiProgramId(program.id))) {
+    return 'instructor-gemini'
+  }
+
+  if (detailCase === 'instructor') {
     return 'instructor'
   }
 

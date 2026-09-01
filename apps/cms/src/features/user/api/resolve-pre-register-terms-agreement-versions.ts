@@ -1,4 +1,5 @@
 import { fetchCurrentTermsDocumentsMetaMap } from '@/features/user/api/fetch-current-terms-document'
+import { resolveTermsTypesForCurrentLookup } from '@/features/user/api/terms-document-type-alias'
 
 type TermsAgreementLike = {
   termsType: string
@@ -26,9 +27,13 @@ export async function resolvePreRegisterTermsAgreementVersions<T extends TermsAg
   const missing = termsTypes.filter(type => !metaMap.has(type))
 
   if (missing.length > 0) {
-    throw new Error(
-      `약관 버전을 불러오지 못했습니다. (${missing.join(', ')}) 잠시 후 다시 시도해 주세요.`
-    )
+    const detail = missing
+      .map(type => {
+        const tried = resolveTermsTypesForCurrentLookup(type)
+        return tried.length > 1 ? `${type} (시도: ${tried.join(', ')})` : type
+      })
+      .join('; ')
+    throw new Error(`약관 버전을 불러오지 못했습니다. (${detail}) 잠시 후 다시 시도해 주세요.`)
   }
 
   return agreements.map(agreement => {

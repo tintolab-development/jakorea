@@ -230,7 +230,8 @@
 }
 
 .account-payments-page__status-text--awaiting-confirmation {
-  color: var(--color-orange, #f07917);
+  /* 시안: 계좌 지급 대기 중 — 초록 */
+  color: var(--color-green, #1e8c29);
   font-weight: 500;
 }
 
@@ -240,7 +241,8 @@
 }
 
 .account-payments-page__status-text--account-paid {
-  color: var(--color-blue, #017eaf);
+  /* 시안: 계좌 지급 완료 — 청록 */
+  color: var(--JA-mint-01, #01a1af);
   font-weight: 500;
 }
 

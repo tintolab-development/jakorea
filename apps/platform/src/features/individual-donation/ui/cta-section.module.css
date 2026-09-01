@@ -121,7 +121,7 @@
 @media (--bp-pc-up) {
   .section {
     position: relative;
-    padding-block: 180px;
+    padding-block: 180px 300px;
     padding-inline: 0;
   }
   .section::before {
@@ -167,6 +167,7 @@
 
   .eyebrow {
     order: unset;
+    color: var(--color-primary-600);
   }
 
   .title {
@@ -200,6 +201,7 @@
     min-width: 0;
     margin-left: 0;
     aspect-ratio: 948 / 560;
+    max-height: 550px;
   }
 
   .imageFrame {

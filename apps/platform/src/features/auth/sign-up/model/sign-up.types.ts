@@ -1,6 +1,6 @@
 export type MemberType = 'general' | 'teacher'
 export type GenderType = 'male' | 'female'
-export type AgreementKey = 'service' | 'privacy' | 'marketing' | 'portrait'
+export type AgreementKey = 'service' | 'privacy' | 'teacherInfo' | 'marketing' | 'portrait'
 export type EmailCheckStatus = 'idle' | 'success' | 'error'
 export type SchoolStatus = 'enrolled' | 'none'
 export type EmploymentStatus = 'employed' | 'on-leave'

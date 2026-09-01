@@ -2,9 +2,11 @@ import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/para
 import type { ProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 
 export function buildProgramRegistrationParagraphBodyOptions(
-  options: ProgramRegistrationParagraphBodyOptions
+  options: ProgramRegistrationParagraphBodyOptions,
+  extras?: Pick<RenderFormParagraphBodyOptions, 'hiddenParagraphIds'>
 ): RenderFormParagraphBodyOptions {
   return {
     programRegistration: options,
+    hiddenParagraphIds: extras?.hiddenParagraphIds,
   }
 }

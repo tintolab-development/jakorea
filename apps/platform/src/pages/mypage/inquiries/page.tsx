@@ -12,6 +12,7 @@ import {
 } from '@/features/inquiry'
 import {
   getMypageLnbItems,
+  MYPAGE_EDUCATION_PATH,
   MYPAGE_INQUIRIES_PATH,
   MYPAGE_PATH,
   showInstructorApplyCta,
@@ -73,6 +74,10 @@ export function MypageInquiriesPage() {
   const handleLnbItemSelect = (key: MypageLnbItemKey) => {
     if (key === 'home') {
       navigate(MYPAGE_PATH)
+      return
+    }
+    if (key === 'education') {
+      navigate(MYPAGE_EDUCATION_PATH)
     }
   }
 

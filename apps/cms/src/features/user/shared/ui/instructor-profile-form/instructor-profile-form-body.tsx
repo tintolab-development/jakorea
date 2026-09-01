@@ -237,6 +237,7 @@ export function InstructorProfileFormBody({
     null
   )
   const homeAddress = Form.useWatch('homeAddress', form) ?? ''
+  const memberName = Form.useWatch('name', form) ?? ''
   const memberType = Form.useWatch('memberType', form) ?? 'general'
   const schoolName = Form.useWatch('schoolName', form) ?? ''
   const affiliationNone = Form.useWatch('affiliationNone', form) === true
@@ -1058,6 +1059,7 @@ export function InstructorProfileFormBody({
           open
           templateId={activeConsentEntry.templateId}
           modalTitle={activeConsentEntry.modalTitle}
+          memberName={memberName}
           savedSnapshot={consentWriteSnapshots.agreementByFieldKey[activeConsentField]}
           onSnapshotSave={snapshot =>
             onSaveConsentAgreementSnapshot?.(activeConsentField, snapshot)

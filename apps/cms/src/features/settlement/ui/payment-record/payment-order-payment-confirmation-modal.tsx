@@ -3,33 +3,19 @@
  */
 
 import { useEffect, useState } from 'react'
-import dayjs, { type Dayjs } from 'dayjs'
+import { type Dayjs } from 'dayjs'
 import { CalendarOutlined } from '@ant-design/icons'
 import { DatePicker } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
+import { defaultLectureFeePaymentScheduledDate } from '@/features/settlement/lib/third-tuesday-of-month'
 import './payment-order-payment-confirmation-modal.css'
 
 const KO_DOW = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 function formatKoreanDateWithWeekday(value: Dayjs): string {
   return `${value.format('YYYY. MM. DD')}(${KO_DOW[value.day()]})`
-}
-
-/** 해당 월의 셋째주 화요일 (강의비 지급 예정일 기본값) */
-function thirdTuesdayOfMonth(monthRef: Dayjs): Dayjs {
-  let d = monthRef.startOf('month')
-  let count = 0
-  const m = monthRef.month()
-  while (d.month() === m) {
-    if (d.day() === 2) {
-      count++
-      if (count === 3) return d
-    }
-    d = d.add(1, 'day')
-  }
-  return monthRef.date(15)
 }
 
 export interface PaymentOrderPaymentConfirmationModalProps {
@@ -55,12 +41,12 @@ export function PaymentOrderPaymentConfirmationModal({
   const instructorName = data ? getInstructorName(data) : ''
 
   const [expectedDate, setExpectedDate] = useState<Dayjs>(() =>
-    thirdTuesdayOfMonth(dayjs().add(1, 'month'))
+    defaultLectureFeePaymentScheduledDate()
   )
 
   useEffect(() => {
     if (open) {
-      setExpectedDate(thirdTuesdayOfMonth(dayjs().add(1, 'month')))
+      setExpectedDate(defaultLectureFeePaymentScheduledDate())
     }
   }, [open])
 

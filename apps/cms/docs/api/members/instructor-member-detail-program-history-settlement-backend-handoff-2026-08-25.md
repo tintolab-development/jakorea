@@ -200,13 +200,13 @@ GET /api/admin/users/{memberId}/applications/{applicationId}/lecture-attendance
 | **SET-006** | **P0** | **지급조서 발급** (선택) | bulk ZIP **미구현** → 단건 PDF 순차 fallback | `POST /api/admin/settlements/payment-statements/bulk-download` `{ settlementIds[] }` | [bulk-download §5.1 #6](../cms-table-bulk-download-api-backend-handoff.md). **PDF 본문 PII는 SET-009 원문** |
 | **SET-007** | P0 | 산출 내역 · **신청 반려** | reject endpoint 없음 (FE path 연결됨) | `PATCH /api/admin/settlements/statements/{statementId}/reject` `{ reason }` | 반려 후 status 반영 |
 | **SET-008** | P1 | 지급조서 확인 | confirm body에 **이체 예정일** — BE 수용 여부 ◐ | `PATCH .../confirm` body: `lectureFeePaymentScheduledDate` (또는 `scheduledPaymentDate`) SSOT | 확인 모달 저장·재조회 |
-| **SET-009** | **P0** | **지급조서 원문 PII · 산출 내역서 unmask** | 발급이 화면 마스킹 값을 바인딩 · unmask API 없음 | `POST /api/admin/settlements/{settlementId}/privacy/unmask` `{ reason }` → 전 PII 원문 | [UI SSOT §1.2](../settlement-payment-order-detail-ui-fields-backend-handoff.md#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api) |
+| **SET-009** | **P0** | **지급조서 원문 PII · 산출 내역서 unmask** | 발급 양식 **공란**(목 샘플 제거) · unmask API 없음 | `POST /api/admin/settlements/{settlementId}/privacy/unmask` `{ reason }` → 전 PII 원문 (`nameEn` 포함) | [UI SSOT §1.2](../settlement-payment-order-detail-ui-fields-backend-handoff.md#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api) |
 
 #### SET-005 · SET-006 · SET-009 FE 동작 (2026-08-26)
 
 - 목록: `map-settlement-to-instructor-member-row.ts` — `institutionName: '-'`, invoice placeholder
 - 모달: `fetchSettlementDetailRemote` + `mapSettlementDetailToInstructorInvoice` — line item type 한글 매핑만, 상세 「준비 중」 구간 존재
-- 발급: `bulkDownloadPaymentStatementsRemote` 호출 → 실패 시 `downloadPaymentStatementRemote` **순차 fallback**. FE는 산출 내역서 **마스킹 표시값**을 발급 양식에 바인딩 — **원문은 SET-009 unmask 대기**
+- 발급: 산출 내역서 값을 양식에 바인딩하되 **목 샘플·`-` placeholder 없음** (공란). **원문은 SET-009 unmask + §4.5 embed 대기**
 
 #### 정산 UI 8종 ↔ API status (SET 공통 · P2)
 
@@ -346,7 +346,7 @@ GET /api/admin/users/{memberId}/applications/{applicationId}/lecture-attendance
 |----|-----|-----|-----|
 | 확인 처리 + 이체 예정일 | `PATCH .../confirm` + date body | ✅ `useConfirmPaymentStatementMutation` | SET-008 |
 | 신청 반려 | `PATCH .../reject` | ✅ `rejectPaymentStatementRemote` | SET-007 |
-| 지급조서 발급 (푸터) | 단건 download / bulk ZIP · **본문 원문 PII** | ✅ 단건 · bulk fallback · 본문 마스킹 바인딩 | SET-006 · **SET-009** |
+| 지급조서 발급 (푸터) | 단건 download / bulk ZIP · **본문 원문 PII** | ✅ 단건 · bulk fallback · **공란**(목 없음) · SET-009 대기 | SET-006 · **SET-009** |
 | `statementId` | 목록 embed 또는 resolve | `GET /statements` join | SET-003 |
 
 **문서·UI 일치:** SET-005 요청은 [UI 필드 SSOT §4.1·§4.3·§4.4](../settlement-payment-order-detail-ui-fields-backend-handoff.md)와 **일치**.  

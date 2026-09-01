@@ -77,9 +77,7 @@ const ADMIN_REGISTER_REQUIRED_CONSENT_FIELDS = [
   label: string
 }>
 
-function normalizeSubmitValues(
-  values: AdminRegisterModalFormValues
-): AdminRegisterModalFormValues {
+function normalizeSubmitValues(values: AdminRegisterModalFormValues): AdminRegisterModalFormValues {
   return {
     ...values,
     name: values.name.trim(),
@@ -90,9 +88,10 @@ function normalizeSubmitValues(
   }
 }
 
-function collectAdminRegisterValidation(
-  values: AdminRegisterModalFormValues
-): { missingRequired: boolean; formatMessages: string[] } {
+function collectAdminRegisterValidation(values: AdminRegisterModalFormValues): {
+  missingRequired: boolean
+  formatMessages: string[]
+} {
   let missingRequired = false
   const formatMessages: string[] = []
 
@@ -191,7 +190,7 @@ export function AdminRegisterModal({
       open={open}
       onCancel={handleClose}
       title="관리자 신규 등록"
-      width={1000}
+      width={1200}
       footer={
         <>
           <CmsButton variant="secondary" size="medium" type="button" onClick={handleClose}>
@@ -231,10 +230,7 @@ export function AdminRegisterModal({
                 labelWidth={200}
                 view="-"
                 edit={
-                  <Form.Item
-                    name="name"
-                    style={FORM_ITEM_STYLE}
-                  >
+                  <Form.Item name="name" style={FORM_ITEM_STYLE}>
                     <CmsInput placeholder="한글 성명" inputSize="medium" width="100%" />
                   </Form.Item>
                 }
@@ -247,7 +243,7 @@ export function AdminRegisterModal({
                 edit={
                   <span className="detail-info-form-inputs-wrapper-no-gap">
                     <Form.Item name="gender" noStyle>
-                      <CmsRadioGroup options={GENDER_OPTIONS} size="medium" />
+                      <CmsRadioGroup options={GENDER_OPTIONS} size="large" />
                     </Form.Item>
                     <DetailInfoForm.InputsSeparator />
                     <Form.Item
@@ -257,7 +253,7 @@ export function AdminRegisterModal({
                       getValueFromEvent={(value: string) => value}
                     >
                       <CmsDateTextInput
-                        placeholder="YYYY.MM.DD"
+                        placeholder="생년월일 8자리"
                         maxLength={10}
                         inputSize="medium"
                         width="100%"
@@ -275,10 +271,7 @@ export function AdminRegisterModal({
                 labelWidth={200}
                 view="-"
                 edit={
-                  <Form.Item
-                    name="contact"
-                    style={FORM_ITEM_STYLE}
-                  >
+                  <Form.Item name="contact" style={FORM_ITEM_STYLE}>
                     <CmsPhoneInput placeholder="연락처" inputSize="medium" width="100%" />
                   </Form.Item>
                 }
@@ -289,10 +282,7 @@ export function AdminRegisterModal({
                 labelWidth={200}
                 view="-"
                 edit={
-                  <Form.Item
-                    name="email"
-                    style={FORM_ITEM_STYLE}
-                  >
+                  <Form.Item name="email" style={FORM_ITEM_STYLE}>
                     <CmsInput placeholder="이메일" inputSize="medium" width="100%" />
                   </Form.Item>
                 }

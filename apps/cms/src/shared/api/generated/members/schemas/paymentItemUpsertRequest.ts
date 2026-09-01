@@ -5,9 +5,11 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { PaymentItemUpsertRequestPaymentItemType } from './paymentItemUpsertRequestPaymentItemType';
 
 export interface PaymentItemUpsertRequest {
   id?: number;
+  paymentItemType?: PaymentItemUpsertRequestPaymentItemType;
   itemName?: string;
   maxAmount?: number;
   taxableYn?: boolean;

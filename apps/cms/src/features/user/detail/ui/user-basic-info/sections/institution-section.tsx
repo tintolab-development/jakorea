@@ -5,7 +5,7 @@ import { addressLine, institutionTimesLabel } from '../display'
 import { useBasicInfoEditing } from '../use-basic-info-editing'
 import { FullWidthAddressEdit } from './shared'
 import type { BasicInfoSectionContext } from './types'
-import { formatDate } from '@/shared/utils'
+import { formatDateDot } from '@/shared/utils'
 
 export function InstitutionSection(ctx: BasicInfoSectionContext) {
   const { user, memberInfoEditing, memberInfoDraft, onMemberInfoDraftChange, cmsMayEditBasicProfileFields } =
@@ -63,7 +63,7 @@ export function InstitutionSection(ctx: BasicInfoSectionContext) {
         />
       </EditableRow>
       <EditableRow type="single">
-        <EditableField label="등록일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
+        <EditableField label="등록일" readOnlyDisplay view={<span>{formatDateDot(user.createdAt)}</span>} />
       </EditableRow>
     </>
   )

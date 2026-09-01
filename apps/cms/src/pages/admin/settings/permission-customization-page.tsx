@@ -23,6 +23,8 @@ import {
   createInitialPermissionsByRole,
   isValidRoleTab,
 } from './admin-permission-settings-ui-data'
+import { isAdminPermissionsRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { AdminPermissionsRemotePanel } from './admin-permissions-remote-panel'
 import './permission-customization-page.css'
 
 interface CategoryCardsProps {
@@ -98,6 +100,7 @@ export function PermissionCustomizationPage() {
   }, [searchParams])
 
   const isMaster = Boolean(user && isMasterAdmin(user))
+  const adminPermissionsRemote = isAdminPermissionsRemoteEnabled()
 
   useEffect(() => {
     if (!isMaster) return
@@ -149,7 +152,11 @@ export function PermissionCustomizationPage() {
         }))}
       />
 
-      <CategoryCards role={activeRole} flags={permissionsByRole[activeRole]} />
+      {adminPermissionsRemote ? (
+        <AdminPermissionsRemotePanel activeRole={activeRole} />
+      ) : (
+        <CategoryCards role={activeRole} flags={permissionsByRole[activeRole]} />
+      )}
     </div>
   )
 }

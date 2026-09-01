@@ -1,0 +1,117 @@
+.form {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  margin-top: var(--spacing-28);
+}
+
+.fieldProgram {
+  width: 100%;
+  min-width: 0;
+}
+
+.fieldCategory {
+  width: 100%;
+  min-width: 0;
+  margin-top: var(--spacing-16);
+}
+
+.fieldTitle {
+  width: 100%;
+  min-width: 0;
+  margin-top: var(--spacing-32);
+}
+
+.fieldContent {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  margin-top: var(--spacing-16);
+}
+
+.label {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: var(--spacing-4);
+  overflow: hidden;
+  padding-left: var(--spacing-8);
+  color: var(--color-neutral-warm-600);
+}
+
+.labelText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.requiredMark {
+  overflow: hidden;
+  flex: 0 0 auto;
+  color: var(--color-red);
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 174px;
+  padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) 14px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+  resize: none;
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--color-neutral-black);
+  background: var(--color-neutral-white);
+}
+
+.textarea:hover:not(:disabled),
+.textarea:focus {
+  border-color: var(--color-border-focus);
+  outline: none;
+}
+
+.textareaError {
+  border-color: var(--color-border-error-strong);
+}
+
+.textarea:disabled {
+  border-color: var(--color-border-default);
+  background: var(--color-neutral-warm-100);
+}
+
+.message {
+  margin: 0;
+  padding-left: var(--spacing-8);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 160%;
+}
+
+.messageError {
+  color: var(--color-border-error-strong);
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  gap: var(--spacing-8);
+  margin-top: var(--spacing-28);
+}

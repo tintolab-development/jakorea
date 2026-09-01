@@ -14,6 +14,9 @@ CMS Playwright E2E · `/e2e-error-log` · 회원 관리 연동에서 **관측·�
 
 | 우선순위 | 도메인 | 대표 증상 | 문서 |
 |----------|--------|-----------|------|
+| **P0** | **members (목록 PII)** | `GET /api/admin/members/all` 연락처·이메일 **원문** | [**members-all-list-email-phone-masking-backend-request-2026-08-31.md**](./members/members-all-list-email-phone-masking-backend-request-2026-08-31.md) |
+| **P0** | **members (동의 current·파일)** | 상세 수정 `PAYMENT_STATEMENT_CONSENT` **404** · 성범죄 업로드 **401** | [**member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md**](./members/member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md) |
+| **P0** | **members (등록 동의서 본문)** | 동의서 작성 후 pre-register **HTTP 500** | [**member-pre-register-filled-document-500-backend-request-2026-08-26.md**](./members/member-pre-register-filled-document-500-backend-request-2026-08-26.md) |
 | **P0** | **members (등록 약관)** | 선택 약관까지 필수 검증 · pre-register 400 | [**members-pre-register-terms-required-policy-backend-request-2026-08-11.md**](./members/members-pre-register-terms-required-policy-backend-request-2026-08-11.md) |
 | **P0** | **members (관리자 회원)** | 일괄 삭제 불가 · 전체 목록 미노출 · 상세 약관·생년월일 누락 | [**admin-member-server-modification-request-2026-08-12.md**](./members/admin-member-server-modification-request-2026-08-12.md) |
 | **P0** | **programs** | `POST /api/admin/programs` → `DATABASE_ERROR` (HTTP 500) | [e2e-programs-create-database-error-handoff.md](./e2e-programs-create-database-error-handoff.md) |
@@ -65,4 +68,4 @@ pnpm --filter cms test:e2e:members
 
 이 항목은 백엔드 **비즈니스 에러 코드 수정** 대상이 아니며, 인프라 복구가 우선입니다.
 
-**Last updated:** 2026-08-11
+**Last updated:** 2026-08-26

@@ -140,8 +140,7 @@ export function SchoolSearch({
     return SCHOOL_LEVEL_OPTIONS.filter(opt => allowed.has(opt.value))
   }, [allowedSchoolLevels])
 
-  const lockedLevel =
-    allowedSchoolLevels?.length === 1 ? allowedSchoolLevels[0] : undefined
+  const lockedLevel = allowedSchoolLevels?.length === 1 ? allowedSchoolLevels[0] : undefined
 
   const [open, setOpen] = useState(false)
   const [schoolLevel, setSchoolLevel] = useState<string>(lockedLevel ?? '')
@@ -191,16 +190,11 @@ export function SchoolSearch({
   }, [schools, sido, sigungu, schoolLevel])
 
   const filteredUniversities = useMemo(
-    () =>
-      isHigherEd
-        ? filterCareerNetUniversitiesBySigungu(universities, sigungu)
-        : [],
+    () => (isHigherEd ? filterCareerNetUniversitiesBySigungu(universities, sigungu) : []),
     [universities, sigungu, isHigherEd]
   )
 
-  const filteredTotalCount = isHigherEd
-    ? filteredUniversities.length
-    : filteredSchools.length
+  const filteredTotalCount = isHigherEd ? filteredUniversities.length : filteredSchools.length
   const totalPages = Math.max(1, Math.ceil(filteredTotalCount / SCHOOL_SEARCH_PAGE_SIZE))
   const pagedFilteredSchools = useMemo(
     () =>
@@ -476,7 +470,7 @@ export function SchoolSearch({
               onChange={handleSidoChange}
               inputSize="medium"
               width={120}
-              withAllOption
+              withAllOption={false}
             />
             <CmsSelect
               placeholder="시/군/구"
@@ -485,7 +479,7 @@ export function SchoolSearch({
               onChange={handleSigunguChange}
               inputSize="medium"
               width={120}
-              withAllOption
+              withAllOption={false}
             />
             <span className="school-search__keyword-wrap">
               <CmsInput

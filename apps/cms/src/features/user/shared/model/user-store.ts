@@ -23,6 +23,9 @@ import {
   type PatchUserBasicInfoInput,
   type PatchUserBasicInfoOptions,
 } from '@/entities/user/api/user-service'
+import { queryClient } from '@/shared/lib/query-client'
+import { fetchMemberDetailQuery, memberDetailQueryKey } from '@/features/user/api/hooks/use-member-detail-query'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { matchesUserInstitutionLocation } from '@/entities/user/lib/matches-institution-location'
 import {
   matchesInstructorJaEvaluationGradeFilter,
@@ -232,7 +235,10 @@ export const useUserStore = create<UserStore>((set, get) => ({
     try {
       const state = get()
       // 상세 본문은 GET 응답만 사용 — 목록/store 힌트와 merge하지 않음
-      const user = await getUserById(userId, options)
+      // remote: React Query ensureQueryData로 동일 member 재GET(탭 전환·StrictMode) 억제
+      const user = isMembersRemoteEnabled()
+        ? await fetchMemberDetailQuery(queryClient, userId, options)
+        : await getUserById(userId, options)
       if (!user) {
         set({ loading: false })
         return null
@@ -405,10 +411,25 @@ export const useUserStore = create<UserStore>((set, get) => ({
     try {
       const updatedUser = await patchUserBasicInfo(userId, patch, options)
       const state = get()
+      if (isMembersRemoteEnabled()) {
+        const hint = {
+          role: updatedUser.role,
+          memberId: updatedUser.memberId,
+          organizationId: updatedUser.organizationId,
+          adminAccountId: updatedUser.adminAccountId,
+          instructorMemberProfile: updatedUser.instructorMemberProfile,
+          roles: updatedUser.roles,
+        }
+        queryClient.setQueryData(memberDetailQueryKey(updatedUser.id, hint), updatedUser)
+        if (userId !== updatedUser.id) {
+          queryClient.setQueryData(memberDetailQueryKey(userId, hint), updatedUser)
+        }
+      }
       set({
         usersById: {
           ...state.usersById,
           [userId]: updatedUser,
+          ...(updatedUser.id !== userId ? { [updatedUser.id]: updatedUser } : {}),
         },
         loading: false,
       })

@@ -1,16 +1,6 @@
 import { useMemo, useCallback, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import {
-  DeleteGuideModal,
-  buildMemberWithdrawMessageLines,
-  buildSchoolDeleteMessageLines,
-} from '@/features/program/general/ui/manager-delete-guide-modal'
-import {
-  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
-  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
-  WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
-  WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
-} from '@/shared/constants'
+import { MemberWithdrawGuideModal } from '@/features/user/shared/ui/member-withdraw-guide-modal'
 import { LectureAttendanceModal } from '@/features/program/general/ui/lecture-attendance-modal'
 import { AssignmentSubmissionModal } from '@/features/program/general/ui/assignment-submission-modal'
 import { InstructorPermissionRevokeModal } from '@/features/user/detail/ui/modal/instructor-permission-revoke-modal'
@@ -75,10 +65,7 @@ export function UserDetailFullpageModalsStack() {
   const assignmentSubmissionsQuery = useQuery({
     queryKey: ['member-detail-assignment-submissions', memberId, assignmentId],
     enabled: Boolean(
-      membersRemote &&
-        modals.assignment.open &&
-        memberId != null &&
-        assignmentId != null
+      membersRemote && modals.assignment.open && memberId != null && assignmentId != null
     ),
     queryFn: () => fetchApplicationAssignmentSubmissionsRemote(memberId!, assignmentId!),
   })
@@ -87,9 +74,9 @@ export function UserDetailFullpageModalsStack() {
     queryKey: ['member-detail-lecture-attendance', memberId, attendanceApplicationId],
     enabled: Boolean(
       membersRemote &&
-        modals.lectureAttendance.open &&
-        memberId != null &&
-        attendanceApplicationId != null
+      modals.lectureAttendance.open &&
+      memberId != null &&
+      attendanceApplicationId != null
     ),
     queryFn: () => fetchApplicationLectureAttendanceRemote(memberId!, attendanceApplicationId!),
     retry: false,
@@ -107,11 +94,7 @@ export function UserDetailFullpageModalsStack() {
     if (!submissions) return null
     const programTitle =
       (assignmentApplication.customFields?.programName as string | undefined)?.trim() || '프로그램'
-    return mapMemberAssignmentSubmissionsToDetail(
-      submissions,
-      programTitle,
-      displayUser.name
-    )
+    return mapMemberAssignmentSubmissionsToDetail(submissions, programTitle, displayUser.name)
   }, [
     membersRemote,
     assignmentApplication,
@@ -126,10 +109,7 @@ export function UserDetailFullpageModalsStack() {
     if (lectureAttendanceQuery.isError || !lectureAttendanceQuery.data) {
       return attendanceSummaryOnly ? undefined : null
     }
-    const mapped = mapMemberLectureAttendanceToDetail(
-      lectureAttendanceQuery.data,
-      displayUser.name
-    )
+    const mapped = mapMemberLectureAttendanceToDetail(lectureAttendanceQuery.data, displayUser.name)
     if (mapped.sessions.length === 0 && attendanceSummaryOnly) return undefined
     return mapped
   }, [
@@ -170,29 +150,15 @@ export function UserDetailFullpageModalsStack() {
         selectedCount={1}
       />
       {withdrawConfirmOpen && (
-        <DeleteGuideModal
+        <MemberWithdrawGuideModal
           open
           onCancel={onWithdrawModalCancel}
           onConfirm={onWithdrawModalConfirm}
-          title={sections.withdraw.isSchoolDelete ? '학교 삭제 안내' : '회원 탈퇴 안내'}
-          lines={
+          variant={sections.withdraw.isSchoolDelete ? 'school_delete' : 'member_withdraw'}
+          displayName={
             sections.withdraw.isSchoolDelete
-              ? buildSchoolDeleteMessageLines({
-                  displayName: displayUser.schoolInfo?.schoolName?.trim() || displayUser.name,
-                })
-              : buildMemberWithdrawMessageLines({ displayName: displayUser.name })
-          }
-          confirmText={sections.withdraw.isSchoolDelete ? '학교 삭제' : '탈퇴'}
-          confirmVariant="delete"
-          requiredConfirmInput={
-            sections.withdraw.isSchoolDelete
-              ? DELETE_GUIDE_TYPED_CONFIRM_VALUE
-              : WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE
-          }
-          confirmInputPlaceholder={
-            sections.withdraw.isSchoolDelete
-              ? DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER
-              : WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER
+              ? displayUser.schoolInfo?.schoolName?.trim() || displayUser.name
+              : displayUser.name
           }
         />
       )}
@@ -227,9 +193,9 @@ export function UserDetailFullpageModalsStack() {
         onCancel={modals.assignment.close}
         application={modals.assignment.data ?? undefined}
         userName={displayUser.name}
-        programTitle={
-          (assignmentApplication?.customFields?.programName as string | undefined)?.trim()
-        }
+        programTitle={(
+          assignmentApplication?.customFields?.programName as string | undefined
+        )?.trim()}
         remoteDetail={membersRemote ? assignmentRemoteDetail : undefined}
         remoteDetailLoading={membersRemote && assignmentSubmissionsQuery.isLoading}
         onBulkDownload={membersRemote ? handleAssignmentBulkDownload : undefined}

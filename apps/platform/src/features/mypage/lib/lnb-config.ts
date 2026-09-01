@@ -2,7 +2,7 @@ import type { MypageLnbItem, MypageLnbItemKey, PlatformMemberProfile } from '../
 
 const GENERAL_LNB_ITEMS: Omit<MypageLnbItem, 'active'>[] = [
   { key: 'home', label: '나의 홈', enabled: true },
-  { key: 'education', label: '교육현황', enabled: false },
+  { key: 'education', label: '교육현황', enabled: true },
   { key: 'volunteer', label: '봉사현황', enabled: false },
   { key: 'inquiries', label: '문의내역', enabled: true },
 ]
@@ -12,7 +12,7 @@ const INSTRUCTOR_LNB_ITEMS: Omit<MypageLnbItem, 'active'>[] = [
   { key: 'home', label: '나의 홈', enabled: true },
   { key: 'lectures', label: '강의현황', enabled: false },
   { key: 'settlement', label: '정산현황', enabled: false, dividerAfter: true },
-  { key: 'education', label: '교육현황', enabled: false },
+  { key: 'education', label: '교육현황', enabled: true },
   { key: 'volunteer', label: '봉사현황', enabled: false },
   { key: 'inquiries', label: '문의내역', enabled: true },
 ]

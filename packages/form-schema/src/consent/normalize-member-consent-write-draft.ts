@@ -1,4 +1,5 @@
 import {
+  AGREEMENT_NOTICE_DEFAULT_PURPOSE,
   AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID,
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
   type WritingFormDraft,
@@ -34,6 +35,19 @@ function clearNoticeInteractiveParagraph(paragraph: WritingFormParagraph): Writi
   }
 }
 
+function resetNoticeInstitutionAndPurpose(paragraph: WritingFormParagraph): WritingFormParagraph {
+  if (paragraph.kind !== 'single_item' || paragraph.variant !== 'agreement_explanation_text') {
+    return paragraph
+  }
+  if (paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution) {
+    return { ...paragraph, bodyText: '' }
+  }
+  if (paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose) {
+    return { ...paragraph, bodyText: AGREEMENT_NOTICE_DEFAULT_PURPOSE }
+  }
+  return paragraph
+}
+
 function clearNoticeIdTypeWithInput(paragraph: WritingFormParagraph): WritingFormParagraph {
   if (
     paragraph.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.table ||
@@ -67,6 +81,7 @@ function normalizeParagraphForWrite(
   if (templateId === 'agreement-notice') {
     next = clearNoticeInteractiveParagraph(next)
     next = clearNoticeIdTypeWithInput(next)
+    next = resetNoticeInstitutionAndPurpose(next)
   }
 
   return next

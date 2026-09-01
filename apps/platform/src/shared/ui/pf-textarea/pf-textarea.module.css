@@ -1,0 +1,179 @@
+.root {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.label {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: var(--spacing-4);
+  overflow: hidden;
+  padding-left: var(--spacing-8);
+  color: var(--color-neutral-warm-600);
+}
+
+.labelText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.requiredMark {
+  overflow: hidden;
+  flex: 0 0 auto;
+  color: var(--color-red);
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.field {
+  position: relative;
+  display: flex;
+  align-self: stretch;
+  align-items: stretch;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) 14px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white);
+}
+
+.field:hover:not(.disabled),
+.field:focus-within:not(.disabled) {
+  border-color: var(--color-border-focus);
+  background: var(--color-neutral-white);
+}
+
+.field.error {
+  border-color: var(--color-border-error-strong);
+  background: var(--color-neutral-white);
+}
+
+.field.disabled {
+  border-color: var(--color-border-default);
+  background: var(--color-neutral-warm-100);
+}
+
+.textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: calc(4 * 1.6em);
+  margin: 0;
+  padding: 0 20px 20px 0;
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: transparent;
+  color: var(--color-neutral-black);
+}
+
+.textarea::placeholder {
+  color: var(--color-neutral-warm-500);
+  opacity: 1;
+}
+
+.textarea:disabled {
+  color: var(--color-neutral-warm-500);
+  cursor: not-allowed;
+}
+
+.textareaLarge {
+  min-height: calc(4 * 1.5em);
+}
+
+/* Platform 양식 페이지 전용 — 타이포만 분기 (.field radius-16 유지) */
+
+.formPageTextarea {
+  min-height: calc(4 * 1.5em);
+  overflow: auto;
+  color: var(--main-BK, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500 !important;
+  line-height: 150%;
+}
+
+.formPageTextarea::placeholder {
+  overflow: hidden;
+  color: var(--gray-85969-d, #85969d);
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 400 !important;
+  line-height: 150%;
+  opacity: 1;
+}
+
+.formPageTextarea:disabled {
+  overflow: hidden;
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 400 !important;
+  line-height: 150%;
+}
+
+.resizeHandle {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.resizeHandle:disabled {
+  cursor: not-allowed;
+}
+
+.resizeIcon {
+  display: block;
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
+}
+
+.message {
+  margin: 0;
+  padding-left: var(--spacing-8);
+  font-family: var(--font-family-base);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+.messageNeutral {
+  color: var(--color-neutral-warm-500);
+}
+
+.messageSuccess {
+  color: var(--color-status-success-light);
+}
+
+.messageError {
+  color: var(--color-status-error-default);
+}

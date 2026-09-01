@@ -1,3 +1,5 @@
+import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import type {
   ImpactStoryCategoryKey,
   ImpactStoryContentBlock,
@@ -226,27 +228,33 @@ function toDetail(seed: SeedStory): ImpactStoryDetail {
 const MOCK_DETAILS: readonly ImpactStoryDetail[] = SEED.map(toDetail)
 
 export function getMockImpactStories(): ImpactStoryListItem[] {
+  if (!shouldUsePlatformMockData()) return []
   return MOCK_STORIES.map(item => ({ ...item }))
 }
 
 export function getFeaturedImpactStories(): ImpactStoryListItem[] {
+  if (!shouldUsePlatformMockData()) return []
   return MOCK_STORIES.filter(item => item.isFeatured).map(item => ({ ...item }))
 }
 
 export function useMockImpactStories(): ImpactStoryListItem[] {
+  useShouldUsePlatformMockData()
   return getMockImpactStories()
 }
 
 export function getMockImpactStoryById(id: string): ImpactStoryListItem | null {
+  if (!shouldUsePlatformMockData()) return null
   return MOCK_STORIES.find(item => item.id === id) ?? null
 }
 
 export function getMockImpactStoryDetailById(id: string): ImpactStoryDetail | null {
+  if (!shouldUsePlatformMockData()) return null
   const detail = MOCK_DETAILS.find(item => item.id === id)
   return detail ? { ...detail, blocks: detail.blocks.map(block => ({ ...block })) } : null
 }
 
 export function useMockImpactStoryDetail(id: string | null): ImpactStoryDetail | null {
+  useShouldUsePlatformMockData()
   if (!id) return null
   return getMockImpactStoryDetailById(id)
 }
@@ -262,7 +270,7 @@ export type AdjacentImpactStories = {
  * - next(다음글): 목록에서 위(더 최근) 글
  */
 export function getAdjacentImpactStories(id: string): AdjacentImpactStories {
-  const sorted = [...MOCK_STORIES].sort(
+  const sorted = [...getMockImpactStories()].sort(
     (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   )
   const index = sorted.findIndex(item => item.id === id)

@@ -1,3 +1,4 @@
+import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 import type { DirectionsInfo } from '../model/types'
 
 /**
@@ -78,6 +79,7 @@ export const MOCK_DIRECTIONS: DirectionsInfo = {
   updatedAt: '2026-07-01T00:00:00.000Z',
 }
 
-export function getMockDirections(): DirectionsInfo {
+export function getMockDirections(): DirectionsInfo | null {
+  if (!shouldUsePlatformMockData()) return null
   return MOCK_DIRECTIONS
 }

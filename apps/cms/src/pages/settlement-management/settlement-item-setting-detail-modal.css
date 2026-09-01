@@ -471,10 +471,19 @@
 }
 
 .settlement-item-setting-detail-modal__section-stack--tier1 > section,
-.settlement-item-setting-detail-modal__section-stack--special-lecture > section {
+.settlement-item-setting-detail-modal__section-stack--special-lecture > section,
+.settlement-item-setting-detail-modal__section-stack--gemini > section {
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+
+/* 제미나이: 산정 기준 금액 입력 우측 정렬 */
+.settlement-item-setting-detail-modal--gemini
+  .modal-spec-table__input-wrap--w160
+  .cms-input__control
+  input.ant-input {
+  text-align: right;
 }
 
 /* 섹션 내부: 레이블 ↔ 컨트롤(산정 기준·자격·비고) 세로 간격 6px — 블록 간 간격은 body gap 30px */
@@ -775,7 +784,7 @@
   margin-top: 4px;
 }
 
-/* 일용근로자 원천징수(d-1): 수익 제외 문구 + 금액 인풋 한 줄/줄바꿈 */
+/* 일용근로자 원천징수(d-1): 소액 부징수 문구 + 금액 인풋 한 줄/줄바꿈 */
 .settlement-item-setting-detail-modal--withholding-daily-worker
   .modal-spec-table__field-row--withholding-inline {
   flex-wrap: wrap;

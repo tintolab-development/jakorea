@@ -4,9 +4,10 @@
 **프론트 경로:** `features/settlement-management/api/payment-orders/`, `use-payment-order-detail-fullpage-modal.ts`  
 **연동 명세:** [settlement-api-integration.md](./settlement-api-integration.md)  
 **공통 갭:** [settlement-api-backend-gaps.md](./settlement-api-backend-gaps.md)  
+**지급조서 확인 P0 (목록 가시성·필터·confirm/reject·statementId):** [payment-orders-openapi-p0-backend-cursor-prompt.md](./payment-orders-openapi-p0-backend-cursor-prompt.md) · [payment-orders-backend-seed-handoff-2026-08-27.md](./payment-orders-backend-seed-handoff-2026-08-27.md)  
 **UI 필드 SSOT (기본 정보·목록 전 열):** [settlement-payment-order-detail-ui-fields-backend-handoff.md](./settlement-payment-order-detail-ui-fields-backend-handoff.md)
 
-**Last updated:** 2026-08-26
+**Last updated:** 2026-08-27 (`statementId` embed P0 승격)
 
 ---
 
@@ -17,7 +18,7 @@
 | 단계 | Method | Path | Query |
 |------|--------|------|-------|
 | 정산 라인 목록 | GET | `/api/admin/settlements` | `programId` **또는** `instructorMemberId`, (선택) `fromDate`, `toDate` |
-| statementId 매핑 | GET | `/api/admin/settlements/statements` | **임시 우회** — §3.1·§4 참고. **권장:** settlements 목록 DTO에 `statementId` embed (§4) |
+| statementId 매핑 | GET | `/api/admin/settlements/statements` | **임시 우회** — §3.1·§4 참고. **P0:** settlements 목록 DTO에 `statementId` embed |
 | 산출 내역서 | GET | `/api/admin/settlements/{settlementId}` | 라인별 (기존 유지) · **⭐ §3.6 필수 필드** |
 | 지급조서 확인 | PATCH | `/api/admin/settlements/statements/{statementId}/confirm` | 단건 순차 (기존 유지) |
 
@@ -349,7 +350,8 @@ GET /api/admin/settlements/statements?programId=42
 ### 3.8 지급조서 발급(원문) · 산출 내역서 unmask API — **P0**
 
 화면 산출 내역서는 §3.7대로 연락처·이메일·계좌를 **마스킹 표시**합니다.  
-**지급조서 발급 PDF·미리보기**와 산출 내역서 「개인정보 확인」은 **원문**이 필요합니다.
+**지급조서 발급 PDF·미리보기**와 산출 내역서 「개인정보 확인」은 **원문**이 필요합니다.  
+FE는 목 샘플로 채우지 않습니다 — DTO/unmask가 없으면 **공란**. `nameEn`은 발급 양식 필드(산출 내역서 UI에는 없음).
 
 회원 상세와 동일:
 
@@ -357,7 +359,7 @@ GET /api/admin/settlements/statements?programId=42
 |---|---|
 | **Method / Path** | `POST /api/admin/settlements/{settlementId}/privacy/unmask` |
 | **Body** | `{ "reason": string }` (1~500자, 감사 로그) |
-| **응답** | `SettlementFrontendResponse` — phone, email, address, bankName, accountNumber, accountHolder, gender, birthDate, **주민등록번호**(발급 양식) **전부 원문** |
+| **응답** | `SettlementFrontendResponse` — phone, email, address, bankName, accountNumber, accountHolder, gender, birthDate, **nameEn**, **주민등록번호**(발급 양식) **전부 원문** |
 
 상세·필드 표·bulk: [UI SSOT §1.2](./settlement-payment-order-detail-ui-fields-backend-handoff.md#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api)
 
@@ -365,7 +367,7 @@ GET /api/admin/settlements/statements?programId=42
 
 ---
 
-## 4. 백엔드 **수정 요청** — `GET /settlements` 목록에 `statementId` 포함 *(권장·P1)*
+## 4. 백엔드 **수정 요청** — `GET /settlements` 목록에 `statementId` 포함 *(P0)*
 
 프론트는 지급 현황 상세 진입 시 **`statementId`를 얻기 위해** `GET /settlements/statements`를 **2차 호출**하고 있습니다.  
 **우회 제거**를 위해 아래 DTO 확장을 요청합니다.
@@ -418,11 +420,11 @@ GET /api/admin/settlements/statements?programId=42
 |----------|------|----------------|
 | **P0** | **신청자명·성명 마스킹 금지** — [UI SSOT §1.1](./settlement-payment-order-detail-ui-fields-backend-handoff.md#11--p0-서버-수정-요청--신청자명성명-등-사람-이름-마스킹-금지) | 정산 관리 목록·상세·산출 내역서·계좌 지급 **이름 원문** |
 | **P0** | **지급조서 발급 원문 + 산출 내역서 unmask** — [UI SSOT §1.2](./settlement-payment-order-detail-ui-fields-backend-handoff.md#12--p0-서버-요청--지급조서-발급원문--산출-내역서-unmask-api) · [§3.8](#38-지급조서-발급원문--산출-내역서-unmask-api-p0) | 발급 PDF에 마스킹 금지 · `POST .../privacy/unmask` |
-| P0 | `POST .../statements/bulk-confirm` + 이체 예정일 | 「일괄 확인」 모달 |
-| P0 | `PATCH .../statements/{id}/reject` | 산출 내역서 「신청 반려」 |
+| P0 | `POST .../statements/bulk-confirm` + 이체 예정일 | 「일괄 확인」 모달 — [지급조서 확인 P0](./payment-orders-openapi-p0-backend-cursor-prompt.md) |
+| P0 | `PATCH .../statements/{id}/reject` | 산출 내역서 「신청 반려」 — 동일 P0 (알림 스케줄 포함) |
 | P1 | 산출 내역서 DTO (`GET /settlements/{id}` 확장) | 산출 내역서 모달 본문 · **items[].type enum 7종** ([§3.5](./settlement-payment-order-detail-backend-handoff.md#35-산출-내역서--산정-항목-type-enum-확장-p1)) · **⭐ 강의비 책정·calculationDetail 필수** ([§3.6](./settlement-payment-order-detail-backend-handoff.md#36--get-settlementssettlementid-필수-확장--강의비-책정-기준산정-기준-상세-p1차단)) |
 | **P0** | 강사 프로필·계좌 embed — [UI SSOT §4.5](./settlement-payment-order-detail-ui-fields-backend-handoff.md#45--백엔드-요청-p0--강사-프로필계좌-현재-ui--) | 풀페이지·산출 내역서 **성별/생년·연락처·주소·계좌** (`-` 해소) |
-| P1 | `GET /settlements/aggregates` (목록용) | 상세와 무관, 목록 성능 |
+| P0 | `GET /settlements/aggregates` (목록용) | 리스트 버킷 / 캘린더 현황 — [지급조서 확인 P0](./payment-orders-openapi-p0-backend-cursor-prompt.md) |
 
 ---
 

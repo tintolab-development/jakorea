@@ -48,10 +48,8 @@ import {
 import { SchoolDetailAssignCompleteModal } from './school-detail-assign-complete-modal'
 import { buildProgramApprovedInstructorAssignOptions } from '../../../lib/school-add-instructor-assign'
 import { SchoolDetailStudentListSection } from './school-detail-student-list-section'
-import {
-  DeleteGuideModal,
-  buildSchoolCancelApprovalMessageLines,
-} from '../../manager-delete-guide-modal'
+import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
+import { buildSchoolCancelApprovalMessageLines } from '../../manager-delete-guide-modal'
 import { EditableStatusBadge } from '@/shared/components'
 import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 import './school-detail-modal.css'

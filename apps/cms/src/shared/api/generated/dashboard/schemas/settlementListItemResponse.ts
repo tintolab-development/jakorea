@@ -15,6 +15,7 @@ export interface SettlementListItemResponse {
   lectureDate?: string;
   instructorAssignmentId?: number;
   instructorMemberId?: number;
+  /** 신청자 실명. 서버에서 마스킹하지 않습니다. */
   instructorName?: string;
   statementId?: number;
   institutionName?: string;
@@ -24,6 +25,7 @@ export interface SettlementListItemResponse {
   sessionTotal?: number;
   programSessionProgressDisplay?: string;
   calculationStatus?: string;
+  /** 지급조서 상태. REQUESTED | REAPPLICATION | CONFIRMED | CORRECTION_REQUESTED | REJECTED */
   statementStatus?: string;
   paymentStatus?: string;
   grossAmount?: number;

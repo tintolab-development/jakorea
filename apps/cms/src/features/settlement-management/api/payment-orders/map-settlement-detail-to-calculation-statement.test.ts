@@ -108,7 +108,7 @@ describe('mapSettlementDetailToProgramCalculationStatement', () => {
       'JA 경제교실',
       '홍길동'
     )
-    expect(mapped.blocks[0]?.lines.map(line => line.kind)).toEqual(['meal', 'activity'])
+    expect(mapped.blocks[0]?.lines.map(line => line.kind)).toEqual(['activity', 'meal'])
   })
 })
 

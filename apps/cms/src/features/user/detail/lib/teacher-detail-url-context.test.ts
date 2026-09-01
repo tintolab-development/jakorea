@@ -3,6 +3,7 @@ import { userDetailModalTitle } from './user-detail-fullpage-helpers'
 import {
   applyTeacherDetailUrlContext,
   memberDetailUrlParamsFromUser,
+  readMemberDetailIdFromLocation,
   readMemberDetailUrlContext,
   readTeacherDetailUrlContext,
   teacherDetailUrlParamsFromUser,
@@ -178,5 +179,12 @@ describe('teacher-detail-url-context', () => {
       role: 'INSTRUCTOR',
       instructorMemberProfile: 'instructor_only',
     })
+  })
+
+  it('readMemberDetailIdFromLocation은 search의 id를 읽는다', () => {
+    expect(readMemberDetailIdFromLocation('?kind=admins&id=admin-account-172231')).toBe(
+      'admin-account-172231'
+    )
+    expect(readMemberDetailIdFromLocation('?kind=admins')).toBeNull()
   })
 })

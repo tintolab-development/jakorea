@@ -60,9 +60,33 @@ describe('buildIssuanceFormSectionsFromApiItems', () => {
     const document = sections.find(section => section.key === 'issuance-document')
 
     expect(report?.rows.find(row => row.id === 'issuance-3')?.templateName).toBe('강의보고서 (API)')
-    expect(report?.rows.some(row => row.id === 'issuance-1')).toBe(true)
+    expect(report?.rows.some(row => row.id === 'issuance-1')).toBe(false)
+    expect(report?.rows.some(row => row.id === 'issuance-2')).toBe(true)
     expect(document?.rows.find(row => row.id === 'document-3')?.templateName).toBe('수료증 (API)')
     expect(document?.rows.some(row => row.id === 'document-payment-order-issue')).toBe(true)
+    expect(document?.rows.some(row => row.id === 'document-1')).toBe(false)
+    expect(document?.rows.some(row => row.id === 'document-payment-order-pre-consent')).toBe(false)
+  })
+
+  it('hides Notion-excluded issuance catalog codes from the list merge', () => {
+    const sections = buildIssuanceFormSectionsFromApiItems([
+      listItem({
+        templateCode: 'issuance-1',
+        templateName: 'UJAT 결과리포트 (API)',
+        category: 'REPORT',
+      }),
+      listItem({
+        templateCode: 'document-2',
+        templateName: '휴가 인증서 (API)',
+        category: 'DOCUMENT',
+      }),
+    ])
+
+    const report = sections.find(section => section.key === 'issuance-report')
+    const document = sections.find(section => section.key === 'issuance-document')
+
+    expect(report?.rows.some(row => row.id === 'issuance-1')).toBe(false)
+    expect(document?.rows.some(row => row.id === 'document-2')).toBe(false)
   })
 
   it('maps BE category enum ISSUANCE/CERTIFICATE for unknown templateCode', () => {

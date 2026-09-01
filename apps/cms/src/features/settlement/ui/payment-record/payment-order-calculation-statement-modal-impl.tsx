@@ -8,7 +8,7 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
-import { useConfirmPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
+import { useConfirmPaymentStatementMutation, useRejectPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
 import type { PaymentOrdersDetailContextQueryResult } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
 import type { PaymentOrderCalculationStatementCommitPayload } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
 import {
@@ -90,6 +90,7 @@ export function PaymentOrderCalculationStatementModalImpl({
   onAfterRejectResultClosed,
 }: PaymentOrderCalculationStatementModalImplProps) {
   const confirmMutation = useConfirmPaymentStatementMutation()
+  const rejectMutation = useRejectPaymentStatementMutation()
   const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false)
   const [paymentRejectOpen, setPaymentRejectOpen] = useState(false)
   const [paymentRejectDoneOpen, setPaymentRejectDoneOpen] = useState(false)
@@ -245,6 +246,39 @@ export function PaymentOrderCalculationStatementModalImpl({
     }
   }
 
+  const handleReject = async (payload: {
+    reason: string
+    notificationType: 'IMMEDIATE' | 'ON_ANNOUNCEMENT' | 'MANUAL'
+    scheduledNotificationAt?: string
+  }) => {
+    if (paymentOrdersRemote) {
+      if (statementId == null) {
+        window.alert('신청 반려 API에 필요한 statementId가 없습니다.')
+        return
+      }
+      try {
+        await rejectMutation.mutateAsync({
+          statementId,
+          reason: payload.reason,
+          notificationType: payload.notificationType,
+          scheduledNotificationAt: payload.scheduledNotificationAt,
+        })
+        await detailContextQuery?.refetch()
+      } catch (error) {
+        window.alert(getSettlementApiErrorMessage(error, '신청 반려 처리에 실패했습니다.'))
+        return
+      }
+    }
+    onStatementLineCommitted?.({
+      lineId: statement.sourceLineRowId,
+      status: 'application_rejected',
+      rejectionReason: payload.reason,
+    })
+    setPaymentRejectOpen(false)
+    setPaymentRejectReason(payload.reason)
+    setPaymentRejectDoneOpen(true)
+  }
+
   const basicSection =
     entryKind === 'program' ? (
       <PaymentOrderCalculationStatementProgramBasicSection
@@ -297,15 +331,8 @@ export function PaymentOrderCalculationStatementModalImpl({
                 <CmsButton
                   variant="delete"
                   size="medium"
-                  disabled={paymentOrdersRemote}
-                  title={paymentOrdersRemote ? '신청 반려 API 연동 대기 중입니다.' : undefined}
-                  onClick={() => {
-                    if (paymentOrdersRemote) {
-                      window.alert('신청 반려 API는 백엔드 연동 대기 중입니다.')
-                      return
-                    }
-                    setPaymentRejectOpen(true)
-                  }}
+                  disabled={rejectMutation.isPending}
+                  onClick={() => setPaymentRejectOpen(true)}
                 >
                   신청 반려
                 </CmsButton>
@@ -341,17 +368,11 @@ export function PaymentOrderCalculationStatementModalImpl({
       <PaymentOrderPaymentRejectionModal
         open={paymentRejectOpen}
         onCancel={() => setPaymentRejectOpen(false)}
-        onReject={reason => {
-          onStatementLineCommitted?.({
-            lineId: statement.sourceLineRowId,
-            status: 'application_rejected',
-            rejectionReason: reason,
-          })
-          setPaymentRejectOpen(false)
-          setPaymentRejectReason(reason)
-          setPaymentRejectDoneOpen(true)
+        onReject={payload => {
+          void handleReject(payload)
         }}
         data={statement}
+        confirmLoading={rejectMutation.isPending}
       />
       <PaymentOrderPaymentRejectionResultModal
         open={paymentRejectDoneOpen}

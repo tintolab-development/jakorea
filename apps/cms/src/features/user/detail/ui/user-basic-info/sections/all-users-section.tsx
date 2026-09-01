@@ -1,9 +1,22 @@
 import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput, CmsSelect, SchoolSearch, type SchoolSearchSelection, type SchoolSearchSelectMeta } from '@/shared/ui'
+import {
+  CmsInput,
+  CmsRadioGroup,
+  CmsSelect,
+  SchoolSearch,
+  type SchoolSearchSelection,
+  type SchoolSearchSelectMeta,
+} from '@/shared/ui'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import { affiliationView, detailAddressView, genderBirthView } from '../display'
+import {
+  affiliationView,
+  detailAddressView,
+  genderBirthView,
+  individualSchoolEnrollmentStatusView,
+  socialView,
+} from '../display'
 import { useBasicInfoEditing } from '../use-basic-info-editing'
 import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
@@ -11,12 +24,13 @@ import { ContactInfoFieldsRow, FullWidthAddressEdit, Id1365View } from './shared
 import {
   GENDER_EDIT_OPTIONS,
   INDIVIDUAL_AFFILIATION_FIELDS_WIDTH,
+  INDIVIDUAL_SCHOOL_ENROLLMENT_OPTIONS,
   individualAffiliationGradeSelectOptions,
 } from './constants'
 import type { BasicInfoSectionContext } from './types'
 import { formatDate } from '@/shared/utils'
-import { socialView } from '../display'
 
+/** 개인 회원 — 가입일·소셜 (상단 분리 카드) */
 export function AllUsersMetaSection(ctx: BasicInfoSectionContext) {
   const { user } = ctx
   return (
@@ -45,9 +59,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
     cmsMayEditBasicProfileFields,
   })
   const d = memberInfoDraft
-  const isIndividual = user.role === 'INDIVIDUAL'
-  const isSchoolEnrollmentAffiliation =
-    !isIndividual || (d?.schoolEnrollmentStatus ?? 'enrolled') !== 'not_enrolled'
+  const isEnrolled = (d?.schoolEnrollmentStatus ?? 'enrolled') !== 'not_enrolled'
 
   const handleSchoolSelect = (selection: SchoolSearchSelection, meta: SchoolSearchSelectMeta) => {
     if (selection.source === 'neis') {
@@ -83,6 +95,26 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
     })
   }
 
+  const handleEnrollmentStatusChange = (next: 'enrolled' | 'not_enrolled') => {
+    if (next === 'not_enrolled') {
+      onMemberInfoDraftChange?.({
+        schoolEnrollmentStatus: next,
+        affiliationInstitution: '',
+        affiliationGrade: '',
+        schoolOrganizationId: null,
+        schoolProvider: undefined,
+        schoolExternalCode: undefined,
+        schoolLevel: undefined,
+        schoolAddress: undefined,
+        schoolZipcode: undefined,
+        schoolRegionSido: undefined,
+        schoolRegionSigungu: undefined,
+      })
+      return
+    }
+    onMemberInfoDraftChange?.({ schoolEnrollmentStatus: next })
+  }
+
   const nameWithBadge = (nameNode: ReactNode) => (
     <span className="user-basic-info-section__name-with-badge">
       {nameNode}
@@ -110,29 +142,6 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
             />
           )}
         />
-        <EditableField
-          label="1365 ID"
-          readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={
-            <Id1365View
-              personalInfoRevealed={personalInfoRevealed}
-              externalId1365={externalId1365}
-            />
-          }
-          edit={
-            <CmsInput
-              placeholder="1365 ID"
-              value={d?.id1365 ?? ''}
-              onChange={e => onMemberInfoDraftChange?.({ id1365: e.target.value })}
-              inputSize="medium"
-              width="100%"
-              aria-label="1365 ID"
-            />
-          }
-        />
-      </EditableRow>
-
-      <EditableRow type="single">
         <EditableField
           label="성별 및 생년월일"
           readOnlyDisplay={editing.isReadOnlyDisplay}
@@ -175,16 +184,17 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
 
       <EditableRow type="double">
         <EditableField
-          label="자택 주소"
+          label="현재 학교 재학 여부"
           readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
+          view={<span>{individualSchoolEnrollmentStatusView(user)}</span>}
           edit={
-            <FullWidthAddressEdit
-              searchValue={d?.detailAddressSearch ?? ''}
-              onSearchChange={next => onMemberInfoDraftChange?.({ detailAddressSearch: next })}
-              detailValue={d?.detailAddressDetail ?? ''}
-              onDetailChange={next => onMemberInfoDraftChange?.({ detailAddressDetail: next })}
-              detailAriaLabel="자택 주소 상세"
+            <CmsRadioGroup
+              options={[...INDIVIDUAL_SCHOOL_ENROLLMENT_OPTIONS]}
+              size="large"
+              value={d?.schoolEnrollmentStatus || 'enrolled'}
+              onChange={event =>
+                handleEnrollmentStatusChange(event.target.value as 'enrolled' | 'not_enrolled')
+              }
             />
           }
         />
@@ -193,7 +203,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
           readOnlyDisplay={editing.isReadOnlyDisplay}
           view={affiliationView(user)}
           edit={
-            isSchoolEnrollmentAffiliation ? (
+            isEnrolled ? (
               <span className="detail-info-form-inputs-wrapper-no-gap">
                 <SchoolSearch
                   value={d?.affiliationInstitution ?? ''}
@@ -242,6 +252,42 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
         />
       </EditableRow>
 
+      <EditableRow type="double">
+        <EditableField
+          label="자택 주소지"
+          readOnlyDisplay={editing.isReadOnlyDisplay}
+          view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
+          edit={
+            <FullWidthAddressEdit
+              searchValue={d?.detailAddressSearch ?? ''}
+              onSearchChange={next => onMemberInfoDraftChange?.({ detailAddressSearch: next })}
+              detailValue={d?.detailAddressDetail ?? ''}
+              onDetailChange={next => onMemberInfoDraftChange?.({ detailAddressDetail: next })}
+              detailAriaLabel="자택 주소지 상세"
+            />
+          }
+        />
+        <EditableField
+          label="1365 ID"
+          readOnlyDisplay={editing.isReadOnlyDisplay}
+          view={
+            <Id1365View
+              personalInfoRevealed={personalInfoRevealed}
+              externalId1365={externalId1365}
+            />
+          }
+          edit={
+            <CmsInput
+              placeholder="1365 ID"
+              value={d?.id1365 ?? ''}
+              onChange={e => onMemberInfoDraftChange?.({ id1365: e.target.value })}
+              inputSize="medium"
+              width="100%"
+              aria-label="1365 ID"
+            />
+          }
+        />
+      </EditableRow>
     </>
   )
 }

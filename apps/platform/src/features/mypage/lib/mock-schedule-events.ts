@@ -1,4 +1,5 @@
 import type { MypageScheduleEvent } from '../model/schedule-types'
+import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 
 /** 스크린샷 확인용 — 2026-01 기준 mock */
 export const MOCK_MYPAGE_SCHEDULE_EVENTS: MypageScheduleEvent[] = [
@@ -120,6 +121,11 @@ export const MOCK_MYPAGE_SCHEDULE_EVENTS: MypageScheduleEvent[] = [
     endDate: '2026-01-26',
   },
 ]
+
+export function getMockMypageScheduleEvents(): MypageScheduleEvent[] {
+  if (!shouldUsePlatformMockData()) return []
+  return MOCK_MYPAGE_SCHEDULE_EVENTS
+}
 
 export function formatMypageScheduleBarLabel(event: MypageScheduleEvent): string {
   return `${event.programName} ${event.title}`

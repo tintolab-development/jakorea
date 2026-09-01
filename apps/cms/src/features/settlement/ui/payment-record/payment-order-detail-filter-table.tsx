@@ -38,6 +38,7 @@ export type PaymentOrderDetailFilterTableProps = {
       isOpen: boolean
       listPageDateRange: [Dayjs, Dayjs] | null
       onAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
+      onCountableAmountChange?: (amount: number) => void
       onOpenCalculationStatement: (row: PaymentOrderAdminProgramDetailInstructorRow) => void
       registerStatementCommitSink?: (
         sink: (payload: PaymentOrderCalculationStatementCommitPayload) => void
@@ -49,6 +50,7 @@ export type PaymentOrderDetailFilterTableProps = {
       isOpen: boolean
       listPageDateRange: [Dayjs, Dayjs] | null
       onAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
+      onCountableAmountChange?: (amount: number) => void
       onOpenCalculationStatement: (row: PaymentOrderAdminInstructorDetailProgramRow) => void
       registerStatementCommitSink?: (
         sink: (payload: PaymentOrderCalculationStatementCommitPayload) => void
@@ -74,6 +76,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
     filterFilters,
     onFilterCardChange,
     handleSearch,
+    filterFetching,
     columns,
     sectionTitle,
     filterClassName,
@@ -111,6 +114,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
         filters={filterFilters}
         onFilterChange={onFilterCardChange}
         onSearch={handleSearch}
+        loading={filterFetching}
         title={sectionTitle}
         description={`총 ${filteredRows.length}건`}
         actions={

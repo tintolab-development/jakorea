@@ -39,6 +39,8 @@ export interface UserDetailFullpageShellValue {
   onOpenAssignmentSubmission: (record: Application) => void
   onOpenEnrollmentProgramDetail: (record: Application) => void
   onOpenVolunteerProgramDetail: (history: UserHistory) => void
+  /** 담당 프로그램 이력 등에서 프로그램 상세로 나갈 때 회원 URL sync 억제 */
+  onBeforeNavigateToProgramDetail?: () => void
   onBulkDeleteHistory: (rowIds: string[]) => void | Promise<void>
   onStudentCertificateBulkIssue: (
     rowIds: readonly string[],
@@ -78,9 +80,7 @@ export interface UserDetailFullpageShellValue {
     nextPermission: AdminPermissionTagVariant
   ) => void | Promise<void>
   /** 교사(겸직 아님) 재직 현황 태그 — PATCH 후 교사 상세 재조회 */
-  onTeacherEmploymentStatusChange?: (
-    status: SchoolTeacherEmploymentStatus
-  ) => void | Promise<void>
+  onTeacherEmploymentStatusChange?: (status: SchoolTeacherEmploymentStatus) => void | Promise<void>
   onOpenInstructorPermissionRevoke: () => void
   onCloseInstructorPermissionRevoke: () => void
   onConfirmInstructorPermissionRevoke: (payload: {
@@ -99,18 +99,23 @@ export function UserDetailFullpageShellProvider({
   value,
   children,
 }: {
-  value: UserDetailFullpageShellValue
+  /** 상세 GET 첫 응답 전에는 null — 소비자는 셸이 준비된 뒤에만 렌더된다 */
+  value: UserDetailFullpageShellValue | null
   children: ReactNode
 }) {
   return (
-    <UserDetailFullpageShellContext.Provider value={value}>{children}</UserDetailFullpageShellContext.Provider>
+    <UserDetailFullpageShellContext.Provider value={value}>
+      {children}
+    </UserDetailFullpageShellContext.Provider>
   )
 }
 
 export function useUserDetailFullpageShell(): UserDetailFullpageShellValue {
   const ctx = useContext(UserDetailFullpageShellContext)
   if (!ctx) {
-    throw new Error('useUserDetailFullpageShell must be used within UserDetailFullpageShellProvider')
+    throw new Error(
+      'useUserDetailFullpageShell must be used within UserDetailFullpageShellProvider'
+    )
   }
   return ctx
 }

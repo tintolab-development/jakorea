@@ -54,7 +54,8 @@
   user-select: none;
 }
 
-.paragraph-label-input .paragraph-label-input__textarea.cms-textarea {
+.paragraph-label-input .paragraph-label-input__textarea.cms-textarea,
+.paragraph-label-input .cms-input {
   width: 100%;
   min-width: 0;
 }

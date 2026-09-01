@@ -25,6 +25,8 @@ import {
 
 export type PaymentOrderAdminProcessingStatus =
   | 'pending'
+  | 'reapplication'
+  | 'partial'
   | 'confirmed'
   | 'correction'
   | 'application_rejected'
@@ -34,6 +36,8 @@ export type PaymentOrderAdminProcessingStatus =
  */
 export const PAYMENT_ORDER_STATUS_LABELS_LIST: Record<PaymentOrderAdminProcessingStatus, string> = {
   pending: '확인 대기 중',
+  reapplication: '지급조서 재신청',
+  partial: '확인 진행 중',
   application_rejected: '신청 반려',
   confirmed: '지급조서 확인 완료',
   correction: '지급 정정 요청',
@@ -43,17 +47,21 @@ export const PAYMENT_ORDER_STATUS_LABELS_LIST: Record<PaymentOrderAdminProcessin
 export const PAYMENT_ORDER_STATUS_LABELS_DETAIL: Record<PaymentOrderAdminProcessingStatus, string> =
   {
     pending: '확인 대기 중',
+    reapplication: '지급조서 재신청',
+    partial: '확인 진행 중',
     confirmed: '지급조서 확인 완료',
     application_rejected: '신청 반려',
     correction: '지급 정정 요청',
   }
 
-/** 캘린더 전용 함축형 (4분류) — 카드·툴팁·그리드 타이틀 한 줄에만 사용 */
+/** 캘린더 전용 함축형 — 카드·툴팁·그리드 타이틀 한 줄에만 사용 */
 export const PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST: Record<
   PaymentOrderAdminProcessingStatus,
   string
 > = {
   pending: '확인 대기',
+  reapplication: '재신청',
+  partial: '일부 확인',
   confirmed: '확인 완료',
   application_rejected: '신청 반려',
   correction: '정정 요청',
@@ -106,6 +114,7 @@ export interface PaymentOrderAdminInstructorRow {
 /** 지급 현황 상세 — 강사별 정산 목록 행 (집계 상태와 별도; 신청 반려 등) */
 export type PaymentOrderAdminLineProcessingStatus =
   | 'pending'
+  | 'reapplication'
   | 'confirmed'
   | 'correction'
   | 'rejected'
@@ -117,10 +126,18 @@ export const PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS: Record<
   string
 > = {
   pending: '확인 대기 중',
+  reapplication: '지급조서 재신청',
   confirmed: '지급조서 확인 완료',
   correction: '지급 정정 요청',
   rejected: '계좌 지급 완료',
   application_rejected: '신청 반려',
+}
+
+/** 목록·상세 합산: 신청 반려·지급 정정 요청·계좌 지급 완료 제외 */
+export function countsTowardPaymentOrderEstimatedAmount(
+  status: PaymentOrderAdminLineProcessingStatus
+): boolean {
+  return status !== 'application_rejected' && status !== 'correction' && status !== 'rejected'
 }
 
 export interface PaymentOrderAdminProgramDetailInstructorRow {
@@ -288,19 +305,24 @@ export interface PaymentOrderAdminInstructorDetail {
   programRows: PaymentOrderAdminInstructorDetailProgramRow[]
 }
 
-/** 정산 신청 이후 ~ 지급조서 확인 완료까지(다음 단계인 계좌 지급 `rejected`는 목 mock에서 제외) */
+/** 정산 신청 이후 ~ 지급조서 확인 완료까지(계좌 지급 `rejected`·해당 없음·제미나이는 제외) */
 const statuses: PaymentOrderAdminProcessingStatus[] = [
   'pending',
   'confirmed',
   'correction',
   'application_rejected',
+  'reapplication',
+  'partial',
 ]
 
+const DESIGN_ELEMENTARY_PROGRAM = '2026년 JA Korea 초등 경제교육'
+const DESIGN_HSBC_PROGRAM = 'HSBC/HKU Business Case Competition 2026 모집 안내'
+
 const programTitles = [
-  'HSBC/HKU Business Case Competition 2026 모집 안내',
+  DESIGN_HSBC_PROGRAM,
   '2026 JA Korea 대학생경제교육봉사단 UJAT 36기 모집',
   'EY한영-JA Korea Growth to Professional 2026 대학생 참가자 모집',
-  '2026년 JA Korea 초등 경제교육 모집 안내',
+  `${DESIGN_ELEMENTARY_PROGRAM} 모집 안내`,
   '2026 SAP-함께 성장하JAI 참여 고등학생 모집 안내 (IT, SW 멘토링)',
   '2026 SAP-JA Korea Global Career Discovery 원데이 취업 멘토링 대학생 참여자 모집',
   '2026년 한국씨티은행-JA Korea 특별한 JOB담 참가자 모집',
@@ -310,6 +332,11 @@ const programTitles = [
 ]
 
 const instructorNames = [
+  '김틴토',
+  '박틴토',
+  '최틴토',
+  '허틴토',
+  '이틴토',
   '김민준',
   '이서연',
   '박도윤',
@@ -325,14 +352,14 @@ const instructorNames = [
   '권태양',
   '배소율',
   '홍래원',
-  '서다인',
-  '문태현',
-  '양가을',
-  '백서준',
-  '노하린',
 ]
 
 const instructorNamesEn = [
+  'Kim Tinto',
+  'Park Tinto',
+  'Choi Tinto',
+  'Heo Tinto',
+  'Lee Tinto',
   'Kim Minjun',
   'Lee Seoyeon',
   'Park Doyun',
@@ -348,11 +375,6 @@ const instructorNamesEn = [
   'Kwon Taeyang',
   'Bae Soyul',
   'Hong Raewon',
-  'Seo Dain',
-  'Moon Taehyun',
-  'Yang Gaeul',
-  'Baek Seojun',
-  'Roh Harin',
 ]
 
 function isoDate(year: number, month: number, day: number): string {
@@ -385,7 +407,7 @@ export const mockPaymentOrderAdminProgramList: PaymentOrderAdminProgramRow[] = A
     const d2 = mockSettlementAttendanceDate(i * 5 + 3)
     const d3 = mockSettlementAttendanceDate(i * 5 + 7)
     const pendingCount = i % 13
-    return {
+    const generated: PaymentOrderAdminProgramRow = {
       no,
       programName: programTitles[titleIdx],
       instructorCount: 5 + ((i * 3) % 12),
@@ -395,6 +417,50 @@ export const mockPaymentOrderAdminProgramList: PaymentOrderAdminProgramRow[] = A
       settlementRelevantAttendanceDates: i % 3 === 0 ? [ref] : [ref, d2, d3],
       pendingPaymentSettlementItemCount: pendingCount,
     }
+    if (i === 0) {
+      return {
+        ...generated,
+        programName: DESIGN_ELEMENTARY_PROGRAM,
+        instructorCount: 15,
+        processingStatus: 'partial',
+        estimatedAmount: 2000000,
+        pendingPaymentSettlementItemCount: 5,
+      }
+    }
+    if (i === 1) {
+      return {
+        ...generated,
+        programName: DESIGN_HSBC_PROGRAM,
+        instructorCount: 9,
+        processingStatus: 'pending',
+        estimatedAmount: 915000,
+        pendingPaymentSettlementItemCount: 3,
+      }
+    }
+    if (i === 2) {
+      return {
+        ...generated,
+        processingStatus: 'confirmed',
+        estimatedAmount: 625000,
+        pendingPaymentSettlementItemCount: 0,
+      }
+    }
+    if (i === 3) {
+      return {
+        ...generated,
+        processingStatus: 'reapplication',
+        pendingPaymentSettlementItemCount: 8,
+        estimatedAmount: 1200000,
+      }
+    }
+    if (i === 4) {
+      return {
+        ...generated,
+        pendingPaymentSettlementItemCount: 12,
+        processingStatus: 'pending',
+      }
+    }
+    return generated
   }
 )
 
@@ -430,14 +496,15 @@ export const mockPaymentOrderAdminInstructorList: PaymentOrderAdminInstructorRow
     ].filter((v, j, a) => a.indexOf(v) === j)
     const ref = mockSettlementAttendanceDate(i * 4)
     const d2 = mockSettlementAttendanceDate(i * 4 + 4)
-    const pendingCount = i % 13
+    const pendingCount = i === 0 ? 5 : i === 1 ? 2 : i % 13
     const slot = buildInstructorCalendarSlot(i)
     const base: PaymentOrderAdminInstructorRow = {
       no,
       instructorName,
-      programCount: 1 + (i % 4),
-      processingStatus: statuses[statusIdx],
-      estimatedAmount: [350000, 820000, 45000, 2100000, 590000][i % 5],
+      programCount: i === 0 ? 3 : 1 + (i % 4),
+      processingStatus: i === 1 ? 'partial' : statuses[statusIdx],
+      estimatedAmount:
+        i === 0 ? 2000000 : i === 1 ? 1845000 : [350000, 820000, 45000, 2100000, 590000][i % 5],
       relatedProgramNames: related,
       referenceDate: ref,
       settlementRelevantAttendanceDates: i % 4 === 0 ? [ref] : [ref, d2],
@@ -449,15 +516,18 @@ export const mockPaymentOrderAdminInstructorList: PaymentOrderAdminInstructorRow
     return base
   })
 
-/** 상세 라인 상태(지급조서 확인 구간 + 신청 반려) */
+/** 상세 라인 상태(지급조서 확인 구간 + 재신청 + 신청 반려). 계좌 지급 완료는 제외 */
 const lineStatuses: PaymentOrderAdminLineProcessingStatus[] = [
   'pending',
+  'reapplication',
   'correction',
   'confirmed',
   'application_rejected',
 ]
 
 const institutionNames = [
+  '강서초등학교',
+  '대구수성초등학교',
   '진월초등학교',
   '서울중학교',
   '한빛고등학교',
@@ -466,23 +536,16 @@ const institutionNames = [
   '동백중학교',
   '미래고등학교',
   '푸른초등학교',
-  '한울중학교',
-  '늘봄초등학교',
 ]
 
 /**
  * 산출 내역서 > 강의비 책정 기준
- * - 정산 항목 설정의 임금 항목 중 6개를 순환 노출
- * - 단순인건비는 강의비 책정 기준 대상에서 제외
+ * - 정산 항목 설정 임금 6건을 순환 노출
  */
-const settlementWageStandardTitles = [
-  ...(settlementItemSettingSections
+const settlementWageStandardTitles =
+  settlementItemSettingSections
     .find(section => section.kind === 'wage')
-    ?.items.filter(item => item.id !== 'w-7')
-    .slice(0, 6)
-    .map(item => item.title) ?? ['1급 강사비']),
-  '제미나이 강사비',
-]
+    ?.items.map(item => item.title) ?? ['1급 강사비']
 
 function pickSettlementWageStandardTitle(seed: number): string {
   return settlementWageStandardTitles[seed % settlementWageStandardTitles.length] ?? '1급 강사비'
@@ -513,6 +576,82 @@ function lectureDateFromAggregateAttendance(
   return isoDate(y, m, day)
 }
 
+function buildDesignElementaryProgramLines(
+  programRow: PaymentOrderAdminProgramRow,
+  n: number
+): PaymentOrderAdminProgramDetailInstructorRow[] {
+  const lectureDate = lectureDateFromAggregateAttendance(
+    programRow.settlementRelevantAttendanceDates,
+    programRow.referenceDate,
+    0,
+    mixSeed(n, 10)
+  )
+  const specs: Array<{
+    instructorName: string
+    institutionName: string
+    sessionOrdinal: number
+    processingStatus: PaymentOrderAdminLineProcessingStatus
+    estimatedAmount: number
+    processingRejectionReason?: string
+  }> = [
+    {
+      instructorName: '박틴토',
+      institutionName: '강서초등학교',
+      sessionOrdinal: 3,
+      processingStatus: 'pending',
+      estimatedAmount: 915000,
+    },
+    {
+      instructorName: '김틴토',
+      institutionName: '대구수성초등학교',
+      sessionOrdinal: 2,
+      processingStatus: 'confirmed',
+      estimatedAmount: 300000,
+    },
+    {
+      instructorName: '최틴토',
+      institutionName: '강서초등학교',
+      sessionOrdinal: 1,
+      processingStatus: 'reapplication',
+      estimatedAmount: 315000,
+    },
+    {
+      instructorName: '허틴토',
+      institutionName: '진월초등학교',
+      sessionOrdinal: 2,
+      processingStatus: 'correction',
+      estimatedAmount: 480000,
+    },
+    {
+      instructorName: '박틴토',
+      institutionName: '강서초등학교',
+      sessionOrdinal: 3,
+      processingStatus: 'application_rejected',
+      estimatedAmount: 915000,
+      processingRejectionReason: '제출 서류 미비',
+    },
+    {
+      instructorName: '이틴토',
+      institutionName: '',
+      sessionOrdinal: 1,
+      processingStatus: 'pending',
+      estimatedAmount: 15000,
+    },
+  ]
+  const count = specs.length
+  return specs.map((spec, i) => ({
+    id: `po-detail-${n}-design-${i}`,
+    no: count - i,
+    instructorName: spec.instructorName,
+    institutionName: spec.institutionName,
+    lectureDate,
+    sessionOrdinal: spec.sessionOrdinal,
+    processingStatus: spec.processingStatus,
+    estimatedAmount: spec.estimatedAmount,
+    processingRejectionReason: spec.processingRejectionReason,
+  }))
+}
+
 /**
  * 프로그램 집계 행 기준으로 지급 현황 상세(기본 정보 + 강사별 정산 목록) mock 생성
  */
@@ -529,17 +668,20 @@ export function getMockPaymentOrderProgramDetail(
 
   const rowCount = Math.min(10, Math.max(4, programRow.instructorCount))
 
-  const instructorRows: PaymentOrderAdminProgramDetailInstructorRow[] = Array.from(
-    { length: rowCount },
-    (_, i) => {
+  const isDesignElementary = programRow.programName.includes(DESIGN_ELEMENTARY_PROGRAM)
+
+  const instructorRows: PaymentOrderAdminProgramDetailInstructorRow[] = isDesignElementary
+    ? buildDesignElementaryProgramLines(programRow, n)
+    : Array.from({ length: rowCount }, (_, i) => {
       const salt = mixSeed(n, 10 + i)
       const nameIdx = (n + i) % instructorNames.length
       const instIdx = (n * 3 + i * 7) % institutionNames.length
+      const isPersonal = i === rowCount - 1
       return {
         id: `po-detail-${n}-${i}`,
         no: rowCount - i,
         instructorName: instructorNames[nameIdx],
-        institutionName: institutionNames[instIdx],
+        institutionName: isPersonal ? '' : institutionNames[instIdx],
         lectureDate: lectureDateFromAggregateAttendance(
           programRow.settlementRelevantAttendanceDates,
           programRow.referenceDate,
@@ -549,9 +691,12 @@ export function getMockPaymentOrderProgramDetail(
         sessionOrdinal: 1 + (salt % 8),
         processingStatus: lineStatuses[(n + i) % lineStatuses.length],
         estimatedAmount: [915000, 480000, 120000, 625000, 15000, 350000][(n + i) % 6],
+        processingRejectionReason:
+          lineStatuses[(n + i) % lineStatuses.length] === 'application_rejected'
+            ? '제출 서류 미비'
+            : undefined,
       }
-    }
-  )
+    })
 
   return {
     programNo: programRow.no,
@@ -629,7 +774,8 @@ export function getMockPaymentOrderInstructorDetail(
     accountHolder,
     totalEstimatedAmount: instructorRow.estimatedAmount,
     genderBirthDisplay: mockGenderBirthDisplay(mixSeed(n, 17)),
-    scheduleChangeCancelCount: mixSeed(n, 7) % 4 === 0 ? 1 : undefined,
+    scheduleChangeCancelCount:
+      instructorRow.instructorName === '박틴토' || mixSeed(n, 7) % 4 === 0 ? 1 : undefined,
     programRows,
   }
 }
@@ -705,22 +851,26 @@ export function getMockPaymentOrderProgramCalculationStatement(
   const lectureFee =
     instructorLineRow.estimatedAmount > 0 ? instructorLineRow.estimatedAmount : 915000
   const lectureFeeAmountLabel = `${lectureFee.toLocaleString('ko-KR')}원`
-  const lectureFeeStandardTitle = pickSettlementWageStandardTitle(seed)
+  const lectureFeeStandardTitle =
+    instructorLineRow.instructorName === '박틴토'
+      ? '특강 강의비'
+      : pickSettlementWageStandardTitle(seed)
 
   const sessionStart = Math.max(1, instructorLineRow.sessionOrdinal)
   const sessionEnd = sessionStart + 1 + (seed % 2)
   const lectureDateDisplay = formatIsoToKoreanWeekday(instructorLineRow.lectureDate)
   const lectureSessionDisplay = `${sessionStart} ~ ${sessionEnd}차시`
 
-  const includeTravel = seed % 5 !== 0
-  const includeLodging = seed % 7 !== 0
-  const includeMeal = seed % 11 !== 0
-  const includeActivity = seed % 13 !== 0
+  const isParkTinto = instructorLineRow.instructorName === '박틴토'
+  const includeTravel = isParkTinto || seed % 5 !== 0
+  const includeLodging = isParkTinto || seed % 7 !== 0
+  const includeMeal = isParkTinto ? false : seed % 11 !== 0
+  const includeActivity = isParkTinto ? false : seed % 13 !== 0
 
   const travelBasisDetail = buildTravelBasisDetail(seed)
-  const travelAmount = resolveTravelBasisDetailTotalWon(travelBasisDetail)
+  const travelAmount = isParkTinto ? 31500 : resolveTravelBasisDetailTotalWon(travelBasisDetail)
   const lodgingBasisDetail = buildLodgingBasisDetail(seed)
-  const lodgingAmount = resolveLodgingBasisDetailTotalWon(lodgingBasisDetail)
+  const lodgingAmount = isParkTinto ? 80000 : resolveLodgingBasisDetailTotalWon(lodgingBasisDetail)
   const mealBasisDetail = buildMealBasisDetail()
   const mealAmount = resolveMealBasisDetailTotalWon(mealBasisDetail)
   const activityBasisDetail = buildActivityBasisDetail()
@@ -894,21 +1044,23 @@ export function getMockPaymentOrderInstructorCalculationStatement(
 
   const lectureFee = programLineRow.estimatedAmount > 0 ? programLineRow.estimatedAmount : 915000
   const lectureFeeAmountLabel = `${lectureFee.toLocaleString('ko-KR')}원`
-  const lectureFeeStandardTitle = pickSettlementWageStandardTitle(seed)
+  const lectureFeeStandardTitle =
+    instructorDetail.nameKo === '박틴토' ? '특강 강의비' : pickSettlementWageStandardTitle(seed)
 
   const sessionStart = Math.max(1, programLineRow.sessionOrdinal)
   const lectureDateDisplay = formatIsoToKoreanWeekday(programLineRow.lectureDate)
   const lectureSessionDisplay = `${sessionStart}차시`
 
-  const includeTravel = seed % 5 !== 0
-  const includeLodging = seed % 7 !== 0
-  const includeMeal = seed % 11 !== 0
-  const includeActivity = seed % 13 !== 0
+  const isParkTinto = instructorDetail.nameKo === '박틴토'
+  const includeTravel = isParkTinto || seed % 5 !== 0
+  const includeLodging = isParkTinto || seed % 7 !== 0
+  const includeMeal = isParkTinto ? false : seed % 11 !== 0
+  const includeActivity = isParkTinto ? false : seed % 13 !== 0
 
   const travelBasisDetail = buildTravelBasisDetail(seed)
-  const travelAmount = resolveTravelBasisDetailTotalWon(travelBasisDetail)
+  const travelAmount = isParkTinto ? 31500 : resolveTravelBasisDetailTotalWon(travelBasisDetail)
   const lodgingBasisDetail = buildLodgingBasisDetail(seed)
-  const lodgingAmount = resolveLodgingBasisDetailTotalWon(lodgingBasisDetail)
+  const lodgingAmount = isParkTinto ? 80000 : resolveLodgingBasisDetailTotalWon(lodgingBasisDetail)
   const mealBasisDetail = buildMealBasisDetail()
   const mealAmount = resolveMealBasisDetailTotalWon(mealBasisDetail)
   const activityBasisDetail = buildActivityBasisDetail()
@@ -1042,7 +1194,8 @@ export function getMockPaymentOrderInstructorCalculationStatement(
       settlementAccountBankNumberPart: settlementBankPart,
       settlementAccountHolderPart: MASKING_POLICY.accountHolderName(instructorDetail.accountHolder),
       genderBirthDisplay: mockGenderBirthDisplay(seed),
-      scheduleChangeCancelCount: seed % 4 === 0 ? 1 : undefined,
+      scheduleChangeCancelCount:
+        instructorDetail.nameKo === '박틴토' || seed % 4 === 0 ? 1 : undefined,
       programName: programLineRow.programName,
       processingStatusDisplay: lineStatusToCalculationDisplay(programLineRow.processingStatus),
       processingStatusClass: programLineRow.processingStatus,

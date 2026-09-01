@@ -1,5 +1,12 @@
 import { Input, Radio } from 'antd'
-import type { HorizontalTableParagraph, IdTypeWithInputParagraph, TableBottomConsent } from '@jakorea/form-schema/writing-form'
+import {
+  type HorizontalTableParagraph,
+  type IdTypeWithInputParagraph,
+  type TableBottomConsent,
+  isIdTypeResidentOptionId,
+  joinIdTypeResidentInputValue,
+  splitIdTypeResidentInputValue,
+} from '@jakorea/form-schema/writing-form'
 import type { ParagraphBodyInteractionMode } from '@jakorea/form-schema/surface'
 import { isFormPreviewReadonlyMode } from '@jakorea/form-schema/surface'
 import { resolveHorizontalTablePreviewLayout } from './horizontal-table-preview.js'
@@ -169,6 +176,8 @@ function IdTypeWithInputFill({
       ? (ID_TYPE_INPUT_PLACEHOLDER[selectedId] ??
         (paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요'))
       : paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요'
+  const isResident = isIdTypeResidentOptionId(selectedId)
+  const residentParts = splitIdTypeResidentInputValue(paragraph.inputValue)
 
   return (
     <div className="form-template-id-type-with-input">
@@ -195,16 +204,66 @@ function IdTypeWithInputFill({
           </Radio>
         ))}
       </Radio.Group>
-      <Input
-        className="form-template-id-type-with-input__input"
-        size="large"
-        value={paragraph.inputValue}
-        placeholder={placeholder}
-        disabled={readonly}
-        onChange={event =>
-          onChange?.({ ...paragraph, inputValue: event.target.value, inputPlaceholder: placeholder })
-        }
-      />
+      {isResident ? (
+        <div className="form-template-id-type-with-input__resident">
+          <Input
+            className="form-template-id-type-with-input__resident-input"
+            size="large"
+            inputMode="numeric"
+            maxLength={6}
+            value={residentParts.front}
+            placeholder="주민등록 앞 6자리"
+            disabled={readonly}
+            onChange={event =>
+              onChange?.({
+                ...paragraph,
+                inputValue: joinIdTypeResidentInputValue(
+                  event.target.value.replace(/\D/g, ''),
+                  residentParts.back
+                ),
+                inputPlaceholder: placeholder,
+              })
+            }
+          />
+          <span className="form-template-id-type-with-input__dash" aria-hidden>
+            -
+          </span>
+          <Input
+            className="form-template-id-type-with-input__resident-input"
+            size="large"
+            inputMode="numeric"
+            maxLength={7}
+            value={residentParts.back}
+            placeholder="주민등록 뒤 7자리"
+            disabled={readonly}
+            onChange={event =>
+              onChange?.({
+                ...paragraph,
+                inputValue: joinIdTypeResidentInputValue(
+                  residentParts.front,
+                  event.target.value.replace(/\D/g, '')
+                ),
+                inputPlaceholder: placeholder,
+              })
+            }
+          />
+        </div>
+      ) : (
+        <Input
+          className="form-template-id-type-with-input__input"
+          size="large"
+          value={paragraph.inputValue}
+          placeholder={placeholder}
+          disabled={readonly}
+          onChange={event =>
+            onChange?.({
+              ...paragraph,
+              inputValue: event.target.value,
+              inputPlaceholder: placeholder,
+            })
+          }
+        />
+      )}
     </div>
   )
 }

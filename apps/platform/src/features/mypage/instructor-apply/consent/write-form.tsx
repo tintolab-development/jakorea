@@ -1,9 +1,12 @@
 import {
   buildPlatformConsentFillOptions,
   createConsentTemplateSeedDraft,
+  getMemberConsentInvalidNoticeSubjectContactAlertMessage,
   hasMemberConsentIncompleteRequiredFields,
+  hasMemberConsentInvalidResidentNumberFormat,
   isCrimeConsentTemplate,
   normalizeMemberConsentWriteDraft,
+  PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE,
   resolveInstructorApplyConsentTemplate,
   resolvePlatformConsentHiddenParagraphIds,
 } from '@jakorea/form-schema/consent'
@@ -85,6 +88,7 @@ export function SchemaConsentWriteForm({
   const { templateId } = resolveInstructorApplyConsentTemplate(consentKey)
   const { lockedBasic } = useInstructorApplyLockedBasic()
   const [alertOpen, setAlertOpen] = useState(false)
+  const [alertMessage, setAlertMessage] = useState(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
 
   const [state, setState] = useState<SchemaConsentWriteState>(() =>
     loadSchemaConsentWriteState(consentKey, createInitialSchemaConsentState(consentKey))
@@ -98,6 +102,23 @@ export function SchemaConsentWriteForm({
 
   const handleSubmit = () => {
     if (incomplete) {
+      setAlertMessage(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
+      setAlertOpen(true)
+      return
+    }
+    const contactFormatMessage = getMemberConsentInvalidNoticeSubjectContactAlertMessage(state.draft)
+    if (contactFormatMessage != null) {
+      setAlertMessage(contactFormatMessage)
+      setAlertOpen(true)
+      return
+    }
+    if (
+      hasMemberConsentInvalidResidentNumberFormat(state.draft, {
+        templateId,
+        paymentStatementBasicInfo: state.paymentBasicInfo,
+      })
+    ) {
+      setAlertMessage(PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE)
       setAlertOpen(true)
       return
     }
@@ -243,7 +264,7 @@ export function SchemaConsentWriteForm({
       <PFAlertModal
         open={alertOpen}
         title="안내"
-        description={CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE}
+        description={alertMessage}
         onConfirm={() => setAlertOpen(false)}
       />
     </>

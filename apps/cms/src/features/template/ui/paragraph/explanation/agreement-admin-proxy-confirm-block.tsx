@@ -27,11 +27,21 @@ export function AgreementAdminProxyConfirmBlock({
 }: AgreementAdminProxyConfirmBlockProps) {
   const dateText = formatKoreanFullDate(now ?? new Date())
   const name = memberName.trim() || AGREEMENT_USER_MODE_AUTHOR_PLACEHOLDER
+  const consent = consentText.trim()
 
   return (
     <div className="agreement-admin-proxy-confirm">
-      <div className="agreement-admin-proxy-confirm__row">
-        <p className="agreement-admin-proxy-confirm__consent">{consentText}</p>
+      <div
+        className={[
+          'agreement-admin-proxy-confirm__row',
+          consent === '' ? 'agreement-admin-proxy-confirm__row--end' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {consent !== '' ? (
+          <p className="agreement-admin-proxy-confirm__consent">{consent}</p>
+        ) : null}
         <p className="agreement-admin-proxy-confirm__date">{dateText}</p>
       </div>
       <div className="agreement-admin-proxy-confirm__row">

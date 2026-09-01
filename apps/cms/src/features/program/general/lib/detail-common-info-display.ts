@@ -69,7 +69,7 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_VARIANT: GeneralProgramVariant
 export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_ID =
   'general-prog-type-org-schedule-single' as const
 
-/** 기관_일정형_복수 회차 — 행사 일정·과제 설정 스크린샷 mock id */
+/** 기관_일정형_복수 회차 — 행사 일정 스크린샷 mock id */
 export const GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_ID =
   'general-prog-type-org-schedule-multi' as const
 
@@ -114,7 +114,7 @@ export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_COMMON_INFO_MOCK: NonNullable<
     { grade: '2급 강사비', pricing: '1시간 당 | 기본 : 350,000원' },
     { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 250,000원' },
   ],
-  paymentItems: '교통비(일반), 숙박비(일반), 자원봉사자 활동비',
+  paymentItems: '교통비(일반), 숙박비(일반), 활동비',
   deductionItems: GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL,
   kpi: {
     finalParticipants: 30,
@@ -161,7 +161,7 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK: NonNullable
     { grade: '2급 강사비', pricing: '1시간 당 | 기본 : 350,000원' },
     { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 250,000원' },
   ],
-  paymentItems: '교통비(일반), 숙박비(일반), 자원봉사자 활동비',
+  paymentItems: '교통비(일반), 숙박비(일반), 활동비',
   deductionItems: GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL,
   kpi: {
     finalParticipants: 30,
@@ -223,7 +223,7 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK: NonNullable
   ],
 }
 
-/** 스크린샷·유형 mock — 기관_일정형_복수 회차 (교육 형태·참여·IPS 일정 별 상이 → 행사 일정 + 과제 설정) */
+/** 스크린샷·유형 mock — 기관_일정형_복수 회차 (교육 형태·참여·IPS 일정 별 상이 → 행사 일정) */
 export const GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_COMMON_INFO_MOCK: NonNullable<
   Program['generalCommonInfo']
 > = {
@@ -237,15 +237,11 @@ export const GENERAL_PROGRAM_ORG_SCHEDULE_MULTI_COMMON_INFO_MOCK: NonNullable<
       scheduleLabel: '행사 일정 01',
       name: '',
       scheduleDateLabel: '26년 4월 20일(월)',
-      assignmentEnabled: false,
-      assignmentPeriod: '',
     },
     {
       scheduleLabel: '행사 일정 02',
       name: '',
       scheduleDateLabel: '',
-      assignmentEnabled: false,
-      assignmentPeriod: '',
     },
   ],
   educationScheduleLines: [
@@ -262,16 +258,12 @@ const MULTI_ROUND_CURRICULUM_SESSIONS_MOCK: NonNullable<
     title: '2',
     description:
       '채용 공고 읽기, 이력서 작성하기 등 취업에 필요한 단계들을 알아봅니다.',
-    assignmentEnabled: true,
-    assignmentPeriod: '26년 4월 20일(월) ~ 26년 4월 27일(월)',
   },
   {
     sessionLabel: '2회차',
     title: '2',
     description:
       '올바른 면접 태도에 대해 알아보고, 직접 면접 체험을 해보는 시간을 갖습니다.',
-    assignmentEnabled: true,
-    assignmentPeriod: '26년 4월 20일(월) ~ 26년 4월 27일(월)',
   },
 ]
 
@@ -295,8 +287,6 @@ const MULTI_ROUND_PER_SCHEDULE_CURRICULUM_SESSIONS_MOCK: NonNullable<
     title: '2',
     description:
       '채용 공고 읽기, 이력서 작성하기 등 취업에 필요한 단계들을 알아봅니다.',
-    assignmentEnabled: true,
-    assignmentPeriod: '26년 4월 20일(월) ~ 26년 4월 27일(월)',
     educationFormLabel: '온라인',
     ipsTypeSummary: 'Prepare | 해당없음',
   },
@@ -305,8 +295,6 @@ const MULTI_ROUND_PER_SCHEDULE_CURRICULUM_SESSIONS_MOCK: NonNullable<
     title: '2',
     description:
       '올바른 면접 태도에 대해 알아보고, 직접 면접 체험을 해보는 시간을 갖습니다.',
-    assignmentEnabled: true,
-    assignmentPeriod: '26년 4월 20일(월) ~ 26년 4월 27일(월)',
     educationFormLabel: '오프라인',
     ipsTypeSummary: 'Prepare | 해당없음',
   },
@@ -333,6 +321,7 @@ function buildCurriculumSessionsFromRounds(
     variant?.educationStructure === 'curriculum' && variant.sessionRound === 'multi'
 
   if (isMulti) {
+    const includeAssignment = variant?.audience !== 'organization'
     return rounds.map((r, i) => ({
       sessionLabel: `${i + 1}회차`,
       title: '2',
@@ -340,8 +329,12 @@ function buildCurriculumSessionsFromRounds(
         r.curriculum?.includes('|')
           ? r.curriculum.split('|').slice(1).join('|').trim()
           : (r.curriculum?.replace(/^\d+회차\s*/, '').trim() ?? '-'),
-      assignmentEnabled: true,
-      assignmentPeriod: '26년 4월 20일(월) ~ 26년 4월 27일(월)',
+      ...(includeAssignment
+        ? {
+            assignmentEnabled: true,
+            assignmentPeriod: '26년 4월 20일(월) ~ 26년 4월 27일(월)',
+          }
+        : {}),
     }))
   }
 
@@ -464,7 +457,7 @@ export function resolveGeneralProgramCommonInfo(
     wageGradeRows: [
       { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 240,000원' },
     ],
-    paymentItems: '교통비 (1사1교), 숙박비, 자원봉사자 활동비',
+    paymentItems: '강사 교통비, 숙박비, 활동비',
     deductionItems: GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL,
     kpi: {
       finalParticipants: program.approvedStudentCount ?? 30,

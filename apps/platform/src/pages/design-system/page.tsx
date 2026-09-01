@@ -44,6 +44,7 @@ import {
   PFToggle,
   PFText,
   PFTextInput,
+  PFTextarea,
   PFDateInput,
   PFSelect,
   PFSort,
@@ -154,6 +155,15 @@ const typographyTokenSpecs = [
     figma: 'Headline/Large',
     size: '24px',
     weight: '600',
+    lineHeight: '150%',
+    letterSpacing: '-0.24px',
+  },
+  {
+    token: 'typo-hl-lg-md',
+    pfText: 'hl-lg-md',
+    figma: 'Headline/Large/medium',
+    size: '24px',
+    weight: '500',
     lineHeight: '150%',
     letterSpacing: '-0.24px',
   },
@@ -1649,6 +1659,55 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
                 messageStatus="success"
               />
               <PFTextInput
+                size={size}
+                label="Label"
+                placeholder="text"
+                defaultValue="text"
+                error
+                message="오류 메시지"
+                messageStatus="error"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFTextarea
+        </PFText>
+        <div className={styles.inputStack}>
+          {inputSizes.map(size => (
+            <div className={styles.inputRow} key={size}>
+              <PFText as="span" typo="label-md" color="neutral-cool-500">
+                {size}
+              </PFText>
+              <PFTextarea size={size} label="Label" placeholder="text" required />
+              <PFTextarea size={size} label="Label" placeholder="text" defaultValue="text" />
+              <PFTextarea
+                size={size}
+                label="Label"
+                placeholder="text"
+                defaultValue="text"
+                disabled
+              />
+              <PFTextarea size={size} label="Label" placeholder="text" defaultValue="text" error />
+              <PFTextarea
+                size={size}
+                label="Label"
+                placeholder="text"
+                message="안내 메시지"
+                messageStatus="neutral"
+              />
+              <PFTextarea
+                size={size}
+                label="Label"
+                placeholder="text"
+                defaultValue="text"
+                message="사용 가능한 값입니다."
+                messageStatus="success"
+              />
+              <PFTextarea
                 size={size}
                 label="Label"
                 placeholder="text"

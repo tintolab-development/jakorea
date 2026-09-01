@@ -25,6 +25,7 @@ import {
 import {
   fetchAdminMemberDetailAsUser,
   isAdminMemberDetailRole,
+  parseAdminAccountIdFromUserId,
   shouldUseAdminAccountDetailApi,
 } from '@/features/user/api/fetch-admin-member-detail'
 import { resolve1365IdFromExternalIdentifiers } from '@/features/user/api/map-external-identifiers'
@@ -45,32 +46,60 @@ export type MemberDetailQueryOptions = {
   roles?: string[]
 }
 
-export function memberDetailQueryOptions(
-  userId: string,
-  options?: MemberDetailQueryOptions
-) {
+/**
+ * 목록 uuid와 canonical `admin-account-{id}` / `organization-{id}`가
+ * 같은 상세 GET을 두 번 치지 않도록 리소스 식별자를 키로 쓴다.
+ */
+export function memberDetailQueryKey(userId: string, options?: MemberDetailQueryOptions) {
   const instructorProfileHint = resolveInstructorMemberProfileHint({
     roles: options?.roles,
     instructorMemberProfile: options?.instructorMemberProfile,
   })
+  const role = options?.role ?? 'auto'
 
+  if (!isMembersRemoteEnabled()) {
+    return [
+      'users',
+      'detail',
+      userId,
+      role,
+      options?.organizationId ?? '',
+      instructorProfileHint ?? '',
+    ] as const
+  }
+
+  const adminAccountId = options?.adminAccountId ?? parseAdminAccountIdFromUserId(userId)
+  if (adminAccountId != null && adminAccountId > 0) {
+    return [
+      ...memberQueryKeys.detailResource('admin', adminAccountId),
+      role,
+      instructorProfileHint ?? '',
+    ] as const
+  }
+
+  const organizationId = options?.organizationId ?? parseOrganizationIdFromUserId(userId)
+  if (organizationId != null && (options?.role === 'SCHOOL' || parseOrganizationIdFromUserId(userId) != null)) {
+    return [...memberQueryKeys.detailResource('org', organizationId), role] as const
+  }
+
+  if (options?.memberId != null) {
+    return [
+      ...memberQueryKeys.detailResource('member', options.memberId),
+      role,
+      instructorProfileHint ?? '',
+    ] as const
+  }
+
+  return [...memberQueryKeys.detailByUuid(userId), role, instructorProfileHint ?? ''] as const
+}
+
+export function memberDetailQueryOptions(
+  userId: string,
+  options?: MemberDetailQueryOptions
+) {
   return queryOptions({
-    queryKey: isMembersRemoteEnabled()
-      ? [
-          ...memberQueryKeys.detailByUuid(userId),
-          options?.role ?? 'auto',
-          options?.adminAccountId ?? '',
-          options?.organizationId ?? '',
-          instructorProfileHint ?? '',
-        ]
-      : [
-          'users',
-          'detail',
-          userId,
-          options?.role ?? 'auto',
-          options?.organizationId ?? '',
-          instructorProfileHint ?? '',
-        ],
+    queryKey: memberDetailQueryKey(userId, options),
+    staleTime: 30_000,
     queryFn: async (): Promise<Omit<User, 'password'>> => {
       if (
         shouldUseAdminAccountDetailApi({
@@ -191,6 +220,14 @@ export function memberDetailQueryOptions(
   })
 }
 
+export function fetchMemberDetailQuery(
+  queryClient: QueryClient,
+  userId: string,
+  options?: MemberDetailQueryOptions
+) {
+  return queryClient.ensureQueryData(memberDetailQueryOptions(userId, options))
+}
+
 export function useMemberDetailQuery(
   userId: string | null | undefined,
   enabled = true,
@@ -207,12 +244,13 @@ export function useMemberDetailQuery(
 export function memberConsentRecordsQueryOptions(memberId: number) {
   return queryOptions({
     queryKey: memberQueryKeys.consentRecords(memberId),
+    staleTime: 30_000,
     queryFn: () => fetchMemberConsentRecordsRemote(memberId),
   })
 }
 
 export function fetchMemberConsentRecordsQuery(queryClient: QueryClient, memberId: number) {
-  return queryClient.fetchQuery(memberConsentRecordsQueryOptions(memberId))
+  return queryClient.ensureQueryData(memberConsentRecordsQueryOptions(memberId))
 }
 
 export function useMemberConsentRecordsQuery(

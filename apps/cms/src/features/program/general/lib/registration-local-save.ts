@@ -13,7 +13,9 @@ import type {
 } from '@/types/domain'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import type {
+  ProgramRegistrationEducationScheduleMode,
   ProgramRegistrationParticipantState,
+  ProgramRegistrationSessionRoundType,
   ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
@@ -107,6 +109,9 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   sponsorId?: string
   /** 목록·생성 요청에 쓸 프로그램명. 없으면 자동 생성 */
   title?: string
+  sessionRoundType?: ProgramRegistrationSessionRoundType
+  educationScheduleMode?: ProgramRegistrationEducationScheduleMode
+  educationScheduleLines?: string[]
 }): Program {
   const now = new Date().toISOString()
   const y = dayjs().year()
@@ -183,6 +188,8 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
       : audienceFromParticipant(args.participant),
     generalProgramEducationStructure:
       isCompanySchool || isTrainedTeachers ? 'curriculum' : args.programType,
+    generalProgramSessionRound:
+      isCompanySchool || isTrainedTeachers ? undefined : (args.sessionRoundType ?? 'single'),
     generalCommonInfo: isCompanySchool || isTrainedTeachers
       ? {
           educationScheduleMode: 'period',
@@ -228,7 +235,10 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
             maxSessionsPerDay: 2,
           },
         }
-      : undefined,
+      : {
+          educationScheduleMode: args.educationScheduleMode ?? 'date',
+          educationScheduleLines: [...(args.educationScheduleLines ?? [])],
+        },
     generalParticipantTypes: participantTypes,
     generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
     rounds,
@@ -328,6 +338,10 @@ export function persistGeneralRegistrationFormLocal(args: {
   programType: ProgramRegistrationType
   variant?: ProgramRegistrationFormVariant
   sponsorId?: string
+  title?: string
+  sessionRoundType?: ProgramRegistrationSessionRoundType
+  educationScheduleMode?: ProgramRegistrationEducationScheduleMode
+  educationScheduleLines?: string[]
 }): Program {
   const variant = args.variant ?? 'general'
   const id =
@@ -342,6 +356,10 @@ export function persistGeneralRegistrationFormLocal(args: {
     programType: args.programType,
     variant,
     sponsorId: args.sponsorId,
+    title: args.title,
+    sessionRoundType: args.sessionRoundType,
+    educationScheduleMode: args.educationScheduleMode,
+    educationScheduleLines: args.educationScheduleLines,
   })
   const record: GeneralRegistrationLocalSaveRecord = {
     version: 1,
@@ -367,6 +385,9 @@ export async function persistGeneralProgramRegistration(args: {
   variant?: ProgramRegistrationFormVariant
   sponsorId?: string
   title?: string
+  sessionRoundType?: ProgramRegistrationSessionRoundType
+  educationScheduleMode?: ProgramRegistrationEducationScheduleMode
+  educationScheduleLines?: string[]
 }): Promise<Program> {
   const variant = args.variant ?? 'general'
   const id =
@@ -382,6 +403,9 @@ export async function persistGeneralProgramRegistration(args: {
     variant,
     sponsorId: args.sponsorId,
     title: args.title,
+    sessionRoundType: args.sessionRoundType,
+    educationScheduleMode: args.educationScheduleMode,
+    educationScheduleLines: args.educationScheduleLines,
   })
 
   if (variant === 'economy' && shouldUseCompanySchoolRemoteApi()) {

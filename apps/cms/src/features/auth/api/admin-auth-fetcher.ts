@@ -13,6 +13,7 @@ import type {
   RefreshTokenRequestBody,
 } from '@/features/auth/model/admin-login-api.types'
 import { AdminLoginApiError } from '@/features/auth/api/admin-login-fetcher'
+import { parseAuthTokenResponse } from '@/features/auth/lib/parse-auth-token-response'
 
 export class AdminMfaApiError extends Error {
   readonly code: string
@@ -53,39 +54,8 @@ function parseAuthError(payload: unknown, fallback: string): AdminMfaApiError {
 }
 
 function unwrapTokenResponse(payload: unknown): AuthTokenResponse {
-  if (payload && typeof payload === 'object') {
-    const o = payload as Record<string, unknown>
-    if (o.success === true && o.data && typeof o.data === 'object') {
-      return unwrapTokenResponse(o.data)
-    }
-    const accessToken = o.accessToken
-    const refreshToken = o.refreshToken
-    if (typeof accessToken === 'string' && typeof refreshToken === 'string') {
-      return {
-        accessToken,
-        refreshToken,
-        tokenType: typeof o.tokenType === 'string' ? o.tokenType : undefined,
-        expiresInSeconds:
-          typeof o.expiresInSeconds === 'number' ? o.expiresInSeconds : undefined,
-        passwordChangeRequired:
-          typeof o.passwordChangeRequired === 'boolean' ? o.passwordChangeRequired : undefined,
-        adminProvisionedOnboardingRequired:
-          typeof o.adminProvisionedOnboardingRequired === 'boolean'
-            ? o.adminProvisionedOnboardingRequired
-            : undefined,
-        adminProvisionedOnboardingStep:
-          typeof o.adminProvisionedOnboardingStep === 'string'
-            ? o.adminProvisionedOnboardingStep
-            : undefined,
-        registeredByAdmin:
-          typeof o.registeredByAdmin === 'boolean' ? o.registeredByAdmin : undefined,
-        identitySelfSignupCompletedAfterAdminRegistration:
-          typeof o.identitySelfSignupCompletedAfterAdminRegistration === 'boolean'
-            ? o.identitySelfSignupCompletedAfterAdminRegistration
-            : undefined,
-      }
-    }
-  }
+  const parsed = parseAuthTokenResponse(payload)
+  if (parsed) return parsed
   throw parseAuthError(payload, '인증 토큰 응답 형식이 올바르지 않습니다.')
 }
 
@@ -173,7 +143,12 @@ export async function fetchAdminAuthRefresh(
       {
         skipRefresh: true,
         skipAuth: true,
-      } as InternalAxiosRequestConfig & { skipRefresh?: boolean; skipAuth?: boolean }
+        skipGlobalErrorAlert: true,
+      } as InternalAxiosRequestConfig & {
+        skipRefresh?: boolean
+        skipAuth?: boolean
+        skipGlobalErrorAlert?: boolean
+      }
     )
     return unwrapTokenResponse(payload)
   } catch (err) {
@@ -186,7 +161,7 @@ export async function fetchAdminAuthRefresh(
   }
 }
 
-/** POST /api/admin/auth/logout — body refreshToken only (Authorization 제외), 204 */
+/** POST /api/admin/auth/logout — body refreshToken only (Authorization 제외). OpenAPI 200/204 */
 export async function fetchAdminAuthLogout(body: RefreshTokenRequestBody): Promise<void> {
   try {
     await axiosClient.post<unknown>(
@@ -195,10 +170,12 @@ export async function fetchAdminAuthLogout(body: RefreshTokenRequestBody): Promi
       {
         skipRefresh: true,
         skipAuth: true,
+        skipGlobalErrorAlert: true,
         validateStatus: (status: number) => status === 204 || status === 200,
       } as unknown as InternalAxiosRequestConfig & {
         skipRefresh?: boolean
         skipAuth?: boolean
+        skipGlobalErrorAlert?: boolean
       }
     )
   } catch (err) {

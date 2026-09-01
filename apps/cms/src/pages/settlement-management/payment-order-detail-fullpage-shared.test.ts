@@ -41,4 +41,14 @@ describe('deriveAggregateFromLines', () => {
     const s: PaymentOrderAdminLineProcessingStatus[] = ['confirmed', 'confirmed']
     expect(deriveAggregateFromLines(s)).toBe('confirmed')
   })
+
+  it('재신청과 확인 완료가 혼재면 partial', () => {
+    const s: PaymentOrderAdminLineProcessingStatus[] = ['confirmed', 'reapplication']
+    expect(deriveAggregateFromLines(s)).toBe('partial')
+  })
+
+  it('전부 대기·재신청이면 pending', () => {
+    const s: PaymentOrderAdminLineProcessingStatus[] = ['pending', 'reapplication']
+    expect(deriveAggregateFromLines(s)).toBe('pending')
+  })
 })

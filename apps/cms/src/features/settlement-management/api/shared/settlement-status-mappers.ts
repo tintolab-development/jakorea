@@ -15,6 +15,12 @@ export function mapStatementStatusToProcessingStatus(
       return 'correction'
     case 'REJECTED':
       return 'application_rejected'
+    case 'REAPPLICATION':
+    case 'RESUBMITTED':
+      return 'reapplication'
+    case 'PARTIAL':
+    case 'PARTIAL_CONFIRMED':
+      return 'partial'
     case 'REQUESTED':
     default:
       return 'pending'
@@ -34,6 +40,9 @@ export function mapStatementStatusToLineStatus(
       return 'application_rejected'
     case 'PAID':
       return 'rejected'
+    case 'REAPPLICATION':
+    case 'RESUBMITTED':
+      return 'reapplication'
     case 'REQUESTED':
     default:
       return 'pending'
@@ -51,6 +60,8 @@ export function mapPaymentStatusToAccountPaymentStatus(
       return 'payment_correction_requested'
     case 'CONFIRMED':
       return 'partial_confirmation'
+    /** BE canonical 대기값. REQUESTED는 대기 버킷 alias(지급조서 REQUESTED와 이름 겹침 — 위장 매핑 금지, 동일 UI만) */
+    case 'WAITING_PAYMENT':
     case 'FAILED':
     case 'REQUESTED':
     default:
@@ -60,5 +71,11 @@ export function mapPaymentStatusToAccountPaymentStatus(
 
 export function isPendingStatementStatus(status: string | undefined): boolean {
   const upper = status?.toUpperCase()
-  return upper === 'REQUESTED' || upper === undefined || upper === ''
+  return (
+    upper === 'REQUESTED' ||
+    upper === 'REAPPLICATION' ||
+    upper === 'RESUBMITTED' ||
+    upper === undefined ||
+    upper === ''
+  )
 }

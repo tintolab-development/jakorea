@@ -18,7 +18,13 @@ export type InstructorLnbPrepareClickContext = 'history-top' | 'history-child' |
 
 export type UserDetailUrlSyncUser = Pick<
   User,
-  'id' | 'role' | 'name' | 'instructorMemberProfile' | 'affiliatedSchoolUserId' | 'affiliatedSchoolName' | 'schoolInfo'
+  | 'id'
+  | 'role'
+  | 'name'
+  | 'instructorMemberProfile'
+  | 'affiliatedSchoolUserId'
+  | 'affiliatedSchoolName'
+  | 'schoolInfo'
 >
 
 export function programsHistoryHasChildMenu(user: UserDetailUrlSyncUser): boolean {
@@ -46,6 +52,40 @@ export function clampProgramsChildForUser(
     return child
   }
   return 'enrollment'
+}
+
+/** URL(`lnb`, `programsChild`) → 회원 상세 LNB 탭 상태 */
+export function resolveMemberDetailTabStateFromUrl(params: {
+  searchParams: URLSearchParams
+  displayUser: UserDetailUrlSyncUser
+  programsChildQueryKey: string
+  mode: 'default' | 'permission'
+}): TabState {
+  const { searchParams, displayUser, programsChildQueryKey, mode } = params
+
+  if (mode === 'permission') {
+    return { lnb: 'detail-info' }
+  }
+
+  const rawLnb = searchParams.get('lnb')
+  const isInstructor = displayUser.role === 'INSTRUCTOR'
+  const hasChildMenu = programsHistoryHasChildMenu(displayUser)
+  const paymentLnbAllowed = instructorDetailShowsPaymentStatusLnb(displayUser)
+
+  const nextLnb: UserDetailLnbKey =
+    rawLnb === 'history'
+      ? 'history'
+      : rawLnb === 'payment-status' && isInstructor && paymentLnbAllowed
+        ? 'payment-status'
+        : 'detail-info'
+
+  if (nextLnb === 'history' && hasChildMenu) {
+    const parsed = parseProgramsChildParam(searchParams.get(programsChildQueryKey))
+    const nextChild = parsed ? clampProgramsChildForUser(displayUser, parsed) : 'enrollment'
+    return { lnb: 'history', child: nextChild }
+  }
+
+  return { lnb: nextLnb }
 }
 
 /**
@@ -176,6 +216,18 @@ export function userDetailModalTitle(
     default:
       return formatUserDetailModalTitle('회원 상세', displayName)
   }
+}
+
+/** 상세 GET 첫 응답 전 타이틀 — 회원명을 모르므로 종류만 표기 */
+export function userDetailModalLoadingTitle(
+  mode: 'default' | 'permission',
+  permissionRole?: 'instructor' | 'admin'
+): string {
+  if (mode === 'permission') {
+    if (permissionRole === 'admin') return '관리자 신청 상세'
+    return '강사 신청 상세'
+  }
+  return '회원 상세'
 }
 
 export function userDetailSidebarNavAriaLabel(

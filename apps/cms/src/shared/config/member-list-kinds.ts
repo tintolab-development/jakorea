@@ -139,6 +139,11 @@ export function memberListHref(kind: MemberListKind): string {
   return `/users/list?kind=${kind}`
 }
 
+/** LNB 회원 목록 3뎁스 키(`/users/list?kind=…`)인지 */
+export function isMemberListMenuHref(href: string): boolean {
+  return href.split('?')[0] === '/users/list'
+}
+
 /** 회원 목록 페이지 상단 제목 */
 export function memberListPageTitle(kind: MemberListKind): string {
   switch (kind) {

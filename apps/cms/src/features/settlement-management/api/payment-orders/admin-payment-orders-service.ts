@@ -32,6 +32,10 @@ export type PaymentOrdersDetailContextParams = {
   aggregateKey: string
   /** 목록(지급조서 확인)에 조회 적용된 출강일 기간 — 상세 라인 API 스코프 */
   dateRange?: { from: string; to: string } | null
+  /** 상세 필터 「신청자명/프로그램명」 → settlements `search` */
+  search?: string | null
+  /** 상세 필터 「지급조서 처리 현황」 → `statementStatus` (all이면 생략) */
+  statementStatus?: string | null
 }
 
 export function buildPaymentOrdersDetailListParams(
@@ -48,6 +52,16 @@ export function buildPaymentOrdersDetailListParams(
     listParams.toDate = params.dateRange.to
   }
 
+  const search = params.search?.trim()
+  if (search) {
+    listParams.search = search
+  }
+
+  const statementStatus = params.statementStatus?.trim()
+  if (statementStatus) {
+    listParams.statementStatus = statementStatus
+  }
+
   return listParams
 }
 
@@ -61,20 +75,27 @@ async function fetchPaymentStatementsForSettlementIds(settlementIds: number[]) {
 }
 
 export async function getPaymentOrdersListRemote(
+  groupBy: 'program' | 'instructor',
   filters: PaymentOrdersListFilterInput = {
     programName: '',
     instructorName: '',
     processingStatus: 'all',
+    pendingItemBucket: 'all',
     dateRange: null,
   }
 ): Promise<PaymentOrdersListData> {
-  const [programAggregates, instructorAggregates] = await Promise.all([
-    fetchSettlementAggregatesRemote(buildPaymentOrdersListAggregateParams('program', filters)),
-    fetchSettlementAggregatesRemote(buildPaymentOrdersListAggregateParams('instructor', filters)),
-  ])
+  const aggregates = await fetchSettlementAggregatesRemote(
+    buildPaymentOrdersListAggregateParams(groupBy, filters)
+  )
+  if (groupBy === 'program') {
+    return {
+      programRows: mapAggregatesToProgramRows(aggregates),
+      instructorRows: [],
+    }
+  }
   return {
-    programRows: mapAggregatesToProgramRows(programAggregates),
-    instructorRows: mapAggregatesToInstructorRows(instructorAggregates),
+    programRows: [],
+    instructorRows: mapAggregatesToInstructorRows(aggregates),
   }
 }
 

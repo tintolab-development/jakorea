@@ -72,7 +72,7 @@ export function resolveActiveProgramHistoryTabLoading(params: {
   }
 }
 
-/** history LNB·하위 child 진입 시 해당 탭 API를 fetchQuery로 1회만 호출 */
+/** history LNB·하위 child 진입 시 해당 탭 API를 ensureQueryData로 1회만 호출 */
 export async function fetchMemberProgramHistoryTabResources(
   queryClient: QueryClient,
   params: {

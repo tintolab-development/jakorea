@@ -214,6 +214,8 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
       info?.contactOrganizationName ?? common?.sponsorDisplayName ?? 'JA Korea',
     contactPhone: program.contactPhone ?? '-',
     contactEmail: program.contactEmail ?? '-',
-    notes: (program.oneLineIntroduction ?? '').trim() || '-',
+    notes: info?.notesNotApplicable
+      ? '-'
+      : (program.oneLineIntroduction ?? '').trim() || '-',
   }
 }

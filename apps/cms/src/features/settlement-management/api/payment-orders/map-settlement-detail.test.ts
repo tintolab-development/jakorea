@@ -132,4 +132,33 @@ describe('buildInstructorDetailFromSettlements', () => {
       statementId: 9,
     })
   })
+
+  it('개인 프로그램 기관명은 공란(비노출)이고 총액은 반려·정정 제외', () => {
+    const detail = buildInstructorDetailFromSettlements(
+      instructorRow,
+      [
+        listItem({
+          settlementId: 1,
+          institutionName: undefined,
+          netPaymentAmount: 100_000,
+          statementStatus: 'REQUESTED',
+        }),
+        listItem({
+          settlementId: 2,
+          institutionName: '-',
+          netPaymentAmount: 50_000,
+          statementStatus: 'REJECTED',
+        }),
+        listItem({
+          settlementId: 3,
+          institutionName: undefined,
+          netPaymentAmount: 30_000,
+          statementStatus: 'CORRECTION_REQUESTED',
+        }),
+      ],
+      []
+    )
+    expect(detail.programRows.every(r => r.institutionName === '')).toBe(true)
+    expect(detail.totalEstimatedAmount).toBe(100_000)
+  })
 })

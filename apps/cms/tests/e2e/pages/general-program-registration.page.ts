@@ -459,6 +459,7 @@ export class GeneralProgramRegistrationPage {
     await clickRegistrationTabIfVisible(this.page, '봉사자 모집 정보')
     await this.fillRecruitVolunteerTab()
     await clickRegistrationTabIfVisible(this.page, '참여자 모집 정보')
+    await clickRegistrationTabIfVisible(this.page, '참여 기관 모집 정보')
   }
 
   private async fillRecruitSharedFields(options?: { interviewYes?: boolean }) {
@@ -505,6 +506,7 @@ export class GeneralProgramRegistrationPage {
     await fillByPlaceholderIfVisible(this.page, '문의처 전화번호', CONTACT_TEL)
     await fillByPlaceholderIfVisible(this.page, '문의처 이메일', CONTACT_EMAIL)
     await fillByPlaceholderIfVisible(this.page, '비고란을 작성하세요 (없으면 -로 입력)', REMARK)
+    await fillByPlaceholderIfVisible(this.page, '비고란을 작성하세요', REMARK)
 
     await fillByPlaceholderIfVisible(
       this.page,

@@ -3,18 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import {
   ANNUAL_REPORTS_PAGE_SIZE,
   AUDIT_REPORTS_PAGE_SIZE,
-  MOCK_ANNUAL_REPORTS,
-  MOCK_AUDIT_REPORTS,
   ReportCard,
   TRANSPARENCY_ANNUAL_REPORTS_PATH,
   TRANSPARENCY_AUDIT_REPORTS_PATH,
   buildReportsListPath,
   filterReports,
+  getMockAnnualReports,
+  getMockAuditReports,
   readReportsListParams,
-  type TransparencyReport,
   type TransparencyReportType,
   type TransparencyReportsListParams,
 } from '@/features/transparency'
+import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import { PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
@@ -24,20 +24,17 @@ const PAGE_CONFIG: Record<
     heroTitle: string
     path: string
     pageSize: number
-    reports: readonly TransparencyReport[]
   }
 > = {
   annual: {
     heroTitle: '한 해의 활동과 재정 현황을\n투명하게 공개합니다',
     path: TRANSPARENCY_ANNUAL_REPORTS_PATH,
     pageSize: ANNUAL_REPORTS_PAGE_SIZE,
-    reports: MOCK_ANNUAL_REPORTS,
   },
   audit: {
     heroTitle: '기부금 운영의 투명성을\n확인하고 있습니다',
     path: TRANSPARENCY_AUDIT_REPORTS_PATH,
     pageSize: AUDIT_REPORTS_PAGE_SIZE,
-    reports: MOCK_AUDIT_REPORTS,
   },
 }
 
@@ -51,8 +48,10 @@ export type TransparencyReportsPageProps = {
 }
 
 export function TransparencyReportsPage({ type }: TransparencyReportsPageProps) {
+  useShouldUsePlatformMockData()
   const navigate = useNavigate()
   const config = PAGE_CONFIG[type]
+  const reports = type === 'annual' ? getMockAnnualReports() : getMockAuditReports()
   const [params, setParams] = useState(readReportsListParams)
 
   // 탭 전환(라우트 변경) 시 URL 기준으로 검색어·페이지 재동기화
@@ -81,8 +80,8 @@ export function TransparencyReportsPage({ type }: TransparencyReportsPageProps) 
   }
 
   const filteredReports = useMemo(
-    () => filterReports(config.reports, params.q),
-    [config.reports, params.q]
+    () => filterReports(reports, params.q),
+    [reports, params.q]
   )
 
   const totalPages = Math.max(1, Math.ceil(filteredReports.length / config.pageSize))

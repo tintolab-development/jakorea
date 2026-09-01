@@ -19,10 +19,9 @@ type TrainedTeachersRegistrationEducationCurriculumParagraphProps = {
 }
 
 function TrainedTeachersTeacherTrainingTable() {
-  const [trainingScheduleIso, setTrainingScheduleIso] = useProgramRegistrationOverlayKv<string | null>(
-    'trainedTeachersRegistration.educationCurriculum.trainingScheduleIso',
-    null
-  )
+  const [trainingScheduleIso, setTrainingScheduleIso] = useProgramRegistrationOverlayKv<
+    string | null
+  >('trainedTeachersRegistration.educationCurriculum.trainingScheduleIso', null)
   const trainingSchedule = trainingScheduleIso ? dayjs(trainingScheduleIso) : null
   const setTrainingSchedule = (next: Dayjs | null) => {
     setTrainingScheduleIso(next == null ? null : next.toISOString())
@@ -32,12 +31,14 @@ function TrainedTeachersTeacherTrainingTable() {
     'trainedTeachersRegistration.educationCurriculum.trainingEducationForm',
     'online'
   )
-  const [trainingIpsType, setTrainingIpsType] = useProgramRegistrationOverlayKv<
-    ProgramRegistrationIpsTypeValue
-  >('trainedTeachersRegistration.educationCurriculum.trainingIpsType', {
-    category: 'prepare',
-    detail: 'none',
-  })
+  const [trainingIpsType, setTrainingIpsType] =
+    useProgramRegistrationOverlayKv<ProgramRegistrationIpsTypeValue>(
+      'trainedTeachersRegistration.educationCurriculum.trainingIpsType',
+      {
+        category: 'prepare',
+        detail: 'none',
+      }
+    )
 
   return (
     <DetailInfoForm

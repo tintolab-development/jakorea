@@ -24,6 +24,10 @@ import {
 import { useInstructorRoleRequestsQuery } from '@/features/user/api/hooks/use-instructor-role-requests-query'
 import { useAdminApprovalRequestsQuery } from '@/features/user/api/hooks/use-admin-approval-requests-query'
 import {
+  parseAdminApprovalRequestListParams,
+  parseInstructorRoleRequestListParams,
+} from '@/features/user/api/lib/parse-members-permission-list-params'
+import {
   isAdminApprovalRequestsRemoteEnabled,
   isInstructorRoleRequestsRemoteEnabled,
 } from '@/features/user/api/member-remote-capabilities'
@@ -45,16 +49,16 @@ const MEMBER_CATEGORY_LABEL: Record<MemberPermissionApplicationRow['memberCatego
   ADMIN: '관리자',
 }
 
-function maskedPhone(phone: string | undefined): string {
+function displayPhone(phone: string | undefined, alreadyMasked: boolean): string {
   const t = phone?.trim()
   if (!t) return '-'
-  return MASKING_POLICY.phone(t)
+  return alreadyMasked ? t : MASKING_POLICY.phone(t)
 }
 
-function maskedEmail(email: string | undefined): string {
+function displayEmail(email: string | undefined, alreadyMasked: boolean): string {
   const t = email?.trim()
   if (!t) return '-'
-  return MASKING_POLICY.email(t)
+  return alreadyMasked ? t : MASKING_POLICY.email(t)
 }
 
 function listTitle(memberType: 'instructor' | 'admin'): string {
@@ -141,13 +145,28 @@ export const MembersPermissionList = forwardRef<
   const canWrite = canPerformWriteAction(user)
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const tableContext = useMemo<MembersPermissionTableContext>(() => ({ memberType }), [memberType])
+  const instructorListParams = useMemo(
+    () => parseInstructorRoleRequestListParams(searchParams),
+    [searchParams]
+  )
+  const adminListParams = useMemo(
+    () => parseAdminApprovalRequestListParams(searchParams),
+    [searchParams]
+  )
 
   const instructorRemote = memberType === 'instructor' && isInstructorRoleRequestsRemoteEnabled()
-  const instructorRemoteQuery = useInstructorRoleRequestsQuery({}, instructorRemote)
+  const instructorRemoteQuery = useInstructorRoleRequestsQuery(instructorListParams, instructorRemote)
 
   const adminRemote = memberType === 'admin' && isAdminApprovalRequestsRemoteEnabled()
-  const adminRemoteQuery = useAdminApprovalRequestsQuery({}, adminRemote)
+  const adminRemoteQuery = useAdminApprovalRequestsQuery(adminListParams, adminRemote)
+
+  const tableContext = useMemo<MembersPermissionTableContext>(
+    () => ({
+      memberType,
+      remoteEnabled: instructorRemote || adminRemote,
+    }),
+    [memberType, instructorRemote, adminRemote]
+  )
 
   const baseRows = useMemo(
     () => {
@@ -448,6 +467,7 @@ export const MembersPermissionList = forwardRef<
 
   const columns: ColumnsType<MemberPermissionApplicationRow> = useMemo(
     () => {
+      const listMasked = instructorRemote || adminRemote
       const cols: ColumnsType<MemberPermissionApplicationRow> = [
         {
           title: 'No.',
@@ -469,14 +489,14 @@ export const MembersPermissionList = forwardRef<
           title: '연락처',
           key: 'phone',
           width: TABLE_COLUMN_WIDTHS.phone,
-          render: (_: unknown, r: MemberPermissionApplicationRow) => maskedPhone(r.phone),
+          render: (_: unknown, r: MemberPermissionApplicationRow) => displayPhone(r.phone, listMasked),
         },
         {
           title: '이메일',
           key: 'email',
           width: TABLE_COLUMN_WIDTHS.email,
           ellipsis: true,
-          render: (_: unknown, r: MemberPermissionApplicationRow) => maskedEmail(r.email),
+          render: (_: unknown, r: MemberPermissionApplicationRow) => displayEmail(r.email, listMasked),
         },
       ]
 
@@ -519,7 +539,7 @@ export const MembersPermissionList = forwardRef<
 
       return cols
     },
-    [memberType, tableData.length]
+    [adminRemote, instructorRemote, memberType, tableData.length]
   )
 
   const filterFields = useMemo<FilterFieldConfig[]>(() => {

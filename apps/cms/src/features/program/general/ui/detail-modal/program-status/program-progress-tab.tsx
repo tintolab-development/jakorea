@@ -35,8 +35,8 @@ import { SegmentedTab } from '@/shared/ui'
 import { AddInstructorModal } from '../../add-instructor-modal'
 import { SchoolDetailModal } from './school-detail-modal'
 import { ApplicantInstructorDetailModal } from '../../applicant-instructor-detail-modal'
+import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import {
-  DeleteGuideModal,
   buildSchoolMessageLines,
   buildInstructorMessageLines,
 } from '../../manager-delete-guide-modal'

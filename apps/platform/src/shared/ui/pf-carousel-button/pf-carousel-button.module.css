@@ -18,7 +18,13 @@
 }
 
 .large:hover:not(:disabled):not(.disabled) {
-  background: var(--color-element-hover);
+  background:
+    linear-gradient(
+      0deg,
+      var(--color-element-hover) 0%,
+      var(--color-element-hover) 100%
+    ),
+    var(--color-neutral-white);
 }
 
 .small {

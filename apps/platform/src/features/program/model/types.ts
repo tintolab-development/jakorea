@@ -59,6 +59,12 @@ export type ProgramLabeledValue = {
 /** 교육 진행 구조 (커리큘럼형 | 일정형). 없거나 비일반 시 커리큘럼 폴백 매핑. */
 export type ProgramEducationStructure = 'curriculum' | 'schedule'
 
+/** 수업 회차 유형 */
+export type ProgramSessionRound = 'single' | 'multi'
+
+/** 교육 진행 일정 유형 — 날짜 지정(개별일자) / 기간 지정 */
+export type ProgramEducationScheduleMode = 'date' | 'period'
+
 export type ProgramExtraSection = {
   title: string
   body: string
@@ -117,6 +123,14 @@ export type ProgramDetail = ProgramListItem & {
   basicInfoFields: ProgramBasicInfoField[]
   /** curriculum | schedule — 기본정보 블록 분기 */
   educationStructure: ProgramEducationStructure
+  /** 수업 회차 — 일정형 복수 회차이면 신청 폼 교육 일정 단락 숨김 */
+  sessionRound: ProgramSessionRound
+  /** 날짜 지정 / 기간 지정 — 신청 폼 진행 희망 교육 일정 UI */
+  educationScheduleMode: ProgramEducationScheduleMode
+  /** 등록된 교육 진행 예정일 (신청 폼 체크박스 선택지) */
+  educationScheduleLines: string[]
+  /** 기간 지정 지망 상한. 없으면 1 */
+  maxPreferredScheduleCount: number
   /** 커리큘럼형 차시/회차 (일정형이면 빈 배열) */
   sessions: ProgramSession[]
   /** 일정형 세부·행사 일정 (커리큘럼형이면 빈 배열) */

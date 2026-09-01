@@ -2,6 +2,8 @@ import type {
   AdminAccountApprovalDecisionRequest,
   ListAdminApprovalRequestsParams,
 } from '@/features/user/api/admin-approval-requests.types'
+import type { BulkActionResponse as MembersBulkActionResponse } from '@/shared/api/generated/members/schemas/bulkActionResponse'
+import { assertBulkActionSucceeded } from '@/features/user/api/lib/assert-bulk-action-succeeded'
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { EXTERNAL_IDENTIFIER_PROVIDER_1365 } from '@/features/user/api/map-external-identifiers'
 import {
@@ -26,6 +28,7 @@ import type {
   InstructorDetailResponse,
   InstructorMemberDetailResponse,
   InstructorRoleRequestDetailResponse,
+  InstructorRoleBulkReviewRequest,
   InstructorRoleReviewRequest,
   ListAdminsParams,
   ListInstructorRoleRequestsParams,
@@ -75,6 +78,8 @@ import type { MemberConsentRecordResponse } from '@/shared/api/generated/members
 import type { ExternalIdentifierResponse } from '@/shared/api/generated/members/schemas/externalIdentifierResponse'
 import type { InstructorEvaluationGradeChangeRequest } from '@/shared/api/generated/members/schemas/instructorEvaluationGradeChangeRequest'
 import type { AccountDirectoryBulkDeleteRequest } from '@/shared/api/generated/members/schemas/accountDirectoryBulkDeleteRequest'
+import type { AdminApprovalBulkDecisionRequest } from '@/shared/api/generated/members/schemas/adminApprovalBulkDecisionRequest'
+import type { ApprovalResetRequest } from '@/shared/api/generated/members/schemas/approvalResetRequest'
 import type { BulkDecisionRequest } from '@/shared/api/generated/members/schemas/bulkDecisionRequest'
 import type { ListAllCmsMembersAndAdminsParams } from '@/shared/api/generated/members/schemas/listAllCmsMembersAndAdminsParams'
 import type { PageResponseAccountDirectoryItemResponse } from '@/shared/api/generated/members/schemas/pageResponseAccountDirectoryItemResponse'
@@ -578,6 +583,63 @@ export async function rejectInstructorRoleRequestRemote(
   body: InstructorRoleReviewRequest
 ) {
   await membersApi.reject2(requestId, body)
+}
+
+export async function resetInstructorRoleRequestPendingRemote(
+  requestId: number,
+  body: ApprovalResetRequest
+) {
+  await membersApi.resetPending(requestId, body)
+}
+
+export async function bulkApproveInstructorRoleRequestsRemote(
+  body: InstructorRoleBulkReviewRequest
+) {
+  const result = unwrapApiBody<MembersBulkActionResponse>(await membersApi.bulkApprove(body))
+  assertBulkActionSucceeded(result, '강사 권한 일괄 승인에 실패했습니다.')
+}
+
+export async function bulkRejectInstructorRoleRequestsRemote(
+  body: InstructorRoleBulkReviewRequest
+) {
+  const result = unwrapApiBody<MembersBulkActionResponse>(await membersApi.bulkReject(body))
+  assertBulkActionSucceeded(result, '강사 권한 일괄 반려에 실패했습니다.')
+}
+
+/** Swagger `getAdminApprovalRequest` — `GET /api/admin/admin-approval-requests/{adminAccountId}` */
+export async function fetchAdminApprovalRequestDetailRemote(
+  adminAccountId: number
+): Promise<AdminAccountApprovalDetailResponse> {
+  return unwrapApiBody(await membersApi.getAdminApprovalRequest(adminAccountId))
+}
+
+export async function resetAdminApprovalRequestPendingRemote(
+  adminAccountId: number,
+  body: ApprovalResetRequest
+) {
+  await membersApi.resetAdminApprovalToPending(adminAccountId, body)
+}
+
+export async function resendAdminApprovalNotificationRemote(adminAccountId: number): Promise<void> {
+  await membersApi.resendAdminApprovalNotification(adminAccountId)
+}
+
+export async function bulkApproveAdminApprovalRequestsRemote(
+  body: AdminApprovalBulkDecisionRequest
+) {
+  const result = unwrapApiBody<MembersBulkActionResponse>(
+    await membersApi.bulkApproveAdminApprovalRequests(body)
+  )
+  assertBulkActionSucceeded(result, '관리자 권한 일괄 승인에 실패했습니다.')
+}
+
+export async function bulkRejectAdminApprovalRequestsRemote(
+  body: AdminApprovalBulkDecisionRequest
+) {
+  const result = unwrapApiBody<MembersBulkActionResponse>(
+    await membersApi.bulkRejectAdminApprovalRequests(body)
+  )
+  assertBulkActionSucceeded(result, '관리자 권한 일괄 반려에 실패했습니다.')
 }
 
 /** Swagger `listAdminApprovalRequests` — `GET /api/admin/admin-approval-requests` */

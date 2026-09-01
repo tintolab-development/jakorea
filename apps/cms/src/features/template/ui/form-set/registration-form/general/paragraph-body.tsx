@@ -21,8 +21,13 @@ import { ProgramRegistrationBasicInfoParagraph } from '@/features/template/ui/fo
 import { ProgramRegistrationBusinessKpiParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/business-kpi-paragraph'
 import { ProgramRegistrationEducationCurriculumParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-curriculum-paragraph'
 import { ProgramRegistrationEducationScheduleCurriculumParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-schedule-curriculum-paragraph'
+import { ProgramRegistrationEducationScheduleSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-schedule-settings-paragraph'
 import { ProgramRegistrationTypeSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/type-settings-paragraph'
 import { ProgramRegistrationWageInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/wage-info-paragraph'
+import {
+  shouldDisableEducationSchedulePeriodMode,
+  shouldLockEducationScheduleCalendarToggles,
+} from '@/features/program/general/lib/schedule-detail-form'
 
 export type ProgramRegistrationType = 'curriculum' | 'schedule'
 
@@ -82,7 +87,7 @@ export interface ProgramRegistrationParagraphBodyOptions {
   scheduleCurriculumGroupCount: number
   onAddScheduleCurriculumGroup: () => void
   onDeleteScheduleCurriculumGroup: (groupIndex: number) => void
-  /** 일정형(복수·일정 별 상이 조합) 카드 헤더 — 사전 교육 토글 */
+  /** 카드 헤더 — 사전 교육 토글 (일정형·커리큘럼형) */
   scheduleCurriculumPreEducation: boolean
   onScheduleCurriculumPreEducationChange: (checked: boolean) => void
   /** 교육받은 교사 — 카드 헤더 교육 연수 토글 */
@@ -232,11 +237,36 @@ export function renderProgramRegistrationParagraphBody(
           educationFormScheduleDetail={options.educationFormScheduleDetail}
           participationScheduleDetail={options.participationScheduleDetail}
           ipsScheduleDetail={options.ipsScheduleDetail}
+          scheduleCurriculumPreEducation={options.scheduleCurriculumPreEducation}
         />
       )
     case PROGRAM_REGISTRATION_IDS.educationScheduleSettings:
-      /** 일반: 등록 폼 비노출(상세 수정만). 1사1교·교육받은 교사만 렌더 */
-      if (options == null || options.programRegistrationFormVariant === 'general') return null
+      if (options == null) return null
+      /** 일반 일정형 + 복수 회차 — 등록·상세와 동일하게 비노출 */
+      if (options.programRegistrationFormVariant === 'general') {
+        if (options.programType === 'schedule' && options.sessionRoundType === 'multi') {
+          return null
+        }
+        return (
+          <ProgramRegistrationEducationScheduleSettingsParagraph
+            educationScheduleMode={options.educationScheduleMode}
+            onEducationScheduleModeChange={options.onEducationScheduleModeChange}
+            autoFillFromScheduleGroupTimes={
+              options.programType === 'schedule' &&
+              options.sessionRoundType === 'single' &&
+              !options.participant.organization
+            }
+            disablePeriodMode={shouldDisableEducationSchedulePeriodMode({
+              participantOrganization: options.participant.organization,
+              sessionRound: options.sessionRoundType,
+            })}
+            lockCalendarTogglesToScheduleMode={shouldLockEducationScheduleCalendarToggles({
+              participantOrganization: options.participant.organization,
+              educationStructure: options.programType,
+            })}
+          />
+        )
+      }
       return options.programRegistrationFormVariant === 'trainedTeachers' ? (
         <TrainedTeachersRegistrationEducationScheduleSettingsParagraph
           educationScheduleMode={options.educationScheduleMode}

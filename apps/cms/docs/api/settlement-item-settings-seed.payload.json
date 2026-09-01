@@ -1,5 +1,5 @@
 {
-  "$schema_note": "GET/PUT /api/admin/settlement-configs/current 용 시드. FE mock SSOT = settlement-item-setting-detail.mock.ts (2026-07-31). layout 전용 필드는 detailJson(stringified object)에 넣는다.",
+  "$schema_note": "SUPERSEDED (2026-08-27): 구 v1 15건 seed. 사용 금지. 대체: settlement-item-settings-seed-v2.payload.json + settlement-item-settings-backend-seed-handoff-2026-08-27.md",
   "seedLabel": "settlement-config-current-v1",
   "configName": "JA Korea 기본 정산 설정",
   "effectiveFrom": "2026-01-01",

@@ -55,6 +55,7 @@ export function ExplanationText({
           bottomConsent: e.target.value as TableBottomConsent,
         })
       }}
+      disabled={!consentInteractive}
       style={consentInteractive ? undefined : { pointerEvents: 'none' }}
     >
       <CmsRadio value="agree">동의</CmsRadio>

@@ -38,6 +38,8 @@ import { GEMINI_VISITING_TRAINING_RECRUIT_FORM_SEED_PARAGRAPH_IDS } from '@/feat
 import { UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-recruit-form-institution-draft'
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import { shouldUseScheduleEventBlockLayout } from '@/features/program/general/lib/schedule-detail-form'
+import { resolveProgramRegistrationScheduleCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
 import {
@@ -153,11 +155,20 @@ export function withProgramRegistrationCurriculumTitleTrailing(
     }
   }
   if (pr.programType === 'schedule') {
-    const isScheduleMultiAllPer =
-      pr.sessionRoundType === 'multi' &&
-      pr.educationFormScheduleDetail === 'perSchedule' &&
-      pr.participationScheduleDetail === 'perSchedule' &&
-      pr.ipsScheduleDetail === 'perSchedule'
+    const isScheduleEventLayout = shouldUseScheduleEventBlockLayout({
+      sessionRound: pr.sessionRoundType,
+      participantOrganization: pr.participant.organization,
+      educationFormScheduleDetail: pr.educationFormScheduleDetail,
+      participationScheduleDetail: pr.participationScheduleDetail,
+      ipsScheduleDetail: pr.ipsScheduleDetail,
+    })
+    const scheduleDescription = resolveProgramRegistrationScheduleCurriculumEditDescription({
+      sessionRoundType: pr.sessionRoundType,
+      participantOrganization: pr.participant.organization,
+      educationFormScheduleDetail: pr.educationFormScheduleDetail,
+      participationScheduleDetail: pr.participationScheduleDetail,
+      ipsScheduleDetail: pr.ipsScheduleDetail,
+    })
 
     const preEducationToggle = (
       <CmsToggle
@@ -167,9 +178,10 @@ export function withProgramRegistrationCurriculumTitleTrailing(
       />
     )
 
-    if (isScheduleMultiAllPer) {
+    if (isScheduleEventLayout) {
       return {
         ...heading,
+        descriptionValue: scheduleDescription,
         titleTrailing: (
           <div
             className="program-registration-paragraph__card-title-actions"
@@ -199,6 +211,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
     if (pr.sessionRoundType === 'multi') {
       return {
         ...heading,
+        descriptionValue: scheduleDescription,
         titleTrailing: (
           <div
             className="program-registration-paragraph__card-title-actions"
@@ -227,6 +240,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
 
     return {
       ...heading,
+      descriptionValue: scheduleDescription,
       titleTrailing: (
         <div
           className="program-registration-paragraph__card-title-actions"

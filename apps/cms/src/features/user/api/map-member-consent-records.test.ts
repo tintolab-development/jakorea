@@ -62,7 +62,20 @@ describe('applyTermsAgreementsToSchema', () => {
       type: 'document',
       agreed: false,
     })
-    // 일반·교사(비겸직) preset에는 강사 전용 항목이 없음
+    // 개인 상세는 등록과 동일하게 지급조서·교육진행자 등 8항목 노출
+    expect(field('지급조서 사전 동의서')).toMatchObject({ type: 'document', agreed: true })
+    expect(field('교육진행자 서약서')).toMatchObject({ type: 'document', agreed: false })
+  })
+
+  it('교사(비겸직) preset에는 강사 전용 동의 항목이 없다', () => {
+    const schoolTeacherSchema = CONSENT_PRESET_SCHEMA.school_teacher
+    const rows = applyTermsAgreementsToSchema(schoolTeacherSchema, [
+      { termsType: 'PAYMENT_STATEMENT', agreed: true },
+      { termsType: 'EDUCATOR_PLEDGE', agreed: true },
+    ])
+    const field = (label: string) =>
+      rows.flatMap(r => r.fields).find(f => f.label === label)?.value
+
     expect(field('지급조서 사전 동의서')).toBeUndefined()
     expect(field('교육진행자 서약서')).toBeUndefined()
   })

@@ -618,6 +618,7 @@ export function VerticalTableParagraphBody({
               if (!bottomConsentInteractive) return
               onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
             }}
+            disabled={!bottomConsentInteractive}
             style={bottomConsentInteractive ? undefined : { pointerEvents: 'none' }}
           >
             <CmsRadio value="agree">동의</CmsRadio>
@@ -629,7 +630,15 @@ export function VerticalTableParagraphBody({
 
   if (p.verticalTableFlavor === 'file_attachment') {
     return (
-      <div className="form-editor-body form-editor-vertical-table-wrap">
+      <div
+        className={[
+          'form-editor-body',
+          'form-editor-vertical-table-wrap',
+          canvasInteractive ? 'form-editor-vertical-table-wrap--canvas-interactive' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         <div className="form-editor-vertical-table" role="grid" aria-readonly={!isEditMode}>
           <div
             className={[
@@ -695,7 +704,15 @@ export function VerticalTableParagraphBody({
   }
 
   return (
-    <div className="form-editor-body form-editor-vertical-table-wrap">
+    <div
+      className={[
+        'form-editor-body',
+        'form-editor-vertical-table-wrap',
+        canvasInteractive ? 'form-editor-vertical-table-wrap--canvas-interactive' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="form-editor-vertical-table" role="grid" aria-readonly={!isEditMode}>
         {p.rows.map((row, rowIdx) => {
           if (isPortraitPersonalConsent && rowIdx === 0) {

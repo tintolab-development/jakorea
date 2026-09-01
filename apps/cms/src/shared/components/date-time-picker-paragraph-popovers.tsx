@@ -58,6 +58,11 @@ export type ParagraphDatePickerPopoverProps = {
   onEndMerChange: (v: 'AM' | 'PM') => void
   invalidTimeRange: boolean
   showPeriodToggle: boolean
+  showTimeToggle?: boolean
+  /** 기간 토글 ON 고정(비활성). 기본 false. */
+  periodToggleDisabled?: boolean
+  /** 시간 토글 ON 고정(비활성). 기본 false. */
+  timeToggleDisabled?: boolean
   periodOn: boolean
   onPeriodOnChange: (next: boolean) => void
   onTimeOnChange: (next: boolean) => void
@@ -105,6 +110,9 @@ export function ParagraphDatePickerPopover({
   onEndMerChange,
   invalidTimeRange,
   showPeriodToggle,
+  showTimeToggle = true,
+  periodToggleDisabled = false,
+  timeToggleDisabled = false,
   periodOn,
   onPeriodOnChange,
   onTimeOnChange,
@@ -295,37 +303,43 @@ export function ParagraphDatePickerPopover({
               </div>
             ) : null}
             <div className="date-time-picker-popover__footer">
-              <div className="date-time-picker-popover__toggles">
-                {showPeriodToggle ? (
-                  <CmsToggle
-                    label="기간"
-                    checked={periodOn}
-                    onChange={next => {
-                      onPeriodOnChange(next)
-                      if (next) {
-                        const nextEnd = findNextEnabledDate(draft.add(1, 'day'), disabledDate)
-                        onPeriodToggleOn?.(draft, nextEnd)
-                      }
-                    }}
-                    disabled={disabled}
-                  />
-                ) : null}
-                <CmsToggle
-                  label="시간"
-                  checked={timeOn}
-                  onChange={next => {
-                    onTimeOnChange(next)
-                    if (next) {
-                      onTimeToggleOn?.({
-                        isRange: isRangeCalendarMode,
-                        rangeStart,
-                        draft,
-                      })
-                    }
-                  }}
-                  disabled={disabled}
-                />
-              </div>
+              {showPeriodToggle || showTimeToggle ? (
+                <div className="date-time-picker-popover__toggles">
+                  {showPeriodToggle ? (
+                    <CmsToggle
+                      label="기간"
+                      checked={periodOn}
+                      onChange={next => {
+                        onPeriodOnChange(next)
+                        if (next) {
+                          const nextEnd = findNextEnabledDate(draft.add(1, 'day'), disabledDate)
+                          onPeriodToggleOn?.(draft, nextEnd)
+                        }
+                      }}
+                      disabled={disabled || periodToggleDisabled}
+                    />
+                  ) : null}
+                  {showTimeToggle ? (
+                    <CmsToggle
+                      label="시간"
+                      checked={timeOn}
+                      onChange={next => {
+                        onTimeOnChange(next)
+                        if (next) {
+                          onTimeToggleOn?.({
+                            isRange: isRangeCalendarMode,
+                            rangeStart,
+                            draft,
+                          })
+                        }
+                      }}
+                      disabled={disabled || timeToggleDisabled}
+                    />
+                  ) : null}
+                </div>
+              ) : (
+                <div />
+              )}
               <div className="date-time-picker-popover__actions">
                 <CmsButton
                   type="button"

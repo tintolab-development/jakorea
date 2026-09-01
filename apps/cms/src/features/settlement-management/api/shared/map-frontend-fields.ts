@@ -5,13 +5,60 @@ import {
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import type { SettlementFrontendCalculationDetailResponse } from '@/shared/api/generated/settlement/schemas'
 
+import type { SettlementFrontendItemResponse } from '@/shared/api/generated/settlement/schemas'
+
+/** 지급조서 items[] 노출 순서 — BE v2 SSOT */
+const SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER = [
+  'instructor_fee',
+  'transportation',
+  'accommodation',
+  'activity',
+  'meal',
+  'withholding',
+  'other',
+] as const
+
+export function sortSettlementFrontendItems(
+  items: SettlementFrontendItemResponse[]
+): SettlementFrontendItemResponse[] {
+  const rank = new Map(
+    SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER.map((type, index) => [type, index])
+  )
+  return [...items].sort((a, b) => {
+    const aType = a.type ?? ''
+    const bType = b.type ?? ''
+    const aRank = rank.get(aType as (typeof SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER)[number]) ??
+      SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER.length
+    const bRank = rank.get(bType as (typeof SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER)[number]) ??
+      SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER.length
+    return aRank - bRank
+  })
+}
+
+/** 편도 30km 미만 등 — 교통 0원 행 미노출 */
+export function filterSettlementFrontendItemsForDisplay(
+  items: SettlementFrontendItemResponse[]
+): SettlementFrontendItemResponse[] {
+  return items.filter(item => {
+    const amount = item.amount ?? 0
+    if (item.type === 'transportation' && amount === 0) return false
+    return true
+  })
+}
+
+export function prepareSettlementFrontendItemsForStatement(
+  items: SettlementFrontendItemResponse[] | undefined
+): SettlementFrontendItemResponse[] {
+  return sortSettlementFrontendItems(filterSettlementFrontendItemsForDisplay(items ?? []))
+}
+
 export function formatLectureSessionLabel(sessionOrdinal?: number): string {
   if (sessionOrdinal == null) return '-'
   return `${sessionOrdinal}차시`
 }
 
 export function formatWonAmountDisplay(amount?: number | null): string {
-  if (amount == null) return '—'
+  if (amount == null) return '-'
   return `${amount.toLocaleString('ko-KR')}원`
 }
 
@@ -34,7 +81,7 @@ export function formatProgramSessionProgressDisplay(input: {
   if (input.sessionCompleted != null && input.sessionTotal != null) {
     return `${input.sessionCompleted} / ${input.sessionTotal}`
   }
-  return '—'
+  return '-'
 }
 
 export function pickProgramSessionProgressFromListItems(
@@ -93,12 +140,12 @@ export function formatBusinessPeriodDisplay(input: {
   if (input.businessPeriodStart && input.businessPeriodEnd) {
     return `${input.formatDate(input.businessPeriodStart)} ~ ${input.formatDate(input.businessPeriodEnd)}`
   }
-  return '—'
+  return '-'
 }
 
 export function formatLectureFeeStandardTitle(title?: string): string {
   const trimmed = title?.trim()
-  return trimmed || '—'
+  return trimmed || '-'
 }
 
 export function formatBusinessIncomeEarnerLabel(label?: string): string {

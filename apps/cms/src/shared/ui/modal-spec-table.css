@@ -136,10 +136,10 @@
   min-height: calc(128px - 24px);
 }
 
-/* 교통비(1사1교) p-2·숙박비 p-3·p-7·식사비 p-4·자원봉사 p-6: 조건 지급 요건·비고 행 최소 104px */
-.modal-spec-table.modal-spec-table--transport-1s1g-condition
+/* 교통비(학생) p-2·숙박비 p-3·p-7·식사비 p-4·활동비 p-6: 조건 지급 요건·비고 행 최소 104px */
+.modal-spec-table.modal-spec-table--transport-student-condition
   .modal-spec-table__label--payment-requirement,
-.modal-spec-table.modal-spec-table--transport-1s1g-condition .modal-spec-table__label--remark,
+.modal-spec-table.modal-spec-table--transport-student-condition .modal-spec-table__label--remark,
 .modal-spec-table.modal-spec-table--lodging-condition .modal-spec-table__label--payment-requirement,
 .modal-spec-table.modal-spec-table--lodging-condition .modal-spec-table__label--remark,
 .modal-spec-table.modal-spec-table--meal-condition .modal-spec-table__label--payment-requirement,
@@ -150,10 +150,10 @@
   min-height: 104px;
 }
 
-.modal-spec-table.modal-spec-table--transport-1s1g-condition
+.modal-spec-table.modal-spec-table--transport-student-condition
   .modal-spec-table__label--payment-requirement
   + .modal-spec-table__cell,
-.modal-spec-table.modal-spec-table--transport-1s1g-condition
+.modal-spec-table.modal-spec-table--transport-student-condition
   .modal-spec-table__label--remark
   + .modal-spec-table__cell,
 .modal-spec-table.modal-spec-table--lodging-condition
@@ -177,11 +177,11 @@
   min-height: 104px;
 }
 
-.modal-spec-table.modal-spec-table--transport-1s1g-condition
+.modal-spec-table.modal-spec-table--transport-student-condition
   .modal-spec-table__label--payment-requirement
   + .modal-spec-table__cell
   .modal-spec-table__textarea,
-.modal-spec-table.modal-spec-table--transport-1s1g-condition
+.modal-spec-table.modal-spec-table--transport-student-condition
   .modal-spec-table__label--remark
   + .modal-spec-table__cell
   .modal-spec-table__textarea,
@@ -245,6 +245,14 @@
 .modal-spec-table__textarea:focus {
   outline: none;
   border-color: var(--ja-mint-01, #01a1af);
+}
+
+.modal-spec-table__textarea::placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .modal-spec-table__field-row {

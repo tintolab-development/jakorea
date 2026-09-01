@@ -71,7 +71,8 @@ function resolveCompanySchoolCurriculumRows(program: Program) {
     const round = program.rounds?.[rows.length]
     const parsed = parseCurriculumContent(round?.curriculum)
     rows.push({
-      unitName: parsed.duration && parsed.duration !== '1시간' ? parsed.duration : `${rows.length + 1}차시`,
+      unitName:
+        parsed.duration && parsed.duration !== '1시간' ? parsed.duration : `${rows.length + 1}차시`,
       content: parsed.description || round?.curriculum?.trim() || '-',
     })
   }
@@ -97,7 +98,9 @@ function getCompanySchoolCurriculumFieldNames(index: number) {
       } as const)
 }
 
-function parseCompanySchoolScheduleLineToRange(line: string | undefined): [Dayjs | null, Dayjs | null] {
+function parseCompanySchoolScheduleLineToRange(
+  line: string | undefined
+): [Dayjs | null, Dayjs | null] {
   if (!line?.trim()) return [null, null]
   const [startText, endText] = line.split('~').map(part => part.trim())
   const parse = (value: string | undefined) => {

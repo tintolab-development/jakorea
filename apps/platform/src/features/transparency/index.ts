@@ -19,6 +19,8 @@ export { isTransparencyPath } from './lib/routes'
 export {
   MOCK_ANNUAL_REPORTS,
   MOCK_AUDIT_REPORTS,
+  getMockAnnualReports,
+  getMockAuditReports,
   filterReports,
 } from './lib/mock-reports'
 export {
@@ -34,6 +36,11 @@ export {
   MOCK_TRANSPARENCY_PRINCIPLES,
   TRANSPARENCY_HERO_TITLE,
   formatKrwAmount,
+  getMockExpenseDetailGroups,
+  getMockExpenseSummary,
+  getMockRevenueSummary,
+  getMockRevenueTableOrder,
+  getMockTransparencyPrinciples,
 } from './lib/mock-data'
 export { PrincipleList } from './ui/principle-list'
 export { FinanceDonutChart } from './ui/finance-donut-chart'

@@ -13,8 +13,8 @@ import '@/features/template/ui/form-set/registration-form/general/paragraphs/pro
 
 const DEDUCTION_VIEW = '일용근로자 원천징수세액'
 
-/** 스크린 표기: mock `p-2`·`p-7`과 동일 항목, 라벨만 화면 문구에 맞춤 */
-const PAYMENT_ID_TRANSPORT_1C1S = 'p-2'
+/** 스크린 표기: 카탈로그 `강사 교통비`(p-1)·`숙박비 (1사1교)`(p-7), 라벨만 화면 문구에 맞춤 */
+const PAYMENT_ID_TRANSPORT_1C1S = 'p-1'
 const PAYMENT_ID_LODGING_1C1S = 'p-7'
 
 const WAGE_FEE_ROWS = [

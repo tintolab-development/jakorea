@@ -3,7 +3,9 @@
  * SSOT 참고: apps/cms/src/data/mock/notices.ts (`mockNotices`)
  */
 
+import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import type { NoticeAttachment, NoticeDetail, NoticeListItem } from '../model/types'
+import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 import { filterAndSortNotices } from './filter-notices'
 
 type CmsNoticeSeed = {
@@ -326,6 +328,7 @@ const MOCK_NOTICE_DETAILS: NoticeDetail[] = (() => {
 export type NoticeCatalogItem = NoticeListItem & { content: string }
 
 export function getMockNotices(): NoticeCatalogItem[] {
+  if (!shouldUsePlatformMockData()) return []
   return MOCK_NOTICE_DETAILS.map(detail => ({
     ...toListItem(detail),
     content: detail.content,
@@ -333,11 +336,13 @@ export function getMockNotices(): NoticeCatalogItem[] {
 }
 
 export function getMockNoticeById(id: string): NoticeListItem | null {
+  if (!shouldUsePlatformMockData()) return null
   const found = MOCK_NOTICE_DETAILS.find(item => item.id === id)
   return found ? toListItem(found) : null
 }
 
 export function getMockNoticeDetailById(id: string): NoticeDetail | null {
+  if (!shouldUsePlatformMockData()) return null
   const found = MOCK_NOTICE_DETAILS.find(item => item.id === id)
   return found
     ? {
@@ -348,10 +353,12 @@ export function getMockNoticeDetailById(id: string): NoticeDetail | null {
 }
 
 export function useMockNoticesCatalog(): NoticeCatalogItem[] {
+  useShouldUsePlatformMockData()
   return getMockNotices()
 }
 
 export function useMockNoticeDetail(id: string | null): NoticeDetail | null {
+  useShouldUsePlatformMockData()
   if (!id) return null
   return getMockNoticeDetailById(id)
 }

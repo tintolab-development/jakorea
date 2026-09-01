@@ -1,6 +1,6 @@
 /**
  * 신청 강사 상세 - 기본 정보 테이블
- * 학력사항 위에 배치, 이미지 시안과 동일한 4열 그리드(성명 한글/영문, 프로그램 승인 현황, 성별 및 생년월일 등)
+ * 학력사항 위에 배치, 이미지 시안과 동일한 4열 그리드(성명, 프로그램 승인 현황, 성별 및 생년월일 등)
  */
 
 import { type ReactNode } from 'react'
@@ -282,13 +282,10 @@ export function ApplicantInstructorBasicInfo({
           <tbody>
             <tr>
               <td
-                rowSpan={2}
-                className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label applicant-instructor-basic-info__cell--name"
+                colSpan={2}
+                className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
               >
                 성명
-              </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
-                한글
               </td>
               <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
                 {nameKoreanCell}
@@ -319,16 +316,16 @@ export function ApplicantInstructorBasicInfo({
               )}
             </tr>
             <tr>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
-                영문
-              </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                {instructor.nameEnglish ?? '-'}
-              </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
+              <td
+                colSpan={2}
+                className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
+              >
                 성별 및 생년월일
               </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
+              <td
+                colSpan={3}
+                className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value"
+              >
                 <ProgramDetailTdSegmentWrap>{genderBirthDisplay}</ProgramDetailTdSegmentWrap>
               </td>
             </tr>

@@ -29,7 +29,6 @@ import type { GeminiRecruitmentDisplayStatus, GeminiRecruitmentRow } from '../..
 import { formatRecruitmentPeriodRange } from '../../lib/recruitment/format-period'
 import { resolveRecruitmentDisplayStatus } from '../../lib/recruitment/resolve-status'
 import { useGeminiRecruitmentDetailUrl } from '../detail/fullpage-modal'
-import { usePrefetchRecruitmentDetail } from '../../api/visiting-training/hooks'
 import { useGeminiRecruitmentAddUrl } from './add-fullpage-modal'
 import '@/pages/programs/program-list-page.css'
 import './list.css'
@@ -90,7 +89,6 @@ export function GeminiRecruitmentList() {
   const recruitmentRows = useGeminiRecruitmentRows()
   const { remoteEnabled, isFetching, isError, refetch } = useGeminiRecruitmentRowsQueryState()
   const { openDetail } = useGeminiRecruitmentDetailUrl()
-  const prefetchRecruitmentDetail = usePrefetchRecruitmentDetail()
   const { openAdd } = useGeminiRecruitmentAddUrl()
 
   const tableContext = useMemo<GeminiRecruitmentTableContext>(() => ({ todayKey }), [todayKey])
@@ -252,12 +250,7 @@ export function GeminiRecruitmentList() {
                 openAdd()
                 return
               }
-              prefetchRecruitmentDetail(record.id)
               openDetail(record.id)
-            },
-            onMouseEnter: () => {
-              if (record.isDraft) return
-              prefetchRecruitmentDetail(record.id)
             },
             style: { cursor: 'pointer' },
           })}

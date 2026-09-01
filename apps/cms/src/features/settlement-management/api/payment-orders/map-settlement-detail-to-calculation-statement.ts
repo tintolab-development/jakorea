@@ -23,6 +23,7 @@ import {
   formatWonAmountDisplay,
   mapCalculationDetailToBasisDetail,
   mapSettlementFrontendItemTypeToLineKind,
+  prepareSettlementFrontendItemsForStatement,
 } from '@/features/settlement-management/api/shared/map-frontend-fields'
 
 type ProgramDetailLineRow = PaymentOrderAdminProgramDetailInstructorRow
@@ -71,7 +72,7 @@ function buildBlocks(
   settlement: SettlementFrontendResponse,
   sessionDisplay: 'range' | 'single' = 'range'
 ): PaymentOrderCalculationStatementSessionBlock[] {
-  const items = settlement.items ?? []
+  const items = prepareSettlementFrontendItemsForStatement(settlement.items)
   const lines = items.length > 0 ? items.map(mapItemToLine) : [
     {
       id: 'calc-line-remote-fallback',

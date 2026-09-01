@@ -12,7 +12,7 @@ import {
   PFTextInput,
 } from '@/shared/ui'
 import {
-  EMPTY_PAYMENT_STATEMENT_BASIC_INFO,
+  mergePaymentStatementBasicInfo,
   PAYMENT_STATEMENT_DEFAULT_PURPOSE,
   type PaymentStatementBasicInfoValues,
 } from '@jakorea/form-schema/consent'
@@ -23,8 +23,8 @@ export type PaymentBasicInfoFieldsProps = {
 }
 
 export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFieldsProps) {
-  const merged = { ...EMPTY_PAYMENT_STATEMENT_BASIC_INFO, ...values }
-  const paymentPurpose = merged.paymentPurpose.trim() || PAYMENT_STATEMENT_DEFAULT_PURPOSE
+  const merged = mergePaymentStatementBasicInfo(values)
+  const paymentPurpose = merged.paymentPurpose
 
   const patch = <K extends keyof PaymentStatementBasicInfoValues>(
     key: K,

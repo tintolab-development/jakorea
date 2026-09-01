@@ -3,20 +3,27 @@ import transparencyGradientUrl from '@/assets/background_gradient/transparency-g
 import {
   ExpenseTable,
   FinanceDonutChart,
-  MOCK_EXPENSE_DETAIL_GROUPS,
-  MOCK_EXPENSE_SUMMARY,
-  MOCK_REVENUE_SUMMARY,
-  MOCK_REVENUE_TABLE_ORDER,
-  MOCK_TRANSPARENCY_PRINCIPLES,
   PrincipleList,
   ReportLinks,
   RevenueTable,
   TRANSPARENCY_HERO_TITLE,
+  getMockExpenseDetailGroups,
+  getMockExpenseSummary,
+  getMockRevenueSummary,
+  getMockRevenueTableOrder,
+  getMockTransparencyPrinciples,
 } from '@/features/transparency'
+import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import { PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function TransparencyPage() {
+  useShouldUsePlatformMockData()
+  const principles = getMockTransparencyPrinciples()
+  const revenueSummary = getMockRevenueSummary()
+  const expenseSummary = getMockExpenseSummary()
+  const revenueOrder = getMockRevenueTableOrder()
+  const expenseGroups = getMockExpenseDetailGroups()
   return (
     <section className={styles.page}>
       <div
@@ -41,7 +48,7 @@ export function TransparencyPage() {
         </header>
 
         <div className={styles.principles}>
-          <PrincipleList principles={MOCK_TRANSPARENCY_PRINCIPLES} />
+          <PrincipleList principles={principles} />
         </div>
 
         <div className={styles.financeArea}>
@@ -56,14 +63,14 @@ export function TransparencyPage() {
               수익총계
             </PFText>
             <FinanceDonutChart
-              summary={MOCK_REVENUE_SUMMARY}
+              summary={revenueSummary}
               height={700}
               ariaLabel="수익총계 도넛 차트"
             />
             <div className={styles.financeTable}>
               <RevenueTable
-                summary={MOCK_REVENUE_SUMMARY}
-                order={MOCK_REVENUE_TABLE_ORDER}
+                summary={revenueSummary}
+                order={revenueOrder}
               />
             </div>
           </section>
@@ -79,14 +86,14 @@ export function TransparencyPage() {
               지출총계
             </PFText>
             <FinanceDonutChart
-              summary={MOCK_EXPENSE_SUMMARY}
+              summary={expenseSummary}
               height={900}
               ariaLabel="지출총계 도넛 차트"
             />
             <div className={styles.financeTable}>
               <ExpenseTable
-                groups={MOCK_EXPENSE_DETAIL_GROUPS}
-                totalAmount={MOCK_EXPENSE_SUMMARY.totalAmount}
+                groups={expenseGroups}
+                totalAmount={expenseSummary.totalAmount}
               />
             </div>
           </section>

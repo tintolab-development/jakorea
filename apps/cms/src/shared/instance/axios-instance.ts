@@ -6,9 +6,15 @@
  * - ngrok 무료 호스트의 브라우저 경고 페이지를 피하려면 `VITE_NGROK_SKIP_BROWSER_WARNING` 설정.
  * - 인증: `useAuthStore` 토큰 + `withCredentials`(쿠키 기반 세션과 병행 가능).
  * - 리프레시: `POST /api/admin/auth/refresh` (body refreshToken only, no Bearer).
+ *   OpenAPI: `RefreshTokenRequest` → `AuthTokenResponse` (access/refresh/expiresInSeconds).
  */
 
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import {
+  expiresAtIsoFromExpiresInSeconds,
+  isAccessTokenUnauthorizedCode,
+  parseAuthTokenResponse,
+} from '@/features/auth/lib/parse-auth-token-response'
 import { recordBackendErrorForE2e } from '@/features/e2e-error-log/lib/record-from-axios-error'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { showGlobalApiErrorAlert } from '@/shared/lib/show-global-api-error-alert'
@@ -96,6 +102,14 @@ function isExcludedFromAutoRefresh(url?: string): boolean {
   )
 }
 
+/** refresh/logout 실패는 세션 핸들러·로그인 UI가 담당 — 글로벌 Alert 억제 */
+function isSessionAuthUtilityPath(url?: string): boolean {
+  if (!url) return false
+  const path = url.split('?')[0] ?? url
+  const prefix = adminAuthPaths.prefix
+  return path.includes(`${prefix}/refresh`) || path.includes(`${prefix}/logout`)
+}
+
 function clearAuthorizationHeader(
   headers: InternalAxiosRequestConfig['headers'] | undefined,
 ): InternalAxiosRequestConfig['headers'] {
@@ -143,6 +157,7 @@ export async function postAuthenticationRefreshToken(refreshToken: string) {
   return axiosClient.post<unknown>(path, { refreshToken }, {
     skipRefresh: true,
     skipAuth: true,
+    skipGlobalErrorAlert: true,
   } as RetryableRequest)
 }
 
@@ -170,7 +185,7 @@ function readRefreshToken(): string | null {
 }
 
 function persistAccessToken(accessToken: string, expiresAtIso?: string) {
-  const expires = expiresAtIso ?? new Date(Date.now() + 60 * 60 * 1000).toISOString()
+  const expires = expiresAtIso ?? expiresAtIsoFromExpiresInSeconds(undefined)
 
   if (typeof window !== 'undefined' && window.localStorage) {
     localStorage.setItem(AUTH_TOKEN_KEY, accessToken)
@@ -189,46 +204,6 @@ function persistRefreshToken(refreshToken: string) {
   }
 }
 
-function parseAccessTokenFromRefreshBody(payload: unknown): string | null {
-  if (typeof payload === 'string' && payload.length > 0) {
-    return payload
-  }
-  if (payload && typeof payload === 'object') {
-    const o = payload as Record<string, unknown>
-    if (o.success === true && o.data && typeof o.data === 'object') {
-      return parseAccessTokenFromRefreshBody(o.data)
-    }
-    for (const key of ['accessToken', 'token'] as const) {
-      const v = o[key]
-      if (typeof v === 'string' && v.length > 0) return v
-    }
-  }
-  return null
-}
-
-function parseRefreshTokenFromRefreshBody(payload: unknown): string | null {
-  if (payload && typeof payload === 'object') {
-    const o = payload as Record<string, unknown>
-    if (o.success === true && o.data && typeof o.data === 'object') {
-      return parseRefreshTokenFromRefreshBody(o.data)
-    }
-    const v = o.refreshToken
-    if (typeof v === 'string' && v.length > 0) return v
-  }
-  return null
-}
-
-function parseExpiresInFromRefreshBody(payload: unknown): number | undefined {
-  if (payload && typeof payload === 'object') {
-    const o = payload as Record<string, unknown>
-    if (o.success === true && o.data && typeof o.data === 'object') {
-      return parseExpiresInFromRefreshBody(o.data)
-    }
-    if (typeof o.expiresInSeconds === 'number') return o.expiresInSeconds
-  }
-  return undefined
-}
-
 function handleAuthFailure() {
   useAuthStore.getState().logout()
   if (typeof window !== 'undefined') {
@@ -242,6 +217,7 @@ function enqueueWhileRefreshing(originalRequest: RetryableRequest) {
   return new Promise((resolve, reject) => {
     failedQueue.push({
       resolve: (token: string) => {
+        originalRequest._retry = true
         originalRequest.headers = setAuthorizationHeader(originalRequest.headers, token)
         resolve(axiosClient(originalRequest))
       },
@@ -260,23 +236,18 @@ async function runSingleFlightRefresh(refreshToken: string): Promise<string> {
   refreshPromise = (async () => {
     try {
       const res = await postAuthenticationRefreshToken(refreshToken)
-      const newAccessToken = parseAccessTokenFromRefreshBody(res.data)
-      const newRefreshToken = parseRefreshTokenFromRefreshBody(res.data)
-      const expiresInSeconds = parseExpiresInFromRefreshBody(res.data)
-
-      if (!newAccessToken || !newRefreshToken) {
+      const parsed = parseAuthTokenResponse(res.data)
+      if (!parsed) {
         throw new Error('Invalid refresh response: missing access or refresh token')
       }
 
-      const expiresAtIso =
-        expiresInSeconds && expiresInSeconds > 0
-          ? new Date(Date.now() + expiresInSeconds * 1000).toISOString()
-          : undefined
+      persistAccessToken(
+        parsed.accessToken,
+        expiresAtIsoFromExpiresInSeconds(parsed.expiresInSeconds)
+      )
+      persistRefreshToken(parsed.refreshToken)
 
-      persistAccessToken(newAccessToken, expiresAtIso)
-      persistRefreshToken(newRefreshToken)
-
-      return newAccessToken
+      return parsed.accessToken
     } finally {
       refreshPromise = null
     }
@@ -323,7 +294,6 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   response => response,
   async (error: AxiosError<TErrorResponse>) => {
-    // E2E/로컬: 백엔드 실패 상황·에러 코드를 Mock 로그에 기록 (/e2e-error-log)
     recordBackendErrorForE2e(error)
 
     const { response, config } = error
@@ -339,7 +309,9 @@ axiosClient.interceptors.response.use(
     const code = getErrorCode(response.data)
 
     if (originalRequest.skipRefresh || isExcludedFromAutoRefresh(requestUrl)) {
-      showGlobalApiErrorAlert(error, originalRequest)
+      if (!isSessionAuthUtilityPath(requestUrl) && !originalRequest.skipGlobalErrorAlert) {
+        showGlobalApiErrorAlert(error, originalRequest)
+      }
       return Promise.reject(error)
     }
 
@@ -348,7 +320,7 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    const isAccessTokenFailure = status === 401 && code === 'UNAUTHORIZED'
+    const isAccessTokenFailure = status === 401 && isAccessTokenUnauthorizedCode(code)
     if (!isAccessTokenFailure || originalRequest._retry) {
       showGlobalApiErrorAlert(error, originalRequest)
       return Promise.reject(error)
@@ -377,9 +349,7 @@ axiosClient.interceptors.response.use(
     } catch (err) {
       processQueue(null, err)
       isRefreshing = false
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY)
-      }
+      // refresh 키는 logout()이 원격 revoke 후 제거한다 (선삭제 금지)
       handleAuthFailure()
       return Promise.reject(err)
     }

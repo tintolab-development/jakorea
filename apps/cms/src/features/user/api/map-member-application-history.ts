@@ -9,7 +9,7 @@ import type { ApplicationProgressStatus } from '@/types/application-progress'
 
 function mapApplicationSubjectType(raw?: string): ApplicationSubjectType {
   const v = raw?.trim().toUpperCase()
-  if (v === 'SCHOOL' || v === 'INSTITUTION') return 'school'
+  if (v === 'SCHOOL' || v === 'INSTITUTION' || v === 'ORGANIZATION') return 'school'
   if (v === 'INSTRUCTOR') return 'instructor'
   if (v === 'VOLUNTEER') return 'volunteer'
   return 'student'

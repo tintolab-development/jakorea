@@ -38,7 +38,6 @@ import {
 } from '@/features/program/shared/ui/registration/draft-notice-modal'
 import {
   useProgramDetail,
-  usePrefetchProgramDetail,
   usePrograms,
   useUpdateProgram,
 } from '@/features/program/ujat/api/queries'
@@ -179,7 +178,6 @@ function UjatProgramListPageContent() {
     )
   }, [programIdFromUrl, programs])
   const detailQuery = useProgramDetail(programIdFromUrl ?? undefined, initialDetailProgram)
-  const prefetchProgramDetail = usePrefetchProgramDetail()
   // remote: 상세 data만. local: mock/시드 허용
   const ujatDetailProgram = detailQuery.data ?? null
 
@@ -394,7 +392,6 @@ function UjatProgramListPageContent() {
           pagination={false}
           onRow={record => ({
             onClick: () => handleRowNavigate(record),
-            onMouseEnter: () => prefetchProgramDetail(record.id),
             style: { cursor: 'pointer' },
           })}
         />

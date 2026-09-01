@@ -1,5 +1,6 @@
 /**
  * 정산 관리 > 정산 항목 설정 — 목업 데이터
+ * SSOT: Notion 정산 항목 설정 + 목록 시안 (임금 6 · 지급 6 · 공제 1)
  */
 
 export type SettlementItemSettingIconKey =
@@ -7,12 +8,15 @@ export type SettlementItemSettingIconKey =
   | 'wage_tier2'
   | 'wage_tier3'
   | 'wage_special_lecture'
+  | 'wage_other_labor'
+  | 'wage_gemini'
   | 'wage_assistant'
   | 'wage_multi_instructor'
   | 'wage_simple_labor'
   | 'pay_transport'
   | 'pay_lodging'
   | 'pay_meal'
+  | 'pay_activity'
   | 'pay_meeting'
   | 'pay_volunteer'
   | 'deduct_business_33'
@@ -26,6 +30,14 @@ export interface SettlementItemSettingRow {
   id: string
   /** API 항목 id (remote 전용) */
   apiItemId?: number
+  /** remote: wage | payment | deduction */
+  sectionKind?: SettlementItemSettingCategoryKind
+  /** remote: WageItemType enum */
+  wageItemType?: string
+  /** remote: PaymentItemType enum */
+  paymentItemType?: string
+  /** remote: 설정 카드 layout (활동비=meal) */
+  layout?: string
   title: string
   description: string
   iconKey: SettlementItemSettingIconKey
@@ -48,6 +60,7 @@ export const settlementItemSettingSections: SettlementItemSettingSection[] = [
    * - 프로그램 등록 시 또는 강사비 유형 선택 시, 유형별 최대 한도 안에서 지급 금액을 입력한다.
    * - 강사 매칭 시 강사마다 임금 항목을 선택한다.
    * - 1사1교 프로그램에 한해: 자택–출강지 거리에 따라 같은 급수라도 금액이 달라질 수 있으며, 편도 200km 초과 시 추가 금액이 지급된다.
+   * - 제미나이 강사비는 제미나이 프로그램 전용.
    */
   {
     kind: 'wage',
@@ -79,21 +92,15 @@ export const settlementItemSettingSections: SettlementItemSettingSection[] = [
       },
       {
         id: 'w-5',
-        title: '보조 강사비',
-        description: '각종 실기 실습 보조 요원에게 적용되는 임금입니다.',
-        iconKey: 'wage_assistant',
+        title: '기타 인건비',
+        description: '금액 한도가 별도 적용되는 임금입니다.',
+        iconKey: 'wage_other_labor',
       },
       {
-        id: 'w-6',
-        title: '다수인출강비',
-        description: '출강 인원이 여러명일 때 적용되는 임금입니다.',
-        iconKey: 'wage_multi_instructor',
-      },
-      {
-        id: 'w-7',
-        title: '단순인건비',
-        description: '1인/1일 단순 근로 시 지원되는 비용입니다.',
-        iconKey: 'wage_simple_labor',
+        id: 'w-gemini',
+        title: '제미나이 강사비',
+        description: '제미나이 프로그램에서 사용되는 강사 임금입니다.',
+        iconKey: 'wage_gemini',
       },
     ],
   },
@@ -103,15 +110,21 @@ export const settlementItemSettingSections: SettlementItemSettingSection[] = [
     items: [
       {
         id: 'p-1',
-        title: '교통비',
+        title: '강사 교통비',
         description: '편도 30km 이상 이동 시 지원되는 비용입니다.',
         iconKey: 'pay_transport',
       },
       {
         id: 'p-2',
-        title: '교통비 (1사1교)',
+        title: '학생 교통비',
         description: '편도 30km 이상 이동 시 지원되는 비용입니다.',
         iconKey: 'pay_transport',
+      },
+      {
+        id: 'p-4',
+        title: '식사비',
+        description: '식사 시 지원되는 비용입니다.',
+        iconKey: 'pay_meal',
       },
       {
         id: 'p-3',
@@ -126,22 +139,10 @@ export const settlementItemSettingSections: SettlementItemSettingSection[] = [
         iconKey: 'pay_lodging',
       },
       {
-        id: 'p-4',
-        title: '식사비',
-        description: '식사 시 지원되는 비용입니다.',
-        iconKey: 'pay_meal',
-      },
-      {
-        id: 'p-5',
-        title: '회의참석비',
-        description: '회의에 참석 시 지원되는 비용입니다.',
-        iconKey: 'pay_meeting',
-      },
-      {
         id: 'p-6',
-        title: '자원봉사자 활동비',
-        description: '자원봉사자에게 지원되는 비용입니다.',
-        iconKey: 'pay_volunteer',
+        title: '활동비',
+        description: '활동비로 지원되는 비용입니다.',
+        iconKey: 'pay_activity',
       },
     ],
   },

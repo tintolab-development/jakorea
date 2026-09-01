@@ -6,10 +6,11 @@
  * OpenAPI spec version: v9
  */
 import type { WageItemRateUpsertRequest } from './wageItemRateUpsertRequest';
+import type { WageItemUpsertRequestWageItemType } from './wageItemUpsertRequestWageItemType';
 
 export interface WageItemUpsertRequest {
   id?: number;
-  wageItemType?: string;
+  wageItemType?: WageItemUpsertRequestWageItemType;
   itemName?: string;
   amount?: number;
   calculationUnit?: string;

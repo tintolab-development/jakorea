@@ -28,12 +28,12 @@ const createIssuanceRows = (
     key: `${prefix}-${index + 1}`,
     no: (options?.startNo ?? 1) + index,
     creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
+    createdAt: '2026. 09. 15',
     updatedAt: '-',
   }))
 
+/** Notion 1. 보고 양식 — UJAT 결과리포트(issuance-1) 제외 */
 const issuanceReportDefinitions = [
-  { id: 'issuance-1', templateName: 'UJAT 결과리포트' },
   { id: 'issuance-2', templateName: UJAT_EDUCATION_PLAN_TEMPLATE_NAME },
   { id: 'issuance-ujat-edu-journal', templateName: UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME },
   { id: 'issuance-3', templateName: LECTURE_REPORT_TEMPLATE_NAME },
@@ -41,16 +41,14 @@ const issuanceReportDefinitions = [
   { id: 'issuance-5', templateName: '결과보고서' },
 ] as const
 
+/**
+ * Notion 2. 서류 양식
+ * 교육진행자 활동인증서 → 발급 대상에 따라 강사/봉사 활동 인증서로 구분
+ */
 const issuanceDocumentDefinitions = [
   { id: PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_CODE, templateName: PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME },
-  {
-    id: PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_CODE,
-    templateName: PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME,
-  },
-  { id: 'document-1', templateName: '지출증빙서류(필수폼)' },
-  { id: 'document-2', templateName: '휴가 인증서' },
-  { id: 'document-3', templateName: '수료증' },
   { id: 'document-participation-certificate', templateName: '참가인증서' },
+  { id: 'document-3', templateName: '수료증' },
   { id: 'document-4', templateName: '강사 활동 인증서' },
   { id: 'document-5', templateName: '봉사 활동 인증서' },
 ] as const

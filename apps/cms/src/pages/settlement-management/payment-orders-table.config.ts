@@ -8,6 +8,12 @@ import type {
   PaymentOrderAdminProcessingStatus,
   PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
+import {
+  matchesPendingItemBucket,
+  PAYMENT_ORDER_PENDING_ITEM_BUCKETS,
+  type PaymentOrderPendingItemBucket,
+  type PaymentOrderPendingItemBucketFilter,
+} from './payment-orders-pending-item-bucket'
 
 const P = 'po'
 
@@ -33,6 +39,13 @@ export function paymentOrdersListQuerySearchParamsKey(searchParams: URLSearchPar
   return next.toString()
 }
 
+/** aggregates 캐시 키 — 노출 기준은 query key의 groupBy로 분리한다. */
+export function paymentOrdersListFilterQueryKey(searchParams: URLSearchParams): string {
+  const next = new URLSearchParams(paymentOrdersListQuerySearchParamsKey(searchParams))
+  next.delete(PAYMENT_ORDERS_EXPOSURE_PARAM_KEY)
+  return next.toString()
+}
+
 export type ExposureMode = 'program' | 'instructor'
 
 /** 지급조서 처리 현황 — `all`은 URL·필터에서 미선택 */
@@ -43,6 +56,7 @@ export type PaymentOrdersPendingFilters = {
   programName: string
   instructorName: string
   processingStatus: PaymentOrderProcessingStatusFilter
+  pendingItemBucket: PaymentOrderPendingItemBucketFilter
   dateRange: [Dayjs, Dayjs] | null
 }
 
@@ -61,9 +75,15 @@ function hasSettlementAttendanceInRange(
 
 const PROCESSING_STATUS_PARAM_VALUES: PaymentOrderAdminProcessingStatus[] = [
   'pending',
+  'reapplication',
+  'partial',
   'confirmed',
   'correction',
   'application_rejected',
+]
+
+const PENDING_BUCKET_PARAM_VALUES: PaymentOrderPendingItemBucket[] = [
+  ...PAYMENT_ORDER_PENDING_ITEM_BUCKETS,
 ]
 
 export function parsePaymentOrdersExposureMode(raw: string | null): ExposureMode {
@@ -83,6 +103,11 @@ export function parsePaymentOrdersFiltersFromUrl(
     PROCESSING_STATUS_PARAM_VALUES.includes(statusRaw as PaymentOrderAdminProcessingStatus)
       ? (statusRaw as PaymentOrderAdminProcessingStatus)
       : 'all'
+  const bucketRaw = searchParams.get(`${P}_bucket`) ?? ''
+  const pendingItemBucket: PaymentOrderPendingItemBucketFilter =
+    PENDING_BUCKET_PARAM_VALUES.includes(bucketRaw as PaymentOrderPendingItemBucket)
+      ? (bucketRaw as PaymentOrderPendingItemBucket)
+      : 'all'
   const fromStr = searchParams.get(`${P}_from`)
   const toStr = searchParams.get(`${P}_to`)
   let dateRange: [Dayjs, Dayjs] | null = null
@@ -91,20 +116,32 @@ export function parsePaymentOrdersFiltersFromUrl(
     const b = dayjs(toStr)
     if (a.isValid() && b.isValid()) dateRange = [a, b]
   }
-  return { exposureMode, programName, instructorName, processingStatus, dateRange }
+  return {
+    exposureMode,
+    programName,
+    instructorName,
+    processingStatus,
+    pendingItemBucket,
+    dateRange,
+  }
 }
 
 export function filterPaymentProgramRows(
   rows: PaymentOrderAdminProgramRow[],
   applied: Pick<
     PaymentOrdersPendingFilters,
-    'programName' | 'processingStatus' | 'dateRange'
-  >
+    'programName' | 'processingStatus' | 'pendingItemBucket' | 'dateRange'
+  >,
+  viewMode: 'list' | 'calendar' = 'list'
 ): PaymentOrderAdminProgramRow[] {
   const q = applied.programName.trim()
   return rows.filter(row => {
     if (q && !row.programName.includes(q)) return false
-    if (applied.processingStatus !== 'all' && row.processingStatus !== applied.processingStatus) {
+    if (viewMode === 'calendar') {
+      if (applied.processingStatus !== 'all' && row.processingStatus !== applied.processingStatus) {
+        return false
+      }
+    } else if (!matchesPendingItemBucket(row.pendingPaymentSettlementItemCount, applied.pendingItemBucket)) {
       return false
     }
     if (
@@ -124,13 +161,18 @@ export function filterPaymentInstructorRows(
   rows: PaymentOrderAdminInstructorRow[],
   applied: Pick<
     PaymentOrdersPendingFilters,
-    'instructorName' | 'processingStatus' | 'dateRange'
-  >
+    'instructorName' | 'processingStatus' | 'pendingItemBucket' | 'dateRange'
+  >,
+  viewMode: 'list' | 'calendar' = 'list'
 ): PaymentOrderAdminInstructorRow[] {
   const q = applied.instructorName.trim()
   return rows.filter(row => {
     if (q && !row.instructorName.includes(q)) return false
-    if (applied.processingStatus !== 'all' && row.processingStatus !== applied.processingStatus) {
+    if (viewMode === 'calendar') {
+      if (applied.processingStatus !== 'all' && row.processingStatus !== applied.processingStatus) {
+        return false
+      }
+    } else if (!matchesPendingItemBucket(row.pendingPaymentSettlementItemCount, applied.pendingItemBucket)) {
       return false
     }
     if (
@@ -190,6 +232,13 @@ function searchSyncRules(): readonly TableSearchParamRule<PaymentOrdersPendingFi
       transform: v => String(v),
     },
     {
+      kind: 'param',
+      filterKey: 'pendingItemBucket',
+      paramKey: `${P}_bucket`,
+      condition: f => f.pendingItemBucket !== 'all',
+      transform: v => String(v),
+    },
+    {
       kind: 'apply',
       apply: (nextParams, filters) => {
         nextParams.delete(`${P}_from`)
@@ -219,6 +268,7 @@ export function createPaymentOrdersTablePageConfig(
         programName: '',
         instructorName: '',
         processingStatus: 'all',
+        pendingItemBucket: 'all',
         dateRange: null,
       },
       syncPendingFromUrl: ({ searchParams, setPendingFilters }) => {
@@ -229,6 +279,7 @@ export function createPaymentOrdersTablePageConfig(
             prev.programName === next.programName &&
             prev.instructorName === next.instructorName &&
             prev.processingStatus === next.processingStatus &&
+            prev.pendingItemBucket === next.pendingItemBucket &&
             isSamePendingDateRange(prev.dateRange, next.dateRange)
           ) {
             return prev
@@ -242,6 +293,7 @@ export function createPaymentOrdersTablePageConfig(
             (searchParams.get(`${P}_prog`) ?? '').trim() ||
             (searchParams.get(`${P}_inst`) ?? '').trim() ||
             (searchParams.get(`${P}_status`) && searchParams.get(`${P}_status`) !== 'all') ||
+            (searchParams.get(`${P}_bucket`) && searchParams.get(`${P}_bucket`) !== 'all') ||
             (searchParams.get(`${P}_from`) && searchParams.get(`${P}_to`))
         ),
       getBaseCount: ({ filteredData }) => filteredData.length,
@@ -264,6 +316,14 @@ export function createPaymentOrdersTablePageConfig(
             processingStatus: (value == null || value === ''
               ? 'all'
               : value) as PaymentOrderProcessingStatusFilter,
+          }
+        }
+        if (key === 'pendingItemBucket') {
+          return {
+            ...prev,
+            pendingItemBucket: (value == null || value === ''
+              ? 'all'
+              : value) as PaymentOrderPendingItemBucketFilter,
           }
         }
         if (key === 'dateRange') {

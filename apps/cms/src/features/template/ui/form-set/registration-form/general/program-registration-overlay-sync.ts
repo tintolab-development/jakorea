@@ -11,6 +11,10 @@ export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY =
   'generalRegistration.basicInfo.localSponsorId' as const
 export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY =
   'generalRegistration.basicInfo.localManagerContactId' as const
+export const GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY =
+  'generalRegistration.educationScheduleSettings.scheduleLines' as const
+export const GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY =
+  'generalRegistration.educationScheduleCurriculum.groupTimesByDetail' as const
 
 let overlayState: Record<string, unknown> = {}
 let overlayVersion = 0
@@ -29,6 +33,15 @@ export function readGeneralRegistrationOverlaySponsorContactId(): string {
   if (typeof raw === 'string' && raw.trim()) return raw.trim()
   if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
   return ''
+}
+
+export function readGeneralRegistrationOverlayScheduleLines(): string[] {
+  const raw = overlayState[GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]
+  if (!Array.isArray(raw)) return []
+  return raw
+    .filter((line): line is string => typeof line === 'string')
+    .map(line => line.trim())
+    .filter(Boolean)
 }
 
 function emitOverlay() {
@@ -50,7 +63,15 @@ export function getProgramRegistrationOverlayRecord(): Record<string, unknown> {
 }
 
 export function patchProgramRegistrationOverlay(partial: Record<string, unknown>): void {
-  overlayState = { ...overlayState, ...partial }
+  let changed = false
+  const next: Record<string, unknown> = { ...overlayState }
+  for (const [key, value] of Object.entries(partial)) {
+    if (Object.is(overlayState[key], value)) continue
+    next[key] = value
+    changed = true
+  }
+  if (!changed) return
+  overlayState = next
   emitOverlay()
 }
 
@@ -59,7 +80,9 @@ export function updateProgramRegistrationOverlayKey<T>(
   updater: (prev: T | undefined) => T
 ): void {
   const prev = overlayState[key] as T | undefined
-  overlayState = { ...overlayState, [key]: updater(prev) }
+  const next = updater(prev)
+  if (Object.is(prev, next)) return
+  overlayState = { ...overlayState, [key]: next }
   emitOverlay()
 }
 
@@ -88,6 +111,8 @@ export function useProgramRegistrationOverlayKv<T>(
   const value = (record[key] as T | undefined) ?? defaultValue
   const setValue = useCallback(
     (next: T) => {
+      const prev = getProgramRegistrationOverlayRecord()[key]
+      if (Object.is(prev, next)) return
       patchProgramRegistrationOverlay({ [key]: next })
     },
     [key]
