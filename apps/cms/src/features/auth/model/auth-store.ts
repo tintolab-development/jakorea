@@ -26,11 +26,9 @@ import { clearMemberQueryCache } from '@/features/user/api/clear-member-query-ca
 import { clearPerformanceQueryCache } from '@/features/education-record/api/clear-performance-query-cache'
 import { clearProgramQueryCache } from '@/features/program/shared/api/clear-query-cache'
 import { flushSocialPendingLinks } from '@/features/auth/social-auth/flush-pending-links'
-
-function elevateAdminToMaster(user: Omit<User, 'password'>): Omit<User, 'password'> {
-  if (user.role !== 'ADMIN') return user
-  return { ...user, adminLevel: 'MASTER' }
-}
+import { fetchAdminMe } from '@/features/auth/api/fetch-admin-me'
+import { applyAdminMeToSessionUser } from '@/features/auth/lib/apply-admin-me-to-session-user'
+import { withSessionAdminRole } from '@/shared/lib/admin-role-policy'
 
 interface AuthState {
   user: Omit<User, 'password'> | null
@@ -114,7 +112,7 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
     if (new Date(expiresAt) > new Date()) {
       try {
         const user = JSON.parse(userStr)
-        const normalizedUser = elevateAdminToMaster(user)
+        const normalizedUser = withSessionAdminRole(user)
         localStorage.setItem('auth_user', JSON.stringify(normalizedUser))
         return {
           user: normalizedUser,
@@ -170,7 +168,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
         // MFA 필요 시 MFA 상태만 설정하고 인증은 완료하지 않음
         if (response.requiresMfa && response.mfaState) {
-          const normalizedUser = elevateAdminToMaster(response.user)
+          const normalizedUser = withSessionAdminRole(response.user)
           set({
             user: normalizedUser,
             token: null, // MFA 완료 전에는 토큰 저장 안 함
@@ -185,7 +183,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         }
 
         // MFA 불필요 시 바로 인증 완료
-        const normalizedUser = elevateAdminToMaster(response.user)
+        const normalizedUser = withSessionAdminRole(response.user)
         // localStorage에 저장
         if (typeof window !== 'undefined' && window.localStorage) {
           localStorage.setItem(TOKEN_STORAGE_KEY, response.token)
@@ -247,7 +245,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       const state = get()
       if (!state.user) return
 
-      const normalizedUser = elevateAdminToMaster(state.user)
+      const normalizedUser = withSessionAdminRole(state.user)
       const { token, expiresAt } = persistAuthTokens(normalizedUser, tokens)
       const passwordChangeRequired = tokens.passwordChangeRequired === true
 
@@ -283,6 +281,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearPerformanceQueryCache()
       clearProgramQueryCache()
       void flushSocialPendingLinks()
+      void hydrateAdminSessionFromMe()
     },
 
     clearPasswordChangeRequired: () => {
@@ -298,11 +297,12 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         email: '',
         name: '관리자',
         role: 'ADMIN',
+        roleCode: 'VIEWER',
         isActive: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
-      const normalizedUser = elevateAdminToMaster(placeholderUser)
+      const normalizedUser = withSessionAdminRole(placeholderUser)
       const { token, expiresAt } = persistAuthTokens(normalizedUser, tokens)
 
       set({
@@ -325,6 +325,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearPerformanceQueryCache()
       clearProgramQueryCache()
       void flushSocialPendingLinks()
+      void hydrateAdminSessionFromMe()
     },
 
     logout: () => {
@@ -451,7 +452,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           }
 
           if (user && user.isActive) {
-            const normalizedUser = elevateAdminToMaster(user)
+            const normalizedUser = withSessionAdminRole(user)
             localStorage.setItem('auth_user', JSON.stringify(normalizedUser))
 
             set({
@@ -460,12 +461,13 @@ export const useAuthStore = create<AuthState>()((set, get) => {
               expiresAt,
               isAuthenticated: true,
             })
+            void hydrateAdminSessionFromMe()
           } else {
             if (!storedUser || !storedUser.isActive) {
               console.warn('User not found or inactive, logging out')
               get().logout()
             } else {
-              const normalizedStoredUser = elevateAdminToMaster(storedUser)
+              const normalizedStoredUser = withSessionAdminRole(storedUser)
               localStorage.setItem('auth_user', JSON.stringify(normalizedStoredUser))
               set({
                 user: normalizedStoredUser,
@@ -473,6 +475,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
                 expiresAt,
                 isAuthenticated: true,
               })
+              void hydrateAdminSessionFromMe()
             }
           }
         } catch (error) {
@@ -480,7 +483,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           try {
             const storedUser = JSON.parse(userStr)
             if (storedUser && storedUser.isActive) {
-              const normalizedStoredUser = elevateAdminToMaster(storedUser)
+              const normalizedStoredUser = withSessionAdminRole(storedUser)
               localStorage.setItem('auth_user', JSON.stringify(normalizedStoredUser))
               set({
                 user: normalizedStoredUser,
@@ -488,6 +491,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
                 expiresAt,
                 isAuthenticated: true,
               })
+              void hydrateAdminSessionFromMe()
             } else {
               get().logout()
             }
@@ -526,7 +530,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
     // Phase 0.1.3: 인증 상태 직접 설정 (휴대폰/소셜 로그인용)
     setAuth: (authData: { user: Omit<User, 'password'>; token: string; expiresAt: string }) => {
-      const normalizedUser = elevateAdminToMaster(authData.user)
+      const normalizedUser = withSessionAdminRole(authData.user)
       // localStorage에 저장
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.setItem(TOKEN_STORAGE_KEY, authData.token)
@@ -631,3 +635,19 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     },
   }
 })
+
+async function hydrateAdminSessionFromMe(): Promise<void> {
+  if (!isRealApiModuleEnabled('adminAuth')) return
+  try {
+    const me = await fetchAdminMe()
+    const current = useAuthStore.getState().user
+    if (!current) return
+    const next = applyAdminMeToSessionUser(current, me)
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('auth_user', JSON.stringify(next))
+    }
+    useAuthStore.setState({ user: next })
+  } catch (error) {
+    console.warn('[auth] GET /api/admin/me failed:', error)
+  }
+}

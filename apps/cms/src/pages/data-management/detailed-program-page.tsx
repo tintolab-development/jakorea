@@ -328,21 +328,20 @@ export default function DetailedProgramPage() {
             <CmsButton
               variant="delete"
               onClick={handleBulkDelete}
-              disabled={!canWrite || selectedRowKeys.length === 0}
+              disabled={selectedRowKeys.length === 0}
             >
               항목 삭제
             </CmsButton>
             <CmsButton
               variant="secondary"
               onClick={isEditMode ? handleSave : enterEditMode}
-              disabled={!canWrite}
             >
               {isEditMode ? '수정 완료' : '정보 수정'}
             </CmsButton>
             <CmsButton
               variant="primary"
               onClick={handleAddClick}
-              disabled={!canWrite || isEditMode}
+              disabled={isEditMode}
             >
               신규 등록
             </CmsButton>

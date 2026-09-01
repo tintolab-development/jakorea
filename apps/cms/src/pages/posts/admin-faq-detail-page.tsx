@@ -165,11 +165,10 @@ export function AdminFaqDetailPage() {
               size="large"
               className="admin-faq-delete-btn"
               onClick={handleDelete}
-              disabled={!canWrite}
             >
               삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" onClick={handleEdit} disabled={!canWrite}>
+            <CmsButton variant="primary" size="large" adminAction="write" onClick={handleEdit}>
               수정
             </CmsButton>
           </div>

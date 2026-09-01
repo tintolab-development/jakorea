@@ -12,7 +12,6 @@ export type FaqFormModalFooterProps = {
 /** FAQ 모달 하단 — 수정 시 좌측 FAQ 삭제, 우측 취소·등록/수정 */
 export function FaqFormModalFooter({
   isEdit,
-  canWrite,
   submitLabel,
   onCancel,
   onSubmit,
@@ -27,7 +26,6 @@ export function FaqFormModalFooter({
           type="button"
           className="faq-form-modal__faq-delete"
           onClick={onRequestDelete}
-          disabled={!canWrite}
         >
           FAQ 삭제
         </CmsButton>
@@ -36,7 +34,7 @@ export function FaqFormModalFooter({
         <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
           취소
         </CmsButton>
-        <CmsButton variant="primary" size="medium" type="button" onClick={onSubmit} disabled={!canWrite}>
+        <CmsButton variant="primary" size="medium" type="button" adminAction="write" onClick={onSubmit}>
           {submitLabel}
         </CmsButton>
       </div>

@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from 'react'
 import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
+import { isAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
+import { clearForbiddenApiErrorAlertDedupe } from '@/shared/lib/show-global-api-error-alert'
 import { cmsAlertModal, setCmsAlertModalListener } from './cms-alert-modal-api'
 import type { CmsAlertModalShowOptions } from './cms-alert-modal-api'
 import { AlertModal } from './alert-modal'
@@ -44,18 +46,24 @@ export function CmsAlertModalProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AlertState>(initialState)
 
   const showAlert = useCallback((options: CmsAlertModalShowOptions) => {
-    setState({
-      open: true,
-      title: options.title,
-      content: options.content,
-      width: options.width ?? DEFAULT_WIDTH,
-      confirmLabel: options.confirmLabel ?? '확인',
-      zIndex: options.zIndex ?? CMS_ALERT_MODAL_Z_INDEX,
-      onConfirm: options.onConfirm,
+    setState(prev => {
+      if (prev.open && isAdminAccessDeniedAlert(prev)) {
+        return prev
+      }
+      return {
+        open: true,
+        title: options.title,
+        content: options.content,
+        width: options.width ?? DEFAULT_WIDTH,
+        confirmLabel: options.confirmLabel ?? '확인',
+        zIndex: options.zIndex ?? CMS_ALERT_MODAL_Z_INDEX,
+        onConfirm: options.onConfirm,
+      }
     })
   }, [])
 
   const closeAlert = useCallback(() => {
+    clearForbiddenApiErrorAlertDedupe()
     setState(prev => ({ ...prev, open: false }))
   }, [])
 

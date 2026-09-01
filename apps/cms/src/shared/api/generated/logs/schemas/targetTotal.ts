@@ -7,7 +7,6 @@
  */
 
 export interface TargetTotal {
-  /** 대상 학교급. elementary|middle|high|university|adult */
   targetLevel?: string;
   schoolCount?: number;
   classCount?: number;

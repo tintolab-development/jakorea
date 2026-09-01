@@ -25,7 +25,6 @@ export function AdminInquiryDetailModal({
   onCancel,
   onSuccess,
   onDeleteClick,
-  canWrite,
 }: AdminInquiryDetailModalProps) {
   const detailQuery = useInquiryDetailQuery(inquiryId, open)
   const { replyMutation } = useInquiryMutations()
@@ -44,7 +43,7 @@ export function AdminInquiryDetailModal({
   const isAnswerRegistered = detail?.status === 'ANSWERED'
 
   const handleReplySubmit = useCallback(async () => {
-    if (!detail || !canWrite || isAnswerRegistered) return
+    if (!detail || isAnswerRegistered) return
     const md = answerText.trim()
     if (md === '') {
       return
@@ -58,12 +57,12 @@ export function AdminInquiryDetailModal({
       setActionResultMessage(getPostsApiErrorMessage(error, '답변 등록에 실패했습니다.'))
       setActionResultOpen(true)
     }
-  }, [answerText, canWrite, detail, isAnswerRegistered, onCancel, onSuccess, replyMutation])
+  }, [answerText, detail, isAnswerRegistered, onCancel, onSuccess, replyMutation])
 
   const handleDelete = useCallback(() => {
-    if (!detail || !canWrite) return
+    if (!detail) return
     onDeleteClick(detail.id)
-  }, [canWrite, detail, onDeleteClick])
+  }, [detail, onDeleteClick])
 
   const footer = (
     <>
@@ -71,7 +70,7 @@ export function AdminInquiryDetailModal({
         variant="delete"
         size="medium"
         onClick={handleDelete}
-        disabled={!canWrite || !detail}
+        disabled={!detail}
       >
         문의삭제
       </CmsButton>
@@ -83,7 +82,8 @@ export function AdminInquiryDetailModal({
           variant="primary"
           size="medium"
           onClick={handleReplySubmit}
-          disabled={!canWrite || !detail || isAnswerRegistered || replyMutation.isPending}
+          adminAction="send"
+          disabled={!detail || isAnswerRegistered || replyMutation.isPending}
         >
           답변 등록
         </CmsButton>
@@ -244,29 +244,13 @@ export function AdminInquiryDetailModal({
               >
                 내용 (답변)
               </h3>
-              {canWrite ? (
-                <textarea
-                  className="admin-inquiry-detail-modal__answer-textarea"
-                  value={answerText}
-                  onChange={e => setAnswerText(e.target.value)}
-                  placeholder="문의에 답변을 입력해 주세요."
-                  disabled={isAnswerRegistered}
-                />
-              ) : (
-                <div className="admin-inquiry-detail-modal__answer-readonly">
-                  {detail.answerMarkdown && detail.answerMarkdown.length > 0 ? (
-                    <RichTextViewer
-                      markdown={detail.answerMarkdown}
-                      className="admin-inquiry-detail-modal__answer-viewer"
-                      maxHeight="none"
-                    />
-                  ) : (
-                    <span className="admin-inquiry-detail-modal__answer-placeholder">
-                      등록된 답변이 없습니다.
-                    </span>
-                  )}
-                </div>
-              )}
+              <textarea
+                className="admin-inquiry-detail-modal__answer-textarea"
+                value={answerText}
+                onChange={e => setAnswerText(e.target.value)}
+                placeholder="문의에 답변을 입력해 주세요."
+                disabled={isAnswerRegistered}
+              />
             </section>
           </div>
         )}

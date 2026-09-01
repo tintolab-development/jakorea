@@ -415,12 +415,12 @@ export function GeminiPerformanceList() {
         actions={
           <>
             {showBulkDelete ? (
-              <CmsButton variant="delete" disabled={!canWrite} onClick={handleBulkDeleteClick}>
+              <CmsButton variant="delete" onClick={handleBulkDeleteClick}>
                 선택 삭제
               </CmsButton>
             ) : null}
             <ExcelButton onClick={exportExcel} loading={isExcelExporting} />
-            <CmsButton variant="primary" disabled={!canWrite} onClick={handleAddReportClick}>
+            <CmsButton variant="primary" onClick={handleAddReportClick}>
               연수 보고서 등록
             </CmsButton>
           </>

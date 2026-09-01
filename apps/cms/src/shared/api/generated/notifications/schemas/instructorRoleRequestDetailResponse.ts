@@ -7,7 +7,6 @@
  */
 import type { InstructorCmsProfile } from './instructorCmsProfile';
 import type { InstructorCmsSettlement } from './instructorCmsSettlement';
-import type { MemberLinkedSocialAccountResponse } from './memberLinkedSocialAccountResponse';
 import type { TermsAgreement } from './termsAgreement';
 
 /**
@@ -20,10 +19,6 @@ export interface InstructorRoleRequestDetailResponse {
   requestedActivityType?: string;
   requestedAt?: string;
   decidedAt?: string;
-  /** 회원 가입일(member.joined_at) */
-  joinedAt?: string;
-  /** 승인/반려 결과 알림 재발송 시각 */
-  notificationResentAt?: string;
   rejectedReason?: string;
   name?: string;
   gender?: string;
@@ -33,5 +28,4 @@ export interface InstructorRoleRequestDetailResponse {
   profile?: InstructorCmsProfile;
   settlement?: InstructorCmsSettlement;
   termsAgreements?: TermsAgreement[];
-  socialAccounts?: MemberLinkedSocialAccountResponse[];
 }

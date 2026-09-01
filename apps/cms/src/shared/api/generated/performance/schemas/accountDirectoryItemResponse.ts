@@ -17,11 +17,11 @@ export interface AccountDirectoryItemResponse {
   accountId?: number;
   /** 외부 참조 및 감사용 UUID. CRUD 경로에는 사용하지 않습니다. */
   uuid?: string;
-  /** 로그인 이메일 */
+  /** 마스킹된 로그인 이메일 */
   email?: string;
-  /** 이름 */
+  /** 마스킹된 이름 */
   name?: string;
-  /** 연락처 */
+  /** 마스킹된 연락처 */
   phone?: string;
   status?: string;
   /** 회원 역할 또는 관리자 권한 코드 */

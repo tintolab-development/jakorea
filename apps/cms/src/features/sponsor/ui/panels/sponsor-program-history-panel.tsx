@@ -220,7 +220,7 @@ export function SponsorProgramHistoryPanel({
           <CmsButton
             variant="delete"
             onClick={handleDeleteProgramHistory}
-            disabled={!canWrite || selectedKeys.length === 0 || deleteDisabled}
+            disabled={selectedKeys.length === 0 || deleteDisabled}
             title={deleteDisabled ? '실 API 연동 시 프로그램 진행 이력 삭제는 지원되지 않습니다.' : undefined}
           >
             이력 삭제

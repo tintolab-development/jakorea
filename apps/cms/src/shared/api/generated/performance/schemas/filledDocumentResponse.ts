@@ -5,7 +5,7 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { FilledDocumentResponseSchemaJson } from './filledDocumentResponseSchemaJson';
+import type { JsonNode } from './jsonNode';
 import type { PaymentStatementBasicInfo } from './paymentStatementBasicInfo';
 
 /**
@@ -18,7 +18,7 @@ export interface FilledDocumentResponse {
   consentType?: string;
   version?: string;
   templateCode?: string;
-  schemaJson?: FilledDocumentResponseSchemaJson;
+  schemaJson?: JsonNode;
   paymentBasicInfo?: PaymentStatementBasicInfo;
   evidenceFileObjectId?: number;
   evidenceOriginalFileName?: string;

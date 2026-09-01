@@ -2,8 +2,18 @@
  * 회원 권한 신청 목록 — 강사·관리자 공통 UI (`FilterTableLayout` / user-list·program-list 스타일 정렬)
  */
 
-import { useMemo, useState, useEffect, useCallback, useImperativeHandle, forwardRef, useRef, type Key, type MouseEvent } from 'react'
-import { Alert, Table } from 'antd'
+import {
+  useMemo,
+  useState,
+  useEffect,
+  useCallback,
+  useImperativeHandle,
+  forwardRef,
+  useRef,
+  type Key,
+  type MouseEvent,
+} from 'react'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -33,8 +43,8 @@ import {
 } from '@/features/user/api/member-remote-capabilities'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { useAuthStore } from '@/features/auth/model/auth-store'
+import { guardAdminAction } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import type { UserDetailPermissionRole } from '@/pages/users/user-detail-fullpage-modal'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -141,8 +151,7 @@ export const MembersPermissionList = forwardRef<
   },
   ref
 ) {
-  const { user } = useAuthStore()
-  const canWrite = canPerformWriteAction(user)
+  const roleCode = useSessionAdminRoleCode()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const instructorListParams = useMemo(
@@ -155,7 +164,10 @@ export const MembersPermissionList = forwardRef<
   )
 
   const instructorRemote = memberType === 'instructor' && isInstructorRoleRequestsRemoteEnabled()
-  const instructorRemoteQuery = useInstructorRoleRequestsQuery(instructorListParams, instructorRemote)
+  const instructorRemoteQuery = useInstructorRoleRequestsQuery(
+    instructorListParams,
+    instructorRemote
+  )
 
   const adminRemote = memberType === 'admin' && isAdminApprovalRequestsRemoteEnabled()
   const adminRemoteQuery = useAdminApprovalRequestsQuery(adminListParams, adminRemote)
@@ -168,26 +180,23 @@ export const MembersPermissionList = forwardRef<
     [memberType, instructorRemote, adminRemote]
   )
 
-  const baseRows = useMemo(
-    () => {
-      if (instructorRemote) {
-        return instructorRemoteQuery.data?.rows ?? []
-      }
-      if (adminRemote) {
-        return adminRemoteQuery.data?.rows ?? []
-      }
-      return memberType === 'instructor'
-        ? [...mockMemberPermissionApplicationsInstructor]
-        : [...mockMemberPermissionApplicationsAdmin]
-    },
-    [
-      adminRemote,
-      adminRemoteQuery.data?.rows,
-      instructorRemote,
-      instructorRemoteQuery.data?.rows,
-      memberType,
-    ]
-  )
+  const baseRows = useMemo(() => {
+    if (instructorRemote) {
+      return instructorRemoteQuery.data?.rows ?? []
+    }
+    if (adminRemote) {
+      return adminRemoteQuery.data?.rows ?? []
+    }
+    return memberType === 'instructor'
+      ? [...mockMemberPermissionApplicationsInstructor]
+      : [...mockMemberPermissionApplicationsAdmin]
+  }, [
+    adminRemote,
+    adminRemoteQuery.data?.rows,
+    instructorRemote,
+    instructorRemoteQuery.data?.rows,
+    memberType,
+  ])
 
   const remoteLoading =
     (instructorRemote && instructorRemoteQuery.isLoading) ||
@@ -308,10 +317,21 @@ export const MembersPermissionList = forwardRef<
     [selectedRowKeys]
   )
 
+  const guardListApproveAction = useCallback(() => {
+    if (memberType === 'admin') {
+      return guardAdminAction({
+        roleCode,
+        action: 'approve',
+        screen: 'admin-permission-approval',
+      })
+    }
+    return guardAdminAction({ roleCode, action: 'approve' })
+  }, [memberType, roleCode])
+
   const bulkApprove = useCallback(() => {
     const keys = selectedKeysSnapshot()
-    if (!canWrite || keys.length === 0) return
-
+    if (keys.length === 0) return
+    if (!guardListApproveAction()) return
     const pendingRows = resolvePendingRowsForKeys(keys)
     const hasNonPendingInSelection = pendingRows.length !== keys.length
     const isBulkSelection = keys.length >= 2
@@ -372,7 +392,7 @@ export const MembersPermissionList = forwardRef<
       return
     }
   }, [
-    canWrite,
+    guardListApproveAction,
     memberType,
     onInstructorApproveRequest,
     onAdminApproveRequest,
@@ -382,7 +402,8 @@ export const MembersPermissionList = forwardRef<
 
   const bulkReject = useCallback(() => {
     const keys = selectedKeysSnapshot()
-    if (!canWrite || keys.length === 0) return
+    if (keys.length === 0) return
+    if (!guardListApproveAction()) return
 
     const rejectableRows = resolveRejectableRowsForKeys(keys)
     const pendingRows = rejectableRows.filter(r => r.approvalStatus === 'PENDING')
@@ -457,7 +478,7 @@ export const MembersPermissionList = forwardRef<
       return
     }
   }, [
-    canWrite,
+    guardListApproveAction,
     memberType,
     onInstructorRejectRequest,
     onAdminRejectRequest,
@@ -465,82 +486,81 @@ export const MembersPermissionList = forwardRef<
     selectedKeysSnapshot,
   ])
 
-  const columns: ColumnsType<MemberPermissionApplicationRow> = useMemo(
-    () => {
-      const listMasked = instructorRemote || adminRemote
-      const cols: ColumnsType<MemberPermissionApplicationRow> = [
-        {
-          title: 'No.',
-          key: 'no',
-          className: CMS_TABLE_NO_COL_CLASS,
-          width: TABLE_COLUMN_WIDTHS.index,
-          align: 'center',
-          render: (_: unknown, __: MemberPermissionApplicationRow, index: number) =>
-            tableData.length - index,
-        },
-        {
-          title: '회원명',
-          dataIndex: 'name',
-          key: 'name',
-          width: TABLE_COLUMN_WIDTHS.name,
-          ellipsis: true,
-        },
-        {
-          title: '연락처',
-          key: 'phone',
-          width: TABLE_COLUMN_WIDTHS.phone,
-          render: (_: unknown, r: MemberPermissionApplicationRow) => displayPhone(r.phone, listMasked),
-        },
-        {
-          title: '이메일',
-          key: 'email',
-          width: TABLE_COLUMN_WIDTHS.email,
-          ellipsis: true,
-          render: (_: unknown, r: MemberPermissionApplicationRow) => displayEmail(r.email, listMasked),
-        },
-      ]
+  const columns: ColumnsType<MemberPermissionApplicationRow> = useMemo(() => {
+    const listMasked = instructorRemote || adminRemote
+    const cols: ColumnsType<MemberPermissionApplicationRow> = [
+      {
+        title: 'No.',
+        key: 'no',
+        className: CMS_TABLE_NO_COL_CLASS,
+        width: TABLE_COLUMN_WIDTHS.index,
+        align: 'center',
+        render: (_: unknown, __: MemberPermissionApplicationRow, index: number) =>
+          tableData.length - index,
+      },
+      {
+        title: '회원명',
+        dataIndex: 'name',
+        key: 'name',
+        width: TABLE_COLUMN_WIDTHS.name,
+        ellipsis: true,
+      },
+      {
+        title: '연락처',
+        key: 'phone',
+        width: TABLE_COLUMN_WIDTHS.phone,
+        render: (_: unknown, r: MemberPermissionApplicationRow) =>
+          displayPhone(r.phone, listMasked),
+      },
+      {
+        title: '이메일',
+        key: 'email',
+        width: TABLE_COLUMN_WIDTHS.email,
+        ellipsis: true,
+        render: (_: unknown, r: MemberPermissionApplicationRow) =>
+          displayEmail(r.email, listMasked),
+      },
+    ]
 
-      // 강사 목록만「회원 유형」노출. 관리자 목록은 회원·신청 유형 모두 비노출.
-      if (memberType === 'instructor') {
-        cols.push({
-          title: '회원 유형',
-          dataIndex: 'memberCategory',
-          key: 'memberCategory',
-          width: 120,
-          align: 'center',
-          render: (c: MemberPermissionApplicationRow['memberCategory']) => MEMBER_CATEGORY_LABEL[c],
-        })
+    // 강사 목록만「회원 유형」노출. 관리자 목록은 회원·신청 유형 모두 비노출.
+    if (memberType === 'instructor') {
+      cols.push({
+        title: '회원 유형',
+        dataIndex: 'memberCategory',
+        key: 'memberCategory',
+        width: 120,
+        align: 'center',
+        render: (c: MemberPermissionApplicationRow['memberCategory']) => MEMBER_CATEGORY_LABEL[c],
+      })
+    }
+
+    cols.push(
+      {
+        title: '권한 승인 현황',
+        dataIndex: 'approvalStatus',
+        key: 'approvalStatus',
+        width: 120,
+        align: 'center',
+        onHeaderCell: () => ({
+          className: 'members-permission-list__col--approval-status',
+        }),
+        onCell: () => ({
+          className: 'members-permission-list__col--approval-status',
+        }),
+        render: (_: unknown, record: MemberPermissionApplicationRow) =>
+          memberPermissionApprovalStatusTextTag(record.approvalStatus),
+      },
+      {
+        title: '신청일',
+        dataIndex: 'appliedAt',
+        key: 'appliedAt',
+        width: TABLE_COLUMN_WIDTHS.date,
+        render: (v: string) => dayjs(v).format('YYYY.MM.DD'),
       }
+    )
 
-      cols.push(
-        {
-          title: '권한 승인 현황',
-          dataIndex: 'approvalStatus',
-          key: 'approvalStatus',
-          width: 120,
-          align: 'center',
-          onHeaderCell: () => ({
-            className: 'members-permission-list__col--approval-status',
-          }),
-          onCell: () => ({
-            className: 'members-permission-list__col--approval-status',
-          }),
-          render: (_: unknown, record: MemberPermissionApplicationRow) =>
-            memberPermissionApprovalStatusTextTag(record.approvalStatus),
-        },
-        {
-          title: '신청일',
-          dataIndex: 'appliedAt',
-          key: 'appliedAt',
-          width: TABLE_COLUMN_WIDTHS.date,
-          render: (v: string) => dayjs(v).format('YYYY.MM.DD'),
-        }
-      )
-
-      return cols
-    },
-    [adminRemote, instructorRemote, memberType, tableData.length]
-  )
+    return cols
+  }, [adminRemote, instructorRemote, memberType, tableData.length])
 
   const filterFields = useMemo<FilterFieldConfig[]>(() => {
     const searchField: FilterFieldConfig = {
@@ -592,136 +612,116 @@ export const MembersPermissionList = forwardRef<
 
   return (
     <>
-      {instructorRemote && instructorRemoteQuery.isError ? (
-        <Alert
-          type="error"
-          showIcon
-          message="강사 권한 신청 목록을 불러오지 못했습니다"
-          style={{ marginBottom: 12 }}
-        />
-      ) : null}
-      {adminRemote && adminRemoteQuery.isError ? (
-        <Alert
-          type="error"
-          showIcon
-          message="관리자 권한 신청 목록을 불러오지 못했습니다"
-          style={{ marginBottom: 12 }}
-        />
-      ) : null}
       <FilterTableLayout
-      bordered={false}
-      fields={filterFields}
-      filters={{
-        search: pendingFilters.search,
-        role: pendingFilters.role,
-        approvalStatus: pendingFilters.approvalStatus,
-        createdAtRange: pendingFilters.createdAtRange ?? undefined,
-      }}
-      onFilterChange={handleFilterChange}
-      onSearch={handleSearch}
-      title={listTitle(memberType)}
-      description={`총 ${displayedCount.toLocaleString()}건`}
-      actions={
-        <>
-          <CmsButton
-            variant="delete"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
-            onClick={bulkReject}
-            disabled={!canWrite || selectedRowKeys.length === 0}
-          >
-            신청 반려
-          </CmsButton>
-          <CmsButton
-            variant="secondary"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
-            onClick={bulkApprove}
-            disabled={!canWrite || selectedRowKeys.length === 0}
-          >
-            신청 승인
-          </CmsButton>
-        </>
-      }
-      excelExport={{
-        columns,
-        data: tableData,
-      }}
-    >
-      <Table<MemberPermissionApplicationRow>
-        rowKey="id"
-        className="cms-data-table members-permission-list__table"
-        columns={columns}
-        dataSource={tableData}
-        loading={remoteLoading}
-        onRow={record => ({
-          onClick: (e: MouseEvent<HTMLElement>) => {
-            if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
-            void onOpenUserDetail?.(record.userId, memberType, record)
-          },
-          style: { cursor: onOpenUserDetail ? 'pointer' : undefined },
-        })}
-        rowSelection={
-          canWrite
-            ? {
-                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                selectedRowKeys,
-                onChange: keys => {
-                  const next = keys.map(k => String(k))
-                  selectedRowKeysRef.current = next
-                  setSelectedRowKeys(next)
-                },
-                preserveSelectedRowKeys: false,
-              }
-            : undefined
+        bordered={false}
+        fields={filterFields}
+        filters={{
+          search: pendingFilters.search,
+          role: pendingFilters.role,
+          approvalStatus: pendingFilters.approvalStatus,
+          createdAtRange: pendingFilters.createdAtRange ?? undefined,
+        }}
+        onFilterChange={handleFilterChange}
+        onSearch={handleSearch}
+        title={listTitle(memberType)}
+        description={`총 ${displayedCount.toLocaleString()}건`}
+        actions={
+          <>
+            <CmsButton
+              variant="delete"
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
+              onClick={bulkReject}
+              disabled={selectedRowKeys.length === 0}
+            >
+              신청 반려
+            </CmsButton>
+            <CmsButton
+              variant="secondary"
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
+              onClick={bulkApprove}
+              disabled={selectedRowKeys.length === 0}
+            >
+              신청 승인
+            </CmsButton>
+          </>
         }
-        pagination={false}
-      />
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
+      >
+        <Table<MemberPermissionApplicationRow>
+          rowKey="id"
+          className="cms-data-table members-permission-list__table"
+          columns={columns}
+          dataSource={tableData}
+          loading={remoteLoading}
+          onRow={record => ({
+            onClick: (e: MouseEvent<HTMLElement>) => {
+              if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
+              void onOpenUserDetail?.(record.userId, memberType, record)
+            },
+            style: { cursor: onOpenUserDetail ? 'pointer' : undefined },
+          })}
+          rowSelection={{
+            columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+            selectedRowKeys,
+            onChange: keys => {
+              const next = keys.map(k => String(k))
+              selectedRowKeysRef.current = next
+              setSelectedRowKeys(next)
+            },
+            preserveSelectedRowKeys: false,
+          }}
+          pagination={false}
+        />
 
-      {bulkApproveBlockedSelectedCount != null ? (
-        <ContentModal
-          open
-          onCancel={() => setBulkApproveBlockedSelectedCount(null)}
-          title="일괄 신청 승인 불가 안내"
-          width={600}
-          description={`선택한 **${bulkApproveBlockedSelectedCount}**명의 회원 중 승인 완료 혹은 신청 반려 상태인 회원이 있습니다.\n다시 확인 해주세요.`}
-          footer={
-            <CmsButton
-              variant="secondary"
-              size="medium"
-              type="button"
-              onClick={() => setBulkApproveBlockedSelectedCount(null)}
-            >
-              확인
-            </CmsButton>
-          }
-        >
-          {null}
-        </ContentModal>
-      ) : null}
+        {bulkApproveBlockedSelectedCount != null ? (
+          <ContentModal
+            open
+            onCancel={() => setBulkApproveBlockedSelectedCount(null)}
+            title="일괄 신청 승인 불가 안내"
+            width={600}
+            description={`선택한 **${bulkApproveBlockedSelectedCount}**명의 회원 중 승인 완료 혹은 신청 반려 상태인 회원이 있습니다.\n다시 확인 해주세요.`}
+            footer={
+              <CmsButton
+                variant="secondary"
+                size="medium"
+                type="button"
+                onClick={() => setBulkApproveBlockedSelectedCount(null)}
+              >
+                확인
+              </CmsButton>
+            }
+          >
+            {null}
+          </ContentModal>
+        ) : null}
 
-      {bulkRejectBlockedSelectedCount != null ? (
-        <ContentModal
-          open
-          onCancel={() => setBulkRejectBlockedSelectedCount(null)}
-          title="일괄 신청 반려 불가 안내"
-          width={600}
-          description={`선택한 **${bulkRejectBlockedSelectedCount}**명의 회원 중 승인 완료 혹은 신청 반려 상태인 회원이 있습니다.\n다시 확인 해주세요.`}
-          footer={
-            <CmsButton
-              variant="secondary"
-              size="medium"
-              type="button"
-              onClick={() => setBulkRejectBlockedSelectedCount(null)}
-            >
-              확인
-            </CmsButton>
-          }
-        >
-          {null}
-        </ContentModal>
-      ) : null}
-    </FilterTableLayout>
+        {bulkRejectBlockedSelectedCount != null ? (
+          <ContentModal
+            open
+            onCancel={() => setBulkRejectBlockedSelectedCount(null)}
+            title="일괄 신청 반려 불가 안내"
+            width={600}
+            description={`선택한 **${bulkRejectBlockedSelectedCount}**명의 회원 중 승인 완료 혹은 신청 반려 상태인 회원이 있습니다.\n다시 확인 해주세요.`}
+            footer={
+              <CmsButton
+                variant="secondary"
+                size="medium"
+                type="button"
+                onClick={() => setBulkRejectBlockedSelectedCount(null)}
+              >
+                확인
+              </CmsButton>
+            }
+          >
+            {null}
+          </ContentModal>
+        ) : null}
+      </FilterTableLayout>
     </>
   )
 })

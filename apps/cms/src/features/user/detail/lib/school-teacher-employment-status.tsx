@@ -5,6 +5,13 @@ import {
   getEmploymentBadgeTone,
   SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL,
 } from '@/shared/constants/editable-status-badge-tones'
+import {
+  canAdminAction,
+  guardAdminAction,
+  showAdminAccessDeniedAlert,
+  type AdminRoleCode,
+} from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import type { SchoolTeacherEmploymentStatus } from '@/types/user'
 
 export {
@@ -34,6 +41,19 @@ export function isSchoolTeacherEmploymentMutedStatus(
   status: SchoolTeacherEmploymentStatus
 ): boolean {
   return SCHOOL_TEACHER_EMPLOYMENT_MUTED_TEXT_STATUSES.has(status)
+}
+
+/** 뷰어는 배지를 유지하고 열기·변경만 차단한다. */
+export function requestSchoolTeacherEmploymentDropdownOpen(
+  open: boolean,
+  roleCode: AdminRoleCode | null,
+  applyOpen: (open: boolean) => void
+): void {
+  if (open && !canAdminAction({ roleCode, action: 'write' })) {
+    showAdminAccessDeniedAlert()
+    return
+  }
+  applyOpen(open)
 }
 
 export function parseSchoolTeacherEmploymentStatus(
@@ -75,6 +95,7 @@ export function SchoolTeacherEmploymentStatusDropdown({
   /** remote 저장. 없으면 화면 상태만 변경(mock) */
   onChange?: (status: SchoolTeacherEmploymentStatus) => void | Promise<void>
 }) {
+  const roleCode = useSessionAdminRoleCode()
   const [employmentStatus, setEmploymentStatus] = useState<SchoolTeacherEmploymentStatus | null>(() =>
     parseSchoolTeacherEmploymentStatus(employmentStatusLabel)
   )
@@ -85,8 +106,16 @@ export function SchoolTeacherEmploymentStatusDropdown({
     setEmploymentStatus(parseSchoolTeacherEmploymentStatus(employmentStatusLabel))
   }, [userId, employmentStatusLabel])
 
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      requestSchoolTeacherEmploymentDropdownOpen(open, roleCode, setEmploymentDropdownOpen)
+    },
+    [roleCode]
+  )
+
   const handleEmploymentStatusChange = useCallback(
     async (next: SchoolTeacherEmploymentStatus) => {
+      if (!guardAdminAction({ roleCode, action: 'write' })) return
       if (next === employmentStatus) return
       setEmploymentDropdownOpen(false)
       if (!onChange) {
@@ -100,7 +129,7 @@ export function SchoolTeacherEmploymentStatusDropdown({
         setIsUpdating(false)
       }
     },
-    [employmentStatus, onChange]
+    [employmentStatus, onChange, roleCode]
   )
 
   if (employmentStatus == null) {
@@ -119,7 +148,7 @@ export function SchoolTeacherEmploymentStatusDropdown({
         onChange={handleEmploymentStatusChange}
         isUpdating={isUpdating}
         isOpen={employmentDropdownOpen}
-        onOpenChange={setEmploymentDropdownOpen}
+        onOpenChange={handleOpenChange}
         tagLayout="tag100"
         style={SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE}
       />

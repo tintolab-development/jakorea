@@ -33,8 +33,6 @@ export interface AdminAccountApprovalDetailResponse {
   lastLoginAt?: string;
   createdAt?: string;
   updatedAt?: string;
-  /** 관리자 권한 승인/반려 결과 알림 재발송 시각 */
-  notificationResentAt?: string;
   socialAccounts?: AdminLinkedSocialAccountResponse[];
   /** 관리자 등록 약관 4종의 최신 동의 상태. SERVICE_TERMS, PRIVACY_COLLECTION, MFA_SETUP_CONSENT, MARKETING을 포함합니다. */
   termsAgreements?: AdminTermsAgreementResponse[];

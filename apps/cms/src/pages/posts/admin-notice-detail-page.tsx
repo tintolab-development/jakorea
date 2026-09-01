@@ -205,10 +205,10 @@ export function AdminNoticeDetailPage() {
             목록
           </CmsButton>
           <div className="admin-notice-detail-page__actions-right">
-            <CmsButton variant="delete" size="large" onClick={handleDelete} disabled={!canWrite}>
+            <CmsButton variant="delete" size="large" onClick={handleDelete}>
               삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" onClick={handleEdit} disabled={!canWrite}>
+            <CmsButton variant="primary" size="large" adminAction="write" onClick={handleEdit}>
               수정
             </CmsButton>
           </div>

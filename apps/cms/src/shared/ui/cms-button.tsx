@@ -5,9 +5,11 @@
 import { forwardRef } from 'react'
 import { Button } from 'antd'
 import type { ButtonProps } from 'antd'
-import type { CSSProperties, ReactNode } from 'react'
+import type { CSSProperties, ReactNode, MouseEvent } from 'react'
 import './cms-button.css'
 import './button-loading-only.css'
+import { guardAdminAction, type AdminActionKind } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 
 type CmsButtonPropsOmit =
   | 'size'
@@ -41,6 +43,8 @@ export interface CmsButtonProps extends Omit<ButtonProps, CmsButtonPropsOmit> {
   style?: CSSProperties
   /** 네이티브 `<button type>` → antd `htmlType` */
   type?: 'button' | 'submit' | 'reset'
+  /** 지정 시 클릭을 해당 조작으로 가드. `variant="delete"` 는 미지정 시 delete */
+  adminAction?: AdminActionKind
 }
 
 export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
@@ -56,10 +60,13 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
       disabled,
       type = 'button',
       loading,
+      adminAction,
+      onClick,
       ...rest
     },
     ref
   ) => {
+    const roleCode = useSessionAdminRoleCode()
     const hasIcon = icon != null
     const resolvedWidth = width == null ? undefined : typeof width === 'number' ? `${width}px` : width
     /**
@@ -106,6 +113,19 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
      * 스피너 absolute 중앙 정렬이 깨짐. 로딩 중 더미 icon으로 existIcon 경로 사용.
      */
     const antdIcon = isLoading ? <span className="cms-button__loading-slot" aria-hidden /> : undefined
+    const resolvedAdminAction = adminAction ?? (variant === 'delete' ? 'delete' : undefined)
+
+    const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+      if (
+        resolvedAdminAction &&
+        !guardAdminAction({ roleCode, action: resolvedAdminAction })
+      ) {
+        event.preventDefault()
+        event.stopPropagation()
+        return
+      }
+      onClick?.(event)
+    }
 
     return (
       <Button
@@ -120,6 +140,7 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
         icon={antdIcon}
         style={{ outline: 'none', ...widthStyle, ...style }}
         {...rest}
+        onClick={handleClick}
       >
         {children != null || hasIcon ? (
           <span className="btn-loading-only__content">

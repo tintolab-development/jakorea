@@ -349,11 +349,11 @@ export default function SponsorPage() {
             <CmsButton
               variant="delete"
               onClick={handleBulkDelete}
-              disabled={!canWrite || selectedRowKeys.length === 0}
+              disabled={selectedRowKeys.length === 0}
             >
               후원사 삭제
             </CmsButton>
-            <CmsButton variant="primary" onClick={handleRegister} disabled={!canWrite}>
+            <CmsButton variant="primary" onClick={handleRegister}>
               후원사 등록
             </CmsButton>
           </>

@@ -5,7 +5,7 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { FilledDocumentRequestSchemaJson } from './filledDocumentRequestSchemaJson';
+import type { JsonNode } from './jsonNode';
 import type { PaymentStatementBasicInfo } from './paymentStatementBasicInfo';
 
 /**
@@ -13,7 +13,7 @@ import type { PaymentStatementBasicInfo } from './paymentStatementBasicInfo';
  */
 export interface FilledDocumentRequest {
   templateCode?: string;
-  /** @jakorea/form-schema WritingFormDraft 전체 객체. Jackson 구현체에 종속되지 않는 JSON object 형태로 전달합니다. */
-  schemaJson?: FilledDocumentRequestSchemaJson;
+  /** @jakorea/form-schema WritingFormDraft 전체 객체 */
+  schemaJson?: JsonNode;
   paymentBasicInfo?: PaymentStatementBasicInfo;
 }

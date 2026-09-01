@@ -5,6 +5,8 @@
 import { CloseOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { onAdminWriteClickCapture } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import './detail-fullpage-modal.css'
 
 export interface DetailFullPageModalProps {
@@ -75,6 +77,7 @@ export function DetailFullPageModal({
   closeAriaLabel = '닫기',
   zIndex,
 }: DetailFullPageModalProps) {
+  const roleCode = useSessionAdminRoleCode()
   const handleClose = onHeaderClose ?? onClose
   const body = (
     <DetailFullPageModalBody loading={loading} error={error}>
@@ -117,12 +120,21 @@ export function DetailFullPageModal({
                 <CloseOutlined />
               </button>
             </div>
-            {headerExtra ? <>{headerExtra}</> : null}
+            {headerExtra ? (
+              <div onClickCapture={event => onAdminWriteClickCapture(event, roleCode)}>
+                {headerExtra}
+              </div>
+            ) : null}
           </header>
           <div className="detail-fullpage-modal__content">
             {contentExtra && !loading && error == null ? (
               <div className="detail-fullpage-modal__content-actions-wrapper">
-                <div className="detail-fullpage-modal__content-actions">{contentExtra}</div>
+                <div
+                  className="detail-fullpage-modal__content-actions"
+                  onClickCapture={event => onAdminWriteClickCapture(event, roleCode)}
+                >
+                  {contentExtra}
+                </div>
                 <div>{body}</div>
               </div>
             ) : (

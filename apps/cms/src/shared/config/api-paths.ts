@@ -23,3 +23,6 @@ export const adminAuthPaths = {
   passwordResetConfirm: () => `${adminAuthPaths.prefix}/password-reset/confirm`,
   passwordChange: () => `${adminAuthPaths.prefix}/password/change`,
 } as const
+
+/** GNB 계정 — `GET /api/admin/me` */
+export const adminMePath = () => '/api/admin/me'
