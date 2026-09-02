@@ -62,8 +62,8 @@ import {
   type GetUsersPageResult,
 } from '@/entities/user/api/user-service'
 import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
-import { useAuthStore } from '@/features/auth/model/auth-store'
-import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { guardAdminAction } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { handleError } from '@/shared/utils/error-handler'
 import {
   ActionResultModal,
@@ -177,8 +177,7 @@ export function UserListPage() {
   const { params, setParams } = useQueryParams<UserListQueryParams>()
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
-  const { user } = useAuthStore()
-  const canWrite = canPerformWriteAction(user)
+  const roleCode = useSessionAdminRoleCode()
 
   const listQueryFilters = useMemo(() => buildListQueryApiFilters(params), [params])
   const listQueryFiltersKey = useMemo(
@@ -1072,6 +1071,7 @@ export function UserListPage() {
 
   // 회원 삭제
   const handleDeleteClick = (user: Omit<User, 'password'>) => {
+    if (!guardAdminAction({ roleCode, action: 'delete' })) return
     if (resolvedMemberListKind === 'institutions' && institutionHasRegisteredTeachers(user)) {
       setInstitutionDeleteBlockedCount(1)
       setInstitutionDeleteBlockedOpen(true)
@@ -1122,6 +1122,7 @@ export function UserListPage() {
   /** 회원 상세 > 탈퇴 확인 모달 확정 — 목록용 DeleteGuideModal 없이 바로 삭제 후 완료 안내 */
   const handleWithdrawFromDetail = useCallback(
     async (u: Omit<User, 'password'>) => {
+      if (!guardAdminAction({ roleCode, action: 'delete' })) return
       flushUserDetailModal()
       setDeleteLoading(true)
       try {
@@ -1143,7 +1144,7 @@ export function UserListPage() {
         setDeleteLoading(false)
       }
     },
-    [flushUserDetailModal, deleteUser, resolvedMemberListKind, invalidateList]
+    [flushUserDetailModal, deleteUser, resolvedMemberListKind, invalidateList, roleCode]
   )
 
   const handleCloseDeleteResultModal = useCallback(() => {
@@ -1152,6 +1153,7 @@ export function UserListPage() {
 
   const handleAdminPermissionChange = useCallback(
     async (ctx: { userId: string; nextPermission: AdminPermissionTagVariant }) => {
+      if (!guardAdminAction({ roleCode, action: 'write' })) return
       setAdminPermissionChangingUserId(ctx.userId)
       try {
         const baseUser =
@@ -1217,7 +1219,7 @@ export function UserListPage() {
         setAdminPermissionChangingUserId(null)
       }
     },
-    [patchUserBasicInfo, queryClient, listUsers, drawerUser, setDrawerUser, setDetailBridgeUser]
+    [patchUserBasicInfo, queryClient, listUsers, drawerUser, setDrawerUser, setDetailBridgeUser, roleCode]
   )
 
   return (
@@ -1300,37 +1302,35 @@ export function UserListPage() {
                     ? '관리자 삭제'
                     : '회원 삭제'}
             </CmsButton>
-            {canWrite && (
-              <CmsButton
-                onClick={() => {
-                  if (resolvedMemberListKind === 'all') {
-                    openCreateModal()
-                    return
-                  }
-                  if (resolvedMemberListKind === 'institutions') {
-                    openSchoolRegisterModal()
-                    return
-                  }
-                  if (resolvedMemberListKind === 'admins') {
-                    openAdminRegisterModal()
-                    return
-                  }
-                  if (resolvedMemberListKind === 'instructors') {
-                    openInstructorRegisterModal()
-                    return
-                  }
-                  window.alert('준비 중입니다')
-                }}
-              >
-                {resolvedMemberListKind === 'institutions'
-                  ? '학교 등록'
-                  : resolvedMemberListKind === 'instructors'
-                    ? '강사 등록'
-                    : resolvedMemberListKind === 'admins'
-                      ? '관리자 등록'
-                      : '회원 등록'}
-              </CmsButton>
-            )}
+            <CmsButton
+              onClick={() => {
+                if (resolvedMemberListKind === 'all') {
+                  openCreateModal()
+                  return
+                }
+                if (resolvedMemberListKind === 'institutions') {
+                  openSchoolRegisterModal()
+                  return
+                }
+                if (resolvedMemberListKind === 'admins') {
+                  openAdminRegisterModal()
+                  return
+                }
+                if (resolvedMemberListKind === 'instructors') {
+                  openInstructorRegisterModal()
+                  return
+                }
+                window.alert('준비 중입니다')
+              }}
+            >
+              {resolvedMemberListKind === 'institutions'
+                ? '학교 등록'
+                : resolvedMemberListKind === 'instructors'
+                  ? '강사 등록'
+                  : resolvedMemberListKind === 'admins'
+                    ? '관리자 등록'
+                    : '회원 등록'}
+            </CmsButton>
           </>
         }
         excelExport={{
@@ -1344,8 +1344,8 @@ export function UserListPage() {
           data={listUsers}
           loading={memberDetailLoading}
           onView={handleView}
-          onDelete={canWrite ? handleDeleteClick : undefined}
-          onAdminPermissionChange={canWrite ? handleAdminPermissionChange : undefined}
+          onDelete={handleDeleteClick}
+          onAdminPermissionChange={handleAdminPermissionChange}
           adminPermissionChangeLoadingUserId={adminPermissionChangingUserId}
           selectedRowKeys={selectedRowKeys}
           onSelectionChange={setSelectedRowKeys}
@@ -1360,7 +1360,7 @@ export function UserListPage() {
         user={modalDetailUser}
         basicInfoEntrySource={basicInfoEntrySource}
         onClose={handleUserDetailModalClose}
-        onWithdraw={canWrite && modalDetailUser ? handleWithdrawFromDetail : undefined}
+        onWithdraw={modalDetailUser ? handleWithdrawFromDetail : undefined}
         onNavigateToLinkedUser={handleNavigateToLinkedUser}
         onMemberBasicInfoSaved={handleMemberBasicInfoSaved}
         detailCloseIntentRef={detailCloseIntentRef}

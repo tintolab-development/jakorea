@@ -29,14 +29,7 @@ export function ApplicantRecruitFormInstitutionEditorLeftColumn({
       singleItemListActiveItemId={vm.singleItemListActiveItemId}
       onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
-      paragraphBodyOptions={{
-        structureLockedParagraphIds: vm.structureLockedParagraphIds,
-        structureLockedAuthoringChoicePreview: true,
-        applicantRecruitFormInstitution: true,
-        showInstitutionApplicationLimits: true,
-        applicantRecruitInstitutionLayoutVariant: vm.applicantRecruitInstitutionLayoutVariant,
-        applicantRecruitInstitutionDefaults: vm.applicantRecruitInstitutionDefaults,
-      }}
+      paragraphBodyOptions={vm.leftPanelParagraphBodyOptions}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
   )

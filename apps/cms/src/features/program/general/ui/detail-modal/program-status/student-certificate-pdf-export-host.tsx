@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
+import { downloadIssuedCertificatePdf } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
+import { getCertificateSerialAllocateErrorMessage } from '@/features/program/shared/api/certificate-serial-api'
 import {
   FormCertificatePreview,
   FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS,
@@ -15,6 +17,7 @@ import {
   resolveStudentCertificateTemplateKey,
   resolveStudentCertificateTemplateName,
 } from '@/features/program/general/lib/student-certificate-template'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import '@/pages/templates/form-certificate-preview.css'
 
 export interface StudentCertificatePdfExportHostProps {
@@ -26,9 +29,11 @@ export function StudentCertificatePdfExportHost({
   context,
   onComplete,
 }: StudentCertificatePdfExportHostProps) {
+  const { showAlert } = useCmsAlert()
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
   const completedRef = useRef(false)
   const [captureMounted, setCaptureMounted] = useState(false)
+  const [pdfSerialNumber, setPdfSerialNumber] = useState<string | undefined>()
 
   const runtimeStringValues = useMemo(
     () => buildStudentCertificateInitialStringValues(context),
@@ -41,7 +46,12 @@ export function StudentCertificatePdfExportHost({
     runtimeStringValues,
     runtimeStringOverrideKeys: ['participantInfo'],
   })
-  const { pdfExport: certificatePdfExportProps } = useFormCertificatePreviewProps(modalState)
+  const certificateType = resolveStudentCertificateTemplateKey(context.certificateKind)
+  const { pdfExport: certificatePdfExportProps } = useFormCertificatePreviewProps(
+    modalState,
+    undefined,
+    pdfSerialNumber
+  )
 
   const buildPdfFilename = useCallback(
     () => `${buildStudentCertificateFileName(context)}.pdf`,
@@ -60,6 +70,7 @@ export function StudentCertificatePdfExportHost({
 
   useEffect(() => {
     completedRef.current = false
+    setPdfSerialNumber(undefined)
   }, [context.student.id, context.certificateKind, context.issuanceReasonLabel])
 
   useEffect(() => {
@@ -71,20 +82,52 @@ export function StudentCertificatePdfExportHost({
     void (async () => {
       try {
         if (pdfExportCanvasRef.current == null) {
-          if (!cancelled) onComplete(false)
+          if (!cancelled) {
+            showAlert({
+              title: '안내',
+              content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+            })
+            onComplete(false)
+          }
           return
         }
-        await downloadPdf()
+        await downloadIssuedCertificatePdf({
+          subject: {
+            programId: context.programId,
+            subjectId: context.student.id,
+            certificateType,
+          },
+          applySerial: setPdfSerialNumber,
+          exportRoot: pdfExportCanvasRef.current,
+          getExportRoot: () => pdfExportCanvasRef.current,
+          downloadPdf,
+        })
+        if (cancelled) return
         if (!cancelled) onComplete(true)
-      } catch {
-        if (!cancelled) onComplete(false)
+      } catch (error) {
+        if (!cancelled) {
+          showAlert({
+            title: '안내',
+            content: getCertificateSerialAllocateErrorMessage(error),
+          })
+          onComplete(false)
+        }
       }
     })()
 
     return () => {
       cancelled = true
     }
-  }, [captureMounted, context.certificateKind, context.student.id, downloadPdf, onComplete])
+  }, [
+    captureMounted,
+    certificateType,
+    context.certificateKind,
+    context.programId,
+    context.student.id,
+    downloadPdf,
+    onComplete,
+    showAlert,
+  ])
 
   return (
     <div className={FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS} aria-hidden="true">

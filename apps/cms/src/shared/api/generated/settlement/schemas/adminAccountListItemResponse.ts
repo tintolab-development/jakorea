@@ -24,4 +24,6 @@ export interface AdminAccountListItemResponse {
   permissionVersion?: number;
   lastLoginAt?: string;
   createdAt?: string;
+  requestedAt?: string;
+  managedProgramCount?: number;
 }

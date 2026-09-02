@@ -197,7 +197,7 @@ export function createGeminiVisitingTrainingApplicationFormInstitutionDraft(): W
     createSeedHorizontalTable(
       GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
       '진행 희망 교육 일정',
-      '1~3순위 희망 날짜 및 강의 희망 차시를 기재해 주세요.',
+      '1~3순위 희망 날짜 및 희망 교육 시간을 기재해 주세요.',
       false
     ),
   ]

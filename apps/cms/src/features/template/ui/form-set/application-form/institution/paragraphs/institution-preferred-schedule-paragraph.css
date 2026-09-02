@@ -1,0 +1,42 @@
+.institution-preferred-schedule-paragraph {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.institution-preferred-schedule-paragraph__header {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.institution-preferred-schedule-paragraph__block-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.institution-preferred-schedule-paragraph__block-body {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.institution-preferred-schedule-paragraph__block-title {
+  margin-bottom: 8px;
+}
+
+.institution-preferred-schedule-paragraph__delete-cell {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+}
+
+.institution-preferred-schedule-paragraph__time-inputs {
+  flex-wrap: wrap;
+}
+
+.institution-preferred-schedule-paragraph__tilde {
+  color: var(--text-secondary, #757575);
+}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { startTransition, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import type { TemplateWritingUserPreviewSession } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
@@ -114,9 +114,11 @@ export function useWritingFormEditorWithUserPreview(
   const applyDraftSnapshot = useCallback(
     (next: WritingFormDraft) => {
       const normalized = normalizeWritingFormDraft(next)
-      setDraft(normalized)
-      setActiveParagraphId(getDefaultActiveParagraphId(normalized))
-      setSingleItemListActiveItemId(null)
+      startTransition(() => {
+        setDraft(normalized)
+        setActiveParagraphId(getDefaultActiveParagraphId(normalized))
+        setSingleItemListActiveItemId(null)
+      })
     },
     [getDefaultActiveParagraphId]
   )

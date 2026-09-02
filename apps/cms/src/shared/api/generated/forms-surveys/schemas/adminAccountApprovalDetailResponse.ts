@@ -33,6 +33,8 @@ export interface AdminAccountApprovalDetailResponse {
   lastLoginAt?: string;
   createdAt?: string;
   updatedAt?: string;
+  requestedAt?: string;
+  managedProgramCount?: number;
   /** 관리자 권한 승인/반려 결과 알림 재발송 시각 */
   notificationResentAt?: string;
   socialAccounts?: AdminLinkedSocialAccountResponse[];

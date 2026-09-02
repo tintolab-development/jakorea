@@ -30,11 +30,7 @@ export function TrainedTeachersProgramApplicationEditorLeftColumn({
       singleItemListActiveItemId={vm.singleItemListActiveItemId}
       onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
-      paragraphBodyOptions={{
-        structureLockedParagraphIds: vm.structureLockedParagraphIds,
-        structureLockedAuthoringChoicePreview: true,
-        programApplicationFormTrainedTeachersInstitution: true,
-      }}
+      paragraphBodyOptions={vm.leftPanelParagraphBodyOptions}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
   )

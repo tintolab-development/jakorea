@@ -6,10 +6,30 @@
   gap: var(--spacing-16);
 }
 
+.labelBreak {
+  display: none;
+}
+
 @media (--bp-below-pc) {
   .cards {
-    flex-direction: column;
-    align-items: stretch;
+    gap: var(--spacing-10);
+  }
+
+  .label {
+    font-size: 14px !important;
+    white-space: normal;
+  }
+
+  .labelSpace {
+    display: none;
+  }
+
+  .labelBreak {
+    display: block;
+  }
+
+  .value {
+    font-size: 20px !important;
   }
 }
 

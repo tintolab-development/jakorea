@@ -2,14 +2,32 @@ import type { ReactNode } from 'react'
 import { PFText } from '../pf-text'
 import styles from './pf-form.module.css'
 
+export type PFFormFieldTableRadius = 'default' | 'rounded'
+
 export type PFFormFieldTableProps = {
   children: ReactNode
   className?: string
+  /** default: 16px · rounded: 24px */
+  radius?: PFFormFieldTableRadius
 }
 
-export function PFFormFieldTable({ children, className }: PFFormFieldTableProps) {
+export function PFFormFieldTable({
+  children,
+  className,
+  radius = 'default',
+}: PFFormFieldTableProps) {
   return (
-    <div className={[styles.fieldTable, className].filter(Boolean).join(' ')}>{children}</div>
+    <div
+      className={[
+        styles.fieldTable,
+        radius === 'rounded' ? styles.fieldTableRounded : undefined,
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {children}
+    </div>
   )
 }
 

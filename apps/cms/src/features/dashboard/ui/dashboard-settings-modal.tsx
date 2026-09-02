@@ -328,7 +328,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
       <CmsButton variant="secondary" size="large" onClick={onCancel}>
         닫기
       </CmsButton>
-      <CmsButton variant="primary" size="large" onClick={handleApply}>
+      <CmsButton variant="primary" size="large" adminAction="write" onClick={handleApply}>
         설정
       </CmsButton>
     </>

@@ -12,6 +12,12 @@ export interface TemplateRow extends TemplateDefinition {
   creator: string
   createdAt: string
   updatedAt: string
+  /** forms-surveys 목록 API numeric id — 삭제 API path param */
+  apiTemplateId?: number
+  systemTemplate?: boolean
+  availableActions?: string[]
+  /** 목록 행 기준 삭제 버튼 노출 (미지정 시 policy helper가 계산) */
+  deletable?: boolean
 }
 
 export interface TemplateSection {

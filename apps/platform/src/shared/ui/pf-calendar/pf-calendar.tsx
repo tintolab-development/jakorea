@@ -257,6 +257,19 @@ export function PFCalendar({
                         >
                           {day.day}
                         </span>
+                        {hasEvents ? (
+                          <span className={styles.eventDots} aria-hidden="true">
+                            {dayEvents.map(event => (
+                              <span
+                                key={event.id}
+                                className={styles.eventDot}
+                                style={{
+                                  backgroundColor: CALENDAR_EVENT_COLORS[event.type].accent,
+                                }}
+                              />
+                            ))}
+                          </span>
+                        ) : null}
                         {overflow > 0 ? (
                           <span className={styles.overflowLabel}>외 {overflow}개</span>
                         ) : null}

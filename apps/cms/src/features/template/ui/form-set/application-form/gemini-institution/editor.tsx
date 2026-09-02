@@ -30,11 +30,7 @@ export function GeminiVisitingTrainingApplicationFormInstitutionEditorLeftColumn
       singleItemListActiveItemId={vm.singleItemListActiveItemId}
       onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
-      paragraphBodyOptions={{
-        structureLockedParagraphIds: vm.structureLockedParagraphIds,
-        structureLockedAuthoringChoicePreview: true,
-        programApplicationFormGeminiInstitution: true,
-      }}
+      paragraphBodyOptions={vm.leftPanelParagraphBodyOptions}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
   )

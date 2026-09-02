@@ -36,6 +36,7 @@ import {
   MypageInquiriesPage,
   MypageEducationPage,
   MypageEducationDetailPage,
+  MypageEducationSettlementWritePage,
   MypageSettingsPage,
 } from '@/pages/mypage'
 import {
@@ -84,6 +85,10 @@ export const router = createBrowserRouter([
       { path: '/programs', element: <ProgramsPage /> },
       { path: '/programs/:programId/apply/complete', element: <ProgramApplyCompletePage /> },
       { path: '/mypage/education/:applicationId', element: <MypageEducationDetailPage /> },
+      {
+        path: '/mypage/education/:applicationId/settlement/write',
+        element: <MypageEducationSettlementWritePage />,
+      },
       { path: '/notices/:noticeId', element: <NoticeDetailPage /> },
       { path: '/results/:resultId', element: <ResultDetailPage /> },
       { path: '/impact/:storyId', element: <ImpactStoryDetailPage /> },

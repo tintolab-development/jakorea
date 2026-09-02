@@ -404,6 +404,7 @@ export function InstructorProfileFormBody({
       type="button"
       variant="secondary"
       size="medium"
+      adminAction="write"
       disabled={!onOpenJaGradeEvaluation}
       onClick={() => onOpenJaGradeEvaluation?.()}
     >

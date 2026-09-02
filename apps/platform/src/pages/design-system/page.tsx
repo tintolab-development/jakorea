@@ -28,6 +28,10 @@ import {
   PFButton,
   PFCheckbox,
   PFDivider,
+  PFFormField,
+  PFFormFieldRow,
+  PFFormFieldTable,
+  PFInfoReview,
   PFAttachmentDropdown,
   PFFileDownload,
   PFModal,
@@ -1623,6 +1627,64 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
       </div>
 
       <div className={styles.section} id="forms">
+        <PFText as="div" typo="hl-sm" color="black">
+          PFInfoReview
+        </PFText>
+        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+          읽기 전용 확인 목록. 세로 행(라벨 120px + 값), 첫 행만 민트 보더. 회원가입 확인·설정 보기에서
+          사용합니다.
+        </PFText>
+        <PFInfoReview
+          rows={[
+            { label: '이름', value: '홍길동' },
+            { label: '연락처', value: '010-1234-5678' },
+            { label: '이메일', value: 'hong@example.com' },
+          ]}
+        />
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFFormFieldTable
+        </PFText>
+        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+          입력 폼 테이블 셸. 회색 라벨 칸 + 흰 값 칸. <code>PFFormFieldRow</code> +{' '}
+          <code>PFFormField</code>와 함께 씁니다. <code>radius=&quot;rounded&quot;</code>는 24px 라운드(정산 정보
+          등). 강사신청·동의서 작성은 기본 16px입니다.
+        </PFText>
+        <div className={styles.stack}>
+          <div className={styles.usageCard}>
+            <PFText as="div" typo="bd-sm-sb" color="black">
+              Row type=&quot;single&quot;
+            </PFText>
+            <PFFormFieldTable>
+              <PFFormFieldRow>
+                <PFFormField label="이름" required>
+                  <PFTextInput placeholder="이름을 입력해 주세요" defaultValue="홍길동" />
+                </PFFormField>
+              </PFFormFieldRow>
+              <PFFormFieldRow>
+                <PFFormField label="연락처">
+                  <PFTextInput placeholder="연락처" defaultValue="010-1234-5678" />
+                </PFFormField>
+              </PFFormFieldRow>
+            </PFFormFieldTable>
+          </div>
+          <div className={styles.usageCard}>
+            <PFText as="div" typo="bd-sm-sb" color="black">
+              Row type=&quot;double&quot; · radius=&quot;rounded&quot;
+            </PFText>
+            <PFFormFieldTable radius="rounded">
+              <PFFormFieldRow type="double">
+                <PFFormField label="지급조서 처리 현황">확인진행중</PFFormField>
+                <PFFormField label="프로그램 진행 회차">3/7 건 (강의 진행 회차 기준)</PFFormField>
+              </PFFormFieldRow>
+            </PFFormFieldTable>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
         <PFText as="div" typo="hl-sm" color="black">
           PFTextInput
         </PFText>

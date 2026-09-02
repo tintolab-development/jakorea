@@ -221,10 +221,10 @@ export function GeminiRecruitmentList() {
         description={`총 ${displayedCount.toLocaleString()}건`}
         actions={
           <>
-            <CmsButton variant="delete" onClick={handleBulkDeleteClick} disabled={!canWrite}>
+            <CmsButton variant="delete" onClick={handleBulkDeleteClick}>
               선택 삭제
             </CmsButton>
-            <CmsButton variant="primary" onClick={handleAddRecruitment} disabled={!canWrite}>
+            <CmsButton variant="primary" onClick={handleAddRecruitment}>
               모집 공고 추가
             </CmsButton>
           </>

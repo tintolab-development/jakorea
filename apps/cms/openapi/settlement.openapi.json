@@ -173,6 +173,10 @@
       "description": "공통 코드, 카탈로그, 정산 항목, 운영 기준값 등 마스터 데이터 API입니다."
     },
     {
+      "name": "기타 API",
+      "description": "주소/좌표 기반 실제 자동차 이동거리 조회 API"
+    },
+    {
       "name": "인증/세션",
       "description": "관리자/회원 로그인, MFA 검증, 토큰 갱신, 로그아웃 API입니다."
     },
@@ -13734,6 +13738,107 @@
           }
         }
       },
+      "DistanceRequest": {
+        "type": "object",
+        "description": "실제 자동차 이동거리 계산 요청",
+        "properties": {
+          "start": {
+            "$ref": "#/components/schemas/RoutePointRequest"
+          },
+          "end": {
+            "$ref": "#/components/schemas/RoutePointRequest"
+          }
+        },
+        "required": [
+          "end",
+          "start"
+        ]
+      },
+      "RoutePointRequest": {
+        "type": "object",
+        "description": "경로 지점. 좌표가 모두 있으면 주소 Geocoding을 생략합니다.",
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          }
+        }
+      },
+      "ApiResponseDistanceResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/DistanceResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "CoordinateResponse": {
+        "type": "object",
+        "description": "위경도 좌표",
+        "properties": {
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          }
+        }
+      },
+      "DistanceResponse": {
+        "type": "object",
+        "description": "NAVER Maps 실제 자동차 이동거리 결과",
+        "properties": {
+          "startAddress": {
+            "type": "string"
+          },
+          "endAddress": {
+            "type": "string"
+          },
+          "start": {
+            "$ref": "#/components/schemas/CoordinateResponse"
+          },
+          "end": {
+            "$ref": "#/components/schemas/CoordinateResponse"
+          },
+          "distanceMeter": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "distanceKm": {
+            "type": "number"
+          },
+          "durationMs": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "EducationStageDto": {
         "type": "object",
         "properties": {
@@ -14951,10 +15056,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -19945,15 +20050,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessYear": {
-            "type": "integer",
-            "format": "int32"
+          "businessStartDate": {
+            "type": "string"
           },
           "businessEndDate": {
             "type": "string"
           },
-          "businessStartDate": {
-            "type": "string"
+          "businessYear": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -20042,10 +20147,10 @@
           "ujatPartnerRecommendationPath": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           }
         }
@@ -34679,15 +34784,15 @@
           },
           "email": {
             "type": "string",
-            "description": "로그인 이메일"
+            "description": "로그인 이메일. 목록 API에서는 기본 마스킹 값입니다."
           },
           "name": {
             "type": "string",
-            "description": "이름"
+            "description": "이름. 목록 API에서는 실명을 유지합니다."
           },
           "phone": {
             "type": "string",
-            "description": "연락처"
+            "description": "연락처. 목록 API에서는 기본 마스킹 값입니다."
           },
           "status": {
             "type": "string"
@@ -35144,6 +35249,12 @@
           "memberId": {
             "type": "integer",
             "format": "int64"
+          },
+          "memberTypeLabel": {
+            "type": "string"
+          },
+          "organizationName": {
+            "type": "string"
           },
           "requestStatus": {
             "type": "string"
@@ -37482,6 +37593,14 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "managedProgramCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -37590,6 +37709,14 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "managedProgramCount": {
+            "type": "integer",
+            "format": "int32"
           },
           "notificationResentAt": {
             "type": "string",

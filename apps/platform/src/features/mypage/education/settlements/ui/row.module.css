@@ -1,0 +1,19 @@
+.amount,
+.actionHint {
+  margin: 0;
+  text-align: right;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-8);
+}
+
+.amountContainer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-16);
+}

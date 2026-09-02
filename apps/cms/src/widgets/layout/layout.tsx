@@ -8,12 +8,18 @@
 
 import { Suspense, useEffect, useRef } from 'react'
 import { Layout as AntLayout } from 'antd'
-import { Outlet, useLocation, useParams } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { RouterLoadingFallback } from '@/app/router/loading-fallback'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canAccessProgram } from '@/features/permission-request/lib/program-acl'
 import { canAccessPath } from '@/shared/config/menu-config'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
+import {
+  canAdminAction,
+  isSecurityLogPath,
+  resolveAdminRoleCodeFromUser,
+  showAdminAccessDeniedAlert,
+} from '@/shared/lib/admin-role-policy'
 import { Sidebar } from './sidebar'
 import { MainHeader } from './main-header'
 import './layout.css'
@@ -22,8 +28,30 @@ const { Content } = AntLayout
 
 function LayoutContent() {
   const location = useLocation()
+  const navigate = useNavigate()
   const params = useParams()
   const { user } = useAuthStore()
+  const roleCode = resolveAdminRoleCodeFromUser(user)
+  const securityLogBlocked =
+    Boolean(user) &&
+    isSecurityLogPath(location.pathname) &&
+    !canAdminAction({ roleCode, action: 'view', screen: 'security-logs' })
+  const deniedLogPathRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!securityLogBlocked) {
+      deniedLogPathRef.current = null
+      return
+    }
+    if (deniedLogPathRef.current === location.pathname) return
+    deniedLogPathRef.current = location.pathname
+    showAdminAccessDeniedAlert()
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      navigate(-1)
+      return
+    }
+    navigate('/', { replace: true })
+  }, [securityLogBlocked, navigate, location.pathname])
 
   const pathActor = user ? { role: user.role, adminLevel: user.adminLevel } : null
   if (user && location.pathname !== '/' && !canAccessPath(location.pathname, pathActor)) {
@@ -33,6 +61,10 @@ function LayoutContent() {
         description="이 페이지에 접근할 권한이 없습니다. 해당 기능은 현재 준비 중입니다."
       />
     )
+  }
+
+  if (securityLogBlocked) {
+    return null
   }
 
   const programId = params.id || params.programId

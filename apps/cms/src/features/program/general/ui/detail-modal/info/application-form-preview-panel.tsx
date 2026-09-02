@@ -10,7 +10,7 @@ import {
   resolveInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { buildGeneralApplicationFormPreviewParagraphBodyOptions } from '@/features/program/general/lib/application-form-preview-options'
-import { buildInstructorAvailableScheduleSlots } from '@/features/program/general/lib/instructor-application-available-schedule'
+import { buildInstructorAvailableScheduleSlotsFromProgram } from '@/features/program/general/lib/instructor-application-available-schedule'
 import { resolveGeneralApplicationEditorVariant } from '@/features/program/general/lib/application-tabs'
 import type { GeneralApplicationTabKey } from '@/features/program/general/lib/application-tabs'
 import { resolveGeneralApplicationTemplateName } from '@/features/program/general/lib/resolve-application-template-name'
@@ -89,8 +89,10 @@ export function ApplicationFormPreviewPanel({
   useInstitutionApplicationFormVisibilityVersion()
   const instructorScheduleSlots = useMemo(
     () =>
-      variant === 'instructor' ? buildInstructorAvailableScheduleSlots(program.id) : undefined,
-    [variant, program.id]
+      variant === 'instructor'
+        ? buildInstructorAvailableScheduleSlotsFromProgram(program)
+        : undefined,
+    [variant, program]
   )
 
   const paragraphBodyOptions = useMemo(

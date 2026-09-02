@@ -86,6 +86,7 @@ export function FormEditorRowDeleteButton({ onClick }: { onClick: () => void }) 
 
 export function FormEditorCustomFieldPanel({
   title,
+  subtitle,
   titleClassName = 'form-editor-horizontal-table-body-fields__title',
   className = 'form-editor-horizontal-table-body-fields',
   beforeDelete,
@@ -94,6 +95,7 @@ export function FormEditorCustomFieldPanel({
   children,
 }: {
   title: string
+  subtitle?: string
   titleClassName?: string
   className?: string
   beforeDelete?: ReactNode
@@ -104,6 +106,9 @@ export function FormEditorCustomFieldPanel({
   return (
     <div className={className}>
       <h3 className={titleClassName}>{title}</h3>
+      {subtitle ? (
+        <p className="form-editor-custom-field-panel__subtitle">{subtitle}</p>
+      ) : null}
       {beforeDelete}
       {onDeleteRow ? <FormEditorRowDeleteButton onClick={onDeleteRow} /> : null}
       {hint}

@@ -123,5 +123,6 @@ export function buildStudentCertificateContextFromUjatVolunteer({
     programStartDate: program.startDate,
     programEndDate: program.endDate,
     issuanceReasonLabel,
+    programId: program.id,
   })
 }

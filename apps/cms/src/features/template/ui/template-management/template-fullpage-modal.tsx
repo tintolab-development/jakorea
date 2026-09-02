@@ -15,6 +15,10 @@ interface TemplateFullpageModalProps {
   templateTabType: 'writing' | 'issuance'
   onPreview?: () => void
   onSave?: () => void
+  /** 사용자 추가 생성 템플릿 — 시안: 삭제 | 미리보기 | 저장 */
+  showDeleteButton?: boolean
+  onDelete?: () => void
+  deleteLoading?: boolean
   onDownloadDocument?: () => void
   /** true이면 문서 다운로드 버튼 비활성(중복 클릭 방지 등) */
   downloadDocumentLoading?: boolean
@@ -74,6 +78,9 @@ export function TemplateFullpageModal({
   templateTabType,
   onPreview,
   onSave,
+  showDeleteButton = false,
+  onDelete,
+  deleteLoading = false,
   onDownloadDocument,
   downloadDocumentLoading = false,
   leftContent,
@@ -111,13 +118,21 @@ export function TemplateFullpageModal({
   const headerActions =
     templateTabType === 'writing' ? (
       <>
-        <CmsButton variant="secondary" onClick={onClose}>
-          닫기
-        </CmsButton>
+        {showDeleteButton ? (
+          <CmsButton variant="delete" onClick={onDelete} loading={deleteLoading} disabled={deleteLoading}>
+            삭제
+          </CmsButton>
+        ) : (
+          <CmsButton variant="secondary" onClick={onClose}>
+            닫기
+          </CmsButton>
+        )}
         <CmsButton variant="secondary" onClick={onPreview}>
           미리보기
         </CmsButton>
-        <CmsButton onClick={() => onSave?.()}>{resolvedSaveLabel}</CmsButton>
+        <CmsButton onClick={() => onSave?.()} disabled={deleteLoading}>
+          {resolvedSaveLabel}
+        </CmsButton>
       </>
     ) : (
       <>

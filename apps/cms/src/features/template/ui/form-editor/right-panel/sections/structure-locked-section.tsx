@@ -10,6 +10,7 @@ import {
   paragraphKindSelectValue,
 } from '@/features/template/model/writing-form/paragraph-selectors'
 import { paragraphVariantLabel } from '@/features/template/ui/form-editor/right-panel/config/paragraph-editor.registry'
+import { resolveStructureLockedParagraphHint } from '@/features/template/lib/structure-locked-paragraph-hint'
 
 export function StructureLockedParagraphSection({ paragraph }: { paragraph: WritingFormParagraph }) {
   const outline =
@@ -45,7 +46,7 @@ export function StructureLockedParagraphSection({ paragraph }: { paragraph: Writ
           </div>
         </Form.Item>
         <span className="form-editor-right-panel__structure-locked-hint">
-          * 해당 단락은 수정 및 삭제가 불가합니다.
+          {resolveStructureLockedParagraphHint(paragraph.id)}
         </span>
       </Form>
     </>

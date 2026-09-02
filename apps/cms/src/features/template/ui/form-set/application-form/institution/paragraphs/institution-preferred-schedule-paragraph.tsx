@@ -16,35 +16,28 @@ import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-butt
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
+import './institution-preferred-schedule-paragraph.css'
 
 type ScheduleBlockState = {
   date: Dayjs | null
   session: string | undefined
-  firstClassPeriod: string | undefined
-  firstStart: Dayjs | null
-  firstEnd: Dayjs | null
-  secondClassPeriod: string | undefined
-  secondStart: Dayjs | null
-  secondEnd: Dayjs | null
+  start: Dayjs | null
+  end: Dayjs | null
 }
 
 function createEmptyBlockState(): ScheduleBlockState {
   return {
     date: null,
     session: undefined,
-    firstClassPeriod: undefined,
-    firstStart: null,
-    firstEnd: null,
-    secondClassPeriod: undefined,
-    secondStart: null,
-    secondEnd: null,
+    start: null,
+    end: null,
   }
 }
 
-function ScheduleDateAndSessionRow({
+function PreferenceScheduleFields({
   block,
   onPatch,
   sessionOptions,
@@ -56,12 +49,11 @@ function ScheduleDateAndSessionRow({
   showSessionSelect: boolean
 }) {
   return (
-    <DetailInfoForm.Row type="single">
-      <DetailInfoForm.Field
-        label="희망 교육일 및 차시"
-        fullRow
-        edit={
-          <div className="detail-info-form-inputs-wrapper-no-gap">
+    <>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="희망 교육일"
+          edit={
             <ParagraphDatePicker
               mode="single"
               presetMode="date"
@@ -73,90 +65,51 @@ function ScheduleDateAndSessionRow({
               width={240}
               style={{ flex: '0 0 240px', width: 240 }}
             />
-            {showSessionSelect ? (
-              <>
-                <DetailInfoForm.InputsSeparator />
-                <CmsSelect
-                  inputSize="medium"
-                  width={120}
-                  withAllOption={false}
-                  placeholder="희망 차시"
-                  value={block.session}
-                  onChange={value =>
-                    onPatch({ session: value == null ? undefined : String(value) })
-                  }
-                  options={sessionOptions}
-                />
-              </>
-            ) : null}
-          </div>
-        }
-        view="-"
-      />
-    </DetailInfoForm.Row>
-  )
-}
-
-function ScheduleTimeRow({
-  label,
-  classPeriod,
-  start,
-  end,
-  onPatch,
-  note,
-}: {
-  label: string
-  classPeriod: string | undefined
-  start: Dayjs | null
-  end: Dayjs | null
-  onPatch: (patch: { classPeriod?: string; start: Dayjs | null; end: Dayjs | null }) => void
-  note?: string
-}) {
-  return (
-    <DetailInfoForm.Row type="single">
-      <DetailInfoForm.Field
-        label={label}
-        fullRow
-        edit={
-          <div
-            className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap"
-            style={{ alignItems: 'center', flexWrap: 'wrap', gap: 8, width: '100%' }}
-          >
-            <CmsNumericInput
-              inputSize="medium"
-              width={120}
-              placeholder="수업 진행 교시"
-              value={classPeriod ?? ''}
-              mode="integer"
-              onValueChange={value =>
-                onPatch({
-                  classPeriod: value === '' ? undefined : value,
-                  start,
-                  end,
-                })
-              }
-            />
-            <span>교시</span>
-            <DetailInfoForm.InputsSeparator />
-            <ParagraphTimePicker
-              value={start}
-              onTimeRangeChange={range =>
-                onPatch({ classPeriod, start: range[0], end: range[1] })
-              }
-              placeholder="시간을 선택해 주세요"
-              width={240}
-              endTimeAlwaysOn
-            />
-            {note ? (
-              <span className="form-editor-template-field-hint-text" style={{ marginLeft: 8 }}>
-                {note}
-              </span>
-            ) : null}
-          </div>
-        }
-        view="-"
-      />
-    </DetailInfoForm.Row>
+          }
+          view="-"
+        />
+        <DetailInfoForm.Field
+          label="희망 교육 시간"
+          edit={
+            <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap institution-preferred-schedule-paragraph__time-inputs">
+              {showSessionSelect ? (
+                <>
+                  <CmsSelect
+                    inputSize="medium"
+                    width={120}
+                    withAllOption={false}
+                    placeholder="희망 차시"
+                    value={block.session}
+                    onChange={value =>
+                      onPatch({ session: value == null ? undefined : String(value) })
+                    }
+                    options={sessionOptions}
+                  />
+                  <DetailInfoForm.InputsSeparator />
+                </>
+              ) : null}
+              <ParagraphTimePicker
+                value={block.start}
+                onChange={next => onPatch({ start: next, end: next == null ? null : block.end })}
+                placeholder="수업 시작"
+                width={168}
+                showEndTimeToggle={false}
+              />
+              <span className="institution-preferred-schedule-paragraph__tilde">~</span>
+              <ParagraphTimePicker
+                value={block.end}
+                onChange={next => onPatch({ end: next })}
+                placeholder="수업 종료"
+                width={168}
+                showEndTimeToggle={false}
+                disabled={block.start == null}
+              />
+            </div>
+          }
+          view="-"
+        />
+      </DetailInfoForm.Row>
+    </>
   )
 }
 
@@ -175,65 +128,23 @@ function ScheduleBlock({
   showSessionSelect: boolean
   deleteAction?: ReactNode
 }) {
-  const sessionCount = showSessionSelect ? parseInt(block.session ?? '1', 10) : 1
-  const showSecondClassTime = sessionCount >= 2
-
   return (
-    <div style={{ display: 'flex', alignItems: 'stretch', gap: 8 }}>
-      <div style={{ flex: '1 1 0', minWidth: 0 }}>
-        <div className="detail-info-form--text-bold" style={{ marginBottom: 8 }}>
+    <div className="institution-preferred-schedule-paragraph__block-row">
+      <div className="institution-preferred-schedule-paragraph__block-body">
+        <div className="detail-info-form--text-bold institution-preferred-schedule-paragraph__block-title">
           {title}
         </div>
         <DetailInfoForm title={title} hideHeader mode="edit">
-          <ScheduleDateAndSessionRow
+          <PreferenceScheduleFields
             block={block}
             onPatch={onPatch}
             sessionOptions={sessionOptions}
             showSessionSelect={showSessionSelect}
           />
-          <ScheduleTimeRow
-            label="1차시 희망 교육 시간"
-            classPeriod={block.firstClassPeriod}
-            start={block.firstStart}
-            end={block.firstEnd}
-            onPatch={patch =>
-              onPatch({
-                firstClassPeriod: patch.classPeriod,
-                firstStart: patch.start,
-                firstEnd: patch.end,
-              })
-            }
-          />
-          {showSecondClassTime ? (
-            <ScheduleTimeRow
-              label="2차시 희망 교육 시간"
-              classPeriod={block.secondClassPeriod}
-              start={block.secondStart}
-              end={block.secondEnd}
-              onPatch={patch =>
-                onPatch({
-                  secondClassPeriod: patch.classPeriod,
-                  secondStart: patch.start,
-                  secondEnd: patch.end,
-                })
-              }
-              note="*1차시가 진행되는 교시의 다음 수업 시간을 작성해 주세요."
-            />
-          ) : null}
         </DetailInfoForm>
       </div>
       {deleteAction ? (
-        <div
-          style={{
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            alignSelf: 'stretch',
-          }}
-        >
-          {deleteAction}
-        </div>
+        <div className="institution-preferred-schedule-paragraph__delete-cell">{deleteAction}</div>
       ) : null}
     </div>
   )
@@ -258,11 +169,11 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
     []
   )
 
-  // Initialize with single empty block on first render
   useMemo(() => {
     if (blocks.length === 0) {
-      updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.institution.preferredSchedules', () =>
-        Array.from({ length: 1 }, () => createEmptyBlockState())
+      updateGeneralApplicationOverlayKey<ScheduleBlockState[]>(
+        'application.institution.preferredSchedules',
+        () => Array.from({ length: 1 }, () => createEmptyBlockState())
       )
     }
   }, [blocks.length])
@@ -271,18 +182,24 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
   const displayBlocks = blocks.slice(0, visibleBlockCount)
 
   const patchBlock = (index: number, patch: Partial<ScheduleBlockState>) => {
-    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.institution.preferredSchedules', prev => {
-      const current = (prev ?? []) as ScheduleBlockState[]
-      return current.map((b, i) => (i === index ? { ...b, ...patch } : b))
-    })
+    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>(
+      'application.institution.preferredSchedules',
+      prev => {
+        const current = (prev ?? []) as ScheduleBlockState[]
+        return current.map((b, i) => (i === index ? { ...b, ...patch } : b))
+      }
+    )
   }
 
   const removeBlock = (index: number) => {
-    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.institution.preferredSchedules', prev => {
-      const current = (prev ?? []) as ScheduleBlockState[]
-      if (current.length <= 1) return [createEmptyBlockState()]
-      return current.filter((_, i) => i !== index)
-    })
+    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>(
+      'application.institution.preferredSchedules',
+      prev => {
+        const current = (prev ?? []) as ScheduleBlockState[]
+        if (current.length <= 1) return [createEmptyBlockState()]
+        return current.filter((_, i) => i !== index)
+      }
+    )
   }
 
   const addBlock = () => {
@@ -293,10 +210,16 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
   }
 
   return (
-    <div
-      className="program-registration-paragraph"
-      style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
-    >
+    <div className="program-registration-paragraph institution-preferred-schedule-paragraph">
+      <div className="institution-preferred-schedule-paragraph__header">
+        {readOnlyPreview || displayBlocks.length >= maxBlocks ? (
+          <span />
+        ) : (
+          <CmsButton size="small" onClick={addBlock}>
+            + 희망 교육 일정 추가
+          </CmsButton>
+        )}
+      </div>
       {displayBlocks.map((block, index) => (
         <ScheduleBlock
           key={index}
@@ -319,16 +242,6 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
           }
         />
       ))}
-      {readOnlyPreview || displayBlocks.length >= maxBlocks ? null : (
-        <button
-          type="button"
-          className="form-editor-template-field-hint-text"
-          style={{ alignSelf: 'flex-start', cursor: 'pointer', border: 'none', background: 'none' }}
-          onClick={addBlock}
-        >
-          + 희망 일정 추가 (최대 {maxBlocks}개)
-        </button>
-      )}
     </div>
   )
 }

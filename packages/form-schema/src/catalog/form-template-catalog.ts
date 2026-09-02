@@ -299,7 +299,6 @@ export const ISSUANCE_FORM_LIST_TEMPLATE_CODES = [
   'issuance-ujat-edu-journal',
   'issuance-3',
   'issuance-4',
-  'issuance-5',
   'document-payment-order-issue',
   'document-participation-certificate',
   'document-3',

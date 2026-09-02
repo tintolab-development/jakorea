@@ -1,10 +1,15 @@
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useMemo } from 'react'
 import './ujat-program-application-grade-info-paragraph.css'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import {
+  UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS,
+  type UjatApplicationGradeDetail,
+  useUjatApplicationInstitutionOverlayKv,
+} from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
 
 const GRADE_OPTIONS = Array.from({ length: 6 }, (_, i) => ({
   value: String(i + 1),
@@ -19,17 +24,44 @@ function parseClassCount(raw: string): number {
   return Math.min(n, MAX_CLASS_COUNT)
 }
 
+const EMPTY_GRADE_DETAIL: UjatApplicationGradeDetail = {
+  classCountInput: '',
+  classNoByIndex: {},
+  studentCountByIndex: {},
+}
+
+function useGradeDetailForBlock(blockKey: string): [
+  UjatApplicationGradeDetail,
+  (patch: Partial<UjatApplicationGradeDetail>) => void,
+] {
+  const [gradeDetailByBlock, setGradeDetailByBlock] = useUjatApplicationInstitutionOverlayKv<
+    Record<string, UjatApplicationGradeDetail>
+  >(UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.gradeDetailByBlock, {})
+
+  const detail = gradeDetailByBlock[blockKey] ?? EMPTY_GRADE_DETAIL
+
+  const patchDetail = (patch: Partial<UjatApplicationGradeDetail>) => {
+    setGradeDetailByBlock({
+      ...gradeDetailByBlock,
+      [blockKey]: { ...detail, ...patch },
+    })
+  }
+
+  return [detail, patchDetail]
+}
+
 /** ■ 신청 학년 N — 학급 수에 따라 학급 별 학생 수 입력 쌍 동적 생성 */
 function GradeApplicationBlock({
+  blockKey,
   gradeValue,
   onGradeChange,
 }: {
+  blockKey: string
   gradeValue: string | undefined
   onGradeChange: (grade: string | undefined) => void
 }) {
-  const [classCountInput, setClassCountInput] = useState('')
-  const [classNoByIndex, setClassNoByIndex] = useState<Record<number, string>>({})
-  const [studentCountByIndex, setStudentCountByIndex] = useState<Record<number, string>>({})
+  const [detail, patchDetail] = useGradeDetailForBlock(blockKey)
+  const { classCountInput, classNoByIndex, studentCountByIndex } = detail
 
   const classCount = useMemo(() => parseClassCount(classCountInput), [classCountInput])
 
@@ -57,7 +89,7 @@ function GradeApplicationBlock({
                 placeholder="총 학급 수"
                 mode="integer"
                 value={classCountInput}
-                onValueChange={setClassCountInput}
+                onValueChange={next => patchDetail({ classCountInput: next })}
               />
               <span>학급</span>
             </div>
@@ -86,10 +118,12 @@ function GradeApplicationBlock({
                       placeholder="학급"
                       value={classNoByIndex[i] ?? ''}
                       onChange={e =>
-                        setClassNoByIndex(prev => ({
-                          ...prev,
-                          [i]: e.target.value,
-                        }))
+                        patchDetail({
+                          classNoByIndex: {
+                            ...classNoByIndex,
+                            [i]: e.target.value,
+                          },
+                        })
                       }
                     />
                     <span>반</span>
@@ -99,10 +133,12 @@ function GradeApplicationBlock({
                       placeholder="학생 수"
                       value={studentCountByIndex[i] ?? ''}
                       onChange={e =>
-                        setStudentCountByIndex(prev => ({
-                          ...prev,
-                          [i]: e.target.value,
-                        }))
+                        patchDetail({
+                          studentCountByIndex: {
+                            ...studentCountByIndex,
+                            [i]: e.target.value,
+                          },
+                        })
                       }
                     />
                     <span>명</span>
@@ -143,6 +179,7 @@ export function UjatProgramApplicationGradeInfoParagraph({
               ■ 신청 학년 {String(blockIndex + 1).padStart(2, '0')}
             </div>
             <GradeApplicationBlock
+              blockKey={blockKey}
               gradeValue={applicationGradeByBlockId[blockKey]}
               onGradeChange={g => onApplicationGradeByBlockChange(blockKey, g)}
             />

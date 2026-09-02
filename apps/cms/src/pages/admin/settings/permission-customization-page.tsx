@@ -1,14 +1,11 @@
 /**
  * 관리자 권한 설정 — 스크린샷 기준 5열 카테고리 UI (조회 전용, 체크박스 비활성)
- * API 카탈로그 정합 전까지 로컬 카탈로그/역할별 체크 상태를 사용한다.
+ * mock/API 모드 모두 동일 화면. API 카탈로그 정합 전까지 로컬 카탈로그/역할별 체크 상태를 사용한다.
  */
 
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Alert } from 'antd'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
-import { useAuthStore } from '@/features/auth/model/auth-store'
-import { isMasterAdmin } from '@/shared/utils/permissions'
 import { CmsCheckbox } from '@/shared/ui'
 import type {
   AdminPermissionFlags,
@@ -23,8 +20,6 @@ import {
   createInitialPermissionsByRole,
   isValidRoleTab,
 } from './admin-permission-settings-ui-data'
-import { isAdminPermissionsRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
-import { AdminPermissionsRemotePanel } from './admin-permissions-remote-panel'
 import './permission-customization-page.css'
 
 interface CategoryCardsProps {
@@ -90,7 +85,6 @@ function CategoryCards({ role, flags }: CategoryCardsProps) {
 }
 
 export function PermissionCustomizationPage() {
-  const { user } = useAuthStore()
   const [searchParams, setSearchParams] = useSearchParams()
   const [permissionsByRole] = useState(createInitialPermissionsByRole)
 
@@ -99,11 +93,7 @@ export function PermissionCustomizationPage() {
     return isValidRoleTab(r) ? r : 'master'
   }, [searchParams])
 
-  const isMaster = Boolean(user && isMasterAdmin(user))
-  const adminPermissionsRemote = isAdminPermissionsRemoteEnabled()
-
   useEffect(() => {
-    if (!isMaster) return
     if (!searchParams.get('role')) {
       setSearchParams(
         prev => {
@@ -114,7 +104,7 @@ export function PermissionCustomizationPage() {
         { replace: true }
       )
     }
-  }, [isMaster, searchParams, setSearchParams])
+  }, [searchParams, setSearchParams])
 
   const handleTabChange = (key: string) => {
     setSearchParams(
@@ -124,18 +114,6 @@ export function PermissionCustomizationPage() {
         return next
       },
       { replace: true }
-    )
-  }
-
-  if (!user || !isMasterAdmin(user)) {
-    return (
-      <div style={{ padding: 24 }}>
-        <Alert
-          description="이 페이지는 마스터 관리자만 접근할 수 있습니다."
-          type="error"
-          showIcon
-        />
-      </div>
     )
   }
 
@@ -152,11 +130,7 @@ export function PermissionCustomizationPage() {
         }))}
       />
 
-      {adminPermissionsRemote ? (
-        <AdminPermissionsRemotePanel activeRole={activeRole} />
-      ) : (
-        <CategoryCards role={activeRole} flags={permissionsByRole[activeRole]} />
-      )}
+      <CategoryCards role={activeRole} flags={permissionsByRole[activeRole]} />
     </div>
   )
 }

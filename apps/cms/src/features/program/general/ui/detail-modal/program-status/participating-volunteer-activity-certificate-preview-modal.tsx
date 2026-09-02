@@ -2,7 +2,7 @@
  * 참여 봉사자 — 활동확인서(활동인증서) 발급 미리보기
  */
 
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
 import {
   ACTIVITY_CERTIFICATE_DOCUMENT_TITLE,
@@ -11,6 +11,8 @@ import {
 } from '@/features/program/general/lib/build-activity-certificate-issuance-preview'
 import { VOLUNTEER_ACTIVITY_CERTIFICATE_TEMPLATE_CODE } from '@/features/template/lib/certificate-form-settings'
 import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
+import { downloadIssuedCertificatePdf } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
+import { getCertificateSerialAllocateErrorMessage } from '@/features/program/shared/api/certificate-serial-api'
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -42,6 +44,8 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
 }: ParticipatingVolunteerActivityCertificatePreviewModalProps) {
   const { showAlert } = useCmsAlert()
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
+  const [isAllocatingSerial, setIsAllocatingSerial] = useState(false)
+  const [pdfSerialNumber, setPdfSerialNumber] = useState<string | undefined>()
 
   const runtimeStringValues = useMemo(
     () =>
@@ -61,7 +65,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
     runtimeStringOverrideKeys: ['participantInfo'],
   })
   const { interactive: certificateInteractiveProps, pdfExport: certificatePdfExportProps } =
-    useFormCertificatePreviewProps(modalState)
+    useFormCertificatePreviewProps(modalState, undefined, pdfSerialNumber)
 
   const fileName = useMemo(
     () => buildActivityCertificateFileName(volunteer.volunteerName),
@@ -80,15 +84,29 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
   }, [onClose])
 
   const handleDownloadPdf = useCallback(async () => {
+    if (isAllocatingSerial || isPdfDownloading) return
+    setIsAllocatingSerial(true)
     try {
-      await downloadPdf()
-    } catch {
+      await downloadIssuedCertificatePdf({
+        subject: {
+          programId: program?.id,
+          subjectId: volunteer.id,
+          certificateType: VOLUNTEER_ACTIVITY_CERTIFICATE_TEMPLATE_CODE,
+        },
+        applySerial: setPdfSerialNumber,
+        exportRoot: pdfExportCanvasRef.current,
+        getExportRoot: () => pdfExportCanvasRef.current,
+        downloadPdf,
+      })
+    } catch (error) {
       showAlert({
         title: '안내',
-        content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        content: getCertificateSerialAllocateErrorMessage(error),
       })
+    } finally {
+      setIsAllocatingSerial(false)
     }
-  }, [downloadPdf, showAlert])
+  }, [downloadPdf, isAllocatingSerial, isPdfDownloading, program?.id, showAlert, volunteer.id])
 
   if (!open) return null
 
@@ -102,7 +120,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
         size="medium"
         width={140}
         icon={<DownloadOutlined />}
-        disabled={isPdfDownloading}
+        disabled={isPdfDownloading || isAllocatingSerial}
         onClick={() => void handleDownloadPdf()}
       >
         파일 다운로드
@@ -112,7 +130,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
 
   return (
     <>
-      <FormCertificatePdfExportOverlay visible={isPdfDownloading} />
+      <FormCertificatePdfExportOverlay visible={isPdfDownloading || isAllocatingSerial} />
       <TealHeaderModal
         open={open}
         onCancel={handleClose}

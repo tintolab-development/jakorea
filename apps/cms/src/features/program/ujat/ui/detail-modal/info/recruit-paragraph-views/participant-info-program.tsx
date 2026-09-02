@@ -55,7 +55,7 @@ export function UjatRecruitParticipantInfoProgramView({
   sponsorName,
   form,
   isEdit,
-  sectionTitle = '참여자 모집 정보',
+  sectionTitle = '참여 기관 모집 정보',
   hideSectionHeader = false,
 }: {
   program: Program

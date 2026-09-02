@@ -11,6 +11,8 @@ export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY =
   'generalRegistration.basicInfo.localSponsorId' as const
 export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY =
   'generalRegistration.basicInfo.localManagerContactId' as const
+export const GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY =
+  'generalRegistration.basicInfo.localProgramTitleKo' as const
 export const GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY =
   'generalRegistration.educationScheduleSettings.scheduleLines' as const
 export const GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY =
@@ -19,20 +21,26 @@ export const GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY =
 let overlayState: Record<string, unknown> = {}
 let overlayVersion = 0
 const overlayListeners = new Set<() => void>()
+const overlayKeyListeners = new Map<string, Set<() => void>>()
 
-/** overlay에 남은 후원사 id (controlled state가 비었을 때 완료·복원 fallback) */
-export function readGeneralRegistrationOverlaySponsorId(): string {
-  const raw = overlayState[GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY]
+function readOverlayString(key: string): string {
+  const raw = overlayState[key]
   if (typeof raw === 'string' && raw.trim()) return raw.trim()
   if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
   return ''
 }
 
+/** overlay에 남은 후원사 id (controlled state가 비었을 때 완료·복원 fallback) */
+export function readGeneralRegistrationOverlaySponsorId(): string {
+  return readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
+}
+
 export function readGeneralRegistrationOverlaySponsorContactId(): string {
-  const raw = overlayState[GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY]
-  if (typeof raw === 'string' && raw.trim()) return raw.trim()
-  if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
-  return ''
+  return readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
+}
+
+export function readGeneralRegistrationOverlayProgramTitleKo(): string {
+  return readOverlayString(GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
 }
 
 export function readGeneralRegistrationOverlayScheduleLines(): string[] {
@@ -44,14 +52,41 @@ export function readGeneralRegistrationOverlayScheduleLines(): string[] {
     .filter(Boolean)
 }
 
-function emitOverlay() {
+function notifyOverlayListeners(changedKeys?: Iterable<string>) {
   overlayVersion += 1
-  overlayListeners.forEach(l => l())
+  const notified = new Set<() => void>()
+  if (changedKeys != null) {
+    for (const key of changedKeys) {
+      overlayKeyListeners.get(key)?.forEach(listener => notified.add(listener))
+    }
+  } else {
+    overlayKeyListeners.forEach(listeners => listeners.forEach(listener => notified.add(listener)))
+  }
+  overlayListeners.forEach(listener => notified.add(listener))
+  notified.forEach(listener => listener())
 }
 
 export function subscribeProgramRegistrationOverlay(listener: () => void): () => void {
   overlayListeners.add(listener)
   return () => overlayListeners.delete(listener)
+}
+
+export function subscribeProgramRegistrationOverlayKey(
+  key: string,
+  listener: () => void
+): () => void {
+  let listeners = overlayKeyListeners.get(key)
+  if (listeners == null) {
+    listeners = new Set()
+    overlayKeyListeners.set(key, listeners)
+  }
+  listeners.add(listener)
+  return () => {
+    listeners?.delete(listener)
+    if (listeners != null && listeners.size === 0) {
+      overlayKeyListeners.delete(key)
+    }
+  }
 }
 
 export function getProgramRegistrationOverlayVersion(): number {
@@ -62,17 +97,22 @@ export function getProgramRegistrationOverlayRecord(): Record<string, unknown> {
   return overlayState
 }
 
+function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
+  const raw = overlayState[key] as T | undefined
+  return raw === undefined ? defaultValue : raw
+}
+
 export function patchProgramRegistrationOverlay(partial: Record<string, unknown>): void {
-  let changed = false
+  const changedKeys: string[] = []
   const next: Record<string, unknown> = { ...overlayState }
   for (const [key, value] of Object.entries(partial)) {
     if (Object.is(overlayState[key], value)) continue
     next[key] = value
-    changed = true
+    changedKeys.push(key)
   }
-  if (!changed) return
+  if (changedKeys.length === 0) return
   overlayState = next
-  emitOverlay()
+  notifyOverlayListeners(changedKeys)
 }
 
 export function updateProgramRegistrationOverlayKey<T>(
@@ -83,32 +123,35 @@ export function updateProgramRegistrationOverlayKey<T>(
   const next = updater(prev)
   if (Object.is(prev, next)) return
   overlayState = { ...overlayState, [key]: next }
-  emitOverlay()
+  notifyOverlayListeners([key])
 }
 
 export function replaceProgramRegistrationOverlay(next: Record<string, unknown>): void {
   overlayState = { ...next }
-  emitOverlay()
+  notifyOverlayListeners()
 }
 
 export function resetProgramRegistrationOverlay(): void {
   overlayState = {}
-  emitOverlay()
+  notifyOverlayListeners()
 }
 
-/** `useSyncExternalStore`용 — 버전만 구독하고 렌더 시 record로 값을 읽는다. */
+/** `useSyncExternalStore`용 — 변경된 overlay 키만 구독한다. */
 export function useProgramRegistrationOverlayKv<T>(
   key: string,
   defaultValue: T
 ): [T, (next: T) => void] {
-  const version = useSyncExternalStore(
-    subscribeProgramRegistrationOverlay,
-    getProgramRegistrationOverlayVersion,
-    getProgramRegistrationOverlayVersion
+  const getSnapshot = useCallback(
+    () => readOverlayKeyValue(key, defaultValue),
+    [defaultValue, key]
   )
-  void version
-  const record = getProgramRegistrationOverlayRecord()
-  const value = (record[key] as T | undefined) ?? defaultValue
+
+  const value = useSyncExternalStore(
+    listener => subscribeProgramRegistrationOverlayKey(key, listener),
+    getSnapshot,
+    getSnapshot
+  )
+
   const setValue = useCallback(
     (next: T) => {
       const prev = getProgramRegistrationOverlayRecord()[key]

@@ -173,6 +173,10 @@
       "description": "공통 코드, 카탈로그, 정산 항목, 운영 기준값 등 마스터 데이터 API입니다."
     },
     {
+      "name": "기타 API",
+      "description": "주소/좌표 기반 실제 자동차 이동거리 조회 API"
+    },
+    {
       "name": "인증/세션",
       "description": "관리자/회원 로그인, MFA 검증, 토큰 갱신, 로그아웃 API입니다."
     },
@@ -2876,7 +2880,7 @@
         ],
         "summary": "관리자 조회",
         "description": "### 이 API가 하는 일\n- 관리자 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 후원사/교재/마스터데이터 (`null`)\n- 프론트 담당 영역: master-data (`master-data`)\n- 호출 방식: `GET /api/admin/material-kits/{kitId}/calculate`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_material-kits_kitId_calculate`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
-        "operationId": "calculate",
+        "operationId": "calculate_1",
         "parameters": [
           {
             "name": "kitId",
@@ -10146,6 +10150,107 @@
           }
         }
       },
+      "DistanceRequest": {
+        "type": "object",
+        "description": "실제 자동차 이동거리 계산 요청",
+        "properties": {
+          "start": {
+            "$ref": "#/components/schemas/RoutePointRequest"
+          },
+          "end": {
+            "$ref": "#/components/schemas/RoutePointRequest"
+          }
+        },
+        "required": [
+          "end",
+          "start"
+        ]
+      },
+      "RoutePointRequest": {
+        "type": "object",
+        "description": "경로 지점. 좌표가 모두 있으면 주소 Geocoding을 생략합니다.",
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          }
+        }
+      },
+      "ApiResponseDistanceResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/DistanceResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "CoordinateResponse": {
+        "type": "object",
+        "description": "위경도 좌표",
+        "properties": {
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          }
+        }
+      },
+      "DistanceResponse": {
+        "type": "object",
+        "description": "NAVER Maps 실제 자동차 이동거리 결과",
+        "properties": {
+          "startAddress": {
+            "type": "string"
+          },
+          "endAddress": {
+            "type": "string"
+          },
+          "start": {
+            "$ref": "#/components/schemas/CoordinateResponse"
+          },
+          "end": {
+            "$ref": "#/components/schemas/CoordinateResponse"
+          },
+          "distanceMeter": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "distanceKm": {
+            "type": "number"
+          },
+          "durationMs": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "EducationStageDto": {
         "type": "object",
         "properties": {
@@ -11363,10 +11468,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -16357,15 +16462,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessYear": {
-            "type": "integer",
-            "format": "int32"
+          "businessStartDate": {
+            "type": "string"
           },
           "businessEndDate": {
             "type": "string"
           },
-          "businessStartDate": {
-            "type": "string"
+          "businessYear": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -16454,10 +16559,10 @@
           "ujatPartnerRecommendationPath": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           }
         }
@@ -31091,15 +31196,15 @@
           },
           "email": {
             "type": "string",
-            "description": "로그인 이메일"
+            "description": "로그인 이메일. 목록 API에서는 기본 마스킹 값입니다."
           },
           "name": {
             "type": "string",
-            "description": "이름"
+            "description": "이름. 목록 API에서는 실명을 유지합니다."
           },
           "phone": {
             "type": "string",
-            "description": "연락처"
+            "description": "연락처. 목록 API에서는 기본 마스킹 값입니다."
           },
           "status": {
             "type": "string"
@@ -31556,6 +31661,12 @@
           "memberId": {
             "type": "integer",
             "format": "int64"
+          },
+          "memberTypeLabel": {
+            "type": "string"
+          },
+          "organizationName": {
+            "type": "string"
           },
           "requestStatus": {
             "type": "string"
@@ -33894,6 +34005,14 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "managedProgramCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -34002,6 +34121,14 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "managedProgramCount": {
+            "type": "integer",
+            "format": "int32"
           },
           "notificationResentAt": {
             "type": "string",

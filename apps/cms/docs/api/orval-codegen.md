@@ -14,6 +14,8 @@ Swagger 스펙에서 TypeScript API 클라이언트·스키마를 생성하는 �
 | `pnpm --filter cms filter:openapi:data-management` | 데이터 관리 subset                                                        |
 | `pnpm --filter cms filter:openapi:posts`           | 게시글 subset                                                             |
 | `pnpm --filter cms filter:openapi:settlement`      | 정산 subset                                                               |
+| `pnpm --filter cms filter:openapi:certificates`    | 인증서 고유번호·다운로드 이력 (`serial` + `download-logs`) subset         |
+| `pnpm --filter cms generate:api:certificates`      | certificates subset filter + Orval                                        |
 | `pnpm --filter cms generate:api`                   | 위 filter 전체 + Orval codegen                                            |
 
 기본 ngrok fallback: `https://6920-221-146-247-18.ngrok-free.app//`
@@ -22,11 +24,11 @@ Swagger 스펙에서 TypeScript API 클라이언트·스키마를 생성하는 �
 
 ## 설정
 
-- [`orval.config.ts`](../../orval.config.ts) — `dashboard`, `logs`, `dataManagement`, `posts`, `settlement`
+- [`orval.config.ts`](../../orval.config.ts) — `dashboard`, `logs`, `dataManagement`, `posts`, `settlement`, `members`, `certificates`
 - [`scripts/filter-openapi-*.mjs`](../../scripts/) — 도메인별 path prefix 필터 + bearerAuth 스키마 정리
 - [`src/shared/api/orval-mutator.ts`](../../src/shared/api/orval-mutator.ts) — `axiosClient` 재사용
 
-**출력:** [`src/shared/api/generated/`](../../src/shared/api/generated/) (`dashboard/`, `logs/`, `data-management/`, `posts/`, `settlement/`)
+**출력:** [`src/shared/api/generated/`](../../src/shared/api/generated/) (`dashboard/`, `logs/`, `data-management/`, `posts/`, `settlement/`, `certificates/`)
 
 ---
 

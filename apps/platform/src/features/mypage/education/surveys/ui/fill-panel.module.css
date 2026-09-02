@@ -1,0 +1,54 @@
+.shell {
+  display: flex;
+  box-sizing: border-box;
+  width: 100vw;
+  max-width: 100vw;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding: 0 240px calc(100px + var(--spacing-80) + var(--content-padding-block));
+  background: var(--color-neutral-cool-50, #f5f7f7);
+  margin-bottom: calc(-1 * (var(--spacing-80) + var(--content-padding-block)));
+  box-shadow: 0 calc(var(--spacing-80) + var(--content-padding-block)) 0 0
+    var(--color-neutral-cool-50, #f5f7f7);
+}
+
+.inner {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-32);
+  padding-top: var(--spacing-8);
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  padding-top: var(--spacing-8);
+}
+
+@media (--bp-below-pc) {
+  .shell {
+    padding: 0 20px calc(80px + var(--spacing-80) + var(--content-padding-block));
+  }
+
+  .inner {
+    gap: var(--spacing-16);
+  }
+}
+
+@media (--bp-pc-up) {
+  .shell {
+    padding-inline: max(80px, calc((100vw - var(--content-shell-max-width, 1280px)) / 2 + 80px));
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .shell {
+    padding-inline: max(0px, calc((100vw - var(--content-shell-max-width, 1280px)) / 2));
+  }
+}

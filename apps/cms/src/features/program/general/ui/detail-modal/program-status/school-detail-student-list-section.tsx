@@ -121,6 +121,8 @@ export interface SchoolDetailStudentListSectionProps {
   classCount?: number
   schoolName?: string
   educationGrade?: string
+  /** 고유번호 발급 키 — 없으면 다운로드 API가 400 */
+  programId?: string | number
   /** 과제·설문 제출 내역 모달 설명에 사용하는 프로그램명 */
   programTitle?: string
   programStartDate?: Date | string | null
@@ -149,6 +151,7 @@ export function SchoolDetailStudentListSection({
   classCount,
   schoolName = '',
   educationGrade = '',
+  programId,
   programTitle = 'JA Korea 경제교육 프로그램',
   programStartDate = null,
   programEndDate = null,
@@ -290,6 +293,7 @@ export function SchoolDetailStudentListSection({
           programStartDate,
           programEndDate,
           issuanceReasonLabel: reasonLabel,
+          ...(programId != null ? { programId } : {}),
         })
       )
       setCertificateExportActive(true)
@@ -300,6 +304,7 @@ export function SchoolDetailStudentListSection({
       hasStudentSatisfactionSurvey,
       mergedStudentList,
       programEndDate,
+      programId,
       programStartDate,
       programTitle,
       schoolId,

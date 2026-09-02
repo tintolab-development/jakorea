@@ -20,7 +20,7 @@ export interface LoginOptions {
 export const HP_REMOTE_SESSION_PREFIX = 'hp-remote-'
 
 const MOCK_ACCOUNTS: Array<{ email: string; password: string; name: string }> = [
-  { email: 'admin1@jakorea.org', password: 'admin1234!', name: '관리자' },
+  { email: 'admin1@jakorea.org', password: 'test1234!', name: '관리자' },
   { email: '123@jakorea.org', password: '!Tinto05270527', name: '가입관리자' },
 ]
 

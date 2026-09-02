@@ -15,7 +15,7 @@ import {
   mergePaymentStatementBasicInfo,
   PAYMENT_STATEMENT_DEFAULT_PURPOSE,
 } from '@jakorea/form-schema/consent'
-import './payment-statement-basic-info-detail-form.css'
+import { RestrictedPiiClickable } from '@/features/user/detail/ui/restricted-pii-clickable'
 
 /** 발급·미리보기에서 채울 값. CMS 템플릿 편집기에서는 비워 두고 placeholder만 노출할 수 있음 */
 export type PaymentStatementBasicInfoAutofillValues = {
@@ -166,7 +166,11 @@ export function PaymentStatementBasicInfoDetailForm({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="주민등록번호"
-          view={textOrDash(residentNumber)}
+          view={
+            <RestrictedPiiClickable action="piiRrn">
+              {textOrDash(residentNumber)}
+            </RestrictedPiiClickable>
+          }
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap payment-statement-basic-info-detail-form__resident">
               <CmsNumericInput

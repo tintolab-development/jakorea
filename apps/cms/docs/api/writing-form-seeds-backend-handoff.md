@@ -57,7 +57,7 @@
 | `application-participant-school` | 일반_참여 기관 신청 폼 | A | [application-participant-school.json](./form-template-seeds/application-participant-school.json) | 7 |
 | `application-participant-individual` | 일반_참여자 신청 폼 | A | [application-participant-individual.json](./form-template-seeds/application-participant-individual.json) | 5 |
 | `application-instructor` | 공통_강사 신청 폼 | A | [application-instructor.json](./form-template-seeds/application-instructor.json) | 4 |
-| `application-volunteer` | 공통_봉사자 신청 폼 | A | [application-volunteer.json](./form-template-seeds/application-volunteer.json) | 6 |
+| `application-volunteer` | 공통_봉사자 신청 폼 | A | [application-volunteer.json](./form-template-seeds/application-volunteer.json) | 7 |
 | `application-economy` | 1사1교_참여 기관 신청 폼 | A | [application-economy.json](./form-template-seeds/application-economy.json) | 9 |
 | `application-trained-teachers` | 교육받은 교사_참여 기관 신청 폼 | A | [application-trained-teachers.json](./form-template-seeds/application-trained-teachers.json) | 4 |
 | `application-gemini-visiting-training-instructor` | Gemini_찾아가는 연수 강사 신청 폼 | A | [application-gemini-visiting-training-instructor.json](./form-template-seeds/application-gemini-visiting-training-instructor.json) | 2 |
@@ -124,7 +124,7 @@
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
-| `applicant-recruit-institution-seed-recruit-info` | single_item | horizontal_table | 참여자 모집 정보 |
+| `applicant-recruit-institution-seed-recruit-info` | single_item | horizontal_table | 참여 기관 모집 정보 |
 | `applicant-recruit-institution-seed-detail-info` | single_item | horizontal_table | 상세 정보 |
 
 ### `recruitment-economy` — 1사1교_참여 기관 모집 폼
@@ -160,8 +160,8 @@
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
-| `ujat-recruit-institution-seed-recruit-info` | single_item | horizontal_table | 참여자 모집 정보 |
-| `ujat-recruit-institution-seed-detail-info` | single_item | horizontal_table | 참여자 상세 정보 |
+| `ujat-recruit-institution-seed-recruit-info` | single_item | horizontal_table | 참여 기관 모집 정보 |
+| `ujat-recruit-institution-seed-detail-info` | single_item | horizontal_table | 상세 정보 |
 
 ### `recruitment-ujat-volunteer` — UJAT_봉사자 모집 폼
 
@@ -226,6 +226,7 @@
 | `program-volunteer-application-seed-previous-ja-program` | single_item | horizontal_table | 이전 참여 JA 봉사 프로그램 |
 | `program-volunteer-application-seed-free-text-items` | single_item | horizontal_table | 자유 작성 항목 |
 | `program-volunteer-application-seed-interview-schedule` | single_item | horizontal_table | 면접 진행 가능 일정 |
+| `program-volunteer-application-seed-activity-schedule` | single_item | horizontal_table | 봉사 진행 가능 일정 |
 
 ### `application-economy` — 1사1교_참여 기관 신청 폼
 
@@ -254,8 +255,8 @@
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
-| `gemini-vt-instructor-seed-available-schedule` | single_item | horizontal_table | 강의 진행 가능 일정 |
 | `gemini-vt-instructor-seed-official-document` | single_item | horizontal_table | 연수 공문 |
+| `gemini-vt-instructor-seed-available-schedule` | single_item | horizontal_table | 강의 진행 가능 일정 |
 
 ### `application-gemini-visiting-training-school` — Gemini_찾아가는 연수 참여 기관 신청 폼
 

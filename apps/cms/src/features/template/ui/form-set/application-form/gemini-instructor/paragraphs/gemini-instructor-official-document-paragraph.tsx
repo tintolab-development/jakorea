@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
@@ -8,8 +8,14 @@ type OfficialNeed = 'needed' | 'not_needed'
 
 /** Gemini 찾아가는 연수 강사 신청 — 연수 공문 */
 export function GeminiInstructorOfficialDocumentParagraph() {
-  const [need, setNeed] = useState<OfficialNeed>('needed')
-  const [detail, setDetail] = useState('')
+  const [need, setNeed] = useGeneralApplicationOverlayKv<OfficialNeed>(
+    'application.gemini.instructor.officialNeed',
+    'needed'
+  )
+  const [detail, setDetail] = useGeneralApplicationOverlayKv<string>(
+    'application.gemini.instructor.officialDetail',
+    ''
+  )
 
   return (
     <div className="program-registration-paragraph">

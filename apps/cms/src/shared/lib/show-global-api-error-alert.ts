@@ -1,14 +1,21 @@
 import type { AxiosError } from 'axios'
-import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import {
+  ADMIN_ACCESS_DENIED_ALERT_CONTENT,
+  ADMIN_ACCESS_DENIED_ALERT_TITLE,
+} from '@/shared/lib/admin-role-policy'
 import {
   extractApiErrorMessage,
   formatApiErrorAlertContent,
 } from '@/shared/lib/extract-api-error-message'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 
 const DEDUPE_MS = 2_000
 /** BE 다운 시 병렬 쿼리가 동일 「네트워크 오류」Alert를 연쇄로 띄우지 않도록 */
 const NETWORK_DEDUPE_MS = 8_000
 const recentAlertKeys = new Map<string, number>()
+
+/** 권한 안내 모달이 열려 있는 동안 추가 403 show를 막는다. 닫히면 해제. */
+let forbiddenAlertVisible = false
 
 export type GlobalApiErrorAlertRequestConfig = {
   skipGlobalErrorAlert?: boolean
@@ -33,7 +40,6 @@ function isGlobalErrorAlertEnabled(): boolean {
 function resolveAlertTitle(httpStatus: number | null | undefined): string {
   if (httpStatus == null) return '네트워크 오류'
   if (httpStatus === 400) return '요청 오류'
-  if (httpStatus === 403) return '권한 없음'
   if (httpStatus === 404) return '찾을 수 없음'
   if (httpStatus === 409) return '처리 불가'
   if (httpStatus >= 500) return '서버 오류'
@@ -92,6 +98,26 @@ export function isGlobalApiErrorAlertShown(error: unknown): boolean {
   )
 }
 
+/** 권한 안내 모달을 닫은 뒤 다음 403을 다시 띄울 수 있게 한다. */
+export function clearForbiddenApiErrorAlertDedupe(): void {
+  forbiddenAlertVisible = false
+}
+
+function markGlobalErrorAlertShown(error: AxiosError): void {
+  error.__cmsGlobalErrorAlertShown = true
+}
+
+function showForbiddenAccessDeniedAlert(error: AxiosError): boolean {
+  markGlobalErrorAlertShown(error)
+  if (forbiddenAlertVisible) return false
+  forbiddenAlertVisible = true
+  cmsAlertModal.show({
+    title: ADMIN_ACCESS_DENIED_ALERT_TITLE,
+    content: ADMIN_ACCESS_DENIED_ALERT_CONTENT,
+  })
+  return true
+}
+
 /**
  * axios 응답 인터셉터 등 React 밖에서 공통 AlertModal을 띄웁니다.
  * @returns Alert를 표시했으면 true
@@ -102,9 +128,13 @@ export function showGlobalApiErrorAlert(
 ): boolean {
   if (shouldSkipGlobalErrorAlert(error, config)) return false
 
+  const httpStatus = error.response?.status ?? null
+  if (httpStatus === 403) {
+    return showForbiddenAccessDeniedAlert(error)
+  }
+
   const method = (config?.method ?? error.config?.method ?? 'GET').toUpperCase()
   const url = config?.url ?? error.config?.url ?? ''
-  const httpStatus = error.response?.status ?? null
 
   const content =
     error.response != null
@@ -123,6 +153,6 @@ export function showGlobalApiErrorAlert(
     content,
   })
 
-  error.__cmsGlobalErrorAlertShown = true
+  markGlobalErrorAlertShown(error)
   return true
 }

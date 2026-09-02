@@ -36,6 +36,8 @@ export function VolunteerFreeTextItemsParagraph() {
             <CmsTextArea
               inputSize="medium"
               rows={3}
+              maxLength={1000}
+              showCount
               placeholder={q.placeholder ?? DEFAULT_PLACEHOLDER}
               width="100%"
             />
