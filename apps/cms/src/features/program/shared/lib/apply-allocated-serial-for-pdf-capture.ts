@@ -1,6 +1,9 @@
 import { flushSync } from 'react-dom'
 import { allocateCertificateSerial } from '@/features/program/shared/api/certificate-serial-api'
-import type { CertificateSerialSubject } from '@/features/program/shared/lib/certificate-serial'
+import {
+  isIssuedCertificateSerial,
+  type CertificateSerialSubject,
+} from '@/features/program/shared/lib/certificate-serial'
 import { waitForCertificatePreviewCaptureReady } from '@/pages/templates/wait-for-certificate-preview-capture-ready'
 
 /**
@@ -13,6 +16,9 @@ export async function applyAllocatedSerialForPdfCapture(args: {
   exportRoot: HTMLElement | null
 }): Promise<string> {
   const { serialNumber } = await allocateCertificateSerial(args.subject)
+  if (!isIssuedCertificateSerial(serialNumber)) {
+    throw new Error('고유번호 응답이 올바르지 않습니다.')
+  }
   flushSync(() => {
     args.applySerial(serialNumber)
   })
