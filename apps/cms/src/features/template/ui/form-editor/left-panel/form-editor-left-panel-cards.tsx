@@ -1,4 +1,6 @@
+import { memo } from 'react'
 import { MenuOutlined } from '@ant-design/icons'
+import { areFormEditorCardPropsEqual } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-card-memo'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
@@ -67,6 +69,7 @@ export function ParagraphCardDragHandleNonInteractive() {
 
 export interface PinnedCardProps {
   paragraph: WritingFormParagraph
+  paragraphIndex: number
   paragraphs: WritingFormParagraph[]
   titleNumbering: FormTitleNumberingStyle
   selectedCardId: string | null
@@ -88,7 +91,7 @@ export interface PinnedCardProps {
   headingDescriptionExtraClassName?: string
 }
 
-export function PinnedFormCard({
+function PinnedFormCardInner({
   paragraph,
   paragraphs,
   titleNumbering,
@@ -211,6 +214,7 @@ export function PinnedFormCard({
 
 export interface SortableMiddleCardProps {
   paragraph: WritingFormParagraph
+  paragraphIndex: number
   paragraphs: WritingFormParagraph[]
   titleNumbering: FormTitleNumberingStyle
   selectedCardId: string | null
@@ -232,7 +236,7 @@ export interface SortableMiddleCardProps {
   headingDescriptionExtraClassName?: string
 }
 
-export function SortableMiddleFormCard({
+function SortableMiddleFormCardInner({
   paragraph,
   paragraphs,
   titleNumbering,
@@ -392,3 +396,6 @@ export function SortableMiddleFormCard({
     </div>
   )
 }
+
+export const PinnedFormCard = memo(PinnedFormCardInner, areFormEditorCardPropsEqual)
+export const SortableMiddleFormCard = memo(SortableMiddleFormCardInner, areFormEditorCardPropsEqual)
