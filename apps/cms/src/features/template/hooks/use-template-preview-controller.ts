@@ -1,28 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
-import { createContentOnlyA4PreviewOptions } from '@/features/template/lib/a4-preview-template-options'
 import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
-import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import {
-  isParticipantApplicationRegistryEntry,
-  isRegistrationRegistryEntry,
-  isSurveyRegistryEntry,
   lookupTemplateRegistry,
-  resolvePreviewEditorKind,
-  resolvePreviewHeaderTitle,
-  shouldRegistryUseA4Preview,
   type TemplateRegistryDefinition,
 } from '@/features/template/model/template-registry/template-registry'
-import type { useTemplateEditorVm } from '@/features/template/hooks/use-template-editor-vm'
-import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
-
-const EMPTY_PREVIEW_DRAFT: WritingFormDraft = {
-  schemaVersion: 1,
-  formSettings: { titleNumbering: 'none' },
-  paragraphs: [],
-}
-
-const noopUpdateParagraph: FormUpdateParagraph = () => {}
 
 export type TemplatePreviewControllerParams = {
   params: {
@@ -38,7 +19,7 @@ export type TemplatePreviewControllerParams = {
   selectedTemplate: { id: string; templateName: string } | null
   registryEntry: TemplateRegistryDefinition | undefined
   isWritingUserPreviewOpen: boolean
-  editorVm: ReturnType<typeof useTemplateEditorVm>
+  runPreview: () => void
 }
 
 export function useTemplatePreviewController({
@@ -48,9 +29,8 @@ export function useTemplatePreviewController({
   selectedTemplate,
   registryEntry,
   isWritingUserPreviewOpen,
-  editorVm,
+  runPreview,
 }: TemplatePreviewControllerParams) {
-  const { openWritingUserPreview } = useTemplateWritingPreview()
   const entry = registryEntry ?? lookupTemplateRegistry(selectedTemplate?.id)
 
   const templateUserPreviewUrlLatchRef = useRef<{
@@ -58,46 +38,10 @@ export function useTemplatePreviewController({
     blockAutoReopen: boolean
   }>({ templateKey: undefined, blockAutoReopen: false })
 
-  const openGenericWritingPreview = useCallback(() => {
-    if (selectedTemplate == null) return
-    const genericA4Options = shouldRegistryUseA4Preview(entry)
-      ? createContentOnlyA4PreviewOptions()
-      : undefined
-    openWritingUserPreview({
-      draft: EMPTY_PREVIEW_DRAFT,
-      updateParagraph: noopUpdateParagraph,
-      headerTitle: resolvePreviewHeaderTitle(entry, selectedTemplate.templateName),
-      editorKind: resolvePreviewEditorKind(entry),
-      previewLayout: genericA4Options?.previewLayout,
-      a4RenderMode: genericA4Options?.a4RenderMode,
-      hideParagraphRequiredChrome: genericA4Options?.hideParagraphRequiredChrome,
-    })
-  }, [entry, openWritingUserPreview, selectedTemplate])
-
-  const runPreviewForRegistry = useCallback(() => {
-    if (entry && isRegistrationRegistryEntry(entry) && entry.registrationEditor === 'general') {
-      editorVm.programRegistrationVm.handlePreview()
-      return
-    }
-    if (entry?.registrationEditor === 'ujat') {
-      editorVm.ujatProgramRegistrationVm.handlePreview()
-      return
-    }
-    if (isParticipantApplicationRegistryEntry(entry)) {
-      editorVm.programParticipantApplicationVm.handlePreview()
-      return
-    }
-    if (isSurveyRegistryEntry(entry)) {
-      editorVm.surveyListEditor.handlePreview()
-      return
-    }
-    openGenericWritingPreview()
-  }, [editorVm, entry, openGenericWritingPreview])
-
   const handlePreview = useCallback(() => {
     setParams({ userPreview: TEMPLATE_USER_PREVIEW_ACTIVE }, { replace: false })
-    runPreviewForRegistry()
-  }, [runPreviewForRegistry, setParams])
+    runPreview()
+  }, [runPreview, setParams])
 
   useEffect(() => {
     const tid =
@@ -124,7 +68,7 @@ export function useTemplatePreviewController({
     if (L.blockAutoReopen) return
     if (entry?.selfManagedPreview === true) return
 
-    runPreviewForRegistry()
+    runPreview()
     L.blockAutoReopen = true
   }, [
     params.userPreview,
@@ -133,7 +77,7 @@ export function useTemplatePreviewController({
     entry,
     selectedTemplate,
     isWritingUserPreviewOpen,
-    runPreviewForRegistry,
+    runPreview,
   ])
 
   return { handlePreview }

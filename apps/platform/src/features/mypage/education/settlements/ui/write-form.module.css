@@ -1,0 +1,154 @@
+.form {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: inherit;
+  align-self: stretch;
+}
+
+.banner {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  padding: var(--spacing-16) var(--spacing-20);
+  border-radius: var(--radius-16);
+  background: var(--color-element-hover, rgba(1, 161, 175, 0.06));
+}
+
+.bannerTitle,
+.bannerMeta {
+  margin: 0;
+}
+
+.radioGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-16);
+}
+
+.radioOption {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-6);
+  cursor: pointer;
+}
+
+.radioOption input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--color-primary-500);
+}
+
+.legBlock {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+}
+
+.legHeading {
+  margin: 0;
+}
+
+.receiptStack {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+}
+
+.fileList {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fileChip {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  gap: var(--spacing-6);
+}
+
+.fileName {
+  min-width: 0;
+}
+
+.receiptHints {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+}
+
+.amountRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.amountInput {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.receiptHint {
+  margin: 0;
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.fileRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--spacing-16);
+}
+
+.fileButton {
+  flex-shrink: 0;
+  white-space: nowrap;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  padding-top: var(--spacing-16);
+}

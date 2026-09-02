@@ -100,11 +100,11 @@ export function SponsorContactsPanel({
               variant="delete"
               size="medium"
               onClick={handleDeleteClick}
-              disabled={!canWrite || selectedKeys.length === 0}
+              disabled={selectedKeys.length === 0}
             >
               담당자 삭제
             </CmsButton>
-            <CmsButton variant="primary" size="medium" onClick={handleRegisterClick} disabled={!canWrite}>
+            <CmsButton variant="primary" size="medium" onClick={handleRegisterClick}>
               담당자 등록
             </CmsButton>
           </>

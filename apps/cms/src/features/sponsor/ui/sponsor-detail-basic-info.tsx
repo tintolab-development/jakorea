@@ -279,11 +279,11 @@ export function SponsorContactsSection({
             variant="delete"
             size="medium"
             onClick={onDeleteClick}
-            disabled={!canWrite || selectedContactKeys.length === 0}
+            disabled={selectedContactKeys.length === 0}
           >
             담당자 삭제
           </CmsButton>
-          <CmsButton variant="primary" size="medium" onClick={onRegisterClick} disabled={!canWrite}>
+          <CmsButton variant="primary" size="medium" onClick={onRegisterClick}>
             담당자 등록
           </CmsButton>
         </div>

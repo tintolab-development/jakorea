@@ -2,6 +2,10 @@ import { ProgramRegistrationBusinessKpiParagraph } from '@/features/template/ui/
 
 export function TrainedTeachersRegistrationBusinessKpiParagraph() {
   return (
-    <ProgramRegistrationBusinessKpiParagraph overlayKeyPrefix="trainedTeachersRegistration.kpi" />
+    <ProgramRegistrationBusinessKpiParagraph
+      overlayKeyPrefix="trainedTeachersRegistration.kpi"
+      instructorDisabled
+      volunteerDisabled
+    />
   )
 }

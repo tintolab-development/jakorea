@@ -7,23 +7,53 @@ import {
   FormEditorTitleNumberingField,
 } from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
 
+function resolveUjatVolunteerHiddenParagraphIds(
+  applicationType: ProgramParticipantApplicationEditorViewModel['ujatVolunteerApplicationType']
+): Set<string> | undefined {
+  const hidden = new Set<string>()
+  if (applicationType === 'new') {
+    hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm)
+  }
+  if (applicationType === 'ujat-graduate') {
+    hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems)
+  }
+  return hidden.size > 0 ? hidden : undefined
+}
+
+function filterUjatVolunteerParagraphs<T extends { id: string }>(
+  paragraphs: readonly T[],
+  applicationType: ProgramParticipantApplicationEditorViewModel['ujatVolunteerApplicationType']
+): T[] {
+  const hidden = resolveUjatVolunteerHiddenParagraphIds(applicationType)
+  if (hidden == null) return [...paragraphs]
+  return paragraphs.filter(p => !hidden.has(p.id))
+}
+
+function resolveUjatVolunteerSelectedParagraphId(
+  activeParagraphId: string | null,
+  applicationType: ProgramParticipantApplicationEditorViewModel['ujatVolunteerApplicationType']
+): string | null {
+  const hidden = resolveUjatVolunteerHiddenParagraphIds(applicationType)
+  if (activeParagraphId != null && hidden?.has(activeParagraphId)) {
+    return UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.basicInfo
+  }
+  return activeParagraphId
+}
+
 /** UJAT 프로그램 봉사자 신청 폼 전용 편집 UI */
 export function UjatProgramApplicationFormVolunteerEditorLeftColumn({
   vm,
 }: {
   vm: ProgramParticipantApplicationEditorViewModel
 }) {
-  const hidePreviousTerm = vm.ujatVolunteerApplicationType === 'new'
-  const visibleParagraphs = hidePreviousTerm
-    ? vm.draft.paragraphs.filter(
-        p => p.id !== UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm
-      )
-    : vm.draft.paragraphs
-  const selectedCardId =
-    hidePreviousTerm &&
-    vm.activeParagraphId === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm
-      ? UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.basicInfo
-      : vm.activeParagraphId
+  const visibleParagraphs = filterUjatVolunteerParagraphs(
+    vm.draft.paragraphs,
+    vm.ujatVolunteerApplicationType
+  )
+  const selectedCardId = resolveUjatVolunteerSelectedParagraphId(
+    vm.activeParagraphId,
+    vm.ujatVolunteerApplicationType
+  )
 
   return (
     <FormEditorLeftPanel
@@ -43,18 +73,7 @@ export function UjatProgramApplicationFormVolunteerEditorLeftColumn({
       singleItemListActiveItemId={vm.singleItemListActiveItemId}
       onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
-      paragraphBodyOptions={{
-        structureLockedParagraphIds: vm.structureLockedParagraphIds,
-        structureLockedAuthoringChoicePreview: true,
-        hiddenParagraphIds: hidePreviousTerm
-          ? new Set([UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm])
-          : undefined,
-        ujatProgramApplicationFormVolunteer: {
-          enabled: true,
-          applicationType: vm.ujatVolunteerApplicationType,
-          onApplicationTypeChange: vm.setUjatVolunteerApplicationType,
-        },
-      }}
+      paragraphBodyOptions={vm.leftPanelParagraphBodyOptions}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
   )
@@ -65,17 +84,14 @@ export function UjatProgramApplicationFormVolunteerEditorRightColumn({
 }: {
   vm: ProgramParticipantApplicationEditorViewModel
 }) {
-  const hidePreviousTerm = vm.ujatVolunteerApplicationType === 'new'
-  const selectedItemId =
-    hidePreviousTerm &&
-    vm.activeParagraphId === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm
-      ? UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.basicInfo
-      : vm.activeParagraphId
-  const sortableMiddle = hidePreviousTerm
-    ? vm.sortableMiddle.filter(
-        item => item.id !== UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm
-      )
-    : vm.sortableMiddle
+  const selectedItemId = resolveUjatVolunteerSelectedParagraphId(
+    vm.activeParagraphId,
+    vm.ujatVolunteerApplicationType
+  )
+  const sortableMiddle = filterUjatVolunteerParagraphs(
+    vm.sortableMiddle,
+    vm.ujatVolunteerApplicationType
+  )
 
   return (
     <FormEditorFieldNav

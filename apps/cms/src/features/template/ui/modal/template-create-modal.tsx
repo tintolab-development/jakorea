@@ -24,6 +24,8 @@ export interface TemplateCreateModalProps {
   onDuplicateSuccess: (newTemplateId: string) => void
 }
 
+const NEW_TEMPLATE_OPTION_VALUE = '__new__'
+
 function resolveSelection(
   kind: TemplateCreateKind,
   selectValue: string | null
@@ -34,6 +36,11 @@ function resolveSelection(
       return { source: 'direct', target: selectValue }
     }
     return null
+  }
+  if (kind === 'survey' || kind === 'agreement') {
+    if (selectValue === NEW_TEMPLATE_OPTION_VALUE) {
+      return { source: 'direct', target: kind }
+    }
   }
   if (kind === 'application' || kind === 'application_form' || kind === 'survey' || kind === 'agreement') {
     return { source: 'template', templateId: selectValue, category: kind }
@@ -76,11 +83,20 @@ export function TemplateCreateModal({
       ]
     }
     const category = kind as WritingTemplateCategory
-    return getWritingTemplateRowsByCategory(category, sections).map(row => ({
+    const rows = getWritingTemplateRowsByCategory(category, sections).map(row => ({
       label: row.templateName,
       value: row.id,
     }))
+    if (kind === 'survey' || kind === 'agreement') {
+      return [...rows, { label: '신규 등록', value: NEW_TEMPLATE_OPTION_VALUE }]
+    }
+    return rows
   }, [kind, sections])
+
+  const selectPlaceholder =
+    kind === 'direct'
+      ? '등록할 양식 유형을 선택해 주세요'
+      : '기본 구조로 사용할 양식을 선택해 주세요'
 
   const selection = useMemo(() => resolveSelection(kind, selectValue), [kind, selectValue])
   const canSubmit = selection != null
@@ -211,7 +227,7 @@ export function TemplateCreateModal({
 
       <CmsSelect
         width={'100%'}
-        placeholder="기본 구조로 사용할 양식을 선택해 주세요"
+        placeholder={selectPlaceholder}
         options={selectOptions}
         value={selectValue ?? undefined}
         onChange={v => setSelectValue(v ?? null)}

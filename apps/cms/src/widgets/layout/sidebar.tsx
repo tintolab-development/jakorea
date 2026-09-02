@@ -12,6 +12,12 @@ import {
   memberListHref,
   normalizeMemberListKind,
 } from '@/shared/config/member-list-kinds'
+import {
+  canAdminAction,
+  isSecurityLogPath,
+  showAdminAccessDeniedAlert,
+} from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { MenuDropdownChevronIcon } from '@/shared/ui/icons'
 import './sidebar.css'
 import { Header } from './header'
@@ -23,6 +29,7 @@ export function Sidebar() {
   const location = useLocation()
   const queryClient = useQueryClient()
   const { user } = useAuthStore()
+  const roleCode = useSessionAdminRoleCode()
 
   const menuItems = useMemo(() => {
     return getMenuItemsByRole(user?.role || null, user)
@@ -190,6 +197,13 @@ export function Sidebar() {
           expandIcon={expandIcon}
           onClick={({ key }) => {
             if (typeof key !== 'string' || !key.startsWith('/')) return
+            if (
+              isSecurityLogPath(key) &&
+              !canAdminAction({ roleCode, action: 'view', screen: 'security-logs' })
+            ) {
+              showAdminAccessDeniedAlert()
+              return
+            }
             const alreadyOnExactHref = `${location.pathname}${location.search}` === key
             navigate(key)
             // 동일 유형 메뉴 재클릭은 URL이 안 바뀌어 observer remount가 없다.

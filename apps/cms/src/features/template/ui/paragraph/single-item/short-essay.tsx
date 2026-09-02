@@ -79,6 +79,7 @@ export function ShortEssay({
         ]
   const showItemTitle = items.length >= 2 ? true : (paragraph.showItemTitle ?? false)
   const itemInputRows = paragraph.itemInputRows ?? 5
+  const maxLength = paragraph.maxLength
 
   const updateItemBodyText = (id: string, bodyText: string) => {
     const nextItems = items.map(item => (item.id === id ? { ...item, bodyText } : item))
@@ -146,6 +147,8 @@ export function ShortEssay({
             value={item.bodyText}
             placeholder={item.placeholder ?? ph}
             rows={itemInputRows}
+            maxLength={maxLength}
+            showCount={maxLength != null}
             onClick={event => {
               event.stopPropagation()
               handleItemClick(item.id)

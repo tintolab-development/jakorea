@@ -27,21 +27,29 @@
 - `development` 에 push/merge → **Production** 배포
 - 그 외 브랜치 PR → Preview
 
-## 3. 환경 변수
+## 3. 환경 변수 · 실서버 고정
 
-**Settings → Environment Variables** 에 `apps/cms/.env.example` 기준 값을 넣는다.
+**배포 API 오리진 SSOT**
 
-권장 (배포에 쓰는 환경에 체크):
+| 계층 | 역할 |
+|------|------|
+| `apps/cms/.env.production` (커밋) | `vite build` 기본값 — `VITE_API_BASE_URL=https://d3r1iaa0sy4tcq.cloudfront.net` |
+| `src/shared/lib/api-remote-env.ts` | Production에서 localhost/127.0.0.1 무시 → CloudFront 강제 |
+| Vercel Environment Variables | 위보다 우선. **localhost를 넣지 말 것** |
+
+권장 Vercel 값 (Production / Preview 모두, `apps/cms/.env.example` 참고):
 
 | 변수 | 용도 |
 |------|------|
-| `VITE_API_BASE_URL` | 브라우저가 호출할 API 오리진 (CORS 허용 필요) |
-| `VITE_OAUTH_REDIRECT_ORIGIN` | 배포 URL — OAuth Redirect URI와 동일 |
-| `VITE_REAL_API_MODULES` | mock→실 API 전환 모듈 목록 (쉼표 구분) |
+| `VITE_API_BASE_URL` | `https://d3r1iaa0sy4tcq.cloudfront.net` (실서버) |
+| `VITE_OAUTH_BACKEND_ORIGIN` | 동일 CloudFront (Admin SSO) |
+| `VITE_REAL_API_MODULES` | mock→실 API 전환 모듈 목록 (쉼표 구분) — `.env.production`과 동기화 |
 | `VITE_ADDRESS_API_KEY` | 도로명주소 검색 |
 | `VITE_NEIS_API_KEY` | 학교 검색 |
 
-로컬 전용 `VITE_API_SERVER`(Vite 프록시)는 Vercel 빌드에 넣지 않는다.
+- `VITE_API_SERVER` / `VITE_OAUTH_REDIRECT_ORIGIN=http://localhost:…` 는 **Vercel에 넣지 않는다** (로컬 전용).
+- OAuth 프론트 redirect는 배포 시 `window.location.origin`을 쓴다.
+- 배포 확인: 번들/Network에 `d3r1iaa0sy4tcq.cloudfront.net` 이 보이고 `127.0.0.1` / `localhost:8080` 이 없어야 한다.
 
 추가로 Node/pnpm 인식이 불안하면:
 

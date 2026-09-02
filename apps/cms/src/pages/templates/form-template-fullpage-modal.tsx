@@ -1,3 +1,4 @@
+import { CloseOutlined } from '@ant-design/icons'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   buildCertificateFormSettings,
@@ -17,7 +18,16 @@ import {
 } from '@/features/template/ui/template-management/template-custom-fields-form'
 import { TemplatePreviewPageNavigator } from '@/features/template/ui/modal/template-preview-page-navigator'
 import { generateFilename } from '@/shared/utils/file-download'
+import { CmsButton } from '@/shared/ui/cms-button'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { downloadIssuedCertificatePdf } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
+import { getCertificateSerialAllocateErrorMessage } from '@/features/program/shared/api/certificate-serial-api'
+import {
+  CERTIFICATE_SERIAL_ISSUANCE_FORM_TEMPLATE,
+  isAllowedCertificateSerialType,
+  parseCertificateSerialInt64,
+} from '@/features/program/shared/lib/certificate-serial'
 import {
   FormCertificatePreview,
   FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS,
@@ -37,6 +47,9 @@ export interface FormTemplateFullpageModalProps {
   initialStringValues?: Record<string, string>
   issueDate?: Date
   buildFilenameTitle?: string
+  /** 프로그램 실발급 키. 없으면 양식 관리 샘플로 시퀀스만 발급 */
+  serialProgramId?: string | number | null
+  serialParticipantId?: string | number | null
 }
 
 export function FormTemplateFullpageModal({
@@ -48,8 +61,11 @@ export function FormTemplateFullpageModal({
   initialStringValues,
   issueDate,
   buildFilenameTitle,
+  serialProgramId,
+  serialParticipantId,
 }: FormTemplateFullpageModalProps) {
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
+  const { showAlert } = useCmsAlert()
 
   const modalState = useCertificateTemplateModalState({
     open,
@@ -75,14 +91,19 @@ export function FormTemplateFullpageModal({
     isTemplateSettingsLoaded,
   } = modalState
 
-  const { interactive: certificatePreviewProps, pdfExport: certificatePdfExportProps } =
-    useFormCertificatePreviewProps(modalState, issueDate)
-
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
   const [certificatePreviewOpen, setCertificatePreviewOpen] = useState(false)
+  const [pdfSerialNumber, setPdfSerialNumber] = useState<string | undefined>()
+  const [isAllocatingSerial, setIsAllocatingSerial] = useState(false)
+
+  const { interactive: certificatePreviewProps, pdfExport: certificatePdfExportProps } =
+    useFormCertificatePreviewProps(modalState, issueDate, pdfSerialNumber)
 
   useEffect(() => {
-    if (!open) setCertificatePreviewOpen(false)
+    if (!open) {
+      setCertificatePreviewOpen(false)
+      setPdfSerialNumber(undefined)
+    }
   }, [open])
 
   const buildPdfFilename = useCallback(
@@ -95,8 +116,57 @@ export function FormTemplateFullpageModal({
     buildFilename: buildPdfFilename,
   })
 
+  const handleDownloadDocument = useCallback(async () => {
+    if (isAllocatingSerial || isPdfDownloading) return
+    setIsAllocatingSerial(true)
+    try {
+      if (templateCode != null && isAllowedCertificateSerialType(templateCode)) {
+        const programId = parseCertificateSerialInt64(serialProgramId)
+        const participantId = parseCertificateSerialInt64(serialParticipantId)
+        await downloadIssuedCertificatePdf({
+          subject:
+            programId != null && participantId != null
+              ? {
+                  programId,
+                  subjectId: participantId,
+                  certificateType: templateCode,
+                }
+              : {
+                  certificateType: templateCode,
+                  issuanceSource: CERTIFICATE_SERIAL_ISSUANCE_FORM_TEMPLATE,
+                },
+          applySerial: setPdfSerialNumber,
+          exportRoot: pdfExportCanvasRef.current,
+          getExportRoot: () => pdfExportCanvasRef.current,
+          downloadPdf,
+        })
+        return
+      }
+      await downloadPdf()
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: getCertificateSerialAllocateErrorMessage(error),
+      })
+    } finally {
+      setIsAllocatingSerial(false)
+    }
+  }, [
+    downloadPdf,
+    isAllocatingSerial,
+    isPdfDownloading,
+    serialParticipantId,
+    serialProgramId,
+    showAlert,
+    templateCode,
+  ])
+
   const handlePreview = useCallback(() => {
     setCertificatePreviewOpen(true)
+  }, [])
+
+  const handleClosePreview = useCallback(() => {
+    setCertificatePreviewOpen(false)
   }, [])
 
   const handleSave = useCallback(() => {
@@ -135,10 +205,10 @@ export function FormTemplateFullpageModal({
 
   return (
     <>
-    <FormCertificatePdfExportOverlay visible={isPdfDownloading} />
+    <FormCertificatePdfExportOverlay visible={isPdfDownloading || isAllocatingSerial} />
     <TealHeaderModal
       open={open && certificatePreviewOpen}
-      onCancel={() => setCertificatePreviewOpen(false)}
+      onCancel={handleClosePreview}
       title=""
       size="full"
       hideHeader
@@ -151,22 +221,35 @@ export function FormTemplateFullpageModal({
             <span className="template-preview-modal__title-text">{title}</span>
             <span className="template-preview-modal__badge">미리보기</span>
           </div>
+          <button
+            type="button"
+            className="template-preview-modal__title-close"
+            onClick={handleClosePreview}
+            aria-label="닫기"
+          >
+            <CloseOutlined />
+          </button>
         </header>
 
         <div className="template-preview-modal__body">
-          <div className="template-preview-modal__notice">
-            <div className="template-preview-modal__notice-text-wrap">
-              <p className="template-preview-modal__notice-text">
+          <div className="template-preview-modal__notice-wrap">
+            <div className="template-preview-modal__notice">
+              <span className="template-preview-modal__notice-text">
                 현재 화면은 미리보기 화면입니다.
-              </p>
+              </span>
+              <div className="template-preview-modal__notice-actions">
+                <CmsButton
+                  type="button"
+                  variant="secondary"
+                  size="large"
+                  width={140}
+                  className="template-preview-modal__notice-close-btn"
+                  onClick={handleClosePreview}
+                >
+                  미리보기 닫기
+                </CmsButton>
+              </div>
             </div>
-            <button
-              type="button"
-              className="template-preview-modal__notice-close-btn"
-              onClick={() => setCertificatePreviewOpen(false)}
-            >
-              미리보기 닫기
-            </button>
           </div>
 
           <div className="template-preview-modal__pages">
@@ -174,7 +257,7 @@ export function FormTemplateFullpageModal({
               <div className="template-preview-modal__a4-stack">
                 <div className="template-preview-modal__a4-frame">
                   <div className="template-preview-modal__a4-scale-inner">
-                    <FormCertificatePreview {...certificatePdfExportProps} />
+                    <FormCertificatePreview {...certificatePdfExportProps} serialNumber={undefined} />
                   </div>
                 </div>
               </div>
@@ -193,8 +276,10 @@ export function FormTemplateFullpageModal({
       templateTabType="issuance"
       onPreview={handlePreview}
       onSave={handleSave}
-      onDownloadDocument={downloadPdf}
-      downloadDocumentLoading={isPdfDownloading}
+      onDownloadDocument={() => {
+        void handleDownloadDocument()
+      }}
+      downloadDocumentLoading={isPdfDownloading || isAllocatingSerial}
       leftContent={
         <>
           <FormCertificateEditScaleViewport>

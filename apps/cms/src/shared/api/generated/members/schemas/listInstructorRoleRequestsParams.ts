@@ -16,6 +16,18 @@ status?: string;
  */
 keyword?: string;
 /**
+ * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ */
+memberType?: string;
+/**
+ * 조회 시작 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
+ */
+requestedAtFrom?: string;
+/**
+ * 조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
+ */
+requestedAtTo?: string;
+/**
  * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
  */
 page?: number;

@@ -19,6 +19,7 @@ export function RecruitFormVolunteerInterviewScheduleParagraph({
   return (
     <VolunteerInterviewAvailableScheduleParagraph
       isTemplateAuthoringMode
+      overlayStore="recruit"
       exceptionScheduleCount={exceptionScheduleCount}
       exceptionBlockKeys={exceptionBlockKeys}
       onRemoveExceptionBlock={onRemoveExceptionBlock}

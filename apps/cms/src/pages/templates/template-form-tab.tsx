@@ -13,8 +13,7 @@ import {
   buildTemplateConfig,
 } from '@/features/template/lib/build-template-config'
 import { useTemplateModal } from '@/features/template/hooks/use-template-modal'
-import { useTemplateEditorVm } from '@/features/template/hooks/use-template-editor-vm'
-import { useTemplatePreviewController } from '@/features/template/hooks/use-template-preview-controller'
+import { useFormTemplateDeleteAction } from '@/features/template/hooks/use-form-template-delete-action'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import { TemplateListCard } from '@/features/template/ui/template-management/template-list-card'
 import { TemplateTable } from '@/features/template/ui/template-management/template-table'
@@ -109,23 +108,47 @@ export default function TemplateFormTab() {
     [orderedLeftContentConfig]
   )
 
-  const editorVm = useTemplateEditorVm({
-    isPreviewOpen,
-    templateId,
-    templateName: selectedTemplate?.templateName,
-    registryEntry,
-    onTemplateDraftSaveConfirmed: handleCloseTemplatePreview,
+  const {
+    showDeleteButton,
+    deleteLoading,
+    requestDelete,
+    deleteConfirmModal,
+  } = useFormTemplateDeleteAction({
+    templateRow: selectedTemplate,
+    onDeleted: handleCloseTemplatePreview,
   })
 
-  const { handlePreview } = useTemplatePreviewController({
-    params,
-    setParams,
-    isPreviewOpen,
-    selectedTemplate,
-    registryEntry,
-    isWritingUserPreviewOpen,
-    editorVm,
-  })
+  const genericModalState = useMemo(
+    () => ({
+      orderedLeftContentConfig,
+      activeCardId,
+      setActiveCardId,
+      applyOrderedCards,
+      rightNavigationConfig,
+    }),
+    [
+      orderedLeftContentConfig,
+      activeCardId,
+      setActiveCardId,
+      applyOrderedCards,
+      rightNavigationConfig,
+    ]
+  )
+
+  const previewControllerBase = useMemo(
+    () => ({
+      params,
+      setParams,
+      isPreviewOpen,
+      selectedTemplate,
+      registryEntry,
+      isWritingUserPreviewOpen,
+    }),
+    [params, setParams, isPreviewOpen, selectedTemplate, registryEntry, isWritingUserPreviewOpen]
+  )
+
+  const isCrimeConsentDetail =
+    isPreviewOpen && registryEntry?.usesCrimeConsentModal === true
 
   const agreementWritingFormConfig = useMemo(
     () =>
@@ -147,31 +170,6 @@ export default function TemplateFormTab() {
     { suppressInactiveUserPreviewStrip }
   )
 
-  const rendererContext = useMemo(
-    () => ({
-      registryEntry: editorVm.registryEntry,
-      editorVm,
-      generic: {
-        orderedLeftContentConfig,
-        activeCardId,
-        setActiveCardId,
-        applyOrderedCards,
-        rightNavigationConfig,
-      },
-    }),
-    [
-      editorVm,
-      orderedLeftContentConfig,
-      activeCardId,
-      setActiveCardId,
-      applyOrderedCards,
-      rightNavigationConfig,
-    ]
-  )
-
-  const isCrimeConsentDetail =
-    isPreviewOpen && registryEntry?.usesCrimeConsentModal === true
-
   if (params.mode === 'new' && params.type === 'survey') {
     return <NewSurveyForm />
   }
@@ -184,17 +182,24 @@ export default function TemplateFormTab() {
 
   if (agreementWritingFormConfig != null) {
     return (
-      <AgreementWritingFormShell
-        {...agreementWritingFormConfig}
-        templateCode={params.id?.trim()}
-        onTemplateDraftSaveConfirmed={handleCloseTemplatePreview}
-        onClose={handleCloseTemplatePreview}
-      />
+      <>
+        {deleteConfirmModal}
+        <AgreementWritingFormShell
+          {...agreementWritingFormConfig}
+          templateCode={params.id?.trim()}
+          onTemplateDraftSaveConfirmed={handleCloseTemplatePreview}
+          onClose={handleCloseTemplatePreview}
+          showDeleteButton={showDeleteButton}
+          onDelete={requestDelete}
+          deleteLoading={deleteLoading}
+        />
+      </>
     )
   }
 
   return (
     <>
+      {deleteConfirmModal}
       <div className="template-form-tab__content">
         {isWritingSectionsLoading ? (
           <p className="template-form-tab__loading">양식 목록을 불러오는 중입니다.</p>
@@ -220,9 +225,15 @@ export default function TemplateFormTab() {
         open={isPreviewOpen && !isCrimeConsentDetail && selectedTemplate != null}
         onClose={handleCloseTemplatePreview}
         title={resolvePreviewHeaderTitle(registryEntry, selectedTemplate?.templateName)}
-        onPreview={handlePreview}
-        onSave={editorVm.handleSave}
-        rendererContext={rendererContext}
+        showDeleteButton={showDeleteButton}
+        onDelete={requestDelete}
+        deleteLoading={deleteLoading}
+        registryEntry={registryEntry}
+        templateId={templateId}
+        templateName={selectedTemplate?.templateName}
+        onTemplateDraftSaveConfirmed={handleCloseTemplatePreview}
+        generic={genericModalState}
+        previewControllerBase={previewControllerBase}
       />
     </>
   )

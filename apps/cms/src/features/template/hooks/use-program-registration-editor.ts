@@ -4,7 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
-  useSyncExternalStore,
+  startTransition,
   type Dispatch,
   type SetStateAction,
 } from 'react'
@@ -68,17 +68,19 @@ import {
 import {
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
   getProgramRegistrationOverlayRecord,
-  getProgramRegistrationOverlayVersion,
   patchProgramRegistrationOverlay,
+  readGeneralRegistrationOverlayProgramTitleKo,
   readGeneralRegistrationOverlayScheduleLines,
   readGeneralRegistrationOverlaySponsorContactId,
   readGeneralRegistrationOverlaySponsorId,
   replaceProgramRegistrationOverlay,
   resetProgramRegistrationOverlay,
-  subscribeProgramRegistrationOverlay,
+  subscribeProgramRegistrationOverlayKey,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { useCmsAlert } from '@/shared/ui'
+import { hasIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
 
 export type ProgramRegistrationParticipantSelection = {
   individual: boolean
@@ -296,10 +298,12 @@ export function useProgramRegistrationEditor(
   const [sponsorId, setSponsorId] = useState('')
   const [sponsorContactId, setSponsorContactId] = useState('')
   const [programTitleKo, setProgramTitleKo] = useState('')
-  const overlayVersion = useSyncExternalStore(
-    subscribeProgramRegistrationOverlay,
-    getProgramRegistrationOverlayVersion,
-    getProgramRegistrationOverlayVersion
+  const usesGeneralRegistrationControlledFields =
+    programRegistrationFormVariant === 'general' && !restrictCurriculumSessionStructure
+
+  const resolveProgramTitleKo = useCallback(
+    () => programTitleKo.trim() || readGeneralRegistrationOverlayProgramTitleKo(),
+    [programTitleKo]
   )
 
   const {
@@ -311,38 +315,49 @@ export function useProgramRegistrationEditor(
 
   useEffect(() => {
     if (!active) return
-    if (programRegistrationFormVariant === 'general') {
-      const hideScheduleSettings = programType === 'schedule' && sessionRoundType === 'multi'
+
+    const syncInstitutionApplicationBridge = () => {
+      if (programRegistrationFormVariant === 'general') {
+        const hideScheduleSettings = programType === 'schedule' && sessionRoundType === 'multi'
+        patchInstitutionApplicationProgramBridge({
+          educationStructure: programType,
+          sessionRound: sessionRoundType,
+          educationScheduleMode,
+          educationScheduleLines: hideScheduleSettings
+            ? []
+            : readGeneralRegistrationOverlayScheduleLines(),
+        })
+        return
+      }
+      if (programRegistrationFormVariant === 'trainedTeachers') {
+        patchInstitutionApplicationProgramBridge({
+          preEducationNoticeRequired: trainedTeachersTeacherTrainingEnabled,
+          educationStructure: programType,
+          sessionRound: sessionRoundType,
+          educationScheduleMode,
+        })
+        return
+      }
       patchInstitutionApplicationProgramBridge({
-        educationStructure: programType,
-        sessionRound: sessionRoundType,
-        educationScheduleMode,
-        educationScheduleLines: hideScheduleSettings
-          ? []
-          : readGeneralRegistrationOverlayScheduleLines(),
+        preEducationNoticeRequired: true,
+        maxScheduleCount: 2,
+        maxSessionsPerDay: 2,
+        educationStructure: 'curriculum',
+        sessionRound: 'multi',
+        educationScheduleMode: 'period',
       })
-      return
     }
-    if (programRegistrationFormVariant === 'trainedTeachers') {
-      patchInstitutionApplicationProgramBridge({
-        preEducationNoticeRequired: trainedTeachersTeacherTrainingEnabled,
-        educationStructure: programType,
-        sessionRound: sessionRoundType,
-        educationScheduleMode,
-      })
-      return
-    }
-    patchInstitutionApplicationProgramBridge({
-      preEducationNoticeRequired: true,
-      maxScheduleCount: 2,
-      maxSessionsPerDay: 2,
-      educationStructure: 'curriculum',
-      sessionRound: 'multi',
-      educationScheduleMode: 'period',
-    })
+
+    syncInstitutionApplicationBridge()
+
+    if (programRegistrationFormVariant !== 'general') return
+
+    return subscribeProgramRegistrationOverlayKey(
+      GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
+      syncInstitutionApplicationBridge
+    )
   }, [
     active,
-    overlayVersion,
     programRegistrationFormVariant,
     programType,
     sessionRoundType,
@@ -389,12 +404,14 @@ export function useProgramRegistrationEditor(
     const next = normalizeWritingFormDraft(
       createProgramRegistrationDraft(programRegistrationFormVariant)
     )
-    setDraft(next)
-    setActiveParagraphId(next.paragraphs[0]?.id ?? null)
-    setSingleItemListActiveItemId(null)
-    applyEditorStateSnapshot(
-      createDefaultRegistrationEditorState(programRegistrationFormVariant)
-    )
+    startTransition(() => {
+      setDraft(next)
+      setActiveParagraphId(next.paragraphs[0]?.id ?? null)
+      setSingleItemListActiveItemId(null)
+      applyEditorStateSnapshot(
+        createDefaultRegistrationEditorState(programRegistrationFormVariant)
+      )
+    })
   }, [applyEditorStateSnapshot, programRegistrationFormVariant])
 
   useEffect(() => {
@@ -424,13 +441,15 @@ export function useProgramRegistrationEditor(
           if (saved?.draft) {
             replaceProgramRegistrationOverlay(saved.overlay ?? {})
             const normalized = normalizeWritingFormDraft(saved.draft)
-            setDraft(normalized)
             const restored = applyProgramRegistrationEditorState(saved.editorState, defaults)
-            applyEditorStateSnapshot(restored)
-            setActiveParagraphId(
-              restored.activeParagraphId ?? normalized.paragraphs[0]?.id ?? null
-            )
-            setSingleItemListActiveItemId(null)
+            startTransition(() => {
+              setDraft(normalized)
+              applyEditorStateSnapshot(restored)
+              setActiveParagraphId(
+                restored.activeParagraphId ?? normalized.paragraphs[0]?.id ?? null
+              )
+              setSingleItemListActiveItemId(null)
+            })
             return
           }
           resetRegistrationEditorToSeed()
@@ -830,7 +849,7 @@ export function useProgramRegistrationEditor(
           onTrainedTeachersTeacherTrainingEnabledChange,
           educationScheduleMode,
           onEducationScheduleModeChange,
-          ...(programRegistrationFormVariant === 'general'
+          ...(usesGeneralRegistrationControlledFields
             ? {
                 sponsorId,
                 onSponsorIdChange,
@@ -886,12 +905,17 @@ export function useProgramRegistrationEditor(
       programRegistrationFormVariant,
       educationScheduleMode,
       onEducationScheduleModeChange,
-      sponsorId,
-      onSponsorIdChange,
-      sponsorContactId,
-      onSponsorContactIdChange,
-      programTitleKo,
-      onProgramTitleKoChange,
+      usesGeneralRegistrationControlledFields,
+      ...(usesGeneralRegistrationControlledFields
+        ? [
+            sponsorId,
+            onSponsorIdChange,
+            sponsorContactId,
+            onSponsorContactIdChange,
+            programTitleKo,
+            onProgramTitleKoChange,
+          ]
+        : []),
     ]
   )
 
@@ -935,6 +959,7 @@ export function useProgramRegistrationEditor(
       sponsorId.trim() || readGeneralRegistrationOverlaySponsorId()
     const resolvedContactId =
       sponsorContactId.trim() || readGeneralRegistrationOverlaySponsorContactId()
+    const resolvedProgramTitleKo = resolveProgramTitleKo()
     await persistWritingFormTemplateDraft({
       templateId: templateCode,
       draft,
@@ -955,7 +980,7 @@ export function useProgramRegistrationEditor(
         educationScheduleMode,
         sponsorId: resolvedSponsorId,
         sponsorContactId: resolvedContactId,
-        programTitleKo,
+        programTitleKo: resolvedProgramTitleKo,
         activeParagraphId,
       }),
     })
@@ -969,8 +994,8 @@ export function useProgramRegistrationEditor(
     ipsScheduleDetail,
     participant,
     participationScheduleDetail,
-    programTitleKo,
     programType,
+    resolveProgramTitleKo,
     scheduleCurriculumDetailCount,
     scheduleCurriculumGroupCount,
     scheduleCurriculumPreEducation,
@@ -1056,7 +1081,7 @@ export function useProgramRegistrationEditor(
           programType,
           variant: programRegistrationFormVariant,
           sponsorId: resolvedSponsorId || undefined,
-          title: programTitleKo.trim() || undefined,
+          title: resolveProgramTitleKo() || undefined,
           sessionRoundType,
           educationScheduleMode,
           educationScheduleLines:
@@ -1088,8 +1113,8 @@ export function useProgramRegistrationEditor(
     participant,
     persistTemplateDraftIfNeeded,
     programRegistrationFormVariant,
-    programTitleKo,
     programType,
+    resolveProgramTitleKo,
     sessionRoundType,
     educationScheduleMode,
     showAlert,
@@ -1101,8 +1126,54 @@ export function useProgramRegistrationEditor(
     setSingleItemListActiveItemId(itemId)
   }, [])
 
+  const hasIncompleteRequiredFields = useCallback(() => {
+    if (programRegistrationFormVariant !== 'general') return false
+    const resolvedSponsorId =
+      sponsorId.trim() || readGeneralRegistrationOverlaySponsorId()
+    const resolvedContactId =
+      sponsorContactId.trim() || readGeneralRegistrationOverlaySponsorContactId()
+    return hasIncompleteGeneralProgramRegistrationRequiredFields(
+      getProgramRegistrationOverlayRecord(),
+      {
+        participant,
+        programType,
+        sessionRoundType,
+        educationFormScheduleDetail,
+        participationScheduleDetail,
+        ipsScheduleDetail,
+        curriculumSessionCount,
+        curriculumChartSessionCount,
+        scheduleCurriculumDetailCount,
+        scheduleCurriculumGroupCount,
+        scheduleCurriculumPreEducation,
+        educationScheduleMode,
+        sponsorId: resolvedSponsorId,
+        sponsorContactId: resolvedContactId,
+        programTitleKo: resolveProgramTitleKo(),
+      }
+    )
+  }, [
+    curriculumChartSessionCount,
+    curriculumSessionCount,
+    educationFormScheduleDetail,
+    educationScheduleMode,
+    ipsScheduleDetail,
+    participant,
+    participationScheduleDetail,
+    programRegistrationFormVariant,
+    programType,
+    resolveProgramTitleKo,
+    scheduleCurriculumDetailCount,
+    scheduleCurriculumGroupCount,
+    scheduleCurriculumPreEducation,
+    sessionRoundType,
+    sponsorContactId,
+    sponsorId,
+  ])
+
   return {
     draft,
+    programRegistrationFormVariant,
     isDraftLoading,
     activeParagraphId,
     singleItemListActiveItemId,
@@ -1131,6 +1202,7 @@ export function useProgramRegistrationEditor(
     programType,
     sessionRoundType,
     educationScheduleMode,
+    hasIncompleteRequiredFields,
   }
 }
 

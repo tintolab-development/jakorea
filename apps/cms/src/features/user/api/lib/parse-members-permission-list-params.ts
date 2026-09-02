@@ -26,16 +26,14 @@ export function parseInstructorRoleRequestListParams(
   }
 }
 
-/** 관리자 탭 — 서버 지원 필터(keyword, status)를 API params로 변환 */
+/** 관리자 탭 — 서버 지원 필터(keyword)만 API params로 변환. 승인 상태는 클라이언트 필터. */
 export function parseAdminApprovalRequestListParams(
   searchParams: URLSearchParams
 ): ListAdminApprovalRequestsParams {
   const keyword = (searchParams.get('permA_search') ?? '').trim()
-  const approvalStatus = parseApproval(searchParams.get('permA_approval'))
 
   return {
     keyword: keyword.length > 0 ? keyword : undefined,
-    status: mapUiApprovalFilterToApiStatus(approvalStatus),
     page: 0,
     size: DEFAULT_PAGE_SIZE,
   }

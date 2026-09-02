@@ -1,0 +1,18 @@
+.form {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-32);
+  align-self: stretch;
+}
+
+.closing {
+  margin: 0;
+  text-align: center;
+}
+
+@media (--bp-below-pc) {
+  .form {
+    gap: var(--spacing-16);
+  }
+}

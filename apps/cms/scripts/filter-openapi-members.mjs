@@ -22,6 +22,7 @@ const MEMBERS_PATH_PREFIXES = [
   '/api/admin/admin-roles',
   '/api/admin/roles',
   '/api/admin/admin-permission-change-logs',
+  '/api/admin/certificates/issues/serial',
 ]
 
 const spec = JSON.parse(readFileSync(inputPath, 'utf8'))

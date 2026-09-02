@@ -147,7 +147,7 @@
 /* ── Mobile · ~1079 ── */
 @media (--bp-below-pc) {
   .shell {
-    --mypage-page-padding-x: var(--spacing-16);
+    --mypage-page-padding-x: var(--spacing-20);
     --mypage-lnb-gap: var(--spacing-24);
   }
 
@@ -169,7 +169,7 @@
   .sidebar {
     flex: none;
     width: 100%;
-    padding-top: var(--spacing-24);
+    padding-top: var(--spacing-40);
     padding-bottom: 0;
   }
 

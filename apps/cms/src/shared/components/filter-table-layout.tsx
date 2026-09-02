@@ -25,6 +25,8 @@ import {
   type FilterFieldConfig,
   type TableFilterGroupProps,
 } from './table-filter-group'
+import { onAdminWriteClickCapture } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 
 export type { FilterFieldConfig, TableFilterGroupProps }
 
@@ -106,6 +108,7 @@ export function FilterTableLayout({
   rows,
   ...tableFilterGroupRest
 }: FilterTableLayoutProps) {
+  const roleCode = useSessionAdminRoleCode()
   const hasExplicitRows = rows != null && rows.length > 0
   const singleRowFields = tableFilterGroupRest.fields ?? []
   const hasPctWidthFields = singleRowFields.some(isFilterFieldPctWidth)
@@ -203,7 +206,12 @@ export function FilterTableLayout({
           {showToolbarActions ? (
             <div className="filter-table-layout__toolbar-actions">
               {actions != null ? (
-                <div className="filter-table-layout__toolbar-actions-slot">{actions}</div>
+                <div
+                  className="filter-table-layout__toolbar-actions-slot"
+                  onClickCapture={event => onAdminWriteClickCapture(event, roleCode)}
+                >
+                  {actions}
+                </div>
               ) : null}
               {showExcelButton ? (
                 <div className="filter-table-layout__toolbar-excel">
@@ -215,7 +223,12 @@ export function FilterTableLayout({
                 </div>
               ) : null}
               {actionsAfterExcel != null ? (
-                <div className="filter-table-layout__toolbar-actions-slot">{actionsAfterExcel}</div>
+                <div
+                  className="filter-table-layout__toolbar-actions-slot"
+                  onClickCapture={event => onAdminWriteClickCapture(event, roleCode)}
+                >
+                  {actionsAfterExcel}
+                </div>
               ) : null}
             </div>
           ) : null}

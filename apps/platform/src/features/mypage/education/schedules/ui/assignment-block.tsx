@@ -5,6 +5,7 @@ import clipDarkMintUrl from '@/shared/assets/icons/clip-dark-mint.svg'
 import portalBlackUrl from '@/shared/assets/icons/portal-black.svg'
 import closeDarkMintUrl from '@/shared/assets/icons/close-dark-mint.svg'
 import closeBlackUrl from '@/shared/assets/icons/close-black.svg'
+import { EducationSessionGuideBlock } from '../../shared'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import styles from './assignment-block.module.css'
 
@@ -28,44 +29,13 @@ export function EducationScheduleAssignmentBlock({
 
   return (
     <>
-      <div
-        className={[styles.block, isSubmitted ? styles.blockSubmitted : undefined]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        <div className={styles.top}>
-          <div className={styles.main}>
-            <p
-              className={[
-                styles.messageRow,
-                guide.tone === 'feedback' ? styles.messageFeedback : undefined,
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              {guide.statusLabel ? (
-                <PFText
-                  as="span"
-                  typo="hl-sm"
-                  color={guide.statusTone === 'submitted' ? 'primary-700' : 'neutral-cool-500'}
-                  className={styles.statusLabel}
-                >
-                  {guide.statusLabel}
-                </PFText>
-              ) : null}
-              <PFText
-                as="span"
-                typo="hl-sm"
-                color="black"
-                className={styles.message}
-              >
-                {guide.message}
-              </PFText>
-            </p>
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.period}>
-              {assignment.periodLabel}
-            </PFText>
-          </div>
+      <EducationSessionGuideBlock
+        variant={isSubmitted ? 'submitted' : 'default'}
+        statusLabel={guide.statusLabel}
+        statusTone={guide.statusTone}
+        message={guide.message}
+        description={assignment.periodLabel}
+        actions={
           <div className={styles.actions}>
             {guide.showFeedbackButton ? (
               <PFButton
@@ -87,8 +57,8 @@ export function EducationScheduleAssignmentBlock({
               {guide.submitLabel}
             </PFButton>
           </div>
-        </div>
-
+        }
+      >
         {showSubmittedDivider ? <div className={styles.divider} aria-hidden="true" /> : null}
 
         {hasFiles ? (
@@ -137,7 +107,7 @@ export function EducationScheduleAssignmentBlock({
             })}
           </ul>
         ) : null}
-      </div>
+      </EducationSessionGuideBlock>
       <PFAlertModal
         open={comingSoonOpen}
         title="준비 중"

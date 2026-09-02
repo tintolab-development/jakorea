@@ -1,20 +1,30 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
+import {
+  getGeneralApplicationOverlayRecord,
+  useGeneralApplicationOverlayKv,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 
 /** UJAT 프로그램 학교 신청 폼 — 신청 지역 */
 export function UjatProgramApplicationRegionParagraph() {
   const { regions: regionOptions } = useUjatEducationRegions()
-  const [region, setRegion] = useState('')
+  const [region, setRegion] = useGeneralApplicationOverlayKv<string>(
+    'application.ujat.inst.region',
+    ''
+  )
 
   useEffect(() => {
     if (regionOptions.length === 0) return
-    setRegion(current => {
-      const valid = regionOptions.some(r => r.label === current)
-      return valid ? current : regionOptions[0].label
-    })
-  }, [regionOptions])
+    const current = (getGeneralApplicationOverlayRecord()['application.ujat.inst.region'] as
+      | string
+      | undefined) ?? ''
+    const valid = regionOptions.some(r => r.label === current)
+    if (!valid) {
+      setRegion(regionOptions[0]!.label)
+    }
+  }, [regionOptions, setRegion])
 
   return (
     <DetailInfoForm title="신청 지역" hideHeader mode="edit">

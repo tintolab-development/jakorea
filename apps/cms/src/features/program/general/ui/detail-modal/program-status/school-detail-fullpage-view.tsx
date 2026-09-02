@@ -1450,6 +1450,7 @@ export function GeneralParticipatingInstitutionDetailView(
               classCount={mergedDetail.classCount}
               schoolName={mergedDetail.schoolName ?? row.schoolName ?? ''}
               educationGrade={mergedDetail.educationGrade ?? ''}
+              programId={program.id}
               programTitle={program.mainTitle ?? program.title ?? ''}
               programStartDate={program.startDate}
               programEndDate={program.endDate}

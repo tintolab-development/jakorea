@@ -343,6 +343,14 @@
   font-size: 12px;
 }
 
+.login-dev-quick__hint {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  opacity: 0.75;
+}
+
 @media (max-width: 640px) {
   .login-card--social-already-linked {
     height: auto;

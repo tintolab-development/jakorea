@@ -15,8 +15,11 @@ import {
   SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
   SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS,
   isSchoolTeacherEmploymentMutedStatus,
+  requestSchoolTeacherEmploymentDropdownOpen,
   SchoolTeacherEmploymentStatusBadge,
 } from '@/features/user/detail/lib/school-teacher-employment-status'
+import { guardAdminAction } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -51,6 +54,7 @@ export function SchoolAffiliatedTeachersSection({
   onLinkedUserClick,
   onEmploymentStatusChange,
 }: SchoolAffiliatedTeachersSectionProps) {
+  const roleCode = useSessionAdminRoleCode()
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [employmentPatchById, setEmploymentPatchById] = useState<
     Partial<Record<string, SchoolTeacherEmploymentStatus>>
@@ -80,11 +84,12 @@ export function SchoolAffiliatedTeachersSection({
 
   const handleEmploymentStatusChange = useCallback(
     (teacherId: string, next: SchoolTeacherEmploymentStatus) => {
+      if (!guardAdminAction({ roleCode, action: 'write' })) return
       setEmploymentPatchById(prev => ({ ...prev, [teacherId]: next }))
       setOpenEmploymentDropdownId(null)
       void onEmploymentStatusChange?.(teacherId, next)
     },
-    [onEmploymentStatusChange]
+    [onEmploymentStatusChange, roleCode]
   )
 
   const columns: ColumnsType<Row> = useMemo(
@@ -147,7 +152,11 @@ export function SchoolAffiliatedTeachersSection({
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={next => handleEmploymentStatusChange(record.id, next)}
             isOpen={openEmploymentDropdownId === record.id}
-            onOpenChange={open => setOpenEmploymentDropdownId(open ? record.id : null)}
+            onOpenChange={open =>
+              requestSchoolTeacherEmploymentDropdownOpen(open, roleCode, nextOpen =>
+                setOpenEmploymentDropdownId(nextOpen ? record.id : null)
+              )
+            }
             style={SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE}
             tagLayout="tag100"
           />
@@ -162,7 +171,13 @@ export function SchoolAffiliatedTeachersSection({
         render: (d: Row['joinedAt']) => formatDateSpaced(d),
       },
     ],
-    [rows.length, openEmploymentDropdownId, handleEmploymentStatusChange, personalInfoRevealed]
+    [
+      rows.length,
+      openEmploymentDropdownId,
+      handleEmploymentStatusChange,
+      personalInfoRevealed,
+      roleCode,
+    ]
   )
 
   const handleWithdraw = () => {

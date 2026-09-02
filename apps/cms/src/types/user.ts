@@ -32,8 +32,11 @@ export type UserRole = 'INDIVIDUAL' | 'SCHOOL' | 'INSTRUCTOR' | 'ADMIN'
 /** 강사(INSTRUCTOR) 회원 상세 UI 분기 — API와 필드명 맞출 것 */
 export type InstructorMemberProfile = 'school_teacher' | 'instructor_dual' | 'instructor_only'
 
-// 관리자 권한 레벨 (§2.2)
+// 관리자 권한 레벨 (§2.2) — UI 배지·레거시 호환. 화면 가드는 `roleCode` 4역할을 쓴다.
 export type AdminLevel = 'MASTER' | 'ADMIN' | 'GENERAL'
+
+/** API `AdminMeResponse.roleCode` — 마스터 / PM / 파트너 / 뷰어 */
+export type AdminRoleCode = 'MASTER' | 'PM' | 'PARTNER' | 'VIEWER'
 
 // 프로그램 단위 역할 (§백오피스 권한 구조)
 export type ProgramRole = 'OWNER' | 'PARTNER' | 'ASSISTANT'
@@ -100,6 +103,10 @@ export interface User {
 
   // 관리자 전용 (§2.2)
   adminLevel?: AdminLevel
+  /** 세션 가드용 4역할. GET /api/admin/me `roleCode` */
+  roleCode?: AdminRoleCode
+  /** GET /api/admin/me `permissionCodes` */
+  permissionCodes?: string[]
   // 프로그램별 역할 (관리자용, §백오피스 권한 구조)
   programRoles?: Record<string, ProgramRole>
 

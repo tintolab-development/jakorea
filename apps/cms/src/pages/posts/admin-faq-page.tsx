@@ -261,14 +261,14 @@ function AdminFAQPage() {
               variant="delete"
               className="admin-faq-delete-btn"
               onClick={handleBulkDelete}
-              disabled={!canWrite || selectedRowKeys.length === 0}
+              disabled={selectedRowKeys.length === 0}
             >
               FAQ 삭제
             </CmsButton>
             <CmsButton variant="secondary" onClick={() => setCategoryModalOpen(true)}>
               카테고리 관리
             </CmsButton>
-            <CmsButton variant="primary" onClick={handleRegister} disabled={!canWrite}>
+            <CmsButton variant="primary" onClick={handleRegister}>
               FAQ 등록
             </CmsButton>
           </>

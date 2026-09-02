@@ -49,8 +49,12 @@ export function useTableRowSelectionState({
     []
   )
 
+  const paragraphIdsKey = paragraphs.map(paragraph => paragraph.id).join('\0')
+  const paragraphsRef = useRef(paragraphs)
+  paragraphsRef.current = paragraphs
+
   useEffect(() => {
-    const ids = new Set(paragraphs.map(p => p.id))
+    const ids = new Set(paragraphsRef.current.map(p => p.id))
     setHorizontalTableRowSelectionsByParagraphId(prev => {
       let changed = false
       const next = { ...prev }
@@ -63,7 +67,7 @@ export function useTableRowSelectionState({
       return changed ? next : prev
     })
     setVerticalTableBodyRowSelection(v => (v != null && !ids.has(v.paragraphId) ? null : v))
-  }, [paragraphs])
+  }, [paragraphIdsKey])
 
   useEffect(() => {
     const prev = previousActiveParagraphIdRef.current

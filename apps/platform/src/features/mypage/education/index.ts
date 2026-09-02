@@ -88,5 +88,27 @@ export {
   EducationSchedulePanel,
   EducationScheduleRow,
 } from './schedules'
-export type { EducationSurveyEmptyKind } from './surveys'
-export { EducationSurveyEmptyPanel } from './surveys'
+export type {
+  EducationSurveyEmptyKind,
+  EducationSurveyFillPanelProps,
+  EducationSurveyMockAvailability,
+} from './surveys'
+export {
+  EducationSurveyEmptyPanel,
+  EducationSurveyFillPanel,
+  createEducationSurveyMockDraft,
+  getEducationSurveyMockAvailability,
+} from './surveys'
+export type {
+  EducationSettlementItem,
+  EducationSettlementProgress,
+  EducationSettlementStatus,
+} from './settlements'
+export {
+  EDUCATION_SETTLEMENT_PAGE_SIZE,
+  EducationSettlementPanel,
+  EducationSettlementWriteForm,
+  buildSettlementWritePath,
+  buildSettlementTabPath,
+  getMockEducationSettlements,
+} from './settlements'

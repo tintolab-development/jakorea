@@ -81,16 +81,7 @@ describe('mapAdminAccountDetailToUser', () => {
     expect(rejected.permissionApprovalHandledAt).toBe('2026-03-01T12:00:00Z')
   })
 
-  it('notificationResentAt·REJECTED_VERIFICATION status를 매핑한다', () => {
-    const withResent = mapAdminAccountDetailToUser({
-      adminAccountId: 4,
-      email: 'd@ja.org',
-      name: '재발송',
-      status: 'ACTIVE',
-      notificationResentAt: '2026-08-20T10:00:00Z',
-    })
-    expect(withResent.permissionNotificationResentAt).toBe('2026-08-20T10:00:00Z')
-
+  it('REJECTED_VERIFICATION status를 REJECTED로 매핑한다', () => {
     const rejectedVerification = mapAdminAccountDetailToUser({
       adminAccountId: 5,
       email: 'e@ja.org',

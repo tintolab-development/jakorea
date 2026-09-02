@@ -58,11 +58,12 @@ const mockAdmins: User[] = [
   {
     id: MOCK_MD_ADMIN_USER_ID,
     email: 'admin1@jakorea.org',
-    password: 'admin1234!', // Mock 데이터용
+    password: 'test1234!', // Mock 데이터용
     name: '김관리',
     nameEn: 'Kim Gwan-ri',
     role: 'ADMIN',
     adminLevel: 'MASTER',
+    roleCode: 'MASTER',
     programRoles: {
       'economy-prog-001': 'OWNER',
       'economy-prog-002': 'OWNER',
@@ -100,6 +101,7 @@ const mockAdmins: User[] = [
     nameEn: 'Lee Un-young',
     role: 'ADMIN',
     adminLevel: 'ADMIN',
+    roleCode: 'PARTNER',
     programRoles: { 'program-1': 'PARTNER' },
     isActive: true,
     lastLoginAt: generatePastDate(3),
@@ -129,6 +131,7 @@ const mockAdmins: User[] = [
     identitySelfSignupCompletedAfterAdminRegistration: false,
     permissionApprovalStatus: 'APPROVED',
     adminLevel: 'GENERAL',
+    roleCode: 'VIEWER',
     programRoles: { 'program-1': 'ASSISTANT' },
     isActive: true,
     lastLoginAt: generatePastDate(7),

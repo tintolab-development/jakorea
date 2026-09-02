@@ -1,16 +1,20 @@
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useMemo } from 'react'
 import '@/features/template/ui/paragraph/single-item/user-info.css'
 import './ujat-program-application-preferred-education-schedule-paragraph.css'
 import { ProgramApplicationScheduleTemplateHintParagraph } from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
+import {
+  UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS,
+  useUjatApplicationInstitutionOverlayKv,
+} from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
 
 /** 템플릿 편집(authoring) — 교육 진행 희망일 값 영역 */
 const AUTHORING_PREFERRED_DATES_HINT = '관리자가 선택한 진행 가능일이 노출됩니다.'
 
 const AUTHORING_SCHEDULE_PLACEHOLDER_HINT =
-  '봉사자 모집 폼에서 관리자가 설정한 일정 및 시간대가 노출됩니다.'
+  '프로그램 등록 시 관리자가 설정한 진행 일정이 노출됩니다.'
 
 /**
  * Mock: 프로그램 등록 > 교육 진행 일정 설정에서 내려올 금요일 후보(추후 API 연동).
@@ -118,20 +122,21 @@ type UjatProgramApplicationPreferredEducationScheduleParagraphProps = {
 export function UjatProgramApplicationPreferredEducationScheduleParagraph({
   paragraphInteractionMode = 'authoring',
 }: UjatProgramApplicationPreferredEducationScheduleParagraphProps) {
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(INITIAL_SELECTED_IDS))
+  const [selectedIdList, setSelectedIdList] = useUjatApplicationInstitutionOverlayKv<string[]>(
+    UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.preferredScheduleSelectedIds,
+    [...INITIAL_SELECTED_IDS]
+  )
+  const selectedIds = useMemo(() => new Set(selectedIdList), [selectedIdList])
 
   const orderedSelected = useMemo(() => {
-    const set = selectedIds
-    return MOCK_FRIDAY_SCHEDULE_OPTIONS.filter(o => set.has(o.id))
+    return MOCK_FRIDAY_SCHEDULE_OPTIONS.filter(o => selectedIds.has(o.id))
   }, [selectedIds])
 
   const toggle = (id: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+    const set = new Set(selectedIdList)
+    if (set.has(id)) set.delete(id)
+    else set.add(id)
+    setSelectedIdList([...set])
   }
 
   if (paragraphInteractionMode === 'authoring') {

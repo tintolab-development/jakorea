@@ -8,6 +8,18 @@
   align-self: stretch;
 }
 
+.fieldset {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: inherit;
+  border: 0;
+}
+
 @media (--bp-below-pc) {
   .form {
     gap: var(--spacing-16);

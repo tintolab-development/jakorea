@@ -33,13 +33,7 @@ export function ProgramApplicationFormInstitutionEditorLeftColumn({
       singleItemListActiveItemId={vm.singleItemListActiveItemId}
       onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
-      paragraphBodyOptions={{
-        structureLockedParagraphIds: vm.structureLockedParagraphIds,
-        structureLockedAuthoringChoicePreview: true,
-        programApplicationFormInstitution: true,
-        programLinkedInstitutionApplicationForm: vm.programLinkedInstitutionApplicationForm,
-        hiddenParagraphIds: vm.institutionApplicationHiddenParagraphIds,
-      }}
+      paragraphBodyOptions={vm.leftPanelParagraphBodyOptions}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
   )

@@ -156,6 +156,10 @@
   background: var(--color-neutral-white);
 }
 
+.fieldTableRounded {
+  border-radius: var(--radius-24, 24px);
+}
+
 .fieldRow {
   display: flex;
   box-sizing: border-box;
@@ -333,6 +337,33 @@
   flex: 0 0 auto;
   align-items: center;
   gap: 0;
+}
+
+/** 한 행을 앞·뒤 인풋이 반반으로 채움 (지급조서 작성 등) */
+.periodPairFill {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.periodPairFill > *:not(.periodTilde):not(.periodHyphen) {
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+.inlineRowFill {
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.inlineRowFill > .inlineSegment {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.inlineRowFill > .inlineSegment > * {
+  width: 100%;
 }
 
 .periodTilde {
