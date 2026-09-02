@@ -624,3 +624,5 @@ PDF는 프론트가 그려도 **번호 장부는 백엔드**다. 프론트는 �
 `certificateType` FE 값: `document-3`, `document-participation-certificate`, `document-4`, `document-5`.
 
 응답 예: `{ "serialNumber": "26-JA-00017", "issueId": 12, "reused": false }`
+
+FE(`allocateCertificateSerial`)는 mock / 404·501 폴백 없이 이 API를 실호출한다. 실패하면 PDF를 만들지 않는다.

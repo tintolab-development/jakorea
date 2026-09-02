@@ -202,4 +202,5 @@ members(또는 certificates) OpenAPI에 추가:
 
 호출 시점: 미리보기 모달 오픈이 아니라 **다운로드 클릭(또는 숨은 export 호스트의 파일 생성 직전)**.
 미리보기만 열고 닫으면 이 API를 호출하지 않는다.
-```
+
+FE 연동(2026-09-02): `allocateCertificateSerial`은 mock / 404·501 폴백 없이 실호출한다. 실패 시 PDF를 만들지 않는다.
