@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
+import { EducationSessionList } from '../../shared'
 import { EDUCATION_SCHEDULE_PAGE_SIZE, type EducationScheduleItem } from '../model/types'
 import { getMockEducationSchedules } from '../lib/mock-schedules'
 import { EducationScheduleRow } from './row'
-import { PFPagination, PFText } from '@/shared/ui'
-import styles from './panel.module.css'
 
 type EducationSchedulePanelProps = {
   programId: string
@@ -35,41 +34,18 @@ export function EducationSchedulePanel({
     return allItems.slice(start, start + EDUCATION_SCHEDULE_PAGE_SIZE)
   }, [allItems, currentPage])
 
-  if (totalElements === 0) {
-    return (
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-        등록된 교육일정이 없어요.
-      </PFText>
-    )
-  }
-
   return (
-    <div className={styles.shell}>
-      <div className={styles.header}>
-        <PFText as="h2" typo="hl-sm" color="black" className={styles.count}>
-          {`${listTitle} `}
-        </PFText>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.count}>
-          {totalElements}건
-        </PFText>
-      </div>
-
-      <div className={styles.list}>
-        {pageItems.map((item: EducationScheduleItem) => (
-          <EducationScheduleRow key={item.id} item={item} />
-        ))}
-      </div>
-
-      {totalPages > 1 ? (
-        <div className={styles.pagination}>
-          <PFPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            ariaLabel={`${listTitle} 페이지`}
-          />
-        </div>
-      ) : null}
-    </div>
+    <EducationSessionList
+      title={listTitle}
+      totalCount={totalElements}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setPage}
+      emptyMessage="등록된 교육일정이 없어요."
+    >
+      {pageItems.map((item: EducationScheduleItem) => (
+        <EducationScheduleRow key={item.id} item={item} />
+      ))}
+    </EducationSessionList>
   )
 }

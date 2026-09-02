@@ -1,0 +1,40 @@
+.mark {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  height: 44px;
+  min-width: 74px;
+  gap: var(--spacing-4) var(--spacing-8);
+}
+
+.icon {
+  display: block;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.label {
+  margin: 0;
+}
+
+.success .label {
+  color: var(--color-primary-500);
+}
+
+.alert .label {
+  color: var(--color-primary-palette-real-world-red, #f65f4e);
+}
+
+.muted .label {
+  color: var(--color-neutral-cool-500);
+}
+
+.neutral .label {
+  color: var(--color-neutral-cool-600);
+}
+
+.extra {
+  margin: 0;
+}

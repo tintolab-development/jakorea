@@ -1,0 +1,58 @@
+.block {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+  gap: var(--spacing-16);
+  padding: 20px;
+  border-radius: var(--radius-16, 16px);
+  background: var(--color-neutral-cool-50, #f5f7f7);
+}
+
+.submitted {
+  background: var(--color-element-hover, rgba(1, 161, 175, 0.06));
+}
+
+.top {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-16);
+}
+
+.main {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 240px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+}
+
+.messageRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spacing-8);
+  margin: 0;
+}
+
+.statusLabel,
+.message,
+.description {
+  margin: 0;
+}
+
+.actionStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-8);
+}
