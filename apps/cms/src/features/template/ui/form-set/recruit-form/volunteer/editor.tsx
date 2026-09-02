@@ -34,6 +34,7 @@ export function RecruitFormVolunteerEditorLeftColumn({
         structureLockedParagraphIds: vm.structureLockedParagraphIds,
         structureLockedAuthoringChoicePreview: true,
         recruitFormVolunteer: true,
+        hiddenParagraphIds: vm.recruitVolunteerHiddenParagraphIds,
         programApplicationFormVolunteer: {
           ...vm.programApplicationFormVolunteerOptions,
           enabled: true,

@@ -32,6 +32,7 @@ export function renderApplicantRecruitFormInstitutionParagraphBody(
       return (
         <RecruitDetailInfoParagraph
           wysiwygResetKey="applicant-recruit-institution-extra-body"
+          overlayKeyPrefix="recruit.detailInfo"
           textFields={[
             { label: '프로그램 설명', placeholder: '프로그램 설명을 작성하세요' },
             { label: '모집 안내', placeholder: '모집 안내를 작성하세요' },
