@@ -14,6 +14,7 @@ export type {
   PFFormFieldProps,
   PFFormFieldRowProps,
   PFFormFieldTableProps,
+  PFFormFieldTableRadius,
   PFFormFieldValueTextProps,
 } from './pf-form-field'
 export {

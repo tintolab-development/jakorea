@@ -156,6 +156,10 @@
   background: var(--color-neutral-white);
 }
 
+.fieldTableRounded {
+  border-radius: var(--radius-24, 24px);
+}
+
 .fieldRow {
   display: flex;
   box-sizing: border-box;
