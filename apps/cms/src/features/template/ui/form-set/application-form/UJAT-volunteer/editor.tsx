@@ -46,7 +46,6 @@ export function UjatProgramApplicationFormVolunteerEditorLeftColumn({
 }: {
   vm: ProgramParticipantApplicationEditorViewModel
 }) {
-  const hiddenParagraphIds = resolveUjatVolunteerHiddenParagraphIds(vm.ujatVolunteerApplicationType)
   const visibleParagraphs = filterUjatVolunteerParagraphs(
     vm.draft.paragraphs,
     vm.ujatVolunteerApplicationType
@@ -74,16 +73,7 @@ export function UjatProgramApplicationFormVolunteerEditorLeftColumn({
       singleItemListActiveItemId={vm.singleItemListActiveItemId}
       onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
-      paragraphBodyOptions={{
-        structureLockedParagraphIds: vm.structureLockedParagraphIds,
-        structureLockedAuthoringChoicePreview: true,
-        hiddenParagraphIds,
-        ujatProgramApplicationFormVolunteer: {
-          enabled: true,
-          applicationType: vm.ujatVolunteerApplicationType,
-          onApplicationTypeChange: vm.setUjatVolunteerApplicationType,
-        },
-      }}
+      paragraphBodyOptions={vm.leftPanelParagraphBodyOptions}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
   )

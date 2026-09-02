@@ -145,4 +145,20 @@ export default defineConfig({
       },
     },
   },
+  certificates: {
+    input: './openapi/certificates.openapi.json',
+    output: {
+      mode: 'split',
+      target: './src/shared/api/generated/certificates/certificates-api.ts',
+      schemas: './src/shared/api/generated/certificates/schemas',
+      client: 'axios',
+      prettier: false,
+      override: {
+        mutator: {
+          path: './src/shared/api/orval-mutator.ts',
+          name: 'customInstance',
+        },
+      },
+    },
+  },
 })

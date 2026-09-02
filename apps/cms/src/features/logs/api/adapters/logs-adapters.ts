@@ -88,14 +88,24 @@ function mapLogListPage<TDto, TItem>(
   return { items, page, size, totalElements, totalPages, hasNext }
 }
 
-export function mapDownloadLogResponse(dto: DownloadLogFrontendResponse): DownloadLog {
+export function mapDownloadLogResponse(dto: DownloadLogFrontendResponse | object): DownloadLog {
+  const rec = dto as Record<string, unknown>
+  const idValue = rec.id
   return {
-    id: dto.id ?? `log-${Date.now()}`,
-    fileName: dto.fileName ?? '-',
-    userId: dto.userId ?? 'unknown',
-    userName: dto.userName ?? '-',
-    ipAddress: dto.ipAddress ?? '-',
-    downloadedAt: dto.downloadedAt ?? new Date().toISOString(),
+    id:
+      typeof idValue === 'string' && idValue.trim()
+        ? idValue.trim()
+        : typeof idValue === 'number' && Number.isFinite(idValue)
+          ? String(idValue)
+          : `log-${Date.now()}`,
+    fileName: readExtraString(dto, ['fileName']),
+    userId: readExtraString(dto, ['userId']),
+    userName: readExtraString(dto, ['userName']),
+    ipAddress: readExtraString(dto, ['ipAddress']),
+    downloadedAt: (() => {
+      const value = readExtraString(dto, ['downloadedAt'])
+      return value === '-' ? new Date().toISOString() : value
+    })(),
   }
 }
 

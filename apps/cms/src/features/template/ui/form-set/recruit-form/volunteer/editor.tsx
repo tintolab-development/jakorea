@@ -30,17 +30,7 @@ export function RecruitFormVolunteerEditorLeftColumn({
       singleItemListActiveItemId={vm.singleItemListActiveItemId}
       onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
-      paragraphBodyOptions={{
-        structureLockedParagraphIds: vm.structureLockedParagraphIds,
-        structureLockedAuthoringChoicePreview: true,
-        recruitFormVolunteer: true,
-        hiddenParagraphIds: vm.recruitVolunteerHiddenParagraphIds,
-        programApplicationFormVolunteer: {
-          ...vm.programApplicationFormVolunteerOptions,
-          enabled: true,
-          isTemplateAuthoringMode: true,
-        },
-      }}
+      paragraphBodyOptions={vm.leftPanelParagraphBodyOptions}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
   )

@@ -30,17 +30,7 @@ export function UjatProgramApplicationFormInstitutionEditorLeftColumn({
       singleItemListActiveItemId={vm.singleItemListActiveItemId}
       onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
-      paragraphBodyOptions={{
-        structureLockedParagraphIds: vm.structureLockedParagraphIds,
-        structureLockedAuthoringChoicePreview: true,
-        ujatProgramApplicationFormInstitution: true,
-        ...(vm.ujatProgramApplicationGradeInfo != null
-          ? { ujatProgramApplicationGradeInfo: vm.ujatProgramApplicationGradeInfo }
-          : {}),
-        ...(vm.ujatProgramApplicationGradeClassTime != null
-          ? { ujatProgramApplicationGradeClassTime: vm.ujatProgramApplicationGradeClassTime }
-          : {}),
-      }}
+      paragraphBodyOptions={vm.leftPanelParagraphBodyOptions}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
   )

@@ -7,6 +7,7 @@
 
 import { test as setup, expect } from './fixtures/test'
 import { LoginPage } from './pages/login.page'
+import { seedMockAdminSession } from './helpers/seed-mock-admin-session'
 import { E2E_ADMIN_AUTH_FILE } from './helpers/auth-paths'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -14,9 +15,13 @@ import path from 'node:path'
 setup('어드민 로그인·MFA 후 세션 저장', async ({ page }) => {
   setup.setTimeout(90_000)
 
-  const loginPage = new LoginPage(page)
-  await loginPage.goto()
-  await loginPage.loginWithAdminAutoFillAndMfa()
+  if (process.env.E2E_MOCK_AUTH === '1') {
+    await seedMockAdminSession(page)
+  } else {
+    const loginPage = new LoginPage(page)
+    await loginPage.goto()
+    await loginPage.loginWithAdminAutoFillAndMfa()
+  }
 
   await expect(page).toHaveURL('/')
   await expect(page.getByRole('heading', { name: '대시보드 홈' })).toBeVisible()

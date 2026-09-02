@@ -45,6 +45,12 @@ export function upsertFormTemplateVersionCacheEntry(
   writeCacheFile(file)
 }
 
+export function removeFormTemplateVersionCacheEntry(templateCode: string): void {
+  const file = readCacheFile()
+  delete file.byTemplateCode[templateCode]
+  writeCacheFile(file)
+}
+
 export function upsertFormTemplateVersionCacheFromListItems(
   items: Array<{
     templateCode?: string

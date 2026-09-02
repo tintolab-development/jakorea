@@ -1,5 +1,8 @@
 import { useMemo } from 'react'
-import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import type {
+  WritingFormDraft,
+  WritingFormParagraph,
+} from '@/features/template/model/writing-form-draft.schema'
 import { isAgreementLockedSystemParagraph, writingOutlineLabel } from '@/features/template/model/writing-form-draft.schema'
 import { paragraphKindLabel } from '@/features/template/model/writing-form/paragraph-labels'
 import { paragraphVariantLabel } from '@/features/template/ui/form-editor/right-panel/config/paragraph-editor.registry'
@@ -11,14 +14,23 @@ import {
 export function useActiveParagraphState({
   draft,
   activeParagraphId,
+  activeParagraph: activeParagraphProp,
   structureLockedParagraphIds,
 }: {
   draft: WritingFormDraft
   activeParagraphId: string | null
+  /** 지정 시 draft.paragraphs 전체 스캔 대신 활성 단락만 구독 */
+  activeParagraph?: WritingFormParagraph | null
   structureLockedParagraphIds?: ReadonlySet<string>
 }) {
+  const draftActiveParagraph =
+    activeParagraphProp === undefined
+      ? draft.paragraphs.find(paragraph => paragraph.id === activeParagraphId) ?? null
+      : null
+
   return useMemo(() => {
-    const active = draft.paragraphs.find(p => p.id === activeParagraphId) ?? null
+    const active =
+      activeParagraphProp !== undefined ? activeParagraphProp : draftActiveParagraph
     const structureLockedActive =
       activeParagraphId != null && (structureLockedParagraphIds?.has(activeParagraphId) ?? false)
 
@@ -41,5 +53,5 @@ export function useActiveParagraphState({
       activeDetailValue,
       activeKindLocked,
     }
-  }, [activeParagraphId, draft, structureLockedParagraphIds])
+  }, [activeParagraphId, activeParagraphProp, structureLockedParagraphIds, draftActiveParagraph])
 }

@@ -514,12 +514,7 @@
 }
 
 .form-certificate-user-preview-modal .template-preview-modal__notice {
-  justify-content: center;
-}
-
-.form-certificate-user-preview-modal .template-preview-modal__notice-text-wrap {
-  width: var(--template-preview-notice-text-width, 1400px);
-  flex: 0 0 auto;
+  max-width: var(--template-preview-content-max-width, 1550px);
 }
 
 /* 작성 미리보기 A4 본문과 동일: 세로 스크롤·하단 고정 네비 여유 */

@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import { generatePdfBlobFromHtmlElement } from '@/shared/utils/certificate-pdf-generator'
 import { downloadBlob } from '@/shared/utils/file-download'
+import { isIssuedCertificateSerial } from '@/features/program/shared/lib/certificate-serial'
 import { waitForCertificatePreviewCaptureReady } from './wait-for-certificate-preview-capture-ready'
 
 export interface UseFormCertificatePdfDownloadOptions {
@@ -21,27 +22,39 @@ export function useFormCertificatePdfDownload({
   /** 상태 갱신 전에도 연속 클릭을 막기 위한 동기 가드 */
   const isGeneratingRef = useRef(false)
 
-  const downloadPdf = useCallback(async () => {
-    if (isGeneratingRef.current) {
-      return
-    }
-    const el = exportRootRef.current
-    if (!el) {
-      return
-    }
-    isGeneratingRef.current = true
-    setIsDownloading(true)
-    try {
-      await waitForCertificatePreviewCaptureReady(el)
-      const blob = await generatePdfBlobFromHtmlElement(el)
-      downloadBlob(blob, buildFilename())
-    } catch (error) {
-      console.debug('formCertificatePdfDownload failed', error)
-    } finally {
-      isGeneratingRef.current = false
-      setIsDownloading(false)
-    }
-  }, [exportRootRef, buildFilename])
+  const downloadPdf = useCallback(
+    async (
+      issuedSerialNumber?: string,
+      beforeSave?: (fileName: string) => Promise<void>
+    ) => {
+      if (isGeneratingRef.current) {
+        throw new Error('PDF를 생성하는 중입니다. 잠시 후 다시 시도해 주세요.')
+      }
+      const el = exportRootRef.current
+      if (!el) {
+        throw new Error('PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+      }
+      isGeneratingRef.current = true
+      setIsDownloading(true)
+      try {
+        await waitForCertificatePreviewCaptureReady(el)
+        const issued =
+          issuedSerialNumber && isIssuedCertificateSerial(issuedSerialNumber)
+            ? issuedSerialNumber
+            : undefined
+        const blob = await generatePdfBlobFromHtmlElement(el, {
+          ...(issued ? { issuedSerialNumber: issued } : {}),
+        })
+        const fileName = buildFilename()
+        if (beforeSave) await beforeSave(fileName)
+        downloadBlob(blob, fileName)
+      } finally {
+        isGeneratingRef.current = false
+        setIsDownloading(false)
+      }
+    },
+    [exportRootRef, buildFilename]
+  )
 
   return { downloadPdf, isDownloading }
 }

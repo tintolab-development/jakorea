@@ -619,6 +619,7 @@ export function renderFormParagraphBody(
             structureLockedConsentChoiceInteractive
           }
           paragraphInteractionMode={paragraphInteractionMode}
+          preservePreviewSelectionOnCardBlur={structureLockedConsentChoiceInteractive}
           itemsEditActive={itemsEditActive}
           onActivateItemsEditor={
             usesMcItemsFocus

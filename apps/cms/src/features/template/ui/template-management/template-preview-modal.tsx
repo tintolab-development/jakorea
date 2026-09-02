@@ -1,20 +1,25 @@
-import { useMemo } from 'react'
 import {
   TemplateFullpageModal,
   type TemplateFullpageModalFooterAction,
 } from '@/features/template/ui/template-management/template-fullpage-modal'
-import { TEMPLATE_FORM_MODAL_DESCRIPTION } from '@/features/template/model/template-registry/template-registry'
-import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
+import type { TemplateRegistryDefinition } from '@/features/template/model/template-registry/template-registry'
 import type { TemplateRendererContext } from '@/features/template/ui/template-renderers/template-renderer-types'
-import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
+import { TemplatePreviewModalEditor } from '@/features/template/ui/template-management/template-preview-modal-editor'
+import type { TemplatePreviewControllerParams } from '@/features/template/hooks/use-template-preview-controller'
 
 export type TemplatePreviewModalProps = {
   open: boolean
   onClose: () => void
   title: string
-  onPreview: () => void
-  onSave?: () => void
-  rendererContext: TemplateRendererContext
+  showDeleteButton?: boolean
+  onDelete?: () => void
+  deleteLoading?: boolean
+  registryEntry: TemplateRegistryDefinition | undefined
+  templateId: string | undefined
+  templateName: string | undefined
+  onTemplateDraftSaveConfirmed?: () => void
+  generic: TemplateRendererContext['generic']
+  previewControllerBase: Omit<TemplatePreviewControllerParams, 'runPreview'>
   /**
    * 프로그램 등록 등 **사용자 모드** 레이아웃(청록 헤더·임시저장).
    * `/templates/form-management` 템플릿 편집에서는 사용하지 않는다.
@@ -27,35 +32,46 @@ export function TemplatePreviewModal({
   open,
   onClose,
   title,
-  onPreview,
-  onSave,
-  rendererContext,
+  showDeleteButton,
+  onDelete,
+  deleteLoading,
+  registryEntry,
+  templateId,
+  templateName,
+  onTemplateDraftSaveConfirmed,
+  generic,
+  previewControllerBase,
   registrationUserMode = false,
   footerAction,
 }: TemplatePreviewModalProps) {
-  const panels = useMemo(
-    () => resolveTemplateEditorPanels(rendererContext),
-    [rendererContext]
-  )
-  const isDraftLoading = rendererContext.editorVm.isDraftLoading === true
+  if (!open) {
+    return (
+      <TemplateFullpageModal
+        open={false}
+        onClose={onClose}
+        title={title}
+        templateTabType="writing"
+        leftContent={null}
+        rightNavigation={null}
+      />
+    )
+  }
 
   return (
-    <TemplateFullpageModal
-      open={open}
-      onClose={onClose}
+    <TemplatePreviewModalEditor
       title={title}
-      description={
-        registrationUserMode
-          ? undefined
-          : (rendererContext.registryEntry?.modalDescription ?? TEMPLATE_FORM_MODAL_DESCRIPTION)
-      }
-      templateTabType="writing"
-      onPreview={onPreview}
-      onSave={onSave}
+      onClose={onClose}
+      showDeleteButton={showDeleteButton}
+      onDelete={onDelete}
+      deleteLoading={deleteLoading}
+      registryEntry={registryEntry}
+      templateId={templateId}
+      templateName={templateName}
+      onTemplateDraftSaveConfirmed={onTemplateDraftSaveConfirmed}
       registrationUserMode={registrationUserMode}
       footerAction={footerAction}
-      leftContent={isDraftLoading ? <FormDraftLoading /> : panels.leftContent}
-      rightNavigation={isDraftLoading ? null : panels.rightNavigation}
+      generic={generic}
+      previewControllerBase={previewControllerBase}
     />
   )
 }

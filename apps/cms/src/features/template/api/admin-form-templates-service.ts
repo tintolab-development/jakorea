@@ -13,12 +13,14 @@ import {
 import { ISSUANCE_FORM_TYPE, WRITING_FORM_TYPE } from '@/features/template/api/form-template-catalog'
 import {
   getFormTemplateVersionCacheEntry,
+  removeFormTemplateVersionCacheEntry,
   upsertFormTemplateVersionCacheEntry,
   upsertFormTemplateVersionCacheFromListItems,
 } from '@/features/template/api/form-template-version-cache'
 import {
   copyFormTemplateVersionRemote,
   createFormTemplateRemote,
+  deleteFormTemplateRemote,
   fetchFormTemplateVersionRemote,
   fetchFormTemplateVersionsRemote,
   fetchFormTemplatesRemote,
@@ -30,6 +32,7 @@ import { shouldUseRemoteDraftApiForTemplateCode } from '@/features/template/lib/
 import {
   loadWritingFormTemplateSave,
   persistWritingFormTemplateSave,
+  removeWritingFormTemplateSave,
   type WritingFormTemplateSaveRecord,
 } from '@/features/template/lib/writing-form-template-local-save'
 import { issuanceFormSections } from '@/features/template/model/issuance-form.schema'
@@ -382,4 +385,18 @@ export async function createWritingFormTemplateRemote(args: {
   }
 
   return newCode
+}
+
+export async function deleteFormTemplate(templateCode: string): Promise<void> {
+  assertFormsSurveysRemoteReady()
+
+  const cached = getFormTemplateVersionCacheEntry(templateCode)
+  const templateId = cached?.templateId
+  if (templateId == null) {
+    throw new Error('삭제할 템플릿 ID를 찾을 수 없습니다. 목록을 먼저 조회해 주세요.')
+  }
+
+  await deleteFormTemplateRemote(templateId)
+  removeFormTemplateVersionCacheEntry(templateCode)
+  removeWritingFormTemplateSave(templateCode)
 }

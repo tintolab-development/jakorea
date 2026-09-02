@@ -3,7 +3,13 @@
  * IdP 콘솔·POST /api/admin/auth/sso/login body.redirectUri 에 사용합니다.
  *
  * 프론트 origin(`localhost:3000`)이나 Vite 프록시 타깃(`VITE_DEV_PROXY_TARGET`)은 사용하지 않습니다.
+ * Production에서는 localhost 오염 시 CloudFront 실서버로 고정합니다.
  */
+import {
+  CMS_DEPLOY_API_ORIGIN,
+  pickRemoteApiOrigin,
+} from '@/shared/lib/api-remote-env'
+
 function normalizeOrigin(value: string): string {
   const normalized = value.trim().replace(/\/+$/, '')
 
@@ -16,21 +22,13 @@ function normalizeOrigin(value: string): string {
 }
 
 function readBackendOriginFromEnv(): string | undefined {
-  const candidates = [
+  const picked = pickRemoteApiOrigin(
     import.meta.env.VITE_OAUTH_BACKEND_ORIGIN,
     import.meta.env.VITE_API_SERVER,
     import.meta.env.VITE_API_BASE_URL,
-    import.meta.env.VITE_NGROK_SERVER,
-  ]
-
-  for (const raw of candidates) {
-    const trimmed = raw?.trim()
-    if (trimmed) {
-      return normalizeOrigin(trimmed)
-    }
-  }
-
-  return undefined
+    import.meta.env.VITE_NGROK_SERVER
+  )
+  return picked ? normalizeOrigin(picked) : undefined
 }
 
 export function resolveBackendApiOrigin(): string {
@@ -38,6 +36,10 @@ export function resolveBackendApiOrigin(): string {
 
   if (origin) {
     return origin
+  }
+
+  if (import.meta.env.PROD) {
+    return CMS_DEPLOY_API_ORIGIN
   }
 
   throw new Error(

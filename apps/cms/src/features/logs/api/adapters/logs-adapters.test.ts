@@ -21,6 +21,23 @@ describe('logs-adapters', () => {
     expect(row.userName).toBe('홍길동')
   })
 
+  it('maps DownloadLogFrontendResponse including numeric id', () => {
+    const row = mapDownloadLogResponse({
+      id: 60001,
+      fileName: '수료증_20260902.pdf',
+      userName: '관리자',
+      userId: '1001',
+      ipAddress: '203.0.113.10',
+      downloadedAt: '2026-09-02T08:00:00Z',
+    })
+    expect(row.id).toBe('60001')
+    expect(row.fileName).toBe('수료증_20260902.pdf')
+    expect(row.userName).toBe('관리자')
+    expect(row.userId).toBe('1001')
+    expect(row.ipAddress).toBe('203.0.113.10')
+    expect(row.downloadedAt).toBe('2026-09-02T08:00:00Z')
+  })
+
   it('maps download log page wrapper and does not use items.length as total', () => {
     const page = mapDownloadLogListPageResponse({
       items: [{ id: '1', fileName: 'a.pdf', userName: '홍길동' }],

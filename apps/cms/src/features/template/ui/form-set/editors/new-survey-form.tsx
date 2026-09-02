@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
+import {
+  createWritingFormTemplateRemote,
+  shouldUseFormsSurveysRemoteApi,
+} from '@/features/template/api/admin-form-templates-service'
+import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
+import { persistWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import {
   createDefaultSurveyDraft,
   DEFAULT_SURVEY_PARAGRAPH_IDS,
+  getWritingFormHeadMiddlePinnedTail,
   reorderWritingFormMiddleParagraphs,
   SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS,
   type FormTitleNumberingStyle,
@@ -27,9 +36,27 @@ type NewSurveyFormQuery = {
   id?: string
 }
 
+function resolveSurveyTemplateName(draft: WritingFormDraft): string {
+  const titleParagraph = draft.paragraphs.find(p => p.id === DEFAULT_SURVEY_PARAGRAPH_IDS.title)
+  if (titleParagraph?.kind === 'description' && titleParagraph.variant === 'survey_title_with_period') {
+    const name = titleParagraph.surveyTitle?.trim()
+    if (name !== '') return name
+  }
+  return '신규 설문 양식'
+}
+
+function hasSurveyMiddleParagraph(draft: WritingFormDraft): boolean {
+  const split = getWritingFormHeadMiddlePinnedTail(draft.paragraphs)
+  if (split == null) return false
+  return split.middle.length > 0
+}
+
 export default function NewSurveyForm() {
+  const queryClient = useQueryClient()
   const { setParams } = useQueryParams<NewSurveyFormQuery>()
+  const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
   const [draft, setDraft] = useState<WritingFormDraft>(() => createDefaultSurveyDraft())
+  const [templateId, setTemplateId] = useState<string | null>(null)
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
     DEFAULT_SURVEY_PARAGRAPH_IDS.user
   )
@@ -111,7 +138,44 @@ export default function NewSurveyForm() {
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    }, [])
+    if (!hasSurveyMiddleParagraph(draft)) {
+      showSaveFailure()
+      return
+    }
+
+    void (async () => {
+      try {
+        let nextTemplateId = templateId
+        if (nextTemplateId == null) {
+          if (shouldUseFormsSurveysRemoteApi()) {
+            nextTemplateId = await createWritingFormTemplateRemote({
+              target: 'survey',
+              templateName: resolveSurveyTemplateName(draft),
+            })
+          } else {
+            nextTemplateId = `survey-custom-${crypto.randomUUID()}`
+          }
+          setTemplateId(nextTemplateId)
+        }
+
+        await persistWritingFormTemplateDraft({
+          templateId: nextTemplateId,
+          draft,
+        })
+
+        await queryClient.invalidateQueries({
+          queryKey: formTemplateQueryKeys.writingSections(),
+        })
+
+        showSaveSuccess(() => {
+          setParams({ mode: 'edit', id: nextTemplateId ?? undefined, type: undefined })
+        })
+      } catch (error) {
+        console.debug('newSurveyForm save failed', error)
+        showSaveFailure()
+      }
+    })()
+  }, [draft, queryClient, setParams, showSaveFailure, showSaveSuccess, templateId])
 
   const handleSelectParagraph = useCallback((id: string) => {
     setActiveParagraphId(id)

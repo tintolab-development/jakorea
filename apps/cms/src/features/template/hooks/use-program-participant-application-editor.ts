@@ -5,9 +5,16 @@ import {
   useMemo,
   useState,
   useSyncExternalStore,
+  startTransition,
   type Dispatch,
   type SetStateAction,
 } from 'react'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
+
+const INACTIVE_LEFT_PANEL_PARAGRAPH_BODY_OPTIONS: RenderFormParagraphBodyOptions = {
+  structureLockedParagraphIds: new Set<string>(),
+  structureLockedAuthoringChoicePreview: true,
+}
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import {
@@ -317,6 +324,21 @@ function isGeneralApplicationOverlayVariant(
   )
 }
 
+/** Notion 모집 양식 — 단락 추가·삭제·복제 전부 비활성 */
+function isRecruitmentEditorVariant(variant: ProgramParticipantApplicationEditorVariant): boolean {
+  return (
+    variant === 'applicant-recruit-institution' ||
+    variant === 'economy-recruit-institution' ||
+    variant === 'trained-teachers-recruit-institution' ||
+    variant === 'ujat-recruit-institution' ||
+    variant === 'applicant-recruit-individual' ||
+    variant === 'recruit-instructor' ||
+    variant === 'recruit-volunteer' ||
+    variant === 'ujat-recruit-volunteer' ||
+    variant === 'gemini-recruit'
+  )
+}
+
 function restoreParticipantOverlayForVariant(
   variant: ProgramParticipantApplicationEditorVariant,
   overlay: Record<string, unknown> | undefined
@@ -505,9 +527,11 @@ export function useProgramParticipantApplicationEditor(
 
     const applyDraft = (next: WritingFormDraft) => {
       const normalized = normalizeWritingFormDraft(next)
-      setDraft(normalized)
-      setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
-      setSingleItemListActiveItemId(null)
+      startTransition(() => {
+        setDraft(normalized)
+        setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
+        setSingleItemListActiveItemId(null)
+      })
     }
 
     const finishLoad = () => {
@@ -648,6 +672,10 @@ export function useProgramParticipantApplicationEditor(
     seedParagraphIds
   )
 
+  const effectiveMiddleParagraphActions = isRecruitmentEditorVariant(variant)
+    ? undefined
+    : middleParagraphActions
+
   const {
     horizontalTableRowSelectionsByParagraphId,
     verticalTableBodyRowSelection,
@@ -765,7 +793,7 @@ export function useProgramParticipantApplicationEditor(
       sortableMiddle: draft.paragraphs.map(line),
       pinnedBottom: null as ReturnType<typeof line> | ReturnType<typeof line>[] | null,
     }
-  }, [draft])
+  }, [draft.formSettings.titleNumbering, draft.paragraphs])
 
   const programLinkedPreview = editorOptions?.programLinkedApplicationFormPreview === true
   const linkedProgram = editorOptions?.program ?? null
@@ -930,102 +958,118 @@ export function useProgramParticipantApplicationEditor(
     [variant, ujatVolunteerApplicationType]
   )
 
+  const leftPanelParagraphBodyOptions = useMemo(
+    () => {
+      if (!active) return INACTIVE_LEFT_PANEL_PARAGRAPH_BODY_OPTIONS
+      return {
+      structureLockedParagraphIds: seedParagraphIds,
+      structureLockedAuthoringChoicePreview: true,
+      programApplicationFormInstitution: variant === 'institution',
+      programApplicationFormEconomyInstitution: variant === 'economy-application-institution',
+      programApplicationFormTrainedTeachersInstitution:
+        variant === 'trained-teachers-application-institution',
+      programApplicationFormGeminiInstitution: variant === 'gemini-application-institution',
+      programApplicationFormGeminiInstructor:
+        variant === 'gemini-application-instructor'
+          ? { enabled: true as const, isTemplateAuthoringMode: true as const }
+          : undefined,
+      ujatProgramApplicationFormInstitution: variant === 'ujat-application-institution',
+      ujatProgramApplicationFormVolunteer: ujatProgramApplicationFormVolunteerOptions,
+      hiddenParagraphIds: (() => {
+        if (variant === 'ujat-application-volunteer') {
+          const hidden = new Set<string>()
+          if (ujatVolunteerApplicationType === 'new') {
+            hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm)
+          }
+          if (ujatVolunteerApplicationType === 'ujat-graduate') {
+            hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems)
+          }
+          return hidden.size > 0 ? hidden : undefined
+        }
+        if (linkedProgram != null) {
+          return resolveGeneralApplicationFormHiddenParagraphIds(variant, {
+            program: linkedProgram,
+            paragraphs: draft.paragraphs,
+            institutionBridge: institutionApplicationBridge,
+          })
+        }
+        if (variant === 'volunteer') return volunteerApplicationHiddenParagraphIds
+        if (variant === 'recruit-volunteer') return recruitVolunteerHiddenParagraphIds
+        if (variant === 'individual') return individualApplicationHiddenParagraphIds
+        if (variant === 'economy-application-institution') return economyApplicationHiddenParagraphIds
+        return institutionApplicationHiddenParagraphIds
+      })(),
+      ujatProgramApplicationGradeInfo,
+      ujatProgramApplicationGradeClassTime,
+      applicantRecruitFormInstitution: variant === 'applicant-recruit-institution',
+      economyRecruitFormInstitution: variant === 'economy-recruit-institution',
+      trainedTeachersRecruitFormInstitution: variant === 'trained-teachers-recruit-institution',
+      showInstitutionApplicationLimits:
+        (variant === 'applicant-recruit-institution' ||
+          variant === 'economy-recruit-institution' ||
+          variant === 'trained-teachers-recruit-institution') &&
+        (editorOptions?.participantOrganization ?? true),
+      applicantRecruitInstitutionLayoutVariant:
+        variant === 'economy-recruit-institution'
+          ? 'economy'
+          : editorOptions?.applicantRecruitInstitutionLayoutVariant,
+      applicantRecruitInstitutionDefaults: editorOptions?.applicantRecruitInstitutionDefaults,
+      applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
+      recruitFormInstructor: variant === 'recruit-instructor',
+      recruitFormVolunteer: variant === 'recruit-volunteer',
+      geminiRecruitForm: variant === 'gemini-recruit',
+      ujatRecruitFormInstitution: variant === 'ujat-recruit-institution',
+      ujatRecruitFormVolunteer: variant === 'ujat-recruit-volunteer',
+      ujatRecruitParagraphProps: editorOptions?.ujatRecruitParagraphProps,
+      programApplicationFormIndividual: variant === 'individual',
+      programApplicationFormInstructor: programApplicationFormInstructorOptions,
+      programApplicationFormVolunteer:
+        variant === 'recruit-volunteer' || variant === 'ujat-recruit-volunteer'
+          ? {
+              ...programApplicationFormVolunteerOptions,
+              enabled: true as const,
+              isTemplateAuthoringMode: true as const,
+            }
+          : programApplicationFormVolunteerOptions,
+      programLinkedInstitutionApplicationForm:
+        editorOptions?.programLinkedInstitutionApplicationForm === true,
+    }
+    },
+    [
+      active,
+      draft.paragraphs,
+      editorOptions?.applicantRecruitInstitutionDefaults,
+      editorOptions?.applicantRecruitInstitutionLayoutVariant,
+      editorOptions?.participantOrganization,
+      editorOptions?.programLinkedInstitutionApplicationForm,
+      editorOptions?.ujatRecruitParagraphProps,
+      economyApplicationHiddenParagraphIds,
+      individualApplicationHiddenParagraphIds,
+      institutionApplicationBridge,
+      institutionApplicationHiddenParagraphIds,
+      linkedProgram,
+      programApplicationFormInstructorOptions,
+      programApplicationFormVolunteerOptions,
+      recruitVolunteerHiddenParagraphIds,
+      seedParagraphIds,
+      ujatProgramApplicationFormVolunteerOptions,
+      ujatProgramApplicationGradeClassTime,
+      ujatProgramApplicationGradeInfo,
+      ujatVolunteerApplicationType,
+      variant,
+      volunteerApplicationHiddenParagraphIds,
+    ]
+  )
+
   const writingPreviewSession = useMemo(
     () => ({
       draft,
       updateParagraph,
       headerTitle: previewHeaderTitle,
       editorKind: 'horizontal_table' as const,
-      paragraphBodyOptions: {
-        structureLockedParagraphIds: seedParagraphIds,
-        structureLockedAuthoringChoicePreview: true,
-        programApplicationFormInstitution: variant === 'institution',
-        programApplicationFormEconomyInstitution: variant === 'economy-application-institution',
-        programApplicationFormTrainedTeachersInstitution:
-          variant === 'trained-teachers-application-institution',
-        programApplicationFormGeminiInstitution: variant === 'gemini-application-institution',
-        programApplicationFormGeminiInstructor: variant === 'gemini-application-instructor',
-        ujatProgramApplicationFormInstitution: variant === 'ujat-application-institution',
-        ujatProgramApplicationFormVolunteer: ujatProgramApplicationFormVolunteerOptions,
-        hiddenParagraphIds: (() => {
-          if (variant === 'ujat-application-volunteer') {
-            const hidden = new Set<string>()
-            if (ujatVolunteerApplicationType === 'new') {
-              hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm)
-            }
-            if (ujatVolunteerApplicationType === 'ujat-graduate') {
-              hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems)
-            }
-            return hidden.size > 0 ? hidden : undefined
-          }
-          if (linkedProgram != null) {
-            return resolveGeneralApplicationFormHiddenParagraphIds(variant, {
-              program: linkedProgram,
-              paragraphs: draft.paragraphs,
-              institutionBridge: institutionApplicationBridge,
-            })
-          }
-          if (variant === 'volunteer') return volunteerApplicationHiddenParagraphIds
-          if (variant === 'recruit-volunteer') return recruitVolunteerHiddenParagraphIds
-          if (variant === 'individual') return individualApplicationHiddenParagraphIds
-          if (variant === 'economy-application-institution') return economyApplicationHiddenParagraphIds
-          return institutionApplicationHiddenParagraphIds
-        })(),
-        ujatProgramApplicationGradeInfo,
-        ujatProgramApplicationGradeClassTime,
-        applicantRecruitFormInstitution: variant === 'applicant-recruit-institution',
-        economyRecruitFormInstitution: variant === 'economy-recruit-institution',
-        trainedTeachersRecruitFormInstitution:
-          variant === 'trained-teachers-recruit-institution',
-        showInstitutionApplicationLimits:
-          (variant === 'applicant-recruit-institution' ||
-            variant === 'economy-recruit-institution' ||
-            variant === 'trained-teachers-recruit-institution') &&
-          (editorOptions?.participantOrganization ?? true),
-        applicantRecruitInstitutionLayoutVariant:
-          variant === 'economy-recruit-institution'
-            ? 'economy'
-            : editorOptions?.applicantRecruitInstitutionLayoutVariant,
-        applicantRecruitInstitutionDefaults: editorOptions?.applicantRecruitInstitutionDefaults,
-        applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
-        recruitFormInstructor: variant === 'recruit-instructor',
-        recruitFormVolunteer: variant === 'recruit-volunteer',
-        geminiRecruitForm: variant === 'gemini-recruit',
-        ujatRecruitFormInstitution: variant === 'ujat-recruit-institution',
-        ujatRecruitFormVolunteer: variant === 'ujat-recruit-volunteer',
-        ujatRecruitParagraphProps: editorOptions?.ujatRecruitParagraphProps,
-        programApplicationFormIndividual: variant === 'individual',
-        programApplicationFormInstructor: programApplicationFormInstructorOptions,
-        programApplicationFormVolunteer: programApplicationFormVolunteerOptions,
-        programLinkedInstitutionApplicationForm:
-          editorOptions?.programLinkedInstitutionApplicationForm === true,
-      },
+      paragraphBodyOptions: leftPanelParagraphBodyOptions,
     }),
-    [
-      draft,
-      previewHeaderTitle,
-      linkedProgram,
-      institutionApplicationBridge,
-      programApplicationFormInstructorOptions,
-      programApplicationFormVolunteerOptions,
-      ujatProgramApplicationFormVolunteerOptions,
-      editorOptions?.ujatRecruitParagraphProps,
-      editorOptions?.applicantRecruitInstitutionLayoutVariant,
-      editorOptions?.applicantRecruitInstitutionDefaults,
-      editorOptions?.participantOrganization,
-      editorOptions?.programLinkedInstitutionApplicationForm,
-      seedParagraphIds,
-      updateParagraph,
-      ujatVolunteerApplicationType,
-      variant,
-      ujatProgramApplicationGradeInfo,
-      ujatProgramApplicationGradeClassTime,
-      institutionApplicationHiddenParagraphIds,
-      economyApplicationHiddenParagraphIds,
-      volunteerApplicationHiddenParagraphIds,
-      recruitVolunteerHiddenParagraphIds,
-      individualApplicationHiddenParagraphIds,
-    ]
+    [draft, leftPanelParagraphBodyOptions, previewHeaderTitle, updateParagraph]
   )
 
   useEffect(() => {
@@ -1118,7 +1162,7 @@ export function useProgramParticipantApplicationEditor(
     onReorderMiddle,
     onTitleNumberingChange,
     updateParagraph,
-    middleParagraphActions,
+    middleParagraphActions: effectiveMiddleParagraphActions,
     horizontalTableRowSelectionsByParagraphId,
     verticalTableBodyRowSelection,
     activeHorizontalTableRowSelection,
@@ -1146,6 +1190,7 @@ export function useProgramParticipantApplicationEditor(
     volunteerApplicationHiddenParagraphIds,
     recruitVolunteerHiddenParagraphIds,
     individualApplicationHiddenParagraphIds,
+    leftPanelParagraphBodyOptions,
   }
 }
 

@@ -45,5 +45,6 @@ export function buildParticipatingParticipantCertificateContext(input: {
     programStartDate: program.startDate,
     programEndDate: program.endDate,
     issuanceReasonLabel,
+    programId: program.id,
   })
 }
