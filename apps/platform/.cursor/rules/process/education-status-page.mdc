@@ -190,7 +190,9 @@ alwaysApply: false
 - 제출 완료+마감 or 수정제출완료 → 과제 제출하기 **disabled**
 - 과제 제출·피드백·결석 사유 팝업: UI 후속(현재 준비 중 alert)
 
-## 설문조사 · 만족도조사 탭 (빈 상태)
+## 설문조사 · 만족도조사 탭
+
+### 빈 상태
 
 컴포넌트: [`EducationSurveyEmptyPanel`](apps/platform/src/features/mypage/education/surveys/ui/empty-panel.tsx)  
 `kind: 'survey' | 'satisfaction'` — 동일 레이아웃(`illust-cross` · 600px · center · `background: cool-50` · **100vw full-bleed** · 푸터까지), 카피만 분기.
@@ -199,6 +201,18 @@ alwaysApply: false
 |------|--------|------|
 | survey | 진행 중인 설문조사가 없어요 | 참여할 프로그램의 설문조사가 생기면 이곳에서 확인할 수 있어요 |
 | satisfaction | 진행 중인 만족도조사가 없어요 | 참여할 프로그램의 만족도조사가 생기면 이곳에서 확인할 수 있어요 |
+
+### 설문 mock fill (active)
+
+컴포넌트: [`EducationSurveyFillPanel`](apps/platform/src/features/mypage/education/surveys/ui/fill-panel.tsx)  
+mock draft: [`createEducationSurveyMockDraft`](apps/platform/src/features/mypage/education/surveys/lib/mock-survey-draft.ts) — CMS `WritingFormDraft` · 설문 단락 8종 + 제목·설문자정보·마무리.
+
+**노출 분기** [`getEducationSurveyMockAvailability`](apps/platform/src/features/mypage/education/surveys/lib/mock-survey-availability.ts):
+
+| 조건 | UI |
+|------|-----|
+| `in_progress` / `completed` / 교육 중 포기 | fill |
+| `surveyConfigured === false` 또는 그 외 | empty |
 
 목록·응답 API 후속.
 
@@ -243,7 +257,7 @@ alwaysApply: false
 | ProgramInfoBody 재사용 + 취소 확인·이력 제거(mock) | 취소 API 연동 |
 | 빈 필드·첨부·지원방법 비노출 / 교육 커리큘럼 라벨 | 교육 일정·설문·만족도 탭 |
 | 신청 내용 (결과 대기·서류 합격) mock UI | 신청 내용 API 연동 |
-| 안내사항 · 프로그램/신청 정보 팝업 · 교육일정 목록 · **설문·만족도 빈 상태** | 결석/과제/피드백 팝업 · 설문 목록 UI · 정산 · API |
+| 안내사항 · 프로그램/신청 정보 팝업 · 교육일정 목록 · **설문 mock fill / 빈 상태** | 결석/과제/피드백 팝업 · 설문 목록 UI · 정산 · API |
 | **활동 포기** 상세 분기(교육 전/중) · 탭 SSOT | 교육일정·설문 UI + 회차 필터 연동 |
 | 비-applied 상태 placeholder | 진행 완료 안내사항 탭 |
 
@@ -266,6 +280,6 @@ alwaysApply: false
 - 활동 포기: `withdrawalPhase` · `lastParticipatedSession` · `isWithdrawnBeforeEducation` · `isWithdrawnDuringEducation`
 - 안내사항: `EducationInProgressNoticePanel` · `EducationInProgressNoticeDetailModal` · `EducationNoticeStats` · `EducationProgramInfoModal` · `EducationApplicationInfoModal`
 - 교육일정: `EducationSchedulePanel` · `resolveEducationAssignmentGuide` · `filterItemsUpToLastParticipatedSession`
-- 설문·만족도 빈 상태: `EducationSurveyEmptyPanel`
+- 설문·만족도: `EducationSurveyFillPanel` (active) · `EducationSurveyEmptyPanel` (empty)
 
-**Last updated:** 2026-09-01 (설문·만족도 빈 상태)
+**Last updated:** 2026-09-02 (설문 mock fill UI)

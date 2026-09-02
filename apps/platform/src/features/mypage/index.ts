@@ -94,6 +94,8 @@ export {
   EducationSchedulePanel,
   EducationSettlementPanel,
   EducationSurveyEmptyPanel,
+  EducationSurveyFillPanel,
+  getEducationSurveyMockAvailability,
   DocumentPassBanner,
   shouldShowDocumentPassBanner,
 } from './education'
