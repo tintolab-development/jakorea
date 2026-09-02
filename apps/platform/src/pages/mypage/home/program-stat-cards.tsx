@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import type { MypageProgramStats } from '@/features/mypage'
 import illustBookUrl from '@/shared/assets/illustration/illust-book.svg'
 import illustFlagUrl from '@/shared/assets/illustration/illust-flag.svg'
@@ -25,7 +26,17 @@ export function ProgramStatCards({ stats }: ProgramStatCardsProps) {
         <article key={item.key} className={styles.card}>
           <div className={styles.info}>
             <PFText as="p" typo="bd-md-md" color="black" className={styles.label}>
-              {item.label}
+              {item.label.split(' ').map((part, index) => (
+                <Fragment key={`${item.key}-${part}`}>
+                  {index > 0 ? (
+                    <>
+                      <span className={styles.labelSpace}> </span>
+                      <br className={styles.labelBreak} />
+                    </>
+                  ) : null}
+                  {part}
+                </Fragment>
+              ))}
             </PFText>
             <PFText as="p" typo="hd-md" color="black" className={styles.value}>
               {stats[item.key]}
