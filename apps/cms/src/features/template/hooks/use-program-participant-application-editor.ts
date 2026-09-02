@@ -4,6 +4,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
   type Dispatch,
   type SetStateAction,
 } from 'react'
@@ -129,20 +130,38 @@ import {
   resetUjatRecruitVolunteerOverlay,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import {
+  getGeminiRecruitOverlayRecord,
+  replaceGeminiRecruitOverlay,
+  resetGeminiRecruitOverlay,
+} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
+import {
   getApplicantRecruitInstitutionOverlayRecord,
   replaceApplicantRecruitInstitutionOverlay,
   resetApplicantRecruitInstitutionOverlay,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import {
   getGeneralRecruitOverlayRecord,
+  getGeneralRecruitOverlayVersion,
   replaceGeneralRecruitOverlay,
   resetGeneralRecruitOverlay,
+  subscribeGeneralRecruitOverlay,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { getRecruitVolunteerHiddenParagraphIds } from '@/features/template/ui/form-set/recruit-form/shared/recruit-volunteer-form-visibility'
 import {
   getGeneralApplicationOverlayRecord,
   replaceGeneralApplicationOverlay,
   resetGeneralApplicationOverlay,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import {
+  getUjatApplicationInstitutionOverlayRecord,
+  replaceUjatApplicationInstitutionOverlay,
+  resetUjatApplicationInstitutionOverlay,
+} from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
+import {
+  getUjatApplicationVolunteerOverlayRecord,
+  replaceUjatApplicationVolunteerOverlay,
+  resetUjatApplicationVolunteerOverlay,
+} from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 import {
   shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph,
   useInstitutionApplicationFormVisibilityVersion,
@@ -152,7 +171,11 @@ import {
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { resolveGeneralApplicationFormHiddenParagraphIds } from '@/features/program/general/lib/application-form-preview-options'
-import { buildInstructorAvailableScheduleSlots } from '@/features/program/general/lib/instructor-application-available-schedule'
+import {
+  buildInstructorAvailableScheduleSlotsFromProgram,
+  buildVolunteerActivityAvailableScheduleSlots,
+} from '@/features/program/general/lib/instructor-application-available-schedule'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { resolveGeneralProgramVolunteerInterviewScheduleEditSeed } from '@/features/program/general/lib/volunteer-interview-schedule-display'
 import type { Program } from '@/types/domain'
 
@@ -298,6 +321,16 @@ function restoreParticipantOverlayForVariant(
   variant: ProgramParticipantApplicationEditorVariant,
   overlay: Record<string, unknown> | undefined
 ): void {
+  if (variant === 'gemini-recruit') {
+    if (overlay) {
+      replaceGeminiRecruitOverlay(overlay)
+      replaceGeneralRecruitOverlay(overlay)
+    } else {
+      resetGeminiRecruitOverlay()
+      resetGeneralRecruitOverlay()
+    }
+    return
+  }
   if (isApplicantRecruitInstitutionVariant(variant)) {
     if (overlay) replaceApplicantRecruitInstitutionOverlay(overlay)
     else resetApplicantRecruitInstitutionOverlay()
@@ -311,12 +344,28 @@ function restoreParticipantOverlayForVariant(
   if (isGeneralApplicationOverlayVariant(variant)) {
     if (overlay) replaceGeneralApplicationOverlay(overlay)
     else resetGeneralApplicationOverlay()
+    return
+  }
+  if (variant === 'ujat-application-institution') {
+    if (overlay) replaceUjatApplicationInstitutionOverlay(overlay)
+    else resetUjatApplicationInstitutionOverlay()
+    return
+  }
+  if (variant === 'ujat-application-volunteer') {
+    if (overlay) replaceUjatApplicationVolunteerOverlay(overlay)
+    else resetUjatApplicationVolunteerOverlay()
   }
 }
 
 function collectParticipantOverlayForVariant(
   variant: ProgramParticipantApplicationEditorVariant
 ): Record<string, unknown> | undefined {
+  if (variant === 'gemini-recruit') {
+    return {
+      ...getGeneralRecruitOverlayRecord(),
+      ...getGeminiRecruitOverlayRecord(),
+    }
+  }
   if (isApplicantRecruitInstitutionVariant(variant)) {
     return { ...getApplicantRecruitInstitutionOverlayRecord() }
   }
@@ -325,6 +374,12 @@ function collectParticipantOverlayForVariant(
   }
   if (isGeneralApplicationOverlayVariant(variant)) {
     return { ...getGeneralApplicationOverlayRecord() }
+  }
+  if (variant === 'ujat-application-institution') {
+    return { ...getUjatApplicationInstitutionOverlayRecord() }
+  }
+  if (variant === 'ujat-application-volunteer') {
+    return { ...getUjatApplicationVolunteerOverlayRecord() }
   }
   return undefined
 }
@@ -537,6 +592,12 @@ export function useProgramParticipantApplicationEditor(
     if (!active) {
       if (variant === 'ujat-recruit-institution') resetUjatRecruitInstitutionOverlay()
       if (variant === 'ujat-recruit-volunteer') resetUjatRecruitVolunteerOverlay()
+      if (variant === 'gemini-recruit') {
+        resetGeminiRecruitOverlay()
+        resetGeneralRecruitOverlay()
+      }
+      if (variant === 'ujat-application-institution') resetUjatApplicationInstitutionOverlay()
+      if (variant === 'ujat-application-volunteer') resetUjatApplicationVolunteerOverlay()
       closeWritingUserPreview()
     }
   }, [active, closeWritingUserPreview, variant])
@@ -712,10 +773,15 @@ export function useProgramParticipantApplicationEditor(
   const instructorScheduleSlots = useMemo(
     () =>
       linkedProgram && variant === 'instructor'
-        ? buildInstructorAvailableScheduleSlots(linkedProgram.id)
+        ? buildInstructorAvailableScheduleSlotsFromProgram(linkedProgram)
         : undefined,
     [linkedProgram, variant]
   )
+
+  const instructorHideScheduleCalendar =
+    linkedProgram != null &&
+    variant === 'instructor' &&
+    isGeneralIndividualProgram(linkedProgram)
 
   const volunteerScheduleSeed = useMemo(
     () =>
@@ -725,16 +791,32 @@ export function useProgramParticipantApplicationEditor(
     [linkedProgram, variant]
   )
 
+  const volunteerActivityScheduleSlots = useMemo(
+    () =>
+      linkedProgram && variant === 'volunteer'
+        ? buildVolunteerActivityAvailableScheduleSlots(linkedProgram)
+        : undefined,
+    [linkedProgram, variant]
+  )
+
+  const volunteerHideActivityScheduleCalendar =
+    linkedProgram != null &&
+    variant === 'volunteer' &&
+    isGeneralIndividualProgram(linkedProgram)
+
   const programApplicationFormInstructorOptions = useMemo(
     () =>
       variant === 'instructor'
         ? {
             enabled: true as const,
             ...(instructorScheduleSlots ? { scheduleSlots: instructorScheduleSlots } : {}),
+            ...(instructorHideScheduleCalendar
+              ? { hideScheduleCalendar: true as const }
+              : {}),
             ...(programLinkedPreview ? { programLinkedPreview: true as const } : {}),
           }
         : { enabled: false as const },
-    [variant, instructorScheduleSlots, programLinkedPreview]
+    [variant, instructorScheduleSlots, instructorHideScheduleCalendar, programLinkedPreview]
   )
   const onAddVolunteerExceptionSchedule = useCallback(() => {
     setVolunteerExceptionScheduleCount(prev => prev + 1)
@@ -759,6 +841,12 @@ export function useProgramParticipantApplicationEditor(
             onAddExceptionSchedule: onAddVolunteerExceptionSchedule,
             onCommonExclusionChange: onVolunteerInterviewExclusionChange,
             ...(volunteerScheduleSeed ? { commonScheduleSeed: volunteerScheduleSeed } : {}),
+            ...(volunteerActivityScheduleSlots
+              ? { activityScheduleSlots: volunteerActivityScheduleSlots }
+              : {}),
+            ...(volunteerHideActivityScheduleCalendar
+              ? { hideActivityScheduleCalendar: true as const }
+              : {}),
             ...(programLinkedPreview && variant === 'volunteer'
               ? { programLinkedPreview: true as const }
               : {}),
@@ -777,6 +865,8 @@ export function useProgramParticipantApplicationEditor(
       onAddVolunteerExceptionSchedule,
       onVolunteerInterviewExclusionChange,
       volunteerScheduleSeed,
+      volunteerActivityScheduleSlots,
+      volunteerHideActivityScheduleCalendar,
       programLinkedPreview,
     ]
   )
@@ -801,6 +891,18 @@ export function useProgramParticipantApplicationEditor(
       paragraphs: draft.paragraphs,
     })
   }, [variant, draft.paragraphs, linkedProgram])
+
+  const generalRecruitOverlayVersion = useSyncExternalStore(
+    subscribeGeneralRecruitOverlay,
+    getGeneralRecruitOverlayVersion,
+    getGeneralRecruitOverlayVersion
+  )
+
+  const recruitVolunteerHiddenParagraphIds = useMemo(() => {
+    void generalRecruitOverlayVersion
+    if (variant !== 'recruit-volunteer') return undefined
+    return getRecruitVolunteerHiddenParagraphIds()
+  }, [variant, generalRecruitOverlayVersion])
 
   const individualApplicationHiddenParagraphIds = useMemo(() => {
     if (variant !== 'individual') return undefined
@@ -846,11 +948,15 @@ export function useProgramParticipantApplicationEditor(
         ujatProgramApplicationFormInstitution: variant === 'ujat-application-institution',
         ujatProgramApplicationFormVolunteer: ujatProgramApplicationFormVolunteerOptions,
         hiddenParagraphIds: (() => {
-          if (
-            variant === 'ujat-application-volunteer' &&
-            ujatVolunteerApplicationType === 'new'
-          ) {
-            return new Set([UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm])
+          if (variant === 'ujat-application-volunteer') {
+            const hidden = new Set<string>()
+            if (ujatVolunteerApplicationType === 'new') {
+              hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm)
+            }
+            if (ujatVolunteerApplicationType === 'ujat-graduate') {
+              hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems)
+            }
+            return hidden.size > 0 ? hidden : undefined
           }
           if (linkedProgram != null) {
             return resolveGeneralApplicationFormHiddenParagraphIds(variant, {
@@ -860,6 +966,7 @@ export function useProgramParticipantApplicationEditor(
             })
           }
           if (variant === 'volunteer') return volunteerApplicationHiddenParagraphIds
+          if (variant === 'recruit-volunteer') return recruitVolunteerHiddenParagraphIds
           if (variant === 'individual') return individualApplicationHiddenParagraphIds
           if (variant === 'economy-application-institution') return economyApplicationHiddenParagraphIds
           return institutionApplicationHiddenParagraphIds
@@ -916,6 +1023,7 @@ export function useProgramParticipantApplicationEditor(
       institutionApplicationHiddenParagraphIds,
       economyApplicationHiddenParagraphIds,
       volunteerApplicationHiddenParagraphIds,
+      recruitVolunteerHiddenParagraphIds,
       individualApplicationHiddenParagraphIds,
     ]
   )
@@ -1036,6 +1144,7 @@ export function useProgramParticipantApplicationEditor(
     institutionApplicationHiddenParagraphIds,
     economyApplicationHiddenParagraphIds,
     volunteerApplicationHiddenParagraphIds,
+    recruitVolunteerHiddenParagraphIds,
     individualApplicationHiddenParagraphIds,
   }
 }
