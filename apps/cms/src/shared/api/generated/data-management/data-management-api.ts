@@ -20,7 +20,7 @@ import type {
   ApiResponseTextbookResponse,
   ApiResponseVoid,
   BulkIdsRequest,
-  CalculateParams,
+  Calculate1Params,
   CurrentKitCalculationParams,
   DetailedProgramRequest,
   DetailedProgramResponse,
@@ -930,7 +930,7 @@ const kits = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary POST /api/admin/material-kits
  */
-const create6 = (
+const create7 = (
     materialKitRequest: MaterialKitRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseMaterialKitResponse>>,) => {
       return customInstance<ApiResponseMaterialKitResponse>(
@@ -1209,7 +1209,7 @@ const detailedPrograms = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary POST /api/admin/detailed-programs
  */
-const create7 = (
+const create8 = (
     detailedProgramRequest: DetailedProgramRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseDetailedProgramResponse>>,) => {
       return customInstance<ApiResponseDetailedProgramResponse>(
@@ -2527,9 +2527,9 @@ const currentKitCalculation = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary 관리자 조회
  */
-const calculate = (
+const calculate1 = (
     kitId: number,
-    params: CalculateParams,
+    params: Calculate1Params,
  options?: SecondParameter<typeof customInstance<MaterialKitCalculationResponse>>,) => {
       return customInstance<MaterialKitCalculationResponse>(
       {url: `/api/admin/material-kits/${kitId}/calculate`, method: 'GET',
@@ -2538,7 +2538,7 @@ const calculate = (
       options);
     }
 
-return {textbooks,create1,bulkDelete,list,create2,sponsors,create4,yearlyBusinesses,addYearlyBusiness,end,contacts,addContact,bulkDeleteContacts,bulkDeleteSponsors,kits,create6,versions,createVersion,addTargetCount,detailedPrograms,create7,bulkDelete3,textbook,_delete,update,get,delete1,update1,sponsor,delete2,update3,deleteYearlyBusiness,updateYearlyBusiness,deleteContact,updateContact,kit,delete3,update4,detailedProgram,delete4,update5,matches,programHistories,currentKitCalculation,calculate}};
+return {textbooks,create1,bulkDelete,list,create2,sponsors,create4,yearlyBusinesses,addYearlyBusiness,end,contacts,addContact,bulkDeleteContacts,bulkDeleteSponsors,kits,create7,versions,createVersion,addTargetCount,detailedPrograms,create8,bulkDelete3,textbook,_delete,update,get,delete1,update1,sponsor,delete2,update3,deleteYearlyBusiness,updateYearlyBusiness,deleteContact,updateContact,kit,delete3,update4,detailedProgram,delete4,update5,matches,programHistories,currentKitCalculation,calculate1}};
 export type TextbooksResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbooks']>>>
 export type Create1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create1']>>>
 export type BulkDeleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDelete']>>>
@@ -2554,12 +2554,12 @@ export type AddContactResult = NonNullable<Awaited<ReturnType<ReturnType<typeof 
 export type BulkDeleteContactsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDeleteContacts']>>>
 export type BulkDeleteSponsorsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDeleteSponsors']>>>
 export type KitsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['kits']>>>
-export type Create6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create6']>>>
+export type Create7Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create7']>>>
 export type VersionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['versions']>>>
 export type CreateVersionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['createVersion']>>>
 export type AddTargetCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addTargetCount']>>>
 export type DetailedProgramsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['detailedPrograms']>>>
-export type Create7Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create7']>>>
+export type Create8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create8']>>>
 export type BulkDelete3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDelete3']>>>
 export type TextbookResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbook']>>>
 export type _DeleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['_delete']>>>
@@ -2583,4 +2583,4 @@ export type Update5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof get
 export type MatchesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['matches']>>>
 export type ProgramHistoriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['programHistories']>>>
 export type CurrentKitCalculationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['currentKitCalculation']>>>
-export type CalculateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['calculate']>>>
+export type Calculate1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['calculate1']>>>
