@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
+import { CertificateSerialAllocateRequestCertificateType } from '@/shared/api/generated/certificates/schemas/certificateSerialAllocateRequestCertificateType'
 import {
   CERTIFICATE_SERIAL_PLACEHOLDER,
-  formatCertificateSerial,
+  CERTIFICATE_SERIAL_TYPES,
   isAllowedCertificateSerialType,
   isCertificateSerialPlaceholder,
+  isFormTemplateCertificateSerialSubject,
   isIssuedCertificateSerial,
-  mockCertificateSerial,
+  parseCertificateIssueId,
   parseCertificateSerialInt64,
   parseIssuedCertificateSerial,
 } from './certificate-serial'
@@ -47,42 +49,45 @@ describe('parseCertificateSerialInt64', () => {
   })
 })
 
+describe('parseCertificateIssueId', () => {
+  it('accepts positive issue ids and rejects invalid values', () => {
+    expect(parseCertificateIssueId(12)).toBe(12)
+    expect(parseCertificateIssueId('81001')).toBe(81001)
+    expect(parseCertificateIssueId(0)).toBeNull()
+    expect(parseCertificateIssueId(null)).toBeNull()
+    expect(parseCertificateIssueId({})).toBeNull()
+  })
+})
+
 describe('isAllowedCertificateSerialType', () => {
-  it('allows the four template codes and rejects COMPLETION/ACTIVITY', () => {
+  it('uses OpenAPI certificateType enum and rejects COMPLETION/ACTIVITY', () => {
+    expect(CERTIFICATE_SERIAL_TYPES).toEqual(
+      Object.values(CertificateSerialAllocateRequestCertificateType)
+    )
     expect(isAllowedCertificateSerialType('document-3')).toBe(true)
     expect(isAllowedCertificateSerialType('document-participation-certificate')).toBe(true)
     expect(isAllowedCertificateSerialType('document-4')).toBe(true)
     expect(isAllowedCertificateSerialType('document-5')).toBe(true)
     expect(isAllowedCertificateSerialType('COMPLETION')).toBe(false)
     expect(isAllowedCertificateSerialType('ACTIVITY')).toBe(false)
+    expect(isAllowedCertificateSerialType('PARTICIPATION')).toBe(false)
   })
 })
 
-describe('formatCertificateSerial', () => {
-  it('pads sequence to 5 digits with year suffix', () => {
-    expect(formatCertificateSerial(17, new Date('2026-09-02'))).toBe('26-JA-00017')
-  })
-
-  it('does not emit the template placeholder 00000', () => {
-    expect(formatCertificateSerial(0, new Date('2026-01-01'))).toBe('26-JA-00001')
-  })
-})
-
-describe('mockCertificateSerial', () => {
-  it('is stable for the same subject', () => {
-    const subject = {
-      programId: 'prog-1',
-      subjectId: 'student-9',
-      certificateType: 'document-3',
-    }
-    expect(mockCertificateSerial(subject)).toBe(mockCertificateSerial(subject))
-    expect(mockCertificateSerial(subject)).not.toBe(CERTIFICATE_SERIAL_PLACEHOLDER)
-  })
-
-  it('differs when certificate type differs', () => {
-    const base = { programId: 'p', subjectId: 's', certificateType: 'document-3' }
-    expect(mockCertificateSerial(base)).not.toBe(
-      mockCertificateSerial({ ...base, certificateType: 'document-participation-certificate' })
-    )
+describe('isFormTemplateCertificateSerialSubject', () => {
+  it('is true only for 양식 관리 sample downloads', () => {
+    expect(
+      isFormTemplateCertificateSerialSubject({
+        certificateType: 'document-3',
+        issuanceSource: 'FORM_TEMPLATE',
+      })
+    ).toBe(true)
+    expect(
+      isFormTemplateCertificateSerialSubject({
+        programId: 5001,
+        subjectId: 7001,
+        certificateType: 'document-3',
+      })
+    ).toBe(false)
   })
 })

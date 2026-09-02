@@ -33,16 +33,23 @@ POST /api/admin/certificates/issues/serial
 Authorization: 관리자 Bearer JWT (기존 /api/admin/certificates/* 와 동일)
 Content-Type: application/json
 
-요청 JSON:
+요청 JSON (프로그램 실발급):
 {
   "programId": 5001,
   "participantId": 7001,
   "certificateType": "document-3"
 }
 
-- programId: 프로그램 ID. Long. 필수. 없으면 400.
-- participantId: 프로그램 참가자 ID. Long. 필수. 기존 POST /api/admin/certificates/issues/bulk 의 participantIds 와 같은 식별 체계를 쓴다.
+요청 JSON (양식 관리 「문서 다운로드」 샘플):
+{
+  "certificateType": "document-participation-certificate",
+  "issuanceSource": "FORM_TEMPLATE"
+}
+
+- programId: 프로그램 ID. Long. 프로그램 실발급에서는 필수. `issuanceSource=FORM_TEMPLATE` 이면 생략.
+- participantId: 프로그램 참가자 ID. Long. 프로그램 실발급에서는 필수. 기존 POST /api/admin/certificates/issues/bulk 의 participantIds 와 같은 식별 체계를 쓴다. `issuanceSource=FORM_TEMPLATE` 이면 생략.
 - certificateType: 문자열. 프론트가 보내는 값을 그대로 저장한다. COMPLETION/ACTIVITY 로 축약하지 않는다.
+- issuanceSource: 생략 또는 `PROGRAM` = 실발급. `FORM_TEMPLATE` = CMS 양식 관리 샘플. 이 값이면 programId/participantId 없이 시퀀스에서 번호를 뽑는다. unknown property 로 400 내지 마라.
 
 허용 certificateType (이 외는 400):
 - document-3 수료증
@@ -65,10 +72,11 @@ data:
 }
 
 - serialNumber: 필수. 정규식 ^\d{2}-JA-\d{5}$ . NNNNN은 00001 이상. 00000 금지.
-- issueId: 장부 PK. 있으면 프론트가 보관한다.
-- reused: 이미 같은 (programId, participantId, certificateType) 행이 있어 기존 번호를 돌려준 경우 true. 신규 발급이면 false.
+- issueId: 장부 PK. **필수.** 프론트가 직후 `POST /api/admin/certificates/issues/{issueId}/download-logs` 를 친다. 빠지면 PDF를 만들지 않는다.
+- reused: 이미 같은 멱등 키 행이 있어 기존 번호를 돌려준 경우 true. 신규 발급이면 false.
 
-같은 키로 다시 호출하면 새 번호를 뽑지 않고 기존 serialNumber 를 반환한다. HTTP도 200. reused=true.
+프로그램 실발급: 같은 (programId, participantId, certificateType) 로 다시 호출하면 새 번호를 뽑지 않고 기존 serialNumber 를 반환한다. HTTP도 200. reused=true.
+양식 관리 샘플: 멱등 키는 (issued_by_admin_id, certificate_type, issuance_source=FORM_TEMPLATE). 같은 관리자가 같은 양식을 다시 받으면 reused=true. program_id/participant_id 는 NULL 허용.
 
 # 하지 말 것
 
@@ -85,8 +93,9 @@ data:
 
 필수 컬럼:
 - id (PK, issueId)
-- program_id NOT NULL
-- participant_id NOT NULL
+- program_id nullable  -- FORM_TEMPLATE 샘플은 NULL
+- participant_id nullable  -- FORM_TEMPLATE 샘플은 NULL
+- issuance_source VARCHAR NOT NULL DEFAULT 'PROGRAM'  -- PROGRAM | FORM_TEMPLATE
 - certificate_type VARCHAR NOT NULL  -- FE templateCode 그대로
 - serial_number VARCHAR(12) NOT NULL  -- 예 26-JA-00017
 - issued_at DATETIME NOT NULL  -- 최초 발급 확정 시각. 재다운로드로 바꾸지 않음
@@ -95,7 +104,8 @@ data:
 
 제약:
 - UNIQUE (serial_number)  -- 과거 적재분 포함, 전역 문자열 고유
-- UNIQUE (program_id, participant_id, certificate_type)  -- 대상 멱등
+- UNIQUE (program_id, participant_id, certificate_type)  -- 실발급 대상 멱등. NULL 행은 이 제약에서 빼거나 PROGRAM 만 필터 인덱스
+- UNIQUE (issued_by_admin_id, certificate_type) WHERE issuance_source = 'FORM_TEMPLATE'  -- 양식 관리 샘플 멱등
 - serial_number <> '26-JA-00000' 체크 제약 권장
 - serial_number 형식 체크 권장: [0-9]{2}-JA-[0-9]{5}
 
@@ -153,7 +163,7 @@ nextSerialForYear 는 반드시 DB 락/시퀀스여야 한다. 애플리케이�
 # 에러
 
 - 401/403: 기존 admin API 와 동일
-- 400: programId/participantId 누락, certificateType 미허용, 숫자 파싱 실패
+- 400: 실발급에서 programId/participantId 누락, certificateType 미허용, 숫자 파싱 실패. FORM_TEMPLATE 에서 둘을 생략한 것은 400이 아니다.
 - 404: 참가자 또는 프로그램이 없을 때. 정책상 존재 검증을 하면 404, 안 하면 발급만 해도 됨. 존재 검증을 권장
 - 409/500: 시퀀스 고갈(연 99999 초과) 또는 재시도 한도 초과
 - 이 API를 아직 안 만들던 시절 프론트는 404/501 이면 mock 번호로 폴백한다. 구현 후에는 200만 주면 된다. 501로 성공을 흉내내지 말 것
@@ -163,8 +173,8 @@ nextSerialForYear 는 반드시 DB 락/시퀀스여야 한다. 애플리케이�
 members(또는 certificates) OpenAPI에 추가:
 - path: /api/admin/certificates/issues/serial
 - operationId 예: allocateCertificateSerial
-- request: CertificateSerialAllocateRequest { programId int64 required, participantId int64 required, certificateType string required }
-- response data: CertificateSerialAllocateResponse { serialNumber string required, issueId int64, reused boolean }
+- request: CertificateSerialAllocateRequest { certificateType string required, programId int64, participantId int64, issuanceSource PROGRAM|FORM_TEMPLATE }
+- response data: CertificateSerialAllocateResponse { serialNumber string required, issueId int64 required, reused boolean }
 - CertificateIssueResponse 등 기존 스키마에 serialNumber 를 넣어도 되지만, 이번 API 응답은 위 세 필드가 최소
 
 # 테스트 (필수)
@@ -178,7 +188,10 @@ members(또는 certificates) OpenAPI에 추가:
 7. 과거 행 serial_number=26-JA-00005 를 넣어 둔 뒤 시퀀스가 5를 뽑으면 스킵하고 26-JA-00006 (또는 그 다음 빈 번호) 발급
 8. 연도 경계: 고정 시계로 2026-12-31 과 2027-01-01 을 넣으면 prefix 26 / 27 이 달라지고 UNIQUE 충돌 없음
 9. 허용되지 않은 certificateType -> 400, INSERT 없음
-10. programId 생략 -> 400
+10. 실발급에서 programId 생략 -> 400
+11. issuanceSource=FORM_TEMPLATE, programId/participantId 생략 -> 200, 시퀀스 번호, issueId 있음
+12. 같은 관리자가 같은 FORM_TEMPLATE certificateType 재호출 -> reused=true, 번호 동일
+13. POST .../download-logs 성공 후 GET /api/admin/logs/file-access 에 파일명·사용자·일시·IP 행 1건. CMS는 file-access 를 POST 하지 않는다. 인증서 PDF는 프론트 html2canvas 이므로 download-logs 가 file-access 적재 훅이다. body.fileName 이 있으면 그 값을 파일명 컬럼에 넣어라. 목록 DTO는 DownloadLogFrontendResponse (id, fileName, userName, userId, ipAddress, downloadedAt).
 
 # 완료 기준
 
@@ -199,8 +212,11 @@ members(또는 certificates) OpenAPI에 추가:
 | 학생 참가인증서 다운로드 | `document-participation-certificate` | 학생(참가자) id |
 | 강사 활동인증서 「파일 다운로드」 | `document-4` | 참여 강사 id |
 | 봉사자 활동인증서 「파일 다운로드」 | `document-5` | 참여 봉사자 id |
+| 양식 관리 인증서 「문서 다운로드」 | 해당 templateCode | 없음. `issuanceSource=FORM_TEMPLATE` |
 
 호출 시점: 미리보기 모달 오픈이 아니라 **다운로드 클릭(또는 숨은 export 호스트의 파일 생성 직전)**.
 미리보기만 열고 닫으면 이 API를 호출하지 않는다.
 
-FE 연동(2026-09-02): `allocateCertificateSerial`은 mock / 404·501 폴백 없이 실호출한다. 실패 시 PDF를 만들지 않는다.
+양식 관리 `/templates/form-management` 발급 서류 「문서 다운로드」도 같은 POST 를 친다. 대상 사람이 없으므로 `issuanceSource=FORM_TEMPLATE` + `certificateType` 만 보낸다. 이 경로를 400 처리하면 샘플 PDF가 계속 `26-JA-00000` 이거나 다운로드가 막힌다.
+
+FE 연동(2026-09-02): OpenAPI `operationId=allocateCertificateSerial` 클라이언트를 실호출한다 (`src/shared/api/generated/certificates`). mock / 404·501 폴백 없음. 실패 시 PDF를 만들지 않는다. 런타임 공통 래퍼는 `unwrapApiBody`로 벗긴다. 파일 저장 직전 `POST .../download-logs` (`fileName` 포함). 이 호출이 `GET /api/admin/logs/file-access` 행을 만들어야 한다.

@@ -579,7 +579,11 @@ PDF는 프론트가 그려도 **번호 장부는 백엔드**다. 프론트는 �
        { programId, participantId, certificateType }
   → 이미 있으면 그 번호(reused: true), 없으면 시퀀스 +1 후 UNIQUE 저장
   → 숨은 PDF 캡처 DOM에만 번호 반영 후 html2canvas
+  → POST /api/admin/certificates/issues/{issueId}/download-logs  (fileName)
+  → 서버가 GET /api/admin/logs/file-access 행을 남김
 ```
+
+양식 관리 「문서 다운로드」도 같은 serial API를 친다. 대상 사람이 없으면 `{ certificateType, issuanceSource: "FORM_TEMPLATE" }` 만 보낸다. `00000` PDF로 폴백하지 않는다.
 
 같은 (프로그램, 대상, 유형)으로 다시 다운로드하면 **새 번호를 뽑지 않는다.**
 
@@ -625,4 +629,4 @@ PDF는 프론트가 그려도 **번호 장부는 백엔드**다. 프론트는 �
 
 응답 예: `{ "serialNumber": "26-JA-00017", "issueId": 12, "reused": false }`
 
-FE(`allocateCertificateSerial`)는 mock / 404·501 폴백 없이 이 API를 실호출한다. 실패하면 PDF를 만들지 않는다.
+FE(`allocateCertificateSerial`, generated OpenAPI 클라이언트)는 mock / 404·501 폴백 없이 이 API를 실호출한다. 실패하면 PDF를 만들지 않는다.

@@ -1,16 +1,18 @@
-/** 양식 관리 미리보기 전용. 실제 발급 번호가 아님 */
+import {
+  CertificateSerialAllocateRequestCertificateType,
+} from '@/shared/api/generated/certificates/schemas/certificateSerialAllocateRequestCertificateType'
+import { CertificateSerialAllocateRequestIssuanceSource } from '@/shared/api/generated/certificates/schemas/certificateSerialAllocateRequestIssuanceSource'
+
+/** 양식 관리 미리보기 전용. 실제 발급 번호가 아님. API에 보내거나 성공 응답으로 쓰지 않는다. */
 export const CERTIFICATE_SERIAL_PLACEHOLDER = '26-JA-00000'
 
 export const CERTIFICATE_SERIAL_PATTERN = /^\d{2}-JA-\d{5}$/
 
-export const CERTIFICATE_SERIAL_TYPES = [
-  'document-3',
-  'document-participation-certificate',
-  'document-4',
-  'document-5',
-] as const
+export const CERTIFICATE_SERIAL_TYPES = Object.values(
+  CertificateSerialAllocateRequestCertificateType
+) as CertificateSerialType[]
 
-export type CertificateSerialType = (typeof CERTIFICATE_SERIAL_TYPES)[number]
+export type CertificateSerialType = CertificateSerialAllocateRequestCertificateType
 
 export function isCertificateSerialPlaceholder(value: string | null | undefined): boolean {
   return value == null || value.trim() === '' || value.trim() === CERTIFICATE_SERIAL_PLACEHOLDER
@@ -44,37 +46,30 @@ export function parseCertificateSerialInt64(value: string | number | null | unde
   return n
 }
 
+export function parseCertificateIssueId(value: unknown): number | null {
+  if (typeof value === 'number' || typeof value === 'string') {
+    return parseCertificateSerialInt64(value)
+  }
+  return null
+}
+
+export const CERTIFICATE_SERIAL_ISSUANCE_PROGRAM =
+  CertificateSerialAllocateRequestIssuanceSource.PROGRAM
+export const CERTIFICATE_SERIAL_ISSUANCE_FORM_TEMPLATE =
+  CertificateSerialAllocateRequestIssuanceSource.FORM_TEMPLATE
+
+export type CertificateSerialIssuanceSource = CertificateSerialAllocateRequestIssuanceSource
+
 export type CertificateSerialSubject = {
   programId?: string | number | null
-  subjectId: string | number
+  subjectId?: string | number | null
   certificateType: string
+  /** 양식 관리 샘플 다운로드. 프로그램/참가자 ID 없이 시퀀스만 발급 */
+  issuanceSource?: CertificateSerialIssuanceSource
 }
 
-export function formatCertificateSerial(sequence: number, issuedAt: Date = new Date()): string {
-  const year = issuedAt.getFullYear()
-  const yy = String(year).slice(-2)
-  const n = Math.max(1, Math.floor(sequence)) % 100000
-  return `${yy}-JA-${String(n).padStart(5, '0')}`
-}
-
-/** 같은 발급 대상이면 항상 같은 목 번호 (재진입 시 새로 뽑지 않음) */
-export function mockCertificateSerial(
-  subject: CertificateSerialSubject,
-  issuedAt: Date = new Date()
-): string {
-  const key = [
-    String(subject.programId ?? ''),
-    String(subject.subjectId),
-    subject.certificateType,
-  ].join('|')
-  return formatCertificateSerial(stablePositiveInt(key), issuedAt)
-}
-
-function stablePositiveInt(value: string): number {
-  let hash = 2166136261
-  for (let i = 0; i < value.length; i += 1) {
-    hash ^= value.charCodeAt(i)
-    hash = Math.imul(hash, 16777619)
-  }
-  return ((hash >>> 0) % 99999) + 1
+export function isFormTemplateCertificateSerialSubject(
+  subject: CertificateSerialSubject
+): boolean {
+  return subject.issuanceSource === CERTIFICATE_SERIAL_ISSUANCE_FORM_TEMPLATE
 }
