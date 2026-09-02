@@ -44,7 +44,11 @@ export function TemplatePreviewModal({
       open={open}
       onClose={onClose}
       title={title}
-      description={registrationUserMode ? undefined : TEMPLATE_FORM_MODAL_DESCRIPTION}
+      description={
+        registrationUserMode
+          ? undefined
+          : (rendererContext.registryEntry?.modalDescription ?? TEMPLATE_FORM_MODAL_DESCRIPTION)
+      }
       templateTabType="writing"
       onPreview={onPreview}
       onSave={onSave}

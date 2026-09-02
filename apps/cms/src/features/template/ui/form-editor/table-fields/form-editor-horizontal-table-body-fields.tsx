@@ -13,6 +13,7 @@ import {
   HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
   HORIZONTAL_TABLE_MIN_COLUMN_COUNT,
   normalizeHorizontalTableParagraph,
+  writingOutlineLabel,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   FormEditorCustomFieldPanel,
@@ -193,12 +194,14 @@ export function FormEditorHorizontalTableBodyFields({
   paragraph,
   paragraphId,
   rowIndex,
+  focusedCol,
   updateParagraph,
   onBodyRowDeleted,
 }: {
   paragraph: HorizontalTableParagraph
   paragraphId: string
   rowIndex: number
+  focusedCol?: number
   updateParagraph: FormUpdateParagraph
   /** 삭제 후 포커스할 데이터 행 인덱스(이전 행, 삭제 행이 0이면 0) */
   onBodyRowDeleted?: (nextRowIndex: number) => void
@@ -220,14 +223,17 @@ export function FormEditorHorizontalTableBodyFields({
     onBodyRowDeleted,
   })
 
-  const isFieldFlavor = p.tableFlavor === 'field'
-  const bodyPanelTitle = isFieldFlavor
-    ? '테이블_가로형(필드형)_항목 선택 시'
-    : '테이블_가로형_항목 선택 시 (바디)'
+  const panelTitle = writingOutlineLabel(paragraph)
+  const focusedColumnIndex = focusedCol ?? 0
+  const panelSubtitle =
+    typeof focusedCol === 'number'
+      ? `${focusedColumnIndex + 1}-${rowIndex + 1}. 항목`
+      : `${rowIndex + 1}행 항목`
 
   return (
     <FormEditorCustomFieldPanel
-      title={bodyPanelTitle}
+      title={panelTitle}
+      subtitle={panelSubtitle}
       onDeleteRow={deleteRow}
       hint={
         <FormEditorFieldHint>

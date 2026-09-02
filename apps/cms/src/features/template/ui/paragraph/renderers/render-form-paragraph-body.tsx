@@ -33,6 +33,7 @@ import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/singl
 import { SessionPlanShortEssay } from '@/features/template/ui/paragraph/single-item/session-plan-short-essay'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
 import { ProgramApplicationFormInstitutionScheduleParagraph } from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-schedule-paragraph'
+import type { GeminiVisitingTrainingApplicationFormInstructorBodyOptions } from '@/features/template/ui/form-set/application-form/gemini-instructor/paragraph-body'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
 import { ProgramApplicationFormIndividualScheduleParagraph } from '@/features/template/ui/form-set/application-form/individual/paragraphs/individual-schedule-paragraph'
 import {
@@ -136,7 +137,9 @@ export type RenderFormParagraphBodyOptions = {
   /** Gemini 찾아가는 연수 참여 기관 신청 폼 시드 단락 — 전용 본문 */
   programApplicationFormGeminiInstitution?: boolean
   /** Gemini 찾아가는 연수 강사 신청 폼 시드 단락 — 전용 본문 */
-  programApplicationFormGeminiInstructor?: boolean
+  programApplicationFormGeminiInstructor?:
+    | boolean
+    | GeminiVisitingTrainingApplicationFormInstructorBodyOptions
   /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramApplicationFormInstitution?: boolean
   /** UJAT 프로그램 봉사자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
