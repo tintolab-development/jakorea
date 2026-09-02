@@ -48,6 +48,17 @@ type PayloadKind = 'A' | 'B' | 'C' | 'D' | 'E'
 const EMPTY_CERTIFICATE_BODY =
   '귀하는 위의 과정에 참여하여\n교육과정을 수료하였음을 확인합니다.'
 
+const DEFAULT_CERTIFICATE_STRING_FIELDS = {
+  bodyContent: EMPTY_CERTIFICATE_BODY,
+  chairmanName: '이은형',
+  orgAddress: '서울특별시 강서구 마곡중앙로 171 714호',
+  orgPhone: 'Tel.02-783-2367',
+  orgFax: 'Fax.070-4275-5115',
+  orgWebsite: 'http://www.jakorea.org',
+  participantInfo:
+    '홍길동\n1990.01.01\nOO고등학교\nJA 직업캠프\n2025.01.01 ~ 2025.12.31\n기관 및 학교 제출용',
+} as const
+
 function createCertificateSettingsJson(titleName: string): Record<string, unknown> {
   return {
     orgLogo: null,
@@ -55,7 +66,7 @@ function createCertificateSettingsJson(titleName: string): Record<string, unknow
     certificateBackground: null,
     chairmanSeal: null,
     titleName,
-    bodyContent: EMPTY_CERTIFICATE_BODY,
+    ...DEFAULT_CERTIFICATE_STRING_FIELDS,
     participantRowVisibility: [true, true, true, true, true, true],
   }
 }

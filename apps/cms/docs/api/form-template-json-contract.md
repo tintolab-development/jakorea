@@ -287,15 +287,23 @@ Body: `FormTemplateVersionUpdateRequest`
   "chairmanSeal": null,
   "titleName": "수료증",
   "bodyContent": "귀하는 위의 과정에 참여하여\n교육과정을 수료하였음을 확인합니다.",
+  "chairmanName": "이은형",
+  "orgAddress": "서울특별시 강서구 마곡중앙로 171 714호",
+  "orgPhone": "Tel.02-783-2367",
+  "orgFax": "Fax.070-4275-5115",
+  "orgWebsite": "http://www.jakorea.org",
+  "participantInfo": "홍길동\n1990.01.01\nOO고등학교\nJA 직업캠프\n2025.01.01 ~ 2025.12.31\n기관 및 학교 제출용",
   "participantRowVisibility": [true, true, true, true, true, true]
 }
 ```
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| `orgLogo`, `orgLogo02`, `certificateBackground`, `chairmanSeal` | `null` \| file ref | 이미지 — `fileId` 또는 URL (**BE 합의 TODO**) |
-| `titleName` | string | 타이틀 (최대 9자) |
+| `orgLogo`, `orgLogo02`, `certificateBackground`, `chairmanSeal` | `null` \| file ref | 이미지 — `url` 필수 ([certificate-image-storage-handoff.md](./certificate-image-storage-handoff.md)) |
+| `titleName` | string | 타이틀 (최대 9자) — **종별 상이** ([certificate-form-seeds-backend-handoff.md](./certificate-form-seeds-backend-handoff.md)) |
 | `bodyContent` | string | 본문 (멀티라인) |
+| `chairmanName`, `orgAddress`, `orgPhone`, `orgFax`, `orgWebsite` | string | 푸터·직인 영역 |
+| `participantInfo` | string | 참여자 6줄 블록 (실발급 시 runtime override) |
 | `participantRowVisibility` | boolean[6] | 성명·생년월일·소속·프로그램명·활동기간·발급목적 행 노출 |
 
 `schemaJson` 없이 `settingsJson`만 사용하는 양식: 인증서 5종 (`document-2` ~ `document-5`, `document-participation-certificate`).
