@@ -104,4 +104,11 @@ export type {
   EducationSettlementProgress,
   EducationSettlementStatus,
 } from './settlements'
-export { EDUCATION_SETTLEMENT_PAGE_SIZE, EducationSettlementPanel } from './settlements'
+export {
+  EDUCATION_SETTLEMENT_PAGE_SIZE,
+  EducationSettlementPanel,
+  EducationSettlementWriteForm,
+  buildSettlementWritePath,
+  buildSettlementTabPath,
+  getMockEducationSettlements,
+} from './settlements'

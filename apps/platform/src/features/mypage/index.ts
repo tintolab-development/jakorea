@@ -93,6 +93,8 @@ export {
   EducationNoticeStats,
   EducationSchedulePanel,
   EducationSettlementPanel,
+  EducationSettlementWriteForm,
+  getMockEducationSettlements,
   EducationSurveyEmptyPanel,
   EducationSurveyFillPanel,
   getEducationSurveyMockAvailability,

@@ -6,6 +6,7 @@ import {
   type SettlementAmountKind,
 } from '../lib/settlement-rules'
 import { buildSettlementPaymentConsentPath } from '../lib/consent-path'
+import { buildSettlementWritePath } from '../lib/write-path'
 import {
   EducationSessionCard,
   EducationSessionCardHeader,
@@ -60,6 +61,8 @@ const STATUS_CONFIG: Record<EducationSettlementStatus, StatusConfig> = {
   overdue: {
     message: '기한 내에 지급조서를 제출해 주세요',
     mark: { tone: 'alert', label: '지급조서 미제출', iconSrc: alertRedUrl },
+    statusLabel: '미제출',
+    statusTone: 'unsubmitted',
     actions: ['write'],
   },
   waiting_confirm: {
@@ -106,7 +109,7 @@ export function EducationSettlementRow({ item, applicationId }: EducationSettlem
   const navigate = useNavigate()
   const [rejectOpen, setRejectOpen] = useState(false)
   const config = STATUS_CONFIG[item.status]
-  const writePath = buildSettlementPaymentConsentPath({ applicationId, mode: 'write' })
+  const writePath = buildSettlementWritePath({ applicationId, sessionId: item.id })
   const viewPath = buildSettlementPaymentConsentPath({ applicationId, mode: 'view' })
   const amount = item.amount
   const showAmount = amount != null && config.amountKind != null
