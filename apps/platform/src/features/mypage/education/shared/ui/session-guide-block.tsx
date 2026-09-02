@@ -34,7 +34,7 @@ export function EducationSessionGuideBlock({
               <PFText
                 as="span"
                 typo="hl-sm"
-                color={statusTone === 'submitted' ? 'primary-700' : 'neutral-cool-500'}
+                color={statusTone === 'submitted' ? 'primary-500' : 'neutral-cool-500'}
                 className={styles.statusLabel}
               >
                 {statusLabel}
