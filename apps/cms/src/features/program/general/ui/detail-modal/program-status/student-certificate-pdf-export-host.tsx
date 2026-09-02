@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
 import { applyAllocatedSerialForPdfCapture } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
-import { isCertificateSerialPlaceholder } from '@/features/program/shared/lib/certificate-serial'
+import { getCertificateSerialAllocateErrorMessage } from '@/features/program/shared/api/certificate-serial-api'
 import {
   FormCertificatePreview,
   FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS,
@@ -17,6 +17,7 @@ import {
   resolveStudentCertificateTemplateKey,
   resolveStudentCertificateTemplateName,
 } from '@/features/program/general/lib/student-certificate-template'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import '@/pages/templates/form-certificate-preview.css'
 
 export interface StudentCertificatePdfExportHostProps {
@@ -28,6 +29,7 @@ export function StudentCertificatePdfExportHost({
   context,
   onComplete,
 }: StudentCertificatePdfExportHostProps) {
+  const { showAlert } = useCmsAlert()
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
   const completedRef = useRef(false)
   const [captureMounted, setCaptureMounted] = useState(false)
@@ -80,10 +82,16 @@ export function StudentCertificatePdfExportHost({
     void (async () => {
       try {
         if (pdfExportCanvasRef.current == null) {
-          if (!cancelled) onComplete(false)
+          if (!cancelled) {
+            showAlert({
+              title: '안내',
+              content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+            })
+            onComplete(false)
+          }
           return
         }
-        const serialNumber = await applyAllocatedSerialForPdfCapture({
+        await applyAllocatedSerialForPdfCapture({
           subject: {
             programId: context.programId,
             subjectId: context.student.id,
@@ -93,14 +101,16 @@ export function StudentCertificatePdfExportHost({
           exportRoot: pdfExportCanvasRef.current,
         })
         if (cancelled) return
-        if (isCertificateSerialPlaceholder(serialNumber)) {
-          onComplete(false)
-          return
-        }
         await downloadPdf()
         if (!cancelled) onComplete(true)
-      } catch {
-        if (!cancelled) onComplete(false)
+      } catch (error) {
+        if (!cancelled) {
+          showAlert({
+            title: '안내',
+            content: getCertificateSerialAllocateErrorMessage(error),
+          })
+          onComplete(false)
+        }
       }
     })()
 
@@ -115,6 +125,7 @@ export function StudentCertificatePdfExportHost({
     context.student.id,
     downloadPdf,
     onComplete,
+    showAlert,
   ])
 
   return (

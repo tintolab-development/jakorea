@@ -9,6 +9,7 @@ import {
 import { INSTRUCTOR_ACTIVITY_CERTIFICATE_TEMPLATE_CODE } from '@/features/template/lib/certificate-form-settings'
 import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
 import { applyAllocatedSerialForPdfCapture } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
+import { getCertificateSerialAllocateErrorMessage } from '@/features/program/shared/api/certificate-serial-api'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -92,10 +93,10 @@ export function ActivityCertificateIssuancePreviewModal({
         exportRoot: pdfExportCanvasRef.current,
       })
       await downloadPdf()
-    } catch {
+    } catch (error) {
       showAlert({
         title: '안내',
-        content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        content: getCertificateSerialAllocateErrorMessage(error),
       })
     } finally {
       setIsAllocatingSerial(false)
