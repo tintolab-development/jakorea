@@ -317,6 +317,21 @@ function isGeneralApplicationOverlayVariant(
   )
 }
 
+/** Notion 모집 양식 — 단락 추가·삭제·복제 전부 비활성 */
+function isRecruitmentEditorVariant(variant: ProgramParticipantApplicationEditorVariant): boolean {
+  return (
+    variant === 'applicant-recruit-institution' ||
+    variant === 'economy-recruit-institution' ||
+    variant === 'trained-teachers-recruit-institution' ||
+    variant === 'ujat-recruit-institution' ||
+    variant === 'applicant-recruit-individual' ||
+    variant === 'recruit-instructor' ||
+    variant === 'recruit-volunteer' ||
+    variant === 'ujat-recruit-volunteer' ||
+    variant === 'gemini-recruit'
+  )
+}
+
 function restoreParticipantOverlayForVariant(
   variant: ProgramParticipantApplicationEditorVariant,
   overlay: Record<string, unknown> | undefined
@@ -647,6 +662,10 @@ export function useProgramParticipantApplicationEditor(
     setActiveParagraphId,
     seedParagraphIds
   )
+
+  const effectiveMiddleParagraphActions = isRecruitmentEditorVariant(variant)
+    ? undefined
+    : middleParagraphActions
 
   const {
     horizontalTableRowSelectionsByParagraphId,
@@ -1118,7 +1137,7 @@ export function useProgramParticipantApplicationEditor(
     onReorderMiddle,
     onTitleNumberingChange,
     updateParagraph,
-    middleParagraphActions,
+    middleParagraphActions: effectiveMiddleParagraphActions,
     horizontalTableRowSelectionsByParagraphId,
     verticalTableBodyRowSelection,
     activeHorizontalTableRowSelection,
