@@ -9,7 +9,10 @@ import {
   ProgramRegistrationIpsTypeFields,
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
-import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  updateProgramRegistrationOverlayKey,
+  useProgramRegistrationOverlayKv,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 type TrainedTeachersRegistrationEducationCurriculumParagraphProps = {
@@ -115,9 +118,17 @@ function TrainedTeachersTeacherTrainingSection({ enabled }: { enabled: boolean }
 function TrainedTeachersCurriculumSessionBlock({
   sessionIndex,
   onDelete,
+  unitName,
+  unitContent,
+  onUnitNameChange,
+  onUnitContentChange,
 }: {
   sessionIndex: number
   onDelete: (sessionIndex: number) => void
+  unitName: string
+  unitContent: string
+  onUnitNameChange: (value: string) => void
+  onUnitContentChange: (value: string) => void
 }) {
   const showDelete = sessionIndex > 1
 
@@ -142,6 +153,8 @@ function TrainedTeachersCurriculumSessionBlock({
                     placeholder="단원명을 입력하세요"
                     width="100%"
                     style={{ minWidth: 0, flex: '1 1 160px' }}
+                    value={unitName}
+                    onChange={event => onUnitNameChange(event.target.value)}
                   />
                   <DetailInfoForm.InputsSeparator />
                   <CmsInput
@@ -149,6 +162,8 @@ function TrainedTeachersCurriculumSessionBlock({
                     placeholder="교육 내용을 작성하세요"
                     width="100%"
                     style={{ minWidth: 0, flex: '2 1 260px' }}
+                    value={unitContent}
+                    onChange={event => onUnitContentChange(event.target.value)}
                   />
                 </div>
               }
@@ -179,6 +194,14 @@ export function TrainedTeachersRegistrationEducationCurriculumParagraph({
   const [educationJournalEnabled, setEducationJournalEnabled] = useProgramRegistrationOverlayKv<
     'yes' | 'no'
   >('trainedTeachersRegistration.educationCurriculum.educationJournalEnabled', 'yes')
+  const [unitNameBySession] = useProgramRegistrationOverlayKv<Record<number, string>>(
+    'trainedTeachersRegistration.educationCurriculum.unitNameBySession',
+    {}
+  )
+  const [unitContentBySession] = useProgramRegistrationOverlayKv<Record<number, string>>(
+    'trainedTeachersRegistration.educationCurriculum.unitContentBySession',
+    {}
+  )
 
   return (
     <div className="program-registration-curriculum__sessions">
@@ -214,6 +237,20 @@ export function TrainedTeachersRegistrationEducationCurriculumParagraph({
             key={sessionIndex}
             sessionIndex={sessionIndex}
             onDelete={onDeleteCurriculumSession}
+            unitName={unitNameBySession[sessionIndex] ?? ''}
+            unitContent={unitContentBySession[sessionIndex] ?? ''}
+            onUnitNameChange={value =>
+              updateProgramRegistrationOverlayKey<Record<number, string>>(
+                'trainedTeachersRegistration.educationCurriculum.unitNameBySession',
+                prev => ({ ...(prev ?? {}), [sessionIndex]: value })
+              )
+            }
+            onUnitContentChange={value =>
+              updateProgramRegistrationOverlayKey<Record<number, string>>(
+                'trainedTeachersRegistration.educationCurriculum.unitContentBySession',
+                prev => ({ ...(prev ?? {}), [sessionIndex]: value })
+              )
+            }
           />
         )
       })}

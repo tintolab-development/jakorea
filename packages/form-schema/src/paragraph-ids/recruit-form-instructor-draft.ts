@@ -52,7 +52,7 @@ export function createRecruitFormInstructorDraft(): WritingFormDraft {
     createSeedHorizontalTable(
       RECRUIT_FORM_INSTRUCTOR_IDS.detailInfo,
       '상세 정보',
-      '공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.'
+      '공란인 경우, 홈페이지 모집 상세에서 해당 항목은 비노출됩니다.'
     ),
   ]
   return normalizeWritingFormDraft({

@@ -41,7 +41,10 @@ import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features
 import { renderEconomyProgramApplicationParagraphBody } from '@/features/template/ui/form-set/application-form/1c-1s/paragraph-body'
 import { renderTrainedTeachersProgramApplicationParagraphBody } from '@/features/template/ui/form-set/application-form/trained-teachers/paragraph-body'
 import { renderGeminiVisitingTrainingApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/gemini-institution/paragraph-body'
-import { renderGeminiVisitingTrainingApplicationFormInstructorParagraphBody } from '@/features/template/ui/form-set/application-form/gemini-instructor/paragraph-body'
+import {
+  renderGeminiVisitingTrainingApplicationFormInstructorParagraphBody,
+  type GeminiVisitingTrainingApplicationFormInstructorBodyOptions,
+} from '@/features/template/ui/form-set/application-form/gemini-instructor/paragraph-body'
 import { renderUjatProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraph-body'
 import {
   renderUjatProgramApplicationFormVolunteerParagraphBody,
@@ -489,7 +492,9 @@ export function HorizontalTableParagraphBody({
   /** Gemini 찾아가는 연수 참여 기관 신청 폼 시드 단락 — 전용 본문 */
   programApplicationFormGeminiInstitution?: boolean
   /** Gemini 찾아가는 연수 강사 신청 폼 시드 단락 — 전용 본문 */
-  programApplicationFormGeminiInstructor?: boolean
+  programApplicationFormGeminiInstructor?:
+    | boolean
+    | GeminiVisitingTrainingApplicationFormInstructorBodyOptions
   /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramApplicationFormInstitution?: boolean
   /** UJAT 프로그램 봉사자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
@@ -654,7 +659,17 @@ export function HorizontalTableParagraphBody({
   const programApplicationFormGeminiInstructorBody =
     renderGeminiVisitingTrainingApplicationFormInstructorParagraphBody(
       p,
-      programApplicationFormGeminiInstructor
+      programApplicationFormGeminiInstructor === true
+        ? {
+            enabled: true,
+            isTemplateAuthoringMode:
+              paragraphInteractionMode === 'authoring' &&
+              programLinkedInstitutionApplicationForm !== true,
+            readOnlyPreview: isFormPreviewReadonlyMode(paragraphInteractionMode),
+          }
+        : programApplicationFormGeminiInstructor === false
+          ? undefined
+          : programApplicationFormGeminiInstructor
     )
   if (programApplicationFormGeminiInstructorBody != null)
     return programApplicationFormGeminiInstructorBody

@@ -38,7 +38,6 @@ const issuanceReportDefinitions = [
   { id: 'issuance-ujat-edu-journal', templateName: UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME },
   { id: 'issuance-3', templateName: LECTURE_REPORT_TEMPLATE_NAME },
   { id: 'issuance-4', templateName: SETTLEMENT_APPLICATION_TEMPLATE_NAME },
-  { id: 'issuance-5', templateName: '결과보고서' },
 ] as const
 
 /**

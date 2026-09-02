@@ -4,6 +4,7 @@ import {
   HORIZONTAL_TABLE_MIN_COLUMN_COUNT,
   horizontalTableRemoveColumn,
   normalizeHorizontalTableParagraph,
+  writingOutlineLabel,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   FormEditorCustomFieldPanel,
@@ -40,16 +41,14 @@ export function FormEditorHorizontalTableHeaderFields({
     })
   }
 
-  const isFieldFlavor = pNorm.tableFlavor === 'field'
-  const panelTitle = isFieldFlavor
-    ? '테이블_가로형(필드형)_항목 선택 시 (헤더)'
-    : '테이블_가로형_항목 선택 시 (헤더)'
+  const panelTitle = writingOutlineLabel(paragraph)
 
   return (
     <FormEditorCustomFieldPanel
       className="form-editor-horizontal-table-header-fields"
       titleClassName="form-editor-horizontal-table-header-fields__title"
       title={panelTitle}
+      subtitle="헤더 항목"
       hint={
         <FormEditorFieldHint tone="header">
           <FormEditorFieldHintLine tone="header">

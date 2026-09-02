@@ -14,7 +14,7 @@ import {
   effectiveVerticalStageKinds,
   normalizeVerticalTableParagraph,
   verticalTablePanelStageTitle,
-  verticalTableParagraphOutlineLabel,
+  writingOutlineLabel,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   FormEditorCustomFieldPanel,
@@ -72,7 +72,6 @@ function FormEditorVerticalTableRowFieldsBody({
   onBodyRowDeleted,
 }: FormEditorVerticalTableRowFieldsProps) {
   const p = normalizeVerticalTableParagraph(paragraph)
-  const flavorPrefix = verticalTableParagraphOutlineLabel(p.verticalTableFlavor)
   const row = p.rows[rowIndex]!
   const rowCount = Math.max(1, p.rows.length)
   const canDeleteRow = rowCount > 1
@@ -97,7 +96,8 @@ function FormEditorVerticalTableRowFieldsBody({
   return (
     <FormEditorCustomFieldPanel
       className="form-editor-horizontal-table-body-fields form-editor-vertical-table-row-fields"
-      title={`${flavorPrefix}_항목 선택 시`}
+      title={writingOutlineLabel(paragraph)}
+      subtitle={`${rowIndex + 1}. 항목`}
       beforeDelete={
         <div className="form-editor-vertical-table-row-fields__structure">
           <span className="form-editor-vertical-table-row-fields__structure-label">

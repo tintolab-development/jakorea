@@ -160,6 +160,8 @@ export type ShortEssayParagraph = WritingFormParagraphBase & {
   bodyText: string
   /** 항목 입력 줄 수 — 1: 한 줄 입력(44px), 그 외/미지정: 기본 멀티라인(5줄). 동의 양식 짧은 라벨(성명·생년월일·전화번호 등)에 사용 */
   itemInputRows?: 1 | 5
+  /** 입력 글자 수 상한 — 지정 시 textarea `maxLength`·글자 수 카운터 적용 */
+  maxLength?: number
 }
 
 /** N차시 교육 계획 등 — `short_essay`와 동일 필드 모양, 전용 variant·UI */
@@ -2477,7 +2479,7 @@ const AGREEMENT_NOTICE_CONFIRMATION_CLOSING: ClosingParagraph = {
 
 const AGREEMENT_NOTICE_TABLE_FIRST_ROW: [string, string, string, string] = [
   '1',
-  '성범죄경력 및 아동학대관련 범죄전력 조회',
+  '성범죄경력 및 아동학대 관련 범죄전력 조회',
   '',
   '',
 ]
@@ -3129,7 +3131,7 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: false,
-        surveyTitle: 'JA Korea 교육진행자 서약서(안)',
+        surveyTitle: 'JA Korea 교육진행자 서약서',
         surveyDescription: '',
         periodMode: 'immediate',
         startAt: null,
@@ -3481,14 +3483,26 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
   }
 }
 
+const UJAT_EDU_PLAN_EXPLANATION_BODY =
+  '1. 봉사자는 학년별로 세부적인 교육 계획을 각각 작성해야 합니다. 계획은 구체적이고 성실하게 작성해 주시기 바랍니다. 1학년부터 6학년까지 모든 학년에 대한 계획을 작성해 주세요.\n' +
+  '2. 교육 계획서는 활동 예정일 1주 전 목요일 24:00까지 제출해야 합니다.\n' +
+  '3. 제출하지 않거나 성의 없는 내용을 작성할 경우, 봉사 시간 인증에 불이익이 있을 수 있습니다.'
+
+const UJAT_EDU_PLAN_DEFAULT_SELECTED_USER_FIELD_KEYS = [
+  'name',
+  'addressRegion',
+  'educationTarget',
+  'educationGrade',
+] as const
+
 const UJAT_EDU_PLAN_USER_FIELDS: Array<{ key: string; label: string }> = [
   { key: 'name', label: '이름' },
   { key: 'gender', label: '성별' },
   { key: 'birthDate', label: '생년월일' },
   { key: 'phone', label: '연락처' },
   { key: 'email', label: '이메일' },
-  { key: 'addressRegion', label: '자택 주소(지번)' },
-  { key: 'addressDetail', label: '자택 주소(도로명)' },
+  { key: 'addressRegion', label: '자택 주소지' },
+  { key: 'addressDetail', label: '자택 주소(상세)' },
   { key: 'affiliation', label: '소속' },
   { key: 'applicantType', label: '신청자 유형' },
   { key: 'programName', label: '프로그램' },
@@ -3562,7 +3576,7 @@ function createUjatEducationIssuanceDraft(
   getSessionParagraphTitle: (sessionIndex: number) => string,
   options?: { paragraphsAfterVolunteer?: WritingFormParagraph[] }
 ): WritingFormDraft {
-  const selectedKeys = UJAT_EDU_PLAN_USER_FIELDS.map(f => f.key)
+  const selectedKeys = [...UJAT_EDU_PLAN_DEFAULT_SELECTED_USER_FIELD_KEYS]
   const afterVolunteer = options?.paragraphsAfterVolunteer ?? []
   return {
     schemaVersion: 1,
@@ -3595,7 +3609,7 @@ function createUjatEducationIssuanceDraft(
         paragraphDescription: '',
         participatesInTitleNumbering: true,
         bodyPlaceholder: '텍스트를 작성해 주세요',
-        bodyText: '',
+        bodyText: UJAT_EDU_PLAN_EXPLANATION_BODY,
         answerRequired: true,
       },
       {

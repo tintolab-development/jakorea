@@ -6,9 +6,11 @@ import {
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { getInstructorApplicationFormHiddenParagraphIds } from '@/features/program/general/lib/institution-application-form-visibility'
 import {
-  buildInstructorAvailableScheduleSlots,
+  buildInstructorAvailableScheduleSlotsFromProgram,
+  buildVolunteerActivityAvailableScheduleSlots,
   type InstructorAvailableScheduleSlot,
 } from '@/features/program/general/lib/instructor-application-available-schedule'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { getVolunteerApplicationFormHiddenParagraphIds } from '@/features/program/general/lib/volunteer-application-form-visibility'
 import {
   isGeneralProgramVolunteerInterviewScheduleVisible,
@@ -86,7 +88,11 @@ export function buildGeneralApplicationFormPreviewParagraphBodyOptions(
           ...(program
             ? {
                 scheduleSlots:
-                  instructorScheduleSlots ?? buildInstructorAvailableScheduleSlots(program.id),
+                  instructorScheduleSlots ??
+                  buildInstructorAvailableScheduleSlotsFromProgram(program),
+                ...(isGeneralIndividualProgram(program)
+                  ? { hideScheduleCalendar: true as const }
+                  : {}),
               }
             : {}),
           ...(programLinkedPreview ? { programLinkedPreview: true as const } : {}),
@@ -100,6 +106,11 @@ export function buildGeneralApplicationFormPreviewParagraphBodyOptions(
           ...(program
             ? {
                 commonScheduleSeed: resolveGeneralProgramVolunteerInterviewScheduleEditSeed(program),
+                activityScheduleSlots:
+                  instructorScheduleSlots ?? buildVolunteerActivityAvailableScheduleSlots(program),
+                ...(isGeneralIndividualProgram(program)
+                  ? { hideActivityScheduleCalendar: true as const }
+                  : {}),
               }
             : {}),
           ...(programLinkedPreview ? { programLinkedPreview: true as const } : {}),

@@ -8,6 +8,7 @@ import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-dat
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { useGeneralRecruitOverlayKv } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -25,13 +26,29 @@ const inquiryColumnStyle: CSSProperties = {
   gap: 8,
 }
 
-function InquiryContactColumn({ label, placeholder }: { label: string; placeholder: string }) {
+function InquiryContactColumn({
+  label,
+  placeholder,
+  value,
+  onChange,
+}: {
+  label: string
+  placeholder: string
+  value: string
+  onChange: (next: string) => void
+}) {
   return (
     <div style={inquiryColumnStyle}>
       <span className="nowrap" style={{ flexShrink: 0 }}>
         {label}
       </span>
-      <CmsInput inputSize="medium" width={240} placeholder={placeholder} />
+      <CmsInput
+        inputSize="medium"
+        width={240}
+        placeholder={placeholder}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+      />
     </div>
   )
 }
@@ -112,6 +129,31 @@ export function RecruitFormInstructorInfoParagraph() {
   const setFinalAnnounceDate = (next: Dayjs | null) => {
     setFinalAnnounceIso(next == null ? null : next.toISOString())
   }
+  const [recruitTargetDetail, setRecruitTargetDetail] = useGeneralRecruitOverlayKv<string>(
+    'recruit.instructor.recruitTargetDetail',
+    ''
+  )
+  const [finalAnnounceMethod, setFinalAnnounceMethod] = useGeneralRecruitOverlayKv<string>(
+    'recruit.instructor.finalAnnounceMethod',
+    ''
+  )
+  const [inquiryContact, setInquiryContact] = useGeneralRecruitOverlayKv<string>(
+    'recruit.instructor.inquiryContact',
+    ''
+  )
+  const [inquiryTel, setInquiryTel] = useGeneralRecruitOverlayKv<string>(
+    'recruit.instructor.inquiryTel',
+    ''
+  )
+  const [inquiryEmail, setInquiryEmail] = useGeneralRecruitOverlayKv<string>(
+    'recruit.instructor.inquiryEmail',
+    ''
+  )
+  const [notesNotApplicable, setNotesNotApplicable] = useGeneralRecruitOverlayKv<boolean>(
+    'recruit.instructor.notesNotApplicable',
+    false
+  )
+  const [notes, setNotes] = useGeneralRecruitOverlayKv<string>('recruit.instructor.notes', '')
 
   return (
     <div className="recruit-form-instructor-info-paragraph__forms">
@@ -185,7 +227,13 @@ export function RecruitFormInstructorInfoParagraph() {
         <DetailInfoForm.Field
           label="모집 대상 상세"
           edit={
-            <CmsInput inputSize="medium" width="100%" placeholder="상세 교육 대상을 입력하세요" />
+            <CmsInput
+              inputSize="medium"
+              width="100%"
+              placeholder="상세 모집 대상을 입력하세요"
+              value={recruitTargetDetail}
+              onChange={e => setRecruitTargetDetail(e.target.value)}
+            />
           }
           view="-"
         />
@@ -233,6 +281,8 @@ export function RecruitFormInstructorInfoParagraph() {
                 width="100%"
                 style={{ flex: '1 1 0', minWidth: 0 }}
                 placeholder="발표 방법 안내"
+                value={finalAnnounceMethod}
+                onChange={e => setFinalAnnounceMethod(e.target.value)}
               />
             </div>
           }
@@ -246,11 +296,26 @@ export function RecruitFormInstructorInfoParagraph() {
           fullRow
           edit={
             <div className={MAX_SUFFIX_CLASS}>
-              <InquiryContactColumn label="문의처" placeholder="담당 문의처" />
+              <InquiryContactColumn
+                label="문의처"
+                placeholder="담당 문의처"
+                value={inquiryContact}
+                onChange={setInquiryContact}
+              />
               <DetailInfoForm.InputsSeparator />
-              <InquiryContactColumn label="Tel" placeholder="문의처 전화번호" />
+              <InquiryContactColumn
+                label="Tel"
+                placeholder="문의처 전화번호"
+                value={inquiryTel}
+                onChange={setInquiryTel}
+              />
               <DetailInfoForm.InputsSeparator />
-              <InquiryContactColumn label="E-mail" placeholder="문의처 이메일" />
+              <InquiryContactColumn
+                label="E-mail"
+                placeholder="문의처 이메일"
+                value={inquiryEmail}
+                onChange={setInquiryEmail}
+              />
             </div>
           }
           view="-"
@@ -260,12 +325,31 @@ export function RecruitFormInstructorInfoParagraph() {
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="비고"
+          fullRow
           edit={
-            <CmsInput
-              inputSize="medium"
-              width="100%"
-              placeholder="비고란을 작성하세요 (없으면 -로 입력)"
-            />
+            <div className={MAX_SUFFIX_CLASS}>
+              <CmsCheckbox
+                checkboxSize="medium"
+                checked={notesNotApplicable}
+                onChange={e => {
+                  const checked = e.target.checked
+                  setNotesNotApplicable(checked)
+                  if (checked) setNotes('')
+                }}
+              >
+                해당 없음
+              </CmsCheckbox>
+              <DetailInfoForm.InputsSeparator />
+              <CmsInput
+                inputSize="medium"
+                width="100%"
+                style={{ flex: '1 1 0', minWidth: 0 }}
+                placeholder="비고란을 작성하세요"
+                value={notes}
+                disabled={notesNotApplicable}
+                onChange={e => setNotes(e.target.value)}
+              />
+            </div>
           }
           view="-"
         />

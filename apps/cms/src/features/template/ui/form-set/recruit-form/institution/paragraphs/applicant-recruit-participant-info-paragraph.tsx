@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type CSSProperties } from 'react'
+import { useEffect, useMemo } from 'react'
 import {
   patchInstitutionApplicationProgramBridge,
   shouldShowInstitutionApplicationMaxScheduleFields,
@@ -18,39 +18,27 @@ import {
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import {
+  RecruitInquiryContactRow,
+  RecruitNotesRow,
+  RECRUIT_FORM_MAX_SUFFIX_CLASS,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './applicant-recruit-participant-info-paragraph.css'
 
 const RECRUIT_PROGRESS_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
+const MAX_SUFFIX_CLASS = RECRUIT_FORM_MAX_SUFFIX_CLASS
 
 const NEED_OR_NOT_OPTIONS = [
   { label: '필요', value: 'need' },
   { label: '불필요', value: 'none' },
 ] as const
 
-const MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
-const inquiryColumnStyle: CSSProperties = {
-  display: 'flex',
-  minWidth: 0,
-  alignItems: 'center',
-  gap: 8,
-}
-
-function InquiryContactColumn({ label, placeholder }: { label: string; placeholder: string }) {
-  return (
-    <div style={inquiryColumnStyle}>
-      <span className="nowrap" style={{ flexShrink: 0 }}>
-        {label}
-      </span>
-      <CmsInput inputSize="medium" width={240} placeholder={placeholder} />
-    </div>
-  )
-}
+const RECRUITMENT_RADIO_CLASS = 'program-detail-info-tab__recruitment-radio'
 
 function NumberWithSuffixRow({
   placeholder,
@@ -78,8 +66,6 @@ function NumberWithSuffixRow({
     </div>
   )
 }
-
-const RECRUITMENT_RADIO_CLASS = 'program-detail-info-tab__recruitment-radio'
 
 function NeedOrNotRadioGroup({
   value,
@@ -243,6 +229,26 @@ export function ApplicantRecruitParticipantInfoParagraph({
     APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.notes,
     ''
   )
+  const [finalAnnounceMethod, setFinalAnnounceMethod] = useApplicantRecruitInstitutionOverlayKv<string>(
+    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.finalAnnounceMethod,
+    ''
+  )
+  const [targetLevelDetail, setTargetLevelDetail] = useApplicantRecruitInstitutionOverlayKv<string>(
+    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.targetLevelDetail,
+    ''
+  )
+  const [inquiryContact, setInquiryContact] = useApplicantRecruitInstitutionOverlayKv<string>(
+    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.inquiryContact,
+    ''
+  )
+  const [inquiryTel, setInquiryTel] = useApplicantRecruitInstitutionOverlayKv<string>(
+    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.inquiryTel,
+    ''
+  )
+  const [inquiryEmail, setInquiryEmail] = useApplicantRecruitInstitutionOverlayKv<string>(
+    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.inquiryEmail,
+    ''
+  )
 
   useEffect(() => {
     patchInstitutionApplicationProgramBridge({
@@ -263,7 +269,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
   if (layoutVariant === 'economy') {
     return (
       <div className="applicant-recruit-participant-info-paragraph__forms">
-        <DetailInfoForm title="참여자 모집 정보" hideHeader mode="edit">
+        <DetailInfoForm title="참여 기관 모집 정보" hideHeader mode="edit">
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="공고 게시 여부"
@@ -306,7 +312,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
           </DetailInfoForm.Row>
         </DetailInfoForm>
 
-        <DetailInfoForm title="참여자 모집 정보" hideHeader mode="edit">
+        <DetailInfoForm title="참여 기관 모집 정보" hideHeader mode="edit">
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="프로그램 운영 기간"
@@ -364,6 +370,8 @@ export function ApplicantRecruitParticipantInfoParagraph({
                   inputSize="medium"
                   width="100%"
                   placeholder="상세 교육 대상을 입력하세요"
+                  value={targetLevelDetail}
+                  onChange={e => setTargetLevelDetail(e.target.value)}
                 />
               }
               view="-"
@@ -412,6 +420,8 @@ export function ApplicantRecruitParticipantInfoParagraph({
                     width="100%"
                     style={{ flex: '1 1 0', minWidth: 0 }}
                     placeholder="발표 방법 안내"
+                    value={finalAnnounceMethod}
+                    onChange={e => setFinalAnnounceMethod(e.target.value)}
                   />
                 </div>
               }
@@ -419,55 +429,22 @@ export function ApplicantRecruitParticipantInfoParagraph({
             />
           </DetailInfoForm.Row>
 
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="문의처"
-              fullRow
-              edit={
-                <div className={MAX_SUFFIX_CLASS}>
-                  <InquiryContactColumn label="문의처" placeholder="담당 문의처" />
-                  <DetailInfoForm.InputsSeparator />
-                  <InquiryContactColumn label="Tel" placeholder="문의처 전화번호" />
-                  <DetailInfoForm.InputsSeparator />
-                  <InquiryContactColumn label="E-mail" placeholder="문의처 이메일" />
-                </div>
-              }
-              view="-"
-            />
-          </DetailInfoForm.Row>
+          <RecruitInquiryContactRow
+            inquiryContact={inquiryContact}
+            onInquiryContactChange={setInquiryContact}
+            inquiryTel={inquiryTel}
+            onInquiryTelChange={setInquiryTel}
+            inquiryEmail={inquiryEmail}
+            onInquiryEmailChange={setInquiryEmail}
+          />
 
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="비고"
-              fullRow
-              edit={
-                <div className={MAX_SUFFIX_CLASS}>
-                  <CmsCheckbox
-                    checkboxSize="medium"
-                    checked={notesNotApplicable}
-                    onChange={e => {
-                      const checked = e.target.checked
-                      setNotesNotApplicable(checked)
-                      if (checked) setNotes('')
-                    }}
-                  >
-                    해당 없음
-                  </CmsCheckbox>
-                  <DetailInfoForm.InputsSeparator />
-                  <CmsInput
-                    inputSize="medium"
-                    width="100%"
-                    style={{ flex: '1 1 0', minWidth: 0 }}
-                    placeholder="비고란을 작성하세요"
-                    value={notes}
-                    disabled={notesNotApplicable}
-                    onChange={e => setNotes(e.target.value)}
-                  />
-                </div>
-              }
-              view="-"
-            />
-          </DetailInfoForm.Row>
+          <RecruitNotesRow
+            fullRow
+            notesNotApplicable={notesNotApplicable}
+            onNotesNotApplicableChange={setNotesNotApplicable}
+            notes={notes}
+            onNotesChange={setNotes}
+          />
         </DetailInfoForm>
       </div>
     )
@@ -475,10 +452,12 @@ export function ApplicantRecruitParticipantInfoParagraph({
 
   const isTrainedTeachers = layoutVariant === 'trainedTeachers'
   const isGeneral = layoutVariant === 'general'
+  const showTrainedTeachersScheduleLimits =
+    isTrainedTeachers && showInstitutionApplicationLimits
 
   return (
     <div className="applicant-recruit-participant-info-paragraph__forms">
-      <DetailInfoForm title="참여자 모집 정보" hideHeader mode="edit">
+      <DetailInfoForm title="참여 기관 모집 정보" hideHeader mode="edit">
         {isTrainedTeachers ? (
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
@@ -573,19 +552,26 @@ export function ApplicantRecruitParticipantInfoParagraph({
             </DetailInfoForm.Row>
 
             {(isGeneral && showInstitutionApplicationLimits) ||
+            showTrainedTeachersScheduleLimits ||
             showMaxScheduleCountField ||
             showMaxSessionsPerDayField ? (
               <DetailInfoForm.Row
                 type={
-                  isGeneral || (showMaxScheduleCountField && showMaxSessionsPerDayField)
+                  isGeneral ||
+                  showTrainedTeachersScheduleLimits ||
+                  (showMaxScheduleCountField && showMaxSessionsPerDayField)
                     ? 'double'
                     : 'single'
                 }
               >
-                {isGeneral || showMaxScheduleCountField ? (
+                {isGeneral || showTrainedTeachersScheduleLimits || showMaxScheduleCountField ? (
                   <DetailInfoForm.Field
                     label="신청 가능 최대 일정 수"
-                    fullRow={!isGeneral && !showMaxSessionsPerDayField}
+                    fullRow={
+                      !isGeneral &&
+                      !showTrainedTeachersScheduleLimits &&
+                      !showMaxSessionsPerDayField
+                    }
                     edit={
                       <NumberWithSuffixRow
                         placeholder="최대값 입력"
@@ -597,10 +583,14 @@ export function ApplicantRecruitParticipantInfoParagraph({
                     view="-"
                   />
                 ) : null}
-                {isGeneral || showMaxSessionsPerDayField ? (
+                {isGeneral || showTrainedTeachersScheduleLimits || showMaxSessionsPerDayField ? (
                   <DetailInfoForm.Field
                     label="신청 가능 1일 최대 차시"
-                    fullRow={!isGeneral && !showMaxScheduleCountField}
+                    fullRow={
+                      !isGeneral &&
+                      !showTrainedTeachersScheduleLimits &&
+                      !showMaxScheduleCountField
+                    }
                     edit={
                       <NumberWithSuffixRow
                         placeholder="최대값 입력"
@@ -618,7 +608,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
         ) : null}
       </DetailInfoForm>
 
-      <DetailInfoForm title="참여자 모집 정보" hideHeader mode="edit">
+      <DetailInfoForm title="참여 기관 모집 정보" hideHeader mode="edit">
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="프로그램 운영 기간"
@@ -656,33 +646,29 @@ export function ApplicantRecruitParticipantInfoParagraph({
           <DetailInfoForm.Field
             label="교육 대상"
             edit={
-              isGeneral ? (
-                <CmsSelect
-                  inputSize="medium"
-                  width={240}
-                  options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
-                  value={targetLevels[0] ?? ''}
-                  onChange={v => setTargetLevels(v ? [String(v)] : [])}
-                />
-              ) : (
-                <CmsSelect
-                  mode="multiple"
-                  inputSize="medium"
-                  width={240}
-                  withAllOption={false}
-                  placeholder="교육 대상을 선택하세요"
-                  options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
-                  value={targetLevels}
-                  onChange={v => setTargetLevels(Array.isArray(v) ? v.map(String) : [])}
-                />
-              )
+              <CmsSelect
+                mode="multiple"
+                inputSize="medium"
+                width={240}
+                withAllOption={false}
+                placeholder="교육 대상을 선택하세요"
+                options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+                value={targetLevels}
+                onChange={v => setTargetLevels(Array.isArray(v) ? v.map(String) : [])}
+              />
             }
             view="-"
           />
           <DetailInfoForm.Field
             label="교육 대상 상세"
             edit={
-              <CmsInput inputSize="medium" width="100%" placeholder="상세 교육 대상을 입력하세요" />
+              <CmsInput
+                inputSize="medium"
+                width="100%"
+                placeholder="상세 교육 대상을 입력하세요"
+                value={targetLevelDetail}
+                onChange={e => setTargetLevelDetail(e.target.value)}
+              />
             }
             view="-"
           />
@@ -730,6 +716,8 @@ export function ApplicantRecruitParticipantInfoParagraph({
                   width="100%"
                   style={{ flex: '1 1 0', minWidth: 0 }}
                   placeholder="발표 방법 안내"
+                  value={finalAnnounceMethod}
+                  onChange={e => setFinalAnnounceMethod(e.target.value)}
                 />
               </div>
             }
@@ -737,55 +725,22 @@ export function ApplicantRecruitParticipantInfoParagraph({
           />
         </DetailInfoForm.Row>
 
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="문의처"
-            fullRow
-            edit={
-              <div className={MAX_SUFFIX_CLASS}>
-                <InquiryContactColumn label="문의처" placeholder="담당 문의처" />
-                <DetailInfoForm.InputsSeparator />
-                <InquiryContactColumn label="Tel" placeholder="문의처 전화번호" />
-                <DetailInfoForm.InputsSeparator />
-                <InquiryContactColumn label="E-mail" placeholder="문의처 이메일" />
-              </div>
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
+        <RecruitInquiryContactRow
+          inquiryContact={inquiryContact}
+          onInquiryContactChange={setInquiryContact}
+          inquiryTel={inquiryTel}
+          onInquiryTelChange={setInquiryTel}
+          inquiryEmail={inquiryEmail}
+          onInquiryEmailChange={setInquiryEmail}
+        />
 
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="비고"
-            fullRow
-            edit={
-              <div className={MAX_SUFFIX_CLASS}>
-                <CmsCheckbox
-                  checkboxSize="medium"
-                  checked={notesNotApplicable}
-                  onChange={e => {
-                    const checked = e.target.checked
-                    setNotesNotApplicable(checked)
-                    if (checked) setNotes('')
-                  }}
-                >
-                  해당 없음
-                </CmsCheckbox>
-                <DetailInfoForm.InputsSeparator />
-                <CmsInput
-                  inputSize="medium"
-                  width="100%"
-                  style={{ flex: '1 1 0', minWidth: 0 }}
-                  placeholder="비고란을 작성하세요"
-                  value={notes}
-                  disabled={notesNotApplicable}
-                  onChange={e => setNotes(e.target.value)}
-                />
-              </div>
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
+        <RecruitNotesRow
+          fullRow
+          notesNotApplicable={notesNotApplicable}
+          onNotesNotApplicableChange={setNotesNotApplicable}
+          notes={notes}
+          onNotesChange={setNotes}
+        />
       </DetailInfoForm>
     </div>
   )

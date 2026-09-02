@@ -9,6 +9,8 @@
 export interface InstructorRoleRequestListItemResponse {
   requestId?: number;
   memberId?: number;
+  memberTypeLabel?: string;
+  organizationName?: string;
   requestStatus?: string;
   requestedActivityType?: string;
   maskedName?: string;

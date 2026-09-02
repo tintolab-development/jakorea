@@ -23,7 +23,6 @@ import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { resolvePostAuthRedirectPath } from '@/shared/utils/post-auth-redirect'
 import {
   DEV_LOGIN_QA_ACCOUNTS,
-  DEV_LOGIN_QA_PASSWORD,
 } from '@/features/auth/lib/dev-login-accounts'
 import { useLoginAttempts } from '@/features/auth/hooks/use-login-attempts'
 import { LOGIN_POLICY } from '@/shared/constants/login-policy'
@@ -355,27 +354,33 @@ export function LoginPage() {
                   <LoginUtilityLinks registerPath={registerPath} />
                   <LoginSocialSection />
 
-                  <div className="login-dev-quick">
-                    <Text type="secondary" className="login-dev-quick__label">
-                      임시 로그인 (DEV)
-                    </Text>
-                    <Space size="small" wrap>
-                      {DEV_LOGIN_QA_ACCOUNTS.map(account => (
-                        <Button
-                          key={account.key}
-                          size="small"
-                          onClick={() => {
-                            form.setFieldsValue({
-                              email: account.email,
-                              password: DEV_LOGIN_QA_PASSWORD,
-                            })
-                          }}
-                        >
-                          {account.label}
-                        </Button>
-                      ))}
-                    </Space>
-                  </div>
+                  {import.meta.env.DEV && (
+                    <div className="login-dev-quick">
+                      <Text type="secondary" className="login-dev-quick__label">
+                        임시 로그인 (DEV)
+                      </Text>
+                      <Space size="small" wrap>
+                        {DEV_LOGIN_QA_ACCOUNTS.map(account => (
+                          <Button
+                            key={account.key}
+                            size="small"
+                            onClick={() => {
+                              form.setFieldsValue({
+                                email: account.email,
+                                password: account.password,
+                              })
+                            }}
+                          >
+                            {account.label}
+                          </Button>
+                        ))}
+                      </Space>
+                      <Text type="secondary" className="login-dev-quick__hint">
+                        실 API: 마스터 → MFA 000000. PM/Partner/Viewer는 BE QA seed 전까지 401일 수
+                        있습니다.
+                      </Text>
+                    </div>
+                  )}
                 </div>
               </>
             )}
