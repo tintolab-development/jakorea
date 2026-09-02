@@ -28,6 +28,8 @@ export type TemplateRegistryDefinition = {
   /** 셸/에디터가 미리보기 URL을 직접 제어 */
   selfManagedPreview?: boolean
   previewHeaderTitleFallback?: string
+  /** 템플릿 편집 모달 헤더 안내. 미지정 시 `TEMPLATE_FORM_MODAL_DESCRIPTION` */
+  modalDescription?: string
 }
 
 const REGISTRATION_MODAL_DESCRIPTION =
@@ -92,6 +94,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     rendererKey: 'participant-application',
     editorVariant: 'recruit-instructor',
     previewHeaderTitleFallback: '공통_강사 모집 폼',
+    modalDescription: '* 해당 폼의 모든 항목은 추가, 삭제 및 수정이 불가합니다.',
   },
   'recruitment-volunteer': {
     id: 'recruitment-volunteer',

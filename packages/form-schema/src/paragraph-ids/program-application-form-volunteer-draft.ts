@@ -16,6 +16,7 @@ export const PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS = {
   previousJaProgram: 'program-volunteer-application-seed-previous-ja-program',
   freeTextItems: 'program-volunteer-application-seed-free-text-items',
   interviewSchedule: 'program-volunteer-application-seed-interview-schedule',
+  activitySchedule: 'program-volunteer-application-seed-activity-schedule',
 } as const
 
 export const PROGRAM_VOLUNTEER_JA_EXPERIENCE_OPTION_IDS = {
@@ -183,6 +184,29 @@ function createVolunteerFreeTextItemsPlaceholderTable(): HorizontalTableParagrap
   })
 }
 
+/** 본문은 `VolunteerActivityAvailableScheduleParagraph`로 대체 */
+function createVolunteerActivitySchedulePlaceholderTable(): HorizontalTableParagraph {
+  return normalizeHorizontalTableParagraph({
+    id: PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule,
+    kind: 'single_item',
+    variant: 'horizontal_table',
+    requiredMark: true,
+    paragraphTitle: '봉사 진행 가능 일정',
+    paragraphDescription: '봉사 진행이 가능한 일정을 모두 선택해 주세요.',
+    participatesInTitleNumbering: true,
+    tableFlavor: 'text',
+    columnHeaders: ['봉사 진행 가능일', ''],
+    dataRows: [['', '']],
+    columnFields: [],
+    fieldDataRows: [],
+    bottomText: '',
+    showBottomText: false,
+    showBottomConsent: false,
+    bottomConsent: 'agree',
+    answerRequired: true,
+  })
+}
+
 /** 본문은 `VolunteerInterviewAvailableScheduleParagraph`로 대체 */
 function createVolunteerInterviewSchedulePlaceholderTable(): HorizontalTableParagraph {
   return normalizeHorizontalTableParagraph({
@@ -215,6 +239,7 @@ export function createProgramApplicationFormVolunteerDraft(): WritingFormDraft {
     createPreviousJaProgramPlaceholderTable(),
     createVolunteerFreeTextItemsPlaceholderTable(),
     createVolunteerInterviewSchedulePlaceholderTable(),
+    createVolunteerActivitySchedulePlaceholderTable(),
   ]
   return normalizeWritingFormDraft({
     schemaVersion: 1,

@@ -62,8 +62,8 @@ function createOfficialDocumentPlaceholderTable(): HorizontalTableParagraph {
 
 export function createGeminiVisitingTrainingApplicationFormInstructorDraft(): WritingFormDraft {
   const paragraphs: WritingFormParagraph[] = [
-    createAvailableSchedulePlaceholderTable(),
     createOfficialDocumentPlaceholderTable(),
+    createAvailableSchedulePlaceholderTable(),
   ]
   return normalizeWritingFormDraft({
     schemaVersion: 1,

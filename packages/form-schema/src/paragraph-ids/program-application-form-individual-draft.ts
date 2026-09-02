@@ -126,6 +126,7 @@ function createSelfIntroShortEssay(): ShortEssayParagraph {
     bodyPlaceholder: '자유롭게 작성해 주세요',
     bodyText: '',
     itemInputRows: 5,
+    maxLength: 1000,
   }
 }
 
