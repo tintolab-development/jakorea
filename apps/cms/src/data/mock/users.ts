@@ -58,7 +58,7 @@ const mockAdmins: User[] = [
   {
     id: MOCK_MD_ADMIN_USER_ID,
     email: 'admin1@jakorea.org',
-    password: 'admin1234!', // Mock 데이터용
+    password: 'test1234!', // Mock 데이터용
     name: '김관리',
     nameEn: 'Kim Gwan-ri',
     role: 'ADMIN',
