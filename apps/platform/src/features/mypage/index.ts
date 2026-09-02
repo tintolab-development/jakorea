@@ -92,6 +92,7 @@ export {
   EducationInProgressNoticeDetailModal,
   EducationNoticeStats,
   EducationSchedulePanel,
+  EducationSettlementPanel,
   EducationSurveyEmptyPanel,
   DocumentPassBanner,
   shouldShowDocumentPassBanner,

@@ -90,3 +90,9 @@ export {
 } from './schedules'
 export type { EducationSurveyEmptyKind } from './surveys'
 export { EducationSurveyEmptyPanel } from './surveys'
+export type {
+  EducationSettlementItem,
+  EducationSettlementProgress,
+  EducationSettlementStatus,
+} from './settlements'
+export { EDUCATION_SETTLEMENT_PAGE_SIZE, EducationSettlementPanel } from './settlements'

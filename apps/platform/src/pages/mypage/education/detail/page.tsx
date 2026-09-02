@@ -14,6 +14,7 @@ import {
   EducationDetailHeader,
   EducationInProgressNoticePanel,
   EducationSchedulePanel,
+  EducationSettlementPanel,
   EducationSurveyEmptyPanel,
   DocumentPassBanner,
   getMockEducationApplicationById,
@@ -320,6 +321,17 @@ export function MypageEducationDetailPage() {
     }
     if (active === 'satisfaction') {
       return <EducationSurveyEmptyPanel kind="satisfaction" />
+    }
+    if (active === 'settlement') {
+      return (
+        <EducationSettlementPanel
+          programId={program.id}
+          applicationId={application.id}
+          lastParticipatedSession={
+            isWithdrawnDuring ? application.lastParticipatedSession : undefined
+          }
+        />
+      )
     }
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
