@@ -64,10 +64,11 @@ export function getApiBaseUrl(): string {
     return ''
   }
 
+  // Production: 프록시 없음. VITE_API_BASE_URL이 비어 있어도 VITE_API_SERVER를 사용한다.
+  // localhost 오염·env 누락 시에는 CloudFront 실서버로 고정한다.
   const fromServer = backendOriginFromEnv()
   if (fromServer) return fromServer
 
-  // Production: env 누락·localhost 오염 시에도 실서버로 고정
   if (import.meta.env.PROD) {
     return CMS_DEPLOY_API_ORIGIN
   }
