@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ProgramBackButton } from '@/features/program'
 import {
   INSTRUCTOR_APPLY_PATH,
@@ -7,12 +7,16 @@ import {
   InstructorApplyConsentWriteForm,
   isInstructorApplyConsentKey,
 } from '@/features/mypage'
+import { parseSafeInternalPath } from '@/features/mypage/lib/safe-internal-path'
 import { PFFormPage } from '@/shared/ui'
 
 export function MypageInstructorApplyConsentPage() {
   const navigate = useNavigate()
   const { consentKey = '' } = useParams<{ consentKey: string }>()
+  const [searchParams] = useSearchParams()
   const isValidKey = isInstructorApplyConsentKey(consentKey)
+  const returnTo = parseSafeInternalPath(searchParams.get('returnTo')) ?? INSTRUCTOR_APPLY_PATH
+  const isView = searchParams.get('mode') === 'view'
 
   useEffect(() => {
     if (!isValidKey) {
@@ -33,14 +37,15 @@ export function MypageInstructorApplyConsentPage() {
         <ProgramBackButton
           size="small"
           label="이전으로"
-          onClick={() => navigate(INSTRUCTOR_APPLY_PATH)}
+          onClick={() => navigate(returnTo)}
         />
       }
       title={title}
     >
       <InstructorApplyConsentWriteForm
         consentKey={consentKey}
-        onComplete={() => navigate(INSTRUCTOR_APPLY_PATH)}
+        readOnly={isView}
+        onComplete={() => navigate(returnTo)}
       />
     </PFFormPage>
   )

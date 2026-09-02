@@ -73,6 +73,7 @@ export type {
   PFFormFieldProps,
   PFFormFieldRowProps,
   PFFormFieldTableProps,
+  PFFormFieldTableRadius,
   PFFormFieldValueTextProps,
   PFFormHomeAddressFieldsProps,
   PFFormInlineRowProps,

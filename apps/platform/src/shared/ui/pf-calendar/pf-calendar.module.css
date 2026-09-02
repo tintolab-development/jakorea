@@ -15,6 +15,9 @@
 @media (--bp-below-pc) {
   .calendar {
     min-width: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 }
 
@@ -69,10 +72,20 @@
   color: var(--color-neutral-cool-600);
 }
 
-@media (--bp-below-pc) {
-  .headerLeft .todayButton {
-    font-size: 16px;
-  }
+.eventDots {
+  display: none;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 6px;
+}
+
+.eventDot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: var(--radius-999);
 }
 
 .navGroup {
@@ -442,4 +455,90 @@
 .popoverEventTime {
   flex: 0 0 auto;
   max-width: 40%;
+}
+
+@media (--bp-below-pc) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0 0 var(--spacing-16);
+    column-gap: 0;
+    row-gap: var(--spacing-16);
+  }
+
+  .headerLeft {
+    width: 100%;
+    justify-content: flex-start;
+    gap: var(--spacing-8);
+  }
+
+  /* Figma: Headline/Large · PFText typo="hl-lg" */
+  .yearMonth {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 150%;
+    letter-spacing: -0.24px;
+  }
+
+  /* Figma: Body/Small/semibold · PFText typo="bd-sm-sb" */
+  .headerLeft .todayButton {
+    margin-inline-start: auto;
+    height: 36px;
+    padding: 0 var(--spacing-12);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 160%;
+    letter-spacing: 0.14px;
+  }
+
+  .legend {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    overflow: visible;
+  }
+
+  .legendItem {
+    height: auto;
+    padding: 0 var(--spacing-8) 0 0;
+    justify-content: flex-start;
+  }
+
+  .legendLabel {
+    color: var(--color-neutral-cool-700);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: normal;
+  }
+
+  .weekday {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: normal;
+  }
+
+  .dayText {
+    width: 22px;
+    height: 22px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: normal;
+  }
+
+  .cell {
+    aspect-ratio: auto;
+    height: 60px;
+    min-height: 60px;
+    padding: var(--spacing-8) 0;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .eventLayer,
+  .overflowLabel {
+    display: none;
+  }
+
+  .eventDots {
+    display: flex;
+  }
 }

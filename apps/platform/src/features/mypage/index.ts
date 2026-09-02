@@ -92,7 +92,12 @@ export {
   EducationInProgressNoticeDetailModal,
   EducationNoticeStats,
   EducationSchedulePanel,
+  EducationSettlementPanel,
+  EducationSettlementWriteForm,
+  getMockEducationSettlements,
   EducationSurveyEmptyPanel,
+  EducationSurveyFillPanel,
+  getEducationSurveyMockAvailability,
   DocumentPassBanner,
   shouldShowDocumentPassBanner,
 } from './education'

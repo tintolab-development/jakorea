@@ -1,7 +1,5 @@
 import { LoadingButton } from '@/shared/ui'
-
 import { LoginUtilityLinks } from './login-utility-links'
-import { LoginSocialSection } from './login-social-section'
 
 interface LoginSocialNotLinkedViewProps {
   registerPath: string
@@ -35,7 +33,6 @@ export function LoginSocialNotLinkedView({
       </LoadingButton>
 
       <LoginUtilityLinks registerPath={registerPath} />
-      <LoginSocialSection />
     </div>
   )
 }

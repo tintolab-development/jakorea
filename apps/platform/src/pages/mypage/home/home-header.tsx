@@ -36,7 +36,7 @@ export function MypageHomeHeader({
             </PFText>
           ) : null}
           <div className={styles.nameRow}>
-            <PFText as="h1" typo="page-title" color="black" className={styles.instructorTitle}>
+            <PFText as="h1" typo="page-title" color="black" className={styles.displayName}>
               {displayName}
               {isInstructor ? (
                 <>
@@ -53,7 +53,7 @@ export function MypageHomeHeader({
           </div>
         </div>
       ) : (
-        <PFText as="h1" typo="page-title" color="black">
+        <PFText as="h1" typo="page-title" color="black" className={styles.displayName}>
           {displayName}님
         </PFText>
       )}

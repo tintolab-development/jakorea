@@ -12,6 +12,8 @@ export type PFFormHomeAddressFieldsProps = {
   roadPlaceholder?: string
   detailPlaceholder?: string
   disabled?: boolean
+  /** true면 도로명·상세 인풋이 한 행을 50%씩 채움 */
+  fillRow?: boolean
 }
 
 /** Platform 양식 — 자택 주소 (PC: 검색 버튼 · 모바일: 아이콘 + 세로 스택) */
@@ -23,6 +25,7 @@ export function PFFormHomeAddressFields({
   roadPlaceholder = '건물명, 도로명 또는 지번',
   detailPlaceholder = '상세 주소',
   disabled = false,
+  fillRow = false,
 }: PFFormHomeAddressFieldsProps) {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
 
@@ -33,7 +36,7 @@ export function PFFormHomeAddressFields({
 
   return (
     <>
-      <PFFormInlineRow>
+      <PFFormInlineRow className={fillRow ? styles.inlineRowFill : undefined}>
         <PFFormInlineSegment>
           <PFTextInput
             className={styles.homeAddressMobileSearch}
