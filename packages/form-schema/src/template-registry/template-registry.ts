@@ -35,6 +35,9 @@ export type TemplateRegistryDefinition = {
 const REGISTRATION_MODAL_DESCRIPTION =
   '* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다.'
 
+const RECRUITMENT_MODAL_DESCRIPTION =
+  '* 해당 폼의 모든 항목은 추가, 삭제 및 수정이 불가합니다.'
+
 export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
   'registration-general': {
     id: 'registration-general',
@@ -73,6 +76,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     rendererKey: 'participant-application',
     editorVariant: 'applicant-recruit-institution',
     previewHeaderTitleFallback: '일반_참여 기관 모집 폼',
+    modalDescription: RECRUITMENT_MODAL_DESCRIPTION,
   },
   'recruitment-economy': {
     id: 'recruitment-economy',
@@ -80,6 +84,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     rendererKey: 'participant-application',
     editorVariant: 'economy-recruit-institution',
     previewHeaderTitleFallback: '1사1교_참여 기관 모집 폼',
+    modalDescription: RECRUITMENT_MODAL_DESCRIPTION,
   },
   'recruitment-participant-individual': {
     id: 'recruitment-participant-individual',
@@ -87,6 +92,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     rendererKey: 'participant-application',
     editorVariant: 'applicant-recruit-individual',
     previewHeaderTitleFallback: '일반_참여자 모집 폼',
+    modalDescription: RECRUITMENT_MODAL_DESCRIPTION,
   },
   'recruitment-instructor': {
     id: 'recruitment-instructor',
@@ -94,7 +100,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     rendererKey: 'participant-application',
     editorVariant: 'recruit-instructor',
     previewHeaderTitleFallback: '공통_강사 모집 폼',
-    modalDescription: '* 해당 폼의 모든 항목은 추가, 삭제 및 수정이 불가합니다.',
+    modalDescription: RECRUITMENT_MODAL_DESCRIPTION,
   },
   'recruitment-volunteer': {
     id: 'recruitment-volunteer',
@@ -102,6 +108,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     rendererKey: 'participant-application',
     editorVariant: 'recruit-volunteer',
     previewHeaderTitleFallback: '공통_봉사자 모집 폼',
+    modalDescription: RECRUITMENT_MODAL_DESCRIPTION,
   },
   'recruitment-ujat-school': {
     id: 'recruitment-ujat-school',
@@ -109,6 +116,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     rendererKey: 'participant-application',
     editorVariant: 'ujat-recruit-institution',
     previewHeaderTitleFallback: 'UJAT_참여 기관 모집 폼',
+    modalDescription: RECRUITMENT_MODAL_DESCRIPTION,
   },
   'recruitment-ujat-volunteer': {
     id: 'recruitment-ujat-volunteer',
@@ -116,6 +124,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     rendererKey: 'participant-application',
     editorVariant: 'ujat-recruit-volunteer',
     previewHeaderTitleFallback: 'UJAT_봉사자 모집 폼',
+    modalDescription: RECRUITMENT_MODAL_DESCRIPTION,
   },
   'recruitment-gemini-visiting-training': {
     id: 'recruitment-gemini-visiting-training',
@@ -123,6 +132,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     rendererKey: 'participant-application',
     editorVariant: 'gemini-recruit',
     previewHeaderTitleFallback: 'Gemini_찾아가는 연수 모집 폼',
+    modalDescription: RECRUITMENT_MODAL_DESCRIPTION,
   },
   'recruitment-trained-teachers': {
     id: 'recruitment-trained-teachers',
@@ -130,6 +140,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     rendererKey: 'participant-application',
     editorVariant: 'trained-teachers-recruit-institution',
     previewHeaderTitleFallback: '교육받은 교사_참여 기관 모집 폼',
+    modalDescription: RECRUITMENT_MODAL_DESCRIPTION,
   },
   'application-participant-school': {
     id: 'application-participant-school',
