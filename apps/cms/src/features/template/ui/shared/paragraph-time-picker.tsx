@@ -96,8 +96,17 @@ export function ParagraphTimePicker({
 
   useEffect(() => {
     if (initialTimeRange == null) return
-    setSurfaceTimeRange(initialTimeRange)
-  }, [initialTimeRange])
+    setSurfaceTimeRange(prev => {
+      if (
+        prev != null &&
+        prev[0].isSame(initialTimeRange[0], 'minute') &&
+        prev[1].isSame(initialTimeRange[1], 'minute')
+      ) {
+        return prev
+      }
+      return initialTimeRange
+    })
+  }, [initialTimeRange?.[0]?.valueOf(), initialTimeRange?.[1]?.valueOf()])
 
   useEffect(() => {
     if (value == null) {
