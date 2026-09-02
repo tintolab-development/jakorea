@@ -1,10 +1,14 @@
 import { SearchOutlined } from '@ant-design/icons'
-import { useState, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { UjatProgramApplicationVolunteerType } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/paragraph-body'
+import {
+  UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS,
+  useUjatApplicationVolunteerOverlayKv,
+} from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 
 const GRADE_OPTIONS = [
   { label: '1학년', value: '1' },
@@ -31,25 +35,29 @@ type BasicInfoFieldsProps = {
   onApplicationTypeChange: (next: UjatProgramApplicationVolunteerType) => void
 }
 
-function useVolunteerBasicInfoFieldState() {
-  const [grade, setGrade] = useState<string | undefined>(undefined)
-  const [applicationRoute, setApplicationRoute] = useState<string | undefined>(undefined)
-  const isOtherApplicationRoute = applicationRoute === APPLICATION_ROUTE_OTHER_VALUE
-  return {
-    grade,
-    setGrade,
-    applicationRoute,
-    setApplicationRoute,
-    isOtherApplicationRoute,
-  }
-}
-
 function UjatProgramApplicationVolunteerBasicInfoFieldRows({
   applicationType,
   onApplicationTypeChange,
 }: BasicInfoFieldsProps): ReactNode {
-  const { grade, setGrade, applicationRoute, setApplicationRoute, isOtherApplicationRoute } =
-    useVolunteerBasicInfoFieldState()
+  const [universityName, setUniversityName] = useUjatApplicationVolunteerOverlayKv<string>(
+    UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.universityName,
+    ''
+  )
+  const [grade, setGrade] = useUjatApplicationVolunteerOverlayKv<string | undefined>(
+    UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.grade,
+    undefined
+  )
+  const [major, setMajor] = useUjatApplicationVolunteerOverlayKv<string>(
+    UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.major,
+    ''
+  )
+  const [applicationRoute, setApplicationRoute] = useUjatApplicationVolunteerOverlayKv<
+    string | undefined
+  >(UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.applicationRoute, undefined)
+  const [applicationRouteOther, setApplicationRouteOther] = useUjatApplicationVolunteerOverlayKv<
+    string
+  >(UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.applicationRouteOther, '')
+  const isOtherApplicationRoute = applicationRoute === APPLICATION_ROUTE_OTHER_VALUE
 
   return (
     <>
@@ -63,6 +71,8 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
                 width={240}
                 placeholder="학교명을 입력해 보세요"
                 icon={<SearchOutlined aria-hidden />}
+                value={universityName}
+                onChange={e => setUniversityName(e.target.value)}
               />
               <DetailInfoForm.InputsSeparator />
               <CmsSelect
@@ -85,6 +95,8 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
               inputSize="medium"
               width="100%"
               placeholder="복수전공이나 부전공이 있을 경우, 함께 기재"
+              value={major}
+              onChange={e => setMajor(e.target.value)}
             />
           }
           view="-"
@@ -112,6 +124,8 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
                   width="100%"
                   style={{ flex: '1 1 0', minWidth: 0 }}
                   placeholder="직접 입력"
+                  value={applicationRouteOther}
+                  onChange={e => setApplicationRouteOther(e.target.value)}
                 />
               </div>
             ) : (
@@ -152,12 +166,25 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
 
 /** 1365 ID — 단독 DetailInfoForm 격자 */
 export function UjatProgramApplicationVolunteer1365IdForm({ className }: { className?: string }) {
+  const [id1365, setId1365] = useUjatApplicationVolunteerOverlayKv<string>(
+    UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.id1365,
+    ''
+  )
+
   return (
     <DetailInfoForm title="1365 ID" hideHeader mode="edit" className={className}>
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="1365 ID"
-          edit={<CmsInput inputSize="medium" width="100%" placeholder="1365 ID" />}
+          edit={
+            <CmsInput
+              inputSize="medium"
+              width="100%"
+              placeholder="1365 ID"
+              value={id1365}
+              onChange={e => setId1365(e.target.value)}
+            />
+          }
           view="-"
         />
       </DetailInfoForm.Row>
@@ -186,12 +213,25 @@ export function UjatProgramApplicationVolunteerBasicInfoParagraph({
   applicationType,
   onApplicationTypeChange,
 }: BasicInfoFieldsProps) {
+  const [id1365, setId1365] = useUjatApplicationVolunteerOverlayKv<string>(
+    UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.id1365,
+    ''
+  )
+
   return (
     <DetailInfoForm title="기본 정보" hideHeader mode="edit">
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="1365 ID"
-          edit={<CmsInput inputSize="medium" width="100%" placeholder="1365 ID" />}
+          edit={
+            <CmsInput
+              inputSize="medium"
+              width="100%"
+              placeholder="1365 ID"
+              value={id1365}
+              onChange={e => setId1365(e.target.value)}
+            />
+          }
           view="-"
         />
       </DetailInfoForm.Row>

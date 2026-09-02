@@ -1,8 +1,11 @@
-import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
+import {
+  UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS,
+  useUjatApplicationVolunteerOverlayKv,
+} from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 
 const CERTIFICATE_GUIDE_LINES = [
   '- 파일은 최대 15M까지 JPG, PNG, PDF 형식만 등록 가능합니다.',
@@ -13,9 +16,18 @@ const CERTIFICATE_ACCEPT = '.jpg,.jpeg,.png,.pdf'
 
 /** UJAT 프로그램 봉사자 신청 폼 — 이전 UJAT 활동 기수 */
 export function UjatProgramApplicationVolunteerPreviousTermParagraph() {
-  const [term, setTerm] = useState('')
-  const [year, setYear] = useState('')
-  const [fileNames, setFileNames] = useState<string[]>([])
+  const [term, setTerm] = useUjatApplicationVolunteerOverlayKv<string>(
+    UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTerm,
+    ''
+  )
+  const [year, setYear] = useUjatApplicationVolunteerOverlayKv<string>(
+    UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousYear,
+    ''
+  )
+  const [fileNames, setFileNames] = useUjatApplicationVolunteerOverlayKv<string[]>(
+    UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames,
+    []
+  )
 
   return (
     <DetailInfoForm title="이전 UJAT 활동 기수" hideHeader mode="edit">
@@ -60,11 +72,9 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph() {
               guideLines={CERTIFICATE_GUIDE_LINES}
               fileNames={fileNames}
               onFilesChange={files =>
-                setFileNames(prev => [...prev, ...files.map(file => file.name)])
+                setFileNames([...fileNames, ...files.map(file => file.name)])
               }
-              onRemoveFile={index =>
-                setFileNames(prev => prev.filter((_, i) => i !== index))
-              }
+              onRemoveFile={index => setFileNames(fileNames.filter((_, i) => i !== index))}
             />
           }
           view="-"

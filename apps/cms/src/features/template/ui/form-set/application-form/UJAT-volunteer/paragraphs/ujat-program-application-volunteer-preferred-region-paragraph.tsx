@@ -1,17 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
+import {
+  UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS,
+  useUjatApplicationVolunteerOverlayKv,
+} from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 
 /** UJAT 프로그램 봉사자 신청 폼 — 희망 교육 활동 지역 */
 export function UjatProgramApplicationVolunteerPreferredRegionParagraph() {
   const { labels: regionOptions } = useUjatEducationRegions()
-  const [region, setRegion] = useState('')
+  const [region, setRegion] = useUjatApplicationVolunteerOverlayKv<string>(
+    UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.preferredRegion,
+    ''
+  )
 
   useEffect(() => {
     if (regionOptions.length === 0) return
-    setRegion(current => (current && regionOptions.includes(current) ? current : regionOptions[0]))
-  }, [regionOptions])
+    if (region && regionOptions.includes(region)) return
+    setRegion(regionOptions[0] ?? '')
+  }, [region, regionOptions, setRegion])
 
   return (
     <DetailInfoForm title="희망 교육 활동 지역" hideHeader mode="edit">

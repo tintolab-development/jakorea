@@ -1,10 +1,15 @@
-import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
+import {
+  UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS,
+  useUjatApplicationVolunteerOverlayKv,
+} from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 
 /** UJAT 프로그램 봉사자 신청 폼 — 교육 진행 경험 여부 */
 export function UjatProgramApplicationVolunteerEducationExperienceParagraph() {
-  const [hasExperience, setHasExperience] = useState<'no' | 'yes' | undefined>(undefined)
+  const [hasExperience, setHasExperience] = useUjatApplicationVolunteerOverlayKv<
+    'no' | 'yes' | undefined
+  >(UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.hasExperience, undefined)
 
   return (
     <DetailInfoForm title="교육 진행 경험 여부" hideHeader mode="edit">
