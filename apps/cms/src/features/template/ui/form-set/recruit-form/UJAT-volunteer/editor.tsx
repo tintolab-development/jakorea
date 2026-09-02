@@ -30,17 +30,7 @@ export function UjatRecruitFormVolunteerEditorLeftColumn({
       singleItemListActiveItemId={vm.singleItemListActiveItemId}
       onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
-      paragraphBodyOptions={{
-        structureLockedParagraphIds: vm.structureLockedParagraphIds,
-        structureLockedAuthoringChoicePreview: true,
-        ujatRecruitFormVolunteer: true,
-        ujatRecruitParagraphProps: vm.ujatRecruitParagraphProps,
-        programApplicationFormVolunteer: {
-          ...vm.programApplicationFormVolunteerOptions,
-          enabled: true,
-          isTemplateAuthoringMode: true,
-        },
-      }}
+      paragraphBodyOptions={vm.leftPanelParagraphBodyOptions}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
   )

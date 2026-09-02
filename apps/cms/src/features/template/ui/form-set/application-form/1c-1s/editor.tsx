@@ -30,12 +30,7 @@ export function EconomyProgramApplicationEditorLeftColumn({
       singleItemListActiveItemId={vm.singleItemListActiveItemId}
       onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
-      paragraphBodyOptions={{
-        structureLockedParagraphIds: vm.structureLockedParagraphIds,
-        structureLockedAuthoringChoicePreview: true,
-        programApplicationFormEconomyInstitution: true,
-        hiddenParagraphIds: vm.economyApplicationHiddenParagraphIds,
-      }}
+      paragraphBodyOptions={vm.leftPanelParagraphBodyOptions}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
   )
