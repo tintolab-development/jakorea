@@ -85,6 +85,7 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
     "test:e2e:install": "playwright install chromium",
+    "test:e2e:templates:qa": "E2E_MOCK_AUTH=1 E2E_PORT=3001 E2E_BASE_URL=http://127.0.0.1:3001 playwright test tests/e2e/flows/templates/form-management-qa.spec.ts --project=chromium --workers=1",
     "preview": "vite preview",
     "validate": "pnpm typecheck && pnpm lint && pnpm build",
     "fetch:openapi": "node scripts/fetch-openapi.mjs",

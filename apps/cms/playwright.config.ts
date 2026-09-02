@@ -2,9 +2,12 @@ import { defineConfig, devices } from '@playwright/test'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { E2E_ADMIN_AUTH_FILE } from './tests/e2e/helpers/auth-paths'
+import { buildE2eWebServerEnv } from './tests/e2e/helpers/e2e-web-server-env'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const baseURL = process.env.E2E_BASE_URL?.trim() || 'http://localhost:3000'
+const e2eMockAuth = process.env.E2E_MOCK_AUTH === '1'
+const e2ePort = Number(process.env.E2E_PORT ?? 3000)
+const baseURL = process.env.E2E_BASE_URL?.trim() || `http://127.0.0.1:${e2ePort}`
 const isCI = Boolean(process.env.CI)
 
 export default defineConfig({
@@ -44,10 +47,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm dev',
+    command: e2eMockAuth ? `pnpm dev -- --port ${e2ePort}` : 'pnpm dev',
     url: baseURL,
-    reuseExistingServer: !isCI,
+    reuseExistingServer: !isCI && !e2eMockAuth,
     timeout: 180_000,
     cwd: __dirname,
+    env: buildE2eWebServerEnv(),
   },
 })
