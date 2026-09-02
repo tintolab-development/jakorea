@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
+import { applyAllocatedSerialForPdfCapture } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
+import { isCertificateSerialPlaceholder } from '@/features/program/shared/lib/certificate-serial'
 import {
   FormCertificatePreview,
   FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS,
@@ -29,6 +31,7 @@ export function StudentCertificatePdfExportHost({
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
   const completedRef = useRef(false)
   const [captureMounted, setCaptureMounted] = useState(false)
+  const [pdfSerialNumber, setPdfSerialNumber] = useState<string | undefined>()
 
   const runtimeStringValues = useMemo(
     () => buildStudentCertificateInitialStringValues(context),
@@ -41,7 +44,12 @@ export function StudentCertificatePdfExportHost({
     runtimeStringValues,
     runtimeStringOverrideKeys: ['participantInfo'],
   })
-  const { pdfExport: certificatePdfExportProps } = useFormCertificatePreviewProps(modalState)
+  const certificateType = resolveStudentCertificateTemplateKey(context.certificateKind)
+  const { pdfExport: certificatePdfExportProps } = useFormCertificatePreviewProps(
+    modalState,
+    undefined,
+    pdfSerialNumber
+  )
 
   const buildPdfFilename = useCallback(
     () => `${buildStudentCertificateFileName(context)}.pdf`,
@@ -60,6 +68,7 @@ export function StudentCertificatePdfExportHost({
 
   useEffect(() => {
     completedRef.current = false
+    setPdfSerialNumber(undefined)
   }, [context.student.id, context.certificateKind, context.issuanceReasonLabel])
 
   useEffect(() => {
@@ -74,6 +83,20 @@ export function StudentCertificatePdfExportHost({
           if (!cancelled) onComplete(false)
           return
         }
+        const serialNumber = await applyAllocatedSerialForPdfCapture({
+          subject: {
+            programId: context.programId,
+            subjectId: context.student.id,
+            certificateType,
+          },
+          applySerial: setPdfSerialNumber,
+          exportRoot: pdfExportCanvasRef.current,
+        })
+        if (cancelled) return
+        if (isCertificateSerialPlaceholder(serialNumber)) {
+          onComplete(false)
+          return
+        }
         await downloadPdf()
         if (!cancelled) onComplete(true)
       } catch {
@@ -84,7 +107,15 @@ export function StudentCertificatePdfExportHost({
     return () => {
       cancelled = true
     }
-  }, [captureMounted, context.certificateKind, context.student.id, downloadPdf, onComplete])
+  }, [
+    captureMounted,
+    certificateType,
+    context.certificateKind,
+    context.programId,
+    context.student.id,
+    downloadPdf,
+    onComplete,
+  ])
 
   return (
     <div className={FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS} aria-hidden="true">

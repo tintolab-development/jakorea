@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
 import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
 import {
@@ -8,6 +8,7 @@ import {
 } from '@/features/program/general/lib/build-activity-certificate-issuance-preview'
 import { INSTRUCTOR_ACTIVITY_CERTIFICATE_TEMPLATE_CODE } from '@/features/template/lib/certificate-form-settings'
 import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
+import { applyAllocatedSerialForPdfCapture } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -38,6 +39,8 @@ export function ActivityCertificateIssuancePreviewModal({
 }: ActivityCertificateIssuancePreviewModalProps) {
   const { showAlert } = useCmsAlert()
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
+  const [pdfSerialNumber, setPdfSerialNumber] = useState<string | undefined>()
+  const [isAllocatingSerial, setIsAllocatingSerial] = useState(false)
 
   const runtimeStringValues = useMemo(
     () => buildActivityCertificateInitialStringValues(instructor, program),
@@ -51,7 +54,8 @@ export function ActivityCertificateIssuancePreviewModal({
     runtimeStringValues,
     runtimeStringOverrideKeys: ['participantInfo'],
   })
-  const { pdfExport: certificatePdfExportProps } = useFormCertificatePreviewProps(modalState)
+  const { interactive: certificatePreviewProps, pdfExport: certificatePdfExportProps } =
+    useFormCertificatePreviewProps(modalState, undefined, pdfSerialNumber)
 
   const fileName = useMemo(
     () => buildActivityCertificateFileName(instructor.instructorName),
@@ -65,20 +69,45 @@ export function ActivityCertificateIssuancePreviewModal({
     buildFilename: buildPdfFilename,
   })
 
+  useEffect(() => {
+    if (!open) setPdfSerialNumber(undefined)
+  }, [open])
+
   const handleClose = useCallback(() => {
+    setPdfSerialNumber(undefined)
     onClose()
   }, [onClose])
 
   const handleDownloadPdf = useCallback(async () => {
+    if (isAllocatingSerial || isPdfDownloading) return
+    setIsAllocatingSerial(true)
     try {
+      await applyAllocatedSerialForPdfCapture({
+        subject: {
+          programId: program?.id,
+          subjectId: instructor.id,
+          certificateType: INSTRUCTOR_ACTIVITY_CERTIFICATE_TEMPLATE_CODE,
+        },
+        applySerial: setPdfSerialNumber,
+        exportRoot: pdfExportCanvasRef.current,
+      })
       await downloadPdf()
     } catch {
       showAlert({
         title: '안내',
         content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
       })
+    } finally {
+      setIsAllocatingSerial(false)
     }
-  }, [downloadPdf, showAlert])
+  }, [
+    downloadPdf,
+    instructor.id,
+    isAllocatingSerial,
+    isPdfDownloading,
+    program?.id,
+    showAlert,
+  ])
 
   const actionButtons = (
     <div className="full-page-modal__actions activity-cert-issuance-preview-modal__actions">
@@ -90,7 +119,7 @@ export function ActivityCertificateIssuancePreviewModal({
         size="medium"
         width={140}
         icon={<DownloadOutlined />}
-        disabled={isPdfDownloading}
+        disabled={isPdfDownloading || isAllocatingSerial}
         onClick={() => void handleDownloadPdf()}
       >
         파일 다운로드
@@ -100,7 +129,7 @@ export function ActivityCertificateIssuancePreviewModal({
 
   return (
     <>
-      <FormCertificatePdfExportOverlay visible={isPdfDownloading} />
+      <FormCertificatePdfExportOverlay visible={isPdfDownloading || isAllocatingSerial} />
 
       <TealHeaderModal
         open={open}
@@ -139,7 +168,7 @@ export function ActivityCertificateIssuancePreviewModal({
             <div className="activity-cert-issuance-preview-modal__workspace">
               <div className="activity-cert-issuance-preview-modal__page">
                 <div className="activity-cert-issuance-preview-modal__scale-inner">
-                  <FormCertificatePreview {...certificatePdfExportProps} />
+                  <FormCertificatePreview {...certificatePreviewProps} />
                 </div>
               </div>
             </div>

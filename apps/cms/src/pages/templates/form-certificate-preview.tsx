@@ -1,5 +1,6 @@
 import { Fragment, useRef, type CSSProperties, type RefObject } from 'react'
 import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template/ui/template-management/template-custom-fields-form'
+import { CERTIFICATE_SERIAL_PLACEHOLDER } from '@/features/program/shared/lib/certificate-serial'
 import templateCertificateBg from '@/assets/images/template/templatge-background.png'
 import templateEducation from '@/assets/images/template/template-education.png'
 import templateLogo from '@/assets/images/template/template-logo.png'
@@ -78,6 +79,11 @@ export interface FormCertificatePreviewProps {
    * PDF(html2canvas) 캡처 대상 — 흰색 캔버스(`__canvas`)만 지정하면 회색 바깥 래퍼(`__bg`)는 제외됨
    */
   canvasRef?: RefObject<HTMLDivElement | null>
+  /**
+   * 좌측 상단 고유번호. 양식 관리 미리보기는 플레이스홀더,
+   * 실발급은 진입 시 백엔드가 준 `{YY}-JA-{00000}` 를 넣는다.
+   */
+  serialNumber?: string
 }
 
 /** PDF 캡처 시 편집용 닷·프레임을 숨길 때 루트에 붙이는 클래스 */
@@ -110,6 +116,7 @@ export function FormCertificatePreview({
   fieldTextColors,
   className,
   canvasRef,
+  serialNumber = CERTIFICATE_SERIAL_PLACEHOLDER,
 }: FormCertificatePreviewProps) {
   const logoSrc = orgLogoPreviewSrc ?? templateLogo
   const educationSrc = orgLogo02PreviewSrc ?? templateEducation
@@ -175,7 +182,7 @@ export function FormCertificatePreview({
               : {})}
           />
           <span className={cn(`${P}__tag`, shouldDim(region, 'decor') && FRAME_DIMMED)}>
-            26-JA-00000
+            {serialNumber}
           </span>
           <span
             role={showLogoEditChrome ? 'button' : undefined}
