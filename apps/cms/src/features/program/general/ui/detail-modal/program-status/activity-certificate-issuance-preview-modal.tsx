@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
 import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
 import {
@@ -8,7 +8,7 @@ import {
 } from '@/features/program/general/lib/build-activity-certificate-issuance-preview'
 import { INSTRUCTOR_ACTIVITY_CERTIFICATE_TEMPLATE_CODE } from '@/features/template/lib/certificate-form-settings'
 import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
-import { applyAllocatedSerialForPdfCapture } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
+import { downloadIssuedCertificatePdf } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
 import { getCertificateSerialAllocateErrorMessage } from '@/features/program/shared/api/certificate-serial-api'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -40,8 +40,8 @@ export function ActivityCertificateIssuancePreviewModal({
 }: ActivityCertificateIssuancePreviewModalProps) {
   const { showAlert } = useCmsAlert()
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
-  const [pdfSerialNumber, setPdfSerialNumber] = useState<string | undefined>()
   const [isAllocatingSerial, setIsAllocatingSerial] = useState(false)
+  const [pdfSerialNumber, setPdfSerialNumber] = useState<string | undefined>()
 
   const runtimeStringValues = useMemo(
     () => buildActivityCertificateInitialStringValues(instructor, program),
@@ -70,12 +70,7 @@ export function ActivityCertificateIssuancePreviewModal({
     buildFilename: buildPdfFilename,
   })
 
-  useEffect(() => {
-    if (!open) setPdfSerialNumber(undefined)
-  }, [open])
-
   const handleClose = useCallback(() => {
-    setPdfSerialNumber(undefined)
     onClose()
   }, [onClose])
 
@@ -83,7 +78,7 @@ export function ActivityCertificateIssuancePreviewModal({
     if (isAllocatingSerial || isPdfDownloading) return
     setIsAllocatingSerial(true)
     try {
-      await applyAllocatedSerialForPdfCapture({
+      await downloadIssuedCertificatePdf({
         subject: {
           programId: program?.id,
           subjectId: instructor.id,
@@ -91,8 +86,9 @@ export function ActivityCertificateIssuancePreviewModal({
         },
         applySerial: setPdfSerialNumber,
         exportRoot: pdfExportCanvasRef.current,
+        getExportRoot: () => pdfExportCanvasRef.current,
+        downloadPdf,
       })
-      await downloadPdf()
     } catch (error) {
       showAlert({
         title: '안내',
@@ -101,14 +97,7 @@ export function ActivityCertificateIssuancePreviewModal({
     } finally {
       setIsAllocatingSerial(false)
     }
-  }, [
-    downloadPdf,
-    instructor.id,
-    isAllocatingSerial,
-    isPdfDownloading,
-    program?.id,
-    showAlert,
-  ])
+  }, [downloadPdf, instructor.id, isAllocatingSerial, isPdfDownloading, program?.id, showAlert])
 
   const actionButtons = (
     <div className="full-page-modal__actions activity-cert-issuance-preview-modal__actions">

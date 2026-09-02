@@ -2,7 +2,7 @@
  * 참여 봉사자 — 활동확인서(활동인증서) 발급 미리보기
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
 import {
   ACTIVITY_CERTIFICATE_DOCUMENT_TITLE,
@@ -11,7 +11,7 @@ import {
 } from '@/features/program/general/lib/build-activity-certificate-issuance-preview'
 import { VOLUNTEER_ACTIVITY_CERTIFICATE_TEMPLATE_CODE } from '@/features/template/lib/certificate-form-settings'
 import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
-import { applyAllocatedSerialForPdfCapture } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
+import { downloadIssuedCertificatePdf } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
 import { getCertificateSerialAllocateErrorMessage } from '@/features/program/shared/api/certificate-serial-api'
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -44,8 +44,8 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
 }: ParticipatingVolunteerActivityCertificatePreviewModalProps) {
   const { showAlert } = useCmsAlert()
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
-  const [pdfSerialNumber, setPdfSerialNumber] = useState<string | undefined>()
   const [isAllocatingSerial, setIsAllocatingSerial] = useState(false)
+  const [pdfSerialNumber, setPdfSerialNumber] = useState<string | undefined>()
 
   const runtimeStringValues = useMemo(
     () =>
@@ -79,12 +79,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
     buildFilename: buildPdfFilename,
   })
 
-  useEffect(() => {
-    if (!open) setPdfSerialNumber(undefined)
-  }, [open])
-
   const handleClose = useCallback(() => {
-    setPdfSerialNumber(undefined)
     onClose()
   }, [onClose])
 
@@ -92,7 +87,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
     if (isAllocatingSerial || isPdfDownloading) return
     setIsAllocatingSerial(true)
     try {
-      await applyAllocatedSerialForPdfCapture({
+      await downloadIssuedCertificatePdf({
         subject: {
           programId: program?.id,
           subjectId: volunteer.id,
@@ -100,8 +95,9 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
         },
         applySerial: setPdfSerialNumber,
         exportRoot: pdfExportCanvasRef.current,
+        getExportRoot: () => pdfExportCanvasRef.current,
+        downloadPdf,
       })
-      await downloadPdf()
     } catch (error) {
       showAlert({
         title: '안내',
@@ -110,14 +106,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
     } finally {
       setIsAllocatingSerial(false)
     }
-  }, [
-    downloadPdf,
-    isAllocatingSerial,
-    isPdfDownloading,
-    program?.id,
-    showAlert,
-    volunteer.id,
-  ])
+  }, [downloadPdf, isAllocatingSerial, isPdfDownloading, program?.id, showAlert, volunteer.id])
 
   if (!open) return null
 

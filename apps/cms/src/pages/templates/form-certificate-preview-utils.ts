@@ -30,6 +30,9 @@ export function cn(...parts: Array<string | false | undefined>): string {
   return parts.filter(Boolean).join(' ')
 }
 
+/** 인증서 좌측 상단 고유번호 태그 — 미리보기 플레이스홀더 / PDF 실번호 */
+export const FORM_CERTIFICATE_SERIAL_TAG_SELECTOR = '.form-certificate-preview__tag'
+
 export function stopAndSelect(fieldName: string, onRegionClick?: (fieldName: string) => void) {
   return (e: MouseEvent) => {
     e.stopPropagation()

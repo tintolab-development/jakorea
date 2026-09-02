@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
-import { applyAllocatedSerialForPdfCapture } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
+import { downloadIssuedCertificatePdf } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
 import { getCertificateSerialAllocateErrorMessage } from '@/features/program/shared/api/certificate-serial-api'
 import {
   FormCertificatePreview,
@@ -91,7 +91,7 @@ export function StudentCertificatePdfExportHost({
           }
           return
         }
-        await applyAllocatedSerialForPdfCapture({
+        await downloadIssuedCertificatePdf({
           subject: {
             programId: context.programId,
             subjectId: context.student.id,
@@ -99,9 +99,10 @@ export function StudentCertificatePdfExportHost({
           },
           applySerial: setPdfSerialNumber,
           exportRoot: pdfExportCanvasRef.current,
+          getExportRoot: () => pdfExportCanvasRef.current,
+          downloadPdf,
         })
         if (cancelled) return
-        await downloadPdf()
         if (!cancelled) onComplete(true)
       } catch (error) {
         if (!cancelled) {
