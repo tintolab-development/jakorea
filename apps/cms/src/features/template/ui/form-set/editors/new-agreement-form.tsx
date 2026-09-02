@@ -82,6 +82,9 @@ export type AgreementWritingFormShellProps = {
   templateCode?: string
   /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */
   onTemplateDraftSaveConfirmed?: () => void
+  showDeleteButton?: boolean
+  onDelete?: () => void
+  deleteLoading?: boolean
 }
 
 type AgreementShellUrlQuery = {
@@ -104,6 +107,9 @@ export function AgreementWritingFormShell({
   paragraphBodyOptions,
   templateCode,
   onTemplateDraftSaveConfirmed,
+  showDeleteButton = false,
+  onDelete,
+  deleteLoading = false,
 }: AgreementWritingFormShellProps) {
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
   const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
@@ -385,6 +391,9 @@ export function AgreementWritingFormShell({
       }
       onPreview={handlePreview}
       onSave={handleSave}
+      showDeleteButton={showDeleteButton}
+      onDelete={onDelete}
+      deleteLoading={deleteLoading}
     />
   )
 }

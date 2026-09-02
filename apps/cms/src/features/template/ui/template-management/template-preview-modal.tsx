@@ -14,6 +14,9 @@ export type TemplatePreviewModalProps = {
   title: string
   onPreview: () => void
   onSave?: () => void
+  showDeleteButton?: boolean
+  onDelete?: () => void
+  deleteLoading?: boolean
   rendererContext: TemplateRendererContext
   /**
    * 프로그램 등록 등 **사용자 모드** 레이아웃(청록 헤더·임시저장).
@@ -29,6 +32,9 @@ export function TemplatePreviewModal({
   title,
   onPreview,
   onSave,
+  showDeleteButton,
+  onDelete,
+  deleteLoading,
   rendererContext,
   registrationUserMode = false,
   footerAction,
@@ -52,6 +58,9 @@ export function TemplatePreviewModal({
       templateTabType="writing"
       onPreview={onPreview}
       onSave={onSave}
+      showDeleteButton={showDeleteButton}
+      onDelete={onDelete}
+      deleteLoading={deleteLoading}
       registrationUserMode={registrationUserMode}
       footerAction={footerAction}
       leftContent={isDraftLoading ? <FormDraftLoading /> : panels.leftContent}

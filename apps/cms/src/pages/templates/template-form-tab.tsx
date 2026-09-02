@@ -14,6 +14,7 @@ import {
 } from '@/features/template/lib/build-template-config'
 import { useTemplateModal } from '@/features/template/hooks/use-template-modal'
 import { useTemplateEditorVm } from '@/features/template/hooks/use-template-editor-vm'
+import { useFormTemplateDeleteAction } from '@/features/template/hooks/use-form-template-delete-action'
 import { useTemplatePreviewController } from '@/features/template/hooks/use-template-preview-controller'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import { TemplateListCard } from '@/features/template/ui/template-management/template-list-card'
@@ -117,6 +118,16 @@ export default function TemplateFormTab() {
     onTemplateDraftSaveConfirmed: handleCloseTemplatePreview,
   })
 
+  const {
+    showDeleteButton,
+    deleteLoading,
+    requestDelete,
+    deleteConfirmModal,
+  } = useFormTemplateDeleteAction({
+    templateRow: selectedTemplate,
+    onDeleted: handleCloseTemplatePreview,
+  })
+
   const { handlePreview } = useTemplatePreviewController({
     params,
     setParams,
@@ -184,17 +195,24 @@ export default function TemplateFormTab() {
 
   if (agreementWritingFormConfig != null) {
     return (
-      <AgreementWritingFormShell
-        {...agreementWritingFormConfig}
-        templateCode={params.id?.trim()}
-        onTemplateDraftSaveConfirmed={handleCloseTemplatePreview}
-        onClose={handleCloseTemplatePreview}
-      />
+      <>
+        {deleteConfirmModal}
+        <AgreementWritingFormShell
+          {...agreementWritingFormConfig}
+          templateCode={params.id?.trim()}
+          onTemplateDraftSaveConfirmed={handleCloseTemplatePreview}
+          onClose={handleCloseTemplatePreview}
+          showDeleteButton={showDeleteButton}
+          onDelete={requestDelete}
+          deleteLoading={deleteLoading}
+        />
+      </>
     )
   }
 
   return (
     <>
+      {deleteConfirmModal}
       <div className="template-form-tab__content">
         {isWritingSectionsLoading ? (
           <p className="template-form-tab__loading">양식 목록을 불러오는 중입니다.</p>
@@ -222,6 +240,9 @@ export default function TemplateFormTab() {
         title={resolvePreviewHeaderTitle(registryEntry, selectedTemplate?.templateName)}
         onPreview={handlePreview}
         onSave={editorVm.handleSave}
+        showDeleteButton={showDeleteButton}
+        onDelete={requestDelete}
+        deleteLoading={deleteLoading}
         rendererContext={rendererContext}
       />
     </>

@@ -9,6 +9,7 @@ import {
   type IssuanceFormCategory,
   type WritingFormCategory,
 } from '@/features/template/api/form-template-catalog'
+import { resolveWritingFormTemplateDeletable } from '@/features/template/lib/form-template-delete-policy'
 import { issuanceFormSections } from '@/features/template/model/issuance-form.schema'
 import { writingSections } from '@/features/template/model/template.schema'
 import type { TemplateRow, TemplateSection } from '@/features/template/model/template.schema'
@@ -32,15 +33,24 @@ export function mapFormTemplateListItemToRow(
   if (templateCode == null || templateCode === '') return null
 
   const catalog = TEMPLATE_CODE_CATALOG[templateCode]
+  const systemTemplate = item.systemTemplate
   return {
     id: templateCode,
     templateName: item.templateName?.trim() || catalog?.templateName || templateCode,
     variant: catalog?.variant ?? 'default',
     key: `${options.rowKeyPrefix}-${options.rowIndex + 1}`,
     no: options.rowIndex + 1,
-    creator: '시스템 생성',
+    creator: systemTemplate === false ? '사용자 생성' : '시스템 생성',
     createdAt: formatTemplateDate(item.updatedAt),
     updatedAt: formatTemplateDate(item.updatedAt),
+    apiTemplateId: item.templateId,
+    systemTemplate,
+    availableActions: item.availableActions,
+    deletable: resolveWritingFormTemplateDeletable({
+      id: templateCode,
+      systemTemplate,
+      availableActions: item.availableActions,
+    }),
   }
 }
 
