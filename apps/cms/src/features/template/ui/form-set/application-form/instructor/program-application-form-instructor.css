@@ -69,6 +69,16 @@
   align-items: flex-start;
 }
 
+.program-application-form-instructor__available-schedule-top--no-calendar {
+  display: block;
+}
+
+.program-application-form-instructor__available-schedule-top--no-calendar
+  .program-application-form-instructor__schedule-side {
+  max-height: none;
+  min-height: auto;
+}
+
 /** 캘린더 열 실측 높이(`--program-reg-schedule-calendar-height`)에 맞춤 — 등록/모집 설정별 우측 내용 높이 상이 */
 .program-application-form-instructor__schedule-side {
   flex: 1 1 0;

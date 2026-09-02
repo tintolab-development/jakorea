@@ -1,4 +1,11 @@
-import { shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph } from '@/features/program/general/lib/institution-application-form-visibility'
+import { useEffect } from 'react'
+import {
+  patchInstitutionSexOffenseConsentInquiryMethod,
+  patchInstitutionSexOffenseConsentSiteSubmission,
+  shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph,
+  type InstitutionSexOffenseConsentInquiryMethod,
+  type InstitutionSexOffenseConsentSiteSubmission,
+} from '@/features/program/general/lib/institution-application-form-visibility'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
   INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS,
@@ -36,6 +43,18 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
     'application.institution.sexOffense.verificationNumber',
     ''
   )
+
+  useEffect(() => {
+    patchInstitutionSexOffenseConsentInquiryMethod(
+      inquiryMethod as InstitutionSexOffenseConsentInquiryMethod
+    )
+  }, [inquiryMethod])
+
+  useEffect(() => {
+    patchInstitutionSexOffenseConsentSiteSubmission(
+      siteSubmission as InstitutionSexOffenseConsentSiteSubmission
+    )
+  }, [siteSubmission])
 
   if (!shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph()) {
     return null

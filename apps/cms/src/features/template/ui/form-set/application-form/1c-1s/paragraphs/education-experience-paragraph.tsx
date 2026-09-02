@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/template/ui/paragraph/single-item/multiple-choice.css'
@@ -10,7 +10,10 @@ const EDUCATION_EXPERIENCE_OPTIONS = [
 
 /** 1사1교 프로그램 참여자 신청 폼 — 전년도 1사1교 경제금융교육 진행 여부 */
 export function EconomyProgramApplicationEducationExperienceParagraph() {
-  const [value, setValue] = useState<string>('')
+  const [value, setValue] = useGeneralApplicationOverlayKv<string>(
+    'application.economy.previousYearParticipation',
+    ''
+  )
 
   return (
     <div className="program-registration-paragraph">

@@ -1,12 +1,18 @@
-import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { CmsInput } from '@/shared/ui/cms-input'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 /** Gemini 찾아가는 연수 참여 기관 신청 — 담당 교사 정보 */
 export function GeminiVisitingTrainingContactPersonParagraph() {
-  const [jobTitle, setJobTitle] = useState('')
-  const [subject, setSubject] = useState('')
+  const [jobTitle, setJobTitle] = useGeneralApplicationOverlayKv<string>(
+    'application.gemini.inst.contactJobTitle',
+    ''
+  )
+  const [subject, setSubject] = useGeneralApplicationOverlayKv<string>(
+    'application.gemini.inst.contactSubject',
+    ''
+  )
 
   return (
     <div className="program-registration-paragraph">

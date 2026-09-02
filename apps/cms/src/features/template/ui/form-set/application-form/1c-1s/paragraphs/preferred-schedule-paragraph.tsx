@@ -1,7 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { useInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import {
+  updateGeneralApplicationOverlayKey,
+  useGeneralApplicationOverlayKv,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -218,8 +222,14 @@ function resolveNextClassPeriod(value: string | undefined): string {
 /** 1사1교 프로그램 참여자 신청 폼 — 진행 희망 교육 일정 */
 export function EconomyProgramApplicationPreferredScheduleParagraph() {
   const bridge = useInstitutionApplicationProgramBridge()
-  const [firstBlock, setFirstBlock] = useState<ScheduleBlockState>(() => createEmptyBlockState())
-  const [secondBlock, setSecondBlock] = useState<ScheduleBlockState>(() => createEmptyBlockState())
+  const [firstBlock] = useGeneralApplicationOverlayKv<ScheduleBlockState>(
+    'application.economy.schedule.first',
+    createEmptyBlockState()
+  )
+  const [secondBlock] = useGeneralApplicationOverlayKv<ScheduleBlockState>(
+    'application.economy.schedule.second',
+    createEmptyBlockState()
+  )
 
   const disabledDate = useMemo(() => {
     const range = bridge.educationScheduleRange
@@ -238,14 +248,24 @@ export function EconomyProgramApplicationPreferredScheduleParagraph() {
       <ScheduleBlock
         title="■ 1지망"
         block={firstBlock}
-        onPatch={patch => setFirstBlock(prev => ({ ...prev, ...patch }))}
+        onPatch={patch =>
+          updateGeneralApplicationOverlayKey<ScheduleBlockState>(
+            'application.economy.schedule.first',
+            prev => ({ ...(prev ?? createEmptyBlockState()), ...patch })
+          )
+        }
         disabledDate={disabledDate}
       />
 
       <ScheduleBlock
         title="■ 2지망"
         block={secondBlock}
-        onPatch={patch => setSecondBlock(prev => ({ ...prev, ...patch }))}
+        onPatch={patch =>
+          updateGeneralApplicationOverlayKey<ScheduleBlockState>(
+            'application.economy.schedule.second',
+            prev => ({ ...(prev ?? createEmptyBlockState()), ...patch })
+          )
+        }
         disabledDate={disabledDate}
       />
     </div>

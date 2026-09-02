@@ -15,6 +15,8 @@ export type ProgramApplicationFormInstructorBodyOptions = {
   isTemplateAuthoringMode?: boolean
   /** 프로그램 상세 신청 정보 탭 — 읽기 전용 미리보기 */
   readOnlyPreview?: boolean
+  /** 개인 프로그램 — 캘린더 미니뷰 비노출 */
+  hideScheduleCalendar?: boolean
 }
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
 import { InstructorAvailableScheduleParagraph } from '@/features/template/ui/form-set/application-form/instructor/paragraphs/instructor-available-schedule-paragraph'
@@ -39,6 +41,7 @@ export function renderProgramApplicationFormInstructorParagraphBody(
           scheduleSlots={options.scheduleSlots}
           isTemplateAuthoringMode={options.isTemplateAuthoringMode === true}
           readOnlyPreview={options.readOnlyPreview === true}
+          hideCalendar={options.hideScheduleCalendar === true}
         />
       )
     default:

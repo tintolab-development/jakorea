@@ -33,7 +33,10 @@ export function GeminiVisitingTrainingApplicationFormInstructorEditorLeftColumn(
       paragraphBodyOptions={{
         structureLockedParagraphIds: vm.structureLockedParagraphIds,
         structureLockedAuthoringChoicePreview: true,
-        programApplicationFormGeminiInstructor: true,
+        programApplicationFormGeminiInstructor: {
+          enabled: true,
+          isTemplateAuthoringMode: true,
+        },
       }}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />

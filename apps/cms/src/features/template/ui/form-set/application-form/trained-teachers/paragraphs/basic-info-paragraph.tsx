@@ -64,6 +64,30 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
     'application.trainedTeachers.basicInfo.educationPlace',
     'inside'
   )
+  const [detailAddress, setDetailAddress] = useGeneralApplicationOverlayKv<string>(
+    'application.trainedTeachers.basicInfo.detailAddress',
+    ''
+  )
+  const [totalStudents, setTotalStudents] = useGeneralApplicationOverlayKv<string>(
+    'application.trainedTeachers.basicInfo.totalStudents',
+    ''
+  )
+  const [educationPlaceDetail, setEducationPlaceDetail] = useGeneralApplicationOverlayKv<string>(
+    'application.trainedTeachers.basicInfo.educationPlaceDetail',
+    ''
+  )
+  const [teacherTel, setTeacherTel] = useGeneralApplicationOverlayKv<string>(
+    'application.trainedTeachers.basicInfo.teacherTel',
+    ''
+  )
+  const [applicationReason, setApplicationReason] = useGeneralApplicationOverlayKv<string>(
+    'application.trainedTeachers.basicInfo.applicationReason',
+    ''
+  )
+  const [otherRequests, setOtherRequests] = useGeneralApplicationOverlayKv<string>(
+    'application.trainedTeachers.basicInfo.otherRequests',
+    ''
+  )
 
   return (
     <DetailInfoForm title="기본 정보" hideHeader mode="edit">
@@ -131,6 +155,8 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
               inputSize="medium"
               placeholder="교구재 등 택배 발송을 위한 정확한 주소를 입력해 주세요"
               width="100%"
+              value={detailAddress}
+              onChange={e => setDetailAddress(e.target.value)}
             />
           }
           view="-"
@@ -158,6 +184,8 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
                 width={120}
                 mode="integer"
                 placeholder="총 학생 수"
+                value={totalStudents}
+                onValueChange={setTotalStudents}
               />
               <span>명</span>
             </div>
@@ -211,6 +239,8 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
                 placeholder="교육이 진행될 상세 장소를 입력해 주세요"
                 width="100%"
                 style={{ flex: '1 1 280px', minWidth: 180 }}
+                value={educationPlaceDetail}
+                onChange={e => setEducationPlaceDetail(e.target.value)}
               />
             </div>
           }
@@ -240,6 +270,8 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
                   inputSize="medium"
                   width={170}
                   placeholder="담당 교사의 내선 번호(직통 번호)"
+                  value={teacherTel}
+                  onChange={e => setTeacherTel(e.target.value)}
                 />
                 <span style={{ color: '#9ca3af' }}>|</span>
                 <span>M</span>
@@ -247,7 +279,9 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
                   inputSize="medium"
                   width={160}
                   placeholder="휴대폰"
-                  defaultValue={PREVIEW_AUTO_USER_INFO_SAMPLE.mobile}
+                  value={PREVIEW_AUTO_USER_INFO_SAMPLE.mobile}
+                  disabled
+                  readOnly
                 />
                 <span style={{ color: '#9ca3af' }}>|</span>
                 <span>E-mail</span>
@@ -255,7 +289,9 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
                   inputSize="medium"
                   width={180}
                   placeholder="이메일"
-                  defaultValue={PREVIEW_AUTO_USER_INFO_SAMPLE.email}
+                  value={PREVIEW_AUTO_USER_INFO_SAMPLE.email}
+                  disabled
+                  readOnly
                 />
               </div>
             )
@@ -283,6 +319,8 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
               expandableFromSingleRow
               placeholder="신청 사유를 입력해 주세요."
               width="100%"
+              value={applicationReason}
+              onChange={e => setApplicationReason(e.target.value)}
             />
           }
           view="-"
@@ -300,6 +338,8 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
               expandableFromSingleRow
               placeholder="기타 요청사항을 입력해 주세요."
               width="100%"
+              value={otherRequests}
+              onChange={e => setOtherRequests(e.target.value)}
             />
           }
           view="-"
