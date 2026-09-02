@@ -1,0 +1,11 @@
+.page {
+  padding-block: 40px;
+  padding-inline: var(--page-padding-x);
+}
+
+.inner {
+  width: 100%;
+  max-width: 480px;
+  min-width: min(100%, 375px);
+  margin-inline: auto;
+}

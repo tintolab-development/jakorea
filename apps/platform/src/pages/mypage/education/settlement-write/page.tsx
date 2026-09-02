@@ -6,10 +6,7 @@ import {
   EducationSettlementWriteForm,
   getMockEducationSettlements,
 } from '@/features/mypage/education/settlements'
-import {
-  educationApplicationDetailPath,
-  getMockEducationApplicationById,
-} from '@/features/mypage'
+import { educationApplicationDetailPath, getMockEducationApplicationById } from '@/features/mypage'
 import { PFFormPage } from '@/shared/ui'
 
 export function MypageEducationSettlementWritePage() {
@@ -20,7 +17,7 @@ export function MypageEducationSettlementWritePage() {
 
   const application = useMemo(
     () => (applicationId ? getMockEducationApplicationById(applicationId) : undefined),
-    [applicationId],
+    [applicationId]
   )
   const session = useMemo(() => {
     if (!application) return undefined
@@ -35,16 +32,15 @@ export function MypageEducationSettlementWritePage() {
   return (
     <PFFormPage
       aria-label="지급조서 작성하기"
-      back={
-        <ProgramBackButton
-          size="small"
-          label="이전으로"
-          onClick={() => navigate(backPath)}
-        />
-      }
+      back={<ProgramBackButton size="small" label="이전으로" onClick={() => navigate(backPath)} />}
       title="지급조서 작성하기"
     >
-      <EducationSettlementWriteForm programTitle={application?.title} session={session} />
+      <EducationSettlementWriteForm
+        applicationId={applicationId}
+        sessionId={sessionId}
+        programTitle={application?.title}
+        session={session}
+      />
     </PFFormPage>
   )
 }
