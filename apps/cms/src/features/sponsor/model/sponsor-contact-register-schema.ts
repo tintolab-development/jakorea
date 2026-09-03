@@ -6,15 +6,21 @@ import { z } from 'zod'
 import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import type { SponsorContactType } from '@/features/sponsor/model/sponsor-management.types'
 
+/** 연락처(`mobilePhone`) — 서버와 동일 */
+export const SPONSOR_CONTACT_PHONE_FORMAT_MESSAGE =
+  '전화번호 형식이 올바르지 않습니다. 010/070은 4-4자리, 02 및 지역번호는 3~4-4자리 형식으로 입력해 주세요.'
+
+export const SPONSOR_CONTACT_OFFICE_PHONE_FORMAT_MESSAGE =
+  '내선번호 형식이 올바르지 않습니다. 02 및 지역번호는 3~4-4자리, 010/070은 4-4자리 형식으로 입력해 주세요.'
+
+/** 내선번호 — 연락처와 동일한 한국 전화번호 형식. 빈 값 허용. */
+export function isValidSponsorOfficePhone(value: string): boolean {
+  const trimmed = value.trim()
+  if (!trimmed) return true
+  return isValidKoreanPhoneNumber(trimmed)
+}
+
 const optionalTrimmedString = z.union([z.string().trim(), z.literal('')])
-const optionalPhone = z.union([
-  z
-    .string()
-    .trim()
-    .max(20, '연락처는 20자 이내로 입력해 주세요.')
-    .refine(isValidKoreanPhoneNumber, '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'),
-  z.literal(''),
-])
 
 export const sponsorContactRegisterFormSchema = z.object({
   contactType: z.enum(['lead', 'assistant'], {
@@ -33,8 +39,17 @@ export const sponsorContactRegisterFormSchema = z.object({
     z.string().trim().max(50, '직함은 50자 이내로 입력해 주세요.'),
     z.literal(''),
   ]),
-  officePhone: optionalPhone,
-  phone: optionalPhone,
+  officePhone: z
+    .string()
+    .trim()
+    .max(20, '내선번호는 20자 이내로 입력해 주세요.')
+    .refine(isValidSponsorOfficePhone, SPONSOR_CONTACT_OFFICE_PHONE_FORMAT_MESSAGE),
+  phone: z
+    .string()
+    .trim()
+    .min(1, '연락처를 입력해 주세요.')
+    .max(20, '연락처는 20자 이내로 입력해 주세요.')
+    .refine(isValidKoreanPhoneNumber, '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'),
   email: optionalTrimmedString.refine(
     value => value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
     '올바른 이메일 형식을 입력해 주세요.'

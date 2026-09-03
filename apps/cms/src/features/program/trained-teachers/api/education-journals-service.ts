@@ -25,7 +25,7 @@ function assertRemoteReady(): void {
 function triggerBlobDownload(fileName: string, blob: Blob): void {
   const objectUrl = URL.createObjectURL(blob)
   try {
-    downloadFile(fileName, objectUrl)
+    void downloadFile(fileName, objectUrl)
   } finally {
     window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1_000)
   }
@@ -33,14 +33,14 @@ function triggerBlobDownload(fileName: string, blob: Blob): void {
 
 async function downloadFromEndpoint(fileName: string, endpoint?: string): Promise<void> {
   if (!endpoint?.trim()) {
-    downloadFile(fileName)
+    void downloadFile(fileName)
     return
   }
   try {
     const blob = await fetchTrainedTeacherEducationJournalFileBlob(endpoint)
     triggerBlobDownload(fileName, blob)
   } catch {
-    downloadFile(fileName, endpoint)
+    void downloadFile(fileName, endpoint)
   }
 }
 
@@ -73,7 +73,7 @@ export async function downloadTrainedTeacherEducationJournal(
   entry: TrainedTeachersEducationJournalEntry
 ): Promise<void> {
   if (!shouldUseTrainedTeacherProgramsRemoteApi()) {
-    downloadFile(entry.fileName, entry.fileUrl)
+    void downloadFile(entry.fileName, entry.fileUrl)
     return
   }
   assertRemoteReady()
@@ -88,7 +88,7 @@ export async function bulkDownloadTrainedTeacherEducationJournals(
 ): Promise<void> {
   if (!shouldUseTrainedTeacherProgramsRemoteApi()) {
     for (const entry of entries) {
-      downloadFile(entry.fileName, entry.fileUrl)
+      void downloadFile(entry.fileName, entry.fileUrl)
     }
     return
   }

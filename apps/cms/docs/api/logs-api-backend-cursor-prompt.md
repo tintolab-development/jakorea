@@ -15,11 +15,13 @@ CMS가 호출하는 로그 목록 4개가 **기획대로 조회**되게 하라. 
 2. 필터는 **플랫 쿼리**다. `params[fileName]` 중첩이 아니어도 동작한다.
 3. local/dev 시드로 각 목록에 **빈 화면이 아닌 샘플**이 있다. prod 마이그레이션에 넣지 마라.
 4. 회원 로그인 이력은 **수집일로부터 1개월 밖 행을 서버가 반환하지 않는다** (삭제 또는 기본 조회 윈도우).
-5. 파일 다운로드·개인정보 원문 조회가 일어나면 해당 로그 테이블에 **서버가 적재**한다. CMS는 POST하지 않는다.
+5. 파일 다운로드·개인정보 원문 조회가 일어나면 해당 로그 테이블에 **서버가 적재**한다.
+6. FE blob(엑셀·지급조서 등)은 `POST /api/admin/logs/file-access/client`로 적재한다 — 계약: [client-file-access-log-backend-handoff.md](./client-file-access-log-backend-handoff.md).
 
 ## Out of scope / 금지
 
-- `POST /api/admin/logs/file-access` 또는 `POST /api/admin/logs/privacy-access` 를 CMS용으로 만들지 마라.
+- `POST /api/admin/logs/file-access`(**GET과 동일 path**) 또는 `POST /api/admin/logs/privacy-access` 를 CMS용으로 만들지 마라.
+- 클라이언트 발급 문서용 write는 **`POST /api/admin/logs/file-access/client`만** 허용한다(위 핸드오프).
 - 버그/이슈 **상세 화면·상태 PATCH를 CMS에 요구하지 마라**. 기획은 행 클릭 액션 없음. 기존 `GET/PATCH /system-issues/{issueId}` 는 삭제하지 말고 그대로 둬라.
 - `GET /api/admin/logs/mail-sends` 만들지 마라 (기획 보류).
 - `/api/files/access-logs` 와 로그 관리 화면을 섞지 마라.

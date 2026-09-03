@@ -24,13 +24,17 @@ import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
-import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  CMS_TABLE_NO_COL_CLASS,
+  TABLE_COLUMN_WIDTHS,
+} from '@/shared/constants/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   buildDomainEntityDeleteMessageLines,
   CmsButton,
   CmsInput,
-  CmsSelect,
+  CmsRadio,
+  CmsRadioGroup,
   ContentModal,
   DeleteGuideModal,
 } from '@/shared/ui'
@@ -38,11 +42,21 @@ import { canPerformWriteAction } from '@/shared/utils/permissions'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
+import './detailed-program-page.css'
 
-const USAGE_SELECT_OPTIONS = [
-  { label: '사용', value: 'true' },
-  { label: '미사용', value: 'false' },
+const USAGE_RADIO_OPTIONS = [
+  { label: '사용', value: true },
+  { label: '미사용', value: false },
 ] as const
+
+/** 사용 여부 열 — 시안 240px (수정 모드 라디오 2개 가로 배치) */
+const USAGE_COL_WIDTH = 240
+const USAGE_COL_CLASS = 'detailed-program-page__usage-col'
+/** 등록자명 / 등록일시 — 시안 고정 폭 */
+const REGISTRANT_COL_WIDTH = 180
+const REGISTERED_AT_COL_WIDTH = 240
+const REGISTRANT_COL_CLASS = 'detailed-program-page__registrant-col'
+const REGISTERED_AT_COL_CLASS = 'detailed-program-page__registered-at-col'
 
 /** Ant Radio `value`가 DOM/이벤트에서 문자열로 올 수 있어 저장·표시 전에 정규화 */
 function coerceRadioBoolean(raw: unknown): boolean {
@@ -239,6 +253,7 @@ export default function DetailedProgramPage() {
         title: 'No.',
         key: 'no',
         width: TABLE_COLUMN_WIDTHS.index,
+        className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
         render: (_: unknown, __: DetailedProgramManagementRow, index: number) =>
           tableDisplayData.length - index,
@@ -246,21 +261,27 @@ export default function DetailedProgramPage() {
       {
         title: '사용 여부',
         key: 'active',
-        width: 200,
+        width: USAGE_COL_WIDTH,
+        className: USAGE_COL_CLASS,
         align: 'center',
         render: (_: unknown, row: DetailedProgramManagementRow) => {
           if (!isEditMode) {
             return row.active ? '사용' : '미사용'
           }
           return (
-            <CmsSelect
+            <CmsRadioGroup
               key={`active-${row.id}`}
-              inputSize="medium"
-              width="100%"
-              defaultValue={row.active ? 'true' : 'false'}
-              onChange={v => updateDraft(row.id, { active: v === 'true' })}
-              options={[...USAGE_SELECT_OPTIONS]}
-            />
+              className="detailed-program-page__usage-radio"
+              size="medium"
+              defaultValue={row.active}
+              onChange={e => updateDraft(row.id, { active: coerceRadioBoolean(e.target.value) })}
+            >
+              {USAGE_RADIO_OPTIONS.map(opt => (
+                <CmsRadio key={String(opt.value)} size="medium" value={opt.value}>
+                  {opt.label}
+                </CmsRadio>
+              ))}
+            </CmsRadioGroup>
           )
         },
       },
@@ -268,7 +289,8 @@ export default function DetailedProgramPage() {
         title: '세부 프로그램명',
         dataIndex: 'name',
         key: 'name',
-        ellipsis: true,
+        className: 'detailed-program-page__name-col',
+        ellipsis: !isEditMode,
         render: (_: unknown, row: DetailedProgramManagementRow) => {
           if (!isEditMode) {
             return row.name
@@ -276,6 +298,7 @@ export default function DetailedProgramPage() {
           return (
             <CmsInput
               key={`name-${row.id}`}
+              className="detailed-program-page__name-input"
               inputSize="medium"
               width="100%"
               defaultValue={row.name}
@@ -287,20 +310,24 @@ export default function DetailedProgramPage() {
         },
       },
       {
-        title: '등록자',
+        title: '등록자명',
         dataIndex: 'createdBy',
         key: 'createdBy',
-        width: TABLE_COLUMN_WIDTHS.name,
+        width: REGISTRANT_COL_WIDTH,
+        className: REGISTRANT_COL_CLASS,
+        align: 'center',
         ellipsis: true,
       },
       {
         title: '등록일시',
         dataIndex: 'createdAt',
         key: 'createdAt',
-        width: 180,
+        width: REGISTERED_AT_COL_WIDTH,
+        className: REGISTERED_AT_COL_CLASS,
+        align: 'center',
         render: (v: string | undefined) =>
           v ? (
-            dayjs(v).format('YYYY.MM.DD HH:mm')
+            dayjs(v).format('YYYY.MM.DD HH:mm:ss')
           ) : (
             <span style={{ color: 'var(--color-text-tertiary, #8c8c8c)' }}>-</span>
           ),
@@ -354,7 +381,11 @@ export default function DetailedProgramPage() {
       >
         <Table<DetailedProgramManagementRow>
           rowKey="id"
-          className="cms-data-table"
+          className={
+            isEditMode
+              ? 'cms-data-table detailed-program-page__table detailed-program-page__table--edit'
+              : 'cms-data-table detailed-program-page__table'
+          }
           columns={columns}
           dataSource={tableDisplayData}
           loading={isListFetching && !isInitialListLoading}

@@ -192,8 +192,11 @@
 }
 
 .admin-inquiry-detail-modal__status {
+  color: inherit;
+  text-align: center;
   font-family: Pretendard, var(--font-family-primary, sans-serif);
   font-size: 16px;
+  font-style: normal;
   font-weight: 500;
   line-height: 150%;
 }

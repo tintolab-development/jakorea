@@ -158,6 +158,8 @@ export interface User {
   interviewScheduledAt?: DateValue
   interviewCompletedAt?: DateValue
   participationHistory?: number
+  /** 회원 상세 성명 배지 — 사용자 일정 변경·취소 이력 횟수 (1 이상일 때만 UI 노출) */
+  scheduleChangeCancelCount?: number
 
   // 계정 상태
   isActive: boolean

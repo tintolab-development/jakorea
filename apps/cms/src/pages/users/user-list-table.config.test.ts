@@ -1,9 +1,25 @@
+import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
 import {
   applyUserListSearchToParams,
   buildListQueryApiFilters,
+  createdAtBoundsFromPendingRange,
+  createdAtBoundsFromUrlParams,
+  createdAtRangeFromUrlParams,
   pendingRoleFromParams,
+  pendingToApiFilters,
+  userListPendingFiltersFromParams,
 } from './user-list-table.config'
+
+const emptyPendingRest = {
+  search: '',
+  role: 'ALL' as const,
+  institutionSido: '',
+  institutionSigungu: '',
+  jaEvaluationGrade: '',
+  settlementStatus: '',
+  adminPermissionVariant: '',
+}
 
 describe('buildListQueryApiFilters', () => {
   it('강사 탭 — rolesExactAnyOf 와 서버 필터를 넣는다', () => {
@@ -150,5 +166,108 @@ describe('applyUserListSearchToParams', () => {
     })
     expect(params.get('kind')).toBe('all')
     expect(params.get('role')).toBeNull()
+  })
+
+  it('가입 시기 — 시작일만 선택해도 createdAtFrom/To를 그날로 넣는다', () => {
+    const params = new URLSearchParams('kind=all')
+    applyUserListSearchToParams(params, {
+      ...emptyPendingRest,
+      createdAtRange: [dayjs('2026-03-15'), null],
+    })
+    expect(params.get('createdAtFrom')).toBe('2026-03-15')
+    expect(params.get('createdAtTo')).toBe('2026-03-15')
+  })
+
+  it('가입 시기 — 종료일만 선택해도 createdAtFrom/To를 그날로 넣는다', () => {
+    const params = new URLSearchParams('kind=instructors')
+    applyUserListSearchToParams(params, {
+      ...emptyPendingRest,
+      role: 'INSTRUCTOR',
+      createdAtRange: [null, dayjs('2026-04-01')],
+    })
+    expect(params.get('createdAtFrom')).toBe('2026-04-01')
+    expect(params.get('createdAtTo')).toBe('2026-04-01')
+  })
+
+  it('가입 시기 — 양쪽 비우면 기간 파라미터를 삭제한다', () => {
+    const params = new URLSearchParams('kind=all&createdAtFrom=2026-01-01&createdAtTo=2026-01-31')
+    applyUserListSearchToParams(params, {
+      ...emptyPendingRest,
+      createdAtRange: null,
+    })
+    expect(params.get('createdAtFrom')).toBeNull()
+    expect(params.get('createdAtTo')).toBeNull()
+  })
+
+  it('가입 시기 — 풀 구간은 그대로 유지한다', () => {
+    const params = new URLSearchParams('kind=institutions')
+    applyUserListSearchToParams(params, {
+      ...emptyPendingRest,
+      role: 'SCHOOL',
+      createdAtRange: [dayjs('2026-01-01'), dayjs('2026-06-30')],
+    })
+    expect(params.get('createdAtFrom')).toBe('2026-01-01')
+    expect(params.get('createdAtTo')).toBe('2026-06-30')
+  })
+})
+
+describe('createdAt date range helpers', () => {
+  it('pending 한쪽만 → from===to', () => {
+    expect(createdAtBoundsFromPendingRange([dayjs('2026-05-10'), null])).toEqual({
+      from: '2026-05-10',
+      to: '2026-05-10',
+    })
+    expect(createdAtBoundsFromPendingRange([null, dayjs('2026-05-20')])).toEqual({
+      from: '2026-05-20',
+      to: '2026-05-20',
+    })
+    expect(createdAtBoundsFromPendingRange(null)).toEqual({})
+  })
+
+  it('URL 한쪽만 → API·pending 미러', () => {
+    expect(createdAtBoundsFromUrlParams('2026-07-01', undefined)).toEqual({
+      from: '2026-07-01',
+      to: '2026-07-01',
+    })
+    expect(createdAtBoundsFromUrlParams(undefined, '2026-07-15')).toEqual({
+      from: '2026-07-15',
+      to: '2026-07-15',
+    })
+    const range = createdAtRangeFromUrlParams('2026-07-01', undefined)
+    expect(range?.[0]?.format('YYYY-MM-DD')).toBe('2026-07-01')
+    expect(range?.[1]?.format('YYYY-MM-DD')).toBe('2026-07-01')
+  })
+
+  it('buildListQueryApiFilters — from만 있어도 하루 구간으로 넣는다', () => {
+    const api = buildListQueryApiFilters({
+      kind: 'admins',
+      createdAtFrom: '2026-08-01',
+    })
+    expect(api.createdAtFrom).toBe('2026-08-01')
+    expect(api.createdAtTo).toBe('2026-08-01')
+  })
+
+  it('pendingToApiFilters / userListPendingFiltersFromParams — 한쪽만 허용', () => {
+    expect(
+      pendingToApiFilters(
+        {
+          search: '',
+          institutionSido: '',
+          institutionSigungu: '',
+          jaEvaluationGrade: '',
+          settlementStatus: '',
+          adminPermissionVariant: '',
+          createdAtRange: [dayjs('2026-09-03'), null],
+        },
+        'all'
+      )
+    ).toMatchObject({ createdAtFrom: '2026-09-03', createdAtTo: '2026-09-03' })
+
+    const pending = userListPendingFiltersFromParams({
+      kind: 'individual',
+      createdAtTo: '2026-09-10',
+    })
+    expect(pending.createdAtRange?.[0]?.format('YYYY-MM-DD')).toBe('2026-09-10')
+    expect(pending.createdAtRange?.[1]?.format('YYYY-MM-DD')).toBe('2026-09-10')
   })
 })

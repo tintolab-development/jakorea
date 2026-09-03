@@ -644,7 +644,7 @@ export function usePaymentOrderDetailLinesController(
     const w =
       mode === 'instructor'
         ? {
-            no: 52,
+            no: 80,
             title: 312,
             institution: 136,
             lecture: 204,
@@ -653,7 +653,7 @@ export function usePaymentOrderDetailLinesController(
             breakdown: 148,
           }
         : {
-            no: 64,
+            no: 80,
             title: 120,
             institution: 160,
             lecture: 220,

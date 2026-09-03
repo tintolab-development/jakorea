@@ -59,8 +59,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlement-configs/current`
  *
@@ -222,8 +222,8 @@ const deleteCurrentConfig = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/settlements/{settlementId}/recalculate
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `POST /api/admin/settlements/{settlementId}/recalculate`
  *
@@ -280,8 +280,8 @@ const recalculate = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/settlements/{settlementId}/payment-statement/request
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `POST /api/admin/settlements/{settlementId}/payment-statement/request`
  *
@@ -391,8 +391,8 @@ const requestPaymentStatementDownload = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/settlements/{settlementId}/correction-requests
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `POST /api/admin/settlements/{settlementId}/correction-requests`
  *
@@ -504,8 +504,8 @@ const bulkConfirmPaymentStatements = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/settlements/exports/tax-report
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `POST /api/admin/settlements/exports/tax-report`
  *
@@ -561,8 +561,8 @@ const requestTaxReportExport = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/settlements/exports/bulk-transfer
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `POST /api/admin/settlements/exports/bulk-transfer`
  *
@@ -783,8 +783,8 @@ const rejectPaymentStatement = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `PATCH /api/admin/settlements/statements/{statementId}/confirm`
  *
@@ -841,8 +841,8 @@ const confirmPaymentStatement = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `PATCH /api/admin/settlements/correction-requests/{correctionRequestId}/reject`
  *
@@ -899,8 +899,8 @@ const rejectCorrection = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `PATCH /api/admin/settlements/correction-requests/{correctionRequestId}/approve`
  *
@@ -957,8 +957,8 @@ const approveCorrection = (
 /**
  * ### 이 API가 하는 일
  * - 개별 지급 완료
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `PATCH /api/admin/account-payments/{paymentId}/paid`
  *
@@ -1015,8 +1015,8 @@ const markPaid = (
 /**
  * ### 이 API가 하는 일
  * - 개별 지급 실패
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `PATCH /api/admin/account-payments/{paymentId}/failed`
  *
@@ -1128,8 +1128,8 @@ const bulkPaid = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements`
  *
@@ -1184,8 +1184,8 @@ const listSettlements = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/{settlementId}`
  *
@@ -1239,8 +1239,8 @@ const getSettlement = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `GET /api/admin/settlements/{settlementId}/revisions`
  *
@@ -1296,8 +1296,8 @@ const listSettlementRevisions = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `GET /api/admin/settlements/{settlementId}/revisions/{revisionId}`
  *
@@ -1352,8 +1352,8 @@ const getSettlementRevisionDetail = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/{settlementId}/payment-statement/download`
  *
@@ -1460,8 +1460,8 @@ const getSettlementAvailableActions = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/transportation-snapshots`
  *
@@ -1569,8 +1569,8 @@ const statusMappings = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/statements`
  *
@@ -1625,8 +1625,8 @@ const listPaymentStatements = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/open-questions`
  *
@@ -1680,8 +1680,8 @@ const openQuestions = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/exports`
  *
@@ -1736,8 +1736,8 @@ const listExportHistories = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `GET /api/admin/settlements/correction-requests`
  *
@@ -1792,8 +1792,8 @@ const listCorrectionRequests = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/calendar`
  *
@@ -1848,8 +1848,8 @@ const settlementCalendar = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/calendar/summary`
  *
@@ -1904,8 +1904,8 @@ const settlementCalendarSummary = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/calendar/dates/{date}`
  *
@@ -2067,8 +2067,8 @@ const listSettlementAggregates = (
 /**
  * ### 이 API가 하는 일
  * - 계좌 지급 확인 목록
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 정산 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/account-payments`
  *

@@ -25,6 +25,26 @@ function parsePartnerInvolvement(value?: string | boolean): boolean | string | u
   return value
 }
 
+/** OpenAPI 미등재 가능 — 취약계층 학생 수 후보 키 */
+const VULNERABLE_STUDENT_KEYS = [
+  'vulnerableStudents',
+  'vulnerableStudentCount',
+  'disadvantagedStudents',
+] as const
+
+function readVulnerableStudents(dto: object): number | undefined {
+  const record = dto as Record<string, unknown>
+  for (const key of VULNERABLE_STUDENT_KEYS) {
+    const raw = record[key]
+    if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+    if (typeof raw === 'string' && raw.trim() !== '') {
+      const parsed = Number(raw)
+      if (Number.isFinite(parsed)) return parsed
+    }
+  }
+  return undefined
+}
+
 function attachRegionFields(row: EducationRecordRow, district?: string): EducationRecordRow {
   const tokens = parseRegionTokens(district)
   const sido = resolveSidoFromSigunguTokens(tokens)
@@ -75,6 +95,7 @@ export function mapPerformanceRecordToRow(
       generalTeachers: dto.generalTeachers,
       educatedTeachers: dto.educatedTeachers,
       instructors: dto.instructors,
+      vulnerableStudents: readVulnerableStudents(dto),
       managerName: dto.managerName?.trim() || undefined,
       schoolId: dto.schoolOrOrganizationName?.trim() || undefined,
     },

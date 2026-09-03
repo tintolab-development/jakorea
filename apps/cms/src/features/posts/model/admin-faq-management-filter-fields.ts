@@ -11,7 +11,7 @@ export function createInitialFaqCategoryRows(): FaqCategoryRow[] {
 }
 
 /**
- * TableFilterGroup `width` % — 합 100%. 작성일(기간)은 두 입력·구분자가 들어가므로 비중 확대.
+ * TableFilterGroup `width` % — 합 100%. 작성일시(기간)는 두 입력·구분자가 들어가므로 비중 확대.
  */
 export function buildAdminFaqManagementFilterFields(
   categoryLabels: readonly string[]
@@ -23,20 +23,12 @@ export function buildAdminFaqManagementFilterFields(
 
   return [
     {
-      key: 'title',
-      type: 'search',
-      label: '제목',
-      placeholder: '제목을 입력하세요',
-      width: '20%',
-    },
-    {
       key: 'visibility',
-      type: 'select',
+      type: 'radio',
       label: '공개 여부',
-      placeholder: '전체',
-      width: '12%',
+      width: '14%',
+      defaultValue: 'public',
       options: [
-        { label: '전체', value: 'ALL' },
         { label: '공개', value: 'public' },
         { label: '비공개', value: 'private' },
       ],
@@ -46,22 +38,29 @@ export function buildAdminFaqManagementFilterFields(
       type: 'select',
       label: '카테고리',
       placeholder: '전체',
-      width: '12%',
+      width: '14%',
       options: categoryOptions,
+    },
+    {
+      key: 'title',
+      type: 'search',
+      label: '제목',
+      placeholder: '제목을 입력하세요',
+      width: '22%',
     },
     {
       key: 'author',
       type: 'search',
-      label: '작성자',
-      placeholder: '작성자를 입력하세요',
-      width: '20%',
+      label: '작성자명',
+      placeholder: '작성자명을 입력하세요',
+      width: '18%',
     },
     {
       key: 'dateRange',
       type: 'dateRange',
-      label: '작성일',
+      label: '작성일시',
       defaultValue: null,
-      width: '36%',
+      width: '32%',
     },
   ]
 }

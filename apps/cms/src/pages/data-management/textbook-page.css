@@ -8,6 +8,16 @@
   width: 100%;
 }
 
+/*
+ * cms-data-table은 No. 이후 col을 width:auto로 풀어 남는 폭을 분배한다.
+ * 사용 여부(체크+No. 다음 열)는 colgroup까지 100px 고정해야 실제 폭이 바뀐다.
+ */
+.textbook-page__table.cms-data-table col.ant-table-selection-col + col + col {
+  width: var(--table-usage-column-width, 100px) !important;
+  min-width: var(--table-usage-column-width, 100px) !important;
+  max-width: var(--table-usage-column-width, 100px) !important;
+}
+
 .textbook-kit-quantity-change-modal-wrap {
   display: flex !important;
   align-items: center !important;

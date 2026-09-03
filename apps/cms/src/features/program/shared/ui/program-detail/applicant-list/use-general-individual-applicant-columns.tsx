@@ -27,7 +27,7 @@ export function useGeneralIndividualApplicantColumns(
 
   return useMemo(() => {
     const columns: ColumnsType<GeneralIndividualApplicantRow> = [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: '64px', align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '신청자명',
         dataIndex: 'applicantName',

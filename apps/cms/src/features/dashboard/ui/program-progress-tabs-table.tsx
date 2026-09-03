@@ -72,7 +72,7 @@ export function ProgramProgressTabsTable() {
         title: 'No.',
         dataIndex: 'no',
         key: 'no',
-        width: 56,
+        width: 80,
         align: 'center',
       },
       {

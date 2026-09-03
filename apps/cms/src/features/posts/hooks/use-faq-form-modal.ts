@@ -82,10 +82,6 @@ export function useFaqFormModal({
     try {
       const v = await form.validateFields()
       const answer = v.answer.trim()
-      if (!answer) {
-        return
-      }
-
       const category = v.category.trim()
       const author = user?.name?.trim() || '관리자'
       const status = v.visibility === 'public' ? 'published' : 'draft'

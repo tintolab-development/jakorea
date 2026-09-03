@@ -53,18 +53,27 @@ export function DetailedProgramAddItemModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title="항목 추가"
+      title="세부 프로그램명 신규 등록"
       width={600}
+      className="detailed-program-add-item-modal"
+      wrapClassName="detailed-program-add-item-modal-wrap"
       footer={
         <>
-          <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
+          <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="medium" type="button" disabled={!name} onClick={handleSubmit}>
+          <CmsButton
+            variant="primary"
+            size="large"
+            type="button"
+            disabled={!name}
+            onClick={handleSubmit}
+          >
             등록
           </CmsButton>
         </>
       }
+      titleBodyGap="none"
     >
       <div className="detailed-program-add-item-modal__form">
         <div>

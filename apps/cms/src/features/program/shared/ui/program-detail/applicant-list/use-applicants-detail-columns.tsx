@@ -77,7 +77,7 @@ export function useInstitutionApplicantColumns(params: {
       if (isCompanySchool) {
         const maxClassCount = programBridge?.maxClassCount
         const columns: ColumnsType<ApplicantSchoolRow> = [
-          { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+          { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
           {
             title: '신청 기관명',
             dataIndex: 'schoolName',
@@ -162,7 +162,7 @@ export function useInstitutionApplicantColumns(params: {
 
       const columns: ColumnsType<ApplicantSchoolRow> = [
       /* 화면 너비 대비 비율 분배(합 100%). 가로 스크롤은 scroll.x = max(최소, 래퍼 너비)로 처리 */
-      { title: 'No.', dataIndex: 'no', key: 'no', width: '64px', align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: isGeneralDetail ? '신청 기관명' : '참여 기관명',
         dataIndex: 'schoolName',
@@ -364,7 +364,7 @@ export function useInstructorApplicantColumns(params: {
 
   return useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '강사명',
         dataIndex: 'instructorName',

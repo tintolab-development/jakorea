@@ -5,6 +5,7 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SettlementApplicationAttachmentResponse } from './settlementApplicationAttachmentResponse';
 
 export interface SettlementApplicationItemResponse {
   applicationItemId?: number;
@@ -19,4 +20,5 @@ export interface SettlementApplicationItemResponse {
   taxIncomeType?: string;
   calculationBasisJsonb?: string;
   displayOrder?: number;
+  evidenceAttachments?: SettlementApplicationAttachmentResponse[];
 }

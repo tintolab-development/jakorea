@@ -1876,27 +1876,39 @@
         {
           "seedKey": "sponsor-contact-1",
           "name": "김제이",
+          "department": "디자인마케팅팀",
           "position": "책임",
+          "officePhone": "02-1234-5678",
           "phone": "010-2431-0000",
-          "email": "gwanl123@naver.com",
+          "email": "gwan123@naver.com",
+          "companyAddress": "서울특별시 강서구 화곡동 936-16",
+          "memo": "",
           "contactType": "lead",
           "registeredAt": "2026-02-10T09:15:00+09:00"
         },
         {
           "seedKey": "sponsor-contact-2",
           "name": "박제이",
+          "department": "전략홍보실",
           "position": "선임",
+          "officePhone": "02-1234-5678",
           "phone": "010-7353-0000",
-          "email": "gwanl433@naver.com",
+          "email": "gwan433@naver.com",
+          "companyAddress": "서울특별시 강서구 화곡동 936-16",
+          "memo": "",
           "contactType": "assistant",
           "registeredAt": "2026-02-10T09:15:00+09:00"
         },
         {
           "seedKey": "sponsor-contact-3",
           "name": "강제이",
+          "department": "전략홍보실",
           "position": "사원",
+          "officePhone": "02-1234-5678",
           "phone": "010-3145-0000",
-          "email": "gwanl213@naver.com",
+          "email": "gwan213@naver.com",
+          "companyAddress": "서울특별시 강서구 화곡동 936-16",
+          "memo": "",
           "contactType": "assistant",
           "registeredAt": "2026-02-10T09:15:00+09:00"
         }

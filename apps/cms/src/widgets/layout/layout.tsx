@@ -16,6 +16,7 @@ import { canAccessPath } from '@/shared/config/menu-config'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 import {
   canAdminAction,
+  isPermissionSettingsPath,
   isSecurityLogPath,
   resolveAdminRoleCodeFromUser,
   showAdminAccessDeniedAlert,
@@ -36,10 +37,15 @@ function LayoutContent() {
     Boolean(user) &&
     isSecurityLogPath(location.pathname) &&
     !canAdminAction({ roleCode, action: 'view', screen: 'security-logs' })
+  const permissionSettingsBlocked =
+    Boolean(user) &&
+    isPermissionSettingsPath(location.pathname) &&
+    !canAdminAction({ roleCode, action: 'view', screen: 'permission-settings' })
+  const screenAccessBlocked = securityLogBlocked || permissionSettingsBlocked
   const deniedLogPathRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!securityLogBlocked) {
+    if (!screenAccessBlocked) {
       deniedLogPathRef.current = null
       return
     }
@@ -51,7 +57,7 @@ function LayoutContent() {
       return
     }
     navigate('/', { replace: true })
-  }, [securityLogBlocked, navigate, location.pathname])
+  }, [screenAccessBlocked, navigate, location.pathname])
 
   const pathActor = user ? { role: user.role, adminLevel: user.adminLevel } : null
   if (user && location.pathname !== '/' && !canAccessPath(location.pathname, pathActor)) {
@@ -63,7 +69,7 @@ function LayoutContent() {
     )
   }
 
-  if (securityLogBlocked) {
+  if (screenAccessBlocked) {
     return null
   }
 

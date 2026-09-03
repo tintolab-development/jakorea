@@ -165,6 +165,16 @@
   justify-content: center !important;
 }
 
+/* medium + 아이콘 긴 라벨 (예: 로고 일괄 다운로드) */
+.cms-button.ant-btn.cms-button--no-label-ellipsis.cms-button--medium.cms-button--has-icon {
+  padding: 6px 14px 6px 10px !important;
+  padding-block: 6px !important;
+  padding-inline: 10px 14px !important;
+  gap: 6px;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 /* 비주얼 아이콘은 children(`cms-button__icon`) — 비로딩 시 antd icon 슬롯(잔여)은 레이아웃에서 제외 */
 .cms-button.ant-btn:not(.ant-btn-loading) > .ant-btn-icon {
   display: none !important;

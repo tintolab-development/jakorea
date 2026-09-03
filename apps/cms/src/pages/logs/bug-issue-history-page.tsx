@@ -25,7 +25,7 @@ import '@/features/program/general/ui/program-list.css'
 const BUG_ISSUE_HISTORY_TABLE_SCROLL_X = 980
 
 const TABLE_COL_WIDTH = {
-  no: 88,
+  no: 80,
   errorMessage: 520,
   userName: 150,
   occurredAt: 220,

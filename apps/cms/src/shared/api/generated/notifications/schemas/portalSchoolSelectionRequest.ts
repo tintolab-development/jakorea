@@ -7,16 +7,16 @@
  */
 
 /**
- * 회원가입 학교 검색 선택값. CMS organizationId가 없어도 NEIS 코드, 학교명, 주소를 전달하면 기존 CMS 학교를 안전하게 재사용하거나 없을 때만 등록합니다.
+ * 회원가입 학교 검색 선택값. CMS organizationId가 없어도 NEIS(초·중·고) 또는 CAREER_NET(대학·전문대) 코드·학교명·주소로 기존 CMS 학교를 재사용하거나 없을 때만 등록합니다.
  */
 export interface PortalSchoolSelectionRequest {
   /** CMS에 이미 등록된 학교 PK. 학교 검색 결과 객체를 그대로 전달할 때 사용합니다. */
   schoolOrganizationId?: number;
-  /** 학교 검색 공급자. 나이스 학교정보 API는 NEIS를 사용합니다. */
+  /** 학교 검색 공급자. NEIS(나이스 초·중·고) 또는 CAREER_NET(커리어넷 대학·전문대). 생략 시 NEIS. */
   provider?: string;
-  /** NEIS 교육청 코드 */
+  /** NEIS 교육청 코드(ATPT_OFCDC_SC_CODE). provider=NEIS이고 외부 검증이 켜진 환경에서 필수. CAREER_NET에서는 생략. */
   educationOfficeCode?: string;
-  /** 공급자의 학교 고유 코드. 숫자 이외 문자가 포함될 수 있습니다. */
+  /** 공급자 학교 고유 코드. NEIS는 SD_SCHUL_CODE, CAREER_NET은 seq. 숫자 이외 문자 가능. */
   externalSchoolCode?: string;
   /** 학교명 */
   name?: string;

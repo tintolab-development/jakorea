@@ -24,7 +24,7 @@ export function useGeneralVolunteerInterview2Columns(
 
   return useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center', className: CENTER_CELL_CLASS },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center', className: CENTER_CELL_CLASS },
       { title: applicantNameTitle, dataIndex: 'name', key: 'name', width: 140, align: 'center', className: CENTER_CELL_CLASS },
       {
         title: '연락처',

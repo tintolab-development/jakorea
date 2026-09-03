@@ -17,6 +17,8 @@ export interface Notice {
   /** 관리자에서 동적 카테고리 추가 가능 — mock·스토어와 문자열로 일치 */
   category: string
   createdAt: string
+  /** 수정일시 — API에 없으면 createdAt으로 표시 */
+  updatedAt?: string
   isImportant: boolean
   viewCount: number
   hasAttachment: boolean

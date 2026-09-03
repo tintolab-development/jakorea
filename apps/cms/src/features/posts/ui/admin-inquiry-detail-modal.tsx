@@ -40,7 +40,8 @@ export function AdminInquiryDetailModal({
     setAnswerText(detail?.answerMarkdown ?? '')
   }, [detail?.answerMarkdown, open])
 
-  const isAnswerRegistered = detail?.status === 'ANSWERED'
+  const isAnswerRegistered =
+    detail?.status === 'ANSWERED' || Boolean(detail?.answerMarkdown?.trim())
 
   const handleReplySubmit = useCallback(async () => {
     if (!detail || isAnswerRegistered) return
@@ -70,9 +71,9 @@ export function AdminInquiryDetailModal({
         variant="delete"
         size="medium"
         onClick={handleDelete}
-        disabled={!detail}
+        disabled={!detail || isAnswerRegistered}
       >
-        문의삭제
+        문의 삭제
       </CmsButton>
       <div className="admin-inquiry-detail-modal__footer-right">
         <CmsButton variant="secondary" size="medium" onClick={onCancel}>
@@ -146,7 +147,7 @@ export function AdminInquiryDetailModal({
                         문의일시
                       </th>
                       <td className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--value">
-                        {dayjs(detail.createdAt).format('YYYY.MM.DD HH:mm')}
+                        {dayjs(detail.createdAt).format('YYYY.MM.DD HH:mm:ss')}
                       </td>
                     </tr>
                     <tr>
@@ -195,6 +196,22 @@ export function AdminInquiryDetailModal({
                             답변 완료
                           </span>
                         )}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th
+                        scope="row"
+                        className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--label"
+                      >
+                        프로그램명
+                      </th>
+                      <td
+                        className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--value"
+                        colSpan={3}
+                      >
+                        {detail.programName == null || detail.programName === ''
+                          ? '-'
+                          : detail.programName}
                       </td>
                     </tr>
                     <tr>

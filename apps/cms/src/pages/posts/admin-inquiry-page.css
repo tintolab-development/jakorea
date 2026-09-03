@@ -1,6 +1,6 @@
 /**
  * 문의내역 관리 — FilterTableLayout 래퍼
- * 필터 규격: 단일 240px · dateRange 500px · 칸 사이 gap 12px (filter-area-layout)
+ * 필터 규격: 단일 기본 260px · 최소 240px · dateRange 540px · 칸 사이 gap 12px
  */
 
 .admin-inquiry-page {
@@ -10,16 +10,17 @@
 
 /*
  * 필터 2행 고정 (1행 5필드 · 2행 담당자명·문의일시 + 조회)
- * 단일 열 240px · gap 12px · dateRange 열 = 2×240 + 20 = 500px
+ * 단일 열 260px · gap 12px · dateRange 열 = 2×260 + 20 = 540px
  */
 .filter-table-layout.admin-inquiry-page__filter-layout {
   --filter-field-gap: 12px;
   --table-filter-field-gap: 12px;
   --table-filter-field-min-width: 240px;
-  --table-filter-field-max-width: 240px;
-  --filter-control-width: 240px;
-  --filter-control-max-width: 240px;
-  --admin-inquiry-filter-col-width: 240px;
+  --table-filter-field-max-width: 260px;
+  --filter-control-width: 260px;
+  --filter-control-max-width: 260px;
+  --filter-control-min-width: 240px;
+  --admin-inquiry-filter-col-width: 260px;
   --admin-inquiry-filter-date-range-width: calc(
     2 * var(--admin-inquiry-filter-col-width) + var(--filter-control-range-split-between, 20px)
   );
@@ -34,7 +35,7 @@
   width: 100%;
 }
 
-/* 1행: 필드 5개 가로 한 줄 (각 240px · gap 12px) */
+/* 1행: 필드 5개 가로 한 줄 (각 260px · gap 12px) */
 .filter-table-layout.admin-inquiry-page__filter-layout
   .table-filter-group__fields-rows
   > .table-filter-group__fields-grid-row {
@@ -47,7 +48,7 @@
   grid-template-columns: repeat(5, var(--admin-inquiry-filter-col-width)) !important;
 }
 
-/* 2행: 담당자명(240) · 문의일시(500) · 여백 · 조회(160, 우측) */
+/* 2행: 담당자명(260) · 문의일시(540) · 여백 · 조회(160, 우측) */
 .filter-table-layout.admin-inquiry-page__filter-layout
   .table-filter-group__fields-row-with-action {
   display: grid !important;
@@ -147,13 +148,21 @@
 /* No. 열 — 80px */
 .admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-no,
 .admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-no {
-  width: 80px;
-  min-width: 80px;
-  max-width: 80px;
+  width: var(--table-no-column-width, 80px);
+  min-width: var(--table-no-column-width, 80px);
+  max-width: var(--table-no-column-width, 80px);
+  height: 54px;
+  flex-shrink: 0;
+  align-self: stretch;
+  vertical-align: middle;
 }
 
 /* 답변 대기·답변 완료 공통 타이포 */
 .admin-inquiry-page__status {
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+  color: inherit;
   text-align: center;
   font-family: Pretendard, var(--font-family-primary, sans-serif);
   font-size: 16px;
@@ -175,13 +184,68 @@
   cursor: pointer;
 }
 
-/* 문의 일시·답변 일시: 화면너비가 좁을 때 td 밖으로 텍스트가 넘치지 않도록 */
+/* 문의일시·답변일시 — 시안 200px */
+.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(8),
+.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(9),
 .admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-datetime,
-.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__cell--datetime {
-  min-width: 0 !important;
-  max-width: 100%;
+.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-datetime {
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
   overflow: hidden;
   vertical-align: middle;
+}
+
+/* 답변 현황 — 시안 120px */
+.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(3),
+.admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-status,
+.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-status {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+}
+
+/* 카테고리 — 시안 140px */
+.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(4),
+.admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-category,
+.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-category {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+/*
+ * 프로그램명 · 제목 — 시안 flex: 1 0 0 (남은 폭 균등 분배)
+ * td/th display:flex 금지 — table-cell + auto width
+ */
+.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(5),
+.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(6),
+.admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-flex,
+.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-flex {
+  width: auto !important;
+  min-width: 140px !important;
+  max-width: none !important;
+  text-align: center !important;
+}
+
+.admin-inquiry-page__flex-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* 문의 회원명 · 담당자명 — 시안 120px */
+.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(7),
+.admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-member,
+.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-member,
+.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(10),
+.admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-assignee,
+.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-assignee {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
 }
 
 .admin-inquiry-page__datetime-text {

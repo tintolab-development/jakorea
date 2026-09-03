@@ -67,6 +67,11 @@ function shouldIgnoreTableRowClick(target: HTMLElement): boolean {
   )
 }
 
+/** 테이블 표시 순 기준 No. — 상단 행이 큰 번호(내림차순) */
+function descendingTableRowNo(totalRows: number, rowIndex: number): number {
+  return Math.max(1, totalRows - rowIndex)
+}
+
 export type { MemberProgramHistoryMode }
 
 export interface MemberProgramLectureHistoryProps {
@@ -319,6 +324,8 @@ export function MemberProgramLectureHistory({
     setDeleteHistoryModalOpen(false)
   }, [mode, onBulkDelete, selectedRowKeys, tableData])
 
+  const rowCount = tableData.length
+
   const columns: ColumnsType<Application> | ColumnsType<UserHistory> = useMemo(() => {
     if (mode === 'volunteerProgram') {
       const managerCol: ColumnsType<UserHistory>[0] = {
@@ -333,7 +340,8 @@ export function MemberProgramLectureHistory({
           title: 'No.',
           key: 'no',
           align: 'center',
-          render: (_: unknown, __: UserHistory, index: number) => index + 1,
+          render: (_: unknown, __: UserHistory, index: number) =>
+            descendingTableRowNo(rowCount, index),
         },
         {
           title: '프로그램명',
@@ -370,7 +378,8 @@ export function MemberProgramLectureHistory({
         title: 'No.',
         key: 'no',
         align: 'center',
-        render: (_: unknown, __: Application, index: number) => index + 1,
+        render: (_: unknown, __: Application, index: number) =>
+          descendingTableRowNo(rowCount, index),
       },
       {
         title: '프로그램명',
@@ -527,6 +536,7 @@ export function MemberProgramLectureHistory({
     ]
   }, [
     mode,
+    rowCount,
     onViewLectureReport,
     onOpenAttendance,
     onOpenAssignment,

@@ -10,14 +10,22 @@ export type PFInfoReviewItem = {
 export type PFInfoReviewProps = {
   rows: PFInfoReviewItem[]
   className?: string
+  /** false면 첫 행 민트 강조선 생략 (카드 제목 아래 구분선과 중복 방지) */
+  accentFirstRow?: boolean
 }
 
-export function PFInfoReview({ rows, className }: PFInfoReviewProps) {
+export function PFInfoReview({ rows, className, accentFirstRow = true }: PFInfoReviewProps) {
   return (
     <div className={[styles.list, className].filter(Boolean).join(' ')}>
       {rows.map((row, index) => (
         <div
-          className={[styles.row, index === 0 ? styles.rowFirst : undefined].filter(Boolean).join(' ')}
+          className={[
+            styles.row,
+            index === 0 && accentFirstRow ? styles.rowFirst : undefined,
+            index === 0 && !accentFirstRow ? styles.rowPlainFirst : undefined,
+          ]
+            .filter(Boolean)
+            .join(' ')}
           key={row.label}
         >
           <PFText typo="bd-md-md" color="neutral-cool-500" className={styles.label}>

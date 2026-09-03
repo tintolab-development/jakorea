@@ -4,6 +4,7 @@ import {
   SponsorBasicInfoSection,
 } from '@/features/sponsor/ui/sponsor-detail-basic-info'
 import { YearlyBusinessPanel } from '@/features/sponsor/ui/panels/yearly-business-panel'
+import type { SponsorProgramHistoryRow } from '@/features/sponsor/model/sponsor-management.types'
 import type { SponsorSponsorshipStatus } from '@/types/domain'
 import { Flex } from 'antd'
 
@@ -14,6 +15,7 @@ export interface SponsorDetailPanelProps {
   onChange: (updater: (prev: BasicInfoEditState) => BasicInfoEditState) => void
   onSponsorshipStatusChange: (next: SponsorSponsorshipStatus) => void
   sponsorshipStartDate?: DateValue
+  programHistories: SponsorProgramHistoryRow[]
   canWrite: boolean
 }
 
@@ -28,6 +30,7 @@ export function SponsorDetailPanel({
   onChange,
   onSponsorshipStatusChange,
   sponsorshipStartDate,
+  programHistories,
   canWrite,
 }: SponsorDetailPanelProps) {
   return (
@@ -42,6 +45,7 @@ export function SponsorDetailPanel({
       <YearlyBusinessPanel
         sponsorId={sponsorId}
         sponsorshipStartDate={sponsorshipStartDate}
+        programHistories={programHistories}
         canWrite={canWrite}
       />
     </Flex>

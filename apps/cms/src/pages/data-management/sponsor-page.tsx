@@ -11,7 +11,10 @@ import { useSponsorMutations } from '@/features/sponsor/hooks/use-sponsor-mutati
 import type { SponsorSponsorshipStatus } from '@/types/domain'
 import { sponsorManagementFilterFields } from '@/features/sponsor/model/sponsor-management-filter-fields'
 import { sponsorManagementTablePageConfig } from '@/features/sponsor/model/sponsor-management-table.config'
-import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
+import type {
+  SponsorManagementRow,
+  SponsorRegisterPayload,
+} from '@/features/sponsor/model/sponsor-management.types'
 import {
   SPONSOR_STATUS_CELL_CLASSNAME,
   SponsorSponsorshipStatusCell,
@@ -50,6 +53,18 @@ const ORG_LABEL: Record<NonNullable<SponsorManagementRow['organizationKind']>, s
 
 /** 구분 기본값 — URL에 없으면 기업(`corporate`)으로 고정 */
 const DEFAULT_SPONSOR_KIND = 'corporate'
+
+function formatProgramCount(count: number): string {
+  return `${count.toLocaleString('ko-KR')}건`
+}
+
+function formatDonationAmount(amount: number): string {
+  return `${amount.toLocaleString('ko-KR')}원`
+}
+
+function formatBeneficiaryCount(count: number): string {
+  return `${count.toLocaleString('ko-KR')}명`
+}
 
 export default function SponsorPage() {
   const { user } = useAuthStore()
@@ -110,6 +125,8 @@ export default function SponsorPage() {
         createdAt: '',
         updatedAt: '',
         programCount: 0,
+        totalDonationAmount: 0,
+        totalBeneficiaryCount: 0,
       }
     )
   }, [rows, sponsorIdFromUrl])
@@ -234,13 +251,13 @@ export default function SponsorPage() {
   }, [canWrite])
 
   const handleRegisterSubmit = useCallback(
-    async (row: SponsorManagementRow) => {
+    async (payload: SponsorRegisterPayload) => {
       try {
-        const created = await createMutation.mutateAsync(row)
+        const created = await createMutation.mutateAsync(payload)
         setRegisterModalOpen(false)
         setActionResultTitle(buildRegisterCompletedTitle('후원사'))
         setActionResultMessage(
-          buildRegisterCompletedMessage(created.name ?? row.name ?? '', '후원사')
+          buildRegisterCompletedMessage(created.name ?? payload.nameDisplayKo, '후원사')
         )
         setActionResultModalOpen(true)
       } catch (error) {
@@ -285,12 +302,6 @@ export default function SponsorPage() {
         width: 200,
         ellipsis: true },
       {
-        title: '프로그램 진행 수',
-        dataIndex: 'programCount',
-        key: 'programCount',
-        width: 130,
-        align: 'center' },
-      {
         title: '후원 상태',
         dataIndex: 'sponsorshipStatus',
         key: 'sponsorshipStatus',
@@ -307,6 +318,33 @@ export default function SponsorPage() {
             onStatusChange={updateSponsorshipStatus}
           />
         ) },
+      {
+        title: '프로그램 진행 수',
+        dataIndex: 'programCount',
+        key: 'programCount',
+        width: 130,
+        align: 'center',
+        render: (value: number | undefined) =>
+          value != null && Number.isFinite(value) ? formatProgramCount(value) : '-',
+      },
+      {
+        title: '누적 후원금',
+        dataIndex: 'totalDonationAmount',
+        key: 'totalDonationAmount',
+        width: 160,
+        align: 'center',
+        render: (value: number | undefined) =>
+          value != null && Number.isFinite(value) ? formatDonationAmount(value) : '-',
+      },
+      {
+        title: '누적 수혜자',
+        dataIndex: 'totalBeneficiaryCount',
+        key: 'totalBeneficiaryCount',
+        width: 120,
+        align: 'center',
+        render: (value: number | undefined) =>
+          value != null && Number.isFinite(value) ? formatBeneficiaryCount(value) : '-',
+      },
       {
         title: '주 담당자',
         key: 'mainManager',

@@ -21,12 +21,14 @@ function toNoticeRequestStatus(status: Notice['status'] | undefined): NoticeRequ
 }
 
 export function mapNoticeResponse(dto: NoticeResponse): Notice {
+  const createdAt = dto.createdAt ?? new Date().toISOString()
   return {
     id: dto.id != null ? String(dto.id) : '',
     title: dto.title ?? '',
     content: dto.content ?? '',
     category: dto.category ?? '',
-    createdAt: dto.createdAt ?? new Date().toISOString(),
+    createdAt,
+    updatedAt: dto.updatedAt ?? createdAt,
     isImportant: Boolean(dto.isImportant),
     viewCount: dto.viewCount ?? 0,
     hasAttachment: Boolean(dto.hasAttachment),

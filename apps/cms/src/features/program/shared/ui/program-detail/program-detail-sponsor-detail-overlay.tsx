@@ -54,6 +54,8 @@ export function ProgramDetailSponsorDetailOverlay() {
       createdAt: '',
       updatedAt: '',
       programCount: 0,
+      totalDonationAmount: 0,
+      totalBeneficiaryCount: 0,
     }
 
   return (

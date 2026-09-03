@@ -96,9 +96,9 @@ describe('buildTableExportMatrix', () => {
   })
 
   it('exports badge labels from StatusDropdownCell-style renderBadge', () => {
-    function StatusBadge({ status }: { status: 'active' | 'ended' }) {
+    function StatusBadge({ status }: { status: SponsorshipStatusRow['sponsorshipStatus'] }) {
       return createElement('span', {
-        label: status === 'active' ? '진행 중' : '후원 종료',
+        label: status === 'active' ? '후원 중' : '후원 종료',
       })
     }
 
@@ -109,7 +109,8 @@ describe('buildTableExportMatrix', () => {
         render: (_value, row) =>
           createElement('div', {
             status: row.sponsorshipStatus,
-            renderBadge: (s: 'active' | 'ended') => createElement(StatusBadge, { status: s }),
+            renderBadge: (s: SponsorshipStatusRow['sponsorshipStatus']) =>
+              createElement(StatusBadge, { status: s }),
           }),
       },
     ]
@@ -121,7 +122,7 @@ describe('buildTableExportMatrix', () => {
     const { headers, rows } = buildTableExportMatrix(columns, statusRows)
 
     expect(headers).toEqual(['후원 상태'])
-    expect(rows).toEqual([['진행 중'], ['후원 종료']])
+    expect(rows).toEqual([['후원 중'], ['후원 종료']])
   })
 
   it('exports Korean labels from SponsorSponsorshipStatusBadge', () => {
@@ -141,7 +142,7 @@ describe('buildTableExportMatrix', () => {
     ]
     const { rows } = buildTableExportMatrix(columns, statusRows)
 
-    expect(rows).toEqual([['진행 중'], ['후원 종료']])
+    expect(rows).toEqual([['후원 중'], ['후원 종료']])
   })
 
   it('exports labels from StatusDropdownCell wrapping a status badge', () => {
@@ -170,6 +171,6 @@ describe('buildTableExportMatrix', () => {
     ]
     const { rows } = buildTableExportMatrix(columns, statusRows)
 
-    expect(rows).toEqual([['진행 중'], ['후원 종료']])
+    expect(rows).toEqual([['후원 중'], ['후원 종료']])
   })
 })

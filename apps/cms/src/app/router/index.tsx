@@ -50,6 +50,7 @@ import { PasswordChangeRequiredPage } from '@/pages/auth/password-change-require
 import { PasswordChangeRequiredBirthPage } from '@/pages/auth/password-change-required-birth-page'
 import { PasswordChangeRequiredIdentityPage } from '@/pages/auth/password-change-required-identity-page'
 import { PasswordChangeRequiredChangePasswordPage } from '@/pages/auth/password-change-required-change-password-page'
+import { PasswordChangeRequiredCompletePage } from '@/pages/auth/password-change-required-complete-page'
 import { PasswordChangeRequiredIdentityCallbackPage } from '@/pages/auth/password-change-required-identity-callback-page'
 import { PasswordChangeRequiredIdentityMockNicePage } from '@/pages/auth/password-change-required-identity-mock-nice-page'
 import { OAuthCallbackPage } from '@/pages/auth/oauth-callback-page'
@@ -151,9 +152,6 @@ const UserListPage = lazyLoad(() => import('@/pages/users/user-list-page'))
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 const TemplateListPage = lazyLoad(() =>
   import('@/pages/templates/template-list-page').then(m => ({ default: m.TemplateListPage }))
-)
-const FormTestTableComponentsPage = lazyLoad(
-  () => import('@/pages/templates/form-test-table-components-page')
 )
 const AdminCategoryPage = lazyLoad(() => import('@/pages/posts/admin-category-page'))
 const AdminNoticeListPage = lazyLoad(() => import('@/pages/posts/admin-notice-list-page'))
@@ -307,6 +305,10 @@ export const router = createBrowserRouter([
   {
     path: '/auth/password-change-required/change-password',
     element: <PasswordChangeRequiredChangePasswordPage />,
+  },
+  {
+    path: '/auth/password-change-required/complete',
+    element: <PasswordChangeRequiredCompletePage />,
   },
   {
     path: '/forbidden',
@@ -674,10 +676,6 @@ export const router = createBrowserRouter([
           {
             element: <TemplateListPage />,
             children: [
-              {
-                path: 'form-test/tables',
-                element: <FormTestTableComponentsPage />,
-              },
               {
                 path: 'form-management',
                 element: <TemplatesFormManagementOutlet />,

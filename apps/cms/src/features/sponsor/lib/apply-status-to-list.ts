@@ -1,14 +1,13 @@
 import type { QueryClient } from '@tanstack/react-query'
 import type { SponsorSponsorshipStatus } from '@/types/domain'
+import { parseSponsorSponsorshipStatusFilter } from '@/features/sponsor/model/sponsorship-status'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 
 export function listStatusFilterFromSearchKey(
   searchParamsKey: string
 ): 'ALL' | SponsorSponsorshipStatus {
-  const raw = new URLSearchParams(searchParamsKey).get('sp_st')
-  if (raw === 'active' || raw === 'ended') return raw
-  return 'ALL'
+  return parseSponsorSponsorshipStatusFilter(new URLSearchParams(searchParamsKey).get('sp_st'))
 }
 
 /** 후원 상태 변경 후 목록 캐시. 현재 필터에 안 맞으면 행을 뺀다. */

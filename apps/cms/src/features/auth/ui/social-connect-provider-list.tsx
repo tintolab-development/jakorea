@@ -4,12 +4,14 @@ import type { SocialProvider } from '@jakorea/social-auth'
 import { isLinkedSocialAccount } from '@jakorea/social-auth'
 
 import { isSocialAdminSocialApiRemoteEnabled } from '@/features/auth/api/social-auth-remote-capabilities'
+import { getSocialConnectUnlinkConfirmContent } from '@/features/auth/lib/social-connect-unlink-copy'
 import {
   getConnectedProviders,
   setRegisterSocialLinkIntent,
 } from '@/features/auth/lib/register-social-connect-state'
 import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { handleError } from '@/shared/utils/error-handler'
 
 import { SocialConnectProviderIcon } from './admin-register/social-connect-provider-icon'
@@ -51,6 +53,8 @@ export function SocialConnectProviderList({
   )
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null)
   const [loadingAccounts, setLoadingAccounts] = useState(false)
+  const [unlinkTarget, setUnlinkTarget] = useState<SocialProvider | null>(null)
+  const [unlinkLoading, setUnlinkLoading] = useState(false)
 
   const syncConnectedProviders = useCallback(async () => {
     if (!remoteEnabled || !cmsSocialAuthClient.hasAccessToken()) {
@@ -93,26 +97,47 @@ export function SocialConnectProviderList({
       })
   }
 
-  const handleDisconnect = (provider: SocialProvider) => {
-    void (async () => {
-      if (isSocialAdminSocialApiRemoteEnabled() && cmsSocialAuthClient.hasAccessToken()) {
-        try {
-          await cmsSocialAuthClient.unlinkAccount(provider)
-        } catch (error: unknown) {
-          handleError(error, { context: 'socialConnectProviderList.unlink' })
-          return
-        }
+  const performDisconnect = async (provider: SocialProvider): Promise<boolean> => {
+    if (isSocialAdminSocialApiRemoteEnabled() && cmsSocialAuthClient.hasAccessToken()) {
+      try {
+        await cmsSocialAuthClient.unlinkAccount(provider)
+      } catch (error: unknown) {
+        handleError(error, { context: 'socialConnectProviderList.unlink' })
+        return false
       }
+    }
 
-      cmsSocialAuthClient.state.removeConnectedProvider(provider)
-      cmsSocialAuthClient.state.removePendingSocialLink(provider)
-      setConnectedProviders(prev => {
-        const next = new Set(prev)
-        next.delete(provider)
-        return next
+    cmsSocialAuthClient.state.removeConnectedProvider(provider)
+    cmsSocialAuthClient.state.removePendingSocialLink(provider)
+    setConnectedProviders(prev => {
+      const next = new Set(prev)
+      next.delete(provider)
+      return next
+    })
+    await syncConnectedProviders()
+    return true
+  }
+
+  const handleDisconnectRequest = (provider: SocialProvider) => {
+    setUnlinkTarget(provider)
+  }
+
+  const handleDisconnectConfirm = () => {
+    if (!unlinkTarget) {
+      return
+    }
+
+    const provider = unlinkTarget
+    setUnlinkLoading(true)
+    void performDisconnect(provider)
+      .then(success => {
+        if (success) {
+          setUnlinkTarget(null)
+        }
       })
-      await syncConnectedProviders()
-    })()
+      .finally(() => {
+        setUnlinkLoading(false)
+      })
   }
 
   const rootClassName = ['social-connect-provider-list', className].filter(Boolean).join(' ')
@@ -166,7 +191,9 @@ export function SocialConnectProviderList({
                 className="social-connect-provider-list__action-btn cms-button--no-label-ellipsis"
                 loading={isLoading}
                 disabled={(loadingProvider !== null && !isLoading) || loadingAccounts}
-                onClick={() => (isConnected ? handleDisconnect(provider) : handleConnect(provider))}
+                onClick={() =>
+                  isConnected ? handleDisconnectRequest(provider) : handleConnect(provider)
+                }
               >
                 {isConnected ? '해제하기' : '연결하기'}
               </CmsButton>
@@ -174,6 +201,24 @@ export function SocialConnectProviderList({
           )
         })}
       </ul>
+
+      <ConfirmModal
+        open={unlinkTarget !== null}
+        title="소셜 계정 연결 해제"
+        content={
+          unlinkTarget ? getSocialConnectUnlinkConfirmContent(unlinkTarget) : ''
+        }
+        confirmText="해제하기"
+        cancelText="취소"
+        danger
+        confirmLoading={unlinkLoading}
+        onConfirm={handleDisconnectConfirm}
+        onCancel={() => {
+          if (!unlinkLoading) {
+            setUnlinkTarget(null)
+          }
+        }}
+      />
     </div>
   )
 }

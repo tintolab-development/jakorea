@@ -26,5 +26,5 @@ export async function downloadFromBulkEndpoint(
     throw new Error('다운로드 URL이 없습니다.')
   }
   const blob = await fetchBulkDownloadBlob(downloadEndpoint.trim())
-  downloadBlob(blob, generateFilename(filenamePrefix, extension))
+  await downloadBlob(blob, generateFilename(filenamePrefix, extension))
 }

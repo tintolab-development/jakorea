@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   extractApiErrorMessage,
   formatApiErrorAlertContent,
+  getApiErrorCode,
+  getApiErrorHttpStatus,
 } from './extract-api-error-message'
 
 describe('extractApiErrorMessage', () => {
@@ -34,5 +36,18 @@ describe('extractApiErrorMessage', () => {
         },
       })
     ).toBe('CONFLICT: ADMIN_EMAIL_ALREADY_EXISTS')
+  })
+})
+
+describe('getApiErrorCode / getApiErrorHttpStatus', () => {
+  it('nested error.code와 HTTP status를 읽는다', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: { error: { code: 'DETAILED_PROGRAM_IN_USE', message: '사용 중' } },
+      },
+    }
+    expect(getApiErrorCode(error)).toBe('DETAILED_PROGRAM_IN_USE')
+    expect(getApiErrorHttpStatus(error)).toBe(409)
   })
 })

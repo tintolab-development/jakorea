@@ -16,19 +16,19 @@ params: {[key: string]: string};
  */
 userName?: string;
 /**
- * 현재 지원 상태: OPEN 또는 RESOLVED
+ * 부가 필터(화면 미노출). OPEN 또는 RESOLVED
  */
 status?: string;
 /**
- * 심각도
+ * 부가 필터(화면 미노출). 심각도
  */
 severity?: string;
 /**
- * 조회 시작일 YYYY-MM-DD 또는 ISO-8601
+ * 발생일시 시작일 YYYY-MM-DD 또는 ISO-8601
  */
 from?: string;
 /**
- * 조회 종료일 YYYY-MM-DD 또는 ISO-8601
+ * 발생일시 종료일 YYYY-MM-DD 또는 ISO-8601
  */
 to?: string;
 /**

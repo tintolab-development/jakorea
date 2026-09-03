@@ -6,7 +6,6 @@ import { TemplateWritingPreviewProvider } from '@/features/template/context/temp
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import TemplateFormTab from './template-form-tab'
 import { IssuanceFormTab } from './issuance-form-tab'
-import { FormTab } from './form-tab'
 
 type FormManagementQuery = {
   tab?: string
@@ -19,8 +18,6 @@ export default function TemplatesFormManagementOutlet() {
   let content: ReactElement
   if (tab === 'issuance-form') {
     content = <IssuanceFormTab />
-  } else if (tab === 'form-test') {
-    content = <FormTab />
   } else {
     content = <TemplateFormTab />
   }

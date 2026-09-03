@@ -12,8 +12,8 @@ import type { EducationRecordRow } from '@/features/education-record/model/educa
 import '@/shared/components/list-page/list-page-layout.css'
 import './education-record-data-tab.css'
 
-/** 실적 데이터 테이블 가로 스크롤 기준(32개 컬럼 width 합 ≒ 5010 + 여유) */
-const EDUCATION_RECORD_TABLE_SCROLL_X = 5100
+/** 실적 데이터 테이블 가로 스크롤 기준(33개 컬럼 width 합 + 여유) */
+const EDUCATION_RECORD_TABLE_SCROLL_X = 5250
 
 export type EducationRecordDataTabProps = {
   antdColumns: ColumnsType<EducationRecordRow>

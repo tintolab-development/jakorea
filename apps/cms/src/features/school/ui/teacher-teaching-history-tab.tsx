@@ -62,7 +62,7 @@ export function TeacherTeachingHistoryTab({ initialData }: TeacherTeachingHistor
         title: 'No.',
         dataIndex: 'no',
         key: 'no',
-        width: 70,
+        width: 80,
         align: 'center' as const,
       },
       {

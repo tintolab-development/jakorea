@@ -14,6 +14,7 @@ export interface DetailedProgramResponse {
   useYn?: boolean;
   createdByAdminId?: number;
   createdByName?: string;
+  inUse?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

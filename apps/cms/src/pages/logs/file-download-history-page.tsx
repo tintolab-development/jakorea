@@ -25,7 +25,7 @@ import '@/features/program/general/ui/program-list.css'
 const FILE_DOWNLOAD_HISTORY_TABLE_SCROLL_X = 1120
 
 const TABLE_COL_WIDTH = {
-  no: 88,
+  no: 80,
   fileName: 420,
   userName: 150,
   downloadedAt: 220,
@@ -83,7 +83,7 @@ export default function FileDownloadHistoryPage() {
         ellipsis: { showTitle: true },
       },
       {
-        title: '사용자',
+        title: '사용자명',
         dataIndex: 'userName',
         key: 'userName',
         width: TABLE_COL_WIDTH.userName,

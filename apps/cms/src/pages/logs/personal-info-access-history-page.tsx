@@ -25,7 +25,7 @@ import '@/features/program/general/ui/program-list.css'
 const PERSONAL_INFO_ACCESS_TABLE_SCROLL_X = 1120
 
 const TABLE_COL_WIDTH = {
-  no: 88,
+  no: 80,
   targetName: 160,
   accessPurpose: 260,
   accessorName: 150,
@@ -92,7 +92,7 @@ export default function PersonalInfoAccessHistoryPage() {
         ellipsis: { showTitle: true },
       },
       {
-        title: '조회자',
+        title: '조회자명',
         dataIndex: 'accessorName',
         key: 'accessorName',
         width: TABLE_COL_WIDTH.accessorName,

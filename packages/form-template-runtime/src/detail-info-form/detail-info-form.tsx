@@ -183,10 +183,14 @@ export type DetailInfoFormNameBlockRow = {
   main: ReactNode
   sideLabel: string
   side: ReactNode
+  /** edit 모드에서 우측 라벨에 필수 `*` 표시 */
+  sideRequired?: boolean
 }
 
 export type DetailInfoFormNameBlockProps = {
   title?: string
+  /** edit 모드에서 좌측 그룹 타이틀에 필수 `*` 표시 */
+  required?: boolean
   /** false: 좌측 '성명' 통합 셀 없이 첫 열을 subLabel 전용(예: 성명(한글))으로 넓게 사용 */
   showGroupTitle?: boolean
   rows: readonly [DetailInfoFormNameBlockRow, DetailInfoFormNameBlockRow]
@@ -195,9 +199,12 @@ export type DetailInfoFormNameBlockProps = {
 
 function DetailInfoFormNameBlock({
   title = '성명',
+  required,
   showGroupTitle = true,
   rows,
   className }: DetailInfoFormNameBlockProps) {
+  const { mode: contextMode } = useContext(DetailInfoFormContext)
+  const showRequired = Boolean(required && contextMode === 'edit')
   const [r0, r1] = rows
   const rootClass = [
     'detail-info-form__name-block',
@@ -213,7 +220,12 @@ function DetailInfoFormNameBlock({
     <div className={rootClass} role="group" aria-label={ariaLabel}>
       {showGroupTitle ? (
         <div className="detail-info-form__name-block-cell detail-info-form__name-block-cell--t detail-info-form__name-block-cell--label">
-          {title}
+          <span className="detail-info-form__field-label-text">{title}</span>
+          {showRequired ? (
+            <span className="detail-info-form__field-required" aria-hidden>
+              *
+            </span>
+          ) : null}
         </div>
       ) : null}
       <div className="detail-info-form__name-block-cell detail-info-form__name-block-cell--s1 detail-info-form__name-block-cell--label">
@@ -223,7 +235,12 @@ function DetailInfoFormNameBlock({
         {r0.main}
       </div>
       <div className="detail-info-form__name-block-cell detail-info-form__name-block-cell--l1 detail-info-form__name-block-cell--label">
-        {r0.sideLabel}
+        <span className="detail-info-form__field-label-text">{r0.sideLabel}</span>
+        {r0.sideRequired && contextMode === 'edit' ? (
+          <span className="detail-info-form__field-required" aria-hidden>
+            *
+          </span>
+        ) : null}
       </div>
       <div className="detail-info-form__name-block-cell detail-info-form__name-block-cell--r1 detail-info-form__name-block-cell--value">
         {r0.side}
@@ -235,7 +252,12 @@ function DetailInfoFormNameBlock({
         {r1.main}
       </div>
       <div className="detail-info-form__name-block-cell detail-info-form__name-block-cell--l2 detail-info-form__name-block-cell--label">
-        {r1.sideLabel}
+        <span className="detail-info-form__field-label-text">{r1.sideLabel}</span>
+        {r1.sideRequired && contextMode === 'edit' ? (
+          <span className="detail-info-form__field-required" aria-hidden>
+            *
+          </span>
+        ) : null}
       </div>
       <div className="detail-info-form__name-block-cell detail-info-form__name-block-cell--r2 detail-info-form__name-block-cell--value">
         {r1.side}

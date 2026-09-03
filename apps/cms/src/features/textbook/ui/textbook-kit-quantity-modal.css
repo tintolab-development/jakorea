@@ -41,13 +41,15 @@
   flex-direction: column;
   align-items: stretch;
   width: 100%;
+  max-width: 100%;
   height: auto;
   min-height: 0;
   max-height: min(100%, calc(100dvh - 32px));
   padding: 26px 30px 34px;
   gap: 0;
   flex-shrink: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: hidden;
   border-radius: 12px;
   background: #fff;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
@@ -58,8 +60,11 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
+  min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 .content-modal.textbook-kit-quantity-modal .content-modal__description,
@@ -74,11 +79,14 @@
 .content-modal.textbook-kit-quantity-modal .teal-header-modal__body {
   flex: 1 1 auto;
   width: 100%;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: 30px;
+  min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .content-modal.textbook-kit-quantity-modal .content-modal__description {
@@ -94,15 +102,20 @@
 .content-modal.textbook-kit-quantity-modal .teal-header-modal__footer {
   flex-shrink: 0;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   margin-top: 30px;
   padding: 0;
   border-top: none;
   background: transparent;
+  overflow-x: hidden;
 }
 
 .textbook-kit-quantity-modal__table {
   display: flex;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   flex-direction: column;
   flex-shrink: 0;
   border-top: 1px solid var(--table-line, #e0e0e0);
@@ -114,11 +127,14 @@
 .textbook-kit-quantity-modal__row {
   display: flex;
   align-items: stretch;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .textbook-kit-quantity-modal__th {
   display: flex;
   width: 140px;
+  max-width: 140px;
   padding: 10px;
   justify-content: center;
   align-items: center;
@@ -140,24 +156,28 @@
 .textbook-kit-quantity-modal__td {
   display: flex;
   box-sizing: border-box;
+  min-width: 0;
   min-height: 64px;
   padding: 12px;
   align-items: center;
   gap: 12px;
-  flex: 1 0 0;
+  flex: 1 1 0;
   align-self: stretch;
   border-right: 1px solid var(--table-line, #e0e0e0);
   border-bottom: 1px solid var(--table-line, #e0e0e0);
 }
 
 .textbook-kit-quantity-modal__input {
-  flex-shrink: 0;
+  max-width: 100%;
 }
 
 .textbook-kit-quantity-modal__footer {
   display: flex;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   justify-content: flex-end;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
 }

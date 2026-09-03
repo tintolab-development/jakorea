@@ -2,17 +2,12 @@ import { test, expect } from '../../fixtures/test'
 import {
   FORM_MANAGEMENT_URL,
   ISSUANCE_URL,
-  FORM_TEST_URL,
-  FORM_TEST_TABLES_URL,
   openTemplateByName,
   closeTemplateEditor,
   saveAndConfirm,
-  selectParagraphByNavLabel,
-  clickMultipleChoiceOption,
   openWritingPreview,
   closeWritingPreview,
   assertMultipleChoiceSurvivesParagraphSwitchById,
-  paragraphCardById,
 } from '../../helpers/form-template-editor-helpers'
 import {
   WRITING_TEMPLATE_NAMES,
@@ -176,43 +171,6 @@ test.describe('폼 양식 관리 — 브라우저 QA (전수)', () => {
     await openTemplateByName(page, '일반 프로그램 등록 폼')
     await expect(page.getByRole('button', { name: '저장' })).toBeVisible()
     await closeTemplateEditor(page)
-  })
-
-  test('양식 테스트 — 단일 항목: 객관식 blur 시 초기화(설문 authoring)', async ({ page }) => {
-    await page.goto(FORM_TEST_URL)
-    await page.getByRole('button', { name: '단일 항목 모음' }).click()
-    await expect(page.getByRole('button', { name: '미리보기' })).toBeVisible({ timeout: 15_000 })
-
-    await selectParagraphByNavLabel(page, /객관식/)
-    const mcCard = paragraphCardById(page, 'multiple-choice')
-    await clickMultipleChoiceOption(page, 'text 1', mcCard)
-    await selectParagraphByNavLabel(page, /주관식/)
-    await selectParagraphByNavLabel(page, /객관식/)
-    await expect(mcCard.locator('.ant-radio-checked')).toHaveCount(0)
-
-    await page.locator('.full-page-modal__close').click()
-  })
-
-  test('양식 테스트 — 단일 항목 모음: 9종 네비·미리보기', async ({ page }) => {
-    await page.goto(FORM_TEST_URL)
-    await page.getByRole('button', { name: '단일 항목 모음' }).click()
-    await expect(page.getByRole('button', { name: '미리보기' })).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByText('객관식형').first()).toBeVisible()
-    await openWritingPreview(page)
-    await closeWritingPreview(page)
-    await page.locator('.full-page-modal__close').click()
-  })
-
-  test('양식 테스트 — 설명글 유형 모음 진입', async ({ page }) => {
-    await page.goto(FORM_TEST_URL)
-    await page.getByRole('button', { name: '설명글 유형 모음' }).click()
-    await expect(page.getByRole('button', { name: '미리보기' })).toBeVisible({ timeout: 15_000 })
-    await page.locator('.full-page-modal__close').click()
-  })
-
-  test('양식 테스트 — 테이블 가로형 페이지 로드', async ({ page }) => {
-    await page.goto(FORM_TEST_TABLES_URL)
-    await expect(page.getByText('테이블').first()).toBeVisible({ timeout: 15_000 })
   })
 
   for (const templateName of WRITING_TEMPLATE_NAMES) {

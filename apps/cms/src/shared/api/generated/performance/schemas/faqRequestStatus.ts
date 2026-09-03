@@ -7,13 +7,14 @@
  */
 
 /**
- * 상태
+ * 공개 여부/상태. 공개=published, 비공개=draft|임시저장. 미입력 시 DRAFT(비공개).
  */
 export type FaqRequestStatus = typeof FaqRequestStatus[keyof typeof FaqRequestStatus];
 
 
 export const FaqRequestStatus = {
   published: 'published',
+  draft: 'draft',
   임시저장: '임시저장',
   archived: 'archived',
 } as const;

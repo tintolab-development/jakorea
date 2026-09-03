@@ -53,3 +53,24 @@ export function extractApiErrorMessage(
 export function formatApiErrorAlertContent(data: unknown, options?: { httpStatus?: number | null }): string {
   return extractApiErrorMessage(data, options)
 }
+
+/** 구조화 오류 코드 (`error.code` 또는 top-level `code`) */
+export function extractApiErrorCode(data: unknown): string | undefined {
+  const envelope = asEnvelope(data)
+  const nested = envelope?.error?.code?.trim()
+  if (nested) return nested
+  const top = (envelope as { code?: unknown } | null)?.code
+  return typeof top === 'string' && top.trim() ? top.trim() : undefined
+}
+
+export function getApiErrorHttpStatus(error: unknown): number | undefined {
+  if (!error || typeof error !== 'object' || !('response' in error)) return undefined
+  const status = (error as { response?: { status?: number } }).response?.status
+  return typeof status === 'number' ? status : undefined
+}
+
+export function getApiErrorCode(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object' || !('response' in error)) return undefined
+  const data = (error as { response?: { data?: unknown } }).response?.data
+  return extractApiErrorCode(data)
+}

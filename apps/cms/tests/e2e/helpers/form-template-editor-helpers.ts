@@ -2,8 +2,6 @@ import { expect, type Page } from '@playwright/test'
 
 export const FORM_MANAGEMENT_URL = '/templates/form-management?tab=template-form'
 export const ISSUANCE_URL = '/templates/form-management?tab=issuance-form'
-export const FORM_TEST_URL = '/templates/form-management?tab=form-test'
-export const FORM_TEST_TABLES_URL = '/templates/form-test/tables?tab=form-test'
 
 export async function openTemplateByName(
   page: Page,

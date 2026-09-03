@@ -12,7 +12,7 @@ export function useGeneralInstructorApplicantColumns(params: {
 
   return useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: '64px', align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '신청 강사명',
         dataIndex: 'instructorName',

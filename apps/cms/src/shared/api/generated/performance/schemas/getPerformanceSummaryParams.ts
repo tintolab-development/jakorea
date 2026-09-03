@@ -12,7 +12,59 @@ export type GetPerformanceSummaryParams = {
  */
 programId?: number;
 /**
- * 쿼리 파라미터입니다. 요청값 출처: 경로/쿼리 from 필터
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType
  */
 educationMonth?: string;
+/**
+ * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
+ */
+status?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType
+ */
+year?: number;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType
+ */
+quarter?: number;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType
+ */
+businessArea?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType
+ */
+sponsorNameKo?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType
+ */
+mainTitle?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType
+ */
+title?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType
+ */
+textbookName?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType
+ */
+institutionName?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType
+ */
+sido?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType
+ */
+sigungu?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType
+ */
+ips?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType
+ */
+educationType?: string;
 };

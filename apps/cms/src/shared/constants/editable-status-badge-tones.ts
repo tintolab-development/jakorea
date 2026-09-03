@@ -78,12 +78,18 @@ export function getManagerEvaluationBadgeTone(
 }
 
 export const SPONSOR_SPONSORSHIP_STATUS_LABEL: Record<SponsorSponsorshipStatus, string> = {
-  active: '진행 중',
+  active: '후원 중',
+  discussing: '후원 논의중',
+  dormant: '후원 휴면',
   ended: '후원 종료',
 }
 
 export function getSponsorSponsorshipStatusBadgeTone(
   status: SponsorSponsorshipStatus
 ): EditableStatusBadgeTone {
-  return status === 'active' ? 'blue' : 'gray'
+  if (status === 'active') return 'blue'
+  if (status === 'discussing') return 'green'
+  if (status === 'dormant') return 'greenOverlay'
+  if (status === 'ended') return 'red'
+  return 'gray'
 }

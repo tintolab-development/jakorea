@@ -425,7 +425,7 @@ export default function AccountPaymentsPage() {
         title: 'No.',
         dataIndex: 'no',
         key: 'no',
-        width: 64,
+        width: 80,
         align: 'center',
       },
       {

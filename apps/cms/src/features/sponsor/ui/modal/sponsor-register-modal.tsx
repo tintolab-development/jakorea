@@ -1,16 +1,31 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Space } from 'antd'
-import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
+import dayjs from 'dayjs'
+import type { SponsorRegisterPayload } from '@/features/sponsor/model/sponsor-management.types'
+import { SPONSOR_SPONSORSHIP_STATUS_VALUES } from '@/features/sponsor/model/sponsorship-status'
+import { SponsorSponsorshipStatusBadge } from '@/features/sponsor/ui/sponsor-sponsorship-status-badge'
+import {
+  STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
+  StatusDropdownCell,
+} from '@/shared/components/status-dropdown-cell'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
-import { AddressSearch, CmsBusinessNumberInput, CmsButton, CmsInput, CmsRadioGroup, ContentModal } from '@/shared/ui'
-import type { SponsorOrganizationKind } from '@/types/domain'
+import {
+  AddressSearch,
+  CmsBusinessNumberInput,
+  CmsButton,
+  CmsDatePicker,
+  CmsInput,
+  CmsRadioGroup,
+  ContentModal,
+  FileSelectField,
+} from '@/shared/ui'
+import type { SponsorOrganizationKind, SponsorSponsorshipStatus } from '@/types/domain'
 
 export interface SponsorRegisterModalProps {
   open: boolean
   onCancel: () => void
-  /** 검증 통과 시 목록에 반영할 행을 넘깁니다. */
-  onSubmit: (row: SponsorManagementRow) => void
+  onSubmit: (payload: SponsorRegisterPayload) => void
 }
 
 type FormState = {
@@ -18,36 +33,46 @@ type FormState = {
   nameDisplayEn: string
   organizationKind: SponsorOrganizationKind
   businessNumber: string
+  sponsorshipStartDate: string
+  sponsorshipStatus: SponsorSponsorshipStatus
   executives: string
   district: string
   detailAddress: string
+  homepageUrl: string
+  securityMemo: string
+  logoFile: File | null
 }
+
+const LOGO_GUIDE_LINES = [
+  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+]
 
 const emptyForm = (): FormState => ({
   nameDisplayKo: '',
   nameDisplayEn: '',
   organizationKind: 'corporate',
   businessNumber: '',
+  sponsorshipStartDate: '',
+  sponsorshipStatus: 'active',
   executives: '',
   district: '',
   detailAddress: '',
+  homepageUrl: '',
+  securityMemo: '',
+  logoFile: null,
 })
-
-function buildDescription(f: FormState): string | undefined {
-  const parts: string[] = []
-  if (f.businessNumber.trim()) parts.push(`사업자번호: ${f.businessNumber.trim()}`)
-  if (f.executives.trim()) parts.push(`대표이사: ${f.executives.trim()}`)
-  const addr = [f.district.trim(), f.detailAddress.trim()].filter(Boolean).join(' ')
-  if (addr) parts.push(`소재지: ${addr}`)
-  return parts.length > 0 ? parts.join('\n') : undefined
-}
 
 export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegisterModalProps) {
   const [form, setForm] = useState<FormState>(emptyForm)
+  const [isSponsorshipStatusOpen, setIsSponsorshipStatusOpen] = useState(false)
 
   /* eslint-disable react-hooks/set-state-in-effect -- 모달이 열릴 때 등록 폼을 초기 상태로 리셋 */
   useEffect(() => {
-    if (open) setForm(emptyForm())
+    if (open) {
+      setForm(emptyForm())
+      setIsSponsorshipStatusOpen(false)
+    }
   }, [open])
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -56,36 +81,35 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
   }, [])
 
   const handleSubmit = useCallback((): void => {
-    const name = form.nameDisplayKo.trim()
-    if (!name) {
-      return
-    }
+    const nameDisplayKo = form.nameDisplayKo.trim()
+    const nameDisplayEn = form.nameDisplayEn.trim()
+    if (!nameDisplayKo || !nameDisplayEn || !form.sponsorshipStartDate) return
 
-    const now = new Date().toISOString()
-    const id = `sponsor-new-${Date.now()}`
-    const address = [form.district.trim(), form.detailAddress.trim()].filter(Boolean).join(' ')
-    const row: SponsorManagementRow = {
-      id,
-      name,
-      nameEn: form.nameDisplayEn.trim() || undefined,
-      description: buildDescription(form),
-      contactInfo: address || undefined,
-      createdAt: now,
-      updatedAt: now,
+    onSubmit({
+      nameDisplayKo,
+      nameDisplayEn,
       organizationKind: form.organizationKind,
-      sponsorshipStatus: 'active',
-      sponsorshipStartDate: now.split('T')[0] + 'T00:00:00.000Z',
-      managers: [],
-      programCount: 0,
-    }
-
-    onSubmit(row)
+      businessNumber: form.businessNumber,
+      sponsorshipStartDate: form.sponsorshipStartDate,
+      sponsorshipStatus: form.sponsorshipStatus,
+      executives: form.executives,
+      district: form.district,
+      detailAddress: form.detailAddress,
+      homepageUrl: form.homepageUrl,
+      securityMemo: form.securityMemo,
+      logoFile: form.logoFile,
+    })
   }, [form, onSubmit])
 
   const noopView = <span />
 
-  /** DetailInfoForm `required`와 동일: 후원사명(국문). 구분은 라디오 기본값으로 항상 있음 */
-  const canSubmit = useMemo(() => form.nameDisplayKo.trim().length > 0, [form.nameDisplayKo])
+  const canSubmit = useMemo(
+    () =>
+      form.nameDisplayKo.trim().length > 0 &&
+      form.nameDisplayEn.trim().length > 0 &&
+      form.sponsorshipStartDate.length > 0,
+    [form.nameDisplayEn, form.nameDisplayKo, form.sponsorshipStartDate]
+  )
 
   return (
     <ContentModal
@@ -114,7 +138,7 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
               <CmsInput
                 value={form.nameDisplayKo}
                 onChange={e => setField('nameDisplayKo', e.target.value)}
-                placeholder="후원사명"
+                placeholder="후원사명(국문)을 입력하세요"
                 inputSize="medium"
                 width="100%"
               />
@@ -122,12 +146,13 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
           />
           <DetailInfoForm.Field
             label="후원사명 (영문)"
+            required
             view={noopView}
             edit={
               <CmsInput
                 value={form.nameDisplayEn}
                 onChange={e => setField('nameDisplayEn', e.target.value)}
-                placeholder="후원사명"
+                placeholder="후원사명(영문)을 입력하세요"
                 inputSize="medium"
                 width="100%"
               />
@@ -160,10 +185,51 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
               <CmsBusinessNumberInput
                 value={form.businessNumber}
                 onChange={e => setField('businessNumber', e.target.value)}
-                placeholder="000-00-00000"
+                placeholder="사업자번호를 입력하세요"
                 inputSize="medium"
                 width="100%"
               />
+            }
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="후원 시작일"
+            required
+            view={noopView}
+            edit={
+              <CmsDatePicker
+                value={form.sponsorshipStartDate ? dayjs(form.sponsorshipStartDate) : null}
+                onChange={date =>
+                  setField(
+                    'sponsorshipStartDate',
+                    date ? date.startOf('day').toISOString() : ''
+                  )
+                }
+                placeholder="후원 시작일을 입력하세요"
+                format="YYYY.MM.DD"
+                allowClear
+                style={{ width: '100%' }}
+              />
+            }
+          />
+          <DetailInfoForm.Field
+            label="후원 상태"
+            required
+            view={noopView}
+            edit={
+              <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
+                <StatusDropdownCell<SponsorSponsorshipStatus>
+                  status={form.sponsorshipStatus}
+                  statusOptions={SPONSOR_SPONSORSHIP_STATUS_VALUES}
+                  renderBadge={status => <SponsorSponsorshipStatusBadge status={status} />}
+                  isItemDisabled={(currentStatus, optionStatus) => currentStatus === optionStatus}
+                  onChange={next => setField('sponsorshipStatus', next)}
+                  isOpen={isSponsorshipStatusOpen}
+                  onOpenChange={setIsSponsorshipStatusOpen}
+                  tagLayout="tag100"
+                />
+              </span>
             }
           />
         </DetailInfoForm.Row>
@@ -176,7 +242,7 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
               <CmsInput
                 value={form.executives}
                 onChange={e => setField('executives', e.target.value)}
-                placeholder="대표이사"
+                placeholder="대표이사명을 입력하세요"
                 inputSize="medium"
                 width="100%"
               />
@@ -185,7 +251,7 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="후원사 소재지"
+            label="소재지"
             colSpan={2}
             view={noopView}
             edit={
@@ -206,6 +272,57 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
                   width="100%"
                 />
               </Space.Compact>
+            }
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="홈페이지"
+            colSpan={2}
+            view={noopView}
+            edit={
+              <CmsInput
+                value={form.homepageUrl}
+                onChange={e => setField('homepageUrl', e.target.value)}
+                placeholder="홈페이지 주소를 입력하세요"
+                inputSize="medium"
+                width="100%"
+              />
+            }
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="후원사 로고"
+            colSpan={2}
+            view={noopView}
+            edit={
+              <FileSelectField
+                multiple={false}
+                accept=".jpg,.jpeg,.png"
+                buttonLabel="파일 추가"
+                fileNames={form.logoFile ? [form.logoFile.name] : []}
+                currentTotalBytes={form.logoFile?.size ?? 0}
+                onFilesChange={files => setField('logoFile', files[0] ?? null)}
+                onRemoveFile={() => setField('logoFile', null)}
+                guideLines={LOGO_GUIDE_LINES}
+              />
+            }
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="비고"
+            colSpan={2}
+            view={noopView}
+            edit={
+              <CmsInput
+                value={form.securityMemo}
+                onChange={e => setField('securityMemo', e.target.value)}
+                placeholder="비고를 입력하세요"
+                inputSize="medium"
+                width="100%"
+              />
             }
           />
         </DetailInfoForm.Row>

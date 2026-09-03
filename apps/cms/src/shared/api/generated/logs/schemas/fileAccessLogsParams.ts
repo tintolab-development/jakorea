@@ -20,11 +20,11 @@ params: {[key: string]: string};
  */
 userName?: string;
 /**
- * 조회 시작일 YYYY-MM-DD 또는 ISO-8601
+ * 다운로드 기간 시작일 YYYY-MM-DD 또는 ISO-8601
  */
 from?: string;
 /**
- * 조회 종료일 YYYY-MM-DD 또는 ISO-8601
+ * 다운로드 기간 종료일 YYYY-MM-DD 또는 ISO-8601
  */
 to?: string;
 /**

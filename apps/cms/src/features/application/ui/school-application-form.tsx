@@ -89,7 +89,7 @@ export function SchoolApplicationForm({
       const { fileUploadService } = await import('@/entities/application/api/file-upload-service')
       const blob = await fileUploadService.createSampleStudentListBlob()
       const filename = `참여학생명단_샘플_${new Date().toISOString().split('T')[0]}.xlsx`
-      downloadBlob(blob, filename)
+      await downloadBlob(blob, filename)
     } catch (error) {
       handleError(error, { context: 'schoolApplicationForm.sampleDownload' })
     }

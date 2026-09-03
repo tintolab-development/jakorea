@@ -90,6 +90,13 @@ export function buildRegisterSocialConnectPath(redirectPath?: string) {
   return `/register/social-connect?redirect=${encodeURIComponent(redirectPath)}`
 }
 
+export function buildRegisterCompletePath(redirectPath?: string) {
+  if (!redirectPath) {
+    return '/register/complete'
+  }
+  return `/register/complete?redirect=${encodeURIComponent(redirectPath)}`
+}
+
 export function buildRegisterSocialConnectCompletePath(redirectPath?: string) {
   if (!redirectPath) {
     return '/register/social-connect/complete'
