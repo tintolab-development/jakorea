@@ -115,7 +115,21 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
       })
       return
     }
-    onMemberInfoDraftChange?.({ schoolEnrollmentStatus: next })
+    // 재학 전환 시 잔존 검색 메타·자유입력 제거
+    onMemberInfoDraftChange?.({
+      schoolEnrollmentStatus: next,
+      affiliationInstitution: '',
+      affiliationGrade: '',
+      schoolOrganizationId: null,
+      schoolProvider: undefined,
+      schoolExternalCode: undefined,
+      schoolEducationOfficeCode: undefined,
+      schoolLevel: undefined,
+      schoolAddress: undefined,
+      schoolZipcode: undefined,
+      schoolRegionSido: undefined,
+      schoolRegionSigungu: undefined,
+    })
   }
 
   const nameWithBadge = (nameNode: ReactNode) => (

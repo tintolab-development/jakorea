@@ -27,6 +27,7 @@ import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-w
 import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { resolveIndividualEnrolledSchoolSubmitBlock } from '@/features/user/api/individual-enrolled-school-selection'
 import {
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
   buildRequiredConsentDisagreeAlertMessage,
@@ -413,6 +414,24 @@ export function AddUserIndividual({
       })
       return
     }
+
+    if (values.schoolEnrollmentStatus === 'enrolled') {
+      const enrolledSchoolBlock = resolveIndividualEnrolledSchoolSubmitBlock({
+        schoolProvider: values.schoolProvider,
+        schoolOrganizationId: values.schoolOrganizationId,
+        schoolExternalCode: values.schoolExternalCode,
+        schoolEducationOfficeCode: values.schoolEducationOfficeCode,
+        schoolRegionSido: values.schoolRegionSido,
+      })
+      if (enrolledSchoolBlock != null) {
+        showAlert({
+          title: '안내',
+          content: enrolledSchoolBlock,
+        })
+        return
+      }
+    }
+
     void handleFinish(values)
   }
 
@@ -433,7 +452,22 @@ export function AddUserIndividual({
       })
       return
     }
-    form.setFieldsValue({ affiliationOrganization: '', affiliationNone: false })
+    // 재학 전환 시 잔존 검색 메타·자유입력 제거 — SchoolSearch로 다시 선택
+    form.setFieldsValue({
+      affiliationOrganization: '',
+      affiliationNone: false,
+      schoolName: '',
+      grade: '',
+      schoolProvider: undefined,
+      schoolExternalCode: undefined,
+      schoolEducationOfficeCode: undefined,
+      schoolLevel: undefined,
+      schoolAddress: undefined,
+      schoolZipcode: undefined,
+      schoolRegionSido: undefined,
+      schoolRegionSigungu: undefined,
+      schoolOrganizationId: undefined,
+    })
   }, [form, schoolEnrollmentStatus])
 
   return (
@@ -517,7 +551,18 @@ export function AddUserIndividual({
                         <SchoolSearch
                           value={schoolName}
                           onChange={nextSchoolName =>
-                            form.setFieldValue('schoolName', nextSchoolName)
+                            form.setFieldsValue({
+                              schoolName: nextSchoolName,
+                              schoolProvider: undefined,
+                              schoolExternalCode: undefined,
+                              schoolEducationOfficeCode: undefined,
+                              schoolLevel: undefined,
+                              schoolAddress: undefined,
+                              schoolZipcode: undefined,
+                              schoolRegionSido: undefined,
+                              schoolRegionSigungu: undefined,
+                              schoolOrganizationId: undefined,
+                            })
                           }
                           onSelect={handleSchoolSelect}
                           placeholder="소속 학교명"
