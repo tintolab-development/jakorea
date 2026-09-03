@@ -1,7 +1,11 @@
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { SponsorsParams } from '@/shared/api/generated/data-management/schemas'
-import type { SponsorOrganizationKind } from '@/types/domain'
+import {
+  isSponsorSponsorshipStatus,
+  parseSponsorSponsorshipStatusFilter,
+} from '@/features/sponsor/model/sponsorship-status'
+import type { SponsorOrganizationKind, SponsorSponsorshipStatus } from '@/types/domain'
 import type { DateValue } from '@/types'
 
 /** OpenAPI SponsorsParams에 아직 없는 후원 시작일 구간 — BE 갭 P1 */
@@ -15,9 +19,8 @@ function parseKind(raw: string | null): SponsorOrganizationKind {
   return 'corporate'
 }
 
-function parseStatus(raw: string | null): 'ALL' | 'active' | 'ended' {
-  if (raw === 'active' || raw === 'ended') return raw
-  return 'ALL'
+function parseStatus(raw: string | null): 'ALL' | SponsorSponsorshipStatus {
+  return parseSponsorSponsorshipStatusFilter(raw)
 }
 
 export function sponsorsParamsFromSearchParams(
@@ -53,7 +56,7 @@ export function serializeSponsorListFilters(searchParams: URLSearchParams): stri
   const mgr = (searchParams.get('sp_mgr') ?? '').trim()
   if (mgr) next.set('sp_mgr', mgr)
   const st = searchParams.get('sp_st')
-  if (st === 'active' || st === 'ended') next.set('sp_st', st)
+  if (isSponsorSponsorshipStatus(st)) next.set('sp_st', st)
   const from = (searchParams.get('sp_from') ?? '').trim()
   if (from) next.set('sp_from', from)
   const to = (searchParams.get('sp_to') ?? '').trim()

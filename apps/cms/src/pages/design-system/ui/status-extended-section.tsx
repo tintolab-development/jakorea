@@ -270,6 +270,8 @@ export function StatusExtendedSection() {
           <SponsorContactTypeBadge type="assistant" />
           <SponsorSponsorshipStatusBadge status="active" />
           <SponsorSponsorshipStatusBadge status="ended" />
+          <SponsorSponsorshipStatusBadge status="discussing" />
+          <SponsorSponsorshipStatusBadge status="dormant" />
         </div>
       </DsDemo>
     </DsSection>

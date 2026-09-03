@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Space } from 'antd'
 import dayjs from 'dayjs'
 import type { SponsorRegisterPayload } from '@/features/sponsor/model/sponsor-management.types'
+import { SPONSOR_SPONSORSHIP_STATUS_VALUES } from '@/features/sponsor/model/sponsorship-status'
 import { SponsorSponsorshipStatusBadge } from '@/features/sponsor/ui/sponsor-sponsorship-status-badge'
+import {
+  STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
+  StatusDropdownCell,
+} from '@/shared/components/status-dropdown-cell'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import {
@@ -15,7 +20,7 @@ import {
   ContentModal,
   FileSelectField,
 } from '@/shared/ui'
-import type { SponsorOrganizationKind } from '@/types/domain'
+import type { SponsorOrganizationKind, SponsorSponsorshipStatus } from '@/types/domain'
 
 export interface SponsorRegisterModalProps {
   open: boolean
@@ -29,6 +34,7 @@ type FormState = {
   organizationKind: SponsorOrganizationKind
   businessNumber: string
   sponsorshipStartDate: string
+  sponsorshipStatus: SponsorSponsorshipStatus
   executives: string
   district: string
   detailAddress: string
@@ -48,6 +54,7 @@ const emptyForm = (): FormState => ({
   organizationKind: 'corporate',
   businessNumber: '',
   sponsorshipStartDate: '',
+  sponsorshipStatus: 'active',
   executives: '',
   district: '',
   detailAddress: '',
@@ -58,10 +65,14 @@ const emptyForm = (): FormState => ({
 
 export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegisterModalProps) {
   const [form, setForm] = useState<FormState>(emptyForm)
+  const [isSponsorshipStatusOpen, setIsSponsorshipStatusOpen] = useState(false)
 
   /* eslint-disable react-hooks/set-state-in-effect -- 모달이 열릴 때 등록 폼을 초기 상태로 리셋 */
   useEffect(() => {
-    if (open) setForm(emptyForm())
+    if (open) {
+      setForm(emptyForm())
+      setIsSponsorshipStatusOpen(false)
+    }
   }, [open])
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -80,7 +91,7 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
       organizationKind: form.organizationKind,
       businessNumber: form.businessNumber,
       sponsorshipStartDate: form.sponsorshipStartDate,
-      sponsorshipStatus: 'active',
+      sponsorshipStatus: form.sponsorshipStatus,
       executives: form.executives,
       district: form.district,
       detailAddress: form.detailAddress,
@@ -206,7 +217,20 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
             label="후원 상태"
             required
             view={noopView}
-            edit={<SponsorSponsorshipStatusBadge status="active" />}
+            edit={
+              <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
+                <StatusDropdownCell<SponsorSponsorshipStatus>
+                  status={form.sponsorshipStatus}
+                  statusOptions={SPONSOR_SPONSORSHIP_STATUS_VALUES}
+                  renderBadge={status => <SponsorSponsorshipStatusBadge status={status} />}
+                  isItemDisabled={(currentStatus, optionStatus) => currentStatus === optionStatus}
+                  onChange={next => setField('sponsorshipStatus', next)}
+                  isOpen={isSponsorshipStatusOpen}
+                  onOpenChange={setIsSponsorshipStatusOpen}
+                  tagLayout="tag100"
+                />
+              </span>
+            }
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">

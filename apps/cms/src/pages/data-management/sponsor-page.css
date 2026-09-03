@@ -215,6 +215,36 @@
   border-color: var(--editable-badge-gray-border) !important;
 }
 
+.filter-table-layout.sponsor-page
+  .filter-table-layout__table
+  .sponsor-page__table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.editable-status-badge--green,
+.filter-table-layout.sponsor-page
+  .filter-table-layout__table
+  .sponsor-page__table.cms-data-table
+  .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+  .editable-status-badge.editable-status-badge--green {
+  border-color: var(--editable-badge-green-border) !important;
+}
+
+.filter-table-layout.sponsor-page
+  .filter-table-layout__table
+  .sponsor-page__table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.editable-status-badge--red,
+.filter-table-layout.sponsor-page
+  .filter-table-layout__table
+  .sponsor-page__table.cms-data-table
+  .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+  .editable-status-badge.editable-status-badge--red {
+  border-color: var(--editable-badge-red-border) !important;
+}
+
 /* 드롭다운 열림 시 행 높이 고정 — UI shifting 방지 */
 .filter-table-layout.sponsor-page
   .filter-table-layout__table

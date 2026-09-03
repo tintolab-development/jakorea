@@ -39,3 +39,34 @@
   align-items: center;
   vertical-align: middle;
 }
+
+.sponsor-detail-basic-info__logos {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sponsor-detail-basic-info__logo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sponsor-detail-basic-info__logo-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-body, #262626);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.sponsor-detail-basic-info__logo-download {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--color-text-tertiary, #8c8c8c);
+}

@@ -16,8 +16,8 @@ export interface SponsorManager {
 /** 후원사 관리 목록 — 구분(기업 / 재단) */
 export type SponsorOrganizationKind = 'corporate' | 'foundation'
 
-/** 후원사 관리 목록 — 후원 상태 */
-export type SponsorSponsorshipStatus = 'active' | 'ended'
+/** 후원사 관리 — 후원 상태 */
+export type SponsorSponsorshipStatus = 'active' | 'ended' | 'discussing' | 'dormant'
 
 // 스폰서
 export interface Sponsor {
@@ -33,7 +33,7 @@ export interface Sponsor {
   updatedAt: DateValue
   /** 기업 / 재단 (후원사 관리) */
   organizationKind?: SponsorOrganizationKind
-  /** 진행 중 / 후원 종료 (후원사 관리) */
+  /** 후원 중 / 후원 종료 / 후원 논의중 / 후원 휴면 */
   sponsorshipStatus?: SponsorSponsorshipStatus
   /** 후원 시작일 (후원사 관리) */
   sponsorshipStartDate?: DateValue

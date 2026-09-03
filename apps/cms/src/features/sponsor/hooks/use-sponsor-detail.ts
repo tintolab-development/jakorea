@@ -49,6 +49,10 @@ export function buildBasicInfoEditStateFromDetail(
     detailAddress: parsedAddress.detailAddress,
     sponsorshipStartDate: detail.sponsorshipStartDate,
     sponsorshipStatus: detail.sponsorshipStatus ?? 'active',
+    homepageUrl: detail.homepageUrl,
+    securityMemo: detail.securityMemo ?? '',
+    logos: detail.logos,
+    pendingLogoFiles: [],
   }
 }
 
@@ -60,6 +64,8 @@ function sponsorRowToPlaceholderDetail(sponsor: SponsorManagementRow): SponsorMa
     businessNumber: '',
     executives: '',
     address: '',
+    homepageUrl: '',
+    logos: [],
     contacts: [],
     programHistories: [],
     yearlyBusinesses: [],

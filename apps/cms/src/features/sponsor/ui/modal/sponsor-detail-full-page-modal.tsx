@@ -109,6 +109,7 @@ function SponsorDetailFullPageModalInner({
     detail,
     basicInfo,
     contacts,
+    programHistories,
     handleBasicInfoChange,
     handleSponsorshipStatusChange,
     isEditingBasicInfo,
@@ -286,6 +287,7 @@ function SponsorDetailFullPageModalInner({
               void handleSponsorshipStatusChange(next)
             }}
             sponsorshipStartDate={detail.sponsorshipStartDate}
+            programHistories={programHistories}
             canWrite={canWrite}
           />
         ) : lnbKey === LNB_CONTACTS ? (

@@ -3,6 +3,7 @@ import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { SponsorOrganizationKind, SponsorSponsorshipStatus } from '@/types/domain'
+import { parseSponsorSponsorshipStatusFilter } from '@/features/sponsor/model/sponsorship-status'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
 import { filterSponsorsBySponsorshipStartDateRange } from '@/features/sponsor/api/sponsor-filter-params'
@@ -19,8 +20,7 @@ function parseKind(raw: string | null): SponsorOrganizationKind {
 }
 
 function parseStatus(raw: string | null): 'ALL' | SponsorSponsorshipStatus {
-  if (raw === 'active' || raw === 'ended') return raw
-  return 'ALL'
+  return parseSponsorSponsorshipStatusFilter(raw)
 }
 
 function dayjsPairEqual(a: SponsorManagementDateRange, b: SponsorManagementDateRange): boolean {

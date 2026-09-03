@@ -1,5 +1,6 @@
 import type {
   SponsorContactRow,
+  SponsorLogoFile,
   SponsorManagementDetailView,
   SponsorManagementRow,
   SponsorProgramHistoryRow,
@@ -29,7 +30,8 @@ function parseOrganizationKind(value: string | undefined): SponsorOrganizationKi
 }
 
 function parseSponsorshipStatus(value: string | undefined): SponsorSponsorshipStatus {
-  return value === 'ended' ? 'ended' : 'active'
+  if (value === 'ended' || value === 'discussing' || value === 'dormant') return value
+  return 'active'
 }
 
 export function mapSponsorResponse(dto: SponsorResponse): SponsorManagementRow {
@@ -199,6 +201,12 @@ export function mergeYearlyBusinessRows(
   return rows
 }
 
+function mapSponsorLogos(dto: Pick<SponsorDetailResponse, 'logoFileId'>): SponsorLogoFile[] {
+  const id = dto.logoFileId?.trim()
+  if (!id) return []
+  return [{ id, fileName: id.includes('.') ? id : '후원사 로고' }]
+}
+
 export function mapSponsorDetailResponse(dto: SponsorDetailResponse): SponsorManagementDetailView {
   const base = mapSponsorResponse(dto)
   return {
@@ -208,6 +216,8 @@ export function mapSponsorDetailResponse(dto: SponsorDetailResponse): SponsorMan
     businessNumber: dto.businessNumber ?? '',
     executives: dto.executives ?? '',
     address: dto.address ?? '',
+    homepageUrl: dto.homepageUrl ?? '',
+    logos: mapSponsorLogos(dto),
     contacts: (dto.contacts ?? []).map(mapSponsorContactResponse),
     programHistories: (dto.programHistories ?? []).map(mapProgramHistoryResponse),
     yearlyBusinesses: mergeYearlyBusinessRows(
@@ -248,7 +258,7 @@ export function toSponsorRequestFromRegister(payload: SponsorRegisterPayload): S
 export function toSponsorRequestFromBasicInfo(
   basicInfo: BasicInfoEditState,
   existing: SponsorManagementDetailView
-): SponsorRequest {
+): SponsorWriteRequest {
   const address = [basicInfo.district.trim(), basicInfo.detailAddress.trim()]
     .filter(Boolean)
     .join(' ')
@@ -271,7 +281,8 @@ export function toSponsorRequestFromBasicInfo(
           : undefined,
     managers: existing.managers,
     contactInfo: existing.contactInfo,
-    securityMemo: existing.securityMemo,
+    securityMemo: basicInfo.securityMemo.trim() || existing.securityMemo,
+    homepageUrl: basicInfo.homepageUrl.trim() || undefined,
   }
 }
 

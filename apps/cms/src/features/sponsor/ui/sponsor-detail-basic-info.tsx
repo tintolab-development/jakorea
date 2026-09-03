@@ -4,8 +4,10 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import type {
   SponsorContactRow,
+  SponsorLogoFile,
   SponsorManagementRow,
 } from '@/features/sponsor/model/sponsor-management.types'
+import { SPONSOR_SPONSORSHIP_STATUS_VALUES } from '@/features/sponsor/model/sponsorship-status'
 import { SponsorContactDeleteModal } from '@/features/sponsor/ui/modal/sponsor-contact-delete-modal'
 import { SponsorSponsorshipStatusBadge } from '@/features/sponsor/ui/sponsor-sponsorship-status-badge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -13,7 +15,16 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import { AddressSearch, CmsBusinessNumberInput, CmsButton, CmsDatePicker, CmsInput, CmsRadioGroup } from '@/shared/ui'
+import {
+  AddressSearch,
+  CmsBusinessNumberInput,
+  CmsButton,
+  CmsDatePicker,
+  CmsInput,
+  CmsRadioGroup,
+  FileSelectField,
+} from '@/shared/ui'
+import { FileDownloadRowIcon } from '@/shared/ui/icons/FileDownloadRowIcon'
 import type { SponsorOrganizationKind } from '@/types/domain'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { formatKoreanBusinessNumber } from '@jakorea/domain/shared/korean-business-number'
@@ -24,7 +35,6 @@ const ORG_LABEL: Record<SponsorOrganizationKind, string> = {
   foundation: '재단',
 }
 
-const SPONSORSHIP_STATUS_OPTIONS = ['active', 'ended'] as const
 type SponsorshipStatus = NonNullable<SponsorManagementRow['sponsorshipStatus']>
 
 export type BasicInfoEditState = {
@@ -37,6 +47,47 @@ export type BasicInfoEditState = {
   detailAddress: string
   sponsorshipStartDate?: SponsorManagementRow['sponsorshipStartDate']
   sponsorshipStatus: SponsorManagementRow['sponsorshipStatus']
+  homepageUrl: string
+  securityMemo: string
+  logos: SponsorLogoFile[]
+  pendingLogoFiles: File[]
+}
+
+const LOGO_GUIDE_LINES = [
+  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+]
+
+function displayText(value: string | undefined): string {
+  const trimmed = value?.trim() ?? ''
+  return trimmed.length > 0 ? trimmed : '-'
+}
+
+function HomepageValue({ url }: { url: string }) {
+  const trimmed = url.trim()
+  if (!trimmed) return <span>-</span>
+  const href = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+  return (
+    <a href={href} target="_blank" rel="noreferrer">
+      {trimmed}
+    </a>
+  )
+}
+
+function SponsorLogoViewList({ files }: { files: SponsorLogoFile[] }) {
+  if (files.length === 0) return <span>-</span>
+  return (
+    <ul className="sponsor-detail-basic-info__logos">
+      {files.map(file => (
+        <li key={file.id} className="sponsor-detail-basic-info__logo-item">
+          <span className="sponsor-detail-basic-info__logo-name">{file.fileName}</span>
+          <span className="sponsor-detail-basic-info__logo-download" aria-hidden>
+            <FileDownloadRowIcon />
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
 }
 
 interface SponsorBasicInfoSectionProps {
@@ -67,7 +118,7 @@ export function SponsorBasicInfoSection({
       <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
         <StatusDropdownCell<SponsorshipStatus>
           status={value.sponsorshipStatus ?? 'active'}
-          statusOptions={SPONSORSHIP_STATUS_OPTIONS}
+          statusOptions={SPONSOR_SPONSORSHIP_STATUS_VALUES}
           renderBadge={status => <SponsorSponsorshipStatusBadge status={status} />}
           isItemDisabled={(currentStatus, optionStatus) => currentStatus === optionStatus}
           onChange={next => {
@@ -167,15 +218,41 @@ export function SponsorBasicInfoSection({
           ]}
         />
       </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double" className="sponsor-detail-basic-info__status-row">
+        <DetailInfoForm.Field
+          label="후원 시작일"
+          view={<span>{sponsorshipStartDisplay}</span>}
+          edit={
+            <CmsDatePicker
+              value={value.sponsorshipStartDate ? dayjs(value.sponsorshipStartDate) : null}
+              onChange={date =>
+                onChange(prev => ({
+                  ...prev,
+                  sponsorshipStartDate: date ? date.startOf('day').toISOString() : undefined,
+                }))
+              }
+              placeholder="후원 시작일을 입력하세요"
+              format="YYYY.MM.DD"
+              allowClear
+              style={{ width: '100%' }}
+            />
+          }
+        />
+        <DetailInfoForm.Field
+          label="후원 상태"
+          view={sponsorshipStatusFieldContent}
+          edit={sponsorshipStatusFieldContent}
+        />
+      </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="대표이사"
-          view={<span>{value.executives}</span>}
+          view={<span>{displayText(value.executives)}</span>}
           edit={
             <CmsInput
               value={value.executives}
               onChange={event => onChange(prev => ({ ...prev, executives: event.target.value }))}
-              placeholder="대표이사"
+              placeholder="대표이사명을 입력하세요"
               inputSize="medium"
               width="100%"
             />
@@ -184,7 +261,7 @@ export function SponsorBasicInfoSection({
         <DetailInfoForm.Field
           label="소재지"
           view={
-            <span>{[value.district, value.detailAddress].filter(Boolean).join(' ') || '-'}</span>
+            <span>{displayText([value.district, value.detailAddress].filter(Boolean).join(' '))}</span>
           }
           edit={
             <Space.Compact block>
@@ -209,30 +286,70 @@ export function SponsorBasicInfoSection({
           }
         />
       </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double" className="sponsor-detail-basic-info__status-row">
+      <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
-          label="후원 시작일"
-          view={<span>{sponsorshipStartDisplay}</span>}
+          label="홈페이지"
+          view={<HomepageValue url={value.homepageUrl} />}
           edit={
-            <CmsDatePicker
-              value={value.sponsorshipStartDate ? dayjs(value.sponsorshipStartDate) : null}
-              onChange={date =>
-                onChange(prev => ({
-                  ...prev,
-                  sponsorshipStartDate: date ? date.startOf('day').toISOString() : undefined,
-                }))
-              }
-              placeholder="후원 시작일"
-              format="YYYY.MM.DD"
-              allowClear
-              style={{ width: '100%' }}
+            <CmsInput
+              value={value.homepageUrl}
+              onChange={event => onChange(prev => ({ ...prev, homepageUrl: event.target.value }))}
+              placeholder="홈페이지 주소를 입력하세요"
+              inputSize="medium"
+              width="100%"
             />
           }
         />
         <DetailInfoForm.Field
-          label="후원 상태"
-          view={sponsorshipStatusFieldContent}
-          edit={sponsorshipStatusFieldContent}
+          label="후원사 로고"
+          view={<SponsorLogoViewList files={value.logos} />}
+          edit={
+            <FileSelectField
+              multiple
+              accept=".jpg,.jpeg,.png"
+              buttonLabel="파일 추가"
+              fileNames={[
+                ...value.logos.map(file => file.fileName),
+                ...value.pendingLogoFiles.map(file => file.name),
+              ]}
+              currentTotalBytes={value.pendingLogoFiles.reduce((sum, file) => sum + file.size, 0)}
+              onFilesChange={files =>
+                onChange(prev => ({
+                  ...prev,
+                  pendingLogoFiles: [...prev.pendingLogoFiles, ...files],
+                }))
+              }
+              onRemoveFile={index =>
+                onChange(prev => {
+                  if (index < prev.logos.length) {
+                    return { ...prev, logos: prev.logos.filter((_, i) => i !== index) }
+                  }
+                  const pendingIndex = index - prev.logos.length
+                  return {
+                    ...prev,
+                    pendingLogoFiles: prev.pendingLogoFiles.filter((_, i) => i !== pendingIndex),
+                  }
+                })
+              }
+              guideLines={LOGO_GUIDE_LINES}
+            />
+          }
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="비고"
+          colSpan={2}
+          view={<span>{displayText(value.securityMemo)}</span>}
+          edit={
+            <CmsInput
+              value={value.securityMemo}
+              onChange={event => onChange(prev => ({ ...prev, securityMemo: event.target.value }))}
+              placeholder="비고를 입력하세요"
+              inputSize="medium"
+              width="100%"
+            />
+          }
         />
       </DetailInfoForm.Row>
     </DetailInfoForm>

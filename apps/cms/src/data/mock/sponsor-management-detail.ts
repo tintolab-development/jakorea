@@ -49,15 +49,33 @@ export const SPONSOR_DETAIL_SEED_CONTACTS: readonly SponsorContactRow[] = [
   },
 ]
 
-/** 시안 누적 후원금·수혜자 수치를 맞춘 연도별 샘플 (상세 yearly 패널) */
+/** 시안 연도별 후원금 테이블 (누적 후원금 109,150,000원). 누적 수혜자 카드는 프로그램 참여자 합. */
 export const SPONSOR_DETAIL_SEED_YEARLY_BUSINESSES: readonly SponsorYearlyBusinessRow[] = [
   {
     id: 'sponsor-yearly-2026',
     year: 2026,
     donationAmount: 91_500_000,
     beneficiaryCount: 915,
-    memo: '시안 샘플 누적값',
+    memo: '',
     businessName: '2026년',
+    managerNameSnapshot: '홍길동',
+  },
+  {
+    id: 'sponsor-yearly-2025',
+    year: 2025,
+    donationAmount: 10_150_000,
+    beneficiaryCount: 0,
+    memo: '',
+    businessName: '2025년',
+    managerNameSnapshot: '홍길동',
+  },
+  {
+    id: 'sponsor-yearly-2024',
+    year: 2024,
+    donationAmount: 7_500_000,
+    beneficiaryCount: 0,
+    memo: '',
+    businessName: '2024년',
     managerNameSnapshot: '홍길동',
   },
 ]
@@ -169,6 +187,11 @@ export function buildSponsorManagementDetailView(
     businessNumber: '124-81-00998',
     executives: '전영현, 노태문',
     address: '경기도 수원시 영통구 삼성로 129(매탄동)',
+    homepageUrl: 'https://www.samsung.com',
+    logos: [
+      { id: 'sponsor-logo-workmark', fileName: 'samsung_logo (workmark).ai' },
+      { id: 'sponsor-logo', fileName: 'samsung_logo.ai' },
+    ],
     contacts: [...SPONSOR_DETAIL_SEED_CONTACTS],
     programHistories: [...SPONSOR_DETAIL_SEED_PROGRAM_HISTORIES],
     yearlyBusinesses: [...SPONSOR_DETAIL_SEED_YEARLY_BUSINESSES],

@@ -112,12 +112,19 @@ export type SponsorYearlyBusinessRow = {
   managerNameSnapshot: string
 }
 
+export type SponsorLogoFile = {
+  id: string
+  fileName: string
+}
+
 export type SponsorManagementDetailView = SponsorManagementRow & {
   nameDisplayKo: string
   nameDisplayEn: string
   businessNumber: string
   executives: string
   address: string
+  homepageUrl: string
+  logos: SponsorLogoFile[]
   contacts: SponsorContactRow[]
   programHistories: SponsorProgramHistoryRow[]
   yearlyBusinesses: SponsorYearlyBusinessRow[]

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  mapSponsorDetailResponse,
   mapSponsorResponse,
   mapYearlyBusinessResponse,
   mergeYearlyBusinessRows,
@@ -33,6 +34,19 @@ describe('mapSponsorResponse', () => {
     expect(row.programCount).toBe(0)
     expect(row.totalDonationAmount).toBe(0)
     expect(row.totalBeneficiaryCount).toBe(0)
+  })
+})
+
+describe('mapSponsorDetailResponse', () => {
+  it('maps homepage and a single logoFileId to logos', () => {
+    const detail = mapSponsorDetailResponse({
+      id: 'sp-1',
+      name: '삼성',
+      homepageUrl: 'https://www.samsung.com',
+      logoFileId: 'samsung_logo.ai',
+    })
+    expect(detail.homepageUrl).toBe('https://www.samsung.com')
+    expect(detail.logos).toEqual([{ id: 'samsung_logo.ai', fileName: 'samsung_logo.ai' }])
   })
 })
 

@@ -47,6 +47,8 @@ function detail(contacts: SponsorContactRow[]): SponsorManagementDetailView {
     businessNumber: '',
     executives: '',
     address: '',
+    homepageUrl: '',
+    logos: [],
     contacts,
     programHistories: [],
     yearlyBusinesses: [],
