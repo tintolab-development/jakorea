@@ -49,7 +49,7 @@ function ConfirmSection({
       <PFText as="h2" typo="form-section-title" color="black" className={styles.sectionTitle}>
         {title}
       </PFText>
-      {children}
+      <div className={styles.sectionBody}>{children}</div>
       {footer ? (
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.sectionFooter}>
           {footer}
@@ -73,7 +73,7 @@ function ConfirmTripLegBlock({
       <PFText as="p" typo="bd-lg-sb" color="black" className={styles.legHeading}>
         {heading}
       </PFText>
-      <PFInfoReview rows={buildTripLegRows(leg)} />
+      <PFInfoReview rows={buildTripLegRows(leg)} accentFirstRow={false} />
     </div>
   )
 }
@@ -105,12 +105,13 @@ export function EducationSettlementConfirmView({
       />
 
       <ConfirmSection title="기본 정보">
-        <PFInfoReview rows={basicRows} />
+        <PFInfoReview rows={basicRows} accentFirstRow={false} />
       </ConfirmSection>
 
       {showTransport ? (
         <ConfirmSection title="교통비 신청">
           <PFInfoReview
+            accentFirstRow={false}
             rows={[{ label: '신청 구분', value: resolveSettlementTripTypeLabel(draft.transport.tripType) }]}
           />
 
@@ -140,6 +141,7 @@ export function EducationSettlementConfirmView({
           footer="1인 기준, 시간 당 최대 3만원까지 지급됩니다."
         >
           <PFInfoReview
+            accentFirstRow={false}
             rows={[
               { label: '영수증 제출', value: formatSettlementFileNames(draft.meal.fileNames) },
               { label: '식사비', value: formatSettlementAmountDisplay(draft.meal.amount) },
@@ -151,6 +153,7 @@ export function EducationSettlementConfirmView({
       {showActivity ? (
         <ConfirmSection title="활동비 신청" footer="사용한 금액의 영수증을 제출해 주세요.">
           <PFInfoReview
+            accentFirstRow={false}
             rows={[
               { label: '영수증 제출', value: formatSettlementFileNames(draft.activity.fileNames) },
               { label: '활동비', value: formatSettlementAmountDisplay(draft.activity.amount) },
