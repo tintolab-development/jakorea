@@ -14,6 +14,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
   SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
   SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS,
+  isSchoolAffiliatedTeacherRowSelectable,
   isSchoolTeacherEmploymentMutedStatus,
   requestSchoolTeacherEmploymentDropdownOpen,
   SchoolTeacherEmploymentStatusBadge,
@@ -32,7 +33,7 @@ export interface SchoolAffiliatedTeachersSectionProps {
   rows: SchoolAffiliatedTeacherRow[]
   /** 상단「개인정보 상세보기」로 마스킹 해제된 경우 연락처·이메일 원문 표시 */
   personalInfoRevealed?: boolean
-  /** 선택 교사 일괄 탈퇴 — 미지정 시 안내만 표시 */
+  /** 선택 교사 일괄 탈퇴 */
   onWithdrawSelected?: (teacherIds: string[]) => void
   /** `linkedUserId`가 있는 행 클릭 시 해당 CMS 회원 상세로 이동 */
   onLinkedUserClick?: (target: AffiliatedTeacherLinkTarget) => void
@@ -51,6 +52,7 @@ function isCheckboxClickTarget(target: EventTarget | null): boolean {
 export function SchoolAffiliatedTeachersSection({
   rows,
   personalInfoRevealed = false,
+  onWithdrawSelected,
   onLinkedUserClick,
   onEmploymentStatusChange,
 }: SchoolAffiliatedTeachersSectionProps) {
@@ -82,6 +84,20 @@ export function SchoolAffiliatedTeachersSection({
     [rows, employmentPatchById]
   )
 
+  const selectableRowIds = useMemo(
+    () =>
+      new Set(
+        dataSource
+          .filter(row => isSchoolAffiliatedTeacherRowSelectable(row.employmentStatus))
+          .map(row => row.id)
+      ),
+    [dataSource]
+  )
+
+  useEffect(() => {
+    setSelectedRowKeys(prev => prev.filter(key => selectableRowIds.has(String(key))))
+  }, [selectableRowIds])
+
   const handleEmploymentStatusChange = useCallback(
     (teacherId: string, next: SchoolTeacherEmploymentStatus) => {
       if (!guardAdminAction({ roleCode, action: 'write' })) return
@@ -106,13 +122,6 @@ export function SchoolAffiliatedTeachersSection({
         dataIndex: 'name',
         key: 'name',
         width: TABLE_COLUMN_WIDTHS.name,
-        align: 'center',
-      },
-      {
-        title: '담당 학년',
-        dataIndex: 'assignedGrade',
-        key: 'assignedGrade',
-        width: 100,
         align: 'center',
       },
       {
@@ -181,10 +190,12 @@ export function SchoolAffiliatedTeachersSection({
   )
 
   const handleWithdraw = () => {
-    window.alert('준비 중입니다.')
+    if (selectedRowKeys.length === 0) return
+    onWithdrawSelected?.(selectedRowKeys.map(String))
   }
 
   const handleRowClick = (record: Row) => {
+    if (!isSchoolAffiliatedTeacherRowSelectable(record.employmentStatus)) return
     const targetId =
       record.linkedUserId?.trim() ||
       (record.teacherMemberId != null ? String(record.teacherMemberId) : '')
@@ -224,6 +235,9 @@ export function SchoolAffiliatedTeachersSection({
                 columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
+                getCheckboxProps: record => ({
+                  disabled: !isSchoolAffiliatedTeacherRowSelectable(record.employmentStatus),
+                }),
               }}
               columns={columns}
               dataSource={dataSource}
@@ -232,19 +246,21 @@ export function SchoolAffiliatedTeachersSection({
               bordered={TABLE_CONFIG.bordered}
               scroll={TABLE_CONFIG.scroll}
               rowKey="id"
-              onRow={record => ({
-                className: isSchoolTeacherEmploymentMutedStatus(record.employmentStatus)
-                  ? 'school-affiliated-teachers-section__row--muted-text'
-                  : undefined,
-                onClick: e => {
-                  if (isCheckboxClickTarget(e.target)) return
-                  handleRowClick(record)
-                },
-                style:
+              onRow={record => {
+                const selectable = isSchoolAffiliatedTeacherRowSelectable(record.employmentStatus)
+                const linked =
                   (record.linkedUserId || record.teacherMemberId != null) && onLinkedUserClick
-                    ? { cursor: 'pointer' }
+                return {
+                  className: isSchoolTeacherEmploymentMutedStatus(record.employmentStatus)
+                    ? 'school-affiliated-teachers-section__row--muted-text'
                     : undefined,
-              })}
+                  onClick: e => {
+                    if (isCheckboxClickTarget(e.target)) return
+                    handleRowClick(record)
+                  },
+                  style: selectable && linked ? { cursor: 'pointer' } : undefined,
+                }
+              }}
             />
           </div>
         </DetailInfoForm.Row>
