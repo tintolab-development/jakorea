@@ -18,8 +18,8 @@ import {
 const adminFaqUrlDateRangeSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
 
 function parseVisibility(raw: string | null): AdminFaqPendingFilters['visibility'] {
-  if (raw === 'public' || raw === 'private') return raw
-  return 'ALL'
+  if (raw === 'private') return 'private'
+  return 'public'
 }
 
 function parseCategory(
@@ -30,34 +30,9 @@ function parseCategory(
   return 'ALL'
 }
 
-function filterRows(
-  data: AdminFaq[],
-  searchParams: URLSearchParams,
-  context: AdminFaqTableContext
-): AdminFaq[] {
-  const title = (searchParams.get('af_q') ?? '').trim().toLowerCase()
-  const author = (searchParams.get('af_auth') ?? '').trim().toLowerCase()
-  const vis = parseVisibility(searchParams.get('af_vis'))
-  const cat = parseCategory(searchParams.get('af_cat'), context.allowedCategoryLabels)
-  const from = searchParams.get('af_from')
-  const to = searchParams.get('af_to')
-
-  return data
-    .filter(row => {
-      if (title && !row.question.toLowerCase().includes(title)) return false
-      if (author && !row.author.toLowerCase().includes(author)) return false
-      if (vis === 'public' && row.status !== 'published') return false
-      if (vis === 'private' && row.status === 'published') return false
-      if (cat !== 'ALL' && row.category !== cat) return false
-      if (from && to) {
-        const d = dayjs(row.createdAt)
-        const start = dayjs(from).startOf('day')
-        const end = dayjs(to).endOf('day')
-        if (d.isBefore(start) || d.isAfter(end)) return false
-      }
-      return true
-    })
-    .sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf())
+/** 서버 필터 결과를 신뢰하고 작성일시 정렬만 맞춘다. */
+function sortRows(data: AdminFaq[]): AdminFaq[] {
+  return [...data].sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf())
 }
 
 const tanstackColumns: ColumnDef<AdminFaq>[] = [{ accessorKey: 'id', id: 'id' }]
@@ -81,7 +56,7 @@ const searchSyncRules: readonly TableSearchParamRule<AdminFaqPendingFilters>[] =
     kind: 'param',
     filterKey: 'visibility',
     paramKey: 'af_vis',
-    condition: f => f.visibility !== 'ALL',
+    condition: () => true,
     transform: v => String(v),
   },
   {
@@ -120,7 +95,7 @@ export const adminFaqManagementTablePageConfig: TablePageConfig<
     initialPending: {
       title: '',
       author: '',
-      visibility: 'ALL',
+      visibility: 'public',
       category: 'ALL',
       dateRange: null,
     },
@@ -164,7 +139,7 @@ export const adminFaqManagementTablePageConfig: TablePageConfig<
     hasActiveFilters: ({ context, searchParams }) => {
       if ((searchParams.get('af_q') ?? '').trim()) return true
       if ((searchParams.get('af_auth') ?? '').trim()) return true
-      if (parseVisibility(searchParams.get('af_vis')) !== 'ALL') return true
+      if (parseVisibility(searchParams.get('af_vis')) !== 'public') return true
       if (parseCategory(searchParams.get('af_cat'), context.allowedCategoryLabels) !== 'ALL')
         return true
       if (searchParams.get('af_from') && searchParams.get('af_to')) return true
@@ -175,10 +150,7 @@ export const adminFaqManagementTablePageConfig: TablePageConfig<
 
     onFilterChange: ({ prev, key, value }) => {
       if (key === 'visibility') {
-        const v =
-          value == null || value === ''
-            ? 'ALL'
-            : (value as AdminFaqPendingFilters['visibility'])
+        const v = value === 'private' ? 'private' : 'public'
         return { ...prev, visibility: v }
       }
       if (key === 'category') {
@@ -198,9 +170,9 @@ export const adminFaqManagementTablePageConfig: TablePageConfig<
     },
   },
 
-  filterFn: ({ context, data, searchParams }) => {
-    const filtered = filterRows(data, searchParams, context)
-    return { dataForTable: filtered, filteredData: filtered }
+  filterFn: ({ data }) => {
+    const sorted = sortRows(data)
+    return { dataForTable: sorted, filteredData: sorted }
   },
 
   getSearchSync: (_context: AdminFaqTableContext) => ({

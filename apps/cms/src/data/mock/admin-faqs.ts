@@ -15,6 +15,8 @@ export interface AdminFaq {
   author: string
   status: 'published' | 'draft' | 'archived'
   createdAt: string
+  /** 수정일시 — API에 없으면 createdAt으로 표시 */
+  updatedAt?: string
 }
 
 const AUTHORS = ['홍길동', '이정재', '관리자', '운영팀', 'IT지원팀', '대외협력팀']
@@ -55,6 +57,7 @@ export function buildAdminFaqMockList(count: number = ADMIN_FAQ_MOCK_LIST_COUNT)
       author: AUTHORS[i % AUTHORS.length],
       status: statusForIndex(i),
       createdAt,
+      updatedAt: createdAt,
     }
   })
 }

@@ -49,7 +49,8 @@ export function updateAdminFaq(id: string, patch: Partial<AdminFaq>): AdminFaq |
   const list = seed()
   const i = list.findIndex(f => f.id === id)
   if (i === -1) return undefined
-  list[i] = { ...list[i], ...patch }
+  const now = new Date().toISOString()
+  list[i] = { ...list[i], ...patch, updatedAt: patch.updatedAt ?? now }
   return { ...list[i] }
 }
 
