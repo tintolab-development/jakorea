@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   isCmsInstructorFeeJaRestrictedEditTarget,
+  shouldShowAdminRegisteredSchoolDetailCaption,
+  shouldShowCmsBasicProfileFieldsEdit,
   shouldShowCmsMemberInfoEditButton,
   shouldShowCmsMemberInfoEditButtonOrInstructorRestricted,
+  shouldShowCmsSchoolInfoEditButton,
 } from './admin-provisioned-member-policy'
 
 describe('shouldShowCmsMemberInfoEditButton', () => {
@@ -120,6 +123,116 @@ describe('shouldShowCmsMemberInfoEditButtonOrInstructorRestricted', () => {
         instructorMemberProfile: 'school_teacher',
         registeredByAdmin: true,
         identitySelfSignupCompletedAfterAdminRegistration: true,
+      })
+    ).toBe(false)
+  })
+
+  it('hides edit for admin-provisioned school teacher before identity completion', () => {
+    expect(
+      shouldShowCmsMemberInfoEditButtonOrInstructorRestricted({
+        role: 'INSTRUCTOR',
+        instructorMemberProfile: 'school_teacher',
+        registeredByAdmin: true,
+        identitySelfSignupCompletedAfterAdminRegistration: false,
+      })
+    ).toBe(false)
+  })
+
+  it('shows edit for admin-provisioned school without affiliated teachers', () => {
+    expect(
+      shouldShowCmsMemberInfoEditButtonOrInstructorRestricted({
+        role: 'SCHOOL',
+        registeredByAdmin: true,
+        identitySelfSignupCompletedAfterAdminRegistration: false,
+        schoolInfo: { affiliatedTeachers: [] },
+      })
+    ).toBe(true)
+  })
+
+  it('hides edit for admin-provisioned school after affiliated teachers exist', () => {
+    expect(
+      shouldShowCmsMemberInfoEditButtonOrInstructorRestricted({
+        role: 'SCHOOL',
+        registeredByAdmin: true,
+        identitySelfSignupCompletedAfterAdminRegistration: false,
+        schoolInfo: {
+          affiliatedTeachers: [{ linkedUserId: 'teacher-1' }],
+        },
+      })
+    ).toBe(false)
+  })
+})
+
+describe('shouldShowCmsSchoolInfoEditButton', () => {
+  it('is true for admin-provisioned school without teachers', () => {
+    expect(
+      shouldShowCmsSchoolInfoEditButton({
+        role: 'SCHOOL',
+        registeredByAdmin: true,
+        identitySelfSignupCompletedAfterAdminRegistration: false,
+        schoolInfo: { affiliatedTeachers: [] },
+      })
+    ).toBe(true)
+  })
+
+  it('is false when affiliated teachers exist', () => {
+    expect(
+      shouldShowCmsSchoolInfoEditButton({
+        role: 'SCHOOL',
+        registeredByAdmin: true,
+        identitySelfSignupCompletedAfterAdminRegistration: false,
+        schoolInfo: {
+          affiliatedTeachers: [{ linkedUserId: 't-1' }],
+        },
+      })
+    ).toBe(false)
+  })
+
+  it('is false for non-school roles', () => {
+    expect(
+      shouldShowCmsSchoolInfoEditButton({
+        role: 'INDIVIDUAL',
+        registeredByAdmin: true,
+        identitySelfSignupCompletedAfterAdminRegistration: false,
+      })
+    ).toBe(false)
+  })
+})
+
+describe('shouldShowCmsBasicProfileFieldsEdit', () => {
+  it('delegates to school info edit for SCHOOL role', () => {
+    expect(
+      shouldShowCmsBasicProfileFieldsEdit({
+        role: 'SCHOOL',
+        registeredByAdmin: true,
+        identitySelfSignupCompletedAfterAdminRegistration: false,
+        schoolInfo: { affiliatedTeachers: [] },
+      })
+    ).toBe(true)
+  })
+})
+
+describe('shouldShowAdminRegisteredSchoolDetailCaption', () => {
+  it('shows caption for admin-provisioned school without linked teachers', () => {
+    expect(
+      shouldShowAdminRegisteredSchoolDetailCaption({
+        role: 'SCHOOL',
+        registeredByAdmin: true,
+        identitySelfSignupCompletedAfterAdminRegistration: false,
+        schoolInfo: { affiliatedTeachers: [] },
+      })
+    ).toBe(true)
+  })
+
+  it('hides caption when a teacher has linkedUserId', () => {
+    expect(
+      shouldShowAdminRegisteredSchoolDetailCaption({
+        role: 'SCHOOL',
+        registeredByAdmin: true,
+        identitySelfSignupCompletedAfterAdminRegistration: false,
+        schoolInfo: {
+          affiliatedTeachers: [{ linkedUserId: 'teacher-uuid' }],
+        },
       })
     ).toBe(false)
   })
