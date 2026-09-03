@@ -91,7 +91,7 @@ describe('mapCreateUserRequestToPreRegisterIndividual', () => {
     })
   })
 
-  it('재학 중이면 schoolName·enrollmentStatus·grade를 함께 보낸다', () => {
+  it('재학 중이면 schoolName·enrollmentStatus·grade와 NEIS schoolSelection을 함께 보낸다', () => {
     const body = mapCreateUserRequestToPreRegisterIndividual(
       individualRequest({
         email: 'enrolled@test.com',
@@ -99,26 +99,39 @@ describe('mapCreateUserRequestToPreRegisterIndividual', () => {
         affiliation: '진월초등학교',
         schoolEnrollmentStatus: 'ENROLLED',
         grade: '3학년',
+        schoolProvider: 'NEIS',
+        schoolExternalCode: 'B100000001',
+        schoolEducationOfficeCode: 'B10',
       })
     )
 
     expect(body.schoolName).toBe('진월초등학교')
     expect(body.enrollmentStatus).toBe('ENROLLED')
     expect(body.grade).toBe('3학년')
+    expect(body.schoolSelection).toMatchObject({
+      provider: 'NEIS',
+      externalSchoolCode: 'B100000001',
+      educationOfficeCode: 'B10',
+    })
+    expect(body.affiliationName).toBeUndefined()
   })
 
-  it('미재학이면 grade를 보내지 않는다', () => {
+  it('미재학이면 grade·schoolName을 보내지 않고 affiliationName만 보낸다', () => {
     const body = mapCreateUserRequestToPreRegisterIndividual(
       individualRequest({
         email: 'none@test.com',
         name: '이미재',
         schoolEnrollmentStatus: 'NOT_ENROLLED',
+        affiliation: '지역아동센터',
         grade: '3학년',
       })
     )
 
     expect(body.enrollmentStatus).toBe('NOT_ENROLLED')
     expect(body.grade).toBeUndefined()
+    expect(body.schoolName).toBeUndefined()
+    expect(body.schoolSelection).toBeUndefined()
+    expect(body.affiliationName).toBe('지역아동센터')
   })
 
   it('재학 중 + CMS PK이면 schoolOrganizationId를 보낸다', () => {
@@ -147,6 +160,7 @@ describe('mapCreateUserRequestToPreRegisterIndividual', () => {
         grade: '2학년',
         schoolProvider: 'NEIS',
         schoolExternalCode: 'B100000658',
+        schoolEducationOfficeCode: 'B10',
         schoolAddress: '서울특별시 강남구',
         schoolRegionSido: '서울특별시',
         schoolRegionSigungu: '강남구',
@@ -157,8 +171,65 @@ describe('mapCreateUserRequestToPreRegisterIndividual', () => {
     expect(body.schoolSelection).toMatchObject({
       provider: 'NEIS',
       externalSchoolCode: 'B100000658',
+      educationOfficeCode: 'B10',
       name: '서울중학교',
       address: '서울특별시 강남구',
     })
+  })
+
+  it('NEIS 선택 시 schoolEducationOfficeCode를 educationOfficeCode로 우선한다', () => {
+    const body = mapCreateUserRequestToPreRegisterIndividual(
+      individualRequest({
+        email: 'neis-office@test.com',
+        name: '박재학',
+        affiliation: '서울중학교',
+        schoolEnrollmentStatus: 'ENROLLED',
+        grade: '2학년',
+        schoolProvider: 'NEIS',
+        schoolExternalCode: 'B100000658',
+        schoolEducationOfficeCode: 'B10',
+      })
+    )
+
+    expect(body.schoolSelection?.educationOfficeCode).toBe('B10')
+  })
+
+  it('재학 중 + CareerNet 선택이면 CAREER_NET schoolSelection을 보낸다', () => {
+    const body = mapCreateUserRequestToPreRegisterIndividual(
+      individualRequest({
+        email: 'univ@test.com',
+        name: '이재학',
+        affiliation: '서울대학교 (관악)',
+        schoolEnrollmentStatus: 'ENROLLED',
+        grade: '1학년',
+        schoolProvider: 'CAREER_NET',
+        schoolExternalCode: '1',
+        schoolAddress: '서울특별시 관악구',
+        schoolRegionSido: '서울특별시',
+      })
+    )
+
+    expect(body.schoolName).toBe('서울대학교 (관악)')
+    expect(body.schoolSelection).toMatchObject({
+      provider: 'CAREER_NET',
+      externalSchoolCode: '1',
+      name: '서울대학교 (관악)',
+      address: '서울특별시 관악구',
+    })
+    expect(body.schoolSelection?.educationOfficeCode).toBeUndefined()
+  })
+
+  it('재학 중 + 학교명만 있으면 매핑을 거절한다', () => {
+    expect(() =>
+      mapCreateUserRequestToPreRegisterIndividual(
+        individualRequest({
+          email: 'name-only@test.com',
+          name: '김재학',
+          affiliation: '서울교육대학교',
+          schoolEnrollmentStatus: 'ENROLLED',
+          grade: '1학년',
+        })
+      )
+    ).toThrow(/학교를 검색해 선택해 주세요/)
   })
 })

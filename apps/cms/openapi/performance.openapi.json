@@ -15467,12 +15467,12 @@
           "businessStartDate": {
             "type": "string"
           },
-          "businessEndDate": {
-            "type": "string"
-          },
           "businessYear": {
             "type": "integer",
             "format": "int32"
+          },
+          "businessEndDate": {
+            "type": "string"
           }
         }
       },
@@ -16978,16 +16978,28 @@
       },
       "CertificateDownloadLogRequest": {
         "type": "object",
+        "description": "인증서 PDF 다운로드 이력 기록 요청",
         "properties": {
           "downloadedByMemberId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "다운로드한 회원 ID (선택)",
+            "example": 12001
           },
           "ipAddress": {
-            "type": "string"
+            "type": "string",
+            "description": "클라이언트 IP. 없으면 서버가 요청 IP를 넣는다",
+            "example": "203.0.113.10"
           },
           "userAgent": {
-            "type": "string"
+            "type": "string",
+            "description": "클라이언트 User-Agent",
+            "example": "Mozilla/5.0"
+          },
+          "fileName": {
+            "type": "string",
+            "description": "저장 파일명. GET /api/admin/logs/file-access 파일명 컬럼에 반영",
+            "example": "참가인증서_20260902.pdf"
           }
         }
       },
@@ -17019,6 +17031,70 @@
           },
           "userAgent": {
             "type": "string"
+          }
+        }
+      },
+      "CertificateSerialAllocateRequest": {
+        "type": "object",
+        "description": "인증서 고유번호(YY-JA-NNNNN) 멱등 발급 요청",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로그램 ID. PROGRAM(실발급)일 때 필수. FORM_TEMPLATE면 생략",
+            "example": 5001
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로그램 참가자 ID. PROGRAM(실발급)일 때 필수. FORM_TEMPLATE면 생략",
+            "example": 7001
+          },
+          "certificateType": {
+            "type": "string",
+            "description": "FE form template code (그대로 저장)",
+            "enum": [
+              "document-3",
+              "document-participation-certificate",
+              "document-4",
+              "document-5"
+            ],
+            "example": "document-3",
+            "minLength": 1
+          },
+          "issuanceSource": {
+            "type": "string",
+            "description": "발급 출처. 생략/PROGRAM=실발급, FORM_TEMPLATE=양식 관리 샘플",
+            "enum": [
+              "PROGRAM",
+              "FORM_TEMPLATE"
+            ],
+            "example": "PROGRAM"
+          }
+        },
+        "required": [
+          "certificateType"
+        ]
+      },
+      "CertificateSerialAllocateResponse": {
+        "type": "object",
+        "description": "인증서 고유번호 멱등 발급 응답",
+        "properties": {
+          "serialNumber": {
+            "type": "string",
+            "description": "고유번호 (YY-JA-NNNNN)",
+            "example": "26-JA-00017"
+          },
+          "issueId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "certificate_issue 장부 PK",
+            "example": 12
+          },
+          "reused": {
+            "type": "boolean",
+            "description": "기존 발급 번호 재사용 여부",
+            "example": false
           }
         }
       },
@@ -30246,15 +30322,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },

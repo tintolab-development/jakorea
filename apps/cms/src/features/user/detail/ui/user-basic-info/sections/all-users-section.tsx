@@ -68,6 +68,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
         affiliationInstitution: school.schulNm.trim(),
         schoolProvider: 'NEIS',
         schoolExternalCode: school.sdSchulCode.trim(),
+        schoolEducationOfficeCode: school.atptOfcdcScCode.trim(),
         schoolLevel: school.schulKndScNm.trim(),
         schoolAddress: school.orgRdnma.trim(),
         schoolZipcode: school.orgRdnzc.trim(),
@@ -86,6 +87,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
       affiliationInstitution: schoolName,
       schoolProvider: 'CAREER_NET',
       schoolExternalCode: univ.seq.trim(),
+      schoolEducationOfficeCode: undefined,
       schoolLevel: univ.schoolGubun.trim() || univ.schoolType.trim(),
       schoolAddress: univ.address.trim(),
       schoolZipcode: '',
@@ -104,6 +106,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
         schoolOrganizationId: null,
         schoolProvider: undefined,
         schoolExternalCode: undefined,
+        schoolEducationOfficeCode: undefined,
         schoolLevel: undefined,
         schoolAddress: undefined,
         schoolZipcode: undefined,
@@ -112,7 +115,21 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
       })
       return
     }
-    onMemberInfoDraftChange?.({ schoolEnrollmentStatus: next })
+    // 재학 전환 시 잔존 검색 메타·자유입력 제거
+    onMemberInfoDraftChange?.({
+      schoolEnrollmentStatus: next,
+      affiliationInstitution: '',
+      affiliationGrade: '',
+      schoolOrganizationId: null,
+      schoolProvider: undefined,
+      schoolExternalCode: undefined,
+      schoolEducationOfficeCode: undefined,
+      schoolLevel: undefined,
+      schoolAddress: undefined,
+      schoolZipcode: undefined,
+      schoolRegionSido: undefined,
+      schoolRegionSigungu: undefined,
+    })
   }
 
   const nameWithBadge = (nameNode: ReactNode) => (
@@ -213,6 +230,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
                       schoolOrganizationId: null,
                       schoolProvider: undefined,
                       schoolExternalCode: undefined,
+                      schoolEducationOfficeCode: undefined,
                       schoolLevel: undefined,
                       schoolAddress: undefined,
                       schoolZipcode: undefined,

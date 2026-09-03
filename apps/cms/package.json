@@ -139,6 +139,7 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "otplib": "^13.4.0",
+    "pdfjs-dist": "^6.3.289",
     "qrcode": "^1.5.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

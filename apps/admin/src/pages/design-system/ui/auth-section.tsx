@@ -29,8 +29,8 @@ export function AuthSection() {
       description="Homepage Admin 로그인·MFA 셸은 CMS Auth 디자인 시스템을 공유합니다. SSOT: auth-shell.css · login-page.css · LoadingButton · MFA 모달."
     >
       <p className="ds-note">
-        실화면: <Link to="/login">/login</Link> · Auth는 antd Form +{' '}
-        <code>LoadingButton</code> (CmsInput 미사용 — CMS Do/Don&apos;t와 동일).
+        실화면: <Link to="/login">/login</Link> · Auth는 antd Form + <code>LoadingButton</code>{' '}
+        (CmsInput 미사용 — CMS Do/Don&apos;t와 동일).
         <br />
         토큰: <code>--color-mint-01</code>, <code>--main-BK</code>, 카드 600px · radius 16 · 인풋
         높이 52.
@@ -68,7 +68,12 @@ export function AuthSection() {
                   </Form.Item>
                   <LoginAdminApprovalPendingNotice />
                   <Form.Item className="login-submit-actions">
-                    <LoadingButton type="primary" block className="login-submit-btn" htmlType="submit">
+                    <LoadingButton
+                      type="primary"
+                      block
+                      className="login-submit-btn"
+                      htmlType="submit"
+                    >
                       로그인하기
                     </LoadingButton>
                     <Text type="secondary" className="login-api-hint">
@@ -90,11 +95,7 @@ export function AuthSection() {
           플로우는 /login 에서 확인하세요.
         </p>
         <div className="ds-demo__row">
-          <CmsButton
-            variant="primary"
-            size="large"
-            onClick={() => setMfaOpen(true)}
-          >
+          <CmsButton variant="primary" size="large" onClick={() => setMfaOpen(true)}>
             MFA 모달 열기
           </CmsButton>
         </div>

@@ -19,6 +19,7 @@ import {
   CmsRadioGroup,
   CmsSelect,
   SchoolSearch,
+  SCHOOL_SEARCH_NEIS_LEVELS,
 } from '@/shared/ui'
 import type { SchoolSearchSelection, SchoolSearchSelectMeta } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -144,26 +145,35 @@ function ConsentDocumentFieldEdit({
   value,
   onChange,
   onWrite,
+  showRadios = false,
 }: {
   value?: ConsentValue
   onChange?: (value: ConsentValue) => void
   onWrite: () => void
+  /** 강사 상세 수정만 라디오. 신규 등록은 상태 문구 + 작성 버튼 */
+  showRadios?: boolean
 }) {
   return (
     <span className="instructor-register-modal__consent-document">
-      <CmsRadioGroup
-        options={CONSENT_RADIO_OPTIONS}
-        size="large"
-        value={value}
-        onChange={event => {
-          const next = event.target.value as ConsentValue
-          if (next === 'disagree') {
-            onChange?.('disagree')
-            return
-          }
-          onWrite()
-        }}
-      />
+      {showRadios ? (
+        <CmsRadioGroup
+          options={CONSENT_RADIO_OPTIONS}
+          size="large"
+          value={value}
+          onChange={event => {
+            const next = event.target.value as ConsentValue
+            if (next === 'disagree') {
+              onChange?.('disagree')
+              return
+            }
+            onWrite()
+          }}
+        />
+      ) : (
+        <span className="instructor-register-modal__consent-status">
+          {value === 'agree' ? '동의' : '미동의'}
+        </span>
+      )}
       <span className="instructor-register-modal__consent-sep" aria-hidden>
         |
       </span>
@@ -267,34 +277,19 @@ export function InstructorProfileFormBody({
   }
 
   const handleSchoolSelect = (selection: SchoolSearchSelection, meta: SchoolSearchSelectMeta) => {
-    if (selection.source === 'neis') {
-      const school = selection.item
-      form.setFieldsValue({
-        schoolName: school.schulNm.trim(),
-        schoolProvider: 'NEIS',
-        schoolExternalCode: school.sdSchulCode.trim(),
-        schoolLevel: school.schulKndScNm.trim(),
-        schoolAddress: school.orgRdnma.trim(),
-        schoolZipcode: school.orgRdnzc.trim(),
-        schoolRegionSido: meta.regionSido,
-        schoolRegionSigungu: meta.regionSigungu,
-        schoolOrganizationId: undefined,
-      })
-      return
-    }
+    // 교사 소속 schoolSelection은 NEIS만 — CareerNet(대학)은 UI·매퍼에서 제외
+    if (selection.source !== 'neis') return
 
-    const univ = selection.item
-    const schoolName = univ.campusName
-      ? `${univ.schoolName.trim()} (${univ.campusName.trim()})`
-      : univ.schoolName.trim()
+    const school = selection.item
     form.setFieldsValue({
-      schoolName,
-      schoolProvider: 'CAREER_NET',
-      schoolExternalCode: univ.seq.trim(),
-      schoolLevel: univ.schoolGubun.trim() || univ.schoolType.trim(),
-      schoolAddress: univ.address.trim(),
-      schoolZipcode: '',
-      schoolRegionSido: meta.regionSido || univ.region.trim(),
+      schoolName: school.schulNm.trim(),
+      schoolProvider: 'NEIS',
+      schoolExternalCode: school.sdSchulCode.trim(),
+      schoolEducationOfficeCode: school.atptOfcdcScCode.trim(),
+      schoolLevel: school.schulKndScNm.trim(),
+      schoolAddress: school.orgRdnma.trim(),
+      schoolZipcode: school.orgRdnzc.trim(),
+      schoolRegionSido: meta.regionSido,
       schoolRegionSigungu: meta.regionSigungu,
       schoolOrganizationId: undefined,
     })
@@ -307,6 +302,7 @@ export function InstructorProfileFormBody({
           value={schoolName}
           onChange={nextSchoolName => form.setFieldValue('schoolName', nextSchoolName)}
           onSelect={handleSchoolSelect}
+          allowedSchoolLevels={SCHOOL_SEARCH_NEIS_LEVELS}
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.schoolName}
           inputSize="medium"
           width="100%"
@@ -314,6 +310,7 @@ export function InstructorProfileFormBody({
       </Form.Item>
       <Form.Item name="schoolProvider" hidden preserve />
       <Form.Item name="schoolExternalCode" hidden preserve />
+      <Form.Item name="schoolEducationOfficeCode" hidden preserve />
       <Form.Item name="schoolLevel" hidden preserve />
       <Form.Item name="schoolAddress" hidden preserve />
       <Form.Item name="schoolZipcode" hidden preserve />
@@ -342,6 +339,7 @@ export function InstructorProfileFormBody({
           value={schoolName}
           onChange={nextSchoolName => form.setFieldValue('schoolName', nextSchoolName)}
           onSelect={handleSchoolSelect}
+          allowedSchoolLevels={SCHOOL_SEARCH_NEIS_LEVELS}
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.schoolName}
           inputSize="medium"
           width={FORM_INPUTS_2_WIDTHS[0]}
@@ -349,6 +347,7 @@ export function InstructorProfileFormBody({
       </Form.Item>
       <Form.Item name="schoolProvider" hidden preserve />
       <Form.Item name="schoolExternalCode" hidden preserve />
+      <Form.Item name="schoolEducationOfficeCode" hidden preserve />
       <Form.Item name="schoolLevel" hidden preserve />
       <Form.Item name="schoolAddress" hidden preserve />
       <Form.Item name="schoolZipcode" hidden preserve />
@@ -720,6 +719,7 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentPortrait" noStyle>
                       <ConsentDocumentFieldEdit
+                        showRadios={isDetailEdit}
                         onWrite={() => handleConsentWrite('consentPortrait')}
                       />
                     </Form.Item>
@@ -743,6 +743,7 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentPaymentStatement" noStyle>
                       <ConsentDocumentFieldEdit
+                        showRadios={isDetailEdit}
                         onWrite={() => handleConsentWrite('consentPaymentStatement')}
                       />
                     </Form.Item>
@@ -755,6 +756,7 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentEducatorPledge" noStyle>
                       <ConsentDocumentFieldEdit
+                        showRadios={isDetailEdit}
                         onWrite={() => handleConsentWrite('consentEducatorPledge')}
                       />
                     </Form.Item>
@@ -769,6 +771,7 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentAdministrativeJoint" noStyle>
                       <ConsentDocumentFieldEdit
+                        showRadios={isDetailEdit}
                         onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
                       />
                     </Form.Item>
@@ -781,6 +784,7 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentSexOffenseCheck" noStyle>
                       <ConsentDocumentFieldEdit
+                        showRadios={isDetailEdit}
                         onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
                       />
                     </Form.Item>

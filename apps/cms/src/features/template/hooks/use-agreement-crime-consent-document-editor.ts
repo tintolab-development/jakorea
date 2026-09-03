@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import crimeConsentDefaultImage from '@/assets/images/template/성범좌 경력 조회.png'
 import {
   AGREEMENT_CRIME_TEMPLATE_CODE,
@@ -24,19 +24,24 @@ const EMPTY_CRIME_CONSENT_DRAFT: WritingFormDraft = {
 
 export function useAgreementCrimeConsentDocumentEditor(active: boolean) {
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
+  const ignoreDraftLoadRef = useRef(false)
   const [displaySrc, setDisplaySrc] = useState<string>(crimeConsentDefaultImage)
   const [replacementFileName, setReplacementFileName] = useState<string | null>(null)
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
 
   useEffect(() => {
     if (!active) {
+      ignoreDraftLoadRef.current = false
       setDisplaySrc(crimeConsentDefaultImage)
       setReplacementFileName(null)
+      setUploadedFile(null)
       return
     }
 
     let cancelled = false
+    ignoreDraftLoadRef.current = false
     void loadWritingFormTemplateDraft(AGREEMENT_CRIME_TEMPLATE_CODE).then(saved => {
-      if (cancelled) return
+      if (cancelled || ignoreDraftLoadRef.current) return
       const settings = parseAgreementCrimeConsentSettings(saved?.settingsJson)
       if (settings.documentImageUrl != null) {
         setDisplaySrc(settings.documentImageUrl)
@@ -69,11 +74,13 @@ export function useAgreementCrimeConsentDocumentEditor(active: boolean) {
     [showSaveFailure, showSaveSuccess]
   )
 
-  const handleImageFile = useCallback(
+  const handleDocumentFile = useCallback(
     async (file: File) => {
+      ignoreDraftLoadRef.current = true
       const dataUrl = await readImageFileAsDataUrl(file)
       setDisplaySrc(dataUrl)
       setReplacementFileName(file.name)
+      setUploadedFile(file)
       await persistDocument({
         documentImageUrl: dataUrl,
         replacementFileName: file.name,
@@ -85,6 +92,7 @@ export function useAgreementCrimeConsentDocumentEditor(active: boolean) {
   return {
     displaySrc,
     replacementFileName,
-    handleImageFile,
+    uploadedFile,
+    handleDocumentFile,
   }
 }

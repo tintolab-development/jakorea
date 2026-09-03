@@ -41,6 +41,7 @@ import {
 import type { User } from '@/types/user'
 import type { Affiliation } from '@/shared/api/generated/members/schemas/affiliation'
 import type { PortalSchoolSelectionRequest } from '@/shared/api/generated/members/schemas/portalSchoolSelectionRequest'
+import { resolveNeisEducationOfficeCode } from '@/features/user/api/neis-education-office-code'
 import { parseOrganizationNamesFromText } from '@/features/user/detail/lib/parse-instructor-affiliation-text'
 
 const MONTH_FORMAT = 'YYYY-MM'
@@ -83,6 +84,7 @@ export function buildInstructorSchoolSelectionFromForm(
     | 'schoolOrganizationId'
     | 'schoolProvider'
     | 'schoolExternalCode'
+    | 'schoolEducationOfficeCode'
     | 'schoolLevel'
     | 'schoolRegionSido'
     | 'schoolRegionSigungu'
@@ -94,6 +96,9 @@ export function buildInstructorSchoolSelectionFromForm(
   const name = trimOptional(values.schoolName)
   if (!name) return undefined
 
+  const provider = trimOptional(values.schoolProvider)
+  if (provider === 'CAREER_NET') return undefined
+
   const selection: PortalSchoolSelectionRequest = {
     name,
     organizationCategory: 'SCHOOL',
@@ -101,10 +106,16 @@ export function buildInstructorSchoolSelectionFromForm(
   if (values.schoolOrganizationId != null && Number.isFinite(values.schoolOrganizationId)) {
     selection.schoolOrganizationId = values.schoolOrganizationId
   }
-  const provider = trimOptional(values.schoolProvider)
   if (provider) selection.provider = provider
   const externalSchoolCode = trimOptional(values.schoolExternalCode)
   if (externalSchoolCode) selection.externalSchoolCode = externalSchoolCode
+  const educationOfficeCode = resolveNeisEducationOfficeCode({
+    provider,
+    educationOfficeCode: values.schoolEducationOfficeCode,
+    regionSido: values.schoolRegionSido,
+    externalSchoolCode,
+  })
+  if (educationOfficeCode) selection.educationOfficeCode = educationOfficeCode
   const schoolLevel = trimOptional(values.schoolLevel)
   if (schoolLevel) selection.schoolLevel = schoolLevel
   const regionSido = trimOptional(values.schoolRegionSido)

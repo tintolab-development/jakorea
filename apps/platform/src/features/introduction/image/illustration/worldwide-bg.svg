@@ -1,0 +1,37 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_8631_9427)">
+<g clip-path="url(#clip1_8631_9427)">
+<g clip-path="url(#clip2_8631_9427)">
+<path d="M1960 864C1960 565.766 1508.26 324 951 324C393.745 324 -58 565.766 -58 864C-58 1162.23 393.745 1404 951 1404C1508.26 1404 1960 1162.23 1960 864Z" fill="url(#paint0_linear_8631_9427)" fill-opacity="0.2"/>
+<path d="M951 1402.5C1229.43 1402.5 1481.43 1342.1 1663.76 1244.52C1846.16 1146.9 1958.5 1012.3 1958.5 864C1958.5 715.704 1846.16 581.101 1663.76 483.484C1481.43 385.902 1229.43 325.5 951 325.5C672.57 325.5 420.573 385.902 238.237 483.484C55.8388 581.101 -56.5 715.704 -56.5 864C-56.5 1012.3 55.8388 1146.9 238.237 1244.52C420.573 1342.1 672.57 1402.5 951 1402.5Z" stroke="url(#paint1_linear_8631_9427)" stroke-opacity="0.04" stroke-width="3"/>
+<circle cx="951" cy="324" r="4" fill="#95E8F0"/>
+<g opacity="0.8">
+<path d="M1429.24 166C1336.21 260.676 1156.82 324.798 950.784 324.798L947.251 324.792C742.696 324.064 564.821 260.135 472.324 166H476.545C500.866 190.297 531.018 212.586 566.026 232.264C664.344 287.524 800.37 321.798 950.784 321.798C1101.2 321.798 1237.22 287.524 1335.54 232.264C1370.55 212.586 1400.7 190.297 1425.02 166H1429.24Z" fill="url(#paint2_linear_8631_9427)" fill-opacity="0.3"/>
+</g>
+</g>
+</g>
+</g>
+<defs>
+<linearGradient id="paint0_linear_8631_9427" x1="928.294" y1="739.5" x2="928.294" y2="324.134" gradientUnits="userSpaceOnUse">
+<stop offset="0.1" stop-color="#3685A8" stop-opacity="0"/>
+<stop offset="1" stop-color="#3685A8" stop-opacity="0.8"/>
+</linearGradient>
+<linearGradient id="paint1_linear_8631_9427" x1="928.294" y1="663.048" x2="928.294" y2="324.134" gradientUnits="userSpaceOnUse">
+<stop stop-color="#CDF4F7" stop-opacity="0"/>
+<stop offset="1" stop-color="#CDF4F7"/>
+</linearGradient>
+<linearGradient id="paint2_linear_8631_9427" x1="950.41" y1="233.025" x2="950.782" y2="324.798" gradientUnits="userSpaceOnUse">
+<stop stop-color="#4E9CBD" stop-opacity="0"/>
+<stop offset="1" stop-color="#4E9CBD"/>
+</linearGradient>
+<clipPath id="clip0_8631_9427">
+<rect width="1920" height="1080" fill="white"/>
+</clipPath>
+<clipPath id="clip1_8631_9427">
+<rect width="1920" height="1080" fill="white"/>
+</clipPath>
+<clipPath id="clip2_8631_9427">
+<rect width="1920" height="1080" fill="white"/>
+</clipPath>
+</defs>
+</svg>

@@ -26,11 +26,12 @@ export interface FormDocumentPreviewBodyProps {
   paragraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
   /** 작성 화면에서 선택한 단락 id — 미리보기 강조·스크롤 */
   focusedParagraphId?: string | null
-  /** 동의 양식 하단 귀하·작성완료. 미지정이면 agreement일 때 귀하만 노출 */
+  /** 동의 양식 하단 귀하·작성완료. 미지정이면 agreement일 때 귀하만 노출(A4) */
   agreementClosingFooter?: {
     onSubmit?: () => void
     submitDisabled?: boolean
     showSubmitButton?: boolean
+    showRecipient?: boolean
   }
 }
 
@@ -83,12 +84,15 @@ export function FormDocumentPreviewBody({
 
   const showSubmitButton =
     agreementClosingFooter?.showSubmitButton ?? renderMode !== 'contentOnly'
+  /** A4 기본은 귀하 노출. 템플릿이 `showRecipient: false`면 숨김(초상권·행정·서약 시안). */
+  const showRecipient = agreementClosingFooter?.showRecipient ?? true
   const closingFooter =
     editorKind === 'agreement' && isLastDocumentPage ? (
       <AgreementSheetClosingFooter
         onSubmit={agreementClosingFooter?.onSubmit}
         submitDisabled={agreementClosingFooter?.submitDisabled}
         showSubmitButton={showSubmitButton}
+        showRecipient={showRecipient}
         variant={showSubmitButton ? 'sheet' : 'document'}
       />
     ) : null

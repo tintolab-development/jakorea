@@ -9,6 +9,7 @@ export type PFFormPageProps = {
   description?: ReactNode
   children: ReactNode
   className?: string
+  innerClassName?: string
   'aria-label'?: string
 }
 
@@ -18,13 +19,15 @@ export function PFFormPage({
   description,
   children,
   className,
+  innerClassName,
   'aria-label': ariaLabel,
 }: PFFormPageProps) {
   const rootClassName = [styles.page, className].filter(Boolean).join(' ')
+  const innerClassNames = [styles.inner, innerClassName].filter(Boolean).join(' ')
 
   return (
     <section className={rootClassName} aria-label={ariaLabel}>
-      <div className={styles.inner}>
+      <div className={innerClassNames}>
         {back ? <div className={styles.back}>{back}</div> : null}
 
         <header className={styles.titleBlock}>

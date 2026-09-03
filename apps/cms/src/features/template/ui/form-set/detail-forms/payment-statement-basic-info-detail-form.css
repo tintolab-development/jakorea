@@ -8,6 +8,11 @@
   width: 100%;
 }
 
+/* 시안: 성명|영문, 주민|소속은 한 행 유지 (기본 double의 wrap으로 세로 쌓이지 않게) */
+.payment-statement-basic-info-detail-form .detail-info-form__row--double {
+  flex-wrap: nowrap;
+}
+
 /* 각 행(라벨+값) 높이 64px — large 인풋 44px 기준 세로 패딩 10px */
 .payment-statement-basic-info-detail-form .detail-info-form__field {
   height: 64px;

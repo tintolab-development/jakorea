@@ -19,7 +19,6 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  padding-top: var(--app-header-height);
 }
 
 .openingBackground {
@@ -161,11 +160,12 @@
 
 /* Montserrat + 시안 사이즈 (토큰 page-title 대비) */
 .inspiringTitle {
+  color: var(--color-primary-800);
   font-family: 'Montserrat', sans-serif;
-  font-size: 40px;
+  font-size: 32px;
   font-weight: 800;
-  line-height: 120%;
-  letter-spacing: -0.4px;
+  line-height: 140%;
+  letter-spacing: -0.96px;
 }
 
 /* 모바일: 본문 톤 강조 */
@@ -382,7 +382,6 @@
     position: absolute;
     inset: 0;
     flex: none;
-    padding-top: 0;
     transition: opacity 400ms ease-in-out;
   }
 
@@ -483,15 +482,8 @@
     animation: inspiringSlideUp 500ms ease-in-out 750ms both;
   }
 
-  .inspiringTitle,
-  .inspiringDescription {
-    word-break: keep-all;
-  }
-
   .inspiringTitle {
-    font-family: 'Montserrat', sans-serif;
     font-size: 60px;
-    font-weight: 800;
     line-height: 120%;
     letter-spacing: -0.48px;
   }
@@ -649,7 +641,7 @@
     flex-direction: column;
     justify-content: center;
     gap: var(--spacing-56);
-    padding-inline: 140px 70px;
+    padding-inline: 7.2916vw 3.6458vw
   }
 
   .statementStack {
@@ -669,7 +661,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: var(--spacing-16) 140px 0;
+    padding: var(--spacing-16) 7.2916vw 0;
     gap: var(--spacing-56);
     background-color: transparent;
     opacity: 1;

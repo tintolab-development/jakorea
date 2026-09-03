@@ -78,11 +78,14 @@
 
 | templateCode | templateName | Payload | 시드 JSON | 단락 수 |
 |--------------|--------------|---------|-----------|--------:|
-| `agreement-third-party` | 지급조서 사전 동의서 | A | [agreement-third-party.json](./form-template-seeds/agreement-third-party.json) | 14 |
+| `agreement-third-party` | 지급조서 사전 동의서 | A | [agreement-third-party.json](./form-template-seeds/agreement-third-party.json) | 15 |
 | `agreement-crime` | 성범죄 경력조회 및 아동학대 관련 범죄전력조회 동의서 | D | [agreement-crime.json](./form-template-seeds/agreement-crime.json) | 0 |
 | `agreement-notice` | 행정정보 공동이용 사전 동의서 | A | [agreement-notice.json](./form-template-seeds/agreement-notice.json) | 9 |
 | `agreement-expense` | 교육진행자 동의 서약서 | A | [agreement-expense.json](./form-template-seeds/agreement-expense.json) | 9 |
 | `agreement-portrait` | 초상권 수집·이용 동의 | A | [agreement-portrait.json](./form-template-seeds/agreement-portrait.json) | 8 |
+
+> **DB 재시드 (A4·시안 동기화):** 동의 4종 + `document-payment-order-pre-consent` 일괄 upsert →  
+> [`agreement-consent-a4-sync-reseed-backend-cursor-prompt.md`](./agreement-consent-a4-sync-reseed-backend-cursor-prompt.md)
 
 ## 단락 id 요약
 
@@ -356,10 +359,11 @@
 | `payment-statement-pre-consent-seed-p2-rrn-collection` | single_item | horizontal_table | 고유식별번호(주민등록번호) 수집·이용 |
 | `payment-statement-pre-consent-seed-p3-third-party` | single_item | horizontal_table | 개인정보 제3자 제공·이용 |
 | `payment-statement-pre-consent-seed-p4-rrn-third-party` | single_item | horizontal_table | 고유식별번호 제3자 제공·이용 |
+| `payment-statement-pre-consent-seed-ja-korea-activity` | single_item | vertical_table | JA Korea 활동 경험 (시안 5번) |
 | `payment-statement-pre-consent-seed-mid-consent-line` | single_item | agreement_explanation_text |  |
 | `payment-statement-pre-consent-seed-mid-date` | description | system | 날짜 유형 |
 | `payment-statement-pre-consent-seed-mid-signature` | description | system | 서명란 유형 |
-| `payment-statement-pre-consent-seed-payment-record` | single_item | vertical_table | 지급조서 |
+| `payment-statement-pre-consent-seed-payment-record` | single_item | vertical_table | 지급조서 (시안 6번) |
 | `payment-statement-pre-consent-seed-final-confirm` | single_item | agreement_explanation_text |  |
 | `payment-statement-pre-consent-seed-tail-date` | description | system | 날짜 유형 |
 | `payment-statement-pre-consent-seed-tail-signature` | description | system | 서명란 유형 |

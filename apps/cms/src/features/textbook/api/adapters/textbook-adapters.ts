@@ -145,7 +145,8 @@ export function mapTextbookResponse(dto: TextbookResponse): TextbookRow {
   )
 
   return {
-    id: dto.id ?? '',
+    // BE가 number로 내려줘도 쿼리키·캐시 키가 흔들리지 않게 문자열로 고정
+    id: dto.id == null || dto.id === '' ? '' : String(dto.id),
     businessArea: (dto.businessArea ?? '') as TextbookBusinessArea,
     educationTarget: (hasSelection ? summary.educationTarget : educationTarget) as TextbookEducationTarget,
     grade: hasSelection
@@ -169,7 +170,7 @@ export function mapTextbookMatchResponse(dto: TextbookMatchResponse): TextbookRo
     normalizeEducationTargetLabel(dto.educationTarget ?? '') ||
     ((dto.educationTarget ?? '') as TextbookEducationTarget)
   return {
-    id: dto.id ?? '',
+    id: dto.id == null || dto.id === '' ? '' : String(dto.id),
     businessArea: (dto.businessArea ?? '') as TextbookBusinessArea,
     educationTarget,
     grade: dto.grade ?? '',

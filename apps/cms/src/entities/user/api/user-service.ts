@@ -419,6 +419,8 @@ export type PatchUserBasicInfoInput = Partial<
   /** NEIS/CareerNet 검색 메타 — CMS PK 없을 때 schoolSelection */
   individualSchoolProvider?: string
   individualSchoolExternalCode?: string
+  /** NEIS `ATPT_OFCDC_SC_CODE` — schoolSelection.educationOfficeCode */
+  individualSchoolEducationOfficeCode?: string
   individualSchoolLevel?: string
   individualSchoolAddress?: string
   individualSchoolZipcode?: string
@@ -1158,6 +1160,8 @@ export interface CreateUserRequest {
   /** NEIS/CareerNet 학교 검색 메타 — CMS PK 없을 때 schoolSelection */
   schoolProvider?: string
   schoolExternalCode?: string
+  /** NEIS `ATPT_OFCDC_SC_CODE` — schoolSelection.educationOfficeCode */
+  schoolEducationOfficeCode?: string
   schoolLevel?: string
   schoolAddress?: string
   schoolZipcode?: string

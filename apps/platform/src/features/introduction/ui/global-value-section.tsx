@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import { PFText } from '@/shared/ui'
 import {
   GLOBAL_VALUE_ITEMS,
@@ -6,6 +6,7 @@ import {
   type GlobalValueItem,
 } from '../lib/global-value-data'
 import styles from './global-value-section.module.css'
+import { JaWorldwideSection } from './ja-worldwide-section'
 
 function EnglishLines({ lines }: { lines: readonly string[] }) {
   return (
@@ -64,9 +65,45 @@ function ValueItem({
   )
 }
 
+function ValueListBlock({
+  activeValueIndex,
+  isDesktopMotion,
+  afterList,
+}: {
+  activeValueIndex: number
+  isDesktopMotion: boolean
+  afterList?: ReactNode
+}) {
+  return (
+    <div className={styles.inner}>
+      <h2 className={styles.title}>{GLOBAL_VALUE_SECTION_TITLE}</h2>
+
+      <div className={styles.list}>
+        {GLOBAL_VALUE_ITEMS.map((item, index) => (
+          <ValueItem
+            key={item.id}
+            item={item}
+            isExpanded={!isDesktopMotion || index >= activeValueIndex}
+            isDesktopMotion={isDesktopMotion}
+            isFrontier={isDesktopMotion && index === activeValueIndex}
+          />
+        ))}
+      </div>
+
+      {afterList}
+    </div>
+  )
+}
+
 export type GlobalValuePanelProps = {
   activeValueIndex?: number
   isDesktopMotion: boolean
+  /**
+   * JA Worldwide를 `.list` 다음(연속 배경)에 포함할지.
+   * Mobile: `.list` 바로 다음 형제.
+   * Desktop accordion: `.inner`(list) 다음 형제 — sticky viewport overflow에 안 잘리게 panel 하위 배치.
+   */
+  withWorldwide?: boolean
   className?: string
 }
 
@@ -74,6 +111,7 @@ export type GlobalValuePanelProps = {
 export function GlobalValuePanel({
   activeValueIndex = 0,
   isDesktopMotion,
+  withWorldwide = false,
   className,
 }: GlobalValuePanelProps) {
   return (
@@ -81,29 +119,38 @@ export function GlobalValuePanel({
       className={[
         styles.panel,
         isDesktopMotion ? styles.isAccordion : undefined,
+        withWorldwide ? styles.withWorldwide : undefined,
         className,
       ]
         .filter(Boolean)
         .join(' ')}
       aria-label={GLOBAL_VALUE_SECTION_TITLE}
     >
-      <div className={styles.inner}>
-        <PFText as="h2" typo="page-title" color="white" className={styles.title}>
-          {GLOBAL_VALUE_SECTION_TITLE}
-        </PFText>
-
-        <div className={styles.list}>
-          {GLOBAL_VALUE_ITEMS.map((item, index) => (
-            <ValueItem
-              key={item.id}
-              item={item}
-              isExpanded={!isDesktopMotion || index >= activeValueIndex}
-              isDesktopMotion={isDesktopMotion}
-              isFrontier={isDesktopMotion && index === activeValueIndex}
-            />
-          ))}
-        </div>
-      </div>
+      {isDesktopMotion && withWorldwide ? (
+        <>
+          {/*
+            Desktop: accordion flex(.inner)와 Worldwide를 분리해 overflow:hidden에 안 잘리게 함.
+            둘 다 같은 .panel 하위 → primary-700·그라데이션 연속.
+          */}
+          <ValueListBlock
+            activeValueIndex={activeValueIndex}
+            isDesktopMotion={isDesktopMotion}
+          />
+          <JaWorldwideSection />
+        </>
+      ) : (
+        <ValueListBlock
+          activeValueIndex={activeValueIndex}
+          isDesktopMotion={isDesktopMotion}
+          afterList={
+            withWorldwide ? (
+              <div className={styles.worldwideSlot}>
+                <JaWorldwideSection />
+              </div>
+            ) : null
+          }
+        />
+      )}
     </div>
   )
 }

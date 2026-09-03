@@ -3,6 +3,7 @@
  * - fileUrl이 실제 리소스이면 링크로 시도, 아니면 placeholder blob으로 파일명만 맞춰 다운로드
  */
 import { recordFileDownload } from '@/entities/download-log/api/download-log-service'
+import { guardAdminDownload } from '@/shared/lib/session-admin-role'
 
 type RuntimeAuthUser = {
   id?: string
@@ -36,6 +37,7 @@ function trackDownload(fileName: string) {
  * @param fileUrl 다운로드 URL (없거나 mock이면 placeholder 내용으로 저장)
  */
 export function downloadFile(fileName: string, fileUrl?: string): void {
+  if (!guardAdminDownload()) return
   const isRealUrl =
     fileUrl &&
     (fileUrl.startsWith('http://') || fileUrl.startsWith('https://'))

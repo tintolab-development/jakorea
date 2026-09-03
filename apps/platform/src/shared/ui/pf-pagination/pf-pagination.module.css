@@ -5,7 +5,7 @@
 }
 
 .numbered {
-  gap: var(--spacing-12);
+  gap: var(--spacing-4);
 }
 
 .compact {
@@ -15,7 +15,7 @@
 .pages {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-12);
+  gap: var(--spacing-4);
 }
 
 .control,
@@ -62,25 +62,23 @@
 
 .large .control,
 .large .pageButton {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
 }
 
 .small .control,
 .small .pageButton {
-  width: 36px;
-  height: 36px;
+  width: 24px;
+  height: 24px;
 }
 
 .pageButton,
 .ellipsis,
 .compactStatus {
   font-family: var(--font-family-base);
-  font-size: 14px;
-  font-style: normal;
+  font-size: 13px;
   font-weight: 600;
   line-height: 160%;
-  letter-spacing: 0;
   text-align: center;
 }
 
@@ -112,4 +110,32 @@
 .divider,
 .disabledText {
   color: var(--color-neutral-cool-400);
+}
+
+@media (--bp-pc-up) {
+  .numbered {
+    gap: var(--spacing-12);
+  }
+
+  .pages {
+    gap: var(--spacing-12);
+  }
+
+  .large .control,
+  .large .pageButton {
+    width: 48px;
+    height: 48px;
+  }
+
+  .small .control,
+  .small .pageButton {
+    width: 36px;
+    height: 36px;
+  }
+
+  .pageButton,
+  .ellipsis,
+  .compactStatus {
+    font-size: 14px;
+  }
 }

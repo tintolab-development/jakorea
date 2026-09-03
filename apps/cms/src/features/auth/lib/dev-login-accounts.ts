@@ -1,5 +1,5 @@
 /**
- * 임시 로그인(DEV) 버튼 — 이메일·비밀번호 자동 입력.
+ * 권한별 로그인 버튼 — 이메일·비밀번호 자동 입력 (배포 빌드에도 노출).
  *
  * - **마스터**: `admin1@jakorea.org` — MFA `000000`
  * - **PM/Partner/Viewer**: `pm1` / `partner1` / `viewer1@jakorea.org`

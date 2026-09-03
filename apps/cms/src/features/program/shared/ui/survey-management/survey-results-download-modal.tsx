@@ -66,6 +66,7 @@ export function SurveyResultsDownloadModal({
             width={140}
             type="button"
             icon={<DownloadOutlined />}
+            adminAction="download"
             loading={downloading}
             onClick={handleDownload}
           >

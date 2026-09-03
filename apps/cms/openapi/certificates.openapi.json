@@ -628,7 +628,7 @@
           },
           "userAgent": {
             "type": "string",
-            "description": "User-Agent",
+            "description": "클라이언트 User-Agent",
             "example": "Mozilla/5.0"
           },
           "fileName": {
