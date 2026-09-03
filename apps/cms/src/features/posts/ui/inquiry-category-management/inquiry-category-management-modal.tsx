@@ -4,7 +4,7 @@
 
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { ContentModal, CmsButton } from '@/shared/ui'
+import { ActionResultModal, ContentModal, CmsButton } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import type { InquiryCategoryRemoteActions } from '@/features/posts/hooks/use-admin-inquiry-categories'
@@ -14,6 +14,7 @@ import type {
   InquiryCategoryRow,
 } from '@/features/posts/model/admin-inquiry-management.types'
 import { InquiryCategoryDeleteBlockedModal } from '@/features/posts/ui/inquiry-category-management/inquiry-category-delete-blocked-modal'
+import { NoticeCategoryDuplicateAlertModal } from '@/features/posts/ui/notice-category-management/notice-category-duplicate-alert-modal'
 import '@/features/posts/ui/notice-category-management-modal.css'
 
 const TABLE_INNER_WIDTH = 540
@@ -142,8 +143,11 @@ export function InquiryCategoryManagementModal({
       <CmsButton variant="secondary" size="large" type="button" onClick={ctrl.handleClose}>
         닫기
       </CmsButton>
-      <CmsButton variant="primary" size="large" type="button" onClick={ctrl.openCompose}>
+      <CmsButton variant="secondary" size="large" type="button" onClick={ctrl.openCompose}>
         카테고리 추가
+      </CmsButton>
+      <CmsButton variant="primary" size="large" type="button" onClick={ctrl.applySettings}>
+        카테고리 저장
       </CmsButton>
     </>
   )
@@ -226,6 +230,20 @@ export function InquiryCategoryManagementModal({
       <InquiryCategoryDeleteBlockedModal
         open={ctrl.deleteBlockedOpen}
         onClose={ctrl.closeDeleteBlocked}
+        zIndex={CATEGORY_SUB_MODAL_Z}
+      />
+
+      <NoticeCategoryDuplicateAlertModal
+        open={ctrl.duplicateAlertOpen}
+        onClose={ctrl.closeDuplicateAlert}
+        zIndex={CATEGORY_SUB_MODAL_Z}
+      />
+
+      <ActionResultModal
+        open={ctrl.settingsCompleteOpen}
+        title="카테고리 설정 완료"
+        body="카테고리 설정이 완료되었습니다."
+        onClose={ctrl.closeSettingsComplete}
         zIndex={CATEGORY_SUB_MODAL_Z}
       />
 
