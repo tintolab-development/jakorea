@@ -4,7 +4,7 @@
  * - 제출 버튼은 항상 활성(loading 제외). 필수값 미충족 시 alert
  */
 
-import { useEffect, useId, useState, useCallback } from 'react'
+import { useEffect, useId, useState, useCallback, type ReactNode } from 'react'
 import { Form } from 'antd'
 import {
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
@@ -70,7 +70,7 @@ function validateInstructorRegister(values: InstructorRegisterModalFormValues) {
 
 function showRegisterAlert(
   showAlert: ReturnType<typeof useCmsAlert>['showAlert'],
-  content: string,
+  content: ReactNode,
   title = '안내'
 ) {
   showAlert({

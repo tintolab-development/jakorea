@@ -31,7 +31,7 @@ export const ADMIN_ACCESS_DENIED_ALERT_CONTENT =
 
 export function isAdminAccessDeniedAlert(options: {
   title?: string
-  content?: string
+  content?: unknown
 }): boolean {
   return (
     options.title === ADMIN_ACCESS_DENIED_ALERT_TITLE &&

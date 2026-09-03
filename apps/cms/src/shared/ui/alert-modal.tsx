@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { ContentModal } from './content-modal'
 import { CmsButton } from './cms-button'
@@ -9,8 +10,8 @@ export interface AlertModalProps {
   open: boolean
   onClose: () => void
   title: string
-  /** `\n` 포함 시 줄바꿈되어 표시됩니다. */
-  content: string
+  /** 문자열의 `\n` 은 `white-space: pre-wrap`으로 줄바꿈됩니다. ReactNode도 가능합니다. */
+  content: ReactNode
   /** 모달 너비(px). 기본 600 */
   width?: number
   /** 기본값 확인 */
