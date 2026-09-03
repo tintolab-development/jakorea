@@ -8,3 +8,5 @@ export function useSessionAdminRoleCode(): AdminRoleCode | null {
   const user = useAuthStore(state => state.user)
   return resolveAdminRoleCodeFromUser(user)
 }
+
+export { getSessionAdminRoleCode, guardAdminDownload } from '@/shared/lib/session-admin-role'

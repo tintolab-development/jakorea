@@ -119,6 +119,7 @@ export function UjatInstitutionScheduleSheetPreviewModal({
             size="medium"
             width={140}
             icon={<DownloadOutlined />}
+            adminAction="download"
             disabled={exporting}
             onClick={() => void handleExcelDownload()}
           >
