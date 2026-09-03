@@ -156,6 +156,7 @@ export function NoticeFormModal({
 
     const md = getMarkdown().trim()
     if (!md) {
+      setErrorMessage('내용을 입력해 주세요.')
       return
     }
 
@@ -249,6 +250,7 @@ export function NoticeFormModal({
                 name="category"
                 label="카테고리"
                 className="notice-register-modal__filter-field notice-register-modal__filter-field--category"
+                rules={[{ required: true, message: '카테고리를 선택해 주세요.' }]}
               >
                 <CmsSelect
                   placeholder="카테고리 선택"
@@ -290,6 +292,7 @@ export function NoticeFormModal({
             name="title"
             label="제목"
             className="notice-register-modal__section"
+            rules={[{ required: true, whitespace: true, message: '제목을 입력해 주세요.' }]}
           >
             <CmsInput placeholder="제목을 입력하세요" inputSize="large" width="100%" />
           </Form.Item>
