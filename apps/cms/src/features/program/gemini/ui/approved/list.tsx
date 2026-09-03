@@ -336,7 +336,7 @@ export function GeminiApprovedTrainingList() {
         description={`총 ${filteredRows.length.toLocaleString()}건`}
         actions={
           <>
-            <CmsButton variant="delete" disabled={!canWrite} onClick={handleBulkDeleteClick}>
+            <CmsButton variant="delete" onClick={handleBulkDeleteClick}>
               선택 삭제
             </CmsButton>
           </>

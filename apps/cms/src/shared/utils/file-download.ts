@@ -4,6 +4,7 @@
 
 import { saveAs } from 'file-saver'
 import { recordFileDownload } from '@/entities/download-log/api/download-log-service'
+import { guardAdminDownload } from '@/shared/lib/session-admin-role'
 
 type RuntimeAuthUser = {
   id?: string
@@ -35,6 +36,7 @@ function trackDownload(filename: string) {
  * Blob 파일 다운로드
  */
 export function downloadBlob(blob: Blob, filename: string): void {
+  if (!guardAdminDownload()) return
   saveAs(blob, filename)
   trackDownload(filename)
 }

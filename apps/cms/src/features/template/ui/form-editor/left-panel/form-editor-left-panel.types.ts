@@ -62,11 +62,13 @@ export interface FormEditorLeftPanelProps {
   headingDescriptionExtraClassName?: string
   /**
    * 동의 양식(`editorKind === 'agreement'`) 시트 하단 — JA KOREA 귀하 + 작성완료.
-   * `showSubmitButton: false`면 귀하 문구만.
+   * - 템플릿 편집: `showSubmitButton: false`, 시안에 없으면 `showRecipient: false`
+   * - 회원 fill: 버튼·onSubmit 연결
    */
   agreementClosingFooter?: {
     onSubmit?: () => void
     submitDisabled?: boolean
     showSubmitButton?: boolean
+    showRecipient?: boolean
   }
 }

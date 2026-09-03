@@ -7,7 +7,6 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useSponsorListQuery } from '@/features/sponsor/hooks/use-sponsor-list-query'
-import { usePrefetchSponsorDetail } from '@/features/sponsor/hooks/use-sponsor-detail-query'
 import { useSponsorMutations } from '@/features/sponsor/hooks/use-sponsor-mutations'
 import type { SponsorSponsorshipStatus } from '@/types/domain'
 import { sponsorManagementFilterFields } from '@/features/sponsor/model/sponsor-management-filter-fields'
@@ -101,7 +100,6 @@ export default function SponsorPage() {
   const [actionResultTitle, setActionResultTitle] = useState('')
   const [actionResultMessage, setActionResultMessage] = useState('')
 
-  const prefetchSponsorDetail = usePrefetchSponsorDetail()
   const sponsorIdFromUrl = searchParams.get('sponsorId') ?? ''
   const sponsorRowForDetail = useMemo((): SponsorManagementRow | null => {
     if (!sponsorIdFromUrl) return null
@@ -349,11 +347,11 @@ export default function SponsorPage() {
             <CmsButton
               variant="delete"
               onClick={handleBulkDelete}
-              disabled={!canWrite || selectedRowKeys.length === 0}
+              disabled={selectedRowKeys.length === 0}
             >
               후원사 삭제
             </CmsButton>
-            <CmsButton variant="primary" onClick={handleRegister} disabled={!canWrite}>
+            <CmsButton variant="primary" onClick={handleRegister}>
               후원사 등록
             </CmsButton>
           </>
@@ -372,7 +370,8 @@ export default function SponsorPage() {
           pagination={false}
           onRow={record => ({
             style: { cursor: 'pointer' },
-            onMouseEnter: () => prefetchSponsorDetail(record.id),
+            // hover prefetch 금지: 등록 후 목록 remount 시 GET /sponsors/{id} N건 과호출.
+            // 상세는 URL 반영 후 useSponsorDetailQuery가 1회 조회.
             onClick: (e: MouseEvent<HTMLElement>) => {
               const el = e.target as HTMLElement
               if (
@@ -382,14 +381,14 @@ export default function SponsorPage() {
               ) {
                 return
               }
-              prefetchSponsorDetail(record.id)
               setSearchParams(prev => {
                 const next = new URLSearchParams(prev)
                 next.set('sponsorId', record.id)
                 next.set('sponsorLnb', 'sponsor-detail')
                 return next
               })
-            } })}
+            },
+          })}
           rowSelection={
             canWrite
               ? {

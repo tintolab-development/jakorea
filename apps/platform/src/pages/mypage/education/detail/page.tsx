@@ -14,8 +14,11 @@ import {
   EducationDetailHeader,
   EducationInProgressNoticePanel,
   EducationSchedulePanel,
+  EducationSettlementPanel,
   EducationSurveyEmptyPanel,
+  EducationSurveyFillPanel,
   DocumentPassBanner,
+  getEducationSurveyMockAvailability,
   getMockEducationApplicationById,
   isWithdrawnBeforeEducation,
   isWithdrawnDuringEducation,
@@ -316,10 +319,29 @@ export function MypageEducationDetailPage() {
       )
     }
     if (active === 'survey') {
+      const surveyAvailability = getEducationSurveyMockAvailability({
+        displayStatus: application.displayStatus,
+        withdrawalPhase: application.withdrawalPhase,
+        surveyConfigured: program.surveyConfigured,
+      })
+      if (surveyAvailability === 'active') {
+        return <EducationSurveyFillPanel programTitle={program.title} />
+      }
       return <EducationSurveyEmptyPanel kind="survey" />
     }
     if (active === 'satisfaction') {
       return <EducationSurveyEmptyPanel kind="satisfaction" />
+    }
+    if (active === 'settlement') {
+      return (
+        <EducationSettlementPanel
+          programId={program.id}
+          applicationId={application.id}
+          lastParticipatedSession={
+            isWithdrawnDuring ? application.lastParticipatedSession : undefined
+          }
+        />
+      )
     }
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>

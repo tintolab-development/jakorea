@@ -13,7 +13,7 @@ export function EducatorConsentForm({
 }) {
   return (
     <>
-      <PFFormSection id="educator-intro" title="JA Korea 교육진행자 서약서">
+      <PFFormSection id="educator-intro" title="JA Korea 교육진행자 서약서(안)">
         <PFText as="p" typo="bd-md-rg" color="black" className={styles.prose}>
           {EDUCATOR_INTRO}
         </PFText>

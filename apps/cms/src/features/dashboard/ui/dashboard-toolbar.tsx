@@ -44,6 +44,7 @@ export function DashboardToolbar({
           style={{ minWidth: 180, lineHeight: 1.2 }}
           className="dashboard-toolbar-settings-btn"
           icon={<IconDashboardEdit />}
+          adminAction="write"
           onClick={onOpenSettings}
         >
           대시보드 설정

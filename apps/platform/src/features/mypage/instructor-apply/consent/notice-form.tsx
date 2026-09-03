@@ -61,7 +61,7 @@ export function NoticeConsentForm({
               <PFTextInput
                 variant="formPage"
                 size="large"
-                placeholder="이용기관 명칭을 입력해 주세요"
+                placeholder="텍스트를 작성해 주세요"
                 value={draft.institution}
                 onValueChange={value => patch('institution', value)}
               />
@@ -111,7 +111,7 @@ export function NoticeConsentForm({
               <PFTextInput
                 variant="formPage"
                 size="large"
-                placeholder="1991.01.01"
+                placeholder="생년월일 8자리를 입력해 주세요"
                 inputMode="numeric"
                 maxLength={10}
                 value={draft.birthDate}

@@ -16,6 +16,7 @@ import type {
   ApiResponsePerformanceSnapshotRefreshResponse,
   ApiResponsePerformanceStatusChangeResponse,
   BulkDecisionRequest,
+  ExportRecords200,
   ExportRecordsParams,
   GetPerformanceSummaryParams,
   ListCorrectionRequests1Params,
@@ -1261,8 +1262,8 @@ const getRevisionDetail = (
  */
 const exportRecords = (
     params?: ExportRecordsParams,
- options?: SecondParameter<typeof customInstance<string>>,) => {
-      return customInstance<string>(
+ options?: SecondParameter<typeof customInstance<ExportRecords200>>,) => {
+      return customInstance<ExportRecords200>(
       {url: `/api/admin/performance-records/export`, method: 'GET',
         params
     },

@@ -72,16 +72,29 @@ export type AgreementWritingFormShellProps = {
   previewLayout?: 'default' | 'a4-document'
   /** A4 미리보기 시 숨길 단락 id */
   a4HiddenParagraphIds?: ReadonlySet<string>
+  /** A4 미리보기 — 해당 단락 앞에서 페이지 분절 */
+  a4PageBreakBeforeParagraphIds?: ReadonlySet<string>
   /** A4 미리보기 렌더링 모드 */
   a4RenderMode?: FormDocumentPreviewRenderMode
   /** A4 미리보기 단락 간격 */
   a4ParagraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
   /** 단락 본문 옵션 */
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
+  /**
+   * 템플릿 편집·A4 미리보기 하단 귀하·작성완료.
+   * 시안에 없으면 `showRecipient: false`, 작성완료는 항상 false(회원 fill만 버튼).
+   */
+  agreementClosingFooter?: {
+    showSubmitButton?: boolean
+    showRecipient?: boolean
+  }
   /** forms-surveys draft API 연동 대상 templateCode */
   templateCode?: string
   /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */
   onTemplateDraftSaveConfirmed?: () => void
+  showDeleteButton?: boolean
+  onDelete?: () => void
+  deleteLoading?: boolean
 }
 
 type AgreementShellUrlQuery = {
@@ -99,11 +112,16 @@ export function AgreementWritingFormShell({
   hideDragHandleForParagraphIds,
   previewLayout = 'default',
   a4HiddenParagraphIds,
+  a4PageBreakBeforeParagraphIds,
   a4RenderMode,
   a4ParagraphGapPx,
   paragraphBodyOptions,
+  agreementClosingFooter,
   templateCode,
   onTemplateDraftSaveConfirmed,
+  showDeleteButton = false,
+  onDelete,
+  deleteLoading = false,
 }: AgreementWritingFormShellProps) {
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
   const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
@@ -220,9 +238,11 @@ export function AgreementWritingFormShell({
       editorKind: 'agreement' as const,
       previewLayout,
       a4HiddenParagraphIds,
+      a4PageBreakBeforeParagraphIds,
       a4RenderMode,
       a4ParagraphGapPx,
       paragraphBodyOptions,
+      agreementClosingFooter,
       /** 사용자 모드(미리보기·응답 입력)에서도 필수(*) 표시 */
       hideParagraphRequiredChrome: false,
       focusedParagraphId: activeParagraphId,
@@ -233,9 +253,11 @@ export function AgreementWritingFormShell({
       writingPreviewHeaderTitle,
       previewLayout,
       a4HiddenParagraphIds,
+      a4PageBreakBeforeParagraphIds,
       a4RenderMode,
       a4ParagraphGapPx,
       paragraphBodyOptions,
+      agreementClosingFooter,
       activeParagraphId,
     ]
   )
@@ -349,6 +371,7 @@ export function AgreementWritingFormShell({
           structureLockedParagraphIds={structureLockedParagraphIds}
           hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
           paragraphBodyOptions={paragraphBodyOptions}
+          agreementClosingFooter={agreementClosingFooter}
         />
       }
       rightNavigation={
@@ -385,6 +408,9 @@ export function AgreementWritingFormShell({
       }
       onPreview={handlePreview}
       onSave={handleSave}
+      showDeleteButton={showDeleteButton}
+      onDelete={onDelete}
+      deleteLoading={deleteLoading}
     />
   )
 }

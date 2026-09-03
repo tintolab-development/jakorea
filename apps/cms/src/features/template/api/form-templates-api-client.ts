@@ -59,3 +59,7 @@ export async function fetchFormTemplateVersionsRemote(
 ): Promise<FormTemplateVersionSummaryResponse[]> {
   return unwrapApiBody(await formsSurveysApi.listVersions(templateId))
 }
+
+export async function deleteFormTemplateRemote(templateId: number): Promise<FormTemplateResponse> {
+  return unwrapApiBody(await formsSurveysApi.deleteTemplate(templateId))
+}

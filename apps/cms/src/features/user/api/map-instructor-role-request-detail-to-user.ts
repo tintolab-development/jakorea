@@ -18,18 +18,7 @@ function mapTermsAgreements(rows: TermsAgreement[] | undefined): TermsAgreementR
     termsVersion: row.version?.trim() || undefined,
     required: row.required,
     agreed: row.agreed,
-    agreedAt: row.agreedAt,
   }))
-}
-
-function mapSocialProviders(
-  accounts: InstructorRoleRequestDetailResponse['socialAccounts']
-): string[] | undefined {
-  const providers = accounts
-    ?.filter(a => (a.status ?? 'CONNECTED').toUpperCase() === 'CONNECTED')
-    .map(a => a.provider?.trim())
-    .filter((value): value is string => Boolean(value))
-  return providers?.length ? providers : undefined
 }
 
 /** `GET /api/admin/instructor-role-requests/{requestId}` → 권한 승인 상세 User */
@@ -49,13 +38,11 @@ export function mapInstructorRoleRequestDetailToUser(
 
   const now = new Date().toISOString()
   const appliedAt = detail.requestedAt ?? now
-  const joinedAt = detail.joinedAt?.trim()
   const cmsProfile = normalizeInstructorCmsProfileFromApi(detail.profile)
   const cmsSettlement = normalizeInstructorCmsSettlementFromApi(detail.settlement)
   const termsAgreements = mapTermsAgreements(detail.termsAgreements)
   const birthDate = toApiBirthDate(detail.birthDate)
   const genderDisplay = toDisplayGender(detail.gender)
-  const socialAccounts = mapSocialProviders(detail.socialAccounts)
 
   const feeGradeLabel = cmsProfile?.defaultFeeGrade
     ? toInstructorFeeGradeDisplayLabel(cmsProfile.defaultFeeGrade)
@@ -65,7 +52,6 @@ export function mapInstructorRoleRequestDetailToUser(
   const homeLine = cmsProfile?.homeAddress?.line?.trim()
   const homeDetail = cmsProfile?.homeAddress?.detail?.trim()
 
-  const permissionNotificationResentAt = detail.notificationResentAt ?? undefined
   const permissionApprovalHandledAt = detail.decidedAt ?? undefined
   const permissionApprovalStatus = mapInstructorRoleRequestStatusToApplicationStatus(detail.status)
 
@@ -82,9 +68,8 @@ export function mapInstructorRoleRequestDetailToUser(
     isActive: true,
     permissionApprovalStatus,
     permissionApprovalHandledAt,
-    permissionNotificationResentAt,
-    createdAt: joinedAt || appliedAt,
-    updatedAt: detail.decidedAt ?? joinedAt ?? appliedAt,
+    createdAt: appliedAt,
+    updatedAt: detail.decidedAt ?? appliedAt,
     instructorMemberProfile:
       cmsProfile?.memberType === 'SCHOOL_TEACHER' ? 'school_teacher' : 'instructor_only',
     listMetrics: {
@@ -92,7 +77,6 @@ export function mapInstructorRoleRequestDetailToUser(
       ...(feeGradeLabel ? { instructorFeeGradeLabel: feeGradeLabel } : {}),
       ...(jaGrade ? { jaEvaluationGrade: jaGrade } : {}),
     },
-    ...(socialAccounts ? { socialAccounts } : {}),
     ...(cmsProfile?.oneLineIntro?.trim() ? { bio: cmsProfile.oneLineIntro.trim() } : {}),
     ...(homeLine ? { detailAddress: homeLine } : {}),
     ...(homeDetail ? { detailAddressDetail: homeDetail } : {}),

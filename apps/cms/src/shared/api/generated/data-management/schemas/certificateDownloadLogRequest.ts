@@ -6,8 +6,16 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 인증서 PDF 다운로드 이력 기록 요청
+ */
 export interface CertificateDownloadLogRequest {
+  /** 다운로드한 회원 ID (선택) */
   downloadedByMemberId?: number;
+  /** 클라이언트 IP. 없으면 서버가 요청 IP를 넣는다 */
   ipAddress?: string;
+  /** 클라이언트 User-Agent */
   userAgent?: string;
+  /** 저장 파일명. GET /api/admin/logs/file-access 파일명 컬럼에 반영 */
+  fileName?: string;
 }

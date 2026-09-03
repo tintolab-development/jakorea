@@ -55,11 +55,11 @@ describe('buildAgreementConsentFillParagraphBodyOptions', () => {
     expect(options?.agreementAdminProxyConfirm).toBe(true)
     expect(options?.hiddenParagraphIds).toEqual(
       new Set([
+        PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingRecipient,
         PAYMENT_STATEMENT_PRE_CONSENT_IDS.midDate,
         PAYMENT_STATEMENT_PRE_CONSENT_IDS.midSignature,
         PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailDate,
         PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature,
-        PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingRecipient,
       ])
     )
   })
@@ -80,27 +80,33 @@ describe('buildAgreementConsentFillParagraphBodyOptions', () => {
     )
   })
 
-  it('keeps admin proxy confirm for payment statement even without participant name', () => {
+  it('enables admin proxy confirm for payment statement even without participant name', () => {
     const options = buildAgreementConsentFillParagraphBodyOptions(agreementConfig, {
       templateId: 'agreement-third-party',
     })
 
     expect(options?.agreementAdminProxyConfirm).toBe(true)
-    expect(options?.agreementSystemParticipantName).toBe('홍길동')
+    expect(options?.agreementSystemParticipantName).toBe('')
     expect(options?.hiddenParagraphIds).toEqual(
-      PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS.hiddenParagraphIds
+      new Set([
+        PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingRecipient,
+        PAYMENT_STATEMENT_PRE_CONSENT_IDS.midDate,
+        PAYMENT_STATEMENT_PRE_CONSENT_IDS.midSignature,
+        PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailDate,
+        PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature,
+      ])
     )
   })
 
-  it('keeps admin proxy confirm for portrait even without participant name', () => {
+  it('enables admin proxy confirm for portrait even without participant name', () => {
     const options = buildAgreementConsentFillParagraphBodyOptions(portraitConfig, {
       templateId: 'agreement-portrait',
     })
 
     expect(options?.agreementAdminProxyConfirm).toBe(true)
-    expect(options?.agreementSystemParticipantName).toBe('홍길동')
+    expect(options?.agreementSystemParticipantName).toBe('')
     expect(options?.hiddenParagraphIds).toEqual(
-      AGREEMENT_PORTRAIT_PARAGRAPH_BODY_OPTIONS.hiddenParagraphIds
+      new Set(['agreement-portrait-system-date', 'agreement-portrait-system-signature'])
     )
   })
 

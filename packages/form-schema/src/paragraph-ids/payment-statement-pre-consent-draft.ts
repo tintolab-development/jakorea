@@ -19,6 +19,8 @@ export const PAYMENT_STATEMENT_PRE_CONSENT_IDS = {
   p2RrnCollection: 'payment-statement-pre-consent-seed-p2-rrn-collection',
   p3ThirdParty: 'payment-statement-pre-consent-seed-p3-third-party',
   p4RrnThirdParty: 'payment-statement-pre-consent-seed-p4-rrn-third-party',
+  /** 시안 5번 — 지급조서(6) 직전·중간 서명 앞 */
+  jaKoreaActivity: 'payment-statement-pre-consent-seed-ja-korea-activity',
   midConsentLine: 'payment-statement-pre-consent-seed-mid-consent-line',
   midDate: 'payment-statement-pre-consent-seed-mid-date',
   midSignature: 'payment-statement-pre-consent-seed-mid-signature',
@@ -241,6 +243,42 @@ const intro: AgreementExplanationTextParagraph = {
   answerRequired: true,
 }
 
+/**
+ * 시안 「5. JA Korea 활동 경험」— 좌측 라벨「활동 이력」+ 기간·프로그램명·역할 행.
+ * fill UI는 CMS/Platform에서 커스텀 슬롯으로 렌더(지급조서 sidecar와 동일 패턴).
+ */
+const jaKoreaActivity = normalizeVerticalTableParagraph({
+  id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.jaKoreaActivity,
+  kind: 'single_item',
+  variant: 'vertical_table',
+  verticalTableFlavor: 'text',
+  requiredMark: true,
+  paragraphTitle: 'JA Korea 활동 경험',
+  paragraphDescription: '',
+  participatesInTitleNumbering: true,
+  rows: [
+    {
+      stageCount: 2,
+      headers: ['활동 이력', ''],
+      cells: ['', ''],
+      stageKinds: ['text', 'text'],
+      placeholderHints: ['프로그램명', '역할'],
+    },
+    {
+      stageCount: 2,
+      headers: ['활동 이력', ''],
+      cells: ['', ''],
+      stageKinds: ['text', 'text'],
+      placeholderHints: ['프로그램명', '역할'],
+    },
+  ],
+  bottomText: '',
+  showBottomText: false,
+  showBottomConsent: false,
+  bottomConsent: 'agree',
+  answerRequired: true,
+})
+
 const midConsentLine: AgreementExplanationTextParagraph = {
   id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine,
   kind: 'single_item',
@@ -352,6 +390,7 @@ export function createPaymentStatementPreConsentDraft(): WritingFormDraft {
       createP2RrnCollectionTable(),
       createP3ThirdPartyTable(),
       createP4RrnThirdPartyTable(),
+      jaKoreaActivity,
       midConsentLine,
       midDate,
       midSignature,
@@ -375,18 +414,38 @@ export const PAYMENT_STATEMENT_PRE_CONSENT_HORIZONTAL_TABLE_IDS = new Set<string
 /**
  * 저장된 draft에 구 시드(1행·옛 문구)가 남아 있어도
  * 가로형 표 단락(p1~p4)은 최신 시드 내용으로 덮어쓴다.
+ * 시드에 있는 mid/tail·활동경험·귀하 등 단락이 없으면 시드 순서로 보강한다.
  */
 export function overlayPaymentStatementPreConsentSeedHorizontalTables(
   draft: WritingFormDraft
 ): WritingFormDraft {
-  const seedById = new Map(
-    createPaymentStatementPreConsentDraft().paragraphs.map(p => [p.id, p] as const)
-  )
+  const seedDraft = createPaymentStatementPreConsentDraft()
+  const seedById = new Map(seedDraft.paragraphs.map(p => [p.id, p] as const))
+
+  const resolvedById = new Map<string, WritingFormParagraph>()
+  for (const p of draft.paragraphs) {
+    if (PAYMENT_STATEMENT_PRE_CONSENT_HORIZONTAL_TABLE_IDS.has(p.id)) {
+      resolvedById.set(p.id, seedById.get(p.id) ?? p)
+    } else {
+      resolvedById.set(p.id, p)
+    }
+  }
+
+  const paragraphs: WritingFormParagraph[] = []
+  const usedIds = new Set<string>()
+  for (const seedParagraph of seedDraft.paragraphs) {
+    const existing = resolvedById.get(seedParagraph.id)
+    paragraphs.push(existing ?? seedParagraph)
+    usedIds.add(seedParagraph.id)
+  }
+  for (const p of draft.paragraphs) {
+    if (usedIds.has(p.id)) continue
+    if (PAYMENT_STATEMENT_PRE_CONSENT_SEED_PARAGRAPH_IDS.has(p.id)) continue
+    paragraphs.push(resolvedById.get(p.id) ?? p)
+  }
+
   return normalizeWritingFormDraft({
     ...draft,
-    paragraphs: draft.paragraphs.map(p => {
-      if (!PAYMENT_STATEMENT_PRE_CONSENT_HORIZONTAL_TABLE_IDS.has(p.id)) return p
-      return seedById.get(p.id) ?? p
-    }),
+    paragraphs,
   })
 }

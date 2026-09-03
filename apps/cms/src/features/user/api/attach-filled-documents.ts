@@ -89,9 +89,7 @@ export function mapAgreementSnapshotToFilledDocument(
 ): FilledDocumentRequest {
   const templateCode = AGREEMENT_TEMPLATE_CODE_BY_TERMS_TYPE[termsType]
   const request: FilledDocumentRequest = {
-    schemaJson: normalizeNoticeIdTypeResidentInputInDraft(
-      snapshot.draft
-    ) as unknown as FilledDocumentRequestSchemaJson,
+    schemaJson: normalizeNoticeIdTypeResidentInputInDraft(snapshot.draft) as unknown as FilledDocumentRequestSchemaJson,
   }
   if (templateCode) request.templateCode = templateCode
   if (templateCode === 'agreement-third-party') {

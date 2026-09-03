@@ -13,9 +13,10 @@ import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { UnavailableDatesBulkExclusionsRow } from '@/features/template/ui/form-set/shared/unavailable-dates-bulk-exclusions-row'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import {
-  useGeneralApplicationOverlayKv,
-  updateGeneralApplicationOverlayKey,
-} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+  updateVolunteerInterviewOverlayKey,
+  useVolunteerInterviewOverlayKv,
+  type VolunteerInterviewOverlayStore,
+} from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import './volunteer-interview-available-schedule-paragraph.css'
 
 type InterviewTimeUnit = '15' | '30' | '60'
@@ -64,44 +65,53 @@ function VolunteerInterviewScheduleBlock({
   type,
   commonScheduleSeed,
   onCommonExclusionChange,
+  overlayStore = 'application',
 }: {
   /** 예외 일정이 있을 때만 공통 블록에 전달 */
   title?: string
   type: 'common' | 'exception'
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
+  overlayStore?: VolunteerInterviewOverlayStore
 }) {
   const seed = type === 'common' ? commonScheduleSeed : undefined
   const initialTimeRange = useMemo(
     () => (seed ? buildDayjsTimeRange(seed.interviewTimeRange) : null),
     [seed]
   )
-  const [exceptionDate, setExceptionDate] = useGeneralApplicationOverlayKv<Dayjs | null>(
-    'application.volunteer.interview.exceptionDate',
+  const [exceptionDate, setExceptionDate] = useVolunteerInterviewOverlayKv<Dayjs | null>(
+    overlayStore,
+    'exceptionDate',
     null
   )
-  const [interviewTime, setInterviewTime] = useGeneralApplicationOverlayKv<Dayjs | null>(
-    'application.volunteer.interview.interviewTime',
+  const [interviewTime, setInterviewTime] = useVolunteerInterviewOverlayKv<Dayjs | null>(
+    overlayStore,
+    'interviewTime',
     initialTimeRange?.[0] ?? null
   )
-  const [interviewTimeRange, setInterviewTimeRange] = useGeneralApplicationOverlayKv<[Dayjs, Dayjs] | null>(
-    'application.volunteer.interview.interviewTimeRange',
+  const [interviewTimeRange, setInterviewTimeRange] = useVolunteerInterviewOverlayKv<[Dayjs, Dayjs] | null>(
+    overlayStore,
+    'interviewTimeRange',
     initialTimeRange
   )
-  const [timeUnit, setTimeUnit] = useGeneralApplicationOverlayKv<InterviewTimeUnit>(
-    'application.volunteer.interview.timeUnit',
+  const [timeUnit, setTimeUnit] = useVolunteerInterviewOverlayKv<InterviewTimeUnit>(
+    overlayStore,
+    'timeUnit',
     seed?.timeUnit ?? '30'
   )
-  const [selectedSlotKeys] = useGeneralApplicationOverlayKv<string[]>(
-    'application.volunteer.interview.selectedSlotKeys',
+  const [selectedSlotKeys] = useVolunteerInterviewOverlayKv<string[]>(
+    overlayStore,
+    'selectedSlotKeys',
     []
   )
-  const [appliedUnavailableDates, setAppliedUnavailableDates] = useGeneralApplicationOverlayKv<string[]>(
-    'application.volunteer.interview.appliedUnavailableDates',
+  const [appliedUnavailableDates, setAppliedUnavailableDates] = useVolunteerInterviewOverlayKv<string[]>(
+    overlayStore,
+    'appliedUnavailableDates',
     seed?.appliedUnavailableDates ?? []
   )
-  const [exclusionState, setExclusionState] = useGeneralApplicationOverlayKv<UnavailableDatesExclusionState>(
-    'application.volunteer.interview.exclusionState',
+  const [exclusionState, setExclusionState] = useVolunteerInterviewOverlayKv<UnavailableDatesExclusionState>(
+    overlayStore,
+    'exclusionState',
     seed
       ? {
           excludeNone: seed.excludeNone,
@@ -118,9 +128,7 @@ function VolunteerInterviewScheduleBlock({
   )
 
   useEffect(() => {
-    updateGeneralApplicationOverlayKey<string[]>(
-      'application.volunteer.interview.selectedSlotKeys',
-      prev => {
+    updateVolunteerInterviewOverlayKey<string[]>(overlayStore, 'selectedSlotKeys', prev => {
         const availableKeys = new Set(interviewTimeSlots.map(slot => slot.key))
         const currentSlots = prev ?? []
         const filtered = currentSlots.filter(key => availableKeys.has(key))
@@ -153,9 +161,8 @@ function VolunteerInterviewScheduleBlock({
           return prev
         }
         return next
-      }
-    )
-  }, [interviewTimeSlots, seed])
+      })
+  }, [interviewTimeSlots, overlayStore, seed])
 
   const handleExclusionChange = (state: UnavailableDatesExclusionState) => {
     setExclusionState(state)
@@ -170,7 +177,7 @@ function VolunteerInterviewScheduleBlock({
   }, [exclusionState, onCommonExclusionChange, type])
 
   const toggleTimeSlot = (slotKey: string) => {
-    updateGeneralApplicationOverlayKey<string[]>('application.volunteer.interview.selectedSlotKeys', prev =>
+    updateVolunteerInterviewOverlayKey<string[]>(overlayStore, 'selectedSlotKeys', prev =>
       (prev ?? []).includes(slotKey) ? (prev ?? []).filter(key => key !== slotKey) : [...(prev ?? []), slotKey]
     )
   }
@@ -291,12 +298,14 @@ function VolunteerInterviewScheduleTemplateUi({
   onRemoveExceptionBlock,
   commonScheduleSeed,
   onCommonExclusionChange,
+  overlayStore = 'application',
 }: {
   exceptionScheduleCount?: number
   exceptionBlockKeys?: number[]
   onRemoveExceptionBlock?: (key: number) => void
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
+  overlayStore?: VolunteerInterviewOverlayStore
 }) {
   const [internalBlockKeys, setInternalBlockKeys] = useState<number[]>([])
 
@@ -335,12 +344,14 @@ function VolunteerInterviewScheduleTemplateUi({
         type="common"
         commonScheduleSeed={commonScheduleSeed}
         onCommonExclusionChange={onCommonExclusionChange}
+        overlayStore={overlayStore}
       />
       {blockKeys.map((key, index) => (
         <div key={key} className="volunteer-interview-available-schedule__exception-row">
           <VolunteerInterviewScheduleBlock
             title={`■ 예외 일정 ${String(index + 1).padStart(2, '0')}`}
             type="exception"
+            overlayStore={overlayStore}
           />
           <div className="volunteer-interview-available-schedule__exception-delete-cell">
             <ItemDeleteButton
@@ -367,6 +378,7 @@ export function VolunteerInterviewAvailableScheduleParagraph({
   onRemoveExceptionBlock,
   commonScheduleSeed,
   onCommonExclusionChange,
+  overlayStore = 'application',
 }: {
   isTemplateAuthoringMode?: boolean
   readOnlyPreview?: boolean
@@ -375,6 +387,7 @@ export function VolunteerInterviewAvailableScheduleParagraph({
   onRemoveExceptionBlock?: (key: number) => void
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
+  overlayStore?: VolunteerInterviewOverlayStore
 }) {
   if (isTemplateAuthoringMode && !readOnlyPreview) {
     return (
@@ -384,6 +397,7 @@ export function VolunteerInterviewAvailableScheduleParagraph({
         onRemoveExceptionBlock={onRemoveExceptionBlock}
         commonScheduleSeed={commonScheduleSeed}
         onCommonExclusionChange={onCommonExclusionChange}
+        overlayStore={overlayStore}
       />
     )
   }

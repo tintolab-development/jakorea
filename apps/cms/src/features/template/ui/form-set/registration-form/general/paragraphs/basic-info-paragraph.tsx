@@ -2,9 +2,6 @@ import { useMemo, type ReactNode } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
-import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
-import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -17,7 +14,6 @@ import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/gene
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS,
-  withDetailedProgramNoneOption,
 } from '@/features/template/lib/template-form-select-options'
 import {
   PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS,
@@ -35,11 +31,11 @@ import {
   type ProgramRegistrationSurveyItemId,
 } from '@/features/template/lib/program-registration-survey-items'
 import {
-  GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
-  GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
   useProgramRegistrationOverlayKv,
   updateProgramRegistrationOverlayKey,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { ProgramRegistrationBasicInfoSponsorFields } from '@/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph-sponsor-fields'
+import { ProgramRegistrationBasicInfoTitleFields } from '@/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph-title-fields'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './program-registration-paragraph.css'
 
@@ -128,60 +124,6 @@ export function ProgramRegistrationBasicInfoParagraph({
     [operationRange]
   )
 
-  const [localSponsorId, setLocalSponsorId] = useProgramRegistrationOverlayKv(
-    GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
-    ''
-  )
-  const [localManagerContactId, setLocalManagerContactId] = useProgramRegistrationOverlayKv(
-    GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
-    ''
-  )
-  const [localProgramTitleKo, setLocalProgramTitleKo] = useProgramRegistrationOverlayKv(
-    'generalRegistration.basicInfo.localProgramTitleKo',
-    ''
-  )
-  const [programTitleEn, setProgramTitleEn] = useProgramRegistrationOverlayKv(
-    'generalRegistration.basicInfo.programTitleEn',
-    ''
-  )
-  const [publicProgramTitle, setPublicProgramTitle] = useProgramRegistrationOverlayKv(
-    'generalRegistration.basicInfo.publicProgramTitle',
-    ''
-  )
-  const isSponsorControlled = onSponsorIdChange != null
-  const isTitleControlled = onProgramTitleKoChange != null
-  const sponsorId = isSponsorControlled ? (sponsorIdProp ?? '') : localSponsorId
-  const managerContactId = isSponsorControlled
-    ? (sponsorContactIdProp ?? '')
-    : localManagerContactId
-  const programTitleKo = isTitleControlled ? (programTitleKoProp ?? '') : localProgramTitleKo
-  const setSponsorId = (next: string) => {
-    // controlled이어도 overlay에 같이 남겨 스텝 전환·draft 복원 시 editor state와 어긋나지 않게 한다
-    setLocalSponsorId(next)
-    if (isSponsorControlled) {
-      onSponsorIdChange(next)
-      return
-    }
-  }
-  const setManagerContactId = (next: string) => {
-    setLocalManagerContactId(next)
-    if (isSponsorControlled) {
-      onSponsorContactIdChange?.(next)
-      return
-    }
-  }
-  const setProgramTitleKo = (next: string) => {
-    if (isTitleControlled) {
-      onProgramTitleKoChange(next)
-      return
-    }
-    setLocalProgramTitleKo(next)
-  }
-  
-  const [detailedProgramId, setDetailedProgramId] = useProgramRegistrationOverlayKv<string>(
-    'generalRegistration.basicInfo.detailedProgramId',
-    ''
-  )
   const [educationVenueKind, setEducationVenueKind] = useProgramRegistrationOverlayKv<
     'inside' | 'outside' | 'other'
   >('generalRegistration.basicInfo.educationVenueKind', 'inside')
@@ -218,29 +160,6 @@ export function ProgramRegistrationBasicInfoParagraph({
     )
   }
 
-  /** `/sponsor` 후원사 관리 목록 API */
-  const { options: sponsorOptions } = useSponsorSelectOptions()
-  const contactsQuery = useSponsorContactsQuery(sponsorId || null, Boolean(sponsorId))
-
-  const managerOptions = useMemo(() => {
-    if (!sponsorId) return []
-    return (contactsQuery.data ?? []).map(c => ({
-      value: c.id,
-      label: c.name,
-    }))
-  }, [contactsQuery.data, sponsorId])
-
-  const detailedProgramOptions = useMemo(
-    () =>
-      withDetailedProgramNoneOption(
-        mockDetailedProgramManagementListRows.map(row => ({
-          value: row.id,
-          label: row.name,
-        }))
-      ),
-    []
-  )
-
   return (
     <>
       <DetailInfoForm
@@ -249,66 +168,10 @@ export function ProgramRegistrationBasicInfoParagraph({
         mode="edit"
         className="program-registration-paragraph"
       >
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="대표 프로그램명 (국문)"
-            edit={
-              <CmsInput
-                inputSize="medium"
-                placeholder="대표 프로그램명을 입력하세요"
-                width="100%"
-                value={programTitleKo}
-                onChange={e => setProgramTitleKo(e.target.value)}
-              />
-            }
-            view="-"
-          />
-          <DetailInfoForm.Field
-            label="대표 프로그램명 (영문)"
-            edit={
-              <CmsInput
-                inputSize="medium"
-                placeholder="상세 프로그램명을 입력하세요"
-                width="100%"
-                value={programTitleEn}
-                onChange={e => setProgramTitleEn(e.target.value)}
-              />
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="공고용 프로그램명"
-            edit={
-              <CmsInput
-                inputSize="medium"
-                placeholder="모집 시 노출될 프로그램명을 입력하세요"
-                width="100%"
-                value={publicProgramTitle}
-                onChange={e => setPublicProgramTitle(e.target.value)}
-              />
-            }
-            view="-"
-          />
-          <DetailInfoForm.Field
-            label="세부 프로그램명"
-            edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap">
-                <CmsSelect
-                  withAllOption={false}
-                  inputSize="medium"
-                  placeholder="세부 프로그램명을 선택하세요"
-                  width="100%"
-                  options={detailedProgramOptions}
-                  value={detailedProgramId}
-                  onChange={v => setDetailedProgramId(String(v ?? ''))}
-                />
-              </div>
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
+        <ProgramRegistrationBasicInfoTitleFields
+          programTitleKo={programTitleKoProp}
+          onProgramTitleKoChange={onProgramTitleKoChange}
+        />
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="사업 운영 기간"
@@ -391,46 +254,12 @@ export function ProgramRegistrationBasicInfoParagraph({
             view="-"
           />
         </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="후원사"
-            edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap">
-                <CmsSelect
-                  withAllOption={false}
-                  inputSize="medium"
-                  placeholder="후원사를 선택하세요"
-                  width={240}
-                  options={sponsorOptions}
-                  value={sponsorId}
-                  onChange={v => {
-                    const next = String(v ?? '')
-                    setSponsorId(next)
-                    setManagerContactId('')
-                  }}
-                />
-              </div>
-            }
-            view="-"
-          />
-          <DetailInfoForm.Field
-            label="후원사 담당자"
-            edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap">
-                <CmsSelect
-                  inputSize="medium"
-                  placeholder="후원사 담당자를 선택하세요"
-                  width={240}
-                  options={managerOptions}
-                  value={managerContactId}
-                  disabled={!sponsorId || managerOptions.length === 0}
-                  onChange={v => setManagerContactId(String(v ?? ''))}
-                />
-              </div>
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
+        <ProgramRegistrationBasicInfoSponsorFields
+          sponsorId={sponsorIdProp}
+          onSponsorIdChange={onSponsorIdChange}
+          sponsorContactId={sponsorContactIdProp}
+          onSponsorContactIdChange={onSponsorContactIdChange}
+        />
         {hideEducationPlace ? null : (
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field

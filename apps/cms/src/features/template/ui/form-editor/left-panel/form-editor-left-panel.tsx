@@ -58,21 +58,38 @@ export function FormEditorLeftPanel({
       <AgreementSheetClosingFooter
         onSubmit={agreementClosingFooter?.onSubmit}
         submitDisabled={agreementClosingFooter?.submitDisabled}
-        showSubmitButton={agreementClosingFooter?.showSubmitButton ?? true}
+        showSubmitButton={agreementClosingFooter?.showSubmitButton ?? false}
+        showRecipient={agreementClosingFooter?.showRecipient ?? false}
       />
     ) : null
-  const mergedParagraphBodyOptions: RenderFormParagraphBodyOptions = {
-    ...paragraphBodyOptions,
-    paragraphInteractionMode,
-    structureLockedParagraphIds:
-      paragraphBodyOptions?.structureLockedParagraphIds ?? structureLockedParagraphIds,
-  }
+  const mergedParagraphBodyOptions: RenderFormParagraphBodyOptions = useMemo(
+    () => ({
+      ...paragraphBodyOptions,
+      paragraphInteractionMode,
+      structureLockedParagraphIds:
+        paragraphBodyOptions?.structureLockedParagraphIds ?? structureLockedParagraphIds,
+    }),
+    [paragraphBodyOptions, paragraphInteractionMode, structureLockedParagraphIds]
+  )
 
   const hiddenParagraphIds = mergedParagraphBodyOptions.hiddenParagraphIds
   const displayParagraphs = useMemo(() => {
     if (hiddenParagraphIds == null || hiddenParagraphIds.size === 0) return paragraphs
     return paragraphs.filter(paragraph => !hiddenParagraphIds.has(paragraph.id))
   }, [paragraphs, hiddenParagraphIds])
+
+  const paragraphOrderKey = useMemo(
+    () => displayParagraphs.map(paragraph => paragraph.id).join('\0'),
+    [displayParagraphs]
+  )
+
+  const paragraphIndexById = useMemo(() => {
+    const map = new Map<string, number>()
+    displayParagraphs.forEach((paragraph, index) => {
+      map.set(paragraph.id, index)
+    })
+    return map
+  }, [paragraphOrderKey, displayParagraphs])
 
   const formEditorLeftClassName = [
     'form-editor-left',
@@ -110,6 +127,7 @@ export function FormEditorLeftPanel({
                   <SortableMiddleFormCard
                     key={p.id}
                     paragraph={p}
+                    paragraphIndex={paragraphIndexById.get(p.id) ?? 0}
                     paragraphs={displayParagraphs}
                     titleNumbering={titleNumbering}
                     selectedCardId={selectedCardId}
@@ -140,6 +158,7 @@ export function FormEditorLeftPanel({
               <PinnedFormCard
                 key={p.id}
                 paragraph={p}
+                paragraphIndex={paragraphIndexById.get(p.id) ?? 0}
                 paragraphs={displayParagraphs}
                 titleNumbering={titleNumbering}
                 selectedCardId={selectedCardId}
@@ -187,6 +206,7 @@ export function FormEditorLeftPanel({
                 <SortableMiddleFormCard
                   key={p.id}
                   paragraph={p}
+                  paragraphIndex={paragraphIndexById.get(p.id) ?? 0}
                   paragraphs={displayParagraphs}
                   titleNumbering={titleNumbering}
                   selectedCardId={selectedCardId}
@@ -217,6 +237,7 @@ export function FormEditorLeftPanel({
             <PinnedFormCard
               key={p.id}
               paragraph={p}
+              paragraphIndex={paragraphIndexById.get(p.id) ?? 0}
               paragraphs={displayParagraphs}
               titleNumbering={titleNumbering}
               selectedCardId={selectedCardId}
@@ -241,6 +262,7 @@ export function FormEditorLeftPanel({
         )}
         <PinnedFormCard
           paragraph={tail}
+          paragraphIndex={paragraphIndexById.get(tail.id) ?? displayParagraphs.length - 1}
           paragraphs={displayParagraphs}
           titleNumbering={titleNumbering}
           selectedCardId={selectedCardId}
@@ -278,6 +300,7 @@ export function FormEditorLeftPanel({
     <div className={formEditorLeftClassName}>
       <PinnedFormCard
         paragraph={head}
+        paragraphIndex={paragraphIndexById.get(head.id) ?? 0}
         paragraphs={displayParagraphs}
         titleNumbering={titleNumbering}
         selectedCardId={selectedCardId}
@@ -310,6 +333,7 @@ export function FormEditorLeftPanel({
               <SortableMiddleFormCard
                 key={p.id}
                 paragraph={p}
+                paragraphIndex={paragraphIndexById.get(p.id) ?? 0}
                 paragraphs={displayParagraphs}
                 titleNumbering={titleNumbering}
                 selectedCardId={selectedCardId}
@@ -340,6 +364,7 @@ export function FormEditorLeftPanel({
           <PinnedFormCard
             key={p.id}
             paragraph={p}
+            paragraphIndex={paragraphIndexById.get(p.id) ?? 0}
             paragraphs={displayParagraphs}
             titleNumbering={titleNumbering}
             selectedCardId={selectedCardId}
@@ -366,6 +391,7 @@ export function FormEditorLeftPanel({
         <PinnedFormCard
           key={p.id}
           paragraph={p}
+          paragraphIndex={paragraphIndexById.get(p.id) ?? 0}
           paragraphs={displayParagraphs}
           titleNumbering={titleNumbering}
           selectedCardId={selectedCardId}

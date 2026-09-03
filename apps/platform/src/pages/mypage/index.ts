@@ -1,6 +1,8 @@
 export { MypageHomePage } from './home/page'
 export { MypageEducationPage } from './education/page'
 export { MypageEducationDetailPage } from './education/detail/page'
+export { MypageEducationSettlementWritePage } from './education/settlement-write/page'
+export { MypageEducationSettlementConfirmPage } from './education/settlement-confirm/page'
 export { MypageInquiriesPage } from './inquiries/page'
 export { MypageInstructorApplyPage } from './instructor-apply/page'
 export { MypageInstructorApplyConsentPage } from './instructor-apply/consent/page'

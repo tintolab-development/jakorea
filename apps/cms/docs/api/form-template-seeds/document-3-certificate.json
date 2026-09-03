@@ -16,6 +16,12 @@
     "chairmanSeal": null,
     "titleName": "수료증",
     "bodyContent": "귀하는 위의 과정에 참여하여\n교육과정을 수료하였음을 확인합니다.",
+    "chairmanName": "이은형",
+    "orgAddress": "서울특별시 강서구 마곡중앙로 171 714호",
+    "orgPhone": "Tel.02-783-2367",
+    "orgFax": "Fax.070-4275-5115",
+    "orgWebsite": "http://www.jakorea.org",
+    "participantInfo": "홍길동\n1990.01.01\nOO고등학교\nJA 직업캠프\n2025.01.01 ~ 2025.12.31\n기관 및 학교 제출용",
     "participantRowVisibility": [
       true,
       true,

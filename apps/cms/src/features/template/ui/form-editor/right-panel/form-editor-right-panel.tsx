@@ -58,12 +58,21 @@ export function FormEditorRightPanel({
   structureLockedParagraphIds,
   hideParagraphKindOutline: hideParagraphKindOutlineProp,
 }: FormEditorRightPanelProps) {
-  const { active, structureLockedActive, outline, activeKindValue, activeDetailValue, activeKindLocked } =
-    useActiveParagraphState({ draft, activeParagraphId, structureLockedParagraphIds })
+  const activeParagraph =
+    activeParagraphId != null
+      ? draft.paragraphs.find(paragraph => paragraph.id === activeParagraphId) ?? null
+      : null
 
-  /** 사용자 추가 단락: 유형 셀렉트 노출 / 시드·관리자 고정: 숨김 */
-  const hideParagraphKindOutline =
-    hideParagraphKindOutlineProp ?? structureLockedActive
+  const { active, structureLockedActive, outline, activeKindValue, activeDetailValue, activeKindLocked } =
+    useActiveParagraphState({
+      draft,
+      activeParagraphId,
+      activeParagraph,
+      structureLockedParagraphIds,
+    })
+
+  /** 사용자 추가 단락: 유형 셀렉트 노출 / 시드·관리자 고정: 기본은 잠금 안내·설정 노출 */
+  const hideParagraphKindOutline = hideParagraphKindOutlineProp === true
 
   const { handleKindChange, handleDetailChange } = useParagraphConversion({
     active,

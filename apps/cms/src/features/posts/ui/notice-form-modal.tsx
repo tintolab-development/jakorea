@@ -11,7 +11,6 @@ import { useNoticeMutations } from '@/features/posts/hooks/use-notice-mutations'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import { RichTextEditor } from '@/shared/rich-text'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { canPerformWriteAction } from '@/shared/utils/permissions'
 import {
   ContentModal,
   CmsButton,
@@ -49,7 +48,6 @@ export function NoticeFormModal({
   onSuccess,
   onDeleted }: NoticeFormModalProps) {
   const { user } = useAuthStore()
-  const canWrite = canPerformWriteAction(user)
   const { createMutation, updateMutation, deleteMutation } = useNoticeMutations()
   const categoriesQuery = useNoticeCategoriesQuery(open)
   const [form] = Form.useForm<FormValues>()
@@ -223,7 +221,6 @@ export function NoticeFormModal({
                 variant="delete"
                 size="large"
                 onClick={handleRequestDelete}
-                disabled={!canWrite}
               >
                 삭제
               </CmsButton>
@@ -232,7 +229,7 @@ export function NoticeFormModal({
               <CmsButton variant="secondary" size="large" onClick={handleCancel}>
                 취소
               </CmsButton>
-              <CmsButton variant="primary" size="large" onClick={() => form.submit()}>
+              <CmsButton variant="primary" size="large" adminAction="write" onClick={() => form.submit()}>
                 {submitLabel}
               </CmsButton>
             </div>
@@ -316,7 +313,6 @@ export function NoticeFormModal({
               <FileSelectField
                 className="notice-register-modal__file-field"
                 multiple
-                disabled={!canWrite}
                 buttonLabel="파일 추가"
                 accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.hwp,.hwpx,.ppt,.pptx"
                 fileNames={attachmentDisplayNames}

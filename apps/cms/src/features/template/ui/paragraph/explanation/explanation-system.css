@@ -53,12 +53,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0;
+  gap: 120px;
   width: 100%;
+}
+
+.explanation-system-signature-document--with-name {
+  gap: 10px;
 }
 
 .explanation-system-signature-document__label {
   color: #000;
+  text-align: right;
   font-family: Pretendard, sans-serif;
   font-size: 24px;
   font-style: normal;
@@ -68,11 +73,10 @@
 
 .explanation-system-signature-document__name {
   box-sizing: border-box;
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
-  flex: 0 0 160px;
-  margin-right: 10px;
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+  flex: 0 0 120px;
   overflow: hidden;
   color: #000;
   text-align: right;
@@ -81,6 +85,13 @@
   font-style: normal;
   font-weight: 400;
   line-height: 150%; /* 36px */
+}
+
+/* 템플릿 미리보기 — 이름 미기입 서명란(밑줄) — document 빈 이름은 gap 120으로 대체 */
+.explanation-system-signature-document__name--blank {
+  align-self: flex-end;
+  min-height: 36px;
+  border-bottom: 1px solid #000;
 }
 
 .explanation-system-signature-document__participant {

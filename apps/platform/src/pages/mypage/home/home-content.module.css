@@ -14,3 +14,13 @@
 .schedule {
   margin-top: 54px;
 }
+
+@media (--bp-below-pc) {
+  .stats {
+    margin-top: 20px;
+  }
+
+  .schedule {
+    margin-top: 32px;
+  }
+}

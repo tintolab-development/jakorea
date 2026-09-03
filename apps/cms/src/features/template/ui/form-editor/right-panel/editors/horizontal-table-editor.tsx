@@ -35,6 +35,7 @@ function FormEditorHorizontalTableCustomFields({
       paragraph={paragraph}
       paragraphId={paragraph.id}
       rowIndex={rowIndex}
+      focusedCol={rowSelection.col}
       updateParagraph={updateParagraph}
       onBodyRowDeleted={onBodyRowDeleted}
     />

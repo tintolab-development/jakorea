@@ -275,14 +275,14 @@ export function AdminNoticeListPage() {
             <CmsButton
               variant="delete"
               onClick={handleBulkDelete}
-              disabled={!canWrite || selectedRowKeys.length === 0}
+              disabled={selectedRowKeys.length === 0}
             >
               공지사항 삭제
             </CmsButton>
             <CmsButton variant="secondary" onClick={() => setCategoryModalOpen(true)}>
               카테고리 관리
             </CmsButton>
-            <CmsButton variant="primary" onClick={handleRegister} disabled={!canWrite}>
+            <CmsButton variant="primary" onClick={handleRegister}>
               공지사항 등록
             </CmsButton>
           </>

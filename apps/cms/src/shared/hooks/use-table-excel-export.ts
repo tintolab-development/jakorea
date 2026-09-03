@@ -8,6 +8,7 @@
 
 import { useCallback, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
+import { guardAdminDownload } from '@/shared/lib/session-admin-role'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { exportTableToExcel } from '@/shared/utils/table-export'
 
@@ -51,6 +52,7 @@ export function useTableExcelExport<T extends object>({
 
   const exportExcel = useCallback(async () => {
     if (isExporting) return
+    if (!guardAdminDownload()) return
     if (data.length === 0) {
       if (alertOnEmpty) {
         cmsAlertModal.show({ title: emptyAlertTitle, content: emptyAlertContent })

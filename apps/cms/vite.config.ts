@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
       mockProgramCatalogApiPlugin({ monorepoRoot: path.resolve(__dirname, '../..') }),
     ],
     optimizeDeps: {
-      include: ['@fortune-sheet/react', '@fortune-sheet/core', 'lodash', 'immer'],
+      include: ['@fortune-sheet/react', '@fortune-sheet/core', 'lodash', 'immer', 'pdfjs-dist'],
     },
     resolve: {
       alias: {

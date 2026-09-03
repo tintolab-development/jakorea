@@ -14,6 +14,7 @@ CMS Playwright E2E · `/e2e-error-log` · 회원 관리 연동에서 **관측·�
 
 | 우선순위 | 도메인 | 대표 증상 | 문서 |
 |----------|--------|-----------|------|
+| **P0** | **admin RBAC · 양식** | VIEWER 목록 GET **403** · PARTNER unmask/강사승인 **403** · form-template PUT **500** · GET **404** | [**admin-role-rbac-unmask-form-template-backend-request-2026-09-01.md**](./members/admin-role-rbac-unmask-form-template-backend-request-2026-09-01.md) |
 | **P0** | **members (목록 PII)** | `GET /api/admin/members/all` 연락처·이메일 **원문** | [**members-all-list-email-phone-masking-backend-request-2026-08-31.md**](./members/members-all-list-email-phone-masking-backend-request-2026-08-31.md) |
 | **P0** | **members (동의 current·파일)** | 상세 수정 `PAYMENT_STATEMENT_CONSENT` **404** · 성범죄 업로드 **401** | [**member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md**](./members/member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md) |
 | **P0** | **members (등록 동의서 본문)** | 동의서 작성 후 pre-register **HTTP 500** | [**member-pre-register-filled-document-500-backend-request-2026-08-26.md**](./members/member-pre-register-filled-document-500-backend-request-2026-08-26.md) |
@@ -68,4 +69,4 @@ pnpm --filter cms test:e2e:members
 
 이 항목은 백엔드 **비즈니스 에러 코드 수정** 대상이 아니며, 인프라 복구가 우선입니다.
 
-**Last updated:** 2026-08-26
+**Last updated:** 2026-09-01

@@ -62,7 +62,6 @@ export function mapAdminAccountDetailToUser(
 
   const permissionApprovalStatus = mapAdminAccountStatusToUserApprovalStatus(detail.status)
   const permissionApprovalHandledAt = detail.verifiedAt ?? detail.updatedAt ?? undefined
-  const permissionNotificationResentAt = detail.notificationResentAt ?? undefined
 
   return {
     id: resolveCanonicalUserDetailId(
@@ -95,7 +94,6 @@ export function mapAdminAccountDetailToUser(
       resolveIdentitySelfSignupCompletedAfterAdminRegistration({ role, adminAccountId }),
     permissionApprovalStatus,
     permissionApprovalHandledAt,
-    permissionNotificationResentAt,
     listMetrics: permissionVariant ? { adminPermissionVariant: permissionVariant } : undefined,
     ...(termsAgreements ? { termsAgreements } : {}),
   }

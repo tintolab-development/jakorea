@@ -3,8 +3,12 @@
  * 성공/에러/알림 메시지 중앙 관리
  */
 
+/** 폼 제출 — 필수 항목 미완 시 AlertModal 제목 (회원 신규 등록과 동일) */
+export const REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = '필수 항목 미입력'
+
 /** 폼 제출 — 필수 항목 미완 시 AlertModal 본문 (필드명 미안내) */
-export const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE = '필수 항목을 모두 작성해주세요'
+export const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE =
+  '필수 항목이 모두 입력되지 않았습니다.\n* 표시된 필수 항목을 모두 작성해주세요'
 
 /** 회원 신규 등록 — 약관·동의 미완료 시 AlertModal 본문 */
 export const REQUIRED_TERMS_AGREEMENT_ALERT_MESSAGE = '필수 약관에 동의해주세요'
@@ -14,8 +18,15 @@ export const INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE =
   '기본 정보를 먼저 작성 해주세요.'
 
 /** 성범죄 경력조회 동의서 — 제출 시 문서 미첨부 AlertModal 본문 */
-export const CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE =
-  '동의서 파일을 첨부해 주세요.'
+export const CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE = '동의서 파일을 첨부해 주세요.'
+
+/** 성범죄 경력조회 동의서 — PDF/이미지 외 파일 선택 시 AlertModal 본문 */
+export const CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE =
+  'PDF 또는 이미지 파일만 업로드할 수 있습니다.'
+
+/** 개인 재학 소속 — 검색 미선택·불완전 선택(학교명만) 시 AlertModal 본문 */
+export const INDIVIDUAL_ENROLLED_NEIS_SCHOOL_SELECTION_REQUIRED_ALERT_MESSAGE =
+  '재학 중인 회원은 학교를 검색해 선택해 주세요.'
 
 /** 미구현 기능 `window.alert` 공통 안내 (프로그램 상세 미리보기, 대시보드 위젯 더보기 등) */
 export const FEATURE_COMING_SOON_ALERT_MESSAGE = '준비 중입니다.'
@@ -43,8 +54,7 @@ export const STUDENT_PORTRAIT_CONSENT_DOWNLOAD_FAILED_ALERT_MESSAGE =
   '초상권 동의서 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.'
 
 /** 참여 학생 목록 — 수료증/참여인증서 발급: 미선택 시 AlertModal 본문 */
-export const STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE =
-  '발급할 학생을 1명 선택해 주세요.'
+export const STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE = '발급할 학생을 1명 선택해 주세요.'
 
 /** 참여 학생 목록 — 수료증/참여인증서 발급: 다수 선택 시 AlertModal 본문 */
 export const STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE =
@@ -59,8 +69,7 @@ export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE =
   '활동인증서는 한 번에 1명만 발급할 수 있습니다.\n강사 1명만 선택한 뒤 다시 시도해 주세요.'
 
 /** 참여 강사 목록 — 강사 추가 등록: 미선택 시 AlertModal 본문 */
-export const PARTICIPATING_INSTRUCTOR_ADD_SELECT_ALERT_MESSAGE =
-  '추가 등록할 강사를 선택해 주세요.'
+export const PARTICIPATING_INSTRUCTOR_ADD_SELECT_ALERT_MESSAGE = '추가 등록할 강사를 선택해 주세요.'
 
 /** 참여 강사 목록 — 강사 추가 등록: 등록 완료 시 AlertModal 본문 */
 export const PARTICIPATING_INSTRUCTOR_ADD_COMPLETE_ALERT_MESSAGE =
@@ -75,8 +84,7 @@ export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_VOLUNTEER_ALERT_MESSAGE 
   '활동확인서는 한 번에 1명만 발급할 수 있습니다.\n봉사자 1명만 선택한 뒤 다시 시도해 주세요.'
 
 /** 참여 봉사자 목록 — 봉사자 추가 등록: 미선택 시 AlertModal 본문 */
-export const PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE =
-  '추가 등록할 회원을 선택해 주세요.'
+export const PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE = '추가 등록할 회원을 선택해 주세요.'
 
 /** 참여 봉사자 목록 — 봉사자 추가 등록: 등록 완료 시 AlertModal 본문 */
 export const PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE =
@@ -118,8 +126,7 @@ export const INSTRUCTOR_ASSIGN_SELECT_UNAPPROVED_SINGLE_ONLY_ALERT_MESSAGE =
   '프로그램 참여 승인이 필요한 강사는 한 번에 한 명씩 선택 배정해 주세요.'
 
 /** 참여 강사 배정 현황 — 선택 배정: 미선택 시 AlertModal 본문 */
-export const INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE =
-  '배정할 강사를 선택해 주세요.'
+export const INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE = '배정할 강사를 선택해 주세요.'
 
 /** 참여 강사 배정 현황 — 선택 배정: 미선택 시 AlertModal 본문 */
 export const INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE = '배정할 기관을 선택해 주세요.'

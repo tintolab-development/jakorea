@@ -27,6 +27,8 @@ import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/mo
 import { queryClient } from '@/shared/lib/query-client'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import type { UserRole } from '@/types/user'
+import { guardAdminAction, resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 
 export type PersonalInfoRevealControlMode =
   | 'toggleRemask'
@@ -182,10 +184,16 @@ export function usePersonalInfoReveal({
     setConfirmOpen(false)
   }, [])
 
+  const guardPiiReveal = useCallback(() => {
+    const roleCode = resolveAdminRoleCodeFromUser(useAuthStore.getState().user)
+    return guardAdminAction({ roleCode, action: 'pii' })
+  }, [])
+
   const revealWithReason = useCallback(
     async (
       reason: string
     ): Promise<{ ok: true; payload?: unknown } | { ok: false }> => {
+      if (!guardPiiReveal()) return { ok: false }
       const result = await revealPersonalInfoWithAudit(
         resolveAccessItem,
         resolveMemberId,
@@ -209,6 +217,7 @@ export function usePersonalInfoReveal({
       resolveMemberRole,
       resolveAdminAccountId,
       resolveInstructorRoleRequestId,
+      guardPiiReveal,
     ]
   )
 
@@ -221,8 +230,9 @@ export function usePersonalInfoReveal({
 
   const openPersonalInfoRevealConfirm = useCallback(() => {
     if (personalInfoRevealed) return
+    if (!guardPiiReveal()) return
     setConfirmOpen(true)
-  }, [personalInfoRevealed])
+  }, [personalInfoRevealed, guardPiiReveal])
 
   const onPrivacyControlClick = useCallback(() => {
     if (controlMode === 'toggleRemask') {
@@ -230,17 +240,20 @@ export function usePersonalInfoReveal({
         setPersonalInfoRevealed(false)
         return
       }
+      if (!guardPiiReveal()) return
       setConfirmOpen(true)
       return
     }
     if (controlMode === 'hideWhenRevealed') {
       if (personalInfoRevealed) return
+      if (!guardPiiReveal()) return
       setConfirmOpen(true)
       return
     }
     if (personalInfoRevealed) return
+    if (!guardPiiReveal()) return
     setConfirmOpen(true)
-  }, [controlMode, personalInfoRevealed])
+  }, [controlMode, personalInfoRevealed, guardPiiReveal])
 
   const confirmModal = useMemo(
     () =>
@@ -325,6 +338,8 @@ export function usePersonalInfoRevealByRow({
         setPrivacyRevealedByRowId(prev => ({ ...prev, [id]: false }))
         return
       }
+      const roleCode = resolveAdminRoleCodeFromUser(useAuthStore.getState().user)
+      if (!guardAdminAction({ roleCode, action: 'pii' })) return
       setPendingConfirmRowId(id)
     },
     []

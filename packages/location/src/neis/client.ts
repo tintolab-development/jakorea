@@ -38,6 +38,7 @@ type NeisSchoolInfoChunk = {
 function mapRowToItem(row: NeisSchoolRow): NeisSchoolItem {
   return {
     sdSchulCode: row.SD_SCHUL_CODE ?? '',
+    atptOfcdcScCode: row.ATPT_OFCDC_SC_CODE ?? '',
     schulNm: row.SCHUL_NM ?? '',
     schulKndScNm: row.SCHUL_KND_SC_NM ?? '',
     atptOfcdcScNm: row.ATPT_OFCDC_SC_NM ?? '',

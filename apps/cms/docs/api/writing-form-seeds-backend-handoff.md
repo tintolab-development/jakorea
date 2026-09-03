@@ -57,7 +57,7 @@
 | `application-participant-school` | 일반_참여 기관 신청 폼 | A | [application-participant-school.json](./form-template-seeds/application-participant-school.json) | 7 |
 | `application-participant-individual` | 일반_참여자 신청 폼 | A | [application-participant-individual.json](./form-template-seeds/application-participant-individual.json) | 5 |
 | `application-instructor` | 공통_강사 신청 폼 | A | [application-instructor.json](./form-template-seeds/application-instructor.json) | 4 |
-| `application-volunteer` | 공통_봉사자 신청 폼 | A | [application-volunteer.json](./form-template-seeds/application-volunteer.json) | 6 |
+| `application-volunteer` | 공통_봉사자 신청 폼 | A | [application-volunteer.json](./form-template-seeds/application-volunteer.json) | 7 |
 | `application-economy` | 1사1교_참여 기관 신청 폼 | A | [application-economy.json](./form-template-seeds/application-economy.json) | 9 |
 | `application-trained-teachers` | 교육받은 교사_참여 기관 신청 폼 | A | [application-trained-teachers.json](./form-template-seeds/application-trained-teachers.json) | 4 |
 | `application-gemini-visiting-training-instructor` | Gemini_찾아가는 연수 강사 신청 폼 | A | [application-gemini-visiting-training-instructor.json](./form-template-seeds/application-gemini-visiting-training-instructor.json) | 2 |
@@ -78,11 +78,14 @@
 
 | templateCode | templateName | Payload | 시드 JSON | 단락 수 |
 |--------------|--------------|---------|-----------|--------:|
-| `agreement-third-party` | 지급조서 사전 동의서 | A | [agreement-third-party.json](./form-template-seeds/agreement-third-party.json) | 14 |
+| `agreement-third-party` | 지급조서 사전 동의서 | A | [agreement-third-party.json](./form-template-seeds/agreement-third-party.json) | 15 |
 | `agreement-crime` | 성범죄 경력조회 및 아동학대 관련 범죄전력조회 동의서 | D | [agreement-crime.json](./form-template-seeds/agreement-crime.json) | 0 |
 | `agreement-notice` | 행정정보 공동이용 사전 동의서 | A | [agreement-notice.json](./form-template-seeds/agreement-notice.json) | 9 |
 | `agreement-expense` | 교육진행자 동의 서약서 | A | [agreement-expense.json](./form-template-seeds/agreement-expense.json) | 9 |
 | `agreement-portrait` | 초상권 수집·이용 동의 | A | [agreement-portrait.json](./form-template-seeds/agreement-portrait.json) | 8 |
+
+> **DB 재시드 (A4·시안 동기화):** 동의 4종 + `document-payment-order-pre-consent` 일괄 upsert →  
+> [`agreement-consent-a4-sync-reseed-backend-cursor-prompt.md`](./agreement-consent-a4-sync-reseed-backend-cursor-prompt.md)
 
 ## 단락 id 요약
 
@@ -124,7 +127,7 @@
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
-| `applicant-recruit-institution-seed-recruit-info` | single_item | horizontal_table | 참여자 모집 정보 |
+| `applicant-recruit-institution-seed-recruit-info` | single_item | horizontal_table | 참여 기관 모집 정보 |
 | `applicant-recruit-institution-seed-detail-info` | single_item | horizontal_table | 상세 정보 |
 
 ### `recruitment-economy` — 1사1교_참여 기관 모집 폼
@@ -160,8 +163,8 @@
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
-| `ujat-recruit-institution-seed-recruit-info` | single_item | horizontal_table | 참여자 모집 정보 |
-| `ujat-recruit-institution-seed-detail-info` | single_item | horizontal_table | 참여자 상세 정보 |
+| `ujat-recruit-institution-seed-recruit-info` | single_item | horizontal_table | 참여 기관 모집 정보 |
+| `ujat-recruit-institution-seed-detail-info` | single_item | horizontal_table | 상세 정보 |
 
 ### `recruitment-ujat-volunteer` — UJAT_봉사자 모집 폼
 
@@ -226,6 +229,7 @@
 | `program-volunteer-application-seed-previous-ja-program` | single_item | horizontal_table | 이전 참여 JA 봉사 프로그램 |
 | `program-volunteer-application-seed-free-text-items` | single_item | horizontal_table | 자유 작성 항목 |
 | `program-volunteer-application-seed-interview-schedule` | single_item | horizontal_table | 면접 진행 가능 일정 |
+| `program-volunteer-application-seed-activity-schedule` | single_item | horizontal_table | 봉사 진행 가능 일정 |
 
 ### `application-economy` — 1사1교_참여 기관 신청 폼
 
@@ -254,8 +258,8 @@
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
-| `gemini-vt-instructor-seed-available-schedule` | single_item | horizontal_table | 강의 진행 가능 일정 |
 | `gemini-vt-instructor-seed-official-document` | single_item | horizontal_table | 연수 공문 |
+| `gemini-vt-instructor-seed-available-schedule` | single_item | horizontal_table | 강의 진행 가능 일정 |
 
 ### `application-gemini-visiting-training-school` — Gemini_찾아가는 연수 참여 기관 신청 폼
 
@@ -355,10 +359,11 @@
 | `payment-statement-pre-consent-seed-p2-rrn-collection` | single_item | horizontal_table | 고유식별번호(주민등록번호) 수집·이용 |
 | `payment-statement-pre-consent-seed-p3-third-party` | single_item | horizontal_table | 개인정보 제3자 제공·이용 |
 | `payment-statement-pre-consent-seed-p4-rrn-third-party` | single_item | horizontal_table | 고유식별번호 제3자 제공·이용 |
+| `payment-statement-pre-consent-seed-ja-korea-activity` | single_item | vertical_table | JA Korea 활동 경험 (시안 5번) |
 | `payment-statement-pre-consent-seed-mid-consent-line` | single_item | agreement_explanation_text |  |
 | `payment-statement-pre-consent-seed-mid-date` | description | system | 날짜 유형 |
 | `payment-statement-pre-consent-seed-mid-signature` | description | system | 서명란 유형 |
-| `payment-statement-pre-consent-seed-payment-record` | single_item | vertical_table | 지급조서 |
+| `payment-statement-pre-consent-seed-payment-record` | single_item | vertical_table | 지급조서 (시안 6번) |
 | `payment-statement-pre-consent-seed-final-confirm` | single_item | agreement_explanation_text |  |
 | `payment-statement-pre-consent-seed-tail-date` | description | system | 날짜 유형 |
 | `payment-statement-pre-consent-seed-tail-signature` | description | system | 서명란 유형 |

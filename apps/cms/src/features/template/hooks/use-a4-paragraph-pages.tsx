@@ -1,15 +1,11 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { FormEditorKind, FormTitleNumberingStyle, WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
-import {
-  A4_DOCUMENT_CONTINUATION_PAGE_BODY_MAX_PX,
-  A4_DOCUMENT_FIRST_PAGE_BODY_MAX_PX,
-  A4_DOCUMENT_CONTENT_INNER_WIDTH_PX,
-  A4_DOCUMENT_PARAGRAPH_GAP_PX,
-} from '@/features/template/lib/a4-document-pagination-constants'
+import { A4_DOCUMENT_CONTENT_INNER_WIDTH_PX } from '@/features/template/lib/a4-document-pagination-constants'
 import type {
   FormDocumentPreviewParagraphGapResolver,
   FormDocumentPreviewRenderMode,
 } from '@/features/template/lib/a4-document-preview'
+import { packParagraphsByHeights } from '@/features/template/lib/a4-paragraph-pack'
 import { FormDocumentPreviewBody } from '@/features/template/ui/document-preview/form-document-preview-body'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
@@ -34,77 +30,9 @@ export interface UseA4ParagraphPagesResult {
   measureLayer: ReactNode
 }
 
-function resolveParagraphGap(
-  paragraph: WritingFormParagraph,
-  pageParagraphs: WritingFormParagraph[],
-  paragraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
-): number {
-  if (pageParagraphs.length === 0) return 0
-  if (typeof paragraphGapPx === 'number') return paragraphGapPx
-  return (
-    paragraphGapPx?.(paragraph, pageParagraphs.length, pageParagraphs) ??
-    A4_DOCUMENT_PARAGRAPH_GAP_PX
-  )
-}
-
-function packParagraphsByHeights(
-  allParagraphs: WritingFormParagraph[],
-  heights: Map<string, number>,
-  enabled: boolean,
-  paragraphGapPx?: number | FormDocumentPreviewParagraphGapResolver,
-  pageBreakBeforeParagraphIds?: ReadonlySet<string>
-): { pages: WritingFormParagraph[][]; overflow: Set<string> } {
-  if (!enabled || allParagraphs.length === 0) {
-    return { pages: [allParagraphs], overflow: new Set() }
-  }
-
-  const overflow = new Set<string>()
-  const out: WritingFormParagraph[][] = []
-  let page: WritingFormParagraph[] = []
-  let used = 0
-  let isFirstPage = true
-
-  const maxFor = () =>
-    isFirstPage ? A4_DOCUMENT_FIRST_PAGE_BODY_MAX_PX : A4_DOCUMENT_CONTINUATION_PAGE_BODY_MAX_PX
-
-  const flushPage = () => {
-    if (page.length > 0) {
-      out.push(page)
-      page = []
-      used = 0
-      isFirstPage = false
-    }
-  }
-
-  for (const p of allParagraphs) {
-    const h = heights.get(p.id) ?? 0
-    const maxH = maxFor()
-    if (h > maxH) {
-      overflow.add(p.id)
-    }
-
-    if (pageBreakBeforeParagraphIds?.has(p.id) && page.length > 0) {
-      flushPage()
-    }
-
-    let gap = resolveParagraphGap(p, page, paragraphGapPx)
-    if (page.length > 0 && used + gap + h > maxH) {
-      flushPage()
-      gap = resolveParagraphGap(p, page, paragraphGapPx)
-    }
-
-    page.push(p)
-    used += gap + h
-  }
-  flushPage()
-  if (out.length === 0) {
-    out.push([])
-  }
-  return { pages: out, overflow }
-}
-
 /**
  * 문서 미리보기와 동일 마크업으로 단락 높이를 재어, A4 본문 최대 높이 기준으로 페이지를 나눈다.
+ * 동의 closing(확인·날짜·서명)은 overflow 시 keep-together (`packParagraphsByHeights`).
  */
 export function useA4ParagraphPages({
   allParagraphs,

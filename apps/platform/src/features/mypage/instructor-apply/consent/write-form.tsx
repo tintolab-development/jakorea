@@ -81,22 +81,30 @@ function isSchemaConsentWriteIncomplete(
 export function SchemaConsentWriteForm({
   consentKey,
   onComplete,
+  readOnly = false,
 }: {
   consentKey: InstructorApplyConsentKey
   onComplete: () => void
+  readOnly?: boolean
 }) {
   const { templateId } = resolveInstructorApplyConsentTemplate(consentKey)
   const { lockedBasic } = useInstructorApplyLockedBasic()
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
 
-  const [state, setState] = useState<SchemaConsentWriteState>(() =>
-    loadSchemaConsentWriteState(consentKey, createInitialSchemaConsentState(consentKey))
-  )
+  const [state, setState] = useState<SchemaConsentWriteState>(() => {
+    const initial = createInitialSchemaConsentState(consentKey)
+    const loaded = loadSchemaConsentWriteState(consentKey, initial)
+    return {
+      ...loaded,
+      draft: normalizeMemberConsentWriteDraft(loaded.draft, templateId),
+    }
+  })
 
   useEffect(() => {
+    if (readOnly) return
     saveSchemaConsentWriteState(consentKey, state)
-  }, [consentKey, state])
+  }, [consentKey, readOnly, state])
 
   const incomplete = isSchemaConsentWriteIncomplete(consentKey, state)
 
@@ -245,21 +253,26 @@ export function SchemaConsentWriteForm({
         className={styles.form}
         onSubmit={event => {
           event.preventDefault()
+          if (readOnly) return
           handleSubmit()
         }}
       >
-        <PlatformConsentFormBody
-          draft={state.draft}
-          hiddenParagraphIds={hiddenParagraphIds}
-          onUpdateParagraph={updateParagraph}
-          fillOptions={fillOptions}
-          renderParagraphSlot={renderParagraphSlot}
-        />
-        <div className={styles.actions}>
-          <PFButton size="xlarge" width={240} type="submit">
-            작성 완료
-          </PFButton>
-        </div>
+        <fieldset disabled={readOnly} className={styles.fieldset}>
+          <PlatformConsentFormBody
+            draft={state.draft}
+            hiddenParagraphIds={hiddenParagraphIds}
+            onUpdateParagraph={readOnly ? () => undefined : updateParagraph}
+            fillOptions={fillOptions}
+            renderParagraphSlot={renderParagraphSlot}
+          />
+        </fieldset>
+        {readOnly ? null : (
+          <div className={styles.actions}>
+            <PFButton size="xlarge" width={240} type="submit">
+              작성 완료
+            </PFButton>
+          </div>
+        )}
       </form>
       <PFAlertModal
         open={alertOpen}
@@ -274,9 +287,13 @@ export function SchemaConsentWriteForm({
 export function InstructorApplyConsentWriteForm({
   consentKey,
   onComplete,
+  readOnly = false,
 }: {
   consentKey: InstructorApplyConsentKey
   onComplete: () => void
+  readOnly?: boolean
 }) {
-  return <SchemaConsentWriteForm consentKey={consentKey} onComplete={onComplete} />
+  return (
+    <SchemaConsentWriteForm consentKey={consentKey} onComplete={onComplete} readOnly={readOnly} />
+  )
 }

@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import {
   patchInstitutionApplicationProgramBridge,
   resetInstitutionApplicationProgramBridge,
@@ -72,6 +77,7 @@ export function useGeneralProgramRegistrationFlow(
   open: boolean,
   options?: UseGeneralProgramRegistrationFlowOptions
 ) {
+  const { showAlert } = useCmsAlert()
   const registrationFormVariant = options?.registrationFormVariant ?? 'general'
   const isCompanySchoolRegistration = registrationFormVariant === 'economy'
   const isTrainedTeachersRegistration = registrationFormVariant === 'trainedTeachers'
@@ -351,6 +357,18 @@ export function useGeneralProgramRegistrationFlow(
 
   const goToPhase = useCallback(
     (nextPhase: GeneralProgramRegistrationPhaseKey) => {
+      if (
+        registrationFormVariant === 'general' &&
+        nextPhase !== 'program' &&
+        isProgramStep &&
+        registrationVm.hasIncompleteRequiredFields()
+      ) {
+        showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
+        return
+      }
       if (nextPhase === 'program') {
         selectStep('program')
         return
@@ -365,7 +383,16 @@ export function useGeneralProgramRegistrationFlow(
           : getDefaultGeneralProgramApplicationStep(participantFlags, tabVisibility)
       )
     },
-    [selectStep, participantFlags, isTrainedTeachersRegistration, tabVisibility]
+    [
+      isProgramStep,
+      isTrainedTeachersRegistration,
+      participantFlags,
+      registrationFormVariant,
+      registrationVm,
+      selectStep,
+      showAlert,
+      tabVisibility,
+    ]
   )
 
   const handlePreview = useCallback(() => {

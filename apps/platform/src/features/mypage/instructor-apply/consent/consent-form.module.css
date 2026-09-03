@@ -8,6 +8,18 @@
   align-self: stretch;
 }
 
+.fieldset {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: inherit;
+  border: 0;
+}
+
 @media (--bp-below-pc) {
   .form {
     gap: var(--spacing-16);
@@ -381,10 +393,17 @@
   background: var(--main-WT, #fff);
 }
 
-.crimeDocumentPreview img {
+.crimeDocumentPreview img,
+.crimeDocumentPreviewPdf {
   display: block;
   width: 100%;
   height: auto;
+}
+
+.crimeDocumentPreviewPdf {
+  height: 720px;
+  border: 0;
+  background: #fff;
 }
 
 .visuallyHiddenFile {

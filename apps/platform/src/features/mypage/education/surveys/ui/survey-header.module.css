@@ -1,0 +1,38 @@
+.header {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  margin-bottom: var(--spacing-8);
+}
+
+.titleRow {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+}
+
+.title {
+  margin: 0;
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.period {
+  margin: 0;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.description {
+  margin: 0;
+}
+
+@media (--bp-below-pc) {
+  .period {
+    white-space: normal;
+  }
+}

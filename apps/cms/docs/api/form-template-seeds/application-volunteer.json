@@ -241,6 +241,34 @@
         "bottomConsent": "agree",
         "answerRequired": true,
         "idTypeWithInput": null
+      },
+      {
+        "id": "program-volunteer-application-seed-activity-schedule",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "봉사 진행 가능 일정",
+        "paragraphDescription": "봉사 진행이 가능한 일정을 모두 선택해 주세요.",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "봉사 진행 가능일",
+          ""
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
       }
     ]
   },

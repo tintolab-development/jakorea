@@ -30,7 +30,7 @@ export function ProgramRegistrationEditorLeftColumn({
       onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
       paragraphBodyOptions={vm.paragraphBodyOptions}
-      hideParagraphRequiredChrome
+      hideParagraphRequiredChrome={vm.programRegistrationFormVariant !== 'general'}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
   )

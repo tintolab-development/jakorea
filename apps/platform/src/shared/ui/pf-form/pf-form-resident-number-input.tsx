@@ -1,5 +1,6 @@
 import { PFTextInput } from '../pf-text-input'
 import { PFFormPeriodHyphen, PFFormPeriodPair } from './pf-form-inline'
+import styles from './pf-form.module.css'
 
 export type PFFormResidentNumberInputProps = {
   frontValue: string
@@ -9,6 +10,8 @@ export type PFFormResidentNumberInputProps = {
   frontPlaceholder?: string
   backPlaceholder?: string
   disabled?: boolean
+  /** true면 앞·뒤 인풋이 한 행을 50%씩 채움 */
+  fillRow?: boolean
 }
 
 /** Platform 양식 — 주민등록번호 앞·뒤 (모바일 50% − 50%) */
@@ -20,9 +23,10 @@ export function PFFormResidentNumberInput({
   frontPlaceholder = '주민등록 앞 6자리',
   backPlaceholder = '주민등록 뒤 7자리',
   disabled = false,
+  fillRow = false,
 }: PFFormResidentNumberInputProps) {
   return (
-    <PFFormPeriodPair>
+    <PFFormPeriodPair className={fillRow ? styles.periodPairFill : undefined}>
       <PFTextInput
         variant="formPage"
         size="large"

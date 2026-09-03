@@ -7,14 +7,30 @@ import {
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import type { DetailedProgramManagementRow } from '@/features/detailed-program/model/detailed-program-management.types'
 import {
-  applyCreatedToArrayLists,
+  applyCreatedToMatchingArrayLists,
   applyDeletedToArrayLists,
-  applyUpdatedToArrayLists,
+  applyUpdatedToMatchingArrayLists,
   invalidateArrayLists,
 } from '@/shared/lib/query-list-cache'
 
 function rowId(row: DetailedProgramManagementRow): string {
   return row.id
+}
+
+/** list key suffix: `dp_use=active|inactive&dp_name=...` */
+function detailedProgramMatchesListFilter(
+  queryKey: readonly unknown[],
+  row: DetailedProgramManagementRow
+): boolean {
+  const raw = queryKey[queryKey.length - 1]
+  if (typeof raw !== 'string') return true
+  const params = new URLSearchParams(raw)
+  const usage = params.get('dp_use') === 'inactive' ? 'inactive' : 'active'
+  if (usage === 'active' && !row.active) return false
+  if (usage === 'inactive' && row.active) return false
+  const nameQ = (params.get('dp_name') ?? '').trim()
+  if (nameQ && !row.name.includes(nameQ)) return false
+  return true
 }
 
 export function useDetailedProgramMutations() {
@@ -29,7 +45,13 @@ export function useDetailedProgramMutations() {
         return
       }
       queryClient.setQueryData(dataManagementQueryKeys.detailedPrograms.detail(created.id), created)
-      applyCreatedToArrayLists(queryClient, listsKey, created, rowId)
+      applyCreatedToMatchingArrayLists(
+        queryClient,
+        listsKey,
+        created,
+        rowId,
+        detailedProgramMatchesListFilter
+      )
     },
   })
 
@@ -42,7 +64,13 @@ export function useDetailedProgramMutations() {
         return
       }
       queryClient.setQueryData(dataManagementQueryKeys.detailedPrograms.detail(updated.id), updated)
-      applyUpdatedToArrayLists(queryClient, listsKey, updated, rowId)
+      applyUpdatedToMatchingArrayLists(
+        queryClient,
+        listsKey,
+        updated,
+        rowId,
+        detailedProgramMatchesListFilter
+      )
     },
   })
 

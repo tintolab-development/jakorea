@@ -7,6 +7,7 @@ import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-
 import { formatDate } from '@/shared/utils'
 import type { TeacherDetailData } from '@/data/mock/school-detail'
 import { inlineSegmentsWithDividers } from '@/features/user/detail/ui/user-basic-info/display'
+import { RestrictedPiiClickable } from '@/features/user/detail/ui/restricted-pii-clickable'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 
 export interface TeacherBasicInfoTabProps {
@@ -74,7 +75,12 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                   <span>주민등록번호</span>
                 </td>
                 <td className="teacher-detail-modal__cell--input">
-                  {inlineSegmentsWithDividers([detail.residentNumber, `만 ${detail.age}세`])}
+                  {inlineSegmentsWithDividers([
+                    <RestrictedPiiClickable key="rrn" action="piiRrn">
+                      {detail.residentNumber}
+                    </RestrictedPiiClickable>,
+                    `만 ${detail.age}세`,
+                  ])}
                 </td>
               </tr>
 

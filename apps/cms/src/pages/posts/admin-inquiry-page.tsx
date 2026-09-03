@@ -363,7 +363,7 @@ export function AdminInquiryPage() {
             <CmsButton
               variant="delete"
               onClick={handleBulkDelete}
-              disabled={!canWrite || selectedRowKeys.length === 0}
+              disabled={selectedRowKeys.length === 0}
             >
               문의삭제
             </CmsButton>

@@ -22,6 +22,8 @@ export interface NeisSchoolRow {
 /** 검색 결과로 노출할 학교 정보 */
 export interface NeisSchoolItem {
   sdSchulCode: string
+  /** NEIS `ATPT_OFCDC_SC_CODE` — 시도교육청 코드 (예: `B10`) */
+  atptOfcdcScCode: string
   schulNm: string
   schulKndScNm: string
   atptOfcdcScNm: string

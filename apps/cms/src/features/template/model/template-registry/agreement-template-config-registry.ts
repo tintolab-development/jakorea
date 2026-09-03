@@ -32,6 +32,7 @@ import {
 import {
   getPaymentStatementPreConsentA4ParagraphGap,
   PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS,
+  PAYMENT_STATEMENT_PRE_CONSENT_A4_PAGE_BREAK_BEFORE_PARAGRAPH_IDS,
 } from '@/features/template/model/payment-statement-pre-consent-a4-preview'
 import {
   PAYMENT_STATEMENT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
@@ -75,6 +76,8 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       a4RenderMode: 'contentOnly',
       a4ParagraphGapPx: getAgreementExpenseA4ParagraphGap,
       paragraphBodyOptions: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_BODY_OPTIONS,
+      /** 시안: JA KOREA 귀하·작성완료 없음 */
+      agreementClosingFooter: { showSubmitButton: false, showRecipient: false },
     }
   },
   'agreement-notice': () => {
@@ -92,6 +95,7 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       a4RenderMode: 'contentOnly',
       a4ParagraphGapPx: getAgreementNoticeA4ParagraphGap,
       paragraphBodyOptions: AGREEMENT_NOTICE_PARAGRAPH_BODY_OPTIONS,
+      agreementClosingFooter: { showSubmitButton: false, showRecipient: false },
     }
   },
   'agreement-portrait': () => {
@@ -109,6 +113,7 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       a4RenderMode: 'contentOnly',
       a4ParagraphGapPx: getAgreementPortraitA4ParagraphGap,
       paragraphBodyOptions: AGREEMENT_PORTRAIT_PARAGRAPH_BODY_OPTIONS,
+      agreementClosingFooter: { showSubmitButton: false, showRecipient: false },
     }
   },
   'agreement-third-party': () => {
@@ -123,9 +128,13 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       hideDragHandleForParagraphIds: PAYMENT_STATEMENT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
       previewLayout: 'a4-document',
       a4HiddenParagraphIds: PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS,
+      a4PageBreakBeforeParagraphIds:
+        PAYMENT_STATEMENT_PRE_CONSENT_A4_PAGE_BREAK_BEFORE_PARAGRAPH_IDS,
       a4RenderMode: 'contentOnly',
       a4ParagraphGapPx: getPaymentStatementPreConsentA4ParagraphGap,
       paragraphBodyOptions: PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
+      /** 시안: 귀하만 (작성완료는 회원 fill) */
+      agreementClosingFooter: { showSubmitButton: false, showRecipient: true },
     }
   },
 }

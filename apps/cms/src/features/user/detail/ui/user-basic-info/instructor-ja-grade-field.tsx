@@ -24,6 +24,7 @@ export function InstructorJaEvaluationGradeField({
       type="button"
       variant="secondary"
       size="small"
+      adminAction="write"
       onClick={() => {
         onOpenJaGradeEvaluation?.()
       }}

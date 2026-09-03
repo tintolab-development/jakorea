@@ -4,6 +4,7 @@ import type { AdminMemberBasicInfoUpdateRequest } from '@/shared/api/generated/m
 import type { PortalSchoolSelectionRequest } from '@/shared/api/generated/members/schemas/portalSchoolSelectionRequest'
 import { filterEditableTermsAgreementsForBasicInfoPatch } from '@/features/user/api/member-basic-info-terms-patch'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
+import { resolveNeisEducationOfficeCode } from '@/features/user/api/neis-education-office-code'
 import {
   toApiInstructorCmsProfile,
   toApiInstructorCmsSettlement,
@@ -37,17 +38,27 @@ function buildIndividualSchoolSelectionFromPatch(
   const name = trimOptional(patch.individualSchoolName)
   if (!name) return undefined
 
+  const provider = trimOptional(patch.individualSchoolProvider)
   const selection: PortalSchoolSelectionRequest = {
     name,
     organizationCategory: 'SCHOOL',
   }
-  const provider = trimOptional(patch.individualSchoolProvider)
   if (provider) selection.provider = provider
   const externalSchoolCode = trimOptional(patch.individualSchoolExternalCode)
   if (externalSchoolCode) {
     selection.externalSchoolCode = externalSchoolCode
     if (!selection.provider) selection.provider = 'NEIS'
   }
+  // schoolSelection은 검색 선택값 — 코드가 없으면 snapshot(schoolName)만 유지
+  if (!selection.externalSchoolCode) return undefined
+
+  const educationOfficeCode = resolveNeisEducationOfficeCode({
+    provider: selection.provider,
+    educationOfficeCode: patch.individualSchoolEducationOfficeCode,
+    regionSido: patch.individualSchoolRegionSido,
+    externalSchoolCode,
+  })
+  if (educationOfficeCode) selection.educationOfficeCode = educationOfficeCode
   const schoolLevel = trimOptional(patch.individualSchoolLevel)
   if (schoolLevel) selection.schoolLevel = schoolLevel
   const regionSido = trimOptional(patch.individualSchoolRegionSido)

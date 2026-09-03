@@ -244,6 +244,7 @@ export function JaGradeEvaluationModal({
                 size="large"
                 width="100%"
                 className="ja-grade-evaluation-modal__submit"
+                adminAction="write"
                 disabled={draft == null || submitting || storageKey == null}
                 loading={submitting}
                 onClick={() => {

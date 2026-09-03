@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import type { TemplateWritingUserPreviewSession } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
@@ -111,15 +111,19 @@ export function useWritingFormEditorWithUserPreview(
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null)
   const [isDraftLoading, setIsDraftLoading] = useState(() => open)
 
-  const applyDraftSnapshot = useCallback(
-    (next: WritingFormDraft) => {
-      const normalized = normalizeWritingFormDraft(next)
+  const getInitialDraftRef = useRef(getInitialDraft)
+  const getDefaultActiveParagraphIdRef = useRef(getDefaultActiveParagraphId)
+  getInitialDraftRef.current = getInitialDraft
+  getDefaultActiveParagraphIdRef.current = getDefaultActiveParagraphId
+
+  const applyDraftSnapshot = useCallback((next: WritingFormDraft) => {
+    const normalized = normalizeWritingFormDraft(next)
+    startTransition(() => {
       setDraft(normalized)
-      setActiveParagraphId(getDefaultActiveParagraphId(normalized))
+      setActiveParagraphId(getDefaultActiveParagraphIdRef.current(normalized))
       setSingleItemListActiveItemId(null)
-    },
-    [getDefaultActiveParagraphId]
-  )
+    })
+  }, [])
 
   useEffect(() => {
     if (!open) {
@@ -139,7 +143,7 @@ export function useWritingFormEditorWithUserPreview(
             applyDraftSnapshot(saved.draft)
             return
           }
-          applyDraftSnapshot(getInitialDraft())
+          applyDraftSnapshot(getInitialDraftRef.current())
         })
         .finally(() => {
           if (!cancelled) setIsDraftLoading(false)
@@ -150,8 +154,8 @@ export function useWritingFormEditorWithUserPreview(
     }
 
     setIsDraftLoading(false)
-    applyDraftSnapshot(getInitialDraft())
-  }, [open, applyDraftSnapshot, getInitialDraft, templateCode])
+    applyDraftSnapshot(getInitialDraftRef.current())
+  }, [open, applyDraftSnapshot, templateCode])
 
   useEffect(() => {
     if (!open) closeWritingUserPreview()

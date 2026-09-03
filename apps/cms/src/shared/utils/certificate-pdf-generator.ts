@@ -182,6 +182,8 @@ export async function generateCertificatePdf(
 export interface GeneratePdfBlobFromHtmlElementOptions {
   /** html2canvas 렌더 스케일 (기본 2) */
   scale?: number
+  /** 캡처 직전 클론 DOM의 고유번호 태그에 넣을 발급 번호 */
+  issuedSerialNumber?: string
 }
 
 const CSS_PX_PER_INCH = 96
@@ -199,13 +201,20 @@ export async function generatePdfBlobFromHtmlElement(
   element: HTMLElement,
   options: GeneratePdfBlobFromHtmlElementOptions = {}
 ): Promise<Blob> {
-  const { scale = 2 } = options
+  const { scale = 2, issuedSerialNumber } = options
 
   const canvas = await html2canvas(element, {
     scale,
     useCORS: true,
     logging: false,
-    backgroundColor: '#ffffff' })
+    backgroundColor: '#ffffff',
+    onclone: clonedDoc => {
+      if (issuedSerialNumber == null || issuedSerialNumber === '') return
+      clonedDoc.querySelectorAll('.form-certificate-preview__tag').forEach(tag => {
+        tag.textContent = issuedSerialNumber
+      })
+    },
+  })
 
   const imgData = canvas.toDataURL('image/png', 1.0)
   const pdf = new jsPDF({

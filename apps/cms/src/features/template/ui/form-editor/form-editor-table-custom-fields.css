@@ -31,6 +31,19 @@
   margin: 0 0 16px;
 }
 
+.form-editor-custom-field-panel__subtitle {
+  margin: -4px 0 12px;
+  overflow: hidden;
+  color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 140%;
+}
+
 .form-editor-horizontal-table-header-fields__hint {
   display: flex;
   flex-direction: row;

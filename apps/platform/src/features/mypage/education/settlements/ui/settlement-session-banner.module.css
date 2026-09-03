@@ -1,0 +1,16 @@
+.banner {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  padding: var(--spacing-16) var(--spacing-20);
+  border-radius: var(--radius-16);
+  background: var(--color-element-hover, rgba(1, 161, 175, 0.06));
+}
+
+.bannerTitle,
+.bannerMeta {
+  margin: 0;
+}

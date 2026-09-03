@@ -9,10 +9,12 @@ import {
   useGeneralRecruitOverlayKv,
   updateGeneralRecruitOverlayKey,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { resolveRecruitDetailTextFieldOverlayKey } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-text-field-keys'
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 
 const THUMB_UPLOAD_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
+const DEFAULT_OVERLAY_KEY_PREFIX = 'recruit.detailInfo'
 
 type RecruitDetailInfoTextField = {
   label: string
@@ -22,40 +24,105 @@ type RecruitDetailInfoTextField = {
 export type RecruitDetailInfoParagraphProps = {
   wysiwygResetKey: string
   textFields: RecruitDetailInfoTextField[]
+  /** overlay 키 prefix (default: `recruit.detailInfo`) */
+  overlayKeyPrefix?: string
+  /** `추가 내용` 에디터 뒤에 둘 필드 (예: 강사 모집 폼 기타사항) */
+  afterEditorFields?: RecruitDetailInfoTextField[]
+  attachmentAccept?: string
+  attachmentGuideLines?: string[]
+}
+
+function RecruitDetailInfoTextFieldRow({
+  field,
+  overlayKeyPrefix,
+}: {
+  field: RecruitDetailInfoTextField
+  overlayKeyPrefix: string
+}) {
+  const overlayKey = resolveRecruitDetailTextFieldOverlayKey(overlayKeyPrefix, field.label)
+  const [value, setValue] = useGeneralRecruitOverlayKv<string>(overlayKey, '')
+
+  return (
+    <DetailInfoForm.Row type="single">
+      <DetailInfoForm.Field
+        label={field.label}
+        fullRow
+        edit={
+          <CmsTextArea
+            inputSize="medium"
+            width="100%"
+            placeholder={field.placeholder}
+            rows={1}
+            value={value}
+            onChange={e => setValue(e.target.value)}
+          />
+        }
+        view="-"
+      />
+    </DetailInfoForm.Row>
+  )
+}
+
+function RecruitDetailInfoTextFieldRows({
+  fields,
+  overlayKeyPrefix,
+}: {
+  fields: RecruitDetailInfoTextField[]
+  overlayKeyPrefix: string
+}) {
+  return (
+    <>
+      {fields.map(field => (
+        <RecruitDetailInfoTextFieldRow
+          key={field.label}
+          field={field}
+          overlayKeyPrefix={overlayKeyPrefix}
+        />
+      ))}
+    </>
+  )
 }
 
 export function RecruitDetailInfoParagraph({
   wysiwygResetKey,
   textFields,
+  overlayKeyPrefix = DEFAULT_OVERLAY_KEY_PREFIX,
+  afterEditorFields,
+  attachmentAccept = '.jpg,.jpeg,.png',
+  attachmentGuideLines,
 }: RecruitDetailInfoParagraphProps) {
+  const thumbObjectUrlKey = `${overlayKeyPrefix}.thumbObjectUrl`
+  const thumbFileNameKey = `${overlayKeyPrefix}.thumbFileName`
+  const attachmentFileNamesKey = `${overlayKeyPrefix}.attachmentFileNames`
+
   const [thumbObjectUrl, setThumbObjectUrl] = useGeneralRecruitOverlayKv<string | null>(
-    'recruit.detailInfo.thumbObjectUrl',
+    thumbObjectUrlKey,
     null
   )
   const [thumbFileName, setThumbFileName] = useGeneralRecruitOverlayKv<string | null>(
-    'recruit.detailInfo.thumbFileName',
+    thumbFileNameKey,
     null
   )
-  const [attachmentFileNames] = useGeneralRecruitOverlayKv<string[]>(
-    'recruit.detailInfo.attachmentFileNames',
-    []
-  )
+  const [attachmentFileNames] = useGeneralRecruitOverlayKv<string[]>(attachmentFileNamesKey, [])
 
   const revokeThumb = useCallback((url: string | null) => {
     if (url) URL.revokeObjectURL(url)
   }, [])
 
-  const handleThumbnailFiles = useCallback((files: File[]) => {
-    const image = files.find(f => /^image\//u.test(f.type)) ?? files[0]
-    if (!image) return
-    setThumbFileName(image.name)
-    setThumbObjectUrl(URL.createObjectURL(image))
-  }, [])
+  const handleThumbnailFiles = useCallback(
+    (files: File[]) => {
+      const image = files.find(f => /^image\//u.test(f.type)) ?? files[0]
+      if (!image) return
+      setThumbFileName(image.name)
+      setThumbObjectUrl(URL.createObjectURL(image))
+    },
+    [setThumbFileName, setThumbObjectUrl]
+  )
 
   const handleRemoveThumbnail = useCallback(() => {
     setThumbFileName(null)
     setThumbObjectUrl(null)
-  }, [])
+  }, [setThumbFileName, setThumbObjectUrl])
 
   useEffect(
     () => () => {
@@ -95,23 +162,7 @@ export function RecruitDetailInfoParagraph({
         />
       </DetailInfoForm.Row>
 
-      {textFields.map(field => (
-        <DetailInfoForm.Row key={field.label} type="single">
-          <DetailInfoForm.Field
-            label={field.label}
-            fullRow
-            edit={
-              <CmsTextArea
-                inputSize="medium"
-                width="100%"
-                placeholder={field.placeholder}
-                rows={1}
-              />
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
-      ))}
+      <RecruitDetailInfoTextFieldRows fields={textFields} overlayKeyPrefix={overlayKeyPrefix} />
 
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
@@ -128,25 +179,32 @@ export function RecruitDetailInfoParagraph({
         />
       </DetailInfoForm.Row>
 
+      {afterEditorFields != null && afterEditorFields.length > 0 ? (
+        <RecruitDetailInfoTextFieldRows
+          fields={afterEditorFields}
+          overlayKeyPrefix={overlayKeyPrefix}
+        />
+      ) : null}
+
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="첨부 파일"
           fullRow
           edit={
             <ParagraphFileUpload
-              accept=".jpg,.jpeg,.png"
+              accept={attachmentAccept}
+              guideLines={attachmentGuideLines}
               multiple
               fileNames={attachmentFileNames}
               onFilesChange={(files: File[]) =>
-                updateGeneralRecruitOverlayKey<string[]>(
-                  'recruit.detailInfo.attachmentFileNames',
-                  (prev: string[] | undefined) => [...(prev ?? []), ...files.map(file => file.name)]
-                )
+                updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev => [
+                  ...(prev ?? []),
+                  ...files.map(file => file.name),
+                ])
               }
               onRemoveFile={(index: number) =>
-                updateGeneralRecruitOverlayKey<string[]>(
-                  'recruit.detailInfo.attachmentFileNames',
-                  (prev: string[] | undefined) => (prev ?? []).filter((_, i) => i !== index)
+                updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev =>
+                  (prev ?? []).filter((_, i) => i !== index)
                 )
               }
             />

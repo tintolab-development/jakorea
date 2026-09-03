@@ -20,6 +20,14 @@ roleCode?: string;
  */
 status?: string;
 /**
+ * 조회 시작 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
+ */
+createdAtFrom?: string;
+/**
+ * 조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
+ */
+createdAtTo?: string;
+/**
  * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
  */
 page?: number;

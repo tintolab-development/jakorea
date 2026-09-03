@@ -25,7 +25,8 @@ export interface FormEditorRightPanelProps {
   onVerticalTableBodyRowDeleted?: (nextRowIndex: number) => void
   /**
    * 단락 종류·상세 셀렉트 숨김 강제 여부.
-   * 미지정 시: 사용자 추가 단락=`false`(노출), 시드·관리자 고정(`structureLockedParagraphIds`)=`true`(숨김).
+   * 미지정 시: 사용자 추가·시드·관리자 고정 단락 모두 유형 셀렉트·잠금 안내 노출.
+   * `true`면 유형 셀렉트·잠금 안내 모두 숨김.
    */
   hideParagraphKindOutline?: boolean
   /** 구조 잠금 단락 ID — 해당 단락 선택 시 우측 패널이 잠금 안내 UI로 전환 */

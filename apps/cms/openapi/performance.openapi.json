@@ -173,6 +173,10 @@
       "description": "공통 코드, 카탈로그, 정산 항목, 운영 기준값 등 마스터 데이터 API입니다."
     },
     {
+      "name": "기타 API",
+      "description": "주소/좌표 기반 실제 자동차 이동거리 조회 API"
+    },
+    {
       "name": "인증/세션",
       "description": "관리자/회원 로그인, MFA 검증, 토큰 갱신, 로그아웃 API입니다."
     },
@@ -1783,8 +1787,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "string",
-                  "format": "byte"
+                  "type": "object"
                 }
               }
             }
@@ -9149,6 +9152,107 @@
           }
         }
       },
+      "DistanceRequest": {
+        "type": "object",
+        "description": "실제 자동차 이동거리 계산 요청",
+        "properties": {
+          "start": {
+            "$ref": "#/components/schemas/RoutePointRequest"
+          },
+          "end": {
+            "$ref": "#/components/schemas/RoutePointRequest"
+          }
+        },
+        "required": [
+          "end",
+          "start"
+        ]
+      },
+      "RoutePointRequest": {
+        "type": "object",
+        "description": "경로 지점. 좌표가 모두 있으면 주소 Geocoding을 생략합니다.",
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          }
+        }
+      },
+      "ApiResponseDistanceResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/DistanceResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "CoordinateResponse": {
+        "type": "object",
+        "description": "위경도 좌표",
+        "properties": {
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          }
+        }
+      },
+      "DistanceResponse": {
+        "type": "object",
+        "description": "NAVER Maps 실제 자동차 이동거리 결과",
+        "properties": {
+          "startAddress": {
+            "type": "string"
+          },
+          "endAddress": {
+            "type": "string"
+          },
+          "start": {
+            "$ref": "#/components/schemas/CoordinateResponse"
+          },
+          "end": {
+            "$ref": "#/components/schemas/CoordinateResponse"
+          },
+          "distanceMeter": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "distanceKm": {
+            "type": "number"
+          },
+          "durationMs": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "EducationStageDto": {
         "type": "object",
         "properties": {
@@ -10366,10 +10470,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -15360,14 +15464,14 @@
             "type": "string",
             "format": "date-time"
           },
+          "businessStartDate": {
+            "type": "string"
+          },
           "businessYear": {
             "type": "integer",
             "format": "int32"
           },
           "businessEndDate": {
-            "type": "string"
-          },
-          "businessStartDate": {
             "type": "string"
           }
         }
@@ -15457,10 +15561,10 @@
           "ujatPartnerRecommendationPath": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           }
         }
@@ -16874,16 +16978,28 @@
       },
       "CertificateDownloadLogRequest": {
         "type": "object",
+        "description": "인증서 PDF 다운로드 이력 기록 요청",
         "properties": {
           "downloadedByMemberId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "다운로드한 회원 ID (선택)",
+            "example": 12001
           },
           "ipAddress": {
-            "type": "string"
+            "type": "string",
+            "description": "클라이언트 IP. 없으면 서버가 요청 IP를 넣는다",
+            "example": "203.0.113.10"
           },
           "userAgent": {
-            "type": "string"
+            "type": "string",
+            "description": "클라이언트 User-Agent",
+            "example": "Mozilla/5.0"
+          },
+          "fileName": {
+            "type": "string",
+            "description": "저장 파일명. GET /api/admin/logs/file-access 파일명 컬럼에 반영",
+            "example": "참가인증서_20260902.pdf"
           }
         }
       },
@@ -16915,6 +17031,70 @@
           },
           "userAgent": {
             "type": "string"
+          }
+        }
+      },
+      "CertificateSerialAllocateRequest": {
+        "type": "object",
+        "description": "인증서 고유번호(YY-JA-NNNNN) 멱등 발급 요청",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로그램 ID. PROGRAM(실발급)일 때 필수. FORM_TEMPLATE면 생략",
+            "example": 5001
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로그램 참가자 ID. PROGRAM(실발급)일 때 필수. FORM_TEMPLATE면 생략",
+            "example": 7001
+          },
+          "certificateType": {
+            "type": "string",
+            "description": "FE form template code (그대로 저장)",
+            "enum": [
+              "document-3",
+              "document-participation-certificate",
+              "document-4",
+              "document-5"
+            ],
+            "example": "document-3",
+            "minLength": 1
+          },
+          "issuanceSource": {
+            "type": "string",
+            "description": "발급 출처. 생략/PROGRAM=실발급, FORM_TEMPLATE=양식 관리 샘플",
+            "enum": [
+              "PROGRAM",
+              "FORM_TEMPLATE"
+            ],
+            "example": "PROGRAM"
+          }
+        },
+        "required": [
+          "certificateType"
+        ]
+      },
+      "CertificateSerialAllocateResponse": {
+        "type": "object",
+        "description": "인증서 고유번호 멱등 발급 응답",
+        "properties": {
+          "serialNumber": {
+            "type": "string",
+            "description": "고유번호 (YY-JA-NNNNN)",
+            "example": "26-JA-00017"
+          },
+          "issueId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "certificate_issue 장부 PK",
+            "example": 12
+          },
+          "reused": {
+            "type": "boolean",
+            "description": "기존 발급 번호 재사용 여부",
+            "example": false
           }
         }
       },
@@ -30094,15 +30274,15 @@
           },
           "email": {
             "type": "string",
-            "description": "로그인 이메일"
+            "description": "로그인 이메일. 목록 API에서는 기본 마스킹 값입니다."
           },
           "name": {
             "type": "string",
-            "description": "이름"
+            "description": "이름. 목록 API에서는 실명을 유지합니다."
           },
           "phone": {
             "type": "string",
-            "description": "연락처"
+            "description": "연락처. 목록 API에서는 기본 마스킹 값입니다."
           },
           "status": {
             "type": "string"
@@ -30142,15 +30322,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },
@@ -30559,6 +30739,12 @@
           "memberId": {
             "type": "integer",
             "format": "int64"
+          },
+          "memberTypeLabel": {
+            "type": "string"
+          },
+          "organizationName": {
+            "type": "string"
           },
           "requestStatus": {
             "type": "string"
@@ -32897,6 +33083,14 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "managedProgramCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -33005,6 +33199,14 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "managedProgramCount": {
+            "type": "integer",
+            "format": "int32"
           },
           "notificationResentAt": {
             "type": "string",

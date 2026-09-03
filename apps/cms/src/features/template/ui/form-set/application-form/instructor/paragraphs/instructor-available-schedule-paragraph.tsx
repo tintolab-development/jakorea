@@ -45,6 +45,22 @@ function coerceOverlayDayjs(value: Dayjs | string | null | undefined, fallback: 
   return parsed.isValid() ? parsed : fallback
 }
 
+const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
+
+function formatIndividualSlotDateLabel(dateKey: string): string {
+  const d = dayjs(dateKey)
+  const yShort = d.year() % 100
+  const weekday = WEEKDAY_KO[d.day()] ?? ''
+  return `${yShort}년 ${d.month() + 1}월 ${d.date()}일(${weekday})`
+}
+
+function formatIndividualSummarySegment(slot: InstructorAvailableScheduleSlot): string {
+  const d = dayjs(slot.dateKey)
+  const yShort = d.year() % 100
+  const datePart = `${yShort}년 ${d.month() + 1}월 ${d.date()}일`
+  return `${slot.sessionLabel} : ${datePart} (${extractClockTimeRangeForScheduleSummary(slot.timeRange)})`
+}
+
 /** 스크린: `강서초등학교 : 26년 3월 9일 (9:20 ~ 12:00)` — 교시 없이 시각만 */
 function slotDisplaySegment(slot: InstructorAvailableScheduleSlot): string {
   const d = dayjs(slot.dateKey)
@@ -53,42 +69,59 @@ function slotDisplaySegment(slot: InstructorAvailableScheduleSlot): string {
   return `${slot.school} : ${datePart} (${extractClockTimeRangeForScheduleSummary(slot.timeRange)})`
 }
 
+export type InstructorAvailableScheduleParagraphProps = {
+  scheduleSlots?: readonly InstructorAvailableScheduleSlot[]
+  isTemplateAuthoringMode?: boolean
+  readOnlyPreview?: boolean
+  summaryFieldLabel?: string
+  /** overlay KV prefix — 기본 `application.instructor` */
+  overlayKeyPrefix?: string
+  /** true: 개인 프로그램 등 캘린더 미니뷰 없이 슬롯 카드만 노출 */
+  hideCalendar?: boolean
+  /** 선택 요약 한 줄 포맷 — 미지정 시 기관명 포함 기본 포맷 */
+  formatSummarySegment?: (slot: InstructorAvailableScheduleSlot) => string
+}
+
 /** 강의 진행 가능 일정 — 상단: 캘린더 + 세션 카드(복수 선택) / 하단: 선택 요약 */
 export function InstructorAvailableScheduleParagraph({
   scheduleSlots: scheduleSlotsProp,
   isTemplateAuthoringMode = false,
   readOnlyPreview = false,
   summaryFieldLabel = '강의 진행 가능일',
-}: {
-  scheduleSlots?: readonly InstructorAvailableScheduleSlot[]
-  isTemplateAuthoringMode?: boolean
-  readOnlyPreview?: boolean
-  summaryFieldLabel?: string
-}) {
+  overlayKeyPrefix = 'application.instructor',
+  hideCalendar = false,
+  formatSummarySegment,
+}: InstructorAvailableScheduleParagraphProps) {
   const scheduleSlots = scheduleSlotsProp ?? EMPTY_SCHEDULE_SLOTS
+  const isIndividualSlotMode =
+    hideCalendar || scheduleSlots.some(slot => slot.isIndividualProgram === true)
+  const resolveSummarySegment =
+    formatSummarySegment ??
+    (isIndividualSlotMode ? formatIndividualSummarySegment : slotDisplaySegment)
   const scheduleSlotsSyncKey = getScheduleSlotsSyncKey(scheduleSlots)
   const scheduleAnchor = resolveScheduleAnchorDate(scheduleSlots)
+  const currentMonthKey = `${overlayKeyPrefix}.currentMonth`
+  const selectedDateKey = `${overlayKeyPrefix}.selectedDate`
+  const selectedSlotIdsKey = `${overlayKeyPrefix}.selectedSlotIds`
+
   const [currentMonthIso, setCurrentMonthIso] = useGeneralApplicationOverlayKv<string>(
-    'application.instructor.currentMonth',
+    currentMonthKey,
     scheduleAnchor.startOf('month').toISOString()
   )
   const [selectedDateIso, setSelectedDateIso] = useGeneralApplicationOverlayKv<string>(
-    'application.instructor.selectedDate',
+    selectedDateKey,
     scheduleAnchor.toISOString()
   )
   const currentMonth = coerceOverlayDayjs(currentMonthIso, scheduleAnchor.startOf('month'))
   const selectedDate = coerceOverlayDayjs(selectedDateIso, scheduleAnchor)
-  const [selectedSlotIds] = useGeneralApplicationOverlayKv<string[]>(
-    'application.instructor.selectedSlotIds',
-    []
-  )
+  const [selectedSlotIds] = useGeneralApplicationOverlayKv<string[]>(selectedSlotIdsKey, [])
 
   useEffect(() => {
     const anchor = resolveScheduleAnchorDate(scheduleSlots)
     setCurrentMonthIso(anchor.startOf('month').toISOString())
     setSelectedDateIso(anchor.toISOString())
-    updateGeneralApplicationOverlayKey<string[]>('application.instructor.selectedSlotIds', () => [])
-  }, [scheduleSlotsSyncKey, setCurrentMonthIso, setSelectedDateIso])
+    updateGeneralApplicationOverlayKey<string[]>(selectedSlotIdsKey, () => [])
+  }, [scheduleSlotsSyncKey, setCurrentMonthIso, setSelectedDateIso, selectedSlotIdsKey])
 
   const scheduleTopRef = useRef<HTMLDivElement>(null)
   const calendarWrapRef = useRef<HTMLDivElement>(null)
@@ -120,7 +153,7 @@ export function InstructorAvailableScheduleParagraph({
           <Fragment key={s.id}>
             {i > 0 ? <DetailInfoForm.TdDivider /> : null}
             <span className="program-application-form-instructor__summary-inline-text">
-              {slotDisplaySegment(s)}
+              {resolveSummarySegment(s)}
             </span>
           </Fragment>
         ))}
@@ -129,7 +162,7 @@ export function InstructorAvailableScheduleParagraph({
 
   const toggleSlot = (slotId: string, dateKey: string) => {
     if (readOnlyPreview) return
-    updateGeneralApplicationOverlayKey<string[]>('application.instructor.selectedSlotIds', prev => {
+    updateGeneralApplicationOverlayKey<string[]>(selectedSlotIdsKey, prev => {
       const next = [...(prev ?? [])]
       const idx = next.indexOf(slotId)
       if (idx >= 0) next.splice(idx, 1)
@@ -150,23 +183,30 @@ export function InstructorAvailableScheduleParagraph({
     >
       <div
         ref={scheduleTopRef}
-        className="program-application-form-instructor__available-schedule-top"
+        className={[
+          'program-application-form-instructor__available-schedule-top',
+          hideCalendar && 'program-application-form-instructor__available-schedule-top--no-calendar',
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
-        <div ref={calendarWrapRef} className="program-application-form-instructor__calendar-wrap">
-          <ParagraphCalendarMini
-            currentMonth={currentMonth}
-            selectedDate={selectedDate}
-            onMonthChange={date => setCurrentMonthIso(date.toISOString())}
-            onSelectDate={date => setSelectedDateIso(date.toISOString())}
-            programDates={programDates}
-          />
-        </div>
+        {hideCalendar ? null : (
+          <div ref={calendarWrapRef} className="program-application-form-instructor__calendar-wrap">
+            <ParagraphCalendarMini
+              currentMonth={currentMonth}
+              selectedDate={selectedDate}
+              onMonthChange={date => setCurrentMonthIso(date.toISOString())}
+              onSelectDate={date => setSelectedDateIso(date.toISOString())}
+              programDates={programDates}
+            />
+          </div>
+        )}
         <div className="program-application-form-instructor__schedule-side">
           {isTemplateAuthoringMode ? (
             <ProgramApplicationScheduleTemplateHintParagraph fillScheduleSide />
           ) : (
             <div className="program-application-form-instructor__session-grid" role="list">
-              {slotsForSelectedCalendarDay.length === 0 ? (
+              {(hideCalendar ? scheduleSlots : slotsForSelectedCalendarDay).length === 0 ? (
                 <div
                   className="program-application-form-instructor__session-grid-empty"
                   role="status"
@@ -176,7 +216,7 @@ export function InstructorAvailableScheduleParagraph({
                   </span>
                 </div>
               ) : (
-                slotsForSelectedCalendarDay.map(slot => {
+                (hideCalendar ? scheduleSlots : slotsForSelectedCalendarDay).map(slot => {
                   const active = selectedSlotIds.includes(slot.id)
                   return (
                     <ParagraphChip
@@ -188,7 +228,9 @@ export function InstructorAvailableScheduleParagraph({
                       onClick={() => toggleSlot(slot.id, slot.dateKey)}
                     >
                       <span className="program-application-form-instructor__session-card-line program-application-form-instructor__session-card-line--primary">
-                        {`${slot.school} | ${slot.region}`}
+                        {slot.isIndividualProgram
+                          ? formatIndividualSlotDateLabel(slot.dateKey)
+                          : `${slot.school} | ${slot.region}`}
                       </span>
                       <span className="program-application-form-instructor__session-card-line program-application-form-instructor__session-card-line--secondary">
                         {`${slot.sessionLabel} | ${slot.timeRange}`}

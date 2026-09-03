@@ -34,6 +34,9 @@ export function usePrefetchTextbookDetail() {
   return useCallback(
     (textbookId: string) => {
       if (!remoteEnabled || !textbookId) return
+      // 이미 fresh 캐시가 있으면 네트워크 생략 (클릭 오픈 전 워밍용)
+      const existing = queryClient.getQueryData(dataManagementQueryKeys.textbooks.detail(textbookId))
+      if (existing) return
       void queryClient.prefetchQuery(textbookDetailQueryOptions(textbookId))
     },
     [queryClient, remoteEnabled]

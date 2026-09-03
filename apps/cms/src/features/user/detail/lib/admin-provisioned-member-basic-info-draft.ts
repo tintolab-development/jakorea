@@ -34,6 +34,7 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   schoolOrganizationId?: number | null
   schoolProvider?: string
   schoolExternalCode?: string
+  schoolEducationOfficeCode?: string
   schoolLevel?: string
   schoolAddress?: string
   schoolZipcode?: string
@@ -372,6 +373,7 @@ function draftToIndividualAffiliationPatch(
   | 'individualSchoolOrganizationId'
   | 'individualSchoolProvider'
   | 'individualSchoolExternalCode'
+  | 'individualSchoolEducationOfficeCode'
   | 'individualSchoolLevel'
   | 'individualSchoolAddress'
   | 'individualSchoolZipcode'
@@ -407,6 +409,9 @@ function draftToIndividualAffiliationPatch(
             : {}),
           ...(draft.schoolExternalCode?.trim()
             ? { individualSchoolExternalCode: draft.schoolExternalCode.trim() }
+            : {}),
+          ...(draft.schoolEducationOfficeCode?.trim()
+            ? { individualSchoolEducationOfficeCode: draft.schoolEducationOfficeCode.trim() }
             : {}),
           ...(draft.schoolLevel?.trim() ? { individualSchoolLevel: draft.schoolLevel.trim() } : {}),
           ...(draft.schoolAddress?.trim()

@@ -176,7 +176,10 @@ function SponsorDetailFullPageModalInner({
     remoteContactActions
   )
   const { registerModalOpen, setRegisterModalOpen, handleRegister } = sponsorContacts
-  const programHistory = useSponsorProgramHistoryFilter(sponsor.id)
+  const programHistory = useSponsorProgramHistoryFilter(
+    sponsor.id,
+    lnbKey === LNB_PROGRAMS
+  )
   const { contactColumns, programHistoryColumns } = useSponsorDetailModalTableColumns({
     contacts: contactsList.allContacts,
     canWrite,
@@ -264,10 +267,10 @@ function SponsorDetailFullPageModalInner({
           <div className="info-section-wrapper">
             <span className="info-section-title">기본 정보</span>
             <div className="info-section-buttons--wrapper">
-              <CmsButton variant="delete" size="medium" onClick={sponsorDelete.openDeleteModal} disabled={!canWrite}>
+              <CmsButton variant="delete" size="medium" onClick={sponsorDelete.openDeleteModal}>
                 후원사 삭제
               </CmsButton>
-              <CmsButton variant="primary" size="medium" onClick={handleToggleBasicInfoClick} disabled={!canWrite}>
+              <CmsButton variant="primary" size="medium" onClick={handleToggleBasicInfoClick}>
                 {isEditingBasicInfo ? '수정 완료' : '정보 수정'}
               </CmsButton>
             </div>

@@ -15,7 +15,12 @@ export const APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS = {
   recruitAnchorIso: 'recruit.recruitAnchorIso',
   recruitRangeSeal: 'recruit.recruitRangeSeal',
   finalAnnounceIso: 'recruit.finalAnnounceIso',
+  finalAnnounceMethod: 'recruit.finalAnnounceMethod',
   targetLevels: 'recruit.targetLevels',
+  targetLevelDetail: 'recruit.targetLevelDetail',
+  inquiryContact: 'recruit.inquiryContact',
+  inquiryTel: 'recruit.inquiryTel',
+  inquiryEmail: 'recruit.inquiryEmail',
   notesNotApplicable: 'recruit.notesNotApplicable',
   notes: 'recruit.notes',
 } as const
@@ -37,7 +42,12 @@ export type ApplicantRecruitInstitutionOverlay = ApplicantRecruitInstitutionLimi
   recruitAnchorIso?: string | null
   recruitRangeSeal?: { start: string; end: string } | null
   finalAnnounceIso?: string | null
+  finalAnnounceMethod?: string
   targetLevels?: string[]
+  targetLevelDetail?: string
+  inquiryContact?: string
+  inquiryTel?: string
+  inquiryEmail?: string
   notesNotApplicable?: boolean
   notes?: string
 }

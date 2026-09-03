@@ -316,6 +316,61 @@
         "idTypeWithInput": null
       },
       {
+        "id": "payment-statement-pre-consent-seed-ja-korea-activity",
+        "kind": "single_item",
+        "variant": "vertical_table",
+        "verticalTableFlavor": "text",
+        "requiredMark": true,
+        "paragraphTitle": "JA Korea 활동 경험",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "rows": [
+          {
+            "stageCount": 2,
+            "headers": [
+              "활동 이력",
+              ""
+            ],
+            "cells": [
+              "",
+              ""
+            ],
+            "stageKinds": [
+              "text",
+              "text"
+            ],
+            "placeholderHints": [
+              "프로그램명",
+              "역할"
+            ]
+          },
+          {
+            "stageCount": 2,
+            "headers": [
+              "활동 이력",
+              ""
+            ],
+            "cells": [
+              "",
+              ""
+            ],
+            "stageKinds": [
+              "text",
+              "text"
+            ],
+            "placeholderHints": [
+              "프로그램명",
+              "역할"
+            ]
+          }
+        ],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true
+      },
+      {
         "id": "payment-statement-pre-consent-seed-mid-consent-line",
         "kind": "single_item",
         "variant": "agreement_explanation_text",

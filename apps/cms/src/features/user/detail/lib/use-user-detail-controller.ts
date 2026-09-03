@@ -72,6 +72,7 @@ import {
   userToSchoolInstitutionEditDraft,
   type AdminProvisionedMemberBasicInfoDraft,
 } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
+import { resolveIndividualEnrolledSchoolSubmitBlock } from '@/features/user/api/individual-enrolled-school-selection'
 import {
   resolveUserBasicInfoBodyKey,
   parseUserBasicInfoEntryQuery,
@@ -85,6 +86,7 @@ import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { applyPrivacyUnmaskResponseToUser } from '@/features/user/api/apply-privacy-unmask-to-user'
+import { stripRestrictedPiiForSessionUser } from '@/features/user/api/strip-restricted-pii'
 import { parseAdminAccountIdFromUserId } from '@/features/user/api/fetch-admin-member-detail'
 import {
   applySavedBasicInfoPatchToUser,
@@ -110,6 +112,7 @@ import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-err
 import { mockUserHistories } from '@/data/mock/mypage'
 import { revokeInstructorPermission } from '@/entities/user/api/user-service'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
+import { guardAdminAction, resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
 
 const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
 
@@ -444,10 +447,14 @@ export function useUserDetailController({
   const handlePrivacyUnmasked = useCallback(
     (payload: unknown, role: User['role'] | undefined) => {
       if (!displayUser) return
-      const merged = applyPrivacyUnmaskResponseToUser(
+      const merged = stripRestrictedPiiForSessionUser(
+        applyPrivacyUnmaskResponseToUser(
+          displayUser,
+          payload,
+          role ?? displayUser.role
+        ),
         displayUser,
-        payload,
-        role ?? displayUser.role
+        useAuthStore.getState().user
       )
       if (displayUser.memberId != null) {
         queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
@@ -860,7 +867,11 @@ export function useUserDetailController({
         if (!result.ok) return
         const unmaskedUser =
           result.payload !== undefined
-            ? applyPrivacyUnmaskResponseToUser(displayUser, result.payload, displayUser.role)
+            ? stripRestrictedPiiForSessionUser(
+                applyPrivacyUnmaskResponseToUser(displayUser, result.payload, displayUser.role),
+                displayUser,
+                useAuthStore.getState().user
+              )
             : displayUser
         setEditUnmaskConfirmOpen(false)
         startBasicInfoEdit(unmaskedUser)
@@ -1030,6 +1041,20 @@ export function useUserDetailController({
           ? draftToAdminAccountBasicInfoPatch(basicInfoDraft)
           : draftToAdminMemberRestrictedPatch(basicInfoDraft)
       } else if (displayUser.role === 'INDIVIDUAL') {
+        const enrolledSchoolBlock =
+          basicInfoDraft.schoolEnrollmentStatus === 'enrolled'
+            ? resolveIndividualEnrolledSchoolSubmitBlock({
+                schoolProvider: basicInfoDraft.schoolProvider,
+                schoolOrganizationId: basicInfoDraft.schoolOrganizationId,
+                schoolExternalCode: basicInfoDraft.schoolExternalCode,
+                schoolEducationOfficeCode: basicInfoDraft.schoolEducationOfficeCode,
+                schoolRegionSido: basicInfoDraft.schoolRegionSido,
+              })
+            : null
+        if (enrolledSchoolBlock != null) {
+          showAlert({ title: '안내', content: enrolledSchoolBlock })
+          return
+        }
         patch = draftToAdminProvisionedIndividualBasicInfoPatch(basicInfoDraft)
       } else {
         patch = draftToBasicInfoPatch(basicInfoDraft)
@@ -1254,9 +1279,17 @@ export function useUserDetailController({
   )
 
   const openJaGradeEvaluation = useCallback(() => {
+    if (
+      !guardAdminAction({
+        roleCode: resolveAdminRoleCodeFromUser(currentUser),
+        action: 'write',
+      })
+    ) {
+      return
+    }
     if (!displayUser || displayUser.role !== 'INSTRUCTOR') return
     setJaGradeEvaluationOpen(true)
-  }, [displayUser])
+  }, [currentUser, displayUser])
 
   const closeJaGradeEvaluation = useCallback(() => {
     setJaGradeEvaluationOpen(false)
@@ -1264,6 +1297,14 @@ export function useUserDetailController({
 
   const completeJaGradeEvaluation = useCallback(
     async ({ grade }: { grade: string; totalScore: number }) => {
+      if (
+        !guardAdminAction({
+          roleCode: resolveAdminRoleCodeFromUser(currentUser),
+          action: 'write',
+        })
+      ) {
+        return
+      }
       if (!displayUser) {
         throw new Error('강사 정보가 없어 평가 등급을 반영할 수 없습니다.')
       }
@@ -1309,6 +1350,7 @@ export function useUserDetailController({
       onMemberBasicInfoSaved?.(mergedUser)
     },
     [
+      currentUser,
       displayUser,
       onMemberBasicInfoSaved,
       patchMemberBasicInfo,

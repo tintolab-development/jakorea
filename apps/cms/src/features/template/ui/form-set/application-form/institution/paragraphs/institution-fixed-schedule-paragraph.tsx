@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { resolveInstitutionFixedScheduleDescription } from '@/features/template/lib/institution-application-schedule-copy'
 import {
   useGeneralApplicationOverlayKv,
   updateGeneralApplicationOverlayKey,
@@ -14,6 +15,7 @@ export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
   readOnlyPreview?: boolean
 }) {
   const bridge = useInstitutionApplicationProgramBridge()
+  const description = resolveInstitutionFixedScheduleDescription(bridge)
   const lines = useMemo(() => {
     const fromBridge = bridge.educationScheduleLines
       ?.map(line => line.trim())
@@ -48,6 +50,9 @@ export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
 
   return (
     <div className="multiple-choice-body">
+      <p className="form-editor-template-field-hint-text institution-fixed-schedule-paragraph__hint">
+        {description}
+      </p>
       {lines.map(line => (
         <div key={line} role="presentation" className="multiple-choice-row">
           <CmsCheckbox

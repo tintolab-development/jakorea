@@ -65,6 +65,7 @@ pnpm --filter cms package:member-management-seed-handoff -- --openapi
 
 | 문서 | 용도 |
 |------|------|
+| [**admin-role-rbac-unmask-form-template-backend-request-2026-09-01.md**](./admin-role-rbac-unmask-form-template-backend-request-2026-09-01.md) | **백엔드 전달** — VIEWER 목록 GET **403** · PARTNER unmask/강사승인 **403** · `form-template-versions` PUT 500·GET 404 · 등록 동의서 500 재확인 (P0) |
 | [**members-all-list-email-phone-masking-backend-request-2026-08-31.md**](./members-all-list-email-phone-masking-backend-request-2026-08-31.md) | **백엔드 전달** — `GET /api/admin/members/all` 연락처·이메일 **원문 노출** → 정책 마스킹 재적용 (P0) |
 | [**member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md**](./member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md) | **백엔드 전달** — 상세 PATCH `PAYMENT_STATEMENT_CONSENT` current **404** · 성범죄 파일 upload **401** (P0) |
 | [**member-pre-register-filled-document-500-backend-request-2026-08-26.md**](./member-pre-register-filled-document-500-backend-request-2026-08-26.md) | **백엔드 전달** — 회원·강사 신규 등록에서 동의서 작성 후 pre-register **HTTP 500** (P0) |
@@ -98,4 +99,4 @@ pnpm --filter cms package:members-be-handoff -- --openapi
 pnpm --filter cms package:members-be-handoff -- --out=~/Desktop/jakorea-members-be-handoff
 ```
 
-**Last updated:** 2026-08-31 (회원 동의 current 404 · crime upload 401 BE 요청)
+**Last updated:** 2026-09-01 (VIEWER/PARTNER RBAC · unmask 필드 마스킹 · 양식 버전 500/404)

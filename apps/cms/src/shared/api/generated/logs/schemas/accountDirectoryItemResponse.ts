@@ -17,11 +17,11 @@ export interface AccountDirectoryItemResponse {
   accountId?: number;
   /** 외부 참조 및 감사용 UUID. CRUD 경로에는 사용하지 않습니다. */
   uuid?: string;
-  /** 로그인 이메일 */
+  /** 로그인 이메일. 목록 API에서는 기본 마스킹 값입니다. */
   email?: string;
-  /** 이름 */
+  /** 이름. 목록 API에서는 실명을 유지합니다. */
   name?: string;
-  /** 연락처 */
+  /** 연락처. 목록 API에서는 기본 마스킹 값입니다. */
   phone?: string;
   status?: string;
   /** 회원 역할 또는 관리자 권한 코드 */
@@ -38,8 +38,8 @@ export interface AccountDirectoryItemResponse {
   identitySelfSignupCompletedAfterAdminRegistration?: boolean;
   lastLoginAt?: string;
   createdAt?: string;
-  /** 관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다. */
-  adminAccountId?: number;
   /** 사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다. */
   memberId?: number;
+  /** 관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다. */
+  adminAccountId?: number;
 }

@@ -29,6 +29,7 @@ export function MultipleChoice({
   isCardSelected,
   isBodyInteractive,
   paragraphInteractionMode = 'authoring',
+  preservePreviewSelectionOnCardBlur = false,
   itemsEditActive,
   onActivateItemsEditor,
 }: {
@@ -38,6 +39,8 @@ export function MultipleChoice({
   isCardSelected: boolean
   /** 본문(미리보기) 조작 가능 — user 모드에서는 카드 비선택이어도 true일 수 있음 */
   isBodyInteractive: boolean
+  /** 단락 카드 비선택으로 미리보기 선택값을 초기화하지 않음 (user·구조 잠금 동의 미리체크) */
+  preservePreviewSelectionOnCardBlur?: boolean
   /** user일 때는 카드 비선택으로 미리보기 선택값을 초기화하지 않음 */
   paragraphInteractionMode?: ParagraphBodyInteractionMode
   /** 항목 영역(라디오/체크박스 바디) 포커스 — 단락 카드만 선택된 상태와 구분 */
@@ -51,20 +54,29 @@ export function MultipleChoice({
   const prevCardSelected = useRef(isCardSelected)
   useEffect(() => {
     if (
-      paragraphInteractionMode === 'authoring' &&
-      prevCardSelected.current &&
-      !isCardSelected
+      preservePreviewSelectionOnCardBlur ||
+      paragraphInteractionMode !== 'authoring' ||
+      !prevCardSelected.current ||
+      isCardSelected
     ) {
-      const p = paragraphRef.current
-      onChange(
-        mergeParagraph(p, {
-          selectedPreviewSingleId: null,
-          selectedPreviewMultipleIds: [],
-        })
-      )
+      prevCardSelected.current = isCardSelected
+      return
     }
+
+    const p = paragraphRef.current
+    onChange(
+      mergeParagraph(p, {
+        selectedPreviewSingleId: null,
+        selectedPreviewMultipleIds: [],
+      })
+    )
     prevCardSelected.current = isCardSelected
-  }, [isCardSelected, onChange, paragraphInteractionMode])
+  }, [
+    isCardSelected,
+    onChange,
+    paragraphInteractionMode,
+    preservePreviewSelectionOnCardBlur,
+  ])
 
   const items = normalizeItems(paragraph)
   const allowMultiple = paragraph.allowMultiple ?? false

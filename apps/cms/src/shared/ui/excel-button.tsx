@@ -8,24 +8,27 @@ import { CmsButton, type CmsButtonProps } from './cms-button'
 
 export type ExcelButtonProps = Omit<
   CmsButtonProps,
-  'variant' | 'size' | 'width' | 'icon' | 'children'
+  'variant' | 'size' | 'width' | 'icon' | 'children' | 'adminAction'
 >
 
 /** 테이블 상단 엑셀 — primary · large · has-icon → 180×44 */
 export const ExcelButton = forwardRef<HTMLButtonElement, ExcelButtonProps>(
-  ({ type = 'button', className, ...rest }, ref) => (
-    <CmsButton
-      ref={ref}
-      type={type}
-      variant="primary"
-      size="large"
-      icon={<DownloadOutlined />}
-      className={['excel-button', className].filter(Boolean).join(' ')}
-      {...rest}
-    >
-      엑셀 다운로드
-    </CmsButton>
-  )
+  ({ type = 'button', className, ...rest }, ref) => {
+    return (
+      <CmsButton
+        ref={ref}
+        type={type}
+        variant="primary"
+        size="large"
+        icon={<DownloadOutlined />}
+        className={['excel-button', className].filter(Boolean).join(' ')}
+        adminAction="download"
+        {...rest}
+      >
+        엑셀 다운로드
+      </CmsButton>
+    )
+  }
 )
 
 ExcelButton.displayName = 'ExcelButton'
