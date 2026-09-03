@@ -1,5 +1,5 @@
 /**
- * 임시 로그인(DEV) 버튼 — CMS `dev-login-accounts.ts` 와 동일.
+ * 권한별 로그인 버튼 — CMS `dev-login-accounts.ts` 와 동일 (배포 빌드에도 노출).
  */
 export type DevLoginQaAccount = {
   key: 'master' | 'pm' | 'partner' | 'viewer'
