@@ -92,9 +92,14 @@ export function SchemaConsentWriteForm({
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
 
-  const [state, setState] = useState<SchemaConsentWriteState>(() =>
-    loadSchemaConsentWriteState(consentKey, createInitialSchemaConsentState(consentKey))
-  )
+  const [state, setState] = useState<SchemaConsentWriteState>(() => {
+    const initial = createInitialSchemaConsentState(consentKey)
+    const loaded = loadSchemaConsentWriteState(consentKey, initial)
+    return {
+      ...loaded,
+      draft: normalizeMemberConsentWriteDraft(loaded.draft, templateId),
+    }
+  })
 
   useEffect(() => {
     if (readOnly) return
