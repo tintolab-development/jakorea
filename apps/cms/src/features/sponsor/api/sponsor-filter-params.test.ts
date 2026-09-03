@@ -1,9 +1,40 @@
+import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
 import {
   filterSponsorsBySponsorshipStartDateRange,
   serializeSponsorListFilters,
   sponsorsParamsFromSearchParams,
+  writeSponsorshipStartDateRangeToSearchParams,
 } from './sponsor-filter-params'
+
+describe('writeSponsorshipStartDateRangeToSearchParams', () => {
+  it('writes both ends when only start is selected (single-day filter)', () => {
+    const params = new URLSearchParams('sp_kind=corporate')
+    writeSponsorshipStartDateRangeToSearchParams(params, [dayjs('2026-03-15'), null])
+    expect(params.get('sp_from')).toBe('2026-03-15')
+    expect(params.get('sp_to')).toBe('2026-03-15')
+  })
+
+  it('writes both ends when only end is selected', () => {
+    const params = new URLSearchParams()
+    writeSponsorshipStartDateRangeToSearchParams(params, [null, dayjs('2026-04-01')])
+    expect(params.get('sp_from')).toBe('2026-04-01')
+    expect(params.get('sp_to')).toBe('2026-04-01')
+  })
+
+  it('keeps a full range and clears when empty', () => {
+    const params = new URLSearchParams('sp_from=2025-01-01&sp_to=2025-12-31')
+    writeSponsorshipStartDateRangeToSearchParams(params, [
+      dayjs('2026-01-01'),
+      dayjs('2026-06-30'),
+    ])
+    expect(params.get('sp_from')).toBe('2026-01-01')
+    expect(params.get('sp_to')).toBe('2026-06-30')
+    writeSponsorshipStartDateRangeToSearchParams(params, null)
+    expect(params.get('sp_from')).toBeNull()
+    expect(params.get('sp_to')).toBeNull()
+  })
+})
 
 describe('serializeSponsorListFilters', () => {
   it('ignores detail overlay params so open/close detail keeps the same list key', () => {

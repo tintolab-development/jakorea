@@ -58,9 +58,13 @@ export function buildSponsorsSeedPayload() {
         contacts: SPONSOR_DETAIL_SEED_CONTACTS.map(c => ({
           seedKey: c.id,
           name: c.name,
+          department: c.department,
           position: c.position,
+          officePhone: c.officePhone,
           phone: c.phone,
           email: c.email,
+          companyAddress: c.companyAddress,
+          memo: c.memo,
           contactType: c.contactType,
           registeredAt: c.registeredAt,
         })),

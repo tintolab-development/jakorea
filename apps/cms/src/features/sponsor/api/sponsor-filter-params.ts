@@ -64,6 +64,27 @@ export function serializeSponsorListFilters(searchParams: URLSearchParams): stri
   return next.toString()
 }
 
+/**
+ * pending 날짜 구간 → URL `sp_from` / `sp_to`.
+ * 시작·종료 중 한쪽만 있으면 그날 하루로 기록한다 (조회 시 URL이 바뀌지 않아 API가 안 나가는 것 방지).
+ */
+export function writeSponsorshipStartDateRangeToSearchParams(
+  nextParams: URLSearchParams,
+  range: [Dayjs | null, Dayjs | null] | null | undefined
+): void {
+  const start = range?.[0] ?? null
+  const end = range?.[1] ?? null
+  if (start == null && end == null) {
+    nextParams.delete('sp_from')
+    nextParams.delete('sp_to')
+    return
+  }
+  const fromDay = start ?? end
+  const toDay = end ?? start
+  nextParams.set('sp_from', fromDay!.format('YYYY-MM-DD'))
+  nextParams.set('sp_to', toDay!.format('YYYY-MM-DD'))
+}
+
 /** BE 미구현 시 목록 응답에 대한 일시적 클라 보조 필터 */
 export function filterSponsorsBySponsorshipStartDateRange<
   T extends { sponsorshipStartDate?: DateValue | Dayjs | null },

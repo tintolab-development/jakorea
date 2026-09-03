@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
+  mapSponsorContactResponse,
   mapSponsorDetailResponse,
   mapSponsorResponse,
   mapYearlyBusinessResponse,
   mergeYearlyBusinessRows,
   parseSponsorContactType,
   shouldPersistYearlyBusinessRow,
+  toSponsorContactRequest,
   toSponsorRequestFromRegister,
   toYearlyBusinessRequest,
 } from './sponsor-adapters'
@@ -199,6 +201,69 @@ describe('yearly business adapters', () => {
     expect(rows.map(row => row.year)).toEqual([2025, 2024, 2023])
     expect(rows.find(row => row.year === 2024)?.id).toBe('yb-1')
     expect(rows.find(row => row.year === 2025)?.id).toBe('')
+  })
+})
+
+describe('toSponsorContactRequest', () => {
+  it('omits blank officePhone so the server does not validate placeholder text', () => {
+    expect(
+      toSponsorContactRequest(
+        {
+          contactType: 'lead',
+          name: '김담당',
+          department: '부서',
+          position: '직함',
+          officePhone: '',
+          phone: '010-9999-8888',
+          email: 'email@mail.com',
+          companyAddress: '회사주소',
+          memo: '비고',
+        },
+        'lead'
+      )
+    ).toEqual({
+      name: '김담당',
+      department: '부서',
+      position: '직함',
+      mobilePhone: '010-9999-8888',
+      email: 'email@mail.com',
+      companyAddress: '회사주소',
+      memo: '비고',
+      primary: true,
+      contactType: 'lead',
+    })
+  })
+})
+
+describe('mapSponsorContactResponse', () => {
+  it('maps the expanded contact list fields', () => {
+    expect(
+      mapSponsorContactResponse({
+        id: 'c-1',
+        name: '김제이',
+        department: '디자인마케팅팀',
+        position: '책임',
+        officePhone: '02-1234-5678',
+        mobilePhone: '010-2431-0000',
+        email: 'gwan123@naver.com',
+        companyAddress: '서울특별시 강서구 화곡동 936-16',
+        memo: '',
+        contactType: 'lead',
+        createdAt: '2026-02-10T00:15:00.000Z',
+      })
+    ).toEqual({
+      id: 'c-1',
+      name: '김제이',
+      department: '디자인마케팅팀',
+      position: '책임',
+      officePhone: '02-1234-5678',
+      phone: '010-2431-0000',
+      email: 'gwan123@naver.com',
+      companyAddress: '서울특별시 강서구 화곡동 936-16',
+      memo: '',
+      registeredAt: '2026-02-10T00:15:00.000Z',
+      contactType: 'lead',
+    })
   })
 })
 

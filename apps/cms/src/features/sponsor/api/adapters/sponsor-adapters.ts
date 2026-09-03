@@ -286,19 +286,24 @@ export function toSponsorRequestFromBasicInfo(
   }
 }
 
+function optionalContactText(value: string | undefined): string | undefined {
+  const trimmed = value?.trim() ?? ''
+  return trimmed || undefined
+}
+
 export function toSponsorContactRequest(
   payload: SponsorContactRegisterPayload,
   contactType: SponsorContactRow['contactType']
 ): SponsorContactRequest {
   return {
     name: payload.name.trim(),
-    department: payload.department.trim(),
-    position: payload.position.trim(),
-    officePhone: payload.officePhone.trim(),
+    department: optionalContactText(payload.department),
+    position: optionalContactText(payload.position),
+    officePhone: optionalContactText(payload.officePhone),
     mobilePhone: payload.phone.trim(),
-    email: payload.email.trim(),
-    companyAddress: payload.companyAddress.trim(),
-    memo: payload.memo.trim(),
+    email: optionalContactText(payload.email),
+    companyAddress: optionalContactText(payload.companyAddress),
+    memo: optionalContactText(payload.memo),
     primary: contactType === 'lead',
     contactType,
   }
@@ -308,14 +313,14 @@ export function toSponsorContactUpdateRequest(
   row: SponsorContactRow
 ): SponsorContactRequest {
   return {
-    name: row.name,
-    department: row.department,
-    position: row.position,
-    officePhone: row.officePhone,
-    mobilePhone: row.phone,
-    email: row.email,
-    companyAddress: row.companyAddress,
-    memo: row.memo,
+    name: row.name.trim(),
+    department: optionalContactText(row.department),
+    position: optionalContactText(row.position),
+    officePhone: optionalContactText(row.officePhone),
+    mobilePhone: row.phone.trim(),
+    email: optionalContactText(row.email),
+    companyAddress: optionalContactText(row.companyAddress),
+    memo: optionalContactText(row.memo),
     primary: row.contactType === 'lead',
     contactType: row.contactType,
   }

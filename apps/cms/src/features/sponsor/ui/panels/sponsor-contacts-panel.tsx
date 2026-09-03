@@ -1,17 +1,24 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { Flex, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { SponsorContactRow } from '@/features/sponsor/model/sponsor-management.types'
+import { buildContactColumns } from '@/features/sponsor/columns/sponsor-contact-columns'
 import type { UseSponsorContactsReturn } from '@/features/sponsor/hooks/use-sponsor-contacts'
 import type { UseContactsListReturn } from '@/features/sponsor/hooks/use-contacts-list'
 import { SponsorContactDeleteModal } from '@/features/sponsor/ui/modal/sponsor-contact-delete-modal'
 import {
-  FilterTableLayout,
-  type FilterFieldConfig,
-} from '@/shared/components/filter-table-layout'
+  SPONSOR_CONTACT_OFFICE_PHONE_FORMAT_MESSAGE,
+  SPONSOR_CONTACT_PHONE_FORMAT_MESSAGE,
+  isValidSponsorOfficePhone,
+} from '@/features/sponsor/model/sponsor-contact-register-schema'
+import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
-import { CmsButton } from '@/shared/ui'
-import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
 
 const contactFilterFields: FilterFieldConfig[] = [
   {
@@ -60,15 +67,15 @@ export function SponsorContactsPanel({
     setDeleteModalOpen,
     deleteModalOpen,
     selectedNames,
+    isEditing,
+    isSavingEdits,
+    draftRows,
+    startEdit,
+    saveEdits,
     handleDelete,
   } = contactsProps
-  const {
-    pendingFilters,
-    filteredRows,
-    isLoading,
-    handleFilterChange,
-    handleSearch,
-  } = contactsList
+  const { showAlert } = useCmsAlert()
+  const { pendingFilters, filteredRows, isLoading, handleFilterChange, handleSearch } = contactsList
 
   const handleRegisterClick = useCallback((): void => {
     if (!canWrite) return
@@ -84,6 +91,48 @@ export function SponsorContactsPanel({
     setDeleteModalOpen(false)
   }, [setDeleteModalOpen])
 
+  const handleToggleEdit = useCallback(async (): Promise<void> => {
+    if (!canWrite || isSavingEdits) return
+    if (!isEditing) {
+      startEdit(filteredRows)
+      return
+    }
+    const result = await saveEdits()
+    if (result === 'invalid') {
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
+    if (result === 'invalid-format') {
+      const officeInvalid = draftRows.some(row => {
+        const officePhone = row.officePhone.trim()
+        return officePhone.length > 0 && !isValidSponsorOfficePhone(officePhone)
+      })
+      showAlert({
+        title: '안내',
+        content: officeInvalid
+          ? SPONSOR_CONTACT_OFFICE_PHONE_FORMAT_MESSAGE
+          : SPONSOR_CONTACT_PHONE_FORMAT_MESSAGE,
+      })
+    }
+  }, [canWrite, draftRows, filteredRows, isEditing, isSavingEdits, saveEdits, showAlert, startEdit])
+
+  const tableRows = isEditing ? draftRows : filteredRows
+  const excelColumns = useMemo(
+    () =>
+      buildContactColumns({
+        contacts: tableRows,
+        canWrite: false,
+        isEditing: false,
+        openDropdownId: null,
+        onTypeChange: () => undefined,
+        onDropdownOpenChange: () => undefined,
+      }),
+    [tableRows]
+  )
+
   return (
     <Flex vertical gap="middle">
       <FilterTableLayout
@@ -93,18 +142,34 @@ export function SponsorContactsPanel({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="담당자 목록"
-        description={`${filteredRows.length.toLocaleString()}건`}
+        description={`${tableRows.length.toLocaleString()}건`}
+        excelExport={{ columns: excelColumns, data: tableRows }}
         actions={
           <>
             <CmsButton
               variant="delete"
               size="medium"
               onClick={handleDeleteClick}
-              disabled={selectedKeys.length === 0}
+              disabled={isEditing || selectedKeys.length === 0}
             >
               담당자 삭제
             </CmsButton>
-            <CmsButton variant="primary" size="medium" onClick={handleRegisterClick}>
+            {canWrite ? (
+              <CmsButton
+                variant="secondary"
+                size="medium"
+                onClick={() => void handleToggleEdit()}
+                disabled={isSavingEdits}
+              >
+                {isEditing ? '수정 완료' : '정보 수정'}
+              </CmsButton>
+            ) : null}
+            <CmsButton
+              variant="primary"
+              size="medium"
+              onClick={handleRegisterClick}
+              disabled={isEditing}
+            >
               담당자 등록
             </CmsButton>
           </>
@@ -114,9 +179,10 @@ export function SponsorContactsPanel({
           rowKey="id"
           className="cms-data-table"
           columns={columns}
-          dataSource={filteredRows}
+          dataSource={tableRows}
           loading={isLoading}
           pagination={false}
+          scroll={TABLE_CONFIG.scroll}
           rowSelection={
             canWrite
               ? {

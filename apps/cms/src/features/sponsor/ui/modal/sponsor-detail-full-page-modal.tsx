@@ -165,6 +165,19 @@ function SponsorDetailFullPageModalInner({
           throw error
         }
       },
+      onUpdate: async row => {
+        try {
+          const updated = await updateSponsorContact(row)
+          applyUpdatedContactToDetail(queryClient, sponsor.id, updated)
+          setContacts(prev => mergeUpdatedContact(prev, updated))
+        } catch (error) {
+          console.debug(
+            'sponsorContact update failed',
+            getDataManagementApiErrorMessage(error, '담당자 수정에 실패했습니다.')
+          )
+          throw error
+        }
+      },
     }
   }, [queryClient, remoteEnabled, setContacts, sponsor.id])
 
