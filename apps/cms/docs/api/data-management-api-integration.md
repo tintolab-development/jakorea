@@ -243,7 +243,9 @@ LNB 3화면은 **mock fallback 없음**.
 ### 연도별 후원금 (상세 패널)
 
 - DTO: `businessYear`, `donationAmount`, `beneficiaryCount`, `memo`
-- UI: 누적 후원금·누적 수혜자 + 테이블(No, 후원년도, 후원금, 총 수혜자 수, 비고)
+- UI: 건수 · 후원정보 수정 · 엑셀 + 누적 카드 2개 + 테이블(No., 후원년도, 후원금, 총 수혜자 수, 비고)
+- **누적 후원금** = 연도별 `donationAmount` 합. **누적 수혜자** = 해당 후원사 프로그램 이력 `participantCount`(실제 참여자) 합
+- 테이블 **총 수혜자 수**는 서버 `beneficiaryCount`를 그대로 표시. 후원정보 수정에서도 편집하지 않음
 - 후원 시작연도~올해 빈 연도를 표시. 「후원정보 수정」 저장 시 기존 id는 PATCH, 없으면 POST
 - 목록 API를 우선하고, 실패 시 상세 embed `yearlyBusinesses`를 사용
 

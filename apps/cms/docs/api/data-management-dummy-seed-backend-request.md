@@ -53,7 +53,7 @@ detailed_programs_upsert
 | child | SSOT export | 건수 | 비고 |
 |-------|-------------|------|------|
 | `contacts` | `SPONSOR_DETAIL_SEED_CONTACTS` | 3 | lead 1 + assistant 2 |
-| `yearlyBusinesses` | `SPONSOR_DETAIL_SEED_YEARLY_BUSINESSES` | 1 | `donationAmount=91500000`, `beneficiaryCount=915` (시안 누적값) |
+| `yearlyBusinesses` | `SPONSOR_DETAIL_SEED_YEARLY_BUSINESSES` | 3 | 2026·2025·2024. 누적 후원금 109,150,000원. 누적 수혜자 카드는 프로그램 참여자 합 |
 | `programHistories` | `SPONSOR_DETAIL_SEED_PROGRAM_HISTORIES` | 8 | `participantType`: school / individual / **volunteer** |
 
 `programHistories[].programIdHint`는 FE mock 프로그램 id입니다. DB 프로그램 PK와 맞춰 링크하거나, 로컬 데모용으로 이력만 insert 하세요.

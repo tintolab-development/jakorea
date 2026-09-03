@@ -4,7 +4,10 @@ CMS LNB **데이터 관리** 3화면(후원사·교재·세부 프로그램)의 
 프론트 연동 명세: [data-management-api-integration.md](./data-management-api-integration.md)  
 더미 시드: [data-management-dummy-seed-backend-request.md](./data-management-dummy-seed-backend-request.md)
 
-**작성일**: 2026-08-24 · **갱신**: 2026-08-26  
+**후원사 관리 API 수정(2026-09-03 UI 정렬 이후)는 [sponsor-management-api-backend-handoff.md](./sponsor-management-api-backend-handoff.md)를 SSOT로 본다.**  
+아래 표의 후원사 항목(B-2 누적 금액·상태 enum·홈페이지/로고 등)은 그 문서 기준으로 갱신됐다. 본 문서는 교재·세부 프로그램·공통 잔여와 이력 삭제(P0) 인덱스로 유지한다.
+
+**작성일**: 2026-08-24 · **갱신**: 2026-09-03  
 **OpenAPI**: `apps/cms/openapi/data-management.openapi.json`
 
 프론트는 목록 CRUD를 이미 호출합니다. 아래는 **스펙에 없는 API**, **있는 API의 계약 구멍**, **확인만 필요한 항목**입니다.
