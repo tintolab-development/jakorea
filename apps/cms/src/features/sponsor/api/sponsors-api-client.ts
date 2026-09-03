@@ -5,6 +5,7 @@ import {
   toBulkNumericIds,
 } from '@/features/data-management/api/bulk-delete'
 import { getJAKoreaCMSBackendAPIDataManagementSubset } from '@/shared/api/generated/data-management/data-management-api'
+import type { SponsorWriteRequest } from '@/features/sponsor/api/adapters/sponsor-adapters'
 import type {
   BulkActionResponse,
   ProgramHistoriesParams,
@@ -40,7 +41,7 @@ export async function fetchSponsorRemote(id: string): Promise<SponsorDetailRespo
   return unwrapApiBody(await dmApi.sponsor(pathId(id)))
 }
 
-export async function createSponsorRemote(body: SponsorRequest): Promise<SponsorResponse> {
+export async function createSponsorRemote(body: SponsorWriteRequest): Promise<SponsorResponse> {
   return unwrapApiBody(await dmApi.create4(body))
 }
 

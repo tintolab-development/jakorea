@@ -168,6 +168,8 @@ function createRow(
     sponsorshipStatus: o.sponsorshipStatus,
     sponsorshipStartDate: o.sponsorshipStartDate ?? START_SCREENSHOT,
     programCount: 13,
+    totalDonationAmount: 91_500_000,
+    totalBeneficiaryCount: 915,
   }
 }
 

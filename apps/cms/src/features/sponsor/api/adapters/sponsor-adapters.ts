@@ -3,6 +3,7 @@ import type {
   SponsorManagementDetailView,
   SponsorManagementRow,
   SponsorProgramHistoryRow,
+  SponsorRegisterPayload,
   SponsorYearlyBusinessRow,
 } from '@/features/sponsor/model/sponsor-management.types'
 import type { BasicInfoEditState } from '@/features/sponsor/ui/sponsor-detail-basic-info'
@@ -49,6 +50,8 @@ export function mapSponsorResponse(dto: SponsorResponse): SponsorManagementRow {
     sponsorshipStatus: parseSponsorshipStatus(dto.sponsorshipStatus),
     sponsorshipStartDate: dto.sponsorshipStartDate,
     programCount: Number(dto.programCount ?? 0),
+    totalDonationAmount: Number(dto.totalDonationAmount ?? 0),
+    totalBeneficiaryCount: Number(dto.totalBeneficiaryCount ?? 0),
   }
 }
 
@@ -214,17 +217,31 @@ export function mapSponsorDetailResponse(dto: SponsorDetailResponse): SponsorMan
   }
 }
 
-export function toSponsorRequestFromRegister(row: SponsorManagementRow): SponsorRequest {
+/** OpenAPI `SponsorRequest` + 응답에만 있는 홈페이지·로고 id (BE 수용 시 저장) */
+export type SponsorWriteRequest = SponsorRequest & {
+  homepageUrl?: string
+  logoFileId?: string
+}
+
+export function toSponsorRequestFromRegister(payload: SponsorRegisterPayload): SponsorWriteRequest {
+  const name = payload.nameDisplayKo.trim()
+  const nameEn = payload.nameDisplayEn.trim()
+  const address = [payload.district.trim(), payload.detailAddress.trim()].filter(Boolean).join(' ')
+  const homepageUrl = payload.homepageUrl.trim()
+  const securityMemo = payload.securityMemo.trim()
   return {
-    name: row.name,
-    nameEn: row.nameEn,
-    description: row.description,
-    contactInfo: row.contactInfo,
-    organizationKind: row.organizationKind,
-    sponsorshipStatus: row.sponsorshipStatus,
-    sponsorshipStartDate:
-      row.sponsorshipStartDate != null ? String(row.sponsorshipStartDate) : undefined,
-    managers: row.managers,
+    name,
+    nameEn: nameEn || undefined,
+    nameDisplayKo: name,
+    nameDisplayEn: nameEn || undefined,
+    businessNumber: payload.businessNumber.trim() || undefined,
+    executives: payload.executives.trim() || undefined,
+    address: address || undefined,
+    organizationKind: payload.organizationKind,
+    sponsorshipStatus: payload.sponsorshipStatus,
+    sponsorshipStartDate: payload.sponsorshipStartDate,
+    securityMemo: securityMemo || undefined,
+    homepageUrl: homepageUrl || undefined,
   }
 }
 

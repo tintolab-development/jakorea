@@ -6,7 +6,33 @@ import type {
 } from '@/types/domain'
 import type { Dayjs } from 'dayjs'
 
-export type SponsorManagementRow = Sponsor & { programCount: number }
+export type SponsorManagementRow = Sponsor & {
+  programCount: number
+  /** 연도별 후원금 합 — 목록 DTO `totalDonationAmount` */
+  totalDonationAmount: number
+  /** 연도별 수혜자 합 — 목록 DTO `totalBeneficiaryCount` */
+  totalBeneficiaryCount: number
+}
+
+/** 후원사 신규 등록 — 목록 행이 아니라 POST body 원본 */
+export type SponsorRegisterPayload = {
+  nameDisplayKo: string
+  nameDisplayEn: string
+  organizationKind: SponsorOrganizationKind
+  businessNumber: string
+  sponsorshipStartDate: string
+  sponsorshipStatus: SponsorSponsorshipStatus
+  executives: string
+  district: string
+  detailAddress: string
+  homepageUrl: string
+  securityMemo: string
+  /**
+   * 로고 로컬 파일. `SponsorRequest`에 `logoFileId`가 없어 전송하지 않음.
+   * BE가 업로드·id를 받으면 create 경로에 연결한다.
+   */
+  logoFile: File | null
+}
 
 export type SponsorManagementTableContext = Record<string, never>
 

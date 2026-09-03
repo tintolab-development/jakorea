@@ -41,6 +41,8 @@ export function buildSponsorsSeedPayload() {
       sponsorshipStatus: row.sponsorshipStatus ?? 'active',
       sponsorshipStartDate: row.sponsorshipStartDate ?? null,
       programCount: row.programCount,
+      totalDonationAmount: row.totalDonationAmount,
+      totalBeneficiaryCount: row.totalBeneficiaryCount,
       mainContact: row.managers?.[0]
         ? { name: row.managers[0].name, phone: row.managers[0].phone }
         : null,

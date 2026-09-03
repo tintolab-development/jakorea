@@ -1,11 +1,74 @@
 import { describe, expect, it } from 'vitest'
 import {
+  mapSponsorResponse,
   mapYearlyBusinessResponse,
   mergeYearlyBusinessRows,
   parseSponsorContactType,
   shouldPersistYearlyBusinessRow,
+  toSponsorRequestFromRegister,
   toYearlyBusinessRequest,
 } from './sponsor-adapters'
+
+describe('mapSponsorResponse', () => {
+  it('maps list aggregate columns from SponsorResponse', () => {
+    const row = mapSponsorResponse({
+      id: 'sp-1',
+      name: '스타벅스',
+      createdAt: '2026-03-30T00:00:00.000Z',
+      updatedAt: '2026-03-30T00:00:00.000Z',
+      programCount: 13,
+      totalDonationAmount: 91_500_000,
+      totalBeneficiaryCount: 915,
+    })
+    expect(row.programCount).toBe(13)
+    expect(row.totalDonationAmount).toBe(91_500_000)
+    expect(row.totalBeneficiaryCount).toBe(915)
+  })
+
+  it('defaults missing aggregates to 0', () => {
+    const row = mapSponsorResponse({
+      id: 'sp-1',
+      name: '스타벅스',
+    })
+    expect(row.programCount).toBe(0)
+    expect(row.totalDonationAmount).toBe(0)
+    expect(row.totalBeneficiaryCount).toBe(0)
+  })
+})
+
+describe('toSponsorRequestFromRegister', () => {
+  it('maps register fields to SponsorRequest instead of description text', () => {
+    expect(
+      toSponsorRequestFromRegister({
+        nameDisplayKo: '스타벅스',
+        nameDisplayEn: 'STARBUCKS',
+        organizationKind: 'corporate',
+        businessNumber: '124-81-00998',
+        sponsorshipStartDate: '2026-03-30T00:00:00.000Z',
+        sponsorshipStatus: 'active',
+        executives: '홍길동',
+        district: '서울특별시 중구',
+        detailAddress: '을지로 100',
+        homepageUrl: 'https://www.starbucks.co.kr',
+        securityMemo: '비고',
+        logoFile: null,
+      })
+    ).toEqual({
+      name: '스타벅스',
+      nameEn: 'STARBUCKS',
+      nameDisplayKo: '스타벅스',
+      nameDisplayEn: 'STARBUCKS',
+      businessNumber: '124-81-00998',
+      executives: '홍길동',
+      address: '서울특별시 중구 을지로 100',
+      organizationKind: 'corporate',
+      sponsorshipStatus: 'active',
+      sponsorshipStartDate: '2026-03-30T00:00:00.000Z',
+      securityMemo: '비고',
+      homepageUrl: 'https://www.starbucks.co.kr',
+    })
+  })
+})
 
 describe('yearly business adapters', () => {
   it('maps businessYear to year', () => {

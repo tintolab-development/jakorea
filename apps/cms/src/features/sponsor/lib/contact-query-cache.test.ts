@@ -40,6 +40,8 @@ function detail(contacts: SponsorContactRow[]): SponsorManagementDetailView {
     createdAt: '',
     updatedAt: '',
     programCount: 0,
+    totalDonationAmount: 0,
+    totalBeneficiaryCount: 0,
     nameDisplayKo: '테스트',
     nameDisplayEn: '',
     businessNumber: '',

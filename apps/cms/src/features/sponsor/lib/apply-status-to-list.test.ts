@@ -15,6 +15,8 @@ function row(id: string, sponsorshipStatus: 'active' | 'ended'): SponsorManageme
     createdAt: '',
     updatedAt: '',
     programCount: 0,
+    totalDonationAmount: 0,
+    totalBeneficiaryCount: 0,
     sponsorshipStatus,
   }
 }

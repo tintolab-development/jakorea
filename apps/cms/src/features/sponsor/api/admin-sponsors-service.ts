@@ -35,6 +35,7 @@ import type {
   SponsorContactRow,
   SponsorManagementDetailView,
   SponsorManagementRow,
+  SponsorRegisterPayload,
   SponsorProgramHistoryFilters,
   SponsorProgramHistoryRow,
   SponsorYearlyBusinessRow,
@@ -80,9 +81,9 @@ export async function getSponsorYearlyBusinesses(
   return yearly.map(mapYearlyBusinessResponse)
 }
 
-export async function createSponsor(row: SponsorManagementRow): Promise<SponsorManagementRow> {
+export async function createSponsor(payload: SponsorRegisterPayload): Promise<SponsorManagementRow> {
   assertSponsorsRemoteReady()
-  const dto = await createSponsorRemote(toSponsorRequestFromRegister(row))
+  const dto = await createSponsorRemote(toSponsorRequestFromRegister(payload))
   return mapSponsorResponse(dto)
 }
 
@@ -103,8 +104,13 @@ export async function updateSponsorStatus(
 ): Promise<void> {
   assertSponsorsRemoteReady()
   await updateSponsorRemote(sponsorId, {
-    ...toSponsorRequestFromRegister(existing),
+    name: existing.name,
+    nameEn: existing.nameEn,
+    organizationKind: existing.organizationKind,
     sponsorshipStatus,
+    sponsorshipStartDate:
+      existing.sponsorshipStartDate != null ? String(existing.sponsorshipStartDate) : undefined,
+    managers: existing.managers,
   })
 }
 
