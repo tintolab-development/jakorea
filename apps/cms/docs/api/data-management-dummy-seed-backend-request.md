@@ -99,7 +99,7 @@ detailed_programs_upsert
 |---------|-------------|
 | `nameKo` / `nameEn` | `SponsorRequest` |
 | `organizationKind` | `corporate` \| `foundation` |
-| `sponsorshipStatus` | `active` \| `ended` |
+| `sponsorshipStatus` | `active` \| `discussing` \| `dormant` \| `ended` |
 | `sponsorshipStartDate` | ISO date |
 | `mainContact` | contacts child (주 담당자 1명) |
 
