@@ -59,14 +59,15 @@
 }
 
 /*
- * Mobile: periodNav / yearList 각각 독립 horizontal scroll.
- * Desktop(--bp-pc-up): 동일 마크업을 세로 navigation으로 전환.
+ * Mobile: periodNav / yearListMobile 각각 독립 horizontal scroll.
+ * Desktop(--bp-pc-up): 활성 periodGroup 안 yearList 중첩, yearListMobile 숨김.
  */
 .periodNav {
   display: flex;
   width: 100%;
   min-width: 0;
   flex-wrap: nowrap;
+  align-items: center;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
@@ -75,6 +76,15 @@
 }
 
 .periodNav::-webkit-scrollbar {
+  display: none;
+}
+
+.periodGroup {
+  flex: 0 0 auto;
+}
+
+/* Desktop 중첩 yearList — Mobile에서는 숨김 */
+.yearList {
   display: none;
 }
 
@@ -105,7 +115,7 @@
   color: var(--color-primary-700);
 }
 
-.yearList {
+.yearListMobile {
   display: flex;
   width: 100%;
   min-width: 0;
@@ -125,7 +135,7 @@
   -ms-overflow-style: none;
 }
 
-.yearList::-webkit-scrollbar {
+.yearListMobile::-webkit-scrollbar {
   display: none;
 }
 
@@ -339,21 +349,39 @@
 
   .historyLayout {
     display: grid;
-    grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+    grid-template-columns: 300px minmax(0, 1fr);
     gap: var(--spacing-100);
     align-items: start;
   }
 
   .historyNav {
-    gap: var(--spacing-8);
+    width: 300px;
+    max-width: 100%;
+    gap: 0;
   }
 
-  /* 동일 마크업 → Desktop 세로 navigation */
+  /* 활성 period 하위에 yearList 중첩 (시안 accordion) */
   .periodNav {
     flex-direction: column;
     flex-wrap: nowrap;
+    align-items: stretch;
     gap: var(--spacing-4);
     overflow: visible;
+  }
+
+  .periodGroup {
+    display: flex;
+    flex: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .periodGroupActive {
+    border-radius: var(--radius-12);
+    background-color: var(--color-neutral-cool-50);
+    box-sizing: border-box;
   }
 
   .periodButton {
@@ -366,17 +394,30 @@
   }
 
   .periodButtonActive {
-    border-radius: var(--radius-12);
-    background-color: var(--color-neutral-cool-50);
+    color: var(--color-primary-700);
+    background-color: transparent;
+    border-radius: 0;
+  }
+
+  /* Mobile sibling yearList 숨김 */
+  .yearListMobile {
+    display: none;
   }
 
   .yearList {
+    display: flex;
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: stretch;
     gap: var(--spacing-4);
-    padding: var(--spacing-8);
+    width: 100%;
+    margin: 0;
+    padding: 0 var(--spacing-8) var(--spacing-16);
+    list-style: none;
+    border-radius: 0;
+    background-color: transparent;
     overflow: visible;
+    box-sizing: border-box;
   }
 
   .yearItem {
@@ -385,11 +426,15 @@
   }
 
   .yearButton {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
     width: 100%;
     padding: var(--spacing-8) var(--spacing-16);
+    box-sizing: border-box;
     font-size: 16px;
-    font-weight: 400;
-    white-space: normal;
+    font-weight: 500;
+    line-height: 150%;
   }
 
   .yearButtonActive {
