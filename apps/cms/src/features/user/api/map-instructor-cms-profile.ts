@@ -96,6 +96,9 @@ export function buildInstructorSchoolSelectionFromForm(
   const name = trimOptional(values.schoolName)
   if (!name) return undefined
 
+  const provider = trimOptional(values.schoolProvider)
+  if (provider === 'CAREER_NET') return undefined
+
   const selection: PortalSchoolSelectionRequest = {
     name,
     organizationCategory: 'SCHOOL',
@@ -103,7 +106,6 @@ export function buildInstructorSchoolSelectionFromForm(
   if (values.schoolOrganizationId != null && Number.isFinite(values.schoolOrganizationId)) {
     selection.schoolOrganizationId = values.schoolOrganizationId
   }
-  const provider = trimOptional(values.schoolProvider)
   if (provider) selection.provider = provider
   const externalSchoolCode = trimOptional(values.schoolExternalCode)
   if (externalSchoolCode) selection.externalSchoolCode = externalSchoolCode
