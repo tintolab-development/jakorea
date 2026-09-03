@@ -2319,7 +2319,7 @@ const AGREEMENT_NOTICE_TABLE_BOTTOM_TEXT =
 
 const AGREEMENT_NOTICE_TABLE_FIRST_ROW: [string, string, string, string] = [
   '1',
-  '성범죄경력 및 아동학대관련 범죄전력 조회',
+  '성범죄경력 및 아동학대 관련 범죄전력 조회',
   '',
   '',
 ]
@@ -3243,7 +3243,7 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: false,
-        surveyTitle: 'JA Korea 교육진행자 서약서(안)',
+        surveyTitle: 'JA Korea 교육진행자 서약서',
         surveyDescription: '',
         periodMode: 'immediate',
         startAt: null,
