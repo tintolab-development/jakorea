@@ -11,7 +11,7 @@ import {
   patchGeneralIndividualApplicantDetail,
   type GeneralIndividualApplicantRow,
 } from '@/data/mock/general-individual-applications-mock'
-import { CmsButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
+import { CmsButton, ExcelButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
 import { MESSAGES } from '@/shared/constants/messages'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
@@ -373,15 +373,9 @@ export function ParticipatingParticipantFullpageView({
               >
                 출결 정정
               </CmsButton>
-              <CmsButton
-                variant="primary"
-                size="large"
-                width={180}
-                icon={<DownloadOutlined />}
+              <ExcelButton
                 onClick={() => attendanceSectionRef.current?.exportExcel()}
-              >
-                엑셀 다운로드
-              </CmsButton>
+              />
             </>
           ) : activeTab === 'assignments' ? (
             <>
@@ -398,19 +392,12 @@ export function ParticipatingParticipantFullpageView({
                 size="large"
                 width={200}
                 icon={<DownloadOutlined />}
+                adminAction="download"
                 onClick={() => assignmentSectionRef.current?.bulkDownloadAssignments()}
               >
                 과제 일괄 다운로드
               </CmsButton>
-              <CmsButton
-                variant="primary"
-                size="large"
-                width={180}
-                icon={<DownloadOutlined />}
-                onClick={() => assignmentSectionRef.current?.exportExcel()}
-              >
-                엑셀 다운로드
-              </CmsButton>
+              <ExcelButton onClick={() => assignmentSectionRef.current?.exportExcel()} />
             </>
           ) : null
         }

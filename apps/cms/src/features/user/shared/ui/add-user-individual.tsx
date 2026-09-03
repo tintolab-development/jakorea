@@ -119,28 +119,16 @@ const TERMS_CONSENT_LABEL_WIDTH = 220 as const
 
 function ConsentDocumentFieldEdit({
   value,
-  onDisagree,
   onWrite,
 }: {
   value: ConsentFieldValue
-  onDisagree: () => void
   onWrite: () => void
 }) {
   return (
     <span className="add-user-individual__consent-document">
-      <CmsRadioGroup
-        options={CONSENT_RADIO_OPTIONS}
-        size="large"
-        value={value}
-        onChange={event => {
-          const next = event.target.value as ConsentValue
-          if (next === 'disagree') {
-            onDisagree()
-            return
-          }
-          onWrite()
-        }}
-      />
+      <span className="add-user-individual__consent-status">
+        {value === 'agree' ? '동의' : '미동의'}
+      </span>
       <span className="add-user-individual__consent-sep" aria-hidden>
         |
       </span>
@@ -181,11 +169,11 @@ const INITIAL_VALUES: AddUserIndividualFormValues = {
   consentTermsOfService: undefined,
   consentPersonalInfo: undefined,
   consentMarketing: undefined,
-  consentPortrait: undefined,
-  consentWithholdingTax: undefined,
-  consentFacilitatorPledge: undefined,
-  consentAdministrativeJoint: undefined,
-  consentSexOffenseCheck: undefined,
+  consentPortrait: 'disagree',
+  consentWithholdingTax: 'disagree',
+  consentFacilitatorPledge: 'disagree',
+  consentAdministrativeJoint: 'disagree',
+  consentSexOffenseCheck: 'disagree',
 }
 
 function isUnder14BirthDate(value: string, today = new Date()): boolean {
@@ -698,7 +686,6 @@ export function AddUserIndividual({
                         <Form.Item name="consentPortrait" hidden preserve />
                         <ConsentDocumentFieldEdit
                           value={allValues?.consentPortrait ?? INITIAL_VALUES.consentPortrait}
-                          onDisagree={() => form.setFieldValue('consentPortrait', 'disagree')}
                           onWrite={() => handleConsentWrite('consentPortrait')}
                         />
                       </>
@@ -725,7 +712,6 @@ export function AddUserIndividual({
                           value={
                             allValues?.consentWithholdingTax ?? INITIAL_VALUES.consentWithholdingTax
                           }
-                          onDisagree={() => form.setFieldValue('consentWithholdingTax', 'disagree')}
                           onWrite={() => handleConsentWrite('consentWithholdingTax')}
                         />
                       </>
@@ -742,9 +728,6 @@ export function AddUserIndividual({
                           value={
                             allValues?.consentFacilitatorPledge ??
                             INITIAL_VALUES.consentFacilitatorPledge
-                          }
-                          onDisagree={() =>
-                            form.setFieldValue('consentFacilitatorPledge', 'disagree')
                           }
                           onWrite={() => handleConsentWrite('consentFacilitatorPledge')}
                         />
@@ -765,9 +748,6 @@ export function AddUserIndividual({
                             allValues?.consentAdministrativeJoint ??
                             INITIAL_VALUES.consentAdministrativeJoint
                           }
-                          onDisagree={() =>
-                            form.setFieldValue('consentAdministrativeJoint', 'disagree')
-                          }
                           onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
                         />
                       </>
@@ -784,9 +764,6 @@ export function AddUserIndividual({
                           value={
                             allValues?.consentSexOffenseCheck ??
                             INITIAL_VALUES.consentSexOffenseCheck
-                          }
-                          onDisagree={() =>
-                            form.setFieldValue('consentSexOffenseCheck', 'disagree')
                           }
                           onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
                         />

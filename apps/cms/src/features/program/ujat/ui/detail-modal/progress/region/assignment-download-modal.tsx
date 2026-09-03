@@ -72,6 +72,7 @@ export function RegionAssignmentDownloadModal({
         size="medium"
         width={140}
         icon={<DownloadOutlined />}
+        adminAction="download"
         disabled={selectedColumnIds.length === 0 || exporting}
         onClick={() => void handleDownload()}
       >

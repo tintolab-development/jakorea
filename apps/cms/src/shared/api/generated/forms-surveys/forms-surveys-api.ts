@@ -143,8 +143,8 @@ const getVersion = (
 const updateVersion = (
     versionId: number,
     formTemplateVersionUpdateRequest: FormTemplateVersionUpdateRequest,
- options?: SecondParameter<typeof customInstance<FormVersionAdminResponse>>,) => {
-      return customInstance<FormVersionAdminResponse>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/form-template-versions/${versionId}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: formTemplateVersionUpdateRequest

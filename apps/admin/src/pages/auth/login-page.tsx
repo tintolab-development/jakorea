@@ -15,9 +15,7 @@ import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-
 import { isAdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
 import { useLoginAttempts } from '@/features/auth/hooks/use-login-attempts'
 import { LOGIN_POLICY } from '@/shared/constants/login-policy'
-import {
-  DEV_LOGIN_QA_ACCOUNTS,
-} from '@/features/auth/lib/dev-login-accounts'
+import { DEV_LOGIN_QA_ACCOUNTS } from '@/features/auth/lib/dev-login-accounts'
 import { AuthFormLabel } from '@/features/auth/ui/auth-form-label'
 import { AuthLogoLink } from '@/features/auth/ui/auth-logo-link'
 import { LoginUtilityLinks } from '@/features/auth/ui/login-utility-links'
@@ -60,9 +58,7 @@ export function LoginPage() {
     }
 
     if (mode === 'api' && !apiLoginAvailable) {
-      console.error(
-        'API 서버가 설정되지 않았습니다. `.env`에 `VITE_API_SERVER`를 확인하세요.',
-      )
+      console.error('API 서버가 설정되지 않았습니다. `.env`에 `VITE_API_SERVER`를 확인하세요.')
       return
     }
 
@@ -181,17 +177,15 @@ export function LoginPage() {
               />
             )}
 
-            {!isLocked &&
-              failedAttempts > 0 &&
-              failedAttempts < LOGIN_POLICY.maxFailedAttempts && (
-                <Alert
-                  type="warning"
-                  message={`로그인 실패: ${failedAttempts}회`}
-                  description={`${LOGIN_POLICY.maxFailedAttempts - failedAttempts}회 더 실패하면 계정이 ${LOGIN_POLICY.lockoutDurationMinutes}분간 잠깁니다.`}
-                  showIcon
-                  className="login-alert"
-                />
-              )}
+            {!isLocked && failedAttempts > 0 && failedAttempts < LOGIN_POLICY.maxFailedAttempts && (
+              <Alert
+                type="warning"
+                message={`로그인 실패: ${failedAttempts}회`}
+                description={`${LOGIN_POLICY.maxFailedAttempts - failedAttempts}회 더 실패하면 계정이 ${LOGIN_POLICY.lockoutDurationMinutes}분간 잠깁니다.`}
+                showIcon
+                className="login-alert"
+              />
+            )}
 
             {error && !isLocked && !showAdminApprovalPending && (
               <div className="login-error">
@@ -230,9 +224,7 @@ export function LoginPage() {
 
           <LoginUtilityLinks
             registerPath={
-              redirectPath
-                ? `/register?redirect=${encodeURIComponent(redirectPath)}`
-                : '/register'
+              redirectPath ? `/register?redirect=${encodeURIComponent(redirectPath)}` : '/register'
             }
           />
           <LoginSocialSection />
