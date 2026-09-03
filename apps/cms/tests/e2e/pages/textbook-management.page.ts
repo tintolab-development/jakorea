@@ -18,7 +18,7 @@ import {
   waitForAdminGet,
 } from './data-management-helpers'
 import { DATA_MANAGEMENT_NAME_PREFIX } from './data-management-seed-titles'
-import { detailInfoField, fillByPlaceholder, selectByPlaceholder } from './form-helpers'
+import { detailInfoField, selectByPlaceholder } from './form-helpers'
 
 const LIST_COLUMNS = [
   'No.',
@@ -234,7 +234,9 @@ export class TextbookManagementPage {
     const modal = this.page.getByRole('dialog').filter({ hasText: '교재 등록' })
     await expect(modal).toBeVisible()
     await modal.getByRole('radio', { name: '사용' }).check({ force: true })
-    await fillByPlaceholder(modal, '교재명을 입력해 주세요.', this.uniqueName)
+    const nameInputs = modal.getByPlaceholder('교재명을 입력해 주세요.')
+    await nameInputs.nth(0).fill(this.uniqueName)
+    await nameInputs.nth(1).fill(`${this.uniqueName} EN`)
     await this.selectRegisterBusinessArea()
     await selectByPlaceholder(this.page, '교육 대상을 선택해 주세요.', '초등학교')
     await selectByPlaceholder(this.page, '대상 학년을 선택해 주세요.', '전학년')
