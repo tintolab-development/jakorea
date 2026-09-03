@@ -5,7 +5,12 @@ import { downloadCrimeConsentFormDocument } from './crime-consent-form-document'
 import { markInstructorApplyConsentAgreed } from './form-persist'
 import styles from './consent-form.module.css'
 
-async function readImageFileAsDataUrl(file: File): Promise<string> {
+const CRIME_CONSENT_UPLOAD_ACCEPT = 'application/pdf,image/*,.pdf,.jpg,.jpeg,.png,.gif,.webp'
+const CRIME_CONSENT_FILE_TYPE_ALERT_MESSAGE = 'PDF 또는 이미지 파일만 업로드할 수 있습니다.'
+const PDF_FILE_NAME_PATTERN = /\.pdf$/i
+const IMAGE_FILE_NAME_PATTERN = /\.(jpe?g|png|gif|webp|bmp|heic|heif)$/i
+
+async function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => {
@@ -13,11 +18,22 @@ async function readImageFileAsDataUrl(file: File): Promise<string> {
         resolve(reader.result)
         return
       }
-      reject(new Error('invalid image data'))
+      reject(new Error('invalid file data'))
     }
     reader.onerror = () => reject(reader.error ?? new Error('read failed'))
     reader.readAsDataURL(file)
   })
+}
+
+function isCrimeConsentUploadFile(file: File): boolean {
+  const mime = file.type.trim().toLowerCase()
+  if (mime === 'application/pdf' || mime.startsWith('image/')) return true
+  return PDF_FILE_NAME_PATTERN.test(file.name) || IMAGE_FILE_NAME_PATTERN.test(file.name)
+}
+
+function isPdfPreviewSrc(src: string, fileName: string | null): boolean {
+  if (fileName != null && PDF_FILE_NAME_PATTERN.test(fileName)) return true
+  return src.startsWith('data:application/pdf')
 }
 
 /** CMS `MemberConsentCrimeModal`과 동일 — A4 문서 업로드 후 제출 */
@@ -34,7 +50,8 @@ export function CrimeConsentDocumentForm({
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [previewSrc, setPreviewSrc] = useState<string | null>(null)
-  const [alertOpen, setAlertOpen] = useState(false)
+  const [previewFileName, setPreviewFileName] = useState<string | null>(null)
+  const [alertMessage, setAlertMessage] = useState<string | null>(null)
 
   const handlePickDocument = () => {
     fileInputRef.current?.click()
@@ -49,16 +66,21 @@ export function CrimeConsentDocumentForm({
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     event.target.value = ''
-    if (!file || !file.type.startsWith('image/')) return
-    void readImageFileAsDataUrl(file).then(dataUrl => {
+    if (!file) return
+    if (!isCrimeConsentUploadFile(file)) {
+      setAlertMessage(CRIME_CONSENT_FILE_TYPE_ALERT_MESSAGE)
+      return
+    }
+    void readFileAsDataUrl(file).then(dataUrl => {
       setPreviewSrc(dataUrl)
+      setPreviewFileName(file.name)
       onUploadedChange(true)
     })
   }
 
   const handleSubmit = () => {
     if (incomplete) {
-      setAlertOpen(true)
+      setAlertMessage(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
       return
     }
     markInstructorApplyConsentAgreed('consentSexOffenseCheck')
@@ -88,14 +110,22 @@ export function CrimeConsentDocumentForm({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept={CRIME_CONSENT_UPLOAD_ACCEPT}
           className={styles.visuallyHiddenFile}
           onChange={handleFileChange}
-          aria-label="동의서 문서 이미지 선택"
+          aria-label="동의서 문서 파일 선택"
         />
         {previewSrc ? (
           <div className={styles.crimeDocumentPreview}>
-            <img src={previewSrc} alt="업로드한 성범죄 경력 조회 동의서" />
+            {isPdfPreviewSrc(previewSrc, previewFileName) ? (
+              <iframe
+                className={styles.crimeDocumentPreviewPdf}
+                src={previewSrc}
+                title="업로드한 성범죄 경력 조회 동의서"
+              />
+            ) : (
+              <img src={previewSrc} alt="업로드한 성범죄 경력 조회 동의서" />
+            )}
           </div>
         ) : null}
       </div>
@@ -105,10 +135,10 @@ export function CrimeConsentDocumentForm({
         </PFButton>
       </div>
       <PFAlertModal
-        open={alertOpen}
+        open={alertMessage != null}
         title="안내"
-        description={CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE}
-        onConfirm={() => setAlertOpen(false)}
+        description={alertMessage ?? ''}
+        onConfirm={() => setAlertMessage(null)}
       />
     </>
   )
