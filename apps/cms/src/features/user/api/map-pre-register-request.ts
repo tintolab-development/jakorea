@@ -8,6 +8,8 @@ import type {
 import type { PortalSchoolSelectionRequest } from '@/shared/api/generated/members/schemas/portalSchoolSelectionRequest'
 import type { AdminPreRegisterMemberRequest } from '@/shared/api/generated/members/schemas/adminPreRegisterMemberRequest'
 import { resolveNeisEducationOfficeCode } from '@/features/user/api/neis-education-office-code'
+import { resolveIndividualEnrolledSchoolSubmitBlock } from '@/features/user/api/individual-enrolled-school-selection'
+import { INDIVIDUAL_ENROLLED_NEIS_SCHOOL_SELECTION_REQUIRED_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
 import {
@@ -41,8 +43,8 @@ function trimOptional(value: string | undefined): string | undefined {
 }
 
 /**
- * 재학 중 개인 pre-register — CMS PK 없을 때 NEIS/CareerNet 선택값.
- * 학교명만 있으면 schoolSelection을 생략하고 schoolName snapshot만 보낸다.
+ * 재학 중 개인 pre-register — CMS PK 없을 때 NEIS 또는 CAREER_NET 선택값.
+ * 학교명만 있으면 schoolSelection을 만들지 않는다 (호출부에서 거절).
  */
 function buildIndividualSchoolSelection(
   request: CreateUserRequest
@@ -52,13 +54,13 @@ function buildIndividualSchoolSelection(
     trimOptional(request.schoolExternalCode) ?? trimOptional(request.neisCode)
   if (!name || !externalSchoolCode) return undefined
 
+  const provider = trimOptional(request.schoolProvider) ?? 'NEIS'
   const selection: PortalSchoolSelectionRequest = {
     name,
     organizationCategory: 'SCHOOL',
     externalSchoolCode,
+    provider,
   }
-  const provider = trimOptional(request.schoolProvider)
-  selection.provider = provider ?? 'NEIS'
   const educationOfficeCode = resolveNeisEducationOfficeCode({
     provider,
     educationOfficeCode: request.schoolEducationOfficeCode,
@@ -165,8 +167,28 @@ export function mapCreateUserRequestToPreRegisterIndividual(
     if (organizationId != null && Number.isFinite(organizationId)) {
       body.schoolOrganizationId = organizationId
     } else {
+      const enrolledSchoolBlock = resolveIndividualEnrolledSchoolSubmitBlock({
+        schoolProvider: request.schoolProvider,
+        schoolOrganizationId: request.schoolOrganizationId,
+        schoolExternalCode: request.schoolExternalCode ?? request.neisCode,
+        schoolEducationOfficeCode: request.schoolEducationOfficeCode,
+        schoolRegionSido: request.schoolRegionSido ?? request.regionSido,
+      })
+      if (enrolledSchoolBlock != null) {
+        throw new Error(enrolledSchoolBlock)
+      }
       const schoolSelection = buildIndividualSchoolSelection(request)
-      if (schoolSelection) body.schoolSelection = schoolSelection
+      if (schoolSelection == null) {
+        throw new Error(
+          resolveIndividualEnrolledSchoolSubmitBlock({
+            schoolProvider: request.schoolProvider,
+            schoolExternalCode: request.schoolExternalCode,
+            schoolEducationOfficeCode: request.schoolEducationOfficeCode,
+            schoolRegionSido: request.schoolRegionSido,
+          }) ?? INDIVIDUAL_ENROLLED_NEIS_SCHOOL_SELECTION_REQUIRED_ALERT_MESSAGE
+        )
+      }
+      body.schoolSelection = schoolSelection
     }
   }
   if (request.id1365?.trim()) body.external1365Id = request.id1365.trim()
