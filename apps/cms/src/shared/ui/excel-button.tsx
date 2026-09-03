@@ -22,8 +22,8 @@ export const ExcelButton = forwardRef<HTMLButtonElement, ExcelButtonProps>(
         size="large"
         icon={<DownloadOutlined />}
         className={['excel-button', className].filter(Boolean).join(' ')}
-        {...rest}
         adminAction="download"
+        {...rest}
       >
         엑셀 다운로드
       </CmsButton>
