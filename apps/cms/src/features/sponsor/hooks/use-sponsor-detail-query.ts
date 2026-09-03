@@ -28,7 +28,7 @@ export function useSponsorDetailQuery(sponsorId: string | null, enabled = true) 
   })
 }
 
-/** 행 hover 시 detail GET 폭주를 막기 위해 debounce */
+/** 행 hover 시 detail GET 폭주를 막기 위해 debounce. 캐시 hit면 네트워크 생략. */
 export function usePrefetchSponsorDetail() {
   const queryClient = useQueryClient()
   const remoteEnabled = useDataManagementRemoteEnabled('sponsors')
@@ -45,12 +45,14 @@ export function usePrefetchSponsorDetail() {
   return useCallback(
     (sponsorId: string) => {
       if (!remoteEnabled || !sponsorId) return
+      if (queryClient.getQueryData(dataManagementQueryKeys.sponsors.detail(sponsorId))) return
       pendingIdRef.current = sponsorId
       if (timerRef.current != null) clearTimeout(timerRef.current)
       timerRef.current = setTimeout(() => {
         timerRef.current = null
         const id = pendingIdRef.current
         if (!id) return
+        if (queryClient.getQueryData(dataManagementQueryKeys.sponsors.detail(id))) return
         void queryClient.prefetchQuery(sponsorDetailQueryOptions(id))
       }, PREFETCH_DEBOUNCE_MS)
     },

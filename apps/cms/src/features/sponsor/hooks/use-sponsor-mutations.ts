@@ -22,14 +22,70 @@ import type {
   SponsorManagementRow,
 } from '@/features/sponsor/model/sponsor-management.types'
 import {
-  applyCreatedToArrayLists,
+  applyCreatedToMatchingArrayLists,
   applyDeletedToArrayLists,
-  applyUpdatedToArrayLists,
+  applyUpdatedToMatchingArrayLists,
   invalidateArrayLists,
 } from '@/shared/lib/query-list-cache'
+import dayjs from 'dayjs'
 
 function rowId(row: SponsorManagementRow): string {
   return row.id
+}
+
+function detailToListRow(detail: SponsorManagementDetailView): SponsorManagementRow {
+  return {
+    id: detail.id,
+    name: detail.name,
+    nameEn: detail.nameEn,
+    description: detail.description,
+    contactInfo: detail.contactInfo,
+    managers: detail.managers,
+    securityMemo: detail.securityMemo,
+    createdAt: detail.createdAt,
+    updatedAt: detail.updatedAt,
+    organizationKind: detail.organizationKind,
+    sponsorshipStatus: detail.sponsorshipStatus,
+    sponsorshipStartDate: detail.sponsorshipStartDate,
+    programCount: detail.programCount,
+  }
+}
+
+function sponsorMatchesListFilter(
+  queryKey: readonly unknown[],
+  row: SponsorManagementRow
+): boolean {
+  const raw = queryKey[queryKey.length - 1]
+  if (typeof raw !== 'string') return true
+  const params = new URLSearchParams(raw)
+  const kind = params.get('sp_kind') === 'foundation' ? 'foundation' : 'corporate'
+  if ((row.organizationKind ?? 'corporate') !== kind) return false
+
+  const st = params.get('sp_st')
+  if (st === 'active' || st === 'ended') {
+    if ((row.sponsorshipStatus ?? 'active') !== st) return false
+  }
+
+  const nameQ = (params.get('sp_name') ?? '').trim()
+  if (nameQ && !row.name.includes(nameQ)) return false
+
+  const mgrQ = (params.get('sp_mgr') ?? '').trim()
+  if (mgrQ) {
+    const managers = row.managers ?? []
+    if (!managers.some(m => m.name.includes(mgrQ))) return false
+  }
+
+  const from = (params.get('sp_from') ?? '').trim()
+  const to = (params.get('sp_to') ?? '').trim()
+  if (from || to) {
+    const rawDate = row.sponsorshipStartDate
+    if (rawDate == null || rawDate === '') return false
+    const day = dayjs(rawDate).format('YYYY-MM-DD')
+    if (from && day < from) return false
+    if (to && day > to) return false
+  }
+
+  return true
 }
 
 function patchSponsorDetailStatus(
@@ -44,6 +100,16 @@ function patchSponsorDetailStatus(
   )
 }
 
+function patchSponsorOptionsList(
+  queryClient: QueryClient,
+  mutate: (old: SponsorManagementRow[]) => SponsorManagementRow[]
+): void {
+  const key = dataManagementQueryKeys.sponsors.options()
+  const old = queryClient.getQueryData<SponsorManagementRow[]>(key)
+  if (!Array.isArray(old)) return
+  queryClient.setQueryData(key, mutate(old))
+}
+
 export function useSponsorMutations() {
   const queryClient = useQueryClient()
   const listsKey = dataManagementQueryKeys.sponsors.listAll()
@@ -53,12 +119,21 @@ export function useSponsorMutations() {
     onSuccess: async created => {
       if (!created.id) {
         await invalidateArrayLists(queryClient, listsKey)
-      } else {
-        applyCreatedToArrayLists(queryClient, listsKey, created, rowId)
+        await queryClient.invalidateQueries({
+          queryKey: dataManagementQueryKeys.sponsors.options(),
+        })
+        return
       }
-      await queryClient.invalidateQueries({
-        queryKey: dataManagementQueryKeys.sponsors.options(),
-      })
+      applyCreatedToMatchingArrayLists(
+        queryClient,
+        listsKey,
+        created,
+        rowId,
+        sponsorMatchesListFilter
+      )
+      patchSponsorOptionsList(queryClient, old =>
+        old.some(row => row.id === created.id) ? old : [created, ...old]
+      )
     },
   })
 
@@ -67,22 +142,19 @@ export function useSponsorMutations() {
     onSuccess: (_data, id) => {
       queryClient.removeQueries({ queryKey: dataManagementQueryKeys.sponsors.detail(id) })
       applyDeletedToArrayLists(queryClient, listsKey, id, rowId)
-      void queryClient.invalidateQueries({
-        queryKey: dataManagementQueryKeys.sponsors.options(),
-      })
+      patchSponsorOptionsList(queryClient, old => old.filter(row => row.id !== id))
     },
   })
 
   const bulkDeleteMutation = useMutation({
     mutationFn: deleteSponsors,
     onSuccess: (_data, ids) => {
+      const idSet = new Set(ids)
       for (const id of ids) {
         queryClient.removeQueries({ queryKey: dataManagementQueryKeys.sponsors.detail(id) })
         applyDeletedToArrayLists(queryClient, listsKey, id, rowId)
       }
-      void queryClient.invalidateQueries({
-        queryKey: dataManagementQueryKeys.sponsors.options(),
-      })
+      patchSponsorOptionsList(queryClient, old => old.filter(row => !idSet.has(row.id)))
     },
   })
 
@@ -103,6 +175,13 @@ export function useSponsorMutations() {
         variables.sponsorshipStatus
       )
       patchSponsorDetailStatus(queryClient, variables.sponsorId, variables.sponsorshipStatus)
+      patchSponsorOptionsList(queryClient, old =>
+        old.map(row =>
+          row.id === variables.sponsorId
+            ? { ...row, sponsorshipStatus: variables.sponsorshipStatus }
+            : row
+        )
+      )
     },
     retry: false,
   })
@@ -126,7 +205,20 @@ export function useSponsorMutations() {
         return
       }
       queryClient.setQueryData(dataManagementQueryKeys.sponsors.detail(updated.id), updated)
-      applyUpdatedToArrayLists(queryClient, listsKey, updated, rowId)
+      const listRow = detailToListRow(updated)
+      applyUpdatedToMatchingArrayLists(
+        queryClient,
+        listsKey,
+        listRow,
+        rowId,
+        sponsorMatchesListFilter
+      )
+      patchSponsorOptionsList(queryClient, old => {
+        const found = old.some(row => row.id === listRow.id)
+        return found
+          ? old.map(row => (row.id === listRow.id ? { ...row, ...listRow } : row))
+          : [listRow, ...old]
+      })
     },
   })
 
@@ -135,6 +227,9 @@ export function useSponsorMutations() {
     onSuccess: (_data, sponsorId) => {
       applySponsorStatusToCachedLists(queryClient, sponsorId, 'ended')
       patchSponsorDetailStatus(queryClient, sponsorId, 'ended')
+      patchSponsorOptionsList(queryClient, old =>
+        old.map(row => (row.id === sponsorId ? { ...row, sponsorshipStatus: 'ended' } : row))
+      )
     },
   })
 
