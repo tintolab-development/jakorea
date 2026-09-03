@@ -220,12 +220,15 @@ export function memberDetailQueryOptions(
   })
 }
 
-export function fetchMemberDetailQuery(
+/** 목록 → 상세 진입 전용. staleTime 안이어도 항상 GET */
+export async function fetchMemberDetailQuery(
   queryClient: QueryClient,
   userId: string,
   options?: MemberDetailQueryOptions
 ) {
-  return queryClient.ensureQueryData(memberDetailQueryOptions(userId, options))
+  const query = memberDetailQueryOptions(userId, options)
+  await queryClient.invalidateQueries({ queryKey: query.queryKey, refetchType: 'none' })
+  return queryClient.fetchQuery(query)
 }
 
 export function useMemberDetailQuery(
@@ -249,8 +252,14 @@ export function memberConsentRecordsQueryOptions(memberId: number) {
   })
 }
 
-export function fetchMemberConsentRecordsQuery(queryClient: QueryClient, memberId: number) {
-  return queryClient.ensureQueryData(memberConsentRecordsQueryOptions(memberId))
+/** 상세 정보 탭 진입 — staleTime 안이어도 consent-records를 다시 GET */
+export async function fetchMemberConsentRecordsQuery(
+  queryClient: QueryClient,
+  memberId: number
+) {
+  const query = memberConsentRecordsQueryOptions(memberId)
+  await queryClient.invalidateQueries({ queryKey: query.queryKey, refetchType: 'none' })
+  return queryClient.fetchQuery(query)
 }
 
 export function useMemberConsentRecordsQuery(
