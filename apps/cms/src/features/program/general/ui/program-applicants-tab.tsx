@@ -375,7 +375,7 @@ export function ProgramApplicantsTab({
 
   const columns: ColumnsType<ApplicantSchoolRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '참여 학교명',
         dataIndex: 'schoolName',
@@ -448,7 +448,7 @@ export function ProgramApplicantsTab({
 
   const instructorColumns: ColumnsType<ApplicantInstructorRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '강사명',
         dataIndex: 'instructorName',
