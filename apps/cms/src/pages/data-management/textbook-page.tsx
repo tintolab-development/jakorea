@@ -33,6 +33,7 @@ import { TextbookDetailFullPageModal } from '@/features/textbook/ui/textbook-det
 import { BusinessAreaManagementModal } from '@/features/textbook/ui/business-area-management-modal'
 import { useTextbookBusinessAreaSelectOptions } from '@/features/textbook/hooks/use-business-areas-query'
 import { TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS } from '@/features/textbook/model/textbook-education-targets'
+import { textbookFilterGradeOptions } from '@/features/textbook/model/textbook-grade-options'
 import {
   parseTextbookUseStatus,
   type TextbookListFilters,
@@ -63,36 +64,6 @@ const INITIAL_FILTERS: TextbookFilters = {
   businessArea: 'ALL',
   educationTarget: 'ALL',
   grade: 'ALL',
-}
-
-type FilterOption = { label: string; value: string }
-
-function gradeOptionsByEducationTarget(educationTarget: string): FilterOption[] {
-  const allOption = { label: '전체', value: 'ALL' }
-  const grade13 = ['1학년', '2학년', '3학년'].map(g => ({ label: g, value: g }))
-  const grade16 = ['1학년', '2학년', '3학년', '4학년', '5학년', '6학년'].map(g => ({
-    label: g,
-    value: g,
-  }))
-  switch (educationTarget) {
-    case '유아':
-      return [allOption, { label: '유아', value: '유아' }, { label: '유치원생', value: '유치원생' }]
-    case '초등학교':
-      return [{ label: '전학년', value: '전학년' }, ...grade16]
-    case '중학교':
-    case '고등학교':
-      return [{ label: '전학년', value: '전학년' }, ...grade13]
-    case '대학교':
-      return [allOption]
-    default:
-      return [
-        allOption,
-        { label: '유아', value: '유아' },
-        { label: '유치원생', value: '유치원생' },
-        { label: '전학년', value: '전학년' },
-        ...grade16,
-      ]
-  }
 }
 
 export default function TextbookPage() {
@@ -157,7 +128,7 @@ export default function TextbookPage() {
   const rows = listQuery.data ?? []
 
   const gradeOptions = useMemo(
-    () => gradeOptionsByEducationTarget(pendingFilters.educationTarget),
+    () => textbookFilterGradeOptions(pendingFilters.educationTarget),
     [pendingFilters.educationTarget]
   )
 
@@ -243,7 +214,7 @@ export default function TextbookPage() {
       }
       const nextValue = (value ?? (key === 'textbookName' ? '' : 'ALL')) as string
       if (key === 'educationTarget') {
-        const nextGradeOptions = gradeOptionsByEducationTarget(nextValue).map(opt => opt.value)
+        const nextGradeOptions = textbookFilterGradeOptions(nextValue).map(opt => opt.value)
         const nextGrade = nextGradeOptions.includes(prev.grade) ? prev.grade : 'ALL'
         return {
           ...prev,
