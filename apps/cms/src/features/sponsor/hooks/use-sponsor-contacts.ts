@@ -40,6 +40,8 @@ export interface UseSponsorContactsReturn {
   setRegisterModalOpen: (open: boolean) => void
   deleteModalOpen: boolean
   setDeleteModalOpen: (open: boolean) => void
+  typeChangeBlockedModalOpen: boolean
+  setTypeChangeBlockedModalOpen: (open: boolean) => void
   selectedNames: string[]
   isEditing: boolean
   isSavingEdits: boolean
@@ -75,6 +77,7 @@ export function useSponsorContacts(
   const [openDropdownId, setOpenDropdownIdState] = useState<string | null>(null)
   const [registerModalOpen, setRegisterModalOpenState] = useState(false)
   const [deleteModalOpen, setDeleteModalOpenState] = useState(false)
+  const [typeChangeBlockedModalOpen, setTypeChangeBlockedModalOpenState] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isSavingEdits, setIsSavingEdits] = useState(false)
   const [draftRows, setDraftRows] = useState<SponsorContactRow[]>([])
@@ -95,6 +98,10 @@ export function useSponsorContacts(
     setDeleteModalOpenState(open)
   }, [])
 
+  const setTypeChangeBlockedModalOpen = useCallback((open: boolean): void => {
+    setTypeChangeBlockedModalOpenState(open)
+  }, [])
+
   const selectedNames = useMemo((): string[] => {
     if (selectedKeys.length === 0) return []
     const selectedSet = new Set(selectedKeys.map(key => String(key)))
@@ -107,7 +114,11 @@ export function useSponsorContacts(
       if (!row) return
       if (row.contactType === 'lead' && nextType === 'assistant') {
         const leadCount = contacts.filter(c => c.contactType === 'lead').length
-        if (leadCount <= 1) return
+        if (leadCount <= 1) {
+          setOpenDropdownId(null)
+          setTypeChangeBlockedModalOpenState(true)
+          return
+        }
       }
       if (remoteActions) {
         void remoteActions
@@ -262,6 +273,8 @@ export function useSponsorContacts(
     setRegisterModalOpen,
     deleteModalOpen,
     setDeleteModalOpen,
+    typeChangeBlockedModalOpen,
+    setTypeChangeBlockedModalOpen,
     selectedNames,
     isEditing,
     isSavingEdits,

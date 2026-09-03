@@ -53,7 +53,12 @@ export function clearMaterialKitIdCache(): void {
 async function resolveGlobalMaterialKitId(): Promise<number> {
   if (cachedGlobalKitId != null) return cachedGlobalKitId
 
-  const page = await fetchMaterialKitsRemote({ page: 0, size: 100, useYn: true })
+  const page = await fetchMaterialKitsRemote({
+    page: 0,
+    size: 100,
+    useYn: true,
+    globalOnly: true,
+  })
   const items = page.items ?? []
   const globalKit = items.find(kit => kit.textbookId == null) ?? items[0]
   if (globalKit?.id != null) {

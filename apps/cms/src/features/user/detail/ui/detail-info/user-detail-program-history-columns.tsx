@@ -28,7 +28,7 @@ export function createProgramHistoryColumns({
     {
       title: 'No.',
       key: 'no',
-      width: 72,
+      width: 80,
       align: 'center',
       render: (_: unknown, __: Application, index: number) => index + 1,
     },

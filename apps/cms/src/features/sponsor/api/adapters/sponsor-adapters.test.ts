@@ -28,7 +28,7 @@ describe('mapSponsorResponse', () => {
     expect(row.totalBeneficiaryCount).toBe(915)
   })
 
-  it('defaults missing aggregates to 0', () => {
+  it('defaults missing donation aggregates to 0', () => {
     const row = mapSponsorResponse({
       id: 'sp-1',
       name: '스타벅스',

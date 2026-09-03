@@ -27,7 +27,7 @@ const LIST_COLUMNS = [
   '사업 분야',
   '교육 대상',
   '대상 학년',
-  '등록자',
+  '등록자명',
   '등록일시',
 ] as const
 
@@ -140,7 +140,7 @@ export class TextbookManagementPage {
   }
 
   async fillTextbookName(name: string) {
-    await this.page.getByPlaceholder('교재명').fill(name)
+    await this.page.getByPlaceholder('교재명을 입력하세요').fill(name)
   }
 
   async selectEducationTarget(label: string) {
@@ -202,7 +202,7 @@ export class TextbookManagementPage {
     await expect(dialog).toBeVisible({ timeout: 30_000 })
     await expect(dialog.getByText('교재명 (국문)', { exact: false }).or(dialog.getByText('교재명')).first()).toBeVisible()
     await expect(dialog.getByText('교재명 (영문)').first()).toBeVisible()
-    await expect(dialog.getByText('교육 분야').first()).toBeVisible()
+    await expect(dialog.getByText('사업 분야').first()).toBeVisible()
     await expect(dialog.getByText('사용 여부').first()).toBeVisible()
     await expect(dialog.getByText('유아').first()).toBeVisible()
     await expect(dialog.getByText('초등학교').first()).toBeVisible()
@@ -279,7 +279,7 @@ export class TextbookManagementPage {
       res => isAdminMutation(res, 'PATCH', /\/api\/admin\/textbooks\/[^/]+\/?$/),
       { timeout: 60_000 }
     )
-    await dialog.getByRole('button', { name: '저장' }).click()
+    await dialog.getByRole('button', { name: '수정 완료' }).click()
     const patch = await patchPromise
     if (!patch.ok()) {
       const body = await patch.text().catch(() => '')

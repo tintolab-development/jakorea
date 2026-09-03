@@ -2,6 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import { memberLoginRetentionCutoff } from '@/features/logs/lib/member-login-retention'
 import type { MemberLoginLog } from '@/types/member-login-log'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
@@ -27,12 +28,34 @@ function dayjsPairEqual(
     (a[1]?.valueOf() ?? null) === (b[1]?.valueOf() ?? null)
 }
 
+/** 노션 1개월 보관: 필터/URL 구간을 cutoff~오늘로 맞춤 */
+function clampDateToRetentionWindow(value: Dayjs | null, now = dayjs()): Dayjs | null {
+  if (value == null || !value.isValid()) return null
+  const cutoff = memberLoginRetentionCutoff(now).startOf('day')
+  const today = now.startOf('day')
+  if (value.isBefore(cutoff, 'day')) return cutoff
+  if (value.isAfter(today, 'day')) return today
+  return value
+}
+
+function clampPendingDateRange(
+  range: MemberLoginHistoryPendingDateRange,
+  now = dayjs()
+): MemberLoginHistoryPendingDateRange {
+  if (range == null) return null
+  const start = clampDateToRetentionWindow(range[0] ?? null, now)
+  const end = clampDateToRetentionWindow(range[1] ?? null, now)
+  if (start == null && end == null) return null
+  if (start != null && end != null && start.isAfter(end, 'day')) return [end, end]
+  return [start, end]
+}
+
 function normalizeDateRangePickerValue(value: unknown): MemberLoginHistoryPendingDateRange {
   if (!Array.isArray(value) || value.length < 2) return null
   const start = (value[0] ?? null) as Dayjs | null
   const end = (value[1] ?? null) as Dayjs | null
   if (start == null && end == null) return null
-  return [start, end]
+  return clampPendingDateRange([start, end])
 }
 
 const urlDateRangeSyncState = { hadCompleteInUrl: false }
@@ -45,7 +68,7 @@ function resolvePendingDateRangeFromUrl(args: {
   const { from, to, prev } = args
   if (from && to) {
     urlDateRangeSyncState.hadCompleteInUrl = true
-    return [dayjs(from), dayjs(to)]
+    return clampPendingDateRange([dayjs(from), dayjs(to)])
   }
   if (urlDateRangeSyncState.hadCompleteInUrl) {
     urlDateRangeSyncState.hadCompleteInUrl = false
@@ -81,9 +104,10 @@ const searchSyncRules: readonly TableSearchParamRule<MemberLoginHistoryPendingFi
   {
     kind: 'apply',
     apply: (nextParams, filters) => {
-      if (filters.dateRange?.[0] && filters.dateRange?.[1]) {
-        nextParams.set('mlh_from', filters.dateRange[0].format('YYYY-MM-DD'))
-        nextParams.set('mlh_to', filters.dateRange[1].format('YYYY-MM-DD'))
+      const clamped = clampPendingDateRange(filters.dateRange)
+      if (clamped?.[0] && clamped?.[1]) {
+        nextParams.set('mlh_from', clamped[0].format('YYYY-MM-DD'))
+        nextParams.set('mlh_to', clamped[1].format('YYYY-MM-DD'))
       } else {
         nextParams.delete('mlh_from')
         nextParams.delete('mlh_to')

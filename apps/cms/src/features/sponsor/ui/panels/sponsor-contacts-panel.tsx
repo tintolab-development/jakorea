@@ -6,6 +6,7 @@ import { buildContactColumns } from '@/features/sponsor/columns/sponsor-contact-
 import type { UseSponsorContactsReturn } from '@/features/sponsor/hooks/use-sponsor-contacts'
 import type { UseContactsListReturn } from '@/features/sponsor/hooks/use-contacts-list'
 import { SponsorContactDeleteModal } from '@/features/sponsor/ui/modal/sponsor-contact-delete-modal'
+import { SponsorContactTypeChangeBlockedModal } from '@/features/sponsor/ui/modal/sponsor-contact-type-change-blocked-modal'
 import {
   SPONSOR_CONTACT_OFFICE_PHONE_FORMAT_MESSAGE,
   SPONSOR_CONTACT_PHONE_FORMAT_MESSAGE,
@@ -25,7 +26,7 @@ const contactFilterFields: FilterFieldConfig[] = [
     key: 'department',
     type: 'search',
     label: '부서',
-    placeholder: '부서를 입력하세요',
+    placeholder: '부서명을 입력하세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
@@ -66,6 +67,8 @@ export function SponsorContactsPanel({
     setRegisterModalOpen,
     setDeleteModalOpen,
     deleteModalOpen,
+    typeChangeBlockedModalOpen,
+    setTypeChangeBlockedModalOpen,
     selectedNames,
     isEditing,
     isSavingEdits,
@@ -200,6 +203,10 @@ export function SponsorContactsPanel({
         onCancel={handleDeleteCancel}
         onConfirm={handleDelete}
         contactNames={selectedNames}
+      />
+      <SponsorContactTypeChangeBlockedModal
+        open={typeChangeBlockedModalOpen}
+        onClose={() => setTypeChangeBlockedModalOpen(false)}
       />
     </Flex>
   )

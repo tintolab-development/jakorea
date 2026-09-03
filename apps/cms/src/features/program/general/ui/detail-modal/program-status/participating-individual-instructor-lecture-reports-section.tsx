@@ -165,7 +165,7 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
 
   const columns = useMemo(
     (): ColumnsType<ParticipatingIndividualInstructorLectureReportRow & { no: number }> => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '교육 진행 일정',
         dataIndex: 'scheduleLabel',

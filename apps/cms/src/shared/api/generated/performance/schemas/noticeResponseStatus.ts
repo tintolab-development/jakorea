@@ -7,7 +7,7 @@
  */
 
 /**
- * 상태
+ * 공개 상태
  */
 export type NoticeResponseStatus = typeof NoticeResponseStatus[keyof typeof NoticeResponseStatus];
 

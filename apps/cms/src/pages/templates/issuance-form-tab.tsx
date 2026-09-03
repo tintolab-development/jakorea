@@ -433,7 +433,7 @@ export function IssuanceFormTab() {
   }, [params.mode, params.id, setParams, issuanceSections])
 
   const issuanceColumns: ColumnsType<IssuanceTemplateRow> = [
-    { title: 'No.', dataIndex: 'no', key: 'no', width: 88, align: 'center' },
+    { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
     { title: '템플릿명', dataIndex: 'templateName', key: 'templateName' },
     { title: '생성자', dataIndex: 'creator', key: 'creator', width: 180, align: 'center' },
     { title: '최초 생성일', dataIndex: 'createdAt', key: 'createdAt', width: 180, align: 'center' },

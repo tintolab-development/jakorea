@@ -271,8 +271,8 @@
 .school-detail-modal__student-table col:nth-child(2),
 .school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(2),
 .school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(2) {
-  width: 64px !important;
-  min-width: 64px !important;
+  width: var(--table-no-column-width, 80px) !important;
+  min-width: var(--table-no-column-width, 80px) !important;
 }
 
 .school-detail-modal__student-table col:nth-child(3),

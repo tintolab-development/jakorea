@@ -304,7 +304,7 @@ export function ParticipatingInstructorSettlementSection({
 
   const columns = useMemo(
     (): ColumnsType<ParticipatingInstructorSettlementRow> => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       { title: '기관명', dataIndex: 'schoolName', key: 'schoolName', width: 140, align: 'center' },
       {
         title: '교육 학년',

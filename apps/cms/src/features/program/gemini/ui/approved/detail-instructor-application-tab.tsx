@@ -49,7 +49,7 @@ const INITIAL_PENDING_FILTERS: PendingFilters = {
 }
 
 const COL = {
-  no: 72,
+  no: TABLE_COLUMN_WIDTHS.index,
   instructorName: 120,
   homeRegion: 170,
   experience: 120,

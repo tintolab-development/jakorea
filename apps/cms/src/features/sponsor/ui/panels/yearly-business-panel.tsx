@@ -242,7 +242,7 @@ export function YearlyBusinessPanel({
           </div>
         </div>
         <div className="yearly-business-panel__summary-card">
-          <span className="yearly-business-panel__summary-label">누적 수혜자</span>
+          <span className="yearly-business-panel__summary-label">누적 수혜자 수</span>
           <div>
             <span className="yearly-business-panel__summary-value">
               {totalBeneficiaries.toLocaleString('ko-KR')}

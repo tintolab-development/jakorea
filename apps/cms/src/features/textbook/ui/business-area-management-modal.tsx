@@ -152,7 +152,7 @@ export function BusinessAreaManagementModal({
               onClick={ctrl.applySettings}
               disabled={ctrl.saving || ctrl.loading}
             >
-              사업 분야 설정
+              사업 분야 저장
             </CmsButton>
           </>
         }

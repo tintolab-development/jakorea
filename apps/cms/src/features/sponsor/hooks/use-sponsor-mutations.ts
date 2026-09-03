@@ -28,6 +28,7 @@ import {
   invalidateArrayLists,
 } from '@/shared/lib/query-list-cache'
 import dayjs from 'dayjs'
+import { isSponsorSponsorshipStatus } from '@/features/sponsor/model/sponsorship-status'
 
 function rowId(row: SponsorManagementRow): string {
   return row.id
@@ -64,7 +65,7 @@ function sponsorMatchesListFilter(
   if ((row.organizationKind ?? 'corporate') !== kind) return false
 
   const st = params.get('sp_st')
-  if (st === 'active' || st === 'ended') {
+  if (isSponsorSponsorshipStatus(st)) {
     if ((row.sponsorshipStatus ?? 'active') !== st) return false
   }
 

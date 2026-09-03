@@ -222,7 +222,7 @@ export function NoticeFormModal({
                 size="large"
                 onClick={handleRequestDelete}
               >
-                삭제
+                공지사항 삭제
               </CmsButton>
             ) : null}
             <div className="notice-register-modal__footer-actions-right">
@@ -291,7 +291,7 @@ export function NoticeFormModal({
             label="제목"
             className="notice-register-modal__section"
           >
-            <CmsInput placeholder="제목을 입력해주세요" inputSize="large" width="100%" />
+            <CmsInput placeholder="제목을 입력하세요" inputSize="large" width="100%" />
           </Form.Item>
 
           <div className="notice-register-modal__section notice-register-modal__section--editor">

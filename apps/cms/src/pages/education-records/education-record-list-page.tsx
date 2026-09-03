@@ -40,10 +40,10 @@ export function EducationRecordListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
 
-  const listQuery = usePerformanceListQuery()
+  const listQuery = usePerformanceListQuery(searchParams)
   const sourceRows = listQuery.data ?? []
   const isDataTab = activeKey === 'data'
-  const summaryQuery = usePerformanceSummaryQuery(activeKey === 'summary')
+  const summaryQuery = usePerformanceSummaryQuery(searchParams, activeKey === 'summary')
 
   const availableYears = useMemo(() => getAvailableYearsFromRows(sourceRows), [sourceRows])
   const context = useMemo<EducationRecordTableContext>(() => ({ availableYears }), [availableYears])

@@ -51,8 +51,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * ### 이 API가 하는 일
  * - 실적 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `GET /api/admin/performance/rules`
  *
@@ -106,8 +106,8 @@ const listRules = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/performance/rules
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `POST /api/admin/performance/rules`
  *
@@ -162,8 +162,8 @@ const upsertRule = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/performance/records/{performanceRecordId}/master-snapshots:refresh
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `POST /api/admin/performance/records/{performanceRecordId}/master-snapshots:refresh`
  *
@@ -216,8 +216,8 @@ const refreshSnapshots = (
 /**
  * ### 이 API가 하는 일
  * - 실적 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `GET /api/admin/performance/external-exports`
  *
@@ -271,8 +271,8 @@ const listExternalExports = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/performance/external-exports
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `POST /api/admin/performance/external-exports`
  *
@@ -327,8 +327,8 @@ const requestExternalExport = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/performance-records/{performanceRecordId}/correction-requests
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `POST /api/admin/performance-records/{performanceRecordId}/correction-requests`
  *
@@ -384,8 +384,8 @@ const requestCorrection1 = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/performance-records/rebuild
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `POST /api/admin/performance-records/rebuild`
  *
@@ -494,8 +494,8 @@ const bulkExcludeRecords = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/performance-closings/reopen
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `POST /api/admin/performance-closings/reopen`
  *
@@ -550,8 +550,8 @@ const reopenMonth = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/performance-closings/close
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `POST /api/admin/performance-closings/close`
  *
@@ -606,8 +606,8 @@ const closeMonth = (
 /**
  * ### 이 API가 하는 일
  * - 실적 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `GET /api/admin/performance-records/{performanceRecordId}`
  *
@@ -660,8 +660,8 @@ const getRecord = (
 /**
  * ### 이 API가 하는 일
  * - 실적 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `PATCH /api/admin/performance-records/{performanceRecordId}`
  *
@@ -717,8 +717,8 @@ const updateRecord = (
 /**
  * ### 이 API가 하는 일
  * - 실적 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `PATCH /api/admin/performance-records/{performanceRecordId}/exclude`
  *
@@ -774,8 +774,8 @@ const excludeRecord = (
 /**
  * ### 이 API가 하는 일
  * - 실적 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `PATCH /api/admin/performance-records/{performanceRecordId}/confirm`
  *
@@ -831,8 +831,8 @@ const confirmRecord = (
 /**
  * ### 이 API가 하는 일
  * - 실적 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `PATCH /api/admin/performance-correction-requests/{correctionRequestId}/reject`
  *
@@ -888,8 +888,8 @@ const rejectCorrection1 = (
 /**
  * ### 이 API가 하는 일
  * - 실적 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `PATCH /api/admin/performance-correction-requests/{correctionRequestId}/approve`
  *
@@ -945,20 +945,20 @@ const approveCorrection1 = (
 /**
  * ### 이 API가 하는 일
  * - 실적 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `GET /api/admin/performance/summary`
  *
  * ### 화면/프론트 사용 기준
- * - 요청값 출처: 경로/쿼리 from 필터
- * - 응답 사용 위치: 조회 캐시 / 화면 summary state
+ * - 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType
+ * - 응답 사용 위치: 실적 합계 탭
  * - 프론트 조회 키: `get_performance_summary`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
  * - 스테이징 점검 기준: STAGE103_PERFORMANCE_SUMMARY_SMOKE
- * - 목데이터 대체: Replace localStorage performance summary API 상태/캐시로 대체합니다.
+ * - 목데이터 대체: 목록·엑셀과 동일 공통 솔팅 필터 적용.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
@@ -1000,8 +1000,8 @@ const getPerformanceSummary = (
 /**
  * ### 이 API가 하는 일
  * - 실적 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `GET /api/admin/performance/records/{performanceRecordId}/master-snapshots`
  *
@@ -1054,20 +1054,20 @@ const listSnapshotLinks = (
 /**
  * ### 이 API가 하는 일
  * - 실적 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `GET /api/admin/performance-records`
  *
  * ### 화면/프론트 사용 기준
- * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
- * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
+ * - 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType/page/size
+ * - 응답 사용 위치: 실적 데이터 목록
  * - 프론트 조회 키: `get_admin_performance-records`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
  * - 스테이징 점검 기준: REQUIRED
- * - 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.
+ * - 목데이터 대체: 공통 솔팅=export와 동일 PerformanceRecordsQueryFilter. 응답은 배열(totalElements 미포함).
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
@@ -1109,8 +1109,8 @@ const listRecords = (
 /**
  * ### 이 API가 하는 일
  * - 실적 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `GET /api/admin/performance-records/{performanceRecordId}/revisions`
  *
@@ -1163,8 +1163,8 @@ const listRevisions = (
 /**
  * ### 이 API가 하는 일
  * - 실적 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `GET /api/admin/performance-records/{performanceRecordId}/revisions/{revisionId}`
  *
@@ -1218,8 +1218,8 @@ const getRevisionDetail = (
 /**
  * ### 이 API가 하는 일
  * - 실적 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `GET /api/admin/performance-records/export`
  *
@@ -1273,8 +1273,8 @@ const exportRecords = (
 /**
  * ### 이 API가 하는 일
  * - 실적 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `GET /api/admin/performance-correction-requests`
  *
@@ -1328,8 +1328,8 @@ const listCorrectionRequests1 = (
 /**
  * ### 이 API가 하는 일
  * - 실적 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 실적 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)
  * - 프론트 담당 영역: 실적 (`performance`)
  * - 호출 방식: `GET /api/admin/performance-correction-requests/{correctionRequestId}/diff`
  *

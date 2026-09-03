@@ -11,6 +11,7 @@ import { getDataManagementApiErrorMessage } from '@/features/data-management/api
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import { hasDuplicateBusinessAreaName } from '@/features/textbook/lib/business-area-domain'
 import type { TextbookBusinessAreaRow } from '@/features/textbook/model/business-area.types'
+import { getApiErrorCode, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 
 export type UseBusinessAreaManagementModalParams = {
   open: boolean
@@ -49,13 +50,21 @@ export type UseBusinessAreaManagementModalResult = {
   applySettings: () => void
 }
 
+const TEXTBOOK_BUSINESS_AREA_NAME_ALREADY_EXISTS = 'TEXTBOOK_BUSINESS_AREA_NAME_ALREADY_EXISTS'
+const TEXTBOOK_BUSINESS_AREA_IN_USE = 'TEXTBOOK_BUSINESS_AREA_IN_USE'
+
 function isConflictError(error: unknown): boolean {
-  return Boolean(
-    error &&
-      typeof error === 'object' &&
-      'response' in error &&
-      (error as { response?: { status?: number } }).response?.status === 409
-  )
+  return getApiErrorHttpStatus(error) === 409
+}
+
+function isBusinessAreaDuplicateError(error: unknown): boolean {
+  const code = getApiErrorCode(error)
+  return code === TEXTBOOK_BUSINESS_AREA_NAME_ALREADY_EXISTS || (isConflictError(error) && code !== TEXTBOOK_BUSINESS_AREA_IN_USE)
+}
+
+function isBusinessAreaInUseError(error: unknown): boolean {
+  const code = getApiErrorCode(error)
+  return code === TEXTBOOK_BUSINESS_AREA_IN_USE || (isConflictError(error) && code !== TEXTBOOK_BUSINESS_AREA_NAME_ALREADY_EXISTS)
 }
 
 export function useBusinessAreaManagementModal({
@@ -173,7 +182,7 @@ export function useBusinessAreaManagementModal({
       await invalidateTextbookLists()
       onSaved?.()
     } catch (error) {
-      if (isConflictError(error)) {
+      if (isBusinessAreaDuplicateError(error)) {
         setDuplicateAlertOpen(true)
         return
       }
@@ -201,7 +210,7 @@ export function useBusinessAreaManagementModal({
         if (editingId === row.id) cancelEdit()
         onSaved?.()
       } catch (error) {
-        if (isConflictError(error)) {
+        if (isBusinessAreaInUseError(error)) {
           setDeleteBlockedOpen(true)
           return
         }
@@ -238,7 +247,7 @@ export function useBusinessAreaManagementModal({
       setComposeOpen(false)
       onSaved?.()
     } catch (error) {
-      if (isConflictError(error)) {
+      if (isBusinessAreaDuplicateError(error)) {
         setDuplicateAlertOpen(true)
         return
       }

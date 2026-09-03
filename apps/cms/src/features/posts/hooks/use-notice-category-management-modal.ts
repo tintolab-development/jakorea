@@ -13,6 +13,22 @@ import {
 } from '@/features/posts/model/notice-category-domain'
 import type { NoticeCategoryRemoteActions } from '@/features/posts/hooks/use-admin-notice-categories'
 import type { NoticeCategoryRow } from '@/features/posts/model/admin-notice-management.types'
+import { getApiErrorCode, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
+
+const NOTICE_CATEGORY_IN_USE = 'NOTICE_CATEGORY_IN_USE'
+const NOTICE_CATEGORY_NAME_ALREADY_EXISTS = 'NOTICE_CATEGORY_NAME_ALREADY_EXISTS'
+
+function isConflictStatus(error: unknown): boolean {
+  return getApiErrorHttpStatus(error) === 409
+}
+
+function isNoticeCategoryInUseError(error: unknown): boolean {
+  return getApiErrorCode(error) === NOTICE_CATEGORY_IN_USE || isConflictStatus(error)
+}
+
+function isNoticeCategoryDuplicateError(error: unknown): boolean {
+  return getApiErrorCode(error) === NOTICE_CATEGORY_NAME_ALREADY_EXISTS || isConflictStatus(error)
+}
 
 export type UseNoticeCategoryManagementModalParams = {
   open: boolean
@@ -35,9 +51,13 @@ export type UseNoticeCategoryManagementModalResult = {
   setNewDraft: (v: string) => void
   composeOpen: boolean
   deleteBlockedOpen: boolean
+  duplicateAlertOpen: boolean
   deleteConfirmOpen: boolean
+  settingsCompleteOpen: boolean
   pendingDeleteRow: NoticeCategoryRow | null
   closeDeleteBlocked: () => void
+  closeDuplicateAlert: () => void
+  closeSettingsComplete: () => void
   handleClose: () => void
   startEdit: (row: NoticeCategoryRow) => void
   cancelEdit: () => void
@@ -48,6 +68,7 @@ export type UseNoticeCategoryManagementModalResult = {
   cancelNew: () => void
   submitNew: () => void
   openCompose: () => void
+  applySettings: () => void
 }
 
 export function useNoticeCategoryManagementModal({
@@ -63,7 +84,9 @@ export function useNoticeCategoryManagementModal({
   const [newDraft, setNewDraft] = useState('')
   const [composeOpen, setComposeOpen] = useState(false)
   const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
+  const [duplicateAlertOpen, setDuplicateAlertOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [settingsCompleteOpen, setSettingsCompleteOpen] = useState(false)
   const [pendingDeleteRow, setPendingDeleteRow] = useState<NoticeCategoryRow | null>(null)
   const newInputRef = useRef<InputRef>(null)
   const editInputRef = useRef<InputRef>(null)
@@ -74,6 +97,7 @@ export function useNoticeCategoryManagementModal({
     setNewDraft('')
     setComposeOpen(false)
     setDeleteBlockedOpen(false)
+    setDuplicateAlertOpen(false)
     setDeleteConfirmOpen(false)
     setPendingDeleteRow(null)
   }, [])
@@ -111,11 +135,18 @@ export function useNoticeCategoryManagementModal({
       return
     }
     if (hasDuplicateCategoryName(categories, trimmed, editingId)) {
+      setDuplicateAlertOpen(true)
       return
     }
     if (remoteActions) {
-      await remoteActions.onUpdate(editingId, trimmed)
-      cancelEdit()
+      try {
+        await remoteActions.onUpdate(editingId, trimmed)
+        cancelEdit()
+      } catch (error) {
+        if (isNoticeCategoryDuplicateError(error)) {
+          setDuplicateAlertOpen(true)
+        }
+      }
       return
     }
     onCategoriesChange(
@@ -153,9 +184,17 @@ export function useNoticeCategoryManagementModal({
   const confirmDeleteCategory = useCallback(async () => {
     if (pendingDeleteRow == null) return
     if (remoteActions) {
-      await remoteActions.onDelete(pendingDeleteRow.id)
-      setDeleteConfirmOpen(false)
-      setPendingDeleteRow(null)
+      try {
+        await remoteActions.onDelete(pendingDeleteRow.id)
+        setDeleteConfirmOpen(false)
+        setPendingDeleteRow(null)
+      } catch (error) {
+        if (isNoticeCategoryInUseError(error)) {
+          setDeleteConfirmOpen(false)
+          setPendingDeleteRow(null)
+          setDeleteBlockedOpen(true)
+        }
+      }
       return
     }
     removeCategory(pendingDeleteRow.id)
@@ -174,12 +213,19 @@ export function useNoticeCategoryManagementModal({
       return
     }
     if (hasDuplicateCategoryName(categories, trimmed)) {
+      setDuplicateAlertOpen(true)
       return
     }
     if (remoteActions) {
-      await remoteActions.onCreate(trimmed)
-      setNewDraft('')
-      setComposeOpen(false)
+      try {
+        await remoteActions.onCreate(trimmed)
+        setNewDraft('')
+        setComposeOpen(false)
+      } catch (error) {
+        if (isNoticeCategoryDuplicateError(error)) {
+          setDuplicateAlertOpen(true)
+        }
+      }
       return
     }
     const id = createNoticeCategoryId()
@@ -198,6 +244,20 @@ export function useNoticeCategoryManagementModal({
     setDeleteBlockedOpen(false)
   }, [])
 
+  const closeDuplicateAlert = useCallback(() => {
+    setDuplicateAlertOpen(false)
+  }, [])
+
+  const applySettings = useCallback(() => {
+    resetEphemeralUi()
+    onClose()
+    setSettingsCompleteOpen(true)
+  }, [onClose, resetEphemeralUi])
+
+  const closeSettingsComplete = useCallback(() => {
+    setSettingsCompleteOpen(false)
+  }, [])
+
   return {
     newInputRef,
     editInputRef,
@@ -208,9 +268,13 @@ export function useNoticeCategoryManagementModal({
     setNewDraft,
     composeOpen,
     deleteBlockedOpen,
+    duplicateAlertOpen,
     deleteConfirmOpen,
+    settingsCompleteOpen,
     pendingDeleteRow,
     closeDeleteBlocked,
+    closeDuplicateAlert,
+    closeSettingsComplete,
     handleClose,
     startEdit,
     cancelEdit,
@@ -221,5 +285,6 @@ export function useNoticeCategoryManagementModal({
     cancelNew,
     submitNew,
     openCompose,
+    applySettings,
   }
 }

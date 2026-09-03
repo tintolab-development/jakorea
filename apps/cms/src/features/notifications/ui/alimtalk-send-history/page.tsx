@@ -19,7 +19,7 @@ import '@/pages/programs/program-list-page.css'
 import './page.css'
 
 const COL_W = {
-  no: 70,
+  no: 80,
   requestAt: 200,
   templateName: 436,
   senderInfo: 280,

@@ -14,6 +14,7 @@ import {
 import { categoryOptions, getProgramListTargetLevelLabel, getProgramListAudienceFilterLabel, resolveProgramListAudienceFilterValue, resolveProgramListParticipantTypeFilterValue } from '../constants/program-list-constants'
 import type { Program, ProgramCategory, TargetLevel } from '@/types/domain'
 import type { ProgramListProgramMode } from '../../model/program-list-program-mode'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 /** ProgramStatusWidget 4탭 기준 목록 뷰 */
 export type ProgramListView = 'ALL' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED'
@@ -35,7 +36,7 @@ function removeInstructorRecruitmentColumn(columns: ColumnsType<Program>): Colum
   return columns.filter(column => column.key !== 'instructorRecruitment')
 }
 
-const WIDTH_NO = 64
+const WIDTH_NO = TABLE_COLUMN_WIDTHS.index
 const WIDTH_PROGRAM_TITLE = 690
 const WIDTH_RECRUITMENT_COUNT = 160
 const WIDTH_TARGET_LEVEL = 160
@@ -112,7 +113,7 @@ function createProgramListAllColumns() {
       key: 'no',
       width: WIDTH_NO,
       align: 'center' as const,
-      className: 'program-list-table__col-no',
+      className: `program-list-table__col-no ${CMS_TABLE_NO_COL_CLASS}`,
       render: (_: unknown, __: Program, index: number) => index + 1,
     },
     {
@@ -174,7 +175,7 @@ function createProgramListScheduledColumns() {
       key: 'no',
       width: WIDTH_NO,
       align: 'center' as const,
-      className: 'program-list-table__col-no',
+      className: `program-list-table__col-no ${CMS_TABLE_NO_COL_CLASS}`,
       render: (_: unknown, __: Program, index: number) => index + 1,
     },
     {
@@ -231,7 +232,7 @@ function createProgramListInProgressColumns() {
       key: 'no',
       width: WIDTH_NO,
       align: 'center' as const,
-      className: 'program-list-table__col-no',
+      className: `program-list-table__col-no ${CMS_TABLE_NO_COL_CLASS}`,
       render: (_: unknown, __: Program, index: number) => index + 1,
     },
     {
@@ -364,8 +365,9 @@ function createGeneralColumns(params: Pick<ResolveEducationColumnsParams, 'progr
     {
       title: 'No.',
       key: 'no',
-      width: 64,
+      width: TABLE_COLUMN_WIDTHS.index,
       align: 'center' as const,
+      className: CMS_TABLE_NO_COL_CLASS,
       render: (_: unknown, __: Program, index: number) => index + 1,
     },
     {

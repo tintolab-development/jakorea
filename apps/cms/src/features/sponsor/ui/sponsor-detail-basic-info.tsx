@@ -25,6 +25,7 @@ import {
   FileSelectField,
 } from '@/shared/ui'
 import { FileDownloadRowIcon } from '@/shared/ui/icons/FileDownloadRowIcon'
+import { downloadFile } from '@/shared/lib/file-download'
 import type { SponsorOrganizationKind } from '@/types/domain'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { formatKoreanBusinessNumber } from '@jakorea/domain/shared/korean-business-number'
@@ -45,9 +46,9 @@ export type BasicInfoEditState = {
   executives: string
   district: string
   detailAddress: string
+  homepageUrl: string
   sponsorshipStartDate?: SponsorManagementRow['sponsorshipStartDate']
   sponsorshipStatus: SponsorManagementRow['sponsorshipStatus']
-  homepageUrl: string
   securityMemo: string
   logos: SponsorLogoFile[]
   pendingLogoFiles: File[]
@@ -80,10 +81,19 @@ function SponsorLogoViewList({ files }: { files: SponsorLogoFile[] }) {
     <ul className="sponsor-detail-basic-info__logos">
       {files.map(file => (
         <li key={file.id} className="sponsor-detail-basic-info__logo-item">
-          <span className="sponsor-detail-basic-info__logo-name">{file.fileName}</span>
-          <span className="sponsor-detail-basic-info__logo-download" aria-hidden>
-            <FileDownloadRowIcon />
-          </span>
+          <button
+            type="button"
+            className="sponsor-detail-basic-info__logo-download-btn"
+            onClick={() => {
+              void downloadFile(file.fileName.trim() || `sponsor-logo-${file.id}`)
+            }}
+            aria-label={`${file.fileName} 다운로드`}
+          >
+            <span className="sponsor-detail-basic-info__logo-name">{file.fileName}</span>
+            <span className="sponsor-detail-basic-info__logo-download" aria-hidden>
+              <FileDownloadRowIcon />
+            </span>
+          </button>
         </li>
       ))}
     </ul>
@@ -221,6 +231,7 @@ export function SponsorBasicInfoSection({
       <DetailInfoForm.Row type="double" className="sponsor-detail-basic-info__status-row">
         <DetailInfoForm.Field
           label="후원 시작일"
+          required
           view={<span>{sponsorshipStartDisplay}</span>}
           edit={
             <CmsDatePicker
@@ -240,6 +251,7 @@ export function SponsorBasicInfoSection({
         />
         <DetailInfoForm.Field
           label="후원 상태"
+          required
           view={sponsorshipStatusFieldContent}
           edit={sponsorshipStatusFieldContent}
         />
@@ -278,7 +290,7 @@ export function SponsorBasicInfoSection({
                 onChange={event =>
                   onChange(prev => ({ ...prev, detailAddress: event.target.value }))
                 }
-                placeholder="상세 주소"
+                placeholder="상세 주소를 입력하세요"
                 inputSize="medium"
                 width="100%"
               />
@@ -304,35 +316,37 @@ export function SponsorBasicInfoSection({
           label="후원사 로고"
           view={<SponsorLogoViewList files={value.logos} />}
           edit={
-            <FileSelectField
-              multiple
-              accept=".jpg,.jpeg,.png"
-              buttonLabel="파일 추가"
-              fileNames={[
-                ...value.logos.map(file => file.fileName),
-                ...value.pendingLogoFiles.map(file => file.name),
-              ]}
-              currentTotalBytes={value.pendingLogoFiles.reduce((sum, file) => sum + file.size, 0)}
-              onFilesChange={files =>
-                onChange(prev => ({
-                  ...prev,
-                  pendingLogoFiles: [...prev.pendingLogoFiles, ...files],
-                }))
-              }
-              onRemoveFile={index =>
-                onChange(prev => {
-                  if (index < prev.logos.length) {
-                    return { ...prev, logos: prev.logos.filter((_, i) => i !== index) }
-                  }
-                  const pendingIndex = index - prev.logos.length
-                  return {
+            <div className="sponsor-detail-basic-info__logo-edit">
+              <FileSelectField
+                multiple
+                accept=".jpg,.jpeg,.png"
+                buttonLabel="파일 추가"
+                fileNames={[
+                  ...value.logos.map(file => file.fileName),
+                  ...value.pendingLogoFiles.map(file => file.name),
+                ]}
+                currentTotalBytes={value.pendingLogoFiles.reduce((sum, file) => sum + file.size, 0)}
+                onFilesChange={files =>
+                  onChange(prev => ({
                     ...prev,
-                    pendingLogoFiles: prev.pendingLogoFiles.filter((_, i) => i !== pendingIndex),
-                  }
-                })
-              }
-              guideLines={LOGO_GUIDE_LINES}
-            />
+                    pendingLogoFiles: [...prev.pendingLogoFiles, ...files],
+                  }))
+                }
+                onRemoveFile={index =>
+                  onChange(prev => {
+                    if (index < prev.logos.length) {
+                      return { ...prev, logos: prev.logos.filter((_, i) => i !== index) }
+                    }
+                    const pendingIndex = index - prev.logos.length
+                    return {
+                      ...prev,
+                      pendingLogoFiles: prev.pendingLogoFiles.filter((_, i) => i !== pendingIndex),
+                    }
+                  })
+                }
+                guideLines={LOGO_GUIDE_LINES}
+              />
+            </div>
           }
         />
       </DetailInfoForm.Row>

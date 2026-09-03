@@ -1,7 +1,113 @@
-.detailed-program-add-item-modal__form {
+/**
+ * 세부 프로그램명 신규 등록 모달
+ * 시안: padding 26 30 34 30 · 타이틀↔본문 30 · 필드 간 30 · 본문↔푸터 30
+ *
+ * ContentModal 구조상 gap은 ant-modal-content에 걸어도
+ * (자식이 ant-modal-body 하나) 타이틀/푸터 간격에 안 먹힘 → margin으로 고정.
+ */
+
+.detailed-program-add-item-modal-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.detailed-program-add-item-modal-wrap::before {
+  display: none !important;
+  content: none !important;
+}
+
+.detailed-program-add-item-modal-wrap .ant-modal.detailed-program-add-item-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+  width: min(600px, calc(100vw - 32px)) !important;
+  max-width: min(600px, calc(100vw - 32px)) !important;
+  box-sizing: border-box !important;
+}
+
+.content-modal.detailed-program-add-item-modal.ant-modal .ant-modal-content {
+  display: flex;
+  width: 600px;
+  max-width: 100%;
+  height: auto;
+  padding: 26px 30px 34px 30px !important;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+  max-height: calc(100dvh - 48px);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.content-modal.detailed-program-add-item-modal .ant-modal-body {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  width: 100%;
+  max-width: 100%;
+  align-self: stretch;
+  box-sizing: border-box;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.content-modal.detailed-program-add-item-modal .teal-header-modal__header,
+.content-modal.detailed-program-add-item-modal .teal-header-modal__body,
+.content-modal.detailed-program-add-item-modal .teal-header-modal__footer,
+.content-modal.detailed-program-add-item-modal .content-modal__footer-actions {
+  width: 100%;
+  max-width: 100%;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
+/* 타이틀 ↔ 사용 여부: 30px */
+.content-modal.detailed-program-add-item-modal .teal-header-modal__header {
+  margin-bottom: 0 !important;
+}
+
+.content-modal.detailed-program-add-item-modal .teal-header-modal__body,
+.content-modal.detailed-program-add-item-modal.content-modal--title-body-gap-always
+  .teal-header-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 30px !important;
+  padding-top: 0 !important;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* 인풋 ↔ 버튼: 30px (공통 content-modal footer margin 유지·강화) */
+.content-modal.detailed-program-add-item-modal .teal-header-modal__footer {
+  width: 100%;
+  margin-top: 30px !important;
+  padding: 0 !important;
+  border-top: none !important;
+  background: transparent;
+}
+
+.detailed-program-add-item-modal__form {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 30px;
 }
 
 .detailed-program-add-item-modal__label {

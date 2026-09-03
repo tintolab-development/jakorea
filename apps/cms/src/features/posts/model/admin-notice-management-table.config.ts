@@ -18,8 +18,8 @@ import {
 const adminNoticeUrlDateRangeSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
 
 function parseVisibility(raw: string | null): AdminNoticePendingFilters['visibility'] {
-  if (raw === 'public' || raw === 'private') return raw
-  return 'ALL'
+  if (raw === 'private') return 'private'
+  return 'public'
 }
 
 function parseCategory(
@@ -30,38 +30,13 @@ function parseCategory(
   return 'ALL'
 }
 
-function filterRows(
-  data: Notice[],
-  searchParams: URLSearchParams,
-  context: AdminNoticeTableContext
-): Notice[] {
-  const title = (searchParams.get('an_q') ?? '').trim().toLowerCase()
-  const author = (searchParams.get('an_auth') ?? '').trim().toLowerCase()
-  const vis = parseVisibility(searchParams.get('an_vis'))
-  const cat = parseCategory(searchParams.get('an_cat'), context.allowedCategoryLabels)
-  const from = searchParams.get('an_from')
-  const to = searchParams.get('an_to')
-
-  return data
-    .filter(row => {
-      if (title && !row.title.toLowerCase().includes(title)) return false
-      if (author && !row.author.toLowerCase().includes(author)) return false
-      if (vis === 'public' && row.status !== 'published') return false
-      if (vis === 'private' && row.status === 'published') return false
-      if (cat !== 'ALL' && row.category !== cat) return false
-      if (from && to) {
-        const d = dayjs(row.createdAt)
-        const start = dayjs(from).startOf('day')
-        const end = dayjs(to).endOf('day')
-        if (d.isBefore(start) || d.isAfter(end)) return false
-      }
-      return true
-    })
-    .sort((a, b) => {
-      const pin = Number(b.isImportant) - Number(a.isImportant)
-      if (pin !== 0) return pin
-      return dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()
-    })
+/** 서버 필터 결과를 신뢰하고 고정·작성일시 정렬만 맞춘다. */
+function sortRows(data: Notice[]): Notice[] {
+  return [...data].sort((a, b) => {
+    const pin = Number(b.isImportant) - Number(a.isImportant)
+    if (pin !== 0) return pin
+    return dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()
+  })
 }
 
 const tanstackColumns: ColumnDef<Notice>[] = [{ accessorKey: 'id', id: 'id' }]
@@ -85,7 +60,7 @@ const searchSyncRules: readonly TableSearchParamRule<AdminNoticePendingFilters>[
     kind: 'param',
     filterKey: 'visibility',
     paramKey: 'an_vis',
-    condition: f => f.visibility !== 'ALL',
+    condition: () => true,
     transform: v => String(v),
   },
   {
@@ -124,7 +99,7 @@ export const adminNoticeManagementTablePageConfig: TablePageConfig<
     initialPending: {
       title: '',
       author: '',
-      visibility: 'ALL',
+      visibility: 'public',
       category: 'ALL',
       dateRange: null,
     },
@@ -168,7 +143,7 @@ export const adminNoticeManagementTablePageConfig: TablePageConfig<
     hasActiveFilters: ({ context, searchParams }) => {
       if ((searchParams.get('an_q') ?? '').trim()) return true
       if ((searchParams.get('an_auth') ?? '').trim()) return true
-      if (parseVisibility(searchParams.get('an_vis')) !== 'ALL') return true
+      if (parseVisibility(searchParams.get('an_vis')) !== 'public') return true
       if (parseCategory(searchParams.get('an_cat'), context.allowedCategoryLabels) !== 'ALL')
         return true
       if (searchParams.get('an_from') && searchParams.get('an_to')) return true
@@ -179,10 +154,7 @@ export const adminNoticeManagementTablePageConfig: TablePageConfig<
 
     onFilterChange: ({ prev, key, value }) => {
       if (key === 'visibility') {
-        const v =
-          value == null || value === ''
-            ? 'ALL'
-            : (value as AdminNoticePendingFilters['visibility'])
+        const v = value === 'private' ? 'private' : 'public'
         return { ...prev, visibility: v }
       }
       if (key === 'category') {
@@ -202,9 +174,9 @@ export const adminNoticeManagementTablePageConfig: TablePageConfig<
     },
   },
 
-  filterFn: ({ context, data, searchParams }) => {
-    const filtered = filterRows(data, searchParams, context)
-    return { dataForTable: filtered, filteredData: filtered }
+  filterFn: ({ data }) => {
+    const sorted = sortRows(data)
+    return { dataForTable: sorted, filteredData: sorted }
   },
 
   getSearchSync: (_context: AdminNoticeTableContext) => ({

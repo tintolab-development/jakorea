@@ -147,9 +147,13 @@
 /* No. 열 — 80px */
 .admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-no,
 .admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-no {
-  width: 80px;
-  min-width: 80px;
-  max-width: 80px;
+  width: var(--table-no-column-width, 80px);
+  min-width: var(--table-no-column-width, 80px);
+  max-width: var(--table-no-column-width, 80px);
+  height: 54px;
+  flex-shrink: 0;
+  align-self: stretch;
+  vertical-align: middle;
 }
 
 /* 답변 대기·답변 완료 공통 타이포 */

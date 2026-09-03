@@ -7,7 +7,7 @@ import {
 } from './types'
 
 const COL = {
-  no: 64,
+  no: 80,
   institution: 180,
   status: 140,
   confirmedSchedule: 450,

@@ -64,7 +64,8 @@ export function createEducationRecordFilterFields({
   availableYears,
 }: CreateEducationRecordFilterFieldsArgs): FilterFieldConfig[] {
   const yearOptions: Array<{ label: string; value: string | number }> = availableYears.map(y => ({
-    label: `${y}년`,
+    // 시안: 년도 셀렉트에 `2025` 형태로 노출 (`2025년` 아님)
+    label: String(y),
     value: String(y),
   }))
 

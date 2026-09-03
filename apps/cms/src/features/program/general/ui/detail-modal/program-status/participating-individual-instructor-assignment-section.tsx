@@ -142,7 +142,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   const assignedColumns: ColumnsType<ParticipatingIndividualInstructorAssignedScheduleRow> =
     useMemo(
       () => [
-        { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+        { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
         {
           title: '역할',
           dataIndex: 'role',
@@ -205,7 +205,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   const waitingColumns: ColumnsType<ParticipatingIndividualInstructorWaitingScheduleRow> =
     useMemo(
       () => [
-        { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+        { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
         {
           title: '출강지',
           dataIndex: 'lectureLocation',

@@ -11,13 +11,15 @@ import {
   categoryOptions,
 } from './program-list-constants'
 import { ProgramLifecycleStatusTableCell } from '@/shared/components/program-lifecycle-status-table-cell'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 export const studentRecruitmentTableColumns = [
   {
     title: 'No.',
     key: 'no',
-    width: 64,
+    width: TABLE_COLUMN_WIDTHS.index,
     align: 'center' as const,
+    className: CMS_TABLE_NO_COL_CLASS,
     render: (_: unknown, __: Program, index: number) => index + 1,
   },
   {
@@ -129,8 +131,9 @@ export const instructorRecruitmentTableColumns = [
   {
     title: 'No.',
     key: 'no',
-    width: 64,
+    width: TABLE_COLUMN_WIDTHS.index,
     align: 'center' as const,
+    className: CMS_TABLE_NO_COL_CLASS,
     render: (_: unknown, __: Program, index: number) => index + 1,
   },
   {

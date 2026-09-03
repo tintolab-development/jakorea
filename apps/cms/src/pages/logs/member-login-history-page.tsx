@@ -28,7 +28,7 @@ import '@/features/program/general/ui/program-list.css'
 const MEMBER_LOGIN_HISTORY_TABLE_SCROLL_X = 1120
 
 const TABLE_COL_WIDTH = {
-  no: 88,
+  no: 80,
   adminName: 160,
   loginId: 320,
   loggedAt: 220,

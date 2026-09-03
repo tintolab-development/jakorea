@@ -96,7 +96,7 @@ describe('buildTableExportMatrix', () => {
   })
 
   it('exports badge labels from StatusDropdownCell-style renderBadge', () => {
-    function StatusBadge({ status }: { status: 'active' | 'ended' }) {
+    function StatusBadge({ status }: { status: SponsorshipStatusRow['sponsorshipStatus'] }) {
       return createElement('span', {
         label: status === 'active' ? '후원 중' : '후원 종료',
       })
@@ -109,7 +109,8 @@ describe('buildTableExportMatrix', () => {
         render: (_value, row) =>
           createElement('div', {
             status: row.sponsorshipStatus,
-            renderBadge: (s: 'active' | 'ended') => createElement(StatusBadge, { status: s }),
+            renderBadge: (s: SponsorshipStatusRow['sponsorshipStatus']) =>
+              createElement(StatusBadge, { status: s }),
           }),
       },
     ]
