@@ -194,7 +194,7 @@ LNB 3화면은 **mock fallback 없음**.
 | `sponsor-programs` | 프로그램 진행 이력 |
 | `sponsor-contacts` | 후원사 담당자 정보 (필터·CRUD) |
 
-담당자 필드: 부서·직함·유형·담당자명·내선·연락처·이메일·회사 주소·비고·등록일시 (`department`, `position`, `officePhone`, `phone`/`mobilePhone`, `email`, `companyAddress`, `memo`).
+담당자 컬럼 순서: No. → 담당자 유형 → 부서 → 직함 → 담당자명 → 내선번호 → 연락처 → 이메일 → 회사 주소 → 비고 → 등록일시 (`department`, `position`, `officePhone`, `phone`/`mobilePhone`, `email`, `companyAddress`, `memo`, `registeredAt`).
 
 ### 프로그램 진행 이력 필터
 
@@ -221,7 +221,7 @@ LNB 3화면은 **mock fallback 없음**.
 | `sponsor-programs` | 프로그램 진행 이력 |
 | `sponsor-contacts` | 후원사 담당자 정보 (필터·CRUD) |
 
-담당자 필드: 부서·직함·유형·담당자명·내선·연락처·이메일·회사 주소·비고·등록일시 (`department`, `position`, `officePhone`, `phone`/`mobilePhone`, `email`, `companyAddress`, `memo`).
+담당자 컬럼 순서: No. → 담당자 유형 → 부서 → 직함 → 담당자명 → 내선번호 → 연락처 → 이메일 → 회사 주소 → 비고 → 등록일시 (`department`, `position`, `officePhone`, `phone`/`mobilePhone`, `email`, `companyAddress`, `memo`, `registeredAt`).
 
 ### 프로그램 진행 이력 필터
 

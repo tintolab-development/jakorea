@@ -108,6 +108,13 @@ detailed_programs_upsert
 | payload | API/DB 힌트 |
 |---------|-------------|
 | `contacts[].contactType` | `lead` \| `assistant` |
+| `contacts[].department` / `position` | 부서 · 직함 |
+| `contacts[].officePhone` | 내선번호. 숫자만(`1234`) **또는** 하이픈 포함(`010-2222-2222`, `02-1234-5678`). 빈 값은 생략. 한글은 불가 |
+| `contacts[].phone` / `mobilePhone` | 연락처 |
+| `contacts[].email` | 이메일 |
+| `contacts[].companyAddress` | 회사 주소 |
+| `contacts[].memo` | 비고. 빈 값은 `""` |
+| `contacts[].registeredAt` | 등록일시. 없으면 `createdAt` |
 | `yearlyBusinesses[].donationAmount` | number |
 | `programHistories[].participantType` | `school` \| `individual` \| `volunteer` |
 | `programHistories[].lifecycleStatus` | planned / education_in_progress / education_completed |

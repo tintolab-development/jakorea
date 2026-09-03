@@ -2,13 +2,35 @@
 
 | 항목 | 값 |
 |------|-----|
-| 작성일 | 2026-09-03 |
-| 범위 | CMS LNB **데이터 관리 > 후원사** 목록·신규 등록·상세 기본정보·로고 |
+| 작성일 | 2026-09-03 (단독 전달용 통합) |
+| 범위 | CMS LNB **데이터 관리 > 후원사** 목록·신규 등록·상세(기본정보·연도별 후원금·프로그램 이력·담당자)·로고 |
 | OpenAPI | `apps/cms/openapi/data-management.openapi.json` (v9) · 파일 공용 API는 `backend.openapi.json` |
-| 관련 | [data-management-api-backend-gaps.md](./data-management-api-backend-gaps.md) (2026-08-26, **후원사 항목은 본 문서가 SSOT**) · [data-management-api-integration.md](./data-management-api-integration.md) |
+| **전달 단위** | **본 문서만으로 후원사 BE 작업·검수 가능.** 교재/세부 프로그램은 범위 밖. |
+| 동봉(선택) | 시드 샘플 [`sponsors-seed.payload.json`](./sponsors-seed.payload.json) — 담당자 확장 필드 채움 참고 |
 
 FE는 목록·등록·상세를 이미 호출합니다. **신규 엔드포인트보다 기존 계약 수정·값 채움**이 대부분입니다.  
 후원사 전용 로고 업로드 API는 **만들지 않아도 됩니다.** 공용 files API + `logoFileId` 연결이면 됩니다.
+
+> 과거 갭 인덱스: `data-management-api-backend-gaps.md` / FE 연동 메모: `data-management-api-integration.md` — **후원사 요청의 본 문서가 SSOT.** 서버는 그 파일을 열 필요 없음.
+
+---
+
+## 0. 이미 있는 API (변경·값 채움 대상)
+
+| Method | Path | 비고 |
+|--------|------|------|
+| GET/POST | `/api/admin/sponsors` | 목록·등록 |
+| GET/PATCH/DELETE | `/api/admin/sponsors/{sponsorId}` | 상세·수정·단건 삭제 |
+| POST | `/api/admin/sponsors/bulk-delete` | 목록 일괄 삭제 |
+| POST | `/api/admin/sponsors/{sponsorId}/end` | 후원 종료 → `ended` |
+| GET/POST | `/api/admin/sponsors/{sponsorId}/contacts` | 담당자 목록·등록 |
+| PATCH/DELETE | `/api/admin/sponsors/contacts/{contactId}` | 담당자 수정·삭제 |
+| POST | `/api/admin/sponsors/contacts/bulk-delete` | 담당자 일괄 삭제 |
+| GET | `/api/admin/sponsors/{sponsorId}/program-histories` | 프로그램 진행 이력 |
+| GET/POST | `/api/admin/sponsors/{sponsorId}/yearly-businesses` | 연도별 후원금 |
+| PATCH/DELETE | `/api/admin/sponsors/yearly-businesses/{yearlyBusinessId}` | 연도별 수정·삭제 |
+
+**아직 없음 (신규):** `DELETE …/program-histories/{historyId}` (S-7), 선택 bulk-delete, `GET …/sponsors/export` (S-9).
 
 ---
 
@@ -22,9 +44,12 @@ FE는 목록·등록·상세를 이미 호출합니다. **신규 엔드포인트
 | **S-4** | **P1** | `SponsorRequest`에 `logoFileId` + 공용 파일 업로드 owner 합의 | 응답에만 `logoFileId`. 업로드·파일명·다운로드 없음 |
 | **S-5** | **P1** | `SponsorsParams`에 `sponsorshipStartDateFrom` / `To` | FE 전송 + 클라 보조 필터. BE 수용 시 클라 필터 제거 |
 | **S-6** | **P1** | 목록 **Page** (`page`/`size`/`total`) | 지금 전체 배열. 교재·세부 프로그램과 불일치 |
-| **S-7** | **P1** | `DELETE …/program-histories/{historyId}` (+ 선택 bulk) | FE 버튼 있음, remote에서 비활성. 상세는 [gaps P0](./data-management-api-backend-gaps.md) |
-| **S-8** | **P2** | 이력 `participantType` 쿼리 | FE 전송 + 클라 보조 매칭 |
-| **S-9** | **P2** | `GET /api/admin/sponsors/export` | 지금은 클라 테이블 dump |
+| **S-7** | **P0** | `DELETE …/program-histories/{historyId}` (+ 선택 bulk) | FE 버튼 있음, remote에서 비활성. **§7.1** |
+| **S-8** | **P2** | 이력 `participantType` 쿼리 | FE 전송 + 클라 보조 매칭. **§7.2** |
+| **S-9** | **P2** | `GET /api/admin/sponsors/export` | 지금은 클라 테이블 dump. **§7.3** |
+| **S-10** | **P1** | 담당자 목록 확장 필드 **영속·응답 채움** | 스키마는 있음. 비우면 내선·주소·비고·등록일시가 `-` |
+| **S-11** | **P0** | `officePhone` 검증 완화 — 숫자만 **또는** 하이픈 포함 번호 | 지금 `mobilePhone`과 동일 validator. `1234`·`010-2222-2222`가 400일 수 있음 |
+| **S-12** | **P1** | `BulkIdsRequest.ids` 타입 정리 | OpenAPI `number[]`. UUID면 bulk-delete 깨짐. **§7.4** |
 
 **이번 UI 정렬에서 서버가 이미 있는 필드로 처리 가능한 것** (스펙 추가 불필요, **영속·값만 확인**):
 
@@ -188,21 +213,135 @@ GET /api/admin/sponsors?page=0&size=50
 
 ---
 
-## 7. 상세 부가 (기존 갭, 그대로)
+## 7. 프로그램 이력 · export · bulk id (S-7 ~ S-12)
 
-| ID | 내용 |
-|----|------|
-| **S-7** | `DELETE /api/admin/sponsors/{sponsorId}/program-histories/{historyId}` — 이력 행 삭제. 실적(연도별 후원금)은 유지. path `id` 타입을 목록 `id`와 동일하게 |
-| **S-8** | `GET …/program-histories?participantType=school\|individual\|volunteer` |
-| **S-9** | `GET /api/admin/sponsors/export` — 목록과 동일 필터, 감사로그 fail-closed |
+### 7.1 이력 삭제 (S-7) — **신규 API**
 
-연도별 후원금 CRUD는 이미 있습니다. 자동 생성 여부는 [gaps §C.2](./data-management-api-backend-gaps.md) 확인 항목.
+```
+DELETE /api/admin/sponsors/{sponsorId}/program-histories/{historyId}
+```
 
-`BulkIdsRequest.ids`가 `number[]`인데 후원사 id가 UUID면 일괄 삭제가 깨집니다. **string[] 이거나 숫자 id로 고정.**
+| 항목 | 계약 |
+|------|------|
+| Auth | 관리자 JWT |
+| 성공 | `200` (또는 `204`) |
+| 효과 | **해당 이력 행만** 목록에서 제거 |
+| 유지 | 연도별 후원금(`yearly-businesses`)·목록 누적 후원금 **삭제·재계산 강제하지 않음**. Notion: 「실적 값은 삭제되지 않음」= 연도별 후원금 실적 유지 |
+| id 타입 | path `historyId` = 목록 GET 행의 `id`와 **동일 타입·동일 값** |
+
+선택:
+
+```
+POST /api/admin/sponsors/{sponsorId}/program-histories/bulk-delete
+body: { "ids": [ ... ] }   // 목록 id와 동일 타입
+```
+
+FE는 API 오기 전까지 삭제 버튼을 remote에서 비활성한다.
+
+### 7.2 이력 `participantType` 필터 (S-8)
+
+```
+GET /api/admin/sponsors/{sponsorId}/program-histories?participantType=school|individual|volunteer
+```
+
+OpenAPI `ProgramHistoriesParams`에 추가. FE는 이미 전송 + 클라 보조 매칭. 서버 수용 시 클라 필터 제거.
+
+이력 행에 총 수혜자(참여자 수)를 보여 준다. 목록 DTO에 `participantCount`(또는 동등)가 비면 `-`/`0`. **채울 것.**
+
+### 7.3 엑셀 export (S-9)
+
+```
+GET /api/admin/sponsors/export
+```
+
+목록과 **동일 필터 쿼리**. 응답: xlsx 또는 download URL. **감사로그 fail-closed** (실패 시 파일 미제공).  
+지금은 FE가 테이블 dump.
+
+### 7.4 bulk-delete `ids` 타입 (S-12)
+
+`POST /api/admin/sponsors/bulk-delete` · `…/contacts/bulk-delete` body `BulkIdsRequest.ids`가 OpenAPI상 `number[]`.  
+후원사/담당자 id가 UUID 문자열이면 깨진다.
+
+- **`string[]`로 바꾸거나**, 숫자 id로 **고정**하고 OpenAPI·시드에 명시.
+- FE는 파싱 가능한 숫자는 number로 보내고, 아니면 런타임 캐스팅한다.
+
+### 7.5 연도별 후원금 — 확인만 (신규 API 없음)
+
+CRUD는 이미 있음. FE 동작:
+
+- 상세에서 후원 시작연도~올해 빈 연도를 UI에 보여 줌
+- 저장 시 id 없으면 `POST …/yearly-businesses`, 있으면 `PATCH`
+
+**서버에 확인할 것:** 후원 시작일부터 매년 행을 **자동 INSERT**하는지, 아니면 FE POST만인지.  
+자동 생성이면 FE empty-row POST와 중복되지 않게 문서로 적어 주세요.
+
+목록 기본 정렬·건수 상한도 스펙에 한 줄 적어 주세요 (예: 등록일 desc, 상한 없음/Page).
 
 ---
 
-## 8. FE가 이미 보내는 POST/PATCH 예시
+## 8. 담당자 목록 확장 (S-10)
+
+신규 엔드포인트는 필요 없습니다. 화면이 담당자 테이블을 시안 전체 컬럼으로 넓혔습니다. **이미 있는 GET/POST/PATCH가 아래를 저장하고 다시 줘야** 합니다.
+
+| 화면 | Request | Response | 비고 |
+|------|---------|----------|------|
+| 담당자 유형 | `contactType` + `primary` | 동일 | `lead` / `assistant`. `primary=true`는 주 담당자 |
+| 부서 | `department` | 동일 | |
+| 직함 | `position` | 동일 | |
+| 담당자명 | `name` | 동일 | 필수 |
+| 내선번호 | `officePhone` | 동일 | **선택.** 아래 **S-11** — 사내 내선 숫자만 / 전체 전화번호 **모두 허용**. 빈 값은 **키 생략**. 한글 등 비숫자 텍스트만 400 |
+| 연락처 | `mobilePhone` | `phone` 또는 `mobilePhone` | FE는 `mobilePhone`으로 보내고 `phone ?? mobilePhone`으로 읽음 |
+| 이메일 | `email` | 동일 | |
+| 회사 주소 | `companyAddress` | 동일 | |
+| 비고 | `memo` | 동일 | 빈 문자열 허용 |
+| 등록일시 | — (서버 생성) | `registeredAt` 또는 `createdAt` | 비우면 `-`. **항상 채울 것** |
+
+요청:
+
+1. POST/PATCH가 `officePhone` / `companyAddress` / `memo` / `department` / `position` / `email`을 버리지 않을 것.
+2. GET `/api/admin/sponsors/{id}/contacts`와 상세 embed `contacts[]`가 위 필드를 **항상 채울 것**.
+3. `GET …/contacts` 쿼리 `department` / `position` / `name` — OpenAPI에 없음. FE가 보내고 클라에서도 한 번 더 거름. **수용하면 OpenAPI에 추가.**
+4. 인라인 수정은 행마다 기존 `PATCH /api/admin/sponsors/contacts/{contactId}`를 호출합니다. **일괄 PATCH는 만들지 않아도 됩니다.**
+5. 시드 `detailSamples[].contacts`에 위 필드를 채울 것. 시안: [`sponsors-seed.payload.json`](./sponsors-seed.payload.json)
+
+### 8.1 내선번호 `officePhone` 검증 (S-11)
+
+화면 라벨은 **내선번호**입니다. 사내 교환 내선(`1234`)과 회사 대표번호(`02-1234-5678`)를 같이 넣습니다.  
+**`mobilePhone`(연락처) 검증은 바꾸지 마세요.** `officePhone`만 한국 전화번호 validator에서 분리합니다.
+
+지금 스테이징은 `officePhone=내선번호`뿐 아니라 **`1234`도 400**입니다.
+
+```
+code: VALIDATION_FAILED
+field: officePhone
+message: 전화번호 형식이 올바르지 않습니다. 010/070은 4-4자리, 02 및 지역번호는 3~4-4자리 형식으로 입력해 주세요.
+```
+
+요청 — 값이 있으면 아래를 **모두 200·영속**. 빈 값/키 생략은 그대로 허용. **하이픈 유무를 가리지 말 것.**
+
+| 값 | 의미 | 결과 |
+|----|------|------|
+| `1234` | 사내 내선 (숫자만) | **200** |
+| `12` / `12345678` | 짧은·긴 내선 (숫자 2~8자리) | **200** |
+| `1234-5678` | 하이픈 있는 내선 | **200** |
+| `010-2222-2222` | 하이픈 있는 휴대폰 형식 | **200** |
+| `02-1234-5678` | 서울 일반전화 | **200** |
+| `0212345678` | 하이픈 없는 일반전화 | **200** |
+| `031-123-4567` | 지역번호 | **200** |
+| `010-9999-8888` | 휴대폰 형식 | **200** |
+| (키 생략 / `""`) | 미입력 | **200** |
+| `내선번호` | 한글 라벨 | **400** |
+
+규칙 제안:
+
+1. 숫자만 2~11자리 → 그대로 저장. **하이픈·포맷 강제하지 말 것.**
+2. 숫자 + 하이픈 (`010-2222-2222`, `02-1234-5678`, `1234-5678` 등) → 하이픈을 유지한 채 저장. **완성된 한국 전화번호인지 검사하지 말 것.** (`mobilePhone` validator를 `officePhone`에 쓰지 말 것.)
+3. 한글·영문·공백 등 숫자/하이픈이 아닌 문자가 있으면 400.
+4. `mobilePhone`은 기존처럼 한국 전화번호만.
+
+---
+
+## 9. FE가 이미 보내는 POST/PATCH 예시
 
 신규 등록 (`POST /api/admin/sponsors`):
 
@@ -227,23 +366,48 @@ GET /api/admin/sponsors?page=0&size=50
 
 ---
 
-## 9. 요청하지 않는 것
+## 10. 요청하지 않는 것
 
 - 후원사 전용 멀티파트 로고 업로드 API
 - 소재지 시군구 분리 필드 (FE는 주소검색 + 상세주소 한 줄 `address`)
 - 목록 「주 담당자 연락처」 컬럼 (FE 제거 완료)
+- 이력 「참여자 모집 인원」 컬럼 (FE 제거 완료)
 - `description`에 사업자번호/대표/주소를 합쳐 넣는 방식 (폐기)
+- 교재·세부 프로그램 API (본 문서 범위 밖)
 
 ---
 
-## 10. 인수 체크
+## 11. 인수 체크
+
+### 등록·상태·목록
 
 - [ ] `discussing` / `dormant` POST·PATCH·목록 필터 200
+- [ ] 알 수 없는 `sponsorshipStatus`는 400
 - [ ] 등록/상세에서 `homepageUrl` 저장 후 GET에 동일 값
 - [ ] `securityMemo` 저장 후 GET에 동일 값
-- [ ] 목록 `totalDonationAmount` / `totalBeneficiaryCount`가 연도별 합과 같음
+- [ ] 목록 `totalDonationAmount` / `totalBeneficiaryCount`가 §5 합산 규칙과 같음
 - [ ] `sponsorshipStartDateFrom`/`To`가 서버에서 걸러짐
+- [ ] 목록 Page (`page`/`size`/`total`) 또는 상한·정렬 문서화
+
+### 로고
+
 - [ ] 파일 prepare `ownerDomain=SPONSOR` `ownerType=LOGO` 200 → confirm → PATCH `logoFileId` → 상세에 파일명
 - [ ] 신규 등록: create → upload → PATCH 로고 연결
-- [ ] 알 수 없는 `sponsorshipStatus`는 400
+
+### 담당자 (S-10, S-11)
+
+- [ ] 담당자 POST/PATCH 후 GET에 `officePhone`·`companyAddress`·`memo`·`registeredAt`이 동일
+- [ ] `officePhone=02-1234-5678` 이 400이 아님
+- [ ] `officePhone=1234` / `010-2222-2222` / `1234-5678` POST/PATCH 200 후 GET에 입력값 유지 (하이픈 유지)
+- [ ] `officePhone` 생략(빈 내선) POST 200. `officePhone=내선번호` 는 400
+- [ ] `GET …/contacts?department=` / `position=` / `name=` 가 서버에서 걸러지거나, 미지원이면 전체 목록 200(클라 보조 필터)
+
+### 이력·bulk·OpenAPI
+
+- [ ] `DELETE …/program-histories/{historyId}` 200 후 목록에서 행 제거, yearly-businesses 유지
+- [ ] (선택) program-histories bulk-delete
+- [ ] `participantType` 쿼리 동작 또는 OpenAPI에 미지원 명시
+- [ ] 이력 행 `participantCount`(총 수혜자) 채움
+- [ ] bulk-delete `ids` 타입이 UUID/숫자와 일치
 - [ ] OpenAPI 반영 후 CMS `data-management` Orval 재생성
+- [ ] (권장) 시드 contacts에 officePhone·companyAddress·memo·registeredAt 채움 — `sponsors-seed.payload.json` 참고
