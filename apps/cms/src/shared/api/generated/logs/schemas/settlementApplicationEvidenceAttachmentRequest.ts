@@ -6,12 +6,7 @@
  * OpenAPI spec version: v9
  */
 
-export interface SettlementFrontendAttachmentResponse {
-  id?: string;
-  fileName?: string;
-  fileSize?: number;
+export interface SettlementApplicationEvidenceAttachmentRequest {
   itemType?: string;
-  applicationItemId?: number;
-  fileObjectId?: number;
-  contentType?: string;
+  fileObjectIds?: number[];
 }

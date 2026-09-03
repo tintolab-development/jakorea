@@ -20,15 +20,15 @@ accessPurpose?: string;
  */
 accessorName?: string;
 /**
- * 개인정보 조회 대상자명 부분 검색
+ * 조회 대상(개인정보 열람 대상자명) 부분 검색 — 기능정의서 필터에는 없으나 API 지원
  */
 targetName?: string;
 /**
- * 조회 시작일 YYYY-MM-DD 또는 ISO-8601
+ * 조회 일시 시작일 YYYY-MM-DD 또는 ISO-8601
  */
 from?: string;
 /**
- * 조회 종료일 YYYY-MM-DD 또는 ISO-8601
+ * 조회 일시 종료일 YYYY-MM-DD 또는 ISO-8601
  */
 to?: string;
 /**
