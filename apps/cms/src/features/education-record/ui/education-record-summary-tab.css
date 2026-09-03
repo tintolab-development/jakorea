@@ -13,8 +13,7 @@
   flex-direction: column;
   align-items: stretch;
   gap: 32px;
-  /* 탭 nav 와의 간격 32px (인접 마진 collapse 로 nav 의 margin-bottom 16 와 병합 → 32 로 유지) */
-  margin-top: 32px;
+  margin-top: 0;
   box-sizing: border-box;
 }
 

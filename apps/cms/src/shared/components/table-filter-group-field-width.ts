@@ -23,8 +23,17 @@ export const FILTER_CONTROL_MAX_WIDTH_PX = 240
 export const FILTER_CONTROL_WIDE_FIELD_WIDTH_PX =
   FILTER_CONTROL_MAX_WIDTH_PX * 2 + 20
 
+export function isCompactSelectPairField(field: FilterFieldConfig): boolean {
+  return field.type === 'selectPair' && field.selectPair?.compact === true
+}
+
+/** 시/도·시/군/구와 같은 콤팩트 50:50 이중 셀렉트 열 */
+export function isAddressRegionLayoutField(field: FilterFieldConfig): boolean {
+  return field.type === 'addressRegion' || isCompactSelectPairField(field)
+}
+
 export function resolveFilterFieldPairGapPx(field: FilterFieldConfig): number {
-  if (field.type === 'addressRegion') return FILTER_ADDRESS_REGION_PAIR_GAP_PX
+  if (isAddressRegionLayoutField(field)) return FILTER_ADDRESS_REGION_PAIR_GAP_PX
   if (field.type === 'selectPair') return FILTER_FIELD_PAIR_GAP_PX
   return FILTER_FIELD_PAIR_GAP_PX
 }
@@ -37,7 +46,7 @@ export function resolveFilterFieldWidthCss(field: FilterFieldConfig): string | u
 }
 
 export function resolveFilterFieldPairSegmentWidthCss(field: FilterFieldConfig): string | undefined {
-  if (field.type === 'addressRegion') {
+  if (isAddressRegionLayoutField(field)) {
     if (typeof field.width === 'number') {
       const gap = FILTER_ADDRESS_REGION_PAIR_GAP_PX
       return `${Math.max(0, (field.width - gap) / 2)}px`
@@ -103,7 +112,7 @@ export function filterFieldGridCellClassName(field: FilterFieldConfig): string {
   if (field.type === 'dateRange') {
     parts.push('table-filter-group__grid-cell--date-range')
   }
-  if (field.type === 'addressRegion') {
+  if (isAddressRegionLayoutField(field)) {
     parts.push('table-filter-group__grid-cell--address-region-field')
     parts.push('table-filter-group__grid-cell--address-region')
   }

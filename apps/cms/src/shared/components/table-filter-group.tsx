@@ -19,6 +19,8 @@ import {
   isFilterFieldPctWidth,
   filterFieldGridCellClassName,
   isFilterFieldPairType,
+  isAddressRegionLayoutField,
+  isCompactSelectPairField,
 } from './table-filter-group-field-width'
 import './table-filter-group.css'
 
@@ -62,6 +64,11 @@ export type SelectPairFilterSubConfig = {
   getSecondaryOptions?: (
     primaryValue: string | number | undefined | null
   ) => Array<{ label: string; value: string | number }>
+  /**
+   * 기관 소재지(`addressRegion`)와 동일 — 열 235.5px, 하위 셀렉트 50:50(각 114.75px), gap 6px.
+   * 실적 관리 년도/분기 등.
+   */
+  compact?: boolean
 }
 
 export interface FilterFieldConfig {
@@ -284,7 +291,7 @@ export function TableFilterGroup({
     if (field.type === 'dateRange') {
       parts.push('table-filter-group__col--date-range')
     }
-    if (field.type === 'addressRegion') {
+    if (isAddressRegionLayoutField(field)) {
       parts.push('table-filter-group__col--address-region-field')
       parts.push('table-filter-group__col--address-region')
     }
@@ -394,10 +401,25 @@ export function TableFilterGroup({
       const secondaryOptions = sp.getSecondaryOptions
         ? sp.getSecondaryOptions(primaryRaw as string | number | undefined | null)
         : sp.secondary.options
+      const compact = isCompactSelectPairField(field)
       return (
-        <div className="table-filter-group__field table-filter-group__field--select">
+        <div
+          className={[
+            'table-filter-group__field',
+            'table-filter-group__field--select',
+            compact ? 'table-filter-group__field--address-region' : undefined,
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
           <span className="table-filter-group__label">{field.label}</span>
-          <div className="table-filter-group__select-pair-selects">
+          <div
+            className={
+              compact
+                ? 'table-filter-group__address-region-selects'
+                : 'table-filter-group__select-pair-selects'
+            }
+          >
             <CmsSelect
               inputSize="large"
               placeholder={sp.primary.placeholder ?? '선택'}
@@ -585,7 +607,15 @@ export function TableFilterGroup({
       return (
         <Col
           key={field.key}
-          flex={colFlex(field, `0 0 ${FILTER_FIELD_PAIR_MIN_WIDTH_CSS}`, rowFieldCount)}
+          flex={colFlex(
+            field,
+            `0 0 ${
+              isCompactSelectPairField(field)
+                ? FILTER_FIELD_ADDRESS_REGION_PAIR_MIN_WIDTH_CSS
+                : FILTER_FIELD_PAIR_MIN_WIDTH_CSS
+            }`,
+            rowFieldCount
+          )}
           className={colClassName(field)}
           style={colInlineStyle(field)}
           {...colDataAttrs}
