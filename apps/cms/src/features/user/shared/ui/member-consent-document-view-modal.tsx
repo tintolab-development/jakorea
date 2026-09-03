@@ -365,8 +365,15 @@ function MemberConsentAgreementDocumentView({
       previewLayout="a4-document"
       a4RenderMode={agreementConfig?.a4RenderMode ?? 'contentOnly'}
       a4HiddenParagraphIds={agreementConfig?.a4HiddenParagraphIds}
+      a4PageBreakBeforeParagraphIds={agreementConfig?.a4PageBreakBeforeParagraphIds}
       a4ParagraphGapPx={agreementConfig?.a4ParagraphGapPx}
       paragraphBodyOptions={paragraphBodyOptions}
+      agreementClosingFooter={
+        agreementConfig?.agreementClosingFooter ?? {
+          showSubmitButton: false,
+          showRecipient: false,
+        }
+      }
       hideParagraphRequiredChrome
     />
   )
