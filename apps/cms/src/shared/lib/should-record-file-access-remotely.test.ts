@@ -1,14 +1,38 @@
-// @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import { shouldRecordFileAccessRemotely } from '@/shared/lib/should-record-file-access-remotely'
 
+vi.mock('@/shared/config/real-api-modules', () => ({
+  isRealApiModuleEnabled: vi.fn(() => false),
+}))
+
 describe('shouldRecordFileAccessRemotely', () => {
+  const getItem = vi.fn<(key: string) => string | null>(() => null)
+
   beforeEach(() => {
-    localStorage.clear()
+    getItem.mockReturnValue(null)
+    vi.mocked(isRealApiModuleEnabled).mockReturnValue(false)
+    vi.stubGlobal('window', { localStorage: { getItem } })
   })
 
-  it('BE client API 배포 전에는 항상 false (405 방지)', () => {
-    localStorage.setItem('auth_token', 'aaa.bbb.ccc')
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('logs 모듈이 꺼져 있으면 false', () => {
+    getItem.mockReturnValue('aaa.bbb.ccc')
     expect(shouldRecordFileAccessRemotely()).toBe(false)
+  })
+
+  it('mock JWT면 false', () => {
+    vi.mocked(isRealApiModuleEnabled).mockImplementation(module => module === 'logs')
+    getItem.mockReturnValue('mock-jwt-token-admin')
+    expect(shouldRecordFileAccessRemotely()).toBe(false)
+  })
+
+  it('logs 실 API + 관리자 JWT이면 true', () => {
+    vi.mocked(isRealApiModuleEnabled).mockImplementation(module => module === 'logs')
+    getItem.mockReturnValue('aaa.bbb.ccc')
+    expect(shouldRecordFileAccessRemotely()).toBe(true)
   })
 })

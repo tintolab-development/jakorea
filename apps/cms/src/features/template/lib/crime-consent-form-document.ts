@@ -10,5 +10,5 @@ export async function downloadCrimeConsentFormDocument(): Promise<void> {
   const res = await fetch(crimeConsentFormDocumentUrl)
   if (!res.ok) throw new Error('fetch failed')
   const blob = await res.blob()
-  downloadBlob(blob, CRIME_CONSENT_FORM_DOWNLOAD_FILENAME)
+  await downloadBlob(blob, CRIME_CONSENT_FORM_DOWNLOAD_FILENAME)
 }
