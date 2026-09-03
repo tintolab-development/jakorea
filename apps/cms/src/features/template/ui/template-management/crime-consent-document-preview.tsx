@@ -94,7 +94,8 @@ export function CrimeConsentDocumentPreview({
   alt: string
 }) {
   const isPdf =
-    (file != null && (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'))) ||
+    (file != null &&
+      (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'))) ||
     isCrimeConsentPdfPreviewSrc(src, fileName ?? file?.name, mimeType ?? file?.type)
 
   if (isPdf) {
