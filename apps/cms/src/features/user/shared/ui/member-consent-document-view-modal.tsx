@@ -16,6 +16,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
 import { TemplatePreviewModal } from '@/features/template/ui/modal/template-preview-modal'
+import { CrimeConsentDocumentPreview } from '@/features/template/ui/template-management/crime-consent-document-preview'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
 import { useConsentFilledDocumentMutation } from '@/features/user/api/hooks/use-consent-filled-document-mutation'
 import { fetchConsentEvidenceBlobRemote } from '@/features/user/api/members-api-client'
@@ -106,6 +107,7 @@ function MemberConsentCrimeDocumentView({
   isSyntheticPreview,
   filled,
   evidenceObjectUrl,
+  evidenceMimeType,
   isLoading,
   loadFailed,
   onClose,
@@ -116,6 +118,7 @@ function MemberConsentCrimeDocumentView({
   isSyntheticPreview: boolean
   filled: FilledDocumentResponse | null
   evidenceObjectUrl: string | null
+  evidenceMimeType: string | null
   isLoading: boolean
   loadFailed: boolean
   onClose: () => void
@@ -216,12 +219,11 @@ function MemberConsentCrimeDocumentView({
             <p className="member-consent-agreement-modal__error">{NO_SUBMITTED_CONSENT_MESSAGE}</p>
           ) : displaySrc != null ? (
             <div className="crime-consent-doc-modal__a4-outer">
-              <img
-                className="crime-consent-doc-modal__a4-img"
+              <CrimeConsentDocumentPreview
                 src={displaySrc}
+                fileName={filename}
+                mimeType={useSubmittedRemote ? evidenceMimeType : undefined}
                 alt={modalTitle}
-                width={1146}
-                height={1618}
               />
             </div>
           ) : (
@@ -393,6 +395,7 @@ export function MemberConsentDocumentViewModal({
   const mutation = useConsentFilledDocumentMutation()
   const [filled, setFilled] = useState<FilledDocumentResponse | null>(null)
   const [evidenceObjectUrl, setEvidenceObjectUrl] = useState<string | null>(null)
+  const [evidenceMimeType, setEvidenceMimeType] = useState<string | null>(null)
   const [reasonOpen, setReasonOpen] = useState(false)
   const [loadFailed, setLoadFailed] = useState(false)
   const [synthetic, setSynthetic] = useState<MemberConsentAgreeOnlyPreviewResult | null>(null)
@@ -421,6 +424,7 @@ export function MemberConsentDocumentViewModal({
               setLoadFailed(true)
               return
             }
+            setEvidenceMimeType(blob.type.trim() || null)
             setEvidenceObjectUrl(prev => {
               if (prev) URL.revokeObjectURL(prev)
               return URL.createObjectURL(blob)
@@ -454,6 +458,7 @@ export function MemberConsentDocumentViewModal({
       setReasonOpen(false)
       setSynthetic(null)
       setSyntheticLoading(false)
+      setEvidenceMimeType(null)
       mutation.reset()
       return
     }
@@ -518,6 +523,7 @@ export function MemberConsentDocumentViewModal({
       URL.revokeObjectURL(evidenceObjectUrl)
       setEvidenceObjectUrl(null)
     }
+    setEvidenceMimeType(null)
     setFilled(null)
     setLoadFailed(false)
     setReasonOpen(false)
@@ -559,6 +565,7 @@ export function MemberConsentDocumentViewModal({
           isSyntheticPreview={isSyntheticPreview}
           filled={filled}
           evidenceObjectUrl={evidenceObjectUrl}
+          evidenceMimeType={evidenceMimeType}
           isLoading={isLoading}
           loadFailed={loadFailed || remoteUnavailable}
           onClose={handleClose}
