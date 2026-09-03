@@ -96,16 +96,15 @@ function TextbookDetailFullPageModalInner({
 
   const isEditMode = mode === 'edit'
   const titleSource = textbook ?? listTextbook
-  const title = titleSource
-    ? `${titleSource.businessArea}_${titleSource.textbookName}`
-    : '교재 상세'
+  const textbookNameLabel = titleSource?.textbookName?.trim() || ''
+  const title = textbookNameLabel ? `교재 상세 (${textbookNameLabel})` : '교재 상세'
   const headerBreadcrumbItems = [
     makeBreadcrumbItem(
       '교재 관리',
       location.pathname,
       buildSearchParams(searchParams, { delete: ['textbookId', 'textbookMode'] })
     ),
-    { label: title },
+    { label: textbookNameLabel || '교재 상세' },
   ]
 
   const handleSave = () => {
@@ -148,8 +147,8 @@ function TextbookDetailFullPageModalInner({
       contentExtra={
         showBody ? (
           <div className="textbook-detail-fullpage-modal__header-actions">
-            <CmsButton variant="primary" size="medium" onClick={isEditMode ? handleSave : onEdit}>
-              {isEditMode ? '저장' : '정보 수정'}
+            <CmsButton variant="secondary" size="large" onClick={isEditMode ? handleSave : onEdit}>
+              {isEditMode ? '수정 완료' : '정보 수정'}
             </CmsButton>
           </div>
         ) : null
@@ -161,25 +160,27 @@ function TextbookDetailFullPageModalInner({
           className="textbook-detail-fullpage-modal__basic-info-section"
           aria-label="기본 정보"
         >
-          <DetailInfoForm title="기본 정보">
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="등록일"
-                view={
-                  <div
-                    className="textbook-detail-fullpage-modal__registered-value"
-                    role="group"
-                    aria-label="등록일 정보"
-                  >
-                    <span>{formatDate(textbook.registeredAt)}</span>
-                    <DetailInfoForm.InputsSeparator />
-                    <span>{textbook.registrant}</span>
-                  </div>
-                }
-              />
-            </DetailInfoForm.Row>
-          </DetailInfoForm>
-          <DetailInfoForm title="기본 정보" hideHeader mode={isEditMode ? 'edit' : 'view'}>
+          {!isEditMode ? (
+            <DetailInfoForm title="기본 정보">
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="등록일"
+                  view={
+                    <div
+                      className="textbook-detail-fullpage-modal__registered-value"
+                      role="group"
+                      aria-label="등록일 정보"
+                    >
+                      <span>{formatDate(textbook.registeredAt)}</span>
+                      <DetailInfoForm.InputsSeparator />
+                      <span>{textbook.registrant}</span>
+                    </div>
+                  }
+                />
+              </DetailInfoForm.Row>
+            </DetailInfoForm>
+          ) : null}
+          <DetailInfoForm title="기본 정보" hideHeader={!isEditMode} mode={isEditMode ? 'edit' : 'view'}>
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="교재명 (국문)"
@@ -218,7 +219,7 @@ function TextbookDetailFullPageModalInner({
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
-                label="교육 분야"
+                label="사업 분야"
                 required
                 view={<span>{textbook.businessArea}</span>}
                 edit={
@@ -269,7 +270,7 @@ function TextbookDetailFullPageModalInner({
         </section>
 
         <DetailInfoForm
-          title="교육 대상"
+          title="교육 대상 및 학년"
           className="textbook-detail-fullpage-modal__education-form"
         >
           {editForm.educationStages.map(stage => (

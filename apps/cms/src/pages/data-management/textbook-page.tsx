@@ -8,7 +8,7 @@ import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
-import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ContentModal, DeleteGuideModal } from '@/shared/ui'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
@@ -44,14 +44,14 @@ type TextbookFilters = TextbookListFilters
 const DEFAULT_TB_USE = 'USED' as const
 const TB_USE_PARAM = 'tb_use'
 
-const TEXTBOOK_TABLE_SCROLL_X = 1280
+const TEXTBOOK_TABLE_SCROLL_X = 1260
 
 const TEXTBOOK_COL_WIDTH = {
   businessArea: 150,
   educationTarget: 150,
   grade: 130,
   textbookName: 260,
-  useStatus: 120,
+  useStatus: TABLE_COLUMN_WIDTHS.usage,
   registrant: 130,
   registeredAt: 200,
 } as const
@@ -146,7 +146,7 @@ export default function TextbookPage() {
         key: 'textbookName',
         type: 'search',
         label: '교재명',
-        placeholder: '교재명',
+        placeholder: '교재명을 입력하세요',
         width: '20%',
       },
       {
@@ -334,6 +334,7 @@ export default function TextbookPage() {
         dataIndex: 'useStatus',
         key: 'useStatus',
         width: TEXTBOOK_COL_WIDTH.useStatus,
+        className: CMS_TABLE_USAGE_COL_CLASS,
         align: 'center',
         render: (status: TextbookRow['useStatus']) => (status === 'USED' ? '사용' : '미사용'),
       },
@@ -370,7 +371,7 @@ export default function TextbookPage() {
         ellipsis: true,
       },
       {
-        title: '등록자',
+        title: '등록자명',
         dataIndex: 'registrant',
         key: 'registrant',
         width: TEXTBOOK_COL_WIDTH.registrant,
@@ -383,7 +384,7 @@ export default function TextbookPage() {
         key: 'registeredAt',
         width: TEXTBOOK_COL_WIDTH.registeredAt,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm'),
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
       },
     ],
     [filteredRows.length]
