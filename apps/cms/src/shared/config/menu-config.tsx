@@ -1058,7 +1058,7 @@ function getPostsPathCategoryNameWhenUnmatched(
 }
 
 /**
- * 메뉴 key는 `/templates/…` exact만 등록돼 있어, form-test·하위 URL 등은 매칭이 비어 null이 된다.
+ * 메뉴 key는 `/templates/…` exact만 등록돼 있어, 하위 URL 등은 매칭이 비어 null이 된다.
  * 사이드바 `selectedKeys`와 동일한 prefix 규칙으로 1뎁스(템플릿 관리) / 2·3뎁스(리프)를 맞춘다.
  */
 function getTemplatesPathCategoryNameWhenUnmatched(
@@ -1071,7 +1071,6 @@ function getTemplatesPathCategoryNameWhenUnmatched(
 
   const isFormSubtree =
     normalizedPath === '/templates' ||
-    normalizedPath.startsWith('/templates/form-test/') ||
     normalizedPath.startsWith('/templates/form-management') ||
     normalizedPath.startsWith('/templates/program-forms')
 

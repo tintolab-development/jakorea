@@ -20,8 +20,6 @@ type FormManagementQuery = {
   type?: string
   id?: string
   userPreview?: string
-  /** 양식 테스트 > 테이블 데모 상세 키 */
-  ftDemo?: string
 }
 
 export function TemplateListPage() {
@@ -30,7 +28,7 @@ export function TemplateListPage() {
   const { params, setParams } = useQueryParams<FormManagementQuery>()
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
-  const baseFormTabItems = useMemo(
+  const formTabItems = useMemo(
     () => [
       { key: 'template-form', label: '작성 양식', path: FORM_MANAGEMENT_BASE },
       { key: 'issuance-form', label: '발급 양식', path: FORM_MANAGEMENT_BASE },
@@ -39,29 +37,12 @@ export function TemplateListPage() {
   )
 
   const isFormManagementSection = location.pathname.startsWith(FORM_MANAGEMENT_BASE)
-  const isFormTestTablePath = location.pathname.startsWith('/templates/form-test/')
-  const formTabItems = useMemo(
-    () => [
-      ...baseFormTabItems,
-      { key: 'form-test', label: '양식 테스트', path: FORM_MANAGEMENT_BASE },
-    ],
-    [baseFormTabItems]
-  )
-  const showFormTopTabs = isFormManagementSection || isFormTestTablePath
   const activeFormTabFromPath = 'template-form'
 
   const tabParam = params.tab
-  const activeKey = isFormTestTablePath
-    ? 'form-test'
-    : tabParam || activeFormTabFromPath
+  const activeKey = tabParam || activeFormTabFromPath
 
   useEffect(() => {
-    if (isFormTestTablePath) {
-      if (tabParam !== 'form-test') {
-        setParams({ tab: 'form-test' })
-      }
-      return
-    }
     if (!isFormManagementSection) return
 
     const validKeys = new Set(formTabItems.map(t => t.key))
@@ -78,16 +59,9 @@ export function TemplateListPage() {
     formTabItems,
     tabParam,
     isFormManagementSection,
-    isFormTestTablePath,
   ])
 
   const handleFormTabChange = (key: string) => {
-    if (isFormTestTablePath) {
-      const sp = new URLSearchParams()
-      sp.set('tab', key)
-      navigate(`${FORM_MANAGEMENT_BASE}?${sp.toString()}`, { replace: true })
-      return
-    }
     const updates: Partial<FormManagementQuery> = {
       tab: key,
       // 탭 이동 시 작성·발급 상세 모달·신규 작성용 쿼리 제거 (탭 간 mode/id 누수 방지)
@@ -95,7 +69,6 @@ export function TemplateListPage() {
       type: undefined,
       id: undefined,
       userPreview: undefined,
-      ftDemo: undefined,
     }
     setParams(updates)
 
@@ -107,7 +80,7 @@ export function TemplateListPage() {
 
   return (
     <>
-      {showFormTopTabs && (
+      {isFormManagementSection && (
         <>
           <CmsTextTabs
             className="template-list-page__tabs"
@@ -116,44 +89,42 @@ export function TemplateListPage() {
             onChange={handleFormTabChange}
             items={formTabItems.map(t => ({ key: t.key, label: t.label }))}
             trailing={
-              isFormManagementSection && activeKey === 'template-form' ? (
+              activeKey === 'template-form' ? (
                 <CmsButton type="button" onClick={() => setCreateModalOpen(true)}>
                   + 신규 템플릿
                 </CmsButton>
               ) : null
             }
           />
-          {isFormManagementSection && (
-            <TemplateCreateModal
-              open={createModalOpen}
-              onCancel={() => setCreateModalOpen(false)}
-              onDirectRegister={target => {
-                setCreateModalOpen(false)
-                setParams(
-                  {
-                    tab: 'template-form',
-                    mode: 'new',
-                    type: target,
-                    id: undefined,
-                    userPreview: undefined,
-                  },
-                  { replace: false }
-                )
-              }}
-              onDuplicateSuccess={newTemplateId => {
-                setCreateModalOpen(false)
-                setParams(
-                  {
-                    mode: 'edit',
-                    id: newTemplateId,
-                    type: undefined,
-                    userPreview: undefined,
-                  },
-                  { replace: false }
-                )
-              }}
-            />
-          )}
+          <TemplateCreateModal
+            open={createModalOpen}
+            onCancel={() => setCreateModalOpen(false)}
+            onDirectRegister={target => {
+              setCreateModalOpen(false)
+              setParams(
+                {
+                  tab: 'template-form',
+                  mode: 'new',
+                  type: target,
+                  id: undefined,
+                  userPreview: undefined,
+                },
+                { replace: false }
+              )
+            }}
+            onDuplicateSuccess={newTemplateId => {
+              setCreateModalOpen(false)
+              setParams(
+                {
+                  mode: 'edit',
+                  id: newTemplateId,
+                  type: undefined,
+                  userPreview: undefined,
+                },
+                { replace: false }
+              )
+            }}
+          />
         </>
       )}
       <Outlet />

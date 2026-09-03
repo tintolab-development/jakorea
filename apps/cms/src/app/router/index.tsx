@@ -152,9 +152,6 @@ const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 const TemplateListPage = lazyLoad(() =>
   import('@/pages/templates/template-list-page').then(m => ({ default: m.TemplateListPage }))
 )
-const FormTestTableComponentsPage = lazyLoad(
-  () => import('@/pages/templates/form-test-table-components-page')
-)
 const AdminCategoryPage = lazyLoad(() => import('@/pages/posts/admin-category-page'))
 const AdminNoticeListPage = lazyLoad(() => import('@/pages/posts/admin-notice-list-page'))
 const AdminNoticeDetailPage = lazyLoad(() => import('@/pages/posts/admin-notice-detail-page'))
@@ -674,10 +671,6 @@ export const router = createBrowserRouter([
           {
             element: <TemplateListPage />,
             children: [
-              {
-                path: 'form-test/tables',
-                element: <FormTestTableComponentsPage />,
-              },
               {
                 path: 'form-management',
                 element: <TemplatesFormManagementOutlet />,

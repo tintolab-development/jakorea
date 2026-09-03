@@ -152,9 +152,6 @@ export function Sidebar() {
     }
 
     if (user?.role === 'ADMIN' && path.startsWith('/templates/')) {
-      if (path.startsWith('/templates/form-test/')) {
-        return ['/templates/form-management']
-      }
       if (path.startsWith('/templates/form-management')) {
         return ['/templates/form-management']
       }
