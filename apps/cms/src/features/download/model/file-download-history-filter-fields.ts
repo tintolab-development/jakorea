@@ -8,21 +8,22 @@ export const fileDownloadHistoryFilterFields: FilterFieldConfig[] = [
   {
     key: 'fileName',
     type: 'search',
-    label: '다운로드 파일명',
+    label: '파일명',
     placeholder: '파일명을 입력하세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'userName',
     type: 'search',
-    label: '사용자',
-    placeholder: '사용자를 입력하세요',
+    label: '사용자명',
+    placeholder: '사용자명을 입력하세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'dateRange',
     type: 'dateRange',
-    label: '다운로드 기간',
+    // 시안: 다운로드 일시 / 노션: 다운로드 기간 — 시안 우선
+    label: '다운로드 일시',
     defaultValue: null,
     width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
   },

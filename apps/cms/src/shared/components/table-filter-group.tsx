@@ -116,6 +116,8 @@ export interface FilterFieldConfig {
   width?: string | number
   /** `dateRange`: 시작일 선택 시 종료일을 시작+1개월−1일로 맞춤 */
   dateRangeOneMonthFromStart?: boolean
+  /** `dateRange`: 선택 불가 날짜 */
+  disabledDate?: (date: Dayjs) => boolean
   /** `select`: 첫 옵션 `전체` 자동 삽입 비활성화 */
   withAllOption?: boolean
   /** `search`: 숫자만 입력 가능 */
@@ -483,6 +485,7 @@ export function TableFilterGroup({
             onChange={dates => onFilterChange(field.key, dates as DateRangeFilterValue)}
             allowClear={field.allowClear !== false}
             oneMonthFromStart={field.dateRangeOneMonthFromStart === true}
+            disabledDate={field.disabledDate}
           />
         </div>
       )
