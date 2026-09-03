@@ -65,6 +65,7 @@ interface AddUserIndividualFormValues {
   grade: string
   schoolProvider?: string
   schoolExternalCode?: string
+  schoolEducationOfficeCode?: string
   schoolLevel?: string
   schoolAddress?: string
   schoolZipcode?: string
@@ -305,6 +306,7 @@ export function AddUserIndividual({
         schoolName: school.schulNm.trim(),
         schoolProvider: 'NEIS',
         schoolExternalCode: school.sdSchulCode.trim(),
+        schoolEducationOfficeCode: school.atptOfcdcScCode.trim(),
         schoolLevel: school.schulKndScNm.trim(),
         schoolAddress: school.orgRdnma.trim(),
         schoolZipcode: school.orgRdnzc.trim(),
@@ -323,6 +325,7 @@ export function AddUserIndividual({
       schoolName: nextSchoolName,
       schoolProvider: 'CAREER_NET',
       schoolExternalCode: univ.seq.trim(),
+      schoolEducationOfficeCode: undefined,
       schoolLevel: univ.schoolGubun.trim() || univ.schoolType.trim(),
       schoolAddress: univ.address.trim(),
       schoolZipcode: '',
@@ -358,6 +361,9 @@ export function AddUserIndividual({
       schoolOrganizationId: enrolled ? (values.schoolOrganizationId ?? null) : null,
       schoolProvider: enrolled ? values.schoolProvider?.trim() || undefined : undefined,
       schoolExternalCode: enrolled ? values.schoolExternalCode?.trim() || undefined : undefined,
+      schoolEducationOfficeCode: enrolled
+        ? values.schoolEducationOfficeCode?.trim() || undefined
+        : undefined,
       schoolLevel: enrolled ? values.schoolLevel?.trim() || undefined : undefined,
       schoolAddress: enrolled ? values.schoolAddress?.trim() || undefined : undefined,
       schoolZipcode: enrolled ? values.schoolZipcode?.trim() || undefined : undefined,
@@ -429,6 +435,7 @@ export function AddUserIndividual({
         grade: '',
         schoolProvider: undefined,
         schoolExternalCode: undefined,
+        schoolEducationOfficeCode: undefined,
         schoolLevel: undefined,
         schoolAddress: undefined,
         schoolZipcode: undefined,
@@ -532,6 +539,7 @@ export function AddUserIndividual({
                       </Form.Item>
                       <Form.Item name="schoolProvider" hidden preserve />
                       <Form.Item name="schoolExternalCode" hidden preserve />
+                      <Form.Item name="schoolEducationOfficeCode" hidden preserve />
                       <Form.Item name="schoolLevel" hidden preserve />
                       <Form.Item name="schoolAddress" hidden preserve />
                       <Form.Item name="schoolZipcode" hidden preserve />

@@ -273,6 +273,7 @@ export function InstructorProfileFormBody({
         schoolName: school.schulNm.trim(),
         schoolProvider: 'NEIS',
         schoolExternalCode: school.sdSchulCode.trim(),
+        schoolEducationOfficeCode: school.atptOfcdcScCode.trim(),
         schoolLevel: school.schulKndScNm.trim(),
         schoolAddress: school.orgRdnma.trim(),
         schoolZipcode: school.orgRdnzc.trim(),
@@ -291,6 +292,7 @@ export function InstructorProfileFormBody({
       schoolName,
       schoolProvider: 'CAREER_NET',
       schoolExternalCode: univ.seq.trim(),
+      schoolEducationOfficeCode: undefined,
       schoolLevel: univ.schoolGubun.trim() || univ.schoolType.trim(),
       schoolAddress: univ.address.trim(),
       schoolZipcode: '',
@@ -314,6 +316,7 @@ export function InstructorProfileFormBody({
       </Form.Item>
       <Form.Item name="schoolProvider" hidden preserve />
       <Form.Item name="schoolExternalCode" hidden preserve />
+      <Form.Item name="schoolEducationOfficeCode" hidden preserve />
       <Form.Item name="schoolLevel" hidden preserve />
       <Form.Item name="schoolAddress" hidden preserve />
       <Form.Item name="schoolZipcode" hidden preserve />
@@ -349,6 +352,7 @@ export function InstructorProfileFormBody({
       </Form.Item>
       <Form.Item name="schoolProvider" hidden preserve />
       <Form.Item name="schoolExternalCode" hidden preserve />
+      <Form.Item name="schoolEducationOfficeCode" hidden preserve />
       <Form.Item name="schoolLevel" hidden preserve />
       <Form.Item name="schoolAddress" hidden preserve />
       <Form.Item name="schoolZipcode" hidden preserve />
