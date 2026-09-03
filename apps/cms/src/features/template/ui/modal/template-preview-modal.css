@@ -174,6 +174,12 @@
   flex-shrink: 0;
 }
 
+.template-preview-modal__notice-download-btn.cms-button.ant-btn {
+  flex-shrink: 0;
+  width: 180px;
+  padding: 6px 16px 6px 10px !important;
+}
+
 .template-preview-modal__notice-actions {
   display: flex;
   align-items: center;
@@ -183,6 +189,23 @@
 
 .template-preview-modal__notice-edit-btn {
   flex-shrink: 0;
+}
+
+.template-preview-modal__pdf-host {
+  position: fixed;
+  left: -20000px;
+  top: 0;
+  width: 1464px;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.template-preview-modal__pdf-host-page-body {
+  width: 100%;
+  padding-bottom: 16px;
+  box-sizing: border-box;
 }
 
 .template-preview-modal__body {
