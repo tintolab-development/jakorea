@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react'
+import { useCallback, useMemo, type ReactNode } from 'react'
 import {
   TemplateFullpageModal,
   type TemplateFullpageModalFooterAction,
@@ -339,7 +339,7 @@ function SurveyTemplatePreviewEditor({
   previewControllerBase,
   ...shellProps
 }: TemplatePreviewModalEditorProps & { registryEntry: TemplateRegistryDefinition }) {
-  const getSurveyListInitialDraft = (): WritingFormDraft => {
+  const getSurveyListInitialDraft = useCallback((): WritingFormDraft => {
     const base = createDefaultSurveyDraft()
     const name = templateName?.trim()
     if (name == null || name === '') return base
@@ -349,12 +349,16 @@ function SurveyTemplatePreviewEditor({
         p.id === DEFAULT_SURVEY_PARAGRAPH_IDS.title ? { ...p, surveyTitle: name } : p
       ),
     }
-  }
+  }, [templateName])
+
+  const getSurveyListDefaultParagraphId = useCallback((_draft: WritingFormDraft) => {
+    return DEFAULT_SURVEY_PARAGRAPH_IDS.title
+  }, [])
 
   const surveyListEditor = useWritingFormEditorWithUserPreview({
     open: true,
     getInitialDraft: getSurveyListInitialDraft,
-    getDefaultActiveParagraphId: () => DEFAULT_SURVEY_PARAGRAPH_IDS.title,
+    getDefaultActiveParagraphId: getSurveyListDefaultParagraphId,
     previewHeaderTitle: resolvePreviewHeaderTitle(registryEntry, templateName),
     editorKind: 'survey',
     templateCode: registryEntry.id ?? templateId,
