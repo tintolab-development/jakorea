@@ -2,23 +2,24 @@
  * 필터 영역 Select(드롭다운) 및 검색 인풋 공통 크기
  *
  * ## 공통 규격 (FilterTableGroup · FilterTableLayout)
- * - 단일 검색·셀렉트: **240×44px** (`--filter-control-width` = `--filter-control-max-width` = 240px)
+ * - 단일 검색·셀렉트: **기본 260×44px** · **최소 240px**
+ *   (`--filter-control-width` = `--filter-control-max-width` = 260px, `--filter-control-min-width` = 240px)
  * - **radio**: 폭 고정 없음(콘텐츠 허그) · 옵션 gap 16px · 칸 사이는 --filter-field-gap 12px
- * - 분리형 dateRange·selectPair: 열 500px (2×240 + --filter-control-range-split-between 20px)
+ * - 분리형 dateRange·selectPair: 열 540px (2×260 + --filter-control-range-split-between 20px)
  * - addressRegion(기관 소재지): 열 235.5px (시/도·시/군/구 각 114.75px + 사이 gap 6px)
  * - 필터 칸 사이 gap: --filter-field-gap (12px)
  * - 레이블·컨트롤 gap: --filter-label-control-gap (6px)
  * - 조회 버튼: 160×44px (table-filter-group.css)
  *
- * FilterFieldConfig.width: 단일 검색·셀렉트는 `FILTER_CONTROL_MAX_WIDTH_PX`(240), 기간·이중셀렉트는
- * `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX`(500). **radio에는 width를 두지 않음.** `%` 폭은 행 전체 stretch — 목록 필터에 쓰지 않음.
+ * FilterFieldConfig.width: 단일 검색·셀렉트는 `FILTER_CONTROL_MAX_WIDTH_PX`(260), 기간·이중셀렉트는
+ * `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX`(540). **radio에는 width를 두지 않음.** `%` 폭은 행 전체 stretch — 목록 필터에 쓰지 않음.
  *
  * 상세: apps/cms/.cursor/rules/design/filter-area-layout.mdc
  */
 
 :root {
-  --filter-control-width: 240px;
-  --filter-control-max-width: 240px;
+  --filter-control-width: 260px;
+  --filter-control-max-width: 260px;
   /** 분리형 기간(시작·종료 두 칸): 구분자(~) 좌우 margin 6px 등 포함한 가운데 간격 */
   --filter-control-range-split-between: 20px;
   /** 필터 칸 사이·TableFilterGroup 행 간격 */
@@ -28,7 +29,7 @@
   /** addressRegion 하위 셀렉트 각 폭 */
   --filter-address-region-segment-width: 114.75px;
   --filter-control-height: 44px;
-  --filter-control-min-width: 180px;
+  --filter-control-min-width: 240px;
   --filter-label-height: 27px;
   --filter-label-control-gap: var(--spacing-6, 6px);
   --filter-area-label-color: var(--default-BK, #3d3d3d);
@@ -51,15 +52,15 @@
 
 @media (max-width: 1200px) {
   :root {
-    --filter-control-width: 200px;
-    --filter-control-min-width: 160px;
+    --filter-control-width: 240px;
+    --filter-control-min-width: 240px;
   }
 }
 
 @media (max-width: 992px) {
   :root {
-    --filter-control-width: 180px;
-    --filter-control-min-width: 140px;
+    --filter-control-width: 240px;
+    --filter-control-min-width: 240px;
   }
 }
 
@@ -95,7 +96,7 @@
   gap: var(--filter-label-control-gap);
 }
 
-/* TableFilterGroup 단일 셀렉트만 240px — pair·addressRegion 내부 셀렉트는 하위 규칙 */
+/* TableFilterGroup 단일 셀렉트만 260px(최소 240) — pair·addressRegion 내부 셀렉트는 하위 규칙 */
 .table-filter-group
   .table-filter-group__field--select:not(:has(.table-filter-group__address-region-selects)):not(
     :has(.table-filter-group__select-pair-selects)
@@ -104,9 +105,9 @@
 .table-filter-group .labeled-search-input .cms-input,
 .table-filter-group .table-filter-group__field .app-datepicker:not(.app-datepicker--range-split),
 .table-filter-group .app-datepicker:not(.app-datepicker--range-split) {
-  min-width: var(--filter-control-max-width);
+  min-width: var(--filter-control-min-width);
   max-width: var(--filter-control-max-width);
-  width: var(--filter-control-max-width);
+  width: var(--filter-control-width);
   height: var(--filter-control-height) !important;
   box-sizing: border-box;
   display: inline-flex;
@@ -126,7 +127,7 @@
   );
 }
 
-/* 분리형 기간: 바깥 2×240 + 구분자, 각 세그먼트 240px 고정 */
+/* 분리형 기간: 바깥 2×260 + 구분자, 각 세그먼트 260px 고정 */
 .table-filter-group .table-filter-group__field .app-datepicker.app-datepicker--range-split,
 .table-filter-group .app-datepicker.app-datepicker--range-split,
 .table-filter-group .table-filter-group__field .cms-datepicker.cms-datepicker--range-split,
@@ -206,9 +207,9 @@
 
 /* LabeledSearchInput + CmsInput: 래퍼 패딩 안에 맞추고 allowClear 아이콘이 박스 밖으로 나가지 않게 */
 .table-filter-group .labeled-search-input {
-  min-width: var(--filter-control-max-width) !important;
+  min-width: var(--filter-control-min-width) !important;
   max-width: var(--filter-control-max-width) !important;
-  width: var(--filter-control-max-width) !important;
+  width: var(--filter-control-width) !important;
 }
 
 .table-filter-group .labeled-search-input__label {
@@ -222,9 +223,9 @@
 
 .table-filter-group .cms-select--multiple-ui,
 .list-page-filters .cms-select--multiple-ui {
-  min-width: var(--filter-control-max-width);
+  min-width: var(--filter-control-min-width);
   max-width: var(--filter-control-max-width);
-  width: var(--filter-control-max-width);
+  width: var(--filter-control-width);
 }
 
 .table-filter-group .labeled-search-input .cms-input {
