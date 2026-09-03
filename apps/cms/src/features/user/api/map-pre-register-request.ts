@@ -7,6 +7,7 @@ import type {
 } from '@/shared/api/generated/members/schemas'
 import type { PortalSchoolSelectionRequest } from '@/shared/api/generated/members/schemas/portalSchoolSelectionRequest'
 import type { AdminPreRegisterMemberRequest } from '@/shared/api/generated/members/schemas/adminPreRegisterMemberRequest'
+import { resolveNeisEducationOfficeCode } from '@/features/user/api/neis-education-office-code'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
 import {
@@ -39,25 +40,32 @@ function trimOptional(value: string | undefined): string | undefined {
   return trimmed ? trimmed : undefined
 }
 
-/** 재학 중 개인 pre-register — CMS PK 없을 때 NEIS/CareerNet 선택값 */
+/**
+ * 재학 중 개인 pre-register — CMS PK 없을 때 NEIS/CareerNet 선택값.
+ * 학교명만 있으면 schoolSelection을 생략하고 schoolName snapshot만 보낸다.
+ */
 function buildIndividualSchoolSelection(
   request: CreateUserRequest
 ): PortalSchoolSelectionRequest | undefined {
   const name = trimOptional(request.affiliation)
-  if (!name) return undefined
+  const externalSchoolCode =
+    trimOptional(request.schoolExternalCode) ?? trimOptional(request.neisCode)
+  if (!name || !externalSchoolCode) return undefined
 
   const selection: PortalSchoolSelectionRequest = {
     name,
     organizationCategory: 'SCHOOL',
+    externalSchoolCode,
   }
   const provider = trimOptional(request.schoolProvider)
-  if (provider) selection.provider = provider
-  const externalSchoolCode =
-    trimOptional(request.schoolExternalCode) ?? trimOptional(request.neisCode)
-  if (externalSchoolCode) {
-    selection.externalSchoolCode = externalSchoolCode
-    if (!selection.provider) selection.provider = 'NEIS'
-  }
+  selection.provider = provider ?? 'NEIS'
+  const educationOfficeCode = resolveNeisEducationOfficeCode({
+    provider,
+    educationOfficeCode: request.schoolEducationOfficeCode,
+    regionSido: trimOptional(request.schoolRegionSido) ?? trimOptional(request.regionSido),
+    externalSchoolCode,
+  })
+  if (educationOfficeCode) selection.educationOfficeCode = educationOfficeCode
   const schoolLevel = trimOptional(request.schoolLevel)
   if (schoolLevel) selection.schoolLevel = schoolLevel
   const regionSido = trimOptional(request.schoolRegionSido) ?? trimOptional(request.regionSido)
@@ -65,7 +73,7 @@ function buildIndividualSchoolSelection(
   const regionSigungu =
     trimOptional(request.schoolRegionSigungu) ?? trimOptional(request.regionSigungu)
   if (regionSigungu) selection.regionSigungu = regionSigungu
-  const zipcode = trimOptional(request.schoolZipcode) ?? trimOptional(request.zipCode)
+  const zipcode = trimOptional(request.schoolZipcode)
   if (zipcode) selection.zipcode = zipcode
   const address = trimOptional(request.schoolAddress)
   if (address) selection.address = address
@@ -147,12 +155,12 @@ export function mapCreateUserRequestToPreRegisterIndividual(
   }
   if (request.detailAddress?.trim()) body.addressDetail = request.detailAddress.trim()
   if (request.zipCode?.trim()) body.zipCode = request.zipCode.trim()
-  if (request.affiliation?.trim()) body.schoolName = request.affiliation.trim()
-  const grade = request.grade?.trim()
-  if (grade && request.schoolEnrollmentStatus === 'ENROLLED') {
-    body.grade = grade
-  }
-  if (request.schoolEnrollmentStatus === 'ENROLLED') {
+  if (enrollmentStatus === 'NOT_ENROLLED') {
+    if (request.affiliation?.trim()) body.affiliationName = request.affiliation.trim()
+  } else {
+    if (request.affiliation?.trim()) body.schoolName = request.affiliation.trim()
+    const grade = request.grade?.trim()
+    if (grade) body.grade = grade
     const organizationId = request.schoolOrganizationId
     if (organizationId != null && Number.isFinite(organizationId)) {
       body.schoolOrganizationId = organizationId

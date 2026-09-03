@@ -162,6 +162,7 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
         schoolEnrollmentStatus: 'enrolled',
         schoolProvider: 'NEIS',
         schoolExternalCode: 'B100000658',
+        schoolEducationOfficeCode: 'B10',
         schoolAddress: '서울특별시 강남구',
       })
     )
@@ -171,6 +172,7 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     expect(body.schoolSelection).toMatchObject({
       provider: 'NEIS',
       externalSchoolCode: 'B100000658',
+      educationOfficeCode: 'B10',
       name: '서울중학교',
     })
   })

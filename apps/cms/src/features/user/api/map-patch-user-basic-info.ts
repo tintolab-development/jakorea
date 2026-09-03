@@ -4,6 +4,7 @@ import type { AdminMemberBasicInfoUpdateRequest } from '@/shared/api/generated/m
 import type { PortalSchoolSelectionRequest } from '@/shared/api/generated/members/schemas/portalSchoolSelectionRequest'
 import { filterEditableTermsAgreementsForBasicInfoPatch } from '@/features/user/api/member-basic-info-terms-patch'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
+import { resolveNeisEducationOfficeCode } from '@/features/user/api/neis-education-office-code'
 import {
   toApiInstructorCmsProfile,
   toApiInstructorCmsSettlement,
@@ -48,6 +49,13 @@ function buildIndividualSchoolSelectionFromPatch(
     selection.externalSchoolCode = externalSchoolCode
     if (!selection.provider) selection.provider = 'NEIS'
   }
+  const educationOfficeCode = resolveNeisEducationOfficeCode({
+    provider: selection.provider,
+    educationOfficeCode: patch.individualSchoolEducationOfficeCode,
+    regionSido: patch.individualSchoolRegionSido,
+    externalSchoolCode,
+  })
+  if (educationOfficeCode) selection.educationOfficeCode = educationOfficeCode
   const schoolLevel = trimOptional(patch.individualSchoolLevel)
   if (schoolLevel) selection.schoolLevel = schoolLevel
   const regionSido = trimOptional(patch.individualSchoolRegionSido)
