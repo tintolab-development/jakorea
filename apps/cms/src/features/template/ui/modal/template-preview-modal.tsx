@@ -1,5 +1,5 @@
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { CloseOutlined } from '@ant-design/icons'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type {
   FormEditorKind,
@@ -24,30 +24,14 @@ import {
   getA4DocumentTitle,
   getA4PreviewParagraphs,
 } from '@/features/template/lib/a4-document-preview'
-import {
-  collectFormDocumentPdfPageElements,
-  downloadFormDocumentPdfFromPageElements,
-} from '@/features/template/lib/generate-form-document-pdf'
 import type { TemplateWritingPreviewLayout } from '@/features/template/context/template-writing-preview-context'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { handleError } from '@/shared/utils/error-handler'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 /** 강사 신청 폼 등 `data-paragraph-id` 스코프 스타일(불가 일정 DatePicker 폭 등) — 미리보기 단독 열림에도 적용 */
 import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
 import './template-preview-modal.css'
 
 const PREVIEW_PAGE_QUERY_PARAM = 'previewPage'
-
-function safePdfFileName(title: string): string {
-  const base =
-    title
-      .trim()
-      .replace(/[^\w가-힣-]+/gu, '_')
-      .replace(/_+/g, '_')
-      .slice(0, 80) || 'form'
-  return `${base}.pdf`
-}
 
 function readPreviewPage(searchParams: URLSearchParams): number {
   const value = Number(searchParams.get(PREVIEW_PAGE_QUERY_PARAM))
@@ -110,9 +94,6 @@ export function TemplatePreviewModal({
   agreementClosingFooter,
 }: TemplatePreviewModalProps) {
   const previewBodyRef = useRef<HTMLDivElement>(null)
-  const pdfHostRef = useRef<HTMLDivElement>(null)
-  const [pdfLoading, setPdfLoading] = useState(false)
-  const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
   const isA4DocumentPreviewLayout = previewLayout === 'a4-document'
   const isAgreementPreviewLayout = editorKind === 'agreement'
@@ -237,24 +218,6 @@ export function TemplatePreviewModal({
     setPreviewPageParam(nextPage)
   }
 
-  const handlePdfDownload = useCallback(async () => {
-    const root = pdfHostRef.current
-    if (root == null || pdfLoading || pageCount === 0) return
-    setPdfLoading(true)
-    try {
-      const pageEls = collectFormDocumentPdfPageElements(root)
-      await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(a4DocumentTitle))
-    } catch (e) {
-      handleError(e, { context: 'templatePreviewModal.pdfDownload' })
-      showAlert({
-        title: '안내',
-        content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-      })
-    } finally {
-      setPdfLoading(false)
-    }
-  }, [a4DocumentTitle, pageCount, pdfLoading, showAlert])
-
   if (isAgreementPreviewLayout && previewLayout !== 'a4-document') {
     return (
       <AgreementTemplatePreviewModal
@@ -271,184 +234,136 @@ export function TemplatePreviewModal({
   }
 
   return (
-    <>
-      <TealHeaderModal
-        open={open}
-        onCancel={handleClose}
-        title=""
-        size="full"
-        hideHeader
-        className={modalClassName}
-        zIndex={zIndex}
-      >
-        {isA4DocumentPreviewLayout ? measureLayer : null}
-        <div className="template-preview-modal__shell">
-          <header className="template-preview-modal__title-row">
-            <div className="template-preview-modal__title-left">
-              <span className="template-preview-modal__title-text">{headerTitle}</span>
-              <span className="template-preview-modal__badge">미리보기</span>
-            </div>
-            <button
-              type="button"
-              className="template-preview-modal__title-close"
-              onClick={handleClose}
-              aria-label="닫기"
-            >
-              <CloseOutlined />
-            </button>
-          </header>
+    <TealHeaderModal
+      open={open}
+      onCancel={handleClose}
+      title=""
+      size="full"
+      hideHeader
+      className={modalClassName}
+      zIndex={zIndex}
+    >
+      {isA4DocumentPreviewLayout ? measureLayer : null}
+      <div className="template-preview-modal__shell">
+        <header className="template-preview-modal__title-row">
+          <div className="template-preview-modal__title-left">
+            <span className="template-preview-modal__title-text">{headerTitle}</span>
+            <span className="template-preview-modal__badge">미리보기</span>
+          </div>
+          <button
+            type="button"
+            className="template-preview-modal__title-close"
+            onClick={handleClose}
+            aria-label="닫기"
+          >
+            <CloseOutlined />
+          </button>
+        </header>
 
-          <div ref={previewBodyRef} className="template-preview-modal__body">
-            {isA4DocumentPreviewLayout || isCardUserPreviewLayout ? (
-              <div className="template-preview-modal__notice-wrap">
-                <div className="template-preview-modal__notice">
-                  <span className="template-preview-modal__notice-text">
-                    현재 화면은 미리보기 화면입니다.
-                  </span>
-                  <div className="template-preview-modal__notice-actions">
-                    {isA4DocumentPreviewLayout ? (
-                      <CmsButton
-                        type="button"
-                        variant="secondary"
-                        size="large"
-                        icon={<DownloadOutlined />}
-                        className="template-preview-modal__notice-download-btn"
-                        disabled={pdfLoading || pageCount === 0}
-                        aria-busy={pdfLoading}
-                        adminAction="download"
-                        onClick={() => void handlePdfDownload()}
-                      >
-                        문서 다운로드
-                      </CmsButton>
-                    ) : null}
+        <div ref={previewBodyRef} className="template-preview-modal__body">
+          {isA4DocumentPreviewLayout || isCardUserPreviewLayout ? (
+            <div className="template-preview-modal__notice-wrap">
+              <div className="template-preview-modal__notice">
+                <span className="template-preview-modal__notice-text">
+                  현재 화면은 미리보기 화면입니다.
+                </span>
+                <div className="template-preview-modal__notice-actions">
+                  <CmsButton
+                    type="button"
+                    variant="secondary"
+                    size="large"
+                    width={140}
+                    className="template-preview-modal__notice-close-btn"
+                    onClick={handleClose}
+                  >
+                    미리보기 닫기
+                  </CmsButton>
+                  {onEditForm != null ? (
                     <CmsButton
                       type="button"
-                      variant="secondary"
+                      variant="primary"
                       size="large"
                       width={140}
-                      className="template-preview-modal__notice-close-btn"
-                      onClick={handleClose}
+                      className="template-preview-modal__notice-edit-btn"
+                      onClick={onEditForm}
                     >
-                      미리보기 닫기
+                      양식 수정
                     </CmsButton>
-                    {onEditForm != null ? (
-                      <CmsButton
-                        type="button"
-                        variant="primary"
-                        size="large"
-                        width={140}
-                        className="template-preview-modal__notice-edit-btn"
-                        onClick={onEditForm}
-                      >
-                        양식 수정
-                      </CmsButton>
-                    ) : null}
-                  </div>
+                  ) : null}
                 </div>
               </div>
-            ) : null}
+            </div>
+          ) : null}
 
-            <div
-              className={
-                isFormPreviewLayout || isCardUserPreviewLayout
-                  ? 'template-preview-modal__pages'
-                  : 'template-preview-modal__content'
-              }
-            >
-              {isA4DocumentPreviewLayout ? (
-                <div className="template-preview-modal__a4-stage">
-                  <div className="template-preview-modal__a4-stack">
-                    <div key={safeActivePageIndex} className="template-preview-modal__a4-frame">
-                      <div className="template-preview-modal__a4-scale-inner">
-                        <A4DocumentPageLayout
-                          title={a4DocumentTitle}
-                          pageIndex={safeActivePageIndex}
-                          pdfCapture
-                        >
-                          <div className="template-preview-modal__a4-text-content">
-                            <FormDocumentPreviewBody
-                              paragraphs={activePageParagraphs}
-                              allParagraphs={previewParagraphs}
-                              titleNumbering={draft.formSettings.titleNumbering}
-                              editorKind={editorKind}
-                              overflowParagraphIds={overflowParagraphIds}
-                              paragraphBodyOptions={paragraphBodyOptions}
-                              renderMode={a4RenderMode}
-                              paragraphGapPx={a4ParagraphGapPx}
-                              focusedParagraphId={focusedParagraphId}
-                              agreementClosingFooter={agreementClosingFooter}
-                            />
-                          </div>
-                        </A4DocumentPageLayout>
-                      </div>
+          <div
+            className={
+              isFormPreviewLayout || isCardUserPreviewLayout
+                ? 'template-preview-modal__pages'
+                : 'template-preview-modal__content'
+            }
+          >
+            {isA4DocumentPreviewLayout ? (
+              <div className="template-preview-modal__a4-stage">
+                <div className="template-preview-modal__a4-stack">
+                  <div key={safeActivePageIndex} className="template-preview-modal__a4-frame">
+                    <div className="template-preview-modal__a4-scale-inner">
+                      <A4DocumentPageLayout
+                        title={a4DocumentTitle}
+                        pageIndex={safeActivePageIndex}
+                        pdfCapture
+                      >
+                        <div className="template-preview-modal__a4-text-content">
+                          <FormDocumentPreviewBody
+                            paragraphs={activePageParagraphs}
+                            allParagraphs={previewParagraphs}
+                            titleNumbering={draft.formSettings.titleNumbering}
+                            editorKind={editorKind}
+                            overflowParagraphIds={overflowParagraphIds}
+                            paragraphBodyOptions={paragraphBodyOptions}
+                            renderMode={a4RenderMode}
+                            paragraphGapPx={a4ParagraphGapPx}
+                            focusedParagraphId={focusedParagraphId}
+                            agreementClosingFooter={agreementClosingFooter}
+                          />
+                        </div>
+                      </A4DocumentPageLayout>
                     </div>
                   </div>
-                  <TemplatePreviewPageNavigator
-                    currentPage={safeActivePage}
-                    totalPages={pageCount}
-                    onPageChange={handlePageChange}
-                  />
                 </div>
-              ) : (
-                <FormEditorLeftPanel
-                  paragraphs={draft.paragraphs}
-                  titleNumbering={draft.formSettings.titleNumbering}
-                  selectedCardId={null}
-                  onSelectCard={() => {}}
-                  onReorderMiddle={() => {}}
-                  updateParagraph={updateParagraph}
-                  editorKind={editorKind}
-                  singleItemListActiveItemId={null}
-                  paragraphInteractionMode="preview"
-                  showEditorChrome={false}
-                  paragraphBodyOptions={paragraphBodyOptions}
-                  hideParagraphRequiredChrome={hideParagraphRequiredChrome}
-                  agreementClosingFooter={
-                    agreementClosingFooter ??
-                    (editorKind === 'agreement'
-                      ? { showSubmitButton: false, showRecipient: false }
-                      : undefined)
-                  }
-                />
-              )}
-            </div>
-            {isCardUserPreviewLayout && !isA4DocumentPreviewLayout ? (
-              <div className="template-preview-modal__body-bottom" aria-hidden="true" />
-            ) : null}
-          </div>
-        </div>
-      </TealHeaderModal>
-
-      {open && isA4DocumentPreviewLayout ? (
-        <div
-          ref={pdfHostRef}
-          className="template-preview-modal__pdf-host"
-          aria-hidden="true"
-        >
-          {pagedParagraphs.map((pageParagraphs, pageIndex) => (
-            <A4DocumentPageLayout
-              key={pageIndex}
-              title={a4DocumentTitle}
-              pageIndex={pageIndex}
-              pdfCapture
-            >
-              <div className="template-preview-modal__pdf-host-page-body">
-                <FormDocumentPreviewBody
-                  paragraphs={pageParagraphs}
-                  allParagraphs={previewParagraphs}
-                  titleNumbering={draft.formSettings.titleNumbering}
-                  editorKind={editorKind}
-                  overflowParagraphIds={overflowParagraphIds}
-                  paragraphBodyOptions={paragraphBodyOptions}
-                  renderMode={a4RenderMode}
-                  paragraphGapPx={a4ParagraphGapPx}
-                  agreementClosingFooter={agreementClosingFooter}
+                <TemplatePreviewPageNavigator
+                  currentPage={safeActivePage}
+                  totalPages={pageCount}
+                  onPageChange={handlePageChange}
                 />
               </div>
-            </A4DocumentPageLayout>
-          ))}
+            ) : (
+              <FormEditorLeftPanel
+                paragraphs={draft.paragraphs}
+                titleNumbering={draft.formSettings.titleNumbering}
+                selectedCardId={null}
+                onSelectCard={() => {}}
+                onReorderMiddle={() => {}}
+                updateParagraph={updateParagraph}
+                editorKind={editorKind}
+                singleItemListActiveItemId={null}
+                paragraphInteractionMode="preview"
+                showEditorChrome={false}
+                paragraphBodyOptions={paragraphBodyOptions}
+                hideParagraphRequiredChrome={hideParagraphRequiredChrome}
+                agreementClosingFooter={
+                  agreementClosingFooter ??
+                  (editorKind === 'agreement'
+                    ? { showSubmitButton: false, showRecipient: false }
+                    : undefined)
+                }
+              />
+            )}
+          </div>
+          {isCardUserPreviewLayout && !isA4DocumentPreviewLayout ? (
+            <div className="template-preview-modal__body-bottom" aria-hidden="true" />
+          ) : null}
         </div>
-      ) : null}
-    </>
+      </div>
+    </TealHeaderModal>
   )
 }
