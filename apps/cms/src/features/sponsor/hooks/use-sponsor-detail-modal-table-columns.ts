@@ -29,7 +29,8 @@ export function useSponsorDetailModalTableColumns({
   sponsorContacts,
   filteredProgramHistoryRowCount,
 }: UseSponsorDetailModalTableColumnsParams): UseSponsorDetailModalTableColumnsResult {
-  const { openDropdownId, setOpenDropdownId, handleTypeChange } = sponsorContacts
+  const { openDropdownId, setOpenDropdownId, handleTypeChange, isEditing, updateDraft } =
+    sponsorContacts
 
   const handleContactTypeDropdownOpenChange = useCallback(
     (contactId: string, open: boolean): void => {
@@ -42,11 +43,21 @@ export function useSponsorDetailModalTableColumns({
     return buildContactColumns({
       contacts,
       canWrite,
+      isEditing,
       openDropdownId,
       onTypeChange: handleTypeChange,
       onDropdownOpenChange: handleContactTypeDropdownOpenChange,
+      onFieldChange: updateDraft,
     })
-  }, [canWrite, contacts, handleContactTypeDropdownOpenChange, handleTypeChange, openDropdownId])
+  }, [
+    canWrite,
+    contacts,
+    handleContactTypeDropdownOpenChange,
+    handleTypeChange,
+    isEditing,
+    openDropdownId,
+    updateDraft,
+  ])
 
   const programHistoryColumns = useMemo((): ColumnsType<SponsorProgramHistoryRow> => {
     return buildProgramHistoryColumns(filteredProgramHistoryRowCount)

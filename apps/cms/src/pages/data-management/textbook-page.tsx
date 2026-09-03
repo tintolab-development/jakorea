@@ -8,7 +8,7 @@ import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
-import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ContentModal, DeleteGuideModal } from '@/shared/ui'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
@@ -31,6 +31,7 @@ import { TextbookDetailFullPageModal } from '@/features/textbook/ui/textbook-det
 import { BusinessAreaManagementModal } from '@/features/textbook/ui/business-area-management-modal'
 import { useTextbookBusinessAreaSelectOptions } from '@/features/textbook/hooks/use-business-areas-query'
 import { TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS } from '@/features/textbook/model/textbook-education-targets'
+import { textbookFilterGradeOptions } from '@/features/textbook/model/textbook-grade-options'
 import {
   parseTextbookUseStatus,
   type TextbookListFilters,
@@ -43,14 +44,14 @@ type TextbookFilters = TextbookListFilters
 const DEFAULT_TB_USE = 'USED' as const
 const TB_USE_PARAM = 'tb_use'
 
-const TEXTBOOK_TABLE_SCROLL_X = 1280
+const TEXTBOOK_TABLE_SCROLL_X = 1260
 
 const TEXTBOOK_COL_WIDTH = {
   businessArea: 150,
   educationTarget: 150,
   grade: 130,
   textbookName: 260,
-  useStatus: 120,
+  useStatus: TABLE_COLUMN_WIDTHS.usage,
   registrant: 130,
   registeredAt: 200,
 } as const
@@ -61,36 +62,6 @@ const INITIAL_FILTERS: TextbookFilters = {
   businessArea: 'ALL',
   educationTarget: 'ALL',
   grade: 'ALL',
-}
-
-type FilterOption = { label: string; value: string }
-
-function gradeOptionsByEducationTarget(educationTarget: string): FilterOption[] {
-  const allOption = { label: '전체', value: 'ALL' }
-  const grade13 = ['1학년', '2학년', '3학년'].map(g => ({ label: g, value: g }))
-  const grade16 = ['1학년', '2학년', '3학년', '4학년', '5학년', '6학년'].map(g => ({
-    label: g,
-    value: g,
-  }))
-  switch (educationTarget) {
-    case '유아':
-      return [allOption, { label: '유아', value: '유아' }, { label: '유치원생', value: '유치원생' }]
-    case '초등학교':
-      return [{ label: '전학년', value: '전학년' }, ...grade16]
-    case '중학교':
-    case '고등학교':
-      return [{ label: '전학년', value: '전학년' }, ...grade13]
-    case '대학교':
-      return [allOption]
-    default:
-      return [
-        allOption,
-        { label: '유아', value: '유아' },
-        { label: '유치원생', value: '유치원생' },
-        { label: '전학년', value: '전학년' },
-        ...grade16,
-      ]
-  }
 }
 
 export default function TextbookPage() {
@@ -154,7 +125,7 @@ export default function TextbookPage() {
   const rows = listQuery.data ?? []
 
   const gradeOptions = useMemo(
-    () => gradeOptionsByEducationTarget(pendingFilters.educationTarget),
+    () => textbookFilterGradeOptions(pendingFilters.educationTarget),
     [pendingFilters.educationTarget]
   )
 
@@ -175,7 +146,7 @@ export default function TextbookPage() {
         key: 'textbookName',
         type: 'search',
         label: '교재명',
-        placeholder: '교재명',
+        placeholder: '교재명을 입력하세요',
         width: '20%',
       },
       {
@@ -240,7 +211,7 @@ export default function TextbookPage() {
       }
       const nextValue = (value ?? (key === 'textbookName' ? '' : 'ALL')) as string
       if (key === 'educationTarget') {
-        const nextGradeOptions = gradeOptionsByEducationTarget(nextValue).map(opt => opt.value)
+        const nextGradeOptions = textbookFilterGradeOptions(nextValue).map(opt => opt.value)
         const nextGrade = nextGradeOptions.includes(prev.grade) ? prev.grade : 'ALL'
         return {
           ...prev,
@@ -363,6 +334,7 @@ export default function TextbookPage() {
         dataIndex: 'useStatus',
         key: 'useStatus',
         width: TEXTBOOK_COL_WIDTH.useStatus,
+        className: CMS_TABLE_USAGE_COL_CLASS,
         align: 'center',
         render: (status: TextbookRow['useStatus']) => (status === 'USED' ? '사용' : '미사용'),
       },
@@ -399,7 +371,7 @@ export default function TextbookPage() {
         ellipsis: true,
       },
       {
-        title: '등록자',
+        title: '등록자명',
         dataIndex: 'registrant',
         key: 'registrant',
         width: TEXTBOOK_COL_WIDTH.registrant,
@@ -412,7 +384,7 @@ export default function TextbookPage() {
         key: 'registeredAt',
         width: TEXTBOOK_COL_WIDTH.registeredAt,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm'),
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
       },
     ],
     [filteredRows.length]

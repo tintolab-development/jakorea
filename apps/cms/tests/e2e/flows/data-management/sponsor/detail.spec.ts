@@ -39,7 +39,7 @@ test.describe('후원사 상세 LNB', () => {
 
     await sponsors.expectDetailOpen()
     await sponsors.expectBasicInfoFields()
-    await sponsors.expectNoHomepageLogoMemo()
+    await sponsors.expectHomepageFieldAndLogoBulk()
     await expect(page.getByText(SPONSOR_SEED_FOUNDATION).first()).toBeVisible()
 
     await sponsors.expectYearlyPanel({

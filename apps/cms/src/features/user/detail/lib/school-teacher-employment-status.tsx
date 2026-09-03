@@ -43,6 +43,13 @@ export function isSchoolTeacherEmploymentMutedStatus(
   return SCHOOL_TEACHER_EMPLOYMENT_MUTED_TEXT_STATUSES.has(status)
 }
 
+/** 휴직·전근 — 선택·행 클릭 비활성 (재직 현황 태그 변경은 가능) */
+export function isSchoolAffiliatedTeacherRowSelectable(
+  status: SchoolTeacherEmploymentStatus
+): boolean {
+  return !isSchoolTeacherEmploymentMutedStatus(status)
+}
+
 /** 뷰어는 배지를 유지하고 열기·변경만 차단한다. */
 export function requestSchoolTeacherEmploymentDropdownOpen(
   open: boolean,

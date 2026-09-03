@@ -6,7 +6,7 @@ import type { UjatEducationProgressVolunteerRow } from './types'
 
 const COL = {
   selection: 48,
-  no: 64,
+  no: 80,
   name: 120,
   grade: 100,
   region: 120,

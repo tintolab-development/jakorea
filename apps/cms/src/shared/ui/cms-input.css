@@ -31,7 +31,7 @@
 }
 
 .cms-input__required {
-  color: var(--color-red, #c32f4a);
+  color: var(--color-required-mark, var(--color-red, #ff4d4f));
   font-weight: 500;
   line-height: 150%;
 }

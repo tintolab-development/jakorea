@@ -229,8 +229,8 @@ const saveProgramRoles = (
 /**
  * ### 이 API가 하는 일
  * - 화면/운영에서 사용하는 구현 API
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/admin-roles/{roleCode}/permissions`
  *
@@ -283,8 +283,8 @@ const getRolePermissions = (
 /**
  * ### 이 API가 하는 일
  * - 화면/운영에서 사용하는 구현 API
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `PUT /api/admin/admin-roles/{roleCode}/permissions`
  *
@@ -449,8 +449,8 @@ const saveProgramRoles1 = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/users/{memberId}/privacy/unmask
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/{memberId}/privacy/unmask`
  *
@@ -506,8 +506,8 @@ const unmaskMemberPrivacy = (
 /**
  * ### 이 API가 하는 일
  * - 강사 회원 역할 상세 원문 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/{memberId}/instructor/privacy/unmask`
  *
@@ -618,8 +618,8 @@ const unmaskInstructorPrivacy = (
 /**
  * ### 이 API가 하는 일
  * - 개인 회원 역할 상세 원문 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/{memberId}/individual/privacy/unmask`
  *
@@ -675,8 +675,8 @@ const unmaskIndividualMemberPrivacy = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/users/{memberId}/delete
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/{memberId}/delete`
  *
@@ -788,8 +788,8 @@ const consentFilledDocument = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/comments`
  *
@@ -844,8 +844,8 @@ const listMemberComments = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/users/{memberId}/comments
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/{memberId}/comments`
  *
@@ -901,8 +901,8 @@ const createMemberComment = (
 /**
  * ### 이 API가 하는 일
  * - 학교·기관 회원 사전 등록
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/pre-register/school`
  *
@@ -958,8 +958,8 @@ const preRegisterSchool = (
 /**
  * ### 이 API가 하는 일
  * - 강사 회원 사전 등록
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/pre-register/instructor`
  *
@@ -1014,8 +1014,8 @@ const preRegisterInstructor = (
 /**
  * ### 이 API가 하는 일
  * - 개인 회원 사전 등록
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/pre-register/individual`
  *
@@ -1070,8 +1070,8 @@ const preRegisterIndividual = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/users/pre-register-conflicts/{conflictId}/resolve
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/pre-register-conflicts/{conflictId}/resolve`
  *
@@ -1450,8 +1450,8 @@ const bulkDelete1 = (
 /**
  * ### 이 API가 하는 일
  * - 강사 권한 신청 재검토 대기 전환
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: members-permission (`members-permission`)
  * - 호출 방식: `POST /api/admin/instructor-role-requests/{requestId}/reset-pending`
  *
@@ -1559,8 +1559,8 @@ const resendNotification = (
 /**
  * ### 이 API가 하는 일
  * - 강사 권한 신청 반려
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `POST /api/admin/instructor-role-requests/{requestId}/reject`
  *
@@ -1671,8 +1671,8 @@ const unmask = (
 /**
  * ### 이 API가 하는 일
  * - 강사 권한 신청 승인
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `POST /api/admin/instructor-role-requests/{requestId}/approve`
  *
@@ -1890,8 +1890,8 @@ const allocateCertificateSerial = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 승인 반려 건 재검토 대기 전환
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: members-permission (`members-permission`)
  * - 호출 방식: `POST /api/admin/admin-approval-requests/{adminAccountId}/reset-pending`
  *
@@ -1947,8 +1947,8 @@ const resetAdminApprovalToPending = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 승인 알림 재발송
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `POST /api/admin/admin-approval-requests/{adminAccountId}/resend-notification`
  *
@@ -2219,8 +2219,8 @@ const bulkApproveAdminApprovalRequests = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 목록 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/admin-accounts`
  *
@@ -2273,8 +2273,8 @@ const listAdmins = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 생성
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `POST /api/admin/admin-accounts`
  *
@@ -2330,7 +2330,7 @@ const createAdmin = (
  * ### 이 API가 하는 일
  * - 마스터 관리자 검증 후 관리자 계정 활성화 또는 반려
  * - API 분류: 시스템 진단/운영 검증 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: permission (`permission`)
  * - 호출 방식: `POST /api/admin/admin-accounts/{adminAccountId}/verify`
  *
@@ -2768,8 +2768,8 @@ const updateMemberBasicInfo = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `PATCH /api/admin/users/{memberId}/external-identifiers/{provider}`
  *
@@ -3262,8 +3262,8 @@ const changeAdminStatus = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 role 변경
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `PATCH /api/admin/admin-accounts/{adminAccountId}/role`
  *
@@ -3483,8 +3483,8 @@ const updateAdminBasicInfo = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users`
  *
@@ -3538,8 +3538,8 @@ const listMembers = (
 /**
  * ### 이 API가 하는 일
  * - 교사 회원 역할 상세 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/teacher`
  *
@@ -3592,8 +3592,8 @@ const getTeacherMemberDetail = (
 /**
  * ### 이 API가 하는 일
  * - 학교·기관 회원 상세 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/school`
  *
@@ -3753,8 +3753,8 @@ const getMemberPrivacyAvailableActions = (
 /**
  * ### 이 API가 하는 일
  * - 강사 회원 상세 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/instructor`
  *
@@ -3807,8 +3807,8 @@ const getInstructorMemberDetail = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/instructor-profile`
  *
@@ -3913,8 +3913,8 @@ const getInstructorPrivacyAvailableActions = (
 /**
  * ### 이 API가 하는 일
  * - 개인 회원 상세 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/individual`
  *
@@ -3967,8 +3967,8 @@ const getIndividualMemberDetail = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/external-identifiers`
  *
@@ -4021,8 +4021,8 @@ const externalIdentifiers = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/consent-records`
  *
@@ -4351,8 +4351,8 @@ const listAssignmentSubmissions = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/affiliated-teachers`
  *
@@ -4460,8 +4460,8 @@ const listMemberAdminPrograms = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 담당 역할 옵션 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: members-permission (`members-permission`)
  * - 호출 방식: `GET /api/admin/users/program-role-options`
  *
@@ -4515,8 +4515,8 @@ const listProgramRoleOptions = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/pre-register-conflicts`
  *
@@ -4727,8 +4727,8 @@ const listAllCmsMembersAndAdmins = (
 /**
  * ### 이 API가 하는 일
  * - 강사 권한 신청 목록 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/instructor-role-requests`
  *
@@ -4834,8 +4834,8 @@ const getDetail = (
 /**
  * ### 이 API가 하는 일
  * - 화면/운영에서 사용하는 구현 API
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/admin-roles`
  *
@@ -4888,8 +4888,8 @@ const listRoles = (
 /**
  * ### 이 API가 하는 일
  * - 화면/운영에서 사용하는 구현 API
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/admin-permissions`
  *
@@ -4943,8 +4943,8 @@ const listPermissions = (
 /**
  * ### 이 API가 하는 일
  * - 화면/운영에서 사용하는 구현 API
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/admin-permission-change-logs`
  *
@@ -5258,8 +5258,8 @@ const availableActions1 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 등록 약관·동의 이력 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/admin-accounts/{adminAccountId}/consent-records`
  *

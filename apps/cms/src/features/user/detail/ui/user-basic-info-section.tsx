@@ -8,7 +8,7 @@ import type { User, SchoolTeacherEmploymentStatus } from '@/types/user'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
-import { shouldShowCmsMemberInfoEditButton } from '@/features/user/shared/lib/admin-provisioned-member-policy'
+import { shouldShowCmsBasicProfileFieldsEdit } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { resolveBasicInfoLayout, type BasicInfoBodyKey } from './user-basic-info-layout-resolver'
 import { BasicInfoLayoutRenderer } from './user-basic-info-layout-renderer'
 import { AdminBasicInfoSection } from './user-basic-info/admin-basic-info-section'
@@ -89,7 +89,7 @@ export function UserBasicInfoSection({
     bodyKey: bodyKey as BasicInfoBodyKey,
     instructorProfile,
   })
-  const cmsMayEditBasicProfileFields = shouldShowCmsMemberInfoEditButton(user)
+  const cmsMayEditBasicProfileFields = shouldShowCmsBasicProfileFieldsEdit(user)
   const feeJaRestrictedEdit =
     memberInfoEditing && memberInfoEditScope === 'instructor_fee_ja'
   const detailInfoFormMode: 'view' | 'edit' = memberInfoEditing ? 'edit' : 'view'

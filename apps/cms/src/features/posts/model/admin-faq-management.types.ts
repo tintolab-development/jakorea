@@ -1,7 +1,7 @@
 import type { AdminPostsPendingDateRange } from '@/features/posts/lib/url-date-range-pending-sync'
 
 /** FAQ 관리 목록 — 필터 카드·URL 동기화용 */
-export type AdminFaqVisibilityFilter = 'ALL' | 'public' | 'private'
+export type AdminFaqVisibilityFilter = 'public' | 'private'
 
 /** 동적 카테고리 라벨(URL `af_cat`·필터 select와 동기화) */
 export type AdminFaqCategoryFilter = 'ALL' | string

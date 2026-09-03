@@ -53,7 +53,7 @@ detailed_programs_upsert
 | child | SSOT export | 건수 | 비고 |
 |-------|-------------|------|------|
 | `contacts` | `SPONSOR_DETAIL_SEED_CONTACTS` | 3 | lead 1 + assistant 2 |
-| `yearlyBusinesses` | `SPONSOR_DETAIL_SEED_YEARLY_BUSINESSES` | 1 | `donationAmount=91500000`, `beneficiaryCount=915` (시안 누적값) |
+| `yearlyBusinesses` | `SPONSOR_DETAIL_SEED_YEARLY_BUSINESSES` | 3 | 2026·2025·2024. 누적 후원금 109,150,000원. 누적 수혜자 카드는 프로그램 참여자 합 |
 | `programHistories` | `SPONSOR_DETAIL_SEED_PROGRAM_HISTORIES` | 8 | `participantType`: school / individual / **volunteer** |
 
 `programHistories[].programIdHint`는 FE mock 프로그램 id입니다. DB 프로그램 PK와 맞춰 링크하거나, 로컬 데모용으로 이력만 insert 하세요.
@@ -99,7 +99,7 @@ detailed_programs_upsert
 |---------|-------------|
 | `nameKo` / `nameEn` | `SponsorRequest` |
 | `organizationKind` | `corporate` \| `foundation` |
-| `sponsorshipStatus` | `active` \| `ended` |
+| `sponsorshipStatus` | `active` \| `discussing` \| `dormant` \| `ended` |
 | `sponsorshipStartDate` | ISO date |
 | `mainContact` | contacts child (주 담당자 1명) |
 
@@ -108,6 +108,13 @@ detailed_programs_upsert
 | payload | API/DB 힌트 |
 |---------|-------------|
 | `contacts[].contactType` | `lead` \| `assistant` |
+| `contacts[].department` / `position` | 부서 · 직함 |
+| `contacts[].officePhone` | 내선번호. 숫자만(`1234`) **또는** 하이픈 포함(`010-2222-2222`, `02-1234-5678`). 빈 값은 생략. 한글은 불가 |
+| `contacts[].phone` / `mobilePhone` | 연락처 |
+| `contacts[].email` | 이메일 |
+| `contacts[].companyAddress` | 회사 주소 |
+| `contacts[].memo` | 비고. 빈 값은 `""` |
+| `contacts[].registeredAt` | 등록일시. 없으면 `createdAt` |
 | `yearlyBusinesses[].donationAmount` | number |
 | `programHistories[].participantType` | `school` \| `individual` \| `volunteer` |
 | `programHistories[].lifecycleStatus` | planned / education_in_progress / education_completed |

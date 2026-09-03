@@ -1,8 +1,35 @@
 import type React from 'react'
 import { useCallback, useMemo, useState, type Key } from 'react'
+import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import { isValidSponsorOfficePhone } from '@/features/sponsor/model/sponsor-contact-register-schema'
 import type { SponsorContactRow } from '@/features/sponsor/model/sponsor-management.types'
 import type { SponsorContactRegisterPayload } from '@/features/sponsor/ui/modal/sponsor-contact-register-modal'
 import { normalizeSponsorContactsSingleLead } from '@/features/sponsor/utils/normalize-sponsor-contacts-single-lead'
+
+const CONTACT_EDITABLE_KEYS = [
+  'department',
+  'position',
+  'name',
+  'officePhone',
+  'phone',
+  'email',
+  'companyAddress',
+  'memo',
+] as const satisfies readonly (keyof SponsorContactRow)[]
+
+function contactEditableChanged(previous: SponsorContactRow, next: SponsorContactRow): boolean {
+  return CONTACT_EDITABLE_KEYS.some(key => previous[key] !== next[key])
+}
+
+function hasMissingRequiredContactFields(row: SponsorContactRow): boolean {
+  return !row.name.trim() || !row.phone.trim()
+}
+
+function hasInvalidContactPhoneFields(row: SponsorContactRow): boolean {
+  if (!isValidKoreanPhoneNumber(row.phone.trim())) return true
+  const officePhone = row.officePhone.trim()
+  return officePhone.length > 0 && !isValidSponsorOfficePhone(officePhone)
+}
 
 export interface UseSponsorContactsReturn {
   selectedKeys: Key[]
@@ -13,7 +40,15 @@ export interface UseSponsorContactsReturn {
   setRegisterModalOpen: (open: boolean) => void
   deleteModalOpen: boolean
   setDeleteModalOpen: (open: boolean) => void
+  typeChangeBlockedModalOpen: boolean
+  setTypeChangeBlockedModalOpen: (open: boolean) => void
   selectedNames: string[]
+  isEditing: boolean
+  isSavingEdits: boolean
+  draftRows: SponsorContactRow[]
+  startEdit: (rows: SponsorContactRow[]) => void
+  updateDraft: (rowId: string, patch: Partial<SponsorContactRow>) => void
+  saveEdits: () => Promise<'saved' | 'invalid' | 'invalid-format' | 'failed'>
   handleRegister: (payload: SponsorContactRegisterPayload) => void | Promise<void>
   handleDelete: () => void
   handleTypeChange: (rowId: string, nextType: SponsorContactRow['contactType']) => void
@@ -29,6 +64,7 @@ export type SponsorContactsRemoteActions = {
   ) => Promise<void>
   onDelete: (ids: string[]) => Promise<void>
   onTypeChange: (row: SponsorContactRow, nextType: SponsorContactRow['contactType']) => Promise<void>
+  onUpdate: (row: SponsorContactRow) => Promise<void>
 }
 
 export function useSponsorContacts(
@@ -41,6 +77,10 @@ export function useSponsorContacts(
   const [openDropdownId, setOpenDropdownIdState] = useState<string | null>(null)
   const [registerModalOpen, setRegisterModalOpenState] = useState(false)
   const [deleteModalOpen, setDeleteModalOpenState] = useState(false)
+  const [typeChangeBlockedModalOpen, setTypeChangeBlockedModalOpenState] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isSavingEdits, setIsSavingEdits] = useState(false)
+  const [draftRows, setDraftRows] = useState<SponsorContactRow[]>([])
 
   const setSelectedKeys = useCallback((keys: Key[]): void => {
     setSelectedKeysState(keys.map(k => String(k)))
@@ -58,6 +98,10 @@ export function useSponsorContacts(
     setDeleteModalOpenState(open)
   }, [])
 
+  const setTypeChangeBlockedModalOpen = useCallback((open: boolean): void => {
+    setTypeChangeBlockedModalOpenState(open)
+  }, [])
+
   const selectedNames = useMemo((): string[] => {
     if (selectedKeys.length === 0) return []
     const selectedSet = new Set(selectedKeys.map(key => String(key)))
@@ -70,12 +114,23 @@ export function useSponsorContacts(
       if (!row) return
       if (row.contactType === 'lead' && nextType === 'assistant') {
         const leadCount = contacts.filter(c => c.contactType === 'lead').length
-        if (leadCount <= 1) return
+        if (leadCount <= 1) {
+          setOpenDropdownId(null)
+          setTypeChangeBlockedModalOpenState(true)
+          return
+        }
       }
       if (remoteActions) {
         void remoteActions
           .onTypeChange(row, nextType)
-          .then(() => setOpenDropdownId(null))
+          .then(() => {
+            setDraftRows(prev =>
+              prev.map(contact =>
+                contact.id === rowId ? { ...contact, contactType: nextType } : contact
+              )
+            )
+            setOpenDropdownId(null)
+          })
           .catch(() => undefined)
         return
       }
@@ -93,6 +148,15 @@ export function useSponsorContacts(
         })
         return normalizeSponsorContactsSingleLead(mapped)
       })
+      setDraftRows(prev =>
+        prev.map(contact => {
+          if (contact.id === rowId) return { ...contact, contactType: nextType }
+          if (nextType === 'lead' && contact.contactType === 'lead') {
+            return { ...contact, contactType: 'assistant' as const }
+          }
+          return contact
+        })
+      )
       setOpenDropdownId(null)
     },
     [contacts, remoteActions, setContacts, setOpenDropdownId]
@@ -157,6 +221,49 @@ export function useSponsorContacts(
     setDeleteModalOpenState(false)
   }, [canWrite, remoteActions, selectedKeys, setContacts])
 
+  const startEdit = useCallback((rows: SponsorContactRow[]): void => {
+    if (!canWrite) return
+    setDraftRows(rows.map(row => ({ ...row })))
+    setIsEditing(true)
+  }, [canWrite])
+
+  const updateDraft = useCallback((rowId: string, patch: Partial<SponsorContactRow>): void => {
+    setDraftRows(prev => prev.map(row => (row.id === rowId ? { ...row, ...patch } : row)))
+  }, [])
+
+  const saveEdits = useCallback(async (): Promise<
+    'saved' | 'invalid' | 'invalid-format' | 'failed'
+  > => {
+    if (!canWrite || !isEditing) return 'saved'
+    if (draftRows.some(hasMissingRequiredContactFields)) return 'invalid'
+    if (draftRows.some(hasInvalidContactPhoneFields)) return 'invalid-format'
+    setIsSavingEdits(true)
+    try {
+      if (remoteActions) {
+        for (const row of draftRows) {
+          const previous = contacts.find(contact => contact.id === row.id)
+          if (!previous || !contactEditableChanged(previous, row)) continue
+          await remoteActions.onUpdate(row)
+        }
+      } else {
+        const draftById = new Map(draftRows.map(row => [row.id, row]))
+        setContacts(prev =>
+          prev.map(contact => {
+            const draft = draftById.get(contact.id)
+            return draft ? { ...contact, ...draft } : contact
+          })
+        )
+      }
+      setIsEditing(false)
+      setDraftRows([])
+      return 'saved'
+    } catch {
+      return 'failed'
+    } finally {
+      setIsSavingEdits(false)
+    }
+  }, [canWrite, contacts, draftRows, isEditing, remoteActions, setContacts])
+
   return {
     selectedKeys,
     setSelectedKeys,
@@ -166,7 +273,15 @@ export function useSponsorContacts(
     setRegisterModalOpen,
     deleteModalOpen,
     setDeleteModalOpen,
+    typeChangeBlockedModalOpen,
+    setTypeChangeBlockedModalOpen,
     selectedNames,
+    isEditing,
+    isSavingEdits,
+    draftRows,
+    startEdit,
+    updateDraft,
+    saveEdits,
     handleRegister,
     handleDelete,
     handleTypeChange,

@@ -29,7 +29,7 @@ export async function downloadCertificate(certificate: Certificate | { id: strin
       dayjs(certificate.issuedAt).toDate()
     )
 
-    downloadBlob(blob, filename)
+    await downloadBlob(blob, filename)
   } catch (error) {
     console.error('Failed to download certificate:', error)
     throw new Error('증빙 문서 다운로드 중 오류가 발생했습니다')

@@ -32,7 +32,7 @@ export function RegisterCompletePage() {
   const socialConnectPath = buildSocialConnectPath(params.redirect)
 
   return (
-    <AuthPageShell showLogo={false} cardClassName="auth-card--register-complete">
+    <AuthPageShell showLogo={false} cardClassName="auth-card--register-complete auth-card--register-signup-complete">
       <RegisterCompleteView
         onGoLogin={() => navigate(loginPath, { replace: true })}
         onConnectSocial={() => navigate(socialConnectPath, { replace: true })}

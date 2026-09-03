@@ -49,7 +49,7 @@ export async function downloadFormDocumentPdfFromPageElements(
 ): Promise<void> {
   const blob = await generateFormDocumentPdfBlobFromPageElements(pageElements)
   const normalizedFileName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`
-  downloadBlob(blob, normalizedFileName)
+  await downloadBlob(blob, normalizedFileName)
 }
 
 /** 컨테이너 하위의 `[data-form-document-pdf-page]` 노드를 위에서 아래 순으로 모은다 */

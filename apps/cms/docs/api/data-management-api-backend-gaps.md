@@ -4,7 +4,10 @@ CMS LNB **데이터 관리** 3화면(후원사·교재·세부 프로그램)의 
 프론트 연동 명세: [data-management-api-integration.md](./data-management-api-integration.md)  
 더미 시드: [data-management-dummy-seed-backend-request.md](./data-management-dummy-seed-backend-request.md)
 
-**작성일**: 2026-08-24 · **갱신**: 2026-08-26  
+**후원사 관리 API 수정(2026-09-03 UI 정렬 이후)는 [sponsor-management-api-backend-handoff.md](./sponsor-management-api-backend-handoff.md)를 SSOT로 본다.**  
+아래 표의 후원사 항목(B-2 누적 금액·상태 enum·홈페이지/로고 등)은 그 문서 기준으로 갱신됐다. 본 문서는 교재·세부 프로그램·공통 잔여와 이력 삭제(P0) 인덱스로 유지한다.
+
+**작성일**: 2026-08-24 · **갱신**: 2026-09-03  
 **OpenAPI**: `apps/cms/openapi/data-management.openapi.json`
 
 프론트는 목록 CRUD를 이미 호출합니다. 아래는 **스펙에 없는 API**, **있는 API의 계약 구멍**, **확인만 필요한 항목**입니다.
@@ -35,7 +38,7 @@ FE는 2026-08-26 Notion 정렬에서 **API로 가능한 UI만** 맞췄습니다.
 | 화면 | Notion 항목 | 조치 | Gap / 비고 |
 |------|-------------|------|------------|
 | 후원사 목록 | 누적 후원금·수혜자 컬럼 | BE 대기 | **P1** / **B-2** |
-| 후원사 목록 | 후원 상태 논의중·휴면 | 기획 확정 후 | **B§1** enum |
+| 후원사 목록 | 후원 상태 논의중·휴면 | **제품 GO 보류** — FE·BE 모두 `active`\|`ended`만. E2E 논의중/휴면 `toHaveCount(0)` | **B§1** · [BE 프롬프트 PD-DM-01](./product-deferred-and-hold-backend-cursor-prompt.md) |
 | 후원사 목록 | 주 담당자 연락처 | ~~취소~~ FE **제거 완료** | — |
 | 후원사 상세 | 홈페이지·로고·비고·로고 일괄 DL | BE 대기 | **P2** |
 | 후원사 상세 | 소재지 시군구 분리 | FE는 AddressSearch+상세 단일 유지 | 잔여 UX (요청 우선순위 낮음) |
@@ -112,10 +115,13 @@ FE는 2026-08-26 Notion 정렬에서 **API로 가능한 UI만** 맞췄습니다.
 
 ### 1. 후원 상태 enum
 
-`sponsorshipStatus`가 자유 문자열입니다. FE는 `active` / `ended`.  
-Notion은 진행 중 / 후원 종료 / **논의중 / 휴면**(노란 하이라이트).
+**현재 확정 (제품 GO 전):** FE·BE 모두 `active` | `ended`만.
+- BE: 그 외 → 400 `SPONSOR_SPONSORSHIP_STATUS_UNSUPPORTED`; `POST …/end` → `ended`(이미 ended면 no-op)
+- FE: 필터·배지·드롭다운 2종 · E2E 「후원 논의중」「후원 휴면」`toHaveCount(0)`
+- Notion 노란(논의중/휴면) · `discussing`/`dormant`는 **제품 GO 후** OpenAPI·시드·FE를 한꺼번에 추가
 
-허용값·목록 인라인 변경 규칙을 OpenAPI enum으로 적어 주세요. 논의중/휴면은 기획 확정 후 FE에 넣습니다.
+→ BE Cursor 통합 프롬프트:  
+[`product-deferred-and-hold-backend-cursor-prompt.md`](./product-deferred-and-hold-backend-cursor-prompt.md) (현재 확정 계약 · §1.1 GO 후 4종).
 
 ### 2. 구분 enum · 필터 키
 

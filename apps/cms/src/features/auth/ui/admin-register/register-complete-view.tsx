@@ -25,6 +25,7 @@ export function RegisterCompleteView({ onGoLogin, onConnectSocial }: RegisterCom
           </LoadingButton>
         </div>
       </div>
+      <div className="register-complete__trailing" aria-hidden />
     </div>
   )
 }

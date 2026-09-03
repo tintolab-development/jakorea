@@ -35,7 +35,7 @@ export function buildUjatEducationProgressInstitutionColumns(): ColumnsType<Ujat
       title: 'No',
       dataIndex: 'no',
       key: 'no',
-      width: 64,
+      width: 80,
       align: 'center',
     },
     {

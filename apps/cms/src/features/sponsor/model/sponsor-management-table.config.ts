@@ -3,9 +3,13 @@ import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { SponsorOrganizationKind, SponsorSponsorshipStatus } from '@/types/domain'
+import { parseSponsorSponsorshipStatusFilter } from '@/features/sponsor/model/sponsorship-status'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
-import { filterSponsorsBySponsorshipStartDateRange } from '@/features/sponsor/api/sponsor-filter-params'
+import {
+  filterSponsorsBySponsorshipStartDateRange,
+  writeSponsorshipStartDateRangeToSearchParams,
+} from '@/features/sponsor/api/sponsor-filter-params'
 import type {
   SponsorManagementDateRange,
   SponsorManagementPendingFilters,
@@ -19,8 +23,7 @@ function parseKind(raw: string | null): SponsorOrganizationKind {
 }
 
 function parseStatus(raw: string | null): 'ALL' | SponsorSponsorshipStatus {
-  if (raw === 'active' || raw === 'ended') return raw
-  return 'ALL'
+  return parseSponsorSponsorshipStatusFilter(raw)
 }
 
 function dayjsPairEqual(a: SponsorManagementDateRange, b: SponsorManagementDateRange): boolean {
@@ -48,9 +51,13 @@ function resolvePendingDateRangeFromUrl(args: {
   prev: SponsorManagementDateRange
 }): SponsorManagementDateRange {
   const { from, to, prev } = args
-  if (from && to) {
+  const fromKey = from?.trim() || null
+  const toKey = to?.trim() || null
+  if (fromKey || toKey) {
     urlDateRangeSyncState.hadCompleteInUrl = true
-    return [dayjs(from), dayjs(to)]
+    const start = dayjs(fromKey ?? toKey!)
+    const end = dayjs(toKey ?? fromKey!)
+    return [start, end]
   }
   if (urlDateRangeSyncState.hadCompleteInUrl) {
     urlDateRangeSyncState.hadCompleteInUrl = false
@@ -93,14 +100,10 @@ const searchSyncRules: readonly TableSearchParamRule<SponsorManagementPendingFil
   {
     kind: 'apply',
     apply: (nextParams, filters) => {
-      const range = filters.sponsorshipStartDateRange
-      if (range?.[0] && range?.[1]) {
-        nextParams.set('sp_from', range[0].format('YYYY-MM-DD'))
-        nextParams.set('sp_to', range[1].format('YYYY-MM-DD'))
-      } else {
-        nextParams.delete('sp_from')
-        nextParams.delete('sp_to')
-      }
+      writeSponsorshipStartDateRangeToSearchParams(
+        nextParams,
+        filters.sponsorshipStartDateRange
+      )
     },
   },
 ]

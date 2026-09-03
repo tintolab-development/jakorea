@@ -1,6 +1,7 @@
 /**
  * 첨부파일 다운로드 트리거
  * - fileUrl이 실제 리소스이면 링크로 시도, 아니면 placeholder blob으로 파일명만 맞춰 다운로드
+ * - 이력 기록 성공 후에만 저장
  */
 import { recordFileDownload } from '@/entities/download-log/api/download-log-service'
 import { guardAdminDownload } from '@/shared/lib/session-admin-role'
@@ -21,13 +22,13 @@ function readRuntimeAuthUser(): RuntimeAuthUser | null {
   }
 }
 
-function trackDownload(fileName: string) {
+async function trackDownload(fileName: string): Promise<void> {
   const user = readRuntimeAuthUser()
-  void recordFileDownload({
+  // ipAddress 생략 — 서버가 요청 IP를 기록
+  await recordFileDownload({
     fileName,
     userId: user?.id ?? 'unknown-user',
     userName: user?.name ?? '알 수 없음',
-    ipAddress: '14.128.xxx.xxx',
   })
 }
 
@@ -36,8 +37,10 @@ function trackDownload(fileName: string) {
  * @param fileName 저장할 파일명
  * @param fileUrl 다운로드 URL (없거나 mock이면 placeholder 내용으로 저장)
  */
-export function downloadFile(fileName: string, fileUrl?: string): void {
+export async function downloadFile(fileName: string, fileUrl?: string): Promise<void> {
   if (!guardAdminDownload()) return
+  await trackDownload(fileName)
+
   const isRealUrl =
     fileUrl &&
     (fileUrl.startsWith('http://') || fileUrl.startsWith('https://'))
@@ -51,7 +54,6 @@ export function downloadFile(fileName: string, fileUrl?: string): void {
     document.body.appendChild(a)
     a.click()
     a.remove()
-    trackDownload(fileName)
     return
   }
 
@@ -66,6 +68,4 @@ export function downloadFile(fileName: string, fileUrl?: string): void {
   a.click()
   a.remove()
   URL.revokeObjectURL(url)
-
-  trackDownload(fileName)
 }

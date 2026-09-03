@@ -78,15 +78,71 @@
 .cms-data-table col.ant-table-selection-col + col {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
 }
 
-/* No. 열: 컬럼 정의에 `className: CMS_TABLE_NO_COL_CLASS` — colgroup 미적용·CSS-in-JS 덮어쓰기 대비 */
+/*
+ * table-layout:fixed + width:100% 이면 남은 폭이 모든 지정 열에 분배되어 No.가 80을 넘는다.
+ * No. 이후 col을 auto로 두어 남는 폭을 흡수한다.
+ */
+.cms-data-table col.ant-table-selection-col + col ~ col {
+  width: auto !important;
+  max-width: none !important;
+}
+
+.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:first-child
+  ~ col {
+  width: auto !important;
+  max-width: none !important;
+}
+
+/*
+ * No. 열 공통 (Figma Auto Layout):
+ * display:flex · height:54px · width:80px · align-items:center · flex-shrink:0 · align-self:stretch
+ * td/th에 display:flex를 주면 table-cell 레이아웃이 깨지므로
+ * 고정 폭·높이 + flex-shrink:0 + vertical-align:middle 로 동일 시각을 맞춘다.
+ */
 .cms-data-table .ant-table-thead > tr > th.cms-table-col--no,
-.cms-data-table .ant-table-tbody > tr > td.cms-table-col--no {
+.cms-data-table .ant-table-tbody > tr > td.cms-table-col--no,
+.cms-data-table:not(.cms-data-table--skip-auto-no-col)
+  .ant-table-thead
+  > tr
+  > th.ant-table-selection-column
+  + th:not(.ant-table-cell-scrollbar),
+.cms-data-table:not(.cms-data-table--skip-auto-no-col)
+  .ant-table-tbody
+  > tr:not(.ant-table-measure-row)
+  > td.ant-table-selection-column
+  + td,
+.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+  .ant-table-thead
+  > tr
+  > th:first-child:not(.ant-table-cell-scrollbar),
+.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+  .ant-table-tbody
+  > tr:not(.ant-table-measure-row)
+  > td:first-child {
+  box-sizing: border-box !important;
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
+  height: 54px !important;
+  flex-shrink: 0;
+  align-self: stretch;
+  vertical-align: middle !important;
+}
+
+/* 사용 여부 열: `className: CMS_TABLE_USAGE_COL_CLASS` — 100px 고정 (시안 width 100 · padding 12×16) */
+.cms-data-table .ant-table-thead > tr > th.ant-table-cell.cms-table-col--usage,
+.cms-data-table .ant-table-tbody > tr > td.ant-table-cell.cms-table-col--usage {
+  width: var(--table-usage-column-width, 100px) !important;
+  min-width: var(--table-usage-column-width, 100px) !important;
+  max-width: var(--table-usage-column-width, 100px) !important;
   box-sizing: border-box !important;
+  padding: 12px 16px !important;
+  vertical-align: middle !important;
 }
 
 /*
@@ -98,6 +154,7 @@
   > col:first-child {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
 }
 
 .cms-data-table .ant-table-thead > tr > th.ant-table-cell:not(.ant-table-cell-scrollbar)::before {
@@ -178,6 +235,7 @@
 .detail-fullpage-modal .cms-data-table col.ant-table-selection-col + col {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
 }
 
 .detail-fullpage-modal .cms-data-table .ant-table-thead > tr > th.ant-table-cell.ant-table-selection-column,
@@ -191,11 +249,37 @@
 }
 
 .detail-fullpage-modal .cms-data-table .ant-table-thead > tr > th.cms-table-col--no,
-.detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td.cms-table-col--no {
+.detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td.cms-table-col--no,
+.detail-fullpage-modal
+  .cms-data-table:not(.cms-data-table--skip-auto-no-col)
+  .ant-table-thead
+  > tr
+  > th.ant-table-selection-column
+  + th:not(.ant-table-cell-scrollbar),
+.detail-fullpage-modal
+  .cms-data-table:not(.cms-data-table--skip-auto-no-col)
+  .ant-table-tbody
+  > tr:not(.ant-table-measure-row)
+  > td.ant-table-selection-column
+  + td,
+.detail-fullpage-modal
+  .cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+  .ant-table-thead
+  > tr
+  > th:first-child:not(.ant-table-cell-scrollbar),
+.detail-fullpage-modal
+  .cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+  .ant-table-tbody
+  > tr:not(.ant-table-measure-row)
+  > td:first-child {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
+  height: 54px !important;
   box-sizing: border-box !important;
+  flex-shrink: 0;
+  align-self: stretch;
+  vertical-align: middle !important;
 }
 
 .detail-fullpage-modal
@@ -204,6 +288,7 @@
   > col:first-child {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
 }
 
 .detail-fullpage-modal .ant-table-wrapper.cms-data-table col.ant-table-selection-col {
@@ -214,6 +299,7 @@
 .detail-fullpage-modal .ant-table-wrapper.cms-data-table col.ant-table-selection-col + col {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
 }
 
 .detail-fullpage-modal
@@ -243,11 +329,37 @@
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
   > tr
-  > td.cms-table-col--no {
+  > td.cms-table-col--no,
+.detail-fullpage-modal
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col)
+  .ant-table-thead
+  > tr
+  > th.ant-table-selection-column
+  + th:not(.ant-table-cell-scrollbar),
+.detail-fullpage-modal
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col)
+  .ant-table-tbody
+  > tr:not(.ant-table-measure-row)
+  > td.ant-table-selection-column
+  + td,
+.detail-fullpage-modal
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+  .ant-table-thead
+  > tr
+  > th:first-child:not(.ant-table-cell-scrollbar),
+.detail-fullpage-modal
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+  .ant-table-tbody
+  > tr:not(.ant-table-measure-row)
+  > td:first-child {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
+  height: 54px !important;
   box-sizing: border-box !important;
+  flex-shrink: 0;
+  align-self: stretch;
+  vertical-align: middle !important;
 }
 
 .detail-fullpage-modal
@@ -256,6 +368,7 @@
   > col:first-child {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
 }
 
 .detail-fullpage-modal
@@ -285,6 +398,17 @@
 .filter-table-layout .filter-table-layout__table .ant-table-wrapper.cms-data-table col.ant-table-selection-col + col {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
+}
+
+.filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  col.ant-table-selection-col
+  + col
+  ~ col {
+  width: auto !important;
+  max-width: none !important;
 }
 
 .filter-table-layout
@@ -318,11 +442,41 @@
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
   > tr
-  > td.cms-table-col--no {
+  > td.cms-table-col--no,
+.filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col)
+  .ant-table-thead
+  > tr
+  > th.ant-table-selection-column
+  + th:not(.ant-table-cell-scrollbar),
+.filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col)
+  .ant-table-tbody
+  > tr:not(.ant-table-measure-row)
+  > td.ant-table-selection-column
+  + td,
+.filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+  .ant-table-thead
+  > tr
+  > th:first-child:not(.ant-table-cell-scrollbar),
+.filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+  .ant-table-tbody
+  > tr:not(.ant-table-measure-row)
+  > td:first-child {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
+  height: 54px !important;
   box-sizing: border-box !important;
+  flex-shrink: 0;
+  align-self: stretch;
+  vertical-align: middle !important;
 }
 
 .filter-table-layout
@@ -332,6 +486,7 @@
   > col:first-child {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
 }
 
 .filter-table-layout

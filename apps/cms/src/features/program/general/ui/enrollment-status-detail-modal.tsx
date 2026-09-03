@@ -112,7 +112,7 @@ export function EnrollmentStatusDetailModal({
 
   const schoolColumns: ColumnsType<ApplicantSchoolRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: '6%', align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '참여 학교명',
         dataIndex: 'schoolName',

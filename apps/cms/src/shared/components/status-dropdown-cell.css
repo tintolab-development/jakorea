@@ -65,6 +65,10 @@
   box-shadow: none;
 }
 
+.status-dropdown-cell__status-trigger.status-dropdown-cell__status-trigger--readonly {
+  cursor: default;
+}
+
 /* 정산 현황(StatusBadge settlement) */
 .status-dropdown-cell__status-trigger .status-badge--variant-badge[class*='--settlement-'] {
   box-sizing: border-box;

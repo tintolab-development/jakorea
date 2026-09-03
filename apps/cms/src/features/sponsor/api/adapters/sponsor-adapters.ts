@@ -1,8 +1,10 @@
 import type {
   SponsorContactRow,
+  SponsorLogoFile,
   SponsorManagementDetailView,
   SponsorManagementRow,
   SponsorProgramHistoryRow,
+  SponsorRegisterPayload,
   SponsorYearlyBusinessRow,
 } from '@/features/sponsor/model/sponsor-management.types'
 import type { BasicInfoEditState } from '@/features/sponsor/ui/sponsor-detail-basic-info'
@@ -28,7 +30,8 @@ function parseOrganizationKind(value: string | undefined): SponsorOrganizationKi
 }
 
 function parseSponsorshipStatus(value: string | undefined): SponsorSponsorshipStatus {
-  return value === 'ended' ? 'ended' : 'active'
+  if (value === 'ended') return 'ended'
+  return 'active'
 }
 
 export function mapSponsorResponse(dto: SponsorResponse): SponsorManagementRow {
@@ -49,6 +52,10 @@ export function mapSponsorResponse(dto: SponsorResponse): SponsorManagementRow {
     sponsorshipStatus: parseSponsorshipStatus(dto.sponsorshipStatus),
     sponsorshipStartDate: dto.sponsorshipStartDate,
     programCount: Number(dto.programCount ?? 0),
+    totalDonationAmount: Number(dto.totalDonationAmount ?? 0),
+    totalBeneficiaryCount: Number(dto.totalBeneficiaryCount ?? 0),
+    homepageUrl: dto.homepageUrl?.trim() || undefined,
+    logoFileId: dto.logoFileId?.trim() || undefined,
   }
 }
 
@@ -196,6 +203,12 @@ export function mergeYearlyBusinessRows(
   return rows
 }
 
+function mapSponsorLogos(dto: Pick<SponsorDetailResponse, 'logoFileId'>): SponsorLogoFile[] {
+  const id = dto.logoFileId?.trim()
+  if (!id) return []
+  return [{ id, fileName: id.includes('.') ? id : '후원사 로고' }]
+}
+
 export function mapSponsorDetailResponse(dto: SponsorDetailResponse): SponsorManagementDetailView {
   const base = mapSponsorResponse(dto)
   return {
@@ -205,6 +218,8 @@ export function mapSponsorDetailResponse(dto: SponsorDetailResponse): SponsorMan
     businessNumber: dto.businessNumber ?? '',
     executives: dto.executives ?? '',
     address: dto.address ?? '',
+    homepageUrl: dto.homepageUrl ?? '',
+    logos: mapSponsorLogos(dto),
     contacts: (dto.contacts ?? []).map(mapSponsorContactResponse),
     programHistories: (dto.programHistories ?? []).map(mapProgramHistoryResponse),
     yearlyBusinesses: mergeYearlyBusinessRows(
@@ -214,27 +229,42 @@ export function mapSponsorDetailResponse(dto: SponsorDetailResponse): SponsorMan
   }
 }
 
-export function toSponsorRequestFromRegister(row: SponsorManagementRow): SponsorRequest {
+/** OpenAPI `SponsorRequest` + 응답에만 있는 홈페이지·로고 id (BE 수용 시 저장) */
+export type SponsorWriteRequest = SponsorRequest & {
+  homepageUrl?: string
+  logoFileId?: string
+}
+
+export function toSponsorRequestFromRegister(payload: SponsorRegisterPayload): SponsorWriteRequest {
+  const name = payload.nameDisplayKo.trim()
+  const nameEn = payload.nameDisplayEn.trim()
+  const address = [payload.district.trim(), payload.detailAddress.trim()].filter(Boolean).join(' ')
+  const homepageUrl = payload.homepageUrl.trim()
+  const securityMemo = payload.securityMemo.trim()
   return {
-    name: row.name,
-    nameEn: row.nameEn,
-    description: row.description,
-    contactInfo: row.contactInfo,
-    organizationKind: row.organizationKind,
-    sponsorshipStatus: row.sponsorshipStatus,
-    sponsorshipStartDate:
-      row.sponsorshipStartDate != null ? String(row.sponsorshipStartDate) : undefined,
-    managers: row.managers,
+    name,
+    nameEn: nameEn || undefined,
+    nameDisplayKo: name,
+    nameDisplayEn: nameEn || undefined,
+    businessNumber: payload.businessNumber.trim() || undefined,
+    executives: payload.executives.trim() || undefined,
+    address: address || undefined,
+    organizationKind: payload.organizationKind,
+    sponsorshipStatus: payload.sponsorshipStatus,
+    sponsorshipStartDate: payload.sponsorshipStartDate,
+    securityMemo: securityMemo || undefined,
+    homepageUrl: homepageUrl || undefined,
   }
 }
 
 export function toSponsorRequestFromBasicInfo(
   basicInfo: BasicInfoEditState,
   existing: SponsorManagementDetailView
-): SponsorRequest {
+): SponsorWriteRequest {
   const address = [basicInfo.district.trim(), basicInfo.detailAddress.trim()]
     .filter(Boolean)
     .join(' ')
+  const homepageUrl = basicInfo.homepageUrl.trim() || existing.homepageUrl
   return {
     name: basicInfo.nameDisplayKo.trim() || existing.name,
     nameEn: basicInfo.nameDisplayEn.trim() || existing.nameEn,
@@ -243,6 +273,7 @@ export function toSponsorRequestFromBasicInfo(
     businessNumber: basicInfo.businessNumber.trim() || existing.businessNumber,
     executives: basicInfo.executives.trim() || existing.executives,
     address: address || existing.address,
+    ...(homepageUrl ? { homepageUrl } : {}),
     description: existing.description,
     organizationKind: basicInfo.organizationKind,
     sponsorshipStatus: basicInfo.sponsorshipStatus,
@@ -254,8 +285,14 @@ export function toSponsorRequestFromBasicInfo(
           : undefined,
     managers: existing.managers,
     contactInfo: existing.contactInfo,
-    securityMemo: existing.securityMemo,
+    securityMemo: basicInfo.securityMemo.trim() || existing.securityMemo,
+    homepageUrl: basicInfo.homepageUrl.trim() || undefined,
   }
+}
+
+function optionalContactText(value: string | undefined): string | undefined {
+  const trimmed = value?.trim() ?? ''
+  return trimmed || undefined
 }
 
 export function toSponsorContactRequest(
@@ -264,13 +301,13 @@ export function toSponsorContactRequest(
 ): SponsorContactRequest {
   return {
     name: payload.name.trim(),
-    department: payload.department.trim(),
-    position: payload.position.trim(),
-    officePhone: payload.officePhone.trim(),
+    department: optionalContactText(payload.department),
+    position: optionalContactText(payload.position),
+    officePhone: optionalContactText(payload.officePhone),
     mobilePhone: payload.phone.trim(),
-    email: payload.email.trim(),
-    companyAddress: payload.companyAddress.trim(),
-    memo: payload.memo.trim(),
+    email: optionalContactText(payload.email),
+    companyAddress: optionalContactText(payload.companyAddress),
+    memo: optionalContactText(payload.memo),
     primary: contactType === 'lead',
     contactType,
   }
@@ -280,14 +317,14 @@ export function toSponsorContactUpdateRequest(
   row: SponsorContactRow
 ): SponsorContactRequest {
   return {
-    name: row.name,
-    department: row.department,
-    position: row.position,
-    officePhone: row.officePhone,
-    mobilePhone: row.phone,
-    email: row.email,
-    companyAddress: row.companyAddress,
-    memo: row.memo,
+    name: row.name.trim(),
+    department: optionalContactText(row.department),
+    position: optionalContactText(row.position),
+    officePhone: optionalContactText(row.officePhone),
+    mobilePhone: row.phone.trim(),
+    email: optionalContactText(row.email),
+    companyAddress: optionalContactText(row.companyAddress),
+    memo: optionalContactText(row.memo),
     primary: row.contactType === 'lead',
     contactType: row.contactType,
   }

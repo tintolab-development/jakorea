@@ -29,20 +29,20 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * ### 이 API가 하는 일
  * - 버그/이슈 이력 상태 변경
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 로그 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
  * - 호출 방식: `PATCH /api/admin/logs/system-issues/{issueId}/status`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: query/path/요청 본문 from 화면 필터
- * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
+ * - 응답 사용 위치: 버그/이슈 상태 변경(CMS UI 미연결)
  * - 프론트 조회 키: `patch_api_logs_system-issues_issueId_status`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: 라우트 준비 완료
  * - 외부 연동 확인: 외부 연동 대기 없음
  * - 스테이징 점검 기준: 기본 스모크 검증 대상
- * - 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.
+ * - 목데이터 대체: 04-4 행 클릭 액션 없음 — CMS 목록 UI 미연결(내부/운영용).
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
@@ -68,7 +68,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: CMS는 호출하지 않음
+ * - 검토 메모: 04-4 행 액션 없음·CMS UI 미연결
  * @summary 버그/이슈 이력 상태 변경
  */
 const updateSystemIssueStatus = (
@@ -85,21 +85,21 @@ const updateSystemIssueStatus = (
 
 /**
  * ### 이 API가 하는 일
- * - 버그/이슈 이력 목록 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 로그 관리 (`null`)
+ * - 버그/이슈 이력 조회
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
  * - 호출 방식: `GET /api/admin/logs/system-issues`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: userName/from/to/page/size
- * - 응답 사용 위치: 시스템 이슈 페이지 목록
+ * - 응답 사용 위치: 버그/이슈 이력 페이지 목록
  * - 프론트 조회 키: `get_api_logs_system-issues`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: 라우트 준비 완료
  * - 외부 연동 확인: 외부 연동 대기 없음
  * - 스테이징 점검 기준: 기본 스모크 검증 대상
- * - 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.
+ * - 목데이터 대체: 04-4 버그/이슈 이력: userName/from/to·발생화면 컬럼 삭제(취소선)·IP/보관클램프/BE export 없음. status·severity는 API 부가.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
@@ -125,8 +125,8 @@ const updateSystemIssueStatus = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: CMS 보안 설정 버그/이슈 목록
- * @summary 버그/이슈 이력 목록 조회
+ * - 검토 메모: 04-4 목록·발생화면 컬럼 삭제·IP/export 없음
+ * @summary 버그/이슈 이력 조회
  */
 const systemIssueLogs = (
     params: SystemIssueLogsParams,
@@ -141,20 +141,20 @@ const systemIssueLogs = (
 /**
  * ### 이 API가 하는 일
  * - 버그/이슈 이력 상세 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 로그 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
  * - 호출 방식: `GET /api/admin/logs/system-issues/{issueId}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: query/path/요청 본문 from 화면 필터
- * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
+ * - 응답 사용 위치: 버그/이슈 상세(CMS UI 미연결)
  * - 프론트 조회 키: `get_api_logs_system-issues_issueId`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: 라우트 준비 완료
  * - 외부 연동 확인: 외부 연동 대기 없음
  * - 스테이징 점검 기준: 기본 스모크 검증 대상
- * - 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.
+ * - 목데이터 대체: 04-4 행 클릭 액션 없음 — CMS 목록 UI 미연결(내부/운영용).
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
@@ -180,7 +180,7 @@ const systemIssueLogs = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: CMS는 호출하지 않음
+ * - 검토 메모: 04-4 행 액션 없음·CMS UI 미연결
  * @summary 버그/이슈 이력 상세 조회
  */
 const systemIssueDetail = (
@@ -195,8 +195,8 @@ const systemIssueDetail = (
 /**
  * ### 이 API가 하는 일
  * - 개인정보 조회 이력 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 로그 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
  * - 호출 방식: `GET /api/admin/logs/privacy-access`
  *
@@ -208,7 +208,7 @@ const systemIssueDetail = (
  * - 로컬/스테이징 준비도: 라우트 준비 완료
  * - 외부 연동 확인: 외부 연동 대기 없음
  * - 스테이징 점검 기준: 기본 스모크 검증 대상
- * - 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.
+ * - 목데이터 대체: 04-3 개인정보 조회 이력: UNMASKED_VIEW only·accessPurpose/accessorName/targetName·보관클램프/BE export 없음.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
@@ -234,7 +234,7 @@ const systemIssueDetail = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: CMS 보안 설정 개인정보 조회 이력(UNMASKED_VIEW)
+ * - 검토 메모: 04-3 UNMASKED_VIEW only·보관클램프/export 없음
  * @summary 개인정보 조회 이력 조회
  */
 const privacyAccessLogs = (
@@ -249,21 +249,21 @@ const privacyAccessLogs = (
 
 /**
  * ### 이 API가 하는 일
- * - 관리자 로그인 이력 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 로그 관리 (`null`)
+ * - 회원 로그인 이력 조회
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
  * - 호출 방식: `GET /api/admin/logs/member-logins`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: adminName/loginId/from/to/page/size
- * - 응답 사용 위치: 회원 관리자 로그인 이력 페이지 목록(최근 1개월)
+ * - 응답 사용 위치: 회원 로그인 이력 페이지 목록(CMS 관리자·최근 1개월)
  * - 프론트 조회 키: `get_api_logs_member-logins`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: 라우트 준비 완료
  * - 외부 연동 확인: 외부 연동 대기 없음
  * - 스테이징 점검 기준: 기본 스모크 검증 대상
- * - 목데이터 대체: Remove member-login mock fallback after FE switches to canonical endpoint.
+ * - 목데이터 대체: 04-1 회원 로그인 이력: CMS ADMIN 성공 로그인만·1개월·IP 원문·BE export 없음(FE client excel).
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
@@ -289,8 +289,8 @@ const privacyAccessLogs = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: CMS 보안 설정 로그인 이력(최근 1개월)
- * @summary 관리자 로그인 이력 조회
+ * - 검토 메모: 04-1 CMS 관리자 성공 로그인(최근 1개월·BE export 없음)
+ * @summary 회원 로그인 이력 조회
  */
 const memberLoginHistory = (
     params: MemberLoginHistoryParams,
@@ -305,8 +305,8 @@ const memberLoginHistory = (
 /**
  * ### 이 API가 하는 일
  * - 파일 다운로드 이력 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 로그 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
  * - 호출 방식: `GET /api/admin/logs/file-access`
  *
@@ -318,7 +318,7 @@ const memberLoginHistory = (
  * - 로컬/스테이징 준비도: 라우트 준비 완료
  * - 외부 연동 확인: 외부 연동 대기 없음
  * - 스테이징 점검 기준: 기본 스모크 검증 대상
- * - 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.
+ * - 목데이터 대체: 04-2 파일 다운로드 이력: SUCCESS download-family events·userName·IP 원문·보관클램프/BE export 없음.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
@@ -344,7 +344,7 @@ const memberLoginHistory = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: CMS 보안 설정 파일 다운로드 이력
+ * - 검토 메모: 04-2 SUCCESS download-family·보관클램프/export 없음
  * @summary 파일 다운로드 이력 조회
  */
 const fileAccessLogs = (

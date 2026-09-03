@@ -235,7 +235,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
     try {
       const state = get()
       // 상세 본문은 GET 응답만 사용 — 목록/store 힌트와 merge하지 않음
-      // remote: React Query ensureQueryData로 동일 member 재GET(탭 전환·StrictMode) 억제
+      // remote: 목록→상세 진입마다 fetchQuery로 상세 GET
       const user = isMembersRemoteEnabled()
         ? await fetchMemberDetailQuery(queryClient, userId, options)
         : await getUserById(userId, options)

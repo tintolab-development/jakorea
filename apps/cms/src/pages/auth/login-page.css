@@ -42,16 +42,25 @@
   margin-bottom: 16px;
 }
 
+.login-form .ant-form-item:has(+ .login-admin-approval-pending-notice) {
+  margin-bottom: 0;
+}
+
 .login-admin-approval-pending-notice {
   display: flex;
   padding: var(--Spacing-8, 8px) var(--Spacing-12, 12px);
   align-items: center;
   gap: var(--Spacing-4, 4px);
   align-self: stretch;
-  margin-bottom: 16px;
+  margin-top: 40px;
+  margin-bottom: 8px;
   border-radius: var(--8, 8px);
   border: 1px solid var(--Color-border-error-light, #fcd7d7);
   background: var(--Color-status-error-bg, rgba(252, 215, 215, 0.4));
+}
+
+.login-admin-approval-pending-notice + .login-submit-actions .login-submit-btn {
+  margin-top: 0;
 }
 
 .login-admin-approval-pending-notice__icon {

@@ -36,7 +36,7 @@ export function EnrollmentStatusTable({ data, loading }: EnrollmentStatusTablePr
     {
       title: 'No.',
       key: 'index',
-      width: 64,
+      width: 80,
       align: 'center',
       render: (_: unknown, __: Program, index: number) => index + 1,
     },

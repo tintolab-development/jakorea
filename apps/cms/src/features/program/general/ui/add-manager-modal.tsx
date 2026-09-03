@@ -116,12 +116,7 @@ export function AddManagerModal({
 
   const footer = (
     <>
-      <CmsButton
-        variant="secondary"
-        size="large"
-        onClick={handleCancel}
-        disabled={confirmLoading}
-      >
+      <CmsButton variant="secondary" size="large" onClick={handleCancel} disabled={confirmLoading}>
         취소
       </CmsButton>
       <CmsButton
@@ -172,11 +167,7 @@ export function AddManagerModal({
               </CmsRadio.Group>
             </Form.Item>
 
-            <Form.Item
-              name="managerPreset"
-              label="담당자명"
-              className="add-manager-modal__field"
-            >
+            <Form.Item name="managerPreset" label="담당자명" className="add-manager-modal__field">
               <Select
                 placeholder="담당자를 선택하세요"
                 size="large"

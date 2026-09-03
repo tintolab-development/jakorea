@@ -35,7 +35,8 @@ Notion **메일 발송 이력**은 기획 보류이며 OpenAPI에 없습니다.
 |------|-----------|------|
 | **P0** | `GET /api/admin/logs/member-logins` **구현·스테이징 200** + **1개월 서버 파기** | OpenAPI·FE 배선 완료. 404면 CMS가 빈 mock이 아니라 에러를 보여 줌 |
 | **P0** | 목록 query `params` 가방 **required 제거**, 플랫 키만 바인딩 | FE는 `?fileName=` `?adminName=` 만 보냄 |
-| **P0** | 파일 다운로드 API가 `file-access` 행을 **자동 적재** | CMS는 POST하지 않음. 적재 없으면 빈 목록 |
+| **P0** | 파일 다운로드 API가 `file-access` 행을 **자동 적재** | 서버 relay/export 성공 시. CMS는 GET path에 POST하지 않음 |
+| **P0** | `POST /api/admin/logs/file-access/client` | FE blob(엑셀·지급조서 등) 저장 직전 감사. **동일 저장소** insert. 상세: [client-file-access-log-backend-handoff.md](./client-file-access-log-backend-handoff.md) |
 | **P0** | unmask 성공 시 `privacy-access` 감사 + `targetName` | 조회 대상 컬럼. 경로 `/api/admin/users/{id}/privacy/unmask` |
 | P1 | 네 목록 GET을 **Page 응답**으로 바꾸거나 `page`, `size`, `total` 추가 | 현재 무한 배열. 로그 적재 시 화면이 전체를 받음 |
 | P1 | `GET /api/admin/logs/{file-access\|privacy-access\|system-issues\|member-logins}/export` (필터 동일, **감사 fail-closed**) | 지금은 클라 테이블 dump. 개인정보·IP 포함 |
@@ -44,7 +45,7 @@ Notion **메일 발송 이력**은 기획 보류이며 OpenAPI에 없습니다.
 
 **요청하지 않는 것**
 
-- `POST /logs/file-access` — 실제 파일 다운로드 시 서버가 기록하는 쪽이 맞음. CMS는 조회 전용.
+- `POST /api/admin/logs/file-access` (**GET과 동일 path**) — 목록 GET 전용. 스테이징 405. 클라이언트 적재는 `/file-access/client`만.
 - `POST /logs/privacy-access` — 회원 unmask API가 이미 감사 생성.
 - 대시보드 `GET /api/admin/dashboard/log-alerts` — v9에서 삭제됨, 로그 LNB 아님.
 

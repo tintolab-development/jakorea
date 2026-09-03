@@ -15,7 +15,7 @@ export function mapDetailedProgramResponse(dto: DetailedProgramResponse): Detail
     active: dto.useYn ?? true,
     createdBy: dto.createdByName?.trim() || (dto.createdByAdminId != null ? String(dto.createdByAdminId) : '-'),
     createdAt: dto.createdAt ?? '',
-    inUse: false,
+    inUse: dto.inUse ?? false,
   }
 }
 
@@ -35,6 +35,17 @@ export function toDetailedProgramRequest(input: {
     nameKo: input.name.trim(),
     nameEn: input.nameEn?.trim() ?? '',
     businessArea: input.businessArea?.trim() || DEFAULT_DETAILED_PROGRAM_BUSINESS_AREA,
+    useYn: input.active,
+  }
+}
+
+/** PATCH는 nameKo·useYn만 갱신. nameEn/businessArea는 보내도 BE가 무시한다. */
+export function toDetailedProgramPatchRequest(input: {
+  name: string
+  active: boolean
+}): DetailedProgramRequest {
+  return {
+    nameKo: input.name.trim(),
     useYn: input.active,
   }
 }

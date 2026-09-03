@@ -6,6 +6,7 @@ import {
   applyMemberLoginRetentionFromFilter,
   clampMemberLoginLogsFromParam,
   filterMemberLoginLogsByRetention,
+  isMemberLoginHistoryDateDisabled,
   isMemberLoginLogWithinRetention,
   memberLoginRetentionCutoff,
 } from './member-login-retention'
@@ -65,5 +66,13 @@ describe('member-login-retention', () => {
     expect(
       applyMemberLoginRetentionFromFilter({ from: '2025-01-01' }, now)
     ).toEqual({ from: memberLoginRetentionCutoff(now).format('YYYY-MM-DD') })
+  })
+
+  it('disables dates outside the one-month retention window for the filter picker', () => {
+    const cutoff = memberLoginRetentionCutoff(now)
+    expect(isMemberLoginHistoryDateDisabled(cutoff, now)).toBe(false)
+    expect(isMemberLoginHistoryDateDisabled(cutoff.subtract(1, 'day'), now)).toBe(true)
+    expect(isMemberLoginHistoryDateDisabled(now, now)).toBe(false)
+    expect(isMemberLoginHistoryDateDisabled(now.add(1, 'day'), now)).toBe(true)
   })
 })

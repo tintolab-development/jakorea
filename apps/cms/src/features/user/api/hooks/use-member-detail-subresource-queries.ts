@@ -41,7 +41,7 @@ const MEMBER_DETAIL_LIST_SIZE = 50
 const MEMBER_DETAIL_SUBRESOURCE_STALE_MS = 30_000
 
 type MemberDetailSubresourceQueryOptions = {
-  /** true면 useQuery 자동 fetch 비활성 — 탭 진입 effect에서 ensureQueryData로 1회만 호출 */
+  /** true면 useQuery 자동 fetch 비활성 — 탭 진입 effect에서 fetch helper로 호출 */
   manualFetch?: boolean
 }
 
@@ -175,15 +175,16 @@ export function memberCommentsQueryOptions(
   })
 }
 
-export function fetchMemberCommentsQuery(
+/** 상세 정보 탭 진입 — staleTime 안이어도 comments를 다시 GET */
+export async function fetchMemberCommentsQuery(
   queryClient: QueryClient,
   resourceId: number,
   screenCode = MEMBER_DETAIL_SCREEN_CODE,
   target: AdminCommentResourceTarget = 'member'
 ) {
-  return queryClient.ensureQueryData(
-    memberCommentsQueryOptions(resourceId, screenCode, target)
-  )
+  const query = memberCommentsQueryOptions(resourceId, screenCode, target)
+  await queryClient.invalidateQueries({ queryKey: query.queryKey, refetchType: 'none' })
+  return queryClient.fetchQuery(query)
 }
 
 export function useMemberCommentsQuery(
@@ -224,12 +225,14 @@ export function affiliatedTeachersQueryOptions(params: {
 }
 
 /** 학교 소속 교사 — `organizationId` 우선, 없으면 legacy `memberId` affiliated-teachers */
-export function fetchAffiliatedTeachersQuery(
+export async function fetchAffiliatedTeachersQuery(
   queryClient: QueryClient,
   params: { memberId?: number; organizationId?: number }
 ) {
   if (params.organizationId != null || params.memberId != null) {
-    return queryClient.ensureQueryData(affiliatedTeachersQueryOptions(params))
+    const query = affiliatedTeachersQueryOptions(params)
+    await queryClient.invalidateQueries({ queryKey: query.queryKey, refetchType: 'none' })
+    return queryClient.fetchQuery(query)
   }
   return Promise.resolve([] as SchoolAffiliatedTeacherRow[])
 }

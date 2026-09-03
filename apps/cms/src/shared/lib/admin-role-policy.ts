@@ -5,6 +5,7 @@
 
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import type { AdminLevel, AdminRoleCode, User } from '@/types/user'
+import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
 
 export type { AdminRoleCode }
 
@@ -31,7 +32,7 @@ export const ADMIN_ACCESS_DENIED_ALERT_CONTENT =
 
 export function isAdminAccessDeniedAlert(options: {
   title?: string
-  content?: string
+  content?: unknown
 }): boolean {
   return (
     options.title === ADMIN_ACCESS_DENIED_ALERT_TITLE &&
@@ -102,14 +103,19 @@ export function isSecurityLogPath(pathname: string): boolean {
   return SECURITY_LOG_PATHS.some(path => normalized === path || normalized.startsWith(`${path}/`))
 }
 
+export function isPermissionSettingsPath(pathname: string): boolean {
+  const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
+  return (
+    normalized === '/admin/settings/permissions' ||
+    normalized.startsWith('/admin/settings/permissions/')
+  )
+}
+
 export function resolveAdminPolicyScreen(pathname: string | undefined): AdminPolicyScreen {
   if (!pathname) return 'default'
   const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
   if (isSecurityLogPath(normalized)) return 'security-logs'
-  if (
-    normalized === '/admin/settings/permissions' ||
-    normalized.startsWith('/admin/settings/permissions/')
-  ) {
+  if (isPermissionSettingsPath(normalized)) {
     return 'permission-settings'
   }
   return 'default'
@@ -125,12 +131,16 @@ export function canAdminAction(input: {
   const screen = input.screen ?? resolveAdminPolicyScreen(input.pathname)
 
   if (roleCode == null) {
-    return input.action === 'view' && screen !== 'security-logs'
+    return (
+      input.action === 'view' && screen !== 'security-logs' && screen !== 'permission-settings'
+    )
   }
 
   switch (input.action) {
     case 'view':
       if (screen === 'security-logs') return roleCode === 'MASTER'
+      // 관리자 권한 설정: 뷰어는 화면 조회 자체 불가 (메뉴 클릭 시 권한 없음 모달)
+      if (screen === 'permission-settings') return roleCode !== 'VIEWER'
       return true
     case 'write':
     case 'delete':
@@ -151,6 +161,7 @@ export function canAdminAction(input: {
 }
 
 export function showAdminAccessDeniedAlert(): void {
+  if (isAdminFirstLoginOnboardingIncomplete()) return
   cmsAlertModal.show({
     title: ADMIN_ACCESS_DENIED_ALERT_TITLE,
     content: ADMIN_ACCESS_DENIED_ALERT_CONTENT,

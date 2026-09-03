@@ -1,6 +1,6 @@
 /**
  * 실적 관리 목록 테이블 컬럼 정의 (AntD)
- * - 32개 컬럼 (기존 33개 중 `상태` 제외)
+ * - 33개 컬럼 (노션: 취약계층 학생 포함, `상태` 제외)
  * - 모든 셀은 **plain text** 렌더 (Tag/Tooltip/strong 래퍼 제거)
  * - 텍스트 정렬/컬러/폰트 스펙은 `education-record-list-page.css` 에서 일괄 적용
  * - 컬럼 width 는 대표 컨텐츠 길이가 잘리지 않도록 넉넉히 산정
@@ -269,7 +269,7 @@ export function createEducationRecordColumns(): ColumnsType<EducationRecordRow> 
       render: (value?: number) => value ?? '-',
     },
     {
-      title: '일반담당교사',
+      title: '일반 담당교사',
       dataIndex: 'generalTeachers',
       key: 'generalTeachers',
       width: 140,
@@ -277,7 +277,7 @@ export function createEducationRecordColumns(): ColumnsType<EducationRecordRow> 
       render: (value?: number) => value ?? '-',
     },
     {
-      title: '교육받은교사',
+      title: '교육받은 교사',
       dataIndex: 'educatedTeachers',
       key: 'educatedTeachers',
       width: 140,
@@ -289,6 +289,14 @@ export function createEducationRecordColumns(): ColumnsType<EducationRecordRow> 
       dataIndex: 'instructors',
       key: 'instructors',
       width: 90,
+      align: 'center',
+      render: (value?: number) => value ?? '-',
+    },
+    {
+      title: '취약계층 학생',
+      dataIndex: 'vulnerableStudents',
+      key: 'vulnerableStudents',
+      width: 140,
       align: 'center',
       render: (value?: number) => value ?? '-',
     },

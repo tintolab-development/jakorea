@@ -378,7 +378,7 @@ export function ParticipatingInstructorFullpageView({
 
   const assignedSchoolColumns: ColumnsType<InstructorAssignedSchoolRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '역할',
         dataIndex: 'role',
@@ -534,7 +534,7 @@ export function ParticipatingInstructorFullpageView({
 
   const waitingSchoolColumns: ColumnsType<InstructorWaitingSchoolRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       { title: '기관명', dataIndex: 'schoolName', key: 'schoolName', width: 140 },
       {
         title: '희망 학년',

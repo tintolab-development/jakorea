@@ -6,9 +6,8 @@
 /** 폼 제출 — 필수 항목 미완 시 AlertModal 제목 (회원 신규 등록과 동일) */
 export const REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = '필수 항목 미입력'
 
-/** 폼 제출 — 필수 항목 미완 시 AlertModal 본문 (필드명 미안내) */
-export const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE =
-  '필수 항목이 모두 입력되지 않았습니다.\n* 표시된 필수 항목을 모두 작성해주세요'
+/** 폼 제출 — 필수 항목 미완 시 AlertModal 본문 (`*` 빨간색). 필드명 미안내 */
+export { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from './required-fields-incomplete-alert-message'
 
 /** 회원 신규 등록 — 약관·동의 미완료 시 AlertModal 본문 */
 export const REQUIRED_TERMS_AGREEMENT_ALERT_MESSAGE = '필수 약관에 동의해주세요'

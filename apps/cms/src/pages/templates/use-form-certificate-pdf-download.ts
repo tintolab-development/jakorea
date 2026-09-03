@@ -47,7 +47,7 @@ export function useFormCertificatePdfDownload({
         })
         const fileName = buildFilename()
         if (beforeSave) await beforeSave(fileName)
-        downloadBlob(blob, fileName)
+        await downloadBlob(blob, fileName, { skipAccessLog: Boolean(beforeSave) })
       } finally {
         isGeneratingRef.current = false
         setIsDownloading(false)

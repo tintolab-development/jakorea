@@ -148,7 +148,7 @@ function MemberConsentCrimeDocumentView({
       const res = await fetch(displaySrc)
       if (!res.ok) throw new Error('fetch failed')
       const blob = await res.blob()
-      downloadBlob(blob, filename)
+      await downloadBlob(blob, filename)
     } catch (error) {
       console.debug('memberConsentCrimeView download failed', error)
     }

@@ -1,0 +1,56 @@
+.yearly-business-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.yearly-business-panel__summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+}
+
+.yearly-business-panel__summary-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 24px;
+  border-radius: 12px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.yearly-business-panel__summary-label {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.yearly-business-panel__summary-value {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 32px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+}
+.yearly-business-panel__summary-value-unit {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 165%; /* 29.7px */
+}
+
+@media (max-width: 768px) {
+  .yearly-business-panel__summary {
+    grid-template-columns: 1fr;
+  }
+}

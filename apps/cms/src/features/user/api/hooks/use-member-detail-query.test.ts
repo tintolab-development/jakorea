@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { QueryClient } from '@tanstack/react-query'
-import { memberDetailQueryOptions } from './use-member-detail-query'
+import { fetchMemberDetailQuery, memberDetailQueryOptions } from './use-member-detail-query'
 
 const fetchTeacherMemberDetailRemote = vi.fn()
 const fetchInstructorMemberDetailRemote = vi.fn()
@@ -127,5 +127,28 @@ describe('memberDetailQueryKey cache identity', () => {
       organizationId: 171601,
     })
     expect(fromList.queryKey).toEqual(fromCanonical.queryKey)
+  })
+})
+
+describe('fetchMemberDetailQuery', () => {
+  it('목록→상세 진입은 캐시가 있어도 상세 GET을 다시 친다', async () => {
+    fetchInstructorMemberDetailRemote.mockClear()
+    fetchMemberExternalIdentifiersRemote.mockClear()
+    fetchInstructorMemberDetailRemote.mockResolvedValue({ member: { memberId: 99 } })
+    fetchMemberExternalIdentifiersRemote.mockResolvedValue([])
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+    const options = {
+      role: 'INSTRUCTOR' as const,
+      memberId: 99,
+      instructorMemberProfile: 'instructor_dual' as const,
+    }
+
+    await fetchMemberDetailQuery(queryClient, 'member-99', options)
+    await fetchMemberDetailQuery(queryClient, 'member-99', options)
+
+    expect(fetchInstructorMemberDetailRemote).toHaveBeenCalledTimes(2)
   })
 })

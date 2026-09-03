@@ -98,6 +98,53 @@ export type UserListStoreFilters = Partial<{
   adminPermissionVariant?: AdminPermissionTagVariant
 }>
 
+type CreatedAtPendingRange = [Dayjs | null, Dayjs | null] | null | undefined
+
+/**
+ * pending 가입/등록 시기 → YYYY-MM-DD from/to.
+ * 시작·종료 중 한쪽만 있으면 그날 하루로 미러 (조회 시 URL·API가 안 나가는 것 방지).
+ */
+export function createdAtBoundsFromPendingRange(
+  range: CreatedAtPendingRange
+): { from?: string; to?: string } {
+  const start = range?.[0] ?? null
+  const end = range?.[1] ?? null
+  if (start == null && end == null) return {}
+  const fromDay = start ?? end
+  const toDay = end ?? start
+  return {
+    from: fromDay!.format('YYYY-MM-DD'),
+    to: toDay!.format('YYYY-MM-DD'),
+  }
+}
+
+/** URL `createdAtFrom`/`createdAtTo` → API bounds (한쪽만 있으면 미러). */
+export function createdAtBoundsFromUrlParams(
+  from: string | undefined,
+  to: string | undefined
+): { from?: string; to?: string } {
+  const fromKey = from?.trim() || undefined
+  const toKey = to?.trim() || undefined
+  if (!fromKey && !toKey) return {}
+  return {
+    from: fromKey ?? toKey,
+    to: toKey ?? fromKey,
+  }
+}
+
+/** URL → dateRange 피커 pending (한쪽만 있어도 `[day, day]`). */
+export function createdAtRangeFromUrlParams(
+  from: string | undefined,
+  to: string | undefined
+): [Dayjs | null, Dayjs | null] | null {
+  const bounds = createdAtBoundsFromUrlParams(from, to)
+  if (!bounds.from || !bounds.to) return null
+  const start = dayjs(bounds.from)
+  const end = dayjs(bounds.to)
+  if (!start.isValid() || !end.isValid()) return null
+  return [start, end]
+}
+
 export function parseUserListQueryParams(searchParams: URLSearchParams): UserListQueryParams {
   const o: UserListQueryParams = {} as UserListQueryParams
   searchParams.forEach((value, key) => {
@@ -193,10 +240,9 @@ export function pendingToApiFilters(
       api.adminPermissionVariant = v
     }
   }
-  if (pending.createdAtRange?.[0] && pending.createdAtRange[1]) {
-    api.createdAtFrom = pending.createdAtRange[0].format('YYYY-MM-DD')
-    api.createdAtTo = pending.createdAtRange[1].format('YYYY-MM-DD')
-  }
+  const createdAt = createdAtBoundsFromPendingRange(pending.createdAtRange)
+  if (createdAt.from) api.createdAtFrom = createdAt.from
+  if (createdAt.to) api.createdAtTo = createdAt.to
   return api
 }
 
@@ -204,12 +250,9 @@ export function buildListQueryApiFilters(params: UserListQueryParams): UserListA
   const kind = normalizeMemberListKind(params.kind)
   const api: UserListApiFilters = {}
   if (params.search) api.search = params.search
-  const from = params.createdAtFrom
-  const to = params.createdAtTo
-  if (from && to) {
-    api.createdAtFrom = from
-    api.createdAtTo = to
-  }
+  const createdAt = createdAtBoundsFromUrlParams(params.createdAtFrom, params.createdAtTo)
+  if (createdAt.from) api.createdAtFrom = createdAt.from
+  if (createdAt.to) api.createdAtTo = createdAt.to
   if (kind === 'institutions') {
     const { institutionSido, institutionSigungu } = parseInstitutionRegionFromUserListParams(params)
     if (institutionSido) api.regionSido = institutionSido
@@ -250,14 +293,7 @@ export function buildListQueryApiFilters(params: UserListQueryParams): UserListA
 }
 
 export function userListPendingFiltersFromParams(params: UserListQueryParams): UserListPendingFilters {
-  const from = params.createdAtFrom
-  const to = params.createdAtTo
-  let createdAtRange: [Dayjs | null, Dayjs | null] | null = null
-  if (from && to) {
-    const start = dayjs(from)
-    const end = dayjs(to)
-    if (start.isValid() && end.isValid()) createdAtRange = [start, end]
-  }
+  const createdAtRange = createdAtRangeFromUrlParams(params.createdAtFrom, params.createdAtTo)
   const kind = normalizeMemberListKind(params.kind)
   const region =
     kind === 'institutions' ? parseInstitutionRegionFromUserListParams(params) : { institutionSido: '', institutionSigungu: '' }
@@ -338,9 +374,10 @@ export function applyUserListSearchToParams(
     nextParams.delete('adminPermissionVariant')
   }
 
-  if (filters.createdAtRange?.[0] && filters.createdAtRange[1]) {
-    nextParams.set('createdAtFrom', filters.createdAtRange[0].format('YYYY-MM-DD'))
-    nextParams.set('createdAtTo', filters.createdAtRange[1].format('YYYY-MM-DD'))
+  const createdAt = createdAtBoundsFromPendingRange(filters.createdAtRange)
+  if (createdAt.from && createdAt.to) {
+    nextParams.set('createdAtFrom', createdAt.from)
+    nextParams.set('createdAtTo', createdAt.to)
   } else {
     nextParams.delete('createdAtFrom')
     nextParams.delete('createdAtTo')

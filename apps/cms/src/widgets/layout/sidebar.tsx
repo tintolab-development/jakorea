@@ -14,6 +14,7 @@ import {
 } from '@/shared/config/member-list-kinds'
 import {
   canAdminAction,
+  isPermissionSettingsPath,
   isSecurityLogPath,
   showAdminAccessDeniedAlert,
 } from '@/shared/lib/admin-role-policy'
@@ -152,9 +153,6 @@ export function Sidebar() {
     }
 
     if (user?.role === 'ADMIN' && path.startsWith('/templates/')) {
-      if (path.startsWith('/templates/form-test/')) {
-        return ['/templates/form-management']
-      }
       if (path.startsWith('/templates/form-management')) {
         return ['/templates/form-management']
       }
@@ -200,6 +198,13 @@ export function Sidebar() {
             if (
               isSecurityLogPath(key) &&
               !canAdminAction({ roleCode, action: 'view', screen: 'security-logs' })
+            ) {
+              showAdminAccessDeniedAlert()
+              return
+            }
+            if (
+              isPermissionSettingsPath(key) &&
+              !canAdminAction({ roleCode, action: 'view', screen: 'permission-settings' })
             ) {
               showAdminAccessDeniedAlert()
               return

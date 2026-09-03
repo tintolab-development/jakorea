@@ -1,5 +1,6 @@
 import type { ColumnsType } from 'antd/es/table'
 import type { SponsorProgramHistoryRow } from '@/features/sponsor/model/sponsor-management.types'
+import { parseProgramParticipantCount } from '@/features/sponsor/lib/program-participant-count'
 import { StatusBadge } from '@/shared/components/status-badge'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { getEnrollmentDisplayStatusFromProgramLifecycle } from '@/shared/constants/status'
@@ -64,14 +65,6 @@ export function buildProgramHistoryColumns(
       ),
     },
     {
-      title: '후원사 담당자명',
-      dataIndex: 'managerName',
-      key: 'managerName',
-      width: 120,
-      ellipsis: true,
-      align: 'center',
-    },
-    {
       title: '참여자 유형',
       key: 'participantType',
       width: 120,
@@ -85,6 +78,24 @@ export function buildProgramHistoryColumns(
       align: 'center',
       render: (_: unknown, row: SponsorProgramHistoryRow) =>
         EDUCATION_TARGET_LABEL[row.educationTarget],
+    },
+    {
+      title: '총 수혜자 수',
+      key: 'beneficiaryCount',
+      width: 120,
+      align: 'center',
+      render: (_: unknown, row: SponsorProgramHistoryRow) => {
+        const count = parseProgramParticipantCount(row.participantCount)
+        return count > 0 ? `${count.toLocaleString('ko-KR')}명` : '-'
+      },
+    },
+    {
+      title: '후원사 담당자명',
+      dataIndex: 'managerName',
+      key: 'managerName',
+      width: 120,
+      ellipsis: true,
+      align: 'center',
     },
   ]
 }

@@ -32,16 +32,20 @@ import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 import './admin-inquiry-page.css'
 
+/**
+ * 시안: 답변현황 120 · 카테고리 140 · 프로그램명·제목 flex:1 · 회원명·담당자 120 · 일시 200
+ * (td display:flex 금지 — 고정폭 + auto 분배 + center로 동일 시각)
+ */
 const INQUIRY_LIST_COL_WIDTH = {
   no: TABLE_COLUMN_WIDTHS.index,
-  status: 108,
-  category: 108,
-  programName: 140,
-  title: 360,
-  memberName: 112,
-  createdAt: 176,
-  assignee: 100,
-  answeredAt: 176,
+  status: 120,
+  category: 140,
+  programName: 160,
+  title: 160,
+  memberName: 120,
+  createdAt: 200,
+  answeredAt: 200,
+  assignee: 120,
 } as const
 
 const INQUIRY_LIST_TABLE_SCROLL_X =
@@ -53,8 +57,8 @@ const INQUIRY_LIST_TABLE_SCROLL_X =
   INQUIRY_LIST_COL_WIDTH.title +
   INQUIRY_LIST_COL_WIDTH.memberName +
   INQUIRY_LIST_COL_WIDTH.createdAt +
-  INQUIRY_LIST_COL_WIDTH.assignee +
-  INQUIRY_LIST_COL_WIDTH.answeredAt
+  INQUIRY_LIST_COL_WIDTH.answeredAt +
+  INQUIRY_LIST_COL_WIDTH.assignee
 
 export function AdminInquiryPage() {
   const { user } = useAuthStore()
@@ -195,6 +199,8 @@ export function AdminInquiryPage() {
         key: 'status',
         width: INQUIRY_LIST_COL_WIDTH.status,
         align: 'center',
+        className: 'admin-inquiry-page__col-status',
+        onHeaderCell: () => ({ className: 'admin-inquiry-page__col-status' }),
         render: (_: unknown, row: AdminInquiryRow) =>
           row.status === 'PENDING' ? (
             <span className="admin-inquiry-page__status admin-inquiry-page__status--pending">
@@ -213,6 +219,8 @@ export function AdminInquiryPage() {
         width: INQUIRY_LIST_COL_WIDTH.category,
         align: 'center',
         ellipsis: true,
+        className: 'admin-inquiry-page__col-category',
+        onHeaderCell: () => ({ className: 'admin-inquiry-page__col-category' }),
         render: (v: string) => (v == null || v === '' ? '-' : v),
       },
       {
@@ -222,7 +230,15 @@ export function AdminInquiryPage() {
         width: INQUIRY_LIST_COL_WIDTH.programName,
         align: 'center',
         ellipsis: true,
-        render: (v: string | null) => (v == null || v === '' ? '-' : v),
+        className: 'admin-inquiry-page__col-flex',
+        onHeaderCell: () => ({ className: 'admin-inquiry-page__col-flex' }),
+        onCell: () => ({ className: 'admin-inquiry-page__col-flex' }),
+        render: (v: string | null) =>
+          v == null || v === '' ? (
+            '-'
+          ) : (
+            <span className="admin-inquiry-page__flex-text">{v}</span>
+          ),
       },
       {
         title: '제목',
@@ -231,9 +247,15 @@ export function AdminInquiryPage() {
         width: INQUIRY_LIST_COL_WIDTH.title,
         align: 'center',
         ellipsis: { showTitle: true },
-        onHeaderCell: () => ({ className: 'admin-inquiry-page__cell--title' }),
-        onCell: () => ({ className: 'admin-inquiry-page__cell--title' }),
-        render: (text: string) => (text == null || text === '' ? '-' : text),
+        className: 'admin-inquiry-page__col-flex',
+        onHeaderCell: () => ({ className: 'admin-inquiry-page__col-flex' }),
+        onCell: () => ({ className: 'admin-inquiry-page__col-flex' }),
+        render: (text: string) =>
+          text == null || text === '' ? (
+            '-'
+          ) : (
+            <span className="admin-inquiry-page__flex-text">{text}</span>
+          ),
       },
       {
         title: '문의 회원명',
@@ -242,20 +264,39 @@ export function AdminInquiryPage() {
         width: INQUIRY_LIST_COL_WIDTH.memberName,
         align: 'center',
         ellipsis: true,
+        className: 'admin-inquiry-page__col-member',
+        onHeaderCell: () => ({ className: 'admin-inquiry-page__col-member' }),
         render: (v: string) => (v == null || v === '' ? '-' : v),
       },
       {
-        title: '문의 일시',
+        title: '문의일시',
         dataIndex: 'createdAt',
         key: 'createdAt',
         width: INQUIRY_LIST_COL_WIDTH.createdAt,
         align: 'center',
         ellipsis: { showTitle: true },
+        className: 'admin-inquiry-page__col-datetime',
         onHeaderCell: () => ({ className: 'admin-inquiry-page__col-datetime' }),
-        onCell: () => ({ className: 'admin-inquiry-page__cell--datetime' }),
+        onCell: () => ({ className: 'admin-inquiry-page__col-datetime' }),
         render: (iso: string) => (
           <span className="admin-inquiry-page__datetime-text">
-            {dayjs(iso).format('YYYY.MM.DD HH:mm')}
+            {dayjs(iso).format('YYYY.MM.DD HH:mm:ss')}
+          </span>
+        ),
+      },
+      {
+        title: '답변일시',
+        dataIndex: 'answeredAt',
+        key: 'answeredAt',
+        width: INQUIRY_LIST_COL_WIDTH.answeredAt,
+        align: 'center',
+        ellipsis: { showTitle: true },
+        className: 'admin-inquiry-page__col-datetime',
+        onHeaderCell: () => ({ className: 'admin-inquiry-page__col-datetime' }),
+        onCell: () => ({ className: 'admin-inquiry-page__col-datetime' }),
+        render: (iso: string | null) => (
+          <span className="admin-inquiry-page__datetime-text">
+            {iso == null || iso === '' ? '-' : dayjs(iso).format('YYYY.MM.DD HH:mm:ss')}
           </span>
         ),
       },
@@ -266,22 +307,9 @@ export function AdminInquiryPage() {
         width: INQUIRY_LIST_COL_WIDTH.assignee,
         align: 'center',
         ellipsis: true,
+        className: 'admin-inquiry-page__col-assignee',
+        onHeaderCell: () => ({ className: 'admin-inquiry-page__col-assignee' }),
         render: (v: string | null) => (v == null || v === '' ? '-' : v),
-      },
-      {
-        title: '답변 일시',
-        dataIndex: 'answeredAt',
-        key: 'answeredAt',
-        width: INQUIRY_LIST_COL_WIDTH.answeredAt,
-        align: 'center',
-        ellipsis: { showTitle: true },
-        onHeaderCell: () => ({ className: 'admin-inquiry-page__col-datetime' }),
-        onCell: () => ({ className: 'admin-inquiry-page__cell--datetime' }),
-        render: (iso: string | null) => (
-          <span className="admin-inquiry-page__datetime-text">
-            {iso == null || iso === '' ? '-' : dayjs(iso).format('YYYY.MM.DD HH:mm')}
-          </span>
-        ),
       },
     ],
     [tableData.length]
@@ -355,7 +383,7 @@ export function AdminInquiryPage() {
         }}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
-        title="문의목록"
+        title="문의내역 목록"
         description={`총 ${displayedCount.toLocaleString()}건`}
         contentLoading={contentLoading}
         actions={
@@ -365,7 +393,7 @@ export function AdminInquiryPage() {
               onClick={handleBulkDelete}
               disabled={selectedRowKeys.length === 0}
             >
-              문의삭제
+              문의 삭제
             </CmsButton>
             <CmsButton
               variant="secondary"
@@ -413,6 +441,9 @@ export function AdminInquiryPage() {
                     selectedRowKeys,
                     onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
                     preserveSelectedRowKeys: false,
+                    getCheckboxProps: (record: AdminInquiryRow) => ({
+                      disabled: record.status === 'ANSWERED',
+                    }),
                   }
                 : undefined
             }

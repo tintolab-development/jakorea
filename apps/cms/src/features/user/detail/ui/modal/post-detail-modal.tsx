@@ -327,7 +327,7 @@ export function PostDetailModal({
                   fileName: file.fileName,
                   fileUrl: file.fileUrl,
                 }))}
-                onDownload={item => downloadFile(item.fileName, item.fileUrl)}
+                onDownload={item => void downloadFile(item.fileName, item.fileUrl)}
               />
             </div>
           </div>

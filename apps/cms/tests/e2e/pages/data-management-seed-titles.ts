@@ -14,7 +14,7 @@ export const SPONSOR_SEED_CORPORATE = '스타벅스'
 export const SPONSOR_SEED_FOUNDATION = '제이에이코리아'
 
 export const SPONSOR_SEED_CONTACT_LEAD = '김제이'
-export const SPONSOR_SEED_CONTACT_DEPT = '사회공헌팀'
+export const SPONSOR_SEED_CONTACT_DEPT = '디자인마케팅팀'
 
 export const SPONSOR_SEED_YEARLY_DONATION = '91,500,000'
 export const SPONSOR_SEED_YEARLY_BENEFICIARY = '915'

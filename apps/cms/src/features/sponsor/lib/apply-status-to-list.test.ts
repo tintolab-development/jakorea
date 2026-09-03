@@ -7,14 +7,17 @@ import {
   listStatusFilterFromSearchKey,
 } from './apply-status-to-list'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
+import type { SponsorSponsorshipStatus } from '@/types/domain'
 
-function row(id: string, sponsorshipStatus: 'active' | 'ended'): SponsorManagementRow {
+function row(id: string, sponsorshipStatus: SponsorSponsorshipStatus): SponsorManagementRow {
   return {
     id,
     name: id,
     createdAt: '',
     updatedAt: '',
     programCount: 0,
+    totalDonationAmount: 0,
+    totalBeneficiaryCount: 0,
     sponsorshipStatus,
   }
 }
@@ -23,6 +26,8 @@ describe('listStatusFilterFromSearchKey', () => {
   it('reads sp_st from the list query key', () => {
     expect(listStatusFilterFromSearchKey('sp_st=ended')).toBe('ended')
     expect(listStatusFilterFromSearchKey('sp_name=우리&sp_st=active')).toBe('active')
+    expect(listStatusFilterFromSearchKey('sp_st=discussing')).toBe('ALL')
+    expect(listStatusFilterFromSearchKey('sp_st=dormant')).toBe('ALL')
     expect(listStatusFilterFromSearchKey('')).toBe('ALL')
   })
 })

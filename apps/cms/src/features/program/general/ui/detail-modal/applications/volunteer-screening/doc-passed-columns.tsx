@@ -22,7 +22,7 @@ export function useGeneralVolunteerDocPassedColumns({
         title: 'No.',
         dataIndex: 'no',
         key: 'no',
-        width: 72,
+        width: 80,
         align: 'center',
         className: CENTER_CELL_CLASS,
       },

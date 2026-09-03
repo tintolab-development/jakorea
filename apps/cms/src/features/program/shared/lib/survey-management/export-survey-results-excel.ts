@@ -53,5 +53,5 @@ export async function exportSurveyResultsExcel({
 
   const buffer = await workbook.xlsx.writeBuffer()
   const filename = generateFilename(`${surveyTitle}_설문조사결과`, 'xlsx')
-  downloadExcel(buffer, filename)
+  await downloadExcel(buffer, filename)
 }

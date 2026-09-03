@@ -320,7 +320,7 @@ export function EnrollmentProgramDetailPostsTab({
     {
       key: 'download',
       label: '다운로드',
-      onClick: () => downloadFile(file.fileName, file.fileUrl),
+      onClick: () => void downloadFile(file.fileName, file.fileUrl),
     },
     {
       key: 'preview',

@@ -2,8 +2,6 @@
 description: CMS 설문 단일 항목(신규 스텁) — slug.tsx 파일명·8종 목록·미리보기 모달 전용
 globs:
   - "apps/cms/src/features/template/ui/paragraph/single-item/**/*.tsx"
-  - "apps/cms/src/pages/templates/form-tab.tsx"
-  - "apps/cms/src/features/template/hooks/use-form-test-single-item-editor.ts"
   - "apps/cms/src/features/template/hooks/use-writing-form-editor-with-user-preview.ts"
 alwaysApply: false
 ---
@@ -34,6 +32,6 @@ export 컴포넌트명은 slug를 PascalCase로 매핑한다. 단, 전역 `Date`
 
 - [paragraph-card-slots.mdc](./paragraph-card-slots.mdc)와 동일: **카드 제목·설명은 바디에 넣지 않고** 슬롯(본문)만 담당한다.
 
-## 임시 미리보기
+## 미리보기
 
-- 9종을 한 화면에서 스크롤·우측 네비로 확인하는 용도는 `form-tab.tsx` + `useFormTestSingleItemEditor`(내부에서 공용 `useWritingFormEditorWithUserPreview`)이다.
+- 작성 양식 에디터는 공용 `useWritingFormEditorWithUserPreview`로 미리보기한다. `createSingleItemPreviewDraft()`는 발급 탭 폴백 초안에도 쓰인다.

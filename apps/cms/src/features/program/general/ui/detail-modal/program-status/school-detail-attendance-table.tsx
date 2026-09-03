@@ -69,7 +69,7 @@ export function SchoolDetailAttendanceTable({
         title: 'No.',
         dataIndex: 'no',
         key: 'no',
-        width: 64,
+        width: 80,
         align: 'center',
       },
       {

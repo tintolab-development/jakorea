@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { AdminActionKind, AdminPolicyScreen, AdminRoleCode } from './admin-role-policy'
 import {
   ADMIN_ACCESS_DENIED_ALERT_CONTENT,
@@ -6,13 +6,30 @@ import {
   adminRoleCodeToLegacyAdminLevel,
   canAdminAction,
   isAdminAccessDeniedAlert,
+  isPermissionSettingsPath,
   isSecurityLogPath,
   parseAdminRoleCode,
   resolveAdminPolicyScreen,
   resolveAdminRoleCodeFromUser,
+  showAdminAccessDeniedAlert,
   withSessionAdminRole,
 } from './admin-role-policy'
 import type { User } from '@/types/user'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+
+vi.mock('@/shared/ui/cms-alert-modal-api', () => ({
+  cmsAlertModal: { show: vi.fn() },
+}))
+
+const onboarding = vi.hoisted(() => ({ incomplete: false }))
+
+vi.mock('@/shared/utils/post-auth-redirect', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/shared/utils/post-auth-redirect')>()
+  return {
+    ...actual,
+    isAdminFirstLoginOnboardingIncomplete: () => onboarding.incomplete,
+  }
+})
 
 const ROLES: AdminRoleCode[] = ['MASTER', 'PM', 'PARTNER', 'VIEWER']
 
@@ -142,7 +159,12 @@ describe('canAdminAction 표 규칙', () => {
     expect(allowed('VIEWER', 'approve', 'admin-permission-approval')).toBe(false)
   })
 
-  it('권한 설정 저장은 뷰어만 차단, 승인·반려는 마스터만', () => {
+  it('권한 설정 조회·저장은 뷰어만 차단, 승인·반려는 마스터만', () => {
+    expect(allowed('MASTER', 'view', 'permission-settings')).toBe(true)
+    expect(allowed('PM', 'view', 'permission-settings')).toBe(true)
+    expect(allowed('PARTNER', 'view', 'permission-settings')).toBe(true)
+    expect(allowed('VIEWER', 'view', 'permission-settings')).toBe(false)
+
     expect(allowed('MASTER', 'write', 'permission-settings')).toBe(true)
     expect(allowed('PM', 'write', 'permission-settings')).toBe(true)
     expect(allowed('PARTNER', 'write', 'permission-settings')).toBe(true)
@@ -152,6 +174,12 @@ describe('canAdminAction 표 규칙', () => {
     expect(allowed('PM', 'approve', 'permission-settings')).toBe(false)
     expect(allowed('PARTNER', 'approve', 'permission-settings')).toBe(false)
     expect(allowed('VIEWER', 'approve', 'permission-settings')).toBe(false)
+  })
+
+  it('isPermissionSettingsPath는 권한 설정 경로만 인식한다', () => {
+    expect(isPermissionSettingsPath('/admin/settings/permissions')).toBe(true)
+    expect(isPermissionSettingsPath('/admin/settings/permissions/')).toBe(true)
+    expect(isPermissionSettingsPath('/admin/permission-requests')).toBe(false)
   })
 
   it('강사 권한 승인은 뷰어만 차단', () => {
@@ -183,5 +211,26 @@ describe('isAdminAccessDeniedAlert', () => {
         content: '현재 계정에 필요한 권한 또는 접근 범위가 없습니다.',
       })
     ).toBe(false)
+  })
+})
+
+describe('showAdminAccessDeniedAlert', () => {
+  beforeEach(() => {
+    onboarding.incomplete = false
+    vi.mocked(cmsAlertModal.show).mockClear()
+  })
+
+  it('온보딩 미완료면 권한 안내를 띄우지 않는다', () => {
+    onboarding.incomplete = true
+    showAdminAccessDeniedAlert()
+    expect(cmsAlertModal.show).not.toHaveBeenCalled()
+  })
+
+  it('온보딩이 끝났으면 권한 안내를 띄운다', () => {
+    showAdminAccessDeniedAlert()
+    expect(cmsAlertModal.show).toHaveBeenCalledWith({
+      title: ADMIN_ACCESS_DENIED_ALERT_TITLE,
+      content: ADMIN_ACCESS_DENIED_ALERT_CONTENT,
+    })
   })
 })

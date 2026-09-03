@@ -66,8 +66,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/textbooks`
  *
@@ -121,8 +121,8 @@ const textbooks = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/textbooks
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/textbooks`
  *
@@ -338,8 +338,8 @@ const create2 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/sponsors`
  *
@@ -393,8 +393,8 @@ const sponsors = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/sponsors
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/sponsors`
  *
@@ -449,8 +449,8 @@ const create4 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}/yearly-businesses`
  *
@@ -503,8 +503,8 @@ const yearlyBusinesses = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/sponsors/{sponsorId}/yearly-businesses
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/sponsors/{sponsorId}/yearly-businesses`
  *
@@ -560,8 +560,8 @@ const addYearlyBusiness = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/sponsors/{sponsorId}/end
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/sponsors/{sponsorId}/end`
  *
@@ -614,8 +614,8 @@ const end = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}/contacts`
  *
@@ -668,8 +668,8 @@ const contacts = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/sponsors/{sponsorId}/contacts
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/sponsors/{sponsorId}/contacts`
  *
@@ -833,8 +833,8 @@ const bulkDeleteSponsors = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/material-kits`
  *
@@ -888,8 +888,8 @@ const kits = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/material-kits
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/material-kits`
  *
@@ -944,8 +944,8 @@ const create7 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/material-kits/{kitId}/versions`
  *
@@ -998,8 +998,8 @@ const versions = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/material-kits/{kitId}/versions
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/material-kits/{kitId}/versions`
  *
@@ -1055,8 +1055,8 @@ const createVersion = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/material-kits/versions/{versionId}/target-counts
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/material-kits/versions/{versionId}/target-counts`
  *
@@ -1112,8 +1112,8 @@ const addTargetCount = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/detailed-programs`
  *
@@ -1167,8 +1167,8 @@ const detailedPrograms = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/detailed-programs
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/detailed-programs`
  *
@@ -1277,8 +1277,8 @@ const bulkDelete3 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/textbooks/{textbookId}`
  *
@@ -1331,8 +1331,8 @@ const textbook = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `DELETE /api/admin/textbooks/{textbookId}`
  *
@@ -1385,8 +1385,8 @@ const _delete = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/textbooks/{textbookId}`
  *
@@ -1601,8 +1601,8 @@ const update1 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}`
  *
@@ -1655,8 +1655,8 @@ const sponsor = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `DELETE /api/admin/sponsors/{sponsorId}`
  *
@@ -1709,8 +1709,8 @@ const delete2 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/sponsors/{sponsorId}`
  *
@@ -1766,8 +1766,8 @@ const update3 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `DELETE /api/admin/sponsors/yearly-businesses/{yearlyBusinessId}`
  *
@@ -1820,8 +1820,8 @@ const deleteYearlyBusiness = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/sponsors/yearly-businesses/{yearlyBusinessId}`
  *
@@ -1877,8 +1877,8 @@ const updateYearlyBusiness = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `DELETE /api/admin/sponsors/contacts/{contactId}`
  *
@@ -1931,8 +1931,8 @@ const deleteContact = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/sponsors/contacts/{contactId}`
  *
@@ -1988,8 +1988,8 @@ const updateContact = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/material-kits/{kitId}`
  *
@@ -2042,8 +2042,8 @@ const kit = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data-material-kits (`master-data-material-kits`)
  * - 호출 방식: `DELETE /api/admin/material-kits/{kitId}`
  *
@@ -2096,8 +2096,8 @@ const delete3 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/material-kits/{kitId}`
  *
@@ -2153,8 +2153,8 @@ const update4 = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/detailed-programs/{detailedProgramId}`
  *
@@ -2207,8 +2207,8 @@ const detailedProgram = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 삭제
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `DELETE /api/admin/detailed-programs/{detailedProgramId}`
  *
@@ -2261,8 +2261,8 @@ const delete4 = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/detailed-programs/{detailedProgramId}`
  *
@@ -2318,8 +2318,8 @@ const update5 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/textbooks/matches`
  *
@@ -2373,8 +2373,8 @@ const matches = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data-sponsors (`master-data-sponsors`)
  * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}/program-histories`
  *
@@ -2429,8 +2429,8 @@ const programHistories = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/material-kits/{kitId}/versions/current/calculate`
  *
@@ -2485,8 +2485,8 @@ const currentKitCalculation = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/material-kits/{kitId}/calculate`
  *

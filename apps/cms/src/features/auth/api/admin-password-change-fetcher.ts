@@ -2,6 +2,8 @@
  * POST /api/admin/auth/password/change
  */
 
+import type { InternalAxiosRequestConfig } from 'axios'
+
 import { axiosClient } from '@/shared/api'
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import { AdminMfaApiError } from '@/features/auth/api/admin-auth-fetcher'
@@ -30,7 +32,13 @@ export async function fetchAdminPasswordChange(
   body: AdminPasswordChangeRequestBody
 ): Promise<void> {
   try {
-    await axiosClient.post(adminAuthPaths.passwordChange(), body)
+    await axiosClient.post(adminAuthPaths.passwordChange(), body, {
+      skipRefresh: true,
+      skipGlobalErrorAlert: true,
+    } as InternalAxiosRequestConfig & {
+      skipRefresh?: boolean
+      skipGlobalErrorAlert?: boolean
+    })
   } catch (err) {
     if (err instanceof AdminMfaApiError) throw err
     if (err && typeof err === 'object' && 'response' in err) {

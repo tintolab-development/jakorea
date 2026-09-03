@@ -18,7 +18,7 @@ export function useUjatVolunteerDocPassedColumns({
       {
         title: 'No.',
         key: 'no',
-        width: 72,
+        width: 80,
         align: 'center',
         className: CENTER_CELL_CLASS,
         render: (_value, _record, index) => index + 1,

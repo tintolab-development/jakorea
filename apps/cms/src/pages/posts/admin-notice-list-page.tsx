@@ -41,17 +41,18 @@ import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 import './admin-notice-list-page.css'
 
-/** 고정 레이아웃 기준 최소 가로 스크롤 (체크박스 열 제외 본문 컬럼 합 + 여유) */
-const NOTICE_LIST_TABLE_SCROLL_X = 1192
+/** 고정열 합 + 제목 최소 + 체크박스 여유 (시안: 공개100·카테고리160·작성자140·일시200×2·조회140) */
+const NOTICE_LIST_TABLE_SCROLL_X = 1280
 
 const NOTICE_LIST_COL_WIDTH = {
   no: 80,
-  category: 108,
-  title: 360,
   visibility: 100,
-  author: 112,
-  datetime: 176,
-  views: 108,
+  category: 160,
+  /** 제목은 flex:1 — Ant width는 최소치만, 실제는 CSS로 잔여폭 */
+  title: 280,
+  author: 140,
+  datetime: 200,
+  views: 140,
 } as const
 
 export function AdminNoticeListPage() {
@@ -156,12 +157,28 @@ export function AdminNoticeListPage() {
           tableData.length === 0 ? '—' : tableData.length - index,
       },
       {
+        title: '공개 여부',
+        key: 'visibility',
+        width: NOTICE_LIST_COL_WIDTH.visibility,
+        align: 'center',
+        className: 'admin-notice-list-page__col-visibility',
+        onHeaderCell: () => ({ className: 'admin-notice-list-page__col-visibility' }),
+        render: (_: unknown, row) =>
+          row.status === 'published' ? (
+            '공개'
+          ) : (
+            <span className="admin-notice-list-page__status-private">비공개</span>
+          ),
+      },
+      {
         title: '카테고리',
         dataIndex: 'category',
         key: 'category',
         width: NOTICE_LIST_COL_WIDTH.category,
         align: 'center',
         ellipsis: true,
+        className: 'admin-notice-list-page__col-category',
+        onHeaderCell: () => ({ className: 'admin-notice-list-page__col-category' }),
       },
       {
         title: '제목',
@@ -170,6 +187,8 @@ export function AdminNoticeListPage() {
         width: NOTICE_LIST_COL_WIDTH.title,
         align: 'center',
         ellipsis: { showTitle: true },
+        className: 'admin-notice-list-page__col-title',
+        onHeaderCell: () => ({ className: 'admin-notice-list-page__col-title' }),
         render: (text: string, row) => (
           <span className="admin-notice-list-page__title-cell">
             {row.isImportant ? (
@@ -180,24 +199,14 @@ export function AdminNoticeListPage() {
         ),
       },
       {
-        title: '공개 여부',
-        key: 'visibility',
-        width: NOTICE_LIST_COL_WIDTH.visibility,
-        align: 'center',
-        render: (_: unknown, row) =>
-          row.status === 'published' ? (
-            '공개'
-          ) : (
-            <span className="admin-notice-list-page__status-private">비공개</span>
-          ),
-      },
-      {
-        title: '작성자',
+        title: '작성자명',
         dataIndex: 'author',
         key: 'author',
         width: NOTICE_LIST_COL_WIDTH.author,
         align: 'center',
         ellipsis: true,
+        className: 'admin-notice-list-page__col-author',
+        onHeaderCell: () => ({ className: 'admin-notice-list-page__col-author' }),
       },
       {
         title: '작성일시',
@@ -205,7 +214,19 @@ export function AdminNoticeListPage() {
         key: 'createdAt',
         width: NOTICE_LIST_COL_WIDTH.datetime,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm'),
+        className: 'admin-notice-list-page__col-datetime',
+        onHeaderCell: () => ({ className: 'admin-notice-list-page__col-datetime' }),
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
+      },
+      {
+        title: '수정일시',
+        key: 'updatedAt',
+        width: NOTICE_LIST_COL_WIDTH.datetime,
+        align: 'center',
+        className: 'admin-notice-list-page__col-datetime',
+        onHeaderCell: () => ({ className: 'admin-notice-list-page__col-datetime' }),
+        render: (_: unknown, row: Notice) =>
+          dayjs(row.updatedAt ?? row.createdAt).format('YYYY.MM.DD HH:mm:ss'),
       },
       {
         title: '조회수',
@@ -213,6 +234,8 @@ export function AdminNoticeListPage() {
         key: 'viewCount',
         width: NOTICE_LIST_COL_WIDTH.views,
         align: 'center',
+        className: 'admin-notice-list-page__col-views',
+        onHeaderCell: () => ({ className: 'admin-notice-list-page__col-views' }),
         render: (n: number) => n.toLocaleString('ko-KR'),
       },
     ],
