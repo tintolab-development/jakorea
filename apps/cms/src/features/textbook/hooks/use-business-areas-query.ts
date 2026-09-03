@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import {
   listTextbookBusinessAreas,
   toBusinessAreaSelectOptions,
@@ -13,28 +13,17 @@ export function useTextbookBusinessAreasQuery(enabled = true) {
   return useQuery({
     queryKey: dataManagementQueryKeys.textbooks.businessAreas(),
     queryFn: () => listTextbookBusinessAreas(),
-    enabled: remoteEnabled || enabled,
+    enabled: remoteEnabled,
     staleTime: 30_000,
+    retry: false,
   })
 }
 
-export function useTextbookBusinessAreaSelectOptions() {
-  const query = useTextbookBusinessAreasQuery()
+export function useTextbookBusinessAreaSelectOptions(enabled = true) {
+  const query = useTextbookBusinessAreasQuery(enabled)
   const options =
     query.data && query.data.length > 0
       ? toBusinessAreaSelectOptions(query.data)
       : TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS
   return { ...query, options }
-}
-
-export function useInvalidateTextbookBusinessAreas() {
-  const queryClient = useQueryClient()
-  return async () => {
-    await queryClient.invalidateQueries({
-      queryKey: dataManagementQueryKeys.textbooks.businessAreas(),
-    })
-    await queryClient.invalidateQueries({
-      queryKey: dataManagementQueryKeys.textbooks.lists(),
-    })
-  }
 }

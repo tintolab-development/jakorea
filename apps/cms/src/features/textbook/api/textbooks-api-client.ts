@@ -28,6 +28,7 @@ export async function fetchTextbookRemote(id: string): Promise<TextbookResponse>
 }
 
 export async function createTextbookRemote(body: TextbookRequest): Promise<TextbookResponse> {
+  // POST /api/admin/textbooks (Orval create1)
   return unwrapApiBody(await dmApi.create1(body))
 }
 

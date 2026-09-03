@@ -77,7 +77,7 @@ function TextbookDetailFullPageModalInner({
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const remoteEnabled = useDataManagementRemoteEnabled('textbooks', open)
-  const { options: businessAreaOptions } = useTextbookBusinessAreaSelectOptions()
+  const { options: businessAreaOptions } = useTextbookBusinessAreaSelectOptions(open)
   const detailQuery = useTextbookDetailQuery(textbookId, open)
   const textbook = detailQuery.data ?? (remoteEnabled ? null : listTextbook)
   const isDetailLoading = remoteEnabled && isAwaitingFirstQueryData(detailQuery)

@@ -44,7 +44,7 @@ export function TextbookRegisterModal({
   mode = 'create',
 }: TextbookRegisterModalProps) {
   const [form, setForm] = useState<RegisterFormState>(emptyForm)
-  const { options: businessAreaOptions } = useTextbookBusinessAreaSelectOptions()
+  const { options: businessAreaOptions } = useTextbookBusinessAreaSelectOptions(open)
 
   useEffect(() => {
     if (!open) return
