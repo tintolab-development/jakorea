@@ -191,6 +191,42 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     expect(body.schoolOrganizationId).toBe(42)
     expect(body.schoolSelection).toBeUndefined()
   })
+
+  it('재학 중 + CareerNet 초안은 CAREER_NET schoolSelection을 PATCH한다', () => {
+    const patch = draftToAdminProvisionedIndividualBasicInfoPatch(
+      individualDraft({
+        affiliationInstitution: '서울교육대학교',
+        affiliationGrade: '1학년',
+        schoolEnrollmentStatus: 'enrolled',
+        schoolProvider: 'CAREER_NET',
+        schoolExternalCode: '1',
+        schoolAddress: '서울특별시',
+      })
+    )
+    const body = mapPatchUserBasicInfoToApiRequest(patch)
+
+    expect(body.schoolName).toBe('서울교육대학교')
+    expect(body.schoolSelection).toMatchObject({
+      provider: 'CAREER_NET',
+      externalSchoolCode: '1',
+      name: '서울교육대학교',
+    })
+    expect(body.schoolSelection?.educationOfficeCode).toBeUndefined()
+  })
+
+  it('재학 중 + 학교명만 초안은 schoolSelection을 보내지 않는다', () => {
+    const patch = draftToAdminProvisionedIndividualBasicInfoPatch(
+      individualDraft({
+        affiliationInstitution: '서울교육대학교',
+        affiliationGrade: '1학년',
+        schoolEnrollmentStatus: 'enrolled',
+      })
+    )
+    const body = mapPatchUserBasicInfoToApiRequest(patch)
+
+    expect(body.schoolName).toBe('서울교육대학교')
+    expect(body.schoolSelection).toBeUndefined()
+  })
 })
 
 describe('mapPatchUserBasicInfoToAdminAccountApiRequest', () => {

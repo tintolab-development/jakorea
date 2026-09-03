@@ -38,17 +38,20 @@ function buildIndividualSchoolSelectionFromPatch(
   const name = trimOptional(patch.individualSchoolName)
   if (!name) return undefined
 
+  const provider = trimOptional(patch.individualSchoolProvider)
   const selection: PortalSchoolSelectionRequest = {
     name,
     organizationCategory: 'SCHOOL',
   }
-  const provider = trimOptional(patch.individualSchoolProvider)
   if (provider) selection.provider = provider
   const externalSchoolCode = trimOptional(patch.individualSchoolExternalCode)
   if (externalSchoolCode) {
     selection.externalSchoolCode = externalSchoolCode
     if (!selection.provider) selection.provider = 'NEIS'
   }
+  // schoolSelection은 검색 선택값 — 코드가 없으면 snapshot(schoolName)만 유지
+  if (!selection.externalSchoolCode) return undefined
+
   const educationOfficeCode = resolveNeisEducationOfficeCode({
     provider: selection.provider,
     educationOfficeCode: patch.individualSchoolEducationOfficeCode,
