@@ -4,16 +4,42 @@ import {
   deleteTextbooks,
   updateTextbook,
 } from '@/features/textbook/api/admin-textbooks-service'
+import type { TextbookListFilters } from '@/features/textbook/api/textbook-filter-params'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import type { TextbookRow } from '@/features/textbook/model/textbook.types'
 import {
+  applyCreatedToMatchingArrayLists,
   applyDeletedToArrayLists,
-  applyUpdatedToArrayLists,
+  applyUpdatedToMatchingArrayLists,
   invalidateArrayLists,
 } from '@/shared/lib/query-list-cache'
 
 function rowId(row: TextbookRow): string {
   return row.id
+}
+
+function listFiltersFromQueryKey(queryKey: readonly unknown[]): TextbookListFilters | null {
+  const raw = queryKey[queryKey.length - 1]
+  if (typeof raw !== 'string') return null
+  try {
+    return JSON.parse(raw) as TextbookListFilters
+  } catch {
+    return null
+  }
+}
+
+function textbookMatchesListFilter(queryKey: readonly unknown[], row: TextbookRow): boolean {
+  const filters = listFiltersFromQueryKey(queryKey)
+  if (!filters) return true
+  if (filters.useStatus !== row.useStatus) return false
+  if (filters.businessArea !== 'ALL' && filters.businessArea !== row.businessArea) return false
+  if (filters.educationTarget !== 'ALL' && filters.educationTarget !== row.educationTarget) {
+    return false
+  }
+  if (filters.grade !== 'ALL' && filters.grade !== row.grade) return false
+  const nameQ = filters.textbookName.trim()
+  if (nameQ && !row.textbookName.includes(nameQ)) return false
+  return true
 }
 
 export function useTextbookMutations() {
@@ -22,8 +48,19 @@ export function useTextbookMutations() {
 
   const createMutation = useMutation({
     mutationFn: createTextbook,
-    onSuccess: async () => {
-      await invalidateArrayLists(queryClient, listsKey)
+    onSuccess: async created => {
+      if (!created?.id) {
+        await invalidateArrayLists(queryClient, listsKey)
+        return
+      }
+      queryClient.setQueryData(dataManagementQueryKeys.textbooks.detail(created.id), created)
+      applyCreatedToMatchingArrayLists(
+        queryClient,
+        listsKey,
+        created,
+        rowId,
+        textbookMatchesListFilter
+      )
     },
   })
 
@@ -36,7 +73,13 @@ export function useTextbookMutations() {
         return
       }
       queryClient.setQueryData(dataManagementQueryKeys.textbooks.detail(variables.id), data)
-      applyUpdatedToArrayLists(queryClient, listsKey, data, rowId)
+      applyUpdatedToMatchingArrayLists(
+        queryClient,
+        listsKey,
+        data,
+        rowId,
+        textbookMatchesListFilter
+      )
     },
   })
 

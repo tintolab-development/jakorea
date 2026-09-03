@@ -72,6 +72,7 @@ import {
   userToSchoolInstitutionEditDraft,
   type AdminProvisionedMemberBasicInfoDraft,
 } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
+import { resolveIndividualEnrolledSchoolSubmitBlock } from '@/features/user/api/individual-enrolled-school-selection'
 import {
   resolveUserBasicInfoBodyKey,
   parseUserBasicInfoEntryQuery,
@@ -1040,6 +1041,20 @@ export function useUserDetailController({
           ? draftToAdminAccountBasicInfoPatch(basicInfoDraft)
           : draftToAdminMemberRestrictedPatch(basicInfoDraft)
       } else if (displayUser.role === 'INDIVIDUAL') {
+        const enrolledSchoolBlock =
+          basicInfoDraft.schoolEnrollmentStatus === 'enrolled'
+            ? resolveIndividualEnrolledSchoolSubmitBlock({
+                schoolProvider: basicInfoDraft.schoolProvider,
+                schoolOrganizationId: basicInfoDraft.schoolOrganizationId,
+                schoolExternalCode: basicInfoDraft.schoolExternalCode,
+                schoolEducationOfficeCode: basicInfoDraft.schoolEducationOfficeCode,
+                schoolRegionSido: basicInfoDraft.schoolRegionSido,
+              })
+            : null
+        if (enrolledSchoolBlock != null) {
+          showAlert({ title: '안내', content: enrolledSchoolBlock })
+          return
+        }
         patch = draftToAdminProvisionedIndividualBasicInfoPatch(basicInfoDraft)
       } else {
         patch = draftToBasicInfoPatch(basicInfoDraft)

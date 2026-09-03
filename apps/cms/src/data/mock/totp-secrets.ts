@@ -6,6 +6,7 @@ const TOTP_SECRETS_BY_EMAIL: Record<string, string> = {
   'admin1@jakorea.org': 'YB6USKOPTY3O4XCOM55K26HWAJFCOYAW',
   'admin2@jakorea.org': 'Z3YRM7RBPVNVMFYNQ2WY6RISDI7QLN2D',
   'admin3@jakorea.org': 'PBG2PKAFVVQBTDSBLXVHWTCN56COJN2I',
+  'viewer1@jakorea.org': 'PBG2PKAFVVQBTDSBLXVHWTCN56COJN2I',
 }
 
 export function getTotpSecretByEmail(email: string): string | undefined {

@@ -145,12 +145,14 @@
   display: flex;
   width: 1208px;
   max-width: 100%;
-  height: 1682px;
+  min-height: 1682px;
+  height: auto;
   padding: 32px;
   box-sizing: border-box;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 16px;
   flex-shrink: 0;
   border-radius: var(--16, 16px);
   background: var(--gray-bdc-6-c-9, #bdc6c9);
@@ -164,6 +166,32 @@
   flex-shrink: 0;
   object-fit: contain;
   display: block;
+  background: #fff;
+}
+
+.crime-consent-doc-modal__a4-pdf-stack {
+  display: flex;
+  width: 1146px;
+  max-width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.crime-consent-doc-modal__a4-pdf-status {
+  display: flex;
+  width: 1146px;
+  height: 1618px;
+  max-width: 100%;
+  margin: 0;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .crime-consent-doc-modal__pen-mask {

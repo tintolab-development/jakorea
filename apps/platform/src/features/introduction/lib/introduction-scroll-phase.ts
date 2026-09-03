@@ -16,22 +16,40 @@ import {
  *    — heroRange 이후 전용 push 구간. accordion 진행 없음.
  * 3) Value accordion (push 완료 이후)
  *    — frontier=0 전체 펼침 → 스크롤 다운 시 위에서부터 순차 접힘
- * 4) end hold (frontier=마지막, 05 expanded 유지)
+ * 4) end hold + JA Worldwide reveal (frontier=마지막, panel translateY로 Worldwide 노출)
  *
  * track 높이 비율:
- * Hero 520vh + Push 100vh + Value accordion 500vh + end hold 80vh
+ * Hero 520vh + Push 100vh + Value accordion 500vh + hold/reveal 200vh
  */
 export const INTRODUCTION_HERO_VH = 520
 /** Mission → Value Push/Up 전용 스크롤 (CSS 600ms와 별개로 accordion과 구간 분리) */
 export const INTRODUCTION_PUSH_VH = 100
 export const INTRODUCTION_VALUE_VH = 500
-/** 05 Active 안착 후 sticky 해제·푸터 진입 전 여유 (UI 정렬과 무관) */
-export const INTRODUCTION_VALUE_HOLD_VH = 80
+/**
+ * 05 Active 안착 후 JA Worldwide를 sticky viewport 안으로 끌어올리는 구간.
+ * (list·Worldwide 동일 panel 형제 — overflow frame 안에서 translate로 연속 노출)
+ */
+export const INTRODUCTION_VALUE_HOLD_VH = 200
 export const INTRODUCTION_TRACK_VH =
   INTRODUCTION_HERO_VH +
   INTRODUCTION_PUSH_VH +
   INTRODUCTION_VALUE_VH +
   INTRODUCTION_VALUE_HOLD_VH
+
+/** hold 구간에서 Worldwide reveal 진행도 0..1 */
+export function resolveWorldwideRevealProgress(
+  scrollPx: number,
+  totalScrollRange: number,
+): number {
+  const range = Math.max(1, totalScrollRange)
+  const heroRange = Math.max(1, range * (INTRODUCTION_HERO_VH / INTRODUCTION_TRACK_VH))
+  const pushRange = Math.max(1, range * (INTRODUCTION_PUSH_VH / INTRODUCTION_TRACK_VH))
+  const valueRange = Math.max(1, range * (INTRODUCTION_VALUE_VH / INTRODUCTION_TRACK_VH))
+  const holdRange = Math.max(1, range * (INTRODUCTION_VALUE_HOLD_VH / INTRODUCTION_TRACK_VH))
+  const holdScroll = scrollPx - heroRange - pushRange - valueRange
+  if (holdScroll <= 0) return 0
+  return Math.min(1, holdScroll / holdRange)
+}
 
 export type IntroductionScrollState = {
   heroPhase: HeroPhase

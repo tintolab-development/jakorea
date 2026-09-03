@@ -29,7 +29,7 @@
   padding-block: 5px;
 }
 
-/** 동의서 작성(라디오 + 버튼) 셀 — DetailInfoForm 기본 상하 12px */
+/** 동의서 작성(상태 + 버튼) 셀 — DetailInfoForm 기본 상하 12px */
 .add-user-individual__section--terms
   .detail-info-form__field:has(.add-user-individual__consent-document) {
   min-height: auto;

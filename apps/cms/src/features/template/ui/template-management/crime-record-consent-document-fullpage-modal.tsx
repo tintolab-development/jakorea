@@ -1,19 +1,24 @@
 /**
- * 작성 양식 — 성범죄 경력조회 동의서 상세: 정적 A4 이미지 미리보기 풀페이지 모달
+ * 작성 양식 — 성범죄 경력조회 동의서 상세: 정적 A4 문서 미리보기 풀페이지 모달
  */
 
 import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
 import { type ChangeEvent, useCallback, useId, useRef } from 'react'
 import { useAgreementCrimeConsentDocumentEditor } from '@/features/template/hooks/use-agreement-crime-consent-document-editor'
+import {
+  CRIME_CONSENT_UPLOAD_ACCEPT,
+  isCrimeConsentUploadFile,
+} from '@/features/template/lib/agreement-crime-consent-settings'
+import { downloadCrimeConsentFormDocument } from '@/features/template/lib/crime-consent-form-document'
+import { CrimeConsentDocumentPreview } from '@/features/template/ui/template-management/crime-consent-document-preview'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { downloadBlob } from '@/shared/utils/file-download'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import './crime-record-consent-document-fullpage-modal.css'
 
 export const CRIME_CONSENT_DOCUMENT_MODAL_HEADER_TITLE =
   '성범죄 경력 조회 및 아동학대 관련 범죄전력조회 동의서'
-
-const DEFAULT_DOWNLOAD_FILENAME = '성범죄_경력조회_동의서.png'
 
 const NOTICE_TEXT = '* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다.'
 
@@ -26,8 +31,9 @@ export function CrimeRecordConsentDocumentFullpageModal({
   open,
   onClose,
 }: CrimeRecordConsentDocumentFullpageModalProps) {
+  const { showAlert } = useCmsAlert()
   const iconMaskId = `crime-consent-pen-mask-${useId().replace(/:/g, '')}`
-  const { displaySrc, replacementFileName, handleImageFile } =
+  const { displaySrc, replacementFileName, uploadedFile, handleDocumentFile } =
     useAgreementCrimeConsentDocumentEditor(open)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -39,26 +45,24 @@ export function CrimeRecordConsentDocumentFullpageModal({
     (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
       e.target.value = ''
-      if (!file || !file.type.startsWith('image/')) return
-      void handleImageFile(file)
+      if (!file) return
+      if (!isCrimeConsentUploadFile(file)) {
+        showAlert({
+          title: '안내',
+          content: CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE,
+        })
+        return
+      }
+      void handleDocumentFile(file)
     },
-    [handleImageFile]
+    [handleDocumentFile, showAlert]
   )
 
-  const handleDownload = useCallback(async () => {
-    try {
-      const res = await fetch(displaySrc)
-      if (!res.ok) throw new Error('fetch failed')
-      const blob = await res.blob()
-      const filename =
-        replacementFileName && replacementFileName.trim() !== ''
-          ? replacementFileName
-          : DEFAULT_DOWNLOAD_FILENAME
-      downloadBlob(blob, filename)
-    } catch (error) {
+  const handleDownload = useCallback(() => {
+    void downloadCrimeConsentFormDocument().catch(error => {
       console.debug('crimeRecordConsentDocument download failed', error)
-    }
-  }, [displaySrc, replacementFileName])
+    })
+  }, [])
 
   return (
     <TealHeaderModal
@@ -124,7 +128,7 @@ export function CrimeRecordConsentDocumentFullpageModal({
               <CmsButton
                 variant="secondary"
                 icon={<DownloadOutlined />}
-                onClick={() => void handleDownload()}
+                onClick={handleDownload}
                 className="crime-consent-doc-modal__download-btn"
               >
                 문서 다운로드
@@ -138,19 +142,18 @@ export function CrimeRecordConsentDocumentFullpageModal({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept={CRIME_CONSENT_UPLOAD_ACCEPT}
             className="crime-consent-doc-modal__visually-hidden-file"
             onChange={handleFileChange}
-            aria-label="동의서 문서 이미지 선택"
+            aria-label="동의서 문서 파일 선택"
           />
 
           <div className="crime-consent-doc-modal__a4-outer">
-            <img
-              className="crime-consent-doc-modal__a4-img"
+            <CrimeConsentDocumentPreview
               src={displaySrc}
+              file={uploadedFile}
+              fileName={replacementFileName}
               alt={CRIME_CONSENT_DOCUMENT_MODAL_HEADER_TITLE}
-              width={1146}
-              height={1618}
             />
           </div>
         </div>

@@ -47,7 +47,13 @@ export const SCHOOL_LEVEL_OPTIONS = [
 
 export type SchoolLevel = (typeof SCHOOL_LEVEL_OPTIONS)[number]['value']
 
-const K12_LEVELS: ReadonlySet<SchoolLevel> = new Set(['초등학교', '중학교', '고등학교'])
+/**
+ * NEIS(초·중·고)만 노출할 때 사용 — 예: 강사(교사) 소속 학교.
+ * 대학교·전문대학(CareerNet)은 포함하지 않는다.
+ */
+export const SCHOOL_SEARCH_NEIS_LEVELS = ['초등학교', '중학교', '고등학교'] as const satisfies readonly SchoolLevel[]
+
+const K12_LEVELS: ReadonlySet<SchoolLevel> = new Set(SCHOOL_SEARCH_NEIS_LEVELS)
 const HIGHER_ED_LEVELS: ReadonlySet<SchoolLevel> = new Set(['대학교', '전문대학'])
 
 function isHigherEdLevel(level: string): level is '대학교' | '전문대학' {

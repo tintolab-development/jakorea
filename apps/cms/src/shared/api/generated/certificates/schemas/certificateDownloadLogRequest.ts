@@ -14,7 +14,7 @@ export interface CertificateDownloadLogRequest {
   downloadedByMemberId?: number;
   /** 클라이언트 IP. 없으면 서버가 요청 IP를 넣는다 */
   ipAddress?: string;
-  /** User-Agent */
+  /** 클라이언트 User-Agent */
   userAgent?: string;
   /** 저장 파일명. GET /api/admin/logs/file-access 파일명 컬럼에 반영 */
   fileName?: string;

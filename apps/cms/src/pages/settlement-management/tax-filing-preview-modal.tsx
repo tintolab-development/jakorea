@@ -52,6 +52,7 @@ export function TaxFilingPreviewModal({ open, onCancel, rows }: TaxFilingPreview
             variant="primary"
             size="large"
             icon={<DownloadOutlined />}
+            adminAction="download"
             onClick={() => void handleDownload()}
           >
             엑셀 다운로드

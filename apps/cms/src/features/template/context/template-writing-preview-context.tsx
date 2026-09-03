@@ -45,6 +45,11 @@ export type TemplateWritingUserPreviewSession = {
   focusedParagraphId?: string | null
   /** 미리보기에서 「양식 수정」 선택 시 — 템플릿 편집 화면 등으로 이동 */
   onEditForm?: () => void
+  /** 동의 양식 A4 — 시안별 귀하·작성완료 노출 */
+  agreementClosingFooter?: {
+    showSubmitButton?: boolean
+    showRecipient?: boolean
+  }
 }
 
 export type TemplateWritingPreviewContextValue = {
@@ -118,6 +123,7 @@ export function TemplateWritingPreviewProvider({ children }: { children: ReactNo
           a4ParagraphGapPx={session.a4ParagraphGapPx}
           focusedParagraphId={session.focusedParagraphId}
           onEditForm={session.onEditForm}
+          agreementClosingFooter={session.agreementClosingFooter}
         />
       ) : null}
     </TemplateWritingPreviewContext.Provider>

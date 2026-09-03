@@ -11,6 +11,7 @@ import {
   PFFormResidentNumberInput,
   PFTextInput,
 } from '@/shared/ui'
+import formStyles from '@/shared/ui/pf-form/pf-form.module.css'
 import {
   mergePaymentStatementBasicInfo,
   PAYMENT_STATEMENT_DEFAULT_PURPOSE,
@@ -58,6 +59,7 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
       <PFFormFieldRow type="double">
         <PFFormField label="주민등록번호" required>
           <PFFormResidentNumberInput
+            fillRow
             frontValue={merged.residentFront}
             backValue={merged.residentBack}
             onFrontChange={value => patch('residentFront', value)}
@@ -65,7 +67,7 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
           />
         </PFFormField>
         <PFFormField label="소속">
-          <PFFormInlineRow>
+          <PFFormInlineRow className={formStyles.inlineRowFill}>
             <PFFormInlineSegment>
               <PFTextInput
                 variant="formPage"
@@ -97,6 +99,7 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
       <PFFormFieldRow type="single">
         <PFFormField label="자택 주소" required>
           <PFFormHomeAddressFields
+            fillRow
             roadValue={merged.addressRoad}
             detailValue={merged.addressDetail}
             onRoadChange={value => patch('addressRoad', value)}
@@ -106,7 +109,7 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
       </PFFormFieldRow>
       <PFFormFieldRow type="single">
         <PFFormField label="정산 계좌 정보" required>
-          <PFFormInlineRow>
+          <PFFormInlineRow className={formStyles.inlineRowFill}>
             <PFFormInlineSegment>
               <PFFormControlCluster>
                 <PFTextInput

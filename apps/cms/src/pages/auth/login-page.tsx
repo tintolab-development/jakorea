@@ -21,9 +21,7 @@ import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-
 import { isAdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { resolvePostAuthRedirectPath } from '@/shared/utils/post-auth-redirect'
-import {
-  DEV_LOGIN_QA_ACCOUNTS,
-} from '@/features/auth/lib/dev-login-accounts'
+import { DEV_LOGIN_QA_ACCOUNTS } from '@/features/auth/lib/dev-login-accounts'
 import { useLoginAttempts } from '@/features/auth/hooks/use-login-attempts'
 import { LOGIN_POLICY } from '@/shared/constants/login-policy'
 import { handleError } from '@/shared/utils/error-handler'
@@ -93,10 +91,9 @@ export function LoginPage() {
   useEffect(() => {
     if (isAuthenticated && user) {
       const fallback = redirectPath || getRedirectPathByRole(user)
-      navigate(
-        resolvePostAuthRedirectPath({ passwordChangeRequired, fallbackPath: fallback }),
-        { replace: true }
-      )
+      navigate(resolvePostAuthRedirectPath({ passwordChangeRequired, fallbackPath: fallback }), {
+        replace: true,
+      })
     }
   }, [isAuthenticated, user, navigate, redirectPath, passwordChangeRequired])
 
@@ -342,45 +339,37 @@ export function LoginPage() {
                       >
                         로그인하기
                       </LoadingButton>
-                      {!apiLoginAvailable && (
-                        <Text type="secondary" className="login-api-hint">
-                          API 로그인은 `VITE_API_SERVER` 또는 `VITE_API_BASE_URL` 설정 후 사용할 수
-                          있습니다.
-                        </Text>
-                      )}
                     </Form.Item>
                   </Form>
 
                   <LoginUtilityLinks registerPath={registerPath} />
                   <LoginSocialSection />
 
-                  {import.meta.env.DEV && (
-                    <div className="login-dev-quick">
-                      <Text type="secondary" className="login-dev-quick__label">
-                        임시 로그인 (DEV)
-                      </Text>
-                      <Space size="small" wrap>
-                        {DEV_LOGIN_QA_ACCOUNTS.map(account => (
-                          <Button
-                            key={account.key}
-                            size="small"
-                            onClick={() => {
-                              form.setFieldsValue({
-                                email: account.email,
-                                password: account.password,
-                              })
-                            }}
-                          >
-                            {account.label}
-                          </Button>
-                        ))}
-                      </Space>
-                      <Text type="secondary" className="login-dev-quick__hint">
-                        실 API: 마스터 → MFA 000000. PM/Partner/Viewer는 BE QA seed 전까지 401일 수
-                        있습니다.
-                      </Text>
-                    </div>
-                  )}
+                  <div className="login-dev-quick">
+                    <Text type="secondary" className="login-dev-quick__label">
+                      권한별 로그인
+                    </Text>
+                    <Space size="small" wrap>
+                      {DEV_LOGIN_QA_ACCOUNTS.map(account => (
+                        <Button
+                          key={account.key}
+                          size="small"
+                          onClick={() => {
+                            form.setFieldsValue({
+                              email: account.email,
+                              password: account.password,
+                            })
+                          }}
+                        >
+                          {account.label}
+                        </Button>
+                      ))}
+                    </Space>
+                    <Text type="secondary" className="login-dev-quick__hint">
+                      실 API: 마스터 → MFA 000000. PM/Partner/Viewer는 BE QA seed 전까지 401일 수
+                      있습니다.
+                    </Text>
+                  </div>
                 </div>
               </>
             )}

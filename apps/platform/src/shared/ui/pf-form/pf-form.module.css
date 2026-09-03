@@ -388,35 +388,7 @@
   line-height: 150%;
 }
 
-/* —— Home address (양식 제출 — 모바일 스택 + 검색 아이콘) —— */
-.homeAddressDesktopSearch {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-8);
-}
-
-.homeAddressDesktopSearch > :first-child {
-  flex: 1 1 160px;
-  min-width: 0;
-}
-
-.homeAddressMobileSearch {
-  display: none;
-  width: 100%;
-}
-
-@media (--bp-below-pc) {
-  .homeAddressDesktopSearch {
-    display: none;
-  }
-
-  .homeAddressMobileSearch {
-    display: block;
-  }
-}
+/* —— Home address: 도로명(검색 아이콘) + 상세. 모바일 세로 스택은 `.inlineRow` 미디어쿼리 —— */
 
 /* =============================================================================
  * ≤1079 — Mobile

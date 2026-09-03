@@ -21,7 +21,7 @@
   --color-border-error-light: #fcd7d7;
   --color-border-error-strong: #d13235;
   --color-border-focus: #01a1af;
-  --color-border-light: #3d3d3d;
+  --color-border-light: rgba(61, 61, 61, 0.1);
   --color-border-strong: #7a7a7a;
   --color-border-success-light: #d7e5fc;
   --color-border-success-strong: #326fd1;

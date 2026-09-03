@@ -74,6 +74,7 @@
 
 .profile-edit-modal__value-with-action-text {
   min-width: 0;
+  flex: 1 1 auto;
   flex-shrink: 1;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
@@ -81,6 +82,26 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* 소셜 3개(카카오·구글·네이버) + 액션 버튼이 한 줄에 들어가도록 디바이더 갭 축소 */
+.profile-edit-modal__value-with-action-text .user-basic-info-section__inline-segments {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.profile-edit-modal__value-with-action-text .detail-info-form-inputs-separator {
+  margin: 0;
+}
+
+.profile-edit-modal__value-with-action > .detail-info-form-inputs-separator {
+  margin: 0 8px;
 }
 
 .profile-edit-modal__section .user-consent-agreement-section__value-status {

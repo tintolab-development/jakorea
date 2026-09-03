@@ -31,9 +31,11 @@ export type UseSponsorProgramHistoryFilterReturn = UseProgramHistoryFilterReturn
 
 /**
  * 후원사 상세 — 프로그램 진행 이력 서버 필터·페이지 API
+ * @param enabled LNB 프로그램 이력 탭일 때만 true (기본정보 오픈 시 GET 방지)
  */
 export function useSponsorProgramHistoryFilter(
-  sponsorId: string
+  sponsorId: string,
+  enabled = true
 ): UseSponsorProgramHistoryFilterReturn {
   const [pendingFilters, setPendingFilters] = useState<SponsorProgramHistoryFilters>(
     INITIAL_PROGRAM_HISTORY_FILTERS
@@ -48,12 +50,15 @@ export function useSponsorProgramHistoryFilter(
     [appliedFilters]
   )
 
-  const remoteEnabled = useDataManagementRemoteEnabled('sponsors', Boolean(sponsorId))
+  const remoteEnabled = useDataManagementRemoteEnabled(
+    'sponsors',
+    enabled && Boolean(sponsorId)
+  )
 
   const query = useQuery({
     queryKey: dataManagementQueryKeys.sponsors.programHistories(sponsorId, paramsKey),
     queryFn: () => getSponsorProgramHistories(sponsorId, appliedFilters),
-    enabled: remoteEnabled && Boolean(sponsorId),
+    enabled: remoteEnabled && enabled && Boolean(sponsorId),
     staleTime: 30_000,
     retry: false,
   })
