@@ -221,7 +221,6 @@ export function SchoolRegisterModal({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="기관 소재지"
-              required
               fullRow
               view="-"
               edit={

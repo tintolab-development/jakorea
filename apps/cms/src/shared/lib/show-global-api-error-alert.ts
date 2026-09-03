@@ -8,6 +8,7 @@ import {
   formatApiErrorAlertContent,
 } from '@/shared/lib/extract-api-error-message'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
 
 const DEDUPE_MS = 2_000
 /** BE 다운 시 병렬 쿼리가 동일 「네트워크 오류」Alert를 연쇄로 띄우지 않도록 */
@@ -130,6 +131,10 @@ export function showGlobalApiErrorAlert(
 
   const httpStatus = error.response?.status ?? null
   if (httpStatus === 403) {
+    if (isAdminFirstLoginOnboardingIncomplete()) {
+      markGlobalErrorAlertShown(error)
+      return false
+    }
     return showForbiddenAccessDeniedAlert(error)
   }
 

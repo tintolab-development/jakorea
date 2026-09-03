@@ -52,6 +52,8 @@ export function RegisterSocialConnectView({
           </button>
         </div>
       </div>
+
+      <div className="register-social-connect__trailing" aria-hidden />
     </div>
   )
 }

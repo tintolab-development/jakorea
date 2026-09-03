@@ -5,6 +5,7 @@
 import { useNavigate } from 'react-router-dom'
 
 import {
+  buildRegisterCompletePath,
   buildRegisterSocialConnectCompletePath,
   buildSocialConnectCompletePath,
   normalizeSocialConnectRedirectPath,
@@ -32,6 +33,11 @@ export function RegisterSocialConnectPage() {
   })
 
   const handleFinish = () => {
+    if (!isAuthenticated) {
+      navigate(buildRegisterCompletePath(params.redirect), { replace: true })
+      return
+    }
+
     navigate(finishPath, { replace: true })
   }
 

@@ -1,11 +1,12 @@
 import type { User } from '@/types/user'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
 
 /** 회원 상세 기본 정보 `DetailInfoForm` description에 붙는 문구 (별표 포함) */
 export const ADMIN_REGISTERED_MEMBER_DETAIL_CAPTION = '*관리자에 의해 등록된 회원입니다'
 
-/** 학교(기관) 상세 기본 정보 `DetailInfoForm` description에 붙는 문구 (별표 포함) */
-export const ADMIN_REGISTERED_SCHOOL_DETAIL_CAPTION = '*관리자에 의해 등록된 학교입니다'
+/** 학교(기관) 상세 기본 정보 `DetailInfoForm` description에 붙는 문구 */
+export const ADMIN_REGISTERED_SCHOOL_DETAIL_CAPTION = '관리자에 의해 등록된 학교입니다'
 
 type UserLike = Pick<User, 'registeredByAdmin' | 'identitySelfSignupCompletedAfterAdminRegistration'>
 type PermissionApprovalUserLike = Pick<User, 'permissionApprovalStatus' | 'role'>
@@ -13,10 +14,11 @@ type CurrentUserLike = Pick<User, 'role' | 'adminLevel'>
 type AdminMemberEditTargetLike = UserLike & Pick<User, 'role'>
 type InstructorRestrictedEditUserLike = UserLike &
   Pick<User, 'role' | 'roles' | 'instructorMemberProfile'>
-type SchoolUserLike = UserLike &
-  Pick<User, 'role' | 'schoolInfo'> & {
-    schoolInfo?: { affiliatedTeachers?: { linkedUserId?: string }[] }
-  }
+type SchoolUserLike = UserLike & {
+  role: User['role']
+  listMetrics?: User['listMetrics']
+  schoolInfo?: { affiliatedTeachers?: { linkedUserId?: string }[] }
+}
 
 /**
  * 회원 등록 유형 — CMS에서 「관리자 등록」으로 보아 기본정보(읽기전용 제외)를 수정할 수 있는지.
@@ -40,11 +42,38 @@ export function isCmsInstructorFeeJaRestrictedEditTarget(
   return resolveInstructorMemberProfile(user) !== 'school_teacher'
 }
 
+/**
+ * 학교(기관) 상세 — [정보 수정] 노출.
+ * 관리자 등록 학교이며 소속 교사가 없을 때만 (교사 등록 후 비노출).
+ */
+export function shouldShowCmsSchoolInfoEditButton(user: SchoolUserLike): boolean {
+  if (user.role !== 'SCHOOL') return false
+  if (!shouldShowCmsMemberInfoEditButton(user)) return false
+  return !institutionHasRegisteredTeachers(
+    user as Pick<User, 'listMetrics' | 'schoolInfo'>
+  )
+}
+
 /** 전체 기본정보 수정 또는 강사·교사 등급 제한 수정 — 헤더 [정보 수정] 노출 */
 export function shouldShowCmsMemberInfoEditButtonOrInstructorRestricted(
-  user: InstructorRestrictedEditUserLike
+  user: InstructorRestrictedEditUserLike & SchoolUserLike
 ): boolean {
+  if (user.role === 'SCHOOL') {
+    return shouldShowCmsSchoolInfoEditButton(user)
+  }
+  /** 순수 교사 상세 — 기본정보·약관 조회 전용, [정보 수정] 미노출 */
+  if (user.role === 'INSTRUCTOR' && resolveInstructorMemberProfile(user) === 'school_teacher') {
+    return false
+  }
   return shouldShowCmsMemberInfoEditButton(user) || isCmsInstructorFeeJaRestrictedEditTarget(user)
+}
+
+/** 기본 정보 폼 — 역할별 CMS 편집 가능 여부 */
+export function shouldShowCmsBasicProfileFieldsEdit(user: SchoolUserLike & UserLike): boolean {
+  if (user.role === 'SCHOOL') {
+    return shouldShowCmsSchoolInfoEditButton(user)
+  }
+  return shouldShowCmsMemberInfoEditButton(user)
 }
 
 /** 직접 등록으로 취급되는지: 처음부터 직접 가입이거나, 관리자 등록 후 본인 직접 가입을 마친 경우 */

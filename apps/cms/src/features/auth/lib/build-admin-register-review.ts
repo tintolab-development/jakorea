@@ -1,3 +1,5 @@
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+
 import type { AdminRegisterGender, AdminRegisterWizardData } from '@/types/admin-register'
 
 export interface AdminRegisterReviewItem {
@@ -21,7 +23,12 @@ export function buildAdminRegisterReviewItems(
   return [
     { label: '회원유형', value: '관리자회원' },
     { label: '이름', value: data.verifiedName?.trim() || '-' },
-    { label: '휴대폰 번호', value: data.verifiedPhone?.trim() || '-' },
+    {
+      label: '휴대폰 번호',
+      value: data.verifiedPhone?.trim()
+        ? formatKoreanPhoneNumber(data.verifiedPhone.trim())
+        : '-',
+    },
     { label: '생년월일', value: data.birthDate ?? '-' },
     { label: '성별', value: getAdminRegisterGenderLabel(data.gender) },
     { label: '이메일 ID', value: data.email ?? '-' },

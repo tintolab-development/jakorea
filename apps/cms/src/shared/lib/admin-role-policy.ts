@@ -5,6 +5,7 @@
 
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import type { AdminLevel, AdminRoleCode, User } from '@/types/user'
+import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
 
 export type { AdminRoleCode }
 
@@ -160,6 +161,7 @@ export function canAdminAction(input: {
 }
 
 export function showAdminAccessDeniedAlert(): void {
+  if (isAdminFirstLoginOnboardingIncomplete()) return
   cmsAlertModal.show({
     title: ADMIN_ACCESS_DENIED_ALERT_TITLE,
     content: ADMIN_ACCESS_DENIED_ALERT_CONTENT,
