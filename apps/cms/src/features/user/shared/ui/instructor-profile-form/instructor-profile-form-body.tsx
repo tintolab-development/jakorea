@@ -144,26 +144,35 @@ function ConsentDocumentFieldEdit({
   value,
   onChange,
   onWrite,
+  showRadios = false,
 }: {
   value?: ConsentValue
   onChange?: (value: ConsentValue) => void
   onWrite: () => void
+  /** 강사 상세 수정만 라디오. 신규 등록은 상태 문구 + 작성 버튼 */
+  showRadios?: boolean
 }) {
   return (
     <span className="instructor-register-modal__consent-document">
-      <CmsRadioGroup
-        options={CONSENT_RADIO_OPTIONS}
-        size="large"
-        value={value}
-        onChange={event => {
-          const next = event.target.value as ConsentValue
-          if (next === 'disagree') {
-            onChange?.('disagree')
-            return
-          }
-          onWrite()
-        }}
-      />
+      {showRadios ? (
+        <CmsRadioGroup
+          options={CONSENT_RADIO_OPTIONS}
+          size="large"
+          value={value}
+          onChange={event => {
+            const next = event.target.value as ConsentValue
+            if (next === 'disagree') {
+              onChange?.('disagree')
+              return
+            }
+            onWrite()
+          }}
+        />
+      ) : (
+        <span className="instructor-register-modal__consent-status">
+          {value === 'agree' ? '동의' : '미동의'}
+        </span>
+      )}
       <span className="instructor-register-modal__consent-sep" aria-hidden>
         |
       </span>
@@ -720,6 +729,7 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentPortrait" noStyle>
                       <ConsentDocumentFieldEdit
+                        showRadios={isDetailEdit}
                         onWrite={() => handleConsentWrite('consentPortrait')}
                       />
                     </Form.Item>
@@ -743,6 +753,7 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentPaymentStatement" noStyle>
                       <ConsentDocumentFieldEdit
+                        showRadios={isDetailEdit}
                         onWrite={() => handleConsentWrite('consentPaymentStatement')}
                       />
                     </Form.Item>
@@ -755,6 +766,7 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentEducatorPledge" noStyle>
                       <ConsentDocumentFieldEdit
+                        showRadios={isDetailEdit}
                         onWrite={() => handleConsentWrite('consentEducatorPledge')}
                       />
                     </Form.Item>
@@ -769,6 +781,7 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentAdministrativeJoint" noStyle>
                       <ConsentDocumentFieldEdit
+                        showRadios={isDetailEdit}
                         onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
                       />
                     </Form.Item>
@@ -781,6 +794,7 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentSexOffenseCheck" noStyle>
                       <ConsentDocumentFieldEdit
+                        showRadios={isDetailEdit}
                         onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
                       />
                     </Form.Item>
