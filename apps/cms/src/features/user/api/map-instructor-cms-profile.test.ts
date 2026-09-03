@@ -203,6 +203,7 @@ describe('map-instructor-cms-profile', () => {
       schoolName: '고양고등학교',
       schoolProvider: 'NEIS',
       schoolExternalCode: 'B109000000',
+      schoolEducationOfficeCode: 'J10',
       schoolAddress: '경기도 고양시',
       schoolRegionSido: '경기도',
       schoolRegionSigungu: '고양시',
@@ -214,6 +215,7 @@ describe('map-instructor-cms-profile', () => {
       name: '고양고등학교',
       provider: 'NEIS',
       externalSchoolCode: 'B109000000',
+      educationOfficeCode: 'J10',
     })
     expect(toApiInstructorCmsProfile(profile).affiliation?.schoolName).toBe('고양고등학교')
   })

@@ -88,21 +88,34 @@ export function useBusinessAreaManagementModal({
     setDuplicateAlertOpen(false)
   }, [])
 
-  const invalidateRelated = useCallback(async () => {
-    await queryClient.invalidateQueries({
-      queryKey: dataManagementQueryKeys.textbooks.businessAreas(),
-    })
+  /** 로컬 rows를 RQ 캐시에 반영 — invalidate로 BA GET을 다시 치지 않음 */
+  const syncBusinessAreasCache = useCallback(
+    (nextRows: TextbookBusinessAreaRow[]) => {
+      queryClient.setQueryData(dataManagementQueryKeys.textbooks.businessAreas(), nextRows)
+    },
+    [queryClient]
+  )
+
+  /** 사업 분야명 변경 시에만 교재 목록 refetch (목록에 문자열로 노출) */
+  const invalidateTextbookLists = useCallback(async () => {
     await queryClient.invalidateQueries({
       queryKey: dataManagementQueryKeys.textbooks.lists(),
     })
-    onSaved?.()
-  }, [onSaved, queryClient])
+  }, [queryClient])
 
   const reloadRows = useCallback(async () => {
+    const cached = queryClient.getQueryData<TextbookBusinessAreaRow[]>(
+      dataManagementQueryKeys.textbooks.businessAreas()
+    )
+    if (cached !== undefined) {
+      setRows(cached)
+      return
+    }
     setLoading(true)
     try {
       const next = await listTextbookBusinessAreas()
       setRows(next)
+      queryClient.setQueryData(dataManagementQueryKeys.textbooks.businessAreas(), next)
     } catch (error) {
       setSaveError(
         getDataManagementApiErrorMessage(error, '사업 분야 목록을 불러오지 못했습니다.')
@@ -110,7 +123,7 @@ export function useBusinessAreaManagementModal({
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [queryClient])
 
   useEffect(() => {
     if (!open) {
@@ -151,9 +164,14 @@ export function useBusinessAreaManagementModal({
     setSaveError(null)
     try {
       const updated = await updateTextbookBusinessArea(editingId, trimmed)
-      setRows(prev => prev.map(row => (row.id === editingId ? updated : row)))
+      setRows(prev => {
+        const next = prev.map(row => (row.id === editingId ? updated : row))
+        syncBusinessAreasCache(next)
+        return next
+      })
       cancelEdit()
-      await invalidateRelated()
+      await invalidateTextbookLists()
+      onSaved?.()
     } catch (error) {
       if (isConflictError(error)) {
         setDuplicateAlertOpen(true)
@@ -163,7 +181,7 @@ export function useBusinessAreaManagementModal({
     } finally {
       setSaving(false)
     }
-  }, [cancelEdit, editDraft, editingId, invalidateRelated, rows])
+  }, [cancelEdit, editDraft, editingId, invalidateTextbookLists, onSaved, rows, syncBusinessAreasCache])
 
   const requestDelete = useCallback(
     async (row: TextbookBusinessAreaRow) => {
@@ -175,9 +193,13 @@ export function useBusinessAreaManagementModal({
       setSaveError(null)
       try {
         await deleteTextbookBusinessArea(row.id)
-        setRows(prev => prev.filter(item => item.id !== row.id))
+        setRows(prev => {
+          const next = prev.filter(item => item.id !== row.id)
+          syncBusinessAreasCache(next)
+          return next
+        })
         if (editingId === row.id) cancelEdit()
-        await invalidateRelated()
+        onSaved?.()
       } catch (error) {
         if (isConflictError(error)) {
           setDeleteBlockedOpen(true)
@@ -188,7 +210,7 @@ export function useBusinessAreaManagementModal({
         setSaving(false)
       }
     },
-    [cancelEdit, editingId, invalidateRelated]
+    [cancelEdit, editingId, onSaved, syncBusinessAreasCache]
   )
 
   const cancelNew = useCallback(() => {
@@ -207,10 +229,14 @@ export function useBusinessAreaManagementModal({
     setSaveError(null)
     try {
       const created = await createTextbookBusinessArea(trimmed)
-      setRows(prev => [...prev, created])
+      setRows(prev => {
+        const next = [...prev, created]
+        syncBusinessAreasCache(next)
+        return next
+      })
       setNewDraft('')
       setComposeOpen(false)
-      await invalidateRelated()
+      onSaved?.()
     } catch (error) {
       if (isConflictError(error)) {
         setDuplicateAlertOpen(true)
@@ -220,7 +246,7 @@ export function useBusinessAreaManagementModal({
     } finally {
       setSaving(false)
     }
-  }, [invalidateRelated, newDraft, rows])
+  }, [newDraft, onSaved, rows, syncBusinessAreasCache])
 
   const openCompose = useCallback(() => {
     cancelEdit()

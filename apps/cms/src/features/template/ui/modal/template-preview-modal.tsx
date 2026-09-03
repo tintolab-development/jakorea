@@ -79,6 +79,11 @@ export interface TemplatePreviewModalProps {
   focusedParagraphId?: string | null
   /** 미리보기에서 「양식 수정」 — 템플릿 편집 등 */
   onEditForm?: () => void
+  /** 동의 양식 A4 — 시안별 귀하·작성완료 */
+  agreementClosingFooter?: {
+    showSubmitButton?: boolean
+    showRecipient?: boolean
+  }
 }
 
 /**
@@ -102,6 +107,7 @@ export function TemplatePreviewModal({
   a4ParagraphGapPx,
   focusedParagraphId = null,
   onEditForm,
+  agreementClosingFooter,
 }: TemplatePreviewModalProps) {
   const previewBodyRef = useRef<HTMLDivElement>(null)
   const pdfHostRef = useRef<HTMLDivElement>(null)
@@ -370,6 +376,7 @@ export function TemplatePreviewModal({
                               renderMode={a4RenderMode}
                               paragraphGapPx={a4ParagraphGapPx}
                               focusedParagraphId={focusedParagraphId}
+                              agreementClosingFooter={agreementClosingFooter}
                             />
                           </div>
                         </A4DocumentPageLayout>
@@ -396,6 +403,12 @@ export function TemplatePreviewModal({
                   showEditorChrome={false}
                   paragraphBodyOptions={paragraphBodyOptions}
                   hideParagraphRequiredChrome={hideParagraphRequiredChrome}
+                  agreementClosingFooter={
+                    agreementClosingFooter ??
+                    (editorKind === 'agreement'
+                      ? { showSubmitButton: false, showRecipient: false }
+                      : undefined)
+                  }
                 />
               )}
             </div>
@@ -429,6 +442,7 @@ export function TemplatePreviewModal({
                   paragraphBodyOptions={paragraphBodyOptions}
                   renderMode={a4RenderMode}
                   paragraphGapPx={a4ParagraphGapPx}
+                  agreementClosingFooter={agreementClosingFooter}
                 />
               </div>
             </A4DocumentPageLayout>

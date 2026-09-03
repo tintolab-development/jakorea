@@ -3,7 +3,6 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
@@ -11,7 +10,6 @@ import {
 } from '@/shared/constants'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ContentModal, DeleteGuideModal } from '@/shared/ui'
-import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useTextbookListQuery } from '@/features/textbook/hooks/use-textbook-list-query'
@@ -67,7 +65,6 @@ const INITIAL_FILTERS: TextbookFilters = {
 }
 
 export default function TextbookPage() {
-  const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const tbUseParam = searchParams.get(TB_USE_PARAM)
   const initialUseStatus = parseTextbookUseStatus(tbUseParam)
@@ -415,14 +412,6 @@ export default function TextbookPage() {
       <BusinessAreaManagementModal
         open={businessAreaModalOpen}
         onCancel={() => setBusinessAreaModalOpen(false)}
-        onSaved={() => {
-          void queryClient.invalidateQueries({
-            queryKey: dataManagementQueryKeys.textbooks.businessAreas(),
-          })
-          void queryClient.invalidateQueries({
-            queryKey: dataManagementQueryKeys.textbooks.lists(),
-          })
-        }}
       />
       <TextbookDetailFullPageModal
         open={Boolean(detailTextbookId)}
@@ -564,7 +553,8 @@ export default function TextbookPage() {
             preserveSelectedRowKeys: false,
           }}
           onRow={record => ({
-            onMouseEnter: () => prefetchTextbookDetail(record.id),
+            // hover prefetch 금지: 등록 후 목록 remount 시 커서 아래 행마다
+            // GET /textbooks/{id} N건이 동시에 나가는 과호출이 발생함. 클릭 시에만 prefetch.
             onClick: event => {
               const target = event.target as HTMLElement
               if (

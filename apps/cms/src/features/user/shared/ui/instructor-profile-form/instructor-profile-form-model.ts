@@ -109,6 +109,7 @@ export type InstructorRegisterModalFormValues = {
   schoolOrganizationId?: number
   schoolProvider?: string
   schoolExternalCode?: string
+  schoolEducationOfficeCode?: string
   schoolLevel?: string
   schoolRegionSido?: string
   schoolRegionSigungu?: string
@@ -191,6 +192,7 @@ export const INITIAL_VALUES: InstructorProfileFormValues = {
   schoolOrganizationId: undefined,
   schoolProvider: '',
   schoolExternalCode: '',
+  schoolEducationOfficeCode: '',
   schoolLevel: '',
   schoolRegionSido: '',
   schoolRegionSigungu: '',

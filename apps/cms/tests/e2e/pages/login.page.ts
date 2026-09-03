@@ -1,7 +1,7 @@
 import { type Page, expect } from '@playwright/test'
 import { generateSync } from 'otplib'
 
-/** DEV 전용 — 로그인 페이지 「임시 로그인 (DEV)」 마스터 버튼 */
+/** 로그인 페이지 「권한별 로그인」 마스터 버튼 */
 export const ADMIN_DEV_LOGIN_MASTER_BUTTON = '마스터'
 
 /** @deprecated `ADMIN_DEV_LOGIN_MASTER_BUTTON` 사용 */

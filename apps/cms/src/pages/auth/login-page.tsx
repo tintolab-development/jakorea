@@ -345,33 +345,31 @@ export function LoginPage() {
                   <LoginUtilityLinks registerPath={registerPath} />
                   <LoginSocialSection />
 
-                  {import.meta.env.DEV && (
-                    <div className="login-dev-quick">
-                      <Text type="secondary" className="login-dev-quick__label">
-                        임시 로그인 (DEV)
-                      </Text>
-                      <Space size="small" wrap>
-                        {DEV_LOGIN_QA_ACCOUNTS.map(account => (
-                          <Button
-                            key={account.key}
-                            size="small"
-                            onClick={() => {
-                              form.setFieldsValue({
-                                email: account.email,
-                                password: account.password,
-                              })
-                            }}
-                          >
-                            {account.label}
-                          </Button>
-                        ))}
-                      </Space>
-                      <Text type="secondary" className="login-dev-quick__hint">
-                        실 API: 마스터 → MFA 000000. PM/Partner/Viewer는 BE QA seed 전까지 401일 수
-                        있습니다.
-                      </Text>
-                    </div>
-                  )}
+                  <div className="login-dev-quick">
+                    <Text type="secondary" className="login-dev-quick__label">
+                      권한별 로그인
+                    </Text>
+                    <Space size="small" wrap>
+                      {DEV_LOGIN_QA_ACCOUNTS.map(account => (
+                        <Button
+                          key={account.key}
+                          size="small"
+                          onClick={() => {
+                            form.setFieldsValue({
+                              email: account.email,
+                              password: account.password,
+                            })
+                          }}
+                        >
+                          {account.label}
+                        </Button>
+                      ))}
+                    </Space>
+                    <Text type="secondary" className="login-dev-quick__hint">
+                      실 API: 마스터 → MFA 000000. PM/Partner/Viewer는 BE QA seed 전까지 401일 수
+                      있습니다.
+                    </Text>
+                  </div>
                 </div>
               </>
             )}

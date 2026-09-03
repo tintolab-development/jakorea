@@ -190,7 +190,10 @@ function SponsorDetailFullPageModalInner({
     remoteContactActions
   )
   const { registerModalOpen, setRegisterModalOpen, handleRegister } = sponsorContacts
-  const programHistory = useSponsorProgramHistoryFilter(sponsor.id)
+  const programHistory = useSponsorProgramHistoryFilter(
+    sponsor.id,
+    lnbKey === LNB_PROGRAMS
+  )
   const { contactColumns, programHistoryColumns } = useSponsorDetailModalTableColumns({
     contacts: contactsList.allContacts,
     canWrite,

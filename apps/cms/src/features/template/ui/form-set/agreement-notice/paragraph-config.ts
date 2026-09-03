@@ -1,12 +1,10 @@
-import { getAgreementNoticeAdminProxyHiddenIds } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
-/** 행정정보 공동이용 사전 동의 — 확인 단락을 공통 2단 카드(문구·날짜 / 안내·성명)로 */
+/**
+ * 행정정보 공동이용 사전 동의 — 템플릿 authoring은 확인 문구·날짜·서명을 시안처럼 분리.
+ * 회원 fill 2단 확인 카드는 `buildAgreementConsentFillParagraphBodyOptions`에서 켠다.
+ */
 export const AGREEMENT_NOTICE_PARAGRAPH_BODY_OPTIONS = {
-  agreementAdminProxyConfirm: true,
-  /** confirmationClosing에 날짜·성명 합침 — systemDate/systemSignature 숨김 */
-  hiddenParagraphIds: getAgreementNoticeAdminProxyHiddenIds(),
-  /** 템플릿 authoring 미리보기용 샘플 이름 (회원 fill에서는 participantName으로 덮어씀) */
-  agreementSystemParticipantName: '홍길동',
+  /** A4·시안: 서명란은 빈 밑줄. 회원 fill은 `buildAgreementConsentFillParagraphBodyOptions`에서 이름 주입 */
   structureLockedAuthoringChoicePreview: true,
 } satisfies RenderFormParagraphBodyOptions

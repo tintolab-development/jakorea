@@ -99,7 +99,10 @@ export function MemberConsentAgreementModal({
     if (savedSnapshot?.draft) {
       const restored = cloneMemberConsentAgreementDraftSnapshot(savedSnapshot)
       setDraft(
-        normalizeNoticeIdTypeResidentInputInDraft(normalizeWritingFormDraft(restored.draft))
+        normalizeMemberConsentWriteDraft(
+          normalizeNoticeIdTypeResidentInputInDraft(normalizeWritingFormDraft(restored.draft)),
+          templateId
+        )
       )
       setPaymentBasicInfo(mergePaymentStatementBasicInfo(restored.paymentBasicInfo))
       setIsDraftLoading(false)
@@ -306,6 +309,8 @@ export function MemberConsentAgreementModal({
                   agreementClosingFooter={{
                     onSubmit: handleSubmit,
                     submitDisabled: isDraftLoading || draft == null,
+                    showSubmitButton: true,
+                    showRecipient: true,
                   }}
                 />
               </div>

@@ -98,14 +98,9 @@ export function HeroStage({
           <div className={styles.brandSlides}>
             <div className={styles.brandSlide}>
               <div className={styles.inspiringLead}>
-                <PFText
-                  as="p"
-                  typo="page-title"
-                  color="primary-800"
-                  className={styles.inspiringTitle}
-                >
+                <p className={styles.inspiringTitle}>
                   <Lines lines={INSPIRING_TITLE_LINES} />
-                </PFText>
+                </p>
                 <PFText
                   as="p"
                   typo="bd-lg-rg"

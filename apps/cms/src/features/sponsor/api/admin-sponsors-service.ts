@@ -94,7 +94,27 @@ export async function updateSponsorBasicInfo(
 ): Promise<SponsorManagementDetailView> {
   assertSponsorsRemoteReady()
   await updateSponsorRemote(sponsorId, toSponsorRequestFromBasicInfo(basicInfo, existing))
-  return getSponsorDetail(sponsorId)
+  // PATCH 후 상세 재GET 생략 — 로컬 편집값 + 기존 embed를 병합
+  const address = [basicInfo.district.trim(), basicInfo.detailAddress.trim()]
+    .filter(Boolean)
+    .join(' ')
+  return {
+    ...existing,
+    id: existing.id || sponsorId,
+    name: basicInfo.nameDisplayKo.trim() || existing.name,
+    nameEn: basicInfo.nameDisplayEn.trim() || existing.nameEn,
+    nameDisplayKo: basicInfo.nameDisplayKo.trim() || existing.nameDisplayKo,
+    nameDisplayEn: basicInfo.nameDisplayEn.trim() || existing.nameDisplayEn,
+    businessNumber: basicInfo.businessNumber.trim() || existing.businessNumber,
+    executives: basicInfo.executives.trim() || existing.executives,
+    address: address || existing.address,
+    organizationKind: basicInfo.organizationKind,
+    sponsorshipStatus: basicInfo.sponsorshipStatus,
+    sponsorshipStartDate:
+      basicInfo.sponsorshipStartDate != null
+        ? basicInfo.sponsorshipStartDate
+        : existing.sponsorshipStartDate,
+  }
 }
 
 export async function updateSponsorStatus(

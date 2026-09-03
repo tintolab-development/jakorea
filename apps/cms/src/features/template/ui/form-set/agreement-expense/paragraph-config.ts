@@ -1,12 +1,10 @@
-import { getEducatorFacilitatorPledgeAdminProxyHiddenIds } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
-/** 교육진행자 동의 서약서 — 위반 동의 단락을 공통 2단 카드(문구·날짜 / 안내·성명)로 */
+/**
+ * 교육진행자 동의 서약서 — 템플릿 authoring은 위반 동의·날짜·서명을 시안처럼 분리.
+ * 회원 fill 2단 확인 카드는 `buildAgreementConsentFillParagraphBodyOptions`에서 켠다.
+ */
 export const EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_BODY_OPTIONS = {
-  agreementAdminProxyConfirm: true,
-  /** violationClosing에 날짜·성명 합침 — systemDate/systemSignature 숨김 */
-  hiddenParagraphIds: getEducatorFacilitatorPledgeAdminProxyHiddenIds(),
-  /** 템플릿 authoring 미리보기용 샘플 이름 (회원 fill에서는 participantName으로 덮어씀) */
-  agreementSystemParticipantName: '홍길동',
+  /** A4·시안: 서명란은 빈 밑줄. 회원 fill은 `buildAgreementConsentFillParagraphBodyOptions`에서 이름 주입 */
   structureLockedAuthoringChoicePreview: true,
 } satisfies RenderFormParagraphBodyOptions

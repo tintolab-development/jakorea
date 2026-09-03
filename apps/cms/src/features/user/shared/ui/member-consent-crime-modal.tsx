@@ -3,23 +3,27 @@ import { type ChangeEvent, useCallback, useEffect, useId, useRef, useState } fro
 import crimeConsentDefaultImage from '@/assets/images/template/성범좌 경력 조회.png'
 import {
   AGREEMENT_CRIME_TEMPLATE_CODE,
+  CRIME_CONSENT_UPLOAD_ACCEPT,
+  isCrimeConsentUploadFile,
   parseAgreementCrimeConsentSettings,
   readImageFileAsDataUrl,
 } from '@/features/template/lib/agreement-crime-consent-settings'
+import { downloadCrimeConsentFormDocument } from '@/features/template/lib/crime-consent-form-document'
 import { loadWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
+import { CrimeConsentDocumentPreview } from '@/features/template/ui/template-management/crime-consent-document-preview'
 import { CRIME_CONSENT_DOCUMENT_MODAL_HEADER_TITLE } from '@/features/template/ui/template-management/crime-record-consent-document-fullpage-modal'
+import type { MemberConsentCrimeDraftSnapshot } from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE } from '@/shared/constants/messages'
-import { downloadBlob } from '@/shared/utils/file-download'
+import {
+  CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE,
+  CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE,
+} from '@/shared/constants/messages'
 import '@/features/template/ui/template-management/crime-record-consent-document-fullpage-modal.css'
 import './member-consent-crime-modal.css'
 
 const MEMBER_CONSENT_MODAL_Z_INDEX = 1200
-const DEFAULT_DOWNLOAD_FILENAME = '성범죄_경력조회_동의서.png'
-
-import type { MemberConsentCrimeDraftSnapshot } from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 
 export interface MemberConsentCrimeModalProps {
   open: boolean
@@ -39,6 +43,7 @@ export function MemberConsentCrimeModal({
   const { showAlert } = useCmsAlert()
   const iconMaskId = `member-crime-consent-pen-mask-${useId().replace(/:/g, '')}`
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const ignoreTemplateLoadRef = useRef(false)
   const [displaySrc, setDisplaySrc] = useState<string>(crimeConsentDefaultImage)
   const [replacementFileName, setReplacementFileName] = useState<string | null>(null)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
@@ -50,6 +55,7 @@ export function MemberConsentCrimeModal({
     }
 
     if (savedSnapshot) {
+      ignoreTemplateLoadRef.current = true
       setDisplaySrc(savedSnapshot.displaySrc)
       setReplacementFileName(savedSnapshot.replacementFileName)
       setUploadedFile(savedSnapshot.file ?? null)
@@ -58,11 +64,12 @@ export function MemberConsentCrimeModal({
     }
 
     let cancelled = false
+    ignoreTemplateLoadRef.current = false
     setHasUploadedDocument(false)
     setReplacementFileName(null)
     setUploadedFile(null)
     void loadWritingFormTemplateDraft(AGREEMENT_CRIME_TEMPLATE_CODE).then(saved => {
-      if (cancelled) return
+      if (cancelled || ignoreTemplateLoadRef.current) return
       const settings = parseAgreementCrimeConsentSettings(saved?.settingsJson)
       if (settings.documentImageUrl != null) {
         setDisplaySrc(settings.documentImageUrl)
@@ -80,32 +87,34 @@ export function MemberConsentCrimeModal({
     fileInputRef.current?.click()
   }, [])
 
-  const handleFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file || !file.type.startsWith('image/')) return
-    void readImageFileAsDataUrl(file).then(dataUrl => {
-      setDisplaySrc(dataUrl)
-      setReplacementFileName(file.name)
+  const handleFileChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      e.target.value = ''
+      if (!file) return
+      if (!isCrimeConsentUploadFile(file)) {
+        showAlert({
+          title: '안내',
+          content: CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE,
+        })
+        return
+      }
+      ignoreTemplateLoadRef.current = true
       setUploadedFile(file)
+      setReplacementFileName(file.name)
       setHasUploadedDocument(true)
+      void readImageFileAsDataUrl(file).then(dataUrl => {
+        setDisplaySrc(dataUrl)
+      })
+    },
+    [showAlert]
+  )
+
+  const handleDownload = useCallback(() => {
+    void downloadCrimeConsentFormDocument().catch(error => {
+      console.debug('memberConsentCrime download failed', error)
     })
   }, [])
-
-  const handleDownload = useCallback(async () => {
-    try {
-      const res = await fetch(displaySrc)
-      if (!res.ok) throw new Error('fetch failed')
-      const blob = await res.blob()
-      const filename =
-        replacementFileName && replacementFileName.trim() !== ''
-          ? replacementFileName
-          : DEFAULT_DOWNLOAD_FILENAME
-      await downloadBlob(blob, filename)
-    } catch (error) {
-      console.debug('memberConsentCrime download failed', error)
-    }
-  }, [displaySrc, replacementFileName])
 
   const handleSubmit = useCallback(() => {
     if (!hasUploadedDocument) {
@@ -202,7 +211,7 @@ export function MemberConsentCrimeModal({
                 variant="secondary"
                 size="medium"
                 icon={<DownloadOutlined />}
-                onClick={() => void handleDownload()}
+                onClick={handleDownload}
                 className="crime-consent-doc-modal__download-btn"
               >
                 문서 다운로드
@@ -219,19 +228,18 @@ export function MemberConsentCrimeModal({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept={CRIME_CONSENT_UPLOAD_ACCEPT}
             className="crime-consent-doc-modal__visually-hidden-file"
             onChange={handleFileChange}
-            aria-label="동의서 문서 이미지 선택"
+            aria-label="동의서 문서 파일 선택"
           />
 
           <div className="crime-consent-doc-modal__a4-outer">
-            <img
-              className="crime-consent-doc-modal__a4-img"
+            <CrimeConsentDocumentPreview
               src={displaySrc}
+              file={uploadedFile}
+              fileName={replacementFileName}
               alt={CRIME_CONSENT_DOCUMENT_MODAL_HEADER_TITLE}
-              width={1146}
-              height={1618}
             />
           </div>
         </div>

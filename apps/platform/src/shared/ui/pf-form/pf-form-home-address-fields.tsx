@@ -16,7 +16,7 @@ export type PFFormHomeAddressFieldsProps = {
   fillRow?: boolean
 }
 
-/** Platform 양식 — 자택 주소 (PC: 검색 버튼 · 모바일: 아이콘 + 세로 스택) */
+/** Platform 양식 — 자택 주소 (도로명 검색 아이콘 + 상세. 모바일은 inlineRow가 세로 스택) */
 export function PFFormHomeAddressFields({
   roadValue,
   detailValue,
@@ -39,7 +39,6 @@ export function PFFormHomeAddressFields({
       <PFFormInlineRow className={fillRow ? styles.inlineRowFill : undefined}>
         <PFFormInlineSegment>
           <PFTextInput
-            className={styles.homeAddressMobileSearch}
             variant="formPage"
             size="large"
             hasIcon

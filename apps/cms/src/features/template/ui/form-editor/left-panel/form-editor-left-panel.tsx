@@ -58,7 +58,8 @@ export function FormEditorLeftPanel({
       <AgreementSheetClosingFooter
         onSubmit={agreementClosingFooter?.onSubmit}
         submitDisabled={agreementClosingFooter?.submitDisabled}
-        showSubmitButton={agreementClosingFooter?.showSubmitButton ?? true}
+        showSubmitButton={agreementClosingFooter?.showSubmitButton ?? false}
+        showRecipient={agreementClosingFooter?.showRecipient ?? false}
       />
     ) : null
   const mergedParagraphBodyOptions: RenderFormParagraphBodyOptions = useMemo(

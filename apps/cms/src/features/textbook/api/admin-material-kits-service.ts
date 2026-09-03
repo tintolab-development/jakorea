@@ -24,6 +24,11 @@ export const MATERIAL_KIT_TARGET_LEVELS = [
   'university',
 ] as const satisfies ReadonlyArray<keyof TextbookKitQuantityValues>
 
+/** 세션 내 글로벌 키트 id — GET /material-kits 반복 방지 */
+let cachedGlobalKitId: number | null = null
+/** 세션 내 current version id (kitId별) */
+const cachedVersionIdByKitId = new Map<number, number>()
+
 function assertMaterialKitsRemoteReady(): void {
   if (!isRealApiModuleEnabled('textbooks')) {
     throw new Error(
@@ -39,28 +44,47 @@ export function shouldUseMaterialKitsRemoteApi(): boolean {
   return shouldUseTextbooksRemoteApi()
 }
 
+/** 테스트·로그아웃 시 모듈 캐시 초기화 */
+export function clearMaterialKitIdCache(): void {
+  cachedGlobalKitId = null
+  cachedVersionIdByKitId.clear()
+}
+
 async function resolveGlobalMaterialKitId(): Promise<number> {
+  if (cachedGlobalKitId != null) return cachedGlobalKitId
+
   const page = await fetchMaterialKitsRemote({ page: 0, size: 100, useYn: true })
   const items = page.items ?? []
   const globalKit = items.find(kit => kit.textbookId == null) ?? items[0]
-  if (globalKit?.id != null) return globalKit.id
+  if (globalKit?.id != null) {
+    cachedGlobalKitId = globalKit.id
+    return cachedGlobalKitId
+  }
 
   const created = await createMaterialKitRemote({ kitName: GLOBAL_KIT_NAME, useYn: true })
   if (created.id == null) {
     throw new Error('키트를 생성하지 못했습니다.')
   }
-  return created.id
+  cachedGlobalKitId = created.id
+  return cachedGlobalKitId
 }
 
 async function resolveCurrentVersionId(kitId: number): Promise<number> {
+  const cached = cachedVersionIdByKitId.get(kitId)
+  if (cached != null) return cached
+
   const versions = await fetchMaterialKitVersionsRemote(kitId)
   const current = versions.find(version => version.current) ?? versions.at(-1)
-  if (current?.id != null) return current.id
+  if (current?.id != null) {
+    cachedVersionIdByKitId.set(kitId, current.id)
+    return current.id
+  }
 
   const created = await createMaterialKitVersionRemote(kitId, { current: true })
   if (created.id == null) {
     throw new Error('키트 버전을 생성하지 못했습니다.')
   }
+  cachedVersionIdByKitId.set(kitId, created.id)
   return created.id
 }
 

@@ -229,29 +229,27 @@ export function LoginPage() {
           />
           <LoginSocialSection />
 
-          {import.meta.env.DEV && (
-            <div className="login-dev-quick">
-              <Text type="secondary" className="login-dev-quick__label">
-                임시 로그인 (DEV)
-              </Text>
-              <Space size="small" wrap>
-                {DEV_LOGIN_QA_ACCOUNTS.map(account => (
-                  <Button
-                    key={account.key}
-                    size="small"
-                    onClick={() => {
-                      form.setFieldsValue({
-                        email: account.email,
-                        password: account.password,
-                      })
-                    }}
-                  >
-                    {account.label}
-                  </Button>
-                ))}
-              </Space>
-            </div>
-          )}
+          <div className="login-dev-quick">
+            <Text type="secondary" className="login-dev-quick__label">
+              권한별 로그인
+            </Text>
+            <Space size="small" wrap>
+              {DEV_LOGIN_QA_ACCOUNTS.map(account => (
+                <Button
+                  key={account.key}
+                  size="small"
+                  onClick={() => {
+                    form.setFieldsValue({
+                      email: account.email,
+                      password: account.password,
+                    })
+                  }}
+                >
+                  {account.label}
+                </Button>
+              ))}
+            </Space>
+          </div>
         </div>
       </div>
 
