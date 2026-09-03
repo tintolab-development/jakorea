@@ -8,25 +8,31 @@
   padding-bottom: 80px;
 }
 
-.agreement-sheet-closing-footer__recipient {
-  margin: 60px 0 16px;
-  color: var(--Color-netural-cool-500, #85969d);
-  font-family: Pretendard, sans-serif;
-  font-size: 30px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 144%;
-  text-align: center;
+/* JA KOREA 귀하 — 작성 시트: disabled pill. 상단 갭은 `.form-editor-left` gap 32px */
+.agreement-sheet-closing-footer--recipient-pill {
+  align-items: stretch;
 }
 
-/* A4 contentOnly — 서명 영역 스펙 (우측 정렬 볼드) */
+.agreement-sheet-closing-footer__recipient-pill {
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.agreement-sheet-closing-footer:not(.agreement-sheet-closing-footer--document)
+  .agreement-sheet-closing-footer__submit {
+  margin-top: 16px;
+}
+
+/* A4 contentOnly — 확인·날짜·서명 스택과 동일 우측 볼드 텍스트 */
 .agreement-sheet-closing-footer--document {
   align-items: flex-end;
   padding-bottom: 0;
 }
 
-.agreement-sheet-closing-footer--document .agreement-sheet-closing-footer__recipient {
+.agreement-sheet-closing-footer__recipient-document {
   margin: 0;
+  width: 100%;
   color: #000;
   text-align: right;
   font-family: Pretendard, sans-serif;
@@ -34,6 +40,11 @@
   font-style: normal;
   font-weight: 700;
   line-height: 150%; /* 36px */
+}
+
+.agreement-sheet-closing-footer--document .agreement-sheet-closing-footer__submit {
+  align-self: center;
+  margin-top: 16px;
 }
 
 .agreement-sheet-closing-footer__submit.cms-button.ant-btn.cms-button--large {

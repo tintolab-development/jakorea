@@ -33,12 +33,12 @@ export function buildAgreementConsentFillParagraphBodyOptions(
 
   const templateId = context?.templateId ?? ''
   const baseOptions = agreementConfig.paragraphBodyOptions
-  const hasParticipantName = (context?.participantName?.trim().length ?? 0) > 0
-  const templateSupportsProxyConfirm = AGREEMENT_ADMIN_PROXY_CONFIRM_TEMPLATE_IDS.has(templateId)
-  /** 템플릿 authoring에서 쓰는 2단 확인 카드 — 지급조서 등은 paragraphBodyOptions 플래그를 그대로 따른다 */
-  const isAdminProxyConfirm =
-    baseOptions?.agreementAdminProxyConfirm === true ||
-    (templateSupportsProxyConfirm && hasParticipantName)
+  /**
+   * 회원 fill만 2단 확인 카드(문구+날짜 / 안내+성명).
+   * 템플릿 authoring은 시안처럼 날짜·서명을 분리하므로 `paragraphBodyOptions`에
+   * `agreementAdminProxyConfirm`를 두지 않는다.
+   */
+  const isAdminProxyConfirm = AGREEMENT_ADMIN_PROXY_CONFIRM_TEMPLATE_IDS.has(templateId)
 
   const baseHidden = baseOptions?.hiddenParagraphIds
   const proxyHidden = isAdminProxyConfirm

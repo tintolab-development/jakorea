@@ -125,6 +125,13 @@
   display: none;
 }
 
+/* 행정정보 — 빈 confirmationClosing 숨김 후 날짜 단락이 구분선+본문(날짜 pill)을 겸함 */
+.form-document-preview-paragraph--notice-date-stack
+  .form-document-preview-paragraph__content-slot {
+  display: block;
+  margin-top: 40px;
+}
+
 /* 동의 A4 하단 확인 문구(closing / untitled explanation) — 카드 크롬 없이 텍스트만 */
 .form-document-preview-paragraph--content-only-closing,
 .form-document-preview-paragraph--content-only-confirm {
@@ -173,6 +180,60 @@
   align-self: stretch;
   background: var(--table-line, #e0e0e0);
   margin-bottom: 40px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 초상권 A4 — 패딩·갭 축소로 1페이지 수용                                       */
+/* -------------------------------------------------------------------------- */
+
+.form-document-preview-body--agreement-portrait
+  .form-document-preview-paragraph__content-header {
+  margin-bottom: 4px;
+}
+
+.form-document-preview-body--agreement-portrait
+  .form-document-preview-paragraph--content-only-closing,
+.form-document-preview-body--agreement-portrait
+  .form-document-preview-paragraph--content-only-confirm {
+  margin-bottom: 12px;
+}
+
+.form-document-preview-body--agreement-portrait
+  .form-document-preview-paragraph--content-only-closing.form-document-preview-paragraph--content-only-confirm-rule,
+.form-document-preview-body--agreement-portrait
+  .form-document-preview-paragraph--content-only-confirm.form-document-preview-paragraph--content-only-confirm-rule {
+  padding-top: 20px;
+}
+
+.form-document-preview-body--agreement-portrait
+  .form-document-preview-paragraph--content-only-confirm-rule::before {
+  margin-bottom: 16px;
+}
+
+.form-document-preview-body--agreement-portrait .explanation-system--document-date {
+  margin-bottom: 6px;
+}
+
+.form-document-preview-body--agreement-portrait .explanation-system--document-signature {
+  margin-bottom: 0;
+}
+
+.form-document-preview-body--agreement-portrait .form-editor-table-bottom-consent {
+  margin-top: 8px;
+}
+
+.form-document-preview-body--agreement-portrait .form-editor-vertical-table__th,
+.form-document-preview-body--agreement-portrait .form-editor-vertical-table__td {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.form-document-preview-body--agreement-portrait
+  .form-document-preview-paragraph__body-text--explanation-filled,
+.form-document-preview-body--agreement-portrait
+  .form-document-preview-paragraph__body-text--explanation-placeholder {
+  font-size: 20px;
+  line-height: 140%;
 }
 
 .form-document-preview-paragraph--overflow .paragraph-card__slot {

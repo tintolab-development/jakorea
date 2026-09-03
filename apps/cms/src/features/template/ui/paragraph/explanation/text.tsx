@@ -69,10 +69,10 @@ export function ExplanationText({
       paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine ||
       paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm
     if (isPreConsentWhiteSheetBar) {
-      /* `form-editor-body`는 슬롯·고정 블록과 flex gap이 겹칠 수 있어 래퍼 없이 렌더 */
+      /* 지급조서 mid/final 확인 — disabled pill(시안 고정 단락) */
       return (
         <>
-          <PaymentPreConsentFixedBlock tone="white">{text}</PaymentPreConsentFixedBlock>
+          <PaymentPreConsentFixedBlock tone="disabled">{text}</PaymentPreConsentFixedBlock>
           {consentRadios}
         </>
       )

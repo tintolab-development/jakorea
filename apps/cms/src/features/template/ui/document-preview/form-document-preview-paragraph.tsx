@@ -29,7 +29,9 @@ import { getFormParagraphDisplayTitle } from '@/features/template/lib/form-title
 import { ParagraphCard } from '@/features/template/ui/paragraph/shared/paragraph-card'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
 import { AgreementAdminProxyConfirmBlock } from '@/features/template/ui/paragraph/explanation/agreement-admin-proxy-confirm-block'
+import { PaymentPreConsentFixedBlock } from '@/features/template/ui/paragraph/explanation/payment-pre-consent-fixed-block'
 import { StaticDescriptionLines } from '@/features/template/ui/paragraph/explanation/static-description-lines'
+import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/table/horizontal-table-paragraph-body'
 import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/table/vertical-table-paragraph-body'
 import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
@@ -53,7 +55,6 @@ import { UjatJournalEducationInfo } from '@/features/template/ui/paragraph/singl
 import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { FormParagraphSectionDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/basic-info-paragraph'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -346,6 +347,16 @@ function renderBody(
       const body = safeTrim(p.bodyText)
       const isNoticeInstitutionEmpty =
         p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution && !body
+      /** 작성(card) 시트만 disabled pill. A4 contentOnly는 확인 문구 우측정렬 규격 */
+      const isPaymentPreConsentSheetBar =
+        renderMode !== 'contentOnly' &&
+        (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine ||
+          p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm)
+      if (isPaymentPreConsentSheetBar) {
+        return (
+          <PaymentPreConsentFixedBlock tone="disabled">{body || ph}</PaymentPreConsentFixedBlock>
+        )
+      }
       const display = isNoticeInstitutionEmpty ? '-' : body || ph
       const filled = Boolean(body) || isNoticeInstitutionEmpty
       return (
@@ -730,6 +741,12 @@ export function FormDocumentPreviewParagraph({
       paragraph.kind === 'single_item' && paragraph.variant === 'file_attachment'
     const isNoticeStackDivider =
       paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
+    const isNoticeDateWithDivider =
+      paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate
+    /** 지급조서 mid/final도 다른 동의서와 동일 confirm·구분선 크롬 (A4 contentOnly) */
+    const useConfirmTextChrome =
+      !isNoticeStackDivider && viewModel.isConfirmText && !viewModel.isClosing
+    const useConfirmRuleChrome = viewModel.isConfirmTextRule
 
     return (
       <div
@@ -739,16 +756,18 @@ export function FormDocumentPreviewParagraph({
           isFileAttachment ? 'form-document-preview-paragraph--file-attachment' : '',
           isNoticeStackDivider
             ? 'form-document-preview-paragraph--content-only-stack-divider'
-            : viewModel.isClosing
-              ? 'form-document-preview-paragraph--content-only-closing'
-              : '',
-          !isNoticeStackDivider && viewModel.isConfirmText && !viewModel.isClosing
-            ? 'form-document-preview-paragraph--content-only-confirm'
             : '',
+          isNoticeDateWithDivider
+            ? 'form-document-preview-paragraph--content-only-stack-divider form-document-preview-paragraph--notice-date-stack'
+            : '',
+          !isNoticeStackDivider && !isNoticeDateWithDivider && viewModel.isClosing
+            ? 'form-document-preview-paragraph--content-only-closing'
+            : '',
+          useConfirmTextChrome ? 'form-document-preview-paragraph--content-only-confirm' : '',
           viewModel.isClosingSignature
             ? 'form-document-preview-paragraph--content-only-closing-signature'
             : '',
-          viewModel.isConfirmTextRule
+          useConfirmRuleChrome
             ? 'form-document-preview-paragraph--content-only-confirm-rule'
             : '',
           overflow ? 'form-document-preview-paragraph--overflow' : '',

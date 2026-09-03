@@ -11,6 +11,7 @@ import { usePaymentStatementIssuanceMiddleActions } from '@/features/template/ho
 import {
   getPaymentStatementPreConsentA4ParagraphGap,
   PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS,
+  PAYMENT_STATEMENT_PRE_CONSENT_A4_PAGE_BREAK_BEFORE_PARAGRAPH_IDS,
 } from '@/features/template/model/payment-statement-pre-consent-a4-preview'
 import {
   createPaymentStatementPreConsentDraft,
@@ -180,8 +181,11 @@ export function usePaymentStatementPreConsentEditor(
       paragraphBodyOptions: PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
       hideParagraphRequiredChrome: true as const,
       a4HiddenParagraphIds: PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS,
+      a4PageBreakBeforeParagraphIds:
+        PAYMENT_STATEMENT_PRE_CONSENT_A4_PAGE_BREAK_BEFORE_PARAGRAPH_IDS,
       a4RenderMode: 'contentOnly' as const,
       a4ParagraphGapPx: getPaymentStatementPreConsentA4ParagraphGap,
+      agreementClosingFooter: { showSubmitButton: false, showRecipient: true },
     }),
     [draft, previewHeaderTitle, updateParagraph]
   )
