@@ -72,6 +72,29 @@ export function clearPasswordChangeRequiredWizardState() {
   window.sessionStorage.removeItem(WIZARD_STORAGE_KEY)
 }
 
+const COMPLETE_STORAGE_KEY = 'cms:password-change-required-complete'
+
+export function markPasswordChangeRequiredComplete() {
+  if (typeof window === 'undefined' || !window.sessionStorage) {
+    return
+  }
+  window.sessionStorage.setItem(COMPLETE_STORAGE_KEY, '1')
+}
+
+export function hasPasswordChangeRequiredComplete(): boolean {
+  if (typeof window === 'undefined' || !window.sessionStorage) {
+    return false
+  }
+  return window.sessionStorage.getItem(COMPLETE_STORAGE_KEY) === '1'
+}
+
+export function clearPasswordChangeRequiredComplete() {
+  if (typeof window === 'undefined' || !window.sessionStorage) {
+    return
+  }
+  window.sessionStorage.removeItem(COMPLETE_STORAGE_KEY)
+}
+
 export function requirePasswordChangeRequiredWizardState() {
   const state = readWizardState()
   if (!state?.email) {

@@ -50,6 +50,7 @@ import { PasswordChangeRequiredPage } from '@/pages/auth/password-change-require
 import { PasswordChangeRequiredBirthPage } from '@/pages/auth/password-change-required-birth-page'
 import { PasswordChangeRequiredIdentityPage } from '@/pages/auth/password-change-required-identity-page'
 import { PasswordChangeRequiredChangePasswordPage } from '@/pages/auth/password-change-required-change-password-page'
+import { PasswordChangeRequiredCompletePage } from '@/pages/auth/password-change-required-complete-page'
 import { PasswordChangeRequiredIdentityCallbackPage } from '@/pages/auth/password-change-required-identity-callback-page'
 import { PasswordChangeRequiredIdentityMockNicePage } from '@/pages/auth/password-change-required-identity-mock-nice-page'
 import { OAuthCallbackPage } from '@/pages/auth/oauth-callback-page'
@@ -304,6 +305,10 @@ export const router = createBrowserRouter([
   {
     path: '/auth/password-change-required/change-password',
     element: <PasswordChangeRequiredChangePasswordPage />,
+  },
+  {
+    path: '/auth/password-change-required/complete',
+    element: <PasswordChangeRequiredCompletePage />,
   },
   {
     path: '/forbidden',

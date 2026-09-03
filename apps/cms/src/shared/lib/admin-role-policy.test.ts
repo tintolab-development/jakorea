@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { AdminActionKind, AdminPolicyScreen, AdminRoleCode } from './admin-role-policy'
 import {
   ADMIN_ACCESS_DENIED_ALERT_CONTENT,
@@ -11,9 +11,25 @@ import {
   parseAdminRoleCode,
   resolveAdminPolicyScreen,
   resolveAdminRoleCodeFromUser,
+  showAdminAccessDeniedAlert,
   withSessionAdminRole,
 } from './admin-role-policy'
 import type { User } from '@/types/user'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+
+vi.mock('@/shared/ui/cms-alert-modal-api', () => ({
+  cmsAlertModal: { show: vi.fn() },
+}))
+
+const onboarding = vi.hoisted(() => ({ incomplete: false }))
+
+vi.mock('@/shared/utils/post-auth-redirect', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/shared/utils/post-auth-redirect')>()
+  return {
+    ...actual,
+    isAdminFirstLoginOnboardingIncomplete: () => onboarding.incomplete,
+  }
+})
 
 const ROLES: AdminRoleCode[] = ['MASTER', 'PM', 'PARTNER', 'VIEWER']
 
@@ -195,5 +211,26 @@ describe('isAdminAccessDeniedAlert', () => {
         content: '현재 계정에 필요한 권한 또는 접근 범위가 없습니다.',
       })
     ).toBe(false)
+  })
+})
+
+describe('showAdminAccessDeniedAlert', () => {
+  beforeEach(() => {
+    onboarding.incomplete = false
+    vi.mocked(cmsAlertModal.show).mockClear()
+  })
+
+  it('온보딩 미완료면 권한 안내를 띄우지 않는다', () => {
+    onboarding.incomplete = true
+    showAdminAccessDeniedAlert()
+    expect(cmsAlertModal.show).not.toHaveBeenCalled()
+  })
+
+  it('온보딩이 끝났으면 권한 안내를 띄운다', () => {
+    showAdminAccessDeniedAlert()
+    expect(cmsAlertModal.show).toHaveBeenCalledWith({
+      title: ADMIN_ACCESS_DENIED_ALERT_TITLE,
+      content: ADMIN_ACCESS_DENIED_ALERT_CONTENT,
+    })
   })
 })

@@ -29,6 +29,10 @@ import { flushSocialPendingLinks } from '@/features/auth/social-auth/flush-pendi
 import { fetchAdminMe } from '@/features/auth/api/fetch-admin-me'
 import { applyAdminMeToSessionUser } from '@/features/auth/lib/apply-admin-me-to-session-user'
 import { withSessionAdminRole } from '@/shared/lib/admin-role-policy'
+import {
+  PASSWORD_CHANGE_REQUIRED_STORAGE_KEY,
+  isAdminFirstLoginOnboardingIncomplete,
+} from '@/shared/utils/post-auth-redirect'
 
 interface AuthState {
   user: Omit<User, 'password'> | null
@@ -65,7 +69,6 @@ interface AuthState {
 
 const TOKEN_STORAGE_KEY = 'auth_token'
 const TOKEN_EXPIRY_KEY = 'auth_expires_at'
-const PASSWORD_CHANGE_REQUIRED_KEY = 'auth_password_change_required'
 
 function tokenExpiresAtFromResponse(tokens: AuthTokenResponse): string {
   if (tokens.expiresInSeconds && tokens.expiresInSeconds > 0) {
@@ -119,7 +122,7 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
           token,
           expiresAt,
           isAuthenticated: true,
-          passwordChangeRequired: localStorage.getItem(PASSWORD_CHANGE_REQUIRED_KEY) === '1',
+          passwordChangeRequired: localStorage.getItem(PASSWORD_CHANGE_REQUIRED_STORAGE_KEY) === '1',
         }
       } catch {
         // JSON 파싱 실패 시 초기화
@@ -251,9 +254,9 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
       if (typeof window !== 'undefined' && window.localStorage) {
         if (passwordChangeRequired) {
-          localStorage.setItem(PASSWORD_CHANGE_REQUIRED_KEY, '1')
+          localStorage.setItem(PASSWORD_CHANGE_REQUIRED_STORAGE_KEY, '1')
         } else {
-          localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_KEY)
+          localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_STORAGE_KEY)
         }
       }
 
@@ -286,7 +289,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
     clearPasswordChangeRequired: () => {
       if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_KEY)
+        localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_STORAGE_KEY)
       }
       set({ passwordChangeRequired: false })
     },
@@ -345,7 +348,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         localStorage.removeItem(TOKEN_EXPIRY_KEY)
         localStorage.removeItem('auth_user')
         localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY)
-        localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_KEY)
+        localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_STORAGE_KEY)
       }
 
       set({
@@ -638,6 +641,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
 async function hydrateAdminSessionFromMe(): Promise<void> {
   if (!isRealApiModuleEnabled('adminAuth')) return
+  if (isAdminFirstLoginOnboardingIncomplete()) return
   try {
     const me = await fetchAdminMe()
     const current = useAuthStore.getState().user
