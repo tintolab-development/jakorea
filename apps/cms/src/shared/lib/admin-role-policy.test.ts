@@ -6,6 +6,7 @@ import {
   adminRoleCodeToLegacyAdminLevel,
   canAdminAction,
   isAdminAccessDeniedAlert,
+  isPermissionSettingsPath,
   isSecurityLogPath,
   parseAdminRoleCode,
   resolveAdminPolicyScreen,
@@ -142,7 +143,12 @@ describe('canAdminAction 표 규칙', () => {
     expect(allowed('VIEWER', 'approve', 'admin-permission-approval')).toBe(false)
   })
 
-  it('권한 설정 저장은 뷰어만 차단, 승인·반려는 마스터만', () => {
+  it('권한 설정 조회·저장은 뷰어만 차단, 승인·반려는 마스터만', () => {
+    expect(allowed('MASTER', 'view', 'permission-settings')).toBe(true)
+    expect(allowed('PM', 'view', 'permission-settings')).toBe(true)
+    expect(allowed('PARTNER', 'view', 'permission-settings')).toBe(true)
+    expect(allowed('VIEWER', 'view', 'permission-settings')).toBe(false)
+
     expect(allowed('MASTER', 'write', 'permission-settings')).toBe(true)
     expect(allowed('PM', 'write', 'permission-settings')).toBe(true)
     expect(allowed('PARTNER', 'write', 'permission-settings')).toBe(true)
@@ -152,6 +158,12 @@ describe('canAdminAction 표 규칙', () => {
     expect(allowed('PM', 'approve', 'permission-settings')).toBe(false)
     expect(allowed('PARTNER', 'approve', 'permission-settings')).toBe(false)
     expect(allowed('VIEWER', 'approve', 'permission-settings')).toBe(false)
+  })
+
+  it('isPermissionSettingsPath는 권한 설정 경로만 인식한다', () => {
+    expect(isPermissionSettingsPath('/admin/settings/permissions')).toBe(true)
+    expect(isPermissionSettingsPath('/admin/settings/permissions/')).toBe(true)
+    expect(isPermissionSettingsPath('/admin/permission-requests')).toBe(false)
   })
 
   it('강사 권한 승인은 뷰어만 차단', () => {

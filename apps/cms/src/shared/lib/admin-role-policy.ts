@@ -102,14 +102,19 @@ export function isSecurityLogPath(pathname: string): boolean {
   return SECURITY_LOG_PATHS.some(path => normalized === path || normalized.startsWith(`${path}/`))
 }
 
+export function isPermissionSettingsPath(pathname: string): boolean {
+  const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
+  return (
+    normalized === '/admin/settings/permissions' ||
+    normalized.startsWith('/admin/settings/permissions/')
+  )
+}
+
 export function resolveAdminPolicyScreen(pathname: string | undefined): AdminPolicyScreen {
   if (!pathname) return 'default'
   const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
   if (isSecurityLogPath(normalized)) return 'security-logs'
-  if (
-    normalized === '/admin/settings/permissions' ||
-    normalized.startsWith('/admin/settings/permissions/')
-  ) {
+  if (isPermissionSettingsPath(normalized)) {
     return 'permission-settings'
   }
   return 'default'
@@ -125,12 +130,16 @@ export function canAdminAction(input: {
   const screen = input.screen ?? resolveAdminPolicyScreen(input.pathname)
 
   if (roleCode == null) {
-    return input.action === 'view' && screen !== 'security-logs'
+    return (
+      input.action === 'view' && screen !== 'security-logs' && screen !== 'permission-settings'
+    )
   }
 
   switch (input.action) {
     case 'view':
       if (screen === 'security-logs') return roleCode === 'MASTER'
+      // 관리자 권한 설정: 뷰어는 화면 조회 자체 불가 (메뉴 클릭 시 권한 없음 모달)
+      if (screen === 'permission-settings') return roleCode !== 'VIEWER'
       return true
     case 'write':
     case 'delete':
