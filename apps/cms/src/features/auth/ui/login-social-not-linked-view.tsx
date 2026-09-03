@@ -22,8 +22,7 @@ export function LoginSocialNotLinkedView({
       <div className="login-social-not-linked__body">
         <p className="login-social-not-linked__body-text">
           먼저 이메일로 로그인한 뒤, [내 정보 수정]에서 소셜 계정을 연결해 주세요.
-        </p>
-        <p className="login-social-not-linked__body-text">
+          <br />
           회원가입이 처음이라면 이메일로 가입한 뒤 소셜 계정을 연결할 수 있어요.
         </p>
       </div>
