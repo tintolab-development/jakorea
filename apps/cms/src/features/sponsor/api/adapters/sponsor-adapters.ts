@@ -30,7 +30,7 @@ function parseOrganizationKind(value: string | undefined): SponsorOrganizationKi
 }
 
 function parseSponsorshipStatus(value: string | undefined): SponsorSponsorshipStatus {
-  if (value === 'ended' || value === 'discussing' || value === 'dormant') return value
+  if (value === 'ended') return 'ended'
   return 'active'
 }
 
@@ -54,6 +54,8 @@ export function mapSponsorResponse(dto: SponsorResponse): SponsorManagementRow {
     programCount: Number(dto.programCount ?? 0),
     totalDonationAmount: Number(dto.totalDonationAmount ?? 0),
     totalBeneficiaryCount: Number(dto.totalBeneficiaryCount ?? 0),
+    homepageUrl: dto.homepageUrl?.trim() || undefined,
+    logoFileId: dto.logoFileId?.trim() || undefined,
   }
 }
 
@@ -262,6 +264,7 @@ export function toSponsorRequestFromBasicInfo(
   const address = [basicInfo.district.trim(), basicInfo.detailAddress.trim()]
     .filter(Boolean)
     .join(' ')
+  const homepageUrl = basicInfo.homepageUrl.trim() || existing.homepageUrl
   return {
     name: basicInfo.nameDisplayKo.trim() || existing.name,
     nameEn: basicInfo.nameDisplayEn.trim() || existing.nameEn,
@@ -270,6 +273,7 @@ export function toSponsorRequestFromBasicInfo(
     businessNumber: basicInfo.businessNumber.trim() || existing.businessNumber,
     executives: basicInfo.executives.trim() || existing.executives,
     address: address || existing.address,
+    ...(homepageUrl ? { homepageUrl } : {}),
     description: existing.description,
     organizationKind: basicInfo.organizationKind,
     sponsorshipStatus: basicInfo.sponsorshipStatus,

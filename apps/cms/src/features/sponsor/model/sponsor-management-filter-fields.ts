@@ -30,15 +30,13 @@ export const sponsorManagementFilterFields: FilterFieldConfig[] = [
       { label: '전체', value: 'ALL' },
       { label: '후원 중', value: 'active' },
       { label: '후원 종료', value: 'ended' },
-      { label: '후원 논의중', value: 'discussing' },
-      { label: '후원 휴면', value: 'dormant' },
     ],
   },
   {
     key: 'managerName',
     type: 'search',
     label: '주 담당자명',
-    placeholder: '담당자명을 입력하세요',
+    placeholder: '주 담당자명을 입력하세요',
     width: '20%',
   },
   {

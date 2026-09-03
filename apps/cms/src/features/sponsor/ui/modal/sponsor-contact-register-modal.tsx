@@ -230,7 +230,7 @@ export function SponsorContactRegisterModal({
               name="officePhone"
               control={control}
               render={({ field }) => (
-                <CmsInput
+                <CmsPhoneInput
                   {...field}
                   id="sponsor-contact-office-phone"
                   placeholder="내선번호를 입력해 주세요"

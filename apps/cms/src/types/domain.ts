@@ -16,8 +16,8 @@ export interface SponsorManager {
 /** 후원사 관리 목록 — 구분(기업 / 재단) */
 export type SponsorOrganizationKind = 'corporate' | 'foundation'
 
-/** 후원사 관리 — 후원 상태 */
-export type SponsorSponsorshipStatus = 'active' | 'ended' | 'discussing' | 'dormant'
+/** 후원사 관리 목록 — 후원 상태 (제품 GO 전: active | ended만) */
+export type SponsorSponsorshipStatus = 'active' | 'discussing' | 'dormant' | 'ended'
 
 // 스폰서
 export interface Sponsor {
@@ -33,10 +33,18 @@ export interface Sponsor {
   updatedAt: DateValue
   /** 기업 / 재단 (후원사 관리) */
   organizationKind?: SponsorOrganizationKind
-  /** 후원 중 / 후원 종료 / 후원 논의중 / 후원 휴면 */
+  /** 후원 중 / 논의중 / 휴면 / 종료 (후원사 관리) */
   sponsorshipStatus?: SponsorSponsorshipStatus
   /** 후원 시작일 (후원사 관리) */
   sponsorshipStartDate?: DateValue
+  /** 누적 후원금 (목록·상세 — BE 합산) */
+  totalDonationAmount?: number
+  /** 누적 수혜자 수 */
+  totalBeneficiaryCount?: number
+  /** 홈페이지 URL */
+  homepageUrl?: string
+  /** 로고 파일 id */
+  logoFileId?: string
 }
 
 // 프로그램 유형

@@ -30,7 +30,7 @@ function renderEditableText(
   row: SponsorContactRow,
   field: keyof Pick<
     SponsorContactRow,
-    'department' | 'position' | 'name' | 'officePhone' | 'companyAddress' | 'memo'
+    'department' | 'position' | 'name' | 'companyAddress' | 'memo'
   >,
   isEditing: boolean,
   onFieldChange?: (rowId: string, patch: Partial<SponsorContactRow>) => void
@@ -49,7 +49,6 @@ function renderEditableText(
 
 interface SponsorContactTypeCellProps {
   row: SponsorContactRow
-  contacts: SponsorContactRow[]
   canWrite: boolean
   openDropdownId: string | null
   onTypeChange: (rowId: string, type: SponsorContactRow['contactType']) => void
@@ -58,7 +57,6 @@ interface SponsorContactTypeCellProps {
 
 const SponsorContactTypeCell = memo(function SponsorContactTypeCell({
   row,
-  contacts,
   canWrite,
   openDropdownId,
   onTypeChange,
@@ -82,14 +80,12 @@ const SponsorContactTypeCell = memo(function SponsorContactTypeCell({
     return <SponsorContactTypeBadge type={type} />
   }, [])
 
-  const leadCount = contacts.filter(c => c.contactType === 'lead').length
   const isItemDisabled = useCallback(
     (current: SponsorContactRow['contactType'], option: SponsorContactRow['contactType']): boolean => {
-      if (current === option) return true
-      if (current === 'lead' && option === 'assistant' && leadCount === 1) return true
-      return false
+      // 유일한 주 담당자 → 담당자 변경은 선택 가능(클릭 시 안내 모달)
+      return current === option
     },
-    [leadCount]
+    []
   )
 
   return (
@@ -143,7 +139,6 @@ export function buildContactColumns(params: BuildContactColumnsParams): ColumnsT
         ) : (
           <SponsorContactTypeCell
             row={row}
-            contacts={contacts}
             canWrite={canWrite}
             openDropdownId={openDropdownId}
             onTypeChange={onTypeChange}
@@ -183,7 +178,17 @@ export function buildContactColumns(params: BuildContactColumnsParams): ColumnsT
       width: TABLE_COLUMN_WIDTHS.phone,
       ellipsis: !isEditing,
       render: (v: string, row) =>
-        renderEditableText(v, row, 'officePhone', isEditing, onFieldChange),
+        isEditing ? (
+          <CmsPhoneInput
+            value={v}
+            inputSize="medium"
+            width="100%"
+            allowClear={false}
+            onChange={event => onFieldChange?.(row.id, { officePhone: event.target.value })}
+          />
+        ) : (
+          v?.trim() || '-'
+        ),
     },
     {
       title: '연락처',

@@ -324,21 +324,27 @@ export default function SponsorPage() {
         key: 'programCount',
         width: 130,
         align: 'center',
-        render: (value: number) => formatProgramCount(value ?? 0) },
+        render: (value: number | undefined) =>
+          value != null && Number.isFinite(value) ? formatProgramCount(value) : '-',
+      },
       {
         title: '누적 후원금',
         dataIndex: 'totalDonationAmount',
         key: 'totalDonationAmount',
         width: 160,
         align: 'center',
-        render: (value: number) => formatDonationAmount(value ?? 0) },
+        render: (value: number | undefined) =>
+          value != null && Number.isFinite(value) ? formatDonationAmount(value) : '-',
+      },
       {
         title: '누적 수혜자',
         dataIndex: 'totalBeneficiaryCount',
         key: 'totalBeneficiaryCount',
         width: 120,
         align: 'center',
-        render: (value: number) => formatBeneficiaryCount(value ?? 0) },
+        render: (value: number | undefined) =>
+          value != null && Number.isFinite(value) ? formatBeneficiaryCount(value) : '-',
+      },
       {
         title: '주 담당자',
         key: 'mainManager',

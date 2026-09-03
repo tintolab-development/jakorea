@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
+import { BulbOutlined, DownloadOutlined, TeamOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import {
   addSponsorContact,
   deleteSponsorContacts,
@@ -17,7 +18,7 @@ import {
   mergeUpdatedContact,
   removeContactsById,
 } from '@/features/sponsor/lib/contact-query-cache'
-import { BulbOutlined, TeamOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import { downloadSponsorLogos } from '@/features/sponsor/lib/download-sponsor-logos'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { useSponsorProgramHistoryFilter } from '@/features/sponsor/hooks/use-sponsor-program-history-filter'
@@ -39,8 +40,12 @@ import {
   makeBreadcrumbItem,
 } from '@/shared/lib/detail-fullpage-query-stack'
 import { DetailModalSidebar, type DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import './sponsor-detail-full-page-modal.css'
 
 const LNB_DETAIL = 'sponsor-detail'
@@ -101,6 +106,8 @@ function SponsorDetailFullPageModalInner({
   const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
+  const { showAlert } = useCmsAlert()
+  const [logoBulkDownloading, setLogoBulkDownloading] = useState(false)
   const rawLnbKey = searchParams.get(SPONSOR_LNB_PARAM)
   const lnbKey: SponsorDetailLnbKey = isSponsorDetailLnbKey(rawLnbKey) ? rawLnbKey : LNB_DETAIL
 
@@ -231,8 +238,36 @@ function SponsorDetailFullPageModalInner({
     setRegisterModalOpen(false)
   }, [setRegisterModalOpen])
   const handleToggleBasicInfoClick = useCallback((): void => {
-    handleToggleBasicInfoEdit(canWrite)
-  }, [canWrite, handleToggleBasicInfoEdit])
+    void (async () => {
+      const result = await handleToggleBasicInfoEdit(canWrite)
+      if (result === 'invalid') {
+        showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
+      }
+    })()
+  }, [canWrite, handleToggleBasicInfoEdit, showAlert])
+
+  const handleLogoBulkDownload = useCallback((): void => {
+    const logos = basicInfo?.logos ?? detail.logos
+    if (!logos.length) {
+      showAlert({
+        title: '안내',
+        content: '다운로드할 로고가 없습니다.',
+      })
+      return
+    }
+    setLogoBulkDownloading(true)
+    void downloadSponsorLogos(logos)
+      .catch(() => {
+        showAlert({
+          title: '안내',
+          content: '로고 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      })
+      .finally(() => setLogoBulkDownloading(false))
+  }, [basicInfo?.logos, detail.logos, showAlert])
 
   const titleName = detail.nameDisplayKo.trim() || sponsor.name.trim()
   const title = titleName ? `후원사 상세_${titleName}` : '후원사 상세'
@@ -281,11 +316,21 @@ function SponsorDetailFullPageModalInner({
           <div className="info-section-wrapper">
             <span className="info-section-title">기본 정보</span>
             <div className="info-section-buttons--wrapper">
-              <CmsButton variant="delete" size="medium" onClick={sponsorDelete.openDeleteModal}>
+              <CmsButton variant="delete" size="large" onClick={sponsorDelete.openDeleteModal}>
                 후원사 삭제
               </CmsButton>
-              <CmsButton variant="primary" size="medium" onClick={handleToggleBasicInfoClick}>
+              <CmsButton variant="secondary" size="large" onClick={handleToggleBasicInfoClick}>
                 {isEditingBasicInfo ? '수정 완료' : '정보 수정'}
+              </CmsButton>
+              <CmsButton
+                variant="secondary"
+                size="large"
+                icon={<DownloadOutlined />}
+                loading={logoBulkDownloading}
+                onClick={handleLogoBulkDownload}
+                adminAction="download"
+              >
+                로고 일괄 다운로드
               </CmsButton>
             </div>
           </div>

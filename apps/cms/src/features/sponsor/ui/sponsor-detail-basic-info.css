@@ -56,6 +56,23 @@
   min-width: 0;
 }
 
+.sponsor-detail-basic-info__logo-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sponsor-detail-basic-info__logo-download-btn:hover .sponsor-detail-basic-info__logo-name {
+  text-decoration: underline;
+}
+
 .sponsor-detail-basic-info__logo-name {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -69,4 +86,22 @@
   display: inline-flex;
   flex-shrink: 0;
   color: var(--color-text-tertiary, #8c8c8c);
+}
+
+/*
+ * 상세 수정 슬롯이 `> * { display:flex; align-items:center }` 로 덮어써
+ * FileSelectField(세로 스택 + 파일 추가 버튼)가 깨지지 않도록 복구
+ */
+.detail-info-form__field-content--edit > .sponsor-detail-basic-info__logo-edit {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  margin-block: 0;
+}
+
+.sponsor-detail-basic-info__logo-edit .file-select-field {
+  width: 100%;
+  align-items: stretch;
 }

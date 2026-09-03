@@ -32,14 +32,6 @@ describe('sponsorContactRegisterFormSchema.officePhone', () => {
     expect(parsed.success).toBe(true)
   })
 
-  it('accepts a numeric extension', () => {
-    const parsed = sponsorContactRegisterFormSchema.safeParse({
-      ...validBase,
-      officePhone: '1234',
-    })
-    expect(parsed.success).toBe(true)
-  })
-
   it('accepts a hyphenated mobile number', () => {
     const parsed = sponsorContactRegisterFormSchema.safeParse({
       ...validBase,
@@ -48,12 +40,12 @@ describe('sponsorContactRegisterFormSchema.officePhone', () => {
     expect(parsed.success).toBe(true)
   })
 
-  it('accepts a hyphenated extension', () => {
+  it('rejects a short extension without area code', () => {
     const parsed = sponsorContactRegisterFormSchema.safeParse({
       ...validBase,
-      officePhone: '1234-5678',
+      officePhone: '1234',
     })
-    expect(parsed.success).toBe(true)
+    expect(parsed.success).toBe(false)
   })
 
   it('rejects non-numeric placeholder text', () => {

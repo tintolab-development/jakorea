@@ -11,19 +11,13 @@ export const SPONSOR_CONTACT_PHONE_FORMAT_MESSAGE =
   '전화번호 형식이 올바르지 않습니다. 010/070은 4-4자리, 02 및 지역번호는 3~4-4자리 형식으로 입력해 주세요.'
 
 export const SPONSOR_CONTACT_OFFICE_PHONE_FORMAT_MESSAGE =
-  '내선번호는 숫자 또는 전화번호(하이픈 포함)로 입력해 주세요.'
+  '내선번호 형식이 올바르지 않습니다. 02 및 지역번호는 3~4-4자리, 010/070은 4-4자리 형식으로 입력해 주세요.'
 
-const OFFICE_PHONE_CHARACTERS = /^[\d-]+$/
-const OFFICE_PHONE_DIGIT_COUNT = /^\d{2,11}$/
-
-/** 사내 내선 숫자만, 하이픈 포함 번호, 한국 전화번호. 빈 값 허용. */
+/** 내선번호 — 연락처와 동일한 한국 전화번호 형식. 빈 값 허용. */
 export function isValidSponsorOfficePhone(value: string): boolean {
   const trimmed = value.trim()
   if (!trimmed) return true
-  if (!OFFICE_PHONE_CHARACTERS.test(trimmed)) return false
-  const digits = trimmed.replace(/-/g, '')
-  if (!OFFICE_PHONE_DIGIT_COUNT.test(digits)) return false
-  return true
+  return isValidKoreanPhoneNumber(trimmed)
 }
 
 const optionalTrimmedString = z.union([z.string().trim(), z.literal('')])

@@ -25,6 +25,7 @@
   + col {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
 }
 
 .filter-table-layout.sponsor-page
@@ -61,6 +62,10 @@
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
+  height: 54px !important;
+  flex-shrink: 0;
+  align-self: stretch;
+  vertical-align: middle !important;
 }
 
 .filter-table-layout.sponsor-page
