@@ -19,9 +19,12 @@ describe('member-withdraw-delete-guide', () => {
   })
 
   it('buildSchoolDeleteMessageLines — 학교 삭제 문구', () => {
-    const lines = buildSchoolDeleteMessageLines({ displayName: '진월초' })
-    expect(lines[0]).toBe('[진월초]를 삭제하시겠습니까?')
-    expect(lines[1]).toContain('즉시 탈퇴 처리')
+    const lines = buildSchoolDeleteMessageLines({ displayName: '진월초등학교' })
+    expect(lines).toEqual([
+      '[진월초등학교]를 삭제하시겠습니까?',
+      '삭제 시 등록 및 관련된 정보는 모두 삭제됩니다.',
+      '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
+    ])
   })
 
   it('buildSelfWithdrawMessageLines — 프로필 본인 탈퇴 문구', () => {
