@@ -163,7 +163,7 @@ function buildProgramsItem(
   role: UserRole | undefined
 ): DetailModalSidebarNavItem {
   let programsLabel = '프로그램 참여 이력'
-  if (role === 'INDIVIDUAL' || role === 'INSTRUCTOR') {
+  if (role === 'INSTRUCTOR') {
     programsLabel = '프로젝트 참여 이력'
   } else if (role === 'ADMIN') {
     programsLabel = '프로그램 담당 이력'
