@@ -21,7 +21,7 @@ import {
   getMemberSignupTypeLabel,
 } from '@/features/user/shared/lib/member-list-display'
 import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
-import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { type MemberListKind, DEFAULT_MEMBER_LIST_KIND } from '@/shared/config/member-list-kinds'
 import { ManagedProgramCountDisplay } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
@@ -148,8 +148,9 @@ function createNoColumn(reverseFromTotal?: number): ColumnsType<Row>[0] {
   return {
     title: 'No.',
     key: 'no',
-    width: 80,
+    width: TABLE_COLUMN_WIDTHS.index,
     align: 'center',
+    className: CMS_TABLE_NO_COL_CLASS,
     render: (_: unknown, __: Row, index: number) => {
       if (reverseFromTotal != null && reverseFromTotal > 0) {
         return reverseFromTotal - index

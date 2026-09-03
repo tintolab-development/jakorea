@@ -8,12 +8,14 @@
 .members-permission-list__table.cms-data-table:has(.ant-table-selection-column) colgroup > col:nth-child(2) {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
 }
 .members-permission-list__table.cms-data-table:not(:has(.ant-table-selection-column))
   colgroup
   > col:first-child {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
 }
 
 .members-permission-list__table.cms-data-table .ant-table-thead > tr > th.ant-table-cell.ant-table-selection-column,
