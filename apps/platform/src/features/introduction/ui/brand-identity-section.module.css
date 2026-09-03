@@ -1,0 +1,156 @@
+.section {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.inner {
+  display: flex;
+  width: 100%;
+  max-width: var(--content-shell-max-width);
+  min-width: 0;
+  margin: 0 auto;
+  flex-direction: column;
+  align-items: stretch;
+  padding: var(--spacing-20) var(--spacing-20) var(--spacing-56);
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-20);
+  text-align: center;
+}
+
+.header .title {
+  margin: 0;
+}
+
+.description {
+  display: flex;
+  width: 100%;
+  max-width: 720px;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.description .descriptionLead {
+  margin: 0;
+  word-break: keep-all;
+  text-align: left;
+}
+
+.description .descriptionText {
+  margin: 0;
+  color: var(--color-neutral-warm-600);
+}
+
+.symbolList {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  margin: var(--spacing-40) 0 0;
+  padding: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  margin-top: var(--spacing-28);
+  list-style: none;
+}
+
+.symbolCard {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-12);
+  background-color: var(--color-neutral-white);
+}
+
+.symbolImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  object-fit: cover;
+}
+
+@media (--bp-below-pc) {
+  .header .title {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 140%;
+    letter-spacing: -0.52px;
+  }
+
+  .description .descriptionLead {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 150%;
+    letter-spacing: -0.32px;
+  }
+
+  .description .descriptionText {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 160%;
+    letter-spacing: 0;
+    text-align: left;
+  }
+}
+
+@media (--bp-pc-up) {
+  /* Desktop 시안: light section */
+  .section {
+    background-color: var(--color-neutral-white);
+    color: var(--color-neutral-black);
+  }
+
+  .inner {
+    padding: 30px 0 var(--spacing-120);
+  }
+
+  .header {
+    gap: var(--spacing-32);
+  }
+
+  .header .title {
+    color: var(--color-neutral-black);
+  }
+
+  .description {
+    max-width: 900px;
+    gap: var(--spacing-16);
+  }
+
+  .description .descriptionLead {
+    text-align: center;
+    color: var(--color-neutral-black);
+  }
+
+  .description .descriptionText {
+    text-align: center;
+    color: var(--color-neutral-cool-600);
+  }
+
+  .symbolList {
+    gap: var(--spacing-48);
+    margin-top: var(--spacing-72);
+  }
+
+  .symbolCard {
+    height: 400px;
+    border-radius: var(--radius-24);
+  }
+  
+  .symbolImage {
+    object-fit: none;
+  }
+}
