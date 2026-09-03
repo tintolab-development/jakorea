@@ -134,7 +134,7 @@ function buildDefaultProgramsItem(
   }
 }
 
-/** 학교 상세: LNB 1뎁스 «프로젝트 수강 이력» */
+/** 학교 상세: LNB 1뎁스 «프로그램 수강 이력» */
 function buildSchoolProgramsItem(
   _user: SidebarUser,
   _programsLabel: string,
@@ -142,7 +142,7 @@ function buildSchoolProgramsItem(
 ): DetailModalSidebarNavItem {
   return {
     key: 'history',
-    label: '프로젝트 수강 이력',
+    label: '프로그램 수강 이력',
     icon: programsIcon,
   }
 }
@@ -164,7 +164,11 @@ function buildProgramsItem(
 ): DetailModalSidebarNavItem {
   let programsLabel = '프로그램 참여 이력'
   if (role === 'INSTRUCTOR') {
-    programsLabel = '프로젝트 참여 이력'
+    const instructorProfile = user ? resolveInstructorMemberProfile(user) : null
+    programsLabel =
+      instructorProfile === 'school_teacher' || instructorProfile === 'instructor_dual'
+        ? '프로그램 참여 이력'
+        : '프로젝트 참여 이력'
   } else if (role === 'ADMIN') {
     programsLabel = '프로그램 담당 이력'
   }
