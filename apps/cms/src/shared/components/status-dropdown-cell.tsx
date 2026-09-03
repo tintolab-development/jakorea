@@ -258,8 +258,25 @@ export function StatusDropdownCell<T extends string = string>({
     )
   }
 
+  const overlayStyle = overlayStyleFromCellStyle(style)
+  const triggerLayoutClass =
+    tagLayout === 'tag100'
+      ? ' status-dropdown-cell__status-trigger--tag-100'
+      : tagLayout === 'tag160'
+        ? ' status-dropdown-cell__status-trigger--tag-160'
+        : tagLayout === 'paymentOrderLine'
+          ? ' status-dropdown-cell__status-trigger--payment-order-line'
+          : ''
+  const triggerClassName = `status-dropdown-cell__status-trigger${triggerLayoutClass}${
+    style != null ? ` ${TRIGGER_CELL_STYLE_CLASS}` : ''
+  }`
+
   if (onChange == null) {
-    return injectBadgeCellStyle(renderBadge(status), style)
+    return (
+      <span className={`${triggerClassName} status-dropdown-cell__status-trigger--readonly`}>
+        {injectBadgeCellStyle(renderBadge(status), style)}
+      </span>
+    )
   }
 
   const overlayClassName = [
@@ -273,17 +290,6 @@ export function StatusDropdownCell<T extends string = string>({
   ]
     .filter(Boolean)
     .join(' ')
-
-  const overlayStyle = overlayStyleFromCellStyle(style)
-
-  const triggerLayoutClass =
-    tagLayout === 'tag100'
-      ? ' status-dropdown-cell__status-trigger--tag-100'
-      : tagLayout === 'tag160'
-        ? ' status-dropdown-cell__status-trigger--tag-160'
-        : tagLayout === 'paymentOrderLine'
-          ? ' status-dropdown-cell__status-trigger--payment-order-line'
-          : ''
 
   return (
     <Dropdown
@@ -326,9 +332,9 @@ export function StatusDropdownCell<T extends string = string>({
       )}
     >
       <span
-        className={`status-dropdown-cell__status-trigger${triggerLayoutClass}${
+        className={`${triggerClassName}${
           controlledOpen ? ' status-dropdown-cell__status-trigger--open' : ''
-        }${style != null ? ` ${TRIGGER_CELL_STYLE_CLASS}` : ''}`}
+        }`}
         style={overlayStyle}
         // focus 시 조상 overflow 스크롤포트가 scrollIntoView 로 가로 밀림 — mousedown에서 포커스 차단
         onMouseDown={e => {
