@@ -2120,32 +2120,108 @@ function migrateAgreementPortraitPersonalConsentNameCells(
   }
 }
 
-const LEGACY_PORTRAIT_DELEGATED_TASK_CELL =
-  'JA Korea 사업 수행 및 관리: 대내외 보고서 작성, 활동영상 및 자료 제작\nJA Korea 프로그램 홍보를 위한 온라인 매체 게시 및 인쇄물 발간\n- 온라인 매체: 홈페이지 및 SNS 이미지/영상 포맷 게시물\n- 인쇄물: 리플렛, 활동북, 브로슈어, 기념보고서, 사례집, 아카이브자료 등'
-
 const PORTRAIT_DELEGATED_TASK_CELL =
   'JA Korea 사업 수행 및 관리: 대내외 보고서 작성, 홍보영상 및 자료 제작\nJA Korea 프로그램 홍보를 위한 온라인 매체 게시 및 인쇄물 발간\n- 온라인 매체: 홈페이지 및 SNS 이미지와 영상 포함 게시물\n- 인쇄물: 리플렛, 팜플렛, 브로슈어, 기업보고서, 사례집, 애뉴얼리포트 등'
 
-/** 초상권 2번 표 — 위탁 업무 문구를 최신 카피로 보정 */
-function migrateAgreementPortraitDelegatedTaskCopy(
+const AGREEMENT_PORTRAIT_INTRO_TEXT =
+  '아래 사항에 동의하는 경우, 명시된 사용 용도에 한하여 글과 함께 저작물을 제작하는 형태로 초상권을 사용할 권리를 촬영자에게 부여합니다.\n또한, 저작물에 대한 소유권을 주장하지 않으며 저작물에 대한 소유권 및 저작권이 JA Korea에 있음을 확인합니다.'
+
+const AGREEMENT_PORTRAIT_PERSONAL_CONSENT_QUESTION =
+  '위 동의를 거부할 수 있으며, 동의하지 않을 경우 수업 참여가 제한될 수 있습니다. 위 개인정보 및 초상권 수집·이용에 동의하십니까?'
+
+const AGREEMENT_PORTRAIT_DELEGATED_CONSENT_QUESTION =
+  '위 개인정보 및 초상권 수집·이용에 동의하십니까?'
+
+const AGREEMENT_PORTRAIT_USAGE_CONSENT_QUESTION = '위와 같은 초상권 활용에 동의하십니까?'
+
+const PORTRAIT_PERSONAL_PURPOSE_CELL =
+  '홍보 콘텐츠 제작 게시, 제작물의 정보 이용\n- 온라인(디지털 매체): 콘텐츠 제작, 홈페이지, SNS 게시물\n- 간행물(인쇄/출판/제작물) 제작: 리플렛, 팜플렛, 브로슈어, 기업보고서, 애뉴얼리포트 등'
+
+const PORTRAIT_DELEGATED_PERIOD_CELL =
+  '개인정보 수집 시 동의 기간 또는 위탁계약 종료 시까지'
+
+const PORTRAIT_USAGE_SCOPE_HEADER = '초상권의 사용 범위'
+
+const PORTRAIT_USAGE_SCOPE_CELL =
+  '1) 간행물(인쇄/출판/제작물): 리플렛, 팜플렛, 브로슈어, 기업보고서, 사례집, 애뉴얼리포트 등\n2) 온라인(디지털 매체): 홈페이지, SNS 게시물 등'
+
+/** 초상권 시드 고정 카피 — 구 draft를 시안 문구로 보정 (성명·소속 응답 셀은 유지) */
+function migrateAgreementPortraitSeedFixedCopy(
   p: WritingFormParagraph
 ): WritingFormParagraph {
-  if (
-    p.id !== AGREEMENT_PORTRAIT_PARAGRAPH_IDS.delegatedConsentTable ||
-    p.kind !== 'single_item' ||
-    p.variant !== 'vertical_table'
-  ) {
-    return p
+  if (p.id === 'agreement-portrait-intro') {
+    if (p.kind !== 'single_item' || p.variant !== 'agreement_explanation_text') return p
+    if (p.bodyText === AGREEMENT_PORTRAIT_INTRO_TEXT) return p
+    return { ...p, bodyText: AGREEMENT_PORTRAIT_INTRO_TEXT }
   }
-  const rows = p.rows ?? []
-  const taskRowIdx = rows.findIndex(r => (r.headers[0] ?? '').trim() === '위탁 업무')
-  if (taskRowIdx < 0) return p
-  const taskRow = rows[taskRowIdx]!
-  if ((taskRow.cells[0] ?? '') !== LEGACY_PORTRAIT_DELEGATED_TASK_CELL) return p
-  if (taskRow.stageCount !== 1) return p
-  const nextRows = [...rows]
-  nextRows[taskRowIdx] = { ...taskRow, cells: [PORTRAIT_DELEGATED_TASK_CELL] }
-  return { ...p, rows: nextRows }
+
+  if (
+    p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable ||
+    p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.delegatedConsentTable ||
+    p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.portraitUsageTable
+  ) {
+    if (p.kind !== 'single_item' || p.variant !== 'vertical_table') return p
+    const rows = p.rows ?? []
+    let changed = false
+    const nextRows = rows.map(row => {
+      const header = (row.headers[0] ?? '').trim()
+      if (p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable) {
+        if (header === '수집 목적' && (row.cells[0] ?? '') !== PORTRAIT_PERSONAL_PURPOSE_CELL) {
+          changed = true
+          return { ...row, cells: [PORTRAIT_PERSONAL_PURPOSE_CELL] }
+        }
+        return row
+      }
+      if (p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.delegatedConsentTable) {
+        if (header === '위탁 업무' && (row.cells[0] ?? '') !== PORTRAIT_DELEGATED_TASK_CELL) {
+          changed = true
+          return { ...row, cells: [PORTRAIT_DELEGATED_TASK_CELL] }
+        }
+        if (header === '위탁 기간' && (row.cells[0] ?? '') !== PORTRAIT_DELEGATED_PERIOD_CELL) {
+          changed = true
+          return { ...row, cells: [PORTRAIT_DELEGATED_PERIOD_CELL] }
+        }
+        return row
+      }
+      // usage table
+      if (header === '초상권 사용 범위' || header === PORTRAIT_USAGE_SCOPE_HEADER) {
+        const headerChanged = header !== PORTRAIT_USAGE_SCOPE_HEADER
+        const cellChanged = (row.cells[0] ?? '') !== PORTRAIT_USAGE_SCOPE_CELL
+        if (!headerChanged && !cellChanged) return row
+        if (row.stageCount !== 1) return row
+        changed = true
+        return {
+          ...row,
+          headers: [PORTRAIT_USAGE_SCOPE_HEADER],
+          cells: [PORTRAIT_USAGE_SCOPE_CELL],
+        }
+      }
+      return row
+    })
+
+    let nextBottom = p.bottomText
+    if (p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable) {
+      if (nextBottom !== AGREEMENT_PORTRAIT_PERSONAL_CONSENT_QUESTION) {
+        changed = true
+        nextBottom = AGREEMENT_PORTRAIT_PERSONAL_CONSENT_QUESTION
+      }
+    } else if (p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.delegatedConsentTable) {
+      if (nextBottom !== AGREEMENT_PORTRAIT_DELEGATED_CONSENT_QUESTION) {
+        changed = true
+        nextBottom = AGREEMENT_PORTRAIT_DELEGATED_CONSENT_QUESTION
+      }
+    } else if (p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.portraitUsageTable) {
+      if (nextBottom !== AGREEMENT_PORTRAIT_USAGE_CONSENT_QUESTION) {
+        changed = true
+        nextBottom = AGREEMENT_PORTRAIT_USAGE_CONSENT_QUESTION
+      }
+    }
+
+    if (!changed) return p
+    return { ...p, rows: nextRows as typeof rows, bottomText: nextBottom }
+  }
+
+  return p
 }
 
 /** 초상권 시드 단락 — 필수항목(*)·답변 필수 강제 */
@@ -2233,6 +2309,23 @@ function migrateAgreementNoticeSeedRequiredMarks(
 /** 행정정보 공동이용 — 식별번호 유형 고정값(주민등록번호) */
 export const AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID = 'agreement-notice-id-resident'
 
+const AGREEMENT_NOTICE_INSTITUTION_PLACEHOLDER = '텍스트를 작성해 주세요'
+const AGREEMENT_NOTICE_SUBJECT_NAME_PLACEHOLDER = '성명을 입력해 주세요'
+const AGREEMENT_NOTICE_SUBJECT_BIRTH_PLACEHOLDER = '생년월일 8자리를 입력해 주세요'
+const AGREEMENT_NOTICE_SUBJECT_PHONE_PLACEHOLDER = '전화번호를 입력해 주세요'
+
+const AGREEMENT_NOTICE_TABLE_BOTTOM_TEXT =
+  '* 이용기관은 본인이 동의한 위 공동이용 행정정보를 확인하기 위해 「개인정보 보호법」 시행령 제19조에 따라 주민등록번호, 여권번호, 운전면허번호 또는 외국인등록번호가 포함된 행정정보를 처리할 수 있습니다.\n이용기관이 요청하는 경우 기재하여 주십시오(필요시 기재사항)'
+
+const AGREEMENT_NOTICE_TABLE_FIRST_ROW: [string, string, string, string] = [
+  '1',
+  '성범죄경력 및 아동학대관련 범죄전력 조회',
+  '',
+  '',
+]
+
+const AGREEMENT_NOTICE_TABLE_BODY_ROW_COUNT = 5
+
 /**
  * 행정정보 공동이용 표 — 1행 시드(연번·행정정보명) 보정 + 최소 행 수 확보.
  * (구 JSON·localStorage/API 저장본이 빈 1행만 가진 경우 복구)
@@ -2272,6 +2365,7 @@ function migrateAgreementNoticeTableSeedRows(
   return {
     ...p,
     dataRows,
+    bottomText: AGREEMENT_NOTICE_TABLE_BOTTOM_TEXT,
     idTypeWithInput:
       p.idTypeWithInput == null
         ? p.idTypeWithInput
@@ -2283,17 +2377,63 @@ function migrateAgreementNoticeTableSeedRows(
   }
 }
 
+/** 행정정보 공동이용 — 이용기관·대상자 placeholder 등 시안 문구 보정 */
+function migrateAgreementNoticeSeedFixedCopy(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (
+    p.id === 'agreement-notice-institution' &&
+    p.kind === 'single_item' &&
+    p.variant === 'agreement_explanation_text'
+  ) {
+    if (p.bodyPlaceholder === AGREEMENT_NOTICE_INSTITUTION_PLACEHOLDER) return p
+    return { ...p, bodyPlaceholder: AGREEMENT_NOTICE_INSTITUTION_PLACEHOLDER }
+  }
+
+  if (
+    p.id === 'agreement-notice-subject' &&
+    p.kind === 'single_item' &&
+    p.variant === 'short_essay'
+  ) {
+    const items = p.items ?? []
+    let changed = false
+    const nextItems = items.map(item => {
+      if (item.id === 'agreement-notice-subj-birth') {
+        if (item.placeholder === AGREEMENT_NOTICE_SUBJECT_BIRTH_PLACEHOLDER) return item
+        changed = true
+        return { ...item, placeholder: AGREEMENT_NOTICE_SUBJECT_BIRTH_PLACEHOLDER }
+      }
+      if (item.id === 'agreement-notice-subj-phone') {
+        if (item.placeholder === AGREEMENT_NOTICE_SUBJECT_PHONE_PLACEHOLDER) return item
+        changed = true
+        return { ...item, placeholder: AGREEMENT_NOTICE_SUBJECT_PHONE_PLACEHOLDER }
+      }
+      if (item.id === 'agreement-notice-subj-name') {
+        if (item.placeholder === AGREEMENT_NOTICE_SUBJECT_NAME_PLACEHOLDER) return item
+        changed = true
+        return { ...item, placeholder: AGREEMENT_NOTICE_SUBJECT_NAME_PLACEHOLDER }
+      }
+      return item
+    })
+    if (!changed) return p
+    return { ...p, items: nextItems }
+  }
+
+  return p
+}
+
 function normalizeWritingFormParagraph(p: WritingFormParagraph): WritingFormParagraph {
   let next = migrateLegacySingleItemDateTimeParagraph(p)
   next = normalizeUjatJournalEducationInfoParagraph(next)
   next = normalizeLectureReportProgramProgressParagraph(next)
   next = migrateAgreementPortraitIntroBottomConsent(next)
   next = migrateAgreementPortraitPersonalConsentNameCells(next)
-  next = migrateAgreementPortraitDelegatedTaskCopy(next)
+  next = migrateAgreementPortraitSeedFixedCopy(next)
   next = migrateAgreementPortraitSeedRequiredMarks(next)
   next = migratePaymentStatementPreConsentSeedRequiredMarks(next)
   next = migrateAgreementNoticeSeedRequiredMarks(next)
   next = migrateAgreementNoticeTableSeedRows(next)
+  next = migrateAgreementNoticeSeedFixedCopy(next)
   if (next.kind === 'description' && next.variant === 'survey_title_with_period') {
     return normalizeTitleWithPeriodParagraph(next)
   }
@@ -2457,9 +2597,6 @@ export function createDefaultIdTypeWithInputOptions(): IdTypeWithInputOption[] {
   ]
 }
 
-const AGREEMENT_NOTICE_TABLE_BOTTOM_TEXT =
-  '※ 이용기관은 본인이 동의한 위 공동이용 행정정보를 확인하기 위해 「개인정보 보호법」 시행령 제19조에 따라 주민등록번호, 여권번호, 운전면허의 면허번호 또는 외국인등록번호가 포함된 행정정보를 처리할 수 있습니다.\n이용기관이 요청하는 경우 기재하여 주십시오(필요시 기재사항)'
-
 const AGREEMENT_NOTICE_CONSENT_LINES = [
   '○ 본인은 위 사무의 처리를 위하여 「전자정부법」 제36조에 따른 행정정보 공동이용을 통해 이용기관의 업무처리담당자가 전자적으로 본인의 구비서류(공동이용 행정정보)를 확인하는 것에 동의합니다.',
   '* 만일, 본인이 위 행정정보 이용에 대해 동의를 하지 아니할 경우에도 불이익은 없습니다. 다만, 동의하지 아니한 경우에는 본인이 해당 구비서류를 제출하여야 합니다.',
@@ -2476,15 +2613,6 @@ const AGREEMENT_NOTICE_CONFIRMATION_CLOSING: ClosingParagraph = {
   /** 작성·미리보기에서 문구 없음. A4는 본문·날짜/서명 사이 구분선으로만 사용 */
   body: '',
 }
-
-const AGREEMENT_NOTICE_TABLE_FIRST_ROW: [string, string, string, string] = [
-  '1',
-  '성범죄경력 및 아동학대 관련 범죄전력 조회',
-  '',
-  '',
-]
-
-const AGREEMENT_NOTICE_TABLE_BODY_ROW_COUNT = 5
 
 function createAgreementNoticeTableDataRows(): string[][] {
   return [
@@ -2557,7 +2685,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         paragraphTitle: '이용기관 명칭',
         paragraphDescription: '',
         participatesInTitleNumbering: true,
-        bodyPlaceholder: '이용기관 명칭을 입력해 주세요',
+        bodyPlaceholder: AGREEMENT_NOTICE_INSTITUTION_PLACEHOLDER,
         bodyText: '',
         answerRequired: false,
       },
@@ -2599,19 +2727,19 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
           {
             id: AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name,
             label: '성명',
-            placeholder: '성명을 입력해 주세요',
+            placeholder: AGREEMENT_NOTICE_SUBJECT_NAME_PLACEHOLDER,
             bodyText: '',
           },
           {
             id: AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth,
             label: '생년월일',
-            placeholder: '1991.01.01',
+            placeholder: AGREEMENT_NOTICE_SUBJECT_BIRTH_PLACEHOLDER,
             bodyText: '',
           },
           {
             id: AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone,
             label: '전화번호',
-            placeholder: '010-1234-5678',
+            placeholder: AGREEMENT_NOTICE_SUBJECT_PHONE_PLACEHOLDER,
             bodyText: '',
           },
         ],
@@ -2722,18 +2850,6 @@ export const AGREEMENT_PORTRAIT_HIDDEN_DRAG_HANDLE_IDS = new Set<string>(
   AGREEMENT_PORTRAIT_SEED_PARAGRAPH_IDS
 )
 
-const AGREEMENT_PORTRAIT_INTRO_TEXT =
-  '아래 사항에 동의할 경우, 명시된 사용 용도에 한하여 글과 함께 저작물을 제작하는 형태로 초상권을 사용할 권리를 촬영자에게 부여합니다.\n또한, 저작물에 대한 소유권을 주장하지 않으며 저작물에 대한 소유권 및 저작권이 JA Korea에 있음을 확인합니다.'
-
-const AGREEMENT_PORTRAIT_PERSONAL_CONSENT_QUESTION =
-  '위 동의서를 거부할 수 있으며, 동의하지 않을 경우 수집 참여가 제한될 수 있습니다. 위 개인정보 및 초상권 수집·이용에 동의하십니까?'
-
-const AGREEMENT_PORTRAIT_DELEGATED_CONSENT_QUESTION =
-  '위 개인정보 및 초상권 수집·이용에 동의하십니까?'
-
-const AGREEMENT_PORTRAIT_USAGE_CONSENT_QUESTION =
-  '위와 같은 초상권 활용에 동의하십니까?'
-
 /** 동의 양식 목록 > 초상권 수집·이용 동의서 — 편집 시드 초안 */
 export function createAgreementPortraitDraft(): WritingFormDraft {
   return {
@@ -2793,9 +2909,7 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
           {
             stageCount: 1,
             headers: ['수집 목적'],
-            cells: [
-              '홍보 콘텐츠 제작·게시, 저작물의 정보 이용\n- 온라인(디지털 매체) 콘텐츠 제작: 홈페이지, SNS 게시물\n- 간행물(인쇄/출판/제작물) 제작: 리플렛, 활동북, 브로슈어, 기념보고서, 아뉴얼리포트 등',
-            ],
+            cells: [PORTRAIT_PERSONAL_PURPOSE_CELL],
           },
           {
             stageCount: 1,
@@ -2832,7 +2946,7 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
           {
             stageCount: 1,
             headers: ['위탁 기간'],
-            cells: ['개인정보 수집 시 동의기간 또는 위탁계약 종료 시까지'],
+            cells: [PORTRAIT_DELEGATED_PERIOD_CELL],
           },
         ],
         bottomText: AGREEMENT_PORTRAIT_DELEGATED_CONSENT_QUESTION,
@@ -2865,10 +2979,8 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
           },
           {
             stageCount: 1,
-            headers: ['초상권 사용 범위'],
-            cells: [
-              '1) 간행물(인쇄/출판/제작물): 리플렛, 활동북, 브로슈어, 기념보고서, 사례집, 아뉴얼리포트 등\n2) 온라인(디지털 매체): 홈페이지, SNS 게시물 등',
-            ],
+            headers: [PORTRAIT_USAGE_SCOPE_HEADER],
+            cells: [PORTRAIT_USAGE_SCOPE_CELL],
           },
           {
             stageCount: 1,
@@ -3131,7 +3243,7 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: false,
-        surveyTitle: 'JA Korea 교육진행자 서약서',
+        surveyTitle: 'JA Korea 교육진행자 서약서(안)',
         surveyDescription: '',
         periodMode: 'immediate',
         startAt: null,

@@ -5,6 +5,7 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '../writing-form/draft-schema.js'
+import { overlayPaymentStatementPreConsentSeedHorizontalTables } from '../paragraph-ids/payment-statement-pre-consent-draft.js'
 
 function clearBottomConsent(paragraph: WritingFormParagraph): WritingFormParagraph {
   if (!('showBottomConsent' in paragraph) || paragraph.showBottomConsent !== true) {
@@ -92,10 +93,19 @@ export function normalizeMemberConsentWriteDraft(
   draft: WritingFormDraft,
   templateId: string
 ): WritingFormDraft {
-  return {
+  let next: WritingFormDraft = {
     ...draft,
     paragraphs: draft.paragraphs.map(paragraph =>
       normalizeParagraphForWrite(paragraph, templateId)
     ),
   }
+
+  if (
+    templateId === 'agreement-third-party' ||
+    templateId === 'document-payment-order-pre-consent'
+  ) {
+    next = overlayPaymentStatementPreConsentSeedHorizontalTables(next)
+  }
+
+  return next
 }
