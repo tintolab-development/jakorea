@@ -101,7 +101,7 @@ export function MemberConsentCrimeModal({
         replacementFileName && replacementFileName.trim() !== ''
           ? replacementFileName
           : DEFAULT_DOWNLOAD_FILENAME
-      downloadBlob(blob, filename)
+      await downloadBlob(blob, filename)
     } catch (error) {
       console.debug('memberConsentCrime download failed', error)
     }

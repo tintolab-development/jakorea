@@ -128,5 +128,5 @@ export async function exportScheduleSheetExcel(
   }
 
   const buffer = await workbook.xlsx.writeBuffer()
-  downloadExcel(buffer, generateFilename('임시교육일정표', 'xlsx'))
+  await downloadExcel(buffer, generateFilename('임시교육일정표', 'xlsx'))
 }

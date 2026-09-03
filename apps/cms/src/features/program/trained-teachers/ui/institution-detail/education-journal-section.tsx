@@ -125,7 +125,7 @@ export function TrainedTeachersEducationJournalSection({
         })
         return
       }
-      downloadFile(entry.fileName, entry.fileUrl)
+      void downloadFile(entry.fileName, entry.fileUrl)
     },
     [downloadMutation, programId, remoteEnabled, showAlert]
   )
@@ -163,7 +163,7 @@ export function TrainedTeachersEducationJournalSection({
     try {
       for (let index = 0; index < entries.length; index += 1) {
         const entry = entries[index]
-        downloadFile(entry.fileName, entry.fileUrl)
+        void downloadFile(entry.fileName, entry.fileUrl)
         if (index < entries.length - 1) {
           await wait(BULK_DOWNLOAD_GAP_MS)
         }

@@ -66,7 +66,7 @@ export function AdminNoticeDetailPage() {
   }, [canWrite])
 
   const handleAttachmentClick = useCallback((fileName: string, fileUrl?: string) => {
-    downloadFile(fileName, fileUrl)
+    void downloadFile(fileName, fileUrl)
   }, [])
 
   const attachmentItems = useMemo(() => {

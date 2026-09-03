@@ -34,6 +34,8 @@ OpenAPI의 `GET /system-issues/{id}` · `PATCH /system-issues/{id}/status`는 **
 
 **별도 (write):** `POST /api/users/{memberId}/privacy/unmask` — 개인정보 해제 시 감사 이력 생성 (`privacy-unmask-fetcher.ts`).
 
+**클라이언트 blob 이력 (예정):** `POST /api/admin/logs/file-access/client` — 엑셀·지급조서 등 FE 생성 파일. BE 확정·스테이징 전 CMS는 **호출하지 않음**. 계약: [client-file-access-log-backend-handoff.md](./client-file-access-log-backend-handoff.md). 인증서는 `POST .../certificates/issues/{issueId}/download-logs` 유지.
+
 `/api/files/access-logs`는 로그 관리 화면과 **다른** 파일 도메인 API입니다.
 
 ---

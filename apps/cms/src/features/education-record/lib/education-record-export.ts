@@ -331,5 +331,5 @@ export async function exportEducationRecordExcel(
   addPivotSummaryWorksheet(workbook, data)
 
   const buffer = await workbook.xlsx.writeBuffer()
-  downloadExcel(buffer, generateFilename(filename, 'xlsx'))
+  await downloadExcel(buffer, generateFilename(filename, 'xlsx'))
 }

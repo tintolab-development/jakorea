@@ -54,7 +54,7 @@ export function CrimeRecordConsentDocumentFullpageModal({
         replacementFileName && replacementFileName.trim() !== ''
           ? replacementFileName
           : DEFAULT_DOWNLOAD_FILENAME
-      downloadBlob(blob, filename)
+      await downloadBlob(blob, filename)
     } catch (error) {
       console.debug('crimeRecordConsentDocument download failed', error)
     }

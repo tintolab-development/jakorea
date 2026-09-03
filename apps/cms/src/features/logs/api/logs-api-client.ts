@@ -20,6 +20,12 @@ import {
   clampLogListPageSize,
 } from '@/features/logs/api/log-list-page'
 
+export {
+  FILE_ACCESS_LOG_CREATE_PATH,
+  postFileAccessLog as postFileAccessLogRemote,
+  type PostFileAccessLogBody,
+} from '@/shared/lib/post-file-access-log'
+
 const logsRemoteApi = getJAKoreaCMSBackendAPILogsSubset()
 
 function unwrapBody<T>(payload: unknown): T {

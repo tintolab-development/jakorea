@@ -219,7 +219,7 @@ async function generatePaymentStatementExcel(
     'xlsx',
     dayjs(settlement.documentGeneratedAt || settlement.createdAt).toDate()
   )
-  downloadExcel(buffer, filename)
+  await downloadExcel(buffer, filename)
 }
 
 /**
@@ -413,7 +413,7 @@ export async function generateTransferList(
         throw new Error('암호화된 Excel 파일 생성에 실패했습니다.')
       }
 
-      downloadExcel(buffer, filename)
+      await downloadExcel(buffer, filename)
     } else {
       const buffer = await workbook.xlsx.writeBuffer()
 
@@ -421,7 +421,7 @@ export async function generateTransferList(
         throw new Error('Excel 파일 생성에 실패했습니다.')
       }
 
-      downloadExcel(buffer, filename)
+      await downloadExcel(buffer, filename)
     }
   } catch (error: any) {
     console.error('Excel 파일 생성 실패:', error)

@@ -1,8 +1,14 @@
 /**
- * 파일 다운로드 기록 (write-only stub — 목록은 GET /api/logs/file-access)
+ * 파일 다운로드 기록
+ * - BE `POST /api/admin/logs/file-access/client` 배포 전: 메모리 stub
+ * - 배포 후: shouldRecordFileAccessRemotely() → postFileAccessLog
+ *
+ * @see apps/cms/docs/api/client-file-access-log-backend-handoff.md
  */
 
 import type { DownloadLog, RecordDownloadPayload } from '@/types/download-log'
+import { postFileAccessLog } from '@/shared/lib/post-file-access-log'
+import { shouldRecordFileAccessRemotely } from '@/shared/lib/should-record-file-access-remotely'
 
 const downloadLogMemory: DownloadLog[] = []
 
@@ -18,12 +24,49 @@ export async function logDownload(log: Omit<DownloadLog, 'id'>): Promise<Downloa
   return newLog
 }
 
+/** 테스트·mock 이력 조회용 */
+export function listDownloadLogMemory(): readonly DownloadLog[] {
+  return downloadLogMemory
+}
+
+export function clearDownloadLogMemoryForTests(): void {
+  downloadLogMemory.length = 0
+}
+
 export async function recordFileDownload(payload: RecordDownloadPayload): Promise<DownloadLog> {
+  const fileName = payload.fileName.trim()
+  if (!fileName) {
+    throw new Error('다운로드 파일명이 없습니다.')
+  }
+
+  const userId = payload.userId ?? 'unknown-user'
+  const userName = payload.userName ?? '알 수 없음'
+  const ipAddress = payload.ipAddress ?? '0.0.0.0'
+  const downloadedAt = new Date().toISOString()
+
+  if (shouldRecordFileAccessRemotely()) {
+    await postFileAccessLog({
+      fileName,
+      ...(typeof navigator !== 'undefined' && navigator.userAgent
+        ? { userAgent: navigator.userAgent }
+        : {}),
+      ...(payload.ipAddress ? { ipAddress: payload.ipAddress } : {}),
+    })
+    return {
+      id: `remote-${Date.now()}`,
+      fileName,
+      userId,
+      userName,
+      ipAddress,
+      downloadedAt,
+    }
+  }
+
   return logDownload({
-    fileName: payload.fileName,
-    userId: payload.userId ?? 'unknown-user',
-    userName: payload.userName ?? '알 수 없음',
-    ipAddress: payload.ipAddress ?? '0.0.0.0',
-    downloadedAt: new Date().toISOString(),
+    fileName,
+    userId,
+    userName,
+    ipAddress,
+    downloadedAt,
   })
 }
