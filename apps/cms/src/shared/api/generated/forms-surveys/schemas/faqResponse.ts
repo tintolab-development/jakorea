@@ -21,7 +21,7 @@ export interface FaqResponse {
   answer?: string;
   /** 작성자 표시명 */
   author?: string;
-  /** 상태 */
+  /** 공개 여부 매핑 상태. published=공개, 임시저장|draft=비공개, archived=보관. */
   status?: FaqResponseStatus;
   /** 생성 시각 */
   createdAt?: string;

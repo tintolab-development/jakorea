@@ -32,8 +32,9 @@ export interface AdminPreRegisterIndividualRequest {
   affiliationName?: string;
   /** @minLength 1 */
   enrollmentStatus: string;
-  /** 기존 CMS 학교 PK. 재학중인 경우 schoolName보다 우선하며, 생략 시 고유한 schoolName을 안전하게 해석합니다. */
+  /** 기존 CMS 학교 PK. 재학중인 경우 schoolName보다 우선하며, 생략 시 schoolSelection(NEIS/CAREER_NET) 또는 고유 schoolName을 안전하게 해석합니다. */
   schoolOrganizationId?: number;
+  /** CMS에 없는 학교 선택값. 개인 재학은 NEIS(초·중·고) 또는 CAREER_NET(대학·전문대). CAREER_NET은 educationOfficeCode 불필요. */
   schoolSelection?: PortalSchoolSelectionRequest;
   /** 재학중 소속 학년 */
   grade?: string;

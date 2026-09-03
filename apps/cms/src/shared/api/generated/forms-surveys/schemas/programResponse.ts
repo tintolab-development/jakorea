@@ -75,6 +75,6 @@ export interface ProgramResponse {
   createdAt?: string;
   updatedAt?: string;
   businessStartDate?: string;
-  businessYear?: number;
   businessEndDate?: string;
+  businessYear?: number;
 }

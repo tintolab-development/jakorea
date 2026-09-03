@@ -16625,10 +16625,10 @@
           "ujatPartnerRecommendationPath": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           }
         }
@@ -17936,9 +17936,10 @@
           },
           "status": {
             "type": "string",
-            "description": "상태",
+            "description": "공개 여부/상태. 공개=published, 비공개=draft|임시저장. 미입력 시 DRAFT(비공개).",
             "enum": [
               "published",
+              "draft",
               "임시저장",
               "archived"
             ],
@@ -18006,7 +18007,7 @@
           },
           "status": {
             "type": "string",
-            "description": "상태",
+            "description": "공개 여부 매핑 상태. published=공개, 임시저장|draft=비공개, archived=보관.",
             "enum": [
               "published",
               "임시저장",
