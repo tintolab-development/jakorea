@@ -23,6 +23,7 @@ import {
   resolveRegisteredByAdmin,
 } from '@/features/user/api/resolve-member-registration-flags'
 import { parseMemberIdFromUserId } from '@/features/user/detail/lib/resolve-member-detail-restore-hint'
+import { applyScheduleChangeCancelCountToUser } from '@/features/user/api/resolve-schedule-change-cancel-count'
 
 function fallbackUuid(memberId?: number): string {
   if (memberId != null) return `member-${memberId}`
@@ -219,7 +220,7 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
     }
   }
 
-  return normalizeRevokedInstructorUser(user)
+  return applyScheduleChangeCancelCountToUser(normalizeRevokedInstructorUser(user), item)
 }
 
 /** 학교(교사) 회원 관리 — `roles`에 SCHOOL 포함 항목만 (SCHOOL_TEACHER 토큰은 제외) */

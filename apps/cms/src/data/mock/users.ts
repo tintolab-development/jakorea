@@ -224,6 +224,7 @@ const mockInstructors: User[] = [
     instructorId: INSTRUCTOR1_ID, // 고정 ID로 변경
     interviewStatus: 'APPROVED', // 승인 완료
     participationHistory: 5, // 참여이력 5건
+    scheduleChangeCancelCount: 2,
     isActive: true,
     lastLoginAt: generatePastDate(2),
     createdAt: generatePastDate(180),
@@ -1366,6 +1367,7 @@ const extraMockUsers: User[] = [
     instructorId: 'instructor-dev-parktinto',
     interviewStatus: 'APPROVED',
     participationHistory: 5,
+    scheduleChangeCancelCount: 1,
     isActive: true,
     lastLoginAt: generatePastDate(1),
     createdAt: generatePastDate(200),

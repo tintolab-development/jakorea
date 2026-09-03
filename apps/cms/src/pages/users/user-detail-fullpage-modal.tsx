@@ -174,7 +174,7 @@ export function UserDetailFullPageModal({
       onOpenJaGradeEvaluation: actions.openJaGradeEvaluation,
       onCloseJaGradeEvaluation: actions.closeJaGradeEvaluation,
       onCompleteJaGradeEvaluation: actions.completeJaGradeEvaluation,
-      scheduleChangeCount: undefined,
+      scheduleChangeCount: user.scheduleChangeCancelCount,
       onStartBasicInfoEdit: actions.startBasicInfoEdit,
       onStartAdminCommentEdit: actions.startAdminCommentEdit,
       onCancelBasicInfoEdit: actions.cancelBasicInfoEdit,
