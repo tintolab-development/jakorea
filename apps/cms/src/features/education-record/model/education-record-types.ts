@@ -43,6 +43,8 @@ export type EducationRecordRow = {
   generalTeachers?: number
   educatedTeachers?: number
   instructors?: number
+  /** 취약계층 학생 수 — 노션 실적 데이터 컬럼. API 미등재 시 '-' */
+  vulnerableStudents?: number
   managerName?: string
   /** 피벗 집계용 — mock schoolId */
   schoolId?: string
@@ -111,13 +113,13 @@ export type SummaryRow = {
   participants: number
   /** 합계 : 교육시간 */
   educationHours: number
-  /** 합계 : 일반자원봉사자 */
+  /** 합계 : 일반 자원봉사자 */
   generalVolunteers: number
-  /** 합계 : 임직원자원봉사자 */
+  /** 합계 : 임직원 자원봉사자 */
   staffVolunteers: number
-  /** 합계 : 일반담당교사 */
+  /** 합계 : 일반 담당교사 */
   generalTeachers: number
-  /** 합계 : 교육받은교사 */
+  /** 합계 : 교육받은 교사 */
   educatedTeachers: number
   /** 합계 : 강사 */
   instructors: number
