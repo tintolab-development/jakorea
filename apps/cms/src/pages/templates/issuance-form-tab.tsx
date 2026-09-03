@@ -1,5 +1,3 @@
-import { Table } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import {
@@ -36,6 +34,7 @@ import {
   createUjatEducationIssuanceA4Preview,
 } from '@/features/template/model/ujat-education-issuance-a4-preview'
 import { TemplateListCard } from '@/features/template/ui/template-management/template-list-card'
+import { TemplateTable } from '@/features/template/ui/template-management/template-table'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { A4DocumentPageLayout } from '@/features/template/ui/layout'
 import { FormDocumentPreviewBody } from '@/features/template/ui/document-preview'
@@ -432,24 +431,6 @@ export function IssuanceFormTab() {
     setSelectedTemplate(null)
   }, [params.mode, params.id, setParams, issuanceSections])
 
-  const issuanceColumns: ColumnsType<IssuanceTemplateRow> = [
-    { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
-    { title: '템플릿명', dataIndex: 'templateName', key: 'templateName' },
-    { title: '생성자', dataIndex: 'creator', key: 'creator', width: 180, align: 'center' },
-    { title: '최초 생성일', dataIndex: 'createdAt', key: 'createdAt', width: 180, align: 'center' },
-    { title: '최근 수정일', dataIndex: 'updatedAt', key: 'updatedAt', width: 180, align: 'center' },
-    {
-      title: '양식 관리',
-      key: 'action',
-      width: 150,
-      align: 'center',
-      render: (_, row) => (
-        <CmsButton size="medium" variant="default" onClick={() => openTemplatePreview(row)}>
-          양식 상세보기
-        </CmsButton>
-      ) },
-  ]
-
   const baseLeftContentConfig = useMemo<TemplateModalLeftCardConfig[]>(
     () => [
       {
@@ -735,12 +716,9 @@ export function IssuanceFormTab() {
               description={reportSection?.description ?? ''}
               headerInline
             >
-              <Table
-                className="cms-data-table"
-                rowKey="key"
-                columns={issuanceColumns}
-                dataSource={reportSection?.rows ?? []}
-                pagination={false}
+              <TemplateTable
+                rows={reportSection?.rows ?? []}
+                onPreview={openTemplatePreview}
               />
             </TemplateListCard>
             <TemplateListCard
@@ -748,12 +726,9 @@ export function IssuanceFormTab() {
               description={documentSection?.description ?? ''}
               headerInline
             >
-              <Table
-                className="cms-data-table"
-                rowKey="key"
-                columns={issuanceColumns}
-                dataSource={documentSection?.rows ?? []}
-                pagination={false}
+              <TemplateTable
+                rows={documentSection?.rows ?? []}
+                onPreview={openTemplatePreview}
               />
             </TemplateListCard>
           </>
