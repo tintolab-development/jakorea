@@ -53,7 +53,6 @@ export function RegisterSocialConnectPage() {
       <RegisterSocialConnectView
         redirectPath={safeRedirectPath}
         onComplete={handleFinish}
-        onSkip={handleFinish}
         onConnectSuccess={handleConnectSuccess}
       />
     </AuthPageShell>
