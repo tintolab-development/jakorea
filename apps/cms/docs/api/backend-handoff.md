@@ -6,7 +6,7 @@ Swagger/OpenAPI 기반 실 API 연동 시 공통 설정·인증·응답 규칙�
 Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)  
 대시보드 1차 파일럿: [dashboard-api-integration.md](./dashboard-api-integration.md)  
 **보안 설정(로그 관리)**: [logs-api-integration.md](./logs-api-integration.md) · [**전환률 · 미적용 API (백엔드 핸드오프 SSOT)**](./logs-api-conversion-status-backend-handoff.md) · [백엔드 갭 요약](./logs-api-backend-gaps.md)  
-**데이터 관리**: [data-management-api-integration.md](./data-management-api-integration.md) · [**백엔드 갭 요청**](./data-management-api-backend-gaps.md)  
+**데이터 관리**: [data-management-api-integration.md](./data-management-api-integration.md) · [**후원사 관리 API 수정 (2026-09-03 SSOT)**](./sponsor-management-api-backend-handoff.md) · [**백엔드 갭 요청**](./data-management-api-backend-gaps.md)  
 **템플릿 양식 (forms-surveys)**: [**전환률 · 미적용 API (백엔드 핸드오프 SSOT)**](./templates-api-conversion-status-backend-handoff.md) · [forms-surveys-api-integration.md](./forms-surveys-api-integration.md) · [PHASE별 마이그레이션](./forms-surveys-api-migration-guide.md) · [백엔드 갭 목록](./forms-surveys-api-backend-gaps.md) · [신규 템플릿 생성 갭](./template-create-api-backend-handoff.md)  
 **일반 프로그램 (programs)**: [programs-api-integration.md](./programs-api-integration.md) · [**등록 플로우 API 목록**](./programs-registration-flow-api-backend-handoff.md) · [**등록 완료 POST 핸드오프**](./programs-create-api-backend-handoff.md) · [마이그레이션 가이드](./programs-api-migration-guide.md) · [백엔드 갭](./programs-api-backend-gaps.md) · [남은 작업](./programs-api-remaining-work.md) · [**상세 완료율 · Phase 5–10**](./programs-detail-api-conversion-status.md) · [**상세 LNB 미전환·CRUD 갭**](./programs-detail-lnb-crud-api-gaps.md)
 
@@ -128,12 +128,14 @@ CMS wiring: [`features/auth/social-auth/cms-client.ts`](../../src/features/auth/
 
 | API                    | 경로                                           | 용도                                                                                                |
 | ---------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| SSO 시작               | `POST /api/admin/auth/sso/login`               | 관리자 소셜 **로그인·연결** OAuth 시작 (`redirectUri`=백엔드 callback, `returnUrl`=프론트 complete) |
-| SSO provider callback  | `GET /api/admin/auth/sso/{provider}/callback`  | IdP → 백엔드 code 교환 (브라우저 redirect, 프론트 XHR 아님)                                         |
-| 로그인 session consume | `POST /api/auth/sso/login/sessions/consume`    | `socialLoginSessionId` → JWT                                                                        |
-| 연결 목록              | `GET /api/admin/me/sso/accounts`               | 로그인 후 연결 목록 (`content[]`)                                                                   |
-| 계정 연결              | `POST /api/admin/me/sso/accounts`              | mock/pending flush 시 `accessToken` + consent                                                       |
-| 연결 해제              | `DELETE /api/admin/me/sso/accounts/{provider}` | 연결 해제                                                                                           |
+| SSO 시작               | `POST /api/admin/auth/sso/login`                        | 관리자 소셜 **로그인** OAuth 시작 (`redirectUri`=백엔드 callback, `returnUrl`=프론트 complete) |
+| SSO provider callback  | `GET /api/admin/auth/sso/{provider}/callback`           | IdP → 백엔드 code 교환 (브라우저 redirect, 프론트 XHR 아님)                                      |
+| 로그인 session consume | `POST /api/admin/auth/sso/login/sessions/consume`       | `adminSsoSessionId` → JWT                                                                            |
+| 연결 시작              | `POST /api/admin/me/sso/accounts` (`startOAuth: true`)  | 관리자 소셜 **계정 연결** OAuth 시작                                                                 |
+| 연결 session consume   | `POST /api/admin/me/sso/link/sessions/consume`          | `adminSsoSessionId` + consent → LINKED                                                               |
+| 연결 목록              | `GET /api/admin/me/sso/accounts`                        | 로그인 후 연결 목록 (`content[]`)                                                                    |
+| 계정 연결              | `POST /api/admin/me/sso/accounts`                       | mock/pending flush 시 `accessToken` + consent                                                        |
+| 연결 해제              | `DELETE /api/admin/me/sso/accounts/{provider}`          | 연결 해제                                                                                            |
 
 > legacy `POST /api/admin/auth/sso/callback` 는 Swagger에서 제거됨. canonical은 backend redirect + session consume.
 
@@ -141,17 +143,17 @@ CMS wiring: [`features/auth/social-auth/cms-client.ts`](../../src/features/auth/
 
 1. 로그인 버튼 → `startLogin({ intent: 'login' })` → `POST /api/admin/auth/sso/login`
 2. IdP → **백엔드** `GET /api/admin/auth/sso/{provider}/callback`
-3. 백엔드 → 프론트 `/login/social/complete?socialLoginSessionId=...`
-4. `processSocialLoginSessionReturn` → `POST /api/auth/sso/login/sessions/consume` → JWT 저장
+3. 백엔드 → 프론트 `/login/social/complete?adminSsoSessionId=...`
+4. `processSocialLoginSessionReturn` → `POST /api/admin/auth/sso/login/sessions/consume` (`adminSsoSessionId`) → JWT 저장
 
 - IdP Redirect URI: `{VITE_API_SERVER}/api/admin/auth/sso/{kakao\|naver\|google}/callback`
 - mock 모드: 기존 `{origin}/oauth/{provider}` 프론트 콜백 유지
 
 ### 관리자 SSO 계정 연결 (내 정보 / 가입 wizard)
 
-1. 연결 버튼 → `startLogin({ intent: 'link' })` → `POST /api/admin/auth/sso/login` (`returnUrl`=`/register/social-connect/callback`)
-2. IdP → **백엔드** callback → 프론트 returnUrl (`linked`, `provider` query)
-3. `processAdminSsoLinkReturn` → 연결 상태 반영
+1. 연결 버튼 → `startLogin({ intent: 'link' })` → `POST /api/admin/me/sso/accounts` (`startOAuth: true`, `returnUrl`=`/register/social-connect/callback`)
+2. IdP → **백엔드** callback → 프론트 returnUrl (`adminSsoSessionId` / `linked` / `provider` query)
+3. `processAdminSsoLinkReturn` → `POST /api/admin/me/sso/link/sessions/consume` 또는 연결 상태 반영
 4. mock: 기존 `/oauth/{provider}` + pending link + `flushSocialPendingLinks()` 유지
 
 - POST body (`SocialLinkRequest`): `provider`, `accessToken`, `socialConsentVersion`, `socialConsentAgreed`

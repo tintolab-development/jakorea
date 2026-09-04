@@ -182,9 +182,8 @@ export async function exportTableToExcel<T extends Record<string, any>>(
     column.width = Math.min(Math.max(headerLength, maxDataLength) + 2, 50)
   })
 
-  // 엑셀 파일 생성 및 다운로드
   const buffer = await workbook.xlsx.writeBuffer()
-  downloadExcel(buffer, resolveExcelDownloadFilename(filename, options?.exactFilename))
+  await downloadExcel(buffer, resolveExcelDownloadFilename(filename, options?.exactFilename))
 }
 
 /**

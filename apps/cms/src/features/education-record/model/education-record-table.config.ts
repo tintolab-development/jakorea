@@ -1,13 +1,17 @@
 /**
  * 실적 관리 목록 TablePageConfig
  * - URL 쿼리 `er_year / er_q / er_area / er_sido / er_sigungu / er_sponsor / er_main / er_title / er_book / er_org / er_ips / er_etype` 와 동기화
+ * - 솔팅은 목록·합계 API가 담당. 여기선 서버/서비스 결과를 그대로 표시한다.
  */
 
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
-import { matchesEducationRecordFilter } from '../lib/match-education-record-filter'
+import {
+  EDUCATION_RECORD_PARAM_KEYS,
+  educationRecordFiltersFromSearchParams,
+} from '@/features/education-record/api/performance-filter-params'
 import { createEducationRecordColumns } from './education-record-columns'
 import type {
   EducationRecordPendingFilters,
@@ -16,20 +20,7 @@ import type {
   EducationRecordTableContext,
 } from './education-record-types'
 
-const PARAM_KEYS = {
-  year: 'er_year',
-  quarter: 'er_q',
-  businessArea: 'er_area',
-  sido: 'er_sido',
-  sigungu: 'er_sigungu',
-  sponsorName: 'er_sponsor',
-  mainTitle: 'er_main',
-  title: 'er_title',
-  textbookName: 'er_book',
-  institutionName: 'er_org',
-  ips: 'er_ips',
-  educationType: 'er_etype',
-} as const
+const PARAM_KEYS = EDUCATION_RECORD_PARAM_KEYS
 
 const EMPTY_PENDING: EducationRecordPendingFilters = {
   year: '',
@@ -46,33 +37,8 @@ const EMPTY_PENDING: EducationRecordPendingFilters = {
   educationType: '',
 }
 
-function parseQuarter(raw: string | null): 'ALL' | EducationRecordQuarter {
-  const n = Number(raw)
-  if (n === 1 || n === 2 || n === 3 || n === 4) return n
-  return 'ALL'
-}
-
-function parseYear(raw: string | null): string {
-  if (!raw) return ''
-  if (!/^\d{4}$/.test(raw)) return ''
-  return raw
-}
-
 function readFilters(searchParams: URLSearchParams): EducationRecordPendingFilters {
-  return {
-    year: parseYear(searchParams.get(PARAM_KEYS.year)),
-    quarter: parseQuarter(searchParams.get(PARAM_KEYS.quarter)),
-    businessArea: searchParams.get(PARAM_KEYS.businessArea) ?? '',
-    sido: searchParams.get(PARAM_KEYS.sido) ?? '',
-    sigungu: searchParams.get(PARAM_KEYS.sigungu) ?? '',
-    sponsorName: searchParams.get(PARAM_KEYS.sponsorName) ?? '',
-    mainTitle: searchParams.get(PARAM_KEYS.mainTitle) ?? '',
-    title: searchParams.get(PARAM_KEYS.title) ?? '',
-    textbookName: searchParams.get(PARAM_KEYS.textbookName) ?? '',
-    institutionName: searchParams.get(PARAM_KEYS.institutionName) ?? '',
-    ips: searchParams.get(PARAM_KEYS.ips) ?? '',
-    educationType: searchParams.get(PARAM_KEYS.educationType) ?? '',
-  }
+  return educationRecordFiltersFromSearchParams(searchParams)
 }
 
 function isSamePending(
@@ -109,11 +75,6 @@ function hasAppliedFilters(filters: EducationRecordPendingFilters): boolean {
   if (filters.ips.trim()) return true
   if (filters.educationType.trim()) return true
   return false
-}
-
-function filterRows(data: EducationRecordRow[], searchParams: URLSearchParams): EducationRecordRow[] {
-  const filters = readFilters(searchParams)
-  return data.filter(row => matchesEducationRecordFilter(row, filters))
 }
 
 const tanstackColumns: ColumnDef<EducationRecordRow>[] = [{ accessorKey: 'id', header: 'id' }]
@@ -210,10 +171,7 @@ export const educationRecordTablePageConfig: TablePageConfig<
     onFilterChange: handleEducationRecordFilterChange,
   },
 
-  filterFn: ({ data, searchParams }) => {
-    const filtered = filterRows(data, searchParams)
-    return { dataForTable: filtered, filteredData: filtered }
-  },
+  filterFn: ({ data }) => ({ dataForTable: data, filteredData: data }),
 
   getSearchSync: () => ({
     paramConfig: searchSyncRules,

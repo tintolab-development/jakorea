@@ -1,7 +1,7 @@
 import { test, expect } from '../../../fixtures/test'
 import { expectAuthenticatedShell } from '../../../helpers/authenticated-shell'
 import { SponsorManagementPage } from '../../../pages/sponsor-management.page'
-import { clickExcelClientDownload } from '../../../pages/data-management-helpers'
+import { clickExcelClientDownload, filterField } from '../../../pages/data-management-helpers'
 import {
   SPONSOR_SEED_CORPORATE,
   SPONSOR_SEED_FOUNDATION,
@@ -23,8 +23,15 @@ test.describe('후원사 관리 목록', () => {
     await sponsors.expectListColumns()
     await sponsors.expectDefaultKindCorporate()
     await sponsors.expectDateRangeFilter()
-    await expect(page.getByRole('radio', { name: '후원 논의중' })).toHaveCount(0)
-    await expect(page.getByRole('radio', { name: '후원 휴면' })).toHaveCount(0)
+    const statusField = filterField(page, '후원 상태')
+    await statusField.locator('.ant-select-selector, [role="combobox"]').first().click()
+    await expect(page.getByTitle('후원 중').or(page.getByText('후원 중', { exact: true })).first()).toBeVisible({
+      timeout: 10_000,
+    })
+    await expect(page.getByTitle('후원 논의중').or(page.getByText('후원 논의중', { exact: true }))).toHaveCount(0)
+    await expect(page.getByTitle('후원 휴면').or(page.getByText('후원 휴면', { exact: true }))).toHaveCount(0)
+    await expect(page.getByTitle('후원 종료').or(page.getByText('후원 종료', { exact: true })).first()).toBeVisible()
+    await page.keyboard.press('Escape')
     await clickExcelClientDownload(page, test.info())
   })
 

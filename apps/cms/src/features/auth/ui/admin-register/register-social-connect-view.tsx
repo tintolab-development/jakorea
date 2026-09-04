@@ -8,14 +8,12 @@ import { RegisterStepHeader } from './register-step-header'
 interface RegisterSocialConnectViewProps {
   redirectPath?: string
   onComplete: () => void
-  onSkip: () => void
   onConnectSuccess: (provider: SocialProvider) => void
 }
 
 export function RegisterSocialConnectView({
   redirectPath,
   onComplete,
-  onSkip,
   onConnectSuccess,
 }: RegisterSocialConnectViewProps) {
   return (
@@ -24,8 +22,7 @@ export function RegisterSocialConnectView({
         title={
           <>
             소셜 계정을 연결하면
-            <br />
-            더 쉽게 로그인 할 수 있어요
+            <br />더 쉽게 로그인 할 수 있어요
           </>
         }
         description={
@@ -38,20 +35,19 @@ export function RegisterSocialConnectView({
       />
 
       <div className="register-social-connect__content">
-        <SocialConnectProviderList redirectPath={redirectPath} onConnectSuccess={onConnectSuccess} />
+        <SocialConnectProviderList
+          redirectPath={redirectPath}
+          onConnectSuccess={onConnectSuccess}
+        />
 
         <div className="register-social-connect__actions">
           <LoadingButton type="primary" block className="auth-submit-btn" onClick={onComplete}>
             완료
           </LoadingButton>
         </div>
-
-        <div className="register-social-connect__skip-wrap">
-          <button type="button" className="register-social-connect__skip" onClick={onSkip}>
-            나중에 할게요
-          </button>
-        </div>
       </div>
+
+      <div className="register-social-connect__trailing" aria-hidden />
     </div>
   )
 }

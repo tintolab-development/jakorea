@@ -477,7 +477,7 @@ export function ParticipatingInstructorsSection({
         title: 'No.',
         dataIndex: 'no',
         key: 'no',
-        width: 64,
+        width: 80,
         align: 'center',
         className: CMS_TABLE_NO_COL_CLASS,
         onHeaderCell: () => ({ className: CMS_TABLE_NO_COL_CLASS }),

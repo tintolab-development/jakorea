@@ -164,5 +164,5 @@ export async function exportRegionAssignmentExcel(
   sheet.views = [{ state: 'frozen', xSplit: 2, ySplit: 2 }]
 
   const buffer = await workbook.xlsx.writeBuffer()
-  downloadExcel(buffer, generateFilename(`배정표_${data.regionLabel}`, 'xlsx'))
+  await downloadExcel(buffer, generateFilename(`배정표_${data.regionLabel}`, 'xlsx'))
 }

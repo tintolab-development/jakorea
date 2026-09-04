@@ -61,6 +61,7 @@ const adminSsoAdapter = createAdminSsoAdapter({
 const signupSocialAdapter = createSignupSocialAdapter({
   http: httpClient,
   paths: adminSocialAuthPaths,
+  resolveBackendCallbackUri: resolveBackendSsoCallbackUri,
 })
 
 /** CMS 관리자 소셜 인증 클라이언트 */

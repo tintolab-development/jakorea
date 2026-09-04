@@ -78,16 +78,15 @@ const DEFAULT_CUSTOM_FIELDS: TemplateCustomFieldDef[] = [
   { name: 'titleName', label: '타이틀명' },
   { name: 'bodyContent', label: '본문 내용' },
   { name: 'certificateBackground', label: '수료증 배경' },
-  // 임시 숨김: 인증서 발급양식 상세에서 사용 범위 확정 후 다시 노출
-  // { name: 'chairmanName', label: '회장명' },
-  // { name: 'chairmanSeal', label: '회장 직인' },
-  // { name: 'orgAddress', label: '기관 주소지' },
-  // { name: 'orgPhone', label: '기관 전화번호' },
-  // { name: 'orgFax', label: '기관 팩스번호' },
-  // { name: 'orgWebsite', label: '기관 홈페이지 주소' },
-  // { name: 'orgLogo', label: '기관 로고' },
-  // { name: 'orgLogo02', label: '기관 로고 02' },
-  // { name: 'participantInfo', label: '참여자 정보' },
+  { name: 'chairmanName', label: '회장명' },
+  { name: 'chairmanSeal', label: '회장 직인' },
+  { name: 'orgAddress', label: '기관 주소지' },
+  { name: 'orgPhone', label: '기관 전화번호' },
+  { name: 'orgFax', label: '기관 팩스번호' },
+  { name: 'orgWebsite', label: '기관 홈페이지 주소' },
+  { name: 'orgLogo', label: '기관 로고' },
+  { name: 'orgLogo02', label: '기관 로고 02' },
+  { name: 'participantInfo', label: '참여자 정보' },
 ]
 
 /** 텍스트 편집 인풋 기본값 — 좌측 미리보기 예시와 동일한 카피(이미지 필드는 썸네일 기본 에셋 사용) */

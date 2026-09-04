@@ -56,3 +56,9 @@
   line-height: 150%;
   white-space: pre-wrap;
 }
+
+.alert-modal__required-asterisk {
+  color: var(--color-required-mark, var(--color-red, #ff4d4f));
+  font-weight: 500;
+  line-height: 150%;
+}

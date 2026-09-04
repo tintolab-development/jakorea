@@ -138,7 +138,7 @@ export function CertificatePreview({
 
       // 다운로드
       const filename = `certificate_${new Date().toISOString().split('T')[0]}.pdf`
-      downloadBlob(pdfBlob, filename)
+      await downloadBlob(pdfBlob, filename)
       setPdfError(null)
       onDownload?.()
     } catch (error) {

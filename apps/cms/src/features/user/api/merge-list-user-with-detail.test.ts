@@ -128,6 +128,52 @@ describe('mergeListUserWithFetchedDetail', () => {
     expect(merged.id).toBe('admin-account-165003')
   })
 
+  it('unmask 상세에 id1365가 없으면 목록·기존 상세의 1365 ID를 유지한다', () => {
+    const list = baseUser({
+      id: 'individual-uuid',
+      role: 'INDIVIDUAL',
+      name: '홍길동',
+      email: 'hong@example.com',
+      schoolInfo: undefined,
+      id1365: '0915123456',
+    })
+    const fetched = baseUser({
+      id: 'individual-uuid',
+      role: 'INDIVIDUAL',
+      name: '홍길동',
+      email: 'hong@example.com',
+      schoolInfo: undefined,
+    })
+    delete (fetched as { id1365?: string }).id1365
+
+    const merged = mergeListUserWithFetchedDetail(list, fetched)
+
+    expect(merged.id1365).toBe('0915123456')
+  })
+
+  it('마스킹된 목록 값보다 unmask 원문 id1365를 우선한다', () => {
+    const list = baseUser({
+      id: 'individual-uuid',
+      role: 'INDIVIDUAL',
+      name: '홍길동',
+      email: 'hong@example.com',
+      schoolInfo: undefined,
+      id1365: '0915***',
+    })
+    const fetched = baseUser({
+      id: 'individual-uuid',
+      role: 'INDIVIDUAL',
+      name: '홍길동',
+      email: 'hong@example.com',
+      schoolInfo: undefined,
+      id1365: '0915123456',
+    })
+
+    const merged = mergeListUserWithFetchedDetail(list, fetched)
+
+    expect(merged.id1365).toBe('0915123456')
+  })
+
   it('마스킹 placeholder 응답이 unmask·목록 강사 필드를 덮어쓰지 않는다', () => {
     const list = baseUser({
       id: 'teacher-uuid',

@@ -28,7 +28,7 @@ export interface UseSponsorDetailReturn {
   handleSponsorshipStatusChange: (
     next: NonNullable<SponsorManagementRow['sponsorshipStatus']>
   ) => Promise<void>
-  handleToggleBasicInfoEdit: (canWrite: boolean) => void
+  handleToggleBasicInfoEdit: (canWrite: boolean) => Promise<'saved' | 'invalid' | 'idle'>
   programHistoryDeleteDisabled: boolean
   refetchDetail: () => Promise<unknown>
   isLoading: boolean
@@ -47,8 +47,12 @@ export function buildBasicInfoEditStateFromDetail(
     executives: detail.executives,
     district: parsedAddress.district,
     detailAddress: parsedAddress.detailAddress,
+    homepageUrl: detail.homepageUrl ?? '',
     sponsorshipStartDate: detail.sponsorshipStartDate,
     sponsorshipStatus: detail.sponsorshipStatus ?? 'active',
+    securityMemo: detail.securityMemo ?? '',
+    logos: detail.logos,
+    pendingLogoFiles: [],
   }
 }
 
@@ -60,6 +64,8 @@ function sponsorRowToPlaceholderDetail(sponsor: SponsorManagementRow): SponsorMa
     businessNumber: '',
     executives: '',
     address: '',
+    homepageUrl: '',
+    logos: [],
     contacts: [],
     programHistories: [],
     yearlyBusinesses: [],
@@ -148,9 +154,15 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
   )
 
   const handleToggleBasicInfoEdit = useCallback(
-    async (canWrite: boolean): Promise<void> => {
-      if (!canWrite || !basicInfo) return
+    async (canWrite: boolean): Promise<'saved' | 'invalid' | 'idle'> => {
+      if (!canWrite || !basicInfo) return 'idle'
       if (isEditingBasicInfo) {
+        const nameKo = basicInfo.nameDisplayKo.trim()
+        const nameEn = basicInfo.nameDisplayEn.trim()
+        const startDate = basicInfo.sponsorshipStartDate
+        if (!nameKo || !nameEn || !startDate || !basicInfo.sponsorshipStatus) {
+          return 'invalid'
+        }
         try {
           await updateBasicInfoMutation.mutateAsync({
             sponsorId: sponsor.id,
@@ -162,13 +174,14 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
             'sponsorDetail basicInfo save failed',
             getDataManagementApiErrorMessage(error, '기본 정보 저장에 실패했습니다.')
           )
-          return
+          return 'idle'
         }
         setIsEditingBasicInfo(false)
-        return
+        return 'saved'
       }
       setBasicInfo(buildBasicInfoEditStateFromDetail(detail))
       setIsEditingBasicInfo(true)
+      return 'idle'
     },
     [basicInfo, detail, isEditingBasicInfo, sponsor.id, updateBasicInfoMutation]
   )

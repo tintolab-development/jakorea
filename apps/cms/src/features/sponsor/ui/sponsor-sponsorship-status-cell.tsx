@@ -1,5 +1,6 @@
 import { memo, useCallback, useState } from 'react'
 import type { SponsorSponsorshipStatus } from '@/types/domain'
+import { SPONSOR_SPONSORSHIP_STATUS_VALUES } from '@/features/sponsor/model/sponsorship-status'
 import { SponsorSponsorshipStatusBadge } from '@/features/sponsor/ui/sponsor-sponsorship-status-badge'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
@@ -8,10 +9,7 @@ import {
   StatusDropdownCell,
 } from '@/shared/components/status-dropdown-cell'
 
-const SPONSORSHIP_STATUS_OPTIONS = [
-  'active',
-  'ended',
-] as const satisfies readonly SponsorSponsorshipStatus[]
+const SPONSORSHIP_STATUS_OPTIONS = SPONSOR_SPONSORSHIP_STATUS_VALUES
 
 type SponsorSponsorshipStatusCellProps = {
   row: SponsorManagementRow

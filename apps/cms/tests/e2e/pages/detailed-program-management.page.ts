@@ -20,7 +20,7 @@ import {
 import { DATA_MANAGEMENT_NAME_PREFIX } from './data-management-seed-titles'
 import { fillByPlaceholder } from './form-helpers'
 
-const LIST_COLUMNS = ['No.', '사용 여부', '세부 프로그램명', '등록자', '등록일시'] as const
+const LIST_COLUMNS = ['No.', '사용 여부', '세부 프로그램명', '등록자명', '등록일시'] as const
 
 export class DetailedProgramManagementPage {
   readonly uniqueName: string
@@ -91,7 +91,7 @@ export class DetailedProgramManagementPage {
 
   async registerItem() {
     await this.page.getByRole('button', { name: '신규 등록' }).click()
-    const modal = this.page.getByRole('dialog').filter({ hasText: '항목 추가' })
+    const modal = this.page.getByRole('dialog').filter({ hasText: '세부 프로그램명 신규 등록' })
     await expect(modal).toBeVisible()
     await modal.getByRole('radio', { name: '사용' }).check({ force: true })
     await fillByPlaceholder(modal, '세부 프로그램명을 입력해 주세요.', this.uniqueName)
@@ -137,7 +137,7 @@ export class DetailedProgramManagementPage {
       res => isAdminMutation(res, 'PATCH', /\/api\/admin\/detailed-programs\/[^/]+\/?$/),
       { timeout: 60_000 }
     )
-    await this.page.getByRole('button', { name: '정보 수정' }).click()
+    await this.page.getByRole('button', { name: '수정 완료' }).click()
     const patch = await patchPromise
     if (!patch.ok()) {
       const body = await patch.text().catch(() => '')

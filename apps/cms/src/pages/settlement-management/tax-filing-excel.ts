@@ -189,5 +189,5 @@ export async function exportTaxFilingExcel(rows: AccountPaymentRow[]): Promise<v
   ]
 
   const buffer = await workbook.xlsx.writeBuffer()
-  downloadExcel(buffer, generateFilename('세금신고', 'xlsx'))
+  await downloadExcel(buffer, generateFilename('세금신고', 'xlsx'))
 }

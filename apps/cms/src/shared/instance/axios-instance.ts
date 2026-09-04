@@ -10,6 +10,11 @@
  */
 
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { hasPasswordChangeRequiredComplete } from '@/features/auth/password-change-required/wizard-state'
+import {
+  passwordChangeRequiredPaths,
+  resolveSessionAuthFailureRedirect,
+} from '@/shared/utils/post-auth-redirect'
 import {
   expiresAtIsoFromExpiresInSeconds,
   isAccessTokenUnauthorizedCode,
@@ -205,12 +210,17 @@ function persistRefreshToken(refreshToken: string) {
 }
 
 function handleAuthFailure() {
+  const complete =
+    typeof window !== 'undefined' ? hasPasswordChangeRequiredComplete() : false
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
+  const search = typeof window !== 'undefined' ? window.location.search : ''
   useAuthStore.getState().logout()
-  if (typeof window !== 'undefined') {
-    const path = `${window.location.pathname}${window.location.search}`
-    const next = encodeURIComponent(path)
-    window.location.assign(`/login?next=${next}`)
-  }
+  if (typeof window === 'undefined') return
+
+  const target = resolveSessionAuthFailureRedirect({ pathname, search, complete })
+  if (target == null) return
+  if (target === passwordChangeRequiredPaths.complete && pathname === target) return
+  window.location.assign(target)
 }
 
 function enqueueWhileRefreshing(originalRequest: RetryableRequest) {

@@ -896,7 +896,7 @@ export function GeneralParticipatingInstitutionDetailView(
 
   const assignedInstructorColumns: ColumnsType<AssignedInstructorDisplayRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '역할',
         dataIndex: 'role',
@@ -986,7 +986,7 @@ export function GeneralParticipatingInstitutionDetailView(
 
   const waitingInstructorColumns: ColumnsType<WaitingInstructorRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '강사명',
         dataIndex: 'instructorName',

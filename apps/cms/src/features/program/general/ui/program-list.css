@@ -655,7 +655,7 @@
 }
 
 .program-list-card--program-list-overview .program-list-table__col-no {
-  min-width: 64px;
+  min-width: var(--table-no-column-width, 80px);
 }
 
 .program-list-page--overview

@@ -32,7 +32,9 @@
 }
 
 .auth-card.auth-card--register-step-5 {
-  min-height: 850px;
+  min-height: 0;
+  height: auto;
+  padding-bottom: 0;
 }
 
 .auth-card.auth-card--register-step-6 {
@@ -201,6 +203,24 @@
 
 .admin-register-step__trailing {
   display: none;
+}
+
+.register-page-content:has(.admin-register-step--password) {
+  flex: 0 0 auto;
+}
+
+.admin-register-step--password {
+  flex: 0 0 auto;
+}
+
+.admin-register-step--password .admin-register-step__form {
+  flex: 0 0 auto;
+}
+
+.admin-register-step--password .admin-register-step__trailing {
+  display: block;
+  height: 72px;
+  flex-shrink: 0;
 }
 
 .admin-register-step--placeholder .admin-register-step__actions {
@@ -831,7 +851,11 @@
   .auth-card.auth-card--register-step-6 {
     height: auto;
     min-height: 0;
-    padding: 40px 24px;
+    padding: 40px 24px 0;
+  }
+
+  .admin-register-step--password .admin-register-step__trailing {
+    height: 72px;
   }
 
   .register-page-content {

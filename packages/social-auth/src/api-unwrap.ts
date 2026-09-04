@@ -51,17 +51,29 @@ function SocialAuthApiErrorFromStatus(
   if (data && typeof data === 'object') {
     const o = data as Record<string, unknown>
     const wrapped = o.error as { code?: string; message?: string } | undefined
-    const code =
-      wrapped?.code ??
-      (typeof o.code === 'string' ? o.code : status === 404 ? 'SOCIAL_ACCOUNT_NOT_LINKED' : 'UNKNOWN')
     const message =
       wrapped?.message ??
       (typeof o.message === 'string' ? o.message : undefined) ??
       fallback
-    return new SocialAuthApiError(String(code), message)
+    const explicitCode = wrapped?.code ?? (typeof o.code === 'string' ? o.code : undefined)
+    if (explicitCode) {
+      return new SocialAuthApiError(String(explicitCode), message)
+    }
+    if (status === 404) {
+      const looksNotLinked =
+        message.includes('연결') || message.includes('NOT_LINKED') || message.includes('소셜')
+      return new SocialAuthApiError(
+        looksNotLinked ? 'SOCIAL_ACCOUNT_NOT_LINKED' : 'NOT_FOUND',
+        message
+      )
+    }
+    if (status === 409) {
+      return new SocialAuthApiError('SOCIAL_ACCOUNT_ALREADY_LINKED', message)
+    }
+    return new SocialAuthApiError('UNKNOWN', message)
   }
   if (status === 404) {
-    return new SocialAuthApiError('SOCIAL_ACCOUNT_NOT_LINKED', fallback)
+    return new SocialAuthApiError('NOT_FOUND', fallback)
   }
   if (status === 409) {
     return new SocialAuthApiError('SOCIAL_ACCOUNT_ALREADY_LINKED', fallback)

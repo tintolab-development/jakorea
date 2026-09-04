@@ -49,13 +49,26 @@ function ConfirmSection({
       <PFText as="h2" typo="form-section-title" color="black" className={styles.sectionTitle}>
         {title}
       </PFText>
-      {children}
+      <div className={styles.sectionBody}>{children}</div>
       {footer ? (
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.sectionFooter}>
           {footer}
         </PFText>
       ) : null}
     </section>
+  )
+}
+
+function ConfirmAmountSummary({ label, amount }: { label: string; amount: string }) {
+  return (
+    <div className={styles.amountSummary}>
+      <PFText typo="bd-md-sb" color="black">
+        {label}
+      </PFText>
+      <PFText typo="bd-md-sb" color="black">
+        {amount}
+      </PFText>
+    </div>
   )
 }
 
@@ -70,10 +83,10 @@ function ConfirmTripLegBlock({
 
   return (
     <div className={styles.legBlock}>
-      <PFText as="p" typo="bd-lg-sb" color="black" className={styles.legHeading}>
+      <PFText as="p" typo="bd-md-sb" color="black" className={styles.legHeading}>
         {heading}
       </PFText>
-      <PFInfoReview rows={buildTripLegRows(leg)} />
+      <PFInfoReview rows={buildTripLegRows(leg)} accentFirstRow={false} />
     </div>
   )
 }
@@ -105,12 +118,13 @@ export function EducationSettlementConfirmView({
       />
 
       <ConfirmSection title="기본 정보">
-        <PFInfoReview rows={basicRows} />
+        <PFInfoReview rows={basicRows} accentFirstRow={false} />
       </ConfirmSection>
 
       {showTransport ? (
         <ConfirmSection title="교통비 신청">
           <PFInfoReview
+            accentFirstRow={false}
             rows={[{ label: '신청 구분', value: resolveSettlementTripTypeLabel(draft.transport.tripType) }]}
           />
 
@@ -123,14 +137,10 @@ export function EducationSettlementConfirmView({
             <ConfirmTripLegBlock heading="오는 편(귀가)" leg={draft.transport.return} />
           ) : null}
 
-          <div className={styles.transportTotal}>
-            <PFText typo="bd-md-md" color="neutral-cool-500" className={styles.transportTotalLabel}>
-              총 산정 교통비
-            </PFText>
-            <PFText typo="bd-md-sb" color="black" className={styles.transportTotalValue}>
-              {transportTotal > 0 ? `${transportTotal.toLocaleString('ko-KR')}원` : ''}
-            </PFText>
-          </div>
+          <ConfirmAmountSummary
+            label="총 산정 교통비"
+            amount={transportTotal > 0 ? `${transportTotal.toLocaleString('ko-KR')}원` : ''}
+          />
         </ConfirmSection>
       ) : null}
 
@@ -140,10 +150,12 @@ export function EducationSettlementConfirmView({
           footer="1인 기준, 시간 당 최대 3만원까지 지급됩니다."
         >
           <PFInfoReview
-            rows={[
-              { label: '영수증 제출', value: formatSettlementFileNames(draft.meal.fileNames) },
-              { label: '식사비', value: formatSettlementAmountDisplay(draft.meal.amount) },
-            ]}
+            accentFirstRow={false}
+            rows={[{ label: '영수증 제출', value: formatSettlementFileNames(draft.meal.fileNames) }]}
+          />
+          <ConfirmAmountSummary
+            label="식사비"
+            amount={formatSettlementAmountDisplay(draft.meal.amount)}
           />
         </ConfirmSection>
       ) : null}
@@ -151,10 +163,12 @@ export function EducationSettlementConfirmView({
       {showActivity ? (
         <ConfirmSection title="활동비 신청" footer="사용한 금액의 영수증을 제출해 주세요.">
           <PFInfoReview
-            rows={[
-              { label: '영수증 제출', value: formatSettlementFileNames(draft.activity.fileNames) },
-              { label: '활동비', value: formatSettlementAmountDisplay(draft.activity.amount) },
-            ]}
+            accentFirstRow={false}
+            rows={[{ label: '영수증 제출', value: formatSettlementFileNames(draft.activity.fileNames) }]}
+          />
+          <ConfirmAmountSummary
+            label="활동비"
+            amount={formatSettlementAmountDisplay(draft.activity.amount)}
           />
         </ConfirmSection>
       ) : null}

@@ -102,7 +102,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
   const assignedColumns: ColumnsType<ParticipatingIndividualVolunteerAssignedScheduleRow> =
     useMemo(
       () => [
-        { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+        { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
         {
           title: '담당 봉사 진행 일정',
           dataIndex: 'scheduleLabel',
@@ -122,7 +122,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
 
   const waitingColumns: ColumnsType<ParticipatingIndividualVolunteerWaitingScheduleRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '봉사 진행 희망 일정',
         dataIndex: 'scheduleLabel',

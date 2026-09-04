@@ -12,6 +12,16 @@ export function memberLoginRetentionCutoff(now: Dayjs = dayjs()): Dayjs {
   return now.subtract(MEMBER_LOGIN_RETENTION_MONTHS, 'month')
 }
 
+/** 로그인 일시 필터: 보관기간(1개월)·오늘 이후는 선택 불가 */
+export function isMemberLoginHistoryDateDisabled(
+  date: Dayjs,
+  now: Dayjs = dayjs()
+): boolean {
+  if (!date?.isValid()) return true
+  const cutoff = memberLoginRetentionCutoff(now).startOf('day')
+  return date.isBefore(cutoff, 'day') || date.isAfter(now, 'day')
+}
+
 export function isMemberLoginLogWithinRetention(
   loggedAt: DateValue,
   now: Dayjs = dayjs()

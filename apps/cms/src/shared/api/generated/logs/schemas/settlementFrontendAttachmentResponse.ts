@@ -10,4 +10,8 @@ export interface SettlementFrontendAttachmentResponse {
   id?: string;
   fileName?: string;
   fileSize?: number;
+  itemType?: string;
+  applicationItemId?: number;
+  fileObjectId?: number;
+  contentType?: string;
 }

@@ -16,6 +16,7 @@ import type { AdminRegisterStep1Data } from '@/types/admin-register'
 import { passwordChangeRequiredPaths } from '@/shared/utils/post-auth-redirect'
 
 import './register-page.css'
+import './password-change-required-birth-page.css'
 
 export function PasswordChangeRequiredBirthPage() {
   const navigate = useNavigate()
@@ -40,15 +41,17 @@ export function PasswordChangeRequiredBirthPage() {
 
   return (
     <AuthPageShell showLogo={false} cardClassName="register-card">
-      <RegisterStepProgress currentStep={1} totalSteps={2} />
-      <AdminRegisterStepBirthGender
-        initialValues={{
-          birthDate: wizardState?.birthDate,
-          gender: wizardState?.gender,
-        }}
-        onNext={handleNext}
-        onBack={handleBack}
-      />
+      <div className="password-change-required-birth-page">
+        <RegisterStepProgress currentStep={1} totalSteps={2} />
+        <AdminRegisterStepBirthGender
+          initialValues={{
+            birthDate: wizardState?.birthDate,
+            gender: wizardState?.gender,
+          }}
+          onNext={handleNext}
+          onBack={handleBack}
+        />
+      </div>
     </AuthPageShell>
   )
 }

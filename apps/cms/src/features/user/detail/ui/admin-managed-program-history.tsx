@@ -336,7 +336,7 @@ export function AdminManagedProgramHistory({
       {
         title: 'No.',
         key: 'no',
-        width: 56,
+        width: 80,
         align: 'center',
         render: (_: unknown, __: Program, index: number) => index + 1,
       },

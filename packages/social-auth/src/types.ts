@@ -16,6 +16,10 @@ export interface SocialAuthPaths {
   socialAccount: (providerCode: string) => string
   signupStart: (provider: string) => string
   signupSession: (sessionId: number) => string
+  /** 가입 직후 public 소셜 연결 시작 */
+  signupSsoLinkStart?: () => string
+  /** 가입 직후 public 소셜 연결 session consume */
+  signupSsoLinkSessionConsume?: () => string
   ssoError?: () => string
   /** 회원(Platform) 확장용 */
   loginStart?: (provider: string) => string
@@ -81,6 +85,8 @@ export interface SsoStartInput {
   returnUrl?: string
   frontendReturnUrl?: string
   loginReturnUrl?: string
+  /** 가입 직후 public handoff — 있으면 `/api/admin/auth/signup/sso/link/start` */
+  signupSocialLinkToken?: string
 }
 
 export interface SsoStartResult {
@@ -94,7 +100,9 @@ export interface CallbackInput {
   code?: string
   idToken?: string
   state?: string
+  /** @deprecated Admin SSO login uses `adminSsoSessionId` (OpenAPI AdminSsoSessionConsumeRequest). */
   socialLoginSessionId?: string
+  adminSsoSessionId?: string
 }
 
 export interface LinkAccountInput {
@@ -112,6 +120,8 @@ export interface AdminSsoLinkSessionInput {
   provider: SocialProvider
   adminSsoSessionId: string
   consent: SocialLinkConsent
+  /** 가입 직후 public consume — 있으면 `/api/admin/auth/signup/sso/link/sessions/consume` */
+  signupSocialLinkToken?: string
 }
 
 export interface OAuthClientConfig {

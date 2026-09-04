@@ -1,5 +1,7 @@
 /**
- * FAQ 등록/수정 모달 — 800px 폭
+ * FAQ 등록/수정 모달 — Figma 셸
+ * display:flex; width:800px; padding:26px 30px 34px 30px;
+ * flex-direction:column; align-items:center; gap:30px; flex-shrink:0;
  */
 
 .faq-form-modal-wrap {
@@ -37,67 +39,78 @@
   box-sizing: border-box !important;
 }
 
+/* 셸: 시안 프레임 규격 — 높이는 콘텐츠에 맞춤(고정 680 제거) */
 .content-modal.faq-form-modal .ant-modal-content {
   display: flex;
+  width: 100%;
+  padding: 26px 30px 34px 30px;
   flex-direction: column;
-  align-items: stretch;
-  padding: 26px 30px 34px;
+  align-items: center;
+  flex-shrink: 0;
   border-radius: 12px;
   background: #fff;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
-  height: min(680px, calc(100dvh - 48px));
-  max-height: min(680px, calc(100dvh - 48px));
+  height: auto;
+  max-height: min(calc(100dvh - 48px), 900px);
   overflow: hidden;
   box-sizing: border-box;
 }
 
+/* 헤더 · 본문 · 푸터 — gap 30px (시안) */
 .content-modal.faq-form-modal .ant-modal-body {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  align-items: center;
+  gap: 30px;
+  flex: 0 1 auto;
   min-height: 0;
+  width: 100%;
   padding: 0;
   overflow: hidden;
-}
-
-/* 폼 항목 영역(teal-header-modal__body)과 취소·등록 푸터 사이 30px */
-.content-modal.faq-form-modal .ant-modal-body > .teal-header-modal__footer {
-  margin-top: 30px;
-  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .content-modal.faq-form-modal .teal-header-modal__header {
-  margin-bottom: 24px;
+  margin-bottom: 0;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.content-modal.faq-form-modal .ant-modal-body > .teal-header-modal__footer,
+.content-modal.faq-form-modal .teal-header-modal__footer {
+  margin-top: 0;
+  width: 100%;
   flex-shrink: 0;
 }
 
 .content-modal.faq-form-modal .teal-header-modal__body {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  width: 100%;
   overflow-x: hidden;
   overflow-y: auto;
   padding: 0;
+  padding-top: 0 !important;
 }
 
-/* 폼: 세로 플렉스 체인 — 필드 스택에 바깥 스크롤 없음 */
+/* 폼: 세로 플렉스 — 필드 스택 */
 .faq-form-modal__form {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  width: 100%;
   min-height: 0;
-  overflow: hidden;
 }
 
+/* 필드 간 24px (레드라인) */
 .faq-form-modal__fields {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  flex: 1 1 auto;
+  width: 100%;
   min-height: 0;
-  overflow: visible;
 }
 
 /* 카테고리·공개 여부: 각 240px, 사이 40px, 상단 기준 정렬 */
@@ -137,7 +150,7 @@
   line-height: 150%;
 }
 
-/* 라벨 ↔ 인풋(셀렉트·라디오·제목) 간격 6px */
+/* 라벨 ↔ 인풋 간격 6px */
 .faq-form-modal__form.ant-form-vertical .ant-form-item-label {
   padding-bottom: 0 !important;
   margin-bottom: 6px;
@@ -169,12 +182,12 @@
 /**
  * FAQ 수정 모달 — 좌측「FAQ 삭제」라벨
  */
-.faq-form-modal .faq-form-modal__faq-delete.cms-button.cms-button--delete.cms-button--medium.ant-btn {
+.faq-form-modal .faq-form-modal__faq-delete.cms-button.cms-button--delete.ant-btn {
   text-align: center;
 }
 
 .faq-form-modal
-  .faq-form-modal__faq-delete.cms-button.cms-button--delete.cms-button--medium.ant-btn
+  .faq-form-modal__faq-delete.cms-button.cms-button--delete.ant-btn
   .cms-button__label {
   text-align: center !important;
   font-family: Pretendard, var(--font-family-primary, sans-serif) !important;

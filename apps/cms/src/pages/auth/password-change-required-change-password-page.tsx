@@ -7,20 +7,19 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { fetchAdminPasswordChange } from '@/features/auth/api/admin-password-change-fetcher'
-import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
-  clearPasswordChangeRequiredWizardState,
   getPasswordChangeRequiredWizardState,
   hasBirthGender,
   hasIdentityVerified,
+  hasPasswordChangeRequiredComplete,
+  markPasswordChangeRequiredComplete,
   usePasswordChangeRequiredGuard,
   validatePasswordChangeRequiredForm,
 } from '@/features/auth/password-change-required'
 import { RegisterStepHeader } from '@/features/auth/ui/admin-register/register-step-header'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 import { LoadingButton } from '@/shared/ui/loading-button'
-import { CmsInput, useCmsAlert } from '@/shared/ui'
-import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
+import { CmsInput } from '@/shared/ui'
 import { passwordChangeRequiredPaths } from '@/shared/utils/post-auth-redirect'
 
 import './register-page.css'
@@ -33,16 +32,18 @@ type FormValues = {
 
 export function PasswordChangeRequiredChangePasswordPage() {
   const navigate = useNavigate()
-  const { showAlert } = useCmsAlert()
   const [form] = Form.useForm<FormValues>()
   const [submitting, setSubmitting] = useState(false)
-  const { isReady, user } = usePasswordChangeRequiredGuard()
-  const clearPasswordChangeRequired = useAuthStore(state => state.clearPasswordChangeRequired)
+  const { isReady } = usePasswordChangeRequiredGuard()
   const wizardState = getPasswordChangeRequiredWizardState()
   const birthReady = hasBirthGender(wizardState)
   const identityReady = hasIdentityVerified(wizardState)
 
   useEffect(() => {
+    if (hasPasswordChangeRequiredComplete()) {
+      navigate(passwordChangeRequiredPaths.complete, { replace: true })
+      return
+    }
     if (!isReady) return
     if (!birthReady) {
       navigate(passwordChangeRequiredPaths.birth, { replace: true })
@@ -83,13 +84,8 @@ export function PasswordChangeRequiredChangePasswordPage() {
         currentPassword: values.currentPassword,
         newPassword: values.newPassword,
       })
-      clearPasswordChangeRequired()
-      clearPasswordChangeRequiredWizardState()
-      showAlert({
-        title: '비밀번호 변경 완료',
-        content: '비밀번호가 변경되었습니다. 서비스를 이용해 주세요.',
-      })
-      navigate(user ? getRedirectPathByRole(user) : '/', { replace: true })
+      markPasswordChangeRequiredComplete()
+      navigate(passwordChangeRequiredPaths.complete, { replace: true })
     } catch (error) {
       const message =
         error instanceof Error ? error.message : '비밀번호 변경에 실패했습니다. 다시 시도해 주세요.'

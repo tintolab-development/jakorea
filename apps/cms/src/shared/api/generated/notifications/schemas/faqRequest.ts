@@ -21,6 +21,6 @@ export interface FaqRequest {
   answer?: string;
   /** 작성자 표시명 */
   author?: string;
-  /** 상태 */
+  /** 공개 여부/상태. 공개=published, 비공개=draft|임시저장. 미입력 시 DRAFT(비공개). */
   status?: FaqRequestStatus;
 }

@@ -1,7 +1,8 @@
 /**
  * 실적 관리 목록 페이지
- * - 데이터 탭: FilterTableLayout(필터) + 탭 nav + 본문
- * - 합계 탭: 필터 비노출, 탭 nav + 본문만 렌더
+ * - 탭: 페이지 상단(권한 승인과 동일 CmsTextTabs). 필터·테이블 카드 밖
+ * - 데이터 탭: FilterTableLayout(필터 + 본문)
+ * - 합계 탭: 필터 비노출, 본문만
  * - 쿼리 파라미터: `?tab=data`(기본) / `?tab=summary`
  */
 
@@ -20,10 +21,10 @@ import type {
 import { getAvailableYearsFromRows } from '@/features/education-record/lib/education-record-region'
 import { EducationRecordDataTab } from '@/features/education-record/ui/education-record-data-tab'
 import { EducationRecordSummaryTab } from '@/features/education-record/ui/education-record-summary-tab'
-import { EducationRecordTabNav } from '@/features/education-record/ui/education-record-tab-nav'
 import { usePerformanceListQuery } from '@/features/education-record/hooks/use-performance-list-query'
 import { usePerformanceSummaryQuery } from '@/features/education-record/hooks/use-performance-summary-query'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
+import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { ExcelButton } from '@/shared/ui/excel-button'
 import { MESSAGES } from '@/shared/constants'
 import './education-record-list-page.css'
@@ -39,10 +40,10 @@ export function EducationRecordListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
 
-  const listQuery = usePerformanceListQuery()
+  const listQuery = usePerformanceListQuery(searchParams)
   const sourceRows = listQuery.data ?? []
   const isDataTab = activeKey === 'data'
-  const summaryQuery = usePerformanceSummaryQuery(activeKey === 'summary')
+  const summaryQuery = usePerformanceSummaryQuery(searchParams, activeKey === 'summary')
 
   const availableYears = useMemo(() => getAvailableYearsFromRows(sourceRows), [sourceRows])
   const context = useMemo<EducationRecordTableContext>(() => ({ availableYears }), [availableYears])
@@ -128,6 +129,24 @@ export function EducationRecordListPage() {
         />
       ) : null}
 
+      <CmsTextTabs
+        className="education-record-list-page__tabs"
+        activeKey={activeKey}
+        onChange={handleTabChange}
+        ariaLabel="실적 관리 탭"
+        items={[
+          { key: 'data', label: '실적 데이터' },
+          { key: 'summary', label: '합계' },
+        ]}
+        trailing={
+          <ExcelButton
+            onClick={handleExportExcel}
+            loading={isExporting}
+            disabled={tableData.length === 0 || listQuery.isLoading}
+          />
+        }
+      />
+
       <FilterTableLayout
         className={[
           'education-record-list-page__layout',
@@ -143,19 +162,6 @@ export function EducationRecordListPage() {
         showTitle={false}
         hideExcelDownload
         contentLoading={listQuery.isLoading && isDataTab}
-        topNav={
-          <div className="education-record-list-page__top-nav">
-            <EducationRecordTabNav activeTab={activeKey} onTabChange={handleTabChange} />
-            <div className="education-record-list-page__top-nav-actions">
-              <ExcelButton
-                onClick={handleExportExcel}
-                loading={isExporting}
-                disabled={tableData.length === 0 || listQuery.isLoading}
-                style={{ height: 44 }}
-              />
-            </div>
-          </div>
-        }
       >
         {isDataTab ? (
           <EducationRecordDataTab

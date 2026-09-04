@@ -105,7 +105,7 @@ export function InstructorRecruitmentDetailModal({
 
   const instructorColumns: ColumnsType<ApplicantInstructorRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '강사명',
         dataIndex: 'instructorName',

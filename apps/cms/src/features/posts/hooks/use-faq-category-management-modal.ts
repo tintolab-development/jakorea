@@ -12,6 +12,22 @@ import {
 } from '@/features/posts/model/notice-category-domain'
 import type { FaqCategoryRemoteActions } from '@/features/posts/hooks/use-admin-faq-categories'
 import type { FaqCategoryRow } from '@/features/posts/model/admin-faq-management.types'
+import { getApiErrorCode, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
+
+const FAQ_CATEGORY_IN_USE = 'FAQ_CATEGORY_IN_USE'
+const FAQ_CATEGORY_NAME_ALREADY_EXISTS = 'FAQ_CATEGORY_NAME_ALREADY_EXISTS'
+
+function isConflictStatus(error: unknown): boolean {
+  return getApiErrorHttpStatus(error) === 409
+}
+
+function isFaqCategoryInUseError(error: unknown): boolean {
+  return getApiErrorCode(error) === FAQ_CATEGORY_IN_USE || isConflictStatus(error)
+}
+
+function isFaqCategoryDuplicateError(error: unknown): boolean {
+  return getApiErrorCode(error) === FAQ_CATEGORY_NAME_ALREADY_EXISTS || isConflictStatus(error)
+}
 
 export type UseFaqCategoryManagementModalParams = {
   open: boolean
@@ -32,9 +48,13 @@ export type UseFaqCategoryManagementModalResult = {
   setNewDraft: (v: string) => void
   composeOpen: boolean
   deleteBlockedOpen: boolean
+  duplicateAlertOpen: boolean
   deleteConfirmOpen: boolean
+  settingsCompleteOpen: boolean
   pendingDeleteRow: FaqCategoryRow | null
   closeDeleteBlocked: () => void
+  closeDuplicateAlert: () => void
+  closeSettingsComplete: () => void
   handleClose: () => void
   startEdit: (row: FaqCategoryRow) => void
   cancelEdit: () => void
@@ -45,6 +65,7 @@ export type UseFaqCategoryManagementModalResult = {
   cancelNew: () => void
   submitNew: () => void
   openCompose: () => void
+  applySettings: () => void
 }
 
 export function useFaqCategoryManagementModal({
@@ -60,7 +81,9 @@ export function useFaqCategoryManagementModal({
   const [newDraft, setNewDraft] = useState('')
   const [composeOpen, setComposeOpen] = useState(false)
   const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
+  const [duplicateAlertOpen, setDuplicateAlertOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [settingsCompleteOpen, setSettingsCompleteOpen] = useState(false)
   const [pendingDeleteRow, setPendingDeleteRow] = useState<FaqCategoryRow | null>(null)
   const newInputRef = useRef<InputRef>(null)
   const editInputRef = useRef<InputRef>(null)
@@ -71,6 +94,7 @@ export function useFaqCategoryManagementModal({
     setNewDraft('')
     setComposeOpen(false)
     setDeleteBlockedOpen(false)
+    setDuplicateAlertOpen(false)
     setDeleteConfirmOpen(false)
     setPendingDeleteRow(null)
   }, [])
@@ -107,11 +131,18 @@ export function useFaqCategoryManagementModal({
       return
     }
     if (hasDuplicateCategoryName(categories, trimmed, editingId)) {
+      setDuplicateAlertOpen(true)
       return
     }
     if (remoteActions) {
-      await remoteActions.onUpdate(editingId, trimmed)
-      cancelEdit()
+      try {
+        await remoteActions.onUpdate(editingId, trimmed)
+        cancelEdit()
+      } catch (error) {
+        if (isFaqCategoryDuplicateError(error)) {
+          setDuplicateAlertOpen(true)
+        }
+      }
       return
     }
     onCategoriesChange(
@@ -149,9 +180,17 @@ export function useFaqCategoryManagementModal({
   const confirmDeleteCategory = useCallback(async () => {
     if (pendingDeleteRow == null) return
     if (remoteActions) {
-      await remoteActions.onDelete(pendingDeleteRow.id)
-      setDeleteConfirmOpen(false)
-      setPendingDeleteRow(null)
+      try {
+        await remoteActions.onDelete(pendingDeleteRow.id)
+        setDeleteConfirmOpen(false)
+        setPendingDeleteRow(null)
+      } catch (error) {
+        if (isFaqCategoryInUseError(error)) {
+          setDeleteConfirmOpen(false)
+          setPendingDeleteRow(null)
+          setDeleteBlockedOpen(true)
+        }
+      }
       return
     }
     removeCategory(pendingDeleteRow.id)
@@ -170,12 +209,19 @@ export function useFaqCategoryManagementModal({
       return
     }
     if (hasDuplicateCategoryName(categories, trimmed)) {
+      setDuplicateAlertOpen(true)
       return
     }
     if (remoteActions) {
-      await remoteActions.onCreate(trimmed)
-      setNewDraft('')
-      setComposeOpen(false)
+      try {
+        await remoteActions.onCreate(trimmed)
+        setNewDraft('')
+        setComposeOpen(false)
+      } catch (error) {
+        if (isFaqCategoryDuplicateError(error)) {
+          setDuplicateAlertOpen(true)
+        }
+      }
       return
     }
     const id = createNoticeCategoryId()
@@ -194,6 +240,20 @@ export function useFaqCategoryManagementModal({
     setDeleteBlockedOpen(false)
   }, [])
 
+  const closeDuplicateAlert = useCallback(() => {
+    setDuplicateAlertOpen(false)
+  }, [])
+
+  const applySettings = useCallback(() => {
+    resetEphemeralUi()
+    onClose()
+    setSettingsCompleteOpen(true)
+  }, [onClose, resetEphemeralUi])
+
+  const closeSettingsComplete = useCallback(() => {
+    setSettingsCompleteOpen(false)
+  }, [])
+
   return {
     newInputRef,
     editInputRef,
@@ -204,9 +264,13 @@ export function useFaqCategoryManagementModal({
     setNewDraft,
     composeOpen,
     deleteBlockedOpen,
+    duplicateAlertOpen,
     deleteConfirmOpen,
+    settingsCompleteOpen,
     pendingDeleteRow,
     closeDeleteBlocked,
+    closeDuplicateAlert,
+    closeSettingsComplete,
     handleClose,
     startEdit,
     cancelEdit,
@@ -217,5 +281,6 @@ export function useFaqCategoryManagementModal({
     cancelNew,
     submitNew,
     openCompose,
+    applySettings,
   }
 }

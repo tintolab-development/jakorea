@@ -40,7 +40,7 @@ export function PreviousTermSection({
                   type="button"
                   className="previous-term-section__file"
                   onClick={() =>
-                    downloadFile(activity.certificateFileName, activity.certificateFileUrl)
+                    void downloadFile(activity.certificateFileName, activity.certificateFileUrl)
                   }
                 >
                   <AttachmentDownloadIcon className="previous-term-section__file-icon" />

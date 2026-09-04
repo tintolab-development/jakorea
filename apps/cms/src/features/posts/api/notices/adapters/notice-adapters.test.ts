@@ -16,6 +16,16 @@ describe('notice-adapters', () => {
     expect(row.status).toBe('published')
   })
 
+  it('maps updatedAt from NoticeResponse', () => {
+    const row = mapNoticeResponse({
+      id: '1',
+      title: '공지',
+      createdAt: '2026-06-02T09:00:00Z',
+      updatedAt: '2026-06-03T11:00:00Z',
+    })
+    expect(row.updatedAt).toBe('2026-06-03T11:00:00Z')
+  })
+
   it('maps list items envelope', () => {
     const rows = mapNoticeListResponse({
       items: [{ id: '1', title: 'A' }],

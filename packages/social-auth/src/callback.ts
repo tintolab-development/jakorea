@@ -36,13 +36,14 @@ function isSignupSessionReady(status?: string): boolean {
   return true
 }
 
-/** Admin SSO login — backend callback 후 `/login/social/complete?socialLoginSessionId=...` */
+/** Admin SSO login — backend callback 후 `/login/social/complete?adminSsoSessionId=...` */
 export async function processSocialLoginSessionReturn(
   client: SocialAuthClient,
   searchParams: URLSearchParams
 ): Promise<OAuthCallbackOutcome> {
   const error = searchParams.get('error')
   const challengeUuid = searchParams.get('challengeUuid') ?? searchParams.get('mfaChallengeUuid')
+  const status = searchParams.get('status')?.trim().toUpperCase() ?? ''
 
   if (challengeUuid) {
     return {
@@ -54,27 +55,66 @@ export async function processSocialLoginSessionReturn(
 
   if (error) {
     const cancelled = error === 'access_denied' || error === 'user_cancelled'
-    return cancelled
-      ? { kind: 'cancelled' }
-      : {
-          kind: 'failed',
-          message:
-            searchParams.get('error_description') ??
-            searchParams.get('message') ??
-            '소셜 인증이 취소되었습니다.',
-        }
+    if (cancelled) {
+      return { kind: 'cancelled' }
+    }
+    const normalizedError = error.trim().toUpperCase()
+    if (
+      normalizedError === 'ADMIN_SOCIAL_ACCOUNT_NOT_LINKED' ||
+      normalizedError === 'SOCIAL_ACCOUNT_NOT_LINKED'
+    ) {
+      return { kind: 'not_linked' }
+    }
+    if (
+      normalizedError === 'SOCIAL_ACCOUNT_ALREADY_LINKED_TO_OTHER_MEMBER' ||
+      normalizedError === 'SOCIAL_ACCOUNT_ALREADY_LINKED' ||
+      normalizedError === 'SOCIAL_ACCOUNT_ALREADY_CONNECTED' ||
+      normalizedError.includes('ALREADY_LINKED')
+    ) {
+      return { kind: 'already_linked' }
+    }
+    return {
+      kind: 'failed',
+      message:
+        searchParams.get('error_description') ??
+        searchParams.get('message') ??
+        error,
+    }
   }
 
-  const socialLoginSessionId = searchParams.get('socialLoginSessionId')
-  if (!socialLoginSessionId) {
-    return { kind: 'failed', message: 'socialLoginSessionId가 없어 로그인을 완료할 수 없습니다.' }
+  if (status === 'FAILED' || status === 'ERROR') {
+    return {
+      kind: 'failed',
+      message:
+        searchParams.get('error_description') ??
+        searchParams.get('message') ??
+        '소셜 로그인에 실패했습니다.',
+    }
+  }
+
+  // OpenAPI AdminSsoSessionConsumeRequest: adminSsoSessionId.
+  // socialLoginSessionId는 구버전/포털 네이밍 하위 호환.
+  const adminSsoSessionId =
+    searchParams.get('adminSsoSessionId') ?? searchParams.get('socialLoginSessionId')
+  if (!adminSsoSessionId) {
+    return {
+      kind: 'failed',
+      message: 'adminSsoSessionId가 없어 로그인을 완료할 수 없습니다.',
+    }
   }
 
   try {
+    const providerParam = searchParams.get('provider')
+    const provider =
+      providerParam && isSocialProvider(providerParam)
+        ? providerParam
+        : providerParam
+          ? (fromApiProviderCode(providerParam) ?? 'kakao')
+          : 'kakao'
     const tokens = await client.completeCallback({
-      provider: 'kakao',
+      provider,
       intent: 'login',
-      socialLoginSessionId,
+      adminSsoSessionId,
     })
     return { kind: 'authenticated', tokens }
   } catch (err) {
@@ -107,7 +147,7 @@ export async function processAdminSsoLinkReturn(
   searchParams: URLSearchParams,
   options: ProcessOAuthLinkCallbackOptions = {}
 ): Promise<OAuthLinkCallbackOutcome> {
-  const { cancelled, consent } = options
+  const { cancelled, consent, signupSocialLinkToken } = options
   const error = searchParams.get('error')
 
   if (error) {
@@ -171,6 +211,7 @@ export async function processAdminSsoLinkReturn(
         provider: resolvedProvider,
         adminSsoSessionId,
         consent,
+        signupSocialLinkToken,
       })
       client.state.addConnectedProvider(resolvedProvider)
       return { kind: 'linked', provider: resolvedProvider, account, pending: false }
@@ -262,6 +303,7 @@ export async function processOAuthCallback(
 export interface ProcessOAuthLinkCallbackOptions {
   cancelled?: boolean
   consent?: SocialLinkConsent
+  signupSocialLinkToken?: string
 }
 
 /** 관리자 SSO 계정 연결 — `/oauth/{provider}` + intent `link` */

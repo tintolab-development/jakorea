@@ -1,8 +1,8 @@
 /**
  * 실적 관리 목록 페이지
  * - 루트: viewport 남은 높이를 채움 (layout-content 헤더 64 + padding 32×2)
- * - filter-card: 공통 필터 + 구분선 + 탭 nav + 본문을 감싸는 카드(흰 배경 fill)
- * - tab 네비게이션: inactive `#7D7D7D`, active `#01A1AF` 하단 2px mint 보더
+ * - 탭: 페이지 상단 CmsTextTabs (권한 승인과 동일). 필터·테이블 카드 밖
+ * - filter-card: 공통 필터 + 본문을 감싸는 카드
  */
 
 .education-record-list-page {
@@ -49,6 +49,10 @@
   min-height: unset;
   height: auto;
   overflow: visible;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .education-record-list-page__layout--summary .filter-table-layout__table {
@@ -64,73 +68,7 @@
   flex: 0 0 auto;
 }
 
-.education-record-list-page__top-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-12, 12px);
-  width: 100%;
-  min-width: 0;
-}
-
-.education-record-list-page__top-nav-actions {
-  display: flex;
-  align-items: center;
-  flex: 0 0 auto;
-}
-
-.education-record-list-page__tabs {
-  display: flex;
-  align-items: flex-end;
-  gap: 0;
-  width: auto;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.education-record-list-page__tab {
-  display: flex;
-  padding: 6px 16px 10px 16px;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 10px;
-  border: none;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  background: none;
-  color: #7d7d7d;
-  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  /* 27px */
-  cursor: pointer;
-  box-sizing: border-box;
-  transition:
-    color 0.2s,
-    border-color 0.2s;
-}
-
-/* 비활성 탭: hover/focus 상태에서도 하단 보더가 생기지 않도록 유지 */
-.education-record-list-page__tab:not(.education-record-list-page__tab--active):hover,
-.education-record-list-page__tab:not(.education-record-list-page__tab--active):focus,
-.education-record-list-page__tab:not(.education-record-list-page__tab--active):focus-visible {
-  color: #7d7d7d;
-  border-bottom-color: transparent;
-  outline: none;
-}
-
-.education-record-list-page__tab--active,
-.education-record-list-page__tab--active:hover,
-.education-record-list-page__tab--active:focus,
-.education-record-list-page__tab--active:focus-visible {
-  color: var(--JA-mint-01, #01a1af);
-  font-weight: 700;
-  border-bottom: 2px solid var(--JA-mint-01, #01a1af);
-  outline: none;
-}
-
-.education-record-list-page__tab-label {
-  display: inline-block;
+/* 권한 승인 목록 탭과 동일 — 페이지 상단, 카드 밖 */
+.education-record-list-page__tabs.cms-text-tabs .cms-text-tabs__row {
+  padding: 0 0 16px;
 }

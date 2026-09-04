@@ -1,0 +1,61 @@
+/**
+ * 작성 양식 탭 테이블 — 등록 양식 시안 컬럼 폭을 전 섹션 공통 적용
+ * cms-data-table `col ~ col { width: auto !important }` 덮어쓰기
+ *
+ * nth-child: 1 No. · 2 템플릿명 · 3 생성자 · 4 최초 생성일 · 5 최근 수정일 · 6 양식 관리
+ */
+
+.template-table.cms-data-table .ant-table-thead > tr > th:not(.ant-table-cell-scrollbar),
+.template-table.cms-data-table .ant-table-tbody > tr > td,
+.template-table.cms-data-table .ant-table-tbody > tr:hover > td {
+  box-sizing: border-box !important;
+  /* cms-data-table hover(10px)와 동일 특이도에서 덮이지 않게 기본·호버 모두 12px 유지 → 행 흔들림 방지 */
+  padding: 12px 16px !important;
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+.template-table.cms-data-table .ant-table-thead > tr > th {
+  background: #edf0f2;
+}
+
+.template-table.cms-data-table colgroup > col:nth-child(1),
+.template-table.cms-data-table th.template-table__col-no,
+.template-table.cms-data-table td.template-table__col-no {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+.template-table.cms-data-table colgroup > col:nth-child(2),
+.template-table.cms-data-table th.template-table__col-name,
+.template-table.cms-data-table td.template-table__col-name {
+  width: 666px !important;
+  min-width: 666px !important;
+  max-width: 666px !important;
+}
+
+.template-table.cms-data-table colgroup > col:nth-child(3),
+.template-table.cms-data-table th.template-table__col-creator,
+.template-table.cms-data-table td.template-table__col-creator {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+}
+
+.template-table.cms-data-table colgroup > col:nth-child(4),
+.template-table.cms-data-table colgroup > col:nth-child(5),
+.template-table.cms-data-table th.template-table__col-date,
+.template-table.cms-data-table td.template-table__col-date {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+}
+
+.template-table.cms-data-table colgroup > col:nth-child(6),
+.template-table.cms-data-table th.template-table__col-action,
+.template-table.cms-data-table td.template-table__col-action {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+}

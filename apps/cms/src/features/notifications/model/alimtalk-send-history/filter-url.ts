@@ -1,4 +1,5 @@
-import dayjs, { type Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import type { AlimtalkSendHistoryPendingFilters, DateRangeFilterValue } from './types'
 
 const DATE_PARAM_FORMAT = 'YYYY-MM-DD'
@@ -20,20 +21,17 @@ export const SEND_HISTORY_FILTER_URL = {
   reserveTo: 'reserve_to',
 } as const
 
-function makeDefaultRange(): [Dayjs, Dayjs] {
-  return [dayjs().startOf('day'), dayjs().add(7, 'day').startOf('day')]
-}
-
 function parseDate(raw: string | null): Dayjs | null {
   if (!raw) return null
   const parsed = dayjs(raw)
   return parsed.isValid() ? parsed : null
 }
 
+/** URL에 날짜가 없으면 빈 범위(시안 placeholder). 한쪽만 있으면 해당 값만 유지. */
 function parseRange(fromRaw: string | null, toRaw: string | null): DateRangeFilterValue {
   const from = parseDate(fromRaw)
   const to = parseDate(toRaw)
-  if (!from || !to) return makeDefaultRange()
+  if (!from && !to) return null
   return [from, to]
 }
 
@@ -43,13 +41,15 @@ function setDateRangeParams(
   toKey: string,
   range: DateRangeFilterValue
 ) {
-  if (!range || !range[0] || !range[1]) {
+  if (!range || (!range[0] && !range[1])) {
     next.delete(fromKey)
     next.delete(toKey)
     return
   }
-  next.set(fromKey, range[0].format(DATE_PARAM_FORMAT))
-  next.set(toKey, range[1].format(DATE_PARAM_FORMAT))
+  if (range[0]) next.set(fromKey, range[0].format(DATE_PARAM_FORMAT))
+  else next.delete(fromKey)
+  if (range[1]) next.set(toKey, range[1].format(DATE_PARAM_FORMAT))
+  else next.delete(toKey)
 }
 
 export function readSendHistoryFiltersFromParams(

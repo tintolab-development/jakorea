@@ -21,14 +21,14 @@ const SCREENSHOT_LEADING: Array<{
   { name: '스타벅스', organizationKind: 'corporate', sponsorshipStatus: 'active' },
   { name: '삼성꿈장학재단', organizationKind: 'foundation', sponsorshipStatus: 'active' },
   { name: '한국청소년활동진흥원', organizationKind: 'foundation', sponsorshipStatus: 'active' },
-  { name: '현대 자동차', organizationKind: 'corporate', sponsorshipStatus: 'active' },
+  { name: '현대 자동차', organizationKind: 'corporate', sponsorshipStatus: 'ended' },
   { name: 'SK하이닉스', organizationKind: 'corporate', sponsorshipStatus: 'active' },
   { name: 'LG화학', organizationKind: 'corporate', sponsorshipStatus: 'active' },
   { name: '네이버', organizationKind: 'corporate', sponsorshipStatus: 'active' },
-  { name: '카카오', organizationKind: 'corporate', sponsorshipStatus: 'active' },
-  { name: '포스코홀딩스', organizationKind: 'corporate', sponsorshipStatus: 'ended' },
-  { name: '신한금융그룹', organizationKind: 'corporate', sponsorshipStatus: 'ended' },
-  { name: 'KB국민은행', organizationKind: 'corporate', sponsorshipStatus: 'active' },
+  { name: '카카오', organizationKind: 'corporate', sponsorshipStatus: 'ended' },
+  { name: '포스코홀딩스', organizationKind: 'corporate', sponsorshipStatus: 'active' },
+  { name: '신한금융그룹', organizationKind: 'corporate', sponsorshipStatus: 'active' },
+  { name: 'KB국민은행', organizationKind: 'corporate', sponsorshipStatus: 'ended' },
   { name: '한화생명', organizationKind: 'corporate', sponsorshipStatus: 'ended' },
   { name: '아름다운 재단', organizationKind: 'foundation', sponsorshipStatus: 'active' },
 ]
@@ -168,6 +168,8 @@ function createRow(
     sponsorshipStatus: o.sponsorshipStatus,
     sponsorshipStartDate: o.sponsorshipStartDate ?? START_SCREENSHOT,
     programCount: 13,
+    totalDonationAmount: 91_500_000,
+    totalBeneficiaryCount: 915,
   }
 }
 
@@ -186,7 +188,7 @@ function buildMockSponsorManagementList(): SponsorManagementRow[] {
     const name = group === 0 ? base : `${base} (${group + 1})`
     const organizationKind = KIND_CYCLE[i % KIND_CYCLE.length]
     const sponsorshipStatus: SponsorSponsorshipStatus =
-      i % 7 === 0 || i % 11 === 0 ? 'ended' : 'active'
+      i % 11 === 0 ? 'ended' : 'active'
     const day = 1 + (i % 28)
     const sponsorshipStartDate = `2026-03-${String(day).padStart(2, '0')}T00:00:00.000Z`
     rows.push(

@@ -27,8 +27,8 @@ export function createInitialInquiryCategoryRows(): InquiryCategoryRow[] {
 
 /**
  * TableFilterGroup `rows` — 문의내역 2행(고정 5열 그리드, `admin-inquiry-page__filter-layout` CSS):
- * 1행: 답변 현황·카테고리·프로그램명·제목·문의 회원명 (각 240px)
- * 2행: 담당자명(240)·문의일시(500) + 조회
+ * 1행: 답변 현황·카테고리·프로그램명·제목·문의 회원명 (각 260px)
+ * 2행: 담당자명(260)·문의일시(540) + 조회
  * 칸 사이 gap 12px — filter-area-layout 공통 규격
  */
 export function buildAdminInquiryFilterRows(

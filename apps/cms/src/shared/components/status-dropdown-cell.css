@@ -30,6 +30,30 @@
   padding-bottom: 0 !important;
 }
 
+/* 행 hover의 `padding: 10px 16px !important` 보다 특이도를 높여 좌우 패딩 0 유지 (중앙 정렬 밀림 방지) */
+.cms-data-table .ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.status-dropdown-cell__cell-status--tag-100,
+.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.status-dropdown-cell__cell-status--tag-160,
+.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.status-dropdown-cell__cell-status--payment-order-line {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 .status-dropdown-cell__status-empty {
   color: var(--color-text-tertiary, #8c8c8c);
 }
@@ -63,6 +87,10 @@
   /* 닫힘 상태에서는 행 배경과 자연스럽게 섞이도록 투명 */
   background: transparent;
   box-shadow: none;
+}
+
+.status-dropdown-cell__status-trigger.status-dropdown-cell__status-trigger--readonly {
+  cursor: default;
 }
 
 /* 정산 현황(StatusBadge settlement) */
@@ -503,7 +531,8 @@
   vertical-align: middle !important;
 }
 
-.ant-table-tbody > tr > td.status-dropdown-cell__cell-status--tag-160 {
+.ant-table-tbody > tr > td.status-dropdown-cell__cell-status--tag-160,
+.cms-data-table .ant-table-tbody > tr > td.status-dropdown-cell__cell-status--tag-160 {
   width: 160px !important;
   min-width: 160px !important;
   max-width: 160px !important;
@@ -512,6 +541,8 @@
   vertical-align: middle !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
 
 .cms-data-table .ant-table-thead > tr > th.ant-table-cell.status-dropdown-cell__header--tag-160 {
@@ -537,6 +568,18 @@
   border-radius: 6px;
   background: transparent;
   box-shadow: none;
+}
+
+/* tag-160: ant-dropdown 래퍼 고정 — 트리거 중앙·호버/오픈 시 가로 밀림 방지 */
+.status-dropdown-cell__cell-status--tag-160 .ant-dropdown-trigger {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 160px;
+  margin-inline: auto;
+  box-sizing: border-box;
+  vertical-align: middle;
 }
 
 .status-dropdown-cell__status-trigger--tag-160.status-dropdown-cell__status-trigger--open {

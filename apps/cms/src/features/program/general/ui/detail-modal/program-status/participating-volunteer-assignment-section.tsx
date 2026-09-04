@@ -119,7 +119,7 @@ export function ParticipatingVolunteerAssignmentSection({
 
   const assignedColumns: ColumnsType<VolunteerAssignedInstitutionRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       { title: '기관명', dataIndex: 'schoolName', key: 'schoolName', width: 140 },
       {
         title: '담당 학년',
@@ -154,7 +154,7 @@ export function ParticipatingVolunteerAssignmentSection({
 
   const waitingColumns: ColumnsType<VolunteerWaitingInstitutionRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       { title: '기관명', dataIndex: 'schoolName', key: 'schoolName', width: 140 },
       {
         title: '희망 학년',

@@ -17,6 +17,10 @@
   border-top: 2px solid var(--color-primary-500);
 }
 
+.rowPlainFirst {
+  border-top: none;
+}
+
 .label {
   overflow: hidden;
   width: 120px;

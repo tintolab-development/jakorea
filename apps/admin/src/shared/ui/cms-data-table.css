@@ -82,13 +82,22 @@
   max-width: var(--table-no-column-width, 80px) !important;
 }
 
+.cms-data-table col.ant-table-selection-col + col ~ col {
+  width: auto !important;
+  max-width: none !important;
+}
+
 /* No. 열: 컬럼 정의에 `className: CMS_TABLE_NO_COL_CLASS` — colgroup 미적용·CSS-in-JS 덮어쓰기 대비 */
 .cms-data-table .ant-table-thead > tr > th.cms-table-col--no,
 .cms-data-table .ant-table-tbody > tr > td.cms-table-col--no {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
+  height: 54px !important;
   box-sizing: border-box !important;
+  flex-shrink: 0;
+  align-self: stretch;
+  vertical-align: middle !important;
 }
 
 /* 사용 여부 열: `className: CMS_TABLE_USAGE_COL_CLASS` — 100px 고정 */
@@ -118,6 +127,7 @@
   > col:first-child {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
 }
 
 .cms-data-table .ant-table-thead > tr > th.ant-table-cell:not(.ant-table-cell-scrollbar)::before {
@@ -224,6 +234,7 @@
   > col:first-child {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
 }
 
 .detail-fullpage-modal .ant-table-wrapper.cms-data-table col.ant-table-selection-col {
@@ -276,6 +287,7 @@
   > col:first-child {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
 }
 
 .detail-fullpage-modal
@@ -352,6 +364,7 @@
   > col:first-child {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
 }
 
 .filter-table-layout

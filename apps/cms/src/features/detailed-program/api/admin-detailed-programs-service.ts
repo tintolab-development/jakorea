@@ -1,6 +1,7 @@
 import {
   mapDetailedProgramListResponse,
   mapDetailedProgramResponse,
+  toDetailedProgramPatchRequest,
   toDetailedProgramRequest,
 } from '@/features/detailed-program/api/adapters/detailed-program-adapters'
 import { detailedProgramsParamsFromSearchParams } from '@/features/detailed-program/api/detailed-program-filter-params'
@@ -53,7 +54,7 @@ export async function updateDetailedProgram(
   input: { name: string; active: boolean }
 ): Promise<DetailedProgramManagementRow> {
   assertDetailedProgramsRemoteReady()
-  const dto = await updateDetailedProgramRemote(Number(id), toDetailedProgramRequest(input))
+  const dto = await updateDetailedProgramRemote(Number(id), toDetailedProgramPatchRequest(input))
   return mapDetailedProgramResponse(dto)
 }
 

@@ -8,6 +8,10 @@ import { isAdminRegisterRemoteEnabled } from '@/features/auth/api/admin-register
 import { buildAdminSelfSignupRequest } from '@/features/auth/lib/map-admin-register-signup-request'
 import { resolveAdminSelfSignupTermsVersion } from '@/features/auth/lib/resolve-admin-self-signup-terms-version'
 import {
+  persistSignupSocialLinkHandoff,
+  clearSignupSocialLinkHandoff,
+} from '@/features/auth/lib/signup-social-link-handoff'
+import {
   AdminRegisterApiError,
   parseAdminRegisterApiError,
   type AdminSelfSignupResponse,
@@ -20,6 +24,8 @@ export interface AdminRegisterCompleteResult {
   email?: string
   status?: string
   nextStep?: string
+  signupSocialLinkToken?: string
+  signupSocialLinkExpiresAt?: string
 }
 
 function unwrapApiData<T>(payload: unknown): T {
@@ -48,11 +54,17 @@ async function completeAdminSignupRemote(
       body
     )
     const result = unwrapApiData<AdminSelfSignupResponse>(payload)
+    persistSignupSocialLinkHandoff(
+      result.signupSocialLinkToken,
+      result.signupSocialLinkExpiresAt
+    )
     return {
-      adminId: result.adminId,
+      adminId: result.adminId ?? result.adminAccountId,
       email: result.email ?? body.email,
       status: result.status,
       nextStep: result.nextStep,
+      signupSocialLinkToken: result.signupSocialLinkToken,
+      signupSocialLinkExpiresAt: result.signupSocialLinkExpiresAt,
     }
   } catch (error) {
     if (error instanceof AdminRegisterApiError) {
@@ -86,6 +98,8 @@ async function completeAdminSignupMock(
   ) {
     throw new Error('가입 정보가 올바르지 않습니다. 이전 단계를 다시 확인해 주세요.')
   }
+
+  clearSignupSocialLinkHandoff()
 
   const response = await register({
     formData: {

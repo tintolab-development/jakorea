@@ -5,13 +5,14 @@
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { AdminFaq } from '@/data/mock/admin-faqs'
-import { ContentModal, CmsButton } from '@/shared/ui'
+import { ActionResultModal, ContentModal, CmsButton } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import type { FaqCategoryRemoteActions } from '@/features/posts/hooks/use-admin-faq-categories'
 import { useFaqCategoryManagementModal } from '@/features/posts/hooks/use-faq-category-management-modal'
 import type { FaqCategoryRow } from '@/features/posts/model/admin-faq-management.types'
 import { NoticeCategoryDeleteBlockedModal } from '@/features/posts/ui/notice-category-management/notice-category-delete-blocked-modal'
+import { NoticeCategoryDuplicateAlertModal } from '@/features/posts/ui/notice-category-management/notice-category-duplicate-alert-modal'
 import '@/features/posts/ui/notice-category-management-modal.css'
 
 const TABLE_INNER_WIDTH = 540
@@ -139,8 +140,11 @@ export function FaqCategoryManagementModal({
       <CmsButton variant="secondary" size="large" type="button" onClick={ctrl.handleClose}>
         닫기
       </CmsButton>
-      <CmsButton variant="primary" size="large" type="button" onClick={ctrl.openCompose}>
+      <CmsButton variant="secondary" size="large" type="button" onClick={ctrl.openCompose}>
         카테고리 추가
+      </CmsButton>
+      <CmsButton variant="primary" size="large" type="button" onClick={ctrl.applySettings}>
+        카테고리 저장
       </CmsButton>
     </>
   )
@@ -223,6 +227,23 @@ export function FaqCategoryManagementModal({
       <NoticeCategoryDeleteBlockedModal
         open={ctrl.deleteBlockedOpen}
         onClose={ctrl.closeDeleteBlocked}
+        zIndex={CATEGORY_SUB_MODAL_Z}
+        description={
+          '현재 해당 카테고리에 등록된 FAQ가 있습니다.\n카테고리를 삭제하려면 등록된 FAQ를 삭제하거나 다른 카테고리로 변경해 주세요.'
+        }
+      />
+
+      <NoticeCategoryDuplicateAlertModal
+        open={ctrl.duplicateAlertOpen}
+        onClose={ctrl.closeDuplicateAlert}
+        zIndex={CATEGORY_SUB_MODAL_Z}
+      />
+
+      <ActionResultModal
+        open={ctrl.settingsCompleteOpen}
+        title="카테고리 설정 완료"
+        body="카테고리 설정이 완료되었습니다."
+        onClose={ctrl.closeSettingsComplete}
         zIndex={CATEGORY_SUB_MODAL_Z}
       />
 

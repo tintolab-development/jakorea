@@ -19,6 +19,8 @@ import {
   isFilterFieldPctWidth,
   filterFieldGridCellClassName,
   isFilterFieldPairType,
+  isAddressRegionLayoutField,
+  isCompactSelectPairField,
 } from './table-filter-group-field-width'
 import './table-filter-group.css'
 
@@ -62,6 +64,11 @@ export type SelectPairFilterSubConfig = {
   getSecondaryOptions?: (
     primaryValue: string | number | undefined | null
   ) => Array<{ label: string; value: string | number }>
+  /**
+   * 기관 소재지(`addressRegion`)와 동일 — 열 235.5px, 하위 셀렉트 50:50(각 114.75px), gap 6px.
+   * 실적 관리 년도/분기 등.
+   */
+  compact?: boolean
 }
 
 export interface FilterFieldConfig {
@@ -109,6 +116,8 @@ export interface FilterFieldConfig {
   width?: string | number
   /** `dateRange`: 시작일 선택 시 종료일을 시작+1개월−1일로 맞춤 */
   dateRangeOneMonthFromStart?: boolean
+  /** `dateRange`: 선택 불가 날짜 */
+  disabledDate?: (date: Dayjs) => boolean
   /** `select`: 첫 옵션 `전체` 자동 삽입 비활성화 */
   withAllOption?: boolean
   /** `search`: 숫자만 입력 가능 */
@@ -252,7 +261,7 @@ export function TableFilterGroup({
   }, [filterRowFields, filters, onFilterChange])
 
   const colFlex = (field: FilterFieldConfig, defaultFlex: string, _rowFieldCount = 1) => {
-    // 라디오는 옵션 콘텐츠 허그 — 240px 등 명시 width로 Col을 키우면 다음 필터와 시각 갭이 과다
+    // 라디오는 옵션 콘텐츠 허그 — 260px 등 명시 width로 Col을 키우면 다음 필터와 시각 갭이 과다
     if (field.type === 'radio') {
       return '0 0 auto'
     }
@@ -284,7 +293,7 @@ export function TableFilterGroup({
     if (field.type === 'dateRange') {
       parts.push('table-filter-group__col--date-range')
     }
-    if (field.type === 'addressRegion') {
+    if (isAddressRegionLayoutField(field)) {
       parts.push('table-filter-group__col--address-region-field')
       parts.push('table-filter-group__col--address-region')
     }
@@ -394,10 +403,25 @@ export function TableFilterGroup({
       const secondaryOptions = sp.getSecondaryOptions
         ? sp.getSecondaryOptions(primaryRaw as string | number | undefined | null)
         : sp.secondary.options
+      const compact = isCompactSelectPairField(field)
       return (
-        <div className="table-filter-group__field table-filter-group__field--select">
+        <div
+          className={[
+            'table-filter-group__field',
+            'table-filter-group__field--select',
+            compact ? 'table-filter-group__field--address-region' : undefined,
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
           <span className="table-filter-group__label">{field.label}</span>
-          <div className="table-filter-group__select-pair-selects">
+          <div
+            className={
+              compact
+                ? 'table-filter-group__address-region-selects'
+                : 'table-filter-group__select-pair-selects'
+            }
+          >
             <CmsSelect
               inputSize="large"
               placeholder={sp.primary.placeholder ?? '선택'}
@@ -461,6 +485,7 @@ export function TableFilterGroup({
             onChange={dates => onFilterChange(field.key, dates as DateRangeFilterValue)}
             allowClear={field.allowClear !== false}
             oneMonthFromStart={field.dateRangeOneMonthFromStart === true}
+            disabledDate={field.disabledDate}
           />
         </div>
       )
@@ -585,7 +610,15 @@ export function TableFilterGroup({
       return (
         <Col
           key={field.key}
-          flex={colFlex(field, `0 0 ${FILTER_FIELD_PAIR_MIN_WIDTH_CSS}`, rowFieldCount)}
+          flex={colFlex(
+            field,
+            `0 0 ${
+              isCompactSelectPairField(field)
+                ? FILTER_FIELD_ADDRESS_REGION_PAIR_MIN_WIDTH_CSS
+                : FILTER_FIELD_PAIR_MIN_WIDTH_CSS
+            }`,
+            rowFieldCount
+          )}
           className={colClassName(field)}
           style={colInlineStyle(field)}
           {...colDataAttrs}

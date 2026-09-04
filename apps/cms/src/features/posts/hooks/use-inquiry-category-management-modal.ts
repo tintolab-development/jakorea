@@ -10,8 +10,28 @@ import {
   hasDuplicateCategoryName,
 } from '@/features/posts/model/notice-category-domain'
 import type { InquiryCategoryRemoteActions } from '@/features/posts/hooks/use-admin-inquiry-categories'
-import type { InquiryCategoryRow } from '@/features/posts/model/admin-inquiry-management.types'
-import type { AdminInquiryRow } from '@/features/posts/model/admin-inquiry-management.types'
+import type {
+  AdminInquiryRow,
+  InquiryCategoryRow,
+} from '@/features/posts/model/admin-inquiry-management.types'
+import { getApiErrorCode, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
+
+const INQUIRY_CATEGORY_IN_USE = 'INQUIRY_CATEGORY_IN_USE'
+const INQUIRY_CATEGORY_NAME_ALREADY_EXISTS = 'INQUIRY_CATEGORY_NAME_ALREADY_EXISTS'
+
+function isConflictStatus(error: unknown): boolean {
+  return getApiErrorHttpStatus(error) === 409
+}
+
+function isInquiryCategoryInUseError(error: unknown): boolean {
+  return getApiErrorCode(error) === INQUIRY_CATEGORY_IN_USE || isConflictStatus(error)
+}
+
+function isInquiryCategoryDuplicateError(error: unknown): boolean {
+  return (
+    getApiErrorCode(error) === INQUIRY_CATEGORY_NAME_ALREADY_EXISTS || isConflictStatus(error)
+  )
+}
 
 export type UseInquiryCategoryManagementModalParams = {
   open: boolean
@@ -32,9 +52,13 @@ export type UseInquiryCategoryManagementModalResult = {
   setNewDraft: (v: string) => void
   composeOpen: boolean
   deleteBlockedOpen: boolean
+  duplicateAlertOpen: boolean
   deleteConfirmOpen: boolean
+  settingsCompleteOpen: boolean
   pendingDeleteRow: InquiryCategoryRow | null
   closeDeleteBlocked: () => void
+  closeDuplicateAlert: () => void
+  closeSettingsComplete: () => void
   handleClose: () => void
   startEdit: (row: InquiryCategoryRow) => void
   cancelEdit: () => void
@@ -45,6 +69,7 @@ export type UseInquiryCategoryManagementModalResult = {
   cancelNew: () => void
   submitNew: () => void
   openCompose: () => void
+  applySettings: () => void
 }
 
 export function useInquiryCategoryManagementModal({
@@ -60,7 +85,9 @@ export function useInquiryCategoryManagementModal({
   const [newDraft, setNewDraft] = useState('')
   const [composeOpen, setComposeOpen] = useState(false)
   const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
+  const [duplicateAlertOpen, setDuplicateAlertOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [settingsCompleteOpen, setSettingsCompleteOpen] = useState(false)
   const [pendingDeleteRow, setPendingDeleteRow] = useState<InquiryCategoryRow | null>(null)
   const newInputRef = useRef<InputRef>(null)
   const editInputRef = useRef<InputRef>(null)
@@ -71,6 +98,7 @@ export function useInquiryCategoryManagementModal({
     setNewDraft('')
     setComposeOpen(false)
     setDeleteBlockedOpen(false)
+    setDuplicateAlertOpen(false)
     setDeleteConfirmOpen(false)
     setPendingDeleteRow(null)
   }, [])
@@ -107,11 +135,18 @@ export function useInquiryCategoryManagementModal({
       return
     }
     if (hasDuplicateCategoryName(categories, trimmed, editingId)) {
+      setDuplicateAlertOpen(true)
       return
     }
     if (remoteActions) {
-      await remoteActions.onUpdate(editingId, trimmed)
-      cancelEdit()
+      try {
+        await remoteActions.onUpdate(editingId, trimmed)
+        cancelEdit()
+      } catch (error) {
+        if (isInquiryCategoryDuplicateError(error)) {
+          setDuplicateAlertOpen(true)
+        }
+      }
       return
     }
     onCategoriesChange(
@@ -149,9 +184,17 @@ export function useInquiryCategoryManagementModal({
   const confirmDeleteCategory = useCallback(async () => {
     if (pendingDeleteRow == null) return
     if (remoteActions) {
-      await remoteActions.onDelete(pendingDeleteRow.id)
-      setDeleteConfirmOpen(false)
-      setPendingDeleteRow(null)
+      try {
+        await remoteActions.onDelete(pendingDeleteRow.id)
+        setDeleteConfirmOpen(false)
+        setPendingDeleteRow(null)
+      } catch (error) {
+        if (isInquiryCategoryInUseError(error)) {
+          setDeleteConfirmOpen(false)
+          setPendingDeleteRow(null)
+          setDeleteBlockedOpen(true)
+        }
+      }
       return
     }
     removeCategory(pendingDeleteRow.id)
@@ -170,12 +213,19 @@ export function useInquiryCategoryManagementModal({
       return
     }
     if (hasDuplicateCategoryName(categories, trimmed)) {
+      setDuplicateAlertOpen(true)
       return
     }
     if (remoteActions) {
-      await remoteActions.onCreate(trimmed)
-      setNewDraft('')
-      setComposeOpen(false)
+      try {
+        await remoteActions.onCreate(trimmed)
+        setNewDraft('')
+        setComposeOpen(false)
+      } catch (error) {
+        if (isInquiryCategoryDuplicateError(error)) {
+          setDuplicateAlertOpen(true)
+        }
+      }
       return
     }
     const id = createNoticeCategoryId()
@@ -194,6 +244,20 @@ export function useInquiryCategoryManagementModal({
     setDeleteBlockedOpen(false)
   }, [])
 
+  const closeDuplicateAlert = useCallback(() => {
+    setDuplicateAlertOpen(false)
+  }, [])
+
+  const applySettings = useCallback(() => {
+    resetEphemeralUi()
+    onClose()
+    setSettingsCompleteOpen(true)
+  }, [onClose, resetEphemeralUi])
+
+  const closeSettingsComplete = useCallback(() => {
+    setSettingsCompleteOpen(false)
+  }, [])
+
   return {
     newInputRef,
     editInputRef,
@@ -204,9 +268,13 @@ export function useInquiryCategoryManagementModal({
     setNewDraft,
     composeOpen,
     deleteBlockedOpen,
+    duplicateAlertOpen,
     deleteConfirmOpen,
+    settingsCompleteOpen,
     pendingDeleteRow,
     closeDeleteBlocked,
+    closeDuplicateAlert,
+    closeSettingsComplete,
     handleClose,
     startEdit,
     cancelEdit,
@@ -217,5 +285,6 @@ export function useInquiryCategoryManagementModal({
     cancelNew,
     submitNew,
     openCompose,
+    applySettings,
   }
 }

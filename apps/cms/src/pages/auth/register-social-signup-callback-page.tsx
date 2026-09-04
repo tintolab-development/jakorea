@@ -13,6 +13,10 @@ import {
   clearOAuthIntent,
   getRegisterSocialRedirect,
 } from '@/features/auth/lib/register-social-connect-state'
+import {
+  clearSignupSocialLinkHandoff,
+  getSignupSocialLinkToken,
+} from '@/features/auth/lib/signup-social-link-handoff'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   buildSignupCallbackKey,
@@ -70,6 +74,18 @@ export function RegisterSocialSignupCallbackPage() {
           ? providerParam
           : null
 
+      const signupSocialLinkToken = getSignupSocialLinkToken() ?? undefined
+      if (
+        !isAuthenticated &&
+        !signupSocialLinkToken &&
+        searchParams.has('adminSsoSessionId')
+      ) {
+        clearOAuthIntent()
+        markSignupCallbackHandled(callbackKey)
+        navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })
+        return
+      }
+
       const outcome = await processAdminSsoLinkReturn(
         cmsSocialAuthClient,
         providerFromQuery,
@@ -80,6 +96,7 @@ export function RegisterSocialSignupCallbackPage() {
             socialConsentVersion: ADMIN_REGISTER_TERMS_VERSION,
             socialConsentAgreed: true,
           },
+          signupSocialLinkToken: isAuthenticated ? undefined : signupSocialLinkToken,
         }
       )
 
@@ -89,6 +106,9 @@ export function RegisterSocialSignupCallbackPage() {
 
       clearOAuthIntent()
       markSignupCallbackHandled(callbackKey)
+      if (outcome.kind === 'linked' && !isAuthenticated) {
+        clearSignupSocialLinkHandoff()
+      }
 
       switch (outcome.kind) {
         case 'linked':

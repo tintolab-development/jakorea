@@ -128,7 +128,7 @@ const ORG_KIND_CYCLE: SponsorOrganizationKind[] = ['corporate', 'foundation']
 mockSponsors.forEach((s, i) => {
   s.managers = i === 0 ? [...JA_KOREA_MANAGERS] : [...defaultManagers]
   s.organizationKind = ORG_KIND_CYCLE[i % ORG_KIND_CYCLE.length]
-  s.sponsorshipStatus = i % 7 === 0 ? 'ended' : 'active'
+  s.sponsorshipStatus = i % 11 === 0 ? 'ended' : 'active'
   const start = randomPastDate(600)
   s.sponsorshipStartDate = start.toISOString()
 })

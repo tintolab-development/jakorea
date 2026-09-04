@@ -33,7 +33,7 @@ export function SponsorContactDeleteModal({
       open={open}
       onCancel={onCancel}
       onConfirm={onConfirm}
-      title="담당자 삭제"
+      title="후원사 담당자 삭제"
       lines={lines}
       confirmText="담당자 삭제"
     />

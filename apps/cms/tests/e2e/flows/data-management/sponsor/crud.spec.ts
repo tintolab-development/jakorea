@@ -20,7 +20,7 @@ test.describe('후원사 관리 CRUD', () => {
     await sponsors.expectInList(sponsors.uniqueName)
 
     await sponsors.changeListStatus(sponsors.uniqueName, '후원 종료')
-    await sponsors.changeListStatus(sponsors.uniqueName, '진행 중')
+    await sponsors.changeListStatus(sponsors.uniqueName, '후원 중')
 
     await sponsors.openUniqueDetail()
     await sponsors.expectBasicInfoFields()

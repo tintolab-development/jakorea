@@ -19,7 +19,7 @@ export function buildSchoolDeleteMessageLines(params: { displayName: string } | 
   if (!name) return []
   return [
     `[${name}]를 삭제하시겠습니까?`,
-    '삭제 시 즉시 탈퇴 처리 되며, 등록 및 관련된 정보는 모두 삭제됩니다.',
+    '삭제 시 등록 및 관련된 정보는 모두 삭제됩니다.',
     '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
   ]
 }

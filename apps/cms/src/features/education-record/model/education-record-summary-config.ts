@@ -25,10 +25,10 @@ export const SUMMARY_COLUMNS: readonly SummaryColumnMeta[] = [
   { key: 'classCount', kind: '개수', label: '학급수' },
   { key: 'participants', kind: '합계', label: '총 참가자' },
   { key: 'educationHours', kind: '합계', label: '교육시간' },
-  { key: 'generalVolunteers', kind: '합계', label: '일반자원봉사자' },
-  { key: 'staffVolunteers', kind: '합계', label: '임직원자원봉사자' },
-  { key: 'generalTeachers', kind: '합계', label: '일반담당교사' },
-  { key: 'educatedTeachers', kind: '합계', label: '교육받은교사' },
+  { key: 'generalVolunteers', kind: '합계', label: '일반 자원봉사자' },
+  { key: 'staffVolunteers', kind: '합계', label: '임직원 자원봉사자' },
+  { key: 'generalTeachers', kind: '합계', label: '일반 담당교사' },
+  { key: 'educatedTeachers', kind: '합계', label: '교육받은 교사' },
   { key: 'instructors', kind: '합계', label: '강사' },
 ] as const
 

@@ -36,9 +36,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-width: 0;
+  gap: 10px;
+  box-sizing: border-box;
   max-width: 100%;
+  vertical-align: middle;
 }
 
 .admin-notice-list-page__title-text {
@@ -46,12 +47,109 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  max-width: 100%;
   text-align: center;
 }
 
 .admin-notice-list-page__pin {
   flex-shrink: 0;
   display: block;
+}
+
+/* 제목 열 — 시안 justify-content: center */
+.admin-notice-list-page__table.cms-data-table .ant-table-thead > tr > th.admin-notice-list-page__col-title,
+.admin-notice-list-page__table.cms-data-table .ant-table-tbody > tr > td.admin-notice-list-page__col-title {
+  text-align: center !important;
+}
+
+/*
+ * Ant Table column.width는 cms-data-table의 `col ~ col { width: auto !important }`에 덮임.
+ * 시안: 공개100 · 카테고리160 · 제목 flex:1 · 작성자명140 · 작성/수정일시200 · 조회수140
+ * nth-child: 1 체크박스 · 2 No. · 3 공개 · 4 카테고리 · 5 제목 · 6 작성자 · 7·8 일시 · 9 조회수
+ */
+.admin-notice-list-page__table.cms-data-table colgroup > col:nth-child(3),
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.admin-notice-list-page__col-visibility,
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.admin-notice-list-page__col-visibility {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+}
+
+.admin-notice-list-page__table.cms-data-table colgroup > col:nth-child(4),
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.admin-notice-list-page__col-category,
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.admin-notice-list-page__col-category {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+}
+
+.admin-notice-list-page__table.cms-data-table colgroup > col:nth-child(5),
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.admin-notice-list-page__col-title,
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.admin-notice-list-page__col-title {
+  width: auto !important;
+  min-width: 200px !important;
+  max-width: none !important;
+}
+
+.admin-notice-list-page__table.cms-data-table colgroup > col:nth-child(6),
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.admin-notice-list-page__col-author,
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.admin-notice-list-page__col-author {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+.admin-notice-list-page__table.cms-data-table colgroup > col:nth-child(7),
+.admin-notice-list-page__table.cms-data-table colgroup > col:nth-child(8),
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.admin-notice-list-page__col-datetime,
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.admin-notice-list-page__col-datetime {
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+}
+
+.admin-notice-list-page__table.cms-data-table colgroup > col:nth-child(9),
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.admin-notice-list-page__col-views,
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.admin-notice-list-page__col-views {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
 }
 
 /* 테이블 — 비공개 셀 타이포 */

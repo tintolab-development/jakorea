@@ -610,7 +610,7 @@
   > .ant-col.table-filter-group__col--explicit-width:not(.table-filter-group__col--radio):not(
     .table-filter-group__col--pct-width
   ) {
-  max-width: min(100%, var(--filter-control-max-width, 240px));
+  max-width: min(100%, var(--filter-control-max-width, 260px));
   box-sizing: border-box;
 }
 
@@ -622,7 +622,7 @@
   max-width: min(
     100%,
     calc(
-      2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+      2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
     )
   );
 }

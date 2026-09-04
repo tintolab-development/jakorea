@@ -262,8 +262,8 @@ const saveDashboardPreferences = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/widgets/{widgetKey}/program-filters`
  *
@@ -316,8 +316,8 @@ const getWidgetProgramFilters = (
 /**
  * ### 이 API가 하는 일
  * - PUT /api/admin/dashboard/widgets/{widgetKey}/program-필터
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `PUT /api/admin/dashboard/widgets/{widgetKey}/program-filters`
  *
@@ -373,8 +373,8 @@ const saveWidgetProgramFilters = (
 /**
  * ### 이 API가 하는 일
  * - PUT /api/admin/dashboard/widgets/layout
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `PUT /api/admin/dashboard/widgets/layout`
  *
@@ -429,8 +429,8 @@ const saveDashboardWidgetLayout = (
 /**
  * ### 이 API가 하는 일
  * - PUT /api/admin/dashboard/shortcuts/visibility
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `PUT /api/admin/dashboard/shortcuts/visibility`
  *
@@ -485,8 +485,8 @@ const saveDashboardShortcutVisibility = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 관리자 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 관리자 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/preferences`
  *
@@ -539,8 +539,8 @@ const dashboardPreferences = (
 /**
  * ### 이 API가 하는 일
  * - PUT /api/admin/dashboard/preferences
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 관리자 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 관리자 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `PUT /api/admin/dashboard/preferences`
  *
@@ -650,8 +650,8 @@ const readDashboardShortcutBadge = (
 /**
  * ### 이 API가 하는 일
  * - 알림 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PATCH /api/admin/notifications/{recipientId}/read`
  *
@@ -704,8 +704,8 @@ const markRead2 = (
 /**
  * ### 이 API가 하는 일
  * - 알림 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PATCH /api/admin/notifications/{recipientId}/hidden`
  *
@@ -758,8 +758,8 @@ const hide1 = (
 /**
  * ### 이 API가 하는 일
  * - 알림 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PATCH /api/admin/notifications/{recipientId}/clicked`
  *
@@ -812,8 +812,8 @@ const markClicked1 = (
 /**
  * ### 이 API가 하는 일
  * - 알림 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PATCH /api/admin/notifications/read-all`
  *
@@ -866,8 +866,8 @@ const readAllNotifications = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notifications`
  *
@@ -921,8 +921,8 @@ const notifications1 = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notifications/unread-count`
  *
@@ -1080,8 +1080,8 @@ const getDashboardShortcutBadges = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/widgets`
  *
@@ -1134,8 +1134,8 @@ const dashboardWidgets = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/shortcuts`
  *
@@ -1188,8 +1188,8 @@ const dashboardShortcuts = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/recruitments`
  *
@@ -1243,8 +1243,8 @@ const dashboardRecruitments = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/program-schedules`
  *
@@ -1298,8 +1298,8 @@ const dashboardProgramSchedules = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 공지/FAQ/문의 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `GET /api/admin/dashboard/program-inquiries`
  *
@@ -1353,8 +1353,8 @@ const dashboardProgramInquiries = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/dashboard/notifications/count`
  *
@@ -1407,8 +1407,8 @@ const dashboardNotificationCount = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/kpi-progress`
  *
@@ -1462,8 +1462,8 @@ const dashboardKpiProgress = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/home`
  *

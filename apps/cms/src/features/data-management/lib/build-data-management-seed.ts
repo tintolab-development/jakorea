@@ -41,6 +41,8 @@ export function buildSponsorsSeedPayload() {
       sponsorshipStatus: row.sponsorshipStatus ?? 'active',
       sponsorshipStartDate: row.sponsorshipStartDate ?? null,
       programCount: row.programCount,
+      totalDonationAmount: row.totalDonationAmount,
+      totalBeneficiaryCount: row.totalBeneficiaryCount,
       mainContact: row.managers?.[0]
         ? { name: row.managers[0].name, phone: row.managers[0].phone }
         : null,
@@ -56,9 +58,13 @@ export function buildSponsorsSeedPayload() {
         contacts: SPONSOR_DETAIL_SEED_CONTACTS.map(c => ({
           seedKey: c.id,
           name: c.name,
+          department: c.department,
           position: c.position,
+          officePhone: c.officePhone,
           phone: c.phone,
           email: c.email,
+          companyAddress: c.companyAddress,
+          memo: c.memo,
           contactType: c.contactType,
           registeredAt: c.registeredAt,
         })),

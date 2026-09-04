@@ -12,13 +12,61 @@ export type ListRecordsParams = {
  */
 programId?: number;
 /**
- * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType/page/size
  */
 educationMonth?: string;
 /**
  * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
  */
 status?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType/page/size
+ */
+year?: number;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType/page/size
+ */
+quarter?: number;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType/page/size
+ */
+businessArea?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType/page/size
+ */
+sponsorNameKo?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType/page/size
+ */
+mainTitle?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType/page/size
+ */
+title?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType/page/size
+ */
+textbookName?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType/page/size
+ */
+institutionName?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType/page/size
+ */
+sido?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType/page/size
+ */
+sigungu?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType/page/size
+ */
+ips?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: year/quarter/businessArea/sponsorNameKo/mainTitle/title/textbookName/institutionName/sido/sigungu/ips/educationType/page/size
+ */
+educationType?: string;
 /**
  * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
  */

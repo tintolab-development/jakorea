@@ -30,42 +30,9 @@ function parseCategory(
   return 'ALL'
 }
 
-function filterRows(
-  data: AdminInquiryRow[],
-  searchParams: URLSearchParams,
-  context: AdminInquiryTableContext
-): AdminInquiryRow[] {
-  const status = parseStatus(searchParams.get('inq_st'))
-  const cat = parseCategory(searchParams.get('inq_cat'), context.allowedCategoryLabels)
-  const prog = (searchParams.get('inq_prog') ?? '').trim().toLowerCase()
-  const title = (searchParams.get('inq_title') ?? '').trim().toLowerCase()
-  const mem = (searchParams.get('inq_mem') ?? '').trim().toLowerCase()
-  const asg = (searchParams.get('inq_asg') ?? '').trim().toLowerCase()
-  const from = searchParams.get('inq_from')
-  const to = searchParams.get('inq_to')
-
-  return data
-    .filter(row => {
-      if (status === 'PENDING' && row.status !== 'PENDING') return false
-      if (status === 'ANSWERED' && row.status !== 'ANSWERED') return false
-      if (cat !== 'ALL' && row.category !== cat) return false
-      if (prog) {
-        const matchesId = /^\d+$/.test(prog) && row.programId === prog
-        const matchesName = (row.programName ?? '').toLowerCase().includes(prog)
-        if (!matchesId && !matchesName) return false
-      }
-      if (title && !row.title.toLowerCase().includes(title)) return false
-      if (mem && !row.memberName.toLowerCase().includes(mem)) return false
-      if (asg && !(row.assignee ?? '').toLowerCase().includes(asg)) return false
-      if (from && to) {
-        const d = dayjs(row.createdAt)
-        const start = dayjs(from).startOf('day')
-        const end = dayjs(to).endOf('day')
-        if (d.isBefore(start) || d.isAfter(end)) return false
-      }
-      return true
-    })
-    .sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf())
+/** 서버 필터 결과를 신뢰하고 문의일시 정렬만 맞춘다. */
+function sortRows(data: AdminInquiryRow[]): AdminInquiryRow[] {
+  return [...data].sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf())
 }
 
 const tanstackColumns: ColumnDef<AdminInquiryRow>[] = [{ accessorKey: 'id', id: 'id' }]
@@ -235,9 +202,9 @@ export const adminInquiryManagementTablePageConfig: TablePageConfig<
     },
   },
 
-  filterFn: ({ context, data, searchParams }) => {
-    const filtered = filterRows(data, searchParams, context)
-    return { dataForTable: filtered, filteredData: filtered }
+  filterFn: ({ data }) => {
+    const sorted = sortRows(data)
+    return { dataForTable: sorted, filteredData: sorted }
   },
 
   getSearchSync: (_context: AdminInquiryTableContext) => ({

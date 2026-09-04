@@ -83,6 +83,18 @@
   gap: 30px;
 }
 
+.textbook-register-modal__row {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.textbook-register-modal__row > .textbook-register-modal__field {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .textbook-register-modal__field {
   display: flex;
   width: 100%;
@@ -102,7 +114,7 @@
 .textbook-register-modal__label--required::after {
   content: '*';
   margin-left: 2px;
-  color: #c32f4a;
+  color: var(--color-required-mark, var(--color-red, #ff4d4f));
 }
 
 .textbook-register-modal__footer {

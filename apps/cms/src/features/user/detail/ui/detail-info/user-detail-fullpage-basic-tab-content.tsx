@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Space } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
 import type { User, AffiliatedTeacherLinkTarget, SchoolTeacherEmploymentStatus } from '@/types/user'
@@ -52,6 +52,18 @@ import {
   updateTeacherEmploymentStatusRemote,
 } from '@/features/user/api/members-api-client'
 import { shouldShowCmsMemberInfoEditButton } from '@/features/user/shared/lib/admin-provisioned-member-policy'
+import { isSchoolAffiliatedTeacherRowSelectable } from '@/features/user/detail/lib/school-teacher-employment-status'
+import { deleteUser } from '@/entities/user/api/user-service'
+import { MemberWithdrawGuideModal } from '@/features/user/shared/ui/member-withdraw-guide-modal'
+import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
+import { buildMemberWithdrawMessageLines } from '@/features/user/shared/lib/member-withdraw-delete-guide'
+import {
+  WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
+} from '@/shared/constants'
+import { guardAdminAction } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { MemberDetailMockDataBanner } from '@/features/user/detail/ui/member-detail-mock-data-banner'
@@ -82,6 +94,8 @@ export interface UserDetailFullpageBasicTabContentProps {
   }) => void
   onOpenJaGradeEvaluation?: () => void
   scheduleChangeCount?: number
+  /** 소속 교사 탈퇴 후 목록·학교 정보 갱신 */
+  onAffiliatedTeachersChanged?: () => void | Promise<void>
 }
 
 export function UserDetailFullpageBasicTabContent({
@@ -103,8 +117,11 @@ export function UserDetailFullpageBasicTabContent({
   onPermissionResendNotification,
   onOpenJaGradeEvaluation,
   scheduleChangeCount,
+  onAffiliatedTeachersChanged,
 }: UserDetailFullpageBasicTabContentProps) {
   const currentUser = useAuthStore(state => state.user)
+  const roleCode = useSessionAdminRoleCode()
+  const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const membersRemote = isMembersRemoteEnabled()
   const adminMemberProfileFieldsEditableWhenEditing =
@@ -174,6 +191,90 @@ export function UserDetailFullpageBasicTabContent({
   const affiliatedTeacherRows = membersRemote
     ? affiliatedTeachers
     : (user.schoolInfo?.affiliatedTeachers ?? [])
+
+  const [affiliatedTeacherWithdrawOpen, setAffiliatedTeacherWithdrawOpen] = useState(false)
+  const [affiliatedTeacherWithdrawTargets, setAffiliatedTeacherWithdrawTargets] = useState<
+    typeof affiliatedTeacherRows
+  >([])
+  const [affiliatedTeacherWithdrawLoading, setAffiliatedTeacherWithdrawLoading] = useState(false)
+
+  const affiliatedTeacherWithdrawGuideLines = useMemo(() => {
+    if (affiliatedTeacherWithdrawTargets.length === 0) return []
+    if (affiliatedTeacherWithdrawTargets.length === 1) {
+      return buildMemberWithdrawMessageLines({
+        displayName: affiliatedTeacherWithdrawTargets[0].name,
+      })
+    }
+    return [
+      `선택한 ${affiliatedTeacherWithdrawTargets.length}명의 회원을 탈퇴 처리하시겠습니까?`,
+      '탈퇴 처리 시 등록 및 관련된 정보는 모두 탈퇴됩니다.',
+      '탈퇴된 목록 및 정보는 되돌릴 수 없습니다. 정말 탈퇴하시겠습니까?',
+    ]
+  }, [affiliatedTeacherWithdrawTargets])
+
+  const handleOpenAffiliatedTeacherWithdraw = useCallback(
+    (teacherIds: string[]) => {
+      if (!guardAdminAction({ roleCode, action: 'delete' })) return
+      const idSet = new Set(teacherIds)
+      const targets = affiliatedTeacherRows.filter(row => {
+        if (!idSet.has(row.id)) return false
+        if (!isSchoolAffiliatedTeacherRowSelectable(row.employmentStatus)) return false
+        return Boolean(row.linkedUserId?.trim() || row.teacherMemberId != null)
+      })
+      if (targets.length === 0) {
+        showAlert({
+          title: '안내',
+          content: '탈퇴 처리할 수 있는 교사를 선택해 주세요. (재직 중·회원 연동된 교사만 가능)',
+        })
+        return
+      }
+      setAffiliatedTeacherWithdrawTargets(targets)
+      setAffiliatedTeacherWithdrawOpen(true)
+    },
+    [affiliatedTeacherRows, roleCode, showAlert]
+  )
+
+  const handleAffiliatedTeacherWithdrawCancel = useCallback(() => {
+    setAffiliatedTeacherWithdrawOpen(false)
+    setAffiliatedTeacherWithdrawTargets([])
+  }, [])
+
+  const handleAffiliatedTeacherWithdrawConfirm = useCallback(async () => {
+    if (affiliatedTeacherWithdrawTargets.length === 0) return
+    setAffiliatedTeacherWithdrawLoading(true)
+    try {
+      for (const row of affiliatedTeacherWithdrawTargets) {
+        const userId = row.linkedUserId?.trim()
+        if (!userId) continue
+        await deleteUser(userId, 'CMS 관리자 회원 탈퇴', {
+          memberId: row.teacherMemberId,
+        })
+      }
+      if (user.memberId != null) {
+        await queryClient.invalidateQueries({
+          queryKey: memberQueryKeys.affiliatedTeachers(user.memberId),
+        })
+      }
+      if (schoolOrganizationId != null) {
+        await queryClient.invalidateQueries({
+          queryKey: memberQueryKeys.schoolTeachers(schoolOrganizationId),
+        })
+      }
+      await onAffiliatedTeachersChanged?.()
+      handleAffiliatedTeacherWithdrawCancel()
+    } catch (error) {
+      handleError(error, { defaultMessage: '교사 회원 탈퇴 처리에 실패했습니다.' })
+    } finally {
+      setAffiliatedTeacherWithdrawLoading(false)
+    }
+  }, [
+    affiliatedTeacherWithdrawTargets,
+    handleAffiliatedTeacherWithdrawCancel,
+    onAffiliatedTeachersChanged,
+    queryClient,
+    schoolOrganizationId,
+    user.memberId,
+  ])
 
   const handleEmploymentStatusChange = useCallback(
     async (teacherId: string, status: SchoolTeacherEmploymentStatus) => {
@@ -397,11 +498,36 @@ export function UserDetailFullpageBasicTabContent({
             rows={affiliatedTeacherRows}
             personalInfoRevealed={personalInfoRevealed}
             onLinkedUserClick={onNavigateToLinkedUser}
+            onWithdrawSelected={handleOpenAffiliatedTeacherWithdraw}
             onEmploymentStatusChange={
               membersRemote ? handleEmploymentStatusChange : undefined
             }
           />
         </>
+      ) : null}
+      {affiliatedTeacherWithdrawOpen && affiliatedTeacherWithdrawTargets.length === 1 ? (
+        <MemberWithdrawGuideModal
+          open
+          onCancel={handleAffiliatedTeacherWithdrawCancel}
+          onConfirm={handleAffiliatedTeacherWithdrawConfirm}
+          variant="member_withdraw"
+          displayName={affiliatedTeacherWithdrawTargets[0].name}
+          confirmLoading={affiliatedTeacherWithdrawLoading}
+        />
+      ) : null}
+      {affiliatedTeacherWithdrawOpen && affiliatedTeacherWithdrawTargets.length >= 2 ? (
+        <DeleteGuideModal
+          open
+          onCancel={handleAffiliatedTeacherWithdrawCancel}
+          onConfirm={handleAffiliatedTeacherWithdrawConfirm}
+          title="회원 탈퇴 처리 안내"
+          lines={affiliatedTeacherWithdrawGuideLines}
+          confirmText="탈퇴"
+          confirmVariant="delete"
+          requiredConfirmInput={WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE}
+          confirmInputPlaceholder={WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
+          confirmLoading={affiliatedTeacherWithdrawLoading}
+        />
       ) : null}
     </Space>
   )

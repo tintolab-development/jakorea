@@ -48,6 +48,7 @@ import {
   resolveRegisteredByAdmin,
 } from '@/features/user/api/resolve-member-registration-flags'
 import { coercePositiveInt } from '@/features/user/api/user-response-row-id'
+import { applyScheduleChangeCancelCountToUser } from '@/features/user/api/resolve-schedule-change-cancel-count'
 
 const USER_AFFILIATION_PIPE_SEP = ' | ' as const
 
@@ -313,7 +314,9 @@ export function mapMemberDetailToUser(
       preRegistered: detail.preRegistered,
       createdByAdmin: detail.createdByAdmin,
     }),
-    id1365: detail.external1365Id?.trim() || undefined,
+    ...(detail.external1365Id?.trim()
+      ? { id1365: detail.external1365Id.trim() }
+      : {}),
     identitySelfSignupCompletedAfterAdminRegistration:
       resolveIdentitySelfSignupCompletedAfterAdminRegistration({
         role,
@@ -599,7 +602,7 @@ export function mapIndividualMemberDetailToUser(
   if (detail.termsAgreements?.length) {
     user.termsAgreements = detail.termsAgreements
   }
-  return user
+  return applyScheduleChangeCancelCountToUser(user, detail)
 }
 
 export function mapSchoolMemberDetailToUser(
@@ -630,7 +633,7 @@ export function mapSchoolMemberDetailToUser(
     ...(detail.position?.trim() ? { position: detail.position.trim() } : {}),
   }
   user.name = schoolName
-  return user
+  return applyScheduleChangeCancelCountToUser(user, detail)
 }
 
 export function mapInstructorMemberDetailToUser(
@@ -776,7 +779,10 @@ export function mapInstructorMemberDetailToUser(
     }
   )
 
-  return normalizeRevokedInstructorUser(user)
+  return applyScheduleChangeCancelCountToUser(
+    normalizeRevokedInstructorUser(user),
+    detail
+  )
 }
 
 /** 학교 소속 교사 상세 — `GET /api/admin/users/{memberId}/teacher` */
@@ -824,5 +830,5 @@ export function mapTeacherMemberDetailToUser(
     user.termsAgreements = detail.termsAgreements
   }
 
-  return user
+  return applyScheduleChangeCancelCountToUser(user, detail)
 }

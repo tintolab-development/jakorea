@@ -7,6 +7,7 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
+import { CmsInput, CmsPhoneInput } from '@/shared/ui'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 const CONTACT_TYPE_OPTIONS = [
@@ -17,14 +18,37 @@ const CONTACT_TYPE_OPTIONS = [
 export interface BuildContactColumnsParams {
   contacts: SponsorContactRow[]
   canWrite: boolean
+  isEditing?: boolean
   openDropdownId: string | null
   onTypeChange: (rowId: string, type: SponsorContactRow['contactType']) => void
   onDropdownOpenChange: (rowId: string, open: boolean) => void
+  onFieldChange?: (rowId: string, patch: Partial<SponsorContactRow>) => void
+}
+
+function renderEditableText(
+  value: string,
+  row: SponsorContactRow,
+  field: keyof Pick<
+    SponsorContactRow,
+    'department' | 'position' | 'name' | 'companyAddress' | 'memo'
+  >,
+  isEditing: boolean,
+  onFieldChange?: (rowId: string, patch: Partial<SponsorContactRow>) => void
+) {
+  if (!isEditing) return value?.trim() || '-'
+  return (
+    <CmsInput
+      value={value}
+      inputSize="medium"
+      width="100%"
+      allowClear={false}
+      onChange={event => onFieldChange?.(row.id, { [field]: event.target.value })}
+    />
+  )
 }
 
 interface SponsorContactTypeCellProps {
   row: SponsorContactRow
-  contacts: SponsorContactRow[]
   canWrite: boolean
   openDropdownId: string | null
   onTypeChange: (rowId: string, type: SponsorContactRow['contactType']) => void
@@ -33,7 +57,6 @@ interface SponsorContactTypeCellProps {
 
 const SponsorContactTypeCell = memo(function SponsorContactTypeCell({
   row,
-  contacts,
   canWrite,
   openDropdownId,
   onTypeChange,
@@ -57,14 +80,12 @@ const SponsorContactTypeCell = memo(function SponsorContactTypeCell({
     return <SponsorContactTypeBadge type={type} />
   }, [])
 
-  const leadCount = contacts.filter(c => c.contactType === 'lead').length
   const isItemDisabled = useCallback(
     (current: SponsorContactRow['contactType'], option: SponsorContactRow['contactType']): boolean => {
-      if (current === option) return true
-      if (current === 'lead' && option === 'assistant' && leadCount === 1) return true
-      return false
+      // 유일한 주 담당자 → 담당자 변경은 선택 가능(클릭 시 안내 모달)
+      return current === option
     },
-    [leadCount]
+    []
   )
 
   return (
@@ -82,10 +103,18 @@ const SponsorContactTypeCell = memo(function SponsorContactTypeCell({
 
 /**
  * 후원사 담당자 테이블의 `ColumnsType` 정의를 생성합니다.
- * 기획 컬럼: 부서 · 직함 · 유형 · 담당자명 · 내선 · 연락처 · 이메일 · 회사 주소 · 비고 · 등록일시
+ * 기획 컬럼: 유형 · 부서 · 직함 · 담당자명 · 내선 · 연락처 · 이메일 · 회사 주소 · 비고 · 등록일시
  */
 export function buildContactColumns(params: BuildContactColumnsParams): ColumnsType<SponsorContactRow> {
-  const { contacts, canWrite, openDropdownId, onTypeChange, onDropdownOpenChange } = params
+  const {
+    contacts,
+    canWrite,
+    isEditing = false,
+    openDropdownId,
+    onTypeChange,
+    onDropdownOpenChange,
+    onFieldChange,
+  } = params
   const contactCount = contacts.length
 
   return [
@@ -98,91 +127,130 @@ export function buildContactColumns(params: BuildContactColumnsParams): ColumnsT
       render: (_: unknown, __: SponsorContactRow, index: number) => contactCount - index,
     },
     {
+      title: '담당자 유형',
+      dataIndex: 'contactType',
+      key: 'contactType',
+      width: 130,
+      align: 'center',
+      onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+      render: (_: SponsorContactRow['contactType'], row: SponsorContactRow) =>
+        isEditing ? (
+          <SponsorContactTypeBadge type={row.contactType} />
+        ) : (
+          <SponsorContactTypeCell
+            row={row}
+            canWrite={canWrite}
+            openDropdownId={openDropdownId}
+            onTypeChange={onTypeChange}
+            onDropdownOpenChange={onDropdownOpenChange}
+          />
+        ),
+    },
+    {
       title: '부서',
       dataIndex: 'department',
       key: 'department',
-      width: 120,
-      ellipsis: true,
-      render: (v: string) => v || '-',
+      width: 140,
+      ellipsis: !isEditing,
+      render: (v: string, row) =>
+        renderEditableText(v, row, 'department', isEditing, onFieldChange),
     },
     {
       title: '직함',
       dataIndex: 'position',
       key: 'position',
-      width: 100,
-      ellipsis: true,
-      render: (v: string) => v || '-',
-    },
-    {
-      title: '담당자 유형',
-      dataIndex: 'contactType',
-      key: 'contactType',
-      width: 150,
-      align: 'center',
-      onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-      render: (_: SponsorContactRow['contactType'], row: SponsorContactRow) => (
-        <SponsorContactTypeCell
-          row={row}
-          contacts={contacts}
-          canWrite={canWrite}
-          openDropdownId={openDropdownId}
-          onTypeChange={onTypeChange}
-          onDropdownOpenChange={onDropdownOpenChange}
-        />
-      ),
+      width: 120,
+      ellipsis: !isEditing,
+      render: (v: string, row) => renderEditableText(v, row, 'position', isEditing, onFieldChange),
     },
     {
       title: '담당자명',
       dataIndex: 'name',
       key: 'name',
       width: TABLE_COLUMN_WIDTHS.name,
-      ellipsis: true,
+      ellipsis: !isEditing,
+      render: (v: string, row) => renderEditableText(v, row, 'name', isEditing, onFieldChange),
     },
     {
       title: '내선번호',
       dataIndex: 'officePhone',
       key: 'officePhone',
       width: TABLE_COLUMN_WIDTHS.phone,
-      ellipsis: true,
-      render: (v: string) => v || '-',
+      ellipsis: !isEditing,
+      render: (v: string, row) =>
+        isEditing ? (
+          <CmsPhoneInput
+            value={v}
+            inputSize="medium"
+            width="100%"
+            allowClear={false}
+            onChange={event => onFieldChange?.(row.id, { officePhone: event.target.value })}
+          />
+        ) : (
+          v?.trim() || '-'
+        ),
     },
     {
       title: '연락처',
       dataIndex: 'phone',
       key: 'phone',
       width: TABLE_COLUMN_WIDTHS.phone,
-      ellipsis: true,
-      render: (v: string) => v || '-',
+      ellipsis: !isEditing,
+      render: (v: string, row) =>
+        isEditing ? (
+          <CmsPhoneInput
+            value={v}
+            inputSize="medium"
+            width="100%"
+            allowClear={false}
+            onChange={event => onFieldChange?.(row.id, { phone: event.target.value })}
+          />
+        ) : (
+          v || '-'
+        ),
     },
     {
       title: '이메일',
       dataIndex: 'email',
       key: 'email',
       width: TABLE_COLUMN_WIDTHS.email,
-      ellipsis: true,
-      render: (v: string) => v || '-',
+      ellipsis: !isEditing,
+      render: (v: string, row) =>
+        isEditing ? (
+          <CmsInput
+            value={v}
+            inputSize="medium"
+            width="100%"
+            allowClear={false}
+            onChange={event => onFieldChange?.(row.id, { email: event.target.value })}
+          />
+        ) : (
+          v || '-'
+        ),
     },
     {
       title: '회사 주소',
       dataIndex: 'companyAddress',
       key: 'companyAddress',
-      width: 180,
-      ellipsis: true,
-      render: (v: string) => v || '-',
+      width: 240,
+      ellipsis: !isEditing,
+      render: (v: string, row) =>
+        renderEditableText(v, row, 'companyAddress', isEditing, onFieldChange),
     },
     {
       title: '비고',
       dataIndex: 'memo',
       key: 'memo',
       width: 140,
-      ellipsis: true,
-      render: (v: string) => v || '-',
+      ellipsis: !isEditing,
+      render: (v: string, row) => renderEditableText(v, row, 'memo', isEditing, onFieldChange),
     },
     {
       title: '등록일시',
       dataIndex: 'registeredAt',
       key: 'registeredAt',
-      width: 170,
+      width: 160,
+      align: 'center',
       render: (v: string) => (v ? dayjs(v).format('YYYY.MM.DD HH:mm') : '-'),
     },
   ]

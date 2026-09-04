@@ -11,6 +11,16 @@ import {
   showGlobalApiErrorAlert,
 } from './show-global-api-error-alert'
 
+const onboarding = vi.hoisted(() => ({ incomplete: false }))
+
+vi.mock('@/shared/utils/post-auth-redirect', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/shared/utils/post-auth-redirect')>()
+  return {
+    ...actual,
+    isAdminFirstLoginOnboardingIncomplete: () => onboarding.incomplete,
+  }
+})
+
 function forbiddenError(url: string, message = '현재 계정에 필요한 권한 또는 접근 범위가 없습니다.'): AxiosError {
   return {
     isAxiosError: true,
@@ -44,6 +54,7 @@ function conflictError(url: string): AxiosError {
 
 describe('showGlobalApiErrorAlert 403', () => {
   beforeEach(() => {
+    onboarding.incomplete = false
     vi.restoreAllMocks()
     clearForbiddenApiErrorAlertDedupe()
     vi.spyOn(cmsAlertModal, 'show').mockImplementation(() => undefined)
@@ -86,6 +97,14 @@ describe('showGlobalApiErrorAlert 403', () => {
     expect(showGlobalApiErrorAlert(error, { skipGlobalErrorAlert: true })).toBe(false)
     expect(cmsAlertModal.show).not.toHaveBeenCalled()
     expect(isGlobalApiErrorAlertShown(error)).toBe(false)
+  })
+
+  it('최초 로그인 온보딩 중 403은 권한 안내를 띄우지 않는다', () => {
+    onboarding.incomplete = true
+    const error = forbiddenError('/api/admin/me')
+    expect(showGlobalApiErrorAlert(error)).toBe(false)
+    expect(cmsAlertModal.show).not.toHaveBeenCalled()
+    expect(isGlobalApiErrorAlertShown(error)).toBe(true)
   })
 
   it('403이 아닌 오류는 서버 메시지를 유지한다', () => {

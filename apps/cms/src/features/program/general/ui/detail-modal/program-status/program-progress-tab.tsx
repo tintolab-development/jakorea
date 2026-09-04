@@ -238,7 +238,7 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
 
   const columns: ColumnsType<ParticipatingSchoolRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '참여 학교명',
         dataIndex: 'schoolName',
@@ -336,7 +336,7 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
 
   const instructorColumns: ColumnsType<ParticipatingInstructorRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 72, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '강사명',
         dataIndex: 'instructorName',

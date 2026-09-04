@@ -50,7 +50,7 @@ export function ApplicantInstitutionInstructorAssignTab({
 
   const assignedColumns: ColumnsType<AssignedInstructorDisplayRowMock> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '역할',
         dataIndex: 'role',
@@ -124,7 +124,7 @@ export function ApplicantInstitutionInstructorAssignTab({
 
   const waitingColumns: ColumnsType<WaitingRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       { title: '강사명', dataIndex: 'instructorName', key: 'instructorName', width: 100 },
       {
         title: '자택 주소지',

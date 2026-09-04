@@ -3,6 +3,7 @@
  */
 
 import { Form, Button, Typography, Space, Alert } from 'antd'
+import type { FormInstance } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -19,16 +20,31 @@ import { LoginUtilityLinks } from '@/features/auth/ui/login-utility-links'
 import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
 import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-approval-pending-notice'
 import { isAdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
+import { hasPasswordChangeRequiredComplete } from '@/features/auth/password-change-required/wizard-state'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
-import { resolvePostAuthRedirectPath } from '@/shared/utils/post-auth-redirect'
+import { passwordChangeRequiredPaths, resolvePostAuthRedirectPath } from '@/shared/utils/post-auth-redirect'
 import { DEV_LOGIN_QA_ACCOUNTS } from '@/features/auth/lib/dev-login-accounts'
 import { useLoginAttempts } from '@/features/auth/hooks/use-login-attempts'
 import { LOGIN_POLICY } from '@/shared/constants/login-policy'
 import { handleError } from '@/shared/utils/error-handler'
+import {
+  applyLoginFieldErrors,
+  clearLoginFieldErrors,
+} from '@/features/auth/lib/login-field-errors'
 import { AuthLogoLink } from '@/features/auth/ui/auth-logo-link'
 import './login-page.css'
 
 const { Text } = Typography
+
+function resetLoginCredentialFeedback(
+  form: FormInstance,
+  clearAuthError: () => void,
+  setApprovalPending: (value: boolean) => void
+) {
+  setApprovalPending(false)
+  clearAuthError()
+  clearLoginFieldErrors(form)
+}
 
 type LoginSocialView = 'default' | 'socialNotLinked' | 'socialAlreadyLinked'
 
@@ -58,7 +74,6 @@ export function LoginPage() {
   const {
     login,
     loading,
-    error,
     isAuthenticated,
     requiresMfa,
     passwordChangeRequired,
@@ -89,11 +104,21 @@ export function LoginPage() {
     : '/register'
 
   useEffect(() => {
+    const complete = hasPasswordChangeRequiredComplete()
+    if (complete) {
+      navigate(passwordChangeRequiredPaths.complete, { replace: true })
+      return
+    }
     if (isAuthenticated && user) {
       const fallback = redirectPath || getRedirectPathByRole(user)
-      navigate(resolvePostAuthRedirectPath({ passwordChangeRequired, fallbackPath: fallback }), {
-        replace: true,
-      })
+      navigate(
+        resolvePostAuthRedirectPath({
+          complete,
+          passwordChangeRequired,
+          fallbackPath: fallback,
+        }),
+        { replace: true }
+      )
     }
   }, [isAuthenticated, user, navigate, redirectPath, passwordChangeRequired])
 
@@ -128,6 +153,7 @@ export function LoginPage() {
         : redirectPath || '/'
       navigate(
         resolvePostAuthRedirectPath({
+          complete: hasPasswordChangeRequiredComplete(),
           passwordChangeRequired: useAuthStore.getState().passwordChangeRequired,
           fallbackPath: fallback,
         }),
@@ -136,11 +162,14 @@ export function LoginPage() {
     } catch (loginError: unknown) {
       if (isAdminLoginApprovalPendingError(loginError)) {
         clearError()
+        clearLoginFieldErrors(form)
         setShowAdminApprovalPending(true)
         return
       }
 
       recordFailure()
+      clearError()
+      applyLoginFieldErrors(form, loginError)
       handleError(loginError, { context: 'loginPage.submitLogin' })
     } finally {
       setLoginMode(null)
@@ -177,6 +206,7 @@ export function LoginPage() {
         const latest = useAuthStore.getState()
         navigate(
           resolvePostAuthRedirectPath({
+            complete: hasPasswordChangeRequiredComplete(),
             passwordChangeRequired: latest.passwordChangeRequired,
             fallbackPath: fallback,
           }),
@@ -196,6 +226,7 @@ export function LoginPage() {
         const fallback = redirectPath || getRedirectPathByRole(authState.user)
         navigate(
           resolvePostAuthRedirectPath({
+            complete: hasPasswordChangeRequiredComplete(),
             passwordChangeRequired: authState.passwordChangeRequired,
             fallbackPath: fallback,
           }),
@@ -245,12 +276,7 @@ export function LoginPage() {
                     requiredMark={false}
                     className="login-form"
                     onValuesChange={() => {
-                      if (showAdminApprovalPending) {
-                        setShowAdminApprovalPending(false)
-                      }
-                      if (error) {
-                        clearError()
-                      }
+                      resetLoginCredentialFeedback(form, clearError, setShowAdminApprovalPending)
                     }}
                   >
                     <Form.Item
@@ -321,12 +347,6 @@ export function LoginPage() {
                           className="login-alert"
                         />
                       )}
-
-                    {error && !isLocked && !showAdminApprovalPending && (
-                      <div className="login-error">
-                        <Text type="danger">로그인에 실패했습니다.</Text>
-                      </div>
-                    )}
 
                     <Form.Item className="login-submit-actions">
                       <LoadingButton

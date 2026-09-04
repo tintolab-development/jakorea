@@ -12,6 +12,7 @@ import {
 import {
   getPasswordChangeRequiredWizardState,
   hasBirthGender,
+  hasPasswordChangeRequiredComplete,
   updatePasswordChangeRequiredWizardState,
   usePasswordChangeRequiredGuard,
 } from '@/features/auth/password-change-required'
@@ -29,6 +30,10 @@ export function PasswordChangeRequiredIdentityPage() {
   const birthReady = hasBirthGender(wizardState)
 
   useEffect(() => {
+    if (hasPasswordChangeRequiredComplete()) {
+      navigate(passwordChangeRequiredPaths.complete, { replace: true })
+      return
+    }
     if (!isReady) return
     if (!birthReady) {
       navigate(passwordChangeRequiredPaths.birth, { replace: true })
@@ -54,7 +59,7 @@ export function PasswordChangeRequiredIdentityPage() {
       onSuccess: handleSuccess,
     })
 
-  if (!isReady || !birthReady) {
+  if (!isReady || !birthReady || hasPasswordChangeRequiredComplete()) {
     return null
   }
 

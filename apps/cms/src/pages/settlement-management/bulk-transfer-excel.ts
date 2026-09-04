@@ -73,5 +73,5 @@ export async function exportBulkTransferExcel(rows: AccountPaymentRow[]): Promis
   ]
 
   const buffer = await workbook.xlsx.writeBuffer()
-  downloadExcel(buffer, generateFilename('대량이체', 'xlsx'))
+  await downloadExcel(buffer, generateFilename('대량이체', 'xlsx'))
 }

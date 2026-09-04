@@ -28,15 +28,17 @@ const LIST_COLUMNS = [
   '구분',
   '후원사명',
   '프로그램 진행 수',
+  '누적 후원금',
+  '누적 수혜자',
   '후원 상태',
   '주 담당자',
   '후원 시작일',
 ] as const
 
 const CONTACT_COLUMNS = [
+  '담당자 유형',
   '부서',
   '직함',
-  '담당자 유형',
   '담당자명',
   '내선번호',
   '연락처',
@@ -88,8 +90,6 @@ export class SponsorManagementPage {
   async expectListColumns() {
     await expectColumnTitles(this.page, LIST_COLUMNS)
     await expectNoColumnTitle(this.page, '주 담당자 연락처')
-    await expectNoColumnTitle(this.page, '누적 후원금')
-    await expectNoColumnTitle(this.page, '누적 수혜자')
   }
 
   async expectDefaultKindCorporate() {
@@ -195,10 +195,10 @@ export class SponsorManagementPage {
     await expect(dialog.getByText(/소재지|후원사 소재지/).first()).toBeVisible()
   }
 
-  async expectNoHomepageLogoMemo() {
+  async expectHomepageFieldAndLogoBulk() {
     const dialog = this.detailDialog()
-    await expect(dialog.getByText('홈페이지', { exact: true })).toHaveCount(0)
-    await expect(dialog.getByRole('button', { name: '로고 일괄 다운로드' })).toHaveCount(0)
+    await expect(dialog.getByText('홈페이지', { exact: true }).first()).toBeVisible()
+    await expect(dialog.getByRole('button', { name: '로고 일괄 다운로드' })).toBeVisible()
   }
 
   async expectYearlyPanel(opts?: { donation?: string; beneficiary?: string }) {
@@ -332,7 +332,7 @@ export class SponsorManagementPage {
     await expect(dialog.getByRole('button', { name: '정보 수정' })).toBeVisible({ timeout: 15_000 })
   }
 
-  async changeListStatus(name: string, nextLabel: '진행 중' | '후원 종료') {
+  async changeListStatus(name: string, nextLabel: '후원 중' | '후원 종료') {
     await this.fillListName(name)
     await this.search()
     const row = this.dataRows().filter({ hasText: name }).first()
@@ -418,14 +418,14 @@ export class SponsorManagementPage {
     await expect(modal).toBeVisible()
     const typeLabel = opts.type === 'lead' ? '주 담당자' : '담당자'
     await modal.getByRole('radio', { name: typeLabel, exact: true }).check({ force: true })
-    await modal.getByPlaceholder('담당자명을 입력해 주세요.').fill(opts.name)
-    await modal.getByPlaceholder('부서를 입력해 주세요.').fill('E2E팀')
-    await modal.getByPlaceholder('직함을 입력해 주세요.').fill('사원')
-    await modal.getByPlaceholder('내선 번호를 입력해 주세요.').fill('1234')
-    await modal.getByPlaceholder('연락처를 입력해 주세요.').fill(opts.phone)
-    await modal.getByPlaceholder('이메일을 입력해 주세요.').fill(opts.email)
-    await modal.getByPlaceholder('회사 주소를 입력해 주세요.').fill('서울시 강남구')
-    await modal.getByPlaceholder('비고를 입력해 주세요.').fill('E2E')
+    await modal.getByPlaceholder('담당자명을 입력해 주세요').fill(opts.name)
+    await modal.getByPlaceholder('부서를 입력해 주세요').fill('E2E팀')
+    await modal.getByPlaceholder('직함을 입력해 주세요').fill('사원')
+    await modal.getByPlaceholder('내선번호를 입력해 주세요').fill('1234')
+    await modal.getByPlaceholder('연락처를 입력해 주세요').fill(opts.phone)
+    await modal.getByPlaceholder('이메일을 입력해 주세요').fill(opts.email)
+    await modal.getByPlaceholder('회사 주소를 입력해 주세요').fill('서울시 강남구')
+    await modal.getByPlaceholder('비고를 입력해 주세요').fill('E2E')
 
     const postPromise = this.page.waitForResponse(
       res => isAdminMutation(res, 'POST', /\/api\/admin\/sponsors\/[^/]+\/contacts\/?$/),
@@ -474,7 +474,7 @@ export class SponsorManagementPage {
   async deleteContact(name: string) {
     await selectRowCheckbox(this.page, name)
     await this.detailDialog().getByRole('button', { name: '담당자 삭제' }).click()
-    const guide = this.page.getByRole('dialog').filter({ hasText: '담당자 삭제' }).last()
+    const guide = this.page.getByRole('dialog').filter({ hasText: '후원사 담당자 삭제' }).last()
     await expect(guide).toBeVisible()
     const deletePromise = this.page.waitForResponse(
       res => isAdminMutation(res, 'POST', /\/api\/admin\/sponsors\/contacts\/bulk-delete\/?$/),

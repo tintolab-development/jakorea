@@ -5,7 +5,7 @@ import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segm
 import { UJAT_INSTITUTION_SCHEDULE_COLUMNS, type UjatInstitutionApplicationRow } from './types'
 
 const COL = {
-  no: 64,
+  no: 80,
   institution: 180,
   status: 140,
   grade: 340,

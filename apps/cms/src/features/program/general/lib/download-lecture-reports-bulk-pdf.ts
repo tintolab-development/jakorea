@@ -21,7 +21,7 @@ function wait(ms: number): Promise<void> {
 export async function downloadLectureReportPdfFiles(files: LectureReportPdfFile[]): Promise<void> {
   for (let index = 0; index < files.length; index += 1) {
     const file = files[index]
-    downloadBlob(file.blob, normalizePdfFileName(file.fileName))
+    await downloadBlob(file.blob, normalizePdfFileName(file.fileName))
     if (index < files.length - 1) {
       await wait(BULK_PDF_DOWNLOAD_GAP_MS)
     }
