@@ -27,10 +27,23 @@ function baseUser(overrides: Partial<User> = {}): User {
 }
 
 describe('shouldFetchSubmittedConsentDocument', () => {
-  it('true만 제출본 경로', () => {
+  it('true만 제출본 경로 (boolean)', () => {
     expect(shouldFetchSubmittedConsentDocument(true)).toBe(true)
     expect(shouldFetchSubmittedConsentDocument(false)).toBe(false)
     expect(shouldFetchSubmittedConsentDocument(undefined)).toBe(false)
+  })
+
+  it('filledDocumentAvailable·formResponseId·filledDocumentId·reveal endpoint면 제출본 경로', () => {
+    expect(shouldFetchSubmittedConsentDocument({ filledDocumentAvailable: true })).toBe(true)
+    expect(shouldFetchSubmittedConsentDocument({ formResponseId: 12 })).toBe(true)
+    expect(shouldFetchSubmittedConsentDocument({ filledDocumentId: 99 })).toBe(true)
+    expect(
+      shouldFetchSubmittedConsentDocument({
+        filledDocumentRevealEndpoint: '/api/admin/users/1/consent-records/X/filled-document',
+      })
+    ).toBe(true)
+    expect(shouldFetchSubmittedConsentDocument({})).toBe(false)
+    expect(shouldFetchSubmittedConsentDocument({ filledDocumentAvailable: false })).toBe(false)
   })
 })
 

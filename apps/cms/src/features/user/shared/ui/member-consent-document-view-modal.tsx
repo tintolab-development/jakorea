@@ -62,8 +62,11 @@ export interface MemberConsentDocumentViewModalProps {
   memberId?: number
   consentType?: string
   membersRemote?: boolean
-  /** true면 제출 filled-document 경로. false/undefined면 동의-only 합성 미리보기 */
+  /** true면 제출 filled-document 경로. false/undefined면 동의-only 합성 미리보기(메타 없을 때) */
   filledDocumentAvailable?: boolean
+  formResponseId?: number
+  filledDocumentId?: number
+  filledDocumentRevealEndpoint?: string
   /** 동의-only 미리보기 PII 주입용 */
   memberUser?: Omit<User, 'password'>
   onClose: () => void
@@ -389,6 +392,9 @@ export function MemberConsentDocumentViewModal({
   consentType,
   membersRemote = false,
   filledDocumentAvailable,
+  formResponseId,
+  filledDocumentId,
+  filledDocumentRevealEndpoint,
   memberUser,
   onClose,
 }: MemberConsentDocumentViewModalProps) {
@@ -401,7 +407,12 @@ export function MemberConsentDocumentViewModal({
   const [synthetic, setSynthetic] = useState<MemberConsentAgreeOnlyPreviewResult | null>(null)
   const [syntheticLoading, setSyntheticLoading] = useState(false)
 
-  const useSubmittedPath = shouldFetchSubmittedConsentDocument(filledDocumentAvailable)
+  const useSubmittedPath = shouldFetchSubmittedConsentDocument({
+    filledDocumentAvailable,
+    formResponseId,
+    filledDocumentId,
+    filledDocumentRevealEndpoint,
+  })
   const isSyntheticPreview = !useSubmittedPath
   const isCrime = templateId === AGREEMENT_CRIME_TEMPLATE_CODE
   const requiresPrivacyReveal = memberConsentViewRequiresPrivacyReveal(templateId)
