@@ -1,7 +1,7 @@
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { alimtalkSendParticipationTypeLabel } from '@/features/notifications/model/alimtalk-send/recipients'
+import { alimtalkSendRecipientTypeLabel } from '@/features/notifications/model/alimtalk-send/recipients'
 import type { AlimtalkSendRecipient } from '@/features/notifications/model/alimtalk-send/types'
 import './recipient-table.css'
 
@@ -38,11 +38,10 @@ export function RecipientTable({
     },
     {
       title: typeColumnTitle,
-      dataIndex: 'participationType',
-      key: 'participationType',
+      key: 'type',
       width: 140,
       align: 'center',
-      render: value => alimtalkSendParticipationTypeLabel(value) || '-',
+      render: (_value, record) => alimtalkSendRecipientTypeLabel(record) || '-',
     },
     {
       title: '수신자명',

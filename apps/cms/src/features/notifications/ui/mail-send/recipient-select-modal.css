@@ -1,10 +1,13 @@
 .mail-send-recipient-select-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
   width: 800px;
-  max-height: none;
+  /* 공통 bounded(880px / 100vh) 유지 — 화면 밖으로 넘치지 않게 */
+  max-height: min(var(--max-height-modal-scroll, 880px), calc(100vh - 48px));
+  max-height: min(var(--max-height-modal-scroll, 880px), calc(100dvh - 48px));
 }
 
 .mail-send-recipient-select-modal .teal-header-modal__footer {
   margin-top: 16px;
+  flex-shrink: 0;
 }
 
 .mail-send-recipient-select-modal__body {
@@ -12,6 +15,8 @@
   flex-direction: column;
   gap: 16px;
   min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .mail-send-recipient-select-modal__search {
@@ -19,6 +24,7 @@
   align-items: center;
   gap: var(--spacing-12, 12px);
   width: 100%;
+  flex-shrink: 0;
 }
 
 .mail-send-recipient-select-modal__search-input {
@@ -34,6 +40,7 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
+  flex-shrink: 0;
 }
 
 .mail-send-recipient-select-modal__count-selected {
@@ -45,9 +52,20 @@
   line-height: 150%;
 }
 
+.mail-send-recipient-select-modal__table-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 474px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 .mail-send-recipient-select-modal__pagination {
   display: flex;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .mail-send-recipient-select-modal__empty {
@@ -70,12 +88,38 @@
   font-weight: 500;
   line-height: 150%;
   white-space: pre-line;
+  flex-shrink: 0;
 }
 
 .mail-send-recipient-select-modal__table.cms-data-table {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: visible;
 }
 
-.mail-send-recipient-select-modal__table.cms-data-table .ant-table {
-  table-layout: fixed;
+.mail-send-recipient-select-modal__table.cms-data-table .ant-table-container,
+.mail-send-recipient-select-modal__table.cms-data-table .ant-table-content,
+.mail-send-recipient-select-modal__table.cms-data-table .ant-table-header,
+.mail-send-recipient-select-modal__table.cms-data-table .ant-table-body {
+  overflow: visible !important;
+}
+
+.mail-send-recipient-select-modal__table.cms-data-table .ant-table-thead > tr > th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.mail-send-recipient-select-modal__table.cms-data-table table.ant-table {
+  table-layout: fixed !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* 첫 데이터 열은 유형(140) — 공통 No. 80px col 규칙을 덮음 */
+.mail-send-recipient-select-modal__table.cms-data-table col.ant-table-selection-col + col {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
 }

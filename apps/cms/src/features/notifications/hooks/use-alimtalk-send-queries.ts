@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   getAlimtalkRecipientCandidates,
   getAlimtalkSenderProfiles,
@@ -32,6 +32,9 @@ export function useAlimtalkRecipientCandidatesQuery(
     programId?: number
     keyword?: string
     participantType?: string
+    memberType?: string
+    page?: number
+    size?: number
   },
   enabled = true
 ) {
@@ -41,6 +44,7 @@ export function useAlimtalkRecipientCandidatesQuery(
     queryFn: () => getAlimtalkRecipientCandidates(input),
     enabled,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
     retry: false,
   })
 }

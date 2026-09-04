@@ -50,21 +50,45 @@ export async function getAlimtalkRecipientCandidates(input: {
   programId?: number
   keyword?: string
   participantType?: string
+  memberType?: string
   page?: number
   size?: number
-}): Promise<AlimtalkSendRecipient[]> {
+}): Promise<{
+  items: AlimtalkSendRecipient[]
+  total: number
+  page: number
+  size: number
+  totalPages: number
+}> {
+  const size = input.size ?? 50
+  const page = input.page ?? 0
   if (!shouldUseAlimtalkSendRemoteApi()) {
-    return ALIMTALK_SEND_RECIPIENT_MOCK
+    return {
+      items: ALIMTALK_SEND_RECIPIENT_MOCK,
+      total: ALIMTALK_SEND_RECIPIENT_MOCK.length,
+      page,
+      size,
+      totalPages: Math.max(Math.ceil(ALIMTALK_SEND_RECIPIENT_MOCK.length / size), 1),
+    }
   }
   const dto = await fetchRecipientCandidatesRemote({
     channelType: ALIMTALK_API_CHANNEL_TYPE,
     programId: input.programId,
     keyword: input.keyword,
     participantType: input.participantType,
-    page: input.page ?? 0,
-    size: input.size ?? 100,
+    memberType: input.memberType,
+    page,
+    size,
   })
-  return mapRecipientCandidates(dto.items)
+  const total = dto.totalElements ?? dto.items?.length ?? 0
+  const resolvedSize = dto.size ?? size
+  return {
+    items: mapRecipientCandidates(dto.items),
+    total,
+    page: dto.page ?? page,
+    size: resolvedSize,
+    totalPages: dto.totalPages ?? Math.max(Math.ceil(total / (resolvedSize || 50)), 1),
+  }
 }
 
 export async function getAlimtalkTemplateVariables(input?: {
