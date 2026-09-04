@@ -1,8 +1,16 @@
-export type KakaoApprovalStatus = 'REGISTERED' | 'REQUESTED' | 'APPROVED' | 'REJECTED'
+export type KakaoApprovalStatus =
+  | 'REGISTERED'
+  | 'REQUESTED'
+  /** 검수중 — 트리 비노출, 목록/상세 approvalStatus로만 확인 */
+  | 'PENDING'
+  | 'APPROVED'
+  | 'REJECTED'
+  /** NHN 공용·상세 미동기화 등 */
+  | 'UNKNOWN'
 
 export type TemplateUsageStatus = 'WAITING' | 'NORMAL' | 'SUSPENDED' | 'DORMANT' | 'BLOCKED'
 
-export type AlimtalkTemplateType = 'BASIC' | 'CHANNEL_ADD' | 'COMPLEX'
+export type AlimtalkTemplateType = 'BASIC' | 'CHANNEL_ADD' | 'EXTRA_INFO' | 'COMPLEX'
 
 /** 알림 템플릿 원격 목록 매핑용 (카테고리 트리 화면과 별도) */
 export type AlimtalkTemplateRow = {
@@ -21,28 +29,36 @@ export type AlimtalkTemplateRow = {
 export const ALIMTALK_MESSAGE_TYPE_LABEL: Record<AlimtalkTemplateType, string> = {
   BASIC: '기본형',
   CHANNEL_ADD: '채널 추가형',
+  EXTRA_INFO: '부가 정보형',
   COMPLEX: '복합형',
 }
 
 export const ALIMTALK_CHANNEL_ADD_GUIDE =
   '채널 추가하고 이 채널의 마케팅 메시지 등을 카카오톡으로 받기'
 
+/** NHN Cloud Notification Hub 알림톡 템플릿 콘솔 (기획·시안 링크) */
+export const NHN_CLOUD_ALIMTALK_TEMPLATE_CONSOLE_URL =
+  'https://console.nhncloud.com/project/eSpBZ77a/notification/notification-hub#template' as const
+
 export function isAlimtalkChannelAddMessageType(type: AlimtalkTemplateType): boolean {
   return type === 'CHANNEL_ADD' || type === 'COMPLEX'
+}
+
+/** 부가 정보 항목 노출: 부가 정보형 · 복합형 */
+export function isAlimtalkExtraInfoMessageType(type: AlimtalkTemplateType): boolean {
+  return type === 'EXTRA_INFO' || type === 'COMPLEX'
 }
 
 export type KakaoAlimtalkTabKey = 'template' | 'send-history'
 
 export const ALIMTALK_ROOT_CATEGORY_ID = 'root'
 
-/** NHN Cloud Notification Hub 알림톡 템플릿 콘솔 */
-export const NHN_CLOUD_ALIMTALK_TEMPLATE_CONSOLE_URL =
-  'https://console.nhncloud.com/org/sfoA1rvGz53XfaQ7/project/eSpBZ77a/service/vCxeDW3z#template' as const
-
 export type AlimtalkCategory = {
   id: string
   name: string
   parentId: string
+  /** BE CATEGORY id null(미분류) — 이름 변경·삭제 비활성 */
+  isVirtualUnclassified?: boolean
 }
 
 export type AlimtalkEmphasisType = 'NONE' | 'TEXT' | 'IMAGE' | 'ITEM_LIST'
@@ -108,6 +124,10 @@ export type AlimtalkTemplateItem = {
   ctaLabel: string
   buttons: AlimtalkTemplateButton[]
   quickLinks: AlimtalkTemplateQuickLink[]
+  /** BE approvalStatus — 발송 시 APPROVED만 허용 */
+  approvalStatus?: KakaoApprovalStatus
+  senderKey?: string
+  nhnConsoleTemplateUrl?: string
 }
 
 export type AlimtalkTemplatePendingFilters = {

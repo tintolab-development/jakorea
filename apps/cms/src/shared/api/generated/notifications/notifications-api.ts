@@ -7,15 +7,32 @@
  */
 import type {
   ApiResponseBulkActionResponse,
+  ApiResponseCancelResponse,
+  ApiResponseCategoryMutationResponse,
+  ApiResponseCreateResponse,
   ApiResponseNotificationDeliveryOperationResponse,
   ApiResponseNotificationEventCatalogMutationResponse,
   ApiResponseNotificationEventChannelTemplateMutationResponse,
   ApiResponseNotificationTemplateMutationResponse,
   ApiResponseNotificationTestSendResponse,
+  ApiResponseRetryFailedResponse,
+  ApiResponseSyncResultResponse,
+  ApiResponseTemplateMoveResponse,
   ArchiveNotificationTemplateParams,
+  BatchDetailResponse,
+  BatchPageResponse,
   BulkDecisionRequest,
+  CatalogResponse,
+  CategoryCreateRequest,
+  CategoryMoveRequest,
+  CategoryTreeParams,
+  CategoryTreeResponse,
+  CategoryUpdateRequest,
+  CreateRequest,
+  List2Params,
   ListNotificationDeliveriesParams,
   ListNotificationTemplatesParams,
+  ListSenderProfilesParams,
   NotificationDeliveryDetailResponse,
   NotificationDeliveryListResponse,
   NotificationEventCatalogResponse,
@@ -23,8 +40,17 @@ import type {
   NotificationEventChannelTemplateListResponse,
   NotificationEventChannelTemplateUpsertRequest,
   NotificationTemplateListResponse,
+  NotificationTemplatePreviewResponse,
+  NotificationTemplateResponse,
   NotificationTemplateUpsertRequest,
-  NotificationTestSendRequest
+  NotificationTestSendRequest,
+  PageResponseRecipientCandidateResponse,
+  RecipientCandidatesParams,
+  SenderProfileListResponse,
+  SyncSenderProfilesParams,
+  TemplateMoveRequest,
+  TemplateSyncRequest,
+  TemplateVariablesParams
 } from './schemas';
 
 import { customInstance } from '../../orval-mutator';
@@ -260,6 +286,115 @@ const createNotificationTemplate = (
 
 /**
  * ### 이 API가 하는 일
+ * - 알림 템플릿 카테고리 이동
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/notification-templates/{templateId}/move`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V78 AlimTalk CMS catalog / Notion alignment
+ * @summary 알림 템플릿 카테고리 이동
+ */
+const moveTemplate = (
+    templateId: number,
+    templateMoveRequest?: TemplateMoveRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseTemplateMoveResponse>>,) => {
+      return customInstance<ApiResponseTemplateMoveResponse>(
+      {url: `/api/admin/notification-templates/${templateId}/move`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: templateMoveRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 승인 알림톡 템플릿 메타 동기화
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/notification-templates/sync`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V78 AlimTalk CMS catalog / Notion alignment
+ * @summary 승인 알림톡 템플릿 메타 동기화
+ */
+const syncTemplates = (
+    templateSyncRequest?: TemplateSyncRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseSyncResultResponse>>,) => {
+      return customInstance<ApiResponseSyncResultResponse>(
+      {url: `/api/admin/notification-templates/sync`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: templateSyncRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - 알림 템플릿 일괄 삭제(archive)
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
@@ -308,6 +443,377 @@ const bulkArchiveNotificationTemplates = (
       {url: `/api/admin/notification-templates/bulk-delete`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: bulkDecisionRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 알림 템플릿 카테고리 추가
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/notification-template-categories`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V78 AlimTalk CMS catalog / Notion alignment
+ * @summary 알림 템플릿 카테고리 추가
+ */
+const createCategory = (
+    categoryCreateRequest: CategoryCreateRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseCategoryMutationResponse>>,) => {
+      return customInstance<ApiResponseCategoryMutationResponse>(
+      {url: `/api/admin/notification-template-categories`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: categoryCreateRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 알림 템플릿 카테고리 이동
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/notification-template-categories/move`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V78 AlimTalk CMS catalog / Notion alignment
+ * @summary 알림 템플릿 카테고리 이동
+ */
+const moveCategory = (
+    categoryMoveRequest: CategoryMoveRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseCategoryMutationResponse>>,) => {
+      return customInstance<ApiResponseCategoryMutationResponse>(
+      {url: `/api/admin/notification-template-categories/move`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: categoryMoveRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 알림톡 발신 프로필 로컬 동기화
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/notification-sender-profiles/sync`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V78 AlimTalk CMS catalog / Notion alignment
+ * @summary 알림톡 발신 프로필 로컬 동기화
+ */
+const syncSenderProfiles = (
+    params?: SyncSenderProfilesParams,
+ options?: SecondParameter<typeof customInstance<ApiResponseSyncResultResponse>>,) => {
+      return customInstance<ApiResponseSyncResultResponse>(
+      {url: `/api/admin/notification-sender-profiles/sync`, method: 'POST',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - CMS 알림 실발송 배치 목록 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/notification-send-batches`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수 아님
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V55 batch aggregate state derived from outbox/delivery
+ * @summary CMS 알림 실발송 배치 목록 조회
+ */
+const list2 = (
+    params?: List2Params,
+ options?: SecondParameter<typeof customInstance<BatchPageResponse>>,) => {
+      return customInstance<BatchPageResponse>(
+      {url: `/api/admin/notification-send-batches`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - CMS 알림 실발송 배치 생성
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/notification-send-batches`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V55 active provider-configured template + required Idempotency-Key + actor/direct recipient snapshot + durable outbox; direct AD blocked
+ * @summary CMS 알림 실발송 배치 생성
+ */
+const create6 = (
+    createRequest: CreateRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseCreateResponse>>,) => {
+      return customInstance<ApiResponseCreateResponse>(
+      {url: `/api/admin/notification-send-batches`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - CMS 알림 실발송 확정 실패 재큐잉
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/notification-send-batches/{batchId}/retry-failed`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V55 only FAILED_PERMANENT rows without provider message id can be manually requeued; UNKNOWN excluded
+ * @summary CMS 알림 실발송 확정 실패 재큐잉
+ */
+const retryFailed = (
+    batchId: number,
+ options?: SecondParameter<typeof customInstance<ApiResponseRetryFailedResponse>>,) => {
+      return customInstance<ApiResponseRetryFailedResponse>(
+      {url: `/api/admin/notification-send-batches/${batchId}/retry-failed`, method: 'POST'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - CMS 알림 실발송 배치 취소
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/notification-send-batches/{batchId}/cancel`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V55 pre-provider queued/retry rows cancelled locally; in-flight count surfaced
+ * @summary CMS 알림 실발송 배치 취소
+ */
+const cancel2 = (
+    batchId: number,
+ options?: SecondParameter<typeof customInstance<ApiResponseCancelResponse>>,) => {
+      return customInstance<ApiResponseCancelResponse>(
+      {url: `/api/admin/notification-send-batches/${batchId}/cancel`, method: 'POST'
     },
       options);
     }
@@ -474,6 +980,57 @@ const testSendNotification = (
 
 /**
  * ### 이 API가 하는 일
+ * - 알림 템플릿 상세 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/notification-templates/{templateId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수 아님
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V78 AlimTalk CMS catalog / Notion alignment
+ * @summary 알림 템플릿 상세 조회
+ */
+const getTemplate = (
+    templateId: number,
+ options?: SecondParameter<typeof customInstance<NotificationTemplateResponse>>,) => {
+      return customInstance<NotificationTemplateResponse>(
+      {url: `/api/admin/notification-templates/${templateId}`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - 알림 템플릿 삭제(archive)
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
@@ -579,6 +1136,423 @@ const updateNotificationTemplate = (
       {url: `/api/admin/notification-templates/${templateId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: notificationTemplateUpsertRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 알림 템플릿 카테고리 삭제
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `DELETE /api/admin/notification-template-categories/{categoryId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V78 AlimTalk CMS catalog / Notion alignment
+ * @summary 알림 템플릿 카테고리 삭제
+ */
+const deleteCategory = (
+    categoryId: number,
+ options?: SecondParameter<typeof customInstance<ApiResponseCategoryMutationResponse>>,) => {
+      return customInstance<ApiResponseCategoryMutationResponse>(
+      {url: `/api/admin/notification-template-categories/${categoryId}`, method: 'DELETE'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 알림 템플릿 카테고리 수정
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `PATCH /api/admin/notification-template-categories/{categoryId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V78 AlimTalk CMS catalog / Notion alignment
+ * @summary 알림 템플릿 카테고리 수정
+ */
+const updateCategory = (
+    categoryId: number,
+    categoryUpdateRequest: CategoryUpdateRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseCategoryMutationResponse>>,) => {
+      return customInstance<ApiResponseCategoryMutationResponse>(
+      {url: `/api/admin/notification-template-categories/${categoryId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: categoryUpdateRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 알림톡 템플릿 미리보기
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/notification-templates/{templateId}/preview`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수 아님
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V78 AlimTalk CMS catalog / Notion alignment
+ * @summary 알림톡 템플릿 미리보기
+ */
+const previewTemplate = (
+    templateId: number,
+ options?: SecondParameter<typeof customInstance<NotificationTemplatePreviewResponse>>,) => {
+      return customInstance<NotificationTemplatePreviewResponse>(
+      {url: `/api/admin/notification-templates/${templateId}/preview`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 알림 템플릿 카테고리 트리 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/notification-template-categories/tree`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수 아님
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V78 AlimTalk CMS catalog / Notion alignment
+ * @summary 알림 템플릿 카테고리 트리 조회
+ */
+const categoryTree = (
+    params?: CategoryTreeParams,
+ options?: SecondParameter<typeof customInstance<CategoryTreeResponse>>,) => {
+      return customInstance<CategoryTreeResponse>(
+      {url: `/api/admin/notification-template-categories/tree`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 알림톡 발신 프로필 후보 목록
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/notification-sender-profiles`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수 아님
+ *
+ * ### 상태값/화면 배지 기준
+ * - 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V78 AlimTalk CMS catalog / Notion alignment
+ * @summary 알림톡 발신 프로필 후보 목록
+ */
+const listSenderProfiles = (
+    params?: ListSenderProfilesParams,
+ options?: SecondParameter<typeof customInstance<SenderProfileListResponse>>,) => {
+      return customInstance<SenderProfileListResponse>(
+      {url: `/api/admin/notification-sender-profiles`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - CMS 알림 실발송 배치 상세 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/notification-send-batches/{batchId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수 아님
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V55 recipient contacts masked; outbox/provider outcome visible
+ * @summary CMS 알림 실발송 배치 상세 조회
+ */
+const detail3 = (
+    batchId: number,
+ options?: SecondParameter<typeof customInstance<BatchDetailResponse>>,) => {
+      return customInstance<BatchDetailResponse>(
+      {url: `/api/admin/notification-send-batches/${batchId}`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 알림 발송 자동입력 변수 카탈로그
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/notification-send-batches/template-variables`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수 아님
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: V78 AlimTalk CMS catalog / Notion alignment
+ * @summary 알림 발송 자동입력 변수 카탈로그
+ */
+const templateVariables = (
+    params?: TemplateVariablesParams,
+ options?: SecondParameter<typeof customInstance<CatalogResponse>>,) => {
+      return customInstance<CatalogResponse>(
+      {url: `/api/admin/notification-send-batches/template-variables`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - CMS 알림 발송 수신자 후보 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/notification-send-batches/recipient-candidates`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: ADMIN_PROGRAM_SCOPE 범위 정책
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수 아님
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Notion recipient popup alignment: accessible active program participants only; name/contact masked; raw contact resolved server-side at send time
+ * @summary CMS 알림 발송 수신자 후보 조회
+ */
+const recipientCandidates = (
+    params: RecipientCandidatesParams,
+ options?: SecondParameter<typeof customInstance<PageResponseRecipientCandidateResponse>>,) => {
+      return customInstance<PageResponseRecipientCandidateResponse>(
+      {url: `/api/admin/notification-send-batches/recipient-candidates`, method: 'GET',
+        params
     },
       options);
     }
@@ -798,17 +1772,35 @@ const getNotificationDelivery = (
       options);
     }
 
-return {updateNotificationEventCatalog,upsertNotificationEventChannelTemplate,listNotificationTemplates,createNotificationTemplate,bulkArchiveNotificationTemplates,confirmNotificationDelivery,cancelNotificationDelivery,testSendNotification,archiveNotificationTemplate,updateNotificationTemplate,notificationEventCatalog,notificationEventChannelTemplates,listNotificationDeliveries,getNotificationDelivery}};
+return {updateNotificationEventCatalog,upsertNotificationEventChannelTemplate,listNotificationTemplates,createNotificationTemplate,moveTemplate,syncTemplates,bulkArchiveNotificationTemplates,createCategory,moveCategory,syncSenderProfiles,list2,create6,retryFailed,cancel2,confirmNotificationDelivery,cancelNotificationDelivery,testSendNotification,getTemplate,archiveNotificationTemplate,updateNotificationTemplate,deleteCategory,updateCategory,previewTemplate,categoryTree,listSenderProfiles,detail3,templateVariables,recipientCandidates,notificationEventCatalog,notificationEventChannelTemplates,listNotificationDeliveries,getNotificationDelivery}};
 export type UpdateNotificationEventCatalogResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['updateNotificationEventCatalog']>>>
 export type UpsertNotificationEventChannelTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['upsertNotificationEventChannelTemplate']>>>
 export type ListNotificationTemplatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['listNotificationTemplates']>>>
 export type CreateNotificationTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['createNotificationTemplate']>>>
+export type MoveTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['moveTemplate']>>>
+export type SyncTemplatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['syncTemplates']>>>
 export type BulkArchiveNotificationTemplatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['bulkArchiveNotificationTemplates']>>>
+export type CreateCategoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['createCategory']>>>
+export type MoveCategoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['moveCategory']>>>
+export type SyncSenderProfilesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['syncSenderProfiles']>>>
+export type List2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['list2']>>>
+export type Create6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['create6']>>>
+export type RetryFailedResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['retryFailed']>>>
+export type Cancel2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['cancel2']>>>
 export type ConfirmNotificationDeliveryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['confirmNotificationDelivery']>>>
 export type CancelNotificationDeliveryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['cancelNotificationDelivery']>>>
 export type TestSendNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['testSendNotification']>>>
+export type GetTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['getTemplate']>>>
 export type ArchiveNotificationTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['archiveNotificationTemplate']>>>
 export type UpdateNotificationTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['updateNotificationTemplate']>>>
+export type DeleteCategoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['deleteCategory']>>>
+export type UpdateCategoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['updateCategory']>>>
+export type PreviewTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['previewTemplate']>>>
+export type CategoryTreeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['categoryTree']>>>
+export type ListSenderProfilesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['listSenderProfiles']>>>
+export type Detail3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['detail3']>>>
+export type TemplateVariablesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['templateVariables']>>>
+export type RecipientCandidatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['recipientCandidates']>>>
 export type NotificationEventCatalogResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['notificationEventCatalog']>>>
 export type NotificationEventChannelTemplatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['notificationEventChannelTemplates']>>>
 export type ListNotificationDeliveriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['listNotificationDeliveries']>>>

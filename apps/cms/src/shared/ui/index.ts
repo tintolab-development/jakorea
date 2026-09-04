@@ -166,6 +166,7 @@ export type { CmsToggleProps } from './cms-toggle'
 export {
   CmsDatePicker,
   CmsDateRangePicker,
+  formatAppDatepickerDateTimeDisplay,
   formatAppDatepickerDisplay,
   formatAppDatepickerRangePlain,
 } from './cms-datepicker'

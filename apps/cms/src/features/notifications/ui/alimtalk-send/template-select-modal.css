@@ -114,8 +114,10 @@
 }
 
 .template-select-modal__table.cms-data-table .ant-table-thead > tr > th.template-select-modal__col-name,
+.template-select-modal__table.cms-data-table .ant-table-thead > tr > th.template-select-modal__col-status,
 .template-select-modal__table.cms-data-table .ant-table-thead > tr > th.template-select-modal__col-actions,
 .template-select-modal__table.cms-data-table .ant-table-tbody > tr > td.template-select-modal__col-name,
+.template-select-modal__table.cms-data-table .ant-table-tbody > tr > td.template-select-modal__col-status,
 .template-select-modal__table.cms-data-table .ant-table-tbody > tr > td.template-select-modal__col-actions {
   text-align: center !important;
 }
@@ -124,6 +126,11 @@
   .ant-table-thead
   > tr
   > th.template-select-modal__col-name
+  .ant-table-column-title,
+.template-select-modal__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.template-select-modal__col-status
   .ant-table-column-title,
 .template-select-modal__table.cms-data-table
   .ant-table-thead
@@ -170,6 +177,28 @@
   line-height: 150%;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.template-select-modal__badge {
+  flex: 0 0 auto;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.template-select-modal__badge--pending {
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.16);
+}
+
+.template-select-modal__table.cms-data-table .ant-table-thead > tr > th.template-select-modal__col-status,
+.template-select-modal__table.cms-data-table .ant-table-tbody > tr > td.template-select-modal__col-status {
+  min-width: 96px;
+  max-width: 140px !important;
 }
 
 .template-select-modal__row-actions {
