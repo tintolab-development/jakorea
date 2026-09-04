@@ -55,17 +55,20 @@ function asWidgetWidths(value: unknown): Record<string, 12 | 24> {
   return out
 }
 
-export function buildMeDashboardPreferencesRequest(role: UserRole): DashboardMePreferencesRequest {
+export function buildMeDashboardPreferencesRequest(
+  layoutRole: UserRole,
+  requestRole: string = layoutRole
+): DashboardMePreferencesRequest {
   const settings = useDashboardSettingsStore.getState()
   const layout = useDashboardWidgetOrderStore.getState()
 
   return {
     schemaVersion: ME_SCHEMA_VERSION,
-    role,
+    role: requestRole,
     revision: cachedRevision,
     layout: {
-      orderedWidgetIds: layout.orderByRole[role] ?? [],
-      widgetWidths: layout.widthByRole[role] ?? {},
+      orderedWidgetIds: layout.orderByRole[layoutRole] ?? [],
+      widgetWidths: layout.widthByRole[layoutRole] ?? {},
     },
     settings: {
       shortcutVisibility: settings.shortcutEnabled,
