@@ -11,6 +11,8 @@ export type NotificationTreeTemplate = {
   name: string
   templateName: string
   categoryId: string
+  /** BE tree approvalStatus — 서버가 APPROVED만 내려줌. FE 이중 필터 금지 */
+  approvalStatus?: string
 }
 
 export type NotificationTreeChild<T extends NotificationTreeTemplate> =

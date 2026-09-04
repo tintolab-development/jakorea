@@ -209,22 +209,35 @@ export async function deleteAlimtalkTemplate(
   return mapOrThrowMutationTree(result)
 }
 
-/** 발송용: APPROVED 템플릿만 */
+/**
+ * 발송 「템플릿 선택」— APPROVED만 (트리·send-batch 가드와 동일).
+ * PENDING은 목록/상세 approvalStatus로만 확인.
+ */
 export async function getAlimtalkSendTemplatePicker(): Promise<AlimtalkTemplateItem[]> {
   if (!shouldUseAlimtalkTemplatesRemoteApi()) {
-    return ALIMTALK_TEMPLATE_ITEM_MOCK.map(item => ({
+    return ALIMTALK_TEMPLATE_ITEM_MOCK.filter(
+      item => (item.approvalStatus ?? 'APPROVED') === 'APPROVED'
+    ).map(item => ({
       ...item,
       approvalStatus: item.approvalStatus ?? 'APPROVED',
     }))
   }
+
   const dto = await fetchNotificationTemplatesRemote({
     channelType: ALIMTALK_API_CHANNEL_TYPE,
     approvalStatus: 'APPROVED',
   })
-  return (dto.items ?? [])
+  const fromList = (dto.items ?? [])
     .map(item => mapNotificationTemplateToItem(item))
     .filter((item): item is AlimtalkTemplateItem => item != null)
     .filter(item => item.approvalStatus === 'APPROVED')
+  if (fromList.length > 0) return fromList
+
+  // fallback: 트리(서버가 APPROVED만 내려줌). FE에서 PENDING 재삽입/이중 필터 금지
+  const { templates } = await getAlimtalkCategoryTree(new URLSearchParams())
+  return templates.filter(
+    item => item.approvalStatus == null || item.approvalStatus === 'APPROVED'
+  )
 }
 
 /** NHN Console 카탈로그 → CMS DB. Body 없음. 성공 후 tree 재조회는 호출측. */

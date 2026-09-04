@@ -1,6 +1,8 @@
 export type KakaoApprovalStatus =
   | 'REGISTERED'
   | 'REQUESTED'
+  /** 검수중 — 트리 비노출, 목록/상세 approvalStatus로만 확인 */
+  | 'PENDING'
   | 'APPROVED'
   | 'REJECTED'
   /** NHN 공용·상세 미동기화 등 */

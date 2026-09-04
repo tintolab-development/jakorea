@@ -37,7 +37,6 @@ import { resolveNhnConsoleUrl } from '@/features/notifications/api/adapters/alim
 import { alimtalkSyncSuccessMessage } from '@/features/notifications/api/adapters/alimtalk-sync-adapters'
 import {
   getNotificationsApiErrorMessage,
-  getNotificationsSyncErrorBannerMessage,
   isCategoryHasChildrenError,
   isCategoryNeedsSyncError,
   isAlimtalkTemplateDeleteRejectedByNhnError,
@@ -139,7 +138,6 @@ export function AlimtalkTemplateList({
   const [localCategories, setLocalCategories] = useState<AlimtalkCategory[]>(ALIMTALK_CATEGORY_MOCK)
   const [localTemplates, setLocalTemplates] = useState<AlimtalkTemplateItem[]>(ALIMTALK_TEMPLATE_ITEM_MOCK)
   const [syncBanner, setSyncBanner] = useState<SyncBannerKind>(null)
-  const [syncErrorMessage, setSyncErrorMessage] = useState<string | null>(null)
   const autoSyncStartedRef = useRef(false)
 
   const categories = remote ? (treeQuery.data?.categories ?? []) : localCategories
@@ -168,7 +166,6 @@ export function AlimtalkTemplateList({
   const runNhnSync = useCallback(
     async (source: 'auto' | 'manual') => {
       if (!remote || mutations.syncCatalog.isPending) return
-      setSyncErrorMessage(null)
       try {
         const result = await mutations.syncCatalog.mutateAsync()
         const outcome = result.templates
@@ -212,7 +209,6 @@ export function AlimtalkTemplateList({
           'NHN 동기화에 실패했습니다. 다시 시도해 주세요.'
         )
         setSyncBanner(isProviderUnavailableError(error) ? 'provider-unavailable' : 'error')
-        setSyncErrorMessage(getNotificationsSyncErrorBannerMessage(error))
         showAlert({ title: 'NHN 동기화 실패', content: message })
       }
     },
@@ -679,51 +675,6 @@ export function AlimtalkTemplateList({
           </>
         }
       >
-        {remote && (syncBanner || isSyncing) ? (
-          <div
-            className={`alimtalk-template-sync-banner${
-              syncBanner === 'error' || syncBanner === 'provider-unavailable'
-                ? ' alimtalk-template-sync-banner--error'
-                : ''
-            }${
-              syncBanner === 'local-mode' || syncBanner === 'synced-empty'
-                ? ' alimtalk-template-sync-banner--warn'
-                : ''
-            }`}
-            role="status"
-          >
-            <p className="alimtalk-template-sync-banner__text">
-              {isSyncing
-                ? 'NHN Cloud 템플릿을 동기화하는 중입니다…'
-                : syncBanner === 'local-mode'
-                  ? 'BE가 NHN 모드가 아닙니다(JA_NOTIFICATION_MODE). NHN live pull이 되지 않습니다. BE에 JA_NOTIFICATION_MODE=NHN_NOTIFICATION_HUB 설정을 요청한 뒤 동기화해 주세요.'
-                  : syncBanner === 'provider-unavailable'
-                    ? syncErrorMessage ||
-                      'NHN Cloud 연동에 실패했습니다. 백엔드 NHN 설정을 확인한 뒤 다시 동기화해 주세요.'
-                    : syncBanner === 'synced-empty'
-                      ? '동기화는 완료되었지만 표시할 템플릿이 없습니다. NHN Console 승인 템플릿을 확인하거나 다시 동기화해 주세요.'
-                      : syncBanner === 'error'
-                        ? syncErrorMessage ||
-                          'NHN 동기화에 실패했습니다. 다시 시도해 주세요.'
-                        : '트리만으로는 NHN 데이터가 보이지 않습니다. 「동기화」를 실행해 주세요.'}
-            </p>
-            {!isSyncing &&
-            (syncBanner === 'need-sync' ||
-              syncBanner === 'error' ||
-              syncBanner === 'provider-unavailable' ||
-              syncBanner === 'local-mode' ||
-              syncBanner === 'synced-empty') ? (
-              <CmsButton
-                variant="secondary"
-                size="medium"
-                type="button"
-                onClick={() => void runNhnSync('manual')}
-              >
-                다시 동기화
-              </CmsButton>
-            ) : null}
-          </div>
-        ) : null}
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <div className="alimtalk-template-split">
             <CategoryTree

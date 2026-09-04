@@ -39,12 +39,21 @@ function mapKakaoApprovalStatus(raw?: string | null): KakaoApprovalStatus {
   const normalized = (raw ?? '').trim().toUpperCase()
   if (!normalized || normalized === 'UNKNOWN') return 'UNKNOWN'
   if (normalized === 'APPROVED') return 'APPROVED'
-  if (normalized === 'REQUESTED' || normalized === 'PENDING' || normalized === 'INSPECTING') {
-    return 'REQUESTED'
-  }
+  // BE: PENDING = 검수중 (목록/상세 approvalStatus). 트리에는 APPROVED만
+  if (normalized === 'PENDING') return 'PENDING'
+  if (normalized === 'REQUESTED' || normalized === 'INSPECTING') return 'REQUESTED'
   if (normalized === 'REJECTED' || normalized === 'FAIL') return 'REJECTED'
   if (normalized === 'REGISTERED') return 'REGISTERED'
   return 'UNKNOWN'
+}
+
+export const ALIMTALK_APPROVAL_STATUS_LABEL: Partial<Record<KakaoApprovalStatus, string>> = {
+  PENDING: '검수중',
+  REQUESTED: '검수요청',
+  APPROVED: '승인',
+  REJECTED: '반려',
+  REGISTERED: '등록',
+  UNKNOWN: '미확인',
 }
 
 function mapTemplateUsageStatus(useYn?: boolean): TemplateUsageStatus {
@@ -389,12 +398,17 @@ function walkTreeNode(
       node.categoryId != null
         ? String(node.categoryId)
         : parentCategoryId || ALIMTALK_ROOT_CATEGORY_ID
+    // OpenAPI TreeNodeResponse에 없어도 BE가 approvalStatus를 실어 보낼 수 있음
+    // 트리 가시성(APPROVED만)은 서버 필터. FE에서 PENDING 재삽입/이중 필터 금지
+    const approvalRaw = (node as TreeNodeResponse & { approvalStatus?: string }).approvalStatus
+    const hasApproval = approvalRaw != null && String(approvalRaw).trim() !== ''
     templates.push({
       ...emptyTemplateItem(String(node.id)),
       id: String(node.id),
       name: displayName,
       templateName: displayName,
       categoryId,
+      approvalStatus: hasApproval ? mapKakaoApprovalStatus(approvalRaw) : undefined,
     })
     return
   }

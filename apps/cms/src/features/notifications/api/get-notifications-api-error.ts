@@ -140,16 +140,6 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
   return fallback
 }
 
-export function getNotificationsSyncErrorBannerMessage(error: unknown): string {
-  if (isProviderUnavailableError(error)) {
-    return 'NHN Cloud 연동에 실패했습니다. 백엔드 NHN 설정을 확인한 뒤 다시 동기화해 주세요.'
-  }
-  if (getApiErrorCode(error) === 'DATABASE_ERROR' || getApiErrorHttpStatus(error) === 500) {
-    return '동기화 중 서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
-  }
-  return getNotificationsApiErrorMessage(error, 'NHN 동기화에 실패했습니다. 다시 시도해 주세요.')
-}
-
 export function isCategoryHasChildrenError(error: unknown): boolean {
   return getApiErrorCode(error) === 'CATEGORY_HAS_CHILDREN'
 }
