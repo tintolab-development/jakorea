@@ -9,6 +9,7 @@ import {
   getConnectedProviders,
   setRegisterSocialLinkIntent,
 } from '@/features/auth/lib/register-social-connect-state'
+import { getSignupSocialLinkToken } from '@/features/auth/lib/signup-social-link-handoff'
 import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
@@ -86,8 +87,27 @@ export function SocialConnectProviderList({
   const handleConnect = (provider: SocialProvider) => {
     setLoadingProvider(provider)
     setRegisterSocialLinkIntent(redirectPath)
+
+    const signupSocialLinkToken = getSignupSocialLinkToken()
+    const hasAccessToken = cmsSocialAuthClient.hasAccessToken()
+    const startInput =
+      remoteEnabled && !hasAccessToken && signupSocialLinkToken
+        ? { provider, intent: 'link' as const, returnUrl: redirectPath, signupSocialLinkToken }
+        : { provider, intent: 'link' as const, returnUrl: redirectPath }
+
+    if (remoteEnabled && !hasAccessToken && !signupSocialLinkToken) {
+      handleError(
+        new Error(
+          '가입 직후 소셜 연결 세션이 없거나 만료되었습니다. 로그인 후 [내 정보 수정]에서 연결해 주세요.'
+        ),
+        { context: 'socialConnectProviderList.connect' }
+      )
+      setLoadingProvider(null)
+      return
+    }
+
     void cmsSocialAuthClient
-      .startLogin({ provider, intent: 'link', returnUrl: redirectPath })
+      .startLogin(startInput)
       .then(url => {
         window.location.assign(url)
       })

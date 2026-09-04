@@ -147,7 +147,7 @@ export async function processAdminSsoLinkReturn(
   searchParams: URLSearchParams,
   options: ProcessOAuthLinkCallbackOptions = {}
 ): Promise<OAuthLinkCallbackOutcome> {
-  const { cancelled, consent } = options
+  const { cancelled, consent, signupSocialLinkToken } = options
   const error = searchParams.get('error')
 
   if (error) {
@@ -211,6 +211,7 @@ export async function processAdminSsoLinkReturn(
         provider: resolvedProvider,
         adminSsoSessionId,
         consent,
+        signupSocialLinkToken,
       })
       client.state.addConnectedProvider(resolvedProvider)
       return { kind: 'linked', provider: resolvedProvider, account, pending: false }
@@ -302,6 +303,7 @@ export async function processOAuthCallback(
 export interface ProcessOAuthLinkCallbackOptions {
   cancelled?: boolean
   consent?: SocialLinkConsent
+  signupSocialLinkToken?: string
 }
 
 /** 관리자 SSO 계정 연결 — `/oauth/{provider}` + intent `link` */
