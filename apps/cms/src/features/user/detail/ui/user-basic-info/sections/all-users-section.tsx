@@ -45,7 +45,6 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
   const {
     user,
     scheduleChangeCount,
-    externalId1365,
     personalInfoRevealed,
     memberInfoEditing,
     memberInfoDraft,
@@ -291,7 +290,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
           view={
             <Id1365View
               personalInfoRevealed={personalInfoRevealed}
-              externalId1365={externalId1365}
+              id1365={user.id1365}
             />
           }
           edit={

@@ -28,7 +28,7 @@ import {
   parseAdminAccountIdFromUserId,
   shouldUseAdminAccountDetailApi,
 } from '@/features/user/api/fetch-admin-member-detail'
-import { resolve1365IdFromExternalIdentifiers } from '@/features/user/api/map-external-identifiers'
+import { assignUser1365IdFromDetailAndIdentifiers } from '@/features/user/api/map-external-identifiers'
 import { resolveInstructorMemberProfileHint } from '@/features/user/api/map-member-role'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
@@ -179,11 +179,11 @@ export function memberDetailQueryOptions(
         const user = useTeacherDetail
           ? mapTeacherMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
           : mapInstructorMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
-        const id1365 = resolve1365IdFromExternalIdentifiers(
-          externalIdentifiers,
-          detail.member?.external1365Id
+        assignUser1365IdFromDetailAndIdentifiers(
+          user,
+          detail.member?.external1365Id,
+          externalIdentifiers
         )
-        if (id1365) user.id1365 = id1365
         return user
       }
 
@@ -193,11 +193,11 @@ export function memberDetailQueryOptions(
           fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
         ])
         const user = mapIndividualMemberDetailToUser(detail, { fallbackRole: 'INDIVIDUAL' })
-        const id1365 = resolve1365IdFromExternalIdentifiers(
-          externalIdentifiers,
-          detail.member?.external1365Id
+        assignUser1365IdFromDetailAndIdentifiers(
+          user,
+          detail.member?.external1365Id,
+          externalIdentifiers
         )
-        if (id1365) user.id1365 = id1365
         return user
       }
 
@@ -206,11 +206,7 @@ export function memberDetailQueryOptions(
         () => []
       )
       const user = mapMemberDetailToUser(detail, null, { fallbackRole: role })
-      const id1365 = resolve1365IdFromExternalIdentifiers(
-        externalIdentifiers,
-        detail.external1365Id
-      )
-      if (id1365) user.id1365 = id1365
+      assignUser1365IdFromDetailAndIdentifiers(user, detail.external1365Id, externalIdentifiers)
       return user
     },
     meta: {

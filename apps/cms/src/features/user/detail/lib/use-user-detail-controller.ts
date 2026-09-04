@@ -67,12 +67,16 @@ import {
   draftToInstructorFeeAndJaGradePatch,
   draftToSchoolAdminCommentOnlyPatch,
   draftToSchoolInstitutionBasicInfoPatch,
+  splitUserAffiliationForDraft,
   userToAdminCommentOnlyDraft,
   userToAdminProvisionedBasicDraft,
   userToSchoolInstitutionEditDraft,
   type AdminProvisionedMemberBasicInfoDraft,
 } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
-import { resolveIndividualEnrolledSchoolSubmitBlock } from '@/features/user/api/individual-enrolled-school-selection'
+import {
+  resolveIndividualEnrolledSchoolSubmitBlock,
+  shouldSkipIndividualEnrolledSchoolReselectionGuard,
+} from '@/features/user/api/individual-enrolled-school-selection'
 import {
   resolveUserBasicInfoBodyKey,
   parseUserBasicInfoEntryQuery,
@@ -86,6 +90,10 @@ import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { applyPrivacyUnmaskResponseToUser } from '@/features/user/api/apply-privacy-unmask-to-user'
+import {
+  extract1365IdFromMemberPrivacyPayload,
+  preferUnmasked1365Id,
+} from '@/features/user/api/map-external-identifiers'
 import { stripRestrictedPiiForSessionUser } from '@/features/user/api/strip-restricted-pii'
 import { parseAdminAccountIdFromUserId } from '@/features/user/api/fetch-admin-member-detail'
 import {
@@ -874,7 +882,16 @@ export function useUserDetailController({
               )
             : displayUser
         setEditUnmaskConfirmOpen(false)
-        startBasicInfoEdit(unmaskedUser)
+        // external-identifiers 마스킹보다 unmask/상세 원문 우선
+        const id1365 = preferUnmasked1365Id(
+          extract1365IdFromMemberPrivacyPayload(result.payload),
+          unmaskedUser.id1365,
+          displayUser.id1365
+        )
+        startBasicInfoEdit({
+          ...unmaskedUser,
+          ...(id1365 ? { id1365 } : {}),
+        })
       })
       .finally(() => {
         setEditUnmaskConfirmLoading(false)
@@ -1042,7 +1059,15 @@ export function useUserDetailController({
           : draftToAdminMemberRestrictedPatch(basicInfoDraft)
       } else if (displayUser.role === 'INDIVIDUAL') {
         const enrolledSchoolBlock =
-          basicInfoDraft.schoolEnrollmentStatus === 'enrolled'
+          basicInfoDraft.schoolEnrollmentStatus === 'enrolled' &&
+          !shouldSkipIndividualEnrolledSchoolReselectionGuard({
+            draftInstitution: basicInfoDraft.affiliationInstitution,
+            originalInstitution: splitUserAffiliationForDraft(displayUser.affiliation)
+              .affiliationInstitution,
+            schoolOrganizationId: basicInfoDraft.schoolOrganizationId,
+            schoolProvider: basicInfoDraft.schoolProvider,
+            schoolExternalCode: basicInfoDraft.schoolExternalCode,
+          })
             ? resolveIndividualEnrolledSchoolSubmitBlock({
                 schoolProvider: basicInfoDraft.schoolProvider,
                 schoolOrganizationId: basicInfoDraft.schoolOrganizationId,

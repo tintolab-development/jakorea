@@ -10,6 +10,7 @@ import {
   inferInstructorMemberProfileFromRoles,
 } from '@/features/user/api/map-member-role'
 import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
+import { preferUnmasked1365Id } from '@/features/user/api/map-external-identifiers'
 import { resolveCanonicalUserDetailId } from '@/features/user/api/user-response-row-id'
 import { mergeTermsAgreementRowsFromPatch } from '@/features/user/api/member-basic-info-terms-patch'
 
@@ -267,6 +268,7 @@ export function mergeListUserWithFetchedDetail(
     affiliation: resolveMergedAffiliation(listUser, fetched),
     detailAddress: resolveMergedDetailAddress(listUser, fetched),
     detailAddressDetail: resolveMergedDetailAddressDetail(listUser, fetched),
+    id1365: preferUnmasked1365Id(fetched.id1365, listUser.id1365),
     bio: resolveMergedBio(listUser, fetched),
     instructorCareerText: resolveMergedInstructorTextField(listUser, fetched, 'instructorCareerText'),
     instructorSelfIntroduction: resolveMergedInstructorTextField(

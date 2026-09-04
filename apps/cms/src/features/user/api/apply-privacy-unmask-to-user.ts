@@ -6,12 +6,29 @@ import type { InstructorMemberDetailResponse } from '@/shared/api/generated/memb
 import type { InstructorRoleRequestDetailResponse } from '@/shared/api/generated/members/schemas/instructorRoleRequestDetailResponse'
 import type { MemberDetailResponse } from '@/shared/api/generated/members/schemas/memberDetailResponse'
 import {
+  extract1365IdFromMemberPrivacyPayload,
+  preferUnmasked1365Id,
+} from '@/features/user/api/map-external-identifiers'
+import {
   mapIndividualMemberDetailToUser,
   mapInstructorMemberDetailToUser,
   mapMemberDetailToUser,
 } from '@/features/user/api/map-member-detail-to-user'
 import { mapInstructorRoleRequestDetailToUser } from '@/features/user/api/map-instructor-role-request-detail-to-user'
 import { mergeListUserWithFetchedDetail } from '@/features/user/api/merge-list-user-with-detail'
+
+function withPreferred1365Id(
+  merged: Omit<User, 'password'>,
+  unmaskPayload: unknown,
+  previous: Omit<User, 'password'>
+): Omit<User, 'password'> {
+  const id1365 = preferUnmasked1365Id(
+    extract1365IdFromMemberPrivacyPayload(unmaskPayload),
+    merged.id1365,
+    previous.id1365
+  )
+  return id1365 ? { ...merged, id1365 } : merged
+}
 
 /**
  * 개인정보 unmask API 응답 → 현재 상세 User에 원문 필드 병합.
@@ -35,11 +52,15 @@ export function applyPrivacyUnmaskResponseToUser(
         unmaskPayload as InstructorRoleRequestDetailResponse,
         { fallbackId: current.id }
       )
-      return mergeListUserWithFetchedDetail(current, {
-        ...mapped,
-        instructorRoleRequestId:
-          mapped.instructorRoleRequestId ?? current.instructorRoleRequestId,
-      })
+      return withPreferred1365Id(
+        mergeListUserWithFetchedDetail(current, {
+          ...mapped,
+          instructorRoleRequestId:
+            mapped.instructorRoleRequestId ?? current.instructorRoleRequestId,
+        }),
+        unmaskPayload,
+        current
+      )
     }
 
     if (role === 'ADMIN') {
@@ -61,7 +82,11 @@ export function applyPrivacyUnmaskResponseToUser(
         unmaskPayload as InstructorMemberDetailResponse,
         { fallbackRole: 'INSTRUCTOR' }
       )
-      return mergeListUserWithFetchedDetail(current, mapped)
+      return withPreferred1365Id(
+        mergeListUserWithFetchedDetail(current, mapped),
+        unmaskPayload,
+        current
+      )
     }
 
     if (role === 'INDIVIDUAL') {
@@ -69,15 +94,24 @@ export function applyPrivacyUnmaskResponseToUser(
         unmaskPayload as IndividualMemberDetailResponse,
         { fallbackRole: 'INDIVIDUAL' }
       )
-      return mergeListUserWithFetchedDetail(current, mapped)
+      return withPreferred1365Id(
+        mergeListUserWithFetchedDetail(current, mapped),
+        unmaskPayload,
+        current
+      )
     }
 
     // SCHOOL 등 — legacy member unmask (MemberDetailResponse)
     const mapped = mapMemberDetailToUser(unmaskPayload as MemberDetailResponse, null, {
       fallbackRole: role,
     })
-    return mergeListUserWithFetchedDetail(current, mapped)
+    return withPreferred1365Id(
+      mergeListUserWithFetchedDetail(current, mapped),
+      unmaskPayload,
+      current
+    )
   } catch {
-    return current
+    // 매핑 실패 시에도 payload에서 1365 원문만 보강
+    return withPreferred1365Id(current, unmaskPayload, current)
   }
 }
