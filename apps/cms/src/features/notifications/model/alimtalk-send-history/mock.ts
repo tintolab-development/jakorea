@@ -38,16 +38,17 @@ const seedRows = [
 export const ALIMTALK_SEND_HISTORY_MOCK: AlimtalkSendHistoryRow[] = seedRows.map((seed, index) => {
   const iso = isoByIndex(index)
   const templateName = 'Gemini Academy 6월 웨비나 참여 안내'
+  const isReserved = seed.broadcastTiming === '예약'
 
   return {
     id: seed.id,
     requestAt: iso,
     sendRequestedAt: iso,
     receiveRequestedAt: iso,
-    reservedAt: iso,
+    reservedAt: isReserved ? iso : '',
     templateName,
-    senderInfo: '홍길동 | gildong@jakorea.org',
-    receiverInfo: '홍길동 <gilldong@jakorea.org>',
+    senderInfo: '@jakorea',
+    receiverInfo: '010-1234-5678',
     broadcastTiming: seed.broadcastTiming,
     sendStatus: '발송 성공',
     receiveStatus: '수신 성공',
