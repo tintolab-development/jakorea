@@ -41,6 +41,12 @@ export function formatAppDatepickerDisplay(value: Dayjs | null | undefined): str
   return `${value.format('YYYY. MM. DD')}(${WEEKDAY_KO_MIN[value.day()]})`
 }
 
+/** 날짜+시분초: YYYY. MM. DD(요일) HH:mm:ss */
+export function formatAppDatepickerDateTimeDisplay(value: Dayjs | null | undefined): string {
+  if (value == null) return ''
+  return `${formatAppDatepickerDisplay(value)} ${value.format('HH:mm:ss')}`
+}
+
 /** 기간 필터 등: 요일 없이 YYYY. MM. DD (시안과 동일) */
 export function formatAppDatepickerRangePlain(value: Dayjs | null | undefined): string {
   if (value == null) return ''
