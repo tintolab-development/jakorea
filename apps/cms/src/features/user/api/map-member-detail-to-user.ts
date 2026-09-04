@@ -314,7 +314,9 @@ export function mapMemberDetailToUser(
       preRegistered: detail.preRegistered,
       createdByAdmin: detail.createdByAdmin,
     }),
-    id1365: detail.external1365Id?.trim() || undefined,
+    ...(detail.external1365Id?.trim()
+      ? { id1365: detail.external1365Id.trim() }
+      : {}),
     identitySelfSignupCompletedAfterAdminRegistration:
       resolveIdentitySelfSignupCompletedAfterAdminRegistration({
         role,

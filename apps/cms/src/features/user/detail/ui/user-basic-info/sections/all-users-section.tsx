@@ -297,7 +297,13 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
           edit={
             <CmsInput
               placeholder="1365 ID"
-              value={d?.id1365 ?? ''}
+              value={
+                d?.id1365 !== undefined
+                  ? d.id1365
+                  : (externalId1365?.fullLabel?.trim() ||
+                      externalId1365?.maskedLabel?.trim() ||
+                      '')
+              }
               onChange={e => onMemberInfoDraftChange?.({ id1365: e.target.value })}
               inputSize="medium"
               width="100%"
