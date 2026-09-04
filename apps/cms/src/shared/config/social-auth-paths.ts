@@ -1,7 +1,7 @@
 export const adminSocialAuthPaths = {
   ssoLogin: () => '/api/admin/auth/sso/login',
   ssoProviderCallback: (provider: string) => `/api/admin/auth/sso/${provider}/callback`,
-  loginSessionConsume: () => '/api/auth/sso/login/sessions/consume',
+  loginSessionConsume: () => '/api/admin/auth/sso/login/sessions/consume',
   linkSessionConsume: () => '/api/admin/me/sso/link/sessions/consume',
   ssoError: () => '/api/admin/auth/sso/error',
   /** @deprecated canonical 아님 — remote adapter 미사용 */

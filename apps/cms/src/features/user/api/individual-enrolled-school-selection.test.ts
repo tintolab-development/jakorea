@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { resolveIndividualEnrolledSchoolSubmitBlock } from '@/features/user/api/individual-enrolled-school-selection'
+import {
+  resolveIndividualEnrolledSchoolSubmitBlock,
+  shouldSkipIndividualEnrolledSchoolReselectionGuard,
+} from '@/features/user/api/individual-enrolled-school-selection'
 import { INDIVIDUAL_ENROLLED_NEIS_SCHOOL_SELECTION_REQUIRED_ALERT_MESSAGE } from '@/shared/constants/messages'
 
 describe('resolveIndividualEnrolledSchoolSubmitBlock', () => {
@@ -67,5 +70,45 @@ describe('resolveIndividualEnrolledSchoolSubmitBlock', () => {
         schoolExternalCode: '999999',
       })
     ).toBe(INDIVIDUAL_ENROLLED_NEIS_SCHOOL_SELECTION_REQUIRED_ALERT_MESSAGE)
+  })
+})
+
+describe('shouldSkipIndividualEnrolledSchoolReselectionGuard', () => {
+  it('기존 소속명을 그대로 두면 재검색 가드를 건너뛴다', () => {
+    expect(
+      shouldSkipIndividualEnrolledSchoolReselectionGuard({
+        draftInstitution: '진월초등학교',
+        originalInstitution: '진월초등학교',
+      })
+    ).toBe(true)
+  })
+
+  it('소속명을 바꾸면 재검색 가드를 적용한다', () => {
+    expect(
+      shouldSkipIndividualEnrolledSchoolReselectionGuard({
+        draftInstitution: '다른초등학교',
+        originalInstitution: '진월초등학교',
+      })
+    ).toBe(false)
+  })
+
+  it('소속명이 비어 있으면 재검색 가드를 적용한다', () => {
+    expect(
+      shouldSkipIndividualEnrolledSchoolReselectionGuard({
+        draftInstitution: '',
+        originalInstitution: '진월초등학교',
+      })
+    ).toBe(false)
+  })
+
+  it('검색 선택이 있으면 가드 스킵 대상이 아니다(resolve로 검증)', () => {
+    expect(
+      shouldSkipIndividualEnrolledSchoolReselectionGuard({
+        draftInstitution: '진월초등학교',
+        originalInstitution: '진월초등학교',
+        schoolExternalCode: 'B100000001',
+        schoolProvider: 'NEIS',
+      })
+    ).toBe(false)
   })
 })

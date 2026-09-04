@@ -34,42 +34,46 @@
   max-height: none !important;
 }
 
-/* 칸 폭 240/500 고정 + 12px gap wrap. 한 줄 한 칸(100% stretch) 방지 */
-.alimtalk-send-history-page
-  .table-filter-group__merged-inline-wrap
-  > .table-filter-group__grid-cell--explicit-width:not(.table-filter-group__grid-cell--pct-width) {
-  flex: 0 0 var(--filter-field-width);
-  width: var(--filter-field-width);
-  min-width: var(--filter-field-width);
-  max-width: var(--filter-field-width);
-}
-
 .alimtalk-send-history-page__table .ant-table-tbody > tr.alimtalk-send-history-page__row {
   cursor: pointer;
 }
 
-.alimtalk-send-history-page__table .ant-table-tbody > tr > td.ant-table-cell {
+/* 기본·호버 padding/border 동일 유지 → 행 호버 흔들림 방지 */
+.alimtalk-send-history-page__table.cms-data-table .ant-table-tbody > tr > td,
+.alimtalk-send-history-page__table.cms-data-table .ant-table-tbody > tr:hover > td {
+  box-sizing: border-box !important;
+  padding: 10px 16px !important;
   white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle !important;
 }
 
-.alimtalk-send-history-page__table
-  .alimtalk-send-history-page__col-template-name.ant-table-cell {
-  width: 436px;
-  min-width: 80px;
-  min-height: 54px;
-  padding: 12px 20px !important;
-  box-sizing: border-box;
-  vertical-align: middle;
-  text-align: center;
+.alimtalk-send-history-page__table.cms-data-table
+  .ant-table-tbody
+  > tr.alimtalk-send-history-page__row:hover:not(.ant-table-row-selected)
+  > td {
+  background: var(--color-table-row-hover, rgba(1, 161, 175, 0.06)) !important;
 }
 
-.alimtalk-send-history-page__template-name-text {
-  display: flex;
-  min-width: 396px;
-  width: 100%;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
+.alimtalk-send-history-page__table.cms-data-table colgroup > col:nth-child(1),
+.alimtalk-send-history-page__table.cms-data-table th.alimtalk-send-history-page__col-no,
+.alimtalk-send-history-page__table.cms-data-table td.alimtalk-send-history-page__col-no {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+.alimtalk-send-history-page__table.cms-data-table th.alimtalk-send-history-page__col-datetime,
+.alimtalk-send-history-page__table.cms-data-table td.alimtalk-send-history-page__col-datetime {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+}
+
+.alimtalk-send-history-page__table.cms-data-table th.alimtalk-send-history-page__col-template-name,
+.alimtalk-send-history-page__table.cms-data-table td.alimtalk-send-history-page__col-template-name {
+  width: 280px !important;
+  min-width: 280px !important;
+  max-width: 280px !important;
 }

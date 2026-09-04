@@ -18,21 +18,35 @@ import { DetailModal } from './detail-modal'
 import '@/pages/programs/program-list-page.css'
 import './page.css'
 
+/** 시안 기준 고정 폭 — 일시 컬럼은 YYYY.MM.DD HH:mm:ss 표시 폭 확보 */
 const COL_W = {
   no: 80,
-  requestAt: 200,
-  templateName: 436,
-  senderInfo: 280,
-  receiverInfo: 280,
+  requestAt: 180,
+  templateName: 280,
+  senderInfo: 120,
+  receiverInfo: 160,
   broadcastTiming: 100,
   sendStatus: 120,
   receiveStatus: 120,
-  sendAt: 200,
-  receiveAt: 200,
-  reservedAt: 200,
+  sendAt: 180,
+  receiveAt: 180,
+  reservedAt: 180,
 } as const
 
 const TABLE_SCROLL_X = Object.values(COL_W).reduce((sum, width) => sum + width, 0)
+
+const DATETIME_FORMAT = 'YYYY.MM.DD HH:mm:ss'
+
+function formatDateTime(value: string | null | undefined): string {
+  if (!value) return '-'
+  const parsed = dayjs(value)
+  return parsed.isValid() ? parsed.format(DATETIME_FORMAT) : '-'
+}
+
+function formatReservedAt(value: string | null | undefined, timing: string): string {
+  if (timing === '즉시' || !value) return '-'
+  return formatDateTime(value)
+}
 
 export function Page() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -60,15 +74,19 @@ export function Page() {
         key: 'no',
         width: COL_W.no,
         align: 'center',
+        className: 'alimtalk-send-history-page__col-no',
+        onHeaderCell: () => ({ className: 'alimtalk-send-history-page__col-no' }),
         render: (_: unknown, __: AlimtalkSendHistoryRow, index: number) => rows.length - index,
       },
       {
-        title: '요청 일시',
+        title: '요청일시',
         dataIndex: 'requestAt',
         key: 'requestAt',
         width: COL_W.requestAt,
         align: 'center',
-        render: (value: string) => dayjs(value).format('YYYY.MM.DD HH:mm'),
+        className: 'alimtalk-send-history-page__col-datetime',
+        onHeaderCell: () => ({ className: 'alimtalk-send-history-page__col-datetime' }),
+        render: (value: string) => formatDateTime(value),
       },
       {
         title: '템플릿명',
@@ -76,10 +94,9 @@ export function Page() {
         key: 'templateName',
         width: COL_W.templateName,
         align: 'center',
+        ellipsis: { showTitle: true },
         className: 'alimtalk-send-history-page__col-template-name',
-        render: (value: string) => (
-          <span className="alimtalk-send-history-page__template-name-text">{value}</span>
-        ),
+        onHeaderCell: () => ({ className: 'alimtalk-send-history-page__col-template-name' }),
       },
       {
         title: '발신자 정보',
@@ -87,6 +104,7 @@ export function Page() {
         key: 'senderInfo',
         width: COL_W.senderInfo,
         align: 'center',
+        ellipsis: true,
       },
       {
         title: '수신자 정보',
@@ -94,6 +112,7 @@ export function Page() {
         key: 'receiverInfo',
         width: COL_W.receiverInfo,
         align: 'center',
+        ellipsis: true,
       },
       {
         title: '발송 시점',
@@ -117,28 +136,34 @@ export function Page() {
         align: 'center',
       },
       {
-        title: '발송 일시',
+        title: '발송일시',
         dataIndex: 'sentAt',
         key: 'sentAt',
         width: COL_W.sendAt,
         align: 'center',
-        render: (value: string) => dayjs(value).format('YYYY.MM.DD HH:mm'),
+        className: 'alimtalk-send-history-page__col-datetime',
+        onHeaderCell: () => ({ className: 'alimtalk-send-history-page__col-datetime' }),
+        render: (value: string) => formatDateTime(value),
       },
       {
-        title: '수신 일시',
+        title: '수신일시',
         dataIndex: 'receivedAt',
         key: 'receivedAt',
         width: COL_W.receiveAt,
         align: 'center',
-        render: (value: string) => dayjs(value).format('YYYY.MM.DD HH:mm'),
+        className: 'alimtalk-send-history-page__col-datetime',
+        onHeaderCell: () => ({ className: 'alimtalk-send-history-page__col-datetime' }),
+        render: (value: string) => formatDateTime(value),
       },
       {
-        title: '예약 일시',
+        title: '예약일시',
         dataIndex: 'reservedAt',
         key: 'reservedAt',
         width: COL_W.reservedAt,
         align: 'center',
-        render: (value: string) => dayjs(value).format('YYYY.MM.DD HH:mm'),
+        className: 'alimtalk-send-history-page__col-datetime',
+        onHeaderCell: () => ({ className: 'alimtalk-send-history-page__col-datetime' }),
+        render: (value: string, row) => formatReservedAt(value, row.broadcastTiming),
       },
     ],
     [rows.length]
@@ -162,7 +187,7 @@ export function Page() {
       >
         <Table<AlimtalkSendHistoryRow>
           rowKey="id"
-          className="cms-data-table alimtalk-send-history-page__table"
+          className="cms-data-table cms-data-table--hoverable alimtalk-send-history-page__table"
           tableLayout="fixed"
           scroll={{ x: TABLE_SCROLL_X }}
           columns={columns}
