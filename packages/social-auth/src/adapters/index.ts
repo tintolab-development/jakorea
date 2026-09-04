@@ -219,9 +219,10 @@ export function createAdminSsoAdapter(options: CreateAdminSsoAdapterOptions): So
 
     async completeCallback(input) {
       try {
-        if (input.socialLoginSessionId) {
+        const adminSsoSessionId = input.adminSsoSessionId ?? input.socialLoginSessionId
+        if (adminSsoSessionId) {
           const { data } = await http.post(paths.loginSessionConsume(), {
-            socialLoginSessionId: input.socialLoginSessionId,
+            adminSsoSessionId,
           })
           return unwrapAuthTokenResult(data)
         }
@@ -238,7 +239,7 @@ export function createAdminSsoAdapter(options: CreateAdminSsoAdapterOptions): So
 
         throw new SocialAuthApiError(
           'UNSUPPORTED',
-          'socialLoginSessionId가 없어 소셜 로그인을 완료할 수 없습니다.'
+          'adminSsoSessionId가 없어 소셜 로그인을 완료할 수 없습니다.'
         )
       } catch (err) {
         rethrowSocialAuthApiError(err, '소셜 로그인 처리에 실패했습니다.')

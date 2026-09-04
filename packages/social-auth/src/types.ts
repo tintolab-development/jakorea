@@ -94,7 +94,9 @@ export interface CallbackInput {
   code?: string
   idToken?: string
   state?: string
+  /** @deprecated Admin SSO login uses `adminSsoSessionId` (OpenAPI AdminSsoSessionConsumeRequest). */
   socialLoginSessionId?: string
+  adminSsoSessionId?: string
 }
 
 export interface LinkAccountInput {
