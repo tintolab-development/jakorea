@@ -20,24 +20,39 @@ import {
   type AlimtalkTemplateItem,
 } from '@/features/notifications/model/alimtalk-template/types'
 import { ALIMTALK_SEND_ALL_PROGRAM_ID } from '@/features/notifications/model/alimtalk-send/types'
-import type { AlimtalkSendRecipient } from '@/features/notifications/model/alimtalk-send/types'
+import type {
+  AlimtalkSendRecipient,
+  AlimtalkSendRecipientSearchParams,
+} from '@/features/notifications/model/alimtalk-send/types'
 import {
   createManualRecipient,
   mergeAlimtalkSendRecipients,
+  resolveAlimtalkSendRecipientTypeMode,
+  alimtalkSendRecipientTypeColumnTitle,
+  toAlimtalkSendMemberTypeApi,
+  toAlimtalkSendParticipantTypeApi,
 } from '@/features/notifications/model/alimtalk-send/recipients'
 import { categoryPathNames } from '@/features/notifications/lib/tree'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { isAlimtalkTemplateApproved } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
 import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
-import { createAlimtalkSendBatch } from '@/features/notifications/api/alimtalk-send-service'
-import { shouldUseAlimtalkSendRemoteApi } from '@/features/notifications/api/alimtalk-send-service'
+import {
+  createAlimtalkSendBatch,
+  getAlimtalkRecipientCandidates,
+  shouldUseAlimtalkSendRemoteApi,
+} from '@/features/notifications/api/alimtalk-send-service'
 import {
   useAlimtalkRecipientCandidatesQuery,
   useAlimtalkSenderProfilesQuery,
   useAlimtalkSendTemplatePickerQuery,
   useAlimtalkTemplateVariablesQuery,
 } from '@/features/notifications/hooks/use-alimtalk-send-queries'
-import { useAlimtalkCategoryTreeQuery } from '@/features/notifications/hooks/use-alimtalk-template-tree-query'
+import {
+  useAlimtalkCategoryTreeQuery,
+  useAlimtalkTemplateDetailQuery,
+  useAlimtalkTemplatePreviewQuery,
+} from '@/features/notifications/hooks/use-alimtalk-template-tree-query'
+import { templateUsesProgramRequiredVariable } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import { ContentPanel } from './content-panel'
 import { RecipientManualModal } from './recipient-manual-modal'
 import { RecipientSelectModal } from './recipient-select-modal'
@@ -61,6 +76,35 @@ function createIdempotencyKey(): string {
   return `alimtalk-batch-${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
+function emptyFallbackTemplate(templateId: string | undefined): AlimtalkTemplateItem {
+  return {
+    id: templateId ?? '',
+    name: '-',
+    templateName: '-',
+    categoryId: 'root',
+    registeredAt: '',
+    updatedAt: '',
+    senderProfile: '-',
+    messageType: 'BASIC',
+    emphasisType: 'NONE',
+    isSecurityTemplate: false,
+    content: '',
+    extraInfo: '',
+    ctaLabel: '',
+    buttons: [],
+    quickLinks: [],
+  }
+}
+
+function recipientTotalPages(
+  total: number,
+  size: number,
+  totalPages?: number
+): number {
+  if (totalPages != null && totalPages > 0) return totalPages
+  return Math.max(Math.ceil((total || 0) / (size || 50)), 1)
+}
+
 type SendFullpageModalProps = {
   open: boolean
   onClose: () => void
@@ -70,7 +114,7 @@ type SendFullpageModalProps = {
 export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFullpageModalProps) {
   const { showAlert } = useCmsAlert()
   const remote = shouldUseAlimtalkSendRemoteApi()
-  const [programId, setProgramId] = useState<string | undefined>('prog-coy-2026')
+  const [programId, setProgramId] = useState<string | undefined>(ALIMTALK_SEND_ALL_PROGRAM_ID)
   const [templateId, setTemplateId] = useState<string | undefined>()
   const [senderProfileKey, setSenderProfileKey] = useState<string | undefined>()
   const [sendTiming, setSendTiming] = useState<'immediate' | 'scheduled'>('immediate')
@@ -81,6 +125,11 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const [recipientManualOpen, setRecipientManualOpen] = useState(false)
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false)
   const [sending, setSending] = useState(false)
+  const [recipientSearch, setRecipientSearch] = useState<AlimtalkSendRecipientSearchParams>({
+    typeValue: '',
+    keyword: '',
+    page: 0,
+  })
   const idempotencyKeyRef = useRef(createIdempotencyKey())
 
   const senderProfilesQuery = useAlimtalkSenderProfilesQuery(open)
@@ -108,18 +157,46 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       ? Number(programId)
       : undefined
 
+  const recipientTypeMode = resolveAlimtalkSendRecipientTypeMode(programId)
+  const typeColumnTitle = alimtalkSendRecipientTypeColumnTitle(recipientTypeMode)
+
   const candidatesQuery = useAlimtalkRecipientCandidatesQuery(
-    { programId: programNumericId },
+    {
+      programId: programNumericId,
+      keyword: recipientSearch.keyword || undefined,
+      participantType:
+        recipientTypeMode === 'participation'
+          ? toAlimtalkSendParticipantTypeApi(recipientSearch.typeValue)
+          : undefined,
+      memberType:
+        recipientTypeMode === 'member'
+          ? toAlimtalkSendMemberTypeApi(recipientSearch.typeValue)
+          : undefined,
+      page: recipientSearch.page,
+      size: 50,
+    },
     open && recipientSelectOpen
   )
 
   const variablesQuery = useAlimtalkTemplateVariablesQuery({}, open && Boolean(templateId))
-  const variablesRequireProgram = (variablesQuery.data ?? []).some(item => item.requiresProgram)
+  const pickerTemplate = useMemo(
+    () => pickerTemplates.find(item => item.id === templateId) ?? null,
+    [pickerTemplates, templateId]
+  )
+  const detailQuery = useAlimtalkTemplateDetailQuery(
+    templateId ?? null,
+    open && remote && Boolean(templateId)
+  )
+  const previewQuery = useAlimtalkTemplatePreviewQuery(
+    templateId ?? null,
+    pickerTemplate,
+    open && remote && Boolean(templateId)
+  )
 
   useEffect(() => {
     if (!open) return
     idempotencyKeyRef.current = createIdempotencyKey()
-    setProgramId('prog-coy-2026')
+    setProgramId(ALIMTALK_SEND_ALL_PROGRAM_ID)
     setTemplateId(initialTemplateId)
     setSendTiming('immediate')
     setScheduledAt(null)
@@ -129,7 +206,14 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     setRecipientManualOpen(false)
     setSendConfirmOpen(false)
     setSending(false)
+    setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
   }, [open, initialTemplateId])
+
+  // 프로그램 전환 시: 유형 필터·page 리셋 (이전 모드 enum 혼용 금지)
+  useEffect(() => {
+    if (!open) return
+    setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
+  }, [open, programId])
 
   useEffect(() => {
     if (!open || senderOptions.length === 0) return
@@ -149,23 +233,62 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   }, [initialTemplateId, open, pickerTemplates, senderOptions, senderProfileKey])
 
   const selectedSender = senderOptions.find(option => option.value === senderProfileKey)
-  const selectedTemplate = useMemo(
-    () => pickerTemplates.find(item => item.id === templateId),
-    [pickerTemplates, templateId]
+  // preview(본문) → detail(메타) → picker(목록) 순으로 병합
+  const selectedTemplate = useMemo(() => {
+    const preview = remote ? previewQuery.data : null
+    const detail = remote ? detailQuery.data : null
+    if (!preview && !detail && !pickerTemplate) return null
+    return {
+      ...(pickerTemplate ?? emptyFallbackTemplate(templateId)),
+      ...(detail ?? {}),
+      ...(preview ?? {}),
+      id: templateId ?? preview?.id ?? detail?.id ?? pickerTemplate?.id ?? '',
+      name:
+        preview?.name ||
+        detail?.name ||
+        pickerTemplate?.name ||
+        preview?.templateName ||
+        detail?.templateName ||
+        '-',
+      templateName:
+        preview?.templateName ||
+        detail?.templateName ||
+        pickerTemplate?.templateName ||
+        preview?.name ||
+        detail?.name ||
+        '-',
+      content: preview?.content || detail?.content || pickerTemplate?.content || '',
+      extraInfo: preview?.extraInfo || detail?.extraInfo || pickerTemplate?.extraInfo || '',
+      senderProfile:
+        (preview?.senderProfile && preview.senderProfile !== '-'
+          ? preview.senderProfile
+          : undefined) ||
+        (detail?.senderProfile && detail.senderProfile !== '-'
+          ? detail.senderProfile
+          : undefined) ||
+        pickerTemplate?.senderProfile ||
+        '-',
+      buttons: preview?.buttons?.length
+        ? preview.buttons
+        : detail?.buttons?.length
+          ? detail.buttons
+          : (pickerTemplate?.buttons ?? []),
+      quickLinks: preview?.quickLinks?.length
+        ? preview.quickLinks
+        : detail?.quickLinks?.length
+          ? detail.quickLinks
+          : (pickerTemplate?.quickLinks ?? []),
+    } satisfies AlimtalkTemplateItem
+  }, [detailQuery.data, pickerTemplate, previewQuery.data, remote, templateId])
+
+  const variablesRequireProgram = useMemo(
+    () => templateUsesProgramRequiredVariable(variablesQuery.data ?? [], selectedTemplate),
+    [selectedTemplate, variablesQuery.data]
   )
 
   const canConfigureRecipients = Boolean(selectedSender && selectedTemplate)
-  const typeColumnTitle =
-    !programId || programId === ALIMTALK_SEND_ALL_PROGRAM_ID ? '회원 유형' : '참여 유형'
 
   const handleSelectTemplate = (template: AlimtalkTemplateItem) => {
-    if (!isAlimtalkTemplateApproved(template) && remote) {
-      showAlert({
-        title: '안내',
-        content: '카카오 승인이 완료되지 않은 템플릿은 선택할 수 없습니다.',
-      })
-      return
-    }
     setTemplateId(template.id)
     if (template.senderKey) {
       const matched = senderOptions.find(option => option.senderKey === template.senderKey)
@@ -210,6 +333,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       })
       return
     }
+    setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
     setRecipientSelectOpen(true)
   }
 
@@ -552,9 +676,49 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       <RecipientSelectModal
         key={recipientSelectOpen ? 'recipient-select-open' : 'recipient-select-closed'}
         open={open && recipientSelectOpen}
-        candidates={candidatesQuery.data}
-        selectedIds={recipients.map(item => item.id)}
-        typeColumnTitle={typeColumnTitle}
+        candidates={candidatesQuery.data?.items}
+        initialSelected={recipients}
+        typeMode={recipientTypeMode}
+        onSearch={
+          remote
+            ? params => {
+                setRecipientSearch(params)
+              }
+            : undefined
+        }
+        totalCount={candidatesQuery.data?.total}
+        totalPages={
+          candidatesQuery.data
+            ? recipientTotalPages(
+                candidatesQuery.data.total,
+                candidatesQuery.data.size,
+                candidatesQuery.data.totalPages
+              )
+            : 1
+        }
+        fetchAllCandidates={
+          remote
+            ? async () => {
+                const total = Math.max(candidatesQuery.data?.total ?? 0, 1)
+                const result = await getAlimtalkRecipientCandidates({
+                  programId: programNumericId,
+                  keyword: recipientSearch.keyword || undefined,
+                  participantType:
+                    recipientTypeMode === 'participation'
+                      ? toAlimtalkSendParticipantTypeApi(recipientSearch.typeValue)
+                      : undefined,
+                  memberType:
+                    recipientTypeMode === 'member'
+                      ? toAlimtalkSendMemberTypeApi(recipientSearch.typeValue)
+                      : undefined,
+                  page: 0,
+                  // 발송 수신자 상한 1000 · 전 페이지를 한 번에 가져와 「전체 선택」
+                  size: Math.min(Math.max(total, 50), 1000),
+                })
+                return result.items
+              }
+            : undefined
+        }
         onClose={() => setRecipientSelectOpen(false)}
         onConfirm={next => {
           setRecipients(prev => mergeAlimtalkSendRecipients(prev, next))
