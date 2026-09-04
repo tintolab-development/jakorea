@@ -97,19 +97,18 @@ flowchart LR
 
 ---
 
-## 4. FE 적용 대상 (연동 예정)
+## 4. FE 적용 대상
 
-API·OpenAPI·스테이징 200 확인 후 CMS가 `downloadBlob` / `downloadFile` 공통 경로에서 호출한다.  
-인증서는 기존처럼 `skipAccessLog` + `download-logs`만 사용한다.
+CMS는 `downloadBlob` / `downloadFile` 공통 경로에서 호출한다 (`shouldRecordFileAccessRemotely` = logs 모듈 + 관리자 JWT).  
+인증서는 기존처럼 `skipAccessLog` + `download-logs`만 사용한다. 라우트 404/405면 파일은 저장하고 메모리 stub만 남긴다.
 
 | 구분 | 예시 | 현재 FE |
 |------|------|---------|
 | 목록 엑셀 | 전체 회원·공지·실적 등 FilterTableLayout `excelExport` | `exportTableToExcel` → `downloadExcel` → `downloadBlob` |
-| 지급조서 PDF | 회원 동의/발급 문서 다운로드 | `downloadBlob` (`member-consent-document-view-modal`, `generate-form-document-pdf` 등) |
+| 작성·발급 양식 PDF | 동의서 미리보기·지급조서·강의보고서 등 「문서 다운로드」 | `downloadFormDocumentPdfFromPageElements` → `downloadBlob` |
+| 지급조서 PDF | 회원 동의/발급 문서 다운로드 | `downloadBlob` (`member-consent-document-view-modal` 등) |
 | 기타 blob/첨부 | `downloadFile`, 세금/대량이체 엑셀 등 | 동일 공통 유틸 |
 | 인증서 PDF | 수료증·참가/활동 인증서 | **본 API 사용 안 함** — `logCertificateIssueDownload` |
-
-핸드오프 반영 전 FE는 원격 POST를 **호출하지 않는다**(405 방지). 메모리 stub만.
 
 ---
 
@@ -139,10 +138,8 @@ API·OpenAPI·스테이징 200 확인 후 CMS가 `downloadBlob` / `downloadFile`
 
 ---
 
-## 7. FE 후속 (이 문서 범위 밖)
+## 7. FE 후속
 
-스테이징 스모크 통과 후:
+CMS는 logs 실세션에서 `POST .../file-access/client`를 호출한다 (fail-closed, 404/405만 stub 폴백).
 
-1. Orval / axios 클라이언트에 `POST .../file-access/client` 연결
-2. `recordFileDownload`가 실세션일 때 해당 POST 호출 (fail-closed → 성공 후에만 `saveAs`)
-3. 단위·수동 QA: 회원 목록 엑셀 · 지급조서 → 파일 다운로드 이력 화면
+수동 QA: 작성/발급 양식 「문서 다운로드」 · 회원 목록 엑셀 → 파일 다운로드 이력 화면

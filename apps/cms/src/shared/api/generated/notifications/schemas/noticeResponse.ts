@@ -21,14 +21,16 @@ export interface NoticeResponse {
   category?: string;
   /** 생성 시각 */
   createdAt?: string;
-  /** 상단 중요 표시 */
+  /** 수정 시각 */
+  updatedAt?: string;
+  /** 상단 고정 */
   isImportant?: boolean;
   /** 조회 수 */
   viewCount?: number;
   /** 첨부파일 존재 여부 */
   hasAttachment?: boolean;
-  /** 작성자 표시명 */
+  /** 작성자명 */
   author?: string;
-  /** 상태 */
+  /** 공개 상태 */
   status?: NoticeResponseStatus;
 }

@@ -15753,12 +15753,12 @@
           "businessStartDate": {
             "type": "string"
           },
-          "businessEndDate": {
-            "type": "string"
-          },
           "businessYear": {
             "type": "integer",
             "format": "int32"
+          },
+          "businessEndDate": {
+            "type": "string"
           }
         }
       },
@@ -15847,10 +15847,10 @@
           "ujatPartnerRecommendationPath": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           }
         }
@@ -17158,9 +17158,10 @@
           },
           "status": {
             "type": "string",
-            "description": "상태",
+            "description": "공개 여부/상태. 공개=published, 비공개=draft|임시저장. 미입력 시 DRAFT(비공개).",
             "enum": [
               "published",
+              "draft",
               "임시저장",
               "archived"
             ],
@@ -17228,7 +17229,7 @@
           },
           "status": {
             "type": "string",
-            "description": "상태",
+            "description": "공개 여부 매핑 상태. published=공개, 임시저장|draft=비공개, archived=보관.",
             "enum": [
               "published",
               "임시저장",
@@ -30630,15 +30631,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },

@@ -38,15 +38,16 @@ import '@/features/program/general/ui/program-list.css'
 import './admin-faq-delete-btn.css'
 import './admin-faq-list-page.css'
 
-const FAQ_LIST_TABLE_SCROLL_X = 1032
+/** 고정열 합 + 제목 최소 + 체크박스 여유 (시안: 공개100·카테고리160·작성자140·일시200×2) */
+const FAQ_LIST_TABLE_SCROLL_X = 1140
 
 const FAQ_LIST_COL_WIDTH = {
   no: 80,
-  category: 108,
-  title: 360,
   visibility: 100,
-  author: 112,
-  datetime: 176,
+  category: 160,
+  title: 280,
+  author: 140,
+  datetime: 200,
 } as const
 
 function AdminFAQPage() {
@@ -151,31 +152,12 @@ function AdminFAQPage() {
           tableData.length === 0 ? '—' : tableData.length - index,
       },
       {
-        title: '카테고리',
-        dataIndex: 'category',
-        key: 'category',
-        width: FAQ_LIST_COL_WIDTH.category,
-        align: 'center',
-        ellipsis: true,
-      },
-      {
-        title: '제목',
-        dataIndex: 'question',
-        key: 'question',
-        width: FAQ_LIST_COL_WIDTH.title,
-        align: 'center',
-        ellipsis: { showTitle: true },
-        render: (text: string) => (
-          <span className="admin-faq-list-page__title-cell">
-            <span className="admin-faq-list-page__title-text">{text}</span>
-          </span>
-        ),
-      },
-      {
-        title: '공개여부',
+        title: '공개 여부',
         key: 'visibility',
         width: FAQ_LIST_COL_WIDTH.visibility,
         align: 'center',
+        className: 'admin-faq-list-page__col-visibility',
+        onHeaderCell: () => ({ className: 'admin-faq-list-page__col-visibility' }),
         render: (_: unknown, row) =>
           row.status === 'published' ? (
             '공개'
@@ -184,12 +166,39 @@ function AdminFAQPage() {
           ),
       },
       {
+        title: '카테고리',
+        dataIndex: 'category',
+        key: 'category',
+        width: FAQ_LIST_COL_WIDTH.category,
+        align: 'center',
+        ellipsis: true,
+        className: 'admin-faq-list-page__col-category',
+        onHeaderCell: () => ({ className: 'admin-faq-list-page__col-category' }),
+      },
+      {
+        title: '제목',
+        dataIndex: 'question',
+        key: 'question',
+        width: FAQ_LIST_COL_WIDTH.title,
+        align: 'center',
+        ellipsis: { showTitle: true },
+        className: 'admin-faq-list-page__col-title',
+        onHeaderCell: () => ({ className: 'admin-faq-list-page__col-title' }),
+        render: (text: string) => (
+          <span className="admin-faq-list-page__title-cell">
+            <span className="admin-faq-list-page__title-text">{text}</span>
+          </span>
+        ),
+      },
+      {
         title: '작성자',
         dataIndex: 'author',
         key: 'author',
         width: FAQ_LIST_COL_WIDTH.author,
         align: 'center',
         ellipsis: true,
+        className: 'admin-faq-list-page__col-author',
+        onHeaderCell: () => ({ className: 'admin-faq-list-page__col-author' }),
       },
       {
         title: '작성일시',
@@ -197,7 +206,19 @@ function AdminFAQPage() {
         key: 'createdAt',
         width: FAQ_LIST_COL_WIDTH.datetime,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm'),
+        className: 'admin-faq-list-page__col-datetime',
+        onHeaderCell: () => ({ className: 'admin-faq-list-page__col-datetime' }),
+        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
+      },
+      {
+        title: '수정일시',
+        key: 'updatedAt',
+        width: FAQ_LIST_COL_WIDTH.datetime,
+        align: 'center',
+        className: 'admin-faq-list-page__col-datetime',
+        onHeaderCell: () => ({ className: 'admin-faq-list-page__col-datetime' }),
+        render: (_: unknown, row: AdminFaq) =>
+          dayjs(row.updatedAt ?? row.createdAt).format('YYYY.MM.DD HH:mm:ss'),
       },
     ],
     [tableData.length]

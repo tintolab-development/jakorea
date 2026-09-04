@@ -20,9 +20,18 @@ vi.mock('@/shared/ui/cms-alert-modal-api', () => ({
   cmsAlertModal: { show: vi.fn() },
 }))
 
+vi.mock('@/shared/lib/query-client', () => ({
+  queryClient: { invalidateQueries: vi.fn() },
+}))
+
 vi.mock('@/shared/lib/post-file-access-log', () => ({
   postFileAccessLog: vi.fn().mockResolvedValue(undefined),
   FILE_ACCESS_LOG_CREATE_PATH: '/api/admin/logs/file-access/client',
+  isClientFileAccessLogUnavailable: (error: unknown) => {
+    if (!error || typeof error !== 'object' || !('response' in error)) return false
+    const status = (error as { response?: { status?: number } }).response?.status
+    return status === 404 || status === 405
+  },
 }))
 
 vi.mock('@/shared/lib/should-record-file-access-remotely', () => ({

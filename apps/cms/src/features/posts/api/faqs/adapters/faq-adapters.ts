@@ -20,6 +20,11 @@ function toFaqRequestStatus(status: AdminFaq['status'] | undefined): FaqRequest[
 }
 
 export function mapFaqResponse(dto: FaqResponse): AdminFaq {
+  const createdAt = dto.createdAt ?? new Date().toISOString()
+  const updatedAt =
+    typeof (dto as { updatedAt?: unknown }).updatedAt === 'string'
+      ? ((dto as { updatedAt?: string }).updatedAt as string)
+      : createdAt
   return {
     id: dto.id ?? '',
     category: dto.category ?? '',
@@ -27,7 +32,8 @@ export function mapFaqResponse(dto: FaqResponse): AdminFaq {
     answer: dto.answer ?? '',
     author: dto.author ?? '',
     status: parseFaqStatus(dto.status),
-    createdAt: dto.createdAt ?? new Date().toISOString(),
+    createdAt,
+    updatedAt,
   }
 }
 

@@ -14,12 +14,16 @@ export const FILTER_ADDRESS_REGION_SEGMENT_WIDTH_PX = 114.75
 export const FILTER_ADDRESS_REGION_FIELD_WIDTH_PX =
   FILTER_ADDRESS_REGION_SEGMENT_WIDTH_PX * 2 + FILTER_ADDRESS_REGION_PAIR_GAP_PX
 
-/**
- * 단일 검색·셀렉트 필터 열 폭 — `filter-controls-common.css` `--filter-control-width`·`--filter-control-max-width` 와 동일(240px)
- */
-export const FILTER_CONTROL_MAX_WIDTH_PX = 240
+/** 단일 검색·셀렉트 최소 폭 — `--filter-control-min-width` · `--table-filter-field-min-width` */
+export const FILTER_CONTROL_MIN_WIDTH_PX = 240
 
-/** 분리형 `dateRange`·`selectPair` 열: 2×240 + 구분 gap(20px) = 500 */
+/**
+ * 단일 검색·셀렉트 기본 폭 — `filter-controls-common.css`
+ * `--filter-control-width`·`--filter-control-max-width` 와 동일(260px)
+ */
+export const FILTER_CONTROL_MAX_WIDTH_PX = 260
+
+/** 분리형 `dateRange`·`selectPair` 열: 2×260 + 구분 gap(20px) = 540 */
 export const FILTER_CONTROL_WIDE_FIELD_WIDTH_PX =
   FILTER_CONTROL_MAX_WIDTH_PX * 2 + 20
 

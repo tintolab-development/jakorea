@@ -3,7 +3,7 @@
  * - 년도/분기는 한 항목(`selectPair` compact)으로 묶어 레이블 1개 + 셀렉트 2개로 렌더
  *   기관 소재지와 동일: 열 235.5px · 하위 50:50(각 114.75px) · gap 6px
  * - 기관 소재지(시/도·시/군/구)도 한 항목(`addressRegion`)으로 묶음
- * - 단일 검색: 공통 240px 규격 — `flex: 1 1 0` 금지(Col만 늘고 컨트롤 240px 고정 시 갭 과다)
+ * - 단일 검색: 공통 260px 규격 — `flex: 1 1 0` 금지(Col만 늘고 컨트롤 260px 고정 시 갭 과다)
  */
 
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'

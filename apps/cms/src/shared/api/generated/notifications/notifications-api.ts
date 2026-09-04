@@ -38,7 +38,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * ### 이 API가 하는 일
  * - PUT /api/admin/notification-event-catalog/{eventType}
  * - API 분류: 시스템 진단/운영 검증 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PUT /api/admin/notification-event-catalog/{eventType}`
  *
@@ -150,8 +150,8 @@ const upsertNotificationEventChannelTemplate = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notification-templates`
  *
@@ -205,8 +205,8 @@ const listNotificationTemplates = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/notification-templates
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `POST /api/admin/notification-templates`
  *
@@ -419,8 +419,8 @@ const cancelNotificationDelivery = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/notification-deliveries/test-send
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `POST /api/admin/notification-deliveries/test-send`
  *
@@ -529,8 +529,8 @@ const archiveNotificationTemplate = (
 /**
  * ### 이 API가 하는 일
  * - 알림 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PATCH /api/admin/notification-templates/{templateId}`
  *
@@ -587,7 +587,7 @@ const updateNotificationTemplate = (
  * ### 이 API가 하는 일
  * - 알림 조회
  * - API 분류: 시스템 진단/운영 검증 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notification-event-catalog`
  *
@@ -692,8 +692,8 @@ const notificationEventChannelTemplates = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notification-deliveries`
  *
@@ -747,8 +747,8 @@ const listNotificationDeliveries = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notification-deliveries/{deliveryId}`
  *

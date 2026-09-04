@@ -36,6 +36,7 @@ export function FaqFormModal(props: FaqFormModalProps) {
         onCancel={props.onCancel}
         title={ctrl.modalTitle}
         width={800}
+        titleBodyGap="none"
         className="faq-form-modal"
         wrapClassName="faq-form-modal-wrap"
         footer={

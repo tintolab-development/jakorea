@@ -1,7 +1,7 @@
 .table-filter-group__container {
   --table-filter-field-gap: var(--filter-field-gap, 12px);
   --table-filter-field-min-width: 240px;
-  --table-filter-field-max-width: 240px;
+  --table-filter-field-max-width: 260px;
   --filter-address-region-segment-width: 114.75px;
   --filter-control-width: var(--table-filter-field-max-width);
   --filter-control-max-width: var(--table-filter-field-max-width);
@@ -39,8 +39,8 @@
 .table-filter-group__grid-cell {
   flex: 0 0 auto;
   min-width: var(--table-filter-field-min-width, 240px);
-  width: var(--table-filter-field-max-width, 240px);
-  max-width: var(--table-filter-field-max-width, 240px);
+  width: var(--table-filter-field-max-width, 260px);
+  max-width: var(--table-filter-field-max-width, 260px);
   box-sizing: border-box;
 }
 
@@ -61,9 +61,9 @@
 .table-filter-group__grid-cell.table-filter-group__grid-cell--pair-field:not(
     .table-filter-group__grid-cell--address-region
   ):not(.table-filter-group__grid-cell--pct-width):not(.table-filter-group__grid-cell--explicit-width) {
-  width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
-  min-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
-  max-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
+  min-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
+  max-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
 }
 
 .table-filter-group__grid-cell.table-filter-group__grid-cell--address-region:not(
@@ -84,13 +84,13 @@
     .table-filter-group__grid-cell--explicit-width
   ):has(.cms-datepicker--range-split) {
   width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
   min-width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
 }
 
@@ -184,15 +184,15 @@
     :has(.cms-datepicker--range-split)
   ) {
   min-width: var(--table-filter-field-min-width, 240px);
-  max-width: var(--table-filter-field-max-width, 240px);
+  max-width: var(--table-filter-field-max-width, 260px);
 }
 
 .table-filter-group__fields-inner.ant-row
   > .ant-col.table-filter-group__col--pair-field:not(.table-filter-group__col--address-region):not(
     .table-filter-group__col--pct-width
   ):not(.table-filter-group__col--explicit-width) {
-  min-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
-  max-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  min-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
+  max-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
 }
 
 .table-filter-group__fields-inner.ant-row
@@ -212,10 +212,10 @@
     .cms-datepicker--range-split
   ) {
   min-width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
 }
 
@@ -274,8 +274,8 @@
 
 .table-filter-group__fields-inner .table-filter-group__field {
   min-width: var(--table-filter-field-min-width, 240px);
-  width: var(--table-filter-field-max-width, 240px);
-  max-width: var(--table-filter-field-max-width, 240px);
+  width: var(--table-filter-field-max-width, 260px);
+  max-width: var(--table-filter-field-max-width, 260px);
 }
 
 .table-filter-group__fields-inner .ant-col.table-filter-group__col--radio .table-filter-group__field {
@@ -301,9 +301,9 @@
     .table-filter-group__grid-cell--address-region
   )
   .table-filter-group__field {
-  min-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
-  width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
-  max-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  min-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
+  width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
+  max-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
 }
 
 .table-filter-group__fields-inner
@@ -327,13 +327,13 @@
   .table-filter-group__field,
 .table-filter-group__grid-cell--pct-width:has(.cms-datepicker--range-split) .table-filter-group__field {
   min-width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
   width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
 }
 
@@ -356,7 +356,7 @@
   max-width: 100%;
 }
 
-/* 필터 컨트롤: 단일 셀렉트만 240px — pair·addressRegion 내부는 세그먼트 규칙 */
+/* 필터 컨트롤: 단일 셀렉트만 260px — pair·addressRegion 내부는 세그먼트 규칙 */
 .table-filter-group__container .labeled-search-input,
 .table-filter-group__fields-inner
   .table-filter-group__field--select:not(:has(.table-filter-group__address-region-selects)):not(
@@ -368,9 +368,9 @@
     :has(.table-filter-group__select-pair-selects)
   )
   > .cms-select {
-  min-width: var(--filter-control-max-width, 240px) !important;
-  width: var(--filter-control-max-width, 240px) !important;
-  max-width: var(--filter-control-max-width, 240px) !important;
+  min-width: var(--filter-control-max-width, 260px) !important;
+  width: var(--filter-control-max-width, 260px) !important;
+  max-width: var(--filter-control-max-width, 260px) !important;
   box-sizing: border-box;
 }
 
@@ -393,9 +393,9 @@
 
 .table-filter-group__fields-inner .table-filter-group__field--select:has(.table-filter-group__select-pair-selects),
 .table-filter-group__grid-cell .table-filter-group__field--select:has(.table-filter-group__select-pair-selects) {
-  min-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px)) !important;
-  width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px)) !important;
-  max-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px)) !important;
+  min-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px)) !important;
+  width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px)) !important;
+  max-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px)) !important;
 }
 
 .table-filter-group__fields-inner
@@ -446,10 +446,10 @@
   )
   .table-filter-group__select-pair-selects
   > .ant-select {
-  flex: 0 0 var(--filter-field-pair-segment-width, var(--filter-control-max-width, 240px)) !important;
-  width: var(--filter-field-pair-segment-width, var(--filter-control-max-width, 240px)) !important;
-  min-width: var(--filter-field-pair-segment-width, var(--filter-control-max-width, 240px)) !important;
-  max-width: var(--filter-field-pair-segment-width, var(--filter-control-max-width, 240px)) !important;
+  flex: 0 0 var(--filter-field-pair-segment-width, var(--filter-control-max-width, 260px)) !important;
+  width: var(--filter-field-pair-segment-width, var(--filter-control-max-width, 260px)) !important;
+  min-width: var(--filter-field-pair-segment-width, var(--filter-control-max-width, 260px)) !important;
+  max-width: var(--filter-field-pair-segment-width, var(--filter-control-max-width, 260px)) !important;
 }
 
 .table-filter-group__fields-inner
@@ -526,9 +526,9 @@
     .table-filter-group__grid-cell--address-region
   )
   .table-filter-group__select-pair-selects {
-  width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
-  min-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
-  max-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
+  min-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
+  max-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
   gap: var(--filter-field-gap, 12px);
 }
 
@@ -571,10 +571,10 @@
   )
   .table-filter-group__select-pair-selects
   > .ant-select {
-  flex: 0 0 var(--filter-control-max-width, 240px) !important;
-  width: var(--filter-control-max-width, 240px) !important;
-  min-width: var(--filter-control-max-width, 240px) !important;
-  max-width: var(--filter-control-max-width, 240px) !important;
+  flex: 0 0 var(--filter-control-max-width, 260px) !important;
+  width: var(--filter-control-max-width, 260px) !important;
+  min-width: var(--filter-control-max-width, 260px) !important;
+  max-width: var(--filter-control-max-width, 260px) !important;
 }
 
 .table-filter-group__fields-inner
@@ -600,9 +600,9 @@
 /* 단일 날짜: 컨트롤 하나당 260px 고정 (% Col 포함) */
 .table-filter-group__fields-inner .cms-datepicker:not(.cms-datepicker--range-split),
 .table-filter-group__grid-cell .cms-datepicker:not(.cms-datepicker--range-split) {
-  min-width: var(--filter-control-max-width, 240px);
-  max-width: var(--filter-control-max-width, 240px);
-  width: var(--filter-control-max-width, 240px);
+  min-width: var(--filter-control-max-width, 260px);
+  max-width: var(--filter-control-max-width, 260px);
+  width: var(--filter-control-max-width, 260px);
   box-sizing: border-box;
 }
 
@@ -610,55 +610,55 @@
 .table-filter-group__fields-inner .cms-datepicker.cms-datepicker--range-split,
 .table-filter-group__grid-cell .cms-datepicker.cms-datepicker--range-split {
   min-width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
   width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
   box-sizing: border-box;
 }
 
 .table-filter-group__container .cms-datepicker--range-split .cms-datepicker__segment {
-  flex: 0 0 var(--filter-control-max-width, 240px) !important;
-  min-width: var(--filter-control-max-width, 240px) !important;
-  max-width: var(--filter-control-max-width, 240px) !important;
-  width: var(--filter-control-max-width, 240px) !important;
+  flex: 0 0 var(--filter-control-max-width, 260px) !important;
+  min-width: var(--filter-control-max-width, 260px) !important;
+  max-width: var(--filter-control-max-width, 260px) !important;
+  width: var(--filter-control-max-width, 260px) !important;
 }
 
 /* `width="100%"` 등 explicit-width 클래스가 붙어도 시작·종료 각 260px 유지 */
 .table-filter-group__container
   .cms-datepicker--range-split.cms-datepicker--explicit-width
   .cms-datepicker__segment {
-  flex: 0 0 var(--filter-control-max-width, 240px) !important;
-  min-width: var(--filter-control-max-width, 240px) !important;
-  max-width: var(--filter-control-max-width, 240px) !important;
-  width: var(--filter-control-max-width, 240px) !important;
+  flex: 0 0 var(--filter-control-max-width, 260px) !important;
+  min-width: var(--filter-control-max-width, 260px) !important;
+  max-width: var(--filter-control-max-width, 260px) !important;
+  width: var(--filter-control-max-width, 260px) !important;
 }
 
 .table-filter-group__container .cms-datepicker--range-split.cms-datepicker--explicit-width {
   width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   ) !important;
   max-width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   ) !important;
 }
 
 .table-filter-group__fields-inner .cms-select--multiple-ui,
 .table-filter-group__grid-cell .cms-select--multiple-ui {
-  min-width: var(--filter-control-max-width, 240px);
-  max-width: var(--filter-control-max-width, 240px);
-  width: var(--filter-control-max-width, 240px);
+  min-width: var(--filter-control-max-width, 260px);
+  max-width: var(--filter-control-max-width, 260px);
+  width: var(--filter-control-max-width, 260px);
   box-sizing: border-box;
 }
 
 .table-filter-group__grid-cell .table-filter-group__field {
   min-width: var(--table-filter-field-min-width, 240px);
-  width: var(--table-filter-field-max-width, 240px);
-  max-width: var(--table-filter-field-max-width, 240px);
+  width: var(--table-filter-field-max-width, 260px);
+  max-width: var(--table-filter-field-max-width, 260px);
 }
 
 .table-filter-group__grid-cell--pair-field:not(.table-filter-group__grid-cell--address-region):not(
@@ -704,7 +704,7 @@
   max-width: min(100%, var(--filter-field-width)) !important;
 }
 
-/* % Col: 바깥 검색 래퍼·CmsInput만 240px — affix까지 240 고정하면
+/* % Col: 바깥 검색 래퍼·CmsInput만 260px — affix까지 고정하면
  * control padding(14×2) 안에서 넘쳐 clear가 테두리에 잘림 */
 .table-filter-group__container
   .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
@@ -726,9 +726,9 @@
   .table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field)
   .labeled-search-input
   .cms-input {
-  min-width: var(--filter-control-max-width, 240px) !important;
-  width: var(--filter-control-max-width, 240px) !important;
-  max-width: var(--filter-control-max-width, 240px) !important;
+  min-width: var(--filter-control-max-width, 260px) !important;
+  width: var(--filter-control-max-width, 260px) !important;
+  max-width: var(--filter-control-max-width, 260px) !important;
   box-sizing: border-box;
 }
 
@@ -839,9 +839,9 @@
   .table-filter-group__select-pair-selects,
 .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width)
   .table-filter-group__select-pair-selects {
-  width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
-  min-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
-  max-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
+  min-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
+  max-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
 }
 
 .table-filter-group__fields-inner
@@ -876,10 +876,10 @@
 .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width)
   .table-filter-group__select-pair-selects
   > .ant-select {
-  flex: 0 0 var(--filter-control-max-width, 240px) !important;
-  width: var(--filter-control-max-width, 240px) !important;
-  min-width: var(--filter-control-max-width, 240px) !important;
-  max-width: var(--filter-control-max-width, 240px) !important;
+  flex: 0 0 var(--filter-control-max-width, 260px) !important;
+  width: var(--filter-control-max-width, 260px) !important;
+  min-width: var(--filter-control-max-width, 260px) !important;
+  max-width: var(--filter-control-max-width, 260px) !important;
 }
 
 .table-filter-group__fields-inner
@@ -944,9 +944,9 @@
 .table-filter-group__fields-grid-row--merged-auto-fill
   > .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--explicit-width) {
   flex: 0 0 auto;
-  width: var(--filter-control-max-width, 240px);
-  max-width: var(--filter-control-max-width, 240px);
-  min-width: var(--filter-control-max-width, 240px);
+  width: var(--filter-control-max-width, 260px);
+  max-width: var(--filter-control-max-width, 260px);
+  min-width: var(--filter-control-max-width, 260px);
   box-sizing: border-box;
 }
 
@@ -975,9 +975,9 @@
 .table-filter-group__merged-inline-wrap
   > .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--explicit-width) {
   flex: 0 0 auto;
-  width: var(--filter-control-max-width, 240px);
-  max-width: var(--filter-control-max-width, 240px);
-  min-width: var(--filter-control-max-width, 240px);
+  width: var(--filter-control-max-width, 260px);
+  max-width: var(--filter-control-max-width, 260px);
+  min-width: var(--filter-control-max-width, 260px);
   box-sizing: border-box;
 }
 
@@ -998,9 +998,9 @@
   > .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--explicit-width):has(
     .cms-datepicker--range-split
   ) {
-  width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
-  max-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
-  min-width: calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px));
+  width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
+  max-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
+  min-width: calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px));
 }
 
 .table-filter-group__merged-inline-wrap
@@ -1008,13 +1008,13 @@
     .cms-datepicker--range-split
   ) {
   width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
   min-width: calc(
-    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
   );
 }
 

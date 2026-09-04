@@ -10,7 +10,13 @@ import type {
 
 function mapInquiryStatus(value: string | undefined): AdminInquiryRow['status'] {
   const normalized = (value ?? '').toUpperCase()
-  if (normalized === 'ANSWERED' || normalized === 'COMPLETED') return 'ANSWERED'
+  if (
+    normalized === 'ANSWERED' ||
+    normalized === 'COMPLETED' ||
+    normalized === 'CLOSED'
+  ) {
+    return 'ANSWERED'
+  }
   return 'PENDING'
 }
 
@@ -21,14 +27,18 @@ function mapInquiryBase(dto: InquiryResponse): AdminInquiryRow {
     category: dto.category ?? '',
     status: mapInquiryStatus(dto.status),
     createdAt: dto.createdAt ?? new Date().toISOString(),
-    memberName: dto.inquirerMemberId != null ? `회원 #${dto.inquirerMemberId}` : '-',
+    memberName:
+      dto.inquirerName?.trim() ||
+      (dto.inquirerMemberId != null ? `회원 #${dto.inquirerMemberId}` : '-'),
     programName: dto.programNameSnapshot ?? null,
     programId: dto.programId != null ? String(dto.programId) : undefined,
-    assignee: dto.assignedAdminId != null ? `관리자 #${dto.assignedAdminId}` : null,
+    assignee:
+      dto.assignedAdminName?.trim() ||
+      (dto.assignedAdminId != null ? `관리자 #${dto.assignedAdminId}` : null),
     answeredAt: dto.answeredAt ?? null,
     body: dto.content ?? '',
-    phone: '-',
-    email: '-',
+    phone: dto.inquirerPhone?.trim() || '-',
+    email: dto.inquirerEmail?.trim() || '-',
     answerMarkdown: null,
   }
 }

@@ -31,9 +31,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-width: 0;
+  gap: 10px;
+  box-sizing: border-box;
   max-width: 100%;
+  vertical-align: middle;
 }
 
 .admin-faq-list-page__title-text {
@@ -41,7 +42,89 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  max-width: 100%;
   text-align: center;
+}
+
+.admin-faq-list-page__table.cms-data-table .ant-table-thead > tr > th.admin-faq-list-page__col-title,
+.admin-faq-list-page__table.cms-data-table .ant-table-tbody > tr > td.admin-faq-list-page__col-title {
+  text-align: center !important;
+}
+
+/*
+ * Ant Table column.width는 cms-data-table의 `col ~ col { width: auto !important }`에 덮임.
+ * 시안: 공개100 · 카테고리160 · 제목 flex:1 · 작성자140 · 작성/수정일시200
+ * nth-child: 1 체크박스 · 2 No. · 3 공개 · 4 카테고리 · 5 제목 · 6 작성자 · 7·8 일시
+ */
+.admin-faq-list-page__table.cms-data-table colgroup > col:nth-child(3),
+.admin-faq-list-page__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.admin-faq-list-page__col-visibility,
+.admin-faq-list-page__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.admin-faq-list-page__col-visibility {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+}
+
+.admin-faq-list-page__table.cms-data-table colgroup > col:nth-child(4),
+.admin-faq-list-page__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.admin-faq-list-page__col-category,
+.admin-faq-list-page__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.admin-faq-list-page__col-category {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+}
+
+.admin-faq-list-page__table.cms-data-table colgroup > col:nth-child(5),
+.admin-faq-list-page__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.admin-faq-list-page__col-title,
+.admin-faq-list-page__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.admin-faq-list-page__col-title {
+  width: auto !important;
+  min-width: 200px !important;
+  max-width: none !important;
+}
+
+.admin-faq-list-page__table.cms-data-table colgroup > col:nth-child(6),
+.admin-faq-list-page__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.admin-faq-list-page__col-author,
+.admin-faq-list-page__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.admin-faq-list-page__col-author {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+.admin-faq-list-page__table.cms-data-table colgroup > col:nth-child(7),
+.admin-faq-list-page__table.cms-data-table colgroup > col:nth-child(8),
+.admin-faq-list-page__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.admin-faq-list-page__col-datetime,
+.admin-faq-list-page__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.admin-faq-list-page__col-datetime {
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
 }
 
 .admin-faq-list-page__status-private {

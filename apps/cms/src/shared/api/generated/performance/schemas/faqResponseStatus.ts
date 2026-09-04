@@ -7,7 +7,7 @@
  */
 
 /**
- * 상태
+ * 공개 여부 매핑 상태. published=공개, 임시저장|draft=비공개, archived=보관.
  */
 export type FaqResponseStatus = typeof FaqResponseStatus[keyof typeof FaqResponseStatus];
 
