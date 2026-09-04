@@ -3,12 +3,21 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { AlimtalkPhonePreview, CmsButton, ContentModal } from '@/shared/ui'
 import { ALIMTALK_CHANNEL_ADD_GUIDE } from '@/features/notifications/model/alimtalk-template/types'
 import type { AlimtalkSendHistoryRow } from '@/features/notifications/model/alimtalk-send-history/types'
+import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import './detail-modal.css'
 
 type DetailModalProps = {
   open: boolean
   row: AlimtalkSendHistoryRow | null
   onClose: () => void
+}
+
+const DATETIME_FORMAT = 'YYYY.MM.DD HH:mm:ss'
+
+function formatDateTime(value: string | null | undefined): string {
+  if (!value) return '-'
+  const parsed = dayjs(value)
+  return parsed.isValid() ? parsed.format(DATETIME_FORMAT) : '-'
 }
 
 export function DetailModal({ open, row, onClose }: DetailModalProps) {
@@ -33,27 +42,35 @@ export function DetailModal({ open, row, onClose }: DetailModalProps) {
                 <DetailInfoForm.Field
                   label="발송일시"
                   fullRow
-                  view={dayjs(row.sentAt).format('YYYY.MM.DD HH:mm')}
+                  view={formatDateTime(row.sentAt)}
                 />
               </DetailInfoForm.Row>
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label="수신일시"
                   fullRow
-                  view={dayjs(row.receivedAt).format('YYYY.MM.DD HH:mm')}
+                  view={formatDateTime(row.receivedAt)}
                 />
               </DetailInfoForm.Row>
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field label="발송자" fullRow view={row.senderInfo} />
               </DetailInfoForm.Row>
               <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field label="수신자" fullRow view={row.receiverInfo} />
+                <DetailInfoForm.Field
+                  label="수신자"
+                  fullRow
+                  view={withProgramDetailTdDivider([row.receiverName, row.receiverPhone])}
+                />
               </DetailInfoForm.Row>
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field label="발송 상태" fullRow view={row.sendStatus} />
               </DetailInfoForm.Row>
               <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field label="템플릿명" fullRow view={row.templateName} />
+                <DetailInfoForm.Field
+                  label="템플릿명"
+                  fullRow
+                  view={row.templateName.trim() ? row.templateName : '미사용'}
+                />
               </DetailInfoForm.Row>
             </DetailInfoForm>
           </div>
