@@ -33,4 +33,9 @@ export interface NotificationDeliveryResponse {
   openedAt?: string;
   providerResultCode?: string;
   providerResultMessage?: string;
+  sendTiming?: string;
+  senderDisplayName?: string;
+  senderKey?: string;
+  recipientName?: string;
+  templateDisplayName?: string;
 }

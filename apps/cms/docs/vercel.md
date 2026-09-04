@@ -51,6 +51,33 @@
 - OAuth 프론트 redirect는 배포 시 `window.location.origin`을 쓴다.
 - 배포 확인: 번들/Network에 `d3r1iaa0sy4tcq.cloudfront.net` 이 보이고 `127.0.0.1` / `localhost:8080` 이 없어야 한다.
 
+### Admin SSO (카카오/네이버/구글) 체크리스트
+
+프론트는 `/login/social/complete`까지 오면 라우팅은 정상이다. IdP·백엔드 설정이 깨지면 query만 `FAILED`로 온다.
+
+1. **IdP Redirect URI**에 CloudFront 콜백이 있어야 한다 (localhost만 있으면 Vercel은 IdP에서 거절되거나 잘못된 앱으로 간다).
+
+   - `https://d3r1iaa0sy4tcq.cloudfront.net/api/admin/auth/sso/kakao/callback`
+   - `https://d3r1iaa0sy4tcq.cloudfront.net/api/admin/auth/sso/naver/callback`
+   - `https://d3r1iaa0sy4tcq.cloudfront.net/api/admin/auth/sso/google/callback`
+
+2. **백엔드 `frontendReturnUrl` allowlist**에 배포 주소가 있어야 한다.
+
+   - `https://jakorea-cms.vercel.app`
+   - (로컬) `http://localhost:3000`
+
+3. **`ADMIN_SSO_PROVIDER_VERIFICATION_FAILED`** 는 프론트 URL 오연결이 아니라 CloudFront 백엔드 ↔ IdP token/userinfo 문제다. 로컬 `127.0.0.1:8080`만 통과하는 경우와 구분한다.
+
+4. **로컬에서 Vercel과 같게 재현** (`apps/cms/.env.local`):
+
+   ```bash
+   VITE_API_SERVER=https://d3r1iaa0sy4tcq.cloudfront.net
+   VITE_OAUTH_BACKEND_ORIGIN=https://d3r1iaa0sy4tcq.cloudfront.net
+   VITE_API_BASE_URL=
+   ```
+
+   Vite 재시작 후 소셜 로그인을 치면 실서버 OAuth를 탄다. 그때도 실패하면 로컬 FE가 아니라 실서버 OAuth다.
+
 추가로 Node/pnpm 인식이 불안하면:
 
 | 변수 | 값 |

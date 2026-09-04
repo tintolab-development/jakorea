@@ -129,6 +129,13 @@ describe('canAdminAction 표 규칙', () => {
     }
   })
 
+  it('대시보드 개인화 저장은 VIEWER 허용, PARTNER 차단', () => {
+    expect(allowed('MASTER', 'dashboardWrite')).toBe(true)
+    expect(allowed('PM', 'dashboardWrite')).toBe(true)
+    expect(allowed('VIEWER', 'dashboardWrite')).toBe(true)
+    expect(allowed('PARTNER', 'dashboardWrite')).toBe(false)
+  })
+
   it('일반 개인정보 열람은 뷰어만 차단', () => {
     expect(allowed('MASTER', 'pii')).toBe(true)
     expect(allowed('PM', 'pii')).toBe(true)

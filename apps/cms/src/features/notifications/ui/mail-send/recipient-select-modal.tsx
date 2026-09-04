@@ -159,10 +159,9 @@ export function RecipientSelectModal({
         </div>
 
         <p className="mail-send-recipient-select-modal__count">
-          총 {filtered.length}명 /{' '}
-          <span className="mail-send-recipient-select-modal__count-selected">
-            선택 {selectedCount}명
-          </span>
+          총 {filtered.length}명 / 선택{' '}
+          <span className="mail-send-recipient-select-modal__count-selected">{selectedCount}</span>
+          명
         </p>
 
         {hasResults ? (

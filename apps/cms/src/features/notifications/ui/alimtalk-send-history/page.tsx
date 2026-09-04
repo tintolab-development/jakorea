@@ -13,7 +13,7 @@ import type {
   AlimtalkSendHistoryPendingFilters,
   AlimtalkSendHistoryRow,
 } from '@/features/notifications/model/alimtalk-send-history/types'
-import { useAlimtalkSendHistoryQuery } from '@/features/notifications/hooks/use-alimtalk-send-history-query'
+import { useAlimtalkSendHistoryDetailQuery, useAlimtalkSendHistoryQuery } from '@/features/notifications/hooks/use-alimtalk-send-history-query'
 import { DetailModal } from './detail-modal'
 import '@/pages/programs/program-list-page.css'
 import './page.css'
@@ -53,7 +53,14 @@ export function Page() {
   const appliedFilters = useMemo(() => readSendHistoryFiltersFromParams(searchParams), [searchParams])
   const { data: rows = [], isLoading } = useAlimtalkSendHistoryQuery(searchParams)
   const [pendingFilters, setPendingFilters] = useState<AlimtalkSendHistoryPendingFilters>(appliedFilters)
-  const [selectedRow, setSelectedRow] = useState<AlimtalkSendHistoryRow | null>(null)
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
+
+  const selectedListRow = useMemo(
+    () => rows.find(row => row.id === selectedRowId) ?? null,
+    [rows, selectedRowId]
+  )
+  const detailQuery = useAlimtalkSendHistoryDetailQuery(selectedRowId, Boolean(selectedRowId))
+  const selectedRow = detailQuery.data ?? selectedListRow
 
   useEffect(() => {
     setPendingFilters(appliedFilters)
@@ -195,11 +202,15 @@ export function Page() {
           pagination={false}
           onRow={record => ({
             className: 'alimtalk-send-history-page__row',
-            onClick: () => setSelectedRow(record),
+            onClick: () => setSelectedRowId(record.id),
           })}
         />
       </FilterTableLayout>
-      <DetailModal open={selectedRow != null} row={selectedRow} onClose={() => setSelectedRow(null)} />
+      <DetailModal
+        open={selectedRowId != null}
+        row={selectedRow}
+        onClose={() => setSelectedRowId(null)}
+      />
     </>
   )
 }

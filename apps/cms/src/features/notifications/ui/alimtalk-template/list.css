@@ -159,6 +159,23 @@
   line-height: 150%;
 }
 
+.alimtalk-category-tree__badge {
+  flex: 0 0 auto;
+  margin-left: 8px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.alimtalk-category-tree__badge--pending {
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.16);
+}
+
 .alimtalk-category-tree__row:hover .alimtalk-category-tree__label,
 .alimtalk-category-tree__row--selected .alimtalk-category-tree__label {
   overflow: hidden;
