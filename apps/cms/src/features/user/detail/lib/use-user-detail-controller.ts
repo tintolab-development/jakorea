@@ -67,12 +67,16 @@ import {
   draftToInstructorFeeAndJaGradePatch,
   draftToSchoolAdminCommentOnlyPatch,
   draftToSchoolInstitutionBasicInfoPatch,
+  splitUserAffiliationForDraft,
   userToAdminCommentOnlyDraft,
   userToAdminProvisionedBasicDraft,
   userToSchoolInstitutionEditDraft,
   type AdminProvisionedMemberBasicInfoDraft,
 } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
-import { resolveIndividualEnrolledSchoolSubmitBlock } from '@/features/user/api/individual-enrolled-school-selection'
+import {
+  resolveIndividualEnrolledSchoolSubmitBlock,
+  shouldSkipIndividualEnrolledSchoolReselectionGuard,
+} from '@/features/user/api/individual-enrolled-school-selection'
 import {
   resolveUserBasicInfoBodyKey,
   parseUserBasicInfoEntryQuery,
@@ -874,7 +878,11 @@ export function useUserDetailController({
               )
             : displayUser
         setEditUnmaskConfirmOpen(false)
-        startBasicInfoEdit(unmaskedUser)
+        startBasicInfoEdit({
+          ...unmaskedUser,
+          // unmask 상세에 external1365Id가 없어도 기존 조회분 유지
+          id1365: unmaskedUser.id1365?.trim() || displayUser.id1365,
+        })
       })
       .finally(() => {
         setEditUnmaskConfirmLoading(false)
@@ -1042,7 +1050,15 @@ export function useUserDetailController({
           : draftToAdminMemberRestrictedPatch(basicInfoDraft)
       } else if (displayUser.role === 'INDIVIDUAL') {
         const enrolledSchoolBlock =
-          basicInfoDraft.schoolEnrollmentStatus === 'enrolled'
+          basicInfoDraft.schoolEnrollmentStatus === 'enrolled' &&
+          !shouldSkipIndividualEnrolledSchoolReselectionGuard({
+            draftInstitution: basicInfoDraft.affiliationInstitution,
+            originalInstitution: splitUserAffiliationForDraft(displayUser.affiliation)
+              .affiliationInstitution,
+            schoolOrganizationId: basicInfoDraft.schoolOrganizationId,
+            schoolProvider: basicInfoDraft.schoolProvider,
+            schoolExternalCode: basicInfoDraft.schoolExternalCode,
+          })
             ? resolveIndividualEnrolledSchoolSubmitBlock({
                 schoolProvider: basicInfoDraft.schoolProvider,
                 schoolOrganizationId: basicInfoDraft.schoolOrganizationId,

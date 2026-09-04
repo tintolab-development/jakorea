@@ -292,7 +292,7 @@ export function userToAdminProvisionedBasicDraft(
             user.schoolEnrollmentStatus,
             affiliationGrade
           ),
-          id1365: user.id1365 ?? '',
+          ...(user.id1365?.trim() ? { id1365: user.id1365.trim() } : {}),
         }
       : {}),
     ...((user.role === 'INDIVIDUAL' || user.role === 'ADMIN' || user.role === 'INSTRUCTOR')
@@ -402,31 +402,35 @@ function draftToIndividualAffiliationPatch(
     ...(grade ? { individualGrade: grade } : {}),
     ...(draft.schoolOrganizationId != null && Number.isFinite(draft.schoolOrganizationId)
       ? { individualSchoolOrganizationId: draft.schoolOrganizationId }
-      : {
-          individualSchoolOrganizationId: null,
-          ...(draft.schoolProvider?.trim()
-            ? { individualSchoolProvider: draft.schoolProvider.trim() }
-            : {}),
-          ...(draft.schoolExternalCode?.trim()
-            ? { individualSchoolExternalCode: draft.schoolExternalCode.trim() }
-            : {}),
-          ...(draft.schoolEducationOfficeCode?.trim()
-            ? { individualSchoolEducationOfficeCode: draft.schoolEducationOfficeCode.trim() }
-            : {}),
-          ...(draft.schoolLevel?.trim() ? { individualSchoolLevel: draft.schoolLevel.trim() } : {}),
-          ...(draft.schoolAddress?.trim()
-            ? { individualSchoolAddress: draft.schoolAddress.trim() }
-            : {}),
-          ...(draft.schoolZipcode?.trim()
-            ? { individualSchoolZipcode: draft.schoolZipcode.trim() }
-            : {}),
-          ...(draft.schoolRegionSido?.trim()
-            ? { individualSchoolRegionSido: draft.schoolRegionSido.trim() }
-            : {}),
-          ...(draft.schoolRegionSigungu?.trim()
-            ? { individualSchoolRegionSigungu: draft.schoolRegionSigungu.trim() }
-            : {}),
-        }),
+      : draft.schoolProvider?.trim() || draft.schoolExternalCode?.trim()
+        ? {
+            // 검색으로 새로 고른 학교(CMS PK 없음) — selection 전달. 기존 연동 해제는 의도적 null.
+            individualSchoolOrganizationId: null,
+            ...(draft.schoolProvider?.trim()
+              ? { individualSchoolProvider: draft.schoolProvider.trim() }
+              : {}),
+            ...(draft.schoolExternalCode?.trim()
+              ? { individualSchoolExternalCode: draft.schoolExternalCode.trim() }
+              : {}),
+            ...(draft.schoolEducationOfficeCode?.trim()
+              ? { individualSchoolEducationOfficeCode: draft.schoolEducationOfficeCode.trim() }
+              : {}),
+            ...(draft.schoolLevel?.trim() ? { individualSchoolLevel: draft.schoolLevel.trim() } : {}),
+            ...(draft.schoolAddress?.trim()
+              ? { individualSchoolAddress: draft.schoolAddress.trim() }
+              : {}),
+            ...(draft.schoolZipcode?.trim()
+              ? { individualSchoolZipcode: draft.schoolZipcode.trim() }
+              : {}),
+            ...(draft.schoolRegionSido?.trim()
+              ? { individualSchoolRegionSido: draft.schoolRegionSido.trim() }
+              : {}),
+            ...(draft.schoolRegionSigungu?.trim()
+              ? { individualSchoolRegionSigungu: draft.schoolRegionSigungu.trim() }
+              : {}),
+          }
+        : // 기존 소속명만 유지(재검색 없음) — organizationId null을 보내지 않아 서버 연동을 유지
+          {}),
   }
 }
 
