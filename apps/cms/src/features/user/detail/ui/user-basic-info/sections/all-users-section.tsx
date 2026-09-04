@@ -45,7 +45,6 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
   const {
     user,
     scheduleChangeCount,
-    externalId1365,
     personalInfoRevealed,
     memberInfoEditing,
     memberInfoDraft,
@@ -291,19 +290,13 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
           view={
             <Id1365View
               personalInfoRevealed={personalInfoRevealed}
-              externalId1365={externalId1365}
+              id1365={user.id1365}
             />
           }
           edit={
             <CmsInput
               placeholder="1365 ID"
-              value={
-                d?.id1365 !== undefined
-                  ? d.id1365
-                  : (externalId1365?.fullLabel?.trim() ||
-                      externalId1365?.maskedLabel?.trim() ||
-                      '')
-              }
+              value={d?.id1365 ?? ''}
               onChange={e => onMemberInfoDraftChange?.({ id1365: e.target.value })}
               inputSize="medium"
               width="100%"

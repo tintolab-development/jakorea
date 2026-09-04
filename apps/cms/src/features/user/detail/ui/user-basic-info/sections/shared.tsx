@@ -2,42 +2,35 @@ import { Space } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { AddressSearch, CmsButton, CmsInput, CmsPhoneInput } from '@/shared/ui'
 import type { User } from '@/types/user'
-import type { UserBasicInfoExternalId1365 } from './types'
+import { detail1365Display } from '@/features/user/api/map-external-identifiers'
+import { openPortal1365Main } from '@/shared/constants'
 import { detailEmailDisplay, detailPhoneDisplay } from '../display'
 import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
 
 const ID1365_NOT_REGISTERED_LABEL = '-'
 
-function resolve1365DisplayText(
-  personalInfoRevealed: boolean,
-  externalId1365?: UserBasicInfoExternalId1365 | null
-): string {
-  if (!externalId1365) return ID1365_NOT_REGISTERED_LABEL
-  if (personalInfoRevealed) {
-    const full = externalId1365.fullLabel?.trim()
-    if (full) return full
-    return ID1365_NOT_REGISTERED_LABEL
-  }
-  const masked = externalId1365.maskedLabel?.trim()
-  if (!masked || masked === '-') return ID1365_NOT_REGISTERED_LABEL
-  return masked
-}
-
+/**
+ * 1365 ID 조회 — 연락처/이메일과 같이 `personalInfoRevealed` 시에만 원문.
+ * 수정 인풋 값은 draft(unmask 후 user.id1365)를 쓴다.
+ */
 export function Id1365View({
   personalInfoRevealed,
-  externalId1365,
+  id1365,
+  onOpen = openPortal1365Main,
 }: {
   personalInfoRevealed: boolean
-  externalId1365?: UserBasicInfoExternalId1365 | null
+  id1365?: string | null
+  onOpen?: () => void
 }) {
-  const label1365 = resolve1365DisplayText(personalInfoRevealed, externalId1365)
+  const label1365 = detail1365Display(id1365, personalInfoRevealed)
+  const hasValue = Boolean(id1365?.trim()) && label1365 !== ID1365_NOT_REGISTERED_LABEL
 
   return (
     <span className="user-basic-info-section__id1365-cell">
       <span>{label1365}</span>
-      {externalId1365?.onOpen ? (
-        <CmsButton size="medium" onClick={externalId1365.onOpen}>
+      {hasValue && onOpen ? (
+        <CmsButton size="medium" onClick={onOpen}>
           1365 바로가기
         </CmsButton>
       ) : null}

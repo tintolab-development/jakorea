@@ -292,7 +292,8 @@ export function userToAdminProvisionedBasicDraft(
             user.schoolEnrollmentStatus,
             affiliationGrade
           ),
-          ...(user.id1365?.trim() ? { id1365: user.id1365.trim() } : {}),
+          // 연락처·이메일과 동일 — unmask 후 user.id1365 원문을 draft에 넣는다
+          id1365: user.id1365?.trim() ?? '',
         }
       : {}),
     ...((user.role === 'INDIVIDUAL' || user.role === 'ADMIN' || user.role === 'INSTRUCTOR')

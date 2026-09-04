@@ -90,6 +90,10 @@ import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { applyPrivacyUnmaskResponseToUser } from '@/features/user/api/apply-privacy-unmask-to-user'
+import {
+  extract1365IdFromMemberPrivacyPayload,
+  preferUnmasked1365Id,
+} from '@/features/user/api/map-external-identifiers'
 import { stripRestrictedPiiForSessionUser } from '@/features/user/api/strip-restricted-pii'
 import { parseAdminAccountIdFromUserId } from '@/features/user/api/fetch-admin-member-detail'
 import {
@@ -878,10 +882,15 @@ export function useUserDetailController({
               )
             : displayUser
         setEditUnmaskConfirmOpen(false)
+        // external-identifiers 마스킹보다 unmask/상세 원문 우선
+        const id1365 = preferUnmasked1365Id(
+          extract1365IdFromMemberPrivacyPayload(result.payload),
+          unmaskedUser.id1365,
+          displayUser.id1365
+        )
         startBasicInfoEdit({
           ...unmaskedUser,
-          // unmask 상세에 external1365Id가 없어도 기존 조회분 유지
-          id1365: unmaskedUser.id1365?.trim() || displayUser.id1365,
+          ...(id1365 ? { id1365 } : {}),
         })
       })
       .finally(() => {
