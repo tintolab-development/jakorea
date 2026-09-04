@@ -105,7 +105,7 @@ export function TemplateSelectModal({
               onUse(record)
             }}
           >
-            사용하기
+            템플릿 사용
           </CmsButton>
         </div>
       ),

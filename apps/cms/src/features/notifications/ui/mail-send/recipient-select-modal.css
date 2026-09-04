@@ -28,18 +28,21 @@
 
 .mail-send-recipient-select-modal__count {
   margin: 0;
-  color: var(--main-BK, #3d3d3d);
+  color: rgba(61, 61, 61, 0.6);
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 16px;
+  font-style: normal;
   font-weight: 500;
   line-height: 150%;
-  opacity: 0.6;
 }
 
 .mail-send-recipient-select-modal__count-selected {
   color: var(--color-mint-01, #01a1af);
-  opacity: 1;
-  font-weight: 700;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .mail-send-recipient-select-modal__pagination {
@@ -67,4 +70,12 @@
   font-weight: 500;
   line-height: 150%;
   white-space: pre-line;
+}
+
+.mail-send-recipient-select-modal__table.cms-data-table {
+  width: 100%;
+}
+
+.mail-send-recipient-select-modal__table.cms-data-table .ant-table {
+  table-layout: fixed;
 }

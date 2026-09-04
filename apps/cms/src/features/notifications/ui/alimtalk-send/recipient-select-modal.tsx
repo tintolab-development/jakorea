@@ -1,62 +1,84 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, CmsSelect } from '@/shared/ui'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { MAIL_SEND_RECIPIENT_MOCK } from '@/features/notifications/model/mail-send/mock'
+import { ALIMTALK_SEND_RECIPIENT_MOCK } from '@/features/notifications/model/alimtalk-send/mock'
 import {
-  MAIL_SEND_PARTICIPATION_TYPE_OPTIONS,
-  filterMailSendRecipients,
-  mailSendParticipationTypeLabel,
-} from '@/features/notifications/model/mail-send/recipients'
+  ALIMTALK_SEND_PARTICIPATION_TYPE_OPTIONS,
+  alimtalkSendParticipationTypeLabel,
+  filterAlimtalkSendRecipients,
+} from '@/features/notifications/model/alimtalk-send/recipients'
 import {
-  MAIL_SEND_PICKER_PAGE_SIZE,
-  type MailSendParticipationType,
-  type MailSendRecipient,
-} from '@/features/notifications/model/mail-send/types'
-import './recipient-select-modal.css'
+  ALIMTALK_SEND_PICKER_PAGE_SIZE,
+  type AlimtalkSendParticipationType,
+  type AlimtalkSendRecipient,
+} from '@/features/notifications/model/alimtalk-send/types'
+import '@/features/notifications/ui/mail-send/recipient-select-modal.css'
 
 const PICKER_Z_INDEX = 1100
 
+/** 시안(800px 모달) 기준 컬럼 폭 — 체크 좁게 · 유형 중 · 이름/휴대폰 넓게(휴대폰이 더 넓음) */
+const COL_W = {
+  type: 160,
+  name: 240,
+  phone: 280,
+} as const
+
+const TABLE_SCROLL_X =
+  TABLE_COLUMN_WIDTHS.checkbox + COL_W.type + COL_W.name + COL_W.phone
+
 type RecipientSelectModalProps = {
   open: boolean
-  candidates?: MailSendRecipient[]
+  candidates?: AlimtalkSendRecipient[]
   selectedIds: string[]
   onClose: () => void
-  onConfirm: (recipients: MailSendRecipient[]) => void
+  onConfirm: (recipients: AlimtalkSendRecipient[]) => void
+  typeColumnTitle: string
   zIndex?: number
 }
 
 export function RecipientSelectModal({
   open,
-  candidates = MAIL_SEND_RECIPIENT_MOCK,
+  candidates = ALIMTALK_SEND_RECIPIENT_MOCK,
   selectedIds,
   onClose,
   onConfirm,
+  typeColumnTitle,
   zIndex = PICKER_Z_INDEX,
 }: RecipientSelectModalProps) {
-  const [participationType, setParticipationType] = useState<MailSendParticipationType | ''>('')
+  const [participationType, setParticipationType] = useState<AlimtalkSendParticipationType | ''>('')
   const [keyword, setKeyword] = useState('')
-  const [appliedType, setAppliedType] = useState<MailSendParticipationType | ''>('')
+  const [appliedType, setAppliedType] = useState<AlimtalkSendParticipationType | ''>('')
   const [appliedKeyword, setAppliedKeyword] = useState('')
   const [page, setPage] = useState(1)
   const [checkedIds, setCheckedIds] = useState<string[]>(selectedIds)
 
+  useEffect(() => {
+    if (!open) return
+    setCheckedIds(selectedIds)
+    setParticipationType('')
+    setKeyword('')
+    setAppliedType('')
+    setAppliedKeyword('')
+    setPage(1)
+  }, [open, selectedIds])
+
   const filtered = useMemo(
     () =>
-      filterMailSendRecipients(candidates, {
+      filterAlimtalkSendRecipients(candidates, {
         participationType: appliedType,
         keyword: appliedKeyword,
       }),
     [appliedKeyword, appliedType, candidates]
   )
 
-  const totalPages = Math.ceil(filtered.length / MAIL_SEND_PICKER_PAGE_SIZE)
+  const totalPages = Math.ceil(filtered.length / ALIMTALK_SEND_PICKER_PAGE_SIZE)
   const currentPage = totalPages > 0 ? Math.min(page, totalPages) : 1
   const paged = filtered.slice(
-    (currentPage - 1) * MAIL_SEND_PICKER_PAGE_SIZE,
-    currentPage * MAIL_SEND_PICKER_PAGE_SIZE
+    (currentPage - 1) * ALIMTALK_SEND_PICKER_PAGE_SIZE,
+    currentPage * ALIMTALK_SEND_PICKER_PAGE_SIZE
   )
   const hasResults = filtered.length > 0
   const selectedCount = checkedIds.length
@@ -80,26 +102,29 @@ export function RecipientSelectModal({
     onConfirm(candidates.filter(item => checked.has(item.id)))
   }
 
-  const columns: ColumnsType<MailSendRecipient> = [
+  const columns: ColumnsType<AlimtalkSendRecipient> = [
     {
-      title: '참여 유형',
+      title: typeColumnTitle,
       dataIndex: 'participationType',
       key: 'participationType',
-      width: 140,
+      width: COL_W.type,
       align: 'center',
-      render: value => mailSendParticipationTypeLabel(value) || '-',
+      ellipsis: true,
+      render: value => alimtalkSendParticipationTypeLabel(value) || '-',
     },
     {
       title: '수신자명',
       dataIndex: 'name',
       key: 'name',
+      width: COL_W.name,
       align: 'center',
       ellipsis: true,
     },
     {
-      title: '이메일',
-      dataIndex: 'email',
-      key: 'email',
+      title: '휴대폰 번호',
+      dataIndex: 'phone',
+      key: 'phone',
+      width: COL_W.phone,
       align: 'center',
       ellipsis: true,
     },
@@ -129,7 +154,7 @@ export function RecipientSelectModal({
         <div className="mail-send-recipient-select-modal__search">
           <CmsSelect
             inputSize="large"
-            placeholder="참여 유형"
+            placeholder={typeColumnTitle}
             value={participationType}
             onChange={value =>
               setParticipationType(
@@ -138,7 +163,7 @@ export function RecipientSelectModal({
                   : ''
               )
             }
-            options={MAIL_SEND_PARTICIPATION_TYPE_OPTIONS}
+            options={ALIMTALK_SEND_PARTICIPATION_TYPE_OPTIONS}
             style={{ width: 160 }}
           />
           <span className="mail-send-recipient-select-modal__search-input">
@@ -172,6 +197,8 @@ export function RecipientSelectModal({
               dataSource={paged}
               rowKey="id"
               pagination={false}
+              tableLayout="fixed"
+              scroll={{ x: TABLE_SCROLL_X }}
               rowSelection={{
                 selectedRowKeys: checkedIds,
                 onChange: keys => setCheckedIds(keys.map(String)),
