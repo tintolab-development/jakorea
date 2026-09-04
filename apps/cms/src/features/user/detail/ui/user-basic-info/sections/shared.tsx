@@ -1,6 +1,6 @@
 import { Space } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { AddressSearch, CmsButton, CmsInput } from '@/shared/ui'
+import { AddressSearch, CmsButton, CmsInput, CmsPhoneInput } from '@/shared/ui'
 import type { User } from '@/types/user'
 import type { UserBasicInfoExternalId1365 } from './types'
 import { detailEmailDisplay, detailPhoneDisplay } from '../display'
@@ -136,7 +136,7 @@ export function ContactInfoFieldsRow({
         readOnlyDisplay={readOnlyDisplay}
         view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
         edit={
-          <CmsInput
+          <CmsPhoneInput
             value={phoneValue}
             onChange={e => onPhoneChange(e.target.value)}
             inputSize="medium"
