@@ -57,3 +57,14 @@
   background: #f2f3f5;
   color: #464646;
 }
+
+/* 목록 tag160 — 132×33 배지 (래퍼 160 = 1+13+132+13+1). 기본 app-status-badge 120 덮어씀 */
+.status-dropdown-cell__status-trigger--tag-160 .app-status-badge[class*='user-list-admin-perm-badge'],
+.status-dropdown-cell__dropdown-overlay--tag-160 .app-status-badge[class*='user-list-admin-perm-badge'] {
+  width: 132px !important;
+  min-width: 132px !important;
+  max-width: 132px !important;
+  height: 33px !important;
+  min-height: 33px !important;
+  max-height: 33px !important;
+}
