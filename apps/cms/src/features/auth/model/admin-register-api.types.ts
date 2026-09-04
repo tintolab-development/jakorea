@@ -15,12 +15,16 @@ export interface AdminSelfSignupRequest {
 
 export interface AdminSelfSignupResponse {
   adminId?: number
+  adminAccountId?: number
   email?: string
   status?: string
   requestedRoleCode?: string
   loginEnabled?: boolean
   nextStep?: string
   createdAt?: string
+  signupSocialLinkToken?: string
+  signupSocialLinkExpiresAt?: string
+  signupSocialLinkStartEndpoint?: string
 }
 
 export class AdminRegisterApiError extends Error {
