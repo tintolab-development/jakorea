@@ -1,5 +1,6 @@
 import { ContentModal, CmsButton, AlimtalkPhonePreview } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { resolveNhnConsoleUrl } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
 import {
   ALIMTALK_CHANNEL_ADD_GUIDE,
   ALIMTALK_EMPHASIS_TYPE_LABEL,
@@ -8,13 +9,11 @@ import {
 } from '@/features/notifications/model/alimtalk-template/types'
 import './preview-modal.css'
 
-const NHN_CLOUD_URL = 'https://www.nhncloud.com/kr'
-
 type PreviewModalProps = {
   open: boolean
   template: AlimtalkTemplateItem | null
   onClose: () => void
-  /** 지정 시 「사용하기」에서 템플릿을 발송 화면에 적용 */
+  /** 지정 시 「템플릿 사용」에서 템플릿을 발송 화면에 적용 */
   onUse?: (template: AlimtalkTemplateItem) => void
   zIndex?: number
 }
@@ -61,10 +60,10 @@ export function PreviewModal({ open, template, onClose, onUse, zIndex }: Preview
               </DetailInfoForm.Row>
             </DetailInfoForm>
             <p className="alimtalk-template-preview__hint">
-              템플릿의 수정 및 삭제는{' '}
+              템플릿의 수정은{' '}
               <a
                 className="alimtalk-template-preview__link"
-                href={NHN_CLOUD_URL}
+                href={resolveNhnConsoleUrl(template)}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -79,7 +78,7 @@ export function PreviewModal({ open, template, onClose, onUse, zIndex }: Preview
                 닫기
               </CmsButton>
               <CmsButton variant="primary" size="large" type="button" onClick={handleUse}>
-                사용하기
+                템플릿 사용
               </CmsButton>
             </div>
           </div>
@@ -99,13 +98,10 @@ export function PreviewModal({ open, template, onClose, onUse, zIndex }: Preview
             itemImageUrl={template.itemImageUrl}
             itemList={template.itemList}
             itemSummary={template.itemSummary}
-            buttons={template.buttons
-              .filter(button => button.variant === 'default')
-              .slice(0, 1)
-              .map(button => ({
-                variant: 'default' as const,
-                label: button.name === 'test sample' ? '버튼명' : button.name,
-              }))}
+            buttons={template.buttons.slice(0, 5).map(button => ({
+              variant: button.variant,
+              label: button.name === 'test sample' ? '버튼명' : button.name,
+            }))}
             quickLinks={template.quickLinks.map(link => link.name)}
           />
         </div>

@@ -6,10 +6,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, CmsModal, ConfirmModal } from '@/shared/ui'
+import { CmsButton, CmsModal, useCmsAlert } from '@/shared/ui'
 import {
   ALIMTALK_ROOT_CATEGORY_ID,
-  NHN_CLOUD_ALIMTALK_TEMPLATE_CONSOLE_URL,
   type AlimtalkCategory,
   type AlimtalkTemplateItem,
   type AlimtalkTemplatePendingFilters,
@@ -28,12 +27,29 @@ import {
   canMoveCategoryTo,
   categoryHasChildren,
   categoryNameById,
-  collectDeleteIds,
   filterAlimtalkTree,
   findTemplate,
+  isVirtualUnclassifiedCategoryId,
   moveCategoryToParent,
   moveTemplateToCategory,
 } from '@/features/notifications/lib/tree'
+import { resolveNhnConsoleUrl } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
+import { alimtalkSyncSuccessMessage } from '@/features/notifications/api/adapters/alimtalk-sync-adapters'
+import {
+  getNotificationsApiErrorMessage,
+  getNotificationsSyncErrorBannerMessage,
+  isCategoryHasChildrenError,
+  isCategoryNeedsSyncError,
+  isAlimtalkTemplateDeleteRejectedByNhnError,
+  isProviderUnavailableError,
+} from '@/features/notifications/api/get-notifications-api-error'
+import { shouldUseAlimtalkTemplatesRemoteApi } from '@/features/notifications/api/alimtalk-template-service'
+import {
+  useAlimtalkCategoryTreeQuery,
+  useAlimtalkTemplateDetailQuery,
+  useAlimtalkTemplatePreviewQuery,
+  useAlimtalkTemplateTreeMutations,
+} from '@/features/notifications/hooks/use-alimtalk-template-tree-query'
 import { CategoryNameModal } from './category-name-modal'
 import { CategoryTree, parseAlimtalkDndId, ALIMTALK_DND_CATEGORY_MOVE_PREFIX } from './category-tree'
 import { DetailPanel } from './detail-panel'
@@ -41,14 +57,38 @@ import { PreviewModal } from './preview-modal'
 import '@/pages/programs/program-list-page.css'
 import './list.css'
 
+const AUTO_SYNC_SESSION_KEY = 'cms.alimtalk.nhnAutoSyncAttempted'
+
+type SyncBannerKind =
+  | 'need-sync'
+  | 'local-mode'
+  | 'error'
+  | 'provider-unavailable'
+  | 'synced-empty'
+  | null
+
 type PendingMove =
   | { kind: 'template'; templateId: string; targetCategoryId: string }
   | { kind: 'category'; categoryId: string; targetParentId: string }
 
 type DeleteDialog = 'category' | 'template' | 'blocked' | null
 
-function defaultExpandedIds(categories: AlimtalkCategory[]): Set<string> {
-  return new Set([ALIMTALK_ROOT_CATEGORY_ID, ...categories.map(category => category.id)])
+/** UI Root(Category) + 바로 아래 1뎁스(Root Category 등)만 펼침. 그 아래 폴더는 접힘. */
+function defaultExpandedIds(categories: AlimtalkCategory[] = []): Set<string> {
+  const ids = new Set<string>([ALIMTALK_ROOT_CATEGORY_ID])
+  for (const category of categories) {
+    if (category.parentId === ALIMTALK_ROOT_CATEGORY_ID) {
+      ids.add(category.id)
+    }
+  }
+  return ids
+}
+
+/** UI Root(Category)는 항상 펼침 유지. */
+function withUiRootExpanded(ids?: Iterable<string>): Set<string> {
+  const next = new Set(ids)
+  next.add(ALIMTALK_ROOT_CATEGORY_ID)
+  return next
 }
 
 function targetCategoryForAdd(selection: AlimtalkTreeSelection, templates: AlimtalkTemplateItem[]): string {
@@ -59,18 +99,30 @@ function targetCategoryForAdd(selection: AlimtalkTreeSelection, templates: Alimt
 
 function categoryIdForEdit(
   selection: AlimtalkTreeSelection,
-  templates: AlimtalkTemplateItem[]
+  templates: AlimtalkTemplateItem[],
+  categories: AlimtalkCategory[]
 ): string | null {
   if (!selection) return null
   if (selection.kind === 'category') {
-    return selection.id === ALIMTALK_ROOT_CATEGORY_ID ? null : selection.id
+    if (selection.id === ALIMTALK_ROOT_CATEGORY_ID) return null
+    const category = categories.find(item => item.id === selection.id)
+    if (category?.isVirtualUnclassified) return null
+    return selection.id
   }
   const parentId = findTemplate(templates, selection.id)?.categoryId
   if (!parentId || parentId === ALIMTALK_ROOT_CATEGORY_ID) return null
+  const parent = categories.find(item => item.id === parentId)
+  if (parent?.isVirtualUnclassified) return null
   return parentId
 }
 
-export function AlimtalkTemplateList() {
+export function AlimtalkTemplateList({
+  onUseTemplate,
+}: {
+  onUseTemplate?: (templateId: string) => void
+}) {
+  const { showAlert } = useCmsAlert()
+  const remote = shouldUseAlimtalkTemplatesRemoteApi()
   const [searchParams, setSearchParams] = useSearchParams()
   const appliedFilters = useMemo(() => pendingFiltersFromSearchParams(searchParams), [searchParams])
   const [pendingFilters, setPendingFilters] = useState<AlimtalkTemplatePendingFilters>(appliedFilters)
@@ -81,50 +133,207 @@ export function AlimtalkTemplateList() {
     setPendingFilters(appliedFilters)
   }, [appliedFilters])
 
-  const [categories, setCategories] = useState<AlimtalkCategory[]>(ALIMTALK_CATEGORY_MOCK)
-  const [templates, setTemplates] = useState<AlimtalkTemplateItem[]>(ALIMTALK_TEMPLATE_ITEM_MOCK)
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(() =>
-    defaultExpandedIds(ALIMTALK_CATEGORY_MOCK)
+  const treeQuery = useAlimtalkCategoryTreeQuery(searchParams, remote)
+  const mutations = useAlimtalkTemplateTreeMutations()
+
+  const [localCategories, setLocalCategories] = useState<AlimtalkCategory[]>(ALIMTALK_CATEGORY_MOCK)
+  const [localTemplates, setLocalTemplates] = useState<AlimtalkTemplateItem[]>(ALIMTALK_TEMPLATE_ITEM_MOCK)
+  const [syncBanner, setSyncBanner] = useState<SyncBannerKind>(null)
+  const [syncErrorMessage, setSyncErrorMessage] = useState<string | null>(null)
+  const autoSyncStartedRef = useRef(false)
+
+  const categories = remote ? (treeQuery.data?.categories ?? []) : localCategories
+  const templates = remote ? (treeQuery.data?.templates ?? []) : localTemplates
+  const isTreeEmpty = remote && categories.length === 0 && templates.length === 0
+  const isSyncing = mutations.syncCatalog.isPending
+  const isMutating =
+    mutations.createCategory.isPending ||
+    mutations.updateCategory.isPending ||
+    mutations.deleteCategory.isPending ||
+    mutations.deleteTemplate.isPending ||
+    mutations.moveCategory.isPending ||
+    mutations.moveTemplate.isPending
+  const treeSettled = remote && !treeQuery.isLoading && !treeQuery.isFetching
+
+  const clearTreeSearchAfterMutation = useCallback(() => {
+    const filters = pendingFiltersRef.current
+    const hasSearch = Boolean(filters.categoryName.trim() || filters.templateName.trim())
+    if (!hasSearch) return
+    const cleared = { categoryName: '', templateName: '' }
+    setPendingFilters(cleared)
+    pendingFiltersRef.current = cleared
+    setSearchParams(prev => applyAlimtalkFiltersToSearchParams(prev, cleared), { replace: true })
+  }, [setSearchParams])
+
+  const runNhnSync = useCallback(
+    async (source: 'auto' | 'manual') => {
+      if (!remote || mutations.syncCatalog.isPending) return
+      setSyncErrorMessage(null)
+      try {
+        const result = await mutations.syncCatalog.mutateAsync()
+        const outcome = result.templates
+        // invalidate 후 최신 tree 반영
+        const refreshed = await treeQuery.refetch()
+        const nextCategories = refreshed.data?.categories ?? []
+        const nextTemplates = refreshed.data?.templates ?? []
+        const stillEmpty = nextCategories.length === 0 && nextTemplates.length === 0
+
+        if (outcome.isLocalApprovalMark) {
+          setSyncBanner('local-mode')
+          showAlert({
+            title: '안내',
+            content: alimtalkSyncSuccessMessage(outcome),
+          })
+          return
+        }
+
+        if (outcome.isNhnLivePull && stillEmpty) {
+          setSyncBanner('synced-empty')
+          showAlert({
+            title: '안내',
+            content:
+              outcome.upsertedCount > 0
+                ? `동기화 ${outcome.upsertedCount.toLocaleString()}건 반영됐지만 트리에 표시할 항목이 없습니다. 필터를 확인하거나 다시 동기화해 주세요.`
+                : 'NHN 동기화는 완료되었지만 가져올 템플릿이 없습니다. NHN Console에 승인 템플릿이 있는지 확인해 주세요.',
+          })
+          return
+        }
+
+        setSyncBanner(null)
+        if (source === 'manual' || outcome.upsertedCount > 0) {
+          showAlert({
+            title: '안내',
+            content: alimtalkSyncSuccessMessage(outcome),
+          })
+        }
+      } catch (error) {
+        const message = getNotificationsApiErrorMessage(
+          error,
+          'NHN 동기화에 실패했습니다. 다시 시도해 주세요.'
+        )
+        setSyncBanner(isProviderUnavailableError(error) ? 'provider-unavailable' : 'error')
+        setSyncErrorMessage(getNotificationsSyncErrorBannerMessage(error))
+        showAlert({ title: 'NHN 동기화 실패', content: message })
+      }
+    },
+    [mutations.syncCatalog, remote, showAlert, treeQuery]
   )
-  const [selection, setSelection] = useState<AlimtalkTreeSelection>({
-    kind: 'template',
-    id: 'tpl-password',
-  })
+
+  useEffect(() => {
+    if (!remote || !treeSettled || !isTreeEmpty) return
+    if (autoSyncStartedRef.current) return
+    if (syncBanner === 'local-mode' || syncBanner === 'synced-empty') return
+
+    const alreadyAttempted =
+      typeof sessionStorage !== 'undefined' &&
+      sessionStorage.getItem(AUTO_SYNC_SESSION_KEY) === '1'
+
+    if (alreadyAttempted) {
+      setSyncBanner(prev =>
+        prev === 'local-mode' ||
+        prev === 'error' ||
+        prev === 'provider-unavailable' ||
+        prev === 'synced-empty'
+          ? prev
+          : 'need-sync'
+      )
+      return
+    }
+
+    autoSyncStartedRef.current = true
+    try {
+      sessionStorage.setItem(AUTO_SYNC_SESSION_KEY, '1')
+    } catch {
+      // ignore
+    }
+    void runNhnSync('auto')
+  }, [isTreeEmpty, remote, runNhnSync, syncBanner, treeSettled])
+
+  useEffect(() => {
+    if (!remote || !treeSettled) return
+    if (!isTreeEmpty && (syncBanner === 'need-sync' || syncBanner === 'synced-empty')) {
+      setSyncBanner(null)
+    }
+  }, [isTreeEmpty, remote, syncBanner, treeSettled])
+
+  const visibleTree = useMemo(() => {
+    if (remote) return { categories, templates }
+    return filterAlimtalkTree(
+      categories,
+      templates,
+      appliedFilters.categoryName,
+      appliedFilters.templateName
+    )
+  }, [appliedFilters.categoryName, appliedFilters.templateName, categories, remote, templates])
+
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() =>
+    defaultExpandedIds(remote ? [] : ALIMTALK_CATEGORY_MOCK)
+  )
+  const [selection, setSelection] = useState<AlimtalkTreeSelection>(
+    remote ? null : { kind: 'template', id: 'tpl-password' }
+  )
   const [previewOpen, setPreviewOpen] = useState(false)
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialog>(null)
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null)
   const [categoryModal, setCategoryModal] = useState<{ mode: 'add' | 'edit'; categoryId: string | null } | null>(
     null
   )
+  const didInitExpandRef = useRef(!remote)
 
-  const visibleTree = useMemo(
-    () =>
-      filterAlimtalkTree(
-        categories,
-        templates,
-        appliedFilters.categoryName,
-        appliedFilters.templateName
-      ),
-    [appliedFilters.categoryName, appliedFilters.templateName, categories, templates]
+  useEffect(() => {
+    if (!remote || selection || templates.length === 0) return
+    setSelection({ kind: 'template', id: templates[0]!.id })
+  }, [remote, selection, templates])
+
+  const isTreeSearching = Boolean(
+    appliedFilters.categoryName.trim() || appliedFilters.templateName.trim()
   )
+  const wasTreeSearchingRef = useRef(isTreeSearching)
 
-  const selectedTemplate =
+  useEffect(() => {
+    if (isTreeSearching) {
+      // 검색 중: 결과 경로가 보이도록 매칭된 폴더 펼침
+      setExpandedIds(withUiRootExpanded(visibleTree.categories.map(category => category.id)))
+      didInitExpandRef.current = true
+    } else if (wasTreeSearchingRef.current) {
+      // 검색 해제: Category + 1뎁스(Root Category)만 펼침
+      setExpandedIds(defaultExpandedIds(categories))
+    } else if (!didInitExpandRef.current && categories.length > 0) {
+      // 최초 트리 로드: Category + Root Category 펼침, 그 아래는 접힘
+      setExpandedIds(defaultExpandedIds(categories))
+      didInitExpandRef.current = true
+    }
+    wasTreeSearchingRef.current = isTreeSearching
+  }, [categories, isTreeSearching, visibleTree.categories])
+
+  const selectedTemplateId = selection?.kind === 'template' ? selection.id : null
+  const detailQuery = useAlimtalkTemplateDetailQuery(
+    selectedTemplateId,
+    remote && Boolean(selectedTemplateId)
+  )
+  const treeTemplate =
     selection?.kind === 'template' ? findTemplate(templates, selection.id) ?? null : null
+  const selectedTemplate = (remote ? detailQuery.data : null) ?? treeTemplate
   const selectedCategoryName = selectedTemplate
     ? categoryNameById(categories, selectedTemplate.categoryId)
     : ''
 
-  const selectedDeleteIds = useMemo(() => {
-    if (!selection || (selection.kind === 'category' && selection.id === ALIMTALK_ROOT_CATEGORY_ID)) {
-      return new Set<string>()
-    }
-    return new Set([selection.id])
-  }, [selection])
+  const previewQuery = useAlimtalkTemplatePreviewQuery(
+    selectedTemplateId,
+    selectedTemplate,
+    previewOpen && Boolean(selectedTemplateId)
+  )
+  const previewTemplate = previewQuery.data ?? selectedTemplate
 
-  const deletableCheckedCount = useMemo(() => {
-    const { categoryIds, templateIds } = collectDeleteIds(categories, templates, selectedDeleteIds)
-    return categoryIds.length + templateIds.length
-  }, [categories, selectedDeleteIds, templates])
+  const canDeleteSelection = Boolean(
+    selection &&
+      !(
+        selection.kind === 'category' &&
+        (selection.id === ALIMTALK_ROOT_CATEGORY_ID ||
+          isVirtualUnclassifiedCategoryId(selection.id) ||
+          categories.find(item => item.id === selection.id)?.isVirtualUnclassified)
+      )
+  )
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -147,11 +356,12 @@ export function AlimtalkTemplateList() {
   }, [setSearchParams])
 
   const handleToggleExpand = useCallback((categoryId: string) => {
+    if (categoryId === ALIMTALK_ROOT_CATEGORY_ID) return
     setExpandedIds(prev => {
       const next = new Set(prev)
       if (next.has(categoryId)) next.delete(categoryId)
       else next.add(categoryId)
-      return next
+      return withUiRootExpanded(next)
     })
   }, [])
 
@@ -176,26 +386,75 @@ export function AlimtalkTemplateList() {
     [categories, templates]
   )
 
-  const handleConfirmMove = useCallback(() => {
+  const handleConfirmMove = useCallback(async () => {
     if (!pendingMove) return
-    if (pendingMove.kind === 'template') {
-      setTemplates(prev =>
-        moveTemplateToCategory(prev, pendingMove.templateId, pendingMove.targetCategoryId)
-      )
-      setExpandedIds(prev => new Set(prev).add(pendingMove.targetCategoryId))
-    } else {
-      setCategories(prev =>
-        moveCategoryToParent(prev, pendingMove.categoryId, pendingMove.targetParentId)
-      )
-      setExpandedIds(prev => new Set(prev).add(pendingMove.targetParentId))
+    try {
+      if (remote) {
+        if (pendingMove.kind === 'template') {
+          await mutations.moveTemplate.mutateAsync({
+            templateId: pendingMove.templateId,
+            targetCategoryId: pendingMove.targetCategoryId,
+          })
+          setExpandedIds(prev => new Set(prev).add(pendingMove.targetCategoryId))
+        } else {
+          await mutations.moveCategory.mutateAsync({
+            categoryId: pendingMove.categoryId,
+            targetParentId: pendingMove.targetParentId,
+          })
+          setExpandedIds(prev => new Set(prev).add(pendingMove.targetParentId))
+        }
+        clearTreeSearchAfterMutation()
+      } else if (pendingMove.kind === 'template') {
+        setLocalTemplates(prev =>
+          moveTemplateToCategory(prev, pendingMove.templateId, pendingMove.targetCategoryId)
+        )
+        setExpandedIds(prev => new Set(prev).add(pendingMove.targetCategoryId))
+      } else {
+        setLocalCategories(prev =>
+          moveCategoryToParent(prev, pendingMove.categoryId, pendingMove.targetParentId)
+        )
+        setExpandedIds(prev => new Set(prev).add(pendingMove.targetParentId))
+      }
+      setPendingMove(null)
+    } catch (error) {
+      if (isCategoryNeedsSyncError(error)) {
+        showAlert({
+          title: '안내',
+          content: getNotificationsApiErrorMessage(error, '이동에 실패했습니다.'),
+          confirmLabel: '동기화',
+          onConfirm: () => {
+            void runNhnSync('manual')
+          },
+        })
+        return
+      }
+      showAlert({
+        title: '안내',
+        content: getNotificationsApiErrorMessage(error, '이동에 실패했습니다.'),
+      })
     }
-    setPendingMove(null)
-  }, [pendingMove])
+  }, [
+    clearTreeSearchAfterMutation,
+    mutations.moveCategory,
+    mutations.moveTemplate,
+    pendingMove,
+    remote,
+    runNhnSync,
+    showAlert,
+  ])
 
   const handleRequestDelete = useCallback(() => {
     if (!selection) return
     if (selection.kind === 'category') {
       if (selection.id === ALIMTALK_ROOT_CATEGORY_ID) return
+      const category = categories.find(item => item.id === selection.id)
+      if (category?.isVirtualUnclassified || isVirtualUnclassifiedCategoryId(selection.id)) {
+        showAlert({
+          title: '안내',
+          content: '미분류 카테고리는 삭제할 수 없습니다.',
+        })
+        return
+      }
       if (categoryHasChildren(categories, templates, selection.id)) {
         setDeleteDialog('blocked')
         return
@@ -204,44 +463,145 @@ export function AlimtalkTemplateList() {
       return
     }
     setDeleteDialog('template')
-  }, [categories, selection, templates])
+  }, [categories, selection, showAlert, templates])
 
-  const handleConfirmDelete = useCallback(() => {
-    const { categoryIds, templateIds } = collectDeleteIds(categories, templates, selectedDeleteIds)
-    const categoryIdSet = new Set(categoryIds)
-    const templateIdSet = new Set(templateIds)
-    setCategories(prev => prev.filter(category => !categoryIdSet.has(category.id)))
-    setTemplates(prev => prev.filter(template => !templateIdSet.has(template.id)))
-    setSelection(current => {
-      if (!current) return current
-      if (current.kind === 'category' && categoryIdSet.has(current.id)) return null
-      if (current.kind === 'template' && templateIdSet.has(current.id)) return null
-      return current
-    })
-    setDeleteDialog(null)
-  }, [categories, selectedDeleteIds, templates])
+  const handleConfirmDelete = useCallback(async () => {
+    if (!selection) return
+
+    try {
+      if (deleteDialog === 'template' && selection.kind === 'template') {
+        if (remote) {
+          await mutations.deleteTemplate.mutateAsync(selection.id)
+          clearTreeSearchAfterMutation()
+        } else {
+          setLocalTemplates(prev => prev.filter(item => item.id !== selection.id))
+        }
+        setSelection(null)
+        setDeleteDialog(null)
+        return
+      }
+
+      if (deleteDialog === 'category' && selection.kind === 'category') {
+        if (remote) {
+          await mutations.deleteCategory.mutateAsync(selection.id)
+          clearTreeSearchAfterMutation()
+        } else {
+          setLocalCategories(prev => prev.filter(category => category.id !== selection.id))
+        }
+        setSelection(null)
+        setDeleteDialog(null)
+      }
+    } catch (error) {
+      if (isAlimtalkTemplateDeleteRejectedByNhnError(error)) {
+        showAlert({
+          title: '삭제 거절',
+          content: getNotificationsApiErrorMessage(
+            error,
+            'NHN Console에서 템플릿 삭제가 거절되었습니다.'
+          ),
+          confirmLabel: 'NHN Console 열기',
+          onConfirm: () => {
+            window.open(resolveNhnConsoleUrl(selectedTemplate), '_blank', 'noopener,noreferrer')
+          },
+        })
+        setDeleteDialog(null)
+        return
+      }
+      if (isCategoryHasChildrenError(error)) {
+        setDeleteDialog('blocked')
+        return
+      }
+      if (isCategoryNeedsSyncError(error)) {
+        showAlert({
+          title: '안내',
+          content: getNotificationsApiErrorMessage(error, '삭제에 실패했습니다.'),
+          confirmLabel: '동기화',
+          onConfirm: () => {
+            void runNhnSync('manual')
+          },
+        })
+        return
+      }
+      showAlert({
+        title: '안내',
+        content: getNotificationsApiErrorMessage(error, '삭제에 실패했습니다.'),
+      })
+    }
+  }, [
+    clearTreeSearchAfterMutation,
+    deleteDialog,
+    mutations.deleteCategory,
+    mutations.deleteTemplate,
+    remote,
+    runNhnSync,
+    selectedTemplate,
+    selection,
+    showAlert,
+  ])
 
   const handleSubmitCategory = useCallback(
-    (name: string) => {
+    async (name: string) => {
       if (!categoryModal) return
-      if (categoryModal.mode === 'add') {
-        const parentId = targetCategoryForAdd(selection, templates)
-        const id = `cat-${Date.now()}`
-        setCategories(prev => [...prev, { id, name, parentId }])
-        setExpandedIds(prev => new Set(prev).add(parentId).add(id))
-        setSelection({ kind: 'category', id })
-      } else if (categoryModal.categoryId) {
-        const editId = categoryModal.categoryId
-        setCategories(prev =>
-          prev.map(category => (category.id === editId ? { ...category, name } : category))
+      try {
+        if (remote) {
+          if (categoryModal.mode === 'add') {
+            const parentId = targetCategoryForAdd(selection, templates)
+            await mutations.createCategory.mutateAsync({ name, parentId })
+            setExpandedIds(prev => new Set(prev).add(parentId))
+          } else if (categoryModal.categoryId) {
+            await mutations.updateCategory.mutateAsync({
+              categoryId: categoryModal.categoryId,
+              name,
+            })
+          }
+          clearTreeSearchAfterMutation()
+        } else if (categoryModal.mode === 'add') {
+          const parentId = targetCategoryForAdd(selection, templates)
+          const id = `cat-${Date.now()}`
+          setLocalCategories(prev => [...prev, { id, name, parentId }])
+          setExpandedIds(prev => new Set(prev).add(parentId).add(id))
+          setSelection({ kind: 'category', id })
+        } else if (categoryModal.categoryId) {
+          const editId = categoryModal.categoryId
+          setLocalCategories(prev =>
+            prev.map(category => (category.id === editId ? { ...category, name } : category))
+          )
+        }
+        setCategoryModal(null)
+      } catch (error) {
+        const content = getNotificationsApiErrorMessage(
+          error,
+          '카테고리 저장에 실패했습니다.'
         )
+        if (remote && isCategoryNeedsSyncError(error)) {
+          showAlert({
+            title: '안내',
+            content,
+            confirmLabel: '동기화',
+            onConfirm: () => {
+              void runNhnSync('manual')
+            },
+          })
+          return
+        }
+        showAlert({ title: '안내', content })
       }
-      setCategoryModal(null)
     },
-    [categoryModal, selection, templates]
+    [
+      categoryModal,
+      clearTreeSearchAfterMutation,
+      mutations.createCategory,
+      mutations.updateCategory,
+      remote,
+      runNhnSync,
+      selection,
+      showAlert,
+      templates,
+    ]
   )
 
-  const editCategoryId = categoryIdForEdit(selection, templates)
+  const editCategoryId = categoryIdForEdit(selection, templates, categories)
+  const busy = isSyncing || isMutating
 
   return (
     <div className="program-list-page">
@@ -259,11 +619,22 @@ export function AlimtalkTemplateList() {
         title="알림톡 템플릿"
         actions={
           <>
+            {remote ? (
+              <CmsButton
+                variant="secondary"
+                size="large"
+                type="button"
+                disabled={busy}
+                onClick={() => void runNhnSync('manual')}
+              >
+                {isSyncing ? '동기화 중…' : '동기화'}
+              </CmsButton>
+            ) : null}
             <CmsButton
               variant="delete"
               size="large"
               type="button"
-              disabled={deletableCheckedCount === 0}
+              disabled={!canDeleteSelection || busy}
               onClick={handleRequestDelete}
             >
               선택 삭제
@@ -272,7 +643,7 @@ export function AlimtalkTemplateList() {
               variant="secondary"
               size="large"
               type="button"
-              disabled={!editCategoryId}
+              disabled={!editCategoryId || busy}
               onClick={() => setCategoryModal({ mode: 'edit', categoryId: editCategoryId })}
             >
               카테고리 수정
@@ -281,6 +652,7 @@ export function AlimtalkTemplateList() {
               variant="secondary"
               size="large"
               type="button"
+              disabled={busy}
               onClick={() =>
                 setCategoryModal({
                   mode: 'add',
@@ -295,7 +667,11 @@ export function AlimtalkTemplateList() {
               size="large"
               type="button"
               onClick={() =>
-                window.open(NHN_CLOUD_ALIMTALK_TEMPLATE_CONSOLE_URL, '_blank', 'noopener,noreferrer')
+                window.open(
+                  resolveNhnConsoleUrl(selectedTemplate),
+                  '_blank',
+                  'noopener,noreferrer'
+                )
               }
             >
               템플릿 등록
@@ -303,6 +679,51 @@ export function AlimtalkTemplateList() {
           </>
         }
       >
+        {remote && (syncBanner || isSyncing) ? (
+          <div
+            className={`alimtalk-template-sync-banner${
+              syncBanner === 'error' || syncBanner === 'provider-unavailable'
+                ? ' alimtalk-template-sync-banner--error'
+                : ''
+            }${
+              syncBanner === 'local-mode' || syncBanner === 'synced-empty'
+                ? ' alimtalk-template-sync-banner--warn'
+                : ''
+            }`}
+            role="status"
+          >
+            <p className="alimtalk-template-sync-banner__text">
+              {isSyncing
+                ? 'NHN Cloud 템플릿을 동기화하는 중입니다…'
+                : syncBanner === 'local-mode'
+                  ? 'BE가 NHN 모드가 아닙니다(JA_NOTIFICATION_MODE). NHN live pull이 되지 않습니다. BE에 JA_NOTIFICATION_MODE=NHN_NOTIFICATION_HUB 설정을 요청한 뒤 동기화해 주세요.'
+                  : syncBanner === 'provider-unavailable'
+                    ? syncErrorMessage ||
+                      'NHN Cloud 연동에 실패했습니다. 백엔드 NHN 설정을 확인한 뒤 다시 동기화해 주세요.'
+                    : syncBanner === 'synced-empty'
+                      ? '동기화는 완료되었지만 표시할 템플릿이 없습니다. NHN Console 승인 템플릿을 확인하거나 다시 동기화해 주세요.'
+                      : syncBanner === 'error'
+                        ? syncErrorMessage ||
+                          'NHN 동기화에 실패했습니다. 다시 시도해 주세요.'
+                        : '트리만으로는 NHN 데이터가 보이지 않습니다. 「동기화」를 실행해 주세요.'}
+            </p>
+            {!isSyncing &&
+            (syncBanner === 'need-sync' ||
+              syncBanner === 'error' ||
+              syncBanner === 'provider-unavailable' ||
+              syncBanner === 'local-mode' ||
+              syncBanner === 'synced-empty') ? (
+              <CmsButton
+                variant="secondary"
+                size="medium"
+                type="button"
+                onClick={() => void runNhnSync('manual')}
+              >
+                다시 동기화
+              </CmsButton>
+            ) : null}
+          </div>
+        ) : null}
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <div className="alimtalk-template-split">
             <CategoryTree
@@ -324,14 +745,18 @@ export function AlimtalkTemplateList() {
 
       <PreviewModal
         open={previewOpen}
-        template={selectedTemplate}
+        template={previewTemplate}
         onClose={() => setPreviewOpen(false)}
+        onUse={template => {
+          setPreviewOpen(false)
+          onUseTemplate?.(template.id)
+        }}
       />
       <CmsModal
         open={deleteDialog === 'blocked'}
         onClose={() => setDeleteDialog(null)}
         title="카테고리 삭제 불가"
-        content="카테고리 하위에 카테고리 또는 템플릿이 있으면 삭제할 수 없습니다."
+        content="하위 카테고리 또는 템플릿이 있어 삭제할 수 없습니다."
         buttons={[
           { label: '닫기', onClick: () => setDeleteDialog(null), variant: 'secondary' },
           { label: '확인', onClick: () => setDeleteDialog(null), variant: 'primary' },
@@ -341,21 +766,21 @@ export function AlimtalkTemplateList() {
         open={deleteDialog === 'category'}
         onClose={() => setDeleteDialog(null)}
         title="카테고리 삭제"
-        content="카테고리를 삭제하시겠습니까?"
+        content="선택한 카테고리를 삭제할까요? NHN Console에도 반영됩니다."
         buttons={[
           { label: '취소', onClick: () => setDeleteDialog(null), variant: 'secondary' },
-          { label: '삭제', onClick: handleConfirmDelete, variant: 'delete' },
+          { label: '삭제', onClick: () => void handleConfirmDelete(), variant: 'delete' },
         ]}
       />
-      <ConfirmModal
+      <CmsModal
         open={deleteDialog === 'template'}
-        title="선택 삭제"
-        content={`선택한 ${deletableCheckedCount}개 항목을 삭제하시겠습니까?`}
-        warningMessage="삭제된 항목은 복구할 수 없습니다."
-        danger
-        confirmText="삭제"
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setDeleteDialog(null)}
+        onClose={() => setDeleteDialog(null)}
+        title="삭제 확인"
+        content="선택한 알림톡 템플릿을 삭제할까요? NHN Console에도 반영됩니다. (승인·공용 템플릿은 NHN에서 거절될 수 있습니다.)"
+        buttons={[
+          { label: '취소', onClick: () => setDeleteDialog(null), variant: 'secondary' },
+          { label: '삭제', onClick: () => void handleConfirmDelete(), variant: 'delete' },
+        ]}
       />
       <CmsModal
         open={pendingMove?.kind === 'category'}
@@ -368,7 +793,7 @@ export function AlimtalkTemplateList() {
         }
         buttons={[
           { label: '취소', onClick: () => setPendingMove(null), variant: 'secondary' },
-          { label: '이동', onClick: handleConfirmMove, variant: 'primary' },
+          { label: '이동', onClick: () => void handleConfirmMove(), variant: 'primary' },
         ]}
       />
       <CmsModal
@@ -377,7 +802,7 @@ export function AlimtalkTemplateList() {
         title="템플릿 이동"
         buttons={[
           { label: '취소', onClick: () => setPendingMove(null), variant: 'secondary' },
-          { label: '이동', onClick: handleConfirmMove, variant: 'primary' },
+          { label: '이동', onClick: () => void handleConfirmMove(), variant: 'primary' },
         ]}
       >
         {pendingMove?.kind === 'template' ? (
@@ -401,7 +826,7 @@ export function AlimtalkTemplateList() {
             : ''
         }
         onCancel={() => setCategoryModal(null)}
-        onSubmit={handleSubmitCategory}
+        onSubmit={name => void handleSubmitCategory(name)}
       />
     </div>
   )

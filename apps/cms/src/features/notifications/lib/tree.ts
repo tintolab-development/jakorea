@@ -137,6 +137,61 @@ export function collectDeleteIds<T extends NotificationTreeTemplate>(
   return { categoryIds: [...categoryIds], templateIds: [...templateIds] }
 }
 
+export function isVirtualUnclassifiedCategoryId(id: string): boolean {
+  return id.startsWith('unclassified-')
+}
+
+export function sortCategoryIdsDeepestFirst(
+  categories: NotificationTreeCategory[],
+  ids: readonly string[]
+): string[] {
+  return [...ids].sort(
+    (a, b) => ancestorIds(categories, b).length - ancestorIds(categories, a).length
+  )
+}
+
+/** 체크·선택된 항목만. 하위 자동 포함 없음(BE는 cascade DELETE 없음). */
+export function collectExplicitDeleteIds<T extends NotificationTreeTemplate>(
+  categories: NotificationTreeCategory[],
+  templates: T[],
+  checkedIds: ReadonlySet<string>
+): { categoryIds: string[]; templateIds: string[] } {
+  const categoryIds: string[] = []
+  const templateIds: string[] = []
+
+  for (const id of checkedIds) {
+    if (id === NOTIFICATION_ROOT_CATEGORY_ID || isVirtualUnclassifiedCategoryId(id)) continue
+    const category = findCategory(categories, id)
+    if (category) {
+      categoryIds.push(category.id)
+      continue
+    }
+    const template = findTemplate(templates, id)
+    if (template) templateIds.push(template.id)
+  }
+
+  return {
+    categoryIds: sortCategoryIdsDeepestFirst(categories, categoryIds),
+    templateIds,
+  }
+}
+
+export function categoryHasUndeletedChildren<T extends NotificationTreeTemplate>(
+  categories: NotificationTreeCategory[],
+  templates: T[],
+  categoryId: string,
+  deletingCategoryIds: ReadonlySet<string>,
+  deletingTemplateIds: ReadonlySet<string>
+): boolean {
+  const leftoverCategories = categoryChildren(categories, categoryId).some(
+    child => !deletingCategoryIds.has(child.id)
+  )
+  const leftoverTemplates = templatesInCategory(templates, categoryId).some(
+    template => !deletingTemplateIds.has(template.id)
+  )
+  return leftoverCategories || leftoverTemplates
+}
+
 export function categoryHasChildren<T extends NotificationTreeTemplate>(
   categories: NotificationTreeCategory[],
   templates: T[],

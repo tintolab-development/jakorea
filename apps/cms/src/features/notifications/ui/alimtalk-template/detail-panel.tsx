@@ -32,6 +32,15 @@ export function DetailPanel({ template, categoryName, onPreview }: DetailPanelPr
         </DetailInfoForm.Row>
       </DetailInfoForm>
       <DetailInfoForm title="템플릿 상세" hideHeader mode="view">
+        {template.approvalStatus === 'UNKNOWN' ? (
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="상태"
+              fullRow
+              view="NHN 공용/상세 미동기화 (승인 상태 UNKNOWN)"
+            />
+          </DetailInfoForm.Row>
+        ) : null}
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="카테고리명" view={categoryName} />
           <DetailInfoForm.Field label="템플릿명" view={template.templateName} />
