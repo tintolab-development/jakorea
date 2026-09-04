@@ -46,12 +46,12 @@ export function LoginSocialCompletePage() {
 
       switch (outcome.kind) {
         case 'cancelled':
-          navigateSocialNotLinked()
+          navigate('/login', { replace: true })
           return
 
         case 'failed':
           handleError(new Error(outcome.message), { context: 'loginSocialCompletePage.failed' })
-          navigateSocialNotLinked()
+          navigate('/login', { replace: true })
           return
 
         case 'not_linked':
@@ -81,7 +81,7 @@ export function LoginSocialCompletePage() {
         }
 
         default:
-          navigateSocialNotLinked()
+          navigate('/login', { replace: true })
           return
       }
     }
@@ -104,7 +104,7 @@ export function LoginSocialCompletePage() {
       }
 
       handleError(err, { context: 'loginSocialCompletePage.unexpected' })
-      navigateSocialNotLinked()
+      navigate('/login', { replace: true })
     })
   }, [applySocialAuthTokens, navigate])
 

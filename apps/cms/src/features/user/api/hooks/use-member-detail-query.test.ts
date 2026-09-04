@@ -53,6 +53,7 @@ vi.mock('@/features/user/api/member-remote-capabilities', () => ({
 }))
 
 vi.mock('@/features/user/api/map-external-identifiers', () => ({
+  assignUser1365IdFromDetailAndIdentifiers: vi.fn(),
   resolve1365IdFromExternalIdentifiers: vi.fn(() => undefined),
 }))
 

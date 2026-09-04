@@ -29,13 +29,14 @@ export function isSocialAccountNotLinkedError(error: unknown): boolean {
   if (error instanceof SocialAuthApiError) {
     return (
       error.code.includes('NOT_LINKED') ||
-      error.code.includes('SOCIAL_ACCOUNT_NOT_LINKED')
+      error.code.includes('SOCIAL_ACCOUNT_NOT_LINKED') ||
+      error.code === 'ADMIN_SOCIAL_ACCOUNT_NOT_LINKED'
     )
   }
   if (error instanceof Error) {
     return (
       error.message.includes('연결된 소셜') ||
-      error.message.includes('소셜 계정') ||
+      error.message.includes('ADMIN_SOCIAL_ACCOUNT_NOT_LINKED') ||
       error.message.includes('SOCIAL_ACCOUNT_NOT_LINKED')
     )
   }

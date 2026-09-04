@@ -307,7 +307,6 @@ function columnsForKind(
       {
         title: '권한 유형',
         key: 'permission',
-        width: 200,
         align: 'center',
         onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME }),
         onCell: () => ({
@@ -425,7 +424,7 @@ export function UserList({
 
   return (
     <Table
-      className={`cms-data-table`}
+      className="cms-data-table user-list-table"
       columns={columns}
       dataSource={data}
       loading={loading}

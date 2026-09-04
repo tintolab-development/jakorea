@@ -226,6 +226,8 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
 
     expect(body.schoolName).toBe('서울교육대학교')
     expect(body.schoolSelection).toBeUndefined()
+    // 기존 CMS 학교 연동을 지우지 않도록 null도 보내지 않는다
+    expect(body.schoolOrganizationId).toBeUndefined()
   })
 })
 

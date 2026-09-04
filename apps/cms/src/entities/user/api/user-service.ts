@@ -122,7 +122,7 @@ import {
   mapPatchUserBasicInfoToAdminAccountApiRequest,
   mapPatchUserBasicInfoToApiRequest,
 } from '@/features/user/api/map-patch-user-basic-info'
-import { resolve1365IdFromExternalIdentifiers } from '@/features/user/api/map-external-identifiers'
+import { assignUser1365IdFromDetailAndIdentifiers } from '@/features/user/api/map-external-identifiers'
 import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
 import { probeMemberDetailAsUser } from '@/features/user/api/probe-member-detail-as-user'
 import {
@@ -999,11 +999,11 @@ export async function getUserById(
             fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
           ])
           const user = mapTeacherMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
-          const id1365 = resolve1365IdFromExternalIdentifiers(
-            externalIdentifiers,
-            detail.member?.external1365Id
+          assignUser1365IdFromDetailAndIdentifiers(
+            user,
+            detail.member?.external1365Id,
+            externalIdentifiers
           )
-          if (id1365) user.id1365 = id1365
           return user
         }
 
@@ -1013,11 +1013,11 @@ export async function getUserById(
             fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
           ])
           const user = mapInstructorMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
-          const id1365 = resolve1365IdFromExternalIdentifiers(
-            externalIdentifiers,
-            detail.member?.external1365Id
+          assignUser1365IdFromDetailAndIdentifiers(
+            user,
+            detail.member?.external1365Id,
+            externalIdentifiers
           )
-          if (id1365) user.id1365 = id1365
           return user
         }
       }
@@ -1028,11 +1028,11 @@ export async function getUserById(
           fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
         ])
         const user = mapIndividualMemberDetailToUser(detail, { fallbackRole: 'INDIVIDUAL' })
-        const id1365 = resolve1365IdFromExternalIdentifiers(
-          externalIdentifiers,
-          detail.member?.external1365Id
+        assignUser1365IdFromDetailAndIdentifiers(
+          user,
+          detail.member?.external1365Id,
+          externalIdentifiers
         )
-        if (id1365) user.id1365 = id1365
         return user
       }
 
@@ -1041,11 +1041,7 @@ export async function getUserById(
         () => []
       )
       const user = mapMemberDetailToUser(detail, null, { fallbackRole: role })
-      const id1365 = resolve1365IdFromExternalIdentifiers(
-        externalIdentifiers,
-        detail.external1365Id
-      )
-      if (id1365) user.id1365 = id1365
+      assignUser1365IdFromDetailAndIdentifiers(user, detail.external1365Id, externalIdentifiers)
       return user
     } catch (error) {
       throw new Error(getMemberApiErrorMessage(error, '회원 상세를 불러오지 못했습니다.'))

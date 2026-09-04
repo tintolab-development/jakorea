@@ -17,7 +17,7 @@ import {
   mapSchoolMemberDetailToUser,
   mapTeacherMemberDetailToUser,
 } from '@/features/user/api/map-member-detail-to-user'
-import { resolve1365IdFromExternalIdentifiers } from '@/features/user/api/map-external-identifiers'
+import { assignUser1365IdFromDetailAndIdentifiers } from '@/features/user/api/map-external-identifiers'
 import {
   inferInstructorMemberProfileFromRoles,
   resolvePrimaryUserRole,
@@ -75,11 +75,11 @@ export async function probeMemberDetailAsUser(
       }
       // individual 엔드포인트가 응답했으면 동일 GET을 반복하지 않고 즉시 매핑
       const user = mapIndividualMemberDetailToUser(detail, { fallbackRole: 'INDIVIDUAL' })
-      const id1365 = resolve1365IdFromExternalIdentifiers(
-        externalIdentifiers,
-        detail.member.external1365Id
+      assignUser1365IdFromDetailAndIdentifiers(
+        user,
+        detail.member.external1365Id,
+        externalIdentifiers
       )
-      if (id1365) user.id1365 = id1365
       return user
     }
   } catch (error) {
@@ -105,11 +105,11 @@ export async function probeMemberDetailAsUser(
         return fetchInstructorLikeDetailAsUser(memberId, detail.member.roles)
       }
       const user = mapInstructorMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
-      const id1365 = resolve1365IdFromExternalIdentifiers(
-        externalIdentifiers,
-        detail.member?.external1365Id
+      assignUser1365IdFromDetailAndIdentifiers(
+        user,
+        detail.member?.external1365Id,
+        externalIdentifiers
       )
-      if (id1365) user.id1365 = id1365
       return user
     }
   } catch (error) {
@@ -138,11 +138,11 @@ async function fetchInstructorLikeDetailAsUser(
   const user = useTeacher
     ? mapTeacherMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
     : mapInstructorMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
-  const id1365 = resolve1365IdFromExternalIdentifiers(
-    externalIdentifiers,
-    detail.member?.external1365Id
+  assignUser1365IdFromDetailAndIdentifiers(
+    user,
+    detail.member?.external1365Id,
+    externalIdentifiers
   )
-  if (id1365) user.id1365 = id1365
   return user
 }
 

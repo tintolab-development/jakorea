@@ -47,3 +47,26 @@ export function resolveIndividualEnrolledSchoolSubmitBlock(
 
   return INDIVIDUAL_ENROLLED_NEIS_SCHOOL_SELECTION_REQUIRED_ALERT_MESSAGE
 }
+
+/**
+ * 회원 상세 수정 — 이미 등록된 재학 소속명을 그대로 두면 학교 재검색을 요구하지 않는다.
+ * 소속명을 바꾸거나 비운 뒤에 검색 선택이 없으면 `resolveIndividualEnrolledSchoolSubmitBlock`으로 막는다.
+ */
+export function shouldSkipIndividualEnrolledSchoolReselectionGuard(params: {
+  draftInstitution: string
+  originalInstitution: string
+  schoolOrganizationId?: number | null
+  schoolProvider?: string | null
+  schoolExternalCode?: string | null
+}): boolean {
+  const draftInstitution = params.draftInstitution.trim()
+  const originalInstitution = params.originalInstitution.trim()
+  if (!draftInstitution || draftInstitution !== originalInstitution) return false
+  if (params.schoolOrganizationId != null && Number.isFinite(params.schoolOrganizationId)) {
+    return false
+  }
+  if (trimOptional(params.schoolProvider) || trimOptional(params.schoolExternalCode)) {
+    return false
+  }
+  return true
+}

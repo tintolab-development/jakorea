@@ -1,4 +1,3 @@
-import dayjs, { type Dayjs } from 'dayjs'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -10,10 +9,6 @@ import {
   ALIMTALK_SEND_STATUS_OPTIONS,
 } from './types'
 
-function defaultWeekRange(): [Dayjs, Dayjs] {
-  return [dayjs().startOf('day'), dayjs().add(7, 'day').startOf('day')]
-}
-
 const SELECT_ALL = '전체'
 
 /** 검색·셀렉트 240 · dateRange 500 · 칸 갭 12. 너비에 따라 flex-wrap으로 2~3줄. */
@@ -21,9 +16,9 @@ export const SEND_HISTORY_FILTER_FIELDS: FilterFieldConfig[] = [
   {
     key: 'requestDateRange',
     type: 'dateRange',
-    label: '요청 일시',
+    label: '요청일',
     width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
-    defaultValue: defaultWeekRange(),
+    defaultValue: null,
   },
   {
     key: 'templateName',
@@ -73,22 +68,22 @@ export const SEND_HISTORY_FILTER_FIELDS: FilterFieldConfig[] = [
   {
     key: 'sendDateRange',
     type: 'dateRange',
-    label: '발송 일시',
+    label: '발송일',
     width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
-    defaultValue: defaultWeekRange(),
+    defaultValue: null,
   },
   {
     key: 'receiveDateRange',
     type: 'dateRange',
-    label: '수신 일시',
+    label: '수신일',
     width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
-    defaultValue: defaultWeekRange(),
+    defaultValue: null,
   },
   {
     key: 'reserveDateRange',
     type: 'dateRange',
-    label: '예약 일시',
+    label: '예약일',
     width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
-    defaultValue: defaultWeekRange(),
+    defaultValue: null,
   },
 ]
