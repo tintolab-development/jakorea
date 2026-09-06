@@ -65,6 +65,7 @@ pnpm --filter cms package:member-management-seed-handoff -- --openapi
 
 | 문서 | 용도 |
 |------|------|
+| [**individual-member-basic-info-patch-unmask-1365-backend-request-2026-09-04.md**](./individual-member-basic-info-patch-unmask-1365-backend-request-2026-09-04.md) | **백엔드 전달** — 개인 회원 상세 PATCH 재학·소속·학년·자택주소 **미반영(200)** · individual unmask `external1365Id` **null** (P0) |
 | [**admin-role-rbac-unmask-form-template-backend-request-2026-09-01.md**](./admin-role-rbac-unmask-form-template-backend-request-2026-09-01.md) | **백엔드 전달** — VIEWER 목록 GET **403** · PARTNER unmask/강사승인 **403** · `form-template-versions` PUT 500·GET 404 · 등록 동의서 500 재확인 (P0) |
 | [**members-all-list-email-phone-masking-backend-request-2026-08-31.md**](./members-all-list-email-phone-masking-backend-request-2026-08-31.md) | **백엔드 전달** — `GET /api/admin/members/all` 연락처·이메일 **원문 노출** → 정책 마스킹 재적용 (P0) |
 | [**member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md**](./member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md) | **백엔드 전달** — 상세 PATCH `PAYMENT_STATEMENT_CONSENT` current **404** · 성범죄 파일 upload **401** (P0) |
@@ -99,4 +100,4 @@ pnpm --filter cms package:members-be-handoff -- --openapi
 pnpm --filter cms package:members-be-handoff -- --out=~/Desktop/jakorea-members-be-handoff
 ```
 
-**Last updated:** 2026-09-01 (VIEWER/PARTNER RBAC · unmask 필드 마스킹 · 양식 버전 500/404)
+**Last updated:** 2026-09-04 (개인 회원 PATCH 주소·소속 미반영 · individual unmask 1365 null)
