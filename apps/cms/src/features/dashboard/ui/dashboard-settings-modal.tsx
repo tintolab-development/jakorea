@@ -148,8 +148,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
     const catalog: Record<string, { id: string; title: string }[]> = {}
     visibleWidgetKeys.forEach((widgetKey, index) => {
       const query = programOptionQueries[index]
-      catalog[widgetKey] =
-        query?.isSuccess && query.data ? query.data : getMockDashboardProgramOptions(widgetKey)
+      catalog[widgetKey] = query?.isSuccess && query.data ? query.data : []
     })
     return catalog
   }, [visibleWidgetKeys, useRemote, programsCatalogLoading, programOptionQueries])
@@ -321,14 +320,14 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
       persistPreferences(undefined)
     }
     onCancel()
-  }, [draftShortcutEnabled, draftWidgetProgramIds, onCancel, persistPreferences])
+  }, [draftShortcutEnabled, draftWidgetProgramIds, onCancel, persistPreferences, useRemote])
 
   const footer = (
     <>
       <CmsButton variant="secondary" size="large" onClick={onCancel}>
         닫기
       </CmsButton>
-      <CmsButton variant="primary" size="large" adminAction="write" onClick={handleApply}>
+      <CmsButton variant="primary" size="large" adminAction="dashboardWrite" onClick={handleApply}>
         설정
       </CmsButton>
     </>

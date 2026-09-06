@@ -40,7 +40,12 @@ export interface SocialAuthClient {
   getRedirectUri: (provider: SocialProvider) => string
   buildLoginReturnUrl: () => string
   buildSignupReturnUrl: (returnUrl?: string) => string
-  startLogin: (input: { provider: SocialProvider; intent: OAuthIntent; returnUrl?: string }) => Promise<string>
+  startLogin: (input: {
+    provider: SocialProvider
+    intent: OAuthIntent
+    returnUrl?: string
+    signupSocialLinkToken?: string
+  }) => Promise<string>
   completeCallback: (input: CallbackInput) => ReturnType<SocialAuthAdapter['completeCallback']>
   completeLinkSession: (
     input: AdminSsoLinkSessionInput
@@ -123,7 +128,7 @@ export function createSocialAuthClient(options: CreateSocialAuthClientOptions): 
     buildLoginReturnUrl,
     buildSignupReturnUrl,
 
-    async startLogin({ provider, intent, returnUrl }) {
+    async startLogin({ provider, intent, returnUrl, signupSocialLinkToken }) {
       state.setOAuthIntent(intent, returnUrl)
       const adapter = resolveAdapter(clientShell, intent)
       const loginReturnUrl = buildLoginReturnUrl()
@@ -156,13 +161,14 @@ export function createSocialAuthClient(options: CreateSocialAuthClientOptions): 
             returnUrl,
             frontendReturnUrl,
             loginReturnUrl,
+            signupSocialLinkToken,
           })
           if (result.state) {
             state.storeOAuthState(provider, result.state)
           }
           return result.authorizationUrl
         } catch (error: unknown) {
-          if (shouldFallbackToFrontendOAuthStart(error)) {
+          if (!signupSocialLinkToken && shouldFallbackToFrontendOAuthStart(error)) {
             if (typeof console !== 'undefined' && console.warn) {
               console.warn(
                 '[social-auth] Admin SSO start unavailable; using frontend Kakao/Naver/Google authorize URL.',

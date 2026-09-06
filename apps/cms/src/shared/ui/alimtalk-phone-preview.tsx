@@ -3,7 +3,7 @@ import alimtalkChannelAddIcon from '@/assets/images/message/alimtalk-channel-add
 import profilePic from '@/assets/images/message/profile-pic.png'
 import './alimtalk-phone-preview.css'
 
-export type AlimtalkPhoneMessageType = 'BASIC' | 'CHANNEL_ADD' | 'COMPLEX'
+export type AlimtalkPhoneMessageType = 'BASIC' | 'CHANNEL_ADD' | 'EXTRA_INFO' | 'COMPLEX'
 
 export type AlimtalkPhoneEmphasisType = 'NONE' | 'TEXT' | 'IMAGE' | 'ITEM_LIST'
 
@@ -45,6 +45,10 @@ const DEFAULT_CHANNEL_GUIDE =
 
 function isChannelAddType(type: AlimtalkPhoneMessageType | undefined): boolean {
   return type === 'CHANNEL_ADD' || type === 'COMPLEX'
+}
+
+function isExtraInfoType(type: AlimtalkPhoneMessageType | undefined): boolean {
+  return type === 'EXTRA_INFO' || type === 'COMPLEX'
 }
 
 export function AlimtalkPhonePreview({
@@ -176,7 +180,7 @@ export function AlimtalkPhonePreview({
                       </>
                     ) : null}
                     <p className="alimtalk-phone-preview__bubble-text">{content}</p>
-                    {extraContent ? (
+                    {isExtraInfoType(messageType) && extraContent ? (
                       <p className="alimtalk-phone-preview__bubble-extra">{extraContent}</p>
                     ) : null}
                     {guideText ? (

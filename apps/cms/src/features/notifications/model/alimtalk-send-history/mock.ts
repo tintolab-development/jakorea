@@ -19,35 +19,41 @@ function numberByIndex(index: number): string {
 }
 
 const seedRows = [
-  { id: 'send-log-9', templateId: 'tpl-channel-add', broadcastTiming: '예약', sendCount: '2건' },
-  { id: 'send-log-8', templateId: 'tpl-password', broadcastTiming: '예약', sendCount: '2건' },
-  { id: 'send-log-7', templateId: 'tpl-emphasis-image', broadcastTiming: '예약', sendCount: '2건' },
-  { id: 'send-log-6', templateId: 'tpl-emphasis-text', broadcastTiming: '즉시', sendCount: '1건' },
-  { id: 'send-log-5', templateId: 'tpl-signup', broadcastTiming: '즉시', sendCount: '1건' },
-  { id: 'send-log-4', templateId: 'tpl-apply', broadcastTiming: '즉시', sendCount: '1건' },
+  { id: 'send-log-9', templateId: 'tpl-channel-add', broadcastTiming: '예약', sendCount: '2건', unusedTemplate: false },
+  { id: 'send-log-8', templateId: 'tpl-password', broadcastTiming: '예약', sendCount: '2건', unusedTemplate: false },
+  { id: 'send-log-7', templateId: 'tpl-emphasis-image', broadcastTiming: '예약', sendCount: '2건', unusedTemplate: false },
+  { id: 'send-log-6', templateId: 'tpl-emphasis-text', broadcastTiming: '즉시', sendCount: '1건', unusedTemplate: false },
+  { id: 'send-log-5', templateId: 'tpl-signup', broadcastTiming: '즉시', sendCount: '1건', unusedTemplate: false },
+  { id: 'send-log-4', templateId: 'tpl-apply', broadcastTiming: '즉시', sendCount: '1건', unusedTemplate: false },
   {
     id: 'send-log-3',
     templateId: 'tpl-emphasis-item-list',
     broadcastTiming: '즉시',
     sendCount: '1건',
+    unusedTemplate: false,
   },
-  { id: 'send-log-2', templateId: 'tpl-channel-add', broadcastTiming: '즉시', sendCount: '1건' },
-  { id: 'send-log-1', templateId: 'tpl-password', broadcastTiming: '즉시', sendCount: '1건' },
+  { id: 'send-log-2', templateId: 'tpl-channel-add', broadcastTiming: '즉시', sendCount: '1건', unusedTemplate: true },
+  { id: 'send-log-1', templateId: 'tpl-password', broadcastTiming: '즉시', sendCount: '1건', unusedTemplate: false },
 ] as const
 
 export const ALIMTALK_SEND_HISTORY_MOCK: AlimtalkSendHistoryRow[] = seedRows.map((seed, index) => {
   const iso = isoByIndex(index)
-  const templateName = 'Gemini Academy 6월 웨비나 참여 안내'
+  const templateName = seed.unusedTemplate ? '미사용' : 'Gemini Academy 6월 웨비나 참여 안내'
+  const isReserved = seed.broadcastTiming === '예약'
+  const receiverName = '홍길동'
+  const receiverPhone = '010-1234-5678'
 
   return {
     id: seed.id,
     requestAt: iso,
     sendRequestedAt: iso,
     receiveRequestedAt: iso,
-    reservedAt: iso,
+    reservedAt: isReserved ? iso : '',
     templateName,
-    senderInfo: '홍길동 | gildong@jakorea.org',
-    receiverInfo: '홍길동 <gilldong@jakorea.org>',
+    senderInfo: '@jakorea',
+    receiverName,
+    receiverPhone,
+    receiverInfo: `${receiverName} ${receiverPhone}`,
     broadcastTiming: seed.broadcastTiming,
     sendStatus: '발송 성공',
     receiveStatus: '수신 성공',

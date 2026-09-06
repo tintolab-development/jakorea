@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
+import { ALIMTALK_APPROVAL_STATUS_LABEL } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
 import {
   ALIMTALK_MESSAGE_TYPE_LABEL,
   type AlimtalkTemplateItem,
@@ -12,10 +13,20 @@ type DetailPanelProps = {
   onPreview: () => void
 }
 
+function approvalStatusLabel(template: AlimtalkTemplateItem): string | null {
+  if (!template.approvalStatus) return null
+  if (template.approvalStatus === 'UNKNOWN') {
+    return 'NHN 공용/상세 미동기화 (승인 상태 UNKNOWN)'
+  }
+  return ALIMTALK_APPROVAL_STATUS_LABEL[template.approvalStatus] ?? template.approvalStatus
+}
+
 export function DetailPanel({ template, categoryName, onPreview }: DetailPanelProps) {
   if (!template) {
     return <div className="alimtalk-template-detail alimtalk-template-detail--empty" />
   }
+
+  const statusLabel = approvalStatusLabel(template)
 
   return (
     <div className="alimtalk-template-detail">
@@ -32,6 +43,11 @@ export function DetailPanel({ template, categoryName, onPreview }: DetailPanelPr
         </DetailInfoForm.Row>
       </DetailInfoForm>
       <DetailInfoForm title="템플릿 상세" hideHeader mode="view">
+        {statusLabel ? (
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field label="승인 상태" fullRow view={statusLabel} />
+          </DetailInfoForm.Row>
+        ) : null}
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="카테고리명" view={categoryName} />
           <DetailInfoForm.Field label="템플릿명" view={template.templateName} />

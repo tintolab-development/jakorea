@@ -319,12 +319,14 @@ export function createAdminSsoAdapter(options: CreateAdminSsoAdapterOptions): So
 export interface CreateSignupSocialAdapterOptions {
   http: SocialAuthHttpClient
   paths: SocialAuthPaths
+  /** IdP redirectUri — 백엔드 GET /api/admin/auth/sso/{provider}/callback */
+  resolveBackendCallbackUri?: (provider: SocialProvider) => string
 }
 
 export function createSignupSocialAdapter(
   options: CreateSignupSocialAdapterOptions
 ): SocialAuthAdapter {
-  const { http, paths } = options
+  const { http, paths, resolveBackendCallbackUri } = options
 
   return {
     async completeCallback() {
@@ -332,6 +334,74 @@ export function createSignupSocialAdapter(
         'UNSUPPORTED',
         '가입 소셜 연결은 signup return URL에서 처리해야 합니다.'
       )
+    },
+
+    async startSso(input) {
+      if (!paths.signupSsoLinkStart) {
+        throw new SocialAuthApiError(
+          'UNSUPPORTED',
+          '가입 직후 소셜 연결 시작 API가 설정되지 않았습니다.'
+        )
+      }
+      if (!input.signupSocialLinkToken?.trim()) {
+        throw new SocialAuthApiError(
+          'INVALID_REQUEST',
+          'signupSocialLinkToken이 없어 소셜 계정 연결을 시작할 수 없습니다.'
+        )
+      }
+
+      try {
+        const redirectUri = resolveBackendCallbackUri
+          ? resolveBackendCallbackUri(input.provider)
+          : input.redirectUri
+        const returnUrl = input.frontendReturnUrl ?? input.returnUrl
+
+        const { data } = await http.post(paths.signupSsoLinkStart(), {
+          provider: toApiProviderCode(input.provider),
+          redirectUri,
+          returnUrl,
+          signupSocialLinkToken: input.signupSocialLinkToken,
+        })
+
+        return resolveSsoAuthorizationStartResult(
+          unwrapApiData<SsoAuthorizationStartPayload>(data),
+          redirectUri
+        )
+      } catch (err) {
+        rethrowSocialAuthApiError(err, '가입 직후 소셜 계정 연결 시작에 실패했습니다.')
+      }
+    },
+
+    async completeLinkSession(input) {
+      if (!paths.signupSsoLinkSessionConsume) {
+        throw new SocialAuthApiError(
+          'UNSUPPORTED',
+          '가입 직후 소셜 연결 완료 API가 설정되지 않았습니다.'
+        )
+      }
+      if (!input.signupSocialLinkToken?.trim()) {
+        throw new SocialAuthApiError(
+          'INVALID_REQUEST',
+          'signupSocialLinkToken이 없어 소셜 계정 연결을 완료할 수 없습니다.'
+        )
+      }
+
+      try {
+        const { data } = await http.post(paths.signupSsoLinkSessionConsume(), {
+          adminSsoSessionId: input.adminSsoSessionId,
+          provider: toApiProviderCode(input.provider),
+          signupSocialLinkToken: input.signupSocialLinkToken,
+          socialConsentVersion: input.consent.socialConsentVersion,
+          socialConsentAgreed: input.consent.socialConsentAgreed,
+          ...(input.consent.socialConsentSnapshotJson
+            ? { socialConsentSnapshotJson: input.consent.socialConsentSnapshotJson }
+            : {}),
+        })
+        const account = unwrapApiData<Record<string, unknown>>(data)
+        return mapLinkedAccount(account, input.provider)
+      } catch (err) {
+        rethrowSocialAuthApiError(err, '가입 직후 소셜 계정 연결을 완료하지 못했습니다.')
+      }
     },
 
     async startSignup(input) {
@@ -396,11 +466,11 @@ export function createCompositeRemoteAdapter(
 
   return {
     async startSso(input) {
-      if (input.intent === 'link') {
-        if (!adminSso.startSso) {
-          throw new SocialAuthApiError('UNSUPPORTED', 'admin SSO start adapter가 없습니다.')
+      if (input.intent === 'link' && input.signupSocialLinkToken) {
+        if (!signupSocial.startSso) {
+          throw new SocialAuthApiError('UNSUPPORTED', 'signup SSO start adapter가 없습니다.')
         }
-        return adminSso.startSso(input)
+        return signupSocial.startSso(input)
       }
 
       if (!adminSso.startSso) {
@@ -412,6 +482,13 @@ export function createCompositeRemoteAdapter(
     completeCallback: input => adminSso.completeCallback(input),
 
     completeLinkSession: input => {
+      if (input.signupSocialLinkToken) {
+        if (!signupSocial.completeLinkSession) {
+          throw new SocialAuthApiError('UNSUPPORTED', 'signup completeLinkSession adapter가 없습니다.')
+        }
+        return signupSocial.completeLinkSession(input)
+      }
+
       if (!adminSso.completeLinkSession) {
         throw new SocialAuthApiError('UNSUPPORTED', 'completeLinkSession adapter가 없습니다.')
       }

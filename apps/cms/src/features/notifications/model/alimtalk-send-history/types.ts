@@ -18,9 +18,6 @@ export const ALIMTALK_RECEIVE_STATUS_OPTIONS = [
   '확인 대기중',
   '대기중',
   '예약됨',
-  '발송 중',
-  '발송 성공',
-  '발송 실패',
   '수신 성공',
   '수신 실패',
   '취소됨',
@@ -40,6 +37,9 @@ export type AlimtalkSendHistoryRow = {
   reservedAt: string
   templateName: string
   senderInfo: string
+  receiverName: string
+  receiverPhone: string
+  /** 목록 표시용: 이름 또는 번호 (검색 호환) */
   receiverInfo: string
   broadcastTiming: Exclude<AlimtalkBroadcastTiming, '전체'>
   sendStatus: Exclude<AlimtalkSendStatus, '전체'>
