@@ -13,12 +13,12 @@ import { DownloadOutlined, EyeOutlined, MoreOutlined, DeleteOutlined } from '@an
 import type { ColumnsType } from 'antd/es/table'
 import type { User } from '@/types/user'
 import { canDownloadInstructors } from '@/features/permission-request/lib/download-permission'
-import { recordFileDownload } from '@/entities/download-log/api/download-log-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { handleError } from '@/shared/utils/error-handler'
 import { DownloadOptionsModal } from '@/features/download/ui/download-options-modal'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { DownloadOptions } from '@/types/download'
+import { downloadExcel } from '@/shared/utils/file-download'
 import ExcelJS from '@zurmokeeper/exceljs'
 
 export interface InstructorListItem {
@@ -92,27 +92,9 @@ export function InstructorList({
       })
 
       const buffer = await workbook.xlsx.writeBuffer()
-      const blob = new Blob([buffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
       const fileName = `강사_목록_${new Date().toISOString().split('T')[0]}${maskingEnabled ? '_마스킹' : ''}.xlsx`
-      link.href = url
-      link.download = fileName
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-
-      await recordFileDownload({
-        fileName,
-        userId: u.id,
-        userName: u.name,
-        ipAddress: '14.128.xxx.xxx',
-      })
-
-      } catch (error) {
+      await downloadExcel(buffer, fileName)
+    } catch (error) {
       handleError(error, { defaultMessage: MESSAGES.error.download })
     }
   }

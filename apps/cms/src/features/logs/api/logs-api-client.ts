@@ -24,6 +24,7 @@ export {
   FILE_ACCESS_LOG_CREATE_PATH,
   postFileAccessLog as postFileAccessLogRemote,
   type PostFileAccessLogBody,
+  type PostFileAccessLogResult,
 } from '@/shared/lib/post-file-access-log'
 
 const logsRemoteApi = getJAKoreaCMSBackendAPILogsSubset()

@@ -1,4 +1,3 @@
-import { AxiosError } from 'axios'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   clearDownloadLogMemoryForTests,
@@ -16,7 +15,7 @@ vi.mock('@/shared/lib/post-file-access-log', async importOriginal => {
   const actual = await importOriginal<typeof import('@/shared/lib/post-file-access-log')>()
   return {
     ...actual,
-    postFileAccessLog: vi.fn().mockResolvedValue(undefined),
+    postFileAccessLog: vi.fn().mockResolvedValue({}),
   }
 })
 
@@ -24,23 +23,12 @@ vi.mock('@/shared/lib/should-record-file-access-remotely', () => ({
   shouldRecordFileAccessRemotely: vi.fn(() => false),
 }))
 
-function axiosStatusError(status: number): AxiosError {
-  const error = new AxiosError('request failed')
-  error.response = {
-    status,
-    data: {},
-    statusText: 'Error',
-    headers: {},
-    config: {} as never,
-  }
-  return error
-}
-
 describe('recordFileDownload', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     clearDownloadLogMemoryForTests()
     vi.mocked(shouldRecordFileAccessRemotely).mockReturnValue(false)
+    vi.mocked(postFileAccessLog).mockResolvedValue({})
   })
 
   it('비원격이면 메모리 stub에 기록한다', async () => {
@@ -52,29 +40,26 @@ describe('recordFileDownload', () => {
 
   it('실세션이면 POST /api/admin/logs/file-access/client를 호출한다', async () => {
     vi.mocked(shouldRecordFileAccessRemotely).mockReturnValue(true)
+    vi.mocked(postFileAccessLog).mockResolvedValueOnce({ id: 'log-12' })
 
-    await recordFileDownload({ fileName: '회원_목록.xlsx', userId: 'u1', userName: '홍길동' })
+    const created = await recordFileDownload({
+      fileName: '회원_목록.xlsx',
+      userId: 'u1',
+      userName: '홍길동',
+    })
 
     expect(postFileAccessLog).toHaveBeenCalledWith(
       expect.objectContaining({ fileName: '회원_목록.xlsx' })
     )
+    expect(created.id).toBe('log-12')
     expect(listDownloadLogMemory()).toHaveLength(0)
   })
 
-  it('실 API POST 실패 시 throw한다', async () => {
+  it('실 API POST 실패 시 throw하고 stub에 기록하지 않는다', async () => {
     vi.mocked(shouldRecordFileAccessRemotely).mockReturnValue(true)
     vi.mocked(postFileAccessLog).mockRejectedValueOnce(new Error('network'))
 
     await expect(recordFileDownload({ fileName: '회원_목록.xlsx' })).rejects.toThrow('network')
-  })
-
-  it('client API 미구현(404/405)이면 stub에 기록한다', async () => {
-    vi.mocked(shouldRecordFileAccessRemotely).mockReturnValue(true)
-    vi.mocked(postFileAccessLog).mockRejectedValueOnce(axiosStatusError(404))
-
-    await recordFileDownload({ fileName: '지급조서.pdf', userId: 'u1', userName: '홍길동' })
-
-    expect(listDownloadLogMemory()).toHaveLength(1)
-    expect(listDownloadLogMemory()[0]?.fileName).toBe('지급조서.pdf')
+    expect(listDownloadLogMemory()).toHaveLength(0)
   })
 })
