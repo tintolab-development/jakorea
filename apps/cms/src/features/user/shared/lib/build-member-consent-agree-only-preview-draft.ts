@@ -55,6 +55,18 @@ export function shouldFetchSubmittedConsentDocument(
   return Boolean(meta.filledDocumentRevealEndpoint?.trim())
 }
 
+/**
+ * consent-records 메타가 없어도 동의(작성 완료) 상태면 filled-document API를 먼저 시도한다.
+ * (강사 등록 등 — termsAgreements만 agreed이고 formResponseId가 consent-records에만 있는 경우)
+ */
+export function shouldAttemptSubmittedConsentDocumentFetch(
+  meta: boolean | undefined | MemberConsentSubmittedDocumentMeta,
+  options?: { documentAgreed?: boolean }
+): boolean {
+  if (shouldFetchSubmittedConsentDocument(meta)) return true
+  return options?.documentAgreed === true
+}
+
 export function isMemberConsentCrimeTemplateId(templateId: string): boolean {
   return templateId.trim() === AGREEMENT_CRIME_TEMPLATE_CODE
 }

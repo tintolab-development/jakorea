@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { AGREEMENT_PORTRAIT_PARAGRAPH_IDS } from '@/features/template/model/writing-form-draft.schema'
 import {
   buildMemberConsentAgreeOnlyPreviewDraft,
+  shouldAttemptSubmittedConsentDocumentFetch,
   shouldFetchSubmittedConsentDocument,
 } from './build-member-consent-agree-only-preview-draft'
 import type { User } from '@/types/user'
@@ -44,6 +45,14 @@ describe('shouldFetchSubmittedConsentDocument', () => {
     ).toBe(true)
     expect(shouldFetchSubmittedConsentDocument({})).toBe(false)
     expect(shouldFetchSubmittedConsentDocument({ filledDocumentAvailable: false })).toBe(false)
+  })
+})
+
+describe('shouldAttemptSubmittedConsentDocumentFetch', () => {
+  it('메타 없이 documentAgreed면 제출본 API를 시도한다', () => {
+    expect(shouldAttemptSubmittedConsentDocumentFetch({}, { documentAgreed: true })).toBe(true)
+    expect(shouldAttemptSubmittedConsentDocumentFetch({}, { documentAgreed: false })).toBe(false)
+    expect(shouldAttemptSubmittedConsentDocumentFetch({ formResponseId: 3 })).toBe(true)
   })
 })
 
