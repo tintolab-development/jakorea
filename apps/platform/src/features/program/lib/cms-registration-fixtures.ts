@@ -850,6 +850,107 @@ export const UJAT_REGISTRATION_FIXTURES: CmsRegistrationFixture[] = [
   UJAT_VOLUNTEER_FIXTURE,
 ]
 
+function buildGeneralVolunteerFixture(args: {
+  id: string
+  title: string
+  audience: 'organization' | 'individual'
+  index: number
+  educationFormLabel: string
+}): CmsRegistrationFixture {
+  const isOrg = args.audience === 'organization'
+  const dates = periodBundle('recruiting', 'recruiting', args.index)
+  const commonInfo = buildGeneralCommonInfo('curriculum', 'multi', args.educationFormLabel)
+  commonInfo.announcementTitle = args.title
+  commonInfo.educationTargetDetailLabel = isOrg ? '초등학생' : '고등학생'
+
+  return {
+    registrationCase: isOrg ? 'general-org-curriculum-multi' : 'general-ind-curriculum-multi',
+    registrationKind: 'general',
+    id: args.id,
+    title: args.title,
+    mainTitle: args.title,
+    description:
+      '청소년의 진로 탐색과 경제·금융 이해를 돕는 봉사 프로그램입니다. 학교 현장에 방문해 수업을 지원합니다.',
+    type: args.educationFormLabel === '온라인' ? 'online' : 'offline',
+    category: isOrg ? 'school' : 'individual',
+    ...dates,
+    lifecycleStatus: 'recruiting_volunteers',
+    businessArea: '경제금융',
+    targetLevel: isOrg ? 'elementary' : 'high',
+    district: '서울특별시 강서구',
+    generalParticipantTypes: ['volunteer'],
+    generalProgramAudience: args.audience,
+    generalProgramEducationStructure: 'curriculum',
+    generalProgramSessionRound: 'multi',
+    volunteerTarget: isOrg ? '대학(원)생' : '대학(원)생',
+    volunteerTargetDetail: '전공무관, 휴학생 지원 가능',
+    volunteerApplicationStartDate: dates.applicationStartDate,
+    volunteerApplicationEndDate: dates.applicationEndDate,
+    interviewEnabled: true,
+    contactPhone: '02-6085-6028',
+    contactEmail: 'volunteer@jakorea.org',
+    recruitmentGuide: '1. 신청 자격: 대학(원)생\n2. 신청 방법: 홈페이지 온라인 신청',
+    otherNotes: '교통비는 실비 정산이며, 오리엔테이션 참석은 필수입니다.',
+    applicationMethod: '홈페이지 온라인 신청',
+    generalCommonInfo: commonInfo,
+  }
+}
+
+export const GENERAL_VOLUNTEER_STATUS_IDS = {
+  orgApplied: 'general-prog-volunteer-org-applied',
+  orgProgress: 'general-prog-volunteer-org-progress',
+  orgWithdrawn: 'general-prog-volunteer-org-withdrawn',
+  indApplied: 'general-prog-volunteer-ind-applied',
+  indDone: 'general-prog-volunteer-ind-done',
+  indRejected: 'general-prog-volunteer-ind-rejected',
+} as const
+
+/** 마이페이지 봉사현황 mock 전용 — 공개 30건 카탈로그와 분리 */
+export const GENERAL_VOLUNTEER_STATUS_FIXTURES: CmsRegistrationFixture[] = [
+  buildGeneralVolunteerFixture({
+    id: GENERAL_VOLUNTEER_STATUS_IDS.orgApplied,
+    title: 'JA 초등 경제교실 봉사 모집 (기관)',
+    audience: 'organization',
+    index: 1,
+    educationFormLabel: '오프라인',
+  }),
+  buildGeneralVolunteerFixture({
+    id: GENERAL_VOLUNTEER_STATUS_IDS.orgProgress,
+    title: '2026년 한국씨티은행 - JA Korea 특별 JOB담 모집 안내',
+    audience: 'organization',
+    index: 2,
+    educationFormLabel: '온라인',
+  }),
+  buildGeneralVolunteerFixture({
+    id: GENERAL_VOLUNTEER_STATUS_IDS.orgWithdrawn,
+    title: 'JA 중등 진로탐색 봉사 모집 (기관)',
+    audience: 'organization',
+    index: 3,
+    educationFormLabel: '오프라인',
+  }),
+  buildGeneralVolunteerFixture({
+    id: GENERAL_VOLUNTEER_STATUS_IDS.indApplied,
+    title: 'JA 주말 금융교실 봉사 모집 (개인)',
+    audience: 'individual',
+    index: 4,
+    educationFormLabel: '온라인',
+  }),
+  buildGeneralVolunteerFixture({
+    id: GENERAL_VOLUNTEER_STATUS_IDS.indDone,
+    title: '2026년 한국씨티은행 - JA Korea 특별 JOB담 모집 안내',
+    audience: 'individual',
+    index: 5,
+    educationFormLabel: '온라인',
+  }),
+  buildGeneralVolunteerFixture({
+    id: GENERAL_VOLUNTEER_STATUS_IDS.indRejected,
+    title: 'JA 청년 멘토링 봉사 모집 (개인)',
+    audience: 'individual',
+    index: 6,
+    educationFormLabel: '오프라인',
+  }),
+]
+
 /** 홈 목록 mock: 일반 16 + 1사1교 2 + 교육받은 교사 8 + Gemini 2 + UJAT 2 = 30 */
 export const CMS_PLATFORM_PROGRAM_FIXTURES: CmsRegistrationFixture[] = [
   ...GENERAL_REGISTRATION_FIXTURES,
@@ -863,7 +964,10 @@ export const CMS_PLATFORM_PROGRAM_FIXTURES: CmsRegistrationFixture[] = [
 export function getCmsRegistrationFixtureById(
   id: string
 ): CmsRegistrationFixture | undefined {
-  return CMS_PLATFORM_PROGRAM_FIXTURES.find(fixture => fixture.id === id)
+  return (
+    CMS_PLATFORM_PROGRAM_FIXTURES.find(fixture => fixture.id === id) ??
+    GENERAL_VOLUNTEER_STATUS_FIXTURES.find(fixture => fixture.id === id)
+  )
 }
 
 export function getCmsRegistrationFixturesByCase(

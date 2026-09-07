@@ -17,6 +17,11 @@ export {
   subscribeMockEducationApplications,
 } from './lib/mock-applications'
 export {
+  filterEducationStatusApplications,
+  filterVolunteerStatusApplications,
+  isGeneralVolunteerApplication,
+} from './lib/application-kind'
+export {
   compareEducationApplicationItems,
   listEducationApplications,
   matchesEducationApplicationTab,

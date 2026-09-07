@@ -38,6 +38,8 @@ import {
   MypageEducationDetailPage,
   MypageEducationSettlementConfirmPage,
   MypageEducationSettlementWritePage,
+  MypageVolunteerPage,
+  MypageVolunteerDetailPage,
   MypageSettingsPage,
 } from '@/pages/mypage'
 import {
@@ -86,6 +88,7 @@ export const router = createBrowserRouter([
       { path: '/programs', element: <ProgramsPage /> },
       { path: '/programs/:programId/apply/complete', element: <ProgramApplyCompletePage /> },
       { path: '/mypage/education/:applicationId', element: <MypageEducationDetailPage /> },
+      { path: '/mypage/volunteer/:applicationId', element: <MypageVolunteerDetailPage /> },
       { path: '/notices/:noticeId', element: <NoticeDetailPage /> },
       { path: '/results/:resultId', element: <ResultDetailPage /> },
       { path: '/impact/:storyId', element: <ImpactStoryDetailPage /> },
@@ -140,6 +143,7 @@ export const router = createBrowserRouter([
     children: [
       { path: '/mypage/settings', element: <MypageSettingsPage /> },
       { path: '/mypage/education', element: <MypageEducationPage /> },
+      { path: '/mypage/volunteer', element: <MypageVolunteerPage /> },
       { path: '/mypage/inquiries', element: <MypageInquiriesPage /> },
     ],
   },

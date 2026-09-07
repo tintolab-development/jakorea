@@ -109,6 +109,8 @@ export type ProgramDetail = ProgramListItem & {
   educationVenueLabel: string
   /** 상세 케이스 (강사·봉사·UJAT·Gemini 등) */
   detailCase: ProgramDetailCase
+  /** CMS 일반 프로그램 대상 — 기관 / 개인. 봉사 배정 테이블 분기 */
+  programAudience: 'organization' | 'individual'
   /**
    * CMS 참여 방식. 개인 프로그램에서 `team`이면 신청 폼 teamInfo 노출.
    * 미설정·기관 등은 `individual`로 정규화.

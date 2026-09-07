@@ -3,7 +3,12 @@ import type {
   EducationApplicationTab,
   EducationDisplayStatus,
 } from '../model/types'
-import { getMockPrograms, type ProgramListItem } from '@/features/program'
+import {
+  GENERAL_VOLUNTEER_STATUS_IDS,
+  getMockProgramById,
+  getMockPrograms,
+  type ProgramListItem,
+} from '@/features/program'
 import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 
 export const EDUCATION_APPLICATION_TAB_ITEMS = [
@@ -30,6 +35,15 @@ const MOCK_SELF_INTRO_MOTIVATION =
 
 const MOCK_PREFERRED_EDUCATION_SCHEDULE = '2026년 04월 20일(월) 9:30 ~ 12:20'
 
+const VOLUNTEER_DISPLAY_STATUS_BY_PROGRAM_ID: Record<string, EducationDisplayStatus> = {
+  [GENERAL_VOLUNTEER_STATUS_IDS.orgApplied]: 'waiting_result',
+  [GENERAL_VOLUNTEER_STATUS_IDS.orgProgress]: 'in_progress',
+  [GENERAL_VOLUNTEER_STATUS_IDS.orgWithdrawn]: 'withdrawn',
+  [GENERAL_VOLUNTEER_STATUS_IDS.indApplied]: 'document_passed',
+  [GENERAL_VOLUNTEER_STATUS_IDS.indDone]: 'completed',
+  [GENERAL_VOLUNTEER_STATUS_IDS.indRejected]: 'rejected',
+}
+
 function educationApplicationId(programId: string) {
   return `edu-app:${programId}`
 }
@@ -38,7 +52,10 @@ function toEducationApplication(
   program: ProgramListItem,
   index: number,
 ): EducationApplicationListItem {
-  const displayStatus = DISPLAY_STATUS_CYCLE[index % DISPLAY_STATUS_CYCLE.length]!
+  const detail = getMockProgramById(program.id)
+  const displayStatus =
+    VOLUNTEER_DISPLAY_STATUS_BY_PROGRAM_ID[program.id] ??
+    DISPLAY_STATUS_CYCLE[index % DISPLAY_STATUS_CYCLE.length]!
   const item: EducationApplicationListItem = {
     id: educationApplicationId(program.id),
     programId: program.id,
@@ -52,6 +69,7 @@ function toEducationApplication(
     educationFormLabel: program.educationFormLabel,
     thumbnailUrl: program.thumbnailUrl,
     displayStatus,
+    detailCase: detail?.detailCase ?? 'general',
   }
 
   if (displayStatus === 'document_passed') {
@@ -60,11 +78,16 @@ function toEducationApplication(
   }
 
   if (displayStatus === 'withdrawn') {
-    const withdrawnWave = Math.floor(index / DISPLAY_STATUS_CYCLE.length)
-    item.withdrawalPhase =
-      withdrawnWave % 2 === 0 ? 'before_education' : 'during_education'
-    if (item.withdrawalPhase === 'during_education') {
+    if (program.id === GENERAL_VOLUNTEER_STATUS_IDS.orgWithdrawn) {
+      item.withdrawalPhase = 'during_education'
       item.lastParticipatedSession = 3
+    } else {
+      const withdrawnWave = Math.floor(index / DISPLAY_STATUS_CYCLE.length)
+      item.withdrawalPhase =
+        withdrawnWave % 2 === 0 ? 'before_education' : 'during_education'
+      if (item.withdrawalPhase === 'during_education') {
+        item.lastParticipatedSession = 3
+      }
     }
     item.selfIntroMotivation = MOCK_SELF_INTRO_MOTIVATION
     item.preferredEducationScheduleLabel = MOCK_PREFERRED_EDUCATION_SCHEDULE

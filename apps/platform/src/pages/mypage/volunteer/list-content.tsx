@@ -1,26 +1,26 @@
 import { useMemo, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  educationApplicationDetailPath,
   EDUCATION_APPLICATION_PAGE_SIZE,
   EducationApplicationListItemRow,
-  filterEducationStatusApplications,
+  filterVolunteerStatusApplications,
   getMockEducationApplications,
   getMockEducationApplicationsVersion,
   listEducationApplications,
   subscribeMockEducationApplications,
+  volunteerApplicationDetailPath,
   type EducationApplicationListParams,
 } from '@/features/mypage'
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import { PFPagination, PFText } from '@/shared/ui'
-import styles from './page.module.css'
+import styles from '../education/page.module.css'
 
-type EducationListContentProps = {
+type VolunteerListContentProps = {
   params: EducationApplicationListParams
   onParamsChange: (next: Partial<EducationApplicationListParams>) => void
 }
 
-export function EducationListContent({ params, onParamsChange }: EducationListContentProps) {
+export function VolunteerListContent({ params, onParamsChange }: VolunteerListContentProps) {
   const navigate = useNavigate()
   const applicationsVersion = useSyncExternalStore(
     subscribeMockEducationApplications,
@@ -32,7 +32,7 @@ export function EducationListContent({ params, onParamsChange }: EducationListCo
   const { items, totalPages, currentPage, totalElements } = useMemo(
     () =>
       listEducationApplications(
-        filterEducationStatusApplications(getMockEducationApplications()),
+        filterVolunteerStatusApplications(getMockEducationApplications()),
         {
           tab: params.tab,
           page: params.page,
@@ -51,9 +51,9 @@ export function EducationListContent({ params, onParamsChange }: EducationListCo
               key={item.id}
               item={item}
               onClick={() =>
-                navigate(educationApplicationDetailPath(item.id), {
+                navigate(volunteerApplicationDetailPath(item.id), {
                   state: {
-                    educationListPath: `${window.location.pathname}${window.location.search}`,
+                    volunteerListPath: `${window.location.pathname}${window.location.search}`,
                   },
                 })
               }
@@ -72,7 +72,7 @@ export function EducationListContent({ params, onParamsChange }: EducationListCo
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={page => onParamsChange({ page })}
-            ariaLabel="교육현황 페이지"
+            ariaLabel="봉사현황 페이지"
           />
         </div>
       ) : null}

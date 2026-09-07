@@ -1,0 +1,21 @@
+.pageTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-24);
+}
+
+.pageIcon {
+  display: block;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  margin: 0;
+}
+
+.tabs {
+  margin-top: var(--spacing-50);
+  margin-bottom: var(--spacing-60);
+}

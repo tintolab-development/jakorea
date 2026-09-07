@@ -13,7 +13,6 @@ import {
   EducationDetailBack,
   EducationDetailHeader,
   EducationInProgressNoticePanel,
-  EducationSchedulePanel,
   EducationSettlementPanel,
   EducationSurveyEmptyPanel,
   EducationSurveyFillPanel,
@@ -23,14 +22,13 @@ import {
   isGeneralVolunteerApplication,
   isWithdrawnBeforeEducation,
   isWithdrawnDuringEducation,
-  MYPAGE_EDUCATION_PATH,
-  resolveEducationListBackPath,
-  volunteerApplicationDetailPath,
-  resolveEducationScheduleTabLabel,
+  MYPAGE_VOLUNTEER_PATH,
   shouldShowDocumentPassBanner,
+  volunteerApplicationDetailPath,
   type EducationActivitySection,
   type EducationDisplayStatus,
 } from '@/features/mypage'
+import { VolunteerAssignmentPanel, resolveVolunteerListBackPath } from '@/features/mypage/volunteer'
 import { ProgramInfoBody, useMockProgramById } from '@/features/program'
 import {
   getAccessToken,
@@ -40,7 +38,7 @@ import {
 } from '@/shared/lib'
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import { PFButton, PFTabs, PFText } from '@/shared/ui'
-import styles from './page.module.css'
+import styles from '../../education/detail/page.module.css'
 
 type AppliedSection = 'program' | 'application'
 type DetailSection = AppliedSection | EducationActivitySection
@@ -95,12 +93,12 @@ function readSection(search = window.location.search): DetailSection {
 }
 
 function buildDetailPath(applicationId: string, section: DetailSection) {
-  const base = educationApplicationDetailPath(applicationId)
+  const base = volunteerApplicationDetailPath(applicationId)
   if (section === 'program' || section === 'notice') return base
   return `${base}?section=${section}`
 }
 
-export function MypageEducationDetailPage() {
+export function MypageVolunteerDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { applicationId = '' } = useParams<{ applicationId: string }>()
@@ -165,7 +163,7 @@ export function MypageEducationDetailPage() {
     }
 
     if (!getDevAuthLoggedIn()) {
-      navigate(resolveLoginRequiredPath(educationApplicationDetailPath(applicationId || 'unknown')))
+      navigate(resolveLoginRequiredPath(volunteerApplicationDetailPath(applicationId || 'unknown')))
       return
     }
 
@@ -173,8 +171,8 @@ export function MypageEducationDetailPage() {
   }, [applicationId, navigate])
 
   useEffect(() => {
-    if (application && isGeneralVolunteerApplication(application)) {
-      navigate(`${volunteerApplicationDetailPath(application.id)}${location.search}`, {
+    if (application && !isGeneralVolunteerApplication(application)) {
+      navigate(`${educationApplicationDetailPath(application.id)}${location.search}`, {
         replace: true,
       })
     }
@@ -216,7 +214,7 @@ export function MypageEducationDetailPage() {
   ])
 
   const handleBack = () => {
-    navigate(resolveEducationListBackPath(location.state), { replace: true })
+    navigate(resolveVolunteerListBackPath(location.state), { replace: true })
   }
 
   const handleSectionChange = (next: string) => {
@@ -247,22 +245,22 @@ export function MypageEducationDetailPage() {
   const handleConfirmCancel = () => {
     cancelMockEducationApplication(applicationId)
     setIsCancelConfirmOpen(false)
-    navigate(MYPAGE_EDUCATION_PATH, { replace: true })
+    navigate(MYPAGE_VOLUNTEER_PATH, { replace: true })
   }
 
   if (!isAuthReady || isChecking || isRedirecting) {
     return null
   }
 
-  if (!application) {
+  if (!application || !isGeneralVolunteerApplication(application)) {
     return (
       <section className={styles.page}>
-        <EducationDetailBack onClick={handleBack} />
+        <EducationDetailBack label="봉사현황" onClick={handleBack} />
         <PFText as="p" typo="hd-md" color="black" className={styles.empty}>
           신청 정보를 찾을 수 없어요
         </PFText>
-        <PFButton variant="secondary" onClick={() => navigate(MYPAGE_EDUCATION_PATH)}>
-          교육현황으로
+        <PFButton variant="secondary" onClick={() => navigate(MYPAGE_VOLUNTEER_PATH)}>
+          봉사현황으로
         </PFButton>
       </section>
     )
@@ -275,12 +273,12 @@ export function MypageEducationDetailPage() {
   if (!program) {
     return (
       <section className={styles.page}>
-        <EducationDetailBack onClick={handleBack} />
+        <EducationDetailBack label="봉사현황" onClick={handleBack} />
         <PFText as="p" typo="hd-md" color="black" className={styles.empty}>
           프로그램을 찾을 수 없어요
         </PFText>
-        <PFButton variant="secondary" onClick={() => navigate(MYPAGE_EDUCATION_PATH)}>
-          교육현황으로
+        <PFButton variant="secondary" onClick={() => navigate(MYPAGE_VOLUNTEER_PATH)}>
+          봉사현황으로
         </PFButton>
       </section>
     )
@@ -319,12 +317,11 @@ export function MypageEducationDetailPage() {
     }
     if (active === 'schedule') {
       return (
-        <EducationSchedulePanel
-          programId={program.id}
+        <VolunteerAssignmentPanel
+          programAudience={program.programAudience}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }
-          listTitle={resolveEducationScheduleTabLabel(program.detailCase)}
         />
       )
     }
@@ -362,7 +359,7 @@ export function MypageEducationDetailPage() {
 
   return (
     <section className={styles.page}>
-      <EducationDetailBack onClick={handleBack} />
+      <EducationDetailBack label="봉사현황" onClick={handleBack} />
 
       <EducationDetailHeader
         title={program.title}
@@ -385,7 +382,7 @@ export function MypageEducationDetailPage() {
             onChange={handleSectionChange}
             variant="pill"
             size="large"
-            ariaLabel="교육현황 상세 탭"
+            ariaLabel="봉사현황 상세 탭"
           />
 
           {appliedSection === 'program' ? (
@@ -408,7 +405,7 @@ export function MypageEducationDetailPage() {
             onChange={handleSectionChange}
             variant="pill"
             size="large"
-            ariaLabel="활동 포기 교육 상세 탭"
+            ariaLabel="활동 포기 봉사 상세 탭"
           />
           {renderActivityBody(activitySection)}
         </>
@@ -421,7 +418,7 @@ export function MypageEducationDetailPage() {
             onChange={handleSectionChange}
             variant="pill"
             size="large"
-            ariaLabel="진행중 교육 상세 탭"
+            ariaLabel="진행중 봉사 상세 탭"
           />
           {renderActivityBody(activitySection)}
         </>

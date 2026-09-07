@@ -820,6 +820,8 @@ export function mapCmsProgramToPlatformDetail(
     educationTargetDetailLabel: targets.educationTargetDetailLabel,
     educationVenueLabel,
     detailCase,
+    programAudience:
+      program.generalProgramAudience === 'individual' ? 'individual' : 'organization',
     participationMethod:
       program.generalCommonInfo?.participationMethod === 'team' ? 'team' : 'individual',
     recruitmentRoleLabel: roleLabel,

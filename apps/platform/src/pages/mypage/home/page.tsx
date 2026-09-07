@@ -5,9 +5,8 @@ import {
   getMypageLnbItems,
   getMockMypageProgramStats,
   getMockMypageScheduleEvents,
-  MYPAGE_EDUCATION_PATH,
-  MYPAGE_INQUIRIES_PATH,
   MYPAGE_PATH,
+  navigateMypageLnb,
   showInstructorApplyCta,
   useMypageMember,
   type MypageLnbItemKey,
@@ -62,13 +61,7 @@ export function MypageHomePage() {
   }, [navigate])
 
   const handleLnbItemSelect = (key: MypageLnbItemKey) => {
-    if (key === 'education') {
-      navigate(MYPAGE_EDUCATION_PATH)
-      return
-    }
-    if (key === 'inquiries') {
-      navigate(MYPAGE_INQUIRIES_PATH)
-    }
+    navigateMypageLnb(navigate, key)
   }
 
   if (!isAuthReady || isChecking || isRedirecting) {

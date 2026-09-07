@@ -11,8 +11,9 @@ alwaysApply: false
 ## 목록 (`/mypage/education`)
 
 - 로그인 회원이 **신청한 교육 프로그램**만 노출
+- **일반 봉사**(`detailCase === 'volunteer'`) 신청은 제외 → 마이페이지 **봉사현황**. UJAT 봉사는 교육현황에 남김
 - API: `GET /api/portal/me/program-applications` (연동 시 `statusGroup`, `page`, `size`)
-- Mock: [`mock-education-applications.ts`](apps/platform/src/features/mypage/education/applications/lib/mock-applications.ts)
+- Mock: [`mock-applications.ts`](apps/platform/src/features/mypage/education/applications/lib/mock-applications.ts) · 필터 `filterEducationStatusApplications`
 
 ### 정렬
 

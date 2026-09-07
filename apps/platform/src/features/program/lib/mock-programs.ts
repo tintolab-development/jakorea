@@ -5,7 +5,10 @@ import programThumbnail01Url from '../image/illustration/program-thumbnail-01.pn
 import programThumbnail02Url from '../image/illustration/program-thumbnail-02.png'
 import programThumbnail03Url from '../image/illustration/program-thumbnail-03.png'
 import type { ProgramDetail, ProgramListItem } from '../model/types'
-import { CMS_PLATFORM_PROGRAM_FIXTURES } from './cms-registration-fixtures'
+import {
+  CMS_PLATFORM_PROGRAM_FIXTURES,
+  GENERAL_VOLUNTEER_STATUS_FIXTURES,
+} from './cms-registration-fixtures'
 import { mapCmsProgramsToPlatformDetails } from './map-from-cms'
 import { mergeSeedAndCatalogPrograms } from './merge-seed-catalog'
 import { fetchMockProgramCatalog } from './mock-program-catalog-client'
@@ -52,7 +55,7 @@ function pickMockImagePair(programId: string): {
  * 일반 16 + 1사1교 2 + 교육받은 교사 8 + Gemini 2 + UJAT 2
  */
 const SEED_PROGRAMS: ProgramDetail[] = mapCmsProgramsToPlatformDetails(
-  CMS_PLATFORM_PROGRAM_FIXTURES,
+  [...CMS_PLATFORM_PROGRAM_FIXTURES, ...GENERAL_VOLUNTEER_STATUS_FIXTURES],
   pickMockImagePair
 )
 

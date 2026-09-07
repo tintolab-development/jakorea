@@ -1,0 +1,45 @@
+---
+description: Platform 마이페이지 봉사현황 목록·상세·배정현황 기획 (SSOT)
+globs: apps/platform/src/features/mypage/volunteer/**/*,apps/platform/src/pages/mypage/volunteer/**/*
+alwaysApply: false
+---
+
+# 봉사현황 (Platform Mypage)
+
+`apps/platform` **마이페이지 → 봉사현황** (일반회원). 교육현황과 동일 셸·상태·탭이며 아래만 예외.
+
+형제 SSOT: [`education-status-page.mdc`](education-status-page.mdc)
+
+## 목록 (`/mypage/volunteer`)
+
+- 일반 봉사 신청만 (`detailCase === 'volunteer'`). UJAT 봉사 제외
+- 탭·정렬·페이지네이션은 교육현황과 동일
+- Mock: 교육 신청 스토어 + `filterVolunteerStatusApplications`
+- 시드: [`GENERAL_VOLUNTEER_STATUS_FIXTURES`](apps/platform/src/features/program/lib/cms-registration-fixtures.ts)
+
+## 상세 (`/mypage/volunteer/:applicationId`)
+
+- 뒤로가기 라벨 `봉사현황`
+- 신청 계열 / 진행 계열 탭은 교육현황과 동일. 진행 탭 라벨 **배정현황**
+- 정산 작성 경로는 `/mypage/education/:id/settlement/*` 유지. return·탭 복귀는 봉사 상세 `?section=settlement`
+
+## 프로그램 정보
+
+- `ProgramInfoBody` 재사용. `detailCase === 'volunteer'` SSOT:
+  - 참여자 → **봉사자** (모집 구분·봉사자 모집 기간)
+  - **기타사항** (`otherNotes`) 노출, 미기재 시 비노출
+  - **학습 지원 내용** 비노출
+
+## 배정현황
+
+[`VolunteerAssignmentPanel`](apps/platform/src/features/mypage/volunteer/assignments/ui/panel.tsx)
+
+- 읽기 전용. 배정 취소·추가 배정·선택 배정·엑셀·배정 봉사자 수 **비노출**
+- `programAudience === 'organization'`
+  - 배정된 기관 목록: No. / 기관명 / 담당학년 / 기관 소재지 / 자택과의 거리 / 담당 봉사 진행 일정
+  - 배정된 대기 기관 목록: + 희망 학년 / 배정 상태
+- `programAudience === 'individual'`
+  - 배정된 봉사 일정: No. / 봉사 지역 / 자택과의 거리 / 담당 봉사 진행 일정
+  - 배정된 봉사 일정 목록: 기관 소재지 / 자택과의 거리 / 담당 봉사 진행 일정 / 배정 상태
+- 배정 상태: `배정 대기`(element-orange) / `배정 취소`(cool-500)
+- 진행중 포기: `lastParticipatedSession` 이하 일정만

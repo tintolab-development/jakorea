@@ -13,6 +13,13 @@ export function educationApplicationDetailPath(applicationId: string): string {
   return `${MYPAGE_EDUCATION_PATH}/${applicationId}`
 }
 
+/** 마이페이지 — 봉사현황 */
+export const MYPAGE_VOLUNTEER_PATH = '/mypage/volunteer'
+
+export function volunteerApplicationDetailPath(applicationId: string): string {
+  return `${MYPAGE_VOLUNTEER_PATH}/${applicationId}`
+}
+
 /** 마이페이지 LNB — 강사 역할 신청 양식 */
 export const INSTRUCTOR_APPLY_PATH = '/mypage/instructor-apply'
 
