@@ -11132,10 +11132,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -19529,7 +19529,8 @@
             "type": "string"
           },
           "address": {
-            "type": "string"
+            "type": "string",
+            "description": "개인 회원 자택 기본 주소"
           },
           "addressDetail": {
             "type": "string"
@@ -19538,13 +19539,16 @@
             "type": "string"
           },
           "enrollmentStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "개인 회원 학교 재학 여부. ENROLLED 또는 NOT_ENROLLED"
           },
           "schoolName": {
-            "type": "string"
+            "type": "string",
+            "description": "재학 중이면 학교명, 미재학이면 선택 소속명으로도 호환 입력됩니다."
           },
           "grade": {
-            "type": "string"
+            "type": "string",
+            "description": "재학 중일 때 학년"
           },
           "schoolOrganizationId": {
             "type": "integer",
@@ -19595,32 +19599,9 @@
             "maxItems": 20,
             "minItems": 0
           },
-          "address": {
-            "type": "string",
-            "description": "개인 회원 자택 기본 주소"
-          },
           "zipCode": {
             "type": "string",
             "description": "개인 회원 자택 우편번호"
-          },
-          "enrollmentStatus": {
-            "type": "string",
-            "description": "개인 회원 학교 재학 여부. ENROLLED 또는 NOT_ENROLLED"
-          },
-          "schoolName": {
-            "type": "string",
-            "description": "재학 중이면 학교명, 미재학이면 선택 소속명으로도 호환 입력됩니다."
-          },
-          "schoolOrganizationId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "schoolSelection": {
-            "$ref": "#/components/schemas/PortalSchoolSelectionRequest"
-          },
-          "grade": {
-            "type": "string",
-            "description": "재학 중일 때 학년"
           },
           "external1365Id": {
             "type": "string"

@@ -19,7 +19,18 @@ export interface AdminMemberBasicInfoUpdateRequest {
   phone?: string;
   email?: string;
   detailAddress?: string;
+  /** 개인 회원 자택 기본 주소 */
+  address?: string;
+  addressDetail?: string;
   affiliation?: string;
+  /** 개인 회원 학교 재학 여부. ENROLLED 또는 NOT_ENROLLED */
+  enrollmentStatus?: string;
+  /** 재학 중이면 학교명, 미재학이면 선택 소속명으로도 호환 입력됩니다. */
+  schoolName?: string;
+  /** 재학 중일 때 학년 */
+  grade?: string;
+  schoolOrganizationId?: number;
+  schoolSelection?: PortalSchoolSelectionRequest;
   gender?: string;
   birthDate?: string;
   socialAccounts?: string[];
@@ -35,17 +46,7 @@ export interface AdminMemberBasicInfoUpdateRequest {
      * @maxItems 20
      */
   termsAgreements?: TermsAgreementRequest[];
-  /** 개인 회원 자택 기본 주소 */
-  address?: string;
   /** 개인 회원 자택 우편번호 */
   zipCode?: string;
-  /** 개인 회원 학교 재학 여부. ENROLLED 또는 NOT_ENROLLED */
-  enrollmentStatus?: string;
-  /** 재학 중이면 학교명, 미재학이면 선택 소속명으로도 호환 입력됩니다. */
-  schoolName?: string;
-  schoolOrganizationId?: number;
-  schoolSelection?: PortalSchoolSelectionRequest;
-  /** 재학 중일 때 학년 */
-  grade?: string;
   external1365Id?: string;
 }
