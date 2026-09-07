@@ -179,8 +179,8 @@ VITE_REAL_API_MODULES=...,socialAuth
 
 [`real-api-modules.ts`](../../src/shared/config/real-api-modules.ts):
 
-- `VITE_REAL_API_MODULES` **미설정·빈 값** → 백엔드 URL이 있어도 **전부 mock**
-- 예: `adminAuth,dashboard` → 나열된 모듈만 실 HTTP
+- `VITE_REAL_API_MODULES` **미설정·빈 값** → remote URL이 있으면 **전부 실 API** (mock 중단)
+- 예: `adminAuth,dashboard` → 나열된 모듈만 실 HTTP (나머지 mock, 로컬 부분 전환용)
 
 UI·페이지는 분기하지 않습니다. **서비스 레이어**(`entities/*/api`, `features/*/api`)에서만 `isRealApiModuleEnabled('키')` 사용.
 

@@ -150,7 +150,7 @@ async function loginWithMock(
  * Phase 0.5.1: MFA 지원 추가
  * - `options.mode === 'api'`: 실 `fetchAdminLogin` (원격 URL 필요)
  * - `options.mode === 'mock'`: mock(`validateLogin` + MFA)
- * - 미지정: `VITE_REAL_API_MODULES`에 `adminAuth`가 있을 때만 실 API
+ * - 미지정: remote URL이 있으면 실 API (`isRealApiModuleEnabled('adminAuth')`)
  */
 export async function login(
   request: LoginRequest,

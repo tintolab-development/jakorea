@@ -13,8 +13,8 @@ interface ImportMetaEnv {
   readonly VITE_OAUTH_BACKEND_ORIGIN?: string
   readonly VITE_OAUTH_EXCHANGE_MODE?: string
   /**
-   * 쉼표 구분 실 API 모듈 키 (`shared/config/real-api-modules`). 미설정·빈 값이면 원격 URL이 있어도 전부 mock.
-   * 관리자 이메일 로그인을 실 API로 쓰려면 `adminAuth` 포함. 예: `adminAuth` | `adminAuth,textbooks`
+   * (선택) 실 API 모듈 allowlist. 미설정·빈 값이면 remote URL 있을 때 **전부 실 API**.
+   * 일부만 mock으로 둘 때만 쉼표 구분 키를 넣는다. 예: `adminAuth,textbooks`
    */
   readonly VITE_REAL_API_MODULES?: string
   readonly VITE_API_BASE_URL?: string

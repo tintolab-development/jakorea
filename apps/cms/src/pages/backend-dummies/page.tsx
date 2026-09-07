@@ -148,7 +148,7 @@ export function BackendDummiesPage() {
           </h2>
           <div className="bd-modules">
             {envModules.length === 0 ? (
-              <span className="bd-chip bd-chip--off">미설정 → 전부 mock</span>
+              <span className="bd-chip bd-chip--on">미설정 → remote 시 전부 실 API</span>
             ) : (
               envModules.map(m => (
                 <span key={m} className="bd-chip bd-chip--on">
