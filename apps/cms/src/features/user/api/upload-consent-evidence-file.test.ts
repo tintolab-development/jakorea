@@ -21,7 +21,7 @@ describe('uploadConsentEvidenceFile', () => {
     vi.mocked(customInstance).mockReset()
   })
 
-  it('files 모듈 비활성 시 stub fileObjectId를 반환한다', async () => {
+  it('files·members 모듈 비활성 시 stub fileObjectId를 반환한다', async () => {
     vi.mocked(isRealApiModuleEnabled).mockReturnValue(false)
     vi.mocked(customInstance).mockResolvedValue({
       success: true,
@@ -64,10 +64,47 @@ describe('uploadConsentEvidenceFile', () => {
     expect(prepareCall?.data).toMatchObject({ ownerId: 1001 })
   })
 
-  it('shouldMockConsentFileUpload는 files 모듈 활성 여부를 따른다', () => {
+  it('members 모듈만 활성해도 실 upload-requests를 호출한다', async () => {
+    vi.mocked(isRealApiModuleEnabled).mockImplementation(module => module === 'members')
+    vi.mocked(customInstance)
+      .mockResolvedValueOnce({
+        success: true,
+        data: { id: 77, version: '1.0' },
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          fileObjectId: 602,
+          uploadUrl: 'https://example.com/upload',
+          method: 'PUT',
+        },
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        data: { fileObjectId: 602 },
+      })
+
+    global.fetch = vi.fn().mockResolvedValue({ ok: true }) as typeof fetch
+
+    const file = new File(['abc'], 'crime.png', { type: 'image/png' })
+    const id = await uploadConsentEvidenceFile({ file })
+
+    expect(id).toBe(602)
+    expect(customInstance).toHaveBeenCalledTimes(3)
+    expect(vi.mocked(customInstance).mock.calls[1]?.[0]?.url).toBe(
+      '/api/admin/files/upload-requests'
+    )
+    expect(vi.mocked(customInstance).mock.calls[1]?.[0]?.data).toMatchObject({ ownerId: 77 })
+  })
+
+  it('shouldMockConsentFileUpload는 files·members 모두 꺼진 경우만 stub', () => {
     vi.mocked(isRealApiModuleEnabled).mockReturnValue(false)
     expect(shouldMockConsentFileUpload()).toBe(true)
-    vi.mocked(isRealApiModuleEnabled).mockReturnValue(true)
+
+    vi.mocked(isRealApiModuleEnabled).mockImplementation(module => module === 'files')
+    expect(shouldMockConsentFileUpload()).toBe(false)
+
+    vi.mocked(isRealApiModuleEnabled).mockImplementation(module => module === 'members')
     expect(shouldMockConsentFileUpload()).toBe(false)
   })
 })

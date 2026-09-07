@@ -57,9 +57,11 @@ function rethrowConsentUploadError(error: unknown, context: 'prepare' | 'confirm
   throw error instanceof Error ? error : new Error('성범죄 동의서 파일 업로드에 실패했습니다.')
 }
 
-/** S3·파일 API 미연결 시 stub id 반환. `VITE_REAL_API_MODULES`에 `files` 포함 시 실 업로드. */
+/** S3·파일 API 미연결 시 stub id 반환.
+ * `files` 또는 `members`(회원·강사 등록/상세)가 실 API이면 실제 upload-requests 경로를 탄다.
+ */
 export function shouldMockConsentFileUpload(): boolean {
-  return !isRealApiModuleEnabled('files')
+  return !isRealApiModuleEnabled('files') && !isRealApiModuleEnabled('members')
 }
 
 function createStubConsentFileObjectId(fileSize: number): number {

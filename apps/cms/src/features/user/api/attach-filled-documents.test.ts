@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   attachFilledDocumentsToTermsAgreements,
   mapAgreementSnapshotToFilledDocument,
@@ -340,5 +340,37 @@ describe('attachFilledDocumentsToTermsAgreements', () => {
       evidenceOriginalFileName: 'crime.png',
     })
     expect(rows?.[0]?.filledDocument).toBeUndefined()
+  })
+
+  it('성범죄 스냅샷에 evidenceFileObjectId가 있으면 재업로드하지 않는다', async () => {
+    const uploadCrimeEvidence = vi.fn(async () => 999)
+    const rows = await attachFilledDocumentsToTermsAgreements(
+      [
+        {
+          termsType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
+          version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+          agreed: true,
+        },
+      ],
+      {
+        mode: 'create',
+        snapshots: {
+          agreementByFieldKey: {},
+          crimeByFieldKey: {
+            consentSexOffenseCheck: {
+              displaySrc: 'data:image/png;base64,AA==',
+              replacementFileName: 'crime-uploaded.png',
+              evidenceFileObjectId: 55,
+            },
+          },
+        },
+        uploadCrimeEvidence,
+      }
+    )
+    expect(uploadCrimeEvidence).not.toHaveBeenCalled()
+    expect(rows?.[0]).toMatchObject({
+      evidenceFileObjectId: 55,
+      evidenceOriginalFileName: 'crime-uploaded.png',
+    })
   })
 })

@@ -662,6 +662,7 @@ export function UserConsentAgreementSection({
       {activeWrite != null && writingCrime ? (
         <MemberConsentCrimeModal
           open
+          memberId={memberId}
           savedSnapshot={consentWriteSnapshots?.crimeByFieldKey[activeWrite.entry.fieldKey]}
           onSnapshotSave={snapshot => onConsentCrimeSnapshotSave?.(activeWrite.label, snapshot)}
           onClose={closeWrite}
