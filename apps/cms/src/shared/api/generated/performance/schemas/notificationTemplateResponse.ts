@@ -5,6 +5,7 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { NotificationTemplateResponseAlimtalkMetadata } from './notificationTemplateResponseAlimtalkMetadata';
 
 export interface NotificationTemplateResponse {
   templateId?: number;
@@ -25,4 +26,15 @@ export interface NotificationTemplateResponse {
   createdByAdminId?: number;
   createdAt?: string;
   updatedAt?: string;
+  categoryId?: number;
+  categoryName?: string;
+  displayName?: string;
+  senderProfileDisplayName?: string;
+  alimtalkMessageType?: string;
+  alimtalkEmphasisType?: string;
+  alimtalkSecurityYn?: boolean;
+  kakaoTemplateCategory?: string;
+  alimtalkMetadata?: NotificationTemplateResponseAlimtalkMetadata;
+  approvalStatus?: string;
+  providerSyncedAt?: string;
 }

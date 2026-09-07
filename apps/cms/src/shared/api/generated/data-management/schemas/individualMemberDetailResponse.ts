@@ -18,4 +18,7 @@ export interface IndividualMemberDetailResponse {
   grade?: string;
   addressDetailMasked?: boolean;
   termsAgreements?: TermsAgreementRow[];
+  affiliationName?: string;
+  schoolOrganizationId?: number;
+  external1365Id?: string;
 }

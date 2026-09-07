@@ -17,6 +17,7 @@ import type {
   ApiResponseNotificationTestSendResponse,
   ApiResponseRetryFailedResponse,
   ApiResponseSyncResultResponse,
+  ApiResponseTemplateDeleteResponse,
   ApiResponseTemplateMoveResponse,
   ArchiveNotificationTemplateParams,
   BatchDetailResponse,
@@ -1075,8 +1076,8 @@ const getTemplate = (
 const archiveNotificationTemplate = (
     templateId: number,
     params?: ArchiveNotificationTemplateParams,
- options?: SecondParameter<typeof customInstance<ApiResponseNotificationTemplateMutationResponse>>,) => {
-      return customInstance<ApiResponseNotificationTemplateMutationResponse>(
+ options?: SecondParameter<typeof customInstance<ApiResponseTemplateDeleteResponse>>,) => {
+      return customInstance<ApiResponseTemplateDeleteResponse>(
       {url: `/api/admin/notification-templates/${templateId}`, method: 'DELETE',
         params
     },

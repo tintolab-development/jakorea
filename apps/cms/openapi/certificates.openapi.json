@@ -53,10 +53,6 @@
       "description": "알림 템플릿·발송 배치·수신함 API입니다. CMS Coming soon 알림톡/메일/문자 관리 CRUD(PD-NOTI-02~04)는 별도 제품 스펙 전까지 확장하지 않습니다."
     },
     {
-      "name": "후원사",
-      "description": "후원사, 담당자, 연도별 후원사업 관리 API입니다."
-    },
-    {
       "name": "CMS 교재",
       "description": "교재 목록, 등록, 수정, 사용 상태 변경, 교재 마스터 관리 API입니다."
     },
@@ -121,6 +117,10 @@
       "description": "프로그램 게시글, 공개 노출, 상세 조회, 게시 상태 관리 API입니다."
     },
     {
+      "name": "기타 API",
+      "description": "XLSX/CSV/ZIP 파일은 백엔드 generated-file 파이프라인에서 생성합니다. 공통 목록 XLSX는 worker job을 사용하고 정산·실적·개인정보·공식 문서는 각 도메인의 백엔드 생성 API를 사용합니다."
+    },
+    {
       "name": "신청/프로그램 워크플로우",
       "description": "프로그램 신청, 승인/반려, 강사/참여자 워크플로우 API"
     },
@@ -139,10 +139,6 @@
     {
       "name": "기타 API",
       "description": "신청폼, 임시저장, 제출, 내 신청 조회 및 취소 API"
-    },
-    {
-      "name": "기타 API",
-      "description": "마스킹된 소규모 목록은 선택 ID 또는 권한 범위 전체 데이터를 JSON으로 반환해 프론트엔드가 XLSX를 생성합니다. 정산·실적·개인정보·공식 문서는 각 도메인의 백엔드 생성 API를 사용합니다."
     },
     {
       "name": "기타 API",
@@ -229,6 +225,10 @@
       "description": "회원 포탈 프로그램 목록, 상세, 신청 가능 옵션 API"
     },
     {
+      "name": "후원사",
+      "description": "후원사, 담당자, 연도별 후원사업 관리 API입니다. sponsorshipStatus SSOT: active | discussing | dormant | ended"
+    },
+    {
       "name": "개인정보/감사",
       "description": "개인정보 원문 조회, export 승인, 감사로그 API"
     },
@@ -259,6 +259,10 @@
     {
       "name": "회원/강사",
       "description": "회원 역할별 관리자 등록 API"
+    },
+    {
+      "name": "후원사",
+      "description": "후원사·담당자·연도별 후원사업 관리 API. sponsorshipStatus SSOT: active | discussing | dormant | ended"
     },
     {
       "name": "기타 API",
@@ -329,16 +333,16 @@
       "description": "CMS 관리자 계정의 프로그램 담당 역할 API"
     },
     {
+      "name": "기타 API",
+      "description": "여러 실제 파일은 Worker에서 ZIP으로 묶어 S3 generated-file로 제공합니다."
+    },
+    {
       "name": "파일 관리",
       "description": "파일 업로드, 다운로드, 민감파일 relay, 첨부파일, 파일 접근 로그 API입니다."
     },
     {
       "name": "기타 API",
       "description": "UJAT 교육 지역 순서 마스터 API"
-    },
-    {
-      "name": "후원사",
-      "description": "후원사·담당자·연도별 후원사업 관리 API. sponsorshipStatus SSOT는 active|ended만(4종 확장·추가 상태는 제품 GO 후)."
     },
     {
       "name": "기타 API",

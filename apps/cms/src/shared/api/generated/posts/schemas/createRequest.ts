@@ -23,4 +23,15 @@ export interface CreateRequest {
      * @maxItems 500
      */
   recipients: RecipientRequest[];
+  /**
+     * @minLength 0
+     * @maxLength 255
+     */
+  senderKey?: string;
+  /**
+     * @minLength 0
+     * @maxLength 20
+     */
+  senderProfileType?: string;
+  senderProfileId?: number;
 }

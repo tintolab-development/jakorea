@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { SponsorManager } from './sponsorManager';
+import type { SponsorRequestSponsorshipStatus } from './sponsorRequestSponsorshipStatus';
 
 export interface SponsorRequest {
   name?: string;
@@ -20,6 +21,7 @@ export interface SponsorRequest {
   managers?: SponsorManager[];
   securityMemo?: string;
   organizationKind?: string;
-  sponsorshipStatus?: string;
+  /** 후원 상태. 등록 시 생략하면 active. PATCH는 4값 양방향. 미지원 값은 400 SPONSOR_SPONSORSHIP_STATUS_UNSUPPORTED. */
+  sponsorshipStatus?: SponsorRequestSponsorshipStatus;
   sponsorshipStartDate?: string;
 }

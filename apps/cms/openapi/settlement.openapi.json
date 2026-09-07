@@ -53,10 +53,6 @@
       "description": "알림 템플릿·발송 배치·수신함 API입니다. CMS Coming soon 알림톡/메일/문자 관리 CRUD(PD-NOTI-02~04)는 별도 제품 스펙 전까지 확장하지 않습니다."
     },
     {
-      "name": "후원사",
-      "description": "후원사, 담당자, 연도별 후원사업 관리 API입니다."
-    },
-    {
       "name": "CMS 교재",
       "description": "교재 목록, 등록, 수정, 사용 상태 변경, 교재 마스터 관리 API입니다."
     },
@@ -121,6 +117,10 @@
       "description": "프로그램 게시글, 공개 노출, 상세 조회, 게시 상태 관리 API입니다."
     },
     {
+      "name": "기타 API",
+      "description": "XLSX/CSV/ZIP 파일은 백엔드 generated-file 파이프라인에서 생성합니다. 공통 목록 XLSX는 worker job을 사용하고 정산·실적·개인정보·공식 문서는 각 도메인의 백엔드 생성 API를 사용합니다."
+    },
+    {
       "name": "신청/프로그램 워크플로우",
       "description": "프로그램 신청, 승인/반려, 강사/참여자 워크플로우 API"
     },
@@ -139,10 +139,6 @@
     {
       "name": "기타 API",
       "description": "신청폼, 임시저장, 제출, 내 신청 조회 및 취소 API"
-    },
-    {
-      "name": "기타 API",
-      "description": "마스킹된 소규모 목록은 선택 ID 또는 권한 범위 전체 데이터를 JSON으로 반환해 프론트엔드가 XLSX를 생성합니다. 정산·실적·개인정보·공식 문서는 각 도메인의 백엔드 생성 API를 사용합니다."
     },
     {
       "name": "기타 API",
@@ -229,6 +225,10 @@
       "description": "회원 포탈 프로그램 목록, 상세, 신청 가능 옵션 API"
     },
     {
+      "name": "후원사",
+      "description": "후원사, 담당자, 연도별 후원사업 관리 API입니다. sponsorshipStatus SSOT: active | discussing | dormant | ended"
+    },
+    {
       "name": "개인정보/감사",
       "description": "개인정보 원문 조회, export 승인, 감사로그 API"
     },
@@ -259,6 +259,10 @@
     {
       "name": "회원/강사",
       "description": "회원 역할별 관리자 등록 API"
+    },
+    {
+      "name": "후원사",
+      "description": "후원사·담당자·연도별 후원사업 관리 API. sponsorshipStatus SSOT: active | discussing | dormant | ended"
     },
     {
       "name": "기타 API",
@@ -329,16 +333,16 @@
       "description": "CMS 관리자 계정의 프로그램 담당 역할 API"
     },
     {
+      "name": "기타 API",
+      "description": "여러 실제 파일은 Worker에서 ZIP으로 묶어 S3 generated-file로 제공합니다."
+    },
+    {
       "name": "파일 관리",
       "description": "파일 업로드, 다운로드, 민감파일 relay, 첨부파일, 파일 접근 로그 API입니다."
     },
     {
       "name": "기타 API",
       "description": "UJAT 교육 지역 순서 마스터 API"
-    },
-    {
-      "name": "후원사",
-      "description": "후원사·담당자·연도별 후원사업 관리 API. sponsorshipStatus SSOT는 active|ended만(4종 확장·추가 상태는 제품 GO 후)."
     },
     {
       "name": "기타 API",
@@ -1128,6 +1132,158 @@
         }
       }
     },
+    "/api/admin/settlements/{settlementId}/payment-statement/rendered-file": {
+      "post": {
+        "tags": [
+          "정산"
+        ],
+        "summary": "지급조서 FE 렌더링 canonical PDF 등록",
+        "description": "### 이 API가 하는 일\n- 지급조서 FE 렌더링 canonical PDF 등록\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/settlements/{settlementId}/payment-statement/rendered-file`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FILE_DOWNLOAD 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PAYMENT_STATEMENT_SENSITIVE 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.\n- 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: frozen payloadHash 일치 + SETTLEMENT/PAYMENT_STATEMENT_RENDERED owner + AVAILABLE/CLEAN PDF만 등록; 이전 canonical 파일 supersede; bulk ZIP source로 사용",
+        "operationId": "registerPaymentStatementRenderedFile",
+        "parameters": [
+          {
+            "name": "settlementId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentStatementRenderedFileRegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값 검증 실패",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "bad-request": {
+                    "summary": "요청 값 검증 실패",
+                    "description": "bad-request",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "BAD_REQUEST: request parameter is invalid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "인증 필요",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "인증 필요",
+                    "description": "unauthorized",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "UNAUTHORIZED: authentication is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 부족",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "forbidden": {
+                    "summary": "권한 부족",
+                    "description": "forbidden",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "PERMISSION_DENIED: admin permission is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "대상 리소스 없음",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "not-found": {
+                    "summary": "대상 리소스 없음",
+                    "description": "not-found",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "NOT_FOUND: requested resource was not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "conflict": {
+                    "summary": "비즈니스 상태 충돌",
+                    "description": "conflict",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "CONFLICT: requested transition is not allowed in the current state"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/settlements/{settlementId}/payment-statement/download-requests": {
       "post": {
         "tags": [
@@ -1155,6 +1311,158 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/SettlementDocumentDownloadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값 검증 실패",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "bad-request": {
+                    "summary": "요청 값 검증 실패",
+                    "description": "bad-request",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "BAD_REQUEST: request parameter is invalid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "인증 필요",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "인증 필요",
+                    "description": "unauthorized",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "UNAUTHORIZED: authentication is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 부족",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "forbidden": {
+                    "summary": "권한 부족",
+                    "description": "forbidden",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "PERMISSION_DENIED: admin permission is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "대상 리소스 없음",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "not-found": {
+                    "summary": "대상 리소스 없음",
+                    "description": "not-found",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "NOT_FOUND: requested resource was not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "conflict": {
+                    "summary": "비즈니스 상태 충돌",
+                    "description": "conflict",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "CONFLICT: requested transition is not allowed in the current state"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/settlements/{settlementId}/payment-statement/download-logs": {
+      "post": {
+        "tags": [
+          "정산"
+        ],
+        "summary": "지급조서 FE PDF 다운로드 이력 기록",
+        "description": "### 이 API가 하는 일\n- 지급조서 FE PDF 다운로드 이력 기록\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/settlements/{settlementId}/payment-statement/download-logs`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FILE_DOWNLOAD 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PAYMENT_STATEMENT_AUDIT 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.\n- 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: download_count/last_downloaded_at과 file_access_log를 동일 트랜잭션으로 기록",
+        "operationId": "recordPaymentStatementClientDownload",
+        "parameters": [
+          {
+            "name": "settlementId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientGeneratedDownloadLogRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
                 }
               }
             }
@@ -1562,6 +1870,53 @@
         }
       }
     },
+    "/api/admin/settlements/payment-statements/bulk-download/jobs": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "지급조서 일괄 Worker ZIP 생성",
+        "description": "### 이 API가 하는 일\n- 지급조서 일괄 Worker ZIP 생성\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/settlements/payment-statements/bulk-download/jobs`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FILE_DOWNLOAD 권한 필요\n- 접근 범위: PROGRAM_ASSIGNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: RAW_PRIVACY_APPROVAL_REQUIRED 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.\n- 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 개별/대량 모두 동일 frozen snapshot 기준; FE 업로드/스캔/등록 canonical PDF만 Worker ZIP source로 사용; 누락 시 CLIENT_RENDER_REQUIRED",
+        "operationId": "paymentStatements",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentStatementBulkDownloadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseBulkDownloadJobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/settlements/exports/tax-report": {
       "post": {
         "tags": [
@@ -1590,7 +1945,7 @@
                 },
                 "examples": {
                   "tax-report-export": {
-                    "summary": "client-side masked 세무 export 예시",
+                    "summary": "Worker masked 세무 export 예시",
                     "description": "tax-report-export",
                     "value": {
                       "success": true,
@@ -1601,9 +1956,13 @@
                         "totalCount": 120,
                         "totalAmount": 3500000,
                         "fileObjectId": null,
-                        "clientExportEventId": 8801,
-                        "exportPolicy": "MASKED_CLIENT_SIDE",
-                        "rawPrivacyIncluded": false
+                        "clientExportEventId": null,
+                        "privacyExportFileId": null,
+                        "deliveryMethod": "SERVER_FILE",
+                        "exportPolicy": "MASKED_ONLY",
+                        "rawPrivacyIncluded": false,
+                        "downloadUrl": null,
+                        "pollingStatus": "PENDING"
                       }
                     }
                   }
@@ -3802,6 +4161,148 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/SettlementRevisionDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값 검증 실패",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "bad-request": {
+                    "summary": "요청 값 검증 실패",
+                    "description": "bad-request",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "BAD_REQUEST: request parameter is invalid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "인증 필요",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "인증 필요",
+                    "description": "unauthorized",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "UNAUTHORIZED: authentication is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 부족",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "forbidden": {
+                    "summary": "권한 부족",
+                    "description": "forbidden",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "PERMISSION_DENIED: admin permission is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "대상 리소스 없음",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "not-found": {
+                    "summary": "대상 리소스 없음",
+                    "description": "not-found",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "NOT_FOUND: requested resource was not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "conflict": {
+                    "summary": "비즈니스 상태 충돌",
+                    "description": "conflict",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "CONFLICT: requested transition is not allowed in the current state"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/settlements/{settlementId}/payment-statement/render-data": {
+      "get": {
+        "tags": [
+          "정산"
+        ],
+        "summary": "지급조서 FE 렌더링 frozen snapshot 조회",
+        "description": "### 이 API가 하는 일\n- 지급조서 FE 렌더링 frozen snapshot 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/settlements/{settlementId}/payment-statement/render-data`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: SETTLEMENT_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PAYMENT_STATEMENT_SNAPSHOT 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.\n- 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 프론트는 금액/세금을 재계산하지 않고 frozen snapshot을 PDF로 렌더링",
+        "operationId": "paymentStatementRenderData",
+        "parameters": [
+          {
+            "name": "settlementId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentStatementRenderDataResponse"
                 }
               }
             }
@@ -7245,6 +7746,9 @@
           "taxableYn": {
             "type": "boolean"
           },
+          "evidenceRequiredYn": {
+            "type": "boolean"
+          },
           "useYn": {
             "type": "boolean"
           },
@@ -7544,6 +8048,9 @@
           "taxableYn": {
             "type": "boolean"
           },
+          "evidenceRequiredYn": {
+            "type": "boolean"
+          },
           "useYn": {
             "type": "boolean"
           },
@@ -7763,6 +8270,31 @@
           "studentCount"
         ]
       },
+      "CapacityWarning": {
+        "type": "object",
+        "properties": {
+          "semesterType": {
+            "type": "string"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "capacityType": {
+            "type": "string"
+          },
+          "maxCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "currentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
       "OrganizationScheduleResponse": {
         "type": "object",
         "properties": {
@@ -7799,6 +8331,12 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/OrganizationScheduleSlotResponse"
+            }
+          },
+          "capacityWarnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CapacityWarning"
             }
           }
         }
@@ -8397,6 +8935,89 @@
         "required": [
           "participantId"
         ]
+      },
+      "CapacityLimitRequest": {
+        "type": "object",
+        "properties": {
+          "semesterType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxClassCount": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "maxVolunteerCount": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "educationRegionCode",
+          "maxClassCount",
+          "maxVolunteerCount",
+          "semesterType"
+        ]
+      },
+      "CapacityUpsertRequest": {
+        "type": "object",
+        "properties": {
+          "capacities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CapacityLimitRequest"
+            }
+          }
+        },
+        "required": [
+          "capacities"
+        ]
+      },
+      "CapacityStatus": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "semesterType": {
+            "type": "string"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "educationRegionName": {
+            "type": "string"
+          },
+          "maxClassCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "currentClassCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxVolunteerCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "currentVolunteerCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "classCapacityExceeded": {
+            "type": "boolean"
+          },
+          "volunteerCapacityExceeded": {
+            "type": "boolean"
+          }
+        }
       },
       "ProgramDraftUpsertRequest": {
         "type": "object",
@@ -9445,6 +10066,29 @@
             }
           }
         }
+      },
+      "ClientGeneratedDownloadLogRequest": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "userAgent": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "ipAddress": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "fileName"
+        ]
       },
       "SettlementApplicationEvidenceAttachmentRequest": {
         "type": "object",
@@ -13221,6 +13865,16 @@
             "items": {
               "$ref": "#/components/schemas/TermsAgreementRow"
             }
+          },
+          "affiliationName": {
+            "type": "string"
+          },
+          "schoolOrganizationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "external1365Id": {
+            "type": "string"
           }
         }
       },
@@ -14365,7 +15019,15 @@
             "type": "string"
           },
           "sponsorshipStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "후원 상태. 등록 시 생략하면 active. PATCH는 4값 양방향. 미지원 값은 400 SPONSOR_SPONSORSHIP_STATUS_UNSUPPORTED.",
+            "enum": [
+              "active",
+              "discussing",
+              "dormant",
+              "ended"
+            ],
+            "example": "active"
           },
           "sponsorshipStartDate": {
             "type": "string"
@@ -14438,7 +15100,14 @@
             "type": "string"
           },
           "sponsorshipStatus": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "active",
+              "discussing",
+              "dormant",
+              "ended"
+            ],
+            "example": "active"
           },
           "sponsorshipStartDate": {
             "type": "string"
@@ -14692,6 +15361,87 @@
           }
         }
       },
+      "SponsorLogoBulkDownloadRequest": {
+        "type": "object",
+        "properties": {
+          "sponsorIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 1
+          }
+        },
+        "required": [
+          "sponsorIds"
+        ]
+      },
+      "ApiResponseBulkDownloadJobResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/BulkDownloadJobResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "BulkDownloadJobResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "sourceCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileObjectIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "sourceJobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeneratedFileJobResponse"
+            }
+          },
+          "renderRequiredSettlementIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "zipJob": {
+            "$ref": "#/components/schemas/GeneratedFileJobResponse"
+          }
+        }
+      },
       "SettlementGenerateRequest": {
         "type": "object",
         "description": "정산 생성 또는 재계산 요청",
@@ -14829,6 +15579,28 @@
         },
         "required": [
           "reason"
+        ]
+      },
+      "PaymentStatementRenderedFileRegisterRequest": {
+        "type": "object",
+        "properties": {
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "업로드/스캔 완료된 PDF file_object ID",
+            "example": 30001,
+            "minimum": 1
+          },
+          "payloadHash": {
+            "type": "string",
+            "description": "GET /payment-statement/render-data 응답의 payloadHash. 다른 snapshot PDF 오등록 방지용",
+            "maxLength": 128,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "fileObjectId",
+          "payloadHash"
         ]
       },
       "SettlementCorrectionRequest": {
@@ -15044,6 +15816,23 @@
           }
         }
       },
+      "PaymentStatementBulkDownloadRequest": {
+        "type": "object",
+        "properties": {
+          "settlementIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 1
+          }
+        },
+        "required": [
+          "settlementIds"
+        ]
+      },
       "SettlementExportRequest": {
         "type": "object",
         "description": "정산 export 요청. 지급/세무/대량이체 자료를 필터링하고 개인정보 export 정책을 함께 지정합니다.",
@@ -15097,8 +15886,8 @@
           },
           "exportPolicy": {
             "type": "string",
-            "description": "export 정책. 예: MASKED_ONLY, MASKED_CLIENT_SIDE, RAW_PRIVACY_APPROVAL_REQUIRED",
-            "example": "MASKED_CLIENT_SIDE",
+            "description": "export 정책. XLSX는 Worker 생성이며 MASKED_ONLY 또는 RAW_PRIVACY_APPROVAL_REQUIRED를 사용합니다. MASKED_CLIENT_SIDE는 전환 호환 입력으로만 수용됩니다.",
+            "example": "MASKED_ONLY",
             "maxLength": 80,
             "minLength": 0
           },
@@ -15559,7 +16348,7 @@
           "reason"
         ]
       },
-      "EducationJournalBulkDownloadRequest": {
+      "EducationJournalExportRequest": {
         "type": "object",
         "properties": {
           "journalIds": {
@@ -15572,49 +16361,6 @@
           "organizationApplicationId": {
             "type": "integer",
             "format": "int64"
-          }
-        }
-      },
-      "EducationJournalBulkDownloadResponse": {
-        "type": "object",
-        "properties": {
-          "programId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "organizationApplicationId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "requestedJournalCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "downloadableFileCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "fileObjectIds": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          "accessPolicy": {
-            "type": "string"
-          },
-          "downloadEndpoint": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "availableActions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           }
         }
       },
@@ -15690,6 +16436,65 @@
           "completedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "EducationJournalBulkDownloadRequest": {
+        "type": "object",
+        "properties": {
+          "journalIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "EducationJournalBulkDownloadResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "requestedJournalCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "downloadableFileCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fileObjectIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "accessPolicy": {
+            "type": "string"
+          },
+          "downloadEndpoint": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
           },
           "availableActions": {
             "type": "array",
@@ -16623,6 +17428,12 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AutoAssignmentSlotResult"
+            }
+          },
+          "capacityWarnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CapacityWarning"
             }
           }
         }
@@ -18080,6 +18891,339 @@
           }
         }
       },
+      "TemplateMoveRequest": {
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ApiResponseTemplateMoveResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/TemplateMoveResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "CategoryTreeResponse": {
+        "type": "object",
+        "properties": {
+          "channelType": {
+            "type": "string"
+          },
+          "roots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TreeNodeResponse"
+            }
+          }
+        }
+      },
+      "TemplateMoveResponse": {
+        "type": "object",
+        "properties": {
+          "templateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "categoryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "moved": {
+            "type": "boolean"
+          },
+          "tree": {
+            "$ref": "#/components/schemas/CategoryTreeResponse"
+          }
+        }
+      },
+      "TreeNodeResponse": {
+        "type": "object",
+        "properties": {
+          "nodeType": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "categoryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TreeNodeResponse"
+            }
+          }
+        }
+      },
+      "TemplateSyncItemRequest": {
+        "type": "object",
+        "properties": {
+          "templateCode": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "providerTemplateCode": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "providerFlowId": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "displayName": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "providerSenderKey": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "providerSenderProfileType": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "senderProfileDisplayName": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "alimtalkMessageType": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 0
+          },
+          "alimtalkEmphasisType": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 0
+          },
+          "alimtalkSecurityYn": {
+            "type": "boolean"
+          },
+          "kakaoTemplateCategory": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "alimtalkMetadata": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "approvalStatus": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 0
+          },
+          "categoryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "titleTemplate": {
+            "type": "string"
+          },
+          "contentTemplate": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "templateCode"
+        ]
+      },
+      "TemplateSyncRequest": {
+        "type": "object",
+        "properties": {
+          "templates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TemplateSyncItemRequest"
+            }
+          }
+        }
+      },
+      "ApiResponseSyncResultResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/SyncResultResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "SyncResultResponse": {
+        "type": "object",
+        "properties": {
+          "resource": {
+            "type": "string"
+          },
+          "upsertedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "syncedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CategoryCreateRequest": {
+        "type": "object",
+        "properties": {
+          "parentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "channelType": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ApiResponseCategoryMutationResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/CategoryMutationResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "CategoryMutationResponse": {
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "created": {
+            "type": "boolean"
+          },
+          "updated": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "moved": {
+            "type": "boolean"
+          },
+          "tree": {
+            "$ref": "#/components/schemas/CategoryTreeResponse"
+          }
+        }
+      },
+      "CategoryMoveRequest": {
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "parentId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "categoryId"
+        ]
+      },
       "CreateRequest": {
         "type": "object",
         "properties": {
@@ -18111,6 +19255,20 @@
             },
             "maxItems": 500,
             "minItems": 0
+          },
+          "senderKey": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "senderProfileType": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "senderProfileId": {
+            "type": "integer",
+            "format": "int64"
           }
         },
         "required": [
@@ -19765,6 +20923,39 @@
             "type": "integer",
             "format": "int32"
           },
+          "sourceTimestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "trainingType": {
+            "type": "string"
+          },
+          "feePayee": {
+            "type": "string"
+          },
+          "trainingSessionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "participantCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "trainingTopic": {
+            "type": "string"
+          },
+          "trainingPhotoReferences": {
+            "type": "string"
+          },
+          "trainingMaterialReferences": {
+            "type": "string"
+          },
+          "lectureEvaluation": {
+            "type": "string"
+          },
+          "supportRequest": {
+            "type": "string"
+          },
           "bankName": {
             "type": "string"
           },
@@ -20110,12 +21301,12 @@
           "businessStartDate": {
             "type": "string"
           },
+          "businessEndDate": {
+            "type": "string"
+          },
           "businessYear": {
             "type": "integer",
             "format": "int32"
-          },
-          "businessEndDate": {
-            "type": "string"
           }
         }
       },
@@ -20579,6 +21770,38 @@
             "format": "date-time"
           }
         }
+      },
+      "FormSubmissionBulkDownloadRequest": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "contextType": {
+            "type": "string"
+          },
+          "contextId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formResponseIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "programId"
+        ]
       },
       "FormResponseCreateRequest": {
         "type": "object",
@@ -21181,6 +22404,57 @@
         "required": [
           "exportType"
         ]
+      },
+      "ApiResponseCommonExportJobResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/CommonExportJobResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "CommonExportJobResponse": {
+        "type": "object",
+        "properties": {
+          "exportType": {
+            "type": "string"
+          },
+          "exportMode": {
+            "type": "string"
+          },
+          "rowCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "auditLogId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "job": {
+            "$ref": "#/components/schemas/GeneratedFileJobResponse"
+          }
+        }
       },
       "ApiResponseCommonExportDataResponse": {
         "type": "object",
@@ -23027,6 +24301,36 @@
             },
             "maxItems": 20,
             "minItems": 0
+          },
+          "address": {
+            "type": "string",
+            "description": "개인 회원 자택 기본 주소"
+          },
+          "zipCode": {
+            "type": "string",
+            "description": "개인 회원 자택 우편번호"
+          },
+          "enrollmentStatus": {
+            "type": "string",
+            "description": "개인 회원 학교 재학 여부. ENROLLED 또는 NOT_ENROLLED"
+          },
+          "schoolName": {
+            "type": "string",
+            "description": "재학 중이면 학교명, 미재학이면 선택 소속명으로도 호환 입력됩니다."
+          },
+          "schoolOrganizationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "schoolSelection": {
+            "$ref": "#/components/schemas/PortalSchoolSelectionRequest"
+          },
+          "grade": {
+            "type": "string",
+            "description": "재학 중일 때 학년"
+          },
+          "external1365Id": {
+            "type": "string"
           }
         }
       },
@@ -24445,6 +25749,19 @@
             "format": "int32"
           }
         }
+      },
+      "CategoryUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "name"
+        ]
       },
       "AdminMeUpdateRequest": {
         "type": "object",
@@ -26078,6 +27395,42 @@
             "type": "null",
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "JsonNode": {},
+      "PaymentStatementRenderDataResponse": {
+        "type": "object",
+        "properties": {
+          "paymentStatementId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "settlementId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "documentType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/JsonNode"
+          },
+          "payloadHash": {
+            "type": "string"
+          },
+          "frozenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -29119,7 +30472,14 @@
             "type": "string"
           },
           "sponsorshipStatus": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "active",
+              "discussing",
+              "dormant",
+              "ended"
+            ],
+            "example": "active"
           },
           "sponsorshipStartDate": {
             "type": "string"
@@ -34356,6 +35716,18 @@
             "additionalProperties": {
               "type": "string"
             }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -34417,6 +35789,118 @@
             "format": "date-time"
           },
           "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "categoryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "categoryName": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "senderProfileDisplayName": {
+            "type": "string"
+          },
+          "alimtalkMessageType": {
+            "type": "string"
+          },
+          "alimtalkEmphasisType": {
+            "type": "string"
+          },
+          "alimtalkSecurityYn": {
+            "type": "boolean"
+          },
+          "kakaoTemplateCategory": {
+            "type": "string"
+          },
+          "alimtalkMetadata": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "approvalStatus": {
+            "type": "string"
+          },
+          "providerSyncedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NotificationTemplatePreviewResponse": {
+        "type": "object",
+        "properties": {
+          "templateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "senderProfileDisplayName": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "alimtalkMessageType": {
+            "type": "string"
+          },
+          "alimtalkEmphasisType": {
+            "type": "string"
+          },
+          "alimtalkSecurityYn": {
+            "type": "boolean"
+          },
+          "kakaoTemplateCategory": {
+            "type": "string"
+          },
+          "contentTemplate": {
+            "type": "string"
+          },
+          "alimtalkMetadata": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "nhnConsoleTemplateUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "SenderProfileListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SenderProfileResponse"
+            }
+          }
+        }
+      },
+      "SenderProfileResponse": {
+        "type": "object",
+        "properties": {
+          "profileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "channelType": {
+            "type": "string"
+          },
+          "senderKey": {
+            "type": "string"
+          },
+          "senderProfileType": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "useYn": {
+            "type": "boolean"
+          },
+          "syncedAt": {
             "type": "string",
             "format": "date-time"
           }
@@ -34582,6 +36066,55 @@
           }
         }
       },
+      "CatalogCategory": {
+        "type": "object",
+        "properties": {
+          "categoryCode": {
+            "type": "string"
+          },
+          "categoryLabel": {
+            "type": "string"
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogVariableItem"
+            }
+          }
+        }
+      },
+      "CatalogResponse": {
+        "type": "object",
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogCategory"
+            }
+          }
+        }
+      },
+      "CatalogVariableItem": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "requiresProgram": {
+            "type": "boolean"
+          }
+        }
+      },
       "PageResponseRecipientCandidateResponse": {
         "type": "object",
         "properties": {
@@ -34627,6 +36160,12 @@
             "type": "string"
           },
           "participantStatus": {
+            "type": "string"
+          },
+          "memberType": {
+            "type": "string"
+          },
+          "typeLabel": {
             "type": "string"
           },
           "recipientNameMasked": {
@@ -34878,6 +36417,21 @@
           },
           "providerResultMessage": {
             "type": "string"
+          },
+          "sendTiming": {
+            "type": "string"
+          },
+          "senderDisplayName": {
+            "type": "string"
+          },
+          "senderKey": {
+            "type": "string"
+          },
+          "recipientName": {
+            "type": "string"
+          },
+          "templateDisplayName": {
+            "type": "string"
           }
         }
       },
@@ -34886,6 +36440,10 @@
         "properties": {
           "delivery": {
             "$ref": "#/components/schemas/NotificationDeliveryResponse"
+          },
+          "preview": {
+            "type": "object",
+            "additionalProperties": {}
           }
         }
       },
@@ -34988,15 +36546,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
@@ -38339,6 +39897,50 @@
           "deletedCount": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "ApiResponseTemplateDeleteResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/TemplateDeleteResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "TemplateDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "templateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "tree": {
+            "$ref": "#/components/schemas/CategoryTreeResponse"
           }
         }
       },
