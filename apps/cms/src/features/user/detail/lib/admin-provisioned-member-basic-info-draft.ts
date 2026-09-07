@@ -72,6 +72,8 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   detailAddressSearch?: string
   /** 강사/개인 — 자택 주소(상세) */
   detailAddressDetail?: string
+  /** 개인 회원 — 자택 우편번호 (`zipCode`) */
+  zipCode?: string
   /** 강사 — 최종 학력(예: 4년제 졸업) */
   highestEducationLevel?: string
   /** 강사 — 최종 졸업 학교명 */
@@ -292,6 +294,8 @@ export function userToAdminProvisionedBasicDraft(
             user.schoolEnrollmentStatus,
             affiliationGrade
           ),
+          schoolOrganizationId: user.individualSchoolOrganizationId ?? null,
+          zipCode: user.zipCode?.trim() ?? '',
           // 연락처·이메일과 동일 — unmask 후 user.id1365 원문을 draft에 넣는다
           id1365: user.id1365?.trim() ?? '',
         }
@@ -329,12 +333,14 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
     | 'email'
     | 'detailAddress'
     | 'detailAddressDetail'
+    | 'zipCode'
     | 'affiliation'
     | 'gender'
     | 'birthDate'
     | 'socialAccounts'
     | 'adminComment'
     | 'listMetrics'
+    | 'id1365'
   >
 > {
   const social = draft.socialAccount.trim()
@@ -344,17 +350,21 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
   const detailAddressDetail = (draft.detailAddressDetail ?? '').trim()
   const detailAddressFallback = (draft.detailAddress ?? '').trim()
   const adminPermissionVariant = (draft.adminPermissionVariant ?? '').trim()
+  const zipCode = (draft.zipCode ?? '').trim()
+  const id1365 = (draft.id1365 ?? '').trim()
   return {
     name: draft.name.trim(),
     phone: draft.phone.trim() || undefined,
     email: draft.email.trim(),
     detailAddress: detailAddressSearch || detailAddressFallback || undefined,
     detailAddressDetail,
+    ...(zipCode ? { zipCode } : {}),
     affiliation,
     gender: draft.gender.trim() || undefined,
     birthDate: draft.birthDate.trim() || undefined,
     socialAccounts: social ? [social] : [],
     adminComment: adminTrimmed ? adminTrimmed : undefined,
+    ...(id1365 ? { id1365 } : {}),
     listMetrics:
       adminPermissionVariant === 'manager' ||
       adminPermissionVariant === 'partner' ||

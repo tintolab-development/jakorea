@@ -1170,7 +1170,9 @@ export function useUserDetailController({
         (basicInfoEditScope === 'profile' || basicInfoEditScope === 'instructor_fee_ja')
       onMemberBasicInfoSaved?.(merged, skipListInvalidate ? { skipListInvalidate: true } : undefined)
     } catch (error) {
-      handleError(error, { defaultMessage: '회원 정보 저장에 실패했습니다.' })
+      handleError(error, {
+        defaultMessage: getMemberApiErrorMessage(error, '회원 정보 저장에 실패했습니다.'),
+      })
     } finally {
       setBasicInfoSaveLoading(false)
     }

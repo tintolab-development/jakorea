@@ -195,7 +195,7 @@ export function memberDetailQueryOptions(
         const user = mapIndividualMemberDetailToUser(detail, { fallbackRole: 'INDIVIDUAL' })
         assignUser1365IdFromDetailAndIdentifiers(
           user,
-          detail.member?.external1365Id,
+          detail.external1365Id ?? detail.member?.external1365Id,
           externalIdentifiers
         )
         return user

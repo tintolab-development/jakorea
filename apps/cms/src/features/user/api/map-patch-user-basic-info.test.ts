@@ -94,7 +94,7 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     })
   })
 
-  it('미재학 소속은 schoolName·grade를 비우고 schoolOrganizationId null로 보낸다', () => {
+  it('미재학 소속은 schoolName에 소속명을 넣고 schoolOrganizationId null로 보낸다', () => {
     const body = mapPatchUserBasicInfoToApiRequest({
       affiliation: 'JA코리아',
       individualSchoolName: '',
@@ -103,11 +103,27 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
 
     expect(body).toMatchObject({
       affiliation: 'JA코리아',
-      schoolName: '',
+      schoolName: 'JA코리아',
       enrollmentStatus: 'NOT_ENROLLED',
       schoolOrganizationId: null,
     })
     expect(body.grade).toBe('')
+  })
+
+  it('자택 우편번호·1365를 PATCH body에 포함한다', () => {
+    const body = mapPatchUserBasicInfoToApiRequest({
+      detailAddress: '서울특별시 관악구 관악로 1',
+      detailAddressDetail: '202호',
+      zipCode: '08787',
+      id1365: '13650001',
+    })
+
+    expect(body).toMatchObject({
+      address: '서울특별시 관악구 관악로 1',
+      addressDetail: '202호',
+      zipCode: '08787',
+      external1365Id: '13650001',
+    })
   })
 
   it('강사 affiliation만 있으면 schoolName/enrollmentStatus extras를 넣지 않는다', () => {
@@ -147,7 +163,7 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     )
     const body = mapPatchUserBasicInfoToApiRequest(patch)
 
-    expect(body.schoolName).toBe('')
+    expect(body.schoolName).toBe('JA코리아')
     expect(body.enrollmentStatus).toBe('NOT_ENROLLED')
     expect(body.schoolOrganizationId).toBe(null)
     expect(body.affiliation).toBe('JA코리아')

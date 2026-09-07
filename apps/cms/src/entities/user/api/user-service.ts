@@ -384,6 +384,7 @@ export type PatchUserBasicInfoInput = Partial<
     | 'email'
     | 'detailAddress'
     | 'detailAddressDetail'
+    | 'zipCode'
     | 'affiliation'
     | 'gender'
     | 'birthDate'
@@ -393,6 +394,7 @@ export type PatchUserBasicInfoInput = Partial<
     | 'schoolInfo'
     | 'instructorInfo'
     | 'listMetrics'
+    | 'id1365'
   >
 > & {
   /** PATCH `instructorInfo.certifications` — 등록·상세 수정 공통 */
@@ -825,9 +827,20 @@ export async function patchUserBasicInfo(
     const detail = patch.detailAddressDetail?.trim()
     user.detailAddressDetail = detail || undefined
   }
+  if (patch.zipCode !== undefined) {
+    const zip = patch.zipCode.trim()
+    user.zipCode = zip || undefined
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, 'id1365')) {
+    const id1365 = patch.id1365?.trim()
+    user.id1365 = id1365 || undefined
+  }
   if (patch.affiliation !== undefined) user.affiliation = patch.affiliation
   if (patch.schoolEnrollmentStatus !== undefined) {
     user.schoolEnrollmentStatus = patch.schoolEnrollmentStatus
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, 'individualSchoolOrganizationId')) {
+    user.individualSchoolOrganizationId = patch.individualSchoolOrganizationId ?? null
   }
   if (patch.gender !== undefined) user.gender = patch.gender
   if (patch.birthDate !== undefined) user.birthDate = patch.birthDate

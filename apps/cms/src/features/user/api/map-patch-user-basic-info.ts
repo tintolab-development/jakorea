@@ -81,17 +81,23 @@ function applyHomeAddressToPatchBody(
 ) {
   if (
     patch.detailAddress === undefined &&
-    !Object.prototype.hasOwnProperty.call(patch, 'detailAddressDetail')
+    !Object.prototype.hasOwnProperty.call(patch, 'detailAddressDetail') &&
+    patch.zipCode === undefined
   ) {
     return
   }
-  const street = (patch.detailAddress ?? '').trim()
-  const detail = (patch.detailAddressDetail ?? '').trim()
-  body.detailAddress = street
-  body.address = street
-  body.addressDetail = detail
-  body.homeAddress = street
-  body.homeAddressDetail = detail
+  if (patch.detailAddress !== undefined || Object.prototype.hasOwnProperty.call(patch, 'detailAddressDetail')) {
+    const street = (patch.detailAddress ?? '').trim()
+    const detail = (patch.detailAddressDetail ?? '').trim()
+    body.detailAddress = street
+    body.address = street
+    body.addressDetail = detail
+    body.homeAddress = street
+    body.homeAddressDetail = detail
+  }
+  if (patch.zipCode !== undefined) {
+    body.zipCode = patch.zipCode.trim()
+  }
 }
 
 /** 개인 회원 전용 — `schoolEnrollmentStatus`가 있을 때만 extras를 붙인다. */
@@ -105,7 +111,9 @@ function applyIndividualAffiliationToPatchBody(
 
   if (patch.schoolEnrollmentStatus === 'NOT_ENROLLED') {
     body.enrollmentStatus = 'NOT_ENROLLED'
-    body.schoolName = ''
+    // 미재학 소속명 — OpenAPI schoolName 호환 + affiliation
+    const affiliationName = (patch.affiliation ?? '').trim()
+    body.schoolName = affiliationName
     body.grade = ''
     body.schoolOrganizationId = null
     return
@@ -159,6 +167,10 @@ export function mapPatchUserBasicInfoToApiRequest(
   applyHomeAddressToPatchBody(body, patch)
   if (patch.affiliation !== undefined) body.affiliation = patch.affiliation
   applyIndividualAffiliationToPatchBody(body, patch)
+  if (Object.prototype.hasOwnProperty.call(patch, 'id1365')) {
+    const id1365 = patch.id1365?.trim()
+    body.external1365Id = id1365 ?? ''
+  }
   if (patch.gender !== undefined) {
     body.gender = toApiGender(patch.gender) ?? patch.gender
   }
