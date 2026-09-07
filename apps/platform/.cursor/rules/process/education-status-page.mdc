@@ -70,7 +70,9 @@ alwaysApply: false
 - 뒤로가기: 라벨 `교육현황`, 아이콘 `chevron-left-gray7A`, gap 14px, `hl-sm` — [`EducationDetailBack`](apps/platform/src/features/mypage/education/applications/ui/detail-back.tsx)
 - 페이지 상단 여백 100px
 - 프로그램명: 공고용 프로그램명 (`ProgramDetail.title`), `hl-lg`, mt 30 / mb 4
-- 진행 상태: `hd-lg`, 목록과 동일 톤
+- 진행 상태: `hd-lg`
+  - **진행중**: JA send 아이콘(`ja-send-mint`) + `--color-primary-500`
+  - 그 외: 목록과 동일 톤 (아이콘 없음)
 - 교육 대상 / 교육 형태: 아이콘 + `bd-md-sb` primary-700 (대상↔형태 gap 16)
 
 ### 서류 합격 배너
@@ -122,8 +124,12 @@ alwaysApply: false
 
 ### 상단 정보 (본문)
 
+참여하기 상세는 운영 기간·후원사를 **페이지 header**에 둔다. 교육·봉사현황 상세는 `EducationDetailHeader`로 header를 대체하므로 `ProgramInfoBody showPeriodSponsor`로 본문 상단에 동일 메타를 둔다. 안내사항 「프로그램 정보」 모달도 동일.
+
 | 블록 | 규칙 | 어드민 출처 |
 |------|------|-------------|
+| **프로그램 운영 기간** | `operatingPeriodLabel`. `-`·빈 값이면 **비노출** | 공통 정보 > 프로그램 운영 기간 (`startDate`–`endDate`) |
+| **후원사** | `sponsor`. `-`·빈 값이면 **비노출** | 공통 정보 > 후원사 (`sponsorDisplayName`) |
 | **프로그램 설명** | 미기재 시 **비노출** (`summary`) | 모집 정보 > 유형별 상세 정보 > 프로그램 설명 |
 | **기본 정보** | 항목 값이 길거나 너비가 줄면 **아래 줄로 wrap** (`infoFields` flex-wrap). 빈 값 항목 **비노출** | 아래 표 |
 | └ 사업 분야 | | 공통 정보 > 기본 정보 > 사업 분야 |

@@ -6,23 +6,33 @@ import {
 } from '../lib/format'
 import fileDocumentUrl from '../assets/icon/file-document.svg'
 import moreVerticalUrl from '../assets/icon/more-vertical.svg'
+import filePreviewUrl from '@/shared/assets/icons/file-preview.svg'
 import { PFOptionList, PFText } from '@/shared/ui'
 import styles from './file-row.module.css'
 
+const IMAGE_FILE_PATTERN = /\.(png|jpe?g|gif|webp|svg)$/i
+
+function isImageFileName(fileName: string) {
+  return IMAGE_FILE_PATTERN.test(fileName)
+}
+
 type EducationInProgressFileRowProps = {
   file: EducationInProgressFile
-  onComingSoon: () => void
+  onDownload: (file: EducationInProgressFile) => void
+  onViewOriginal: (file: EducationInProgressFile) => void
 }
 
 export function EducationInProgressFileRow({
   file,
-  onComingSoon,
+  onDownload,
+  onViewOriginal,
 }: EducationInProgressFileRowProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const menuWrapRef = useRef<HTMLDivElement>(null)
   const menuId = useId()
   const dateLabel = formatEducationNoticeFileDate(file.uploadedAt)
   const sizeLabel = formatEducationNoticeFileSize(file.fileSizeBytes)
+  const isImage = isImageFileName(file.fileName)
 
   useEffect(() => {
     if (!isMenuOpen) return
@@ -46,21 +56,31 @@ export function EducationInProgressFileRow({
     }
   }, [isMenuOpen])
 
-  const handleMenuAction = () => {
+  const handleMenuAction = (value: string) => {
     setIsMenuOpen(false)
-    onComingSoon()
+    if (value === 'download') {
+      onDownload(file)
+      return
+    }
+    if (value === 'view-original') {
+      onViewOriginal(file)
+    }
   }
 
   const fileMenuOptions = [
     { value: 'download', label: '다운로드' },
-    { value: 'view-original', label: '원문보기' },
+    { value: 'view-original', label: '원글보기' },
   ]
 
   return (
     <div className={styles.row}>
-      <div className={styles.icon} aria-hidden="true">
-        <img className={styles.iconImg} src={fileDocumentUrl} alt="" />
-      </div>
+      {isImage ? (
+        <img className={styles.imageCover} src={filePreviewUrl} alt="" aria-hidden="true" />
+      ) : (
+        <div className={styles.icon} aria-hidden="true">
+          <img className={styles.iconImg} src={fileDocumentUrl} alt="" />
+        </div>
+      )}
 
       <div className={styles.info}>
         <PFText as="p" typo="bd-sm-sb" color="black" className={styles.name} title={file.fileName}>
