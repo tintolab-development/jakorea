@@ -89,7 +89,7 @@ export function getSponsorSponsorshipStatusBadgeTone(
 ): EditableStatusBadgeTone {
   if (status === 'active') return 'blue'
   if (status === 'discussing') return 'green'
-  if (status === 'dormant') return 'greenOverlay'
+  if (status === 'dormant') return 'gray'
   if (status === 'ended') return 'red'
   return 'gray'
 }
