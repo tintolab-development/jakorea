@@ -8,6 +8,7 @@
 import type { InstructorCmsProfile } from './instructorCmsProfile';
 import type { InstructorCmsSettlement } from './instructorCmsSettlement';
 import type { InstructorInfoPatch } from './instructorInfoPatch';
+import type { PortalSchoolSelectionRequest } from './portalSchoolSelectionRequest';
 import type { SchoolInfoPatch } from './schoolInfoPatch';
 import type { TermsAgreementRequest } from './termsAgreementRequest';
 import type { UserListRowMetricsPatch } from './userListRowMetricsPatch';
@@ -18,7 +19,14 @@ export interface AdminMemberBasicInfoUpdateRequest {
   phone?: string;
   email?: string;
   detailAddress?: string;
+  address?: string;
+  addressDetail?: string;
   affiliation?: string;
+  enrollmentStatus?: string;
+  schoolName?: string;
+  grade?: string;
+  schoolOrganizationId?: number;
+  schoolSelection?: PortalSchoolSelectionRequest;
   gender?: string;
   birthDate?: string;
   socialAccounts?: string[];

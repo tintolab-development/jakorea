@@ -19,6 +19,16 @@ export interface GeminiTrainingReportImportRow {
   trainingStartTime?: string;
   trainingEndTime?: string;
   trainingMinutes?: number;
+  sourceTimestamp?: string;
+  trainingType?: string;
+  feePayee?: string;
+  trainingSessionCount?: number;
+  participantCount?: number;
+  trainingTopic?: string;
+  trainingPhotoReferences?: string;
+  trainingMaterialReferences?: string;
+  lectureEvaluation?: string;
+  supportRequest?: string;
   bankName?: string;
   accountNo?: string;
   accountHolder?: string;

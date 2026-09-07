@@ -14,7 +14,10 @@ import {
  * 개인 회원 상세 GET·pre-register는 `address`/`addressDetail`, `schoolName`/`enrollmentStatus`가 SSOT.
  * PATCH OpenAPI(`detailAddress`/`affiliation`)만 보내면 저장되지 않고 새로고침 시 이전 값이 남는다.
  */
-export type AdminMemberBasicInfoUpdateRequestWithAddress = AdminMemberBasicInfoUpdateRequest & {
+export type AdminMemberBasicInfoUpdateRequestWithAddress = Omit<
+  AdminMemberBasicInfoUpdateRequest,
+  'schoolOrganizationId'
+> & {
   address?: string
   addressDetail?: string
   homeAddress?: string
@@ -22,7 +25,7 @@ export type AdminMemberBasicInfoUpdateRequestWithAddress = AdminMemberBasicInfoU
   schoolName?: string
   enrollmentStatus?: 'ENROLLED' | 'NOT_ENROLLED'
   grade?: string
-  /** BE wire extension — 소속 해제 시 `null` (omit 금지) */
+  /** BE wire extension — 소속 해제 시 `null` (omit 금지). OpenAPI는 number?만 두지만 런타임 null 전송 */
   schoolOrganizationId?: number | null
   schoolSelection?: PortalSchoolSelectionRequest
 }

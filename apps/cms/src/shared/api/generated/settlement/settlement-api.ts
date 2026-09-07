@@ -8,12 +8,14 @@
 import type {
   AccountPaymentDetailResponse,
   ApiResponse,
+  ApiResponseBulkDownloadJobResponse,
   ApiResponseSettlementBulkStatusChangeResponse,
   ApiResponseSettlementCorrectionResponse,
   ApiResponseSettlementGenerateResponse,
   ApiResponseSettlementStatusChangeResponse,
   ApiResponseVoid,
   BudgetSummaryParams,
+  ClientGeneratedDownloadLogRequest,
   ListAccountPaymentsParams,
   ListCorrectionRequestsParams,
   ListExportHistoriesParams,
@@ -28,6 +30,9 @@ import type {
   PageResponseSettlementExportHistoryResponse,
   PageResponseSettlementListItemResponse,
   PageResponseSettlementTransportationSnapshotResponse,
+  PaymentStatementBulkDownloadRequest,
+  PaymentStatementRenderDataResponse,
+  PaymentStatementRenderedFileRegisterRequest,
   SettlementAggregateResponse,
   SettlementAvailableActionsResponse,
   SettlementBudgetSummaryResponse,
@@ -59,8 +64,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlement-configs/current`
  *
@@ -222,8 +227,8 @@ const deleteCurrentConfig = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/settlements/{settlementId}/recalculate
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `POST /api/admin/settlements/{settlementId}/recalculate`
  *
@@ -280,8 +285,8 @@ const recalculate = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/settlements/{settlementId}/payment-statement/request
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `POST /api/admin/settlements/{settlementId}/payment-statement/request`
  *
@@ -331,6 +336,62 @@ const requestPaymentStatement = (
       {url: `/api/admin/settlements/${settlementId}/payment-statement/request`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: settlementStatusChangeRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 지급조서 FE 렌더링 canonical PDF 등록
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/settlements/{settlementId}/payment-statement/rendered-file`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: FILE_DOWNLOAD 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: PAYMENT_STATEMENT_SENSITIVE 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
+ * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: frozen payloadHash 일치 + SETTLEMENT/PAYMENT_STATEMENT_RENDERED owner + AVAILABLE/CLEAN PDF만 등록; 이전 canonical 파일 supersede; bulk ZIP source로 사용
+ * @summary 지급조서 FE 렌더링 canonical PDF 등록
+ */
+const registerPaymentStatementRenderedFile = (
+    settlementId: number,
+    paymentStatementRenderedFileRegisterRequest: PaymentStatementRenderedFileRegisterRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseVoid>>,) => {
+      return customInstance<ApiResponseVoid>(
+      {url: `/api/admin/settlements/${settlementId}/payment-statement/rendered-file`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: paymentStatementRenderedFileRegisterRequest
     },
       options);
     }
@@ -390,9 +451,65 @@ const requestPaymentStatementDownload = (
 
 /**
  * ### 이 API가 하는 일
+ * - 지급조서 FE PDF 다운로드 이력 기록
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/settlements/{settlementId}/payment-statement/download-logs`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: FILE_DOWNLOAD 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: PAYMENT_STATEMENT_AUDIT 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
+ * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: download_count/last_downloaded_at과 file_access_log를 동일 트랜잭션으로 기록
+ * @summary 지급조서 FE PDF 다운로드 이력 기록
+ */
+const recordPaymentStatementClientDownload = (
+    settlementId: number,
+    clientGeneratedDownloadLogRequest: ClientGeneratedDownloadLogRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseVoid>>,) => {
+      return customInstance<ApiResponseVoid>(
+      {url: `/api/admin/settlements/${settlementId}/payment-statement/download-logs`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: clientGeneratedDownloadLogRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - POST /api/admin/settlements/{settlementId}/correction-requests
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `POST /api/admin/settlements/{settlementId}/correction-requests`
  *
@@ -503,9 +620,64 @@ const bulkConfirmPaymentStatements = (
 
 /**
  * ### 이 API가 하는 일
+ * - 지급조서 일괄 Worker ZIP 생성
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/settlements/payment-statements/bulk-download/jobs`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: FILE_DOWNLOAD 권한 필요
+ * - 접근 범위: PROGRAM_ASSIGNED 범위 정책
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: RAW_PRIVACY_APPROVAL_REQUIRED 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
+ * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 개별/대량 모두 동일 frozen snapshot 기준; FE 업로드/스캔/등록 canonical PDF만 Worker ZIP source로 사용; 누락 시 CLIENT_RENDER_REQUIRED
+ * @summary 지급조서 일괄 Worker ZIP 생성
+ */
+const paymentStatements = (
+    paymentStatementBulkDownloadRequest: PaymentStatementBulkDownloadRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseBulkDownloadJobResponse>>,) => {
+      return customInstance<ApiResponseBulkDownloadJobResponse>(
+      {url: `/api/admin/settlements/payment-statements/bulk-download/jobs`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: paymentStatementBulkDownloadRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - POST /api/admin/settlements/exports/tax-report
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `POST /api/admin/settlements/exports/tax-report`
  *
@@ -561,8 +733,8 @@ const requestTaxReportExport = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/settlements/exports/bulk-transfer
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `POST /api/admin/settlements/exports/bulk-transfer`
  *
@@ -783,8 +955,8 @@ const rejectPaymentStatement = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `PATCH /api/admin/settlements/statements/{statementId}/confirm`
  *
@@ -841,8 +1013,8 @@ const confirmPaymentStatement = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `PATCH /api/admin/settlements/correction-requests/{correctionRequestId}/reject`
  *
@@ -899,8 +1071,8 @@ const rejectCorrection = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `PATCH /api/admin/settlements/correction-requests/{correctionRequestId}/approve`
  *
@@ -957,8 +1129,8 @@ const approveCorrection = (
 /**
  * ### 이 API가 하는 일
  * - 개별 지급 완료
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `PATCH /api/admin/account-payments/{paymentId}/paid`
  *
@@ -1015,8 +1187,8 @@ const markPaid = (
 /**
  * ### 이 API가 하는 일
  * - 개별 지급 실패
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `PATCH /api/admin/account-payments/{paymentId}/failed`
  *
@@ -1128,8 +1300,8 @@ const bulkPaid = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements`
  *
@@ -1184,8 +1356,8 @@ const listSettlements = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/{settlementId}`
  *
@@ -1239,8 +1411,8 @@ const getSettlement = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `GET /api/admin/settlements/{settlementId}/revisions`
  *
@@ -1296,8 +1468,8 @@ const listSettlementRevisions = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `GET /api/admin/settlements/{settlementId}/revisions/{revisionId}`
  *
@@ -1351,9 +1523,62 @@ const getSettlementRevisionDetail = (
 
 /**
  * ### 이 API가 하는 일
+ * - 지급조서 FE 렌더링 frozen snapshot 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/settlements/{settlementId}/payment-statement/render-data`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: SETTLEMENT_READ 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: PAYMENT_STATEMENT_SNAPSHOT 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
+ * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 프론트는 금액/세금을 재계산하지 않고 frozen snapshot을 PDF로 렌더링
+ * @summary 지급조서 FE 렌더링 frozen snapshot 조회
+ */
+const paymentStatementRenderData = (
+    settlementId: number,
+ options?: SecondParameter<typeof customInstance<PaymentStatementRenderDataResponse>>,) => {
+      return customInstance<PaymentStatementRenderDataResponse>(
+      {url: `/api/admin/settlements/${settlementId}/payment-statement/render-data`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/{settlementId}/payment-statement/download`
  *
@@ -1460,8 +1685,8 @@ const getSettlementAvailableActions = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/transportation-snapshots`
  *
@@ -1569,8 +1794,8 @@ const statusMappings = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/statements`
  *
@@ -1625,8 +1850,8 @@ const listPaymentStatements = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/open-questions`
  *
@@ -1680,8 +1905,8 @@ const openQuestions = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/exports`
  *
@@ -1736,8 +1961,8 @@ const listExportHistories = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산 (`settlement`)
  * - 호출 방식: `GET /api/admin/settlements/correction-requests`
  *
@@ -1792,8 +2017,8 @@ const listCorrectionRequests = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/calendar`
  *
@@ -1848,8 +2073,8 @@ const settlementCalendar = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/calendar/summary`
  *
@@ -1904,8 +2129,8 @@ const settlementCalendarSummary = (
 /**
  * ### 이 API가 하는 일
  * - 정산/계좌지급 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/settlements/calendar/dates/{date}`
  *
@@ -2067,8 +2292,8 @@ const listSettlementAggregates = (
 /**
  * ### 이 API가 하는 일
  * - 계좌 지급 확인 목록
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
  * - 호출 방식: `GET /api/admin/account-payments`
  *
@@ -2227,15 +2452,18 @@ const deleteConfigItem = (
       options);
     }
 
-return {currentConfig,updateCurrentConfig,deleteCurrentConfig,recalculate,requestPaymentStatement,requestPaymentStatementDownload,requestCorrection,bulkConfirmPaymentStatements,requestTaxReportExport,requestBulkTransferExport,duplicateConfigItem,duplicateCurrentConfig,rejectPaymentStatement,confirmPaymentStatement,rejectCorrection,approveCorrection,markPaid,markFailed,bulkPaid,listSettlements,getSettlement,listSettlementRevisions,getSettlementRevisionDetail,downloadPaymentStatement,getSettlementAvailableActions,listTransportationSnapshots,statusMappings,listPaymentStatements,openQuestions,listExportHistories,listCorrectionRequests,settlementCalendar,settlementCalendarSummary,settlementCalendarDate,budgetSummary,listSettlementAggregates,listAccountPayments,getAccountPayment,deleteConfigItem}};
+return {currentConfig,updateCurrentConfig,deleteCurrentConfig,recalculate,requestPaymentStatement,registerPaymentStatementRenderedFile,requestPaymentStatementDownload,recordPaymentStatementClientDownload,requestCorrection,bulkConfirmPaymentStatements,paymentStatements,requestTaxReportExport,requestBulkTransferExport,duplicateConfigItem,duplicateCurrentConfig,rejectPaymentStatement,confirmPaymentStatement,rejectCorrection,approveCorrection,markPaid,markFailed,bulkPaid,listSettlements,getSettlement,listSettlementRevisions,getSettlementRevisionDetail,paymentStatementRenderData,downloadPaymentStatement,getSettlementAvailableActions,listTransportationSnapshots,statusMappings,listPaymentStatements,openQuestions,listExportHistories,listCorrectionRequests,settlementCalendar,settlementCalendarSummary,settlementCalendarDate,budgetSummary,listSettlementAggregates,listAccountPayments,getAccountPayment,deleteConfigItem}};
 export type CurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['currentConfig']>>>
 export type UpdateCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['updateCurrentConfig']>>>
 export type DeleteCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['deleteCurrentConfig']>>>
 export type RecalculateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['recalculate']>>>
 export type RequestPaymentStatementResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestPaymentStatement']>>>
+export type RegisterPaymentStatementRenderedFileResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['registerPaymentStatementRenderedFile']>>>
 export type RequestPaymentStatementDownloadResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestPaymentStatementDownload']>>>
+export type RecordPaymentStatementClientDownloadResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['recordPaymentStatementClientDownload']>>>
 export type RequestCorrectionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestCorrection']>>>
 export type BulkConfirmPaymentStatementsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['bulkConfirmPaymentStatements']>>>
+export type PaymentStatementsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['paymentStatements']>>>
 export type RequestTaxReportExportResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestTaxReportExport']>>>
 export type RequestBulkTransferExportResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestBulkTransferExport']>>>
 export type DuplicateConfigItemResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['duplicateConfigItem']>>>
@@ -2251,6 +2479,7 @@ export type ListSettlementsResult = NonNullable<Awaited<ReturnType<ReturnType<ty
 export type GetSettlementResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['getSettlement']>>>
 export type ListSettlementRevisionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listSettlementRevisions']>>>
 export type GetSettlementRevisionDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['getSettlementRevisionDetail']>>>
+export type PaymentStatementRenderDataResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['paymentStatementRenderData']>>>
 export type DownloadPaymentStatementResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['downloadPaymentStatement']>>>
 export type GetSettlementAvailableActionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['getSettlementAvailableActions']>>>
 export type ListTransportationSnapshotsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listTransportationSnapshots']>>>

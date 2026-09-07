@@ -27,4 +27,12 @@ managerName?: string;
  * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
  */
 status?: string;
+/**
+ * 조회 시작 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
+ */
+sponsorshipStartDateFrom?: string;
+/**
+ * 조회 시작 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
+ */
+sponsorshipStartDateTo?: string;
 };

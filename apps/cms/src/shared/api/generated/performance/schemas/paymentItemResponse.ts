@@ -13,6 +13,7 @@ export interface PaymentItemResponse {
   itemName?: string;
   maxAmount?: number;
   taxableYn?: boolean;
+  evidenceRequiredYn?: boolean;
   useYn?: boolean;
   iconKey?: string;
   emojiOverride?: string;

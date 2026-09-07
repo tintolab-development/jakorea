@@ -22,8 +22,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/certificates/issues/{issueId}/download-logs
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 프로그램 진행현황 (`SCR_PROGRESS`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 프로그램 진행현황 (`null`)
  * - 프론트 담당 영역: 프로그램-progress (`program-progress`)
  * - 호출 방식: `POST /api/admin/certificates/issues/{issueId}/download-logs`
  *

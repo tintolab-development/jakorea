@@ -121,6 +121,10 @@
       "description": "프로그램 게시글, 공개 노출, 상세 조회, 게시 상태 관리 API입니다."
     },
     {
+      "name": "기타 API",
+      "description": "XLSX/CSV/ZIP 파일은 백엔드 generated-file 파이프라인에서 생성합니다. 공통 목록 XLSX는 worker job을 사용하고 정산·실적·개인정보·공식 문서는 각 도메인의 백엔드 생성 API를 사용합니다."
+    },
+    {
       "name": "신청/프로그램 워크플로우",
       "description": "프로그램 신청, 승인/반려, 강사/참여자 워크플로우 API"
     },
@@ -139,10 +143,6 @@
     {
       "name": "기타 API",
       "description": "신청폼, 임시저장, 제출, 내 신청 조회 및 취소 API"
-    },
-    {
-      "name": "기타 API",
-      "description": "마스킹된 소규모 목록은 선택 ID 또는 권한 범위 전체 데이터를 JSON으로 반환해 프론트엔드가 XLSX를 생성합니다. 정산·실적·개인정보·공식 문서는 각 도메인의 백엔드 생성 API를 사용합니다."
     },
     {
       "name": "기타 API",
@@ -329,6 +329,10 @@
       "description": "CMS 관리자 계정의 프로그램 담당 역할 API"
     },
     {
+      "name": "기타 API",
+      "description": "여러 실제 파일은 Worker에서 ZIP으로 묶어 S3 generated-file로 제공합니다."
+    },
+    {
       "name": "파일 관리",
       "description": "파일 업로드, 다운로드, 민감파일 relay, 첨부파일, 파일 접근 로그 API입니다."
     },
@@ -385,6 +389,10 @@
       "description": "일반 화면이 아니라 내부 운영, 릴리즈 확인, QA 검증에서 사용하는 API입니다."
     },
     {
+      "name": "기타 API",
+      "description": "CMS 알림톡 템플릿 및 카탈로그 관리 API"
+    },
+    {
       "name": "신청/프로그램 워크플로우",
       "description": "프로그램 신청, 승인/반려, 강사·봉사자·참여자 배정과 상태 변경 API입니다."
     },
@@ -420,7 +428,7 @@
           "수료증/참여인증서"
         ],
         "summary": "POST /api/admin/certificates/issues/{issueId}/download-logs",
-        "description": "### 이 API가 하는 일\n- POST /api/admin/certificates/issues/{issueId}/download-logs\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 프로그램 진행현황 (`SCR_PROGRESS`)\n- 프론트 담당 영역: 프로그램-progress (`program-progress`)\n- 호출 방식: `POST /api/admin/certificates/issues/{issueId}/download-logs`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_certificates_issues_issueId_download-logs`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 program-progress API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 수료증/참여인증서는 발급 상태와 다운로드 이력을 함께 확인합니다. `COMPLETION_ISSUED`, `PARTICIPATION_ISSUED`, `ISSUED`는 발급 완료 배지로 표시합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/certificates/issues/{issueId}/download-logs\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 프로그램 진행현황 (`null`)\n- 프론트 담당 영역: 프로그램-progress (`program-progress`)\n- 호출 방식: `POST /api/admin/certificates/issues/{issueId}/download-logs`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_certificates_issues_issueId_download-logs`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 program-progress API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 수료증/참여인증서는 발급 상태와 다운로드 이력을 함께 확인합니다. `COMPLETION_ISSUED`, `PARTICIPATION_ISSUED`, `ISSUED`는 발급 완료 배지로 표시합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "logDownload",
         "parameters": [
           {

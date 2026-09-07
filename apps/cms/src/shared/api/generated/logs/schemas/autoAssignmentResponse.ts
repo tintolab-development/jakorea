@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { AutoAssignmentSlotResult } from './autoAssignmentSlotResult';
+import type { CapacityWarning } from './capacityWarning';
 
 export interface AutoAssignmentResponse {
   programId?: number;
@@ -15,4 +16,5 @@ export interface AutoAssignmentResponse {
   singleAssignedCount?: number;
   unassignedCount?: number;
   results?: AutoAssignmentSlotResult[];
+  capacityWarnings?: CapacityWarning[];
 }
