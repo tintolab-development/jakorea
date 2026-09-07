@@ -26,8 +26,8 @@ describe('listStatusFilterFromSearchKey', () => {
   it('reads sp_st from the list query key', () => {
     expect(listStatusFilterFromSearchKey('sp_st=ended')).toBe('ended')
     expect(listStatusFilterFromSearchKey('sp_name=우리&sp_st=active')).toBe('active')
-    expect(listStatusFilterFromSearchKey('sp_st=discussing')).toBe('ALL')
-    expect(listStatusFilterFromSearchKey('sp_st=dormant')).toBe('ALL')
+    expect(listStatusFilterFromSearchKey('sp_st=discussing')).toBe('discussing')
+    expect(listStatusFilterFromSearchKey('sp_st=dormant')).toBe('dormant')
     expect(listStatusFilterFromSearchKey('')).toBe('ALL')
   })
 })

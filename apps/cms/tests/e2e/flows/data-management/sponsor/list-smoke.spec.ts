@@ -28,8 +28,10 @@ test.describe('후원사 관리 목록', () => {
     await expect(page.getByTitle('후원 중').or(page.getByText('후원 중', { exact: true })).first()).toBeVisible({
       timeout: 10_000,
     })
-    await expect(page.getByTitle('후원 논의중').or(page.getByText('후원 논의중', { exact: true }))).toHaveCount(0)
-    await expect(page.getByTitle('후원 휴면').or(page.getByText('후원 휴면', { exact: true }))).toHaveCount(0)
+    await expect(
+      page.getByTitle('후원 논의중').or(page.getByText('후원 논의중', { exact: true })).first()
+    ).toBeVisible()
+    await expect(page.getByTitle('후원 휴면').or(page.getByText('후원 휴면', { exact: true })).first()).toBeVisible()
     await expect(page.getByTitle('후원 종료').or(page.getByText('후원 종료', { exact: true })).first()).toBeVisible()
     await page.keyboard.press('Escape')
     await clickExcelClientDownload(page, test.info())

@@ -188,7 +188,7 @@ function buildMockSponsorManagementList(): SponsorManagementRow[] {
     const name = group === 0 ? base : `${base} (${group + 1})`
     const organizationKind = KIND_CYCLE[i % KIND_CYCLE.length]
     const sponsorshipStatus: SponsorSponsorshipStatus =
-      i % 11 === 0 ? 'ended' : 'active'
+      i % 11 === 0 ? 'ended' : i % 7 === 0 ? 'dormant' : i % 5 === 0 ? 'discussing' : 'active'
     const day = 1 + (i % 28)
     const sponsorshipStartDate = `2026-03-${String(day).padStart(2, '0')}T00:00:00.000Z`
     rows.push(

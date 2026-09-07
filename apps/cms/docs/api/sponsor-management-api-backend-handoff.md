@@ -38,7 +38,7 @@ FE는 목록·등록·상세를 이미 호출합니다. **신규 엔드포인트
 
 | ID | 우선 | 작업 | 현재 상태 |
 |----|------|------|-----------|
-| **S-1** | **P0** | `sponsorshipStatus` 4종 허용 (목록 필터·POST·PATCH·`POST …/end`) | FE 전송 중. OpenAPI는 자유 문자열. `discussing`/`dormant` 거절되면 저장·필터 깨짐 |
+| **S-1** | **P0** | `sponsorshipStatus` 4종 허용 (목록 필터·POST·PATCH·`POST …/end`) | **GO 완료 (2026-09-07).** FE·BE 4값 enum 정합 |
 | **S-2** | **P0** | `SponsorRequest`에 `homepageUrl` 추가·영속 | 응답에만 있음. FE는 POST/PATCH에 extra로 보냄 |
 | **S-3** | **P0** | 목록 `totalDonationAmount` / `totalBeneficiaryCount` **값 채움** | OpenAPI 필드는 있음. 비우면 화면이 `0원` / `0명` |
 | **S-4** | **P1** | `SponsorRequest`에 `logoFileId` + 공용 파일 업로드 owner 합의 | 응답에만 `logoFileId`. 업로드·파일명·다운로드 없음 |

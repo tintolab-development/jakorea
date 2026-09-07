@@ -332,7 +332,10 @@ export class SponsorManagementPage {
     await expect(dialog.getByRole('button', { name: '정보 수정' })).toBeVisible({ timeout: 15_000 })
   }
 
-  async changeListStatus(name: string, nextLabel: '후원 중' | '후원 종료') {
+  async changeListStatus(
+    name: string,
+    nextLabel: '후원 중' | '후원 논의중' | '후원 휴면' | '후원 종료'
+  ) {
     await this.fillListName(name)
     await this.search()
     const row = this.dataRows().filter({ hasText: name }).first()

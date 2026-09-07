@@ -1,8 +1,10 @@
 import type { SponsorSponsorshipStatus } from '@/types/domain'
 
-/** 제품 GO 전: 후원 중 / 후원 종료만 */
+/** 후원 중 / 후원 논의중 / 후원 휴면 / 후원 종료 */
 export const SPONSOR_SPONSORSHIP_STATUS_VALUES = [
   'active',
+  'discussing',
+  'dormant',
   'ended',
 ] as const satisfies readonly SponsorSponsorshipStatus[]
 

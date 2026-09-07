@@ -29,6 +29,8 @@ export const sponsorManagementFilterFields: FilterFieldConfig[] = [
     options: [
       { label: '전체', value: 'ALL' },
       { label: '후원 중', value: 'active' },
+      { label: '후원 논의중', value: 'discussing' },
+      { label: '후원 휴면', value: 'dormant' },
       { label: '후원 종료', value: 'ended' },
     ],
   },
