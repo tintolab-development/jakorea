@@ -6,6 +6,9 @@ import {
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 
+/** mock fill — 바로 시작 시 헤더 시작일(설문 생성일) */
+export const EDUCATION_SURVEY_MOCK_CREATED_AT = '2024-09-23'
+
 export const EDUCATION_SURVEY_MOCK_PARAGRAPH_IDS = {
   title: 'edu-survey-title',
   user: 'edu-survey-user',

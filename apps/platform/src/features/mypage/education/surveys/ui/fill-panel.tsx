@@ -2,7 +2,10 @@ import { useCallback, useMemo, useState } from 'react'
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { PFAlertModal, PFButton } from '@/shared/ui'
-import { createEducationSurveyMockDraft } from '../lib/mock-survey-draft'
+import {
+  createEducationSurveyMockDraft,
+  EDUCATION_SURVEY_MOCK_CREATED_AT,
+} from '../lib/mock-survey-draft'
 import { EducationSurveyFormBody } from './survey-form-body'
 import { EducationSurveyHeader } from './survey-header'
 import type { SurveySidecarState } from './platform-survey-paragraph-body'
@@ -50,7 +53,12 @@ export function EducationSurveyFillPanel({ programTitle }: EducationSurveyFillPa
     <>
       <div className={styles.shell}>
         <div className={styles.inner}>
-          {titleParagraph ? <EducationSurveyHeader paragraph={titleParagraph} /> : null}
+          {titleParagraph ? (
+            <EducationSurveyHeader
+              paragraph={titleParagraph}
+              surveyCreatedAt={EDUCATION_SURVEY_MOCK_CREATED_AT}
+            />
+          ) : null}
 
           <EducationSurveyFormBody
             draft={draft}
