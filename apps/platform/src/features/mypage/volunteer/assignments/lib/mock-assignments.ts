@@ -12,7 +12,7 @@ const INSTITUTION_ASSIGNED: VolunteerAssignedInstitutionRow[] = [
   {
     id: 'org-assigned-1',
     no: 3,
-    schoolName: 'JA 초등학교',
+    schoolName: '강서초등학교',
     educationGrade: '1학년',
     region: '서울특별시 강서구',
     distanceFromHome: '10km',
@@ -24,7 +24,7 @@ const INSTITUTION_ASSIGNED: VolunteerAssignedInstitutionRow[] = [
   {
     id: 'org-assigned-2',
     no: 2,
-    schoolName: 'JA 초등학교',
+    schoolName: '진월초등학교',
     educationGrade: '2학년',
     region: '서울특별시 강서구',
     distanceFromHome: '10km',

@@ -12,7 +12,6 @@ import {
   EducationCancelConfirm,
   EducationDetailBack,
   EducationDetailHeader,
-  EducationInProgressNoticePanel,
   EducationSettlementPanel,
   EducationSurveyEmptyPanel,
   EducationSurveyFillPanel,
@@ -28,7 +27,11 @@ import {
   type EducationActivitySection,
   type EducationDisplayStatus,
 } from '@/features/mypage'
-import { VolunteerAssignmentPanel, resolveVolunteerListBackPath } from '@/features/mypage/volunteer'
+import {
+  VolunteerAssignmentPanel,
+  VolunteerNoticePanel,
+  resolveVolunteerListBackPath,
+} from '@/features/mypage/volunteer'
 import { ProgramInfoBody, useMockProgramById } from '@/features/program'
 import {
   getAccessToken,
@@ -308,10 +311,13 @@ export function MypageVolunteerDetailPage() {
   const renderActivityBody = (active: EducationActivitySection) => {
     if (active === 'notice' && isActivityStatus) {
       return (
-        <EducationInProgressNoticePanel
+        <VolunteerNoticePanel
           program={program}
           selfIntroMotivation={application.selfIntroMotivation}
           preferredEducationScheduleLabel={application.preferredEducationScheduleLabel}
+          lastParticipatedSession={
+            isWithdrawnDuring ? application.lastParticipatedSession : undefined
+          }
         />
       )
     }
@@ -388,6 +394,7 @@ export function MypageVolunteerDetailPage() {
           {appliedSection === 'program' ? (
             <ProgramInfoBody
               program={program}
+              showPeriodSponsor
               showApplyCta={false}
               showCancelCta={showCancelCta}
               onCancel={() => setIsCancelConfirmOpen(true)}

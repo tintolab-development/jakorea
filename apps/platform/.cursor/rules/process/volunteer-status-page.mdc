@@ -16,6 +16,7 @@ alwaysApply: false
 - 탭·정렬·페이지네이션은 교육현황과 동일
 - Mock: 교육 신청 스토어 + `filterVolunteerStatusApplications`
 - 시드: [`GENERAL_VOLUNTEER_STATUS_FIXTURES`](apps/platform/src/features/program/lib/cms-registration-fixtures.ts)
+- 배정현황 확인용: 기관 `orgProgress`(진행중) · `orgDone`(종료) / 개인 `indProgress`(진행중) · `indDone`(종료)
 
 ## 상세 (`/mypage/volunteer/:applicationId`)
 
@@ -25,16 +26,28 @@ alwaysApply: false
 
 ## 프로그램 정보
 
-- `ProgramInfoBody` 재사용. `detailCase === 'volunteer'` SSOT:
+- `ProgramInfoBody` 재사용 (`showPeriodSponsor` — 운영 기간·후원사). `detailCase === 'volunteer'` SSOT:
   - 참여자 → **봉사자** (모집 구분·봉사자 모집 기간)
   - **기타사항** (`otherNotes`) 노출, 미기재 시 비노출
   - **학습 지원 내용** 비노출
+
+## 안내사항
+
+진행 중 탭. 목록·파일·프로그램/신청 정보 팝업은 교육현황 [`EducationInProgressNoticePanel`](apps/platform/src/features/mypage/education/notices/ui/panel.tsx) 재사용. 래퍼: [`VolunteerNoticePanel`](apps/platform/src/features/mypage/volunteer/notices/ui/panel.tsx).
+
+- **기관 안내사항** (`programAudience === 'organization'`만)
+  - 배정된 기관 선택 → 해당 기관이 작성한 안내 테이블
+  - 개인 프로그램은 **비노출**
+  - 필드: 강의 공간 내 컴퓨터 여부 / 대기 장소 안내 / 식사 가능 여부 및 안내 / 기타 특이사항 / 성범죄 경력 조회서 요청
+  - Mock: [`mock-institution-guides.ts`](apps/platform/src/features/mypage/volunteer/notices/lib/mock-institution-guides.ts)
+- 안내사항 작성하기는 **강사/교사 페이지만** — 일반회원 봉사현황 **비노출**
 
 ## 배정현황
 
 [`VolunteerAssignmentPanel`](apps/platform/src/features/mypage/volunteer/assignments/ui/panel.tsx)
 
 - 읽기 전용. 배정 취소·추가 배정·선택 배정·엑셀·배정 봉사자 수 **비노출**
+- 그리드: 4목록 모두 `VolunteerAssignmentTable` + `PFDataTable`
 - `programAudience === 'organization'`
   - 배정된 기관 목록: No. / 기관명 / 담당학년 / 기관 소재지 / 자택과의 거리 / 담당 봉사 진행 일정
   - 배정된 대기 기관 목록: + 희망 학년 / 배정 상태

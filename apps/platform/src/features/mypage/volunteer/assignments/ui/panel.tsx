@@ -22,11 +22,11 @@ export function VolunteerAssignmentPanel({
 }: VolunteerAssignmentPanelProps) {
   const institution = useMemo(
     () => getMockVolunteerInstitutionAssignment(lastParticipatedSession),
-    [lastParticipatedSession],
+    [lastParticipatedSession]
   )
   const individual = useMemo(
     () => getMockVolunteerIndividualAssignment(lastParticipatedSession),
-    [lastParticipatedSession],
+    [lastParticipatedSession]
   )
 
   if (programAudience === 'individual') {
@@ -126,7 +126,6 @@ export function VolunteerAssignmentPanel({
           {
             key: 'school',
             label: '기관명',
-            align: 'left',
             render: row => <VolunteerCellText>{row.schoolName}</VolunteerCellText>,
           },
           {
@@ -138,7 +137,6 @@ export function VolunteerAssignmentPanel({
           {
             key: 'region',
             label: '기관 소재지',
-            align: 'left',
             render: row => <VolunteerCellText>{row.region}</VolunteerCellText>,
           },
           {
@@ -171,7 +169,6 @@ export function VolunteerAssignmentPanel({
           {
             key: 'school',
             label: '기관명',
-            align: 'left',
             render: row => <VolunteerCellText>{row.schoolName}</VolunteerCellText>,
           },
           {
@@ -183,7 +180,6 @@ export function VolunteerAssignmentPanel({
           {
             key: 'region',
             label: '기관 소재지',
-            align: 'left',
             render: row => <VolunteerCellText>{row.region}</VolunteerCellText>,
           },
           {

@@ -899,8 +899,10 @@ function buildGeneralVolunteerFixture(args: {
 export const GENERAL_VOLUNTEER_STATUS_IDS = {
   orgApplied: 'general-prog-volunteer-org-applied',
   orgProgress: 'general-prog-volunteer-org-progress',
+  orgDone: 'general-prog-volunteer-org-done',
   orgWithdrawn: 'general-prog-volunteer-org-withdrawn',
   indApplied: 'general-prog-volunteer-ind-applied',
+  indProgress: 'general-prog-volunteer-ind-progress',
   indDone: 'general-prog-volunteer-ind-done',
   indRejected: 'general-prog-volunteer-ind-rejected',
 } as const
@@ -922,6 +924,13 @@ export const GENERAL_VOLUNTEER_STATUS_FIXTURES: CmsRegistrationFixture[] = [
     educationFormLabel: '온라인',
   }),
   buildGeneralVolunteerFixture({
+    id: GENERAL_VOLUNTEER_STATUS_IDS.orgDone,
+    title: 'JA 기관 연계 금융교실 봉사 (종료)',
+    audience: 'organization',
+    index: 7,
+    educationFormLabel: '오프라인',
+  }),
+  buildGeneralVolunteerFixture({
     id: GENERAL_VOLUNTEER_STATUS_IDS.orgWithdrawn,
     title: 'JA 중등 진로탐색 봉사 모집 (기관)',
     audience: 'organization',
@@ -934,6 +943,13 @@ export const GENERAL_VOLUNTEER_STATUS_FIXTURES: CmsRegistrationFixture[] = [
     audience: 'individual',
     index: 4,
     educationFormLabel: '온라인',
+  }),
+  buildGeneralVolunteerFixture({
+    id: GENERAL_VOLUNTEER_STATUS_IDS.indProgress,
+    title: 'JA 개인 방문 경제교실 봉사 모집',
+    audience: 'individual',
+    index: 8,
+    educationFormLabel: '오프라인',
   }),
   buildGeneralVolunteerFixture({
     id: GENERAL_VOLUNTEER_STATUS_IDS.indDone,

@@ -38,8 +38,10 @@ const MOCK_PREFERRED_EDUCATION_SCHEDULE = '2026년 04월 20일(월) 9:30 ~ 12:20
 const VOLUNTEER_DISPLAY_STATUS_BY_PROGRAM_ID: Record<string, EducationDisplayStatus> = {
   [GENERAL_VOLUNTEER_STATUS_IDS.orgApplied]: 'waiting_result',
   [GENERAL_VOLUNTEER_STATUS_IDS.orgProgress]: 'in_progress',
+  [GENERAL_VOLUNTEER_STATUS_IDS.orgDone]: 'completed',
   [GENERAL_VOLUNTEER_STATUS_IDS.orgWithdrawn]: 'withdrawn',
   [GENERAL_VOLUNTEER_STATUS_IDS.indApplied]: 'document_passed',
+  [GENERAL_VOLUNTEER_STATUS_IDS.indProgress]: 'in_progress',
   [GENERAL_VOLUNTEER_STATUS_IDS.indDone]: 'completed',
   [GENERAL_VOLUNTEER_STATUS_IDS.indRejected]: 'rejected',
 }
