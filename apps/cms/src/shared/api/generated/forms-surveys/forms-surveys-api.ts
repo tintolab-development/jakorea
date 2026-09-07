@@ -46,8 +46,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-template-versions/{versionId}`
  *
@@ -100,8 +100,8 @@ const getVersion = (
 /**
  * ### 이 API가 하는 일
  * - PUT /api/admin/form-template-versions/{versionId}
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `PUT /api/admin/form-template-versions/{versionId}`
  *
@@ -157,8 +157,8 @@ const updateVersion = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/programs/{programId}/form-bindings`
  *
@@ -211,8 +211,8 @@ const formBindings = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/programs/{programId}/form-bindings
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `POST /api/admin/programs/{programId}/form-bindings`
  *
@@ -268,8 +268,8 @@ const createFormBinding = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-templates`
  *
@@ -323,8 +323,8 @@ const listTemplates = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/form-templates
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `POST /api/admin/form-templates`
  *
@@ -379,8 +379,8 @@ const createTemplate2 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-templates/{templateId}/versions`
  *
@@ -433,8 +433,8 @@ const listVersions = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/form-templates/{templateId}/versions
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `POST /api/admin/form-templates/{templateId}/versions`
  *
@@ -490,8 +490,8 @@ const createVersion1 = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/form-templates/{templateId}/versions/copy
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `POST /api/admin/form-templates/{templateId}/versions/copy`
  *
@@ -547,8 +547,8 @@ const copyVersion = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/form-template-versions/{versionId}/publish
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `POST /api/admin/form-template-versions/{versionId}/publish`
  *
@@ -658,8 +658,8 @@ const formSubmissionFiles = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/form-responses/submit
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `POST /api/admin/form-responses/submit`
  *
@@ -714,8 +714,8 @@ const submitResponse = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `DELETE /api/admin/programs/{programId}/form-bindings/{bindingId}`
  *
@@ -769,8 +769,8 @@ const deactivateFormBinding = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `PATCH /api/admin/programs/{programId}/form-bindings/{bindingId}`
  *
@@ -827,8 +827,8 @@ const updateFormBinding = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-templates/{templateId}`
  *
@@ -881,8 +881,8 @@ const getTemplate1 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `DELETE /api/admin/form-templates/{templateId}`
  *
@@ -935,8 +935,8 @@ const deleteTemplate = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `PATCH /api/admin/form-templates/{templateId}`
  *
@@ -1096,8 +1096,8 @@ const getTemplatePayloadByCode = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-template-versions/{versionId}/render`
  *
@@ -1150,8 +1150,8 @@ const render1 = (
 /**
  * ### 이 API가 하는 일
  * - 파일 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-submission-files/{submissionFileId}/download`
  *
@@ -1204,8 +1204,8 @@ const submissionFileDownload = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-responses`
  *
@@ -1259,8 +1259,8 @@ const listResponses = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-responses/{responseId}`
  *
@@ -1418,8 +1418,8 @@ const listBusinessProjections = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-auto-fill-keys`
  *

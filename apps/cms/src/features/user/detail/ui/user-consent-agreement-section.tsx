@@ -105,7 +105,9 @@ export type ConsentFieldValueSchema =
       agreed: boolean
       agreedAtDisplay?: string
       formResponseId?: number
+      filledDocumentId?: number
       filledDocumentAvailable?: boolean
+      filledDocumentRevealEndpoint?: string
       consentType?: string
     }
   /** 더블 행 우측 빈 절반(격자·하단 보더만 유지) */
@@ -519,6 +521,9 @@ type ActiveConsentView = {
   entry: MemberConsentTemplateEntry
   consentType?: string
   filledDocumentAvailable?: boolean
+  formResponseId?: number
+  filledDocumentId?: number
+  filledDocumentRevealEndpoint?: string
 }
 
 type ActiveConsentWrite = {
@@ -561,6 +566,9 @@ export function UserConsentAgreementSection({
           consentType:
             document.consentType?.trim() || CONSENT_LABEL_TO_EDITABLE_TERMS_TYPE[label.trim()],
           filledDocumentAvailable: document.filledDocumentAvailable,
+          formResponseId: document.formResponseId,
+          filledDocumentId: document.filledDocumentId,
+          filledDocumentRevealEndpoint: document.filledDocumentRevealEndpoint,
         })
       }
     },
@@ -575,7 +583,10 @@ export function UserConsentAgreementSection({
   const closeWrite = useCallback(() => setActiveWrite(null), [])
 
   const handleWriteComplete = useCallback(() => {
-    if (activeWrite) onEditableConsentChange?.(activeWrite.label, true)
+    if (activeWrite) {
+      /** 스냅샷 저장과 동일 틱에서 동의 반영 — 부모 draft ref로 스냅샷 유실 방지 */
+      onEditableConsentChange?.(activeWrite.label, true)
+    }
     setActiveWrite(null)
   }, [activeWrite, onEditableConsentChange])
 
@@ -629,6 +640,9 @@ export function UserConsentAgreementSection({
           consentType={activeView.consentType}
           membersRemote={membersRemote}
           filledDocumentAvailable={activeView.filledDocumentAvailable}
+          formResponseId={activeView.formResponseId}
+          filledDocumentId={activeView.filledDocumentId}
+          filledDocumentRevealEndpoint={activeView.filledDocumentRevealEndpoint}
           memberUser={memberUser}
           onClose={() => setActiveView(null)}
         />
@@ -648,6 +662,7 @@ export function UserConsentAgreementSection({
       {activeWrite != null && writingCrime ? (
         <MemberConsentCrimeModal
           open
+          memberId={memberId}
           savedSnapshot={consentWriteSnapshots?.crimeByFieldKey[activeWrite.entry.fieldKey]}
           onSnapshotSave={snapshot => onConsentCrimeSnapshotSave?.(activeWrite.label, snapshot)}
           onClose={closeWrite}

@@ -25,13 +25,8 @@ vi.mock('@/shared/lib/query-client', () => ({
 }))
 
 vi.mock('@/shared/lib/post-file-access-log', () => ({
-  postFileAccessLog: vi.fn().mockResolvedValue(undefined),
+  postFileAccessLog: vi.fn().mockResolvedValue({}),
   FILE_ACCESS_LOG_CREATE_PATH: '/api/admin/logs/file-access/client',
-  isClientFileAccessLogUnavailable: (error: unknown) => {
-    if (!error || typeof error !== 'object' || !('response' in error)) return false
-    const status = (error as { response?: { status?: number } }).response?.status
-    return status === 404 || status === 405
-  },
 }))
 
 vi.mock('@/shared/lib/should-record-file-access-remotely', () => ({
@@ -67,7 +62,7 @@ describe('downloadBlob / downloadExcel access log', () => {
     vi.clearAllMocks()
     clearDownloadLogMemoryForTests()
     vi.mocked(shouldRecordFileAccessRemotely).mockReturnValue(false)
-    vi.mocked(postFileAccessLog).mockResolvedValue(undefined)
+    vi.mocked(postFileAccessLog).mockResolvedValue({})
     useAuthStore.setState({ user: masterUser, token: null })
     localStorage.setItem('auth_user', JSON.stringify(masterUser))
   })

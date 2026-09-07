@@ -389,6 +389,10 @@
       "description": "일반 화면이 아니라 내부 운영, 릴리즈 확인, QA 검증에서 사용하는 API입니다."
     },
     {
+      "name": "기타 API",
+      "description": "CMS 알림톡 템플릿 및 카탈로그 관리 API"
+    },
+    {
       "name": "신청/프로그램 워크플로우",
       "description": "프로그램 신청, 승인/반려, 강사·봉사자·참여자 배정과 상태 변경 API입니다."
     },
@@ -471,7 +475,7 @@
           "로그 관리"
         ],
         "summary": "버그/이슈 이력 상태 변경",
-        "description": "### 이 API가 하는 일\n- 버그/이슈 이력 상태 변경\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `PATCH /api/admin/logs/system-issues/{issueId}/status`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 버그/이슈 상태 변경(CMS UI 미연결)\n- 프론트 조회 키: `patch_api_logs_system-issues_issueId_status`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-4 행 클릭 액션 없음 — CMS 목록 UI 미연결(내부/운영용).\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_WRITE 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-4 행 액션 없음·CMS UI 미연결",
+        "description": "### 이 API가 하는 일\n- 버그/이슈 이력 상태 변경\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `PATCH /api/admin/logs/system-issues/{issueId}/status`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 버그/이슈 상태 변경(CMS UI 미연결)\n- 프론트 조회 키: `patch_api_logs_system-issues_issueId_status`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-4 행 클릭 액션 없음 — CMS 목록 UI 미연결(내부/운영용).\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_WRITE 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-4 행 액션 없음·CMS UI 미연결",
         "operationId": "updateSystemIssueStatus",
         "parameters": [
           {
@@ -530,7 +534,7 @@
           "로그 관리"
         ],
         "summary": "버그/이슈 이력 조회",
-        "description": "### 이 API가 하는 일\n- 버그/이슈 이력 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: userName/from/to/page/size\n- 응답 사용 위치: 버그/이슈 이력 페이지 목록\n- 프론트 조회 키: `get_api_logs_system-issues`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-4 버그/이슈 이력: userName/from/to·발생화면 컬럼 삭제(취소선)·IP/보관클램프/BE export 없음. status·severity는 API 부가.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-4 목록·발생화면 컬럼 삭제·IP/export 없음",
+        "description": "### 이 API가 하는 일\n- 버그/이슈 이력 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: userName/from/to/page/size\n- 응답 사용 위치: 버그/이슈 이력 페이지 목록\n- 프론트 조회 키: `get_api_logs_system-issues`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-4 버그/이슈 이력: userName/from/to·발생화면 컬럼 삭제(취소선)·IP/보관클램프/BE export 없음. status·severity는 API 부가.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-4 목록·발생화면 컬럼 삭제·IP/export 없음",
         "operationId": "systemIssueLogs",
         "parameters": [
           {
@@ -634,7 +638,7 @@
           "로그 관리"
         ],
         "summary": "버그/이슈 이력 상세 조회",
-        "description": "### 이 API가 하는 일\n- 버그/이슈 이력 상세 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues/{issueId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 버그/이슈 상세(CMS UI 미연결)\n- 프론트 조회 키: `get_api_logs_system-issues_issueId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-4 행 클릭 액션 없음 — CMS 목록 UI 미연결(내부/운영용).\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-4 행 액션 없음·CMS UI 미연결",
+        "description": "### 이 API가 하는 일\n- 버그/이슈 이력 상세 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues/{issueId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 버그/이슈 상세(CMS UI 미연결)\n- 프론트 조회 키: `get_api_logs_system-issues_issueId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-4 행 클릭 액션 없음 — CMS 목록 UI 미연결(내부/운영용).\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-4 행 액션 없음·CMS UI 미연결",
         "operationId": "systemIssueDetail",
         "parameters": [
           {
@@ -680,7 +684,7 @@
           "로그 관리"
         ],
         "summary": "개인정보 조회 이력 조회",
-        "description": "### 이 API가 하는 일\n- 개인정보 조회 이력 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/privacy-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: accessPurpose/accessorName/targetName/from/to/page/size\n- 응답 사용 위치: 개인정보 조회 이력 페이지 목록\n- 프론트 조회 키: `get_api_logs_privacy-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-3 개인정보 조회 이력: UNMASKED_VIEW only·accessPurpose/accessorName/targetName·보관클램프/BE export 없음.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-3 UNMASKED_VIEW only·보관클램프/export 없음",
+        "description": "### 이 API가 하는 일\n- 개인정보 조회 이력 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/privacy-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: accessPurpose/accessorName/targetName/from/to/page/size\n- 응답 사용 위치: 개인정보 조회 이력 페이지 목록\n- 프론트 조회 키: `get_api_logs_privacy-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-3 개인정보 조회 이력: UNMASKED_VIEW only·accessPurpose/accessorName/targetName·보관클램프/BE export 없음.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-3 UNMASKED_VIEW only·보관클램프/export 없음",
         "operationId": "privacyAccessLogs",
         "parameters": [
           {
@@ -784,7 +788,7 @@
           "로그 관리"
         ],
         "summary": "회원 로그인 이력 조회",
-        "description": "### 이 API가 하는 일\n- 회원 로그인 이력 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/member-logins`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: adminName/loginId/from/to/page/size\n- 응답 사용 위치: 회원 로그인 이력 페이지 목록(CMS 관리자·최근 1개월)\n- 프론트 조회 키: `get_api_logs_member-logins`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-1 회원 로그인 이력: CMS ADMIN 성공 로그인만·1개월·IP 원문·BE export 없음(FE client excel).\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-1 CMS 관리자 성공 로그인(최근 1개월·BE export 없음)",
+        "description": "### 이 API가 하는 일\n- 회원 로그인 이력 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/member-logins`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: adminName/loginId/from/to/page/size\n- 응답 사용 위치: 회원 로그인 이력 페이지 목록(CMS 관리자·최근 1개월)\n- 프론트 조회 키: `get_api_logs_member-logins`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-1 회원 로그인 이력: CMS ADMIN 성공 로그인만·1개월·IP 원문·BE export 없음(FE client excel).\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-1 CMS 관리자 성공 로그인(최근 1개월·BE export 없음)",
         "operationId": "memberLoginHistory",
         "parameters": [
           {
@@ -880,7 +884,7 @@
           "로그 관리"
         ],
         "summary": "파일 다운로드 이력 조회",
-        "description": "### 이 API가 하는 일\n- 파일 다운로드 이력 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/file-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: fileName/userName/from/to/page/size\n- 응답 사용 위치: 파일 다운로드 이력 페이지 목록\n- 프론트 조회 키: `get_api_logs_file-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-2 파일 다운로드 이력: SUCCESS download-family events·userName·IP 원문·보관클램프/BE export 없음.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-2 SUCCESS download-family·보관클램프/export 없음",
+        "description": "### 이 API가 하는 일\n- 파일 다운로드 이력 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/file-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: fileName/userName/from/to/page/size\n- 응답 사용 위치: 파일 다운로드 이력 페이지 목록\n- 프론트 조회 키: `get_api_logs_file-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-2 파일 다운로드 이력: SUCCESS download-family events·userName·IP 원문·보관클램프/BE export 없음.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-2 SUCCESS download-family·보관클램프/export 없음",
         "operationId": "fileAccessLogs",
         "parameters": [
           {
@@ -2533,6 +2537,9 @@
             "type": "integer",
             "format": "int64"
           },
+          "assignmentStatus": {
+            "type": "string"
+          },
           "noneYn": {
             "type": "boolean"
           },
@@ -2960,6 +2967,83 @@
           },
           "volunteerCapacityExceeded": {
             "type": "boolean"
+          }
+        }
+      },
+      "PlanningEstimateRequest": {
+        "type": "object",
+        "properties": {
+          "semesterType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxClassesPerDay": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "expectedVolunteerCount": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "educationRegionCode",
+          "expectedVolunteerCount",
+          "maxClassesPerDay",
+          "semesterType"
+        ]
+      },
+      "PlanningEstimateUpsertRequest": {
+        "type": "object",
+        "properties": {
+          "estimates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanningEstimateRequest"
+            }
+          }
+        },
+        "required": [
+          "estimates"
+        ]
+      },
+      "PlanningEstimateStatus": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "semesterType": {
+            "type": "string"
+          },
+          "educationRegionCode": {
+            "type": "string"
+          },
+          "educationRegionName": {
+            "type": "string"
+          },
+          "maxClassesPerDay": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalClassCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expectedVolunteerCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "volunteerEducationDayCount": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -12744,6 +12828,22 @@
           "historyRowIds"
         ]
       },
+      "ApplicationDecisionCancelRequest": {
+        "type": "object",
+        "description": "신청 결정 취소 요청",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "승인/반려 취소 사유. 상태 이력과 알림에 사용됩니다.",
+            "example": "신청 정보 재검토 필요",
+            "maxLength": 500,
+            "minLength": 2
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
       "NotificationTemplateUpsertRequest": {
         "type": "object",
         "properties": {
@@ -17052,6 +17152,82 @@
           "adminSsoSessionId"
         ]
       },
+      "AdminMfaChallengeResponse": {
+        "type": "object",
+        "description": "관리자 MFA challenge 응답",
+        "properties": {
+          "requiresMfa": {
+            "type": "boolean",
+            "description": "관리자 MFA 필요 여부",
+            "example": true
+          },
+          "challengeUuid": {
+            "type": "string",
+            "description": "MFA 검증에 사용할 challenge UUID",
+            "example": "mfa-challenge-sample-uuid"
+          },
+          "mfaMethod": {
+            "type": "string",
+            "description": "MFA 방식",
+            "example": "TOTP"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "challenge 만료 시각",
+            "example": "2026-06-02T09:10:00Z"
+          },
+          "mfaSetupRequired": {
+            "type": "boolean",
+            "description": "MFA 앱 등록 정보가 필요한지 여부",
+            "example": true
+          },
+          "secretKey": {
+            "type": "string",
+            "description": "Microsoft Authenticator 앱 수동 입력용 Base32 secret key",
+            "example": "JBSWY3DPEHPK3PXP"
+          },
+          "manualEntryKey": {
+            "type": "string",
+            "description": "Microsoft Authenticator 앱 수동 입력용 key 별칭",
+            "example": "JBSWY3DPEHPK3PXP"
+          },
+          "totpSecret": {
+            "type": "string",
+            "description": "Microsoft Authenticator 등록용 TOTP secret 값",
+            "example": "JBSWY3DPEHPK3PXP"
+          },
+          "otpauthUri": {
+            "type": "string",
+            "description": "Microsoft Authenticator 호환 otpauth URI"
+          },
+          "qrCodeUrl": {
+            "type": "string",
+            "description": "QR 이미지 URL 또는 data URI"
+          },
+          "qrCodeDataUrl": {
+            "type": "string",
+            "description": "QR 이미지 data URI"
+          },
+          "qrDataUrl": {
+            "type": "string",
+            "description": "프론트 호환용 QR data URI 별칭"
+          },
+          "qrImageUrl": {
+            "type": "string",
+            "description": "QR 이미지 별칭"
+          },
+          "qrCodeImageUrl": {
+            "type": "string",
+            "description": "QR 이미지 별칭"
+          },
+          "verificationCodeHint": {
+            "type": "string",
+            "description": "로컬 프로필 전용 MFA 통과 코드",
+            "example": "000000"
+          }
+        }
+      },
       "AdminSignupSsoLinkStartRequest": {
         "type": "object",
         "properties": {
@@ -17097,6 +17273,31 @@
           },
           "message": {
             "type": "string"
+          }
+        }
+      },
+      "AdminSignupSocialLinkCompleteRequest": {
+        "type": "object",
+        "properties": {
+          "signupSocialLinkToken": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "signupSocialLinkToken"
+        ]
+      },
+      "AdminSignupSocialLinkCompleteResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -17405,82 +17606,6 @@
           "email",
           "password"
         ]
-      },
-      "AdminMfaChallengeResponse": {
-        "type": "object",
-        "description": "관리자 MFA challenge 응답",
-        "properties": {
-          "requiresMfa": {
-            "type": "boolean",
-            "description": "관리자 MFA 필요 여부",
-            "example": true
-          },
-          "challengeUuid": {
-            "type": "string",
-            "description": "MFA 검증에 사용할 challenge UUID",
-            "example": "mfa-challenge-sample-uuid"
-          },
-          "mfaMethod": {
-            "type": "string",
-            "description": "MFA 방식",
-            "example": "TOTP"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "challenge 만료 시각",
-            "example": "2026-06-02T09:10:00Z"
-          },
-          "mfaSetupRequired": {
-            "type": "boolean",
-            "description": "MFA 앱 등록 정보가 필요한지 여부",
-            "example": true
-          },
-          "secretKey": {
-            "type": "string",
-            "description": "Microsoft Authenticator 앱 수동 입력용 Base32 secret key",
-            "example": "JBSWY3DPEHPK3PXP"
-          },
-          "manualEntryKey": {
-            "type": "string",
-            "description": "Microsoft Authenticator 앱 수동 입력용 key 별칭",
-            "example": "JBSWY3DPEHPK3PXP"
-          },
-          "totpSecret": {
-            "type": "string",
-            "description": "Microsoft Authenticator 등록용 TOTP secret 값",
-            "example": "JBSWY3DPEHPK3PXP"
-          },
-          "otpauthUri": {
-            "type": "string",
-            "description": "Microsoft Authenticator 호환 otpauth URI"
-          },
-          "qrCodeUrl": {
-            "type": "string",
-            "description": "QR 이미지 URL 또는 data URI"
-          },
-          "qrCodeDataUrl": {
-            "type": "string",
-            "description": "QR 이미지 data URI"
-          },
-          "qrDataUrl": {
-            "type": "string",
-            "description": "프론트 호환용 QR data URI 별칭"
-          },
-          "qrImageUrl": {
-            "type": "string",
-            "description": "QR 이미지 별칭"
-          },
-          "qrCodeImageUrl": {
-            "type": "string",
-            "description": "QR 이미지 별칭"
-          },
-          "verificationCodeHint": {
-            "type": "string",
-            "description": "로컬 프로필 전용 MFA 통과 코드",
-            "example": "000000"
-          }
-        }
       },
       "AdminAccountApprovalDecisionRequest": {
         "type": "object",
@@ -18201,8 +18326,30 @@
           "detailAddress": {
             "type": "string"
           },
+          "address": {
+            "type": "string"
+          },
+          "addressDetail": {
+            "type": "string"
+          },
           "affiliation": {
             "type": "string"
+          },
+          "enrollmentStatus": {
+            "type": "string"
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "grade": {
+            "type": "string"
+          },
+          "schoolOrganizationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "schoolSelection": {
+            "$ref": "#/components/schemas/PortalSchoolSelectionRequest"
           },
           "gender": {
             "type": "string"
@@ -24088,7 +24235,17 @@
             "type": "string",
             "format": "date-time"
           },
+          "submitDueAt": {
+            "type": "string",
+            "format": "date-time"
+          },
           "institutionName": {
+            "type": "string"
+          },
+          "educationGrade": {
+            "type": "string"
+          },
+          "lectureProgressStatus": {
             "type": "string"
           },
           "reportFileIds": {

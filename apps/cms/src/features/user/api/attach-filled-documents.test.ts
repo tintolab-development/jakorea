@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   attachFilledDocumentsToTermsAgreements,
   mapAgreementSnapshotToFilledDocument,
@@ -114,6 +114,76 @@ describe('mapAgreementSnapshotToFilledDocument', () => {
     if (table?.kind === 'single_item' && table.variant === 'horizontal_table') {
       expect(table.idTypeWithInput?.inputValue).toBe('970721-1234567')
     }
+  })
+
+  it('행정정보 이용기관·이용목적·대상자 본인 입력값을 schemaJson에 그대로 실는다', () => {
+    const draft = normalizeWritingFormDraft(createAgreementNoticeDraft())
+    const filledIn: WritingFormDraft = {
+      ...draft,
+      paragraphs: draft.paragraphs.map(paragraph => {
+        if (
+          paragraph.id === 'agreement-notice-institution' &&
+          paragraph.kind === 'single_item' &&
+          paragraph.variant === 'agreement_explanation_text'
+        ) {
+          return { ...paragraph, bodyText: 'JA Korea' }
+        }
+        if (
+          paragraph.id === 'agreement-notice-purpose' &&
+          paragraph.kind === 'single_item' &&
+          paragraph.variant === 'agreement_explanation_text'
+        ) {
+          return { ...paragraph, bodyText: '범죄경력 유무 조회' }
+        }
+        if (
+          paragraph.id === 'agreement-notice-subject' &&
+          paragraph.kind === 'single_item' &&
+          paragraph.variant === 'short_essay'
+        ) {
+          return {
+            ...paragraph,
+            items: (paragraph.items ?? []).map(item => {
+              if (item.id === 'agreement-notice-subj-name') {
+                return { ...item, bodyText: '작성자이름' }
+              }
+              if (item.id === 'agreement-notice-subj-birth') {
+                return { ...item, bodyText: '1990.01.15' }
+              }
+              if (item.id === 'agreement-notice-subj-phone') {
+                return { ...item, bodyText: '010-9999-8888' }
+              }
+              return item
+            }),
+          }
+        }
+        return paragraph
+      }),
+    }
+
+    const filled = mapAgreementSnapshotToFilledDocument('ADMINISTRATIVE_INFO_CONSENT', {
+      draft: filledIn,
+    })
+    expect(filled.templateCode).toBe('agreement-notice')
+    const schema = filled.schemaJson as unknown as WritingFormDraft
+    const institution = schema.paragraphs.find(p => p.id === 'agreement-notice-institution')
+    const purpose = schema.paragraphs.find(p => p.id === 'agreement-notice-purpose')
+    const subject = schema.paragraphs.find(p => p.id === 'agreement-notice-subject')
+    expect(
+      institution?.kind === 'single_item' &&
+        institution.variant === 'agreement_explanation_text' &&
+        institution.bodyText
+    ).toBe('JA Korea')
+    expect(
+      purpose?.kind === 'single_item' &&
+        purpose.variant === 'agreement_explanation_text' &&
+        purpose.bodyText
+    ).toBe('범죄경력 유무 조회')
+    expect(subject?.kind === 'single_item' && subject.variant === 'short_essay').toBe(true)
+    if (subject?.kind !== 'single_item' || subject.variant !== 'short_essay') return
+    const byId = Object.fromEntries((subject.items ?? []).map(i => [i.id, i.bodyText]))
+    expect(byId['agreement-notice-subj-name']).toBe('작성자이름')
+    expect(byId['agreement-notice-subj-birth']).toBe('1990.01.15')
+    expect(byId['agreement-notice-subj-phone']).toBe('010-9999-8888')
   })
 })
 
@@ -270,5 +340,37 @@ describe('attachFilledDocumentsToTermsAgreements', () => {
       evidenceOriginalFileName: 'crime.png',
     })
     expect(rows?.[0]?.filledDocument).toBeUndefined()
+  })
+
+  it('성범죄 스냅샷에 evidenceFileObjectId가 있으면 재업로드하지 않는다', async () => {
+    const uploadCrimeEvidence = vi.fn(async () => 999)
+    const rows = await attachFilledDocumentsToTermsAgreements(
+      [
+        {
+          termsType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
+          version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+          agreed: true,
+        },
+      ],
+      {
+        mode: 'create',
+        snapshots: {
+          agreementByFieldKey: {},
+          crimeByFieldKey: {
+            consentSexOffenseCheck: {
+              displaySrc: 'data:image/png;base64,AA==',
+              replacementFileName: 'crime-uploaded.png',
+              evidenceFileObjectId: 55,
+            },
+          },
+        },
+        uploadCrimeEvidence,
+      }
+    )
+    expect(uploadCrimeEvidence).not.toHaveBeenCalled()
+    expect(rows?.[0]).toMatchObject({
+      evidenceFileObjectId: 55,
+      evidenceOriginalFileName: 'crime-uploaded.png',
+    })
   })
 })

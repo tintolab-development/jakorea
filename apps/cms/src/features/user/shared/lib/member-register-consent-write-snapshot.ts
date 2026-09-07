@@ -11,6 +11,11 @@ export type MemberConsentCrimeDraftSnapshot = {
   replacementFileName: string | null
   /** 제출 시 object storage 업로드용. 세션 메모리에만 유지 */
   file?: File
+  /**
+   * 동의서 작성 모달에서 업로드 완료된 fileObjectId.
+   * 등록·PATCH 시 재업로드 없이 `evidenceFileObjectId`로 실음.
+   */
+  evidenceFileObjectId?: number
 }
 
 export type MemberRegisterConsentWriteSnapshots = {

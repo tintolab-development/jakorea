@@ -56,7 +56,9 @@ type AgreementOverlay = {
   agreed: boolean
   agreedAt?: string
   formResponseId?: number
+  filledDocumentId?: number
   filledDocumentAvailable?: boolean
+  filledDocumentRevealEndpoint?: string
   consentType?: string
 }
 
@@ -90,7 +92,9 @@ function agreementToFieldValue(
       agreed,
       agreedAtDisplay: agreed ? agreedAtDisplay : undefined,
       formResponseId: agreement.formResponseId,
+      filledDocumentId: agreement.filledDocumentId,
       filledDocumentAvailable: agreement.filledDocumentAvailable,
+      filledDocumentRevealEndpoint: agreement.filledDocumentRevealEndpoint,
       consentType: agreement.consentType,
     }
   }
@@ -146,7 +150,9 @@ function buildConsentRecordLabelMap(
       agreed: record.consentValue === true,
       agreedAt: record.consentedAt,
       formResponseId: record.formResponseId,
+      filledDocumentId: record.filledDocumentId,
       filledDocumentAvailable: record.filledDocumentAvailable,
+      filledDocumentRevealEndpoint: record.filledDocumentRevealEndpoint,
       consentType: record.consentType,
     })
   }
@@ -175,7 +181,8 @@ function overlayAgreementByLabel(
 
 /** 상세 `termsAgreements` + `consent-records` → 약관·동의 UI 스키마.
  * 동의 여부·시각은 상세 `termsAgreements`를 SSOT로 쓰고,
- * 작성본 조회 메타(`filledDocumentAvailable`·`consentType`)는 consent-records에서 보강한다.
+ * 작성본 조회 메타(`filledDocumentAvailable`·`formResponseId`·`filledDocumentId`·`consentType`)는
+ * consent-records에서 보강한다.
  */
 export function applyMemberConsentToSchema(
   schema: ConsentRowSchema[],
@@ -205,7 +212,10 @@ export function applyMemberConsentToSchema(
       termsMap.set(label, {
         ...existing,
         formResponseId: rec.formResponseId ?? existing.formResponseId,
+        filledDocumentId: rec.filledDocumentId ?? existing.filledDocumentId,
         filledDocumentAvailable: rec.filledDocumentAvailable ?? existing.filledDocumentAvailable,
+        filledDocumentRevealEndpoint:
+          rec.filledDocumentRevealEndpoint ?? existing.filledDocumentRevealEndpoint,
         consentType: rec.consentType ?? existing.consentType,
       })
     }

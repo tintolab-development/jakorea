@@ -14,6 +14,7 @@ CMS Playwright E2E · `/e2e-error-log` · 회원 관리 연동에서 **관측·�
 
 | 우선순위 | 도메인 | 대표 증상 | 문서 |
 |----------|--------|-----------|------|
+| **P0** | **members (개인 상세 PATCH·unmask)** | 재학·소속·학년·자택주소 PATCH **200인데 미반영** · individual unmask `external1365Id` **null** | [**individual-member-basic-info-patch-unmask-1365-backend-request-2026-09-04.md**](./members/individual-member-basic-info-patch-unmask-1365-backend-request-2026-09-04.md) |
 | **P0** | **admin RBAC · 양식** | VIEWER 목록 GET **403** · PARTNER unmask/강사승인 **403** · form-template PUT **500** · GET **404** | [**admin-role-rbac-unmask-form-template-backend-request-2026-09-01.md**](./members/admin-role-rbac-unmask-form-template-backend-request-2026-09-01.md) |
 | **P0** | **members (목록 PII)** | `GET /api/admin/members/all` 연락처·이메일 **원문** | [**members-all-list-email-phone-masking-backend-request-2026-08-31.md**](./members/members-all-list-email-phone-masking-backend-request-2026-08-31.md) |
 | **P0** | **members (동의 current·파일)** | 상세 수정 `PAYMENT_STATEMENT_CONSENT` **404** · 성범죄 업로드 **401** | [**member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md**](./members/member-consent-terms-current-404-crime-upload-401-backend-request-2026-08-31.md) |

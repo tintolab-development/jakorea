@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { Space } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
 import type { User, AffiliatedTeacherLinkTarget, SchoolTeacherEmploymentStatus } from '@/types/user'
@@ -124,6 +124,8 @@ export function UserDetailFullpageBasicTabContent({
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const membersRemote = isMembersRemoteEnabled()
+  const memberInfoDraftRef = useRef(memberInfoDraft)
+  memberInfoDraftRef.current = memberInfoDraft
   const adminMemberProfileFieldsEditableWhenEditing =
     user.role !== 'ADMIN' || canEditAdminMemberInfo(currentUser, user)
   const canShowAdminCommentForTarget = shouldShowAdminCommentSectionForViewer(currentUser, user)
@@ -367,23 +369,24 @@ export function UserDetailFullpageBasicTabContent({
     (label: string, agreed: boolean) => {
       if (!onMemberInfoDraftChange) return
       const fieldKey = resolveMemberConsentTemplateByLabel(label)?.fieldKey
+      const draft = memberInfoDraftRef.current
       onMemberInfoDraftChange({
         termsAgreements: upsertEditableTermsAgreementInDraft(
-          memberInfoDraft?.termsAgreements,
+          draft?.termsAgreements,
           label,
           agreed
         ),
         ...(!agreed && fieldKey
           ? {
               consentWriteSnapshots: clearConsentWriteSnapshot(
-                memberInfoDraft?.consentWriteSnapshots,
+                draft?.consentWriteSnapshots,
                 fieldKey
               ),
             }
           : {}),
       })
     },
-    [memberInfoDraft?.consentWriteSnapshots, memberInfoDraft?.termsAgreements, onMemberInfoDraftChange]
+    [onMemberInfoDraftChange]
   )
 
   const handleConsentAgreementSnapshotSave = useCallback(
@@ -393,13 +396,13 @@ export function UserDetailFullpageBasicTabContent({
       if (!fieldKey) return
       onMemberInfoDraftChange({
         consentWriteSnapshots: upsertConsentAgreementWriteSnapshot(
-          memberInfoDraft?.consentWriteSnapshots,
+          memberInfoDraftRef.current?.consentWriteSnapshots,
           fieldKey,
           snapshot
         ),
       })
     },
-    [memberInfoDraft?.consentWriteSnapshots, onMemberInfoDraftChange]
+    [onMemberInfoDraftChange]
   )
 
   const handleConsentCrimeSnapshotSave = useCallback(
@@ -409,13 +412,13 @@ export function UserDetailFullpageBasicTabContent({
       if (!fieldKey) return
       onMemberInfoDraftChange({
         consentWriteSnapshots: upsertConsentCrimeWriteSnapshot(
-          memberInfoDraft?.consentWriteSnapshots,
+          memberInfoDraftRef.current?.consentWriteSnapshots,
           fieldKey,
           snapshot
         ),
       })
     },
-    [memberInfoDraft?.consentWriteSnapshots, onMemberInfoDraftChange]
+    [onMemberInfoDraftChange]
   )
 
   return (

@@ -2,37 +2,56 @@
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: var(--spacing-12);
-  margin-bottom: var(--spacing-8);
 }
 
 .titleRow {
   display: flex;
   width: 100%;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  flex-direction: row;
+  align-items: stretch;
   justify-content: space-between;
   gap: var(--spacing-12);
 }
 
-.title {
-  margin: 0;
-  flex: 1 1 280px;
+.titleDescriptionContainer {
+  display: flex;
+  flex: 1 1 0;
   min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.periodContainer {
+  display: flex;
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  align-self: stretch;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: var(--spacing-12);
 }
 
 .period {
   margin: 0;
-  flex-shrink: 0;
+  text-align: right;
   white-space: nowrap;
 }
 
-.description {
-  margin: 0;
-}
-
 @media (--bp-below-pc) {
+  .titleRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .periodContainer {
+    align-self: auto;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding-right: 0;
+  }
+
   .period {
+    text-align: left;
     white-space: normal;
   }
 }

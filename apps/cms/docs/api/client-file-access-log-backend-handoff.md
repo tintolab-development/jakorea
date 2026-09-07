@@ -100,7 +100,7 @@ flowchart LR
 ## 4. FE 적용 대상
 
 CMS는 `downloadBlob` / `downloadFile` 공통 경로에서 호출한다 (`shouldRecordFileAccessRemotely` = logs 모듈 + 관리자 JWT).  
-인증서는 기존처럼 `skipAccessLog` + `download-logs`만 사용한다. 라우트 404/405면 파일은 저장하고 메모리 stub만 남긴다.
+인증서는 기존처럼 `skipAccessLog` + `download-logs`만 사용한다. 실세션 POST 실패 시 파일은 저장하지 않는다.
 
 | 구분 | 예시 | 현재 FE |
 |------|------|---------|
@@ -140,6 +140,6 @@ CMS는 `downloadBlob` / `downloadFile` 공통 경로에서 호출한다 (`should
 
 ## 7. FE 후속
 
-CMS는 logs 실세션에서 `POST .../file-access/client`를 호출한다 (fail-closed, 404/405만 stub 폴백).
+CMS는 logs 실세션에서 `POST .../file-access/client`를 호출한다 (fail-closed).
 
 수동 QA: 작성/발급 양식 「문서 다운로드」 · 회원 목록 엑셀 → 파일 다운로드 이력 화면

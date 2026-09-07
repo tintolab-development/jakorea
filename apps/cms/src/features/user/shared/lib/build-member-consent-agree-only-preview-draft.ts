@@ -31,11 +31,28 @@ export type MemberConsentAgreeOnlyPreviewResult = {
   participantName?: string
 }
 
-/** 제출본이 있을 때만 filled-document API·열람 사유 경로를 탄다. */
+export type MemberConsentSubmittedDocumentMeta = {
+  filledDocumentAvailable?: boolean
+  formResponseId?: number
+  filledDocumentId?: number
+  filledDocumentRevealEndpoint?: string
+}
+
+/**
+ * 제출본이 있을 때만 filled-document API·열람 사유 경로를 탄다.
+ * BE가 `filledDocumentAvailable`만 누락하고 id/endpoint만 주는 경우도 제출본으로 본다.
+ * (미설정이면 동의-only 합성 미리보기 → 기본정보 PII 주입)
+ */
 export function shouldFetchSubmittedConsentDocument(
-  filledDocumentAvailable: boolean | undefined
+  meta: boolean | undefined | MemberConsentSubmittedDocumentMeta
 ): boolean {
-  return filledDocumentAvailable === true
+  if (meta == null || typeof meta === 'boolean') {
+    return meta === true
+  }
+  if (meta.filledDocumentAvailable === true) return true
+  if (meta.formResponseId != null && Number.isFinite(meta.formResponseId)) return true
+  if (meta.filledDocumentId != null && Number.isFinite(meta.filledDocumentId)) return true
+  return Boolean(meta.filledDocumentRevealEndpoint?.trim())
 }
 
 export function isMemberConsentCrimeTemplateId(templateId: string): boolean {

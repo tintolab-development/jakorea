@@ -7,7 +7,7 @@
 import ExcelJS from '@zurmokeeper/exceljs'
 import type { Settlement, Instructor } from '@/types/domain'
 import { formatSettlementItemTypeLabel } from '@/shared/constants/settlement-item-type'
-import { downloadExcel, generateFilename } from './file-download'
+import { downloadBlob, downloadExcel, generateFilename } from './file-download'
 import dayjs from 'dayjs'
 
 /**
@@ -300,12 +300,7 @@ async function generatePaymentStatementPDF(
   )
 
   // TODO: 실제 PDF 생성 시 downloadPDF 사용
-  // 현재는 HTML로 다운로드 (개발 중)
-  const link = document.createElement('a')
-  link.href = URL.createObjectURL(blob)
-  link.download = filename
-  link.click()
-  URL.revokeObjectURL(link.href)
+  await downloadBlob(blob, filename)
 }
 
 /**

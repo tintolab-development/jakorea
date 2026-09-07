@@ -5,6 +5,7 @@ import {
   createEducatorFacilitatorPledgeDraft,
   normalizeWritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
+import { createPaymentStatementPreConsentDraft } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { normalizeMemberConsentWriteDraft } from '@/features/user/shared/lib/normalize-member-consent-write-draft'
 
 describe('normalizeMemberConsentWriteDraft', () => {
@@ -115,5 +116,23 @@ describe('normalizeMemberConsentWriteDraft', () => {
         purpose.variant === 'agreement_explanation_text' &&
         purpose.bodyText
     ).toBe('범죄경력 유무 조회')
+  })
+
+  it('지급조서 — overlay 시드 표의 bottomConsent(동의)를 작성 진입 시 비운다', () => {
+    const draft = normalizeMemberConsentWriteDraft(
+      createPaymentStatementPreConsentDraft(),
+      'agreement-third-party'
+    )
+
+    const consentTables = draft.paragraphs.filter(
+      p =>
+        p.kind === 'single_item' &&
+        p.variant === 'horizontal_table' &&
+        p.showBottomConsent === true
+    )
+    expect(consentTables.length).toBeGreaterThan(0)
+    for (const paragraph of consentTables) {
+      expect((paragraph as { bottomConsent?: string }).bottomConsent).toBeUndefined()
+    }
   })
 })

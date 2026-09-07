@@ -98,11 +98,9 @@ export function MemberConsentAgreementModal({
 
     if (savedSnapshot?.draft) {
       const restored = cloneMemberConsentAgreementDraftSnapshot(savedSnapshot)
+      /** 이전 작성본 복원 — 응답 필드를 비우지 않는다 (normalizeMemberConsentWriteDraft 금지) */
       setDraft(
-        normalizeMemberConsentWriteDraft(
-          normalizeNoticeIdTypeResidentInputInDraft(normalizeWritingFormDraft(restored.draft)),
-          templateId
-        )
+        normalizeNoticeIdTypeResidentInputInDraft(normalizeWritingFormDraft(restored.draft))
       )
       setPaymentBasicInfo(mergePaymentStatementBasicInfo(restored.paymentBasicInfo))
       setIsDraftLoading(false)
