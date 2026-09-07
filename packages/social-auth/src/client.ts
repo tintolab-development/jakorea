@@ -168,7 +168,13 @@ export function createSocialAuthClient(options: CreateSocialAuthClientOptions): 
           }
           return result.authorizationUrl
         } catch (error: unknown) {
-          if (!signupSocialLinkToken && shouldFallbackToFrontendOAuthStart(error)) {
+          // remote Admin SSO는 BE authorizationUrl만 사용. FE IdP authorize 폴백은
+          // redirect_uri_mismatch / KOE006 / Naver 오류를 만든다.
+          if (
+            !clientShell.isRemoteEnabled(intent) &&
+            !signupSocialLinkToken &&
+            shouldFallbackToFrontendOAuthStart(error)
+          ) {
             if (typeof console !== 'undefined' && console.warn) {
               console.warn(
                 '[social-auth] Admin SSO start unavailable; using frontend Kakao/Naver/Google authorize URL.',
