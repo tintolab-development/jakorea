@@ -391,6 +391,7 @@ export function MypageEducationDetailPage() {
           {appliedSection === 'program' ? (
             <ProgramInfoBody
               program={program}
+              showPeriodSponsor
               showApplyCta={false}
               showCancelCta={showCancelCta}
               onCancel={() => setIsCancelConfirmOpen(true)}
