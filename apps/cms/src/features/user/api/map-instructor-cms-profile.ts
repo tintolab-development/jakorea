@@ -832,7 +832,7 @@ function toApiAffiliation(
   if (affiliation.schoolName?.trim()) result.schoolName = affiliation.schoolName.trim()
   if (affiliation.employmentStatus) result.employmentStatus = affiliation.employmentStatus
   const orgs = affiliation.organizationNames?.map(name => name.trim()).filter(Boolean) ?? []
-  if (orgs.length > 0) result.organizationNames = orgs
+  if (affiliation.organizationNames !== undefined) result.organizationNames = orgs
   const schoolUserId = affiliation.affiliatedSchoolUserId?.trim()
   if (schoolUserId) {
     const parsed = Number(schoolUserId)
@@ -903,9 +903,7 @@ export function toApiInstructorCmsProfile(
     ...(profile.oneLineIntro?.trim() ? { oneLineIntro: profile.oneLineIntro.trim() } : {}),
     homeAddress: {
       line: profile.homeAddress.line.trim(),
-      ...(profile.homeAddress.detail?.trim()
-        ? { detail: profile.homeAddress.detail.trim() }
-        : {}),
+      detail: profile.homeAddress.detail?.trim() ?? '',
     },
     education: profile.education as ApiInstructorCmsProfile['education'],
     career: profile.career as unknown as ApiInstructorCmsProfile['career'],

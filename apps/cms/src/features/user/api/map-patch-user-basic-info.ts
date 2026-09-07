@@ -9,6 +9,7 @@ import {
   toApiInstructorCmsProfile,
   toApiInstructorCmsSettlement,
 } from '@/features/user/api/map-instructor-cms-profile'
+import { toInstructorFeeGradeApiValue } from '@/features/user/api/map-instructor-activity-display'
 
 /**
  * 개인 회원 상세 GET·pre-register는 `address`/`addressDetail`, `schoolName`/`enrollmentStatus`가 SSOT.
@@ -28,6 +29,8 @@ export type AdminMemberBasicInfoUpdateRequestWithAddress = Omit<
   /** BE wire extension — 소속 해제 시 `null` (omit 금지). OpenAPI는 number만이라 Omit 후 재선언. */
   schoolOrganizationId?: number | null
   schoolSelection?: PortalSchoolSelectionRequest
+  /** pre-register와 동일 — `profile.defaultFeeGrade` 호환 */
+  feeGrade?: string
 }
 
 function trimOptional(value: string | undefined): string | undefined {
@@ -222,6 +225,10 @@ export function mapPatchUserBasicInfoToApiRequest(
   if (patch.instructorCmsProfile != null) {
     body.profile = toApiInstructorCmsProfile(patch.instructorCmsProfile)
   }
+  const feeGrade =
+    toInstructorFeeGradeApiValue(patch.instructorCmsProfile?.defaultFeeGrade) ??
+    toInstructorFeeGradeApiValue(patch.listMetrics?.instructorFeeGradeLabel)
+  if (feeGrade) body.feeGrade = feeGrade
   if (patch.instructorCmsSettlement != null) {
     body.settlement = toApiInstructorCmsSettlement(patch.instructorCmsSettlement)
   }

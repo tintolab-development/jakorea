@@ -3,7 +3,7 @@
  * 신규 등록(`InstructorProfileFormBody`)과 동일 구성 + 상세 전용 메타/강사비 등급
  */
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef, type MutableRefObject } from 'react'
 import { Form } from 'antd'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { User } from '@/types/user'
@@ -36,8 +36,10 @@ import {
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
+import { normalizeInstructorFeeGradeSelectValue } from '@/features/user/api/map-instructor-activity-display'
 import { formatDate } from '@/shared/utils'
 import '@/features/user/shared/ui/instructor-register-modal.css'
+import '@/features/user/detail/ui/user-basic-info-section.css'
 import './instructor-detail-edit-form.css'
 
 /**
@@ -65,6 +67,9 @@ export interface InstructorDetailEditFormProps {
   instructorResumeApplicantRow: ApplicantInstructorRow | null
   memberInfoDraft: AdminProvisionedMemberBasicInfoDraft
   onMemberInfoDraftChange: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+  instructorEditDraftFlushRef?: MutableRefObject<
+    (() => Partial<AdminProvisionedMemberBasicInfoDraft>) | null
+  >
   onOpenJaGradeEvaluation?: () => void
   isInstructorPermissionDetail?: boolean
 }
@@ -74,6 +79,7 @@ export function InstructorDetailEditForm({
   instructorResumeApplicantRow,
   memberInfoDraft,
   onMemberInfoDraftChange,
+  instructorEditDraftFlushRef,
   onOpenJaGradeEvaluation,
   isInstructorPermissionDetail = false,
 }: InstructorDetailEditFormProps) {
@@ -85,15 +91,47 @@ export function InstructorDetailEditForm({
     [user, instructorResumeApplicantRow]
   )
 
+  const editSessionKey = `${user.id}:${instructorResumeApplicantRow?.id ?? ''}`
+  const initializedSessionKeyRef = useRef<string | null>(null)
+
   useEffect(() => {
+    if (initializedSessionKeyRef.current === editSessionKey) return
+    initializedSessionKeyRef.current = editSessionKey
     form.setFieldsValue(initialValues)
     // 기본정보만 draft 동기화 — termsAgreements는 userToAdminProvisionedBasicDraft 초기값 유지
     onMemberInfoDraftChange(mapInstructorProfileFormToBasicInfoDraftPartial(initialValues))
-  }, [form, initialValues, onMemberInfoDraftChange])
+  }, [editSessionKey, form, initialValues, onMemberInfoDraftChange])
+
+  useEffect(() => {
+    const grade = memberInfoDraft.jaEvaluationGrade?.trim()
+    if (!grade || form.getFieldValue('jaEvaluationGrade') === grade) return
+    form.setFieldValue('jaEvaluationGrade', grade)
+    const values = form.getFieldsValue(true) as InstructorProfileFormValues
+    onMemberInfoDraftChange(mapInstructorProfileFormToBasicInfoDraftPartial(values))
+  }, [form, memberInfoDraft.jaEvaluationGrade, onMemberInfoDraftChange])
+
+  useEffect(() => {
+    const grade = memberInfoDraft.instructorFeeGrade ?? ''
+    if (form.getFieldValue('instructorFeeGrade') === grade) return
+    form.setFieldValue('instructorFeeGrade', grade)
+  }, [form, memberInfoDraft.instructorFeeGrade])
+
+  const collectDraftFromForm = () => {
+    const values = form.getFieldsValue(true) as InstructorProfileFormValues
+    return mapInstructorProfileFormToBasicInfoDraftPartial(values)
+  }
 
   const syncDraftFromForm = (values: InstructorProfileFormValues) => {
     onMemberInfoDraftChange(mapInstructorProfileFormToBasicInfoDraftPartial(values))
   }
+
+  useEffect(() => {
+    if (instructorEditDraftFlushRef == null) return
+    instructorEditDraftFlushRef.current = collectDraftFromForm
+    return () => {
+      instructorEditDraftFlushRef.current = null
+    }
+  }, [form, instructorEditDraftFlushRef])
 
   const syncConsentDraftFromForm = (values: InstructorProfileFormValues) => {
     const termsAgreements = mapInstructorFormConsentToEditableTermsAgreements(
@@ -141,9 +179,21 @@ export function InstructorDetailEditForm({
     syncConsentDraftFromForm(values)
   }
 
+  const jaGradeUser = useMemo(() => {
+    const draftGrade = memberInfoDraft.jaEvaluationGrade?.trim()
+    if (!draftGrade) return user
+    return {
+      ...user,
+      listMetrics: {
+        ...user.listMetrics,
+        jaEvaluationGrade: draftGrade,
+      },
+    }
+  }, [user, memberInfoDraft.jaEvaluationGrade])
+
   const jaEvaluationGradeDisplay = (
     <InstructorJaEvaluationGradeField
-      user={user}
+      user={jaGradeUser}
       wrapClassName="instructor-detail-edit-form__ja-grade"
       onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
     />
@@ -216,12 +266,25 @@ export function InstructorDetailEditForm({
         view="-"
         edit={
           <CmsSelect
-            value={memberInfoDraft.instructorFeeGrade || undefined}
-            onChange={v =>
-              onMemberInfoDraftChange({
-                instructorFeeGrade: v != null ? String(v) : '',
-              })
+            value={
+              normalizeInstructorFeeGradeSelectValue(memberInfoDraft.instructorFeeGrade) ||
+              undefined
             }
+            onChange={v => {
+              const next = v != null ? String(v) : ''
+              form.setFieldValue('instructorFeeGrade', next)
+              onMemberInfoDraftChange({
+                instructorFeeGrade: next,
+                ...(memberInfoDraft.instructorCmsProfile
+                  ? {
+                      instructorCmsProfile: {
+                        ...memberInfoDraft.instructorCmsProfile,
+                        defaultFeeGrade: next,
+                      },
+                    }
+                  : {}),
+              })
+            }}
             options={INSTRUCTOR_FEE_GRADE_OPTIONS}
             placeholder="선택"
             inputSize="medium"
@@ -239,10 +302,11 @@ export function InstructorDetailEditForm({
       initialValues={initialValues}
       requiredMark={false}
       className="instructor-detail-edit-form"
-      onValuesChange={(changed, all) => {
-        syncDraftFromForm(all)
+      onValuesChange={changed => {
+        const values = form.getFieldsValue(true) as InstructorProfileFormValues
+        syncDraftFromForm(values)
         if (Object.keys(changed).some(isInstructorConsentFormFieldKey)) {
-          syncConsentDraftFromForm(all)
+          syncConsentDraftFromForm(values)
         }
       }}
     >

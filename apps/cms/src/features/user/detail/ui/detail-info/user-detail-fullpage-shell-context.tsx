@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from 'react'
+import { createContext, useContext, type MutableRefObject, type ReactNode } from 'react'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import type { AffiliatedTeacherLinkTarget, SchoolTeacherEmploymentStatus, User } from '@/types/user'
@@ -75,6 +75,9 @@ export interface UserDetailFullpageShellValue {
   onCancelBasicInfoEdit: () => void
   onSaveBasicInfoEdit: () => void | Promise<void>
   onBasicInfoDraftChange: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+  instructorEditDraftFlushRef?: MutableRefObject<
+    (() => Partial<AdminProvisionedMemberBasicInfoDraft>) | null
+  >
   /** 마스터 관리자 + ADMIN 대상일 때만 정의 — 뷰 모드 권한 유형 즉시 저장 */
   onPatchAdminPermissionVariantFromDetailView?: (
     nextPermission: AdminPermissionTagVariant

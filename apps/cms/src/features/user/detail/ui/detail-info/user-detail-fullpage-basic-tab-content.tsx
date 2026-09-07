@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState, type MutableRefObject } from 'react'
 import { Space } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
 import type { User, AffiliatedTeacherLinkTarget, SchoolTeacherEmploymentStatus } from '@/types/user'
@@ -83,6 +83,9 @@ export interface UserDetailFullpageBasicTabContentProps {
   memberInfoEditScope?: 'profile' | 'instructor_fee_ja'
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+  instructorEditDraftFlushRef?: MutableRefObject<
+    (() => Partial<AdminProvisionedMemberBasicInfoDraft>) | null
+  >
   adminPermissionVariantPatching?: boolean
   onPatchAdminPermissionVariantFromDetailView?: (
     nextPermission: AdminPermissionTagVariant
@@ -111,6 +114,7 @@ export function UserDetailFullpageBasicTabContent({
   memberInfoEditScope = 'profile',
   memberInfoDraft,
   onMemberInfoDraftChange,
+  instructorEditDraftFlushRef,
   adminPermissionVariantPatching = false,
   onPatchAdminPermissionVariantFromDetailView,
   onEmploymentStatusChange,
@@ -158,10 +162,7 @@ export function UserDetailFullpageBasicTabContent({
     membersRemote && shouldLoadConsentRecords && !consentQuery.isFetched
   )
 
-  const {
-    data: commentsData,
-    isError: commentsError,
-  } = useMemberCommentsQuery(
+  const { data: commentsData } = useMemberCommentsQuery(
     adminCommentResource?.resourceId,
     loadMemberAdminComments,
     undefined,
@@ -291,11 +292,7 @@ export function UserDetailFullpageBasicTabContent({
       }
       try {
         if (schoolOrganizationId != null) {
-          await updateTeacherEmploymentStatusRemote(
-            schoolOrganizationId,
-            teacherMemberId,
-            status
-          )
+          await updateTeacherEmploymentStatusRemote(schoolOrganizationId, teacherMemberId, status)
           await queryClient.invalidateQueries({
             queryKey: memberQueryKeys.schoolTeachers(schoolOrganizationId),
           })
@@ -358,11 +355,11 @@ export function UserDetailFullpageBasicTabContent({
   /** 개인·관리자 상세 — 선택 동의 편집 / 필수 동의는 라디오 disabled */
   const memberConsentEditing = Boolean(
     memberInfoEditing &&
-      (user.role === 'INDIVIDUAL' || user.role === 'ADMIN') &&
-      shouldShowCmsMemberInfoEditButton(user) &&
-      (user.role !== 'ADMIN' || adminMemberProfileFieldsEditableWhenEditing) &&
-      memberInfoDraft != null &&
-      onMemberInfoDraftChange != null
+    (user.role === 'INDIVIDUAL' || user.role === 'ADMIN') &&
+    shouldShowCmsMemberInfoEditButton(user) &&
+    (user.role !== 'ADMIN' || adminMemberProfileFieldsEditableWhenEditing) &&
+    memberInfoDraft != null &&
+    onMemberInfoDraftChange != null
   )
 
   const handleEditableConsentChange = useCallback(
@@ -371,11 +368,7 @@ export function UserDetailFullpageBasicTabContent({
       const fieldKey = resolveMemberConsentTemplateByLabel(label)?.fieldKey
       const draft = memberInfoDraftRef.current
       onMemberInfoDraftChange({
-        termsAgreements: upsertEditableTermsAgreementInDraft(
-          draft?.termsAgreements,
-          label,
-          agreed
-        ),
+        termsAgreements: upsertEditableTermsAgreementInDraft(draft?.termsAgreements, label, agreed),
         ...(!agreed && fieldKey
           ? {
               consentWriteSnapshots: clearConsentWriteSnapshot(
@@ -424,14 +417,7 @@ export function UserDetailFullpageBasicTabContent({
   return (
     <Space direction="vertical" size={24} style={{ width: '100%' }}>
       {canShowAdminCommentForTarget ? (
-        <>
-          {membersRemote && commentsError ? (
-            <MemberDetailMockDataBanner message="관리자 코멘트 API 조회에 실패했습니다. 저장된 값 또는 빈 목록이 표시됩니다." />
-          ) : null}
-          <UserDetailAdminCommentSection
-            user={userForAdminComment}
-          />
-        </>
+        <UserDetailAdminCommentSection user={userForAdminComment} />
       ) : null}
       {instructorRegisterLikeEdit ? (
         <InstructorDetailEditForm
@@ -439,6 +425,7 @@ export function UserDetailFullpageBasicTabContent({
           instructorResumeApplicantRow={instructorResumeApplicantRow}
           memberInfoDraft={instructorRegisterLikeEdit.memberInfoDraft}
           onMemberInfoDraftChange={instructorRegisterLikeEdit.onMemberInfoDraftChange}
+          instructorEditDraftFlushRef={instructorEditDraftFlushRef}
           onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
           isInstructorPermissionDetail={isInstructorPermissionDetail}
         />
@@ -457,8 +444,12 @@ export function UserDetailFullpageBasicTabContent({
             memberInfoDraft={memberInfoDraft}
             onMemberInfoDraftChange={onMemberInfoDraftChange}
             adminPermissionVariantPatching={adminPermissionVariantPatching}
-            onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
-            adminMemberProfileFieldsEditableWhenEditing={adminMemberProfileFieldsEditableWhenEditing}
+            onPatchAdminPermissionVariantFromDetailView={
+              onPatchAdminPermissionVariantFromDetailView
+            }
+            adminMemberProfileFieldsEditableWhenEditing={
+              adminMemberProfileFieldsEditableWhenEditing
+            }
             onPermissionResendNotification={onPermissionResendNotification}
             onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
             scheduleChangeCount={scheduleChangeCount}
@@ -502,9 +493,7 @@ export function UserDetailFullpageBasicTabContent({
             personalInfoRevealed={personalInfoRevealed}
             onLinkedUserClick={onNavigateToLinkedUser}
             onWithdrawSelected={handleOpenAffiliatedTeacherWithdraw}
-            onEmploymentStatusChange={
-              membersRemote ? handleEmploymentStatusChange : undefined
-            }
+            onEmploymentStatusChange={membersRemote ? handleEmploymentStatusChange : undefined}
           />
         </>
       ) : null}

@@ -12,6 +12,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import {
   CONSENT_LABEL_TO_EDITABLE_TERMS_TYPE,
+  isAdminDetailLockedConsentLabel,
   isMemberBasicInfoImmutableConsentLabel,
   resolveEditableConsentAgreedFromDraft,
 } from '@/features/user/api/member-basic-info-terms-patch'
@@ -55,7 +56,7 @@ export interface UserConsentAgreementSectionProps {
   remoteConsentLoading?: boolean
   /**
    * 관리자 등록 회원 기본정보 수정.
-   * 선택 동의: 라디오 편집. 필수(서비스·개인정보·MFA): 라디오 노출 + disabled.
+   * 선택 동의: 라디오 편집(관리자 회원은 마케팅 제외). 필수(서비스·개인정보·MFA): disabled.
    */
   editing?: boolean
   draftTermsAgreements?: TermsAgreementRequest[]
@@ -275,6 +276,7 @@ export interface ConsentRenderCtx {
   ) => void
   onWriteConsentDocument?: (label: string) => void
   editing?: boolean
+  preset?: UserConsentAgreementPreset
   draftTermsAgreements?: TermsAgreementRequest[]
   onEditableConsentChange?: (label: string, agreed: boolean) => void
 }
@@ -423,8 +425,11 @@ function resolveConsentFieldEdit(
       ? field.value.agreed
       : false
 
-  // 필수 약관: 수정 불가 — 라디오 형식으로 노출하되 disabled (FE/BE 공통)
-  if (isMemberBasicInfoImmutableConsentLabel(field.label)) {
+  // 필수 약관·관리자 회원 마케팅: 수정 불가 — 라디오 노출 + disabled (FE/BE 공통)
+  if (
+    isMemberBasicInfoImmutableConsentLabel(field.label) ||
+    (ctx.preset === 'admin' && isAdminDetailLockedConsentLabel(field.label))
+  ) {
     return (
       <CmsRadioGroup
         options={CONSENT_RADIO_OPTIONS}
@@ -520,6 +525,7 @@ export function renderConsentRow(
 type ActiveConsentView = {
   entry: MemberConsentTemplateEntry
   consentType?: string
+  documentAgreed?: boolean
   filledDocumentAvailable?: boolean
   formResponseId?: number
   filledDocumentId?: number
@@ -565,6 +571,7 @@ export function UserConsentAgreementSection({
           entry,
           consentType:
             document.consentType?.trim() || CONSENT_LABEL_TO_EDITABLE_TERMS_TYPE[label.trim()],
+          documentAgreed: document.agreed,
           filledDocumentAvailable: document.filledDocumentAvailable,
           formResponseId: document.formResponseId,
           filledDocumentId: document.filledDocumentId,
@@ -601,6 +608,7 @@ export function UserConsentAgreementSection({
     openDocumentForLabel,
     onWriteConsentDocument: editing ? openWriteForLabel : undefined,
     editing,
+    preset,
     draftTermsAgreements,
     onEditableConsentChange,
   }
@@ -643,6 +651,7 @@ export function UserConsentAgreementSection({
           formResponseId={activeView.formResponseId}
           filledDocumentId={activeView.filledDocumentId}
           filledDocumentRevealEndpoint={activeView.filledDocumentRevealEndpoint}
+          documentAgreed={activeView.documentAgreed}
           memberUser={memberUser}
           onClose={() => setActiveView(null)}
         />
