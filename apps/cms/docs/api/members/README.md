@@ -65,6 +65,7 @@ pnpm --filter cms package:member-management-seed-handoff -- --openapi
 
 | 문서 | 용도 |
 |------|------|
+| [**school-detail-admin-comment-404-backend-request-2026-09-07.md**](./school-detail-admin-comment-404-backend-request-2026-09-07.md) | **백엔드 전달** — 학교 상세 관리자 코멘트 GET/POST **404** (`ADMIN_COMMENT_TARGET_NOT_FOUND`) · **관리자 본인 탈퇴 API 신규** (`POST /api/admin/me/withdrawals`) (P1) |
 | [**individual-member-basic-info-patch-unmask-1365-backend-request-2026-09-04.md**](./individual-member-basic-info-patch-unmask-1365-backend-request-2026-09-04.md) | **백엔드 전달** — 개인 회원 상세 PATCH 재학·소속·학년·자택주소 **미반영(200)** · individual unmask `external1365Id` **null** (P0) |
 | [**admin-role-rbac-unmask-form-template-backend-request-2026-09-01.md**](./admin-role-rbac-unmask-form-template-backend-request-2026-09-01.md) | **백엔드 전달** — VIEWER 목록 GET **403** · PARTNER unmask/강사승인 **403** · `form-template-versions` PUT 500·GET 404 · 등록 동의서 500 재확인 (P0) |
 | [**members-all-list-email-phone-masking-backend-request-2026-08-31.md**](./members-all-list-email-phone-masking-backend-request-2026-08-31.md) | **백엔드 전달** — `GET /api/admin/members/all` 연락처·이메일 **원문 노출** → 정책 마스킹 재적용 (P0) |
@@ -100,4 +101,4 @@ pnpm --filter cms package:members-be-handoff -- --openapi
 pnpm --filter cms package:members-be-handoff -- --out=~/Desktop/jakorea-members-be-handoff
 ```
 
-**Last updated:** 2026-09-04 (개인 회원 PATCH 주소·소속 미반영 · individual unmask 1365 null)
+**Last updated:** 2026-09-07 (학교 상세 관리자 코멘트 404)
