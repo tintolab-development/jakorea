@@ -116,6 +116,7 @@ import { resolvePreRegisterTermsAgreementVersions } from '@/features/user/api/re
 import { attachFilledDocumentsToTermsAgreements } from '@/features/user/api/attach-filled-documents'
 import type { MemberRegisterConsentWriteSnapshots } from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
+import { resolveAdminCommentResource } from '@/features/user/api/resolve-admin-comment-resource'
 import {
   hasAdminCommentPatch,
   isAdminCommentOnlyPatch,
@@ -493,13 +494,14 @@ async function patchAdminUserBasicInfoRemote(
     )
   }
 
-  const memberId = options?.memberId ?? existing.memberId
-  if (memberId != null && hasAdminCommentPatch(patch)) {
+  const commentResource = resolveAdminCommentResource(existing)
+  if (commentResource && hasAdminCommentPatch(patch)) {
     const comment = patch.adminComment?.trim()
     if (comment) {
-      await upsertMemberAdminCommentRemote(memberId, comment, {
+      await upsertMemberAdminCommentRemote(commentResource.resourceId, comment, {
         existingCommentId: options?.existingCommentId,
         screenCode: MEMBER_DETAIL_SCREEN_CODE,
+        target: commentResource.target,
       })
     }
   }
@@ -603,6 +605,7 @@ async function patchUserBasicInfoRemote(
           await upsertMemberAdminCommentRemote(organizationId, comment, {
             existingCommentId: options?.existingCommentId,
             screenCode: MEMBER_DETAIL_SCREEN_CODE,
+            target: 'schoolOrganization',
           })
         }
       }
@@ -629,6 +632,7 @@ async function patchUserBasicInfoRemote(
         await upsertMemberAdminCommentRemote(memberId, comment, {
           existingCommentId: options?.existingCommentId,
           screenCode: MEMBER_DETAIL_SCREEN_CODE,
+          target: 'member',
         })
       }
     }

@@ -239,6 +239,25 @@ export async function fetchMemberCommentsRemote(
   return Array.isArray(data) ? data : []
 }
 
+export async function fetchAdminAccountCommentsRemote(
+  adminAccountId: number,
+  params?: ListMemberCommentsParams
+): Promise<AdminCommentResponse[]> {
+  const data = await unwrapApiBody(await membersApi.listComments(adminAccountId, params))
+  return Array.isArray(data) ? data : []
+}
+
+export async function fetchAdminCommentsRemote(
+  resourceId: number,
+  target: 'member' | 'schoolOrganization' | 'adminAccount',
+  params?: ListMemberCommentsParams
+): Promise<AdminCommentResponse[]> {
+  if (target === 'adminAccount') {
+    return fetchAdminAccountCommentsRemote(resourceId, params)
+  }
+  return fetchMemberCommentsRemote(resourceId, params)
+}
+
 export async function createMemberCommentRemote(
   memberId: number,
   body: AdminMemberCommentCreateRequest
@@ -254,16 +273,38 @@ export async function updateMemberCommentRemote(
   return unwrapApiBody(await membersApi.updateMemberComment(memberId, commentId, body))
 }
 
+export async function createAdminAccountCommentRemote(
+  adminAccountId: number,
+  body: AdminMemberCommentCreateRequest
+): Promise<AdminCommentResponse> {
+  return unwrapApiBody(await membersApi.createComment(adminAccountId, body))
+}
+
+export async function updateAdminAccountCommentRemote(
+  adminAccountId: number,
+  commentId: number,
+  body: AdminCommentUpdateRequest
+): Promise<AdminCommentResponse> {
+  return unwrapApiBody(await membersApi.updateComment(adminAccountId, commentId, body))
+}
+
 /**
- * 회원/학교 organization 관리자 코멘트 upsert.
- * path param `{memberId}`는 OpenAPI상 "대상 리소스 식별자" — 학교는 `organizationId`를 전달한다.
+ * 회원/학교 organization/관리자 계정 관리자 코멘트 upsert.
+ * - `adminAccount`: `/api/admin/admin-accounts/{adminAccountId}/comments`
+ * - `schoolOrganization`: `/api/admin/users/{organizationId}/comments`
+ * - `member`: `/api/admin/users/{memberId}/comments`
  */
 export async function upsertMemberAdminCommentRemote(
   resourceId: number,
   comment: string,
-  options?: { existingCommentId?: number; screenCode?: string }
+  options?: {
+    existingCommentId?: number
+    screenCode?: string
+    target?: 'member' | 'schoolOrganization' | 'adminAccount'
+  }
 ): Promise<AdminCommentResponse> {
   const screenCode = options?.screenCode ?? MEMBER_DETAIL_SCREEN_CODE
+  const target = options?.target ?? 'member'
   const trimmed = comment.trim()
   if (!trimmed) {
     throw new Error('관리자 코멘트가 비어 있습니다.')
@@ -271,14 +312,21 @@ export async function upsertMemberAdminCommentRemote(
 
   let commentId = options?.existingCommentId
   if (commentId == null) {
-    const existingComments = await fetchMemberCommentsRemote(resourceId, { screenCode }).catch(
+    const existingComments = await fetchAdminCommentsRemote(resourceId, target, { screenCode }).catch(
       () => []
     )
     commentId = resolveLatestMemberAdminCommentDetail(existingComments, screenCode)?.commentId
   }
 
   if (commentId != null) {
+    if (target === 'adminAccount') {
+      return updateAdminAccountCommentRemote(resourceId, commentId, { comment: trimmed })
+    }
     return updateMemberCommentRemote(resourceId, commentId, { comment: trimmed })
+  }
+
+  if (target === 'adminAccount') {
+    return createAdminAccountCommentRemote(resourceId, { screenCode, comment: trimmed })
   }
   return createMemberCommentRemote(resourceId, { screenCode, comment: trimmed })
 }

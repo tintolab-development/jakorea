@@ -26,7 +26,10 @@ export async function fetchMemberDetailBasicTabResources(
   params: {
     detailTabActive: boolean
     membersRemote: boolean
-    displayUser: Pick<User, 'role' | 'memberId' | 'organizationId' | 'id'> | null | undefined
+    displayUser: Pick<
+      User,
+      'role' | 'memberId' | 'organizationId' | 'adminAccountId' | 'id'
+    > | null | undefined
     mode: 'default' | 'permission'
     showConsentAgreement: boolean
     showSchoolAffiliatedTeachers: boolean
