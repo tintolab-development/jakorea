@@ -60,7 +60,7 @@ export function VolunteerAssignmentPanel({
             {
               key: 'schedule',
               label: '담당 봉사 진행 일정',
-              align: 'left',
+
               render: row => <VolunteerScheduleLines lines={[row.scheduleLine]} />,
             },
           ]}
@@ -93,7 +93,7 @@ export function VolunteerAssignmentPanel({
             {
               key: 'schedule',
               label: '담당 봉사 진행 일정',
-              align: 'left',
+
               render: row => <VolunteerScheduleLines lines={[row.scheduleLine]} />,
             },
             {
@@ -148,7 +148,7 @@ export function VolunteerAssignmentPanel({
           {
             key: 'schedule',
             label: '담당 봉사 진행 일정',
-            align: 'left',
+
             render: row => <VolunteerScheduleLines lines={row.scheduleLines} />,
           },
         ]}
@@ -191,7 +191,6 @@ export function VolunteerAssignmentPanel({
           {
             key: 'schedule',
             label: '담당 봉사 진행 일정',
-            align: 'left',
             render: row => <VolunteerScheduleLines lines={[row.scheduleLine]} />,
           },
           {

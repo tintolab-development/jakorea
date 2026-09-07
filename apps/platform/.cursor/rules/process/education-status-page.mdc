@@ -61,7 +61,7 @@ alwaysApply: false
 
 - **`/mypage/education/:applicationId`** (`educationApplicationDetailPath`)
 - 신청 `id` 기준 (programId 아님)
-- 레이아웃: `default` (LNB 없음 — 참여하기 상세와 동일)
+- 레이아웃: `full` (ContentShell 없음 · LNB 없음 — 참여하기 상세와 동일)
 
 ## 상세 (`/mypage/education/:applicationId`)
 
