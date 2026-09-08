@@ -6,9 +6,6 @@
  * OpenAPI spec version: v9
  */
 
-export interface NotificationTemplateMutationResponse {
-  templateId?: number;
-  created?: boolean;
-  updated?: boolean;
-  providerTemplateCode?: string;
+export interface EmailAttachmentBindRequest {
+  fileObjectId: number;
 }

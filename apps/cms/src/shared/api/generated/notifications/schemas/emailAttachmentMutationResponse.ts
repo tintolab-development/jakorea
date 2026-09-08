@@ -5,10 +5,11 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { EmailAttachmentItem } from './emailAttachmentItem';
 
-export interface NotificationTemplateMutationResponse {
+export interface EmailAttachmentMutationResponse {
+  attachmentId?: number;
   templateId?: number;
-  created?: boolean;
-  updated?: boolean;
-  providerTemplateCode?: string;
+  attachment?: EmailAttachmentItem;
+  attachments?: EmailAttachmentItem[];
 }
