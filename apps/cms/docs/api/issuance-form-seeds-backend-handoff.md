@@ -127,7 +127,6 @@
 | `payment-statement-pre-consent-seed-p2-rrn-collection` | single_item | horizontal_table | 고유식별번호(주민등록번호) 수집·이용 |
 | `payment-statement-pre-consent-seed-p3-third-party` | single_item | horizontal_table | 개인정보 제3자 제공·이용 |
 | `payment-statement-pre-consent-seed-p4-rrn-third-party` | single_item | horizontal_table | 고유식별번호 제3자 제공·이용 |
-| `payment-statement-pre-consent-seed-ja-korea-activity` | single_item | vertical_table | JA Korea 활동 경험 |
 | `payment-statement-pre-consent-seed-mid-consent-line` | single_item | agreement_explanation_text |  |
 | `payment-statement-pre-consent-seed-mid-date` | description | system | 날짜 유형 |
 | `payment-statement-pre-consent-seed-mid-signature` | description | system | 서명란 유형 |
