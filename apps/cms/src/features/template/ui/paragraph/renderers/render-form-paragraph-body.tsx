@@ -46,6 +46,7 @@ import {
   UserInfo,
   type UserInfoPreviewValues,
 } from '@/features/template/ui/paragraph/single-item/user-info'
+import { UserInfoWriteField } from '@/features/template/ui/paragraph/single-item/user-info-write-field'
 import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/single-item/lecture-report-program-progress'
 import {
   UjatJournalEducationInfo,
@@ -182,6 +183,10 @@ export type RenderFormParagraphBodyOptions = {
   ujatJournalEducationInfoAutofill?: UjatJournalEducationInfoAutofill | null
   /** user_info 단락 미리보기 셀 값 — UJAT 문서 뷰어의 선택 봉사자 정보 등 */
   userInfoPreviewValues?: UserInfoPreviewValues
+  /** 설문 write flatten — 설문자 정보 필드 1장 */
+  userInfoWriteField?: { key: string; label: string }
+  /** true면 fieldAnswers를 단락에 저장(강의평가 user). preview는 로컬만 */
+  userInfoWritePersist?: boolean
   /** A4 문서 본문 스코프 클래스 — 템플릿별 preview CSS 오버라이드 */
   documentPreviewClassName?: string
   /**
@@ -699,6 +704,17 @@ export function renderFormParagraphBody(
         />
       )
     case 'user_info':
+      if (options?.userInfoWriteField != null && p.kind === 'single_item' && p.variant === 'user_info') {
+        return (
+          <UserInfoWriteField
+            paragraph={p}
+            fieldKey={options.userInfoWriteField.key}
+            label={options.userInfoWriteField.label}
+            persist={options.userInfoWritePersist === true}
+            onChange={next => updateParagraph(p.id, () => next)}
+          />
+        )
+      }
       return (
         <UserInfo
           paragraph={p}

@@ -1,8 +1,12 @@
 import { ClockCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import type { ReactNode } from 'react'
 import type { ParagraphCardEditableHeading } from '@/features/template/ui/template-management/template-fullpage-modal'
-import { getFormParagraphTitleNumberPrefix } from '@/features/template/lib/form-title-numbering'
 import {
+  getFormParagraphTitleNumberPrefix,
+  getSurveyWriteFormTitleNumberPrefix,
+} from '@/features/template/lib/form-title-numbering'
+import {
+  formatUserInfoWriteQuestionTitle,
   isAgreementLockedSystemParagraph,
   isEducatorFacilitatorPledgeClauseParagraphId,
   EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS,
@@ -83,6 +87,52 @@ export function withMultipleChoiceAllowMultipleTitleHint<
       <span className="paragraph-input__title-hint"> (중복 선택 가능)</span>
     ),
   }
+}
+
+export type UserInfoWriteHeadingField = { key: string; label: string }
+
+/** 설문 write — user_info는 필드 질문 문구, 그 외 단락은 write 순번만 교체 */
+export function withSurveyWriteTitleNumbering<
+  T extends {
+    titleValue?: string
+    titleLeading?: ReactNode
+    titleRequired?: boolean
+    showDescription?: boolean
+    isEditMode?: boolean
+    titleIsEditMode?: boolean
+    descriptionIsEditMode?: boolean
+    onTitleChange?: (next: string) => void
+  },
+>(
+  heading: T | undefined,
+  paragraphs: WritingFormParagraph[],
+  paragraph: WritingFormParagraph,
+  titleNumbering: FormTitleNumberingStyle,
+  enabled: boolean,
+  writeField?: UserInfoWriteHeadingField
+): T | undefined {
+  if (!heading || !enabled) return heading
+  const prefix = getSurveyWriteFormTitleNumberPrefix(
+    paragraphs,
+    writeField != null
+      ? { paragraphId: paragraph.id, fieldKey: writeField.key }
+      : { paragraphId: paragraph.id },
+    titleNumbering
+  )
+  if (writeField != null) {
+    return {
+      ...heading,
+      titleValue: formatUserInfoWriteQuestionTitle(writeField.label),
+      titleLeading: prefix,
+      titleRequired: true,
+      showDescription: false,
+      isEditMode: false,
+      titleIsEditMode: false,
+      descriptionIsEditMode: false,
+      onTitleChange: () => {},
+    }
+  }
+  return { ...heading, titleLeading: prefix }
 }
 
 const HIDDEN_PREVIEW_DESCRIPTION_TEXTS = new Set(['설명 입력', '설명을 입력해 주세요'])
