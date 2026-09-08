@@ -16,6 +16,8 @@ export interface ParagraphCardEditableHeading {
   /** 예: `paragraph-card__title--placeholder` */
   titleClassName?: string
   titleLeading?: ReactNode
+  /** 제목 본문 뒤·필수(*) 앞 (예: 객관식 「(중복 선택 가능)」) */
+  titleHint?: ReactNode
   /** 제목 입력 우측(예: 단락별 액션 버튼) — `paragraph-card__title-block` 맨 오른쪽 */
   titleTrailing?: ReactNode
   descriptionValue: string
@@ -91,6 +93,7 @@ export function ParagraphCard({
           onChange={h.onTitleChange}
           placeholder={h.titlePlaceholder ?? '타이틀을 입력해 주세요'}
           leading={h.titleLeading}
+          suffix={h.titleHint}
           className={h.titleClassName}
         />
       )

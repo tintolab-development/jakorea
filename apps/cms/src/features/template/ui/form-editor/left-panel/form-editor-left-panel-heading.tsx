@@ -1,4 +1,5 @@
 import { ClockCircleOutlined, PlusOutlined } from '@ant-design/icons'
+import type { ReactNode } from 'react'
 import type { ParagraphCardEditableHeading } from '@/features/template/ui/template-management/template-fullpage-modal'
 import { getFormParagraphTitleNumberPrefix } from '@/features/template/lib/form-title-numbering'
 import {
@@ -62,6 +63,26 @@ export function withoutTitleRequired<T extends { titleRequired?: boolean }>(
 ): T | undefined {
   if (!heading || !hideParagraphRequiredChrome) return heading
   return { ...heading, titleRequired: false }
+}
+
+/** 객관식 중복 선택 — 제목 뒤 민트 안내 (시안: 「(중복 선택 가능)」) */
+export function withMultipleChoiceAllowMultipleTitleHint<
+  T extends { titleHint?: ReactNode },
+>(heading: T | undefined, paragraph: WritingFormParagraph): T | undefined {
+  if (!heading) return heading
+  if (
+    paragraph.kind !== 'single_item' ||
+    paragraph.variant !== 'multiple_choice' ||
+    paragraph.allowMultiple !== true
+  ) {
+    return heading
+  }
+  return {
+    ...heading,
+    titleHint: (
+      <span className="paragraph-input__title-hint"> (중복 선택 가능)</span>
+    ),
+  }
 }
 
 const HIDDEN_PREVIEW_DESCRIPTION_TEXTS = new Set(['설명 입력', '설명을 입력해 주세요'])

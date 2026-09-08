@@ -259,6 +259,10 @@
   white-space: pre-wrap;
 }
 
+.form-document-preview-paragraph__title-text .paragraph-input__title-hint {
+  color: var(--color-mint-01, #01a1af);
+}
+
 .form-document-preview-paragraph__body-text {
   font-family: Pretendard, sans-serif;
   font-size: 15px;

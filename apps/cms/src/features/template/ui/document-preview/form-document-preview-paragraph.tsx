@@ -79,11 +79,17 @@ function normalizePreviewDescription(value: unknown): string {
 
 function readOnlyTitleBlock(
   displayTitle: string,
-  description?: string
+  description?: string,
+  titleHint?: ReactNode
 ): { title: ReactNode; description?: ReactNode } {
   const trimmedDescription = normalizePreviewDescription(description)
   return {
-    title: <span className="form-document-preview-paragraph__title-text">{displayTitle}</span>,
+    title: (
+      <span className="form-document-preview-paragraph__title-text">
+        {displayTitle}
+        {titleHint}
+      </span>
+    ),
     description:
       trimmedDescription.length > 0 ? (
         <FormParagraphSectionDescription
@@ -96,16 +102,35 @@ function readOnlyTitleBlock(
   }
 }
 
+function multipleChoiceAllowMultipleTitleHint(
+  paragraph: WritingFormParagraph
+): ReactNode {
+  if (
+    paragraph.kind !== 'single_item' ||
+    paragraph.variant !== 'multiple_choice' ||
+    paragraph.allowMultiple !== true
+  ) {
+    return null
+  }
+  return <span className="paragraph-input__title-hint"> (중복 선택 가능)</span>
+}
+
 function ContentOnlyParagraphHeader({
   displayTitle,
   description,
   requiredMark,
+  titleHint,
 }: {
   displayTitle: string
   description?: string
   requiredMark?: boolean
+  titleHint?: ReactNode
 }) {
-  const { title, description: descriptionNode } = readOnlyTitleBlock(displayTitle, description)
+  const { title, description: descriptionNode } = readOnlyTitleBlock(
+    displayTitle,
+    description,
+    titleHint
+  )
   return (
     <div className="form-document-preview-paragraph__content-header">
       <div className="form-document-preview-paragraph__title-row">
@@ -674,7 +699,11 @@ export function FormDocumentPreviewParagraph({
     renderMode,
     nextParagraph
   )
-  const { title, description } = readOnlyTitleBlock(displayTitle, viewModel.description)
+  const { title, description } = readOnlyTitleBlock(
+    displayTitle,
+    viewModel.description,
+    multipleChoiceAllowMultipleTitleHint(paragraph)
+  )
 
   if (
     renderMode === 'card' &&
@@ -792,6 +821,7 @@ export function FormDocumentPreviewParagraph({
             displayTitle={displayTitle}
             description={viewModel.description}
             requiredMark={resolveParagraphTitleRequiredMark(paragraph)}
+            titleHint={multipleChoiceAllowMultipleTitleHint(paragraph)}
           />
         ) : null}
         <div className="form-document-preview-paragraph__content-slot">{body}</div>
