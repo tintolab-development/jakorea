@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { isAllowedMailSenderDomain, validateMailSenderEmail } from './sender-email'
+import {
+  MAIL_SENDER_EMAIL_NOT_REGISTERED_MESSAGE,
+  MAIL_SENDER_EMAIL_REQUIRED_MESSAGE,
+  isAllowedMailSenderDomain,
+  validateMailSenderEmail,
+} from './sender-email'
 
 describe('validateMailSenderEmail', () => {
   it('requires a non-empty email', () => {
-    expect(validateMailSenderEmail('')).toBe('발신 메일을 입력하세요.')
-    expect(validateMailSenderEmail('  ')).toBe('발신 메일을 입력하세요.')
+    expect(validateMailSenderEmail('')).toBe(MAIL_SENDER_EMAIL_REQUIRED_MESSAGE)
+    expect(validateMailSenderEmail('  ')).toBe(MAIL_SENDER_EMAIL_REQUIRED_MESSAGE)
   })
 
   it('rejects invalid shape', () => {
@@ -12,9 +17,7 @@ describe('validateMailSenderEmail', () => {
   })
 
   it('rejects domains outside the NHN allowlist', () => {
-    expect(validateMailSenderEmail('user@gmail.com')).toBe(
-      'NHN에 등록된 발신 메일 도메인만 사용할 수 있습니다.'
-    )
+    expect(validateMailSenderEmail('user@gmail.com')).toBe(MAIL_SENDER_EMAIL_NOT_REGISTERED_MESSAGE)
   })
 
   it('accepts jakorea.org (and subdomains)', () => {

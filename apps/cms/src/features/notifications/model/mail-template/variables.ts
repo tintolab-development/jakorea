@@ -1,6 +1,8 @@
 export type MailVariableItem = {
   label: string
   hint?: string
+  requiresProgram?: boolean
+  enabled?: boolean
 }
 
 export type MailVariableGroup = {
@@ -9,8 +11,18 @@ export type MailVariableGroup = {
   items: MailVariableItem[]
 }
 
-function item(label: string, hint?: string): MailVariableItem {
-  return hint ? { label, hint } : { label }
+function item(
+  label: string,
+  hint?: string,
+  requiresProgram?: boolean,
+  enabled?: boolean
+): MailVariableItem {
+  return {
+    label,
+    ...(hint ? { hint } : {}),
+    ...(requiresProgram ? { requiresProgram: true } : {}),
+    ...(enabled === false ? { enabled: false } : enabled === true ? { enabled: true } : {}),
+  }
 }
 
 export const MAIL_TEMPLATE_VARIABLE_GROUPS: MailVariableGroup[] = [
@@ -176,3 +188,42 @@ export function filterMailVariableGroups(
     }))
     .filter(group => group.items.length > 0)
 }
+
+/** BE `GET …/template-variables` 카탈로그 → 메일 변수 패널 그룹 */
+export function groupMailTemplateVariablesFromCatalog(
+  variables: Array<{
+    key: string
+    description?: string
+    requiresProgram?: boolean
+    enabled?: boolean
+    categoryCode?: string
+    categoryLabel?: string
+  }>
+): MailVariableGroup[] {
+  const order: string[] = []
+  const map = new Map<string, MailVariableGroup>()
+  for (const variable of variables) {
+    const key = variable.key?.trim()
+    if (!key) continue
+    const id = (variable.categoryCode || 'misc').trim() || 'misc'
+    const label = (variable.categoryLabel || '기타').trim() || '기타'
+    let group = map.get(id)
+    if (!group) {
+      group = { id, label, items: [] }
+      map.set(id, group)
+      order.push(id)
+    }
+    group.items.push(
+      item(
+        key,
+        variable.requiresProgram
+          ? variable.description?.trim() || '프로그램 선택 필요'
+          : variable.description?.trim() || undefined,
+        variable.requiresProgram === true,
+        variable.enabled === true
+      )
+    )
+  }
+  return order.map(id => map.get(id)!).filter(group => group.items.length > 0)
+}
+

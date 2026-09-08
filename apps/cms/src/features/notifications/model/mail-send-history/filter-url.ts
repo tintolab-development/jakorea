@@ -64,23 +64,16 @@ function setDateRangeParams(
 export function readMailSendHistoryFiltersFromParams(
   searchParams: URLSearchParams
 ): MailSendHistoryPendingFilters {
-  const hasAnyDateParam =
+  const hasRequestDateParam =
     searchParams.has(MAIL_SEND_HISTORY_FILTER_URL.requestFrom) ||
-    searchParams.has(MAIL_SEND_HISTORY_FILTER_URL.requestTo) ||
-    searchParams.has(MAIL_SEND_HISTORY_FILTER_URL.sendFrom) ||
-    searchParams.has(MAIL_SEND_HISTORY_FILTER_URL.sendTo) ||
-    searchParams.has(MAIL_SEND_HISTORY_FILTER_URL.receiveFrom) ||
-    searchParams.has(MAIL_SEND_HISTORY_FILTER_URL.receiveTo) ||
-    searchParams.has(MAIL_SEND_HISTORY_FILTER_URL.reserveFrom) ||
-    searchParams.has(MAIL_SEND_HISTORY_FILTER_URL.reserveTo)
-
-  const useDefault = !hasAnyDateParam
+    searchParams.has(MAIL_SEND_HISTORY_FILTER_URL.requestTo)
 
   return {
+    // 기본 기간은 요청일만. 발송/수신/예약일은 사용자가 켠 경우에만 전송.
     requestDateRange: parseRange(
       searchParams.get(MAIL_SEND_HISTORY_FILTER_URL.requestFrom),
       searchParams.get(MAIL_SEND_HISTORY_FILTER_URL.requestTo),
-      useDefault
+      !hasRequestDateParam
     ),
     subject: searchParams.get(MAIL_SEND_HISTORY_FILTER_URL.subject) ?? '',
     senderInfo: searchParams.get(MAIL_SEND_HISTORY_FILTER_URL.senderInfo) ?? '',
@@ -94,17 +87,17 @@ export function readMailSendHistoryFiltersFromParams(
     sendDateRange: parseRange(
       searchParams.get(MAIL_SEND_HISTORY_FILTER_URL.sendFrom),
       searchParams.get(MAIL_SEND_HISTORY_FILTER_URL.sendTo),
-      useDefault
+      false
     ),
     receiveDateRange: parseRange(
       searchParams.get(MAIL_SEND_HISTORY_FILTER_URL.receiveFrom),
       searchParams.get(MAIL_SEND_HISTORY_FILTER_URL.receiveTo),
-      useDefault
+      false
     ),
     reserveDateRange: parseRange(
       searchParams.get(MAIL_SEND_HISTORY_FILTER_URL.reserveFrom),
       searchParams.get(MAIL_SEND_HISTORY_FILTER_URL.reserveTo),
-      useDefault
+      false
     ),
   }
 }

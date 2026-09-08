@@ -66,7 +66,9 @@ export function MailSendHistoryPage() {
     [rows, selectedRowId]
   )
   const detailQuery = useMailSendHistoryDetailQuery(selectedRowId, Boolean(selectedRowId))
-  const selectedRow = detailQuery.data ?? selectedListRow
+  const detailLoading = Boolean(selectedRowId) && detailQuery.isLoading && !detailQuery.data
+  // 목록 row(preview 없음)로 빈 상세를 먼저 그리지 않음 — detail 우선
+  const selectedRow = detailQuery.data ?? (detailLoading ? null : selectedListRow)
 
   useEffect(() => {
     setPendingFilters(appliedFilters)
@@ -101,36 +103,13 @@ export function MailSendHistoryPage() {
         render: (value: string) => formatDateTime(value),
       },
       {
-        title: '발송일시',
-        dataIndex: 'sentAt',
-        key: 'sentAt',
-        width: COL_W.sendAt,
-        align: 'center',
-        render: (value: string) => formatDateTime(value),
-      },
-      {
-        title: '수신일시',
-        dataIndex: 'receivedAt',
-        key: 'receivedAt',
-        width: COL_W.receiveAt,
-        align: 'center',
-        render: (value: string) => formatDateTime(value),
-      },
-      {
-        title: '예약일시',
-        dataIndex: 'reservedAt',
-        key: 'reservedAt',
-        width: COL_W.reservedAt,
-        align: 'center',
-        render: (value: string, row) => formatReservedAt(value, row.broadcastTiming),
-      },
-      {
         title: '메일 제목',
         dataIndex: 'subject',
         key: 'subject',
         width: COL_W.subject,
         align: 'center',
         ellipsis: { showTitle: true },
+        render: (value: string) => value?.trim() || '-',
       },
       {
         title: '발신자 정보',
@@ -169,6 +148,30 @@ export function MailSendHistoryPage() {
         width: COL_W.receiveStatus,
         align: 'center',
       },
+      {
+        title: '발송일시',
+        dataIndex: 'sentAt',
+        key: 'sentAt',
+        width: COL_W.sendAt,
+        align: 'center',
+        render: (value: string) => formatDateTime(value),
+      },
+      {
+        title: '수신일시',
+        dataIndex: 'receivedAt',
+        key: 'receivedAt',
+        width: COL_W.receiveAt,
+        align: 'center',
+        render: (value: string) => formatDateTime(value),
+      },
+      {
+        title: '예약일시',
+        dataIndex: 'reservedAt',
+        key: 'reservedAt',
+        width: COL_W.reservedAt,
+        align: 'center',
+        render: (value: string, row) => formatReservedAt(value, row.broadcastTiming),
+      },
     ],
     [rows.length]
   )
@@ -206,6 +209,7 @@ export function MailSendHistoryPage() {
       <DetailModal
         open={selectedRowId != null}
         row={selectedRow}
+        loading={detailLoading}
         onClose={() => setSelectedRowId(null)}
       />
     </>

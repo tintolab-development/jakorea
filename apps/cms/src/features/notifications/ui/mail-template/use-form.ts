@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { MailTemplateItem, MailTemplateFormMode } from '@/features/notifications/model/mail-template/types'
 import { validateMailSenderEmail } from '@/features/notifications/model/mail-template/sender-email'
+import {
+  sanitizeMailTemplateNameInput,
+  validateMailTemplateName,
+} from '@/features/notifications/model/mail-template/template-name'
 import { EMPTY_MAIL_COMPOSE, useMailCompose } from './use-compose'
 
 export type { MailTemplateFormMode } from '@/features/notifications/model/mail-template/types'
@@ -28,7 +32,7 @@ const EMPTY_DRAFT: MailTemplateFormDraft = {
 export function draftFromTemplate(template: MailTemplateItem | null): MailTemplateFormDraft {
   if (!template) return { ...EMPTY_DRAFT }
   return {
-    templateName: template.templateName,
+    templateName: sanitizeMailTemplateNameInput(template.templateName),
     senderName: template.senderName,
     senderEmail: template.senderEmail,
     subject: template.subject,
@@ -62,15 +66,19 @@ export function useMailTemplateForm(
     [initialDraft, mode, template?.attachments]
   )
 
-  const [templateName, setTemplateName] = useState(initialDraft.templateName)
+  const [templateName, setTemplateNameState] = useState(initialDraft.templateName)
   const [senderName, setSenderName] = useState(initialDraft.senderName)
   const [senderEmail, setSenderEmail] = useState(initialDraft.senderEmail)
   const compose = useMailCompose(open, resetKey, composeInitial)
 
+  const setTemplateName = useCallback((value: string) => {
+    setTemplateNameState(sanitizeMailTemplateNameInput(value))
+  }, [])
+
   useEffect(() => {
     if (!open) return
     const next = draftFromTemplate(mode === 'edit' ? template : null)
-    setTemplateName(next.templateName)
+    setTemplateNameState(next.templateName)
     setSenderName(next.senderName)
     setSenderEmail(next.senderEmail)
   }, [open, mode, template])
@@ -90,7 +98,8 @@ export function useMailTemplateForm(
 
   const validateRequired = useCallback((): string | null => {
     const draft = getDraft()
-    if (!draft.templateName) return '템플릿명을 입력하세요.'
+    const nameError = validateMailTemplateName(draft.templateName)
+    if (nameError) return nameError
     const senderError = validateMailSenderEmail(draft.senderEmail)
     if (senderError) return senderError
     if (!draft.subject) return '제목을 작성하세요.'

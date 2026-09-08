@@ -6,38 +6,51 @@ import { formatMailPreviewPerson } from '@/features/notifications/model/mail-tem
 import type {
   MailBroadcastTiming,
   MailReceiveStatus,
+  MailSendHistoryAttachment,
   MailSendHistoryRow,
   MailSendStatus,
 } from '@/features/notifications/model/mail-send-history/types'
 
+/** BE sendStatus → UI 라벨 (알림톡과 동일 SSOT) */
 const SEND_STATUS_MAP: Record<string, Exclude<MailSendStatus, '전체'>> = {
   REQUESTED: '발송 요청',
-  CANCELLED: '발송 취소',
-  CANCELED: '발송 취소',
-  SCHEDULED: '발송 예약',
-  QUEUED: '발송 대기',
-  PENDING: '발송 대기',
-  SENDING: '발송 중',
-  IN_PROGRESS: '발송 중',
+  SCHEDULED: '예약',
+  WAITED: '대기',
+  QUEUED: '대기',
+  PENDING: '대기',
+  IN_PROGRESS: '발송중',
+  SENDING: '발송중',
+  SENT: '발송 성공',
+  SUCCESS: '발송 성공',
+  DELIVERED: '발송 성공',
+  SEND_FAILED: '발송 실패',
   FAILED: '발송 실패',
   FAILURE: '발송 실패',
-  SUCCESS: '발송 성공',
-  SENT: '발송 성공',
-  DELIVERED: '발송 성공',
+  CANCELED: '취소',
+  CANCELLED: '취소',
+  UNKNOWN: '확인불가',
 }
 
+/** BE receiptStatus → UI 라벨 */
 const RECEIVE_STATUS_MAP: Record<string, Exclude<MailReceiveStatus, '전체'>> = {
   REQUESTED: '요청됨',
+  CONFIRM_WAITED: '확인 대기중',
   WAITING_CONFIRM: '확인 대기중',
+  WAITED: '대기중',
   PENDING: '대기중',
   SCHEDULED: '예약됨',
+  IN_PROGRESS: '대기중',
+  SENT: '수신 성공',
   SUCCESS: '수신 성공',
   DELIVERED: '수신 성공',
   OPENED: '수신 성공',
+  SEND_FAILED: '수신 실패',
+  DELIVERY_FAILED: '수신 실패',
   FAILED: '수신 실패',
   FAILURE: '수신 실패',
-  CANCELLED: '취소됨',
   CANCELED: '취소됨',
+  CANCELLED: '취소됨',
+  UNKNOWN: '확인불가',
 }
 
 function mapSendStatus(raw?: string | null): Exclude<MailSendStatus, '전체'> {
@@ -46,7 +59,8 @@ function mapSendStatus(raw?: string | null): Exclude<MailSendStatus, '전체'> {
   if ((Object.values(SEND_STATUS_MAP) as string[]).includes(raw ?? '')) {
     return raw as Exclude<MailSendStatus, '전체'>
   }
-  return '발송 요청'
+  // 미지 코드는 REQUESTED로 떨어뜨리지 않음 (알림톡과 동일)
+  return '확인불가'
 }
 
 function mapReceiveStatus(raw?: string | null): Exclude<MailReceiveStatus, '전체'> {
@@ -55,7 +69,7 @@ function mapReceiveStatus(raw?: string | null): Exclude<MailReceiveStatus, '전�
   if ((Object.values(RECEIVE_STATUS_MAP) as string[]).includes(raw ?? '')) {
     return raw as Exclude<MailReceiveStatus, '전체'>
   }
-  return '요청됨'
+  return '확인불가'
 }
 
 function mapBroadcastTiming(
@@ -82,24 +96,43 @@ function previewString(preview: Record<string, unknown> | null, keys: string[]):
   return ''
 }
 
-function previewAttachments(preview: Record<string, unknown> | null): string[] {
+function previewAttachmentItems(
+  preview: Record<string, unknown> | null
+): MailSendHistoryAttachment[] {
   if (!preview) return []
   const raw = preview.attachments
-  if (!Array.isArray(raw)) {
-    const names = preview.attachmentFileNames
-    if (Array.isArray(names)) {
-      return names.map(name => String(name).trim()).filter(Boolean)
-    }
-    return []
+  if (Array.isArray(raw)) {
+    return raw
+      .map(item => {
+        if (!item || typeof item !== 'object') return null
+        const record = item as Record<string, unknown>
+        const fileName =
+          typeof record.fileName === 'string' ? record.fileName.trim() : ''
+        if (!fileName) return null
+        const fileObjectId =
+          typeof record.fileObjectId === 'number' && Number.isFinite(record.fileObjectId)
+            ? record.fileObjectId
+            : undefined
+        const downloadHint =
+          typeof record.downloadHint === 'string' ? record.downloadHint.trim() : undefined
+        const byteSize =
+          typeof record.byteSize === 'number' && Number.isFinite(record.byteSize)
+            ? record.byteSize
+            : undefined
+        const mapped: MailSendHistoryAttachment = { fileName }
+        if (fileObjectId != null) mapped.fileObjectId = fileObjectId
+        if (downloadHint) mapped.downloadHint = downloadHint
+        if (byteSize != null) mapped.byteSize = byteSize
+        return mapped
+      })
+      .filter((row): row is MailSendHistoryAttachment => row != null)
   }
-  return raw
-    .map(item => {
-      if (!item || typeof item !== 'object') return ''
-      const record = item as Record<string, unknown>
-      const fileName = record.fileName
-      return typeof fileName === 'string' ? fileName.trim() : ''
-    })
+  const names = preview.attachmentFileNames
+  if (!Array.isArray(names)) return []
+  return names
+    .map(name => String(name).trim())
     .filter(Boolean)
+    .map(fileName => ({ fileName }))
 }
 
 export function mapMailDeliveryToSendHistoryRow(
@@ -111,7 +144,9 @@ export function mapMailDeliveryToSendHistoryRow(
   const previewRecord = asPreviewRecord(preview)
   const receiverName = item.recipientName?.trim() || ''
   const receiverEmail = item.recipientContactMasked?.trim() || ''
-  const senderDisplay = previewString(previewRecord, ['senderDisplay'])
+  const senderDisplay =
+    previewString(previewRecord, ['senderDisplay', 'senderProfileDisplayName']) ||
+    formatMailPreviewPerson(item.senderDisplayName, item.senderKey)
   const senderName =
     item.senderDisplayName?.trim() ||
     (senderDisplay.includes('<')
@@ -125,21 +160,32 @@ export function mapMailDeliveryToSendHistoryRow(
       : '') ||
     ''
   const templateName = item.templateDisplayName?.trim() || ''
-  const subject =
-    previewString(previewRecord, ['titleTemplate', 'subject', 'title', 'displayName']) ||
-    templateName ||
-    '(제목 없음)'
-  const bodyHtml =
-    previewString(previewRecord, ['contentTemplate', 'bodyHtml', 'content', 'body']) ||
-    item.providerResultMessage ||
-    item.failedReason ||
-    ''
+  // 제목: renderedTitle || titleTemplate || '-' (templateDisplayName 위장 금지)
+  const subjectFromPreview = previewString(previewRecord, [
+    'renderedTitle',
+    'titleTemplate',
+  ])
+  const subject = previewRecord ? subjectFromPreview || '-' : ''
+  // 본문: renderedContent || contentTemplate (failedReason을 본문에 넣지 않음)
+  const bodyHtml = previewString(previewRecord, [
+    'renderedContent',
+    'contentTemplate',
+    'bodyHtml',
+    'content',
+    'body',
+  ])
+
+  const sendStatus = mapSendStatus(item.sendStatus)
+  const failedReasonRaw = item.failedReason?.trim() || ''
+  const failedReason = sendStatus === '발송 실패' ? failedReasonRaw : ''
 
   const readStatus: MailSendHistoryRow['readStatus'] = item.openedAt
     ? '읽음'
     : item.deliveredAt || item.sentAt
       ? '안읽음'
       : '-'
+
+  const attachments = previewAttachmentItems(previewRecord)
 
   return {
     id: String(item.deliveryId),
@@ -148,19 +194,22 @@ export function mapMailDeliveryToSendHistoryRow(
     subject,
     senderName,
     senderEmail,
-    senderInfo: formatMailPreviewPerson(senderName, senderEmail) || senderDisplay || '-',
+    senderInfo: senderDisplay || formatMailPreviewPerson(senderName, senderEmail) || '-',
     receiverName,
     receiverEmail,
     receiverInfo: formatMailPreviewPerson(receiverName, receiverEmail),
     broadcastTiming: mapBroadcastTiming(item),
-    sendStatus: mapSendStatus(item.sendStatus || item.deliveryStatus),
-    receiveStatus: mapReceiveStatus(item.receiptStatus || item.deliveryStatus),
-    sentAt: item.sentAt ?? item.deliveredAt ?? '',
-    receivedAt: item.deliveredAt ?? item.openedAt ?? '',
+    sendStatus,
+    receiveStatus: mapReceiveStatus(item.receiptStatus),
+    // 발송/수신일시: sentAt / deliveredAt만 (requestedAt·openedAt 대체 금지)
+    sentAt: item.sentAt?.trim() || '',
+    receivedAt: item.deliveredAt?.trim() || '',
     readStatus,
     templateName,
     bodyHtml,
-    attachmentFileNames: previewAttachments(previewRecord),
+    failedReason: failedReason || undefined,
+    attachmentFileNames: attachments.map(item => item.fileName),
+    attachments,
   }
 }
 

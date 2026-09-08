@@ -6,7 +6,7 @@ import {
   mergeMailSendRecipients,
 } from './recipients'
 import { listMailSendProgramPickerRows } from './programs'
-import { MAIL_SEND_ALL_PROGRAM_ID, type MailSendProgram, type MailSendRecipient } from './types'
+import { type MailSendProgram, type MailSendRecipient } from './types'
 
 const programs: MailSendProgram[] = [
   { id: 'prog-a', name: 'JA Company Of The Year', year: 2026 },
@@ -31,18 +31,17 @@ const recipients: MailSendRecipient[] = [
 ]
 
 describe('listMailSendProgramPickerRows', () => {
-  it('prepends the all-program row', () => {
+  it('returns filtered programs without an all-program row', () => {
     const rows = listMailSendProgramPickerRows(programs, { year: '', keyword: '' })
-    expect(rows[0]?.id).toBe(MAIL_SEND_ALL_PROGRAM_ID)
-    expect(rows).toHaveLength(3)
+    expect(rows.map(row => row.id)).toEqual(['prog-a', 'prog-b'])
   })
 
-  it('keeps the all-program row when filtering by year', () => {
+  it('filters by year', () => {
     const rows = listMailSendProgramPickerRows(programs, { year: 2026, keyword: '' })
-    expect(rows.map(row => row.id)).toEqual([MAIL_SEND_ALL_PROGRAM_ID, 'prog-a'])
+    expect(rows.map(row => row.id)).toEqual(['prog-a'])
   })
 
-  it('hides the all-program row when the name search does not match', () => {
+  it('filters by name search', () => {
     const rows = listMailSendProgramPickerRows(programs, { year: '', keyword: 'Job' })
     expect(rows.map(row => row.id)).toEqual(['prog-b'])
   })
@@ -85,9 +84,11 @@ describe('createManualRecipient', () => {
     expect(createManualRecipient('  rkdtk@naver.com ')).toEqual({
       id: 'manual-rkdtk@naver.com',
       participationType: '',
+      typeLabel: '',
       name: '',
       email: 'rkdtk@naver.com',
       source: 'manual',
+      actorType: 'DIRECT',
     })
   })
 })

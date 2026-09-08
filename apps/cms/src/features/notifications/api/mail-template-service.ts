@@ -19,10 +19,16 @@ import {
   fetchNotificationTemplatesRemote,
   moveCategoryRemote,
   moveTemplateRemote,
+  syncNotificationTemplatesRemote,
+  syncSenderProfilesRemote,
   unbindEmailAttachmentRemote,
   updateCategoryRemote,
   updateNotificationTemplateRemote,
 } from '@/features/notifications/api/notifications-api-client'
+import {
+  mapSyncResultResponse,
+  type AlimtalkSyncOutcome,
+} from '@/features/notifications/api/adapters/alimtalk-sync-adapters'
 import {
   syncMailTemplateAttachments,
   uploadAndBindMailTemplateAttachments,
@@ -33,6 +39,7 @@ import {
 } from '@/features/notifications/model/mail-template/mock'
 import { pendingFiltersFromSearchParams } from '@/features/notifications/model/mail-template/filter-url'
 import { MAIL_ROOT_CATEGORY_ID, type MailTemplateItem } from '@/features/notifications/model/mail-template/types'
+import { validateMailTemplateName } from '@/features/notifications/model/mail-template/template-name'
 import { filterNotificationTree } from '@/features/notifications/lib/tree'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
@@ -51,6 +58,34 @@ function assertMailTemplatesRemoteReady(): void {
 
 export function shouldUseMailTemplatesRemoteApi(): boolean {
   return isRealApiModuleEnabled('notifications') && hasRemoteAdminJwt()
+}
+
+/** 카테고리·발신 프로필 NHN 연동 (수동). 알림톡 승인 카탈로그 pull과 문구·목적이 다름. */
+export async function syncMailCatalog(): Promise<{
+  templates: AlimtalkSyncOutcome
+  senderProfiles: AlimtalkSyncOutcome | null
+}> {
+  assertMailTemplatesRemoteReady()
+  const templates = mapSyncResultResponse(await syncNotificationTemplatesRemote())
+  let senderProfiles: AlimtalkSyncOutcome | null = null
+  try {
+    senderProfiles = mapSyncResultResponse(
+      await syncSenderProfilesRemote({ channelType: MAIL_API_CHANNEL_TYPE })
+    )
+  } catch {
+    // 템플릿/카테고리 sync가 본 목적. 프로필 sync 실패는 tree 갱신을 막지 않음.
+  }
+  return { templates, senderProfiles }
+}
+
+export function mailSyncSuccessMessage(outcome: AlimtalkSyncOutcome): string {
+  if (outcome.isLocalApprovalMark) {
+    return 'BE가 NHN 모드가 아닙니다(JA_NOTIFICATION_MODE). 카테고리·발신 프로필 연동이 되지 않을 수 있습니다. BE에 JA_NOTIFICATION_MODE=NHN_NOTIFICATION_HUB 설정을 요청해 주세요.'
+  }
+  if (outcome.isNhnLivePull && outcome.upsertedCount > 0) {
+    return `카테고리·발신 프로필 연동이 완료되었습니다. ${outcome.upsertedCount.toLocaleString()}건이 반영되었습니다.`
+  }
+  return '카테고리·발신 프로필 연동이 완료되었습니다.'
 }
 
 function mockCategoryTree(searchParams: URLSearchParams): MailCategoryTreeMapped {
@@ -220,13 +255,16 @@ function buildMailTemplateUpsertBody(input: {
   bodyHtml: string
   categoryId?: string | null
 }): NotificationTemplateUpsertRequest {
+  const nameError = validateMailTemplateName(input.templateName)
+  if (nameError) throw new Error(nameError)
   const categoryId = input.categoryId ? resolveNullableCategoryId(input.categoryId) : null
+  // templateCode 생략 — BE가 displayName으로 채움. emailAttachmentIds는 저장 후 bind API 사용.
   return {
     channelType: MAIL_API_CHANNEL_TYPE,
     displayName: input.templateName.trim(),
     senderProfileDisplayName: input.senderName.trim() || undefined,
     providerSenderEmailAddress: input.senderEmail.trim(),
-    titleTemplate: input.subject.trim(),
+    titleTemplate: input.subject.trim().slice(0, 1000),
     contentTemplate: input.bodyHtml,
     emailTemplateLanguage: MAIL_EMAIL_TEMPLATE_LANGUAGE,
     useYn: true,

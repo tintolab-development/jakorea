@@ -49,6 +49,8 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
   const [attachmentFileNames, setAttachmentFileNames] = useState(initial.attachmentFileNames)
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [removedAttachmentIds, setRemovedAttachmentIds] = useState<number[]>([])
+  const subjectRef = useRef(subject)
+  subjectRef.current = subject
   newFilesRef.current = newFiles
   removedAttachmentIdsRef.current = removedAttachmentIds
 
@@ -62,6 +64,7 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
     placeholder: '내용을 작성하세요',
     autofocus: false,
     extraExtensions: mailVariableExtensions,
+    shouldRerenderOnTransaction: false,
     onReady: readyApi => {
       apiRef.current = readyApi
     },
@@ -112,32 +115,29 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
     setSubject(value.slice(0, MAIL_COMPOSE_SUBJECT_MAX_LENGTH))
   }, [])
 
-  const insertVariable = useCallback(
-    (label: string) => {
-      if (lastTargetRef.current === 'subject') {
-        const range = subjectRangeRef.current
-        const { next, caret } = insertMailVariableInText(
-          subject,
-          label,
-          range.start,
-          range.end,
-          MAIL_COMPOSE_SUBJECT_MAX_LENGTH
-        )
-        setSubject(next)
-        subjectRangeRef.current = { start: caret, end: caret }
-        requestAnimationFrame(() => {
-          const input = subjectInputRef.current?.input
-          if (!input) return
-          input.focus()
-          input.setSelectionRange(caret, caret)
-        })
-        return
-      }
-      if (!editor) return
-      insertMailVariableInEditor(editor, label, bodyRangeRef.current ?? undefined)
-    },
-    [editor, subject]
-  )
+  const insertVariable = useCallback((label: string) => {
+    if (lastTargetRef.current === 'subject') {
+      const range = subjectRangeRef.current
+      const { next, caret } = insertMailVariableInText(
+        subjectRef.current,
+        label,
+        range.start,
+        range.end,
+        MAIL_COMPOSE_SUBJECT_MAX_LENGTH
+      )
+      setSubject(next)
+      subjectRangeRef.current = { start: caret, end: caret }
+      requestAnimationFrame(() => {
+        const input = subjectInputRef.current?.input
+        if (!input) return
+        input.focus()
+        input.setSelectionRange(caret, caret)
+      })
+      return
+    }
+    if (!editor) return
+    insertMailVariableInEditor(editor, label, bodyRangeRef.current ?? undefined)
+  }, [editor])
 
   const handleAttachmentAdd = useCallback(
     (files: File[]) => {

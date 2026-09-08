@@ -17,8 +17,6 @@ import {
   type MailComposeInitial,
 } from '@/features/notifications/ui/mail-template/use-compose'
 
-const VARIABLE_LOCKED_MESSAGE = '전체 프로그램 선택 시 변수값을 사용할 수 없습니다.'
-
 export function useMailSendForm(open: boolean) {
   const [programId, setProgramId] = useState(MAIL_SEND_DEFAULT_PROGRAM_ID)
   const [templateId, setTemplateId] = useState<string | undefined>()
@@ -119,7 +117,6 @@ export function useMailSendForm(open: boolean) {
     editor: compose.editor,
     editorMinHeight: compose.editorMinHeight,
     subjectMaxLength: compose.subjectMaxLength,
-    variableLockedMessage: VARIABLE_LOCKED_MESSAGE,
     subjectInputRef: compose.subjectInputRef,
     programId,
     templateId,

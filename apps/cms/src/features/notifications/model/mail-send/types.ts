@@ -16,9 +16,19 @@ export type MailSendProgram = {
 export type MailSendRecipient = {
   id: string
   participationType: MailSendParticipationType
+  /** BE typeLabel 우선 표시 */
+  typeLabel?: string
   name: string
   email: string
   source: MailSendRecipientSource
+  actorType?: string
+  actorId?: number
+}
+
+export type MailSendRecipientSearchParams = {
+  typeValue: MailSendParticipationType | ''
+  keyword: string
+  page: number
 }
 
 export type MailSendDraft = {

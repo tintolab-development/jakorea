@@ -21,6 +21,26 @@ export function mailSendParticipationTypeLabel(type: MailSendParticipationType):
   return MAIL_SEND_PARTICIPATION_TYPE_LABEL[type]
 }
 
+export const MAIL_SEND_PARTICIPATION_TYPE_API: Record<
+  Exclude<MailSendParticipationType, ''>,
+  string
+> = {
+  participant: 'PARTICIPANT',
+  volunteer: 'VOLUNTEER',
+  instructor: 'INSTRUCTOR',
+}
+
+export function mailSendRecipientTypeLabel(recipient: MailSendRecipient): string {
+  return recipient.typeLabel?.trim() || ''
+}
+
+export function toMailSendParticipantTypeApi(
+  type: MailSendParticipationType | ''
+): string | undefined {
+  if (!type) return undefined
+  return MAIL_SEND_PARTICIPATION_TYPE_API[type]
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function isMailSendEmail(value: string): boolean {
@@ -71,8 +91,10 @@ export function createManualRecipient(email: string): MailSendRecipient {
   return {
     id: manualRecipientId(normalized),
     participationType: '',
+    typeLabel: '',
     name: '',
     email: normalized,
     source: 'manual',
+    actorType: 'DIRECT',
   }
 }

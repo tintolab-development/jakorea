@@ -4,6 +4,31 @@
   gap: 28px;
 }
 
+.mail-send-history-detail-modal__loading {
+  padding: 48px 24px;
+  color: rgba(61, 61, 61, 0.7);
+  font-size: 14px;
+  text-align: center;
+}
+
+.mail-send-history-detail-modal__status-with-reason {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.mail-send-history-detail-modal__failed-reason {
+  color: #c0392b;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 140%;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .mail-send-history-detail-modal__mail {
   display: flex;
   flex-direction: column;
@@ -27,6 +52,12 @@
   overflow: visible;
   padding-left: 0;
   padding-right: 0;
+}
+
+.mail-send-history-detail-modal__body-empty {
+  margin: 0;
+  color: rgba(61, 61, 61, 0.55);
+  font-size: 14px;
 }
 
 .mail-send-history-detail-modal__attachments {

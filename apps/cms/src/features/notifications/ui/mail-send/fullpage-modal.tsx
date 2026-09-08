@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -18,11 +18,25 @@ import type {
 } from '@/features/notifications/model/mail-template/preview'
 import { VariablesPanel } from '@/features/notifications/ui/mail-template/variables-panel'
 import { MAIL_TEMPLATE_ITEM_MOCK } from '@/features/notifications/model/mail-template/mock'
-import { isMailSendVariableLocked } from '@/features/notifications/model/mail-send/flags'
+import {
+  groupMailTemplateVariablesFromCatalog,
+} from '@/features/notifications/model/mail-template/variables'
 import { MAIL_SEND_PROGRAM_MOCK } from '@/features/notifications/model/mail-send/mock'
-import { submitMailSend } from '@/features/notifications/api/mail-send-service'
+import { type MailSendRecipientSearchParams } from '@/features/notifications/model/mail-send/types'
+import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
+import { toMailSendParticipantTypeApi } from '@/features/notifications/model/mail-send/recipients'
+import {
+  shouldUseMailSendRemoteApi,
+  submitMailSend,
+  getMailRecipientCandidates,
+} from '@/features/notifications/api/mail-send-service'
 import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
 import { useInvalidateMailSendHistory } from '@/features/notifications/hooks/use-mail-send-history-query'
+import {
+  useMailRecipientCandidatesQuery,
+  useMailSenderProfilesQuery,
+  useMailTemplateVariablesQuery,
+} from '@/features/notifications/hooks/use-mail-send-queries'
 import { useMailSendTemplatePickerQuery } from '@/features/notifications/hooks/use-mail-template-tree-query'
 import { useMailSendForm } from './use-form'
 import { ProgramSelectField } from './program-select-field'
@@ -41,6 +55,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   const { showAlert } = useCmsAlert()
   const invalidateHistory = useInvalidateMailSendHistory()
   const form = useMailSendForm(open)
+  const remote = shouldUseMailSendRemoteApi()
   const templatesQuery = useMailSendTemplatePickerQuery(open)
   const templates = templatesQuery.data ?? MAIL_TEMPLATE_ITEM_MOCK
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -56,14 +71,62 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<string[]>([])
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false)
   const [sending, setSending] = useState(false)
-  const variableLocked = isMailSendVariableLocked(form.programId)
-  const hasTemplates = templates.length > 0
+  const [recipientSearch, setRecipientSearch] = useState<MailSendRecipientSearchParams>({
+    typeValue: '',
+    keyword: '',
+    page: 0,
+  })
 
+  const senderProfilesQuery = useMailSenderProfilesQuery(open && remote)
+  const programNumericId = useMemo(
+    () => parseNotificationSendProgramId(form.programId),
+    [form.programId]
+  )
+  const candidatesQuery = useMailRecipientCandidatesQuery(
+    {
+      programId: programNumericId,
+      keyword: recipientSearch.keyword || undefined,
+      participantType: toMailSendParticipantTypeApi(recipientSearch.typeValue),
+      page: recipientSearch.page,
+      size: 50,
+    },
+    open && recipientSelectOpen
+  )
+  const variablesQuery = useMailTemplateVariablesQuery(
+    {
+      programId: programNumericId,
+      participantType: toMailSendParticipantTypeApi(recipientSearch.typeValue),
+    },
+    open && remote
+  )
+  const variableGroups = useMemo(
+    () => groupMailTemplateVariablesFromCatalog(variablesQuery.data ?? []),
+    [variablesQuery.data]
+  )
+  const isCatalogItemDisabled = useCallback(
+    (label: string) => {
+      const catalog = variablesQuery.data ?? []
+      const found = catalog.find(item => item.key === label)
+      return found != null && found.enabled !== true
+    },
+    [variablesQuery.data]
+  )
+
+  const hasTemplates = templates.length > 0
+  const composeReadOnly = Boolean(form.templateId)
+  const resolvedSenderProfileId = useMemo(() => {
+    const email = form.senderEmail.trim().toLowerCase()
+    if (!email) return undefined
+    return senderProfilesQuery.data?.find(
+      profile => profile.senderKey.trim().toLowerCase() === email
+    )?.profileId
+  }, [form.senderEmail, senderProfilesQuery.data])
   const handleClose = () => {
     setPreviewOpen(false)
     setRecipientSelectOpen(false)
     setRecipientManualOpen(false)
     setSelectedRecipientIds([])
+    setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
     setSendConfirmOpen(false)
     onClose()
   }
@@ -73,6 +136,23 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
     if (!result.ok) {
       showAlert({ title: '안내', content: result.message })
     }
+  }
+
+  const handleOpenRecipientSelect = () => {
+    if (programNumericId == null) {
+      showAlert({ title: '안내', content: '프로그램을 먼저 선택하세요.' })
+      return
+    }
+    setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
+    setRecipientSelectOpen(true)
+  }
+
+  const handleOpenRecipientManual = () => {
+    if (programNumericId == null) {
+      showAlert({ title: '안내', content: '프로그램을 먼저 선택하세요.' })
+      return
+    }
+    setRecipientManualOpen(true)
   }
 
   const handleDeleteSelected = () => {
@@ -117,10 +197,15 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         draft,
         templateDisplayName,
         idempotencyKey: crypto.randomUUID(),
+        senderProfileId: resolvedSenderProfileId,
       })
       setSendConfirmOpen(false)
       await invalidateHistory()
-      showAlert({ title: '안내', content: '메일 발송이 완료 되었습니다.' })
+      showAlert({
+        title: '메일 발송 완료',
+        content: '메일 발송이 완료되었습니다.',
+        confirmLabel: '닫기',
+      })
       handleClose()
     } catch (error) {
       setSendConfirmOpen(false)
@@ -159,8 +244,8 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
           <div className="mail-send-fullpage-modal__body">
             <div className="mail-send-fullpage-modal__notice">
               <p className="mail-send-fullpage-modal__notice-text">
-                * 프로그램은 현재 운영 중인 프로그램만 선택 가능하며, 전체 선택 시 변수값 사용이
-                불가합니다.
+                * 프로그램은 현재 운영 중인 프로그램만 선택 가능합니다. 발송·수신자 조회에는
+                프로그램 선택이 필요합니다. 제목·본문·첨부는 선택한 템플릿 기준으로 발송됩니다.
               </p>
               <div className="mail-send-fullpage-modal__notice-actions">
                 <CmsButton variant="cancel" size="large" width={140} type="button" onClick={handleClose}>
@@ -303,7 +388,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                         variant="secondary"
                         size="large"
                         type="button"
-                        onClick={() => setRecipientManualOpen(true)}
+                        onClick={handleOpenRecipientManual}
                       >
                         수신자 직접 입력
                       </CmsButton>
@@ -311,7 +396,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                         variant="secondary"
                         size="large"
                         type="button"
-                        onClick={() => setRecipientSelectOpen(true)}
+                        onClick={handleOpenRecipientSelect}
                       >
                         수신자 설정
                       </CmsButton>
@@ -343,6 +428,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                       onRememberSubjectRange={form.rememberSubjectRange}
                       onAttachmentAdd={handleAttachmentAdd}
                       onAttachmentRemove={form.handleAttachmentRemove}
+                      readOnly={composeReadOnly}
                     />
                   </DetailInfoForm>
                 </section>
@@ -350,11 +436,23 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
 
               <VariablesPanel
                 onInsert={form.insertVariable}
-                disabled={variableLocked}
-                disabledReason={form.variableLockedMessage}
-                onDisabledInsert={() =>
-                  showAlert({ title: '안내', content: form.variableLockedMessage })
+                groups={variableGroups.length > 0 ? variableGroups : undefined}
+                disabled={composeReadOnly}
+                disabledReason={
+                  composeReadOnly
+                    ? '발송 시 변수는 템플릿에 포함된 값만 사용됩니다. 변수 추가는 템플릿 등록에서 하세요.'
+                    : undefined
                 }
+                onDisabledInsert={() =>
+                  showAlert({
+                    title: '안내',
+                    content: composeReadOnly
+                      ? '발송 시 변수는 템플릿에 포함된 값만 사용됩니다. 변수 추가는 템플릿 등록에서 하세요.'
+                      : '현재 프로그램·수신자 유형에서 사용할 수 없는 변수입니다.',
+                  })
+                }
+                isItemDisabled={isCatalogItemDisabled}
+                itemDisabledReason="현재 프로그램·수신자 유형에서 사용할 수 없는 변수입니다."
               />
             </div>
           </div>
@@ -376,7 +474,26 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       <RecipientSelectModal
         key={recipientSelectOpen ? 'recipient-select-open' : 'recipient-select-closed'}
         open={open && recipientSelectOpen}
+        candidates={candidatesQuery.data?.items}
         selectedIds={form.recipients.map(item => item.id)}
+        onSearch={remote ? params => setRecipientSearch(params) : undefined}
+        totalCount={candidatesQuery.data?.total}
+        totalPages={candidatesQuery.data?.totalPages}
+        fetchAllCandidates={
+          remote && programNumericId != null
+            ? async () => {
+                const total = Math.max(candidatesQuery.data?.total ?? 0, 1)
+                const result = await getMailRecipientCandidates({
+                  programId: programNumericId,
+                  keyword: recipientSearch.keyword || undefined,
+                  participantType: toMailSendParticipantTypeApi(recipientSearch.typeValue),
+                  page: 0,
+                  size: Math.min(Math.max(total, 50), 1000),
+                })
+                return result.items
+              }
+            : undefined
+        }
         onClose={() => setRecipientSelectOpen(false)}
         onConfirm={recipients => {
           form.addRecipients(recipients)
@@ -395,7 +512,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       />
       <ConfirmModal
         open={sendConfirmOpen}
-        title="발송 안내"
+        title="메일 발송"
         content="해당 내용으로 메일을 발송하시겠습니까?"
         confirmText="발송"
         cancelText="취소"

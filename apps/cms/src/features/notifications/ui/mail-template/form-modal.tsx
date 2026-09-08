@@ -1,5 +1,5 @@
 import { CloseOutlined } from '@ant-design/icons'
-import { useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import {
@@ -9,6 +9,10 @@ import {
   ConfirmModal,
   useCmsAlert,
 } from '@/shared/ui'
+import { shouldUseMailTemplatesRemoteApi } from '@/features/notifications/api/mail-template-service'
+import { useMailTemplateVariablesQuery } from '@/features/notifications/hooks/use-mail-send-queries'
+import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
+import { MAIL_TEMPLATE_NAME_PLACEHOLDER } from '@/features/notifications/model/mail-template/template-name'
 import type { MailTemplateItem } from '@/features/notifications/model/mail-template/types'
 import type { MailPreviewAttachment } from '@/features/notifications/model/mail-template/preview'
 import { ComposeFields } from './compose-fields'
@@ -20,6 +24,78 @@ import {
 } from './use-form'
 import { VariablesPanel } from './variables-panel'
 import './form-modal.css'
+
+type BasicSettingsFieldsProps = {
+  templateName: string
+  senderName: string
+  senderEmail: string
+  onTemplateNameChange: (value: string) => void
+  onSenderNameChange: (value: string) => void
+  onSenderEmailChange: (value: string) => void
+}
+
+const BasicSettingsFields = memo(function BasicSettingsFields({
+  templateName,
+  senderName,
+  senderEmail,
+  onTemplateNameChange,
+  onSenderNameChange,
+  onSenderEmailChange,
+}: BasicSettingsFieldsProps) {
+  return (
+    <DetailInfoForm title="기본 설정" hideHeader mode="edit">
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="템플릿명"
+          required
+          fullRow
+          view={templateName}
+          edit={
+            <CmsInput
+              inputSize="large"
+              width="100%"
+              allowClear={false}
+              placeholder={MAIL_TEMPLATE_NAME_PLACEHOLDER}
+              value={templateName}
+              onChange={event => onTemplateNameChange(event.target.value)}
+            />
+          }
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="발신자명"
+          view={senderName}
+          edit={
+            <CmsInput
+              inputSize="large"
+              width="100%"
+              allowClear={false}
+              placeholder="발신자명을 입력하세요"
+              value={senderName}
+              onChange={event => onSenderNameChange(event.target.value)}
+            />
+          }
+        />
+        <DetailInfoForm.Field
+          label="발신 메일"
+          required
+          view={senderEmail}
+          edit={
+            <CmsInput
+              inputSize="large"
+              width="100%"
+              allowClear={false}
+              placeholder="발신 메일을 입력하세요"
+              value={senderEmail}
+              onChange={event => onSenderEmailChange(event.target.value)}
+            />
+          }
+        />
+      </DetailInfoForm.Row>
+    </DetailInfoForm>
+  )
+})
 
 type PreviewDraft = MailTemplateFormDraft & {
   attachments: MailPreviewAttachment[]
@@ -50,9 +126,14 @@ export function FormModal({
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [previewDraft, setPreviewDraft] = useState<PreviewDraft | null>(null)
   const form = useMailTemplateForm(open, mode, template)
+  const remote = shouldUseMailTemplatesRemoteApi()
+  const variablesQuery = useMailTemplateVariablesQuery({}, open && remote)
+  const variableGroups = useMemo(
+    () => groupMailTemplateVariablesFromCatalog(variablesQuery.data ?? []),
+    [variablesQuery.data]
+  )
   const isEdit = mode === 'edit'
-  const templateNamePlaceholder = '템플릿명을 입력하세요'
-  const headerTitle = form.templateName.trim() || templateNamePlaceholder
+  const headerTitle = form.templateName.trim() || MAIL_TEMPLATE_NAME_PLACEHOLDER
   const [titleEditing, setTitleEditing] = useState(false)
 
   useEffect(() => {
@@ -79,12 +160,15 @@ export function FormModal({
     onSubmit(form.getDraft())
   }
 
-  const handleAttachmentAdd = (files: File[]) => {
-    const result = form.handleAttachmentAdd(files)
-    if (!result.ok) {
-      showAlert({ title: '안내', content: result.message })
-    }
-  }
+  const handleAttachmentAdd = useCallback(
+    (files: File[]) => {
+      const result = form.handleAttachmentAdd(files)
+      if (!result.ok) {
+        showAlert({ title: '안내', content: result.message })
+      }
+    },
+    [form.handleAttachmentAdd, showAlert]
+  )
 
   return (
     <>
@@ -102,11 +186,11 @@ export function FormModal({
               <CmsInputIconClick
                 value={form.templateName}
                 editing={titleEditing}
-                placeholder={templateNamePlaceholder}
+                placeholder={MAIL_TEMPLATE_NAME_PLACEHOLDER}
                 onChange={form.setTemplateName}
                 onRequestEdit={() => setTitleEditing(true)}
                 onCommitEdit={() => setTitleEditing(false)}
-                inputAriaLabel={templateNamePlaceholder}
+                inputAriaLabel={MAIL_TEMPLATE_NAME_PLACEHOLDER}
                 editButtonAriaLabel="템플릿명 수정"
                 containerClassName="mail-template-form-modal__title-edit-row"
                 inputClassName="mail-template-form-modal__title-input mail-template-form-modal__title-input--editing"
@@ -202,57 +286,14 @@ export function FormModal({
                       발신자명 미기재 시, 이메일을 받는 사람에게 이메일 주소 형식만 표시됩니다.
                     </p>
                   </div>
-                  <DetailInfoForm title="기본 설정" hideHeader mode="edit">
-                    <DetailInfoForm.Row type="single">
-                      <DetailInfoForm.Field
-                        label="템플릿명"
-                        required
-                        fullRow
-                        view={form.templateName}
-                        edit={
-                          <CmsInput
-                            inputSize="large"
-                            width="100%"
-                            allowClear={false}
-                            placeholder="템플릿명을 입력하세요"
-                            value={form.templateName}
-                            onChange={event => form.setTemplateName(event.target.value)}
-                          />
-                        }
-                      />
-                    </DetailInfoForm.Row>
-                    <DetailInfoForm.Row type="double">
-                      <DetailInfoForm.Field
-                        label="발신자명"
-                        view={form.senderName}
-                        edit={
-                          <CmsInput
-                            inputSize="large"
-                            width="100%"
-                            allowClear={false}
-                            placeholder="발신자명을 입력하세요"
-                            value={form.senderName}
-                            onChange={event => form.setSenderName(event.target.value)}
-                          />
-                        }
-                      />
-                      <DetailInfoForm.Field
-                        label="발신 메일"
-                        required
-                        view={form.senderEmail}
-                        edit={
-                          <CmsInput
-                            inputSize="large"
-                            width="100%"
-                            allowClear={false}
-                            placeholder="발신 메일을 입력하세요"
-                            value={form.senderEmail}
-                            onChange={event => form.setSenderEmail(event.target.value)}
-                          />
-                        }
-                      />
-                    </DetailInfoForm.Row>
-                  </DetailInfoForm>
+                  <BasicSettingsFields
+                    templateName={form.templateName}
+                    senderName={form.senderName}
+                    senderEmail={form.senderEmail}
+                    onTemplateNameChange={form.setTemplateName}
+                    onSenderNameChange={form.setSenderName}
+                    onSenderEmailChange={form.setSenderEmail}
+                  />
                 </section>
 
                 <section className="mail-template-form-modal__widget">
@@ -278,7 +319,10 @@ export function FormModal({
                   </DetailInfoForm>
                 </section>
               </div>
-              <VariablesPanel onInsert={form.insertVariable} />
+              <VariablesPanel
+                onInsert={form.insertVariable}
+                groups={variableGroups.length > 0 ? variableGroups : undefined}
+              />
             </div>
           </div>
         </div>

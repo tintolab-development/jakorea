@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { submitMailSend } from './mail-send-service'
+import { buildMailSendRecipients, submitMailSend } from './mail-send-service'
 import {
   getMailSendHistoryMockRows,
   resetMailSendHistoryMockRows,
@@ -45,5 +45,43 @@ describe('submitMailSend', () => {
     expect(result.mode).toBe('mock')
     expect(getMailSendHistoryMockRows().length).toBe(before + 1)
     expect(getMailSendHistoryMockRows()[0]?.subject).toBe('테스트 메일')
+  })
+})
+
+describe('buildMailSendRecipients', () => {
+  it('maps DIRECT contact without actorId and MEMBER with actorId', () => {
+    expect(
+      buildMailSendRecipients([
+        {
+          id: 'manual-a@jakorea.org',
+          participationType: '',
+          name: '직접',
+          email: 'direct@example.com',
+          source: 'manual',
+          actorType: 'DIRECT',
+        },
+        {
+          id: 'actor-MEMBER-12',
+          participationType: 'participant',
+          name: '회원',
+          email: 'member@example.com',
+          source: 'program',
+          actorType: 'MEMBER',
+          actorId: 12,
+        },
+      ])
+    ).toEqual([
+      {
+        actorType: 'DIRECT',
+        recipientContact: 'direct@example.com',
+        recipientName: '직접',
+      },
+      {
+        actorType: 'MEMBER',
+        actorId: 12,
+        recipientName: '회원',
+        recipientContact: 'member@example.com',
+      },
+    ])
   })
 })

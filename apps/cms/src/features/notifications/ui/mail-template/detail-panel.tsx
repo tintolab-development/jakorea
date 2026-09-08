@@ -8,9 +8,17 @@ type DetailPanelProps = {
   template: MailTemplateItem | null
   categoryName: string
   onPreview: () => void
+  loading?: boolean
 }
 
-export function DetailPanel({ template, categoryName, onPreview }: DetailPanelProps) {
+export function DetailPanel({ template, categoryName, onPreview, loading }: DetailPanelProps) {
+  if (loading) {
+    return (
+      <div className="mail-template-detail mail-template-detail--empty" aria-busy="true">
+        불러오는 중…
+      </div>
+    )
+  }
   if (!template) {
     return <div className="mail-template-detail mail-template-detail--empty" />
   }
@@ -44,7 +52,7 @@ export function DetailPanel({ template, categoryName, onPreview }: DetailPanelPr
           <DetailInfoForm.Field label="템플릿명" view={template.templateName} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="발신 메일" view={senderView} />
+          <DetailInfoForm.Field label="보낸사람" view={senderView} />
           <DetailInfoForm.Field label="첨부 파일" view={attachmentView} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">

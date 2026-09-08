@@ -4,7 +4,8 @@ import { MAIL_SEND_ALL_PROGRAM_ID, MAIL_SEND_PURPOSE, type MailSendDraft } from 
 
 function draft(overrides: Partial<MailSendDraft> = {}): MailSendDraft {
   return {
-    programId: 'prog-coy-2026',
+    programId: '101',
+    templateId: 'mail-tpl-workshop',
     purpose: MAIL_SEND_PURPOSE,
     useTemplate: false,
     senderName: '홍길동',
@@ -49,11 +50,15 @@ describe('buildMailSendPayload', () => {
 })
 
 describe('validateMailSendDraft', () => {
-  it('requires program, sender email, recipients, subject, and body', () => {
+  it('requires program, template, sender email, recipients, subject, and body', () => {
     expect(validateMailSendDraft(draft({ programId: '' }))).toBe('대상 프로그램을 선택하세요.')
-    expect(validateMailSendDraft(draft({ senderEmail: '  ' }))).toBe('발신 메일을 입력하세요.')
+    expect(validateMailSendDraft(draft({ templateId: '' }))).toBe('템플릿을 선택하세요.')
+    expect(validateMailSendDraft(draft({ templateId: undefined }))).toBe('템플릿을 선택하세요.')
+    expect(validateMailSendDraft(draft({ senderEmail: '  ' }))).toBe(
+      '발신 메일을 선택/입력해 주세요.'
+    )
     expect(validateMailSendDraft(draft({ senderEmail: 'user@gmail.com' }))).toBe(
-      'NHN에 등록된 발신 메일 도메인만 사용할 수 있습니다.'
+      'NHN에 등록된 발신 메일만 사용할 수 있습니다. 발신 프로필을 확인해 주세요.'
     )
     expect(validateMailSendDraft(draft({ recipients: [] }))).toBe('수신자를 설정하세요.')
     expect(validateMailSendDraft(draft({ subject: '' }))).toBe('제목을 작성하세요.')
@@ -66,7 +71,7 @@ describe('validateMailSendDraft', () => {
     )
   })
 
-  it('blocks variables when all programs are selected', () => {
+  it('blocks send when all programs are selected', () => {
     expect(
       validateMailSendDraft(
         draft({
@@ -74,7 +79,32 @@ describe('validateMailSendDraft', () => {
           subject: '[JA Korea] #{프로그램명}',
         })
       )
-    ).toBe('전체 프로그램 선택 시 변수값을 사용할 수 없습니다.')
+    ).toBe('대상 프로그램을 선택하세요.')
+  })
+
+  it('blocks send when program id is not numeric', () => {
+    expect(validateMailSendDraft(draft({ programId: 'prog-coy-2026' }))).toBe(
+      '대상 프로그램을 선택하세요.'
+    )
+  })
+
+  it('requires DIRECT recipient contact', () => {
+    expect(
+      validateMailSendDraft(
+        draft({
+          recipients: [
+            {
+              id: 'manual-empty',
+              participationType: '',
+              name: '',
+              email: '   ',
+              source: 'manual',
+              actorType: 'DIRECT',
+            },
+          ],
+        })
+      )
+    ).toBe('직접 입력 수신자의 연락처를 입력하세요.')
   })
 
   it('accepts a complete immediate send', () => {

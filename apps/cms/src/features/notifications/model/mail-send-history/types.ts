@@ -1,14 +1,16 @@
 import type { Dayjs } from 'dayjs'
 
+/** 알림톡 sendStatus와 동일 SSOT 라벨 */
 export const MAIL_SEND_STATUS_OPTIONS = [
   '전체',
   '발송 요청',
-  '발송 취소',
-  '발송 예약',
-  '발송 대기',
-  '발송 중',
-  '발송 실패',
+  '예약',
+  '대기',
+  '발송중',
   '발송 성공',
+  '발송 실패',
+  '취소',
+  '확인불가',
 ] as const
 
 export const MAIL_RECEIVE_STATUS_OPTIONS = [
@@ -20,6 +22,7 @@ export const MAIL_RECEIVE_STATUS_OPTIONS = [
   '수신 성공',
   '수신 실패',
   '취소됨',
+  '확인불가',
 ] as const
 
 export const MAIL_BROADCAST_TIMING_OPTIONS = ['전체', '즉시', '예약'] as const
@@ -27,6 +30,13 @@ export const MAIL_BROADCAST_TIMING_OPTIONS = ['전체', '즉시', '예약'] as c
 export type MailSendStatus = (typeof MAIL_SEND_STATUS_OPTIONS)[number]
 export type MailReceiveStatus = (typeof MAIL_RECEIVE_STATUS_OPTIONS)[number]
 export type MailBroadcastTiming = (typeof MAIL_BROADCAST_TIMING_OPTIONS)[number]
+
+export type MailSendHistoryAttachment = {
+  fileName: string
+  fileObjectId?: number
+  downloadHint?: string
+  byteSize?: number
+}
 
 export type MailSendHistoryRow = {
   id: string
@@ -49,7 +59,10 @@ export type MailSendHistoryRow = {
   readStatus: '읽음' | '안읽음' | '-'
   templateName: string
   bodyHtml: string
+  /** sendStatus=발송 실패일 때 failedReason 보조 문구 */
+  failedReason?: string
   attachmentFileNames: string[]
+  attachments?: MailSendHistoryAttachment[]
 }
 
 export type DateRangeFilterValue = [Dayjs | null, Dayjs | null] | null

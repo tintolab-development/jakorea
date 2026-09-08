@@ -40,8 +40,15 @@ import {
   moveCategoryToParent,
   moveTemplateToCategory,
 } from '@/features/notifications/lib/tree'
-import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
-import { shouldUseMailTemplatesRemoteApi } from '@/features/notifications/api/mail-template-service'
+import {
+  getNotificationsApiErrorMessage,
+  isCategoryHasChildrenError,
+  isCategoryNeedsSyncError,
+} from '@/features/notifications/api/get-notifications-api-error'
+import {
+  mailSyncSuccessMessage,
+  shouldUseMailTemplatesRemoteApi,
+} from '@/features/notifications/api/mail-template-service'
 import {
   useMailCategoryTreeQuery,
   useMailTemplateDetailQuery,
@@ -118,19 +125,6 @@ export function MailTemplateList() {
 
   const [localCategories, setLocalCategories] = useState<MailCategory[]>(MAIL_CATEGORY_MOCK)
   const [localTemplates, setLocalTemplates] = useState<MailTemplateItem[]>(MAIL_TEMPLATE_ITEM_MOCK)
-
-  const categories = remote ? (treeQuery.data?.categories ?? []) : localCategories
-  const templates = remote ? (treeQuery.data?.templates ?? []) : localTemplates
-  const isMutating =
-    mutations.createCategory.isPending ||
-    mutations.updateCategory.isPending ||
-    mutations.deleteCategory.isPending ||
-    mutations.deleteTemplate.isPending ||
-    mutations.moveCategory.isPending ||
-    mutations.moveTemplate.isPending ||
-    mutations.createTemplate.isPending ||
-    mutations.updateTemplate.isPending
-
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() =>
     defaultExpandedIds(remote ? [] : MAIL_CATEGORY_MOCK)
   )
@@ -145,6 +139,74 @@ export function MailTemplateList() {
   } | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
   const didInitExpandRef = useRef(!remote)
+
+  const categories = remote ? (treeQuery.data?.categories ?? []) : localCategories
+  const templates = remote ? (treeQuery.data?.templates ?? []) : localTemplates
+  const isSyncing = mutations.syncCatalog.isPending
+  const isMutating =
+    mutations.createCategory.isPending ||
+    mutations.updateCategory.isPending ||
+    mutations.deleteCategory.isPending ||
+    mutations.deleteTemplate.isPending ||
+    mutations.moveCategory.isPending ||
+    mutations.moveTemplate.isPending ||
+    mutations.createTemplate.isPending ||
+    mutations.updateTemplate.isPending
+  const busy = isSyncing || isMutating
+  const treeLoading =
+    remote && !treeQuery.data && (treeQuery.isLoading || treeQuery.isFetching)
+  const treeError = remote && treeQuery.isError && !treeQuery.data
+
+  const clearTreeSearchAfterMutation = useCallback(() => {
+    const filters = pendingFiltersRef.current
+    const hasSearch = Boolean(filters.categoryName.trim() || filters.templateName.trim())
+    if (!hasSearch) return
+    const cleared = { categoryName: '', templateName: '' }
+    setPendingFilters(cleared)
+    pendingFiltersRef.current = cleared
+    setSearchParams(prev => applyMailFiltersToSearchParams(prev, cleared), { replace: true })
+  }, [setSearchParams])
+
+  const runMailSync = useCallback(async () => {
+    if (!remote || mutations.syncCatalog.isPending) return
+    try {
+      const result = await mutations.syncCatalog.mutateAsync()
+      await treeQuery.refetch()
+      showAlert({
+        title: '안내',
+        content: mailSyncSuccessMessage(result.templates),
+      })
+    } catch (error) {
+      showAlert({
+        title: '연동 실패',
+        content: getNotificationsApiErrorMessage(
+          error,
+          '카테고리·발신 프로필 연동에 실패했습니다. 다시 시도해 주세요.'
+        ),
+      })
+    }
+  }, [mutations.syncCatalog, remote, showAlert, treeQuery])
+
+  const offerSyncOnError = useCallback(
+    (title: string, error: unknown, fallback: string) => {
+      if (isCategoryNeedsSyncError(error)) {
+        showAlert({
+          title,
+          content: getNotificationsApiErrorMessage(error, fallback),
+          confirmLabel: '동기화',
+          onConfirm: () => {
+            void runMailSync()
+          },
+        })
+        return
+      }
+      showAlert({
+        title,
+        content: getNotificationsApiErrorMessage(error, fallback),
+      })
+    },
+    [runMailSync, showAlert]
+  )
 
   useEffect(() => {
     if (!remote || selection || templates.length === 0) return
@@ -211,6 +273,8 @@ export function MailTemplateList() {
   const treeTemplate =
     selection?.kind === 'template' ? findTemplate(templates, selection.id) ?? null : null
   const selectedTemplate = (remote ? detailQuery.data : null) ?? treeTemplate
+  const detailLoading =
+    remote && Boolean(selectedTemplateId) && detailQuery.isLoading && !detailQuery.data
   const editingTemplateId = formMode === 'edit' ? formState.templateId : null
   const editDetailQuery = useMailTemplateDetailQuery(
     editingTemplateId,
@@ -230,7 +294,8 @@ export function MailTemplateList() {
   const previewTemplate = previewQuery.data ?? selectedTemplate
 
   const selectedCategoryName = selectedTemplate
-    ? categoryNameById(categories, selectedTemplate.categoryId)
+    ? selectedTemplate.categoryName?.trim() ||
+      categoryNameById(categories, selectedTemplate.categoryId)
     : ''
 
   const selectedDeleteIds = useMemo(() => {
@@ -319,6 +384,7 @@ export function MailTemplateList() {
           })
           setExpandedIds(prev => new Set(prev).add(pendingMove.targetParentId))
         }
+        clearTreeSearchAfterMutation()
       } else if (pendingMove.kind === 'template') {
         setLocalTemplates(prev =>
           moveTemplateToCategory(prev, pendingMove.templateId, pendingMove.targetCategoryId)
@@ -331,13 +397,23 @@ export function MailTemplateList() {
         setExpandedIds(prev => new Set(prev).add(pendingMove.targetParentId))
       }
       setPendingMove(null)
-    } catch (error) {
       showAlert({
-        title: '이동 실패',
-        content: getNotificationsApiErrorMessage(error, '이동에 실패했습니다. 다시 시도해 주세요.'),
+        title: '이동 완료',
+        content: '이동이 완료되었습니다.',
+        confirmLabel: '닫기',
       })
+    } catch (error) {
+      offerSyncOnError('이동 실패', error, '이동에 실패했습니다. 다시 시도해 주세요.')
     }
-  }, [mutations.moveCategory, mutations.moveTemplate, pendingMove, remote, showAlert])
+  }, [
+    clearTreeSearchAfterMutation,
+    mutations.moveCategory,
+    mutations.moveTemplate,
+    offerSyncOnError,
+    pendingMove,
+    remote,
+    showAlert,
+  ])
 
   const handleRequestDelete = useCallback(() => {
     if (!selection) return
@@ -363,6 +439,7 @@ export function MailTemplateList() {
         for (const templateId of templateIds) {
           await mutations.deleteTemplate.mutateAsync(templateId)
         }
+        clearTreeSearchAfterMutation()
       } else {
         const categoryIdSet = new Set(categoryIds)
         const templateIdSet = new Set(templateIds)
@@ -376,16 +453,24 @@ export function MailTemplateList() {
         return current
       })
       setDeleteDialog(null)
-    } catch (error) {
       showAlert({
-        title: '삭제 실패',
-        content: getNotificationsApiErrorMessage(error, '삭제에 실패했습니다. 다시 시도해 주세요.'),
+        title: '삭제 완료',
+        content: '삭제가 완료되었습니다.',
+        confirmLabel: '닫기',
       })
+    } catch (error) {
+      if (isCategoryHasChildrenError(error)) {
+        setDeleteDialog('blocked')
+        return
+      }
+      offerSyncOnError('삭제 실패', error, '삭제에 실패했습니다. 다시 시도해 주세요.')
     }
   }, [
     categories,
+    clearTreeSearchAfterMutation,
     mutations.deleteCategory,
     mutations.deleteTemplate,
+    offerSyncOnError,
     remote,
     selectedDeleteIds,
     showAlert,
@@ -400,6 +485,7 @@ export function MailTemplateList() {
           const parentId = targetCategoryForAdd(selection, templates)
           if (remote) {
             const tree = await mutations.createCategory.mutateAsync({ name, parentId })
+            clearTreeSearchAfterMutation()
             const created = tree.categories.find(
               category => category.parentId === parentId && category.name === name
             )
@@ -417,6 +503,7 @@ export function MailTemplateList() {
           const editId = categoryModal.categoryId
           if (remote) {
             await mutations.updateCategory.mutateAsync({ categoryId: editId, name })
+            clearTreeSearchAfterMutation()
           } else {
             setLocalCategories(prev =>
               prev.map(category => (category.id === editId ? { ...category, name } : category))
@@ -425,22 +512,21 @@ export function MailTemplateList() {
         }
         setCategoryModal(null)
       } catch (error) {
-        showAlert({
-          title: '카테고리 저장 실패',
-          content: getNotificationsApiErrorMessage(
-            error,
-            '카테고리 저장에 실패했습니다. 다시 시도해 주세요.'
-          ),
-        })
+        offerSyncOnError(
+          '카테고리 저장 실패',
+          error,
+          '카테고리 저장에 실패했습니다. 다시 시도해 주세요.'
+        )
       }
     },
     [
       categoryModal,
+      clearTreeSearchAfterMutation,
       mutations.createCategory,
       mutations.updateCategory,
+      offerSyncOnError,
       remote,
       selection,
-      showAlert,
       templates,
     ]
   )
@@ -492,6 +578,7 @@ export function MailTemplateList() {
             })
             setSelection({ kind: 'template', id: result.templateId })
             setExpandedIds(prev => new Set(prev).add(categoryId))
+            clearTreeSearchAfterMutation()
           } else if (editingTemplate) {
             await mutations.updateTemplate.mutateAsync({
               templateId: editingTemplate.id,
@@ -504,6 +591,7 @@ export function MailTemplateList() {
               newFiles: draft.newFiles,
               removedAttachmentIds: draft.removedAttachmentIds,
             })
+            clearTreeSearchAfterMutation()
           }
         } else {
           const now = new Date().toISOString()
@@ -550,25 +638,24 @@ export function MailTemplateList() {
         }
         handleCloseForm()
       } catch (error) {
-        showAlert({
-          title: '저장 실패',
-          content: getNotificationsApiErrorMessage(
-            error,
-            '템플릿 저장에 실패했습니다. 다시 시도해 주세요.'
-          ),
-        })
+        offerSyncOnError(
+          '저장 실패',
+          error,
+          '템플릿 저장에 실패했습니다. 다시 시도해 주세요.'
+        )
       }
     },
     [
+      clearTreeSearchAfterMutation,
       editingTemplate,
       formMode,
       formState.categoryId,
       handleCloseForm,
       mutations.createTemplate,
       mutations.updateTemplate,
+      offerSyncOnError,
       remote,
       selection,
-      showAlert,
       templates,
     ]
   )
@@ -579,6 +666,7 @@ export function MailTemplateList() {
     try {
       if (remote) {
         await mutations.deleteTemplate.mutateAsync(editId)
+        clearTreeSearchAfterMutation()
       } else {
         setLocalTemplates(prev => prev.filter(item => item.id !== editId))
       }
@@ -587,12 +675,16 @@ export function MailTemplateList() {
       )
       handleCloseForm()
     } catch (error) {
-      showAlert({
-        title: '삭제 실패',
-        content: getNotificationsApiErrorMessage(error, '삭제에 실패했습니다. 다시 시도해 주세요.'),
-      })
+      offerSyncOnError('삭제 실패', error, '삭제에 실패했습니다. 다시 시도해 주세요.')
     }
-  }, [editingTemplate, handleCloseForm, mutations.deleteTemplate, remote, showAlert])
+  }, [
+    clearTreeSearchAfterMutation,
+    editingTemplate,
+    handleCloseForm,
+    mutations.deleteTemplate,
+    offerSyncOnError,
+    remote,
+  ])
 
   const editCategoryId = categoryIdForEdit(selection, templates, categories)
 
@@ -612,11 +704,22 @@ export function MailTemplateList() {
         title="메일 템플릿"
         actions={
           <>
+            {remote ? (
+              <CmsButton
+                variant="secondary"
+                size="large"
+                type="button"
+                disabled={busy}
+                onClick={() => void runMailSync()}
+              >
+                {isSyncing ? '동기화 중…' : '동기화'}
+              </CmsButton>
+            ) : null}
             <CmsButton
               variant="delete"
               size="large"
               type="button"
-              disabled={deletableCheckedCount === 0 || isMutating}
+              disabled={deletableCheckedCount === 0 || busy}
               onClick={handleRequestDelete}
             >
               선택 삭제
@@ -625,7 +728,7 @@ export function MailTemplateList() {
               variant="secondary"
               size="large"
               type="button"
-              disabled={!editCategoryId || isMutating}
+              disabled={!editCategoryId || busy}
               onClick={() => setCategoryModal({ mode: 'edit', categoryId: editCategoryId })}
             >
               카테고리 수정
@@ -634,7 +737,7 @@ export function MailTemplateList() {
               variant="secondary"
               size="large"
               type="button"
-              disabled={isMutating}
+              disabled={busy}
               onClick={() =>
                 setCategoryModal({
                   mode: 'add',
@@ -648,7 +751,7 @@ export function MailTemplateList() {
               variant="primary"
               size="large"
               type="button"
-              disabled={isMutating}
+              disabled={busy}
               onClick={handleOpenCreate}
             >
               템플릿 등록
@@ -656,23 +759,47 @@ export function MailTemplateList() {
           </>
         }
       >
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-          <div className="mail-template-split">
-            <CategoryTree
-              categories={visibleTree.categories}
-              templates={visibleTree.templates}
-              expandedIds={expandedIds}
-              selection={selection}
-              onToggleExpand={handleToggleExpand}
-              onSelect={setSelection}
-            />
-            <DetailPanel
-              template={selectedTemplate}
-              categoryName={selectedCategoryName}
-              onPreview={() => setPreviewOpen(true)}
-            />
+        {treeError ? (
+          <div className="mail-template-tree-status" role="alert">
+            <p>
+              {getNotificationsApiErrorMessage(
+                treeQuery.error,
+                '메일 템플릿 목록을 불러오지 못했습니다.'
+              )}
+            </p>
+            <CmsButton
+              variant="secondary"
+              size="large"
+              type="button"
+              onClick={() => void treeQuery.refetch()}
+            >
+              다시 시도
+            </CmsButton>
           </div>
-        </DndContext>
+        ) : treeLoading ? (
+          <div className="mail-template-tree-status" aria-busy="true">
+            불러오는 중…
+          </div>
+        ) : (
+          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <div className="mail-template-split">
+              <CategoryTree
+                categories={visibleTree.categories}
+                templates={visibleTree.templates}
+                expandedIds={expandedIds}
+                selection={selection}
+                onToggleExpand={handleToggleExpand}
+                onSelect={setSelection}
+              />
+              <DetailPanel
+                template={detailLoading ? null : selectedTemplate}
+                categoryName={selectedCategoryName}
+                loading={detailLoading}
+                onPreview={() => setPreviewOpen(true)}
+              />
+            </div>
+          </DndContext>
+        )}
       </FilterTableLayout>
 
       <CmsModal
@@ -689,14 +816,16 @@ export function MailTemplateList() {
         open={deleteDialog === 'category'}
         onClose={() => setDeleteDialog(null)}
         title="카테고리 삭제"
-        content="카테고리를 삭제하시겠습니까?"
+        content={
+          '해당 카테고리를 삭제하시겠습니까?\n삭제 시 NHN 서비스에서도 함께 반영됩니다.'
+        }
         buttons={[
           { label: '취소', onClick: () => setDeleteDialog(null), variant: 'secondary' },
           {
             label: '삭제',
             onClick: () => void handleConfirmDelete(),
             variant: 'delete',
-            disabled: isMutating,
+            disabled: busy,
           },
         ]}
       />
@@ -716,7 +845,7 @@ export function MailTemplateList() {
         title="카테고리 이동"
         content={
           pendingMove?.kind === 'category'
-            ? `카테고리 이동 시 하위의 카테고리/템플릿도 같이 이동됩니다.\n[${categoryNameById(categories, pendingMove.categoryId)}] 카테고리의 위치를 이동하시겠습니까?`
+            ? `[${categoryNameById(categories, pendingMove.categoryId)}] 카테고리의 위치를 이동하시겠습니까?\n카테고리 이동 시 하위의 카테고리/템플릿도 같이 이동되며, NHN 서비스에서도 함께 반영됩니다.`
             : ''
         }
         buttons={[
@@ -725,7 +854,7 @@ export function MailTemplateList() {
             label: '이동',
             onClick: () => void handleConfirmMove(),
             variant: 'primary',
-            disabled: isMutating,
+            disabled: busy,
           },
         ]}
       />
@@ -733,23 +862,21 @@ export function MailTemplateList() {
         open={pendingMove?.kind === 'template'}
         onClose={() => setPendingMove(null)}
         title="템플릿 이동"
+        content={
+          pendingMove?.kind === 'template'
+            ? `해당 템플릿을 [${categoryNameById(categories, pendingMove.targetCategoryId)}] 카테고리로 이동하시겠습니까?\n템플릿 이동 시 NHN 서비스에서도 함께 반영됩니다.`
+            : ''
+        }
         buttons={[
           { label: '취소', onClick: () => setPendingMove(null), variant: 'secondary' },
           {
             label: '이동',
             onClick: () => void handleConfirmMove(),
             variant: 'primary',
-            disabled: isMutating,
+            disabled: busy,
           },
         ]}
-      >
-        {pendingMove?.kind === 'template' ? (
-          <p className="cms-modal__content">
-            해당 템플릿을 <strong>[{categoryNameById(categories, pendingMove.targetCategoryId)}]</strong>{' '}
-            카테고리로 이동하시겠습니까?
-          </p>
-        ) : null}
-      </CmsModal>
+      />
       <CategoryNameModal
         open={categoryModal != null}
         mode={categoryModal?.mode ?? 'add'}

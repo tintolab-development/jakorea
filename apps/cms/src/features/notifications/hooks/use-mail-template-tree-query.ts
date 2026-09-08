@@ -10,6 +10,7 @@ import {
   getMailTemplatePreview,
   moveMailCategory,
   moveMailTemplate,
+  syncMailCatalog,
   updateMailCategory,
   updateMailTemplate,
 } from '@/features/notifications/api/mail-template-service'
@@ -58,11 +59,16 @@ function applyMutationTreeToCache(
   queryClient: ReturnType<typeof useQueryClient>,
   tree: MailCategoryTreeMapped
 ) {
+  // 비필터 키만 즉시 교체. 필터 tree는 invalidate로 재조회해 풀트리 오염을 막는다.
   queryClient.setQueryData(notificationsQueryKeys.mailTemplates.tree(''), tree)
-  queryClient.setQueriesData<MailCategoryTreeMapped>(
-    { queryKey: [...notificationsQueryKeys.mailTemplates.all(), 'tree'] },
-    tree
-  )
+  void queryClient.invalidateQueries({
+    queryKey: [...notificationsQueryKeys.mailTemplates.all(), 'tree'],
+    predicate: query => {
+      const key = query.queryKey
+      const paramsKey = key[key.length - 1]
+      return typeof paramsKey === 'string' && paramsKey !== ''
+    },
+  })
 }
 
 function removeTemplateDetailCaches(
@@ -130,6 +136,12 @@ export function useMailTemplateTreeMutations() {
       removeTemplateDetailCaches(queryClient, result.templateId)
     },
   })
+  const syncCatalog = useMutation({
+    mutationFn: syncMailCatalog,
+    onSuccess: async () => {
+      await invalidateMailTemplateCaches(queryClient)
+    },
+  })
 
   return {
     createCategory,
@@ -140,6 +152,7 @@ export function useMailTemplateTreeMutations() {
     moveTemplate,
     createTemplate,
     updateTemplate,
+    syncCatalog,
   }
 }
 

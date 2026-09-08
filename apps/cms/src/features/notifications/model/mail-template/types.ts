@@ -24,6 +24,8 @@ export type MailTemplateItem = {
   name: string
   templateName: string
   categoryId: string
+  /** GET template/{id}.categoryName — 없으면 트리 조회로 보완 */
+  categoryName?: string
   registeredAt: string
   updatedAt: string
   senderName: string

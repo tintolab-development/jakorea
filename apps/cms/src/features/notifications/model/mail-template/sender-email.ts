@@ -16,12 +16,16 @@ export function isAllowedMailSenderDomain(email: string): boolean {
   )
 }
 
+export const MAIL_SENDER_EMAIL_REQUIRED_MESSAGE = '발신 메일을 선택/입력해 주세요.'
+export const MAIL_SENDER_EMAIL_NOT_REGISTERED_MESSAGE =
+  'NHN에 등록된 발신 메일만 사용할 수 있습니다. 발신 프로필을 확인해 주세요.'
+
 export function validateMailSenderEmail(email: string): string | null {
   const trimmed = email.trim()
-  if (!trimmed) return '발신 메일을 입력하세요.'
+  if (!trimmed) return MAIL_SENDER_EMAIL_REQUIRED_MESSAGE
   if (!EMAIL_SHAPE_RE.test(trimmed)) return '발신 메일 형식이 올바르지 않습니다.'
   if (!isAllowedMailSenderDomain(trimmed)) {
-    return 'NHN에 등록된 발신 메일 도메인만 사용할 수 있습니다.'
+    return MAIL_SENDER_EMAIL_NOT_REGISTERED_MESSAGE
   }
   return null
 }

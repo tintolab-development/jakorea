@@ -1,4 +1,4 @@
-import type { RefObject } from 'react'
+import { memo, useEffect, type RefObject } from 'react'
 import type { InputRef } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput, FileSelectField } from '@/shared/ui'
@@ -17,9 +17,11 @@ type ComposeFieldsProps = {
   onRememberSubjectRange: (el: HTMLInputElement | null) => void
   onAttachmentAdd: (files: File[]) => void
   onAttachmentRemove: (index: number) => void
+  /** 발송 화면: 저장된 템플릿 미리보기만 (제목/본문 override API 없음) */
+  readOnly?: boolean
 }
 
-export function ComposeFields({
+export const ComposeFields = memo(function ComposeFields({
   editor,
   editorMinHeight,
   subject,
@@ -30,7 +32,16 @@ export function ComposeFields({
   onRememberSubjectRange,
   onAttachmentAdd,
   onAttachmentRemove,
+  readOnly = false,
 }: ComposeFieldsProps) {
+  useEffect(() => {
+    if (!editor) return
+    editor.setEditable(!readOnly)
+    return () => {
+      editor.setEditable(true)
+    }
+  }, [editor, readOnly])
+
   return (
     <>
       <DetailInfoForm.Row type="single">
@@ -49,7 +60,11 @@ export function ComposeFields({
                 maxLength={subjectMaxLength}
                 placeholder="제목을 작성하세요"
                 value={subject}
-                onChange={event => onSubjectChange(event.target.value)}
+                readOnly={readOnly}
+                onChange={event => {
+                  if (readOnly) return
+                  onSubjectChange(event.target.value)
+                }}
                 onFocus={event => onRememberSubjectRange(event.currentTarget)}
                 onBlur={event => onRememberSubjectRange(event.currentTarget)}
                 onSelect={event => onRememberSubjectRange(event.currentTarget)}
@@ -88,7 +103,12 @@ export function ComposeFields({
               maxTotalBytes={0}
               buttonLabel="파일 추가"
               fileNames={attachmentFileNames}
-              guideLines={MAIL_ATTACHMENT_GUIDE_LINES}
+              guideLines={
+                readOnly
+                  ? ['템플릿에 등록된 첨부만 발송됩니다.']
+                  : MAIL_ATTACHMENT_GUIDE_LINES
+              }
+              disabled={readOnly}
               onFilesChange={onAttachmentAdd}
               onRemoveFile={onAttachmentRemove}
             />
@@ -97,4 +117,4 @@ export function ComposeFields({
       </DetailInfoForm.Row>
     </>
   )
-}
+})

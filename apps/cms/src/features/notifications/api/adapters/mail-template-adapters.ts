@@ -109,6 +109,7 @@ export function mapMailNotificationTemplateToItem(
     name: displayName,
     templateName: displayName,
     categoryId: item.categoryId != null ? String(item.categoryId) : MAIL_ROOT_CATEGORY_ID,
+    categoryName: item.categoryName?.trim() || undefined,
     registeredAt: item.createdAt ?? item.updatedAt ?? new Date().toISOString(),
     updatedAt: item.updatedAt ?? item.createdAt ?? new Date().toISOString(),
     senderName: parsed.senderName || item.senderProfileDisplayName?.trim() || '',

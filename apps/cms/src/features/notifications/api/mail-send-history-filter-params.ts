@@ -21,22 +21,24 @@ function rangeToParams(
 
 const SEND_STATUS_TO_API: Record<string, string> = {
   '발송 요청': 'REQUESTED',
-  '발송 취소': 'CANCELLED',
-  '발송 예약': 'SCHEDULED',
-  '발송 대기': 'PENDING',
-  '발송 중': 'SENDING',
-  '발송 실패': 'FAILED',
-  '발송 성공': 'SUCCESS',
+  예약: 'SCHEDULED',
+  대기: 'WAITED',
+  발송중: 'IN_PROGRESS',
+  '발송 실패': 'SEND_FAILED',
+  '발송 성공': 'SENT',
+  취소: 'CANCELED',
+  확인불가: 'UNKNOWN',
 }
 
 const RECEIVE_STATUS_TO_API: Record<string, string> = {
   요청됨: 'REQUESTED',
-  '확인 대기중': 'WAITING_CONFIRM',
-  대기중: 'PENDING',
+  '확인 대기중': 'CONFIRM_WAITED',
+  대기중: 'WAITED',
   예약됨: 'SCHEDULED',
-  '수신 성공': 'SUCCESS',
-  '수신 실패': 'FAILED',
-  취소됨: 'CANCELLED',
+  '수신 성공': 'DELIVERED',
+  '수신 실패': 'DELIVERY_FAILED',
+  취소됨: 'CANCELED',
+  확인불가: 'UNKNOWN',
 }
 
 export function mailSendHistoryParamsFromFilters(
@@ -52,8 +54,9 @@ export function mailSendHistoryParamsFromFilters(
   rangeToParams(params, 'scheduledFrom', 'scheduledTo', filters.reserveDateRange)
 
   if (filters.subject.trim()) {
-    params.subject = filters.subject.trim()
+    // BE: template_code_snapshot 기준 검색 (메일 제목 ILIKE 아님)
     params.templateName = filters.subject.trim()
+    params.templateCode = filters.subject.trim()
   }
   if (filters.senderInfo.trim()) {
     params.sender = filters.senderInfo.trim()

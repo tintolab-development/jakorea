@@ -46,7 +46,7 @@ export function createMailSendHistoryRowsFromDraft(
       receiverEmail: recipient.email,
       receiverInfo: formatMailPreviewPerson(recipient.name, recipient.email),
       broadcastTiming: isScheduled ? '예약' : '즉시',
-      sendStatus: isScheduled ? '발송 예약' : '발송 성공',
+      sendStatus: isScheduled ? '예약' : '발송 성공',
       receiveStatus: isScheduled ? '예약됨' : '수신 성공',
       sentAt: isScheduled ? '' : now,
       receivedAt: isScheduled ? '' : now,
