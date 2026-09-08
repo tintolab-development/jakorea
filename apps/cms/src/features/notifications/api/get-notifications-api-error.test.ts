@@ -60,6 +60,91 @@ describe('get-notifications-api-error', () => {
         'fallback'
       )
     ).toContain('FreeMarker')
+    expect(
+      getNotificationsApiErrorMessage(apiError(400, 'EMAIL_SENDER_PROFILE_MISMATCH'), 'fallback')
+    ).toBe('NHN에 등록된 발신 메일만 사용할 수 있습니다. 발신 프로필을 확인해 주세요.')
+    expect(
+      getNotificationsApiErrorMessage(apiError(400, 'EMAIL_SENDER_PROFILE_NOT_HARVESTED'), 'fallback')
+    ).toBe('NHN에 등록된 발신 메일만 사용할 수 있습니다. 발신 프로필을 확인해 주세요.')
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(400, 'NOTIFICATION_SENDER_PROFILE_NOT_FOUND'),
+        'fallback'
+      )
+    ).toContain('발신 프로필을 찾을 수 없습니다')
+    expect(
+      getNotificationsApiErrorMessage(apiError(400, 'EMAIL_TEMPLATE_FILE_OWNER_INVALID'), 'fallback')
+    ).toContain('메일 템플릿이 아닙니다')
+    expect(
+      getNotificationsApiErrorMessage(apiError(400, 'EMAIL_ATTACHMENT_OWNER_MISMATCH'), 'fallback')
+    ).toContain('소유가 아닙니다')
+    expect(
+      getNotificationsApiErrorMessage(apiError(404, 'FILE_OBJECT_NOT_FOUND'), 'fallback')
+    ).toContain('파일을 찾을 수 없습니다')
+  })
+
+  it('EMAIL_TEMPLATE_NAME_INVALID와 displayName 누락을 안내한다', () => {
+    expect(
+      getNotificationsApiErrorMessage(apiError(400, 'EMAIL_TEMPLATE_NAME_INVALID'), 'fallback')
+    ).toBe(
+      '메일 템플릿명은 한글·영문·숫자·_·-만 사용할 수 있습니다. 공백은 사용할 수 없습니다.'
+    )
+    expect(
+      getNotificationsApiErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: {
+              success: false,
+              error: {
+                code: 'MISSING_PARAMETER',
+                message: '필수 입력값이 누락되었습니다',
+                field: 'displayName',
+              },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toBe('템플릿명을 입력해 주세요.')
+  })
+
+  it('EMAIL_CATEGORY_NOT_LINKED_TO_NHN은 동기화 안내를 쓴다', () => {
+    expect(
+      getNotificationsApiErrorMessage(apiError(400, 'EMAIL_CATEGORY_NOT_LINKED_TO_NHN'), 'fallback')
+    ).toContain('카테고리 동기화')
+  })
+
+  it('EMAIL_TEMPLATE_DELETE_REJECTED_BY_NHN과 NOTIFICATION_DELIVERY_NOT_FOUND를 매핑한다', () => {
+    expect(
+      getNotificationsApiErrorMessage(apiError(409, 'EMAIL_TEMPLATE_DELETE_REJECTED_BY_NHN'), 'fallback')
+    ).toContain('메일 템플릿 삭제')
+    expect(
+      getNotificationsApiErrorMessage(apiError(404, 'NOTIFICATION_DELIVERY_NOT_FOUND'), 'fallback')
+    ).toBe('발송 내역을 찾을 수 없습니다.')
+  })
+
+  it('PROVIDER_UNAVAILABLE은 code·traceId를 함께 노출한다', () => {
+    const message = getNotificationsApiErrorMessage(
+      {
+        response: {
+          status: 503,
+          data: {
+            success: false,
+            error: {
+              code: 'PROVIDER_UNAVAILABLE',
+              message: 'hub down',
+              traceId: 'trace-abc',
+            },
+          },
+        },
+      },
+      'fallback'
+    )
+    expect(message).toContain('외부 연동 서비스를 사용할 수 없습니다')
+    expect(message).toContain('code: PROVIDER_UNAVAILABLE')
+    expect(message).toContain('message: hub down')
+    expect(message).toContain('traceId: trace-abc')
   })
 
   it('NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING을 사용자 문구로 변환한다', () => {
@@ -73,5 +158,38 @@ describe('get-notifications-api-error', () => {
         'fallback'
       )
     ).toBe('템플릿 필수 변수가 없습니다: 사용자 아이디(이메일)')
+  })
+
+  it('DIRECT + AD 및 프로그램 필수 에러를 매핑한다', () => {
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(400, 'DIRECT_RECIPIENT_AD_CONSENT_UNSUPPORTED'),
+        'fallback'
+      )
+    ).toBe('직접 입력 수신자로는 광고성 템플릿을 발송할 수 없습니다.')
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(400, 'NOTIFICATION_PROGRAM_REQUIRED_FOR_RECIPIENTS'),
+        'fallback'
+      )
+    ).toBe('프로그램을 먼저 선택하세요.')
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(400, 'NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES'),
+        'fallback'
+      )
+    ).toBe('프로그램 필수 변수가 있어 프로그램을 선택하세요.')
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(400, 'NOTIFICATION_RECIPIENT_NOT_IN_PROGRAM'),
+        'fallback'
+      )
+    ).toBe('선택한 수신자가 해당 프로그램 참여자가 아닙니다.')
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(400, 'NOTIFICATION_ADMIN_RECIPIENT_NOT_IN_PROGRAM'),
+        'fallback'
+      )
+    ).toBe('선택한 관리자가 해당 프로그램에 배정되어 있지 않습니다.')
   })
 })

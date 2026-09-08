@@ -27,6 +27,7 @@ import type {
   SyncSenderProfilesParams,
   TemplateMoveRequest,
   TemplateMoveResponse,
+  TemplateDeleteResponse,
   TemplateVariablesParams,
   CatalogResponse,
   ArchiveNotificationTemplateParams,
@@ -106,7 +107,7 @@ export async function moveTemplateRemote(
 export async function deleteNotificationTemplateRemote(
   templateId: number,
   params?: ArchiveNotificationTemplateParams
-): Promise<NotificationTemplateMutationResponse> {
+): Promise<TemplateDeleteResponse> {
   return unwrapApiBody(
     await notificationsRemoteApi.archiveNotificationTemplate(templateId, params, MUTATION_OPTIONS)
   )

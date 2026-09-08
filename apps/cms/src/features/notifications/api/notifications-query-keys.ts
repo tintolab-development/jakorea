@@ -38,11 +38,44 @@ export const notificationsQueryKeys = {
       [...notificationsQueryKeys.mailTemplates.all(), 'preview', templateId] as const,
     picker: () => [...notificationsQueryKeys.mailTemplates.all(), 'picker'] as const,
   },
+  mailSend: {
+    all: () => [...notificationsQueryKeys.all, 'mail-send'] as const,
+    senderProfiles: () => [...notificationsQueryKeys.mailSend.all(), 'sender-profiles'] as const,
+    recipients: (key: string) =>
+      [...notificationsQueryKeys.mailSend.all(), 'recipients', key] as const,
+    variables: (key: string) =>
+      [...notificationsQueryKeys.mailSend.all(), 'variables', key] as const,
+  },
   mailSendHistory: {
     all: () => [...notificationsQueryKeys.all, 'mail-send-history'] as const,
     list: (searchParamsKey: string) =>
       [...notificationsQueryKeys.mailSendHistory.all(), 'list', searchParamsKey] as const,
     detail: (deliveryId: string) =>
       [...notificationsQueryKeys.mailSendHistory.all(), 'detail', deliveryId] as const,
+  },
+  smsTemplates: {
+    all: () => [...notificationsQueryKeys.all, 'sms-templates'] as const,
+    tree: (searchParamsKey: string) =>
+      [...notificationsQueryKeys.smsTemplates.all(), 'tree', searchParamsKey] as const,
+    detail: (templateId: string) =>
+      [...notificationsQueryKeys.smsTemplates.all(), 'detail', templateId] as const,
+    preview: (templateId: string) =>
+      [...notificationsQueryKeys.smsTemplates.all(), 'preview', templateId] as const,
+    picker: () => [...notificationsQueryKeys.smsTemplates.all(), 'picker'] as const,
+  },
+  smsSend: {
+    all: () => [...notificationsQueryKeys.all, 'sms-send'] as const,
+    senderProfiles: () => [...notificationsQueryKeys.smsSend.all(), 'sender-profiles'] as const,
+    recipients: (key: string) =>
+      [...notificationsQueryKeys.smsSend.all(), 'recipients', key] as const,
+    variables: (key: string) =>
+      [...notificationsQueryKeys.smsSend.all(), 'variables', key] as const,
+  },
+  smsSendHistory: {
+    all: () => [...notificationsQueryKeys.all, 'sms-send-history'] as const,
+    list: (searchParamsKey: string) =>
+      [...notificationsQueryKeys.smsSendHistory.all(), 'list', searchParamsKey] as const,
+    detail: (deliveryId: string) =>
+      [...notificationsQueryKeys.smsSendHistory.all(), 'detail', deliveryId] as const,
   },
 } as const
