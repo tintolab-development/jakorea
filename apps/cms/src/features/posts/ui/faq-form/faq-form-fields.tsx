@@ -5,11 +5,19 @@ export type FaqFormFieldsProps = {
   categoryOptions: { label: string; value: string }[]
 }
 
+function isRegisterableFaqCategory(value: unknown): value is string {
+  if (typeof value !== 'string') return false
+  const v = value.trim()
+  return v.length > 0 && v !== 'ALL' && v !== '전체'
+}
+
 /**
  * FAQ 등록/수정 폼 본문 — 부모 `Form` 안에서만 사용.
  * 모달·상세 등 레이아웃은 래퍼에서 담당.
  */
 export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
+  const registerOptions = categoryOptions.filter(opt => isRegisterableFaqCategory(opt.value))
+
   return (
     <div className="faq-form-modal__fields">
       <div className="faq-form-modal__row-split">
@@ -17,13 +25,23 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
           name="category"
           label="카테고리"
           className="faq-form-modal__field faq-form-modal__field--category"
-          rules={[{ required: true, message: '카테고리를 선택해 주세요.' }]}
+          normalize={value => (isRegisterableFaqCategory(value) ? value.trim() : undefined)}
+          rules={[
+            {
+              validator: async (_, value) => {
+                if (!isRegisterableFaqCategory(value)) {
+                  throw new Error('카테고리를 선택해 주세요.')
+                }
+              },
+            },
+          ]}
         >
           <CmsSelect
-            placeholder="전체"
-            options={categoryOptions}
+            placeholder="카테고리 선택"
+            options={registerOptions}
             width={240}
             inputSize="large"
+            withAllOption={false}
           />
         </Form.Item>
         <Form.Item

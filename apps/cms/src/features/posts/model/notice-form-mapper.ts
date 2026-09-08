@@ -1,8 +1,8 @@
 import type { Notice, NoticeAttachment } from '@/data/mock/notices'
 
-/** 폼 필드(에디터·첨부 제외) */
+/** 폼 필드(에디터·첨부 제외) — 셀렉트 value는 category.id */
 export type NoticeFormFieldValues = {
-  category: string
+  categoryId: string
   visibility: 'public' | 'private'
   pinTop: 'off' | 'on'
   title: string
@@ -10,7 +10,7 @@ export type NoticeFormFieldValues = {
 
 export function noticeToFormValues(notice: Notice): NoticeFormFieldValues {
   return {
-    category: notice.category,
+    categoryId: notice.categoryId != null ? String(notice.categoryId) : '',
     visibility: notice.status === 'published' ? 'public' : 'private',
     pinTop: notice.isImportant ? 'on' : 'off',
     title: notice.title,
@@ -29,11 +29,16 @@ export function noticeInitialAttachmentNames(notice: Notice): string[] {
 export type BuildNoticeBodyParams = {
   title: string
   contentMarkdown: string
+  /** 공지 카테고리 ID (API categoryId) */
+  categoryId: number
+  /** 표시용 카테고리명 (로컬 Notice.category) */
   category: string
   visibility: 'public' | 'private'
   pinToTop: boolean
   /** 최종 반영할 첨부 파일명(기존 유지 + 신규 파일명) */
   attachmentNames: string[]
+  /** 실 API 업로드용 실제 파일. 파일명만 보내면 S3 PUT이 수행되지 않는다. */
+  newFiles?: File[]
   author: string
 }
 
@@ -50,6 +55,7 @@ export function buildNoticeCreateBody(params: BuildNoticeBodyParams): Omit<Notic
     title: params.title.trim(),
     content: params.contentMarkdown,
     category: params.category,
+    categoryId: params.categoryId,
     status: params.visibility === 'public' ? 'published' : 'draft',
     isImportant: params.pinToTop,
     hasAttachment: names.length > 0,
@@ -71,6 +77,7 @@ export function buildNoticeUpdateBody(
     title: params.title.trim(),
     content: params.contentMarkdown,
     category: params.category,
+    categoryId: params.categoryId,
     status: params.visibility === 'public' ? 'published' : 'draft',
     isImportant: params.pinToTop,
     hasAttachment: names.length > 0,

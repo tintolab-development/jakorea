@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Form } from 'antd'
+import { useEffect, useMemo, useState, forwardRef } from 'react'
+import { Form, Select } from 'antd'
+import type { RefSelectProps } from 'antd/es/select'
 import type { Notice } from '@/data/mock/notices'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import {
   noticeInitialAttachmentNames,
   noticeToFormValues,
-  type NoticeFormFieldValues } from '@/features/posts/model/notice-form-mapper'
+  type NoticeFormFieldValues,
+} from '@/features/posts/model/notice-form-mapper'
 import { useNoticeCategoriesQuery } from '@/features/posts/hooks/use-notice-categories-query'
 import { useNoticeMutations } from '@/features/posts/hooks/use-notice-mutations'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
@@ -15,11 +17,58 @@ import {
   ContentModal,
   CmsButton,
   CmsInput,
-  CmsSelect,
   CmsRadioGroup,
-  FileSelectField } from '@/shared/ui'
+  FileSelectField,
+} from '@/shared/ui'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import './notice-register-modal.css'
+
+function isRegisterableNoticeCategoryId(value: string): boolean {
+  const v = value.trim()
+  return v.length > 0 && v !== 'ALL' && v !== '전체'
+}
+
+/** 등록/수정 전용 — CmsSelect의 「전체」 자동삽입을 쓰지 않음. value = category.id */
+const NoticeCategorySelect = forwardRef<
+  RefSelectProps,
+  {
+    value?: string
+    onChange?: (value: string | undefined) => void
+    options: { label: string; value: string }[]
+    id?: string
+    'aria-describedby'?: string
+    status?: '' | 'warning' | 'error'
+  }
+>(function NoticeCategorySelect(
+  { value, onChange, options, id, status: _status, ...rest },
+  ref
+) {
+  const resolved =
+    typeof value === 'string' && isRegisterableNoticeCategoryId(value) ? value : undefined
+  return (
+    <span className="cms-select cms-select--large cms-select--explicit-width" style={{ width: 240 }}>
+      <Select
+        {...rest}
+        id={id}
+        ref={ref}
+        variant="borderless"
+        placeholder="카테고리 선택"
+        options={options}
+        value={resolved}
+        allowClear={false}
+        popupMatchSelectWidth
+        onChange={next => {
+          if (typeof next !== 'string' || !isRegisterableNoticeCategoryId(next)) {
+            onChange?.(undefined)
+            return
+          }
+          onChange?.(next.trim())
+        }}
+      />
+    </span>
+  )
+})
+NoticeCategorySelect.displayName = 'NoticeCategorySelect'
 
 export type NoticeFormModalMode = 'create' | 'edit'
 
@@ -35,7 +84,7 @@ export interface NoticeFormModalProps {
 }
 
 type FormValues = NoticeFormFieldValues & {
-  category: string | undefined
+  categoryId: string | undefined
 }
 
 const ATTACHMENT_MAX_BYTES = 20 * 1024 * 1024
@@ -46,7 +95,8 @@ export function NoticeFormModal({
   notice,
   onCancel,
   onSuccess,
-  onDeleted }: NoticeFormModalProps) {
+  onDeleted,
+}: NoticeFormModalProps) {
   const { user } = useAuthStore()
   const { createMutation, updateMutation, deleteMutation } = useNoticeMutations()
   const categoriesQuery = useNoticeCategoriesQuery(open)
@@ -85,23 +135,42 @@ export function NoticeFormModal({
       setNewFiles([])
     } else {
       form.setFieldsValue({
-        category: undefined,
+        categoryId: undefined,
         visibility: 'public',
         pinTop: 'off',
-        title: '' })
+        title: '',
+      })
       setExistingAttachmentNames([])
       setNewFiles([])
     }
   }, [open, mode, notice, form])
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  /** 응답에 categoryId가 없고 name만 있을 때 — 카테고리 목록으로 id 보정 */
+  useEffect(() => {
+    if (!open || mode !== 'edit' || !notice) return
+    const current = form.getFieldValue('categoryId')
+    if (typeof current === 'string' && isRegisterableNoticeCategoryId(current)) return
+    const rows = categoriesQuery.data ?? []
+    if (notice.categoryId != null) {
+      form.setFieldValue('categoryId', String(notice.categoryId))
+      return
+    }
+    const byName = rows.find(row => row.name === notice.category)
+    if (byName) form.setFieldValue('categoryId', byName.id)
+  }, [open, mode, notice, categoriesQuery.data, form])
+
   const attachmentDisplayNames = useMemo(
     () => [...existingAttachmentNames, ...newFiles.map(f => f.name)],
     [existingAttachmentNames, newFiles]
   )
 
+  /** API 카테고리만 — label=name, value=id. 하드코딩 폴백 없음 */
   const categorySelectOptions = useMemo(
-    () => (categoriesQuery.data ?? []).map(row => ({ label: row.name, value: row.name })),
+    () =>
+      (categoriesQuery.data ?? [])
+        .map(row => ({ label: row.name, value: row.id }))
+        .filter(opt => isRegisterableNoticeCategoryId(opt.value) && opt.label.trim().length > 0),
     [categoriesQuery.data]
   )
 
@@ -160,15 +229,26 @@ export function NoticeFormModal({
       return
     }
 
+    const categoryIdRaw = values.categoryId?.trim() ?? ''
+    const categoryId = Number(categoryIdRaw)
+    if (!isRegisterableNoticeCategoryId(categoryIdRaw) || !Number.isFinite(categoryId)) {
+      setErrorMessage('카테고리를 선택해 주세요.')
+      return
+    }
+    const categoryName =
+      categorySelectOptions.find(opt => opt.value === categoryIdRaw)?.label?.trim() ?? ''
+
     const attachmentNames = [...existingAttachmentNames, ...newFiles.map(f => f.name)]
     const pinToTop = values.pinTop === 'on'
     const base = {
       title: values.title,
       contentMarkdown: md,
-      category: values.category!,
+      categoryId,
+      category: categoryName,
       visibility: values.visibility,
       pinToTop,
       attachmentNames,
+      newFiles,
       author: authorName,
     }
 
@@ -218,11 +298,7 @@ export function NoticeFormModal({
         footer={
           <div className="notice-register-modal__footer-row">
             {mode === 'edit' ? (
-              <CmsButton
-                variant="delete"
-                size="large"
-                onClick={handleRequestDelete}
-              >
+              <CmsButton variant="delete" size="large" onClick={handleRequestDelete}>
                 공지사항 삭제
               </CmsButton>
             ) : null}
@@ -230,7 +306,12 @@ export function NoticeFormModal({
               <CmsButton variant="secondary" size="large" onClick={handleCancel}>
                 취소
               </CmsButton>
-              <CmsButton variant="primary" size="large" adminAction="write" onClick={() => form.submit()}>
+              <CmsButton
+                variant="primary"
+                size="large"
+                adminAction="write"
+                onClick={() => form.submit()}
+              >
                 {submitLabel}
               </CmsButton>
             </div>
@@ -247,17 +328,24 @@ export function NoticeFormModal({
           <div className="notice-register-modal__filter-wrap">
             <div className="notice-register-modal__filter-inner">
               <Form.Item
-                name="category"
+                name="categoryId"
                 label="카테고리"
                 className="notice-register-modal__filter-field notice-register-modal__filter-field--category"
-                rules={[{ required: true, message: '카테고리를 선택해 주세요.' }]}
+                normalize={(value: unknown) => {
+                  if (typeof value !== 'string') return undefined
+                  return isRegisterableNoticeCategoryId(value) ? value.trim() : undefined
+                }}
+                rules={[
+                  {
+                    validator: async (_, value) => {
+                      if (typeof value !== 'string' || !isRegisterableNoticeCategoryId(value)) {
+                        throw new Error('카테고리를 선택해 주세요.')
+                      }
+                    },
+                  },
+                ]}
               >
-                <CmsSelect
-                  placeholder="카테고리 선택"
-                  options={categorySelectOptions}
-                  inputSize="large"
-                  width={240}
-                />
+                <NoticeCategorySelect options={categorySelectOptions} />
               </Form.Item>
               <Form.Item
                 name="visibility"

@@ -8,14 +8,18 @@ export interface NoticeAttachment {
   name: string
   /** API 연동 시 — 없으면 mock placeholder 텍스트 파일로 다운로드 */
   fileUrl?: string
+  fileObjectId?: number
+  attachmentId?: number
 }
 
 export interface Notice {
   id: string
   title: string
   content: string
-  /** 관리자에서 동적 카테고리 추가 가능 — mock·스토어와 문자열로 일치 */
+  /** 표시용 카테고리명 (목록·상세). 생성/수정 API에는 categoryId 사용 */
   category: string
+  /** 공지 카테고리 ID — GET notice-categories / 생성·수정 요청용 */
+  categoryId?: number
   createdAt: string
   /** 수정일시 — API에 없으면 createdAt으로 표시 */
   updatedAt?: string
