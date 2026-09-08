@@ -69,6 +69,22 @@
   overflow: visible;
 }
 
+/*
+ * 잠금·미리보기(행 선택 없음) — 헤더 행 사각 bg가 외곽 radius 밖으로
+ * 새지 않게 테이블에서 clip. 선택 섀도우는 canvas-interactive에서만 필요.
+ */
+.form-editor-horizontal-table-wrap:not(.form-editor-horizontal-table-wrap--canvas-interactive)
+  .form-editor-horizontal-table {
+  overflow: hidden;
+}
+
+/* 헤더 bg는 행에 있음. 행에 inner radius를 줘야 외곽 라운드 밖으로 안 새어 나감 */
+.form-editor-horizontal-table__row--header:not(.form-editor-horizontal-table__row--selected) {
+  border-top-left-radius: var(--ht-radius-cell);
+  border-top-right-radius: var(--ht-radius-cell);
+  overflow: hidden;
+}
+
 /* 테이블 외곽 radius와 그리드 스트로크 정합 */
 .form-editor-horizontal-table__row--header .form-editor-horizontal-table__th:first-child {
   border-top-left-radius: var(--ht-radius-cell);

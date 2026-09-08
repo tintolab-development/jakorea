@@ -158,8 +158,8 @@ export type ShortEssayParagraph = WritingFormParagraphBase & {
   items?: Array<{ id: string; label?: string; placeholder?: string; bodyText: string }>
   bodyPlaceholder: string
   bodyText: string
-  /** 항목 입력 줄 수 — 1: 한 줄 입력(44px), 그 외/미지정: 기본 멀티라인(5줄). 동의 양식 짧은 라벨(성명·생년월일·전화번호 등)에 사용 */
-  itemInputRows?: 1 | 5
+  /** 항목 입력 줄 수 — 1: 한 줄 입력(44px), 4·5: 멀티라인. 동의 양식 짧은 라벨(성명·생년월일·전화번호 등)에 1 사용 */
+  itemInputRows?: 1 | 4 | 5
   /** 입력 글자 수 상한 — 지정 시 textarea `maxLength`·글자 수 카운터 적용 */
   maxLength?: number
 }

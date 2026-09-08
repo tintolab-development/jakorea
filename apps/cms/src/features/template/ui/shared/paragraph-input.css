@@ -63,9 +63,13 @@
   color: var(--paragraph-input-filled);
 }
 
-.paragraph-input--edit.paragraph-input--description:not(.paragraph-input--explanation-body)
+.paragraph-input--edit.paragraph-input--description:not(.paragraph-input--explanation-body):not(
+    .paragraph-input--filled
+  )
   .paragraph-input__leading,
-.paragraph-input--view.paragraph-input--description:not(.paragraph-input--explanation-body)
+.paragraph-input--view.paragraph-input--description:not(.paragraph-input--explanation-body):not(
+    .paragraph-input--filled
+  )
   .paragraph-input__leading {
   color: var(--gray-85969-d, #85969d);
   opacity: 0.6;
@@ -226,6 +230,16 @@
   opacity: 0.6;
 }
 
+/* 단락 설명 — 값이 있으면 placeholder가 아니라 본문 설명 톤(미리보기 `.form-paragraph-section-description`) */
+.paragraph-input--view.paragraph-input--filled.paragraph-input--description:not(
+    .paragraph-input--explanation-body
+  )
+  .paragraph-input__view-text {
+  color: var(--paragraph-input-filled);
+  -webkit-text-fill-color: var(--paragraph-input-filled);
+  opacity: 0.6;
+}
+
 .paragraph-input__placeholder {
   color: var(--paragraph-input-default);
 }
@@ -241,7 +255,9 @@
   background: transparent !important;
 }
 
-.paragraph-input--edit.paragraph-input--title .paragraph-input__shell :is(.ant-input, textarea.ant-input) {
+.paragraph-input--edit.paragraph-input--title
+  .paragraph-input__shell
+  :is(.ant-input, textarea.ant-input) {
   font-size: 20px !important;
   font-weight: 700 !important;
 }
@@ -287,15 +303,26 @@
   font-style: normal !important;
   font-weight: 500 !important;
   line-height: 150% !important;
-  color: var(--gray-85969-d, #85969d) !important;
-  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
-  opacity: 0.6 !important;
 }
 
-.paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--description
+.paragraph-input--edit.paragraph-input--description:not(.paragraph-input--explanation-body):not(
+    .paragraph-input--filled
+  )
+  .paragraph-input__shell
+  :is(.ant-input, textarea.ant-input),
+.paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--description:not(
+    .paragraph-input--filled
+  )
+  .paragraph-input__shell
+  :is(.ant-input, textarea.ant-input),
+.paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--description:not(
+    .paragraph-input--filled
+  )
   .paragraph-input__shell--focused
   .ant-input,
-.paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--description
+.paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--description:not(
+    .paragraph-input--filled
+  )
   .paragraph-input__shell--focused
   textarea.ant-input {
   color: var(--gray-85969-d, #85969d) !important;
@@ -325,8 +352,8 @@
 .paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
   .paragraph-input__shell--focused
   textarea.ant-input {
-  color: var(--gray-85969-d, #85969d) !important;
-  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  color: var(--paragraph-input-filled) !important;
+  -webkit-text-fill-color: var(--paragraph-input-filled);
   opacity: 0.6 !important;
 }
 
@@ -372,17 +399,20 @@
   )
   .paragraph-input__shell
   textarea.ant-input {
-  color: var(--gray-85969-d, #85969d) !important;
-  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  color: var(--paragraph-input-filled) !important;
+  -webkit-text-fill-color: var(--paragraph-input-filled);
   opacity: 0.6 !important;
 }
 
-.paragraph-input--edit.paragraph-input--filled.paragraph-input--title .paragraph-input__leading,
+.paragraph-input--edit.paragraph-input--filled.paragraph-input--title .paragraph-input__leading {
+  color: var(--paragraph-input-filled);
+}
+
 .paragraph-input--edit.paragraph-input--filled.paragraph-input--description:not(
     .paragraph-input--explanation-body
   )
   .paragraph-input__leading {
-  color: var(--gray-85969-d, #85969d);
+  color: var(--paragraph-input-filled);
   opacity: 0.6;
 }
 
@@ -436,7 +466,7 @@
   opacity: 0.6;
 }
 
-/* 입력값이 있을 때만 포커스·일반 모두 본문색(설명은 0.6) */
+/* 입력값이 있을 때만 포커스·일반 모두 본문색(설명은 본문색 + 0.6, placeholder 회색과 구분) */
 .paragraph-input--edit.paragraph-input--filled.paragraph-input--title
   .paragraph-input__shell--focused
   .ant-input,
@@ -456,8 +486,8 @@
   )
   .paragraph-input__shell--focused
   textarea.ant-input {
-  color: var(--gray-85969-d, #85969d) !important;
-  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  color: var(--paragraph-input-filled) !important;
+  -webkit-text-fill-color: var(--paragraph-input-filled);
   opacity: 0.6 !important;
 }
 
@@ -472,7 +502,7 @@
   )
   .paragraph-input__row:has(.paragraph-input__shell--focused)
   .paragraph-input__leading {
-  color: var(--gray-85969-d, #85969d);
+  color: var(--paragraph-input-filled);
   opacity: 0.6;
 }
 
