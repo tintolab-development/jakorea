@@ -42,6 +42,7 @@ export function createShortEssayDefault(id: string): ShortEssayParagraph {
     ],
     bodyPlaceholder: '답변을 입력해 주세요',
     bodyText: '',
+    itemInputRows: 1,
   }
 }
 

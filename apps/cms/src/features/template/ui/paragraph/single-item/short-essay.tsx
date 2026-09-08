@@ -79,7 +79,8 @@ export function ShortEssay({
           },
         ]
   const showItemTitle = items.length >= 2 ? true : (paragraph.showItemTitle ?? false)
-  const itemInputRows = paragraph.itemInputRows ?? 5
+  const itemInputRows = paragraph.itemInputRows ?? 1
+  const singleLineExpandable = itemInputRows === 1
   const maxLength = paragraph.maxLength
 
   const updateItemBodyText = (id: string, bodyText: string) => {
@@ -114,7 +115,14 @@ export function ShortEssay({
   }
 
   return (
-    <div className="short-essay-items">
+    <div
+      className={[
+        'short-essay-items',
+        singleLineExpandable ? 'short-essay-items--single-line-default' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       {items.map((item, index) => {
         const itemLabel = showItemTitle
           ? (item.label ?? `Title ${String(index + 1).padStart(2, '0')}`)
@@ -149,6 +157,7 @@ export function ShortEssay({
             value={item.bodyText}
             placeholder={item.placeholder ?? ph}
             rows={itemInputRows}
+            expandableFromSingleRow={singleLineExpandable}
             maxLength={maxLength}
             showCount={maxLength != null}
             onClick={event => {
@@ -233,6 +242,7 @@ export function subjectiveParagraphToShortEssayView(p: SubjectiveParagraph): Sho
     bodyPlaceholder,
     bodyText: '',
     showItemTitle: mappedItems.length >= 2 ? true : false,
+    itemInputRows: 1,
     items: mappedItems,
   }
 }
