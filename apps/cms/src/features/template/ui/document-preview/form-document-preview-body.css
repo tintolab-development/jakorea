@@ -4,7 +4,7 @@
 .form-document-preview-body {
   display: flex;
   flex-direction: column;
-  gap: var(--form-document-preview-gap, 32px);
+  gap: var(--form-document-preview-gap, 40px);
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -196,18 +196,6 @@
 .form-document-preview-body--agreement-portrait
   .form-document-preview-paragraph--content-only-confirm {
   margin-bottom: 12px;
-}
-
-.form-document-preview-body--agreement-portrait
-  .form-document-preview-paragraph--content-only-closing.form-document-preview-paragraph--content-only-confirm-rule,
-.form-document-preview-body--agreement-portrait
-  .form-document-preview-paragraph--content-only-confirm.form-document-preview-paragraph--content-only-confirm-rule {
-  padding-top: 20px;
-}
-
-.form-document-preview-body--agreement-portrait
-  .form-document-preview-paragraph--content-only-confirm-rule::before {
-  margin-bottom: 16px;
 }
 
 .form-document-preview-body--agreement-portrait .explanation-system--document-date {

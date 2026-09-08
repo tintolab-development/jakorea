@@ -2,9 +2,9 @@ import {
   getAgreementClosingStackGapBefore,
   type FormDocumentPreviewParagraphGapResolver,
 } from '@/features/template/lib/a4-document-preview'
+import { A4_DOCUMENT_PARAGRAPH_GAP_PX } from '@/features/template/lib/a4-document-pagination-constants'
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
-  AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/writing-form-draft.schema'
 
 export const AGREEMENT_NOTICE_A4_HIDDEN_PARAGRAPH_IDS = new Set<string>([
@@ -23,6 +23,6 @@ export const getAgreementNoticeA4ParagraphGap: FormDocumentPreviewParagraphGapRe
   ) {
     return 0
   }
-  const fallback = AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS.has(paragraph.id) ? 32 : 16
+  const fallback = A4_DOCUMENT_PARAGRAPH_GAP_PX
   return getAgreementClosingStackGapBefore(paragraph, index, pageParagraphs, fallback)
 }
