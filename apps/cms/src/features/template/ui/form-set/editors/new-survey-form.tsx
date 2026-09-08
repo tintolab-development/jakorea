@@ -14,13 +14,11 @@ import { getFormNavDisplayLine } from '@/features/template/lib/form-title-number
 import {
   createDefaultSurveyDraft,
   DEFAULT_SURVEY_PARAGRAPH_IDS,
-  getWritingFormHeadMiddlePinnedTail,
-  reorderWritingFormMiddleParagraphs,
-  SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS,
   type FormTitleNumberingStyle,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import { reorderSurveyParagraphs } from '@/features/template/lib/writing-form-middle-paragraph-mutations'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
@@ -45,10 +43,8 @@ function resolveSurveyTemplateName(draft: WritingFormDraft): string {
   return '신규 설문 양식'
 }
 
-function hasSurveyMiddleParagraph(draft: WritingFormDraft): boolean {
-  const split = getWritingFormHeadMiddlePinnedTail(draft.paragraphs)
-  if (split == null) return false
-  return split.middle.length > 0
+function hasMinimumSurveyParagraphs(draft: WritingFormDraft): boolean {
+  return draft.paragraphs.length >= 1
 }
 
 export default function NewSurveyForm() {
@@ -85,7 +81,7 @@ export default function NewSurveyForm() {
   const onReorderMiddle = useCallback((activeId: string, overId: string) => {
     setDraft(prev => ({
       ...prev,
-      paragraphs: reorderWritingFormMiddleParagraphs(prev.paragraphs, activeId, overId),
+      paragraphs: reorderSurveyParagraphs(prev.paragraphs, activeId, overId),
     }))
   }, [])
 
@@ -96,19 +92,14 @@ export default function NewSurveyForm() {
     }))
   }, [])
 
-  const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {
-    const [head, ...rest] = draft.paragraphs
-    const tail = rest[rest.length - 1]
-    const middle = rest.slice(0, -1)
+  const { sortableMiddle } = useMemo(() => {
     const { titleNumbering } = draft.formSettings
     const line = (p: WritingFormParagraph) => ({
       id: p.id,
       displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
     })
     return {
-      pinnedTop: line(head),
-      sortableMiddle: middle.map(line),
-      pinnedBottom: line(tail),
+      sortableMiddle: draft.paragraphs.map(line),
     }
   }, [draft])
 
@@ -138,7 +129,7 @@ export default function NewSurveyForm() {
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    if (!hasSurveyMiddleParagraph(draft)) {
+    if (!hasMinimumSurveyParagraphs(draft)) {
       showSaveFailure()
       return
     }
@@ -182,7 +173,9 @@ export default function NewSurveyForm() {
     setSingleItemListActiveItemId(null)
   }, [])
 
-  const middleParagraphActions = useWritingFormMiddleParagraphActions(setDraft, setActiveParagraphId)
+  const middleParagraphActions = useWritingFormMiddleParagraphActions(setDraft, setActiveParagraphId, {
+    surveyFreeForm: true,
+  })
   const {
     horizontalTableRowSelectionsByParagraphId,
     verticalTableBodyRowSelection,
@@ -201,7 +194,7 @@ export default function NewSurveyForm() {
       open
       onClose={handleClose}
       title="설문조사"
-      description="* 등록 시 제목과 마무리글, 설문자 정보를 제외하고 최소 1개 이상의 단락이 존재해야 합니다."
+      description="모든 항목의 추가 및 삭제, 수정이 가능한 양식입니다."
       templateTabType="writing"
       leftContent={
         <FormEditorLeftPanel
@@ -211,7 +204,6 @@ export default function NewSurveyForm() {
           onSelectCard={handleSelectParagraph}
           onReorderMiddle={onReorderMiddle}
           updateParagraph={updateParagraph}
-          hideDragHandleForParagraphIds={SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS}
           editorKind="survey"
           singleItemListActiveItemId={singleItemListActiveItemId}
           onSelectSingleItemListItem={(paragraphId, itemId) => {
@@ -228,10 +220,7 @@ export default function NewSurveyForm() {
       rightNavigation={
         <FormEditorFieldNav
           sectionTitle="커스텀 필드"
-          pinnedTop={pinnedTop}
           sortableMiddle={sortableMiddle}
-          pinnedBottom={pinnedBottom}
-          hideSortableDragHandleForIds={SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS}
           selectedItemId={activeParagraphId}
           onSelectItem={handleSelectParagraph}
           onReorderMiddle={onReorderMiddle}

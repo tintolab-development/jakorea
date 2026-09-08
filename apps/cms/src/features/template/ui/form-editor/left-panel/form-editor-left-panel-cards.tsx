@@ -23,6 +23,7 @@ import {
   withProgramRegistrationCurriculumTitleTrailing,
   withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing,
   withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing,
+  withMultipleChoiceAllowMultipleTitleHint,
   withoutPlaceholderDescriptionInPreview,
   withoutTitleRequired,
 } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-heading'
@@ -117,15 +118,18 @@ function PinnedFormCardInner({
   const hideDragHandle = hideDragHandleForParagraphIds?.has(paragraph.id) ?? false
   const editableHeadingBase = withoutPlaceholderDescriptionInPreview(
     withoutTitleRequired(
-      paragraphEditableHeading(
-        paragraph,
-        paragraphs,
-        titleNumbering,
-        isSelected,
-        updateParagraph,
-        editorKind,
-        structureLockedParagraphIds,
-        headingDescriptionExtraClassName
+      withMultipleChoiceAllowMultipleTitleHint(
+        paragraphEditableHeading(
+          paragraph,
+          paragraphs,
+          titleNumbering,
+          isSelected,
+          updateParagraph,
+          editorKind,
+          structureLockedParagraphIds,
+          headingDescriptionExtraClassName
+        ),
+        paragraph
       ),
       hideParagraphRequiredChrome
     ),
@@ -190,7 +194,8 @@ function PinnedFormCardInner({
               updateParagraph,
               middleParagraphActions,
               paragraphs,
-              structureLockedParagraphIds
+              structureLockedParagraphIds,
+              editorKind
             )
           : undefined
       }
@@ -272,15 +277,18 @@ function SortableMiddleFormCardInner({
   const isSelected = selectedCardId === paragraph.id
   const editableHeadingBase = withoutPlaceholderDescriptionInPreview(
     withoutTitleRequired(
-      paragraphEditableHeading(
-        paragraph,
-        paragraphs,
-        titleNumbering,
-        isSelected,
-        updateParagraph,
-        editorKind,
-        structureLockedParagraphIds,
-        headingDescriptionExtraClassName
+      withMultipleChoiceAllowMultipleTitleHint(
+        paragraphEditableHeading(
+          paragraph,
+          paragraphs,
+          titleNumbering,
+          isSelected,
+          updateParagraph,
+          editorKind,
+          structureLockedParagraphIds,
+          headingDescriptionExtraClassName
+        ),
+        paragraph
       ),
       hideParagraphRequiredChrome
     ),
@@ -376,7 +384,8 @@ function SortableMiddleFormCardInner({
                 updateParagraph,
                 middleParagraphActions,
                 paragraphs,
-                structureLockedParagraphIds
+                structureLockedParagraphIds,
+                editorKind
               )
             : undefined
         }

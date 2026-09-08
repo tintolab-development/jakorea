@@ -19,6 +19,7 @@ import { getLastMiddleParagraphId } from '@/features/template/lib/writing-form-m
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel.types'
 import { isTitleWithPeriodParagraph } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-heading'
+import type { FormEditorKind } from '@/features/template/model/writing-form-draft.schema'
 
 function disabledParagraphCardActions(minimal = false) {
   return minimal ? (
@@ -265,9 +266,12 @@ export function modalCardFooterActions(
   updateParagraph: FormEditorLeftPanelProps['updateParagraph'],
   middleParagraphActions: FormEditorLeftPanelProps['middleParagraphActions'],
   paragraphs: WritingFormParagraph[],
-  structureLockedParagraphIds?: ReadonlySet<string>
+  structureLockedParagraphIds?: ReadonlySet<string>,
+  editorKind: FormEditorKind = 'survey'
 ): ReactNode {
   const structureLocked = structureLockedParagraphIds?.has(paragraph.id) ?? false
+  const surveyFreeForm = editorKind === 'survey'
+  const titleActionsLocked = !surveyFreeForm && isTitleWithPeriodParagraph(paragraph)
 
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
     if (!isSelected) return undefined
@@ -353,6 +357,10 @@ export function modalCardFooterActions(
         duplicateDisabled={structureLocked}
         deleteDisabled={structureLocked}
         onAdd={() => {
+          if (surveyFreeForm) {
+            middleParagraphActions.onAddAfter(paragraph.id)
+            return
+          }
           const lastMid = getLastMiddleParagraphId(paragraphs)
           if (lastMid != null) {
             middleParagraphActions.onAddAfter(lastMid)
@@ -448,8 +456,8 @@ export function modalCardFooterActions(
     return middleParagraphActions ? (
       <FormParagraphCardActionsMinimal
         addDisabled={structureLocked}
-        duplicateDisabled={structureLocked}
-        deleteDisabled={structureLocked}
+        duplicateDisabled={structureLocked || titleActionsLocked}
+        deleteDisabled={structureLocked || titleActionsLocked}
         onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
         onDuplicate={() => middleParagraphActions.onDuplicate(paragraph.id)}
         onDelete={() => middleParagraphActions.onDelete(paragraph.id)}

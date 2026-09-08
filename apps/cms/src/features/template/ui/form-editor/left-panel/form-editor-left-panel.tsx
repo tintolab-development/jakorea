@@ -12,6 +12,7 @@ import {
   getWritingFormHeadMiddlePinnedTail,
   isAgreementLockedSystemParagraph,
   paragraphsAreOnlyTableLayoutParagraphs,
+  type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   renderFormParagraphBody,
@@ -283,6 +284,61 @@ export function FormEditorLeftPanel({
           headingDescriptionExtraClassName={headingDescriptionExtraClassName}
           showEditorChrome={showEditorChrome}
         />
+      </div>
+    )
+  }
+
+  if (editorKind === 'survey') {
+    const sortableIds = displayParagraphs.map(p => p.id)
+    if (sortableIds.length < 1) return null
+
+    const renderSurveyCard = (p: WritingFormParagraph, sortable: boolean) => {
+      const commonProps = {
+        paragraph: p,
+        paragraphIndex: paragraphIndexById.get(p.id) ?? 0,
+        paragraphs: displayParagraphs,
+        titleNumbering,
+        selectedCardId,
+        onSelectCard,
+        updateParagraph,
+        editorKind,
+        singleItemListActiveItemId,
+        onSelectSingleItemListItem,
+        horizontalTableRowSelectionsByParagraphId,
+        onHorizontalTableRowSelectionChange,
+        verticalTableBodyRowSelection,
+        onVerticalTableBodyRowSelectionChange,
+        middleParagraphActions,
+        paragraphBodyOptions: mergedParagraphBodyOptions,
+        structureLockedParagraphIds,
+        hideDragHandleForParagraphIds,
+        hideParagraphRequiredChrome,
+        headingDescriptionExtraClassName,
+        showEditorChrome,
+      }
+      return sortable ? (
+        <SortableMiddleFormCard key={p.id} {...commonProps} />
+      ) : (
+        <PinnedFormCard key={p.id} {...commonProps} />
+      )
+    }
+
+    return (
+      <div className={formEditorLeftClassName}>
+        {showEditorChrome ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictFormEditorListToVerticalAxis]}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+              {displayParagraphs.map(p => renderSurveyCard(p, true))}
+            </SortableContext>
+          </DndContext>
+        ) : (
+          displayParagraphs.map(p => renderSurveyCard(p, false))
+        )}
       </div>
     )
   }

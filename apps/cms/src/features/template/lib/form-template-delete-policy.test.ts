@@ -48,6 +48,21 @@ describe('form-template-delete-policy', () => {
     ).toBe(false)
   })
 
+  it('never locks catalog survey templates', () => {
+    expect(
+      isWritingFormTemplateStructureLocked({
+        templateCode: 'survey-default',
+        systemTemplate: true,
+      })
+    ).toBe(false)
+    expect(
+      isWritingFormTemplateStructureLocked({
+        templateCode: 'survey-admin',
+        systemTemplate: true,
+      })
+    ).toBe(false)
+  })
+
   it('treats user-created list rows as editable', () => {
     expect(
       isUserCreatedWritingFormTemplateRow({

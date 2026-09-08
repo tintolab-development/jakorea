@@ -17,6 +17,7 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import { reorderSurveyParagraphs } from '@/features/template/lib/writing-form-middle-paragraph-mutations'
 import {
   useWritingFormMiddleParagraphActions,
   type MiddleParagraphActionsHandlers,
@@ -209,12 +210,18 @@ export function useWritingFormEditorWithUserPreview(
     syncWritingUserPreviewSession(writingPreviewSession)
   }, [open, isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
 
-  const onReorderMiddle = useCallback((activeId: string, overId: string) => {
-    setDraft(prev => ({
-      ...prev,
-      paragraphs: reorderHeadMiddleTail(prev.paragraphs, activeId, overId),
-    }))
-  }, [])
+  const onReorderMiddle = useCallback(
+    (activeId: string, overId: string) => {
+      setDraft(prev => ({
+        ...prev,
+        paragraphs:
+          editorKind === 'survey'
+            ? reorderSurveyParagraphs(prev.paragraphs, activeId, overId)
+            : reorderHeadMiddleTail(prev.paragraphs, activeId, overId),
+      }))
+    },
+    [editorKind]
+  )
 
   const onTitleNumberingChange = useCallback((style: FormTitleNumberingStyle) => {
     setDraft(prev => ({
@@ -229,6 +236,13 @@ export function useWritingFormEditorWithUserPreview(
       id: p.id,
       displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
     })
+    if (editorKind === 'survey') {
+      return {
+        pinnedTop: null as ReturnType<typeof line> | null,
+        sortableMiddle: draft.paragraphs.map(line),
+        pinnedBottom: null as ReturnType<typeof line> | ReturnType<typeof line>[] | null,
+      }
+    }
     const split = getWritingFormHeadMiddlePinnedTail(draft.paragraphs)
     if (split == null) {
       return {
@@ -245,7 +259,7 @@ export function useWritingFormEditorWithUserPreview(
       pinnedBottom:
         bottomLines.length === 1 ? bottomLines[0]! : bottomLines.length > 1 ? bottomLines : null,
     }
-  }, [draft])
+  }, [draft, editorKind])
 
   const handlePreview = useCallback(() => {
     openWritingUserPreview(writingPreviewSession)
@@ -289,7 +303,8 @@ export function useWritingFormEditorWithUserPreview(
 
   const middleParagraphActions = useWritingFormMiddleParagraphActions(
     setDraft,
-    setActiveParagraphId
+    setActiveParagraphId,
+    { surveyFreeForm: editorKind === 'survey' }
   )
 
   return {

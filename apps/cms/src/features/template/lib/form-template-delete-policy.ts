@@ -1,4 +1,5 @@
 import { TEMPLATE_CODE_CATALOG } from '@/features/template/api/form-template-catalog'
+import { lookupTemplateRegistry } from '@/features/template/model/template-registry/template-registry'
 
 const DELETE_AVAILABLE_ACTIONS = new Set(['DELETE', 'delete', 'REMOVE', 'remove'])
 
@@ -37,11 +38,16 @@ export function isDuplicateWritingTemplateCode(
   return /-copy(?:-\d+)?$/i.test(code)
 }
 
-/** 단락 구조·본문 편집 잠금 여부 — 고정 카탈로그 양식만 true */
+/** 단락 구조·본문 편집 잠금 여부 — 고정 카탈로그 양식만 true (설문 양식 제외) */
 export function isWritingFormTemplateStructureLocked(
   target: WritingFormTemplateStructureLockTarget
 ): boolean {
   if (target.forceUserEditable === true) return false
+  const templateCode = target.templateCode?.trim()
+  if (templateCode != null && templateCode !== '') {
+    const registryEntry = lookupTemplateRegistry(templateCode)
+    if (registryEntry?.category === 'survey') return false
+  }
   if (target.systemTemplate === false) return false
   if (isDuplicateWritingTemplateCode(target.templateCode)) return false
   if (target.systemTemplate === true) return true
