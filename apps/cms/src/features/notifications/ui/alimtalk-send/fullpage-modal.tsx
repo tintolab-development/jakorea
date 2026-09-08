@@ -7,6 +7,7 @@ import {
   AlimtalkPhonePreview,
   CmsButton,
   CmsDatePicker,
+  CmsInput,
   CmsRadio,
   CmsSelect,
   ConfirmModal,
@@ -52,7 +53,13 @@ import {
   useAlimtalkTemplateDetailQuery,
   useAlimtalkTemplatePreviewQuery,
 } from '@/features/notifications/hooks/use-alimtalk-template-tree-query'
-import { templateUsesProgramRequiredVariable } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
+import {
+  buildAlimtalkBatchVariables,
+  collectTemplatePlaceholderKeys,
+  findMissingAlimtalkTemplateVariableKeys,
+  formatAlimtalkMissingVariablesMessage,
+  templateUsesProgramRequiredVariable,
+} from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import { ContentPanel } from './content-panel'
 import { RecipientManualModal } from './recipient-manual-modal'
 import { RecipientSelectModal } from './recipient-select-modal'
@@ -130,6 +137,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     keyword: '',
     page: 0,
   })
+  /** 본문 #{...} 필수값 — batch variables로 전달 */
+  const [templateVariableValues, setTemplateVariableValues] = useState<Record<string, string>>({})
   const idempotencyKeyRef = useRef(createIdempotencyKey())
 
   const senderProfilesQuery = useAlimtalkSenderProfilesQuery(open)
@@ -207,6 +216,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     setSendConfirmOpen(false)
     setSending(false)
     setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
+    setTemplateVariableValues({})
   }, [open, initialTemplateId])
 
   // 프로그램 전환 시: 유형 필터·page 리셋 (이전 모드 enum 혼용 금지)
@@ -258,6 +268,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         detail?.name ||
         '-',
       content: preview?.content || detail?.content || pickerTemplate?.content || '',
+      titleTemplate:
+        preview?.titleTemplate || detail?.titleTemplate || pickerTemplate?.titleTemplate,
       extraInfo: preview?.extraInfo || detail?.extraInfo || pickerTemplate?.extraInfo || '',
       senderProfile:
         (preview?.senderProfile && preview.senderProfile !== '-'
@@ -286,10 +298,33 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     [selectedTemplate, variablesQuery.data]
   )
 
+  const requiredPlaceholderKeys = useMemo(() => {
+    if (!selectedTemplate) return [] as string[]
+    return [...collectTemplatePlaceholderKeys(selectedTemplate)].sort((a, b) =>
+      a.localeCompare(b, 'ko')
+    )
+  }, [selectedTemplate])
+
+  const batchVariables = useMemo(
+    () => buildAlimtalkBatchVariables(templateVariableValues),
+    [templateVariableValues]
+  )
+
+  const missingRequiredVariableKeys = useMemo(
+    () =>
+      findMissingAlimtalkTemplateVariableKeys({
+        requiredKeys: requiredPlaceholderKeys,
+        batchVariables,
+        recipients,
+      }),
+    [batchVariables, recipients, requiredPlaceholderKeys]
+  )
+
   const canConfigureRecipients = Boolean(selectedSender && selectedTemplate)
 
   const handleSelectTemplate = (template: AlimtalkTemplateItem) => {
     setTemplateId(template.id)
+    setTemplateVariableValues({})
     if (template.senderKey) {
       const matched = senderOptions.find(option => option.senderKey === template.senderKey)
       if (matched) setSenderProfileKey(matched.value)
@@ -368,6 +403,13 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       })
       return
     }
+    if (missingRequiredVariableKeys.length > 0) {
+      showAlert({
+        title: '필수 입력 안내',
+        content: formatAlimtalkMissingVariablesMessage(missingRequiredVariableKeys),
+      })
+      return
+    }
     setSendConfirmOpen(true)
   }
 
@@ -384,6 +426,14 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       return
     }
 
+    if (missingRequiredVariableKeys.length > 0) {
+      showAlert({
+        title: '필수 입력 안내',
+        content: formatAlimtalkMissingVariablesMessage(missingRequiredVariableKeys),
+      })
+      return
+    }
+
     setSending(true)
     try {
       await createAlimtalkSendBatch({
@@ -395,6 +445,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         senderKey: selectedSender.senderKey,
         senderProfileId: selectedSender.profileId,
         recipients,
+        variables: batchVariables,
         idempotencyKey: idempotencyKeyRef.current,
       })
       idempotencyKeyRef.current = createIdempotencyKey()
@@ -547,6 +598,45 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                 </DetailInfoForm.Row>
               </DetailInfoForm>
             </section>
+
+            {requiredPlaceholderKeys.length > 0 ? (
+              <section className="alimtalk-send-fullpage__widget">
+                <h3 className="alimtalk-send-fullpage__section-title">
+                  템플릿 필수 변수<span className="alimtalk-send-fullpage__required">*</span>
+                </h3>
+                <p className="alimtalk-send-fullpage-modal__notice-text">
+                  본문의 {'#{...}'} 값은 발송 전 채워야 합니다. 회원(MEMBER) 수신자는 「사용자
+                  아이디(이메일)」을 BE가 자동 채울 수 있습니다. DIRECT(번호 직접 입력)는 모두
+                  직접 입력하세요.
+                </p>
+                <DetailInfoForm title="템플릿 필수 변수" hideHeader mode="edit">
+                  {requiredPlaceholderKeys.map(key => (
+                    <DetailInfoForm.Row key={key} type="single">
+                      <DetailInfoForm.Field
+                        label={key}
+                        required
+                        fullRow
+                        view={templateVariableValues[key] || '-'}
+                        edit={
+                          <CmsInput
+                            inputSize="large"
+                            value={templateVariableValues[key] ?? ''}
+                            placeholder={`#{${key}}`}
+                            onChange={event => {
+                              const nextValue = event.target.value
+                              setTemplateVariableValues(prev => ({
+                                ...prev,
+                                [key]: nextValue,
+                              }))
+                            }}
+                          />
+                        }
+                      />
+                    </DetailInfoForm.Row>
+                  ))}
+                </DetailInfoForm>
+              </section>
+            ) : null}
 
             <section className="alimtalk-send-fullpage__widget alimtalk-send-fullpage__widget--recipients">
               <div className="alimtalk-send-fullpage__section-head">
