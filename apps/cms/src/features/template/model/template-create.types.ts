@@ -2,13 +2,12 @@
  * 템플릿 신규 등록 모달 · URL 분기용 타입
  */
 
-/** 모달 라디오: 모집 / 신청 / 설문 / 동의 / 직접 등록 */
+/** 모달 라디오: 모집 / 신청 / 설문 / 동의 */
 export type TemplateCreateKind =
   | 'application'
   | 'application_form'
   | 'survey'
   | 'agreement'
-  | 'direct'
 
 /**
  * 작성 양식 섹션 키 (등록 양식 registration 제외)

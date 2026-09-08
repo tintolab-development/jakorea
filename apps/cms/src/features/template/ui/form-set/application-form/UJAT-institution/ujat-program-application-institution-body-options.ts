@@ -14,6 +14,6 @@ export type UjatProgramApplicationGradeClassTimeParagraphOptions = {
   classTimeBlockIds: readonly string[]
   onAddClassTimeBlock: () => void
   onRemoveClassTimeBlockAtIndex: (index: number) => void
-  /** 신청 정보 단락에서 고른 학년(`1`…`6`)의 정렬·중복 제거 목록. 비면 안내 문구만 노출 */
+  /** 학년 별 신청 정보에서 입력한 학년(`1`…`6`) — 수업 시간 해당 학년 항목 */
   applicationGradeValuesForClassTime: readonly string[]
 }

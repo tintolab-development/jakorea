@@ -1,4 +1,4 @@
-import { MenuOutlined } from '@ant-design/icons'
+import { SortOrderDragIcon } from '@/shared/ui/sort-order-drag-icon'
 import { Form } from 'antd'
 import {
   DndContext,
@@ -67,7 +67,7 @@ function SortableMcRow({
         {...attributes}
         {...listeners}
       >
-        <MenuOutlined />
+        <SortOrderDragIcon />
       </button>
       <div className="form-editor-mc-item__field-wrap">
         <span className="form-editor-mc-item__index" aria-hidden>{`${index + 1}.`}</span>

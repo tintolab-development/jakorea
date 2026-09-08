@@ -1,6 +1,6 @@
 {
   "templateCode": "document-payment-order-issue",
-  "templateName": "지급조서 (발급용)",
+  "templateName": "지급조서(발급용)",
   "formType": "ISSUANCE",
   "category": "ISSUANCE",
   "schemaJson": {

@@ -79,7 +79,7 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
                 inputSize="medium"
                 width={120}
                 withAllOption
-                placeholder="학년"
+                placeholder="전체"
                 value={grade}
                 onChange={v => setGrade(v == null ? undefined : String(v))}
                 options={GRADE_OPTIONS}
@@ -94,7 +94,7 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
             <CmsInput
               inputSize="medium"
               width="100%"
-              placeholder="복수전공이나 부전공이 있을 경우, 함께 기재"
+              placeholder="복수전공이나 부전공이 있을 경우, 함께 기재해 주세요"
               value={major}
               onChange={e => setMajor(e.target.value)}
             />
@@ -107,38 +107,27 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
         <DetailInfoForm.Field
           label="지원 경로"
           edit={
-            isOtherApplicationRoute ? (
-              <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
-                <CmsSelect
-                  inputSize="medium"
-                  width={160}
-                  withAllOption={false}
-                  placeholder="선택"
-                  value={applicationRoute}
-                  onChange={v => setApplicationRoute(v == null ? undefined : String(v))}
-                  options={APPLICATION_ROUTE_OPTIONS}
-                />
-                <DetailInfoForm.InputsSeparator />
-                <CmsInput
-                  inputSize="medium"
-                  width="100%"
-                  style={{ flex: '1 1 0', minWidth: 0 }}
-                  placeholder="직접 입력"
-                  value={applicationRouteOther}
-                  onChange={e => setApplicationRouteOther(e.target.value)}
-                />
-              </div>
-            ) : (
+            <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
               <CmsSelect
                 inputSize="medium"
-                width="100%"
+                width={160}
                 withAllOption
-                placeholder="선택"
+                placeholder="전체"
                 value={applicationRoute}
                 onChange={v => setApplicationRoute(v == null ? undefined : String(v))}
                 options={APPLICATION_ROUTE_OPTIONS}
               />
-            )
+              <DetailInfoForm.InputsSeparator />
+              <CmsInput
+                inputSize="medium"
+                width="100%"
+                style={{ flex: '1 1 0', minWidth: 0 }}
+                placeholder="직접 입력"
+                disabled={!isOtherApplicationRoute}
+                value={applicationRouteOther}
+                onChange={e => setApplicationRouteOther(e.target.value)}
+              />
+            </div>
           }
           view="-"
         />
@@ -208,37 +197,15 @@ export function UjatProgramApplicationVolunteerBasicInfoDetailForm({
   )
 }
 
-/** UJAT 프로그램 봉사자 신청 폼 — 기본 정보(템플릿 편집: 단일 격자) */
+/** UJAT 프로그램 봉사자 신청 폼 — 기본 정보(템플릿 편집: 2×2 격자, 1365 ID 없음) */
 export function UjatProgramApplicationVolunteerBasicInfoParagraph({
   applicationType,
   onApplicationTypeChange,
 }: BasicInfoFieldsProps) {
-  const [id1365, setId1365] = useUjatApplicationVolunteerOverlayKv<string>(
-    UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.id1365,
-    ''
-  )
-
   return (
-    <DetailInfoForm title="기본 정보" hideHeader mode="edit">
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="1365 ID"
-          edit={
-            <CmsInput
-              inputSize="medium"
-              width="100%"
-              placeholder="1365 ID"
-              value={id1365}
-              onChange={e => setId1365(e.target.value)}
-            />
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-      <UjatProgramApplicationVolunteerBasicInfoFieldRows
-        applicationType={applicationType}
-        onApplicationTypeChange={onApplicationTypeChange}
-      />
-    </DetailInfoForm>
+    <UjatProgramApplicationVolunteerBasicInfoDetailForm
+      applicationType={applicationType}
+      onApplicationTypeChange={onApplicationTypeChange}
+    />
   )
 }

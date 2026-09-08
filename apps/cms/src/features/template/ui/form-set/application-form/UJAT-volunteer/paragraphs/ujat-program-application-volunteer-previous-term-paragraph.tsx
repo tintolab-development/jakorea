@@ -40,8 +40,7 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph() {
               <CmsNumericInput
                 mode="numericText"
                 inputSize="medium"
-                width="100%"
-                style={{ flex: '3 1 0', minWidth: 0 }}
+                width={240}
                 placeholder="활동 기수"
                 value={term}
                 onValueChange={setTerm}
@@ -49,8 +48,7 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph() {
               <DetailInfoForm.InputsSeparator />
               <CmsInput
                 inputSize="medium"
-                width="100%"
-                style={{ flex: '7 1 0', minWidth: 0 }}
+                width={240}
                 placeholder="활동 년도"
                 value={year}
                 onChange={e => setYear(e.target.value)}

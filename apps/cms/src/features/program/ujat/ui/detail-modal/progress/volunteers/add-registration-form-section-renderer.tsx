@@ -3,6 +3,7 @@
  * draft 단락 본문(`renderFormParagraphBody`) + 전용 plugin·custom 섹션 통합
  */
 
+import { resolveUjatVolunteerRuntimeHiddenParagraphIds } from '@/features/template/lib/ujat-volunteer-application-form-visibility'
 import type { ProgramParticipantApplicationEditorViewModel } from '@/features/template/hooks/use-program-participant-application-editor'
 import type { WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { normalizeHorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
@@ -34,8 +35,10 @@ function buildRenderParagraphBodyOptions(vm: ProgramParticipantApplicationEditor
       enabled: true,
       applicationType: vm.ujatVolunteerApplicationType,
       onApplicationTypeChange: vm.setUjatVolunteerApplicationType,
+      recruitCohortLabel:
+        vm.leftPanelParagraphBodyOptions?.ujatProgramApplicationFormVolunteer?.recruitCohortLabel,
     },
-    hiddenParagraphIds: vm.ujatVolunteerApplicationType === 'new' ? new Set<string>() : undefined,
+    hiddenParagraphIds: resolveUjatVolunteerRuntimeHiddenParagraphIds(vm.ujatVolunteerApplicationType),
   }
 }
 

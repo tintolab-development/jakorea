@@ -5,7 +5,7 @@
 .paragraph-card {
   position: relative;
   display: flex;
-  padding: 20px;
+  padding: 20px 28px;
   flex-direction: column;
   align-items: stretch;
   align-self: stretch;
@@ -163,8 +163,8 @@
   cursor: grab;
 }
 
-.paragraph-card__drag-handle .anticon {
-  font-size: 14px;
+.paragraph-card__drag-handle .sort-order-drag-icon {
+  display: block;
 }
 
 .paragraph-card__drag-handle--non-interactive {

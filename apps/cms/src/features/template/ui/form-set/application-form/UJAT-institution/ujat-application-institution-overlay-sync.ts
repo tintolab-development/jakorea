@@ -1,6 +1,7 @@
 import { useCallback, useSyncExternalStore } from 'react'
 
 export const UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS = {
+  applicationRegion: 'ujatApplication.applicationRegion',
   gradeDetailByBlock: 'ujatApplication.gradeDetailByBlock',
   classTimeCheckedByBlock: 'ujatApplication.classTimeCheckedByBlock',
   classTimePeriodsByBlock: 'ujatApplication.classTimePeriodsByBlock',

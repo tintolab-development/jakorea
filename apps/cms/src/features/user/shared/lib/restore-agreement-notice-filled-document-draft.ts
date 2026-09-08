@@ -2,6 +2,7 @@ import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
   createAgreementNoticeDraft,
   ensureAgreementNoticeConfirmationClosing,
+  ensureAgreementNoticeInstitutionPurposeParagraphs,
   normalizeNoticeIdTypeResidentInputInDraft,
   overlayAgreementNoticeSeedHorizontalTable,
   type IdTypeWithInputParagraph,
@@ -39,6 +40,7 @@ export function restoreAgreementNoticeFilledDocumentDraft(
   draft: WritingFormDraft
 ): WritingFormDraft {
   let next = ensureAgreementNoticeConfirmationClosing(draft)
+  next = ensureAgreementNoticeInstitutionPurposeParagraphs(next)
   next = overlayAgreementNoticeSeedHorizontalTable(next)
 
   const legacy = findLegacyStandaloneIdTypeParagraph(next)

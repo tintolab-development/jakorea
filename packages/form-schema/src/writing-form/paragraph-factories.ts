@@ -9,6 +9,7 @@ import type {
   ShortEssayParagraph,
   WritingFormParagraph,
 } from './draft-schema.js'
+import { DEFAULT_USER_INFO_FIELD_CATALOG } from './user-info-write.js'
 import {
   createDefaultIdTypeWithInputOptions,
   createDefaultMultipleChoiceItems,
@@ -42,6 +43,7 @@ export function createShortEssayDefault(id: string): ShortEssayParagraph {
     ],
     bodyPlaceholder: '답변을 입력해 주세요',
     bodyText: '',
+    itemInputRows: 1,
   }
 }
 
@@ -150,25 +152,7 @@ export function createUserInfoDefault(id: string): WritingFormParagraph {
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     answerRequired: true,
-    userFields: [
-      { key: 'name', label: '이름' },
-      { key: 'gender', label: '성별' },
-      { key: 'birthDate', label: '생년월일' },
-      { key: 'phone', label: '연락처' },
-      { key: 'email', label: '이메일' },
-      { key: 'addressRegion', label: '자택 주소지(지역)' },
-      { key: 'addressDetail', label: '자택 주소지(상세)' },
-      { key: 'affiliation', label: '소속' },
-      { key: 'applicantType', label: '신청자 유형' },
-      { key: 'programName', label: '프로그램명' },
-      { key: 'period', label: '교육 진행 일정(진행 기간)' },
-      { key: 'institutionName', label: '기관명' },
-      { key: 'institutionRegion', label: '기관 소재지(시군구)' },
-      { key: 'educationTarget', label: '교육 대상(담당 대상)' },
-      { key: 'educationGrade', label: '교육 학년(담당 학년)' },
-      { key: 'teamName', label: '팀 명' },
-      { key: 'teamPartnerName', label: '팀원/파트너 명' },
-    ],
+    userFields: DEFAULT_USER_INFO_FIELD_CATALOG.map(entry => ({ ...entry })),
     selectedUserFieldKeys: [],
   }
 }

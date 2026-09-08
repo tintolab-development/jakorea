@@ -34,9 +34,8 @@ export function buildAgreementConsentFillParagraphBodyOptions(
   const templateId = context?.templateId ?? ''
   const baseOptions = agreementConfig.paragraphBodyOptions
   /**
-   * 회원 fill만 2단 확인 카드(문구+날짜 / 안내+성명).
-   * 템플릿 authoring은 시안처럼 날짜·서명을 분리하므로 `paragraphBodyOptions`에
-   * `agreementAdminProxyConfirm`를 두지 않는다.
+   * 회원 fill — 2단 확인 카드(문구+날짜 / 안내+성명).
+   * 템플릿 authoring·A4 미리보기도 `paragraphBodyOptions`의 동일 설정을 사용한다.
    */
   const isAdminProxyConfirm = AGREEMENT_ADMIN_PROXY_CONFIRM_TEMPLATE_IDS.has(templateId)
 
@@ -50,13 +49,10 @@ export function buildAgreementConsentFillParagraphBodyOptions(
       : undefined
 
   /**
-   * fill: context.participantName을 그대로 씀 (`(작성자)` 또는 폼 성명 동기화값).
-   * authoring 샘플(홍길동)로 덮어쓰지 않음.
+   * fill: context.participantName만 사용 (`(작성자)` 또는 폼 성명 동기화값).
+   * authoring 샘플(홍길동)은 `paragraphBodyOptions`에서만 쓰고 fill에 덮어쓰지 않음.
    */
-  const participantName =
-    context?.participantName != null
-      ? context.participantName.trim()
-      : (baseOptions?.agreementSystemParticipantName ?? '')
+  const participantName = context?.participantName?.trim() ?? ''
 
   return {
     ...baseOptions,

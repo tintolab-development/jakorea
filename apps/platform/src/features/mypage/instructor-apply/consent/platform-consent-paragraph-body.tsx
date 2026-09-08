@@ -11,6 +11,7 @@ import {
   type MultipleChoiceParagraph,
   type TableBottomConsent,
   type WritingFormParagraph,
+  resolveMultipleChoiceBodyDescriptionText,
 } from '@jakorea/form-schema/writing-form'
 import {
   PFFormField,
@@ -122,11 +123,15 @@ export function PlatformConsentParagraphBody({
   }
 
   if (paragraph.kind === 'single_item' && paragraph.variant === 'multiple_choice') {
+    const bodyDescription =
+      resolveMultipleChoiceBodyDescriptionText(paragraph) ||
+      paragraph.paragraphDescription?.trim() ||
+      ''
     return (
       <>
-        {paragraph.paragraphDescription?.trim() ? (
+        {bodyDescription ? (
           <PFText as="p" typo="bd-md-rg" color="black" className={styles.prose}>
-            {paragraph.paragraphDescription}
+            {bodyDescription}
           </PFText>
         ) : null}
         <PFFormFieldTable>

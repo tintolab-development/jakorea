@@ -25,6 +25,11 @@ const PERSONAL_INFO_COLLECTION_BOTTOM =
 const PERSONAL_INFO_THIRD_PARTY_BOTTOM =
   '위의 개인정보 제3자 정보 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.'
 
+const PERSONAL_INFO_RETENTION_CELL =
+  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
+
+const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 폐기'
+
 function createInstructorPersonalInfoHorizontalTable(): HorizontalTableParagraph {
   const colCount = 3
   const columnFields = Array.from({ length: colCount }, () => ({
@@ -42,8 +47,7 @@ function createInstructorPersonalInfoHorizontalTable(): HorizontalTableParagraph
     },
     {
       kind: 'text' as const,
-      value:
-        '- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 프로그램 종료로부터 1년 보관 후 폐기',
+      value: PERSONAL_INFO_RETENTION_CELL,
     },
   ]
   return normalizeHorizontalTableParagraph({
@@ -85,7 +89,7 @@ function createInstructorThirdPartyHorizontalTable(): HorizontalTableParagraph {
       kind: 'text' as const,
       value: 'JA 프로그램 진행을 위한 업무 연락',
     },
-    { kind: 'text' as const, value: '1년' },
+    { kind: 'text' as const, value: THIRD_PARTY_RETENTION_CELL },
   ]
   return normalizeHorizontalTableParagraph({
     id: PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.thirdPartyConsent,
@@ -166,4 +170,46 @@ export function createProgramApplicationFormInstructorDraft(): WritingFormDraft 
     formSettings: { titleNumbering: 'none' },
     paragraphs,
   })
+}
+
+function patchHorizontalTableTextCell(
+  paragraph: HorizontalTableParagraph,
+  row: number,
+  col: number,
+  value: string
+): HorizontalTableParagraph {
+  const fieldDataRows = (paragraph.fieldDataRows ?? []).map(cells =>
+    cells.map(cell => ({ ...cell }))
+  )
+  const rowCells = fieldDataRows[row]
+  const cell = rowCells?.[col]
+  if (cell == null || cell.kind !== 'text' || cell.value === value) {
+    return paragraph
+  }
+  rowCells[col] = { ...cell, value }
+  return { ...paragraph, fieldDataRows }
+}
+
+/** 구 시드 고정 문구 보정 */
+export function migrateProgramApplicationFormInstructorParagraphs(
+  draft: WritingFormDraft
+): WritingFormDraft {
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (paragraph.kind !== 'single_item' || paragraph.variant !== 'horizontal_table') {
+      return paragraph
+    }
+    if (paragraph.id === PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.personalInfoCollection) {
+      const next = patchHorizontalTableTextCell(paragraph, 0, 2, PERSONAL_INFO_RETENTION_CELL)
+      if (next !== paragraph) changed = true
+      return next
+    }
+    if (paragraph.id === PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.thirdPartyConsent) {
+      const next = patchHorizontalTableTextCell(paragraph, 0, 3, THIRD_PARTY_RETENTION_CELL)
+      if (next !== paragraph) changed = true
+      return next
+    }
+    return paragraph
+  })
+  return changed ? { ...draft, paragraphs } : draft
 }

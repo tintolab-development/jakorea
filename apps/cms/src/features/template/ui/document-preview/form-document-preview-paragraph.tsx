@@ -18,6 +18,7 @@ import type {
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
   isAgreementLockedSystemParagraph,
+  resolveMultipleChoiceBodyDescriptionText,
   normalizeHorizontalTableParagraph,
   type HorizontalTableParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -25,6 +26,7 @@ import type { FormDocumentPreviewRenderMode } from '@/features/template/lib/a4-d
 import { getDocumentPreviewParagraphViewModel } from '@/features/template/lib/a4-document-preview'
 import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
 import { resolveParagraphTitleRequiredMark } from '@/features/template/lib/paragraph-required-mark'
+import { shouldHideMultipleChoiceAllowMultipleTitleHint } from '@/features/template/model/program-application-form-individual-draft'
 import { getFormParagraphDisplayTitle } from '@/features/template/lib/form-title-numbering'
 import { ParagraphCard } from '@/features/template/ui/paragraph/shared/paragraph-card'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
@@ -78,11 +80,17 @@ function normalizePreviewDescription(value: unknown): string {
 
 function readOnlyTitleBlock(
   displayTitle: string,
-  description?: string
+  description?: string,
+  titleHint?: ReactNode
 ): { title: ReactNode; description?: ReactNode } {
   const trimmedDescription = normalizePreviewDescription(description)
   return {
-    title: <span className="form-document-preview-paragraph__title-text">{displayTitle}</span>,
+    title: (
+      <span className="form-document-preview-paragraph__title-text">
+        {displayTitle}
+        {titleHint}
+      </span>
+    ),
     description:
       trimmedDescription.length > 0 ? (
         <FormParagraphSectionDescription
@@ -95,16 +103,36 @@ function readOnlyTitleBlock(
   }
 }
 
+function multipleChoiceAllowMultipleTitleHint(
+  paragraph: WritingFormParagraph
+): ReactNode {
+  if (
+    paragraph.kind !== 'single_item' ||
+    paragraph.variant !== 'multiple_choice' ||
+    paragraph.allowMultiple !== true ||
+    shouldHideMultipleChoiceAllowMultipleTitleHint(paragraph.id)
+  ) {
+    return null
+  }
+  return <span className="paragraph-input__title-hint"> (중복 선택 가능)</span>
+}
+
 function ContentOnlyParagraphHeader({
   displayTitle,
   description,
   requiredMark,
+  titleHint,
 }: {
   displayTitle: string
   description?: string
   requiredMark?: boolean
+  titleHint?: ReactNode
 }) {
-  const { title, description: descriptionNode } = readOnlyTitleBlock(displayTitle, description)
+  const { title, description: descriptionNode } = readOnlyTitleBlock(
+    displayTitle,
+    description,
+    titleHint
+  )
   return (
     <div className="form-document-preview-paragraph__content-header">
       <div className="form-document-preview-paragraph__title-row">
@@ -125,10 +153,14 @@ function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoi
   const allowMultiple = paragraph.allowMultiple ?? false
   const singleId = paragraph.selectedPreviewSingleId ?? null
   const multi = new Set(paragraph.selectedPreviewMultipleIds ?? [])
+  const bodyDescription = resolveMultipleChoiceBodyDescriptionText(paragraph)
 
   if (allowMultiple) {
     return (
       <div className="form-document-preview-multiple-choice">
+        {bodyDescription ? (
+          <p className="form-document-preview-multiple-choice__description">{bodyDescription}</p>
+        ) : null}
         {items.map(item => {
           const checked = multi.has(item.id)
           return (
@@ -146,6 +178,9 @@ function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoi
 
   return (
     <div className="form-editor-body">
+      {bodyDescription ? (
+        <p className="form-document-preview-multiple-choice__description">{bodyDescription}</p>
+      ) : null}
       <CmsRadioGroup
         className="form-editor-table-bottom-consent"
         size="large"
@@ -619,7 +654,8 @@ function renderBody(
       }
       if (
         renderMode === 'contentOnly' &&
-        c.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
+        c.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing &&
+        paragraphBodyOptions?.agreementAdminProxyConfirm !== true
       ) {
         return null
       }
@@ -665,7 +701,11 @@ export function FormDocumentPreviewParagraph({
     renderMode,
     nextParagraph
   )
-  const { title, description } = readOnlyTitleBlock(displayTitle, viewModel.description)
+  const { title, description } = readOnlyTitleBlock(
+    displayTitle,
+    viewModel.description,
+    multipleChoiceAllowMultipleTitleHint(paragraph)
+  )
 
   if (
     renderMode === 'card' &&
@@ -783,6 +823,7 @@ export function FormDocumentPreviewParagraph({
             displayTitle={displayTitle}
             description={viewModel.description}
             requiredMark={resolveParagraphTitleRequiredMark(paragraph)}
+            titleHint={multipleChoiceAllowMultipleTitleHint(paragraph)}
           />
         ) : null}
         <div className="form-document-preview-paragraph__content-slot">{body}</div>

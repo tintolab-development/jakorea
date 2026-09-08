@@ -156,7 +156,7 @@ const agreementDefinitions: TemplateDefinition[] = [
   { id: 'agreement-third-party', templateName: '지급조서 사전 동의서', variant: 'default' },
   {
     id: 'agreement-crime',
-    templateName: '성범죄 경력조회 및 아동학대 관련 범죄전력조회 동의서',
+    templateName: '성범죄 경력조회 동의서',
     variant: 'default',
   },
   { id: 'agreement-notice', templateName: '행정정보 공동이용 사전 동의서', variant: 'default' },

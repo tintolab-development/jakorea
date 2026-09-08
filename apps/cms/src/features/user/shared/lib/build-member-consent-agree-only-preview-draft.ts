@@ -2,6 +2,7 @@ import { AGREEMENT_CRIME_TEMPLATE_CODE } from '@/features/template/lib/agreement
 import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
 import {
   ensureAgreementNoticeConfirmationClosing,
+  ensureAgreementNoticeInstitutionPurposeParagraphs,
   normalizeWritingFormDraft,
   overlayAgreementNoticeSeedHorizontalTable,
   type WritingFormDraft,
@@ -145,6 +146,7 @@ export function buildMemberConsentAgreeOnlyPreviewDraft(
   let draft = normalizeWritingFormDraft(structureSource)
   if (code === 'agreement-notice') {
     draft = ensureAgreementNoticeConfirmationClosing(draft)
+    draft = ensureAgreementNoticeInstitutionPurposeParagraphs(draft)
     draft = overlayAgreementNoticeSeedHorizontalTable(draft)
   }
 

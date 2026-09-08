@@ -10,6 +10,7 @@ import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/te
 import { AddressSearch } from '@/shared/ui/address-search'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import {
   mergePaymentStatementBasicInfo,
@@ -36,12 +37,19 @@ export type PaymentStatementBasicInfoAutofillValues = {
 
 const EMPTY: PaymentStatementBasicInfoAutofillValues = mergePaymentStatementBasicInfo()
 
-/** 발급·미리보기 목 데이터 등 레거시 코드값 표시용 */
-const LEGACY_BANK_LABELS: Record<string, string> = {
-  kb: 'KB국민은행',
-  shinhan: '신한은행',
-  woori: '우리은행',
-  hana: '하나은행',
+const PAYMENT_STATEMENT_BANK_OPTIONS = [
+  { label: '국민은행', value: 'kb' },
+  { label: '신한은행', value: 'shinhan' },
+  { label: '우리은행', value: 'woori' },
+  { label: '하나은행', value: 'hana' },
+  { label: '농협은행', value: 'nh' },
+  { label: '기업은행', value: 'ibk' },
+  { label: '카카오뱅크', value: 'kakao' },
+] as const
+
+/** 발급·미리보기 등 레거시 표기 → 옵션 value */
+const LEGACY_BANK_NAME_TO_VALUE: Record<string, string> = {
+  'KB국민은행': 'kb',
 }
 
 const LEGACY_AFFILIATION_LABELS: Record<string, string> = {
@@ -68,10 +76,28 @@ function textOrDash(value: string): string {
   return value.trim() || '-'
 }
 
+function resolveBankSelectValue(bankName: string): string | undefined {
+  const trimmed = bankName.trim()
+  if (!trimmed) return undefined
+  const byValue = PAYMENT_STATEMENT_BANK_OPTIONS.find(option => option.value === trimmed)
+  if (byValue) return byValue.value
+  const byLabel = PAYMENT_STATEMENT_BANK_OPTIONS.find(option => option.label === trimmed)
+  if (byLabel) return byLabel.value
+  const legacyValue = LEGACY_BANK_NAME_TO_VALUE[trimmed]
+  if (legacyValue) return legacyValue
+  return undefined
+}
+
 function displayBankName(value: string): string {
   const trimmed = value.trim()
   if (!trimmed) return '-'
-  return LEGACY_BANK_LABELS[trimmed] ?? trimmed
+  const selectValue = resolveBankSelectValue(trimmed)
+  if (selectValue) {
+    return (
+      PAYMENT_STATEMENT_BANK_OPTIONS.find(option => option.value === selectValue)?.label ?? trimmed
+    )
+  }
+  return trimmed
 }
 
 function displayAffiliation(value: string, noAffiliation: boolean): string {
@@ -285,13 +311,15 @@ export function PaymentStatementBasicInfoDetailForm({
           view={textOrDash(accountText)}
           edit={
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__account">
-              <CmsInput
+              <CmsSelect
                 disabled={allAutofillLocked}
                 inputSize="medium"
                 placeholder="은행명"
-                value={v.bankName}
-                onChange={e => patch({ bankName: e.target.value })}
-                width="100%"
+                width={200}
+                withAllOption={false}
+                options={[...PAYMENT_STATEMENT_BANK_OPTIONS]}
+                value={resolveBankSelectValue(v.bankName)}
+                onChange={next => patch({ bankName: String(next ?? '') })}
                 aria-label="은행명 (발급 시 자동 입력)"
               />
               <CmsNumericInput

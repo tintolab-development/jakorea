@@ -4,7 +4,7 @@
 .form-document-preview-body {
   display: flex;
   flex-direction: column;
-  gap: var(--form-document-preview-gap, 32px);
+  gap: var(--form-document-preview-gap, 40px);
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -198,18 +198,6 @@
   margin-bottom: 12px;
 }
 
-.form-document-preview-body--agreement-portrait
-  .form-document-preview-paragraph--content-only-closing.form-document-preview-paragraph--content-only-confirm-rule,
-.form-document-preview-body--agreement-portrait
-  .form-document-preview-paragraph--content-only-confirm.form-document-preview-paragraph--content-only-confirm-rule {
-  padding-top: 20px;
-}
-
-.form-document-preview-body--agreement-portrait
-  .form-document-preview-paragraph--content-only-confirm-rule::before {
-  margin-bottom: 16px;
-}
-
 .form-document-preview-body--agreement-portrait .explanation-system--document-date {
   margin-bottom: 6px;
 }
@@ -271,6 +259,10 @@
   white-space: pre-wrap;
 }
 
+.form-document-preview-paragraph__title-text .paragraph-input__title-hint {
+  color: var(--color-mint-01, #01a1af);
+}
+
 .form-document-preview-paragraph__body-text {
   font-family: Pretendard, sans-serif;
   font-size: 15px;
@@ -304,6 +296,17 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.form-document-preview-multiple-choice__description {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 150%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .form-document-preview-multiple-choice__row {

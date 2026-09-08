@@ -2,8 +2,8 @@ import type { ReactNode } from 'react'
 import type { InstructorAvailableScheduleSlot } from '@/features/program/general/lib/instructor-application-available-schedule'
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/gemini-visiting-training-application-form-instructor-draft'
+import { GeminiInstructorAvailableScheduleParagraph } from '@/features/template/ui/form-set/application-form/gemini-instructor/paragraphs/available-schedule-paragraph'
 import { GeminiInstructorOfficialDocumentParagraph } from '@/features/template/ui/form-set/application-form/gemini-instructor/paragraphs/gemini-instructor-official-document-paragraph'
-import { InstructorAvailableScheduleParagraph } from '@/features/template/ui/form-set/application-form/instructor/paragraphs/instructor-available-schedule-paragraph'
 
 export type GeminiVisitingTrainingApplicationFormInstructorBodyOptions = {
   enabled: boolean
@@ -27,11 +27,10 @@ export function renderGeminiVisitingTrainingApplicationFormInstructorParagraphBo
   switch (paragraph.id) {
     case GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule:
       return (
-        <InstructorAvailableScheduleParagraph
+        <GeminiInstructorAvailableScheduleParagraph
           scheduleSlots={resolved.scheduleSlots}
           isTemplateAuthoringMode={resolved.isTemplateAuthoringMode === true}
           readOnlyPreview={resolved.readOnlyPreview === true}
-          overlayKeyPrefix="application.gemini.instructor"
         />
       )
     case GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.officialDocument:

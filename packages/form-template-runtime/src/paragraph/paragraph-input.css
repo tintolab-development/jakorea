@@ -21,6 +21,17 @@
   min-width: 0;
 }
 
+.paragraph-input__title-hint {
+  flex-shrink: 0;
+  color: var(--paragraph-input-mint);
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
 .paragraph-input__required {
   display: inline-flex;
   align-items: center;

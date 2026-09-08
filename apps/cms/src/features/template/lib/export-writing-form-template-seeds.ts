@@ -562,7 +562,7 @@ const ISSUANCE_FORM_SEED_SPECS: IssuanceFormSeedSpec[] = [
     templateCode: 'document-4',
     payload: 'D',
     schemaJsonNull: true,
-    settingsJson: createCertificateSettingsJson('강사 활동 인증서'),
+    settingsJson: createCertificateSettingsJson('강사 활동인증서'),
     apiStorageNote:
       '인증서 양식은 schemaJson 없이 settingsJson만 사용. DB/API에는 settingsJson을 JSON.stringify한 string으로 저장',
   },
@@ -570,7 +570,7 @@ const ISSUANCE_FORM_SEED_SPECS: IssuanceFormSeedSpec[] = [
     templateCode: 'document-5',
     payload: 'D',
     schemaJsonNull: true,
-    settingsJson: createCertificateSettingsJson('봉사 활동 인증서'),
+    settingsJson: createCertificateSettingsJson('봉사 활동인증서'),
     apiStorageNote:
       '인증서 양식은 schemaJson 없이 settingsJson만 사용. DB/API에는 settingsJson을 JSON.stringify한 string으로 저장',
   },

@@ -1,0 +1,93 @@
+/* 테이블 텍스트형 셀 인풋 — CmsInput(민트·라운드) / 주관식형과 별도 */
+
+.text-cell-input {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  align-self: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--color-blue, #017eaf);
+  border-radius: 0;
+  background: transparent;
+  cursor: text;
+}
+
+.text-cell-input--multiline {
+  align-items: flex-start;
+  width: 100%;
+}
+
+.text-cell-input--align-center {
+  justify-content: center;
+}
+
+.text-cell-input--align-start {
+  justify-content: flex-start;
+}
+
+.text-cell-input__control.ant-input,
+.text-cell-input__control--area.ant-input {
+  flex: 0 1 auto;
+  min-width: 0;
+  width: auto;
+  max-width: 100%;
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 !important;
+  margin: 0;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--main-BK, #3d3d3d);
+  -webkit-text-fill-color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+  resize: none;
+  overflow: hidden;
+}
+
+.text-cell-input--multiline .text-cell-input__control--area.ant-input {
+  width: 100%;
+  height: auto !important;
+  min-height: 24px !important;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  line-height: 150%;
+}
+
+.text-cell-input--header .text-cell-input__control.ant-input {
+  font-weight: 700;
+  text-align: center;
+}
+
+.text-cell-input--align-center .text-cell-input__control.ant-input {
+  text-align: center;
+}
+
+.text-cell-input--align-start .text-cell-input__control.ant-input {
+  text-align: left;
+}
+
+.text-cell-input__control.ant-input::placeholder,
+.text-cell-input__control--area.ant-input::placeholder {
+  color: var(--gray-85969-d, #85969d);
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  opacity: 1;
+}
+
+.text-cell-input--header .text-cell-input__control.ant-input::placeholder {
+  font-weight: 700;
+}
+
+.text-cell-input__control.ant-input:focus,
+.text-cell-input__control.ant-input-focused {
+  box-shadow: none !important;
+}

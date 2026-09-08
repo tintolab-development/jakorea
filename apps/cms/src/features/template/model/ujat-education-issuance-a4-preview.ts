@@ -1,13 +1,12 @@
 import type { FormDocumentPreviewParagraphGapResolver } from '@/features/template/lib/a4-document-preview'
+import { A4_DOCUMENT_PARAGRAPH_GAP_PX } from '@/features/template/lib/a4-document-pagination-constants'
 import {
   createContentOnlyA4PreviewOptions,
   type A4PreviewSessionOptions,
 } from '@/features/template/lib/a4-preview-template-options'
 import {
   UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS,
-  UJAT_EDUCATION_JOURNAL_SEED_PARAGRAPH_IDS,
   UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS,
-  UJAT_EDUCATION_PLAN_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/writing-form-draft.schema'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import type { UserInfoPreviewValues } from '@/features/template/ui/paragraph/single-item/user-info'
@@ -33,13 +32,11 @@ export function getUjatEducationA4HiddenParagraphIds(
     : UJAT_EDUCATION_JOURNAL_A4_HIDDEN_PARAGRAPH_IDS
 }
 
-export const getUjatEducationPlanA4ParagraphGap: FormDocumentPreviewParagraphGapResolver =
-  paragraph =>
-    UJAT_EDUCATION_PLAN_SEED_PARAGRAPH_IDS.has(paragraph.id) ? 32 : 16
+export const getUjatEducationPlanA4ParagraphGap: FormDocumentPreviewParagraphGapResolver = () =>
+  A4_DOCUMENT_PARAGRAPH_GAP_PX
 
-export const getUjatEducationJournalA4ParagraphGap: FormDocumentPreviewParagraphGapResolver =
-  paragraph =>
-    UJAT_EDUCATION_JOURNAL_SEED_PARAGRAPH_IDS.has(paragraph.id) ? 32 : 16
+export const getUjatEducationJournalA4ParagraphGap: FormDocumentPreviewParagraphGapResolver = () =>
+  A4_DOCUMENT_PARAGRAPH_GAP_PX
 
 export function getUjatEducationA4ParagraphGap(
   variant: UjatEducationA4PreviewVariant

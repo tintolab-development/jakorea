@@ -23,8 +23,9 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
+import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/form-template-delete-policy'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
+import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
@@ -32,6 +33,8 @@ import {
 import { overlayPaymentStatementPreConsentSeedHorizontalTables } from '@/features/template/model/payment-statement-pre-consent-draft'
 import {
   ensureAgreementNoticeConfirmationClosing,
+  ensureAgreementNoticeInstitutionPurposeParagraphs,
+  ensureEducatorFacilitatorPledgeIntroParagraph,
   overlayAgreementNoticeSeedHorizontalTable,
 } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
@@ -90,6 +93,10 @@ export type AgreementWritingFormShellProps = {
   }
   /** forms-surveys draft API 연동 대상 templateCode */
   templateCode?: string
+  /** 목록 API systemTemplate — 사용자 복제본(false)은 편집 허용 */
+  systemTemplate?: boolean
+  /** 신규 등록 직후 — catalog code여도 편집 허용 */
+  forceUserEditable?: boolean
   /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */
   onTemplateDraftSaveConfirmed?: () => void
   showDeleteButton?: boolean
@@ -118,6 +125,8 @@ export function AgreementWritingFormShell({
   paragraphBodyOptions,
   agreementClosingFooter,
   templateCode,
+  systemTemplate,
+  forceUserEditable = false,
   onTemplateDraftSaveConfirmed,
   showDeleteButton = false,
   onDelete,
@@ -125,6 +134,18 @@ export function AgreementWritingFormShell({
 }: AgreementWritingFormShellProps) {
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
   const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
+  const isStructureLocked = isWritingFormTemplateStructureLocked({
+    templateCode,
+    systemTemplate,
+    forceUserEditable,
+  })
+  /** 사용자 복제·신규 — 시드 잠금 props가 남아 있어도 편집 허용 */
+  const effectiveStructureLockedParagraphIds =
+    isStructureLocked ? structureLockedParagraphIds : undefined
+  const effectiveHideDragHandleForParagraphIds = isStructureLocked
+    ? hideDragHandleForParagraphIds
+    : undefined
+  const effectiveParagraphBodyOptions = isStructureLocked ? paragraphBodyOptions : undefined
 
   const resolveInitialDraft = useCallback((): WritingFormDraft => {
     const raw = typeof initialDraft === 'function' ? initialDraft() : initialDraft
@@ -137,6 +158,7 @@ export function AgreementWritingFormShell({
     return resolveInitialDraft().paragraphs[0]?.id ?? null
   })
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
+  const middleParagraphActions = useWritingFormMiddleParagraphActions(setDraft, setActiveParagraphId)
   const {
     openWritingUserPreview,
     syncWritingUserPreviewSession,
@@ -168,7 +190,11 @@ export function AgreementWritingFormShell({
       }
       if (templateCode === 'agreement-notice') {
         normalized = ensureAgreementNoticeConfirmationClosing(normalized)
+        normalized = ensureAgreementNoticeInstitutionPurposeParagraphs(normalized)
         normalized = overlayAgreementNoticeSeedHorizontalTable(normalized)
+      }
+      if (templateCode === 'agreement-expense') {
+        normalized = ensureEducatorFacilitatorPledgeIntroParagraph(normalized)
       }
       setDraft(normalized)
       setActiveParagraphId(defaultActiveParagraphId ?? normalized.paragraphs[0]?.id ?? null)
@@ -241,7 +267,7 @@ export function AgreementWritingFormShell({
       a4PageBreakBeforeParagraphIds,
       a4RenderMode,
       a4ParagraphGapPx,
-      paragraphBodyOptions,
+      paragraphBodyOptions: effectiveParagraphBodyOptions,
       agreementClosingFooter,
       /** 사용자 모드(미리보기·응답 입력)에서도 필수(*) 표시 */
       hideParagraphRequiredChrome: false,
@@ -256,7 +282,7 @@ export function AgreementWritingFormShell({
       a4PageBreakBeforeParagraphIds,
       a4RenderMode,
       a4ParagraphGapPx,
-      paragraphBodyOptions,
+      effectiveParagraphBodyOptions,
       agreementClosingFooter,
       activeParagraphId,
     ]
@@ -325,10 +351,6 @@ export function AgreementWritingFormShell({
     setSingleItemListActiveItemId(null)
   }, [])
 
-  const middleParagraphActions = useWritingFormMiddleParagraphActions(
-    setDraft,
-    setActiveParagraphId
-  )
   const {
     horizontalTableRowSelectionsByParagraphId,
     verticalTableBodyRowSelection,
@@ -367,11 +389,13 @@ export function AgreementWritingFormShell({
           onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
           verticalTableBodyRowSelection={verticalTableBodyRowSelection}
           onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
-          middleParagraphActions={middleParagraphActions}
-          structureLockedParagraphIds={structureLockedParagraphIds}
-          hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
-          paragraphBodyOptions={paragraphBodyOptions}
+          structureLockedParagraphIds={effectiveStructureLockedParagraphIds}
+          hideDragHandleForParagraphIds={effectiveHideDragHandleForParagraphIds}
+          paragraphBodyOptions={effectiveParagraphBodyOptions}
           agreementClosingFooter={agreementClosingFooter}
+          middleParagraphActions={
+            effectiveStructureLockedParagraphIds != null ? undefined : middleParagraphActions
+          }
         />
       }
       rightNavigation={
@@ -380,6 +404,7 @@ export function AgreementWritingFormShell({
           pinnedTop={pinnedTop}
           sortableMiddle={sortableMiddle}
           pinnedBottom={pinnedBottom}
+          hideSortableDragHandleForIds={effectiveHideDragHandleForParagraphIds}
           selectedItemId={activeParagraphId}
           onSelectItem={handleSelectParagraph}
           onReorderMiddle={onReorderMiddle}
@@ -402,7 +427,7 @@ export function AgreementWritingFormShell({
             onHorizontalTableBodyRowDeleted={focusHorizontalTableBodyRow}
             verticalTableBodyRowSelection={verticalTableBodyRowSelection}
             onVerticalTableBodyRowDeleted={focusVerticalTableBodyRow}
-            structureLockedParagraphIds={structureLockedParagraphIds}
+            structureLockedParagraphIds={effectiveStructureLockedParagraphIds}
           />
         </FormEditorFieldNav>
       }

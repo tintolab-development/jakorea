@@ -24,6 +24,7 @@ export function GeminiVisitingTrainingTrainingInfoParagraph() {
                   inputSize="medium"
                   width={120}
                   mode="integer"
+                  placeholder="학생 수"
                   value={headcount}
                   onValueChange={setHeadcount}
                 />

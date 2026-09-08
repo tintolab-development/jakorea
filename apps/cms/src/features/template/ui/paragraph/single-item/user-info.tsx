@@ -1,26 +1,11 @@
-import type { UserInfoParagraph } from '@/features/template/model/writing-form-draft.schema'
+import {
+  DEFAULT_USER_INFO_FIELD_CATALOG,
+  type UserInfoParagraph,
+} from '@/features/template/model/writing-form-draft.schema'
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
 import './user-info.css'
 
-const DEFAULT_USER_INFO_FIELDS: Array<{ key: string; label: string }> = [
-  { key: 'name', label: '이름' },
-  { key: 'gender', label: '성별' },
-  { key: 'birthDate', label: '생년월일' },
-  { key: 'phone', label: '연락처' },
-  { key: 'email', label: '이메일' },
-  { key: 'addressRegion', label: '자택 주소지(지역)' },
-  { key: 'addressDetail', label: '자택 주소지(상세)' },
-  { key: 'affiliation', label: '소속' },
-  { key: 'applicantType', label: '신청자 유형' },
-  { key: 'programName', label: '프로그램명' },
-  { key: 'period', label: '교육 진행 일정(진행 기간)' },
-  { key: 'institutionName', label: '기관명' },
-  { key: 'institutionRegion', label: '기관 소재지(시군구)' },
-  { key: 'educationTarget', label: '교육 대상(담당 대상)' },
-  { key: 'educationGrade', label: '교육 학년(담당 학년)' },
-  { key: 'teamName', label: '팀 명' },
-  { key: 'teamPartnerName', label: '팀원/파트너 명' },
-]
+const DEFAULT_USER_INFO_FIELDS = DEFAULT_USER_INFO_FIELD_CATALOG
 
 /** 미리보기 전용 예시 값 — 실제 응답 연동 전까지 고정 문구 */
 const USER_INFO_PREVIEW_SAMPLE_BY_KEY: Record<string, string> = {

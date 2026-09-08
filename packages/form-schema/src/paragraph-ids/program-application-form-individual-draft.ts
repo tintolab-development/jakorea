@@ -1,3 +1,4 @@
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from './program-application-form-institution-draft.js'
 import {
   HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
   normalizeHorizontalTableParagraph,
@@ -21,6 +22,14 @@ export const PROGRAM_PARTICIPANT_APPLICATION_IDS = {
 export const PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS = new Set<string>(
   Object.values(PROGRAM_PARTICIPANT_APPLICATION_IDS)
 )
+
+/** 일반 참여자·참여 기관 신청 폼 일정 단락 — 중복 선택이어도 제목 뒤 「(중복 선택 가능)」 비노출 */
+export function shouldHideMultipleChoiceAllowMultipleTitleHint(paragraphId: string): boolean {
+  return (
+    paragraphId === PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice ||
+    paragraphId === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
+  )
+}
 
 const PERSONAL_INFO_COLLECTION_BOTTOM =
   '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.'
@@ -47,7 +56,7 @@ function createPersonalInfoHorizontalTable(): HorizontalTableParagraph {
     {
       kind: 'text',
       value:
-        '- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 프로그램 종료로부터 1년 보관 후 폐기',
+        '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기',
     },
   ]
   return normalizeHorizontalTableParagraph({
@@ -89,7 +98,7 @@ function createThirdPartyHorizontalTable(): HorizontalTableParagraph {
       kind: 'text',
       value: 'JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내',
     },
-    { kind: 'text', value: '5년' },
+    { kind: 'text', value: '동의일로부터 3년 보관 후 폐기' },
   ]
   return normalizeHorizontalTableParagraph({
     id: PROGRAM_PARTICIPANT_APPLICATION_IDS.thirdPartyConsent,
@@ -125,8 +134,7 @@ function createSelfIntroShortEssay(): ShortEssayParagraph {
     showItemTitle: false,
     bodyPlaceholder: '자유롭게 작성해 주세요',
     bodyText: '',
-    itemInputRows: 5,
-    maxLength: 1000,
+    itemInputRows: 4,
   }
 }
 
@@ -162,7 +170,7 @@ function createScheduleMultipleChoice(): MultipleChoiceParagraph {
     requiredMark: true,
     paragraphTitle: '진행 희망 교육 일정',
     paragraphDescription:
-      '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.',
+      '프로그램 등록 시 노출되는 항목에 따라 설명글을 작성해 주세요.',
     participatesInTitleNumbering: true,
     answerRequired: true,
     allowMultiple: true,
