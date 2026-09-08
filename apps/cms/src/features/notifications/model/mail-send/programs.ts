@@ -1,10 +1,4 @@
-import { MAIL_SEND_ALL_PROGRAM_ID, type MailSendProgram } from './types'
-
-export const MAIL_SEND_ALL_PROGRAM: MailSendProgram = {
-  id: MAIL_SEND_ALL_PROGRAM_ID,
-  name: '전체',
-  year: 0,
-}
+import type { MailSendProgram } from './types'
 
 export function programYearLabel(year: number): string {
   if (!year) return ''
@@ -31,11 +25,7 @@ export function listMailSendProgramPickerRows(
   programs: MailSendProgram[],
   params: { year: number | ''; keyword: string }
 ): MailSendProgram[] {
-  const filtered = filterMailSendPrograms(programs, params)
-  const needle = params.keyword.trim().toLowerCase()
-  const allMatches = !needle || MAIL_SEND_ALL_PROGRAM.name.toLowerCase().includes(needle)
-  if (allMatches) return [MAIL_SEND_ALL_PROGRAM, ...filtered]
-  return filtered
+  return filterMailSendPrograms(programs, params)
 }
 
 export function findMailSendProgram(
@@ -43,6 +33,5 @@ export function findMailSendProgram(
   programId: string | undefined
 ): MailSendProgram | undefined {
   if (!programId) return undefined
-  if (programId === MAIL_SEND_ALL_PROGRAM_ID) return MAIL_SEND_ALL_PROGRAM
   return programs.find(program => program.id === programId)
 }
