@@ -75,6 +75,7 @@ import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-editor/form-editor-horizontal-table.css'
+import { TextCellInput } from '@/features/template/ui/paragraph/table/text-cell-input'
 
 const { TextArea } = Input
 
@@ -190,6 +191,7 @@ function isEventFromTableInteractive(target: EventTarget | null) {
         '.ant-radio',
         '.ant-radio-wrapper',
         '.paragraph-input',
+        '.text-cell-input',
         'input',
         'textarea',
         'label',
@@ -274,12 +276,12 @@ function FieldTableBodyCell({
     const essayValue = cell.kind === 'subjective' || cell.kind === 'text' ? cell.value : ''
     return (
       <div
-        className="form-editor-horizontal-table__field-box form-editor-horizontal-table__field-box--text"
+        className="form-editor-horizontal-table__field-box form-editor-horizontal-table__field-box--subjective"
         title="주관식형"
       >
         <TextArea
           variant="borderless"
-          className="form-editor-horizontal-table__field-text-input"
+          className="form-editor-horizontal-table__field-subjective-input"
           autoSize={{ minRows: 1 }}
           value={essayValue}
           placeholder={ph}
@@ -534,6 +536,31 @@ export function HorizontalTableParagraphBody({
   const [internalSelection, setInternalSelection] = useState<HorizontalTableRowSelection | null>(
     null
   )
+  type HorizontalTextEditTarget =
+    | { area: 'header'; col: number }
+    | { area: 'body'; row: number; col: number }
+  const [textEditCell, setTextEditCell] = useState<HorizontalTextEditTarget | null>(null)
+  const isTextCellEditing = (target: HorizontalTextEditTarget) => {
+    if (!textEditCell) return false
+    if (target.area === 'header') {
+      return textEditCell.area === 'header' && textEditCell.col === target.col
+    }
+    return (
+      textEditCell.area === 'body' &&
+      textEditCell.row === target.row &&
+      textEditCell.col === target.col
+    )
+  }
+  const deactivateTextCellOnBlur = (e: React.FocusEvent<HTMLElement>) => {
+    const related = e.relatedTarget
+    if (
+      related instanceof HTMLElement &&
+      related.closest('.text-cell-input')
+    ) {
+      return
+    }
+    setTextEditCell(null)
+  }
   const isControlled = onTableRowSelectionChange != null
   const selection = isControlled ? (controlledSelection ?? null) : internalSelection
   const setSelection = (next: HorizontalTableRowSelection | null) => {
@@ -778,6 +805,35 @@ export function HorizontalTableParagraphBody({
     setSelection({ area: 'body', row: rowIdx, col: colIdx })
   }
 
+  /** 텍스트형 — 1클릭: 행(헤더/바디) 민트 선택, 2클릭: 해당 셀 인라인 편집 */
+  const activateTextTableHeaderCell = (colIdx: number) => {
+    if (!canvasInteractive) return
+    const target = { area: 'header' as const, col: colIdx }
+    if (isTextCellEditing(target)) return
+    if (!isHeaderRowSelected()) {
+      setTextEditCell(null)
+      setSelection({ area: 'header' })
+      return
+    }
+    setTextEditCell(target)
+  }
+
+  const activateTextTableBodyCell = (rowIdx: number, colIdx: number) => {
+    if (!canvasInteractive) return
+    const target = { area: 'body' as const, row: rowIdx, col: colIdx }
+    if (isTextCellEditing(target)) return
+    const isSameCell =
+      activeSelection?.area === 'body' &&
+      activeSelection.row === rowIdx &&
+      (activeSelection.col ?? 0) === colIdx
+    if (!isSameCell) {
+      setTextEditCell(null)
+      setSelection(target)
+      return
+    }
+    setTextEditCell(target)
+  }
+
   const focusBodyCell = (rowIdx: number, colIdx: number) => {
     if (!canvasInteractive) return
     setSelection({ area: 'body', row: rowIdx, col: colIdx })
@@ -801,6 +857,7 @@ export function HorizontalTableParagraphBody({
   }
 
   const isField = p.tableFlavor === 'field'
+  const isTextTable = !isField
   const canvasInteractive = tableCanvasInteractive
   /** 셀·하단 동의 입력은 `isEditMode`, 격자 행 선택·민트 강조는 `canvasInteractive`로 분리 */
   const effectiveEditMode = isEditMode
@@ -829,6 +886,9 @@ export function HorizontalTableParagraphBody({
         'form-editor-body',
         'form-editor-horizontal-table-wrap',
         canvasInteractive ? 'form-editor-horizontal-table-wrap--canvas-interactive' : '',
+        isTextTable && effectiveEditMode
+          ? 'form-editor-horizontal-table-wrap--text-canvas-edit'
+          : '',
         isPaymentStatementPreConsentP1
           ? 'form-editor-horizontal-table-wrap--payment-pre-consent-p1'
           : '',
@@ -869,26 +929,54 @@ export function HorizontalTableParagraphBody({
                   canvasInteractive
                     ? e => {
                         if (isEventFromTableInteractive(e.target)) return
-                        toggleHeaderRow()
+                        if (isTextTable) {
+                          activateTextTableHeaderCell(i)
+                        } else {
+                          toggleHeaderRow()
+                        }
                       }
                     : undefined
                 }
               >
-                {effectiveEditMode && !headerFieldLocked && !isAgreementNoticeTable ? (
-                  <div className="form-editor-horizontal-table__cell-input-shell form-editor-horizontal-table__cell-input-shell--header">
-                    <Input
-                      variant="borderless"
-                      value={h ?? ''}
-                      placeholder={ph}
-                      onChange={e => setHeaderValue(i, e.target.value)}
-                      onFocus={() => {
-                        if (canvasInteractive) setSelection({ area: 'header' })
-                      }}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
-                      }}
-                    />
-                  </div>
+                {effectiveEditMode && !headerFieldLocked ? (
+                  isTextTable ? (
+                    isTextCellEditing({ area: 'header', col: i }) ? (
+                      <TextCellInput
+                        variant="header"
+                        autoFocus
+                        value={h ?? ''}
+                        placeholder={ph}
+                        onChange={value => setHeaderValue(i, value)}
+                        onBlur={deactivateTextCellOnBlur}
+                      />
+                    ) : (
+                      <div className="form-editor-horizontal-table__cell-text-hit">
+                        <HorizontalTableCellText value={h ?? ''} placeholder={ph} variant="header" />
+                      </div>
+                    )
+                  ) : (
+                    <div
+                      className={[
+                        'form-editor-horizontal-table__cell-input-shell',
+                        'form-editor-horizontal-table__cell-input-shell--header',
+                      ].join(' ')}
+                    >
+                      <Input
+                        variant="borderless"
+                        value={h ?? ''}
+                        placeholder={ph}
+                        onChange={e => setHeaderValue(i, e.target.value)}
+                        onFocus={() => {
+                          if (canvasInteractive) {
+                            setSelection({ area: 'header' })
+                          }
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
+                        }}
+                      />
+                    </div>
+                  )
                 ) : (
                   <HorizontalTableCellText value={h ?? ''} placeholder={ph} variant="header" />
                 )}
@@ -924,23 +1012,38 @@ export function HorizontalTableParagraphBody({
                       canvasInteractive
                         ? e => {
                             if (isEventFromTableInteractive(e.target)) return
-                            toggleBodyCellSelection(rowIdx, colIdx)
+                            if (isTextTable) {
+                              activateTextTableBodyCell(rowIdx, colIdx)
+                            } else {
+                              toggleBodyCellSelection(rowIdx, colIdx)
+                            }
                           }
                         : undefined
                     }
                   >
                     {effectiveEditMode ? (
-                      <div className="form-editor-horizontal-table__cell-input-shell form-editor-horizontal-table__cell-input-shell--body">
-                        {isAgreementNoticeTable ? (
-                          <ParagraphInput
-                            type="description"
-                            className="form-editor-horizontal-table__cell-paragraph-input"
+                      isTextTable ? (
+                        isTextCellEditing({ area: 'body', row: rowIdx, col: colIdx }) ? (
+                          <TextCellInput
+                            variant="body"
+                            autoFocus
                             value={cell}
                             placeholder={ph}
-                            isEditMode
-                            onChange={next => setTextCellValue(rowIdx, colIdx, next)}
+                            onChange={value => setTextCellValue(rowIdx, colIdx, value)}
+                            onBlur={deactivateTextCellOnBlur}
                           />
                         ) : (
+                          <div className="form-editor-horizontal-table__cell-text-hit">
+                            <HorizontalTableCellText value={cell} placeholder={ph} variant="body" />
+                          </div>
+                        )
+                      ) : (
+                        <div
+                          className={[
+                            'form-editor-horizontal-table__cell-input-shell',
+                            'form-editor-horizontal-table__cell-input-shell--body',
+                          ].join(' ')}
+                        >
                           <TextArea
                             variant="borderless"
                             className="form-editor-horizontal-table__cell-textarea"
@@ -948,13 +1051,17 @@ export function HorizontalTableParagraphBody({
                             value={cell}
                             placeholder={ph}
                             onChange={e => setTextCellValue(rowIdx, colIdx, e.target.value)}
-                            onFocus={() => focusBodyCell(rowIdx, colIdx)}
+                            onFocus={() => {
+                              if (canvasInteractive) {
+                                focusBodyCell(rowIdx, colIdx)
+                              }
+                            }}
                             onKeyDown={e => {
                               if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
                             }}
                           />
-                        )}
-                      </div>
+                        </div>
+                      )
                     ) : (
                       <HorizontalTableCellText value={cell} placeholder={ph} variant="body" />
                     )}
