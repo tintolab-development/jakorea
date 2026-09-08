@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { MailTemplateItem, MailTemplateFormMode } from '@/features/notifications/model/mail-template/types'
+import { validateMailSenderEmail } from '@/features/notifications/model/mail-template/sender-email'
 import { EMPTY_MAIL_COMPOSE, useMailCompose } from './use-compose'
 
 export type { MailTemplateFormMode } from '@/features/notifications/model/mail-template/types'
@@ -11,6 +12,8 @@ export type MailTemplateFormDraft = {
   subject: string
   bodyHtml: string
   attachmentFileNames: string[]
+  newFiles: File[]
+  removedAttachmentIds: number[]
 }
 
 const EMPTY_DRAFT: MailTemplateFormDraft = {
@@ -18,6 +21,8 @@ const EMPTY_DRAFT: MailTemplateFormDraft = {
   senderName: '',
   senderEmail: '',
   ...EMPTY_MAIL_COMPOSE,
+  newFiles: [],
+  removedAttachmentIds: [],
 }
 
 export function draftFromTemplate(template: MailTemplateItem | null): MailTemplateFormDraft {
@@ -29,6 +34,8 @@ export function draftFromTemplate(template: MailTemplateItem | null): MailTempla
     subject: template.subject,
     bodyHtml: template.bodyHtml,
     attachmentFileNames: [...template.attachmentFileNames],
+    newFiles: [],
+    removedAttachmentIds: [],
   }
 }
 
@@ -50,8 +57,9 @@ export function useMailTemplateForm(
       subject: initialDraft.subject,
       bodyHtml: initialDraft.bodyHtml,
       attachmentFileNames: initialDraft.attachmentFileNames,
+      existingAttachments: mode === 'edit' ? template?.attachments ?? [] : [],
     }),
-    [initialDraft]
+    [initialDraft, mode, template?.attachments]
   )
 
   const [templateName, setTemplateName] = useState(initialDraft.templateName)
@@ -75,13 +83,16 @@ export function useMailTemplateForm(
       subject: compose.subject.trim(),
       bodyHtml: compose.getBodyHtml(),
       attachmentFileNames: compose.attachmentFileNames,
+      newFiles: compose.getNewFiles(),
+      removedAttachmentIds: compose.getRemovedAttachmentIds(),
     }
   }, [compose, senderEmail, senderName, templateName])
 
   const validateRequired = useCallback((): string | null => {
     const draft = getDraft()
     if (!draft.templateName) return '템플릿명을 입력하세요.'
-    if (!draft.senderEmail) return '발신 메일을 입력하세요.'
+    const senderError = validateMailSenderEmail(draft.senderEmail)
+    if (senderError) return senderError
     if (!draft.subject) return '제목을 작성하세요.'
     if (!draft.bodyHtml) return '내용을 작성하세요.'
     return null

@@ -94,8 +94,11 @@ export function TemplateSelectField({
         bodyHtml={previewTemplate?.bodyHtml ?? ''}
         senderName={previewTemplate?.senderName}
         senderEmail={previewTemplate?.senderEmail}
-        attachments={previewTemplate?.attachmentFileNames.map(name => ({ name }))}
-        previewAt={previewTemplate?.updatedAt}
+        attachments={previewTemplate?.attachmentFileNames.map(name => ({
+          name,
+          sizeBytes: previewTemplate.attachmentSizes?.[name],
+        }))}
+        previewAt={new Date().toISOString()}
         onClose={() => setPreviewTemplate(null)}
       />
     </>

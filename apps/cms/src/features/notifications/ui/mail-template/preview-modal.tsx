@@ -23,6 +23,10 @@ type PreviewModalProps = {
   recipient?: MailPreviewRecipient
   previewAt?: string
   onClose: () => void
+  /** 템플릿 목록 미리보기에서만 — 수정 화면 이동 */
+  onEdit?: () => void
+  /** 템플릿 목록 미리보기에서만 — 삭제 확인 */
+  onDelete?: () => void
   zIndex?: number
 }
 
@@ -36,12 +40,15 @@ export function PreviewModal({
   recipient,
   previewAt,
   onClose,
+  onEdit,
+  onDelete,
   zIndex,
 }: PreviewModalProps) {
   const previewSubject = useMemo(() => applyMailPreviewTokens(subject), [subject])
   const previewHtml = useMemo(() => applyMailPreviewHtml(bodyHtml), [bodyHtml])
   const sender = formatMailPreviewPerson(senderName, senderEmail)
   const attachmentLines = attachments.map(formatMailPreviewAttachment).filter(Boolean)
+  const showListActions = onEdit != null || onDelete != null
 
   return (
     <ContentModal
@@ -52,9 +59,25 @@ export function PreviewModal({
       zIndex={zIndex}
       className="mail-template-preview-modal"
       footer={
-        <CmsButton variant="cancel" size="large" type="button" onClick={onClose}>
-          닫기
-        </CmsButton>
+        <div className="mail-template-preview-modal__footer">
+          <CmsButton variant="cancel" size="large" type="button" onClick={onClose}>
+            닫기
+          </CmsButton>
+          {showListActions ? (
+            <div className="mail-template-preview-modal__footer-actions">
+              {onDelete ? (
+                <CmsButton variant="delete" size="large" type="button" onClick={onDelete}>
+                  삭제
+                </CmsButton>
+              ) : null}
+              {onEdit ? (
+                <CmsButton variant="primary" size="large" type="button" onClick={onEdit}>
+                  수정
+                </CmsButton>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       }
     >
       <div className="mail-template-preview">
@@ -70,18 +93,22 @@ export function PreviewModal({
               <dt>받는 사람</dt>
               <dd>{formatMailPreviewRecipient(recipient)}</dd>
             </div>
-            {attachmentLines.length > 0 ? (
-              <div className="mail-template-preview__meta-row">
-                <dt>첨부파일</dt>
-                <dd>
-                  {attachmentLines.map(line => (
+            <div className="mail-template-preview__meta-row">
+              <dt>첨부파일</dt>
+              <dd>
+                {attachmentLines.length > 0 ? (
+                  attachmentLines.map(line => (
                     <span key={line} className="mail-template-preview__attachment">
                       {line}
                     </span>
-                  ))}
-                </dd>
-              </div>
-            ) : null}
+                  ))
+                ) : (
+                  <span className="mail-template-preview__attachment-empty">
+                    첨부된 파일이 없습니다.
+                  </span>
+                )}
+              </dd>
+            </div>
           </dl>
           <hr className="mail-template-preview__divider" />
           <RichTextViewer

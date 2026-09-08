@@ -28,8 +28,8 @@ describe('applyMailPreviewHtml', () => {
 })
 
 describe('formatMailPreviewDateTime', () => {
-  it('matches the design date pattern', () => {
-    expect(formatMailPreviewDateTime('2026-09-15T09:15:00+09:00')).toBe('2026. 9. 15 (화) 09:15')
+  it('matches YYYY.MM.DD(요일) HH:mm', () => {
+    expect(formatMailPreviewDateTime('2026-09-15T09:15:00+09:00')).toBe('2026.09.15(화) 09:15')
   })
 })
 

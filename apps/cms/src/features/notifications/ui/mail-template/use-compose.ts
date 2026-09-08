@@ -12,6 +12,7 @@ import {
   mailAttachmentRejectMessage,
   rejectMailAttachments,
 } from '@/features/notifications/model/mail-template/attachments'
+import type { MailTemplateAttachment } from '@/features/notifications/model/mail-template/types'
 
 export const MAIL_COMPOSE_SUBJECT_MAX_LENGTH = 1000
 export const MAIL_COMPOSE_EDITOR_MIN_HEIGHT = '360px'
@@ -20,6 +21,7 @@ export type MailComposeInitial = {
   subject: string
   bodyHtml: string
   attachmentFileNames: string[]
+  existingAttachments?: MailTemplateAttachment[]
 }
 
 type InsertTarget = 'subject' | 'body'
@@ -28,6 +30,7 @@ const EMPTY_COMPOSE: MailComposeInitial = {
   subject: '',
   bodyHtml: '',
   attachmentFileNames: [],
+  existingAttachments: [],
 }
 
 export function useMailCompose(open: boolean, resetKey: string, initial: MailComposeInitial) {
@@ -37,13 +40,17 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
   const subjectRangeRef = useRef({ start: 0, end: 0 })
   const bodyRangeRef = useRef<{ from: number; to: number } | null>(null)
   const newFilesRef = useRef<File[]>([])
+  const existingAttachmentsRef = useRef<MailTemplateAttachment[]>([])
+  const removedAttachmentIdsRef = useRef<number[]>([])
   const initialRef = useRef(initial)
   initialRef.current = initial
 
   const [subject, setSubject] = useState(initial.subject)
   const [attachmentFileNames, setAttachmentFileNames] = useState(initial.attachmentFileNames)
   const [newFiles, setNewFiles] = useState<File[]>([])
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<number[]>([])
   newFilesRef.current = newFiles
+  removedAttachmentIdsRef.current = removedAttachmentIds
 
   const mailVariableExtensions = useMemo(() => [MailVariable], [])
 
@@ -66,6 +73,8 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
     setSubject(next.subject)
     setAttachmentFileNames([...next.attachmentFileNames])
     setNewFiles([])
+    setRemovedAttachmentIds([])
+    existingAttachmentsRef.current = [...(next.existingAttachments ?? [])]
     lastTargetRef.current = 'body'
     subjectRangeRef.current = { start: 0, end: 0 }
     bodyRangeRef.current = null
@@ -130,28 +139,45 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
     [editor, subject]
   )
 
-  const handleAttachmentAdd = useCallback((files: File[]) => {
-    const result = rejectMailAttachments({
-      incoming: files,
-      currentCount: attachmentFileNames.length,
-      currentTotalBytes: newFilesRef.current.reduce((sum, file) => sum + file.size, 0),
-    })
-    if (result.reason) {
-      return { ok: false as const, message: mailAttachmentRejectMessage(result.reason) }
-    }
-    if (result.accepted.length === 0) return { ok: true as const }
-    setNewFiles(prev => [...prev, ...result.accepted])
-    setAttachmentFileNames(prev => [...prev, ...result.accepted.map(file => file.name)])
-    return { ok: true as const }
-  }, [attachmentFileNames.length])
+  const handleAttachmentAdd = useCallback(
+    (files: File[]) => {
+      const existingBytes = existingAttachmentsRef.current
+        .filter(item => !removedAttachmentIdsRef.current.includes(item.attachmentId))
+        .reduce((sum, item) => sum + (item.byteSize ?? 0), 0)
+      const result = rejectMailAttachments({
+        incoming: files,
+        currentCount: attachmentFileNames.length,
+        currentTotalBytes:
+          existingBytes + newFilesRef.current.reduce((sum, file) => sum + file.size, 0),
+      })
+      if (result.reason) {
+        return { ok: false as const, message: mailAttachmentRejectMessage(result.reason) }
+      }
+      if (result.accepted.length === 0) return { ok: true as const }
+      setNewFiles(prev => [...prev, ...result.accepted])
+      setAttachmentFileNames(prev => [...prev, ...result.accepted.map(file => file.name)])
+      return { ok: true as const }
+    },
+    [attachmentFileNames.length]
+  )
 
   const handleAttachmentRemove = useCallback((index: number) => {
     setAttachmentFileNames(prev => {
       const name = prev[index]
+      if (!name) return prev
+
       setNewFiles(files => {
         const fileIndex = files.findIndex(file => file.name === name)
-        if (fileIndex < 0) return files
-        return files.filter((_, i) => i !== fileIndex)
+        if (fileIndex >= 0) {
+          return files.filter((_, i) => i !== fileIndex)
+        }
+        const existing = existingAttachmentsRef.current.find(item => item.fileName === name)
+        if (existing) {
+          setRemovedAttachmentIds(ids =>
+            ids.includes(existing.attachmentId) ? ids : [...ids, existing.attachmentId]
+          )
+        }
+        return files
       })
       return prev.filter((_, i) => i !== index)
     })
@@ -167,10 +193,14 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
     () =>
       attachmentFileNames.map(name => {
         const file = newFilesRef.current.find(item => item.name === name)
-        return { name, sizeBytes: file?.size }
+        const existing = existingAttachmentsRef.current.find(item => item.fileName === name)
+        return { name, sizeBytes: file?.size ?? existing?.byteSize }
       }),
     [attachmentFileNames]
   )
+
+  const getNewFiles = useCallback(() => [...newFilesRef.current], [])
+  const getRemovedAttachmentIds = useCallback(() => [...removedAttachmentIdsRef.current], [])
 
   return {
     editor: editor as Editor | null,
@@ -186,6 +216,8 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
     handleAttachmentRemove,
     getBodyHtml,
     getPreviewAttachments,
+    getNewFiles,
+    getRemovedAttachmentIds,
   }
 }
 
