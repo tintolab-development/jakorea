@@ -275,7 +275,7 @@
 |----|------|---------|----------------|
 | `ujat-program-application-institution-seed-personal-info` | single_item | horizontal_table | 개인정보 수집·이용 |
 | `ujat-program-application-institution-seed-third-party` | single_item | horizontal_table | 개인정보 제3자 정보 제공·이용 동의 |
-| `ujat-program-application-institution-seed-application-region` | single_item | horizontal_table | 신청 지역 |
+| `ujat-program-application-institution-seed-application-region` | single_item | multiple_choice | 신청 지역 |
 | `ujat-program-application-institution-seed-basic-info` | single_item | horizontal_table | 기본 정보 |
 | `ujat-program-application-institution-seed-grade-application-info` | single_item | horizontal_table | 학년 별 신청 정보 |
 | `ujat-program-application-institution-seed-grade-class-time` | single_item | horizontal_table | 학년 별 수업 시간 |
@@ -290,8 +290,8 @@
 | `ujat-program-application-volunteer-seed-third-party` | single_item | horizontal_table | 개인정보 제3자 정보 제공·이용 동의 |
 | `ujat-program-application-volunteer-seed-basic-info` | single_item | horizontal_table | 기본 정보 |
 | `ujat-program-application-volunteer-seed-previous-term` | single_item | horizontal_table | 이전 UJAT 활동 기수 |
-| `ujat-program-application-volunteer-seed-preferred-region` | single_item | horizontal_table | 희망 교육 활동 지역 |
-| `ujat-program-application-volunteer-seed-education-experience` | single_item | horizontal_table | 교육 진행 경험 여부 |
+| `ujat-program-application-volunteer-seed-preferred-region` | single_item | multiple_choice | 희망 교육 활동 지역 |
+| `ujat-program-application-volunteer-seed-education-experience` | single_item | multiple_choice | 교육 진행 경험 여부 |
 | `ujat-program-application-volunteer-seed-interview-schedule` | single_item | horizontal_table | 면접 진행 가능 일정 |
 | `ujat-program-application-volunteer-seed-free-text-items` | single_item | horizontal_table | 자유 작성 항목 |
 | `ujat-program-application-volunteer-seed-submit-confirmation` | single_item | multiple_choice | 상기 내용 모두 확인하였으며 현재 답변으로 제출합니다. |
