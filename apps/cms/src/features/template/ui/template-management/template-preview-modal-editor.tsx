@@ -125,7 +125,7 @@ function GeneralRegistrationTemplatePreviewEditor({
 }: TemplatePreviewModalEditorProps & { registryEntry: TemplateRegistryDefinition }) {
   const previewTitle = resolvePreviewHeaderTitle(registryEntry, templateName)
   const programRegistrationVm = useProgramRegistrationEditor(true, previewTitle, {
-    restrictCurriculumSessionStructure: true,
+    restrictCurriculumSessionStructure: false,
     programRegistrationFormVariant: registryEntry.registrationFormVariant ?? 'general',
     templateCode: registryEntry.id ?? templateId,
     onTemplateDraftSaveConfirmed,
