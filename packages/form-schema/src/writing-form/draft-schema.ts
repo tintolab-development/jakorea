@@ -282,6 +282,8 @@ export type UserInfoParagraph = WritingFormParagraphBase & {
   userFields?: Array<{ key: string; label: string }>
   /** 미리보기에서 선택된 필드 key */
   selectedUserFieldKeys?: string[]
+  /** 설문 write 모드 — 선택 필드별 입력값 */
+  fieldAnswers?: Record<string, string>
 }
 
 export type FileAttachmentParagraph = WritingFormParagraphBase & {
