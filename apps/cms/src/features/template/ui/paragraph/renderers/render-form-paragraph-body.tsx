@@ -26,14 +26,24 @@ import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
 import { FileAttachment } from '@/features/template/ui/paragraph/single-item/file-attachment'
 import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { MultipleChoice } from '@/features/template/ui/paragraph/single-item/multiple-choice'
+import { resolveUjatVolunteerSubmitConfirmationItemLabel } from '@/features/template/lib/ujat-volunteer-submit-confirmation-label'
+import { resolveUjatInstitutionSubmitConfirmationItemLabel } from '@/features/template/lib/ujat-institution-submit-confirmation-label'
+import { isUjatProgramApplicationVolunteerSingleOptionMultipleChoiceSeed } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
+import {
+  isUjatProgramApplicationInstitutionApplicationRegionMultipleChoiceSeed,
+  isUjatProgramApplicationInstitutionSingleOptionMultipleChoiceSeed,
+} from '@/features/template/model/ujat-program-application-form-institution-draft'
+import { UjatProgramApplicationApplicationRegionParagraph } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraphs/application-region-paragraph'
 import { ScaleType } from '@/features/template/ui/paragraph/single-item/scale-type'
 import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/table/horizontal-table-paragraph-body'
 import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/table/vertical-table-paragraph-body'
 import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/single-item/score-select-paragraph-body'
 import { SessionPlanShortEssay } from '@/features/template/ui/paragraph/single-item/session-plan-short-essay'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
+import { isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed } from '@/features/template/model/program-application-form-volunteer-draft'
 import { ProgramApplicationFormInstitutionScheduleParagraph } from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-schedule-paragraph'
 import type { GeminiVisitingTrainingApplicationFormInstructorBodyOptions } from '@/features/template/ui/form-set/application-form/gemini-instructor/paragraph-body'
+import type { EconomyProgramApplicationParagraphBodyOptions } from '@/features/template/ui/form-set/application-form/1c-1s/paragraph-body'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
 import { ProgramApplicationFormIndividualScheduleParagraph } from '@/features/template/ui/form-set/application-form/individual/paragraphs/individual-schedule-paragraph'
 import {
@@ -133,7 +143,7 @@ export type RenderFormParagraphBodyOptions = {
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
   /** 1사1교 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
-  programApplicationFormEconomyInstitution?: boolean
+  programApplicationFormEconomyInstitution?: boolean | EconomyProgramApplicationParagraphBodyOptions
   /** 교육받은 교사 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormTrainedTeachersInstitution?: boolean
   /** Gemini 찾아가는 연수 참여 기관 신청 폼 시드 단락 — 전용 본문 */
@@ -628,11 +638,43 @@ export function renderFormParagraphBody(
           />
         )
       }
-      const usesMcItemsFocus = options?.onSelectSingleItemListItem != null
-      const itemsEditActive = usesMcItemsFocus
-        ? isCardSelected &&
-          options?.singleItemListActiveItemId === FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID
-        : isCardSelected
+      if (
+        options?.ujatProgramApplicationFormInstitution === true &&
+        isUjatProgramApplicationInstitutionApplicationRegionMultipleChoiceSeed(p.id)
+      ) {
+        return (
+          <UjatProgramApplicationApplicationRegionParagraph readOnlyPreview={isPreviewReadonly} />
+        )
+      }
+      const ujatVolunteerRecruitCohort =
+        paragraphInteractionMode === 'user'
+          ? options?.ujatProgramApplicationFormVolunteer?.recruitCohortLabel
+          : undefined
+      const resolveItemDisplayLabel =
+        options?.ujatProgramApplicationFormInstitution === true &&
+        isUjatProgramApplicationInstitutionSingleOptionMultipleChoiceSeed(p.id)
+          ? (item: { id: string; label: string }) =>
+              resolveUjatInstitutionSubmitConfirmationItemLabel(item.label)
+          : ujatVolunteerRecruitCohort &&
+              options?.ujatProgramApplicationFormVolunteer?.enabled === true &&
+              isUjatProgramApplicationVolunteerSingleOptionMultipleChoiceSeed(p.id)
+            ? (item: { id: string; label: string }) =>
+                resolveUjatVolunteerSubmitConfirmationItemLabel(
+                  item.label,
+                  ujatVolunteerRecruitCohort
+                )
+            : undefined
+      const suppressMcItemsEditor = isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed(
+        p.id
+      )
+      const usesMcItemsFocus =
+        !suppressMcItemsEditor && options?.onSelectSingleItemListItem != null
+      const itemsEditActive = suppressMcItemsEditor
+        ? false
+        : usesMcItemsFocus
+          ? isCardSelected &&
+            options?.singleItemListActiveItemId === FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID
+          : isCardSelected
       return (
         <MultipleChoice
           paragraph={p}
@@ -652,6 +694,7 @@ export function renderFormParagraphBody(
                   options!.onSelectSingleItemListItem!(FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID)
               : undefined
           }
+          resolveItemDisplayLabel={resolveItemDisplayLabel}
         />
       )
     }

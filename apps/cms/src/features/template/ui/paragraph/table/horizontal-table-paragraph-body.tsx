@@ -38,7 +38,10 @@ import { renderRecruitFormInstructorParagraphBody } from '@/features/template/ui
 import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraph-body'
 import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraph-body'
 import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/institution/paragraph-body'
-import { renderEconomyProgramApplicationParagraphBody } from '@/features/template/ui/form-set/application-form/1c-1s/paragraph-body'
+import {
+  renderEconomyProgramApplicationParagraphBody,
+  type EconomyProgramApplicationParagraphBodyOptions,
+} from '@/features/template/ui/form-set/application-form/1c-1s/paragraph-body'
 import { renderTrainedTeachersProgramApplicationParagraphBody } from '@/features/template/ui/form-set/application-form/trained-teachers/paragraph-body'
 import { renderGeminiVisitingTrainingApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/gemini-institution/paragraph-body'
 import {
@@ -488,7 +491,7 @@ export function HorizontalTableParagraphBody({
   /** 프로그램 상세·등록 위저드 연동 — 기관 신청 폼 자동 반영 UI 노출 */
   programLinkedInstitutionApplicationForm?: boolean
   /** 1사1교 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
-  programApplicationFormEconomyInstitution?: boolean
+  programApplicationFormEconomyInstitution?: boolean | EconomyProgramApplicationParagraphBodyOptions
   /** 교육받은 교사 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormTrainedTeachersInstitution?: boolean
   /** Gemini 찾아가는 연수 참여 기관 신청 폼 시드 단락 — 전용 본문 */
@@ -721,7 +724,8 @@ export function HorizontalTableParagraphBody({
   const economyProgramApplicationBody = renderEconomyProgramApplicationParagraphBody(
     p,
     programApplicationFormEconomyInstitution,
-    paragraphInteractionMode === 'authoring'
+    paragraphInteractionMode === 'authoring' &&
+      programLinkedInstitutionApplicationForm !== true
   )
   if (economyProgramApplicationBody != null) return economyProgramApplicationBody
 
@@ -729,7 +733,8 @@ export function HorizontalTableParagraphBody({
     renderTrainedTeachersProgramApplicationParagraphBody(
       p,
       programApplicationFormTrainedTeachersInstitution,
-      paragraphInteractionMode === 'authoring',
+      paragraphInteractionMode === 'authoring' &&
+        programLinkedInstitutionApplicationForm !== true,
       isFormPreviewReadonlyMode(paragraphInteractionMode)
     )
   if (trainedTeachersProgramApplicationBody != null)

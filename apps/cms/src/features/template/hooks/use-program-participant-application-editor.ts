@@ -50,11 +50,12 @@ import {
 } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
 import {
   createUjatProgramApplicationFormInstitutionDraft,
+  migrateUjatProgramApplicationInstitutionParagraphs,
   UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/ujat-program-application-form-institution-draft'
 import {
   createUjatProgramApplicationFormVolunteerDraft,
-  UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS,
+  migrateUjatProgramApplicationVolunteerChoiceParagraphs,
   UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import {
@@ -63,6 +64,7 @@ import {
 } from '@/features/template/model/gemini-visiting-training-application-form-instructor-draft'
 import {
   createGeminiVisitingTrainingApplicationFormInstitutionDraft,
+  migrateGeminiVisitingTrainingApplicationInstitutionParagraphs,
   GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/gemini-visiting-training-application-form-institution-draft'
 import {
@@ -79,10 +81,13 @@ import {
 } from '@/features/template/model/economy-recruit-form-institution-draft'
 import {
   createProgramApplicationFormInstitutionDraft,
+  migrateProgramApplicationFormInstitutionParagraphs,
+  PROGRAM_APPLICATION_FORM_INSTITUTION_IDS,
   PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-institution-draft'
 import {
   createProgramApplicationFormEconomyDraft,
+  migrateProgramApplicationFormEconomyParagraphs,
   PROGRAM_APPLICATION_FORM_ECONOMY_IDS,
   PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-economy-draft'
@@ -92,10 +97,12 @@ import {
 } from '@/features/template/model/program-application-form-trained-teachers-draft'
 import {
   createProgramApplicationFormInstructorDraft,
+  migrateProgramApplicationFormInstructorParagraphs,
   PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-instructor-draft'
 import {
   createProgramApplicationFormVolunteerDraft,
+  migrateProgramApplicationFormVolunteerParagraphs,
   PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-volunteer-draft'
 import {
@@ -186,6 +193,8 @@ import {
 } from '@/features/program/general/lib/instructor-application-available-schedule'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { resolveGeneralProgramVolunteerInterviewScheduleEditSeed } from '@/features/program/general/lib/volunteer-interview-schedule-display'
+import { getUjatVolunteerRound } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-program-round'
+import { resolveUjatVolunteerHiddenParagraphIds } from '@/features/template/lib/ujat-volunteer-application-form-visibility'
 import type { Program } from '@/types/domain'
 
 function useParticipantApplicationMiddleActions(
@@ -536,7 +545,23 @@ export function useProgramParticipantApplicationEditor(
     setSingleItemListActiveItemId(null)
 
     const applyDraft = (next: WritingFormDraft) => {
-      const normalized = normalizeWritingFormDraft(next)
+      const migrated =
+        variant === 'ujat-application-volunteer'
+          ? migrateUjatProgramApplicationVolunteerChoiceParagraphs(next)
+          : variant === 'ujat-application-institution'
+            ? migrateUjatProgramApplicationInstitutionParagraphs(next)
+            : variant === 'gemini-application-institution'
+              ? migrateGeminiVisitingTrainingApplicationInstitutionParagraphs(next)
+              : variant === 'economy-application-institution'
+                ? migrateProgramApplicationFormEconomyParagraphs(next)
+                : variant === 'institution'
+                  ? migrateProgramApplicationFormInstitutionParagraphs(next)
+                  : variant === 'instructor'
+                    ? migrateProgramApplicationFormInstructorParagraphs(next)
+                    : variant === 'volunteer'
+                      ? migrateProgramApplicationFormVolunteerParagraphs(next)
+                      : next
+      const normalized = normalizeWritingFormDraft(migrated)
       startTransition(() => {
         setDraft(normalized)
         setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
@@ -922,7 +947,15 @@ export function useProgramParticipantApplicationEditor(
   const institutionApplicationFormVisibilityVersion = useInstitutionApplicationFormVisibilityVersion()
   const institutionApplicationHiddenParagraphIds = useMemo(() => {
     if (variant !== 'institution') return undefined
-    return getInstitutionApplicationFormHiddenParagraphIds(institutionApplicationBridge)
+    const hidden = getInstitutionApplicationFormHiddenParagraphIds(institutionApplicationBridge)
+    if (hidden == null) return undefined
+    const isTemplateAuthoringContext =
+      institutionApplicationBridge.educationStructure == null &&
+      institutionApplicationBridge.sessionRound == null
+    if (!isTemplateAuthoringContext) return hidden
+    const next = new Set(hidden)
+    next.delete(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice)
+    return next.size > 0 ? next : undefined
   }, [variant, institutionApplicationBridge, institutionApplicationFormVisibilityVersion])
 
   const economyApplicationHiddenParagraphIds = useMemo(() => {
@@ -961,6 +994,12 @@ export function useProgramParticipantApplicationEditor(
     })
   }, [variant, linkedProgram, draft.paragraphs, institutionApplicationBridge])
 
+  const ujatVolunteerRecruitCohortLabel = useMemo(() => {
+    if (variant !== 'ujat-application-volunteer' || linkedProgram == null) return undefined
+    const half = editorOptions?.ujatRecruitParagraphProps?.volunteerHalf ?? 'h2'
+    return getUjatVolunteerRound(linkedProgram, half)?.curriculum?.trim() || undefined
+  }, [variant, linkedProgram, editorOptions?.ujatRecruitParagraphProps?.volunteerHalf])
+
   const ujatProgramApplicationFormVolunteerOptions = useMemo(
     () =>
       variant === 'ujat-application-volunteer'
@@ -968,13 +1007,20 @@ export function useProgramParticipantApplicationEditor(
             enabled: true as const,
             applicationType: ujatVolunteerApplicationType,
             onApplicationTypeChange: setUjatVolunteerApplicationType,
+            isTemplateAuthoringMode: !programLinkedPreview,
+            recruitCohortLabel: ujatVolunteerRecruitCohortLabel,
           }
         : {
             enabled: false as const,
             applicationType: 'ujat-graduate' as const,
             onApplicationTypeChange: () => {},
           },
-    [variant, ujatVolunteerApplicationType]
+    [
+      variant,
+      ujatVolunteerApplicationType,
+      programLinkedPreview,
+      ujatVolunteerRecruitCohortLabel,
+    ]
   )
 
   const leftPanelParagraphBodyOptions = useMemo(
@@ -984,7 +1030,14 @@ export function useProgramParticipantApplicationEditor(
       structureLockedParagraphIds: effectiveStructureLockedParagraphIds,
       structureLockedAuthoringChoicePreview: isStructureLocked ? true : undefined,
       programApplicationFormInstitution: variant === 'institution',
-      programApplicationFormEconomyInstitution: variant === 'economy-application-institution',
+      programApplicationFormEconomyInstitution:
+        variant === 'economy-application-institution'
+          ? {
+              enabled: true as const,
+              sponsorId: linkedProgram?.sponsorId,
+              sponsorDisplayName: linkedProgram?.generalCommonInfo?.sponsorDisplayName,
+            }
+          : undefined,
       programApplicationFormTrainedTeachersInstitution:
         variant === 'trained-teachers-application-institution',
       programApplicationFormGeminiInstitution: variant === 'gemini-application-institution',
@@ -996,14 +1049,9 @@ export function useProgramParticipantApplicationEditor(
       ujatProgramApplicationFormVolunteer: ujatProgramApplicationFormVolunteerOptions,
       hiddenParagraphIds: (() => {
         if (variant === 'ujat-application-volunteer') {
-          const hidden = new Set<string>()
-          if (ujatVolunteerApplicationType === 'new') {
-            hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm)
-          }
-          if (ujatVolunteerApplicationType === 'ujat-graduate') {
-            hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems)
-          }
-          return hidden.size > 0 ? hidden : undefined
+          return resolveUjatVolunteerHiddenParagraphIds(ujatVolunteerApplicationType, {
+            isTemplateAuthoringMode: !programLinkedPreview,
+          })
         }
         if (linkedProgram != null) {
           return resolveGeneralApplicationFormHiddenParagraphIds(variant, {
@@ -1069,6 +1117,7 @@ export function useProgramParticipantApplicationEditor(
       linkedProgram,
       programApplicationFormInstructorOptions,
       programApplicationFormVolunteerOptions,
+      programLinkedPreview,
       recruitVolunteerHiddenParagraphIds,
       effectiveStructureLockedParagraphIds,
       isStructureLocked,
