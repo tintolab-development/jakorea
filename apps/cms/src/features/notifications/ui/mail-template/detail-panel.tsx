@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
+import { formatMailPreviewPerson } from '@/features/notifications/model/mail-template/preview'
 import type { MailTemplateItem } from '@/features/notifications/model/mail-template/types'
 
 type DetailPanelProps = {
@@ -14,14 +15,14 @@ export function DetailPanel({ template, categoryName, onPreview }: DetailPanelPr
     return <div className="mail-template-detail mail-template-detail--empty" />
   }
 
-  const senderView = (
-    <>
-      {template.senderName}
-      <DetailInfoForm.TdDivider />
-      {template.senderEmail}
-    </>
-  )
-  const attachmentView = template.attachmentFileNames[0] || '-'
+  const senderView =
+    template.senderDisplay?.trim() ||
+    formatMailPreviewPerson(template.senderName, template.senderEmail) ||
+    '-'
+  const attachmentView =
+    template.attachmentFileNames.length > 0
+      ? template.attachmentFileNames.join(', ')
+      : '첨부된 파일이 없습니다.'
 
   return (
     <div className="mail-template-detail">

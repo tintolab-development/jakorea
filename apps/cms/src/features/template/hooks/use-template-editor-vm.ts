@@ -49,7 +49,8 @@ export function useTemplateEditorVm({
     isProgramRegistration,
     registrationPreviewTitle,
     {
-      restrictCurriculumSessionStructure: true,
+      /** 일정형「세부 일정 추가」와 동일 — 커리큘럼 차시/회차 추가도 템플릿 편집에서 허용 */
+      restrictCurriculumSessionStructure: false,
       programRegistrationFormVariant: entry?.registrationFormVariant ?? 'general',
       templateCode:
         entry?.registrationEditor === 'general' ? (entry.id ?? templateId) : undefined,

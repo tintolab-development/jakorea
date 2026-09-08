@@ -13,6 +13,7 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   NOTIFICATION_TEMPLATE_NOT_FOUND: '템플릿을 찾을 수 없습니다. 동기화 후 다시 시도해 주세요.',
   ALIMTALK_TEMPLATE_NOT_APPROVED: '카카오 승인이 완료되지 않은 템플릿은 발송할 수 없습니다.',
   ALIMTALK_SENDER_PROFILE_MISMATCH: '선택한 발신 프로필이 템플릿과 일치하지 않습니다.',
+  NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING: '템플릿 필수 변수가 없습니다.',
   ALIMTALK_TEMPLATE_MANAGED_BY_NHN:
     '알림톡 템플릿 본문은 NHN Cloud에서 관리됩니다. CMS에서는 수정할 수 없습니다.',
   ALIMTALK_TEMPLATE_DELETE_REJECTED_BY_NHN:
@@ -24,6 +25,14 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   DATABASE_ERROR: '데이터베이스 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
   PROVIDER_CATEGORY_REQUIRED:
     '부모 카테고리가 NHN과 연결되어 있지 않습니다. 「동기화」를 먼저 실행한 뒤 다시 시도해 주세요.',
+  EMAIL_ATTACHMENT_LIMIT_EXCEEDED: '파일은 최대 10개까지 첨부할 수 있습니다.',
+  EMAIL_ATTACHMENT_TOTAL_SIZE_EXCEEDED: '파일은 총 최대 30MB까지 업로드할 수 있습니다.',
+  EMAIL_ATTACHMENT_FORBIDDEN_EXTENSION: 'js, exe, bat 등 실행 파일은 첨부할 수 없습니다.',
+  EMAIL_ATTACHMENT_FILE_NAME_TOO_LONG: '파일명은 최대 45자까지 가능합니다.',
+  FILE_NOT_CLEAN: '파일 검사가 완료되지 않았거나 사용할 수 없는 파일입니다. 다시 업로드해 주세요.',
+  EMAIL_TEMPLATE_LANGUAGE_FREEMARKER_NOT_SUPPORTED:
+    '메일 템플릿은 일반 텍스트만 지원합니다. FreeMarker 템플릿은 사용할 수 없습니다.',
+  EMAIL_SENDER_PROFILE_MISMATCH: '선택한 발신 프로필이 메일 템플릿과 일치하지 않습니다.',
 }
 
 const PROVIDER_UNAVAILABLE_HINT =
@@ -112,6 +121,35 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
   }
   if (code === 'ALIMTALK_TEMPLATE_MANAGED_BY_NHN') {
     return ERROR_CODE_MESSAGES.ALIMTALK_TEMPLATE_MANAGED_BY_NHN
+  }
+  if (code === 'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING') {
+    const token = serverMessage.includes(':')
+      ? serverMessage.split(':').slice(1).join(':').trim()
+      : ''
+    if (token && !token.startsWith('NOTIFICATION_')) {
+      return `템플릿 필수 변수가 없습니다: ${token}`
+    }
+    // message가 코드만 있거나 `CODE:token` 형태일 수 있음
+    const fromRaw = (serverMessage || '').replace(
+      /^NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:?\s*/,
+      ''
+    ).trim()
+    return fromRaw
+      ? `템플릿 필수 변수가 없습니다: ${fromRaw}`
+      : ERROR_CODE_MESSAGES.NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING
+  }
+  if (
+    code === 'EMAIL_ATTACHMENT_LIMIT_EXCEEDED' ||
+    code === 'EMAIL_ATTACHMENT_TOTAL_SIZE_EXCEEDED' ||
+    code === 'EMAIL_ATTACHMENT_FORBIDDEN_EXTENSION' ||
+    code === 'EMAIL_ATTACHMENT_FILE_NAME_TOO_LONG' ||
+    code === 'FILE_NOT_CLEAN' ||
+    code === 'EMAIL_TEMPLATE_LANGUAGE_FREEMARKER_NOT_SUPPORTED' ||
+    code === 'EMAIL_SENDER_PROFILE_MISMATCH'
+  ) {
+    const mapped = ERROR_CODE_MESSAGES[code]
+    if (serverMessage && serverMessage !== code) return serverMessage
+    return mapped || fallback
   }
 
   if (

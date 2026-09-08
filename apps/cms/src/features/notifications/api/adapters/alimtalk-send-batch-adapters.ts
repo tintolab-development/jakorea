@@ -116,10 +116,109 @@ export function mapTemplateVariablesCatalog(
 
 const TEMPLATE_PLACEHOLDER_RE = /#\{([^{}]+)\}/g
 
-/** 템플릿 본문·버튼 등에 등장하는 `#{키}` 집합 */
+/** BE MEMBER actor enrich로 채울 수 있는 본문 토큰 (DIRECT는 FE가 명시) */
+export const ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS = new Set([
+  '사용자 아이디(이메일)',
+])
+
+/** 텍스트들에서 `#{키}` 추출 — contentTemplate·titleTemplate이 SSOT */
+export function extractPlaceholderKeysFromTexts(...texts: Array<string | null | undefined>): Set<string> {
+  const keys = new Set<string>()
+  for (const text of texts) {
+    if (!text) continue
+    for (const match of text.matchAll(TEMPLATE_PLACEHOLDER_RE)) {
+      const key = match[1]?.trim()
+      if (key) keys.add(key)
+    }
+  }
+  return keys
+}
+
+export function formatAlimtalkMissingVariablesMessage(missingKeys: string[]): string {
+  const labels = missingKeys.map(key => key.trim()).filter(Boolean)
+  if (labels.length === 0) return '템플릿 필수 변수가 없습니다.'
+  return `템플릿 필수 변수가 없습니다: ${labels.join(', ')}`
+}
+
+/**
+ * BE failedReason 표시용.
+ * `NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:사용자 아이디(이메일)`
+ * → `템플릿 필수 변수가 없습니다: 사용자 아이디(이메일)`
+ */
+export function formatAlimtalkFailedReason(raw?: string | null): string {
+  const text = (raw ?? '').trim()
+  if (!text) return ''
+  const missingPrefix = 'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING'
+  if (text === missingPrefix || text.startsWith(`${missingPrefix}:`)) {
+    const token = text.slice(missingPrefix.length).replace(/^:\s*/, '').trim()
+    return formatAlimtalkMissingVariablesMessage(token ? [token] : [])
+  }
+  if (text.startsWith('필수 변수') || text.startsWith('템플릿 필수 변수')) return text
+  return text
+}
+
+function hasNonEmptyVariableValue(
+  variables: Record<string, unknown> | null | undefined,
+  key: string
+): boolean {
+  if (!variables) return false
+  const value = variables[key]
+  if (value == null) return false
+  if (typeof value === 'string') return value.trim().length > 0
+  if (typeof value === 'number' || typeof value === 'boolean') return true
+  return String(value).trim().length > 0
+}
+
+export type AlimtalkRequiredVariableCheckInput = {
+  requiredKeys: Iterable<string>
+  batchVariables?: Record<string, unknown> | null
+  recipients?: Array<{
+    actorType?: string
+    actorId?: number
+    source?: string
+    variables?: Record<string, unknown> | null
+  }>
+}
+
+/**
+ * 본문 `#{...}` 대비 batch/recipient variables 누락 키.
+ * - MEMBER+actorId: BE가 enrich하는 「사용자 아이디(이메일)」은 충족으로 본다.
+ * - DIRECT / 수동 번호: enrich 없음 → 모든 토큰이 variables에 있어야 함.
+ */
+export function findMissingAlimtalkTemplateVariableKeys(
+  input: AlimtalkRequiredVariableCheckInput
+): string[] {
+  const required = [...input.requiredKeys].map(key => key.trim()).filter(Boolean)
+  if (required.length === 0) return []
+
+  const recipients = input.recipients ?? []
+  const allMembersWithId =
+    recipients.length > 0 &&
+    recipients.every(recipient => {
+      const actorType = (recipient.actorType || '').trim().toUpperCase()
+      const isDirect =
+        recipient.source === 'manual' || actorType === 'DIRECT' || recipient.actorId == null
+      return !isDirect && Number.isFinite(recipient.actorId)
+    })
+
+  const missing: string[] = []
+  for (const key of required) {
+    if (hasNonEmptyVariableValue(input.batchVariables, key)) continue
+    const coveredByRecipient = recipients.some(recipient =>
+      hasNonEmptyVariableValue(recipient.variables, key)
+    )
+    if (coveredByRecipient) continue
+    if (allMembersWithId && ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS.has(key)) continue
+    missing.push(key)
+  }
+  return missing
+}
+
+/** 템플릿 본문·제목·버튼 등에 등장하는 `#{키}` 집합 (본문 토큰이 SSOT) */
 export function collectTemplatePlaceholderKeys(
   template: {
     content?: string
+    titleTemplate?: string
     extraInfo?: string
     emphasisTitle?: string
     emphasisSubtitle?: string
@@ -136,6 +235,7 @@ export function collectTemplatePlaceholderKeys(
 
   const parts: string[] = [
     template.content ?? '',
+    template.titleTemplate ?? '',
     template.extraInfo ?? '',
     template.emphasisTitle ?? '',
     template.emphasisSubtitle ?? '',
@@ -158,15 +258,21 @@ export function collectTemplatePlaceholderKeys(
     if (link.destinations) parts.push(...Object.values(link.destinations).map(v => v ?? ''))
   }
 
-  const keys = new Set<string>()
-  for (const text of parts) {
-    if (!text) continue
-    for (const match of text.matchAll(TEMPLATE_PLACEHOLDER_RE)) {
-      const key = match[1]?.trim()
-      if (key) keys.add(key)
-    }
+  return extractPlaceholderKeysFromTexts(...parts)
+}
+
+export function buildAlimtalkBatchVariables(
+  values: Record<string, string> | null | undefined
+): Record<string, unknown> | undefined {
+  if (!values) return undefined
+  const next: Record<string, unknown> = {}
+  for (const [key, raw] of Object.entries(values)) {
+    const trimmedKey = key.trim()
+    const trimmedValue = raw.trim()
+    if (!trimmedKey || !trimmedValue) continue
+    next[trimmedKey] = trimmedValue
   }
-  return keys
+  return Object.keys(next).length > 0 ? next : undefined
 }
 
 /** 선택 템플릿이 실제로 쓰는 변수 중 프로그램 스코프가 필요한지 */

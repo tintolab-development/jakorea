@@ -7,6 +7,7 @@ import {
   CmsDatePicker,
   CmsInput,
   CmsRadio,
+  ConfirmModal,
   useCmsAlert,
 } from '@/shared/ui'
 import { ComposeFields } from '@/features/notifications/ui/mail-template/compose-fields'
@@ -19,6 +20,10 @@ import { VariablesPanel } from '@/features/notifications/ui/mail-template/variab
 import { MAIL_TEMPLATE_ITEM_MOCK } from '@/features/notifications/model/mail-template/mock'
 import { isMailSendVariableLocked } from '@/features/notifications/model/mail-send/flags'
 import { MAIL_SEND_PROGRAM_MOCK } from '@/features/notifications/model/mail-send/mock'
+import { submitMailSend } from '@/features/notifications/api/mail-send-service'
+import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
+import { useInvalidateMailSendHistory } from '@/features/notifications/hooks/use-mail-send-history-query'
+import { useMailSendTemplatePickerQuery } from '@/features/notifications/hooks/use-mail-template-tree-query'
 import { useMailSendForm } from './use-form'
 import { ProgramSelectField } from './program-select-field'
 import { TemplateSelectField } from './template-select-field'
@@ -34,7 +39,10 @@ type SendFullpageModalProps = {
 
 export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   const { showAlert } = useCmsAlert()
+  const invalidateHistory = useInvalidateMailSendHistory()
   const form = useMailSendForm(open)
+  const templatesQuery = useMailSendTemplatePickerQuery(open)
+  const templates = templatesQuery.data ?? MAIL_TEMPLATE_ITEM_MOCK
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewSubject, setPreviewSubject] = useState('')
   const [previewBodyHtml, setPreviewBodyHtml] = useState('')
@@ -46,14 +54,17 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   const [recipientSelectOpen, setRecipientSelectOpen] = useState(false)
   const [recipientManualOpen, setRecipientManualOpen] = useState(false)
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<string[]>([])
+  const [sendConfirmOpen, setSendConfirmOpen] = useState(false)
+  const [sending, setSending] = useState(false)
   const variableLocked = isMailSendVariableLocked(form.programId)
-  const hasTemplates = MAIL_TEMPLATE_ITEM_MOCK.length > 0
+  const hasTemplates = templates.length > 0
 
   const handleClose = () => {
     setPreviewOpen(false)
     setRecipientSelectOpen(false)
     setRecipientManualOpen(false)
     setSelectedRecipientIds([])
+    setSendConfirmOpen(false)
     onClose()
   }
 
@@ -91,8 +102,35 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       showAlert({ title: '필수 입력 안내', content: error })
       return
     }
-    showAlert({ title: '안내', content: '메일을 발송했습니다.' })
-    handleClose()
+    setSendConfirmOpen(true)
+  }
+
+  const handleConfirmSend = async () => {
+    if (sending) return
+    setSending(true)
+    try {
+      const draft = form.getDraft()
+      const templateDisplayName = draft.templateId
+        ? templates.find(item => item.id === draft.templateId)?.templateName
+        : undefined
+      await submitMailSend({
+        draft,
+        templateDisplayName,
+        idempotencyKey: crypto.randomUUID(),
+      })
+      setSendConfirmOpen(false)
+      await invalidateHistory()
+      showAlert({ title: '안내', content: '메일 발송이 완료 되었습니다.' })
+      handleClose()
+    } catch (error) {
+      setSendConfirmOpen(false)
+      showAlert({
+        title: '메일 발송 실패',
+        content: getNotificationsApiErrorMessage(error, '메일 발송에 실패했습니다.'),
+      })
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -175,7 +213,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                         edit={
                           <TemplateSelectField
                             value={form.templateId}
-                            templates={MAIL_TEMPLATE_ITEM_MOCK}
+                            templates={templates}
                             disabled={!hasTemplates}
                             onSelect={form.applyTemplate}
                           />
@@ -353,6 +391,17 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         onConfirm={emails => {
           form.addManualEmails(emails)
           setRecipientManualOpen(false)
+        }}
+      />
+      <ConfirmModal
+        open={sendConfirmOpen}
+        title="발송 안내"
+        content="해당 내용으로 메일을 발송하시겠습니까?"
+        confirmText="발송"
+        cancelText="취소"
+        onConfirm={() => void handleConfirmSend()}
+        onCancel={() => {
+          if (!sending) setSendConfirmOpen(false)
         }}
       />
     </>

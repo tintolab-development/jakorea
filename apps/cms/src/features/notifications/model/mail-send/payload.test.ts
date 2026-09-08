@@ -52,6 +52,9 @@ describe('validateMailSendDraft', () => {
   it('requires program, sender email, recipients, subject, and body', () => {
     expect(validateMailSendDraft(draft({ programId: '' }))).toBe('대상 프로그램을 선택하세요.')
     expect(validateMailSendDraft(draft({ senderEmail: '  ' }))).toBe('발신 메일을 입력하세요.')
+    expect(validateMailSendDraft(draft({ senderEmail: 'user@gmail.com' }))).toBe(
+      'NHN에 등록된 발신 메일 도메인만 사용할 수 있습니다.'
+    )
     expect(validateMailSendDraft(draft({ recipients: [] }))).toBe('수신자를 설정하세요.')
     expect(validateMailSendDraft(draft({ subject: '' }))).toBe('제목을 작성하세요.')
     expect(validateMailSendDraft(draft({ bodyHtml: '' }))).toBe('내용을 작성하세요.')

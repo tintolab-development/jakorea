@@ -21,7 +21,7 @@ function includesText(target: string, query: string): boolean {
 
 function isWithinRange(value: string, range: DateRangeFilterValue): boolean {
   if (!range || !range[0] || !range[1]) return true
-  if (!value) return true
+  if (!value) return false
   const date = dayjs(value)
   if (!date.isValid()) return false
   const start = range[0].startOf('day')
@@ -32,8 +32,9 @@ function isWithinRange(value: string, range: DateRangeFilterValue): boolean {
 function filterRows(rows: AlimtalkSendHistoryRow[], filters: AlimtalkSendHistoryPendingFilters) {
   return rows.filter(row => {
     if (!isWithinRange(row.requestAt, filters.requestDateRange)) return false
-    if (!isWithinRange(row.sendRequestedAt, filters.sendDateRange)) return false
-    if (!isWithinRange(row.receiveRequestedAt, filters.receiveDateRange)) return false
+    // 발송/수신/예약 기간은 사용자가 켠 경우에만 — 해당 컬럼 기준
+    if (!isWithinRange(row.sentAt, filters.sendDateRange)) return false
+    if (!isWithinRange(row.receivedAt, filters.receiveDateRange)) return false
     if (!isWithinRange(row.reservedAt, filters.reserveDateRange)) return false
     if (filters.sendStatus !== '전체' && row.sendStatus !== filters.sendStatus) return false
     if (filters.receiveStatus !== '전체' && row.receiveStatus !== filters.receiveStatus) return false

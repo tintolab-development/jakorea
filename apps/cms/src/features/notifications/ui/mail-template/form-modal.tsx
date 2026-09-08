@@ -30,12 +30,21 @@ type FormModalProps = {
   open: boolean
   mode: MailTemplateFormMode
   template: MailTemplateItem | null
+  submitting?: boolean
   onClose: () => void
   onSubmit: (draft: MailTemplateFormDraft) => void
   onDelete?: () => void
 }
 
-export function FormModal({ open, mode, template, onClose, onSubmit, onDelete }: FormModalProps) {
+export function FormModal({
+  open,
+  mode,
+  template,
+  submitting = false,
+  onClose,
+  onSubmit,
+  onDelete,
+}: FormModalProps) {
   const { showAlert } = useCmsAlert()
   const [previewOpen, setPreviewOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -128,6 +137,7 @@ export function FormModal({ open, mode, template, onClose, onSubmit, onDelete }:
                       size="large"
                       width={140}
                       type="button"
+                      disabled={submitting}
                       onClick={() => setDeleteOpen(true)}
                     >
                       템플릿 삭제
@@ -137,6 +147,7 @@ export function FormModal({ open, mode, template, onClose, onSubmit, onDelete }:
                       size="large"
                       width={140}
                       type="button"
+                      disabled={submitting}
                       onClick={handlePreview}
                     >
                       미리보기
@@ -146,6 +157,7 @@ export function FormModal({ open, mode, template, onClose, onSubmit, onDelete }:
                       size="large"
                       width={140}
                       type="button"
+                      disabled={submitting}
                       onClick={handleSubmit}
                     >
                       수정
@@ -161,6 +173,7 @@ export function FormModal({ open, mode, template, onClose, onSubmit, onDelete }:
                       size="large"
                       width={140}
                       type="button"
+                      disabled={submitting}
                       onClick={handlePreview}
                     >
                       미리보기
@@ -170,6 +183,7 @@ export function FormModal({ open, mode, template, onClose, onSubmit, onDelete }:
                       size="large"
                       width={140}
                       type="button"
+                      disabled={submitting}
                       onClick={handleSubmit}
                     >
                       등록

@@ -1,0 +1,64 @@
+.mail-send-history-detail-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.mail-send-history-detail-modal__mail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+}
+
+.mail-send-history-detail-modal__subject {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  word-break: break-word;
+}
+
+.mail-send-history-detail-modal__body.rich-text-viewer {
+  max-height: none !important;
+  overflow: visible;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.mail-send-history-detail-modal__attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mail-send-history-detail-modal__attachments-label {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mail-send-history-detail-modal__attachment-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mail-send-history-detail-modal__attachment-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #0070e7;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.mail-send-history-detail-modal__attachment-empty {
+  color: rgba(61, 61, 61, 0.55);
+  font-size: 14px;
+}

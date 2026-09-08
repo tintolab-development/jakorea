@@ -9,6 +9,8 @@ import type {
   CategoryUpdateRequest,
   CreateRequest,
   CreateResponse,
+  EmailAttachmentBindRequest,
+  EmailAttachmentMutationResponse,
   ListNotificationDeliveriesParams,
   ListNotificationTemplatesParams,
   ListSenderProfilesParams,
@@ -17,6 +19,7 @@ import type {
   NotificationTemplateListResponse,
   NotificationTemplatePreviewResponse,
   NotificationTemplateResponse,
+  NotificationTemplateUpsertRequest,
   PageResponseRecipientCandidateResponse,
   RecipientCandidatesParams,
   SenderProfileListResponse,
@@ -109,10 +112,45 @@ export async function deleteNotificationTemplateRemote(
   )
 }
 
+export async function createNotificationTemplateRemote(
+  body: NotificationTemplateUpsertRequest
+): Promise<NotificationTemplateMutationResponse> {
+  return unwrapApiBody(
+    await notificationsRemoteApi.createNotificationTemplate(body, MUTATION_OPTIONS)
+  )
+}
+
+export async function updateNotificationTemplateRemote(
+  templateId: number,
+  body: NotificationTemplateUpsertRequest
+): Promise<NotificationTemplateMutationResponse> {
+  return unwrapApiBody(
+    await notificationsRemoteApi.updateNotificationTemplate(templateId, body, MUTATION_OPTIONS)
+  )
+}
+
+export async function bindEmailAttachmentRemote(
+  templateId: number,
+  body: EmailAttachmentBindRequest
+): Promise<EmailAttachmentMutationResponse> {
+  return unwrapApiBody(
+    await notificationsRemoteApi.bindEmailAttachment(templateId, body, MUTATION_OPTIONS)
+  )
+}
+
+export async function unbindEmailAttachmentRemote(
+  templateId: number,
+  attachmentId: number
+): Promise<EmailAttachmentMutationResponse> {
+  return unwrapApiBody(
+    await notificationsRemoteApi.unbindEmailAttachment(templateId, attachmentId, MUTATION_OPTIONS)
+  )
+}
+
 /** Body 없음 — NHN live pull / local approval mark (FE 일반 화면은 templates[] 미전송) */
 export async function syncNotificationTemplatesRemote(): Promise<SyncResultResponse> {
   return unwrapApiBody(
-    await notificationsRemoteApi.syncTemplates(undefined, { skipGlobalErrorAlert: true })
+    await notificationsRemoteApi.syncTemplates(undefined, undefined, MUTATION_OPTIONS)
   )
 }
 

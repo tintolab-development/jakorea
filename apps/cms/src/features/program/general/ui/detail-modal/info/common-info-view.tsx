@@ -41,7 +41,6 @@ import {
   shouldUseScheduleEventBlockLayout,
   getScheduleDetailPerBlockLayoutPlan,
   getScheduleEventPerScheduleExtraPlan,
-  isIndividualAllPerScheduleLayout,
   isScheduleEducationAndIpsBothPerSchedule,
   padCurriculumSessionLabel,
   padEventScheduleLabel,
@@ -52,12 +51,14 @@ import {
   PRE_EDUCATION_SCHEDULE_LABEL,
   type ScheduleEventPerScheduleExtraPlan,
 } from '@/features/program/general/lib/schedule-detail-form'
+import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
 import {
   GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT,
   GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS,
   formatGeneralProgramProgressSessionDisplay,
 } from '@/features/program/general/lib/curriculum-progress-session-options'
 import { CurriculumAssignmentSettingView } from '@/features/template/ui/shared/curriculum-assignment-setting-view'
+import { IndividualPerScheduleExtraRows } from '@/features/template/ui/form-set/registration-form/general/paragraphs/individual-per-schedule-extra-rows'
 import {
   formatGeneralParticipantTypesSummary,
   formatGeneralSurveyItemsSummary,
@@ -1808,9 +1809,9 @@ function MultiRoundCurriculumSessionForm({
   showEducationPerRound,
   showIpsPerRoundWithEducation,
   showIpsOnlyPerRound,
-  showParticipationPerRound = false,
   showAssignment = true,
   educationFormOptions,
+  individualTableRows,
   isPreEducationBlock = false,
   canRemove = false,
 }: {
@@ -1826,11 +1827,10 @@ function MultiRoundCurriculumSessionForm({
   showIpsPerRoundWithEducation: boolean
   /** 교육·참여 공통 + IPS 일정 별 상이 — 회차별 IPS만 */
   showIpsOnlyPerRound: boolean
-  /** 개인 + 교육·참여·IPS 모두 일정 별 상이 — 과제|참여를 같은 행에 */
-  showParticipationPerRound?: boolean
   /** 과제 설정 — 일반(개인)만 */
   showAssignment?: boolean
   educationFormOptions: ReturnType<typeof getProgramRegistrationEducationFormOptions>
+  individualTableRows?: ReturnType<typeof getIndividualMultiRoundPerScheduleTableRows>
   isPreEducationBlock?: boolean
   canRemove?: boolean
 }) {
@@ -1844,7 +1844,6 @@ function MultiRoundCurriculumSessionForm({
     : isFormEdit
       ? `${session.sessionLabel.replace(/회차$/, '')}회차 수업`
       : '차시 및 교육 내용'
-  const pairAssignmentWithParticipation = showParticipationPerRound && !isPreEducationBlock
 
   const assignmentField = (fullRow: boolean) => (
     <DetailInfoForm.Field
@@ -1911,22 +1910,6 @@ function MultiRoundCurriculumSessionForm({
     />
   )
 
-  const participationField = (
-    <DetailInfoForm.Field
-      label="참여 방식"
-      view={session.participationMethodLabel ?? '-'}
-      edit={
-        <Controller
-          name={`curriculumSessions.${index}.participationMethod`}
-          control={editForm.control}
-          render={({ field }) => (
-            <ParticipationMethodRadioGroup value={field.value} onChange={field.onChange} />
-          )}
-        />
-      }
-    />
-  )
-
   return (
     <div className="program-registration-curriculum__session-block">
       <div className="program-registration-curriculum__session-heading">■ {headingLabel}</div>
@@ -1984,129 +1967,217 @@ function MultiRoundCurriculumSessionForm({
               }
             />
           </DetailInfoForm.Row>
-          {isPreEducationBlock || pairAssignmentWithParticipation || !showAssignment ? null : (
-            <DetailInfoForm.Row type="single">{assignmentField(true)}</DetailInfoForm.Row>
-          )}
-          {showEducationPerRound ? (
-            showIpsPerRoundWithEducation ? (
-              <DetailInfoForm.Row type="double">
-                <DetailInfoForm.Field
-                  label="교육 형태"
-                  view={session.educationFormLabel ?? '-'}
-                  edit={
-                    <Controller
-                      name={`curriculumSessions.${index}.educationForm`}
-                      control={editForm.control}
-                      render={({ field }) => (
-                        <CmsRadioGroup
-                          size="large"
-                          value={field.value ?? 'online'}
-                          onChange={e => field.onChange(e.target.value)}
-                        >
-                          {educationFormOptions.map(opt => (
-                            <CmsRadio key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </CmsRadio>
-                          ))}
-                        </CmsRadioGroup>
-                      )}
-                    />
-                  }
-                />
-                <DetailInfoForm.Field
-                  label="IPS 유형"
-                  view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
-                  edit={
-                    <ProgramRegistrationIpsTypeFields
-                      layout="inline"
-                      disabled={isPreEducationBlock}
-                      value={
-                        isPreEducationBlock
-                          ? { category: 'prepare', detail: 'none' }
-                          : {
-                              category: sessionIpsCategory,
-                              detail: sessionIpsDetail,
-                            }
+          {isPreEducationBlock || !showAssignment ? (
+            <>
+              {showEducationPerRound ? (
+                showIpsPerRoundWithEducation ? (
+                  <DetailInfoForm.Row type="double">
+                    <DetailInfoForm.Field
+                      label="교육 형태"
+                      view={session.educationFormLabel ?? '-'}
+                      edit={
+                        <Controller
+                          name={`curriculumSessions.${index}.educationForm`}
+                          control={editForm.control}
+                          render={({ field }) => (
+                            <CmsRadioGroup
+                              size="large"
+                              value={field.value ?? 'online'}
+                              onChange={e => field.onChange(e.target.value)}
+                            >
+                              {educationFormOptions.map(opt => (
+                                <CmsRadio key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </CmsRadio>
+                              ))}
+                            </CmsRadioGroup>
+                          )}
+                        />
                       }
-                      onChange={next => {
-                        if (isPreEducationBlock) return
-                        editForm.setValue(`curriculumSessions.${index}.ipsCategory`, next.category, {
-                          shouldDirty: true,
-                        })
-                        editForm.setValue(`curriculumSessions.${index}.ipsDetail`, next.detail, {
-                          shouldDirty: true,
-                        })
-                      }}
                     />
-                  }
-                />
-              </DetailInfoForm.Row>
-            ) : (
-              <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field
-                  label="교육 형태"
-                  fullRow
-                  view={session.educationFormLabel ?? '-'}
-                  edit={
-                    <Controller
-                      name={`curriculumSessions.${index}.educationForm`}
-                      control={editForm.control}
-                      render={({ field }) => (
-                        <CmsRadioGroup
-                          size="large"
-                          value={field.value ?? 'online'}
-                          onChange={e => field.onChange(e.target.value)}
-                        >
-                          {educationFormOptions.map(opt => (
-                            <CmsRadio key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </CmsRadio>
-                          ))}
-                        </CmsRadioGroup>
-                      )}
+                    <DetailInfoForm.Field
+                      label="IPS 유형"
+                      view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
+                      edit={
+                        <ProgramRegistrationIpsTypeFields
+                          layout="inline"
+                          disabled={isPreEducationBlock}
+                          value={
+                            isPreEducationBlock
+                              ? { category: 'prepare', detail: 'none' }
+                              : {
+                                  category: sessionIpsCategory,
+                                  detail: sessionIpsDetail,
+                                }
+                          }
+                          onChange={next => {
+                            if (isPreEducationBlock) return
+                            editForm.setValue(
+                              `curriculumSessions.${index}.ipsCategory`,
+                              next.category,
+                              { shouldDirty: true }
+                            )
+                            editForm.setValue(
+                              `curriculumSessions.${index}.ipsDetail`,
+                              next.detail,
+                              { shouldDirty: true }
+                            )
+                          }}
+                        />
+                      }
                     />
-                  }
-                />
-              </DetailInfoForm.Row>
-            )
-          ) : null}
-          {showIpsOnlyPerRound && !showIpsPerRoundWithEducation ? (
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="IPS 유형"
-                fullRow
-                view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
-                edit={
-                  <ProgramRegistrationIpsTypeFields
-                    disabled={isPreEducationBlock}
-                    value={
-                      isPreEducationBlock
-                        ? { category: 'prepare', detail: 'none' }
-                        : {
+                  </DetailInfoForm.Row>
+                ) : (
+                  <DetailInfoForm.Row type="single">
+                    <DetailInfoForm.Field
+                      label="교육 형태"
+                      fullRow
+                      view={session.educationFormLabel ?? '-'}
+                      edit={
+                        <Controller
+                          name={`curriculumSessions.${index}.educationForm`}
+                          control={editForm.control}
+                          render={({ field }) => (
+                            <CmsRadioGroup
+                              size="large"
+                              value={field.value ?? 'online'}
+                              onChange={e => field.onChange(e.target.value)}
+                            >
+                              {educationFormOptions.map(opt => (
+                                <CmsRadio key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </CmsRadio>
+                              ))}
+                            </CmsRadioGroup>
+                          )}
+                        />
+                      }
+                    />
+                  </DetailInfoForm.Row>
+                )
+              ) : null}
+              {showIpsOnlyPerRound && !showIpsPerRoundWithEducation ? (
+                <DetailInfoForm.Row type="single">
+                  <DetailInfoForm.Field
+                    label="IPS 유형"
+                    fullRow
+                    view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
+                    edit={
+                      <ProgramRegistrationIpsTypeFields
+                        disabled={isPreEducationBlock}
+                        value={
+                          isPreEducationBlock
+                            ? { category: 'prepare', detail: 'none' }
+                            : {
+                                category: sessionIpsCategory,
+                                detail: sessionIpsDetail,
+                              }
+                        }
+                        onChange={next => {
+                          if (isPreEducationBlock) return
+                          editForm.setValue(
+                            `curriculumSessions.${index}.ipsCategory`,
+                            next.category,
+                            { shouldDirty: true }
+                          )
+                          editForm.setValue(
+                            `curriculumSessions.${index}.ipsDetail`,
+                            next.detail,
+                            { shouldDirty: true }
+                          )
+                        }}
+                      />
+                    }
+                  />
+                </DetailInfoForm.Row>
+              ) : null}
+            </>
+          ) : (
+            <IndividualPerScheduleExtraRows
+              rows={individualTableRows ?? [{ type: 'single', field: 'assignment' }]}
+              renderField={(field, options) => {
+                if (field === 'assignment') return assignmentField(options.fullRow)
+                if (field === 'education') {
+                  return (
+                    <DetailInfoForm.Field
+                      label="교육 형태"
+                      fullRow={options.fullRow}
+                      view={session.educationFormLabel ?? '-'}
+                      edit={
+                        <Controller
+                          name={`curriculumSessions.${index}.educationForm`}
+                          control={editForm.control}
+                          render={({ field: radioField }) => (
+                            <CmsRadioGroup
+                              size="large"
+                              value={radioField.value ?? 'online'}
+                              onChange={e => radioField.onChange(e.target.value)}
+                            >
+                              {educationFormOptions.map(opt => (
+                                <CmsRadio key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </CmsRadio>
+                              ))}
+                            </CmsRadioGroup>
+                          )}
+                        />
+                      }
+                    />
+                  )
+                }
+                if (field === 'ips') {
+                  return (
+                    <DetailInfoForm.Field
+                      label="IPS 유형"
+                      fullRow={options.fullRow}
+                      view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
+                      edit={
+                        <ProgramRegistrationIpsTypeFields
+                          layout={options.layout}
+                          disabled={isPreEducationBlock}
+                          value={{
                             category: sessionIpsCategory,
                             detail: sessionIpsDetail,
-                          }
-                    }
-                    onChange={next => {
-                      if (isPreEducationBlock) return
-                      editForm.setValue(`curriculumSessions.${index}.ipsCategory`, next.category, {
-                        shouldDirty: true,
-                      })
-                      editForm.setValue(`curriculumSessions.${index}.ipsDetail`, next.detail, {
-                        shouldDirty: true,
-                      })
-                    }}
-                  />
+                          }}
+                          onChange={next => {
+                            editForm.setValue(
+                              `curriculumSessions.${index}.ipsCategory`,
+                              next.category,
+                              { shouldDirty: true }
+                            )
+                            editForm.setValue(
+                              `curriculumSessions.${index}.ipsDetail`,
+                              next.detail,
+                              { shouldDirty: true }
+                            )
+                          }}
+                        />
+                      }
+                    />
+                  )
                 }
-              />
-            </DetailInfoForm.Row>
-          ) : null}
-          {pairAssignmentWithParticipation ? (
-            <DetailInfoForm.Row type="double">
-              {assignmentField(false)}
-              {participationField}
-            </DetailInfoForm.Row>
-          ) : null}
+                return (
+                  <DetailInfoForm.Field
+                    label="참여 방식"
+                    fullRow={options.fullRow}
+                    view={session.participationMethodLabel ?? '-'}
+                    edit={
+                      <Controller
+                        name={`curriculumSessions.${index}.participationMethod`}
+                        control={editForm.control}
+                        render={({ field: radioField }) => (
+                          <ParticipationMethodRadioGroup
+                            value={radioField.value}
+                            onChange={radioField.onChange}
+                          />
+                        )}
+                      />
+                    }
+                  />
+                )
+              }}
+            />
+          )}
         </DetailInfoForm>
         {isFormEdit && canRemove ? (
           <ItemDeleteButton
@@ -2416,12 +2487,13 @@ function CurriculumSection({
     isMultiRoundCurriculum && multiCurriculumRowPlan === 'c_allCommon_piBothPer'
   const showIpsPerSession =
     !isMultiRoundCurriculum && ipsScheduleDetail === 'perSchedule'
-  const showParticipationPerRound = isIndividualAllPerScheduleLayout({
-    participantOrganization: Boolean(participantOrganization),
-    educationFormScheduleDetail,
-    participationScheduleDetail,
-    ipsScheduleDetail,
-  })
+  const individualCurriculumTableRows = participantOrganization
+    ? undefined
+    : getIndividualMultiRoundPerScheduleTableRows({
+        educationFormScheduleDetail,
+        participationScheduleDetail,
+        ipsScheduleDetail,
+      })
   const perScheduleEducationFormOptions = getProgramRegistrationEducationFormOptions(
     Boolean(participantOrganization),
     { context: 'perScheduleBlock' }
@@ -2603,9 +2675,9 @@ function CurriculumSection({
         showEducationPerRound={showEducationPerRound}
         showIpsPerRoundWithEducation={showIpsPerRoundWithEducation}
         showIpsOnlyPerRound={showIpsOnlyPerRound}
-        showParticipationPerRound={showParticipationPerRound}
         showAssignment={!participantOrganization}
         educationFormOptions={perScheduleEducationFormOptions}
+        individualTableRows={individualCurriculumTableRows}
         isPreEducationBlock={isPreEducationBlock}
         canRemove={canRemove}
       />
@@ -2803,6 +2875,46 @@ function ScheduleEventPerScheduleExtraViewRows({
     />
   )
 
+  if (extraPlan.showAssignment) {
+    return (
+      <IndividualPerScheduleExtraRows
+        rows={getIndividualMultiRoundPerScheduleTableRows({
+          educationFormScheduleDetail: extraPlan.showEducation ? 'perSchedule' : 'common',
+          participationScheduleDetail: extraPlan.showParticipation ? 'perSchedule' : 'common',
+          ipsScheduleDetail: extraPlan.showIps ? 'perSchedule' : 'common',
+        })}
+        renderField={(field, options) => {
+          if (field === 'assignment') return assignmentField(options.fullRow)
+          if (field === 'education') {
+            return (
+              <DetailInfoForm.Field
+                label="교육 형태"
+                fullRow={options.fullRow}
+                view={educationFormLabel?.trim() || '-'}
+              />
+            )
+          }
+          if (field === 'ips') {
+            return (
+              <DetailInfoForm.Field
+                label="IPS 유형"
+                fullRow={options.fullRow}
+                view={<PipeSeparatedInlineView text={ipsTypeSummary} />}
+              />
+            )
+          }
+          return (
+            <DetailInfoForm.Field
+              label="참여 방식"
+              fullRow={options.fullRow}
+              view={participationMethodLabel?.trim() || '-'}
+            />
+          )
+        }}
+      />
+    )
+  }
+
   return (
     <>
       {extraPlan.showEducation && extraPlan.showIps ? (
@@ -2829,17 +2941,6 @@ function ScheduleEventPerScheduleExtraViewRows({
             view={<PipeSeparatedInlineView text={ipsTypeSummary} />}
           />
         </DetailInfoForm.Row>
-      ) : null}
-      {extraPlan.showParticipation ? (
-        <DetailInfoForm.Row type="double">
-          {assignmentField(false)}
-          <DetailInfoForm.Field
-            label="참여 방식"
-            view={participationMethodLabel?.trim() || '-'}
-          />
-        </DetailInfoForm.Row>
-      ) : extraPlan.showAssignment ? (
-        <DetailInfoForm.Row type="single">{assignmentField(true)}</DetailInfoForm.Row>
       ) : null}
     </>
   )
@@ -3001,29 +3102,6 @@ function ScheduleEventPerScheduleExtraEditRows({
     )
   }
 
-  const participationField = (
-    <DetailInfoForm.Field
-      label="참여 방식"
-      edit={
-        <Controller
-          name={`scheduleDetails.${index}.participationMethod`}
-          control={editForm.control}
-          render={({ field }) => (
-            <CmsRadioGroup
-              size="large"
-              value={field.value ?? 'individual'}
-              onChange={e => field.onChange(e.target.value)}
-            >
-              <CmsRadio value="individual">개인</CmsRadio>
-              <CmsRadio value="team">팀</CmsRadio>
-            </CmsRadioGroup>
-          )}
-        />
-      }
-      view="-"
-    />
-  )
-
   const assignmentField = (fullRow: boolean) => (
     <DetailInfoForm.Field
       label="과제 설정"
@@ -3089,6 +3167,48 @@ function ScheduleEventPerScheduleExtraEditRows({
     />
   )
 
+  if (extraPlan.showAssignment) {
+    return (
+      <IndividualPerScheduleExtraRows
+        rows={getIndividualMultiRoundPerScheduleTableRows({
+          educationFormScheduleDetail: extraPlan.showEducation ? 'perSchedule' : 'common',
+          participationScheduleDetail: extraPlan.showParticipation ? 'perSchedule' : 'common',
+          ipsScheduleDetail: extraPlan.showIps ? 'perSchedule' : 'common',
+        })}
+        renderField={(field, options) => {
+          if (field === 'assignment') return assignmentField(options.fullRow)
+          if (field === 'education') return educationField(options.fullRow)
+          if (field === 'ips') {
+            return ipsField({ fullRow: options.fullRow, layout: options.layout })
+          }
+          return (
+            <DetailInfoForm.Field
+              label="참여 방식"
+              fullRow={options.fullRow}
+              edit={
+                <Controller
+                  name={`scheduleDetails.${index}.participationMethod`}
+                  control={editForm.control}
+                  render={({ field: radioField }) => (
+                    <CmsRadioGroup
+                      size="large"
+                      value={radioField.value ?? 'individual'}
+                      onChange={e => radioField.onChange(e.target.value)}
+                    >
+                      <CmsRadio value="individual">개인</CmsRadio>
+                      <CmsRadio value="team">팀</CmsRadio>
+                    </CmsRadioGroup>
+                  )}
+                />
+              }
+              view="-"
+            />
+          )
+        }}
+      />
+    )
+  }
+
   return (
     <>
       {extraPlan.showEducation && extraPlan.showIps ? (
@@ -3100,14 +3220,6 @@ function ScheduleEventPerScheduleExtraEditRows({
         <DetailInfoForm.Row type="single">{educationField(true)}</DetailInfoForm.Row>
       ) : extraPlan.showIps ? (
         <DetailInfoForm.Row type="single">{ipsField({ fullRow: true })}</DetailInfoForm.Row>
-      ) : null}
-      {extraPlan.showParticipation ? (
-        <DetailInfoForm.Row type="double">
-          {assignmentField(false)}
-          {participationField}
-        </DetailInfoForm.Row>
-      ) : extraPlan.showAssignment ? (
-        <DetailInfoForm.Row type="single">{assignmentField(true)}</DetailInfoForm.Row>
       ) : null}
     </>
   )

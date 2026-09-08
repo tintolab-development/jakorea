@@ -35,6 +35,9 @@ export const MAIL_TEMPLATE_ITEM_MOCK: MailTemplateItem[] = [
     subject: '[JA Korea] 2026 JA Company Of the Year 2차 교육 워크숍 수강 안내',
     bodyHtml: WORKSHOP_BODY_HTML,
     attachmentFileNames: ['JA Company Of the Year 2차 교육 워크숍 수강 안내.pdf'],
+    attachmentSizes: {
+      'JA Company Of the Year 2차 교육 워크숍 수강 안내.pdf': 915 * 1024,
+    },
   },
   {
     id: 'mail-tpl-workshop',
@@ -48,5 +51,8 @@ export const MAIL_TEMPLATE_ITEM_MOCK: MailTemplateItem[] = [
     subject: '[JA Korea] 2026 JA Company Of the Year 2차 교육 워크숍 수강 안내',
     bodyHtml: WORKSHOP_BODY_HTML,
     attachmentFileNames: ['JA Company Of the Year 2차 교육 워크숍 수강 안내.pdf'],
+    attachmentSizes: {
+      'JA Company Of the Year 2차 교육 워크숍 수강 안내.pdf': 915 * 1024,
+    },
   },
 ]

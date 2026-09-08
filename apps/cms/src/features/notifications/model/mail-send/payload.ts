@@ -1,5 +1,6 @@
 import { isMailSendVariableLocked, mailSendUseTemplate } from './flags'
 import { MAIL_SEND_PURPOSE, type MailSendDraft, type MailSendPayload } from './types'
+import { validateMailSenderEmail } from '@/features/notifications/model/mail-template/sender-email'
 
 const MAIL_VARIABLE_TOKEN_RE = /#\{[^{}]+\}/
 const MAIL_VARIABLE_ATTR_RE = /data-mail-variable\s*=/
@@ -21,7 +22,8 @@ export function buildMailSendPayload(draft: MailSendDraft): MailSendPayload {
 
 export function validateMailSendDraft(draft: MailSendDraft): string | null {
   if (!draft.programId) return '대상 프로그램을 선택하세요.'
-  if (!draft.senderEmail.trim()) return '발신 메일을 입력하세요.'
+  const senderError = validateMailSenderEmail(draft.senderEmail)
+  if (senderError) return senderError
   if (draft.sendTiming === 'scheduled' && !draft.scheduledAt) return '예약 일시를 선택하세요.'
   if (draft.recipients.length === 0) return '수신자를 설정하세요.'
   if (!draft.subject.trim()) return '제목을 작성하세요.'

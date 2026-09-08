@@ -7,7 +7,6 @@ import {
   mapNoticeListResponse,
   mapNoticeResponse,
   toNoticeRequestFromForm,
-  toNoticeRequestFromNotice,
 } from '@/features/posts/api/notices/adapters/notice-adapters'
 import { noticesParamsFromSearchParams } from '@/features/posts/api/notices/notice-filter-params'
 import {
@@ -25,6 +24,11 @@ import type { Notice } from '@/data/mock/notices'
 import type { BuildNoticeBodyParams } from '@/features/posts/model/notice-form-mapper'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import {
+  hydrateNoticeAttachments,
+  parseNoticeOwnerId,
+  uploadAndAttachNoticeFiles,
+} from '@/features/posts/api/notices/notice-attachments'
 
 function assertNoticesRemoteReady(): void {
   if (!isRealApiModuleEnabled('notices')) {
@@ -48,13 +52,37 @@ export async function getNoticeList(searchParams: URLSearchParams): Promise<Noti
 export async function getNoticeDetail(id: string): Promise<Notice> {
   assertNoticesRemoteReady()
   const dto = await fetchNoticeRemote(id)
-  return mapNoticeResponse(dto)
+  return hydrateNoticeAttachments(mapNoticeResponse(dto))
+}
+
+async function attachNewNoticeFiles(notice: Notice, files: File[] | undefined): Promise<Notice> {
+  const newFiles = files?.filter(file => file.size > 0) ?? []
+  if (newFiles.length === 0) return notice
+  const ownerId = parseNoticeOwnerId(notice.id)
+  if (ownerId == null) {
+    throw new Error('공지 ID를 확인하지 못해 첨부 파일을 업로드할 수 없습니다.')
+  }
+  const uploaded = await uploadAndAttachNoticeFiles(ownerId, newFiles)
+  const attachments = [...(notice.attachments ?? []), ...uploaded]
+  return {
+    ...notice,
+    attachments,
+    hasAttachment: attachments.length > 0,
+  }
 }
 
 export async function createNotice(params: BuildNoticeBodyParams): Promise<Notice> {
   assertNoticesRemoteReady()
   const dto = await createNoticeRemote(toNoticeRequestFromForm(params))
-  return mapNoticeResponse(dto)
+  const created = mapNoticeResponse(dto)
+  return attachNewNoticeFiles(
+    {
+      ...created,
+      category: created.category || params.category,
+      categoryId: created.categoryId ?? params.categoryId,
+    },
+    params.newFiles
+  )
 }
 
 export async function updateNotice(
@@ -63,17 +91,17 @@ export async function updateNotice(
   params: BuildNoticeBodyParams
 ): Promise<Notice> {
   assertNoticesRemoteReady()
-  const merged: Notice = {
-    ...existing,
-    title: params.title.trim(),
-    content: params.contentMarkdown,
-    category: params.category,
-    status: params.visibility === 'public' ? 'published' : 'draft',
-    isImportant: params.pinToTop,
-    hasAttachment: params.attachmentNames.some(n => n.trim()),
-  }
-  const dto = await updateNoticeRemote(id, toNoticeRequestFromNotice(merged))
-  return mapNoticeResponse(dto)
+  const dto = await updateNoticeRemote(id, toNoticeRequestFromForm(params))
+  const updated = mapNoticeResponse(dto)
+  return attachNewNoticeFiles(
+    {
+      ...updated,
+      category: updated.category || params.category,
+      categoryId: updated.categoryId ?? params.categoryId,
+      attachments: updated.attachments?.length ? updated.attachments : existing.attachments,
+    },
+    params.newFiles
+  )
 }
 
 export async function deleteNotice(id: string): Promise<void> {
@@ -89,7 +117,7 @@ export async function deleteNotices(ids: string[]): Promise<void> {
 
 export async function getNoticeCategories(): Promise<CategoryRow[]> {
   assertNoticesRemoteReady()
-  const dto = await fetchNoticeCategoriesRemote({ page: 0, size: 50 })
+  const dto = await fetchNoticeCategoriesRemote({ page: 0, size: 100 })
   return mapCategoryItems(dto.items)
 }
 

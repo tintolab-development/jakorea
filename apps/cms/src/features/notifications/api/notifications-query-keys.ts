@@ -28,4 +28,21 @@ export const notificationsQueryKeys = {
     detail: (deliveryId: string) =>
       [...notificationsQueryKeys.alimtalkSendHistory.all(), 'detail', deliveryId] as const,
   },
+  mailTemplates: {
+    all: () => [...notificationsQueryKeys.all, 'mail-templates'] as const,
+    tree: (searchParamsKey: string) =>
+      [...notificationsQueryKeys.mailTemplates.all(), 'tree', searchParamsKey] as const,
+    detail: (templateId: string) =>
+      [...notificationsQueryKeys.mailTemplates.all(), 'detail', templateId] as const,
+    preview: (templateId: string) =>
+      [...notificationsQueryKeys.mailTemplates.all(), 'preview', templateId] as const,
+    picker: () => [...notificationsQueryKeys.mailTemplates.all(), 'picker'] as const,
+  },
+  mailSendHistory: {
+    all: () => [...notificationsQueryKeys.all, 'mail-send-history'] as const,
+    list: (searchParamsKey: string) =>
+      [...notificationsQueryKeys.mailSendHistory.all(), 'list', searchParamsKey] as const,
+    detail: (deliveryId: string) =>
+      [...notificationsQueryKeys.mailSendHistory.all(), 'detail', deliveryId] as const,
+  },
 } as const
