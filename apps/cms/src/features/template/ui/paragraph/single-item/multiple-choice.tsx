@@ -1,4 +1,6 @@
 import { useEffect, useRef, type MouseEvent as ReactMouseEvent } from 'react'
+import { isUjatProgramApplicationInstitutionApplicationRegionMultipleChoiceSeed } from '@/features/template/model/ujat-program-application-form-institution-draft'
+import { isUjatProgramApplicationVolunteerPreferredRegionMultipleChoiceSeed } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import type { MultipleChoiceParagraph } from '@/features/template/model/writing-form-draft.schema'
 import {
   createDefaultMultipleChoiceItems,
@@ -41,6 +43,7 @@ export function MultipleChoice({
   preservePreviewSelectionOnCardBlur = false,
   itemsEditActive,
   onActivateItemsEditor,
+  resolveItemDisplayLabel,
 }: {
   paragraph: MultipleChoiceParagraph
   onChange: (next: MultipleChoiceParagraph) => void
@@ -56,6 +59,8 @@ export function MultipleChoice({
   itemsEditActive: boolean
   /** 항목 영역 클릭 시 우측「항목 수정」·선택 테두리 연동 */
   onActivateItemsEditor?: () => void
+  /** user 모드 등 — 표시 라벨만 치환(저장 draft는 변경하지 않음) */
+  resolveItemDisplayLabel?: (item: { id: string; label: string }) => string
 }) {
   const paragraphRef = useRef(paragraph)
   paragraphRef.current = paragraph
@@ -90,6 +95,10 @@ export function MultipleChoice({
   const items = normalizeItems(paragraph)
   const allowMultiple = paragraph.allowMultiple ?? false
   const isInlineDualChoice = !allowMultiple && items.length === 2
+  const isInlineWrapChoice =
+    !allowMultiple &&
+    (isUjatProgramApplicationVolunteerPreferredRegionMultipleChoiceSeed(paragraph.id) ||
+      isUjatProgramApplicationInstitutionApplicationRegionMultipleChoiceSeed(paragraph.id))
   const singleId = paragraph.selectedPreviewSingleId ?? null
   const multiIds = paragraph.selectedPreviewMultipleIds ?? []
   const isPreviewReadonly = isFormPreviewReadonlyMode(paragraphInteractionMode)
@@ -131,7 +140,9 @@ export function MultipleChoice({
               checked={multiIds.includes(item.id)}
               onChange={e => toggleMulti(item.id, e.target.checked)}
             />
-            <span className="multiple-choice-row__label">{item.label}</span>
+            <span className="multiple-choice-row__label">
+              {resolveItemDisplayLabel?.(item) ?? item.label}
+            </span>
           </div>
         ))}
       </div>
@@ -144,7 +155,11 @@ export function MultipleChoice({
       <CmsRadioGroup
         className={[
           'multiple-choice-radio-group',
-          isInlineDualChoice ? 'multiple-choice-radio-group--inline' : '',
+          isInlineWrapChoice
+            ? 'multiple-choice-radio-group--inline-wrap'
+            : isInlineDualChoice
+              ? 'multiple-choice-radio-group--inline'
+              : '',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -155,7 +170,9 @@ export function MultipleChoice({
         {items.map(item => (
           <div key={item.id} role="presentation" className="multiple-choice-row">
             <CmsRadio value={item.id} disabled={controlDisabled} />
-            <span className="multiple-choice-row__label">{item.label}</span>
+            <span className="multiple-choice-row__label">
+              {resolveItemDisplayLabel?.(item) ?? item.label}
+            </span>
           </div>
         ))}
       </CmsRadioGroup>

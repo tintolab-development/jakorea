@@ -14,6 +14,9 @@ export type UjatProgramApplicationVolunteerBodyOptions = {
   enabled: boolean
   applicationType: UjatProgramApplicationVolunteerType
   onApplicationTypeChange: (next: UjatProgramApplicationVolunteerType) => void
+  isTemplateAuthoringMode?: boolean
+  /** 사용자 작성 모드 — 제출 확인 MC `N기` 치환용(모집 폼 활동 기수) */
+  recruitCohortLabel?: string
 }
 
 /** 템플릿 편집기 — UJAT 프로그램 봉사자 신청 폼 시드 단락 본문 */
@@ -31,15 +34,24 @@ export function renderUjatProgramApplicationFormVolunteerParagraphBody(
         />
       )
     case UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm:
-      if (options.applicationType === 'new') return null
+      if (options.isTemplateAuthoringMode !== true && options.applicationType === 'new') {
+        return null
+      }
       return <UjatProgramApplicationVolunteerPreviousTermParagraph />
     case UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.preferredRegion:
       return <UjatProgramApplicationVolunteerPreferredRegionParagraph />
     case UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.educationExperience:
       return <UjatProgramApplicationVolunteerEducationExperienceParagraph />
     case UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule:
-      return <UjatProgramApplicationVolunteerInterviewScheduleParagraph />
+      return (
+        <UjatProgramApplicationVolunteerInterviewScheduleParagraph
+          isTemplateAuthoringMode={options.isTemplateAuthoringMode !== false}
+        />
+      )
     case UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems:
+      if (options.isTemplateAuthoringMode !== true && options.applicationType === 'ujat-graduate') {
+        return null
+      }
       return <UjatProgramApplicationVolunteerFreeTextParagraph />
     default:
       return null

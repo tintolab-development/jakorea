@@ -48,6 +48,15 @@
   width: auto;
 }
 
+/* UJAT 신청 지역(봉사자 희망 지역 / 참여 기관 신청 지역) — 8항 가로 한 줄(좁으면 wrap) */
+.multiple-choice-body .multiple-choice-radio-group--inline-wrap.app-radio-group {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 20px;
+  width: 100%;
+}
+
 .multiple-choice-row {
   display: flex;
   align-items: center;

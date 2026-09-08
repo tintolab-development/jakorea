@@ -1942,6 +1942,8 @@ export function UjatProgramDetailFullPageModal({
               {volAddMemberId ? (
                 <UjatEducationProgressVolunteerAddRegistrationView
                   memberId={volAddMemberId}
+                  program={displayProgram}
+                  volunteerHalf={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
                   onClose={closeVolAddRegistration}
                   onComplete={handleCompleteVolAddRegistration}
                 />

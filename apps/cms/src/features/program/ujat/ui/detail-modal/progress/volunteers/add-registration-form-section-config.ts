@@ -111,6 +111,7 @@ export const UJAT_VOLUNTEER_ADD_REGISTRATION_SECTIONS: UjatVolunteerAddRegistrat
       title: '자유 작성 항목',
       fallbackDescription: '1~4번 문항은 자유롭게 작성 가능합니다.',
       body: 'free-text',
+      isVisible: vm => vm.ujatVolunteerApplicationType === 'new',
     },
     { key: 'activity-term', kind: 'activity-term' },
   ]
