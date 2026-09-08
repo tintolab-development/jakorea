@@ -54,6 +54,7 @@ export function CategoryNameModal({
       open={open}
       onCancel={onCancel}
       title={title}
+      description={CATEGORY_NAME_INPUT_HINT}
       size="compact"
       className={['category-name-modal', view.mode === 'add' ? 'category-name-modal--add' : ''].filter(Boolean).join(' ')}
       footer={
@@ -101,7 +102,6 @@ export function CategoryNameModal({
                 width="100%"
                 value={name}
                 placeholder="카테고리명을 입력해 주세요"
-                message={restrictCharset ? CATEGORY_NAME_INPUT_HINT : undefined}
                 onCompositionStart={() => {
                   composingRef.current = true
                 }}

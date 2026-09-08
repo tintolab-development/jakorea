@@ -3,6 +3,7 @@ import {
   mapRecipientCandidates,
   mapTemplateVariablesCatalog,
   type AlimtalkTemplateVariable,
+  type NotificationTemplateVariablesQuery,
 } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import {
   mapSenderProfileOptions,
@@ -17,6 +18,7 @@ import {
 } from '@/features/notifications/api/notifications-api-client'
 import { ALIMTALK_SEND_RECIPIENT_MOCK } from '@/features/notifications/model/alimtalk-send/mock'
 import type { AlimtalkSendRecipient } from '@/features/notifications/model/alimtalk-send/types'
+import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
@@ -47,7 +49,7 @@ export async function getAlimtalkSenderProfiles(): Promise<AlimtalkSenderProfile
 }
 
 export async function getAlimtalkRecipientCandidates(input: {
-  programId?: number
+  programId: number
   keyword?: string
   participantType?: string
   memberType?: string
@@ -91,14 +93,16 @@ export async function getAlimtalkRecipientCandidates(input: {
   }
 }
 
-export async function getAlimtalkTemplateVariables(input?: {
-  category?: string
-  keyword?: string
-}): Promise<AlimtalkTemplateVariable[]> {
+export async function getAlimtalkTemplateVariables(
+  input: NotificationTemplateVariablesQuery = {}
+): Promise<AlimtalkTemplateVariable[]> {
   if (!shouldUseAlimtalkSendRemoteApi()) return []
   const dto = await fetchTemplateVariablesRemote({
-    category: input?.category,
-    keyword: input?.keyword,
+    category: input.category,
+    keyword: input.keyword,
+    programId: input.programId,
+    participantType: input.participantType,
+    memberType: input.memberType,
   })
   return mapTemplateVariablesCatalog(dto)
 }
@@ -118,11 +122,10 @@ export async function createAlimtalkSendBatch(input: {
   const templateId = Number(input.templateId)
   if (!Number.isFinite(templateId)) throw new Error('템플릿 ID가 올바르지 않습니다.')
 
-  const programIdRaw = input.programId
-  const programId =
-    programIdRaw && programIdRaw !== 'all' && Number.isFinite(Number(programIdRaw))
-      ? Number(programIdRaw)
-      : undefined
+  const programId = parseNotificationSendProgramId(input.programId)
+  if (programId == null) {
+    throw new Error('대상 프로그램을 선택하세요.')
+  }
 
   const body = buildCreateSendBatchRequest({
     batchName: input.batchName,

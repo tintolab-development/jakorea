@@ -7,7 +7,6 @@ import {
   AlimtalkPhonePreview,
   CmsButton,
   CmsDatePicker,
-  CmsInput,
   CmsRadio,
   CmsSelect,
   ConfirmModal,
@@ -20,7 +19,6 @@ import {
   ALIMTALK_MESSAGE_TYPE_LABEL,
   type AlimtalkTemplateItem,
 } from '@/features/notifications/model/alimtalk-template/types'
-import { ALIMTALK_SEND_ALL_PROGRAM_ID } from '@/features/notifications/model/alimtalk-send/types'
 import type {
   AlimtalkSendRecipient,
   AlimtalkSendRecipientSearchParams,
@@ -33,6 +31,8 @@ import {
   toAlimtalkSendMemberTypeApi,
   toAlimtalkSendParticipantTypeApi,
 } from '@/features/notifications/model/alimtalk-send/recipients'
+import { MAIL_SEND_PROGRAM_MOCK } from '@/features/notifications/model/mail-send/mock'
+import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
 import { categoryPathNames } from '@/features/notifications/lib/tree'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { isAlimtalkTemplateApproved } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
@@ -46,7 +46,6 @@ import {
   useAlimtalkRecipientCandidatesQuery,
   useAlimtalkSenderProfilesQuery,
   useAlimtalkSendTemplatePickerQuery,
-  useAlimtalkTemplateVariablesQuery,
 } from '@/features/notifications/hooks/use-alimtalk-send-queries'
 import {
   useAlimtalkCategoryTreeQuery,
@@ -54,12 +53,9 @@ import {
   useAlimtalkTemplatePreviewQuery,
 } from '@/features/notifications/hooks/use-alimtalk-template-tree-query'
 import {
-  buildAlimtalkBatchVariables,
   collectTemplatePlaceholderKeys,
-  findMissingAlimtalkTemplateVariableKeys,
-  formatAlimtalkMissingVariablesMessage,
-  templateUsesProgramRequiredVariable,
 } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
+import { ProgramSelectField } from '@/features/notifications/ui/mail-send/program-select-field'
 import { ContentPanel } from './content-panel'
 import { RecipientManualModal } from './recipient-manual-modal'
 import { RecipientSelectModal } from './recipient-select-modal'
@@ -70,11 +66,6 @@ import './fullpage-modal.css'
 const EMPTY_HINT = '발신 프로필/템플릿을 먼저 선택하세요.'
 const UNSELECTED_CONTENT =
   '알림톡은 미리 승인 받은 템플릿만 사용 가능합니다. 템플릿 제목을 선택하면 내용이 표시됩니다.'
-
-const PROGRAM_OPTIONS = [
-  { label: '전체', value: ALIMTALK_SEND_ALL_PROGRAM_ID },
-  { label: '2026 JA Company Of The Year', value: 'prog-coy-2026' },
-]
 
 function createIdempotencyKey(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -121,7 +112,7 @@ type SendFullpageModalProps = {
 export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFullpageModalProps) {
   const { showAlert } = useCmsAlert()
   const remote = shouldUseAlimtalkSendRemoteApi()
-  const [programId, setProgramId] = useState<string | undefined>(ALIMTALK_SEND_ALL_PROGRAM_ID)
+  const [programId, setProgramId] = useState<string | undefined>(undefined)
   const [templateId, setTemplateId] = useState<string | undefined>()
   const [senderProfileKey, setSenderProfileKey] = useState<string | undefined>()
   const [sendTiming, setSendTiming] = useState<'immediate' | 'scheduled'>('immediate')
@@ -137,8 +128,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     keyword: '',
     page: 0,
   })
-  /** 본문 #{...} 필수값 — batch variables로 전달 */
-  const [templateVariableValues, setTemplateVariableValues] = useState<Record<string, string>>({})
   const idempotencyKeyRef = useRef(createIdempotencyKey())
 
   const senderProfilesQuery = useAlimtalkSenderProfilesQuery(open)
@@ -161,10 +150,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
 
   const pickerTemplates = templatesQuery.data ?? []
 
-  const programNumericId =
-    programId && programId !== ALIMTALK_SEND_ALL_PROGRAM_ID && Number.isFinite(Number(programId))
-      ? Number(programId)
-      : undefined
+  const programNumericId = parseNotificationSendProgramId(programId)
 
   const recipientTypeMode = resolveAlimtalkSendRecipientTypeMode(programId)
   const typeColumnTitle = alimtalkSendRecipientTypeColumnTitle(recipientTypeMode)
@@ -187,7 +173,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     open && recipientSelectOpen
   )
 
-  const variablesQuery = useAlimtalkTemplateVariablesQuery({}, open && Boolean(templateId))
   const pickerTemplate = useMemo(
     () => pickerTemplates.find(item => item.id === templateId) ?? null,
     [pickerTemplates, templateId]
@@ -205,7 +190,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   useEffect(() => {
     if (!open) return
     idempotencyKeyRef.current = createIdempotencyKey()
-    setProgramId(ALIMTALK_SEND_ALL_PROGRAM_ID)
+    setProgramId(undefined)
     setTemplateId(initialTemplateId)
     setSendTiming('immediate')
     setScheduledAt(null)
@@ -216,7 +201,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     setSendConfirmOpen(false)
     setSending(false)
     setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
-    setTemplateVariableValues({})
   }, [open, initialTemplateId])
 
   // 프로그램 전환 시: 유형 필터·page 리셋 (이전 모드 enum 혼용 금지)
@@ -293,11 +277,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     } satisfies AlimtalkTemplateItem
   }, [detailQuery.data, pickerTemplate, previewQuery.data, remote, templateId])
 
-  const variablesRequireProgram = useMemo(
-    () => templateUsesProgramRequiredVariable(variablesQuery.data ?? [], selectedTemplate),
-    [selectedTemplate, variablesQuery.data]
-  )
-
   const requiredPlaceholderKeys = useMemo(() => {
     if (!selectedTemplate) return [] as string[]
     return [...collectTemplatePlaceholderKeys(selectedTemplate)].sort((a, b) =>
@@ -305,26 +284,10 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     )
   }, [selectedTemplate])
 
-  const batchVariables = useMemo(
-    () => buildAlimtalkBatchVariables(templateVariableValues),
-    [templateVariableValues]
-  )
-
-  const missingRequiredVariableKeys = useMemo(
-    () =>
-      findMissingAlimtalkTemplateVariableKeys({
-        requiredKeys: requiredPlaceholderKeys,
-        batchVariables,
-        recipients,
-      }),
-    [batchVariables, recipients, requiredPlaceholderKeys]
-  )
-
   const canConfigureRecipients = Boolean(selectedSender && selectedTemplate)
 
   const handleSelectTemplate = (template: AlimtalkTemplateItem) => {
     setTemplateId(template.id)
-    setTemplateVariableValues({})
     if (template.senderKey) {
       const matched = senderOptions.find(option => option.senderKey === template.senderKey)
       if (matched) setSenderProfileKey(matched.value)
@@ -356,15 +319,22 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
 
   const handleManualRecipients = () => {
     if (!requireProfileAndTemplate()) return
+    if (!programNumericId) {
+      showAlert({
+        title: '안내',
+        content: '프로그램을 먼저 선택하세요.',
+      })
+      return
+    }
     setRecipientManualOpen(true)
   }
 
   const handleSetRecipients = () => {
     if (!requireProfileAndTemplate()) return
-    if (variablesRequireProgram && !programNumericId) {
+    if (!programNumericId) {
       showAlert({
         title: '안내',
-        content: '프로그램 변수가 필요한 템플릿입니다. 대상 프로그램을 먼저 선택하세요.',
+        content: '프로그램을 먼저 선택하세요.',
       })
       return
     }
@@ -396,17 +366,10 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       showAlert({ title: '필수 입력 안내', content: '수신자를 설정하세요.' })
       return
     }
-    if (variablesRequireProgram && !programNumericId) {
+    if (!programNumericId) {
       showAlert({
         title: '필수 입력 안내',
-        content: '프로그램 변수가 필요한 템플릿입니다. 대상 프로그램을 선택하세요.',
-      })
-      return
-    }
-    if (missingRequiredVariableKeys.length > 0) {
-      showAlert({
-        title: '필수 입력 안내',
-        content: formatAlimtalkMissingVariablesMessage(missingRequiredVariableKeys),
+        content: '대상 프로그램을 선택하세요.',
       })
       return
     }
@@ -419,17 +382,18 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
 
     if (!remote) {
       showAlert({
-        title: '안내',
-        content: '알림톡 발송이 완료 되었습니다.',
+        title: '알림톡 발송 완료',
+        content: '알림톡 발송이 완료되었습니다.',
+        confirmLabel: '닫기',
         onConfirm: onClose,
       })
       return
     }
 
-    if (missingRequiredVariableKeys.length > 0) {
+    if (!programNumericId) {
       showAlert({
         title: '필수 입력 안내',
-        content: formatAlimtalkMissingVariablesMessage(missingRequiredVariableKeys),
+        content: '대상 프로그램을 선택하세요.',
       })
       return
     }
@@ -445,13 +409,13 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         senderKey: selectedSender.senderKey,
         senderProfileId: selectedSender.profileId,
         recipients,
-        variables: batchVariables,
         idempotencyKey: idempotencyKeyRef.current,
       })
       idempotencyKeyRef.current = createIdempotencyKey()
       showAlert({
-        title: '안내',
-        content: '알림톡 발송이 완료 되었습니다.',
+        title: '알림톡 발송 완료',
+        content: '알림톡 발송이 완료되었습니다.',
+        confirmLabel: '닫기',
         onConfirm: onClose,
       })
     } catch (error) {
@@ -524,17 +488,12 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                 <DetailInfoForm.Row type="double">
                   <DetailInfoForm.Field
                     label="대상 프로그램"
-                    view={PROGRAM_OPTIONS.find(option => option.value === programId)?.label}
+                    view=""
                     edit={
-                      <CmsSelect
-                        inputSize="large"
-                        withAllOption={false}
+                      <ProgramSelectField
                         value={programId}
-                        onChange={value =>
-                          setProgramId(typeof value === 'string' ? value : undefined)
-                        }
-                        options={PROGRAM_OPTIONS}
-                        style={{ width: '100%' }}
+                        programs={MAIL_SEND_PROGRAM_MOCK}
+                        onSelect={program => setProgramId(program.id)}
                       />
                     }
                   />
@@ -601,40 +560,16 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
 
             {requiredPlaceholderKeys.length > 0 ? (
               <section className="alimtalk-send-fullpage__widget">
-                <h3 className="alimtalk-send-fullpage__section-title">
-                  템플릿 필수 변수<span className="alimtalk-send-fullpage__required">*</span>
-                </h3>
+                <h3 className="alimtalk-send-fullpage__section-title">템플릿 자동입력 변수</h3>
                 <p className="alimtalk-send-fullpage-modal__notice-text">
-                  본문의 {'#{...}'} 값은 발송 전 채워야 합니다. 회원(MEMBER) 수신자는 「사용자
-                  아이디(이메일)」을 BE가 자동 채울 수 있습니다. DIRECT(번호 직접 입력)는 모두
-                  직접 입력하세요.
+                  본문의 {'#{...}'} 값은 발송 시 서버가 프로그램·수신자 정보로 치환합니다. 직접
+                  입력 수신자는 이름·연락처 위주로 채워지며, 비어 있는 값은 보내지 않습니다.
                 </p>
-                <DetailInfoForm title="템플릿 필수 변수" hideHeader mode="edit">
+                <ul className="alimtalk-send-fullpage-modal__notice-text">
                   {requiredPlaceholderKeys.map(key => (
-                    <DetailInfoForm.Row key={key} type="single">
-                      <DetailInfoForm.Field
-                        label={key}
-                        required
-                        fullRow
-                        view={templateVariableValues[key] || '-'}
-                        edit={
-                          <CmsInput
-                            inputSize="large"
-                            value={templateVariableValues[key] ?? ''}
-                            placeholder={`#{${key}}`}
-                            onChange={event => {
-                              const nextValue = event.target.value
-                              setTemplateVariableValues(prev => ({
-                                ...prev,
-                                [key]: nextValue,
-                              }))
-                            }}
-                          />
-                        }
-                      />
-                    </DetailInfoForm.Row>
+                    <li key={key}>{`#{${key}}`}</li>
                   ))}
-                </DetailInfoForm>
+                </ul>
               </section>
             ) : null}
 
@@ -787,7 +722,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
             : 1
         }
         fetchAllCandidates={
-          remote
+          remote && programNumericId != null
             ? async () => {
                 const total = Math.max(candidatesQuery.data?.total ?? 0, 1)
                 const result = await getAlimtalkRecipientCandidates({
@@ -831,7 +766,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       />
       <ConfirmModal
         open={sendConfirmOpen}
-        title="발송 안내"
+        title="알림톡 발송"
         content="해당 내용으로 알림톡을 발송하시겠습니까?"
         confirmText="발송"
         cancelText="취소"

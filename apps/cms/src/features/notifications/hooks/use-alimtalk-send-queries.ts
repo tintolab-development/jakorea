@@ -4,6 +4,7 @@ import {
   getAlimtalkSenderProfiles,
   getAlimtalkTemplateVariables,
 } from '@/features/notifications/api/alimtalk-send-service'
+import type { NotificationTemplateVariablesQuery } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import { getAlimtalkSendTemplatePicker } from '@/features/notifications/api/alimtalk-template-service'
 import { notificationsQueryKeys } from '@/features/notifications/api/notifications-query-keys'
 
@@ -38,11 +39,16 @@ export function useAlimtalkRecipientCandidatesQuery(
   },
   enabled = true
 ) {
+  const canFetch = enabled && input.programId != null && Number.isFinite(input.programId)
   const key = JSON.stringify(input)
   return useQuery({
     queryKey: notificationsQueryKeys.alimtalkSend.recipients(key),
-    queryFn: () => getAlimtalkRecipientCandidates(input),
-    enabled,
+    queryFn: () =>
+      getAlimtalkRecipientCandidates({
+        ...input,
+        programId: input.programId as number,
+      }),
+    enabled: canFetch,
     staleTime: 30_000,
     placeholderData: keepPreviousData,
     retry: false,
@@ -50,7 +56,7 @@ export function useAlimtalkRecipientCandidatesQuery(
 }
 
 export function useAlimtalkTemplateVariablesQuery(
-  input: { category?: string; keyword?: string } = {},
+  input: NotificationTemplateVariablesQuery = {},
   enabled = true
 ) {
   const key = JSON.stringify(input)

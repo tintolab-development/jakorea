@@ -412,6 +412,11 @@ export function AlimtalkTemplateList({
         setExpandedIds(prev => new Set(prev).add(pendingMove.targetParentId))
       }
       setPendingMove(null)
+      showAlert({
+        title: '이동 완료',
+        content: '이동이 완료되었습니다.',
+        confirmLabel: '닫기',
+      })
     } catch (error) {
       if (isCategoryNeedsSyncError(error)) {
         showAlert({
@@ -474,6 +479,11 @@ export function AlimtalkTemplateList({
         }
         setSelection(null)
         setDeleteDialog(null)
+        showAlert({
+          title: '삭제 완료',
+          content: '삭제가 완료되었습니다.',
+          confirmLabel: '닫기',
+        })
         return
       }
 
@@ -486,6 +496,11 @@ export function AlimtalkTemplateList({
         }
         setSelection(null)
         setDeleteDialog(null)
+        showAlert({
+          title: '삭제 완료',
+          content: '삭제가 완료되었습니다.',
+          confirmLabel: '닫기',
+        })
       }
     } catch (error) {
       if (isAlimtalkTemplateDeleteRejectedByNhnError(error)) {
@@ -707,7 +722,7 @@ export function AlimtalkTemplateList({
         open={deleteDialog === 'blocked'}
         onClose={() => setDeleteDialog(null)}
         title="카테고리 삭제 불가"
-        content="하위 카테고리 또는 템플릿이 있어 삭제할 수 없습니다."
+        content="카테고리 하위에 카테고리 또는 템플릿이 있으면 삭제할 수 없습니다."
         buttons={[
           { label: '닫기', onClick: () => setDeleteDialog(null), variant: 'secondary' },
           { label: '확인', onClick: () => setDeleteDialog(null), variant: 'primary' },
@@ -717,7 +732,9 @@ export function AlimtalkTemplateList({
         open={deleteDialog === 'category'}
         onClose={() => setDeleteDialog(null)}
         title="카테고리 삭제"
-        content="선택한 카테고리를 삭제할까요? NHN Console에도 반영됩니다."
+        content={
+          '해당 카테고리를 삭제하시겠습니까?\n삭제 시 NHN 서비스에서도 함께 반영됩니다.'
+        }
         buttons={[
           { label: '취소', onClick: () => setDeleteDialog(null), variant: 'secondary' },
           { label: '삭제', onClick: () => void handleConfirmDelete(), variant: 'delete' },
@@ -727,7 +744,9 @@ export function AlimtalkTemplateList({
         open={deleteDialog === 'template'}
         onClose={() => setDeleteDialog(null)}
         title="삭제 확인"
-        content="선택한 알림톡 템플릿을 삭제할까요? NHN Console에도 반영됩니다. (승인·공용 템플릿은 NHN에서 거절될 수 있습니다.)"
+        content={
+          '선택한 알림톡 템플릿을 삭제할까요?\n삭제 시 NHN 서비스에서도 함께 반영됩니다. (승인·공용 템플릿은 NHN에서 거절될 수 있습니다.)'
+        }
         buttons={[
           { label: '취소', onClick: () => setDeleteDialog(null), variant: 'secondary' },
           { label: '삭제', onClick: () => void handleConfirmDelete(), variant: 'delete' },
@@ -739,7 +758,7 @@ export function AlimtalkTemplateList({
         title="카테고리 이동"
         content={
           pendingMove?.kind === 'category'
-            ? `카테고리 이동 시 하위의 카테고리/템플릿도 같이 이동됩니다.\n[${categoryNameById(categories, pendingMove.categoryId)}] 카테고리의 위치를 이동하시겠습니까?`
+            ? `[${categoryNameById(categories, pendingMove.categoryId)}] 카테고리의 위치를 이동하시겠습니까?\n카테고리 이동 시 하위의 카테고리/템플릿도 같이 이동되며, NHN 서비스에서도 함께 반영됩니다.`
             : ''
         }
         buttons={[
@@ -751,18 +770,16 @@ export function AlimtalkTemplateList({
         open={pendingMove?.kind === 'template'}
         onClose={() => setPendingMove(null)}
         title="템플릿 이동"
+        content={
+          pendingMove?.kind === 'template'
+            ? `해당 템플릿을 [${categoryNameById(categories, pendingMove.targetCategoryId)}] 카테고리로 이동하시겠습니까?\n템플릿 이동 시 NHN 서비스에서도 함께 반영됩니다.`
+            : ''
+        }
         buttons={[
           { label: '취소', onClick: () => setPendingMove(null), variant: 'secondary' },
           { label: '이동', onClick: () => void handleConfirmMove(), variant: 'primary' },
         ]}
-      >
-        {pendingMove?.kind === 'template' ? (
-          <p className="cms-modal__content">
-            해당 템플릿을 <strong>[{categoryNameById(categories, pendingMove.targetCategoryId)}]</strong>{' '}
-            카테고리로 이동하시겠습니까?
-          </p>
-        ) : null}
-      </CmsModal>
+      />
       <CategoryNameModal
         open={categoryModal != null}
         mode={categoryModal?.mode ?? 'add'}

@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildCreateSendBatchRequest,
   collectTemplatePlaceholderKeys,
   findMissingAlimtalkTemplateVariableKeys,
   formatAlimtalkFailedReason,
   formatAlimtalkMissingVariablesMessage,
+  mapTemplateVariablesCatalog,
+  pickNonEmptySendVariables,
 } from './alimtalk-send-batch-adapters'
 
 describe('alimtalk-send-batch-adapters placeholders', () => {
@@ -60,5 +63,106 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
         'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:사용자 아이디(이메일)'
       )
     ).toBe('템플릿 필수 변수가 없습니다: 사용자 아이디(이메일)')
+  })
+
+  it('빈 문자열 variables는 생략하고 값이 있는 항목만 남긴다', () => {
+    expect(pickNonEmptySendVariables({ 회원명: '', 프로그램명: '  ' })).toBeUndefined()
+    expect(pickNonEmptySendVariables({ 회원명: '홍길동', 프로그램명: '' })).toEqual({
+      회원명: '홍길동',
+    })
+  })
+
+  it('발송 요청은 programId 필수이고 variables를 기본 생략한다', () => {
+    const request = buildCreateSendBatchRequest({
+      batchName: '알림톡 발송',
+      templateId: 11,
+      programId: 77,
+      recipients: [
+        {
+          id: 'actor-MEMBER-1',
+          participationType: 'participant',
+          name: '홍길동',
+          phone: '010-1111-2222',
+          source: 'program',
+          actorType: 'MEMBER',
+          actorId: 1,
+        },
+      ],
+    })
+    expect(request.programId).toBe(77)
+    expect(request).not.toHaveProperty('variables')
+    expect(request.recipients[0]).toMatchObject({
+      actorType: 'MEMBER',
+      actorId: 1,
+    })
+  })
+
+  it('DIRECT 수신자는 actorId 없이 recipientContact만 실는다', () => {
+    const request = buildCreateSendBatchRequest({
+      batchName: '알림톡 발송',
+      templateId: 11,
+      programId: 77,
+      recipients: [
+        {
+          id: 'manual-1',
+          participationType: '',
+          name: '직접',
+          phone: '010-3333-4444',
+          source: 'manual',
+          actorType: 'DIRECT',
+        },
+      ],
+    })
+    expect(request.recipients[0]).toEqual({
+      actorType: 'DIRECT',
+      recipientContact: '01033334444',
+      recipientName: '직접',
+    })
+    expect(request.recipients[0]).not.toHaveProperty('actorId')
+  })
+
+  it('enabled를 BE 값 그대로 옮기고 로컬 재계산하지 않는다', () => {
+    const mapped = mapTemplateVariablesCatalog({
+      categories: [
+        {
+          categoryCode: 'name',
+          categoryLabel: '이름',
+          variables: [
+            {
+              key: '회원명',
+              token: '#{회원명}',
+              description: '회원 이름',
+              requiresProgram: false,
+              enabled: true,
+              programGroups: [],
+              memberTypes: ['GENERAL'],
+            },
+            {
+              key: '프로그램명',
+              token: '#{프로그램명}',
+              description: '프로그램',
+              requiresProgram: true,
+              enabled: false,
+              programGroups: ['GENERAL'],
+            },
+          ],
+        },
+      ],
+    })
+    expect(mapped).toEqual([
+      expect.objectContaining({
+        key: '회원명',
+        enabled: true,
+        requiresProgram: false,
+        programGroups: [],
+        memberTypes: ['GENERAL'],
+      }),
+      expect.objectContaining({
+        key: '프로그램명',
+        enabled: false,
+        requiresProgram: true,
+        programGroups: ['GENERAL'],
+      }),
+    ])
   })
 })

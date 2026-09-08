@@ -16,8 +16,22 @@ export type AlimtalkTemplateVariable = {
   token: string
   description: string
   requiresProgram: boolean
+  /** BE SSOT. FE는 이 값만으로 발송 화면 삽입 활성/비활성을 결정한다. */
+  enabled: boolean
+  programGroups: string[]
+  recruitmentTypes: string[]
+  participantTypes: string[]
+  memberTypes: string[]
   categoryCode?: string
   categoryLabel?: string
+}
+
+export type NotificationTemplateVariablesQuery = {
+  category?: string
+  keyword?: string
+  programId?: number
+  participantType?: string
+  memberType?: string
 }
 
 function mapParticipationType(
@@ -261,18 +275,30 @@ export function collectTemplatePlaceholderKeys(
   return extractPlaceholderKeysFromTexts(...parts)
 }
 
-export function buildAlimtalkBatchVariables(
-  values: Record<string, string> | null | undefined
+export function pickNonEmptySendVariables(
+  values?: Record<string, unknown>
 ): Record<string, unknown> | undefined {
   if (!values) return undefined
   const next: Record<string, unknown> = {}
   for (const [key, raw] of Object.entries(values)) {
     const trimmedKey = key.trim()
-    const trimmedValue = raw.trim()
-    if (!trimmedKey || !trimmedValue) continue
-    next[trimmedKey] = trimmedValue
+    if (!trimmedKey) continue
+    if (typeof raw === 'string') {
+      const trimmedValue = raw.trim()
+      if (!trimmedValue) continue
+      next[trimmedKey] = trimmedValue
+      continue
+    }
+    if (raw == null || raw === '') continue
+    next[trimmedKey] = raw
   }
   return Object.keys(next).length > 0 ? next : undefined
+}
+
+export function buildAlimtalkBatchVariables(
+  values: Record<string, string> | null | undefined
+): Record<string, unknown> | undefined {
+  return pickNonEmptySendVariables(values ?? undefined)
 }
 
 /** 선택 템플릿이 실제로 쓰는 변수 중 프로그램 스코프가 필요한지 */
@@ -301,6 +327,11 @@ function mapCatalogVariable(
     token: variable.token?.trim() || `#{${key}}`,
     description: variable.description?.trim() || key,
     requiresProgram: variable.requiresProgram === true,
+    enabled: variable.enabled === true,
+    programGroups: variable.programGroups ?? [],
+    recruitmentTypes: variable.recruitmentTypes ?? [],
+    participantTypes: variable.participantTypes ?? [],
+    memberTypes: variable.memberTypes ?? [],
     categoryCode,
     categoryLabel,
   }
@@ -331,13 +362,14 @@ export function buildSendBatchRecipients(
 export function buildCreateSendBatchRequest(input: {
   batchName: string
   templateId: number
-  programId?: number
+  programId: number
   scheduledAt?: string
   senderKey?: string
   senderProfileId?: number
   recipients: AlimtalkSendRecipient[]
   variables?: Record<string, unknown>
 }): CreateRequest {
+  const variables = pickNonEmptySendVariables(input.variables)
   return {
     batchName: input.batchName,
     templateId: input.templateId,
@@ -345,7 +377,7 @@ export function buildCreateSendBatchRequest(input: {
     scheduledAt: input.scheduledAt,
     senderKey: input.senderKey,
     senderProfileId: input.senderProfileId,
-    variables: input.variables,
+    ...(variables ? { variables } : {}),
     recipients: buildSendBatchRecipients(input.recipients),
   }
 }
