@@ -1,6 +1,6 @@
 import { memo } from 'react'
-import { MenuOutlined } from '@ant-design/icons'
 import { areFormEditorCardPropsEqual } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-card-memo'
+import { SortOrderDragIcon } from '@/shared/ui/sort-order-drag-icon'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
@@ -62,7 +62,7 @@ export function ParagraphCardDragHandleNonInteractive() {
       className="paragraph-card__drag-handle paragraph-card__drag-handle--non-interactive"
       aria-hidden
     >
-      <MenuOutlined />
+      <SortOrderDragIcon />
     </span>
   )
 }
@@ -350,7 +350,7 @@ function SortableMiddleFormCardInner({
               {...attributes}
               {...listeners}
             >
-              <MenuOutlined />
+              <SortOrderDragIcon />
             </button>
           ) : showEditorChrome && hideDragHandle ? (
             <ParagraphCardDragHandleNonInteractive />

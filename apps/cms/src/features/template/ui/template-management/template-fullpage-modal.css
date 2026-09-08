@@ -387,8 +387,8 @@
   flex-shrink: 0;
 }
 
-.template-modal-nav-item__handle .anticon {
-  font-size: 14px;
+.template-modal-nav-item__handle .sort-order-drag-icon {
+  display: block;
 }
 
 .template-modal-nav-item__handle:active {

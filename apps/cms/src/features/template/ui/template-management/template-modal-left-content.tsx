@@ -1,4 +1,4 @@
-import { MenuOutlined } from '@ant-design/icons'
+import { SortOrderDragIcon } from '@/shared/ui/sort-order-drag-icon'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   DndContext,
@@ -125,7 +125,7 @@ function SortableLeftCard({ card, selectedCardId, onSelectCard }: SortableLeftCa
             {...attributes}
             {...listeners}
           >
-            <MenuOutlined />
+            <SortOrderDragIcon />
           </button>
         }
       />

@@ -1,5 +1,5 @@
-import { MenuOutlined } from '@ant-design/icons'
 import type { ReactNode } from 'react'
+import { SortOrderDragIcon } from '@/shared/ui/sort-order-drag-icon'
 import {
   DndContext,
   PointerSensor,
@@ -102,14 +102,14 @@ function SortableNavRow({
           {...attributes}
           {...listeners}
         >
-          <MenuOutlined />
+          <SortOrderDragIcon />
         </span>
       ) : (
         <span
           className="template-modal-nav-item__handle template-modal-nav-item__handle--non-interactive"
           aria-hidden
         >
-          <MenuOutlined />
+          <SortOrderDragIcon />
         </span>
       )}
     </button>
