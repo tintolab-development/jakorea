@@ -368,7 +368,12 @@
         "showBottomText": false,
         "showBottomConsent": false,
         "bottomConsent": "agree",
-        "answerRequired": true
+        "answerRequired": true,
+        "verticalChoiceOptions": [
+          "A",
+          "B",
+          "C"
+        ]
       },
       {
         "id": "payment-statement-pre-consent-seed-mid-consent-line",

@@ -18,6 +18,7 @@ import type {
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
   isAgreementLockedSystemParagraph,
+  resolveMultipleChoiceBodyDescriptionText,
   normalizeHorizontalTableParagraph,
   type HorizontalTableParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -125,10 +126,14 @@ function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoi
   const allowMultiple = paragraph.allowMultiple ?? false
   const singleId = paragraph.selectedPreviewSingleId ?? null
   const multi = new Set(paragraph.selectedPreviewMultipleIds ?? [])
+  const bodyDescription = resolveMultipleChoiceBodyDescriptionText(paragraph)
 
   if (allowMultiple) {
     return (
       <div className="form-document-preview-multiple-choice">
+        {bodyDescription ? (
+          <p className="form-document-preview-multiple-choice__description">{bodyDescription}</p>
+        ) : null}
         {items.map(item => {
           const checked = multi.has(item.id)
           return (
@@ -146,6 +151,9 @@ function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoi
 
   return (
     <div className="form-editor-body">
+      {bodyDescription ? (
+        <p className="form-document-preview-multiple-choice__description">{bodyDescription}</p>
+      ) : null}
       <CmsRadioGroup
         className="form-editor-table-bottom-consent"
         size="large"
@@ -619,7 +627,8 @@ function renderBody(
       }
       if (
         renderMode === 'contentOnly' &&
-        c.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
+        c.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing &&
+        paragraphBodyOptions?.agreementAdminProxyConfirm !== true
       ) {
         return null
       }

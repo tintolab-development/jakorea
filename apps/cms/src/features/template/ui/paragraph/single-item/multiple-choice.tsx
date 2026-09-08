@@ -1,6 +1,9 @@
 import { useEffect, useRef, type MouseEvent as ReactMouseEvent } from 'react'
 import type { MultipleChoiceParagraph } from '@/features/template/model/writing-form-draft.schema'
-import { createDefaultMultipleChoiceItems } from '@/features/template/model/writing-form-draft.schema'
+import {
+  createDefaultMultipleChoiceItems,
+  resolveMultipleChoiceBodyDescriptionText,
+} from '@/features/template/model/writing-form-draft.schema'
 import {
   isFormPreviewReadonlyMode,
   type ParagraphBodyInteractionMode,
@@ -20,6 +23,12 @@ function mergeParagraph(
   const next = { ...paragraph, ...partial }
   if (!next.items?.length) next.items = createDefaultMultipleChoiceItems()
   return next
+}
+
+function MultipleChoiceBodyDescription({ paragraph }: { paragraph: MultipleChoiceParagraph }) {
+  const text = resolveMultipleChoiceBodyDescriptionText(paragraph)
+  if (!text) return null
+  return <p className="multiple-choice-body__description">{text}</p>
 }
 
 /** 객관식형 — 단락 바디: 라디오(단일) / 체크박스(중복 선택) */
@@ -80,6 +89,7 @@ export function MultipleChoice({
 
   const items = normalizeItems(paragraph)
   const allowMultiple = paragraph.allowMultiple ?? false
+  const isInlineDualChoice = !allowMultiple && items.length === 2
   const singleId = paragraph.selectedPreviewSingleId ?? null
   const multiIds = paragraph.selectedPreviewMultipleIds ?? []
   const isPreviewReadonly = isFormPreviewReadonlyMode(paragraphInteractionMode)
@@ -113,6 +123,7 @@ export function MultipleChoice({
 
     return (
       <div role="presentation" className={bodyClass} onClick={handleBodyClick}>
+        <MultipleChoiceBodyDescription paragraph={paragraph} />
         {items.map(item => (
           <div key={item.id} role="presentation" className="multiple-choice-row">
             <CmsCheckbox
@@ -129,8 +140,14 @@ export function MultipleChoice({
 
   return (
     <div role="presentation" className={bodyClass} onClick={handleBodyClick}>
+      <MultipleChoiceBodyDescription paragraph={paragraph} />
       <CmsRadioGroup
-        className="multiple-choice-radio-group"
+        className={[
+          'multiple-choice-radio-group',
+          isInlineDualChoice ? 'multiple-choice-radio-group--inline' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         disabled={controlDisabled}
         value={singleId}
         onChange={e => patch({ selectedPreviewSingleId: e.target.value })}

@@ -339,7 +339,7 @@ export const UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME = 'JA초등학�
 
 /** 캔버스에서 선택된 테이블 행(헤더 행 vs 데이터 행) — 에디터에서 단락 id별로 보관해 위젯마다 분리 */
 export type HorizontalTableRowSelection =
-  | { area: 'header' }
+  | { area: 'header'; col?: number }
   /** `col`: 본문 칸 단위 선택(미지정·레거시는 0으로 취급) */
   | { area: 'body'; row: number; col?: number }
 
@@ -2109,14 +2109,27 @@ function migrateAgreementPortraitPersonalConsentNameCells(
   const c1 = (r0.cells[1] ?? '').trim()
   const clearName = c0 === '한글 성명'
   const clearAff = c1 === '소속 / 소속 없음' || c1 === '소속'
-  if (!clearName && !clearAff) return p
+  const kindsNeedFix =
+    r0.stageKinds?.[0] !== 'subjective' || r0.stageKinds?.[1] !== 'subjective'
+  const h0 = (r0.placeholderHints?.[0] ?? '').trim()
+  const h1 = (r0.placeholderHints?.[1] ?? '').trim()
+  const hintsNeedFix = h0 === '' || h1 === ''
+  if (!clearName && !clearAff && !kindsNeedFix && !hintsNeedFix) return p
   const nextCells: [string, string] = [
     clearName ? '' : (r0.cells[0] ?? ''),
     clearAff ? '' : (r0.cells[1] ?? ''),
   ]
   return {
     ...p,
-    rows: [{ ...r0, cells: nextCells }, ...rows.slice(1)],
+    rows: [
+      {
+        ...r0,
+        cells: nextCells,
+        stageKinds: ['subjective', 'subjective'],
+        placeholderHints: [h0 || '한글 성명', h1 || '소속 기관명'],
+      },
+      ...rows.slice(1),
+    ],
   }
 }
 
@@ -2125,6 +2138,13 @@ const PORTRAIT_DELEGATED_TASK_CELL =
 
 const AGREEMENT_PORTRAIT_INTRO_TEXT =
   '아래 사항에 동의하는 경우, 명시된 사용 용도에 한하여 글과 함께 저작물을 제작하는 형태로 초상권을 사용할 권리를 촬영자에게 부여합니다.\n또한, 저작물에 대한 소유권을 주장하지 않으며 저작물에 대한 소유권 및 저작권이 JA Korea에 있음을 확인합니다.'
+
+/** 교육진행자 동의 서약서 — 서문(설명글 텍스트형) 고정 본문 */
+export const EDUCATOR_FACILITATOR_PLEDGE_INTRO_TEXT =
+  '본인은 JA Korea의 교육사업에 참여함에 있어, 다음 사항을 준수할 것을 서약합니다.'
+
+/** 교육진행자 동의 서약서 — 제목 단락(`survey_title_with_period`) 고정 문구 */
+export const EDUCATOR_FACILITATOR_PLEDGE_SURVEY_TITLE = '교육진행자 동의 서약서'
 
 const AGREEMENT_PORTRAIT_PERSONAL_CONSENT_QUESTION =
   '위 동의를 거부할 수 있으며, 동의하지 않을 경우 수업 참여가 제한될 수 있습니다. 위 개인정보 및 초상권 수집·이용에 동의하십니까?'
@@ -2310,6 +2330,7 @@ function migrateAgreementNoticeSeedRequiredMarks(
 export const AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID = 'agreement-notice-id-resident'
 
 const AGREEMENT_NOTICE_INSTITUTION_PLACEHOLDER = '텍스트를 작성해 주세요'
+const AGREEMENT_NOTICE_PURPOSE_PLACEHOLDER = '이용 목적을 입력해 주세요'
 const AGREEMENT_NOTICE_SUBJECT_NAME_PLACEHOLDER = '성명을 입력해 주세요'
 const AGREEMENT_NOTICE_SUBJECT_BIRTH_PLACEHOLDER = '생년월일 8자리를 입력해 주세요'
 const AGREEMENT_NOTICE_SUBJECT_PHONE_PLACEHOLDER = '전화번호를 입력해 주세요'
@@ -2436,6 +2457,139 @@ function migrateAgreementNoticeSeedFixedCopy(
   return p
 }
 
+function extractWritingFormParagraphBodyText(p: WritingFormParagraph): string {
+  if (p.kind !== 'single_item') return ''
+  if ('bodyText' in p && typeof p.bodyText === 'string') return p.bodyText
+  const firstItem = 'items' in p && Array.isArray(p.items) ? p.items[0] : undefined
+  if (
+    firstItem != null &&
+    'bodyText' in firstItem &&
+    typeof firstItem.bodyText === 'string'
+  ) {
+    return firstItem.bodyText
+  }
+  return ''
+}
+
+/** 행정정보 공동이용 — 이용기관·이용사무 구 variant를 설명글 텍스트형으로 보정 */
+function migrateAgreementNoticeInstitutionPurposeParagraph(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (
+    p.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.institution &&
+    p.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose
+  ) {
+    return p
+  }
+
+  const seed =
+    p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution
+      ? AGREEMENT_NOTICE_INSTITUTION_PARAGRAPH
+      : AGREEMENT_NOTICE_PURPOSE_PARAGRAPH
+
+  if (p.kind === 'single_item' && p.variant === 'agreement_explanation_text') {
+    const bodyText = typeof p.bodyText === 'string' ? p.bodyText : seed.bodyText
+    const bodyPlaceholder =
+      p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution
+        ? AGREEMENT_NOTICE_INSTITUTION_PLACEHOLDER
+        : AGREEMENT_NOTICE_PURPOSE_PLACEHOLDER
+    if (
+      p.paragraphTitle === seed.paragraphTitle &&
+      (p.paragraphDescription ?? '') === seed.paragraphDescription &&
+      p.participatesInTitleNumbering === seed.participatesInTitleNumbering &&
+      p.bodyPlaceholder === bodyPlaceholder &&
+      p.bodyText === bodyText &&
+      p.requiredMark === seed.requiredMark &&
+      p.answerRequired === seed.answerRequired
+    ) {
+      return p
+    }
+    return {
+      ...p,
+      paragraphTitle: seed.paragraphTitle,
+      paragraphDescription: p.paragraphDescription ?? '',
+      participatesInTitleNumbering: seed.participatesInTitleNumbering,
+      bodyPlaceholder,
+      bodyText,
+      requiredMark: seed.requiredMark,
+      answerRequired: seed.answerRequired,
+    }
+  }
+
+  let bodyText = extractWritingFormParagraphBodyText(p)
+  if (p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose && bodyText.trim() === '') {
+    bodyText = AGREEMENT_NOTICE_DEFAULT_PURPOSE
+  }
+
+  return {
+    ...seed,
+    bodyText,
+    paragraphDescription:
+      p.kind === 'single_item' || p.kind === 'description'
+        ? (p.paragraphDescription ?? '')
+        : seed.paragraphDescription,
+  }
+}
+
+/** 교육진행자 서약 intro — 구 저장본(closing·static 등)을 설명글 텍스트형으로 보정 */
+function migrateAgreementExpensePledgeIntroParagraph(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (p.id !== 'agreement-expense-pledge-intro') return p
+
+  if (p.kind === 'single_item' && p.variant === 'agreement_explanation_text') {
+    const bodyText =
+      typeof p.bodyText === 'string' && p.bodyText.trim() !== ''
+        ? p.bodyText
+        : EDUCATOR_FACILITATOR_PLEDGE_INTRO_TEXT
+    if (
+      bodyText === p.bodyText &&
+      p.bodyPlaceholder === '한 줄 안내를 입력해 주세요' &&
+      p.requiredMark === false &&
+      p.participatesInTitleNumbering === false &&
+      p.answerRequired === false
+    ) {
+      return p
+    }
+    return {
+      ...p,
+      requiredMark: false,
+      paragraphTitle: p.paragraphTitle ?? '',
+      paragraphDescription: p.paragraphDescription ?? '',
+      participatesInTitleNumbering: false,
+      bodyPlaceholder: '한 줄 안내를 입력해 주세요',
+      bodyText,
+      answerRequired: false,
+    }
+  }
+
+  let bodyText = EDUCATOR_FACILITATOR_PLEDGE_INTRO_TEXT
+  if (p.kind === 'description' && p.variant === 'closing' && typeof p.body === 'string') {
+    const trimmed = p.body.trim()
+    if (trimmed !== '') bodyText = trimmed
+  } else if (
+    p.kind === 'description' &&
+    p.variant === 'static_description_lines' &&
+    Array.isArray(p.lines)
+  ) {
+    const firstLine = p.lines.find(line => typeof line === 'string' && line.trim() !== '')
+    if (firstLine != null) bodyText = firstLine.trim()
+  }
+
+  return {
+    id: 'agreement-expense-pledge-intro',
+    kind: 'single_item',
+    variant: 'agreement_explanation_text',
+    requiredMark: false,
+    paragraphTitle: '',
+    paragraphDescription: '',
+    participatesInTitleNumbering: false,
+    bodyPlaceholder: '한 줄 안내를 입력해 주세요',
+    bodyText,
+    answerRequired: false,
+  }
+}
+
 function normalizeWritingFormParagraph(p: WritingFormParagraph): WritingFormParagraph {
   let next = migrateLegacySingleItemDateTimeParagraph(p)
   next = normalizeUjatJournalEducationInfoParagraph(next)
@@ -2448,6 +2602,8 @@ function normalizeWritingFormParagraph(p: WritingFormParagraph): WritingFormPara
   next = migrateAgreementNoticeSeedRequiredMarks(next)
   next = migrateAgreementNoticeTableSeedRows(next)
   next = migrateAgreementNoticeSeedFixedCopy(next)
+  next = migrateAgreementNoticeInstitutionPurposeParagraph(next)
+  next = migrateAgreementExpensePledgeIntroParagraph(next)
   if (next.kind === 'description' && next.variant === 'survey_title_with_period') {
     return normalizeTitleWithPeriodParagraph(next)
   }
@@ -2602,6 +2758,34 @@ export const AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
   AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature,
 ])
 
+/** 행정정보 공동이용 — 이용기관 명칭(설명글 텍스트형) 시드 단락 */
+export const AGREEMENT_NOTICE_INSTITUTION_PARAGRAPH: AgreementExplanationTextParagraph = {
+  id: AGREEMENT_NOTICE_PARAGRAPH_IDS.institution,
+  kind: 'single_item',
+  variant: 'agreement_explanation_text',
+  requiredMark: false,
+  paragraphTitle: '이용기관 명칭',
+  paragraphDescription: '',
+  participatesInTitleNumbering: true,
+  bodyPlaceholder: AGREEMENT_NOTICE_INSTITUTION_PLACEHOLDER,
+  bodyText: '',
+  answerRequired: false,
+}
+
+/** 행정정보 공동이용 — 이용사무(이용목적)(설명글 텍스트형) 시드 단락 */
+export const AGREEMENT_NOTICE_PURPOSE_PARAGRAPH: AgreementExplanationTextParagraph = {
+  id: AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose,
+  kind: 'single_item',
+  variant: 'agreement_explanation_text',
+  requiredMark: false,
+  paragraphTitle: '이용사무(이용목적)',
+  paragraphDescription: '',
+  participatesInTitleNumbering: true,
+  bodyPlaceholder: AGREEMENT_NOTICE_PURPOSE_PLACEHOLDER,
+  bodyText: AGREEMENT_NOTICE_DEFAULT_PURPOSE,
+  answerRequired: false,
+}
+
 export function createDefaultIdTypeWithInputOptions(): IdTypeWithInputOption[] {
   return [
     { id: AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID, label: '주민등록번호' },
@@ -2691,30 +2875,8 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         endAt: null,
         showWritingPeriodOnForm: false,
       },
-      {
-        id: AGREEMENT_NOTICE_PARAGRAPH_IDS.institution,
-        kind: 'single_item',
-        variant: 'agreement_explanation_text',
-        requiredMark: false,
-        paragraphTitle: '이용기관 명칭',
-        paragraphDescription: '',
-        participatesInTitleNumbering: true,
-        bodyPlaceholder: AGREEMENT_NOTICE_INSTITUTION_PLACEHOLDER,
-        bodyText: '',
-        answerRequired: false,
-      },
-      {
-        id: AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose,
-        kind: 'single_item',
-        variant: 'agreement_explanation_text',
-        requiredMark: false,
-        paragraphTitle: '이용사무(이용목적)',
-        paragraphDescription: '',
-        participatesInTitleNumbering: true,
-        bodyPlaceholder: '이용 목적을 입력해 주세요',
-        bodyText: AGREEMENT_NOTICE_DEFAULT_PURPOSE,
-        answerRequired: false,
-      },
+      { ...AGREEMENT_NOTICE_INSTITUTION_PARAGRAPH },
+      { ...AGREEMENT_NOTICE_PURPOSE_PARAGRAPH },
       tableSeed,
       {
         id: AGREEMENT_NOTICE_PARAGRAPH_IDS.consentStatic,
@@ -2785,7 +2947,73 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
   }
 }
 
+/** 교육진행자 동의 서약서 — 제목 단락 surveyTitle 구 저장본 보정 */
+function migrateEducatorFacilitatorPledgeTitleParagraph(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (p.id !== 'agreement-expense-pledge-title') return p
+  if (p.kind !== 'description' || p.variant !== 'survey_title_with_period') return p
+  if (p.surveyTitle === EDUCATOR_FACILITATOR_PLEDGE_SURVEY_TITLE) return p
+  return { ...p, surveyTitle: EDUCATOR_FACILITATOR_PLEDGE_SURVEY_TITLE }
+}
+
 /** 구 저장본에 confirmationClosing이 없으면 systemDate 앞에 삽입. 제목형 작성 기간은 항상 off. 확인 문구는 비운다. */
+/** 교육진행자 동의 서약서 — 서문 단락(설명글 텍스트형) 누락·구 variant 보정 */
+export function ensureEducatorFacilitatorPledgeIntroParagraph(
+  draft: WritingFormDraft
+): WritingFormDraft {
+  let paragraphs = draft.paragraphs.map(p =>
+    migrateEducatorFacilitatorPledgeTitleParagraph(migrateAgreementExpensePledgeIntroParagraph(p))
+  )
+
+  if (!paragraphs.some(p => p.id === EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.intro)) {
+    paragraphs = [...paragraphs]
+    const titleIdx = paragraphs.findIndex(
+      p => p.id === EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.title
+    )
+    paragraphs.splice(
+      titleIdx >= 0 ? titleIdx + 1 : 0,
+      0,
+      EDUCATOR_FACILITATOR_PLEDGE_INTRO_PARAGRAPH
+    )
+  }
+
+  return { ...draft, paragraphs }
+}
+
+/** 행정정보 공동이용 — 이용기관·이용사무 단락 누락·구 variant를 설명글 텍스트형으로 보정 */
+export function ensureAgreementNoticeInstitutionPurposeParagraphs(
+  draft: WritingFormDraft
+): WritingFormDraft {
+  let paragraphs = draft.paragraphs.map(migrateAgreementNoticeInstitutionPurposeParagraph)
+
+  const hasInstitution = paragraphs.some(p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution)
+  const hasPurpose = paragraphs.some(p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose)
+  if (hasInstitution && hasPurpose) {
+    return { ...draft, paragraphs }
+  }
+
+  paragraphs = [...paragraphs]
+  const titleIdx = paragraphs.findIndex(p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.title)
+  let insertAt = titleIdx >= 0 ? titleIdx + 1 : 0
+
+  if (!hasInstitution) {
+    paragraphs.splice(insertAt, 0, { ...AGREEMENT_NOTICE_INSTITUTION_PARAGRAPH })
+    insertAt += 1
+  }
+  if (!hasPurpose) {
+    const purposeInsertAt =
+      paragraphs.findIndex(p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution) + 1
+    paragraphs.splice(
+      purposeInsertAt > 0 ? purposeInsertAt : insertAt,
+      0,
+      { ...AGREEMENT_NOTICE_PURPOSE_PARAGRAPH }
+    )
+  }
+
+  return { ...draft, paragraphs }
+}
+
 export function ensureAgreementNoticeConfirmationClosing(
   draft: WritingFormDraft
 ): WritingFormDraft {
@@ -2914,6 +3142,8 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
             headers: ['성명', '소속'],
             /** 성명·소속은 작성(write) UI placeholder — 셀 값은 비움 */
             cells: ['', ''],
+            stageKinds: ['subjective', 'subjective'],
+            placeholderHints: ['한글 성명', '소속 기관명'],
           },
           {
             stageCount: 1,
@@ -3216,7 +3446,40 @@ export const EDUCATOR_FACILITATOR_PLEDGE_HIDDEN_DRAG_HANDLE_IDS = new Set<string
   EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS
 )
 
+/** 서약 조항(1~4) — `paragraphDescription`은 카드 설명이 아니라 본문(객관식 위)에 표시 */
+export const EDUCATOR_FACILITATOR_PLEDGE_CLAUSE_PARAGRAPH_IDS = new Set<string>([
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause1,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause2,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause3,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause4,
+])
+
+export function isEducatorFacilitatorPledgeClauseParagraphId(paragraphId: string): boolean {
+  return EDUCATOR_FACILITATOR_PLEDGE_CLAUSE_PARAGRAPH_IDS.has(paragraphId)
+}
+
+export function resolveMultipleChoiceBodyDescriptionText(
+  paragraph: MultipleChoiceParagraph
+): string {
+  if (!isEducatorFacilitatorPledgeClauseParagraphId(paragraph.id)) return ''
+  return paragraph.paragraphDescription?.trim() ?? ''
+}
+
 const PLEDGE_MC_OPTIONS_BASE = 'pledge-mc' as const
+
+/** 교육진행자 동의 서약서 — 서문(설명글 텍스트형) 시드 단락 */
+export const EDUCATOR_FACILITATOR_PLEDGE_INTRO_PARAGRAPH: AgreementExplanationTextParagraph = {
+  id: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.intro,
+  kind: 'single_item',
+  variant: 'agreement_explanation_text',
+  requiredMark: false,
+  paragraphTitle: '',
+  paragraphDescription: '',
+  participatesInTitleNumbering: false,
+  bodyPlaceholder: '한 줄 안내를 입력해 주세요',
+  bodyText: EDUCATOR_FACILITATOR_PLEDGE_INTRO_TEXT,
+  answerRequired: false,
+}
 
 function createPledgeClauseMultipleChoice(
   id: string,
@@ -3257,26 +3520,14 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: false,
-        surveyTitle: 'JA Korea 교육진행자 서약서',
+        surveyTitle: EDUCATOR_FACILITATOR_PLEDGE_SURVEY_TITLE,
         surveyDescription: '',
         periodMode: 'immediate',
         startAt: null,
         endAt: null,
         showWritingPeriodOnForm: false,
       },
-      {
-        id: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.intro,
-        kind: 'single_item',
-        variant: 'agreement_explanation_text',
-        requiredMark: false,
-        paragraphTitle: '',
-        paragraphDescription: '',
-        participatesInTitleNumbering: false,
-        bodyPlaceholder: '한 줄 안내를 입력해 주세요',
-        bodyText:
-          '본인은 JA Korea의 교육사업에 참여함에 있어, 다음 사항을 준수할 것을 서약합니다.',
-        answerRequired: false,
-      },
+      { ...EDUCATOR_FACILITATOR_PLEDGE_INTRO_PARAGRAPH },
       createPledgeClauseMultipleChoice(
         EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause1,
         '1',
@@ -4182,7 +4433,7 @@ export function writingOutlineLabel(p: WritingFormParagraph): string {
   }
   if (p.kind === 'single_item' && p.variant === 'agreement_explanation_text') {
     const t = p.paragraphTitle.trim()
-    return t || '설명 안내'
+    return t || '타이틀을 입력해 주세요'
   }
   if (
     p.kind === 'single_item' &&

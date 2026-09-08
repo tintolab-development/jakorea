@@ -44,14 +44,14 @@
 
 | templateCode | templateName | Payload | 시드 JSON | 단락 수 |
 |--------------|--------------|---------|-----------|--------:|
-| `document-payment-order-issue` | 지급조서 (발급용) | A | [document-payment-order-issue.json](./form-template-seeds/document-payment-order-issue.json) | 7 |
-| `document-payment-order-pre-consent` | 지급조서 사전 동의서 | A | [document-payment-order-pre-consent.json](./form-template-seeds/document-payment-order-pre-consent.json) | 14 |
+| `document-payment-order-issue` | 지급조서(발급용) | A | [document-payment-order-issue.json](./form-template-seeds/document-payment-order-issue.json) | 7 |
+| `document-payment-order-pre-consent` | 지급조서 사전 동의서 | A | [document-payment-order-pre-consent.json](./form-template-seeds/document-payment-order-pre-consent.json) | 15 |
 | `document-1` | 지출증빙서류(필수폼) | E | [document-1.json](./form-template-seeds/document-1.json) | 0 |
 | `document-2` | 휴가 인증서 | D | [document-2.json](./form-template-seeds/document-2.json) | 0 |
 | `document-3` | 수료증 | D | [document-3-certificate.json](./form-template-seeds/document-3-certificate.json) | 0 |
 | `document-participation-certificate` | 참가인증서 | D | [document-participation-certificate.json](./form-template-seeds/document-participation-certificate.json) | 0 |
-| `document-4` | 강사 활동 인증서 | D | [document-4.json](./form-template-seeds/document-4.json) | 0 |
-| `document-5` | 봉사 활동 인증서 | D | [document-5.json](./form-template-seeds/document-5.json) | 0 |
+| `document-4` | 강사 활동인증서 | D | [document-4.json](./form-template-seeds/document-4.json) | 0 |
+| `document-5` | 봉사 활동인증서 | D | [document-5.json](./form-template-seeds/document-5.json) | 0 |
 
 ## 단락 id 요약 (Payload A)
 
@@ -103,7 +103,7 @@
 | `settlement-application-seed-table-transport` | single_item | horizontal_table | 교통비 신청 |
 | `settlement-application-seed-table-accommodation` | single_item | horizontal_table | 숙박비 신청 |
 
-### `document-payment-order-issue` — 지급조서 (발급용)
+### `document-payment-order-issue` — 지급조서(발급용)
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
@@ -127,6 +127,7 @@
 | `payment-statement-pre-consent-seed-p2-rrn-collection` | single_item | horizontal_table | 고유식별번호(주민등록번호) 수집·이용 |
 | `payment-statement-pre-consent-seed-p3-third-party` | single_item | horizontal_table | 개인정보 제3자 제공·이용 |
 | `payment-statement-pre-consent-seed-p4-rrn-third-party` | single_item | horizontal_table | 고유식별번호 제3자 제공·이용 |
+| `payment-statement-pre-consent-seed-ja-korea-activity` | single_item | vertical_table | JA Korea 활동 경험 |
 | `payment-statement-pre-consent-seed-mid-consent-line` | single_item | agreement_explanation_text |  |
 | `payment-statement-pre-consent-seed-mid-date` | description | system | 날짜 유형 |
 | `payment-statement-pre-consent-seed-mid-signature` | description | system | 서명란 유형 |

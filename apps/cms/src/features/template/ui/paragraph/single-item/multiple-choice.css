@@ -1,9 +1,19 @@
+.multiple-choice-body__description {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 30px */
+  padding: 0 8px;
+  margin: 0;
+}
+
 .multiple-choice-body {
   display: flex;
   flex-direction: column;
   gap: 12px;
   box-sizing: border-box;
-  border: 1px solid transparent;
   border-radius: var(--8, 8px);
   transition:
     border-color 0.15s ease,
@@ -19,7 +29,7 @@
   box-shadow: 0 4px 24px 0 rgba(0, 89, 97, 0.2);
 }
 
-/* CmsRadioGroup(.app-radio-group) 기본이 가로(row)라, 체크박스 모드와 같이 옵션을 세로로 쌓음 */
+/* CmsRadioGroup(.app-radio-group) 기본이 가로(row)라, 체크박스 모드·3개 이상은 세로로 쌓음 */
 .multiple-choice-body .multiple-choice-radio-group.app-radio-group {
   display: flex;
   flex-direction: column;
@@ -27,6 +37,15 @@
   align-items: stretch;
   gap: 12px;
   width: 100%;
+}
+
+/* 동의/동의하지 않음 등 옵션 2개 — 가로 정렬 (교육진행자 동의 서약서 조항 등) */
+.multiple-choice-body .multiple-choice-radio-group--inline.app-radio-group {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 16px;
+  width: auto;
 }
 
 .multiple-choice-row {

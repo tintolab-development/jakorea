@@ -31,7 +31,7 @@ describe('isCertificateIssuanceTemplate', () => {
     expect(
       isCertificateIssuanceTemplate({
         templateCode: 'document-payment-order-issue',
-        templateName: '지급조서 (발급용)',
+        templateName: '지급조서(발급용)',
       })
     ).toBe(false)
   })
@@ -51,14 +51,14 @@ describe('shouldUseA4PreviewForIssuanceTemplate', () => {
     expect(
       shouldUseA4PreviewForIssuanceTemplate({
         templateCode: 'document-payment-order-issue',
-        templateName: '지급조서 (발급용)',
+        templateName: '지급조서(발급용)',
       })
     ).toBe(true)
   })
 
   it('keeps string overload for legacy name-only callers', () => {
     expect(shouldUseA4PreviewForIssuanceTemplate('수료증')).toBe(false)
-    expect(shouldUseA4PreviewForIssuanceTemplate('지급조서 (발급용)')).toBe(true)
+    expect(shouldUseA4PreviewForIssuanceTemplate('지급조서(발급용)')).toBe(true)
     expect(isCertificateIssuanceTemplateName('수료증')).toBe(true)
     expect(isCertificateIssuanceTemplateName('참가인증서')).toBe(true)
   })

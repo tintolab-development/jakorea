@@ -10,6 +10,8 @@ import { loadWritingFormTemplateDraft } from '@/features/template/lib/writing-fo
 import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
 import {
   ensureAgreementNoticeConfirmationClosing,
+  ensureAgreementNoticeInstitutionPurposeParagraphs,
+  ensureEducatorFacilitatorPledgeIntroParagraph,
   normalizeNoticeIdTypeResidentInputInDraft,
   normalizeWritingFormDraft,
   overlayAgreementNoticeSeedHorizontalTable,
@@ -122,7 +124,11 @@ export function MemberConsentAgreementModal({
         let next = normalizeWritingFormDraft(structureSource)
         if (templateId === 'agreement-notice') {
           next = ensureAgreementNoticeConfirmationClosing(next)
+          next = ensureAgreementNoticeInstitutionPurposeParagraphs(next)
           next = overlayAgreementNoticeSeedHorizontalTable(next)
+        }
+        if (templateId === 'agreement-expense') {
+          next = ensureEducatorFacilitatorPledgeIntroParagraph(next)
         }
         next = normalizeMemberConsentWriteDraft(next, templateId)
         setDraft(next)
