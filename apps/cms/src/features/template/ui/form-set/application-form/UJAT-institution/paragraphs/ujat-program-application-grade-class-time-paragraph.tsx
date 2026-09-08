@@ -13,9 +13,6 @@ import {
   useUjatApplicationInstitutionOverlayKv,
 } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
 
-/** 신청 학년 미선택 시 — 해당 학년 행에만 표시(공백 두 칸: 을  먼) */
-const EMPTY_GRADE_IN_ROW_HINT = '학년 별 신청 정보를  먼저 입력해 주세요'
-
 function getDisabledGradesForBlock(
   blockKey: string,
   checkedByBlockKey: Readonly<Record<string, Record<string, boolean>>>
@@ -84,6 +81,7 @@ function PeriodTimeFields({
   )
 }
 
+/** 「전체」는 신청 학년 유무와 관계없이 고정 노출. 선택 시 노출된 전학년(다른 블록 선택분 제외)을 선택한다. */
 function GradeCheckRow({
   gradeValues,
   checkedByGrade,
@@ -174,26 +172,13 @@ function ClassTimeBlockBody({
 }) {
   return (
     <DetailInfoForm title="학년 별 수업 시간" hideHeader mode="edit">
-      {applicationGradeValues.length === 0 ? (
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="해당 학년"
-            fullRow
-            edit={
-              <span className="form-editor-template-field-hint-text">{EMPTY_GRADE_IN_ROW_HINT}</span>
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
-      ) : (
-        <GradeCheckRow
-          gradeValues={applicationGradeValues}
-          checkedByGrade={checkedByGrade}
-          disabledGrades={disabledGrades}
-          onToggleGrade={onToggleGrade}
-          onToggleAll={onToggleAll}
-        />
-      )}
+      <GradeCheckRow
+        gradeValues={applicationGradeValues}
+        checkedByGrade={checkedByGrade}
+        disabledGrades={disabledGrades}
+        onToggleGrade={onToggleGrade}
+        onToggleAll={onToggleAll}
+      />
       <DetailInfoForm.Row type="double">
         <PeriodTimeFields
           blockKey={blockKey}
@@ -379,7 +364,9 @@ export function UjatProgramApplicationGradeClassTimeParagraph({
                 checkedByGrade={checkedForBlock}
                 disabledGrades={disabledGrades}
                 onToggleGrade={(grade, checked) => setGradeChecked(blockKey, grade, checked)}
-                onToggleAll={checked => setAllGradesChecked(blockKey, checked, applicationGradeValuesForClassTime)}
+                onToggleAll={checked =>
+                  setAllGradesChecked(blockKey, checked, applicationGradeValuesForClassTime)
+                }
                 periodsByBlock={periodsByBlock}
                 onPeriodChange={onPeriodChange}
               />
