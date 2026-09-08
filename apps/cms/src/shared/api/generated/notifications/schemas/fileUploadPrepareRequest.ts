@@ -11,13 +11,13 @@
  */
 export interface FileUploadPrepareRequest {
   /**
-     * 파일이 연결될 상위 도메인
+     * 파일이 연결될 상위 도메인. 메일 템플릿 첨부는 NOTIFICATION + EMAIL_TEMPLATE + ownerId=templateId.
      * @minLength 0
      * @maxLength 80
      */
   ownerDomain: string;
   /**
-     * 파일 소유 리소스 유형
+     * 파일 소유 리소스 유형. 메일 템플릿 첨부는 EMAIL_TEMPLATE.
      * @minLength 0
      * @maxLength 80
      */

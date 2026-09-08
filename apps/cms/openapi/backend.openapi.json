@@ -46952,6 +46952,34 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "programId",
+            "in": "query",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "participantType",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "memberType",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -46993,7 +47021,7 @@
             "name": "programId",
             "in": "query",
             "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
-            "required": false,
+            "required": true,
             "schema": {
               "type": "integer",
               "format": "int64"
@@ -62238,10 +62266,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -65614,14 +65642,17 @@
         "type": "object",
         "properties": {
           "resource": {
-            "type": "string"
+            "type": "string",
+            "description": "동기화 대상 리소스. NOTIFICATION_TEMPLATE | SENDER_PROFILE"
           },
           "upsertedCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "요청 channelType에 해당하는 템플릿(또는 발신 프로필) upsert/갱신 건수. 카테고리 건수·타 채널 합산 아님."
           },
           "mode": {
-            "type": "string"
+            "type": "string",
+            "description": "NHN_LIVE_PULL | LOCAL_APPROVAL_MARK | REQUEST_UPSERT | LOCAL_TEMPLATE_HARVEST"
           },
           "syncedAt": {
             "type": "string",
@@ -65738,7 +65769,8 @@
           },
           "scheduledAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "예약 시각 ISO-8601. 즉시 발송이면 생략. Hub scheduledDateTime은 사용하지 않음."
           },
           "variables": {
             "type": "object",
@@ -65754,6 +65786,7 @@
           },
           "senderKey": {
             "type": "string",
+            "description": "EMAIL은 From 메일주소. senderProfileId가 없을 때 이 값으로 프로필/템플릿 발신 메일을 매칭합니다.",
             "maxLength": 255,
             "minLength": 0
           },
@@ -65764,11 +65797,13 @@
           },
           "senderProfileId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "발신 프로필 id. EMAIL은 channelType=EMAIL 프로필. 없으면 senderKey로 매칭."
           }
         },
         "required": [
           "batchName",
+          "programId",
           "recipients",
           "templateId"
         ]
@@ -68693,14 +68728,14 @@
         "properties": {
           "ownerDomain": {
             "type": "string",
-            "description": "파일이 연결될 상위 도메인",
+            "description": "파일이 연결될 상위 도메인. 메일 템플릿 첨부는 NOTIFICATION + EMAIL_TEMPLATE + ownerId=templateId.",
             "example": "PROGRAM",
             "maxLength": 80,
             "minLength": 0
           },
           "ownerType": {
             "type": "string",
-            "description": "파일 소유 리소스 유형",
+            "description": "파일 소유 리소스 유형. 메일 템플릿 첨부는 EMAIL_TEMPLATE.",
             "example": "APPLICATION",
             "maxLength": 80,
             "minLength": 0
@@ -82679,6 +82714,33 @@
           },
           "requiresProgram": {
             "type": "boolean"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "programGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recruitmentTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "participantTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "memberTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -82927,18 +82989,21 @@
           },
           "requestedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "요청일시. 목록 기본 기간 필터 축."
           },
           "sentAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "실제 발송 시각. requestedAt으로 대체하지 않음. 미발송이면 null."
           },
           "failedAt": {
             "type": "string",
             "format": "date-time"
           },
           "failedReason": {
-            "type": "string"
+            "type": "string",
+            "description": "발송 실패 사유 문자열. 성공 시 null."
           },
           "providerRequestId": {
             "type": "string"
@@ -82966,18 +83031,22 @@
             "type": "string"
           },
           "sendStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "발송상태. ALIMTALK·EMAIL 동일. REQUESTED|SCHEDULED|WAITED|IN_PROGRESS|SENT|SEND_FAILED|CANCELED|UNKNOWN"
           },
           "receiptStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "수신상태. ALIMTALK·EMAIL 동일. REQUESTED|CONFIRM_WAITED|WAITED|SCHEDULED|IN_PROGRESS|SENT|SEND_FAILED|DELIVERED|DELIVERY_FAILED|CANCELED|UNKNOWN"
           },
           "deliveredAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "수신/배달 시각. openedAt으로 대체하지 않음."
           },
           "openedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "읽음 시각. 읽음 여부 표시용만."
           },
           "providerResultCode": {
             "type": "string"

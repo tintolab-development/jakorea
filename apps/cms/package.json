@@ -100,6 +100,7 @@
     "generate:api:members": "pnpm patch:openapi:member-permission-p0 && pnpm filter:openapi:members && orval --config orval.config.ts --project members",
     "generate:api:certificates": "pnpm filter:openapi:certificates && orval --config orval.config.ts --project certificates",
     "filter:openapi:notifications": "node scripts/filter-openapi-notifications.mjs",
+    "generate:api:notifications": "pnpm filter:openapi:notifications && orval --config orval.config.ts --project notifications",
     "filter:openapi:performance": "node scripts/filter-openapi-performance.mjs",
     "filter:openapi:forms-surveys": "node scripts/filter-openapi-forms-surveys.mjs",
     "package:members-be-handoff": "node scripts/package-members-be-handoff.mjs",
