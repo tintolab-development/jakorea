@@ -34,6 +34,7 @@ import {
   EMPTY_EDUCATION_SCHOOL_ROW,
 } from '@/features/user/shared/ui/instructor-register-education-section'
 import { USER_AFFILIATION_PIPE_SEP } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
+import { normalizeInstructorFeeGradeSelectValue } from '@/features/user/api/map-instructor-activity-display'
 
 function toConsentValue(agreed: boolean | undefined): ConsentValue {
   return agreed === true ? 'agree' : 'disagree'
@@ -216,8 +217,12 @@ function resolveHomeAddress(user: Omit<User, 'password'>): {
   homeAddressDetail: string
 } {
   return {
-    homeAddress: user.detailAddress?.trim() ?? '',
-    homeAddressDetail: user.detailAddressDetail?.trim() ?? '',
+    homeAddress:
+      user.instructorCmsProfile?.homeAddress?.line?.trim() || user.detailAddress?.trim() || '',
+    homeAddressDetail:
+      user.instructorCmsProfile?.homeAddress?.detail?.trim() ||
+      user.detailAddressDetail?.trim() ||
+      '',
   }
 }
 
@@ -331,15 +336,15 @@ export function mapUserToInstructorProfileFormValues(
     instructorCareer:
       fromCmsProfile?.instructorCareer ??
       careerText,
-    instructorFeeGrade:
+    instructorFeeGrade: normalizeInstructorFeeGradeSelectValue(
       fromCmsProfile?.instructorFeeGrade ??
-      user.instructorCmsProfile?.defaultFeeGrade?.trim() ??
-      user.listMetrics?.instructorFeeGradeLabel?.trim() ??
-      '',
+        user.instructorCmsProfile?.defaultFeeGrade ??
+        user.listMetrics?.instructorFeeGradeLabel
+    ),
     jaEvaluationGrade:
+      user.listMetrics?.jaEvaluationGrade?.trim() ??
       fromCmsProfile?.jaEvaluationGrade ??
       user.instructorCmsProfile?.defaultJaGrade?.trim() ??
-      user.listMetrics?.jaEvaluationGrade?.trim() ??
       '',
     isBusinessIncome:
       user.instructorCmsSettlement?.businessIncome != null
@@ -354,8 +359,8 @@ export function mapUserToInstructorProfileFormValues(
       user.instructorCmsSettlement?.accountNumber ?? user.instructorInfo?.accountNumber ?? '',
     accountHolder:
       user.instructorCmsSettlement?.accountHolder ?? user.instructorInfo?.accountHolder ?? '',
-    homeAddress: fromCmsProfile?.homeAddress ?? home.homeAddress,
-    homeAddressDetail: fromCmsProfile?.homeAddressDetail ?? home.homeAddressDetail,
+    homeAddress: fromCmsProfile?.homeAddress?.trim() || home.homeAddress,
+    homeAddressDetail: fromCmsProfile?.homeAddressDetail?.trim() || home.homeAddressDetail,
     oneLineIntro: fromCmsProfile?.oneLineIntro ?? user.bio ?? '',
     ...mapTermsAgreements(user),
     eduSchoolType: fromCmsProfile?.eduSchoolType ?? eduSchoolType,
@@ -414,6 +419,18 @@ export function mapInstructorProfileFormToBasicInfoDraftPartial(
   highestEducationLevel: string
   highestEducationSchoolName: string
   licenseRows: InstructorProfileFormValues['licenseRows']
+  jaEvaluationGrade: string
+  instructorFeeGrade: string
+  detailAddress: string
+  schoolOrganizationId?: number | null
+  schoolProvider?: string
+  schoolExternalCode?: string
+  schoolEducationOfficeCode?: string
+  schoolLevel?: string
+  schoolAddress?: string
+  schoolZipcode?: string
+  schoolRegionSido?: string
+  schoolRegionSigungu?: string
   instructorCmsProfile: InstructorCmsProfileProposal
   instructorCmsSettlement: InstructorCmsSettlement
 } {
@@ -435,6 +452,12 @@ export function mapInstructorProfileFormToBasicInfoDraftPartial(
         ? ''
         : values.affiliationName.trim()
 
+  const instructorFeeGrade = normalizeInstructorFeeGradeSelectValue(values.instructorFeeGrade)
+  const valuesForProfile =
+    instructorFeeGrade && instructorFeeGrade !== values.instructorFeeGrade
+      ? { ...values, instructorFeeGrade }
+      : values
+
   return {
     name: values.name.trim(),
     phone: values.contact.trim(),
@@ -454,7 +477,23 @@ export function mapInstructorProfileFormToBasicInfoDraftPartial(
     highestEducationLevel: values.eduSchoolType.trim(),
     highestEducationSchoolName: values.eduStatus.trim(),
     licenseRows: values.licenseRows,
-    instructorCmsProfile: instructorProfileFormValuesToCmsProfile(values),
+    jaEvaluationGrade: values.jaEvaluationGrade.trim(),
+    instructorFeeGrade,
+    detailAddress: values.homeAddress.trim(),
+    ...(values.memberType === 'school_teacher'
+      ? {
+          schoolOrganizationId: values.schoolOrganizationId ?? null,
+          schoolProvider: values.schoolProvider,
+          schoolExternalCode: values.schoolExternalCode,
+          schoolEducationOfficeCode: values.schoolEducationOfficeCode,
+          schoolLevel: values.schoolLevel,
+          schoolAddress: values.schoolAddress,
+          schoolZipcode: values.schoolZipcode,
+          schoolRegionSido: values.schoolRegionSido,
+          schoolRegionSigungu: values.schoolRegionSigungu,
+        }
+      : {}),
+    instructorCmsProfile: instructorProfileFormValuesToCmsProfile(valuesForProfile),
     instructorCmsSettlement: instructorProfileFormValuesToCmsSettlement(values),
   }
 }

@@ -320,6 +320,7 @@ function makeStubDetail(id: string, title: string): ProgramDetail {
     educationTargetDetailLabel: '고등학생',
     educationVenueLabel: '온라인',
     detailCase: 'general',
+    programAudience: 'individual',
     participationMethod: 'individual',
     recruitmentRoleLabel: '참여자',
     basicInfoFields: [

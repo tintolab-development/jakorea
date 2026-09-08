@@ -6,8 +6,7 @@ import {
   EDUCATION_APPLICATION_TAB_ITEMS,
   getMypageLnbItems,
   MYPAGE_EDUCATION_PATH,
-  MYPAGE_INQUIRIES_PATH,
-  MYPAGE_PATH,
+  navigateMypageLnb,
   readEducationApplicationListParams,
   showInstructorApplyCta,
   useMypageMember,
@@ -69,13 +68,7 @@ export function MypageEducationPage() {
   }
 
   const handleLnbItemSelect = (key: MypageLnbItemKey) => {
-    if (key === 'home') {
-      navigate(MYPAGE_PATH)
-      return
-    }
-    if (key === 'inquiries') {
-      navigate(MYPAGE_INQUIRIES_PATH)
-    }
+    navigateMypageLnb(navigate, key)
   }
 
   const handleTabChange = (tab: string) => {

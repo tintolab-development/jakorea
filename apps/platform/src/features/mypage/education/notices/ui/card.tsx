@@ -46,7 +46,7 @@ export function EducationInProgressNoticeCard({
               color={notice.read ? 'neutral-cool-500' : 'primary-500'}
               className={styles.readStatus}
             >
-              {notice.read ? '읽음' : '안읽음'}
+              {notice.read ? '읽음' : '읽지 않음'}
             </PFText>
           </div>
         </div>

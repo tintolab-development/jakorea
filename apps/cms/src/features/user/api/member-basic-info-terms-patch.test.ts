@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  filterEditableTermsAgreementsForAdminAccountBasicInfoPatch,
   filterEditableTermsAgreementsForBasicInfoPatch,
+  isAdminDetailLockedConsentLabel,
   isMemberBasicInfoImmutableConsentLabel,
   isMemberBasicInfoImmutableTermsType,
   mergeTermsAgreementRowsFromPatch,
@@ -17,6 +19,20 @@ describe('member-basic-info-terms-patch', () => {
     expect(filtered).toEqual([
       { termsType: 'MARKETING', version: '1', required: false, agreed: false },
     ])
+  })
+
+  it('관리자 회원 상세 PATCH에서는 마케팅을 제외한다', () => {
+    const filtered = filterEditableTermsAgreementsForAdminAccountBasicInfoPatch([
+      { termsType: 'SERVICE_TERMS', version: '1', required: true, agreed: true },
+      { termsType: 'MARKETING', version: '1', required: false, agreed: false },
+      { termsType: 'PRIVACY_COLLECTION', version: '1', required: true, agreed: true },
+    ])
+    expect(filtered).toBeUndefined()
+  })
+
+  it('관리자 회원 상세 — 마케팅 라벨은 수정 불가', () => {
+    expect(isAdminDetailLockedConsentLabel('마케팅 제공 동의')).toBe(true)
+    expect(isAdminDetailLockedConsentLabel('서비스 이용약관')).toBe(false)
   })
 
   it('필수 라벨·타입을 판별한다', () => {

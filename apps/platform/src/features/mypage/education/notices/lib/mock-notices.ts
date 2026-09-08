@@ -37,7 +37,7 @@ const MOCK_NOTICES: EducationInProgressNotice[] = [
     title: '1회차 수업 하루 전입니다. 내일 진행될 단원 내용을 미리 준비해 주시기 바랍니다.',
     content:
       '1회차 수업 하루 전입니다. 내일 진행될 단원 내용을 미리 준비해 주시기 바랍니다! 교재와 필기도구를 꼭 챙겨 주세요.',
-    authorName: 'JA KOREA 알림',
+    authorName: 'JA Korea 담당자님',
     publishedAt: '2026-01-05T10:00:00',
     read: true,
     viewCount: 12,
@@ -56,7 +56,7 @@ const MOCK_FILES: EducationInProgressFile[] = [
   },
   {
     id: 'edu-file-002',
-    fileName: '강사 대기실 변경 안내도_기존 대기실',
+    fileName: '강사 대기실 변경 안내도_기존 대기실.png',
     uploadedAt: '2026-01-15T10:00:00',
     fileSizeBytes: 18 * 1024 * 1024,
     postId: 'edu-notice-002',

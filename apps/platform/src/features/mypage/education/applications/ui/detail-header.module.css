@@ -14,7 +14,15 @@
 }
 
 .status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-8);
   margin: 0 0 var(--spacing-20);
+}
+
+.statusIcon {
+  display: block;
+  flex-shrink: 0;
 }
 
 .meta {
@@ -40,7 +48,7 @@
 }
 
 .statusProgress {
-  color: var(--color-element-blue);
+  color: var(--color-primary-500);
 }
 
 .statusCompleted {

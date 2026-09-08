@@ -20,10 +20,12 @@ import {
   DocumentPassBanner,
   getEducationSurveyMockAvailability,
   getMockEducationApplicationById,
+  isGeneralVolunteerApplication,
   isWithdrawnBeforeEducation,
   isWithdrawnDuringEducation,
   MYPAGE_EDUCATION_PATH,
   resolveEducationListBackPath,
+  volunteerApplicationDetailPath,
   resolveEducationScheduleTabLabel,
   shouldShowDocumentPassBanner,
   type EducationActivitySection,
@@ -169,6 +171,14 @@ export function MypageEducationDetailPage() {
 
     setIsAuthReady(true)
   }, [applicationId, navigate])
+
+  useEffect(() => {
+    if (application && isGeneralVolunteerApplication(application)) {
+      navigate(`${volunteerApplicationDetailPath(application.id)}${location.search}`, {
+        replace: true,
+      })
+    }
+  }, [application, location.search, navigate])
 
   useEffect(() => {
     const onPopState = () => {
@@ -381,6 +391,7 @@ export function MypageEducationDetailPage() {
           {appliedSection === 'program' ? (
             <ProgramInfoBody
               program={program}
+              showPeriodSponsor
               showApplyCta={false}
               showCancelCta={showCancelCta}
               onCancel={() => setIsCancelConfirmOpen(true)}

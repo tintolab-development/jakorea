@@ -1,5 +1,5 @@
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
-import type { EducationForm } from '@/features/program'
+import type { EducationForm, ProgramDetailCase } from '@/features/program'
 
 export type EducationApplicationTab = 'all' | 'applied' | 'in_progress' | 'completed'
 
@@ -34,6 +34,8 @@ export type EducationApplicationListItem = {
   educationFormLabel: string
   thumbnailUrl?: string
   displayStatus: EducationDisplayStatus
+  /** 프로그램 상세 케이스 — 교육/봉사 목록 분리 */
+  detailCase: ProgramDetailCase
   /** 면접 전형 포함 여부 — 서류 합격 배너 노출 조건 */
   hasInterview?: boolean
   /** 관리자 배정 면접일 표시 문구 (예: 2026년 04월 12일(일) 14시) */

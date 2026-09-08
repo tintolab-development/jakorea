@@ -7,7 +7,6 @@
   padding-top: var(--spacing-100);
   padding-bottom: var(--spacing-80);
   padding-inline: var(--page-padding-x);
-  /* 설문·만족도 empty 100vw bleed가 ContentShell에 잘리지 않도록 */
   overflow: visible;
 }
 

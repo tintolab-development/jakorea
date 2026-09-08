@@ -162,6 +162,13 @@ export function toInstructorFeeGradeDisplayLabel(
   return trimmed
 }
 
+/** CmsSelect value — wire(`1`)·부분(`1급`)·라벨(`1급 강사비`)을 옵션 value와 맞춘다. */
+export function normalizeInstructorFeeGradeSelectValue(
+  raw: string | undefined | null
+): string {
+  return toInstructorFeeGradeDisplayLabel(raw) ?? ''
+}
+
 /** CMS 폼·표시 라벨 → BE `defaultFeeGrade` / `feeGrade` wire 값 (예: `2급 강사비` → `2`) */
 export function toInstructorFeeGradeApiValue(
   raw: string | undefined | null

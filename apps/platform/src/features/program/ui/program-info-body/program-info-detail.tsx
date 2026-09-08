@@ -1,12 +1,15 @@
 import type { ReactNode } from 'react'
 import { PFText } from '@/shared/ui'
 import type { ProgramDetail } from '../../model/types'
+import { ProgramInfoPeriodSponsor } from './program-info-period-sponsor'
 import styles from './program-info-body.module.css'
 
 type ProgramInfoDetailProps = {
   program: ProgramDetail
   /** 참여하기 상세 header 등 — article 상단에 슬롯 */
   header?: ReactNode
+  /** 교육·봉사현황 상세처럼 참여하기 header를 쓰지 않을 때 운영 기간·후원사 노출 */
+  showPeriodSponsor?: boolean
   className?: string
 }
 
@@ -25,7 +28,12 @@ function resolveBasicInfoFields(program: ProgramDetail) {
   return fields.filter(field => field.value.trim().length > 0)
 }
 
-export function ProgramInfoDetail({ program, header, className }: ProgramInfoDetailProps) {
+export function ProgramInfoDetail({
+  program,
+  header,
+  showPeriodSponsor = false,
+  className,
+}: ProgramInfoDetailProps) {
   const basicInfoFields = resolveBasicInfoFields(program)
   const hasCurriculumBlock = program.sessions.length > 0 || program.eventSchedules.length > 0
   const hasBasicInfoSection = basicInfoFields.length > 0 || hasCurriculumBlock
@@ -41,6 +49,7 @@ export function ProgramInfoDetail({ program, header, className }: ProgramInfoDet
   return (
     <article className={articleClassName}>
       {header}
+      {showPeriodSponsor ? <ProgramInfoPeriodSponsor program={program} /> : null}
 
       {program.summary.trim() ? (
         <div className={styles.summary}>

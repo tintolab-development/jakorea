@@ -61,6 +61,8 @@ export {
 } from './lib/map-from-cms'
 export {
   CMS_PLATFORM_PROGRAM_FIXTURES,
+  GENERAL_VOLUNTEER_STATUS_FIXTURES,
+  GENERAL_VOLUNTEER_STATUS_IDS,
   ECONOMY_REGISTRATION_FIXTURE,
   ECONOMY_REGISTRATION_FIXTURES,
   GENERAL_REGISTRATION_FIXTURES,
@@ -98,7 +100,12 @@ export {
   educationTargetBadgeIconUrl,
 } from './lib/badge-config'
 export { ProgramBackButton } from './ui/back-button'
-export { ProgramInfoBody, ProgramInfoAside, ProgramInfoDetail } from './ui/program-info-body'
+export {
+  ProgramInfoBody,
+  ProgramInfoAside,
+  ProgramInfoDetail,
+  ProgramInfoPeriodSponsor,
+} from './ui/program-info-body'
 export { ProgramListItemRow } from './ui/list-item'
 export { ProgramSort } from './ui/program-sort'
 export { ProgramStatusBadges } from './ui/program-status-badges'

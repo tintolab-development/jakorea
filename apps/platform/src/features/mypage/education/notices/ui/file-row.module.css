@@ -5,6 +5,7 @@
   gap: var(--spacing-12);
   width: 100%;
   padding: var(--spacing-16);
+  border: 2px solid transparent;
   border-radius: var(--radius-16);
   background: var(--color-neutral-cool-50);
 }
@@ -24,6 +25,13 @@
   display: block;
   width: 24px;
   height: 24px;
+}
+
+.imageCover {
+  display: block;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
 }
 
 .info {

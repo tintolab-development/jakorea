@@ -14,6 +14,7 @@ CMS Playwright E2E · `/e2e-error-log` · 회원 관리 연동에서 **관측·�
 
 | 우선순위 | 도메인 | 대표 증상 | 문서 |
 |----------|--------|-----------|------|
+| **P1** | **members (학교 상세 코멘트 · 관리자 본인 탈퇴)** | `GET/POST …/users/{organizationId}/comments` **404** · CMS 관리자 self-withdraw API **없음** | [**school-detail-admin-comment-404-backend-request-2026-09-07.md**](./members/school-detail-admin-comment-404-backend-request-2026-09-07.md) |
 | **P0** | **members (개인 상세 PATCH·unmask)** | 재학·소속·학년·자택주소 PATCH **200인데 미반영** · individual unmask `external1365Id` **null** | [**individual-member-basic-info-patch-unmask-1365-backend-request-2026-09-04.md**](./members/individual-member-basic-info-patch-unmask-1365-backend-request-2026-09-04.md) |
 | **P0** | **admin RBAC · 양식** | VIEWER 목록 GET **403** · PARTNER unmask/강사승인 **403** · form-template PUT **500** · GET **404** | [**admin-role-rbac-unmask-form-template-backend-request-2026-09-01.md**](./members/admin-role-rbac-unmask-form-template-backend-request-2026-09-01.md) |
 | **P0** | **members (목록 PII)** | `GET /api/admin/members/all` 연락처·이메일 **원문** | [**members-all-list-email-phone-masking-backend-request-2026-08-31.md**](./members/members-all-list-email-phone-masking-backend-request-2026-08-31.md) |
@@ -70,4 +71,4 @@ pnpm --filter cms test:e2e:members
 
 이 항목은 백엔드 **비즈니스 에러 코드 수정** 대상이 아니며, 인프라 복구가 우선입니다.
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-07

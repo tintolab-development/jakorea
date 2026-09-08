@@ -2362,13 +2362,27 @@ function migrateAgreementNoticeTableSeedRows(
       dataRows.push(Array.from({ length: colCount }, () => ''))
     }
   }
+  const seedIdTypeWithInput = (() => {
+    const seedTable = createAgreementNoticeDraft().paragraphs.find(
+      sp => sp.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.table
+    )
+    if (
+      seedTable?.kind === 'single_item' &&
+      seedTable.variant === 'horizontal_table' &&
+      seedTable.idTypeWithInput != null
+    ) {
+      return seedTable.idTypeWithInput
+    }
+    return null
+  })()
+
   return {
     ...p,
     dataRows,
     bottomText: AGREEMENT_NOTICE_TABLE_BOTTOM_TEXT,
     idTypeWithInput:
       p.idTypeWithInput == null
-        ? p.idTypeWithInput
+        ? seedIdTypeWithInput
         : {
             ...p.idTypeWithInput,
             selectedOptionId: AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID,

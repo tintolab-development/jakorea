@@ -3,8 +3,33 @@ import {
   mapPatchUserBasicInfoToAdminAccountApiRequest,
   mapPatchUserBasicInfoToApiRequest,
 } from './map-patch-user-basic-info'
-import { draftToAdminProvisionedIndividualBasicInfoPatch } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
+import {
+  applyJaEvaluationGradeToInstructorDraft,
+  applyInstructorFeeGradeToInstructorDraft,
+  draftToAdminProvisionedIndividualBasicInfoPatch,
+  draftToAdminProvisionedInstructorBasicInfoPatch,
+  draftToInstructorFeeAndJaGradePatch,
+  mergeInstructorDetailEditFlushIntoDraft,
+} from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
+
+function instructorDraft(
+  overrides: Partial<AdminProvisionedMemberBasicInfoDraft>
+): AdminProvisionedMemberBasicInfoDraft {
+  return {
+    name: '김강사',
+    phone: '010-0000-0000',
+    email: 'a@b.com',
+    detailAddress: '',
+    affiliationInstitution: '',
+    affiliationGrade: '',
+    gender: '남성',
+    birthDate: '1990-01-01',
+    socialAccount: '',
+    adminComment: '',
+    ...overrides,
+  }
+}
 
 function individualDraft(
   overrides: Partial<AdminProvisionedMemberBasicInfoDraft>
@@ -244,6 +269,168 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     expect(body.schoolSelection).toBeUndefined()
     // 기존 CMS 학교 연동을 지우지 않도록 null도 보내지 않는다
     expect(body.schoolOrganizationId).toBeUndefined()
+  })
+
+  it('강사 상세 저장은 성명·소속·자택주소 상세를 PATCH body에 넣는다', () => {
+    const draft = instructorDraft({
+      name: '박신규',
+      affiliationInstitution: '제미나이 강사단',
+      detailAddress: '예전 도로명',
+      detailAddressSearch: '서울특별시 강남구 테헤란로 1',
+      detailAddressDetail: '10층',
+      instructorCmsProfile: {
+        memberType: 'GENERAL',
+        affiliation: { organizationNames: ['제미나이 강사단'] },
+        homeAddress: { line: '서울특별시 강남구 테헤란로 1', detail: '10층' },
+        education: {},
+        career: { level: 'experienced', rows: [] },
+        jaKoreaActivities: [],
+        licenses: [],
+        awards: [],
+        essays: {},
+      },
+    })
+    const patch = draftToAdminProvisionedInstructorBasicInfoPatch(draft)
+    const body = mapPatchUserBasicInfoToApiRequest(patch)
+
+    expect(body.name).toBe('박신규')
+    expect(body.affiliation).toBe('제미나이 강사단')
+    expect(body.detailAddress).toBe('서울특별시 강남구 테헤란로 1')
+    expect(body.addressDetail).toBe('10층')
+    expect(body.homeAddressDetail).toBe('10층')
+    expect(body.profile?.affiliation?.organizationNames).toEqual(['제미나이 강사단'])
+    expect(body.profile?.homeAddress).toEqual({
+      line: '서울특별시 강남구 테헤란로 1',
+      detail: '10층',
+    })
+  })
+
+  it('강사 상세 저장은 draft JA 등급으로 profile.defaultJaGrade를 덮어쓴다', () => {
+    const draft = applyJaEvaluationGradeToInstructorDraft(
+      instructorDraft({
+        jaEvaluationGrade: 'A',
+        instructorCmsProfile: {
+          memberType: 'GENERAL',
+          affiliation: { organizationNames: [] },
+          homeAddress: { line: '' },
+          education: {},
+          career: { level: 'experienced', rows: [] },
+          jaKoreaActivities: [],
+          licenses: [],
+          awards: [],
+          essays: {},
+          defaultJaGrade: 'A',
+        },
+      }),
+      'S'
+    )
+    const patch = draftToAdminProvisionedInstructorBasicInfoPatch(draft)
+    const body = mapPatchUserBasicInfoToApiRequest(patch)
+
+    expect(draft.jaEvaluationGrade).toBe('S')
+    expect(draft.instructorCmsProfile?.defaultJaGrade).toBe('S')
+    expect(patch.listMetrics?.jaEvaluationGrade).toBe('S')
+    expect(patch.instructorCmsProfile?.defaultJaGrade).toBe('S')
+    expect(body.profile?.defaultJaGrade).toBe('S')
+    expect(body.listMetrics?.jaEvaluationGrade).toBe('S')
+  })
+
+  it('강사 상세 저장은 draft 강사비 등급으로 profile.defaultFeeGrade·feeGrade를 덮어쓴다', () => {
+    const draft = applyInstructorFeeGradeToInstructorDraft(
+      instructorDraft({
+        instructorFeeGrade: '2급 강사비',
+        instructorCmsProfile: {
+          memberType: 'GENERAL',
+          affiliation: { organizationNames: [] },
+          homeAddress: { line: '' },
+          education: {},
+          career: { level: 'experienced', rows: [] },
+          jaKoreaActivities: [],
+          licenses: [],
+          awards: [],
+          essays: {},
+          defaultFeeGrade: '2급 강사비',
+        },
+      }),
+      '1급 강사비'
+    )
+    const patch = draftToAdminProvisionedInstructorBasicInfoPatch(draft)
+    const body = mapPatchUserBasicInfoToApiRequest(patch)
+
+    expect(draft.instructorFeeGrade).toBe('1급 강사비')
+    expect(draft.instructorCmsProfile?.defaultFeeGrade).toBe('1급 강사비')
+    expect(patch.listMetrics?.instructorFeeGradeLabel).toBe('1급 강사비')
+    expect(patch.instructorCmsProfile?.defaultFeeGrade).toBe('1급 강사비')
+    expect(body.profile?.defaultFeeGrade).toBe('1')
+    expect(body.feeGrade).toBe('1')
+    expect(body.listMetrics?.instructorFeeGradeLabel).toBe('1급 강사비')
+  })
+
+  it('폼 flush의 예전 강사비 등급은 draft 셀렉트 값을 덮지 않는다', () => {
+    const draft = instructorDraft({
+      instructorFeeGrade: '1급 강사비',
+      instructorCmsProfile: {
+        memberType: 'GENERAL',
+        affiliation: { organizationNames: [] },
+        homeAddress: { line: '' },
+        education: {},
+        career: { level: 'experienced', rows: [] },
+        jaKoreaActivities: [],
+        licenses: [],
+        awards: [],
+        essays: {},
+        defaultFeeGrade: '2급 강사비',
+      },
+    })
+    const merged = mergeInstructorDetailEditFlushIntoDraft(draft, {
+      instructorFeeGrade: '2급 강사비',
+      instructorCmsProfile: {
+        memberType: 'GENERAL',
+        affiliation: { organizationNames: [] },
+        homeAddress: { line: '' },
+        education: {},
+        career: { level: 'experienced', rows: [] },
+        jaKoreaActivities: [],
+        licenses: [],
+        awards: [],
+        essays: {},
+        defaultFeeGrade: '2급 강사비',
+      },
+    })
+    const body = mapPatchUserBasicInfoToApiRequest(
+      draftToAdminProvisionedInstructorBasicInfoPatch(merged)
+    )
+
+    expect(merged.instructorFeeGrade).toBe('1급 강사비')
+    expect(merged.instructorCmsProfile?.defaultFeeGrade).toBe('1급 강사비')
+    expect(body.profile?.defaultFeeGrade).toBe('1')
+    expect(body.feeGrade).toBe('1')
+  })
+
+  it('강사비·JA 제한 수정도 profile.defaultFeeGrade와 feeGrade를 보낸다', () => {
+    const patch = draftToInstructorFeeAndJaGradePatch(
+      instructorDraft({
+        instructorFeeGrade: '3급 강사비',
+        jaEvaluationGrade: 'A',
+        instructorCmsProfile: {
+          memberType: 'GENERAL',
+          affiliation: { organizationNames: [] },
+          homeAddress: { line: '' },
+          education: {},
+          career: { level: 'experienced', rows: [] },
+          jaKoreaActivities: [],
+          licenses: [],
+          awards: [],
+          essays: {},
+          defaultFeeGrade: '2급 강사비',
+        },
+      })
+    )
+    const body = mapPatchUserBasicInfoToApiRequest(patch)
+
+    expect(body.listMetrics?.instructorFeeGradeLabel).toBe('3급 강사비')
+    expect(body.profile?.defaultFeeGrade).toBe('3')
+    expect(body.feeGrade).toBe('3')
   })
 })
 

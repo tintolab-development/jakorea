@@ -53,7 +53,7 @@ export function PFFormFieldRow({ type = 'single', children, className }: PFFormF
   )
 }
 
-export type PFFormFieldLabelWidth = 'default' | 'wide'
+export type PFFormFieldLabelWidth = 'default' | 'wide' | 'wider'
 /** horizontal: 좌측 라벨 / vertical: 상단 라벨(세로형 테이블 단락) */
 export type PFFormFieldLayout = 'horizontal' | 'vertical'
 
@@ -63,7 +63,7 @@ export type PFFormFieldProps = {
   children: ReactNode
   /** double 행에서 전체 폭 */
   fullWidth?: boolean
-  /** label(title) 영역 너비 — default 200 / wide 220 (`layout="horizontal"`만 적용) */
+  /** label(title) 영역 너비 — default 200 / wide 220 / wider 250 (`layout="horizontal"`만 적용) */
   labelWidth?: PFFormFieldLabelWidth
   /**
    * 필드 레이아웃.
@@ -101,6 +101,7 @@ export function PFFormField({
           styles.fieldLabel,
           isVertical ? styles.fieldLabelVertical : undefined,
           !isVertical && labelWidth === 'wide' ? styles.fieldLabelWide : undefined,
+          !isVertical && labelWidth === 'wider' ? styles.fieldLabelWider : undefined,
         ]
           .filter(Boolean)
           .join(' ')}
