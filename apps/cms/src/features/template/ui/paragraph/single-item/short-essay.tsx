@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import {
+  AGREEMENT_NOTICE_PARAGRAPH_IDS,
   AGREEMENT_NOTICE_SUBJECT_ITEM_IDS,
   type ShortEssayParagraph,
   type SubjectiveParagraph,
@@ -179,7 +180,9 @@ export function ShortEssay({
               ) : undefined
             }
           />
-          {isCardSelected && index > 0 ? (
+          {isCardSelected &&
+          index > 0 &&
+          paragraph.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.subject ? (
             <ItemDeleteButton
               className="item-delete-button short-essay-item-delete"
               aria-label={`항목 ${index + 1} 삭제`}

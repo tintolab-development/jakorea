@@ -76,7 +76,7 @@ function SortableNavRow({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: item.id })
+  } = useSortable({ id: item.id, disabled: hideDragHandle })
 
   return (
     <button
@@ -104,7 +104,14 @@ function SortableNavRow({
         >
           <MenuOutlined />
         </span>
-      ) : null}
+      ) : (
+        <span
+          className="template-modal-nav-item__handle template-modal-nav-item__handle--non-interactive"
+          aria-hidden
+        >
+          <MenuOutlined />
+        </span>
+      )}
     </button>
   )
 }
@@ -128,7 +135,15 @@ export function FormEditorFieldNav({
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     if (over == null || active.id === over.id) return
-    onReorderMiddle(String(active.id), String(over.id))
+    const activeId = String(active.id)
+    const overId = String(over.id)
+    if (
+      hideSortableDragHandleForIds?.has(activeId) ||
+      hideSortableDragHandleForIds?.has(overId)
+    ) {
+      return
+    }
+    onReorderMiddle(activeId, overId)
   }
 
   return (

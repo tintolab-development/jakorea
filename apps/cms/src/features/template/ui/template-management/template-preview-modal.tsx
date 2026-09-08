@@ -17,6 +17,8 @@ export type TemplatePreviewModalProps = {
   registryEntry: TemplateRegistryDefinition | undefined
   templateId: string | undefined
   templateName: string | undefined
+  systemTemplate?: boolean
+  forceUserEditable?: boolean
   onTemplateDraftSaveConfirmed?: () => void
   generic: TemplateRendererContext['generic']
   previewControllerBase: Omit<TemplatePreviewControllerParams, 'runPreview'>
@@ -38,6 +40,8 @@ export function TemplatePreviewModal({
   registryEntry,
   templateId,
   templateName,
+  systemTemplate,
+  forceUserEditable = false,
   onTemplateDraftSaveConfirmed,
   generic,
   previewControllerBase,
@@ -67,6 +71,8 @@ export function TemplatePreviewModal({
       registryEntry={registryEntry}
       templateId={templateId}
       templateName={templateName}
+      systemTemplate={systemTemplate}
+      forceUserEditable={forceUserEditable}
       onTemplateDraftSaveConfirmed={onTemplateDraftSaveConfirmed}
       registrationUserMode={registrationUserMode}
       footerAction={footerAction}

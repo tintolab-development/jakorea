@@ -352,6 +352,8 @@ function SortableMiddleFormCardInner({
             >
               <MenuOutlined />
             </button>
+          ) : showEditorChrome && hideDragHandle ? (
+            <ParagraphCardDragHandleNonInteractive />
           ) : undefined
         }
         editableHeading={editableHeading}

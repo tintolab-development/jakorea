@@ -395,6 +395,15 @@
   cursor: grabbing;
 }
 
+.template-modal-nav-item__handle--non-interactive {
+  cursor: default;
+  pointer-events: none;
+}
+
+.template-modal-nav-item__handle--non-interactive:active {
+  cursor: default;
+}
+
 /* 문서 다운로드 버튼 — secondary 기본 스펙에서 width·padding 오버라이드 */
 .full-page-modal__download-btn.cms-button.ant-btn {
   width: 180px;

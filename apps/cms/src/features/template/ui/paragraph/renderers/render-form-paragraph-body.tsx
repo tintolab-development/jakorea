@@ -62,6 +62,7 @@ import type { PaymentStatementBasicInfoAutofillValues } from '@/features/templat
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { AGREEMENT_NOTICE_PARAGRAPH_IDS } from '@/features/template/model/writing-form-draft.schema'
 import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/basic-info-paragraph'
 import type { ProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { ProgramApplicationFormInstructorBodyOptions } from '@/features/template/ui/form-set/application-form/instructor/paragraph-body'
@@ -329,13 +330,17 @@ export function renderFormParagraphBody(
           p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm) &&
         structureLocked &&
         options?.agreementAdminProxyConfirm !== true
+      const isAgreementNoticeExplanationParagraph =
+        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution ||
+        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose
       const shouldRenderDisabledPlaceholder =
         structureLocked &&
         (p.paragraphTitle?.trim().length ?? 0) > 0 &&
         !isBodyInteractive &&
-        paragraphInteractionMode === 'authoring'
+        paragraphInteractionMode === 'authoring' &&
+        !isAgreementNoticeExplanationParagraph
       /* 구조 잠금 + 라벨 있는 설명글_텍스트형 — 단락 공통 `ExplanationText`의 Disabled CmsInput.
-         행정정보 이용기관·이용사무는 fill에서 입력 가능(interactive id). */
+         행정정보 이용기관·이용사무는 설명글 텍스트형 placeholder UI를 유지한다. */
       let explanationBodyDisplayMode: ExplanationTextBodyDisplayMode = 'input'
       if (isPaymentPreConsentIntro || isPaymentPreConsentWhiteSheetBar) {
         explanationBodyDisplayMode = 'static-body'
@@ -357,21 +362,29 @@ export function renderFormParagraphBody(
       const hp = normalizeHorizontalTableParagraph(
         p as Extract<WritingFormParagraph, { variant: 'horizontal_table' }>
       )
-      const isAgreementNoticeTable = hp.id === 'agreement-notice-table'
-      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지. 동의서 fill은 양식 본문만 잠금
-       * 행정정보 표: fill interactive + authoring 선택 시 셀 입력 허용 */
-      const isEditMode =
+      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지. 동의서 fill은 양식 본문만 잠금.
+       * 텍스트형 셀 편집은 구조 미잠금(사용자 신규/복제)일 때만. 카탈로그 행정정보 구비서류 표는 고정. */
+      const isTextTableAuthoringEdit =
+        hp.tableFlavor === 'text' &&
+        paragraphInteractionMode === 'authoring' &&
         !isPreviewReadonly &&
-        (!structureLocked ||
-          consentFillParagraphInteractive ||
-          (paragraphInteractionMode === 'user' && !consentFillBodyReadOnly) ||
-          (paragraphInteractionMode === 'authoring' &&
-            isParagraphSelected &&
-            isAgreementNoticeTable)) &&
-        (paragraphInteractionMode === 'user' || isParagraphSelected || hp.tableFlavor === 'field')
-      /** 표 격자·헤더 행 선택(민트 스트로크) — 작성(authoring) + 구조 미잠금에서만 */
+        !structureLocked
+      const isEditMode =
+        isTextTableAuthoringEdit ||
+        (!isPreviewReadonly &&
+          (!structureLocked ||
+            consentFillParagraphInteractive ||
+            (paragraphInteractionMode === 'user' && !consentFillBodyReadOnly)) &&
+          (paragraphInteractionMode === 'user' ||
+            isParagraphSelected ||
+            hp.tableFlavor === 'field'))
+      /** 표 격자·헤더 행 선택(민트 스트로크) — 작성(authoring) + 구조 미잠금 */
       const tableCanvasInteractive =
-        !structureLocked && paragraphInteractionMode === 'authoring'
+        !structureLocked &&
+        paragraphInteractionMode === 'authoring' &&
+        (hp.tableFlavor === 'field' ||
+          hp.tableFlavor === 'text' ||
+          isParagraphSelected)
       return (
         <HorizontalTableParagraphBody
           paragraph={p}
@@ -487,14 +500,20 @@ export function renderFormParagraphBody(
       const vp = normalizeVerticalTableParagraph(
         p as Extract<WritingFormParagraph, { variant: 'vertical_table' }>
       )
+      const isVerticalTextTableAuthoringEdit =
+        vp.verticalTableFlavor === 'text' &&
+        paragraphInteractionMode === 'authoring' &&
+        !isPreviewReadonly &&
+        !structureLocked
       const dateTimeCellsInteractive = isBodyInteractive || lockedAuthoringChoicePreview
       const tableCanvasInteractive =
         !structureLocked && paragraphInteractionMode === 'authoring'
+      const verticalTableEditMode = isVerticalTextTableAuthoringEdit || isBodyInteractive
       return (
         <VerticalTableParagraphBody
           paragraph={vp}
           onChange={next => updateParagraph(p.id, () => normalizeVerticalTableParagraph(next))}
-          isEditMode={isBodyInteractive}
+          isEditMode={verticalTableEditMode}
           dateTimeCellsInteractive={dateTimeCellsInteractive}
           tableCanvasInteractive={tableCanvasInteractive}
           tableRowSelection={options?.verticalTableRowSelection}
@@ -502,6 +521,7 @@ export function renderFormParagraphBody(
           portraitConsentResponseFieldsInteractive={
             options?.portraitConsentResponseFieldsInteractive
           }
+          portraitSeedPresetLocked={structureLocked}
           bottomConsentInteractive={structureLockedConsentChoiceInteractive}
           consentFillMode={consentFillBodyReadOnly}
         />

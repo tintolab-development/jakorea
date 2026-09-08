@@ -3,6 +3,8 @@ import type { ParagraphCardEditableHeading } from '@/features/template/ui/templa
 import { getFormParagraphTitleNumberPrefix } from '@/features/template/lib/form-title-numbering'
 import {
   isAgreementLockedSystemParagraph,
+  isEducatorFacilitatorPledgeClauseParagraphId,
+  EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS,
   LECTURE_REPORT_SEED_PARAGRAPH_IDS,
   type FormEditorKind,
   type FormTitleNumberingStyle,
@@ -106,6 +108,12 @@ function usesPlaceholderDescriptionValue(paragraphId: string): boolean {
 function normalizeCardDescriptionValue(paragraphId: string, value: string): string {
   if (value.trim() !== CARD_DESCRIPTION_PLACEHOLDER_TEXT) return value
   return usesPlaceholderDescriptionValue(paragraphId) ? '' : value
+}
+
+/** 서약 조항 MC — `paragraphDescription`은 본문에만 표시, 카드 설명 슬롯은 비움 */
+function resolveCardDescriptionValue(paragraphId: string, paragraphDescription: string): string {
+  if (isEducatorFacilitatorPledgeClauseParagraphId(paragraphId)) return ''
+  return normalizeCardDescriptionValue(paragraphId, paragraphDescription)
 }
 
 /** 프로그램 등록 — 교육 진행 단락: 카드 제목 줄 우측 액션 (본문 DetailInfoForm 밖) */
@@ -581,6 +589,163 @@ export function titleWithPeriodPlaceholder(editorKind: FormEditorKind): string {
   return editorKind === 'agreement' ? '동의서 제목 입력' : '타이틀을 입력해 주세요'
 }
 
+function agreementExplanationTextEditableHeading(
+  p: Extract<WritingFormParagraph, { variant: 'agreement_explanation_text' }>,
+  paragraph: WritingFormParagraph,
+  prefix: ReturnType<typeof getFormParagraphTitleNumberPrefix>,
+  isSelected: boolean,
+  updateParagraph: FormEditorLeftPanelProps['updateParagraph'],
+  descCls: (base?: string) => string | undefined,
+  headerEditable = true
+): ParagraphCardEditableHeading {
+  const headerEditActive = headerEditable && isSelected
+  return {
+    isEditMode: headerEditActive,
+    titleIsEditMode: headerEditActive,
+    descriptionIsEditMode: headerEditActive,
+    showTitlePlaceholderWhenInactive: true,
+    titleValue: p.paragraphTitle,
+    onTitleChange: headerEditActive
+      ? (next: string) =>
+          updateParagraph(p.id, cur =>
+            cur.kind === 'single_item' && cur.id === p.id
+              ? { ...cur, paragraphTitle: next }
+              : cur
+          )
+      : () => {},
+    titlePlaceholder: '타이틀을 입력해 주세요',
+    titleRequired: p.requiredMark,
+    titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
+      ? 'paragraph-card__title--placeholder'
+      : undefined,
+    titleLeading: prefix,
+    descriptionValue: normalizeCardDescriptionValue(p.id, p.paragraphDescription),
+    onDescriptionChange: headerEditActive
+      ? (next: string) =>
+          updateParagraph(p.id, cur =>
+            cur.kind === 'single_item' && cur.id === p.id
+              ? { ...cur, paragraphDescription: next }
+              : cur
+          )
+      : () => {},
+    descriptionPlaceholder: '설명 입력',
+    descriptionClassName: descCls(),
+  }
+}
+
+/** 교육진행자 동의 서약서 — 모든 단락 카드 헤더(타이틀·설명) 입력 잠금 */
+function buildEducatorFacilitatorPledgeLockedHeading(
+  paragraph: WritingFormParagraph,
+  prefix: ReturnType<typeof getFormParagraphTitleNumberPrefix>,
+  descCls: (base?: string) => string | undefined,
+  editorKind: FormEditorKind
+): ParagraphCardEditableHeading {
+  const lockedBase = {
+    isEditMode: false,
+    titleIsEditMode: false,
+    descriptionIsEditMode: false,
+    onTitleChange: () => {},
+    onDescriptionChange: () => {},
+    descriptionPlaceholder: '설명 입력',
+  } satisfies Partial<ParagraphCardEditableHeading>
+
+  if (paragraph.kind === 'description' && paragraph.variant === 'survey_title_with_period') {
+    const p = paragraph as TitleWithPeriodParagraph
+    return {
+      ...lockedBase,
+      titleValue: p.surveyTitle,
+      titlePlaceholder: titleWithPeriodPlaceholder(editorKind),
+      titleRequired: p.requiredMark,
+      titleClassName: [
+        'paragraph-input-explanation-title',
+        formCardTitleUsesPlaceholderTone(paragraph) ? 'paragraph-card__title--placeholder' : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
+      titleLeading: prefix,
+      descriptionValue: p.surveyDescription,
+      descriptionClassName: descCls('paragraph-input-explanation-title'),
+    }
+  }
+
+  if (paragraph.kind === 'single_item' && paragraph.variant === 'agreement_explanation_text') {
+    return {
+      ...lockedBase,
+      showTitlePlaceholderWhenInactive: true,
+      titleValue: paragraph.paragraphTitle,
+      titlePlaceholder: '타이틀을 입력해 주세요',
+      titleRequired: paragraph.requiredMark,
+      titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
+        ? 'paragraph-card__title--placeholder'
+        : undefined,
+      titleLeading: prefix,
+      descriptionValue: normalizeCardDescriptionValue(paragraph.id, paragraph.paragraphDescription),
+      descriptionClassName: descCls(),
+    }
+  }
+
+  if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
+    const p = paragraph
+    return {
+      ...lockedBase,
+      titleValue: p.body,
+      titlePlaceholder: '마무리 문구를 입력해 주세요',
+      titleRequired: p.requiredMark,
+      titleClassName: [
+        'paragraph-input--closing-body',
+        formCardTitleUsesPlaceholderTone(paragraph) ? 'paragraph-card__title--placeholder' : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
+      titleLeading: prefix,
+      showDescription: false,
+      descriptionValue: '',
+    }
+  }
+
+  if (paragraph.kind === 'description' && paragraph.variant === 'system') {
+    const p = paragraph
+    return {
+      ...lockedBase,
+      titleValue: p.paragraphTitle,
+      titlePlaceholder: '타이틀을 입력해 주세요',
+      titleRequired: p.requiredMark,
+      titleLeading: prefix,
+      showDescription: false,
+      descriptionValue: '',
+    }
+  }
+
+  if (paragraph.kind === 'single_item') {
+    const p = paragraph
+    const titleRequired =
+      p.variant === 'horizontal_table'
+        ? (p as HorizontalTableParagraph).answerRequired
+        : p.variant === 'vertical_table'
+          ? (p as VerticalTableParagraph).answerRequired
+          : (p.answerRequired ?? p.requiredMark)
+    return {
+      ...lockedBase,
+      titleValue: p.paragraphTitle,
+      titlePlaceholder: '타이틀을 입력해 주세요',
+      titleRequired,
+      titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
+        ? 'paragraph-card__title--placeholder'
+        : undefined,
+      titleLeading: prefix,
+      descriptionValue: resolveCardDescriptionValue(p.id, p.paragraphDescription),
+      descriptionClassName: descCls(),
+    }
+  }
+
+  return {
+    ...lockedBase,
+    titleValue: paragraph.paragraphTitle,
+    titleLeading: prefix,
+    descriptionValue: '',
+  }
+}
+
 export function paragraphEditableHeading(
   paragraph: WritingFormParagraph,
   paragraphs: WritingFormParagraph[],
@@ -595,6 +760,10 @@ export function paragraphEditableHeading(
     mergeHeadingDescriptionClassName(base, headingDescriptionExtraClassName)
   const prefix = getFormParagraphTitleNumberPrefix(paragraphs, paragraph, titleNumbering)
   const locked = structureLockedParagraphIds?.has(paragraph.id) ?? false
+
+  if (locked && EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS.has(paragraph.id)) {
+    return buildEducatorFacilitatorPledgeLockedHeading(paragraph, prefix, descCls, editorKind)
+  }
 
   if (locked) {
     if (paragraph.kind === 'description' && paragraph.variant === 'survey_title_with_period') {
@@ -678,6 +847,17 @@ export function paragraphEditableHeading(
         descriptionPlaceholder: '설명 입력',
       }
     }
+    /** 구조 잠금 설명글_텍스트형 — 비선택·빈 값일 때도 시안 placeholder 노출 */
+    if (paragraph.kind === 'single_item' && paragraph.variant === 'agreement_explanation_text') {
+      return agreementExplanationTextEditableHeading(
+        paragraph,
+        paragraph,
+        prefix,
+        isSelected,
+        updateParagraph,
+        descCls
+      )
+    }
     if (paragraph.kind === 'single_item') {
       const p = paragraph
       const titleRequired =
@@ -738,7 +918,7 @@ export function paragraphEditableHeading(
           ? 'paragraph-card__title--placeholder'
           : undefined,
         titleLeading: prefix,
-        descriptionValue: normalizeCardDescriptionValue(p.id, p.paragraphDescription),
+        descriptionValue: resolveCardDescriptionValue(p.id, p.paragraphDescription),
         onDescriptionChange: descriptionIsEditMode
           ? (next: string) =>
               updateParagraph(p.id, cur =>
@@ -884,6 +1064,17 @@ export function paragraphEditableHeading(
     }
   }
 
+  if (paragraph.kind === 'single_item' && paragraph.variant === 'agreement_explanation_text') {
+    return agreementExplanationTextEditableHeading(
+      paragraph,
+      paragraph,
+      prefix,
+      isSelected,
+      updateParagraph,
+      descCls
+    )
+  }
+
   if (paragraph.kind === 'single_item') {
     const p = paragraph
     const titleRequired =
@@ -905,13 +1096,15 @@ export function paragraphEditableHeading(
         ? 'paragraph-card__title--placeholder'
         : undefined,
       titleLeading: prefix,
-      descriptionValue: normalizeCardDescriptionValue(p.id, p.paragraphDescription),
-      onDescriptionChange: (next: string) =>
-        updateParagraph(p.id, cur =>
-          cur.kind === 'single_item' && cur.id === p.id
-            ? { ...cur, paragraphDescription: next }
-            : cur
-        ),
+      descriptionValue: resolveCardDescriptionValue(p.id, p.paragraphDescription),
+      onDescriptionChange: isEducatorFacilitatorPledgeClauseParagraphId(p.id)
+        ? () => {}
+        : (next: string) =>
+            updateParagraph(p.id, cur =>
+              cur.kind === 'single_item' && cur.id === p.id
+                ? { ...cur, paragraphDescription: next }
+                : cur
+            ),
       descriptionPlaceholder: '설명 입력',
       descriptionClassName: descCls(),
     }

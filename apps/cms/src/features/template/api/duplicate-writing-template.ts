@@ -3,6 +3,7 @@ import {
   duplicateFormTemplateVersionRemote,
   shouldUseFormsSurveysRemoteApi,
 } from '@/features/template/api/admin-form-templates-service'
+import { buildLocalDuplicateWritingTemplateCode } from '@/features/template/lib/form-template-delete-policy'
 
 export interface DuplicateWritingTemplateParams {
   sourceTemplateId: string
@@ -34,5 +35,5 @@ export async function duplicateWritingTemplate(
   await new Promise<void>(resolve => {
     setTimeout(resolve, 150)
   })
-  return { newTemplateId: params.sourceTemplateId }
+  return { newTemplateId: buildLocalDuplicateWritingTemplateCode(params.sourceTemplateId) }
 }

@@ -115,6 +115,8 @@ import {
   buildParticipantApplicationEditorState,
 } from '@/features/template/lib/participant-application-editor-state'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
+import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/form-template-delete-policy'
+import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
 import {
   loadWritingFormTemplateDraft,
@@ -276,6 +278,8 @@ export type UseProgramParticipantApplicationEditorOptions = {
    * 있으면 seed variant id 대신 이 code로 draft 로드/저장.
    */
   templateCode?: string
+  systemTemplate?: boolean
+  forceUserEditable?: boolean
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
   /** 프로그램 등록 마법사 — 참여자 유형이 학교/기관일 때만 모집 최대값 필드 노출 */
   participantOrganization?: boolean
@@ -421,6 +425,12 @@ export function useProgramParticipantApplicationEditor(
     if (override != null && override !== '') return override
     return getTemplateIdForParticipantApplicationVariant(variant)
   }, [editorOptions?.templateCode, variant])
+
+  const isStructureLocked = isWritingFormTemplateStructureLocked({
+    templateCode: resolvePersistTemplateId(),
+    systemTemplate: editorOptions?.systemTemplate,
+    forceUserEditable: editorOptions?.forceUserEditable,
+  })
 
   const seedParagraphIds = useMemo(() => {
     if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
@@ -672,9 +682,18 @@ export function useProgramParticipantApplicationEditor(
     seedParagraphIds
   )
 
-  const effectiveMiddleParagraphActions = isRecruitmentEditorVariant(variant)
-    ? undefined
-    : middleParagraphActions
+  const writingFormMiddleParagraphActions = useWritingFormMiddleParagraphActions(
+    setDraft,
+    setActiveParagraphId
+  )
+
+  const effectiveMiddleParagraphActions = !isStructureLocked
+    ? writingFormMiddleParagraphActions
+    : isRecruitmentEditorVariant(variant)
+      ? undefined
+      : middleParagraphActions
+
+  const effectiveStructureLockedParagraphIds = isStructureLocked ? seedParagraphIds : undefined
 
   const {
     horizontalTableRowSelectionsByParagraphId,
@@ -962,8 +981,8 @@ export function useProgramParticipantApplicationEditor(
     () => {
       if (!active) return INACTIVE_LEFT_PANEL_PARAGRAPH_BODY_OPTIONS
       return {
-      structureLockedParagraphIds: seedParagraphIds,
-      structureLockedAuthoringChoicePreview: true,
+      structureLockedParagraphIds: effectiveStructureLockedParagraphIds,
+      structureLockedAuthoringChoicePreview: isStructureLocked ? true : undefined,
       programApplicationFormInstitution: variant === 'institution',
       programApplicationFormEconomyInstitution: variant === 'economy-application-institution',
       programApplicationFormTrainedTeachersInstitution:
@@ -1051,7 +1070,8 @@ export function useProgramParticipantApplicationEditor(
       programApplicationFormInstructorOptions,
       programApplicationFormVolunteerOptions,
       recruitVolunteerHiddenParagraphIds,
-      seedParagraphIds,
+      effectiveStructureLockedParagraphIds,
+      isStructureLocked,
       ujatProgramApplicationFormVolunteerOptions,
       ujatProgramApplicationGradeClassTime,
       ujatProgramApplicationGradeInfo,
@@ -1154,7 +1174,7 @@ export function useProgramParticipantApplicationEditor(
     isDraftLoading,
     activeParagraphId,
     singleItemListActiveItemId,
-    structureLockedParagraphIds: seedParagraphIds,
+    structureLockedParagraphIds: effectiveStructureLockedParagraphIds,
     pinnedTop,
     sortableMiddle,
     pinnedBottom,
