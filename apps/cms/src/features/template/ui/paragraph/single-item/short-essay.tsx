@@ -8,7 +8,7 @@ import {
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { ParagraphLabelInput } from '@/features/template/ui/shared/paragraph-label-input'
-import { CmsDateTextInput, CmsPhoneInput } from '@/shared/ui'
+import { CmsDateTextInput, CmsInput, CmsPhoneInput } from '@/shared/ui'
 import './short-essay.css'
 
 /** 주관식형 (short_essay) — 단락 바디 슬롯 */
@@ -137,6 +137,7 @@ export function ShortEssay({
           )
         }
 
+        const isName = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name
         const isBirth = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth
         const isPhone = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone
 
@@ -156,7 +157,16 @@ export function ShortEssay({
             }}
             onChange={isBodyInteractive ? e => updateItemBodyText(item.id, e.target.value) : undefined}
             control={
-              isBirth ? (
+              isName ? (
+                <CmsInput
+                  id={`short-essay-${item.id}`}
+                  inputSize="large"
+                  width="100%"
+                  value={item.bodyText}
+                  placeholder={item.placeholder ?? '성명을 입력해 주세요'}
+                  onChange={e => updateItemBodyText(item.id, e.target.value)}
+                />
+              ) : isBirth ? (
                 <CmsDateTextInput
                   id={`short-essay-${item.id}`}
                   inputSize="large"
@@ -164,7 +174,6 @@ export function ShortEssay({
                   value={item.bodyText}
                   placeholder={item.placeholder ?? '1991.01.01'}
                   maxLength={10}
-                  disabled={!isBodyInteractive}
                   onValueChange={value => updateItemBodyText(item.id, value)}
                 />
               ) : isPhone ? (
@@ -174,7 +183,6 @@ export function ShortEssay({
                   width="100%"
                   value={item.bodyText}
                   placeholder={item.placeholder ?? '010-1234-5678'}
-                  disabled={!isBodyInteractive}
                   onChange={event => updateItemBodyText(item.id, event.target.value)}
                 />
               ) : undefined

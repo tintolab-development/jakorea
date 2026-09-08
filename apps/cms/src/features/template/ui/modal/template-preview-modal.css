@@ -150,7 +150,6 @@
 
 .template-preview-modal__notice {
   width: 100%;
-  max-width: var(--template-preview-paragraph-column-max, 1400px);
   display: flex;
   height: 44px;
   align-items: center;
