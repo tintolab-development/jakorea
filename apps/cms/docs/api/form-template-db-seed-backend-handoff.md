@@ -129,7 +129,7 @@
 | SURVEY | `survey-admin` | 강의평가 (관리자용) | A | [survey-admin.json](./form-template-seeds/survey-admin.json) |
 | AGREEMENT | `agreement-portrait` | 초상권 수집·이용 동의 | A | [agreement-portrait.json](./form-template-seeds/agreement-portrait.json) |
 | AGREEMENT | `agreement-third-party` | 지급조서 사전 동의서 | A | [agreement-third-party.json](./form-template-seeds/agreement-third-party.json) |
-| AGREEMENT | `agreement-crime` | 성범죄 경력조회 및 아동학대 관련 범죄전력조회 동의서 | D | [agreement-crime.json](./form-template-seeds/agreement-crime.json) |
+| AGREEMENT | `agreement-crime` | 성범죄 경력조회 동의서 | D | [agreement-crime.json](./form-template-seeds/agreement-crime.json) |
 | AGREEMENT | `agreement-notice` | 행정정보 공동이용 사전 동의서 | A | [agreement-notice.json](./form-template-seeds/agreement-notice.json) |
 | AGREEMENT | `agreement-expense` | 교육진행자 동의 서약서 | A | [agreement-expense.json](./form-template-seeds/agreement-expense.json) |
 
@@ -143,11 +143,11 @@
 | `issuance-ujat-edu-journal` | UJAT 교육일지 | A | ☑ | [issuance-ujat-edu-journal.json](./form-template-seeds/issuance-ujat-edu-journal.json) |
 | `issuance-3` | 강의보고서 | A | ☑ | [issuance-3.json](./form-template-seeds/issuance-3.json) |
 | `issuance-4` | 정산 신청서 | A | ☑ | [issuance-4.json](./form-template-seeds/issuance-4.json) |
-| `document-payment-order-issue` | 지급조서 (발급용) | A | ☑ | [document-payment-order-issue.json](./form-template-seeds/document-payment-order-issue.json) |
+| `document-payment-order-issue` | 지급조서(발급용) | A | ☑ | [document-payment-order-issue.json](./form-template-seeds/document-payment-order-issue.json) |
 | `document-participation-certificate` | 참가인증서 | D | ☑ | [document-participation-certificate.json](./form-template-seeds/document-participation-certificate.json) |
 | `document-3` | 수료증 | D | ☑ | [document-3-certificate.json](./form-template-seeds/document-3-certificate.json) |
-| `document-4` | 강사 활동 인증서 | D | ☑ | [document-4.json](./form-template-seeds/document-4.json) |
-| `document-5` | 봉사 활동 인증서 | D | ☑ | [document-5.json](./form-template-seeds/document-5.json) |
+| `document-4` | 강사 활동인증서 | D | ☑ | [document-4.json](./form-template-seeds/document-4.json) |
+| `document-5` | 봉사 활동인증서 | D | ☑ | [document-5.json](./form-template-seeds/document-5.json) |
 | `issuance-1` | UJAT 결과리포트 | E | ✗ | [issuance-1.json](./form-template-seeds/issuance-1.json) |
 | `issuance-5` | 결과보고서 | E | ✗ | [issuance-5.json](./form-template-seeds/issuance-5.json) |
 | `document-1` | 지출증빙서류(필수폼) | E | ✗ | [document-1.json](./form-template-seeds/document-1.json) |

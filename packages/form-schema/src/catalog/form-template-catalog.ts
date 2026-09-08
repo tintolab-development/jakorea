@@ -201,7 +201,7 @@ export const TEMPLATE_CODE_CATALOG: Record<string, TemplateCodeCatalogEntry> = {
     variant: 'default',
   },
   'agreement-crime': {
-    templateName: '성범죄 경력조회 및 아동학대 관련 범죄전력조회 동의서',
+    templateName: '성범죄 경력조회 동의서',
     category: 'AGREEMENT',
     variant: 'default',
   },
@@ -280,14 +280,14 @@ export const ISSUANCE_TEMPLATE_CODE_CATALOG: Record<string, IssuanceTemplateCode
   'issuance-3': { templateName: '강의보고서', category: 'REPORT' },
   'issuance-4': { templateName: '정산 신청서', category: 'REPORT' },
   'issuance-5': { templateName: '결과보고서', category: 'REPORT' },
-  'document-payment-order-issue': { templateName: '지급조서 (발급용)', category: 'DOCUMENT' },
+  'document-payment-order-issue': { templateName: '지급조서(발급용)', category: 'DOCUMENT' },
   'document-payment-order-pre-consent': { templateName: '지급조서 사전 동의서', category: 'DOCUMENT' },
   'document-1': { templateName: '지출증빙서류(필수폼)', category: 'DOCUMENT' },
   'document-2': { templateName: '휴가 인증서', category: 'DOCUMENT' },
   'document-3': { templateName: '수료증', category: 'DOCUMENT' },
   'document-participation-certificate': { templateName: '참가인증서', category: 'DOCUMENT' },
-  'document-4': { templateName: '강사 활동 인증서', category: 'DOCUMENT' },
-  'document-5': { templateName: '봉사 활동 인증서', category: 'DOCUMENT' },
+  'document-4': { templateName: '강사 활동인증서', category: 'DOCUMENT' },
+  'document-5': { templateName: '봉사 활동인증서', category: 'DOCUMENT' },
 }
 
 /**
@@ -300,10 +300,10 @@ export const ISSUANCE_FORM_LIST_TEMPLATE_CODES = [
   'issuance-3',
   'issuance-4',
   'document-payment-order-issue',
-  'document-participation-certificate',
   'document-3',
-  'document-4',
+  'document-participation-certificate',
   'document-5',
+  'document-4',
 ] as const
 
 export type IssuanceFormListTemplateCode = (typeof ISSUANCE_FORM_LIST_TEMPLATE_CODES)[number]
