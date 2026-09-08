@@ -233,6 +233,8 @@ export type {
   AttachmentDownloadItem,
 } from './posts'
 export { AlimtalkPhonePreview } from './alimtalk-phone-preview'
+export { SmsPhonePreview } from './sms-phone-preview'
+export type { SmsPhonePreviewProps } from './sms-phone-preview'
 export type {
   AlimtalkPhonePreviewProps,
   AlimtalkPhonePreviewButton,
