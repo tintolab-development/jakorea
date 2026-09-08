@@ -2616,14 +2616,20 @@ export const DEFAULT_SURVEY_PARAGRAPH_IDS = {
   user: 'survey-paragraph-user',
   score: 'survey-paragraph-score',
   score2: 'survey-paragraph-score-2',
+  score3: 'survey-paragraph-score-3',
+  score4: 'survey-paragraph-score-4',
+  score5: 'survey-paragraph-score-5',
+  score6: 'survey-paragraph-score-6',
+  score7: 'survey-paragraph-score-7',
   subjective: 'survey-paragraph-subjective',
   subjective2: 'survey-paragraph-subjective-2',
+  subjective3: 'survey-paragraph-subjective-3',
+  star: 'survey-paragraph-star',
   closing: 'survey-paragraph-closing',
 } as const
 
 /**
- * 설문 양식 기본 구조: 제목형·설문자 정보·마무리글은 `getWritingFormHeadMiddlePinnedTail`에서 고정 역할.
- * DnD 대상이 아니므로 햄버거 핸들 미노출 — `PAYMENT_STATEMENT_ISSUANCE_HIDDEN_DRAG_HANDLE_IDS` 등과 동일 UX.
+ * @deprecated 설문 템플릿 편집은 모든 단락 DnD 허용. 프로그램 강의평가 미리보기 등 런타임 잠금은 `LECTURE_EVAL_STRUCTURE_LOCKED_IDS` 사용.
  */
 export const SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
   DEFAULT_SURVEY_PARAGRAPH_IDS.title,
@@ -3727,8 +3733,53 @@ export function createDefaultHorizontalTableDraft(): WritingFormDraft {
   }
 }
 
+function createDefaultSurveyScaleParagraph(
+  id: string,
+  paragraphTitle: string
+): ScaleTypeParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'scale_type',
+    answerRequired: true,
+    requiredMark: true,
+    paragraphTitle,
+    paragraphDescription: '설명 입력',
+    participatesInTitleNumbering: true,
+    items: createDefaultScaleTypeItems(),
+    selectedPreviewItemId: 'scale-type-item-5',
+  }
+}
+
+function createDefaultSurveyShortEssayParagraph(
+  id: string,
+  paragraphTitle: string,
+  itemId: string
+): ShortEssayParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'short_essay',
+    answerRequired: true,
+    requiredMark: true,
+    paragraphTitle,
+    paragraphDescription: '없다면 ‘없음’으로 기재해 주세요',
+    participatesInTitleNumbering: true,
+    showItemTitle: false,
+    items: [
+      {
+        id: itemId,
+        label: 'Title 01',
+        placeholder: '답변을 입력해 주세요',
+        bodyText: '',
+      },
+    ],
+    bodyPlaceholder: '답변을 입력해 주세요',
+    bodyText: '',
+  }
+}
+
 export function createDefaultSurveyDraft(): WritingFormDraft {
-  const scaleItems = createDefaultScaleTypeItems()
   return {
     schemaVersion: 1,
     formSettings: { titleNumbering: 'q123' },
@@ -3781,70 +3832,66 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
       {
         id: DEFAULT_SURVEY_PARAGRAPH_IDS.score,
         kind: 'single_item',
-        variant: 'scale_type',
+        variant: 'multiple_choice',
         answerRequired: true,
         requiredMark: true,
-        paragraphTitle: '오리엔테이션에서 제공된 정보가 이해하기 쉬웠나요?',
+        paragraphTitle: '프로그램 신청 계기',
+        paragraphDescription: '본 프로그램을 신청하신 계기를 선택해 주세요',
+        participatesInTitleNumbering: true,
+        allowMultiple: true,
+        items: createDefaultMultipleChoiceItems().map((it: MultipleChoiceItem) => ({ ...it })),
+        selectedPreviewSingleId: null,
+        selectedPreviewMultipleIds: [],
+      },
+      createDefaultSurveyScaleParagraph(
+        DEFAULT_SURVEY_PARAGRAPH_IDS.score2,
+        '프로그램 교육 일정 및 시간이 적절하였나요?'
+      ),
+      createDefaultSurveyScaleParagraph(
+        DEFAULT_SURVEY_PARAGRAPH_IDS.score3,
+        '교육이 체계적으로 구성되어 있었나요?'
+      ),
+      createDefaultSurveyScaleParagraph(
+        DEFAULT_SURVEY_PARAGRAPH_IDS.score4,
+        '학생들의 수준을 고려한 프로그램이었나요?'
+      ),
+      createDefaultSurveyScaleParagraph(
+        DEFAULT_SURVEY_PARAGRAPH_IDS.score5,
+        '청소년 교육에 도움 되었나요?'
+      ),
+      createDefaultSurveyScaleParagraph(
+        DEFAULT_SURVEY_PARAGRAPH_IDS.score6,
+        '진행 중에 참가자들의 요구와 관심이 반영되었나요?'
+      ),
+      createDefaultSurveyScaleParagraph(
+        DEFAULT_SURVEY_PARAGRAPH_IDS.score7,
+        '내년에도 해당 프로그램 혹은 비슷한 프로그램에 참여할 의사가 있나요?'
+      ),
+      createDefaultSurveyShortEssayParagraph(
+        DEFAULT_SURVEY_PARAGRAPH_IDS.subjective,
+        '본 프로그램에서 개선했으면 하는 사항 혹은 불만 사항이 있다면 기재해 주세요',
+        'survey-short-essay-item-1'
+      ),
+      createDefaultSurveyShortEssayParagraph(
+        DEFAULT_SURVEY_PARAGRAPH_IDS.subjective2,
+        '프로그램 참여 후 느낀 소감이나 제안 사항 등을 자유롭게 적어 주세요',
+        'survey-short-essay-item-2'
+      ),
+      createDefaultSurveyShortEssayParagraph(
+        DEFAULT_SURVEY_PARAGRAPH_IDS.subjective3,
+        '현재 가장 필요로 하는 교육 컨텐츠가 있다면 기재해 주세요',
+        'survey-short-essay-item-3'
+      ),
+      {
+        id: DEFAULT_SURVEY_PARAGRAPH_IDS.star,
+        kind: 'single_item',
+        variant: 'star_rate',
+        answerRequired: true,
+        requiredMark: true,
+        paragraphTitle: '프로그램 전반에 대한 만족도를 선택해 주세요',
         paragraphDescription: '설명 입력',
         participatesInTitleNumbering: true,
-        items: scaleItems,
-        selectedPreviewItemId: 'scale-type-item-5',
-      },
-      {
-        id: DEFAULT_SURVEY_PARAGRAPH_IDS.score2,
-        kind: 'single_item',
-        variant: 'scale_type',
-        answerRequired: true,
-        requiredMark: true,
-        paragraphTitle: '프로그램 전반적인 프로세스에 대해 명확히 이해했나요?',
-        paragraphDescription: '설명 입력',
-        participatesInTitleNumbering: true,
-        items: scaleItems,
-        selectedPreviewItemId: 'scale-type-item-5',
-      },
-      {
-        id: DEFAULT_SURVEY_PARAGRAPH_IDS.subjective,
-        kind: 'single_item',
-        variant: 'short_essay',
-        answerRequired: true,
-        requiredMark: true,
-        paragraphTitle:
-          '오늘 강의에서 배운 점, 기억나는 점, 좋았던 점 등을 작성해 주세요.',
-        paragraphDescription: '설명 입력',
-        participatesInTitleNumbering: true,
-        showItemTitle: false,
-        items: [
-          {
-            id: 'survey-short-essay-item-1',
-            label: 'Title 01',
-            placeholder: '답변을 입력해 주세요',
-            bodyText: '',
-          },
-        ],
-        bodyPlaceholder: '답변을 입력해 주세요',
-        bodyText: '',
-      },
-      {
-        id: DEFAULT_SURVEY_PARAGRAPH_IDS.subjective2,
-        kind: 'single_item',
-        variant: 'short_essay',
-        answerRequired: true,
-        requiredMark: true,
-        paragraphTitle: '기타 의견이 있다면 작성해 주세요.',
-        paragraphDescription:
-          '교육 워크숍 진행, 강의 내용 등에 대한 기타 의견을 작성해 주세요.',
-        participatesInTitleNumbering: true,
-        showItemTitle: false,
-        items: [
-          {
-            id: 'survey-short-essay-item-2',
-            label: 'Title 01',
-            placeholder: '답변을 입력해 주세요',
-            bodyText: '',
-          },
-        ],
-        bodyPlaceholder: '답변을 입력해 주세요',
-        bodyText: '',
+        selectedPreviewStars: null,
       },
       {
         id: DEFAULT_SURVEY_PARAGRAPH_IDS.closing,

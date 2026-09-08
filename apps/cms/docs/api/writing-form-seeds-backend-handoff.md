@@ -69,10 +69,10 @@
 
 | templateCode | templateName | Payload | 시드 JSON | 단락 수 |
 |--------------|--------------|---------|-----------|--------:|
-| `survey-default` | 설문조사 | A | [survey-default.json](./form-template-seeds/survey-default.json) | 7 |
-| `survey-student` | 만족도조사 (학생용) | A | [survey-student.json](./form-template-seeds/survey-student.json) | 7 |
-| `survey-teacher` | 만족도조사 (교사용) | A | [survey-teacher.json](./form-template-seeds/survey-teacher.json) | 7 |
-| `survey-admin` | 강의평가 (관리자용) | A | [survey-admin.json](./form-template-seeds/survey-admin.json) | 7 |
+| `survey-default` | 설문조사 | A | [survey-default.json](./form-template-seeds/survey-default.json) | 14 |
+| `survey-student` | 만족도조사 (학생용) | A | [survey-student.json](./form-template-seeds/survey-student.json) | 14 |
+| `survey-teacher` | 만족도조사 (교사용) | A | [survey-teacher.json](./form-template-seeds/survey-teacher.json) | 14 |
+| `survey-admin` | 강의평가 (관리자용) | A | [survey-admin.json](./form-template-seeds/survey-admin.json) | 14 |
 
 ### 동의 양식 (5)
 
@@ -302,10 +302,17 @@
 |----|------|---------|----------------|
 | `survey-paragraph-title` | description | survey_title_with_period |  |
 | `survey-paragraph-user` | single_item | user_info | 설문자 정보 |
-| `survey-paragraph-score` | single_item | scale_type | 오리엔테이션에서 제공된 정보가 이해하기 쉬웠나요? |
-| `survey-paragraph-score-2` | single_item | scale_type | 프로그램 전반적인 프로세스에 대해 명확히 이해했나요? |
-| `survey-paragraph-subjective` | single_item | short_essay | 오늘 강의에서 배운 점, 기억나는 점, 좋았던 점 등을 작성해 주세요. |
-| `survey-paragraph-subjective-2` | single_item | short_essay | 기타 의견이 있다면 작성해 주세요. |
+| `survey-paragraph-score` | single_item | multiple_choice | 프로그램 신청 계기 |
+| `survey-paragraph-score-2` | single_item | scale_type | 프로그램 교육 일정 및 시간이 적절하였나요? |
+| `survey-paragraph-score-3` | single_item | scale_type | 교육이 체계적으로 구성되어 있었나요? |
+| `survey-paragraph-score-4` | single_item | scale_type | 학생들의 수준을 고려한 프로그램이었나요? |
+| `survey-paragraph-score-5` | single_item | scale_type | 청소년 교육에 도움 되었나요? |
+| `survey-paragraph-score-6` | single_item | scale_type | 진행 중에 참가자들의 요구와 관심이 반영되었나요? |
+| `survey-paragraph-score-7` | single_item | scale_type | 내년에도 해당 프로그램 혹은 비슷한 프로그램에 참여할 의사가 있나요? |
+| `survey-paragraph-subjective` | single_item | short_essay | 본 프로그램에서 개선했으면 하는 사항 혹은 불만 사항이 있다면 기재해 주세요 |
+| `survey-paragraph-subjective-2` | single_item | short_essay | 프로그램 참여 후 느낀 소감이나 제안 사항 등을 자유롭게 적어 주세요 |
+| `survey-paragraph-subjective-3` | single_item | short_essay | 현재 가장 필요로 하는 교육 컨텐츠가 있다면 기재해 주세요 |
+| `survey-paragraph-star` | single_item | star_rate | 프로그램 전반에 대한 만족도를 선택해 주세요 |
 | `survey-paragraph-closing` | description | closing |  |
 
 ### `survey-student` — 만족도조사 (학생용)
@@ -314,10 +321,17 @@
 |----|------|---------|----------------|
 | `survey-paragraph-title` | description | survey_title_with_period |  |
 | `survey-paragraph-user` | single_item | user_info | 설문자 정보 |
-| `survey-paragraph-score` | single_item | scale_type | 오리엔테이션에서 제공된 정보가 이해하기 쉬웠나요? |
-| `survey-paragraph-score-2` | single_item | scale_type | 프로그램 전반적인 프로세스에 대해 명확히 이해했나요? |
-| `survey-paragraph-subjective` | single_item | short_essay | 오늘 강의에서 배운 점, 기억나는 점, 좋았던 점 등을 작성해 주세요. |
-| `survey-paragraph-subjective-2` | single_item | short_essay | 기타 의견이 있다면 작성해 주세요. |
+| `survey-paragraph-score` | single_item | multiple_choice | 프로그램 신청 계기 |
+| `survey-paragraph-score-2` | single_item | scale_type | 프로그램 교육 일정 및 시간이 적절하였나요? |
+| `survey-paragraph-score-3` | single_item | scale_type | 교육이 체계적으로 구성되어 있었나요? |
+| `survey-paragraph-score-4` | single_item | scale_type | 학생들의 수준을 고려한 프로그램이었나요? |
+| `survey-paragraph-score-5` | single_item | scale_type | 청소년 교육에 도움 되었나요? |
+| `survey-paragraph-score-6` | single_item | scale_type | 진행 중에 참가자들의 요구와 관심이 반영되었나요? |
+| `survey-paragraph-score-7` | single_item | scale_type | 내년에도 해당 프로그램 혹은 비슷한 프로그램에 참여할 의사가 있나요? |
+| `survey-paragraph-subjective` | single_item | short_essay | 본 프로그램에서 개선했으면 하는 사항 혹은 불만 사항이 있다면 기재해 주세요 |
+| `survey-paragraph-subjective-2` | single_item | short_essay | 프로그램 참여 후 느낀 소감이나 제안 사항 등을 자유롭게 적어 주세요 |
+| `survey-paragraph-subjective-3` | single_item | short_essay | 현재 가장 필요로 하는 교육 컨텐츠가 있다면 기재해 주세요 |
+| `survey-paragraph-star` | single_item | star_rate | 프로그램 전반에 대한 만족도를 선택해 주세요 |
 | `survey-paragraph-closing` | description | closing |  |
 
 ### `survey-teacher` — 만족도조사 (교사용)
@@ -326,10 +340,17 @@
 |----|------|---------|----------------|
 | `survey-paragraph-title` | description | survey_title_with_period |  |
 | `survey-paragraph-user` | single_item | user_info | 설문자 정보 |
-| `survey-paragraph-score` | single_item | scale_type | 오리엔테이션에서 제공된 정보가 이해하기 쉬웠나요? |
-| `survey-paragraph-score-2` | single_item | scale_type | 프로그램 전반적인 프로세스에 대해 명확히 이해했나요? |
-| `survey-paragraph-subjective` | single_item | short_essay | 오늘 강의에서 배운 점, 기억나는 점, 좋았던 점 등을 작성해 주세요. |
-| `survey-paragraph-subjective-2` | single_item | short_essay | 기타 의견이 있다면 작성해 주세요. |
+| `survey-paragraph-score` | single_item | multiple_choice | 프로그램 신청 계기 |
+| `survey-paragraph-score-2` | single_item | scale_type | 프로그램 교육 일정 및 시간이 적절하였나요? |
+| `survey-paragraph-score-3` | single_item | scale_type | 교육이 체계적으로 구성되어 있었나요? |
+| `survey-paragraph-score-4` | single_item | scale_type | 학생들의 수준을 고려한 프로그램이었나요? |
+| `survey-paragraph-score-5` | single_item | scale_type | 청소년 교육에 도움 되었나요? |
+| `survey-paragraph-score-6` | single_item | scale_type | 진행 중에 참가자들의 요구와 관심이 반영되었나요? |
+| `survey-paragraph-score-7` | single_item | scale_type | 내년에도 해당 프로그램 혹은 비슷한 프로그램에 참여할 의사가 있나요? |
+| `survey-paragraph-subjective` | single_item | short_essay | 본 프로그램에서 개선했으면 하는 사항 혹은 불만 사항이 있다면 기재해 주세요 |
+| `survey-paragraph-subjective-2` | single_item | short_essay | 프로그램 참여 후 느낀 소감이나 제안 사항 등을 자유롭게 적어 주세요 |
+| `survey-paragraph-subjective-3` | single_item | short_essay | 현재 가장 필요로 하는 교육 컨텐츠가 있다면 기재해 주세요 |
+| `survey-paragraph-star` | single_item | star_rate | 프로그램 전반에 대한 만족도를 선택해 주세요 |
 | `survey-paragraph-closing` | description | closing |  |
 
 ### `survey-admin` — 강의평가 (관리자용)
@@ -338,10 +359,17 @@
 |----|------|---------|----------------|
 | `survey-paragraph-title` | description | survey_title_with_period |  |
 | `survey-paragraph-user` | single_item | user_info | 설문자 정보 |
-| `survey-paragraph-score` | single_item | scale_type | 오리엔테이션에서 제공된 정보가 이해하기 쉬웠나요? |
-| `survey-paragraph-score-2` | single_item | scale_type | 프로그램 전반적인 프로세스에 대해 명확히 이해했나요? |
-| `survey-paragraph-subjective` | single_item | short_essay | 오늘 강의에서 배운 점, 기억나는 점, 좋았던 점 등을 작성해 주세요. |
-| `survey-paragraph-subjective-2` | single_item | short_essay | 기타 의견이 있다면 작성해 주세요. |
+| `survey-paragraph-score` | single_item | multiple_choice | 프로그램 신청 계기 |
+| `survey-paragraph-score-2` | single_item | scale_type | 프로그램 교육 일정 및 시간이 적절하였나요? |
+| `survey-paragraph-score-3` | single_item | scale_type | 교육이 체계적으로 구성되어 있었나요? |
+| `survey-paragraph-score-4` | single_item | scale_type | 학생들의 수준을 고려한 프로그램이었나요? |
+| `survey-paragraph-score-5` | single_item | scale_type | 청소년 교육에 도움 되었나요? |
+| `survey-paragraph-score-6` | single_item | scale_type | 진행 중에 참가자들의 요구와 관심이 반영되었나요? |
+| `survey-paragraph-score-7` | single_item | scale_type | 내년에도 해당 프로그램 혹은 비슷한 프로그램에 참여할 의사가 있나요? |
+| `survey-paragraph-subjective` | single_item | short_essay | 본 프로그램에서 개선했으면 하는 사항 혹은 불만 사항이 있다면 기재해 주세요 |
+| `survey-paragraph-subjective-2` | single_item | short_essay | 프로그램 참여 후 느낀 소감이나 제안 사항 등을 자유롭게 적어 주세요 |
+| `survey-paragraph-subjective-3` | single_item | short_essay | 현재 가장 필요로 하는 교육 컨텐츠가 있다면 기재해 주세요 |
+| `survey-paragraph-star` | single_item | star_rate | 프로그램 전반에 대한 만족도를 선택해 주세요 |
 | `survey-paragraph-closing` | description | closing |  |
 
 ### `agreement-third-party` — 지급조서 사전 동의서
