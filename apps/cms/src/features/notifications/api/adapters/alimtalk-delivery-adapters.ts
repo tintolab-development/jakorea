@@ -4,8 +4,12 @@ import type {
   NotificationTemplatePreviewResponse,
 } from '@/shared/api/generated/notifications/schemas'
 import {
+  mapAlimtalkEmphasisType,
+  mapAlimtalkMessageType,
+  mapAlimtalkMetadataFields,
   mapNotificationTemplatePreviewToItem,
 } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
+import { formatAlimtalkFailedReason } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import type {
   AlimtalkBroadcastTiming,
   AlimtalkReceiveStatus,
@@ -17,20 +21,24 @@ import {
   type AlimtalkTemplateItem,
 } from '@/features/notifications/model/alimtalk-template/types'
 
+/** BE sendStatus → UI 라벨 (deliveryStatus 원시값 직접 노출 금지) */
 const SEND_STATUS_MAP: Record<string, Exclude<AlimtalkSendStatus, '전체'>> = {
   REQUESTED: '발송 요청',
-  CANCELLED: '발송 취소',
-  CANCELED: '발송 취소',
-  SCHEDULED: '발송 예약',
-  QUEUED: '발송 대기',
-  PENDING: '발송 대기',
-  SENDING: '발송 중',
-  IN_PROGRESS: '발송 중',
+  SCHEDULED: '예약',
+  WAITED: '대기',
+  QUEUED: '대기',
+  PENDING: '대기',
+  IN_PROGRESS: '발송중',
+  SENDING: '발송중',
+  SENT: '발송 성공',
+  SUCCESS: '발송 성공',
+  DELIVERED: '발송 성공',
+  SEND_FAILED: '발송 실패',
   FAILED: '발송 실패',
   FAILURE: '발송 실패',
-  SUCCESS: '발송 성공',
-  SENT: '발송 성공',
-  DELIVERED: '발송 성공',
+  CANCELED: '취소',
+  CANCELLED: '취소',
+  UNKNOWN: '확인불가',
 }
 
 const RECEIVE_STATUS_MAP: Record<string, Exclude<AlimtalkReceiveStatus, '전체'>> = {
@@ -50,11 +58,11 @@ const RECEIVE_STATUS_MAP: Record<string, Exclude<AlimtalkReceiveStatus, '전체'
 function mapSendStatus(raw?: string | null): Exclude<AlimtalkSendStatus, '전체'> {
   const key = (raw ?? '').trim().toUpperCase()
   if (SEND_STATUS_MAP[key]) return SEND_STATUS_MAP[key]
-  // already Korean label from mock-compatible BE?
   if ((Object.values(SEND_STATUS_MAP) as string[]).includes(raw ?? '')) {
     return raw as Exclude<AlimtalkSendStatus, '전체'>
   }
-  return '발송 요청'
+  // 미지 코드는 REQUESTED로 떨어뜨리지 않음 (FAILED→REQUESTED 오표시 방지)
+  return '확인불가'
 }
 
 function mapReceiveStatus(raw?: string | null): Exclude<AlimtalkReceiveStatus, '전체'> {
@@ -74,11 +82,27 @@ function mapBroadcastTiming(
   return '즉시'
 }
 
+function asPreviewRecord(
+  preview: NotificationDeliveryDetailResponse['preview']
+): Record<string, unknown> | null {
+  if (preview == null || typeof preview !== 'object' || Array.isArray(preview)) return null
+  return preview as Record<string, unknown>
+}
+
+function previewString(preview: Record<string, unknown> | null, keys: string[]): string {
+  if (!preview) return ''
+  for (const key of keys) {
+    const value = preview[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return ''
+}
+
 function emptyPhoneTemplate(): AlimtalkTemplateItem {
   return {
     id: 'unused',
-    name: '미사용',
-    templateName: '미사용',
+    name: '-',
+    templateName: '-',
     categoryId: ALIMTALK_ROOT_CATEGORY_ID,
     registeredAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -94,40 +118,96 @@ function emptyPhoneTemplate(): AlimtalkTemplateItem {
   }
 }
 
-function mapPreviewToPhoneTemplate(
+/**
+ * 우측 목업 — 템플릿 2-2와 동일 렌더러 입력.
+ * 우선순위: renderedContent || contentTemplate / alimtalkMetadata / message·emphasis type / senderDisplay
+ * 기본은 detail.preview만 사용 (템플릿 preview API 폴백 없음).
+ */
+export function mapPreviewToPhoneTemplate(
   preview: NotificationDeliveryDetailResponse['preview'],
   delivery: NotificationDeliveryResponse
 ): AlimtalkTemplateItem {
-  if (preview && typeof preview === 'object') {
-    const asTemplatePreview = preview as NotificationTemplatePreviewResponse
-    const mapped = mapNotificationTemplatePreviewToItem({
-      ...asTemplatePreview,
-      templateId: asTemplatePreview.templateId ?? delivery.templateId,
-      displayName:
-        asTemplatePreview.displayName ??
-        delivery.templateDisplayName ??
-        delivery.templateCodeSnapshot,
-      contentTemplate: asTemplatePreview.contentTemplate,
-    })
+  const previewRecord = asPreviewRecord(preview)
+  const content =
+    previewString(previewRecord, ['renderedContent', 'contentTemplate']) || ''
+  const templateName =
+    previewString(previewRecord, ['templateDisplayName', 'displayName', 'renderedTitle']) ||
+    delivery.templateDisplayName?.trim() ||
+    '-'
+  const senderFromPreview = previewString(previewRecord, [
+    'senderDisplay',
+    'senderProfileDisplayName',
+  ])
+  const senderProfile =
+    senderFromPreview ||
+    delivery.senderDisplayName?.trim() ||
+    delivery.senderKey?.trim() ||
+    '-'
+
+  const templateId =
+    (typeof previewRecord?.templateId === 'number' ? previewRecord.templateId : null) ??
+    delivery.templateId ??
+    null
+
+  if (previewRecord) {
+    const asTemplatePreview = {
+      ...(preview as NotificationTemplatePreviewResponse),
+      templateId: templateId ?? undefined,
+      displayName: templateName === '-' ? undefined : templateName,
+      // 렌더러 content 소스: 치환본문 우선
+      contentTemplate: content || undefined,
+      senderProfileDisplayName: senderProfile === '-' ? undefined : senderProfile,
+      alimtalkMessageType:
+        previewString(previewRecord, ['alimtalkMessageType']) || undefined,
+      alimtalkEmphasisType:
+        previewString(previewRecord, ['alimtalkEmphasisType']) || undefined,
+      alimtalkMetadata: previewRecord.alimtalkMetadata as
+        | NotificationTemplatePreviewResponse['alimtalkMetadata']
+        | undefined,
+    } satisfies NotificationTemplatePreviewResponse
+
+    const mapped = mapNotificationTemplatePreviewToItem(
+      asTemplatePreview,
+      emptyPhoneTemplate()
+    )
     if (mapped) {
+      const meta = mapAlimtalkMetadataFields(previewRecord.alimtalkMetadata)
       return {
         ...mapped,
-        senderProfile:
-          delivery.senderDisplayName?.trim() ||
-          delivery.senderKey?.trim() ||
-          mapped.senderProfile,
+        id: templateId != null ? String(templateId) : mapped.id,
+        name: templateName,
+        templateName,
+        senderProfile,
+        content: content || mapped.content,
+        messageType: previewString(previewRecord, ['alimtalkMessageType'])
+          ? mapAlimtalkMessageType(previewString(previewRecord, ['alimtalkMessageType']))
+          : mapped.messageType,
+        emphasisType: previewString(previewRecord, ['alimtalkEmphasisType'])
+          ? mapAlimtalkEmphasisType(previewString(previewRecord, ['alimtalkEmphasisType']))
+          : mapped.emphasisType,
+        buttons: meta.buttons?.length ? meta.buttons : mapped.buttons,
+        quickLinks: meta.quickLinks?.length ? meta.quickLinks : mapped.quickLinks,
+        extraInfo: meta.extraInfo || mapped.extraInfo,
+        emphasisTitle: meta.emphasisTitle ?? mapped.emphasisTitle,
+        emphasisSubtitle: meta.emphasisSubtitle ?? mapped.emphasisSubtitle,
+        imageUrl: meta.imageUrl ?? mapped.imageUrl,
+        templateHeader: meta.templateHeader ?? mapped.templateHeader,
+        itemTitle: meta.itemTitle ?? mapped.itemTitle,
+        itemDescription: meta.itemDescription ?? mapped.itemDescription,
+        itemImageUrl: meta.itemImageUrl ?? mapped.itemImageUrl,
+        itemList: meta.itemList ?? mapped.itemList,
+        itemSummary: meta.itemSummary ?? mapped.itemSummary,
       }
     }
   }
 
-  const templateName = delivery.templateDisplayName?.trim() || ''
   return {
     ...emptyPhoneTemplate(),
-    id: delivery.templateId != null ? String(delivery.templateId) : 'unused',
-    name: templateName || '미사용',
-    templateName: templateName || '미사용',
-    senderProfile: delivery.senderDisplayName?.trim() || delivery.senderKey?.trim() || '-',
-    content: '',
+    id: templateId != null ? String(templateId) : 'unused',
+    name: templateName,
+    templateName,
+    senderProfile,
+    content,
   }
 }
 
@@ -139,29 +219,35 @@ export function mapDeliveryToSendHistoryRow(
 
   const receiverName = item.recipientName?.trim() || '-'
   const receiverPhone = item.recipientContactMasked?.trim() || '-'
-  const templateName = item.templateDisplayName?.trim() || ''
+  const templateName = item.templateDisplayName?.trim() || '-'
   const senderInfo =
     item.senderDisplayName?.trim() || item.senderKey?.trim() || '-'
+  const sendStatus = mapSendStatus(item.sendStatus)
+  const failedReasonRaw = item.failedReason?.trim() || ''
+  const failedReason =
+    sendStatus === '발송 실패' ? formatAlimtalkFailedReason(failedReasonRaw) || failedReasonRaw : ''
 
   return {
     id: String(item.deliveryId),
     requestAt: item.requestedAt ?? '',
-    sendRequestedAt: item.requestedAt ?? item.sentAt ?? '',
+    sendRequestedAt: item.requestedAt ?? '',
     receiveRequestedAt: item.requestedAt ?? '',
     reservedAt: item.scheduledAt ?? '',
-    templateName: templateName || '미사용',
+    templateName,
     senderInfo,
     receiverName,
     receiverPhone,
-    receiverInfo: `${receiverName} ${receiverPhone}`.trim(),
+    receiverInfo: `${receiverName} | ${receiverPhone}`,
     broadcastTiming: mapBroadcastTiming(item),
-    sendStatus: mapSendStatus(item.sendStatus || item.deliveryStatus),
-    receiveStatus: mapReceiveStatus(item.receiptStatus || item.deliveryStatus),
-    sentAt: item.sentAt ?? item.deliveredAt ?? '',
-    receivedAt: item.deliveredAt ?? item.openedAt ?? '',
+    sendStatus,
+    receiveStatus: mapReceiveStatus(item.receiptStatus),
+    // 발송/수신일시: sentAt / deliveredAt만. requestedAt·openedAt 대체 금지
+    sentAt: item.sentAt?.trim() || '',
+    receivedAt: item.deliveredAt?.trim() || '',
     sendCount: '1건',
     sendNumber: item.providerMessageId || item.providerRequestId || String(item.deliveryId),
-    message: item.providerResultMessage || item.failedReason || '',
+    message: item.providerResultMessage || failedReason || failedReasonRaw || '',
+    failedReason: failedReason || undefined,
     phoneTemplate: phoneTemplate ?? emptyPhoneTemplate(),
   }
 }
