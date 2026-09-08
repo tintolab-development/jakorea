@@ -11,7 +11,7 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  padding: 26px 30px 34px 30px;
+  padding: 24px 30px 32px;
   flex-shrink: 0;
 }
 
@@ -32,6 +32,13 @@
 .alert-modal.content-modal .teal-header-modal__title {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+/* 시안: 타이틀 ↔ 본문 gap 30 (ContentModal titleBodyGap always 16 덮어씀) */
+.alert-modal.content-modal.content-modal--title-body-gap-always .teal-header-modal__body,
+.alert-modal.content-modal .teal-header-modal__body {
+  padding-top: 30px;
+  box-sizing: border-box;
 }
 
 /* TealHeaderModal 푸터 기본이 center라 버튼만 좁게 잡히면 가운데로 보임 → 전폭 + 우측 정렬 */
