@@ -28,7 +28,10 @@ import {
   PROGRAM_REGISTRATION_IDS,
 } from '@/features/template/model/program-registration-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-economy-draft'
-import { PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-individual-draft'
+import {
+  PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS,
+  shouldHideMultipleChoiceAllowMultipleTitleHint,
+} from '@/features/template/model/program-application-form-individual-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-institution-draft'
 import { APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS } from '@/features/template/model/applicant-recruit-form-individual-draft'
 import { APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/applicant-recruit-form-institution-draft'
@@ -77,7 +80,8 @@ export function withMultipleChoiceAllowMultipleTitleHint<
   if (
     paragraph.kind !== 'single_item' ||
     paragraph.variant !== 'multiple_choice' ||
-    paragraph.allowMultiple !== true
+    paragraph.allowMultiple !== true ||
+    shouldHideMultipleChoiceAllowMultipleTitleHint(paragraph.id)
   ) {
     return heading
   }

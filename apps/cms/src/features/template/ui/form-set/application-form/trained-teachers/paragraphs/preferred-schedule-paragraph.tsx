@@ -16,6 +16,10 @@ import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-tim
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import {
+  PROGRAM_APPLICATION_SCHEDULE_STRUCTURE_HINT,
+  ProgramApplicationScheduleTemplateHintParagraph,
+} from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 type SessionTimeState = {
@@ -208,20 +212,56 @@ function ScheduleBlock({
   )
 }
 
+function hasTrainedTeachersProgramScheduleContext(
+  bridge: ReturnType<typeof useInstitutionApplicationProgramBridge>
+): boolean {
+  return (
+    bridge.maxScheduleCount != null ||
+    (bridge.educationScheduleLines != null && bridge.educationScheduleLines.length > 0) ||
+    bridge.educationScheduleRange != null
+  )
+}
+
 /**
  * 교육받은 교사 프로그램 참여자 신청 폼 — 진행 희망 교육 일정.
- * 일반 기관 폼과 동일한 지망/차시 구조이나, 교사가 차시별 진행 시간을 자유롭게
- * 지정할 수 있어 연강 안내 문구를 노출하지 않는다.
+ * 템플릿 편집·미리보기: 설정값 안내 박스.
+ * 프로그램 연동 작성: 해당 프로그램 일정·상한에 맞춘 지망/차시 입력.
  */
 export function TrainedTeachersProgramApplicationPreferredScheduleParagraph({
   readOnlyPreview = false,
+  isTemplateAuthoringMode = false,
 }: {
   readOnlyPreview?: boolean
+  /** true: 템플릿 편집 — 설정값 안내 힌트. false: 프로그램 연동 본문 */
+  isTemplateAuthoringMode?: boolean
 }) {
   const bridge = useInstitutionApplicationProgramBridge()
-  /** 프로그램 미연동(등록 위저드 등) — 모집 상한이 없으므로 기존과 같이 1·2지망 고정 노출 */
-  const isProgramLinked = bridge.maxScheduleCount != null
-  const maxBlocks = isProgramLinked ? clampInstitutionScheduleBlockCount(bridge.maxScheduleCount) : 2
+  const isProgramLinked = hasTrainedTeachersProgramScheduleContext(bridge)
+
+  if (isTemplateAuthoringMode || !isProgramLinked) {
+    return (
+      <ProgramApplicationScheduleTemplateHintParagraph
+        hintText={PROGRAM_APPLICATION_SCHEDULE_STRUCTURE_HINT}
+      />
+    )
+  }
+
+  return (
+    <TrainedTeachersPreferredScheduleFields
+      bridge={bridge}
+      readOnlyPreview={readOnlyPreview}
+    />
+  )
+}
+
+function TrainedTeachersPreferredScheduleFields({
+  bridge,
+  readOnlyPreview,
+}: {
+  bridge: ReturnType<typeof useInstitutionApplicationProgramBridge>
+  readOnlyPreview: boolean
+}) {
+  const maxBlocks = clampInstitutionScheduleBlockCount(bridge.maxScheduleCount)
   const sessionOptions = useMemo(
     () => buildInstitutionSessionCountOptions(bridge.maxSessionsPerDay),
     [bridge.maxSessionsPerDay]
@@ -241,19 +281,14 @@ export function TrainedTeachersProgramApplicationPreferredScheduleParagraph({
     []
   )
 
-  // Initialize with correct default based on preview mode and program linkage
   useMemo(() => {
     if (blocks.length === 0) {
-      updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', () =>
-        readOnlyPreview
-          ? // 미리보기 — 1지망(1차시)·2지망(2차시) 예시 블록으로 차시별 시간 지정 구조를 노출
-            Array.from({ length: Math.min(2, Math.max(maxBlocks, 1)) }, (_, index) =>
-              createEmptyBlockState(index + 1)
-            )
-          : Array.from({ length: isProgramLinked ? 1 : 2 }, () => createEmptyBlockState())
+      updateGeneralApplicationOverlayKey<ScheduleBlockState[]>(
+        'application.trainedTeachers.preferredSchedules',
+        () => [createEmptyBlockState()]
       )
     }
-  }, [blocks.length, isProgramLinked, maxBlocks, readOnlyPreview])
+  }, [blocks.length])
 
   const visibleBlockCount = Math.min(Math.max(blocks.length, 1), Math.max(maxBlocks, blocks.length))
   const displayBlocks = blocks.slice(0, visibleBlockCount)

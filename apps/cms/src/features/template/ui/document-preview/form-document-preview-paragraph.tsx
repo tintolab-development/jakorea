@@ -26,6 +26,7 @@ import type { FormDocumentPreviewRenderMode } from '@/features/template/lib/a4-d
 import { getDocumentPreviewParagraphViewModel } from '@/features/template/lib/a4-document-preview'
 import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
 import { resolveParagraphTitleRequiredMark } from '@/features/template/lib/paragraph-required-mark'
+import { shouldHideMultipleChoiceAllowMultipleTitleHint } from '@/features/template/model/program-application-form-individual-draft'
 import { getFormParagraphDisplayTitle } from '@/features/template/lib/form-title-numbering'
 import { ParagraphCard } from '@/features/template/ui/paragraph/shared/paragraph-card'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
@@ -108,7 +109,8 @@ function multipleChoiceAllowMultipleTitleHint(
   if (
     paragraph.kind !== 'single_item' ||
     paragraph.variant !== 'multiple_choice' ||
-    paragraph.allowMultiple !== true
+    paragraph.allowMultiple !== true ||
+    shouldHideMultipleChoiceAllowMultipleTitleHint(paragraph.id)
   ) {
     return null
   }
