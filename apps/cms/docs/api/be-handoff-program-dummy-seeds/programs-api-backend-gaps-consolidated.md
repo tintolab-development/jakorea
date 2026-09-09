@@ -234,10 +234,13 @@ POST /api/admin/gemini/trainings/training-reports/import
 
 | Cat | templateCode (FE 기대) |
 |-----|------------------------|
-| 1 | `registration-economy`, `application-economy` |
+| 1 | `registration-economy`, `recruitment-economy`, `application-economy` |
 | 2 | `registration-ujat`, `recruitment-ujat-school`, `recruitment-ujat-volunteer`(상·하반기), `application-ujat-school`, `application-ujat-volunteer` |
-| 4 | `registration-trained-teachers`, `application-trained-teachers` |
-| 5 | `application-gemini-visiting-training-instructor`, `application-gemini-visiting-training-school` |
+| 4 | `registration-trained-teachers`, `recruitment-trained-teachers`, `application-trained-teachers` |
+| 5 | `recruitment-gemini-visiting-training`, `application-gemini-visiting-training-instructor`, `application-gemini-visiting-training-school` |
+
+> 2026-09-09: Cat1/4/5에 **모집(`recruitment-*`)** templateCode를 catalog·`form-template-seeds`와 맞게 보강.  
+> 일반(GENERAL) binding 세트는 본 표 Cat 밖 — `registration-general` + `recruitment-participant-*` / `recruitment-instructor` / `recruitment-volunteer` + `application-participant-*` / `application-instructor` / `application-volunteer` ([`../form-template-db-seed-backend-handoff.md`](../form-template-db-seed-backend-handoff.md)).
 
 ---
 
