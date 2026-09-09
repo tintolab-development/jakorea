@@ -5,12 +5,14 @@ import { GeminiRecruitmentInstitutionFields } from '@/features/program/gemini/ui
 import type { GeminiRecruitmentFormFieldValues } from '@/features/program/gemini/lib/recruitment/format-recruitment-fields'
 import type { GeminiRecruitmentEducationForm } from '@/features/program/gemini/lib/recruitment/add-form-options'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
+import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
   GEMINI_RECRUIT_OVERLAY_KEYS,
   useGeminiRecruitOverlayKv,
 } from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
+import './gemini-recruit-institution-info-paragraph.css'
 
 function parsePeriodFromOverlay(
   startIso: string | null,
@@ -177,12 +179,27 @@ export function GeminiRecruitInstitutionInfoParagraph() {
   }
 
   return (
-    <div className="program-registration-paragraph">
+    <div className="program-registration-paragraph gemini-recruit-institution-info-paragraph">
+      <DetailInfoForm title="참여 기관 모집 정보(설정)" hideHeader mode="edit">
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="공고 게시 여부"
+            fullRow
+            view="-"
+            edit={
+              <ParticipantRecruitmentAnnouncementPublishedRadios
+                value={announcementPublished}
+                onChange={setAnnouncementPublished}
+              />
+            }
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
       <DetailInfoForm title="참여 기관 모집 정보" hideHeader mode="edit">
         <GeminiRecruitmentInstitutionFields
           mode="edit"
           values={values}
-          showAnnouncementRow
+          showAnnouncementRow={false}
           applicationPeriod={applicationPeriod}
           onApplicationPeriodChange={handleApplicationPeriodChange}
           trainingRequestPeriod={trainingRequestPeriod}

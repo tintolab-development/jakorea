@@ -219,7 +219,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
   }
   const [targetLevels, setTargetLevels] = useApplicantRecruitInstitutionOverlayKv<string[]>(
     APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.targetLevels,
-    layoutVariant === 'economy' ? ['high'] : []
+    []
   )
   const [notesNotApplicable, setNotesNotApplicable] = useApplicantRecruitInstitutionOverlayKv<boolean>(
     APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.notesNotApplicable,
