@@ -3,10 +3,7 @@ import { SearchOutlined } from '@ant-design/icons'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, useCmsAlert } from '@/shared/ui'
-import {
-  ALIMTALK_APPROVAL_STATUS_LABEL,
-  isAlimtalkTemplateApproved,
-} from '@/features/notifications/api/adapters/alimtalk-template-adapters'
+import { isAlimtalkTemplateApproved } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
 import type { AlimtalkTemplateItem } from '@/features/notifications/model/alimtalk-template/types'
 import './template-select-modal.css'
 
@@ -30,11 +27,6 @@ function matchesTemplateName(template: AlimtalkTemplateItem, keyword: string): b
     template.name.toLowerCase().includes(needle) ||
     template.templateName.toLowerCase().includes(needle)
   )
-}
-
-function approvalStatusDisplay(template: AlimtalkTemplateItem): string {
-  if (!template.approvalStatus) return '-'
-  return ALIMTALK_APPROVAL_STATUS_LABEL[template.approvalStatus] ?? template.approvalStatus
 }
 
 export function TemplateSelectModal({
@@ -89,15 +81,6 @@ export function TemplateSelectModal({
           <span className="template-select-modal__name-cell">{value ?? '-'}</span>
         </div>
       ),
-    },
-    {
-      title: '승인 상태',
-      key: 'approvalStatus',
-      width: 120,
-      align: 'center',
-      className: 'template-select-modal__col-status',
-      onHeaderCell: () => ({ className: 'template-select-modal__col-status' }),
-      render: (_value, record) => approvalStatusDisplay(record),
     },
     {
       title: '관리',
