@@ -6,7 +6,7 @@
   "schemaJson": {
     "schemaVersion": 1,
     "formSettings": {
-      "titleNumbering": "numeric"
+      "titleNumbering": "none"
     },
     "paragraphs": [
       {
