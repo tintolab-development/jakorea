@@ -27,12 +27,7 @@ import {
   updateCategoryRemote,
 } from '@/features/notifications/api/notifications-api-client'
 import type { AlimtalkTemplateItem, AlimtalkTemplateRow } from '@/features/notifications/model/alimtalk-template/types'
-import {
-  ALIMTALK_CATEGORY_MOCK,
-  ALIMTALK_TEMPLATE_ITEM_MOCK,
-} from '@/features/notifications/model/alimtalk-template/mock'
 import { pendingFiltersFromSearchParams } from '@/features/notifications/model/alimtalk-template/filter-url'
-import { filterAlimtalkTree } from '@/features/notifications/lib/tree'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import { ALIMTALK_ROOT_CATEGORY_ID } from '@/features/notifications/model/alimtalk-template/types'
@@ -62,22 +57,11 @@ export async function getAlimtalkTemplateList(
   return mapAlimtalkTemplateListResponse(dto.items)
 }
 
-function mockCategoryTree(searchParams: URLSearchParams): AlimtalkCategoryTreeMapped {
-  const filters = pendingFiltersFromSearchParams(searchParams)
-  const filtered = filterAlimtalkTree(
-    ALIMTALK_CATEGORY_MOCK,
-    ALIMTALK_TEMPLATE_ITEM_MOCK,
-    filters.categoryName,
-    filters.templateName
-  )
-  return { categories: filtered.categories, templates: filtered.templates }
-}
-
 export async function getAlimtalkCategoryTree(
   searchParams: URLSearchParams
 ): Promise<AlimtalkCategoryTreeMapped> {
   if (!shouldUseAlimtalkTemplatesRemoteApi()) {
-    return mockCategoryTree(searchParams)
+    return { categories: [], templates: [] }
   }
 
   const filters = pendingFiltersFromSearchParams(searchParams)
@@ -92,9 +76,7 @@ export async function getAlimtalkCategoryTree(
 export async function getAlimtalkTemplateDetail(
   templateId: string
 ): Promise<AlimtalkTemplateItem | null> {
-  if (!shouldUseAlimtalkTemplatesRemoteApi()) {
-    return ALIMTALK_TEMPLATE_ITEM_MOCK.find(item => item.id === templateId) ?? null
-  }
+  if (!shouldUseAlimtalkTemplatesRemoteApi()) return null
   const numericId = Number(templateId)
   if (!Number.isFinite(numericId)) return null
   const dto = await fetchNotificationTemplateRemote(numericId)
@@ -105,13 +87,7 @@ export async function getAlimtalkTemplatePreview(
   templateId: string,
   fallback?: AlimtalkTemplateItem | null
 ): Promise<AlimtalkTemplateItem | null> {
-  if (!shouldUseAlimtalkTemplatesRemoteApi()) {
-    return (
-      fallback ??
-      ALIMTALK_TEMPLATE_ITEM_MOCK.find(item => item.id === templateId) ??
-      null
-    )
-  }
+  if (!shouldUseAlimtalkTemplatesRemoteApi()) return fallback ?? null
   const numericId = Number(templateId)
   if (!Number.isFinite(numericId)) return fallback ?? null
   const dto = await fetchNotificationTemplatePreviewRemote(numericId)
@@ -214,20 +190,16 @@ export async function deleteAlimtalkTemplate(
  * PENDING은 목록/상세 approvalStatus로만 확인.
  */
 export async function getAlimtalkSendTemplatePicker(): Promise<AlimtalkTemplateItem[]> {
-  if (!shouldUseAlimtalkTemplatesRemoteApi()) {
-    return ALIMTALK_TEMPLATE_ITEM_MOCK.filter(
-      item => (item.approvalStatus ?? 'APPROVED') === 'APPROVED'
-    ).map(item => ({
-      ...item,
-      approvalStatus: item.approvalStatus ?? 'APPROVED',
-    }))
-  }
+  if (!shouldUseAlimtalkTemplatesRemoteApi()) return []
 
   const dto = await fetchNotificationTemplatesRemote({
     channelType: ALIMTALK_API_CHANNEL_TYPE,
     approvalStatus: 'APPROVED',
   })
   const fromList = (dto.items ?? [])
+    .filter(
+      item => (item.channelType ?? ALIMTALK_API_CHANNEL_TYPE).toUpperCase() === ALIMTALK_API_CHANNEL_TYPE
+    )
     .map(item => mapNotificationTemplateToItem(item))
     .filter((item): item is AlimtalkTemplateItem => item != null)
     .filter(item => item.approvalStatus === 'APPROVED')

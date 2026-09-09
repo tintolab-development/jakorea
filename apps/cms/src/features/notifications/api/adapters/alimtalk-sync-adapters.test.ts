@@ -36,13 +36,14 @@ describe('notificationTemplateSyncSuccessMessage', () => {
     )
   })
 
-  it('SMS + LOCAL_APPROVAL_MARK: 성공 toast (JA_NOTIFICATION_MODE 경고 금지)', () => {
+  it('SMS + LOCAL_APPROVAL_MARK: 로컬 갱신 toast (JA_NOTIFICATION_MODE 경고 금지)', () => {
     const message = smsSyncSuccessMessage(
       outcome({ isLocalApprovalMark: true, mode: 'LOCAL_APPROVAL_MARK', upsertedCount: 3 })
     )
-    expect(message).toBe('SMS 템플릿 3건이 반영되었습니다.')
+    expect(message).toBe('SMS 로컬 갱신 3건')
     expect(message).not.toContain('JA_NOTIFICATION_MODE')
     expect(message).not.toContain('문자 카테고리')
+    expect(message).not.toContain('BE가 NHN 모드가 아닙니다')
   })
 
   it('ALIMTALK|EMAIL + LOCAL_APPROVAL_MARK: NHN 모드 안내만', () => {

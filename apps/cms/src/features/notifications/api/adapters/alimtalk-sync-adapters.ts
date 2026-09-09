@@ -54,7 +54,7 @@ function templateReflectedMessage(channel: NotificationSyncChannelType, count: n
 /**
  * 알림 템플릿 sync toast — BE mode/channel SSOT.
  * - NHN_LIVE_PULL: 「{채널} 템플릿 N건이 반영되었습니다.」
- * - SMS + LOCAL_APPROVAL_MARK: 성공 toast (NHN 모드 경고 금지)
+ * - SMS + LOCAL_APPROVAL_MARK: 「SMS 로컬 갱신 N건」 (NHN 모드 경고 금지)
  * - ALIMTALK|EMAIL + LOCAL_APPROVAL_MARK: JA_NOTIFICATION_MODE 안내만
  */
 export function notificationTemplateSyncSuccessMessage(
@@ -67,7 +67,8 @@ export function notificationTemplateSyncSuccessMessage(
 
   if (outcome.isLocalApprovalMark) {
     if (channel === 'SMS') {
-      return templateReflectedMessage('SMS', outcome.upsertedCount)
+      // NHN 기대인데 LOCAL이면 폴백/설정 이슈. JA_NOTIFICATION_MODE 경고 금지.
+      return `SMS 로컬 갱신 ${outcome.upsertedCount.toLocaleString()}건`
     }
     return NHN_MODE_WARN
   }

@@ -140,6 +140,9 @@ export function useMailTemplateTreeMutations() {
     mutationFn: syncMailCatalog,
     onSuccess: async () => {
       await invalidateMailTemplateCaches(queryClient)
+      await queryClient.invalidateQueries({
+        queryKey: notificationsQueryKeys.mailSend.senderProfiles(),
+      })
     },
   })
 

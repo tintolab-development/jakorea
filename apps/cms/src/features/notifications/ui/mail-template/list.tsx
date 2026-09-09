@@ -26,10 +26,6 @@ import {
   openMailEditFormSearchParams,
 } from '@/features/notifications/model/mail-template/form-url'
 import {
-  MAIL_CATEGORY_MOCK,
-  MAIL_TEMPLATE_ITEM_MOCK,
-} from '@/features/notifications/model/mail-template/mock'
-import {
   canMoveCategoryTo,
   categoryHasChildren,
   categoryNameById,
@@ -123,14 +119,10 @@ export function MailTemplateList() {
   const treeQuery = useMailCategoryTreeQuery(searchParams, remote)
   const mutations = useMailTemplateTreeMutations()
 
-  const [localCategories, setLocalCategories] = useState<MailCategory[]>(MAIL_CATEGORY_MOCK)
-  const [localTemplates, setLocalTemplates] = useState<MailTemplateItem[]>(MAIL_TEMPLATE_ITEM_MOCK)
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(() =>
-    defaultExpandedIds(remote ? [] : MAIL_CATEGORY_MOCK)
-  )
-  const [selection, setSelection] = useState<MailTreeSelection>(
-    remote ? null : { kind: 'template', id: 'mail-tpl-password' }
-  )
+  const [localCategories, setLocalCategories] = useState<MailCategory[]>([])
+  const [localTemplates, setLocalTemplates] = useState<MailTemplateItem[]>([])
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => defaultExpandedIds([]))
+  const [selection, setSelection] = useState<MailTreeSelection>(null)
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialog>(null)
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null)
   const [categoryModal, setCategoryModal] = useState<{
@@ -139,6 +131,8 @@ export function MailTemplateList() {
   } | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
   const didInitExpandRef = useRef(!remote)
+  const syncInFlightRef = useRef(false)
+  const syncCatalogMutateAsync = mutations.syncCatalog.mutateAsync
 
   const categories = remote ? (treeQuery.data?.categories ?? []) : localCategories
   const templates = remote ? (treeQuery.data?.templates ?? []) : localTemplates
@@ -168,10 +162,12 @@ export function MailTemplateList() {
   }, [setSearchParams])
 
   const runMailSync = useCallback(async () => {
-    if (!remote || mutations.syncCatalog.isPending) return
+    // isPending만으로는 리렌더 전 동시 클릭을 막지 못함 → sync 과호출 방지
+    if (!remote || syncInFlightRef.current) return
+    syncInFlightRef.current = true
     try {
-      const result = await mutations.syncCatalog.mutateAsync()
-      await treeQuery.refetch()
+      // tree는 mutation onSuccess invalidate로만 갱신 (refetch 중복 금지)
+      const result = await syncCatalogMutateAsync()
       showAlert({
         title: '안내',
         content: mailSyncSuccessMessage(result.templates),
@@ -184,8 +180,10 @@ export function MailTemplateList() {
           '메일 템플릿 연동에 실패했습니다. 다시 시도해 주세요.'
         ),
       })
+    } finally {
+      syncInFlightRef.current = false
     }
-  }, [mutations.syncCatalog, remote, showAlert, treeQuery])
+  }, [remote, showAlert, syncCatalogMutateAsync])
 
   const offerSyncOnError = useCallback(
     (title: string, error: unknown, fallback: string) => {

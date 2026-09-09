@@ -25,7 +25,6 @@ import {
   openSmsEditFormSearchParams,
   smsFormStateFromSearchParams,
 } from '@/features/notifications/model/sms-template/form-url'
-import { SMS_CATEGORY_MOCK, SMS_TEMPLATE_ITEM_MOCK } from '@/features/notifications/model/sms-template/mock'
 import {
   canMoveCategoryTo,
   categoryHasChildren,
@@ -143,14 +142,10 @@ export function SmsTemplateList() {
   const treeQuery = useSmsCategoryTreeQuery(searchParams, remote)
   const mutations = useSmsTemplateTreeMutations()
 
-  const [localCategories, setLocalCategories] = useState<SmsCategory[]>(SMS_CATEGORY_MOCK)
-  const [localTemplates, setLocalTemplates] = useState<SmsTemplateItem[]>(SMS_TEMPLATE_ITEM_MOCK)
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(() =>
-    defaultExpandedIds(remote ? [] : SMS_CATEGORY_MOCK)
-  )
-  const [selection, setSelection] = useState<SmsTreeSelection>(
-    remote ? null : { kind: 'template', id: 'sms-tpl-password' }
-  )
+  const [localCategories, setLocalCategories] = useState<SmsCategory[]>([])
+  const [localTemplates, setLocalTemplates] = useState<SmsTemplateItem[]>([])
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => defaultExpandedIds([]))
+  const [selection, setSelection] = useState<SmsTreeSelection>(null)
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialog>(null)
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null)
   const [categoryModal, setCategoryModal] = useState<{
@@ -159,6 +154,8 @@ export function SmsTemplateList() {
   } | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
   const didInitExpandRef = useRef(!remote)
+  const syncInFlightRef = useRef(false)
+  const syncCatalogMutateAsync = mutations.syncCatalog.mutateAsync
 
   const categories = remote ? (treeQuery.data?.categories ?? []) : localCategories
   const templates = remote ? (treeQuery.data?.templates ?? []) : localTemplates
@@ -187,13 +184,15 @@ export function SmsTemplateList() {
   }, [setSearchParams])
 
   const runSmsSync = useCallback(async () => {
-    if (!remote || mutations.syncCatalog.isPending) return
+    // isPending만으로는 리렌더 전 동시 클릭을 막지 못함 → sync 과호출 방지
+    if (!remote || syncInFlightRef.current) return
+    syncInFlightRef.current = true
     try {
-      const result = await mutations.syncCatalog.mutateAsync()
-      await treeQuery.refetch()
+      // tree는 mutation onSuccess invalidate로만 갱신 (refetch 중복 금지)
+      const result = await syncCatalogMutateAsync()
       showAlert({
         title: '안내',
-        content: smsSyncSuccessMessage(result),
+        content: smsSyncSuccessMessage(result.templates),
       })
     } catch (error) {
       showAlert({
@@ -203,8 +202,10 @@ export function SmsTemplateList() {
           '문자 템플릿 연동에 실패했습니다. 다시 시도해 주세요.'
         ),
       })
+    } finally {
+      syncInFlightRef.current = false
     }
-  }, [mutations.syncCatalog, remote, showAlert, treeQuery])
+  }, [remote, showAlert, syncCatalogMutateAsync])
 
   const offerSyncOnError = useCallback(
     (title: string, error: unknown, fallback: string) => {

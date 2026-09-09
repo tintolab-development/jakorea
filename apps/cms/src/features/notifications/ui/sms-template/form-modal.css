@@ -289,81 +289,178 @@
 
 .sms-template-form-modal__compose-row {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 24px;
   width: 100%;
   min-width: 0;
 }
 
 .sms-template-form-modal__compose {
+  display: flex;
   flex: 1 1 auto;
+  flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  align-self: stretch;
+}
+
+/* 휴대폰(785px) 높이에 맞춰 본문 격자 stretch — 라디오별 노출 행만큼 내용칸이 남은 높이 fill */
+.sms-template-form-modal__compose .detail-info-form__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.sms-template-form-modal__compose .detail-info-form__row {
+  flex: 0 0 auto;
+}
+
+.sms-template-form-modal__compose
+  .detail-info-form__row:has(.sms-template-form-modal__body-field) {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sms-template-form-modal__compose
+  .detail-info-form__row:has(.sms-template-form-modal__body-field)
+  > .detail-info-form__field {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  align-self: stretch;
 }
 
 .sms-template-form-modal__phone {
   flex: 0 0 auto;
   margin-top: 0;
+  align-self: flex-start;
 }
 
 .sms-template-form-modal__subject-field {
-  position: relative;
   display: flex;
   width: 100%;
+  min-width: 0;
   align-items: center;
+  gap: 8px;
 }
 
-.sms-template-form-modal__subject-count {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: rgba(61, 61, 61, 0.6);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 150%;
-  pointer-events: none;
+/* field-content > * { display:block } 보다 우선 — 인풋·카운터 한 줄 정렬 */
+.sms-template-form-modal
+  .detail-info-form__field-content--edit
+  > .sms-template-form-modal__subject-field {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
 
 .sms-template-form-modal__subject-field .cms-input,
-.sms-template-form-modal__subject-field .ant-input {
-  padding-right: 64px;
+.sms-template-form-modal__subject-field .cms-input__field {
+  flex: 1 1 auto;
+  display: flex;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
-/* 다줄 내용: 라벨·값 상단 정렬 (세로 중앙 + 아래 빈 공간 방지) */
+.sms-template-form-modal__subject-count {
+  display: -webkit-box;
+  flex: 0 0 46px;
+  width: 46px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  color: var(--main-BK, #3d3d3d);
+  text-align: right;
+  text-overflow: ellipsis;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* 다줄 내용: 라벨·값 영역이 행 높이를 채움 */
+.sms-template-form-modal__compose
+  .detail-info-form__field:has(.sms-template-form-modal__body-field)
+  .detail-info-form__field-label {
+  align-items: flex-start;
+  padding-top: 16px;
+}
+
 .sms-template-form-modal__compose
   .detail-info-form__field:has(.sms-template-form-modal__body-field)
   .detail-info-form__field-content {
-  align-items: flex-start;
+  align-items: stretch;
+  align-self: stretch;
+  height: 100%;
+  min-height: 0;
 }
 
 .sms-template-form-modal__body-field {
   display: flex !important;
+  flex: 1 1 auto;
   flex-direction: column;
   align-items: stretch;
+  align-self: stretch;
   gap: 12px;
   width: 100%;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+  margin-block: 0 !important;
 }
 
+.sms-template-form-modal__body-field .sms-variable-text-field--multiline {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.sms-template-form-modal__body-field .sms-variable-text-field__control,
 .sms-template-form-modal__body-field .cms-textarea,
-.sms-template-form-modal__body-field .cms-textarea__control {
+.sms-template-form-modal__body-field .cms-textarea__field,
+.sms-template-form-modal__body-field .cms-textarea__control,
+.sms-template-form-modal__body-field .cms-textarea__inner {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   width: 100%;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.sms-template-form-modal__body-field .cms-textarea__inner textarea.ant-input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 120px !important;
+  height: 100% !important;
+  resize: none;
 }
 
 .sms-template-form-modal__byte-row {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 8px;
   flex-shrink: 0;
+  width: 100%;
 }
 
+.sms-template-form-modal__byte-label,
 .sms-template-form-modal__byte-count {
-  flex: 0 0 auto;
-  color: rgba(61, 61, 61, 0.72);
-  font-size: 13px;
-  font-weight: 700;
+  color: rgba(61, 61, 61, 0.6);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
   line-height: 150%;
 }
 
@@ -381,8 +478,21 @@
 
 .sms-template-form-modal .detail-info-form__field-content--edit > .sms-template-form-modal__body-field {
   display: flex !important;
+  flex: 1 1 auto;
   flex-direction: column;
   align-items: stretch;
+  height: 100%;
+  min-height: 0;
+}
+
+/* 시안: 발송 유형 라디오 — 필드 패딩 16px + 원–텍스트/옵션 gap 16px(app-radio), 세로 가운데 */
+.sms-template-form-modal .detail-info-form__field-content--edit > .app-radio-group {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  width: auto;
+  min-width: 0;
 }
 
 .sms-template-form-modal .file-select-field {
