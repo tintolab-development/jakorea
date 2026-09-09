@@ -34,6 +34,21 @@ export type NotificationTemplateVariablesQuery = {
   memberType?: string
 }
 
+/** programId 미선택 시 쿼리에서 완전히 제외 (undefined/null 전달 금지) */
+export function toTemplateVariablesRequestParams(
+  input: NotificationTemplateVariablesQuery = {}
+): NotificationTemplateVariablesQuery {
+  const params: NotificationTemplateVariablesQuery = {}
+  if (input.category?.trim()) params.category = input.category.trim()
+  if (input.keyword?.trim()) params.keyword = input.keyword.trim()
+  if (input.programId != null && Number.isFinite(input.programId)) {
+    params.programId = input.programId
+  }
+  if (input.participantType?.trim()) params.participantType = input.participantType.trim()
+  if (input.memberType?.trim()) params.memberType = input.memberType.trim()
+  return params
+}
+
 function mapParticipationType(
   candidate: RecipientCandidateResponse
 ): AlimtalkSendParticipationType {

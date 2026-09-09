@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { CmsSelect } from '@/shared/ui'
 import type { SmsTemplateItem } from '@/features/notifications/model/sms-template/types'
-import { SMS_TEMPLATE_ITEM_MOCK } from '@/features/notifications/model/sms-template/mock'
 import { PreviewModal } from '@/features/notifications/ui/sms-template/preview-modal'
 import { TemplateSelectModal } from './template-select-modal'
 import '@/features/notifications/ui/mail-send/template-select-modal.css'
@@ -19,7 +18,7 @@ type TemplateSelectFieldProps = {
 
 export function TemplateSelectField({
   value,
-  templates = SMS_TEMPLATE_ITEM_MOCK,
+  templates = [],
   disabled,
   onSelect,
 }: TemplateSelectFieldProps) {

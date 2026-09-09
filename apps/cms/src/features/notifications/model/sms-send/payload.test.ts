@@ -144,6 +144,14 @@ describe('validateSmsSendDraft', () => {
     expect(validateSmsSendDraft(draft({ sendTiming: 'scheduled', scheduledAt: null }))).toBe(
       '예약 일시를 선택하세요.'
     )
+    expect(
+      validateSmsSendDraft(
+        draft({
+          sendTiming: 'scheduled',
+          scheduledAt: '2020-01-01T00:00:00.000Z',
+        })
+      )
+    ).toBe('예약 시간은 현재 이후여야 합니다.')
     expect(validateSmsSendDraft(draft({ recipients: [] }))).toBe('수신자를 설정하세요.')
     expect(validateSmsSendDraft(draft({ subject: '' }))).toBe('제목을 작성하세요.')
     expect(validateSmsSendDraft(draft({ bodyText: '' }))).toBe('내용을 작성하세요.')

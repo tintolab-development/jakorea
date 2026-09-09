@@ -2,6 +2,7 @@ import type { SmsMessageType } from '@/features/notifications/api/adapters/sms-c
 
 export const SMS_SEND_ALL_PROGRAM_ID = 'all'
 export const SMS_SEND_PICKER_PAGE_SIZE = 50
+export const SMS_SEND_DEFAULT_PROGRAM_ID = ''
 
 export type SmsSendTiming = 'immediate' | 'scheduled'
 export type SmsSendRecipientSource = 'program' | 'manual'

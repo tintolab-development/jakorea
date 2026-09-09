@@ -69,6 +69,14 @@ describe('validateMailSendDraft', () => {
     expect(validateMailSendDraft(draft({ sendTiming: 'scheduled', scheduledAt: null }))).toBe(
       '예약 일시를 선택하세요.'
     )
+    expect(
+      validateMailSendDraft(
+        draft({
+          sendTiming: 'scheduled',
+          scheduledAt: '2020-01-01T00:00:00.000Z',
+        })
+      )
+    ).toBe('예약 시간은 현재 이후여야 합니다.')
   })
 
   it('blocks send when all programs are selected', () => {

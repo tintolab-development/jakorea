@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -15,7 +16,7 @@ type RecipientTableProps = {
   onSelectedIdsChange: (ids: string[]) => void
 }
 
-export function RecipientTable({
+export const RecipientTable = memo(function RecipientTable({
   recipients,
   selectedIds,
   onSelectedIdsChange,
@@ -72,4 +73,4 @@ export function RecipientTable({
       }}
     />
   )
-}
+})

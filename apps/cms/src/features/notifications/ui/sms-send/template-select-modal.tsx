@@ -3,9 +3,11 @@ import { SearchOutlined } from '@ant-design/icons'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput } from '@/shared/ui'
-import { SMS_SEND_PICKER_PAGE_SIZE } from '@/features/notifications/model/sms-send/types'
 import type { SmsTemplateItem } from '@/features/notifications/model/sms-template/types'
 import '@/features/notifications/ui/mail-send/template-select-modal.css'
+
+/** 메일·알림톡 템플릿 선택과 동일. 수신자 피커(SMS_SEND_PICKER_PAGE_SIZE)와 분리 */
+const TEMPLATE_PICKER_PAGE_SIZE = 5
 
 type TemplateSelectModalProps = {
   open: boolean
@@ -42,11 +44,11 @@ export function TemplateSelectModal({
     [appliedKeyword, templates]
   )
 
-  const totalPages = Math.ceil(filtered.length / SMS_SEND_PICKER_PAGE_SIZE)
+  const totalPages = Math.ceil(filtered.length / TEMPLATE_PICKER_PAGE_SIZE)
   const currentPage = totalPages > 0 ? Math.min(page, totalPages) : 1
   const paged = filtered.slice(
-    (currentPage - 1) * SMS_SEND_PICKER_PAGE_SIZE,
-    currentPage * SMS_SEND_PICKER_PAGE_SIZE
+    (currentPage - 1) * TEMPLATE_PICKER_PAGE_SIZE,
+    currentPage * TEMPLATE_PICKER_PAGE_SIZE
   )
   const hasResults = filtered.length > 0
 

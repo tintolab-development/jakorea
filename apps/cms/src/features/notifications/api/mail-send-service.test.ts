@@ -1,16 +1,31 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { buildMailSendRecipients, submitMailSend } from './mail-send-service'
-import {
-  getMailSendHistoryMockRows,
-  resetMailSendHistoryMockRows,
-} from '@/features/notifications/model/mail-send-history/session-store'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MAIL_SEND_PURPOSE, type MailSendDraft } from '@/features/notifications/model/mail-send/types'
+
+vi.mock('@/entities/user/api/auth-service', () => ({
+  hasRemoteAdminJwt: vi.fn(() => true),
+}))
+
+vi.mock('@/shared/config/real-api-modules', () => ({
+  isRealApiModuleEnabled: vi.fn(() => true),
+}))
+
+vi.mock('@/features/notifications/api/notifications-api-client', () => ({
+  createSendBatchRemote: vi.fn(async () => ({})),
+  fetchRecipientCandidatesRemote: vi.fn(),
+  fetchSenderProfilesRemote: vi.fn(),
+  fetchTemplateVariablesRemote: vi.fn(),
+}))
+
+import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import { createSendBatchRemote } from '@/features/notifications/api/notifications-api-client'
+import { buildMailSendRecipients, submitMailSend } from './mail-send-service'
 
 function draft(overrides: Partial<MailSendDraft> = {}): MailSendDraft {
   return {
-    programId: 'prog-1',
+    programId: '12',
     purpose: MAIL_SEND_PURPOSE,
-    useTemplate: false,
+    useTemplate: true,
     senderName: '홍길동',
     senderEmail: 'gildong@jakorea.org',
     sendTiming: 'immediate',
@@ -18,6 +33,7 @@ function draft(overrides: Partial<MailSendDraft> = {}): MailSendDraft {
     subject: '테스트 메일',
     bodyHtml: '<p>본문</p>',
     attachmentFileNames: ['a.pdf'],
+    templateId: '33',
     recipients: [
       {
         id: 'manual-a@jakorea.org',
@@ -33,18 +49,44 @@ function draft(overrides: Partial<MailSendDraft> = {}): MailSendDraft {
 
 describe('submitMailSend', () => {
   beforeEach(() => {
-    resetMailSendHistoryMockRows()
+    vi.mocked(hasRemoteAdminJwt).mockReturnValue(true)
+    vi.mocked(isRealApiModuleEnabled).mockReturnValue(true)
+    vi.mocked(createSendBatchRemote).mockClear()
   })
 
-  it('records mock history when remote template id is absent', async () => {
-    const before = getMailSendHistoryMockRows().length
-    const result = await submitMailSend({
+  it('sends a remote batch and does not fall back to mock history', async () => {
+    await submitMailSend({
       draft: draft(),
       idempotencyKey: 'idem-1',
+      senderProfileId: 7,
     })
-    expect(result.mode).toBe('mock')
-    expect(getMailSendHistoryMockRows().length).toBe(before + 1)
-    expect(getMailSendHistoryMockRows()[0]?.subject).toBe('테스트 메일')
+    expect(createSendBatchRemote).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]).toMatchObject({
+      templateId: 33,
+      programId: 12,
+      senderProfileId: 7,
+    })
+  })
+
+  it('throws when the template is not a server id', async () => {
+    await expect(
+      submitMailSend({
+        draft: draft({ templateId: 'mail-tpl-password' }),
+        idempotencyKey: 'idem-1',
+      })
+    ).rejects.toThrow('메일 발송에는 서버에 등록된 템플릿이 필요합니다.')
+    expect(createSendBatchRemote).not.toHaveBeenCalled()
+  })
+
+  it('throws when remote API is unavailable instead of recording mock history', async () => {
+    vi.mocked(hasRemoteAdminJwt).mockReturnValue(false)
+    await expect(
+      submitMailSend({
+        draft: draft(),
+        idempotencyKey: 'idem-1',
+      })
+    ).rejects.toThrow('메일 발송은 관리자 로그인 후 이용할 수 있습니다.')
+    expect(createSendBatchRemote).not.toHaveBeenCalled()
   })
 })
 

@@ -3,7 +3,6 @@ import { SearchOutlined } from '@ant-design/icons'
 import { CmsSelect } from '@/shared/ui'
 import { PreviewModal } from '@/features/notifications/ui/mail-template/preview-modal'
 import type { MailTemplateItem } from '@/features/notifications/model/mail-template/types'
-import { MAIL_TEMPLATE_ITEM_MOCK } from '@/features/notifications/model/mail-template/mock'
 import { TemplateSelectModal } from './template-select-modal'
 import './template-select-modal.css'
 
@@ -19,7 +18,7 @@ type TemplateSelectFieldProps = {
 
 export function TemplateSelectField({
   value,
-  templates = MAIL_TEMPLATE_ITEM_MOCK,
+  templates = [],
   disabled,
   onSelect,
 }: TemplateSelectFieldProps) {

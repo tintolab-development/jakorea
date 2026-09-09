@@ -5,7 +5,7 @@ import {
   isMailSendEmail,
   mergeMailSendRecipients,
 } from './recipients'
-import { listMailSendProgramPickerRows } from './programs'
+import { listMailSendProgramPickerRows, uniqueProgramYears } from './programs'
 import { type MailSendProgram, type MailSendRecipient } from './types'
 
 const programs: MailSendProgram[] = [
@@ -29,6 +29,18 @@ const recipients: MailSendRecipient[] = [
     source: 'program',
   },
 ]
+
+describe('uniqueProgramYears', () => {
+  it('omits missing years', () => {
+    expect(
+      uniqueProgramYears([
+        { id: '1', name: 'A', year: 2026 },
+        { id: '2', name: 'B', year: 0 },
+        { id: '3', name: 'C', year: 2025 },
+      ])
+    ).toEqual([2026, 2025])
+  })
+})
 
 describe('listMailSendProgramPickerRows', () => {
   it('returns filtered programs without an all-program row', () => {

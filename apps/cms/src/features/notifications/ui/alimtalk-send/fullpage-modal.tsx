@@ -6,13 +6,10 @@ import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import {
   AlimtalkPhonePreview,
   CmsButton,
-  CmsDatePicker,
-  CmsRadio,
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
 } from '@/shared/ui'
-import { ALIMTALK_CATEGORY_MOCK } from '@/features/notifications/model/alimtalk-template/mock'
 import {
   ALIMTALK_CHANNEL_ADD_GUIDE,
   ALIMTALK_EMPHASIS_TYPE_LABEL,
@@ -31,12 +28,19 @@ import {
   toAlimtalkSendMemberTypeApi,
   toAlimtalkSendParticipantTypeApi,
 } from '@/features/notifications/model/alimtalk-send/recipients'
-import { MAIL_SEND_PROGRAM_MOCK } from '@/features/notifications/model/mail-send/mock'
+import { useNotificationSendProgramsQuery } from '@/features/notifications/hooks/use-send-programs-query'
 import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
 import { categoryPathNames } from '@/features/notifications/lib/tree'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { isAlimtalkTemplateApproved } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
-import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
+import {
+  getNotificationSendBatchErrorMessage,
+  getNotificationsApiErrorMessage,
+} from '@/features/notifications/api/get-notifications-api-error'
+import {
+  resolveScheduledAtForCreateRequest,
+  validateNotificationScheduledAt,
+} from '@/features/notifications/model/send-scheduled-at'
 import {
   createAlimtalkSendBatch,
   getAlimtalkRecipientCandidates,
@@ -56,6 +60,7 @@ import {
   collectTemplatePlaceholderKeys,
 } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import { ProgramSelectField } from '@/features/notifications/ui/mail-send/program-select-field'
+import { SendScheduleField } from '@/features/notifications/ui/shared/send-schedule-field'
 import { ContentPanel } from './content-panel'
 import { RecipientManualModal } from './recipient-manual-modal'
 import { RecipientSelectModal } from './recipient-select-modal'
@@ -131,11 +136,23 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const idempotencyKeyRef = useRef(createIdempotencyKey())
 
   const senderProfilesQuery = useAlimtalkSenderProfilesQuery(open)
-  const templatesQuery = useAlimtalkSendTemplatePickerQuery(open)
-  const treeQuery = useAlimtalkCategoryTreeQuery(new URLSearchParams(), open)
-  const categories = remote
-    ? (treeQuery.data?.categories ?? [])
-    : ALIMTALK_CATEGORY_MOCK
+  const programsQuery = useNotificationSendProgramsQuery(open && remote)
+  const programs = programsQuery.data ?? []
+
+  useEffect(() => {
+    if (!open || !remote || !programsQuery.isError) return
+    showAlert({
+      title: '안내',
+      content: getNotificationsApiErrorMessage(
+        programsQuery.error,
+        '프로그램 목록을 불러오지 못했습니다. 다시 불러오세요.'
+      ),
+    })
+  }, [open, programsQuery.error, programsQuery.isError, remote, showAlert])
+
+  const templatesQuery = useAlimtalkSendTemplatePickerQuery(open && remote)
+  const treeQuery = useAlimtalkCategoryTreeQuery(new URLSearchParams(), open && remote)
+  const categories = treeQuery.data?.categories ?? []
 
   const senderOptions = useMemo(
     () =>
@@ -358,9 +375,15 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       })
       return
     }
-    if (sendTiming === 'scheduled' && !scheduledAt) {
-      showAlert({ title: '필수 입력 안내', content: '예약 발송 일시를 선택하세요.' })
-      return
+    if (sendTiming === 'scheduled') {
+      const scheduleError = validateNotificationScheduledAt({
+        sendTiming,
+        scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
+      })
+      if (scheduleError) {
+        showAlert({ title: '필수 입력 안내', content: scheduleError })
+        return
+      }
     }
     if (recipients.length === 0) {
       showAlert({ title: '필수 입력 안내', content: '수신자를 설정하세요.' })
@@ -380,16 +403,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     if (!selectedTemplate || !selectedSender) return
     setSendConfirmOpen(false)
 
-    if (!remote) {
-      showAlert({
-        title: '알림톡 발송 완료',
-        content: '알림톡 발송이 완료되었습니다.',
-        confirmLabel: '닫기',
-        onConfirm: onClose,
-      })
-      return
-    }
-
     if (!programNumericId) {
       showAlert({
         title: '필수 입력 안내',
@@ -404,8 +417,10 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         batchName: selectedTemplate.templateName || selectedTemplate.name || '알림톡 발송',
         templateId: selectedTemplate.id,
         programId,
-        scheduledAt:
-          sendTiming === 'scheduled' && scheduledAt ? scheduledAt.toISOString() : undefined,
+        scheduledAt: resolveScheduledAtForCreateRequest({
+          sendTiming,
+          scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
+        }),
         senderKey: selectedSender.senderKey,
         senderProfileId: selectedSender.profileId,
         recipients,
@@ -421,7 +436,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     } catch (error) {
       showAlert({
         title: '안내',
-        content: getNotificationsApiErrorMessage(error, '알림톡 발송에 실패했습니다.'),
+        content: getNotificationSendBatchErrorMessage(error, '알림톡 발송에 실패했습니다.'),
       })
     } finally {
       setSending(false)
@@ -492,7 +507,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                     edit={
                       <ProgramSelectField
                         value={programId}
-                        programs={MAIL_SEND_PROGRAM_MOCK}
+                        programs={programs}
                         onSelect={program => setProgramId(program.id)}
                       />
                     }
@@ -533,25 +548,13 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                     required
                     view={sendTiming === 'immediate' ? '즉시 발송' : '예약 발송'}
                     edit={
-                      <div className="alimtalk-send-fullpage__timing">
-                        <CmsRadio.Group
-                          value={sendTiming}
-                          onChange={event => {
-                            const next = event.target.value
-                            if (next === 'immediate' || next === 'scheduled') setSendTiming(next)
-                          }}
-                        >
-                          <CmsRadio value="immediate">즉시 발송</CmsRadio>
-                          <CmsRadio value="scheduled">예약 발송</CmsRadio>
-                        </CmsRadio.Group>
-                        <CmsDatePicker
-                          showTime
-                          disabled={sendTiming !== 'scheduled'}
-                          value={scheduledAt}
-                          onChange={value => setScheduledAt(value)}
-                          style={{ width: '100%' }}
-                        />
-                      </div>
+                      <SendScheduleField
+                        className="alimtalk-send-fullpage__timing"
+                        sendTiming={sendTiming}
+                        scheduledAt={scheduledAt}
+                        onSendTimingChange={setSendTiming}
+                        onScheduledAtChange={setScheduledAt}
+                      />
                     }
                   />
                 </DetailInfoForm.Row>

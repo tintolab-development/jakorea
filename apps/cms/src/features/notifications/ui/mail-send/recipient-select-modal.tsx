@@ -4,7 +4,6 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, CmsSelect } from '@/shared/ui'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { MAIL_SEND_RECIPIENT_MOCK } from '@/features/notifications/model/mail-send/mock'
 import {
   MAIL_SEND_PARTICIPATION_TYPE_OPTIONS,
   filterMailSendRecipients,
@@ -35,7 +34,7 @@ type RecipientSelectModalProps = {
 
 export function RecipientSelectModal({
   open,
-  candidates = MAIL_SEND_RECIPIENT_MOCK,
+  candidates = [],
   selectedIds,
   onClose,
   onConfirm,

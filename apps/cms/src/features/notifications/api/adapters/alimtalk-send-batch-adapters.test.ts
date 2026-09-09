@@ -7,6 +7,7 @@ import {
   formatAlimtalkMissingVariablesMessage,
   mapTemplateVariablesCatalog,
   pickNonEmptySendVariables,
+  toTemplateVariablesRequestParams,
 } from './alimtalk-send-batch-adapters'
 
 describe('alimtalk-send-batch-adapters placeholders', () => {
@@ -164,5 +165,23 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
         programGroups: ['GENERAL'],
       }),
     ])
+  })
+})
+
+describe('toTemplateVariablesRequestParams', () => {
+  it('programId 미선택 시 쿼리에서 제외한다', () => {
+    expect(
+      toTemplateVariablesRequestParams({
+        programId: undefined,
+        participantType: 'PARTICIPANT',
+      })
+    ).toEqual({ participantType: 'PARTICIPANT' })
+    expect(toTemplateVariablesRequestParams({})).toEqual({})
+  })
+
+  it('유효한 programId만 포함한다', () => {
+    expect(toTemplateVariablesRequestParams({ programId: 162371 })).toEqual({
+      programId: 162371,
+    })
   })
 })

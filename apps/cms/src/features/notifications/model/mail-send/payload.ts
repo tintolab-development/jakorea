@@ -2,6 +2,7 @@ import { mailSendUseTemplate } from './flags'
 import { MAIL_SEND_PURPOSE, type MailSendDraft, type MailSendPayload } from './types'
 import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
 import { validateMailSenderEmail } from '@/features/notifications/model/mail-template/sender-email'
+import { validateNotificationScheduledAt } from '@/features/notifications/model/send-scheduled-at'
 
 const MAIL_VARIABLE_TOKEN_RE = /#\{[^{}]+\}/
 const MAIL_VARIABLE_ATTR_RE = /data-mail-variable\s*=/
@@ -28,7 +29,11 @@ export function validateMailSendDraft(draft: MailSendDraft): string | null {
   if (!draft.templateId?.trim()) return '템플릿을 선택하세요.'
   const senderError = validateMailSenderEmail(draft.senderEmail)
   if (senderError) return senderError
-  if (draft.sendTiming === 'scheduled' && !draft.scheduledAt) return '예약 일시를 선택하세요.'
+  const scheduleError = validateNotificationScheduledAt({
+    sendTiming: draft.sendTiming,
+    scheduledAt: draft.scheduledAt,
+  })
+  if (scheduleError) return scheduleError
   if (draft.recipients.length === 0) return '수신자를 설정하세요.'
   const missingDirectContact = draft.recipients.some(
     recipient =>

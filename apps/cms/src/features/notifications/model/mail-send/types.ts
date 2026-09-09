@@ -1,6 +1,11 @@
 export const MAIL_SEND_ALL_PROGRAM_ID = 'all'
 export const MAIL_SEND_PURPOSE = 'general'
 export const MAIL_SEND_PICKER_PAGE_SIZE = 5
+export const MAIL_SEND_DEFAULT_PROGRAM_ID = ''
+export const MAIL_SEND_DEFAULT_SENDER = {
+  name: '',
+  email: '',
+} as const
 
 export type MailSendPurpose = typeof MAIL_SEND_PURPOSE
 export type MailSendTiming = 'immediate' | 'scheduled'

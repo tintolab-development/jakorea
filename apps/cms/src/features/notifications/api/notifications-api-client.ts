@@ -1,5 +1,6 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { getJAKoreaCMSBackendAPINotificationsSubset } from '@/shared/api/generated/notifications/notifications-api'
+import customInstance from '@/shared/api/orval-mutator'
 import type {
   CategoryCreateRequest,
   CategoryMoveRequest,
@@ -11,8 +12,6 @@ import type {
   CreateResponse,
   EmailAttachmentBindRequest,
   EmailAttachmentMutationResponse,
-  ListNotificationDeliveriesParams,
-  ListNotificationTemplatesParams,
   ListSenderProfilesParams,
   NotificationDeliveryDetailResponse,
   NotificationDeliveryListResponse,
@@ -39,11 +38,21 @@ const MUTATION_OPTIONS = { skipGlobalErrorAlert: true } as const
 
 const notificationsRemoteApi = getJAKoreaCMSBackendAPINotificationsSubset()
 
+/**
+ * Orval `ListNotificationTemplatesParams`는 `{ params: Record }` 래퍼라
+ * axios에 그대로 넘기면 `?params[channelType]=…` 로 나가 channelType 필터가 무시된다.
+ * → flat query (`?channelType=SMS`)로 호출한다.
+ */
 export async function fetchNotificationTemplatesRemote(
   params: Record<string, string>
 ): Promise<NotificationTemplateListResponse> {
-  const query: ListNotificationTemplatesParams = { params }
-  return unwrapApiBody(await notificationsRemoteApi.listNotificationTemplates(query))
+  return unwrapApiBody(
+    await customInstance<unknown>({
+      url: '/api/admin/notification-templates',
+      method: 'GET',
+      params,
+    })
+  )
 }
 
 export async function fetchNotificationTemplateRemote(
@@ -202,8 +211,14 @@ export async function createSendBatchRemote(
 export async function fetchNotificationDeliveriesRemote(
   params: Record<string, string>
 ): Promise<NotificationDeliveryListResponse> {
-  const query: ListNotificationDeliveriesParams = { params }
-  return unwrapApiBody(await notificationsRemoteApi.listNotificationDeliveries(query))
+  // ListNotificationDeliveriesParams도 `{ params }` 래퍼 — flat query로 호출
+  return unwrapApiBody(
+    await customInstance<unknown>({
+      url: '/api/admin/notification-deliveries',
+      method: 'GET',
+      params,
+    })
+  )
 }
 
 export async function fetchNotificationDeliveryRemote(

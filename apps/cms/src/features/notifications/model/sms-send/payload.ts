@@ -5,6 +5,10 @@ import {
 } from '@/shared/utils/phone-validation'
 import type { SmsSendDraft, SmsSendRecipient } from './types'
 import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
+import {
+  resolveScheduledAtForCreateRequest,
+  validateNotificationScheduledAt,
+} from '@/features/notifications/model/send-scheduled-at'
 
 const SMS_BODY_BYTE_LIMIT = 90
 const LMS_MMS_BODY_BYTE_LIMIT = 2000
@@ -59,7 +63,10 @@ export function buildSmsSendCreateRequest(input: {
     batchName: (draft.subject || draft.bodyText).trim().slice(0, 200) || '문자 발송',
     templateId,
     programId,
-    scheduledAt: draft.sendTiming === 'scheduled' ? draft.scheduledAt ?? undefined : undefined,
+    scheduledAt: resolveScheduledAtForCreateRequest({
+      sendTiming: draft.sendTiming,
+      scheduledAt: draft.scheduledAt,
+    }),
     senderKey: senderKey?.trim() || undefined,
     senderProfileId,
     recipients: buildSmsSendRecipients(draft.recipients),
@@ -83,7 +90,11 @@ export function validateSmsSendDraft(draft: SmsSendDraft): string | null {
   if (!isValidKoreanPhoneNumber(draft.senderPhone)) {
     return '발신 번호 형식이 올바르지 않습니다.'
   }
-  if (draft.sendTiming === 'scheduled' && !draft.scheduledAt) return '예약 일시를 선택하세요.'
+  const scheduleError = validateNotificationScheduledAt({
+    sendTiming: draft.sendTiming,
+    scheduledAt: draft.scheduledAt,
+  })
+  if (scheduleError) return scheduleError
   if (draft.recipients.length === 0) return '수신자를 설정하세요.'
   const missingDirectContact = draft.recipients.some(
     recipient =>
