@@ -1,7 +1,6 @@
 .recruit-detail-info-paragraph__forms {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
 .recruit-detail-info-paragraph__forms .detail-info-form {

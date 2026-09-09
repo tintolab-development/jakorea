@@ -642,37 +642,49 @@ export function ApplicantRecruitParticipantInfoParagraph({
           />
         </DetailInfoForm.Row>
 
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="교육 대상"
-            edit={
-              <CmsSelect
-                mode="multiple"
-                inputSize="medium"
-                width={240}
-                withAllOption={false}
-                placeholder="교육 대상을 선택하세요"
-                options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
-                value={targetLevels}
-                onChange={v => setTargetLevels(Array.isArray(v) ? v.map(String) : [])}
-              />
-            }
-            view="-"
-          />
-          <DetailInfoForm.Field
-            label="교육 대상 상세"
-            edit={
-              <CmsInput
-                inputSize="medium"
-                width="100%"
-                placeholder="상세 교육 대상을 입력하세요"
-                value={targetLevelDetail}
-                onChange={e => setTargetLevelDetail(e.target.value)}
-              />
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="교육 대상"
+              edit={
+                isGeneral ? (
+                  <CmsSelect
+                    inputSize="medium"
+                    width={240}
+                    withAllOption
+                    placeholder="교육 대상을 선택하세요"
+                    options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+                    value={targetLevels[0] ?? ''}
+                    onChange={v => setTargetLevels(v ? [String(v)] : [])}
+                  />
+                ) : (
+                  <CmsSelect
+                    mode="multiple"
+                    inputSize="medium"
+                    width={240}
+                    withAllOption={false}
+                    placeholder="교육 대상을 선택하세요"
+                    options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+                    value={targetLevels}
+                    onChange={v => setTargetLevels(Array.isArray(v) ? v.map(String) : [])}
+                  />
+                )
+              }
+              view="-"
+            />
+            <DetailInfoForm.Field
+              label="교육 대상 상세"
+              edit={
+                <CmsInput
+                  inputSize="medium"
+                  width="100%"
+                  placeholder="상세 교육 대상을 입력하세요"
+                  value={targetLevelDetail}
+                  onChange={e => setTargetLevelDetail(e.target.value)}
+                />
+              }
+              view="-"
+            />
+          </DetailInfoForm.Row>
 
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field

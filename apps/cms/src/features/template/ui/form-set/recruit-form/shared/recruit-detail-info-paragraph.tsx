@@ -193,9 +193,7 @@ export function RecruitDetailInfoParagraph({
             overlayKeyPrefix={overlayKeyPrefix}
           />
         ) : null}
-      </DetailInfoForm>
 
-      <DetailInfoForm title="첨부 파일" hideHeader mode="edit">
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="첨부 파일"
