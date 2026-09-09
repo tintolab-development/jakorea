@@ -15,7 +15,7 @@ type CmsRadioRef = ComponentRef<typeof Radio>
 export type CmsRadioSize = 'large' | 'medium'
 
 export type CmsRadioProps = RadioProps & {
-  /** 기본 large: 원 20px·본문 16px·간격 8px. medium: 18px / 14px / 6px */
+  /** 기본 large: 원 20px·본문 16px·간격 8px. medium: 18px / 15px / 6px */
   size?: CmsRadioSize
 }
 

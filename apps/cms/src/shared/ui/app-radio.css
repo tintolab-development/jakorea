@@ -65,9 +65,9 @@
   transform: translate(-50%, -50%) scale(1) !important;
 }
 
-/* ----- medium: 원 18px, 본문 14px, 원–텍스트 6px ----- */
+/* ----- medium: 원 18px, 본문 15px, 원–텍스트 6px ----- */
 .app-radio-group--medium.ant-radio-group {
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .app-radio-group--medium .ant-radio-wrapper,
@@ -76,7 +76,7 @@
   align-items: center;
   gap: 6px;
   margin-inline-end: 0;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
