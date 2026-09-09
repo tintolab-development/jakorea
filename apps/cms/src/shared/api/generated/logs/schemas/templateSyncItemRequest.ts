@@ -68,4 +68,20 @@ export interface TemplateSyncItemRequest {
   categoryId?: number;
   titleTemplate?: string;
   contentTemplate?: string;
+  /**
+     * @minLength 0
+     * @maxLength 20
+     */
+  channelType?: string;
+  /**
+     * @minLength 0
+     * @maxLength 255
+     */
+  providerSenderEmailAddress?: string;
+  /**
+     * @minLength 0
+     * @maxLength 20
+     */
+  emailTemplateLanguage?: string;
+  emailAttachmentIds?: string[];
 }

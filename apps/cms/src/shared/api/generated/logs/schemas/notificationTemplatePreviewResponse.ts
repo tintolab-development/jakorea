@@ -5,6 +5,7 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { EmailAttachmentItem } from './emailAttachmentItem';
 import type { NotificationTemplatePreviewResponseAlimtalkMetadata } from './notificationTemplatePreviewResponseAlimtalkMetadata';
 
 export interface NotificationTemplatePreviewResponse {
@@ -18,4 +19,8 @@ export interface NotificationTemplatePreviewResponse {
   contentTemplate?: string;
   alimtalkMetadata?: NotificationTemplatePreviewResponseAlimtalkMetadata;
   nhnConsoleTemplateUrl?: string;
+  titleTemplate?: string;
+  providerSenderEmailAddress?: string;
+  senderDisplay?: string;
+  attachments?: EmailAttachmentItem[];
 }

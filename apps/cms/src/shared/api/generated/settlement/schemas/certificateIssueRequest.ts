@@ -5,9 +5,16 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { CertificateIssueRequestIssueReason } from './certificateIssueRequestIssueReason';
 
+/**
+ * 회원 포털 증명서 발급 요청
+ */
 export interface CertificateIssueRequest {
-  programId?: number;
-  participantId?: number;
+  programId: number;
+  participantId: number;
+  /** 증명서 유형. 생략 또는 AUTO면 수료조건에 따라 COMPLETION/PARTICIPATION을 서버가 결정합니다. */
   certificateType?: string;
+  /** 발급 사유 코드 */
+  issueReason?: CertificateIssueRequestIssueReason;
 }

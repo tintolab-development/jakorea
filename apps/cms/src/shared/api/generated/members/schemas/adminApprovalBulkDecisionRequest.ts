@@ -22,4 +22,6 @@ export interface AdminApprovalBulkDecisionRequest {
   reason?: string;
   roleCode?: string;
   requestedRoleCode?: string;
+  /** 일괄 결과 알림 예약 시각. null이면 즉시 발송 */
+  scheduledAt?: string;
 }

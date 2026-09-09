@@ -11,4 +11,9 @@ export interface CatalogVariableItem {
   token?: string;
   description?: string;
   requiresProgram?: boolean;
+  enabled?: boolean;
+  programGroups?: string[];
+  recruitmentTypes?: string[];
+  participantTypes?: string[];
+  memberTypes?: string[];
 }

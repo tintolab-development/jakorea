@@ -5,6 +5,7 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { EmailAttachmentItem } from './emailAttachmentItem';
 import type { NotificationTemplateResponseAlimtalkMetadata } from './notificationTemplateResponseAlimtalkMetadata';
 
 export interface NotificationTemplateResponse {
@@ -37,4 +38,8 @@ export interface NotificationTemplateResponse {
   alimtalkMetadata?: NotificationTemplateResponseAlimtalkMetadata;
   approvalStatus?: string;
   providerSyncedAt?: string;
+  emailTemplateLanguage?: string;
+  emailAttachmentIds?: string[];
+  senderDisplay?: string;
+  attachments?: EmailAttachmentItem[];
 }

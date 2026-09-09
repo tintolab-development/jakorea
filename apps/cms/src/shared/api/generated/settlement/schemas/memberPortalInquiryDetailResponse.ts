@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { MemberPortalInquiryAnswer } from './memberPortalInquiryAnswer';
+import type { MemberPortalInquiryAttachment } from './memberPortalInquiryAttachment';
 
 export interface MemberPortalInquiryDetailResponse {
   inquiryId?: number;
@@ -18,5 +19,6 @@ export interface MemberPortalInquiryDetailResponse {
   displayStatus?: string;
   inquiredAt?: string;
   answeredAt?: string;
+  attachments?: MemberPortalInquiryAttachment[];
   answers?: MemberPortalInquiryAnswer[];
 }

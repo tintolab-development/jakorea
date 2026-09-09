@@ -16,9 +16,12 @@ export interface NotificationDeliveryResponse {
   recipientContactMasked?: string;
   templateCodeSnapshot?: string;
   deliveryStatus?: string;
+  /** 요청일시. 목록 기본 기간 필터 축. */
   requestedAt?: string;
+  /** 실제 발송 시각. requestedAt으로 대체하지 않음. 미발송이면 null. */
   sentAt?: string;
   failedAt?: string;
+  /** 발송 실패 사유 문자열. 성공 시 null. */
   failedReason?: string;
   providerRequestId?: string;
   providerMessageId?: string;
@@ -27,9 +30,13 @@ export interface NotificationDeliveryResponse {
   confirmedAt?: string;
   providerStatusUpdatedAt?: string;
   providerChannelType?: string;
+  /** 발송상태. ALIMTALK·EMAIL 동일. REQUESTED|SCHEDULED|WAITED|IN_PROGRESS|SENT|SEND_FAILED|CANCELED|UNKNOWN */
   sendStatus?: string;
+  /** 수신상태. ALIMTALK·EMAIL 동일. REQUESTED|CONFIRM_WAITED|WAITED|SCHEDULED|IN_PROGRESS|SENT|SEND_FAILED|DELIVERED|DELIVERY_FAILED|CANCELED|UNKNOWN */
   receiptStatus?: string;
+  /** 수신/배달 시각. openedAt으로 대체하지 않음. */
   deliveredAt?: string;
+  /** 읽음 시각. 읽음 여부 표시용만. */
   openedAt?: string;
   providerResultCode?: string;
   providerResultMessage?: string;

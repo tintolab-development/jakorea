@@ -8,7 +8,7 @@
 import type { FileUploadUrlResponseRequiredHeaders } from './fileUploadUrlResponseRequiredHeaders';
 
 export interface FileUploadUrlResponse {
-  fileObjectId?: string;
+  fileObjectId?: number;
   uploadUrl?: string;
   method?: string;
   expiresAt?: string;

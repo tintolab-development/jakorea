@@ -21,4 +21,9 @@ export interface AccountDirectoryBulkDeleteRequest {
      * @maxLength 500
      */
   reason?: string;
+  /**
+     * @minLength 0
+     * @maxLength 30
+     */
+  confirmationText: string;
 }

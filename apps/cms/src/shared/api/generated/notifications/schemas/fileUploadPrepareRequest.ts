@@ -28,11 +28,11 @@ export interface FileUploadPrepareRequest {
      */
   ownerId: number;
   /**
-     * 개인정보/민감도 등급. 민감 파일은 다운로드 감사와 relay 정책이 적용됩니다.
+     * 파일 업무 목적. privacy/retention/download 정책은 서버가 이 값으로 결정합니다.
      * @minLength 0
      * @maxLength 80
      */
-  privacyLevel: string;
+  filePurpose: string;
   /**
      * 사용자가 업로드한 원본 파일명
      * @minLength 0
@@ -51,9 +51,9 @@ export interface FileUploadPrepareRequest {
      */
   fileSize: number;
   /**
-     * 선택적 SHA-256 체크섬. 업로드 무결성 검증에 사용됩니다.
-     * @minLength 0
-     * @maxLength 128
+     * SHA-256 체크섬(64자리 HEX). S3 native checksum 서명/검증에 사용됩니다.
+     * @minLength 1
+     * @pattern ^[0-9a-fA-F]{64}$
      */
-  checksumSha256?: string;
+  checksumSha256: string;
 }
