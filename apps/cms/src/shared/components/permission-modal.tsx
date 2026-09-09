@@ -18,6 +18,25 @@ const DATE_TIME_PICKER_Z_OFFSET = 100
 
 const MESSAGE_BOLD_PATTERN = /(\*\*[^*]+\*\*)/g
 
+function PermissionModalFieldLabel({
+  children,
+  required,
+}: {
+  children: ReactNode
+  required?: boolean
+}) {
+  return (
+    <span className="permission-modal__label">
+      {children}
+      {required ? (
+        <span className="permission-modal__required" aria-hidden="true">
+          *
+        </span>
+      ) : null}
+    </span>
+  )
+}
+
 function parsePermissionModalMessageLine(line: string): ReactNode[] {
   return line
     .split(MESSAGE_BOLD_PATTERN)
@@ -237,26 +256,26 @@ export function PermissionModal({
 
           {notifyBeforeReason && showNotifyTiming ? (
             <div className="permission-modal__field">
-              <span className="permission-modal__label">알림 발송</span>
+              <PermissionModalFieldLabel required>알림 발송</PermissionModalFieldLabel>
               <CmsRadio.Group
-                size="large"
+                size="medium"
                 value={notifyTiming}
                 onChange={e =>
                   handleNotifyTimingChange(e.target.value as PermissionModalNotifyTiming)
                 }
               >
-                <CmsRadio value="immediate" size="large">
+                <CmsRadio value="immediate" size="medium">
                   즉시
                 </CmsRadio>
                 {notifyTimingOptions === 'three' ? (
-                  <CmsRadio value="on_announcement" size="large">
+                  <CmsRadio value="on_announcement" size="medium">
                     발표일에 맞춰서
                   </CmsRadio>
                 ) : null}
                 <span ref={manualRadioAnchorRef} className="permission-modal__manual-anchor">
                   <CmsRadio
                     value="manual"
-                    size="large"
+                    size="medium"
                     onClick={() => {
                       if (notifyTiming === 'manual') {
                         setManualNotifyAt(prev => prev ?? nowManualNotifyAt())
@@ -284,7 +303,7 @@ export function PermissionModal({
 
           {requireReason ? (
             <div className="permission-modal__field">
-              <span className="permission-modal__label">{reasonLabel}</span>
+              <PermissionModalFieldLabel required>{reasonLabel}</PermissionModalFieldLabel>
               <CmsInput
                 inputSize="large"
                 width="100%"
@@ -306,26 +325,26 @@ export function PermissionModal({
 
           {!notifyBeforeReason && showNotifyTiming ? (
             <div className="permission-modal__field">
-              <span className="permission-modal__label">알림 발송</span>
+              <PermissionModalFieldLabel required>알림 발송</PermissionModalFieldLabel>
               <CmsRadio.Group
-                size="large"
+                size="medium"
                 value={notifyTiming}
                 onChange={e =>
                   handleNotifyTimingChange(e.target.value as PermissionModalNotifyTiming)
                 }
               >
-                <CmsRadio value="immediate" size="large">
+                <CmsRadio value="immediate" size="medium">
                   즉시
                 </CmsRadio>
                 {notifyTimingOptions === 'three' ? (
-                  <CmsRadio value="on_announcement" size="large">
+                  <CmsRadio value="on_announcement" size="medium">
                     발표일에 맞춰서
                   </CmsRadio>
                 ) : null}
                 <span ref={manualRadioAnchorRef} className="permission-modal__manual-anchor">
                   <CmsRadio
                     value="manual"
-                    size="large"
+                    size="medium"
                     onClick={() => {
                       if (notifyTiming === 'manual') {
                         setManualNotifyAt(prev => prev ?? nowManualNotifyAt())
