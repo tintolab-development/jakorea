@@ -229,16 +229,17 @@
 
 .sms-template-form-modal__section-head {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
-.sms-template-form-modal__section-title {
+.sms-template-form-modal h3.sms-template-form-modal__section-title {
   margin: 0;
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  padding: 0 8px 0 0;
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 20px;
@@ -256,6 +257,8 @@
 
 .sms-template-form-modal__section-hint {
   margin: 0;
+  /* 링크가 함께 흐려지지 않도록 opacity 대신 color alpha */
+  opacity: 1;
   color: rgba(61, 61, 61, 0.6);
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 16px;
@@ -264,8 +267,9 @@
   line-height: 150%;
 }
 
-.sms-template-form-modal__section-hint-link {
-  color: var(--color-link, #0070e7);
+.sms-template-form-modal a.sms-template-form-modal__section-hint-link {
+  /* CMS --color-link는 민트(#01a1af). 시안 링크 색은 #0070E7 */
+  color: #0070e7;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 16px;
   font-style: normal;
@@ -274,7 +278,8 @@
   text-decoration: none;
 }
 
-.sms-template-form-modal__section-hint-link:hover {
+.sms-template-form-modal a.sms-template-form-modal__section-hint-link:hover {
+  color: #0070e7;
   text-decoration: underline;
 }
 
@@ -324,10 +329,26 @@
   padding-right: 64px;
 }
 
+/* 다줄 내용: 라벨·값 상단 정렬 (세로 중앙 + 아래 빈 공간 방지) */
+.sms-template-form-modal__compose
+  .detail-info-form__field:has(.sms-template-form-modal__body-field)
+  .detail-info-form__field-content {
+  align-items: flex-start;
+}
+
 .sms-template-form-modal__body-field {
-  display: flex;
+  display: flex !important;
   flex-direction: column;
+  align-items: stretch;
   gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.sms-template-form-modal__body-field .cms-textarea,
+.sms-template-form-modal__body-field .cms-textarea__control {
+  width: 100%;
+  min-width: 0;
 }
 
 .sms-template-form-modal__byte-row {
@@ -335,6 +356,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .sms-template-form-modal__byte-count {
@@ -357,16 +379,30 @@
   align-items: stretch;
 }
 
+.sms-template-form-modal .detail-info-form__field-content--edit > .sms-template-form-modal__body-field {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+}
+
 .sms-template-form-modal .file-select-field {
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
+  justify-content: center;
+}
+
+/* 시안: 파일 추가 버튼 — 가이드 문구·라벨 컬럼 기준 세로 가운데 */
+.sms-template-form-modal
+  .detail-info-form__field:has(.sms-template-form-modal__file-field)
+  .detail-info-form__field-content {
+  align-items: center;
 }
 
 .sms-template-form-modal .file-select-field__actions {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
 }

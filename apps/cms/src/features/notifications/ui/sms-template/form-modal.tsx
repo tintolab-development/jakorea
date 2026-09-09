@@ -249,23 +249,23 @@ export function FormModal({
               <div className="sms-template-form-modal__main">
                 <section className="sms-template-form-modal__widget">
                   <div className="sms-template-form-modal__section-head">
-                    <h3 className="sms-template-form-modal__section-title">
+                    <h3 className="info-section-title detail-info-form__title sms-template-form-modal__section-title">
                       기본 설정
                       <span className="sms-template-form-modal__required" aria-hidden>
                         *
                       </span>
                     </h3>
-                    <p className="sms-template-form-modal__section-hint">
-                      발신 번호는 NHN Cloud의{' '}
+                    <p className="info-section-desc sms-template-form-modal__section-hint">
+                      발신 번호는{' '}
                       <a
                         className="sms-template-form-modal__section-hint-link"
                         href={SMS_NHN_SENDER_NUMBER_CONSOLE_URL}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        [발신 정보 &gt; 발신 번호 관리]
-                      </a>{' '}
-                      메뉴에서 사전 등록된 번호만 사용 가능합니다.
+                        NHN Cloud의 [발신 정보 &gt; 발신 번호 관리] 메뉴
+                      </a>
+                      에서 사전 등록된 번호만 사용 가능합니다.
                     </p>
                   </div>
                   <BasicSettingsFields
