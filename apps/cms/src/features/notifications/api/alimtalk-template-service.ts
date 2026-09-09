@@ -243,7 +243,9 @@ export async function getAlimtalkSendTemplatePicker(): Promise<AlimtalkTemplateI
 /** NHN Console 카탈로그 → CMS DB. Body 없음. 성공 후 tree 재조회는 호출측. */
 export async function syncAlimtalkTemplatesFromNhn(): Promise<AlimtalkSyncOutcome> {
   assertAlimtalkTemplatesRemoteReady()
-  const result = await syncNotificationTemplatesRemote()
+  const result = await syncNotificationTemplatesRemote({
+    channelType: ALIMTALK_API_CHANNEL_TYPE,
+  })
   return mapSyncResultResponse(result)
 }
 

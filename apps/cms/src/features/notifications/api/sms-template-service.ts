@@ -23,6 +23,7 @@ import {
 } from '@/features/notifications/api/notifications-api-client'
 import {
   mapSyncResultResponse,
+  smsSyncSuccessMessage,
   type AlimtalkSyncOutcome,
 } from '@/features/notifications/api/adapters/alimtalk-sync-adapters'
 import { pendingFiltersFromSearchParams } from '@/features/notifications/model/sms-template/filter-url'
@@ -51,18 +52,12 @@ export function shouldUseSmsTemplatesRemoteApi(): boolean {
 
 export async function syncSmsCatalog(): Promise<AlimtalkSyncOutcome> {
   assertSmsTemplatesRemoteReady()
-  return mapSyncResultResponse(await syncNotificationTemplatesRemote())
+  return mapSyncResultResponse(
+    await syncNotificationTemplatesRemote({ channelType: SMS_API_CHANNEL_TYPE })
+  )
 }
 
-export function smsSyncSuccessMessage(outcome: AlimtalkSyncOutcome): string {
-  if (outcome.isLocalApprovalMark) {
-    return 'BE가 NHN 모드가 아닙니다(JA_NOTIFICATION_MODE). 문자 카테고리 연동이 되지 않을 수 있습니다. BE에 JA_NOTIFICATION_MODE=NHN_NOTIFICATION_HUB 설정을 요청해 주세요.'
-  }
-  if (outcome.isNhnLivePull && outcome.upsertedCount > 0) {
-    return `문자 카테고리 연동이 완료되었습니다. ${outcome.upsertedCount.toLocaleString()}건이 반영되었습니다.`
-  }
-  return '문자 카테고리 연동이 완료되었습니다.'
-}
+export { smsSyncSuccessMessage }
 
 function mockCategoryTree(searchParams: URLSearchParams): SmsCategoryTreeMapped {
   const filters = pendingFiltersFromSearchParams(searchParams)

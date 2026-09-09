@@ -14,7 +14,7 @@ function outcome(partial: Partial<AlimtalkSyncOutcome>): AlimtalkSyncOutcome {
 }
 
 describe('mailSyncSuccessMessage', () => {
-  it('warns when BE is not in NHN mode', () => {
+  it('warns when BE is not in NHN mode (EMAIL only)', () => {
     expect(mailSyncSuccessMessage(outcome({ isLocalApprovalMark: true, mode: 'LOCAL_APPROVAL_MARK' }))).toContain(
       'JA_NOTIFICATION_MODE'
     )
@@ -25,12 +25,12 @@ describe('mailSyncSuccessMessage', () => {
       mailSyncSuccessMessage(
         outcome({ isNhnLivePull: true, mode: 'NHN_LIVE_PULL', upsertedCount: 3 })
       )
-    ).toContain('3건')
+    ).toBe('메일 템플릿 3건이 반영되었습니다.')
   })
 
-  it('returns generic success otherwise', () => {
+  it('returns refresh fallback for unknown mode', () => {
     expect(mailSyncSuccessMessage(outcome({}))).toBe(
-      '카테고리·발신 프로필 연동이 완료되었습니다.'
+      '동기화가 완료되었습니다. 목록을 새로고침합니다.'
     )
   })
 })

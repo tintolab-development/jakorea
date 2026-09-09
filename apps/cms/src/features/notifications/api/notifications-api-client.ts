@@ -25,6 +25,7 @@ import type {
   SenderProfileListResponse,
   SyncResultResponse,
   SyncSenderProfilesParams,
+  SyncTemplatesParams,
   TemplateMoveRequest,
   TemplateMoveResponse,
   TemplateDeleteResponse,
@@ -148,10 +149,15 @@ export async function unbindEmailAttachmentRemote(
   )
 }
 
-/** Body 없음 — NHN live pull / local approval mark (FE 일반 화면은 templates[] 미전송) */
-export async function syncNotificationTemplatesRemote(): Promise<SyncResultResponse> {
+/**
+ * Body 없음 — NHN live pull / local approval mark (FE 일반 화면은 templates[] 미전송).
+ * channelType을 넘기면 upsertedCount가 해당 채널 템플릿만 집계된다(타 채널 합산 아님).
+ */
+export async function syncNotificationTemplatesRemote(
+  params?: SyncTemplatesParams
+): Promise<SyncResultResponse> {
   return unwrapApiBody(
-    await notificationsRemoteApi.syncTemplates(undefined, undefined, MUTATION_OPTIONS)
+    await notificationsRemoteApi.syncTemplates(undefined, params, MUTATION_OPTIONS)
   )
 }
 

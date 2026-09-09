@@ -200,7 +200,7 @@ export function SmsTemplateList() {
         title: '연동 실패',
         content: getNotificationsApiErrorMessage(
           error,
-          '문자 카테고리 연동에 실패했습니다. 다시 시도해 주세요.'
+          '문자 템플릿 연동에 실패했습니다. 다시 시도해 주세요.'
         ),
       })
     }

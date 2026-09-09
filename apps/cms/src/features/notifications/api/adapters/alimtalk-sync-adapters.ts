@@ -10,6 +10,9 @@ export type AlimtalkSyncMode =
   | typeof ALIMTALK_SYNC_MODE_REQUEST_UPSERT
   | string
 
+/** sync?channelType= 과 동일. 화면 채널 SSOT */
+export type NotificationSyncChannelType = 'ALIMTALK' | 'SMS' | 'EMAIL'
+
 export type AlimtalkSyncOutcome = {
   mode: AlimtalkSyncMode
   upsertedCount: number
@@ -35,18 +38,61 @@ export function mapSyncResultResponse(
   }
 }
 
-export function alimtalkSyncSuccessMessage(outcome: AlimtalkSyncOutcome): string {
+const CHANNEL_LABEL: Record<NotificationSyncChannelType, string> = {
+  ALIMTALK: '알림톡',
+  SMS: 'SMS',
+  EMAIL: '메일',
+}
+
+const NHN_MODE_WARN =
+  'BE가 NHN 모드가 아닙니다(JA_NOTIFICATION_MODE). NHN live pull이 되지 않습니다. BE에 JA_NOTIFICATION_MODE=NHN_NOTIFICATION_HUB 설정을 요청해 주세요.'
+
+function templateReflectedMessage(channel: NotificationSyncChannelType, count: number): string {
+  return `${CHANNEL_LABEL[channel]} 템플릿 ${count.toLocaleString()}건이 반영되었습니다.`
+}
+
+/**
+ * 알림 템플릿 sync toast — BE mode/channel SSOT.
+ * - NHN_LIVE_PULL: 「{채널} 템플릿 N건이 반영되었습니다.」
+ * - SMS + LOCAL_APPROVAL_MARK: 성공 toast (NHN 모드 경고 금지)
+ * - ALIMTALK|EMAIL + LOCAL_APPROVAL_MARK: JA_NOTIFICATION_MODE 안내만
+ */
+export function notificationTemplateSyncSuccessMessage(
+  channel: NotificationSyncChannelType,
+  outcome: AlimtalkSyncOutcome
+): string {
   if (outcome.isNhnLivePull) {
-    return `NHN 동기화가 완료되었습니다. 템플릿 ${outcome.upsertedCount.toLocaleString()}건이 반영되었습니다.`
+    return templateReflectedMessage(channel, outcome.upsertedCount)
   }
+
   if (outcome.isLocalApprovalMark) {
-    return 'BE가 NHN 모드가 아닙니다(JA_NOTIFICATION_MODE). NHN live pull이 되지 않습니다. BE에 JA_NOTIFICATION_MODE=NHN_NOTIFICATION_HUB 설정을 요청해 주세요.'
+    if (channel === 'SMS') {
+      return templateReflectedMessage('SMS', outcome.upsertedCount)
+    }
+    return NHN_MODE_WARN
   }
+
   if (outcome.isRequestUpsert) {
     if (import.meta.env.DEV) {
-      console.warn('[alimtalk sync] REQUEST_UPSERT는 FE 일반 화면 경로가 아닙니다.', outcome)
+      console.warn(
+        `[${channel} sync] REQUEST_UPSERT는 FE 일반 화면 경로가 아닙니다.`,
+        outcome
+      )
     }
     return '동기화가 완료되었습니다.'
   }
+
   return '동기화가 완료되었습니다. 목록을 새로고침합니다.'
+}
+
+export function alimtalkSyncSuccessMessage(outcome: AlimtalkSyncOutcome): string {
+  return notificationTemplateSyncSuccessMessage('ALIMTALK', outcome)
+}
+
+export function smsSyncSuccessMessage(outcome: AlimtalkSyncOutcome): string {
+  return notificationTemplateSyncSuccessMessage('SMS', outcome)
+}
+
+export function mailSyncSuccessMessage(outcome: AlimtalkSyncOutcome): string {
+  return notificationTemplateSyncSuccessMessage('EMAIL', outcome)
 }
