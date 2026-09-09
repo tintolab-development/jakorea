@@ -19,6 +19,7 @@ import {
   fetchFaqCategoriesRemote,
   fetchFaqRemote,
   fetchFaqsRemote,
+  replaceFaqInlineImagesRemote,
   updateFaqCategoryRemote,
   updateFaqRemote,
 } from '@/features/posts/api/faqs/faqs-api-client'
@@ -51,10 +52,32 @@ export async function getFaqDetail(id: string): Promise<AdminFaq> {
   return mapFaqResponse(dto)
 }
 
+function extractInlineImageFileObjectIds(text: string | undefined): number[] {
+  if (!text) return []
+  const ids = new Set<number>()
+  const pattern = /\/api\/admin\/files\/(\d+)\/content/g
+  for (const match of text.matchAll(pattern)) {
+    const id = Number(match[1])
+    if (Number.isFinite(id)) ids.add(id)
+  }
+  return [...ids]
+}
+
+async function syncFaqInlineImages(faqId: string, answer: string | undefined): Promise<void> {
+  const fileObjectIds = extractInlineImageFileObjectIds(answer)
+  try {
+    await replaceFaqInlineImagesRemote(faqId, fileObjectIds)
+  } catch {
+    /* 인라인 이미지 바인딩 실패는 FAQ 본문 저장을 막지 않음 */
+  }
+}
+
 export async function createFaq(payload: FaqCreatePayload): Promise<AdminFaq> {
   assertFaqsRemoteReady()
   const dto = await createFaqRemote(toFaqRequest(payload))
-  return mapFaqResponse(dto)
+  const mapped = mapFaqResponse(dto)
+  await syncFaqInlineImages(mapped.id, payload.answer)
+  return mapped
 }
 
 export async function updateFaq(id: string, patch: FaqUpdatePayload): Promise<AdminFaq> {
@@ -70,7 +93,9 @@ export async function updateFaq(id: string, patch: FaqUpdatePayload): Promise<Ad
       status: patch.status ?? existing.status,
     })
   )
-  return mapFaqResponse(dto)
+  const mapped = mapFaqResponse(dto)
+  await syncFaqInlineImages(id, patch.answer ?? existing.answer)
+  return mapped
 }
 
 export async function deleteFaq(id: string): Promise<void> {
