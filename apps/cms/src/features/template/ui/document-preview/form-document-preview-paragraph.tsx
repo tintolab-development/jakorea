@@ -63,6 +63,7 @@ import {
   isPlaceholderParagraphDescription,
 } from '@/features/template/ui/shared/form-paragraph-section-description'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
+import { PAYMENT_STATEMENT_ISSUANCE_IDS } from '@/features/template/model/payment-statement-issuance-draft'
 import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/basic-info-paragraph'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -861,7 +862,11 @@ export function FormDocumentPreviewParagraph({
     /** 지급조서 mid/final도 다른 동의서와 동일 confirm·구분선 크롬 (A4 contentOnly) */
     const useConfirmTextChrome =
       !isNoticeStackDivider && viewModel.isConfirmText && !viewModel.isClosing
-    const useConfirmRuleChrome = viewModel.isConfirmTextRule
+    /** 지급조서(발급용) 날짜 — 확인 문구 없이 날짜 위에 동일 회색 구분선 */
+    const isPaymentStatementIssuanceClosingDate =
+      paragraph.id === PAYMENT_STATEMENT_ISSUANCE_IDS.closingDate
+    const useConfirmRuleChrome =
+      viewModel.isConfirmTextRule || isPaymentStatementIssuanceClosingDate
 
     return (
       <div

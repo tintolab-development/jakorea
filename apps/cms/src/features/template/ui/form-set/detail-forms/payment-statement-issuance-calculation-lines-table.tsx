@@ -1,24 +1,17 @@
 /**
- * 지급조서(발급용) — 「강의비 산출 내역」Ant Design 테이블.
- * 정산 `PaymentOrderCalculationBreakdownTable`와 동일 스타일 클래스를 공유하되, 열 구성은 발급 시안(6열, 산정 기준·발급 버튼 없음).
+ * 지급조서(발급용) — 「강의비 산출 내역」표.
+ * Ant Design Table(scroll/sticky)은 A4 미리보기에서 보더·레이아웃이 깨지므로
+ * 편집·미리보기 동일하게 네이티브 HTML 테이블로 렌더한다.
  */
 
 import { useMemo } from 'react'
-import { Table } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
 import type {
   PaymentOrderCalculationLineKind,
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/data/mock/payment-order-admin-list'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
-import {
-  formatPaymentOrderCalculationWonPlain,
-} from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
-import '@/features/settlement/ui/payment-record/payment-order-program-calculation-statement-modal.css'
+import { formatPaymentOrderCalculationWonPlain } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
 import './payment-statement-issuance-calculation-lines-table.css'
-
-
-export const PAYMENT_STATEMENT_ISSUANCE_CALC_LINES_MIN_WIDTH = 1020
 
 export interface PaymentStatementIssuanceCalculationLinesRow {
   key: string
@@ -39,20 +32,21 @@ function paymentDeductionLabel(kind: PaymentOrderCalculationLineKind): string {
   return kind === 'withholding' ? '공제' : '지급'
 }
 
+/** 발급용 시안 구분 라벨 (정산 모달과 별도) */
 function categoryLabel(kind: PaymentOrderCalculationLineKind): string {
   switch (kind) {
     case 'lecture_fee':
       return '3급'
     case 'travel':
-      return '일반'
+      return '왕복'
     case 'lodging':
-      return '고정급'
+      return '1사1교'
     case 'meal':
-      return '일반'
+      return '식사'
     case 'activity':
-      return '일반'
+      return '활동'
     case 'withholding':
-      return '일반'
+      return '기타소득'
     default:
       return ''
   }
@@ -84,79 +78,9 @@ export function buildPaymentStatementIssuanceCalculationLinesRows(
   return out
 }
 
-function renderAmountCell(amount: number, row: PaymentStatementIssuanceCalculationLinesRow) {
-  if (row.amountDisplayOverride) {
-    return (
-      <span className="payment-order-calc-statement-modal__amount--negative">
-        {row.amountDisplayOverride}
-      </span>
-    )
-  }
-  return (
-    <span className="payment-order-calc-statement-modal__amount--positive">
-      {formatPaymentOrderCalculationWonPlain(amount)}
-    </span>
-  )
-}
-
-function getIssuanceCalculationLinesColumns(): ColumnsType<PaymentStatementIssuanceCalculationLinesRow> {
-  return [
-    {
-      title: '참여 기관명',
-      dataIndex: 'institutionName',
-      key: 'institutionName',
-      width: 160,
-      align: 'center',
-      onCell: record => ({
-        rowSpan: record.isFirstInBlock ? record.blockRowSpan : 0,
-      }),
-    },
-    {
-      title: '강의 진행 일자',
-      key: 'lectureProgress',
-      width: 268,
-      align: 'center',
-      onCell: record => ({
-        rowSpan: record.isFirstInBlock ? record.blockRowSpan : 0,
-      }),
-      render: (_: unknown, row: PaymentStatementIssuanceCalculationLinesRow) => (
-        <div className="payment-order-calc-statement-modal__td-divider-wrap payment-order-calc-statement-modal__td-divider-wrap--center">
-          {withProgramDetailTdDivider([row.lectureDateDisplay, row.lectureSessionDisplay])}
-        </div>
-      ),
-    },
-    {
-      title: '지급/공제',
-      dataIndex: 'paymentDeductionLabel',
-      key: 'paymentDeductionLabel',
-      width: 112,
-      align: 'center',
-    },
-    {
-      title: '구분',
-      dataIndex: 'categoryLabel',
-      key: 'categoryLabel',
-      width: 112,
-      align: 'center',
-    },
-    {
-      title: '항목명',
-      dataIndex: 'itemLabel',
-      key: 'itemLabel',
-      width: 200,
-      ellipsis: { showTitle: true },
-      align: 'center',
-    },
-    {
-      title: '금액',
-      dataIndex: 'amount',
-      key: 'amount',
-      width: 168,
-      align: 'center',
-      render: (amount: number, row: PaymentStatementIssuanceCalculationLinesRow) =>
-        renderAmountCell(amount, row),
-    },
-  ]
+function renderAmountText(amount: number, row: PaymentStatementIssuanceCalculationLinesRow) {
+  if (row.amountDisplayOverride) return row.amountDisplayOverride
+  return formatPaymentOrderCalculationWonPlain(amount)
 }
 
 export type PaymentStatementIssuanceCalculationLinesTableProps = {
@@ -173,53 +97,82 @@ export function PaymentStatementIssuanceCalculationLinesTable({
   className,
 }: PaymentStatementIssuanceCalculationLinesTableProps) {
   const tableRows = useMemo(() => buildPaymentStatementIssuanceCalculationLinesRows(blocks), [blocks])
-  const columns = useMemo(() => getIssuanceCalculationLinesColumns(), [])
 
   const rootClass = [
     'payment-statement-issuance-calculation-lines-table',
-    'payment-order-calc-statement-modal__table',
-    'cms-data-table',
-    'cms-data-table--skip-auto-no-col',
     className,
   ]
     .filter(Boolean)
     .join(' ')
 
   return (
-    <div
-      className="payment-statement-issuance-calculation-lines-table__wrap"
-      style={{ minWidth: PAYMENT_STATEMENT_ISSUANCE_CALC_LINES_MIN_WIDTH }}
-    >
-      <Table<PaymentStatementIssuanceCalculationLinesRow>
-        className={rootClass}
-        rowKey="key"
-        columns={columns}
-        dataSource={tableRows}
-        pagination={false}
-        size="middle"
-        tableLayout="fixed"
-        rowHoverable={false}
-        scroll={{ x: PAYMENT_STATEMENT_ISSUANCE_CALC_LINES_MIN_WIDTH }}
-        summary={() => (
-          <Table.Summary fixed="bottom">
-            <Table.Summary.Row className="payment-order-calc-statement-modal__summary-row">
-              <Table.Summary.Cell index={0} colSpan={1} align="center">
-                <span className="payment-order-calc-statement-modal__summary-label">합계</span>
-              </Table.Summary.Cell>
-              <Table.Summary.Cell index={1} colSpan={4} align="center">
-                <span className="payment-order-calc-statement-modal__summary-formula">
-                  {formulaLabel}
-                </span>
-              </Table.Summary.Cell>
-              <Table.Summary.Cell index={2} align="center">
-                <span className="payment-order-calc-statement-modal__summary-total">
-                  {formatPaymentOrderCalculationWonPlain(totalAmount)}
-                </span>
-              </Table.Summary.Cell>
-            </Table.Summary.Row>
-          </Table.Summary>
-        )}
-      />
+    <div className="payment-statement-issuance-calculation-lines-table__wrap">
+      <div className="payment-statement-issuance-calculation-lines-table__radius">
+        <table className={rootClass}>
+          <colgroup>
+            <col className="payment-statement-issuance-calculation-lines-table__col--institution" />
+            <col className="payment-statement-issuance-calculation-lines-table__col--date" />
+            <col className="payment-statement-issuance-calculation-lines-table__col--pay" />
+            <col className="payment-statement-issuance-calculation-lines-table__col--category" />
+            <col className="payment-statement-issuance-calculation-lines-table__col--item" />
+            <col className="payment-statement-issuance-calculation-lines-table__col--amount" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>참여 기관명</th>
+              <th>강의 진행 일자</th>
+              <th>지급/공제</th>
+              <th>구분</th>
+              <th>항목명</th>
+              <th>금액</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tableRows.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="payment-statement-issuance-calculation-lines-table__empty">
+                  -
+                </td>
+              </tr>
+            ) : (
+              tableRows.map(row => (
+                <tr key={row.key}>
+                  {row.isFirstInBlock ? (
+                    <>
+                      <td rowSpan={row.blockRowSpan}>{row.institutionName}</td>
+                      <td rowSpan={row.blockRowSpan}>
+                        <div className="payment-statement-issuance-calculation-lines-table__date-cell">
+                          {withProgramDetailTdDivider([
+                            row.lectureDateDisplay,
+                            row.lectureSessionDisplay,
+                          ])}
+                        </div>
+                      </td>
+                    </>
+                  ) : null}
+                  <td>{row.paymentDeductionLabel}</td>
+                  <td>{row.categoryLabel}</td>
+                  <td>{row.itemLabel}</td>
+                  <td className="payment-statement-issuance-calculation-lines-table__amount">
+                    {renderAmountText(row.amount, row)}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+          <tfoot>
+            <tr className="payment-statement-issuance-calculation-lines-table__summary-row">
+              <th scope="row">합계</th>
+              <td colSpan={4} className="payment-statement-issuance-calculation-lines-table__formula">
+                {formulaLabel}
+              </td>
+              <td className="payment-statement-issuance-calculation-lines-table__summary-total">
+                {formatPaymentOrderCalculationWonPlain(totalAmount)}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   )
 }

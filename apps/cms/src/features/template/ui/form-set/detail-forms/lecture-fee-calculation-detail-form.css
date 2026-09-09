@@ -21,13 +21,6 @@
   padding-inline: 16px;
 }
 
-.lecture-fee-calculation-detail-form .detail-info-form-inputs-separator {
-  width: 1px;
-  height: 13px;
-  opacity: 0.5;
-  background: var(--main-BK, #3d3d3d);
-}
-
 .lecture-fee-calculation-detail-form__text {
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
@@ -35,6 +28,19 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
+}
+
+/* 강사비 책정 · 사업소득자 여부 — 텍스트 구분선 */
+.lecture-fee-calculation-detail-form__inline-pair.detail-info-form-inputs-wrapper {
+  gap: 0;
+}
+
+.lecture-fee-calculation-detail-form__inline-pair .detail-info-form-inputs-separator {
+  width: 1px;
+  height: 13px;
+  margin: 0 16px;
+  opacity: 0.5;
+  background: var(--main-BK, #3d3d3d);
 }
 
 .lecture-fee-calculation-detail-form__inline-pair.detail-info-form-inputs-wrapper,
@@ -56,38 +62,6 @@
 
 .lecture-fee-calculation-detail-form__payment-items {
   gap: 16px;
-}
-
-.lecture-fee-calculation-detail-form__payment-item-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.lecture-fee-calculation-detail-form__payment-item-label {
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.lecture-fee-calculation-detail-form__payment-check-cell {
-  box-sizing: border-box;
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  border: 1px solid rgba(34, 64, 75, 0.35);
-  border-radius: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-}
-
-.lecture-fee-calculation-detail-form__payment-check-svg {
-  display: block;
-  flex-shrink: 0;
 }
 
 .lecture-fee-calculation-detail-form__session {

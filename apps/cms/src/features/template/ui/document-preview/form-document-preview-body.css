@@ -163,6 +163,8 @@
 .form-document-preview-paragraph--content-only-closing-signature
   .form-document-preview-paragraph__body-text {
   font-size: 24px;
+  font-weight: 700;
+  line-height: 150%; /* 36px */
 }
 
 /* 지급조서 최종확인·교육진행자 서약·초상권 확인 — 텍스트 위 구분선
@@ -181,6 +183,15 @@
   align-self: stretch;
   background: var(--table-line, #e0e0e0);
   margin-bottom: 40px;
+}
+
+/* 지급조서(발급용) — 날짜 ↔ (회장) 서명 10px (다른 동의서 document-date와 동일) */
+.form-document-preview-paragraph[data-paragraph-id='payment-statement-seed-closing-date'].form-document-preview-paragraph--content-only-closing {
+  margin-bottom: 10px;
+}
+
+.form-document-preview-paragraph[data-paragraph-id='payment-statement-seed-closing-signature'].form-document-preview-paragraph--content-only-closing {
+  margin-bottom: 0;
 }
 
 /* -------------------------------------------------------------------------- */
