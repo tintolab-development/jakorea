@@ -68,6 +68,7 @@ export interface UserDetailFullpageShellValue {
   onCompleteJaGradeEvaluation: (payload: {
     grade: string
     totalScore: number
+    jaEvaluation?: import('@/shared/api/generated/members/schemas/instructorJaEvaluationInput').InstructorJaEvaluationInput
   }) => void | Promise<void>
   scheduleChangeCount?: number
   onStartBasicInfoEdit: () => void
