@@ -17,6 +17,7 @@ import type {
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS,
   isAgreementLockedSystemParagraph,
   resolveMultipleChoiceBodyDescriptionText,
   normalizeHorizontalTableParagraph,
@@ -469,15 +470,23 @@ function renderBody(
           programApplicationFormInstructor={paragraphBodyOptions?.programApplicationFormInstructor}
         />
       )
-    case 'ujat_journal_education_info':
-      return (
+    case 'ujat_journal_education_info': {
+      const educationInfo = (
         <UjatJournalEducationInfo
           paragraph={p as UjatJournalEducationInfoParagraph}
           onChange={noopOnParagraphChange}
           isEditMode={false}
           autofill={paragraphBodyOptions?.ujatJournalEducationInfoAutofill}
+          previewReadonly
+          previewSkin={renderMode === 'contentOnly' ? 'a4Document' : 'surface'}
         />
       )
+      return renderMode === 'contentOnly' ? (
+        <div className="form-editor-body">{educationInfo}</div>
+      ) : (
+        educationInfo
+      )
+    }
     case 'lecture_report_program_progress':
       return (
         <LectureReportProgramProgress
@@ -611,6 +620,9 @@ function renderBody(
               selectedEntries={getUserInfoPreviewSelectedEntries(ui)}
               skin="a4Document"
               previewValues={paragraphBodyOptions?.userInfoPreviewValues}
+              forceTwoColumnRow={
+                ui.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo
+              }
             />
           </div>
         )
@@ -622,6 +634,7 @@ function renderBody(
           isEditMode={false}
           layout="previewTable"
           previewValues={paragraphBodyOptions?.userInfoPreviewValues}
+          forceTwoColumnRow={ui.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo}
         />
       )
     }

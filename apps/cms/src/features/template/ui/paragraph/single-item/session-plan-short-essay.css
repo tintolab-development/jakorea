@@ -52,7 +52,6 @@
   align-self: stretch;
   width: 100%;
   box-sizing: border-box;
-  border-right: 1px solid var(--table-line, #e0e0e0);
   border-bottom: 1px solid var(--table-line, #e0e0e0);
   background:
     linear-gradient(
@@ -91,7 +90,6 @@
   gap: 12px;
   align-self: stretch;
   box-sizing: border-box;
-  border-right: 1px solid var(--table-line, #e0e0e0);
 }
 
 .session-plan-short-essay-block__textarea-root.cms-textarea {

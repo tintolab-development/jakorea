@@ -48,10 +48,13 @@ export function UserInfoPreviewTable({
   selectedEntries,
   skin = 'surface',
   previewValues,
+  forceTwoColumnRow = false,
 }: {
   selectedEntries: UserInfoFieldEntry[]
   skin?: UserInfoPreviewTableSkin
   previewValues?: UserInfoPreviewValues
+  /** 선택 항목 2개일 때도 한 행에 라벨·값 두 쌍 (UJAT 교육일지 봉사자 정보 미리보기) */
+  forceTwoColumnRow?: boolean
 }) {
   const n = selectedEntries.length
   const isA4 = skin === 'a4Document'
@@ -73,14 +76,14 @@ export function UserInfoPreviewTable({
     )
   }
 
-  const useTwoTier = n >= 4
+  const useTwoTier = forceTwoColumnRow ? n >= 2 : n >= 4
 
   if (!useTwoTier) {
     const table = (
       <table
         className={
           isA4
-            ? 'form-document-short-essay-table form-document-short-essay-table--user-info'
+            ? 'form-document-short-essay-table form-document-short-essay-table--user-info form-document-short-essay-table--one-tier'
             : 'user-info-preview-table user-info-preview-table--one-tier'
         }
         role="grid"
@@ -114,7 +117,7 @@ export function UserInfoPreviewTable({
     <table
       className={
         isA4
-          ? 'form-document-short-essay-table form-document-short-essay-table--user-info'
+          ? 'form-document-short-essay-table form-document-short-essay-table--user-info form-document-short-essay-table--two-tier'
           : 'user-info-preview-table user-info-preview-table--two-tier'
       }
       role="grid"
@@ -174,12 +177,14 @@ export function UserInfo({
   isEditMode,
   layout = 'chips',
   previewValues,
+  forceTwoColumnRow = false,
 }: {
   paragraph: UserInfoParagraph
   onChange?: (next: UserInfoParagraph) => void
   isEditMode: boolean
   layout?: UserInfoLayout
   previewValues?: UserInfoPreviewValues
+  forceTwoColumnRow?: boolean
 }) {
   const fields = normalizeFields(paragraph)
   const selected = new Set(paragraph.selectedUserFieldKeys ?? [])
@@ -202,6 +207,7 @@ export function UserInfo({
         selectedEntries={getUserInfoPreviewSelectedEntries(paragraph)}
         skin="surface"
         previewValues={previewValues}
+        forceTwoColumnRow={forceTwoColumnRow}
       />
     )
   }

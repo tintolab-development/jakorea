@@ -6,7 +6,6 @@ import {
   UJAT_EDUCATION_JOURNAL_SEED_PARAGRAPH_IDS,
   UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS,
   UJAT_EDUCATION_PLAN_SEED_PARAGRAPH_IDS,
-  UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 import { useWritingFormEditorWithUserPreview } from '@/features/template/hooks/use-writing-form-editor-with-user-preview'
@@ -57,9 +56,6 @@ export function useUjatEducationIssuanceEditor(
     () =>
       createUjatEducationIssuanceA4Preview({
         variant,
-        ...(variant === 'journal'
-          ? { journalInstitutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME }
-          : {}),
       }),
     [variant]
   )

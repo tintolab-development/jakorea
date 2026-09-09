@@ -8,6 +8,7 @@ import {
   type SubjectiveParagraph,
   type LectureReportProgramProgressParagraph,
   type UjatJournalEducationInfoParagraph,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { AgreementAdminProxyConfirmBlock } from '@/features/template/ui/paragraph/explanation/agreement-admin-proxy-confirm-block'
@@ -488,6 +489,8 @@ export function renderFormParagraphBody(
           onChange={next => updateParagraph(jp.id, () => next)}
           isEditMode={isBodyInteractive}
           autofill={options?.ujatJournalEducationInfoAutofill}
+          previewReadonly={isUserLikeVisible || isPreviewReadonly}
+          previewSkin="surface"
         />
       )
     }
@@ -765,6 +768,7 @@ export function renderFormParagraphBody(
           isEditMode={isBodyInteractive}
           layout={isUserLikeVisible ? 'previewTable' : 'chips'}
           previewValues={options?.userInfoPreviewValues}
+          forceTwoColumnRow={p.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo}
         />
       )
     case 'file_attachment':

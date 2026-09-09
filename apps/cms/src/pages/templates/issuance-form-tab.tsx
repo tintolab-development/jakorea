@@ -16,7 +16,6 @@ import {
   LECTURE_REPORT_HIDDEN_DRAG_HANDLE_IDS,
   UJAT_EDUCATION_JOURNAL_HIDDEN_DRAG_HANDLE_IDS,
   UJAT_EDUCATION_PLAN_HIDDEN_DRAG_HANDLE_IDS,
-  UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME,
   type WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import {
   getPaymentStatementA4ParagraphGap,
@@ -363,9 +362,6 @@ export function IssuanceFormTab() {
     () =>
       createUjatEducationIssuanceA4Preview({
         variant: ujatStructuredIssuanceVariant ?? 'plan',
-        ...(ujatStructuredIssuanceVariant === 'journal'
-          ? { journalInstitutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME }
-          : {}),
       }),
     [ujatStructuredIssuanceVariant]
   )
@@ -492,11 +488,6 @@ export function IssuanceFormTab() {
       ujatPreviewVariant != null
         ? createUjatEducationIssuanceA4Preview({
             variant: ujatPreviewVariant,
-            ...(isJournalPreview
-              ? {
-                  journalInstitutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME,
-                }
-              : {}),
           })
         : null
     const baseA4Options = useA4Preview
@@ -820,13 +811,6 @@ export function IssuanceFormTab() {
                 UJAT_STRUCTURED_ISSUANCE_HIDDEN_DRAG_HANDLES[ujatStructuredIssuanceVariant ?? 'plan']
               }
               headingDescriptionExtraClassName="paragraph-input-explanation-title"
-              paragraphBodyOptions={
-                ujatStructuredIssuanceVariant === 'journal'
-                  ? {
-                      ujatJournalEducationInfoAutofill: {
-                        institutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME } }
-                  : undefined
-              }
             />
           ) : isLectureReportIssuance ? (
             <FormEditorLeftPanel

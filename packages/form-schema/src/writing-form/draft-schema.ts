@@ -3910,9 +3910,17 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
 }
 
 const UJAT_EDU_PLAN_EXPLANATION_BODY =
-  '1. 봉사자는 학년별로 세부적인 교육 계획을 각각 작성해야 합니다. 계획은 구체적이고 성실하게 작성해 주시기 바랍니다. 1학년부터 6학년까지 모든 학년에 대한 계획을 작성해 주세요.\n' +
-  '2. 교육 계획서는 활동 예정일 1주 전 목요일 24:00까지 제출해야 합니다.\n' +
-  '3. 제출하지 않거나 성의 없는 내용을 작성할 경우, 봉사 시간 인증에 불이익이 있을 수 있습니다.'
+  '1) 봉사자 개인별로 각 학년에 대한 세부적인 교육계획서를 작성해 주시기 바랍니다.\n' +
+  '- 교육계획서는 실제 수업을 진행하기 위한 준비 단계입니다. 최대한 구체적으로 성실하게 작성해 주세요.\n' +
+  '- 1학년부터 6학년까지 모든 교육계획서를 작성해 주세요.\n' +
+  '2) 교육 계획서는 교육 활동일 기준 일주일 전 목요일 24시까지 작성하여 제출해 주시기 바랍니다.\n' +
+  '3) 교육 계획서를 불성실하게 작성하거나 기한 내에 제출하지 않을 경우, 봉사 시간 인증에 불이익이 있을 수 있습니다.'
+
+const UJAT_EDU_JOURNAL_EXPLANATION_BODY =
+  '1) 봉사자 개인별로 각 수업 진행 후, 교육일지를 작성해 주시기 바랍니다.\n' +
+  '2) 교육일지는 실제 수업에 나간 후, 수업 진행 내용, 진행 중 느낀 점, 보완점 등을 정리하여 추후 다른 봉사자가 해당 학년의 교육을 할 때 참고하기 위한 자료이니 성실하게 작성해 주시기 바랍니다.\n' +
+  '3) 해당 활동일 기준 다음 주 목요일 24시까지 작성하여 제출해 주시기 바랍니다.\n' +
+  '4) 교육일지를 기한 내에 제출하지 않을 경우, 봉사 시간 인증에 불이익이 있을 수 있습니다.'
 
 const UJAT_EDU_PLAN_DEFAULT_SELECTED_USER_FIELD_KEYS = [
   'name',
@@ -3920,6 +3928,8 @@ const UJAT_EDU_PLAN_DEFAULT_SELECTED_USER_FIELD_KEYS = [
   'educationTarget',
   'educationGrade',
 ] as const
+
+const UJAT_EDU_JOURNAL_DEFAULT_SELECTED_USER_FIELD_KEYS = ['name', 'teamPartnerName'] as const
 
 const UJAT_EDU_PLAN_USER_FIELDS: Array<{ key: string; label: string }> = [
   { key: 'name', label: '이름' },
@@ -3940,6 +3950,11 @@ const UJAT_EDU_PLAN_USER_FIELDS: Array<{ key: string; label: string }> = [
   { key: 'teamName', label: '팀 명' },
   { key: 'teamPartnerName', label: '팀원 명' },
 ]
+
+const UJAT_EDU_JOURNAL_USER_FIELDS: Array<{ key: string; label: string }> = UJAT_EDU_PLAN_USER_FIELDS.map(
+  field =>
+    field.key === 'teamPartnerName' ? { ...field, label: '파트너명' } : field
+)
 
 function createUjatEducationIssuanceSessionParagraph(
   id: string,
@@ -3983,11 +3998,11 @@ function createUjatJournalEducationInfoParagraph(id: string): UjatJournalEducati
     kind: 'single_item',
     variant: 'ujat_journal_education_info',
     requiredMark: true,
-    paragraphTitle: '교육 정보',
+    paragraphTitle: '교육 일정',
     paragraphDescription: '설명 입력',
     participatesInTitleNumbering: true,
     answerRequired: true,
-    schoolDisplayFallback: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME,
+    schoolDisplayFallback: '',
     grade: '',
     classSection: '',
     prepDate: '',
@@ -4000,13 +4015,20 @@ function createUjatEducationIssuanceDraft(
   ids: UjatEducationIssuanceParagraphIds,
   surveyTitle: string,
   getSessionParagraphTitle: (sessionIndex: number) => string,
-  options?: { paragraphsAfterVolunteer?: WritingFormParagraph[] }
+  options?: {
+    paragraphsAfterVolunteer?: WritingFormParagraph[]
+    titleNumbering?: FormTitleNumberingStyle
+    showWritingPeriodOnForm?: boolean
+    explanationBody?: string
+    selectedUserFieldKeys?: readonly string[]
+    userFields?: Array<{ key: string; label: string }>
+  }
 ): WritingFormDraft {
-  const selectedKeys = [...UJAT_EDU_PLAN_DEFAULT_SELECTED_USER_FIELD_KEYS]
+  const selectedKeys = [...(options?.selectedUserFieldKeys ?? UJAT_EDU_PLAN_DEFAULT_SELECTED_USER_FIELD_KEYS)]
   const afterVolunteer = options?.paragraphsAfterVolunteer ?? []
   return {
     schemaVersion: 1,
-    formSettings: { titleNumbering: 'numeric' },
+    formSettings: { titleNumbering: options?.titleNumbering ?? 'numeric' },
     paragraphs: [
       {
         id: ids.title,
@@ -4024,7 +4046,7 @@ function createUjatEducationIssuanceDraft(
         startAt: null,
         endAt: null,
         endPeriodPresetLabel: '활동일 전주 목요일 (24:00)',
-        showWritingPeriodOnForm: false,
+        showWritingPeriodOnForm: options?.showWritingPeriodOnForm ?? false,
       },
       {
         id: ids.explanationText,
@@ -4035,7 +4057,7 @@ function createUjatEducationIssuanceDraft(
         paragraphDescription: '',
         participatesInTitleNumbering: true,
         bodyPlaceholder: '텍스트를 작성해 주세요',
-        bodyText: UJAT_EDU_PLAN_EXPLANATION_BODY,
+        bodyText: options?.explanationBody ?? UJAT_EDU_PLAN_EXPLANATION_BODY,
         answerRequired: true,
       },
       {
@@ -4047,7 +4069,7 @@ function createUjatEducationIssuanceDraft(
         paragraphTitle: '봉사자 정보',
         paragraphDescription: '노출할 항목을 선택합니다. (실제 응답 시 자동 매핑)',
         participatesInTitleNumbering: true,
-        userFields: UJAT_EDU_PLAN_USER_FIELDS,
+        userFields: options?.userFields ?? UJAT_EDU_PLAN_USER_FIELDS,
         selectedUserFieldKeys: selectedKeys,
       },
       ...afterVolunteer,
@@ -4064,7 +4086,12 @@ export function createUjatEducationPlanIssuanceDraft(): WritingFormDraft {
   return createUjatEducationIssuanceDraft(
     UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS,
     'JA KOREA 대학생경제교육봉사단(UJAT) 교육계획서',
-    n => `${n}차시 교육 계획`
+    n => `${n}차시 교육 계획`,
+    {
+      titleNumbering: 'none',
+      showWritingPeriodOnForm: true,
+      explanationBody: UJAT_EDU_PLAN_EXPLANATION_BODY,
+    }
   )
 }
 
@@ -4133,6 +4160,11 @@ export function createUjatEducationJournalIssuanceDraft(): WritingFormDraft {
       paragraphsAfterVolunteer: [
         createUjatJournalEducationInfoParagraph(UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.educationInfo),
       ],
+      explanationBody: UJAT_EDU_JOURNAL_EXPLANATION_BODY,
+      titleNumbering: 'none',
+      showWritingPeriodOnForm: true,
+      selectedUserFieldKeys: UJAT_EDU_JOURNAL_DEFAULT_SELECTED_USER_FIELD_KEYS,
+      userFields: UJAT_EDU_JOURNAL_USER_FIELDS,
     }
   )
   return {
@@ -4494,7 +4526,7 @@ export function writingOutlineLabel(p: WritingFormParagraph): string {
   if (p.kind === 'single_item' && p.variant === 'ujat_journal_education_info') {
     const t = p.paragraphTitle.trim()
     if (t) return t
-    return '교육 정보'
+    return '교육 일정'
   }
   if (p.kind === 'single_item' && p.variant === 'lecture_report_program_progress') {
     const t = p.paragraphTitle.trim()
