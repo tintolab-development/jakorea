@@ -24,6 +24,8 @@ export const postsQueryKeys = {
     detail: (id: string) => [...postsQueryKeys.inquiries.all(), 'detail', id] as const,
     answers: (inquiryId: string) =>
       [...postsQueryKeys.inquiries.all(), 'answers', inquiryId] as const,
+    attachments: (inquiryId: string) =>
+      [...postsQueryKeys.inquiries.all(), 'attachments', inquiryId] as const,
     categories: () => [...postsQueryKeys.inquiries.all(), 'categories'] as const,
   },
 } as const

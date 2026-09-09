@@ -309,3 +309,17 @@
   align-items: center;
   min-height: 240px;
 }
+
+.admin-inquiry-detail-modal__attachments {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.admin-inquiry-detail-modal__attachment-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--color-primary, #1677ff);
+  cursor: pointer;
+  text-decoration: underline;
+}
