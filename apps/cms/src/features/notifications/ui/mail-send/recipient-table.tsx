@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -13,12 +14,14 @@ type RecipientTableProps = {
   recipients: MailSendRecipient[]
   selectedIds: string[]
   onSelectedIdsChange: (ids: string[]) => void
+  typeColumnTitle?: string
 }
 
-export function RecipientTable({
+export const RecipientTable = memo(function RecipientTable({
   recipients,
   selectedIds,
   onSelectedIdsChange,
+  typeColumnTitle = '유형',
 }: RecipientTableProps) {
   const needScroll =
     recipients.length * TABLE_ROW_HEIGHT + TABLE_HEADER_HEIGHT > TABLE_MAX_HEIGHT
@@ -34,7 +37,7 @@ export function RecipientTable({
       render: (_value, _record, index) => recipients.length - index,
     },
     {
-      title: '유형',
+      title: typeColumnTitle,
       key: 'type',
       width: 140,
       align: 'center',
@@ -72,4 +75,4 @@ export function RecipientTable({
       }}
     />
   )
-}
+})

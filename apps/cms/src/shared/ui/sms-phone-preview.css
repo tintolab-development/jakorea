@@ -92,7 +92,7 @@
   pointer-events: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  padding: 8px 14px 20px;
+  padding: 28px 12px 20px;
   box-sizing: border-box;
 }
 
@@ -103,42 +103,88 @@
 .sms-phone-preview__message {
   display: flex;
   width: 100%;
+  min-width: 0;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .sms-phone-preview__bubble {
   display: flex;
-  max-width: 100%;
-  padding: 12px 14px;
+  padding: 12px;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  border-radius: 18px;
-  background: #e9e9eb;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .sms-phone-preview__subject {
   margin: 0;
-  color: #1c1c1e;
-  font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 14px;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Inter, Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
   font-style: normal;
   font-weight: 700;
-  line-height: 140%;
+  line-height: 150%;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
 }
 
 .sms-phone-preview__body {
   margin: 0;
-  color: #1c1c1e;
-  font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 14px;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Inter, Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 15px;
   font-style: normal;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 150%;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.sms-phone-preview .notification-variable-token {
+  color: var(--color-mint-01, #01a1af);
+  font-weight: 700;
+}
+
+/* 미리보기 모달 — 뷰포트에 맞게 ~75% 축소 */
+.sms-phone-preview--compact {
+  flex: 0 0 287px;
+  width: 287px;
+  height: 589px;
+}
+
+.sms-phone-preview--compact .sms-phone-preview__frame {
+  width: 287px;
+  height: 589px;
+}
+
+.sms-phone-preview--compact .sms-phone-preview__stage {
+  top: 44px;
+  width: 255px;
+  bottom: 27px;
+}
+
+.sms-phone-preview--compact .sms-phone-preview__nav {
+  min-height: 36px;
+  padding: 2px 12px 6px;
+}
+
+.sms-phone-preview--compact .sms-phone-preview__scroll {
+  padding: 20px 10px 16px;
 }

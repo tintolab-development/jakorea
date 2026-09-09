@@ -109,8 +109,8 @@ export function useSmsTemplateForm(
     [initialCategoryId, mode, template]
   )
   const resetKey = useMemo(
-    () => (open ? `${mode}-${template?.id ?? initialCategoryId ?? 'new'}` : 'closed'),
-    [initialCategoryId, mode, open, template?.id]
+    () => (open ? `${mode}-${template?.id ?? 'new'}` : 'closed'),
+    [mode, open, template?.id]
   )
 
   const [categoryId, setCategoryId] = useState(initialDraft.categoryId)
@@ -140,14 +140,19 @@ export function useSmsTemplateForm(
   newFilesRef.current = newFiles
   attachmentFileNamesRef.current = attachmentFileNames
 
-  const showSubject = true
-  const showAttachments = true
+  const showSubject = messageType !== 'SMS'
+  const showAttachments = messageType === 'MMS'
   const attachmentsEnabled = messageType === 'MMS'
   const bodyByteLength = useMemo(() => estimateSmsBodyBytes(bodyText), [bodyText])
   const bodyByteLimit = messageType === 'SMS' ? SMS_BODY_BYTE_LIMIT : LMS_MMS_BODY_BYTE_LIMIT
-  const bodyCounterLabel = messageType === 'SMS' ? '공지내용' : '문자내용'
+  const bodyCounterLabel = '문자내용'
 
-  const setTemplateName = useCallback((value: string) => {
+  const setTemplateName = useCallback((value: string, options?: { composing?: boolean }) => {
+    // IME 조합 중 sanitize하면 한글 자모가 지워져 입력이 막힘 → 조합 종료 후 sanitize
+    if (options?.composing) {
+      setTemplateNameState(value)
+      return
+    }
     setTemplateNameState(sanitizeSmsTemplateNameInput(value))
   }, [])
 
@@ -170,7 +175,9 @@ export function useSmsTemplateForm(
     lastTargetRef.current = 'body'
     subjectRangeRef.current = { start: 0, end: 0 }
     bodyRangeRef.current = { start: 0, end: 0 }
-  }, [initialCategoryId, mode, open, resetKey, template])
+    // 모달 세션(open/resetKey)이 바뀔 때만 리셋 — 입력 중 initialCategoryId·template 참조 변경으로 값이 지워지지 않게
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional session-scoped reset
+  }, [open, resetKey])
 
   const rememberSubjectRange = useCallback((el: HTMLInputElement | null) => {
     if (!el) return
@@ -242,26 +249,7 @@ export function useSmsTemplateForm(
 
   const insertVariable = useCallback(
     (label: string) => {
-      if (lastTargetRef.current === 'subject' && showSubject) {
-        const range = subjectRangeRef.current
-        const { next, caret } = insertMailVariableInText(
-          subjectRef.current,
-          label,
-          range.start,
-          range.end,
-          SMS_SUBJECT_MAX_LENGTH
-        )
-        setSubject(next)
-        subjectRangeRef.current = { start: caret, end: caret }
-        requestAnimationFrame(() => {
-          const input = subjectInputRef.current?.input
-          if (!input) return
-          input.focus()
-          input.setSelectionRange(caret, caret)
-        })
-        return
-      }
-
+      // 스펙: 제목에서는 변수값 사용 불가 — 본문에만 삽입
       const range = bodyRangeRef.current
       const { next, caret } = insertMailVariableInText(
         bodyTextRefValue.current,
@@ -271,6 +259,7 @@ export function useSmsTemplateForm(
       )
       setBodyText(next)
       bodyRangeRef.current = { start: caret, end: caret }
+      lastTargetRef.current = 'body'
       requestAnimationFrame(() => {
         const textarea = getTextareaElement(bodyTextRef.current)
         if (!textarea) return
@@ -278,7 +267,7 @@ export function useSmsTemplateForm(
         textarea.setSelectionRange(caret, caret)
       })
     },
-    [setSubject, showSubject]
+    []
   )
 
   const getDraft = useCallback((): SmsTemplateFormDraft => {

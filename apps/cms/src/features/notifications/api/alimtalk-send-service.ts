@@ -2,6 +2,7 @@ import {
   buildCreateSendBatchRequest,
   mapRecipientCandidates,
   mapTemplateVariablesCatalog,
+  toTemplateVariablesRequestParams,
   type AlimtalkTemplateVariable,
   type NotificationTemplateVariablesQuery,
 } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
@@ -16,7 +17,6 @@ import {
   fetchSenderProfilesRemote,
   fetchTemplateVariablesRemote,
 } from '@/features/notifications/api/notifications-api-client'
-import { ALIMTALK_SEND_RECIPIENT_MOCK } from '@/features/notifications/model/alimtalk-send/mock'
 import type { AlimtalkSendRecipient } from '@/features/notifications/model/alimtalk-send/types'
 import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
@@ -38,9 +38,7 @@ export function shouldUseAlimtalkSendRemoteApi(): boolean {
 }
 
 export async function getAlimtalkSenderProfiles(): Promise<AlimtalkSenderProfileOption[]> {
-  if (!shouldUseAlimtalkSendRemoteApi()) {
-    return [{ profileId: 1, senderKey: 'mock-sender', displayName: 'JA Korea' }]
-  }
+  if (!shouldUseAlimtalkSendRemoteApi()) return []
   const dto = await fetchSenderProfilesRemote({
     channelType: ALIMTALK_API_CHANNEL_TYPE,
     useYn: true,
@@ -66,11 +64,11 @@ export async function getAlimtalkRecipientCandidates(input: {
   const page = input.page ?? 0
   if (!shouldUseAlimtalkSendRemoteApi()) {
     return {
-      items: ALIMTALK_SEND_RECIPIENT_MOCK,
-      total: ALIMTALK_SEND_RECIPIENT_MOCK.length,
+      items: [],
+      total: 0,
       page,
       size,
-      totalPages: Math.max(Math.ceil(ALIMTALK_SEND_RECIPIENT_MOCK.length / size), 1),
+      totalPages: 1,
     }
   }
   const dto = await fetchRecipientCandidatesRemote({
@@ -97,13 +95,7 @@ export async function getAlimtalkTemplateVariables(
   input: NotificationTemplateVariablesQuery = {}
 ): Promise<AlimtalkTemplateVariable[]> {
   if (!shouldUseAlimtalkSendRemoteApi()) return []
-  const dto = await fetchTemplateVariablesRemote({
-    category: input.category,
-    keyword: input.keyword,
-    programId: input.programId,
-    participantType: input.participantType,
-    memberType: input.memberType,
-  })
+  const dto = await fetchTemplateVariablesRemote(toTemplateVariablesRequestParams(input))
   return mapTemplateVariablesCatalog(dto)
 }
 
@@ -123,7 +115,8 @@ export async function createAlimtalkSendBatch(input: {
   if (!Number.isFinite(templateId)) throw new Error('템플릿 ID가 올바르지 않습니다.')
 
   const programId = parseNotificationSendProgramId(input.programId)
-  if (programId == null) {
+  const isAllProgram = (input.programId?.trim() ?? '').toLowerCase() === 'all'
+  if (!isAllProgram && programId == null) {
     throw new Error('대상 프로그램을 선택하세요.')
   }
 

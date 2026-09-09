@@ -1,0 +1,37 @@
+.notification-send-schedule-field {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+}
+
+.notification-send-schedule-field .app-radio-group.ant-radio-group {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+}
+
+.notification-send-schedule-field__divider {
+  flex: 0 0 1px;
+  width: 1px;
+  height: 16px;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.2;
+}
+
+.notification-send-schedule-field__trigger {
+  flex: 1 1 0;
+  min-width: 120px;
+  cursor: pointer;
+}
+
+.notification-send-schedule-field__trigger[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+.notification-send-schedule-field__trigger .cms-input {
+  pointer-events: none;
+  width: 100%;
+}

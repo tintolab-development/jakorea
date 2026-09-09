@@ -1,5 +1,5 @@
 import { CloseOutlined } from '@ant-design/icons'
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import {
@@ -29,6 +29,7 @@ import {
   type SmsTemplateFormDraft,
   type SmsTemplateFormMode,
 } from './use-form'
+import { SmsVariableTextField } from './variable-text-field'
 import './form-modal.css'
 
 type BasicSettingsFieldsProps = {
@@ -36,7 +37,7 @@ type BasicSettingsFieldsProps = {
   senderPhone: string
   senderOptions: Array<{ label: string; value: string }>
   senderLoading?: boolean
-  onTemplateNameChange: (value: string) => void
+  onTemplateNameChange: (value: string, options?: { composing?: boolean }) => void
   onSenderPhoneChange: (value: string) => void
 }
 
@@ -48,6 +49,8 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
   onTemplateNameChange,
   onSenderPhoneChange,
 }: BasicSettingsFieldsProps) {
+  const composingNameRef = useRef(false)
+
   return (
     <DetailInfoForm title="기본 설정" hideHeader mode="edit">
       <DetailInfoForm.Row type="double">
@@ -62,7 +65,22 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
               allowClear={false}
               placeholder={SMS_TEMPLATE_NAME_PLACEHOLDER}
               value={templateName}
-              onChange={event => onTemplateNameChange(event.target.value)}
+              onCompositionStart={() => {
+                composingNameRef.current = true
+              }}
+              onCompositionEnd={event => {
+                composingNameRef.current = false
+                onTemplateNameChange(event.currentTarget.value)
+              }}
+              onChange={event => {
+                const next = event.target.value
+                const native = event.nativeEvent as InputEvent
+                if (composingNameRef.current || native.isComposing) {
+                  onTemplateNameChange(next, { composing: true })
+                  return
+                }
+                onTemplateNameChange(next)
+              }}
             />
           }
         />
@@ -127,6 +145,7 @@ export function FormModal({
 
   const senderOptions = useMemo(() => {
     const fromApi = (senderProfilesQuery.data ?? []).map(profile => {
+      // senderKey = NHN 발신번호 문자열 그대로 (하이픈 정규화 금지)
       const phone = profile.senderKey.trim()
       const label = profile.displayName.trim() || phone
       return { label, value: phone }
@@ -136,6 +155,13 @@ export function FormModal({
     }
     return fromApi
   }, [form.senderPhone, senderProfilesQuery.data])
+
+  const senderListEmpty =
+    remote &&
+    !senderProfilesQuery.isFetching &&
+    !senderProfilesQuery.isLoading &&
+    (senderProfilesQuery.data?.length ?? 0) === 0 &&
+    !form.senderPhone
 
   useEffect(() => {
     if (!open) return
@@ -249,23 +275,26 @@ export function FormModal({
               <div className="sms-template-form-modal__main">
                 <section className="sms-template-form-modal__widget">
                   <div className="sms-template-form-modal__section-head">
-                    <h3 className="sms-template-form-modal__section-title">
+                    <h3 className="info-section-title detail-info-form__title sms-template-form-modal__section-title">
                       기본 설정
                       <span className="sms-template-form-modal__required" aria-hidden>
                         *
                       </span>
                     </h3>
-                    <p className="sms-template-form-modal__section-hint">
-                      발신 번호는 NHN Cloud의{' '}
+                    <p className="info-section-desc sms-template-form-modal__section-hint">
+                      발신 번호는{' '}
                       <a
                         className="sms-template-form-modal__section-hint-link"
                         href={SMS_NHN_SENDER_NUMBER_CONSOLE_URL}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        [발신 정보 &gt; 발신 번호 관리]
-                      </a>{' '}
-                      메뉴에서 사전 등록된 번호만 사용 가능합니다.
+                        NHN Cloud의 [발신 정보 &gt; 발신 번호 관리] 메뉴
+                      </a>
+                      에서 사전 등록된 번호만 사용 가능합니다.
+                      {senderListEmpty
+                        ? ' 목록이 비어 있으면 문자 템플릿 화면에서 「동기화」를 먼저 실행해 주세요.'
+                        : null}
                     </p>
                   </div>
                   <BasicSettingsFields
@@ -349,22 +378,30 @@ export function FormModal({
                           view={form.bodyText}
                           edit={
                             <div className="sms-template-form-modal__body-field">
-                              <CmsTextArea
-                                ref={form.bodyTextRef}
-                                inputSize="large"
-                                width="100%"
-                                rows={12}
-                                placeholder="내용을 작성하세요"
+                              <SmsVariableTextField
                                 value={form.bodyText}
-                                onChange={event => form.setBodyText(event.target.value)}
-                                onFocus={event => form.rememberBodyRange(event.currentTarget)}
-                                onBlur={event => form.rememberBodyRange(event.currentTarget)}
-                                onSelect={event => form.rememberBodyRange(event.currentTarget)}
-                                onClick={event => form.rememberBodyRange(event.currentTarget)}
-                                onKeyUp={event => form.rememberBodyRange(event.currentTarget)}
-                              />
+                                multiline
+                                onValueChange={form.setBodyText}
+                              >
+                                <CmsTextArea
+                                  ref={form.bodyTextRef}
+                                  inputSize="large"
+                                  width="100%"
+                                  rows={8}
+                                  placeholder="내용을 작성하세요"
+                                  value={form.bodyText}
+                                  onChange={event => form.setBodyText(event.target.value)}
+                                  onFocus={event => form.rememberBodyRange(event.currentTarget)}
+                                  onBlur={event => form.rememberBodyRange(event.currentTarget)}
+                                  onSelect={event => form.rememberBodyRange(event.currentTarget)}
+                                  onClick={event => form.rememberBodyRange(event.currentTarget)}
+                                  onKeyUp={event => form.rememberBodyRange(event.currentTarget)}
+                                />
+                              </SmsVariableTextField>
                               <div className="sms-template-form-modal__byte-row">
-                                <span />
+                                <span className="sms-template-form-modal__byte-label">
+                                  {form.bodyCounterLabel}
+                                </span>
                                 <span
                                   className={
                                     form.bodyByteLength > form.bodyByteLimit
@@ -372,8 +409,7 @@ export function FormModal({
                                       : 'sms-template-form-modal__byte-count'
                                   }
                                 >
-                                  {form.bodyCounterLabel} {form.bodyByteLength} / {form.bodyByteLimit}
-                                  byte
+                                  {form.bodyByteLength} / {form.bodyByteLimit}byte
                                 </span>
                               </div>
                             </div>
@@ -408,7 +444,7 @@ export function FormModal({
                       senderPhone={form.senderPhone}
                       subject={previewSubjectPlaceholder}
                       bodyText={previewBodyPlaceholder}
-                      showSubject
+                      showSubject={form.showSubject}
                     />
                   </div>
                 </section>
@@ -416,6 +452,7 @@ export function FormModal({
               <VariablesPanel
                 onInsert={form.insertVariable}
                 groups={variableGroups.length > 0 ? variableGroups : undefined}
+                respectCatalogEnabled={false}
               />
             </div>
           </div>

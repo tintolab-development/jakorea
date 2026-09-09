@@ -47,15 +47,6 @@ function mapKakaoApprovalStatus(raw?: string | null): KakaoApprovalStatus {
   return 'UNKNOWN'
 }
 
-export const ALIMTALK_APPROVAL_STATUS_LABEL: Partial<Record<KakaoApprovalStatus, string>> = {
-  PENDING: '검수중',
-  REQUESTED: '검수요청',
-  APPROVED: '승인',
-  REJECTED: '반려',
-  REGISTERED: '등록',
-  UNKNOWN: '미확인',
-}
-
 function mapTemplateUsageStatus(useYn?: boolean): TemplateUsageStatus {
   if (useYn === false) return 'SUSPENDED'
   return 'NORMAL'

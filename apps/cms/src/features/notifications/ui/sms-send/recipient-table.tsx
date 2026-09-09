@@ -1,9 +1,8 @@
+import { memo } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import {
-  smsSendRecipientTypeLabel,
-} from '@/features/notifications/model/sms-send/recipients'
+import { smsSendRecipientTypeLabel } from '@/features/notifications/model/sms-send/recipients'
 import type { SmsSendRecipient } from '@/features/notifications/model/sms-send/types'
 import '@/features/notifications/ui/alimtalk-send/recipient-table.css'
 
@@ -18,7 +17,7 @@ type RecipientTableProps = {
   typeColumnTitle: string
 }
 
-export function RecipientTable({
+export const RecipientTable = memo(function RecipientTable({
   recipients,
   selectedIds,
   onSelectedIdsChange,
@@ -76,4 +75,4 @@ export function RecipientTable({
       }}
     />
   )
-}
+})

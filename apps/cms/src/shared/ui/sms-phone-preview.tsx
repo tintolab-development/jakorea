@@ -1,4 +1,5 @@
 import phoneFrameImage from '@/assets/images/message/문자 발송 _ 미리보기.png'
+import { renderNotificationVariableText } from '@/features/notifications/model/shared/render-notification-variable-text'
 import './sms-phone-preview.css'
 
 export type SmsPhonePreviewProps = {
@@ -8,6 +9,8 @@ export type SmsPhonePreviewProps = {
   subject?: string
   bodyText: string
   showSubject?: boolean
+  /** default=시안 실측(383×785), compact=미리보기 모달용 */
+  size?: 'default' | 'compact'
   className?: string
 }
 
@@ -19,6 +22,7 @@ export function SmsPhonePreview({
   subject = '',
   bodyText,
   showSubject = true,
+  size = 'default',
   className,
 }: SmsPhonePreviewProps) {
   const phoneLabel = senderPhone.trim() || '발신번호'
@@ -27,7 +31,15 @@ export function SmsPhonePreview({
   const hasSubject = showSubject && Boolean(subjectText)
 
   return (
-    <div className={['sms-phone-preview', className].filter(Boolean).join(' ')}>
+    <div
+      className={[
+        'sms-phone-preview',
+        size === 'compact' ? 'sms-phone-preview--compact' : '',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <img className="sms-phone-preview__frame" src={phoneFrameImage} alt="" />
       <div className="sms-phone-preview__stage">
         <div className="sms-phone-preview__nav" aria-hidden>
@@ -38,10 +50,16 @@ export function SmsPhonePreview({
           <div className="sms-phone-preview__message">
             <div className="sms-phone-preview__bubble">
               {hasSubject ? (
-                <p className="sms-phone-preview__subject">{subjectText}</p>
+                <p className="sms-phone-preview__subject">
+                  {renderNotificationVariableText(subjectText)}
+                </p>
               ) : null}
               <p className="sms-phone-preview__body">
-                {body || (hasSubject ? '' : '내용을 작성하세요')}
+                {body
+                  ? renderNotificationVariableText(body)
+                  : hasSubject
+                    ? ''
+                    : '내용을 작성하세요'}
               </p>
             </div>
           </div>

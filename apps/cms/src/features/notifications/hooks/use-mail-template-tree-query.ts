@@ -17,10 +17,21 @@ import {
 import type { MailCategoryTreeMapped } from '@/features/notifications/api/adapters/mail-template-adapters'
 import { notificationsQueryKeys } from '@/features/notifications/api/notifications-query-keys'
 import { useNotificationsRemoteEnabled } from '@/features/notifications/hooks/use-notifications-remote-enabled'
+import {
+  applyMailFiltersToSearchParams,
+  pendingFiltersFromSearchParams,
+} from '@/features/notifications/model/mail-template/filter-url'
 import type { MailTemplateItem } from '@/features/notifications/model/mail-template/types'
 
+function mailTreeSearchParamsKey(searchParams: URLSearchParams): string {
+  return applyMailFiltersToSearchParams(
+    new URLSearchParams(),
+    pendingFiltersFromSearchParams(searchParams)
+  ).toString()
+}
+
 export function useMailCategoryTreeQuery(searchParams: URLSearchParams, enabled = true) {
-  const searchParamsKey = searchParams.toString()
+  const searchParamsKey = mailTreeSearchParamsKey(searchParams)
   return useQuery({
     queryKey: notificationsQueryKeys.mailTemplates.tree(searchParamsKey),
     queryFn: () => getMailCategoryTree(new URLSearchParams(searchParamsKey)),
@@ -140,6 +151,9 @@ export function useMailTemplateTreeMutations() {
     mutationFn: syncMailCatalog,
     onSuccess: async () => {
       await invalidateMailTemplateCaches(queryClient)
+      await queryClient.invalidateQueries({
+        queryKey: notificationsQueryKeys.mailSend.senderProfiles(),
+      })
     },
   })
 

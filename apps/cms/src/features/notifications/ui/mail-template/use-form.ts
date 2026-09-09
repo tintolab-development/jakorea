@@ -71,7 +71,11 @@ export function useMailTemplateForm(
   const [senderEmail, setSenderEmail] = useState(initialDraft.senderEmail)
   const compose = useMailCompose(open, resetKey, composeInitial)
 
-  const setTemplateName = useCallback((value: string) => {
+  const setTemplateName = useCallback((value: string, options?: { composing?: boolean }) => {
+    if (options?.composing) {
+      setTemplateNameState(value)
+      return
+    }
     setTemplateNameState(sanitizeMailTemplateNameInput(value))
   }, [])
 
@@ -81,14 +85,16 @@ export function useMailTemplateForm(
     setTemplateNameState(next.templateName)
     setSenderName(next.senderName)
     setSenderEmail(next.senderEmail)
-  }, [open, mode, template])
+    // 모달 open / 편집 대상 변경 시에만 리셋
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional session-scoped reset
+  }, [open, mode, template?.id])
 
   const getDraft = useCallback((): MailTemplateFormDraft => {
     return {
       templateName: templateName.trim(),
       senderName: senderName.trim(),
       senderEmail: senderEmail.trim(),
-      subject: compose.subject.trim(),
+      subject: compose.getSubject().trim(),
       bodyHtml: compose.getBodyHtml(),
       attachmentFileNames: compose.attachmentFileNames,
       newFiles: compose.getNewFiles(),

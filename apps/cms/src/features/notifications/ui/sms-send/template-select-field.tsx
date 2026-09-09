@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { CmsSelect } from '@/shared/ui'
 import type { SmsTemplateItem } from '@/features/notifications/model/sms-template/types'
-import { SMS_TEMPLATE_ITEM_MOCK } from '@/features/notifications/model/sms-template/mock'
 import { PreviewModal } from '@/features/notifications/ui/sms-template/preview-modal'
 import { TemplateSelectModal } from './template-select-modal'
 import '@/features/notifications/ui/mail-send/template-select-modal.css'
@@ -15,13 +14,15 @@ type TemplateSelectFieldProps = {
   templates?: SmsTemplateItem[]
   disabled?: boolean
   onSelect: (template: SmsTemplateItem) => void
+  isTemplateUsable?: (template: SmsTemplateItem) => boolean
 }
 
 export function TemplateSelectField({
   value,
-  templates = SMS_TEMPLATE_ITEM_MOCK,
+  templates = [],
   disabled,
   onSelect,
+  isTemplateUsable,
 }: TemplateSelectFieldProps) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [previewTemplate, setPreviewTemplate] = useState<SmsTemplateItem | null>(null)
@@ -84,6 +85,7 @@ export function TemplateSelectField({
           onClose={handlePickerClose}
           onPreview={setPreviewTemplate}
           onUse={handleUse}
+          isTemplateUsable={isTemplateUsable}
           zIndex={PICKER_Z_INDEX}
         />
       ) : null}

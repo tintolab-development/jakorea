@@ -4,6 +4,7 @@ import { mapMailRecipientCandidates } from '@/features/notifications/api/adapter
 import {
   mapTemplateVariablesCatalog,
   pickNonEmptySendVariables,
+  toTemplateVariablesRequestParams,
   type AlimtalkTemplateVariable,
   type NotificationTemplateVariablesQuery,
 } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
@@ -17,17 +18,24 @@ import {
   fetchSenderProfilesRemote,
   fetchTemplateVariablesRemote,
 } from '@/features/notifications/api/notifications-api-client'
-import { MAIL_SEND_RECIPIENT_MOCK } from '@/features/notifications/model/mail-send/mock'
 import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
+import { resolveScheduledAtForCreateRequest } from '@/features/notifications/model/send-scheduled-at'
 import type { MailSendDraft, MailSendRecipient } from '@/features/notifications/model/mail-send/types'
-import {
-  createMailSendHistoryRowsFromDraft,
-  prependMailSendHistoryMockRows,
-} from '@/features/notifications/model/mail-send-history/session-store'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
 export type MailSenderProfileOption = AlimtalkSenderProfileOption
+
+function assertMailSendRemoteReady(): void {
+  if (!isRealApiModuleEnabled('notifications')) {
+    throw new Error(
+      '알림 API가 활성화되지 않았습니다. VITE_REAL_API_MODULES에 notifications를 추가해 주세요.'
+    )
+  }
+  if (!hasRemoteAdminJwt()) {
+    throw new Error('메일 발송은 관리자 로그인 후 이용할 수 있습니다.')
+  }
+}
 
 export function shouldUseMailSendRemoteApi(): boolean {
   return isRealApiModuleEnabled('notifications') && hasRemoteAdminJwt()
@@ -60,15 +68,7 @@ export function buildMailSendRecipients(recipients: MailSendRecipient[]): Recipi
 }
 
 export async function getMailSenderProfiles(): Promise<MailSenderProfileOption[]> {
-  if (!shouldUseMailSendRemoteApi()) {
-    return [
-      {
-        profileId: 1,
-        senderKey: 'noreply@jakorea.org',
-        displayName: 'JA Korea',
-      },
-    ]
-  }
+  if (!shouldUseMailSendRemoteApi()) return []
   const dto = await fetchSenderProfilesRemote({
     channelType: MAIL_API_CHANNEL_TYPE,
     useYn: true,
@@ -105,11 +105,11 @@ export async function getMailRecipientCandidates(input: {
   const page = input.page ?? 0
   if (!shouldUseMailSendRemoteApi()) {
     return {
-      items: MAIL_SEND_RECIPIENT_MOCK,
-      total: MAIL_SEND_RECIPIENT_MOCK.length,
+      items: [],
+      total: 0,
       page,
       size,
-      totalPages: Math.max(Math.ceil(MAIL_SEND_RECIPIENT_MOCK.length / size), 1),
+      totalPages: 1,
     }
   }
   const dto = await fetchRecipientCandidatesRemote({
@@ -136,13 +136,7 @@ export async function getMailTemplateVariables(
   input: NotificationTemplateVariablesQuery = {}
 ): Promise<AlimtalkTemplateVariable[]> {
   if (!shouldUseMailSendRemoteApi()) return []
-  const dto = await fetchTemplateVariablesRemote({
-    category: input.category,
-    keyword: input.keyword,
-    programId: input.programId,
-    participantType: input.participantType,
-    memberType: input.memberType,
-  })
+  const dto = await fetchTemplateVariablesRemote(toTemplateVariablesRequestParams(input))
   return mapTemplateVariablesCatalog(dto)
 }
 
@@ -159,48 +153,46 @@ export async function submitMailSend(input: {
   idempotencyKey: string
   senderProfileId?: number
   variables?: Record<string, unknown>
-}): Promise<{ mode: 'remote' | 'mock' }> {
+}): Promise<void> {
   const { draft, templateDisplayName, idempotencyKey, senderProfileId, variables } = input
+  assertMailSendRemoteReady()
 
   const numericTemplateId =
     draft.templateId && /^\d+$/.test(draft.templateId.trim())
       ? Number(draft.templateId.trim())
       : null
 
-  if (shouldUseMailSendRemoteApi()) {
-    if (numericTemplateId == null) {
-      throw new Error('메일 발송에는 서버에 등록된 템플릿이 필요합니다.')
-    }
-
-    const programId = parseNotificationSendProgramId(draft.programId)
-    if (programId == null) {
-      throw new Error('대상 프로그램을 선택하세요.')
-    }
-
-    let resolvedSenderProfileId = senderProfileId
-    if (resolvedSenderProfileId == null && draft.senderEmail.trim()) {
-      const profiles = await getMailSenderProfiles()
-      resolvedSenderProfileId = resolveMailSenderProfileId(profiles, draft.senderEmail)
-    }
-
-    const batchVariables = pickNonEmptySendVariables(variables)
-    const body: CreateRequest = {
-      batchName:
-        (templateDisplayName || draft.subject).slice(0, 200).trim() || '메일 발송',
-      templateId: numericTemplateId,
-      programId,
-      scheduledAt: draft.sendTiming === 'scheduled' ? draft.scheduledAt ?? undefined : undefined,
-      recipients: buildMailSendRecipients(draft.recipients),
-      senderProfileId: resolvedSenderProfileId,
-      senderKey: draft.senderEmail.trim() || undefined,
-      ...(batchVariables ? { variables: batchVariables } : {}),
-    }
-
-    await createSendBatchRemote(body, idempotencyKey)
-    return { mode: 'remote' }
+  if (numericTemplateId == null) {
+    throw new Error('메일 발송에는 서버에 등록된 템플릿이 필요합니다.')
   }
 
-  const rows = createMailSendHistoryRowsFromDraft(draft, templateDisplayName)
-  prependMailSendHistoryMockRows(rows)
-  return { mode: 'mock' }
+  const programId = parseNotificationSendProgramId(draft.programId)
+  const isAllProgram = draft.programId?.trim().toLowerCase() === 'all'
+  if (!isAllProgram && programId == null) {
+    throw new Error('대상 프로그램을 선택하세요.')
+  }
+
+  let resolvedSenderProfileId = senderProfileId
+  if (resolvedSenderProfileId == null && draft.senderEmail.trim()) {
+    const profiles = await getMailSenderProfiles()
+    resolvedSenderProfileId = resolveMailSenderProfileId(profiles, draft.senderEmail)
+  }
+
+  const batchVariables = pickNonEmptySendVariables(variables)
+  const body: CreateRequest = {
+    batchName:
+      (templateDisplayName || draft.subject).slice(0, 200).trim() || '메일 발송',
+    templateId: numericTemplateId,
+    scheduledAt: resolveScheduledAtForCreateRequest({
+      sendTiming: draft.sendTiming,
+      scheduledAt: draft.scheduledAt,
+    }),
+    recipients: buildMailSendRecipients(draft.recipients),
+    senderProfileId: resolvedSenderProfileId,
+    senderKey: draft.senderEmail.trim() || undefined,
+  }
+  if (programId != null) body.programId = programId
+  if (batchVariables) body.variables = batchVariables
+
+  await createSendBatchRemote(body, idempotencyKey)
 }

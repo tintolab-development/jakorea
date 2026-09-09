@@ -3,10 +3,7 @@ import { SearchOutlined } from '@ant-design/icons'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, useCmsAlert } from '@/shared/ui'
-import {
-  ALIMTALK_APPROVAL_STATUS_LABEL,
-  isAlimtalkTemplateApproved,
-} from '@/features/notifications/api/adapters/alimtalk-template-adapters'
+import { isAlimtalkTemplateApproved } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
 import type { AlimtalkTemplateItem } from '@/features/notifications/model/alimtalk-template/types'
 import './template-select-modal.css'
 
@@ -20,6 +17,7 @@ type TemplateSelectModalProps = {
   onClose: () => void
   onPreview: (template: AlimtalkTemplateItem) => void
   onUse: (template: AlimtalkTemplateItem) => void
+  isTemplateUsable?: (template: AlimtalkTemplateItem) => boolean
   zIndex?: number
 }
 
@@ -32,17 +30,13 @@ function matchesTemplateName(template: AlimtalkTemplateItem, keyword: string): b
   )
 }
 
-function approvalStatusDisplay(template: AlimtalkTemplateItem): string {
-  if (!template.approvalStatus) return '-'
-  return ALIMTALK_APPROVAL_STATUS_LABEL[template.approvalStatus] ?? template.approvalStatus
-}
-
 export function TemplateSelectModal({
   open,
   templates,
   onClose,
   onPreview,
   onUse,
+  isTemplateUsable,
   zIndex,
 }: TemplateSelectModalProps) {
   const { showAlert } = useCmsAlert()
@@ -73,6 +67,13 @@ export function TemplateSelectModal({
       })
       return
     }
+    if (isTemplateUsable?.(template) === false) {
+      showAlert({
+        title: '안내',
+        content: '현재 프로그램에서는 사용할 수 없는 변수가 포함된 템플릿입니다.',
+      })
+      return
+    }
     onUse(template)
   }
 
@@ -91,15 +92,6 @@ export function TemplateSelectModal({
       ),
     },
     {
-      title: '승인 상태',
-      key: 'approvalStatus',
-      width: 120,
-      align: 'center',
-      className: 'template-select-modal__col-status',
-      onHeaderCell: () => ({ className: 'template-select-modal__col-status' }),
-      render: (_value, record) => approvalStatusDisplay(record),
-    },
-    {
       title: '관리',
       key: 'actions',
       width: 220,
@@ -107,7 +99,8 @@ export function TemplateSelectModal({
       className: 'template-select-modal__col-actions',
       onHeaderCell: () => ({ className: 'template-select-modal__col-actions' }),
       render: (_, record) => {
-        const canUse = isAlimtalkTemplateApproved(record)
+        const canUse =
+          isAlimtalkTemplateApproved(record) && isTemplateUsable?.(record) !== false
         return (
           <div
             className="template-select-modal__row-actions"

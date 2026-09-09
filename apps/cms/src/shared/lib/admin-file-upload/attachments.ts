@@ -45,7 +45,7 @@ export async function createFileAttachment(
     ownerDomain: input.owner.ownerDomain,
     ownerType: input.owner.ownerType,
     ownerId: input.owner.ownerId,
-    attachmentType: input.attachmentType,
+    attachmentType: input.attachmentType?.trim() || 'DEFAULT',
     displayOrder: input.displayOrder,
   }
   return unwrapApiBody<FileAttachmentResponse>(

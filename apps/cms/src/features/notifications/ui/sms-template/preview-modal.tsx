@@ -113,6 +113,7 @@ export function PreviewModal({
 
         <section className="sms-template-preview__phone-shell" aria-label="문자 프리뷰">
           <SmsPhonePreview
+            size="compact"
             senderPhone={senderPhone}
             subject={subject}
             bodyText={bodyText}

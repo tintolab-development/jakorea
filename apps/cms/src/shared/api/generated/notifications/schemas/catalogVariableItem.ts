@@ -5,15 +5,29 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { CatalogVariableItemMemberTypesItem } from './catalogVariableItemMemberTypesItem';
+import type { CatalogVariableItemParticipantTypesItem } from './catalogVariableItemParticipantTypesItem';
 
+/**
+ * Notion 사용 변수 1건. enabled=삽입 허용 SSOT(값 존재와 무관).
+ */
 export interface CatalogVariableItem {
+  /** 카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일. */
   key?: string;
+  /** 본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입. */
   token?: string;
-  description?: string;
+  /** 보조 설명. 없으면 null */
+  description?: string | null;
+  /** true이면 programId 없이 enabled=false. */
   requiresProgram?: boolean;
+  /** 삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능. */
   enabled?: boolean;
+  /** 허용 프로그램 유형 그룹. 비면 제한 없음 */
   programGroups?: string[];
+  /** 필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음 */
   recruitmentTypes?: string[];
-  participantTypes?: string[];
-  memberTypes?: string[];
+  /** 허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER. */
+  participantTypes?: CatalogVariableItemParticipantTypesItem[];
+  /** 허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN. */
+  memberTypes?: CatalogVariableItemMemberTypesItem[];
 }

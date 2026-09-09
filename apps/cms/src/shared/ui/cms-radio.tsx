@@ -34,9 +34,7 @@ export type CmsRadioGroupProps = Omit<RadioGroupProps, 'size'> & {
 
 export const CmsRadioGroup = forwardRef<HTMLDivElement, CmsRadioGroupProps>(
   ({ className, rootClassName, size = 'large', ...rest }, ref) => {
-    const cn = ['app-radio-group', `app-radio-group--${size}`, className]
-      .filter(Boolean)
-      .join(' ')
+    const cn = ['app-radio-group', `app-radio-group--${size}`, className].filter(Boolean).join(' ')
     return <Radio.Group ref={ref} className={cn} rootClassName={rootClassName} {...rest} />
   }
 )

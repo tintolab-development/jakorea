@@ -1,9 +1,10 @@
-import { memo, useEffect, type RefObject } from 'react'
+import { memo, useEffect, useState, type RefObject } from 'react'
 import type { InputRef } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput, FileSelectField } from '@/shared/ui'
 import { RichTextEditor, type Editor } from '@/shared/rich-text'
 import { MAIL_ATTACHMENT_GUIDE_LINES } from '@/features/notifications/model/mail-template/attachments'
+import { SmsVariableTextField } from '@/features/notifications/ui/sms-template/variable-text-field'
 import './compose-fields.css'
 
 type ComposeFieldsProps = {
@@ -34,6 +35,13 @@ export const ComposeFields = memo(function ComposeFields({
   onAttachmentRemove,
   readOnly = false,
 }: ComposeFieldsProps) {
+  // 제목 타이핑은 로컬 state — 부모 setState 없이 입력 반응성 유지
+  const [localSubject, setLocalSubject] = useState(subject)
+
+  useEffect(() => {
+    setLocalSubject(subject)
+  }, [subject])
+
   useEffect(() => {
     if (!editor) return
     editor.setEditable(!readOnly)
@@ -49,30 +57,45 @@ export const ComposeFields = memo(function ComposeFields({
           label="제목"
           required
           fullRow
-          view={subject}
+          view={localSubject}
           edit={
             <div className="mail-template-compose__subject">
-              <CmsInput
-                ref={subjectInputRef}
-                inputSize="large"
-                width="100%"
-                allowClear={false}
+              <SmsVariableTextField
+                value={localSubject}
                 maxLength={subjectMaxLength}
-                placeholder="제목을 작성하세요"
-                value={subject}
-                readOnly={readOnly}
-                onChange={event => {
-                  if (readOnly) return
-                  onSubjectChange(event.target.value)
-                }}
-                onFocus={event => onRememberSubjectRange(event.currentTarget)}
-                onBlur={event => onRememberSubjectRange(event.currentTarget)}
-                onSelect={event => onRememberSubjectRange(event.currentTarget)}
-                onClick={event => onRememberSubjectRange(event.currentTarget)}
-                onKeyUp={event => onRememberSubjectRange(event.currentTarget)}
-              />
+                onValueChange={
+                  readOnly
+                    ? undefined
+                    : next => {
+                        setLocalSubject(next)
+                        onSubjectChange(next)
+                      }
+                }
+              >
+                <CmsInput
+                  ref={subjectInputRef}
+                  inputSize="large"
+                  width="100%"
+                  allowClear={false}
+                  maxLength={subjectMaxLength}
+                  placeholder="제목을 작성하세요"
+                  value={localSubject}
+                  readOnly={readOnly}
+                  onChange={event => {
+                    if (readOnly) return
+                    const next = event.target.value
+                    setLocalSubject(next)
+                    onSubjectChange(next)
+                  }}
+                  onFocus={event => onRememberSubjectRange(event.currentTarget)}
+                  onBlur={event => onRememberSubjectRange(event.currentTarget)}
+                  onSelect={event => onRememberSubjectRange(event.currentTarget)}
+                  onClick={event => onRememberSubjectRange(event.currentTarget)}
+                  onKeyUp={event => onRememberSubjectRange(event.currentTarget)}
+                />
+              </SmsVariableTextField>
               <span className="mail-template-compose__subject-count">
-                {subject.length}/{subjectMaxLength}
+                {localSubject.length}/{subjectMaxLength}
               </span>
             </div>
           }

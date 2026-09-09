@@ -2,6 +2,7 @@ import { normalizeKoreanPhoneDigits } from '@/shared/utils/phone-validation'
 import { mapSenderProfileOptions, type AlimtalkSenderProfileOption } from '@/features/notifications/api/adapters/alimtalk-sender-adapters'
 import {
   mapTemplateVariablesCatalog,
+  toTemplateVariablesRequestParams,
   type AlimtalkTemplateVariable,
   type NotificationTemplateVariablesQuery,
 } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
@@ -13,16 +14,11 @@ import {
   fetchSenderProfilesRemote,
   fetchTemplateVariablesRemote,
 } from '@/features/notifications/api/notifications-api-client'
-import { SMS_SEND_RECIPIENT_MOCK } from '@/features/notifications/model/sms-send/mock'
 import {
   buildSmsSendCreateRequest,
   buildSmsSendPayload,
 } from '@/features/notifications/model/sms-send/payload'
 import type { SmsSendDraft, SmsSendRecipient } from '@/features/notifications/model/sms-send/types'
-import {
-  createSmsSendHistoryRowsFromDraft,
-  prependSmsSendHistoryMockRows,
-} from '@/features/notifications/model/sms-send-history/session-store'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
@@ -44,15 +40,7 @@ export function shouldUseSmsSendRemoteApi(): boolean {
 }
 
 export async function getSmsSenderProfiles(): Promise<SmsSenderProfileOption[]> {
-  if (!shouldUseSmsSendRemoteApi()) {
-    return [
-      {
-        profileId: 1,
-        senderKey: '027832367',
-        displayName: '02-783-2367',
-      },
-    ]
-  }
+  if (!shouldUseSmsSendRemoteApi()) return []
 
   const dto = await fetchSenderProfilesRemote({
     channelType: SMS_API_CHANNEL_TYPE,
@@ -89,11 +77,11 @@ export async function getSmsRecipientCandidates(input: {
 
   if (!shouldUseSmsSendRemoteApi()) {
     return {
-      items: SMS_SEND_RECIPIENT_MOCK,
-      total: SMS_SEND_RECIPIENT_MOCK.length,
+      items: [],
+      total: 0,
       page,
       size,
-      totalPages: Math.max(Math.ceil(SMS_SEND_RECIPIENT_MOCK.length / size), 1),
+      totalPages: 1,
     }
   }
 
@@ -121,13 +109,7 @@ export async function getSmsTemplateVariables(
   input: NotificationTemplateVariablesQuery = {}
 ): Promise<AlimtalkTemplateVariable[]> {
   if (!shouldUseSmsSendRemoteApi()) return []
-  const dto = await fetchTemplateVariablesRemote({
-    category: input.category,
-    keyword: input.keyword,
-    programId: input.programId,
-    participantType: input.participantType,
-    memberType: input.memberType,
-  })
+  const dto = await fetchTemplateVariablesRemote(toTemplateVariablesRequestParams(input))
   return mapTemplateVariablesCatalog(dto)
 }
 
@@ -136,39 +118,32 @@ export async function submitSmsSend(input: {
   templateDisplayName?: string
   idempotencyKey: string
   senderProfileId?: number
-}): Promise<{ mode: 'remote' | 'mock' }> {
+}): Promise<void> {
   const { templateDisplayName, idempotencyKey, senderProfileId } = input
+  assertSmsSendRemoteReady()
   const draft = buildSmsSendPayload(input.draft)
   const numericTemplateId =
     draft.templateId && /^\d+$/.test(draft.templateId.trim()) ? Number(draft.templateId.trim()) : null
 
-  if (shouldUseSmsSendRemoteApi()) {
-    assertSmsSendRemoteReady()
-    if (numericTemplateId == null) {
-      throw new Error('문자 발송에는 서버에 등록된 템플릿이 필요합니다.')
-    }
-
-    let resolvedSenderProfileId = senderProfileId
-    if (resolvedSenderProfileId == null && draft.senderPhone.trim()) {
-      const profiles = await getSmsSenderProfiles()
-      resolvedSenderProfileId = resolveSmsSenderProfileId(profiles, draft.senderPhone)
-    }
-
-    const body = buildSmsSendCreateRequest({
-      draft,
-      templateId: numericTemplateId,
-      senderKey: normalizeKoreanPhoneDigits(draft.senderPhone) || draft.senderPhone.trim(),
-      senderProfileId: resolvedSenderProfileId,
-    })
-    if (templateDisplayName?.trim()) {
-      body.batchName = templateDisplayName.trim().slice(0, 200)
-    }
-
-    await createSendBatchRemote(body, idempotencyKey)
-    return { mode: 'remote' }
+  if (numericTemplateId == null) {
+    throw new Error('문자 발송에는 서버에 등록된 템플릿이 필요합니다.')
   }
 
-  const rows = createSmsSendHistoryRowsFromDraft(draft, templateDisplayName)
-  prependSmsSendHistoryMockRows(rows)
-  return { mode: 'mock' }
+  let resolvedSenderProfileId = senderProfileId
+  if (resolvedSenderProfileId == null && draft.senderPhone.trim()) {
+    const profiles = await getSmsSenderProfiles()
+    resolvedSenderProfileId = resolveSmsSenderProfileId(profiles, draft.senderPhone)
+  }
+
+  const body = buildSmsSendCreateRequest({
+    draft,
+    templateId: numericTemplateId,
+    senderKey: normalizeKoreanPhoneDigits(draft.senderPhone) || draft.senderPhone.trim(),
+    senderProfileId: resolvedSenderProfileId,
+  })
+  if (templateDisplayName?.trim()) {
+    body.batchName = templateDisplayName.trim().slice(0, 200)
+  }
+
+  await createSendBatchRemote(body, idempotencyKey)
 }

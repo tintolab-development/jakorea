@@ -1,9 +1,18 @@
 import type {
-  CatalogResponse,
-  CatalogVariableItem,
   CreateRequest,
+  ListNotificationTemplateVariablesCategory,
+  ListNotificationTemplateVariablesMemberType,
+  ListNotificationTemplateVariablesParams,
+  ListNotificationTemplateVariablesParticipantType,
+  NotificationCatalogVariableItem,
+  NotificationTemplateVariableCatalogResponse,
   RecipientCandidateResponse,
   RecipientRequest,
+} from '@/shared/api/generated/notifications/schemas'
+import {
+  ListNotificationTemplateVariablesCategory as TemplateVariablesCategoryEnum,
+  ListNotificationTemplateVariablesMemberType as TemplateVariablesMemberTypeEnum,
+  ListNotificationTemplateVariablesParticipantType as TemplateVariablesParticipantTypeEnum,
 } from '@/shared/api/generated/notifications/schemas'
 import type { AlimtalkSendRecipient } from '@/features/notifications/model/alimtalk-send/types'
 import type {
@@ -32,6 +41,44 @@ export type NotificationTemplateVariablesQuery = {
   programId?: number
   participantType?: string
   memberType?: string
+}
+
+function pickEnumValue<T extends string>(
+  raw: string | undefined,
+  allowed: readonly T[]
+): T | undefined {
+  const value = raw?.trim()
+  if (!value) return undefined
+  return (allowed as readonly string[]).includes(value) ? (value as T) : undefined
+}
+
+/** programId 미선택 시 쿼리에서 완전히 제외 (undefined/null 전달 금지) */
+export function toTemplateVariablesRequestParams(
+  input: NotificationTemplateVariablesQuery = {}
+): ListNotificationTemplateVariablesParams {
+  const params: ListNotificationTemplateVariablesParams = {}
+  const category = pickEnumValue(
+    input.category,
+    Object.values(TemplateVariablesCategoryEnum) as ListNotificationTemplateVariablesCategory[]
+  )
+  if (category) params.category = category
+  if (input.keyword?.trim()) params.keyword = input.keyword.trim()
+  if (input.programId != null && Number.isFinite(input.programId)) {
+    params.programId = input.programId
+  }
+  const participantType = pickEnumValue(
+    input.participantType,
+    Object.values(
+      TemplateVariablesParticipantTypeEnum
+    ) as ListNotificationTemplateVariablesParticipantType[]
+  )
+  if (participantType) params.participantType = participantType
+  const memberType = pickEnumValue(
+    input.memberType,
+    Object.values(TemplateVariablesMemberTypeEnum) as ListNotificationTemplateVariablesMemberType[]
+  )
+  if (memberType) params.memberType = memberType
+  return params
 }
 
 function mapParticipationType(
@@ -116,7 +163,7 @@ export function mapRecipientCandidates(
 }
 
 export function mapTemplateVariablesCatalog(
-  catalog: CatalogResponse | null | undefined
+  catalog: NotificationTemplateVariableCatalogResponse | null | undefined
 ): AlimtalkTemplateVariable[] {
   const result: AlimtalkTemplateVariable[] = []
   for (const category of catalog?.categories ?? []) {
@@ -148,28 +195,10 @@ export function extractPlaceholderKeysFromTexts(...texts: Array<string | null | 
   return keys
 }
 
-export function formatAlimtalkMissingVariablesMessage(missingKeys: string[]): string {
-  const labels = missingKeys.map(key => key.trim()).filter(Boolean)
-  if (labels.length === 0) return '템플릿 필수 변수가 없습니다.'
-  return `템플릿 필수 변수가 없습니다: ${labels.join(', ')}`
-}
-
-/**
- * BE failedReason 표시용.
- * `NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:사용자 아이디(이메일)`
- * → `템플릿 필수 변수가 없습니다: 사용자 아이디(이메일)`
- */
-export function formatAlimtalkFailedReason(raw?: string | null): string {
-  const text = (raw ?? '').trim()
-  if (!text) return ''
-  const missingPrefix = 'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING'
-  if (text === missingPrefix || text.startsWith(`${missingPrefix}:`)) {
-    const token = text.slice(missingPrefix.length).replace(/^:\s*/, '').trim()
-    return formatAlimtalkMissingVariablesMessage(token ? [token] : [])
-  }
-  if (text.startsWith('필수 변수') || text.startsWith('템플릿 필수 변수')) return text
-  return text
-}
+export {
+  formatNotificationFailedReason as formatAlimtalkFailedReason,
+  formatNotificationMissingVariablesMessage as formatAlimtalkMissingVariablesMessage,
+} from '@/features/notifications/model/shared/format-notification-failed-reason'
 
 function hasNonEmptyVariableValue(
   variables: Record<string, unknown> | null | undefined,
@@ -316,7 +345,7 @@ export function templateUsesProgramRequiredVariable(
 }
 
 function mapCatalogVariable(
-  variable: CatalogVariableItem,
+  variable: NotificationCatalogVariableItem,
   categoryCode?: string,
   categoryLabel?: string
 ): AlimtalkTemplateVariable | null {
@@ -362,7 +391,7 @@ export function buildSendBatchRecipients(
 export function buildCreateSendBatchRequest(input: {
   batchName: string
   templateId: number
-  programId: number
+  programId?: number
   scheduledAt?: string
   senderKey?: string
   senderProfileId?: number
@@ -370,14 +399,15 @@ export function buildCreateSendBatchRequest(input: {
   variables?: Record<string, unknown>
 }): CreateRequest {
   const variables = pickNonEmptySendVariables(input.variables)
-  return {
+  const body: CreateRequest = {
     batchName: input.batchName,
     templateId: input.templateId,
-    programId: input.programId,
     scheduledAt: input.scheduledAt,
     senderKey: input.senderKey,
     senderProfileId: input.senderProfileId,
-    ...(variables ? { variables } : {}),
     recipients: buildSendBatchRecipients(input.recipients),
   }
+  if (input.programId != null) body.programId = input.programId
+  if (variables) body.variables = variables
+  return body
 }

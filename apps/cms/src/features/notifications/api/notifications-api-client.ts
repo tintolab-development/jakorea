@@ -1,5 +1,6 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { getJAKoreaCMSBackendAPINotificationsSubset } from '@/shared/api/generated/notifications/notifications-api'
+import customInstance from '@/shared/api/orval-mutator'
 import type {
   CategoryCreateRequest,
   CategoryMoveRequest,
@@ -11,8 +12,6 @@ import type {
   CreateResponse,
   EmailAttachmentBindRequest,
   EmailAttachmentMutationResponse,
-  ListNotificationDeliveriesParams,
-  ListNotificationTemplatesParams,
   ListSenderProfilesParams,
   NotificationDeliveryDetailResponse,
   NotificationDeliveryListResponse,
@@ -25,11 +24,12 @@ import type {
   SenderProfileListResponse,
   SyncResultResponse,
   SyncSenderProfilesParams,
+  SyncTemplatesParams,
   TemplateMoveRequest,
   TemplateMoveResponse,
   TemplateDeleteResponse,
-  TemplateVariablesParams,
-  CatalogResponse,
+  ListNotificationTemplateVariablesParams,
+  NotificationTemplateVariableCatalogResponse,
   ArchiveNotificationTemplateParams,
   NotificationTemplateMutationResponse,
 } from '@/shared/api/generated/notifications/schemas'
@@ -38,11 +38,21 @@ const MUTATION_OPTIONS = { skipGlobalErrorAlert: true } as const
 
 const notificationsRemoteApi = getJAKoreaCMSBackendAPINotificationsSubset()
 
+/**
+ * Orval `ListNotificationTemplatesParams`는 `{ params: Record }` 래퍼라
+ * axios에 그대로 넘기면 `?params[channelType]=…` 로 나가 channelType 필터가 무시된다.
+ * → flat query (`?channelType=SMS`)로 호출한다.
+ */
 export async function fetchNotificationTemplatesRemote(
   params: Record<string, string>
 ): Promise<NotificationTemplateListResponse> {
-  const query: ListNotificationTemplatesParams = { params }
-  return unwrapApiBody(await notificationsRemoteApi.listNotificationTemplates(query))
+  return unwrapApiBody(
+    await customInstance<unknown>({
+      url: '/api/admin/notification-templates',
+      method: 'GET',
+      params,
+    })
+  )
 }
 
 export async function fetchNotificationTemplateRemote(
@@ -148,10 +158,15 @@ export async function unbindEmailAttachmentRemote(
   )
 }
 
-/** Body 없음 — NHN live pull / local approval mark (FE 일반 화면은 templates[] 미전송) */
-export async function syncNotificationTemplatesRemote(): Promise<SyncResultResponse> {
+/**
+ * Body 없음 — NHN live pull / local approval mark (FE 일반 화면은 templates[] 미전송).
+ * channelType을 넘기면 upsertedCount가 해당 채널 템플릿만 집계된다(타 채널 합산 아님).
+ */
+export async function syncNotificationTemplatesRemote(
+  params?: SyncTemplatesParams
+): Promise<SyncResultResponse> {
   return unwrapApiBody(
-    await notificationsRemoteApi.syncTemplates(undefined, undefined, MUTATION_OPTIONS)
+    await notificationsRemoteApi.syncTemplates(undefined, params, MUTATION_OPTIONS)
   )
 }
 
@@ -176,9 +191,12 @@ export async function fetchRecipientCandidatesRemote(
 }
 
 export async function fetchTemplateVariablesRemote(
-  params?: TemplateVariablesParams
-): Promise<CatalogResponse> {
-  return unwrapApiBody(await notificationsRemoteApi.templateVariables(params))
+  params?: ListNotificationTemplateVariablesParams
+): Promise<NotificationTemplateVariableCatalogResponse> {
+  // BE Controller는 catalog를 직접 반환(ApiResponse 래퍼 없음). unwrap는 passthrough.
+  return unwrapApiBody(
+    await notificationsRemoteApi.listNotificationTemplateVariables(params)
+  )
 }
 
 export async function createSendBatchRemote(
@@ -196,8 +214,14 @@ export async function createSendBatchRemote(
 export async function fetchNotificationDeliveriesRemote(
   params: Record<string, string>
 ): Promise<NotificationDeliveryListResponse> {
-  const query: ListNotificationDeliveriesParams = { params }
-  return unwrapApiBody(await notificationsRemoteApi.listNotificationDeliveries(query))
+  // ListNotificationDeliveriesParams도 `{ params }` 래퍼 — flat query로 호출
+  return unwrapApiBody(
+    await customInstance<unknown>({
+      url: '/api/admin/notification-deliveries',
+      method: 'GET',
+      params,
+    })
+  )
 }
 
 export async function fetchNotificationDeliveryRemote(

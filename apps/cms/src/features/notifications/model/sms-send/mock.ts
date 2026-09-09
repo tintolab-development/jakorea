@@ -7,6 +7,7 @@ import type {
 
 export const SMS_SEND_DEFAULT_PROGRAM_ID = ''
 
+/** 로컬 mock JWT 전용. remote API에서는 GET /api/admin/programs items[].id 를 쓴다. */
 export const SMS_SEND_PROGRAM_MOCK: SmsSendProgram[] = [
   { id: '101', name: 'JA Company Of The Year', year: 2026 },
   { id: '102', name: 'JA Job Shadow', year: 2026 },

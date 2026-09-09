@@ -150,6 +150,9 @@ export function useSmsTemplateTreeMutations() {
     mutationFn: syncSmsCatalog,
     onSuccess: async () => {
       await invalidateSmsTemplateCaches(queryClient)
+      await queryClient.invalidateQueries({
+        queryKey: notificationsQueryKeys.smsSend.senderProfiles(),
+      })
     },
   })
 

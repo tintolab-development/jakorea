@@ -1,5 +1,9 @@
 import type { RecipientCandidateResponse } from '@/shared/api/generated/notifications/schemas'
-import type { MailSendParticipationType, MailSendRecipient } from '@/features/notifications/model/mail-send/types'
+import type {
+  MailSendMemberType,
+  MailSendParticipationType,
+  MailSendRecipient,
+} from '@/features/notifications/model/mail-send/types'
 
 function mapParticipationType(
   candidate: RecipientCandidateResponse
@@ -15,6 +19,26 @@ function mapParticipationType(
   if (raw === 'INSTRUCTOR' || raw.includes('INSTRUCTOR') || raw.includes('강사')) {
     return 'instructor'
   }
+  return ''
+}
+
+function mapMemberType(candidate: RecipientCandidateResponse): MailSendMemberType {
+  const raw = (candidate.memberType || '').trim().toUpperCase()
+  if (!raw) return ''
+  if (
+    raw === 'TEACHER_AND_INSTRUCTOR' ||
+    raw === 'TEACHER_INSTRUCTOR' ||
+    raw.includes('INSTRUCTOR_DUAL') ||
+    raw === 'DUAL'
+  ) {
+    return 'teacher_instructor'
+  }
+  if (raw.includes('SCHOOL_TEACHER') || raw === 'TEACHER' || raw.includes('교사')) {
+    return 'school_teacher'
+  }
+  if (raw === 'INSTRUCTOR' || raw.includes('강사')) return 'instructor'
+  if (raw === 'ADMIN' || raw.includes('관리')) return 'admin'
+  if (raw === 'GENERAL' || raw.includes('일반')) return 'general'
   return ''
 }
 
@@ -38,6 +62,7 @@ export function mapMailRecipientCandidate(
   return {
     id,
     participationType: mapParticipationType(candidate),
+    memberType: mapMemberType(candidate),
     typeLabel: resolveTypeLabel(candidate),
     name: candidate.recipientNameMasked?.trim() || '-',
     email: candidate.recipientContactMasked?.trim() || '-',

@@ -1,5 +1,9 @@
 export const notificationsQueryKeys = {
   all: ['cms', 'notifications'] as const,
+  sendPrograms: {
+    all: () => [...notificationsQueryKeys.all, 'send-programs'] as const,
+    picker: () => [...notificationsQueryKeys.sendPrograms.all(), 'picker'] as const,
+  },
   alimtalkTemplates: {
     all: () => [...notificationsQueryKeys.all, 'alimtalk-templates'] as const,
     list: (searchParamsKey: string) =>
@@ -18,8 +22,8 @@ export const notificationsQueryKeys = {
       [...notificationsQueryKeys.alimtalkSend.all(), 'sender-profiles'] as const,
     recipients: (key: string) =>
       [...notificationsQueryKeys.alimtalkSend.all(), 'recipients', key] as const,
-    variables: (key: string) =>
-      [...notificationsQueryKeys.alimtalkSend.all(), 'variables', key] as const,
+    /** @deprecated use templateVariables.list */
+    variables: (key: string) => notificationsQueryKeys.templateVariables.list(key),
   },
   alimtalkSendHistory: {
     all: () => [...notificationsQueryKeys.all, 'alimtalk-send-history'] as const,
@@ -38,13 +42,22 @@ export const notificationsQueryKeys = {
       [...notificationsQueryKeys.mailTemplates.all(), 'preview', templateId] as const,
     picker: () => [...notificationsQueryKeys.mailTemplates.all(), 'picker'] as const,
   },
+  /**
+   * GET …/template-variables — 채널 공통 카탈로그.
+   * mail/sms/alimtalk이 같은 key를 쓰면 중복 네트워크를 피한다.
+   */
+  templateVariables: {
+    all: () => [...notificationsQueryKeys.all, 'template-variables'] as const,
+    list: (key: string) =>
+      [...notificationsQueryKeys.templateVariables.all(), 'list', key] as const,
+  },
   mailSend: {
     all: () => [...notificationsQueryKeys.all, 'mail-send'] as const,
     senderProfiles: () => [...notificationsQueryKeys.mailSend.all(), 'sender-profiles'] as const,
     recipients: (key: string) =>
       [...notificationsQueryKeys.mailSend.all(), 'recipients', key] as const,
-    variables: (key: string) =>
-      [...notificationsQueryKeys.mailSend.all(), 'variables', key] as const,
+    /** @deprecated use templateVariables.list — 하위 호환용 별칭 */
+    variables: (key: string) => notificationsQueryKeys.templateVariables.list(key),
   },
   mailSendHistory: {
     all: () => [...notificationsQueryKeys.all, 'mail-send-history'] as const,
@@ -68,8 +81,8 @@ export const notificationsQueryKeys = {
     senderProfiles: () => [...notificationsQueryKeys.smsSend.all(), 'sender-profiles'] as const,
     recipients: (key: string) =>
       [...notificationsQueryKeys.smsSend.all(), 'recipients', key] as const,
-    variables: (key: string) =>
-      [...notificationsQueryKeys.smsSend.all(), 'variables', key] as const,
+    /** @deprecated use templateVariables.list */
+    variables: (key: string) => notificationsQueryKeys.templateVariables.list(key),
   },
   smsSendHistory: {
     all: () => [...notificationsQueryKeys.all, 'sms-send-history'] as const,

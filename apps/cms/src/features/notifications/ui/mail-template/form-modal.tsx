@@ -1,5 +1,5 @@
 import { CloseOutlined } from '@ant-design/icons'
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import {
@@ -29,7 +29,7 @@ type BasicSettingsFieldsProps = {
   templateName: string
   senderName: string
   senderEmail: string
-  onTemplateNameChange: (value: string) => void
+  onTemplateNameChange: (value: string, options?: { composing?: boolean }) => void
   onSenderNameChange: (value: string) => void
   onSenderEmailChange: (value: string) => void
 }
@@ -42,6 +42,8 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
   onSenderNameChange,
   onSenderEmailChange,
 }: BasicSettingsFieldsProps) {
+  const composingNameRef = useRef(false)
+
   return (
     <DetailInfoForm title="기본 설정" hideHeader mode="edit">
       <DetailInfoForm.Row type="single">
@@ -57,7 +59,22 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
               allowClear={false}
               placeholder={MAIL_TEMPLATE_NAME_PLACEHOLDER}
               value={templateName}
-              onChange={event => onTemplateNameChange(event.target.value)}
+              onCompositionStart={() => {
+                composingNameRef.current = true
+              }}
+              onCompositionEnd={event => {
+                composingNameRef.current = false
+                onTemplateNameChange(event.currentTarget.value)
+              }}
+              onChange={event => {
+                const next = event.target.value
+                const native = event.nativeEvent as InputEvent
+                if (composingNameRef.current || native.isComposing) {
+                  onTemplateNameChange(next, { composing: true })
+                  return
+                }
+                onTemplateNameChange(next)
+              }}
             />
           }
         />
@@ -322,6 +339,7 @@ export function FormModal({
               <VariablesPanel
                 onInsert={form.insertVariable}
                 groups={variableGroups.length > 0 ? variableGroups : undefined}
+                respectCatalogEnabled={false}
               />
             </div>
           </div>

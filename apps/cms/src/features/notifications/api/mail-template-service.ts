@@ -27,20 +27,16 @@ import {
 } from '@/features/notifications/api/notifications-api-client'
 import {
   mapSyncResultResponse,
+  mailSyncSuccessMessage,
   type AlimtalkSyncOutcome,
 } from '@/features/notifications/api/adapters/alimtalk-sync-adapters'
 import {
   syncMailTemplateAttachments,
   uploadAndBindMailTemplateAttachments,
 } from '@/features/notifications/api/mail-template-attachments'
-import {
-  MAIL_CATEGORY_MOCK,
-  MAIL_TEMPLATE_ITEM_MOCK,
-} from '@/features/notifications/model/mail-template/mock'
 import { pendingFiltersFromSearchParams } from '@/features/notifications/model/mail-template/filter-url'
 import { MAIL_ROOT_CATEGORY_ID, type MailTemplateItem } from '@/features/notifications/model/mail-template/types'
 import { validateMailTemplateName } from '@/features/notifications/model/mail-template/template-name'
-import { filterNotificationTree } from '@/features/notifications/lib/tree'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import type { NotificationTemplateUpsertRequest } from '@/shared/api/generated/notifications/schemas'
@@ -66,7 +62,9 @@ export async function syncMailCatalog(): Promise<{
   senderProfiles: AlimtalkSyncOutcome | null
 }> {
   assertMailTemplatesRemoteReady()
-  const templates = mapSyncResultResponse(await syncNotificationTemplatesRemote())
+  const templates = mapSyncResultResponse(
+    await syncNotificationTemplatesRemote({ channelType: MAIL_API_CHANNEL_TYPE })
+  )
   let senderProfiles: AlimtalkSyncOutcome | null = null
   try {
     senderProfiles = mapSyncResultResponse(
@@ -78,32 +76,13 @@ export async function syncMailCatalog(): Promise<{
   return { templates, senderProfiles }
 }
 
-export function mailSyncSuccessMessage(outcome: AlimtalkSyncOutcome): string {
-  if (outcome.isLocalApprovalMark) {
-    return 'BE가 NHN 모드가 아닙니다(JA_NOTIFICATION_MODE). 카테고리·발신 프로필 연동이 되지 않을 수 있습니다. BE에 JA_NOTIFICATION_MODE=NHN_NOTIFICATION_HUB 설정을 요청해 주세요.'
-  }
-  if (outcome.isNhnLivePull && outcome.upsertedCount > 0) {
-    return `카테고리·발신 프로필 연동이 완료되었습니다. ${outcome.upsertedCount.toLocaleString()}건이 반영되었습니다.`
-  }
-  return '카테고리·발신 프로필 연동이 완료되었습니다.'
-}
-
-function mockCategoryTree(searchParams: URLSearchParams): MailCategoryTreeMapped {
-  const filters = pendingFiltersFromSearchParams(searchParams)
-  const filtered = filterNotificationTree(
-    MAIL_CATEGORY_MOCK,
-    MAIL_TEMPLATE_ITEM_MOCK,
-    filters.categoryName,
-    filters.templateName
-  )
-  return { categories: filtered.categories, templates: filtered.templates }
-}
+export { mailSyncSuccessMessage }
 
 export async function getMailCategoryTree(
   searchParams: URLSearchParams
 ): Promise<MailCategoryTreeMapped> {
   if (!shouldUseMailTemplatesRemoteApi()) {
-    return mockCategoryTree(searchParams)
+    return { categories: [], templates: [] }
   }
 
   const filters = pendingFiltersFromSearchParams(searchParams)
@@ -118,9 +97,7 @@ export async function getMailCategoryTree(
 export async function getMailTemplateDetail(
   templateId: string
 ): Promise<MailTemplateItem | null> {
-  if (!shouldUseMailTemplatesRemoteApi()) {
-    return MAIL_TEMPLATE_ITEM_MOCK.find(item => item.id === templateId) ?? null
-  }
+  if (!shouldUseMailTemplatesRemoteApi()) return null
   const numericId = Number(templateId)
   if (!Number.isFinite(numericId)) return null
   const dto = await fetchNotificationTemplateRemote(numericId)
@@ -131,11 +108,7 @@ export async function getMailTemplatePreview(
   templateId: string,
   fallback?: MailTemplateItem | null
 ): Promise<MailTemplateItem | null> {
-  if (!shouldUseMailTemplatesRemoteApi()) {
-    return (
-      fallback ?? MAIL_TEMPLATE_ITEM_MOCK.find(item => item.id === templateId) ?? null
-    )
-  }
+  if (!shouldUseMailTemplatesRemoteApi()) return fallback ?? null
   const numericId = Number(templateId)
   if (!Number.isFinite(numericId)) return fallback ?? null
   const dto = await fetchNotificationTemplatePreviewRemote(numericId)
@@ -144,14 +117,13 @@ export async function getMailTemplatePreview(
 
 /** 발송 「템플릿 선택」— EMAIL은 APPROVED 필터 없음 */
 export async function getMailSendTemplatePicker(): Promise<MailTemplateItem[]> {
-  if (!shouldUseMailTemplatesRemoteApi()) {
-    return MAIL_TEMPLATE_ITEM_MOCK
-  }
+  if (!shouldUseMailTemplatesRemoteApi()) return []
 
   const dto = await fetchNotificationTemplatesRemote({
     channelType: MAIL_API_CHANNEL_TYPE,
   })
   const fromList = (dto.items ?? [])
+    .filter(item => (item.channelType ?? MAIL_API_CHANNEL_TYPE).toUpperCase() === MAIL_API_CHANNEL_TYPE)
     .map(item => mapMailNotificationTemplateToItem(item))
     .filter((item): item is MailTemplateItem => item != null)
   if (fromList.length > 0) return fromList

@@ -4,17 +4,18 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, CmsSelect } from '@/shared/ui'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { MAIL_SEND_RECIPIENT_MOCK } from '@/features/notifications/model/mail-send/mock'
 import {
+  MAIL_SEND_MEMBER_TYPE_OPTIONS,
   MAIL_SEND_PARTICIPATION_TYPE_OPTIONS,
   filterMailSendRecipients,
+  mailSendRecipientTypeColumnTitle,
   mailSendRecipientTypeLabel,
 } from '@/features/notifications/model/mail-send/recipients'
 import {
   MAIL_SEND_PICKER_PAGE_SIZE,
-  type MailSendParticipationType,
   type MailSendRecipient,
   type MailSendRecipientSearchParams,
+  type MailSendRecipientTypeMode,
 } from '@/features/notifications/model/mail-send/types'
 import './recipient-select-modal.css'
 
@@ -24,6 +25,7 @@ type RecipientSelectModalProps = {
   open: boolean
   candidates?: MailSendRecipient[]
   selectedIds: string[]
+  typeMode: MailSendRecipientTypeMode
   onClose: () => void
   onConfirm: (recipients: MailSendRecipient[]) => void
   onSearch?: (params: MailSendRecipientSearchParams) => void
@@ -35,8 +37,9 @@ type RecipientSelectModalProps = {
 
 export function RecipientSelectModal({
   open,
-  candidates = MAIL_SEND_RECIPIENT_MOCK,
+  candidates = [],
   selectedIds,
+  typeMode,
   onClose,
   onConfirm,
   onSearch,
@@ -45,9 +48,13 @@ export function RecipientSelectModal({
   fetchAllCandidates,
   zIndex = PICKER_Z_INDEX,
 }: RecipientSelectModalProps) {
-  const [participationType, setParticipationType] = useState<MailSendParticipationType | ''>('')
+  const typeColumnTitle = mailSendRecipientTypeColumnTitle(typeMode)
+  const typeOptions =
+    typeMode === 'member' ? MAIL_SEND_MEMBER_TYPE_OPTIONS : MAIL_SEND_PARTICIPATION_TYPE_OPTIONS
+
+  const [typeValue, setTypeValue] = useState('')
   const [keyword, setKeyword] = useState('')
-  const [appliedType, setAppliedType] = useState<MailSendParticipationType | ''>('')
+  const [appliedType, setAppliedType] = useState('')
   const [appliedKeyword, setAppliedKeyword] = useState('')
   const [page, setPage] = useState(1)
   const [selectedById, setSelectedById] = useState<Record<string, MailSendRecipient>>({})
@@ -55,7 +62,7 @@ export function RecipientSelectModal({
 
   useEffect(() => {
     if (!open) return
-    setParticipationType('')
+    setTypeValue('')
     setKeyword('')
     setAppliedType('')
     setAppliedKeyword('')
@@ -68,16 +75,17 @@ export function RecipientSelectModal({
           .map(item => [item.id, item])
       )
     )
-  }, [open])
+  }, [open, typeMode])
 
   const useServerPaging = Boolean(onSearch)
   const filtered = useMemo(() => {
     if (useServerPaging) return candidates
     return filterMailSendRecipients(candidates, {
-      participationType: appliedType,
+      typeMode,
+      typeValue: appliedType,
       keyword: appliedKeyword,
     })
-  }, [appliedKeyword, appliedType, candidates, useServerPaging])
+  }, [appliedKeyword, appliedType, candidates, typeMode, useServerPaging])
 
   const clientTotalPages = Math.ceil(filtered.length / MAIL_SEND_PICKER_PAGE_SIZE)
   const totalPages = useServerPaging ? Math.max(serverTotalPages ?? 1, 1) : clientTotalPages
@@ -106,7 +114,7 @@ export function RecipientSelectModal({
   }
 
   const handleSearch = () => {
-    const nextType = participationType
+    const nextType = typeValue
     const nextKeyword = keyword.trim()
     setAppliedType(nextType)
     setAppliedKeyword(nextKeyword)
@@ -140,7 +148,7 @@ export function RecipientSelectModal({
 
   const columns: ColumnsType<MailSendRecipient> = [
     {
-      title: '유형',
+      title: typeColumnTitle,
       key: 'type',
       width: 140,
       align: 'center',
@@ -192,16 +200,10 @@ export function RecipientSelectModal({
         <div className="mail-send-recipient-select-modal__search">
           <CmsSelect
             inputSize="large"
-            placeholder="참여 유형"
-            value={participationType}
-            onChange={value =>
-              setParticipationType(
-                value === 'participant' || value === 'volunteer' || value === 'instructor'
-                  ? value
-                  : ''
-              )
-            }
-            options={MAIL_SEND_PARTICIPATION_TYPE_OPTIONS}
+            placeholder={typeColumnTitle}
+            value={typeValue || undefined}
+            onChange={value => setTypeValue(String(value ?? ''))}
+            options={typeOptions}
             style={{ width: 160 }}
           />
           <span className="mail-send-recipient-select-modal__search-input">

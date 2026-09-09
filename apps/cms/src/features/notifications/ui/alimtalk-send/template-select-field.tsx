@@ -12,10 +12,18 @@ const PREVIEW_Z_INDEX = 1200
 type TemplateSelectFieldProps = {
   value?: string
   templates: AlimtalkTemplateItem[]
+  disabled?: boolean
   onSelect: (template: AlimtalkTemplateItem) => void
+  isTemplateUsable?: (template: AlimtalkTemplateItem) => boolean
 }
 
-export function TemplateSelectField({ value, templates, onSelect }: TemplateSelectFieldProps) {
+export function TemplateSelectField({
+  value,
+  templates,
+  disabled,
+  onSelect,
+  isTemplateUsable,
+}: TemplateSelectFieldProps) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [previewTemplate, setPreviewTemplate] = useState<AlimtalkTemplateItem | null>(null)
 
@@ -40,11 +48,16 @@ export function TemplateSelectField({ value, templates, onSelect }: TemplateSele
       <span
         className="template-select-field__trigger"
         role="button"
-        tabIndex={0}
+        tabIndex={disabled ? -1 : 0}
+        aria-disabled={disabled || undefined}
         aria-haspopup="dialog"
         aria-expanded={pickerOpen}
-        onClick={() => setPickerOpen(true)}
+        onClick={() => {
+          if (disabled) return
+          setPickerOpen(true)
+        }}
         onKeyDown={event => {
+          if (disabled) return
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault()
             setPickerOpen(true)
@@ -59,6 +72,7 @@ export function TemplateSelectField({ value, templates, onSelect }: TemplateSele
           options={selectOptions}
           open={false}
           showSearch={false}
+          disabled={disabled}
           suffixIcon={<SearchOutlined />}
           tabIndex={-1}
           style={{ width: '100%' }}
@@ -71,6 +85,7 @@ export function TemplateSelectField({ value, templates, onSelect }: TemplateSele
           onClose={handlePickerClose}
           onPreview={setPreviewTemplate}
           onUse={handleUse}
+          isTemplateUsable={isTemplateUsable}
           zIndex={PICKER_Z_INDEX}
         />
       ) : null}

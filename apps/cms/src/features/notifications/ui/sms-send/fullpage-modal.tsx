@@ -1,33 +1,46 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import {
   CmsButton,
-  CmsDatePicker,
   CmsInput,
   CmsPhoneInput,
-  CmsRadio,
-  CmsTextArea,
   ConfirmModal,
   useCmsAlert,
 } from '@/shared/ui'
-import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
+import {
+  getNotificationSendBatchErrorMessage,
+  getNotificationsApiErrorMessage,
+} from '@/features/notifications/api/get-notifications-api-error'
 import {
   getSmsRecipientCandidates,
   resolveSmsSenderProfileId,
   shouldUseSmsSendRemoteApi,
   submitSmsSend,
 } from '@/features/notifications/api/sms-send-service'
-import { SMS_TEMPLATE_ITEM_MOCK } from '@/features/notifications/model/sms-template/mock'
 import { useInvalidateSmsSendHistory } from '@/features/notifications/hooks/use-sms-send-history-query'
 import {
   useSmsRecipientCandidatesQuery,
   useSmsSendTemplatePickerQuery,
   useSmsSenderProfilesQuery,
+  useSmsTemplateVariablesQuery,
 } from '@/features/notifications/hooks/use-sms-send-queries'
-import { SMS_SEND_PROGRAM_MOCK } from '@/features/notifications/model/sms-send/mock'
-import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
+import { useNotificationSendProgramsQuery } from '@/features/notifications/hooks/use-send-programs-query'
+import {
+  canSelectNotificationSendTemplate,
+  isNotificationSendAllProgram,
+  isNotificationSendProgramUnset,
+  parseNotificationSendProgramId,
+} from '@/features/notifications/model/send-program-id'
+import { canUseNotificationSendTemplateForProgram } from '@/features/notifications/model/shared/template-usable-for-program'
+import { SMS_SEND_ALL_PROGRAM_ID } from '@/features/notifications/model/sms-send/types'
+import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
+import { isNotificationCatalogVariableDisabled } from '@/features/notifications/model/shared/catalog-variable-disabled'
+import {
+  buildNotificationTemplateVariablesQuery,
+  inferUniqueRecipientTypeValue,
+} from '@/features/notifications/model/shared/template-variables-query'
 import {
   createManualRecipient,
   resolveSmsSendRecipientTypeMode,
@@ -36,8 +49,11 @@ import {
   toSmsSendParticipantTypeApi,
 } from '@/features/notifications/model/sms-send/recipients'
 import { type SmsSendRecipientSearchParams } from '@/features/notifications/model/sms-send/types'
+import { VariablesPanel } from '@/features/notifications/ui/mail-template/variables-panel'
 import { PreviewModal } from '@/features/notifications/ui/sms-template/preview-modal'
 import { ProgramSelectField } from '@/features/notifications/ui/mail-send/program-select-field'
+import { SendScheduleField } from '@/features/notifications/ui/shared/send-schedule-field'
+import { SmsSendComposeFields } from './compose-fields'
 import { RecipientManualModal } from './recipient-manual-modal'
 import { RecipientSelectModal } from './recipient-select-modal'
 import { RecipientTable } from './recipient-table'
@@ -73,9 +89,13 @@ export function SendFullpageModal({
   const invalidateHistory = useInvalidateSmsSendHistory()
   const form = useSmsSendForm(open, initialTemplateId)
   const remote = shouldUseSmsSendRemoteApi()
-  const templatesQuery = useSmsSendTemplatePickerQuery(open)
-  const templates = templatesQuery.data ?? SMS_TEMPLATE_ITEM_MOCK
+  const canLoadProgramScoped = !isNotificationSendProgramUnset(form.programId)
+  const templatesQuery = useSmsSendTemplatePickerQuery(open && remote && canLoadProgramScoped)
+  const templates = templatesQuery.data ?? []
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewSubject, setPreviewSubject] = useState('')
+  const [previewBodyText, setPreviewBodyText] = useState('')
+  const [previewAt, setPreviewAt] = useState<string | undefined>()
   const [recipientSelectOpen, setRecipientSelectOpen] = useState(false)
   const [recipientManualOpen, setRecipientManualOpen] = useState(false)
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<string[]>([])
@@ -92,12 +112,57 @@ export function SendFullpageModal({
     [form.templateId, templates]
   )
   const senderProfilesQuery = useSmsSenderProfilesQuery(open && remote)
+  const programsQuery = useNotificationSendProgramsQuery(open && remote)
+  const programs = programsQuery.data ?? []
+
+  useEffect(() => {
+    if (!open) return
+    const first = senderProfilesQuery.data?.[0]
+    if (!first) return
+    if (!form.senderPhone.trim()) form.setSenderPhone(first.senderKey)
+  }, [form.senderPhone, form.setSenderPhone, open, senderProfilesQuery.data])
+
+  useEffect(() => {
+    if (!open || !remote || !programsQuery.isError) return
+    showAlert({
+      title: '안내',
+      content: getNotificationsApiErrorMessage(
+        programsQuery.error,
+        '프로그램 목록을 불러오지 못했습니다. 다시 불러오세요.'
+      ),
+    })
+  }, [open, programsQuery.error, programsQuery.isError, remote, showAlert])
+
   const resolvedSenderProfileId = useMemo(() => {
     return resolveSmsSenderProfileId(senderProfilesQuery.data ?? [], form.senderPhone)
   }, [form.senderPhone, senderProfilesQuery.data])
   const programNumericId = parseNotificationSendProgramId(form.programId)
   const recipientTypeMode = resolveSmsSendRecipientTypeMode(form.programId)
   const typeColumnTitle = smsSendRecipientTypeColumnTitle(recipientTypeMode)
+
+  const variablesTypeValue = useMemo(() => {
+    const fromFilter = recipientSearch.typeValue.trim()
+    if (fromFilter) return fromFilter
+    if (recipientTypeMode === 'participation') {
+      return inferUniqueRecipientTypeValue(
+        form.recipients.map(item => item.participationType)
+      )
+    }
+    return inferUniqueRecipientTypeValue(form.recipients.map(item => item.memberType))
+  }, [form.recipients, recipientSearch.typeValue, recipientTypeMode])
+
+  const templateVariablesQuery = useMemo(
+    () =>
+      buildNotificationTemplateVariablesQuery({
+        programId: programNumericId,
+        recipientTypeMode,
+        typeValue: variablesTypeValue,
+        toParticipantTypeApi: toSmsSendParticipantTypeApi,
+        toMemberTypeApi: toSmsSendMemberTypeApi,
+      }),
+    [programNumericId, recipientTypeMode, variablesTypeValue]
+  )
+
   const candidatesQuery = useSmsRecipientCandidatesQuery(
     {
       programId: programNumericId,
@@ -111,9 +176,64 @@ export function SendFullpageModal({
       page: recipientSearch.page,
       size: 50,
     },
-    open && recipientSelectOpen
+    open && recipientSelectOpen && programNumericId != null
+  )
+  const variablesQuery = useSmsTemplateVariablesQuery(
+    templateVariablesQuery,
+    open && remote && canLoadProgramScoped
+  )
+  const variableGroups = useMemo(
+    () => groupMailTemplateVariablesFromCatalog(variablesQuery.data ?? []),
+    [variablesQuery.data]
+  )
+  const isCatalogItemDisabled = useCallback(
+    (label: string) => {
+      const found = (variablesQuery.data ?? []).find(item => item.key === label)
+      return isNotificationCatalogVariableDisabled(found, programNumericId)
+    },
+    [programNumericId, variablesQuery.data]
   )
   const hasTemplates = templates.length > 0
+  const canPickTemplate = canSelectNotificationSendTemplate(form.programId) && hasTemplates
+  const isAllProgram = isNotificationSendAllProgram(form.programId)
+  const isProgramUnset = isNotificationSendProgramUnset(form.programId)
+
+  const isTemplateUsable = useCallback(
+    (template: (typeof templates)[number]) =>
+      canUseNotificationSendTemplateForProgram({
+        texts: [template.subject, template.bodyText],
+        catalog: variablesQuery.data,
+        programNumericId,
+      }),
+    [programNumericId, variablesQuery.data]
+  )
+
+  useEffect(() => {
+    if (!open || !form.templateId) return
+    const selected = templates.find(item => item.id === form.templateId)
+    if (!selected) return
+    if (!isTemplateUsable(selected)) {
+      form.clearTemplate()
+    }
+  }, [form.clearTemplate, form.templateId, isTemplateUsable, open, templates])
+
+  useEffect(() => {
+    if (!open || !remote || !variablesQuery.isError) return
+    showAlert({
+      title: '안내',
+      content: getNotificationsApiErrorMessage(
+        variablesQuery.error,
+        '템플릿 변수 목록을 불러오지 못했습니다.'
+      ),
+    })
+  }, [open, remote, showAlert, variablesQuery.error, variablesQuery.isError])
+
+  function handleDisabledVariableInsert() {
+    showAlert({
+      title: '안내',
+      content: '현재 프로그램/참여 유형에서는 사용할 수 없는 변수입니다.',
+    })
+  }
 
   function handleClose() {
     setPreviewOpen(false)
@@ -134,8 +254,16 @@ export function SendFullpageModal({
   }
 
   function handleOpenRecipientSelect() {
-    if (programNumericId == null) {
-      showAlert({ title: '안내', content: '프로그램을 먼저 선택하세요.' })
+    if (isProgramUnset) {
+      showAlert({ title: '안내', content: '대상 프로그램을 선택하세요.' })
+      return
+    }
+    if (isAllProgram || programNumericId == null) {
+      showAlert({
+        title: '안내',
+        content:
+          '대상 프로그램이 미선택일 때는 프로그램 참여 회원 후보를 조회할 수 없습니다. 수신자 직접 입력을 이용해 주세요.',
+      })
       return
     }
     setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
@@ -143,14 +271,22 @@ export function SendFullpageModal({
   }
 
   function handleOpenRecipientManual() {
-    if (programNumericId == null) {
-      showAlert({ title: '안내', content: '프로그램을 먼저 선택하세요.' })
+    if (isProgramUnset) {
+      showAlert({ title: '안내', content: '대상 프로그램을 선택하세요.' })
       return
     }
     setRecipientManualOpen(true)
   }
 
   function handlePreview() {
+    const snapshot = form.readComposeSnapshot()
+    setPreviewSubject(snapshot.subject)
+    setPreviewBodyText(snapshot.bodyText)
+    setPreviewAt(
+      form.sendTiming === 'scheduled' && form.scheduledAt
+        ? form.scheduledAt.toISOString()
+        : new Date().toISOString()
+    )
     setPreviewOpen(true)
   }
 
@@ -197,7 +333,7 @@ export function SendFullpageModal({
       setSendConfirmOpen(false)
       showAlert({
         title: '문자 발송 실패',
-        content: getNotificationsApiErrorMessage(error, '문자 발송에 실패했습니다.'),
+        content: getNotificationSendBatchErrorMessage(error, '문자 발송에 실패했습니다.'),
       })
     } finally {
       setSending(false)
@@ -273,8 +409,17 @@ export function SendFullpageModal({
                         edit={
                           <ProgramSelectField
                             value={form.programId || undefined}
-                            programs={SMS_SEND_PROGRAM_MOCK}
-                            onSelect={program => form.setProgramId(program.id)}
+                            programs={programs}
+                            onSelect={program => {
+                              form.setProgramId(program.id)
+                              form.clearRecipients()
+                              setSelectedRecipientIds([])
+                            }}
+                            onClearProgram={() => {
+                              form.setProgramId(SMS_SEND_ALL_PROGRAM_ID)
+                              form.clearRecipients()
+                              setSelectedRecipientIds([])
+                            }}
                           />
                         }
                       />
@@ -288,7 +433,8 @@ export function SendFullpageModal({
                           <TemplateSelectField
                             value={form.templateId}
                             templates={templates}
-                            disabled={!hasTemplates}
+                            disabled={!canPickTemplate}
+                            isTemplateUsable={isTemplateUsable}
                             onSelect={form.applyTemplate}
                           />
                         }
@@ -328,29 +474,13 @@ export function SendFullpageModal({
                         required
                         view={form.sendTiming === 'immediate' ? '즉시 발송' : '예약 발송'}
                         edit={
-                          <div className="mail-send-fullpage__timing">
-                            <CmsRadio.Group
-                              value={form.sendTiming}
-                              onChange={event => {
-                                const next = event.target.value
-                                if (next === 'immediate' || next === 'scheduled') {
-                                  form.setSendTiming(next)
-                                }
-                              }}
-                            >
-                              <CmsRadio value="immediate">즉시 발송</CmsRadio>
-                              <CmsRadio value="scheduled">예약 발송</CmsRadio>
-                            </CmsRadio.Group>
-                            <span className="mail-send-fullpage__timing-divider" aria-hidden />
-                            <CmsDatePicker
-                              showTime
-                              inputSize="large"
-                              placeholder="날짜를 선택하세요"
-                              disabled={form.sendTiming !== 'scheduled'}
-                              value={form.scheduledAt}
-                              onChange={value => form.setScheduledAt(value)}
-                            />
-                          </div>
+                          <SendScheduleField
+                            className="mail-send-fullpage__timing"
+                            sendTiming={form.sendTiming}
+                            scheduledAt={form.scheduledAt}
+                            onSendTimingChange={form.setSendTiming}
+                            onScheduledAtChange={form.setScheduledAt}
+                          />
                         }
                       />
                     </DetailInfoForm.Row>
@@ -400,96 +530,51 @@ export function SendFullpageModal({
 
                 <section className="mail-send-fullpage__widget">
                   <h3 className="mail-send-fullpage__section-title">3. 문자 작성</h3>
-                  <DetailInfoForm
-                    title="문자 작성"
-                    hideHeader
-                    mode="edit"
-                    className="mail-send-fullpage__compose"
-                  >
-                    {form.showSubject ? (
-                      <DetailInfoForm.Row type="single">
-                        <DetailInfoForm.Field
-                          label="제목"
-                          required
-                          fullRow
-                          view={form.subject}
-                          edit={
-                            <CmsInput
-                              inputSize="large"
-                              width="100%"
-                              allowClear={false}
-                              maxLength={1000}
-                              placeholder="제목을 작성하세요"
-                              value={form.subject}
-                              onChange={event => form.setSubject(event.target.value)}
-                            />
-                          }
-                        />
-                      </DetailInfoForm.Row>
-                    ) : null}
-                    <DetailInfoForm.Row type="single">
-                      <DetailInfoForm.Field
-                        label="내용"
-                        required
-                        fullRow
-                        view={form.bodyText}
-                        edit={
-                          <div className="sms-send-fullpage__body-field">
-                            <CmsTextArea
-                              inputSize="large"
-                              width="100%"
-                              rows={12}
-                              placeholder="내용을 작성하세요"
-                              value={form.bodyText}
-                              onChange={event => form.setBodyText(event.target.value)}
-                            />
-                            <div className="sms-send-fullpage__byte-row">
-                              <span>SMS는 90byte, LMS/MMS는 2000byte까지 작성할 수 있습니다.</span>
-                              <span
-                                className={
-                                  form.bodyByteLength > form.bodyByteLimit
-                                    ? 'sms-send-fullpage__byte-count sms-send-fullpage__byte-count--danger'
-                                    : 'sms-send-fullpage__byte-count'
-                                }
-                              >
-                                {form.bodyByteLength}/{form.bodyByteLimit} byte
-                              </span>
-                            </div>
-                          </div>
-                        }
-                      />
-                    </DetailInfoForm.Row>
-                  </DetailInfoForm>
+                  <SmsSendComposeFields
+                    composeVersion={form.composeVersion}
+                    initialSubject={form.composeSeed.subject}
+                    initialBodyText={form.composeSeed.bodyText}
+                    showSubject={form.showSubject}
+                    bodyByteLimit={form.bodyByteLimit}
+                    subjectRef={form.subjectRef}
+                    bodyTextRef={form.bodyTextRef}
+                  />
                 </section>
               </div>
+
+              <VariablesPanel
+                onInsert={form.insertVariable}
+                groups={variableGroups.length > 0 ? variableGroups : undefined}
+                onDisabledInsert={handleDisabledVariableInsert}
+                isItemDisabled={isCatalogItemDisabled}
+                itemDisabledReason="현재 프로그램/참여 유형에서는 사용할 수 없는 변수입니다."
+              />
             </div>
           </div>
         </div>
       </TealHeaderModal>
 
-      <PreviewModal
-        open={open && previewOpen}
-        zIndex={1100}
-        templateName={selectedTemplate?.templateName ?? ''}
-        senderPhone={form.senderPhone}
-        messageType={form.messageType}
-        subject={form.subject}
-        bodyText={form.bodyText}
-        attachments={
-          selectedTemplate?.attachments?.length
-            ? selectedTemplate.attachments.map(item => ({
-                name: item.fileName,
-                sizeBytes: item.byteSize,
-              }))
-            : selectedTemplate?.attachmentFileNames.map(name => ({ name }))
-        }
-        previewAt={
-          form.sendTiming === 'scheduled' && form.scheduledAt
-            ? form.scheduledAt.toISOString()
-            : new Date().toISOString()
-        }
-        onClose={() => setPreviewOpen(false)}
-      />
+      {previewOpen ? (
+        <PreviewModal
+          open={open && previewOpen}
+          zIndex={1100}
+          templateName={selectedTemplate?.templateName ?? ''}
+          senderPhone={form.senderPhone}
+          messageType={form.messageType}
+          subject={previewSubject}
+          bodyText={previewBodyText}
+          attachments={
+            selectedTemplate?.attachments?.length
+              ? selectedTemplate.attachments.map(item => ({
+                  name: item.fileName,
+                  sizeBytes: item.byteSize,
+                }))
+              : selectedTemplate?.attachmentFileNames.map(name => ({ name }))
+          }
+          previewAt={previewAt}
+          onClose={() => setPreviewOpen(false)}
+        />
+      ) : null}
       <RecipientSelectModal
         key={recipientSelectOpen ? 'recipient-select-open' : 'recipient-select-closed'}
         open={open && recipientSelectOpen}

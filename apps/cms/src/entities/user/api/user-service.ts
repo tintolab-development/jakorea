@@ -108,6 +108,7 @@ import {
   toAccountDirectoryBulkDeleteTargets,
 } from '@/features/user/api/partition-users-for-bulk-delete'
 import type { MemberListKind } from '@/shared/config/member-list-kinds'
+import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants/delete-guide-modal'
 import { adminPermissionFeeGradeToRoleCode } from '@/features/user/api/admin-approval-role'
 import type { InstructorCertificationUpsertRequest } from '@/shared/api/generated/members/schemas/instructorCertificationUpsertRequest'
 import type { AdminTermsAgreementRequest } from '@/shared/api/generated/members/schemas/adminTermsAgreementRequest'
@@ -1610,7 +1611,7 @@ export async function deleteUser(
       const memberId = resolveMemberIdForApi(userId, options)
       await deleteMemberRemote(memberId, {
         reason,
-        confirmationText: DEFAULT_DELETE_CONFIRMATION_TEXT,
+        confirmationText: DELETE_GUIDE_TYPED_CONFIRM_VALUE,
       })
       return
     } catch (error) {
@@ -1629,8 +1630,6 @@ export async function deleteUser(
 }
 
 const DEFAULT_DELETE_REASON = 'CMS 관리자 회원 삭제'
-/** BE 삭제·익명화 요청 confirmationText — 의도적 확인 문구 */
-const DEFAULT_DELETE_CONFIRMATION_TEXT = '삭제'
 
 /**
  * 목록 탭별 일괄·단건 삭제 (remote). mock에서는 단건 `deleteUser` 루프.
@@ -1660,7 +1659,7 @@ export async function deleteUsersByListKind(
       await bulkDeleteAllAccountsRemote({
         targets: toAccountDirectoryBulkDeleteTargets(users),
         reason,
-        confirmationText: DEFAULT_DELETE_CONFIRMATION_TEXT,
+        confirmationText: DELETE_GUIDE_TYPED_CONFIRM_VALUE,
       })
       return
     }
@@ -1706,7 +1705,7 @@ export async function deleteUsersByListKind(
     await bulkDeleteMembersRemote({
       ids: collectMemberIds(users),
       reason,
-      confirmationText: DEFAULT_DELETE_CONFIRMATION_TEXT,
+      confirmationText: DELETE_GUIDE_TYPED_CONFIRM_VALUE,
     })
   } catch (error) {
     throw new Error(getMemberApiErrorMessage(error, '회원 삭제에 실패했습니다.'))

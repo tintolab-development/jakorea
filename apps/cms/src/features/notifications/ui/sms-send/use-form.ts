@@ -1,16 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
-import { SMS_SEND_DEFAULT_PROGRAM_ID } from '@/features/notifications/model/sms-send/mock'
 import {
   buildSmsSendPayload,
-  estimateSmsSendBodyBytes,
   validateSmsSendDraft,
 } from '@/features/notifications/model/sms-send/payload'
 import { mergeSmsSendRecipients } from '@/features/notifications/model/sms-send/recipients'
-import type {
-  SmsSendDraft,
-  SmsSendRecipient,
-  SmsSendTiming,
+import {
+  SMS_SEND_DEFAULT_PROGRAM_ID,
+  type SmsSendDraft,
+  type SmsSendRecipient,
+  type SmsSendTiming,
 } from '@/features/notifications/model/sms-send/types'
 import type { SmsTemplateItem } from '@/features/notifications/model/sms-template/types'
 
@@ -22,12 +21,16 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
   const [templateId, setTemplateId] = useState<string | undefined>(initialTemplateId)
   const [senderPhone, setSenderPhone] = useState('')
   const [messageType, setMessageType] = useState<SmsTemplateItem['messageType']>('SMS')
-  const [subject, setSubject] = useState('')
-  const [bodyText, setBodyText] = useState('')
   const [attachmentFileNames, setAttachmentFileNames] = useState<string[]>([])
   const [sendTiming, setSendTiming] = useState<SmsSendTiming>('immediate')
   const [scheduledAt, setScheduledAt] = useState<Dayjs | null>(null)
   const [recipients, setRecipients] = useState<SmsSendRecipient[]>([])
+  /** 템플릿 적용·모달 오픈 리셋 시에만 증가 (타이핑과 무관) */
+  const [composeVersion, setComposeVersion] = useState(0)
+  const [composeSeed, setComposeSeed] = useState({ subject: '', bodyText: '' })
+
+  const subjectRef = useRef('')
+  const bodyTextRef = useRef('')
 
   useEffect(() => {
     if (!open) return
@@ -35,21 +38,35 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     setTemplateId(initialTemplateId)
     setSenderPhone('')
     setMessageType('SMS')
-    setSubject('')
-    setBodyText('')
     setAttachmentFileNames([])
     setSendTiming('immediate')
     setScheduledAt(null)
     setRecipients([])
+    subjectRef.current = ''
+    bodyTextRef.current = ''
+    setComposeSeed({ subject: '', bodyText: '' })
+    setComposeVersion(version => version + 1)
   }, [initialTemplateId, open])
 
   const applyTemplate = useCallback((template: SmsTemplateItem) => {
     setTemplateId(template.id)
     setSenderPhone(template.senderPhone)
     setMessageType(template.messageType)
-    setSubject(template.subject)
-    setBodyText(template.bodyText)
     setAttachmentFileNames([...template.attachmentFileNames])
+    subjectRef.current = template.subject
+    bodyTextRef.current = template.bodyText
+    setComposeSeed({ subject: template.subject, bodyText: template.bodyText })
+    setComposeVersion(version => version + 1)
+  }, [])
+
+  const clearTemplate = useCallback(() => {
+    setTemplateId(undefined)
+    setMessageType('SMS')
+    setAttachmentFileNames([])
+    subjectRef.current = ''
+    bodyTextRef.current = ''
+    setComposeSeed({ subject: '', bodyText: '' })
+    setComposeVersion(version => version + 1)
   }, [])
 
   const addRecipients = useCallback((incoming: SmsSendRecipient[]) => {
@@ -68,14 +85,18 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     setRecipients(prev => prev.filter(item => !removeIds.has(item.id)))
   }, [])
 
+  const clearRecipients = useCallback(() => {
+    setRecipients([])
+  }, [])
+
   const getDraft = useCallback((): SmsSendDraft => {
     return buildSmsSendPayload({
       programId,
       templateId,
       senderPhone,
       messageType,
-      subject,
-      bodyText,
+      subject: subjectRef.current,
+      bodyText: bodyTextRef.current,
       attachmentFileNames,
       sendTiming,
       scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
@@ -83,49 +104,65 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     })
   }, [
     attachmentFileNames,
-    bodyText,
     messageType,
     programId,
     recipients,
     scheduledAt,
     sendTiming,
     senderPhone,
-    subject,
     templateId,
   ])
 
   const validateRequired = useCallback(() => validateSmsSendDraft(getDraft()), [getDraft])
 
-  const bodyByteLength = useMemo(() => estimateSmsSendBodyBytes(bodyText), [bodyText])
   const bodyByteLimit = messageType === 'SMS' ? SMS_BODY_BYTE_LIMIT : LMS_MMS_BODY_BYTE_LIMIT
   const showSubject = messageType !== 'SMS'
+
+  const readComposeSnapshot = useCallback(
+    () => ({
+      subject: subjectRef.current,
+      bodyText: bodyTextRef.current,
+    }),
+    []
+  )
+
+  const insertVariable = useCallback((label: string) => {
+    const token = `#{${label}}`
+    const next = `${bodyTextRef.current}${token}`
+    bodyTextRef.current = next
+    setComposeSeed(prev => ({ ...prev, bodyText: next }))
+    setComposeVersion(version => version + 1)
+  }, [])
 
   return {
     programId,
     templateId,
     senderPhone,
     messageType,
-    subject,
-    bodyText,
     attachmentFileNames,
     sendTiming,
     scheduledAt,
     recipients,
-    bodyByteLength,
     bodyByteLimit,
     showSubject,
+    composeVersion,
+    composeSeed,
+    subjectRef,
+    bodyTextRef,
     setProgramId,
     setSenderPhone,
-    setSubject,
-    setBodyText,
     setSendTiming,
     setScheduledAt,
     setRecipients,
     applyTemplate,
+    clearTemplate,
     addRecipients,
     replaceManualRecipients,
     removeRecipients,
+    clearRecipients,
     getDraft,
     validateRequired,
+    readComposeSnapshot,
+    insertVariable,
   }
 }

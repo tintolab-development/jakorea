@@ -7,6 +7,7 @@ import {
   formatAlimtalkMissingVariablesMessage,
   mapTemplateVariablesCatalog,
   pickNonEmptySendVariables,
+  toTemplateVariablesRequestParams,
 } from './alimtalk-send-batch-adapters'
 
 describe('alimtalk-send-batch-adapters placeholders', () => {
@@ -72,7 +73,7 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
     })
   })
 
-  it('발송 요청은 programId 필수이고 variables를 기본 생략한다', () => {
+  it('programId가 있으면 포함하고 variables는 기본 생략한다', () => {
     const request = buildCreateSendBatchRequest({
       batchName: '알림톡 발송',
       templateId: 11,
@@ -95,6 +96,24 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
       actorType: 'MEMBER',
       actorId: 1,
     })
+  })
+
+  it('programId 미전달 시 필드를 omit 한다', () => {
+    const request = buildCreateSendBatchRequest({
+      batchName: 'direct-smoke',
+      templateId: 11,
+      recipients: [
+        {
+          id: 'manual-1',
+          participationType: '',
+          name: '직접',
+          phone: '010-1234-5678',
+          source: 'manual',
+          actorType: 'DIRECT',
+        },
+      ],
+    })
+    expect(request).not.toHaveProperty('programId')
   })
 
   it('DIRECT 수신자는 actorId 없이 recipientContact만 실는다', () => {
@@ -123,6 +142,7 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
 
   it('enabled를 BE 값 그대로 옮기고 로컬 재계산하지 않는다', () => {
     const mapped = mapTemplateVariablesCatalog({
+      totalCount: 2,
       categories: [
         {
           categoryCode: 'name',
@@ -135,6 +155,8 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
               requiresProgram: false,
               enabled: true,
               programGroups: [],
+              recruitmentTypes: [],
+              participantTypes: [],
               memberTypes: ['GENERAL'],
             },
             {
@@ -144,6 +166,9 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
               requiresProgram: true,
               enabled: false,
               programGroups: ['GENERAL'],
+              recruitmentTypes: [],
+              participantTypes: [],
+              memberTypes: [],
             },
           ],
         },
@@ -164,5 +189,23 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
         programGroups: ['GENERAL'],
       }),
     ])
+  })
+})
+
+describe('toTemplateVariablesRequestParams', () => {
+  it('programId 미선택 시 쿼리에서 제외한다', () => {
+    expect(
+      toTemplateVariablesRequestParams({
+        programId: undefined,
+        participantType: 'PARTICIPANT',
+      })
+    ).toEqual({ participantType: 'PARTICIPANT' })
+    expect(toTemplateVariablesRequestParams({})).toEqual({})
+  })
+
+  it('유효한 programId만 포함한다', () => {
+    expect(toTemplateVariablesRequestParams({ programId: 162371 })).toEqual({
+      programId: 162371,
+    })
   })
 })

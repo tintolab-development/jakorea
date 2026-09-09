@@ -74,6 +74,7 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
     if (!open) return
     const next = initialRef.current
     setSubject(next.subject)
+    subjectRef.current = next.subject
     setAttachmentFileNames([...next.attachmentFileNames])
     setNewFiles([])
     setRemovedAttachmentIds([])
@@ -112,7 +113,9 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
   }, [])
 
   const handleSubjectChange = useCallback((value: string) => {
-    setSubject(value.slice(0, MAIL_COMPOSE_SUBJECT_MAX_LENGTH))
+    // ref만 갱신 — 부모 리렌더(수신자 테이블·변수 패널)를 막는다.
+    // UI 표시는 ComposeFields 로컬 state가 담당. insertVariable/리셋 시에만 setSubject.
+    subjectRef.current = value.slice(0, MAIL_COMPOSE_SUBJECT_MAX_LENGTH)
   }, [])
 
   const insertVariable = useCallback((label: string) => {
@@ -125,6 +128,7 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
         range.end,
         MAIL_COMPOSE_SUBJECT_MAX_LENGTH
       )
+      subjectRef.current = next
       setSubject(next)
       subjectRangeRef.current = { start: caret, end: caret }
       requestAnimationFrame(() => {
@@ -189,6 +193,8 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
     return isMailEditorEmpty(bodyHtml, plainText) ? '' : bodyHtml
   }, [api, editor])
 
+  const getSubject = useCallback(() => subjectRef.current, [])
+
   const getPreviewAttachments = useCallback(
     () =>
       attachmentFileNames.map(name => {
@@ -215,6 +221,7 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
     handleAttachmentAdd,
     handleAttachmentRemove,
     getBodyHtml,
+    getSubject,
     getPreviewAttachments,
     getNewFiles,
     getRemovedAttachmentIds,
