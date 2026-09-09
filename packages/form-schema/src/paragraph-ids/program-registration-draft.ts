@@ -35,10 +35,9 @@ export const PROGRAM_REGISTRATION_ECONOMY_SEED_PARAGRAPH_IDS = new Set<string>([
   PROGRAM_REGISTRATION_IDS.educationScheduleSettings,
 ])
 
-/** 교육받은 교사 프로그램 등록 폼 — 학교(교사) 진행, 강사비 섹션 제외 */
+/** 교육받은 교사 프로그램 등록 폼 — 학교(교사) 진행, 강사비·사업 KPI 섹션 제외 */
 export const PROGRAM_REGISTRATION_TRAINED_TEACHERS_SEED_PARAGRAPH_IDS = new Set<string>([
   PROGRAM_REGISTRATION_IDS.basicInfo,
-  PROGRAM_REGISTRATION_IDS.businessKpi,
   PROGRAM_REGISTRATION_IDS.typeSettings,
   PROGRAM_REGISTRATION_IDS.educationCurriculum,
   PROGRAM_REGISTRATION_IDS.educationScheduleSettings,
@@ -90,9 +89,9 @@ export function createProgramRegistrationDraft(
 ): WritingFormDraft {
   const paragraphs: HorizontalTableParagraph[] = [
     createSeedParagraph(PROGRAM_REGISTRATION_IDS.basicInfo, '기본 정보'),
-    createSeedParagraph(PROGRAM_REGISTRATION_IDS.businessKpi, '사업 KPI 목표'),
   ]
   if (variant !== 'trainedTeachers') {
+    paragraphs.push(createSeedParagraph(PROGRAM_REGISTRATION_IDS.businessKpi, '사업 KPI 목표'))
     paragraphs.push(
       createSeedParagraph(
         PROGRAM_REGISTRATION_IDS.wageInfo,

@@ -12,7 +12,6 @@ import {
 } from '@/features/template/ui/form-set/registration-form/1c-1s'
 import {
   TrainedTeachersRegistrationBasicInfoParagraph,
-  TrainedTeachersRegistrationBusinessKpiParagraph,
   TrainedTeachersRegistrationEducationCurriculumParagraph,
   TrainedTeachersRegistrationEducationScheduleSettingsParagraph,
   TrainedTeachersRegistrationTypeSettingsParagraph,
@@ -143,9 +142,8 @@ export function renderProgramRegistrationParagraphBody(
         />
       )
     case PROGRAM_REGISTRATION_IDS.businessKpi:
-      return options?.programRegistrationFormVariant === 'trainedTeachers' ? (
-        <TrainedTeachersRegistrationBusinessKpiParagraph />
-      ) : options?.programRegistrationFormVariant === 'economy' ? (
+      if (options?.programRegistrationFormVariant === 'trainedTeachers') return null
+      return options?.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationBusinessKpiParagraph />
       ) : (
         <ProgramRegistrationBusinessKpiParagraph

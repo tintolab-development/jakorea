@@ -34,7 +34,7 @@
 |--------------|--------------|---------|-----------|--------:|
 | `registration-economy` | 1사1교 프로그램 등록 폼 | A | [registration-economy.json](./form-template-seeds/registration-economy.json) | 5 |
 | `registration-ujat` | UJAT 프로그램 등록 폼 | C | [registration-ujat.json](./form-template-seeds/registration-ujat.json) | 7 |
-| `registration-trained-teachers` | 교육받은 교사 프로그램 등록 폼 | A | [registration-trained-teachers.json](./form-template-seeds/registration-trained-teachers.json) | 5 |
+| `registration-trained-teachers` | 교육받은 교사 프로그램 등록 폼 | A | [registration-trained-teachers.json](./form-template-seeds/registration-trained-teachers.json) | 4 |
 
 ### 모집 양식 (9)
 
@@ -113,7 +113,6 @@
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
 | `program-registration-seed-basic-info` | single_item | horizontal_table | 기본 정보 |
-| `program-registration-seed-business-kpi` | single_item | horizontal_table | 사업 KPI 목표 |
 | `program-registration-seed-type-settings` | single_item | horizontal_table | 프로그램 유형 설정 |
 | `program-registration-seed-education-curriculum` | single_item | horizontal_table | 교육 진행 (커리큘럼) |
 | `program-registration-seed-education-schedule-settings` | single_item | horizontal_table | 교육 진행 일정 설정 |

@@ -1,6 +1,6 @@
 /**
  * 교육받은 교사 프로그램 등록 폼 — 기본 정보
- * (일반과 동일 + 참여자 유형: 학교/기관 디폴트, 나머지 비활성)
+ * (참여자 유형: 학교/기관 고정, 나머지 비활성. 프로그램명·후원사·IPS 등 스크린 기본값)
  */
 import { useEffect } from 'react'
 import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
@@ -54,6 +54,7 @@ export function TrainedTeachersRegistrationBasicInfoParagraph({
       onVolunteerChange={onVolunteerChange}
       hideEducationPlace
       includeFooterIpsType
+      trainedTeachersDefaults
       participantTypesEdit={
         <div className="detail-info-form-inputs-wrapper">
           <CmsCheckbox checkboxSize="large" checked={false} disabled>

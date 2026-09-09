@@ -36,6 +36,10 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { ProgramRegistrationBasicInfoSponsorFields } from '@/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph-sponsor-fields'
 import { ProgramRegistrationBasicInfoTitleFields } from '@/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph-title-fields'
+import {
+  TRAINED_TEACHERS_REGISTRATION_ALL_VALUE,
+  TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX,
+} from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './program-registration-paragraph.css'
 
@@ -69,6 +73,8 @@ type ProgramRegistrationBasicInfoParagraphProps = {
   /** controlled — 부모(editor)에서 등록 완료 스냅샷으로 전달 */
   programTitleKo?: string
   onProgramTitleKoChange?: (title: string) => void
+  /** 교육받은 교사 등록 폼 — overlay 키·기본값 분리 (일반 폼 기본값 유지) */
+  trainedTeachersDefaults?: boolean
 }
 
 export function ProgramRegistrationBasicInfoParagraph({
@@ -86,18 +92,26 @@ export function ProgramRegistrationBasicInfoParagraph({
   onSponsorContactIdChange,
   programTitleKo: programTitleKoProp,
   onProgramTitleKoChange,
+  trainedTeachersDefaults = false,
 }: ProgramRegistrationBasicInfoParagraphProps) {
+  const overlayPrefix = trainedTeachersDefaults
+    ? TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX
+    : 'generalRegistration.basicInfo'
+
   const [businessField, setBusinessField] = useProgramRegistrationOverlayKv(
-    'generalRegistration.basicInfo.businessField',
-    ''
+    `${overlayPrefix}.businessField`,
+    trainedTeachersDefaults ? 'economy_finance' : ''
   )
   const [partnerInvolvement, setPartnerInvolvement] = useProgramRegistrationOverlayKv<
     'yes' | 'no'
-  >('generalRegistration.basicInfo.partnerInvolvement', 'yes')
+  >(`${overlayPrefix}.partnerInvolvement`, trainedTeachersDefaults ? 'no' : 'yes')
   
   const [operationAnchorIso, setOperationAnchorIso] = useProgramRegistrationOverlayKv<
     string | null
-  >('generalRegistration.basicInfo.operationAnchorIso', dayjs().startOf('day').toISOString())
+  >(
+    `${overlayPrefix}.operationAnchorIso`,
+    trainedTeachersDefaults ? null : dayjs().startOf('day').toISOString()
+  )
   const operationAnchorDate = operationAnchorIso ? dayjs(operationAnchorIso) : null
   const setOperationAnchorDate = (next: Dayjs | null) => {
     setOperationAnchorIso(next == null ? null : next.toISOString())
@@ -105,7 +119,7 @@ export function ProgramRegistrationBasicInfoParagraph({
 
   const [operationRangeSeal, setOperationRangeSeal] = useProgramRegistrationOverlayKv<
     OperationRangeSeal
-  >('generalRegistration.basicInfo.operationRangeSeal', null)
+  >(`${overlayPrefix}.operationRangeSeal`, null)
   const operationRange: [Dayjs, Dayjs] | null = useMemo(() => {
     if (operationRangeSeal == null) return null
     return [dayjs(operationRangeSeal.start), dayjs(operationRangeSeal.end)]
@@ -126,39 +140,52 @@ export function ProgramRegistrationBasicInfoParagraph({
 
   const [educationVenueKind, setEducationVenueKind] = useProgramRegistrationOverlayKv<
     'inside' | 'outside' | 'other'
-  >('generalRegistration.basicInfo.educationVenueKind', 'inside')
+  >(`${overlayPrefix}.educationVenueKind`, 'inside')
   const [educationVenueDetail, setEducationVenueDetail] = useProgramRegistrationOverlayKv(
-    'generalRegistration.basicInfo.educationVenueDetail',
+    `${overlayPrefix}.educationVenueDetail`,
     ''
   )
   const [educationCourse, setEducationCourse] = useProgramRegistrationOverlayKv(
-    'generalRegistration.basicInfo.educationCourse',
-    ''
+    `${overlayPrefix}.educationCourse`,
+    trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_ALL_VALUE : ''
   )
   const [ipOwned, setIpOwned] = useProgramRegistrationOverlayKv(
-    'generalRegistration.basicInfo.ipOwned',
-    ''
+    `${overlayPrefix}.ipOwned`,
+    trainedTeachersDefaults ? 'ja' : ''
   )
   const [courseDeliveredBy, setCourseDeliveredBy] = useProgramRegistrationOverlayKv(
-    'generalRegistration.basicInfo.courseDeliveredBy',
-    ''
+    `${overlayPrefix}.courseDeliveredBy`,
+    trainedTeachersDefaults ? 'ja' : ''
   )
   const [footerIpsType, setFooterIpsType] = useProgramRegistrationOverlayKv<
     ProgramRegistrationIpsTypeValue
-  >('generalRegistration.basicInfo.footerIpsType', {
-    category: '',
-    detail: '',
-  })
+  >(
+    `${overlayPrefix}.footerIpsType`,
+    trainedTeachersDefaults
+      ? { category: 'prepare', detail: 'none' }
+      : { category: '', detail: '' }
+  )
+  const surveyItemsDefault = initialProgramRegistrationSurveyItems(trainedTeachersDefaults)
   const [surveyItems] = useProgramRegistrationOverlayKv<
     Record<ProgramRegistrationSurveyItemId, boolean>
-  >('generalRegistration.basicInfo.surveyItems', initialProgramRegistrationSurveyItems())
+  >(`${overlayPrefix}.surveyItems`, surveyItemsDefault)
 
   const toggleSurveyItem = (id: ProgramRegistrationSurveyItemId) => (e: CheckboxChangeEvent) => {
     updateProgramRegistrationOverlayKey<Record<ProgramRegistrationSurveyItemId, boolean>>(
-      'generalRegistration.basicInfo.surveyItems',
-      prev => ({ ...(prev ?? initialProgramRegistrationSurveyItems()), [id]: e.target.checked })
+      `${overlayPrefix}.surveyItems`,
+      prev => ({
+        ...(prev ?? initialProgramRegistrationSurveyItems(trainedTeachersDefaults)),
+        [id]: e.target.checked,
+      })
     )
   }
+
+  const educationCourseOptions = trainedTeachersDefaults
+    ? [
+        { value: TRAINED_TEACHERS_REGISTRATION_ALL_VALUE, label: '전체' },
+        ...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS,
+      ]
+    : [...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]
 
   return (
     <>
@@ -171,6 +198,7 @@ export function ProgramRegistrationBasicInfoParagraph({
         <ProgramRegistrationBasicInfoTitleFields
           programTitleKo={programTitleKoProp}
           onProgramTitleKoChange={onProgramTitleKoChange}
+          trainedTeachersDefaults={trainedTeachersDefaults}
         />
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -259,6 +287,7 @@ export function ProgramRegistrationBasicInfoParagraph({
           onSponsorIdChange={onSponsorIdChange}
           sponsorContactId={sponsorContactIdProp}
           onSponsorContactIdChange={onSponsorContactIdChange}
+          trainedTeachersDefaults={trainedTeachersDefaults}
         />
         {hideEducationPlace ? null : (
           <DetailInfoForm.Row type="single">
@@ -327,7 +356,7 @@ export function ProgramRegistrationBasicInfoParagraph({
                   placeholder="전체"
                   withAllOption={false}
                   width={240}
-                  options={[...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]}
+                  options={educationCourseOptions}
                   value={educationCourse || undefined}
                   onChange={v => setEducationCourse(String(v ?? ''))}
                 />
