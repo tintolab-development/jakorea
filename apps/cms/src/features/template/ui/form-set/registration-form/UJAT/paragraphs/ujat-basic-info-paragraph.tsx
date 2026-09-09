@@ -2,7 +2,7 @@
  * UJAT 프로그램 등록 폼 — 기본 정보
  * (1사 1교 프로그램 등록 폼 기본 정보와 동일하게 DetailInfoForm 3구역: 프로그램명 / 운영·설문 / 교육·IPS)
  */
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -116,7 +116,7 @@ export function UjatBasicInfoParagraph() {
     [operationRange]
   )
 
-  const [individualChecked, setIndividualChecked] = useUjatProgramRegistrationOverlayKv(
+  const [individualChecked] = useUjatProgramRegistrationOverlayKv(
     'ujat.basicInfo.participant.individual',
     false
   )
@@ -124,7 +124,7 @@ export function UjatBasicInfoParagraph() {
     'ujat.basicInfo.participant.organization',
     true
   )
-  const [teacherChecked, setTeacherChecked] = useUjatProgramRegistrationOverlayKv(
+  const [teacherChecked] = useUjatProgramRegistrationOverlayKv(
     'ujat.basicInfo.participant.teacher',
     false
   )
@@ -132,22 +132,6 @@ export function UjatBasicInfoParagraph() {
     'ujat.basicInfo.participant.volunteer',
     true
   )
-
-  useEffect(() => {
-    if (!organizationChecked) setOrganizationChecked(true)
-    if (!volunteerChecked) setVolunteerChecked(true)
-    if (individualChecked) setIndividualChecked(false)
-    if (teacherChecked) setTeacherChecked(false)
-  }, [
-    organizationChecked,
-    volunteerChecked,
-    individualChecked,
-    teacherChecked,
-    setOrganizationChecked,
-    setVolunteerChecked,
-    setIndividualChecked,
-    setTeacherChecked,
-  ])
 
   const [businessField, setBusinessField] = useUjatProgramRegistrationOverlayKv(
     'ujat.basicInfo.businessField',
@@ -384,7 +368,7 @@ export function UjatBasicInfoParagraph() {
                 <CmsCheckbox
                   checkboxSize="large"
                   checked={organizationChecked}
-                  disabled
+                  onChange={e => setOrganizationChecked(e.target.checked)}
                 >
                   {participantTypeLabel('school_institution')}
                 </CmsCheckbox>
@@ -398,7 +382,7 @@ export function UjatBasicInfoParagraph() {
                 <CmsCheckbox
                   checkboxSize="large"
                   checked={volunteerChecked}
-                  disabled
+                  onChange={e => setVolunteerChecked(e.target.checked)}
                 >
                   {participantTypeLabel('volunteer')}
                 </CmsCheckbox>
