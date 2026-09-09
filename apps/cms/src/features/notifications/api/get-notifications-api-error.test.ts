@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  getNotificationSendBatchErrorMessage,
   getNotificationsApiErrorMessage,
   isAlimtalkTemplateDeleteRejectedByNhnError,
   isCategoryHasChildrenError,
@@ -191,5 +192,23 @@ describe('get-notifications-api-error', () => {
         'fallback'
       )
     ).toBe('선택한 관리자가 해당 프로그램에 배정되어 있지 않습니다.')
+  })
+
+  it('PROGRAM_NOT_FOUND는 권한/장애로 오해되지 않는 고정 문구를 쓴다', () => {
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(404, 'PROGRAM_NOT_FOUND', '프로그램을 찾을 수 없습니다.'),
+        'fallback'
+      )
+    ).toBe('선택한 프로그램이 없거나 잘못된 id입니다. 프로그램 목록을 다시 불러오세요.')
+  })
+
+  it('발송 배치 INVALID_VALUE는 예약 시각 재확인 CTA를 붙인다', () => {
+    expect(
+      getNotificationSendBatchErrorMessage(
+        apiError(400, 'INVALID_VALUE', '입력값 또는 요청 조건을 확인해 주세요.'),
+        'fallback'
+      )
+    ).toBe('예약 시간은 현재 이후여야 합니다. 예약 발송 시각을 다시 확인해 주세요.')
   })
 })

@@ -13,6 +13,7 @@ import {
   MAIL_TEMPLATE_NAME_INVALID_MESSAGE,
   MAIL_TEMPLATE_NAME_REQUIRED_MESSAGE,
 } from '@/features/notifications/model/mail-template/template-name'
+import { SCHEDULED_AT_MUST_BE_FUTURE_MESSAGE } from '@/features/notifications/model/send-scheduled-at'
 
 const ERROR_CODE_MESSAGES: Record<string, string> = {
   CATEGORY_HAS_CHILDREN: '하위 카테고리 또는 템플릿이 있어 삭제할 수 없습니다.',
@@ -33,6 +34,8 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   NOTIFICATION_PROGRAM_REQUIRED_FOR_RECIPIENTS: '프로그램을 먼저 선택하세요.',
   NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES:
     '프로그램 필수 변수가 있어 프로그램을 선택하세요.',
+  PROGRAM_NOT_FOUND:
+    '선택한 프로그램이 없거나 잘못된 id입니다. 프로그램 목록을 다시 불러오세요.',
   NOTIFICATION_RECIPIENT_NOT_IN_PROGRAM:
     '선택한 수신자가 해당 프로그램 참여자가 아닙니다.',
   NOTIFICATION_ADMIN_RECIPIENT_NOT_IN_PROGRAM:
@@ -221,6 +224,10 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
     if (serverMessage && serverMessage !== code) return serverMessage
     return ERROR_CODE_MESSAGES.EMAIL_TEMPLATE_DELETE_REJECTED_BY_NHN
   }
+  if (code === 'PROGRAM_NOT_FOUND') {
+    // BE "프로그램을 찾을 수 없습니다."는 권한/장애로 오해되기 쉬움 → FE 고정 문구
+    return ERROR_CODE_MESSAGES.PROGRAM_NOT_FOUND
+  }
   if (
     code === 'NOTIFICATION_TEMPLATE_CATEGORY_NOT_FOUND' ||
     code === 'NOTIFICATION_TEMPLATE_NOT_FOUND' ||
@@ -336,4 +343,14 @@ export function isCategoryNeedsSyncError(error: unknown): boolean {
   const message =
     data != null ? extractApiErrorMessage(data, { httpStatus: 400, fallback: '' }) : ''
   return looksLikeNeedsSyncMessage(message)
+}
+
+/** 발송 배치 POST 전용 — INVALID_VALUE는 예약 시각 재확인 CTA */
+export function getNotificationSendBatchErrorMessage(error: unknown, fallback: string): string {
+  const code = getApiErrorCode(error) ?? extractApiErrorCode(readAxiosData(error))
+  // BE: scheduledAt must be in the future → INVALID_VALUE (field=null, 일반 문구)
+  if (code === 'INVALID_VALUE') {
+    return `${SCHEDULED_AT_MUST_BE_FUTURE_MESSAGE} 예약 발송 시각을 다시 확인해 주세요.`
+  }
+  return getNotificationsApiErrorMessage(error, fallback)
 }
