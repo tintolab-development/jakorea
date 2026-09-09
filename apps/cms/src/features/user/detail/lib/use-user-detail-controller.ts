@@ -186,8 +186,8 @@ export function useUserDetailController({
   const loadProgramHistoryResources = open && mode !== 'permission'
   /** 기본정보 등 다른 LNB — 프로그램 이력·수강 API는 history 탭 진입 시에만 */
   const shouldLoadProgramHistoryTab = loadProgramHistoryResources && tabState.lnb === 'history'
-  /** 회원 상세 정보 탭 — consent-records 등 기본정보 전용 API */
-  const shouldLoadDetailInfoTab = open && mode !== 'permission' && tabState.lnb === 'detail-info'
+  /** 회원 상세 정보 탭 — consent-records·comments 등 기본정보 전용 API (권한 승인 상세도 comments 포함) */
+  const shouldLoadDetailInfoTab = open && tabState.lnb === 'detail-info'
   /** 정산 현황 탭 — 강사·교사 겸 강사 settlement API */
   const shouldLoadPaymentStatusTab =
     open && mode !== 'permission' && tabState.lnb === 'payment-status'
@@ -947,6 +947,14 @@ export function useUserDetailController({
   const startAdminCommentEdit = useCallback(() => {
     if (!displayUser) return
     if (!shouldShowAdminCommentSectionForViewer(currentUser, displayUser)) return
+    // 권한 승인 상세 · 승인 대기: 코멘트 영역은 열람만, 작성 진입 불가
+    if (
+      mode === 'permission' &&
+      (displayUser.permissionApprovalStatus === 'PENDING' ||
+        !displayUser.permissionApprovalStatus)
+    ) {
+      return
+    }
 
     const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
     const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, displayUser.role)
@@ -985,6 +993,7 @@ export function useUserDetailController({
     focusDetailInfoTab()
   }, [
     displayUser,
+    mode,
     basicInfoEntrySource,
     searchParams,
     currentUser,

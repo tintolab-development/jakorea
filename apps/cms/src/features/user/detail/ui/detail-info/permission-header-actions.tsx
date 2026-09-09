@@ -1,6 +1,18 @@
+import { useSearchParams } from 'react-router-dom'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import {
+  canAccessAdminCommentInAdminDetail,
+  shouldShowAdminCommentSectionForViewer,
+} from '@/features/user/shared/lib/admin-provisioned-member-policy'
+import {
+  parseUserBasicInfoEntryQuery,
+  resolveUserBasicInfoBodyKey,
+  USER_BASIC_INFO_ENTRY_QUERY_KEY,
+} from '@/features/user/detail/ui/user-basic-info-section'
+import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
 import type { PermissionHeaderActionsProps } from './user-detail-fullpage-header-actions'
 
 type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'REVOKED'
@@ -28,6 +40,10 @@ export function PermissionHeaderActions({
   onPermissionReject,
   onPermissionResetToPending,
 }: PermissionHeaderActionsProps) {
+  const pageShell = useUserDetailFullpageShell()
+  const [searchParams] = useSearchParams()
+  const currentUser = useAuthStore(state => state.user)
+
   if (!permissionRole) {
     return null
   }
@@ -36,6 +52,29 @@ export function PermissionHeaderActions({
     displayUser.permissionApprovalStatus,
     permissionRole === 'instructor' && isInstructorPermissionRevoked(displayUser)
   )
+
+  const isCommentEditing =
+    pageShell.basicInfoEditing && pageShell.basicInfoEditScope === 'comment'
+
+  const entryFromQuery = parseUserBasicInfoEntryQuery(
+    searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY)
+  )
+  const basicBodyKey = resolveUserBasicInfoBodyKey(
+    pageShell.basicInfoEntrySource,
+    entryFromQuery,
+    displayUser.role
+  )
+  const canEditCommentBody =
+    basicBodyKey === 'all_users' ||
+    basicBodyKey === 'institution' ||
+    basicBodyKey === 'instructor' ||
+    (basicBodyKey === 'admin' && canAccessAdminCommentInAdminDetail(currentUser))
+
+  const showCommentEditStart =
+    !isCommentEditing &&
+    approvalStatus !== 'PENDING' &&
+    shouldShowAdminCommentSectionForViewer(currentUser, displayUser) &&
+    canEditCommentBody
 
   return (
     <div className="info-section-buttons--wrapper">
@@ -93,6 +132,16 @@ export function PermissionHeaderActions({
           }}
         >
           승인 취소
+        </CmsButton>
+      ) : null}
+      {showCommentEditStart ? (
+        <CmsButton
+          key="admin-comment-edit"
+          size="large"
+          variant="primary"
+          onClick={pageShell.onStartAdminCommentEdit}
+        >
+          코멘트 작성
         </CmsButton>
       ) : null}
       {personalInfoButton ? (
