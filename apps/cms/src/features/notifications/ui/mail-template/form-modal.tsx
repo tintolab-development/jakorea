@@ -339,6 +339,7 @@ export function FormModal({
               <VariablesPanel
                 onInsert={form.insertVariable}
                 groups={variableGroups.length > 0 ? variableGroups : undefined}
+                respectCatalogEnabled={false}
               />
             </div>
           </div>

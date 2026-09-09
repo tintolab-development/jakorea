@@ -18,9 +18,14 @@ type VariablesPanelProps = {
   onDisabledInsert?: () => void
   /** remote catalog; 없으면 정적 MAIL_TEMPLATE_VARIABLE_GROUPS */
   groups?: MailVariableGroup[]
-  /** 항목별 비활성 (requiresProgram 등) */
+  /** 항목별 비활성 (발송 화면 requiresProgram 가드 등) */
   isItemDisabled?: (label: string) => boolean
   itemDisabledReason?: string
+  /**
+   * false면 catalog `enabled` 를 무시하고 전부 삽입 가능.
+   * 템플릿 **등록/수정** = false, 발송 = true(기본).
+   */
+  respectCatalogEnabled?: boolean
 }
 
 export const VariablesPanel = memo(function VariablesPanel({
@@ -31,6 +36,7 @@ export const VariablesPanel = memo(function VariablesPanel({
   groups: groupsProp,
   isItemDisabled,
   itemDisabledReason,
+  respectCatalogEnabled = true,
 }: VariablesPanelProps) {
   const [query, setQuery] = useState('')
   const sourceGroups = groupsProp?.length ? groupsProp : MAIL_TEMPLATE_VARIABLE_GROUPS
@@ -48,12 +54,17 @@ export const VariablesPanel = memo(function VariablesPanel({
           <ul className="mail-template-variables__items">
             {group.items.map(variable => {
               const label = getMailVariableLabel(variable)
-              const itemDisabled = Boolean(isItemDisabled?.(label))
+              const catalogLocked =
+                respectCatalogEnabled && variable.enabled === false
+              const itemDisabled = catalogLocked || Boolean(isItemDisabled?.(label))
               const locked = disabled || itemDisabled
               const reason = disabled
                 ? disabledReason
                 : itemDisabled
-                  ? itemDisabledReason || variable.hint
+                  ? itemDisabledReason ||
+                    (catalogLocked
+                      ? '현재 프로그램/참여 유형에서는 사용할 수 없는 변수입니다.'
+                      : variable.hint)
                   : undefined
               return (
                 <li key={label}>
@@ -92,6 +103,7 @@ export const VariablesPanel = memo(function VariablesPanel({
       itemDisabledReason,
       onDisabledInsert,
       onInsert,
+      respectCatalogEnabled,
     ]
   )
 

@@ -378,7 +378,11 @@ export function FormModal({
                           view={form.bodyText}
                           edit={
                             <div className="sms-template-form-modal__body-field">
-                              <SmsVariableTextField value={form.bodyText} multiline>
+                              <SmsVariableTextField
+                                value={form.bodyText}
+                                multiline
+                                onValueChange={form.setBodyText}
+                              >
                                 <CmsTextArea
                                   ref={form.bodyTextRef}
                                   inputSize="large"
@@ -448,6 +452,7 @@ export function FormModal({
               <VariablesPanel
                 onInsert={form.insertVariable}
                 groups={variableGroups.length > 0 ? variableGroups : undefined}
+                respectCatalogEnabled={false}
               />
             </div>
           </div>
