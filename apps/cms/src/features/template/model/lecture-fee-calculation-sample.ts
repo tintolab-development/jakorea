@@ -17,3 +17,12 @@ export const LECTURE_FEE_CALCULATION_SAMPLE_VALUES: LectureFeeCalculationAutofil
   totalStudents: '120',
   totalLectureFee: '2,880,000',
 }
+
+/** 정산 신청서 「강의비 산출 내역」— 교육 진행 차시·총 강의비는 기본값 없음 */
+export const SETTLEMENT_APPLICATION_LECTURE_FEE_CALCULATION_SAMPLE_VALUES: LectureFeeCalculationAutofillValues =
+  {
+    ...LECTURE_FEE_CALCULATION_SAMPLE_VALUES,
+    sessionCount: '',
+    sessionHours: '',
+    totalLectureFee: '',
+  }
