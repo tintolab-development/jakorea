@@ -4,9 +4,10 @@ import {
   getSmsSendHistoryList,
 } from '@/features/notifications/api/sms-send-history-service'
 import { notificationsQueryKeys } from '@/features/notifications/api/notifications-query-keys'
+import { smsSendHistorySearchParamsKey } from '@/features/notifications/api/send-history-search-params-key'
 
 export function useSmsSendHistoryQuery(searchParams: URLSearchParams, enabled = true) {
-  const searchParamsKey = searchParams.toString()
+  const searchParamsKey = smsSendHistorySearchParamsKey(searchParams)
 
   return useQuery({
     queryKey: notificationsQueryKeys.smsSendHistory.list(searchParamsKey),
