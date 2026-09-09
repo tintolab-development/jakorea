@@ -124,6 +124,7 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
 
   it('enabled를 BE 값 그대로 옮기고 로컬 재계산하지 않는다', () => {
     const mapped = mapTemplateVariablesCatalog({
+      totalCount: 2,
       categories: [
         {
           categoryCode: 'name',
@@ -136,6 +137,8 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
               requiresProgram: false,
               enabled: true,
               programGroups: [],
+              recruitmentTypes: [],
+              participantTypes: [],
               memberTypes: ['GENERAL'],
             },
             {
@@ -145,6 +148,9 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
               requiresProgram: true,
               enabled: false,
               programGroups: ['GENERAL'],
+              recruitmentTypes: [],
+              participantTypes: [],
+              memberTypes: [],
             },
           ],
         },
