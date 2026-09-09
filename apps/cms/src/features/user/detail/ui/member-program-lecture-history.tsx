@@ -53,8 +53,12 @@ import {
   DeleteGuideModal,
   ProgramHistoryDeleteBlockedModal,
   buildProgramProgressHistoryDeleteGuide,
+  useCmsAlert,
   type ProgramProgressHistoryDeleteDomain,
 } from '@/shared/ui'
+import { downloadAllMemberLectureReportsRemote } from '@/features/user/api/members-api-client'
+import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
+import { handleError } from '@/shared/utils/error-handler'
 import { CertificateBulkIssueReasonModal } from './modal/certificate-bulk-issue-reason-modal'
 import type { CertificateIssueReasonValue } from './modal/certificate-bulk-issue-reason-modal'
 import { LectureReportSubmissionHistoryModal } from './modal/lecture-report-submission-history-modal'
@@ -248,6 +252,8 @@ export function MemberProgramLectureHistory({
   const [certificateIssueKind, setCertificateIssueKind] = useState<'activity' | 'completion'>(
     'completion'
   )
+  const { showAlert } = useCmsAlert()
+  const [allLectureReportsDownloading, setAllLectureReportsDownloading] = useState(false)
   const [lectureReportHistoryModalOpen, setLectureReportHistoryModalOpen] = useState(false)
   const [lectureReportHistoryTarget, setLectureReportHistoryTarget] = useState<Application | null>(
     null
@@ -268,6 +274,22 @@ export function MemberProgramLectureHistory({
     },
     []
   )
+
+  const handleDownloadAllLectureReports = useCallback(async () => {
+    if (memberId == null || allLectureReportsDownloading) return
+    setAllLectureReportsDownloading(true)
+    try {
+      const job = await downloadAllMemberLectureReportsRemote(memberId)
+      await downloadFromBulkEndpoint(job.downloadUrl, 'lecture-reports-all', 'zip')
+    } catch (error) {
+      const info = handleError(error, {
+        defaultMessage: '강의보고서 일괄 다운로드에 실패했습니다.',
+      })
+      showAlert({ title: '안내', content: info.detail })
+    } finally {
+      setAllLectureReportsDownloading(false)
+    }
+  }, [allLectureReportsDownloading, memberId, showAlert])
 
   const historyDeleteGuide = useMemo(() => {
     if (selectedRowKeys.length === 0) return null
@@ -658,6 +680,20 @@ export function MemberProgramLectureHistory({
                   }
                 >
                   활동인증서 발급
+                </CmsButton>
+              )}
+              {mode === 'instructorLecture' && memberId != null && isMembersRemoteEnabled() && (
+                <CmsButton
+                  variant="secondary"
+                  width={220}
+                  icon={<DownloadOutlined />}
+                  loading={allLectureReportsDownloading}
+                  disabled={allLectureReportsDownloading}
+                  onClick={() => {
+                    void handleDownloadAllLectureReports()
+                  }}
+                >
+                  전체 강의보고서 일괄 다운로드
                 </CmsButton>
               )}
             </div>
