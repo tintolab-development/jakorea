@@ -13,7 +13,7 @@ import { downloadFile } from '@/shared/lib/file-download'
 /** CMS 공지 첨부의 files-domain owner. OpenAPI example은 PROGRAM/APPLICATION이라 공지 전용 값을 둔다. */
 export const NOTICE_FILE_OWNER_DOMAIN = 'CONTENT'
 export const NOTICE_FILE_OWNER_TYPE = 'NOTICE'
-export const NOTICE_FILE_PRIVACY_LEVEL = 'NORMAL'
+export const NOTICE_FILE_PURPOSE = 'NOTICE_ATTACHMENT'
 export const NOTICE_FILE_ATTACHMENT_TYPE = 'NOTICE_ATTACHMENT'
 
 export function noticeFileOwner(noticeId: number): AdminFileUploadOwner {
@@ -21,7 +21,7 @@ export function noticeFileOwner(noticeId: number): AdminFileUploadOwner {
     ownerDomain: NOTICE_FILE_OWNER_DOMAIN,
     ownerType: NOTICE_FILE_OWNER_TYPE,
     ownerId: noticeId,
-    privacyLevel: NOTICE_FILE_PRIVACY_LEVEL,
+    filePurpose: NOTICE_FILE_PURPOSE,
   }
 }
 

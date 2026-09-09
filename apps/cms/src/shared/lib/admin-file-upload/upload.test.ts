@@ -20,7 +20,7 @@ const OWNER = {
   ownerDomain: 'PROGRAM',
   ownerType: 'APPLICATION',
   ownerId: 10001,
-  privacyLevel: 'NORMAL',
+  filePurpose: 'STUDENT_ROSTER',
 } as const
 
 function wrapData<T>(data: T) {
@@ -136,7 +136,7 @@ describe('admin file upload', () => {
       ownerDomain: 'PROGRAM',
       ownerType: 'APPLICATION',
       ownerId: 10001,
-      privacyLevel: 'NORMAL',
+      filePurpose: 'STUDENT_ROSTER',
       originalFileName: 'application-form.pdf',
       contentType: 'application/pdf',
       fileSize: 204800,

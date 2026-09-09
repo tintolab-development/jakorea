@@ -15,6 +15,8 @@ export {
 export {
   createFileAttachment,
   deleteFileObject,
+  fetchFileContentBlob,
+  getFileContentPath,
   getFileDownload,
   listFileAttachments,
 } from '@/shared/lib/admin-file-upload/attachments'

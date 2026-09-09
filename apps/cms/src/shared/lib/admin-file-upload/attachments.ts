@@ -22,7 +22,7 @@ function unwrapApiBody<T>(payload: unknown): T {
 export type CreateFileAttachmentInput = {
   fileObjectId: number
   owner: AdminFileUploadOwner
-  attachmentType?: string
+  attachmentType: string
   displayOrder?: number
 }
 
@@ -90,6 +90,18 @@ export async function getFileDownload(fileObjectId: number): Promise<FileDownloa
       method: 'GET',
     })
   )
+}
+
+export function getFileContentPath(fileObjectId: number): string {
+  return `/api/admin/files/${fileObjectId}/content`
+}
+
+export async function fetchFileContentBlob(fileObjectId: number): Promise<Blob> {
+  return customInstance<Blob>({
+    url: getFileContentPath(fileObjectId),
+    method: 'GET',
+    responseType: 'blob',
+  })
 }
 
 export function parseOwnerResourceId(value: unknown): number | null {

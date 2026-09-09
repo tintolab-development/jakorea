@@ -150,7 +150,7 @@ export async function createUploadRequest(
     ownerDomain: input.owner.ownerDomain,
     ownerType: input.owner.ownerType,
     ownerId: input.owner.ownerId,
-    privacyLevel: input.owner.privacyLevel,
+    filePurpose: input.owner.filePurpose,
     originalFileName: input.originalFileName,
     contentType: input.contentType,
     fileSize: input.fileSize,

@@ -8,14 +8,14 @@ import {
 /** 메일 템플릿 첨부 files-domain owner. CMS `/api/admin/files/attachments` 바인딩은 사용하지 않는다. */
 export const MAIL_TEMPLATE_FILE_OWNER_DOMAIN = 'NOTIFICATION'
 export const MAIL_TEMPLATE_FILE_OWNER_TYPE = 'EMAIL_TEMPLATE'
-export const MAIL_TEMPLATE_FILE_PRIVACY_LEVEL = 'NORMAL'
+export const MAIL_TEMPLATE_FILE_PURPOSE = 'EMAIL_TEMPLATE_ATTACHMENT'
 
 export function mailTemplateFileOwner(templateId: number): AdminFileUploadOwner {
   return {
     ownerDomain: MAIL_TEMPLATE_FILE_OWNER_DOMAIN,
     ownerType: MAIL_TEMPLATE_FILE_OWNER_TYPE,
     ownerId: templateId,
-    privacyLevel: MAIL_TEMPLATE_FILE_PRIVACY_LEVEL,
+    filePurpose: MAIL_TEMPLATE_FILE_PURPOSE,
   }
 }
 
