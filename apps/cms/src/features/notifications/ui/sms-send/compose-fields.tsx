@@ -2,6 +2,7 @@ import { memo, useDeferredValue, useEffect, useMemo, useState, type MutableRefOb
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput, CmsTextArea } from '@/shared/ui'
 import { estimateSmsSendBodyBytes } from '@/features/notifications/model/sms-send/payload'
+import { SmsVariableTextField } from '@/features/notifications/ui/sms-template/variable-text-field'
 import './fullpage-modal.css'
 
 type SmsSendComposeFieldsProps = {
@@ -84,18 +85,27 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
           view={bodyText}
           edit={
             <div className="sms-send-fullpage__body-field">
-              <CmsTextArea
-                inputSize="large"
-                width="100%"
-                rows={12}
-                placeholder="내용을 작성하세요"
+              <SmsVariableTextField
                 value={bodyText}
-                onChange={event => {
-                  const next = event.target.value
+                multiline
+                onValueChange={next => {
                   setBodyText(next)
                   bodyTextRef.current = next
                 }}
-              />
+              >
+                <CmsTextArea
+                  inputSize="large"
+                  width="100%"
+                  rows={12}
+                  placeholder="내용을 작성하세요"
+                  value={bodyText}
+                  onChange={event => {
+                    const next = event.target.value
+                    setBodyText(next)
+                    bodyTextRef.current = next
+                  }}
+                />
+              </SmsVariableTextField>
               <div className="sms-send-fullpage__byte-row">
                 <span>SMS는 90byte, LMS/MMS는 2000byte까지 작성할 수 있습니다.</span>
                 <span
