@@ -21,6 +21,7 @@ import {
   PRE_EDUCATION_SCHEDULE_LABEL,
   shouldUseScheduleEventBlockLayout,
 } from '@/features/program/general/lib/schedule-detail-form'
+import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
 import {
   getProgramRegistrationCurriculumMultiSessionRowPlan,
   shouldHideCurriculumParticipationRowForCommonEduPartWithIpsPerSchedule,
@@ -31,6 +32,7 @@ import {
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
 import { CurriculumAssignmentSettingView } from '@/features/template/ui/shared/curriculum-assignment-setting-view'
+import { IndividualPerScheduleExtraRows } from './individual-per-schedule-extra-rows'
 import {
   educationScheduleAppliedSurfaceRange,
   educationScheduleRangeHasClock,
@@ -209,7 +211,7 @@ export type ProgramRegistrationEducationScheduleCurriculumParagraphProps = {
   ipsScheduleDetail: ProgramRegistrationScheduleDetailKind
   /** 카드 헤더「사전 교육」ON이면 일정 앞에 사전 교육 블록을 두고, 그 블록의 IPS만 Prepare로 고정 */
   scheduleCurriculumPreEducation?: boolean
-  /** 사전 교육/교육 연수 블록 헤딩 라벨 (기본: 사전 교육) */
+  /** 사전 교육/교사 연수 블록 헤딩 라벨 (기본: 사전 교육) */
   preEducationBlockLabel?: string
 }
 
@@ -524,8 +526,33 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     )
     const showEducation = eventExtraPlan.showEducation
     const showIps = eventExtraPlan.showIps
-    const showParticipation = eventExtraPlan.showParticipation
     const showAssignment = eventExtraPlan.showAssignment
+
+    if (showAssignment) {
+      return (
+        <IndividualPerScheduleExtraRows
+          rows={getIndividualMultiRoundPerScheduleTableRows({
+            educationFormScheduleDetail,
+            participationScheduleDetail,
+            ipsScheduleDetail,
+          })}
+          renderField={(field, options) => {
+            if (field === 'assignment') return assignmentField(options.fullRow)
+            if (field === 'education') {
+              return renderEducationFormField(detailIndex, { fullRow: options.fullRow })
+            }
+            if (field === 'ips') {
+              return renderIpsFormField(detailIndex, {
+                fullRow: options.fullRow,
+                layout: options.layout,
+              })
+            }
+            return renderParticipationField(detailIndex, { fullRow: options.fullRow })
+          }}
+        />
+      )
+    }
+
     return (
       <>
         {showEducation && showIps ? (
@@ -541,14 +568,6 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
           <DetailInfoForm.Row type="single">
             {renderIpsFormField(detailIndex, { fullRow: true })}
           </DetailInfoForm.Row>
-        ) : null}
-        {showParticipation ? (
-          <DetailInfoForm.Row type="double">
-            {assignmentField(false)}
-            {renderParticipationField(detailIndex)}
-          </DetailInfoForm.Row>
-        ) : showAssignment ? (
-          <DetailInfoForm.Row type="single">{assignmentField(true)}</DetailInfoForm.Row>
         ) : null}
       </>
     )

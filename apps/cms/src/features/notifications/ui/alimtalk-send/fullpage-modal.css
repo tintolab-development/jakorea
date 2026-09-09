@@ -231,11 +231,6 @@
   width: 100%;
 }
 
-.alimtalk-send-fullpage__timing .cms-datepicker {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
 .alimtalk-send-fullpage__empty {
   display: flex;
   flex: 1 1 auto;

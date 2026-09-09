@@ -23,4 +23,9 @@ export interface MemberPortalInquiryCreateRequest {
      * @maxLength 5000
      */
   content: string;
+  /**
+     * @minItems 0
+     * @maxItems 10
+     */
+  fileObjectIds?: number[];
 }

@@ -573,13 +573,26 @@ export function mapIndividualMemberDetailToUser(
   const addressDetail = detail.addressDetail?.trim()
   if (address) user.detailAddress = address
   if (addressDetail) user.detailAddressDetail = addressDetail
+  const zipCode = detail.zipCode?.trim()
+  if (zipCode) user.zipCode = zipCode
 
   const enrollment = parseIndividualApiEnrollmentStatus(detail.enrollmentStatus)
   if (enrollment) {
     user.schoolEnrollmentStatus = enrollment
   }
 
+  const schoolOrganizationId = coercePositiveInt(detail.schoolOrganizationId)
+  if (schoolOrganizationId != null) {
+    user.individualSchoolOrganizationId = schoolOrganizationId
+  }
+
+  const external1365Id = detail.external1365Id?.trim()
+  if (external1365Id) {
+    user.id1365 = external1365Id
+  }
+
   const schoolName = detail.schoolName?.trim()
+  const affiliationName = detail.affiliationName?.trim()
   const grade = pickTrimmed((detail as { grade?: string }).grade)
   if (schoolName) {
     if (enrollment === 'NOT_ENROLLED') {
@@ -596,8 +609,10 @@ export function mapIndividualMemberDetailToUser(
           : schoolName
     }
   } else if (enrollment === 'NOT_ENROLLED') {
-    // 포털에서 소속 해제 시 schoolName 비움 — 목록 merge가 옛 소속을 되살리지 않도록 명시
-    user.affiliation = undefined
+    // affiliationName 우선 — 포털 미재학 소속. schoolName 비움은 소속 해제로 본다.
+    user.affiliation = affiliationName || undefined
+  } else if (affiliationName) {
+    user.affiliation = affiliationName
   }
   if (detail.termsAgreements?.length) {
     user.termsAgreements = detail.termsAgreements

@@ -13,10 +13,9 @@
   margin-right: calc(50% - 50vw);
   padding: 60px 240px 100px;
   background: var(--color-neutral-cool-50, #f5f7f7);
-  /* 상세 page padding-bottom + ContentShell padding-block → 푸터까지 bg */
-  margin-bottom: calc(-1 * (var(--spacing-80) + var(--content-padding-block)));
-  box-shadow: 0 calc(var(--spacing-80) + var(--content-padding-block)) 0 0
-    var(--color-neutral-cool-50, #f5f7f7);
+  /* 상세 page padding-bottom → 푸터까지 bg */
+  margin-bottom: calc(-1 * var(--spacing-80));
+  box-shadow: 0 var(--spacing-80) 0 0 var(--color-neutral-cool-50, #f5f7f7);
 }
 
 .content {

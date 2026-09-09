@@ -1,26 +1,25 @@
 /**
- * 지급조서(발급용) 단락 — 디자인·기능 검증용 목 회원 기본정보.
- * mock 강사(최강사) 스토리와 맞추고, BANK_OPTIONS/AFFILIATION_OPTIONS value 키와 일치시킨다.
+ * 지급조서(발급용)·정산 신청서 기본 정보 — 양식 관리 미리보기용.
+ * 회원 목 데이터 없이 placeholder만 노출. 지급 목적만 고정 문구.
  */
 
 import { PAYMENT_STATEMENT_DEFAULT_PURPOSE } from '@jakorea/form-schema/consent'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
 
-export const PAYMENT_STATEMENT_BASIC_INFO_SAMPLE_VALUES: PaymentStatementBasicInfoAutofillValues =
-  {
-    nameKo: '최강사',
-    nameEn: 'Choi Kang-sa',
-    residentFront: '850320',
-    residentBack: '1234567',
-    affiliation: 'school',
-    noAffiliation: false,
-    addressRoad: '서울특별시 서초구 서초길 123-22',
-    addressDetail: 'JA빌딩 10층',
-    bankName: 'kb',
-    accountNumber: '123456789012',
-    accountHolder: '최강사',
-    paymentPurpose: PAYMENT_STATEMENT_DEFAULT_PURPOSE,
-  }
+export const PAYMENT_STATEMENT_BASIC_INFO_SAMPLE_VALUES: PaymentStatementBasicInfoAutofillValues = {
+  nameKo: '',
+  nameEn: '',
+  residentFront: '',
+  residentBack: '',
+  affiliation: '',
+  noAffiliation: false,
+  addressRoad: '',
+  addressDetail: '',
+  bankName: '',
+  accountNumber: '',
+  accountHolder: '',
+  paymentPurpose: PAYMENT_STATEMENT_DEFAULT_PURPOSE,
+}
 
 /**
  * 지급조서 사전 동의서 authoring/작성 — 입력란은 비우고, 지급 목적만 고정 문구를 값으로 넣는다.

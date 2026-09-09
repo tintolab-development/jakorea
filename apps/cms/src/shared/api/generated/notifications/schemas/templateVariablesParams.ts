@@ -5,14 +5,29 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { TemplateVariablesCategory } from './templateVariablesCategory';
+import type { TemplateVariablesMemberType } from './templateVariablesMemberType';
+import type { TemplateVariablesParticipantType } from './templateVariablesParticipantType';
 
 export type TemplateVariablesParams = {
 /**
- * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ * 카탈로그 카테고리 코드.
  */
-category?: string;
+category?: TemplateVariablesCategory;
 /**
- * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ * key/description 부분 검색.
  */
 keyword?: string;
+/**
+ * 대상 프로그램 id. 미지정(전체)이면 requiresProgram 항목은 enabled=false.
+ */
+programId?: number;
+/**
+ * 프로그램 선택 시 참여 유형 필터. PARTICIPANT|INSTRUCTOR|VOLUNTEER.
+ */
+participantType?: TemplateVariablesParticipantType;
+/**
+ * 프로그램 미선택(전체) 시 회원 유형 필터.
+ */
+memberType?: TemplateVariablesMemberType;
 };

@@ -93,6 +93,28 @@ describe('mapIndividualMemberDetailToUser', () => {
     expect(user.affiliation).toBe('JA Korea')
   })
 
+  it('affiliationName·zipCode·schoolOrganizationId·external1365Id를 매핑한다', () => {
+    const user = mapIndividualMemberDetailToUser(
+      baseIndividualDetail({
+        enrollmentStatus: 'NOT_ENROLLED',
+        affiliationName: 'JA 봉사단',
+        zipCode: '06236',
+        schoolOrganizationId: 42,
+        external1365Id: '13659999',
+        address: '서울특별시 강남구',
+        addressDetail: '101호',
+      })
+    )
+
+    expect(user.schoolEnrollmentStatus).toBe('NOT_ENROLLED')
+    expect(user.affiliation).toBe('JA 봉사단')
+    expect(user.zipCode).toBe('06236')
+    expect(user.individualSchoolOrganizationId).toBe(42)
+    expect(user.id1365).toBe('13659999')
+    expect(user.detailAddress).toBe('서울특별시 강남구')
+    expect(user.detailAddressDetail).toBe('101호')
+  })
+
   it('ENROLLED이면 enrollmentStatus를 학년 접미사로 붙이지 않는다', () => {
     const user = mapIndividualMemberDetailToUser(
       baseIndividualDetail({

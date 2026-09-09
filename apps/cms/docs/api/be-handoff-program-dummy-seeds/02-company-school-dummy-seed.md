@@ -14,12 +14,12 @@ CMS `/programs/company-school` (legacy `/programs/economy-education`) **목록 �
 
 **관련 문서**
 
-- [programs-company-school-api-backend-handoff.md](./programs-company-school-api-backend-handoff.md)
-- [programs-company-school-detail-api-conversion-status.md](./programs-company-school-detail-api-conversion-status.md)
-- [programs-registration-flow-api-backend-handoff.md](./programs-registration-flow-api-backend-handoff.md)
-- [writing-form-seeds-backend-handoff.md](./writing-form-seeds-backend-handoff.md) (`registration-economy` · `application-economy`)
-- [settlement-item-settings-dummy-seed-backend-request.md](./settlement-item-settings-dummy-seed-backend-request.md) (교통비/숙박비 1사1교)
-- 포맷 참고(대상 제외): [general-program-dummy-seed-backend-request.md](./general-program-dummy-seed-backend-request.md)
+- [programs-company-school-api-backend-handoff.md](../programs-company-school-api-backend-handoff.md)
+- [programs-company-school-detail-api-conversion-status.md](../programs-company-school-detail-api-conversion-status.md)
+- [programs-registration-flow-api-backend-handoff.md](../programs-registration-flow-api-backend-handoff.md)
+- [writing-form-seeds-backend-handoff.md](../writing-form-seeds-backend-handoff.md) (`registration-economy` · `application-economy`)
+- [settlement-item-settings-dummy-seed-backend-request.md](../settlement-item-settings-dummy-seed-backend-request.md) (교통비/숙박비 1사1교)
+- 포맷 참고(대상 제외): [01-general-program-dummy-seed.md](./01-general-program-dummy-seed.md)
 
 > **금지**
 >
@@ -587,7 +587,7 @@ create 직후 form-bindings:
 | 등록 | `registration-economy` |
 | 신청 | `application-economy` |
 
-시드: [writing-form-seeds-backend-handoff.md](./writing-form-seeds-backend-handoff.md).
+시드: [writing-form-seeds-backend-handoff.md](../writing-form-seeds-backend-handoff.md).
 
 ---
 
@@ -601,7 +601,7 @@ create 직후 form-bindings:
 | **CS-30** | 강의보고서 bulk PDF 대상 행 ≥2 |
 | **CS-31** | 기관 신청 pending ≥3 (일괄 승인/반려 QA) |
 | **CS-32** | overview **예정**만 bulk delete 가능 정책용 시드 |
-| **CS-33** | 정산 항목 마스터에 `교통비 (1사1교)` / `숙박비 (1사1교)` 연결 — [settlement-item-settings 시드](./settlement-item-settings-dummy-seed-backend-request.md) |
+| **CS-33** | 정산 항목 마스터에 `교통비 (1사1교)` / `숙박비 (1사1교)` 연결 — [settlement-item-settings 시드](../settlement-item-settings-dummy-seed-backend-request.md) |
 | **CS-34** | 담당자 1명 이상 (managers API 준비 시) |
 | **CS-35** | 설문 responses/summary + answers 샘플 (Phase 9) |
 | **CS-36** | 안정적 numeric/string `programId` — `?programId=` deep-link round-trip |
@@ -802,7 +802,7 @@ Playwright `company-school-edit` 전용. **대표 프로그램명(국문)은 E2E
 
 ## 부록 B — 일반 프로그램 시드와의 차이
 
-| 항목 | 1사1교 (본 문서) | 일반 ([general-program-dummy-seed](./general-program-dummy-seed-backend-request.md)) |
+| 항목 | 1사1교 (본 문서) | 일반 ([01-general-program-dummy-seed](./01-general-program-dummy-seed.md)) |
 |------|------------------|-------------------------------------------------------------------------------------|
 | `programType` | `COMPANY_SCHOOL` | `GENERAL` |
 | CASE 축 | lifecycle × survey × 운영 표면 | audience × structure × session × LNB 매트릭스 |

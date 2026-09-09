@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import {
+  AGREEMENT_NOTICE_PARAGRAPH_IDS,
   AGREEMENT_NOTICE_SUBJECT_ITEM_IDS,
   type ShortEssayParagraph,
   type SubjectiveParagraph,
@@ -7,7 +8,7 @@ import {
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { ParagraphLabelInput } from '@/features/template/ui/shared/paragraph-label-input'
-import { CmsDateTextInput, CmsPhoneInput } from '@/shared/ui'
+import { CmsDateTextInput, CmsInput, CmsPhoneInput } from '@/shared/ui'
 import './short-essay.css'
 
 /** 주관식형 (short_essay) — 단락 바디 슬롯 */
@@ -78,7 +79,8 @@ export function ShortEssay({
           },
         ]
   const showItemTitle = items.length >= 2 ? true : (paragraph.showItemTitle ?? false)
-  const itemInputRows = paragraph.itemInputRows ?? 5
+  const itemInputRows = paragraph.itemInputRows ?? 1
+  const singleLineExpandable = itemInputRows === 1
   const maxLength = paragraph.maxLength
 
   const updateItemBodyText = (id: string, bodyText: string) => {
@@ -113,7 +115,14 @@ export function ShortEssay({
   }
 
   return (
-    <div className="short-essay-items">
+    <div
+      className={[
+        'short-essay-items',
+        singleLineExpandable ? 'short-essay-items--single-line-default' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       {items.map((item, index) => {
         const itemLabel = showItemTitle
           ? (item.label ?? `Title ${String(index + 1).padStart(2, '0')}`)
@@ -136,6 +145,7 @@ export function ShortEssay({
           )
         }
 
+        const isName = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name
         const isBirth = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth
         const isPhone = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone
 
@@ -147,6 +157,7 @@ export function ShortEssay({
             value={item.bodyText}
             placeholder={item.placeholder ?? ph}
             rows={itemInputRows}
+            expandableFromSingleRow={singleLineExpandable}
             maxLength={maxLength}
             showCount={maxLength != null}
             onClick={event => {
@@ -155,7 +166,16 @@ export function ShortEssay({
             }}
             onChange={isBodyInteractive ? e => updateItemBodyText(item.id, e.target.value) : undefined}
             control={
-              isBirth ? (
+              isName ? (
+                <CmsInput
+                  id={`short-essay-${item.id}`}
+                  inputSize="large"
+                  width="100%"
+                  value={item.bodyText}
+                  placeholder={item.placeholder ?? '성명을 입력해 주세요'}
+                  onChange={e => updateItemBodyText(item.id, e.target.value)}
+                />
+              ) : isBirth ? (
                 <CmsDateTextInput
                   id={`short-essay-${item.id}`}
                   inputSize="large"
@@ -163,7 +183,6 @@ export function ShortEssay({
                   value={item.bodyText}
                   placeholder={item.placeholder ?? '1991.01.01'}
                   maxLength={10}
-                  disabled={!isBodyInteractive}
                   onValueChange={value => updateItemBodyText(item.id, value)}
                 />
               ) : isPhone ? (
@@ -173,13 +192,14 @@ export function ShortEssay({
                   width="100%"
                   value={item.bodyText}
                   placeholder={item.placeholder ?? '010-1234-5678'}
-                  disabled={!isBodyInteractive}
                   onChange={event => updateItemBodyText(item.id, event.target.value)}
                 />
               ) : undefined
             }
           />
-          {isCardSelected && index > 0 ? (
+          {isCardSelected &&
+          index > 0 &&
+          paragraph.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.subject ? (
             <ItemDeleteButton
               className="item-delete-button short-essay-item-delete"
               aria-label={`항목 ${index + 1} 삭제`}
@@ -222,6 +242,7 @@ export function subjectiveParagraphToShortEssayView(p: SubjectiveParagraph): Sho
     bodyPlaceholder,
     bodyText: '',
     showItemTitle: mappedItems.length >= 2 ? true : false,
+    itemInputRows: 1,
     items: mappedItems,
   }
 }

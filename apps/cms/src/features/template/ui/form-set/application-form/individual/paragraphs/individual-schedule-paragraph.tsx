@@ -3,7 +3,10 @@ import {
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { ProgramApplicationFormInstitutionFixedScheduleParagraph } from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-fixed-schedule-paragraph'
-import { ProgramApplicationScheduleTemplateHintParagraph } from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
+import {
+  ProgramApplicationScheduleTemplateHintParagraph,
+  PROGRAM_APPLICATION_SCHEDULE_STRUCTURE_HINT,
+} from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
 
 /** 프로그램 참여자 신청(개인) — 진행 희망 교육 일정 (기관과 동일 연동 규칙, 기간 지정 케이스 없음) */
 export function ProgramApplicationFormIndividualScheduleParagraph({
@@ -15,11 +18,15 @@ export function ProgramApplicationFormIndividualScheduleParagraph({
   isTemplateAuthoringMode?: boolean
 }) {
   const bridge = useInstitutionApplicationProgramBridge()
+  if (isTemplateAuthoringMode) {
+    return (
+      <ProgramApplicationScheduleTemplateHintParagraph
+        hintText={PROGRAM_APPLICATION_SCHEDULE_STRUCTURE_HINT}
+      />
+    )
+  }
   if (!shouldShowInstitutionApplicationScheduleParagraph(bridge)) {
     return null
-  }
-  if (isTemplateAuthoringMode) {
-    return <ProgramApplicationScheduleTemplateHintParagraph />
   }
   return <ProgramApplicationFormInstitutionFixedScheduleParagraph readOnlyPreview={readOnlyPreview} />
 }

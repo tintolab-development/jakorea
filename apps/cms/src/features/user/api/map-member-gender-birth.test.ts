@@ -225,11 +225,43 @@ describe('mapCreateUserRequestToPreRegisterInstructor', () => {
     expect(body.settlement?.accountNumber).toBe('123')
     expect(body.settlement?.accountHolder).toBe('홍길동')
     expect(body.settlement?.businessIncome).toBe(true)
+    expect(body.jaGrade).toBeUndefined()
     expect(body.settlement?.bankAccounts?.[0]).toMatchObject({
       bankName: '국민',
       accountNumber: '123',
       accountHolder: '홍길동',
     })
     expect('organizationText' in body).toBe(false)
+    expect(body.jaGrade).toBeUndefined()
+  })
+
+  it('pre-register에 jaEvaluation을 전달하고 jaGrade는 보내지 않는다', () => {
+    const body = mapCreateUserRequestToPreRegisterInstructor({
+      email: 'i@test.com',
+      password: 'i@test.com',
+      name: '강사',
+      role: 'INSTRUCTOR',
+      instructorCmsProfile: instructorProfileFormValuesToCmsProfile({
+        ...INITIAL_VALUES,
+        jaEvaluationGrade: 'A',
+      }),
+      jaEvaluation: {
+        contentExpertiseScore: 5,
+        deliveryImmersionScore: 4,
+        engagementInteractionScore: 3,
+        contentUseLessonDesignScore: 2,
+        comment: '메모',
+      },
+      isActive: true,
+    })
+
+    expect(body.jaEvaluation).toEqual({
+      contentExpertiseScore: 5,
+      deliveryImmersionScore: 4,
+      engagementInteractionScore: 3,
+      contentUseLessonDesignScore: 2,
+      comment: '메모',
+    })
+    expect(body.jaGrade).toBeUndefined()
   })
 })

@@ -1,0 +1,53 @@
+---
+description: Rich text·메일 템플릿 폼 입력 시 전체 모달 리렌더(버벅임) 방지
+globs:
+  - packages/rich-text/**/*.{ts,tsx}
+  - "**/shared/rich-text/**/*.{ts,tsx}"
+  - apps/cms/src/features/notifications/ui/mail-template/**/*.{ts,tsx}
+  - apps/cms/src/features/notifications/ui/mail-send/**/*.{ts,tsx}
+  - apps/cms/src/features/notifications/ui/alimtalk-*/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Rich text / 템플릿 compose — 입력 버벅임 방지
+
+메일·공지 등 **에디터+사이드패널이 한 화면에 있는 작성 폼**에서, 키 입력마다 부모 전체가 리렌더되면 버벅인다.
+
+## TipTap / `useRichTextEditor`
+
+- `shouldRerenderOnTransaction` 기본값은 **`false`**다. `true`로 되돌리지 말 것.
+- 툴바 active 상태는 부모 리렌더가 아니라 **`useEditorState`**(CMS `RichTextToolbar` 패턴)로 구독한다.
+- 본문 HTML/Markdown을 **키 입력마다 React state에 올리지 않는다**. 제출·미리보기 시에만 `api.getHTML()` / `getMarkdown()` 등으로 읽는다.
+
+```ts
+// ❌ BAD — 타이핑마다 FormModal + VariablesPanel 전체 리렌더
+shouldRerenderOnTransaction: true
+onUpdate: ({ editor }) => setBodyHtml(editor.getHTML())
+
+// ✅ GOOD
+shouldRerenderOnTransaction: false // 또는 생략(기본)
+// submit: apiRef.current?.getHTML()
+```
+
+## 작성 폼 레이아웃 (메일 템플릿 등록 등)
+
+- 무거운 사이드(변수 Collapse 목록 등)는 **`React.memo`** + **안정된 `onInsert`**.
+- `onInsert`가 subject 등 controlled 값을 쓰면 **ref**로 읽어 deps에서 빼 콜백 신원을 유지한다.
+- 기본 설정 / 제목·본문 / 변수 패널은 **필드군별로 memo 분리**해, 한 인풋 변경이 다른 섹션을 다시 그리지 않게 한다.
+
+```ts
+// ❌ BAD
+const insertVariable = useCallback((label) => { /* uses subject */ }, [subject])
+
+// ✅ GOOD
+subjectRef.current = subject
+const insertVariable = useCallback((label) => { /* uses subjectRef.current */ }, [editor])
+```
+
+## 회귀 체크
+
+- [ ] 본문 타이핑 시 React DevTools로 부모 모달·VariablesPanel이 **매 키마다** 하이라이트되지 않는가
+- [ ] 제목/발신자 입력 시 변수 패널·에디터 셸이 불필요하게 리렌더되지 않는가
+- [ ] 툴바 bold 등 active는 `useEditorState`로 갱신되는가
+
+**Last updated:** 2026-09-08

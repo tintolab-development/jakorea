@@ -21,7 +21,7 @@ describe('uploadConsentEvidenceFile', () => {
     vi.mocked(customInstance).mockReset()
   })
 
-  it('files 모듈 비활성 시 stub fileObjectId를 반환한다', async () => {
+  it('files·members 모듈 비활성 시 stub fileObjectId를 반환한다', async () => {
     vi.mocked(isRealApiModuleEnabled).mockReturnValue(false)
     vi.mocked(customInstance).mockResolvedValue({
       success: true,
@@ -51,6 +51,10 @@ describe('uploadConsentEvidenceFile', () => {
         success: true,
         data: { fileObjectId: 501 },
       })
+      .mockResolvedValueOnce({
+        success: true,
+        data: { fileObjectId: 501, scanStatus: 'CLEAN', uploadStatus: 'AVAILABLE' },
+      })
 
     global.fetch = vi.fn().mockResolvedValue({ ok: true }) as typeof fetch
 
@@ -58,16 +62,72 @@ describe('uploadConsentEvidenceFile', () => {
     const id = await uploadConsentEvidenceFile({ file, memberId: 1001 })
 
     expect(id).toBe(501)
-    expect(customInstance).toHaveBeenCalledTimes(2)
+    expect(customInstance).toHaveBeenCalledTimes(3)
     const prepareCall = vi.mocked(customInstance).mock.calls[0]?.[0]
     expect(prepareCall?.url).toBe('/api/admin/files/upload-requests')
-    expect(prepareCall?.data).toMatchObject({ ownerId: 1001 })
+    expect(prepareCall?.data).toMatchObject({
+      ownerId: 1001,
+      ownerDomain: 'MEMBER',
+      ownerType: 'CONSENT',
+      filePurpose: 'CRIMINAL_HISTORY_CHECK_CONSENT',
+    })
+    expect(typeof prepareCall?.data?.checksumSha256).toBe('string')
+    expect(prepareCall?.data?.checksumSha256).toMatch(/^[a-f0-9]{64}$/)
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe('https://example.com/upload')
+    expect(vi.mocked(fetch).mock.calls[0]?.[1]).toEqual(
+      expect.objectContaining({ method: 'PUT', credentials: 'omit' })
+    )
+    expect(vi.mocked(customInstance).mock.calls[1]?.[0]?.url).toBe('/api/admin/files/501/confirm')
+    expect(vi.mocked(customInstance).mock.calls[2]?.[0]?.url).toBe('/api/admin/files/501')
   })
 
-  it('shouldMockConsentFileUpload는 files 모듈 활성 여부를 따른다', () => {
+  it('members 모듈만 활성해도 실 upload-requests를 호출한다', async () => {
+    vi.mocked(isRealApiModuleEnabled).mockImplementation(module => module === 'members')
+    vi.mocked(customInstance)
+      .mockResolvedValueOnce({
+        success: true,
+        data: { id: 77, version: '1.0' },
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          fileObjectId: 602,
+          uploadUrl: 'https://example.com/upload',
+          method: 'PUT',
+        },
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        data: { fileObjectId: 602 },
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        data: { fileObjectId: 602, scanStatus: 'CLEAN', uploadStatus: 'AVAILABLE' },
+      })
+
+    global.fetch = vi.fn().mockResolvedValue({ ok: true }) as typeof fetch
+
+    const file = new File(['abc'], 'crime.png', { type: 'image/png' })
+    const id = await uploadConsentEvidenceFile({ file })
+
+    expect(id).toBe(602)
+    expect(customInstance).toHaveBeenCalledTimes(4)
+    expect(vi.mocked(customInstance).mock.calls[1]?.[0]?.url).toBe(
+      '/api/admin/files/upload-requests'
+    )
+    expect(vi.mocked(customInstance).mock.calls[1]?.[0]?.data).toMatchObject({ ownerId: 77 })
+    expect(vi.mocked(customInstance).mock.calls[3]?.[0]?.url).toBe('/api/admin/files/602')
+  })
+
+  it('shouldMockConsentFileUpload는 files·members 모두 꺼진 경우만 stub', () => {
     vi.mocked(isRealApiModuleEnabled).mockReturnValue(false)
     expect(shouldMockConsentFileUpload()).toBe(true)
-    vi.mocked(isRealApiModuleEnabled).mockReturnValue(true)
+
+    vi.mocked(isRealApiModuleEnabled).mockImplementation(module => module === 'files')
+    expect(shouldMockConsentFileUpload()).toBe(false)
+
+    vi.mocked(isRealApiModuleEnabled).mockImplementation(module => module === 'members')
     expect(shouldMockConsentFileUpload()).toBe(false)
   })
 })

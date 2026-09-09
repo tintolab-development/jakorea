@@ -46,17 +46,45 @@ describe('notice-adapters', () => {
     expect(rows[0]?.id).toBe('3')
   })
 
-  it('maps public visibility to published status', () => {
+  it('maps public visibility to published status and sends categoryId only', () => {
+    const body = toNoticeRequestFromForm({
+      title: '제목',
+      contentMarkdown: '본문',
+      categoryId: 3,
+      category: '일반',
+      visibility: 'public',
+      pinToTop: false,
+      attachmentNames: [],
+      author: '관리자',
+    })
+    expect(body.status).toBe('published')
+    expect(body.categoryId).toBe(3)
+    expect(body.category).toBeUndefined()
+  })
+
+  it('maps private visibility to 임시저장 status', () => {
     expect(
       toNoticeRequestFromForm({
         title: '제목',
         contentMarkdown: '본문',
-        category: '일반',
-        visibility: 'public',
+        categoryId: 1,
+        category: '안내',
+        visibility: 'private',
         pinToTop: false,
         attachmentNames: [],
         author: '관리자',
       }).status
-    ).toBe('published')
+    ).toBe('임시저장')
+  })
+
+  it('maps categoryId from notice response when present', () => {
+    const row = mapNoticeResponse({
+      id: '1',
+      title: '공지',
+      category: '안내',
+      categoryId: 7,
+    } as Parameters<typeof mapNoticeResponse>[0])
+    expect(row.categoryId).toBe(7)
+    expect(row.category).toBe('안내')
   })
 })

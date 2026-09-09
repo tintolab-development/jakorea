@@ -1,0 +1,80 @@
+.sms-variable-text-field {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  border-radius: var(--8, 8px);
+  background: var(--main-WT, #fff);
+}
+
+.sms-variable-text-field__mirror,
+.sms-variable-text-field__control {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.sms-variable-text-field__mirror {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: auto;
+  pointer-events: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sms-variable-text-field__mirror::-webkit-scrollbar {
+  display: none;
+}
+
+.sms-variable-text-field--single .sms-variable-text-field__mirror {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sms-variable-text-field--multiline .sms-variable-text-field__mirror {
+  padding: 8px 14px;
+}
+
+.sms-variable-text-field__control {
+  position: relative;
+  z-index: 1;
+}
+
+/* 입력 글자는 투명 — 미러가 색·변수 강조를 담당, caret만 보임 */
+.sms-variable-text-field__control .cms-input__control,
+.sms-variable-text-field__control .cms-textarea__control {
+  background: transparent !important;
+}
+
+.sms-variable-text-field__control .cms-input .ant-input,
+.sms-variable-text-field__control .cms-textarea__inner textarea.ant-input {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  caret-color: var(--main-BK, #3d3d3d);
+  background: transparent !important;
+}
+
+.sms-variable-text-field__control .cms-input .ant-input::placeholder,
+.sms-variable-text-field__control .cms-textarea__inner textarea.ant-input::placeholder {
+  color: var(--gray-85969-d, #85969d) !important;
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d) !important;
+}
+
+.sms-variable-text-field .notification-variable-token {
+  color: var(--color-mint-01, #01a1af);
+  font-weight: 700;
+}

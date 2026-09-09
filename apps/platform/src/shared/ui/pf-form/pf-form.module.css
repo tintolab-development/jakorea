@@ -185,6 +185,10 @@
   grid-template-columns: 220px minmax(0, 1fr) 220px minmax(0, 1fr);
 }
 
+.fieldRowDouble:has(.fieldLabelWider) {
+  grid-template-columns: 250px minmax(0, 1fr) 250px minmax(0, 1fr);
+}
+
 .field {
   display: flex;
   box-sizing: border-box;
@@ -233,6 +237,10 @@
 
 .fieldLabelWide {
   width: 220px;
+}
+
+.fieldLabelWider {
+  width: 250px;
 }
 
 .fieldLabelText {
@@ -472,7 +480,8 @@
 
   .fieldLabel,
   .fieldLabelVertical,
-  .fieldLabelWide {
+  .fieldLabelWide,
+  .fieldLabelWider {
     width: 100%;
     min-height: auto;
     align-items: center;

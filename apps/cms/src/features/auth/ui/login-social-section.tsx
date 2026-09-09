@@ -46,14 +46,14 @@ export function LoginSocialSection() {
       .catch((error: unknown) => {
         handleError(error, { context: 'loginSocialSection.startLogin' })
         if (import.meta.env.DEV) {
-          if (isSocialAuthLoginRemoteEnabled()) {
+          try {
             const backendBase = resolveBackendApiOrigin()
             console.info(
-              `[social-auth] IdP Redirect URI 등록 필요: ${backendBase}${adminSocialAuthPaths.ssoProviderCallback(provider)}`
+              `[social-auth] IdP Redirect URI(BE callback) 등록 필요: ${backendBase}${adminSocialAuthPaths.ssoProviderCallback(provider)}`
             )
-          } else {
+          } catch {
             console.info(
-              `[social-auth] IdP Redirect URI 등록 필요: ${cmsSocialAuthClient.getRedirectUri(provider)}`
+              '[social-auth] VITE_OAUTH_BACKEND_ORIGIN 또는 VITE_API_SERVER를 설정하세요.'
             )
           }
         }

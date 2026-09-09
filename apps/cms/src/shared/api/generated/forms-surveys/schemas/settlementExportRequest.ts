@@ -43,7 +43,7 @@ export interface SettlementExportRequest {
      */
   businessPurpose: string;
   /**
-     * export 정책. 예: MASKED_ONLY, MASKED_CLIENT_SIDE, RAW_PRIVACY_APPROVAL_REQUIRED
+     * export 정책. XLSX는 Worker 생성이며 MASKED_ONLY 또는 RAW_PRIVACY_APPROVAL_REQUIRED를 사용합니다. MASKED_CLIENT_SIDE는 전환 호환 입력으로만 수용됩니다.
      * @minLength 0
      * @maxLength 80
      */

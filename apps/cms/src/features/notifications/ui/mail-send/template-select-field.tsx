@@ -3,7 +3,6 @@ import { SearchOutlined } from '@ant-design/icons'
 import { CmsSelect } from '@/shared/ui'
 import { PreviewModal } from '@/features/notifications/ui/mail-template/preview-modal'
 import type { MailTemplateItem } from '@/features/notifications/model/mail-template/types'
-import { MAIL_TEMPLATE_ITEM_MOCK } from '@/features/notifications/model/mail-template/mock'
 import { TemplateSelectModal } from './template-select-modal'
 import './template-select-modal.css'
 
@@ -15,13 +14,15 @@ type TemplateSelectFieldProps = {
   templates?: MailTemplateItem[]
   disabled?: boolean
   onSelect: (template: MailTemplateItem) => void
+  isTemplateUsable?: (template: MailTemplateItem) => boolean
 }
 
 export function TemplateSelectField({
   value,
-  templates = MAIL_TEMPLATE_ITEM_MOCK,
+  templates = [],
   disabled,
   onSelect,
+  isTemplateUsable,
 }: TemplateSelectFieldProps) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [previewTemplate, setPreviewTemplate] = useState<MailTemplateItem | null>(null)
@@ -84,6 +85,7 @@ export function TemplateSelectField({
           onClose={handlePickerClose}
           onPreview={setPreviewTemplate}
           onUse={handleUse}
+          isTemplateUsable={isTemplateUsable}
           zIndex={PICKER_Z_INDEX}
         />
       ) : null}
@@ -94,8 +96,11 @@ export function TemplateSelectField({
         bodyHtml={previewTemplate?.bodyHtml ?? ''}
         senderName={previewTemplate?.senderName}
         senderEmail={previewTemplate?.senderEmail}
-        attachments={previewTemplate?.attachmentFileNames.map(name => ({ name }))}
-        previewAt={previewTemplate?.updatedAt}
+        attachments={previewTemplate?.attachmentFileNames.map(name => ({
+          name,
+          sizeBytes: previewTemplate.attachmentSizes?.[name],
+        }))}
+        previewAt={new Date().toISOString()}
         onClose={() => setPreviewTemplate(null)}
       />
     </>

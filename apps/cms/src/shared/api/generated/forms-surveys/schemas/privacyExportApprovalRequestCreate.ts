@@ -41,9 +41,14 @@ export interface PrivacyExportApprovalRequestCreate {
      */
   searchSnapshotHash?: string;
   /**
-     * 페이로드 해시
+     * 페이로드 해시. 브라우저/기존 payload 기반 export에서 사용합니다. 서버가 Worker에서 원문을 생성하는 정산 RAW export 승인 요청에서는 반드시 생략합니다.
      * @minLength 0
      * @maxLength 128
      */
   payloadHash?: string;
+  /**
+     * 프로그램 범위 원문 export 승인 요청인 경우 프로그램 ID. CMS 전역 요청은 생략합니다.
+     * @minimum 1
+     */
+  programId?: number;
 }

@@ -7,11 +7,9 @@ import {
   parseAgreementCrimeConsentSettings,
 } from '@/features/template/lib/agreement-crime-consent-settings'
 import { loadWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
+import { schemaJsonToWritingFormDraft } from '@/features/template/api/adapters/form-template-draft-adapters'
 import {
-  ensureAgreementNoticeConfirmationClosing,
   normalizeNoticeIdTypeResidentInputInDraft,
-  normalizeWritingFormDraft,
-  overlayAgreementNoticeSeedHorizontalTable,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
@@ -24,9 +22,11 @@ import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-err
 import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/modal/user-personal-info-reveal-confirm-modal'
 import {
   buildMemberConsentAgreeOnlyPreviewDraft,
+  shouldAttemptSubmittedConsentDocumentFetch,
   shouldFetchSubmittedConsentDocument,
   type MemberConsentAgreeOnlyPreviewResult,
 } from '@/features/user/shared/lib/build-member-consent-agree-only-preview-draft'
+import { restoreAgreementNoticeFilledDocumentDraft } from '@/features/user/shared/lib/restore-agreement-notice-filled-document-draft'
 import {
   MEMBER_CONSENT_VIEW_AUTO_PRIVACY_REASON,
   memberConsentViewRequiresPrivacyReveal,
@@ -62,19 +62,26 @@ export interface MemberConsentDocumentViewModalProps {
   memberId?: number
   consentType?: string
   membersRemote?: boolean
-  /** true면 제출 filled-document 경로. false/undefined면 동의-only 합성 미리보기 */
+  /** true면 제출 filled-document 경로. false/undefined면 동의-only 합성 미리보기(메타 없을 때) */
   filledDocumentAvailable?: boolean
+  formResponseId?: number
+  filledDocumentId?: number
+  filledDocumentRevealEndpoint?: string
+  /** consent-records 메타 없을 때 filled-document API 시도 여부 */
+  documentAgreed?: boolean
   /** 동의-only 미리보기 PII 주입용 */
   memberUser?: Omit<User, 'password'>
   onClose: () => void
 }
 
 function filledSchemaToDraft(schemaJson: unknown): WritingFormDraft | null {
-  if (schemaJson == null || typeof schemaJson !== 'object') return null
+  if (schemaJson == null) return null
   try {
-    return normalizeNoticeIdTypeResidentInputInDraft(
-      normalizeWritingFormDraft(schemaJson as WritingFormDraft)
+    const parsed = schemaJsonToWritingFormDraft(
+      schemaJson as string | Record<string, unknown>
     )
+    if (parsed == null) return null
+    return normalizeNoticeIdTypeResidentInputInDraft(parsed)
   } catch {
     return null
   }
@@ -291,12 +298,10 @@ function MemberConsentAgreementDocumentView({
   const displayDraft = useMemo((): WritingFormDraft | null => {
     if (isSyntheticPreview) return synthetic?.draft ?? null
     if (submittedDraft == null) return null
-    let next = submittedDraft
     if (templateId === 'agreement-notice') {
-      next = ensureAgreementNoticeConfirmationClosing(next)
-      next = overlayAgreementNoticeSeedHorizontalTable(next)
+      return restoreAgreementNoticeFilledDocumentDraft(submittedDraft)
     }
-    return next
+    return submittedDraft
   }, [isSyntheticPreview, synthetic?.draft, submittedDraft, templateId])
 
   const showEmpty = !isLoading && (loadFailed || displayDraft == null)
@@ -389,6 +394,10 @@ export function MemberConsentDocumentViewModal({
   consentType,
   membersRemote = false,
   filledDocumentAvailable,
+  formResponseId,
+  filledDocumentId,
+  filledDocumentRevealEndpoint,
+  documentAgreed,
   memberUser,
   onClose,
 }: MemberConsentDocumentViewModalProps) {
@@ -398,15 +407,33 @@ export function MemberConsentDocumentViewModal({
   const [evidenceMimeType, setEvidenceMimeType] = useState<string | null>(null)
   const [reasonOpen, setReasonOpen] = useState(false)
   const [loadFailed, setLoadFailed] = useState(false)
+  const [submittedFetchFallback, setSubmittedFetchFallback] = useState(false)
   const [synthetic, setSynthetic] = useState<MemberConsentAgreeOnlyPreviewResult | null>(null)
   const [syntheticLoading, setSyntheticLoading] = useState(false)
 
-  const useSubmittedPath = shouldFetchSubmittedConsentDocument(filledDocumentAvailable)
-  const isSyntheticPreview = !useSubmittedPath
+  const submissionMeta = useMemo(
+    () => ({
+      filledDocumentAvailable,
+      formResponseId,
+      filledDocumentId,
+      filledDocumentRevealEndpoint,
+    }),
+    [filledDocumentAvailable, filledDocumentId, filledDocumentRevealEndpoint, formResponseId]
+  )
+  const hasSubmissionMeta = shouldFetchSubmittedConsentDocument(submissionMeta)
+  const useSubmittedPath = shouldAttemptSubmittedConsentDocumentFetch(submissionMeta, {
+    documentAgreed,
+  })
+  const isSyntheticPreview = !useSubmittedPath || submittedFetchFallback
   const isCrime = templateId === AGREEMENT_CRIME_TEMPLATE_CODE
   const requiresPrivacyReveal = memberConsentViewRequiresPrivacyReveal(templateId)
   const canFetchRemote = Boolean(
-    useSubmittedPath && membersRemote && open && memberId != null && consentType?.trim()
+    useSubmittedPath &&
+      !submittedFetchFallback &&
+      membersRemote &&
+      open &&
+      memberId != null &&
+      consentType?.trim()
   )
 
   const loadFilledDocument = useCallback(
@@ -440,13 +467,18 @@ export function MemberConsentDocumentViewModal({
           }
         })
         .catch(error => {
+          if (documentAgreed === true && !hasSubmissionMeta && memberUser != null && !isCrime) {
+            setSubmittedFetchFallback(true)
+            setLoadFailed(false)
+            return
+          }
           setLoadFailed(true)
           handleError(error, {
             defaultMessage: getMemberApiErrorMessage(error, SUBMITTED_CONSENT_LOAD_FAILED_MESSAGE),
           })
         })
     },
-    [consentType, isCrime, memberId, mutation]
+    [consentType, documentAgreed, hasSubmissionMeta, isCrime, memberId, memberUser, mutation]
   )
   const loadFilledDocumentRef = useRef(loadFilledDocument)
   loadFilledDocumentRef.current = loadFilledDocument
@@ -456,6 +488,7 @@ export function MemberConsentDocumentViewModal({
       setFilled(null)
       setLoadFailed(false)
       setReasonOpen(false)
+      setSubmittedFetchFallback(false)
       setSynthetic(null)
       setSyntheticLoading(false)
       setEvidenceMimeType(null)
@@ -510,6 +543,7 @@ export function MemberConsentDocumentViewModal({
     isCrime,
     templateId,
     memberUser,
+    submittedFetchFallback,
   ])
 
   useEffect(() => {
@@ -527,6 +561,7 @@ export function MemberConsentDocumentViewModal({
     setFilled(null)
     setLoadFailed(false)
     setReasonOpen(false)
+    setSubmittedFetchFallback(false)
     setSynthetic(null)
     setSyntheticLoading(false)
     mutation.reset()

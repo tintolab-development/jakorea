@@ -6,6 +6,15 @@ import { CmsTextArea } from '@/shared/ui/cms-textarea'
 
 const TEMPLATE_AUTO_USER_INFO_HINT = '로그인 사용자 정보가 자동으로 반영됩니다.'
 
+/** 사용자 작성·미리보기 — 신청 교사/기관 자동 반영 예시 */
+const WRITE_AUTO_USER_INFO_SAMPLE = {
+  institutionName: '진해초등학교',
+  institutionAddress: '광주광역시 남구 백운로4길 40',
+  teacherName: '홍길동',
+  mobile: '010-1234-0000',
+  email: 'test@naver.com',
+} as const
+
 /** UJAT 프로그램 학교 신청 폼 — 기본 정보 */
 export function UjatProgramApplicationBasicInfoParagraph({
   isTemplateAuthoringMode = false,
@@ -38,9 +47,13 @@ export function UjatProgramApplicationBasicInfoParagraph({
           fullRow
           readOnlyDisplay
           view={
-            <span className="form-editor-template-field-hint-text">
-              {TEMPLATE_AUTO_USER_INFO_HINT}
-            </span>
+            isTemplateAuthoringMode ? (
+              <span className="form-editor-template-field-hint-text">
+                {TEMPLATE_AUTO_USER_INFO_HINT}
+              </span>
+            ) : (
+              WRITE_AUTO_USER_INFO_SAMPLE.institutionName
+            )
           }
         />
       </DetailInfoForm.Row>
@@ -50,9 +63,13 @@ export function UjatProgramApplicationBasicInfoParagraph({
           label="기관 소재지"
           readOnlyDisplay
           view={
-            <span className="form-editor-template-field-hint-text">
-              {TEMPLATE_AUTO_USER_INFO_HINT}
-            </span>
+            isTemplateAuthoringMode ? (
+              <span className="form-editor-template-field-hint-text">
+                {TEMPLATE_AUTO_USER_INFO_HINT}
+              </span>
+            ) : (
+              WRITE_AUTO_USER_INFO_SAMPLE.institutionAddress
+            )
           }
         />
         <DetailInfoForm.Field
@@ -79,7 +96,13 @@ export function UjatProgramApplicationBasicInfoParagraph({
             isTemplateAuthoringMode ? undefined : (
               <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
                 <span>담당 교사</span>
-                <CmsInput inputSize="medium" width={140} placeholder="홍길동" disabled readOnly />
+                <CmsInput
+                  inputSize="medium"
+                  width={140}
+                  value={WRITE_AUTO_USER_INFO_SAMPLE.teacherName}
+                  disabled
+                  readOnly
+                />
                 <DetailInfoForm.InputsSeparator />
                 <span>Tel</span>
                 <CmsInput
@@ -91,10 +114,22 @@ export function UjatProgramApplicationBasicInfoParagraph({
                 />
                 <DetailInfoForm.InputsSeparator />
                 <span>M</span>
-                <CmsInput inputSize="medium" width={160} placeholder="010-1234-0000" disabled readOnly />
+                <CmsInput
+                  inputSize="medium"
+                  width={160}
+                  value={WRITE_AUTO_USER_INFO_SAMPLE.mobile}
+                  disabled
+                  readOnly
+                />
                 <DetailInfoForm.InputsSeparator />
                 <span>E-mail</span>
-                <CmsInput inputSize="medium" width={200} placeholder="id***@naver.com" disabled readOnly />
+                <CmsInput
+                  inputSize="medium"
+                  width={200}
+                  value={WRITE_AUTO_USER_INFO_SAMPLE.email}
+                  disabled
+                  readOnly
+                />
               </div>
             )
           }
@@ -121,7 +156,7 @@ export function UjatProgramApplicationBasicInfoParagraph({
               <DetailInfoForm.InputsSeparator />
               <CmsTextArea
                 inputSize="medium"
-                rows={2}
+                rows={1}
                 placeholder="기타 요청사항을 입력해 주세요."
                 width="100%"
                 value={otherRequests}

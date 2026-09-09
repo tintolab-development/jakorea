@@ -9,6 +9,15 @@
   gap: 32px;
 }
 
+/* 강사 상세 수정 — 조회 SPLIT_CARD와 동일하게 기본정보 2장 */
+.instructor-register-modal__basic-info-split {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
 .instructor-register-modal__basic-info .detail-info-form__title::after,
 .instructor-register-modal__consent-heading > .detail-info-form__header .detail-info-form__title::after,
 .instructor-register-career > .detail-info-form__header .detail-info-form__title::after {

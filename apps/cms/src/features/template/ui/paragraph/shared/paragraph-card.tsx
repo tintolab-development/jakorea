@@ -16,6 +16,8 @@ export interface ParagraphCardEditableHeading {
   /** 예: `paragraph-card__title--placeholder` */
   titleClassName?: string
   titleLeading?: ReactNode
+  /** 제목 본문 뒤·필수(*) 앞 (예: 객관식 「(중복 선택 가능)」) */
+  titleHint?: ReactNode
   /** 제목 입력 우측(예: 단락별 액션 버튼) — `paragraph-card__title-block` 맨 오른쪽 */
   titleTrailing?: ReactNode
   descriptionValue: string
@@ -24,6 +26,11 @@ export interface ParagraphCardEditableHeading {
   descriptionClassName?: string
   /** false면 카드 헤더에 설명란을 렌더하지 않음(제목만) */
   showDescription?: boolean
+  /**
+   * true면 카드 비선택·빈 타이틀일 때도 placeholder(「타이틀을 입력해 주세요」) 노출.
+   * 설명글_텍스트형(`agreement_explanation_text`) 시안용.
+   */
+  showTitlePlaceholderWhenInactive?: boolean
 }
 
 /** 읽기 전용 단락 제목 — `ParagraphInput`·필수(*) 마크업을 카드 헤더와 동일하게 쓴다 */
@@ -82,10 +89,11 @@ export function ParagraphCard({
       const h = editableHeading
       const titleEditMode = h.titleIsEditMode ?? h.isEditMode
       const descriptionEditMode = h.descriptionIsEditMode ?? h.isEditMode
-      /** view: 타이틀 내용 없으면 placeholder(「타이틀을 입력해 주세요」등) 영역 숨김 */
+      /** view: 타이틀 내용 없으면 placeholder 영역 숨김 — `showTitlePlaceholderWhenInactive` 예외 */
       const titleHasContent =
         (typeof h.titleValue === 'string' ? h.titleValue.trim() : '').length > 0
-      const showTitle = titleEditMode || titleHasContent
+      const showTitle =
+        titleEditMode || titleHasContent || h.showTitlePlaceholderWhenInactive === true
       const titleInput = showTitle ? (
         <ParagraphInput
           type="title"
@@ -95,6 +103,7 @@ export function ParagraphCard({
           onChange={h.onTitleChange}
           placeholder={h.titlePlaceholder ?? '타이틀을 입력해 주세요'}
           leading={h.titleLeading}
+          suffix={h.titleHint}
           className={h.titleClassName}
         />
       ) : null

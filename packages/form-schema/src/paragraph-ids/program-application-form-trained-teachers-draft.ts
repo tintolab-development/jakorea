@@ -148,7 +148,7 @@ export function createProgramApplicationFormTrainedTeachersDraft(): WritingFormD
     createTrainedTeachersPlaceholderTable(
       PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule,
       '진행 희망 교육 일정',
-      '교육 진행 예정인 날짜 및 진행 차시를 회차 별로 작성해 주세요.'
+      '프로그램 등록 시 노출되는 항목에 따라 설명글을 작성해 주세요.'
     ),
   ]
 

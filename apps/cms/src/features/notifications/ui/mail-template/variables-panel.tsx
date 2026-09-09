@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { Collapse } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
 import { CmsInput } from '@/shared/ui'
@@ -7,6 +7,7 @@ import {
   filterMailVariableGroups,
   formatMailVariableToken,
   getMailVariableLabel,
+  type MailVariableGroup,
 } from '@/features/notifications/model/mail-template/variables'
 import './variables-panel.css'
 
@@ -15,20 +16,96 @@ type VariablesPanelProps = {
   disabled?: boolean
   disabledReason?: string
   onDisabledInsert?: () => void
+  /** remote catalog; 없으면 정적 MAIL_TEMPLATE_VARIABLE_GROUPS */
+  groups?: MailVariableGroup[]
+  /** 항목별 비활성 (발송 화면 requiresProgram 가드 등) */
+  isItemDisabled?: (label: string) => boolean
+  itemDisabledReason?: string
+  /**
+   * false면 catalog `enabled` 를 무시하고 전부 삽입 가능.
+   * 템플릿 **등록/수정** = false, 발송 = true(기본).
+   */
+  respectCatalogEnabled?: boolean
 }
 
-export function VariablesPanel({
+export const VariablesPanel = memo(function VariablesPanel({
   onInsert,
   disabled,
   disabledReason,
   onDisabledInsert,
+  groups: groupsProp,
+  isItemDisabled,
+  itemDisabledReason,
+  respectCatalogEnabled = true,
 }: VariablesPanelProps) {
   const [query, setQuery] = useState('')
+  const sourceGroups = groupsProp?.length ? groupsProp : MAIL_TEMPLATE_VARIABLE_GROUPS
+  const defaultActiveKey = useMemo(() => sourceGroups.map(group => group.id), [sourceGroups])
   const groups = useMemo(
-    () => filterMailVariableGroups(MAIL_TEMPLATE_VARIABLE_GROUPS, query),
-    [query]
+    () => filterMailVariableGroups(sourceGroups, query),
+    [query, sourceGroups]
   )
-  const defaultActiveKey = MAIL_TEMPLATE_VARIABLE_GROUPS.map(group => group.id)
+  const collapseItems = useMemo(
+    () =>
+      groups.map(group => ({
+        key: group.id,
+        label: group.label,
+        children: (
+          <ul className="mail-template-variables__items">
+            {group.items.map(variable => {
+              const label = getMailVariableLabel(variable)
+              const catalogLocked =
+                respectCatalogEnabled && variable.enabled === false
+              const itemDisabled = catalogLocked || Boolean(isItemDisabled?.(label))
+              const locked = disabled || itemDisabled
+              const reason = disabled
+                ? disabledReason
+                : itemDisabled
+                  ? itemDisabledReason ||
+                    (catalogLocked
+                      ? '현재 프로그램/참여 유형에서는 사용할 수 없는 변수입니다.'
+                      : variable.hint)
+                  : undefined
+              return (
+                <li key={label}>
+                  <button
+                    type="button"
+                    className="mail-template-variables__item"
+                    onMouseDown={event => event.preventDefault()}
+                    onClick={() => {
+                      if (locked) {
+                        onDisabledInsert?.()
+                        return
+                      }
+                      onInsert(label)
+                    }}
+                    aria-disabled={locked || undefined}
+                    title={reason}
+                  >
+                    <span className="mail-template-variables__item-label">
+                      {formatMailVariableToken(label)}
+                    </span>
+                    {variable.hint ? (
+                      <span className="mail-template-variables__item-hint">{variable.hint}</span>
+                    ) : null}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        ),
+      })),
+    [
+      disabled,
+      disabledReason,
+      groups,
+      isItemDisabled,
+      itemDisabledReason,
+      onDisabledInsert,
+      onInsert,
+      respectCatalogEnabled,
+    ]
+  )
 
   return (
     <aside
@@ -54,44 +131,9 @@ export function VariablesPanel({
           bordered={false}
           expandIconPosition="end"
           defaultActiveKey={defaultActiveKey}
-          items={groups.map(group => ({
-            key: group.id,
-            label: group.label,
-            children: (
-              <ul className="mail-template-variables__items">
-                {group.items.map(variable => {
-                  const label = getMailVariableLabel(variable)
-                  return (
-                    <li key={label}>
-                      <button
-                        type="button"
-                        className="mail-template-variables__item"
-                        onMouseDown={event => event.preventDefault()}
-                        onClick={() => {
-                          if (disabled) {
-                            onDisabledInsert?.()
-                            return
-                          }
-                          onInsert(label)
-                        }}
-                        aria-disabled={disabled || undefined}
-                        title={disabled ? disabledReason : undefined}
-                      >
-                        <span className="mail-template-variables__item-label">
-                          {formatMailVariableToken(label)}
-                        </span>
-                        {variable.hint ? (
-                          <span className="mail-template-variables__item-hint">{variable.hint}</span>
-                        ) : null}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            ),
-          }))}
+          items={collapseItems}
         />
       </div>
     </aside>
   )
-}
+})

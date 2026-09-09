@@ -445,6 +445,33 @@ export async function deleteAdminProgramManagerRemote(
   })
 }
 
+/** POST /api/admin/programs/{programId}/ujat/organization-applications/temporary-rejections */
+export async function temporarilyRejectUjatOrganizationApplicationsRemote(
+  programId: number,
+  body: { applicationIds: number[]; reason: string }
+): Promise<unknown> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${programId}/ujat/organization-applications/temporary-rejections`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    })
+  )
+}
+
+/** POST /api/admin/programs/{programId}/completion/rebuild-participants */
+export async function rebuildProgramCompletionParticipantsRemote(
+  programId: number
+): Promise<unknown> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${programId}/completion/rebuild-participants`,
+      method: 'POST',
+    })
+  )
+}
+
 /** POST /api/admin/form-responses/submit — 강의평가 등 관리자 응답 제출 */
 export async function submitAdminFormResponseRemote(
   payload: import('@/shared/api/generated/forms-surveys/schemas/formResponseCreateRequest').FormResponseCreateRequest

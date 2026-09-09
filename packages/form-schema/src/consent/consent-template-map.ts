@@ -41,7 +41,7 @@ export const MEMBER_CONSENT_TEMPLATE_MAP: Record<MemberConsentFieldKey, MemberCo
     consentSexOffenseCheck: {
       fieldKey: 'consentSexOffenseCheck',
       templateId: 'agreement-crime',
-      modalTitle: '성범죄 경력 조회 및 아동학대 관련 범죄전력조회 동의서',
+      modalTitle: '성범죄 경력조회 동의서',
     },
   }
 

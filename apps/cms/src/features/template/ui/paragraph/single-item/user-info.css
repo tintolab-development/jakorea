@@ -44,6 +44,24 @@
   width: 18%;
 }
 
+/* A4 contentOnly — surface 미리보기와 동일 열 비율(2-tier: 좌·우 50:50) */
+.form-document-short-essay-table--user-info {
+  table-layout: fixed;
+}
+
+.form-document-short-essay-table--user-info.form-document-short-essay-table--one-tier th {
+  width: 28%;
+}
+
+.form-document-short-essay-table--user-info.form-document-short-essay-table--two-tier th {
+  width: 18%;
+}
+
+.form-document-short-essay-table--user-info td {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 .user-info-preview-table__th {
   padding: 12px 14px;
   text-align: left;

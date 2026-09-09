@@ -24,7 +24,8 @@ import {
 import { ParagraphInput } from '@/features/template/ui/shared/paragraph-input'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
-import { AgreementPortraitPersonalConsentNameRow } from '@/features/template/ui/paragraph/table/agreement-portrait-personal-consent-name-row'
+import { PortraitAffiliationBody } from '@/features/template/ui/paragraph/table/agreement-portrait-personal-consent-name-row'
+import { TextCellInput } from '@/features/template/ui/paragraph/table/text-cell-input'
 import '@/features/template/ui/form-editor/form-editor.css'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -48,6 +49,7 @@ function isEventFromTableInteractive(target: EventTarget | null) {
         '.paragraph-date-picker',
         '.paragraph-date-picker__backdrop',
         '.paragraph-date-picker__popover',
+        '.text-cell-input',
         '.ant-checkbox',
         '.ant-checkbox-wrapper',
         '.ant-radio',
@@ -147,6 +149,8 @@ export function VerticalTableParagraphBody({
   tableRowSelection: controlledRow,
   onTableRowSelectionChange,
   portraitConsentResponseFieldsInteractive = false,
+  /** 카탈로그 고정 초상권 시드 표 — 위탁·고정 안내 행 읽기 전용. 사용자 복제본은 false */
+  portraitSeedPresetLocked = false,
   bottomConsentInteractive: bottomConsentInteractiveProp,
   consentFillMode = false,
 }: {
@@ -164,6 +168,8 @@ export function VerticalTableParagraphBody({
   onTableRowSelectionChange?: (row: number | null) => void
   /** preview fill — 초상권 1번 표 성명·소속만 입력 허용 */
   portraitConsentResponseFieldsInteractive?: boolean
+  /** 카탈로그 고정 초상권 시드 표 — 위탁·고정 안내 행 읽기 전용 */
+  portraitSeedPresetLocked?: boolean
   /** preview fill — 하단 동의 라디오만 조작 허용 */
   bottomConsentInteractive?: boolean
   /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
@@ -178,6 +184,23 @@ export function VerticalTableParagraphBody({
     [p.verticalChoiceOptions]
   )
   const [internalRow, setInternalRow] = useState<number | null>(null)
+  type VerticalTextEditTarget = { row: number; stage: number; part: 'header' | 'body' }
+  const [textEditCell, setTextEditCell] = useState<VerticalTextEditTarget | null>(null)
+  const isTextCellEditing = (target: VerticalTextEditTarget) =>
+    textEditCell != null &&
+    textEditCell.row === target.row &&
+    textEditCell.stage === target.stage &&
+    textEditCell.part === target.part
+  const deactivateTextCellOnBlur = (e: React.FocusEvent<HTMLElement>) => {
+    const related = e.relatedTarget
+    if (
+      related instanceof HTMLElement &&
+      related.closest('.text-cell-input')
+    ) {
+      return
+    }
+    setTextEditCell(null)
+  }
   const isControlled = onTableRowSelectionChange != null
   const selectedRow = isControlled ? (controlledRow ?? null) : internalRow
   const setSelectedRow = (next: number | null) => {
@@ -246,9 +269,28 @@ export function VerticalTableParagraphBody({
     })
   }
 
+  const isTextTable = p.verticalTableFlavor === 'text'
+
   const toggleRow = (rowIdx: number) => {
     if (!canvasInteractive) return
     setSelectedRow(selectedRow === rowIdx ? null : rowIdx)
+  }
+
+  /** 텍스트형 — 1클릭: 행 민트 선택, 2클릭: 해당 셀 인라인 편집 */
+  const activateVerticalTextTableCell = (
+    rowIdx: number,
+    stageIdx: number,
+    part: 'header' | 'body'
+  ) => {
+    if (!canvasInteractive) return
+    const target = { row: rowIdx, stage: stageIdx, part }
+    if (isTextCellEditing(target)) return
+    if (selectedRow !== rowIdx) {
+      setTextEditCell(null)
+      setSelectedRow(rowIdx)
+      return
+    }
+    setTextEditCell(target)
   }
 
   /** onFocus 타이밍에 행 선택 state를 갱신하면 리렌더로 피커가 닫히거나 패널이 열리지 않을 수 있어, 패널 open 이후 동기화 */
@@ -256,12 +298,17 @@ export function VerticalTableParagraphBody({
     if (pickerOpen && canvasInteractive) setSelectedRow(rowIdxFocus)
   }
 
-  const isPortraitPersonalConsent =
+  const isPortraitPersonalConsentTable =
     p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable
-  const isPortraitDelegatedConsent =
+  const isPortraitDelegatedConsentTable =
     p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.delegatedConsentTable
+  /** 카탈로그 고정 시드 — 2~4행(수집 항목 등) 셀·헤더 편집 잠금. 사용자 복제본은 편집 허용 */
+  const portraitPresetRowsLocked =
+    portraitSeedPresetLocked &&
+    (isPortraitPersonalConsentTable || isPortraitDelegatedConsentTable)
   /** 위탁·고정 안내 표 — 작성/편집 모두 스크린샷처럼 테두리 없는 본문 텍스트 */
-  const isPortraitStaticConsentTable = isPortraitDelegatedConsent
+  const isPortraitStaticConsentTable =
+    portraitPresetRowsLocked && isPortraitDelegatedConsentTable
 
   const renderStage = (
     row: VerticalTableRow,
@@ -270,7 +317,13 @@ export function VerticalTableParagraphBody({
     /** 초상권 1번 표 고정 문구 행 등 — 헤더·본문 모두 읽기 전용 텍스트 */
     forceStatic = false
   ) => {
-    const rowEditMode = forceStatic ? false : isEditMode
+    const portraitNameRowInteractive =
+      isPortraitPersonalConsentTable &&
+      rowIdx === 0 &&
+      portraitConsentResponseFieldsInteractive
+    const rowEditMode = forceStatic ? false : isEditMode || portraitNameRowInteractive
+    const isPortraitAffiliationStage =
+      isPortraitPersonalConsentTable && rowIdx === 0 && stageIdx === 1
     const header = row.headers[stageIdx] ?? ''
     const cell = row.cells[stageIdx] ?? ''
     const hPh = verticalTableHeaderPlaceholder(rowIdx, stageIdx, row.stageCount)
@@ -428,26 +481,59 @@ export function VerticalTableParagraphBody({
             canvasInteractive
               ? e => {
                   if (isEventFromTableInteractive(e.target)) return
-                  toggleRow(rowIdx)
+                  if (isTextTable && stageKind === 'text') {
+                    activateVerticalTextTableCell(rowIdx, stageIdx, 'header')
+                  } else {
+                    toggleRow(rowIdx)
+                  }
                 }
               : undefined
           }
         >
           {rowEditMode ? (
-            <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--header">
-              <Input
-                variant="borderless"
-                value={header}
-                placeholder={hPh}
-                onChange={e => setHeader(rowIdx, stageIdx, e.target.value)}
-                onFocus={() => {
-                  if (canvasInteractive) setSelectedRow(rowIdx)
-                }}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
-                }}
-              />
-            </div>
+            isTextTable && stageKind === 'text' ? (
+              isTextCellEditing({ row: rowIdx, stage: stageIdx, part: 'header' }) ? (
+                <TextCellInput
+                  variant="header"
+                  autoFocus
+                  value={header}
+                  placeholder={hPh}
+                  onChange={value => setHeader(rowIdx, stageIdx, value)}
+                  onBlur={deactivateTextCellOnBlur}
+                />
+              ) : (
+                <div
+                  className={[
+                    'form-editor-vertical-table__cell-text-hit',
+                    'form-editor-vertical-table__cell-text-hit--header',
+                  ].join(' ')}
+                >
+                  <VerticalTableCellText value={header} placeholder={hPh} variant="header" />
+                </div>
+              )
+            ) : (
+              <div
+                className={[
+                  'form-editor-vertical-table__cell-input-shell',
+                  'form-editor-vertical-table__cell-input-shell--header',
+                ].join(' ')}
+              >
+                <Input
+                  variant="borderless"
+                  value={header}
+                  placeholder={hPh}
+                  onChange={e => setHeader(rowIdx, stageIdx, e.target.value)}
+                  onFocus={() => {
+                    if (canvasInteractive) {
+                      setSelectedRow(rowIdx)
+                    }
+                  }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
+                  }}
+                />
+              </div>
+            )
           ) : (
             <VerticalTableCellText value={header} placeholder={hPh} variant="header" />
           )}
@@ -459,7 +545,11 @@ export function VerticalTableParagraphBody({
             canvasInteractive
               ? e => {
                   if (isEventFromTableInteractive(e.target)) return
-                  toggleRow(rowIdx)
+                  if (isTextTable && stageKind === 'text') {
+                    activateVerticalTextTableCell(rowIdx, stageIdx, 'body')
+                  } else {
+                    toggleRow(rowIdx)
+                  }
                 }
               : undefined
           }
@@ -540,15 +630,68 @@ export function VerticalTableParagraphBody({
                 })}
               </div>
             </div>
+          ) : rowEditMode && stageKind === 'subjective' ? (
+            isPortraitAffiliationStage ? (
+              <PortraitAffiliationBody
+                cell={cell}
+                placeholder={cPh}
+                interactive
+                onChange={value => setCell(rowIdx, stageIdx, value)}
+                onFocus={() => {
+                  if (canvasInteractive) setSelectedRow(rowIdx)
+                }}
+              />
+            ) : (
+              <div
+                className={[
+                  'form-editor-vertical-table__cell-input-shell',
+                  'form-editor-vertical-table__cell-input-shell--body',
+                  subjectiveShell,
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                <Input
+                  variant="borderless"
+                  value={cell}
+                  placeholder={cPh}
+                  onChange={e => setCell(rowIdx, stageIdx, e.target.value)}
+                  onFocus={() => {
+                    if (canvasInteractive) setSelectedRow(rowIdx)
+                  }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
+                  }}
+                />
+              </div>
+            )
+          ) : rowEditMode && isTextTable && stageKind === 'text' ? (
+            isTextCellEditing({ row: rowIdx, stage: stageIdx, part: 'body' }) ? (
+              <TextCellInput
+                variant="body"
+                align="start"
+                autoFocus
+                value={cell}
+                placeholder={cPh}
+                onChange={value => setCell(rowIdx, stageIdx, value)}
+                onBlur={deactivateTextCellOnBlur}
+              />
+            ) : (
+              <div
+                className={[
+                  'form-editor-vertical-table__cell-text-hit',
+                  'form-editor-vertical-table__cell-text-hit--body',
+                ].join(' ')}
+              >
+                <VerticalTableCellText value={cell} placeholder={cPh} variant="body" />
+              </div>
+            )
           ) : rowEditMode ? (
             <div
               className={[
                 'form-editor-vertical-table__cell-input-shell',
                 'form-editor-vertical-table__cell-input-shell--body',
-                subjectiveShell,
-              ]
-                .filter(Boolean)
-                .join(' ')}
+              ].join(' ')}
             >
               <TextArea
                 variant="borderless"
@@ -567,7 +710,14 @@ export function VerticalTableParagraphBody({
             </div>
           ) : (
             <>
-              {stageKind === 'subjective' ? (
+              {isPortraitAffiliationStage ? (
+                <PortraitAffiliationBody
+                  cell={cell}
+                  placeholder={cPh}
+                  interactive={false}
+                  onChange={() => {}}
+                />
+              ) : stageKind === 'subjective' ? (
                 <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body form-editor-vertical-table__cell-input-shell--body-subjective">
                   <VerticalTableCellText value={cell} placeholder={cPh} variant="body" />
                 </div>
@@ -709,29 +859,16 @@ export function VerticalTableParagraphBody({
         'form-editor-body',
         'form-editor-vertical-table-wrap',
         canvasInteractive ? 'form-editor-vertical-table-wrap--canvas-interactive' : '',
+        isTextTable && isEditMode ? 'form-editor-vertical-table-wrap--text-canvas-edit' : '',
       ]
         .filter(Boolean)
         .join(' ')}
     >
       <div className="form-editor-vertical-table" role="grid" aria-readonly={!isEditMode}>
         {p.rows.map((row, rowIdx) => {
-          if (isPortraitPersonalConsent && rowIdx === 0) {
-            return (
-              <AgreementPortraitPersonalConsentNameRow
-                key={`vr-${rowIdx}-portrait-name`}
-                row={row}
-                interactive={isEditMode || portraitConsentResponseFieldsInteractive}
-                onNameChange={value => setCell(0, 0, value)}
-                onAffiliationChange={value => setCell(0, 1, value)}
-                onSelectRow={() => {
-                  if (canvasInteractive) setSelectedRow(0)
-                }}
-              />
-            )
-          }
-
           const forceStatic =
-            (isPortraitPersonalConsent && rowIdx > 0) || isPortraitStaticConsentTable
+            (portraitPresetRowsLocked && isPortraitPersonalConsentTable && rowIdx > 0) ||
+            isPortraitStaticConsentTable
           return (
             <div
               key={`vr-${rowIdx}-sc${row.stageCount}`}

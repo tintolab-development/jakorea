@@ -20,6 +20,7 @@ type FormManagementQuery = {
   type?: string
   id?: string
   userPreview?: string
+  userTemplate?: string
 }
 
 export function TemplateListPage() {
@@ -69,6 +70,7 @@ export function TemplateListPage() {
       type: undefined,
       id: undefined,
       userPreview: undefined,
+      userTemplate: undefined,
     }
     setParams(updates)
 
@@ -108,6 +110,7 @@ export function TemplateListPage() {
                   type: target,
                   id: undefined,
                   userPreview: undefined,
+                  userTemplate: undefined,
                 },
                 { replace: false }
               )
@@ -120,6 +123,7 @@ export function TemplateListPage() {
                   id: newTemplateId,
                   type: undefined,
                   userPreview: undefined,
+                  userTemplate: '1',
                 },
                 { replace: false }
               )

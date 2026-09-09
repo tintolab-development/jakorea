@@ -15,6 +15,8 @@ export interface DashboardRecruitmentResponse {
   recruitmentType?: string;
   targetType?: string;
   recruitmentStatus?: string;
+  participantRecruitmentStatus?: string;
+  volunteerRecruitmentStatus?: string;
   recruitmentStartAt?: string;
   recruitmentEndAt?: string;
   createdAt?: string;

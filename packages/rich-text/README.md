@@ -36,6 +36,10 @@ const { editor } = useRichTextEditor({ enabled: true, initialContent: '' })
 
 앱별 노드(메일 `#{변수}` atom 등)는 `useRichTextEditor({ extraExtensions })` / `RichTextViewer extraExtensions`로 주입합니다.
 
+## 입력 성능
+
+`useRichTextEditor`의 `shouldRerenderOnTransaction` 기본값은 `false`다. 툴바는 `useEditorState`로 구독하고, 작성 폼 부모를 키 입력마다 리렌더하지 않는다. 에이전트 규칙: `.cursor/rules/rich-text-compose-input-perf.mdc`.
+
 ## CMS 마이그레이션
 
 기존 `@/shared/rich-text`는 re-export 어댑터로 유지. 상세: `apps/cms/docs/implementation/rich-text-editor-tiptap-migration.md`

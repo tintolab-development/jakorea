@@ -38,34 +38,6 @@
         "idTypeWithInput": null
       },
       {
-        "id": "program-registration-seed-business-kpi",
-        "kind": "single_item",
-        "variant": "horizontal_table",
-        "requiredMark": true,
-        "paragraphTitle": "사업 KPI 목표",
-        "paragraphDescription": "",
-        "participatesInTitleNumbering": true,
-        "tableFlavor": "text",
-        "columnHeaders": [
-          "항목",
-          "내용"
-        ],
-        "dataRows": [
-          [
-            "",
-            ""
-          ]
-        ],
-        "columnFields": [],
-        "fieldDataRows": [],
-        "bottomText": "",
-        "showBottomText": false,
-        "showBottomConsent": false,
-        "bottomConsent": "agree",
-        "answerRequired": true,
-        "idTypeWithInput": null
-      },
-      {
         "id": "program-registration-seed-type-settings",
         "kind": "single_item",
         "variant": "horizontal_table",

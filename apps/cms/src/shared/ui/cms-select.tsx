@@ -21,6 +21,21 @@ import './cms-select.css'
 
 const CMS_SELECT_ALL_OPTION = { label: '전체', value: '' as const }
 
+/** 필터용 「전체」 센티널 — 등록/필수 선택 폼에서는 제외해야 함 */
+function isAllSentinelOption(opt: unknown): boolean {
+  if (opt == null || typeof opt !== 'object') return false
+  const o = opt as { value?: unknown; label?: unknown; options?: unknown[] }
+  if (Array.isArray(o.options)) return false
+  const value = String(o.value ?? '').trim()
+  const label = String(o.label ?? '').trim()
+  return value === '' || value === 'ALL' || label === '전체'
+}
+
+function stripAllSentinelOptions(options: SelectProps['options']): SelectProps['options'] {
+  if (!Array.isArray(options)) return options
+  return options.filter(opt => !isAllSentinelOption(opt))
+}
+
 function optionsIncludeEmptyValueOption(options: SelectProps['options']): boolean {
   if (!Array.isArray(options)) return false
   return options.some(opt => {
@@ -60,7 +75,11 @@ function mergeOptionsForCmsSelect(
   mode: SelectProps['mode'] | undefined,
   withAllOption: boolean
 ): SelectProps['options'] {
-  if (!withAllOption) return options
+  // 등록·필수 선택: 「전체」 자동삽입뿐 아니라 options에 섞인 센티널도 제거
+  if (!withAllOption) {
+    if (mode === 'multiple' || mode === 'tags') return options
+    return stripAllSentinelOptions(options)
+  }
   if (mode === 'multiple' || mode === 'tags') return options
   if (!Array.isArray(options)) return options
   if (optionsIncludeEmptyValueOption(options)) return options

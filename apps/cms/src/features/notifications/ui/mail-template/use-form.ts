@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { MailTemplateItem, MailTemplateFormMode } from '@/features/notifications/model/mail-template/types'
+import { validateMailSenderEmail } from '@/features/notifications/model/mail-template/sender-email'
+import {
+  sanitizeMailTemplateNameInput,
+  validateMailTemplateName,
+} from '@/features/notifications/model/mail-template/template-name'
 import { EMPTY_MAIL_COMPOSE, useMailCompose } from './use-compose'
 
 export type { MailTemplateFormMode } from '@/features/notifications/model/mail-template/types'
@@ -11,6 +16,8 @@ export type MailTemplateFormDraft = {
   subject: string
   bodyHtml: string
   attachmentFileNames: string[]
+  newFiles: File[]
+  removedAttachmentIds: number[]
 }
 
 const EMPTY_DRAFT: MailTemplateFormDraft = {
@@ -18,17 +25,21 @@ const EMPTY_DRAFT: MailTemplateFormDraft = {
   senderName: '',
   senderEmail: '',
   ...EMPTY_MAIL_COMPOSE,
+  newFiles: [],
+  removedAttachmentIds: [],
 }
 
 export function draftFromTemplate(template: MailTemplateItem | null): MailTemplateFormDraft {
   if (!template) return { ...EMPTY_DRAFT }
   return {
-    templateName: template.templateName,
+    templateName: sanitizeMailTemplateNameInput(template.templateName),
     senderName: template.senderName,
     senderEmail: template.senderEmail,
     subject: template.subject,
     bodyHtml: template.bodyHtml,
     attachmentFileNames: [...template.attachmentFileNames],
+    newFiles: [],
+    removedAttachmentIds: [],
   }
 }
 
@@ -50,38 +61,53 @@ export function useMailTemplateForm(
       subject: initialDraft.subject,
       bodyHtml: initialDraft.bodyHtml,
       attachmentFileNames: initialDraft.attachmentFileNames,
+      existingAttachments: mode === 'edit' ? template?.attachments ?? [] : [],
     }),
-    [initialDraft]
+    [initialDraft, mode, template?.attachments]
   )
 
-  const [templateName, setTemplateName] = useState(initialDraft.templateName)
+  const [templateName, setTemplateNameState] = useState(initialDraft.templateName)
   const [senderName, setSenderName] = useState(initialDraft.senderName)
   const [senderEmail, setSenderEmail] = useState(initialDraft.senderEmail)
   const compose = useMailCompose(open, resetKey, composeInitial)
 
+  const setTemplateName = useCallback((value: string, options?: { composing?: boolean }) => {
+    if (options?.composing) {
+      setTemplateNameState(value)
+      return
+    }
+    setTemplateNameState(sanitizeMailTemplateNameInput(value))
+  }, [])
+
   useEffect(() => {
     if (!open) return
     const next = draftFromTemplate(mode === 'edit' ? template : null)
-    setTemplateName(next.templateName)
+    setTemplateNameState(next.templateName)
     setSenderName(next.senderName)
     setSenderEmail(next.senderEmail)
-  }, [open, mode, template])
+    // 모달 open / 편집 대상 변경 시에만 리셋
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional session-scoped reset
+  }, [open, mode, template?.id])
 
   const getDraft = useCallback((): MailTemplateFormDraft => {
     return {
       templateName: templateName.trim(),
       senderName: senderName.trim(),
       senderEmail: senderEmail.trim(),
-      subject: compose.subject.trim(),
+      subject: compose.getSubject().trim(),
       bodyHtml: compose.getBodyHtml(),
       attachmentFileNames: compose.attachmentFileNames,
+      newFiles: compose.getNewFiles(),
+      removedAttachmentIds: compose.getRemovedAttachmentIds(),
     }
   }, [compose, senderEmail, senderName, templateName])
 
   const validateRequired = useCallback((): string | null => {
     const draft = getDraft()
-    if (!draft.templateName) return '템플릿명을 입력하세요.'
-    if (!draft.senderEmail) return '발신 메일을 입력하세요.'
+    const nameError = validateMailTemplateName(draft.templateName)
+    if (nameError) return nameError
+    const senderError = validateMailSenderEmail(draft.senderEmail)
+    if (senderError) return senderError
     if (!draft.subject) return '제목을 작성하세요.'
     if (!draft.bodyHtml) return '내용을 작성하세요.'
     return null

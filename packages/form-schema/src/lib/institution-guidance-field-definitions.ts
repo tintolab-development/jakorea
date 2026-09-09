@@ -5,6 +5,9 @@ export const INSTITUTION_GUIDANCE_SECTION_DESCRIPTION =
 
 export const INSTITUTION_GUIDANCE_ANSWER_PLACEHOLDER = '답변을 입력해 주세요'
 
+/** 안내 사항 항목별 답변 — 최대 글자 수 */
+export const INSTITUTION_GUIDANCE_ANSWER_MAX_LENGTH = 1000
+
 export type InstitutionGuidanceFieldId =
   | 'computer-in-room'
   | 'waiting-place'

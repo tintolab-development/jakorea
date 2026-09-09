@@ -7,6 +7,7 @@
  */
 import type { NoticeAttachment } from './noticeAttachment';
 import type { NoticeComment } from './noticeComment';
+import type { NoticeInlineImage } from './noticeInlineImage';
 
 export interface NoticeDetailResponse {
   postId?: number;
@@ -19,5 +20,6 @@ export interface NoticeDetailResponse {
   createdAt?: string;
   updatedAt?: string;
   attachments?: NoticeAttachment[];
+  inlineImages?: NoticeInlineImage[];
   comments?: NoticeComment[];
 }

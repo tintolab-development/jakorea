@@ -18,12 +18,9 @@ import { SurveyShortEssayField } from './fields/short-essay-field'
 import { SurveyStarRateField } from './fields/star-rate-field'
 import { SurveyTimeField } from './fields/time-field'
 import { SurveyUserInfoField } from './fields/user-info-field'
+import type { SurveySidecarState } from '../lib/survey-sidecar'
 
-export type SurveySidecarState = {
-  dateValues: Record<string, string>
-  timeValues: Record<string, string>
-  fileNames: Record<string, string | null>
-}
+export type { SurveySidecarState }
 
 export type PlatformSurveyParagraphBodyProps = {
   paragraph: WritingFormParagraph
@@ -31,18 +28,27 @@ export type PlatformSurveyParagraphBodyProps = {
   onUpdateParagraph: FormUpdateParagraph
   sidecar: SurveySidecarState
   onSidecarChange: (next: SurveySidecarState) => void
+  userInfoWriteField?: { key: string; label: string }
 }
 
 export function PlatformSurveyParagraphBody({
   paragraph,
-  programTitle,
   onUpdateParagraph,
   sidecar,
   onSidecarChange,
+  userInfoWriteField,
 }: PlatformSurveyParagraphBodyProps) {
   if (paragraph.kind === 'single_item' && paragraph.variant === 'user_info') {
+    if (userInfoWriteField == null) return null
     return (
-      <SurveyUserInfoField paragraph={paragraph as UserInfoParagraph} programTitle={programTitle} />
+      <SurveyUserInfoField
+        paragraph={paragraph as UserInfoParagraph}
+        fieldKey={userInfoWriteField.key}
+        label={userInfoWriteField.label}
+        onUpdateParagraph={onUpdateParagraph}
+        sidecar={sidecar}
+        onSidecarChange={onSidecarChange}
+      />
     )
   }
 

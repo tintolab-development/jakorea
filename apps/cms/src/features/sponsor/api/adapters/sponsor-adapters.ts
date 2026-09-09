@@ -30,7 +30,9 @@ function parseOrganizationKind(value: string | undefined): SponsorOrganizationKi
 }
 
 function parseSponsorshipStatus(value: string | undefined): SponsorSponsorshipStatus {
-  if (value === 'ended') return 'ended'
+  if (value === 'active' || value === 'discussing' || value === 'dormant' || value === 'ended') {
+    return value
+  }
   return 'active'
 }
 

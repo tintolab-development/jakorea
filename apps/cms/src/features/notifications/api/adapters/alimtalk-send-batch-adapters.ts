@@ -1,9 +1,18 @@
 import type {
-  CatalogResponse,
-  CatalogVariableItem,
   CreateRequest,
+  ListNotificationTemplateVariablesCategory,
+  ListNotificationTemplateVariablesMemberType,
+  ListNotificationTemplateVariablesParams,
+  ListNotificationTemplateVariablesParticipantType,
+  NotificationCatalogVariableItem,
+  NotificationTemplateVariableCatalogResponse,
   RecipientCandidateResponse,
   RecipientRequest,
+} from '@/shared/api/generated/notifications/schemas'
+import {
+  ListNotificationTemplateVariablesCategory as TemplateVariablesCategoryEnum,
+  ListNotificationTemplateVariablesMemberType as TemplateVariablesMemberTypeEnum,
+  ListNotificationTemplateVariablesParticipantType as TemplateVariablesParticipantTypeEnum,
 } from '@/shared/api/generated/notifications/schemas'
 import type { AlimtalkSendRecipient } from '@/features/notifications/model/alimtalk-send/types'
 import type {
@@ -16,8 +25,60 @@ export type AlimtalkTemplateVariable = {
   token: string
   description: string
   requiresProgram: boolean
+  /** BE SSOT. FE는 이 값만으로 발송 화면 삽입 활성/비활성을 결정한다. */
+  enabled: boolean
+  programGroups: string[]
+  recruitmentTypes: string[]
+  participantTypes: string[]
+  memberTypes: string[]
   categoryCode?: string
   categoryLabel?: string
+}
+
+export type NotificationTemplateVariablesQuery = {
+  category?: string
+  keyword?: string
+  programId?: number
+  participantType?: string
+  memberType?: string
+}
+
+function pickEnumValue<T extends string>(
+  raw: string | undefined,
+  allowed: readonly T[]
+): T | undefined {
+  const value = raw?.trim()
+  if (!value) return undefined
+  return (allowed as readonly string[]).includes(value) ? (value as T) : undefined
+}
+
+/** programId 미선택 시 쿼리에서 완전히 제외 (undefined/null 전달 금지) */
+export function toTemplateVariablesRequestParams(
+  input: NotificationTemplateVariablesQuery = {}
+): ListNotificationTemplateVariablesParams {
+  const params: ListNotificationTemplateVariablesParams = {}
+  const category = pickEnumValue(
+    input.category,
+    Object.values(TemplateVariablesCategoryEnum) as ListNotificationTemplateVariablesCategory[]
+  )
+  if (category) params.category = category
+  if (input.keyword?.trim()) params.keyword = input.keyword.trim()
+  if (input.programId != null && Number.isFinite(input.programId)) {
+    params.programId = input.programId
+  }
+  const participantType = pickEnumValue(
+    input.participantType,
+    Object.values(
+      TemplateVariablesParticipantTypeEnum
+    ) as ListNotificationTemplateVariablesParticipantType[]
+  )
+  if (participantType) params.participantType = participantType
+  const memberType = pickEnumValue(
+    input.memberType,
+    Object.values(TemplateVariablesMemberTypeEnum) as ListNotificationTemplateVariablesMemberType[]
+  )
+  if (memberType) params.memberType = memberType
+  return params
 }
 
 function mapParticipationType(
@@ -102,7 +163,7 @@ export function mapRecipientCandidates(
 }
 
 export function mapTemplateVariablesCatalog(
-  catalog: CatalogResponse | null | undefined
+  catalog: NotificationTemplateVariableCatalogResponse | null | undefined
 ): AlimtalkTemplateVariable[] {
   const result: AlimtalkTemplateVariable[] = []
   for (const category of catalog?.categories ?? []) {
@@ -116,10 +177,91 @@ export function mapTemplateVariablesCatalog(
 
 const TEMPLATE_PLACEHOLDER_RE = /#\{([^{}]+)\}/g
 
-/** 템플릿 본문·버튼 등에 등장하는 `#{키}` 집합 */
+/** BE MEMBER actor enrich로 채울 수 있는 본문 토큰 (DIRECT는 FE가 명시) */
+export const ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS = new Set([
+  '사용자 아이디(이메일)',
+])
+
+/** 텍스트들에서 `#{키}` 추출 — contentTemplate·titleTemplate이 SSOT */
+export function extractPlaceholderKeysFromTexts(...texts: Array<string | null | undefined>): Set<string> {
+  const keys = new Set<string>()
+  for (const text of texts) {
+    if (!text) continue
+    for (const match of text.matchAll(TEMPLATE_PLACEHOLDER_RE)) {
+      const key = match[1]?.trim()
+      if (key) keys.add(key)
+    }
+  }
+  return keys
+}
+
+export {
+  formatNotificationFailedReason as formatAlimtalkFailedReason,
+  formatNotificationMissingVariablesMessage as formatAlimtalkMissingVariablesMessage,
+} from '@/features/notifications/model/shared/format-notification-failed-reason'
+
+function hasNonEmptyVariableValue(
+  variables: Record<string, unknown> | null | undefined,
+  key: string
+): boolean {
+  if (!variables) return false
+  const value = variables[key]
+  if (value == null) return false
+  if (typeof value === 'string') return value.trim().length > 0
+  if (typeof value === 'number' || typeof value === 'boolean') return true
+  return String(value).trim().length > 0
+}
+
+export type AlimtalkRequiredVariableCheckInput = {
+  requiredKeys: Iterable<string>
+  batchVariables?: Record<string, unknown> | null
+  recipients?: Array<{
+    actorType?: string
+    actorId?: number
+    source?: string
+    variables?: Record<string, unknown> | null
+  }>
+}
+
+/**
+ * 본문 `#{...}` 대비 batch/recipient variables 누락 키.
+ * - MEMBER+actorId: BE가 enrich하는 「사용자 아이디(이메일)」은 충족으로 본다.
+ * - DIRECT / 수동 번호: enrich 없음 → 모든 토큰이 variables에 있어야 함.
+ */
+export function findMissingAlimtalkTemplateVariableKeys(
+  input: AlimtalkRequiredVariableCheckInput
+): string[] {
+  const required = [...input.requiredKeys].map(key => key.trim()).filter(Boolean)
+  if (required.length === 0) return []
+
+  const recipients = input.recipients ?? []
+  const allMembersWithId =
+    recipients.length > 0 &&
+    recipients.every(recipient => {
+      const actorType = (recipient.actorType || '').trim().toUpperCase()
+      const isDirect =
+        recipient.source === 'manual' || actorType === 'DIRECT' || recipient.actorId == null
+      return !isDirect && Number.isFinite(recipient.actorId)
+    })
+
+  const missing: string[] = []
+  for (const key of required) {
+    if (hasNonEmptyVariableValue(input.batchVariables, key)) continue
+    const coveredByRecipient = recipients.some(recipient =>
+      hasNonEmptyVariableValue(recipient.variables, key)
+    )
+    if (coveredByRecipient) continue
+    if (allMembersWithId && ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS.has(key)) continue
+    missing.push(key)
+  }
+  return missing
+}
+
+/** 템플릿 본문·제목·버튼 등에 등장하는 `#{키}` 집합 (본문 토큰이 SSOT) */
 export function collectTemplatePlaceholderKeys(
   template: {
     content?: string
+    titleTemplate?: string
     extraInfo?: string
     emphasisTitle?: string
     emphasisSubtitle?: string
@@ -136,6 +278,7 @@ export function collectTemplatePlaceholderKeys(
 
   const parts: string[] = [
     template.content ?? '',
+    template.titleTemplate ?? '',
     template.extraInfo ?? '',
     template.emphasisTitle ?? '',
     template.emphasisSubtitle ?? '',
@@ -158,15 +301,33 @@ export function collectTemplatePlaceholderKeys(
     if (link.destinations) parts.push(...Object.values(link.destinations).map(v => v ?? ''))
   }
 
-  const keys = new Set<string>()
-  for (const text of parts) {
-    if (!text) continue
-    for (const match of text.matchAll(TEMPLATE_PLACEHOLDER_RE)) {
-      const key = match[1]?.trim()
-      if (key) keys.add(key)
+  return extractPlaceholderKeysFromTexts(...parts)
+}
+
+export function pickNonEmptySendVariables(
+  values?: Record<string, unknown>
+): Record<string, unknown> | undefined {
+  if (!values) return undefined
+  const next: Record<string, unknown> = {}
+  for (const [key, raw] of Object.entries(values)) {
+    const trimmedKey = key.trim()
+    if (!trimmedKey) continue
+    if (typeof raw === 'string') {
+      const trimmedValue = raw.trim()
+      if (!trimmedValue) continue
+      next[trimmedKey] = trimmedValue
+      continue
     }
+    if (raw == null || raw === '') continue
+    next[trimmedKey] = raw
   }
-  return keys
+  return Object.keys(next).length > 0 ? next : undefined
+}
+
+export function buildAlimtalkBatchVariables(
+  values: Record<string, string> | null | undefined
+): Record<string, unknown> | undefined {
+  return pickNonEmptySendVariables(values ?? undefined)
 }
 
 /** 선택 템플릿이 실제로 쓰는 변수 중 프로그램 스코프가 필요한지 */
@@ -184,7 +345,7 @@ export function templateUsesProgramRequiredVariable(
 }
 
 function mapCatalogVariable(
-  variable: CatalogVariableItem,
+  variable: NotificationCatalogVariableItem,
   categoryCode?: string,
   categoryLabel?: string
 ): AlimtalkTemplateVariable | null {
@@ -195,6 +356,11 @@ function mapCatalogVariable(
     token: variable.token?.trim() || `#{${key}}`,
     description: variable.description?.trim() || key,
     requiresProgram: variable.requiresProgram === true,
+    enabled: variable.enabled === true,
+    programGroups: variable.programGroups ?? [],
+    recruitmentTypes: variable.recruitmentTypes ?? [],
+    participantTypes: variable.participantTypes ?? [],
+    memberTypes: variable.memberTypes ?? [],
     categoryCode,
     categoryLabel,
   }
@@ -232,14 +398,16 @@ export function buildCreateSendBatchRequest(input: {
   recipients: AlimtalkSendRecipient[]
   variables?: Record<string, unknown>
 }): CreateRequest {
-  return {
+  const variables = pickNonEmptySendVariables(input.variables)
+  const body: CreateRequest = {
     batchName: input.batchName,
     templateId: input.templateId,
-    programId: input.programId,
     scheduledAt: input.scheduledAt,
     senderKey: input.senderKey,
     senderProfileId: input.senderProfileId,
-    variables: input.variables,
     recipients: buildSendBatchRecipients(input.recipients),
   }
+  if (input.programId != null) body.programId = input.programId
+  if (variables) body.variables = variables
+  return body
 }

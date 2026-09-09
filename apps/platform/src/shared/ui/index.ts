@@ -49,6 +49,8 @@ export { PFDivider } from './pf-divider'
 export type { PFDividerProps, PFDividerVariant } from './pf-divider'
 export { PFInfoReview } from './pf-info-review'
 export type { PFInfoReviewItem, PFInfoReviewProps } from './pf-info-review'
+export { PFDataTable } from './pf-data-table'
+export type { PFDataTableColumn, PFDataTableProps } from './pf-data-table'
 export {
   PFFormField,
   PFFormFieldRow,

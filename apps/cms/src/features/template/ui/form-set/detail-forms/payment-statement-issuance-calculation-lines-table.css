@@ -1,4 +1,4 @@
-/* 발급용 산출 내역: 금액 열 중앙 정렬 · 합계 행 마지막 셀은 정산 테이블의 flex(발급 버튼용) 제거 */
+/* 지급조서(발급용) 「강의비 산출 내역」— 네이티브 표 (편집·A4 미리보기 동일) */
 
 .payment-statement-issuance-calculation-lines-table__wrap {
   width: 100%;
@@ -6,20 +6,114 @@
   box-sizing: border-box;
 }
 
-.payment-statement-issuance-calculation-lines-table.payment-order-calc-statement-modal__table.ant-table-wrapper
-  .ant-table-tbody
-  > tr
-  > td:last-child {
-  text-align: center !important;
+.payment-statement-issuance-calculation-lines-table__radius {
+  box-sizing: border-box;
+  border: 1px solid var(--table-line, #e5e7eb);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.payment-statement-issuance-calculation-lines-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.payment-statement-issuance-calculation-lines-table__col--institution {
+  width: 15.7%;
+}
+
+.payment-statement-issuance-calculation-lines-table__col--date {
+  width: 26.3%;
+}
+
+.payment-statement-issuance-calculation-lines-table__col--pay,
+.payment-statement-issuance-calculation-lines-table__col--category {
+  width: 11%;
+}
+
+.payment-statement-issuance-calculation-lines-table__col--item {
+  width: 19.6%;
+}
+
+.payment-statement-issuance-calculation-lines-table__col--amount {
+  width: 16.4%;
+}
+
+.payment-statement-issuance-calculation-lines-table th,
+.payment-statement-issuance-calculation-lines-table td {
+  box-sizing: border-box;
+  height: 54px;
+  min-height: 54px;
+  padding: 0 16px;
+  vertical-align: middle;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  border: none;
+  border-right: 1px solid var(--table-line, #e5e7eb);
+  border-bottom: 1px solid var(--table-line, #e5e7eb);
+}
+
+.payment-statement-issuance-calculation-lines-table th:last-child,
+.payment-statement-issuance-calculation-lines-table td:last-child {
+  border-right: none;
+}
+
+.payment-statement-issuance-calculation-lines-table thead th {
+  font-weight: 700;
+  background: #f5f6f7;
+}
+
+.payment-statement-issuance-calculation-lines-table tbody td {
+  font-weight: 500;
+  background: #fff;
+}
+
+.payment-statement-issuance-calculation-lines-table__empty {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+}
+
+.payment-statement-issuance-calculation-lines-table__date-cell {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.payment-statement-issuance-calculation-lines-table__amount {
   font-variant-numeric: tabular-nums;
 }
 
-.payment-statement-issuance-calculation-lines-table.payment-order-calc-statement-modal__table.ant-table-wrapper
-  .ant-table-summary
-  tr
-  .ant-table-cell:last-child {
-  display: table-cell !important;
-  justify-content: unset !important;
-  align-items: unset !important;
-  text-align: center !important;
+.payment-statement-issuance-calculation-lines-table__summary-row > th,
+.payment-statement-issuance-calculation-lines-table__summary-row > td {
+  height: 54px;
+  min-height: 54px;
+  border-bottom: none;
+  background: #f0f7f8 !important;
+  font-weight: 500;
+}
+
+.payment-statement-issuance-calculation-lines-table__summary-row > th {
+  font-weight: 700;
+}
+
+.payment-statement-issuance-calculation-lines-table__formula {
+  font-weight: 500;
+}
+
+.payment-statement-issuance-calculation-lines-table__summary-total {
+  font-weight: 700;
+  color: #01a1af;
+  font-variant-numeric: tabular-nums;
 }

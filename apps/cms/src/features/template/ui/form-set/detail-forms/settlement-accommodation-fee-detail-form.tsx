@@ -6,19 +6,24 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import { CmsInput } from '@/shared/ui/cms-input'
-import { CmsRadio } from '@/shared/ui/cms-radio'
 import './settlement-accommodation-fee-detail-form.css'
 
 const INPUT_W = 244
 
+const ACCOMMODATION_RECEIPT_ACCEPT =
+  '.jpg,.jpeg,.png,.xls,.xlsx,.pdf,.doc,.docx'
+
+const ACCOMMODATION_RECEIPT_GUIDE_LINES = [
+  '- 파일은 최대 15M까지 JPG, PNG, Excel, PDF, Word 형식만 등록 가능합니다.',
+  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+]
+
 export type SettlementAccommodationFeeAutofillValues = {
-  preConsultation: 'consulted' | 'na' | ''
   accommodationFee: string
 }
 
 const EMPTY: SettlementAccommodationFeeAutofillValues = {
-  preConsultation: '',
-  accommodationFee: '80,000',
+  accommodationFee: '',
 }
 
 export type SettlementAccommodationFeeDetailFormProps = {
@@ -29,12 +34,6 @@ export type SettlementAccommodationFeeDetailFormProps = {
 
 function textOrDash(value: string): string {
   return value.trim() || '-'
-}
-
-function preConsultLabel(v: SettlementAccommodationFeeAutofillValues['preConsultation']): string {
-  if (v === 'consulted') return '협의 완료'
-  if (v === 'na') return '해당 없음'
-  return '-'
 }
 
 export function SettlementAccommodationFeeDetailForm({
@@ -55,25 +54,6 @@ export function SettlementAccommodationFeeDetailForm({
     >
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label="사전 협의 확인"
-          fullRow
-          view={preConsultLabel(v.preConsultation)}
-          edit={
-            <CmsRadio.Group
-              className="settlement-accommodation-fee-detail-form__radios"
-              size="large"
-              value={v.preConsultation || undefined}
-              disabled={disabled}
-            >
-              <CmsRadio value="consulted">협의 완료</CmsRadio>
-              <CmsRadio value="na">해당 없음</CmsRadio>
-            </CmsRadio.Group>
-          }
-        />
-      </DetailInfoForm.Row>
-
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
           label="숙박비"
           fullRow
           view={textOrDash(v.accommodationFee ? `${v.accommodationFee}원` : '')}
@@ -82,6 +62,7 @@ export function SettlementAccommodationFeeDetailForm({
               <CmsInput
                 disabled={disabled}
                 inputSize="medium"
+                placeholder="직접 입력"
                 value={v.accommodationFee}
                 width={INPUT_W}
                 aria-label="숙박비"
@@ -94,16 +75,14 @@ export function SettlementAccommodationFeeDetailForm({
 
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label="실비 영수증 제출"
+          label="영수증 제출"
           fullRow
           view={<span className="settlement-accommodation-fee-detail-form__view-muted">-</span>}
           edit={
             <ParagraphFileUpload
               disabled={disabled}
-              guideLines={[
-                '- 파일은 총 최대 15MB까지 JPG, PNG 형식만 등록 가능합니다.',
-                '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-              ]}
+              accept={ACCOMMODATION_RECEIPT_ACCEPT}
+              guideLines={ACCOMMODATION_RECEIPT_GUIDE_LINES}
             />
           }
         />

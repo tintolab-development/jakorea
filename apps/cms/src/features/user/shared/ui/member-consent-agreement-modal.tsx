@@ -10,6 +10,8 @@ import { loadWritingFormTemplateDraft } from '@/features/template/lib/writing-fo
 import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
 import {
   ensureAgreementNoticeConfirmationClosing,
+  ensureAgreementNoticeInstitutionPurposeParagraphs,
+  ensureEducatorFacilitatorPledgeIntroParagraph,
   normalizeNoticeIdTypeResidentInputInDraft,
   normalizeWritingFormDraft,
   overlayAgreementNoticeSeedHorizontalTable,
@@ -98,11 +100,9 @@ export function MemberConsentAgreementModal({
 
     if (savedSnapshot?.draft) {
       const restored = cloneMemberConsentAgreementDraftSnapshot(savedSnapshot)
+      /** 이전 작성본 복원 — 응답 필드를 비우지 않는다 (normalizeMemberConsentWriteDraft 금지) */
       setDraft(
-        normalizeMemberConsentWriteDraft(
-          normalizeNoticeIdTypeResidentInputInDraft(normalizeWritingFormDraft(restored.draft)),
-          templateId
-        )
+        normalizeNoticeIdTypeResidentInputInDraft(normalizeWritingFormDraft(restored.draft))
       )
       setPaymentBasicInfo(mergePaymentStatementBasicInfo(restored.paymentBasicInfo))
       setIsDraftLoading(false)
@@ -124,7 +124,11 @@ export function MemberConsentAgreementModal({
         let next = normalizeWritingFormDraft(structureSource)
         if (templateId === 'agreement-notice') {
           next = ensureAgreementNoticeConfirmationClosing(next)
+          next = ensureAgreementNoticeInstitutionPurposeParagraphs(next)
           next = overlayAgreementNoticeSeedHorizontalTable(next)
+        }
+        if (templateId === 'agreement-expense') {
+          next = ensureEducatorFacilitatorPledgeIntroParagraph(next)
         }
         next = normalizeMemberConsentWriteDraft(next, templateId)
         setDraft(next)

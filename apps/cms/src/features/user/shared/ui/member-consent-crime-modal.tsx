@@ -1,4 +1,5 @@
 import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { Spin } from 'antd'
 import { type ChangeEvent, useCallback, useEffect, useId, useRef, useState } from 'react'
 import crimeConsentDefaultImage from '@/assets/images/template/성범좌 경력 조회.png'
 import {
@@ -12,6 +13,11 @@ import { downloadCrimeConsentFormDocument } from '@/features/template/lib/crime-
 import { loadWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { CrimeConsentDocumentPreview } from '@/features/template/ui/template-management/crime-consent-document-preview'
 import { CRIME_CONSENT_DOCUMENT_MODAL_HEADER_TITLE } from '@/features/template/ui/template-management/crime-record-consent-document-fullpage-modal'
+import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
+import {
+  dataUrlToFile,
+  uploadConsentEvidenceFile,
+} from '@/features/user/api/upload-consent-evidence-file'
 import type { MemberConsentCrimeDraftSnapshot } from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -27,6 +33,8 @@ const MEMBER_CONSENT_MODAL_Z_INDEX = 1200
 
 export interface MemberConsentCrimeModalProps {
   open: boolean
+  /** 상세 수정 등 — 이미 회원이 있으면 prepare ownerId로 사용 */
+  memberId?: number
   savedSnapshot?: MemberConsentCrimeDraftSnapshot | null
   onSnapshotSave?: (snapshot: MemberConsentCrimeDraftSnapshot) => void
   onClose: () => void
@@ -35,6 +43,7 @@ export interface MemberConsentCrimeModalProps {
 
 export function MemberConsentCrimeModal({
   open,
+  memberId,
   savedSnapshot,
   onSnapshotSave,
   onClose,
@@ -48,9 +57,12 @@ export function MemberConsentCrimeModal({
   const [replacementFileName, setReplacementFileName] = useState<string | null>(null)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false)
+  const [evidenceFileObjectId, setEvidenceFileObjectId] = useState<number | undefined>(undefined)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (!open) {
+      setIsSubmitting(false)
       return
     }
 
@@ -59,6 +71,7 @@ export function MemberConsentCrimeModal({
       setDisplaySrc(savedSnapshot.displaySrc)
       setReplacementFileName(savedSnapshot.replacementFileName)
       setUploadedFile(savedSnapshot.file ?? null)
+      setEvidenceFileObjectId(savedSnapshot.evidenceFileObjectId)
       setHasUploadedDocument(true)
       return
     }
@@ -68,6 +81,7 @@ export function MemberConsentCrimeModal({
     setHasUploadedDocument(false)
     setReplacementFileName(null)
     setUploadedFile(null)
+    setEvidenceFileObjectId(undefined)
     void loadWritingFormTemplateDraft(AGREEMENT_CRIME_TEMPLATE_CODE).then(saved => {
       if (cancelled || ignoreTemplateLoadRef.current) return
       const settings = parseAgreementCrimeConsentSettings(saved?.settingsJson)
@@ -102,6 +116,7 @@ export function MemberConsentCrimeModal({
       ignoreTemplateLoadRef.current = true
       setUploadedFile(file)
       setReplacementFileName(file.name)
+      setEvidenceFileObjectId(undefined)
       setHasUploadedDocument(true)
       void readImageFileAsDataUrl(file).then(dataUrl => {
         setDisplaySrc(dataUrl)
@@ -116,7 +131,7 @@ export function MemberConsentCrimeModal({
     })
   }, [])
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (!hasUploadedDocument) {
       showAlert({
         title: '안내',
@@ -124,15 +139,57 @@ export function MemberConsentCrimeModal({
       })
       return
     }
+
+    const originalFileName = replacementFileName?.trim() || 'crime-consent.png'
+    let fileObjectId = evidenceFileObjectId
+    let fileForUpload = uploadedFile
+
+    if (fileObjectId == null) {
+      if (fileForUpload == null || fileForUpload.size < 1) {
+        fileForUpload = dataUrlToFile(displaySrc, originalFileName)
+      }
+      if (fileForUpload == null || fileForUpload.size < 1) {
+        showAlert({
+          title: '안내',
+          content: CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE,
+        })
+        return
+      }
+
+      setIsSubmitting(true)
+      try {
+        fileObjectId = await uploadConsentEvidenceFile({
+          file: fileForUpload,
+          originalFileName,
+          memberId,
+        })
+        setEvidenceFileObjectId(fileObjectId)
+      } catch (error) {
+        showAlert({
+          title: '안내',
+          content: getMemberApiErrorMessage(
+            error,
+            '성범죄 동의서 파일 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          ),
+        })
+        return
+      } finally {
+        setIsSubmitting(false)
+      }
+    }
+
     onSnapshotSave?.({
       displaySrc,
       replacementFileName,
-      file: uploadedFile ?? undefined,
+      file: uploadedFile ?? fileForUpload ?? undefined,
+      evidenceFileObjectId: fileObjectId,
     })
     onComplete()
   }, [
     displaySrc,
+    evidenceFileObjectId,
     hasUploadedDocument,
+    memberId,
     onComplete,
     onSnapshotSave,
     replacementFileName,
@@ -191,6 +248,7 @@ export function MemberConsentCrimeModal({
             className="crime-consent-doc-modal__close"
             onClick={onClose}
             aria-label="닫기"
+            disabled={isSubmitting}
           >
             <CloseOutlined />
           </button>
@@ -204,7 +262,12 @@ export function MemberConsentCrimeModal({
               </p>
             </div>
             <div className="crime-consent-doc-modal__actions member-consent-crime-modal__actions">
-              <CmsButton variant="secondary" size="medium" onClick={onClose}>
+              <CmsButton
+                variant="secondary"
+                size="medium"
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
                 닫기
               </CmsButton>
               <CmsButton
@@ -213,13 +276,26 @@ export function MemberConsentCrimeModal({
                 icon={<DownloadOutlined />}
                 onClick={handleDownload}
                 className="crime-consent-doc-modal__download-btn"
+                disabled={isSubmitting}
               >
                 문서 다운로드
               </CmsButton>
-              <CmsButton variant="primary" size="medium" onClick={handlePickDocument}>
+              <CmsButton
+                variant="primary"
+                size="medium"
+                onClick={handlePickDocument}
+                disabled={isSubmitting}
+              >
                 문서 업로드
               </CmsButton>
-              <CmsButton variant="primary" size="medium" width={140} onClick={handleSubmit}>
+              <CmsButton
+                variant="primary"
+                size="medium"
+                width={140}
+                onClick={() => void handleSubmit()}
+                disabled={isSubmitting}
+                loading={isSubmitting}
+              >
                 제출
               </CmsButton>
             </div>
@@ -234,14 +310,20 @@ export function MemberConsentCrimeModal({
             aria-label="동의서 문서 파일 선택"
           />
 
-          <div className="crime-consent-doc-modal__a4-outer">
-            <CrimeConsentDocumentPreview
-              src={displaySrc}
-              file={uploadedFile}
-              fileName={replacementFileName}
-              alt={CRIME_CONSENT_DOCUMENT_MODAL_HEADER_TITLE}
-            />
-          </div>
+          {isSubmitting ? (
+            <div className="member-consent-crime-modal__uploading">
+              <Spin tip="동의서 파일을 업로드하는 중입니다." />
+            </div>
+          ) : (
+            <div className="crime-consent-doc-modal__a4-outer">
+              <CrimeConsentDocumentPreview
+                src={displaySrc}
+                file={uploadedFile}
+                fileName={replacementFileName}
+                alt={CRIME_CONSENT_DOCUMENT_MODAL_HEADER_TITLE}
+              />
+            </div>
+          )}
         </div>
       </div>
     </TealHeaderModal>

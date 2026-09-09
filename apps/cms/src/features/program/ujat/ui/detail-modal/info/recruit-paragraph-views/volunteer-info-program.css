@@ -1,0 +1,63 @@
+.ujat-recruit-volunteer-info-program {
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-recruit-volunteer-info-program__forms {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ujat-recruit-volunteer-info-program__forms > .detail-info-form {
+  margin: 0;
+}
+
+.ujat-recruit-activity-term-field > .cms-input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ujat-recruit-activity-term-field__suffix {
+  flex-shrink: 0;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.ujat-recruit-volunteer-notes-field > .cms-input,
+.ujat-recruit-participant-notes-field > .cms-input {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+}
+
+/* 1차 서류 합격자 발표 / 2차 면접 기간 / 최종 합격자 발표 — 날짜 240px, 옆 입력은 짧게 */
+.ujat-recruit-inline-result-row.program-detail-info-tab__result-row,
+.ujat-recruit-inline-result-row.program-detail-info-tab__result-row:has(
+    .program-detail-info-tab__result-row-divider
+  ) {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.ujat-recruit-inline-result-row > .paragraph-date-picker,
+.ujat-recruit-inline-result-row > .ujat-recruit-inline-result-row__date,
+.ujat-recruit-inline-result-row > .ujat-recruit-inline-result-row__period {
+  flex: 0 0 240px;
+  width: 240px !important;
+  max-width: 240px;
+  min-width: 240px;
+}
+
+.ujat-recruit-inline-result-row > .ujat-recruit-inline-result-row__period > .paragraph-date-picker {
+  width: 240px !important;
+  max-width: 240px;
+}
+
+.ujat-recruit-inline-result-row .cms-input.program-detail-info-tab__result-method-input,
+.ujat-recruit-inline-result-row .cms-select.program-detail-info-tab__select--interview-method {
+  flex: 0 0 160px;
+  width: 160px !important;
+  max-width: 160px;
+  min-width: 0;
+}

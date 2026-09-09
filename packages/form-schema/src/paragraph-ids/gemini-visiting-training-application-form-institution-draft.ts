@@ -29,6 +29,9 @@ const THIRD_PARTY_BOTTOM =
 const PORTRAIT_BOTTOM =
   '동의하지 않을 권리가 있으며, 동의하지 않을 시 본 프로그램 참여가 불가능합니다.'
 
+const PERSONAL_INFO_RETENTION_CELL =
+  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
+
 function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
   const colCount = 3
   const columnFields = Array.from({ length: colCount }, () => ({
@@ -59,8 +62,7 @@ function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
         },
         {
           kind: 'text',
-          value:
-            '- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 동의일로부터 3년 보관 후 폐기',
+          value: PERSONAL_INFO_RETENTION_CELL,
         },
       ],
     ],
@@ -206,4 +208,42 @@ export function createGeminiVisitingTrainingApplicationFormInstitutionDraft(): W
     formSettings: { titleNumbering: 'none' },
     paragraphs,
   })
+}
+
+function patchHorizontalTableTextCell(
+  paragraph: HorizontalTableParagraph,
+  row: number,
+  col: number,
+  value: string
+): HorizontalTableParagraph {
+  const fieldDataRows = (paragraph.fieldDataRows ?? []).map(cells =>
+    cells.map(cell => ({ ...cell }))
+  )
+  const rowCells = fieldDataRows[row]
+  const cell = rowCells?.[col]
+  if (cell == null || cell.kind !== 'text' || cell.value === value) {
+    return paragraph
+  }
+  rowCells[col] = { ...cell, value }
+  return { ...paragraph, fieldDataRows }
+}
+
+/** 구 시드 고정 문구 보정 */
+export function migrateGeminiVisitingTrainingApplicationInstitutionParagraphs(
+  draft: WritingFormDraft
+): WritingFormDraft {
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (
+      paragraph.id === GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.personalInfoCollection &&
+      paragraph.kind === 'single_item' &&
+      paragraph.variant === 'horizontal_table'
+    ) {
+      const next = patchHorizontalTableTextCell(paragraph, 0, 2, PERSONAL_INFO_RETENTION_CELL)
+      if (next !== paragraph) changed = true
+      return next
+    }
+    return paragraph
+  })
+  return changed ? { ...draft, paragraphs } : draft
 }

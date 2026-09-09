@@ -16,6 +16,9 @@ Swagger 스펙에서 TypeScript API 클라이언트·스키마를 생성하는 �
 | `pnpm --filter cms filter:openapi:settlement`      | 정산 subset                                                               |
 | `pnpm --filter cms filter:openapi:certificates`    | 인증서 고유번호·다운로드 이력 (`serial` + `download-logs`) subset         |
 | `pnpm --filter cms generate:api:certificates`      | certificates subset filter + Orval                                        |
+| `pnpm --filter cms merge:openapi:notification-template-variables` | JABACK `backend.openapi.json`에서 template-variables path·Notification* 스키마만 병합 (`BE_OPENAPI` 가능) |
+| `pnpm --filter cms patch:openapi:notification-template-variables` | template-variables query/`NotificationCatalogVariableItem` 설명·enum 보강 |
+| `pnpm --filter cms generate:api:notifications` | merge + patch + notifications filter + Orval |
 | `pnpm --filter cms generate:api`                   | 위 filter 전체 + Orval codegen                                            |
 
 기본 ngrok fallback: `https://6920-221-146-247-18.ngrok-free.app//`

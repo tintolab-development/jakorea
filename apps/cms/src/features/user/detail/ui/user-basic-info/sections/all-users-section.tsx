@@ -277,9 +277,14 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
           edit={
             <FullWidthAddressEdit
               searchValue={d?.detailAddressSearch ?? ''}
-              onSearchChange={next => onMemberInfoDraftChange?.({ detailAddressSearch: next })}
+              onSearchChange={next =>
+                onMemberInfoDraftChange?.({ detailAddressSearch: next, zipCode: '' })
+              }
               detailValue={d?.detailAddressDetail ?? ''}
               onDetailChange={next => onMemberInfoDraftChange?.({ detailAddressDetail: next })}
+              onAddressSelect={item =>
+                onMemberInfoDraftChange?.({ zipCode: item.zipNo?.trim() ?? '' })
+              }
               detailAriaLabel="자택 주소지 상세"
             />
           }

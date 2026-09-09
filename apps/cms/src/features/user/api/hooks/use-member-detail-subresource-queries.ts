@@ -3,9 +3,9 @@ import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import {
   fetchAffiliatedTeachersRemote,
   fetchAdminAccountProgramRolesRemote,
+  fetchAdminCommentsRemote,
   fetchMemberAdminProgramsRemote,
   fetchMemberApplicationsRemote,
-  fetchMemberCommentsRemote,
   fetchMemberProgramHistoryRemote,
   fetchSchoolTeachersRemote,
   fetchSchoolOrganizationProgramEnrollmentHistoryRemote,
@@ -161,7 +161,7 @@ export function memberCommentsQueryOptions(
     queryKey: memberQueryKeys.comments(resourceId, screenCode, target),
     staleTime: 30_000,
     queryFn: async () => {
-      const comments = await fetchMemberCommentsRemote(resourceId, { screenCode })
+      const comments = await fetchAdminCommentsRemote(resourceId, target, { screenCode })
       return {
         comments,
         latestComment: resolveLatestMemberAdminComment(comments, screenCode),
@@ -175,7 +175,7 @@ export function memberCommentsQueryOptions(
   })
 }
 
-/** 상세 정보 탭 진입 — staleTime 안이어도 comments를 다시 GET */
+/** 상세 정보 탭 진입 — staleTime과 무관하게 comments를 다시 GET */
 export async function fetchMemberCommentsQuery(
   queryClient: QueryClient,
   resourceId: number,
@@ -184,7 +184,10 @@ export async function fetchMemberCommentsQuery(
 ) {
   const query = memberCommentsQueryOptions(resourceId, screenCode, target)
   await queryClient.invalidateQueries({ queryKey: query.queryKey, refetchType: 'none' })
-  return queryClient.fetchQuery(query)
+  return queryClient.fetchQuery({
+    ...query,
+    staleTime: 0,
+  })
 }
 
 export function useMemberCommentsQuery(

@@ -7,12 +7,15 @@ import {
   mapPersonalInfoAccessLogListPageResponse,
 } from '@/features/logs/api/adapters/logs-adapters'
 import {
+  exportMemberLoginHistoryRemote,
   fetchFileAccessLogsRemote,
   fetchMemberLoginsRemote,
   fetchPrivacyAccessLogsRemote,
   fetchSystemIssueLogsRemote,
   toLogsListQueryParams,
 } from '@/features/logs/api/logs-api-client'
+import { downloadBlob } from '@/shared/utils/file-download'
+import { buildMemberLoginHistoryExcelFilename } from '@/features/logs/lib/member-login-excel'
 import { LOG_LIST_PAGE_SIZE, type LogListPage } from '@/features/logs/api/log-list-page'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import type { BugIssueLog } from '@/types/bug-issue-log'
@@ -63,6 +66,26 @@ export async function getMemberLoginLogsPage(
     toLogsListQueryParams(applyMemberLoginRetentionFromFilter(filters), page, size)
   )
   return mapMemberLoginLogListPageResponse(dto)
+}
+
+export async function exportMemberLoginLogs(
+  filters: Record<string, string> = {}
+): Promise<void> {
+  assertLogsRemoteApiReady()
+  const blob = await exportMemberLoginHistoryRemote(applyMemberLoginRetentionFromFilter(filters))
+  if (blob.type.includes('json')) {
+    const text = await blob.text()
+    try {
+      const parsed = JSON.parse(text) as { message?: string; error?: { message?: string } }
+      throw new Error(parsed.error?.message ?? parsed.message ?? '회원 로그인 이력 다운로드에 실패했습니다.')
+    } catch (error) {
+      if (error instanceof Error && error.message !== 'Unexpected end of JSON input') {
+        throw error
+      }
+      throw new Error('회원 로그인 이력 다운로드에 실패했습니다.')
+    }
+  }
+  await downloadBlob(blob, `${buildMemberLoginHistoryExcelFilename()}.xlsx`)
 }
 
 export async function getBugIssueLogsPage(

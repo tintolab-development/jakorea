@@ -180,6 +180,7 @@ export function UserDetailFullPageModal({
       onCancelBasicInfoEdit: actions.cancelBasicInfoEdit,
       onSaveBasicInfoEdit: actions.saveBasicInfoEdit,
       onBasicInfoDraftChange: actions.updateBasicInfoDraft,
+      instructorEditDraftFlushRef: actions.instructorEditDraftFlushRef,
       onPatchAdminPermissionVariantFromDetailView: derived.canPatchAdminPermissionInDetailView
         ? actions.patchAdminPermissionVariantFromDetailView
         : undefined,

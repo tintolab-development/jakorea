@@ -1,0 +1,190 @@
+.sms-phone-preview {
+  --sms-phone-w: 383;
+  --sms-phone-h: 785;
+  --sms-phone-scale-x: 1;
+  --sms-phone-scale-y: 1;
+  position: relative;
+  flex: 0 0 383px;
+  width: 383px;
+  height: 785px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.sms-phone-preview__frame {
+  display: block;
+  width: 383px;
+  height: 785px;
+  object-fit: fill;
+  pointer-events: none;
+  user-select: none;
+}
+
+.sms-phone-preview__stage {
+  position: absolute;
+  top: 58px;
+  left: 50%;
+  width: 340px;
+  bottom: 36px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.sms-phone-preview__nav {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 4px 16px 8px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.sms-phone-preview__nav-brand {
+  margin: 0;
+  overflow: hidden;
+  color: #fff;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 130%;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.sms-phone-preview__nav-phone {
+  margin: 0;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.sms-phone-preview__scroll {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 28px 12px 20px;
+  box-sizing: border-box;
+}
+
+.sms-phone-preview__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.sms-phone-preview__message {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.sms-phone-preview__bubble {
+  display: flex;
+  padding: 12px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.sms-phone-preview__subject {
+  margin: 0;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Inter, Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.sms-phone-preview__body {
+  margin: 0;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Inter, Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.sms-phone-preview .notification-variable-token {
+  color: var(--color-mint-01, #01a1af);
+  font-weight: 700;
+}
+
+/* 미리보기 모달 — 뷰포트에 맞게 ~75% 축소 */
+.sms-phone-preview--compact {
+  flex: 0 0 287px;
+  width: 287px;
+  height: 589px;
+}
+
+.sms-phone-preview--compact .sms-phone-preview__frame {
+  width: 287px;
+  height: 589px;
+}
+
+.sms-phone-preview--compact .sms-phone-preview__stage {
+  top: 44px;
+  width: 255px;
+  bottom: 27px;
+}
+
+.sms-phone-preview--compact .sms-phone-preview__nav {
+  min-height: 36px;
+  padding: 2px 12px 6px;
+}
+
+.sms-phone-preview--compact .sms-phone-preview__scroll {
+  padding: 20px 10px 16px;
+}

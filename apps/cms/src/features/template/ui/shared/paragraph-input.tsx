@@ -14,6 +14,8 @@ export interface ParagraphInputProps {
   required?: boolean
   /** 번호 접두 등(예: <span>1. </span>) */
   leading?: ReactNode
+  /** 제목 본문 뒤·필수(*) 앞 (예: 객관식 중복 선택 안내) */
+  suffix?: ReactNode
   disabled?: boolean
   className?: string
 }
@@ -45,6 +47,7 @@ export function ParagraphInput({
   placeholder,
   required,
   leading,
+  suffix,
   disabled,
   className,
 }: ParagraphInputProps) {
@@ -102,6 +105,7 @@ export function ParagraphInput({
                 <span className="paragraph-input__placeholder">{placeholder ?? ''}</span>
               )}
             </span>
+            {suffix}
             {required ? (
               <span className="paragraph-input__required" aria-hidden>
                 *
@@ -148,6 +152,7 @@ export function ParagraphInput({
               />
             )}
           </div>
+          {suffix}
           {required ? (
             <span className="paragraph-input__required" aria-hidden>
               *

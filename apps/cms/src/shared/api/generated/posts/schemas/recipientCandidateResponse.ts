@@ -12,6 +12,8 @@ export interface RecipientCandidateResponse {
   actorType?: string;
   participantType?: string;
   participantStatus?: string;
+  memberType?: string;
+  typeLabel?: string;
   recipientNameMasked?: string;
   channelType?: string;
   recipientContactMasked?: string;

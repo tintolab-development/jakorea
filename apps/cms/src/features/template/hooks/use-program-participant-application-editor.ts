@@ -3,9 +3,9 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
-  startTransition,
   type Dispatch,
   type SetStateAction,
 } from 'react'
@@ -50,11 +50,12 @@ import {
 } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
 import {
   createUjatProgramApplicationFormInstitutionDraft,
+  migrateUjatProgramApplicationInstitutionParagraphs,
   UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/ujat-program-application-form-institution-draft'
 import {
   createUjatProgramApplicationFormVolunteerDraft,
-  UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS,
+  migrateUjatProgramApplicationVolunteerChoiceParagraphs,
   UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import {
@@ -63,6 +64,7 @@ import {
 } from '@/features/template/model/gemini-visiting-training-application-form-instructor-draft'
 import {
   createGeminiVisitingTrainingApplicationFormInstitutionDraft,
+  migrateGeminiVisitingTrainingApplicationInstitutionParagraphs,
   GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/gemini-visiting-training-application-form-institution-draft'
 import {
@@ -79,10 +81,13 @@ import {
 } from '@/features/template/model/economy-recruit-form-institution-draft'
 import {
   createProgramApplicationFormInstitutionDraft,
+  migrateProgramApplicationFormInstitutionParagraphs,
+  PROGRAM_APPLICATION_FORM_INSTITUTION_IDS,
   PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-institution-draft'
 import {
   createProgramApplicationFormEconomyDraft,
+  migrateProgramApplicationFormEconomyParagraphs,
   PROGRAM_APPLICATION_FORM_ECONOMY_IDS,
   PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-economy-draft'
@@ -92,10 +97,12 @@ import {
 } from '@/features/template/model/program-application-form-trained-teachers-draft'
 import {
   createProgramApplicationFormInstructorDraft,
+  migrateProgramApplicationFormInstructorParagraphs,
   PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-instructor-draft'
 import {
   createProgramApplicationFormVolunteerDraft,
+  migrateProgramApplicationFormVolunteerParagraphs,
   PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-volunteer-draft'
 import {
@@ -115,6 +122,8 @@ import {
   buildParticipantApplicationEditorState,
 } from '@/features/template/lib/participant-application-editor-state'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
+import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/form-template-delete-policy'
+import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
 import {
   loadWritingFormTemplateDraft,
@@ -184,6 +193,8 @@ import {
 } from '@/features/program/general/lib/instructor-application-available-schedule'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { resolveGeneralProgramVolunteerInterviewScheduleEditSeed } from '@/features/program/general/lib/volunteer-interview-schedule-display'
+import { getUjatVolunteerRound } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-program-round'
+import { resolveUjatVolunteerHiddenParagraphIds } from '@/features/template/lib/ujat-volunteer-application-form-visibility'
 import type { Program } from '@/types/domain'
 
 function useParticipantApplicationMiddleActions(
@@ -276,6 +287,8 @@ export type UseProgramParticipantApplicationEditorOptions = {
    * 있으면 seed variant id 대신 이 code로 draft 로드/저장.
    */
   templateCode?: string
+  systemTemplate?: boolean
+  forceUserEditable?: boolean
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
   /** 프로그램 등록 마법사 — 참여자 유형이 학교/기관일 때만 모집 최대값 필드 노출 */
   participantOrganization?: boolean
@@ -422,6 +435,12 @@ export function useProgramParticipantApplicationEditor(
     return getTemplateIdForParticipantApplicationVariant(variant)
   }, [editorOptions?.templateCode, variant])
 
+  const isStructureLocked = isWritingFormTemplateStructureLocked({
+    templateCode: resolvePersistTemplateId(),
+    systemTemplate: editorOptions?.systemTemplate,
+    forceUserEditable: editorOptions?.forceUserEditable,
+  })
+
   const seedParagraphIds = useMemo(() => {
     if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'economy-application-institution')
@@ -513,102 +532,183 @@ export function useProgramParticipantApplicationEditor(
     return createProgramParticipantApplicationDraft()
   }, [variant])
 
+  /** 모집/신청 탭 전환 시 EMPTY→스피너 깜빡임 방지 — 세션 내 templateId별 마지막 draft */
+  const sessionDraftCacheRef = useRef(
+    new Map<
+      string,
+      {
+        draft: WritingFormDraft
+        overlay: Record<string, unknown> | undefined
+        editorState: Record<string, unknown> | undefined
+      }
+    >()
+  )
+  /** 해당 templateId를 저장소에서 한 번이라도 hydrate 했는지 — 미완료면 캐시보다 저장본 우선 */
+  const storageHydratedTemplateIdsRef = useRef(new Set<string>())
+  const draftRef = useRef(draft)
+  draftRef.current = draft
+  const volunteerExceptionScheduleCountRef = useRef(volunteerExceptionScheduleCount)
+  volunteerExceptionScheduleCountRef.current = volunteerExceptionScheduleCount
+  const ujatVolunteerApplicationTypeRef = useRef(ujatVolunteerApplicationType)
+  ujatVolunteerApplicationTypeRef.current = ujatVolunteerApplicationType
+  const ujatGradeApplicationBlockIdsRef = useRef(ujatGradeApplicationBlockIds)
+  ujatGradeApplicationBlockIdsRef.current = ujatGradeApplicationBlockIds
+  const ujatApplicationGradeByBlockIdRef = useRef(ujatApplicationGradeByBlockId)
+  ujatApplicationGradeByBlockIdRef.current = ujatApplicationGradeByBlockId
+  const ujatGradeClassTimeBlockIdsRef = useRef(ujatGradeClassTimeBlockIds)
+  ujatGradeClassTimeBlockIdsRef.current = ujatGradeClassTimeBlockIds
+
   useEffect(() => {
     if (!active) {
       setIsDraftLoading(false)
+      sessionDraftCacheRef.current.clear()
+      storageHydratedTemplateIdsRef.current.clear()
       return
     }
     /* eslint-disable react-hooks/set-state-in-effect -- 풀페이지 미리보기 열림과 동기화해 시드·저장본을 반영 */
     let cancelled = false
-    setIsDraftLoading(true)
-    setDraft(EMPTY_WRITING_FORM_DRAFT)
-    setActiveParagraphId(null)
-    setSingleItemListActiveItemId(null)
+    const templateId = resolvePersistTemplateId()
 
-    const applyDraft = (next: WritingFormDraft) => {
-      const normalized = normalizeWritingFormDraft(next)
-      startTransition(() => {
-        setDraft(normalized)
-        setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
-        setSingleItemListActiveItemId(null)
-      })
+    const applyDraftNow = (next: WritingFormDraft) => {
+      const migrated =
+        variant === 'ujat-application-volunteer'
+          ? migrateUjatProgramApplicationVolunteerChoiceParagraphs(next)
+          : variant === 'ujat-application-institution'
+            ? migrateUjatProgramApplicationInstitutionParagraphs(next)
+            : variant === 'gemini-application-institution'
+              ? migrateGeminiVisitingTrainingApplicationInstitutionParagraphs(next)
+              : variant === 'economy-application-institution'
+                ? migrateProgramApplicationFormEconomyParagraphs(next)
+                : variant === 'institution'
+                  ? migrateProgramApplicationFormInstitutionParagraphs(next)
+                  : variant === 'instructor'
+                    ? migrateProgramApplicationFormInstructorParagraphs(next)
+                    : variant === 'volunteer'
+                      ? migrateProgramApplicationFormVolunteerParagraphs(next)
+                      : next
+      const normalized = normalizeWritingFormDraft(migrated)
+      setDraft(normalized)
+      setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
+      setSingleItemListActiveItemId(null)
     }
 
-    const finishLoad = () => {
-      if (!cancelled) setIsDraftLoading(false)
+    const cached = sessionDraftCacheRef.current.get(templateId)
+    if (cached) {
+      applyDraftNow(cached.draft)
+      if (variant === 'ujat-recruit-institution') {
+        replaceUjatRecruitInstitutionOverlay(cached.overlay ?? {})
+      } else if (variant === 'ujat-recruit-volunteer') {
+        replaceUjatRecruitVolunteerOverlay(cached.overlay ?? {})
+      } else {
+        restoreParticipantOverlayForVariant(variant, cached.overlay)
+        applyParticipantApplicationEditorState({
+          variant,
+          editorState: cached.editorState,
+          setVolunteerExceptionScheduleCount,
+          setUjatVolunteerApplicationType,
+          setUjatGradeApplicationBlockIds,
+          setUjatApplicationGradeByBlockId,
+          setUjatGradeClassTimeBlockIds,
+        })
+      }
+      setIsDraftLoading(false)
+    } else {
+      // 탭 전환 시 EMPTY/스피너 대신 시드를 즉시 그려 깜빡임 제거
+      applyDraftNow(createSeedDraft())
+      if (variant === 'ujat-recruit-institution') {
+        resetUjatRecruitInstitutionOverlay()
+      } else if (variant === 'ujat-recruit-volunteer') {
+        resetUjatRecruitVolunteerOverlay()
+      } else {
+        restoreParticipantOverlayForVariant(variant, undefined)
+      }
+      setIsDraftLoading(false)
     }
+
+    const preferSessionCache =
+      cached != null && storageHydratedTemplateIdsRef.current.has(templateId)
 
     if (variant === 'ujat-recruit-institution' || variant === 'ujat-recruit-volunteer') {
-      const templateId = resolvePersistTemplateId()
-      void loadWritingFormTemplateDraft(templateId)
-        .then(saved => {
-          if (cancelled) return
-          if (saved?.draft) {
-            applyDraft(saved.draft)
-            if (variant === 'ujat-recruit-institution') {
-              replaceUjatRecruitInstitutionOverlay(saved.overlay ?? {})
-            } else {
-              replaceUjatRecruitVolunteerOverlay(saved.overlay ?? {})
-            }
-            return
-          }
-          const legacy =
-            variant === 'ujat-recruit-institution'
-              ? loadUjatRecruitInstitutionTemplateSave()
-              : loadUjatRecruitVolunteerTemplateSave()
-          if (legacy) {
-            applyDraft(legacy.draft)
-            if (variant === 'ujat-recruit-institution') {
-              replaceUjatRecruitInstitutionOverlay(legacy.overlay ?? {})
-            } else {
-              replaceUjatRecruitVolunteerOverlay(legacy.overlay ?? {})
-            }
-          } else if (variant === 'ujat-recruit-institution') {
-            resetUjatRecruitInstitutionOverlay()
-            applyDraft(createUjatRecruitFormInstitutionDraft())
+      void loadWritingFormTemplateDraft(templateId).then(saved => {
+        if (cancelled) return
+        if (preferSessionCache) return
+        if (saved?.draft) {
+          applyDraftNow(saved.draft)
+          if (variant === 'ujat-recruit-institution') {
+            replaceUjatRecruitInstitutionOverlay(saved.overlay ?? {})
           } else {
-            resetUjatRecruitVolunteerOverlay()
-            applyDraft(createUjatRecruitFormVolunteerDraft())
+            replaceUjatRecruitVolunteerOverlay(saved.overlay ?? {})
           }
-        })
-        .finally(finishLoad)
+          storageHydratedTemplateIdsRef.current.add(templateId)
+          return
+        }
+        const legacy =
+          variant === 'ujat-recruit-institution'
+            ? loadUjatRecruitInstitutionTemplateSave()
+            : loadUjatRecruitVolunteerTemplateSave()
+        if (legacy) {
+          applyDraftNow(legacy.draft)
+          if (variant === 'ujat-recruit-institution') {
+            replaceUjatRecruitInstitutionOverlay(legacy.overlay ?? {})
+          } else {
+            replaceUjatRecruitVolunteerOverlay(legacy.overlay ?? {})
+          }
+        }
+        storageHydratedTemplateIdsRef.current.add(templateId)
+      })
     } else {
-      const templateId = resolvePersistTemplateId()
-      void loadWritingFormTemplateDraft(templateId)
-        .then(saved => {
-          if (cancelled) return
-          if (saved?.draft) {
-            applyDraft(saved.draft)
-            restoreParticipantOverlayForVariant(variant, saved.overlay)
-            applyParticipantApplicationEditorState({
-              variant,
-              editorState: saved.editorState,
-              setVolunteerExceptionScheduleCount,
-              setUjatVolunteerApplicationType,
-              setUjatGradeApplicationBlockIds,
-              setUjatApplicationGradeByBlockId,
-              setUjatGradeClassTimeBlockIds,
-            })
-            return
-          }
-          restoreParticipantOverlayForVariant(variant, undefined)
-          applyDraft(createSeedDraft())
-          if (variant === 'ujat-application-volunteer') {
-            setUjatVolunteerApplicationType('ujat-graduate')
-          }
-          if (variant === 'ujat-application-institution') {
-            setUjatGradeApplicationBlockIds([crypto.randomUUID()])
-            setUjatApplicationGradeByBlockId({})
-            setUjatGradeClassTimeBlockIds([crypto.randomUUID()])
-          }
-        })
-        .finally(finishLoad)
+      void loadWritingFormTemplateDraft(templateId).then(saved => {
+        if (cancelled) return
+        if (preferSessionCache) return
+        if (saved?.draft) {
+          applyDraftNow(saved.draft)
+          restoreParticipantOverlayForVariant(variant, saved.overlay)
+          applyParticipantApplicationEditorState({
+            variant,
+            editorState: saved.editorState,
+            setVolunteerExceptionScheduleCount,
+            setUjatVolunteerApplicationType,
+            setUjatGradeApplicationBlockIds,
+            setUjatApplicationGradeByBlockId,
+            setUjatGradeClassTimeBlockIds,
+          })
+          storageHydratedTemplateIdsRef.current.add(templateId)
+          return
+        }
+        if (variant === 'ujat-application-volunteer') {
+          setUjatVolunteerApplicationType('ujat-graduate')
+        }
+        if (variant === 'ujat-application-institution') {
+          setUjatGradeApplicationBlockIds([crypto.randomUUID()])
+          setUjatApplicationGradeByBlockId({})
+          setUjatGradeClassTimeBlockIds([crypto.randomUUID()])
+        }
+        storageHydratedTemplateIdsRef.current.add(templateId)
+      })
     }
 
     /* eslint-enable react-hooks/set-state-in-effect */
 
     return () => {
       cancelled = true
+      if (draftRef.current.paragraphs.length === 0) return
+      sessionDraftCacheRef.current.set(templateId, {
+        draft: draftRef.current,
+        overlay:
+          variant === 'ujat-recruit-institution'
+            ? { ...getUjatRecruitInstitutionOverlayRecord() }
+            : variant === 'ujat-recruit-volunteer'
+              ? { ...getUjatRecruitVolunteerOverlayRecord() }
+              : collectParticipantOverlayForVariant(variant),
+        editorState: buildParticipantApplicationEditorState({
+          variant,
+          volunteerExceptionScheduleCount: volunteerExceptionScheduleCountRef.current,
+          ujatVolunteerApplicationType: ujatVolunteerApplicationTypeRef.current,
+          ujatGradeApplicationBlockIds: ujatGradeApplicationBlockIdsRef.current,
+          ujatApplicationGradeByBlockId: ujatApplicationGradeByBlockIdRef.current,
+          ujatGradeClassTimeBlockIds: ujatGradeClassTimeBlockIdsRef.current,
+        }),
+      })
     }
   }, [active, createSeedDraft, resolvePersistTemplateId, variant])
 
@@ -672,9 +772,18 @@ export function useProgramParticipantApplicationEditor(
     seedParagraphIds
   )
 
-  const effectiveMiddleParagraphActions = isRecruitmentEditorVariant(variant)
-    ? undefined
-    : middleParagraphActions
+  const writingFormMiddleParagraphActions = useWritingFormMiddleParagraphActions(
+    setDraft,
+    setActiveParagraphId
+  )
+
+  const effectiveMiddleParagraphActions = !isStructureLocked
+    ? writingFormMiddleParagraphActions
+    : isRecruitmentEditorVariant(variant)
+      ? undefined
+      : middleParagraphActions
+
+  const effectiveStructureLockedParagraphIds = isStructureLocked ? seedParagraphIds : undefined
 
   const {
     horizontalTableRowSelectionsByParagraphId,
@@ -903,7 +1012,15 @@ export function useProgramParticipantApplicationEditor(
   const institutionApplicationFormVisibilityVersion = useInstitutionApplicationFormVisibilityVersion()
   const institutionApplicationHiddenParagraphIds = useMemo(() => {
     if (variant !== 'institution') return undefined
-    return getInstitutionApplicationFormHiddenParagraphIds(institutionApplicationBridge)
+    const hidden = getInstitutionApplicationFormHiddenParagraphIds(institutionApplicationBridge)
+    if (hidden == null) return undefined
+    const isTemplateAuthoringContext =
+      institutionApplicationBridge.educationStructure == null &&
+      institutionApplicationBridge.sessionRound == null
+    if (!isTemplateAuthoringContext) return hidden
+    const next = new Set(hidden)
+    next.delete(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice)
+    return next.size > 0 ? next : undefined
   }, [variant, institutionApplicationBridge, institutionApplicationFormVisibilityVersion])
 
   const economyApplicationHiddenParagraphIds = useMemo(() => {
@@ -942,6 +1059,12 @@ export function useProgramParticipantApplicationEditor(
     })
   }, [variant, linkedProgram, draft.paragraphs, institutionApplicationBridge])
 
+  const ujatVolunteerRecruitCohortLabel = useMemo(() => {
+    if (variant !== 'ujat-application-volunteer' || linkedProgram == null) return undefined
+    const half = editorOptions?.ujatRecruitParagraphProps?.volunteerHalf ?? 'h2'
+    return getUjatVolunteerRound(linkedProgram, half)?.curriculum?.trim() || undefined
+  }, [variant, linkedProgram, editorOptions?.ujatRecruitParagraphProps?.volunteerHalf])
+
   const ujatProgramApplicationFormVolunteerOptions = useMemo(
     () =>
       variant === 'ujat-application-volunteer'
@@ -949,23 +1072,37 @@ export function useProgramParticipantApplicationEditor(
             enabled: true as const,
             applicationType: ujatVolunteerApplicationType,
             onApplicationTypeChange: setUjatVolunteerApplicationType,
+            isTemplateAuthoringMode: !programLinkedPreview,
+            recruitCohortLabel: ujatVolunteerRecruitCohortLabel,
           }
         : {
             enabled: false as const,
             applicationType: 'ujat-graduate' as const,
             onApplicationTypeChange: () => {},
           },
-    [variant, ujatVolunteerApplicationType]
+    [
+      variant,
+      ujatVolunteerApplicationType,
+      programLinkedPreview,
+      ujatVolunteerRecruitCohortLabel,
+    ]
   )
 
   const leftPanelParagraphBodyOptions = useMemo(
     () => {
       if (!active) return INACTIVE_LEFT_PANEL_PARAGRAPH_BODY_OPTIONS
       return {
-      structureLockedParagraphIds: seedParagraphIds,
-      structureLockedAuthoringChoicePreview: true,
+      structureLockedParagraphIds: effectiveStructureLockedParagraphIds,
+      structureLockedAuthoringChoicePreview: isStructureLocked ? true : undefined,
       programApplicationFormInstitution: variant === 'institution',
-      programApplicationFormEconomyInstitution: variant === 'economy-application-institution',
+      programApplicationFormEconomyInstitution:
+        variant === 'economy-application-institution'
+          ? {
+              enabled: true as const,
+              sponsorId: linkedProgram?.sponsorId,
+              sponsorDisplayName: linkedProgram?.generalCommonInfo?.sponsorDisplayName,
+            }
+          : undefined,
       programApplicationFormTrainedTeachersInstitution:
         variant === 'trained-teachers-application-institution',
       programApplicationFormGeminiInstitution: variant === 'gemini-application-institution',
@@ -977,14 +1114,9 @@ export function useProgramParticipantApplicationEditor(
       ujatProgramApplicationFormVolunteer: ujatProgramApplicationFormVolunteerOptions,
       hiddenParagraphIds: (() => {
         if (variant === 'ujat-application-volunteer') {
-          const hidden = new Set<string>()
-          if (ujatVolunteerApplicationType === 'new') {
-            hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm)
-          }
-          if (ujatVolunteerApplicationType === 'ujat-graduate') {
-            hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems)
-          }
-          return hidden.size > 0 ? hidden : undefined
+          return resolveUjatVolunteerHiddenParagraphIds(ujatVolunteerApplicationType, {
+            isTemplateAuthoringMode: !programLinkedPreview,
+          })
         }
         if (linkedProgram != null) {
           return resolveGeneralApplicationFormHiddenParagraphIds(variant, {
@@ -1050,8 +1182,10 @@ export function useProgramParticipantApplicationEditor(
       linkedProgram,
       programApplicationFormInstructorOptions,
       programApplicationFormVolunteerOptions,
+      programLinkedPreview,
       recruitVolunteerHiddenParagraphIds,
-      seedParagraphIds,
+      effectiveStructureLockedParagraphIds,
+      isStructureLocked,
       ujatProgramApplicationFormVolunteerOptions,
       ujatProgramApplicationGradeClassTime,
       ujatProgramApplicationGradeInfo,
@@ -1154,7 +1288,7 @@ export function useProgramParticipantApplicationEditor(
     isDraftLoading,
     activeParagraphId,
     singleItemListActiveItemId,
-    structureLockedParagraphIds: seedParagraphIds,
+    structureLockedParagraphIds: effectiveStructureLockedParagraphIds,
     pinnedTop,
     sortableMiddle,
     pinnedBottom,

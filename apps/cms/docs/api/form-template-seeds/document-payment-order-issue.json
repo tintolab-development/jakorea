@@ -1,12 +1,12 @@
 {
   "templateCode": "document-payment-order-issue",
-  "templateName": "지급조서 (발급용)",
+  "templateName": "지급조서(발급용)",
   "formType": "ISSUANCE",
   "category": "ISSUANCE",
   "schemaJson": {
     "schemaVersion": 1,
     "formSettings": {
-      "titleNumbering": "numeric"
+      "titleNumbering": "none"
     },
     "paragraphs": [
       {
@@ -355,7 +355,7 @@
         "paragraphTitle": "",
         "paragraphDescription": "",
         "participatesInTitleNumbering": false,
-        "body": "2026년 09월 02일"
+        "body": "2026년 09월 09일"
       },
       {
         "id": "payment-statement-seed-closing-signature",

@@ -47,15 +47,6 @@ function mapKakaoApprovalStatus(raw?: string | null): KakaoApprovalStatus {
   return 'UNKNOWN'
 }
 
-export const ALIMTALK_APPROVAL_STATUS_LABEL: Partial<Record<KakaoApprovalStatus, string>> = {
-  PENDING: '검수중',
-  REQUESTED: '검수요청',
-  APPROVED: '승인',
-  REJECTED: '반려',
-  REGISTERED: '등록',
-  UNKNOWN: '미확인',
-}
-
 function mapTemplateUsageStatus(useYn?: boolean): TemplateUsageStatus {
   if (useYn === false) return 'SUSPENDED'
   return 'NORMAL'
@@ -284,6 +275,7 @@ export function mapNotificationTemplateToItem(
     emphasisType: mapAlimtalkEmphasisType(item.alimtalkEmphasisType),
     isSecurityTemplate: item.alimtalkSecurityYn === true,
     content: item.contentTemplate ?? '',
+    titleTemplate: item.titleTemplate?.trim() || undefined,
     extraInfo: meta.extraInfo ?? '',
     buttons: meta.buttons ?? [],
     quickLinks: meta.quickLinks ?? [],
@@ -322,6 +314,7 @@ export function mapNotificationTemplatePreviewToItem(
         ? preview.alimtalkSecurityYn === true
         : base.isSecurityTemplate,
     content: preview?.contentTemplate ?? base.content,
+    titleTemplate: preview?.titleTemplate?.trim() || base.titleTemplate,
     extraInfo: meta.extraInfo ?? base.extraInfo,
     buttons: meta.buttons ?? base.buttons,
     quickLinks: meta.quickLinks ?? base.quickLinks,

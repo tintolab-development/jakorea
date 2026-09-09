@@ -7,6 +7,11 @@ import {
   getVolunteerRecruitmentLifecycle,
   INTERVIEW_METHOD_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  ANNOUNCEMENT_PUBLISHED_OPTIONS,
+  announcementPublishedToFormValue,
+} from '@/features/program/shared/lib/participant-recruitment-form-options'
+import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { resolveUjatAnnouncementTitle } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
@@ -15,7 +20,11 @@ import {
   UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS,
 } from '@/features/template/lib/ujat-volunteer-notice-exposure'
 import { ProgramDetailContactReadRow } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
-import { recruitmentTargetLabelsToOptionValues } from '../recruit-lib/recruitment-target-values'
+import {
+  normalizeRecruitmentTargetSelectValues,
+  recruitmentTargetOptionValuesToLabels,
+  UJAT_VOLUNTEER_RECRUIT_DEFAULT_TARGET_LABELS,
+} from '../recruit-lib/recruitment-target-values'
 import { UjatRecruitSectionDescriptionHeader } from '../ujat-recruit-section-description-header'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DividerVertical } from '@/shared/components/divider-vertical'
@@ -29,6 +38,7 @@ import { getUjatVolunteerRecruitPeriod, getUjatVolunteerRound } from '../ujat-re
 import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segments'
 import {
   UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS,
+  UJAT_RECRUIT_PROGRESS_HINT,
   UjatRecruitFormDateMethodRow,
   UjatRecruitFormInterviewPeriodRow,
   UjatRecruitFormPeriodDatePicker,
@@ -36,6 +46,8 @@ import {
 } from '../recruit-lib/ujat-recruit-form-fields'
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
+import '@/features/template/ui/form-editor/form-editor.css'
+import './volunteer-info-program.css'
 
 function LifecycleStatusView({ lifecycle }: { lifecycle: ProgramLifecycleStatus | null }) {
   if (!lifecycle) return <>-</>
@@ -81,6 +93,7 @@ export function UjatRecruitVolunteerInfoProgramView({
   showNoticeExposure,
   sectionTitle = '봉사자 모집 정보',
   hideSectionHeader = false,
+  isTemplateAuthoring = false,
 }: {
   program: Program
   sponsorName?: string
@@ -91,6 +104,8 @@ export function UjatRecruitVolunteerInfoProgramView({
   sectionTitle?: string
   /** 폼 양식 편집기 — 바깥 단락 헤더(title·description)가 있을 때 중복 제거 */
   hideSectionHeader?: boolean
+  /** 양식 작성 화면 — 프로그램 연동 값 대신 placeholder·힌트 */
+  isTemplateAuthoring?: boolean
 }) {
   const period = getUjatVolunteerRecruitPeriod(program, volunteerHalf)
   const roundIndex = volunteerHalf === 'h1' ? 0 : 1
@@ -122,8 +137,12 @@ export function UjatRecruitVolunteerInfoProgramView({
         }
       : undefined
   )
-  const publicTitle = resolveUjatAnnouncementTitle(program)
-  const volunteerTarget = program.volunteerTarget ?? '대학(원)생'
+  const publicTitle = resolveUjatAnnouncementTitle(program).trim() || '-'
+  const watchedTargets = isEdit && form ? form.watch('volunteerTargets') : undefined
+  const volunteerTarget =
+    (watchedTargets?.length ? watchedTargets.join(', ') : undefined) ??
+    program.volunteerTarget ??
+    UJAT_VOLUNTEER_RECRUIT_DEFAULT_TARGET_LABELS.join(', ')
   const volunteerTargetDetail = program.volunteerTargetDetail ?? '-'
   const notes = resolveVolunteerNotesDisplay(program)
   const activityTerm = resolveActivityTermDisplay(program, volunteerHalf)
@@ -133,6 +152,14 @@ export function UjatRecruitVolunteerInfoProgramView({
   const noticeExposureLabel = getUjatVolunteerNoticeExposureReadLabel(
     typeof noticeExposureSetting === 'string' ? noticeExposureSetting : undefined
   )
+  const announcementPublishedValue =
+    (isEdit && form ? form.watch('volunteerRecruitmentAnnouncementPublished') : undefined) ??
+    announcementPublishedToFormValue(
+      program.generalCommonInfo?.volunteerRecruitmentInfo?.announcementPublished
+    )
+  const announcementPublishedLabel =
+    ANNOUNCEMENT_PUBLISHED_OPTIONS.find(option => option.value === announcementPublishedValue)
+      ?.label ?? '게시'
   const volunteerPeriodLabel = formatDateRange(period.start, period.end)
   const interviewLine =
     program.interviewStartDate && program.interviewEndDate ? (
@@ -146,42 +173,68 @@ export function UjatRecruitVolunteerInfoProgramView({
       '-'
     )
   const formMode = isEdit && form ? 'edit' : 'view'
-  const recruitTargets = recruitmentTargetLabelsToOptionValues(program.volunteerTarget)
+  const announcementPublishedEdit =
+    isEdit && form ? (
+      <Controller
+        name="volunteerRecruitmentAnnouncementPublished"
+        control={form.control}
+        render={({ field }) => (
+          <ParticipantRecruitmentAnnouncementPublishedRadios
+            value={field.value}
+            onChange={field.onChange}
+          />
+        )}
+      />
+    ) : undefined
+  const noticeExposureEdit =
+    isEdit && form ? (
+      <Controller
+        name="volunteerRecruitmentNoticeExposure"
+        control={form.control}
+        render={({ field }) => (
+          <CmsRadioGroup
+            value={field.value ?? 'start-day'}
+            onChange={e => field.onChange(String(e.target.value))}
+          >
+            {UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS.map(o => (
+              <CmsRadio key={o.value} value={o.value}>
+                {o.label}
+              </CmsRadio>
+            ))}
+          </CmsRadioGroup>
+        )}
+      />
+    ) : undefined
 
   return (
-    <>
+    <div className="ujat-recruit-volunteer-info-program">
       {!hideSectionHeader ? <UjatRecruitSectionDescriptionHeader title={sectionTitle} /> : null}
-      {showNoticeExposure && (
-        <DetailInfoForm title="봉사자 모집 공고 노출 시점" hideHeader mode={formMode}>
-          <DetailInfoForm.Row type="single">
+      <div className="ujat-recruit-volunteer-info-program__forms">
+      <DetailInfoForm title="봉사자 모집 정보(설정)" hideHeader mode={formMode}>
+        {showNoticeExposure ? (
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="공고 게시 여부"
+              view={announcementPublishedLabel}
+              edit={announcementPublishedEdit}
+            />
             <DetailInfoForm.Field
               label="모집 공고 노출 시점"
-              fullRow
               view={noticeExposureLabel}
-              edit={
-                isEdit && form ? (
-                  <Controller
-                    name="volunteerRecruitmentNoticeExposure"
-                    control={form.control}
-                    render={({ field }) => (
-                      <CmsRadioGroup
-                        value={field.value ?? 'start-day'}
-                        onChange={e => field.onChange(String(e.target.value))}
-                      >
-                        {UJAT_VOLUNTEER_NOTICE_EXPOSURE_OPTIONS.map(o => (
-                          <CmsRadio key={o.value} value={o.value}>
-                            {o.label}
-                          </CmsRadio>
-                        ))}
-                      </CmsRadioGroup>
-                    )}
-                  />
-                ) : undefined
-              }
+              edit={noticeExposureEdit}
             />
           </DetailInfoForm.Row>
-        </DetailInfoForm>
-      )}
+        ) : (
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="공고 게시 여부"
+              fullRow
+              view={announcementPublishedLabel}
+              edit={announcementPublishedEdit}
+            />
+          </DetailInfoForm.Row>
+        )}
+      </DetailInfoForm>
 
       <DetailInfoForm title="봉사자 모집 정보" hideHeader mode={formMode}>
         <DetailInfoForm.Row type="double">
@@ -196,7 +249,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                   render={({ field }) => (
                     <CmsInput
                       {...field}
-                      value={field.value ?? program.title ?? ''}
+                      value={field.value ?? (isTemplateAuthoring ? '' : (program.title ?? ''))}
                       inputSize="medium"
                       width="100%"
                       placeholder="공고용 프로그램명"
@@ -215,15 +268,18 @@ export function UjatRecruitVolunteerInfoProgramView({
                   name={`rounds.${roundIndex}.curriculum` as 'rounds.0.curriculum'}
                   control={form.control}
                   render={({ field }) => (
-                    <CmsNumericInput
-                      {...field}
-                      mode="numericText"
-                      value={(field.value as string | undefined) ?? ''}
-                      inputSize="medium"
-                      width="100%"
-                      placeholder="활동 기수"
-                      onValueChange={field.onChange}
-                    />
+                    <div className={`${UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS} ujat-recruit-activity-term-field`}>
+                      <CmsNumericInput
+                        {...field}
+                        mode="numericText"
+                        value={(field.value as string | undefined) ?? ''}
+                        inputSize="medium"
+                        width="100%"
+                        placeholder="활동 기수"
+                        onValueChange={field.onChange}
+                      />
+                      <span className="ujat-recruit-activity-term-field__suffix">기</span>
+                    </div>
                   )}
                 />
               ) : undefined
@@ -251,7 +307,13 @@ export function UjatRecruitVolunteerInfoProgramView({
           <DetailInfoForm.Field
             label="봉사자 모집 현황"
             readOnlyDisplay
-            view={<LifecycleStatusView lifecycle={lifecycle} />}
+            view={
+              isTemplateAuthoring ? (
+                <span className="form-editor-template-field-hint-text">{UJAT_RECRUIT_PROGRESS_HINT}</span>
+              ) : (
+                <LifecycleStatusView lifecycle={lifecycle} />
+              )
+            }
           />
         </DetailInfoForm.Row>
 
@@ -261,16 +323,23 @@ export function UjatRecruitVolunteerInfoProgramView({
             view={volunteerTarget}
             edit={
               isEdit && form ? (
-                <CmsSelect
-                  mode="multiple"
-                  withAllOption={false}
-                  inputSize="medium"
-                  width="100%"
-                  value={recruitTargets}
-                  onChange={() => undefined}
-                  disabled
-                  placeholder="모집 대상"
-                  options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+                <Controller
+                  name="volunteerTargets"
+                  control={form.control}
+                  render={({ field }) => (
+                    <CmsSelect
+                      mode="multiple"
+                      withAllOption={false}
+                      inputSize="medium"
+                      width="100%"
+                      value={normalizeRecruitmentTargetSelectValues(field.value)}
+                      onChange={next =>
+                        field.onChange(recruitmentTargetOptionValuesToLabels(next))
+                      }
+                      placeholder="모집 대상"
+                      options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+                    />
+                  )}
                 />
               ) : undefined
             }
@@ -447,11 +516,13 @@ export function UjatRecruitVolunteerInfoProgramView({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="비고"
+            fullRow
             view={notes}
             edit={isEdit && form ? <UjatRecruitVolunteerNotesField form={form} /> : undefined}
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
-    </>
+      </div>
+    </div>
   )
 }

@@ -1,7 +1,6 @@
 import { ContentModal, CmsButton, AlimtalkPhonePreview, useCmsAlert } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
-  ALIMTALK_APPROVAL_STATUS_LABEL,
   isAlimtalkTemplateApproved,
   resolveNhnConsoleUrl,
 } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
@@ -32,9 +31,6 @@ export function PreviewModal({ open, template, onClose, onUse, zIndex }: Preview
   )
   const resolved = previewQuery.data ?? template
   const canUseForSend = isAlimtalkTemplateApproved(resolved)
-  const approvalLabel = resolved?.approvalStatus
-    ? (ALIMTALK_APPROVAL_STATUS_LABEL[resolved.approvalStatus] ?? resolved.approvalStatus)
-    : null
 
   const handleUse = () => {
     if (resolved && onUse) {
@@ -77,11 +73,6 @@ export function PreviewModal({ open, template, onClose, onUse, zIndex }: Preview
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field label="템플릿명" view={resolved.templateName} />
               </DetailInfoForm.Row>
-              {approvalLabel ? (
-                <DetailInfoForm.Row type="single">
-                  <DetailInfoForm.Field label="승인 상태" view={approvalLabel} />
-                </DetailInfoForm.Row>
-              ) : null}
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label="메세지 유형"

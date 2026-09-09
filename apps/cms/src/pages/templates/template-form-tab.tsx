@@ -2,7 +2,15 @@ import { useCallback, useEffect, useMemo } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import type { TemplateRow } from '@/features/template/model/template.schema'
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
-import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
+import {
+  resolveAgreementWritingFormConfig,
+  stripAgreementWritingFormStructureLocks,
+} from '@/features/template/model/template-registry/agreement-template-config-registry'
+import {
+  isDuplicateWritingTemplateCode,
+  isUserCreatedWritingFormTemplateRow,
+  isWritingFormTemplateStructureLocked,
+} from '@/features/template/lib/form-template-delete-policy'
 import {
   lookupTemplateRegistry,
   resolvePreviewHeaderTitle,
@@ -33,6 +41,8 @@ type TemplateFormTabQuery = {
   type?: string
   id?: string
   userPreview?: string
+  /** 신규 등록(복제·직접) 직후 편집 — catalog code여도 단락 편집 허용 */
+  userTemplate?: string
 }
 
 export default function TemplateFormTab() {
@@ -67,8 +77,15 @@ export default function TemplateFormTab() {
 
   const handleOpenTemplatePreview = useCallback(
     (row: TemplateRow) => {
+      const userEditable = isUserCreatedWritingFormTemplateRow(row)
       setParams(
-        { mode: 'edit', id: row.id, type: undefined, userPreview: undefined },
+        {
+          mode: 'edit',
+          id: row.id,
+          type: undefined,
+          userPreview: undefined,
+          userTemplate: userEditable ? '1' : undefined,
+        },
         { replace: false }
       )
     },
@@ -76,7 +93,13 @@ export default function TemplateFormTab() {
   )
 
   const handleCloseTemplatePreview = useCallback(() => {
-    setParams({ mode: undefined, id: undefined, type: undefined, userPreview: undefined })
+    setParams({
+      mode: undefined,
+      id: undefined,
+      type: undefined,
+      userPreview: undefined,
+      userTemplate: undefined,
+    })
   }, [setParams])
 
   useEffect(() => {
@@ -100,8 +123,24 @@ export default function TemplateFormTab() {
       creator: '-',
       createdAt: '-',
       updatedAt: '-',
+      systemTemplate:
+        params.userTemplate === '1' ||
+        isDuplicateWritingTemplateCode(normalizedId) ||
+        isUserCreatedWritingFormTemplateRow({
+          id: normalizedId,
+          creator: params.userTemplate === '1' ? '사용자 생성' : undefined,
+        })
+          ? false
+          : undefined,
     })
-  }, [params.mode, params.id, closeTemplatePreview, openTemplatePreview, writingSections])
+  }, [
+    params.mode,
+    params.id,
+    params.userTemplate,
+    closeTemplatePreview,
+    openTemplatePreview,
+    writingSections,
+  ])
 
   const rightNavigationConfig = useMemo(
     () => buildRightNavigationConfig(orderedLeftContentConfig),
@@ -150,11 +189,42 @@ export default function TemplateFormTab() {
   const isCrimeConsentDetail =
     isPreviewOpen && registryEntry?.usesCrimeConsentModal === true
 
-  const agreementWritingFormConfig = useMemo(
-    () =>
-      params.mode === 'edit' ? resolveAgreementWritingFormConfig(params.id) : null,
-    [params.mode, params.id]
-  )
+  const forceUserEditable = useMemo(() => {
+    if (params.userTemplate === '1') return true
+    const templateCode = params.id?.trim()
+    if (templateCode != null && templateCode !== '') {
+      if (isDuplicateWritingTemplateCode(templateCode)) return true
+      const row =
+        selectedTemplate?.id === templateCode
+          ? selectedTemplate
+          : findWritingTemplateRowByDefinitionId(templateCode, writingSections)
+      if (isUserCreatedWritingFormTemplateRow(row)) return true
+    }
+    return isUserCreatedWritingFormTemplateRow(selectedTemplate ?? null)
+  }, [params.userTemplate, params.id, selectedTemplate, writingSections])
+
+  const agreementWritingFormConfig = useMemo(() => {
+    if (params.mode !== 'edit' || params.id == null || params.id.trim() === '') return null
+    const templateCode = params.id.trim()
+    const raw = resolveAgreementWritingFormConfig(templateCode)
+    if (raw == null) return null
+    const row =
+      selectedTemplate?.id === templateCode
+        ? selectedTemplate
+        : findWritingTemplateRowByDefinitionId(templateCode, writingSections)
+    const locked = isWritingFormTemplateStructureLocked({
+      templateCode,
+      systemTemplate: row?.systemTemplate,
+      forceUserEditable,
+    })
+    return locked ? raw : stripAgreementWritingFormStructureLocks(raw)
+  }, [
+    forceUserEditable,
+    params.id,
+    params.mode,
+    selectedTemplate,
+    writingSections,
+  ])
 
   const suppressInactiveUserPreviewStrip = useMemo(() => {
     if (params.mode !== 'edit' || params.id == null || params.id.trim() === '') return false
@@ -187,6 +257,12 @@ export default function TemplateFormTab() {
         <AgreementWritingFormShell
           {...agreementWritingFormConfig}
           templateCode={params.id?.trim()}
+          systemTemplate={
+            forceUserEditable && selectedTemplate?.systemTemplate !== true
+              ? false
+              : selectedTemplate?.systemTemplate
+          }
+          forceUserEditable={forceUserEditable}
           onTemplateDraftSaveConfirmed={handleCloseTemplatePreview}
           onClose={handleCloseTemplatePreview}
           showDeleteButton={showDeleteButton}
@@ -231,6 +307,8 @@ export default function TemplateFormTab() {
         registryEntry={registryEntry}
         templateId={templateId}
         templateName={selectedTemplate?.templateName}
+        systemTemplate={selectedTemplate?.systemTemplate}
+        forceUserEditable={forceUserEditable}
         onTemplateDraftSaveConfirmed={handleCloseTemplatePreview}
         generic={genericModalState}
         previewControllerBase={previewControllerBase}

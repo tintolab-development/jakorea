@@ -31,18 +31,17 @@ function resolveSelection(
   selectValue: string | null
 ): TemplateCreateSelection | null {
   if (selectValue == null || selectValue === '') return null
-  if (kind === 'direct') {
-    if (selectValue === 'survey' || selectValue === 'agreement') {
-      return { source: 'direct', target: selectValue }
-    }
-    return null
-  }
   if (kind === 'survey' || kind === 'agreement') {
     if (selectValue === NEW_TEMPLATE_OPTION_VALUE) {
       return { source: 'direct', target: kind }
     }
   }
-  if (kind === 'application' || kind === 'application_form' || kind === 'survey' || kind === 'agreement') {
+  if (
+    kind === 'application' ||
+    kind === 'application_form' ||
+    kind === 'survey' ||
+    kind === 'agreement'
+  ) {
     return { source: 'template', templateId: selectValue, category: kind }
   }
   return null
@@ -76,12 +75,6 @@ export function TemplateCreateModal({
   }, [open])
 
   const selectOptions = useMemo(() => {
-    if (kind === 'direct') {
-      return [
-        { label: '설문 양식', value: 'survey' as const },
-        { label: '동의 양식', value: 'agreement' as const },
-      ]
-    }
     const category = kind as WritingTemplateCategory
     const rows = getWritingTemplateRowsByCategory(category, sections).map(row => ({
       label: row.templateName,
@@ -93,10 +86,7 @@ export function TemplateCreateModal({
     return rows
   }, [kind, sections])
 
-  const selectPlaceholder =
-    kind === 'direct'
-      ? '등록할 양식 유형을 선택해 주세요'
-      : '기본 구조로 사용할 양식을 선택해 주세요'
+  const selectPlaceholder = '기본 구조로 사용할 양식을 선택해 주세요'
 
   const selection = useMemo(() => resolveSelection(kind, selectValue), [kind, selectValue])
   const canSubmit = selection != null
@@ -221,17 +211,18 @@ export function TemplateCreateModal({
           <CmsRadio value="application_form">신청 양식</CmsRadio>
           <CmsRadio value="survey">설문 양식</CmsRadio>
           <CmsRadio value="agreement">동의 양식</CmsRadio>
-          <CmsRadio value="direct">직접 등록</CmsRadio>
         </CmsRadioGroup>
       </div>
 
-      <CmsSelect
-        width={'100%'}
-        placeholder={selectPlaceholder}
-        options={selectOptions}
-        value={selectValue ?? undefined}
-        onChange={v => setSelectValue(v ?? null)}
-      />
+      <div className="template-create-modal__select-wrapper">
+        <CmsSelect
+          width={'100%'}
+          placeholder={selectPlaceholder}
+          options={selectOptions}
+          value={selectValue ?? undefined}
+          onChange={v => setSelectValue(v ?? null)}
+        />
+      </div>
     </ContentModal>
   )
 }

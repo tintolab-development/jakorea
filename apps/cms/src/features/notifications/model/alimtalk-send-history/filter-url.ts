@@ -65,23 +65,16 @@ function setDateRangeParams(
 export function readSendHistoryFiltersFromParams(
   searchParams: URLSearchParams
 ): AlimtalkSendHistoryPendingFilters {
-  const hasAnyDateParam =
+  const hasRequestDateParam =
     searchParams.has(SEND_HISTORY_FILTER_URL.requestFrom) ||
-    searchParams.has(SEND_HISTORY_FILTER_URL.requestTo) ||
-    searchParams.has(SEND_HISTORY_FILTER_URL.sendFrom) ||
-    searchParams.has(SEND_HISTORY_FILTER_URL.sendTo) ||
-    searchParams.has(SEND_HISTORY_FILTER_URL.receiveFrom) ||
-    searchParams.has(SEND_HISTORY_FILTER_URL.receiveTo) ||
-    searchParams.has(SEND_HISTORY_FILTER_URL.reserveFrom) ||
-    searchParams.has(SEND_HISTORY_FILTER_URL.reserveTo)
-
-  const useDefault = !hasAnyDateParam
+    searchParams.has(SEND_HISTORY_FILTER_URL.requestTo)
 
   return {
+    // 기본 기간은 요청일만. 발송/수신/예약일은 사용자가 켠 경우에만.
     requestDateRange: parseRange(
       searchParams.get(SEND_HISTORY_FILTER_URL.requestFrom),
       searchParams.get(SEND_HISTORY_FILTER_URL.requestTo),
-      useDefault
+      !hasRequestDateParam
     ),
     templateName: searchParams.get(SEND_HISTORY_FILTER_URL.templateName) ?? '',
     senderInfo: searchParams.get(SEND_HISTORY_FILTER_URL.senderInfo) ?? '',
@@ -95,17 +88,17 @@ export function readSendHistoryFiltersFromParams(
     sendDateRange: parseRange(
       searchParams.get(SEND_HISTORY_FILTER_URL.sendFrom),
       searchParams.get(SEND_HISTORY_FILTER_URL.sendTo),
-      useDefault
+      false
     ),
     receiveDateRange: parseRange(
       searchParams.get(SEND_HISTORY_FILTER_URL.receiveFrom),
       searchParams.get(SEND_HISTORY_FILTER_URL.receiveTo),
-      useDefault
+      false
     ),
     reserveDateRange: parseRange(
       searchParams.get(SEND_HISTORY_FILTER_URL.reserveFrom),
       searchParams.get(SEND_HISTORY_FILTER_URL.reserveTo),
-      useDefault
+      false
     ),
   }
 }

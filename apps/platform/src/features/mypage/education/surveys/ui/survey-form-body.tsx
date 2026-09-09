@@ -1,15 +1,17 @@
-import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
+import {
+  getUserInfoSelectedEntries,
+  isUserInfoParagraph,
+  type WritingFormDraft,
+  type WritingFormParagraph,
+} from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { PFFormSection, PFText } from '@/shared/ui'
 import {
   resolveEducationSurveySectionRequired,
   resolveEducationSurveySectionTitle,
 } from '../lib/survey-section-title'
-import { EDUCATION_SURVEY_MOCK_PARAGRAPH_IDS } from '../lib/mock-survey-draft'
-import {
-  PlatformSurveyParagraphBody,
-  type SurveySidecarState,
-} from './platform-survey-paragraph-body'
+import type { SurveySidecarState } from '../lib/survey-sidecar'
+import { PlatformSurveyParagraphBody } from './platform-survey-paragraph-body'
 import styles from './survey-form-body.module.css'
 
 export type EducationSurveyFormBodyProps = {
@@ -40,36 +42,39 @@ export function EducationSurveyFormBody({
 }: EducationSurveyFormBodyProps) {
   return (
     <div className={styles.form}>
-      {draft.paragraphs.map(paragraph => {
+      {draft.paragraphs.flatMap(paragraph => {
         if (shouldSkipParagraph(paragraph)) {
-          return null
+          return []
         }
 
-        if (paragraph.id === EDUCATION_SURVEY_MOCK_PARAGRAPH_IDS.user) {
-          const title = resolveEducationSurveySectionTitle(draft, paragraph)
-          return (
-            <PFFormSection
-              key={paragraph.id}
-              id={paragraph.id}
-              title={title}
-              description={paragraph.paragraphDescription?.trim() || undefined}
-              required={resolveEducationSurveySectionRequired(paragraph)}
-            >
-              <PlatformSurveyParagraphBody
-                paragraph={paragraph}
-                programTitle={programTitle}
-                onUpdateParagraph={onUpdateParagraph}
-                sidecar={sidecar}
-                onSidecarChange={onSidecarChange}
-              />
-            </PFFormSection>
-          )
+        if (isUserInfoParagraph(paragraph)) {
+          const entries = getUserInfoSelectedEntries(paragraph)
+          return entries.map(entry => {
+            const title = resolveEducationSurveySectionTitle(draft, paragraph, entry)
+            return (
+              <PFFormSection
+                key={`${paragraph.id}::${entry.key}`}
+                id={`${paragraph.id}::${entry.key}`}
+                title={title}
+                required={resolveEducationSurveySectionRequired(paragraph)}
+              >
+                <PlatformSurveyParagraphBody
+                  paragraph={paragraph}
+                  programTitle={programTitle}
+                  onUpdateParagraph={onUpdateParagraph}
+                  sidecar={sidecar}
+                  onSidecarChange={onSidecarChange}
+                  userInfoWriteField={entry}
+                />
+              </PFFormSection>
+            )
+          })
         }
 
         if (isBodyOnlyParagraph(paragraph)) {
           const body = 'body' in paragraph ? String(paragraph.body ?? '').trim() : ''
-          if (!body) return null
-          return (
+          if (!body) return []
+          return [
             <PFText
               key={paragraph.id}
               as="p"
@@ -78,14 +83,14 @@ export function EducationSurveyFormBody({
               className={styles.closing}
             >
               {body}
-            </PFText>
-          )
+            </PFText>,
+          ]
         }
 
         const title = resolveEducationSurveySectionTitle(draft, paragraph)
-        if (!title) return null
+        if (!title) return []
 
-        return (
+        return [
           <PFFormSection
             key={paragraph.id}
             id={paragraph.id}
@@ -100,8 +105,8 @@ export function EducationSurveyFormBody({
               sidecar={sidecar}
               onSidecarChange={onSidecarChange}
             />
-          </PFFormSection>
-        )
+          </PFFormSection>,
+        ]
       })}
     </div>
   )

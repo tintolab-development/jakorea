@@ -9,6 +9,7 @@ import type { ProgramMaterialResponse } from './programMaterialResponse';
 
 export interface ProgramMaterialAssignmentResponse {
   programId?: number;
+  assignmentStatus?: string;
   noneYn?: boolean;
   items?: ProgramMaterialResponse[];
 }

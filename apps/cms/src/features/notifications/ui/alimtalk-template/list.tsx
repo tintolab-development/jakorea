@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CmsModal, useCmsAlert } from '@/shared/ui'
@@ -20,10 +21,6 @@ import {
   pendingFiltersFromSearchParams,
 } from '@/features/notifications/model/alimtalk-template/filter-url'
 import {
-  ALIMTALK_CATEGORY_MOCK,
-  ALIMTALK_TEMPLATE_ITEM_MOCK,
-} from '@/features/notifications/model/alimtalk-template/mock'
-import {
   canMoveCategoryTo,
   categoryHasChildren,
   categoryNameById,
@@ -33,7 +30,10 @@ import {
   moveCategoryToParent,
   moveTemplateToCategory,
 } from '@/features/notifications/lib/tree'
-import { resolveNhnConsoleUrl } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
+import {
+  resolveNhnConsoleUrl,
+  type AlimtalkCategoryTreeMapped,
+} from '@/features/notifications/api/adapters/alimtalk-template-adapters'
 import { alimtalkSyncSuccessMessage } from '@/features/notifications/api/adapters/alimtalk-sync-adapters'
 import {
   getNotificationsApiErrorMessage,
@@ -49,6 +49,7 @@ import {
   useAlimtalkTemplatePreviewQuery,
   useAlimtalkTemplateTreeMutations,
 } from '@/features/notifications/hooks/use-alimtalk-template-tree-query'
+import { notificationsQueryKeys } from '@/features/notifications/api/notifications-query-keys'
 import { CategoryNameModal } from './category-name-modal'
 import { CategoryTree, parseAlimtalkDndId, ALIMTALK_DND_CATEGORY_MOVE_PREFIX } from './category-tree'
 import { DetailPanel } from './detail-panel'
@@ -134,9 +135,12 @@ export function AlimtalkTemplateList({
 
   const treeQuery = useAlimtalkCategoryTreeQuery(searchParams, remote)
   const mutations = useAlimtalkTemplateTreeMutations()
+  const queryClient = useQueryClient()
+  const syncInFlightRef = useRef(false)
+  const syncCatalogMutateAsync = mutations.syncCatalog.mutateAsync
 
-  const [localCategories, setLocalCategories] = useState<AlimtalkCategory[]>(ALIMTALK_CATEGORY_MOCK)
-  const [localTemplates, setLocalTemplates] = useState<AlimtalkTemplateItem[]>(ALIMTALK_TEMPLATE_ITEM_MOCK)
+  const [localCategories, setLocalCategories] = useState<AlimtalkCategory[]>([])
+  const [localTemplates, setLocalTemplates] = useState<AlimtalkTemplateItem[]>([])
   const [syncBanner, setSyncBanner] = useState<SyncBannerKind>(null)
   const autoSyncStartedRef = useRef(false)
 
@@ -152,6 +156,7 @@ export function AlimtalkTemplateList({
     mutations.moveCategory.isPending ||
     mutations.moveTemplate.isPending
   const treeSettled = remote && !treeQuery.isLoading && !treeQuery.isFetching
+  const treeSearchParamsKey = searchParams.toString()
 
   const clearTreeSearchAfterMutation = useCallback(() => {
     const filters = pendingFiltersRef.current
@@ -165,14 +170,18 @@ export function AlimtalkTemplateList({
 
   const runNhnSync = useCallback(
     async (source: 'auto' | 'manual') => {
-      if (!remote || mutations.syncCatalog.isPending) return
+      // isPending만으로는 리렌더 전 동시 클릭을 막지 못함 → sync 과호출 방지
+      if (!remote || syncInFlightRef.current) return
+      syncInFlightRef.current = true
       try {
-        const result = await mutations.syncCatalog.mutateAsync()
+        const result = await syncCatalogMutateAsync()
         const outcome = result.templates
-        // invalidate 후 최신 tree 반영
-        const refreshed = await treeQuery.refetch()
-        const nextCategories = refreshed.data?.categories ?? []
-        const nextTemplates = refreshed.data?.templates ?? []
+        // mutation onSuccess invalidate가 tree를 갱신한 뒤 캐시에서 읽음 (별도 refetch 금지)
+        const latest = queryClient.getQueryData<AlimtalkCategoryTreeMapped>(
+          notificationsQueryKeys.alimtalkTemplates.tree(treeSearchParamsKey)
+        )
+        const nextCategories = latest?.categories ?? []
+        const nextTemplates = latest?.templates ?? []
         const stillEmpty = nextCategories.length === 0 && nextTemplates.length === 0
 
         if (outcome.isLocalApprovalMark) {
@@ -210,10 +219,15 @@ export function AlimtalkTemplateList({
         )
         setSyncBanner(isProviderUnavailableError(error) ? 'provider-unavailable' : 'error')
         showAlert({ title: 'NHN 동기화 실패', content: message })
+      } finally {
+        syncInFlightRef.current = false
       }
     },
-    [mutations.syncCatalog, remote, showAlert, treeQuery]
+    [queryClient, remote, showAlert, syncCatalogMutateAsync, treeSearchParamsKey]
   )
+
+  const runNhnSyncRef = useRef(runNhnSync)
+  runNhnSyncRef.current = runNhnSync
 
   useEffect(() => {
     if (!remote || !treeSettled || !isTreeEmpty) return
@@ -242,8 +256,8 @@ export function AlimtalkTemplateList({
     } catch {
       // ignore
     }
-    void runNhnSync('auto')
-  }, [isTreeEmpty, remote, runNhnSync, syncBanner, treeSettled])
+    void runNhnSyncRef.current('auto')
+  }, [isTreeEmpty, remote, syncBanner, treeSettled])
 
   useEffect(() => {
     if (!remote || !treeSettled) return
@@ -262,12 +276,8 @@ export function AlimtalkTemplateList({
     )
   }, [appliedFilters.categoryName, appliedFilters.templateName, categories, remote, templates])
 
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(() =>
-    defaultExpandedIds(remote ? [] : ALIMTALK_CATEGORY_MOCK)
-  )
-  const [selection, setSelection] = useState<AlimtalkTreeSelection>(
-    remote ? null : { kind: 'template', id: 'tpl-password' }
-  )
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => defaultExpandedIds([]))
+  const [selection, setSelection] = useState<AlimtalkTreeSelection>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialog>(null)
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null)
@@ -412,6 +422,11 @@ export function AlimtalkTemplateList({
         setExpandedIds(prev => new Set(prev).add(pendingMove.targetParentId))
       }
       setPendingMove(null)
+      showAlert({
+        title: '이동 완료',
+        content: '이동이 완료되었습니다.',
+        confirmLabel: '닫기',
+      })
     } catch (error) {
       if (isCategoryNeedsSyncError(error)) {
         showAlert({
@@ -474,6 +489,11 @@ export function AlimtalkTemplateList({
         }
         setSelection(null)
         setDeleteDialog(null)
+        showAlert({
+          title: '삭제 완료',
+          content: '삭제가 완료되었습니다.',
+          confirmLabel: '닫기',
+        })
         return
       }
 
@@ -486,6 +506,11 @@ export function AlimtalkTemplateList({
         }
         setSelection(null)
         setDeleteDialog(null)
+        showAlert({
+          title: '삭제 완료',
+          content: '삭제가 완료되었습니다.',
+          confirmLabel: '닫기',
+        })
       }
     } catch (error) {
       if (isAlimtalkTemplateDeleteRejectedByNhnError(error)) {
@@ -707,7 +732,7 @@ export function AlimtalkTemplateList({
         open={deleteDialog === 'blocked'}
         onClose={() => setDeleteDialog(null)}
         title="카테고리 삭제 불가"
-        content="하위 카테고리 또는 템플릿이 있어 삭제할 수 없습니다."
+        content="카테고리 하위에 카테고리 또는 템플릿이 있으면 삭제할 수 없습니다."
         buttons={[
           { label: '닫기', onClick: () => setDeleteDialog(null), variant: 'secondary' },
           { label: '확인', onClick: () => setDeleteDialog(null), variant: 'primary' },
@@ -717,7 +742,9 @@ export function AlimtalkTemplateList({
         open={deleteDialog === 'category'}
         onClose={() => setDeleteDialog(null)}
         title="카테고리 삭제"
-        content="선택한 카테고리를 삭제할까요? NHN Console에도 반영됩니다."
+        content={
+          '해당 카테고리를 삭제하시겠습니까?\n삭제 시 NHN 서비스에서도 함께 반영됩니다.'
+        }
         buttons={[
           { label: '취소', onClick: () => setDeleteDialog(null), variant: 'secondary' },
           { label: '삭제', onClick: () => void handleConfirmDelete(), variant: 'delete' },
@@ -727,7 +754,9 @@ export function AlimtalkTemplateList({
         open={deleteDialog === 'template'}
         onClose={() => setDeleteDialog(null)}
         title="삭제 확인"
-        content="선택한 알림톡 템플릿을 삭제할까요? NHN Console에도 반영됩니다. (승인·공용 템플릿은 NHN에서 거절될 수 있습니다.)"
+        content={
+          '선택한 알림톡 템플릿을 삭제할까요?\n삭제 시 NHN 서비스에서도 함께 반영됩니다. (승인·공용 템플릿은 NHN에서 거절될 수 있습니다.)'
+        }
         buttons={[
           { label: '취소', onClick: () => setDeleteDialog(null), variant: 'secondary' },
           { label: '삭제', onClick: () => void handleConfirmDelete(), variant: 'delete' },
@@ -739,7 +768,7 @@ export function AlimtalkTemplateList({
         title="카테고리 이동"
         content={
           pendingMove?.kind === 'category'
-            ? `카테고리 이동 시 하위의 카테고리/템플릿도 같이 이동됩니다.\n[${categoryNameById(categories, pendingMove.categoryId)}] 카테고리의 위치를 이동하시겠습니까?`
+            ? `[${categoryNameById(categories, pendingMove.categoryId)}] 카테고리의 위치를 이동하시겠습니까?\n카테고리 이동 시 하위의 카테고리/템플릿도 같이 이동되며, NHN 서비스에서도 함께 반영됩니다.`
             : ''
         }
         buttons={[
@@ -751,18 +780,16 @@ export function AlimtalkTemplateList({
         open={pendingMove?.kind === 'template'}
         onClose={() => setPendingMove(null)}
         title="템플릿 이동"
+        content={
+          pendingMove?.kind === 'template'
+            ? `해당 템플릿을 [${categoryNameById(categories, pendingMove.targetCategoryId)}] 카테고리로 이동하시겠습니까?\n템플릿 이동 시 NHN 서비스에서도 함께 반영됩니다.`
+            : ''
+        }
         buttons={[
           { label: '취소', onClick: () => setPendingMove(null), variant: 'secondary' },
           { label: '이동', onClick: () => void handleConfirmMove(), variant: 'primary' },
         ]}
-      >
-        {pendingMove?.kind === 'template' ? (
-          <p className="cms-modal__content">
-            해당 템플릿을 <strong>[{categoryNameById(categories, pendingMove.targetCategoryId)}]</strong>{' '}
-            카테고리로 이동하시겠습니까?
-          </p>
-        ) : null}
-      </CmsModal>
+      />
       <CategoryNameModal
         open={categoryModal != null}
         mode={categoryModal?.mode ?? 'add'}

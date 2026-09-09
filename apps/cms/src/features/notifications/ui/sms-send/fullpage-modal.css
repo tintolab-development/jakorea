@@ -1,0 +1,24 @@
+.sms-send-fullpage__body-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sms-send-fullpage__byte-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--font-size-14, 14px);
+  line-height: var(--line-height-150, 150%);
+  color: var(--color-text-subtle, #666);
+}
+
+.sms-send-fullpage__byte-count {
+  color: var(--color-text-body, #111);
+  font-weight: var(--font-weight-600, 600);
+}
+
+.sms-send-fullpage__byte-count--danger {
+  color: var(--color-danger, #d92d20);
+}

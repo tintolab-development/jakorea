@@ -9,9 +9,11 @@ import {
   PFFormInlineSegment,
   PFFormInlineSeparator,
   PFFormResidentNumberInput,
+  PFSelect,
   PFTextInput,
 } from '@/shared/ui'
 import formStyles from '@/shared/ui/pf-form/pf-form.module.css'
+import { SETTLEMENT_BANK_OPTIONS } from '@/features/mypage/education/settlements/lib/settlement-options'
 import {
   mergePaymentStatementBasicInfo,
   PAYMENT_STATEMENT_DEFAULT_PURPOSE,
@@ -21,6 +23,17 @@ import {
 export type PaymentBasicInfoFieldsProps = {
   values: Partial<PaymentStatementBasicInfoValues>
   onChange: (next: Partial<PaymentStatementBasicInfoValues>) => void
+}
+
+function resolveBankSelectValue(bankName: string): string | undefined {
+  const trimmed = bankName.trim()
+  if (!trimmed) return undefined
+  const byValue = SETTLEMENT_BANK_OPTIONS.find(option => option.value === trimmed)
+  if (byValue) return byValue.value
+  const byLabel = SETTLEMENT_BANK_OPTIONS.find(option => option.label === trimmed)
+  if (byLabel) return byLabel.value
+  if (trimmed === 'KB국민은행') return 'kb'
+  return undefined
 }
 
 export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFieldsProps) {
@@ -112,11 +125,13 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
           <PFFormInlineRow className={formStyles.inlineRowFill}>
             <PFFormInlineSegment>
               <PFFormControlCluster>
-                <PFTextInput
+                <PFSelect
                   variant="formPage"
                   size="large"
+                  width={200}
                   placeholder="은행명"
-                  value={merged.bankName}
+                  options={SETTLEMENT_BANK_OPTIONS}
+                  value={resolveBankSelectValue(merged.bankName)}
                   onValueChange={value => patch('bankName', value)}
                 />
                 <PFTextInput

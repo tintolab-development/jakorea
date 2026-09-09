@@ -21,3 +21,11 @@
   height: 100%;
   max-height: 100%;
 }
+
+/** 강사 신청 — 템플릿 write 전체 폭 안내(캘린더 없음) */
+.program-application-schedule-template-placeholder
+  .program-application-schedule-template-hint
+  .form-editor-template-field-hint-text {
+  text-align: center;
+  white-space: pre-line;
+}

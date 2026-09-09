@@ -6,11 +6,29 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * JA 평가 제출 요청. 4개 항목만 입력하며 총점/등급은 서버가 산정합니다.
+ */
 export interface InstructorEvaluationSubmitRequest {
   /**
-     * @minimum 0
-     * @maximum 100
+     * @minimum 1
+     * @maximum 5
      */
-  totalScore: number;
+  contentExpertiseScore: number;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  deliveryImmersionScore: number;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  engagementInteractionScore: number;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  contentUseLessonDesignScore: number;
   comment?: string;
 }

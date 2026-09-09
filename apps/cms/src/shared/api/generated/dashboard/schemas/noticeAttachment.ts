@@ -12,4 +12,5 @@ export interface NoticeAttachment {
   originalFileName?: string;
   fileSize?: number;
   mimeType?: string;
+  downloadPath?: string;
 }

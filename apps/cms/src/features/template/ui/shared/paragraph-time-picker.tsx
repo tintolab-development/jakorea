@@ -90,34 +90,43 @@ export function ParagraphTimePicker({
         : null
   const triggerIsPlaceholder = triggerDisplay == null
 
+  const initialStartMs = initialTimeRange?.[0]?.valueOf()
+  const initialEndMs = initialTimeRange?.[1]?.valueOf()
+  const valueMs = value?.valueOf()
+  const initialTimeRangeRef = useRef(initialTimeRange)
+  const valueRef = useRef(value)
+  initialTimeRangeRef.current = initialTimeRange
+  valueRef.current = value
+
   useEffect(() => {
-    if (endTimeAlwaysOn) setEndTimeOn(true)
+    if (endTimeAlwaysOn) {
+      setEndTimeOn(prev => (prev ? prev : true))
+    }
   }, [endTimeAlwaysOn])
 
   useEffect(() => {
-    if (initialTimeRange == null) return
-    setSurfaceTimeRange(prev => {
-      if (
-        prev != null &&
-        prev[0].isSame(initialTimeRange[0], 'minute') &&
-        prev[1].isSame(initialTimeRange[1], 'minute')
-      ) {
-        return prev
-      }
-      return initialTimeRange
-    })
-  }, [initialTimeRange?.[0]?.valueOf(), initialTimeRange?.[1]?.valueOf()])
-
-  useEffect(() => {
-    if (value == null) {
-      setSurfaceTimeRange(null)
+    const range = initialTimeRangeRef.current
+    if (range != null && initialStartMs != null && initialEndMs != null) {
+      setSurfaceTimeRange(prev => {
+        if (prev != null && prev[0].valueOf() === initialStartMs && prev[1].valueOf() === initialEndMs) {
+          return prev
+        }
+        return range
+      })
       return
     }
+
+    const current = valueRef.current
+    if (current == null) {
+      setSurfaceTimeRange(prev => (prev == null ? prev : null))
+      return
+    }
+
     setSurfaceTimeRange(prev => {
       if (prev == null) return prev
-      return value.isSame(prev[0], 'minute') ? prev : null
+      return current.isSame(prev[0], 'minute') ? prev : null
     })
-  }, [value])
+  }, [initialEndMs, initialStartMs, valueMs])
 
   const populateDraftFromInstant = useCallback((d: Dayjs) => {
     const { h12, mer } = from24h(d.hour())

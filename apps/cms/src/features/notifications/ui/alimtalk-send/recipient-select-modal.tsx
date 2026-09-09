@@ -4,7 +4,6 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, CmsSelect } from '@/shared/ui'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { ALIMTALK_SEND_RECIPIENT_MOCK } from '@/features/notifications/model/alimtalk-send/mock'
 import {
   ALIMTALK_SEND_MEMBER_TYPE_OPTIONS,
   ALIMTALK_SEND_PARTICIPATION_TYPE_OPTIONS,
@@ -27,7 +26,7 @@ const TYPE_COL_WIDTH = 140
 
 type RecipientSelectModalProps = {
   open: boolean
-  /** 원격 조회 결과. 미전달 시 mock + 클라이언트 필터 */
+  /** 원격 조회 결과. 미전달 시 빈 목록 */
   candidates?: AlimtalkSendRecipient[]
   /** 모달 오픈 시 이미 선택된 수신자(발송 화면 누적분) */
   initialSelected?: AlimtalkSendRecipient[]
@@ -54,7 +53,7 @@ type RecipientSelectModalProps = {
 
 export function RecipientSelectModal({
   open,
-  candidates = ALIMTALK_SEND_RECIPIENT_MOCK,
+  candidates = [],
   initialSelected = [],
   onClose,
   onConfirm,

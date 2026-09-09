@@ -4,6 +4,7 @@ import type { HorizontalTableParagraph } from '@/features/template/model/writing
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
 import { VolunteerFreeTextItemsParagraph } from '@/features/template/ui/form-set/application-form/shared/volunteer-free-text-items-paragraph'
 import { VolunteerActivityAvailableScheduleParagraph } from '@/features/template/ui/form-set/application-form/volunteer/paragraphs/volunteer-activity-available-schedule-paragraph'
+import { VolunteerInterviewApplicantScheduleParagraph } from '@/features/template/ui/form-set/application-form/volunteer/paragraphs/volunteer-interview-applicant-schedule-paragraph'
 import { VolunteerInterviewAvailableScheduleParagraph } from '@/features/template/ui/form-set/application-form/volunteer/paragraphs/volunteer-interview-available-schedule-paragraph'
 import { VolunteerPreviousJaProgramParagraph } from '@/features/template/ui/form-set/application-form/volunteer/paragraphs/volunteer-previous-ja-program-paragraph'
 import type { VolunteerInterviewScheduleEditSeed } from '@/features/program/shared/lib/volunteer-interview-schedule-edit-seed'
@@ -37,16 +38,22 @@ export function renderProgramApplicationFormVolunteerParagraphBody(
       return <VolunteerPreviousJaProgramParagraph />
     case PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems:
       return <VolunteerFreeTextItemsParagraph />
-    case PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule:
+    case PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule: {
+      const isTemplateAuthoringMode = options.isTemplateAuthoringMode === true
+      const readOnlyPreview = options.readOnlyPreview === true
+      if (isTemplateAuthoringMode && !readOnlyPreview) {
+        return <VolunteerInterviewApplicantScheduleParagraph isTemplateAuthoringMode />
+      }
       return (
         <VolunteerInterviewAvailableScheduleParagraph
-          isTemplateAuthoringMode={options.isTemplateAuthoringMode === true}
-          readOnlyPreview={options.readOnlyPreview === true}
+          isTemplateAuthoringMode={isTemplateAuthoringMode}
+          readOnlyPreview={readOnlyPreview}
           exceptionScheduleCount={options.exceptionScheduleCount ?? 0}
           onCommonExclusionChange={options.onCommonExclusionChange}
           commonScheduleSeed={options.commonScheduleSeed}
         />
       )
+    }
     case PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule:
       return (
         <VolunteerActivityAvailableScheduleParagraph

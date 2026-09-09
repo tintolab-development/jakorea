@@ -59,8 +59,12 @@
               ""
             ],
             "stageKinds": [
-              "text",
-              "text"
+              "subjective",
+              "subjective"
+            ],
+            "placeholderHints": [
+              "한글 성명",
+              "소속 기관명"
             ]
           },
           {

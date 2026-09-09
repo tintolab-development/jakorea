@@ -55,6 +55,8 @@ export function parseAdminRoleCode(value: string | undefined | null): AdminRoleC
   if ((ADMIN_ROLE_CODES as readonly string[]).includes(upper)) {
     return upper as AdminRoleCode
   }
+  // OpenAPI 관리자 계정 권한 코드 MIDDLE(중간 관리자) → 세션 정책 PARTNER
+  if (upper === 'MIDDLE') return 'PARTNER'
   return null
 }
 

@@ -113,3 +113,7 @@
   line-height: 150%;
   white-space: pre-line;
 }
+
+.mail-send-program-select-modal .content-modal__footer-actions {
+  justify-content: flex-end;
+}

@@ -19,6 +19,15 @@ import { getLastMiddleParagraphId } from '@/features/template/lib/writing-form-m
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel.types'
 import { isTitleWithPeriodParagraph } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-heading'
+import type { FormEditorKind } from '@/features/template/model/writing-form-draft.schema'
+
+function disabledParagraphCardActions(minimal = false) {
+  return minimal ? (
+    <FormParagraphCardActionsMinimal disabled />
+  ) : (
+    <FormParagraphCardActions disabled />
+  )
+}
 
 export function modalCardFooterToggles(
   paragraph: WritingFormParagraph,
@@ -257,9 +266,12 @@ export function modalCardFooterActions(
   updateParagraph: FormEditorLeftPanelProps['updateParagraph'],
   middleParagraphActions: FormEditorLeftPanelProps['middleParagraphActions'],
   paragraphs: WritingFormParagraph[],
-  structureLockedParagraphIds?: ReadonlySet<string>
+  structureLockedParagraphIds?: ReadonlySet<string>,
+  editorKind: FormEditorKind = 'survey'
 ): ReactNode {
   const structureLocked = structureLockedParagraphIds?.has(paragraph.id) ?? false
+  const surveyFreeForm = editorKind === 'survey'
+  const titleActionsLocked = !surveyFreeForm && isTitleWithPeriodParagraph(paragraph)
 
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
     if (!isSelected) return undefined
@@ -272,6 +284,7 @@ export function modalCardFooterActions(
     ) : null
     const paragraphActions = middleParagraphActions ? (
       <FormParagraphCardActions
+        addDisabled={structureLocked}
         duplicateDisabled={structureLocked}
         deleteDisabled={structureLocked}
         onAdd={() => middleParagraphActions.onAddAfter(tableParagraph.id)}
@@ -294,6 +307,7 @@ export function modalCardFooterActions(
     if (vt.verticalTableFlavor === 'file_attachment') {
       return middleParagraphActions ? (
         <FormParagraphCardActions
+          addDisabled={structureLocked}
           duplicateDisabled={structureLocked}
           deleteDisabled={structureLocked}
           onAdd={() => middleParagraphActions.onAddAfter(vt.id)}
@@ -310,6 +324,7 @@ export function modalCardFooterActions(
     ) : null
     const paragraphActions = middleParagraphActions ? (
       <FormParagraphCardActions
+        addDisabled={structureLocked}
         duplicateDisabled={structureLocked}
         deleteDisabled={structureLocked}
         onAdd={() => middleParagraphActions.onAddAfter(vt.id)}
@@ -329,14 +344,23 @@ export function modalCardFooterActions(
   if (!isSelected) return undefined
   if (paragraph.kind === 'description' && paragraph.variant === 'system') {
     if (isAgreementLockedSystemParagraph(paragraph)) return undefined
-    return <FormParagraphCardActionsMinimal />
+    return middleParagraphActions ? (
+      <FormParagraphCardActionsMinimal />
+    ) : (
+      disabledParagraphCardActions(true)
+    )
   }
   if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
     return middleParagraphActions ? (
       <FormParagraphCardActionsMinimal
+        addDisabled={structureLocked}
         duplicateDisabled={structureLocked}
         deleteDisabled={structureLocked}
         onAdd={() => {
+          if (surveyFreeForm) {
+            middleParagraphActions.onAddAfter(paragraph.id)
+            return
+          }
           const lastMid = getLastMiddleParagraphId(paragraphs)
           if (lastMid != null) {
             middleParagraphActions.onAddAfter(lastMid)
@@ -349,7 +373,7 @@ export function modalCardFooterActions(
         onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
       />
     ) : (
-      <FormParagraphCardActionsMinimal />
+      disabledParagraphCardActions(true)
     )
   }
 
@@ -358,8 +382,12 @@ export function modalCardFooterActions(
       paragraph.variant === 'short_essay' ||
       paragraph.variant === 'session_plan_short_essay'
     ) {
+      if (!middleParagraphActions) {
+        return disabledParagraphCardActions(false)
+      }
       return (
         <FormParagraphCardActions
+          addDisabled={structureLocked}
           duplicateDisabled={structureLocked}
           deleteDisabled={structureLocked}
           onAddItem={
@@ -404,24 +432,15 @@ export function modalCardFooterActions(
               }
             })
           }
-          onAdd={
-            middleParagraphActions
-              ? () => middleParagraphActions.onAddAfter(paragraph.id)
-              : undefined
-          }
-          onDuplicate={
-            middleParagraphActions
-              ? () => middleParagraphActions.onDuplicate(paragraph.id)
-              : undefined
-          }
-          onDelete={
-            middleParagraphActions ? () => middleParagraphActions.onDelete(paragraph.id) : undefined
-          }
+          onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
+          onDuplicate={() => middleParagraphActions.onDuplicate(paragraph.id)}
+          onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
         />
       )
     }
     return middleParagraphActions ? (
       <FormParagraphCardActions
+        addDisabled={structureLocked}
         duplicateDisabled={structureLocked}
         deleteDisabled={structureLocked}
         onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
@@ -429,31 +448,29 @@ export function modalCardFooterActions(
         onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
       />
     ) : (
-      <FormParagraphCardActions
-        duplicateDisabled={structureLocked}
-        deleteDisabled={structureLocked}
-        addDisabled={structureLocked}
-      />
+      disabledParagraphCardActions(false)
     )
   }
 
   if (isTitleWithPeriodParagraph(paragraph)) {
     return middleParagraphActions ? (
       <FormParagraphCardActionsMinimal
-        duplicateDisabled={structureLocked}
-        deleteDisabled={structureLocked}
+        addDisabled={structureLocked}
+        duplicateDisabled={structureLocked || titleActionsLocked}
+        deleteDisabled={structureLocked || titleActionsLocked}
         onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
         onDuplicate={() => middleParagraphActions.onDuplicate(paragraph.id)}
         onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
       />
     ) : (
-      <FormParagraphCardActionsMinimal />
+      disabledParagraphCardActions(true)
     )
   }
 
   if (paragraph.kind === 'description' && paragraph.variant === 'static_description_lines') {
     return middleParagraphActions ? (
       <FormParagraphCardActionsMinimal
+        addDisabled={structureLocked}
         duplicateDisabled={structureLocked}
         deleteDisabled={structureLocked}
         onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
@@ -461,7 +478,7 @@ export function modalCardFooterActions(
         onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
       />
     ) : (
-      <FormParagraphCardActionsMinimal />
+      disabledParagraphCardActions(true)
     )
   }
 

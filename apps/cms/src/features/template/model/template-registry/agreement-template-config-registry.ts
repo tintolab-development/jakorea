@@ -139,6 +139,18 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
   },
 }
 
+export function stripAgreementWritingFormStructureLocks(
+  config: AgreementWritingFormConfig
+): AgreementWritingFormConfig {
+  const {
+    structureLockedParagraphIds: _structureLockedParagraphIds,
+    hideDragHandleForParagraphIds: _hideDragHandleForParagraphIds,
+    paragraphBodyOptions: _paragraphBodyOptions,
+    ...editable
+  } = config
+  return editable
+}
+
 export function resolveAgreementWritingFormConfig(
   templateId: string | undefined | null
 ): AgreementWritingFormConfig | null {
@@ -147,9 +159,9 @@ export function resolveAgreementWritingFormConfig(
   const direct = AGREEMENT_TEMPLATE_CONFIG_REGISTRY[code as AgreementTemplateConfigKey]
   if (direct != null) return direct()
 
-  const copyMatch = code.match(/^(.*)-copy-\d+$/)
+  const copyMatch = code.match(/^(.*)-copy(?:-\d+)?$/i)
   const baseKey = copyMatch?.[1] as AgreementTemplateConfigKey | undefined
   if (baseKey == null) return null
   const factory = AGREEMENT_TEMPLATE_CONFIG_REGISTRY[baseKey]
-  return factory != null ? factory() : null
+  return factory != null ? stripAgreementWritingFormStructureLocks(factory()) : null
 }
