@@ -33,7 +33,7 @@
   min-height: var(--calendar-mini-height);
   max-height: var(--calendar-mini-height);
   box-shadow: none;
-  border-radius: var(--8, 8px);
+  border-radius: 16px;
   border: 1px solid var(--table-line, #e0e0e0);
 }
 
