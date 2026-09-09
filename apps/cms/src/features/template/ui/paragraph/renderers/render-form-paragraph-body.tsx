@@ -230,6 +230,8 @@ export type RenderFormParagraphBodyOptions = {
   programLinkedIndividualApplicationForm?: boolean
   /** 강의 평가 등 — 설문 기간을 기간 피커 대신 지정 텍스트로 표시 */
   surveyPeriodReadonly?: boolean
+  /** 강의보고서 프로그램 진행 정보 — 프로그램·배정 연동 미리보기(템플릿 안내 대신 실값) */
+  lectureReportProgramLinkedPreview?: boolean
   /** 회원 동의 작성(fill) — 제목형「작성 기간」본문 슬롯 숨김 */
   hideSurveyWritingPeriod?: boolean
 }
@@ -501,6 +503,10 @@ export function renderFormParagraphBody(
           paragraph={lr}
           onChange={next => updateParagraph(lr.id, () => next)}
           isEditMode={isBodyInteractive}
+          isTemplateAuthoringMode={
+            paragraphInteractionMode === 'authoring' &&
+            options?.lectureReportProgramLinkedPreview !== true
+          }
         />
       )
     }

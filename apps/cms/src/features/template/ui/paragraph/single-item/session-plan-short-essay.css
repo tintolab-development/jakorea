@@ -6,6 +6,16 @@
   gap: 20px;
 }
 
+.session-plan-short-essay-items--plain {
+  gap: 16px;
+}
+
+.session-plan-short-essay-items--plain .paragraph-label-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
 .session-plan-short-essay-item-row {
   display: flex;
   align-items: stretch;
@@ -66,13 +76,27 @@
   flex: 1 1 auto;
   min-width: 0;
   padding-right: 40px;
-  color: var(--main-BK, #3d3d3d);
   text-align: left;
+  white-space: normal;
+}
+
+.session-plan-short-essay-block__title-main {
+  color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
   font-weight: 700;
   line-height: 140%;
+}
+
+.session-plan-short-essay-block__title-hint {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
 }
 
 .session-plan-short-essay-block__delete {

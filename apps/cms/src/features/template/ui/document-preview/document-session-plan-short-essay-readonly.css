@@ -1,19 +1,80 @@
+/**
+ * session_plan_short_essay (showItemTitle) — A4·문서 미리보기 공통
+ * UJAT 교육계획서 N차시 블록과 동일 토큰. 템플릿별 scope 없이 항상 적용.
+ */
+
+.form-document-preview-paragraph--content-only:has(.session-plan-short-essay-block)
+  .form-document-preview-paragraph__content-header {
+  margin-bottom: 16px;
+}
+
 .session-plan-short-essay-block__footer--document-readonly {
-  align-items: flex-start;
+  display: flex;
+  min-height: 54px;
+  min-width: 80px;
+  padding: 12px 20px;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  box-sizing: border-box;
 }
 
 .document-session-plan-short-essay-readonly__text {
   flex: 1 1 auto;
   min-width: 0;
-  width: 100%;
-  min-height: 40px;
+  min-height: 0;
   box-sizing: border-box;
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 150%;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/*
+ * 단락 설명 ex) 힌트 — 강의 종합 평가 등
+ * content-only 기본 설명(24px)보다 specificity를 높여 덮지 않게 함
+ */
+.form-document-preview-body--lecture-report
+  .form-document-preview-paragraph--content-only
+  .form-document-preview-paragraph__description-text--hint {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.form-document-preview-body--lecture-report
+  .form-document-preview-paragraph--content-only:has(
+    .form-document-preview-paragraph__description-text--hint
+  )
+  .form-document-preview-paragraph__content-header {
+  margin-bottom: 16px;
+}
+
+/* 강의 종합 평가 등 showItemTitle=false — 미리보기는 일반 텍스트(인풋 크롬 없음) */
+.form-document-preview-body--lecture-report
+  .form-document-preview-paragraph__body-text--plain-filled {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.form-document-preview-body--lecture-report
+  .form-document-preview-paragraph__body-text--plain-placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }

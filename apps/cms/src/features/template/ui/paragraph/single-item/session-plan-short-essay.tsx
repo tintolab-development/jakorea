@@ -3,6 +3,8 @@ import type { SessionPlanShortEssayParagraph } from '@/features/template/model/w
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
+import { ParagraphLabelInput } from '@/features/template/ui/shared/paragraph-label-input'
+import { SessionPlanItemTitle } from '@/features/template/ui/paragraph/single-item/session-plan-item-title'
 import './session-plan-short-essay.css'
 
 /**
@@ -109,28 +111,28 @@ export function SessionPlanShortEssay({
 
   if (!showItemTitle) {
     return (
-      <div className="session-plan-short-essay-items">
+      <div className="session-plan-short-essay-items session-plan-short-essay-items--plain">
         {items.map((item, index) => (
           <div key={item.id} className="session-plan-short-essay-item-row">
-            <div className="session-plan-short-essay-block">
-              <div className="session-plan-short-essay-block__footer">
-                <CmsTextArea
-                  inputSize="medium"
-                  width="100%"
-                  rootClassName="session-plan-short-essay-block__textarea-root"
-                  className="session-plan-short-essay-block__textarea"
-                  value={item.bodyText}
-                  placeholder={item.placeholder ?? ph}
-                  onChange={
-                    isBodyInteractive
-                      ? e => updateItemBodyText(item.id, e.target.value)
-                      : undefined
-                  }
-                  readOnly={!isBodyInteractive}
-                  rows={1}
-                />
-              </div>
-            </div>
+            <ParagraphLabelInput
+              className={
+                activeItemId === item.id ? 'session-plan-short-essay-item--active' : undefined
+              }
+              value={item.bodyText}
+              placeholder={item.placeholder ?? ph}
+              rows={1}
+              expandableFromSingleRow
+              onClick={event => {
+                event.stopPropagation()
+                handleItemClick(item.id)
+              }}
+              onChange={
+                isBodyInteractive
+                  ? e => updateItemBodyText(item.id, e.target.value)
+                  : undefined
+              }
+              readOnly={!isBodyInteractive}
+            />
             {isCardSelected && index > 0 ? (
               <ItemDeleteButton
                 className="item-delete-button"
@@ -167,9 +169,12 @@ export function SessionPlanShortEssay({
             }}
           >
             <div className="session-plan-short-essay-block__header">
-              <span className="session-plan-short-essay-block__title" id={`${controlId}-label`}>
-                {titleText}
-              </span>
+              <SessionPlanItemTitle
+                id={`${controlId}-label`}
+                itemId={item.id}
+                label={titleText}
+                titleHint={item.titleHint}
+              />
               {isCardSelected && index > 0 ? (
                 <ItemDeleteButton
                   className="item-delete-button session-plan-short-essay-block__delete"

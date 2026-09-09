@@ -18,6 +18,7 @@ import type {
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
   UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS,
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS,
   isAgreementLockedSystemParagraph,
   resolveMultipleChoiceBodyDescriptionText,
   normalizeHorizontalTableParagraph,
@@ -56,7 +57,11 @@ import { DocumentSessionPlanShortEssayReadonly } from '@/features/template/ui/do
 import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/single-item/lecture-report-program-progress'
 import { UjatJournalEducationInfo } from '@/features/template/ui/paragraph/single-item/ujat-journal-education-info'
 import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
-import { FormParagraphSectionDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
+import { isPreviewSectionHintDescription } from '@/features/template/lib/session-plan-item-label'
+import {
+  FormParagraphSectionDescription,
+  isPlaceholderParagraphDescription,
+} from '@/features/template/ui/shared/form-paragraph-section-description'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/basic-info-paragraph'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
@@ -71,12 +76,10 @@ function safeTrim(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
-const HIDDEN_PREVIEW_DESCRIPTION_TEXTS = new Set(['설명 입력', '설명을 입력해 주세요'])
-
 function normalizePreviewDescription(value: unknown): string {
   const trimmed = safeTrim(value)
   if (trimmed.length === 0) return ''
-  return HIDDEN_PREVIEW_DESCRIPTION_TEXTS.has(trimmed) ? '' : trimmed
+  return isPlaceholderParagraphDescription(trimmed) ? '' : trimmed
 }
 
 function readOnlyTitleBlock(
@@ -96,7 +99,14 @@ function readOnlyTitleBlock(
       trimmedDescription.length > 0 ? (
         <FormParagraphSectionDescription
           surface="templateAuthoring"
-          className="form-document-preview-paragraph__description-text"
+          className={[
+            'form-document-preview-paragraph__description-text',
+            isPreviewSectionHintDescription(trimmedDescription)
+              ? 'form-document-preview-paragraph__description-text--hint'
+              : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
         >
           {trimmedDescription}
         </FormParagraphSectionDescription>
@@ -199,6 +209,45 @@ function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoi
   )
 }
 
+const UJAT_JOURNAL_CONTENT_FEEDBACK_PREVIEW_SAMPLE =
+  '작성된 교육 내용 피드백 내용 노출'
+
+const UJAT_EDUCATION_SESSION_PARAGRAPH_IDS = new Set<string>([
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session1,
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session2,
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session3,
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session4,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.session1,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.session2,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.session3,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.session4,
+])
+
+const UJAT_EDUCATION_SESSION_PREVIEW_SAMPLE = '작성된 내용'
+
+function DocumentUjatJournalContentFeedbackReadonly({
+  paragraph,
+}: {
+  paragraph: ShortEssayParagraph
+}) {
+  const written =
+    safeTrim(paragraph.items?.[0]?.bodyText) || safeTrim(paragraph.bodyText)
+  const filled = written.length > 0
+  return (
+    <div className="form-editor-body explanation-text">
+      <div
+        className={
+          filled
+            ? 'form-document-preview-paragraph__body-text form-document-preview-paragraph__body-text--explanation-filled'
+            : 'form-document-preview-paragraph__body-text form-document-preview-paragraph__body-text--explanation-placeholder'
+        }
+      >
+        {written || UJAT_JOURNAL_CONTENT_FEEDBACK_PREVIEW_SAMPLE}
+      </div>
+    </div>
+  )
+}
+
 function DocumentShortEssayTableReadonly({ paragraph }: { paragraph: ShortEssayParagraph }) {
   const items = paragraph.items && paragraph.items.length > 0 ? paragraph.items : []
   return (
@@ -281,6 +330,11 @@ function DocumentShortEssayReadonly({
     return (
       <DocumentSessionPlanShortEssayReadonly
         paragraph={paragraph as SessionPlanShortEssayParagraph}
+        emptyDisplayText={
+          UJAT_EDUCATION_SESSION_PARAGRAPH_IDS.has(paragraph.id)
+            ? UJAT_EDUCATION_SESSION_PREVIEW_SAMPLE
+            : undefined
+        }
       />
     )
   }
@@ -493,6 +547,9 @@ function renderBody(
           paragraph={p as LectureReportProgramProgressParagraph}
           onChange={noopOnParagraphChange}
           isEditMode={false}
+          isTemplateAuthoringMode={
+            paragraphBodyOptions?.lectureReportProgramLinkedPreview !== true
+          }
         />
       )
     case 'vertical_table':
@@ -522,6 +579,9 @@ function renderBody(
       return <DocumentMultipleChoiceReadonly paragraph={p as MultipleChoiceParagraph} />
     case 'short_essay': {
       const shortEssayP = p as ShortEssayParagraph
+      if (shortEssayP.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.contentFeedback) {
+        return <DocumentUjatJournalContentFeedbackReadonly paragraph={shortEssayP} />
+      }
       if (renderMode === 'contentOnly' && (shortEssayP.items?.length ?? 0) >= 2) {
         return <DocumentShortEssayTableReadonly paragraph={shortEssayP} />
       }
@@ -792,6 +852,8 @@ export function FormDocumentPreviewParagraph({
   if (renderMode === 'contentOnly') {
     const isFileAttachment =
       paragraph.kind === 'single_item' && paragraph.variant === 'file_attachment'
+    const isUjatJournalContentFeedback =
+      paragraph.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.contentFeedback
     const isNoticeStackDivider =
       paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
     const isNoticeDateWithDivider =
@@ -807,6 +869,9 @@ export function FormDocumentPreviewParagraph({
           'form-document-preview-paragraph',
           'form-document-preview-paragraph--content-only',
           isFileAttachment ? 'form-document-preview-paragraph--file-attachment' : '',
+          isUjatJournalContentFeedback
+            ? 'form-document-preview-paragraph--ujat-journal-feedback'
+            : '',
           isNoticeStackDivider
             ? 'form-document-preview-paragraph--content-only-stack-divider'
             : '',
