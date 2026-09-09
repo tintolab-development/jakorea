@@ -161,6 +161,19 @@ describe('get-notifications-api-error', () => {
     ).toBe('템플릿 필수 변수가 없습니다: 사용자 아이디(이메일)')
   })
 
+  it('NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING 복수 키를 표시한다', () => {
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(
+          400,
+          'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING',
+          'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:교육 진행 수업 시간,배정 기관명'
+        ),
+        'fallback'
+      )
+    ).toBe('템플릿 필수 변수가 없습니다: 교육 진행 수업 시간, 배정 기관명')
+  })
+
   it('DIRECT + AD 및 프로그램 필수 에러를 매핑한다', () => {
     expect(
       getNotificationsApiErrorMessage(

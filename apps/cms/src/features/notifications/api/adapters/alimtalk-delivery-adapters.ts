@@ -9,7 +9,7 @@ import {
   mapAlimtalkMetadataFields,
   mapNotificationTemplatePreviewToItem,
 } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
-import { formatAlimtalkFailedReason } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
+import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
 import type {
   AlimtalkBroadcastTiming,
   AlimtalkReceiveStatus,
@@ -225,7 +225,7 @@ export function mapDeliveryToSendHistoryRow(
   const sendStatus = mapSendStatus(item.sendStatus)
   const failedReasonRaw = item.failedReason?.trim() || ''
   const failedReason =
-    sendStatus === '발송 실패' ? formatAlimtalkFailedReason(failedReasonRaw) || failedReasonRaw : ''
+    sendStatus === '발송 실패' ? formatNotificationFailedReason(failedReasonRaw) || failedReasonRaw : ''
 
   return {
     id: String(item.deliveryId),

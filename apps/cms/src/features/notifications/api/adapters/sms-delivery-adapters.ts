@@ -7,6 +7,7 @@ import {
   type SmsMessageType,
   type SmsSenderNumberType,
 } from '@/features/notifications/api/adapters/sms-channel'
+import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
 import type {
   SmsBroadcastTiming,
   SmsReceiveStatus,
@@ -209,7 +210,10 @@ export function mapSmsDeliveryToSendHistoryRow(
   const messageType = mapMessageType(item, previewRecord)
   const sendStatus = mapSendStatus(item.sendStatus)
   const failedReasonRaw = item.failedReason?.trim() || ''
-  const failedReason = sendStatus === '발송 실패' ? failedReasonRaw : ''
+  const failedReason =
+    sendStatus === '발송 실패'
+      ? formatNotificationFailedReason(failedReasonRaw) || failedReasonRaw
+      : ''
   const attachments = previewAttachmentItems(previewRecord)
   const contentSource = bodyText || subject || templateName
 

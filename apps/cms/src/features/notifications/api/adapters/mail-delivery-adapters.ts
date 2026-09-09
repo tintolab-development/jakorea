@@ -3,6 +3,7 @@ import type {
   NotificationDeliveryResponse,
 } from '@/shared/api/generated/notifications/schemas'
 import { formatMailPreviewPerson } from '@/features/notifications/model/mail-template/preview'
+import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
 import type {
   MailBroadcastTiming,
   MailReceiveStatus,
@@ -177,7 +178,10 @@ export function mapMailDeliveryToSendHistoryRow(
 
   const sendStatus = mapSendStatus(item.sendStatus)
   const failedReasonRaw = item.failedReason?.trim() || ''
-  const failedReason = sendStatus === '발송 실패' ? failedReasonRaw : ''
+  const failedReason =
+    sendStatus === '발송 실패'
+      ? formatNotificationFailedReason(failedReasonRaw) || failedReasonRaw
+      : ''
 
   const readStatus: MailSendHistoryRow['readStatus'] = item.openedAt
     ? '읽음'

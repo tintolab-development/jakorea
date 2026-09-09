@@ -14,6 +14,7 @@ import {
   MAIL_TEMPLATE_NAME_REQUIRED_MESSAGE,
 } from '@/features/notifications/model/mail-template/template-name'
 import { SCHEDULED_AT_MUST_BE_FUTURE_MESSAGE } from '@/features/notifications/model/send-scheduled-at'
+import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
 
 const ERROR_CODE_MESSAGES: Record<string, string> = {
   CATEGORY_HAS_CHILDREN: '하위 카테고리 또는 템플릿이 있어 삭제할 수 없습니다.',
@@ -255,19 +256,8 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
     return ERROR_CODE_MESSAGES[code] || serverMessage
   }
   if (code === 'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING') {
-    const token = serverMessage.includes(':')
-      ? serverMessage.split(':').slice(1).join(':').trim()
-      : ''
-    if (token && !token.startsWith('NOTIFICATION_')) {
-      return `템플릿 필수 변수가 없습니다: ${token}`
-    }
-    const fromRaw = (serverMessage || '').replace(
-      /^NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:?\s*/,
-      ''
-    ).trim()
-    return fromRaw
-      ? `템플릿 필수 변수가 없습니다: ${fromRaw}`
-      : ERROR_CODE_MESSAGES.NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING
+    const formatted = formatNotificationFailedReason(serverMessage || code)
+    return formatted || ERROR_CODE_MESSAGES.NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING
   }
   if (
     code === 'EMAIL_ATTACHMENT_LIMIT_EXCEEDED' ||
