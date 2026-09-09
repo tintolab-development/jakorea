@@ -281,8 +281,9 @@ export function mapCreateUserRequestToPreRegisterInstructor(
     }
     const feeGrade = toInstructorFeeGradeApiValue(request.instructorCmsProfile.defaultFeeGrade)
     if (feeGrade) body.feeGrade = feeGrade
-    const jaGrade = request.instructorCmsProfile.defaultJaGrade?.trim()
-    if (jaGrade) body.jaGrade = jaGrade
+    if (request.jaEvaluation) {
+      body.jaEvaluation = request.jaEvaluation
+    }
   } else {
     if (request.address?.trim()) body.homeAddress = request.address.trim()
     if (request.detailAddress?.trim()) body.homeAddressDetail = request.detailAddress.trim()

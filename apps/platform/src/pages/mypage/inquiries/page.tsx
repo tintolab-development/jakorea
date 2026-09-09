@@ -12,9 +12,8 @@ import {
 } from '@/features/inquiry'
 import {
   getMypageLnbItems,
-  MYPAGE_EDUCATION_PATH,
   MYPAGE_INQUIRIES_PATH,
-  MYPAGE_PATH,
+  navigateMypageLnb,
   showInstructorApplyCta,
   useMypageMember,
   type MypageLnbItemKey,
@@ -72,13 +71,7 @@ export function MypageInquiriesPage() {
   }
 
   const handleLnbItemSelect = (key: MypageLnbItemKey) => {
-    if (key === 'home') {
-      navigate(MYPAGE_PATH)
-      return
-    }
-    if (key === 'education') {
-      navigate(MYPAGE_EDUCATION_PATH)
-    }
+    navigateMypageLnb(navigate, key)
   }
 
   const handleTabChange = (tab: string) => {

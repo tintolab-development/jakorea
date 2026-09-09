@@ -325,6 +325,60 @@ export function getWritingFormSeedSpecsForExport(): WritingFormSeedSpec[] {
   return WRITING_FORM_SEED_SPECS.filter(spec => !EXCLUDED_TEMPLATE_CODES.has(spec.templateCode))
 }
 
+/**
+ * `registration-general`은 작성 31종 export에서 제외되지만 DB 시드 33종에 포함된다.
+ * Payload B: schemaJson + extensionJson.editorState (기본 등록 에디터 상태).
+ */
+export function exportRegistrationGeneralFormSeed(options?: {
+  seedsDir?: string
+}): { seedsDir: string; filePath: string; paragraphCount: number } {
+  const seedsDir =
+    options?.seedsDir ??
+    repoRelativeFromModule('../../../../docs/api/form-template-seeds')
+  mkdirSync(seedsDir, { recursive: true })
+
+  const catalog = TEMPLATE_CODE_CATALOG['registration-general']
+  const draft = createProgramRegistrationDraft('general')
+  const filePath = join(seedsDir, 'registration-general.json')
+  const fileBody = {
+    templateCode: 'registration-general',
+    templateName: catalog?.templateName ?? '일반 프로그램 등록 폼',
+    formType: 'WRITING' as const,
+    category: catalog?.category ?? 'REGISTRATION',
+    schemaJson: draft,
+    extensionJson: {
+      overlay: {},
+      editorState: {
+        participant: {
+          individual: true,
+          organization: false,
+          teacherInstructor: false,
+          volunteer: false,
+        },
+        programType: 'curriculum',
+        sessionRoundType: 'single',
+        educationFormScheduleDetail: 'common',
+        participationScheduleDetail: 'common',
+        ipsScheduleDetail: 'common',
+        curriculumSessionCount: 1,
+        curriculumChartSessionCount: 1,
+        scheduleCurriculumDetailCount: 1,
+        scheduleCurriculumGroupCount: 1,
+        scheduleCurriculumPreEducation: false,
+        trainedTeachersTeacherTrainingEnabled: false,
+        educationScheduleMode: 'date',
+        activeParagraphId: null,
+      },
+      uiState: {},
+    },
+    settingsJson: null,
+    _apiStorageNote:
+      'DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장',
+  }
+  writeFileSync(filePath, `${JSON.stringify(fileBody, null, 2)}\n`, 'utf8')
+  return { seedsDir, filePath, paragraphCount: draft.paragraphs.length }
+}
+
 function repoRelativeFromModule(relativePath: string): string {
   const moduleDir = dirname(fileURLToPath(import.meta.url))
   return join(moduleDir, relativePath)
@@ -562,7 +616,7 @@ const ISSUANCE_FORM_SEED_SPECS: IssuanceFormSeedSpec[] = [
     templateCode: 'document-4',
     payload: 'D',
     schemaJsonNull: true,
-    settingsJson: createCertificateSettingsJson('강사 활동 인증서'),
+    settingsJson: createCertificateSettingsJson('강사 활동인증서'),
     apiStorageNote:
       '인증서 양식은 schemaJson 없이 settingsJson만 사용. DB/API에는 settingsJson을 JSON.stringify한 string으로 저장',
   },
@@ -570,7 +624,7 @@ const ISSUANCE_FORM_SEED_SPECS: IssuanceFormSeedSpec[] = [
     templateCode: 'document-5',
     payload: 'D',
     schemaJsonNull: true,
-    settingsJson: createCertificateSettingsJson('봉사 활동 인증서'),
+    settingsJson: createCertificateSettingsJson('봉사 활동인증서'),
     apiStorageNote:
       '인증서 양식은 schemaJson 없이 settingsJson만 사용. DB/API에는 settingsJson을 JSON.stringify한 string으로 저장',
   },

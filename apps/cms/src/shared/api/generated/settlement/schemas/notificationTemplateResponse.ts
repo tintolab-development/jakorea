@@ -5,6 +5,8 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { EmailAttachmentItem } from './emailAttachmentItem';
+import type { NotificationTemplateResponseAlimtalkMetadata } from './notificationTemplateResponseAlimtalkMetadata';
 
 export interface NotificationTemplateResponse {
   templateId?: number;
@@ -25,4 +27,19 @@ export interface NotificationTemplateResponse {
   createdByAdminId?: number;
   createdAt?: string;
   updatedAt?: string;
+  categoryId?: number;
+  categoryName?: string;
+  displayName?: string;
+  senderProfileDisplayName?: string;
+  alimtalkMessageType?: string;
+  alimtalkEmphasisType?: string;
+  alimtalkSecurityYn?: boolean;
+  kakaoTemplateCategory?: string;
+  alimtalkMetadata?: NotificationTemplateResponseAlimtalkMetadata;
+  approvalStatus?: string;
+  providerSyncedAt?: string;
+  emailTemplateLanguage?: string;
+  emailAttachmentIds?: string[];
+  senderDisplay?: string;
+  attachments?: EmailAttachmentItem[];
 }

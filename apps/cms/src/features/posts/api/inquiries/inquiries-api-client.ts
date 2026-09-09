@@ -84,3 +84,10 @@ export async function updateInquiryCategoryRemote(
 export async function deleteInquiryCategoryRemote(categoryId: string): Promise<void> {
   await postsApi.deleteInquiryCategory(categoryPathId(categoryId))
 }
+
+export async function fetchInquiryAttachmentsRemote(
+  inquiryId: string
+): Promise<import('@/shared/api/generated/posts/schemas/inquiryAttachmentResponse').InquiryAttachmentResponse[]> {
+  const data = unwrapApiBody(await postsApi.attachments(pathId(inquiryId)))
+  return Array.isArray(data) ? data : []
+}

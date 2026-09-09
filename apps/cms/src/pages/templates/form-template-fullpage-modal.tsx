@@ -1,4 +1,4 @@
-import { CloseOutlined } from '@ant-design/icons'
+import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   buildCertificateFormSettings,
@@ -238,6 +238,19 @@ export function FormTemplateFullpageModal({
                 현재 화면은 미리보기 화면입니다.
               </span>
               <div className="template-preview-modal__notice-actions">
+                <CmsButton
+                  type="button"
+                  variant="primary"
+                  size="large"
+                  icon={<DownloadOutlined />}
+                  className="template-preview-modal__notice-download-btn"
+                  adminAction="download"
+                  loading={isPdfDownloading || isAllocatingSerial}
+                  disabled={isPdfDownloading || isAllocatingSerial}
+                  onClick={() => void handleDownloadDocument()}
+                >
+                  문서 다운로드
+                </CmsButton>
                 <CmsButton
                   type="button"
                   variant="secondary"

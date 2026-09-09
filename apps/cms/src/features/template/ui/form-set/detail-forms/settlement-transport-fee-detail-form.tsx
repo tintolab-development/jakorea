@@ -1,19 +1,17 @@
 /**
  * 정산 신청서 — 교통비 신청 블록
+ * 상단(거리·유류비·톨비) / 하단(총 산정 교통비) 표 분리. 입력값은 자동 산출로 전부 disabled.
  */
 
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
-import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import { CmsInput } from '@/shared/ui/cms-input'
-import { CmsRadio } from '@/shared/ui/cms-radio'
 import './settlement-transport-fee-detail-form.css'
 
 const INPUT_W = 244
 
 export type SettlementTransportFeeAutofillValues = {
   distanceKm: string
-  travelMethod: 'car' | 'public' | ''
   fuelCost: string
   tollFee: string
   totalTransportFee: string
@@ -21,7 +19,6 @@ export type SettlementTransportFeeAutofillValues = {
 
 const EMPTY: SettlementTransportFeeAutofillValues = {
   distanceKm: '',
-  travelMethod: '',
   fuelCost: '',
   tollFee: '',
   totalTransportFee: '',
@@ -37,10 +34,32 @@ function textOrDash(value: string): string {
   return value.trim() || '-'
 }
 
-function travelLabel(method: SettlementTransportFeeAutofillValues['travelMethod']): string {
-  if (method === 'car') return '자차'
-  if (method === 'public') return '대중교통'
-  return '-'
+function SuffixInput({
+  value,
+  width = INPUT_W,
+  placeholder,
+  'aria-label': ariaLabel,
+  suffix,
+}: {
+  value: string
+  width?: number
+  placeholder?: string
+  'aria-label': string
+  suffix: string
+}) {
+  return (
+    <div className="detail-info-form-inputs-wrapper-no-gap settlement-transport-fee-detail-form__suffix-row">
+      <CmsInput
+        disabled
+        inputSize="medium"
+        placeholder={placeholder}
+        value={value}
+        width={width}
+        aria-label={ariaLabel}
+      />
+      <span className="settlement-transport-fee-detail-form__suffix">{suffix}</span>
+    </div>
+  )
 }
 
 export function SettlementTransportFeeDetailForm({
@@ -50,131 +69,59 @@ export function SettlementTransportFeeDetailForm({
 }: SettlementTransportFeeDetailFormProps) {
   const v = { ...EMPTY, ...valuesProp }
   const isDocumentMode = displayMode === 'document'
-  const disabled = isDocumentMode
+  const mode = isDocumentMode ? 'view' : 'edit'
+  const rootClass = ['settlement-transport-fee-detail-form', className].filter(Boolean).join(' ')
 
   return (
-    <DetailInfoForm
-      title="교통비 신청"
-      hideHeader
-      mode={isDocumentMode ? 'view' : 'edit'}
-      className={['settlement-transport-fee-detail-form', className].filter(Boolean).join(' ')}
-    >
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="자택과 출강지 간의 거리"
-          fullRow
-          view={textOrDash(v.distanceKm ? `${v.distanceKm} km (편도)` : '')}
-          edit={
-            <div className="detail-info-form-inputs-wrapper-no-gap settlement-transport-fee-detail-form__suffix-row">
-              <CmsInput
-                disabled={disabled}
-                inputSize="medium"
-                placeholder="거리"
+    <div className={rootClass}>
+      <DetailInfoForm title="교통비 신청" hideHeader mode={mode}>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="자택과 출강지 간의 거리"
+            fullRow
+            view={textOrDash(v.distanceKm ? `${v.distanceKm} km (편도)` : '')}
+            edit={
+              <SuffixInput
                 value={v.distanceKm}
-                width={INPUT_W}
+                placeholder="거리"
                 aria-label="자택과 출강지 간 거리(km)"
+                suffix="km (편도)"
               />
-              <span className="settlement-transport-fee-detail-form__suffix">km (편도)</span>
-            </div>
-          }
-        />
-      </DetailInfoForm.Row>
+            }
+          />
+        </DetailInfoForm.Row>
 
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="이동 방식"
-          fullRow
-          view={travelLabel(v.travelMethod)}
-          edit={
-            <CmsRadio.Group
-              className="settlement-transport-fee-detail-form__radios"
-              size="large"
-              value={v.travelMethod || undefined}
-              disabled={disabled}
-            >
-              <CmsRadio value="car">자차</CmsRadio>
-              <CmsRadio value="public">대중교통</CmsRadio>
-            </CmsRadio.Group>
-          }
-        />
-      </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="유류비"
+            view={textOrDash(v.fuelCost ? `${v.fuelCost}원` : '')}
+            edit={<SuffixInput value={v.fuelCost} aria-label="유류비" suffix="원" />}
+          />
+          <DetailInfoForm.Field
+            label="톨비"
+            view={textOrDash(v.tollFee ? `${v.tollFee}원` : '')}
+            edit={<SuffixInput value={v.tollFee} aria-label="톨비" suffix="원" />}
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
 
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="유류비"
-          fullRow
-          view={textOrDash(v.fuelCost ? `${v.fuelCost}원` : '')}
-          edit={
-            <div className="detail-info-form-inputs-wrapper-no-gap settlement-transport-fee-detail-form__suffix-row">
-              <CmsInput
-                disabled={disabled}
-                inputSize="medium"
-                value={v.fuelCost}
-                width={INPUT_W}
-                aria-label="유류비"
-              />
-              <span className="settlement-transport-fee-detail-form__suffix">원</span>
-            </div>
-          }
-        />
-      </DetailInfoForm.Row>
-
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="통행료"
-          fullRow
-          view={textOrDash(v.tollFee ? `${v.tollFee}원` : '')}
-          edit={
-            <div className="detail-info-form-inputs-wrapper-no-gap settlement-transport-fee-detail-form__suffix-row">
-              <CmsInput
-                disabled={disabled}
-                inputSize="medium"
-                value={v.tollFee}
-                width={INPUT_W}
-                aria-label="통행료"
-              />
-              <span className="settlement-transport-fee-detail-form__suffix">원</span>
-            </div>
-          }
-        />
-      </DetailInfoForm.Row>
-
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="총 산정 교통비"
-          fullRow
-          view={textOrDash(v.totalTransportFee ? `${v.totalTransportFee}원` : '')}
-          edit={
-            <div className="detail-info-form-inputs-wrapper-no-gap settlement-transport-fee-detail-form__suffix-row">
-              <CmsInput
-                disabled={disabled}
-                inputSize="medium"
-                value={v.totalTransportFee}
-                width={INPUT_W}
-                aria-label="총 산정 교통비"
-              />
-              <span className="settlement-transport-fee-detail-form__suffix">원</span>
-            </div>
-          }
-        />
-      </DetailInfoForm.Row>
-
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="증빙 첨부"
-          fullRow
-          view={<span className="settlement-transport-fee-detail-form__view-muted">-</span>}
-          edit={
-            <ParagraphFileUpload
-              disabled={disabled}
-              guideLines={[
-                '- 파일은 총 최대 15MB까지 JPG, PNG 형식만 등록 가능합니다.',
-                '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-              ]}
-            />
-          }
-        />
-      </DetailInfoForm.Row>
-    </DetailInfoForm>
+      <DetailInfoForm
+        title="총 산정 교통비"
+        hideHeader
+        mode={mode}
+        className="settlement-transport-fee-detail-form__total-block"
+      >
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="총 산정 교통비"
+            fullRow
+            view={textOrDash(v.totalTransportFee ? `${v.totalTransportFee}원` : '')}
+            edit={
+              <SuffixInput value={v.totalTransportFee} aria-label="총 산정 교통비" suffix="원" />
+            }
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+    </div>
   )
 }

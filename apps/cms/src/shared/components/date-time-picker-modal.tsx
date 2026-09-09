@@ -63,6 +63,21 @@ export type DateTimePickerPopoverProps = {
   footerExtra?: ReactNode
   applyLabel?: string
   zIndex?: number
+  /** 분 선택 스텝(예: 30 → 00/30만). 기본 1분 */
+  minuteStep?: number
+}
+
+function snapDayjsMinute(value: Dayjs, minuteStep?: number): Dayjs {
+  if (minuteStep == null || minuteStep <= 1) return value.second(0).millisecond(0)
+  const step = Math.floor(minuteStep)
+  const rawMinute = value.minute()
+  let snappedMinute = Math.round(rawMinute / step) * step
+  let next = value.second(0).millisecond(0)
+  if (snappedMinute >= 60) {
+    next = next.add(1, 'hour')
+    snappedMinute = 0
+  }
+  return next.minute(snappedMinute)
 }
 
 export function DateTimePickerPopover({
@@ -78,10 +93,11 @@ export function DateTimePickerPopover({
   footerExtra,
   applyLabel = '설정',
   zIndex = CMS_DATE_TIME_PICKER_DEFAULT_Z_INDEX,
+  minuteStep,
 }: DateTimePickerPopoverProps) {
   const panelId = useId()
 
-  const initialDate = findNextEnabledDate(value, disabledDate)
+  const initialDate = snapDayjsMinute(findNextEnabledDate(value, disabledDate), minuteStep)
   const initialTimeParts = dayjsTimeParts(initialDate)
 
   const [draft, setDraft] = useState(initialDate)
@@ -108,14 +124,14 @@ export function DateTimePickerPopover({
     if (wasOpenRef.current) return
     wasOpenRef.current = true
 
-    const next = findNextEnabledDate(value, disabledDate)
-    const timeParts = dayjsTimeParts(value)
+    const next = snapDayjsMinute(findNextEnabledDate(value, disabledDate), minuteStep)
+    const timeParts = dayjsTimeParts(next)
     setDraft(next)
     setCalendarMonth(next.startOf('month'))
     setSingleHour(timeParts.h)
     setSingleMinute(timeParts.m)
     setSingleMer(timeParts.mer)
-  }, [open, value, disabledDate])
+  }, [open, value, disabledDate, minuteStep])
 
   const buildDraftDateTime = useCallback(
     (date: Dayjs, hour = singleHour, minute = singleMinute, mer = singleMer) =>
@@ -131,12 +147,12 @@ export function DateTimePickerPopover({
       return
     }
     if (!onChange) return
-    const next = buildDraftDateTime(draft)
+    const next = snapDayjsMinute(buildDraftDateTime(draft), minuteStep)
     const ts = next.valueOf()
     if (lastEmittedAtRef.current === ts) return
     lastEmittedAtRef.current = ts
     onChange(next)
-  }, [open, onChange, draft, singleHour, singleMinute, singleMer, buildDraftDateTime])
+  }, [open, onChange, draft, singleHour, singleMinute, singleMer, buildDraftDateTime, minuteStep])
 
   const handleCalendarSelect = (next: Dayjs) => {
     if (disabledDate?.(next)) return
@@ -145,7 +161,7 @@ export function DateTimePickerPopover({
   }
 
   const handleApply = () => {
-    onApply(buildDraftDateTime(draft))
+    onApply(snapDayjsMinute(buildDraftDateTime(draft), minuteStep))
     onClose()
   }
 
@@ -181,19 +197,17 @@ export function DateTimePickerPopover({
             </div>
           </div>
           <div className="date-time-picker-popover__side">
-            <div className="date-time-picker-popover__datetime-row">
+            <div className="date-time-picker-popover__datetime-stack">
               <CmsInput
                 className="date-time-picker-popover__input date-time-picker-popover__input--active"
                 width="100%"
                 inputSize="large"
                 readOnly
+                allowClear={false}
                 tabIndex={-1}
                 value={formatAppDatepickerDisplay(draft)}
                 aria-label="선택한 날짜"
               />
-              <span className="date-time-picker-popover__date-time-sep" aria-hidden>
-                |
-              </span>
               <DateTimePickerTimeInlineSelects
                 hour={singleHour}
                 minute={singleMinute}
@@ -205,6 +219,7 @@ export function DateTimePickerPopover({
                 disabled={disabled}
                 hourActive
                 rowPhase="single"
+                minuteStep={minuteStep}
               />
             </div>
             <div className="date-time-picker-popover__footer">

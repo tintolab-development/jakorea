@@ -46,6 +46,7 @@ export function AddressSearchDetailInputs({
   searchWidth,
   detailWidth,
   detailAriaLabel,
+  onAddressSelect,
 }: {
   searchValue: string
   onSearchChange: (next: string) => void
@@ -54,6 +55,7 @@ export function AddressSearchDetailInputs({
   searchWidth: string | number
   detailWidth: string | number
   detailAriaLabel: string
+  onAddressSelect?: (item: { zipNo?: string }) => void
 }) {
   return (
     <>
@@ -63,6 +65,7 @@ export function AddressSearchDetailInputs({
         placeholder="건물명, 도로명 또는 지번"
         inputSize="medium"
         width={searchWidth}
+        onSelect={onAddressSelect}
       />
       <DetailInfoForm.InputsSeparator />
       <CmsInput
@@ -162,12 +165,14 @@ export function FullWidthAddressEdit({
   detailValue,
   onDetailChange,
   detailAriaLabel,
+  onAddressSelect,
 }: {
   searchValue: string
   onSearchChange: (next: string) => void
   detailValue: string
   onDetailChange: (next: string) => void
   detailAriaLabel: string
+  onAddressSelect?: (item: { zipNo?: string }) => void
 }) {
   return (
     <Space.Compact style={{ width: '100%' }}>
@@ -179,6 +184,7 @@ export function FullWidthAddressEdit({
         searchWidth="100%"
         detailWidth="100%"
         detailAriaLabel={detailAriaLabel}
+        onAddressSelect={onAddressSelect}
       />
     </Space.Compact>
   )

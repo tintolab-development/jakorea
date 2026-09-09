@@ -8,6 +8,26 @@
 
 export type ListMemberProgramHistoryParams = {
 /**
+ * 조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
+ */
+historyType?: string;
+/**
+ * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ */
+programName?: string;
+/**
+ * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ */
+progressYear?: number;
+/**
+ * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
+ */
+progressStatus?: string;
+/**
+ * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ */
+managerName?: string;
+/**
  * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
  */
 page?: number;

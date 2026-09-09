@@ -15,19 +15,12 @@ import {
 import { RecruitInterviewConditionalRows } from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-conditional-rows'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
-import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './applicant-recruit-individual-participant-info-paragraph.css'
 
 const RECRUIT_PROGRESS_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
 const MAX_SUFFIX_CLASS = RECRUIT_FORM_MAX_SUFFIX_CLASS
-const RECRUITMENT_RADIO_CLASS = 'program-detail-info-tab__recruitment-radio'
-
-const INTERVIEW_OPTIONS = [
-  { label: '필요', value: 'yes' },
-  { label: '불필요', value: 'no' },
-] as const
 
 type RangeSeal = { start: string; end: string } | null
 
@@ -38,10 +31,6 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
       'recruit.individual.announcementPublished',
       'published'
     )
-  const [interviewRequired, setInterviewRequired] = useGeneralRecruitOverlayKv<string>(
-    'recruit.individual.interviewRequired',
-    'no'
-  )
 
   const [programAnchorIso, setProgramAnchorIso] = useGeneralRecruitOverlayKv<string | null>(
     'recruit.individual.programAnchorIso',
@@ -186,37 +175,18 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
   )
   const [notes, setNotes] = useGeneralRecruitOverlayKv<string>('recruit.individual.notes', '')
 
-  const interviewEnabled = interviewRequired === 'yes'
-
   return (
     <div className="applicant-recruit-individual-participant-info-paragraph__forms">
       <DetailInfoForm title="참여자 모집 정보" hideHeader mode="edit">
-        <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="공고 게시 여부"
+            fullRow
             edit={
               <ParticipantRecruitmentAnnouncementPublishedRadios
                 value={announcementPublished}
                 onChange={setAnnouncementPublished}
               />
-            }
-            view="-"
-          />
-          <DetailInfoForm.Field
-            label="참여자 면접 유무"
-            edit={
-              <CmsRadioGroup
-                size="large"
-                value={interviewRequired}
-                onChange={e => setInterviewRequired(String(e.target.value))}
-                className={RECRUITMENT_RADIO_CLASS}
-              >
-                {INTERVIEW_OPTIONS.map(o => (
-                  <CmsRadio key={o.value} value={o.value} size="large">
-                    {o.label}
-                  </CmsRadio>
-                ))}
-              </CmsRadioGroup>
             }
             view="-"
           />
@@ -291,7 +261,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
 
         <RecruitInterviewConditionalRows
           recruitPeriodLabel="참여자 모집 기간"
-          interviewEnabled={interviewEnabled}
+          interviewEnabled={false}
           state={{
             recruitAnchor,
             setRecruitAnchor,

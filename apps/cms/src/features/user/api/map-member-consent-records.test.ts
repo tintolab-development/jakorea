@@ -130,7 +130,7 @@ describe('applyMemberConsentToSchema', () => {
     expect(marketing).toMatchObject({ type: 'remote_consent', agreed: true })
   })
 
-  it('consent-records의 filledDocumentAvailable·consentType을 terms SSOT 위에 보강한다', () => {
+  it('consent-records의 filledDocumentAvailable·formResponseId·filledDocumentId·consentType을 terms SSOT 위에 보강한다', () => {
     const rows = applyMemberConsentToSchema(individualSchema, {
       termsAgreements: [
         { termsType: 'PORTRAIT_RIGHTS', agreed: true, agreedAt: '2026-01-15T09:15:42Z' },
@@ -140,7 +140,10 @@ describe('applyMemberConsentToSchema', () => {
           consentType: 'PORTRAIT_RIGHTS',
           consentValue: false,
           formResponseId: 42,
+          filledDocumentId: 7,
           filledDocumentAvailable: true,
+          filledDocumentRevealEndpoint:
+            '/api/admin/users/1/consent-records/PORTRAIT_RIGHTS/filled-document',
         },
       ],
     })
@@ -153,8 +156,37 @@ describe('applyMemberConsentToSchema', () => {
       type: 'document',
       agreed: true,
       formResponseId: 42,
+      filledDocumentId: 7,
       filledDocumentAvailable: true,
+      filledDocumentRevealEndpoint:
+        '/api/admin/users/1/consent-records/PORTRAIT_RIGHTS/filled-document',
       consentType: 'PORTRAIT_RIGHTS',
+    })
+  })
+
+  it('filledDocumentAvailable이 없어도 formResponseId만으로 문서 메타를 전달한다', () => {
+    const rows = applyMemberConsentToSchema(individualSchema, {
+      termsAgreements: [
+        { termsType: 'ADMINISTRATIVE_INFO_CONSENT', agreed: true, agreedAt: '2026-03-01T00:00:00Z' },
+      ],
+      consentRecords: [
+        {
+          consentType: 'ADMINISTRATIVE_INFO_CONSENT',
+          consentValue: true,
+          formResponseId: 88,
+        },
+      ],
+    })
+
+    const notice = rows
+      .flatMap(r => r.fields)
+      .find(f => f.label === '행정정보 공동이용 사전동의서')?.value
+
+    expect(notice).toMatchObject({
+      type: 'document',
+      agreed: true,
+      formResponseId: 88,
+      consentType: 'ADMINISTRATIVE_INFO_CONSENT',
     })
   })
 

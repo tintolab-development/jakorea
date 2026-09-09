@@ -1,13 +1,13 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
-import { getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
+import { exportMemberLoginLogs, getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
+import { memberLoginLogsParamsFromSearchParams } from '@/features/logs/api/logs-filter-params'
 import { useMemberLoginHistoryQuery } from '@/features/logs/hooks/use-member-login-history-query'
 import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
 import { LOGS_EMPTY_SEARCH_TEXT } from '@/features/logs/lib/logs-empty-copy'
-import { buildMemberLoginHistoryExcelFilename } from '@/features/logs/lib/member-login-excel'
 import { memberLoginHistoryFilterFields } from '@/features/logs/model/member-login-history-filter-fields'
 import { memberLoginHistoryTablePageConfig } from '@/features/logs/model/member-login-history-table.config'
 import { LogsQueryError } from '@/features/logs/ui/logs-query-error'
@@ -17,9 +17,7 @@ import {
   useTablePage,
 } from '@/shared/components/table-system/model/use-table-page'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
-import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import { EmptyState } from '@/shared/ui'
-import { exportTableToExcel } from '@/shared/utils/table-export'
+import { EmptyState, useCmsAlert } from '@/shared/ui'
 import type { MemberLoginLog } from '@/types/member-login-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -112,15 +110,22 @@ export default function MemberLoginHistoryPage() {
     [totalElements]
   )
 
-  const { exportExcel, isExporting } = useTableExcelExport({
-    columns,
-    data: tableData,
-    filename: buildMemberLoginHistoryExcelFilename(),
-    exporter: (exportColumns, data) =>
-      exportTableToExcel(exportColumns, data, buildMemberLoginHistoryExcelFilename(), {
-        exactFilename: true,
-      }),
-  })
+  const { showAlert } = useCmsAlert()
+  const [isExporting, setIsExporting] = useState(false)
+  const exportExcel = useCallback(async () => {
+    if (!remoteEnabled || isExporting) return
+    setIsExporting(true)
+    try {
+      await exportMemberLoginLogs(memberLoginLogsParamsFromSearchParams(searchParams))
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: getLogsApiErrorMessage(error, '회원 로그인 이력 다운로드에 실패했습니다.'),
+      })
+    } finally {
+      setIsExporting(false)
+    }
+  }, [isExporting, remoteEnabled, searchParams, showAlert])
 
   return (
     <FilterTableLayout

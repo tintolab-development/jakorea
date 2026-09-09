@@ -38,7 +38,7 @@ const seedRows = [
 
 export const ALIMTALK_SEND_HISTORY_MOCK: AlimtalkSendHistoryRow[] = seedRows.map((seed, index) => {
   const iso = isoByIndex(index)
-  const templateName = seed.unusedTemplate ? '미사용' : 'Gemini Academy 6월 웨비나 참여 안내'
+  const templateName = seed.unusedTemplate ? '-' : 'Gemini Academy 6월 웨비나 참여 안내'
   const isReserved = seed.broadcastTiming === '예약'
   const receiverName = '홍길동'
   const receiverPhone = '010-1234-5678'
@@ -53,7 +53,7 @@ export const ALIMTALK_SEND_HISTORY_MOCK: AlimtalkSendHistoryRow[] = seedRows.map
     senderInfo: '@jakorea',
     receiverName,
     receiverPhone,
-    receiverInfo: `${receiverName} ${receiverPhone}`,
+    receiverInfo: `${receiverName} | ${receiverPhone}`,
     broadcastTiming: seed.broadcastTiming,
     sendStatus: '발송 성공',
     receiveStatus: '수신 성공',

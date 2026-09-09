@@ -121,6 +121,8 @@ export type InstructorRegisterModalFormValues = {
   instructorFeeGrade: string
   /** JA 평가 등급 — BE `profile.defaultJaGrade` (CMS 등록 전용) */
   jaEvaluationGrade: string
+  /** JA 평가 팝업 4항목. pre-register `jaEvaluation` */
+  jaEvaluationInput?: import('@/shared/api/generated/members/schemas/instructorJaEvaluationInput').InstructorJaEvaluationInput
   isBusinessIncome: 'yes' | 'no'
   bankName: string
   accountNumber: string

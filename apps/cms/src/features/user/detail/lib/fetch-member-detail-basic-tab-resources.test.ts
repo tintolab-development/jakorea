@@ -101,6 +101,30 @@ describe('fetchMemberDetailBasicTabResources', () => {
     )
   })
 
+  it('관리자 상세 detail-info — admin-accounts comments fetch', async () => {
+    vi.mocked(fetchMemberConsentRecordsQuery).mockClear()
+    vi.mocked(fetchMemberCommentsQuery).mockClear()
+    const queryClient = {} as QueryClient
+
+    await fetchMemberDetailBasicTabResources(queryClient, {
+      detailTabActive: true,
+      membersRemote: true,
+      displayUser: { role: 'ADMIN', adminAccountId: 3, id: 'admin-account-3' },
+      mode: 'default',
+      showConsentAgreement: true,
+      showSchoolAffiliatedTeachers: false,
+      currentUser: { role: 'ADMIN' },
+    })
+
+    expect(fetchMemberConsentRecordsQuery).not.toHaveBeenCalled()
+    expect(fetchMemberCommentsQuery).toHaveBeenCalledWith(
+      queryClient,
+      3,
+      MEMBER_DETAIL_SCREEN_CODE,
+      'adminAccount'
+    )
+  })
+
   it('관리자 상세는 consent-records를 호출하지 않는다', async () => {
     vi.mocked(fetchMemberConsentRecordsQuery).mockClear()
     const queryClient = {} as QueryClient

@@ -5,9 +5,9 @@ import {
   bulkApproveInstructorRoleRequestsRemote,
   bulkRejectInstructorRoleRequestsRemote,
   rejectInstructorRoleRequestRemote,
+  cancelInstructorRoleApprovalRemote,
   resetInstructorRoleRequestPendingRemote,
   resendInstructorRoleNotificationRemote,
-  revokeInstructorPermissionRemote,
 } from '@/features/user/api/members-api-client'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import type { InstructorPermissionApprovePayload } from '@/features/user/permission-management/instructor-permission-approve-modal'
@@ -112,19 +112,19 @@ export function useInstructorRoleRequestMutations() {
     },
   })
 
-  /** APPROVED 건 「승인 취소」 — reset-pending 금지, memberId 기준 revoke */
+  /** APPROVED 건 「승인 취소」 — cancel-approval */
   const revokeMutation = useMutation({
     mutationFn: async (input: {
       memberId: number
       reason: string
-      /** 상세 캐시 무효화용 (신청 row는 APPROVED 이력으로 남을 수 있음) */
       requestId?: number
     }) => {
+      const requestId = input.requestId
+      if (requestId == null) {
+        throw new Error('승인 취소할 권한 신청 ID를 찾지 못했습니다.')
+      }
       const reason = input.reason.trim() || 'CMS 강사 권한 승인 취소'
-      await revokeInstructorPermissionRemote(input.memberId, {
-        reason,
-        revokeReason: reason,
-      })
+      await cancelInstructorRoleApprovalRemote(requestId, { reason })
     },
     onSuccess: async (_data, variables) => {
       await invalidateLists()

@@ -2,11 +2,10 @@
 
 .settlement-application-issuance-footnote {
   margin-top: 12px;
-  color: #85969d;
+  color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-weight: 500;
   line-height: 150%;
-  opacity: 0.6;
   white-space: pre-wrap;
 }

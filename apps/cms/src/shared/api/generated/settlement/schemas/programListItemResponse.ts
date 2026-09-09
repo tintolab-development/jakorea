@@ -10,8 +10,10 @@ export interface ProgramListItemResponse {
   programId?: number;
   programUuid?: string;
   programCode?: string;
-  /** 프로그램 유형 */
+  /** 프로그램 원장 유형 */
   programType?: string;
+  /** 회원포탈 탭 유형 */
+  portalCategories?: string[];
   title?: string;
   summary?: string;
   operationMethod?: string;
@@ -25,4 +27,8 @@ export interface ProgramListItemResponse {
   applicationTargetMode?: string;
   availableApplicationTypes?: string[];
   canApply?: boolean;
+  thumbnailFileObjectId?: number;
+  educationTarget?: string;
+  targetGradeFrom?: string;
+  targetGradeTo?: string;
 }

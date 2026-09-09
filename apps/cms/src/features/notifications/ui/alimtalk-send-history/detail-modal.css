@@ -80,3 +80,17 @@
   transform: translate(-50%, -50%) scale(min(1, calc(100cqh / 777px)));
   transform-origin: center center;
 }
+
+.alimtalk-send-history-detail-modal__status-with-reason {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.alimtalk-send-history-detail-modal__failed-reason {
+  color: var(--cms-color-danger, #d4380d);
+  font-size: 12px;
+  line-height: 1.4;
+  word-break: break-word;
+}

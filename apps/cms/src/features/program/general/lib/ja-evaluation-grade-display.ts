@@ -2,7 +2,8 @@
 export function formatJaEvaluationGradeCellDisplay(
   value: string | null | undefined
 ): string {
-  const grade = value?.trim()
-  if (!grade) return '-'
+  const raw = value?.trim()
+  if (!raw) return '-'
+  const grade = raw.replace(/^JA_/i, '')
   return grade.endsWith('등급') ? grade : `${grade}등급`
 }

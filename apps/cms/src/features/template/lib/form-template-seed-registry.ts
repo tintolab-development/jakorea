@@ -2,19 +2,37 @@ import { CERTIFICATE_ISSUANCE_TEMPLATE_CODES } from '@/features/template/api/for
 import { createApplicantRecruitFormIndividualDraft } from '@/features/template/model/applicant-recruit-form-individual-draft'
 import { createApplicantRecruitFormInstitutionDraft } from '@/features/template/model/applicant-recruit-form-institution-draft'
 import { createGeminiVisitingTrainingApplicationFormInstructorDraft } from '@/features/template/model/gemini-visiting-training-application-form-instructor-draft'
-import { createGeminiVisitingTrainingApplicationFormInstitutionDraft } from '@/features/template/model/gemini-visiting-training-application-form-institution-draft'
+import {
+  createGeminiVisitingTrainingApplicationFormInstitutionDraft,
+  migrateGeminiVisitingTrainingApplicationInstitutionParagraphs,
+} from '@/features/template/model/gemini-visiting-training-application-form-institution-draft'
 import { createGeminiVisitingTrainingRecruitFormDraft } from '@/features/template/model/gemini-visiting-training-recruit-form-draft'
-import { createProgramApplicationFormEconomyDraft } from '@/features/template/model/program-application-form-economy-draft'
+import {
+  createProgramApplicationFormEconomyDraft,
+  migrateProgramApplicationFormEconomyParagraphs,
+} from '@/features/template/model/program-application-form-economy-draft'
 import { createProgramApplicationFormInstructorDraft } from '@/features/template/model/program-application-form-instructor-draft'
-import { createProgramApplicationFormInstitutionDraft } from '@/features/template/model/program-application-form-institution-draft'
+import {
+  createProgramApplicationFormInstitutionDraft,
+  migrateProgramApplicationFormInstitutionParagraphs,
+} from '@/features/template/model/program-application-form-institution-draft'
 import { createProgramApplicationFormTrainedTeachersDraft } from '@/features/template/model/program-application-form-trained-teachers-draft'
-import { createProgramApplicationFormVolunteerDraft } from '@/features/template/model/program-application-form-volunteer-draft'
+import {
+  createProgramApplicationFormVolunteerDraft,
+  migrateProgramApplicationFormVolunteerParagraphs,
+} from '@/features/template/model/program-application-form-volunteer-draft'
 import { createProgramParticipantApplicationDraft } from '@/features/template/model/program-application-form-individual-draft'
 import { createProgramRegistrationDraft } from '@/features/template/model/program-registration-draft'
 import { createRecruitFormInstructorDraft } from '@/features/template/model/recruit-form-instructor-draft'
 import { createRecruitFormVolunteerDraft } from '@/features/template/model/recruit-form-volunteer-draft'
-import { createUjatProgramApplicationFormInstitutionDraft } from '@/features/template/model/ujat-program-application-form-institution-draft'
-import { createUjatProgramApplicationFormVolunteerDraft } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
+import {
+  createUjatProgramApplicationFormInstitutionDraft,
+  migrateUjatProgramApplicationInstitutionParagraphs,
+} from '@/features/template/model/ujat-program-application-form-institution-draft'
+import {
+  createUjatProgramApplicationFormVolunteerDraft,
+  migrateUjatProgramApplicationVolunteerChoiceParagraphs,
+} from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { createUjatProgramRegistrationDraft } from '@/features/template/model/ujat-program-registration-draft'
 import { createUjatRecruitFormInstitutionDraft } from '@/features/template/model/ujat-recruit-form-institution-draft'
 import { createUjatRecruitFormVolunteerDraft } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
@@ -98,6 +116,24 @@ export function normalizeWritingFormDraftFromApi(
   draft: WritingFormDraft
 ): WritingFormDraft {
   if (draft.paragraphs.length > 0 || EMPTY_PARAGRAPHS_ALLOWED.has(templateCode)) {
+    if (templateCode === 'application-ujat-volunteer') {
+      return migrateUjatProgramApplicationVolunteerChoiceParagraphs(draft)
+    }
+    if (templateCode === 'application-ujat-school') {
+      return migrateUjatProgramApplicationInstitutionParagraphs(draft)
+    }
+    if (templateCode === 'application-gemini-visiting-training-school') {
+      return migrateGeminiVisitingTrainingApplicationInstitutionParagraphs(draft)
+    }
+    if (templateCode === 'application-economy') {
+      return migrateProgramApplicationFormEconomyParagraphs(draft)
+    }
+    if (templateCode === 'application-participant-school') {
+      return migrateProgramApplicationFormInstitutionParagraphs(draft)
+    }
+    if (templateCode === 'application-volunteer') {
+      return migrateProgramApplicationFormVolunteerParagraphs(draft)
+    }
     return draft
   }
   const seed = getFormTemplateSeedDraft(templateCode)

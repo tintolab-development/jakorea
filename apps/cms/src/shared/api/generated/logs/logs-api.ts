@@ -7,6 +7,9 @@
  */
 import type {
   ApiResponseSystemIssueStatusResponse,
+  ApiResponseVoid,
+  ClientGeneratedDownloadLogRequest,
+  ExportMemberLoginHistoryParams,
   FileAccessLogsParams,
   LogListPageResponseBugIssueLogFrontendResponse,
   LogListPageResponseDownloadLogFrontendResponse,
@@ -26,6 +29,60 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
   export const getJAKoreaCMSBackendAPILogsSubset = () => {
+/**
+ * ### 이 API가 하는 일
+ * - 클라이언트 생성 파일 다운로드 이력 적재
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/logs/file-access/client`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: FILE_DOWNLOAD 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: AUDIT_LOG_WRITE 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 서버를 거치지 않는 단일 PDF/blob 다운로드 감사 로그; 서버 판별 IP 사용
+ * @summary 클라이언트 생성 파일 다운로드 이력 적재
+ */
+const recordClientGeneratedFileDownload = (
+    clientGeneratedDownloadLogRequest: ClientGeneratedDownloadLogRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseVoid>>,) => {
+      return customInstance<ApiResponseVoid>(
+      {url: `/api/admin/logs/file-access/client`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: clientGeneratedDownloadLogRequest
+    },
+      options);
+    }
+
 /**
  * ### 이 API가 하는 일
  * - 버그/이슈 이력 상태 변경
@@ -257,13 +314,13 @@ const privacyAccessLogs = (
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: adminName/loginId/from/to/page/size
- * - 응답 사용 위치: 회원 로그인 이력 페이지 목록(CMS 관리자·최근 1개월)
+ * - 응답 사용 위치: 회원 로그인 이력 페이지 목록(CMS 관리자)
  * - 프론트 조회 키: `get_api_logs_member-logins`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: 라우트 준비 완료
  * - 외부 연동 확인: 외부 연동 대기 없음
  * - 스테이징 점검 기준: 기본 스모크 검증 대상
- * - 목데이터 대체: 04-1 회원 로그인 이력: CMS ADMIN 성공 로그인만·1개월·IP 원문·BE export 없음(FE client excel).
+ * - 목데이터 대체: 04-1 회원 로그인 이력: CMS ADMIN 성공 로그인만·요청 기간·IP 원문.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
@@ -289,7 +346,7 @@ const privacyAccessLogs = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: 04-1 CMS 관리자 성공 로그인(최근 1개월·BE export 없음)
+ * - 검토 메모: 04-1 CMS 관리자 성공 로그인(요청 기간·서버 XLSX export 제공)
  * @summary 회원 로그인 이력 조회
  */
 const memberLoginHistory = (
@@ -297,6 +354,61 @@ const memberLoginHistory = (
  options?: SecondParameter<typeof customInstance<LogListPageResponseMemberLoginLogFrontendResponse>>,) => {
       return customInstance<LogListPageResponseMemberLoginLogFrontendResponse>(
       {url: `/api/admin/logs/member-logins`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 회원 로그인 이력 엑셀 다운로드
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
+ * - 프론트 담당 영역: logs (`logs`)
+ * - 호출 방식: `GET /api/admin/logs/member-logins/export`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: adminName/loginId/from/to
+ * - 응답 사용 위치: 현재 조회 조건 전체 회원 로그인 이력 XLSX 다운로드
+ * - 프론트 조회 키: `get_api_logs_member-logins_export`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 목데이터 대체: none
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: LOG_READ 권한 필요
+ * - 접근 범위: 마스터 관리자만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Notion 04-1 현재 검색 조건 전체 XLSX 다운로드
+ * @summary 회원 로그인 이력 엑셀 다운로드
+ */
+const exportMemberLoginHistory = (
+    params: ExportMemberLoginHistoryParams,
+ options?: SecondParameter<typeof customInstance<string>>,) => {
+      return customInstance<string>(
+      {url: `/api/admin/logs/member-logins/export`, method: 'GET',
         params
     },
       options);
@@ -357,10 +469,12 @@ const fileAccessLogs = (
       options);
     }
 
-return {updateSystemIssueStatus,systemIssueLogs,systemIssueDetail,privacyAccessLogs,memberLoginHistory,fileAccessLogs}};
+return {recordClientGeneratedFileDownload,updateSystemIssueStatus,systemIssueLogs,systemIssueDetail,privacyAccessLogs,memberLoginHistory,exportMemberLoginHistory,fileAccessLogs}};
+export type RecordClientGeneratedFileDownloadResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPILogsSubset>['recordClientGeneratedFileDownload']>>>
 export type UpdateSystemIssueStatusResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPILogsSubset>['updateSystemIssueStatus']>>>
 export type SystemIssueLogsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPILogsSubset>['systemIssueLogs']>>>
 export type SystemIssueDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPILogsSubset>['systemIssueDetail']>>>
 export type PrivacyAccessLogsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPILogsSubset>['privacyAccessLogs']>>>
 export type MemberLoginHistoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPILogsSubset>['memberLoginHistory']>>>
+export type ExportMemberLoginHistoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPILogsSubset>['exportMemberLoginHistory']>>>
 export type FileAccessLogsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPILogsSubset>['fileAccessLogs']>>>

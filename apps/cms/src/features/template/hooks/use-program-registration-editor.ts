@@ -5,8 +5,6 @@ import {
   useRef,
   useState,
   startTransition,
-  type Dispatch,
-  type SetStateAction,
 } from 'react'
 import {
   applyGeneralParticipantAudienceSelection,
@@ -14,13 +12,6 @@ import {
 } from '@/features/program/general/lib/participant-audience-selection'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
-import {
-  createAgreementExplanationTextParagraphForInsert,
-  duplicateMiddleParagraph,
-  insertMiddleParagraphAfter,
-  pickActiveParagraphIdAfterMiddleDelete,
-  removeMiddleParagraph,
-} from '@/features/template/lib/writing-form-middle-paragraph-mutations'
 import {
   createProgramRegistrationDraft,
   getProgramRegistrationSeedParagraphIds,
@@ -65,6 +56,8 @@ import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
 } from '@/features/template/lib/writing-form-template-local-save'
+import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/form-template-delete-policy'
+import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import {
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
@@ -107,6 +100,19 @@ function getDefaultEducationScheduleMode(
   return variant === 'economy' ? 'period' : 'date'
 }
 
+function filterProgramRegistrationDraftForVariant(
+  draft: WritingFormDraft,
+  variant: ProgramRegistrationFormVariant
+): WritingFormDraft {
+  if (variant !== 'trainedTeachers') return draft
+  return {
+    ...draft,
+    paragraphs: draft.paragraphs.filter(
+      paragraph => paragraph.id !== PROGRAM_REGISTRATION_IDS.businessKpi
+    ),
+  }
+}
+
 function createDefaultRegistrationEditorState(
   variant: ProgramRegistrationFormVariant
 ): ProgramRegistrationEditorState {
@@ -145,86 +151,6 @@ function patchEducationCurriculumParagraph(
   }
 }
 
-function useProgramRegistrationMiddleActions(
-  setDraft: Dispatch<SetStateAction<WritingFormDraft>>,
-  setActiveParagraphId: Dispatch<SetStateAction<string | null>>,
-  seedParagraphIds: ReadonlySet<string>
-) {
-  const appendBasicTitleParagraph = useCallback(
-    (paragraphId?: string) => {
-      const newId = crypto.randomUUID()
-      const insert = createAgreementExplanationTextParagraphForInsert(newId)
-      let inserted = false
-      setDraft(prev => {
-        const targetId = paragraphId ?? prev.paragraphs[prev.paragraphs.length - 1]?.id
-        if (targetId == null) return prev
-        const next = insertMiddleParagraphAfter(prev.paragraphs, targetId, insert)
-        if (next == null) return prev
-        inserted = true
-        return { ...prev, paragraphs: next }
-      })
-      if (inserted) setActiveParagraphId(newId)
-    },
-    [setDraft, setActiveParagraphId]
-  )
-
-  const onAddAfter = useCallback(
-    (paragraphId: string) => {
-      appendBasicTitleParagraph(paragraphId)
-    },
-    [appendBasicTitleParagraph]
-  )
-
-  const onDuplicate = useCallback(
-    (paragraphId: string) => {
-      if (seedParagraphIds.has(paragraphId)) {
-        return
-      }
-      const newId = crypto.randomUUID()
-      let duplicated = false
-      setDraft(prev => {
-        const next = duplicateMiddleParagraph(prev.paragraphs, paragraphId, newId)
-        if (next == null) {
-          return prev
-        }
-        duplicated = true
-        return { ...prev, paragraphs: next }
-      })
-      if (duplicated) setActiveParagraphId(newId)
-    },
-    [setDraft, setActiveParagraphId, seedParagraphIds]
-  )
-
-  const onDelete = useCallback(
-    (paragraphId: string) => {
-      if (seedParagraphIds.has(paragraphId)) {
-        return
-      }
-      let nextActive: string | null = null
-      setDraft(prev => {
-        const next = removeMiddleParagraph(prev.paragraphs, paragraphId)
-        if (next == null) {
-          return prev
-        }
-        nextActive = pickActiveParagraphIdAfterMiddleDelete(prev.paragraphs, paragraphId)
-        return { ...prev, paragraphs: next }
-      })
-      if (nextActive != null) setActiveParagraphId(nextActive)
-    },
-    [setDraft, setActiveParagraphId, seedParagraphIds]
-  )
-
-  return useMemo(
-    () => ({
-      onAddAfter,
-      onDuplicate,
-      onDelete,
-      appendBasicTitleParagraph,
-    }),
-    [appendBasicTitleParagraph, onAddAfter, onDelete, onDuplicate]
-  )
-}
-
 export type UseProgramRegistrationEditorOptions = {
   /** 템플릿 편집 등: 커리큘럼 차시·회차 추가 버튼 비활성·노출 블록 1개로 고정 */
   restrictCurriculumSessionStructure?: boolean
@@ -236,6 +162,8 @@ export type UseProgramRegistrationEditorOptions = {
   onTemplateDraftSaveConfirmed?: () => void
   /** forms-surveys draft API 연동 대상 templateCode (`registration-general` · `registration-economy`) */
   templateCode?: string
+  systemTemplate?: boolean
+  forceUserEditable?: boolean
   /** true면 임시저장 복원 없이 시드로 시작 (신규 등록) */
   skipDraftRestore?: boolean
 }
@@ -253,6 +181,11 @@ export function useProgramRegistrationEditor(
   const onTemplateDraftSaveConfirmed = editorOptions?.onTemplateDraftSaveConfirmed
   const templateCode = editorOptions?.templateCode
   const skipDraftRestore = editorOptions?.skipDraftRestore === true
+  const isStructureLocked = isWritingFormTemplateStructureLocked({
+    templateCode,
+    systemTemplate: editorOptions?.systemTemplate,
+    forceUserEditable: editorOptions?.forceUserEditable,
+  })
   const { showAlert } = useCmsAlert()
   const usesTemplateDraftApi = templateCode != null && templateCode !== ''
   const completionPromiseRef = useRef<Promise<void> | null>(null)
@@ -401,8 +334,9 @@ export function useProgramRegistrationEditor(
 
   const resetRegistrationEditorToSeed = useCallback(() => {
     resetProgramRegistrationOverlay()
-    const next = normalizeWritingFormDraft(
-      createProgramRegistrationDraft(programRegistrationFormVariant)
+    const next = filterProgramRegistrationDraftForVariant(
+      normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant)),
+      programRegistrationFormVariant
     )
     startTransition(() => {
       setDraft(next)
@@ -440,7 +374,10 @@ export function useProgramRegistrationEditor(
           if (cancelled) return
           if (saved?.draft) {
             replaceProgramRegistrationOverlay(saved.overlay ?? {})
-            const normalized = normalizeWritingFormDraft(saved.draft)
+            const normalized = filterProgramRegistrationDraftForVariant(
+              normalizeWritingFormDraft(saved.draft),
+              programRegistrationFormVariant
+            )
             const restored = applyProgramRegistrationEditorState(saved.editorState, defaults)
             startTransition(() => {
               setDraft(normalized)
@@ -522,10 +459,9 @@ export function useProgramRegistrationEditor(
     }))
   }, [])
 
-  const middleParagraphActions = useProgramRegistrationMiddleActions(
+  const middleParagraphActions = useWritingFormMiddleParagraphActions(
     setDraft,
-    setActiveParagraphId,
-    seedParagraphIds
+    setActiveParagraphId
   )
 
   const {
@@ -862,11 +798,13 @@ export function useProgramRegistrationEditor(
         },
         {
           hiddenParagraphIds:
-            programRegistrationFormVariant === 'general' &&
-            programType === 'schedule' &&
-            sessionRoundType === 'multi'
-              ? new Set<string>([PROGRAM_REGISTRATION_IDS.educationScheduleSettings])
-              : undefined,
+            programRegistrationFormVariant === 'trainedTeachers'
+              ? new Set<string>([PROGRAM_REGISTRATION_IDS.businessKpi])
+              : programRegistrationFormVariant === 'general' &&
+                  programType === 'schedule' &&
+                  sessionRoundType === 'multi'
+                ? new Set<string>([PROGRAM_REGISTRATION_IDS.educationScheduleSettings])
+                : undefined,
         }
       ),
     [
@@ -1177,7 +1115,7 @@ export function useProgramRegistrationEditor(
     isDraftLoading,
     activeParagraphId,
     singleItemListActiveItemId,
-    structureLockedParagraphIds: seedParagraphIds,
+    structureLockedParagraphIds: isStructureLocked ? seedParagraphIds : undefined,
     pinnedTop,
     sortableMiddle,
     pinnedBottom,
@@ -1185,7 +1123,7 @@ export function useProgramRegistrationEditor(
     onReorderMiddle,
     onTitleNumberingChange,
     updateParagraph,
-    middleParagraphActions,
+    middleParagraphActions: isStructureLocked ? undefined : middleParagraphActions,
     horizontalTableRowSelectionsByParagraphId,
     verticalTableBodyRowSelection,
     activeHorizontalTableRowSelection,

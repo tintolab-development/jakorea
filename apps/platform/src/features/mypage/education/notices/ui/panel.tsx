@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import type { ProgramDetail } from '@/features/program'
 import { EducationApplicationInfoModal } from '../../applications/ui/application-info-modal'
 import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no-bg.svg'
-import type { EducationInProgressNotice } from '../model/types'
+import type { EducationInProgressFile, EducationInProgressNotice } from '../model/types'
+import { downloadEducationNoticeFile } from '../lib/download-file'
 import {
   getMockEducationInProgressFiles,
   getMockEducationInProgressNotices,
@@ -18,12 +19,15 @@ type EducationInProgressNoticePanelProps = {
   program: ProgramDetail
   selfIntroMotivation?: string
   preferredEducationScheduleLabel?: string
+  /** 봉사현황 기관 안내사항 등 — 안내 목록 위 슬롯 */
+  leading?: ReactNode
 }
 
 export function EducationInProgressNoticePanel({
   program,
   selfIntroMotivation,
   preferredEducationScheduleLabel,
+  leading,
 }: EducationInProgressNoticePanelProps) {
   const programId = program.id
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false)
@@ -54,6 +58,18 @@ export function EducationInProgressNoticePanel({
     setSelectedNoticeId(noticeId)
   }
 
+  const handleDownloadFile = (file: EducationInProgressFile) => {
+    downloadEducationNoticeFile(file)
+  }
+
+  const handleViewOriginal = (file: EducationInProgressFile) => {
+    if (file.postId) {
+      openNoticeDetail(file.postId)
+      return
+    }
+    openComingSoon()
+  }
+
   const deleteNotice = (noticeId: string) => {
     setNotices(prev => prev.filter(notice => notice.id !== noticeId))
     setSelectedNoticeId(null)
@@ -65,34 +81,37 @@ export function EducationInProgressNoticePanel({
 
   return (
     <div className={styles.shell}>
-      {hasNotices ? (
-        <div className={styles.noticeList}>
-          {notices.map(notice => (
-            <EducationInProgressNoticeCard
-              key={notice.id}
-              notice={notice}
-              onClick={() => openNoticeDetail(notice.id)}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className={styles.noticeEmpty}>
-          <div className={styles.noticeEmptyContent}>
-            <img
-              className={styles.illustration}
-              src={illustQuotationUrl}
-              alt=""
-              aria-hidden="true"
-            />
-            <PFText as="p" typo="hl-lg" color="black" className={styles.noticeTitle}>
-              아직 확인할 안내사항이 없어요
-            </PFText>
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={styles.noticeDescription}>
-              새로운 안내사항이 등록되면 이곳에서 확인할 수 있어요.
-            </PFText>
+      <div className={styles.mainColumn}>
+        {leading}
+        {hasNotices ? (
+          <div className={styles.noticeList}>
+            {notices.map(notice => (
+              <EducationInProgressNoticeCard
+                key={notice.id}
+                notice={notice}
+                onClick={() => openNoticeDetail(notice.id)}
+              />
+            ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className={styles.noticeEmpty}>
+            <div className={styles.noticeEmptyContent}>
+              <img
+                className={styles.illustration}
+                src={illustQuotationUrl}
+                alt=""
+                aria-hidden="true"
+              />
+              <PFText as="p" typo="hl-lg" color="black" className={styles.noticeTitle}>
+                아직 확인할 안내사항이 없어요
+              </PFText>
+              <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={styles.noticeDescription}>
+                새로운 안내사항이 등록되면 이곳에서 확인할 수 있어요.
+              </PFText>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className={styles.files}>
         <PFSearchInput
@@ -123,7 +142,8 @@ export function EducationInProgressNoticePanel({
               <EducationInProgressFileRow
                 key={file.id}
                 file={file}
-                onComingSoon={openComingSoon}
+                onDownload={handleDownloadFile}
+                onViewOriginal={handleViewOriginal}
               />
             ))}
           </div>

@@ -8,6 +8,7 @@ import dayjs from 'dayjs'
 import { Spin } from 'antd'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
 import { AttachmentDownloadIcon } from '@/shared/ui'
+import { downloadNoticeAttachment } from '@/features/posts/api/notices/notice-attachments'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { shouldUseNoticesRemoteApi } from '@/features/posts/api/notices/admin-notices-service'
 import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
@@ -19,7 +20,6 @@ import { NoticeFormModal } from '@/features/posts/ui/notice-form-modal'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { ActionResultModal, CmsButton } from '@/shared/ui'
-import { downloadFile } from '@/shared/lib/file-download'
 import { RichTextViewer } from '@/shared/rich-text'
 import './admin-notice-detail-page.css'
 
@@ -65,14 +65,19 @@ export function AdminNoticeDetailPage() {
     setEditModalOpen(true)
   }, [canWrite])
 
-  const handleAttachmentClick = useCallback((fileName: string, fileUrl?: string) => {
-    void downloadFile(fileName, fileUrl)
+  const handleAttachmentClick = useCallback((item: { name: string; fileUrl?: string; fileObjectId?: number }) => {
+    void downloadNoticeAttachment(item).catch(error => {
+      setActionResultTitle('첨부 다운로드 실패')
+      setActionResultMessage(getPostsApiErrorMessage(error, '첨부파일 다운로드에 실패했습니다.'))
+      setActionResultOpen(true)
+    })
   }, [])
 
   const attachmentItems = useMemo(() => {
+    if (notice?.attachments?.length) return notice.attachments
     if (!notice?.hasAttachment) return []
     if (remoteEnabled) return []
-    return notice.attachments?.length ? notice.attachments : [{ name: '첨부파일.pdf' }]
+    return [{ name: '첨부파일.pdf' }]
   }, [notice?.attachments, notice?.hasAttachment, remoteEnabled])
 
   if (detailQuery.isLoading) {
@@ -178,7 +183,7 @@ export function AdminNoticeDetailPage() {
                     <button
                       type="button"
                       className="admin-notice-detail-page__file"
-                      onClick={() => handleAttachmentClick(item.name, item.fileUrl)}
+                      onClick={() => handleAttachmentClick(item)}
                     >
                       <span className="admin-notice-detail-page__file-name">{item.name}</span>
                       <AttachmentDownloadIcon className="admin-notice-detail-page__file-icon" />

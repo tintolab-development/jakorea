@@ -3,7 +3,10 @@ import {
   shouldShowInstitutionApplicationPreferredEducationForm,
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
-import { buildInstitutionClassCountOptions } from '@/features/template/lib/participant-recruitment-institution-limits'
+import {
+  DEFAULT_INSTITUTION_APPLICATION_MAX_CLASS_COUNT,
+  buildInstitutionClassCountOptions,
+} from '@/features/template/lib/participant-recruitment-institution-limits'
 import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -48,7 +51,10 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
 }) {
   const bridge = useInstitutionApplicationProgramBridge()
   const classCountOptions = useMemo(
-    () => buildInstitutionClassCountOptions(bridge.maxClassCount),
+    () =>
+      buildInstitutionClassCountOptions(
+        bridge.maxClassCount ?? DEFAULT_INSTITUTION_APPLICATION_MAX_CLASS_COUNT
+      ),
     [bridge.maxClassCount]
   )
   const showPreferredEducationForm =
@@ -117,7 +123,6 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
           <CmsSelect
             inputSize="medium"
             withAllOption={false}
-            disabled={classCountOptions.length === 0}
             placeholder="신청 학급 수"
             width={120}
             value={classCount === '' ? undefined : classCount}

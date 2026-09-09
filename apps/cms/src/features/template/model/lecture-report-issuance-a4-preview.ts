@@ -1,7 +1,7 @@
 import type { FormDocumentPreviewParagraphGapResolver } from '@/features/template/lib/a4-document-preview'
+import { A4_DOCUMENT_PARAGRAPH_GAP_PX } from '@/features/template/lib/a4-document-pagination-constants'
 import {
   LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS,
-  LECTURE_REPORT_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/writing-form-draft.schema'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
@@ -14,8 +14,8 @@ export const LECTURE_REPORT_A4_PAGE_BREAK_BEFORE_PARAGRAPH_IDS = new Set<string>
   LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.educationPhotos,
 ])
 
-export const getLectureReportA4ParagraphGap: FormDocumentPreviewParagraphGapResolver = paragraph =>
-  LECTURE_REPORT_SEED_PARAGRAPH_IDS.has(paragraph.id) ? 32 : 16
+export const getLectureReportA4ParagraphGap: FormDocumentPreviewParagraphGapResolver = () =>
+  A4_DOCUMENT_PARAGRAPH_GAP_PX
 
 export const LECTURE_REPORT_A4_PREVIEW_BODY_CLASS_NAME =
   'form-document-preview-body--lecture-report'

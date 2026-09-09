@@ -108,6 +108,7 @@ import {
   toAccountDirectoryBulkDeleteTargets,
 } from '@/features/user/api/partition-users-for-bulk-delete'
 import type { MemberListKind } from '@/shared/config/member-list-kinds'
+import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants/delete-guide-modal'
 import { adminPermissionFeeGradeToRoleCode } from '@/features/user/api/admin-approval-role'
 import type { InstructorCertificationUpsertRequest } from '@/shared/api/generated/members/schemas/instructorCertificationUpsertRequest'
 import type { AdminTermsAgreementRequest } from '@/shared/api/generated/members/schemas/adminTermsAgreementRequest'
@@ -116,6 +117,7 @@ import { resolvePreRegisterTermsAgreementVersions } from '@/features/user/api/re
 import { attachFilledDocumentsToTermsAgreements } from '@/features/user/api/attach-filled-documents'
 import type { MemberRegisterConsentWriteSnapshots } from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
+import { resolveAdminCommentResource } from '@/features/user/api/resolve-admin-comment-resource'
 import {
   hasAdminCommentPatch,
   isAdminCommentOnlyPatch,
@@ -384,6 +386,7 @@ export type PatchUserBasicInfoInput = Partial<
     | 'email'
     | 'detailAddress'
     | 'detailAddressDetail'
+    | 'zipCode'
     | 'affiliation'
     | 'gender'
     | 'birthDate'
@@ -393,6 +396,7 @@ export type PatchUserBasicInfoInput = Partial<
     | 'schoolInfo'
     | 'instructorInfo'
     | 'listMetrics'
+    | 'id1365'
   >
 > & {
   /** PATCH `instructorInfo.certifications` — 등록·상세 수정 공통 */
@@ -491,13 +495,14 @@ async function patchAdminUserBasicInfoRemote(
     )
   }
 
-  const memberId = options?.memberId ?? existing.memberId
-  if (memberId != null && hasAdminCommentPatch(patch)) {
+  const commentResource = resolveAdminCommentResource(existing)
+  if (commentResource && hasAdminCommentPatch(patch)) {
     const comment = patch.adminComment?.trim()
     if (comment) {
-      await upsertMemberAdminCommentRemote(memberId, comment, {
+      await upsertMemberAdminCommentRemote(commentResource.resourceId, comment, {
         existingCommentId: options?.existingCommentId,
         screenCode: MEMBER_DETAIL_SCREEN_CODE,
+        target: commentResource.target,
       })
     }
   }
@@ -601,6 +606,7 @@ async function patchUserBasicInfoRemote(
           await upsertMemberAdminCommentRemote(organizationId, comment, {
             existingCommentId: options?.existingCommentId,
             screenCode: MEMBER_DETAIL_SCREEN_CODE,
+            target: 'schoolOrganization',
           })
         }
       }
@@ -627,6 +633,7 @@ async function patchUserBasicInfoRemote(
         await upsertMemberAdminCommentRemote(memberId, comment, {
           existingCommentId: options?.existingCommentId,
           screenCode: MEMBER_DETAIL_SCREEN_CODE,
+          target: 'member',
         })
       }
     }
@@ -825,9 +832,20 @@ export async function patchUserBasicInfo(
     const detail = patch.detailAddressDetail?.trim()
     user.detailAddressDetail = detail || undefined
   }
+  if (patch.zipCode !== undefined) {
+    const zip = patch.zipCode.trim()
+    user.zipCode = zip || undefined
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, 'id1365')) {
+    const id1365 = patch.id1365?.trim()
+    user.id1365 = id1365 || undefined
+  }
   if (patch.affiliation !== undefined) user.affiliation = patch.affiliation
   if (patch.schoolEnrollmentStatus !== undefined) {
     user.schoolEnrollmentStatus = patch.schoolEnrollmentStatus
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, 'individualSchoolOrganizationId')) {
+    user.individualSchoolOrganizationId = patch.individualSchoolOrganizationId ?? null
   }
   if (patch.gender !== undefined) user.gender = patch.gender
   if (patch.birthDate !== undefined) user.birthDate = patch.birthDate
@@ -1182,6 +1200,8 @@ export interface CreateUserRequest {
   instructorCmsProfile?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsProfileProposal
   /** BE §3.8 — CMS 강사 `settlement` 구조체 */
   instructorCmsSettlement?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsSettlement
+  /** JA 평가 4항목. 총점/등급은 서버 산정 */
+  jaEvaluation?: import('@/shared/api/generated/members/schemas/instructorJaEvaluationInput').InstructorJaEvaluationInput
 }
 
 async function fetchCreatedMemberAsUser(
@@ -1589,7 +1609,10 @@ export async function deleteUser(
       }
 
       const memberId = resolveMemberIdForApi(userId, options)
-      await deleteMemberRemote(memberId, { reason })
+      await deleteMemberRemote(memberId, {
+        reason,
+        confirmationText: DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+      })
       return
     } catch (error) {
       throw new Error(getMemberApiErrorMessage(error, '회원 삭제에 실패했습니다.'))
@@ -1636,6 +1659,7 @@ export async function deleteUsersByListKind(
       await bulkDeleteAllAccountsRemote({
         targets: toAccountDirectoryBulkDeleteTargets(users),
         reason,
+        confirmationText: DELETE_GUIDE_TYPED_CONFIRM_VALUE,
       })
       return
     }
@@ -1678,7 +1702,11 @@ export async function deleteUsersByListKind(
       return
     }
 
-    await bulkDeleteMembersRemote({ ids: collectMemberIds(users), reason })
+    await bulkDeleteMembersRemote({
+      ids: collectMemberIds(users),
+      reason,
+      confirmationText: DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+    })
   } catch (error) {
     throw new Error(getMemberApiErrorMessage(error, '회원 삭제에 실패했습니다.'))
   }

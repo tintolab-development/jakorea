@@ -9,6 +9,8 @@ type ProgramInfoBodyProps = {
   program: ProgramDetail
   /** 참여하기 상세 header 등 — article 상단에 슬롯 */
   header?: ReactNode
+  /** 교육·봉사현황 상세처럼 참여하기 header를 쓰지 않을 때 운영 기간·후원사 노출 */
+  showPeriodSponsor?: boolean
   showApplyCta?: boolean
   showCancelCta?: boolean
   onApply?: () => void
@@ -20,6 +22,7 @@ type ProgramInfoBodyProps = {
 export function ProgramInfoBody({
   program,
   header,
+  showPeriodSponsor = false,
   showApplyCta = false,
   showCancelCta = false,
   onApply,
@@ -31,7 +34,11 @@ export function ProgramInfoBody({
 
   return (
     <div className={rootClassName}>
-      <ProgramInfoDetail program={program} header={header} />
+      <ProgramInfoDetail
+        program={program}
+        header={header}
+        showPeriodSponsor={showPeriodSponsor}
+      />
 
       <ProgramInfoAside
         detailImageUrl={program.detailImageUrl}

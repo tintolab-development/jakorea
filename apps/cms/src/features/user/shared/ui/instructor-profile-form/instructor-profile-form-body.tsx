@@ -293,6 +293,7 @@ export function InstructorProfileFormBody({
       schoolRegionSigungu: meta.regionSigungu,
       schoolOrganizationId: undefined,
     })
+    onConsentValuesCommit?.()
   }
 
   const schoolTeacherSchoolFieldEdit = (
@@ -300,7 +301,10 @@ export function InstructorProfileFormBody({
       <Form.Item name="schoolName" noStyle>
         <SchoolSearch
           value={schoolName}
-          onChange={nextSchoolName => form.setFieldValue('schoolName', nextSchoolName)}
+          onChange={nextSchoolName => {
+            form.setFieldValue('schoolName', nextSchoolName)
+            onConsentValuesCommit?.()
+          }}
           onSelect={handleSchoolSelect}
           allowedSchoolLevels={SCHOOL_SEARCH_NEIS_LEVELS}
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.schoolName}
@@ -337,7 +341,10 @@ export function InstructorProfileFormBody({
       <Form.Item name="schoolName" noStyle>
         <SchoolSearch
           value={schoolName}
-          onChange={nextSchoolName => form.setFieldValue('schoolName', nextSchoolName)}
+          onChange={nextSchoolName => {
+            form.setFieldValue('schoolName', nextSchoolName)
+            onConsentValuesCommit?.()
+          }}
           onSelect={handleSchoolSelect}
           allowedSchoolLevels={SCHOOL_SEARCH_NEIS_LEVELS}
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.schoolName}
@@ -422,15 +429,8 @@ export function InstructorProfileFormBody({
       gradeEvaluateButton
     )
 
-  return (
+  const basicInfoProfileFields = (
     <>
-      <div className={className ?? 'instructor-register-modal__stack'}>
-        <DetailInfoForm
-          title="기본 정보"
-          mode="edit"
-          className="instructor-register-modal__basic-info"
-        >
-          {basicInfoPrefix}
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="성명"
@@ -539,7 +539,10 @@ export function InstructorProfileFormBody({
                   <Form.Item name="homeAddress" noStyle>
                     <AddressSearch
                       value={homeAddress}
-                      onChange={next => form.setFieldValue('homeAddress', next)}
+                      onChange={next => {
+                        form.setFieldValue('homeAddress', next)
+                        onConsentValuesCommit?.()
+                      }}
                       placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.homeAddress}
                       inputSize="medium"
                       width="100%"
@@ -619,7 +622,45 @@ export function InstructorProfileFormBody({
           </DetailInfoForm.Row>
             </>
           ) : null}
-        </DetailInfoForm>
+    </>
+  )
+
+  return (
+    <>
+      <div className={className ?? 'instructor-register-modal__stack'}>
+        {isDetailEdit ? (
+          <div className="instructor-register-modal__basic-info-split">
+            <DetailInfoForm
+              title="기본 정보"
+              mode="edit"
+              className="instructor-register-modal__basic-info"
+            >
+              {basicInfoPrefix}
+            </DetailInfoForm>
+            <DetailInfoForm
+              title="기본 정보 — 성명·연락처 등"
+              hideHeader
+              mode="edit"
+              className={[
+                'instructor-register-modal__basic-info',
+                isTeacherMember
+                  ? 'user-basic-info-section--school-teacher-profile-card'
+                  : 'user-basic-info-section--instructor-profile-card',
+              ].join(' ')}
+            >
+              {basicInfoProfileFields}
+            </DetailInfoForm>
+          </div>
+        ) : (
+          <DetailInfoForm
+            title="기본 정보"
+            mode="edit"
+            className="instructor-register-modal__basic-info"
+          >
+            {basicInfoPrefix}
+            {basicInfoProfileFields}
+          </DetailInfoForm>
+        )}
 
         {formLayout.showInstructorGradeSection && showInstructorApplicationSections ? (
           <DetailInfoForm title="강사 등급" mode="edit" className="instructor-register-modal__grade-section">

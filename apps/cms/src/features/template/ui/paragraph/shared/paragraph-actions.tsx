@@ -3,6 +3,9 @@ import { CopyOutlined, DeleteOutlined } from '@ant-design/icons'
 import { FormEditorPlusIcon } from '@/features/template/ui/shared/form-editor-plus-icon'
 import { CmsButton } from '@/shared/ui/cms-button'
 
+/** 템플릿 단락 카드 푸터 — large+icon 기본 180px 대신 시안 140×44 */
+const PARAGRAPH_CARD_ACTION_BUTTON_CLASS = 'cms-button--action'
+
 export type FormParagraphCardActionHandlers = {
   onAdd?: () => void
   onDuplicate?: () => void
@@ -43,6 +46,8 @@ export function FormParagraphCardActions({
         <CmsButton
           variant="primary"
           type="button"
+          size="large"
+          className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
           disabled={addOff}
           onClick={e => {
             stopCardClick(e)
@@ -56,6 +61,7 @@ export function FormParagraphCardActions({
         variant="secondary"
         type="button"
         size="large"
+        className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
         icon={<FormEditorPlusIcon />}
         disabled={addOff}
         onClick={e => {
@@ -69,6 +75,7 @@ export function FormParagraphCardActions({
         variant="secondary"
         type="button"
         size="large"
+        className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
         icon={<CopyOutlined />}
         disabled={dupOff}
         onClick={e => {
@@ -82,6 +89,7 @@ export function FormParagraphCardActions({
         variant="secondary"
         type="button"
         size="large"
+        className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
         icon={<DeleteOutlined />}
         disabled={delOff}
         onClick={e => {
@@ -113,6 +121,7 @@ export function FormParagraphCardActionsMinimal({
         variant="secondary"
         type="button"
         size="large"
+        className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
         icon={<FormEditorPlusIcon />}
         disabled={addOff}
         onClick={e => {
@@ -126,6 +135,7 @@ export function FormParagraphCardActionsMinimal({
         variant="secondary"
         type="button"
         size="large"
+        className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
         icon={<CopyOutlined />}
         disabled={dupOff}
         onClick={e => {
@@ -139,6 +149,7 @@ export function FormParagraphCardActionsMinimal({
         variant="secondary"
         type="button"
         size="large"
+        className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
         icon={<DeleteOutlined />}
         disabled={delOff}
         onClick={e => {

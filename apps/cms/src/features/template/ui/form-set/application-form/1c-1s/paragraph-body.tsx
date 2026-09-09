@@ -9,13 +9,31 @@ import { EconomyProgramApplicationPreferredScheduleParagraph } from '@/features/
 import { ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagraph } from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-sex-offense-consent-inquiry-paragraph'
 import { ProgramApplicationFormInstitutionSexOffenseConsentSubmissionParagraph } from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-sex-offense-consent-submission-paragraph'
 
+export type EconomyProgramApplicationParagraphBodyOptions = {
+  enabled: boolean
+  isTemplateAuthoringMode?: boolean
+  sponsorId?: string
+  sponsorDisplayName?: string
+}
+
 /** 1사1교 프로그램 참여자 신청 폼 — 시드 단락 본문 */
 export function renderEconomyProgramApplicationParagraphBody(
   paragraph: HorizontalTableParagraph,
-  enabled: boolean | undefined,
-  isTemplateAuthoringMode = false
+  options: EconomyProgramApplicationParagraphBodyOptions | boolean | undefined,
+  isTemplateAuthoringModeArg = false
 ): ReactNode | null {
-  if (!enabled) return null
+  const resolved =
+    options === true
+      ? { enabled: true as const, isTemplateAuthoringMode: isTemplateAuthoringModeArg }
+      : options && typeof options === 'object'
+        ? {
+            ...options,
+            isTemplateAuthoringMode:
+              options.isTemplateAuthoringMode ?? isTemplateAuthoringModeArg,
+          }
+        : undefined
+  if (resolved?.enabled !== true) return null
+  const isTemplateAuthoringMode = resolved.isTemplateAuthoringMode === true
 
   switch (paragraph.id) {
     case PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo:
@@ -31,7 +49,13 @@ export function renderEconomyProgramApplicationParagraphBody(
     case PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentInquiryMethod:
       return <ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagraph />
     case PROGRAM_APPLICATION_FORM_ECONOMY_IDS.lessonReply:
-      return <EconomyProgramApplicationLessonReplyParagraph />
+      return (
+        <EconomyProgramApplicationLessonReplyParagraph
+          isTemplateAuthoringMode={isTemplateAuthoringMode}
+          sponsorId={resolved.sponsorId}
+          sponsorDisplayName={resolved.sponsorDisplayName}
+        />
+      )
     case PROGRAM_APPLICATION_FORM_ECONOMY_IDS.educationExperience:
       return <EconomyProgramApplicationEducationExperienceParagraph />
     case PROGRAM_APPLICATION_FORM_ECONOMY_IDS.preferredSchedule:

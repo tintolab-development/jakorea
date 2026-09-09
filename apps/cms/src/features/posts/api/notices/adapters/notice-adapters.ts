@@ -20,6 +20,14 @@ function toNoticeRequestStatus(status: Notice['status'] | undefined): NoticeRequ
   return NoticeRequestStatus.임시저장
 }
 
+function parseCategoryId(dto: NoticeResponse): number | undefined {
+  const extended = dto as NoticeResponse & { categoryId?: number | string }
+  const raw = extended.categoryId
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+  if (typeof raw === 'string' && /^\d+$/.test(raw.trim())) return Number(raw.trim())
+  return undefined
+}
+
 export function mapNoticeResponse(dto: NoticeResponse): Notice {
   const createdAt = dto.createdAt ?? new Date().toISOString()
   return {
@@ -27,6 +35,7 @@ export function mapNoticeResponse(dto: NoticeResponse): Notice {
     title: dto.title ?? '',
     content: dto.content ?? '',
     category: dto.category ?? '',
+    categoryId: parseCategoryId(dto),
     createdAt,
     updatedAt: dto.updatedAt ?? createdAt,
     isImportant: Boolean(dto.isImportant),
@@ -62,7 +71,7 @@ export function toNoticeRequestFromForm(params: BuildNoticeBodyParams): NoticeRe
   return {
     title: params.title.trim(),
     content: params.contentMarkdown,
-    category: params.category,
+    categoryId: params.categoryId,
     isImportant: params.pinToTop,
     author: params.author,
     hasAttachment: attachmentNames.length > 0,
@@ -75,7 +84,7 @@ export function toNoticeRequestFromNotice(notice: Notice): NoticeRequest {
   return {
     title: notice.title,
     content: notice.content,
-    category: notice.category,
+    categoryId: notice.categoryId,
     isImportant: notice.isImportant,
     author: notice.author,
     hasAttachment: notice.hasAttachment,

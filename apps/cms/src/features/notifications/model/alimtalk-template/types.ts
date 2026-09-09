@@ -120,6 +120,8 @@ export type AlimtalkTemplateItem = {
   itemSummary?: AlimtalkItemListEntry
   isSecurityTemplate: boolean
   content: string
+  /** BE titleTemplate — placeholder 추출 SSOT에 포함 */
+  titleTemplate?: string
   extraInfo: string
   ctaLabel: string
   buttons: AlimtalkTemplateButton[]

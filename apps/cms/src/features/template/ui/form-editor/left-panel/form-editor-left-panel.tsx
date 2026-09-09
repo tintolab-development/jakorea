@@ -23,6 +23,10 @@ import {
   SortableMiddleFormCard,
 } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-cards'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel.types'
+import {
+  buildSurveyDisplayCards,
+  shouldFlattenSurveyUserInfoWrite,
+} from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-survey-write'
 import { AgreementSheetClosingFooter } from '@/features/template/ui/paragraph/explanation/agreement-sheet-closing-footer'
 import '../form-editor.css'
 
@@ -283,6 +287,71 @@ export function FormEditorLeftPanel({
           headingDescriptionExtraClassName={headingDescriptionExtraClassName}
           showEditorChrome={showEditorChrome}
         />
+      </div>
+    )
+  }
+
+  if (editorKind === 'survey') {
+    const flattenUserInfoWrite = shouldFlattenSurveyUserInfoWrite(
+      editorKind,
+      paragraphInteractionMode
+    )
+    const surveyDisplayCards = buildSurveyDisplayCards(displayParagraphs, flattenUserInfoWrite)
+    const sortableIds = displayParagraphs.map(p => p.id)
+    if (sortableIds.length < 1) return null
+
+    const renderSurveyCard = (
+      card: (typeof surveyDisplayCards)[number],
+      sortable: boolean
+    ) => {
+      const commonProps = {
+        paragraph: card.paragraph,
+        paragraphIndex: paragraphIndexById.get(card.paragraph.id) ?? 0,
+        paragraphs: displayParagraphs,
+        titleNumbering,
+        selectedCardId,
+        onSelectCard,
+        updateParagraph,
+        editorKind,
+        singleItemListActiveItemId,
+        onSelectSingleItemListItem,
+        horizontalTableRowSelectionsByParagraphId,
+        onHorizontalTableRowSelectionChange,
+        verticalTableBodyRowSelection,
+        onVerticalTableBodyRowSelectionChange,
+        middleParagraphActions,
+        paragraphBodyOptions: mergedParagraphBodyOptions,
+        structureLockedParagraphIds,
+        hideDragHandleForParagraphIds,
+        hideParagraphRequiredChrome,
+        headingDescriptionExtraClassName,
+        showEditorChrome,
+        surveyWriteNumbering: flattenUserInfoWrite,
+        userInfoWriteField: card.writeField,
+      }
+      return sortable ? (
+        <SortableMiddleFormCard key={card.displayKey} {...commonProps} />
+      ) : (
+        <PinnedFormCard key={card.displayKey} {...commonProps} />
+      )
+    }
+
+    return (
+      <div className={formEditorLeftClassName}>
+        {showEditorChrome && !flattenUserInfoWrite ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictFormEditorListToVerticalAxis]}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+              {surveyDisplayCards.map(card => renderSurveyCard(card, true))}
+            </SortableContext>
+          </DndContext>
+        ) : (
+          surveyDisplayCards.map(card => renderSurveyCard(card, false))
+        )}
       </div>
     )
   }

@@ -57,7 +57,7 @@ VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED=true
 | **FE mock** | `general-prog-*`, `economy-*`, `ujat-*`, `trained-teachers-prog-*` |
 
 스테이징에서 BE 시드 ID로 상세를 열면 **게이트 ON 시 remote**, OFF면 FE mock 문자열 id 경로.  
-CASE별 FE mock 레시피는 [general-program-dummy-seed-backend-request.md](./general-program-dummy-seed-backend-request.md) · [company-school-program-dummy-seed-backend-request.md](./company-school-program-dummy-seed-backend-request.md) 참고.
+CASE별 FE mock 레시피는 [01-general-program-dummy-seed.md](./01-general-program-dummy-seed.md) · [02-company-school-dummy-seed.md](./02-company-school-dummy-seed.md) 참고.
 
 ---
 
@@ -323,16 +323,16 @@ flowchart LR
 | 문서 | 역할 |
 |------|------|
 | [programs-api-backend-gaps-consolidated.md](./programs-api-backend-gaps-consolidated.md) | Cat1–6 통합 갭 (2026-07-16; managers 등은 **본 문서로 갱신**) |
-| [programs-detail-api-conversion-status.md](./programs-detail-api-conversion-status.md) | 일반 상세 LNB 완료율 SSOT |
-| [programs-company-school-detail-api-conversion-status.md](./programs-company-school-detail-api-conversion-status.md) | 1사1교 |
-| [programs-ujat-detail-api-conversion-status.md](./programs-ujat-detail-api-conversion-status.md) | UJAT |
-| [programs-trained-teachers-api-conversion-status.md](./programs-trained-teachers-api-conversion-status.md) | 교육받은 교사 |
-| [programs-gemini-visiting-training-api-conversion-status.md](./programs-gemini-visiting-training-api-conversion-status.md) | Gemini 모집/승인 |
-| [programs-gemini-performance-api-conversion-status.md](./programs-gemini-performance-api-conversion-status.md) | Gemini 실적 |
-| [general-program-dummy-seed-backend-request.md](./general-program-dummy-seed-backend-request.md) | 일반 CASE 시드 레시피 |
-| [company-school-program-dummy-seed-backend-request.md](./company-school-program-dummy-seed-backend-request.md) | 1사1교 시드 |
-| [programs-gemini-dummy-seed-backend-request.md](./programs-gemini-dummy-seed-backend-request.md) | Gemini 시드 |
-| [programs-api-conversion-roadmap.md](./programs-api-conversion-roadmap.md) | Cat 로드맵 |
+| [programs-detail-api-conversion-status.md](../programs-detail-api-conversion-status.md) | 일반 상세 LNB 완료율 SSOT |
+| [programs-company-school-detail-api-conversion-status.md](../programs-company-school-detail-api-conversion-status.md) | 1사1교 |
+| [programs-ujat-detail-api-conversion-status.md](../programs-ujat-detail-api-conversion-status.md) | UJAT |
+| [programs-trained-teachers-api-conversion-status.md](../programs-trained-teachers-api-conversion-status.md) | 교육받은 교사 |
+| [programs-gemini-visiting-training-api-conversion-status.md](../programs-gemini-visiting-training-api-conversion-status.md) | Gemini 모집/승인 |
+| [programs-gemini-performance-api-conversion-status.md](../programs-gemini-performance-api-conversion-status.md) | Gemini 실적 |
+| [01-general-program-dummy-seed.md](./01-general-program-dummy-seed.md) | 일반 CASE 시드 레시피 |
+| [02-company-school-dummy-seed.md](./02-company-school-dummy-seed.md) | 1사1교 시드 |
+| [06-gemini-dummy-seed.md](./06-gemini-dummy-seed.md) | Gemini 시드 |
+| [programs-api-conversion-roadmap.md](../programs-api-conversion-roadmap.md) | Cat 로드맵 |
 
 ### 5.2 FE API · mock 루트 (요약)
 

@@ -14,7 +14,7 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 
 **API 에러 사용자 메시지 (CMS·Platform 공통)**: [backend-handoff §에러 응답](./backend-handoff.md#에러-응답--사용자-노출-메시지-p0--cms--platform-공통) · [Platform handoff](../../platform/docs/api/api-error-response-handoff-2026-07-31.md)
 
-**회원 관리 (members)**: [members/README.md](./members/README.md) · [**회원 상세 이력·정산 BE 필수 묶음 (7종)**](./members/README.md#회원-상세-이력정산--백엔드-전달-필수-묶음) · [**VIEWER/PARTNER RBAC · unmask · 양식 버전 (2026-09-01)**](./members/admin-role-rbac-unmask-form-template-backend-request-2026-09-01.md) · [**등록 동의서 작성 500**](./members/member-pre-register-filled-document-500-backend-request-2026-08-26.md) · [**동의서 작성 본문**](./members/member-consent-filled-document-backend-handoff-2026-08-25.md) · [**등록 약관**](./members/members-pre-register-terms-required-policy-backend-request-2026-08-11.md)
+**회원 관리 (members)**: [members/README.md](./members/README.md) · [**회원 상세 이력·정산 BE 필수 묶음 (7종)**](./members/README.md#회원-상세-이력정산--백엔드-전달-필수-묶음) · [**개인 회원 PATCH 주소·소속 미반영 · unmask 1365 null (2026-09-04)**](./members/individual-member-basic-info-patch-unmask-1365-backend-request-2026-09-04.md) · [**VIEWER/PARTNER RBAC · unmask · 양식 버전 (2026-09-01)**](./members/admin-role-rbac-unmask-form-template-backend-request-2026-09-01.md) · [**등록 동의서 작성 500**](./members/member-pre-register-filled-document-500-backend-request-2026-08-26.md) · [**동의서 작성 본문**](./members/member-consent-filled-document-backend-handoff-2026-08-25.md) · [**등록 약관**](./members/members-pre-register-terms-required-policy-backend-request-2026-08-11.md)
 
 **프로그램 유형별 전환**: [**UJAT 백엔드 핸드오프**](./programs-ujat-api-backend-handoff.md) · [**1사1교 백엔드 핸드오프**](./programs-company-school-api-backend-handoff.md) · [**1사1교 더미 시드**](./company-school-program-dummy-seed-backend-request.md) · [**일반 프로그램 더미 시드**](./general-program-dummy-seed-backend-request.md)
 
@@ -179,8 +179,8 @@ VITE_REAL_API_MODULES=...,socialAuth
 
 [`real-api-modules.ts`](../../src/shared/config/real-api-modules.ts):
 
-- `VITE_REAL_API_MODULES` **미설정·빈 값** → 백엔드 URL이 있어도 **전부 mock**
-- 예: `adminAuth,dashboard` → 나열된 모듈만 실 HTTP
+- `VITE_REAL_API_MODULES` **미설정·빈 값** → remote URL이 있으면 **전부 실 API** (mock 중단)
+- 예: `adminAuth,dashboard` → 나열된 모듈만 실 HTTP (나머지 mock, 로컬 부분 전환용)
 
 UI·페이지는 분기하지 않습니다. **서비스 레이어**(`entities/*/api`, `features/*/api`)에서만 `isRealApiModuleEnabled('키')` 사용.
 

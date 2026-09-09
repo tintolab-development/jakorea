@@ -3,21 +3,24 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { MailTemplateItem } from '@/features/notifications/model/mail-template/types'
 import type { MailPreviewRecipient } from '@/features/notifications/model/mail-template/preview'
-import { MAIL_SEND_DEFAULT_PROGRAM_ID, MAIL_SEND_DEFAULT_SENDER } from '@/features/notifications/model/mail-send/mock'
 import { mailSendUseTemplate } from '@/features/notifications/model/mail-send/flags'
 import { buildMailSendPayload, validateMailSendDraft } from '@/features/notifications/model/mail-send/payload'
 import {
   createManualRecipient,
   mergeMailSendRecipients,
 } from '@/features/notifications/model/mail-send/recipients'
-import { MAIL_SEND_PURPOSE, type MailSendRecipient, type MailSendTiming } from '@/features/notifications/model/mail-send/types'
+import {
+  MAIL_SEND_DEFAULT_PROGRAM_ID,
+  MAIL_SEND_DEFAULT_SENDER,
+  MAIL_SEND_PURPOSE,
+  type MailSendRecipient,
+  type MailSendTiming,
+} from '@/features/notifications/model/mail-send/types'
 import {
   EMPTY_MAIL_COMPOSE,
   useMailCompose,
   type MailComposeInitial,
 } from '@/features/notifications/ui/mail-template/use-compose'
-
-const VARIABLE_LOCKED_MESSAGE = '전체 프로그램 선택 시 변수값을 사용할 수 없습니다.'
 
 export function useMailSendForm(open: boolean) {
   const [programId, setProgramId] = useState(MAIL_SEND_DEFAULT_PROGRAM_ID)
@@ -58,6 +61,12 @@ export function useMailSendForm(open: boolean) {
     setComposeNonce(key => key + 1)
   }, [])
 
+  const clearTemplate = useCallback(() => {
+    setTemplateId(undefined)
+    setComposeInitial(EMPTY_MAIL_COMPOSE)
+    setComposeNonce(key => key + 1)
+  }, [])
+
   const addRecipients = useCallback((incoming: MailSendRecipient[]) => {
     setRecipients(prev => mergeMailSendRecipients(prev, incoming))
   }, [])
@@ -71,6 +80,10 @@ export function useMailSendForm(open: boolean) {
     setRecipients(prev => prev.filter(item => !remove.has(item.id)))
   }, [])
 
+  const clearRecipients = useCallback(() => {
+    setRecipients([])
+  }, [])
+
   const getDraft = useCallback(() => {
     return buildMailSendPayload({
       programId,
@@ -81,7 +94,7 @@ export function useMailSendForm(open: boolean) {
       senderEmail,
       sendTiming,
       scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
-      subject: compose.subject,
+      subject: compose.getSubject(),
       bodyHtml: compose.getBodyHtml(),
       attachmentFileNames: compose.attachmentFileNames,
       recipients,
@@ -119,7 +132,6 @@ export function useMailSendForm(open: boolean) {
     editor: compose.editor,
     editorMinHeight: compose.editorMinHeight,
     subjectMaxLength: compose.subjectMaxLength,
-    variableLockedMessage: VARIABLE_LOCKED_MESSAGE,
     subjectInputRef: compose.subjectInputRef,
     programId,
     templateId,
@@ -141,9 +153,11 @@ export function useMailSendForm(open: boolean) {
     handleAttachmentAdd: compose.handleAttachmentAdd,
     handleAttachmentRemove: compose.handleAttachmentRemove,
     applyTemplate,
+    clearTemplate,
     addRecipients,
     addManualEmails,
     removeRecipients,
+    clearRecipients,
     getDraft,
     getPreviewAttachments: compose.getPreviewAttachments,
     getPreviewRecipient,

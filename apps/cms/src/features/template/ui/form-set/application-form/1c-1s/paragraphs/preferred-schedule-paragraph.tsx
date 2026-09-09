@@ -175,19 +175,21 @@ function ScheduleBlock({
         </div>
         <DetailInfoForm title={title} hideHeader mode="edit">
           <ScheduleDateAndSessionRow block={block} onPatch={onPatch} disabledDate={disabledDate} />
-          <ScheduleTimeRow
-            label="1차시 희망 교육 시간"
-            classPeriod={block.firstClassPeriod}
-            start={block.firstStart}
-            end={block.firstEnd}
-            onPatch={patch =>
-              onPatch({
-                firstClassPeriod: patch.classPeriod,
-                firstStart: patch.start,
-                firstEnd: patch.end,
-              })
-            }
-          />
+          {block.session === '1' || block.session === '2' ? (
+            <ScheduleTimeRow
+              label="1차시 희망 교육 시간"
+              classPeriod={block.firstClassPeriod}
+              start={block.firstStart}
+              end={block.firstEnd}
+              onPatch={patch =>
+                onPatch({
+                  firstClassPeriod: patch.classPeriod,
+                  firstStart: patch.start,
+                  firstEnd: patch.end,
+                })
+              }
+            />
+          ) : null}
           {showSecondClassTime ? (
             <ScheduleTimeRow
               label="2차시 희망 교육 시간"

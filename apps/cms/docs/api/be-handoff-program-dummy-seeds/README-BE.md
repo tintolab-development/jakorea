@@ -3,14 +3,33 @@
 JaKorea **CMS 프로그램 관리** 화면을 FE mock과 동일하게 검증할 수 있도록,  
 **이미 존재하는 FE mock 데이터**를 기준으로 스테이징/로컬 DB 더미를 만들어 달라는 요청 묶음입니다.
 
-백엔드는 monorepo를 보지 않아도 됩니다. **이 폴더 전체를 zip** 해서 전달하면 됩니다.
+백엔드는 monorepo를 보지 않아도 됩니다. **이 폴더 전체를 zip** 해서 전달하면 됩니다.  
+**단, 양식(schema) DB 시드는 본 zip만으로는 불완전**합니다 — 아래 「양식 SSOT」를 **함께** 전달하세요.
 
 | 항목 | 값 |
 |------|-----|
 | **작성일** | 2026-07-30 |
+| **양식·문서 갱신** | 2026-09-09 |
 | **목적** | FE mock → BE 더미 시드 생성 |
 | **범위** | 일반 · 1사1교 · UJAT · 교육받은 교사 · Gemini · 하위(신청/진행) 행 |
 | **압축** | 폴더 `be-handoff-program-dummy-seeds/` 를 zip |
+
+---
+
+## 양식 SSOT (2026-09-09)
+
+프로그램 create 직후 **form binding**이 가리키는 `templateCode`의 **schema/extension/settings JSON** 은 아래가 SSOT입니다.
+
+| 구분 | monorepo 경로 (zip 밖) |
+|------|------------------------|
+| 시드 JSON 46파일 | [`../form-template-seeds/`](../form-template-seeds/) |
+| DB 시드 핸드오프 | [`../form-template-db-seed-backend-handoff.md`](../form-template-db-seed-backend-handoff.md) |
+| BE Cursor 프롬프트 | [`../form-template-db-seed-backend-cursor-prompt.md`](../form-template-db-seed-backend-cursor-prompt.md) |
+| 작성 인덱스 | [`../writing-form-seeds-backend-handoff.md`](../writing-form-seeds-backend-handoff.md) |
+| 발급 인덱스 | [`../issuance-form-seeds-backend-handoff.md`](../issuance-form-seeds-backend-handoff.md) |
+
+- BE reseed `seedLabel`: **`form-template-fe-seed-v2`**
+- 프로그램 zip만 전달하면 binding은 걸려도 양식 내용이 구버전일 수 있음 → **양식 핸드오프 + `form-template-seeds/` 동봉 필수**
 
 ---
 
@@ -40,7 +59,8 @@ JaKorea **CMS 프로그램 관리** 화면을 FE mock과 동일하게 검증할 
 
 > FE CMS mock에 이미 있는 프로그램·신청·진행 케이스를 **동일 분기·동일 화면**이 열리도록 스테이징에 시드해 주세요.  
 > 우선순위는 각 문서의 **P0 → P1 → P2** 입니다.  
-> 시드만으로 부족한 **API mutation 갭**은 `programs-seed-case-api-coverage-…` §3·§4 및 `programs-api-backend-gaps-consolidated` 를 참고하세요.
+> 시드만으로 부족한 **API mutation 갭**은 `programs-seed-case-api-coverage-…` §3·§4 및 `programs-api-backend-gaps-consolidated` 를 참고하세요.  
+> 양식 schema는 `form-template-fe-seed-v2` + `form-template-seeds/` 로 **별도 upsert** 해 주세요.
 
 ---
 
@@ -57,9 +77,19 @@ JaKorea **CMS 프로그램 관리** 화면을 FE mock과 동일하게 검증할 
 
 ```bash
 cd apps/cms/docs/api
-zip -r be-handoff-program-dummy-seeds-2026-07-30.zip be-handoff-program-dummy-seeds
+zip -r be-handoff-program-dummy-seeds-2026-09-09.zip be-handoff-program-dummy-seeds
+# 양식 시드·핸드오프는 함께 전달
+zip -r form-template-db-seed-2026-09-09.zip \
+  form-template-seeds \
+  form-template-db-seed-backend-handoff.md \
+  form-template-db-seed-backend-cursor-prompt.md \
+  writing-form-seeds-backend-handoff.md \
+  issuance-form-seeds-backend-handoff.md
 ```
 
-전달물: `be-handoff-program-dummy-seeds-2026-07-30.zip` 하나만내면 됩니다.
+전달물:
 
-**Last updated:** 2026-07-30
+1. `be-handoff-program-dummy-seeds-2026-09-09.zip` — 프로그램 CASE 더미
+2. `form-template-db-seed-2026-09-09.zip` — 양식 47종 schema 시드 (`seedLabel=v2`)
+
+**Last updated:** 2026-09-09

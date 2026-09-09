@@ -42,6 +42,7 @@ export interface PerformanceRecordResponse {
   generalTeacherCount?: number;
   trainedTeacherCount?: number;
   instructorCount?: number;
+  vulnerableStudentCount?: number;
   managerName?: string;
   createdAt?: string;
   updatedAt?: string;

@@ -14,10 +14,21 @@ import {
 import type { AlimtalkCategoryTreeMapped } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
 import { notificationsQueryKeys } from '@/features/notifications/api/notifications-query-keys'
 import { useNotificationsRemoteEnabled } from '@/features/notifications/hooks/use-notifications-remote-enabled'
+import {
+  applyAlimtalkFiltersToSearchParams,
+  pendingFiltersFromSearchParams,
+} from '@/features/notifications/model/alimtalk-template/filter-url'
 import type { AlimtalkTemplateItem } from '@/features/notifications/model/alimtalk-template/types'
 
+function alimtalkTreeSearchParamsKey(searchParams: URLSearchParams): string {
+  return applyAlimtalkFiltersToSearchParams(
+    new URLSearchParams(),
+    pendingFiltersFromSearchParams(searchParams)
+  ).toString()
+}
+
 export function useAlimtalkCategoryTreeQuery(searchParams: URLSearchParams, enabled = true) {
-  const searchParamsKey = searchParams.toString()
+  const searchParamsKey = alimtalkTreeSearchParamsKey(searchParams)
   return useQuery({
     queryKey: notificationsQueryKeys.alimtalkTemplates.tree(searchParamsKey),
     queryFn: () => getAlimtalkCategoryTree(new URLSearchParams(searchParamsKey)),

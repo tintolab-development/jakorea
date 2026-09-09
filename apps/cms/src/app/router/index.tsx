@@ -167,6 +167,7 @@ const PermissionRequestListPage = lazyLoad(
 )
 const KakaoAlimtalkPage = lazyLoad(() => import('@/pages/notifications/kakao-alimtalk-page'))
 const MailPage = lazyLoad(() => import('@/pages/notifications/mail-page'))
+const SmsPage = lazyLoad(() => import('@/pages/notifications/sms-page'))
 const SchoolMyLearningPage = lazyLoad(() => import('@/pages/surveys/school-my-learning-page'))
 const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
 const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
@@ -780,10 +781,7 @@ export const router = createBrowserRouter([
                 path: 'sms',
                 element: (
                   <ProtectedRoute requiredRoles={['ADMIN']}>
-                    <ComingSoonPage
-                      title="문자 관리"
-                      description="문자 관리 기능은 현재 준비 중입니다."
-                    />
+                    <SmsPage />
                   </ProtectedRoute>
                 ),
               },

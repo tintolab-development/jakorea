@@ -1,49 +1,37 @@
 import type {
   FormTitleNumberingStyle,
+  UserInfoFieldEntry,
   WritingFormDraft,
   WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
-
-function getTitleNumberSequenceIndex(
-  paragraphs: WritingFormParagraph[],
-  paragraphId: string,
-): number | null {
-  let n = 0
-  for (const paragraph of paragraphs) {
-    if (!paragraph.participatesInTitleNumbering) continue
-    n += 1
-    if (paragraph.id === paragraphId) return n
-  }
-  return null
-}
-
-function formatNumberToken(style: FormTitleNumberingStyle, sequence: number): string {
-  if (style === 'none') return ''
-  if (style === 'numeric') return `${sequence}`
-  if (style === 'q123') return `Q${sequence}`
-  if (style === 'q_repeat') return 'Q'
-  return `${sequence}`
-}
+import {
+  formatUserInfoWriteQuestionTitle,
+  getSurveyWriteTitleNumberPrefix,
+} from '@jakorea/form-schema/writing-form'
 
 export function resolveEducationSurveySectionTitle(
   draft: WritingFormDraft,
   paragraph: WritingFormParagraph,
+  userInfoField?: UserInfoFieldEntry,
 ): string {
+  const style: FormTitleNumberingStyle = draft.formSettings.titleNumbering
+  const slot =
+    userInfoField != null
+      ? { paragraphId: paragraph.id, fieldKey: userInfoField.key }
+      : { paragraphId: paragraph.id }
+  const prefix = getSurveyWriteTitleNumberPrefix(draft.paragraphs, slot, style)
+
+  if (userInfoField != null) {
+    const base = formatUserInfoWriteQuestionTitle(userInfoField.label)
+    return prefix ? `${prefix}${base}` : base
+  }
+
   const base = paragraph.paragraphTitle?.trim() ?? ''
   if (!base) return ''
-
-  const style = draft.formSettings.titleNumbering
   if (!paragraph.participatesInTitleNumbering || style === 'none') {
     return base
   }
-
-  const sequence = getTitleNumberSequenceIndex(draft.paragraphs, paragraph.id)
-  if (sequence == null) return base
-
-  const token = formatNumberToken(style, sequence)
-  if (!token) return base
-
-  return `${token}. ${base}`
+  return prefix ? `${prefix}${base}` : base
 }
 
 export function resolveEducationSurveySectionRequired(paragraph: WritingFormParagraph): boolean {

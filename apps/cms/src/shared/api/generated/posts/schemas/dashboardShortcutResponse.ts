@@ -13,6 +13,8 @@ export interface DashboardShortcutResponse {
   targetUrl?: string;
   requiredPermissionKey?: string;
   iconKey?: string;
+  visible?: boolean;
+  permissionAllowed?: boolean;
   useYn?: boolean;
   createdAt?: string;
   updatedAt?: string;

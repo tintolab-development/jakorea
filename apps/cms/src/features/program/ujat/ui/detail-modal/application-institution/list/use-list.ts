@@ -24,6 +24,7 @@ import {
   checkUjatRegionClassCapacityExceeded,
   getUjatRegionClassCapacityExceededAlertContent,
 } from '@/features/program/ujat/lib/ujat-region-capacity-institution-assign'
+import { rejectUjatOrganizationApplicationsIfRemote } from '@/features/program/ujat/api/temporary-rejections'
 
 function filterRows(
   rows: UjatInstitutionApplicationRow[],
@@ -53,7 +54,10 @@ function filterRows(
   })
 }
 
-export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionApplicationRegionKey) {
+export function useUjatInstitutionApplicationList(
+  regionKey: UjatInstitutionApplicationRegionKey,
+  programId?: string | null
+) {
   const { showAlert } = useCmsAlert()
   const [dataVersion, setDataVersion] = useState(0)
   const [pendingFilters, setPendingFilters] = useState<UjatInstitutionApplicationFilters>(
@@ -131,14 +135,31 @@ export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionAppl
       showNoSelectionAlert()
       return
     }
-    patchUjatInstitutionApplicationRows(ids, 'temp_rejected')
-    setDataVersion(v => v + 1)
-    setSelectedRowKeys([])
-    showAlert({
-      title: UJAT_INSTITUTION_TEMP_REJECT_ALERT_TITLE,
-      content: getUjatInstitutionTempRejectCompleteContent(ids.length),
-    })
-  }, [selectedRowKeys, showNoSelectionAlert, showAlert])
+    void (async () => {
+      try {
+        await rejectUjatOrganizationApplicationsIfRemote({
+          programId,
+          applicationIds: ids,
+          reason: 'CMS UJAT 신청기관 임시 반려',
+        })
+        patchUjatInstitutionApplicationRows(ids, 'temp_rejected')
+        setDataVersion(v => v + 1)
+        setSelectedRowKeys([])
+        showAlert({
+          title: UJAT_INSTITUTION_TEMP_REJECT_ALERT_TITLE,
+          content: getUjatInstitutionTempRejectCompleteContent(ids.length),
+        })
+      } catch (error) {
+        showAlert({
+          title: '안내',
+          content:
+            error instanceof Error
+              ? error.message
+              : '신청기관 임시 반려에 실패했습니다.',
+        })
+      }
+    })()
+  }, [programId, selectedRowKeys, showNoSelectionAlert, showAlert])
 
   const handleBulkTempAssign = useCallback(() => {
     const ids = selectedRowKeys.map(String)

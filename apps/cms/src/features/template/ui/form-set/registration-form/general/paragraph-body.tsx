@@ -12,7 +12,6 @@ import {
 } from '@/features/template/ui/form-set/registration-form/1c-1s'
 import {
   TrainedTeachersRegistrationBasicInfoParagraph,
-  TrainedTeachersRegistrationBusinessKpiParagraph,
   TrainedTeachersRegistrationEducationCurriculumParagraph,
   TrainedTeachersRegistrationEducationScheduleSettingsParagraph,
   TrainedTeachersRegistrationTypeSettingsParagraph,
@@ -90,7 +89,7 @@ export interface ProgramRegistrationParagraphBodyOptions {
   /** 카드 헤더 — 사전 교육 토글 (일정형·커리큘럼형) */
   scheduleCurriculumPreEducation: boolean
   onScheduleCurriculumPreEducationChange: (checked: boolean) => void
-  /** 교육받은 교사 — 카드 헤더 교육 연수 토글 */
+  /** 교육받은 교사 — 카드 헤더 교사 연수 토글 */
   trainedTeachersTeacherTrainingEnabled: boolean
   onTrainedTeachersTeacherTrainingEnabledChange: (checked: boolean) => void
   educationScheduleMode: ProgramRegistrationEducationScheduleMode
@@ -143,9 +142,8 @@ export function renderProgramRegistrationParagraphBody(
         />
       )
     case PROGRAM_REGISTRATION_IDS.businessKpi:
-      return options?.programRegistrationFormVariant === 'trainedTeachers' ? (
-        <TrainedTeachersRegistrationBusinessKpiParagraph />
-      ) : options?.programRegistrationFormVariant === 'economy' ? (
+      if (options?.programRegistrationFormVariant === 'trainedTeachers') return null
+      return options?.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationBusinessKpiParagraph />
       ) : (
         <ProgramRegistrationBusinessKpiParagraph
@@ -219,7 +217,7 @@ export function renderProgramRegistrationParagraphBody(
             participationScheduleDetail={options.participationScheduleDetail}
             ipsScheduleDetail={options.ipsScheduleDetail}
             scheduleCurriculumPreEducation={options.trainedTeachersTeacherTrainingEnabled}
-            preEducationBlockLabel="교육 연수"
+            preEducationBlockLabel="교사 연수"
           />
         ) : (
           <TrainedTeachersRegistrationEducationCurriculumParagraph

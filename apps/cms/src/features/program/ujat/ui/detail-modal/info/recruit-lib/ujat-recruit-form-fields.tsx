@@ -19,6 +19,7 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import { INTERVIEW_METHOD_OPTIONS } from '@/features/program/shared/lib/program-detail-info-constants'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import '@/features/template/ui/form-editor/form-editor.css'
+import '../recruit-paragraph-views/volunteer-info-program.css'
 export const UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 export const UJAT_RECRUIT_PROGRESS_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
 const inquiryColumnStyle: CSSProperties = {
@@ -170,12 +171,13 @@ export function UjatRecruitFormDateMethodRow({
   methodPlaceholder?: string
 }) {
   return (
-    <div className="program-detail-info-tab__result-row">
+    <div className="program-detail-info-tab__result-row ujat-recruit-inline-result-row">
       <UjatRecruitFormSingleDatePicker
         form={form}
         name={dateName}
         placeholder={datePlaceholder}
         clearToUndefined={false}
+        className="ujat-recruit-inline-result-row__date"
         width={240}
       />
       <DividerVertical height={13} className="program-detail-info-tab__result-row-divider" />
@@ -187,6 +189,7 @@ export function UjatRecruitFormDateMethodRow({
             {...field}
             value={(field.value as string | undefined) ?? ''}
             inputSize="medium"
+            width={160}
             className="program-detail-info-tab__result-method-input"
             placeholder={methodPlaceholder}
           />
@@ -218,8 +221,8 @@ export function UjatRecruitFormInterviewPeriodRow({
   clearToUndefined?: boolean
 }) {
   return (
-    <div className="program-detail-info-tab__result-row">
-      <div style={{ flex: '1 1 190px', minWidth: 0, width: '100%' }}>
+    <div className="program-detail-info-tab__result-row ujat-recruit-inline-result-row">
+      <div className="ujat-recruit-inline-result-row__period">
         <UjatRecruitFormPeriodDatePicker
           form={form}
           startName={startName}
@@ -235,6 +238,7 @@ export function UjatRecruitFormInterviewPeriodRow({
         render={({ field }) => (
           <CmsSelect
             inputSize="medium"
+            width={160}
             className="program-detail-info-tab__select--interview-method"
             placeholder={methodPlaceholder}
             value={(field.value as string | undefined) ?? undefined}
@@ -255,7 +259,7 @@ export function UjatRecruitVolunteerNotesField({
   const notApplicable = form.watch('volunteerRecruitmentNotesNotApplicable') === 'not_applicable'
 
   return (
-    <div className={UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS}>
+    <div className={`${UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS} ujat-recruit-volunteer-notes-field`}>
       <Controller
         name="volunteerRecruitmentNotesNotApplicable"
         control={form.control}
@@ -285,7 +289,8 @@ export function UjatRecruitVolunteerNotesField({
             value={field.value ?? ''}
             disabled={notApplicable}
             inputSize="medium"
-            style={{ flex: '1 1 0', minWidth: 0 }}
+            width="100%"
+            style={{ flex: '1 1 0', minWidth: 0, width: '100%' }}
             placeholder="비고란을 작성하세요"
           />
         )}
@@ -302,7 +307,7 @@ export function UjatRecruitParticipantNotesField({
   const notApplicable = form.watch('participantRecruitmentNotesNotApplicable') === 'not_applicable'
 
   return (
-    <div className={UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS}>
+    <div className={`${UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS} ujat-recruit-participant-notes-field`}>
       <Controller
         name="participantRecruitmentNotesNotApplicable"
         control={form.control}
@@ -332,7 +337,8 @@ export function UjatRecruitParticipantNotesField({
             value={field.value ?? ''}
             disabled={notApplicable}
             inputSize="medium"
-            style={{ flex: '1 1 0', minWidth: 0 }}
+            width="100%"
+            style={{ flex: '1 1 0', minWidth: 0, width: '100%' }}
             placeholder="비고란을 작성하세요"
           />
         )}

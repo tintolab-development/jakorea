@@ -5,6 +5,18 @@
   min-height: 480px;
 }
 
+.mail-template-tree-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 320px;
+  padding: 24px;
+  color: var(--cms-color-text-secondary, #666);
+  text-align: center;
+}
+
 .mail-template-detail {
   flex: 1 1 0;
   min-width: 0;

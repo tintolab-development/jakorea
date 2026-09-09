@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import {
+  INSTITUTION_GUIDANCE_ANSWER_MAX_LENGTH,
   INSTITUTION_GUIDANCE_ANSWER_PLACEHOLDER,
   type InstitutionGuidanceFieldDefinition,
 } from '@/features/template/lib/institution-guidance-field-definitions'
@@ -36,6 +37,7 @@ export function InstitutionGuidanceFieldCard({
           rows={1}
           expandableFromSingleRow
           placeholder={INSTITUTION_GUIDANCE_ANSWER_PLACEHOLDER}
+          maxLength={INSTITUTION_GUIDANCE_ANSWER_MAX_LENGTH}
           value={value}
           onChange={onChange ? event => onChange(event.target.value) : undefined}
         />

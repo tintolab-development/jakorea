@@ -4,6 +4,8 @@
  */
 
 import { useMemo } from 'react'
+import type { Program } from '@/types/domain'
+import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import {
   lookupTemplateRegistry,
@@ -28,12 +30,16 @@ function resolveVolunteerApplicationTemplateName(): string {
 
 export type UjatEducationProgressVolunteerAddRegistrationViewProps = {
   memberId: string
+  program: Program
+  volunteerHalf: UjatVolunteerRecruitHalf
   onClose: () => void
   onComplete: (memberId: string) => void
 }
 
 export function UjatEducationProgressVolunteerAddRegistrationView({
   memberId,
+  program,
+  volunteerHalf,
   onClose,
   onComplete,
 }: UjatEducationProgressVolunteerAddRegistrationViewProps) {
@@ -41,7 +47,14 @@ export function UjatEducationProgressVolunteerAddRegistrationView({
   const participantVm = useProgramParticipantApplicationEditor(
     true,
     templateName,
-    'ujat-application-volunteer'
+    'ujat-application-volunteer',
+    {
+      program,
+      ujatRecruitParagraphProps: {
+        volunteerHalf,
+        sectionTitle: '',
+      },
+    }
   )
 
   const handleComplete = () => {

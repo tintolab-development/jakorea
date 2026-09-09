@@ -5,6 +5,7 @@ import type {
   MultipleChoiceParagraph,
   WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
+import { resolveMultipleChoiceBodyDescriptionText } from '@jakorea/form-schema/writing-form'
 import type { ParagraphBodyInteractionMode } from '@jakorea/form-schema/surface'
 import { isFormPreviewReadonlyMode } from '@jakorea/form-schema/surface'
 import { HorizontalTablePreviewBody } from './horizontal-table-preview-body.js'
@@ -78,8 +79,11 @@ function MultipleChoiceFill({
     )
   }
 
+  const bodyDescription = resolveMultipleChoiceBodyDescriptionText(paragraph)
+
   return (
     <div className="form-template-fill-multiple-choice">
+      {bodyDescription ? <div className="form-template-preview-text">{bodyDescription}</div> : null}
       <Radio.Group
         className="form-template-fill-multiple-choice__radios app-radio-group app-radio-group--large"
         size="large"

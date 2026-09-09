@@ -1,0 +1,14 @@
+.ujat-recruit-participant-info-program {
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-recruit-participant-info-program__forms {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ujat-recruit-participant-info-program__forms > .detail-info-form {
+  margin: 0;
+}

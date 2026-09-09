@@ -5,6 +5,7 @@
  * query는 최상위 키로 보냅니다 (`?page=0&size=20&adminName=…`).
  */
 import { getJAKoreaCMSBackendAPILogsSubset } from '@/shared/api/generated/logs/logs-api'
+import { customInstance } from '@/shared/api/orval-mutator'
 import type {
   FileAccessLogsParams,
   LogListPageResponseBugIssueLogFrontendResponse,
@@ -24,6 +25,7 @@ export {
   FILE_ACCESS_LOG_CREATE_PATH,
   postFileAccessLog as postFileAccessLogRemote,
   type PostFileAccessLogBody,
+  type PostFileAccessLogResult,
 } from '@/shared/lib/post-file-access-log'
 
 const logsRemoteApi = getJAKoreaCMSBackendAPILogsSubset()
@@ -99,6 +101,18 @@ export async function fetchMemberLoginsRemote(
   return unwrapBody(
     await logsRemoteApi.memberLoginHistory(toOrvalListParams<MemberLoginHistoryParams>(params))
   )
+}
+
+export async function exportMemberLoginHistoryRemote(
+  filters: Record<string, string>
+): Promise<Blob> {
+  const query = toLogsQueryParams(filters)
+  return customInstance<Blob>({
+    url: '/api/admin/logs/member-logins/export',
+    method: 'GET',
+    params: query,
+    responseType: 'blob',
+  })
 }
 
 export async function fetchSystemIssueLogsRemote(

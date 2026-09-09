@@ -16,7 +16,7 @@ CMS LNB **양식 관리** (`/templates/form-management`)가 호출하는 `forms-
 3. `GET /api/admin/form-template-versions/{latestVersionId}` 의 `schemaJson` / `extensionJson` / `settingsJson` 이 프론트 시드 JSON과 **동일한 내용**이다 (string 1회 stringify, 이중 escaping 없음).
 4. `registration-general` version 조회 시 `schemaJson` 파싱 후 `paragraphs.length >= 6` 이다. **빈 paragraphs로 두지 마라.**
 5. Payload C 6종(`registration-ujat`, `recruitment-ujat-school`, `recruitment-ujat-volunteer`, `application-ujat-school`, `application-ujat-volunteer`)은 `extensionJson` 이 시드 파일과 동일하다.
-6. 시드는 **idempotent**. `seedLabel=form-template-fe-seed-v1`, natural key=`templateCode` 로 upsert. 재실행 시 47종이 중복되지 않는다.
+6. 시드는 **idempotent**. `seedLabel=form-template-fe-seed-v2`, natural key=`templateCode` 로 upsert. 재실행 시 47종이 중복되지 않는다.
 7. **인증서 Payload D 5종** (`document-2`, `document-3`, `document-participation-certificate`, `document-4`, `document-5`) 전부 시드. 종별 `settingsJson` 독립. 상세: `certificate-form-seeds-backend-handoff.md`
 8. **local/dev/staging** 전용. prod Flyway/마이그레이션에 넣지 마라.
 
@@ -87,7 +87,7 @@ apps/cms/docs/api/certificate-form-seeds-backend-handoff.md  # 인증서 5종 Pa
 
 | 항목 | 값 |
 |------|-----|
-| seedLabel | `form-template-fe-seed-v1` |
+| seedLabel | `form-template-fe-seed-v2` |
 | natural key | `templateCode` (string, UNIQUE) |
 | versionNo | `1` |
 | versionStatus | `DRAFT` |
@@ -269,4 +269,4 @@ FE 2차 QA (시드 배포 후): 프론트 `.env`에 `VITE_REAL_API_MODULES=forms
 
 ---
 
-_프롬프트 버전: form-template-fe-seed-v1 · 2026-09-02_
+_프롬프트 버전: form-template-fe-seed-v2 · 2026-09-09_

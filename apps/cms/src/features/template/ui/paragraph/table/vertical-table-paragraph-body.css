@@ -210,6 +210,24 @@
   opacity: 0.45;
 }
 
+.form-editor-vertical-table-wrap--text-canvas-edit .form-editor-vertical-table__cell-text-hit {
+  width: 100%;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  cursor: text;
+}
+
+.form-editor-vertical-table-wrap--text-canvas-edit
+  .form-editor-vertical-table__cell-text-hit--header {
+  justify-content: center;
+}
+
+.form-editor-vertical-table-wrap--text-canvas-edit
+  .form-editor-vertical-table__cell-text-hit--body {
+  justify-content: flex-start;
+}
+
 /* 본문 입력값 main-BK · placeholder만 회색 — 긴 텍스트는 줄바꿈(단줄 Input 잘림 방지) */
 .form-editor-vertical-table__cell-input-shell--body .ant-input,
 .form-editor-vertical-table__cell-input-shell--body textarea.ant-input {

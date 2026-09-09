@@ -159,6 +159,21 @@ export async function attachFilledDocumentsToTermsAgreements(
         if (options.mode === 'patch') continue
         throw new Error(missingDocumentMessage(termsType))
       }
+      const originalFileName = crime.replacementFileName?.trim() || 'crime-consent.png'
+      const existingObjectId = crime.evidenceFileObjectId
+      if (
+        existingObjectId != null &&
+        Number.isFinite(existingObjectId) &&
+        existingObjectId >= 1
+      ) {
+        next.push({
+          ...row,
+          filledDocument: undefined,
+          evidenceFileObjectId: existingObjectId,
+          evidenceOriginalFileName: originalFileName,
+        })
+        continue
+      }
       const resolved = resolveCrimeEvidenceFile(crime)
       if (resolved == null) {
         if (options.mode === 'patch') continue

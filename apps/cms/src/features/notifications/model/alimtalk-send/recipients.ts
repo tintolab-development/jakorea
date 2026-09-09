@@ -5,7 +5,7 @@ import type {
   AlimtalkSendRecipient,
   AlimtalkSendRecipientTypeMode,
 } from './types'
-import { ALIMTALK_SEND_ALL_PROGRAM_ID } from './types'
+import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
 
 export const ALIMTALK_SEND_PARTICIPATION_TYPE_LABEL: Record<
   Exclude<AlimtalkSendParticipationType, ''>,
@@ -61,7 +61,7 @@ export const ALIMTALK_SEND_MEMBER_TYPE_OPTIONS = (
 export function resolveAlimtalkSendRecipientTypeMode(
   programId: string | undefined
 ): AlimtalkSendRecipientTypeMode {
-  if (!programId || programId === ALIMTALK_SEND_ALL_PROGRAM_ID) return 'member'
+  if (parseNotificationSendProgramId(programId) == null) return 'member'
   return 'participation'
 }
 

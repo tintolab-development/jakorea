@@ -38,6 +38,11 @@ const IMMUTABLE_LABELS = new Set([
   '2단계 인증(MFA) 설정 동의',
 ])
 
+/** 관리자 회원 상세 — 수정 모드에서 라디오 disabled (PATCH body에서도 제외) */
+export const ADMIN_DETAIL_LOCKED_TERMS_TYPES = ['MARKETING'] as const
+
+const ADMIN_DETAIL_LOCKED_LABELS = new Set(['마케팅 제공 동의'])
+
 export function isMemberBasicInfoImmutableTermsType(termsType: string | undefined): boolean {
   if (!termsType?.trim()) return false
   return IMMUTABLE_SET.has(termsType.trim().toUpperCase())
@@ -47,12 +52,34 @@ export function isMemberBasicInfoImmutableConsentLabel(label: string): boolean {
   return IMMUTABLE_LABELS.has(label.trim())
 }
 
+export function isAdminDetailLockedTermsType(termsType: string | undefined): boolean {
+  if (!termsType?.trim()) return false
+  return termsType.trim().toUpperCase() === 'MARKETING'
+}
+
+export function isAdminDetailLockedConsentLabel(label: string): boolean {
+  return ADMIN_DETAIL_LOCKED_LABELS.has(label.trim())
+}
+
 /** PATCH body용 — 필수 약관 제거 */
 export function filterEditableTermsAgreementsForBasicInfoPatch(
   rows: TermsAgreementRequest[] | undefined
 ): TermsAgreementRequest[] | undefined {
   if (!rows?.length) return undefined
   const filtered = rows.filter(row => !isMemberBasicInfoImmutableTermsType(row.termsType))
+  return filtered.length > 0 ? filtered : undefined
+}
+
+/** 관리자 회원 상세 PATCH — 필수 + 마케팅 제외 */
+export function filterEditableTermsAgreementsForAdminAccountBasicInfoPatch(
+  rows: TermsAgreementRequest[] | undefined
+): TermsAgreementRequest[] | undefined {
+  if (!rows?.length) return undefined
+  const filtered = rows.filter(
+    row =>
+      !isMemberBasicInfoImmutableTermsType(row.termsType) &&
+      !isAdminDetailLockedTermsType(row.termsType)
+  )
   return filtered.length > 0 ? filtered : undefined
 }
 

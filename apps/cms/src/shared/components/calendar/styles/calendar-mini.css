@@ -26,7 +26,7 @@
   flex-direction: column;
   overflow: hidden;
   background: var(--color-bg-base);
-  border-radius: var(--calendar-mini-shell-radius, var(--calendar-shell-radius, 12px));
+  border-radius: var(--calendar-mini-shell-radius, var(--calendar-shell-radius, 16px));
   border: var(--calendar-shell-border, 1px solid #d4d4d4);
   box-shadow: var(--calendar-shell-shadow, none);
 }

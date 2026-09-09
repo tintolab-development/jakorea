@@ -104,7 +104,12 @@ export function normalizeMemberConsentWriteDraft(
     templateId === 'agreement-third-party' ||
     templateId === 'document-payment-order-pre-consent'
   ) {
+    // 가로형 표(p1~p4)를 최신 시드로 덮으면 bottomConsent:'agree'가 다시 들어옴 → 응답 필드 재비움
     next = overlayPaymentStatementPreConsentSeedHorizontalTables(next)
+    next = {
+      ...next,
+      paragraphs: next.paragraphs.map(clearBottomConsent),
+    }
   }
 
   return next

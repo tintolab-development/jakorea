@@ -8,7 +8,9 @@ import '@/shared/components/calendar/styles/calendar.css'
 import {
   ProgramApplicationScheduleSummaryHintText,
   ProgramApplicationScheduleTemplateHintParagraph,
+  PROGRAM_APPLICATION_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT,
 } from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
+import '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph.css'
 import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/template/hooks/use-program-registration-schedule-top-calendar-height-sync'
 import { extractClockTimeRangeForScheduleSummary } from '@/features/template/lib/extract-clock-time-range-for-schedule-summary'
 import { ParagraphCalendarMini } from '@/features/template/ui/shared/paragraph-calendar-mini'
@@ -82,6 +84,37 @@ export type InstructorAvailableScheduleParagraphProps = {
   formatSummarySegment?: (slot: InstructorAvailableScheduleSlot) => string
 }
 
+function InstructorAvailableScheduleTemplatePlaceholder({
+  summaryFieldLabel = '강의 진행 가능일',
+}: {
+  summaryFieldLabel?: string
+}) {
+  const summaryHint = (
+    <div className="program-application-form-instructor__field-summary-wrap">
+      <ProgramApplicationScheduleSummaryHintText />
+    </div>
+  )
+
+  return (
+    <div className="program-application-form-instructor__available-schedule">
+      <div className="program-application-schedule-template-placeholder">
+        <ProgramApplicationScheduleTemplateHintParagraph
+          hintText={PROGRAM_APPLICATION_INSTRUCTOR_AVAILABLE_SCHEDULE_TEMPLATE_HINT}
+        />
+      </div>
+      <DetailInfoForm title="" hideHeader mode="edit">
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label={summaryFieldLabel}
+            edit={summaryHint}
+            view={summaryHint}
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+    </div>
+  )
+}
+
 /** 강의 진행 가능 일정 — 상단: 캘린더 + 세션 카드(복수 선택) / 하단: 선택 요약 */
 export function InstructorAvailableScheduleParagraph({
   scheduleSlots: scheduleSlotsProp,
@@ -92,6 +125,10 @@ export function InstructorAvailableScheduleParagraph({
   hideCalendar = false,
   formatSummarySegment,
 }: InstructorAvailableScheduleParagraphProps) {
+  if (isTemplateAuthoringMode) {
+    return <InstructorAvailableScheduleTemplatePlaceholder summaryFieldLabel={summaryFieldLabel} />
+  }
+
   const scheduleSlots = scheduleSlotsProp ?? EMPTY_SCHEDULE_SLOTS
   const isIndividualSlotMode =
     hideCalendar || scheduleSlots.some(slot => slot.isIndividualProgram === true)
@@ -202,10 +239,7 @@ export function InstructorAvailableScheduleParagraph({
           </div>
         )}
         <div className="program-application-form-instructor__schedule-side">
-          {isTemplateAuthoringMode ? (
-            <ProgramApplicationScheduleTemplateHintParagraph fillScheduleSide />
-          ) : (
-            <div className="program-application-form-instructor__session-grid" role="list">
+          <div className="program-application-form-instructor__session-grid" role="list">
               {(hideCalendar ? scheduleSlots : slotsForSelectedCalendarDay).length === 0 ? (
                 <div
                   className="program-application-form-instructor__session-grid-empty"
@@ -237,10 +271,9 @@ export function InstructorAvailableScheduleParagraph({
                       </span>
                     </ParagraphChip>
                   )
-                })
-              )}
-            </div>
-          )}
+                }              )
+            )}
+          </div>
         </div>
       </div>
 

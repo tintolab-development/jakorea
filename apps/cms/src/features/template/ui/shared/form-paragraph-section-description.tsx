@@ -34,7 +34,14 @@ export function FormParagraphSectionDescription({
 }
 
 /** 템플릿 단락 카드·프로그램 상세 등 — 시드 placeholder는 사용자-facing 설명으로 노출하지 않음 */
-const PLACEHOLDER_PARAGRAPH_DESCRIPTIONS = new Set(['설명 입력', '설명을 입력해 주세요'])
+const PLACEHOLDER_PARAGRAPH_DESCRIPTIONS = new Set([
+  '설명 입력',
+  '설명을 입력해 주세요',
+  /** user_info — CMS 항목 선택 안내, 응답·미리보기에는 미노출 */
+  '노출할 항목을 선택합니다. (실제 응답 시 자동 매핑)',
+  /** 강의보고서 프로그램 진행 정보 — CMS 연동 안내, 응답·미리보기에는 미노출 */
+  '실제 응답 시 배정된 프로그램·기관·교육 일정 정보가 자동으로 반영됩니다.',
+])
 
 export function isPlaceholderParagraphDescription(value: string | undefined | null): boolean {
   const trimmed = value?.trim() ?? ''

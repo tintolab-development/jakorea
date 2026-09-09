@@ -10,4 +10,5 @@ export interface NotificationTemplateMutationResponse {
   templateId?: number;
   created?: boolean;
   updated?: boolean;
+  providerTemplateCode?: string;
 }

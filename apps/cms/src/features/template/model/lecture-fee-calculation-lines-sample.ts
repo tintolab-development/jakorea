@@ -23,7 +23,7 @@ export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_BLOCKS: PaymentOrderCalculatio
     {
       institutionName: '강서초등학교',
       lectureDateDisplay: '2026. 01. 28(수)',
-      lectureSessionDisplay: '2 ~ 3차시',
+      lectureSessionDisplay: '2회차',
       lines: [
         {
           id: 'issuance-sample-lecture',
@@ -48,7 +48,7 @@ export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_BLOCKS: PaymentOrderCalculatio
         },
         {
           id: 'issuance-sample-tax',
-          itemLabel: '원천징수',
+          itemLabel: '원천징수 8.8%',
           description: '원천징수 8.8%',
           amount: withholdingAmount,
           kind: 'withholding',
@@ -61,8 +61,9 @@ export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_BLOCKS: PaymentOrderCalculatio
 export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_FORMULA_LABEL =
   '강의비 + 교통비 + 숙박비 - 원천징수'
 
+/** 템플릿 미리보기: 원천징수는 NN,NNN 마스킹 → 합계는 지급 항목 합(시안 415,000원) */
 export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_TOTAL_AMOUNT =
-  LECTURE_FEE_CALCULATION_LINES_SAMPLE_BLOCKS[0]!.lines.reduce((s, l) => s + l.amount, 0)
+  lectureFee + transportFee + lodgingFee
 
 export const LECTURE_FEE_CALCULATION_LINES_SAMPLE: PaymentStatementCalculationLinesViewModel = {
   blocks: LECTURE_FEE_CALCULATION_LINES_SAMPLE_BLOCKS,

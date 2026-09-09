@@ -9,6 +9,8 @@ export interface ParagraphLabelInputProps extends Omit<CmsTextAreaProps, 'label'
   label?: ReactNode
   /** 있으면 textarea 대신 이 컨트롤을 렌더 (생년월일·전화번호 등) */
   control?: ReactNode
+  /** `rows={1}`일 때 한 줄 높이에서 세로 확장·resize 허용 (`CmsTextArea`) */
+  expandableFromSingleRow?: boolean
 }
 
 function cn(...parts: Array<string | false | null | undefined>): string {
@@ -20,8 +22,9 @@ export function ParagraphLabelInput({
   className,
   id: idProp,
   width = '100%',
-  /** 단일항목 주관식 등 — `rows={1}`은 한 줄 입력형; 기본은 여러 줄 `CmsTextArea` */
-  rows = 5,
+  /** 단일항목 주관식 등 — 기본 1줄, `rows`로 확장 */
+  rows = 1,
+  expandableFromSingleRow,
   control,
   ...rest
 }: ParagraphLabelInputProps) {
@@ -45,6 +48,7 @@ export function ParagraphLabelInput({
           width={width}
           className="paragraph-label-input__textarea"
           rows={rows ? rows : 1}
+          expandableFromSingleRow={expandableFromSingleRow}
         />
       )}
     </div>

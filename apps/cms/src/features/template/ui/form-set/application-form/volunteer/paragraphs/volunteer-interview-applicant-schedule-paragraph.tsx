@@ -1,15 +1,16 @@
-import { Fragment, useEffect, useMemo, useRef } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { VolunteerInterviewScheduleEditSeed } from '@/features/program/shared/lib/volunteer-interview-schedule-edit-seed'
-import {
-  parseVolunteerInterviewApplicantScheduleFromSeed,
-  resolveVolunteerInterviewApplicantScheduleSeed,
-} from '@/features/program/shared/lib/volunteer-interview-applicant-schedule'
+import { parseVolunteerInterviewApplicantScheduleFromSeed } from '@/features/program/shared/lib/volunteer-interview-applicant-schedule'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import '@/shared/components/calendar/styles/calendar.css'
 import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
-import { ProgramApplicationScheduleSummaryHintText } from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
+import {
+  ProgramApplicationScheduleSummaryHintText,
+  ProgramApplicationScheduleTemplateHintParagraph,
+  VOLUNTEER_INTERVIEW_APPLICANT_SCHEDULE_TEMPLATE_HINT,
+} from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
 import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/template/hooks/use-program-registration-schedule-top-calendar-height-sync'
 import { ParagraphCalendarMini } from '@/features/template/ui/shared/paragraph-calendar-mini'
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
@@ -69,18 +70,91 @@ function buildGroupedSummaryEntries(
     }))
 }
 
+const EMPTY_PROGRAM_DATES = new Set<string>()
+const TEMPLATE_CALENDAR_UNSELECTED = dayjs('1970-01-01')
+
+/** 템플릿 작성 — mock 일정 없이 캘린더 + 안내 문구만 */
+function VolunteerInterviewApplicantScheduleTemplatePlaceholder() {
+  const [currentMonth, setCurrentMonth] = useState(() => dayjs().startOf('month'))
+  const scheduleTopRef = useRef<HTMLDivElement>(null)
+  const calendarWrapRef = useRef<HTMLDivElement>(null)
+  useProgramRegistrationScheduleTopCalendarHeightSync(scheduleTopRef, calendarWrapRef)
+
+  const summaryHint = (
+    <div className="program-application-form-instructor__field-summary-wrap">
+      <ProgramApplicationScheduleSummaryHintText />
+    </div>
+  )
+
+  return (
+    <div className="volunteer-interview-applicant-schedule program-application-form-instructor__available-schedule">
+      <div
+        ref={scheduleTopRef}
+        className="program-application-form-instructor__available-schedule-top"
+      >
+        <div ref={calendarWrapRef} className="program-application-form-instructor__calendar-wrap">
+          <ParagraphCalendarMini
+            currentMonth={currentMonth}
+            selectedDate={TEMPLATE_CALENDAR_UNSELECTED}
+            onMonthChange={date => setCurrentMonth(date.startOf('month'))}
+            onSelectDate={() => {}}
+            programDates={EMPTY_PROGRAM_DATES}
+          />
+        </div>
+        <div className="program-application-form-instructor__schedule-side">
+          <ProgramApplicationScheduleTemplateHintParagraph
+            hintText={VOLUNTEER_INTERVIEW_APPLICANT_SCHEDULE_TEMPLATE_HINT}
+            fillScheduleSide
+          />
+        </div>
+      </div>
+
+      <DetailInfoForm title="" hideHeader mode="edit">
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="면접 진행 가능일"
+            edit={summaryHint}
+            view={summaryHint}
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+    </div>
+  )
+}
+
 /** 봉사자 신청 폼 — 면접 진행 가능 일정(신청자 응답 · 모집 폼 관리자 설정 연동) */
 export function VolunteerInterviewApplicantScheduleParagraph({
   commonScheduleSeed,
   readOnlyPreview = false,
+  isTemplateAuthoringMode = false,
 }: {
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
   readOnlyPreview?: boolean
+  /** true: 템플릿 작성 — mock 슬롯 대신 안내 문구 */
+  isTemplateAuthoringMode?: boolean
 }) {
-  const seed = resolveVolunteerInterviewApplicantScheduleSeed(commonScheduleSeed)
+  if (isTemplateAuthoringMode || commonScheduleSeed == null) {
+    return <VolunteerInterviewApplicantScheduleTemplatePlaceholder />
+  }
+
+  return (
+    <VolunteerInterviewApplicantScheduleInteractive
+      commonScheduleSeed={commonScheduleSeed}
+      readOnlyPreview={readOnlyPreview}
+    />
+  )
+}
+
+function VolunteerInterviewApplicantScheduleInteractive({
+  commonScheduleSeed,
+  readOnlyPreview,
+}: {
+  commonScheduleSeed: VolunteerInterviewScheduleEditSeed
+  readOnlyPreview: boolean
+}) {
   const parsedSchedule = useMemo(
-    () => parseVolunteerInterviewApplicantScheduleFromSeed(seed),
-    [seed]
+    () => parseVolunteerInterviewApplicantScheduleFromSeed(commonScheduleSeed),
+    [commonScheduleSeed]
   )
 
   const computeDefaultSelectedDate = () => {
@@ -117,7 +191,7 @@ export function VolunteerInterviewApplicantScheduleParagraph({
     const first = [...parsedSchedule.clickableDateKeys].sort()[0]
     setSelectedDateIso((first ? dayjs(first) : parsedSchedule.scheduleMonth).toISOString())
     updateGeneralApplicationOverlayKey<SelectedSlot[]>('application.volunteer.applicant.selectedSlots', () => [])
-  }, [seed, setCurrentMonthIso, setSelectedDateIso])
+  }, [commonScheduleSeed, setCurrentMonthIso, setSelectedDateIso])
 
   const toggleSlot = (slotKey: string, label: string, enabled: boolean) => {
     if (readOnlyPreview || !enabled) return

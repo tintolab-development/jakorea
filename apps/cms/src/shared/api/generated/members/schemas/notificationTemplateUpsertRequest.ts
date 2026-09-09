@@ -21,4 +21,9 @@ export interface NotificationTemplateUpsertRequest {
   titleTemplate?: string;
   contentTemplate?: string;
   useYn?: boolean;
+  displayName?: string;
+  categoryId?: number;
+  emailTemplateLanguage?: string;
+  emailAttachmentIds?: string[];
+  senderProfileDisplayName?: string;
 }

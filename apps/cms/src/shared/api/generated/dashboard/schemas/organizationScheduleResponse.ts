@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { CapacityWarning } from './capacityWarning';
 import type { OrganizationScheduleSlotResponse } from './organizationScheduleSlotResponse';
 
 export interface OrganizationScheduleResponse {
@@ -17,4 +18,5 @@ export interface OrganizationScheduleResponse {
   institutionConfirmedAt?: string;
   assignmentLockedAt?: string;
   slots?: OrganizationScheduleSlotResponse[];
+  capacityWarnings?: CapacityWarning[];
 }

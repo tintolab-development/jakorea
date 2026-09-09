@@ -18,15 +18,24 @@
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
-        "columnHeaders": ["항목", "내용"],
-        "dataRows": [["", ""]],
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
         "columnFields": [],
         "fieldDataRows": [],
         "bottomText": "",
         "showBottomText": false,
         "showBottomConsent": false,
         "bottomConsent": "agree",
-        "answerRequired": true
+        "answerRequired": true,
+        "idTypeWithInput": null
       },
       {
         "id": "program-registration-seed-business-kpi",
@@ -37,15 +46,24 @@
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
-        "columnHeaders": ["항목", "내용"],
-        "dataRows": [["", ""]],
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
         "columnFields": [],
         "fieldDataRows": [],
         "bottomText": "",
         "showBottomText": false,
         "showBottomConsent": false,
         "bottomConsent": "agree",
-        "answerRequired": true
+        "answerRequired": true,
+        "idTypeWithInput": null
       },
       {
         "id": "program-registration-seed-wage-info",
@@ -56,15 +74,24 @@
         "paragraphDescription": "해당 프로그램 내에서 각 등급별로 지급할 강사비를 책정해 주세요.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
-        "columnHeaders": ["항목", "내용"],
-        "dataRows": [["", ""]],
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
         "columnFields": [],
         "fieldDataRows": [],
         "bottomText": "",
         "showBottomText": false,
         "showBottomConsent": false,
         "bottomConsent": "agree",
-        "answerRequired": true
+        "answerRequired": true,
+        "idTypeWithInput": null
       },
       {
         "id": "program-registration-seed-type-settings",
@@ -75,15 +102,24 @@
         "paragraphDescription": "프로그램의 운영 방식과 진행 구조를 설정합니다. 해당 설정에 따라 교육 일정 작성 방식이 달라집니다.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
-        "columnHeaders": ["항목", "내용"],
-        "dataRows": [["", ""]],
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
         "columnFields": [],
         "fieldDataRows": [],
         "bottomText": "",
         "showBottomText": false,
         "showBottomConsent": false,
         "bottomConsent": "agree",
-        "answerRequired": true
+        "answerRequired": true,
+        "idTypeWithInput": null
       },
       {
         "id": "program-registration-seed-education-curriculum",
@@ -94,15 +130,24 @@
         "paragraphDescription": "차시 별 정보를 입력해 주세요",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
-        "columnHeaders": ["항목", "내용"],
-        "dataRows": [["", ""]],
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
         "columnFields": [],
         "fieldDataRows": [],
         "bottomText": "",
         "showBottomText": false,
         "showBottomConsent": false,
         "bottomConsent": "agree",
-        "answerRequired": true
+        "answerRequired": true,
+        "idTypeWithInput": null
       },
       {
         "id": "program-registration-seed-education-schedule-settings",
@@ -113,15 +158,24 @@
         "paragraphDescription": "교육이 실행되는 일정을 설정해 주세요.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
-        "columnHeaders": ["항목", "내용"],
-        "dataRows": [["", ""]],
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
         "columnFields": [],
         "fieldDataRows": [],
         "bottomText": "",
         "showBottomText": false,
         "showBottomConsent": false,
         "bottomConsent": "agree",
-        "answerRequired": true
+        "answerRequired": true,
+        "idTypeWithInput": null
       }
     ]
   },
@@ -144,7 +198,7 @@
       "scheduleCurriculumDetailCount": 1,
       "scheduleCurriculumGroupCount": 1,
       "scheduleCurriculumPreEducation": false,
-      "trainedTeachersTeacherTrainingEnabled": true,
+      "trainedTeachersTeacherTrainingEnabled": false,
       "educationScheduleMode": "date",
       "activeParagraphId": null
     },

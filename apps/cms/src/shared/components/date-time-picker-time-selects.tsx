@@ -12,10 +12,23 @@ const HOUR_OPTIONS = Array.from({ length: 12 }, (_, i) => {
   return { value: String(n), label: String(n) }
 })
 
-const MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => ({
+const ALL_MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => ({
   value: String(i),
   label: String(i).padStart(2, '0'),
 }))
+
+function minuteOptionsForStep(minuteStep?: number) {
+  const step = minuteStep != null && minuteStep > 0 ? Math.floor(minuteStep) : 1
+  if (step <= 1) return ALL_MINUTE_OPTIONS
+  const options: Array<{ value: string; label: string }> = []
+  for (let minute = 0; minute < 60; minute += step) {
+    options.push({
+      value: String(minute),
+      label: String(minute).padStart(2, '0'),
+    })
+  }
+  return options
+}
 
 const MERIDIEM_OPTIONS = [
   { value: 'AM', label: 'AM' },
@@ -56,6 +69,8 @@ export interface DateTimePickerTimeInlineSelectsProps {
   hourActive: boolean
   invalid?: boolean
   rowPhase?: 'single' | 'start' | 'end'
+  /** 분 선택 스텝(예: 30 → 00/30만). 기본 1분 */
+  minuteStep?: number
 }
 
 /** 날짜·시간 팝오버 공용 시·분·AM/PM 셀렉트 행 */
@@ -71,7 +86,9 @@ export function DateTimePickerTimeInlineSelects({
   hourActive,
   invalid = false,
   rowPhase = 'single',
+  minuteStep,
 }: DateTimePickerTimeInlineSelectsProps) {
+  const minuteOptions = minuteOptionsForStep(minuteStep)
   const selectCommon = {
     inputSize: 'large' as const,
     withAllOption: false,
@@ -117,9 +134,9 @@ export function DateTimePickerTimeInlineSelects({
         className={wrapMuted}
         width={TIME_SELECT_FIELD_WIDTH_PX}
         placeholder="분"
-        options={MINUTE_OPTIONS}
+        options={minuteOptions}
         value={minute}
-        onChange={v => onMinuteChange(String(v ?? '0'))}
+        onChange={v => onMinuteChange(String(v ?? minuteOptions[0]?.value ?? '0'))}
         disabled={disabled}
         aria-label={endMer ? '종료 분' : '분'}
       />

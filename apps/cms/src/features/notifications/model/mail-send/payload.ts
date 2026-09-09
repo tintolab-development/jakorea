@@ -1,5 +1,12 @@
-import { isMailSendVariableLocked, mailSendUseTemplate } from './flags'
+import { mailSendUseTemplate } from './flags'
 import { MAIL_SEND_PURPOSE, type MailSendDraft, type MailSendPayload } from './types'
+import {
+  isNotificationSendAllProgram,
+  isNotificationSendProgramUnset,
+  parseNotificationSendProgramId,
+} from '@/features/notifications/model/send-program-id'
+import { validateMailSenderEmail } from '@/features/notifications/model/mail-template/sender-email'
+import { validateNotificationScheduledAt } from '@/features/notifications/model/send-scheduled-at'
 
 const MAIL_VARIABLE_TOKEN_RE = /#\{[^{}]+\}/
 const MAIL_VARIABLE_ATTR_RE = /data-mail-variable\s*=/
@@ -20,17 +27,35 @@ export function buildMailSendPayload(draft: MailSendDraft): MailSendPayload {
 }
 
 export function validateMailSendDraft(draft: MailSendDraft): string | null {
-  if (!draft.programId) return '대상 프로그램을 선택하세요.'
-  if (!draft.senderEmail.trim()) return '발신 메일을 입력하세요.'
-  if (draft.sendTiming === 'scheduled' && !draft.scheduledAt) return '예약 일시를 선택하세요.'
+  if (isNotificationSendProgramUnset(draft.programId)) {
+    return '대상 프로그램을 선택하세요.'
+  }
+  if (!draft.templateId?.trim()) return '템플릿을 선택하세요.'
+  const senderError = validateMailSenderEmail(draft.senderEmail)
+  if (senderError) return senderError
+  const scheduleError = validateNotificationScheduledAt({
+    sendTiming: draft.sendTiming,
+    scheduledAt: draft.scheduledAt,
+  })
+  if (scheduleError) return scheduleError
   if (draft.recipients.length === 0) return '수신자를 설정하세요.'
+  if (isNotificationSendAllProgram(draft.programId)) {
+    const hasProgramBound = draft.recipients.some(
+      recipient => recipient.source !== 'manual' && recipient.actorType !== 'DIRECT'
+    )
+    if (hasProgramBound) {
+      return '대상 프로그램이 미선택일 때는 직접 입력 수신자만 사용할 수 있습니다.'
+    }
+  } else if (parseNotificationSendProgramId(draft.programId) == null) {
+    return '대상 프로그램을 선택하세요.'
+  }
+  const missingDirectContact = draft.recipients.some(
+    recipient =>
+      (recipient.source === 'manual' || recipient.actorType === 'DIRECT') && !recipient.email.trim()
+  )
+  if (missingDirectContact) return '직접 입력 수신자의 연락처를 입력하세요.'
+  // 제목/본문은 저장된 템플릿 기준 발송. 화면 미리보기용으로만 유지.
   if (!draft.subject.trim()) return '제목을 작성하세요.'
   if (!draft.bodyHtml.trim()) return '내용을 작성하세요.'
-  if (
-    isMailSendVariableLocked(draft.programId) &&
-    (containsMailVariableTokens(draft.subject) || containsMailVariableTokens(draft.bodyHtml))
-  ) {
-    return '전체 프로그램 선택 시 변수값을 사용할 수 없습니다.'
-  }
   return null
 }

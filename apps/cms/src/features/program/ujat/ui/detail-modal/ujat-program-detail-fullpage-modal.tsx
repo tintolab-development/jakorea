@@ -1841,12 +1841,14 @@ export function UjatProgramDetailFullPageModal({
             (institutionDetailId ? (
               <UjatInstitutionApplicationDetailPage
                 institutionId={institutionDetailId}
+                programId={programId}
                 onBack={() => setInstitutionApplicationId(null)}
                 onStatusUpdated={() => setInstitutionListVersion(v => v + 1)}
               />
             ) : (
               <UjatInstitutionApplicationList
                 key={institutionListVersion}
+                programId={programId}
                 onOpenDetail={row => setInstitutionApplicationId(row.id)}
               />
             ))}
@@ -1942,6 +1944,8 @@ export function UjatProgramDetailFullPageModal({
               {volAddMemberId ? (
                 <UjatEducationProgressVolunteerAddRegistrationView
                   memberId={volAddMemberId}
+                  program={displayProgram}
+                  volunteerHalf={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
                   onClose={closeVolAddRegistration}
                   onComplete={handleCompleteVolAddRegistration}
                 />

@@ -2,12 +2,17 @@ import { DatePicker, Input, TimePicker } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
+import type { ReactNode } from 'react'
 import type { LectureReportProgramProgressParagraph } from '@/features/template/model/writing-form-draft.schema'
+import '@/features/template/ui/form-editor/form-editor-template-field-hint.css'
 import '@/features/template/ui/paragraph/table/vertical-table-paragraph-body.css'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import './lecture-report-program-progress.css'
 
 dayjs.extend(customParseFormat)
+
+const LECTURE_REPORT_PROGRAM_PROGRESS_AUTO_HINT =
+  '배정된 프로그램·기관·교육 일정 정보가 자동으로 반영됩니다.'
 
 const verticalTablePickerPopupStyles = {
   popup: {
@@ -41,14 +46,36 @@ function fromDayjsTime(d: Dayjs | null): string {
   return d.format('HH:mm')
 }
 
+function ProgramProgressCell({
+  value,
+  isTemplateAuthoringMode,
+  control,
+}: {
+  value: string
+  isTemplateAuthoringMode: boolean
+  control: ReactNode
+}) {
+  if (isTemplateAuthoringMode && value.trim() === '') {
+    return (
+      <span className="form-editor-template-field-hint-text">
+        {LECTURE_REPORT_PROGRAM_PROGRESS_AUTO_HINT}
+      </span>
+    )
+  }
+  return control
+}
+
 export function LectureReportProgramProgress({
   paragraph,
   onChange,
   isEditMode,
+  isTemplateAuthoringMode = false,
 }: {
   paragraph: LectureReportProgramProgressParagraph
   onChange: (next: LectureReportProgramProgressParagraph) => void
   isEditMode: boolean
+  /** 템플릿 편집 — 프로그램 연동 안내. false: 실제 응답·프로그램 미리보기 본문 */
+  isTemplateAuthoringMode?: boolean
 }) {
   const patch = (partial: Partial<LectureReportProgramProgressParagraph>) => {
     onChange({ ...paragraph, ...partial })
@@ -64,13 +91,19 @@ export function LectureReportProgramProgress({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <Input
-                  className="lecture-report-prog-info__input"
-                  variant="borderless"
+                <ProgramProgressCell
                   value={paragraph.programName}
-                  onChange={e => patch({ programName: e.target.value })}
-                  disabled={!isEditMode}
-                  placeholder="입력"
+                  isTemplateAuthoringMode={isTemplateAuthoringMode}
+                  control={
+                    <Input
+                      className="lecture-report-prog-info__input"
+                      variant="borderless"
+                      value={paragraph.programName}
+                      onChange={e => patch({ programName: e.target.value })}
+                      disabled={!isEditMode}
+                      placeholder="입력"
+                    />
+                  }
                 />
               </div>
             </div>
@@ -81,13 +114,19 @@ export function LectureReportProgramProgress({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <Input
-                  className="lecture-report-prog-info__input"
-                  variant="borderless"
+                <ProgramProgressCell
                   value={paragraph.finalInstructorCount}
-                  onChange={e => patch({ finalInstructorCount: e.target.value })}
-                  disabled={!isEditMode}
-                  placeholder="입력"
+                  isTemplateAuthoringMode={isTemplateAuthoringMode}
+                  control={
+                    <Input
+                      className="lecture-report-prog-info__input"
+                      variant="borderless"
+                      value={paragraph.finalInstructorCount}
+                      onChange={e => patch({ finalInstructorCount: e.target.value })}
+                      disabled={!isEditMode}
+                      placeholder="입력"
+                    />
+                  }
                 />
               </div>
             </div>
@@ -101,13 +140,19 @@ export function LectureReportProgramProgress({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <Input
-                  className="lecture-report-prog-info__input"
-                  variant="borderless"
+                <ProgramProgressCell
                   value={paragraph.institutionName}
-                  onChange={e => patch({ institutionName: e.target.value })}
-                  disabled={!isEditMode}
-                  placeholder="입력"
+                  isTemplateAuthoringMode={isTemplateAuthoringMode}
+                  control={
+                    <Input
+                      className="lecture-report-prog-info__input"
+                      variant="borderless"
+                      value={paragraph.institutionName}
+                      onChange={e => patch({ institutionName: e.target.value })}
+                      disabled={!isEditMode}
+                      placeholder="입력"
+                    />
+                  }
                 />
               </div>
             </div>
@@ -118,13 +163,19 @@ export function LectureReportProgramProgress({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <Input
-                  className="lecture-report-prog-info__input"
-                  variant="borderless"
+                <ProgramProgressCell
                   value={paragraph.institutionLocation}
-                  onChange={e => patch({ institutionLocation: e.target.value })}
-                  disabled={!isEditMode}
-                  placeholder="입력"
+                  isTemplateAuthoringMode={isTemplateAuthoringMode}
+                  control={
+                    <Input
+                      className="lecture-report-prog-info__input"
+                      variant="borderless"
+                      value={paragraph.institutionLocation}
+                      onChange={e => patch({ institutionLocation: e.target.value })}
+                      disabled={!isEditMode}
+                      placeholder="입력"
+                    />
+                  }
                 />
               </div>
             </div>
@@ -144,22 +195,28 @@ export function LectureReportProgramProgress({
                   'form-editor-vertical-table__cell-input-shell--body-dt-full',
                 ].join(' ')}
               >
-                <DatePicker
-                  rootClassName={[
-                    'form-editor-vertical-table__field-box',
-                    'form-editor-vertical-table__field-box--picker',
-                    'form-editor-vertical-table__dt-picker--full',
-                    'lecture-report-prog-info__dt-picker',
-                  ].join(' ')}
-                  className="form-editor-vertical-table__dt-picker-inner"
-                  needConfirm={false}
-                  styles={verticalTablePickerPopupStyles}
-                  getPopupContainer={verticalTableFieldPopupContainer}
-                  value={toDayjsDate(paragraph.educationDate)}
-                  onChange={d => isEditMode && patch({ educationDate: fromDayjsDate(d) })}
-                  format="YYYY-MM-DD"
-                  placeholder="날짜 선택"
-                  disabled={!isEditMode}
+                <ProgramProgressCell
+                  value={paragraph.educationDate}
+                  isTemplateAuthoringMode={isTemplateAuthoringMode}
+                  control={
+                    <DatePicker
+                      rootClassName={[
+                        'form-editor-vertical-table__field-box',
+                        'form-editor-vertical-table__field-box--picker',
+                        'form-editor-vertical-table__dt-picker--full',
+                        'lecture-report-prog-info__dt-picker',
+                      ].join(' ')}
+                      className="form-editor-vertical-table__dt-picker-inner"
+                      needConfirm={false}
+                      styles={verticalTablePickerPopupStyles}
+                      getPopupContainer={verticalTableFieldPopupContainer}
+                      value={toDayjsDate(paragraph.educationDate)}
+                      onChange={d => isEditMode && patch({ educationDate: fromDayjsDate(d) })}
+                      format="YYYY-MM-DD"
+                      placeholder="날짜 선택"
+                      disabled={!isEditMode}
+                    />
+                  }
                 />
               </div>
             </div>
@@ -170,37 +227,43 @@ export function LectureReportProgramProgress({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <div className="lecture-report-prog-info__time-session-row">
-                  <div className="lecture-report-prog-info__time-wrap">
-                    <TimePicker
-                      rootClassName={[
-                        'form-editor-vertical-table__field-box',
-                        'form-editor-vertical-table__field-box--picker',
-                        'lecture-report-prog-info__time-picker',
-                      ].join(' ')}
-                      className="form-editor-vertical-table__dt-picker-inner"
-                      needConfirm={false}
-                      styles={verticalTablePickerPopupStyles}
-                      getPopupContainer={verticalTableFieldPopupContainer}
-                      value={toDayjsTime(paragraph.sessionTime)}
-                      onChange={d => isEditMode && patch({ sessionTime: fromDayjsTime(d) })}
-                      format="HH:mm"
-                      placeholder="시간"
-                      disabled={!isEditMode}
-                    />
-                  </div>
-                  <span className="lecture-report-prog-info__divider" role="presentation" />
-                  <div className="lecture-report-prog-info__session-wrap">
-                    <Input
-                      className="lecture-report-prog-info__session-input"
-                      variant="borderless"
-                      value={paragraph.sessionIndex}
-                      onChange={e => patch({ sessionIndex: e.target.value })}
-                      disabled={!isEditMode}
-                      placeholder="차시"
-                    />
-                  </div>
-                </div>
+                <ProgramProgressCell
+                  value={`${paragraph.sessionTime}${paragraph.sessionIndex}`}
+                  isTemplateAuthoringMode={isTemplateAuthoringMode}
+                  control={
+                    <div className="lecture-report-prog-info__time-session-row">
+                      <div className="lecture-report-prog-info__time-wrap">
+                        <TimePicker
+                          rootClassName={[
+                            'form-editor-vertical-table__field-box',
+                            'form-editor-vertical-table__field-box--picker',
+                            'lecture-report-prog-info__time-picker',
+                          ].join(' ')}
+                          className="form-editor-vertical-table__dt-picker-inner"
+                          needConfirm={false}
+                          styles={verticalTablePickerPopupStyles}
+                          getPopupContainer={verticalTableFieldPopupContainer}
+                          value={toDayjsTime(paragraph.sessionTime)}
+                          onChange={d => isEditMode && patch({ sessionTime: fromDayjsTime(d) })}
+                          format="HH:mm"
+                          placeholder="시간"
+                          disabled={!isEditMode}
+                        />
+                      </div>
+                      <span className="lecture-report-prog-info__divider" role="presentation" />
+                      <div className="lecture-report-prog-info__session-wrap">
+                        <Input
+                          className="lecture-report-prog-info__session-input"
+                          variant="borderless"
+                          value={paragraph.sessionIndex}
+                          onChange={e => patch({ sessionIndex: e.target.value })}
+                          disabled={!isEditMode}
+                          placeholder="차시"
+                        />
+                      </div>
+                    </div>
+                  }
+                />
               </div>
             </div>
           </div>
@@ -213,13 +276,19 @@ export function LectureReportProgramProgress({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <Input
-                  className="lecture-report-prog-info__input"
-                  variant="borderless"
+                <ProgramProgressCell
                   value={paragraph.educationTarget}
-                  onChange={e => patch({ educationTarget: e.target.value })}
-                  disabled={!isEditMode}
-                  placeholder="입력"
+                  isTemplateAuthoringMode={isTemplateAuthoringMode}
+                  control={
+                    <Input
+                      className="lecture-report-prog-info__input"
+                      variant="borderless"
+                      value={paragraph.educationTarget}
+                      onChange={e => patch({ educationTarget: e.target.value })}
+                      disabled={!isEditMode}
+                      placeholder="입력"
+                    />
+                  }
                 />
               </div>
             </div>
@@ -230,32 +299,38 @@ export function LectureReportProgramProgress({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <div className="lecture-report-prog-info__time-session-row">
-                  <div className="lecture-report-prog-info__class-wrap">
-                    <Input
-                      className="lecture-report-prog-info__session-input"
-                      variant="borderless"
-                      value={paragraph.classLabel}
-                      onChange={e => patch({ classLabel: e.target.value })}
-                      disabled={!isEditMode}
-                      placeholder="학급"
-                    />
-                  </div>
-                  <span className="lecture-report-prog-info__divider" role="presentation" />
-                  <div className="lecture-report-prog-info__count-wrap">
-                    <CmsNumericInput
-                      mode="integer"
-                      min={0}
-                      className="lecture-report-prog-info__session-input"
-                      inputSize="medium"
-                      width="100%"
-                      value={paragraph.studentCount}
-                      onValueChange={value => patch({ studentCount: value })}
-                      disabled={!isEditMode}
-                      placeholder="총 인원"
-                    />
-                  </div>
-                </div>
+                <ProgramProgressCell
+                  value={`${paragraph.classLabel}${paragraph.studentCount}`}
+                  isTemplateAuthoringMode={isTemplateAuthoringMode}
+                  control={
+                    <div className="lecture-report-prog-info__time-session-row">
+                      <div className="lecture-report-prog-info__class-wrap">
+                        <Input
+                          className="lecture-report-prog-info__session-input"
+                          variant="borderless"
+                          value={paragraph.classLabel}
+                          onChange={e => patch({ classLabel: e.target.value })}
+                          disabled={!isEditMode}
+                          placeholder="학급"
+                        />
+                      </div>
+                      <span className="lecture-report-prog-info__divider" role="presentation" />
+                      <div className="lecture-report-prog-info__count-wrap">
+                        <CmsNumericInput
+                          mode="integer"
+                          min={0}
+                          className="lecture-report-prog-info__session-input"
+                          inputSize="medium"
+                          width="100%"
+                          value={paragraph.studentCount}
+                          onValueChange={value => patch({ studentCount: value })}
+                          disabled={!isEditMode}
+                          placeholder="총 인원"
+                        />
+                      </div>
+                    </div>
+                  }
+                />
               </div>
             </div>
           </div>

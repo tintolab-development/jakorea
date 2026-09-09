@@ -141,7 +141,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
   )
   const [publicProgramTitle, setPublicProgramTitle] = useProgramRegistrationOverlayKv(
     'economyRegistration.basicInfo.publicProgramTitle',
-    REP_KO
+    ''
   )
 
   const [surveyItems] = useProgramRegistrationOverlayKv<
@@ -349,7 +349,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
-                  withAllOption={false}
+                  withAllOption
                   inputSize="medium"
                   placeholder="후원사를 선택하세요"
                   width={240}
@@ -370,7 +370,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
-                  withAllOption={false}
+                  withAllOption
                   inputSize="medium"
                   placeholder="후원사 담당자를 선택하세요"
                   width={240}
@@ -414,7 +414,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
-                  withAllOption={false}
+                  withAllOption
                   inputSize="medium"
                   placeholder="교육 과정을 선택하세요"
                   width={240}

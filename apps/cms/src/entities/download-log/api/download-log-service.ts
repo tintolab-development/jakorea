@@ -1,16 +1,13 @@
 /**
  * 파일 다운로드 기록
- * - logs 실세션: POST /api/admin/logs/file-access/client
- * - 라우트 미배포(404/405) 또는 mock 세션: 메모리 stub
+ * - logs 실세션: POST /api/admin/logs/file-access/client (실패 시 파일 저장 차단)
+ * - mock 세션: 메모리 stub
  *
  * @see apps/cms/docs/api/client-file-access-log-backend-handoff.md
  */
 
 import type { DownloadLog, RecordDownloadPayload } from '@/types/download-log'
-import {
-  isClientFileAccessLogUnavailable,
-  postFileAccessLog,
-} from '@/shared/lib/post-file-access-log'
+import { postFileAccessLog } from '@/shared/lib/post-file-access-log'
 import { queryClient } from '@/shared/lib/query-client'
 import { shouldRecordFileAccessRemotely } from '@/shared/lib/should-record-file-access-remotely'
 
@@ -49,25 +46,21 @@ export async function recordFileDownload(payload: RecordDownloadPayload): Promis
   const downloadedAt = new Date().toISOString()
 
   if (shouldRecordFileAccessRemotely()) {
-    try {
-      await postFileAccessLog({
-        fileName,
-        ...(typeof navigator !== 'undefined' && navigator.userAgent
-          ? { userAgent: navigator.userAgent }
-          : {}),
-        ...(payload.ipAddress ? { ipAddress: payload.ipAddress } : {}),
-      })
-      void queryClient.invalidateQueries({ queryKey: ['cms', 'logs'] })
-      return {
-        id: `remote-${Date.now()}`,
-        fileName,
-        userId,
-        userName,
-        ipAddress,
-        downloadedAt,
-      }
-    } catch (error) {
-      if (!isClientFileAccessLogUnavailable(error)) throw error
+    const created = await postFileAccessLog({
+      fileName,
+      ...(typeof navigator !== 'undefined' && navigator.userAgent
+        ? { userAgent: navigator.userAgent }
+        : {}),
+      ...(payload.ipAddress ? { ipAddress: payload.ipAddress } : {}),
+    })
+    void queryClient.invalidateQueries({ queryKey: ['cms', 'logs'] })
+    return {
+      id: created.id ?? `remote-${Date.now()}`,
+      fileName,
+      userId,
+      userName,
+      ipAddress,
+      downloadedAt,
     }
   }
 

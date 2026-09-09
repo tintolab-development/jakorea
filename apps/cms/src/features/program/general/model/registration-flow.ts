@@ -67,7 +67,7 @@ export const GENERAL_PROGRAM_REGISTRATION_APPLICATION_TAB_LABELS: Record<
   GeneralProgramRegistrationApplicationTabKey,
   string
 > = {
-  'application-participant-school': '참여자 신청 정보',
+  'application-participant-school': '참여 기관 신청 정보',
   'application-participant-individual': '참여자 신청 정보',
   'application-instructor': '강사 신청 정보',
   'application-volunteer': '봉사자 신청 정보',

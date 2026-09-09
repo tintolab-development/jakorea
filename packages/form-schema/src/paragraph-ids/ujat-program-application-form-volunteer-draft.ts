@@ -33,6 +33,43 @@ export function isUjatProgramApplicationVolunteerSingleOptionMultipleChoiceSeed(
   return paragraphId === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.submitConfirmation
 }
 
+/** 희망 교육 활동 지역 — 8항도 가로 라디오(시안) */
+export function isUjatProgramApplicationVolunteerPreferredRegionMultipleChoiceSeed(
+  paragraphId: string
+): boolean {
+  return paragraphId === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.preferredRegion
+}
+
+export const UJAT_PROGRAM_APPLICATION_VOLUNTEER_PREFERRED_REGION_ITEMS: ReadonlyArray<{
+  id: string
+  label: string
+}> = [
+  { id: 'ujat-program-application-volunteer-preferred-region-seoul', label: '서울' },
+  {
+    id: 'ujat-program-application-volunteer-preferred-region-gyeonggi-south',
+    label: '경기(남부)',
+  },
+  { id: 'ujat-program-application-volunteer-preferred-region-incheon', label: '인천' },
+  { id: 'ujat-program-application-volunteer-preferred-region-daejeon', label: '대전' },
+  { id: 'ujat-program-application-volunteer-preferred-region-daegu', label: '대구' },
+  { id: 'ujat-program-application-volunteer-preferred-region-busan', label: '부산' },
+  { id: 'ujat-program-application-volunteer-preferred-region-gwangju', label: '광주' },
+  {
+    id: 'ujat-program-application-volunteer-preferred-region-jeonbuk-jeonju',
+    label: '전북(전주)',
+  },
+]
+
+export const UJAT_PROGRAM_APPLICATION_VOLUNTEER_EDUCATION_EXPERIENCE_OPTION_IDS = {
+  yes: 'ujat-program-application-volunteer-education-experience-yes',
+  no: 'ujat-program-application-volunteer-education-experience-no',
+} as const
+
+const PERSONAL_INFO_RETENTION_CELL =
+  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
+const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 폐기'
+const FREE_TEXT_ITEMS_DESCRIPTION = '1~4번 문항은 자유롭게 작성 가능합니다.'
+
 const PERSONAL_INFO_COLLECTION_BOTTOM =
   '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.'
 
@@ -66,8 +103,7 @@ function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
         },
         {
           kind: 'text',
-          value:
-            '- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 프로그램 종료로부터 1년 보관 후 폐기',
+          value: PERSONAL_INFO_RETENTION_CELL,
         },
       ],
     ],
@@ -106,7 +142,7 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
           kind: 'text',
           value: 'JA 프로그램 봉사활동 안내 및\n프로그램 진행에 필요한 정보 안내',
         },
-        { kind: 'text', value: '해당 프로그램이 진행되는 기간' },
+        { kind: 'text', value: THIRD_PARTY_RETENTION_CELL },
       ],
     ],
     bottomText: PERSONAL_INFO_THIRD_PARTY_BOTTOM,
@@ -143,6 +179,52 @@ function createSubmitConfirmationMultipleChoiceParagraph(): MultipleChoiceParagr
   }
 }
 
+function createPreferredRegionMultipleChoiceParagraph(): MultipleChoiceParagraph {
+  return {
+    id: UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.preferredRegion,
+    kind: 'single_item',
+    variant: 'multiple_choice',
+    requiredMark: true,
+    paragraphTitle: '희망 교육 활동 지역',
+    paragraphDescription: '금요일 오전 활동이 가능한 지역을 선택해 주세요.',
+    participatesInTitleNumbering: true,
+    answerRequired: true,
+    allowMultiple: false,
+    items: UJAT_PROGRAM_APPLICATION_VOLUNTEER_PREFERRED_REGION_ITEMS.map(item => ({
+      ...item,
+    })),
+    selectedPreviewSingleId: null,
+    selectedPreviewMultipleIds: [],
+  }
+}
+
+function createEducationExperienceMultipleChoiceParagraph(): MultipleChoiceParagraph {
+  return {
+    id: UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.educationExperience,
+    kind: 'single_item',
+    variant: 'multiple_choice',
+    requiredMark: true,
+    paragraphTitle: '교육 진행 경험 여부',
+    paragraphDescription:
+      '교육봉사, 강사 아르바이트 등 교육 진행 경험 여부를 선택해 주세요.',
+    participatesInTitleNumbering: true,
+    answerRequired: true,
+    allowMultiple: false,
+    items: [
+      {
+        id: UJAT_PROGRAM_APPLICATION_VOLUNTEER_EDUCATION_EXPERIENCE_OPTION_IDS.yes,
+        label: '있음',
+      },
+      {
+        id: UJAT_PROGRAM_APPLICATION_VOLUNTEER_EDUCATION_EXPERIENCE_OPTION_IDS.no,
+        label: '없음',
+      },
+    ],
+    selectedPreviewSingleId: null,
+    selectedPreviewMultipleIds: [],
+  }
+}
+
 function createSeedHorizontalTable(
   id: string,
   paragraphTitle: string,
@@ -169,6 +251,77 @@ function createSeedHorizontalTable(
   })
 }
 
+function patchHorizontalTableTextCell(
+  paragraph: HorizontalTableParagraph,
+  row: number,
+  col: number,
+  value: string
+): HorizontalTableParagraph {
+  const fieldDataRows = (paragraph.fieldDataRows ?? []).map(cells =>
+    cells.map(cell => ({ ...cell }))
+  )
+  const rowCells = fieldDataRows[row]
+  const cell = rowCells?.[col]
+  if (cell == null || cell.kind !== 'text' || cell.value === value) {
+    return paragraph
+  }
+  rowCells[col] = { ...cell, value }
+  return { ...paragraph, fieldDataRows }
+}
+
+/** 구 시드(가로표) → 객관식형 + JSON 시드 고정 문구 보정 */
+export function migrateUjatProgramApplicationVolunteerChoiceParagraphs(
+  draft: WritingFormDraft
+): WritingFormDraft {
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (
+      paragraph.id === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.preferredRegion &&
+      paragraph.kind === 'single_item' &&
+      paragraph.variant === 'horizontal_table'
+    ) {
+      changed = true
+      return createPreferredRegionMultipleChoiceParagraph()
+    }
+    if (
+      paragraph.id === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.educationExperience &&
+      paragraph.kind === 'single_item' &&
+      paragraph.variant === 'horizontal_table'
+    ) {
+      changed = true
+      return createEducationExperienceMultipleChoiceParagraph()
+    }
+    if (
+      paragraph.id === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.personalInfoCollection &&
+      paragraph.kind === 'single_item' &&
+      paragraph.variant === 'horizontal_table'
+    ) {
+      const next = patchHorizontalTableTextCell(paragraph, 0, 2, PERSONAL_INFO_RETENTION_CELL)
+      if (next !== paragraph) changed = true
+      return next
+    }
+    if (
+      paragraph.id === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent &&
+      paragraph.kind === 'single_item' &&
+      paragraph.variant === 'horizontal_table'
+    ) {
+      const next = patchHorizontalTableTextCell(paragraph, 0, 3, THIRD_PARTY_RETENTION_CELL)
+      if (next !== paragraph) changed = true
+      return next
+    }
+    if (
+      paragraph.id === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems &&
+      paragraph.kind === 'single_item' &&
+      paragraph.paragraphDescription !== FREE_TEXT_ITEMS_DESCRIPTION
+    ) {
+      changed = true
+      return { ...paragraph, paragraphDescription: FREE_TEXT_ITEMS_DESCRIPTION }
+    }
+    return paragraph
+  })
+  return changed ? { ...draft, paragraphs } : draft
+}
+
 export function createUjatProgramApplicationFormVolunteerDraft(): WritingFormDraft {
   const paragraphs: WritingFormParagraph[] = [
     createPersonalInfoCollectionParagraph(),
@@ -183,16 +336,8 @@ export function createUjatProgramApplicationFormVolunteerDraft(): WritingFormDra
       '이전 UJAT 활동 기수',
       '이전에 UJAT 활동한 활동 기수 기재 및 해당 기수의 UJAT 수료증 이미지 파일을 첨부해야 수료증 전형으로 서류전형 통과가 가능합니다.'
     ),
-    createSeedHorizontalTable(
-      UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.preferredRegion,
-      '희망 교육 활동 지역',
-      '금요일 오전 활동이 가능한 지역을 선택해 주세요.'
-    ),
-    createSeedHorizontalTable(
-      UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.educationExperience,
-      '교육 진행 경험 여부',
-      '교육봉사, 강사 아르바이트 등 교육 진행 경험 여부를 선택해 주세요.'
-    ),
+    createPreferredRegionMultipleChoiceParagraph(),
+    createEducationExperienceMultipleChoiceParagraph(),
     createSeedHorizontalTable(
       UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule,
       '면접 진행 가능 일정',
@@ -201,7 +346,7 @@ export function createUjatProgramApplicationFormVolunteerDraft(): WritingFormDra
     createSeedHorizontalTable(
       UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems,
       '자유 작성 항목',
-      '1~4번 문항은 자유롭게 작성가능합니다.'
+      FREE_TEXT_ITEMS_DESCRIPTION
     ),
     createSubmitConfirmationMultipleChoiceParagraph(),
   ]

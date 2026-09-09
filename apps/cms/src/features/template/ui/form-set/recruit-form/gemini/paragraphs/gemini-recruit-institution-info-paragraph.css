@@ -1,0 +1,9 @@
+.gemini-recruit-institution-info-paragraph {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gemini-recruit-institution-info-paragraph > .detail-info-form {
+  margin: 0;
+}

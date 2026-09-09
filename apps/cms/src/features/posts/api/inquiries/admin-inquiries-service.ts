@@ -17,6 +17,7 @@ import {
   fetchInquiriesRemote,
   fetchInquiryAnswersRemote,
   fetchInquiryCategoriesRemote,
+  fetchInquiryAttachmentsRemote,
   fetchInquiryRemote,
   updateInquiryAnswerRemote,
   updateInquiryCategoryRemote,
@@ -54,6 +55,11 @@ export async function getInquiryDetail(id: string): Promise<AdminInquiryDetail> 
     fetchInquiryAnswersRemote(id),
   ])
   return mapInquiryDetail(inquiry, answers)
+}
+
+export async function getInquiryAttachments(id: string) {
+  assertInquiriesRemoteReady()
+  return fetchInquiryAttachmentsRemote(id)
 }
 
 export async function submitInquiryReply(inquiryId: string, content: string): Promise<void> {

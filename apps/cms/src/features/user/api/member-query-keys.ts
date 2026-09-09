@@ -26,7 +26,7 @@ export const memberQueryKeys = {
   comments: (
     resourceId: number,
     screenCode?: string,
-    target: 'member' | 'schoolOrganization' = 'member'
+    target: 'member' | 'schoolOrganization' | 'adminAccount' = 'member'
   ) => [...memberQueryKeys.all, 'comments', target, resourceId, screenCode ?? ''] as const,
   applications: (memberId: number) =>
     [...memberQueryKeys.all, 'applications', memberId] as const,

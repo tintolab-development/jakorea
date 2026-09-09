@@ -194,3 +194,56 @@ export function pickActiveParagraphIdAfterMiddleDelete(
   if (idx > 0) return paragraphsBeforeDelete[idx - 1]!.id
   return paragraphsBeforeDelete[idx + 1]?.id ?? paragraphsBeforeDelete[0]?.id ?? null
 }
+
+/** 설문 양식 — head/middle/tail 구분 없이 임의 위치에 삽입 */
+export function insertSurveyParagraphAfter(
+  paragraphs: WritingFormParagraph[],
+  afterId: string,
+  insert: WritingFormParagraph
+): WritingFormParagraph[] | null {
+  const idx = paragraphs.findIndex(p => p.id === afterId)
+  if (idx < 0) return null
+  const next = [...paragraphs]
+  next.splice(idx + 1, 0, insert)
+  return next
+}
+
+/** 설문 양식 — 임의 단락 삭제(최소 1개 유지) */
+export function removeSurveyParagraph(
+  paragraphs: WritingFormParagraph[],
+  paragraphId: string
+): WritingFormParagraph[] | null {
+  if (paragraphs.length <= 1) return null
+  if (!paragraphs.some(p => p.id === paragraphId)) return null
+  return paragraphs.filter(p => p.id !== paragraphId)
+}
+
+/** 설문 양식 — 임의 단락 복제 */
+export function duplicateSurveyParagraph(
+  paragraphs: WritingFormParagraph[],
+  paragraphId: string,
+  newParagraphId: string
+): WritingFormParagraph[] | null {
+  const idx = paragraphs.findIndex(p => p.id === paragraphId)
+  if (idx < 0) return null
+  const source = paragraphs[idx]!
+  const clone = cloneWritingFormParagraphWithNewParagraphId(source, newParagraphId)
+  const next = [...paragraphs]
+  next.splice(idx + 1, 0, clone)
+  return next
+}
+
+/** 설문 양식 — 전체 단락 순서 변경 */
+export function reorderSurveyParagraphs(
+  paragraphs: WritingFormParagraph[],
+  activeId: string,
+  overId: string
+): WritingFormParagraph[] {
+  const oldIndex = paragraphs.findIndex(p => p.id === activeId)
+  const newIndex = paragraphs.findIndex(p => p.id === overId)
+  if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return paragraphs
+  const next = [...paragraphs]
+  const [removed] = next.splice(oldIndex, 1)
+  next.splice(newIndex, 0, removed!)
+  return next
+}

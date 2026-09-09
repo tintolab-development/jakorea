@@ -4,6 +4,7 @@ import {
   filterMailVariableGroups,
   formatMailVariableToken,
   getMailVariableLabel,
+  groupMailTemplateVariablesFromCatalog,
 } from './variables'
 
 describe('MAIL_TEMPLATE_VARIABLE_GROUPS', () => {
@@ -59,5 +60,43 @@ describe('filterMailVariableGroups', () => {
 
   it('formats tokens consistently', () => {
     expect(formatMailVariableToken('회원명')).toBe('#{회원명}')
+  })
+})
+
+describe('groupMailTemplateVariablesFromCatalog', () => {
+  it('passes through BE enabled without local recalculation', () => {
+    const groups = groupMailTemplateVariablesFromCatalog([
+      {
+        key: '회원명',
+        description: '회원 이름',
+        requiresProgram: false,
+        enabled: true,
+        categoryCode: 'name',
+        categoryLabel: '이름',
+      },
+      {
+        key: '프로그램명',
+        description: '프로그램',
+        requiresProgram: true,
+        enabled: false,
+        categoryCode: 'name',
+        categoryLabel: '이름',
+      },
+    ])
+    expect(groups).toEqual([
+      {
+        id: 'name',
+        label: '이름',
+        items: [
+          { label: '회원명', hint: '회원 이름', enabled: true },
+          {
+            label: '프로그램명',
+            hint: '프로그램',
+            requiresProgram: true,
+            enabled: false,
+          },
+        ],
+      },
+    ])
   })
 })

@@ -1,7 +1,6 @@
 /* 설문 제목형 — 작성 기간 행: 설명 입력란 아래 16px, 라벨·피커 간 12px */
 .explanation-title-period {
   margin-top: 16px;
-  padding: 0 8px;
 }
 
 .explanation-title-period__row {

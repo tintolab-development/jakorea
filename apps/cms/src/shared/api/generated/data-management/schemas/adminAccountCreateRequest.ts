@@ -23,11 +23,8 @@ export interface AdminAccountCreateRequest {
   phone?: string;
   gender?: string;
   birthDate?: string;
-  /**
-     * 관리자 권한 코드. MASTER, PM, PARTNER, VIEWER
-     * @minLength 1
-     */
-  roleCode: string;
+  /** CMS 관리자 권한 코드. MASTER, MIDDLE, VIEWER. 생략 시 최소 권한 VIEWER로 생성됩니다. */
+  roleCode?: string;
   reason?: string;
   /**
      * 관리자 등록 약관 4종. SERVICE_TERMS, PRIVACY_COLLECTION, MFA_SETUP_CONSENT, MARKETING을 각각 1건씩 전송합니다.

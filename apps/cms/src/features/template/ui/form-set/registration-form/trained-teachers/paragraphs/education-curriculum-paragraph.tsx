@@ -45,7 +45,7 @@ function TrainedTeachersTeacherTrainingTable() {
 
   return (
     <DetailInfoForm
-      title="교육 연수"
+      title="교사 연수"
       hideHeader
       mode="edit"
       className="program-registration-paragraph"
@@ -62,7 +62,7 @@ function TrainedTeachersTeacherTrainingTable() {
               suppressAutoTodayWhenEmpty
               value={trainingSchedule}
               onChange={setTrainingSchedule}
-              width="100%"
+              width={240}
               placeholder="일정을 선택하세요"
             />
           }
@@ -107,7 +107,7 @@ function TrainedTeachersTeacherTrainingSection({ enabled }: { enabled: boolean }
 
   return (
     <div className="program-registration-curriculum__session-block">
-      <div className="program-registration-curriculum__session-heading">■ 교육 연수</div>
+      <div className="program-registration-curriculum__session-heading">■ 교사 연수</div>
       <div className="program-registration-curriculum__session-row">
         <TrainedTeachersTeacherTrainingTable />
       </div>

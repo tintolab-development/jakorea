@@ -7,7 +7,7 @@ import {
   bulkRejectAdminApprovalRequestsRemote,
   changeAdminAccountRoleRemote,
   rejectAdminApprovalRequestRemote,
-  resetAdminApprovalRequestPendingRemote,
+  cancelAdminApprovalRemote,
   resendAdminApprovalNotificationRemote,
 } from '@/features/user/api/members-api-client'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
@@ -96,7 +96,7 @@ export function useAdminApprovalRequestMutations() {
 
   const resetPendingMutation = useMutation({
     mutationFn: async (input: { adminAccountId: number; reason: string }) => {
-      await resetAdminApprovalRequestPendingRemote(input.adminAccountId, {
+      await cancelAdminApprovalRemote(input.adminAccountId, {
         reason: input.reason.trim() || 'CMS 관리자 권한 승인 취소',
       })
     },

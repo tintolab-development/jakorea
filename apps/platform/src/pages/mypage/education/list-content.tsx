@@ -4,6 +4,7 @@ import {
   educationApplicationDetailPath,
   EDUCATION_APPLICATION_PAGE_SIZE,
   EducationApplicationListItemRow,
+  filterEducationStatusApplications,
   getMockEducationApplications,
   getMockEducationApplicationsVersion,
   listEducationApplications,
@@ -30,11 +31,14 @@ export function EducationListContent({ params, onParamsChange }: EducationListCo
 
   const { items, totalPages, currentPage, totalElements } = useMemo(
     () =>
-      listEducationApplications(getMockEducationApplications(), {
-        tab: params.tab,
-        page: params.page,
-        pageSize: EDUCATION_APPLICATION_PAGE_SIZE,
-      }),
+      listEducationApplications(
+        filterEducationStatusApplications(getMockEducationApplications()),
+        {
+          tab: params.tab,
+          page: params.page,
+          pageSize: EDUCATION_APPLICATION_PAGE_SIZE,
+        },
+      ),
     [applicationsVersion, mockEnabled, params.page, params.tab],
   )
 

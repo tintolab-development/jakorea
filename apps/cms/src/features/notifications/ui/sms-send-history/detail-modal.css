@@ -1,0 +1,99 @@
+.sms-send-history-detail-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.sms-send-history-detail-modal__loading {
+  padding: 48px 24px;
+  color: rgba(61, 61, 61, 0.7);
+  font-size: 14px;
+  text-align: center;
+}
+
+.sms-send-history-detail-modal__status-with-reason {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.sms-send-history-detail-modal__failed-reason {
+  color: #c0392b;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 140%;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sms-send-history-detail-modal__message {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+}
+
+.sms-send-history-detail-modal__subject {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  word-break: break-word;
+}
+
+.sms-send-history-detail-modal__body {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.sms-send-history-detail-modal__body-empty {
+  margin: 0;
+  color: rgba(61, 61, 61, 0.55);
+  font-size: 14px;
+}
+
+.sms-send-history-detail-modal__attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sms-send-history-detail-modal__attachments-label {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sms-send-history-detail-modal__attachment-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sms-send-history-detail-modal__attachment-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #0070e7;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.sms-send-history-detail-modal__attachment-empty {
+  color: rgba(61, 61, 61, 0.55);
+  font-size: 14px;
+}

@@ -17,6 +17,9 @@ export interface MemberLectureReportResponse {
   rejectReason?: string;
   sessionOrdinal?: number;
   lectureStartAt?: string;
+  submitDueAt?: string;
   institutionName?: string;
+  educationGrade?: string;
+  lectureProgressStatus?: string;
   reportFileIds?: number[];
 }

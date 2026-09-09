@@ -83,6 +83,8 @@ export { TealHeaderModal } from './teal-header-modal'
 export type { ModalSize, TealHeaderModalProps } from './teal-header-modal'
 export { ContentModal } from './content-modal'
 export type { ContentModalProps } from './content-modal'
+export { SortOrderDragIcon } from './sort-order-drag-icon'
+export type { SortOrderDragIconProps } from './sort-order-drag-icon'
 export { ModalSpecTable, ModalSpecTableRow, ModalSpecTableRadioCell } from './modal-spec-table'
 export type {
   ModalSpecTableProps,
@@ -233,6 +235,8 @@ export type {
   AttachmentDownloadItem,
 } from './posts'
 export { AlimtalkPhonePreview } from './alimtalk-phone-preview'
+export { SmsPhonePreview } from './sms-phone-preview'
+export type { SmsPhonePreviewProps } from './sms-phone-preview'
 export type {
   AlimtalkPhonePreviewProps,
   AlimtalkPhonePreviewButton,

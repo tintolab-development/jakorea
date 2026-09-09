@@ -25,10 +25,10 @@ export function HorizontalTableDimensionActions({
       aria-label="테이블 행·열 추가"
     >
       <CmsButton
-        className="form-editor-horizontal-table-dimension-actions__btn"
         variant="primary"
         type="button"
         size="large"
+        width={140}
         icon={<FormEditorPlusIcon />}
         disabled={disabled}
         title="테이블 최하단에 가로 한 줄(행)을 추가합니다."
@@ -37,10 +37,10 @@ export function HorizontalTableDimensionActions({
         행 추가
       </CmsButton>
       <CmsButton
-        className="form-editor-horizontal-table-dimension-actions__btn"
         variant="primary"
         type="button"
         size="large"
+        width={140}
         icon={<FormEditorPlusIcon />}
         disabled={disabled}
         title="테이블 가장 오른쪽에 세로 한 줄(열)을 추가합니다."

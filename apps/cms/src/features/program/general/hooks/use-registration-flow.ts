@@ -28,6 +28,12 @@ import type { ProgramRegistrationFormVariant } from '@/features/template/model/p
 import type { Program } from '@/types/domain'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
+
+/**
+ * TODO(temp): 일반프로그램 등록 필수 항목 미입력 검사 임시 해제 — 이후 `false`로 되돌려 재적용.
+ * 검증 로직: `hasIncompleteGeneralProgramRegistrationRequiredFields`
+ */
+const SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK = true
 import {
   coerceGeneralProgramRegistrationStep,
   getDefaultGeneralProgramApplicationStep,
@@ -341,10 +347,10 @@ export function useGeneralProgramRegistrationFlow(
         registrationFormVariant
       )
       if (next === coercedActiveStep) return
-      void persistDraftSilent().finally(() => {
-        setActiveStep(next)
-        options?.onStepChange?.(next)
-      })
+      // 이전 탭 저장은 백그라운드 — 대기하면 모집 탭 전환 깜빡임이 커짐
+      void persistDraftSilent().catch(() => {})
+      setActiveStep(next)
+      options?.onStepChange?.(next)
     },
     [
       coercedActiveStep,
@@ -358,6 +364,7 @@ export function useGeneralProgramRegistrationFlow(
   const goToPhase = useCallback(
     (nextPhase: GeneralProgramRegistrationPhaseKey) => {
       if (
+        !SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK &&
         registrationFormVariant === 'general' &&
         nextPhase !== 'program' &&
         isProgramStep &&

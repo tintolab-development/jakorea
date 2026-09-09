@@ -17,7 +17,10 @@ import type {
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS,
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS,
   isAgreementLockedSystemParagraph,
+  resolveMultipleChoiceBodyDescriptionText,
   normalizeHorizontalTableParagraph,
   type HorizontalTableParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -25,6 +28,7 @@ import type { FormDocumentPreviewRenderMode } from '@/features/template/lib/a4-d
 import { getDocumentPreviewParagraphViewModel } from '@/features/template/lib/a4-document-preview'
 import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
 import { resolveParagraphTitleRequiredMark } from '@/features/template/lib/paragraph-required-mark'
+import { shouldHideMultipleChoiceAllowMultipleTitleHint } from '@/features/template/model/program-application-form-individual-draft'
 import { getFormParagraphDisplayTitle } from '@/features/template/lib/form-title-numbering'
 import { ParagraphCard } from '@/features/template/ui/paragraph/shared/paragraph-card'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
@@ -53,8 +57,13 @@ import { DocumentSessionPlanShortEssayReadonly } from '@/features/template/ui/do
 import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/single-item/lecture-report-program-progress'
 import { UjatJournalEducationInfo } from '@/features/template/ui/paragraph/single-item/ujat-journal-education-info'
 import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
-import { FormParagraphSectionDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
+import { isPreviewSectionHintDescription } from '@/features/template/lib/session-plan-item-label'
+import {
+  FormParagraphSectionDescription,
+  isPlaceholderParagraphDescription,
+} from '@/features/template/ui/shared/form-paragraph-section-description'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
+import { PAYMENT_STATEMENT_ISSUANCE_IDS } from '@/features/template/model/payment-statement-issuance-draft'
 import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/basic-info-paragraph'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -68,26 +77,37 @@ function safeTrim(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
-const HIDDEN_PREVIEW_DESCRIPTION_TEXTS = new Set(['설명 입력', '설명을 입력해 주세요'])
-
 function normalizePreviewDescription(value: unknown): string {
   const trimmed = safeTrim(value)
   if (trimmed.length === 0) return ''
-  return HIDDEN_PREVIEW_DESCRIPTION_TEXTS.has(trimmed) ? '' : trimmed
+  return isPlaceholderParagraphDescription(trimmed) ? '' : trimmed
 }
 
 function readOnlyTitleBlock(
   displayTitle: string,
-  description?: string
+  description?: string,
+  titleHint?: ReactNode
 ): { title: ReactNode; description?: ReactNode } {
   const trimmedDescription = normalizePreviewDescription(description)
   return {
-    title: <span className="form-document-preview-paragraph__title-text">{displayTitle}</span>,
+    title: (
+      <span className="form-document-preview-paragraph__title-text">
+        {displayTitle}
+        {titleHint}
+      </span>
+    ),
     description:
       trimmedDescription.length > 0 ? (
         <FormParagraphSectionDescription
           surface="templateAuthoring"
-          className="form-document-preview-paragraph__description-text"
+          className={[
+            'form-document-preview-paragraph__description-text',
+            isPreviewSectionHintDescription(trimmedDescription)
+              ? 'form-document-preview-paragraph__description-text--hint'
+              : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
         >
           {trimmedDescription}
         </FormParagraphSectionDescription>
@@ -95,16 +115,36 @@ function readOnlyTitleBlock(
   }
 }
 
+function multipleChoiceAllowMultipleTitleHint(
+  paragraph: WritingFormParagraph
+): ReactNode {
+  if (
+    paragraph.kind !== 'single_item' ||
+    paragraph.variant !== 'multiple_choice' ||
+    paragraph.allowMultiple !== true ||
+    shouldHideMultipleChoiceAllowMultipleTitleHint(paragraph.id)
+  ) {
+    return null
+  }
+  return <span className="paragraph-input__title-hint"> (중복 선택 가능)</span>
+}
+
 function ContentOnlyParagraphHeader({
   displayTitle,
   description,
   requiredMark,
+  titleHint,
 }: {
   displayTitle: string
   description?: string
   requiredMark?: boolean
+  titleHint?: ReactNode
 }) {
-  const { title, description: descriptionNode } = readOnlyTitleBlock(displayTitle, description)
+  const { title, description: descriptionNode } = readOnlyTitleBlock(
+    displayTitle,
+    description,
+    titleHint
+  )
   return (
     <div className="form-document-preview-paragraph__content-header">
       <div className="form-document-preview-paragraph__title-row">
@@ -125,10 +165,14 @@ function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoi
   const allowMultiple = paragraph.allowMultiple ?? false
   const singleId = paragraph.selectedPreviewSingleId ?? null
   const multi = new Set(paragraph.selectedPreviewMultipleIds ?? [])
+  const bodyDescription = resolveMultipleChoiceBodyDescriptionText(paragraph)
 
   if (allowMultiple) {
     return (
       <div className="form-document-preview-multiple-choice">
+        {bodyDescription ? (
+          <p className="form-document-preview-multiple-choice__description">{bodyDescription}</p>
+        ) : null}
         {items.map(item => {
           const checked = multi.has(item.id)
           return (
@@ -146,6 +190,9 @@ function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoi
 
   return (
     <div className="form-editor-body">
+      {bodyDescription ? (
+        <p className="form-document-preview-multiple-choice__description">{bodyDescription}</p>
+      ) : null}
       <CmsRadioGroup
         className="form-editor-table-bottom-consent"
         size="large"
@@ -159,6 +206,45 @@ function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoi
           </CmsRadio>
         ))}
       </CmsRadioGroup>
+    </div>
+  )
+}
+
+const UJAT_JOURNAL_CONTENT_FEEDBACK_PREVIEW_SAMPLE =
+  '작성된 교육 내용 피드백 내용 노출'
+
+const UJAT_EDUCATION_SESSION_PARAGRAPH_IDS = new Set<string>([
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session1,
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session2,
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session3,
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session4,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.session1,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.session2,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.session3,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.session4,
+])
+
+const UJAT_EDUCATION_SESSION_PREVIEW_SAMPLE = '작성된 내용'
+
+function DocumentUjatJournalContentFeedbackReadonly({
+  paragraph,
+}: {
+  paragraph: ShortEssayParagraph
+}) {
+  const written =
+    safeTrim(paragraph.items?.[0]?.bodyText) || safeTrim(paragraph.bodyText)
+  const filled = written.length > 0
+  return (
+    <div className="form-editor-body explanation-text">
+      <div
+        className={
+          filled
+            ? 'form-document-preview-paragraph__body-text form-document-preview-paragraph__body-text--explanation-filled'
+            : 'form-document-preview-paragraph__body-text form-document-preview-paragraph__body-text--explanation-placeholder'
+        }
+      >
+        {written || UJAT_JOURNAL_CONTENT_FEEDBACK_PREVIEW_SAMPLE}
+      </div>
     </div>
   )
 }
@@ -245,6 +331,11 @@ function DocumentShortEssayReadonly({
     return (
       <DocumentSessionPlanShortEssayReadonly
         paragraph={paragraph as SessionPlanShortEssayParagraph}
+        emptyDisplayText={
+          UJAT_EDUCATION_SESSION_PARAGRAPH_IDS.has(paragraph.id)
+            ? UJAT_EDUCATION_SESSION_PREVIEW_SAMPLE
+            : undefined
+        }
       />
     )
   }
@@ -434,21 +525,32 @@ function renderBody(
           programApplicationFormInstructor={paragraphBodyOptions?.programApplicationFormInstructor}
         />
       )
-    case 'ujat_journal_education_info':
-      return (
+    case 'ujat_journal_education_info': {
+      const educationInfo = (
         <UjatJournalEducationInfo
           paragraph={p as UjatJournalEducationInfoParagraph}
           onChange={noopOnParagraphChange}
           isEditMode={false}
           autofill={paragraphBodyOptions?.ujatJournalEducationInfoAutofill}
+          previewReadonly
+          previewSkin={renderMode === 'contentOnly' ? 'a4Document' : 'surface'}
         />
       )
+      return renderMode === 'contentOnly' ? (
+        <div className="form-editor-body">{educationInfo}</div>
+      ) : (
+        educationInfo
+      )
+    }
     case 'lecture_report_program_progress':
       return (
         <LectureReportProgramProgress
           paragraph={p as LectureReportProgramProgressParagraph}
           onChange={noopOnParagraphChange}
           isEditMode={false}
+          isTemplateAuthoringMode={
+            paragraphBodyOptions?.lectureReportProgramLinkedPreview !== true
+          }
         />
       )
     case 'vertical_table':
@@ -478,6 +580,9 @@ function renderBody(
       return <DocumentMultipleChoiceReadonly paragraph={p as MultipleChoiceParagraph} />
     case 'short_essay': {
       const shortEssayP = p as ShortEssayParagraph
+      if (shortEssayP.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.contentFeedback) {
+        return <DocumentUjatJournalContentFeedbackReadonly paragraph={shortEssayP} />
+      }
       if (renderMode === 'contentOnly' && (shortEssayP.items?.length ?? 0) >= 2) {
         return <DocumentShortEssayTableReadonly paragraph={shortEssayP} />
       }
@@ -576,6 +681,9 @@ function renderBody(
               selectedEntries={getUserInfoPreviewSelectedEntries(ui)}
               skin="a4Document"
               previewValues={paragraphBodyOptions?.userInfoPreviewValues}
+              forceTwoColumnRow={
+                ui.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo
+              }
             />
           </div>
         )
@@ -587,6 +695,7 @@ function renderBody(
           isEditMode={false}
           layout="previewTable"
           previewValues={paragraphBodyOptions?.userInfoPreviewValues}
+          forceTwoColumnRow={ui.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo}
         />
       )
     }
@@ -619,7 +728,8 @@ function renderBody(
       }
       if (
         renderMode === 'contentOnly' &&
-        c.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
+        c.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing &&
+        paragraphBodyOptions?.agreementAdminProxyConfirm !== true
       ) {
         return null
       }
@@ -665,7 +775,11 @@ export function FormDocumentPreviewParagraph({
     renderMode,
     nextParagraph
   )
-  const { title, description } = readOnlyTitleBlock(displayTitle, viewModel.description)
+  const { title, description } = readOnlyTitleBlock(
+    displayTitle,
+    viewModel.description,
+    multipleChoiceAllowMultipleTitleHint(paragraph)
+  )
 
   if (
     renderMode === 'card' &&
@@ -739,6 +853,8 @@ export function FormDocumentPreviewParagraph({
   if (renderMode === 'contentOnly') {
     const isFileAttachment =
       paragraph.kind === 'single_item' && paragraph.variant === 'file_attachment'
+    const isUjatJournalContentFeedback =
+      paragraph.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.contentFeedback
     const isNoticeStackDivider =
       paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
     const isNoticeDateWithDivider =
@@ -746,7 +862,11 @@ export function FormDocumentPreviewParagraph({
     /** 지급조서 mid/final도 다른 동의서와 동일 confirm·구분선 크롬 (A4 contentOnly) */
     const useConfirmTextChrome =
       !isNoticeStackDivider && viewModel.isConfirmText && !viewModel.isClosing
-    const useConfirmRuleChrome = viewModel.isConfirmTextRule
+    /** 지급조서(발급용) 날짜 — 확인 문구 없이 날짜 위에 동일 회색 구분선 */
+    const isPaymentStatementIssuanceClosingDate =
+      paragraph.id === PAYMENT_STATEMENT_ISSUANCE_IDS.closingDate
+    const useConfirmRuleChrome =
+      viewModel.isConfirmTextRule || isPaymentStatementIssuanceClosingDate
 
     return (
       <div
@@ -754,6 +874,9 @@ export function FormDocumentPreviewParagraph({
           'form-document-preview-paragraph',
           'form-document-preview-paragraph--content-only',
           isFileAttachment ? 'form-document-preview-paragraph--file-attachment' : '',
+          isUjatJournalContentFeedback
+            ? 'form-document-preview-paragraph--ujat-journal-feedback'
+            : '',
           isNoticeStackDivider
             ? 'form-document-preview-paragraph--content-only-stack-divider'
             : '',
@@ -783,6 +906,7 @@ export function FormDocumentPreviewParagraph({
             displayTitle={displayTitle}
             description={viewModel.description}
             requiredMark={resolveParagraphTitleRequiredMark(paragraph)}
+            titleHint={multipleChoiceAllowMultipleTitleHint(paragraph)}
           />
         ) : null}
         <div className="form-document-preview-paragraph__content-slot">{body}</div>

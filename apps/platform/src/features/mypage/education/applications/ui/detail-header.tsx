@@ -9,6 +9,7 @@ import {
   getEducationDisplayStatusLabel,
   getEducationDisplayStatusTone,
 } from '../lib/display-status'
+import jaSendMintUrl from '@/shared/assets/icons/ja-send-mint.svg'
 import { PFText } from '@/shared/ui'
 import styles from './detail-header.module.css'
 
@@ -37,6 +38,16 @@ export function EducationDetailHeader({
         {title}
       </PFText>
       <PFText as="p" typo="hd-lg" className={[styles.status, statusToneClass].join(' ')}>
+        {displayStatus === 'in_progress' ? (
+          <img
+            className={styles.statusIcon}
+            src={jaSendMintUrl}
+            alt=""
+            width={40}
+            height={40}
+            aria-hidden="true"
+          />
+        ) : null}
         {statusLabel}
       </PFText>
       <div className={styles.meta}>

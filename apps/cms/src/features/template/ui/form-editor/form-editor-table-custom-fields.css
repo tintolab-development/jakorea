@@ -842,6 +842,10 @@
   cursor: grab;
 }
 
+.form-editor-mc-item__drag .sort-order-drag-icon {
+  display: block;
+}
+
 .form-editor-mc-item__drag:active {
   cursor: grabbing;
 }
