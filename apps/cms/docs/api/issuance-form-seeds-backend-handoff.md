@@ -45,7 +45,7 @@
 | templateCode | templateName | Payload | 시드 JSON | 단락 수 |
 |--------------|--------------|---------|-----------|--------:|
 | `document-payment-order-issue` | 지급조서(발급용) | A | [document-payment-order-issue.json](./form-template-seeds/document-payment-order-issue.json) | 7 |
-| `document-payment-order-pre-consent` | 지급조서 사전 동의서 | A | [document-payment-order-pre-consent.json](./form-template-seeds/document-payment-order-pre-consent.json) | 15 |
+| `document-payment-order-pre-consent` | 지급조서 사전 동의서 | A | [document-payment-order-pre-consent.json](./form-template-seeds/document-payment-order-pre-consent.json) | 14 |
 | `document-1` | 지출증빙서류(필수폼) | E | [document-1.json](./form-template-seeds/document-1.json) | 0 |
 | `document-2` | 휴가 인증서 | D | [document-2.json](./form-template-seeds/document-2.json) | 0 |
 | `document-3` | 수료증 | D | [document-3-certificate.json](./form-template-seeds/document-3-certificate.json) | 0 |
@@ -74,7 +74,7 @@
 | `ujat-edu-journal-title` | description | survey_title_with_period |  |
 | `ujat-edu-journal-explanation-text` | single_item | agreement_explanation_text |  |
 | `ujat-edu-journal-volunteer-info` | single_item | user_info | 봉사자 정보 |
-| `ujat-edu-journal-education-info` | single_item | ujat_journal_education_info | 교육 정보 |
+| `ujat-edu-journal-education-info` | single_item | ujat_journal_education_info | 교육 일정 |
 | `ujat-edu-journal-session-1` | single_item | session_plan_short_essay | 1차시 교육 일지 |
 | `ujat-edu-journal-session-2` | single_item | session_plan_short_essay | 2차시 교육 일지 |
 | `ujat-edu-journal-session-3` | single_item | session_plan_short_essay | 3차시 교육 일지 |
