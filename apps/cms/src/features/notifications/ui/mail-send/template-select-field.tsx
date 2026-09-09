@@ -14,6 +14,7 @@ type TemplateSelectFieldProps = {
   templates?: MailTemplateItem[]
   disabled?: boolean
   onSelect: (template: MailTemplateItem) => void
+  isTemplateUsable?: (template: MailTemplateItem) => boolean
 }
 
 export function TemplateSelectField({
@@ -21,6 +22,7 @@ export function TemplateSelectField({
   templates = [],
   disabled,
   onSelect,
+  isTemplateUsable,
 }: TemplateSelectFieldProps) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [previewTemplate, setPreviewTemplate] = useState<MailTemplateItem | null>(null)
@@ -83,6 +85,7 @@ export function TemplateSelectField({
           onClose={handlePickerClose}
           onPreview={setPreviewTemplate}
           onUse={handleUse}
+          isTemplateUsable={isTemplateUsable}
           zIndex={PICKER_Z_INDEX}
         />
       ) : null}

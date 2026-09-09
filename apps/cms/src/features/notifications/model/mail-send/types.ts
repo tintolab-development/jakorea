@@ -10,6 +10,14 @@ export const MAIL_SEND_DEFAULT_SENDER = {
 export type MailSendPurpose = typeof MAIL_SEND_PURPOSE
 export type MailSendTiming = 'immediate' | 'scheduled'
 export type MailSendParticipationType = 'participant' | 'volunteer' | 'instructor' | ''
+export type MailSendMemberType =
+  | 'general'
+  | 'school_teacher'
+  | 'instructor'
+  | 'teacher_instructor'
+  | 'admin'
+  | ''
+export type MailSendRecipientTypeMode = 'participation' | 'member'
 export type MailSendRecipientSource = 'program' | 'manual'
 
 export type MailSendProgram = {
@@ -21,6 +29,7 @@ export type MailSendProgram = {
 export type MailSendRecipient = {
   id: string
   participationType: MailSendParticipationType
+  memberType?: MailSendMemberType
   /** BE typeLabel 우선 표시 */
   typeLabel?: string
   name: string
@@ -31,7 +40,7 @@ export type MailSendRecipient = {
 }
 
 export type MailSendRecipientSearchParams = {
-  typeValue: MailSendParticipationType | ''
+  typeValue: string
   keyword: string
   page: number
 }

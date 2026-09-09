@@ -84,13 +84,26 @@ describe('buildSmsSendCreateRequest', () => {
     })
   })
 
-  it('rejects all-program send', () => {
-    expect(() =>
-      buildSmsSendCreateRequest({
-        draft: draft({ programId: SMS_SEND_ALL_PROGRAM_ID }),
-        templateId: 101,
-      })
-    ).toThrow('대상 프로그램을 선택하세요.')
+  it('omits programId for all-program send', () => {
+    const request = buildSmsSendCreateRequest({
+      draft: draft({
+        programId: SMS_SEND_ALL_PROGRAM_ID,
+        recipients: [
+          {
+            id: 'manual-1',
+            participationType: '',
+            memberType: '',
+            name: '직접',
+            phone: '010-3333-4444',
+            source: 'manual',
+            actorType: 'DIRECT',
+          },
+        ],
+      }),
+      templateId: 101,
+    })
+    expect(request).not.toHaveProperty('programId')
+    expect(request.templateId).toBe(101)
   })
 
   it('rejects non-numeric program id', () => {
@@ -130,12 +143,35 @@ describe('buildSmsSendCreateRequest', () => {
 
 describe('validateSmsSendDraft', () => {
   it('requires program, template, sender phone, schedule, recipients, subject, and body', () => {
-    expect(validateSmsSendDraft(draft({ programId: SMS_SEND_ALL_PROGRAM_ID }))).toBe(
-      '대상 프로그램을 선택하세요.'
-    )
+    expect(validateSmsSendDraft(draft({ programId: '' }))).toBe('대상 프로그램을 선택하세요.')
     expect(validateSmsSendDraft(draft({ programId: 'prog-coy-2026' }))).toBe(
       '대상 프로그램을 선택하세요.'
     )
+    expect(
+      validateSmsSendDraft(
+        draft({
+          programId: SMS_SEND_ALL_PROGRAM_ID,
+        })
+      )
+    ).toBe('대상 프로그램이 미선택일 때는 직접 입력 수신자만 사용할 수 있습니다.')
+    expect(
+      validateSmsSendDraft(
+        draft({
+          programId: SMS_SEND_ALL_PROGRAM_ID,
+          recipients: [
+            {
+              id: 'manual-1',
+              participationType: '',
+              memberType: '',
+              name: '',
+              phone: '01012345678',
+              source: 'manual',
+              actorType: 'DIRECT',
+            },
+          ],
+        })
+      )
+    ).toBeNull()
     expect(validateSmsSendDraft(draft({ templateId: '' }))).toBe('템플릿을 선택하세요.')
     expect(validateSmsSendDraft(draft({ senderPhone: '  ' }))).toBe('발신 번호를 입력하세요.')
     expect(validateSmsSendDraft(draft({ senderPhone: '1234' }))).toBe(

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -24,9 +24,23 @@ import {
   useSmsRecipientCandidatesQuery,
   useSmsSendTemplatePickerQuery,
   useSmsSenderProfilesQuery,
+  useSmsTemplateVariablesQuery,
 } from '@/features/notifications/hooks/use-sms-send-queries'
 import { useNotificationSendProgramsQuery } from '@/features/notifications/hooks/use-send-programs-query'
-import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
+import {
+  canSelectNotificationSendTemplate,
+  isNotificationSendAllProgram,
+  isNotificationSendProgramUnset,
+  parseNotificationSendProgramId,
+} from '@/features/notifications/model/send-program-id'
+import { canUseNotificationSendTemplateForProgram } from '@/features/notifications/model/shared/template-usable-for-program'
+import { SMS_SEND_ALL_PROGRAM_ID } from '@/features/notifications/model/sms-send/types'
+import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
+import { isNotificationCatalogVariableDisabled } from '@/features/notifications/model/shared/catalog-variable-disabled'
+import {
+  buildNotificationTemplateVariablesQuery,
+  inferUniqueRecipientTypeValue,
+} from '@/features/notifications/model/shared/template-variables-query'
 import {
   createManualRecipient,
   resolveSmsSendRecipientTypeMode,
@@ -35,6 +49,7 @@ import {
   toSmsSendParticipantTypeApi,
 } from '@/features/notifications/model/sms-send/recipients'
 import { type SmsSendRecipientSearchParams } from '@/features/notifications/model/sms-send/types'
+import { VariablesPanel } from '@/features/notifications/ui/mail-template/variables-panel'
 import { PreviewModal } from '@/features/notifications/ui/sms-template/preview-modal'
 import { ProgramSelectField } from '@/features/notifications/ui/mail-send/program-select-field'
 import { SendScheduleField } from '@/features/notifications/ui/shared/send-schedule-field'
@@ -123,6 +138,30 @@ export function SendFullpageModal({
   const programNumericId = parseNotificationSendProgramId(form.programId)
   const recipientTypeMode = resolveSmsSendRecipientTypeMode(form.programId)
   const typeColumnTitle = smsSendRecipientTypeColumnTitle(recipientTypeMode)
+
+  const variablesTypeValue = useMemo(() => {
+    const fromFilter = recipientSearch.typeValue.trim()
+    if (fromFilter) return fromFilter
+    if (recipientTypeMode === 'participation') {
+      return inferUniqueRecipientTypeValue(
+        form.recipients.map(item => item.participationType)
+      )
+    }
+    return inferUniqueRecipientTypeValue(form.recipients.map(item => item.memberType))
+  }, [form.recipients, recipientSearch.typeValue, recipientTypeMode])
+
+  const templateVariablesQuery = useMemo(
+    () =>
+      buildNotificationTemplateVariablesQuery({
+        programId: programNumericId,
+        recipientTypeMode,
+        typeValue: variablesTypeValue,
+        toParticipantTypeApi: toSmsSendParticipantTypeApi,
+        toMemberTypeApi: toSmsSendMemberTypeApi,
+      }),
+    [programNumericId, recipientTypeMode, variablesTypeValue]
+  )
+
   const candidatesQuery = useSmsRecipientCandidatesQuery(
     {
       programId: programNumericId,
@@ -138,7 +177,59 @@ export function SendFullpageModal({
     },
     open && recipientSelectOpen
   )
+  const variablesQuery = useSmsTemplateVariablesQuery(templateVariablesQuery, open && remote)
+  const variableGroups = useMemo(
+    () => groupMailTemplateVariablesFromCatalog(variablesQuery.data ?? []),
+    [variablesQuery.data]
+  )
+  const isCatalogItemDisabled = useCallback(
+    (label: string) => {
+      const found = (variablesQuery.data ?? []).find(item => item.key === label)
+      return isNotificationCatalogVariableDisabled(found, programNumericId)
+    },
+    [programNumericId, variablesQuery.data]
+  )
   const hasTemplates = templates.length > 0
+  const canPickTemplate = canSelectNotificationSendTemplate(form.programId) && hasTemplates
+  const isAllProgram = isNotificationSendAllProgram(form.programId)
+  const isProgramUnset = isNotificationSendProgramUnset(form.programId)
+
+  const isTemplateUsable = useCallback(
+    (template: (typeof templates)[number]) =>
+      canUseNotificationSendTemplateForProgram({
+        texts: [template.subject, template.bodyText],
+        catalog: variablesQuery.data,
+        programNumericId,
+      }),
+    [programNumericId, variablesQuery.data]
+  )
+
+  useEffect(() => {
+    if (!open || !form.templateId) return
+    const selected = templates.find(item => item.id === form.templateId)
+    if (!selected) return
+    if (!isTemplateUsable(selected)) {
+      form.clearTemplate()
+    }
+  }, [form.clearTemplate, form.templateId, isTemplateUsable, open, templates])
+
+  useEffect(() => {
+    if (!open || !remote || !variablesQuery.isError) return
+    showAlert({
+      title: '안내',
+      content: getNotificationsApiErrorMessage(
+        variablesQuery.error,
+        '템플릿 변수 목록을 불러오지 못했습니다.'
+      ),
+    })
+  }, [open, remote, showAlert, variablesQuery.error, variablesQuery.isError])
+
+  function handleDisabledVariableInsert() {
+    showAlert({
+      title: '안내',
+      content: '현재 프로그램/참여 유형에서는 사용할 수 없는 변수입니다.',
+    })
+  }
 
   function handleClose() {
     setPreviewOpen(false)
@@ -159,8 +250,16 @@ export function SendFullpageModal({
   }
 
   function handleOpenRecipientSelect() {
-    if (programNumericId == null) {
-      showAlert({ title: '안내', content: '프로그램을 먼저 선택하세요.' })
+    if (isProgramUnset) {
+      showAlert({ title: '안내', content: '대상 프로그램을 선택하세요.' })
+      return
+    }
+    if (isAllProgram || programNumericId == null) {
+      showAlert({
+        title: '안내',
+        content:
+          '대상 프로그램이 미선택일 때는 프로그램 참여 회원 후보를 조회할 수 없습니다. 수신자 직접 입력을 이용해 주세요.',
+      })
       return
     }
     setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
@@ -168,8 +267,8 @@ export function SendFullpageModal({
   }
 
   function handleOpenRecipientManual() {
-    if (programNumericId == null) {
-      showAlert({ title: '안내', content: '프로그램을 먼저 선택하세요.' })
+    if (isProgramUnset) {
+      showAlert({ title: '안내', content: '대상 프로그램을 선택하세요.' })
       return
     }
     setRecipientManualOpen(true)
@@ -307,7 +406,16 @@ export function SendFullpageModal({
                           <ProgramSelectField
                             value={form.programId || undefined}
                             programs={programs}
-                            onSelect={program => form.setProgramId(program.id)}
+                            onSelect={program => {
+                              form.setProgramId(program.id)
+                              form.clearRecipients()
+                              setSelectedRecipientIds([])
+                            }}
+                            onClearProgram={() => {
+                              form.setProgramId(SMS_SEND_ALL_PROGRAM_ID)
+                              form.clearRecipients()
+                              setSelectedRecipientIds([])
+                            }}
                           />
                         }
                       />
@@ -321,7 +429,8 @@ export function SendFullpageModal({
                           <TemplateSelectField
                             value={form.templateId}
                             templates={templates}
-                            disabled={!hasTemplates}
+                            disabled={!canPickTemplate}
+                            isTemplateUsable={isTemplateUsable}
                             onSelect={form.applyTemplate}
                           />
                         }
@@ -428,6 +537,14 @@ export function SendFullpageModal({
                   />
                 </section>
               </div>
+
+              <VariablesPanel
+                onInsert={form.insertVariable}
+                groups={variableGroups.length > 0 ? variableGroups : undefined}
+                onDisabledInsert={handleDisabledVariableInsert}
+                isItemDisabled={isCatalogItemDisabled}
+                itemDisabledReason="현재 프로그램/참여 유형에서는 사용할 수 없는 변수입니다."
+              />
             </div>
           </div>
         </div>

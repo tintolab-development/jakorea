@@ -14,12 +14,14 @@ type RecipientTableProps = {
   recipients: MailSendRecipient[]
   selectedIds: string[]
   onSelectedIdsChange: (ids: string[]) => void
+  typeColumnTitle?: string
 }
 
 export const RecipientTable = memo(function RecipientTable({
   recipients,
   selectedIds,
   onSelectedIdsChange,
+  typeColumnTitle = '유형',
 }: RecipientTableProps) {
   const needScroll =
     recipients.length * TABLE_ROW_HEIGHT + TABLE_HEADER_HEIGHT > TABLE_MAX_HEIGHT
@@ -35,7 +37,7 @@ export const RecipientTable = memo(function RecipientTable({
       render: (_value, _record, index) => recipients.length - index,
     },
     {
-      title: '유형',
+      title: typeColumnTitle,
       key: 'type',
       width: 140,
       align: 'center',

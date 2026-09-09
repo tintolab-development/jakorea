@@ -79,15 +79,33 @@ describe('validateMailSendDraft', () => {
     ).toBe('예약 시간은 현재 이후여야 합니다.')
   })
 
-  it('blocks send when all programs are selected', () => {
+  it('allows all-program with DIRECT recipients only', () => {
     expect(
       validateMailSendDraft(
         draft({
           programId: MAIL_SEND_ALL_PROGRAM_ID,
-          subject: '[JA Korea] #{프로그램명}',
+          subject: '[JA Korea] hello',
         })
       )
-    ).toBe('대상 프로그램을 선택하세요.')
+    ).toBe('대상 프로그램이 미선택일 때는 직접 입력 수신자만 사용할 수 있습니다.')
+
+    expect(
+      validateMailSendDraft(
+        draft({
+          programId: MAIL_SEND_ALL_PROGRAM_ID,
+          recipients: [
+            {
+              id: 'manual-1',
+              participationType: '',
+              name: '',
+              email: 'direct@jakorea.org',
+              source: 'manual',
+              actorType: 'DIRECT',
+            },
+          ],
+        })
+      )
+    ).toBeNull()
   })
 
   it('blocks send when program id is not numeric', () => {

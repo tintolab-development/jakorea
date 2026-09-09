@@ -167,7 +167,8 @@ export async function submitMailSend(input: {
   }
 
   const programId = parseNotificationSendProgramId(draft.programId)
-  if (programId == null) {
+  const isAllProgram = draft.programId?.trim().toLowerCase() === 'all'
+  if (!isAllProgram && programId == null) {
     throw new Error('대상 프로그램을 선택하세요.')
   }
 
@@ -178,11 +179,11 @@ export async function submitMailSend(input: {
   }
 
   const batchVariables = pickNonEmptySendVariables(variables)
-  const body: CreateRequest = {
+  const body = {
     batchName:
       (templateDisplayName || draft.subject).slice(0, 200).trim() || '메일 발송',
     templateId: numericTemplateId,
-    programId,
+    ...(programId != null ? { programId } : {}),
     scheduledAt: resolveScheduledAtForCreateRequest({
       sendTiming: draft.sendTiming,
       scheduledAt: draft.scheduledAt,
@@ -191,7 +192,7 @@ export async function submitMailSend(input: {
     senderProfileId: resolvedSenderProfileId,
     senderKey: draft.senderEmail.trim() || undefined,
     ...(batchVariables ? { variables: batchVariables } : {}),
-  }
+  } as CreateRequest
 
   await createSendBatchRemote(body, idempotencyKey)
 }

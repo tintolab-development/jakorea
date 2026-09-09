@@ -1,5 +1,5 @@
 import { CloseOutlined } from '@ant-design/icons'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -29,7 +29,18 @@ import {
   toAlimtalkSendParticipantTypeApi,
 } from '@/features/notifications/model/alimtalk-send/recipients'
 import { useNotificationSendProgramsQuery } from '@/features/notifications/hooks/use-send-programs-query'
-import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
+import {
+  canSelectNotificationSendTemplate,
+  isNotificationSendAllProgram,
+  isNotificationSendProgramUnset,
+  parseNotificationSendProgramId,
+} from '@/features/notifications/model/send-program-id'
+import { canUseNotificationSendTemplateForProgram } from '@/features/notifications/model/shared/template-usable-for-program'
+import {
+  buildNotificationTemplateVariablesQuery,
+  inferUniqueRecipientTypeValue,
+} from '@/features/notifications/model/shared/template-variables-query'
+import { ALIMTALK_SEND_ALL_PROGRAM_ID } from '@/features/notifications/model/alimtalk-send/types'
 import { categoryPathNames } from '@/features/notifications/lib/tree'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { isAlimtalkTemplateApproved } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
@@ -50,12 +61,14 @@ import {
   useAlimtalkRecipientCandidatesQuery,
   useAlimtalkSenderProfilesQuery,
   useAlimtalkSendTemplatePickerQuery,
+  useAlimtalkTemplateVariablesQuery,
 } from '@/features/notifications/hooks/use-alimtalk-send-queries'
 import {
   useAlimtalkCategoryTreeQuery,
   useAlimtalkTemplateDetailQuery,
   useAlimtalkTemplatePreviewQuery,
 } from '@/features/notifications/hooks/use-alimtalk-template-tree-query'
+import { useInvalidateAlimtalkSendHistory } from '@/features/notifications/hooks/use-alimtalk-send-history-query'
 import {
   collectTemplatePlaceholderKeys,
 } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
@@ -116,6 +129,7 @@ type SendFullpageModalProps = {
 
 export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFullpageModalProps) {
   const { showAlert } = useCmsAlert()
+  const invalidateHistory = useInvalidateAlimtalkSendHistory()
   const remote = shouldUseAlimtalkSendRemoteApi()
   const [programId, setProgramId] = useState<string | undefined>(undefined)
   const [templateId, setTemplateId] = useState<string | undefined>()
@@ -168,9 +182,55 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const pickerTemplates = templatesQuery.data ?? []
 
   const programNumericId = parseNotificationSendProgramId(programId)
+  const isAllProgram = isNotificationSendAllProgram(programId)
+  const isProgramUnset = isNotificationSendProgramUnset(programId)
+  const canPickTemplate =
+    canSelectNotificationSendTemplate(programId) && pickerTemplates.length > 0
 
   const recipientTypeMode = resolveAlimtalkSendRecipientTypeMode(programId)
   const typeColumnTitle = alimtalkSendRecipientTypeColumnTitle(recipientTypeMode)
+
+  const variablesTypeValue = useMemo(() => {
+    const fromFilter = recipientSearch.typeValue.trim()
+    if (fromFilter) return fromFilter
+    if (recipientTypeMode === 'participation') {
+      return inferUniqueRecipientTypeValue(recipients.map(item => item.participationType))
+    }
+    return inferUniqueRecipientTypeValue(recipients.map(item => item.memberType))
+  }, [recipientSearch.typeValue, recipientTypeMode, recipients])
+
+  const templateVariablesQuery = useMemo(
+    () =>
+      buildNotificationTemplateVariablesQuery({
+        programId: programNumericId,
+        recipientTypeMode,
+        typeValue: variablesTypeValue,
+        toParticipantTypeApi: toAlimtalkSendParticipantTypeApi,
+        toMemberTypeApi: toAlimtalkSendMemberTypeApi,
+      }),
+    [programNumericId, recipientTypeMode, variablesTypeValue]
+  )
+
+  const variablesQuery = useAlimtalkTemplateVariablesQuery(
+    templateVariablesQuery,
+    open && remote
+  )
+
+  const isTemplateUsable = useCallback(
+    (template: AlimtalkTemplateItem) =>
+      canUseNotificationSendTemplateForProgram({
+        texts: [
+          template.content,
+          template.titleTemplate,
+          template.extraInfo,
+          template.emphasisTitle,
+          template.emphasisSubtitle,
+        ],
+        catalog: variablesQuery.data,
+        programNumericId,
+      }),
+    [programNumericId, variablesQuery.data]
+  )
 
   const candidatesQuery = useAlimtalkRecipientCandidatesQuery(
     {
@@ -336,10 +396,10 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
 
   const handleManualRecipients = () => {
     if (!requireProfileAndTemplate()) return
-    if (!programNumericId) {
+    if (isProgramUnset) {
       showAlert({
         title: '안내',
-        content: '프로그램을 먼저 선택하세요.',
+        content: '대상 프로그램을 선택하세요.',
       })
       return
     }
@@ -348,10 +408,18 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
 
   const handleSetRecipients = () => {
     if (!requireProfileAndTemplate()) return
-    if (!programNumericId) {
+    if (isProgramUnset) {
       showAlert({
         title: '안내',
-        content: '프로그램을 먼저 선택하세요.',
+        content: '대상 프로그램을 선택하세요.',
+      })
+      return
+    }
+    if (isAllProgram || !programNumericId) {
+      showAlert({
+        title: '안내',
+        content:
+          '대상 프로그램이 미선택일 때는 프로그램 참여 회원 후보를 조회할 수 없습니다. 수신자 직접 입력을 이용해 주세요.',
       })
       return
     }
@@ -389,7 +457,25 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       showAlert({ title: '필수 입력 안내', content: '수신자를 설정하세요.' })
       return
     }
-    if (!programNumericId) {
+    if (isProgramUnset) {
+      showAlert({
+        title: '필수 입력 안내',
+        content: '대상 프로그램을 선택하세요.',
+      })
+      return
+    }
+    if (isAllProgram) {
+      const hasProgramBound = recipients.some(
+        item => item.source !== 'manual' && item.actorType !== 'DIRECT'
+      )
+      if (hasProgramBound) {
+        showAlert({
+          title: '필수 입력 안내',
+          content: '대상 프로그램이 미선택일 때는 직접 입력 수신자만 사용할 수 있습니다.',
+        })
+        return
+      }
+    } else if (!programNumericId) {
       showAlert({
         title: '필수 입력 안내',
         content: '대상 프로그램을 선택하세요.',
@@ -403,7 +489,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     if (!selectedTemplate || !selectedSender) return
     setSendConfirmOpen(false)
 
-    if (!programNumericId) {
+    if (isProgramUnset || (!isAllProgram && !programNumericId)) {
       showAlert({
         title: '필수 입력 안내',
         content: '대상 프로그램을 선택하세요.',
@@ -427,6 +513,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         idempotencyKey: idempotencyKeyRef.current,
       })
       idempotencyKeyRef.current = createIdempotencyKey()
+      await invalidateHistory()
       showAlert({
         title: '알림톡 발송 완료',
         content: '알림톡 발송이 완료되었습니다.',
@@ -508,7 +595,16 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                       <ProgramSelectField
                         value={programId}
                         programs={programs}
-                        onSelect={program => setProgramId(program.id)}
+                        onSelect={program => {
+                          setProgramId(program.id)
+                          setRecipients([])
+                          setSelectedRecipientIds([])
+                        }}
+                        onClearProgram={() => {
+                          setProgramId(ALIMTALK_SEND_ALL_PROGRAM_ID)
+                          setRecipients([])
+                          setSelectedRecipientIds([])
+                        }}
                       />
                     }
                   />
@@ -539,6 +635,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                       <TemplateSelectField
                         value={templateId}
                         templates={pickerTemplates}
+                        disabled={!canPickTemplate}
+                        isTemplateUsable={isTemplateUsable}
                         onSelect={handleSelectTemplate}
                       />
                     }

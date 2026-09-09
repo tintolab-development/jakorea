@@ -17,6 +17,7 @@ type TemplateSelectModalProps = {
   onClose: () => void
   onPreview: (template: AlimtalkTemplateItem) => void
   onUse: (template: AlimtalkTemplateItem) => void
+  isTemplateUsable?: (template: AlimtalkTemplateItem) => boolean
   zIndex?: number
 }
 
@@ -35,6 +36,7 @@ export function TemplateSelectModal({
   onClose,
   onPreview,
   onUse,
+  isTemplateUsable,
   zIndex,
 }: TemplateSelectModalProps) {
   const { showAlert } = useCmsAlert()
@@ -65,6 +67,13 @@ export function TemplateSelectModal({
       })
       return
     }
+    if (isTemplateUsable?.(template) === false) {
+      showAlert({
+        title: '안내',
+        content: '현재 프로그램에서는 사용할 수 없는 변수가 포함된 템플릿입니다.',
+      })
+      return
+    }
     onUse(template)
   }
 
@@ -90,7 +99,8 @@ export function TemplateSelectModal({
       className: 'template-select-modal__col-actions',
       onHeaderCell: () => ({ className: 'template-select-modal__col-actions' }),
       render: (_, record) => {
-        const canUse = isAlimtalkTemplateApproved(record)
+        const canUse =
+          isAlimtalkTemplateApproved(record) && isTemplateUsable?.(record) !== false
         return (
           <div
             className="template-select-modal__row-actions"

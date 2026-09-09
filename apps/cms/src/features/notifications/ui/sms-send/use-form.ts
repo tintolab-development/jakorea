@@ -59,6 +59,16 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     setComposeVersion(version => version + 1)
   }, [])
 
+  const clearTemplate = useCallback(() => {
+    setTemplateId(undefined)
+    setMessageType('SMS')
+    setAttachmentFileNames([])
+    subjectRef.current = ''
+    bodyTextRef.current = ''
+    setComposeSeed({ subject: '', bodyText: '' })
+    setComposeVersion(version => version + 1)
+  }, [])
+
   const addRecipients = useCallback((incoming: SmsSendRecipient[]) => {
     setRecipients(prev => mergeSmsSendRecipients(prev, incoming))
   }, [])
@@ -73,6 +83,10 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
   const removeRecipients = useCallback((ids: string[]) => {
     const removeIds = new Set(ids)
     setRecipients(prev => prev.filter(item => !removeIds.has(item.id)))
+  }, [])
+
+  const clearRecipients = useCallback(() => {
+    setRecipients([])
   }, [])
 
   const getDraft = useCallback((): SmsSendDraft => {
@@ -112,6 +126,14 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     []
   )
 
+  const insertVariable = useCallback((label: string) => {
+    const token = `#{${label}}`
+    const next = `${bodyTextRef.current}${token}`
+    bodyTextRef.current = next
+    setComposeSeed(prev => ({ ...prev, bodyText: next }))
+    setComposeVersion(version => version + 1)
+  }, [])
+
   return {
     programId,
     templateId,
@@ -133,11 +155,14 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     setScheduledAt,
     setRecipients,
     applyTemplate,
+    clearTemplate,
     addRecipients,
     replaceManualRecipients,
     removeRecipients,
+    clearRecipients,
     getDraft,
     validateRequired,
     readComposeSnapshot,
+    insertVariable,
   }
 }

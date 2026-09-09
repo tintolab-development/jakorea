@@ -61,6 +61,12 @@ export function useMailSendForm(open: boolean) {
     setComposeNonce(key => key + 1)
   }, [])
 
+  const clearTemplate = useCallback(() => {
+    setTemplateId(undefined)
+    setComposeInitial(EMPTY_MAIL_COMPOSE)
+    setComposeNonce(key => key + 1)
+  }, [])
+
   const addRecipients = useCallback((incoming: MailSendRecipient[]) => {
     setRecipients(prev => mergeMailSendRecipients(prev, incoming))
   }, [])
@@ -72,6 +78,10 @@ export function useMailSendForm(open: boolean) {
   const removeRecipients = useCallback((ids: string[]) => {
     const remove = new Set(ids)
     setRecipients(prev => prev.filter(item => !remove.has(item.id)))
+  }, [])
+
+  const clearRecipients = useCallback(() => {
+    setRecipients([])
   }, [])
 
   const getDraft = useCallback(() => {
@@ -143,9 +153,11 @@ export function useMailSendForm(open: boolean) {
     handleAttachmentAdd: compose.handleAttachmentAdd,
     handleAttachmentRemove: compose.handleAttachmentRemove,
     applyTemplate,
+    clearTemplate,
     addRecipients,
     addManualEmails,
     removeRecipients,
+    clearRecipients,
     getDraft,
     getPreviewAttachments: compose.getPreviewAttachments,
     getPreviewRecipient,

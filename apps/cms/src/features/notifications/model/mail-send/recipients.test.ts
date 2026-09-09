@@ -78,14 +78,18 @@ describe('mergeMailSendRecipients', () => {
 describe('filterMailSendRecipients', () => {
   it('filters by participation type and keyword', () => {
     expect(
-      filterMailSendRecipients(recipients, { participationType: 'volunteer', keyword: '' }).map(
-        item => item.id
-      )
+      filterMailSendRecipients(recipients, {
+        typeMode: 'participation',
+        typeValue: 'volunteer',
+        keyword: '',
+      }).map(item => item.id)
     ).toEqual(['b'])
     expect(
-      filterMailSendRecipients(recipients, { participationType: '', keyword: '홍' }).map(
-        item => item.id
-      )
+      filterMailSendRecipients(recipients, {
+        typeMode: 'participation',
+        typeValue: '',
+        keyword: '홍',
+      }).map(item => item.id)
     ).toEqual(['a'])
   })
 })
@@ -96,6 +100,7 @@ describe('createManualRecipient', () => {
     expect(createManualRecipient('  rkdtk@naver.com ')).toEqual({
       id: 'manual-rkdtk@naver.com',
       participationType: '',
+      memberType: '',
       typeLabel: '',
       name: '',
       email: 'rkdtk@naver.com',
