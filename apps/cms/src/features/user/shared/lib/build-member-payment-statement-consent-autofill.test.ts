@@ -16,7 +16,7 @@ describe('buildMemberPaymentStatementBasicInfoAutofill', () => {
         schoolName: '○○고등학교',
       })
     ).toEqual({
-      paymentPurpose: '강사비 또는 활동비 지급',
+      paymentPurpose: '강의비 또는 활동비 지급',
       nameKo: '홍길동',
       residentFront: '900501',
       addressRoad: '서울특별시 강남구',
@@ -36,7 +36,7 @@ describe('buildMemberPaymentStatementBasicInfoAutofill', () => {
         memberType: 'general',
       })
     ).toEqual({
-      paymentPurpose: '강사비 또는 활동비 지급',
+      paymentPurpose: '강의비 또는 활동비 지급',
       nameKo: '김철수',
       accountHolder: '김철수',
       noAffiliation: true,
