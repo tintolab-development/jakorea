@@ -430,7 +430,7 @@ export function UjatBasicInfoParagraph() {
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
-                  withAllOption={false}
+                  withAllOption
                   inputSize="medium"
                   placeholder="후원사를 선택하세요"
                   width={240}
@@ -452,7 +452,7 @@ export function UjatBasicInfoParagraph() {
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
-                  withAllOption={false}
+                  withAllOption
                   inputSize="medium"
                   placeholder="후원사 담당자를 선택하세요"
                   width={240}

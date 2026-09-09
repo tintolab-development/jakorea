@@ -6,7 +6,12 @@ export const TRAINED_TEACHERS_REGISTRATION_REP_KO = '1사1교 경제금융교육
 export const TRAINED_TEACHERS_REGISTRATION_REP_EN =
   '1 Company 1 School Economics and Finance Education'
 
-export const TRAINED_TEACHERS_REGISTRATION_ALL_VALUE = '__all__'
+/** CmsSelect 「전체」 옵션과 동일 — value `''` (라벨만 전체) */
+export const TRAINED_TEACHERS_REGISTRATION_ALL_VALUE = ''
+
+export function normalizeTrainedTeachersAllSelectValue(value: string): string {
+  return value === '__all__' || value === 'ALL' ? TRAINED_TEACHERS_REGISTRATION_ALL_VALUE : value
+}
 
 export const TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE = '__economy_1c1s_main__'
 export const TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_OPTION = {

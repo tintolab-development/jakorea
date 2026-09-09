@@ -11,6 +11,7 @@ import {
 import {
   TRAINED_TEACHERS_REGISTRATION_ALL_VALUE,
   TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX,
+  normalizeTrainedTeachersAllSelectValue,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 
 type ControlledSponsorProps = {
@@ -47,10 +48,16 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   )
 
   const isSponsorControlled = onSponsorIdChange != null
-  const sponsorId = isSponsorControlled ? (sponsorIdProp ?? '') : localSponsorId
-  const managerContactId = isSponsorControlled
+  const rawSponsorId = isSponsorControlled ? (sponsorIdProp ?? '') : localSponsorId
+  const rawManagerContactId = isSponsorControlled
     ? (sponsorContactIdProp ?? '')
     : localManagerContactId
+  const sponsorId = trainedTeachersDefaults
+    ? normalizeTrainedTeachersAllSelectValue(rawSponsorId)
+    : rawSponsorId
+  const managerContactId = trainedTeachersDefaults
+    ? normalizeTrainedTeachersAllSelectValue(rawManagerContactId)
+    : rawManagerContactId
 
   const setSponsorId = (next: string) => {
     setLocalSponsorId(next)
@@ -72,13 +79,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     !isAllSponsor && Boolean(sponsorId)
   )
 
-  const sponsorOptions = useMemo(
-    () =>
-      trainedTeachersDefaults
-        ? [{ value: TRAINED_TEACHERS_REGISTRATION_ALL_VALUE, label: '전체' }, ...sponsorApiOptions]
-        : sponsorApiOptions,
-    [sponsorApiOptions, trainedTeachersDefaults]
-  )
+  const sponsorOptions = sponsorApiOptions
 
   const managerOptions = useMemo(() => {
     if (isAllSponsor) {
@@ -98,7 +99,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
         edit={
           <div className="detail-info-form-inputs-wrapper-no-gap">
             <CmsSelect
-              withAllOption={false}
+              withAllOption={trainedTeachersDefaults}
               inputSize="medium"
               placeholder="후원사를 선택하세요"
               width={240}

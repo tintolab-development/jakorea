@@ -39,6 +39,7 @@ import { ProgramRegistrationBasicInfoTitleFields } from '@/features/template/ui/
 import {
   TRAINED_TEACHERS_REGISTRATION_ALL_VALUE,
   TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX,
+  normalizeTrainedTeachersAllSelectValue,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './program-registration-paragraph.css'
@@ -145,10 +146,13 @@ export function ProgramRegistrationBasicInfoParagraph({
     `${overlayPrefix}.educationVenueDetail`,
     ''
   )
-  const [educationCourse, setEducationCourse] = useProgramRegistrationOverlayKv(
+  const [educationCourseRaw, setEducationCourse] = useProgramRegistrationOverlayKv(
     `${overlayPrefix}.educationCourse`,
     trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_ALL_VALUE : ''
   )
+  const educationCourse = trainedTeachersDefaults
+    ? normalizeTrainedTeachersAllSelectValue(educationCourseRaw)
+    : educationCourseRaw
   const [ipOwned, setIpOwned] = useProgramRegistrationOverlayKv(
     `${overlayPrefix}.ipOwned`,
     trainedTeachersDefaults ? 'ja' : ''
@@ -180,12 +184,7 @@ export function ProgramRegistrationBasicInfoParagraph({
     )
   }
 
-  const educationCourseOptions = trainedTeachersDefaults
-    ? [
-        { value: TRAINED_TEACHERS_REGISTRATION_ALL_VALUE, label: '전체' },
-        ...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS,
-      ]
-    : [...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]
+  const educationCourseOptions = [...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]
 
   return (
     <>
@@ -354,10 +353,12 @@ export function ProgramRegistrationBasicInfoParagraph({
                 <CmsSelect
                   inputSize="medium"
                   placeholder="전체"
-                  withAllOption={false}
+                  withAllOption={trainedTeachersDefaults}
                   width={240}
                   options={educationCourseOptions}
-                  value={educationCourse || undefined}
+                  value={
+                    trainedTeachersDefaults ? educationCourse : educationCourse || undefined
+                  }
                   onChange={v => setEducationCourse(String(v ?? ''))}
                 />
               </div>
