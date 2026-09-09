@@ -48,6 +48,6 @@ export interface InstructorCmsProfile {
   essays?: Essays;
   /** 기본 강사비 등급 */
   defaultFeeGrade?: string;
-  /** 기본 JA 평가 등급 */
-  defaultJaGrade?: string;
+  /** 서버가 JA 평가/감점 이력으로 산정한 현재 등급. 요청에서 직접 변경할 수 없습니다. */
+  readonly defaultJaGrade?: string;
 }

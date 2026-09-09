@@ -12,4 +12,9 @@ export interface AdminMemberDeleteRequest {
      * @maxLength 500
      */
   reason: string;
+  /**
+     * @minLength 0
+     * @maxLength 30
+     */
+  confirmationText: string;
 }

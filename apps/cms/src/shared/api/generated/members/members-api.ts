@@ -19,6 +19,7 @@ import type {
   AdminCommentResponse,
   AdminCommentUpdateRequest,
   AdminMemberBasicInfoUpdateRequest,
+  AdminMemberBulkDeleteRequest,
   AdminMemberCommentCreateRequest,
   AdminMemberDeleteRequest,
   AdminPermissionResponse,
@@ -51,7 +52,9 @@ import type {
   FileDownloadJobResponse,
   FilledDocumentResponse,
   GetApplicationEnrollmentSummaryParams,
+  GetInstructorPrivacyAvailableActionsParams,
   GetLectureAttendanceParams,
+  GetMemberPrivacyAvailableActionsParams,
   IndividualMemberDetailResponse,
   InstructorDetailResponse,
   InstructorMemberDetailResponse,
@@ -111,6 +114,33 @@ import type {
 } from './schemas';
 
 import { customInstance } from '../../orval-mutator';
+
+// https://stackoverflow.com/questions/49579094/typescript-conditional-types-filter-out-readonly-properties-pick-only-requir/49579497#49579497
+type IfEquals<X, Y, A = X, B = never> = (<T>() => T extends X ? 1 : 2) extends <
+T,
+>() => T extends Y ? 1 : 2
+? A
+: B;
+
+type WritableKeys<T> = {
+[P in keyof T]-?: IfEquals<
+  { [Q in P]: T[P] },
+  { -readonly [Q in P]: T[P] },
+  P
+>;
+}[keyof T];
+
+type UnionToIntersection<U> =
+  (U extends any ? (k: U)=>void : never) extends ((k: infer I)=>void) ? I : never;
+type DistributeReadOnlyOverUnions<T> = T extends any ? NonReadonly<T> : never;
+
+type Writable<T> = Pick<T, WritableKeys<T>>;
+type NonReadonly<T> = [T] extends [UnionToIntersection<T>] ? {
+  [P in keyof Writable<T>]: T[P] extends object
+    ? NonReadonly<NonNullable<T[P]>>
+    : T[P];
+} : DistributeReadOnlyOverUnions<T>;
+
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -230,8 +260,8 @@ const saveProgramRoles = (
 /**
  * ### 이 API가 하는 일
  * - 화면/운영에서 사용하는 구현 API
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/admin-roles/{roleCode}/permissions`
  *
@@ -284,8 +314,8 @@ const getRolePermissions = (
 /**
  * ### 이 API가 하는 일
  * - 화면/운영에서 사용하는 구현 API
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `PUT /api/admin/admin-roles/{roleCode}/permissions`
  *
@@ -340,7 +370,7 @@ const updateRolePermissions = (
 
 /**
  * ### 이 API가 하는 일
- * - CMS 관리자 프로그램 담당 역할 목록 조회
+ * - CMS 관리자 프로그램 담당 이력 목록 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
  * - 호출 방식: `GET /api/admin/admin-accounts/{adminAccountId}/program-roles`
@@ -378,8 +408,8 @@ const updateRolePermissions = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: 회원 memberId/e-mail 브리지가 아닌 admin_account.id canonical 경계
- * @summary CMS 관리자 프로그램 담당 역할 목록 조회
+ * - 검토 메모: program_admin_assignment_history 기반 과거/현재 담당 프로그램 조회; live authorization과 분리
+ * @summary CMS 관리자 프로그램 담당 이력 목록 조회
  */
 const listProgramRoles1 = (
     adminAccountId: number,
@@ -449,9 +479,64 @@ const saveProgramRoles1 = (
 
 /**
  * ### 이 API가 하는 일
- * - POST /api/admin/users/{memberId}/privacy/unmask
+ * - 회원 프로그램 이력 일괄 삭제
  * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/users/{memberId}/program-history/bulk-delete`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MEMBER_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 선택 참여이력을 신청원장/참여/실적 정합성 규칙으로 최대 100건 처리
+ * @summary 회원 프로그램 이력 일괄 삭제
+ */
+const bulkDeleteProgramHistory = (
+    memberId: number,
+    bulkDecisionRequest: BulkDecisionRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseBulkActionResponse>>,) => {
+      return customInstance<ApiResponseBulkActionResponse>(
+      {url: `/api/admin/users/${memberId}/program-history/bulk-delete`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkDecisionRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - POST /api/admin/users/{memberId}/privacy/unmask
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/{memberId}/privacy/unmask`
  *
@@ -507,8 +592,8 @@ const unmaskMemberPrivacy = (
 /**
  * ### 이 API가 하는 일
  * - 강사 회원 역할 상세 원문 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/{memberId}/instructor/privacy/unmask`
  *
@@ -619,8 +704,8 @@ const unmaskInstructorPrivacy = (
 /**
  * ### 이 API가 하는 일
  * - 개인 회원 역할 상세 원문 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/{memberId}/individual/privacy/unmask`
  *
@@ -676,8 +761,8 @@ const unmaskIndividualMemberPrivacy = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/users/{memberId}/delete
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/{memberId}/delete`
  *
@@ -789,8 +874,8 @@ const consentFilledDocument = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/comments`
  *
@@ -845,8 +930,8 @@ const listMemberComments = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/users/{memberId}/comments
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/{memberId}/comments`
  *
@@ -902,8 +987,8 @@ const createMemberComment = (
 /**
  * ### 이 API가 하는 일
  * - 학교·기관 회원 사전 등록
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/pre-register/school`
  *
@@ -959,8 +1044,8 @@ const preRegisterSchool = (
 /**
  * ### 이 API가 하는 일
  * - 강사 회원 사전 등록
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/pre-register/instructor`
  *
@@ -1002,7 +1087,7 @@ const preRegisterSchool = (
  * @summary 강사 회원 사전 등록
  */
 const preRegisterInstructor = (
-    adminPreRegisterInstructorRequest: AdminPreRegisterInstructorRequest,
+    adminPreRegisterInstructorRequest: NonReadonly<AdminPreRegisterInstructorRequest>,
  options?: SecondParameter<typeof customInstance<MemberWorkflowResponse>>,) => {
       return customInstance<MemberWorkflowResponse>(
       {url: `/api/admin/users/pre-register/instructor`, method: 'POST',
@@ -1015,8 +1100,8 @@ const preRegisterInstructor = (
 /**
  * ### 이 API가 하는 일
  * - 개인 회원 사전 등록
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/pre-register/individual`
  *
@@ -1071,8 +1156,8 @@ const preRegisterIndividual = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/users/pre-register-conflicts/{conflictId}/resolve
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/pre-register-conflicts/{conflictId}/resolve`
  *
@@ -1169,12 +1254,12 @@ const resolvePreRegisterConflict = (
  * @summary POST /api/admin/users/bulk-delete
  */
 const bulkDeleteAndAnonymize = (
-    bulkDecisionRequest: BulkDecisionRequest,
+    adminMemberBulkDeleteRequest: AdminMemberBulkDeleteRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseBulkActionResponse>>,) => {
       return customInstance<ApiResponseBulkActionResponse>(
       {url: `/api/admin/users/bulk-delete`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: bulkDecisionRequest
+      data: adminMemberBulkDeleteRequest
     },
       options);
     }
@@ -1413,7 +1498,7 @@ const bulkDeleteSchools = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: ADMIN_WRITE+MEMBER_WRITE 권한 필요
+ * - 필요 권한: ADMIN_READ 권한 필요
  * - 접근 범위: 관리자 CMS 권한 범위
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
@@ -1434,7 +1519,7 @@ const bulkDeleteSchools = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: typed MEMBER/ADMIN_ACCOUNT targets preserve canonical id namespaces
+ * - 검토 메모: entry gate ADMIN_READ; service requires CRUD_MEMBER_DELETE for MEMBER targets and ADMIN_WRITE for ADMIN_ACCOUNT targets; typed ids preserve canonical namespaces
  * @summary 전체 회원·관리자 혼합 일괄 삭제
  */
 const bulkDelete1 = (
@@ -1451,8 +1536,8 @@ const bulkDelete1 = (
 /**
  * ### 이 API가 하는 일
  * - 강사 권한 신청 재검토 대기 전환
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: members-permission (`members-permission`)
  * - 호출 방식: `POST /api/admin/instructor-role-requests/{requestId}/reset-pending`
  *
@@ -1560,8 +1645,8 @@ const resendNotification = (
 /**
  * ### 이 API가 하는 일
  * - 강사 권한 신청 반려
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `POST /api/admin/instructor-role-requests/{requestId}/reject`
  *
@@ -1727,8 +1812,8 @@ const cancelApproval = (
 /**
  * ### 이 API가 하는 일
  * - 강사 권한 신청 승인
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `POST /api/admin/instructor-role-requests/{requestId}/approve`
  *
@@ -1946,8 +2031,8 @@ const allocateCertificateSerial = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 승인 반려 건 재검토 대기 전환
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: members-permission (`members-permission`)
  * - 호출 방식: `POST /api/admin/admin-approval-requests/{adminAccountId}/reset-pending`
  *
@@ -2003,8 +2088,8 @@ const resetAdminApprovalToPending = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 승인 알림 재발송
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `POST /api/admin/admin-approval-requests/{adminAccountId}/resend-notification`
  *
@@ -2330,8 +2415,8 @@ const bulkApproveAdminApprovalRequests = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 목록 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/admin-accounts`
  *
@@ -2384,8 +2469,8 @@ const listAdmins = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 생성
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `POST /api/admin/admin-accounts`
  *
@@ -2441,7 +2526,7 @@ const createAdmin = (
  * ### 이 API가 하는 일
  * - 마스터 관리자 검증 후 관리자 계정 활성화 또는 반려
  * - API 분류: 시스템 진단/운영 검증 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: permission (`permission`)
  * - 호출 방식: `POST /api/admin/admin-accounts/{adminAccountId}/verify`
  *
@@ -2534,7 +2619,7 @@ const verifyAdmin = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: 2026-08-25 프론트 member-management handoff cross-check
+ * - 검토 메모: 선택 이력만 숨기며 현재 프로그램 접근권한은 변경하지 않음
  * @summary CMS 관리자 담당 프로그램 이력 일괄 삭제
  */
 const bulkDeleteProgramRoles = (
@@ -2866,7 +2951,7 @@ const bulkDeleteAdmins = (
  */
 const updateMemberBasicInfo = (
     memberId: number,
-    adminMemberBasicInfoUpdateRequest: AdminMemberBasicInfoUpdateRequest,
+    adminMemberBasicInfoUpdateRequest: NonReadonly<AdminMemberBasicInfoUpdateRequest>,
  options?: SecondParameter<typeof customInstance<UserResponse>>,) => {
       return customInstance<UserResponse>(
       {url: `/api/admin/users/${memberId}`, method: 'PATCH',
@@ -2879,8 +2964,8 @@ const updateMemberBasicInfo = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `PATCH /api/admin/users/{memberId}/external-identifiers/{provider}`
  *
@@ -3373,8 +3458,8 @@ const changeAdminStatus = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 role 변경
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `PATCH /api/admin/admin-accounts/{adminAccountId}/role`
  *
@@ -3594,8 +3679,8 @@ const updateAdminBasicInfo = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users`
  *
@@ -3649,8 +3734,8 @@ const listMembers = (
 /**
  * ### 이 API가 하는 일
  * - 교사 회원 역할 상세 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/teacher`
  *
@@ -3703,8 +3788,8 @@ const getTeacherMemberDetail = (
 /**
  * ### 이 API가 하는 일
  * - 학교·기관 회원 상세 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/school`
  *
@@ -3854,9 +3939,11 @@ const listMemberProgramHistory = (
  */
 const getMemberPrivacyAvailableActions = (
     memberId: number,
+    params?: GetMemberPrivacyAvailableActionsParams,
  options?: SecondParameter<typeof customInstance<RawPrivacyAvailableActionsResponse>>,) => {
       return customInstance<RawPrivacyAvailableActionsResponse>(
-      {url: `/api/admin/users/${memberId}/privacy/available-actions`, method: 'GET'
+      {url: `/api/admin/users/${memberId}/privacy/available-actions`, method: 'GET',
+        params
     },
       options);
     }
@@ -3916,8 +4003,8 @@ const downloadAllLectureReports = (
 /**
  * ### 이 API가 하는 일
  * - 강사 회원 상세 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/instructor`
  *
@@ -3970,8 +4057,8 @@ const getInstructorMemberDetail = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/instructor-profile`
  *
@@ -4066,9 +4153,11 @@ const getInstructorDetail = (
  */
 const getInstructorPrivacyAvailableActions = (
     memberId: number,
+    params?: GetInstructorPrivacyAvailableActionsParams,
  options?: SecondParameter<typeof customInstance<RawPrivacyAvailableActionsResponse>>,) => {
       return customInstance<RawPrivacyAvailableActionsResponse>(
-      {url: `/api/admin/users/${memberId}/instructor-profile/privacy/available-actions`, method: 'GET'
+      {url: `/api/admin/users/${memberId}/instructor-profile/privacy/available-actions`, method: 'GET',
+        params
     },
       options);
     }
@@ -4076,8 +4165,8 @@ const getInstructorPrivacyAvailableActions = (
 /**
  * ### 이 API가 하는 일
  * - 개인 회원 상세 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/individual`
  *
@@ -4130,8 +4219,8 @@ const getIndividualMemberDetail = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/external-identifiers`
  *
@@ -4184,8 +4273,8 @@ const externalIdentifiers = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/consent-records`
  *
@@ -4514,8 +4603,8 @@ const listAssignmentSubmissions = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/affiliated-teachers`
  *
@@ -4623,8 +4712,8 @@ const listMemberAdminPrograms = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 담당 역할 옵션 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: members-permission (`members-permission`)
  * - 호출 방식: `GET /api/admin/users/program-role-options`
  *
@@ -4678,8 +4767,8 @@ const listProgramRoleOptions = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/pre-register-conflicts`
  *
@@ -4890,8 +4979,8 @@ const listAllCmsMembersAndAdmins = (
 /**
  * ### 이 API가 하는 일
  * - 강사 권한 신청 목록 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/instructor-role-requests`
  *
@@ -4997,8 +5086,8 @@ const getDetail = (
 /**
  * ### 이 API가 하는 일
  * - 화면/운영에서 사용하는 구현 API
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/admin-roles`
  *
@@ -5051,8 +5140,8 @@ const listRoles = (
 /**
  * ### 이 API가 하는 일
  * - 화면/운영에서 사용하는 구현 API
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/admin-permissions`
  *
@@ -5106,8 +5195,8 @@ const listPermissions = (
 /**
  * ### 이 API가 하는 일
  * - 화면/운영에서 사용하는 구현 API
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/admin-permission-change-logs`
  *
@@ -5421,8 +5510,8 @@ const availableActions1 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 등록 약관·동의 이력 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/admin-accounts/{adminAccountId}/consent-records`
  *
@@ -5688,7 +5777,7 @@ const deleteAdminProgram = (
 
 /**
  * ### 이 API가 하는 일
- * - CMS 관리자 프로그램 담당 역할 해제
+ * - CMS 관리자 프로그램 담당 이력 숨김
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
  * - 호출 방식: `DELETE /api/admin/admin-accounts/{adminAccountId}/program-roles/{programId}`
@@ -5726,8 +5815,8 @@ const deleteAdminProgram = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: admin_account.id canonical write boundary
- * @summary CMS 관리자 프로그램 담당 역할 해제
+ * - 검토 메모: 이력 화면에서만 숨김; live program_admin_assignment 접근권한은 유지
+ * @summary CMS 관리자 프로그램 담당 이력 숨김
  */
 const deleteProgramRole = (
     adminAccountId: number,
@@ -5739,13 +5828,14 @@ const deleteProgramRole = (
       options);
     }
 
-return {listProgramRoles,saveProgramRoles,getRolePermissions,updateRolePermissions,listProgramRoles1,saveProgramRoles1,unmaskMemberPrivacy,unmaskInstructorMemberPrivacy,unmaskInstructorPrivacy,unmaskIndividualMemberPrivacy,deleteAndAnonymize,consentFilledDocument,listMemberComments,createMemberComment,preRegisterSchool,preRegisterInstructor,preRegisterIndividual,resolvePreRegisterConflict,bulkDeleteAndAnonymize,listSchools,createSchool,bulkDeleteProgramEnrollmentHistory,bulkDeleteSchools,bulkDelete1,resetPending,resendNotification,reject2,unmask,cancelApproval,approve1,bulkReject,bulkApprove,allocateCertificateSerial,resetAdminApprovalToPending,resendAdminApprovalNotification,rejectAdminApprovalRequest,cancelAdminApproval,approveAdminApprovalRequest,bulkRejectAdminApprovalRequests,bulkApproveAdminApprovalRequests,listAdmins,createAdmin,verifyAdmin,bulkDeleteProgramRoles,unmask1,resetAdminPassword,listComments,createComment,bulkDeleteAdmins,updateMemberBasicInfo,upsertExternalIdentifier,deleteMemberComment,updateMemberComment,updateAffiliatedTeacherEmploymentStatus,getSchool,deleteSchool,updateSchool,updateTeacherEmploymentStatus,changeAdminStatus,changeAdminRole,deleteComment,updateComment,updateAdminBasicInfo,listMembers,getTeacherMemberDetail,getSchoolMemberDetail,listMemberProgramHistory,getMemberPrivacyAvailableActions,downloadAllLectureReports,getInstructorMemberDetail,getInstructorDetail,getInstructorPrivacyAvailableActions,getIndividualMemberDetail,externalIdentifiers,consentRecords,listMemberApplications,listLectureReports,getLectureAttendance,getApplicationEnrollmentSummary,listAssignmentSubmissions,listAffiliatedTeachers,listMemberAdminPrograms,listProgramRoleOptions,listPreRegisterConflicts,listTeachers,listProgramEnrollmentHistory,listAllCmsMembersAndAdmins,listInstructorRoleRequests,getDetail,listRoles,listPermissions,listPermissionChangeLogs,listAdminApprovalRequests,getAdminApprovalRequest,getAdminAccount,deleteAdmin,availableActions1,consentRecords1,listProgramRoleOptions1,deleteProgramHistory,deleteApplicationHistory,deleteAdminProgram,deleteProgramRole}};
+return {listProgramRoles,saveProgramRoles,getRolePermissions,updateRolePermissions,listProgramRoles1,saveProgramRoles1,bulkDeleteProgramHistory,unmaskMemberPrivacy,unmaskInstructorMemberPrivacy,unmaskInstructorPrivacy,unmaskIndividualMemberPrivacy,deleteAndAnonymize,consentFilledDocument,listMemberComments,createMemberComment,preRegisterSchool,preRegisterInstructor,preRegisterIndividual,resolvePreRegisterConflict,bulkDeleteAndAnonymize,listSchools,createSchool,bulkDeleteProgramEnrollmentHistory,bulkDeleteSchools,bulkDelete1,resetPending,resendNotification,reject2,unmask,cancelApproval,approve1,bulkReject,bulkApprove,allocateCertificateSerial,resetAdminApprovalToPending,resendAdminApprovalNotification,rejectAdminApprovalRequest,cancelAdminApproval,approveAdminApprovalRequest,bulkRejectAdminApprovalRequests,bulkApproveAdminApprovalRequests,listAdmins,createAdmin,verifyAdmin,bulkDeleteProgramRoles,unmask1,resetAdminPassword,listComments,createComment,bulkDeleteAdmins,updateMemberBasicInfo,upsertExternalIdentifier,deleteMemberComment,updateMemberComment,updateAffiliatedTeacherEmploymentStatus,getSchool,deleteSchool,updateSchool,updateTeacherEmploymentStatus,changeAdminStatus,changeAdminRole,deleteComment,updateComment,updateAdminBasicInfo,listMembers,getTeacherMemberDetail,getSchoolMemberDetail,listMemberProgramHistory,getMemberPrivacyAvailableActions,downloadAllLectureReports,getInstructorMemberDetail,getInstructorDetail,getInstructorPrivacyAvailableActions,getIndividualMemberDetail,externalIdentifiers,consentRecords,listMemberApplications,listLectureReports,getLectureAttendance,getApplicationEnrollmentSummary,listAssignmentSubmissions,listAffiliatedTeachers,listMemberAdminPrograms,listProgramRoleOptions,listPreRegisterConflicts,listTeachers,listProgramEnrollmentHistory,listAllCmsMembersAndAdmins,listInstructorRoleRequests,getDetail,listRoles,listPermissions,listPermissionChangeLogs,listAdminApprovalRequests,getAdminApprovalRequest,getAdminAccount,deleteAdmin,availableActions1,consentRecords1,listProgramRoleOptions1,deleteProgramHistory,deleteApplicationHistory,deleteAdminProgram,deleteProgramRole}};
 export type ListProgramRolesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listProgramRoles']>>>
 export type SaveProgramRolesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['saveProgramRoles']>>>
 export type GetRolePermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['getRolePermissions']>>>
 export type UpdateRolePermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['updateRolePermissions']>>>
 export type ListProgramRoles1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listProgramRoles1']>>>
 export type SaveProgramRoles1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['saveProgramRoles1']>>>
+export type BulkDeleteProgramHistoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['bulkDeleteProgramHistory']>>>
 export type UnmaskMemberPrivacyResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['unmaskMemberPrivacy']>>>
 export type UnmaskInstructorMemberPrivacyResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['unmaskInstructorMemberPrivacy']>>>
 export type UnmaskInstructorPrivacyResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['unmaskInstructorPrivacy']>>>

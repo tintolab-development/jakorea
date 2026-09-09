@@ -12,4 +12,6 @@ export interface ApprovalResetRequest {
      * @maxLength 1000
      */
   reason: string;
+  /** 승인 취소 결과 알림 예약 시각. null이면 즉시 발송 */
+  scheduledAt?: string;
 }

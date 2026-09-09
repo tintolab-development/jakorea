@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { GuardianInfo } from './guardianInfo';
 import type { MemberDetailResponse } from './memberDetailResponse';
 import type { TermsAgreementRow } from './termsAgreementRow';
 
@@ -21,4 +22,5 @@ export interface IndividualMemberDetailResponse {
   affiliationName?: string;
   schoolOrganizationId?: number;
   external1365Id?: string;
+  guardianInfo?: GuardianInfo;
 }

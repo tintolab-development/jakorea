@@ -108,6 +108,7 @@ import {
   toAccountDirectoryBulkDeleteTargets,
 } from '@/features/user/api/partition-users-for-bulk-delete'
 import type { MemberListKind } from '@/shared/config/member-list-kinds'
+import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants/delete-guide-modal'
 import { adminPermissionFeeGradeToRoleCode } from '@/features/user/api/admin-approval-role'
 import type { InstructorCertificationUpsertRequest } from '@/shared/api/generated/members/schemas/instructorCertificationUpsertRequest'
 import type { AdminTermsAgreementRequest } from '@/shared/api/generated/members/schemas/adminTermsAgreementRequest'
@@ -1606,7 +1607,10 @@ export async function deleteUser(
       }
 
       const memberId = resolveMemberIdForApi(userId, options)
-      await deleteMemberRemote(memberId, { reason })
+      await deleteMemberRemote(memberId, {
+        reason,
+        confirmationText: DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+      })
       return
     } catch (error) {
       throw new Error(getMemberApiErrorMessage(error, '회원 삭제에 실패했습니다.'))
@@ -1653,6 +1657,7 @@ export async function deleteUsersByListKind(
       await bulkDeleteAllAccountsRemote({
         targets: toAccountDirectoryBulkDeleteTargets(users),
         reason,
+        confirmationText: DELETE_GUIDE_TYPED_CONFIRM_VALUE,
       })
       return
     }
@@ -1695,7 +1700,11 @@ export async function deleteUsersByListKind(
       return
     }
 
-    await bulkDeleteMembersRemote({ ids: collectMemberIds(users), reason })
+    await bulkDeleteMembersRemote({
+      ids: collectMemberIds(users),
+      reason,
+      confirmationText: DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+    })
   } catch (error) {
     throw new Error(getMemberApiErrorMessage(error, '회원 삭제에 실패했습니다.'))
   }

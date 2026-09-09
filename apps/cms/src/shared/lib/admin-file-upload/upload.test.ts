@@ -136,7 +136,7 @@ describe('admin file upload', () => {
       ownerDomain: 'PROGRAM',
       ownerType: 'APPLICATION',
       ownerId: 10001,
-      privacyLevel: 'NORMAL',
+      filePurpose: 'NORMAL',
       originalFileName: 'application-form.pdf',
       contentType: 'application/pdf',
       fileSize: 204800,

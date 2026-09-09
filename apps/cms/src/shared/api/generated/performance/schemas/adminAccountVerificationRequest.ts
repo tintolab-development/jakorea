@@ -14,8 +14,10 @@ export interface AdminAccountVerificationRequest {
   result?: string;
   /** 승인/반려 사유. 반려 시 필수입니다. */
   reason?: string;
-  /** 승인 시 최종 적용할 관리자 권한 코드. 미전달 시 기존 신청 권한 유지 */
+  /** 승인 시 최종 적용할 관리자 권한 코드 */
   roleCode?: string;
-  /** 프론트 호환용 권한 코드 필드. roleCode가 없고 requestedRoleCode가 있으면 이 값을 사용합니다. */
+  /** 프론트 호환용 권한 코드 필드 */
   requestedRoleCode?: string;
+  /** 결과 알림 예약 시각. null이면 즉시 발송 */
+  scheduledAt?: string;
 }

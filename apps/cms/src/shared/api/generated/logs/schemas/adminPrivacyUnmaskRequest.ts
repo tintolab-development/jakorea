@@ -16,4 +16,6 @@ export interface AdminPrivacyUnmaskRequest {
      * @maxLength 500
      */
   reason: string;
+  /** 프로그램 상세 문맥에서 조회하는 경우 프로그램 ID. 지정 시 CMS 전역 역할 대신 프로그램 PM 권한과 대상 회원의 프로그램 연관성을 검증합니다. */
+  programId?: number;
 }

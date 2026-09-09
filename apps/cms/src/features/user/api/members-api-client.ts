@@ -78,6 +78,7 @@ import type { MemberConsentRecordResponse } from '@/shared/api/generated/members
 import type { ExternalIdentifierResponse } from '@/shared/api/generated/members/schemas/externalIdentifierResponse'
 import type { InstructorEvaluationGradeChangeRequest } from '@/shared/api/generated/members/schemas/instructorEvaluationGradeChangeRequest'
 import type { AccountDirectoryBulkDeleteRequest } from '@/shared/api/generated/members/schemas/accountDirectoryBulkDeleteRequest'
+import type { AdminMemberBulkDeleteRequest } from '@/shared/api/generated/members/schemas/adminMemberBulkDeleteRequest'
 import type { AdminApprovalBulkDecisionRequest } from '@/shared/api/generated/members/schemas/adminApprovalBulkDecisionRequest'
 import type { ApprovalResetRequest } from '@/shared/api/generated/members/schemas/approvalResetRequest'
 import type { BulkDecisionRequest } from '@/shared/api/generated/members/schemas/bulkDecisionRequest'
@@ -116,7 +117,7 @@ export async function bulkDeleteAllAccountsRemote(body: AccountDirectoryBulkDele
 }
 
 /** Swagger `bulkDeleteAndAnonymize` — `POST /api/admin/users/bulk-delete` */
-export async function bulkDeleteMembersRemote(body: BulkDecisionRequest) {
+export async function bulkDeleteMembersRemote(body: AdminMemberBulkDeleteRequest) {
   return unwrapApiBody(await membersApi.bulkDeleteAndAnonymize(body))
 }
 

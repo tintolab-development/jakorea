@@ -14,4 +14,6 @@ export interface TreeNodeResponse {
   categoryId?: number;
   displayName?: string;
   children?: TreeNodeResponse[];
+  senderDisplay?: string;
+  attachmentFileNames?: string[];
 }

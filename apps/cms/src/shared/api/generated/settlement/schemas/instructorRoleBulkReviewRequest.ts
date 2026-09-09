@@ -23,5 +23,7 @@ export interface InstructorRoleBulkReviewRequest {
      * @minLength 0
      * @maxLength 500
      */
-  reason: string;
+  reason?: string;
+  /** 일괄 결과 알림 예약 시각. null이면 즉시 발송 */
+  scheduledAt?: string;
 }

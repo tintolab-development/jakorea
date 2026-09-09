@@ -37,6 +37,7 @@ export interface PerformanceRecordUpdateRequest {
   generalTeacherCount?: number;
   trainedTeacherCount?: number;
   instructorCount?: number;
+  vulnerableStudentCount?: number;
   managerName?: string;
   changeReason?: string;
 }

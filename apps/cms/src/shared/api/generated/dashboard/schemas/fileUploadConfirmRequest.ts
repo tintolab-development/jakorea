@@ -16,11 +16,11 @@ export interface FileUploadConfirmRequest {
      */
   fileSize: number;
   /**
-     * 실제 업로드된 파일의 SHA-256 체크섬
-     * @minLength 0
-     * @maxLength 128
+     * 실제 업로드된 파일의 SHA-256 체크섬(64자리 HEX)
+     * @minLength 1
+     * @pattern ^[0-9a-fA-F]{64}$
      */
-  checksumSha256?: string;
+  checksumSha256: string;
   /**
      * 실제 업로드된 파일 content type
      * @minLength 0

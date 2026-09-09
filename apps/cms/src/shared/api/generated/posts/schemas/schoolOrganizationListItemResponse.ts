@@ -26,4 +26,7 @@ export interface SchoolOrganizationListItemResponse {
   programCompleteCount?: number;
   createdAt?: string;
   updatedAt?: string;
+  registrationSource?: string;
+  registeredByAdmin?: boolean;
+  editable?: boolean;
 }

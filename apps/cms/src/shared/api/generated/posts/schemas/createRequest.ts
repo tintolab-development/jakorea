@@ -15,7 +15,8 @@ export interface CreateRequest {
      */
   batchName: string;
   templateId: number;
-  programId?: number;
+  programId: number;
+  /** 예약 시각 ISO-8601. 즉시 발송이면 생략. Hub scheduledDateTime은 사용하지 않음. */
   scheduledAt?: string;
   variables?: CreateRequestVariables;
   /**
@@ -24,6 +25,7 @@ export interface CreateRequest {
      */
   recipients: RecipientRequest[];
   /**
+     * EMAIL은 From 메일주소. senderProfileId가 없을 때 이 값으로 프로필/템플릿 발신 메일을 매칭합니다.
      * @minLength 0
      * @maxLength 255
      */
@@ -33,5 +35,6 @@ export interface CreateRequest {
      * @maxLength 20
      */
   senderProfileType?: string;
+  /** 발신 프로필 id. EMAIL은 channelType=EMAIL 프로필. 없으면 senderKey로 매칭. */
   senderProfileId?: number;
 }

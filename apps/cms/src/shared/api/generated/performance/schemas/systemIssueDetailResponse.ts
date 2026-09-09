@@ -12,7 +12,7 @@ export interface SystemIssueDetailResponse {
   severity?: string;
   screenKey?: string;
   apiPath?: string;
-  traceId?: number;
+  traceId?: string;
   actorType?: string;
   actorId?: number;
   message?: string;
