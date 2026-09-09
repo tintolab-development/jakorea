@@ -24,6 +24,8 @@ import {
   checkUjatRegionClassCapacityExceeded,
   getUjatRegionClassCapacityExceededAlertContent,
 } from '@/features/program/ujat/lib/ujat-region-capacity-institution-assign'
+import { rejectUjatOrganizationApplicationsIfRemote } from '@/features/program/ujat/api/temporary-rejections'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 
 const TEMP_REJECT_BUTTON_STYLE = {
   borderColor: '#e07a96',
@@ -32,10 +34,12 @@ const TEMP_REJECT_BUTTON_STYLE = {
 
 export function UjatInstitutionApplicationDetailPage({
   institutionId,
+  programId,
   onBack,
   onStatusUpdated,
 }: {
   institutionId: string
+  programId?: string | null
   onBack: () => void
   onStatusUpdated: () => void
 }) {
@@ -99,14 +103,31 @@ export function UjatInstitutionApplicationDetailPage({
     })
   }, [row, onStatusUpdated, onBack, showAlert])
 
-  const handleActionConfirm = () => {
-    if (!pendingAction) return
+  const handleActionConfirm = (payload: PermissionModalPayload) => {
+    if (!pendingAction || !row) return
     const statusMap = {
       application_reject: 'application_rejected',
       temp_reject: 'temp_rejected',
     } as const
-    patchStatus(statusMap[pendingAction])
-    setPendingAction(null)
+    void (async () => {
+      try {
+        if (pendingAction === 'temp_reject') {
+          await rejectUjatOrganizationApplicationsIfRemote({
+            programId,
+            applicationIds: [row.id],
+            reason: payload.reason ?? 'CMS UJAT 신청기관 임시 반려',
+          })
+        }
+        patchStatus(statusMap[pendingAction])
+        setPendingAction(null)
+      } catch (error) {
+        showAlert({
+          title: '안내',
+          content:
+            error instanceof Error ? error.message : '신청기관 임시 반려에 실패했습니다.',
+        })
+      }
+    })()
   }
 
   if (!row || !detail) {
