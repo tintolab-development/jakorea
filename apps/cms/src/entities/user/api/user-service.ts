@@ -1199,6 +1199,8 @@ export interface CreateUserRequest {
   instructorCmsProfile?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsProfileProposal
   /** BE §3.8 — CMS 강사 `settlement` 구조체 */
   instructorCmsSettlement?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsSettlement
+  /** JA 평가 4항목. 총점/등급은 서버 산정 */
+  jaEvaluation?: import('@/shared/api/generated/members/schemas/instructorJaEvaluationInput').InstructorJaEvaluationInput
 }
 
 async function fetchCreatedMemberAsUser(
@@ -1606,7 +1608,10 @@ export async function deleteUser(
       }
 
       const memberId = resolveMemberIdForApi(userId, options)
-      await deleteMemberRemote(memberId, { reason })
+      await deleteMemberRemote(memberId, {
+        reason,
+        confirmationText: DEFAULT_DELETE_CONFIRMATION_TEXT,
+      })
       return
     } catch (error) {
       throw new Error(getMemberApiErrorMessage(error, '회원 삭제에 실패했습니다.'))
@@ -1624,6 +1629,8 @@ export async function deleteUser(
 }
 
 const DEFAULT_DELETE_REASON = 'CMS 관리자 회원 삭제'
+/** BE 삭제·익명화 요청 confirmationText — 의도적 확인 문구 */
+const DEFAULT_DELETE_CONFIRMATION_TEXT = '삭제'
 
 /**
  * 목록 탭별 일괄·단건 삭제 (remote). mock에서는 단건 `deleteUser` 루프.
@@ -1653,6 +1660,7 @@ export async function deleteUsersByListKind(
       await bulkDeleteAllAccountsRemote({
         targets: toAccountDirectoryBulkDeleteTargets(users),
         reason,
+        confirmationText: DEFAULT_DELETE_CONFIRMATION_TEXT,
       })
       return
     }
@@ -1695,7 +1703,11 @@ export async function deleteUsersByListKind(
       return
     }
 
-    await bulkDeleteMembersRemote({ ids: collectMemberIds(users), reason })
+    await bulkDeleteMembersRemote({
+      ids: collectMemberIds(users),
+      reason,
+      confirmationText: DEFAULT_DELETE_CONFIRMATION_TEXT,
+    })
   } catch (error) {
     throw new Error(getMemberApiErrorMessage(error, '회원 삭제에 실패했습니다.'))
   }

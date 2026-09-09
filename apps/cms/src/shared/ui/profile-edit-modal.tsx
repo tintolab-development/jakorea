@@ -31,6 +31,9 @@ import {
 } from '@/features/auth/lib/register-social-connect-state'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { withdrawAdminSelfRemote } from '@/features/user/api/members-api-client'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import {
   cmsIdentityVerificationClient,
   type IdentityChallengeCompleteResult,
@@ -261,12 +264,19 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
 
     setWithdrawing(true)
     try {
-      updateUser({ isActive: false })
+      if (isMembersRemoteEnabled()) {
+        await withdrawAdminSelfRemote({ confirmationText: '탈퇴' })
+      } else {
+        updateUser({ isActive: false })
+      }
       setWithdrawModalOpen(false)
       onCancel()
       logout()
     } catch (error) {
-      console.error('Failed to withdraw account:', error)
+      showAlert({
+        title: '안내',
+        content: getMemberApiErrorMessage(error, '회원 탈퇴에 실패했습니다.'),
+      })
     } finally {
       setWithdrawing(false)
     }
