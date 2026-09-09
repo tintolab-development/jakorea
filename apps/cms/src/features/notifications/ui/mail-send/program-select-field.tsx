@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { CmsSelect } from '@/shared/ui'
 import type { MailSendProgram } from '@/features/notifications/model/mail-send/types'
-import { MAIL_SEND_PROGRAM_MOCK } from '@/features/notifications/model/mail-send/mock'
 import { findMailSendProgram } from '@/features/notifications/model/mail-send/programs'
 import { ProgramSelectModal } from './program-select-modal'
 import './program-select-modal.css'
@@ -11,13 +10,14 @@ const PICKER_Z_INDEX = 1100
 
 type ProgramSelectFieldProps = {
   value?: string
+  /** GET /api/admin/programs items[].id 기준. mock id 금지. */
   programs?: MailSendProgram[]
   onSelect: (program: MailSendProgram) => void
 }
 
 export function ProgramSelectField({
   value,
-  programs = MAIL_SEND_PROGRAM_MOCK,
+  programs = [],
   onSelect,
 }: ProgramSelectFieldProps) {
   const [pickerOpen, setPickerOpen] = useState(false)

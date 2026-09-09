@@ -1,5 +1,9 @@
 export const notificationsQueryKeys = {
   all: ['cms', 'notifications'] as const,
+  sendPrograms: {
+    all: () => [...notificationsQueryKeys.all, 'send-programs'] as const,
+    picker: () => [...notificationsQueryKeys.sendPrograms.all(), 'picker'] as const,
+  },
   alimtalkTemplates: {
     all: () => [...notificationsQueryKeys.all, 'alimtalk-templates'] as const,
     list: (searchParamsKey: string) =>

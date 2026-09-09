@@ -6,7 +6,9 @@ export function programYearLabel(year: number): string {
 }
 
 export function uniqueProgramYears(programs: MailSendProgram[]): number[] {
-  return [...new Set(programs.map(program => program.year))].sort((a, b) => b - a)
+  return [...new Set(programs.map(program => program.year).filter(year => year > 0))].sort(
+    (a, b) => b - a
+  )
 }
 
 export function filterMailSendPrograms(

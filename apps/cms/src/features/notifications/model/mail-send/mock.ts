@@ -1,12 +1,13 @@
 import type { MailSendParticipationType, MailSendProgram, MailSendRecipient } from './types'
 
 export const MAIL_SEND_DEFAULT_SENDER = {
-  name: '홍길동',
-  email: 'gildong@jakorea.org',
+  name: '',
+  email: '',
 } as const
 
 export const MAIL_SEND_DEFAULT_PROGRAM_ID = ''
 
+/** 로컬 mock JWT 전용. remote API에서는 GET /api/admin/programs items[].id 를 쓴다. */
 export const MAIL_SEND_PROGRAM_MOCK: MailSendProgram[] = [
   { id: '101', name: 'JA Company Of The Year', year: 2026 },
   { id: '102', name: 'JA Job Shadow', year: 2026 },
