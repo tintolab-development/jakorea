@@ -6,7 +6,7 @@
   "schemaJson": {
     "schemaVersion": 1,
     "formSettings": {
-      "titleNumbering": "numeric"
+      "titleNumbering": "none"
     },
     "paragraphs": [
       {
@@ -30,7 +30,7 @@
         "variant": "lecture_report_program_progress",
         "requiredMark": true,
         "paragraphTitle": "프로그램 진행 정보",
-        "paragraphDescription": "설명 입력",
+        "paragraphDescription": "실제 응답 시 배정된 프로그램·기관·교육 일정 정보가 자동으로 반영됩니다.",
         "participatesInTitleNumbering": true,
         "answerRequired": true,
         "programName": "",
@@ -63,7 +63,8 @@
           },
           {
             "id": "lecture-report-education-content-item-2",
-            "label": "Q2. 강의 진행 내용 (ex: 교재/활동 내용, 교구재 활용 방식 등)",
+            "label": "Q2. 강의 진행 내용",
+            "titleHint": "ex) 교육/활동 내용, 교구재 활용 방식 등",
             "placeholder": "자유롭게 작성해 주세요",
             "bodyText": ""
           }
@@ -85,18 +86,21 @@
           {
             "id": "lecture-report-education-operation-item-1",
             "label": "Q1. 전반적인 학생들의 교육 참여도는 어떠했나요?",
+            "titleHint": "ex) 전반적인 참여도, 다양한 상황 기반(수업 중 에피소드, 교구재활용 등)",
             "placeholder": "자유롭게 작성해 주세요",
             "bodyText": ""
           },
           {
             "id": "lecture-report-education-operation-item-2",
             "label": "Q2. 교육 콘텐츠 난이도 적합성은 어떠했나요?",
+            "titleHint": "(쉬움/적절/어려움+이유)",
             "placeholder": "자유롭게 작성해 주세요",
             "bodyText": ""
           },
           {
             "id": "lecture-report-education-operation-item-3",
-            "label": "Q3. 강의 진행 중 이슈 및 특이사항이 있었나요?",
+            "label": "Q3. 강의 진행 중 이슈 및 불편사항이 있었나요?",
+            "titleHint": "ex) 강의 준비, 운영진/학교/강사단과의 소통, 강의 환경 등",
             "placeholder": "자유롭게 작성해 주세요",
             "bodyText": ""
           }
