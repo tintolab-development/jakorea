@@ -73,7 +73,7 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
     })
   })
 
-  it('발송 요청은 programId 필수이고 variables를 기본 생략한다', () => {
+  it('programId가 있으면 포함하고 variables는 기본 생략한다', () => {
     const request = buildCreateSendBatchRequest({
       batchName: '알림톡 발송',
       templateId: 11,
@@ -96,6 +96,24 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
       actorType: 'MEMBER',
       actorId: 1,
     })
+  })
+
+  it('programId 미전달 시 필드를 omit 한다', () => {
+    const request = buildCreateSendBatchRequest({
+      batchName: 'direct-smoke',
+      templateId: 11,
+      recipients: [
+        {
+          id: 'manual-1',
+          participationType: '',
+          name: '직접',
+          phone: '010-1234-5678',
+          source: 'manual',
+          actorType: 'DIRECT',
+        },
+      ],
+    })
+    expect(request).not.toHaveProperty('programId')
   })
 
   it('DIRECT 수신자는 actorId 없이 recipientContact만 실는다', () => {

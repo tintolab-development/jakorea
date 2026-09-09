@@ -179,11 +179,10 @@ export async function submitMailSend(input: {
   }
 
   const batchVariables = pickNonEmptySendVariables(variables)
-  const body = {
+  const body: CreateRequest = {
     batchName:
       (templateDisplayName || draft.subject).slice(0, 200).trim() || '메일 발송',
     templateId: numericTemplateId,
-    ...(programId != null ? { programId } : {}),
     scheduledAt: resolveScheduledAtForCreateRequest({
       sendTiming: draft.sendTiming,
       scheduledAt: draft.scheduledAt,
@@ -191,8 +190,9 @@ export async function submitMailSend(input: {
     recipients: buildMailSendRecipients(draft.recipients),
     senderProfileId: resolvedSenderProfileId,
     senderKey: draft.senderEmail.trim() || undefined,
-    ...(batchVariables ? { variables: batchVariables } : {}),
-  } as CreateRequest
+  }
+  if (programId != null) body.programId = programId
+  if (batchVariables) body.variables = batchVariables
 
   await createSendBatchRemote(body, idempotencyKey)
 }

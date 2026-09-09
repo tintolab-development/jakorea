@@ -399,14 +399,15 @@ export function buildCreateSendBatchRequest(input: {
   variables?: Record<string, unknown>
 }): CreateRequest {
   const variables = pickNonEmptySendVariables(input.variables)
-  return {
+  const body: CreateRequest = {
     batchName: input.batchName,
     templateId: input.templateId,
-    ...(input.programId != null ? { programId: input.programId } : {}),
     scheduledAt: input.scheduledAt,
     senderKey: input.senderKey,
     senderProfileId: input.senderProfileId,
-    ...(variables ? { variables } : {}),
     recipients: buildSendBatchRecipients(input.recipients),
-  } as CreateRequest
+  }
+  if (input.programId != null) body.programId = input.programId
+  if (variables) body.variables = variables
+  return body
 }

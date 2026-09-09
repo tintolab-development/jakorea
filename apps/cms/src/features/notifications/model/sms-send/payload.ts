@@ -64,10 +64,9 @@ export function buildSmsSendCreateRequest(input: {
     throw new Error('대상 프로그램을 선택하세요.')
   }
 
-  return {
+  const body: CreateRequest = {
     batchName: (draft.subject || draft.bodyText).trim().slice(0, 200) || '문자 발송',
     templateId,
-    ...(programId != null ? { programId } : {}),
     scheduledAt: resolveScheduledAtForCreateRequest({
       sendTiming: draft.sendTiming,
       scheduledAt: draft.scheduledAt,
@@ -75,7 +74,9 @@ export function buildSmsSendCreateRequest(input: {
     senderKey: senderKey?.trim() || undefined,
     senderProfileId,
     recipients: buildSmsSendRecipients(draft.recipients),
-  } as CreateRequest
+  }
+  if (programId != null) body.programId = programId
+  return body
 }
 
 export function buildSmsSendPayload(draft: SmsSendDraft): SmsSendDraft {
