@@ -8,25 +8,35 @@ import {
   parseTargetLevelsSelectValue,
   TARGET_LEVEL_LABEL,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  ANNOUNCEMENT_PUBLISHED_OPTIONS,
+  announcementPublishedToFormValue,
+} from '@/features/program/shared/lib/participant-recruitment-form-options'
+import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { resolveUjatAnnouncementTitle } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import { ProgramDetailContactReadRow } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
-import { detailInfoFormSectionTitleHeaderProps } from '@/features/template/lib/writing-form-paragraph-description'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { UjatRecruitSectionDescriptionHeader } from '../ujat-recruit-section-description-header'
 import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segments'
 import {
   UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS,
+  UJAT_RECRUIT_PROGRESS_HINT,
   UjatRecruitFormDateMethodRow,
   UjatRecruitFormPeriodDatePicker,
   UjatRecruitParticipantNotesField,
 } from '../recruit-lib/ujat-recruit-form-fields'
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
+import '@/features/template/ui/form-editor/form-editor.css'
+import './volunteer-info-program.css'
+import './participant-info-program.css'
 
 function LifecycleStatusView({ lifecycle }: { lifecycle: ProgramLifecycleStatus | null }) {
   if (!lifecycle) return <>-</>
@@ -50,6 +60,10 @@ function resolveEducationTargetLabel(program: Program): string {
   return TARGET_LEVEL_LABEL[level] ?? level
 }
 
+function resolveActivityTermDisplay(program: Program): string {
+  return program.rounds?.[0]?.curriculum?.trim() || '-'
+}
+
 export function UjatRecruitParticipantInfoProgramView({
   program,
   sponsorName,
@@ -57,6 +71,7 @@ export function UjatRecruitParticipantInfoProgramView({
   isEdit,
   sectionTitle = '참여 기관 모집 정보',
   hideSectionHeader = false,
+  isTemplateAuthoring = false,
 }: {
   program: Program
   sponsorName?: string
@@ -65,6 +80,8 @@ export function UjatRecruitParticipantInfoProgramView({
   sectionTitle?: string
   /** 폼 양식 편집기 — 바깥 단락 헤더가 있을 때 중복 제거 */
   hideSectionHeader?: boolean
+  /** 양식 작성 화면 — 프로그램 연동 값 대신 placeholder·힌트 */
+  isTemplateAuthoring?: boolean
 }) {
   const lifecycle = getParticipantRecruitmentLifecycle(
     program,
@@ -76,28 +93,60 @@ export function UjatRecruitParticipantInfoProgramView({
       : undefined
   )
   const resultDate = program.resultAnnouncementDate ?? program.applicationEndDate
-  const resultMethod = program.resultAnnouncementMethod ?? '홈페이지 공지 및 담당교사 개별 안내'
+  const resultMethod = program.resultAnnouncementMethod?.trim()
   const resultLine = resultDate ? (
     <UjatInlineDividedSegments
-      segments={[dayjs(resultDate).format('YYYY.MM.DD(ddd)'), resultMethod]}
+      segments={[dayjs(resultDate).format('YYYY.MM.DD(ddd)'), resultMethod || '-']}
     />
   ) : (
     '-'
   )
-  const publicTitle = resolveUjatAnnouncementTitle(program)
+  const publicTitle = resolveUjatAnnouncementTitle(program).trim() || '-'
   const notes = resolveParticipantNotesDisplay(program)
+  const activityTerm = resolveActivityTermDisplay(program)
+  const announcementPublishedValue =
+    (isEdit && form ? form.watch('participantRecruitmentAnnouncementPublished') : undefined) ??
+    announcementPublishedToFormValue(
+      program.generalCommonInfo?.participantRecruitmentInfo?.announcementPublished
+    )
+  const announcementPublishedLabel =
+    ANNOUNCEMENT_PUBLISHED_OPTIONS.find(option => option.value === announcementPublishedValue)
+      ?.label ?? '게시'
 
   const formMode = isEdit && form ? 'edit' : 'view'
-  const headerProps = hideSectionHeader
-    ? { title: sectionTitle, hideHeader: true as const }
-    : detailInfoFormSectionTitleHeaderProps(sectionTitle)
 
   return (
-    <DetailInfoForm {...headerProps} mode={formMode}>
+    <div className="ujat-recruit-participant-info-program">
+      {!hideSectionHeader ? <UjatRecruitSectionDescriptionHeader title={sectionTitle} /> : null}
+      <div className="ujat-recruit-participant-info-program__forms">
+      <DetailInfoForm title="참여 기관 모집 정보(설정)" hideHeader mode={formMode}>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="공고 게시 여부"
+            fullRow
+            view={announcementPublishedLabel}
+            edit={
+              isEdit && form ? (
+                <Controller
+                  name="participantRecruitmentAnnouncementPublished"
+                  control={form.control}
+                  render={({ field }) => (
+                    <ParticipantRecruitmentAnnouncementPublishedRadios
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+              ) : undefined
+            }
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+
+      <DetailInfoForm title="참여 기관 모집 정보" hideHeader mode={formMode}>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="공고용 프로그램명"
-          fullRow
           view={publicTitle}
           edit={
             isEdit && form ? (
@@ -107,11 +156,37 @@ export function UjatRecruitParticipantInfoProgramView({
                 render={({ field }) => (
                   <CmsInput
                     {...field}
-                    value={field.value ?? program.title ?? ''}
+                    value={field.value ?? (isTemplateAuthoring ? '' : (program.title ?? ''))}
                     inputSize="medium"
                     width="100%"
                     placeholder="공고용 프로그램명"
                   />
+                )}
+              />
+            ) : undefined
+          }
+        />
+        <DetailInfoForm.Field
+          label="활동 기수"
+          view={activityTerm}
+          edit={
+            isEdit && form ? (
+              <Controller
+                name="rounds.0.curriculum"
+                control={form.control}
+                render={({ field }) => (
+                  <div className={`${UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS} ujat-recruit-activity-term-field`}>
+                    <CmsNumericInput
+                      {...field}
+                      mode="numericText"
+                      value={(field.value as string | undefined) ?? ''}
+                      inputSize="medium"
+                      width="100%"
+                      placeholder="활동 기수"
+                      onValueChange={field.onChange}
+                    />
+                    <span className="ujat-recruit-activity-term-field__suffix">기</span>
+                  </div>
                 )}
               />
             ) : undefined
@@ -139,7 +214,13 @@ export function UjatRecruitParticipantInfoProgramView({
         <DetailInfoForm.Field
           label="참여자 모집 현황"
           readOnlyDisplay
-          view={<LifecycleStatusView lifecycle={lifecycle} />}
+          view={
+            isTemplateAuthoring ? (
+              <span className="form-editor-template-field-hint-text">{UJAT_RECRUIT_PROGRESS_HINT}</span>
+            ) : (
+              <LifecycleStatusView lifecycle={lifecycle} />
+            )
+          }
         />
       </DetailInfoForm.Row>
 
@@ -218,7 +299,7 @@ export function UjatRecruitParticipantInfoProgramView({
                 dateName="resultAnnouncementDate"
                 methodName="resultAnnouncementMethod"
                 datePlaceholder="합격자 발표일"
-                methodPlaceholder="공지 방법"
+                methodPlaceholder="발표 방법 안내"
               />
             ) : undefined
           }
@@ -299,10 +380,13 @@ export function UjatRecruitParticipantInfoProgramView({
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="비고"
+          fullRow
           view={notes}
           edit={isEdit && form ? <UjatRecruitParticipantNotesField form={form} /> : undefined}
         />
       </DetailInfoForm.Row>
-    </DetailInfoForm>
+      </DetailInfoForm>
+      </div>
+    </div>
   )
 }
