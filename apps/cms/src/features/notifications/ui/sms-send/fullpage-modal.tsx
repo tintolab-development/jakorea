@@ -89,7 +89,8 @@ export function SendFullpageModal({
   const invalidateHistory = useInvalidateSmsSendHistory()
   const form = useSmsSendForm(open, initialTemplateId)
   const remote = shouldUseSmsSendRemoteApi()
-  const templatesQuery = useSmsSendTemplatePickerQuery(open && remote)
+  const canLoadProgramScoped = !isNotificationSendProgramUnset(form.programId)
+  const templatesQuery = useSmsSendTemplatePickerQuery(open && remote && canLoadProgramScoped)
   const templates = templatesQuery.data ?? []
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewSubject, setPreviewSubject] = useState('')
@@ -175,9 +176,12 @@ export function SendFullpageModal({
       page: recipientSearch.page,
       size: 50,
     },
-    open && recipientSelectOpen
+    open && recipientSelectOpen && programNumericId != null
   )
-  const variablesQuery = useSmsTemplateVariablesQuery(templateVariablesQuery, open && remote)
+  const variablesQuery = useSmsTemplateVariablesQuery(
+    templateVariablesQuery,
+    open && remote && canLoadProgramScoped
+  )
   const variableGroups = useMemo(
     () => groupMailTemplateVariablesFromCatalog(variablesQuery.data ?? []),
     [variablesQuery.data]

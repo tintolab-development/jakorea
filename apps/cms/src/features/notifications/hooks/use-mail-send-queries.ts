@@ -6,6 +6,7 @@ import {
 } from '@/features/notifications/api/mail-send-service'
 import type { NotificationTemplateVariablesQuery } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import { notificationsQueryKeys } from '@/features/notifications/api/notifications-query-keys'
+import { stableNotificationQueryKey } from '@/features/notifications/api/stable-query-key'
 
 export function useMailSenderProfilesQuery(enabled = true) {
   return useQuery({
@@ -29,7 +30,14 @@ export function useMailRecipientCandidatesQuery(
   enabled = true
 ) {
   const canFetch = enabled && input.programId != null && Number.isFinite(input.programId)
-  const key = JSON.stringify(input)
+  const key = stableNotificationQueryKey({
+    programId: input.programId,
+    keyword: input.keyword,
+    participantType: input.participantType,
+    memberType: input.memberType,
+    page: input.page,
+    size: input.size,
+  })
   return useQuery({
     queryKey: notificationsQueryKeys.mailSend.recipients(key),
     queryFn: () =>
@@ -48,9 +56,9 @@ export function useMailTemplateVariablesQuery(
   input: NotificationTemplateVariablesQuery = {},
   enabled = true
 ) {
-  const key = JSON.stringify(input)
+  const key = stableNotificationQueryKey({ ...input })
   return useQuery({
-    queryKey: notificationsQueryKeys.mailSend.variables(key),
+    queryKey: notificationsQueryKeys.templateVariables.list(key),
     queryFn: () => getMailTemplateVariables(input),
     enabled,
     staleTime: 60_000,

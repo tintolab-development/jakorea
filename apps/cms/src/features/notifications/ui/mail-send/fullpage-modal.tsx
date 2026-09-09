@@ -74,7 +74,8 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   const invalidateHistory = useInvalidateMailSendHistory()
   const form = useMailSendForm(open)
   const remote = shouldUseMailSendRemoteApi()
-  const templatesQuery = useMailSendTemplatePickerQuery(open && remote)
+  const canLoadProgramScoped = !isNotificationSendProgramUnset(form.programId)
+  const templatesQuery = useMailSendTemplatePickerQuery(open && remote && canLoadProgramScoped)
   const templates = templatesQuery.data ?? []
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewSubject, setPreviewSubject] = useState('')
@@ -174,11 +175,11 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       page: recipientSearch.page,
       size: 50,
     },
-    open && recipientSelectOpen
+    open && recipientSelectOpen && programNumericId != null
   )
   const variablesQuery = useMailTemplateVariablesQuery(
     templateVariablesQuery,
-    open && remote
+    open && remote && canLoadProgramScoped
   )
 
   useEffect(() => {

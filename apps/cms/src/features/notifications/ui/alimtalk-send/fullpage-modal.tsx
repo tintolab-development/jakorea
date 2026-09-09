@@ -152,6 +152,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const senderProfilesQuery = useAlimtalkSenderProfilesQuery(open)
   const programsQuery = useNotificationSendProgramsQuery(open && remote)
   const programs = programsQuery.data ?? []
+  const canLoadProgramScoped = !isNotificationSendProgramUnset(programId)
 
   useEffect(() => {
     if (!open || !remote || !programsQuery.isError) return
@@ -164,8 +165,13 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     })
   }, [open, programsQuery.error, programsQuery.isError, remote, showAlert])
 
-  const templatesQuery = useAlimtalkSendTemplatePickerQuery(open && remote)
-  const treeQuery = useAlimtalkCategoryTreeQuery(new URLSearchParams(), open && remote)
+  const templatesQuery = useAlimtalkSendTemplatePickerQuery(
+    open && remote && canLoadProgramScoped
+  )
+  const treeQuery = useAlimtalkCategoryTreeQuery(
+    new URLSearchParams(),
+    open && remote && canLoadProgramScoped
+  )
   const categories = treeQuery.data?.categories ?? []
 
   const senderOptions = useMemo(
@@ -213,7 +219,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
 
   const variablesQuery = useAlimtalkTemplateVariablesQuery(
     templateVariablesQuery,
-    open && remote
+    open && remote && canLoadProgramScoped
   )
 
   const isTemplateUsable = useCallback(
@@ -247,7 +253,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       page: recipientSearch.page,
       size: 50,
     },
-    open && recipientSelectOpen
+    open && recipientSelectOpen && programNumericId != null
   )
 
   const pickerTemplate = useMemo(
