@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { Spin } from 'antd'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
+import { getInquiryAttachments } from '@/features/posts/api/inquiries/admin-inquiries-service'
+import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
 import { useInquiryDetailQuery } from '@/features/posts/hooks/use-inquiry-detail-query'
 import { useInquiryMutations } from '@/features/posts/hooks/use-inquiry-mutations'
+import { usePostsRemoteEnabled } from '@/features/posts/hooks/use-posts-remote-enabled'
+import { getFileDownload } from '@/shared/lib/admin-file-upload'
+import { downloadFile } from '@/shared/lib/file-download'
 import { RichTextViewer } from '@/shared/rich-text'
 import { ActionResultModal, CmsButton, ContentModal } from '@/shared/ui'
 import './admin-inquiry-detail-modal.css'
@@ -27,8 +33,26 @@ export function AdminInquiryDetailModal({
   onDeleteClick,
 }: AdminInquiryDetailModalProps) {
   const detailQuery = useInquiryDetailQuery(inquiryId, open)
+  const attachmentsEnabled = usePostsRemoteEnabled('inquiries', open && Boolean(inquiryId))
+  const attachmentsQuery = useQuery({
+    queryKey: postsQueryKeys.inquiries.attachments(inquiryId ?? ''),
+    queryFn: () => getInquiryAttachments(inquiryId!),
+    enabled: attachmentsEnabled,
+    staleTime: 30_000,
+    retry: false,
+  })
   const { replyMutation } = useInquiryMutations()
   const detail = detailQuery.data ?? null
+  const attachments = attachmentsQuery.data ?? []
+
+  const handleDownloadAttachment = useCallback(async (fileObjectId: number, fileName: string) => {
+    const resolved = await getFileDownload(fileObjectId)
+    const url = resolved.downloadUrl?.trim()
+    if (!url) {
+      throw new Error('첨부파일 다운로드 URL이 없습니다.')
+    }
+    await downloadFile(fileName, url)
+  }, [])
 
   const [answerText, setAnswerText] = useState('')
   const [actionResultOpen, setActionResultOpen] = useState(false)
@@ -250,6 +274,43 @@ export function AdminInquiryDetailModal({
                 </table>
               </div>
             </section>
+
+            {attachments.length > 0 ? (
+              <section
+                className="admin-inquiry-detail-modal__section"
+                aria-labelledby="inquiry-detail-attachments-heading"
+              >
+                <h3
+                  id="inquiry-detail-attachments-heading"
+                  className="admin-inquiry-detail-modal__section-title"
+                >
+                  첨부파일
+                </h3>
+                <ul className="admin-inquiry-detail-modal__attachments">
+                  {attachments.map(item => {
+                    const fileObjectId = item.fileObjectId
+                    const fileName = item.originalFileName?.trim() || `첨부파일-${fileObjectId ?? ''}`
+                    return (
+                      <li key={item.attachmentId ?? fileObjectId ?? fileName}>
+                        {fileObjectId == null ? (
+                          fileName
+                        ) : (
+                          <button
+                            type="button"
+                            className="admin-inquiry-detail-modal__attachment-link"
+                            onClick={() => {
+                              void handleDownloadAttachment(fileObjectId, fileName)
+                            }}
+                          >
+                            {fileName}
+                          </button>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            ) : null}
 
             <section
               className="admin-inquiry-detail-modal__section"

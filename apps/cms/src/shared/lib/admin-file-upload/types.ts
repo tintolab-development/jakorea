@@ -5,7 +5,8 @@ export type AdminFileUploadOwner = {
   ownerDomain: string
   ownerType: string
   ownerId: number
-  privacyLevel: string
+  /** 파일 업무 목적 — privacy/retention/download 정책은 서버가 이 값으로 결정 */
+  filePurpose: string
 }
 
 /** 업로드 UI 상태 — confirm 성공만으로는 SUCCESS가 아님 */

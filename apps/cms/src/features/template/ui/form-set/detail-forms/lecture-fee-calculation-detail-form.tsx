@@ -5,6 +5,7 @@
 
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import './lecture-fee-calculation-detail-form.css'
 
@@ -70,35 +71,6 @@ function InlineTextPair({ left, right }: { left: string; right: string }) {
   )
 }
 
-function IssuancePaymentItemMark({ checked, label }: { checked: boolean; label: string }) {
-  return (
-    <div className="lecture-fee-calculation-detail-form__payment-item-row">
-      <span className="lecture-fee-calculation-detail-form__payment-item-label">{label}</span>
-      <span
-        className="lecture-fee-calculation-detail-form__payment-check-cell"
-        aria-hidden="true"
-      >
-        {checked ? (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="12"
-            height="10"
-            viewBox="0 0 12 10"
-            fill="none"
-            className="lecture-fee-calculation-detail-form__payment-check-svg"
-          >
-            <path
-              opacity="0.2"
-              d="M10.1883 0.252684C10.4627 -0.0572855 10.9367 -0.0859769 11.2469 0.188231C11.5568 0.462613 11.5855 0.93661 11.3113 1.24682L4.43633 9.02417C4.29397 9.18512 4.08969 9.2771 3.87481 9.2771C3.65992 9.2771 3.45564 9.18512 3.31328 9.02417L0.188283 5.48901C-0.0859598 5.17876 -0.057344 4.70478 0.252736 4.43042C0.563086 4.15609 1.037 4.1855 1.31133 4.49585L3.87383 7.39526L10.1883 0.252684Z"
-              fill="#22404B"
-            />
-          </svg>
-        ) : null}
-      </span>
-    </div>
-  )
-}
-
 export function LectureFeeCalculationDetailForm({
   values: valuesProp,
   className,
@@ -108,10 +80,6 @@ export function LectureFeeCalculationDetailForm({
   const v = { ...EMPTY, ...valuesProp }
   const isDocumentMode = displayMode === 'document'
   const isSettlementLayout = feeLayout === 'settlement_application'
-  const paymentItems = [
-    v.transportFee ? '교통비' : '',
-    v.lodgingFee ? '숙박비' : '',
-  ]
 
   return (
     <DetailInfoForm
@@ -180,11 +148,15 @@ export function LectureFeeCalculationDetailForm({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="지급 항목 여부"
-            view={joinText(paymentItems)}
+            view={joinText(['교통비', '숙박비'])}
             edit={
               <div className="detail-info-form-inputs-wrapper lecture-fee-calculation-detail-form__payment-items">
-                <IssuancePaymentItemMark checked={v.transportFee} label="교통비" />
-                <IssuancePaymentItemMark checked={v.lodgingFee} label="숙박비" />
+                <CmsCheckbox checkboxSize="large" checked disabled>
+                  교통비
+                </CmsCheckbox>
+                <CmsCheckbox checkboxSize="large" checked disabled>
+                  숙박비
+                </CmsCheckbox>
               </div>
             }
           />

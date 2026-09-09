@@ -494,9 +494,11 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                         <CmsSelect
                           inputSize="medium"
                           width={240}
+                          withAllOption
                           options={TARGET_LEVEL_OPTIONS}
                           value={field.value?.[0] ?? ''}
                           onChange={v => field.onChange(v ? [String(v)] : [])}
+                          placeholder="교육 대상을 선택하세요"
                           className="program-detail-info-tab__target-select"
                         />
                       ) : (

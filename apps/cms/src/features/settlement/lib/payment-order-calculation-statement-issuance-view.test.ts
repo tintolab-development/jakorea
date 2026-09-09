@@ -68,7 +68,7 @@ describe('지급조서 발급 바인딩 — mock 샘플 금지', () => {
     expect(basic?.residentFront).toBe('')
     expect(basic?.residentBack).toBe('')
     expect(basic?.affiliation).toBe('')
-    expect(basic?.paymentPurpose).toBe('강사비 또는 활동비 지급')
+    expect(basic?.paymentPurpose).toBe('강의비 또는 활동비 지급')
 
     expect(lecture?.lectureFeeType).toBe('2급 강사비')
     expect(lecture?.feeBasisRight).toBe('기본 : 915,000원')

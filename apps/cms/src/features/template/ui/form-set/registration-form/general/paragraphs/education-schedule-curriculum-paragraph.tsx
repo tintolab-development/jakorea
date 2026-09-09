@@ -211,7 +211,7 @@ export type ProgramRegistrationEducationScheduleCurriculumParagraphProps = {
   ipsScheduleDetail: ProgramRegistrationScheduleDetailKind
   /** 카드 헤더「사전 교육」ON이면 일정 앞에 사전 교육 블록을 두고, 그 블록의 IPS만 Prepare로 고정 */
   scheduleCurriculumPreEducation?: boolean
-  /** 사전 교육/교육 연수 블록 헤딩 라벨 (기본: 사전 교육) */
+  /** 사전 교육/교사 연수 블록 헤딩 라벨 (기본: 사전 교육) */
   preEducationBlockLabel?: string
 }
 

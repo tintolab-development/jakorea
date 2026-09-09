@@ -1841,12 +1841,14 @@ export function UjatProgramDetailFullPageModal({
             (institutionDetailId ? (
               <UjatInstitutionApplicationDetailPage
                 institutionId={institutionDetailId}
+                programId={programId}
                 onBack={() => setInstitutionApplicationId(null)}
                 onStatusUpdated={() => setInstitutionListVersion(v => v + 1)}
               />
             ) : (
               <UjatInstitutionApplicationList
                 key={institutionListVersion}
+                programId={programId}
                 onOpenDetail={row => setInstitutionApplicationId(row.id)}
               />
             ))}

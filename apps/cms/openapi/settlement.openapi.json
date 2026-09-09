@@ -12833,12 +12833,10 @@
               "INSTITUTION_SUBMISSION",
               "EDUCATION_COMPLETION_PROOF",
               "PERSONAL_ARCHIVE"
-            ],
-            "minLength": 1
+            ]
           }
         },
         "required": [
-          "issueReason",
           "participantId",
           "programId"
         ]
@@ -20033,7 +20031,7 @@
           },
           "mode": {
             "type": "string",
-            "description": "NHN_LIVE_PULL | LOCAL_APPROVAL_MARK | REQUEST_UPSERT | LOCAL_TEMPLATE_HARVEST. ALIMTALK NHN_LIVE_PULL의 upsertedCount는 APPROVED만."
+            "description": "동기화 방식: NHN 실시간 조회(NHN_LIVE_PULL), 로컬 승인 상태 반영(LOCAL_APPROVAL_MARK), 요청 upsert(REQUEST_UPSERT), 로컬 템플릿 수집(LOCAL_TEMPLATE_HARVEST)"
           },
           "syncedAt": {
             "type": "string",
@@ -22264,15 +22262,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessStartDate": {
-            "type": "string"
+          "businessYear": {
+            "type": "integer",
+            "format": "int32"
           },
           "businessEndDate": {
             "type": "string"
           },
-          "businessYear": {
-            "type": "integer",
-            "format": "int32"
+          "businessStartDate": {
+            "type": "string"
           }
         }
       },

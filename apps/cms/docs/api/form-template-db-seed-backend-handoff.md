@@ -1,6 +1,6 @@
 # 폼 양식 관리 — DB 시드 백엔드 핸드오프
 
-> 작성: 2026-09-02  
+> 작성: 2026-09-02 · **재시드: 2026-09-09** (`seedLabel=form-template-fe-seed-v2`)  
 > 목적: CMS `/templates/form-management` **작성·발급 양식 47종**을 BE DB에 시드하고, FE가 `formsSurveys` 실 API로 전환할 수 있게 한다.  
 > 선행: FE 1차 QA 완료 ([`form-template-fe-gap-report.md`](../qa/form-template-fe-gap-report.md) — E2E 59 passed / 1 skipped)
 
@@ -44,7 +44,7 @@
 
 - **총 46개 JSON 파일** (파일명 = `templateCode`, 예외: `document-3-certificate.json` → `document-3`)
 - `registration-general.json` 포함 — 작성 33종 전체 커버
-- FE 재생성: `exportWritingFormTemplateSeeds()` / `exportIssuanceFormTemplateSeeds()` (`src/features/template/lib/export-writing-form-template-seeds.ts`)
+- FE 재생성: `exportWritingFormTemplateSeeds()` / `exportIssuanceFormTemplateSeeds()` / `exportRegistrationGeneralFormSeed()` (`src/features/template/lib/export-writing-form-template-seeds.ts`)
 
 ### 2.2 templateCode · 표시명 SSOT
 
@@ -69,6 +69,7 @@
 | Payload | schemaJson | extensionJson | settingsJson | 대상 |
 |---------|------------|---------------|--------------|------|
 | **A** | `WritingFormDraft` (paragraphs ≥ 1) | 빈 object 허용 | `null` | 대부분 작성·발급 보고 |
+| **B** | `WritingFormDraft` | **`editorState` 시드 포함** | `null` | `registration-general` |
 | **C** | `WritingFormDraft` | **overlay/editorState 시드 포함** | `null` | UJAT 등록·모집·신청 6종 |
 | **D** | `null` | 빈 object | **settingsJson only** | 인증서 5종, `agreement-crime`(paragraphs 빈 배열) |
 | **E** | 빈 paragraphs object | 빈 object | `null` | `issuance-1`, `issuance-5`, `document-1` (레거시·목록 비노출) |
@@ -100,7 +101,7 @@
 
 | category | templateCode | templateName | Payload | 시드 JSON |
 |----------|--------------|--------------|---------|-----------|
-| REGISTRATION | `registration-general` | 일반 프로그램 등록 폼 | A | [registration-general.json](./form-template-seeds/registration-general.json) |
+| REGISTRATION | `registration-general` | 일반 프로그램 등록 폼 | B | [registration-general.json](./form-template-seeds/registration-general.json) |
 | REGISTRATION | `registration-economy` | 1사1교 프로그램 등록 폼 | A | [registration-economy.json](./form-template-seeds/registration-economy.json) |
 | REGISTRATION | `registration-ujat` | UJAT 프로그램 등록 폼 | C | [registration-ujat.json](./form-template-seeds/registration-ujat.json) |
 | REGISTRATION | `registration-trained-teachers` | 교육받은 교사 프로그램 등록 폼 | A | [registration-trained-teachers.json](./form-template-seeds/registration-trained-teachers.json) |
@@ -176,7 +177,7 @@ form_template
   - form_type (WRITING | ISSUANCE)
   - category (REGISTRATION | RECRUITMENT | ... | ISSUANCE)
   - use_yn
-  - seed_label (optional, e.g. form-template-fe-seed-v1)
+  - seed_label (optional, e.g. form-template-fe-seed-v2)
 
 form_template_version
   - template_version_id (PK)
@@ -224,7 +225,7 @@ String settingsJsonStr = seed.get("settingsJson") == null || seed.get("settingsJ
 
 | 키 | 값 |
 |----|-----|
-| `seedLabel` | `form-template-fe-seed-v1` |
+| `seedLabel` | `form-template-fe-seed-v2` |
 | natural key | `templateCode` (string) |
 | upsert | template + version 1 재실행 시 JSON 필드만 갱신, template_id 유지 |
 
@@ -355,4 +356,18 @@ FE E2E: `cd apps/cms && pnpm test:e2e:templates:qa` (mock auth — API 전환 �
 
 ---
 
-_Last updated: 2026-09-02 · FE QA E2E 59/60 passed_
+## 11. 2026-09-09 재생성 변경 요약 (`seedLabel` v1 → v2)
+
+FE draft factory export 기준. **내용이 바뀐** 시드 JSON만 나열 (나머지 44파일은 export 재실행 시 기존과 동일).
+
+| templateCode | 요약 |
+|--------------|------|
+| `registration-general` | Payload B 재생성 — `schemaJson`에 `idTypeWithInput: null` 등 draft 필드 정합 · `extensionJson.editorState.trainedTeachersTeacherTrainingEnabled` → `false` (일반 기본값) |
+| `application-ujat-volunteer` | JSON pretty-print/배열 포맷만 변경 (단락 id·문구 동일) |
+| `document-payment-order-issue` | 시드 본문 날짜 `2026년 09월 08일` → `2026년 09월 09일` |
+
+BE는 `seedLabel=form-template-fe-seed-v2` 로 **전체 47종 upsert** 권장 (스테이징에 v1이 있어도 version JSON을 최신 파일로 덮어씀).
+
+---
+
+_Last updated: 2026-09-09 · seedLabel form-template-fe-seed-v2_

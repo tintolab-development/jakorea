@@ -106,18 +106,31 @@ const tableCalcInfo = htText(
   ]
 )
 
+/** 정산 신청서 — 교통비 신청 단락 설명·하단 안내 (스크린샷 SSOT) */
+export const SETTLEMENT_TRANSPORT_PARAGRAPH_DESCRIPTION =
+  '강의 진행을 위한 교통비에 한해 신청이 가능합니다.'
+
+export const SETTLEMENT_TRANSPORT_PARAGRAPH_BOTTOM_TEXT =
+  '교통비는 자택과 출강지 간의 거리가 편도 30km 이상인 경우에만 지급되며, 거리 및 유류비와 총 산정 금액은 입력된 정보를 바탕으로 자동 산출됩니다.'
+
 const tableTransport = htText(
   SETTLEMENT_APPLICATION_ISSUANCE_IDS.tableTransport,
   '교통비 신청',
   ['항목', '내용'],
   [['', '']],
   {
-    paragraphDescription: '강의 과정에서 발생한 교통비에 한해 신청해 주세요',
-    bottomText:
-      '* 자택과 출강지 간 편도 거리 30km 이상인 경우에 한해 신청 가능합니다. 유류비·통행료는 실비를 원칙으로 하되, 총 산정 교통비는 자동 계산 값을 따릅니다.',
+    paragraphDescription: SETTLEMENT_TRANSPORT_PARAGRAPH_DESCRIPTION,
+    bottomText: SETTLEMENT_TRANSPORT_PARAGRAPH_BOTTOM_TEXT,
     showBottomText: true,
   }
 )
+
+/** 정산 신청서 — 숙박비 신청 단락 설명·하단 안내 (스크린샷 SSOT) */
+export const SETTLEMENT_ACCOMMODATION_PARAGRAPH_DESCRIPTION =
+  '사전에 안내된 경우에만 지급되며 임의 신청 건은 반려될 수 있습니다.'
+
+export const SETTLEMENT_ACCOMMODATION_PARAGRAPH_BOTTOM_TEXT =
+  '숙박비는 1인 1실 기준, 최대 15만원까지 지급됩니다. 지출 금액이 15만원을 넘어가는 경우 150,000원으로 기재해 주세요.'
 
 const tableAccommodation = htText(
   SETTLEMENT_APPLICATION_ISSUANCE_IDS.tableAccommodation,
@@ -125,9 +138,8 @@ const tableAccommodation = htText(
   ['항목', '내용'],
   [['', '']],
   {
-    paragraphDescription:
-      '사전 협의가 완료된 건에 한해 지급됩니다. 협의되지 않은 숙박비는 지급 대상에서 제외됩니다.',
-    bottomText: '* 숙박비는 건당 80,000원으로 고정합니다.',
+    paragraphDescription: SETTLEMENT_ACCOMMODATION_PARAGRAPH_DESCRIPTION,
+    bottomText: SETTLEMENT_ACCOMMODATION_PARAGRAPH_BOTTOM_TEXT,
     showBottomText: true,
   }
 )

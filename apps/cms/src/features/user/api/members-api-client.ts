@@ -76,7 +76,10 @@ import type { AdminPermissionResponse } from '@/shared/api/generated/members/sch
 import type { AdminRoleResponse } from '@/shared/api/generated/members/schemas/adminRoleResponse'
 import type { MemberConsentRecordResponse } from '@/shared/api/generated/members/schemas/memberConsentRecordResponse'
 import type { ExternalIdentifierResponse } from '@/shared/api/generated/members/schemas/externalIdentifierResponse'
-import type { InstructorEvaluationGradeChangeRequest } from '@/shared/api/generated/members/schemas/instructorEvaluationGradeChangeRequest'
+import type { InstructorJaEvaluationInput } from '@/shared/api/generated/members/schemas/instructorJaEvaluationInput'
+import type { InstructorJaEvaluationResponse } from '@/shared/api/generated/members/schemas/instructorJaEvaluationResponse'
+import type { AdminSelfWithdrawalRequest } from '@/shared/api/generated/members/schemas/adminSelfWithdrawalRequest'
+import type { FileDownloadJobResponse } from '@/shared/api/generated/members/schemas/fileDownloadJobResponse'
 import type { AccountDirectoryBulkDeleteRequest } from '@/shared/api/generated/members/schemas/accountDirectoryBulkDeleteRequest'
 import type { AdminMemberBulkDeleteRequest } from '@/shared/api/generated/members/schemas/adminMemberBulkDeleteRequest'
 import type { AdminApprovalBulkDecisionRequest } from '@/shared/api/generated/members/schemas/adminApprovalBulkDecisionRequest'
@@ -435,6 +438,25 @@ export async function deleteMemberProgramHistoryRemote(
   await membersApi.deleteProgramHistory(memberId, participantId)
 }
 
+/** Swagger `bulkDeleteProgramHistory` — POST program-history/bulk-delete */
+export async function bulkDeleteProgramHistoryRemote(
+  memberId: number,
+  body: BulkDecisionRequest
+): Promise<MembersBulkActionResponse> {
+  const result = unwrapApiBody<MembersBulkActionResponse>(
+    await membersApi.bulkDeleteProgramHistory(memberId, body)
+  )
+  assertBulkActionSucceeded(result, '프로그램 이력 일괄 삭제에 실패했습니다.')
+  return result
+}
+
+/** Swagger `downloadAllLectureReports` — GET users/{memberId}/lecture-reports/download */
+export async function downloadAllMemberLectureReportsRemote(
+  memberId: number
+): Promise<FileDownloadJobResponse> {
+  return unwrapApiBody(await membersApi.downloadAllLectureReports(memberId))
+}
+
 export async function fetchAffiliatedTeachersRemote(
   memberId: number
 ): Promise<SchoolAffiliatedTeacherRow[]> {
@@ -641,6 +663,13 @@ export async function resetInstructorRoleRequestPendingRemote(
   await membersApi.resetPending(requestId, body)
 }
 
+export async function cancelInstructorRoleApprovalRemote(
+  requestId: number,
+  body: ApprovalResetRequest
+) {
+  await membersApi.cancelApproval(requestId, body)
+}
+
 export async function bulkApproveInstructorRoleRequestsRemote(
   body: InstructorRoleBulkReviewRequest
 ) {
@@ -667,6 +696,13 @@ export async function resetAdminApprovalRequestPendingRemote(
   body: ApprovalResetRequest
 ) {
   await membersApi.resetAdminApprovalToPending(adminAccountId, body)
+}
+
+export async function cancelAdminApprovalRemote(
+  adminAccountId: number,
+  body: ApprovalResetRequest
+) {
+  await membersApi.cancelAdminApproval(adminAccountId, body)
 }
 
 export async function resendAdminApprovalNotificationRemote(adminAccountId: number): Promise<void> {
@@ -797,17 +833,23 @@ export async function updateAdminRolePermissionsRemote(
   await membersApi.updateRolePermissions(roleCode, body)
 }
 
-/** Swagger `changeEvaluationGrade` — `POST /api/admin/instructors/{instructorMemberId}/evaluation-grade` */
-export async function changeInstructorEvaluationGradeRemote(
+/** Swagger `currentJaEvaluation` — GET /api/admin/instructors/{id}/ja-evaluation */
+export async function fetchInstructorJaEvaluationRemote(
+  instructorMemberId: number
+): Promise<InstructorJaEvaluationResponse> {
+  return unwrapApiBody(await membersApi.currentJaEvaluation(instructorMemberId))
+}
+
+/** Swagger `submitJaEvaluation` — POST /api/admin/instructors/{id}/ja-evaluation */
+export async function submitInstructorJaEvaluationRemote(
   instructorMemberId: number,
-  body: InstructorEvaluationGradeChangeRequest
-) {
-  await customInstance({
-    url: `/api/admin/instructors/${instructorMemberId}/evaluation-grade`,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    data: body,
-  })
+  body: InstructorJaEvaluationInput
+): Promise<InstructorJaEvaluationResponse> {
+  return unwrapApiBody(await membersApi.submitJaEvaluation(instructorMemberId, body))
+}
+
+export async function withdrawAdminSelfRemote(body: AdminSelfWithdrawalRequest): Promise<void> {
+  await membersApi.withdrawMe(body)
 }
 
 /**

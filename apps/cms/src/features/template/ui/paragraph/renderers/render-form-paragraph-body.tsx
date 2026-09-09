@@ -8,6 +8,7 @@ import {
   type SubjectiveParagraph,
   type LectureReportProgramProgressParagraph,
   type UjatJournalEducationInfoParagraph,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { AgreementAdminProxyConfirmBlock } from '@/features/template/ui/paragraph/explanation/agreement-admin-proxy-confirm-block'
@@ -229,6 +230,8 @@ export type RenderFormParagraphBodyOptions = {
   programLinkedIndividualApplicationForm?: boolean
   /** 강의 평가 등 — 설문 기간을 기간 피커 대신 지정 텍스트로 표시 */
   surveyPeriodReadonly?: boolean
+  /** 강의보고서 프로그램 진행 정보 — 프로그램·배정 연동 미리보기(템플릿 안내 대신 실값) */
+  lectureReportProgramLinkedPreview?: boolean
   /** 회원 동의 작성(fill) — 제목형「작성 기간」본문 슬롯 숨김 */
   hideSurveyWritingPeriod?: boolean
 }
@@ -488,6 +491,8 @@ export function renderFormParagraphBody(
           onChange={next => updateParagraph(jp.id, () => next)}
           isEditMode={isBodyInteractive}
           autofill={options?.ujatJournalEducationInfoAutofill}
+          previewReadonly={isUserLikeVisible || isPreviewReadonly}
+          previewSkin="surface"
         />
       )
     }
@@ -498,6 +503,10 @@ export function renderFormParagraphBody(
           paragraph={lr}
           onChange={next => updateParagraph(lr.id, () => next)}
           isEditMode={isBodyInteractive}
+          isTemplateAuthoringMode={
+            paragraphInteractionMode === 'authoring' &&
+            options?.lectureReportProgramLinkedPreview !== true
+          }
         />
       )
     }
@@ -765,6 +774,7 @@ export function renderFormParagraphBody(
           isEditMode={isBodyInteractive}
           layout={isUserLikeVisible ? 'previewTable' : 'chips'}
           previewValues={options?.userInfoPreviewValues}
+          forceTwoColumnRow={p.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo}
         />
       )
     case 'file_attachment':

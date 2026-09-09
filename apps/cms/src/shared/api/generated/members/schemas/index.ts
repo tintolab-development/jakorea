@@ -555,6 +555,7 @@ export * from './listAllCmsMembersAndAdminsParams';
 export * from './listAssignmentSubmissionsParams';
 export * from './listCommentsParams';
 export * from './listInstructorRoleRequestsParams';
+export * from './listInstructorsParams';
 export * from './listLectureReportsParams';
 export * from './listMemberAdminProgramsParams';
 export * from './listMemberApplicationsParams';

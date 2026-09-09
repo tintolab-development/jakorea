@@ -24,6 +24,7 @@ function UjatRecruitVolunteerInterviewScheduleTemplateEditor() {
       form={form}
       isEdit
       volunteerHalf="h2"
+      isTemplateAuthoring
     />
   )
 }

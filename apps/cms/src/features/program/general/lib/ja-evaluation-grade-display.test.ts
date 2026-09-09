@@ -12,5 +12,6 @@ describe('formatJaEvaluationGradeCellDisplay', () => {
   it('등급 코드에 등급 접미사를 붙인다', () => {
     expect(formatJaEvaluationGradeCellDisplay('A')).toBe('A등급')
     expect(formatJaEvaluationGradeCellDisplay('B등급')).toBe('B등급')
+    expect(formatJaEvaluationGradeCellDisplay('JA_A')).toBe('A등급')
   })
 })

@@ -1,4 +1,4 @@
-import { useCallback, useSyncExternalStore } from 'react'
+import { useCallback, useRef, useSyncExternalStore } from 'react'
 import {
   getGeneralApplicationOverlayRecord,
   getGeneralApplicationOverlayVersion,
@@ -35,6 +35,7 @@ export function useVolunteerInterviewOverlayKv<T>(
   const applicationKey = buildVolunteerInterviewOverlayKey('application', suffix)
   const recruitKey = buildVolunteerInterviewOverlayKey('recruit', suffix)
 
+  const defaultRef = useRef(defaultValue)
   const applicationVersion = useSyncExternalStore(
     subscribeGeneralApplicationOverlay,
     getGeneralApplicationOverlayVersion,
@@ -53,7 +54,7 @@ export function useVolunteerInterviewOverlayKv<T>(
   const recruitRecord = getGeneralRecruitOverlayRecord()
   const key = store === 'recruit' ? recruitKey : applicationKey
   const record = store === 'recruit' ? recruitRecord : applicationRecord
-  const value = (record[key] as T | undefined) ?? defaultValue
+  const value = (record[key] as T | undefined) ?? defaultRef.current
 
   const setValue = useCallback(
     (next: T) => {

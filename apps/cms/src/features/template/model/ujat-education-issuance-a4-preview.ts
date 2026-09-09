@@ -46,6 +46,13 @@ export function getUjatEducationA4ParagraphGap(
     : getUjatEducationJournalA4ParagraphGap
 }
 
+const UJAT_JOURNAL_USER_INFO_PREVIEW_SAMPLES: UserInfoPreviewValues = {
+  name: '홍길동',
+  teamPartnerName: '이순신',
+}
+
+const UJAT_JOURNAL_PREVIEW_INSTITUTION_NAME = '틴토초등학교'
+
 export type UjatEducationIssuanceA4PreviewInput = {
   variant: UjatEducationA4PreviewVariant
   userInfoPreviewValues?: UserInfoPreviewValues
@@ -69,16 +76,18 @@ export function createUjatEducationIssuanceA4Preview(input: UjatEducationIssuanc
 
   const paragraphBodyOptions: RenderFormParagraphBodyOptions = {
     documentPreviewClassName: UJAT_EDUCATION_A4_PREVIEW_BODY_CLASS_NAME,
-    ...(input.userInfoPreviewValues != null
-      ? { userInfoPreviewValues: input.userInfoPreviewValues }
-      : {}),
-    ...(input.variant === 'journal' && input.journalInstitutionName != null
+    ...(input.variant === 'journal'
       ? {
+          userInfoPreviewValues:
+            input.userInfoPreviewValues ?? UJAT_JOURNAL_USER_INFO_PREVIEW_SAMPLES,
           ujatJournalEducationInfoAutofill: {
-            institutionName: input.journalInstitutionName,
+            institutionName:
+              input.journalInstitutionName ?? UJAT_JOURNAL_PREVIEW_INSTITUTION_NAME,
           },
         }
-      : {}),
+      : input.userInfoPreviewValues != null
+        ? { userInfoPreviewValues: input.userInfoPreviewValues }
+        : {}),
   }
 
   return {

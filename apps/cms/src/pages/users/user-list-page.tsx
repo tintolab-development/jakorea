@@ -1021,6 +1021,7 @@ export function UserListPage() {
         instructorType: values.memberType === 'school_teacher' ? 'SCHOOL_TEACHER' : 'GENERAL',
         instructorCmsProfile: instructorProfileFormValuesToCmsProfile(values),
         instructorCmsSettlement: instructorProfileFormValuesToCmsSettlement(values),
+        ...(values.jaEvaluationInput ? { jaEvaluation: values.jaEvaluationInput } : {}),
         termsAgreements: buildPreRegisterTermsAgreements(
           {
             consentTermsOfService: values.consentTermsOfService,

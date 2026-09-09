@@ -19,6 +19,7 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
+import { isPlaceholderParagraphDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
 import {
   UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS,
   UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
@@ -139,7 +140,6 @@ export function withSurveyWriteTitleNumbering<
   return { ...heading, titleLeading: prefix }
 }
 
-const HIDDEN_PREVIEW_DESCRIPTION_TEXTS = new Set(['설명 입력', '설명을 입력해 주세요'])
 const CARD_DESCRIPTION_PLACEHOLDER_TEXT = '설명 입력'
 
 export function withoutPlaceholderDescriptionInPreview<
@@ -148,7 +148,7 @@ export function withoutPlaceholderDescriptionInPreview<
   if (!heading || !hideInPreview) return heading
   if (heading.showDescription === false) return heading
   const trimmedDescription = heading.descriptionValue?.trim() ?? ''
-  if (trimmedDescription.length === 0 || HIDDEN_PREVIEW_DESCRIPTION_TEXTS.has(trimmedDescription)) {
+  if (isPlaceholderParagraphDescription(trimmedDescription)) {
     return { ...heading, showDescription: false }
   }
   return heading

@@ -69,7 +69,7 @@ describe('uploadConsentEvidenceFile', () => {
       ownerId: 1001,
       ownerDomain: 'MEMBER',
       ownerType: 'CONSENT',
-      privacyLevel: 'SENSITIVE',
+      filePurpose: 'CRIMINAL_HISTORY_CHECK_CONSENT',
     })
     expect(typeof prepareCall?.data?.checksumSha256).toBe('string')
     expect(prepareCall?.data?.checksumSha256).toMatch(/^[a-f0-9]{64}$/)

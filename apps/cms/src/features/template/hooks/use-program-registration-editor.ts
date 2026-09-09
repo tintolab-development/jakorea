@@ -100,6 +100,19 @@ function getDefaultEducationScheduleMode(
   return variant === 'economy' ? 'period' : 'date'
 }
 
+function filterProgramRegistrationDraftForVariant(
+  draft: WritingFormDraft,
+  variant: ProgramRegistrationFormVariant
+): WritingFormDraft {
+  if (variant !== 'trainedTeachers') return draft
+  return {
+    ...draft,
+    paragraphs: draft.paragraphs.filter(
+      paragraph => paragraph.id !== PROGRAM_REGISTRATION_IDS.businessKpi
+    ),
+  }
+}
+
 function createDefaultRegistrationEditorState(
   variant: ProgramRegistrationFormVariant
 ): ProgramRegistrationEditorState {
@@ -321,8 +334,9 @@ export function useProgramRegistrationEditor(
 
   const resetRegistrationEditorToSeed = useCallback(() => {
     resetProgramRegistrationOverlay()
-    const next = normalizeWritingFormDraft(
-      createProgramRegistrationDraft(programRegistrationFormVariant)
+    const next = filterProgramRegistrationDraftForVariant(
+      normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant)),
+      programRegistrationFormVariant
     )
     startTransition(() => {
       setDraft(next)
@@ -360,7 +374,10 @@ export function useProgramRegistrationEditor(
           if (cancelled) return
           if (saved?.draft) {
             replaceProgramRegistrationOverlay(saved.overlay ?? {})
-            const normalized = normalizeWritingFormDraft(saved.draft)
+            const normalized = filterProgramRegistrationDraftForVariant(
+              normalizeWritingFormDraft(saved.draft),
+              programRegistrationFormVariant
+            )
             const restored = applyProgramRegistrationEditorState(saved.editorState, defaults)
             startTransition(() => {
               setDraft(normalized)
@@ -781,11 +798,13 @@ export function useProgramRegistrationEditor(
         },
         {
           hiddenParagraphIds:
-            programRegistrationFormVariant === 'general' &&
-            programType === 'schedule' &&
-            sessionRoundType === 'multi'
-              ? new Set<string>([PROGRAM_REGISTRATION_IDS.educationScheduleSettings])
-              : undefined,
+            programRegistrationFormVariant === 'trainedTeachers'
+              ? new Set<string>([PROGRAM_REGISTRATION_IDS.businessKpi])
+              : programRegistrationFormVariant === 'general' &&
+                  programType === 'schedule' &&
+                  sessionRoundType === 'multi'
+                ? new Set<string>([PROGRAM_REGISTRATION_IDS.educationScheduleSettings])
+                : undefined,
         }
       ),
     [

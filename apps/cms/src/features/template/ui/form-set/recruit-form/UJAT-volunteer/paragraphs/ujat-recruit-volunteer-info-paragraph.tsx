@@ -8,6 +8,7 @@ import {
   resolveUjatRecruitParagraphMode,
 } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
 import { UjatRecruitVolunteerInfoProgramView } from '@/features/program/ujat/ui/detail-modal/info/recruit-paragraph-views/volunteer-info-program'
+import '@/features/program/ujat/ui/detail-modal/info/recruit-paragraph-views/volunteer-info-program.css'
 
 function UjatRecruitVolunteerInfoTemplateEditor() {
   const previewProgram = useMemo(
@@ -24,6 +25,7 @@ function UjatRecruitVolunteerInfoTemplateEditor() {
       volunteerHalf="h2"
       showNoticeExposure
       hideSectionHeader
+      isTemplateAuthoring
     />
   )
 }

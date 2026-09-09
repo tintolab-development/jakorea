@@ -8,12 +8,19 @@ import {
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
   useProgramRegistrationOverlayKv,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  TRAINED_TEACHERS_REGISTRATION_ALL_VALUE,
+  TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX,
+  normalizeTrainedTeachersAllSelectValue,
+} from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 
 type ControlledSponsorProps = {
   sponsorId?: string
   onSponsorIdChange?: (sponsorId: string) => void
   sponsorContactId?: string
   onSponsorContactIdChange?: (contactId: string) => void
+  /** 교육받은 교사 등록 폼 — 후원사/담당자 기본값 「전체」 */
+  trainedTeachersDefaults?: boolean
 }
 
 function ProgramRegistrationBasicInfoSponsorFieldsInner({
@@ -21,21 +28,36 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   onSponsorIdChange,
   sponsorContactId: sponsorContactIdProp,
   onSponsorContactIdChange,
+  trainedTeachersDefaults = false,
 }: ControlledSponsorProps) {
+  const sponsorIdKey = trainedTeachersDefaults
+    ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.sponsorId`
+    : GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY
+  const sponsorContactKey = trainedTeachersDefaults
+    ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.managerContactId`
+    : GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY
+  const allValueDefault = trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_ALL_VALUE : ''
+
   const [localSponsorId, setLocalSponsorId] = useProgramRegistrationOverlayKv(
-    GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
-    ''
+    sponsorIdKey,
+    allValueDefault
   )
   const [localManagerContactId, setLocalManagerContactId] = useProgramRegistrationOverlayKv(
-    GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
-    ''
+    sponsorContactKey,
+    allValueDefault
   )
 
   const isSponsorControlled = onSponsorIdChange != null
-  const sponsorId = isSponsorControlled ? (sponsorIdProp ?? '') : localSponsorId
-  const managerContactId = isSponsorControlled
+  const rawSponsorId = isSponsorControlled ? (sponsorIdProp ?? '') : localSponsorId
+  const rawManagerContactId = isSponsorControlled
     ? (sponsorContactIdProp ?? '')
     : localManagerContactId
+  const sponsorId = trainedTeachersDefaults
+    ? normalizeTrainedTeachersAllSelectValue(rawSponsorId)
+    : rawSponsorId
+  const managerContactId = trainedTeachersDefaults
+    ? normalizeTrainedTeachersAllSelectValue(rawManagerContactId)
+    : rawManagerContactId
 
   const setSponsorId = (next: string) => {
     setLocalSponsorId(next)
@@ -50,16 +72,25 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     }
   }
 
-  const { options: sponsorOptions } = useSponsorSelectOptions()
-  const contactsQuery = useSponsorContactsQuery(sponsorId || null, Boolean(sponsorId))
+  const { options: sponsorApiOptions } = useSponsorSelectOptions()
+  const isAllSponsor = trainedTeachersDefaults && sponsorId === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE
+  const contactsQuery = useSponsorContactsQuery(
+    isAllSponsor ? null : sponsorId || null,
+    !isAllSponsor && Boolean(sponsorId)
+  )
+
+  const sponsorOptions = sponsorApiOptions
 
   const managerOptions = useMemo(() => {
+    if (isAllSponsor) {
+      return [{ value: TRAINED_TEACHERS_REGISTRATION_ALL_VALUE, label: '전체' }]
+    }
     if (!sponsorId) return []
     return (contactsQuery.data ?? []).map(c => ({
       value: c.id,
       label: c.name,
     }))
-  }, [contactsQuery.data, sponsorId])
+  }, [contactsQuery.data, isAllSponsor, sponsorId])
 
   return (
     <DetailInfoForm.Row type="double">
@@ -68,7 +99,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
         edit={
           <div className="detail-info-form-inputs-wrapper-no-gap">
             <CmsSelect
-              withAllOption={false}
+              withAllOption={trainedTeachersDefaults}
               inputSize="medium"
               placeholder="후원사를 선택하세요"
               width={240}
@@ -77,7 +108,11 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
               onChange={v => {
                 const next = String(v ?? '')
                 setSponsorId(next)
-                setManagerContactId('')
+                setManagerContactId(
+                  trainedTeachersDefaults && next === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE
+                    ? TRAINED_TEACHERS_REGISTRATION_ALL_VALUE
+                    : ''
+                )
               }}
             />
           </div>
@@ -94,7 +129,11 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
               width={240}
               options={managerOptions}
               value={managerContactId}
-              disabled={!sponsorId || managerOptions.length === 0}
+              disabled={
+                trainedTeachersDefaults
+                  ? !isAllSponsor && managerOptions.length === 0
+                  : !sponsorId || managerOptions.length === 0
+              }
               onChange={v => setManagerContactId(String(v ?? ''))}
             />
           </div>

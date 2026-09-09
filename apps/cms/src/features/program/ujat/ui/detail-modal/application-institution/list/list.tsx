@@ -18,8 +18,10 @@ import './list.css'
 
 export function UjatInstitutionApplicationList({
   onOpenDetail,
+  programId,
 }: {
   onOpenDetail: (row: UjatInstitutionApplicationRow) => void
+  programId?: string | null
 }) {
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
     getDefaultUjatEducationRegionKey
@@ -43,7 +45,7 @@ export function UjatInstitutionApplicationList({
     confirmApplicationRejectModal,
     selectedApplications,
     resetRegionState,
-  } = useUjatInstitutionApplicationList(activeRegion)
+  } = useUjatInstitutionApplicationList(activeRegion, programId)
   useEffect(() => {
     resetRegionState()
   }, [activeRegion, resetRegionState])

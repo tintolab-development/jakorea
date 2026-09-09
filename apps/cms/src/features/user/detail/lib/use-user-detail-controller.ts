@@ -103,7 +103,7 @@ import {
   mergeListUserWithFetchedDetail,
 } from '@/features/user/api/merge-list-user-with-detail'
 import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
-import { upsertMember1365ExternalIdentifierRemote, upsertMemberAdminCommentRemote, deleteMemberApplicationHistoryRemote, deleteMemberProgramHistoryRemote, bulkDeleteSchoolOrganizationProgramEnrollmentHistoryRemote } from '@/features/user/api/members-api-client'
+import { upsertMember1365ExternalIdentifierRemote, upsertMemberAdminCommentRemote, deleteMemberApplicationHistoryRemote, bulkDeleteProgramHistoryRemote, bulkDeleteSchoolOrganizationProgramEnrollmentHistoryRemote } from '@/features/user/api/members-api-client'
 import { parseSchoolOrganizationEnrollmentRowId } from '@/features/user/api/map-school-organization-program-enrollment-history'
 import { parseOrganizationIdFromUserId } from '@/features/user/api/map-school-organization-to-user'
 import { resolveAdminCommentResource } from '@/features/user/api/resolve-admin-comment-resource'
@@ -663,17 +663,30 @@ export function useUserDetailController({
 
       if (!displayUser.memberId) return
       try {
-        await Promise.all(
-          rowIds.map(async rowId => {
-            const parsed = parseMemberProgramHistoryRowId(rowId)
-            if (!parsed) return
-            if (parsed.kind === 'application') {
-              await deleteMemberApplicationHistoryRemote(displayUser.memberId!, parsed.numericId)
-              return
-            }
-            await deleteMemberProgramHistoryRemote(displayUser.memberId!, parsed.numericId)
+        const applicationIds: number[] = []
+        const historyIds: number[] = []
+        for (const rowId of rowIds) {
+          const parsed = parseMemberProgramHistoryRowId(rowId)
+          if (!parsed) continue
+          if (parsed.kind === 'application') {
+            applicationIds.push(parsed.numericId)
+            continue
+          }
+          historyIds.push(parsed.numericId)
+        }
+        if (historyIds.length > 0) {
+          await bulkDeleteProgramHistoryRemote(displayUser.memberId, {
+            ids: historyIds.slice(0, 100),
+            reason: 'CMS 회원 상세 프로그램 이력 일괄 삭제',
           })
-        )
+        }
+        if (applicationIds.length > 0) {
+          await Promise.all(
+            applicationIds.map(applicationId =>
+              deleteMemberApplicationHistoryRemote(displayUser.memberId!, applicationId)
+            )
+          )
+        }
         await refetchApplications()
       } catch (error) {
         showAlert({
@@ -1341,7 +1354,7 @@ export function useUserDetailController({
   }, [])
 
   const completeJaGradeEvaluation = useCallback(
-    async ({ grade }: { grade: string; totalScore: number }) => {
+    async ({ grade }: { grade: string; totalScore: number; jaEvaluation?: unknown }) => {
       if (
         !guardAdminAction({
           roleCode: resolveAdminRoleCodeFromUser(currentUser),
@@ -1360,7 +1373,7 @@ export function useUserDetailController({
         )
       }
 
-      // remote: 모달에서 evaluation-grade POST 완료됨. mock만 상세 패치로 영속화.
+      // remote: 모달에서 ja-evaluation POST 완료됨. mock만 상세 패치로 영속화.
       if (patchMemberBasicInfo && !isMembersRemoteEnabled()) {
         const persisted = await patchMemberBasicInfo(displayUser.id, {
           listMetrics: { jaEvaluationGrade: grade },

@@ -59,7 +59,7 @@ export const PAYMENT_TABLES = [
 export const PAYMENT_MID_CONSENT =
   '상기 본인은 위와 같이 「개인정보보호법」등 관련 법규에 의거하여 개인정보 수집 및 활용에 동의합니다.'
 export const PAYMENT_BASIC_SECTION_TITLE = `${PAYMENT_TABLES.length + 1}. 지급조서`
-export const PAYMENT_PURPOSE_FIXED = '강사비 또는 활동비 지급'
+export const PAYMENT_PURPOSE_FIXED = '강의비 또는 활동비 지급'
 export const PAYMENT_FINAL_CONFIRM =
   '본인은 본 비용 지급 목적의 활동에 참여하였으며 상기 내용을 바탕으로 금액을 수령함을 확인합니다.'
 export const PAYMENT_CLOSING = 'JA KOREA 귀하'

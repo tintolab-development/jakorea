@@ -5,9 +5,9 @@ import {
 } from './admin-approval-role'
 
 describe('adminPermissionFeeGradeToRoleCode', () => {
-  it('maps FE variants to BE roleCode', () => {
+  it('maps FE variants to BE roleCode (MASTER / MIDDLE / VIEWER)', () => {
     expect(adminPermissionFeeGradeToRoleCode('manager')).toBe('MASTER')
-    expect(adminPermissionFeeGradeToRoleCode('partner')).toBe('PARTNER')
+    expect(adminPermissionFeeGradeToRoleCode('partner')).toBe('MIDDLE')
     expect(adminPermissionFeeGradeToRoleCode('viewer')).toBe('VIEWER')
   })
 })
@@ -15,6 +15,7 @@ describe('adminPermissionFeeGradeToRoleCode', () => {
 describe('roleCodeToAdminPermissionVariant', () => {
   it('maps BE roleCode and FE variants', () => {
     expect(roleCodeToAdminPermissionVariant('MASTER')).toBe('manager')
+    expect(roleCodeToAdminPermissionVariant('MIDDLE')).toBe('partner')
     expect(roleCodeToAdminPermissionVariant('PM')).toBe('partner')
     expect(roleCodeToAdminPermissionVariant('PARTNER')).toBe('partner')
     expect(roleCodeToAdminPermissionVariant('VIEWER')).toBe('viewer')

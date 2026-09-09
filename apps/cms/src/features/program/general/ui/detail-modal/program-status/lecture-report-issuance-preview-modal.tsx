@@ -100,7 +100,16 @@ export function LectureReportIssuancePreviewModal({
     [context]
   )
 
-  const a4Preview = useMemo(() => createLectureReportIssuanceA4Preview(), [])
+  const a4Preview = useMemo(() => {
+    const base = createLectureReportIssuanceA4Preview()
+    return {
+      ...base,
+      paragraphBodyOptions: {
+        ...base.paragraphBodyOptions,
+        lectureReportProgramLinkedPreview: true,
+      },
+    }
+  }, [])
 
   const previewParagraphs = useMemo(
     () =>
@@ -110,7 +119,7 @@ export function LectureReportIssuancePreviewModal({
 
   const { pages, overflowParagraphIds, measureLayer } = useA4ParagraphPages({
     allParagraphs: previewParagraphs,
-    titleNumbering: draft?.formSettings.titleNumbering ?? 'numeric',
+    titleNumbering: draft?.formSettings.titleNumbering ?? 'none',
     editorKind: 'survey',
     enabled: open && draft != null,
     paragraphBodyOptions: a4Preview.paragraphBodyOptions,
@@ -122,7 +131,7 @@ export function LectureReportIssuancePreviewModal({
   const totalPages = pages.length || 1
   const safePageIndex = Math.min(currentPageIndex, totalPages - 1)
   const currentPageParagraphs = pages[safePageIndex] ?? []
-  const titleNumbering = draft?.formSettings.titleNumbering ?? 'numeric'
+  const titleNumbering = draft?.formSettings.titleNumbering ?? 'none'
   const surveyTitle =
     draft != null ? getA4DocumentTitle(draft, LECTURE_REPORT_DOCUMENT_TITLE) : LECTURE_REPORT_DOCUMENT_TITLE
 

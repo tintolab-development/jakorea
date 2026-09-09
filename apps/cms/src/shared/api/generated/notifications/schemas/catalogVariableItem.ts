@@ -12,15 +12,15 @@ import type { CatalogVariableItemParticipantTypesItem } from './catalogVariableI
  * Notion 사용 변수 1건. enabled=삽입 허용 SSOT(값 존재와 무관).
  */
 export interface CatalogVariableItem {
-  /** 변수 키(토큰 안쪽 라벨). 예: 교육 진행 수업 시간. fail-closed 메시지 키와 동일. */
+  /** 카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일. */
   key?: string;
   /** 본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입. */
   token?: string;
   /** 보조 설명. 없으면 null */
   description?: string | null;
-  /** true이면 programId 없는 발송 맥락에서 enabled=false. */
+  /** true이면 programId 없이 enabled=false. */
   requiresProgram?: boolean;
-  /** 발송 맥락 SSOT. 삽입/사용 허용 여부. FE는 재계산하지 않고 이 값만으로 패널 활성/비활성. */
+  /** 삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능. */
   enabled?: boolean;
   /** 허용 프로그램 유형 그룹. 비면 제한 없음 */
   programGroups?: string[];

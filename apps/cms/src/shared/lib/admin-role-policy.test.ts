@@ -47,6 +47,11 @@ describe('parseAdminRoleCode', () => {
     expect(parseAdminRoleCode('PM')).toBe('PM')
     expect(parseAdminRoleCode('ADMIN')).toBeNull()
   })
+
+  it('OpenAPI MIDDLE(중간 관리자)는 PARTNER로 정규화한다', () => {
+    expect(parseAdminRoleCode('MIDDLE')).toBe('PARTNER')
+    expect(parseAdminRoleCode('middle')).toBe('PARTNER')
+  })
 })
 
 describe('adminRoleCodeToLegacyAdminLevel', () => {

@@ -18,6 +18,8 @@ import {
   RICH_TEXT_IMAGE_ACCEPT,
   TextSelection,
 } from '@jakorea/rich-text'
+import { fetchFileContentBlob, uploadAdminFile } from '@/shared/lib/admin-file-upload'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import {
   FONT_FAMILY_OPTIONS,
   FONT_SIZE_OPTIONS,
@@ -307,7 +309,29 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
       const file = event.target.files?.[0]
       event.target.value = ''
       if (!file || !editor) return
-      insertImageFromFile(editor, file)
+      if (!isRealApiModuleEnabled('files')) {
+        insertImageFromFile(editor, file)
+        return
+      }
+      void (async () => {
+        try {
+          const uploaded = await uploadAdminFile({
+            file,
+            owner: {
+              ownerDomain: 'CONTENT',
+              ownerType: 'INLINE_IMAGE',
+              ownerId: 0,
+              filePurpose: 'INLINE_IMAGE',
+            },
+            waitUntilAvailable: true,
+          })
+          const blob = await fetchFileContentBlob(uploaded.fileObjectId)
+          const objectUrl = URL.createObjectURL(blob)
+          insertImageFromUrl(editor, objectUrl)
+        } catch {
+          insertImageFromFile(editor, file)
+        }
+      })()
     },
     [editor]
   )

@@ -3,9 +3,9 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
-  startTransition,
   type Dispatch,
   type SetStateAction,
 } from 'react'
@@ -532,19 +532,44 @@ export function useProgramParticipantApplicationEditor(
     return createProgramParticipantApplicationDraft()
   }, [variant])
 
+  /** 모집/신청 탭 전환 시 EMPTY→스피너 깜빡임 방지 — 세션 내 templateId별 마지막 draft */
+  const sessionDraftCacheRef = useRef(
+    new Map<
+      string,
+      {
+        draft: WritingFormDraft
+        overlay: Record<string, unknown> | undefined
+        editorState: Record<string, unknown> | undefined
+      }
+    >()
+  )
+  /** 해당 templateId를 저장소에서 한 번이라도 hydrate 했는지 — 미완료면 캐시보다 저장본 우선 */
+  const storageHydratedTemplateIdsRef = useRef(new Set<string>())
+  const draftRef = useRef(draft)
+  draftRef.current = draft
+  const volunteerExceptionScheduleCountRef = useRef(volunteerExceptionScheduleCount)
+  volunteerExceptionScheduleCountRef.current = volunteerExceptionScheduleCount
+  const ujatVolunteerApplicationTypeRef = useRef(ujatVolunteerApplicationType)
+  ujatVolunteerApplicationTypeRef.current = ujatVolunteerApplicationType
+  const ujatGradeApplicationBlockIdsRef = useRef(ujatGradeApplicationBlockIds)
+  ujatGradeApplicationBlockIdsRef.current = ujatGradeApplicationBlockIds
+  const ujatApplicationGradeByBlockIdRef = useRef(ujatApplicationGradeByBlockId)
+  ujatApplicationGradeByBlockIdRef.current = ujatApplicationGradeByBlockId
+  const ujatGradeClassTimeBlockIdsRef = useRef(ujatGradeClassTimeBlockIds)
+  ujatGradeClassTimeBlockIdsRef.current = ujatGradeClassTimeBlockIds
+
   useEffect(() => {
     if (!active) {
       setIsDraftLoading(false)
+      sessionDraftCacheRef.current.clear()
+      storageHydratedTemplateIdsRef.current.clear()
       return
     }
     /* eslint-disable react-hooks/set-state-in-effect -- 풀페이지 미리보기 열림과 동기화해 시드·저장본을 반영 */
     let cancelled = false
-    setIsDraftLoading(true)
-    setDraft(EMPTY_WRITING_FORM_DRAFT)
-    setActiveParagraphId(null)
-    setSingleItemListActiveItemId(null)
+    const templateId = resolvePersistTemplateId()
 
-    const applyDraft = (next: WritingFormDraft) => {
+    const applyDraftNow = (next: WritingFormDraft) => {
       const migrated =
         variant === 'ujat-application-volunteer'
           ? migrateUjatProgramApplicationVolunteerChoiceParagraphs(next)
@@ -562,88 +587,128 @@ export function useProgramParticipantApplicationEditor(
                       ? migrateProgramApplicationFormVolunteerParagraphs(next)
                       : next
       const normalized = normalizeWritingFormDraft(migrated)
-      startTransition(() => {
-        setDraft(normalized)
-        setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
-        setSingleItemListActiveItemId(null)
-      })
+      setDraft(normalized)
+      setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
+      setSingleItemListActiveItemId(null)
     }
 
-    const finishLoad = () => {
-      if (!cancelled) setIsDraftLoading(false)
+    const cached = sessionDraftCacheRef.current.get(templateId)
+    if (cached) {
+      applyDraftNow(cached.draft)
+      if (variant === 'ujat-recruit-institution') {
+        replaceUjatRecruitInstitutionOverlay(cached.overlay ?? {})
+      } else if (variant === 'ujat-recruit-volunteer') {
+        replaceUjatRecruitVolunteerOverlay(cached.overlay ?? {})
+      } else {
+        restoreParticipantOverlayForVariant(variant, cached.overlay)
+        applyParticipantApplicationEditorState({
+          variant,
+          editorState: cached.editorState,
+          setVolunteerExceptionScheduleCount,
+          setUjatVolunteerApplicationType,
+          setUjatGradeApplicationBlockIds,
+          setUjatApplicationGradeByBlockId,
+          setUjatGradeClassTimeBlockIds,
+        })
+      }
+      setIsDraftLoading(false)
+    } else {
+      // 탭 전환 시 EMPTY/스피너 대신 시드를 즉시 그려 깜빡임 제거
+      applyDraftNow(createSeedDraft())
+      if (variant === 'ujat-recruit-institution') {
+        resetUjatRecruitInstitutionOverlay()
+      } else if (variant === 'ujat-recruit-volunteer') {
+        resetUjatRecruitVolunteerOverlay()
+      } else {
+        restoreParticipantOverlayForVariant(variant, undefined)
+      }
+      setIsDraftLoading(false)
     }
+
+    const preferSessionCache =
+      cached != null && storageHydratedTemplateIdsRef.current.has(templateId)
 
     if (variant === 'ujat-recruit-institution' || variant === 'ujat-recruit-volunteer') {
-      const templateId = resolvePersistTemplateId()
-      void loadWritingFormTemplateDraft(templateId)
-        .then(saved => {
-          if (cancelled) return
-          if (saved?.draft) {
-            applyDraft(saved.draft)
-            if (variant === 'ujat-recruit-institution') {
-              replaceUjatRecruitInstitutionOverlay(saved.overlay ?? {})
-            } else {
-              replaceUjatRecruitVolunteerOverlay(saved.overlay ?? {})
-            }
-            return
-          }
-          const legacy =
-            variant === 'ujat-recruit-institution'
-              ? loadUjatRecruitInstitutionTemplateSave()
-              : loadUjatRecruitVolunteerTemplateSave()
-          if (legacy) {
-            applyDraft(legacy.draft)
-            if (variant === 'ujat-recruit-institution') {
-              replaceUjatRecruitInstitutionOverlay(legacy.overlay ?? {})
-            } else {
-              replaceUjatRecruitVolunteerOverlay(legacy.overlay ?? {})
-            }
-          } else if (variant === 'ujat-recruit-institution') {
-            resetUjatRecruitInstitutionOverlay()
-            applyDraft(createUjatRecruitFormInstitutionDraft())
+      void loadWritingFormTemplateDraft(templateId).then(saved => {
+        if (cancelled) return
+        if (preferSessionCache) return
+        if (saved?.draft) {
+          applyDraftNow(saved.draft)
+          if (variant === 'ujat-recruit-institution') {
+            replaceUjatRecruitInstitutionOverlay(saved.overlay ?? {})
           } else {
-            resetUjatRecruitVolunteerOverlay()
-            applyDraft(createUjatRecruitFormVolunteerDraft())
+            replaceUjatRecruitVolunteerOverlay(saved.overlay ?? {})
           }
-        })
-        .finally(finishLoad)
+          storageHydratedTemplateIdsRef.current.add(templateId)
+          return
+        }
+        const legacy =
+          variant === 'ujat-recruit-institution'
+            ? loadUjatRecruitInstitutionTemplateSave()
+            : loadUjatRecruitVolunteerTemplateSave()
+        if (legacy) {
+          applyDraftNow(legacy.draft)
+          if (variant === 'ujat-recruit-institution') {
+            replaceUjatRecruitInstitutionOverlay(legacy.overlay ?? {})
+          } else {
+            replaceUjatRecruitVolunteerOverlay(legacy.overlay ?? {})
+          }
+        }
+        storageHydratedTemplateIdsRef.current.add(templateId)
+      })
     } else {
-      const templateId = resolvePersistTemplateId()
-      void loadWritingFormTemplateDraft(templateId)
-        .then(saved => {
-          if (cancelled) return
-          if (saved?.draft) {
-            applyDraft(saved.draft)
-            restoreParticipantOverlayForVariant(variant, saved.overlay)
-            applyParticipantApplicationEditorState({
-              variant,
-              editorState: saved.editorState,
-              setVolunteerExceptionScheduleCount,
-              setUjatVolunteerApplicationType,
-              setUjatGradeApplicationBlockIds,
-              setUjatApplicationGradeByBlockId,
-              setUjatGradeClassTimeBlockIds,
-            })
-            return
-          }
-          restoreParticipantOverlayForVariant(variant, undefined)
-          applyDraft(createSeedDraft())
-          if (variant === 'ujat-application-volunteer') {
-            setUjatVolunteerApplicationType('ujat-graduate')
-          }
-          if (variant === 'ujat-application-institution') {
-            setUjatGradeApplicationBlockIds([crypto.randomUUID()])
-            setUjatApplicationGradeByBlockId({})
-            setUjatGradeClassTimeBlockIds([crypto.randomUUID()])
-          }
-        })
-        .finally(finishLoad)
+      void loadWritingFormTemplateDraft(templateId).then(saved => {
+        if (cancelled) return
+        if (preferSessionCache) return
+        if (saved?.draft) {
+          applyDraftNow(saved.draft)
+          restoreParticipantOverlayForVariant(variant, saved.overlay)
+          applyParticipantApplicationEditorState({
+            variant,
+            editorState: saved.editorState,
+            setVolunteerExceptionScheduleCount,
+            setUjatVolunteerApplicationType,
+            setUjatGradeApplicationBlockIds,
+            setUjatApplicationGradeByBlockId,
+            setUjatGradeClassTimeBlockIds,
+          })
+          storageHydratedTemplateIdsRef.current.add(templateId)
+          return
+        }
+        if (variant === 'ujat-application-volunteer') {
+          setUjatVolunteerApplicationType('ujat-graduate')
+        }
+        if (variant === 'ujat-application-institution') {
+          setUjatGradeApplicationBlockIds([crypto.randomUUID()])
+          setUjatApplicationGradeByBlockId({})
+          setUjatGradeClassTimeBlockIds([crypto.randomUUID()])
+        }
+        storageHydratedTemplateIdsRef.current.add(templateId)
+      })
     }
 
     /* eslint-enable react-hooks/set-state-in-effect */
 
     return () => {
       cancelled = true
+      if (draftRef.current.paragraphs.length === 0) return
+      sessionDraftCacheRef.current.set(templateId, {
+        draft: draftRef.current,
+        overlay:
+          variant === 'ujat-recruit-institution'
+            ? { ...getUjatRecruitInstitutionOverlayRecord() }
+            : variant === 'ujat-recruit-volunteer'
+              ? { ...getUjatRecruitVolunteerOverlayRecord() }
+              : collectParticipantOverlayForVariant(variant),
+        editorState: buildParticipantApplicationEditorState({
+          variant,
+          volunteerExceptionScheduleCount: volunteerExceptionScheduleCountRef.current,
+          ujatVolunteerApplicationType: ujatVolunteerApplicationTypeRef.current,
+          ujatGradeApplicationBlockIds: ujatGradeApplicationBlockIdsRef.current,
+          ujatApplicationGradeByBlockId: ujatApplicationGradeByBlockIdRef.current,
+          ujatGradeClassTimeBlockIds: ujatGradeClassTimeBlockIdsRef.current,
+        }),
+      })
     }
   }, [active, createSeedDraft, resolvePersistTemplateId, variant])
 

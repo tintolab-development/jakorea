@@ -252,7 +252,7 @@ export function createParagraphByDetail(detail: DetailSelectValue, id: string): 
         kind: 'single_item',
         variant: 'ujat_journal_education_info',
         requiredMark: true,
-        paragraphTitle: '교육 정보',
+        paragraphTitle: '교육 일정',
         paragraphDescription: '설명 입력',
         participatesInTitleNumbering: true,
         answerRequired: true,

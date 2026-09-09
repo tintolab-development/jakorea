@@ -35,7 +35,7 @@ describe('mapPaymentBasicInfo', () => {
         bankName: '국민',
         accountNumber: '',
         accountHolder: '',
-        paymentPurpose: '강사비 또는 활동비 지급',
+        paymentPurpose: '강의비 또는 활동비 지급',
       })
     ).toEqual({
       nameKo: '홍길동',
@@ -49,7 +49,7 @@ describe('mapPaymentBasicInfo', () => {
       bankName: '국민',
       accountNumber: undefined,
       accountHolder: undefined,
-      paymentPurpose: '강사비 또는 활동비 지급',
+      paymentPurpose: '강의비 또는 활동비 지급',
     })
   })
 
@@ -61,7 +61,7 @@ describe('mapPaymentBasicInfo', () => {
       })
     ).toMatchObject({
       nameKo: '홍길동',
-      paymentPurpose: '강사비 또는 활동비 지급',
+      paymentPurpose: '강의비 또는 활동비 지급',
     })
   })
 })
@@ -70,7 +70,7 @@ describe('mapAgreementSnapshotToFilledDocument', () => {
   it('지급조서는 templateCode와 paymentBasicInfo를 붙인다', () => {
     const filled = mapAgreementSnapshotToFilledDocument('PAYMENT_STATEMENT_PRE_CONSENT', {
       draft: stubDraft(),
-      paymentBasicInfo: { nameKo: '홍길동', paymentPurpose: '강사비 또는 활동비 지급' },
+      paymentBasicInfo: { nameKo: '홍길동', paymentPurpose: '강의비 또는 활동비 지급' },
     })
     expect(filled.templateCode).toBe('agreement-third-party')
     expect(filled.schemaJson).toMatchObject({ schemaVersion: 1 })

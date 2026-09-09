@@ -161,7 +161,7 @@ export function RecruitFormVolunteerInfoParagraph() {
 
   const [volunteerTargets, setVolunteerTargets] = useGeneralRecruitOverlayKv<string[]>(
     'recruit.volunteer.volunteerTargets',
-    ['대학(원)생']
+    []
   )
   const [volunteerTargetDetail, setVolunteerTargetDetail] = useGeneralRecruitOverlayKv<string>(
     'recruit.volunteer.volunteerTargetDetail',

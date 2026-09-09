@@ -8111,12 +8111,10 @@
               "INSTITUTION_SUBMISSION",
               "EDUCATION_COMPLETION_PROOF",
               "PERSONAL_ARCHIVE"
-            ],
-            "minLength": 1
+            ]
           }
         },
         "required": [
-          "issueReason",
           "participantId",
           "programId"
         ]
@@ -15311,7 +15309,7 @@
           },
           "mode": {
             "type": "string",
-            "description": "NHN_LIVE_PULL | LOCAL_APPROVAL_MARK | REQUEST_UPSERT | LOCAL_TEMPLATE_HARVEST. ALIMTALK NHN_LIVE_PULL의 upsertedCount는 APPROVED만."
+            "description": "동기화 방식: NHN 실시간 조회(NHN_LIVE_PULL), 로컬 승인 상태 반영(LOCAL_APPROVAL_MARK), 요청 upsert(REQUEST_UPSERT), 로컬 템플릿 수집(LOCAL_TEMPLATE_HARVEST)"
           },
           "syncedAt": {
             "type": "string",
@@ -17542,15 +17540,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessStartDate": {
-            "type": "string"
+          "businessYear": {
+            "type": "integer",
+            "format": "int32"
           },
           "businessEndDate": {
             "type": "string"
           },
-          "businessYear": {
-            "type": "integer",
-            "format": "int32"
+          "businessStartDate": {
+            "type": "string"
           }
         }
       },
@@ -32445,43 +32443,40 @@
           }
         }
       },
-      "NotificationCatalogCategory": {
+      "CatalogCategory": {
         "type": "object",
-        "required": [
-          "categoryCode",
-          "categoryLabel",
-          "variables"
-        ],
         "properties": {
           "categoryCode": {
-            "type": "string",
-            "example": "TIME"
+            "type": "string"
           },
           "categoryLabel": {
-            "type": "string",
-            "example": "시간"
+            "type": "string"
           },
           "variables": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/NotificationCatalogVariableItem"
+              "$ref": "#/components/schemas/CatalogVariableItem"
             }
           }
         }
       },
-      "NotificationCatalogVariableItem": {
+      "CatalogResponse": {
         "type": "object",
-        "description": "Notion 사용 변수 1건. enabled=삽입 허용 SSOT(값 존재와 무관).",
-        "required": [
-          "key",
-          "token",
-          "requiresProgram",
-          "enabled",
-          "programGroups",
-          "recruitmentTypes",
-          "participantTypes",
-          "memberTypes"
-        ],
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogCategory"
+            }
+          }
+        }
+      },
+      "CatalogVariableItem": {
+        "type": "object",
         "properties": {
           "key": {
             "type": "string",
@@ -32546,26 +32541,8 @@
             },
             "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN."
           }
-        }
-      },
-      "NotificationTemplateVariableCatalogResponse": {
-        "type": "object",
-        "required": [
-          "totalCount",
-          "categories"
-        ],
-        "properties": {
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "categories": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationCatalogCategory"
-            }
-          }
-        }
+        },
+        "description": "Notion 사용 변수 1건. enabled=삽입 허용 SSOT(값 존재와 무관)."
       },
       "PageResponseRecipientCandidateResponse": {
         "type": "object",
@@ -36505,6 +36482,128 @@
           },
           "status": {
             "type": "string"
+          }
+        }
+      },
+      "NotificationCatalogVariableItem": {
+        "type": "object",
+        "description": "Notion 사용 변수 1건. enabled=삽입 허용 SSOT(값 존재와 무관).",
+        "required": [
+          "key",
+          "token",
+          "requiresProgram",
+          "enabled",
+          "programGroups",
+          "recruitmentTypes",
+          "participantTypes",
+          "memberTypes"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
+            "example": "교육 진행 수업 시간"
+          },
+          "token": {
+            "type": "string",
+            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
+            "example": "#{교육 진행 수업 시간}"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "보조 설명. 없으면 null"
+          },
+          "requiresProgram": {
+            "type": "boolean",
+            "description": "true이면 programId 없이 enabled=false."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
+          },
+          "programGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "허용 프로그램 유형 그룹. 비면 제한 없음"
+          },
+          "recruitmentTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음"
+          },
+          "participantTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "PARTICIPANT",
+                "INSTRUCTOR",
+                "VOLUNTEER"
+              ]
+            },
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER."
+          },
+          "memberTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "GENERAL",
+                "SCHOOL_TEACHER",
+                "INSTRUCTOR",
+                "TEACHER_AND_INSTRUCTOR",
+                "ADMIN"
+              ]
+            },
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN."
+          }
+        }
+      },
+      "NotificationCatalogCategory": {
+        "type": "object",
+        "required": [
+          "categoryCode",
+          "categoryLabel",
+          "variables"
+        ],
+        "properties": {
+          "categoryCode": {
+            "type": "string",
+            "example": "TIME"
+          },
+          "categoryLabel": {
+            "type": "string",
+            "example": "시간"
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationCatalogVariableItem"
+            }
+          }
+        }
+      },
+      "NotificationTemplateVariableCatalogResponse": {
+        "type": "object",
+        "required": [
+          "totalCount",
+          "categories"
+        ],
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationCatalogCategory"
+            }
           }
         }
       }

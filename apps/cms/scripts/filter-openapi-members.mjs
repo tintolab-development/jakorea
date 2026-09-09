@@ -14,6 +14,7 @@ const outputPath = join(root, 'openapi/members.openapi.json')
 const MEMBERS_PATH_PREFIXES = [
   '/api/admin/users',
   '/api/admin/members',
+  '/api/admin/instructors',
   '/api/admin/organizations/schools',
   '/api/admin/instructor-role-requests',
   '/api/admin/admin-accounts',
@@ -23,6 +24,7 @@ const MEMBERS_PATH_PREFIXES = [
   '/api/admin/roles',
   '/api/admin/admin-permission-change-logs',
   '/api/admin/certificates/issues/serial',
+  '/api/admin/me/withdrawals',
 ]
 
 const spec = JSON.parse(readFileSync(inputPath, 'utf8'))

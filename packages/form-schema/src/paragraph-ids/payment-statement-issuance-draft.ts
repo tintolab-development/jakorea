@@ -171,7 +171,7 @@ export function createPaymentStatementIssuanceDraft(): WritingFormDraft {
   }
   return normalizeWritingFormDraft({
     schemaVersion: 1,
-    formSettings: { titleNumbering: 'numeric' },
+    formSettings: { titleNumbering: 'none' },
     paragraphs: [
       seedTitle,
       tableBasic,

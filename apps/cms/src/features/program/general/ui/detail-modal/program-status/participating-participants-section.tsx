@@ -32,6 +32,8 @@ import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { handleError } from '@/shared/utils/error-handler'
+import { rebuildProgramCompletionParticipantsRemote } from '@/features/program/general/api/programs-api-client'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import type { StudentCertificateDownloadContext } from '@/features/program/general/lib/build-student-certificate-issuance'
 import type { Program } from '@/types/domain'
 import { ParticipatingParticipantFullpageView, type ParticipantDetailTabKey } from './participating-participant-fullpage-view'
@@ -93,6 +95,7 @@ export function ParticipatingParticipantsSection({
   const [certificateExportContext, setCertificateExportContext] =
     useState<StudentCertificateDownloadContext | null>(null)
   const [certificateExportActive, setCertificateExportActive] = useState(false)
+  const [rebuildParticipantsLoading, setRebuildParticipantsLoading] = useState(false)
 
   const hasStudentSatisfactionSurvey = useMemo(
     () =>
@@ -214,6 +217,24 @@ export function ParticipatingParticipantsSection({
     showAlert,
   ])
 
+  const handleRebuildParticipants = useCallback(async () => {
+    const numericProgramId = Number(programId)
+    if (!Number.isFinite(numericProgramId) || numericProgramId <= 0) {
+      showAlert({ title: '안내', content: '프로그램 ID를 확인할 수 없습니다.' })
+      return
+    }
+    setRebuildParticipantsLoading(true)
+    try {
+      await rebuildProgramCompletionParticipantsRemote(numericProgramId)
+      showAlert({ title: '안내', content: '참가자 수료 상태를 다시 계산했습니다.' })
+    } catch (error) {
+      const info = handleError(error, { defaultMessage: '수료 상태 재계산에 실패했습니다.' })
+      showAlert({ title: '안내', content: info.detail })
+    } finally {
+      setRebuildParticipantsLoading(false)
+    }
+  }, [programId, showAlert])
+
   const handleCertificateIssueModalCancel = useCallback(() => {
     setCertificateIssueModalOpen(false)
   }, [])
@@ -316,6 +337,20 @@ export function ParticipatingParticipantsSection({
         description={`${filteredParticipants.length}건`}
         actions={
           <>
+            {isRealApiModuleEnabled('programs') && programId ? (
+              <CmsButton
+                variant="secondary"
+                size="large"
+                width={180}
+                loading={rebuildParticipantsLoading}
+                disabled={rebuildParticipantsLoading}
+                onClick={() => {
+                  void handleRebuildParticipants()
+                }}
+              >
+                수료 상태 재계산
+              </CmsButton>
+            ) : null}
             <CmsButton
               variant="secondary"
               size="large"

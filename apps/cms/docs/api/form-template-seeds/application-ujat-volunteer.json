@@ -18,8 +18,18 @@
         "paragraphDescription": "설명 입력",
         "participatesInTitleNumbering": true,
         "tableFlavor": "field",
-        "columnHeaders": ["수집 항목", "수집·이용 목적", "보유기간"],
-        "dataRows": [["", "", ""]],
+        "columnHeaders": [
+          "수집 항목",
+          "수집·이용 목적",
+          "보유기간"
+        ],
+        "dataRows": [
+          [
+            "",
+            "",
+            ""
+          ]
+        ],
         "columnFields": [
           {
             "kind": "text",
@@ -66,8 +76,20 @@
         "paragraphDescription": "설명 입력",
         "participatesInTitleNumbering": true,
         "tableFlavor": "field",
-        "columnHeaders": ["제공받는 곳", "수집 항목", "수집·이용 목적", "제공받는 자의 보유기간"],
-        "dataRows": [["", "", "", ""]],
+        "columnHeaders": [
+          "제공받는 곳",
+          "수집 항목",
+          "수집·이용 목적",
+          "제공받는 자의 보유기간"
+        ],
+        "dataRows": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ],
         "columnFields": [
           {
             "kind": "text",
@@ -122,8 +144,16 @@
         "paragraphDescription": "학년은 202N년 N학기 기준으로 기재해 주세요.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
-        "columnHeaders": ["항목", "내용"],
-        "dataRows": [["", ""]],
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
         "columnFields": [],
         "fieldDataRows": [],
         "bottomText": "",
@@ -142,8 +172,16 @@
         "paragraphDescription": "이전에 UJAT 활동한 활동 기수 기재 및 해당 기수의 UJAT 수료증 이미지 파일을 첨부해야 수료증 전형으로 서류전형 통과가 가능합니다.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
-        "columnHeaders": ["항목", "내용"],
-        "dataRows": [["", ""]],
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
         "columnFields": [],
         "fieldDataRows": [],
         "bottomText": "",
@@ -232,8 +270,16 @@
         "paragraphDescription": "서류 합격 시 면접이 진행됩니다. 면접 진행이 가능한 일정을 모두 선택해 주세요.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
-        "columnHeaders": ["항목", "내용"],
-        "dataRows": [["", ""]],
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
         "columnFields": [],
         "fieldDataRows": [],
         "bottomText": "",
@@ -252,8 +298,16 @@
         "paragraphDescription": "1~4번 문항은 자유롭게 작성 가능합니다.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
-        "columnHeaders": ["항목", "내용"],
-        "dataRows": [["", ""]],
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
         "columnFields": [],
         "fieldDataRows": [],
         "bottomText": "",

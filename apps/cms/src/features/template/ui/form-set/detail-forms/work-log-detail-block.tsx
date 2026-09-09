@@ -42,7 +42,7 @@ export function WorkLogDetailBlock() {
         </table>
       </div>
 
-      <div className="work-log-detail-block__table-radius">
+      <div className="work-log-detail-block__table-radius work-log-detail-block__totals-table-wrap">
         <table className="work-log-detail-block__totals-table">
           <colgroup>
             <col className="work-log-detail-block__col--total" />

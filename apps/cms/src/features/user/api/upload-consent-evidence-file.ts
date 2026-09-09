@@ -8,7 +8,7 @@ import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 const CRIME_TERMS_TYPE = 'CRIMINAL_HISTORY_CHECK_CONSENT'
 const CONSENT_OWNER_DOMAIN = 'MEMBER'
 const CONSENT_OWNER_TYPE = 'CONSENT'
-const CONSENT_PRIVACY_LEVEL = 'SENSITIVE'
+const CONSENT_FILE_PURPOSE = 'CRIMINAL_HISTORY_CHECK_CONSENT'
 
 export type UploadConsentEvidenceFileInput = {
   file: File
@@ -99,7 +99,7 @@ export async function uploadConsentEvidenceFile(
       ownerDomain: CONSENT_OWNER_DOMAIN,
       ownerType: CONSENT_OWNER_TYPE,
       ownerId,
-      privacyLevel: CONSENT_PRIVACY_LEVEL,
+      filePurpose: CONSENT_FILE_PURPOSE,
     },
   })
   return result.fileObjectId

@@ -22,6 +22,7 @@ function UjatRecruitParticipantInfoTemplateEditor() {
       form={form}
       isEdit
       hideSectionHeader
+      isTemplateAuthoring
     />
   )
 }

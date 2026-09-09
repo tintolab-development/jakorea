@@ -1200,6 +1200,8 @@ export interface CreateUserRequest {
   instructorCmsProfile?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsProfileProposal
   /** BE §3.8 — CMS 강사 `settlement` 구조체 */
   instructorCmsSettlement?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsSettlement
+  /** JA 평가 4항목. 총점/등급은 서버 산정 */
+  jaEvaluation?: import('@/shared/api/generated/members/schemas/instructorJaEvaluationInput').InstructorJaEvaluationInput
 }
 
 async function fetchCreatedMemberAsUser(
