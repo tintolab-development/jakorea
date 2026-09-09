@@ -5,15 +5,15 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { TemplateVariablesCategory } from './templateVariablesCategory';
-import type { TemplateVariablesMemberType } from './templateVariablesMemberType';
-import type { TemplateVariablesParticipantType } from './templateVariablesParticipantType';
+import type { ListNotificationTemplateVariablesCategory } from './listNotificationTemplateVariablesCategory';
+import type { ListNotificationTemplateVariablesMemberType } from './listNotificationTemplateVariablesMemberType';
+import type { ListNotificationTemplateVariablesParticipantType } from './listNotificationTemplateVariablesParticipantType';
 
-export type TemplateVariablesParams = {
+export type ListNotificationTemplateVariablesParams = {
 /**
  * 카탈로그 카테고리 코드.
  */
-category?: TemplateVariablesCategory;
+category?: ListNotificationTemplateVariablesCategory;
 /**
  * key/description 부분 검색.
  */
@@ -25,9 +25,9 @@ programId?: number;
 /**
  * 프로그램 선택 시 참여 유형 필터. PARTICIPANT|INSTRUCTOR|VOLUNTEER.
  */
-participantType?: TemplateVariablesParticipantType;
+participantType?: ListNotificationTemplateVariablesParticipantType;
 /**
  * 프로그램 미선택(전체) 시 회원 유형 필터.
  */
-memberType?: TemplateVariablesMemberType;
+memberType?: ListNotificationTemplateVariablesMemberType;
 };
