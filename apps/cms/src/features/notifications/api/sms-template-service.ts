@@ -33,6 +33,10 @@ import { SMS_ROOT_CATEGORY_ID, type SmsTemplateItem } from '@/features/notificat
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import type { NotificationTemplateUpsertRequest } from '@/shared/api/generated/notifications/schemas'
+import {
+  syncSmsTemplateAttachments,
+  uploadAndBindSmsTemplateAttachments,
+} from '@/features/notifications/api/sms-template-attachments'
 
 function assertSmsTemplatesRemoteReady(): void {
   if (!isRealApiModuleEnabled('notifications')) {
@@ -267,6 +271,9 @@ export async function createSmsTemplate(input: {
   if (templateId == null || !Number.isFinite(templateId)) {
     throw new Error('템플릿 생성 응답에 ID가 없습니다.')
   }
+  if (input.newFiles && input.newFiles.length > 0) {
+    await uploadAndBindSmsTemplateAttachments(templateId, input.newFiles)
+  }
   return { templateId: String(templateId) }
 }
 
@@ -294,5 +301,23 @@ export async function updateSmsTemplate(input: {
       categoryId: input.categoryId,
     })
   )
+  if (input.newFiles && input.newFiles.length > 0) {
+    await uploadAndBindSmsTemplateAttachments(templateId, input.newFiles)
+  }
   return { templateId: String(templateId) }
+}
+
+export async function syncSmsTemplateAttachmentChanges(input: {
+  templateId: string
+  newFiles: File[]
+  removedAttachmentIds: number[]
+}): Promise<void> {
+  assertSmsTemplatesRemoteReady()
+  const templateId = Number(input.templateId)
+  if (!Number.isFinite(templateId)) throw new Error('템플릿 ID가 올바르지 않습니다.')
+  await syncSmsTemplateAttachments({
+    templateId,
+    newFiles: input.newFiles,
+    removedAttachmentIds: input.removedAttachmentIds,
+  })
 }
