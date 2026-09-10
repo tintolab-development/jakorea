@@ -7,6 +7,7 @@ import { getDataManagementApiErrorMessage } from '@/features/data-management/api
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useDetailedProgramListQuery } from '@/features/detailed-program/hooks/use-detailed-program-list-query'
 import { useDetailedProgramMutations } from '@/features/detailed-program/hooks/use-detailed-program-mutations'
+import { isDetailedProgramInUseDeleteError } from '@/features/detailed-program/lib/is-detailed-program-in-use-delete-error'
 import { detailedProgramManagementFilterFields } from '@/features/detailed-program/model/detailed-program-management-filter-fields'
 import { detailedProgramManagementTablePageConfig } from '@/features/detailed-program/model/detailed-program-management-table.config'
 import type {
@@ -37,6 +38,7 @@ import {
   CmsRadioGroup,
   ContentModal,
   DeleteGuideModal,
+  cmsAlertModal,
 } from '@/shared/ui'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import '@/pages/programs/program-list-page.css'
@@ -168,16 +170,15 @@ export default function DetailedProgramPage() {
       exitEditMode()
       setSelectedRowKeys([])
     } catch (error) {
-      const axiosErr = error as { response?: { status?: number } }
-      if (axiosErr.response?.status === 409) {
+      if (isDetailedProgramInUseDeleteError(error)) {
         setDeleteBlockedSelectedCount(staged.size || 1)
         setDeleteBlockedModalOpen(true)
         return
       }
-      console.debug(
-        'detailedProgramPage save failed',
-        getDataManagementApiErrorMessage(error, '저장에 실패했습니다.')
-      )
+      cmsAlertModal.show({
+        title: '저장 실패',
+        content: getDataManagementApiErrorMessage(error, '저장에 실패했습니다.'),
+      })
     }
   }, [deleteMutation, exitEditMode, rows, stagedDeleteIds, updateMutation])
 
@@ -194,6 +195,12 @@ export default function DetailedProgramPage() {
         delete draftByIdRef.current[id]
       }
       setSelectedRowKeys([])
+      return
+    }
+
+    if (selectedRows.some(row => row.inUse)) {
+      setDeleteBlockedSelectedCount(selectedRows.length)
+      setDeleteBlockedModalOpen(true)
       return
     }
 
@@ -442,6 +449,7 @@ export default function DetailedProgramPage() {
         confirmVariant="delete"
         requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
         confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
+        confirmLoading={deleteMutation.isPending}
         onCancel={() => setViewDeleteModalOpen(false)}
         onConfirm={async () => {
           const ids = [...viewDeletePendingIdsRef.current]
@@ -452,17 +460,16 @@ export default function DetailedProgramPage() {
             setViewDeleteModalLines([])
             viewDeletePendingIdsRef.current = []
           } catch (error) {
-            const axiosErr = error as { response?: { status?: number } }
-            if (axiosErr.response?.status === 409) {
+            if (isDetailedProgramInUseDeleteError(error)) {
               setViewDeleteModalOpen(false)
               setDeleteBlockedSelectedCount(ids.length)
               setDeleteBlockedModalOpen(true)
               return
             }
-            console.debug(
-              'detailedProgramPage delete failed',
-              getDataManagementApiErrorMessage(error, '삭제에 실패했습니다.')
-            )
+            cmsAlertModal.show({
+              title: '삭제 실패',
+              content: getDataManagementApiErrorMessage(error, '삭제에 실패했습니다.'),
+            })
           }
         }}
       />
