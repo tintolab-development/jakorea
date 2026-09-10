@@ -76,7 +76,7 @@ describe('submitSmsSend', () => {
     })
   })
 
-  it('omits snapshot when compose equals registered template', async () => {
+  it('still sends contentTemplate when compose equals registered template', async () => {
     await submitSmsSend({
       draft: draft(),
       templateBaseline: { subject: '안내', bodyText: '등록본문' },
@@ -85,7 +85,6 @@ describe('submitSmsSend', () => {
     })
     expect(updateSmsTemplate).not.toHaveBeenCalled()
     const body = vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]
-    expect(body).not.toHaveProperty('contentTemplate')
-    expect(body).not.toHaveProperty('titleTemplate')
+    expect(body).toMatchObject({ contentTemplate: '등록본문', titleTemplate: '안내' })
   })
 })
