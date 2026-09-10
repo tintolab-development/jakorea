@@ -61,6 +61,14 @@
   min-height: 0;
 }
 
+.template-select-modal__hint {
+  margin: 0;
+  color: rgba(61, 61, 61, 0.72);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
 .template-select-modal__search {
   display: flex;
   align-items: center;

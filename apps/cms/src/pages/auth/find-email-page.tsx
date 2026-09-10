@@ -9,13 +9,13 @@ import { lookupFindEmail } from '@/features/auth/api/find-email-service'
 import { useFindEmailIdentityVerification } from '@/features/auth/identity-verification'
 import type { IdentityChallengeCompleteResult } from '@/features/auth/identity-verification'
 import { FindEmailForm } from '@/features/auth/ui/find-email/find-email-form'
+import { FindEmailNotFoundView } from '@/features/auth/ui/find-email/find-email-not-found-view'
 import { FindEmailResultView } from '@/features/auth/ui/find-email/find-email-result-view'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
-import { AlertModal } from '@/shared/ui/alert-modal'
 
 import './find-email-page.css'
 
-type FindEmailView = 'form' | 'success'
+type FindEmailView = 'form' | 'success' | 'not_found'
 
 function normalizeName(value: string): string {
   return value.trim().replace(/\s+/g, ' ')
@@ -41,7 +41,6 @@ export function FindEmailPage() {
   const [view, setView] = useState<FindEmailView>('form')
   const [maskedEmail, setMaskedEmail] = useState('')
   const [isLookupLoading, setIsLookupLoading] = useState(false)
-  const [notFoundModalOpen, setNotFoundModalOpen] = useState(false)
 
   const handleAccountNotFoundRef = useRef<() => void>(() => {})
   const resetErrorRef = useRef<() => void>(() => {})
@@ -64,7 +63,6 @@ export function FindEmailPage() {
 
         if (result.kind === 'found') {
           setMaskedEmail(result.maskedEmail)
-          setNotFoundModalOpen(false)
           resetErrorRef.current()
           setView('success')
           return
@@ -100,7 +98,7 @@ export function FindEmailPage() {
 
   const handleAccountNotFound = useCallback(() => {
     resetError()
-    setNotFoundModalOpen(true)
+    setView('not_found')
   }, [resetError])
 
   handleAccountNotFoundRef.current = handleAccountNotFound
@@ -116,38 +114,35 @@ export function FindEmailPage() {
   }, [isLookupLoading, isVerifying, resetError, verify])
 
   const cardClassName =
-    view === 'success' ? 'auth-card--find-email-result' : 'auth-card--find-email'
+    view === 'form' ? 'auth-card--find-email' : 'auth-card--find-email-result'
+  const showLogo = view === 'not_found'
 
   return (
-    <AuthPageShell showLogo={false} cardClassName={cardClassName}>
+    <AuthPageShell showLogo={showLogo} cardClassName={cardClassName}>
       <div className="find-email-page-content">
         {view === 'form' ? (
           <FindEmailForm
             status={status}
             isVerifying={isVerifying}
             isLookupLoading={isLookupLoading}
-            errorMessage={isLookupLoading || notFoundModalOpen ? null : errorMessage}
+            errorMessage={isLookupLoading ? null : errorMessage}
             onSubmit={() => {
               void handleSubmit()
             }}
           />
-        ) : (
+        ) : view === 'success' ? (
           <FindEmailResultView
             maskedEmail={maskedEmail}
             onGoLogin={() => navigate('/login', { replace: true })}
             onResetPassword={() => navigate('/find-password', { replace: true })}
           />
+        ) : (
+          <FindEmailNotFoundView
+            onGoRegister={() => navigate('/register', { replace: true })}
+            onGoLogin={() => navigate('/login', { replace: true })}
+          />
         )}
       </div>
-
-      <AlertModal
-        open={notFoundModalOpen}
-        onClose={() => setNotFoundModalOpen(false)}
-        title="회원 정보 미확인"
-        content={
-          '해당 정보와 일치하는 계정이 없습니다.\n정보를 확인한 뒤 다시 시도해 주세요.'
-        }
-      />
     </AuthPageShell>
   )
 }

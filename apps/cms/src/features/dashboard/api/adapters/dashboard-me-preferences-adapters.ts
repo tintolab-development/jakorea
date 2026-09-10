@@ -4,7 +4,9 @@
 import type { DashboardMePreferencesRequest } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesRequest'
 import type { DashboardMePreferencesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesResponse'
 import { parseAssignedProgramTypes } from '@/data/mock/program-schedule-keys'
-import { useDashboardSettingsStore } from '@/features/dashboard/model/dashboard-settings-store'
+import {
+  useDashboardSettingsStore,
+} from '@/features/dashboard/model/dashboard-settings-store'
 import {
   stripRemovedDashboardWidgetIds,
   stripRemovedDashboardWidgetWidths,
@@ -71,6 +73,7 @@ export function buildMeDashboardPreferencesRequest(
       widgetWidths: layout.widthByRole[layoutRole] ?? {},
     },
     settings: {
+      /** remote 저장 시 서버 값을 그대로 보냄 (FE settingsDisabled normalize 미적용) */
       shortcutVisibility: settings.shortcutEnabled,
       widgetProgramFilters: settings.widgetProgramIds,
       inquiryRowRead: settings.inquiryNotificationReadProgramKeys,
@@ -92,6 +95,7 @@ export function applyMeDashboardPreferencesResponse(
   const settings = dto.settings
   if (settings) {
     useDashboardSettingsStore.setState(state => ({
+      /** remote preferences는 서버 boolean을 그대로 반영 (FE disabled 강제 OFF 없음) */
       shortcutEnabled: {
         ...state.shortcutEnabled,
         ...asBooleanRecord(settings.shortcutVisibility),

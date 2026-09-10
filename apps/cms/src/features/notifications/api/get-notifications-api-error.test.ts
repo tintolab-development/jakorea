@@ -171,7 +171,9 @@ describe('get-notifications-api-error', () => {
         ),
         'fallback'
       )
-    ).toBe('템플릿 필수 변수가 없습니다: 사용자 아이디(이메일)')
+    ).toBe(
+      '템플릿 필수 변수가 없습니다: 사용자 아이디(이메일)\n본문 #{키} 값이 비어 발송이 중단되었습니다. 수신자·프로그램 데이터 또는 템플릿 본문을 확인하세요.'
+    )
   })
 
   it('NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING 복수 키를 표시한다', () => {
@@ -184,7 +186,22 @@ describe('get-notifications-api-error', () => {
         ),
         'fallback'
       )
-    ).toBe('템플릿 필수 변수가 없습니다: 교육 진행 수업 시간, 배정 기관명')
+    ).toBe(
+      '템플릿 필수 변수가 없습니다: 교육 진행 수업 시간, 배정 기관명\n본문 #{키} 값이 비어 발송이 중단되었습니다. 수신자·프로그램 데이터 또는 템플릿 본문을 확인하세요.'
+    )
+  })
+
+  it('NOTIFICATION_SERVER_RESERVED_VARIABLE 키를 표시한다', () => {
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(
+          400,
+          'NOTIFICATION_SERVER_RESERVED_VARIABLE',
+          'NOTIFICATION_SERVER_RESERVED_VARIABLE:휴대폰 번호'
+        ),
+        'fallback'
+      )
+    ).toBe('서버가 채우는 예약 변수는 발송 요청에 넣을 수 없습니다: 휴대폰 번호')
   })
 
   it('DIRECT + AD 및 프로그램 필수 에러를 매핑한다', () => {

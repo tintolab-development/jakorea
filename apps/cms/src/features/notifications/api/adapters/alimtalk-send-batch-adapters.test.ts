@@ -68,8 +68,10 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
 
   it('빈 문자열 variables는 생략하고 값이 있는 항목만 남긴다', () => {
     expect(pickNonEmptySendVariables({ 회원명: '', 프로그램명: '  ' })).toBeUndefined()
-    expect(pickNonEmptySendVariables({ 회원명: '홍길동', 프로그램명: '' })).toEqual({
-      회원명: '홍길동',
+    // 예약 키(회원명·프로그램명)는 variables에서 제외
+    expect(pickNonEmptySendVariables({ 회원명: '홍길동', 프로그램명: 'A' })).toBeUndefined()
+    expect(pickNonEmptySendVariables({ 커스텀키: '값', 회원명: '홍길동' })).toEqual({
+      커스텀키: '값',
     })
   })
 

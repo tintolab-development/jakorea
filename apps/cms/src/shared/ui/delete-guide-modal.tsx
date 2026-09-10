@@ -6,7 +6,10 @@
  */
 
 import { useEffect, useState } from 'react'
-import { DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER } from '@/shared/constants'
+import {
+  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  matchesDeleteGuideTypedConfirm,
+} from '@/shared/constants'
 import { CmsButton } from './cms-button'
 import { CmsInput } from './cms-input'
 import { ContentModal } from './content-modal'
@@ -64,7 +67,10 @@ export function DeleteGuideModal({
 }: DeleteGuideModalProps) {
   const [confirmInput, setConfirmInput] = useState('')
   const needsTypedConfirm = Boolean(requiredConfirmInput)
-  const canConfirm = !needsTypedConfirm || confirmInput.trim() === requiredConfirmInput
+  const canConfirm =
+    !needsTypedConfirm ||
+    (requiredConfirmInput != null &&
+      matchesDeleteGuideTypedConfirm(confirmInput, requiredConfirmInput))
 
   useEffect(() => {
     if (open) setConfirmInput('')

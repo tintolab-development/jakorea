@@ -268,6 +268,8 @@ export type ScaleTypeParagraph = WritingFormParagraphBase & {
   items: ScaleTypeItem[]
   /** 미리보기에서 강조(민트)되는 항목 id */
   selectedPreviewItemId?: string | null
+  /** 척도 위 본문(평가 기준 등) — 개행 유지 */
+  bodyText?: string
 }
 
 /** 점수 선택형 기본 5단계 (Likert 문구) */

@@ -182,5 +182,13 @@ export async function submitSmsSend(input: {
       : null,
   })
 
+  // 발송 화면 삽입 #{변수}가 omit되면 등록 템플릿만 나감. 본문·제목 있으면 스냅샷 강제.
+  if (draft.bodyText.trim()) {
+    body.contentTemplate = draft.bodyText
+  }
+  if (draft.messageType !== 'SMS' && draft.subject.trim()) {
+    body.titleTemplate = draft.subject.trim().slice(0, 40)
+  }
+
   await createSendBatchRemote(body, idempotencyKey)
 }

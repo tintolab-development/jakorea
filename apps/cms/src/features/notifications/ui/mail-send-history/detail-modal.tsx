@@ -4,6 +4,7 @@ import { CmsButton, ContentModal, useCmsAlert } from '@/shared/ui'
 import { RichTextViewer } from '@/shared/rich-text'
 import { downloadMailSendHistoryAttachment } from '@/features/notifications/model/mail-send-history/download-attachment'
 import type { MailSendHistoryRow } from '@/features/notifications/model/mail-send-history/types'
+import { NOTIFICATION_SEND_FAILURE_SNAPSHOT_HINT } from '@/features/notifications/model/shared/send-ux-copy'
 import './detail-modal.css'
 
 type DetailModalProps = {
@@ -31,6 +32,9 @@ function sendStatusView(row: MailSendHistoryRow) {
           title={row.failedReason}
         >
           {row.failedReason}
+        </span>
+        <span className="mail-send-history-detail-modal__snapshot-hint">
+          {NOTIFICATION_SEND_FAILURE_SNAPSHOT_HINT}
         </span>
       </span>
     )

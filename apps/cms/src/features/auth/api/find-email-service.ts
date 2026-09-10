@@ -122,7 +122,8 @@ async function lookupFindEmailRemote(input: FindEmailLookupInput): Promise<FindE
 }
 
 export async function lookupFindEmail(input: FindEmailLookupInput): Promise<FindEmailLookupResult> {
-  if (isRealApiModuleEnabled('findEmail')) {
+  // 이메일 찾기는 Admin Auth 계열 — findPassword와 동일하게 adminAuth만 켜도 실 API
+  if (isRealApiModuleEnabled('findEmail') || isRealApiModuleEnabled('adminAuth')) {
     return lookupFindEmailRemote(input)
   }
 

@@ -7,16 +7,28 @@
 
 import { Checkbox, Collapse, Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { getDashboardWidgetsForUser, type DashboardWidgetType } from '@/shared/config/dashboard-config'
+import {
+  getDashboardWidgetsForUser,
+  type DashboardWidgetType,
+} from '@/shared/config/dashboard-config'
 import {
   useDashboardSettingsStore,
   SHORTCUT_ITEMS,
   WIDGET_PROGRAM_KEYS,
   isShortcutItemEnabled,
-  DASHBOARD_HOME_PATH,
+  isShortcutSettingsDisabled,
+  normalizeShortcutEnabled,
 } from '../model/dashboard-settings-store'
 import { useSaveDashboardPreferences } from '../hooks/use-dashboard-preferences'
 import { getDashboardProgramOptions } from '../api/admin-dashboard-service'
@@ -155,13 +167,18 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
 
   const shortcutCatalogItems = useMemo(() => {
     if (!useRemote || !apiShortcuts?.length) {
-      return SHORTCUT_ITEMS
+      return SHORTCUT_ITEMS.map(item => ({
+        id: item.id,
+        label: item.label,
+        path: item.path,
+      }))
     }
     const localById = new Map(SHORTCUT_ITEMS.map(item => [item.id, item]))
+    /** remote: 서버 카탈로그 순서·항목 그대로 (임시 — FE SHORTCUT_ITEMS SSOT 미적용) */
     return apiShortcuts.map(item => ({
       id: item.id,
       label: item.label || localById.get(item.id)?.label || item.id,
-      path: item.path || localById.get(item.id)?.path || DASHBOARD_HOME_PATH,
+      path: item.path || localById.get(item.id)?.path || '/',
     }))
   }, [useRemote, apiShortcuts])
 
@@ -207,33 +224,53 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
   const widgetProgramIds =
     draftWidgetProgramIds ?? useDashboardSettingsStore.getState().widgetProgramIds
 
-  const setDraftShortcut = useCallback((id: string, enabled: boolean) => {
-    setDraftShortcutEnabled(prev => {
-      const base = prev ?? { ...useDashboardSettingsStore.getState().shortcutEnabled }
-      return { ...base, [id]: enabled }
-    })
-  }, [])
+  const setDraftShortcut = useCallback(
+    (id: string, enabled: boolean) => {
+      if (!useRemote && isShortcutSettingsDisabled(id)) return
+      setDraftShortcutEnabled(prev => {
+        const base = prev ?? { ...useDashboardSettingsStore.getState().shortcutEnabled }
+        const next = { ...base, [id]: enabled }
+        return useRemote ? next : normalizeShortcutEnabled(next)
+      })
+    },
+    [useRemote]
+  )
 
-  /** 전체 선택: 메뉴 바로가기 항목이 아님 — 모든 바로가기 id를 켜거나 끔 */
-  const setAllDraftShortcuts = useCallback((enabled: boolean) => {
-    setDraftShortcutEnabled(prev => {
-      const base = prev ?? { ...useDashboardSettingsStore.getState().shortcutEnabled }
-      const next = { ...base }
-      for (const item of shortcutCatalogItems) {
-        next[item.id] = enabled
-      }
-      return next
-    })
-  }, [shortcutCatalogItems])
+  const selectableCatalogItems = useMemo(
+    () =>
+      useRemote
+        ? shortcutCatalogItems
+        : shortcutCatalogItems.filter(item => !isShortcutSettingsDisabled(item.id)),
+    [shortcutCatalogItems, useRemote]
+  )
+
+  /** 전체 선택: 메뉴 바로가기 항목이 아님 — selectable 바로가기 id만 켜거나 끔 */
+  const setAllDraftShortcuts = useCallback(
+    (enabled: boolean) => {
+      setDraftShortcutEnabled(prev => {
+        const base = prev ?? { ...useDashboardSettingsStore.getState().shortcutEnabled }
+        const next = { ...base }
+        for (const item of selectableCatalogItems) {
+          next[item.id] = enabled
+        }
+        return useRemote ? next : normalizeShortcutEnabled(next)
+      })
+    },
+    [selectableCatalogItems, useRemote]
+  )
 
   const shortcutAllEnabled = useMemo(
-    () => shortcutCatalogItems.every(item => isShortcutItemEnabled(shortcutEnabled, item.id)),
-    [shortcutCatalogItems, shortcutEnabled]
+    () =>
+      selectableCatalogItems.length > 0 &&
+      selectableCatalogItems.every(item => isShortcutItemEnabled(shortcutEnabled, item.id)),
+    [selectableCatalogItems, shortcutEnabled]
   )
   const shortcutAllIndeterminate = useMemo(() => {
-    const anyOn = shortcutCatalogItems.some(item => isShortcutItemEnabled(shortcutEnabled, item.id))
+    const anyOn = selectableCatalogItems.some(item =>
+      isShortcutItemEnabled(shortcutEnabled, item.id)
+    )
     return anyOn && !shortcutAllEnabled
-  }, [shortcutAllEnabled, shortcutCatalogItems, shortcutEnabled])
+  }, [shortcutAllEnabled, selectableCatalogItems, shortcutEnabled])
 
   const isTitleGroupSelected = useCallback(
     (widgetKey: string, groupIds: string[]) =>
@@ -310,17 +347,24 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
 
   const handleApply = useCallback(() => {
     const s = useDashboardSettingsStore.getState()
-    const nextShortcut = draftShortcutEnabled ?? s.shortcutEnabled
+    const raw = draftShortcutEnabled ?? s.shortcutEnabled
+    const nextShortcut = useRemote ? { ...raw } : normalizeShortcutEnabled(raw)
     const nextWidgetIds = draftWidgetProgramIds ?? s.widgetProgramIds
     useDashboardSettingsStore.setState({
-      shortcutEnabled: { ...nextShortcut },
+      shortcutEnabled: nextShortcut,
       widgetProgramIds: cloneWidgetProgramIds(nextWidgetIds),
     })
     if (useRemote) {
       persistPreferences(undefined)
     }
     onCancel()
-  }, [draftShortcutEnabled, draftWidgetProgramIds, onCancel, persistPreferences, useRemote])
+  }, [
+    draftShortcutEnabled,
+    draftWidgetProgramIds,
+    onCancel,
+    persistPreferences,
+    useRemote,
+  ])
 
   const footer = (
     <>
@@ -328,7 +372,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
         닫기
       </CmsButton>
       <CmsButton variant="primary" size="large" adminAction="dashboardWrite" onClick={handleApply}>
-        설정
+        저장
       </CmsButton>
     </>
   )
@@ -353,15 +397,19 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
             >
               전체 선택
             </Checkbox>
-            {shortcutCatalogItems.map(item => (
-              <Checkbox
-                key={item.id}
-                checked={isShortcutItemEnabled(shortcutEnabled, item.id)}
-                onChange={e => setDraftShortcut(item.id, e.target.checked)}
-              >
-                {item.label}
-              </Checkbox>
-            ))}
+            {shortcutCatalogItems.map(item => {
+              const settingsDisabled = !useRemote && isShortcutSettingsDisabled(item.id)
+              return (
+                <Checkbox
+                  key={item.id}
+                  checked={isShortcutItemEnabled(shortcutEnabled, item.id)}
+                  disabled={settingsDisabled}
+                  onChange={e => setDraftShortcut(item.id, e.target.checked)}
+                >
+                  {item.label}
+                </Checkbox>
+              )
+            })}
           </div>
         </section>
 

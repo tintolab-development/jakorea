@@ -189,6 +189,19 @@ export const ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS = new Set([
   'phone',
 ])
 
+/**
+ * Create.variables 에 넣으면 NOTIFICATION_SERVER_RESERVED_VARIABLE 이 나는 키.
+ * 서버 enrich / 카탈로그 SYSTEM·문맥 키 — 커스텀 키만 variables로 허용.
+ */
+export const NOTIFICATION_SERVER_RESERVED_VARIABLE_KEYS = new Set([
+  ...ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS,
+  '프로그램명',
+  '소속명',
+  '담당교사명',
+  '동의 항목',
+  '만료일시',
+])
+
 /** 텍스트들에서 `#{키}` 추출 — contentTemplate·titleTemplate이 SSOT */
 export function extractPlaceholderKeysFromTexts(
   ...texts: Array<string | null | undefined>
@@ -328,6 +341,8 @@ export function pickNonEmptySendVariables(
   for (const [key, raw] of Object.entries(values)) {
     const trimmedKey = key.trim()
     if (!trimmedKey) continue
+    // 서버 예약·카탈로그 enrich 키는 variables로 덮어쓰지 않음
+    if (NOTIFICATION_SERVER_RESERVED_VARIABLE_KEYS.has(trimmedKey)) continue
     if (typeof raw === 'string') {
       const trimmedValue = raw.trim()
       if (!trimmedValue) continue
@@ -396,10 +411,6 @@ export function buildSendBatchRecipients(
     return {
       actorType: recipient.actorType || 'MEMBER',
       actorId: recipient.actorId,
-      recipientName: recipient.name.trim() || undefined,
-      recipientContact: recipient.phone.includes('*')
-        ? undefined
-        : recipient.phone.replace(/\D/g, '') || undefined,
     }
   })
 }

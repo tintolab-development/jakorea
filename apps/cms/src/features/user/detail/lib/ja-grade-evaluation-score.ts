@@ -1,11 +1,9 @@
 import {
   JA_GRADE_PENALTY_PER_EVENT,
-  JA_GRADE_PARAGRAPH_IDS,
   JA_GRADE_SCALE_QUESTION_IDS,
 } from '@/features/user/detail/lib/ja-grade-evaluation-constants'
 import type {
   ScaleTypeParagraph,
-  ShortEssayParagraph,
   WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 
@@ -22,13 +20,6 @@ export interface JaGradeEvaluationScoreResult {
   totalScore: number
   grade: JaEvaluationLetterGrade
   comment: string
-}
-
-function getShortEssayText(paragraph: ShortEssayParagraph): string {
-  if (paragraph.items != null && paragraph.items.length > 0) {
-    return paragraph.items.map(item => item.bodyText.trim()).join('\n').trim()
-  }
-  return paragraph.bodyText.trim()
 }
 
 export function resolveScaleTypeScore(paragraph: ScaleTypeParagraph): number | null {
@@ -95,10 +86,6 @@ export function calculateJaGradeEvaluationFromDraft(
     qItemIds.push(paragraph.selectedPreviewItemId ?? '')
   }
 
-  const q5 = draft.paragraphs.find(p => p.id === JA_GRADE_PARAGRAPH_IDS.q5)
-  const comment =
-    q5?.kind === 'single_item' && q5.variant === 'short_essay' ? getShortEssayText(q5) : ''
-
   const fixedTotal = qScores.reduce((sum, score) => sum + score, 0)
   const { penaltyEventCount, penalty } = calculateJaGradePenalty(
     options?.scheduleChangeCount ?? 0,
@@ -115,7 +102,7 @@ export function calculateJaGradeEvaluationFromDraft(
     penaltyEventCount,
     totalScore,
     grade,
-    comment,
+    comment: '',
   }
 }
 
@@ -126,8 +113,5 @@ export function buildJaGradeEvaluationReason(result: JaGradeEvaluationScoreResul
     `penalty=${result.penalty}`,
     `total=${result.totalScore}`,
     `grade=${result.grade}`,
-    result.comment ? `comment=${result.comment}` : null,
-  ]
-    .filter(Boolean)
-    .join(', ')
+  ].join(', ')
 }

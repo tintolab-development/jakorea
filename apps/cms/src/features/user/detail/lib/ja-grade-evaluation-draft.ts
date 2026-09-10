@@ -2,7 +2,6 @@ import {
   normalizeWritingFormDraft,
   type ScaleTypeItem,
   type ScaleTypeParagraph,
-  type ShortEssayParagraph,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -19,9 +18,56 @@ function createJaGradeScaleItems(): ScaleTypeItem[] {
   }))
 }
 
+const JA_GRADE_SCALE_SCORE_DESCRIPTION =
+  '평가 항목 당 점수는 1점 당 X5점으로 환산되어 25점 만점으로 부여됩니다.'
+
+/** 제목 설명 중 bold(700) 처리 구간 */
+export const JA_GRADE_INTRO_GRADE_RANGE_BOLD =
+  'A등급(85~100점), B등급(60~84점), C등급(50~59점), D등급(50점 이하) 4가지 등급으로 분류'
+
+const JA_GRADE_INTRO_DESCRIPTION = [
+  '관리자의 평가 항목은 총 4개 문항으로, 각 항목 당 25점씩 총 100점 만점으로 평가됩니다.',
+  `평가등급은 행정 평가까지 반영된 최종 점수에 따라 ${JA_GRADE_INTRO_GRADE_RANGE_BOLD}됩니다.`,
+].join('\n')
+
+const JA_GRADE_Q1_BODY = [
+  '• 학습 목표를 이해하고 목표 달성을 위한 교육을 전개하는가?',
+  '• 학생 수준에 맞게 내용을 적절히 풀어내는가?',
+  '• 교재를 단순 전달이 아닌 이해중심으로 설명하는가?',
+].join('\n')
+
+const JA_GRADE_Q2_BODY = [
+  '• 발음, 속도, 표현이 명확한가?',
+  '• 학생 참여를 유도하는 질문/활동이 있는가?',
+  '• 수업이 지루하지 않고 학생들의 집중도가 유지되는가?',
+].join('\n')
+
+const JA_GRADE_Q3_BODY = [
+  '• 질문, 토론, 활동 등을 적절히 활용하는가?',
+  '• 학생 반응을 보고 수업을 유연하게 조정하는가?',
+  '• 학생 참여를 자연스럽게 이끌어내는가?',
+].join('\n')
+
+const JA_GRADE_Q4_BODY = [
+  '• 자료(슬라이드, 활동지 등)가 체계적인가?',
+  '• 예시, 스토리텔링이 자연스럽게 이어지는가?',
+  '• 초,중,고,특수학생 수준에 맞는 수업 설계 및 전달인가?',
+].join('\n')
+
+const JA_GRADE_Q5_LINES = [
+  '평가 내용',
+  '• 강의보고서 기한 미준수 2회 이상',
+  '• 강의 취소 이력 2건 이상',
+  '',
+  '매 2회 발생 시마다 -5점',
+  'ex. 강의보고서 3회 누락, 강의취소 2회 시 기준 점수 - 10점',
+  'ex. 강의보고서 1회 누락, 강의취소 1회 누락 시 감점 없음. 동일 항목 2회 이상일 경우부터 감점 처리',
+]
+
 function createScaleQuestion(
   id: string,
   paragraphTitle: string,
+  bodyText: string,
   selectedPreviewItemId: string | null = null
 ): ScaleTypeParagraph {
   return {
@@ -30,44 +76,16 @@ function createScaleQuestion(
     variant: 'scale_type',
     requiredMark: true,
     paragraphTitle,
-    paragraphDescription:
-      '평가 항목 당 점수는 1점 당 X5점으로 환산되어 25점 만점으로 부여됩니다.',
+    paragraphDescription: JA_GRADE_SCALE_SCORE_DESCRIPTION,
     participatesInTitleNumbering: true,
     answerRequired: true,
     items: createJaGradeScaleItems(),
     selectedPreviewItemId,
+    bodyText,
   }
 }
 
-const JA_GRADE_INTRO_DESCRIPTION = [
-  '관리자의 평가 항목은 총 4개 문항으로, 각 항목 당 25점씩 총 100점 만점으로 평가됩니다.',
-  '평가등급은 행정 평가까지 반영된 최종 점수에 따라 A등급(85~100점), B등급(60~84점), C등급(50~59점), D등급(50점 이하) 4가지 등급으로 분류됩니다.',
-].join('\n')
-
 export function createJaGradeEvaluationDraft(): WritingFormDraft {
-  const q5: ShortEssayParagraph = {
-    id: JA_GRADE_PARAGRAPH_IDS.q5,
-    kind: 'single_item',
-    variant: 'short_essay',
-    requiredMark: false,
-    paragraphTitle: '행정 능력 평가',
-    paragraphDescription:
-      '해당 항목은 별도의 평가 없이 강사의 이력에 따라 자동으로 계산되어 감점 반영됩니다.',
-    participatesInTitleNumbering: true,
-    answerRequired: false,
-    showItemTitle: false,
-    items: [
-      {
-        id: 'ja-grade-q5-comment',
-        label: 'Title 01',
-        placeholder: '답변을 입력해 주세요',
-        bodyText: '',
-      },
-    ],
-    bodyPlaceholder: '답변을 입력해 주세요',
-    bodyText: '',
-  }
-
   return normalizeWritingFormDraft({
     schemaVersion: 1,
     formSettings: { titleNumbering: 'q123' },
@@ -90,11 +108,21 @@ export function createJaGradeEvaluationDraft(): WritingFormDraft {
         endPeriodPresetLabel: null,
         showWritingPeriodOnForm: false,
       },
-      createScaleQuestion(JA_GRADE_PARAGRAPH_IDS.q1, '교육 내용의 전문성'),
-      createScaleQuestion(JA_GRADE_PARAGRAPH_IDS.q2, '전달력 및 수업 몰입도'),
-      createScaleQuestion(JA_GRADE_PARAGRAPH_IDS.q3, '참여 유도 및 상호작용'),
-      createScaleQuestion(JA_GRADE_PARAGRAPH_IDS.q4, '콘텐츠 활용 및 수업 설계'),
-      q5,
+      createScaleQuestion(JA_GRADE_PARAGRAPH_IDS.q1, '교육 내용의 전문성', JA_GRADE_Q1_BODY),
+      createScaleQuestion(JA_GRADE_PARAGRAPH_IDS.q2, '전달력 및 수업 몰입도', JA_GRADE_Q2_BODY),
+      createScaleQuestion(JA_GRADE_PARAGRAPH_IDS.q3, '참여 유도 및 상호작용', JA_GRADE_Q3_BODY),
+      createScaleQuestion(JA_GRADE_PARAGRAPH_IDS.q4, '콘텐츠 활용 및 수업 설계', JA_GRADE_Q4_BODY),
+      {
+        id: JA_GRADE_PARAGRAPH_IDS.q5,
+        kind: 'description',
+        variant: 'static_description_lines',
+        requiredMark: false,
+        paragraphTitle: '행정 능력 평가',
+        paragraphDescription:
+          '해당 항목은 별도의 평가 없이 강사의 이력에 따라 자동으로 계산되어 감점 반영됩니다.',
+        participatesInTitleNumbering: true,
+        lines: JA_GRADE_Q5_LINES,
+      },
       {
         id: JA_GRADE_PARAGRAPH_IDS.closing,
         kind: 'description',
@@ -126,32 +154,6 @@ function applyStoredSelection(
   }
 }
 
-function applyStoredComment(
-  paragraph: WritingFormParagraph,
-  comment: string | undefined
-): WritingFormParagraph {
-  if (
-    comment == null ||
-    comment === '' ||
-    paragraph.id !== JA_GRADE_PARAGRAPH_IDS.q5 ||
-    paragraph.kind !== 'single_item' ||
-    paragraph.variant !== 'short_essay'
-  ) {
-    return paragraph
-  }
-
-  const items =
-    paragraph.items?.map((item, index) =>
-      index === 0 ? { ...item, bodyText: comment } : item
-    ) ?? paragraph.items
-
-  return {
-    ...paragraph,
-    bodyText: comment,
-    items,
-  }
-}
-
 export function applyJaGradeEvaluationRecordToDraft(
   draft: WritingFormDraft,
   record: JaGradeEvaluationRecord | null | undefined
@@ -174,7 +176,7 @@ export function applyJaGradeEvaluationRecordToDraft(
       if (qIndex >= 0) {
         return applyStoredSelection(paragraph, selections[qIndex])
       }
-      return applyStoredComment(paragraph, record.comment)
+      return paragraph
     }),
   })
 }

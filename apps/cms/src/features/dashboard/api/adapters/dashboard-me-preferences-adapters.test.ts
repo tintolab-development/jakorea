@@ -9,6 +9,7 @@ vi.mock('@/features/dashboard/model/dashboard-settings-store', () => ({
       inquiryNotificationReadProgramKeys: {},
     }),
   },
+  normalizeShortcutEnabled: (value: Record<string, boolean>) => value,
 }))
 
 vi.mock('@/features/dashboard/model/dashboard-widget-order-store', () => ({

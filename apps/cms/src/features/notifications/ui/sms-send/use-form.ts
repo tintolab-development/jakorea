@@ -45,6 +45,10 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     attachmentFileNamesRef.current = attachmentFileNames
   }, [attachmentFileNames])
 
+  const lastComposeTargetRef = useRef<'subject' | 'body'>('body')
+  const subjectRangeRef = useRef({ start: 0, end: 0 })
+  const bodyRangeRef = useRef({ start: 0, end: 0 })
+
   useEffect(() => {
     if (!open) return
     setProgramId(SMS_SEND_DEFAULT_PROGRAM_ID)
@@ -59,6 +63,9 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     setRecipients([])
     subjectRef.current = ''
     bodyTextRef.current = ''
+    lastComposeTargetRef.current = 'body'
+    subjectRangeRef.current = { start: 0, end: 0 }
+    bodyRangeRef.current = { start: 0, end: 0 }
     setComposeSeed({ subject: '', bodyText: '' })
     setComposeVersion(version => version + 1)
   }, [initialTemplateId, open])
@@ -179,21 +186,56 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     []
   )
 
+  const rememberSubjectRange = useCallback((el: HTMLInputElement | null) => {
+    if (!el) return
+    lastComposeTargetRef.current = 'subject'
+    subjectRangeRef.current = {
+      start: el.selectionStart ?? el.value.length,
+      end: el.selectionEnd ?? el.value.length,
+    }
+  }, [])
+
+  const rememberBodyRange = useCallback((el: HTMLTextAreaElement | null) => {
+    if (!el) return
+    lastComposeTargetRef.current = 'body'
+    bodyRangeRef.current = {
+      start: el.selectionStart ?? el.value.length,
+      end: el.selectionEnd ?? el.value.length,
+    }
+  }, [])
+
   const insertVariable = useCallback(
     (label: string) => {
-      const control = document.querySelector(
-        '.sms-send-fullpage__body-field textarea, .sms-send-fullpage__body-field input'
-      ) as HTMLTextAreaElement | HTMLInputElement | null
-      const current = bodyTextRef.current
-      const start = control?.selectionStart ?? current.length
-      const end = control?.selectionEnd ?? current.length
-      const { next } = insertMailVariableInText(current, label, start, end)
+      if (lastComposeTargetRef.current === 'subject' && showSubject) {
+        const range = subjectRangeRef.current
+        const { next, caret } = insertMailVariableInText(
+          subjectRef.current,
+          label,
+          range.start,
+          range.end
+        )
+        subjectRef.current = next
+        subjectRangeRef.current = { start: caret, end: caret }
+        setComposeSeed(prev => ({ ...prev, subject: next }))
+        setComposeVersion(version => version + 1)
+        return
+      }
+
+      const range = bodyRangeRef.current
+      const { next, caret } = insertMailVariableInText(
+        bodyTextRef.current,
+        label,
+        range.start,
+        range.end
+      )
       bodyTextRef.current = next
+      bodyRangeRef.current = { start: caret, end: caret }
+      lastComposeTargetRef.current = 'body'
       setComposeSeed(prev => ({ ...prev, bodyText: next }))
       setComposeVersion(version => version + 1)
       syncMessageTypeToBodyBytes(next)
     },
-    [syncMessageTypeToBodyBytes]
+    [showSubject, syncMessageTypeToBodyBytes]
   )
 
   return {
@@ -226,6 +268,8 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     getDraft,
     validateRequired,
     readComposeSnapshot,
+    rememberSubjectRange,
+    rememberBodyRange,
     insertVariable,
   }
 }
