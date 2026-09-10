@@ -120,36 +120,10 @@
   line-height: 150% !important;
 }
 
-/* 테이블용 네이티브 input 전용: 220×40, span 없이 input만 스타일링 */
+/* DatePicker / NativeSelect 공통 폭 헬퍼 (CmsInput은 width prop 사용) */
 .add-instructor-modal__table-input {
-  display: block;
   width: 220px;
-  height: 40px;
-  padding: var(--spacing-4) 11px;
-  font-family: var(--font-family-primary), sans-serif;
-  font-size: var(--font-size-15);
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  color: var(--color-input-placeholder);
-  background: var(--color-bg-base);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-4);
   box-sizing: border-box;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-/* 기본정보 섹션 input 전용 스타일 */
-.add-instructor-modal__section--basic .add-instructor-modal__table-input {
-  width: 220px;
-  height: 40px;
-  padding: 0 14px 0 16px;
-  border-radius: var(--radius-6);
-  border: 1px solid var(--color-border-input-secondary);
-  background: var(--color-bg-base);
-  box-sizing: border-box;
-  display: block;
 }
 
 /* 기본정보: 주민등록번호 인풋만 164.5px */
@@ -159,31 +133,8 @@
   min-width: 164.5px;
 }
 
-.add-instructor-modal__section--basic .add-instructor-modal__resident-registration-row .add-instructor-modal__table-input {
-  width: 164.5px !important;
-  min-width: 164.5px !important;
-  box-sizing: border-box;
-}
-
-.add-instructor-modal__table-input::placeholder {
-  overflow: hidden;
-  color: #85969d;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: Pretendard, sans-serif;
-  font-size: 15px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.add-instructor-modal__table-input:hover {
-  border-color: var(--color-modal-header);
-}
-
-.add-instructor-modal__table-input:focus {
-  border-color: var(--color-modal-header);
-  box-shadow: 0 0 0 1px var(--color-focus-teal-ring);
+.add-instructor-modal__section--basic .add-instructor-modal__basic-table-cell--input > .add-instructor-modal__native-select {
+  width: 220px;
 }
 
 /* 섹션 */
@@ -590,11 +541,6 @@
   align-items: center;
 }
 
-.add-instructor-modal__bank-account-row .add-instructor-modal__table-input {
-  height: 40px !important;
-  min-height: 40px !important;
-}
-
 .add-instructor-modal__bank-account-row .ant-select,
 .add-instructor-modal__bank-account-row .ant-select .ant-select-selector {
   box-shadow: none !important;
@@ -631,10 +577,6 @@
 .add-instructor-modal__resident-registration-row .ant-form-item-control-input-content {
   width: 100%;
   min-width: 0;
-}
-
-.add-instructor-modal__resident-registration-row .add-instructor-modal__table-input {
-  text-align: left;
 }
 
 .add-instructor-modal__resident-registration-divider {
@@ -735,90 +677,6 @@
 .add-instructor-modal__section--basic .ant-picker {
   border-radius: 6px !important;
   border-color: var(--color-border-input-secondary) !important;
-}
-
-/* 주소 검색: 아이콘 + input 한 묶음 220×40 */
-.add-instructor-modal__table-input-wrap--with-prefix {
-  display: flex;
-  align-items: center;
-  width: 220px;
-  height: 40px;
-  padding: 0 11px;
-  background: var(--color-bg-base);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-4);
-  box-sizing: border-box;
-}
-
-.add-instructor-modal__section--basic .add-instructor-modal__table-input-wrap--with-prefix {
-  padding: 0 14px 0 16px;
-  gap: var(--spacing-8);
-  border-radius: var(--radius-6);
-  border-color: var(--color-border-input-secondary);
-}
-
-.add-instructor-modal__table-input-wrap--with-prefix .add-instructor-modal__table-input-prefix {
-  flex-shrink: 0;
-  margin-right: 0;
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-14);
-}
-
-.add-instructor-modal__table-input-wrap--with-prefix .add-instructor-modal__table-input {
-  flex: 1;
-  min-width: 0;
-  width: auto !important;
-  height: 100%;
-  padding-left: 0;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.add-instructor-modal__address-search-btn {
-  flex-shrink: 0;
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid var(--color-border-input-secondary);
-  border-radius: 4px;
-  background: #fff;
-  color: #333;
-  font-family: Pretendard, sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.add-instructor-modal__address-search-btn:hover {
-  border-color: var(--color-modal-header);
-  color: var(--color-modal-header);
-}
-
-.add-instructor-modal__table-input-wrap--with-prefix .add-instructor-modal__table-input:hover,
-.add-instructor-modal__table-input-wrap--with-prefix .add-instructor-modal__table-input:focus {
-  border: none;
-  box-shadow: none;
-}
-
-.add-instructor-modal__table-input-wrap--with-prefix:hover {
-  border-color: var(--color-modal-header);
-}
-
-.add-instructor-modal__table-input-wrap--with-prefix:focus-within {
-  border-color: var(--color-modal-header);
-  box-shadow: 0 0 0 1px var(--color-focus-teal-ring);
-}
-
-/* 정산 계좌: 계좌번호 160px, 예금주명 120px */
-.add-instructor-modal__bank-account-row .add-instructor-modal__table-input.add-instructor-modal__bank-account-input--number {
-  width: 160px !important;
-  min-width: 160px;
-}
-
-.add-instructor-modal__bank-account-row .add-instructor-modal__table-input.add-instructor-modal__bank-account-input--holder {
-  width: 120px !important;
-  min-width: 120px;
 }
 
 /* 정산 계좌: 은행명 Select 140px (네이티브 select 포함) */
@@ -1998,15 +1856,22 @@
   min-height: 64px !important;
 }
 
-.add-instructor-modal__section--basic .add-instructor-modal__table-input--wide {
-  width: 100% !important;
-}
-
 .add-instructor-modal__address-row {
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
+}
+
+.add-instructor-modal__address-row > .ant-form-item {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.add-instructor-modal__address-row > .ant-form-item:first-child {
+  flex: 0 0 396px;
+  max-width: 396px;
 }
 
 .add-instructor-modal__address-divider {
@@ -2018,158 +1883,29 @@
   flex-shrink: 0;
 }
 
-.add-instructor-modal__section--basic .add-instructor-modal__address-row .add-instructor-modal__table-input-wrap--with-prefix,
-.add-instructor-modal__section--basic .add-instructor-modal__address-row .add-instructor-modal__table-input {
-  width: 396px !important;
-  min-width: 396px !important;
-  max-width: 396px !important;
-}
 
-.add-instructor-modal__section--basic .add-instructor-modal__address-row .add-instructor-modal__table-input-wrap--with-prefix .add-instructor-modal__table-input {
-  width: auto !important;
-  min-width: 0 !important;
-  max-width: none !important;
-}
 
-.add-instructor-modal__section--basic .add-instructor-modal__address-row .add-instructor-modal__table-input-wrap--with-prefix {
-  justify-content: space-between;
-  gap: 8px;
-}
 
-.add-instructor-modal__address-popup-modal .ant-modal-content {
-  border-radius: 10px;
-  overflow: hidden;
-  padding: 0;
-}
 
-.add-instructor-modal__address-popup.pop-address-search {
-  background-color: #ececec;
-}
 
-.add-instructor-modal__address-popup-inner.pop-address-search-inner {
-  padding: 20px;
-}
 
-.add-instructor-modal__address-popup-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
 
-.add-instructor-modal__address-popup-title {
-  color: #222;
-  font-size: 20px;
-  font-weight: 700;
-}
 
-.add-instructor-modal__address-popup-logo.logo {
-  color: #6f7f85;
-  font-size: 12px;
-  font-weight: 700;
-}
 
-.add-instructor-modal__address-popup-search.wrap {
-  display: flex;
-  gap: 8px;
-  padding: 10px;
-  background-color: #fff;
-  border-radius: 6px;
-  border: 1px solid #d5dde1;
-}
 
-.add-instructor-modal__address-popup-search.wrap input {
-  flex: 1;
-  min-width: 0;
-  height: 40px;
-  padding: 0 12px;
-  border: 1px solid #c4cdd1;
-  border-radius: 4px;
-  background-color: #fff;
-  color: #222;
-  font-size: 15px;
-  font-weight: 500;
-}
 
-.add-instructor-modal__address-popup-search-btn {
-  min-width: 72px !important;
-  height: 40px !important;
-}
 
-.add-instructor-modal__address-popup-result.result {
-  margin-top: 12px;
-  border: 1px solid #d5dde1;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #fff;
-}
 
-.add-instructor-modal__address-popup-result-count {
-  padding: 10px 12px;
-  border-bottom: 1px solid #e2e8eb;
-  color: #4b5a60;
-  font-size: 13px;
-  font-weight: 600;
-}
 
-.add-instructor-modal__address-popup-table.data-col {
-  width: 100%;
-  border-collapse: collapse;
-  color: #333;
-}
 
-.add-instructor-modal__address-popup-table.data-col th {
-  background: #f5f7f8;
-  color: #56656b;
-  font-size: 13px;
-  font-weight: 700;
-  text-align: left;
-  padding: 10px 12px;
-  border-bottom: 1px solid #e2e8eb;
-}
 
-.add-instructor-modal__address-popup-table.data-col td {
-  color: #333;
-  padding: 10px 12px;
-  border-bottom: 1px solid #eef2f4;
-  font-size: 14px;
-  vertical-align: top;
-}
 
-.add-instructor-modal__address-popup-table.data-col tbody tr:nth-child(odd) td {
-  background: #fff;
-}
 
-.add-instructor-modal__address-popup-table.data-col tbody tr:nth-child(even) td {
-  background: #fff;
-}
 
-.add-instructor-modal__address-popup-table.data-col tbody tr {
-  cursor: pointer;
-}
 
-.add-instructor-modal__address-popup-table.data-col tbody tr:hover td {
-  background: #f0f9fa;
-}
 
-.add-instructor-modal__address-popup-table.data-col tbody tr td.subj {
-  color: #333;
-  font-weight: 600;
-}
 
-.add-instructor-modal__address-popup-empty {
-  padding: 24px 12px;
-  text-align: center;
-  color: #6f7f85;
-  font-size: 14px;
-}
 
-.add-instructor-modal__address-popup-pagination {
-  display: flex;
-  justify-content: center;
-  padding: 12px;
-  border-top: 1px solid #e2e8eb;
-}
 
 /* 세로 디바이더: margin 0 (양옆 12px는 행 flex gap 등으로 확보), 주민번호 구간 `-`는 제외 */
 .add-instructor-modal__divider,
@@ -2189,8 +1925,3 @@
   margin: 0 !important;
 }
 
-.add-instructor-modal__section--basic .add-instructor-modal__table-input--wide {
-  width: 396px !important;
-  min-width: 396px !important;
-  max-width: 396px !important;
-}
