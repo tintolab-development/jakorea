@@ -27,6 +27,7 @@ export function ScaleType({
   const items = normalizeItems(paragraph)
   const prevCardSelectedRef = useRef(isCardSelected)
   const selectedId = isBodyInteractive ? (paragraph.selectedPreviewItemId ?? null) : null
+  const bodyText = paragraph.bodyText?.trim() ?? ''
 
   useEffect(() => {
     const wasCardSelected = prevCardSelectedRef.current
@@ -51,30 +52,35 @@ export function ScaleType({
   }
 
   return (
-    <div
-      className={['scale-type-bar', !isBodyInteractive ? 'scale-type-bar--disabled' : '']
-        .filter(Boolean)
-        .join(' ')}
-      role="group"
-      aria-label="점수 선택"
-    >
-      {items.map(item => (
-        <button
-          key={item.id}
-          type="button"
-          disabled={!isBodyInteractive}
-          className={[
-            'scale-type-item',
-            selectedId === item.id ? 'scale-type-item--selected' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-          aria-pressed={selectedId === item.id}
-          onClick={e => handleItemClick(e, item.id)}
-        >
-          {item.label}
-        </button>
-      ))}
+    <div className="scale-type">
+      {bodyText.length > 0 ? (
+        <div className="scale-type__body-text">{bodyText}</div>
+      ) : null}
+      <div
+        className={['scale-type-bar', !isBodyInteractive ? 'scale-type-bar--disabled' : '']
+          .filter(Boolean)
+          .join(' ')}
+        role="group"
+        aria-label="점수 선택"
+      >
+        {items.map(item => (
+          <button
+            key={item.id}
+            type="button"
+            disabled={!isBodyInteractive}
+            className={[
+              'scale-type-item',
+              selectedId === item.id ? 'scale-type-item--selected' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            aria-pressed={selectedId === item.id}
+            onClick={e => handleItemClick(e, item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

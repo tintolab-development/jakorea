@@ -61,3 +61,18 @@
   font-size: 18px;
   font-weight: 700;
 }
+
+.ja-grade-evaluation-intro__grade-range {
+  font-weight: 700;
+}
+
+.ja-grade-evaluation-modal .paragraph-input__view-text--rich {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ja-grade-evaluation-modal .static-description-lines__line {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
