@@ -65,8 +65,13 @@ export function useMailSendForm(open: boolean) {
   const applyTemplate = useCallback(
     (template: MailTemplateItem) => {
       setTemplateId(template.id)
-      replaceSenderName(template.senderName)
-      setSenderEmail(template.senderEmail)
+      // senderName이 빈 템플릿이면 기존 harvest 시드를 지우지 않음 (fullpage에서 보강)
+      if (template.senderName.trim()) {
+        replaceSenderName(template.senderName)
+      }
+      if (template.senderEmail.trim()) {
+        setSenderEmail(template.senderEmail)
+      }
       setComposeInitial({
         subject: template.subject,
         bodyHtml: template.bodyHtml,
