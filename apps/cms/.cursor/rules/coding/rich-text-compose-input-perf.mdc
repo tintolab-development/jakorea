@@ -1,16 +1,23 @@
 ---
-description: CMS — rich text·메일 템플릿 작성 폼 입력 버벅임 방지 (모노레포 규칙 위임)
+description: CMS — rich text·메일 템플릿 작성 폼 입력 버벅임·제목 검증 불일치 방지 (모노레포 규칙 위임)
 globs:
   - apps/cms/src/shared/rich-text/**/*.{ts,tsx}
   - apps/cms/src/features/notifications/ui/mail-template/**/*.{ts,tsx}
   - apps/cms/src/features/notifications/ui/mail-send/**/*.{ts,tsx}
+  - apps/cms/src/features/notifications/ui/sms-*/**/*.{ts,tsx}
 alwaysApply: false
 ---
 
-# Rich text compose 입력 성능 (CMS)
+# Rich text compose 입력 성능·검증 SSOT (CMS)
 
 모노레포 규칙을 따른다:
 
 → **[.cursor/rules/rich-text-compose-input-perf.mdc](../../../../../.cursor/rules/rich-text-compose-input-perf.mdc)**
 
-요약: `shouldRerenderOnTransaction` 기본 `false` 유지, 본문을 키마다 state에 올리지 않기, 변수 패널·필드군 `memo` + 안정된 insert 콜백.
+요약:
+- `shouldRerenderOnTransaction` 기본 `false`
+- 제목·발신자명은 **로컬 state + ref SSOT** (타이핑 시 부모 setState 금지)
+- ❌ 매 렌더 `subjectRef.current = subject` 금지 → UI엔 제목 있는데 「제목을 작성하세요」회귀
+- ❌ `.ProseMirror { min-height: 0 }` 금지 → 빈 여백 클릭 시 커서 안 잡힘
+- `getDraft`/`validate`는 ref·에디터 api만 사용
+- harvest/시드는 open당 1회
