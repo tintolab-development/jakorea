@@ -5,7 +5,6 @@ import {
   JA_GRADE_PARAGRAPH_IDS,
   JA_GRADE_SCALE_QUESTION_IDS,
 } from '@/features/user/detail/lib/ja-grade-evaluation-constants'
-import { calculateJaGradeEvaluationFromDraft } from '@/features/user/detail/lib/ja-grade-evaluation-score'
 import type { JaEvaluationLetterGrade } from '@/features/user/detail/lib/ja-grade-evaluation-score'
 import type { ScaleTypeParagraph, WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { applyJaGradeEvaluationRecordToDraft } from '@/features/user/detail/lib/ja-grade-evaluation-draft'
@@ -56,13 +55,11 @@ export function mapJaGradeDraftToEvaluationInput(
     scores.push(score)
   }
 
-  const local = calculateJaGradeEvaluationFromDraft(draft)
   return {
     contentExpertiseScore: scores[0],
     deliveryImmersionScore: scores[1],
     engagementInteractionScore: scores[2],
     contentUseLessonDesignScore: scores[3],
-    ...(local.comment ? { comment: local.comment } : {}),
   }
 }
 
