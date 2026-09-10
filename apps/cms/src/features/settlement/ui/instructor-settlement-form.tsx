@@ -14,11 +14,17 @@ import type { Settlement } from '@/types/domain'
 import { mockPrograms, mockMatchings } from '@/data/mock'
 import { calculateSettlementTotal } from '../lib/settlement-helpers'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import locale from 'antd/es/date-picker/locale/ko_KR'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import {
+  ADMIN_FILE_OWNER,
+  ADMIN_FILE_PURPOSE,
+  buildAdminFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -44,6 +50,7 @@ export function InstructorSettlementForm({
   loading }: InstructorSettlementFormProps) {
   const { user } = useAuthStore()
   const instructorId = user?.instructorId || user?.id
+  const [receiptFiles, setReceiptFiles] = useState<File[]>([])
 
   const {
     register,
@@ -102,6 +109,16 @@ export function InstructorSettlementForm({
     }
     // 상태는 pending으로 고정 (제출 시)
     data.status = 'pending'
+    if (receiptFiles.length > 0) {
+      const owner = buildAdminFileOwner(
+        ADMIN_FILE_OWNER.SETTLEMENT,
+        1,
+        ADMIN_FILE_PURPOSE.EXPENSE_RECEIPT
+      )
+      for (const file of receiptFiles) {
+        await uploadAdminFileMaybeMock({ file, owner })
+      }
+    }
     await onSubmit(data)
   }
 
@@ -326,8 +343,18 @@ export function InstructorSettlementForm({
       <Form.Item label="증빙 파일 (선택사항)">
         <Upload
           multiple
-          beforeUpload={() => false}
-          // TODO: 실제 파일 업로드 구현 필요
+          beforeUpload={file => {
+            setReceiptFiles(prev => [...prev, file as File])
+            return false
+          }}
+          onRemove={file => {
+            setReceiptFiles(prev => prev.filter(item => item.name !== file.name))
+          }}
+          fileList={receiptFiles.map((file, index) => ({
+            uid: `${index}-${file.name}`,
+            name: file.name,
+            size: file.size,
+          }))}
         >
           <Button icon={<UploadOutlined />}>파일 선택</Button>
         </Upload>

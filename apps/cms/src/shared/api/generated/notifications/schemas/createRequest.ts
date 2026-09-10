@@ -26,7 +26,7 @@ export interface CreateRequest {
   variables?: CreateRequestVariables;
   /**
      * @minItems 0
-     * @maxItems 500
+     * @maxItems 5000
      */
   recipients: RecipientRequest[];
   /**
@@ -42,4 +42,16 @@ export interface CreateRequest {
   senderProfileType?: string;
   /** 발신 프로필 id. EMAIL은 channelType=EMAIL 프로필. 없으면 senderKey로 매칭. */
   senderProfileId?: number;
+  /**
+     * 발송 시점 제목 스냅샷(SMS LMS/MMS·EMAIL만). 생략 시 등록 템플릿 title_template 사용.
+     * ALIMTALK에 전달 시 NOTIFICATION_SEND_BODY_OVERRIDE_NOT_ALLOWED_FOR_ALIMTALK.
+     * @minLength 0
+     * @maxLength 1000
+     */
+  titleTemplate?: string;
+  /**
+     * 발송 시점 본문 스냅샷(SMS·EMAIL만). 등록 템플릿과 달라도 됨. 안의 #{키}는 variables/enrich로 치환.
+     * 생략 시 등록 템플릿 content_template 사용. ALIMTALK 전달 시 거부.
+     */
+  contentTemplate?: string;
 }

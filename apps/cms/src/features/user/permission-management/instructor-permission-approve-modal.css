@@ -42,6 +42,17 @@
   margin-bottom: 8px;
 }
 
+.instructor-permission-approve-modal__required {
+  margin-left: 1px;
+  color: var(--color-red, #c32f4a);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+}
+
 .instructor-permission-approve-modal .app-radio-group {
   display: flex;
   align-items: center;

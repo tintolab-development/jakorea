@@ -42,6 +42,7 @@ import type {
 } from '@/features/sponsor/model/sponsor-management.types'
 import type { BasicInfoEditState } from '@/features/sponsor/ui/sponsor-detail-basic-info'
 import type { SponsorContactRegisterPayload } from '@/features/sponsor/ui/modal/sponsor-contact-register-modal'
+import { uploadSponsorLogoFile } from '@/features/sponsor/api/sponsor-logo-upload'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
@@ -84,7 +85,18 @@ export async function getSponsorYearlyBusinesses(
 export async function createSponsor(payload: SponsorRegisterPayload): Promise<SponsorManagementRow> {
   assertSponsorsRemoteReady()
   const dto = await createSponsorRemote(toSponsorRequestFromRegister(payload))
-  return mapSponsorResponse(dto)
+  const row = mapSponsorResponse(dto)
+  if (payload.logoFile && row.id) {
+    const sponsorId = Number(row.id)
+    if (Number.isFinite(sponsorId) && sponsorId >= 1) {
+      const logoFileId = await uploadSponsorLogoFile(sponsorId, payload.logoFile)
+      await updateSponsorRemote(row.id, {
+        ...toSponsorRequestFromRegister(payload),
+        logoFileId: String(logoFileId),
+      })
+    }
+  }
+  return row
 }
 
 export async function updateSponsorBasicInfo(
@@ -93,7 +105,19 @@ export async function updateSponsorBasicInfo(
   existing: SponsorManagementDetailView
 ): Promise<SponsorManagementDetailView> {
   assertSponsorsRemoteReady()
-  await updateSponsorRemote(sponsorId, toSponsorRequestFromBasicInfo(basicInfo, existing))
+  let logoFileId: string | undefined
+  const pendingLogo = basicInfo.pendingLogoFiles.at(-1)
+  if (pendingLogo) {
+    const numericSponsorId = Number(sponsorId)
+    if (Number.isFinite(numericSponsorId) && numericSponsorId >= 1) {
+      logoFileId = String(await uploadSponsorLogoFile(numericSponsorId, pendingLogo))
+    }
+  }
+  const writeBody = toSponsorRequestFromBasicInfo(basicInfo, existing)
+  if (logoFileId) {
+    writeBody.logoFileId = logoFileId
+  }
+  await updateSponsorRemote(sponsorId, writeBody)
   // PATCH 후 상세 재GET 생략 — 로컬 편집값 + 기존 embed를 병합
   const address = [basicInfo.district.trim(), basicInfo.detailAddress.trim()]
     .filter(Boolean)

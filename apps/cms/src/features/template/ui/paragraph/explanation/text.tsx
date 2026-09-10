@@ -36,9 +36,7 @@ export function ExplanationText({
   consentFillMode?: boolean
 }) {
   const consentInteractive = bottomConsentInteractive ?? isEditMode
-  /** 초상권 intro는 구 저장본에 필드가 없어도 하단 동의 라디오 필수 */
-  const showBottomConsent =
-    paragraph.showBottomConsent === true || paragraph.id === 'agreement-portrait-intro'
+  const showBottomConsent = paragraph.showBottomConsent === true
 
   const consentRadios = showBottomConsent ? (
     <CmsRadioGroup

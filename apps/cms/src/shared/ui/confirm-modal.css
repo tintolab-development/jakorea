@@ -38,13 +38,7 @@
   align-self: stretch;
   width: 100%;
   gap: 0;
-  /* 시안: 타이틀 ↔ 본문 gap 30 (ContentModal titleBodyGap always 16 덮어씀) */
-  padding-top: 30px;
   box-sizing: border-box;
-}
-
-.confirm-modal.content-modal.content-modal--title-body-gap-always .teal-header-modal__body {
-  padding-top: 30px;
 }
 
 .confirm-modal.content-modal .teal-header-modal__footer {

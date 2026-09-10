@@ -71,8 +71,15 @@ type PendingMove =
 
 type DeleteDialog = 'category' | 'template' | 'blocked' | null
 
-function defaultExpandedIds(categories: MailCategory[]): Set<string> {
-  return new Set([MAIL_ROOT_CATEGORY_ID, ...categories.map(category => category.id)])
+/** UI Root(Category) + 바로 아래 1뎁스만 펼침. 그 아래 폴더는 접힘. */
+function defaultExpandedIds(categories: MailCategory[] = []): Set<string> {
+  const ids = new Set<string>([MAIL_ROOT_CATEGORY_ID])
+  for (const category of categories) {
+    if (category.parentId === MAIL_ROOT_CATEGORY_ID) {
+      ids.add(category.id)
+    }
+  }
+  return ids
 }
 
 function targetCategoryForAdd(selection: MailTreeSelection, templates: MailTemplateItem[]): string {

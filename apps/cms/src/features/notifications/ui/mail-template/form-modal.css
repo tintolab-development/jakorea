@@ -228,6 +228,15 @@
   gap: 8px;
 }
 
+.mail-template-form-modal__section-title-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .mail-template-form-modal__section-title {
   margin: 0;
   color: var(--main-BK, #3d3d3d);
@@ -246,6 +255,22 @@
   font-weight: 500;
   line-height: 150%;
   opacity: 0.6;
+}
+
+.mail-template-form-modal a.mail-template-form-modal__section-hint-link {
+  color: #0070e7;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  text-decoration: none;
+  opacity: 1;
+}
+
+.mail-template-form-modal a.mail-template-form-modal__section-hint-link:hover {
+  color: #0070e7;
+  text-decoration: underline;
 }
 
 .mail-template-form-modal .detail-info-form__field-content--edit > * {

@@ -55,7 +55,9 @@ export const VariablesPanel = memo(function VariablesPanel({
             {group.items.map(variable => {
               const label = getMailVariableLabel(variable)
               const catalogLocked =
-                respectCatalogEnabled && variable.enabled === false
+                respectCatalogEnabled &&
+                Object.prototype.hasOwnProperty.call(variable, 'enabled') &&
+                variable.enabled !== true
               const itemDisabled = catalogLocked || Boolean(isItemDisabled?.(label))
               const locked = disabled || itemDisabled
               const reason = disabled

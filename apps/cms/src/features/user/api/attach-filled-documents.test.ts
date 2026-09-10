@@ -12,6 +12,16 @@ import {
 import type { MemberRegisterConsentWriteSnapshots } from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import { ADMIN_PRE_REGISTER_TERMS_VERSION } from './build-pre-register-terms-agreements'
 
+vi.mock('@/shared/lib/admin-file-upload', async importOriginal => {
+  const mod = await importOriginal<typeof import('@/shared/lib/admin-file-upload')>()
+  return {
+    ...mod,
+    shouldMockAdminFileUpload: () => true,
+    getFileStatus: vi.fn(),
+    waitUntilFileAvailable: vi.fn(),
+  }
+})
+
 function stubDraft(): WritingFormDraft {
   return {
     schemaVersion: 1,

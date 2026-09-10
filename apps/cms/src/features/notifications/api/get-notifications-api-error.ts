@@ -8,6 +8,8 @@ import {
 import {
   MAIL_SENDER_EMAIL_NOT_REGISTERED_MESSAGE,
   MAIL_SENDER_EMAIL_REQUIRED_MESSAGE,
+  MAIL_SENDER_PROFILE_MISMATCH_MESSAGE,
+  MAIL_SENDER_PROFILES_EMPTY_MESSAGE,
 } from '@/features/notifications/model/mail-template/sender-email'
 import {
   MAIL_TEMPLATE_NAME_INVALID_MESSAGE,
@@ -58,8 +60,9 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   FILE_OBJECT_NOT_FOUND: '파일을 찾을 수 없습니다. 다시 업로드하거나 첨부를 확인해 주세요.',
   EMAIL_TEMPLATE_LANGUAGE_FREEMARKER_NOT_SUPPORTED:
     '메일 템플릿은 일반 텍스트만 지원합니다. FreeMarker 템플릿은 사용할 수 없습니다.',
-  EMAIL_SENDER_PROFILE_MISMATCH: MAIL_SENDER_EMAIL_NOT_REGISTERED_MESSAGE,
+  EMAIL_SENDER_PROFILE_MISMATCH: MAIL_SENDER_PROFILE_MISMATCH_MESSAGE,
   EMAIL_SENDER_PROFILE_NOT_HARVESTED: MAIL_SENDER_EMAIL_NOT_REGISTERED_MESSAGE,
+  EMAIL_SENDER_PROFILES_EMPTY: MAIL_SENDER_PROFILES_EMPTY_MESSAGE,
   NOTIFICATION_SENDER_PROFILE_NOT_FOUND:
     '발신 프로필을 찾을 수 없습니다. 발신 프로필 동기화 후 다시 시도해 주세요.',
   EMAIL_TEMPLATE_NAME_INVALID: MAIL_TEMPLATE_NAME_INVALID_MESSAGE,
@@ -187,11 +190,14 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
     return MAIL_SENDER_EMAIL_REQUIRED_MESSAGE
   }
 
-  if (
-    code === 'EMAIL_SENDER_PROFILE_MISMATCH' ||
-    code === 'EMAIL_SENDER_PROFILE_NOT_HARVESTED'
-  ) {
+  if (code === 'EMAIL_SENDER_PROFILE_MISMATCH') {
+    return MAIL_SENDER_PROFILE_MISMATCH_MESSAGE
+  }
+  if (code === 'EMAIL_SENDER_PROFILE_NOT_HARVESTED') {
     return MAIL_SENDER_EMAIL_NOT_REGISTERED_MESSAGE
+  }
+  if (code === 'EMAIL_SENDER_PROFILES_EMPTY') {
+    return MAIL_SENDER_PROFILES_EMPTY_MESSAGE
   }
 
   if (code === 'NOTIFICATION_SENDER_PROFILE_NOT_FOUND') {
@@ -318,13 +324,14 @@ export function isProviderUnavailableError(error: unknown): boolean {
   return code === 'PROVIDER_UNAVAILABLE' || getApiErrorHttpStatus(error) === 503
 }
 
-/** 부모 카테고리 NHN 미연결 등 → 동기화 유도 */
+/** 부모 카테고리 NHN 미연결·발신 프로필 harvest 0건 등 → 동기화 유도 */
 export function isCategoryNeedsSyncError(error: unknown): boolean {
   const code = getApiErrorCode(error)
   if (
     code === 'PROVIDER_CATEGORY_REQUIRED' ||
     code === 'CATEGORY_PROVIDER_REQUIRED' ||
-    code === 'EMAIL_CATEGORY_NOT_LINKED_TO_NHN'
+    code === 'EMAIL_CATEGORY_NOT_LINKED_TO_NHN' ||
+    code === 'EMAIL_SENDER_PROFILES_EMPTY'
   ) {
     return true
   }

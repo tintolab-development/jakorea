@@ -9,7 +9,7 @@ import type { FormInstance } from 'antd/es/form'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
 import { getTotpProvisioning, verifyTotp } from '@/entities/user/api/mfa-service'
-import { OTP_LENGTH, isAdminLocalTestMfa } from '@/shared/constants/mfa-policy'
+import { OTP_LENGTH, OTP_POLICY, clampMfaFailedAttempts, isAdminLocalTestMfa } from '@/shared/constants/mfa-policy'
 import { unknownErrorText } from '@/shared/utils/error-handler'
 import type { TotpProvisioning } from '@/types/mfa'
 
@@ -35,6 +35,8 @@ interface UseMfaVerificationResult {
   onOtpCodeChange: (value: string) => void
   refreshProvisioning: () => Promise<void>
   lockMessage: string | null
+  /** OTP 입력 초기화 시 증가 — 첫 칸 포커스용 */
+  otpResetToken: number
 }
 
 export function useMfaVerification({
@@ -50,7 +52,12 @@ export function useMfaVerification({
   const [provisioningError, setProvisioningError] = useState<string | null>(null)
   const [remoteVerifying, setRemoteVerifying] = useState(false)
   const [remoteFailedAttempts, setRemoteFailedAttempts] = useState(0)
+  const [remoteIsLocked, setRemoteIsLocked] = useState(false)
+  const [remoteLockUntil, setRemoteLockUntil] = useState<string | null>(null)
+  const [otpResetToken, setOtpResetToken] = useState(0)
   const verifyInFlightRef = useRef(false)
+  const remoteFailedAttemptsRef = useRef(0)
+  const isBusy = verifying || remoteVerifying
 
   const isRemoteMfa = Boolean(mfaState?.challengeUuid)
   const isLocalTestMfa =
@@ -59,6 +66,8 @@ export function useMfaVerification({
     !provisioning &&
     !provisioningLoading
   const displayFailedAttempts = isRemoteMfa ? remoteFailedAttempts : failedAttempts
+  const displayIsLocked = isRemoteMfa ? remoteIsLocked : isLocked
+  const displayLockUntil = isRemoteMfa ? remoteLockUntil : lockUntil
 
   const clearOtpInput = useCallback(() => {
     try {
@@ -68,7 +77,49 @@ export function useMfaVerification({
       console.debug('Form not connected, skipping clearOtpInput')
     }
     setOtpCode('')
+    setOtpResetToken(token => token + 1)
   }, [form])
+
+  const resetRemoteLockState = useCallback(() => {
+    remoteFailedAttemptsRef.current = 0
+    setRemoteFailedAttempts(0)
+    setRemoteIsLocked(false)
+    setRemoteLockUntil(null)
+  }, [])
+
+  const applyRemoteAccountLock = useCallback(() => {
+    remoteFailedAttemptsRef.current = OTP_POLICY.maxFailedAttempts
+    setRemoteFailedAttempts(OTP_POLICY.maxFailedAttempts)
+    const lockTime = new Date(Date.now() + OTP_POLICY.lockoutDurationMinutes * 60 * 1000)
+    setRemoteIsLocked(true)
+    setRemoteLockUntil(lockTime.toISOString())
+  }, [])
+
+  /** 원격 MFA 실패 기록. 5회째(max) 도달 시 잠금. UI는 5 초과 표시 금지. */
+  const registerRemoteFailure = useCallback(() => {
+    if (remoteIsLocked) {
+      clearOtpInput()
+      return
+    }
+    const next = clampMfaFailedAttempts(remoteFailedAttemptsRef.current + 1)
+    remoteFailedAttemptsRef.current = next
+    setRemoteFailedAttempts(next)
+    if (next >= OTP_POLICY.maxFailedAttempts) {
+      applyRemoteAccountLock()
+    }
+    clearOtpInput()
+  }, [clearOtpInput, remoteIsLocked, applyRemoteAccountLock])
+
+  const ensureRemoteNotLocked = useCallback((): boolean => {
+    if (!remoteIsLocked || !remoteLockUntil) return true
+    const lockTime = new Date(remoteLockUntil)
+    if (lockTime > new Date()) {
+      clearOtpInput()
+      return false
+    }
+    resetRemoteLockState()
+    return true
+  }, [remoteIsLocked, remoteLockUntil, clearOtpInput, resetRemoteLockState])
 
   const refreshProvisioning = useCallback(async () => {
     if (!user?.email) return
@@ -107,9 +158,9 @@ export function useMfaVerification({
     if (!open) {
       setProvisioning(null)
       setProvisioningError(null)
-      setRemoteFailedAttempts(0)
+      resetRemoteLockState()
     }
-  }, [open, user?.email, refreshProvisioning])
+  }, [open, user?.email, refreshProvisioning, resetRemoteLockState])
 
   useEffect(() => {
     if (!open) {
@@ -138,6 +189,10 @@ export function useMfaVerification({
   const verifyAndComplete = useCallback(
     async (codeToVerify: string) => {
       if (verifyInFlightRef.current) return
+      if (displayIsLocked) {
+        clearOtpInput()
+        return
+      }
       verifyInFlightRef.current = true
       try {
         if (!user?.email) {
@@ -166,6 +221,10 @@ export function useMfaVerification({
 
         try {
           if (isRemoteMfa && mfaState?.challengeUuid) {
+            if (!ensureRemoteNotLocked()) {
+              return
+            }
+
             setRemoteVerifying(true)
             try {
               const response = await verifyTotp(user.email, codeToVerify, {
@@ -173,7 +232,7 @@ export function useMfaVerification({
               })
 
               if (response.verified && response.tokens) {
-                setRemoteFailedAttempts(0)
+                resetRemoteLockState()
                 completeAdminAuth(response.tokens)
                 try {
                   form.resetFields()
@@ -184,8 +243,17 @@ export function useMfaVerification({
                 return
               }
 
-              setRemoteFailedAttempts(prev => prev + 1)
-              clearOtpInput()
+              // BE ACCOUNT_LOCKED(5회째): 입력 중단·횟수 증가 UI 중단
+              if (response.isLocked || response.errorCode === 'ACCOUNT_LOCKED') {
+                applyRemoteAccountLock()
+                clearOtpInput()
+                return
+              }
+
+              // MFA_VERIFICATION_FAILED (1~4): 로컬 카운트 클램프 후 계속 입력
+              registerRemoteFailure()
+            } catch {
+              registerRemoteFailure()
             } finally {
               setRemoteVerifying(false)
             }
@@ -210,16 +278,13 @@ export function useMfaVerification({
           }
         } catch (error: unknown) {
           const errMsg = unknownErrorText(error, '인증에 실패했습니다.')
-          if (isLocked || errMsg.includes('인증 시도 횟수')) {
-            clearOtpInput()
-          } else {
+          clearOtpInput()
+          if (!displayIsLocked && !errMsg.includes('인증 시도 횟수')) {
             try {
               form.setFields([{ name: 'otpCode', errors: [errMsg] }])
-              form.setFieldsValue({ otpCode: '' })
             } catch {
               console.debug('Form not connected, skipping setFields (verify error)')
             }
-            setOtpCode('')
           }
         }
       } finally {
@@ -235,7 +300,11 @@ export function useMfaVerification({
       setMfaVerified,
       form,
       clearOtpInput,
-      isLocked,
+      displayIsLocked,
+      ensureRemoteNotLocked,
+      registerRemoteFailure,
+      resetRemoteLockState,
+      applyRemoteAccountLock,
     ]
   )
 
@@ -244,15 +313,15 @@ export function useMfaVerification({
       setOtpCode(value)
       if (
         value.length === OTP_LENGTH &&
-        !isLocked &&
-        !verifying &&
+        !displayIsLocked &&
+        !isBusy &&
         user?.email &&
         /^\d+$/.test(value)
       ) {
         void verifyAndComplete(value)
       }
     },
-    [isLocked, verifying, user?.email, verifyAndComplete]
+    [displayIsLocked, isBusy, user?.email, verifyAndComplete]
   )
 
   const handleVerify = useCallback(
@@ -276,7 +345,9 @@ export function useMfaVerification({
   )
 
   const lockMessage =
-    isLocked && lockUntil ? `인증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해주세요.` : null
+    displayIsLocked && displayLockUntil
+      ? `인증 시도 횟수를 초과했습니다. ${OTP_POLICY.lockoutDurationMinutes}분 후 다시 시도해주세요.`
+      : null
 
   return {
     form,
@@ -287,13 +358,14 @@ export function useMfaVerification({
     provisioningLoading,
     provisioningError,
     isLocalTestMfa,
-    failedAttempts: displayFailedAttempts,
-    isLocked,
-    lockUntil,
+    failedAttempts: clampMfaFailedAttempts(displayFailedAttempts),
+    isLocked: displayIsLocked,
+    lockUntil: displayLockUntil,
     verifying: verifying || remoteVerifying,
     handleVerify,
     onOtpCodeChange,
     refreshProvisioning,
     lockMessage,
+    otpResetToken,
   }
 }

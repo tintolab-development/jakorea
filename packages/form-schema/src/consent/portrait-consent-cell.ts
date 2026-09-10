@@ -1,6 +1,6 @@
 const LEGACY_NAME_CELL = '한글 성명'
 const LEGACY_AFFILIATION_CELL = '소속 / 소속 없음'
-const AFFILIATION_PLACEHOLDER = '소속 기관명'
+const AFFILIATION_PLACEHOLDER = '소속'
 export const PORTRAIT_NO_AFFILIATION = '소속 없음'
 
 export function portraitPersonalConsentNameValue(raw: string): string {

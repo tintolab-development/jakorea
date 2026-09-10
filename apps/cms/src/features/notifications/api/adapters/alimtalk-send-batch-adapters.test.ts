@@ -92,6 +92,8 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
     })
     expect(request.programId).toBe(77)
     expect(request).not.toHaveProperty('variables')
+    expect(request).not.toHaveProperty('titleTemplate')
+    expect(request).not.toHaveProperty('contentTemplate')
     expect(request.recipients[0]).toMatchObject({
       actorType: 'MEMBER',
       actorId: 1,

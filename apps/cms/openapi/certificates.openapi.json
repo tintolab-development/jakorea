@@ -146,6 +146,10 @@
     },
     {
       "name": "기타 API",
+      "description": "공유 링크 기반 비회원 설문 API"
+    },
+    {
+      "name": "기타 API",
       "description": "회원 알림 목록과 읽음/클릭 상태 API"
     },
     {

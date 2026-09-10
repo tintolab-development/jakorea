@@ -15,6 +15,11 @@ import {
   RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 import { resolveRecruitDetailTextFieldOverlayKey } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-text-field-keys'
+import {
+  ADMIN_FILE_PURPOSE,
+  programFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './recruit-detail-info-paragraph.css'
@@ -121,6 +126,10 @@ export function RecruitDetailInfoParagraph({
       if (!image) return
       setThumbFileName(image.name)
       setThumbObjectUrl(URL.createObjectURL(image))
+      void uploadAdminFileMaybeMock({
+        file: image,
+        owner: programFileOwner(1, ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL),
+      }).catch(() => undefined)
     },
     [setThumbFileName, setThumbObjectUrl]
   )
@@ -204,12 +213,18 @@ export function RecruitDetailInfoParagraph({
                 guideLines={attachmentGuideLines}
                 multiple
                 fileNames={attachmentFileNames}
-                onFilesChange={(files: File[]) =>
+                onFilesChange={(files: File[]) => {
                   updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev => [
                     ...(prev ?? []),
                     ...files.map(file => file.name),
                   ])
-                }
+                  const owner = programFileOwner(1, ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT)
+                  void (async () => {
+                    for (const file of files) {
+                      await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
+                    }
+                  })()
+                }}
                 onRemoveFile={(index: number) =>
                   updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev =>
                     (prev ?? []).filter((_, i) => i !== index)

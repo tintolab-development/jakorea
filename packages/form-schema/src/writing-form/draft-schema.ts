@@ -119,7 +119,7 @@ export interface AgreementExplanationTextParagraph extends WritingFormParagraphB
   bodyText: string
   /** 카드 하단 토글 — 본문(답변) 필수 여부 */
   answerRequired: boolean
-  /** 하단에 동의(라디오) 영역 노출 — 초상권 수집·이용 동의서 intro 등 */
+  /** 하단에 동의(라디오) 영역 노출 — 표 하단 동의와 동일 패턴 */
   showBottomConsent?: boolean
   /** `showBottomConsent`일 때 동의 라디오 값 */
   bottomConsent?: TableBottomConsent
@@ -2139,7 +2139,7 @@ export function normalizeWritingFormDraft(draft: WritingFormDraft): WritingFormD
   }
 }
 
-/** 초상권 수집·이용 동의서 intro — 구 시드/저장본에 하단 동의 라디오 필드 보정 */
+/** 초상권 intro — 설명글만 (구 시드/저장본의 하단 동의 라디오 제거) */
 function migrateAgreementPortraitIntroBottomConsent(
   p: WritingFormParagraph
 ): WritingFormParagraph {
@@ -2150,16 +2150,13 @@ function migrateAgreementPortraitIntroBottomConsent(
   ) {
     return p
   }
-  if (p.showBottomConsent === true) {
-    return {
-      ...p,
-      bottomConsent: normalizeTableBottomConsent(p.bottomConsent),
-    }
+  if (p.showBottomConsent !== true && p.bottomConsent == null) {
+    return p
   }
   return {
     ...p,
-    showBottomConsent: true,
-    bottomConsent: normalizeTableBottomConsent(p.bottomConsent),
+    showBottomConsent: false,
+    bottomConsent: undefined,
   }
 }
 
@@ -2186,7 +2183,7 @@ function migrateAgreementPortraitPersonalConsentNameCells(
     r0.stageKinds?.[0] !== 'subjective' || r0.stageKinds?.[1] !== 'subjective'
   const h0 = (r0.placeholderHints?.[0] ?? '').trim()
   const h1 = (r0.placeholderHints?.[1] ?? '').trim()
-  const hintsNeedFix = h0 === '' || h1 === ''
+  const hintsNeedFix = h0 === '' || h1 === '' || h1 === '소속 기관명'
   if (!clearName && !clearAff && !kindsNeedFix && !hintsNeedFix) return p
   const nextCells: [string, string] = [
     clearName ? '' : (r0.cells[0] ?? ''),
@@ -2199,7 +2196,10 @@ function migrateAgreementPortraitPersonalConsentNameCells(
         ...r0,
         cells: nextCells,
         stageKinds: ['subjective', 'subjective'],
-        placeholderHints: [h0 || '한글 성명', h1 || '소속 기관명'],
+        placeholderHints: [
+          h0 === '' ? '한글 성명' : h0,
+          h1 === '' || h1 === '소속 기관명' ? '소속' : h1,
+        ],
       },
       ...rows.slice(1),
     ],
@@ -3259,8 +3259,7 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
         bodyPlaceholder: '한 줄 안내를 입력해 주세요',
         bodyText: AGREEMENT_PORTRAIT_INTRO_TEXT,
         answerRequired: true,
-        showBottomConsent: true,
-        bottomConsent: 'agree',
+        showBottomConsent: false,
       },
       normalizeVerticalTableParagraph({
         id: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable,
@@ -3278,7 +3277,7 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
             /** 성명·소속은 작성(write) UI placeholder — 셀 값은 비움 */
             cells: ['', ''],
             stageKinds: ['subjective', 'subjective'],
-            placeholderHints: ['한글 성명', '소속 기관명'],
+            placeholderHints: ['한글 성명', '소속'],
           },
           {
             stageCount: 1,

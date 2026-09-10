@@ -50,7 +50,7 @@ import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 import './members-permission-list.css'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH, ContentModal } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH, ContentModal, useCmsAlert } from '@/shared/ui'
 
 const MEMBER_CATEGORY_LABEL: Record<MemberPermissionApplicationRow['memberCategory'], string> = {
   SCHOOL: '학교(교사)',
@@ -152,7 +152,15 @@ export const MembersPermissionList = forwardRef<
   ref
 ) {
   const roleCode = useSessionAdminRoleCode()
+  const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
+
+  const showNoSelectionAlert = useCallback(() => {
+    showAlert({
+      title: '항목 선택 안내',
+      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+    })
+  }, [showAlert])
 
   const instructorListParams = useMemo(
     () => parseInstructorRoleRequestListParams(searchParams),
@@ -330,21 +338,22 @@ export const MembersPermissionList = forwardRef<
 
   const bulkApprove = useCallback(() => {
     const keys = selectedKeysSnapshot()
-    if (keys.length === 0) return
+    if (keys.length === 0) {
+      showNoSelectionAlert()
+      return
+    }
     if (!guardListApproveAction()) return
     const pendingRows = resolvePendingRowsForKeys(keys)
     const hasNonPendingInSelection = pendingRows.length !== keys.length
     const isBulkSelection = keys.length >= 2
 
-    if (isBulkSelection && hasNonPendingInSelection) {
+    /** 승인 대기 없음(승인 완료·반려만)이거나, 다건 선택에 비대기 행이 섞인 경우 */
+    if (pendingRows.length === 0 || (isBulkSelection && hasNonPendingInSelection)) {
       setBulkApproveBlockedSelectedCount(keys.length)
       return
     }
 
     if (memberType === 'instructor') {
-      if (pendingRows.length === 0) {
-        return
-      }
       /** 승인 대기가 2건 이상이면 일괄 승인 모달(선택에 비대기 행이 섞여 있어도 대기 건만 반영) */
       const useBulkApproveModal = pendingRows.length >= 2
       if (!useBulkApproveModal) {
@@ -367,9 +376,6 @@ export const MembersPermissionList = forwardRef<
     }
 
     if (memberType === 'admin') {
-      if (pendingRows.length === 0) {
-        return
-      }
       const useBulkApproveModal = pendingRows.length >= 2
       if (!useBulkApproveModal) {
         const row = pendingRows[0]
@@ -398,11 +404,15 @@ export const MembersPermissionList = forwardRef<
     onAdminApproveRequest,
     resolvePendingRowsForKeys,
     selectedKeysSnapshot,
+    showNoSelectionAlert,
   ])
 
   const bulkReject = useCallback(() => {
     const keys = selectedKeysSnapshot()
-    if (keys.length === 0) return
+    if (keys.length === 0) {
+      showNoSelectionAlert()
+      return
+    }
     if (!guardListApproveAction()) return
 
     const rejectableRows = resolveRejectableRowsForKeys(keys)
@@ -410,15 +420,13 @@ export const MembersPermissionList = forwardRef<
     const hasNonPendingInSelection = pendingRows.length !== keys.length
     const isBulkSelection = keys.length >= 2
 
-    if (isBulkSelection && hasNonPendingInSelection) {
+    /** 승인 대기 없음(승인 완료·반려만)이거나, 다건 선택에 비대기 행이 섞인 경우 */
+    if (pendingRows.length === 0 || (isBulkSelection && hasNonPendingInSelection)) {
       setBulkRejectBlockedSelectedCount(keys.length)
       return
     }
 
     if (memberType === 'instructor') {
-      if (pendingRows.length === 0) {
-        return
-      }
       /** 반려 대상이 2건 이상이면 일괄 반려 모달 — 신청 승인과 동일 기준 */
       const useBulkRejectModal = pendingRows.length >= 2
       if (!useBulkRejectModal) {
@@ -447,9 +455,6 @@ export const MembersPermissionList = forwardRef<
     }
 
     if (memberType === 'admin') {
-      if (pendingRows.length === 0) {
-        return
-      }
       const useBulkRejectModal = pendingRows.length >= 2
       if (!useBulkRejectModal) {
         const row = pendingRows[0]
@@ -484,6 +489,7 @@ export const MembersPermissionList = forwardRef<
     onAdminRejectRequest,
     resolveRejectableRowsForKeys,
     selectedKeysSnapshot,
+    showNoSelectionAlert,
   ])
 
   const columns: ColumnsType<MemberPermissionApplicationRow> = useMemo(() => {
@@ -632,7 +638,6 @@ export const MembersPermissionList = forwardRef<
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={bulkReject}
-              disabled={selectedRowKeys.length === 0}
             >
               신청 반려
             </CmsButton>
@@ -641,7 +646,6 @@ export const MembersPermissionList = forwardRef<
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={bulkApprove}
-              disabled={selectedRowKeys.length === 0}
             >
               신청 승인
             </CmsButton>

@@ -5,6 +5,12 @@ import {
   useGeneralApplicationOverlayKv,
   updateGeneralApplicationOverlayKey,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import {
+  ADMIN_FILE_OWNER,
+  ADMIN_FILE_PURPOSE,
+  buildAdminFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 
 const CERTIFICATE_GUIDE_LINES = [
   '- 파일은 최대 15M까지 JPG, PNG, PDF 형식만 등록 가능합니다.',
@@ -74,6 +80,16 @@ export function VolunteerPreviousJaProgramParagraph() {
                   'application.volunteer.previousProgram.fileNames',
                   prev => [...(prev ?? []), ...files.map(file => file.name)]
                 )
+                const owner = buildAdminFileOwner(
+                  ADMIN_FILE_OWNER.CERTIFICATE_TEMPLATE,
+                  1,
+                  ADMIN_FILE_PURPOSE.CERTIFICATE_ASSET
+                )
+                void (async () => {
+                  for (const file of files) {
+                    await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
+                  }
+                })()
               }}
               onRemoveFile={index => {
                 updateGeneralApplicationOverlayKey<string[]>(

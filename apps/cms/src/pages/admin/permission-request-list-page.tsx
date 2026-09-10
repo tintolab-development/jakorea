@@ -27,8 +27,16 @@ import {
 } from '@/features/user/permission-management/instructor-permission-reject-modal'
 import { InstructorPermissionApprovedCompleteModal } from '@/features/user/permission-management/instructor-permission-approved-complete-modal'
 import { InstructorPermissionStatusResetConfirmModal } from '@/features/user/permission-management/instructor-permission-status-reset-confirm-modal'
+import { PermissionNotificationResendModal } from '@/features/user/permission-management/permission-notification-resend-modal'
+import {
+  mapPermissionApprovalStatusForResend,
+  resolvePermissionNotificationResendSentAt,
+  toPermissionNotificationResendNotifyOptions,
+  type PermissionNotificationResendApprovalStatus,
+} from '@/features/user/permission-management/lib/permission-notification-resend'
 import { UserDetailFullPageModal } from '@/pages/users/user-detail-fullpage-modal'
 import type { UserDetailPermissionRole } from '@/pages/users/user-detail-fullpage-modal'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 import { updateMockUserById } from '@/data/mock/users'
 import { applyInstructorPermissionRevokedToUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
@@ -52,6 +60,7 @@ const INSTRUCTOR_PERMISSION_APPROVE_MODAL_Z = 1150
 const INSTRUCTOR_PERMISSION_REJECT_MODAL_Z = 2100
 const INSTRUCTOR_PERMISSION_APPROVED_COMPLETE_MODAL_Z = 1160
 const PERMISSION_STATUS_RESET_CONFIRM_MODAL_Z = 1160
+const PERMISSION_NOTIFICATION_RESEND_MODAL_Z = 2100
 
 /** 권한 승인 — 회원 풀페이지 상세 URL (`replace: false`로 열어 뒤로가기 복귀) */
 const PR_DETAIL_USER = 'pr_detail_user'
@@ -113,6 +122,13 @@ type PermissionStatusResetConfirmState = {
   displayName: string
   permissionRole: UserDetailPermissionRole
   fromStatus: 'APPROVED' | 'REJECTED'
+}
+
+type PermissionNotificationResendModalState = {
+  userId: string
+  displayName: string
+  permissionRole: UserDetailPermissionRole
+  approvalStatus: PermissionNotificationResendApprovalStatus
 }
 
 type PermissionListTabKey = 'instructor' | 'admin'
@@ -198,6 +214,8 @@ export function PermissionRequestListPage() {
     useState<AdminApprovedCompleteState | null>(null)
   const [permissionStatusResetConfirm, setPermissionStatusResetConfirm] =
     useState<PermissionStatusResetConfirmState | null>(null)
+  const [permissionNotificationResend, setPermissionNotificationResend] =
+    useState<PermissionNotificationResendModalState | null>(null)
   const [activeListTab, setActiveListTab] = useState<PermissionListTabKey>('instructor')
   const [detailTargetRow, setDetailTargetRow] = useState<MemberPermissionApplicationRow | null>(
     null
@@ -941,11 +959,40 @@ export function PermissionRequestListPage() {
   )
 
   const handlePermissionResendNotification = useCallback(
-    async (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
-      if (ctx.permissionRole === 'instructor' && instructorRemote) {
+    (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
+      const approvalStatus = mapPermissionApprovalStatusForResend(
+        detailUser?.id === ctx.userId ? detailUser.permissionApprovalStatus : undefined
+      )
+      if (approvalStatus == null) {
+        handleError(new Error('승인·반려 상태에서만 알림을 재발송할 수 있습니다.'), {
+          context: 'permissionRequestList.resendNotification.invalidStatus',
+        })
+        return
+      }
+      const displayName =
+        (detailUser?.id === ctx.userId ? detailUser.name?.trim() : '') ||
+        detailTargetRow?.name?.trim() ||
+        '회원'
+      setPermissionNotificationResend({
+        userId: ctx.userId,
+        displayName,
+        permissionRole: ctx.permissionRole,
+        approvalStatus,
+      })
+    },
+    [detailTargetRow?.name, detailUser]
+  )
+
+  const handlePermissionNotificationResendConfirm = useCallback(
+    async (payload: PermissionModalPayload) => {
+      if (!permissionNotificationResend) return
+      const { userId, permissionRole } = permissionNotificationResend
+      setPermissionNotificationResend(null)
+
+      if (permissionRole === 'instructor' && instructorRemote) {
         const requestId =
           detailUser?.instructorRoleRequestId ??
-          instructorListRef.current?.getRequestIdForUser(ctx.userId)
+          instructorListRef.current?.getRequestIdForUser(userId)
         if (requestId == null) {
           handleError(new Error('알림 재발송할 권한 신청 ID를 찾지 못했습니다.'), {
             context: 'permissionRequestList.resendNotification.missingRequestId',
@@ -960,9 +1007,9 @@ export function PermissionRequestListPage() {
         return
       }
 
-      if (ctx.permissionRole === 'admin' && adminRemote) {
+      if (permissionRole === 'admin' && adminRemote) {
         const adminAccountId =
-          detailUser?.adminAccountId ?? adminListRef.current?.getRequestIdForUser(ctx.userId)
+          detailUser?.adminAccountId ?? adminListRef.current?.getRequestIdForUser(userId)
         if (adminAccountId == null) {
           handleError(new Error('알림 재발송할 관리자 신청 ID를 찾지 못했습니다.'), {
             context: 'permissionRequestList.resendNotification.missingAdminId',
@@ -977,8 +1024,10 @@ export function PermissionRequestListPage() {
         return
       }
 
-      updateMockUserById(ctx.userId, {
-        permissionNotificationResentAt: new Date().toISOString(),
+      const notifyOptions = toPermissionNotificationResendNotifyOptions(payload)
+      updateMockUserById(userId, {
+        permissionNotificationResentAt:
+          resolvePermissionNotificationResendSentAt(notifyOptions).toISOString(),
       })
     },
     [
@@ -989,6 +1038,7 @@ export function PermissionRequestListPage() {
       getAdminResendNotificationError,
       getResendNotificationError,
       instructorRemote,
+      permissionNotificationResend,
       resendNotificationMutation,
     ]
   )
@@ -1262,6 +1312,16 @@ export function PermissionRequestListPage() {
           onConfirm={handleConfirmPermissionResetToPending}
         />
       ) : null}
+
+      <PermissionNotificationResendModal
+        open={permissionNotificationResend != null}
+        permissionRole={permissionNotificationResend?.permissionRole ?? 'instructor'}
+        userDisplayName={permissionNotificationResend?.displayName ?? ''}
+        approvalStatus={permissionNotificationResend?.approvalStatus ?? 'approved'}
+        zIndex={PERMISSION_NOTIFICATION_RESEND_MODAL_Z}
+        onCancel={() => setPermissionNotificationResend(null)}
+        onConfirm={handlePermissionNotificationResendConfirm}
+      />
     </div>
   )
 }

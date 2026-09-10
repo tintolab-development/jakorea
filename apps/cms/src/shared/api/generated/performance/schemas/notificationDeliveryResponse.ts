@@ -44,5 +44,16 @@ export interface NotificationDeliveryResponse {
   senderDisplayName?: string;
   senderKey?: string;
   recipientName?: string;
+  /** 템플릿 표시명. EMAIL 메일 제목(renderedTitle)과 다름 — 제목 위장 금지. */
   templateDisplayName?: string;
+  /** 목록용 치환 제목 스냅샷. EMAIL「메일 제목」SSOT. 우선순위: rendered_preview_json.renderedTitle → titleTemplate. 없으면 null. */
+  renderedTitle?: string;
+  /** 목록용 본문 요약(plain, truncate). SMS「문자 내용」SSOT. 우선순위: renderedContent → contentTemplate. HTML은 태그 제거. ALIMTALK는 null 허용. */
+  renderedContentPreview?: string;
+  /** 치환 전 제목 스냅샷. FE fallback: renderedTitle || titleTemplate. */
+  titleTemplate?: string;
+  /** 치환 전 본문 스냅샷. 목록에서는 대용량 회피 위해 보통 null — 전문은 상세 preview. */
+  contentTemplate?: string;
+  /** SMS|LMS|MMS. SMS 목록 메시지 유형. preview/스냅샷 또는 템플릿 sms_message_type. */
+  smsMessageType?: string;
 }

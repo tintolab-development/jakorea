@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -56,6 +56,12 @@ import {
 } from '@/features/notifications/hooks/use-mail-send-queries'
 import { useMailSendTemplatePickerQuery } from '@/features/notifications/hooks/use-mail-template-tree-query'
 import { SendScheduleField } from '@/features/notifications/ui/shared/send-schedule-field'
+import {
+  listNotificationMailContextKeysInTexts,
+  NOTIFICATION_MAIL_CONTEXT_VARIABLES_HINT,
+  pickNotificationMailContextVariables,
+  type NotificationMailContextPlaceholderKey,
+} from '@/features/notifications/model/shared/mail-context-variables'
 import { useMailSendForm } from './use-form'
 import { ProgramSelectField } from './program-select-field'
 import { TemplateSelectField } from './template-select-field'
@@ -63,6 +69,33 @@ import { RecipientTable } from './recipient-table'
 import { RecipientSelectModal } from './recipient-select-modal'
 import { RecipientManualModal } from './recipient-manual-modal'
 import './fullpage-modal.css'
+
+type SenderNameFieldProps = {
+  seed: string
+  epoch: number
+  onChange: (value: string) => void
+}
+
+function SenderNameField({ seed, epoch, onChange }: SenderNameFieldProps) {
+  const [value, setValue] = useState(seed)
+  useEffect(() => {
+    setValue(seed)
+  }, [epoch, seed])
+  return (
+    <CmsInput
+      inputSize="large"
+      width="100%"
+      allowClear={false}
+      placeholder="발신자명을 입력하세요"
+      value={value}
+      onChange={event => {
+        const next = event.target.value
+        setValue(next)
+        onChange(next)
+      }}
+    />
+  )
+}
 
 type SendFullpageModalProps = {
   open: boolean
@@ -90,6 +123,9 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<string[]>([])
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false)
   const [sending, setSending] = useState(false)
+  const [contextVariableValues, setContextVariableValues] = useState<
+    Partial<Record<NotificationMailContextPlaceholderKey, string>>
+  >({})
   const [recipientSearch, setRecipientSearch] = useState<MailSendRecipientSearchParams>({
     typeValue: '',
     keyword: '',
@@ -99,21 +135,22 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   const senderProfilesQuery = useMailSenderProfilesQuery(open && remote)
   const programsQuery = useNotificationSendProgramsQuery(open && remote)
   const programs = programsQuery.data ?? []
+  /** 모달 open당 1회만 시드. 비어 있을 때마다 채우면 사용자가 지운 값이 다시 들어온다. */
+  const didSeedSenderRef = useRef(false)
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      didSeedSenderRef.current = false
+      return
+    }
+    if (didSeedSenderRef.current) return
     const first = senderProfilesQuery.data?.[0]
     if (!first) return
+    didSeedSenderRef.current = true
     if (!form.senderEmail.trim()) form.setSenderEmail(first.senderKey)
-    if (!form.senderName.trim()) form.setSenderName(first.displayName)
-  }, [
-    form.senderEmail,
-    form.senderName,
-    form.setSenderEmail,
-    form.setSenderName,
-    open,
-    senderProfilesQuery.data,
-  ])
+    if (!form.senderNameSeed.trim()) form.replaceSenderName(first.displayName)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- open당 1회 시드; sender 입력 deps 금지
+  }, [open, senderProfilesQuery.data, form.replaceSenderName, form.setSenderEmail])
   const programNumericId = useMemo(
     () => parseNotificationSendProgramId(form.programId),
     [form.programId]
@@ -237,12 +274,19 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       profile => profile.senderKey.trim().toLowerCase() === email
     )?.profileId
   }, [form.senderEmail, senderProfilesQuery.data])
+
+  const contextKeysInCompose = listNotificationMailContextKeysInTexts(
+    form.subject,
+    form.editor?.getHTML() ?? ''
+  )
+
   const handleClose = () => {
     setPreviewOpen(false)
     setRecipientSelectOpen(false)
     setRecipientManualOpen(false)
     setSelectedRecipientIds([])
     setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
+    setContextVariableValues({})
     setSendConfirmOpen(false)
     onClose()
   }
@@ -324,14 +368,19 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
     setSending(true)
     try {
       const draft = form.getDraft()
-      const templateDisplayName = draft.templateId
-        ? templates.find(item => item.id === draft.templateId)?.templateName
+      const selected = draft.templateId
+        ? templates.find(item => item.id === draft.templateId)
         : undefined
       await submitMailSend({
         draft,
-        templateDisplayName,
+        templateDisplayName: selected?.templateName,
+        templateCategoryId: selected?.categoryId,
+        templateBaseline: selected
+          ? { subject: selected.subject, bodyHtml: selected.bodyHtml }
+          : undefined,
         idempotencyKey: crypto.randomUUID(),
         senderProfileId: resolvedSenderProfileId,
+        variables: pickNotificationMailContextVariables(contextVariableValues),
       })
       setSendConfirmOpen(false)
       await invalidateHistory()
@@ -466,15 +515,12 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                     <DetailInfoForm.Row type="double">
                       <DetailInfoForm.Field
                         label="발신자명"
-                        view={form.senderName}
+                        view={form.senderNameSeed}
                         edit={
-                          <CmsInput
-                            inputSize="large"
-                            width="100%"
-                            allowClear={false}
-                            placeholder="발신자명을 입력하세요"
-                            value={form.senderName}
-                            onChange={event => form.setSenderName(event.target.value)}
+                          <SenderNameField
+                            seed={form.senderNameSeed}
+                            epoch={form.senderNameEpoch}
+                            onChange={form.setSenderName}
                           />
                         }
                       />
@@ -559,6 +605,38 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                       onAttachmentRemove={form.handleAttachmentRemove}
                     />
                   </DetailInfoForm>
+                  {contextKeysInCompose.length > 0 ? (
+                    <div className="mail-send-fullpage__context-vars">
+                      <p className="mail-send-fullpage__context-vars-hint">
+                        {NOTIFICATION_MAIL_CONTEXT_VARIABLES_HINT}
+                      </p>
+                      <DetailInfoForm title="문맥 변수" hideHeader mode="edit">
+                        {contextKeysInCompose.map(key => (
+                          <DetailInfoForm.Row key={key} type="single">
+                            <DetailInfoForm.Field
+                              label={`#{${key}}`}
+                              fullRow
+                              view={contextVariableValues[key] ?? ''}
+                              edit={
+                                <CmsInput
+                                  inputSize="large"
+                                  width="100%"
+                                  placeholder={`${key} 값 입력`}
+                                  value={contextVariableValues[key] ?? ''}
+                                  onChange={event =>
+                                    setContextVariableValues(prev => ({
+                                      ...prev,
+                                      [key]: event.target.value,
+                                    }))
+                                  }
+                                />
+                              }
+                            />
+                          </DetailInfoForm.Row>
+                        ))}
+                      </DetailInfoForm>
+                    </div>
+                  ) : null}
                 </section>
               </div>
 

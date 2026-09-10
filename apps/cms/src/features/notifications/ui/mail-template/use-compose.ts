@@ -49,8 +49,13 @@ export function useMailCompose(open: boolean, resetKey: string, initial: MailCom
   const [attachmentFileNames, setAttachmentFileNames] = useState(initial.attachmentFileNames)
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [removedAttachmentIds, setRemovedAttachmentIds] = useState<number[]>([])
-  const subjectRef = useRef(subject)
-  subjectRef.current = subject
+  /**
+   * 제목 SSOT = subjectRef.
+   * 타이핑은 handleSubjectChange가 ref만 갱신하고 React subject state는 리셋/변수삽입 때만 올린다.
+   * ❌ 매 렌더 `subjectRef.current = subject` 금지 — state가  lagged ''이면 UI(로컬)와 달리
+   *    getSubject()가 비어 「제목을 작성하세요」가 난다.
+   */
+  const subjectRef = useRef(initial.subject)
   newFilesRef.current = newFiles
   removedAttachmentIdsRef.current = removedAttachmentIds
 

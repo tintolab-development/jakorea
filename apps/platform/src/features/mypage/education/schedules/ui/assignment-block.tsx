@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { EducationScheduleAssignment } from '../model/types'
 import { resolveEducationAssignmentGuide } from '../lib/schedule-rules'
 import clipDarkMintUrl from '@/shared/assets/icons/clip-dark-mint.svg'
@@ -7,6 +7,7 @@ import closeDarkMintUrl from '@/shared/assets/icons/close-dark-mint.svg'
 import closeBlackUrl from '@/shared/assets/icons/close-black.svg'
 import { EducationSessionGuideBlock } from '../../shared'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import { usePortalFormResponseFeedbackQuery } from '../api/use-portal-form-response-feedback-query'
 import styles from './assignment-block.module.css'
 
 type EducationScheduleAssignmentBlockProps = {
@@ -17,6 +18,13 @@ export function EducationScheduleAssignmentBlock({
   assignment,
 }: EducationScheduleAssignmentBlockProps) {
   const [comingSoonOpen, setComingSoonOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+
+  const feedbackQuery = usePortalFormResponseFeedbackQuery({
+    formResponseId: assignment.formResponseId,
+    enabled: feedbackOpen,
+  })
+
   const guide = resolveEducationAssignmentGuide(assignment.status, assignment.submitEndAt)
   const deadlineOpen = new Date().getTime() <= new Date(assignment.submitEndAt).getTime()
   const showFileRemove =
@@ -26,6 +34,17 @@ export function EducationScheduleAssignmentBlock({
   const files = assignment.files ?? []
   const hasFiles = files.length > 0
   const showSubmittedDivider = isSubmitted && hasFiles
+
+  const remoteFeedbackText = useMemo(() => {
+    const items = feedbackQuery.data?.feedbacks ?? []
+    if (items.length === 0) return null
+    return items.map(item => item.content).join('\n\n')
+  }, [feedbackQuery.data?.feedbacks])
+
+  const feedbackBody =
+    remoteFeedbackText?.trim() ||
+    assignment.feedback?.trim() ||
+    (feedbackQuery.isFetching ? '피드백을 불러오는 중입니다…' : '등록된 피드백이 없습니다.')
 
   return (
     <>
@@ -42,7 +61,7 @@ export function EducationScheduleAssignmentBlock({
                 type="button"
                 variant="tertiary"
                 size="large"
-                onClick={() => setComingSoonOpen(true)}
+                onClick={() => setFeedbackOpen(true)}
               >
                 피드백 확인
               </PFButton>
@@ -112,6 +131,12 @@ export function EducationScheduleAssignmentBlock({
         open={comingSoonOpen}
         title="준비 중"
         onConfirm={() => setComingSoonOpen(false)}
+      />
+      <PFAlertModal
+        open={feedbackOpen}
+        title="피드백 확인"
+        description={feedbackBody}
+        onConfirm={() => setFeedbackOpen(false)}
       />
     </>
   )

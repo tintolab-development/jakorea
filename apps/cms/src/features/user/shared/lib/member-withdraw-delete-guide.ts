@@ -34,10 +34,7 @@ export function buildSelfWithdrawMessageLines(): string[] {
 }
 
 /** 회원 목록 > 삭제 안내 본문 (단일·일괄·학교) */
-export function buildMemberListDeleteGuideLines(
-  names: string[],
-  kind: MemberListKind
-): string[] {
+export function buildMemberListDeleteGuideLines(names: string[], kind: MemberListKind): string[] {
   const normalized = names.map(name => name.trim()).filter(Boolean)
   if (normalized.length === 0) return []
   if (kind === 'institutions' && normalized.length >= 2) {
@@ -49,7 +46,7 @@ export function buildMemberListDeleteGuideLines(
   }
   if (normalized.length >= 2) {
     return [
-      `선택한 ${normalized.length}명의 회원을 삭제하시겠습니까?`,
+      `**선택한 ${normalized.length}명의 회원**을 삭제하시겠습니까?`,
       '삭제 시 즉시 탈퇴 처리 되며, 등록 및 관련된 정보는 모두 삭제됩니다.',
       '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
     ]

@@ -5,9 +5,11 @@ import {
   toBulkNumericIds,
 } from '@/features/data-management/api/bulk-delete'
 import { getJAKoreaCMSBackendAPIDataManagementSubset } from '@/shared/api/generated/data-management/data-management-api'
+import customInstance from '@/shared/api/orval-mutator'
 import type { SponsorWriteRequest } from '@/features/sponsor/api/adapters/sponsor-adapters'
 import type {
   BulkActionResponse,
+  ContactsParams,
   ProgramHistoriesParams,
   SponsorContactRequest,
   SponsorContactResponse,
@@ -96,10 +98,9 @@ export async function fetchSponsorContactsRemote(
         Object.entries(params).filter(([, value]) => value != null && String(value).trim() !== '')
       )
     : undefined
-  const payload = await dmApi.contacts(
-    pathId(sponsorId),
-    query && Object.keys(query).length > 0 ? { params: query } : undefined
-  )
+  const contactsParams =
+    query && Object.keys(query).length > 0 ? (query as ContactsParams) : undefined
+  const payload = await dmApi.contacts(pathId(sponsorId), contactsParams)
   return unwrapSponsorContactList(payload)
 }
 
@@ -151,7 +152,11 @@ export async function updateYearlyBusinessRemote(
 }
 
 export async function deleteYearlyBusinessRemote(yearlyBusinessId: string): Promise<void> {
-  await dmApi.deleteYearlyBusiness(pathId(yearlyBusinessId))
+  // OpenAPI subset currently omits DELETE; keep runtime path used by CMS sponsor UI.
+  await customInstance({
+    url: `/api/admin/sponsors/yearly-businesses/${pathId(yearlyBusinessId)}`,
+    method: 'DELETE',
+  })
 }
 
 export async function fetchProgramHistoriesRemote(

@@ -208,6 +208,8 @@ export interface AssignmentSubmissionTableRow {
   canViewAssignment: boolean
   /** REQ-010 — BE `submissionFileIds[]` 연동 시 단건 download */
   submissionFileIds?: number[]
+  /** Wave11 POST feedback — form response id (없으면 CTA 비노출) */
+  formResponseId?: number
 }
 
 export interface AssignmentSubmissionDetail {

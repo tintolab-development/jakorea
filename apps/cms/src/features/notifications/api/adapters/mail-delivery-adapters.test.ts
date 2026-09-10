@@ -20,7 +20,7 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
     })
 
     expect(row?.id).toBe('42')
-    expect(row?.subject).toBe('')
+    expect(row?.subject).toBe('-')
     expect(row?.templateName).toBe('워크숍 안내')
     expect(row?.senderInfo).toBe('홍길동 <gildong@jakorea.org>')
     expect(row?.broadcastTiming).toBe('즉시')
@@ -36,8 +36,27 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
       sendStatus: 'SUCCESS',
       receiptStatus: 'SUCCESS',
     })
-    expect(row?.subject).toBe('')
+    expect(row?.subject).toBe('-')
     expect(row?.templateName).toBe('템플릿코드명')
+  })
+
+  it('uses list renderedTitle||titleTemplate without preview (N+1 금지)', () => {
+    const withRendered = mapMailDeliveryToSendHistoryRow({
+      deliveryId: 2,
+      templateDisplayName: '템플릿명',
+      renderedTitle: '치환된 제목',
+      titleTemplate: '원문 제목 #{회원명}',
+      sendStatus: 'SENT',
+    })
+    expect(withRendered?.subject).toBe('치환된 제목')
+    expect(withRendered?.templateName).toBe('템플릿명')
+
+    const withTemplateOnly = mapMailDeliveryToSendHistoryRow({
+      deliveryId: 3,
+      titleTemplate: '원문 제목만',
+      sendStatus: 'SEND_FAILED',
+    })
+    expect(withTemplateOnly?.subject).toBe('원문 제목만')
   })
 
   it('maps preview title/attachments/senderDisplay', () => {
@@ -143,5 +162,25 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
 
     expect(row?.sentAt).toBe('2026-09-07T10:00:00+09:00')
     expect(row?.receivedAt).toBe('2026-09-07T10:01:00+09:00')
+  })
+
+  it('formats NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING for delivery detail', () => {
+    const failed = mapMailDeliveryToSendHistoryRow(
+      {
+        deliveryId: 12,
+        sendStatus: 'SEND_FAILED',
+        failedReason: 'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:동의 항목,만료일시',
+        recipientName: '이건희',
+        recipientContactMasked: '2***@tinto.co.kr',
+      },
+      {
+        renderedTitle: '필수 동의 만료 안내',
+        renderedContent: '<p>#{회원명} #{동의 항목} #{만료일시}</p>',
+      }
+    )
+    expect(failed?.sendStatus).toBe('발송 실패')
+    expect(failed?.failedReason).toBe('템플릿 필수 변수가 없습니다: 동의 항목, 만료일시')
+    // preview에 #{…} 잔존 = 치환 전 실패(정상)
+    expect(failed?.bodyHtml).toContain('#{동의 항목}')
   })
 })

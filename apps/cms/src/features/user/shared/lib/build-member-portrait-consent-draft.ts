@@ -22,8 +22,6 @@ export type MemberConsentMemberContext = {
   grade?: string
   affiliationOrganization?: string
   affiliationNone?: boolean
-  /** 초상권 동의서 소속 셀렉트 고정 옵션(강사 신규 등록 등) */
-  portraitAffiliationSelectOptions?: ReadonlyArray<{ value: string; label: string }>
 }
 
 function birthDateToNoticeValue(birthDate: string | undefined): string {

@@ -102,6 +102,7 @@ function mapMessageType(
   preview: Record<string, unknown> | null
 ): SmsMessageType {
   const raw = (
+    item.smsMessageType?.trim() ||
     previewString(preview, ['messageType', 'smsMessageType', 'providerChannelType']) ||
     item.providerChannelType ||
     ''
@@ -112,8 +113,15 @@ function mapMessageType(
   if (raw === 'LMS' || raw === 'LMS/MMS') return 'LMS'
   if (raw === 'SMS') return 'SMS'
   // 제목·본문 길이로 추정
-  const subject = previewString(preview, ['renderedTitle', 'titleTemplate', 'subject'])
-  const body = previewString(preview, ['renderedContent', 'contentTemplate', 'content', 'body'])
+  const subject =
+    previewString(preview, ['renderedTitle', 'titleTemplate', 'subject']) ||
+    item.renderedTitle?.trim() ||
+    item.titleTemplate?.trim() ||
+    ''
+  const body =
+    previewString(preview, ['renderedContent', 'contentTemplate', 'content', 'body']) ||
+    item.renderedContentPreview?.trim() ||
+    ''
   if (previewAttachmentItems(preview).length > 0) return 'MMS'
   if (subject || body.length > 90) return 'LMS'
   return 'SMS'
@@ -199,14 +207,21 @@ export function mapSmsDeliveryToSendHistoryRow(
     formatSenderInfo(senderNumberType, senderPhone)
   const receiverPhone = item.recipientContactMasked?.trim() || ''
   const templateName = item.templateDisplayName?.trim() || ''
-  const subject = previewString(previewRecord, ['renderedTitle', 'titleTemplate', 'subject'])
-  const bodyText = previewString(previewRecord, [
-    'renderedContent',
-    'contentTemplate',
-    'content',
-    'body',
-    'bodyText',
-  ])
+  const subject =
+    previewString(previewRecord, ['renderedTitle', 'titleTemplate', 'subject']) ||
+    item.renderedTitle?.trim() ||
+    item.titleTemplate?.trim() ||
+    ''
+  const bodyText =
+    previewString(previewRecord, [
+      'renderedContent',
+      'contentTemplate',
+      'content',
+      'body',
+      'bodyText',
+    ]) ||
+    item.contentTemplate?.trim() ||
+    ''
   const messageType = mapMessageType(item, previewRecord)
   const sendStatus = mapSendStatus(item.sendStatus)
   const failedReasonRaw = item.failedReason?.trim() || ''
@@ -215,13 +230,19 @@ export function mapSmsDeliveryToSendHistoryRow(
       ? formatNotificationFailedReason(failedReasonRaw) || failedReasonRaw
       : ''
   const attachments = previewAttachmentItems(previewRecord)
-  const contentSource = bodyText || subject || templateName
+  // 목록 SSOT: renderedContentPreview (templateDisplayName fallback 금지)
+  const listContent = item.renderedContentPreview?.trim() || ''
+  const content = listContent
+    ? truncateContent(listContent)
+    : previewRecord
+      ? truncateContent(bodyText || subject) || '-'
+      : '-'
 
   return {
     id: String(item.deliveryId),
     requestAt: item.requestedAt ?? '',
     reservedAt: item.scheduledAt ?? '',
-    content: truncateContent(contentSource),
+    content,
     subject,
     senderNumberType,
     senderPhone,

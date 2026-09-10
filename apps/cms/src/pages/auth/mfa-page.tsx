@@ -17,6 +17,7 @@ import {
   OTP_LENGTH,
   ADMIN_MFA_LOCAL_TEST_CODE,
   isAdminLocalTestMfa,
+  clampMfaFailedAttempts,
 } from '@/shared/constants/mfa-policy'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import { unknownErrorText } from '@/shared/utils/error-handler'
@@ -238,9 +239,10 @@ export function MfaPage() {
 
           <div style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg, textAlign: 'center' }}>
             <Text type="secondary">앱의 코드는 약 30초마다 바뀝니다.</Text>
-            {failedAttempts > 0 && (
+            {failedAttempts > 0 && !isLocked && (
               <Text type="danger" style={{ display: 'block', marginTop: 4 }}>
-                실패 횟수: {failedAttempts} / {OTP_POLICY.maxFailedAttempts}
+                잘못된 코드를 입력하였습니다. (실패 {clampMfaFailedAttempts(failedAttempts)}회 /
+                최대 {OTP_POLICY.maxFailedAttempts}회)
               </Text>
             )}
           </div>

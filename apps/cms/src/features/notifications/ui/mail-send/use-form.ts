@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { MailTemplateItem } from '@/features/notifications/model/mail-template/types'
@@ -25,7 +25,10 @@ import {
 export function useMailSendForm(open: boolean) {
   const [programId, setProgramId] = useState(MAIL_SEND_DEFAULT_PROGRAM_ID)
   const [templateId, setTemplateId] = useState<string | undefined>()
-  const [senderName, setSenderName] = useState<string>(MAIL_SEND_DEFAULT_SENDER.name)
+  /** 입력 중 부모(수신자 테이블 등) 리렌더 방지 */
+  const senderNameRef = useRef<string>(MAIL_SEND_DEFAULT_SENDER.name)
+  const [senderNameSeed, setSenderNameSeed] = useState<string>(MAIL_SEND_DEFAULT_SENDER.name)
+  const [senderNameEpoch, setSenderNameEpoch] = useState(0)
   const [senderEmail, setSenderEmail] = useState<string>(MAIL_SEND_DEFAULT_SENDER.email)
   const [sendTiming, setSendTiming] = useState<MailSendTiming>('immediate')
   const [scheduledAt, setScheduledAt] = useState<Dayjs | null>(null)
@@ -36,30 +39,43 @@ export function useMailSendForm(open: boolean) {
   const resetKey = open ? `send-${composeNonce}` : 'closed'
   const compose = useMailCompose(open, resetKey, composeInitial)
 
+  const setSenderName = useCallback((value: string) => {
+    senderNameRef.current = value
+  }, [])
+
+  const replaceSenderName = useCallback((value: string) => {
+    senderNameRef.current = value
+    setSenderNameSeed(value)
+    setSenderNameEpoch(key => key + 1)
+  }, [])
+
   useEffect(() => {
     if (!open) return
     setProgramId(MAIL_SEND_DEFAULT_PROGRAM_ID)
     setTemplateId(undefined)
-    setSenderName(MAIL_SEND_DEFAULT_SENDER.name)
+    replaceSenderName(MAIL_SEND_DEFAULT_SENDER.name)
     setSenderEmail(MAIL_SEND_DEFAULT_SENDER.email)
     setSendTiming('immediate')
     setScheduledAt(null)
     setComposeInitial(EMPTY_MAIL_COMPOSE)
     setComposeNonce(key => key + 1)
     setRecipients([])
-  }, [open])
+  }, [open, replaceSenderName])
 
-  const applyTemplate = useCallback((template: MailTemplateItem) => {
-    setTemplateId(template.id)
-    setSenderName(template.senderName)
-    setSenderEmail(template.senderEmail)
-    setComposeInitial({
-      subject: template.subject,
-      bodyHtml: template.bodyHtml,
-      attachmentFileNames: [...template.attachmentFileNames],
-    })
-    setComposeNonce(key => key + 1)
-  }, [])
+  const applyTemplate = useCallback(
+    (template: MailTemplateItem) => {
+      setTemplateId(template.id)
+      replaceSenderName(template.senderName)
+      setSenderEmail(template.senderEmail)
+      setComposeInitial({
+        subject: template.subject,
+        bodyHtml: template.bodyHtml,
+        attachmentFileNames: [...template.attachmentFileNames],
+      })
+      setComposeNonce(key => key + 1)
+    },
+    [replaceSenderName]
+  )
 
   const clearTemplate = useCallback(() => {
     setTemplateId(undefined)
@@ -90,7 +106,7 @@ export function useMailSendForm(open: boolean) {
       templateId,
       purpose: MAIL_SEND_PURPOSE,
       useTemplate: mailSendUseTemplate(templateId),
-      senderName,
+      senderName: senderNameRef.current,
       senderEmail,
       sendTiming,
       scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
@@ -106,7 +122,6 @@ export function useMailSendForm(open: boolean) {
     scheduledAt,
     sendTiming,
     senderEmail,
-    senderName,
     templateId,
   ])
 
@@ -135,7 +150,8 @@ export function useMailSendForm(open: boolean) {
     subjectInputRef: compose.subjectInputRef,
     programId,
     templateId,
-    senderName,
+    senderNameSeed,
+    senderNameEpoch,
     senderEmail,
     sendTiming,
     scheduledAt,
@@ -144,6 +160,7 @@ export function useMailSendForm(open: boolean) {
     recipients,
     setProgramId,
     setSenderName,
+    replaceSenderName,
     setSenderEmail,
     setSendTiming,
     setScheduledAt,

@@ -11,6 +11,7 @@ import {
 import { useNoticeCategoriesQuery } from '@/features/posts/hooks/use-notice-categories-query'
 import { useNoticeMutations } from '@/features/posts/hooks/use-notice-mutations'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
+import { noticeInlineImageOwner, parseNoticeOwnerId } from '@/features/posts/api/notices/notice-attachments'
 import { RichTextEditor } from '@/shared/rich-text'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -124,6 +125,12 @@ export function NoticeFormModal({
     initialMarkdown,
     editorResetKey
   )
+
+  const noticeInlineOwner = useMemo(() => {
+    if (mode !== 'edit' || !notice) return null
+    const id = parseNoticeOwnerId(notice.id)
+    return id != null ? noticeInlineImageOwner(id) : null
+  }, [mode, notice])
 
   /* 모달이 열릴 때마다 폼·첨부 세션 초기화(등록↔수정·다른 공지 전환) */
   /* eslint-disable react-hooks/set-state-in-effect -- open/mode/notice 변경 시 의도적 초기화 */
@@ -388,7 +395,11 @@ export function NoticeFormModal({
           <div className="notice-register-modal__section notice-register-modal__section--editor">
             <div className="notice-register-modal__editor-label">내용</div>
             <div className="notice-register-modal__editor-host">
-              <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+              <RichTextEditor
+                editor={editor}
+                minHeight={editorMinHeight}
+                fileUploadOwner={noticeInlineOwner}
+              />
             </div>
           </div>
 

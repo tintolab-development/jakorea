@@ -161,12 +161,15 @@ export function mapMailDeliveryToSendHistoryRow(
       : '') ||
     ''
   const templateName = item.templateDisplayName?.trim() || ''
-  // 제목: renderedTitle || titleTemplate || '-' (templateDisplayName 위장 금지)
+  // 목록 SSOT: renderedTitle || titleTemplate (templateDisplayName 위장 금지)
+  // 상세: preview 동일 키 우선
+  const subjectFromItem =
+    item.renderedTitle?.trim() || item.titleTemplate?.trim() || ''
   const subjectFromPreview = previewString(previewRecord, [
     'renderedTitle',
     'titleTemplate',
   ])
-  const subject = previewRecord ? subjectFromPreview || '-' : ''
+  const subject = subjectFromPreview || subjectFromItem || '-'
   // 본문: renderedContent || contentTemplate (failedReason을 본문에 넣지 않음)
   const bodyHtml = previewString(previewRecord, [
     'renderedContent',

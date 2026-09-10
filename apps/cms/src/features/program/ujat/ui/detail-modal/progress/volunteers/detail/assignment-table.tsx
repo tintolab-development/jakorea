@@ -156,6 +156,7 @@ export function UjatEducationProgressVolunteerAssignmentTable({
         institutionName: getInstitutionName(record),
         assignedClass: record.classDisplay.kind === 'class' ? record.classDisplay.label : '',
         submittedDateLabel: '260403',
+        formResponseId: record.educationPlanFormResponseId,
       })
     },
     [volunteerName, regionLabel, getInstitutionName]
@@ -170,6 +171,7 @@ export function UjatEducationProgressVolunteerAssignmentTable({
         institutionName: getInstitutionName(record),
         assignedClass: record.classDisplay.kind === 'class' ? record.classDisplay.label : '',
         submittedDateLabel: '260410',
+        formResponseId: record.educationLogFormResponseId,
       })
     },
     [volunteerName, regionLabel, getInstitutionName]

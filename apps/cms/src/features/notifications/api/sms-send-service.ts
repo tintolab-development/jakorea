@@ -1,7 +1,11 @@
 import { normalizeKoreanPhoneDigits } from '@/shared/utils/phone-validation'
-import { mapSenderProfileOptions, type AlimtalkSenderProfileOption } from '@/features/notifications/api/adapters/alimtalk-sender-adapters'
+import {
+  mapSenderProfileOptions,
+  type AlimtalkSenderProfileOption,
+} from '@/features/notifications/api/adapters/alimtalk-sender-adapters'
 import {
   mapTemplateVariablesCatalog,
+  pickNonEmptySendVariables,
   toTemplateVariablesRequestParams,
   type AlimtalkTemplateVariable,
   type NotificationTemplateVariablesQuery,
@@ -19,6 +23,7 @@ import {
   buildSmsSendPayload,
 } from '@/features/notifications/model/sms-send/payload'
 import type { SmsSendDraft, SmsSendRecipient } from '@/features/notifications/model/sms-send/types'
+import { applyNotificationSendBodySnapshot } from '@/features/notifications/model/shared/send-body-snapshot'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
@@ -55,7 +60,8 @@ export function resolveSmsSenderProfileId(
 ): number | undefined {
   const normalized = normalizeKoreanPhoneDigits(senderPhone)
   if (!normalized) return undefined
-  return profiles.find(profile => normalizeKoreanPhoneDigits(profile.senderKey) === normalized)?.profileId
+  return profiles.find(profile => normalizeKoreanPhoneDigits(profile.senderKey) === normalized)
+    ?.profileId
 }
 
 export async function getSmsRecipientCandidates(input: {
@@ -113,17 +119,34 @@ export async function getSmsTemplateVariables(
   return mapTemplateVariablesCatalog(dto)
 }
 
+/**
+ * 문자 발송 — `POST /api/admin/notification-send-batches`
+ * - 발송 편집본은 titleTemplate/contentTemplate 스냅샷으로 전송 (등록 템플릿 PATCH 금지)
+ * - 필수 변수 누락은 BE fail-closed
+ * - recipient.variables로 DIRECT·마스킹되지 않은 값 보완
+ */
 export async function submitSmsSend(input: {
   draft: SmsSendDraft
   templateDisplayName?: string
+  templateCategoryId?: string | null
+  templateBaseline?: { subject: string; bodyText: string; messageType?: string }
   idempotencyKey: string
   senderProfileId?: number
+  variables?: Record<string, unknown>
 }): Promise<void> {
-  const { templateDisplayName, idempotencyKey, senderProfileId } = input
+  const {
+    templateDisplayName,
+    templateBaseline,
+    idempotencyKey,
+    senderProfileId,
+    variables,
+  } = input
   assertSmsSendRemoteReady()
   const draft = buildSmsSendPayload(input.draft)
   const numericTemplateId =
-    draft.templateId && /^\d+$/.test(draft.templateId.trim()) ? Number(draft.templateId.trim()) : null
+    draft.templateId && /^\d+$/.test(draft.templateId.trim())
+      ? Number(draft.templateId.trim())
+      : null
 
   if (numericTemplateId == null) {
     throw new Error('문자 발송에는 서버에 등록된 템플릿이 필요합니다.')
@@ -144,6 +167,20 @@ export async function submitSmsSend(input: {
   if (templateDisplayName?.trim()) {
     body.batchName = templateDisplayName.trim().slice(0, 200)
   }
+  const batchVariables = pickNonEmptySendVariables(variables)
+  if (batchVariables) body.variables = batchVariables
+
+  applyNotificationSendBodySnapshot(body, {
+    channel: 'SMS',
+    title: draft.messageType === 'SMS' ? '' : draft.subject,
+    content: draft.bodyText,
+    baseline: templateBaseline
+      ? {
+          title: draft.messageType === 'SMS' ? '' : templateBaseline.subject,
+          content: templateBaseline.bodyText,
+        }
+      : null,
+  })
 
   await createSendBatchRemote(body, idempotencyKey)
 }

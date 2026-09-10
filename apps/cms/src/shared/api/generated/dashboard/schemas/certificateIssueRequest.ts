@@ -15,6 +15,9 @@ export interface CertificateIssueRequest {
   participantId: number;
   /** 증명서 유형. 생략 또는 AUTO면 수료조건에 따라 COMPLETION/PARTICIPATION을 서버가 결정합니다. */
   certificateType?: string;
-  /** 발급 사유 코드 */
-  issueReason?: CertificateIssueRequestIssueReason;
+  /**
+     * 발급 사유 코드
+     * @minLength 1
+     */
+  issueReason: CertificateIssueRequestIssueReason;
 }

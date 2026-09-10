@@ -209,3 +209,18 @@
   min-width: 0;
   align-items: stretch;
 }
+
+.mail-send-fullpage__context-vars {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.mail-send-fullpage__context-vars-hint {
+  margin: 0 0 12px;
+  color: var(--color-gray-06, #666);
+  font-size: 13px;
+  line-height: 1.5;
+}

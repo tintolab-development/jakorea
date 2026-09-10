@@ -8,6 +8,7 @@
 
 /**
  * 발급 사유 코드
+ * @minLength 1
  */
 export type CertificateIssueRequestIssueReason = typeof CertificateIssueRequestIssueReason[keyof typeof CertificateIssueRequestIssueReason];
 

@@ -1,6 +1,8 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { getJAKoreaCMSBackendAPIFormsSurveysSubset } from '@/shared/api/generated/forms-surveys/forms-surveys-api'
 import type {
+  FormResponseFeedbackCreateRequest,
+  FormResponseFeedbackResponse,
   FormTemplateCreateRequest,
   FormTemplateResponse,
   FormTemplateVersionCopyRequest,
@@ -62,4 +64,12 @@ export async function fetchFormTemplateVersionsRemote(
 
 export async function deleteFormTemplateRemote(templateId: number): Promise<FormTemplateResponse> {
   return unwrapApiBody(await formsSurveysApi.deleteTemplate(templateId))
+}
+
+/** POST /api/admin/form-responses/{responseId}/feedback — Wave11 */
+export async function createFormResponseFeedbackRemote(
+  responseId: number,
+  body: FormResponseFeedbackCreateRequest
+): Promise<FormResponseFeedbackResponse> {
+  return unwrapApiBody(await formsSurveysApi.createFeedback(responseId, body))
 }
