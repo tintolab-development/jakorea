@@ -45,49 +45,39 @@ export function resolveSmsSendMessageTypeForBody(input: {
   return input.current
 }
 
-function isMaskedPii(value: string): boolean {
-  return value.includes('*')
+/**
+ * @deprecated 서버 enrich 예약 키는 Create body에 넣지 않는다.
+ * MEMBER는 actorId만, DIRECT는 recipientContact만 사용.
+ */
+export function buildSmsRecipientVariables(
+  _recipient: SmsSendRecipient
+): Record<string, string> | undefined {
+  return undefined
 }
 
-export function buildSmsRecipientVariables(
-  recipient: SmsSendRecipient
-): Record<string, string> | undefined {
-  const vars: Record<string, string> = {}
-  const name = recipient.name.trim()
-  if (name && !isMaskedPii(name) && name !== '-') {
-    vars['회원명'] = name
-    vars['수신자명'] = name
+function resolveSmsSendActorId(recipient: SmsSendRecipient): number | undefined {
+  if (recipient.actorId != null && Number.isFinite(recipient.actorId)) {
+    return recipient.actorId
   }
-  const phone = normalizeKoreanPhoneDigits(recipient.phone) || recipient.phone.trim()
-  if (phone && !isMaskedPii(phone) && phone !== '-') {
-    vars['휴대폰 번호'] = phone
-    vars['전화번호'] = phone
-    vars.phone = phone
-  }
-  return Object.keys(vars).length > 0 ? vars : undefined
+  const actorIdMatch = /^actor-[^-]+-(\d+)$/.exec(recipient.id)
+  const parsedActorId = actorIdMatch ? Number(actorIdMatch[1]) : undefined
+  return Number.isFinite(parsedActorId) ? parsedActorId : undefined
 }
 
 function buildSmsSendRecipients(recipients: SmsSendRecipient[]): RecipientRequest[] {
   return recipients.map(recipient => {
-    const variables = buildSmsRecipientVariables(recipient)
     if (recipient.source === 'manual' || recipient.actorType === 'DIRECT') {
       const contact = normalizeKoreanPhoneDigits(recipient.phone) || recipient.phone.trim()
       return {
         actorType: 'DIRECT',
         recipientContact: contact,
         recipientName: recipient.name.trim() || undefined,
-        ...(variables ? { variables } : {}),
       }
     }
 
     return {
       actorType: recipient.actorType || 'MEMBER',
-      actorId: recipient.actorId,
-      recipientName: recipient.name.trim() || undefined,
-      recipientContact: recipient.phone.includes('*')
-        ? undefined
-        : normalizeKoreanPhoneDigits(recipient.phone) || undefined,
-      ...(variables ? { variables } : {}),
+      actorId: resolveSmsSendActorId(recipient),
     }
   })
 }
