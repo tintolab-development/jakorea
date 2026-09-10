@@ -2,6 +2,7 @@
  * GET /api/admin/notifications → UI Notification 타입
  */
 import type { Notification, NotificationType } from '../notification-service'
+import { resolveNotificationInboxTitle } from '../../model/notification-event-type-labels'
 
 interface NotificationInboxItemDto {
   recipientId?: number
@@ -53,7 +54,9 @@ export function mapNotificationInboxItem(item: unknown): Notification | null {
   const recipientId = dto.recipientId ?? dto.id
   if (recipientId == null) return null
 
-  const title = pickString(dto.title, dto.subject, '알림')
+  const eventType = pickString(dto.eventType) || undefined
+  const rawTitle = pickString(dto.title, dto.subject)
+  const title = resolveNotificationInboxTitle({ title: rawTitle, eventType })
   const body = pickString(dto.body, dto.message, dto.content, dto.summary, title)
   const link = pickString(dto.linkUrl, dto.link, dto.targetUrl) || undefined
   const createdAt = pickString(dto.createdAt, dto.sentAt) || new Date().toISOString()
@@ -62,7 +65,7 @@ export function mapNotificationInboxItem(item: unknown): Notification | null {
 
   return {
     id: String(recipientId),
-    type: mapEventTypeToNotificationType(dto.eventType ?? dto.category),
+    type: mapEventTypeToNotificationType(eventType ?? dto.category),
     title,
     body,
     programName,
