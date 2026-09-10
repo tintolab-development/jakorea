@@ -1,5 +1,5 @@
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
-import { CmsSelect } from '@/shared/ui/cms-select'
+import { CmsInput } from '@/shared/ui/cms-input'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import {
   portraitPersonalConsentAffiliationState,
@@ -17,7 +17,7 @@ type PortraitAffiliationBodyProps = {
   onFocus?: () => void
 }
 
-/** 초상권 1번 표 소속 칸 — 셀렉트 + 소속 없음 (시안) */
+/** 초상권 1번 표 소속 칸 — 텍스트 인풋 + 소속 없음 */
 export function PortraitAffiliationBody({
   cell,
   placeholder = AFFILIATION_PLACEHOLDER,
@@ -26,27 +26,23 @@ export function PortraitAffiliationBody({
   onFocus,
 }: PortraitAffiliationBodyProps) {
   const { noAffiliation, affiliation } = portraitPersonalConsentAffiliationState(cell)
-  const selectPlaceholder =
+  const inputPlaceholder =
     !placeholder.trim() || placeholder.trim() === '소속 기관명'
       ? AFFILIATION_PLACEHOLDER
       : placeholder.trim()
-  const selectOptions =
-    affiliation.trim() !== '' ? [{ label: affiliation, value: affiliation }] : []
 
   return (
     <div className="agreement-portrait-personal-consent-name-row__affiliation">
       <div className="agreement-portrait-personal-consent-name-row__affiliation-input-shell">
-        <CmsSelect
-          withAllOption={false}
+        <CmsInput
           inputSize="medium"
           width="100%"
-          placeholder={selectPlaceholder}
-          options={selectOptions}
-          value={noAffiliation ? undefined : affiliation || undefined}
+          placeholder={inputPlaceholder}
+          value={noAffiliation ? '' : affiliation}
           disabled={!interactive || noAffiliation}
-          onChange={value => {
+          onChange={e => {
             if (!interactive || noAffiliation) return
-            onChange(typeof value === 'string' ? value : '')
+            onChange(e.target.value)
           }}
           onFocus={() => onFocus?.()}
           aria-label="소속"
