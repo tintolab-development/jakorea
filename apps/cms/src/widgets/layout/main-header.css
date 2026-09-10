@@ -192,7 +192,7 @@
 .main-header-account-dropdown {
   display: inline-flex;
   width: 76px;
-  height: 98px;
+  height: auto;
   padding: 4px;
   flex-direction: column;
   align-items: flex-start;
