@@ -2,10 +2,17 @@
  * 정산 신청서 — 숙박비 신청 블록
  */
 
+import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import { CmsInput } from '@/shared/ui/cms-input'
+import {
+  ADMIN_FILE_OWNER,
+  ADMIN_FILE_PURPOSE,
+  buildAdminFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 import './settlement-accommodation-fee-detail-form.css'
 
 const INPUT_W = 244
@@ -44,6 +51,7 @@ export function SettlementAccommodationFeeDetailForm({
   const v = { ...EMPTY, ...valuesProp }
   const isDocumentMode = displayMode === 'document'
   const disabled = isDocumentMode
+  const [receiptFileNames, setReceiptFileNames] = useState<string[]>([])
 
   return (
     <DetailInfoForm
@@ -83,6 +91,23 @@ export function SettlementAccommodationFeeDetailForm({
               disabled={disabled}
               accept={ACCOMMODATION_RECEIPT_ACCEPT}
               guideLines={ACCOMMODATION_RECEIPT_GUIDE_LINES}
+              fileNames={receiptFileNames}
+              onFilesChange={files => {
+                setReceiptFileNames(prev => [...prev, ...files.map(file => file.name)])
+                const owner = buildAdminFileOwner(
+                  ADMIN_FILE_OWNER.SETTLEMENT,
+                  1,
+                  ADMIN_FILE_PURPOSE.EXPENSE_RECEIPT
+                )
+                void (async () => {
+                  for (const file of files) {
+                    await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
+                  }
+                })()
+              }}
+              onRemoveFile={index =>
+                setReceiptFileNames(prev => prev.filter((_, currentIndex) => currentIndex !== index))
+              }
             />
           }
         />
