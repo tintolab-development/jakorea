@@ -48260,7 +48260,7 @@
       "get": {
         "operationId": "listNotificationTemplateVariables",
         "summary": "자동입력 변수 카탈로그 조회",
-        "description": "메일·문자 템플릿 편집/발송 화면 우측 자동입력(변수값) 리스트. Notion 사용 가능 항목만 카테고리별로 반환(enabled=false 항목도 목록 유지). enabled=삽입 허용 SSOT(값 존재와 무관). FE는 enabled를 재계산하지 않는다. requiresProgram=true 이고 programId 미전달이면 enabled=false. programId/participantType/memberType을 넘기면 enabled가 프로그램·모집·참여·회원 유형에 맞게 계산된다. participantType·memberType 둘 다 없으면 유형 특화 변수는 enabled=false. 실발송 시 본문 #{키} 값이 비면 provider 전 NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:{키}[,{키2}…] fail-closed.",
+        "description": "메일·문자 템플릿 편집/발송 화면 우측 자동입력(변수값) 리스트 + 알림톡 발송 피커 변수 SSOT. Notion 사용 가능 항목과 CMS 수동 발송 불가(시스템 이벤트 전용) 키를 카테고리별로 반환(enabled=false 항목도 목록 유지). enabled=삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT(값 존재와 무관). FE는 enabled를 재계산하지 않는다. 축 분리: 카카오 승인(approved) ≠ CMS 변수 가능(catalog membership + enabled). 알림톡 발송 피커 Option A(프로그램 지정 시): 본문 #{키} ⊆ catalog && 모든 키 enabled=true. 예: 로그인 실패 횟수/마지막 로그인 실패일시 → catalog 등재 + enabled=false. requiresProgram=true 이고 programId 미전달이면 enabled=false. programId/participantType/memberType을 넘기면 enabled가 프로그램·모집·참여·회원 유형에 맞게 계산된다. participantType·memberType 둘 다 없으면 유형 특화 변수는 enabled=false. 실발송(EMAIL/SMS/ALIMTALK) 시 본문 #{키} 값이 비면 provider 전 NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:{키}[,{키2}…] fail-closed(프로바이더 원문「변수처리실패」에 의존하지 않음).",
         "tags": [
           "알림 발송 배치"
         ],
@@ -48341,7 +48341,7 @@
         ],
         "responses": {
           "200": {
-            "description": "카탈로그. CatalogVariableItem.enabled 가 삽입 허용 SSOT.",
+            "description": "카탈로그. CatalogVariableItem.enabled 가 삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT.",
             "content": {
               "application/json": {
                 "schema": {
@@ -60823,10 +60823,12 @@
               "INSTITUTION_SUBMISSION",
               "EDUCATION_COMPLETION_PROOF",
               "PERSONAL_ARCHIVE"
-            ]
+            ],
+            "minLength": 1
           }
         },
         "required": [
+          "issueReason",
           "participantId",
           "programId"
         ]
@@ -64573,10 +64575,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -67580,10 +67582,12 @@
             "type": "string"
           },
           "providerSenderEmailAddress": {
-            "type": "string"
+            "type": "string",
+            "description": "EMAIL From. NHN Hub 모드: harvest된 sender profile senderKey와 소문자 일치 필수(fail-closed).\n프로필 0건 → 400 EMAIL_SENDER_PROFILES_EMPTY. 미일치 → 400 EMAIL_SENDER_PROFILE_NOT_HARVESTED.\n템플릿 등록 FE 기본값: jakorea@jakorea.org. create 시 생략/blank이면 서버가 기본값 채운 뒤 harvest 검사.\n"
           },
           "providerStatsKeyId": {
-            "type": "string"
+            "type": "string",
+            "description": "통계키. EMAIL Hub 카탈로그에 매핑 없음 — NHN Hub 모드에서는 저장하지 않음(요청 invent 무시).\nLOCAL만 허용.\n"
           },
           "titleTemplate": {
             "type": "string"
@@ -67611,7 +67615,8 @@
             }
           },
           "senderProfileDisplayName": {
-            "type": "string"
+            "type": "string",
+            "description": "발신자 표시명. NHN Hub 모드에서는 harvest 프로필 display_name SSOT(요청값 invent 무시).\nLOCAL만 FE 입력값 사용.\n"
           }
         }
       },
@@ -68021,7 +68026,7 @@
           },
           "mode": {
             "type": "string",
-            "description": "동기화 방식: NHN 실시간 조회(NHN_LIVE_PULL), 로컬 승인 상태 반영(LOCAL_APPROVAL_MARK), 요청 upsert(REQUEST_UPSERT), 로컬 템플릿 수집(LOCAL_TEMPLATE_HARVEST)"
+            "description": "NHN_LIVE_PULL | LOCAL_APPROVAL_MARK | REQUEST_UPSERT | LOCAL_TEMPLATE_HARVEST. ALIMTALK NHN_LIVE_PULL의 upsertedCount는 APPROVED만."
           },
           "syncedAt": {
             "type": "string",
@@ -68169,6 +68174,16 @@
             "type": "integer",
             "format": "int64",
             "description": "발신 프로필 id. EMAIL은 channelType=EMAIL 프로필. 없으면 senderKey로 매칭."
+          },
+          "titleTemplate": {
+            "type": "string",
+            "description": "발송 시점 제목 스냅샷(SMS LMS/MMS·EMAIL만). 생략 시 등록 템플릿 title_template 사용.\nALIMTALK에 전달 시 NOTIFICATION_SEND_BODY_OVERRIDE_NOT_ALLOWED_FOR_ALIMTALK.\n",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "contentTemplate": {
+            "type": "string",
+            "description": "발송 시점 본문 스냅샷(SMS·EMAIL만). 등록 템플릿과 달라도 됨. 안의 #{키}는 variables/enrich로 치환.\n생략 시 등록 템플릿 content_template 사용. ALIMTALK 전달 시 거부.\n"
           }
         },
         "required": [
@@ -70252,15 +70267,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessYear": {
-            "type": "integer",
-            "format": "int32"
+          "businessStartDate": {
+            "type": "string"
           },
           "businessEndDate": {
             "type": "string"
           },
-          "businessStartDate": {
-            "type": "string"
+          "businessYear": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -84975,16 +84990,19 @@
             "format": "int64"
           },
           "channelType": {
-            "type": "string"
+            "type": "string",
+            "description": "ALIMTALK|SMS|EMAIL"
           },
           "senderKey": {
-            "type": "string"
+            "type": "string",
+            "description": "EMAIL=From 메일주소(소문자 비교). SMS=발신번호(Hub 문자열). ALIMTALK=발신 프로필 키."
           },
           "senderProfileType": {
             "type": "string"
           },
           "displayName": {
-            "type": "string"
+            "type": "string",
+            "description": "발신자 표시명. EMAIL은 이름, SMS는 보통 번호와 동일."
           },
           "useYn": {
             "type": "boolean"
@@ -85155,40 +85173,43 @@
           }
         }
       },
-      "CatalogCategory": {
+      "NotificationCatalogCategory": {
         "type": "object",
+        "required": [
+          "categoryCode",
+          "categoryLabel",
+          "variables"
+        ],
         "properties": {
           "categoryCode": {
-            "type": "string"
+            "type": "string",
+            "example": "TIME"
           },
           "categoryLabel": {
-            "type": "string"
+            "type": "string",
+            "example": "시간"
           },
           "variables": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CatalogVariableItem"
+              "$ref": "#/components/schemas/NotificationCatalogVariableItem"
             }
           }
         }
       },
-      "CatalogResponse": {
+      "NotificationCatalogVariableItem": {
         "type": "object",
-        "properties": {
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "categories": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CatalogCategory"
-            }
-          }
-        }
-      },
-      "CatalogVariableItem": {
-        "type": "object",
+        "description": "카탈로그 변수 1건. enabled=삽입/발송-피커 사용 허용 SSOT(값 존재와 무관). 알림톡 발송 피커(프로그램 지정 시): 본문 키 ⊆ catalog && enabled=true.",
+        "required": [
+          "key",
+          "token",
+          "requiresProgram",
+          "enabled",
+          "programGroups",
+          "recruitmentTypes",
+          "participantTypes",
+          "memberTypes"
+        ],
         "properties": {
           "key": {
             "type": "string",
@@ -85203,7 +85224,7 @@
           "description": {
             "type": "string",
             "nullable": true,
-            "description": "보조 설명. 없으면 null"
+            "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null"
           },
           "requiresProgram": {
             "type": "boolean",
@@ -85253,8 +85274,26 @@
             },
             "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN."
           }
-        },
-        "description": "Notion 사용 변수 1건. enabled=삽입 허용 SSOT(값 존재와 무관)."
+        }
+      },
+      "NotificationTemplateVariableCatalogResponse": {
+        "type": "object",
+        "required": [
+          "totalCount",
+          "categories"
+        ],
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationCatalogCategory"
+            }
+          }
+        }
       },
       "PageResponseRecipientCandidateResponse": {
         "type": "object",
@@ -85579,7 +85618,28 @@
             "type": "string"
           },
           "templateDisplayName": {
-            "type": "string"
+            "type": "string",
+            "description": "템플릿 표시명. EMAIL 메일 제목(renderedTitle)과 다름 — 제목 위장 금지."
+          },
+          "renderedTitle": {
+            "type": "string",
+            "description": "목록용 치환 제목 스냅샷. EMAIL「메일 제목」SSOT. 우선순위: rendered_preview_json.renderedTitle → titleTemplate. 없으면 null."
+          },
+          "renderedContentPreview": {
+            "type": "string",
+            "description": "목록용 본문 요약(plain, truncate). SMS「문자 내용」SSOT. 우선순위: renderedContent → contentTemplate. HTML은 태그 제거. ALIMTALK는 null 허용."
+          },
+          "titleTemplate": {
+            "type": "string",
+            "description": "치환 전 제목 스냅샷. FE fallback: renderedTitle || titleTemplate."
+          },
+          "contentTemplate": {
+            "type": "string",
+            "description": "치환 전 본문 스냅샷. 목록에서는 대용량 회피 위해 보통 null — 전문은 상세 preview."
+          },
+          "smsMessageType": {
+            "type": "string",
+            "description": "SMS|LMS|MMS. SMS 목록 메시지 유형. preview/스냅샷 또는 템플릿 sms_message_type."
           }
         }
       },
@@ -85694,15 +85754,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },
@@ -89194,128 +89254,6 @@
           },
           "status": {
             "type": "string"
-          }
-        }
-      },
-      "NotificationCatalogVariableItem": {
-        "type": "object",
-        "description": "Notion 사용 변수 1건. enabled=삽입 허용 SSOT(값 존재와 무관).",
-        "required": [
-          "key",
-          "token",
-          "requiresProgram",
-          "enabled",
-          "programGroups",
-          "recruitmentTypes",
-          "participantTypes",
-          "memberTypes"
-        ],
-        "properties": {
-          "key": {
-            "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
-            "example": "교육 진행 수업 시간"
-          },
-          "token": {
-            "type": "string",
-            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
-            "example": "#{교육 진행 수업 시간}"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true,
-            "description": "보조 설명. 없으면 null"
-          },
-          "requiresProgram": {
-            "type": "boolean",
-            "description": "true이면 programId 없이 enabled=false."
-          },
-          "enabled": {
-            "type": "boolean",
-            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
-          },
-          "programGroups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "허용 프로그램 유형 그룹. 비면 제한 없음"
-          },
-          "recruitmentTypes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음"
-          },
-          "participantTypes": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "PARTICIPANT",
-                "INSTRUCTOR",
-                "VOLUNTEER"
-              ]
-            },
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER."
-          },
-          "memberTypes": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "GENERAL",
-                "SCHOOL_TEACHER",
-                "INSTRUCTOR",
-                "TEACHER_AND_INSTRUCTOR",
-                "ADMIN"
-              ]
-            },
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN."
-          }
-        }
-      },
-      "NotificationCatalogCategory": {
-        "type": "object",
-        "required": [
-          "categoryCode",
-          "categoryLabel",
-          "variables"
-        ],
-        "properties": {
-          "categoryCode": {
-            "type": "string",
-            "example": "TIME"
-          },
-          "categoryLabel": {
-            "type": "string",
-            "example": "시간"
-          },
-          "variables": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationCatalogVariableItem"
-            }
-          }
-        }
-      },
-      "NotificationTemplateVariableCatalogResponse": {
-        "type": "object",
-        "required": [
-          "totalCount",
-          "categories"
-        ],
-        "properties": {
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "categories": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationCatalogCategory"
-            }
           }
         }
       }
