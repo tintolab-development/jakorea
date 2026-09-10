@@ -367,6 +367,11 @@
   max-width: 100%;
 }
 
+.sms-template-form-modal__subject-field .sms-variable-text-field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .sms-template-form-modal__subject-count {
   display: -webkit-box;
   flex: 0 0 46px;

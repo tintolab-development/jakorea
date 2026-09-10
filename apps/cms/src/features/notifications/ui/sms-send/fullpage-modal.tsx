@@ -33,7 +33,11 @@ import {
   isNotificationSendProgramUnset,
   parseNotificationSendProgramId,
 } from '@/features/notifications/model/send-program-id'
-import { canUseNotificationSendTemplateForProgram } from '@/features/notifications/model/shared/template-usable-for-program'
+import {
+  canUseNotificationSendTemplateForProgram,
+  formatNotificationSendTemplateDisabledKeysWarning,
+  listNotificationSendTemplateDisabledKeysForProgram,
+} from '@/features/notifications/model/shared/template-usable-for-program'
 import { SMS_SEND_ALL_PROGRAM_ID } from '@/features/notifications/model/sms-send/types'
 import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
 import { isNotificationCatalogVariableDisabled } from '@/features/notifications/model/shared/catalog-variable-disabled'
@@ -148,15 +152,14 @@ export function SendFullpageModal({
   const typeColumnTitle = smsSendRecipientTypeColumnTitle(recipientTypeMode)
 
   const variablesTypeValue = useMemo(() => {
-    const fromFilter = recipientSearch.typeValue.trim()
-    if (fromFilter) return fromFilter
+    // 후보 모달 검색 필터는 목록에만 사용 — 확정 수신자만 변수 카탈로그 문맥에 반영
     if (recipientTypeMode === 'participation') {
       return inferUniqueRecipientTypeValue(
         form.recipients.map(item => item.participationType)
       )
     }
     return inferUniqueRecipientTypeValue(form.recipients.map(item => item.memberType))
-  }, [form.recipients, recipientSearch.typeValue, recipientTypeMode])
+  }, [form.recipients, recipientTypeMode])
 
   const templateVariablesQuery = useMemo(
     () =>
@@ -215,14 +218,19 @@ export function SendFullpageModal({
     [programNumericId, variablesQuery.data]
   )
 
-  useEffect(() => {
-    if (!open || !form.templateId) return
-    const selected = templates.find(item => item.id === form.templateId)
-    if (!selected) return
-    if (!isTemplateUsable(selected)) {
-      form.clearTemplate()
-    }
-  }, [form.clearTemplate, form.templateId, isTemplateUsable, open, templates])
+  const getTemplateUnusableMessage = useCallback(
+    (template: (typeof templates)[number]) =>
+      formatNotificationSendTemplateDisabledKeysWarning(
+        listNotificationSendTemplateDisabledKeysForProgram({
+          texts: [template.subject, template.bodyText],
+          catalog: variablesQuery.data,
+          programNumericId,
+        })
+      ),
+    [programNumericId, variablesQuery.data]
+  )
+
+  // 선택 완료된 템플릿은 수신자 추가·유형 문맥 변경으로 자동 clear 하지 않음.
 
   useEffect(() => {
     if (!open || !remote || !variablesQuery.isError) return
@@ -450,6 +458,7 @@ export function SendFullpageModal({
                             templates={templates}
                             disabled={!canPickTemplate}
                             isTemplateUsable={isTemplateUsable}
+                            getTemplateUnusableMessage={getTemplateUnusableMessage}
                             onSelect={form.applyTemplate}
                           />
                         }
@@ -554,6 +563,8 @@ export function SendFullpageModal({
                     subjectRef={form.subjectRef}
                     bodyTextRef={form.bodyTextRef}
                     onBodyTextChange={form.syncMessageTypeToBodyBytes}
+                    onRememberSubjectRange={form.rememberSubjectRange}
+                    onRememberBodyRange={form.rememberBodyRange}
                   />
                 </section>
               </div>

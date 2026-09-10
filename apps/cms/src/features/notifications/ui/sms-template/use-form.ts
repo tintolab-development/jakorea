@@ -249,7 +249,28 @@ export function useSmsTemplateForm(
 
   const insertVariable = useCallback(
     (label: string) => {
-      // 스펙: 제목에서는 변수값 사용 불가 — 본문에만 삽입
+      // LMS/MMS 제목 포커스 시 제목에 삽입 (메일 compose와 동일). SMS는 제목 미사용.
+      if (lastTargetRef.current === 'subject' && showSubject) {
+        const range = subjectRangeRef.current
+        const { next, caret } = insertMailVariableInText(
+          subjectRef.current,
+          label,
+          range.start,
+          range.end,
+          SMS_SUBJECT_MAX_LENGTH
+        )
+        setSubject(next)
+        subjectRangeRef.current = { start: caret, end: caret }
+        lastTargetRef.current = 'subject'
+        requestAnimationFrame(() => {
+          const input = subjectInputRef.current?.input
+          if (!input) return
+          input.focus()
+          input.setSelectionRange(caret, caret)
+        })
+        return
+      }
+
       const range = bodyRangeRef.current
       const { next, caret } = insertMailVariableInText(
         bodyTextRefValue.current,
@@ -267,7 +288,7 @@ export function useSmsTemplateForm(
         textarea.setSelectionRange(caret, caret)
       })
     },
-    []
+    [setSubject, showSubject]
   )
 
   const getDraft = useCallback((): SmsTemplateFormDraft => {
