@@ -187,6 +187,9 @@ OpenAPI `TermsAgreementRequest.termsSnapshotJson`은 **게시 약관 원장** �
 
 작성 UI: 「초상권 수집·이용 동의서」. factory: `createPortraitRightsConsentDraft`.
 
+> **후속 (부분 동의):** 항목 1·2·3별 동의에 따른 `consentStatus` / `programEligible` —  
+> [member-portrait-partial-consent-backend-handoff-2026-09-10.md](./member-portrait-partial-consent-backend-handoff-2026-09-10.md)
+
 | UI 라벨 | 저장 위치 | 분류 | 제출 필수 | 비고 |
 |---------|-----------|------|-----------|------|
 | 안내문 하단 동의/미동의 | `agreement-portrait-intro`.`bottomConsent` (`agree` \| `disagree`) | 사용자 입력 | Y | `showBottomConsent: true` |
