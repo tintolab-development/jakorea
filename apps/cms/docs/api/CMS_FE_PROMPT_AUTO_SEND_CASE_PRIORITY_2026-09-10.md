@@ -28,11 +28,12 @@
 | **3** | 완료 | `MEMBER_CONSENT_WITHDRAWN` → `동의_철회_안내`, `DORMANT_ACCOUNT_TRANSITIONED` → `계정_휴면_전환_처리_안내` (V109). 휴면 전환 **예정** EMAIL만 |
 | **4** | 완료 | 공통 잔여 B (V110) — 아래 |
 
-### Wave 1 MFA 실패 알림 (BE SSOT · 2026-09-10)
+### Wave 1 MFA 실패 알림 (BE SSOT 최종 · 2026-09-10 재검증)
 
-- `MFA_MAX_FAILED_ATTEMPTS = 6` — 실패 1~5 `MFA_VERIFICATION_FAILED`, 6회째 `ACCOUNT_LOCKED`(30분)
-- `ADMIN_MFA_FAILURE_NOTICE` / 템플릿 `관리자_2단계_인증_실패_안내`: **정확히 5회째만** WEB·알림톡 (가능)
-- MFA **잠금/6회째**에는 알림톡 없음(잠금 UX만). 「잠금 시 알림톡」기대 invent 금지
+- `MFA_MAX_FAILED_ATTEMPTS = 5` — 실패 1~4 `MFA_VERIFICATION_FAILED`(계속 입력), 5회째 `ACCOUNT_LOCKED`(HTTP 423 · 30분)
+- `ADMIN_MFA_FAILURE_NOTICE` / 템플릿 `관리자_2단계_인증_실패_안내`: **정확히 5회째(잠금과 동시)** WEB 1건 + 알림톡 1건
+- 실패 1~4회에는 MFA 실패 알림 없음 (「4회째 경고」구계약 폐기)
+- 구계약(6회 잠금·5회 알림 / 4회 경고·5회 무알림) 모두 폐기 — 따르지 말 것
 - 비밀번호 로그인 잠금 `ADMIN_LOGIN_LOCK_NOTICE`: WEB만 (알림톡 없음)
 - CMS 수동 피커: `관리자_2단계_인증_실패_안내` SYSTEM 변수 `enabled=false` → 프로그램 지정 시 사용 불가(Option A)
 
@@ -60,9 +61,9 @@
 - [ ] 프로그램 지정 + 자동발송 전용 템플릿(`로그인_실패_안내`, `동의_철회_안내`, `관리자_2단계_인증_실패_안내` 등) → 「템플릿 사용」비활성
 - [ ] 프로그램 미선택 → 변수 Option A 미적용 (승인만)
 - [ ] 자동발송 vs 수동 발송 UX 축 스모크
-- [ ] MFA 실패 UI: 「실패 N회 / 최대 6회」, 분자 ≤6 (`N / 5`·7+ 노출 Fail)
-- [ ] MFA 6회째/`ACCOUNT_LOCKED`: OTP 잠금·30분 재시도 안내 (잠금 시 알림톡 기대 없음)
-- [ ] MFA 알림톡·WEB: **정확히 5회째**만 (`ADMIN_MFA_FAILURE_NOTICE`) — 휴대폰·관리자 인박스
+- [ ] MFA 실패 UI: 「실패 N회 / 최대 5회」, 분자 ≤5 (`6+`·`N/6` 노출 Fail)
+- [ ] MFA 1~4회: `MFA_VERIFICATION_FAILED`, 입력 가능, MFA 경고 WEB/알림톡 없음
+- [ ] MFA 5회째/`ACCOUNT_LOCKED`(423): OTP 입력·확인 중단, 30분 재시도 안내, **WEB 1건 + 알림톡 1건** 수신
 - [ ] Master `000000` LOCAL_TEST_CODE 성공 경로와 실패 카운트 QA 분리
 
 ## Done (FE)

@@ -97,7 +97,7 @@ export function useOtpVerification(): UseOtpVerificationResult {
       const newFailedAttempts = clampMfaFailedAttempts(failedAttempts + 1)
       setFailedAttempts(newFailedAttempts)
 
-      // 최대 실패 횟수 도달 시 잠금 (6회째)
+      // 최대 실패 횟수 도달 시 잠금 (5회째)
       if (newFailedAttempts >= OTP_POLICY.maxFailedAttempts) {
         const lockTime = new Date(Date.now() + OTP_POLICY.lockoutDurationMinutes * 60 * 1000)
         setIsLocked(true)

@@ -95,7 +95,7 @@ export function useMfaVerification({
     setRemoteLockUntil(lockTime.toISOString())
   }, [])
 
-  /** 원격 MFA 실패 기록. 6회째(max) 도달 시 잠금. UI는 6 초과 표시 금지. */
+  /** 원격 MFA 실패 기록. 5회째(max) 도달 시 잠금. UI는 5 초과 표시 금지. */
   const registerRemoteFailure = useCallback(() => {
     if (remoteIsLocked) {
       clearOtpInput()
@@ -243,14 +243,14 @@ export function useMfaVerification({
                 return
               }
 
-              // BE ACCOUNT_LOCKED(6회째): 입력 중단·횟수 증가 UI 중단
+              // BE ACCOUNT_LOCKED(5회째): 입력 중단·횟수 증가 UI 중단
               if (response.isLocked || response.errorCode === 'ACCOUNT_LOCKED') {
                 applyRemoteAccountLock()
                 clearOtpInput()
                 return
               }
 
-              // MFA_VERIFICATION_FAILED (1~5): 로컬 카운트 클램프 후 계속 입력
+              // MFA_VERIFICATION_FAILED (1~4): 로컬 카운트 클램프 후 계속 입력
               registerRemoteFailure()
             } catch {
               registerRemoteFailure()
