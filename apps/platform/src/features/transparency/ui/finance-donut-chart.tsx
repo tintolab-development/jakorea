@@ -281,7 +281,7 @@ function LegendItem({ slice }: { slice: FinanceSlice }) {
   return (
     <li className={styles.legendItem}>
       <span className={styles.legendDot} style={{ backgroundColor: slice.color }} />
-      <PFText typo="bd-md-rg" color="black">
+      <PFText typo="bd-md-rg" color="black" className={styles.legendText}>
         {slice.label}
       </PFText>
     </li>

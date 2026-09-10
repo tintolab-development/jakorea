@@ -3,7 +3,7 @@
   width: 100%;
   min-width: 0;
   flex-direction: column;
-  gap: var(--spacing-12);
+  gap: var(--spacing-20);
   margin: 0;
 }
 
@@ -144,11 +144,17 @@
   }
 
   .legend {
-    gap: var(--spacing-8) var(--spacing-12);
+    gap: var(--spacing-8) var(--spacing-16);
   }
 
   .legendDot {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
+  }
+
+  .legendText {
+    font-size: 13px;
+    line-height: normal;
+    letter-spacing: 0;
   }
 }

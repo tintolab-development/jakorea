@@ -13,7 +13,7 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: var(--spacing-16);
+  gap: var(--spacing-8);
 }
 
 .icon {
@@ -26,10 +26,11 @@
   justify-content: center;
 }
 
-.icon svg {
+.icon img {
   display: block;
   width: 100%;
   height: 100%;
+  object-fit: contain;
 }
 
 .title,
@@ -42,6 +43,20 @@
   font-weight: 600;
 }
 
+@media (--bp-below-pc) {
+  .title {
+    font-size: 20px;
+    line-height: 135%;
+    letter-spacing: -0.4px;
+  }
+
+  .description {
+    font-size: 14px;
+    line-height: 160%;
+    letter-spacing: 0;
+  }
+}
+
 @media (--bp-pc-up) {
   .list {
     gap: var(--spacing-80);
@@ -51,25 +66,8 @@
     width: 80px;
     height: 80px;
   }
-}
 
-@media (--bp-below-pc) {
-  .title {
-    color: var(--color-neutral-black);
-    font-family: var(--font-family-base);
-    font-size: 20px;
-    font-style: normal;
-    font-weight: 700;
-    line-height: 135%;
-    letter-spacing: -0.4px;
-  }
-
-  .description {
-    color: var(--color-neutral-warm-600);
-    font-family: var(--font-family-base);
-    font-size: 14px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 160%;
+  .item {
+    gap: var(--spacing-16);
   }
 }

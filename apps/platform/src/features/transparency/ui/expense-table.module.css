@@ -89,7 +89,6 @@
 .ratioCell,
 .amountCell {
   text-align: right;
-  font-variant-numeric: tabular-nums;
 }
 
 .groupFirstRow .cell {
@@ -156,7 +155,6 @@
 .mobilePercent {
   display: block;
   font-weight: 600;
-  font-variant-numeric: tabular-nums;
 }
 
 .amountValue {
@@ -332,7 +330,7 @@
     box-sizing: border-box;
     width: 100%;
     max-width: 100%;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: var(--spacing-12);
   }
@@ -405,9 +403,12 @@
     border-right: none;
     border-bottom: none;
   }
+  .table tbody tr.groupLastRow {
+    border-bottom: 0 none;
+  }
 
   .cell {
-    padding: var(--spacing-8) var(--spacing-12);
+    padding: var(--spacing-12) var(--spacing-12);
     overflow: visible;
     white-space: normal;
   }
@@ -426,12 +427,12 @@
   }
 
   .mobilePercent {
+    padding-bottom: 2px;
     color: var(--color-neutral-black);
     font-size: 14px;
     font-weight: 600;
     line-height: normal;
     text-align: right;
-    font-variant-numeric: tabular-nums;
   }
 
   .amountValue {
@@ -440,7 +441,6 @@
     font-weight: 400;
     line-height: normal;
     text-align: right;
-    font-variant-numeric: tabular-nums;
   }
 
   .groupHeadingCell {
@@ -485,6 +485,15 @@
     font-size: 14px;
     font-weight: 700;
     line-height: 140%;
+    letter-spacing: 0;
+  }
+  .subtotalCell .amountValue {
+    font-size: 12px;
+  }
+  
+  .totalRow {
+    border-top: 2px solid var(--color-primary-500);
+    background: var(--color-neutral-cool-80);
   }
 
   .totalRow .cell {
@@ -500,9 +509,10 @@
   .totalRow .mobilePercent,
   .totalRow .amountValue {
     color: var(--color-primary-700);
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
     line-height: 140%;
+    letter-spacing: 0;
   }
 
   .totalLabel {
