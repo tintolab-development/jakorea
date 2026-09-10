@@ -4,7 +4,12 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import './permission-modal.css'
 
 /** 직접 설정 최초값 — 호출 시점의 현재 날짜·시간(초 이하 절삭) */
@@ -153,55 +158,53 @@ export function PermissionModal({
   requireReason: requireReasonProp,
   reasonLabel: reasonLabelProp,
   reasonPlaceholder: reasonPlaceholderProp,
-  reasonRequiredMessage: reasonRequiredMessageProp,
+  reasonRequiredMessage: _reasonRequiredMessageProp,
   showNotifyTiming = true,
   notifyTimingOptions = 'three',
   infoCallout,
   className: classNameProp,
   notifyBeforeReason = false,
 }: PermissionModalProps) {
+  const { showAlert } = useCmsAlert()
   const defaults = resolveVariantDefaults(variant)
   const confirmLabel = confirmLabelProp ?? defaults.confirmLabel
   const confirmVariant = confirmVariantProp ?? defaults.confirmVariant
   const requireReason = requireReasonProp ?? defaults.requireReason
   const reasonLabel = reasonLabelProp ?? defaults.reasonLabel
   const reasonPlaceholder = reasonPlaceholderProp ?? defaults.reasonPlaceholder
-  const reasonRequiredMessage = reasonRequiredMessageProp ?? defaults.reasonRequiredMessage
 
   const [reason, setReason] = useState('')
-  const [reasonError, setReasonError] = useState('')
   const [notifyTiming, setNotifyTiming] = useState<PermissionModalNotifyTiming>('immediate')
   const [manualNotifyAt, setManualNotifyAt] = useState<Dayjs | null>(null)
   const [dateTimePickerOpen, setDateTimePickerOpen] = useState(false)
-  const [notifyError, setNotifyError] = useState('')
   const manualRadioAnchorRef = useRef<HTMLSpanElement>(null)
   const modalContentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!open) return
     setReason('')
-    setReasonError('')
     setNotifyTiming('immediate')
     setManualNotifyAt(null)
     setDateTimePickerOpen(false)
-    setNotifyError('')
   }, [open])
 
-  const hasReason = reason.trim().length > 0
-  const canConfirm = requireReason ? hasReason : true
+  const showIncompleteRequiredAlert = () => {
+    showAlert({
+      title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+      content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+    })
+  }
 
   const handleConfirm = () => {
     const trimmed = reason.trim()
     if (requireReason && !trimmed) {
-      setReasonError(reasonRequiredMessage)
+      showIncompleteRequiredAlert()
       return
     }
     if (showNotifyTiming && notifyTiming === 'manual' && !manualNotifyAt) {
-      setNotifyError('알림 발송 일시를 설정해 주세요.')
+      showIncompleteRequiredAlert()
       return
     }
-    setReasonError('')
-    setNotifyError('')
     onConfirm({
       reason: trimmed,
       notifyTiming,
@@ -211,7 +214,6 @@ export function PermissionModal({
 
   const handleNotifyTimingChange = (next: PermissionModalNotifyTiming) => {
     setNotifyTiming(next)
-    setNotifyError('')
     if (next === 'manual') {
       setManualNotifyAt(nowManualNotifyAt())
       setDateTimePickerOpen(true)
@@ -241,7 +243,6 @@ export function PermissionModal({
               variant={confirmVariant}
               size="medium"
               type="button"
-              disabled={!canConfirm}
               onClick={handleConfirm}
             >
               {confirmLabel}
@@ -293,11 +294,6 @@ export function PermissionModal({
                   </CmsRadio>
                 </span>
               </CmsRadio.Group>
-              {notifyError ? (
-                <span className="permission-modal__field-error" role="alert">
-                  {notifyError}
-                </span>
-              ) : null}
             </div>
           ) : null}
 
@@ -308,18 +304,10 @@ export function PermissionModal({
                 inputSize="large"
                 width="100%"
                 value={reason}
-                onChange={e => {
-                  setReason(e.target.value)
-                  if (reasonError) setReasonError('')
-                }}
+                onChange={e => setReason(e.target.value)}
                 placeholder={reasonPlaceholder}
                 maxLength={500}
               />
-              {reasonError ? (
-                <span className="permission-modal__field-error" role="alert">
-                  {reasonError}
-                </span>
-              ) : null}
             </div>
           ) : null}
 
@@ -362,11 +350,6 @@ export function PermissionModal({
                   </CmsRadio>
                 </span>
               </CmsRadio.Group>
-              {notifyError ? (
-                <span className="permission-modal__field-error" role="alert">
-                  {notifyError}
-                </span>
-              ) : null}
             </div>
           ) : null}
         </div>
@@ -383,7 +366,6 @@ export function PermissionModal({
           onApply={value => {
             setManualNotifyAt(value)
             setDateTimePickerOpen(false)
-            setNotifyError('')
           }}
           zIndex={dateTimePickerZ}
         />
