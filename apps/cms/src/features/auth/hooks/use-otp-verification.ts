@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from 'react'
 import { sendOtp, verifyOtp, verifyTotp } from '@/entities/user/api/mfa-service'
-import { OTP_POLICY, OTP_LENGTH } from '@/shared/constants/mfa-policy'
+import { OTP_POLICY, OTP_LENGTH, clampMfaFailedAttempts } from '@/shared/constants/mfa-policy'
 import type { OtpSendRequest, OtpVerifyRequest, TotpVerifyRequest } from '@/types/mfa'
 
 interface UseOtpVerificationResult {
@@ -93,11 +93,11 @@ export function useOtpVerification(): UseOtpVerificationResult {
         return true
       }
 
-      // 실패 시 실패 횟수 증가
-      const newFailedAttempts = failedAttempts + 1
+      // 실패 시 실패 횟수 증가 (BE LEAST(..., max) 와 동일 클램프)
+      const newFailedAttempts = clampMfaFailedAttempts(failedAttempts + 1)
       setFailedAttempts(newFailedAttempts)
 
-      // 최대 실패 횟수 초과 시 잠금
+      // 최대 실패 횟수 도달 시 잠금 (6회째)
       if (newFailedAttempts >= OTP_POLICY.maxFailedAttempts) {
         const lockTime = new Date(Date.now() + OTP_POLICY.lockoutDurationMinutes * 60 * 1000)
         setIsLocked(true)
@@ -152,7 +152,18 @@ export function useOtpVerification(): UseOtpVerificationResult {
         return true
       }
 
-      const newFailedAttempts = failedAttempts + 1
+      if (response.isLocked || response.errorCode === 'ACCOUNT_LOCKED') {
+        setFailedAttempts(OTP_POLICY.maxFailedAttempts)
+        const lockTime = new Date(Date.now() + OTP_POLICY.lockoutDurationMinutes * 60 * 1000)
+        setIsLocked(true)
+        setLockUntil(lockTime.toISOString())
+        throw new Error(
+          response.detail ||
+            `인증 시도 횟수를 초과했습니다. ${OTP_POLICY.lockoutDurationMinutes}분 후 다시 시도해주세요.`
+        )
+      }
+
+      const newFailedAttempts = clampMfaFailedAttempts(failedAttempts + 1)
       setFailedAttempts(newFailedAttempts)
 
       if (newFailedAttempts >= OTP_POLICY.maxFailedAttempts) {
@@ -182,7 +193,7 @@ export function useOtpVerification(): UseOtpVerificationResult {
   return {
     sending,
     verifying,
-    failedAttempts,
+    failedAttempts: clampMfaFailedAttempts(failedAttempts),
     isLocked,
     lockUntil,
     sendOtpCode,

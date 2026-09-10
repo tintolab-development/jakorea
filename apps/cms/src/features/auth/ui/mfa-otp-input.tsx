@@ -3,8 +3,8 @@
  */
 
 import { Form, Input } from 'antd'
-import { useEffect, useRef } from 'react'
-import { OTP_POLICY, OTP_LENGTH } from '@/shared/constants/mfa-policy'
+import { useEffect, useRef, useState } from 'react'
+import { OTP_POLICY, OTP_LENGTH, clampMfaFailedAttempts } from '@/shared/constants/mfa-policy'
 import './mfa-otp-input.css'
 
 interface MfaOtpInputProps {
@@ -12,6 +12,13 @@ interface MfaOtpInputProps {
   disabled?: boolean
   autoFocus?: boolean
   failedAttempts?: number
+  /** 인증 실패 등으로 값이 초기화될 때 증가 — Input.OTP 리마운트 + 첫 칸 포커스 */
+  resetToken?: number
+}
+
+function focusFirstOtpInput(root: HTMLElement | null) {
+  const firstInput = root?.querySelector('input') as HTMLInputElement | null
+  firstInput?.focus()
 }
 
 export function MfaOtpInput({
@@ -19,20 +26,23 @@ export function MfaOtpInput({
   disabled,
   autoFocus = true,
   failedAttempts = 0,
+  resetToken = 0,
 }: MfaOtpInputProps) {
-  const inputRef = useRef<HTMLInputElement>(null)
+  const boxesRef = useRef<HTMLDivElement>(null)
+  const [otpInstanceKey, setOtpInstanceKey] = useState(0)
 
   useEffect(() => {
-    if (autoFocus && !disabled && inputRef.current) {
-      const timer = setTimeout(() => {
-        const firstInput = inputRef.current?.querySelector('input') as HTMLInputElement | null
-        if (firstInput) {
-          firstInput.focus()
-        }
-      }, 100)
-      return () => clearTimeout(timer)
-    }
-  }, [autoFocus, disabled])
+    if (resetToken <= 0) return
+    setOtpInstanceKey(token => token + 1)
+  }, [resetToken])
+
+  useEffect(() => {
+    if (disabled || (!autoFocus && otpInstanceKey === 0)) return
+    const timer = window.setTimeout(() => {
+      focusFirstOtpInput(boxesRef.current)
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [autoFocus, disabled, otpInstanceKey])
 
   return (
     <Form.Item
@@ -53,8 +63,9 @@ export function MfaOtpInput({
 
           return (
             <div className="mfa-otp-input">
-              <div className="mfa-otp-input__boxes" ref={inputRef}>
+              <div className="mfa-otp-input__boxes" ref={boxesRef}>
                 <Input.OTP
+                  key={otpInstanceKey}
                   length={OTP_LENGTH}
                   value={formValue}
                   onChange={newValue => {
@@ -66,10 +77,11 @@ export function MfaOtpInput({
                   disabled={disabled}
                 />
               </div>
-              {failedAttempts > 0 ? (
+              {failedAttempts > 0 && !disabled ? (
                 <p className="mfa-otp-input__failure">
-                  잘못된 코드를 입력하였습니다. (실패 횟수: {failedAttempts} /{' '}
-                  {OTP_POLICY.maxFailedAttempts})
+                  잘못된 코드를 입력하였습니다. (실패{' '}
+                  {clampMfaFailedAttempts(failedAttempts)}회 / 최대{' '}
+                  {OTP_POLICY.maxFailedAttempts}회)
                 </p>
               ) : null}
               {errors && errors.length > 0 && failedAttempts === 0 ? (
