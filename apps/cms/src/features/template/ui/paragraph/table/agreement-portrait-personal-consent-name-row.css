@@ -1,20 +1,4 @@
-/* 초상권 동의서 — 개인정보·초상권 수집·이용 동의 표 첫 행(성명·소속) */
-
-.agreement-portrait-personal-consent-name-row--readonly {
-  pointer-events: none;
-}
-
-.agreement-portrait-personal-consent-name-row__name-shell {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-}
-
-.agreement-portrait-personal-consent-name-row__name-shell .cms-input,
-.agreement-portrait-personal-consent-name-row__affiliation-input-shell .cms-input {
-  width: 100%;
-  max-width: 100%;
-}
+/* 초상권 동의서 — 개인정보·초상권 수집·이용 동의 표 소속 칸 */
 
 .agreement-portrait-personal-consent-name-row__affiliation-td {
   gap: 0;
@@ -33,6 +17,11 @@
   min-width: 0;
   max-width: 249px;
   width: 100%;
+}
+
+.agreement-portrait-personal-consent-name-row__affiliation-input-shell .cms-select {
+  width: 100%;
+  max-width: 100%;
 }
 
 .agreement-portrait-personal-consent-name-row__affiliation .app-divider-vertical {

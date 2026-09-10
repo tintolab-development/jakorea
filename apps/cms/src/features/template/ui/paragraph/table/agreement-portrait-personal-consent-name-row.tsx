@@ -1,68 +1,69 @@
-import { Input } from 'antd'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import { DividerVertical } from '@/shared/components/divider-vertical'
-import { portraitPersonalConsentAffiliationState } from '@jakorea/form-schema/consent'
-
-const NO_AFFILIATION = '소속 없음'
+import {
+  portraitPersonalConsentAffiliationState,
+  PORTRAIT_NO_AFFILIATION,
+} from '@jakorea/form-schema/consent'
 import '@/features/template/ui/paragraph/table/agreement-portrait-personal-consent-name-row.css'
+
+const AFFILIATION_PLACEHOLDER = '소속'
 
 type PortraitAffiliationBodyProps = {
   cell: string
-  placeholder: string
+  placeholder?: string
   interactive: boolean
   onChange: (value: string) => void
   onFocus?: () => void
 }
 
-/** 초상권 1번 표 소속 칸 — 주관식형 인풋 + 소속 없음 */
+/** 초상권 1번 표 소속 칸 — 셀렉트 + 소속 없음 (시안) */
 export function PortraitAffiliationBody({
   cell,
-  placeholder,
+  placeholder = AFFILIATION_PLACEHOLDER,
   interactive,
   onChange,
   onFocus,
 }: PortraitAffiliationBodyProps) {
   const { noAffiliation, affiliation } = portraitPersonalConsentAffiliationState(cell)
-  const affiliationDisplay = noAffiliation ? NO_AFFILIATION : affiliation
-
-  if (!interactive) {
-    return (
-      <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body form-editor-vertical-table__cell-input-shell--body-subjective">
-        <span className="form-editor-vertical-table__cell-text form-editor-vertical-table__cell-text--body">
-          {affiliationDisplay}
-        </span>
-      </div>
-    )
-  }
+  const selectPlaceholder =
+    !placeholder.trim() || placeholder.trim() === '소속 기관명'
+      ? AFFILIATION_PLACEHOLDER
+      : placeholder.trim()
+  const selectOptions =
+    affiliation.trim() !== '' ? [{ label: affiliation, value: affiliation }] : []
 
   return (
     <div className="agreement-portrait-personal-consent-name-row__affiliation">
-      <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body form-editor-vertical-table__cell-input-shell--body-subjective agreement-portrait-personal-consent-name-row__affiliation-input-shell">
-        <Input
-          variant="borderless"
-          value={noAffiliation ? '' : affiliation}
-          placeholder={placeholder}
-          disabled={noAffiliation}
-          onChange={e => {
-            if (noAffiliation) return
-            onChange(e.target.value)
+      <div className="agreement-portrait-personal-consent-name-row__affiliation-input-shell">
+        <CmsSelect
+          withAllOption={false}
+          inputSize="medium"
+          width="100%"
+          placeholder={selectPlaceholder}
+          options={selectOptions}
+          value={noAffiliation ? undefined : affiliation || undefined}
+          disabled={!interactive || noAffiliation}
+          onChange={value => {
+            if (!interactive || noAffiliation) return
+            onChange(typeof value === 'string' ? value : '')
           }}
           onFocus={() => onFocus?.()}
-          onKeyDown={e => {
-            if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
-          }}
+          aria-label="소속"
         />
       </div>
       <DividerVertical />
       <CmsCheckbox
         checkboxSize="large"
         checked={noAffiliation}
+        disabled={!interactive}
         onChange={e => {
+          if (!interactive) return
           onFocus?.()
-          onChange(e.target.checked ? NO_AFFILIATION : '')
+          onChange(e.target.checked ? PORTRAIT_NO_AFFILIATION : '')
         }}
       >
-        {NO_AFFILIATION}
+        {PORTRAIT_NO_AFFILIATION}
       </CmsCheckbox>
     </div>
   )
