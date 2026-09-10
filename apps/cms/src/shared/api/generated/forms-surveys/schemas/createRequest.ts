@@ -15,13 +15,13 @@ export interface CreateRequest {
      */
   batchName: string;
   templateId: number;
-  programId: number;
+  programId?: number;
   /** 예약 시각 ISO-8601. 즉시 발송이면 생략. Hub scheduledDateTime은 사용하지 않음. */
   scheduledAt?: string;
   variables?: CreateRequestVariables;
   /**
      * @minItems 0
-     * @maxItems 500
+     * @maxItems 5000
      */
   recipients: RecipientRequest[];
   /**

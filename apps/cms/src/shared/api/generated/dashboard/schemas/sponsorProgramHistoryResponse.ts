@@ -14,6 +14,7 @@ export interface SponsorProgramHistoryResponse {
   lifecycleStatus?: string;
   managerName?: string;
   participantCount?: string;
+  totalBeneficiaryCount?: number;
   participantType?: string;
   educationTarget?: string;
 }

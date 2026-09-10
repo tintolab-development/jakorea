@@ -28,8 +28,8 @@ import type {
   TemplateMoveRequest,
   TemplateMoveResponse,
   TemplateDeleteResponse,
-  ListNotificationTemplateVariablesParams,
-  NotificationTemplateVariableCatalogResponse,
+  CatalogResponse,
+  TemplateVariablesParams,
   ArchiveNotificationTemplateParams,
   NotificationTemplateMutationResponse,
 } from '@/shared/api/generated/notifications/schemas'
@@ -191,12 +191,10 @@ export async function fetchRecipientCandidatesRemote(
 }
 
 export async function fetchTemplateVariablesRemote(
-  params?: ListNotificationTemplateVariablesParams
-): Promise<NotificationTemplateVariableCatalogResponse> {
+  params?: TemplateVariablesParams
+): Promise<CatalogResponse> {
   // BE Controller는 catalog를 직접 반환(ApiResponse 래퍼 없음). unwrap는 passthrough.
-  return unwrapApiBody(
-    await notificationsRemoteApi.listNotificationTemplateVariables(params)
-  )
+  return unwrapApiBody(await notificationsRemoteApi.templateVariables(params))
 }
 
 export async function createSendBatchRemote(

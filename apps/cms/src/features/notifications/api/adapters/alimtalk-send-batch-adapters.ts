@@ -1,18 +1,18 @@
 import type {
+  CatalogResponse,
+  CatalogVariableItem,
   CreateRequest,
-  ListNotificationTemplateVariablesCategory,
-  ListNotificationTemplateVariablesMemberType,
-  ListNotificationTemplateVariablesParams,
-  ListNotificationTemplateVariablesParticipantType,
-  NotificationCatalogVariableItem,
-  NotificationTemplateVariableCatalogResponse,
   RecipientCandidateResponse,
   RecipientRequest,
+  TemplateVariablesCategory,
+  TemplateVariablesMemberType,
+  TemplateVariablesParams,
+  TemplateVariablesParticipantType,
 } from '@/shared/api/generated/notifications/schemas'
 import {
-  ListNotificationTemplateVariablesCategory as TemplateVariablesCategoryEnum,
-  ListNotificationTemplateVariablesMemberType as TemplateVariablesMemberTypeEnum,
-  ListNotificationTemplateVariablesParticipantType as TemplateVariablesParticipantTypeEnum,
+  TemplateVariablesCategory as TemplateVariablesCategoryEnum,
+  TemplateVariablesMemberType as TemplateVariablesMemberTypeEnum,
+  TemplateVariablesParticipantType as TemplateVariablesParticipantTypeEnum,
 } from '@/shared/api/generated/notifications/schemas'
 import type { AlimtalkSendRecipient } from '@/features/notifications/model/alimtalk-send/types'
 import type {
@@ -55,11 +55,11 @@ function pickEnumValue<T extends string>(
 /** programId 미선택 시 쿼리에서 완전히 제외 (undefined/null 전달 금지) */
 export function toTemplateVariablesRequestParams(
   input: NotificationTemplateVariablesQuery = {}
-): ListNotificationTemplateVariablesParams {
-  const params: ListNotificationTemplateVariablesParams = {}
+): TemplateVariablesParams {
+  const params: TemplateVariablesParams = {}
   const category = pickEnumValue(
     input.category,
-    Object.values(TemplateVariablesCategoryEnum) as ListNotificationTemplateVariablesCategory[]
+    Object.values(TemplateVariablesCategoryEnum) as TemplateVariablesCategory[]
   )
   if (category) params.category = category
   if (input.keyword?.trim()) params.keyword = input.keyword.trim()
@@ -68,14 +68,12 @@ export function toTemplateVariablesRequestParams(
   }
   const participantType = pickEnumValue(
     input.participantType,
-    Object.values(
-      TemplateVariablesParticipantTypeEnum
-    ) as ListNotificationTemplateVariablesParticipantType[]
+    Object.values(TemplateVariablesParticipantTypeEnum) as TemplateVariablesParticipantType[]
   )
   if (participantType) params.participantType = participantType
   const memberType = pickEnumValue(
     input.memberType,
-    Object.values(TemplateVariablesMemberTypeEnum) as ListNotificationTemplateVariablesMemberType[]
+    Object.values(TemplateVariablesMemberTypeEnum) as TemplateVariablesMemberType[]
   )
   if (memberType) params.memberType = memberType
   return params
@@ -163,7 +161,7 @@ export function mapRecipientCandidates(
 }
 
 export function mapTemplateVariablesCatalog(
-  catalog: NotificationTemplateVariableCatalogResponse | null | undefined
+  catalog: CatalogResponse | null | undefined
 ): AlimtalkTemplateVariable[] {
   const result: AlimtalkTemplateVariable[] = []
   for (const category of catalog?.categories ?? []) {
@@ -345,7 +343,7 @@ export function templateUsesProgramRequiredVariable(
 }
 
 function mapCatalogVariable(
-  variable: NotificationCatalogVariableItem,
+  variable: CatalogVariableItem,
   categoryCode?: string,
   categoryLabel?: string
 ): AlimtalkTemplateVariable | null {

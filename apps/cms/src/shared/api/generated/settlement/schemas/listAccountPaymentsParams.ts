@@ -9,7 +9,7 @@ import type { ListAccountPaymentsStatus } from './listAccountPaymentsStatus';
 
 export type ListAccountPaymentsParams = {
 /**
- * REQUESTED는 대기 버킷 alias(WAITING_PAYMENT+FAILED). 응답 paymentStatus는 WAITING_PAYMENT입니다.
+ * REQUESTED는 대기 버킷 alias(WAITING_PAYMENT+내부 FAILED)입니다. UI 업무 상태는 WAITING_PAYMENT/PAID만 사용합니다.
  */
 status?: ListAccountPaymentsStatus;
 /**

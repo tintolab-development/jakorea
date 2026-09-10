@@ -146,6 +146,10 @@
     },
     {
       "name": "기타 API",
+      "description": "공유 링크 기반 비회원 설문 API"
+    },
+    {
+      "name": "기타 API",
       "description": "회원 알림 목록과 읽음/클릭 상태 API"
     },
     {
@@ -1668,6 +1672,107 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/OrganizationScheduleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/programs/{programId}/sponsors": {
+      "get": {
+        "tags": [
+          "프로그램"
+        ],
+        "summary": "프로그램 후원사/후원사 담당자 목록 조회",
+        "description": "### 이 API가 하는 일\n- 프로그램 후원사/후원사 담당자 목록 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/programs/{programId}/sponsors`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PROGRAM_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-09-09 cumulative content/runtime/settlement final merge contract synchronization",
+        "operationId": "listSponsors",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListProgramSponsorAssignmentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "프로그램"
+        ],
+        "summary": "프로그램 후원사/후원사 담당자 전체 교체",
+        "description": "### 이 API가 하는 일\n- 프로그램 후원사/후원사 담당자 전체 교체\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PUT /api/admin/programs/{programId}/sponsors`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PROGRAM_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-09-09 cumulative content/runtime/settlement final merge contract synchronization",
+        "operationId": "replaceSponsors",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProgramSponsorAssignmentsReplaceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListProgramSponsorAssignmentResponse"
                 }
               }
             }
@@ -3779,6 +3884,188 @@
         }
       }
     },
+    "/api/admin/material-kits/{kitId}/current-config": {
+      "get": {
+        "tags": [
+          "마스터 데이터"
+        ],
+        "summary": "키트 수량 현재 설정 조회",
+        "description": "### 이 API가 하는 일\n- 키트 수량 현재 설정 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/material-kits/{kitId}/current-config`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MASTER_DATA_READ 권한 필요\n- 접근 범위: GLOBAL 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NONE 개인정보 정책\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-09-09 cumulative content/runtime/settlement final merge contract synchronization",
+        "operationId": "currentConfig_1",
+        "parameters": [
+          {
+            "name": "kitId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialKitCurrentConfigResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "마스터 데이터"
+        ],
+        "summary": "키트 수량 현재 설정 저장",
+        "description": "### 이 API가 하는 일\n- 키트 수량 현재 설정 저장\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PUT /api/admin/material-kits/{kitId}/current-config`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MASTER_DATA_WRITE 권한 필요\n- 접근 범위: GLOBAL 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NONE 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-09-09 cumulative content/runtime/settlement final merge contract synchronization",
+        "operationId": "replaceCurrentConfig",
+        "parameters": [
+          {
+            "name": "kitId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialKitCurrentConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMaterialKitCurrentConfigResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/material-kits/global/current-config": {
+      "get": {
+        "tags": [
+          "마스터 데이터"
+        ],
+        "summary": "전역 키트 수량 현재 설정 조회",
+        "description": "### 이 API가 하는 일\n- 전역 키트 수량 현재 설정 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/material-kits/global/current-config`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MASTER_DATA_READ 권한 필요\n- 접근 범위: GLOBAL 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NONE 개인정보 정책\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-09-09 cumulative content/runtime/settlement final merge contract synchronization",
+        "operationId": "globalCurrentConfig",
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialKitCurrentConfigResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "마스터 데이터"
+        ],
+        "summary": "전역 키트 수량 현재 설정 저장",
+        "description": "### 이 API가 하는 일\n- 전역 키트 수량 현재 설정 저장\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PUT /api/admin/material-kits/global/current-config`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MASTER_DATA_WRITE 권한 필요\n- 접근 범위: GLOBAL 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NONE 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-09-09 cumulative content/runtime/settlement final merge contract synchronization",
+        "operationId": "replaceGlobalCurrentConfig",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialKitCurrentConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMaterialKitCurrentConfigResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/form-template-versions/{versionId}": {
       "get": {
         "tags": [
@@ -4783,6 +5070,64 @@
         }
       }
     },
+    "/api/portal/public/surveys/{publicToken}/responses": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "비회원 공유 설문 제출",
+        "description": "### 이 API가 하는 일\n- 비회원 공유 설문 제출\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/public/surveys/{publicToken}/responses`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 공개 API 또는 로그인 전 호출 가능\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: OPAQUE_SHARE_TOKEN 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: FORM_ANSWERS 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: UUID capability link, 분당 제출 제한, 현재 binding/version 재검증, 파일첨부 질문 공개 공유 금지",
+        "operationId": "submit",
+        "parameters": [
+          {
+            "name": "publicToken",
+            "in": "path",
+            "description": "조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicSurveySubmitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSurveySubmitResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/portal/public/newsletter/subscriptions": {
       "post": {
         "tags": [
@@ -4840,7 +5185,7 @@
         ],
         "summary": "회원 포털 프로그램 신청서 최종 제출",
         "description": "### 이 API가 하는 일\n- 회원 포털 프로그램 신청서 최종 제출\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그인/회원가입/내 계정 (`SCR_AUTH`)\n- 프론트 담당 영역: 인증/세션 (`auth/session`)\n- 호출 방식: `POST /api/portal/programs/{programId}/applications`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_homepage_programs_programId_applications`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 auth/session API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: MEMBER_SELF 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 관리자 CMS 프로그램·모집·신청폼 원본을 재사용하는 회원 포털 canonical API",
-        "operationId": "submit",
+        "operationId": "submit_1",
         "parameters": [
           {
             "name": "programId",
@@ -6739,7 +7084,7 @@
         ],
         "summary": "POST /api/portal/me/instructor-assignments/{assignmentId}/settlement-applications/submit",
         "description": "### 이 API가 하는 일\n- POST /api/portal/me/instructor-assignments/{assignmentId}/settlement-applications/submit\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)\n- 호출 방식: `POST /api/portal/me/instructor-assignments/{assignmentId}/settlement-applications/submit`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: SETTLEMENT_APPLICATION_FLOW_SMOKE\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.\n- 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
-        "operationId": "submit_1",
+        "operationId": "submit_2",
         "parameters": [
           {
             "name": "assignmentId",
@@ -7105,7 +7450,7 @@
         ],
         "summary": "POST /api/portal/me/form-responses/submit",
         "description": "### 이 API가 하는 일\n- POST /api/portal/me/form-responses/submit\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `POST /api/portal/me/form-responses/submit`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_form-responses_submit`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
-        "operationId": "submit_2",
+        "operationId": "submit_3",
         "requestBody": {
           "content": {
             "application/json": {
@@ -10914,6 +11259,33 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          {
+            "name": "department",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "position",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -11027,6 +11399,65 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseBulkDownloadJobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/sponsors/contacts/{contactId}/privacy/unmask": {
+      "post": {
+        "tags": [
+          "후원사"
+        ],
+        "summary": "후원사 담당자 개인정보 원문 조회",
+        "description": "### 이 API가 하는 일\n- 후원사 담당자 개인정보 원문 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/sponsors/contacts/{contactId}/privacy/unmask`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PRIVACY_RAW_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNMASK_REASON_REQUIRED 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-09-09 cumulative content/runtime/settlement final merge contract synchronization",
+        "operationId": "unmaskContact",
+        "parameters": [
+          {
+            "name": "contactId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminPrivacyUnmaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SponsorContactResponse"
                 }
               }
             }
@@ -13791,6 +14222,61 @@
           },
           "409": {
             "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/programs/{programId}/surveys/bindings/{bindingId}/share-link": {
+      "post": {
+        "tags": [
+          "폼/설문"
+        ],
+        "summary": "설문 공유 링크 생성/조회",
+        "description": "### 이 API가 하는 일\n- 설문 공유 링크 생성/조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/programs/{programId}/surveys/bindings/{bindingId}/share-link`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FORM_TEMPLATE_WRITE 권한 필요\n- 접근 범위: ASSIGNED_PROGRAM_OR_MASTER 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 프로그램 편집 권한과 FORM_TEMPLATE_WRITE를 모두 검증하며 활성 PUBLISHED SURVEY binding만 공유 가능",
+        "operationId": "shareLink",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bindingId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyShareLinkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
           },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
@@ -21015,6 +21501,65 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/inquiries/{inquiryId}/privacy/unmask": {
+      "post": {
+        "tags": [
+          "콘텐츠/고객지원"
+        ],
+        "summary": "문의 개인정보 원문 조회",
+        "description": "### 이 API가 하는 일\n- 문의 개인정보 원문 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/inquiries/{inquiryId}/privacy/unmask`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PRIVACY_RAW_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNMASK_REASON_REQUIRED 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-09-09 cumulative content/runtime/settlement final merge contract synchronization",
+        "operationId": "unmaskInquiry",
+        "parameters": [
+          {
+            "name": "inquiryId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminPrivacyUnmaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InquiryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
           },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
@@ -29037,50 +29582,6 @@
       }
     },
     "/api/admin/sponsors/yearly-businesses/{yearlyBusinessId}": {
-      "delete": {
-        "tags": [
-          "후원사"
-        ],
-        "summary": "관리자 삭제",
-        "description": "### 이 API가 하는 일\n- 관리자 삭제\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)\n- 프론트 담당 영역: master-data (`master-data`)\n- 호출 방식: `DELETE /api/admin/sponsors/yearly-businesses/{yearlyBusinessId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `delete_admin_sponsor-yearly-businesses_yearlyBusinessId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
-        "operationId": "deleteYearlyBusiness",
-        "parameters": [
-          {
-            "name": "yearlyBusinessId",
-            "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponseDeleteResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
-          "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
-          },
-          "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
-          }
-        }
-      },
       "patch": {
         "tags": [
           "후원사"
@@ -29722,7 +30223,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SettlementCorrectionRequest"
+                "$ref": "#/components/schemas/SettlementCorrectionApprovalRequest"
               }
             }
           },
@@ -35308,6 +35809,51 @@
         }
       }
     },
+    "/api/portal/public/surveys/{publicToken}": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "비회원 공유 설문 조회",
+        "description": "### 이 API가 하는 일\n- 비회원 공유 설문 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/public/surveys/{publicToken}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 공개 API 또는 로그인 전 호출 가능\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: OPAQUE_SHARE_TOKEN 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NO_SERVER_AUTOFILL 개인정보 정책\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 활성 공유 토큰과 동일 binding/version의 PUBLISHED SURVEY만 조회; settings/extension 내부정보 제거",
+        "operationId": "form",
+        "parameters": [
+          {
+            "name": "publicToken",
+            "in": "path",
+            "description": "조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSurveyFormResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          }
+        }
+      }
+    },
     "/api/portal/public/notices": {
       "get": {
         "tags": [
@@ -40311,6 +40857,15 @@
             }
           },
           {
+            "name": "participantType",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 후원사 상세 선택 sponsorId와 프로그램명/년도/진행현황/교육대상/담당자 필터",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "educationTarget",
             "in": "query",
             "description": "쿼리 파라미터입니다. 요청값 출처: 후원사 상세 선택 sponsorId와 프로그램명/년도/진행현황/교육대상/담당자 필터",
@@ -42877,7 +43432,7 @@
           {
             "name": "year",
             "in": "query",
-            "description": "금년도 예산·정산 완료 총액 연도. fromDate/toDate가 없으면 전년-12-01~당해-12-31을 예정금 구간으로 씁니다.",
+            "description": "금년도 예산 및 실제 지급 완료일(paidAt) 기준 정산 완료 총액 연도. fromDate/toDate가 없으면 전년-12-01~당해-12-31을 예정금 구간으로 씁니다.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -48258,18 +48813,18 @@
     },
     "/api/admin/notification-send-batches/template-variables": {
       "get": {
-        "operationId": "listNotificationTemplateVariables",
-        "summary": "자동입력 변수 카탈로그 조회",
-        "description": "메일·문자 템플릿 편집/발송 화면 우측 자동입력(변수값) 리스트. Notion 사용 가능 항목만 카테고리별로 반환(enabled=false 항목도 목록 유지). enabled=삽입 허용 SSOT(값 존재와 무관). FE는 enabled를 재계산하지 않는다. requiresProgram=true 이고 programId 미전달이면 enabled=false. programId/participantType/memberType을 넘기면 enabled가 프로그램·모집·참여·회원 유형에 맞게 계산된다. participantType·memberType 둘 다 없으면 유형 특화 변수는 enabled=false. 실발송 시 본문 #{키} 값이 비면 provider 전 NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:{키}[,{키2}…] fail-closed.",
         "tags": [
-          "알림 발송 배치"
+          "기타 API"
         ],
+        "summary": "알림 발송 자동입력 변수 카탈로그",
+        "description": "### 이 API가 하는 일\n- 알림 발송 자동입력 변수 카탈로그\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/notification-send-batches/template-variables`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: NOTIFICATION_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: V78 AlimTalk CMS catalog / Notion alignment",
+        "operationId": "templateVariables",
         "parameters": [
           {
             "name": "category",
             "in": "query",
-            "required": false,
             "description": "카탈로그 카테고리 코드.",
+            "required": false,
             "schema": {
               "type": "string",
               "enum": [
@@ -48290,8 +48845,8 @@
           {
             "name": "keyword",
             "in": "query",
-            "required": false,
             "description": "key/description 부분 검색.",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -48299,19 +48854,18 @@
           {
             "name": "programId",
             "in": "query",
-            "required": false,
             "description": "대상 프로그램 id. 미지정(전체)이면 requiresProgram 항목은 enabled=false.",
+            "required": false,
             "schema": {
               "type": "integer",
               "format": "int64"
-            },
-            "example": 164003
+            }
           },
           {
             "name": "participantType",
             "in": "query",
-            "required": false,
             "description": "프로그램 선택 시 참여 유형 필터. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
+            "required": false,
             "schema": {
               "type": "string",
               "enum": [
@@ -48319,14 +48873,13 @@
                 "INSTRUCTOR",
                 "VOLUNTEER"
               ]
-            },
-            "example": "PARTICIPANT"
+            }
           },
           {
             "name": "memberType",
             "in": "query",
-            "required": false,
             "description": "프로그램 미선택(전체) 시 회원 유형 필터.",
+            "required": false,
             "schema": {
               "type": "string",
               "enum": [
@@ -48341,75 +48894,26 @@
         ],
         "responses": {
           "200": {
-            "description": "카탈로그. CatalogVariableItem.enabled 가 삽입 허용 SSOT.",
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
             "content": {
-              "application/json": {
+              "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/NotificationTemplateVariableCatalogResponse"
-                },
-                "examples": {
-                  "participantContext": {
-                    "summary": "programId+PARTICIPANT — 강사 전용 키 enabled=false",
-                    "value": {
-                      "totalCount": 2,
-                      "categories": [
-                        {
-                          "categoryCode": "TIME",
-                          "categoryLabel": "시간",
-                          "variables": [
-                            {
-                              "key": "교육 진행 수업 시간",
-                              "token": "#{교육 진행 수업 시간}",
-                              "description": null,
-                              "requiresProgram": true,
-                              "enabled": true,
-                              "programGroups": [],
-                              "recruitmentTypes": [],
-                              "participantTypes": [],
-                              "memberTypes": []
-                            },
-                            {
-                              "key": "배정 기관명",
-                              "token": "#{배정 기관명}",
-                              "description": null,
-                              "requiresProgram": true,
-                              "enabled": false,
-                              "programGroups": [],
-                              "recruitmentTypes": [],
-                              "participantTypes": [
-                                "INSTRUCTOR",
-                                "VOLUNTEER"
-                              ],
-                              "memberTypes": []
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  }
+                  "$ref": "#/components/schemas/CatalogResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "participantType/memberType enum 위반 등",
-            "content": {
-              "application/json": {
-                "examples": {
-                  "requiredVariableMissing": {
-                    "summary": "발송 파이프라인 실패 코드(배치/delivery). GET catalog 자체는 아님",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "error": {
-                        "code": "NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING",
-                        "message": "NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:교육 진행 수업 시간"
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
           }
         },
         "x-jakorea-fe-notes": "enabled=삽입 허용 SSOT(값 존재와 무관). 누락 시 NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:{키}[,{키2}]. QA programId=164003 actorId=1799401."
@@ -48428,7 +48932,7 @@
             "name": "programId",
             "in": "query",
             "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "integer",
               "format": "int64"
@@ -53806,15 +54310,14 @@
           {
             "name": "status",
             "in": "query",
-            "description": "REQUESTED는 대기 버킷 alias(WAITING_PAYMENT+FAILED). 응답 paymentStatus는 WAITING_PAYMENT입니다.",
+            "description": "REQUESTED는 대기 버킷 alias(WAITING_PAYMENT+내부 FAILED)입니다. UI 업무 상태는 WAITING_PAYMENT/PAID만 사용합니다.",
             "required": false,
             "schema": {
               "type": "string",
               "enum": [
                 "REQUESTED",
                 "WAITING_PAYMENT",
-                "PAID",
-                "FAILED"
+                "PAID"
               ]
             }
           },
@@ -54562,6 +55065,62 @@
         "deprecated": true
       }
     },
+    "/api/admin/sponsors/{sponsorId}/program-histories/{programId}": {
+      "delete": {
+        "tags": [
+          "후원사"
+        ],
+        "summary": "후원사 프로그램 진행 이력 연결 삭제",
+        "description": "### 이 API가 하는 일\n- 후원사 프로그램 진행 이력 연결 삭제\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `DELETE /api/admin/sponsors/{sponsorId}/program-histories/{programId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MASTER_DATA_WRITE 권한 필요\n- 접근 범위: GLOBAL 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NONE 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-09-09 cumulative content/runtime/settlement final merge contract synchronization",
+        "operationId": "deleteProgramHistory_1",
+        "parameters": [
+          {
+            "name": "sponsorId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDeleteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/settlement-configs/current/items/{itemKind}/{itemId}": {
       "delete": {
         "tags": [
@@ -55078,6 +55637,10 @@
             },
             "maxItems": 2,
             "minItems": 0
+          },
+          "requestedClassCount": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "required": [
@@ -56393,6 +56956,97 @@
           },
           "organizationAddressDetail": {
             "type": "string"
+          }
+        }
+      },
+      "ProgramSponsorAssignmentRequest": {
+        "type": "object",
+        "properties": {
+          "sponsorId": {
+            "type": "string"
+          },
+          "sponsorContactId": {
+            "type": "string"
+          }
+        }
+      },
+      "ProgramSponsorAssignmentsReplaceRequest": {
+        "type": "object",
+        "properties": {
+          "sponsors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramSponsorAssignmentRequest"
+            }
+          }
+        },
+        "required": [
+          "sponsors"
+        ]
+      },
+      "ApiResponseListProgramSponsorAssignmentResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "items": {
+              "$ref": "#/components/schemas/ProgramSponsorAssignmentResponse"
+            }
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "ProgramSponsorAssignmentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sponsorId": {
+            "type": "string"
+          },
+          "sponsorName": {
+            "type": "string"
+          },
+          "sponsorContactId": {
+            "type": "string"
+          },
+          "sponsorContactName": {
+            "type": "string"
+          },
+          "sponsorYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "contributionAmountSnapshot": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -57791,6 +58445,105 @@
           }
         }
       },
+      "MaterialKitCurrentConfigRequest": {
+        "type": "object",
+        "properties": {
+          "infant": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "elementary": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "middle": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "high": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "university": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "ApiResponseMaterialKitCurrentConfigResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/MaterialKitCurrentConfigResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "MaterialKitCurrentConfigResponse": {
+        "type": "object",
+        "properties": {
+          "materialKitId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "versionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "versionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "infant": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "elementary": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "middle": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "high": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "university": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "FormTemplateVersionUpdateRequest": {
         "type": "object",
         "properties": {
@@ -58214,6 +58967,38 @@
           },
           "$unsubscribe_reason": {
             "type": "string"
+          }
+        }
+      },
+      "PublicSurveySubmitRequest": {
+        "type": "object",
+        "properties": {
+          "answers": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "answers"
+        ]
+      },
+      "PublicSurveySubmitResponse": {
+        "type": "object",
+        "properties": {
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "responseStatus": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -63654,13 +64439,15 @@
             "type": "string"
           },
           "nameEn": {
-            "type": "string"
+            "type": "string",
+            "description": "후원사명(영문). POST 등록 시 nameDisplayEn 또는 nameEn 중 하나는 필수입니다."
           },
           "nameDisplayKo": {
             "type": "string"
           },
           "nameDisplayEn": {
-            "type": "string"
+            "type": "string",
+            "description": "후원사 표시명(영문). POST 등록 시 nameDisplayEn 또는 nameEn 중 하나는 필수입니다."
           },
           "businessNumber": {
             "type": "string"
@@ -63669,6 +64456,12 @@
             "type": "string"
           },
           "address": {
+            "type": "string"
+          },
+          "homepageUrl": {
+            "type": "string"
+          },
+          "logoFileId": {
             "type": "string"
           },
           "description": {
@@ -63687,11 +64480,17 @@
             "type": "string"
           },
           "organizationKind": {
-            "type": "string"
+            "type": "string",
+            "description": "구분. POST 등록 시 필수이며 corporate(기업) 또는 foundation(재단)을 사용합니다.",
+            "enum": [
+              "corporate",
+              "foundation"
+            ],
+            "example": "corporate"
           },
           "sponsorshipStatus": {
             "type": "string",
-            "description": "후원 상태. 등록 시 생략하면 active. PATCH는 4값 양방향. 미지원 값은 400 SPONSOR_SPONSORSHIP_STATUS_UNSUPPORTED.",
+            "description": "후원 상태. POST 등록 시 필수. PATCH는 4값 양방향. 미지원 값은 400 SPONSOR_SPONSORSHIP_STATUS_UNSUPPORTED.",
             "enum": [
               "active",
               "discussing",
@@ -63701,7 +64500,9 @@
             "example": "active"
           },
           "sponsorshipStartDate": {
-            "type": "string"
+            "type": "string",
+            "description": "후원 시작일. POST 등록 시 필수. ISO-8601 날짜(YYYY-MM-DD) 또는 offset datetime.",
+            "example": "2026-09-09"
           }
         }
       },
@@ -64281,14 +65082,14 @@
           "reason": {
             "type": "string",
             "description": "정정 요청 사유",
-            "example": "강사 교통비 증빙 재확인으로 재산출 필요",
+            "example": "강사비 책정 기준이 잘못 적용되어 정정이 필요합니다.",
             "maxLength": 500,
             "minLength": 2
           },
           "requestedChangeSummary": {
             "type": "string",
             "description": "요청 변경 요약",
-            "example": "교통비 산출 기준 거리 재확인 후 재정산",
+            "example": "3급 강사비에서 특강 강사비로 변경 요청",
             "maxLength": 1000,
             "minLength": 0
           }
@@ -64352,6 +65153,10 @@
             "type": "string"
           },
           "requestedByAdminId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "requestedByMemberId": {
             "type": "integer",
             "format": "int64"
           },
@@ -64647,6 +65452,12 @@
         "properties": {
           "sponsorId": {
             "type": "string"
+          },
+          "sponsors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramSponsorAssignmentRequest"
+            }
           },
           "programType": {
             "type": "string",
@@ -65194,6 +66005,50 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "SurveyShareLinkResponse": {
+        "type": "object",
+        "properties": {
+          "shareLinkId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "accessMode": {
+            "type": "string"
+          },
+          "shareToken": {
+            "type": "string"
+          },
+          "formPath": {
+            "type": "string"
+          },
+          "submitPath": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "submissionCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -68134,8 +68989,7 @@
           },
           "programId": {
             "type": "integer",
-            "format": "int64",
-            "description": "대상 프로그램. 미전달(발송 UI 미선택/지정 해제)이면 program 스코프 enrich 불가.\nrequiresProgram 변수 포함 템플릿은 NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES.\nMEMBER/ADMIN 수신자는 불가(DIRECT만). FE는 문자열 all을 보내지 않음(필드 생략).\n"
+            "format": "int64"
           },
           "scheduledAt": {
             "type": "string",
@@ -68151,7 +69005,7 @@
             "items": {
               "$ref": "#/components/schemas/RecipientRequest"
             },
-            "maxItems": 500,
+            "maxItems": 5000,
             "minItems": 0
           },
           "senderKey": {
@@ -69665,6 +70519,103 @@
           }
         }
       },
+      "InquiryResponse": {
+        "type": "object",
+        "description": "문의 응답",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "문의 ID",
+            "example": 6001
+          },
+          "category": {
+            "type": "string",
+            "description": "문의 카테고리",
+            "example": "PROGRAM"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "연결 프로그램 ID",
+            "example": 1201
+          },
+          "programNameSnapshot": {
+            "type": "string",
+            "description": "문의 시점 프로그램명 스냅샷",
+            "example": "경제교육 기본 과정"
+          },
+          "inquirerMemberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "문의자 회원 ID",
+            "example": 3001
+          },
+          "inquirerName": {
+            "type": "string",
+            "description": "문의자 표시명",
+            "example": "서봉사"
+          },
+          "inquirerPhone": {
+            "type": "string",
+            "description": "문의자 전화번호(기본 마스킹)",
+            "example": "010-****-2000"
+          },
+          "inquirerEmail": {
+            "type": "string",
+            "description": "문의자 이메일(기본 마스킹)",
+            "example": "vol***@example.com"
+          },
+          "title": {
+            "type": "string",
+            "description": "문의 제목",
+            "example": "참여 확인서 발급 문의"
+          },
+          "content": {
+            "type": "string",
+            "description": "문의 본문",
+            "example": "참여 완료 후 확인서 발급 가능 여부를 문의합니다."
+          },
+          "status": {
+            "type": "string",
+            "description": "CMS 문의 답변 상태",
+            "enum": [
+              "PENDING",
+              "ANSWERED"
+            ],
+            "example": "ANSWERED"
+          },
+          "assignedAdminId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "담당 관리자 ID",
+            "example": 9001
+          },
+          "assignedAdminName": {
+            "type": "string",
+            "description": "담당 관리자 표시명",
+            "example": "운영팀 관리자"
+          },
+          "answeredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "답변 완료 시각",
+            "example": "2026-06-02T10:00:00Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "문의 생성 시각",
+            "example": "2026-06-02T09:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "문의 수정 시각",
+            "example": "2026-06-02T09:30:00Z"
+          }
+        }
+      },
       "InquiryAnswerRequest": {
         "type": "object",
         "description": "문의 답변 등록 요청",
@@ -70252,12 +71203,12 @@
             "type": "string",
             "format": "date-time"
           },
+          "businessEndDate": {
+            "type": "string"
+          },
           "businessYear": {
             "type": "integer",
             "format": "int32"
-          },
-          "businessEndDate": {
-            "type": "string"
           },
           "businessStartDate": {
             "type": "string"
@@ -73874,6 +74825,60 @@
           }
         }
       },
+      "SettlementCorrectionApprovalRequest": {
+        "type": "object",
+        "description": "관리자 강사비 지급 정정 승인 요청",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "관리자 정정 메모(선택). 미입력 시 신청자의 정정 요청 사유를 이력에 사용",
+            "example": "강사 등급 재확인 후 특강 강사비로 정정",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "pricingMode": {
+            "type": "string",
+            "description": "강사비 책정 방식",
+            "enum": [
+              "PROGRAM_STANDARD",
+              "SPECIAL_LECTURE",
+              "OTHER_LABOR"
+            ],
+            "example": "PROGRAM_STANDARD",
+            "minLength": 1
+          },
+          "wageItemType": {
+            "type": "string",
+            "description": "강사비 유형. PROGRAM_STANDARD일 때 TIER1/TIER2/TIER3 중 하나",
+            "enum": [
+              "TIER1",
+              "TIER2",
+              "TIER3",
+              "SPECIAL_LECTURE",
+              "OTHER_LABOR"
+            ],
+            "example": "TIER2"
+          },
+          "calculationUnit": {
+            "type": "string",
+            "description": "특강/기타 인건비 지급 기준",
+            "enum": [
+              "PER_LECTURE",
+              "PER_HOUR"
+            ],
+            "example": "PER_HOUR"
+          },
+          "unitAmount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "특강/기타 인건비 1회 또는 1시간당 금액. PROGRAM_STANDARD에서는 서버 카탈로그 금액을 사용",
+            "example": 200000
+          }
+        },
+        "required": [
+          "pricingMode"
+        ]
+      },
       "SettlementApplicationAdminActionRequest": {
         "type": "object",
         "properties": {
@@ -73994,6 +74999,12 @@
         "properties": {
           "sponsorId": {
             "type": "string"
+          },
+          "sponsors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramSponsorAssignmentRequest"
+            }
           },
           "title": {
             "type": "string"
@@ -75349,6 +76360,34 @@
           "reason": {
             "type": "string",
             "description": "수정 사유"
+          }
+        }
+      },
+      "PublicSurveyFormResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "targetScope": {
+            "type": "string"
+          },
+          "targetScopeId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "form": {
+            "type": "object",
+            "additionalProperties": {}
           }
         }
       },
@@ -79680,6 +80719,10 @@
           "participantCount": {
             "type": "string"
           },
+          "totalBeneficiaryCount": {
+            "type": "integer",
+            "format": "int64"
+          },
           "participantType": {
             "type": "string"
           },
@@ -80098,6 +81141,10 @@
           },
           "paymentStatus": {
             "type": "string"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time"
           },
           "documentGeneratedAt": {
             "type": "string",
@@ -81671,6 +82718,10 @@
       "ProgramSurveyResponse": {
         "type": "object",
         "properties": {
+          "bindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "templateId": {
             "type": "integer",
             "format": "int64"
@@ -81683,6 +82734,22 @@
             "type": "string"
           },
           "versionLabel": {
+            "type": "string"
+          },
+          "targetScope": {
+            "type": "string"
+          },
+          "targetScopeId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "shareAccessMode": {
+            "type": "string"
+          },
+          "shareActive": {
+            "type": "boolean"
+          },
+          "sharePath": {
             "type": "string"
           },
           "responseCount": {
@@ -85192,18 +86259,14 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
-            "example": "교육 진행 수업 시간"
+            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일."
           },
           "token": {
             "type": "string",
-            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
-            "example": "#{교육 진행 수업 시간}"
+            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입."
           },
           "description": {
-            "type": "string",
-            "nullable": true,
-            "description": "보조 설명. 없으면 null"
+            "type": "string"
           },
           "requiresProgram": {
             "type": "boolean",
@@ -85217,44 +86280,29 @@
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "description": "허용 프로그램 유형 그룹. 비면 제한 없음"
+            }
           },
           "recruitmentTypes": {
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음"
+            }
           },
           "participantTypes": {
             "type": "array",
             "items": {
-              "type": "string",
-              "enum": [
-                "PARTICIPANT",
-                "INSTRUCTOR",
-                "VOLUNTEER"
-              ]
+              "type": "string"
             },
             "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER."
           },
           "memberTypes": {
             "type": "array",
             "items": {
-              "type": "string",
-              "enum": [
-                "GENERAL",
-                "SCHOOL_TEACHER",
-                "INSTRUCTOR",
-                "TEACHER_AND_INSTRUCTOR",
-                "ADMIN"
-              ]
+              "type": "string"
             },
             "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN."
           }
-        },
-        "description": "Notion 사용 변수 1건. enabled=삽입 허용 SSOT(값 존재와 무관)."
+        }
       },
       "PageResponseRecipientCandidateResponse": {
         "type": "object",
@@ -86201,99 +87249,6 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
-          }
-        }
-      },
-      "InquiryResponse": {
-        "type": "object",
-        "description": "문의 응답",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64",
-            "description": "문의 ID",
-            "example": 6001
-          },
-          "category": {
-            "type": "string",
-            "description": "문의 카테고리",
-            "example": "PROGRAM"
-          },
-          "programId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "연결 프로그램 ID",
-            "example": 1201
-          },
-          "programNameSnapshot": {
-            "type": "string",
-            "description": "문의 시점 프로그램명 스냅샷",
-            "example": "경제교육 기본 과정"
-          },
-          "inquirerMemberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "문의자 회원 ID",
-            "example": 3001
-          },
-          "inquirerName": {
-            "type": "string",
-            "description": "문의자 표시명",
-            "example": "서봉사"
-          },
-          "inquirerPhone": {
-            "type": "string",
-            "description": "문의자 전화번호",
-            "example": "010-1049-2000"
-          },
-          "inquirerEmail": {
-            "type": "string",
-            "description": "문의자 이메일",
-            "example": "volunteer@example.com"
-          },
-          "title": {
-            "type": "string",
-            "description": "문의 제목",
-            "example": "참여 확인서 발급 문의"
-          },
-          "content": {
-            "type": "string",
-            "description": "문의 본문",
-            "example": "참여 완료 후 확인서 발급 가능 여부를 문의합니다."
-          },
-          "status": {
-            "type": "string",
-            "description": "문의 상태",
-            "example": "ANSWERED"
-          },
-          "assignedAdminId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "담당 관리자 ID",
-            "example": 9001
-          },
-          "assignedAdminName": {
-            "type": "string",
-            "description": "담당 관리자 표시명",
-            "example": "운영팀 관리자"
-          },
-          "answeredAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "답변 완료 시각",
-            "example": "2026-06-02T10:00:00Z"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "문의 생성 시각",
-            "example": "2026-06-02T09:00:00Z"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "문의 수정 시각",
-            "example": "2026-06-02T09:30:00Z"
           }
         }
       },
@@ -88828,7 +89783,18 @@
           },
           "paymentStatus": {
             "type": "string",
-            "description": "Canonical WAITING_PAYMENT | PAID | FAILED. 응답을 REQUESTED로 위장하지 않습니다."
+            "description": "CMS 업무 상태는 WAITING_PAYMENT | PAID만 노출합니다. 내부 FAILED는 WAITING_PAYMENT로 정규화됩니다."
+          },
+          "paymentFailureYn": {
+            "type": "boolean",
+            "description": "내부 계좌 지급 처리 실패 여부. true여도 paymentStatus는 WAITING_PAYMENT입니다."
+          },
+          "paymentFailureReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "내부 계좌 지급 실패 사유. paymentFailureYn=true일 때만 노출합니다."
           },
           "instructorName": {
             "type": "string",
@@ -89194,128 +90160,6 @@
           },
           "status": {
             "type": "string"
-          }
-        }
-      },
-      "NotificationCatalogVariableItem": {
-        "type": "object",
-        "description": "Notion 사용 변수 1건. enabled=삽입 허용 SSOT(값 존재와 무관).",
-        "required": [
-          "key",
-          "token",
-          "requiresProgram",
-          "enabled",
-          "programGroups",
-          "recruitmentTypes",
-          "participantTypes",
-          "memberTypes"
-        ],
-        "properties": {
-          "key": {
-            "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
-            "example": "교육 진행 수업 시간"
-          },
-          "token": {
-            "type": "string",
-            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
-            "example": "#{교육 진행 수업 시간}"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true,
-            "description": "보조 설명. 없으면 null"
-          },
-          "requiresProgram": {
-            "type": "boolean",
-            "description": "true이면 programId 없이 enabled=false."
-          },
-          "enabled": {
-            "type": "boolean",
-            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
-          },
-          "programGroups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "허용 프로그램 유형 그룹. 비면 제한 없음"
-          },
-          "recruitmentTypes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음"
-          },
-          "participantTypes": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "PARTICIPANT",
-                "INSTRUCTOR",
-                "VOLUNTEER"
-              ]
-            },
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER."
-          },
-          "memberTypes": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "GENERAL",
-                "SCHOOL_TEACHER",
-                "INSTRUCTOR",
-                "TEACHER_AND_INSTRUCTOR",
-                "ADMIN"
-              ]
-            },
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN."
-          }
-        }
-      },
-      "NotificationCatalogCategory": {
-        "type": "object",
-        "required": [
-          "categoryCode",
-          "categoryLabel",
-          "variables"
-        ],
-        "properties": {
-          "categoryCode": {
-            "type": "string",
-            "example": "TIME"
-          },
-          "categoryLabel": {
-            "type": "string",
-            "example": "시간"
-          },
-          "variables": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationCatalogVariableItem"
-            }
-          }
-        }
-      },
-      "NotificationTemplateVariableCatalogResponse": {
-        "type": "object",
-        "required": [
-          "totalCount",
-          "categories"
-        ],
-        "properties": {
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "categories": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationCatalogCategory"
-            }
           }
         }
       }

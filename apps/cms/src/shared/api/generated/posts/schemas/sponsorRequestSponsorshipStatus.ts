@@ -7,7 +7,7 @@
  */
 
 /**
- * 후원 상태. 등록 시 생략하면 active. PATCH는 4값 양방향. 미지원 값은 400 SPONSOR_SPONSORSHIP_STATUS_UNSUPPORTED.
+ * 후원 상태. POST 등록 시 필수. PATCH는 4값 양방향. 미지원 값은 400 SPONSOR_SPONSORSHIP_STATUS_UNSUPPORTED.
  */
 export type SponsorRequestSponsorshipStatus = typeof SponsorRequestSponsorshipStatus[keyof typeof SponsorRequestSponsorshipStatus];
 
