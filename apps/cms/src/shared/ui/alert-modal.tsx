@@ -1,5 +1,6 @@
-import { useCallback, useEffect, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, type ReactNode } from 'react'
 import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
+import { CMS_ALERT_MODAL_CLOSED_EVENT } from './cms-alert-modal-api'
 import { ContentModal } from './content-modal'
 import { CmsButton } from './cms-button'
 import './alert-modal.css'
@@ -57,6 +58,14 @@ export function AlertModal({
     window.addEventListener('keydown', onKeyDown, true)
     return () => window.removeEventListener('keydown', onKeyDown, true)
   }, [open, handleConfirm])
+
+  const wasOpenRef = useRef(false)
+  useEffect(() => {
+    if (wasOpenRef.current && !open) {
+      window.dispatchEvent(new CustomEvent(CMS_ALERT_MODAL_CLOSED_EVENT))
+    }
+    wasOpenRef.current = open
+  }, [open])
 
   return (
     <ContentModal

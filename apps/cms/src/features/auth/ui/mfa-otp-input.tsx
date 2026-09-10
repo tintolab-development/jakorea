@@ -5,6 +5,7 @@
 import { Form, Input } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { OTP_POLICY, OTP_LENGTH, clampMfaFailedAttempts } from '@/shared/constants/mfa-policy'
+import { CMS_ALERT_MODAL_CLOSED_EVENT } from '@/shared/ui/cms-alert-modal-api'
 import './mfa-otp-input.css'
 
 interface MfaOtpInputProps {
@@ -16,9 +17,26 @@ interface MfaOtpInputProps {
   resetToken?: number
 }
 
-function focusFirstOtpInput(root: HTMLElement | null) {
+function focusFirstOtpInput(root: HTMLElement | null): boolean {
   const firstInput = root?.querySelector('input') as HTMLInputElement | null
-  firstInput?.focus()
+  if (!firstInput || firstInput.disabled) return false
+  firstInput.focus()
+  firstInput.select?.()
+  return document.activeElement === firstInput
+}
+
+function scheduleFocusFirst(root: HTMLElement | null, attempts = 12) {
+  let cancelled = false
+  const run = (left: number) => {
+    if (cancelled || left <= 0) return
+    if (focusFirstOtpInput(root)) return
+    window.setTimeout(() => run(left - 1), 32)
+  }
+  const timer = window.setTimeout(() => run(attempts), 0)
+  return () => {
+    cancelled = true
+    window.clearTimeout(timer)
+  }
 }
 
 export function MfaOtpInput({
@@ -38,11 +56,23 @@ export function MfaOtpInput({
 
   useEffect(() => {
     if (disabled || (!autoFocus && otpInstanceKey === 0)) return
-    const timer = window.setTimeout(() => {
-      focusFirstOtpInput(boxesRef.current)
-    }, 0)
-    return () => window.clearTimeout(timer)
+    return scheduleFocusFirst(boxesRef.current)
   }, [autoFocus, disabled, otpInstanceKey])
+
+  // 요청 실패 Alert 닫힌 뒤에도 첫 칸으로 포커스 복구
+  useEffect(() => {
+    if (disabled) return
+    let cancelFocus: (() => void) | undefined
+    const onAlertClosed = () => {
+      cancelFocus?.()
+      cancelFocus = scheduleFocusFirst(boxesRef.current)
+    }
+    window.addEventListener(CMS_ALERT_MODAL_CLOSED_EVENT, onAlertClosed)
+    return () => {
+      cancelFocus?.()
+      window.removeEventListener(CMS_ALERT_MODAL_CLOSED_EVENT, onAlertClosed)
+    }
+  }, [disabled, otpInstanceKey])
 
   return (
     <Form.Item
@@ -68,6 +98,7 @@ export function MfaOtpInput({
                   key={otpInstanceKey}
                   length={OTP_LENGTH}
                   value={formValue}
+                  autoFocus={!disabled && (autoFocus || otpInstanceKey > 0)}
                   onChange={newValue => {
                     setFieldValue('otpCode', newValue)
                     if (onChange) {
