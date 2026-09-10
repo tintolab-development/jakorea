@@ -4,6 +4,7 @@
 
 import { axiosClient } from '@/shared/api'
 import { adminAuthPaths } from '@/shared/config/api-paths'
+import { OTP_POLICY } from '@/shared/constants/mfa-policy'
 import type { InternalAxiosRequestConfig } from 'axios'
 import type {
   AdminMfaVerifyRequestBody,
@@ -25,14 +26,21 @@ export class AdminMfaApiError extends Error {
   }
 }
 
-function humanizeAuthErrorMessage(message: string, fallback: string): string {
+function humanizeAuthErrorMessage(code: string, message: string, fallback: string): string {
+  if (code === 'ACCOUNT_LOCKED' || message.includes('ACCOUNT_LOCKED')) {
+    return `인증 시도 횟수를 초과했습니다. ${OTP_POLICY.lockoutDurationMinutes}분 후 다시 시도해주세요.`
+  }
   if (message.includes('jwt.secret')) {
     return '백엔드 JWT 설정(app.auth.jwt.secret, 32자 이상)이 없어 토큰 발급에 실패했습니다. 백엔드팀에 설정을 요청하세요.'
   }
-  if (message.includes('MFA_VERIFICATION_FAILED')) {
+  if (code === 'MFA_VERIFICATION_FAILED' || message.includes('MFA_VERIFICATION_FAILED')) {
     return '인증번호가 올바르지 않습니다. LOCAL_TEST_CODE 환경이면 000000을 입력하세요.'
   }
-  if (message.includes('MFA_CHALLENGE_INVALID') || message.includes('cooldown')) {
+  if (
+    code === 'MFA_CHALLENGE_INVALID' ||
+    message.includes('MFA_CHALLENGE_INVALID') ||
+    message.includes('cooldown')
+  ) {
     return 'MFA challenge가 만료되었거나 재시도 대기 중입니다. 로그인부터 다시 시도하세요.'
   }
   return message || fallback
@@ -43,12 +51,17 @@ function parseAuthError(payload: unknown, fallback: string): AdminMfaApiError {
     const o = payload as Record<string, unknown>
     if (o.success === false) {
       const raw = typeof o.message === 'string' ? o.message : fallback
-      return new AdminMfaApiError('MFA_FAILED', humanizeAuthErrorMessage(raw, fallback))
+      const codeFromMessage = raw.includes('ACCOUNT_LOCKED')
+        ? 'ACCOUNT_LOCKED'
+        : raw.includes('MFA_VERIFICATION_FAILED')
+          ? 'MFA_VERIFICATION_FAILED'
+          : 'MFA_FAILED'
+      return new AdminMfaApiError(codeFromMessage, humanizeAuthErrorMessage(codeFromMessage, raw, fallback))
     }
     const wrapped = o.error as { code?: string; message?: string } | undefined
-    const code = wrapped?.code ?? 'UNKNOWN'
+    const code = String(wrapped?.code ?? 'UNKNOWN')
     const raw = wrapped?.message ?? (typeof o.message === 'string' ? o.message : fallback)
-    return new AdminMfaApiError(String(code), humanizeAuthErrorMessage(raw, fallback))
+    return new AdminMfaApiError(code, humanizeAuthErrorMessage(code, raw, fallback))
   }
   return new AdminMfaApiError('UNKNOWN', fallback)
 }
