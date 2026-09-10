@@ -20,7 +20,7 @@ import {
 } from '@/shared/constants/mfa-policy'
 import { generateMockOtp, verifyMockOtp } from '@/data/mock/mfa'
 import { saveSmsLog, updateSmsLogStatus, getSmsLogByOtp } from '@/data/mock/sms-logs'
-import { fetchAdminMfaEnrollment, fetchAdminMfaVerify } from '@/features/auth/api/admin-auth-fetcher'
+import { fetchAdminMfaEnrollment, fetchAdminMfaVerify, AdminMfaApiError } from '@/features/auth/api/admin-auth-fetcher'
 import type { AuthTokenResponse } from '@/features/auth/model/admin-login-api.types'
 
 // Mock: 사용자별 OTP 저장 (실제로는 백엔드에서 관리)
@@ -315,6 +315,18 @@ export async function verifyTotp(
         tokens,
       }
     } catch (error) {
+      if (error instanceof AdminMfaApiError) {
+        const locked = error.code === 'ACCOUNT_LOCKED'
+        return {
+          success: false,
+          detail: error.message,
+          verified: false,
+          failedAttempts: locked ? OTP_POLICY.maxFailedAttempts : 1,
+          isLocked: locked,
+          lockUntil: null,
+          errorCode: error.code,
+        }
+      }
       const message = error instanceof Error ? error.message : 'MFA 인증에 실패했습니다.'
       return {
         success: false,

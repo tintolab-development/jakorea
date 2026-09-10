@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react'
 
+/** Alert 닫힘 후 MFA OTP 등 하위 포커스 복구용 window 이벤트 */
+export const CMS_ALERT_MODAL_CLOSED_EVENT = 'cms-alert-modal-closed'
+
 export type CmsAlertModalShowOptions = {
   title: string
   content: ReactNode

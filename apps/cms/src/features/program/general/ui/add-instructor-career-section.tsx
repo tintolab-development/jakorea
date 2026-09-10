@@ -6,8 +6,8 @@
  */
 
 import { useRef } from 'react'
-import { Form, Input, Checkbox, DatePicker } from 'antd'
-import { CmsButton } from '@/shared/ui'
+import { Checkbox, DatePicker, Form } from 'antd'
+import { CmsButton, CmsInput } from '@/shared/ui'
 import { NativeSelect } from './add-instructor-native-select'
 
 /** 삭제용 X 아이콘 28×28 */
@@ -143,11 +143,11 @@ export function CareerDetailSection() {
                                 noStyle
                                 className="add-instructor-modal__career-input-wrap"
                               >
-                                <Input
+                                <CmsInput
                                   placeholder="회사명"
-                                  size="large"
-                                  allowClear
-                                  className="add-instructor-modal__table-input add-instructor-modal__career-input"
+                                  inputSize="medium"
+                                  width={190}
+                                  className="add-instructor-modal__career-input"
                                 />
                               </Form.Item>
                               <span className="add-instructor-modal__career-divider" aria-hidden />
@@ -156,11 +156,11 @@ export function CareerDetailSection() {
                                 noStyle
                                 className="add-instructor-modal__career-input-wrap"
                               >
-                                <Input
+                                <CmsInput
                                   placeholder="담당 업무"
-                                  size="large"
-                                  allowClear
-                                  className="add-instructor-modal__table-input add-instructor-modal__career-input"
+                                  inputSize="medium"
+                                  width={190}
+                                  className="add-instructor-modal__career-input"
                                 />
                               </Form.Item>
                               <span className="add-instructor-modal__career-divider" aria-hidden />

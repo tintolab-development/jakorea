@@ -81,6 +81,7 @@ export function UjatEducationProgressAssignmentTable({
         institutionName: record.institutionName,
         assignedClass: record.assignedClass,
         submittedDateLabel: parseSubmittedDate(record.plan.submittedDateLabel),
+        formResponseId: record.plan.formResponseId,
       })
     },
     [regionLabel]
@@ -95,6 +96,7 @@ export function UjatEducationProgressAssignmentTable({
         institutionName: record.institutionName,
         assignedClass: record.assignedClass,
         submittedDateLabel: parseSubmittedDate(record.log.submittedDateLabel),
+        formResponseId: record.log.formResponseId,
       })
     },
     [regionLabel]

@@ -4,6 +4,7 @@ import {
   getNotificationsApiErrorMessage,
   isAlimtalkTemplateDeleteRejectedByNhnError,
   isCategoryHasChildrenError,
+  isCategoryNeedsSyncError,
 } from './get-notifications-api-error'
 
 function apiError(status: number, code: string, message?: string) {
@@ -63,10 +64,15 @@ describe('get-notifications-api-error', () => {
     ).toContain('FreeMarker')
     expect(
       getNotificationsApiErrorMessage(apiError(400, 'EMAIL_SENDER_PROFILE_MISMATCH'), 'fallback')
-    ).toBe('NHN에 등록된 발신 메일만 사용할 수 있습니다. 발신 프로필을 확인해 주세요.')
+    ).toBe('메일 발신 프로필이 템플릿 발신 메일과 일치하지 않습니다.')
     expect(
       getNotificationsApiErrorMessage(apiError(400, 'EMAIL_SENDER_PROFILE_NOT_HARVESTED'), 'fallback')
     ).toBe('NHN에 등록된 발신 메일만 사용할 수 있습니다. 발신 프로필을 확인해 주세요.')
+    expect(
+      getNotificationsApiErrorMessage(apiError(400, 'EMAIL_SENDER_PROFILES_EMPTY'), 'fallback')
+    ).toBe(
+      'NHN 발신 메일 프로필이 없습니다. 발신 프로필 동기화(sync) 후 다시 시도해 주세요.'
+    )
     expect(
       getNotificationsApiErrorMessage(
         apiError(400, 'NOTIFICATION_SENDER_PROFILE_NOT_FOUND'),
@@ -114,6 +120,13 @@ describe('get-notifications-api-error', () => {
     expect(
       getNotificationsApiErrorMessage(apiError(400, 'EMAIL_CATEGORY_NOT_LINKED_TO_NHN'), 'fallback')
     ).toContain('카테고리 동기화')
+  })
+
+  it('EMAIL_SENDER_PROFILES_EMPTY는 동기화 CTA 대상이다', () => {
+    expect(isCategoryNeedsSyncError(apiError(400, 'EMAIL_SENDER_PROFILES_EMPTY'))).toBe(true)
+    expect(isCategoryNeedsSyncError(apiError(400, 'EMAIL_SENDER_PROFILE_NOT_HARVESTED'))).toBe(
+      false
+    )
   })
 
   it('EMAIL_TEMPLATE_DELETE_REJECTED_BY_NHN과 NOTIFICATION_DELIVERY_NOT_FOUND를 매핑한다', () => {

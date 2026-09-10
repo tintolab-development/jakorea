@@ -56,6 +56,6 @@ export interface SettlementExportRequest {
      * @maxLength 120
      */
   approvalReference?: string;
-  dateRangeValid?: boolean;
   rawPrivacyApprovalValid?: boolean;
+  dateRangeValid?: boolean;
 }

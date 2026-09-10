@@ -177,17 +177,33 @@ export function mapTemplateVariablesCatalog(
 
 const TEMPLATE_PLACEHOLDER_RE = /#\{([^{}]+)\}/g
 
-/** BE MEMBER actor enrich로 채울 수 있는 본문 토큰 (DIRECT는 FE가 명시) */
+/** BE MEMBER/ADMIN actor enrich로 채울 수 있는 본문 토큰 (DIRECT는 FE가 명시) */
 export const ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS = new Set([
+  '회원명',
+  '수신자명',
   '사용자 아이디(이메일)',
+  '이메일',
+  'email',
+  '휴대폰 번호',
+  '전화번호',
+  'phone',
 ])
 
 /** 텍스트들에서 `#{키}` 추출 — contentTemplate·titleTemplate이 SSOT */
-export function extractPlaceholderKeysFromTexts(...texts: Array<string | null | undefined>): Set<string> {
+export function extractPlaceholderKeysFromTexts(
+  ...texts: Array<string | null | undefined>
+): Set<string> {
   const keys = new Set<string>()
   for (const text of texts) {
     if (!text) continue
-    for (const match of text.matchAll(TEMPLATE_PLACEHOLDER_RE)) {
+    const normalized = text
+      .replace(/&#0*123;/gi, '{')
+      .replace(/&#0*125;/gi, '}')
+      .replace(/&#x0*7b;/gi, '{')
+      .replace(/&#x0*7d;/gi, '}')
+      .replace(/&lbrace;/gi, '{')
+      .replace(/&rbrace;/gi, '}')
+    for (const match of normalized.matchAll(TEMPLATE_PLACEHOLDER_RE)) {
       const key = match[1]?.trim()
       if (key) keys.add(key)
     }
@@ -409,5 +425,6 @@ export function buildCreateSendBatchRequest(input: {
   }
   if (input.programId != null) body.programId = input.programId
   if (variables) body.variables = variables
+  // ALIMTALK: titleTemplate/contentTemplate 절대 미포함 (BE NOTIFICATION_SEND_BODY_OVERRIDE_NOT_ALLOWED_FOR_ALIMTALK)
   return body
 }

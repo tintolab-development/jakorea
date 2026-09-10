@@ -9,10 +9,10 @@ export type NotificationSendCatalogVariableLike = {
 }
 
 /**
- * 특정 프로그램 발송 맥락에서 템플릿 「사용하기」 가능 여부.
- * - programNumericId 없음(전체/미선택): 변수 제한 없음 → true
- * - 카탈로그에 있고 enabled=false(또는 requiresProgram 가드)인 키가 본문/제목에 있으면 false
- * - 카탈로그에 없는 키: FE에서 막지 않음(BE fail-closed)
+ * 특정 프로그램 발송 맥락에서 템플릿 「사용하기」 가능 여부 (Option A).
+ * - programNumericId 없음(미선택): 변수 제한 없음 → true
+ * - 프로그램 지정: 본문 #{키} ⊆ catalog 이고 모두 enabled=true
+ * - 카탈로그 미등재 키 → false (BE SYSTEM/비enrich 키 포함)
  */
 export function canUseNotificationSendTemplateForProgram(input: {
   texts: Array<string | null | undefined>
@@ -36,7 +36,7 @@ export function canUseNotificationSendTemplateForProgram(input: {
 
   for (const key of usedKeys) {
     const item = byKey.get(key)
-    if (!item) continue
+    if (!item) return false
     if (isNotificationCatalogVariableDisabled(item, programId)) return false
   }
   return true

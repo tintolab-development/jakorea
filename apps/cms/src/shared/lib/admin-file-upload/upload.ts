@@ -4,6 +4,7 @@ import type { FileUploadPrepareRequest } from '@/shared/api/generated/members/sc
 import { customInstance } from '@/shared/api/orval-mutator'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { createSha256 } from '@/shared/lib/admin-file-upload/create-sha256'
+import { resolveUploadContentType } from '@/shared/lib/admin-file-upload/purposes'
 import type {
   ConfirmUploadInput,
   CreateUploadRequestInput,
@@ -241,7 +242,9 @@ export async function waitUntilFileAvailable(
     }
   }
 
-  throw new Error('파일 검사 대기 시간 초과')
+  throw new Error(
+    '파일 보안 검사가 완료되지 않았습니다. 검사가 끝날 때까지 기다린 뒤 다시 시도해 주세요.'
+  )
 }
 
 /**
@@ -251,7 +254,7 @@ export async function waitUntilFileAvailable(
 export async function uploadAdminFile(input: UploadAdminFileInput): Promise<UploadAdminFileResult> {
   const notify = input.onPhaseChange
   const originalFileName = input.originalFileName?.trim() || input.file.name.trim() || 'upload.bin'
-  const contentType = input.file.type.trim() || 'application/octet-stream'
+  const contentType = resolveUploadContentType(input.file)
   const fileSize = input.file.size
   if (fileSize < 1) {
     notify?.('ERROR')

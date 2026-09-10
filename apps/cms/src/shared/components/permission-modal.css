@@ -47,8 +47,19 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%; /* 21px */
-  padding: 0 8px;
   margin-bottom: 6px;
+  padding: 0 4px;
+}
+
+.permission-modal__required {
+  margin-left: 1px;
+  color: var(--color-red, #c32f4a);
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%; /* 14.4px */
 }
 
 .permission-modal__footer {
@@ -66,8 +77,8 @@
 
 /* 알림 발송 — 직접 설정(span)과 동일한 flex 행·세로 중앙 정렬 */
 .permission-modal__field > .app-radio-group.ant-radio-group {
-  margin-top: 12px;
-  padding-left: 8px;
+  margin-top: 10px;
+  padding-left: 3px;
   align-items: center;
 }
 

@@ -7,6 +7,7 @@ import {
   mapMailNotificationTemplateToItem,
   type MailCategoryTreeMapped,
 } from '@/features/notifications/api/adapters/mail-template-adapters'
+import { normalizeNotificationPlaceholderMarkup } from '@/features/notifications/model/shared/notification-placeholder-markup'
 import {
   bindEmailAttachmentRemote,
   createCategoryRemote,
@@ -236,8 +237,8 @@ function buildMailTemplateUpsertBody(input: {
     displayName: input.templateName.trim(),
     senderProfileDisplayName: input.senderName.trim() || undefined,
     providerSenderEmailAddress: input.senderEmail.trim(),
-    titleTemplate: input.subject.trim().slice(0, 1000),
-    contentTemplate: input.bodyHtml,
+    titleTemplate: normalizeNotificationPlaceholderMarkup(input.subject.trim().slice(0, 1000)),
+    contentTemplate: normalizeNotificationPlaceholderMarkup(input.bodyHtml),
     emailTemplateLanguage: MAIL_EMAIL_TEMPLATE_LANGUAGE,
     useYn: true,
     categoryId: categoryId ?? undefined,

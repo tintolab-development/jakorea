@@ -28,6 +28,8 @@ const { Text } = Typography
 
 /** 임시: true로 변경 시 브레드크럼 표시 */
 const SHOW_BREADCRUMB = false
+/** 임시: true로 변경 시 계정 메뉴 「알림 설정」 표시 */
+const SHOW_NOTIFICATION_SETTINGS = false
 
 export function MainHeader() {
   const navigate = useNavigate()
@@ -333,13 +335,15 @@ export function MainHeader() {
                     >
                       정보 수정
                     </button>
-                    <button
-                      type="button"
-                      className="main-header-account-dropdown-item"
-                      onClick={() => handleAccountMenuAction('notification')}
-                    >
-                      알림 설정
-                    </button>
+                    {SHOW_NOTIFICATION_SETTINGS ? (
+                      <button
+                        type="button"
+                        className="main-header-account-dropdown-item"
+                        onClick={() => handleAccountMenuAction('notification')}
+                      >
+                        알림 설정
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="main-header-account-dropdown-item"
@@ -392,10 +396,12 @@ export function MainHeader() {
         open={profileEditModalOpen}
         onCancel={() => setProfileEditModalOpen(false)}
       />
-      <NotificationSettingsModal
-        open={notificationSettingsOpen}
-        onCancel={() => setNotificationSettingsOpen(false)}
-      />
+      {SHOW_NOTIFICATION_SETTINGS ? (
+        <NotificationSettingsModal
+          open={notificationSettingsOpen}
+          onCancel={() => setNotificationSettingsOpen(false)}
+        />
+      ) : null}
     </AntHeader>
   )
 }

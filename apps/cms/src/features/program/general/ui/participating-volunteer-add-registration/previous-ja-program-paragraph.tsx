@@ -3,6 +3,12 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import type { ParticipatingVolunteerAddRegistrationSectionContext } from './add-registration-form-types'
+import {
+  ADMIN_FILE_OWNER,
+  ADMIN_FILE_PURPOSE,
+  buildAdminFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 
 const CERTIFICATE_GUIDE_LINES = [
   '- 파일은 최대 15M까지 JPG, PNG, PDF 형식만 등록 가능합니다.',
@@ -60,9 +66,19 @@ export function ParticipatingVolunteerAddRegistrationPreviousJaProgramParagraph(
               multiple
               guideLines={CERTIFICATE_GUIDE_LINES}
               fileNames={fileNames}
-              onFilesChange={files =>
+              onFilesChange={files => {
                 setFileNames(prev => [...prev, ...files.map(file => file.name)])
-              }
+                const owner = buildAdminFileOwner(
+                  ADMIN_FILE_OWNER.CERTIFICATE_TEMPLATE,
+                  1,
+                  ADMIN_FILE_PURPOSE.CERTIFICATE_ASSET
+                )
+                void (async () => {
+                  for (const file of files) {
+                    await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
+                  }
+                })()
+              }}
               onRemoveFile={index => setFileNames(prev => prev.filter((_, i) => i !== index))}
             />
           }

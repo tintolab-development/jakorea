@@ -11,6 +11,7 @@ import type { ProgramPeriodRequest } from './programPeriodRequest';
 import type { ProgramRoundRequest } from './programRoundRequest';
 import type { ProgramScheduleRequest } from './programScheduleRequest';
 import type { ProgramSettlementPaymentItemRequest } from './programSettlementPaymentItemRequest';
+import type { ProgramSponsorAssignmentRequest } from './programSponsorAssignmentRequest';
 import type { ProgramWagePolicyRequest } from './programWagePolicyRequest';
 
 /**
@@ -18,6 +19,7 @@ import type { ProgramWagePolicyRequest } from './programWagePolicyRequest';
  */
 export interface ProgramCreateRequest {
   sponsorId?: string;
+  sponsors?: ProgramSponsorAssignmentRequest[];
   /** 프로그램 유형 */
   programType?: ProgramCreateRequestProgramType;
   title?: string;

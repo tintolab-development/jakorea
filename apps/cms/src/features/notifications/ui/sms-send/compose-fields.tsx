@@ -14,6 +14,8 @@ type SmsSendComposeFieldsProps = {
   bodyByteLimit: number
   subjectRef: MutableRefObject<string>
   bodyTextRef: MutableRefObject<string>
+  /** 본문 변경 시 바이트 기준 메시지 유형 동기화 */
+  onBodyTextChange?: (bodyText: string) => void
 }
 
 /**
@@ -28,6 +30,7 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
   bodyByteLimit,
   subjectRef,
   bodyTextRef,
+  onBodyTextChange,
 }: SmsSendComposeFieldsProps) {
   const [subject, setSubject] = useState(initialSubject)
   const [bodyText, setBodyText] = useState(initialBodyText)
@@ -44,6 +47,15 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
     () => estimateSmsSendBodyBytes(deferredBody),
     [deferredBody]
   )
+
+  useEffect(() => {
+    onBodyTextChange?.(deferredBody)
+  }, [deferredBody, onBodyTextChange])
+
+  const commitBody = (next: string) => {
+    setBodyText(next)
+    bodyTextRef.current = next
+  }
 
   return (
     <DetailInfoForm
@@ -85,25 +97,14 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
           view={bodyText}
           edit={
             <div className="sms-send-fullpage__body-field">
-              <SmsVariableTextField
-                value={bodyText}
-                multiline
-                onValueChange={next => {
-                  setBodyText(next)
-                  bodyTextRef.current = next
-                }}
-              >
+              <SmsVariableTextField value={bodyText} multiline onValueChange={commitBody}>
                 <CmsTextArea
                   inputSize="large"
                   width="100%"
                   rows={12}
                   placeholder="내용을 작성하세요"
                   value={bodyText}
-                  onChange={event => {
-                    const next = event.target.value
-                    setBodyText(next)
-                    bodyTextRef.current = next
-                  }}
+                  onChange={event => commitBody(event.target.value)}
                 />
               </SmsVariableTextField>
               <div className="sms-send-fullpage__byte-row">

@@ -213,7 +213,8 @@ export const INITIAL_VALUES: InstructorProfileFormValues = {
   oneLineIntro: '',
   consentTermsOfService: undefined,
   consentPersonal: undefined,
-  consentMarketing: undefined,
+  /** CMS — 마케팅 미동의 고정(비활성). Form 값도 disagree로 맞춰 미선택으로 잡히지 않게 함 */
+  consentMarketing: 'disagree',
   consentPortrait: 'disagree',
   consentPaymentStatement: 'disagree',
   consentEducatorPledge: 'disagree',

@@ -23,6 +23,12 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { ParagraphInput } from '@/features/template/ui/shared/paragraph-input'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
+import {
+  ADMIN_FILE_OWNER,
+  ADMIN_FILE_PURPOSE,
+  buildAdminFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { PortraitAffiliationBody } from '@/features/template/ui/paragraph/table/agreement-portrait-personal-consent-name-row'
 import { TextCellInput } from '@/features/template/ui/paragraph/table/text-cell-input'
@@ -179,6 +185,7 @@ export function VerticalTableParagraphBody({
   const dtCellsInteractive = dateTimeCellsInteractiveProp ?? isEditMode
   const canvasInteractive = tableCanvasInteractive
   const p = useMemo(() => normalizeVerticalTableParagraph(paragraph), [paragraph])
+  const [fileAttachmentNames, setFileAttachmentNames] = useState<string[]>([])
   const choiceOpts = useMemo(
     () => normalizeVerticalChoiceOptions(p.verticalChoiceOptions),
     [p.verticalChoiceOptions]
@@ -842,6 +849,25 @@ export function VerticalTableParagraphBody({
                     accept=".jpg,.jpeg,.png"
                     multiple
                     disabled={!isEditMode}
+                    fileNames={fileAttachmentNames}
+                    onFilesChange={files => {
+                      setFileAttachmentNames(prev => [...prev, ...files.map(file => file.name)])
+                      const owner = buildAdminFileOwner(
+                        ADMIN_FILE_OWNER.EDUCATION_JOURNAL,
+                        1,
+                        ADMIN_FILE_PURPOSE.EDUCATION_JOURNAL
+                      )
+                      void (async () => {
+                        for (const file of files) {
+                          await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
+                        }
+                      })()
+                    }}
+                    onRemoveFile={index =>
+                      setFileAttachmentNames(prev =>
+                        prev.filter((_, currentIndex) => currentIndex !== index)
+                      )
+                    }
                   />
                 </div>
               </div>

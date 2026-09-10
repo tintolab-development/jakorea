@@ -22,4 +22,5 @@ export interface SaveApplicationRequest {
      * @maxItems 2
      */
   requestedSchedules?: RequestedScheduleRequest[];
+  requestedClassCount?: number;
 }

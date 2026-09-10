@@ -13,7 +13,14 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TextAreaFieldRow } from '@/shared/ui/text-area-field-row'
-import { fileUploadService } from '@/entities/application/api/file-upload-service'
+import {
+  ADMIN_FILE_PURPOSE,
+  contentUrlForFileObjectId,
+  createFileAttachment,
+  parseFileObjectId,
+  programFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 import { useTemplateEditor } from '@/features/template/hooks/use-template-editor'
 import { RichTextEditor, RichTextViewer } from '@/shared/rich-text'
 import {
@@ -233,9 +240,17 @@ function ThumbnailImageRow({
                         setThumbnailPreviewBlobUrl(blobUrl)
                         setUploadingThumbnail(true)
                         try {
-                          const result = await fileUploadService.upload(file, 'image')
-                          form.setValue('keyVisualImage', result.url)
-                          form.setValue('posterImage', result.url)
+                          const programId = parseFileObjectId(program.id) ?? 1
+                          const uploaded = await uploadAdminFileMaybeMock({
+                            file,
+                            owner: programFileOwner(
+                              programId,
+                              ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL
+                            ),
+                          })
+                          const url = contentUrlForFileObjectId(uploaded.fileObjectId)
+                          form.setValue('keyVisualImage', url)
+                          form.setValue('posterImage', url)
                         } catch (e) {
                           URL.revokeObjectURL(blobUrl)
                           setThumbnailPreviewBlobUrl(null)
@@ -336,6 +351,7 @@ function AdditionalContentRow({
 }
 
 function AttachmentRowStandard({
+  program,
   isEditMode,
   isFormEdit,
   form,
@@ -343,6 +359,7 @@ function AttachmentRowStandard({
   guideLines,
   emptyReadDisplay = 'mock-default',
 }: {
+  program: Program
   isEditMode: boolean
   isFormEdit: boolean
   form: UseFormReturn<ProgramDetailEditFormValues> | undefined
@@ -370,9 +387,25 @@ function AttachmentRowStandard({
             guideLines={guideLines}
             onFilesChange={
               isFormEdit
-                ? files => {
+                ? async files => {
+                    const programId = parseFileObjectId(program.id) ?? 1
+                    const owner = programFileOwner(
+                      programId,
+                      ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT
+                    )
                     const current = form!.getValues('attachmentFileNames') ?? []
-                    form!.setValue('attachmentFileNames', [...current, ...files.map(f => f.name)])
+                    const uploadedNames: string[] = []
+                    for (const file of files) {
+                      const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+                      await createFileAttachment({
+                        fileObjectId: uploaded.fileObjectId,
+                        owner,
+                        attachmentType: ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT,
+                        displayOrder: current.length + uploadedNames.length + 1,
+                      }).catch(() => undefined)
+                      uploadedNames.push(file.name)
+                    }
+                    form!.setValue('attachmentFileNames', [...current, ...uploadedNames])
                   }
                 : undefined
             }
@@ -544,6 +577,7 @@ export function DetailInfoSection({
             emptyReadDisplay={emptyReadDisplay}
           />
           <AttachmentRowStandard
+            program={program}
             isEditMode={isEditMode}
             isFormEdit={isFormEdit}
             form={f}
@@ -659,6 +693,7 @@ export function InstructorDetailInfoSection({
             readContent={otherNotes}
           />
           <AttachmentRowStandard
+            program={program}
             isEditMode={isEditMode}
             isFormEdit={isFormEdit}
             form={f}
@@ -797,12 +832,25 @@ export function VolunteerDetailInfoSection({
                   guideLines={ATTACHMENT_GUIDE_LINES}
                   onFilesChange={
                     isFormEdit
-                      ? files => {
+                      ? async files => {
+                          const programId = parseFileObjectId(program.id) ?? 1
+                          const owner = programFileOwner(
+                            programId,
+                            ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT
+                          )
                           const current = f!.getValues('attachmentFileNames') ?? []
-                          f!.setValue('attachmentFileNames', [
-                            ...current,
-                            ...files.map(x => x.name),
-                          ])
+                          const uploadedNames: string[] = []
+                          for (const file of files) {
+                            const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+                            await createFileAttachment({
+                              fileObjectId: uploaded.fileObjectId,
+                              owner,
+                              attachmentType: ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT,
+                              displayOrder: current.length + uploadedNames.length + 1,
+                            }).catch(() => undefined)
+                            uploadedNames.push(file.name)
+                          }
+                          f!.setValue('attachmentFileNames', [...current, ...uploadedNames])
                         }
                       : undefined
                   }

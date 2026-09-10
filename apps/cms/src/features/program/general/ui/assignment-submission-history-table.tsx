@@ -69,7 +69,8 @@ export function AssignmentSubmissionCellActionButton({
 
 function renderSubmissionCell(
   record: AssignmentSubmissionTableRow,
-  onOpenPreview: (row: AssignmentSubmissionTableRow) => void
+  onOpenPreview: (row: AssignmentSubmissionTableRow) => void,
+  onOpenFeedback?: (row: AssignmentSubmissionTableRow) => void
 ) {
   if (record.lectureProgress === 'scheduled' || record.submissionStatus === 'none') {
     return '-'
@@ -84,10 +85,21 @@ function renderSubmissionCell(
   }
 
   if (record.submissionStatus === 'submitted' && record.canViewAssignment) {
+    const showFeedback =
+      onOpenFeedback != null &&
+      record.formResponseId != null &&
+      Number.isFinite(record.formResponseId)
     return (
-      <AssignmentSubmissionCellActionButton onClick={() => onOpenPreview(record)}>
-        과제 보기
-      </AssignmentSubmissionCellActionButton>
+      <div className="assignment-submission-history-table__cell-actions">
+        <AssignmentSubmissionCellActionButton onClick={() => onOpenPreview(record)}>
+          과제 보기
+        </AssignmentSubmissionCellActionButton>
+        {showFeedback ? (
+          <AssignmentSubmissionCellActionButton onClick={() => onOpenFeedback(record)}>
+            피드백 작성
+          </AssignmentSubmissionCellActionButton>
+        ) : null}
+      </div>
     )
   }
 
@@ -104,6 +116,7 @@ export function useAssignmentSubmissionHistoryColumns(options: {
   onTeamRoleDropdownOpenChange: (rowId: string, open: boolean) => void
   onTeamRoleChange: (rowId: string, role: AssignmentTeamRoleKey) => void
   onOpenPreview: (row: AssignmentSubmissionTableRow) => void
+  onOpenFeedback?: (row: AssignmentSubmissionTableRow) => void
 }): ColumnsType<AssignmentSubmissionHistoryTableRow> {
   const {
     isRemoteDetail,
@@ -111,6 +124,7 @@ export function useAssignmentSubmissionHistoryColumns(options: {
     onTeamRoleDropdownOpenChange,
     onTeamRoleChange,
     onOpenPreview,
+    onOpenFeedback,
   } = options
 
   return useMemo(
@@ -191,7 +205,8 @@ export function useAssignmentSubmissionHistoryColumns(options: {
         key: 'submission',
         width: 300,
         align: 'center',
-        render: (_value, record) => renderSubmissionCell(record, onOpenPreview),
+        render: (_value, record) =>
+          renderSubmissionCell(record, onOpenPreview, onOpenFeedback),
       },
       {
         title: '교육 진행 현황',
@@ -207,6 +222,7 @@ export function useAssignmentSubmissionHistoryColumns(options: {
     ],
     [
       isRemoteDetail,
+      onOpenFeedback,
       onOpenPreview,
       onTeamRoleChange,
       onTeamRoleDropdownOpenChange,

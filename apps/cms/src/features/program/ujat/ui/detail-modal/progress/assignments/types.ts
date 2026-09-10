@@ -12,6 +12,8 @@ export type UjatAssignmentReportState = {
   submittedDateLabel?: string
   /** 피드백 전달 후 봉사자가 아직 수정 제출하지 않은 상태의 피드백 작성일 */
   feedbackDeliveredDateLabel?: string
+  /** Wave11 POST feedback — BE form response id (없을 때 mock-only UI) */
+  formResponseId?: number
 }
 
 export type UjatAssignmentSubmissionStatusKey =

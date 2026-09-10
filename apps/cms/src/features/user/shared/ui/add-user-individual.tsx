@@ -23,7 +23,6 @@ import {
   isBirthDateInputIncomplete,
 } from '@/shared/ui/date-text-input'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
 import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
@@ -169,7 +168,8 @@ const INITIAL_VALUES: AddUserIndividualFormValues = {
   volunteerId: '',
   consentTermsOfService: undefined,
   consentPersonalInfo: undefined,
-  consentMarketing: undefined,
+  /** CMS 회원 등록 — 마케팅은 미동의 고정(비활성). Form 값도 disagree로 맞춰 미선택(undefined)으로 잡히지 않게 함 */
+  consentMarketing: 'disagree',
   consentPortrait: 'disagree',
   consentWithholdingTax: 'disagree',
   consentFacilitatorPledge: 'disagree',
@@ -516,7 +516,7 @@ export function AddUserIndividual({
                       getValueFromEvent={(value: string) => value}
                     >
                       <CmsDateTextInput
-                        placeholder="YYYY.MM.DD"
+                        placeholder="생년월일 8자리"
                         maxLength={10}
                         inputSize="medium"
                         width="100%"
@@ -547,29 +547,31 @@ export function AddUserIndividual({
                 edit={
                   isEnrolled ? (
                     <div className="detail-info-form-inputs-wrapper">
-                      <Form.Item name="schoolName" noStyle>
-                        <SchoolSearch
-                          value={schoolName}
-                          onChange={nextSchoolName =>
-                            form.setFieldsValue({
-                              schoolName: nextSchoolName,
-                              schoolProvider: undefined,
-                              schoolExternalCode: undefined,
-                              schoolEducationOfficeCode: undefined,
-                              schoolLevel: undefined,
-                              schoolAddress: undefined,
-                              schoolZipcode: undefined,
-                              schoolRegionSido: undefined,
-                              schoolRegionSigungu: undefined,
-                              schoolOrganizationId: undefined,
-                            })
-                          }
-                          onSelect={handleSchoolSelect}
-                          placeholder="소속 학교명"
-                          inputSize="medium"
-                          width={FORM_INPUTS_2_WIDTHS[0]}
-                        />
-                      </Form.Item>
+                      <div style={{ flex: '1 1 0', minWidth: 0 }}>
+                        <Form.Item name="schoolName" noStyle>
+                          <SchoolSearch
+                            value={schoolName}
+                            onChange={nextSchoolName =>
+                              form.setFieldsValue({
+                                schoolName: nextSchoolName,
+                                schoolProvider: undefined,
+                                schoolExternalCode: undefined,
+                                schoolEducationOfficeCode: undefined,
+                                schoolLevel: undefined,
+                                schoolAddress: undefined,
+                                schoolZipcode: undefined,
+                                schoolRegionSido: undefined,
+                                schoolRegionSigungu: undefined,
+                                schoolOrganizationId: undefined,
+                              })
+                            }
+                            onSelect={handleSchoolSelect}
+                            placeholder="소속 학교명"
+                            inputSize="medium"
+                            width="100%"
+                          />
+                        </Form.Item>
+                      </div>
                       <Form.Item name="schoolProvider" hidden preserve />
                       <Form.Item name="schoolExternalCode" hidden preserve />
                       <Form.Item name="schoolEducationOfficeCode" hidden preserve />
@@ -584,7 +586,7 @@ export function AddUserIndividual({
                           placeholder="학년"
                           withAllOption={false}
                           inputSize="medium"
-                          width={FORM_INPUTS_2_WIDTHS[1]}
+                          width={120}
                           options={individualAffiliationGradeSelectOptions(allValues?.grade)}
                         />
                       </Form.Item>
@@ -718,7 +720,11 @@ export function AddUserIndividual({
                     view="-"
                     edit={
                       <Form.Item name="consentMarketing" noStyle>
-                        <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="large" />
+                        <CmsRadioGroup
+                          options={CONSENT_RADIO_OPTIONS}
+                          size="large"
+                          disabled
+                        />
                       </Form.Item>
                     }
                   />

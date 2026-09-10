@@ -2,7 +2,7 @@
  * 게시글 등록 모달
  * 수강 프로그램 상세 / 학교 상세 게시글 탭 > "게시글 등록" 버튼 클릭 시 노출
  * antd Modal 사용 (흰색 헤더, 타이틀 + X), 공개 범위·내용·첨부파일·취소/등록
- * 실제 데이터: createProgramPost + fileUploadService 연동
+ * 실제 데이터: createProgramPost + uploadAdminFile 연동
  */
 
 import { useState, useEffect, useMemo } from 'react'
@@ -18,7 +18,14 @@ import type { Program } from '@/types/domain'
 import { createProgramPost, addProgramFiles } from '@/data/mock'
 import { createGeneralProgramPost } from '@/features/program/general/api/admin-general-programs-service'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
-import { fileUploadService } from '@/entities/application/api/file-upload-service'
+import {
+  ADMIN_FILE_PURPOSE,
+  contentUrlForFileObjectId,
+  createFileAttachment,
+  parseFileObjectId,
+  programPostFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 import './post-write-modal.css'
 
 const { TextArea } = Input
@@ -133,10 +140,29 @@ export function PostWriteModal({
 
     setLoading(true)
     try {
-      const uploadResults =
-        files.length > 0
-          ? await fileUploadService.uploadMultiple(files, 'document')
-          : []
+      const ownerId = parseFileObjectId(programId) ?? 1
+      const owner = programPostFileOwner(ownerId, ADMIN_FILE_PURPOSE.PROGRAM_POST_ATTACHMENT)
+      const uploadResults: Array<{
+        fileName: string
+        fileUrl: string
+        fileSize: number
+        fileObjectId: number
+      }> = []
+      for (const file of files) {
+        const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+        await createFileAttachment({
+          fileObjectId: uploaded.fileObjectId,
+          owner,
+          attachmentType: ADMIN_FILE_PURPOSE.PROGRAM_POST_ATTACHMENT,
+          displayOrder: uploadResults.length + 1,
+        }).catch(() => undefined)
+        uploadResults.push({
+          fileName: file.name,
+          fileUrl: contentUrlForFileObjectId(uploaded.fileObjectId),
+          fileSize: file.size,
+          fileObjectId: uploaded.fileObjectId,
+        })
+      }
       const audienceForSave = resolvePostWriteAudienceForSave(audience, program)
       const visibilityType = audienceForSave.includes('all')
         ? 'ALL'
@@ -163,7 +189,7 @@ export function PostWriteModal({
             newPost.id,
             uploadResults.map(r => ({
               fileName: r.fileName,
-              fileUrl: r.url,
+              fileUrl: r.fileUrl,
               fileSize: r.fileSize,
             }))
           )

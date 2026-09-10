@@ -18,6 +18,9 @@ import {
 } from '@/features/template/model/ujat-education-issuance-a4-preview'
 import { useCmsAlert } from '@/shared/ui'
 import { handleError } from '@/shared/utils/error-handler'
+import { shouldUseFormsSurveysRemoteApi } from '@/features/template/api/admin-form-templates-service'
+import { useCreateFormResponseFeedbackMutation } from '@/features/template/hooks/use-create-form-response-feedback-mutation'
+import { getFormResponseFeedbackErrorMessage } from '@/features/template/lib/form-response-feedback-error'
 import { UjatAssignmentFeedbackModal, type UjatFeedbackModalMode } from './ujat-assignment-feedback-modal'
 import {
   buildUjatDocumentFileName,
@@ -118,6 +121,7 @@ export function UjatAssignmentDocumentViewerModal({
   target,
 }: UjatAssignmentDocumentViewerModalProps) {
   const { showAlert } = useCmsAlert()
+  const createFeedbackMutation = useCreateFormResponseFeedbackMutation()
 
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [feedbackMode, setFeedbackMode] = useState<UjatFeedbackModalMode | null>(null)
@@ -199,10 +203,42 @@ export function UjatAssignmentDocumentViewerModal({
     }
   }, [submittedFeedback])
 
-  const handleFeedbackSubmit = useCallback((feedback: string) => {
-    setSubmittedFeedback(feedback)
-    setFeedbackMode(null)
-  }, [])
+  const handleFeedbackSubmit = useCallback(
+    async (feedback: string) => {
+      const responseId = target?.formResponseId
+      if (
+        responseId != null &&
+        Number.isFinite(responseId) &&
+        shouldUseFormsSurveysRemoteApi()
+      ) {
+        if (createFeedbackMutation.isPending) return
+        try {
+          const result = await createFeedbackMutation.mutateAsync({
+            responseId,
+            body: { content: feedback },
+          })
+          setSubmittedFeedback(result.content?.trim() || feedback)
+          setFeedbackMode(null)
+          showAlert({
+            title: '안내',
+            content: '피드백을 등록했습니다. 회원에게 확인 요청 알림이 발송됩니다.',
+          })
+        } catch (error) {
+          handleError(error, { context: 'ujatDocumentViewerModal.createFeedback' })
+          showAlert({
+            title: '등록 실패',
+            content: getFormResponseFeedbackErrorMessage(error),
+          })
+        }
+        return
+      }
+
+      // formResponseId 없는 mock/로컬 미리보기: UI만 반영
+      setSubmittedFeedback(feedback)
+      setFeedbackMode(null)
+    },
+    [createFeedbackMutation, showAlert, target?.formResponseId]
+  )
 
   const handleDownloadPdf = useCallback(async () => {
     const root = pdfHostRef.current
@@ -366,6 +402,7 @@ export function UjatAssignmentDocumentViewerModal({
           volunteerName={target.volunteerName}
           docTypeLabel={docTypeLabel}
           existingFeedback={submittedFeedback ?? ''}
+          submitting={createFeedbackMutation.isPending}
           onSubmit={handleFeedbackSubmit}
         />
       ) : null}

@@ -142,16 +142,37 @@ export function withSurveyWriteTitleNumbering<
 
 const CARD_DESCRIPTION_PLACEHOLDER_TEXT = '설명 입력'
 
+/**
+ * 사용자 작성·미리보기(`showEditorChrome=false`):
+ * - placeholder성 카드 설명 숨김
+ * - 설명글 등 빈 타이틀의 「타이틀을 입력해 주세요」 노출 억제
+ */
 export function withoutPlaceholderDescriptionInPreview<
-  T extends { descriptionValue?: string; showDescription?: boolean },
+  T extends {
+    descriptionValue?: string
+    showDescription?: boolean
+    showTitlePlaceholderWhenInactive?: boolean
+    titleIsEditMode?: boolean
+    titleValue?: string
+  },
 >(heading: T | undefined, hideInPreview?: boolean): T | undefined {
   if (!heading || !hideInPreview) return heading
-  if (heading.showDescription === false) return heading
-  const trimmedDescription = heading.descriptionValue?.trim() ?? ''
-  if (isPlaceholderParagraphDescription(trimmedDescription)) {
-    return { ...heading, showDescription: false }
+  let next: T = heading
+  if (next.showDescription !== false) {
+    const trimmedDescription = next.descriptionValue?.trim() ?? ''
+    if (isPlaceholderParagraphDescription(trimmedDescription)) {
+      next = { ...next, showDescription: false }
+    }
   }
-  return heading
+  const titleEmpty = (typeof next.titleValue === 'string' ? next.titleValue.trim() : '') === ''
+  if (titleEmpty || next.showTitlePlaceholderWhenInactive === true) {
+    next = {
+      ...next,
+      showTitlePlaceholderWhenInactive: false,
+      titleIsEditMode: false,
+    }
+  }
+  return next
 }
 
 function usesPlaceholderDescriptionValue(paragraphId: string): boolean {

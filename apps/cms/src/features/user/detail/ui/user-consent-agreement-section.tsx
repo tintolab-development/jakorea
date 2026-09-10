@@ -21,7 +21,6 @@ import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-co
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
 import {
   CONSENT_RADIO_OPTIONS,
-  type ConsentValue,
 } from '@/features/user/shared/ui/instructor-profile-form'
 import {
   isMemberCrimeConsentField,
@@ -381,28 +380,16 @@ function resolveConsentFieldView(
 
 function ConsentDocumentFieldEdit({
   agreed,
-  onDisagree,
   onWrite,
 }: {
   agreed: boolean
-  onDisagree: () => void
   onWrite: () => void
 }) {
   return (
     <span className="user-consent-agreement-section__document-edit">
-      <CmsRadioGroup
-        options={CONSENT_RADIO_OPTIONS}
-        size="large"
-        value={agreed ? 'agree' : 'disagree'}
-        onChange={event => {
-          const next = event.target.value as ConsentValue
-          if (next === 'disagree') {
-            onDisagree()
-            return
-          }
-          onWrite()
-        }}
-      />
+      <span className="user-consent-agreement-section__document-edit-status">
+        {agreed ? '동의' : '미동의'}
+      </span>
       <span className="user-consent-agreement-section__value-sep" aria-hidden>
         |
       </span>
@@ -454,7 +441,6 @@ function resolveConsentFieldEdit(
     return (
       <ConsentDocumentFieldEdit
         agreed={agreed}
-        onDisagree={() => ctx.onEditableConsentChange?.(field.label, false)}
         onWrite={() => ctx.onWriteConsentDocument?.(field.label)}
       />
     )

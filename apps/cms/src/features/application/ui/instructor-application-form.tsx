@@ -14,6 +14,12 @@ import type { Program } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { UploadFile } from 'antd/es/upload/interface'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
+import {
+  ADMIN_FILE_OWNER,
+  ADMIN_FILE_PURPOSE,
+  buildAdminFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 
 const { TextArea } = Input
 
@@ -55,6 +61,11 @@ export function InstructorApplicationForm({
       subjectId: user?.instructorId || '',
       status: 'submitted' } })
 
+  const resolveInstructorApplicationOwnerId = (): number => {
+    const parsed = Number(user?.instructorId)
+    return Number.isFinite(parsed) && parsed >= 1 ? parsed : 1
+  }
+
   // 서류 파일 업로드 핸들러
   const handleDocumentUpload = (file: File, type: 'resume' | 'crimeCheckConsent') => {
     // 파일 확장자 검증
@@ -69,6 +80,15 @@ export function InstructorApplicationForm({
     }
 
     setValue(type, file)
+    const ownerId = resolveInstructorApplicationOwnerId()
+    const owner = buildAdminFileOwner(
+      ADMIN_FILE_OWNER.INSTRUCTOR_APPLICATION,
+      ownerId,
+      type === 'resume'
+        ? ADMIN_FILE_PURPOSE.INSTRUCTOR_APPLICATION
+        : ADMIN_FILE_PURPOSE.CRIMINAL_HISTORY_EVIDENCE
+    )
+    void uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
     return false // 자동 업로드 방지
   }
 

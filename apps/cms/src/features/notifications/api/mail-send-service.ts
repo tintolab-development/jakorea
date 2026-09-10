@@ -18,6 +18,8 @@ import {
   fetchSenderProfilesRemote,
   fetchTemplateVariablesRemote,
 } from '@/features/notifications/api/notifications-api-client'
+import { normalizeNotificationPlaceholderMarkup } from '@/features/notifications/model/shared/notification-placeholder-markup'
+import { applyNotificationSendBodySnapshot } from '@/features/notifications/model/shared/send-body-snapshot'
 import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
 import { resolveScheduledAtForCreateRequest } from '@/features/notifications/model/send-scheduled-at'
 import type { MailSendDraft, MailSendRecipient } from '@/features/notifications/model/mail-send/types'
@@ -41,13 +43,38 @@ export function shouldUseMailSendRemoteApi(): boolean {
   return isRealApiModuleEnabled('notifications') && hasRemoteAdminJwt()
 }
 
+function isMaskedPii(value: string): boolean {
+  return value.includes('*')
+}
+
+/** DIRECT·마스킹되지 않은 연락처는 FE가 recipient.variables로 명시 (BE enrich 보완) */
+export function buildMailRecipientVariables(
+  recipient: MailSendRecipient
+): Record<string, string> | undefined {
+  const vars: Record<string, string> = {}
+  const name = recipient.name.trim()
+  if (name && !isMaskedPii(name) && name !== '-') {
+    vars['회원명'] = name
+    vars['수신자명'] = name
+  }
+  const email = recipient.email.trim()
+  if (email && !isMaskedPii(email) && email !== '-' && email.includes('@')) {
+    vars['사용자 아이디(이메일)'] = email
+    vars['이메일'] = email
+    vars.email = email
+  }
+  return Object.keys(vars).length > 0 ? vars : undefined
+}
+
 export function buildMailSendRecipients(recipients: MailSendRecipient[]): RecipientRequest[] {
   return recipients.map(recipient => {
+    const variables = buildMailRecipientVariables(recipient)
     if (recipient.source === 'manual' || recipient.actorType === 'DIRECT') {
       return {
         actorType: 'DIRECT',
         recipientContact: recipient.email.trim(),
         recipientName: recipient.name.trim() || undefined,
+        ...(variables ? { variables } : {}),
       }
     }
     const actorIdMatch = /^actor-[^-]+-(\d+)$/.exec(recipient.id)
@@ -63,6 +90,7 @@ export function buildMailSendRecipients(recipients: MailSendRecipient[]): Recipi
       actorId,
       recipientName: recipient.name.trim() || undefined,
       recipientContact: recipient.email.includes('*') ? undefined : recipient.email.trim(),
+      ...(variables ? { variables } : {}),
     }
   })
 }
@@ -76,7 +104,7 @@ export async function getMailSenderProfiles(): Promise<MailSenderProfileOption[]
   return mapSenderProfileOptions(dto.items)
 }
 
-/** 발신 메일 주소로 EMAIL senderProfileId 매칭 (senderKey ≈ 메일주소) */
+/** 발신 메일 주소로 EMAIL senderProfileId 매칭 (메일주소 = senderKey) */
 export function resolveMailSenderProfileId(
   profiles: MailSenderProfileOption[],
   senderEmail: string
@@ -143,18 +171,27 @@ export async function getMailTemplateVariables(
 /**
  * 메일 발송 — `POST /api/admin/notification-send-batches`
  * - Hub scheduledDateTime 금지 → `scheduledAt`만 사용
- * - 제목/본문 override API 없음 → 저장된 템플릿 + BE 변수 치환
- * - senderProfileId: EMAIL 프로필 (메일주소 = senderKey)
+ * - 발송 편집본은 titleTemplate/contentTemplate 스냅샷으로 전송 (등록 템플릿 PATCH 금지)
+ * - 필수 변수 누락은 BE fail-closed
  * - variables 빈 문자열 패딩 금지 (BE 자동입력을 덮어씀)
  */
 export async function submitMailSend(input: {
   draft: MailSendDraft
   templateDisplayName?: string
+  templateCategoryId?: string | null
+  templateBaseline?: { subject: string; bodyHtml: string }
   idempotencyKey: string
   senderProfileId?: number
   variables?: Record<string, unknown>
 }): Promise<void> {
-  const { draft, templateDisplayName, idempotencyKey, senderProfileId, variables } = input
+  const {
+    draft,
+    templateDisplayName,
+    templateBaseline,
+    idempotencyKey,
+    senderProfileId,
+    variables,
+  } = input
   assertMailSendRemoteReady()
 
   const numericTemplateId =
@@ -172,27 +209,40 @@ export async function submitMailSend(input: {
     throw new Error('대상 프로그램을 선택하세요.')
   }
 
+  const subject = normalizeNotificationPlaceholderMarkup(draft.subject)
+  const bodyHtml = normalizeNotificationPlaceholderMarkup(draft.bodyHtml)
+
   let resolvedSenderProfileId = senderProfileId
   if (resolvedSenderProfileId == null && draft.senderEmail.trim()) {
     const profiles = await getMailSenderProfiles()
     resolvedSenderProfileId = resolveMailSenderProfileId(profiles, draft.senderEmail)
   }
 
+  const recipients = buildMailSendRecipients(draft.recipients)
   const batchVariables = pickNonEmptySendVariables(variables)
   const body: CreateRequest = {
     batchName:
-      (templateDisplayName || draft.subject).slice(0, 200).trim() || '메일 발송',
+      (templateDisplayName || subject).slice(0, 200).trim() || '메일 발송',
     templateId: numericTemplateId,
     scheduledAt: resolveScheduledAtForCreateRequest({
       sendTiming: draft.sendTiming,
       scheduledAt: draft.scheduledAt,
     }),
-    recipients: buildMailSendRecipients(draft.recipients),
+    recipients,
     senderProfileId: resolvedSenderProfileId,
     senderKey: draft.senderEmail.trim() || undefined,
   }
   if (programId != null) body.programId = programId
   if (batchVariables) body.variables = batchVariables
+
+  applyNotificationSendBodySnapshot(body, {
+    channel: 'EMAIL',
+    title: subject,
+    content: bodyHtml,
+    baseline: templateBaseline
+      ? { title: templateBaseline.subject, content: templateBaseline.bodyHtml }
+      : null,
+  })
 
   await createSendBatchRemote(body, idempotencyKey)
 }

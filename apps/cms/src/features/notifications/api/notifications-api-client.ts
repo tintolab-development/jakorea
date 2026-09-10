@@ -194,9 +194,7 @@ export async function fetchTemplateVariablesRemote(
   params?: ListNotificationTemplateVariablesParams
 ): Promise<NotificationTemplateVariableCatalogResponse> {
   // BE Controller는 catalog를 직접 반환(ApiResponse 래퍼 없음). unwrap는 passthrough.
-  return unwrapApiBody(
-    await notificationsRemoteApi.listNotificationTemplateVariables(params)
-  )
+  return unwrapApiBody(await notificationsRemoteApi.listNotificationTemplateVariables(params))
 }
 
 export async function createSendBatchRemote(

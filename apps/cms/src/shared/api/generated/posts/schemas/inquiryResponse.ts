@@ -5,6 +5,7 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InquiryResponseStatus } from './inquiryResponseStatus';
 
 /**
  * 문의 응답
@@ -22,16 +23,16 @@ export interface InquiryResponse {
   inquirerMemberId?: number;
   /** 문의자 표시명 */
   inquirerName?: string;
-  /** 문의자 전화번호 */
+  /** 문의자 전화번호(기본 마스킹) */
   inquirerPhone?: string;
-  /** 문의자 이메일 */
+  /** 문의자 이메일(기본 마스킹) */
   inquirerEmail?: string;
   /** 문의 제목 */
   title?: string;
   /** 문의 본문 */
   content?: string;
-  /** 문의 상태 */
-  status?: string;
+  /** CMS 문의 답변 상태 */
+  status?: InquiryResponseStatus;
   /** 담당 관리자 ID */
   assignedAdminId?: number;
   /** 담당 관리자 표시명 */

@@ -43,6 +43,7 @@ import type {
   SettlementCalendarSummaryResponse,
   SettlementConfigResponse,
   SettlementConfigUpdateRequest,
+  SettlementCorrectionApprovalRequest,
   SettlementCorrectionRequest,
   SettlementDocumentDownloadResponse,
   SettlementExportRequest,
@@ -1116,12 +1117,12 @@ const rejectCorrection = (
  */
 const approveCorrection = (
     correctionRequestId: number,
-    settlementCorrectionRequest: SettlementCorrectionRequest,
+    settlementCorrectionApprovalRequest: SettlementCorrectionApprovalRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSettlementCorrectionResponse>>,) => {
       return customInstance<ApiResponseSettlementCorrectionResponse>(
       {url: `/api/admin/settlements/correction-requests/${correctionRequestId}/approve`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
-      data: settlementCorrectionRequest
+      data: settlementCorrectionApprovalRequest
     },
       options);
     }

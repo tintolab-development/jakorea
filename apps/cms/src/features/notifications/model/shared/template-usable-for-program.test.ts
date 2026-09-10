@@ -47,13 +47,32 @@ describe('canUseNotificationSendTemplateForProgram', () => {
     ).toBe(true)
   })
 
-  it('카탈로그에 없는 키는 FE에서 막지 않는다', () => {
+  it('카탈로그에 없는 키는 프로그램 지정 시 false (Option A)', () => {
     expect(
       canUseNotificationSendTemplateForProgram({
         texts: ['#{알 수 없는 키}'],
         catalog,
         programNumericId: 164003,
       })
-    ).toBe(true)
+    ).toBe(false)
+  })
+
+  it('SYSTEM enabled=false 키(로그인 실패 횟수) 포함 시 false', () => {
+    const withSystem = [
+      ...catalog,
+      {
+        key: '로그인 실패 횟수',
+        token: '#{로그인 실패 횟수}',
+        enabled: false,
+        requiresProgram: false,
+      },
+    ]
+    expect(
+      canUseNotificationSendTemplateForProgram({
+        texts: ['실패 횟수: #{로그인 실패 횟수}'],
+        catalog: withSystem,
+        programNumericId: 164003,
+      })
+    ).toBe(false)
   })
 })

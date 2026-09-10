@@ -105,6 +105,7 @@
     "generate:api:notifications": "pnpm merge:openapi:notification-template-variables && pnpm patch:openapi:notification-template-variables && pnpm filter:openapi:notifications && orval --config orval.config.ts --project notifications",
     "filter:openapi:performance": "node scripts/filter-openapi-performance.mjs",
     "filter:openapi:forms-surveys": "node scripts/filter-openapi-forms-surveys.mjs",
+    "generate:api:forms-surveys": "pnpm filter:openapi:forms-surveys && orval --config orval.config.ts --project formsSurveys",
     "package:members-be-handoff": "node scripts/package-members-be-handoff.mjs",
     "package:member-management-seed-handoff": "node scripts/package-member-management-seed-handoff.mjs",
     "smoke:member-management-be": "node scripts/member-management-be-smoke.mjs",

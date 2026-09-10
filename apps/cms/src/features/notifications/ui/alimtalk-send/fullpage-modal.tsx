@@ -69,9 +69,6 @@ import {
   useAlimtalkTemplatePreviewQuery,
 } from '@/features/notifications/hooks/use-alimtalk-template-tree-query'
 import { useInvalidateAlimtalkSendHistory } from '@/features/notifications/hooks/use-alimtalk-send-history-query'
-import {
-  collectTemplatePlaceholderKeys,
-} from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import { ProgramSelectField } from '@/features/notifications/ui/mail-send/program-select-field'
 import { SendScheduleField } from '@/features/notifications/ui/shared/send-schedule-field'
 import { ContentPanel } from './content-panel'
@@ -359,13 +356,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
           : (pickerTemplate?.quickLinks ?? []),
     } satisfies AlimtalkTemplateItem
   }, [detailQuery.data, pickerTemplate, previewQuery.data, remote, templateId])
-
-  const requiredPlaceholderKeys = useMemo(() => {
-    if (!selectedTemplate) return [] as string[]
-    return [...collectTemplatePlaceholderKeys(selectedTemplate)].sort((a, b) =>
-      a.localeCompare(b, 'ko')
-    )
-  }, [selectedTemplate])
 
   const canConfigureRecipients = Boolean(selectedSender && selectedTemplate)
 
@@ -664,21 +654,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                 </DetailInfoForm.Row>
               </DetailInfoForm>
             </section>
-
-            {requiredPlaceholderKeys.length > 0 ? (
-              <section className="alimtalk-send-fullpage__widget">
-                <h3 className="alimtalk-send-fullpage__section-title">템플릿 자동입력 변수</h3>
-                <p className="alimtalk-send-fullpage-modal__notice-text">
-                  본문의 {'#{...}'} 값은 발송 시 서버가 프로그램·수신자 정보로 치환합니다. 직접
-                  입력 수신자는 이름·연락처 위주로 채워지며, 비어 있는 값은 보내지 않습니다.
-                </p>
-                <ul className="alimtalk-send-fullpage-modal__notice-text">
-                  {requiredPlaceholderKeys.map(key => (
-                    <li key={key}>{`#{${key}}`}</li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
 
             <section className="alimtalk-send-fullpage__widget alimtalk-send-fullpage__widget--recipients">
               <div className="alimtalk-send-fullpage__section-head">

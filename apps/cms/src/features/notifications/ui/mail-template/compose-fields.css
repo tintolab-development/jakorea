@@ -26,7 +26,11 @@
 }
 
 .mail-template-compose__editor-host .cms-rich-text-editor {
+  display: flex;
+  flex-direction: column;
   min-height: 0;
+  /* 빈 여백 클릭으로 커서 배치 — ProseMirror가 body 높이를 채워야 함 */
+  --rt-body-min-height: 360px;
   --rt-body-padding: 0;
   --rt-content-color: var(--main-BK, #3d3d3d);
   --rt-content-font-family: Pretendard, var(--font-family-primary), sans-serif;
@@ -38,11 +42,11 @@
 .mail-template-compose__editor-host .cms-rich-text-editor .rich-text-editor__body {
   display: flex;
   padding: 16px;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 8px;
   align-self: stretch;
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: var(--rt-body-min-height, 360px);
 }
 
 .mail-template-compose__editor-host .cms-rich-text-editor .rich-text-editor__content {
@@ -50,16 +54,20 @@
   align-self: stretch;
   width: 100%;
   min-width: 0;
-  min-height: 0;
+  min-height: 100%;
+  cursor: text;
 }
 
+/* ❌ min-height:0 금지 — 글자 있는 줄만 클릭되는 회귀 */
 .mail-template-compose__editor-host .cms-rich-text-editor .rich-text-editor__body .ProseMirror,
 .mail-template-compose__editor-host .cms-rich-text-editor .rich-text-editor__body .tiptap,
 .mail-template-compose__editor-host .cms-rich-text-editor .rich-text-editor__body .rich-text-content {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
-  min-height: 0;
+  min-height: 100%;
+  height: 100%;
+  cursor: text;
 }
 
 .mail-template-compose__editor-host .cms-rich-text-editor .rich-text-content p {

@@ -9,14 +9,14 @@ import type { NotificationCatalogVariableItemMemberTypesItem } from './notificat
 import type { NotificationCatalogVariableItemParticipantTypesItem } from './notificationCatalogVariableItemParticipantTypesItem';
 
 /**
- * Notion 사용 변수 1건. enabled=삽입 허용 SSOT(값 존재와 무관).
+ * 카탈로그 변수 1건. enabled=삽입/발송-피커 사용 허용 SSOT(값 존재와 무관). 알림톡 발송 피커(프로그램 지정 시): 본문 키 ⊆ catalog && enabled=true.
  */
 export interface NotificationCatalogVariableItem {
   /** 카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일. */
   key: string;
   /** 본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입. */
   token: string;
-  /** 보조 설명. 없으면 null */
+  /** 보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null */
   description?: string | null;
   /** true이면 programId 없이 enabled=false. */
   requiresProgram: boolean;

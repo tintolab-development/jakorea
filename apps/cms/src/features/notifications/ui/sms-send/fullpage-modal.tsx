@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -114,11 +114,18 @@ export function SendFullpageModal({
   const senderProfilesQuery = useSmsSenderProfilesQuery(open && remote)
   const programsQuery = useNotificationSendProgramsQuery(open && remote)
   const programs = programsQuery.data ?? []
+  /** 모달 open당 1회만 시드. 비어 있을 때마다 채우면 사용자가 지운 값이 다시 들어온다. */
+  const didSeedSenderRef = useRef(false)
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      didSeedSenderRef.current = false
+      return
+    }
+    if (didSeedSenderRef.current) return
     const first = senderProfilesQuery.data?.[0]
     if (!first) return
+    didSeedSenderRef.current = true
     if (!form.senderPhone.trim()) form.setSenderPhone(first.senderKey)
   }, [form.senderPhone, form.setSenderPhone, open, senderProfilesQuery.data])
 
@@ -318,6 +325,14 @@ export function SendFullpageModal({
       await submitSmsSend({
         draft,
         templateDisplayName: selectedTemplate?.templateName,
+        templateCategoryId: selectedTemplate?.categoryId,
+        templateBaseline: selectedTemplate
+          ? {
+              subject: selectedTemplate.subject,
+              bodyText: selectedTemplate.bodyText,
+              messageType: selectedTemplate.messageType,
+            }
+          : undefined,
         idempotencyKey: createIdempotencyKey(),
         senderProfileId: resolvedSenderProfileId,
       })
@@ -538,6 +553,7 @@ export function SendFullpageModal({
                     bodyByteLimit={form.bodyByteLimit}
                     subjectRef={form.subjectRef}
                     bodyTextRef={form.bodyTextRef}
+                    onBodyTextChange={form.syncMessageTypeToBodyBytes}
                   />
                 </section>
               </div>
