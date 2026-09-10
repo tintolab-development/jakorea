@@ -8,6 +8,6 @@
 import type { NotificationCatalogCategory } from './notificationCatalogCategory';
 
 export interface NotificationTemplateVariableCatalogResponse {
-  totalCount?: number;
-  categories?: NotificationCatalogCategory[];
+  totalCount: number;
+  categories: NotificationCatalogCategory[];
 }

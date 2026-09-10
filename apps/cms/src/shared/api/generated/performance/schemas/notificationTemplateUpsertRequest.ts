@@ -16,16 +16,7 @@ export interface NotificationTemplateUpsertRequest {
   providerSenderKey?: string;
   providerSenderProfileType?: string;
   providerSenderPhoneNumber?: string;
-  /**
-     * EMAIL From. NHN Hub 모드: harvest된 sender profile senderKey와 소문자 일치 필수(fail-closed).
-     * 프로필 0건 → 400 EMAIL_SENDER_PROFILES_EMPTY. 미일치 → 400 EMAIL_SENDER_PROFILE_NOT_HARVESTED.
-     * 템플릿 등록 FE 기본값: jakorea@jakorea.org. create 시 생략/blank이면 서버가 기본값 채운 뒤 harvest 검사.
-     */
   providerSenderEmailAddress?: string;
-  /**
-     * 통계키. EMAIL Hub 카탈로그에 매핑 없음 — NHN Hub 모드에서는 저장하지 않음(요청 invent 무시).
-     * LOCAL만 허용.
-     */
   providerStatsKeyId?: string;
   titleTemplate?: string;
   contentTemplate?: string;
@@ -34,9 +25,5 @@ export interface NotificationTemplateUpsertRequest {
   categoryId?: number;
   emailTemplateLanguage?: string;
   emailAttachmentIds?: string[];
-  /**
-     * 발신자 표시명. NHN Hub 모드에서는 harvest 프로필 display_name SSOT(요청값 invent 무시).
-     * LOCAL만 FE 입력값 사용.
-     */
   senderProfileDisplayName?: string;
 }
