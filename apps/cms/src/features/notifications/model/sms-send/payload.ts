@@ -1,4 +1,5 @@
 import type { CreateRequest, RecipientRequest } from '@/shared/api/generated/notifications/schemas'
+import type { SmsMessageType } from '@/features/notifications/api/adapters/sms-channel'
 import {
   isValidKoreanPhoneNumber,
   normalizeKoreanPhoneDigits,
@@ -13,9 +14,10 @@ import {
   resolveScheduledAtForCreateRequest,
   validateNotificationScheduledAt,
 } from '@/features/notifications/model/send-scheduled-at'
+import { normalizeNotificationPlaceholderMarkup } from '@/features/notifications/model/shared/notification-placeholder-markup'
 
-const SMS_BODY_BYTE_LIMIT = 90
-const LMS_MMS_BODY_BYTE_LIMIT = 2000
+export const SMS_SEND_BODY_BYTE_LIMIT = 90
+export const SMS_SEND_LMS_MMS_BODY_BYTE_LIMIT = 2000
 
 export function estimateSmsSendBodyBytes(text: string): number {
   let bytes = 0
@@ -25,14 +27,56 @@ export function estimateSmsSendBodyBytes(text: string): number {
   return bytes
 }
 
+/**
+ * 발송 화면(읽기 전용 유형): 본문 바이트·첨부에 맞춰 표시 유형을 맞춘다.
+ * - 첨부 있으면 MMS
+ * - SMS 한도 초과 시 SMS → LMS
+ * - 그 외는 현재 값 유지
+ */
+export function resolveSmsSendMessageTypeForBody(input: {
+  current: SmsMessageType
+  bodyBytes: number
+  hasAttachments: boolean
+}): SmsMessageType {
+  if (input.hasAttachments) return 'MMS'
+  if (input.bodyBytes > SMS_SEND_BODY_BYTE_LIMIT && input.current === 'SMS') {
+    return 'LMS'
+  }
+  return input.current
+}
+
+function isMaskedPii(value: string): boolean {
+  return value.includes('*')
+}
+
+export function buildSmsRecipientVariables(
+  recipient: SmsSendRecipient
+): Record<string, string> | undefined {
+  const vars: Record<string, string> = {}
+  const name = recipient.name.trim()
+  if (name && !isMaskedPii(name) && name !== '-') {
+    vars['회원명'] = name
+    vars['수신자명'] = name
+  }
+  const phone = normalizeKoreanPhoneDigits(recipient.phone) || recipient.phone.trim()
+  if (phone && !isMaskedPii(phone) && phone !== '-') {
+    vars['휴대폰 번호'] = phone
+    vars['전화번호'] = phone
+    vars.phone = phone
+  }
+  return Object.keys(vars).length > 0 ? vars : undefined
+}
+
 function buildSmsSendRecipients(recipients: SmsSendRecipient[]): RecipientRequest[] {
   return recipients.map(recipient => {
+    const variables = buildSmsRecipientVariables(recipient)
     if (recipient.source === 'manual' || recipient.actorType === 'DIRECT') {
       const contact = normalizeKoreanPhoneDigits(recipient.phone) || recipient.phone.trim()
       return {
         actorType: 'DIRECT',
         recipientContact: contact,
         recipientName: recipient.name.trim() || undefined,
+        ...(variables ? { variables } : {}),
       }
     }
 
@@ -43,6 +87,7 @@ function buildSmsSendRecipients(recipients: SmsSendRecipient[]): RecipientReques
       recipientContact: recipient.phone.includes('*')
         ? undefined
         : normalizeKoreanPhoneDigits(recipient.phone) || undefined,
+      ...(variables ? { variables } : {}),
     }
   })
 }
@@ -83,7 +128,11 @@ export function buildSmsSendPayload(draft: SmsSendDraft): SmsSendDraft {
   return {
     ...draft,
     senderPhone: draft.senderPhone.trim(),
-    subject: draft.messageType === 'SMS' ? '' : draft.subject.trim(),
+    subject:
+      draft.messageType === 'SMS'
+        ? ''
+        : normalizeNotificationPlaceholderMarkup(draft.subject.trim()),
+    bodyText: normalizeNotificationPlaceholderMarkup(draft.bodyText),
   }
 }
 
@@ -121,7 +170,8 @@ export function validateSmsSendDraft(draft: SmsSendDraft): string | null {
   if (!draft.bodyText.trim()) return '내용을 작성하세요.'
   if (draft.messageType !== 'SMS' && !draft.subject.trim()) return '제목을 작성하세요.'
 
-  const bodyByteLimit = draft.messageType === 'SMS' ? SMS_BODY_BYTE_LIMIT : LMS_MMS_BODY_BYTE_LIMIT
+  const bodyByteLimit =
+    draft.messageType === 'SMS' ? SMS_SEND_BODY_BYTE_LIMIT : SMS_SEND_LMS_MMS_BODY_BYTE_LIMIT
   if (estimateSmsSendBodyBytes(draft.bodyText) > bodyByteLimit) {
     return `내용은 ${bodyByteLimit.toLocaleString()}byte 이하로 입력하세요.`
   }

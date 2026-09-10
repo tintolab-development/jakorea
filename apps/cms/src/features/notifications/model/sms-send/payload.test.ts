@@ -3,6 +3,7 @@ import {
   buildSmsSendCreateRequest,
   buildSmsSendPayload,
   estimateSmsSendBodyBytes,
+  resolveSmsSendMessageTypeForBody,
   validateSmsSendDraft,
 } from './payload'
 import { SMS_SEND_ALL_PROGRAM_ID, type SmsSendDraft } from './types'
@@ -38,6 +39,38 @@ describe('estimateSmsSendBodyBytes', () => {
   it('counts ascii as 1 byte and hangul as 2 bytes', () => {
     expect(estimateSmsSendBodyBytes('abc')).toBe(3)
     expect(estimateSmsSendBodyBytes('가나')).toBe(4)
+  })
+})
+
+describe('resolveSmsSendMessageTypeForBody', () => {
+  it('upgrades SMS to LMS when over SMS byte limit', () => {
+    expect(
+      resolveSmsSendMessageTypeForBody({
+        current: 'SMS',
+        bodyBytes: 91,
+        hasAttachments: false,
+      })
+    ).toBe('LMS')
+  })
+
+  it('keeps LMS when over limit without attachments', () => {
+    expect(
+      resolveSmsSendMessageTypeForBody({
+        current: 'LMS',
+        bodyBytes: 200,
+        hasAttachments: false,
+      })
+    ).toBe('LMS')
+  })
+
+  it('forces MMS when attachments exist', () => {
+    expect(
+      resolveSmsSendMessageTypeForBody({
+        current: 'SMS',
+        bodyBytes: 10,
+        hasAttachments: true,
+      })
+    ).toBe('MMS')
   })
 })
 
@@ -81,6 +114,13 @@ describe('buildSmsSendCreateRequest', () => {
       actorType: 'MEMBER',
       actorId: 1,
       recipientContact: '01011112222',
+      variables: {
+        회원명: '홍길동',
+        수신자명: '홍길동',
+        '휴대폰 번호': '01011112222',
+        전화번호: '01011112222',
+        phone: '01011112222',
+      },
     })
   })
 
@@ -136,6 +176,13 @@ describe('buildSmsSendCreateRequest', () => {
       actorType: 'DIRECT',
       recipientContact: '01033334444',
       recipientName: '직접',
+      variables: {
+        회원명: '직접',
+        수신자명: '직접',
+        '휴대폰 번호': '01033334444',
+        전화번호: '01033334444',
+        phone: '01033334444',
+      },
     })
     expect(request.recipients[0]).not.toHaveProperty('actorId')
   })
