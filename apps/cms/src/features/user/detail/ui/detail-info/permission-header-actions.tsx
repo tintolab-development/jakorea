@@ -102,7 +102,7 @@ export function PermissionHeaderActions({
           </CmsButton>
         </>
       ) : null}
-      {approvalStatus === 'REJECTED' ? (
+      {approvalStatus === 'REJECTED' && permissionRole !== 'instructor' ? (
         <CmsButton
           variant="delete"
           className="cms-button--action"
