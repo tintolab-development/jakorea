@@ -40,7 +40,10 @@ export type EducationScheduleAssignment = {
   periodLabel: string
   status: EducationAssignmentSubmitStatus
   files?: EducationScheduleAssignmentFile[]
+  /** mock/로컬 미리보기용 — remote GET이 우선 */
   feedback?: string
+  /** Wave11 portal GET feedback — 있을 때만 원격 조회 */
+  formResponseId?: number
 }
 
 export type EducationScheduleItem = {

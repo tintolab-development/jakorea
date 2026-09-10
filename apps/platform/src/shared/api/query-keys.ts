@@ -46,5 +46,8 @@ export const platformQueryKeys = {
     /** 내 강사 권한 신청 상태 — GET /api/portal/me/instructor-role-requests/current */
     instructorRoleRequestCurrent: () =>
       [...platformQueryKeys.mypage.all(), 'instructor-role-request', 'current'] as const,
+    /** 내 폼 응답 피드백 — GET /api/portal/me/form-responses/{id}/feedback (Class D) */
+    formResponseFeedback: (formResponseId: number) =>
+      [...platformQueryKeys.mypage.all(), 'form-response-feedback', formResponseId] as const,
   },
 } as const
