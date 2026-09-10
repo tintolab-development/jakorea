@@ -2,13 +2,16 @@ import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import type { TermsDocumentResponse } from '@/shared/api/generated/members/schemas/termsDocumentResponse'
 import { customInstance } from '@/shared/api/orval-mutator'
-import { parseFileObjectId, uploadAdminFile } from '@/shared/lib/admin-file-upload'
+import {
+  ADMIN_FILE_OWNER,
+  ADMIN_FILE_PURPOSE,
+  buildAdminFileOwner,
+  parseFileObjectId,
+  uploadAdminFile,
+} from '@/shared/lib/admin-file-upload'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 
 const CRIME_TERMS_TYPE = 'CRIMINAL_HISTORY_CHECK_CONSENT'
-const CONSENT_OWNER_DOMAIN = 'MEMBER'
-const CONSENT_OWNER_TYPE = 'CONSENT'
-const CONSENT_FILE_PURPOSE = 'CRIMINAL_HISTORY_CHECK_CONSENT'
 
 export type UploadConsentEvidenceFileInput = {
   file: File
@@ -71,7 +74,8 @@ export function dataUrlToFile(dataUrl: string, filename: string): File | null {
 /**
  * 성범죄 경력조회 동의서 첨부 → object storage 업로드 → fileObjectId.
  * presigned PUT은 스토리지 직접 호출이라 axios Bearer를 붙이지 않는다.
- * 최종 완료는 scanStatus=CLEAN + uploadStatus=AVAILABLE.
+ * pre-register는 `CONSENT_EVIDENCE_FILE_NOT_READY_OR_NOT_OWNED`로
+ * CLEAN+AVAILABLE(및 업로더 소유)을 요구하므로 confirm 후 상태 폴링까지 한다.
  */
 export async function uploadConsentEvidenceFile(
   input: UploadConsentEvidenceFileInput
@@ -95,12 +99,14 @@ export async function uploadConsentEvidenceFile(
   const result = await uploadAdminFile({
     file: input.file,
     originalFileName,
-    owner: {
-      ownerDomain: CONSENT_OWNER_DOMAIN,
-      ownerType: CONSENT_OWNER_TYPE,
+    owner: buildAdminFileOwner(
+      ADMIN_FILE_OWNER.MEMBER_CONSENT,
       ownerId,
-      filePurpose: CONSENT_FILE_PURPOSE,
-    },
+      ADMIN_FILE_PURPOSE.CRIMINAL_HISTORY_EVIDENCE
+    ),
+    waitUntilAvailable: true,
+    // 배포 스캐너·프로모션이 느릴 수 있음 (기본 30×2s=60s → 90×2s=3분)
+    poll: { maxAttempts: 90, intervalMs: 2_000 },
   })
   return result.fileObjectId
 }
