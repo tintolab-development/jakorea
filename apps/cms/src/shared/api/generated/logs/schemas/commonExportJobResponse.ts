@@ -5,17 +5,12 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { GeneratedFileJobResponse } from './generatedFileJobResponse';
 
 export interface CommonExportJobResponse {
-  jobId?: number;
   exportType?: string;
   exportMode?: string;
-  jobStatus?: string;
-  fileName?: string;
-  contentType?: string;
-  selectedCount?: number;
-  privacyIncludedYn?: boolean;
-  requestedAt?: string;
-  completedAt?: string;
-  downloadPath?: string;
+  rowCount?: number;
+  auditLogId?: number;
+  job?: GeneratedFileJobResponse;
 }

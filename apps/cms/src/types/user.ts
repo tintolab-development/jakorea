@@ -208,6 +208,8 @@ export interface User {
   affiliation?: string
   /** 개인 회원 — API `enrollmentStatus` (`ENROLLED` | `NOT_ENROLLED`) */
   schoolEnrollmentStatus?: 'ENROLLED' | 'NOT_ENROLLED'
+  /** 개인 회원 — GET/PATCH `schoolOrganizationId` (재학 중 CMS 학교 PK) */
+  individualSchoolOrganizationId?: number | null
   socialAccounts?: string[]
   /** 플랫폼 가입 시 서버가 판정한 만 14세 미만 여부 */
   under14?: boolean

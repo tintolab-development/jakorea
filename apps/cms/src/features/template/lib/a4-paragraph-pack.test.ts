@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   A4_DOCUMENT_FIRST_PAGE_BODY_MAX_PX,
+  A4_DOCUMENT_PARAGRAPH_GAP_PX,
 } from '@/features/template/lib/a4-document-pagination-constants'
 import {
   countTrailingAgreementClosingStackToMoveWith,
@@ -92,7 +93,7 @@ describe('packParagraphsByHeights closing keep-together', () => {
     // intro+table+gaps ≈ 1432, +confirm+date ≈ 1592, +signature(80) exceeds 1650
     expect(A4_DOCUMENT_FIRST_PAGE_BODY_MAX_PX).toBe(1650)
 
-    const { pages } = packParagraphsByHeights(paragraphs, heights, true, 32)
+    const { pages } = packParagraphsByHeights(paragraphs, heights, true, A4_DOCUMENT_PARAGRAPH_GAP_PX)
 
     expect(pages).toHaveLength(2)
     expect(pages[0]!.map(p => p.id)).toEqual(['intro', 'table'])
@@ -112,7 +113,7 @@ describe('packParagraphsByHeights closing keep-together', () => {
       [AGREEMENT_PORTRAIT_PARAGRAPH_IDS.systemSignature, 100],
     ])
 
-    const { pages } = packParagraphsByHeights(paragraphs, heights, true, 32)
+    const { pages } = packParagraphsByHeights(paragraphs, heights, true, A4_DOCUMENT_PARAGRAPH_GAP_PX)
     const signaturePage = pages.find(page =>
       page.some(p => p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.systemSignature)
     )

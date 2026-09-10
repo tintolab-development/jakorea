@@ -4,7 +4,6 @@ import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragr
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/ujat-program-application-form-institution-draft'
 import { UjatProgramApplicationBasicInfoParagraph } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraphs/ujat-program-application-basic-info-paragraph'
 import { UjatProgramApplicationGradeInfoParagraph } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraphs/ujat-program-application-grade-info-paragraph'
-import { UjatProgramApplicationRegionParagraph } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraphs/ujat-program-application-region-paragraph'
 import { UjatProgramApplicationGradeClassTimeParagraph } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraphs/ujat-program-application-grade-class-time-paragraph'
 import { UjatProgramApplicationPreferredEducationScheduleParagraph } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraphs/ujat-program-application-preferred-education-schedule-paragraph'
 import type {
@@ -22,8 +21,6 @@ export function renderUjatProgramApplicationFormInstitutionParagraphBody(
 ): ReactNode | null {
   if (!enabled) return null
   switch (paragraph.id) {
-    case UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.applicationRegion:
-      return <UjatProgramApplicationRegionParagraph />
     case UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo:
       return (
         <UjatProgramApplicationBasicInfoParagraph
@@ -44,7 +41,9 @@ export function renderUjatProgramApplicationFormInstitutionParagraphBody(
         <UjatProgramApplicationGradeClassTimeParagraph
           classTimeBlockIds={gradeClassTime?.classTimeBlockIds ?? ['ujat-class-time-solo']}
           onRemoveClassTimeBlockAtIndex={gradeClassTime?.onRemoveClassTimeBlockAtIndex ?? (() => {})}
-          applicationGradeValuesForClassTime={gradeClassTime?.applicationGradeValuesForClassTime ?? []}
+          applicationGradeValuesForClassTime={
+            gradeClassTime?.applicationGradeValuesForClassTime ?? []
+          }
         />
       )
     case UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule:

@@ -21,17 +21,27 @@ export const SEND_HISTORY_FILTER_URL = {
   reserveTo: 'reserve_to',
 } as const
 
+/** 기획: 기본 조회 기간 금일 ~ 일주일 뒤 */
+export function defaultSendHistoryDateRange(): [Dayjs, Dayjs] {
+  const start = dayjs().startOf('day')
+  return [start, start.add(7, 'day')]
+}
+
 function parseDate(raw: string | null): Dayjs | null {
   if (!raw) return null
   const parsed = dayjs(raw)
   return parsed.isValid() ? parsed : null
 }
 
-/** URL에 날짜가 없으면 빈 범위(시안 placeholder). 한쪽만 있으면 해당 값만 유지. */
-function parseRange(fromRaw: string | null, toRaw: string | null): DateRangeFilterValue {
+/** URL에 날짜가 없으면 기본 기간(금일~+7일). 한쪽만 있으면 해당 값만 유지. */
+function parseRange(
+  fromRaw: string | null,
+  toRaw: string | null,
+  useDefaultWhenEmpty: boolean
+): DateRangeFilterValue {
   const from = parseDate(fromRaw)
   const to = parseDate(toRaw)
-  if (!from && !to) return null
+  if (!from && !to) return useDefaultWhenEmpty ? defaultSendHistoryDateRange() : null
   return [from, to]
 }
 
@@ -55,10 +65,16 @@ function setDateRangeParams(
 export function readSendHistoryFiltersFromParams(
   searchParams: URLSearchParams
 ): AlimtalkSendHistoryPendingFilters {
+  const hasRequestDateParam =
+    searchParams.has(SEND_HISTORY_FILTER_URL.requestFrom) ||
+    searchParams.has(SEND_HISTORY_FILTER_URL.requestTo)
+
   return {
+    // 기본 기간은 요청일만. 발송/수신/예약일은 사용자가 켠 경우에만.
     requestDateRange: parseRange(
       searchParams.get(SEND_HISTORY_FILTER_URL.requestFrom),
-      searchParams.get(SEND_HISTORY_FILTER_URL.requestTo)
+      searchParams.get(SEND_HISTORY_FILTER_URL.requestTo),
+      !hasRequestDateParam
     ),
     templateName: searchParams.get(SEND_HISTORY_FILTER_URL.templateName) ?? '',
     senderInfo: searchParams.get(SEND_HISTORY_FILTER_URL.senderInfo) ?? '',
@@ -71,15 +87,18 @@ export function readSendHistoryFiltersFromParams(
       AlimtalkSendHistoryPendingFilters['receiveStatus'],
     sendDateRange: parseRange(
       searchParams.get(SEND_HISTORY_FILTER_URL.sendFrom),
-      searchParams.get(SEND_HISTORY_FILTER_URL.sendTo)
+      searchParams.get(SEND_HISTORY_FILTER_URL.sendTo),
+      false
     ),
     receiveDateRange: parseRange(
       searchParams.get(SEND_HISTORY_FILTER_URL.receiveFrom),
-      searchParams.get(SEND_HISTORY_FILTER_URL.receiveTo)
+      searchParams.get(SEND_HISTORY_FILTER_URL.receiveTo),
+      false
     ),
     reserveDateRange: parseRange(
       searchParams.get(SEND_HISTORY_FILTER_URL.reserveFrom),
-      searchParams.get(SEND_HISTORY_FILTER_URL.reserveTo)
+      searchParams.get(SEND_HISTORY_FILTER_URL.reserveTo),
+      false
     ),
   }
 }

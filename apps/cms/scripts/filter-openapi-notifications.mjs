@@ -13,6 +13,9 @@ const outputPath = join(root, 'openapi/notifications.openapi.json')
 
 const NOTIFICATIONS_PATH_PREFIXES = [
   '/api/admin/notification-templates',
+  '/api/admin/notification-template-categories',
+  '/api/admin/notification-sender-profiles',
+  '/api/admin/notification-send-batches',
   '/api/admin/notification-deliveries',
   '/api/admin/notification-event-catalog',
 ]

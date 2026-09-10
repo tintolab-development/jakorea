@@ -3,6 +3,11 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
 import {
   ADMIN_PERMISSION_TAG_LABEL,
@@ -42,16 +47,15 @@ export function InstructorPermissionApproveModal(
   props: InstructorPermissionApproveModalProps
 ) {
   const { open, onCancel, onConfirm, zIndex, variant, permissionKind = 'instructor' } = props
+  const { showAlert } = useCmsAlert()
   const isAdmin = permissionKind === 'admin'
   const [feeGrade, setFeeGrade] = useState<string | undefined>(undefined)
-  const [feeGradeError, setFeeGradeError] = useState('')
   const [notifyTiming, setNotifyTiming] =
     useState<InstructorPermissionApproveNotifyTiming>('immediate')
 
   useEffect(() => {
     if (!open) return
     setFeeGrade(isAdmin ? 'manager' : undefined)
-    setFeeGradeError('')
     setNotifyTiming('immediate')
   }, [open, isAdmin])
 
@@ -62,10 +66,12 @@ export function InstructorPermissionApproveModal(
   const handleConfirm = () => {
     const grade = feeGrade?.trim()
     if (!grade) {
-      setFeeGradeError(isAdmin ? '권한 유형을 선택해 주세요.' : '강사비 등급을 선택해 주세요.')
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
       return
     }
-    setFeeGradeError('')
     onConfirm({ feeGrade: grade, notifyTiming })
   }
 
@@ -117,15 +123,17 @@ export function InstructorPermissionApproveModal(
         </p>
 
         <div className="instructor-permission-approve-modal__field">
-          <span className="instructor-permission-approve-modal__label">{isAdmin ? '권한 설정' : '강사비 등급 지정'}</span>
+          <span className="instructor-permission-approve-modal__label">
+            {isAdmin ? '권한 설정' : '강사비 등급 지정'}
+            <span className="instructor-permission-approve-modal__required" aria-hidden="true">
+              *
+            </span>
+          </span>
           {isAdmin ? (
             <CmsRadio.Group
               size="large"
               value={feeGrade}
-              onChange={e => {
-                setFeeGrade(e.target.value as AdminPermissionTagVariant)
-                if (feeGradeError) setFeeGradeError('')
-              }}
+              onChange={e => setFeeGrade(e.target.value as AdminPermissionTagVariant)}
             >
               <CmsRadio value="manager">{ADMIN_PERMISSION_TAG_LABEL.manager}</CmsRadio>
               <CmsRadio value="partner">{ADMIN_PERMISSION_TAG_LABEL.partner}(PM/파트너)</CmsRadio>
@@ -137,22 +145,19 @@ export function InstructorPermissionApproveModal(
               width="100%"
               placeholder="강사비 등급을 선택해 주세요"
               value={feeGrade}
-              onChange={v => {
-                setFeeGrade(v as string | undefined)
-                if (feeGradeError) setFeeGradeError('')
-              }}
+              onChange={v => setFeeGrade(v as string | undefined)}
               options={INSTRUCTOR_FEE_GRADE_OPTIONS}
             />
           )}
-          {feeGradeError ? (
-            <span className="instructor-permission-approve-modal__field-error" role="alert">
-              {feeGradeError}
-            </span>
-          ) : null}
         </div>
 
         <div className="instructor-permission-approve-modal__field">
-          <span className="instructor-permission-approve-modal__label">알림 발송</span>
+          <span className="instructor-permission-approve-modal__label">
+            알림 발송
+            <span className="instructor-permission-approve-modal__required" aria-hidden="true">
+              *
+            </span>
+          </span>
           <CmsRadio.Group
             size="large"
             value={notifyTiming}

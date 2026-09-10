@@ -3,7 +3,8 @@
  * Form.useFormInstance()로 부모 Form 컨텍스트 공유 (props 불필요)
  */
 
-import { Form, Input, DatePicker } from 'antd'
+import { Form, DatePicker } from 'antd'
+import { CmsInput } from '@/shared/ui'
 import { NativeSelect } from './add-instructor-native-select'
 
 /** 학력사항 섹션: 학교 유형 선택 옵션 */
@@ -105,21 +106,21 @@ export function EducationSection() {
                       <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                         <div className="add-instructor-modal__basic-table-inline add-instructor-modal__education-row-inputs">
                           <Form.Item name={[field.name, 'schoolName']} noStyle>
-                            <Input
+                            <CmsInput
                               placeholder="학교명"
-                              size="large"
-                              allowClear
-                              className="add-instructor-modal__table-input add-instructor-modal__education-school-input"
+                              inputSize="medium"
+                              width={190}
+                              className="add-instructor-modal__education-school-input"
                             />
                           </Form.Item>
                           <span className="add-instructor-modal__education-divider" aria-hidden />
                           {showMajorInput && (
                             <Form.Item name={[field.name, 'major']} noStyle>
-                              <Input
+                              <CmsInput
                                 placeholder="전공"
-                                size="large"
-                                allowClear
-                                className="add-instructor-modal__table-input add-instructor-modal__education-major"
+                                inputSize="medium"
+                                width={140}
+                                className="add-instructor-modal__education-major"
                               />
                             </Form.Item>
                           )}

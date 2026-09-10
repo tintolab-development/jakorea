@@ -5,6 +5,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { ContentModal } from '@/shared/ui/content-modal'
 import type { UserDetailPermissionRole } from '@/pages/users/user-detail-fullpage-modal'
 import type { InstructorPermissionApproveNotifyTiming } from '@/features/user/permission-management/instructor-permission-approve-modal'
+import './instructor-permission-approve-modal.css'
 
 type PermissionStatusResetConfirmModalProps = {
   open: boolean
@@ -65,6 +66,7 @@ export function InstructorPermissionStatusResetConfirmModal({
       title={`${permissionLabel} 권한 ${actionLabel}`}
       width={600}
       zIndex={zIndex}
+      className="instructor-permission-approve-modal"
       footer={
         <div className="instructor-permission-approve-modal__footer">
           <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
@@ -81,8 +83,8 @@ export function InstructorPermissionStatusResetConfirmModal({
         </div>
       }
     >
-      <div className="instructor-permission-reject-modal__content">
-        <p className="instructor-permission-reject-modal__lead instructor-permission-reject-modal__lead--single">
+      <div className="instructor-permission-approve-modal__content">
+        <p className="instructor-permission-approve-modal__lead">
           <strong>[{normalizedName}]</strong> {permissionLabel}님의 {permissionLabel} 권한{' '}
           {actionLabel}
           하시겠습니까?
@@ -92,8 +94,8 @@ export function InstructorPermissionStatusResetConfirmModal({
           또한, 해당 {permissionLabel}님은 자동으로 일반 회원(개인 또는 교사)로 처리됩니다.
         </p>
 
-        <div className="instructor-permission-reject-modal__field">
-          <span className="instructor-permission-reject-modal__label">알림 발송</span>
+        <div className="instructor-permission-approve-modal__field">
+          <span className="instructor-permission-approve-modal__label">알림 발송</span>
           <CmsRadio.Group
             size="large"
             value={notifyTiming}
@@ -106,8 +108,8 @@ export function InstructorPermissionStatusResetConfirmModal({
           </CmsRadio.Group>
         </div>
 
-        <div className="instructor-permission-reject-modal__field">
-          <span className="instructor-permission-reject-modal__label">취소 사유</span>
+        <div className="instructor-permission-approve-modal__field">
+          <span className="instructor-permission-approve-modal__label">취소 사유</span>
           <CmsInput
             inputSize="large"
             width="100%"
@@ -120,7 +122,7 @@ export function InstructorPermissionStatusResetConfirmModal({
             maxLength={500}
           />
           {reasonError ? (
-            <span className="instructor-permission-reject-modal__field-error" role="alert">
+            <span className="instructor-permission-approve-modal__field-error" role="alert">
               {reasonError}
             </span>
           ) : null}

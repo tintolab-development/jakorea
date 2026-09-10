@@ -9,9 +9,20 @@ import {
   useGeneralRecruitOverlayKv,
   updateGeneralRecruitOverlayKey,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import {
+  RECRUIT_DETAIL_ATTACHMENT_ACCEPT,
+  RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
+  RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 import { resolveRecruitDetailTextFieldOverlayKey } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-text-field-keys'
+import {
+  ADMIN_FILE_PURPOSE,
+  programFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
+import './recruit-detail-info-paragraph.css'
 
 const THUMB_UPLOAD_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 const DEFAULT_OVERLAY_KEY_PREFIX = 'recruit.detailInfo'
@@ -88,8 +99,8 @@ export function RecruitDetailInfoParagraph({
   textFields,
   overlayKeyPrefix = DEFAULT_OVERLAY_KEY_PREFIX,
   afterEditorFields,
-  attachmentAccept = '.jpg,.jpeg,.png',
-  attachmentGuideLines,
+  attachmentAccept = RECRUIT_DETAIL_ATTACHMENT_ACCEPT,
+  attachmentGuideLines = RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
 }: RecruitDetailInfoParagraphProps) {
   const thumbObjectUrlKey = `${overlayKeyPrefix}.thumbObjectUrl`
   const thumbFileNameKey = `${overlayKeyPrefix}.thumbFileName`
@@ -115,6 +126,10 @@ export function RecruitDetailInfoParagraph({
       if (!image) return
       setThumbFileName(image.name)
       setThumbObjectUrl(URL.createObjectURL(image))
+      void uploadAdminFileMaybeMock({
+        file: image,
+        owner: programFileOwner(1, ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL),
+      }).catch(() => undefined)
     },
     [setThumbFileName, setThumbObjectUrl]
   )
@@ -136,82 +151,91 @@ export function RecruitDetailInfoParagraph({
   })
 
   return (
-    <DetailInfoForm title="상세 정보" hideHeader mode="edit">
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="썸네일 이미지"
-          fullRow
-          edit={
-            <div className={THUMB_UPLOAD_CLASS}>
-              {thumbObjectUrl ? (
-                <img src={thumbObjectUrl} alt="" width={86} height={86} />
-              ) : (
-                <ProgramThumbnailPlaceholder />
-              )}
-              <ParagraphFileUpload
-                accept=".jpg,.jpeg,.png"
-                multiple={false}
-                style={{ marginLeft: 16 }}
-                fileNames={thumbFileName ? [thumbFileName] : []}
-                onFilesChange={handleThumbnailFiles}
-                onRemoveFile={handleRemoveThumbnail}
-              />
-            </div>
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-
-      <RecruitDetailInfoTextFieldRows fields={textFields} overlayKeyPrefix={overlayKeyPrefix} />
-
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="추가 내용"
-          fullRow
-          edit={
-            <div className="notice-register-modal__section notice-register-modal__section--editor">
-              <div className="notice-register-modal__editor-host">
-                <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+    <div className="recruit-detail-info-paragraph__forms">
+      <DetailInfoForm title="상세 정보" hideHeader mode="edit">
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="썸네일 이미지"
+            fullRow
+            edit={
+              <div className={THUMB_UPLOAD_CLASS}>
+                {thumbObjectUrl ? (
+                  <img src={thumbObjectUrl} alt="" width={86} height={86} />
+                ) : (
+                  <ProgramThumbnailPlaceholder />
+                )}
+                <ParagraphFileUpload
+                  accept=".jpg,.jpeg,.png"
+                  multiple={false}
+                  style={{ marginLeft: 16 }}
+                  guideLines={RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES}
+                  fileNames={thumbFileName ? [thumbFileName] : []}
+                  onFilesChange={handleThumbnailFiles}
+                  onRemoveFile={handleRemoveThumbnail}
+                />
               </div>
-            </div>
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
 
-      {afterEditorFields != null && afterEditorFields.length > 0 ? (
-        <RecruitDetailInfoTextFieldRows
-          fields={afterEditorFields}
-          overlayKeyPrefix={overlayKeyPrefix}
-        />
-      ) : null}
+        <RecruitDetailInfoTextFieldRows fields={textFields} overlayKeyPrefix={overlayKeyPrefix} />
 
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="첨부 파일"
-          fullRow
-          edit={
-            <ParagraphFileUpload
-              accept={attachmentAccept}
-              guideLines={attachmentGuideLines}
-              multiple
-              fileNames={attachmentFileNames}
-              onFilesChange={(files: File[]) =>
-                updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev => [
-                  ...(prev ?? []),
-                  ...files.map(file => file.name),
-                ])
-              }
-              onRemoveFile={(index: number) =>
-                updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev =>
-                  (prev ?? []).filter((_, i) => i !== index)
-                )
-              }
-            />
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-    </DetailInfoForm>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="추가 내용"
+            fullRow
+            edit={
+              <div className="notice-register-modal__section notice-register-modal__section--editor">
+                <div className="notice-register-modal__editor-host">
+                  <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+                </div>
+              </div>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+
+        {afterEditorFields != null && afterEditorFields.length > 0 ? (
+          <RecruitDetailInfoTextFieldRows
+            fields={afterEditorFields}
+            overlayKeyPrefix={overlayKeyPrefix}
+          />
+        ) : null}
+
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="첨부 파일"
+            fullRow
+            edit={
+              <ParagraphFileUpload
+                accept={attachmentAccept}
+                guideLines={attachmentGuideLines}
+                multiple
+                fileNames={attachmentFileNames}
+                onFilesChange={(files: File[]) => {
+                  updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev => [
+                    ...(prev ?? []),
+                    ...files.map(file => file.name),
+                  ])
+                  const owner = programFileOwner(1, ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT)
+                  void (async () => {
+                    for (const file of files) {
+                      await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
+                    }
+                  })()
+                }}
+                onRemoveFile={(index: number) =>
+                  updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev =>
+                    (prev ?? []).filter((_, i) => i !== index)
+                  )
+                }
+              />
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+    </div>
   )
 }

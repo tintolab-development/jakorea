@@ -1,4 +1,3 @@
-import { SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS } from '@/features/template/model/writing-form-draft.schema'
 import {
   isParticipantApplicationRegistryEntry,
   isRegistrationRegistryEntry,
@@ -205,7 +204,6 @@ function resolveSurveyPanels(ctx: TemplateRendererContext): TemplateRendererPane
         onSelectCard={surveyListEditor.handleSelectCard}
         onReorderMiddle={surveyListEditor.onReorderMiddle}
         updateParagraph={surveyListEditor.updateParagraph}
-        hideDragHandleForParagraphIds={SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS}
         editorKind="survey"
         singleItemListActiveItemId={surveyListEditor.singleItemListActiveItemId}
         onSelectSingleItemListItem={surveyListEditor.onSelectSingleItemListItem}
@@ -228,7 +226,6 @@ function resolveSurveyPanels(ctx: TemplateRendererContext): TemplateRendererPane
         pinnedTop={surveyListEditor.pinnedTop}
         sortableMiddle={surveyListEditor.sortableMiddle}
         pinnedBottom={surveyListEditor.pinnedBottom}
-        hideSortableDragHandleForIds={SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS}
         selectedItemId={surveyListEditor.activeParagraphId}
         onSelectItem={surveyListEditor.handleSelectCard}
         onReorderMiddle={surveyListEditor.onReorderMiddle}

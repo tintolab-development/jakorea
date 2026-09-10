@@ -202,10 +202,10 @@ S3·파일 API 미연결 환경에서 UI·payload wiring 검증을 위해 FE에�
 |------|---------|-----------------|
 | 이슈 1 current 404 | `terms-document-type-alias.ts` — `PAYMENT_STATEMENT_CONSENT` ↔ `PRE_CONSENT` ↔ `PAYMENT_STATEMENT` lookup fallback. PATCH body `termsType`은 **변경하지 않음** | BE에 **둘 다** 게시본이 없으면 여전히 resolve 실패 |
 | 이슈 1 draft 중복 | `member-basic-info-terms-patch.ts` — GET `CONSENT` + UI `PRE_CONSENT` upsert dedupe | — |
-| 이슈 2 upload 401 | `VITE_REAL_API_MODULES`에 `files` **미포함** 시 stub `fileObjectId` (`900_000_001 + fileSize % 1000`). `files` 포함 시 실 upload + 401/403/404 구분 메시지 | stub id로 pre-register **persist**는 BE object 존재 검증·member 재연결 필요. S3 미연결 시 등록 submit은 BE 수정 전까지 실패할 수 있음 |
+| 이슈 2 upload 401 | `members` 또는 `files` 실 API일 때 prepare→PUT→confirm. 동의서 **제출 시** 업로드 후 `evidenceFileObjectId`를 스냅샷에 보관. 둘 다 꺼져 있을 때만 stub | stub id로 pre-register **persist**는 BE object 존재 검증·member 재연결 필요. S3 미연결·401 시 제출 단계에서 실패 |
 | filledDocument 500 | — (별도 문서) | [member-pre-register-filled-document-500-backend-request-2026-08-26.md](./member-pre-register-filled-document-500-backend-request-2026-08-26.md) |
 
-**환경 변수:** `VITE_REAL_API_MODULES=members,...` (기본 `files` 없음 → stub upload). 실 upload 검증 시 `files` 추가.
+**환경 변수:** `VITE_REAL_API_MODULES`에 `members` 또는 `files`가 있으면 실 upload. 둘 다 없으면 stub.
 
 ---
 

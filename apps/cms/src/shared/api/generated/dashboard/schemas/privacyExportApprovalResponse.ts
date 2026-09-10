@@ -44,4 +44,6 @@ export interface PrivacyExportApprovalResponse {
   usedAt?: string;
   /** 승인 reference를 사용한 client export 이벤트 ID */
   usedByClientEventId?: number;
+  /** 프로그램 범위 승인인 경우 프로그램 ID. null이면 CMS 전역 승인 */
+  programId?: number;
 }

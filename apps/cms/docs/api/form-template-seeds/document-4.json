@@ -1,6 +1,6 @@
 {
   "templateCode": "document-4",
-  "templateName": "강사 활동 인증서",
+  "templateName": "강사 활동인증서",
   "formType": "ISSUANCE",
   "category": "ISSUANCE",
   "schemaJson": null,
@@ -14,7 +14,7 @@
     "orgLogo02": null,
     "certificateBackground": null,
     "chairmanSeal": null,
-    "titleName": "강사 활동 인증서",
+    "titleName": "강사 활동인증서",
     "bodyContent": "귀하는 위의 과정에 참여하여\n교육과정을 수료하였음을 확인합니다.",
     "chairmanName": "이은형",
     "orgAddress": "서울특별시 강서구 마곡중앙로 171 714호",

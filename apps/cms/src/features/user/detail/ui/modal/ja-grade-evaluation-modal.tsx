@@ -9,15 +9,23 @@ import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-pan
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { changeInstructorEvaluationGradeRemote } from '@/features/user/api/members-api-client'
+import {
+  fetchInstructorJaEvaluationRemote,
+  submitInstructorJaEvaluationRemote,
+} from '@/features/user/api/members-api-client'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
 import { buildJaGradeEvaluationDraft } from '@/features/user/detail/lib/ja-grade-evaluation-draft'
 import {
-  buildJaGradeEvaluationReason,
+  applyJaEvaluationResponseToDraft,
+  mapJaGradeDraftToEvaluationInput,
+  resolveJaEvaluationDisplayGrade,
+} from '@/features/user/detail/lib/ja-grade-evaluation-api'
+import {
   calculateJaGradeEvaluationFromDraft,
   validateJaGradeEvaluationDraft,
 } from '@/features/user/detail/lib/ja-grade-evaluation-score'
+import type { InstructorJaEvaluationInput } from '@/shared/api/generated/members/schemas/instructorJaEvaluationInput'
 import {
   loadJaGradeEvaluationRecord,
   resolveJaGradeEvaluationStorageKey,
@@ -47,8 +55,12 @@ export interface JaGradeEvaluationModalProps {
   scheduleChangeCount?: number
   lateReportCount?: number
   onClose: () => void
-  /** remote POST(evaluation-grade) 또는 mock 저장 후 UI 반영. 성공 시에만 resolve */
-  onComplete: (payload: { grade: string; totalScore: number }) => void | Promise<void>
+  /** remote POST(ja-evaluation) 또는 mock 저장 후 UI 반영. 성공 시에만 resolve */
+  onComplete: (payload: {
+    grade: string
+    totalScore: number
+    jaEvaluation: InstructorJaEvaluationInput
+  }) => void | Promise<void>
 }
 
 export function JaGradeEvaluationModal({
@@ -81,9 +93,36 @@ export function JaGradeEvaluationModal({
       setDraft(null)
       return
     }
+
+    let cancelled = false
     const stored = restoreStoredDraft ? loadJaGradeEvaluationRecord(storageKey) : null
     setDraft(buildJaGradeEvaluationDraft(stored))
-  }, [open, restoreStoredDraft, storageKey])
+
+    const hydrateFromServer = async () => {
+      if (persistMode !== 'remote' || !isMembersRemoteEnabled()) return
+      let remoteMemberId = instructorMemberId ?? null
+      if (remoteMemberId == null && instructorUserId) {
+        try {
+          remoteMemberId = resolveMemberIdForApi(instructorUserId)
+        } catch {
+          remoteMemberId = null
+        }
+      }
+      if (remoteMemberId == null) return
+      try {
+        const current = await fetchInstructorJaEvaluationRemote(remoteMemberId)
+        if (cancelled) return
+        setDraft(applyJaEvaluationResponseToDraft(buildJaGradeEvaluationDraft(stored), current))
+      } catch {
+        /* GET 실패 시 localStorage/빈 초안 유지 */
+      }
+    }
+
+    void hydrateFromServer()
+    return () => {
+      cancelled = true
+    }
+  }, [instructorMemberId, instructorUserId, open, persistMode, restoreStoredDraft, storageKey])
 
   const updateParagraph = useCallback(
     (id: string, updater: (paragraph: WritingFormParagraph) => WritingFormParagraph) => {
@@ -118,11 +157,13 @@ export function JaGradeEvaluationModal({
     }
 
     let result
+    let jaEvaluation
     try {
       result = calculateJaGradeEvaluationFromDraft(draft, {
         scheduleChangeCount,
         lateReportCount,
       })
+      jaEvaluation = mapJaGradeDraftToEvaluationInput(draft)
     } catch (error) {
       const info = handleError(error, { defaultMessage: '등급 산출에 실패했습니다.' })
       showAlert({ title: '안내', content: info.detail })
@@ -131,8 +172,9 @@ export function JaGradeEvaluationModal({
 
     setSubmitting(true)
     try {
-      const reason = buildJaGradeEvaluationReason(result)
       let remoteMemberId = instructorMemberId ?? null
+      let persistedGrade = result.grade
+      let persistedTotal = result.totalScore
 
       if (persistMode === 'remote' && isMembersRemoteEnabled()) {
         if (remoteMemberId == null && instructorUserId) {
@@ -145,10 +187,9 @@ export function JaGradeEvaluationModal({
         if (remoteMemberId == null) {
           throw new Error('강사 memberId가 없어 평가 등급을 저장할 수 없습니다.')
         }
-        await changeInstructorEvaluationGradeRemote(remoteMemberId, {
-          grade: result.grade,
-          reason,
-        })
+        const response = await submitInstructorJaEvaluationRemote(remoteMemberId, jaEvaluation)
+        persistedGrade = resolveJaEvaluationDisplayGrade(response, result.grade)
+        persistedTotal = response.totalScore ?? result.totalScore
       }
 
       saveJaGradeEvaluationRecord({
@@ -159,14 +200,18 @@ export function JaGradeEvaluationModal({
         q3ItemId: result.qItemIds[2],
         q4ItemId: result.qItemIds[3],
         comment: result.comment || undefined,
-        grade: result.grade,
+        grade: persistedGrade,
         fixedTotal: result.fixedTotal,
         penalty: result.penalty,
-        totalScore: result.totalScore,
+        totalScore: persistedTotal,
         savedAt: new Date().toISOString(),
       })
 
-      await onComplete({ grade: result.grade, totalScore: result.totalScore })
+      await onComplete({
+        grade: persistedGrade,
+        totalScore: persistedTotal,
+        jaEvaluation,
+      })
       onClose()
     } catch (error) {
       const info = handleError(error, { defaultMessage: 'JA 등급 평가 저장에 실패했습니다.' })

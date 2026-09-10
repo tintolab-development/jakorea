@@ -21,10 +21,10 @@ export function VerticalTableDimensionActions({
       aria-label="테이블 행 추가"
     >
       <CmsButton
-        className="form-editor-horizontal-table-dimension-actions__btn"
         variant="primary"
         type="button"
         size="large"
+        width={140}
         icon={<FormEditorPlusIcon />}
         disabled={disabled}
         title="테이블 최하단에 한 줄(행)을 추가합니다."

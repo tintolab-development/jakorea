@@ -4,7 +4,7 @@ import './cms-input-iconclick.css'
 interface CmsInputIconClickProps {
   value: string
   editing: boolean
-  onChange: (next: string) => void
+  onChange: (next: string, options?: { composing?: boolean }) => void
   onRequestEdit: () => void
   onCommitEdit: () => void
   restoreValueIfEmptyOnBlur?: string
@@ -38,6 +38,7 @@ export function CmsInputIconClick({
 }: CmsInputIconClickProps) {
   const showPlaceholder = !value.trim() && Boolean(placeholder)
   const inputRef = useRef<HTMLInputElement>(null)
+  const composingRef = useRef(false)
   const iconMaskId = `cms-input-iconclick-title-mask-${useId().replace(/:/g, '')}`
   const join = (...names: Array<string | undefined>) => names.filter(Boolean).join(' ')
 
@@ -51,8 +52,12 @@ export function CmsInputIconClick({
   }, [readOnly, editing])
 
   const handleBlur = () => {
-    if (value.trim() === '' && restoreValueIfEmptyOnBlur !== '') {
+    // controlled IME 중 props value가 DOM과 어긋날 수 있음 → 실제 input 값 기준으로 커밋
+    const raw = inputRef.current?.value ?? value
+    if (raw.trim() === '' && restoreValueIfEmptyOnBlur !== '') {
       onChange(restoreValueIfEmptyOnBlur)
+    } else {
+      onChange(raw)
     }
     onCommitEdit()
   }
@@ -97,7 +102,22 @@ export function CmsInputIconClick({
             inputClassName
           )}
           value={value}
-          onChange={e => onChange(e.target.value)}
+          onCompositionStart={() => {
+            composingRef.current = true
+          }}
+          onCompositionEnd={e => {
+            composingRef.current = false
+            onChange(e.currentTarget.value)
+          }}
+          onChange={e => {
+            const next = e.target.value
+            const native = e.nativeEvent as InputEvent
+            if (composingRef.current || native.isComposing) {
+              onChange(next, { composing: true })
+              return
+            }
+            onChange(next)
+          }}
           onBlur={handleBlur}
           onKeyDown={e => {
             if (e.key === 'Enter') {

@@ -1,0 +1,89 @@
+---
+description: Rich text·메일 템플릿 폼 입력 시 전체 모달 리렌더(버벅임) 방지 + ref/local SSOT
+globs:
+  - packages/rich-text/**/*.{ts,tsx}
+  - "**/shared/rich-text/**/*.{ts,tsx}"
+  - apps/cms/src/features/notifications/ui/mail-template/**/*.{ts,tsx}
+  - apps/cms/src/features/notifications/ui/mail-send/**/*.{ts,tsx}
+  - apps/cms/src/features/notifications/ui/sms-*/**/*.{ts,tsx}
+  - apps/cms/src/features/notifications/ui/alimtalk-*/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Rich text / 템플릿 compose — 입력 버벅임·검증 불일치 방지
+
+메일·문자 등 **에디터+사이드패널+기본설정이 한 화면**인 작성 폼에서, 키 입력마다 부모 전체가 리렌더되면 버벅인다.  
+로컬 UI state와 submit용 ref를 쓸 때는 **SSOT를 한쪽만** 써야 한다.
+
+## TipTap / `useRichTextEditor`
+
+- `shouldRerenderOnTransaction` 기본값은 **`false`**다. `true`로 되돌리지 말 것.
+- 툴바 active 상태는 부모 리렌더가 아니라 **`useEditorState`**(CMS `RichTextToolbar` 패턴)로 구독한다.
+- 본문 HTML/Markdown을 **키 입력마다 React state에 올리지 않는다**. 제출·미리보기 시에만 `api.getHTML()` / `getMarkdown()` 등으로 읽는다.
+- **작성 가능 영역 전체 클릭**: `.ProseMirror` / `.rich-text-editor__content` 는 `min-height: 100%`(또는 body `--rt-body-min-height`).  
+  앱 CSS에서 `min-height: 0` + `align-items: flex-start` 로 덮으면 **글자 있는 줄만** 커서가 잡힌다 (공지 에디터·`@jakorea/rich-text` 기본과 맞출 것).
+
+```ts
+// ❌ BAD — 타이핑마다 FormModal + VariablesPanel 전체 리렌더
+shouldRerenderOnTransaction: true
+onUpdate: ({ editor }) => setBodyHtml(editor.getHTML())
+
+// ✅ GOOD
+shouldRerenderOnTransaction: false // 또는 생략(기본)
+// submit: apiRef.current?.getHTML()
+```
+
+```css
+/* ❌ BAD — 빈 여백 클릭 불가 */
+.mail-template-compose__editor-host .ProseMirror { min-height: 0; }
+.rich-text-editor__body { align-items: flex-start; }
+
+/* ✅ GOOD — 패키지 기본과 동일 */
+.rich-text-editor__body { align-items: stretch; min-height: var(--rt-body-min-height); }
+.ProseMirror, .rich-text-editor__content { min-height: 100%; cursor: text; }
+```
+
+## 제목·발신자명 등 “가벼운 인풋” (필수)
+
+부모에 TipTap·변수 패널·수신자 테이블이 있으면, 해당 인풋 타이핑은 **부모 setState 금지**.
+
+| 층 | 역할 |
+|----|------|
+| 필드 로컬 `useState` | 화면에 보이는 값 |
+| `ref` | `getDraft` / `validate` / 변수 삽입 SSOT |
+| 부모 React state | **리셋·템플릿 적용·변수 삽입 결과**일 때만 갱신 (epoch/seed로 자식 동기화) |
+
+```ts
+// ❌ BAD — 타이핑마다 부모 리렌더 → 에디터·변수 패널 버벅임
+onChange={e => setSenderName(e.target.value)}
+
+// ❌ BAD — ref-only 타이핑인데 매 렌더 state로 ref를 덮음
+//    UI(로컬)엔 제목이 있는데 validate는 '' → 「제목을 작성하세요」
+subjectRef.current = subject // subject state는 아직 ''
+
+// ✅ GOOD — 타이핑은 ref(+로컬)만; state 동기화는 리셋/삽입 경로에서만
+const handleSubjectChange = (value: string) => {
+  subjectRef.current = value
+}
+const getSubject = () => subjectRef.current
+// reset / insertVariable 때만 setSubject(next); subjectRef.current = next
+```
+
+`getDraft` / `validateRequired` / 미리보기는 **반드시 ref(또는 에디터 api)에서 읽는다**.  
+화면에만 있고 ref/api에 없는 값은 검증·제출에 쓰지 말 것.
+
+## 작성 폼 레이아웃
+
+- 무거운 사이드(변수 Collapse 목록 등)는 **`React.memo`** + **안정된 `onInsert`**.
+- `onInsert` deps에서 subject 문자열을 빼고 **`subjectRef.current`** 를 읽는다.
+- 기본 설정 / 제목·본문 / 변수 패널은 **필드군별로 memo 분리**.
+- harvest·발신 프로필 시드는 **모달 open당 1회**(ref 가드). 입력 deps에 `senderName`/`subject`를 넣어 다시 채우지 말 것.
+
+## 회귀 체크
+
+- [ ] 본문·제목·발신자명 타이핑 시 부모 모달·VariablesPanel이 **매 키마다** 리렌더되지 않는가
+- [ ] 제목이 화면에 있는데 등록 시 「제목을 작성하세요」가 **나지 않는가** (ref←state 덮어쓰기 회귀)
+- [ ] 발신자명 입력 중 값이 지워지거나 harvest 기본값으로 되돌아가지 않는가
+- [ ] 툴바 bold 등 active는 `useEditorState`로 갱신되는가
+
+**Last updated:** 2026-09-10

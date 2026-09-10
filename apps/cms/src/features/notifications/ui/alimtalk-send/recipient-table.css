@@ -1,0 +1,13 @@
+.alimtalk-send-recipient-table.cms-data-table .ant-table-container {
+  max-height: 400px;
+  overflow-x: hidden;
+}
+
+.alimtalk-send-recipient-table.cms-data-table .ant-table-body {
+  max-height: 346px;
+  overflow-x: hidden;
+}
+
+.alimtalk-send-recipient-table.cms-data-table table.ant-table {
+  width: 100% !important;
+}

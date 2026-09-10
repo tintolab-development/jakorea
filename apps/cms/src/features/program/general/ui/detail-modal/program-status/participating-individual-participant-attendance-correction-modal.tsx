@@ -4,6 +4,12 @@ import {
   PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS,
   type ProgramAttendanceCorrectionStatus,
 } from '@/features/program/shared/lib/attendance-correction-types'
+import {
+  ADMIN_FILE_OWNER,
+  ADMIN_FILE_PURPOSE,
+  buildAdminFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 import type { ParticipatingIndividualParticipantAttendanceRow } from '@/features/program/general/lib/participating-individual-participant-attendance-types'
 import './participating-individual-participant-attendance-correction-modal.css'
 
@@ -18,6 +24,7 @@ export type ParticipatingIndividualParticipantAttendanceCorrectionConfirmPayload
   status: ProgramAttendanceCorrectionStatus
   reason: string
   evidenceFileName: string | null
+  evidenceFileObjectIds?: number[]
 }
 
 function toCorrectionStatus(
@@ -46,7 +53,8 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
   const [scheduleRowId, setScheduleRowId] = useState<string | undefined>(undefined)
   const [status, setStatus] = useState<ProgramAttendanceCorrectionStatus>('present')
   const [reason, setReason] = useState('')
-  const [evidenceFileNames, setEvidenceFileNames] = useState<string[]>([])
+  const [evidenceFiles, setEvidenceFiles] = useState<File[]>([])
+  const [uploadingEvidence, setUploadingEvidence] = useState(false)
 
   const selectedOption = useMemo(
     () => scheduleOptions.find(option => option.value === scheduleRowId) ?? null,
@@ -58,14 +66,14 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
     setScheduleRowId(undefined)
     setStatus('present')
     setReason('')
-    setEvidenceFileNames([])
+    setEvidenceFiles([])
   }, [open, scheduleOptions])
 
   useEffect(() => {
     if (!selectedOption) return
     setStatus(toCorrectionStatus(selectedOption.row))
     setReason(selectedOption.row.remark?.trim() ?? '')
-    setEvidenceFileNames([])
+    setEvidenceFiles([])
   }, [selectedOption])
 
   const showReasonTable = status === 'excused_absence'
@@ -73,10 +81,12 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
   useEffect(() => {
     if (showReasonTable) return
     setReason('')
-    setEvidenceFileNames([])
+    setEvidenceFiles([])
   }, [showReasonTable])
 
-  const canConfirm = Boolean(scheduleRowId && selectedOption)
+  const evidenceFileNames = evidenceFiles.map(file => file.name)
+
+  const canConfirm = Boolean(scheduleRowId && selectedOption && !uploadingEvidence)
 
   return (
     <ContentModal
@@ -105,12 +115,40 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
                 return
               }
 
-              onConfirm({
-                scheduleRowId,
-                status,
-                reason: reason.trim(),
-                evidenceFileName: evidenceFileNames[0] ?? null,
-              })
+              void (async () => {
+                let evidenceFileObjectIds: number[] | undefined
+                if (status === 'excused_absence' && evidenceFiles.length > 0) {
+                  setUploadingEvidence(true)
+                  try {
+                    const owner = buildAdminFileOwner(
+                      ADMIN_FILE_OWNER.ATTENDANCE,
+                      1,
+                      ADMIN_FILE_PURPOSE.ABSENCE_EVIDENCE
+                    )
+                    evidenceFileObjectIds = []
+                    for (const file of evidenceFiles) {
+                      const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+                      evidenceFileObjectIds.push(uploaded.fileObjectId)
+                    }
+                  } catch {
+                    showAlert({
+                      title: '안내',
+                      content: '증빙 서류 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+                    })
+                    return
+                  } finally {
+                    setUploadingEvidence(false)
+                  }
+                }
+
+                onConfirm({
+                  scheduleRowId,
+                  status,
+                  reason: reason.trim(),
+                  evidenceFileName: evidenceFiles[0]?.name ?? null,
+                  evidenceFileObjectIds,
+                })
+              })()
             }}
           >
             출결 정정
@@ -174,14 +212,9 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
                     <FileSelectField
                       accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
                       fileNames={evidenceFileNames}
-                      onFilesChange={files =>
-                        setEvidenceFileNames(prev => [
-                          ...prev,
-                          ...files.map(file => file.name),
-                        ])
-                      }
+                      onFilesChange={files => setEvidenceFiles(prev => [...prev, ...files])}
                       onRemoveFile={index =>
-                        setEvidenceFileNames(prev =>
+                        setEvidenceFiles(prev =>
                           prev.filter((_, currentIndex) => currentIndex !== index)
                         )
                       }

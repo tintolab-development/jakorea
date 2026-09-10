@@ -30,7 +30,9 @@ function parseOrganizationKind(value: string | undefined): SponsorOrganizationKi
 }
 
 function parseSponsorshipStatus(value: string | undefined): SponsorSponsorshipStatus {
-  if (value === 'ended') return 'ended'
+  if (value === 'active' || value === 'discussing' || value === 'dormant' || value === 'ended') {
+    return value
+  }
   return 'active'
 }
 
@@ -232,7 +234,7 @@ export function mapSponsorDetailResponse(dto: SponsorDetailResponse): SponsorMan
 /** OpenAPI `SponsorRequest` + 응답에만 있는 홈페이지·로고 id (BE 수용 시 저장) */
 export type SponsorWriteRequest = SponsorRequest & {
   homepageUrl?: string
-  logoFileId?: string
+  logoFileId?: string | null
 }
 
 export function toSponsorRequestFromRegister(payload: SponsorRegisterPayload): SponsorWriteRequest {

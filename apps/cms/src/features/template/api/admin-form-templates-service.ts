@@ -11,6 +11,7 @@ import {
   writingFormDraftToSchemaJson,
 } from '@/features/template/api/adapters/form-template-draft-adapters'
 import { ISSUANCE_FORM_TYPE, WRITING_FORM_TYPE } from '@/features/template/api/form-template-catalog'
+import { buildLocalDuplicateWritingTemplateCode } from '@/features/template/lib/form-template-delete-policy'
 import {
   getFormTemplateVersionCacheEntry,
   removeFormTemplateVersionCacheEntry,
@@ -327,7 +328,10 @@ export async function duplicateFormTemplateVersionRemote(args: {
     versionLabel: args.versionLabel,
   })
 
-  const newCode = copied.templateCode?.trim() || args.sourceTemplateCode
+  let newCode = copied.templateCode?.trim() || args.sourceTemplateCode
+  if (newCode === args.sourceTemplateCode) {
+    newCode = buildLocalDuplicateWritingTemplateCode(args.sourceTemplateCode)
+  }
   if (copied.templateId != null && copied.templateVersionId != null) {
     upsertFormTemplateVersionCacheEntry({
       templateCode: newCode,

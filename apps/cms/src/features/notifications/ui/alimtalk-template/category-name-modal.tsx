@@ -2,6 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
+import {
+  CATEGORY_NAME_INPUT_HINT,
+  isValidCategoryName,
+  sanitizeCategoryNameInput,
+} from './category-name'
 import './category-name-modal.css'
 
 type CategoryNameModalProps = {
@@ -22,6 +27,7 @@ export function CategoryNameModal({
   onSubmit,
 }: CategoryNameModalProps) {
   const [name, setName] = useState(initialName)
+  const composingRef = useRef(false)
   const viewRef = useRef({ mode, parentName, initialName })
 
   if (open) {
@@ -35,7 +41,13 @@ export function CategoryNameModal({
   }, [open, initialName])
 
   const trimmed = name.trim()
+  const restrictCharset = view.mode === 'add'
+  const canSubmit = restrictCharset ? isValidCategoryName(trimmed) : Boolean(trimmed)
   const title = view.mode === 'add' ? '카테고리 추가' : '카테고리 수정'
+
+  const applyName = (raw: string) => {
+    setName(restrictCharset ? sanitizeCategoryNameInput(raw) : raw)
+  }
 
   return (
     <ContentModal
@@ -54,7 +66,7 @@ export function CategoryNameModal({
             size="large"
             type="button"
             className={view.mode === 'add' ? 'cms-button--footer-auto' : undefined}
-            disabled={!trimmed}
+            disabled={!canSubmit}
             onClick={() => onSubmit(trimmed)}
           >
             {view.mode === 'add' ? '카테고리 추가' : '수정'}
@@ -89,9 +101,24 @@ export function CategoryNameModal({
                 width="100%"
                 value={name}
                 placeholder="카테고리명을 입력해 주세요"
-                onChange={event => setName(event.target.value)}
+                message={restrictCharset ? CATEGORY_NAME_INPUT_HINT : undefined}
+                onCompositionStart={() => {
+                  composingRef.current = true
+                }}
+                onCompositionEnd={event => {
+                  composingRef.current = false
+                  applyName(event.currentTarget.value)
+                }}
+                onChange={event => {
+                  const next = event.target.value
+                  if (composingRef.current) {
+                    setName(next)
+                    return
+                  }
+                  applyName(next)
+                }}
                 onPressEnter={() => {
-                  if (trimmed) onSubmit(trimmed)
+                  if (canSubmit) onSubmit(trimmed)
                 }}
               />
             }

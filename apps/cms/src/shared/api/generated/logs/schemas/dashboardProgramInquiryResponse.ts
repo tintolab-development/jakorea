@@ -15,6 +15,6 @@ export interface DashboardProgramInquiryResponse {
   assignedAdminId?: number;
   createdAt?: string;
   answeredAt?: string;
-  /** 미열람(답변대기) 여부. 없으면 프론트는 답변대기를 신규로 본다 */
+  /** 신규/미확인 문의 여부. RECEIVED/PENDING은 true, IN_PROGRESS부터는 답변대기 중이어도 확인된 문의라 false */
   unread?: boolean;
 }

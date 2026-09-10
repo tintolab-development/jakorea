@@ -35,8 +35,7 @@
         "bodyPlaceholder": "한 줄 안내를 입력해 주세요",
         "bodyText": "아래 사항에 동의하는 경우, 명시된 사용 용도에 한하여 글과 함께 저작물을 제작하는 형태로 초상권을 사용할 권리를 촬영자에게 부여합니다.\n또한, 저작물에 대한 소유권을 주장하지 않으며 저작물에 대한 소유권 및 저작권이 JA Korea에 있음을 확인합니다.",
         "answerRequired": true,
-        "showBottomConsent": true,
-        "bottomConsent": "agree"
+        "showBottomConsent": false
       },
       {
         "id": "agreement-portrait-personal-consent-table",
@@ -59,8 +58,12 @@
               ""
             ],
             "stageKinds": [
-              "text",
-              "text"
+              "subjective",
+              "subjective"
+            ],
+            "placeholderHints": [
+              "한글 성명",
+              "소속"
             ]
           },
           {

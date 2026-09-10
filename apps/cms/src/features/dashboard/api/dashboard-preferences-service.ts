@@ -16,11 +16,16 @@ import { getQueryRetryHttpStatus } from '@/shared/lib/query-retry'
 import type { DashboardMePreferencesRequest } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesRequest'
 import type { DashboardMePreferencesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesResponse'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
 import type { UserRole } from '@/types/user'
 
-function resolvePreferencesRole(): UserRole {
+function resolvePreferencesLayoutRole(): UserRole {
   const role = useAuthStore.getState().user?.role
   return role ?? 'ADMIN'
+}
+
+function resolvePreferencesRequestRole(layoutRole: UserRole): string {
+  return resolveAdminRoleCodeFromUser(useAuthStore.getState().user) ?? layoutRole
 }
 
 export async function loadDashboardPreferences(): Promise<DashboardMePreferencesResponse | null> {
@@ -28,7 +33,7 @@ export async function loadDashboardPreferences(): Promise<DashboardMePreferences
     return null
   }
   const dto = await fetchMeDashboardPreferencesRemote()
-  applyMeDashboardPreferencesResponse(dto, resolvePreferencesRole())
+  applyMeDashboardPreferencesResponse(dto, resolvePreferencesLayoutRole())
   return dto
 }
 
@@ -38,8 +43,12 @@ export async function saveDashboardPreferences(
   if (!shouldUseDashboardRemoteApi()) {
     return null
   }
-  const role = resolvePreferencesRole()
-  const body = payload ?? buildMeDashboardPreferencesRequest(role)
+  const layoutRole = resolvePreferencesLayoutRole()
+  const requestRole = resolvePreferencesRequestRole(layoutRole)
+  const body = {
+    ...(payload ?? buildMeDashboardPreferencesRequest(layoutRole, requestRole)),
+    role: requestRole,
+  }
   const saved = await runWithRevisionConflictRetry(
     body,
     saveMeDashboardPreferencesRemote,
@@ -50,6 +59,6 @@ export async function saveDashboardPreferences(
     },
     getQueryRetryHttpStatus
   )
-  applyMeDashboardPreferencesResponse(saved, role)
+  applyMeDashboardPreferencesResponse(saved, layoutRole)
   return saved
 }

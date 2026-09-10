@@ -1,5 +1,5 @@
-import { CloseOutlined } from '@ant-design/icons'
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type {
   FormEditorKind,
@@ -26,12 +26,29 @@ import {
 } from '@/features/template/lib/a4-document-preview'
 import type { TemplateWritingPreviewLayout } from '@/features/template/context/template-writing-preview-context'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import {
+  collectFormDocumentPdfPageElements,
+  downloadFormDocumentPdfFromPageElements,
+} from '@/features/template/lib/generate-form-document-pdf'
+import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
+import { handleError } from '@/shared/utils/error-handler'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 /** 강사 신청 폼 등 `data-paragraph-id` 스코프 스타일(불가 일정 DatePicker 폭 등) — 미리보기 단독 열림에도 적용 */
 import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
 import './template-preview-modal.css'
 
 const PREVIEW_PAGE_QUERY_PARAM = 'previewPage'
+
+function safePdfFileName(title: string): string {
+  const base =
+    title
+      .trim()
+      .replace(/[^\w가-힣-]+/gu, '_')
+      .replace(/_+/g, '_')
+      .slice(0, 80) || 'form'
+  return `${base}.pdf`
+}
 
 function readPreviewPage(searchParams: URLSearchParams): number {
   const value = Number(searchParams.get(PREVIEW_PAGE_QUERY_PARAM))
@@ -93,7 +110,10 @@ export function TemplatePreviewModal({
   onEditForm,
   agreementClosingFooter,
 }: TemplatePreviewModalProps) {
+  const { showAlert } = useCmsAlert()
   const previewBodyRef = useRef<HTMLDivElement>(null)
+  const pdfHostRef = useRef<HTMLDivElement>(null)
+  const [pdfLoading, setPdfLoading] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
   const isA4DocumentPreviewLayout = previewLayout === 'a4-document'
   const isAgreementPreviewLayout = editorKind === 'agreement'
@@ -218,6 +238,27 @@ export function TemplatePreviewModal({
     setPreviewPageParam(nextPage)
   }
 
+  const handlePdfDownload = useCallback(async () => {
+    const root = pdfHostRef.current
+    if (root == null || pdfLoading) return
+    setPdfLoading(true)
+    try {
+      const pageEls = collectFormDocumentPdfPageElements(root)
+      await downloadFormDocumentPdfFromPageElements(
+        pageEls,
+        safePdfFileName(a4DocumentTitle)
+      )
+    } catch (error) {
+      handleError(error, { context: 'templatePreviewModal.pdfDownload' })
+      showAlert({
+        title: '안내',
+        content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+      })
+    } finally {
+      setPdfLoading(false)
+    }
+  }, [a4DocumentTitle, pdfLoading, showAlert])
+
   if (isAgreementPreviewLayout && previewLayout !== 'a4-document') {
     return (
       <AgreementTemplatePreviewModal
@@ -234,6 +275,8 @@ export function TemplatePreviewModal({
   }
 
   return (
+    <>
+    <FormCertificatePdfExportOverlay visible={pdfLoading} />
     <TealHeaderModal
       open={open}
       onCancel={handleClose}
@@ -268,6 +311,21 @@ export function TemplatePreviewModal({
                   현재 화면은 미리보기 화면입니다.
                 </span>
                 <div className="template-preview-modal__notice-actions">
+                  {isA4DocumentPreviewLayout ? (
+                    <CmsButton
+                      type="button"
+                      variant="primary"
+                      size="large"
+                      icon={<DownloadOutlined />}
+                      className="template-preview-modal__notice-download-btn"
+                      adminAction="download"
+                      loading={pdfLoading}
+                      disabled={pdfLoading || pageCount === 0}
+                      onClick={() => void handlePdfDownload()}
+                    >
+                      문서 다운로드
+                    </CmsButton>
+                  ) : null}
                   <CmsButton
                     type="button"
                     variant="secondary"
@@ -365,5 +423,32 @@ export function TemplatePreviewModal({
         </div>
       </div>
     </TealHeaderModal>
+    {open && isA4DocumentPreviewLayout ? (
+      <div ref={pdfHostRef} className="template-preview-modal__pdf-host" aria-hidden="true">
+        {pagedParagraphs.map((pageParagraphs, pageIndex) => (
+          <A4DocumentPageLayout
+            key={pageIndex}
+            title={a4DocumentTitle}
+            pageIndex={pageIndex}
+            pdfCapture
+          >
+            <div className="template-preview-modal__pdf-host-page-body">
+              <FormDocumentPreviewBody
+                paragraphs={pageParagraphs}
+                allParagraphs={previewParagraphs}
+                titleNumbering={draft.formSettings.titleNumbering}
+                editorKind={editorKind}
+                overflowParagraphIds={overflowParagraphIds}
+                paragraphBodyOptions={paragraphBodyOptions}
+                renderMode={a4RenderMode}
+                paragraphGapPx={a4ParagraphGapPx}
+                agreementClosingFooter={agreementClosingFooter}
+              />
+            </div>
+          </A4DocumentPageLayout>
+        ))}
+      </div>
+    ) : null}
+    </>
   )
 }

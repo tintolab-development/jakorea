@@ -18,8 +18,12 @@ export const UJAT_WAGE_PAYMENT_ITEM_NONE_LABEL = PROGRAM_WAGE_PAYMENT_ITEM_NONE_
 export const UJAT_WAGE_DEDUCTION_LABEL = PROGRAM_WAGE_DEDUCTION_LABEL
 export const UJAT_WAGE_OVERLAY_PAYMENT_KEY = 'ujat.wage.paymentItemValues' as const
 
-/** UJAT 등록 양식 기본 지급 항목 — mock `강사 교통비` (id `p-1`) */
-export const UJAT_DEFAULT_PAYMENT_ITEM_VALUES: string[] = ['p-1']
+/** 카탈로그 `강사 교통비`(p-1) — UJAT 화면 표기 `교통비(일반)` */
+const UJAT_PAYMENT_ID_TRANSPORT_GENERAL = 'p-1'
+const UJAT_PAYMENT_LABEL_TRANSPORT_GENERAL = '교통비(일반)'
+
+/** UJAT 등록 양식 기본 지급 항목 — `교통비(일반)` */
+export const UJAT_DEFAULT_PAYMENT_ITEM_VALUES: string[] = [UJAT_PAYMENT_ID_TRANSPORT_GENERAL]
 
 export type UjatWageInfoDisplay = {
   paymentItemsText: string
@@ -27,7 +31,13 @@ export type UjatWageInfoDisplay = {
   paymentItemIds: string[]
 }
 
-export const getUjatWagePaymentItemOptions = getProgramWagePaymentItemOptions
+export function getUjatWagePaymentItemOptions() {
+  return getProgramWagePaymentItemOptions().map(opt =>
+    opt.value === UJAT_PAYMENT_ID_TRANSPORT_GENERAL
+      ? { ...opt, label: UJAT_PAYMENT_LABEL_TRANSPORT_GENERAL }
+      : opt
+  )
+}
 export const isUjatPaymentNoneOnly = isProgramPaymentNoneOnly
 export const resolveUjatWageDeductionLabel = resolveProgramWageDeductionLabel
 export const ujatPaymentItemLabelsFromIds = programPaymentItemLabelsFromIds

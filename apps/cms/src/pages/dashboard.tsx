@@ -14,6 +14,8 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getAdminLevelLabel } from '@/shared/config/permissions'
 import { getDashboardWidgetsForUser, isWidgetResizable } from '@/shared/config/dashboard-config'
 import { getRoleLabel } from '@/shared/ui'
+import { canAdminAction } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import {
   useActiveProgramCount,
   useDashboardLayout,
@@ -51,7 +53,11 @@ export function Dashboard() {
   const { data: dashboardHome } = useDashboardHome(!!isAdmin)
   const { isFetched: preferencesFetched } = useDashboardPreferences(!!isAdmin)
   const preferencesReady = !useRemoteDashboard || preferencesFetched
-  const persistLayout = usePersistDashboardLayout(preferencesReady, user?.role ?? null)
+  const roleCode = useSessionAdminRoleCode()
+  const persistLayout = usePersistDashboardLayout(
+    preferencesReady && canAdminAction({ roleCode, action: 'dashboardWrite' }),
+    user?.role ?? null
+  )
   const userRole = user?.role ?? null
 
   const instructorCount = dashboardHome?.memberCount ?? 0

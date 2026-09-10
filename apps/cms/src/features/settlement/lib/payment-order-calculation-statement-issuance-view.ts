@@ -25,7 +25,7 @@ import type { PaymentStatementBasicInfoAutofillValues } from '@/features/templat
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
 /** 지급조서 양식 고정 문구 — 목 회원 데이터가 아님 */
-const PAYMENT_STATEMENT_PAYMENT_PURPOSE = '강사비 또는 활동비 지급'
+const PAYMENT_STATEMENT_PAYMENT_PURPOSE = '강의비 또는 활동비 지급'
 
 function presentText(value: string | undefined): string {
   const trimmed = value?.trim() ?? ''

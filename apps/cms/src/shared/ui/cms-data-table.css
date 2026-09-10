@@ -61,6 +61,7 @@
   padding: 0 !important;
   border-right: none !important;
   border-bottom: 1px solid var(--table-line, #e0e0e0);
+  background: var(--BG-header) !important;
 }
 
 /* rowSelection.columnWidth·colgroup 과 동일 폭 유지 — 총폭 68px·좌 8px 패딩 포함 */
@@ -74,8 +75,8 @@
   vertical-align: middle !important;
 }
 
-/* No. 열: 선택 열 바로 다음 col(체크박스+번호 패턴) */
-.cms-data-table col.ant-table-selection-col + col {
+/* No. 열: 선택 열 바로 다음 col(체크박스+번호 패턴). skip-auto-no-col 은 첫 데이터 열이 No.가 아님 */
+.cms-data-table:not(.cms-data-table--skip-auto-no-col) col.ant-table-selection-col + col {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
@@ -85,7 +86,7 @@
  * table-layout:fixed + width:100% 이면 남은 폭이 모든 지정 열에 분배되어 No.가 80을 넘는다.
  * No. 이후 col을 auto로 두어 남는 폭을 흡수한다.
  */
-.cms-data-table col.ant-table-selection-col + col ~ col {
+.cms-data-table:not(.cms-data-table--skip-auto-no-col) col.ant-table-selection-col + col ~ col {
   width: auto !important;
   max-width: none !important;
 }
@@ -232,7 +233,7 @@
   min-width: var(--table-selection-column-width, 68px) !important;
 }
 
-.detail-fullpage-modal .cms-data-table col.ant-table-selection-col + col {
+.detail-fullpage-modal .cms-data-table:not(.cms-data-table--skip-auto-no-col) col.ant-table-selection-col + col {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
@@ -296,7 +297,7 @@
   min-width: var(--table-selection-column-width, 68px) !important;
 }
 
-.detail-fullpage-modal .ant-table-wrapper.cms-data-table col.ant-table-selection-col + col {
+.detail-fullpage-modal .ant-table-wrapper.cms-data-table:not(.cms-data-table--skip-auto-no-col) col.ant-table-selection-col + col {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;

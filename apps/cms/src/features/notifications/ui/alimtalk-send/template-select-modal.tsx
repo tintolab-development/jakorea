@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { ContentModal, CmsButton, CmsCompactPagination, CmsInput } from '@/shared/ui'
+import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, useCmsAlert } from '@/shared/ui'
+import { isAlimtalkTemplateApproved } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
 import type { AlimtalkTemplateItem } from '@/features/notifications/model/alimtalk-template/types'
 import './template-select-modal.css'
 
@@ -16,6 +17,7 @@ type TemplateSelectModalProps = {
   onClose: () => void
   onPreview: (template: AlimtalkTemplateItem) => void
   onUse: (template: AlimtalkTemplateItem) => void
+  isTemplateUsable?: (template: AlimtalkTemplateItem) => boolean
   zIndex?: number
 }
 
@@ -34,8 +36,10 @@ export function TemplateSelectModal({
   onClose,
   onPreview,
   onUse,
+  isTemplateUsable,
   zIndex,
 }: TemplateSelectModalProps) {
+  const { showAlert } = useCmsAlert()
   const [keyword, setKeyword] = useState('')
   const [appliedKeyword, setAppliedKeyword] = useState('')
   const [page, setPage] = useState(1)
@@ -53,6 +57,24 @@ export function TemplateSelectModal({
   const handleSearch = () => {
     setAppliedKeyword(keyword.trim())
     setPage(1)
+  }
+
+  const handleUse = (template: AlimtalkTemplateItem) => {
+    if (!isAlimtalkTemplateApproved(template)) {
+      showAlert({
+        title: '안내',
+        content: '카카오 승인이 완료되지 않은 템플릿은 발송할 수 없습니다.',
+      })
+      return
+    }
+    if (isTemplateUsable?.(template) === false) {
+      showAlert({
+        title: '안내',
+        content: '현재 프로그램에서는 사용할 수 없는 변수가 포함된 템플릿입니다.',
+      })
+      return
+    }
+    onUse(template)
   }
 
   const columns: ColumnsType<AlimtalkTemplateItem> = [
@@ -76,39 +98,44 @@ export function TemplateSelectModal({
       align: 'center',
       className: 'template-select-modal__col-actions',
       onHeaderCell: () => ({ className: 'template-select-modal__col-actions' }),
-      render: (_, record) => (
-        <div
-          className="template-select-modal__row-actions"
-          onClick={event => event.stopPropagation()}
-        >
-          <CmsButton
-            type="button"
-            variant="default"
-            size="small"
-            width={80}
-            className="template-select-modal__action-btn template-select-modal__action-btn--preview"
-            onClick={event => {
-              event.stopPropagation()
-              onPreview(record)
-            }}
+      render: (_, record) => {
+        const canUse =
+          isAlimtalkTemplateApproved(record) && isTemplateUsable?.(record) !== false
+        return (
+          <div
+            className="template-select-modal__row-actions"
+            onClick={event => event.stopPropagation()}
           >
-            미리보기
-          </CmsButton>
-          <CmsButton
-            type="button"
-            variant="secondary"
-            size="small"
-            width={80}
-            className="template-select-modal__action-btn template-select-modal__action-btn--use"
-            onClick={event => {
-              event.stopPropagation()
-              onUse(record)
-            }}
-          >
-            사용하기
-          </CmsButton>
-        </div>
-      ),
+            <CmsButton
+              type="button"
+              variant="default"
+              size="small"
+              width={80}
+              className="template-select-modal__action-btn template-select-modal__action-btn--preview"
+              onClick={event => {
+                event.stopPropagation()
+                onPreview(record)
+              }}
+            >
+              미리보기
+            </CmsButton>
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="small"
+              width={80}
+              className="template-select-modal__action-btn template-select-modal__action-btn--use"
+              disabled={!canUse}
+              onClick={event => {
+                event.stopPropagation()
+                handleUse(record)
+              }}
+            >
+              템플릿 사용
+            </CmsButton>
+          </div>
+        )
+      },
     },
   ]
 

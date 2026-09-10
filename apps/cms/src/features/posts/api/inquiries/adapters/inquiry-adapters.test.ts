@@ -31,7 +31,8 @@ describe('inquiry-adapters', () => {
 
   it('maps CLOSED and answers to ANSWERED', () => {
     const detail = mapInquiryDetail(
-      { id: 1, status: 'CLOSED', title: '문의' },
+      // OpenAPI enum is PENDING|ANSWERED; mapper still accepts legacy CLOSED
+      { id: 1, status: 'CLOSED' as never, title: '문의' },
       [{ content: '답변입니다', createdAt: '2026-09-01T00:00:00Z', answeredByAdminId: 3 }]
     )
     expect(detail.status).toBe('ANSWERED')

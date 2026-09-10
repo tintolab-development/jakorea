@@ -15,10 +15,10 @@ CMS **Gemini 프로그램** — **찾아가는 연수** · **실적 관리** 화
 
 **관련 문서**
 
-- [programs-gemini-visiting-training-api-backend-handoff.md](./programs-gemini-visiting-training-api-backend-handoff.md) (Cat 5)
-- [programs-gemini-performance-api-backend-handoff.md](./programs-gemini-performance-api-backend-handoff.md) (Cat 6)
-- 양식 시드: [form-template-seeds/recruitment-gemini-visiting-training.json](./form-template-seeds/recruitment-gemini-visiting-training.json) · `application-gemini-visiting-training-school.json` · `application-gemini-visiting-training-instructor.json`
-- 포맷 참고: [company-school-program-dummy-seed-backend-request.md](./company-school-program-dummy-seed-backend-request.md)
+- [programs-gemini-visiting-training-api-backend-handoff.md](../programs-gemini-visiting-training-api-backend-handoff.md) (Cat 5)
+- [programs-gemini-performance-api-backend-handoff.md](../programs-gemini-performance-api-backend-handoff.md) (Cat 6)
+- 양식 시드: [form-template-seeds/recruitment-gemini-visiting-training.json](../form-template-seeds/recruitment-gemini-visiting-training.json) · [`application-gemini-visiting-training-school.json`](../form-template-seeds/application-gemini-visiting-training-school.json) · [`application-gemini-visiting-training-instructor.json`](../form-template-seeds/application-gemini-visiting-training-instructor.json)
+- 포맷 참고: [02-company-school-dummy-seed.md](./02-company-school-dummy-seed.md)
 
 > **금지**
 >

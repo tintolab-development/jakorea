@@ -7,16 +7,8 @@
  * @see apps/cms/docs/api/client-file-access-log-backend-handoff.md
  */
 
+import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
-
-function hasRemoteAdminJwt(): boolean {
-  if (typeof window === 'undefined') return false
-  const token = window.localStorage?.getItem?.('auth_token')
-  if (!token || token.startsWith('mock-jwt-token-') || token.startsWith('cms-remote-')) {
-    return false
-  }
-  return token.split('.').length >= 3
-}
 
 export function shouldRecordFileAccessRemotely(): boolean {
   return isRealApiModuleEnabled('logs') && hasRemoteAdminJwt()

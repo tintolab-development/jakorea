@@ -5,8 +5,10 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { NotificationDeliveryDetailResponsePreview } from './notificationDeliveryDetailResponsePreview';
 import type { NotificationDeliveryResponse } from './notificationDeliveryResponse';
 
 export interface NotificationDeliveryDetailResponse {
   delivery?: NotificationDeliveryResponse;
+  preview?: NotificationDeliveryDetailResponsePreview;
 }

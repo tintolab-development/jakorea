@@ -8,6 +8,7 @@ import {
   getVisibleParagraphDescription,
 } from '../paragraph/form-paragraph-section-description.js'
 import type { FormTemplateSurface, ParagraphBodyInteractionMode } from '@jakorea/form-schema/surface'
+import { shouldHideMultipleChoiceAllowMultipleTitleHint } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import {
   ParagraphCard,
   paragraphCardStaticHeading,
@@ -73,6 +74,13 @@ function buildParagraphEditableHeading(
     titleLeading: numberedPrefix ? (
       <span className="paragraph-input__leading">{numberedPrefix}</span>
     ) : undefined,
+    titleHint:
+      paragraph.kind === 'single_item' &&
+      paragraph.variant === 'multiple_choice' &&
+      paragraph.allowMultiple === true &&
+      !shouldHideMultipleChoiceAllowMultipleTitleHint(paragraph.id) ? (
+        <span className="paragraph-input__title-hint"> (중복 선택 가능)</span>
+      ) : undefined,
     descriptionValue: visibleDescription ?? '',
     /** 비어 있어도 「설명 입력」 placeholder 노출 (CMS 미리보기·스크린샷과 동일) */
     showDescription: Boolean(visibleDescription?.trim()),

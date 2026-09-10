@@ -49,9 +49,11 @@ export function FormDocumentPreviewBody({
   agreementClosingFooter,
 }: FormDocumentPreviewBodyProps) {
   const useCustomGaps = paragraphGapPx != null
-  /** A4: 대리작성 shadow 카드 대신 날짜·서명 플랫 스택 */
+  /** A4 contentOnly — proxy 확인 카드가 아닐 때만 날짜·서명 플랫 스택 */
   const resolvedParagraphBodyOptions: RenderFormParagraphBodyOptions | undefined =
-    renderMode === 'contentOnly' && paragraphBodyOptions != null
+    renderMode === 'contentOnly' &&
+    paragraphBodyOptions != null &&
+    paragraphBodyOptions.agreementAdminProxyConfirm !== true
       ? {
           ...paragraphBodyOptions,
           agreementAdminProxyConfirm: false,

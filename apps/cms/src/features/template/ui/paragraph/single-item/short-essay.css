@@ -1,7 +1,7 @@
 .short-essay-items {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
 }
 
 .short-essay-item-row {
@@ -45,4 +45,19 @@
 .short-essay-item-delete {
   align-self: flex-start;
   margin-top: 40px;
+}
+
+/* 단일항목 주관식형 — 1줄 시작, resize 핸들 항상 노출 */
+.short-essay-items--single-line-default
+  .paragraph-label-input__textarea.cms-textarea--expandable-single-row
+  .cms-textarea__control {
+  overflow: visible;
+}
+
+.short-essay-items--single-line-default
+  .paragraph-label-input__textarea.cms-textarea--expandable-single-row
+  .cms-textarea__inner
+  textarea.ant-input {
+  resize: vertical;
+  overflow: auto;
 }

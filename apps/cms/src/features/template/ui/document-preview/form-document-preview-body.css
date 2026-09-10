@@ -1,10 +1,11 @@
 @import '../shared/form-paragraph-section-description.css';
 @import './document-education-photos-readonly.css';
+@import './document-session-plan-short-essay-readonly.css';
 
 .form-document-preview-body {
   display: flex;
   flex-direction: column;
-  gap: var(--form-document-preview-gap, 32px);
+  gap: var(--form-document-preview-gap, 40px);
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -162,6 +163,8 @@
 .form-document-preview-paragraph--content-only-closing-signature
   .form-document-preview-paragraph__body-text {
   font-size: 24px;
+  font-weight: 700;
+  line-height: 150%; /* 36px */
 }
 
 /* 지급조서 최종확인·교육진행자 서약·초상권 확인 — 텍스트 위 구분선
@@ -182,6 +185,15 @@
   margin-bottom: 40px;
 }
 
+/* 지급조서(발급용) — 날짜 ↔ (회장) 서명 10px (다른 동의서 document-date와 동일) */
+.form-document-preview-paragraph[data-paragraph-id='payment-statement-seed-closing-date'].form-document-preview-paragraph--content-only-closing {
+  margin-bottom: 10px;
+}
+
+.form-document-preview-paragraph[data-paragraph-id='payment-statement-seed-closing-signature'].form-document-preview-paragraph--content-only-closing {
+  margin-bottom: 0;
+}
+
 /* -------------------------------------------------------------------------- */
 /* 초상권 A4 — 패딩·갭 축소로 1페이지 수용                                       */
 /* -------------------------------------------------------------------------- */
@@ -196,18 +208,6 @@
 .form-document-preview-body--agreement-portrait
   .form-document-preview-paragraph--content-only-confirm {
   margin-bottom: 12px;
-}
-
-.form-document-preview-body--agreement-portrait
-  .form-document-preview-paragraph--content-only-closing.form-document-preview-paragraph--content-only-confirm-rule,
-.form-document-preview-body--agreement-portrait
-  .form-document-preview-paragraph--content-only-confirm.form-document-preview-paragraph--content-only-confirm-rule {
-  padding-top: 20px;
-}
-
-.form-document-preview-body--agreement-portrait
-  .form-document-preview-paragraph--content-only-confirm-rule::before {
-  margin-bottom: 16px;
 }
 
 .form-document-preview-body--agreement-portrait .explanation-system--document-date {
@@ -271,6 +271,10 @@
   white-space: pre-wrap;
 }
 
+.form-document-preview-paragraph__title-text .paragraph-input__title-hint {
+  color: var(--color-mint-01, #01a1af);
+}
+
 .form-document-preview-paragraph__body-text {
   font-family: Pretendard, sans-serif;
   font-size: 15px;
@@ -304,6 +308,17 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.form-document-preview-multiple-choice__description {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 150%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .form-document-preview-multiple-choice__row {
@@ -383,6 +398,16 @@
   margin-bottom: 16px;
 }
 
+.form-document-preview-paragraph--content-only.form-document-preview-paragraph--ujat-journal-feedback
+  .form-document-preview-paragraph__description-text {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
 .form-document-preview-body--ujat-education .form-document-preview-paragraph__title-text {
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
@@ -399,6 +424,11 @@
   font-style: normal;
   font-weight: 400;
   line-height: 150%;
+}
+
+.form-document-preview-body--ujat-education
+  .form-document-preview-paragraph__body-text--explanation-placeholder {
+  color: var(--gray-85969-d, #85969d);
 }
 
 .form-document-preview-body--ujat-education .form-document-short-essay-table,
@@ -480,7 +510,6 @@
 
 /* 강의보고서 A4 미리보기·PDF — 입력값(프로그램명·기관명·서술 등) 공통 타이포 */
 .form-document-preview-body--lecture-report .form-document-preview-paragraph__body-text,
-.form-document-preview-body--lecture-report .document-session-plan-short-essay-readonly__text,
 .form-document-preview-body--lecture-report .form-document-short-essay-table td,
 .form-document-preview-body--lecture-report .form-document-text-input-table td,
 .form-document-preview-body--lecture-report

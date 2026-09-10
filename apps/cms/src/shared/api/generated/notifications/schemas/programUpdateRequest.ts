@@ -10,6 +10,7 @@ import type { ProgramPeriodRequest } from './programPeriodRequest';
 import type { ProgramRoundRequest } from './programRoundRequest';
 import type { ProgramScheduleRequest } from './programScheduleRequest';
 import type { ProgramSettlementPaymentItemRequest } from './programSettlementPaymentItemRequest';
+import type { ProgramSponsorAssignmentRequest } from './programSponsorAssignmentRequest';
 import type { ProgramWagePolicyRequest } from './programWagePolicyRequest';
 
 /**
@@ -17,6 +18,7 @@ import type { ProgramWagePolicyRequest } from './programWagePolicyRequest';
  */
 export interface ProgramUpdateRequest {
   sponsorId?: string;
+  sponsors?: ProgramSponsorAssignmentRequest[];
   title?: string;
   type?: string;
   format?: string;

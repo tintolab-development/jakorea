@@ -56,7 +56,7 @@
             },
             {
               "kind": "text",
-              "value": "- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 프로그램 종료로부터 1년 보관 후 폐기"
+              "value": "이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기"
             }
           ]
         ],
@@ -138,30 +138,49 @@
       {
         "id": "ujat-program-application-institution-seed-application-region",
         "kind": "single_item",
-        "variant": "horizontal_table",
+        "variant": "multiple_choice",
         "requiredMark": true,
         "paragraphTitle": "신청 지역",
         "paragraphDescription": "설명 입력",
         "participatesInTitleNumbering": true,
-        "tableFlavor": "text",
-        "columnHeaders": [
-          "항목",
-          "내용"
-        ],
-        "dataRows": [
-          [
-            "",
-            ""
-          ]
-        ],
-        "columnFields": [],
-        "fieldDataRows": [],
-        "bottomText": "",
-        "showBottomText": false,
-        "showBottomConsent": false,
-        "bottomConsent": "agree",
         "answerRequired": true,
-        "idTypeWithInput": null
+        "allowMultiple": false,
+        "items": [
+          {
+            "id": "ujat-program-application-institution-application-region-seoul",
+            "label": "서울"
+          },
+          {
+            "id": "ujat-program-application-institution-application-region-gyeonggi-south",
+            "label": "경기(남부)"
+          },
+          {
+            "id": "ujat-program-application-institution-application-region-incheon",
+            "label": "인천"
+          },
+          {
+            "id": "ujat-program-application-institution-application-region-daejeon",
+            "label": "대전"
+          },
+          {
+            "id": "ujat-program-application-institution-application-region-daegu",
+            "label": "대구"
+          },
+          {
+            "id": "ujat-program-application-institution-application-region-busan",
+            "label": "부산"
+          },
+          {
+            "id": "ujat-program-application-institution-application-region-gwangju",
+            "label": "광주"
+          },
+          {
+            "id": "ujat-program-application-institution-application-region-jeonbuk-jeonju",
+            "label": "전북(전주)"
+          }
+        ],
+        "selectedPreviewSingleId": null,
+        "selectedPreviewMultipleIds": []
       },
       {
         "id": "ujat-program-application-institution-seed-basic-info",

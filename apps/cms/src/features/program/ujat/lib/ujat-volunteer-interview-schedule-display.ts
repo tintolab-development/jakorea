@@ -9,9 +9,19 @@ import {
   type UjatVolunteerInterviewScheduleData,
 } from '@/data/mock/ujat-volunteer-interview-schedule'
 
+const EMPTY_UJAT_VOLUNTEER_INTERVIEW_SCHEDULE: UjatVolunteerInterviewScheduleData = {
+  common: {
+    recurringUnavailable: '-',
+    specificUnavailableDates: '-',
+    availableTimeSlots: '-',
+  },
+  exceptions: [],
+}
+
 export function resolveUjatVolunteerInterviewScheduleDisplay(
   program: Program,
-  half?: UjatVolunteerRecruitHalf
+  half?: UjatVolunteerRecruitHalf,
+  options?: { allowMockFallback?: boolean }
 ): UjatVolunteerInterviewScheduleData {
   const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo
   const availableTimeSlots = info?.availableTimeSlots?.trim()
@@ -27,12 +37,17 @@ export function resolveUjatVolunteerInterviewScheduleDisplay(
     }
   }
 
+  if (options?.allowMockFallback === false) {
+    return EMPTY_UJAT_VOLUNTEER_INTERVIEW_SCHEDULE
+  }
+
   return getUjatVolunteerInterviewScheduleMock(program.id, half)
 }
 
 export function resolveUjatVolunteerInterviewScheduleEditSeed(
   program: Program,
-  half?: UjatVolunteerRecruitHalf
+  half?: UjatVolunteerRecruitHalf,
+  options?: { allowMockFallback?: boolean }
 ): VolunteerInterviewScheduleEditSeed | undefined {
   const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo
   const availableTimeSlots = info?.availableTimeSlots?.trim()
@@ -43,6 +58,10 @@ export function resolveUjatVolunteerInterviewScheduleEditSeed(
       specificUnavailableDateIsos: info?.specificUnavailableDateIsos,
       availableTimeSlots,
     })
+  }
+
+  if (options?.allowMockFallback === false) {
+    return undefined
   }
 
   const mock = getUjatVolunteerInterviewScheduleMock(program.id, half)

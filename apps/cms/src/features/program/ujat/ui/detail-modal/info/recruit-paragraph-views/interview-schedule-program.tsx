@@ -26,15 +26,22 @@ export function UjatRecruitInterviewScheduleProgramView({
   isEdit,
   volunteerHalf,
   sectionTitle = '면접 진행 가능 일정',
+  isTemplateAuthoring = false,
 }: {
   program: Program
   volunteerHalf?: UjatVolunteerRecruitHalf
   sectionTitle?: string
   form?: UseFormReturn<ProgramDetailEditFormValues>
   isEdit: boolean
+  /** 양식 작성 화면 — mock·미리보기 선택값을 넣지 않음 */
+  isTemplateAuthoring?: boolean
 }) {
-  const display = resolveUjatVolunteerInterviewScheduleDisplay(program, volunteerHalf)
-  const editSeed = resolveUjatVolunteerInterviewScheduleEditSeed(program, volunteerHalf)
+  const display = resolveUjatVolunteerInterviewScheduleDisplay(program, volunteerHalf, {
+    allowMockFallback: !isTemplateAuthoring,
+  })
+  const editSeed = resolveUjatVolunteerInterviewScheduleEditSeed(program, volunteerHalf, {
+    allowMockFallback: !isTemplateAuthoring,
+  })
   const [exceptionBlockKeys, setExceptionBlockKeys] = useState<number[]>(() =>
     display.exceptions.length > 0
       ? display.exceptions.map((_, index) => Date.now() + index)

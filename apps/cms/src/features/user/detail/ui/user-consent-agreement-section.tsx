@@ -12,6 +12,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import {
   CONSENT_LABEL_TO_EDITABLE_TERMS_TYPE,
+  isAdminDetailLockedConsentLabel,
   isMemberBasicInfoImmutableConsentLabel,
   resolveEditableConsentAgreedFromDraft,
 } from '@/features/user/api/member-basic-info-terms-patch'
@@ -20,7 +21,6 @@ import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-co
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
 import {
   CONSENT_RADIO_OPTIONS,
-  type ConsentValue,
 } from '@/features/user/shared/ui/instructor-profile-form'
 import {
   isMemberCrimeConsentField,
@@ -55,7 +55,7 @@ export interface UserConsentAgreementSectionProps {
   remoteConsentLoading?: boolean
   /**
    * 관리자 등록 회원 기본정보 수정.
-   * 선택 동의: 라디오 편집. 필수(서비스·개인정보·MFA): 라디오 노출 + disabled.
+   * 선택 동의: 라디오 편집(관리자 회원은 마케팅 제외). 필수(서비스·개인정보·MFA): disabled.
    */
   editing?: boolean
   draftTermsAgreements?: TermsAgreementRequest[]
@@ -105,7 +105,9 @@ export type ConsentFieldValueSchema =
       agreed: boolean
       agreedAtDisplay?: string
       formResponseId?: number
+      filledDocumentId?: number
       filledDocumentAvailable?: boolean
+      filledDocumentRevealEndpoint?: string
       consentType?: string
     }
   /** 더블 행 우측 빈 절반(격자·하단 보더만 유지) */
@@ -273,6 +275,7 @@ export interface ConsentRenderCtx {
   ) => void
   onWriteConsentDocument?: (label: string) => void
   editing?: boolean
+  preset?: UserConsentAgreementPreset
   draftTermsAgreements?: TermsAgreementRequest[]
   onEditableConsentChange?: (label: string, agreed: boolean) => void
 }
@@ -377,28 +380,16 @@ function resolveConsentFieldView(
 
 function ConsentDocumentFieldEdit({
   agreed,
-  onDisagree,
   onWrite,
 }: {
   agreed: boolean
-  onDisagree: () => void
   onWrite: () => void
 }) {
   return (
     <span className="user-consent-agreement-section__document-edit">
-      <CmsRadioGroup
-        options={CONSENT_RADIO_OPTIONS}
-        size="large"
-        value={agreed ? 'agree' : 'disagree'}
-        onChange={event => {
-          const next = event.target.value as ConsentValue
-          if (next === 'disagree') {
-            onDisagree()
-            return
-          }
-          onWrite()
-        }}
-      />
+      <span className="user-consent-agreement-section__document-edit-status">
+        {agreed ? '동의' : '미동의'}
+      </span>
       <span className="user-consent-agreement-section__value-sep" aria-hidden>
         |
       </span>
@@ -421,8 +412,11 @@ function resolveConsentFieldEdit(
       ? field.value.agreed
       : false
 
-  // 필수 약관: 수정 불가 — 라디오 형식으로 노출하되 disabled (FE/BE 공통)
-  if (isMemberBasicInfoImmutableConsentLabel(field.label)) {
+  // 필수 약관·관리자 회원 마케팅: 수정 불가 — 라디오 노출 + disabled (FE/BE 공통)
+  if (
+    isMemberBasicInfoImmutableConsentLabel(field.label) ||
+    (ctx.preset === 'admin' && isAdminDetailLockedConsentLabel(field.label))
+  ) {
     return (
       <CmsRadioGroup
         options={CONSENT_RADIO_OPTIONS}
@@ -447,7 +441,6 @@ function resolveConsentFieldEdit(
     return (
       <ConsentDocumentFieldEdit
         agreed={agreed}
-        onDisagree={() => ctx.onEditableConsentChange?.(field.label, false)}
         onWrite={() => ctx.onWriteConsentDocument?.(field.label)}
       />
     )
@@ -518,7 +511,11 @@ export function renderConsentRow(
 type ActiveConsentView = {
   entry: MemberConsentTemplateEntry
   consentType?: string
+  documentAgreed?: boolean
   filledDocumentAvailable?: boolean
+  formResponseId?: number
+  filledDocumentId?: number
+  filledDocumentRevealEndpoint?: string
 }
 
 type ActiveConsentWrite = {
@@ -560,7 +557,11 @@ export function UserConsentAgreementSection({
           entry,
           consentType:
             document.consentType?.trim() || CONSENT_LABEL_TO_EDITABLE_TERMS_TYPE[label.trim()],
+          documentAgreed: document.agreed,
           filledDocumentAvailable: document.filledDocumentAvailable,
+          formResponseId: document.formResponseId,
+          filledDocumentId: document.filledDocumentId,
+          filledDocumentRevealEndpoint: document.filledDocumentRevealEndpoint,
         })
       }
     },
@@ -575,7 +576,10 @@ export function UserConsentAgreementSection({
   const closeWrite = useCallback(() => setActiveWrite(null), [])
 
   const handleWriteComplete = useCallback(() => {
-    if (activeWrite) onEditableConsentChange?.(activeWrite.label, true)
+    if (activeWrite) {
+      /** 스냅샷 저장과 동일 틱에서 동의 반영 — 부모 draft ref로 스냅샷 유실 방지 */
+      onEditableConsentChange?.(activeWrite.label, true)
+    }
     setActiveWrite(null)
   }, [activeWrite, onEditableConsentChange])
 
@@ -590,6 +594,7 @@ export function UserConsentAgreementSection({
     openDocumentForLabel,
     onWriteConsentDocument: editing ? openWriteForLabel : undefined,
     editing,
+    preset,
     draftTermsAgreements,
     onEditableConsentChange,
   }
@@ -629,6 +634,10 @@ export function UserConsentAgreementSection({
           consentType={activeView.consentType}
           membersRemote={membersRemote}
           filledDocumentAvailable={activeView.filledDocumentAvailable}
+          formResponseId={activeView.formResponseId}
+          filledDocumentId={activeView.filledDocumentId}
+          filledDocumentRevealEndpoint={activeView.filledDocumentRevealEndpoint}
+          documentAgreed={activeView.documentAgreed}
           memberUser={memberUser}
           onClose={() => setActiveView(null)}
         />
@@ -648,6 +657,7 @@ export function UserConsentAgreementSection({
       {activeWrite != null && writingCrime ? (
         <MemberConsentCrimeModal
           open
+          memberId={memberId}
           savedSnapshot={consentWriteSnapshots?.crimeByFieldKey[activeWrite.entry.fieldKey]}
           onSnapshotSave={snapshot => onConsentCrimeSnapshotSave?.(activeWrite.label, snapshot)}
           onClose={closeWrite}

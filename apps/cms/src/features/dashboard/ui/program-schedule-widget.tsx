@@ -87,11 +87,8 @@ function resolveWidgetProgram(programId: string, variant: ProgramScheduleKind): 
   return programService.getByIdSync(programId)
 }
 
-function programsFromOptions(
-  options: { id: string; title: string }[],
-  user: Omit<User, 'password'> | null | undefined
-): Program[] {
-  const base: Program[] = options.map(o => ({
+function programsFromOptions(options: { id: string; title: string }[]): Program[] {
+  return options.map(o => ({
     id: o.id,
     title: o.title,
     sponsorId: '',
@@ -105,10 +102,6 @@ function programsFromOptions(
     createdAt: '',
     updatedAt: '',
   }))
-  if (!user || user.role !== 'ADMIN' || user.adminLevel === 'MASTER') {
-    return base
-  }
-  return filterProgramsByACL(base, user)
 }
 
 /** 빈 배열 = 전체, 선택 id → 해당 id만 */
@@ -438,12 +431,12 @@ export function ProgramScheduleWidget({
 
   const useRemoteSchedules = shouldUseDashboardRemoteApi()
   const useCompanySchoolProgramsRemote =
-    variant === 'company_school' && shouldUseCompanySchoolRemoteApi()
+    !useRemoteSchedules && variant === 'company_school' && shouldUseCompanySchoolRemoteApi()
   const companySchoolProgramsQuery = useCompanySchoolPrograms({}, useCompanySchoolProgramsRemote)
   const { data: remoteProgramOptions = [] } = useDashboardProgramOptions(widgetKey, useRemoteSchedules)
 
   const categoryProgramIdSet = useMemo(() => {
-    if (useRemoteSchedules && remoteProgramOptions.length > 0) {
+    if (useRemoteSchedules) {
       return new Set(remoteProgramOptions.map(p => p.id))
     }
     if (useCompanySchoolProgramsRemote && companySchoolProgramsQuery.data) {
@@ -464,8 +457,8 @@ export function ProgramScheduleWidget({
   )
 
   const programsForRecruitment = useMemo(() => {
-    if (useRemoteSchedules && remoteProgramOptions.length > 0) {
-      return programsFromOptions(remoteProgramOptions, user)
+    if (useRemoteSchedules) {
+      return programsFromOptions(remoteProgramOptions)
     }
     if (useCompanySchoolProgramsRemote && companySchoolProgramsQuery.data) {
       const base = companySchoolProgramsQuery.data

@@ -1,6 +1,6 @@
 import { memo } from 'react'
-import { MenuOutlined } from '@ant-design/icons'
 import { areFormEditorCardPropsEqual } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-card-memo'
+import { SortOrderDragIcon } from '@/shared/ui/sort-order-drag-icon'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
@@ -23,9 +23,12 @@ import {
   withProgramRegistrationCurriculumTitleTrailing,
   withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing,
   withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing,
+  withMultipleChoiceAllowMultipleTitleHint,
+  withSurveyWriteTitleNumbering,
   withoutPlaceholderDescriptionInPreview,
   withoutTitleRequired,
 } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-heading'
+import type { SurveyUserInfoWriteField } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-survey-write'
 import {
   modalCardFooterActions,
   modalCardFooterToggles,
@@ -62,7 +65,7 @@ export function ParagraphCardDragHandleNonInteractive() {
       className="paragraph-card__drag-handle paragraph-card__drag-handle--non-interactive"
       aria-hidden
     >
-      <MenuOutlined />
+      <SortOrderDragIcon />
     </span>
   )
 }
@@ -89,6 +92,8 @@ export interface PinnedCardProps {
   hideDragHandleForParagraphIds?: ReadonlySet<string>
   hideParagraphRequiredChrome?: boolean
   headingDescriptionExtraClassName?: string
+  surveyWriteNumbering?: boolean
+  userInfoWriteField?: SurveyUserInfoWriteField
 }
 
 function PinnedFormCardInner({
@@ -112,20 +117,32 @@ function PinnedFormCardInner({
   hideDragHandleForParagraphIds,
   hideParagraphRequiredChrome,
   headingDescriptionExtraClassName,
+  surveyWriteNumbering = false,
+  userInfoWriteField,
 }: PinnedCardProps) {
   const isSelected = selectedCardId === paragraph.id
   const hideDragHandle = hideDragHandleForParagraphIds?.has(paragraph.id) ?? false
   const editableHeadingBase = withoutPlaceholderDescriptionInPreview(
     withoutTitleRequired(
-      paragraphEditableHeading(
-        paragraph,
+      withSurveyWriteTitleNumbering(
+        withMultipleChoiceAllowMultipleTitleHint(
+          paragraphEditableHeading(
+            paragraph,
+            paragraphs,
+            titleNumbering,
+            isSelected,
+            updateParagraph,
+            editorKind,
+            structureLockedParagraphIds,
+            headingDescriptionExtraClassName
+          ),
+          paragraph
+        ),
         paragraphs,
+        paragraph,
         titleNumbering,
-        isSelected,
-        updateParagraph,
-        editorKind,
-        structureLockedParagraphIds,
-        headingDescriptionExtraClassName
+        surveyWriteNumbering,
+        userInfoWriteField
       ),
       hideParagraphRequiredChrome
     ),
@@ -190,7 +207,8 @@ function PinnedFormCardInner({
               updateParagraph,
               middleParagraphActions,
               paragraphs,
-              structureLockedParagraphIds
+              structureLockedParagraphIds,
+              editorKind
             )
           : undefined
       }
@@ -206,7 +224,11 @@ function PinnedFormCardInner({
         onVerticalTableBodyRowSelectionChange,
         singleItemListActiveItemId,
         onSelectSingleItemListItem,
-        paragraphBodyOptions
+        {
+          ...paragraphBodyOptions,
+          userInfoWriteField,
+          userInfoWritePersist: paragraphBodyOptions?.paragraphInteractionMode === 'user',
+        }
       )}
     </ParagraphCard>
   )
@@ -234,6 +256,8 @@ export interface SortableMiddleCardProps {
   hideDragHandleForParagraphIds?: ReadonlySet<string>
   hideParagraphRequiredChrome?: boolean
   headingDescriptionExtraClassName?: string
+  surveyWriteNumbering?: boolean
+  userInfoWriteField?: SurveyUserInfoWriteField
 }
 
 function SortableMiddleFormCardInner({
@@ -257,6 +281,8 @@ function SortableMiddleFormCardInner({
   hideDragHandleForParagraphIds,
   hideParagraphRequiredChrome,
   headingDescriptionExtraClassName,
+  surveyWriteNumbering = false,
+  userInfoWriteField,
 }: SortableMiddleCardProps) {
   const hideDragHandle = hideDragHandleForParagraphIds?.has(paragraph.id) ?? false
   const {
@@ -272,15 +298,25 @@ function SortableMiddleFormCardInner({
   const isSelected = selectedCardId === paragraph.id
   const editableHeadingBase = withoutPlaceholderDescriptionInPreview(
     withoutTitleRequired(
-      paragraphEditableHeading(
-        paragraph,
+      withSurveyWriteTitleNumbering(
+        withMultipleChoiceAllowMultipleTitleHint(
+          paragraphEditableHeading(
+            paragraph,
+            paragraphs,
+            titleNumbering,
+            isSelected,
+            updateParagraph,
+            editorKind,
+            structureLockedParagraphIds,
+            headingDescriptionExtraClassName
+          ),
+          paragraph
+        ),
         paragraphs,
+        paragraph,
         titleNumbering,
-        isSelected,
-        updateParagraph,
-        editorKind,
-        structureLockedParagraphIds,
-        headingDescriptionExtraClassName
+        surveyWriteNumbering,
+        userInfoWriteField
       ),
       hideParagraphRequiredChrome
     ),
@@ -350,8 +386,10 @@ function SortableMiddleFormCardInner({
               {...attributes}
               {...listeners}
             >
-              <MenuOutlined />
+              <SortOrderDragIcon />
             </button>
+          ) : showEditorChrome && hideDragHandle ? (
+            <ParagraphCardDragHandleNonInteractive />
           ) : undefined
         }
         editableHeading={editableHeading}
@@ -374,7 +412,8 @@ function SortableMiddleFormCardInner({
                 updateParagraph,
                 middleParagraphActions,
                 paragraphs,
-                structureLockedParagraphIds
+                structureLockedParagraphIds,
+                editorKind
               )
             : undefined
         }
@@ -390,7 +429,11 @@ function SortableMiddleFormCardInner({
           onVerticalTableBodyRowSelectionChange,
           singleItemListActiveItemId,
           onSelectSingleItemListItem,
-          paragraphBodyOptions
+          {
+            ...paragraphBodyOptions,
+            userInfoWriteField,
+            userInfoWritePersist: paragraphBodyOptions?.paragraphInteractionMode === 'user',
+          }
         )}
       </ParagraphCard>
     </div>

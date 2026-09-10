@@ -1,6 +1,7 @@
 import {
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
+  isEducatorFacilitatorPledgeClauseParagraphId,
   type TitleWithPeriodParagraph,
   type WritingFormDraft,
   type WritingFormParagraph,
@@ -162,7 +163,12 @@ export function getDocumentPreviewParagraphViewModel(
 
   return {
     title: getDocumentPreviewParagraphTitle(paragraph, displayTitle),
-    description: paragraph.paragraphDescription?.trim() || undefined,
+    description:
+      paragraph.kind === 'single_item' &&
+      paragraph.variant === 'multiple_choice' &&
+      isEducatorFacilitatorPledgeClauseParagraphId(paragraph.id)
+        ? undefined
+        : paragraph.paragraphDescription?.trim() || undefined,
     showHeader:
       renderMode !== 'contentOnly' ||
       (!isClosing && !isSystem && !isUntitledAgreementExplanation && !isFileAttachmentContentOnly),

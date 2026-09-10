@@ -14,6 +14,12 @@ import type { PaymentStatementBasicInfo } from '@/shared/api/generated/members/s
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 import { PAYMENT_STATEMENT_DEFAULT_PURPOSE } from '@jakorea/form-schema/consent'
 import { normalizeNoticeIdTypeResidentInputInDraft } from '@/features/template/model/writing-form-draft.schema'
+import {
+  getFileStatus,
+  isFileAvailable,
+  shouldMockAdminFileUpload,
+  waitUntilFileAvailable,
+} from '@/shared/lib/admin-file-upload'
 
 const AGREEMENT_TEMPLATE_CODE_BY_TERMS_TYPE: Record<string, string> = {
   PORTRAIT_RIGHTS: 'agreement-portrait',
@@ -123,6 +129,20 @@ function missingDocumentMessage(termsType: string): string {
   return '작성된 동의서 본문을 찾을 수 없습니다. 동의서를 다시 작성해 주세요.'
 }
 
+/** pre-register `CONSENT_EVIDENCE_FILE_NOT_READY_OR_NOT_OWNED` 방지 */
+async function ensureCrimeEvidenceFileReady(fileObjectId: number): Promise<void> {
+  if (shouldMockAdminFileUpload()) return
+  const current = await getFileStatus(fileObjectId)
+  if (isFileAvailable(current)) return
+  try {
+    await waitUntilFileAvailable(fileObjectId, { maxAttempts: 90, intervalMs: 2_000 })
+  } catch {
+    throw new Error(
+      '성범죄 동의서 파일의 보안 검사가 아직 완료되지 않았습니다. 잠시 후 다시 등록해 주세요.'
+    )
+  }
+}
+
 /**
  * 등록·PATCH `termsAgreements`에 작성 본문(`filledDocument`)·성범죄 파일 id를 붙인다.
  * `agreed: false` 행은 본문을 보내지 않는다.
@@ -158,6 +178,22 @@ export async function attachFilledDocumentsToTermsAgreements(
       if (crime == null) {
         if (options.mode === 'patch') continue
         throw new Error(missingDocumentMessage(termsType))
+      }
+      const originalFileName = crime.replacementFileName?.trim() || 'crime-consent.png'
+      const existingObjectId = crime.evidenceFileObjectId
+      if (
+        existingObjectId != null &&
+        Number.isFinite(existingObjectId) &&
+        existingObjectId >= 1
+      ) {
+        await ensureCrimeEvidenceFileReady(existingObjectId)
+        next.push({
+          ...row,
+          filledDocument: undefined,
+          evidenceFileObjectId: existingObjectId,
+          evidenceOriginalFileName: originalFileName,
+        })
+        continue
       }
       const resolved = resolveCrimeEvidenceFile(crime)
       if (resolved == null) {

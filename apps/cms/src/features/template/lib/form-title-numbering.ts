@@ -1,8 +1,14 @@
 import type {
   FormTitleNumberingStyle,
+  SurveyWriteTitleSlot,
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import { writingOutlineLabel } from '@/features/template/model/writing-form-draft.schema'
+import {
+  getSurveyWriteTitleNumberPrefix as getSharedSurveyWriteTitleNumberPrefix,
+  writingOutlineLabel,
+} from '@/features/template/model/writing-form-draft.schema'
+
+export { getSurveyWriteTitleSequence } from '@/features/template/model/writing-form-draft.schema'
 
 /** 번호 대상 단락에 대해 1부터 부여되는 순번 (전체 paragraphs 순서 기준) */
 export function getTitleNumberSequenceIndex(
@@ -34,6 +40,15 @@ function formatToken(style: FormTitleNumberingStyle, sequence: number): string {
   if (style === 'q_repeat') return 'Q'
   if (style === 'q123') return `Q${sequence}`
   return `${sequence}`
+}
+
+/** 설문 write — `user_info`는 선택 필드 수만큼 Q를 소비. edit 번호는 `getFormParagraphTitleNumberPrefix` */
+export function getSurveyWriteFormTitleNumberPrefix(
+  paragraphs: WritingFormParagraph[],
+  slot: SurveyWriteTitleSlot,
+  style: FormTitleNumberingStyle
+): string | undefined {
+  return getSharedSurveyWriteTitleNumberPrefix(paragraphs, slot, style)
 }
 
 /** 카드 제목 `ParagraphInput` 앞 번호 접두 (예: `1. `, `A. `) — 번호 없으면 undefined */

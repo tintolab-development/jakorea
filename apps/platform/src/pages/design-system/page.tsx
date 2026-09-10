@@ -31,6 +31,7 @@ import {
   PFFormField,
   PFFormFieldRow,
   PFFormFieldTable,
+  PFDataTable,
   PFInfoReview,
   PFAttachmentDropdown,
   PFFileDownload,
@@ -1681,6 +1682,30 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
               </PFFormFieldRow>
             </PFFormFieldTable>
           </div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFDataTable
+        </PFText>
+        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+          다행 목록용 그리드. <code>PFFormFieldTable</code>의 형제이며 양식 라벨/값 셸이 아닙니다. 제목·건수는
+          호출부에서 둡니다.
+        </PFText>
+        <div className={styles.usageCard}>
+          <PFDataTable
+            rowKey={row => String(row.no)}
+            columns={[
+              { key: 'no', label: 'No.', width: '72px', render: row => row.no },
+              { key: 'name', label: '기관명', align: 'left', render: row => row.name },
+              { key: 'region', label: '기관 소재지', align: 'left', render: row => row.region },
+            ]}
+            rows={[
+              { no: 1, name: '서울초등학교', region: '서울 종로구' },
+              { no: 2, name: '한강중학교', region: '서울 마포구' },
+            ]}
+          />
         </div>
       </div>
 

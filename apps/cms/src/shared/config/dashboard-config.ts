@@ -114,6 +114,18 @@ export function buildAdminDashboardWidgets(scheduleKinds: ProgramScheduleKind[])
 }
 
 /**
+ * remote GET 전에 mock ACL로 일정 위젯을 채우지 않는다.
+ * null = 아직 없음(mock ACL 폴백), [] = 담당 유형 없음.
+ */
+export function assignedProgramTypesForWidgetLayout(
+  assignedProgramTypes: ProgramScheduleKind[] | null,
+  remote: boolean
+): ProgramScheduleKind[] | null {
+  if (remote && assignedProgramTypes == null) return []
+  return assignedProgramTypes
+}
+
+/**
  * 로그인 사용자 기준 대시보드 위젯 (관리자는 assignedProgramTypes 또는 ACL로 일정 유형 필터)
  * 로그 알림 위젯은 백엔드 v9에서 API가 제거되어 홈에 붙이지 않는다.
  */

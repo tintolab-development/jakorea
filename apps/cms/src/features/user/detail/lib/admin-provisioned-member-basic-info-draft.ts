@@ -12,9 +12,11 @@ import {
 import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 import {
+  filterEditableTermsAgreementsForAdminAccountBasicInfoPatch,
   filterEditableTermsAgreementsForBasicInfoPatch,
   termsAgreementRowsToRequests,
 } from '@/features/user/api/member-basic-info-terms-patch'
+import { normalizeInstructorFeeGradeSelectValue } from '@/features/user/api/map-instructor-activity-display'
 
 /** `user.affiliation` 저장 시 기관·학년 구분에 사용 (목·API와 동일) */
 export const USER_AFFILIATION_PIPE_SEP = ' | ' as const
@@ -72,6 +74,8 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   detailAddressSearch?: string
   /** 강사/개인 — 자택 주소(상세) */
   detailAddressDetail?: string
+  /** 개인 회원 — 자택 우편번호 (`zipCode`) */
+  zipCode?: string
   /** 강사 — 최종 학력(예: 4년제 졸업) */
   highestEducationLevel?: string
   /** 강사 — 최종 졸업 학교명 */
@@ -228,7 +232,11 @@ export function userToAdminCommentOnlyDraft(user: Omit<User, 'password'>): Admin
     ...EMPTY_ADMIN_PROVISIONED_DRAFT,
     adminComment: user.adminComment ?? '',
     instructorFeeGrade:
-      user.role === 'INSTRUCTOR' ? user.listMetrics?.instructorFeeGradeLabel ?? '' : '',
+      user.role === 'INSTRUCTOR'
+        ? normalizeInstructorFeeGradeSelectValue(
+            user.listMetrics?.instructorFeeGradeLabel ?? user.instructorCmsProfile?.defaultFeeGrade
+          )
+        : '',
     adminPermissionVariant: user.role === 'ADMIN' ? getAdminPermissionVariant(user) : '',
   }
 }
@@ -244,6 +252,12 @@ export function userToAdminProvisionedBasicDraft(
   const { highestEducationLevel, highestEducationSchoolName } = splitHighestEducationForDraft(
     user.role === 'INSTRUCTOR' ? user.listMetrics?.highestEducationLabel : undefined
   )
+  const instructorFeeGrade =
+    user.role === 'INSTRUCTOR'
+      ? normalizeInstructorFeeGradeSelectValue(
+          user.listMetrics?.instructorFeeGradeLabel ?? user.instructorCmsProfile?.defaultFeeGrade
+        )
+      : ''
   return {
     name: user.name ?? '',
     phone: user.phone ?? '',
@@ -258,8 +272,7 @@ export function userToAdminProvisionedBasicDraft(
     birthDate: birthDateToInputValue(user.birthDate),
     socialAccount: user.socialAccounts?.[0] ?? '',
     adminComment: user.adminComment ?? '',
-    instructorFeeGrade:
-      user.role === 'INSTRUCTOR' ? user.listMetrics?.instructorFeeGradeLabel ?? '' : '',
+    instructorFeeGrade,
     instructorBankName: user.role === 'INSTRUCTOR' ? user.instructorInfo?.bankName ?? '' : '',
     instructorAccountNumber: user.role === 'INSTRUCTOR' ? user.instructorInfo?.accountNumber ?? '' : '',
     instructorAccountHolder: user.role === 'INSTRUCTOR' ? user.instructorInfo?.accountHolder ?? '' : '',
@@ -281,6 +294,14 @@ export function userToAdminProvisionedBasicDraft(
         : '',
     jaEvaluationGrade: user.role === 'INSTRUCTOR' ? user.listMetrics?.jaEvaluationGrade ?? '' : '',
     bio: user.role === 'INSTRUCTOR' ? user.bio ?? '' : '',
+    ...(user.role === 'INSTRUCTOR' && user.instructorCmsProfile
+      ? {
+          instructorCmsProfile: {
+            ...user.instructorCmsProfile,
+            ...(instructorFeeGrade ? { defaultFeeGrade: instructorFeeGrade } : {}),
+          },
+        }
+      : {}),
     adminPermissionVariant: user.role === 'ADMIN' ? getAdminPermissionVariant(user) : '',
     detailAddressSearch,
     detailAddressDetail,
@@ -292,15 +313,22 @@ export function userToAdminProvisionedBasicDraft(
             user.schoolEnrollmentStatus,
             affiliationGrade
           ),
+          schoolOrganizationId: user.individualSchoolOrganizationId ?? null,
+          zipCode: user.zipCode?.trim() ?? '',
           // 연락처·이메일과 동일 — unmask 후 user.id1365 원문을 draft에 넣는다
           id1365: user.id1365?.trim() ?? '',
         }
       : {}),
     ...((user.role === 'INDIVIDUAL' || user.role === 'ADMIN' || user.role === 'INSTRUCTOR')
       ? {
-          termsAgreements: filterEditableTermsAgreementsForBasicInfoPatch(
-            termsAgreementRowsToRequests(user.termsAgreements)
-          ),
+          termsAgreements:
+            user.role === 'ADMIN'
+              ? filterEditableTermsAgreementsForAdminAccountBasicInfoPatch(
+                  termsAgreementRowsToRequests(user.termsAgreements)
+                )
+              : filterEditableTermsAgreementsForBasicInfoPatch(
+                  termsAgreementRowsToRequests(user.termsAgreements)
+                ),
           consentTermsDirty: false,
         }
       : {}),
@@ -329,12 +357,14 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
     | 'email'
     | 'detailAddress'
     | 'detailAddressDetail'
+    | 'zipCode'
     | 'affiliation'
     | 'gender'
     | 'birthDate'
     | 'socialAccounts'
     | 'adminComment'
     | 'listMetrics'
+    | 'id1365'
   >
 > {
   const social = draft.socialAccount.trim()
@@ -344,17 +374,21 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
   const detailAddressDetail = (draft.detailAddressDetail ?? '').trim()
   const detailAddressFallback = (draft.detailAddress ?? '').trim()
   const adminPermissionVariant = (draft.adminPermissionVariant ?? '').trim()
+  const zipCode = (draft.zipCode ?? '').trim()
+  const id1365 = (draft.id1365 ?? '').trim()
   return {
     name: draft.name.trim(),
     phone: draft.phone.trim() || undefined,
     email: draft.email.trim(),
     detailAddress: detailAddressSearch || detailAddressFallback || undefined,
-    detailAddressDetail,
+    detailAddressDetail: detailAddressDetail,
+    ...(zipCode ? { zipCode } : {}),
     affiliation,
     gender: draft.gender.trim() || undefined,
     birthDate: draft.birthDate.trim() || undefined,
     socialAccounts: social ? [social] : [],
     adminComment: adminTrimmed ? adminTrimmed : undefined,
+    ...(id1365 ? { id1365 } : {}),
     listMetrics:
       adminPermissionVariant === 'manager' ||
       adminPermissionVariant === 'partner' ||
@@ -451,11 +485,22 @@ export function draftToAdminProvisionedIndividualBasicInfoPatch(
   }
 }
 
-/** 관리자 계정 상세 — 기본정보 + 선택 동의(MARKETING) PATCH */
+/** 관리자 계정 상세 — 기본정보만 PATCH (마케팅·필수 약관은 수정 불가) */
 export function draftToAdminAccountBasicInfoPatch(
   draft: AdminProvisionedMemberBasicInfoDraft
 ): PatchUserBasicInfoInput {
-  return draftToAdminProvisionedIndividualBasicInfoPatch(draft)
+  const base = draftToBasicInfoPatch(draft)
+  const termsAgreements = filterEditableTermsAgreementsForAdminAccountBasicInfoPatch(
+    draft.termsAgreements
+  )
+  return {
+    ...base,
+    ...draftToIndividualAffiliationPatch(draft),
+    ...(termsAgreements ? { termsAgreements } : {}),
+    ...(draft.consentWriteSnapshots
+      ? { consentWriteSnapshots: draft.consentWriteSnapshots }
+      : {}),
+  }
 }
 
 /** 학교 계정 — 본인 가입 완료 후 등: 기본 정보는 잠금일 때 `adminComment`만 patch */
@@ -477,6 +522,70 @@ export function draftToAdminCommentAndInstructorFeePatch(
   }
 }
 
+/** 등급 평가 직후 — 상세 수정 draft의 JA 등급·profile.defaultJaGrade를 함께 맞춘다. */
+export function applyJaEvaluationGradeToInstructorDraft(
+  draft: AdminProvisionedMemberBasicInfoDraft,
+  grade: string
+): AdminProvisionedMemberBasicInfoDraft {
+  const trimmed = grade.trim()
+  return {
+    ...draft,
+    jaEvaluationGrade: trimmed,
+    ...(draft.instructorCmsProfile
+      ? {
+          instructorCmsProfile: {
+            ...draft.instructorCmsProfile,
+            defaultJaGrade: trimmed,
+          },
+        }
+      : {}),
+  }
+}
+
+/** 강사비 등급 셀렉트 — draft와 profile.defaultFeeGrade를 함께 맞춘다. */
+export function applyInstructorFeeGradeToInstructorDraft(
+  draft: AdminProvisionedMemberBasicInfoDraft,
+  grade: string
+): AdminProvisionedMemberBasicInfoDraft {
+  const trimmed = grade.trim()
+  return {
+    ...draft,
+    instructorFeeGrade: trimmed,
+    ...(draft.instructorCmsProfile
+      ? {
+          instructorCmsProfile: {
+            ...draft.instructorCmsProfile,
+            defaultFeeGrade: trimmed,
+          },
+        }
+      : {}),
+  }
+}
+
+/**
+ * 상세 수정 저장 — 폼 flush 위에 강사비 등급(별도 CmsSelect SSOT)을 유지한다.
+ * 상세 편집은 강사비 셀렉트가 Form.Item이 아니라 폼 flush가 예전 등급으로 덮어쓸 수 있다.
+ */
+export function mergeInstructorDetailEditFlushIntoDraft(
+  draft: AdminProvisionedMemberBasicInfoDraft,
+  flushed: Partial<AdminProvisionedMemberBasicInfoDraft>
+): AdminProvisionedMemberBasicInfoDraft {
+  const feeGrade = (draft.instructorFeeGrade ?? flushed.instructorFeeGrade ?? '').trim()
+  const merged: AdminProvisionedMemberBasicInfoDraft = {
+    ...draft,
+    ...flushed,
+    ...(feeGrade ? { instructorFeeGrade: feeGrade } : {}),
+  }
+  if (!merged.instructorCmsProfile) return merged
+  return {
+    ...merged,
+    instructorCmsProfile: {
+      ...merged.instructorCmsProfile,
+      ...(feeGrade ? { defaultFeeGrade: feeGrade } : {}),
+    },
+  }
+}
+
 /** 어드민 등록 강사 — 본인인증 완료 후 제한 수정: 강사비 등급·JA 평가 등급만 */
 export function draftToInstructorFeeAndJaGradePatch(
   draft: AdminProvisionedMemberBasicInfoDraft
@@ -488,6 +597,15 @@ export function draftToInstructorFeeAndJaGradePatch(
       ...(feeGrade ? { instructorFeeGradeLabel: feeGrade } : {}),
       ...(jaGrade ? { jaEvaluationGrade: jaGrade } : {}),
     },
+    ...(draft.instructorCmsProfile
+      ? {
+          instructorCmsProfile: {
+            ...draft.instructorCmsProfile,
+            ...(feeGrade ? { defaultFeeGrade: feeGrade } : {}),
+            ...(jaGrade ? { defaultJaGrade: jaGrade } : {}),
+          },
+        }
+      : {}),
   }
 }
 
@@ -523,7 +641,15 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
       ...(businessIncome !== undefined ? { isBusinessIncome: businessIncome } : {}),
     } as NonNullable<User['instructorInfo']>,
     ...(certifications != null ? { instructorCertifications: certifications } : {}),
-    ...(draft.instructorCmsProfile ? { instructorCmsProfile: draft.instructorCmsProfile } : {}),
+    ...(draft.instructorCmsProfile
+      ? {
+          instructorCmsProfile: {
+            ...draft.instructorCmsProfile,
+            ...(jaGrade ? { defaultJaGrade: jaGrade } : {}),
+            ...(feeGrade ? { defaultFeeGrade: feeGrade } : {}),
+          },
+        }
+      : {}),
     ...(draft.instructorCmsSettlement ? { instructorCmsSettlement: draft.instructorCmsSettlement } : {}),
     ...(() => {
       if (!draft.consentTermsDirty) return {}

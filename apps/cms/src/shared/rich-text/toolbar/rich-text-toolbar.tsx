@@ -18,6 +18,9 @@ import {
   RICH_TEXT_IMAGE_ACCEPT,
   TextSelection,
 } from '@jakorea/rich-text'
+import { fetchFileContentBlob, uploadAdminFile } from '@/shared/lib/admin-file-upload'
+import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload/types'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import {
   FONT_FAMILY_OPTIONS,
   FONT_SIZE_OPTIONS,
@@ -55,6 +58,8 @@ import './rich-text-toolbar.css'
 
 export type RichTextToolbarProps = {
   editor: Editor | null
+  /** prepare 연동용. 없으면 로컬 blob 삽입만 */
+  fileUploadOwner?: AdminFileUploadOwner | null
 }
 
 const EMPTY_TOOLBAR_STATE = {
@@ -114,7 +119,7 @@ function getActiveTextAlign(editor: Editor): TextAlignValue {
  * Figma 스펙 커스텀 툴바 — 드롭다운 + B/I/U/S·목록·삽입(이미지·YouTube 등).
  * 이미지 선택 시 `tiptap-extension-resize-image`가 크기·좌/중/우 정렬 UI를 표시한다.
  */
-export function RichTextToolbar({ editor }: RichTextToolbarProps) {
+export function RichTextToolbar({ editor, fileUploadOwner }: RichTextToolbarProps) {
   const imageFileInputRef = useRef<HTMLInputElement>(null)
   const state =
     useEditorState({
@@ -307,9 +312,26 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
       const file = event.target.files?.[0]
       event.target.value = ''
       if (!file || !editor) return
-      insertImageFromFile(editor, file)
+      if (!isRealApiModuleEnabled('files') || fileUploadOwner == null) {
+        insertImageFromFile(editor, file)
+        return
+      }
+      void (async () => {
+        try {
+          const uploaded = await uploadAdminFile({
+            file,
+            owner: fileUploadOwner,
+            waitUntilAvailable: true,
+          })
+          const blob = await fetchFileContentBlob(uploaded.fileObjectId)
+          const objectUrl = URL.createObjectURL(blob)
+          insertImageFromUrl(editor, objectUrl)
+        } catch {
+          insertImageFromFile(editor, file)
+        }
+      })()
     },
-    [editor]
+    [editor, fileUploadOwner]
   )
 
   if (!editor) return null

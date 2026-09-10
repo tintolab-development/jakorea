@@ -2,16 +2,19 @@
  * 카카오 알림톡 양식 목록 URL 쿼리 → 백엔드 params 맵
  */
 
+import { ALIMTALK_API_CHANNEL_TYPE } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
+
 export function alimtalkTemplateParamsFromSearchParams(
   searchParams: URLSearchParams
 ): Record<string, string> {
   const params: Record<string, string> = {
-    channelType: 'KAKAO',
+    channelType: ALIMTALK_API_CHANNEL_TYPE,
   }
 
   const approvalStatus = searchParams.get('kat_appr')?.trim()
   if (approvalStatus && approvalStatus !== 'ALL') {
     params.kakaoApprovalStatus = approvalStatus
+    params.approvalStatus = approvalStatus
   }
 
   const usageStatus = searchParams.get('kat_usage')?.trim()

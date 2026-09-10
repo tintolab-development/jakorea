@@ -12,6 +12,7 @@ import {
 } from '@jakorea/form-schema/consent'
 import {
   ensureAgreementNoticeConfirmationClosing,
+  ensureAgreementNoticeInstitutionPurposeParagraphs,
   overlayAgreementNoticeSeedHorizontalTable,
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
@@ -52,6 +53,7 @@ function createInitialSchemaConsentState(consentKey: InstructorApplyConsentKey):
   let draft = seed
   if (templateId === 'agreement-notice') {
     draft = ensureAgreementNoticeConfirmationClosing(draft)
+    draft = ensureAgreementNoticeInstitutionPurposeParagraphs(draft)
     draft = overlayAgreementNoticeSeedHorizontalTable(draft)
   }
   draft = normalizeMemberConsentWriteDraft(draft, templateId)

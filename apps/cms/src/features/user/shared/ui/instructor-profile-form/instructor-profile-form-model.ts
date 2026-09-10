@@ -121,6 +121,8 @@ export type InstructorRegisterModalFormValues = {
   instructorFeeGrade: string
   /** JA 평가 등급 — BE `profile.defaultJaGrade` (CMS 등록 전용) */
   jaEvaluationGrade: string
+  /** JA 평가 팝업 4항목. pre-register `jaEvaluation` */
+  jaEvaluationInput?: import('@/shared/api/generated/members/schemas/instructorJaEvaluationInput').InstructorJaEvaluationInput
   isBusinessIncome: 'yes' | 'no'
   bankName: string
   accountNumber: string
@@ -211,7 +213,8 @@ export const INITIAL_VALUES: InstructorProfileFormValues = {
   oneLineIntro: '',
   consentTermsOfService: undefined,
   consentPersonal: undefined,
-  consentMarketing: undefined,
+  /** CMS — 마케팅 미동의 고정(비활성). Form 값도 disagree로 맞춰 미선택으로 잡히지 않게 함 */
+  consentMarketing: 'disagree',
   consentPortrait: 'disagree',
   consentPaymentStatement: 'disagree',
   consentEducatorPledge: 'disagree',

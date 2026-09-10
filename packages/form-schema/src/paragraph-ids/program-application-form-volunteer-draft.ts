@@ -34,6 +34,17 @@ const PERSONAL_INFO_COLLECTION_BOTTOM =
 const PERSONAL_INFO_THIRD_PARTY_BOTTOM =
   '위의 개인정보 제3자 정보 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.'
 
+const PERSONAL_INFO_RETENTION_CELL =
+  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
+const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 폐기'
+
+/** 객관식 항목 에디터(라디오 개별 선택)를 쓰지 않는 시드 */
+export function isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed(
+  paragraphId: string
+): boolean {
+  return paragraphId === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.jaVolunteerExperience
+}
+
 function createVolunteerPersonalInfoHorizontalTable(): HorizontalTableParagraph {
   const colCount = 3
   const columnFields = Array.from({ length: colCount }, () => ({
@@ -51,8 +62,7 @@ function createVolunteerPersonalInfoHorizontalTable(): HorizontalTableParagraph 
     },
     {
       kind: 'text' as const,
-      value:
-        '- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 프로그램 종료로부터 1년 보관 후 폐기',
+      value: PERSONAL_INFO_RETENTION_CELL,
     },
   ]
   return normalizeHorizontalTableParagraph({
@@ -94,7 +104,7 @@ function createVolunteerThirdPartyHorizontalTable(): HorizontalTableParagraph {
       kind: 'text' as const,
       value: 'JA 프로그램 봉사활동 안내 및 진행에 필요한 정보 안내',
     },
-    { kind: 'text' as const, value: '해당 프로그램이 진행되는 기간' },
+    { kind: 'text' as const, value: THIRD_PARTY_RETENTION_CELL },
   ]
   return normalizeHorizontalTableParagraph({
     id: PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent,
@@ -229,6 +239,48 @@ function createVolunteerInterviewSchedulePlaceholderTable(): HorizontalTablePara
     bottomConsent: 'agree',
     answerRequired: true,
   })
+}
+
+function patchHorizontalTableTextCell(
+  paragraph: HorizontalTableParagraph,
+  row: number,
+  col: number,
+  value: string
+): HorizontalTableParagraph {
+  const fieldDataRows = (paragraph.fieldDataRows ?? []).map(cells =>
+    cells.map(cell => ({ ...cell }))
+  )
+  const rowCells = fieldDataRows[row]
+  const cell = rowCells?.[col]
+  if (cell == null || cell.kind !== 'text' || cell.value === value) {
+    return paragraph
+  }
+  rowCells[col] = { ...cell, value }
+  return { ...paragraph, fieldDataRows }
+}
+
+/** 구 시드 고정 문구 보정 */
+export function migrateProgramApplicationFormVolunteerParagraphs(
+  draft: WritingFormDraft
+): WritingFormDraft {
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (paragraph.kind !== 'single_item' || paragraph.variant !== 'horizontal_table') {
+      return paragraph
+    }
+    if (paragraph.id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.personalInfoCollection) {
+      const next = patchHorizontalTableTextCell(paragraph, 0, 2, PERSONAL_INFO_RETENTION_CELL)
+      if (next !== paragraph) changed = true
+      return next
+    }
+    if (paragraph.id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent) {
+      const next = patchHorizontalTableTextCell(paragraph, 0, 3, THIRD_PARTY_RETENTION_CELL)
+      if (next !== paragraph) changed = true
+      return next
+    }
+    return paragraph
+  })
+  return changed ? { ...draft, paragraphs } : draft
 }
 
 export function createProgramApplicationFormVolunteerDraft(): WritingFormDraft {

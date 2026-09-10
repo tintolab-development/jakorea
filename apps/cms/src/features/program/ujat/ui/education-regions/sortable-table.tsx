@@ -9,7 +9,7 @@ import React, {
   useRef,
   type CSSProperties,
 } from 'react'
-import { MenuOutlined } from '@ant-design/icons'
+import { SortOrderDragIcon } from '@/shared/ui/sort-order-drag-icon'
 import {
   DndContext,
   MeasuringStrategy,
@@ -106,7 +106,7 @@ export function UjatEducationRegionDragHandle() {
       onClick={event => event.stopPropagation()}
       {...listeners}
     >
-      <MenuOutlined />
+      <SortOrderDragIcon />
     </button>
   )
 }

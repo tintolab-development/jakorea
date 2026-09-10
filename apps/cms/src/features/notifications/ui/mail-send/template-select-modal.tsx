@@ -13,6 +13,8 @@ type TemplateSelectModalProps = {
   onClose: () => void
   onPreview: (template: MailTemplateItem) => void
   onUse: (template: MailTemplateItem) => void
+  /** false면 「사용하기」 비활성 (프로그램 맥락에서 사용 불가 변수 포함) */
+  isTemplateUsable?: (template: MailTemplateItem) => boolean
   zIndex?: number
 }
 
@@ -31,6 +33,7 @@ export function TemplateSelectModal({
   onClose,
   onPreview,
   onUse,
+  isTemplateUsable,
   zIndex,
 }: TemplateSelectModalProps) {
   const [keyword, setKeyword] = useState('')
@@ -72,7 +75,9 @@ export function TemplateSelectModal({
       align: 'center',
       className: 'mail-send-template-select-modal__col-actions',
       onHeaderCell: () => ({ className: 'mail-send-template-select-modal__col-actions' }),
-      render: (_, record) => (
+      render: (_, record) => {
+        const canUse = isTemplateUsable?.(record) !== false
+        return (
         <div
           className="mail-send-template-select-modal__row-actions"
           onClick={event => event.stopPropagation()}
@@ -96,15 +101,18 @@ export function TemplateSelectModal({
             size="small"
             width={80}
             className="mail-send-template-select-modal__action-btn mail-send-template-select-modal__action-btn--use"
+            disabled={!canUse}
             onClick={event => {
               event.stopPropagation()
+              if (!canUse) return
               onUse(record)
             }}
           >
             사용하기
           </CmsButton>
         </div>
-      ),
+        )
+      },
     },
   ]
 

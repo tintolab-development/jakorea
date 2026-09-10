@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { SponsorManager } from './sponsorManager';
+import type { SponsorResponseSponsorshipStatus } from './sponsorResponseSponsorshipStatus';
 
 export interface SponsorResponse {
   id?: string;
@@ -18,7 +19,7 @@ export interface SponsorResponse {
   createdAt?: string;
   updatedAt?: string;
   organizationKind?: string;
-  sponsorshipStatus?: string;
+  sponsorshipStatus?: SponsorResponseSponsorshipStatus;
   sponsorshipStartDate?: string;
   programCount?: number;
   activeProgramCount?: number;

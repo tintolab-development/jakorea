@@ -6,20 +6,29 @@
  * OpenAPI spec version: v9
  */
 import type { SponsorManager } from './sponsorManager';
+import type { SponsorRequestOrganizationKind } from './sponsorRequestOrganizationKind';
+import type { SponsorRequestSponsorshipStatus } from './sponsorRequestSponsorshipStatus';
 
 export interface SponsorRequest {
   name?: string;
+  /** 후원사명(영문). POST 등록 시 nameDisplayEn 또는 nameEn 중 하나는 필수입니다. */
   nameEn?: string;
   nameDisplayKo?: string;
+  /** 후원사 표시명(영문). POST 등록 시 nameDisplayEn 또는 nameEn 중 하나는 필수입니다. */
   nameDisplayEn?: string;
   businessNumber?: string;
   executives?: string;
   address?: string;
+  homepageUrl?: string;
+  logoFileId?: string;
   description?: string;
   contactInfo?: string;
   managers?: SponsorManager[];
   securityMemo?: string;
-  organizationKind?: string;
-  sponsorshipStatus?: string;
+  /** 구분. POST 등록 시 필수이며 corporate(기업) 또는 foundation(재단)을 사용합니다. */
+  organizationKind?: SponsorRequestOrganizationKind;
+  /** 후원 상태. POST 등록 시 필수. PATCH는 4값 양방향. 미지원 값은 400 SPONSOR_SPONSORSHIP_STATUS_UNSUPPORTED. */
+  sponsorshipStatus?: SponsorRequestSponsorshipStatus;
+  /** 후원 시작일. POST 등록 시 필수. ISO-8601 날짜(YYYY-MM-DD) 또는 offset datetime. */
   sponsorshipStartDate?: string;
 }

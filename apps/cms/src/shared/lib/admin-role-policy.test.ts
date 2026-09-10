@@ -47,6 +47,11 @@ describe('parseAdminRoleCode', () => {
     expect(parseAdminRoleCode('PM')).toBe('PM')
     expect(parseAdminRoleCode('ADMIN')).toBeNull()
   })
+
+  it('OpenAPI MIDDLE(중간 관리자)는 PARTNER로 정규화한다', () => {
+    expect(parseAdminRoleCode('MIDDLE')).toBe('PARTNER')
+    expect(parseAdminRoleCode('middle')).toBe('PARTNER')
+  })
 })
 
 describe('adminRoleCodeToLegacyAdminLevel', () => {
@@ -127,6 +132,13 @@ describe('canAdminAction 표 규칙', () => {
       expect(allowed('PARTNER', action)).toBe(true)
       expect(allowed('VIEWER', action)).toBe(false)
     }
+  })
+
+  it('대시보드 개인화 저장은 VIEWER 허용, PARTNER 차단', () => {
+    expect(allowed('MASTER', 'dashboardWrite')).toBe(true)
+    expect(allowed('PM', 'dashboardWrite')).toBe(true)
+    expect(allowed('VIEWER', 'dashboardWrite')).toBe(true)
+    expect(allowed('PARTNER', 'dashboardWrite')).toBe(false)
   })
 
   it('일반 개인정보 열람은 뷰어만 차단', () => {

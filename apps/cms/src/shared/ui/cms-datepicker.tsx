@@ -21,6 +21,7 @@ import type { Dayjs } from 'dayjs'
 import type { CmsControlSize } from './cms-control-size'
 import {
   DEFAULT_APP_DATE_PLACEHOLDER,
+  formatAppDatepickerDateTimeDisplay,
   formatAppDatepickerDisplay,
   formatAppDatepickerRangePlain,
 } from './app-datepicker'
@@ -31,6 +32,7 @@ export type CmsDatePickerRef = AppDatePickerRef
 
 export {
   DEFAULT_APP_DATE_PLACEHOLDER,
+  formatAppDatepickerDateTimeDisplay,
   formatAppDatepickerDisplay,
   formatAppDatepickerRangePlain,
 }
@@ -52,6 +54,7 @@ const CmsDatePickerRender: ForwardRefRenderFunction<CmsDatePickerRef, CmsDatePic
     className,
     pickerClassName,
     format: formatProp,
+    showTime,
     prefix,
     suffixIcon,
     inputReadOnly,
@@ -71,6 +74,10 @@ const CmsDatePickerRender: ForwardRefRenderFunction<CmsDatePickerRef, CmsDatePic
       ? { width: typeof width === 'number' ? `${width}px` : width }
       : undefined
 
+  const resolvedFormat =
+    formatProp ??
+    (showTime ? formatAppDatepickerDateTimeDisplay : formatAppDatepickerDisplay)
+
   const wrapperCn = [
     'cms-datepicker',
     `cms-datepicker--${inputSize}`,
@@ -88,7 +95,8 @@ const CmsDatePickerRender: ForwardRefRenderFunction<CmsDatePickerRef, CmsDatePic
         ref={ref as Ref<InternalDatePickerRef>}
         variant="borderless"
         className={pickerCn}
-        format={formatProp ?? formatAppDatepickerDisplay}
+        format={resolvedFormat}
+        showTime={showTime === true ? { format: 'HH:mm:ss' } : showTime}
         prefix={
           prefix ?? <CalendarOutlined className="cms-datepicker__calendar-icon" aria-hidden />
         }

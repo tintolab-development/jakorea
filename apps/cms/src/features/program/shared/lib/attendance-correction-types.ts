@@ -20,6 +20,8 @@ export type ProgramAttendanceCorrectionConfirmPayload = {
   attendanceTime: string | null
   reason: string
   evidenceFileName: string | null
+  /** prepare 완료된 증빙 fileObjectId (사유 불참) */
+  evidenceFileObjectIds?: number[]
 }
 
 export type ProgramAttendanceCorrectionStatusOption = {

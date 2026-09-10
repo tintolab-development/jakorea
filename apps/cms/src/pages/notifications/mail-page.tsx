@@ -5,6 +5,7 @@
 import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { MailTemplateList } from '@/features/notifications/ui/mail-template/list'
+import { MailSendHistoryPage } from '@/features/notifications/ui/mail-send-history/page'
 import { SendFullpageModal } from '@/features/notifications/ui/mail-send/fullpage-modal'
 import type { MailTabKey } from '@/features/notifications/model/mail-template/types'
 import { CmsButton } from '@/shared/ui'
@@ -85,11 +86,7 @@ export function MailPage() {
           </CmsButton>
         }
       />
-      {activeKey === 'template' ? (
-        <MailTemplateList />
-      ) : (
-        <div className="notification-coming-soon-tab-panel">메일 발송 조회 기능은 현재 준비 중입니다.</div>
-      )}
+      {activeKey === 'template' ? <MailTemplateList /> : <MailSendHistoryPage />}
       <SendFullpageModal open={sendOpen} onClose={handleCloseSend} />
     </div>
   )

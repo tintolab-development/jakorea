@@ -31,4 +31,23 @@ describe('resolveAdminCommentResource', () => {
       })
     ).toEqual({ resourceId: 99, target: 'member' })
   })
+
+  it('관리자 회원은 adminAccountId를 코멘트 resource id로 쓴다', () => {
+    expect(
+      resolveAdminCommentResource({
+        id: 'admin-account-7',
+        role: 'ADMIN',
+        adminAccountId: 7,
+      })
+    ).toEqual({ resourceId: 7, target: 'adminAccount' })
+  })
+
+  it('관리자 회원 id slug에서 adminAccountId를 파싱한다', () => {
+    expect(
+      resolveAdminCommentResource({
+        id: 'admin-account-12',
+        role: 'ADMIN',
+      })
+    ).toEqual({ resourceId: 12, target: 'adminAccount' })
+  })
 })

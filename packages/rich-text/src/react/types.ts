@@ -22,6 +22,11 @@ export type UseRichTextEditorOptions = {
   preset?: 'full' | 'basic'
   extraExtensions?: Extensions
   onReady?: (api: RichTextEditorApi) => void
+  /**
+   * TipTap `useEditor` 트랜잭션마다 React 리렌더 여부.
+   * 기본 `false` — 툴바는 `useEditorState`로 구독하고, 부모 폼 전체 리렌더를 막는다.
+   */
+  shouldRerenderOnTransaction?: boolean
 }
 
 export type RichTextEditorProps = {

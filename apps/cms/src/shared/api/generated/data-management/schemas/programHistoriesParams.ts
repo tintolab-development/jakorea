@@ -34,6 +34,10 @@ lifecycleStatus?: string;
 /**
  * 쿼리 파라미터입니다. 요청값 출처: 후원사 상세 선택 sponsorId와 프로그램명/년도/진행현황/교육대상/담당자 필터
  */
+participantType?: string;
+/**
+ * 쿼리 파라미터입니다. 요청값 출처: 후원사 상세 선택 sponsorId와 프로그램명/년도/진행현황/교육대상/담당자 필터
+ */
 educationTarget?: string;
 /**
  * 쿼리 파라미터입니다. 요청값 출처: 후원사 상세 선택 sponsorId와 프로그램명/년도/진행현황/교육대상/담당자 필터

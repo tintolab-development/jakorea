@@ -30,6 +30,7 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
     isLocked,
     handleVerify,
     lockMessage,
+    otpResetToken,
   } = useMfaVerification({ open })
 
   if (!user || user.role !== 'ADMIN') {
@@ -110,6 +111,7 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
             onChange={onOtpCodeChange}
             disabled={isLocked}
             failedAttempts={failedAttempts}
+            resetToken={otpResetToken}
           />
           {failedAttempts === 0 ? <MfaOtpStatus /> : null}
         </Form>

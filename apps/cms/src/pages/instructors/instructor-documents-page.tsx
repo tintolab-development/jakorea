@@ -10,6 +10,12 @@ import { UploadOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import dayjs from 'dayjs'
+import {
+  ADMIN_FILE_OWNER,
+  ADMIN_FILE_PURPOSE,
+  buildAdminFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 
 const { Title, Paragraph, Text } = Typography
 
@@ -81,7 +87,14 @@ export function InstructorDocumentsPage() {
   }, [user?.instructorId])
 
   const handleUpload = (file: File, type: DocumentFile['type']) => {
-    // 실제로는 API로 파일 업로드
+    const ownerId = Number(user?.instructorId) || 1
+    const filePurpose =
+      type === 'crimeCheckConsent'
+        ? ADMIN_FILE_PURPOSE.CRIMINAL_HISTORY_EVIDENCE
+        : ADMIN_FILE_PURPOSE.INSTRUCTOR_APPLICATION
+    const owner = buildAdminFileOwner(ADMIN_FILE_OWNER.INSTRUCTOR_APPLICATION, ownerId, filePurpose)
+    void uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
+
     const newDocument: DocumentFile = {
       id: `doc-${Date.now()}`,
       type,

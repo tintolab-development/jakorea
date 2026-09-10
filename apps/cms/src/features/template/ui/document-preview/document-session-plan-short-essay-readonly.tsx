@@ -1,4 +1,5 @@
 import type { SessionPlanShortEssayParagraph } from '@/features/template/model/writing-form-draft.schema'
+import { SessionPlanItemTitle } from '@/features/template/ui/paragraph/single-item/session-plan-item-title'
 import '@/features/template/ui/paragraph/single-item/session-plan-short-essay.css'
 import './document-session-plan-short-essay-readonly.css'
 
@@ -22,10 +23,16 @@ function SessionPlanReadonlyText({
 /** A4 contentOnly — 작성 모드 `SessionPlanShortEssay`와 동일 블록(헤더·border·bg) */
 export function DocumentSessionPlanShortEssayReadonly({
   paragraph,
+  emptyDisplayText,
 }: {
   paragraph: SessionPlanShortEssayParagraph
+  /** 미작성 미리보기 본문 — UJAT 교육계획서·교육일지는 `작성된 내용` */
+  emptyDisplayText?: string
 }) {
-  const ph = safeTrim(paragraph.bodyPlaceholder) || '자유롭게 작성해 주세요'
+  const ph =
+    safeTrim(emptyDisplayText) ||
+    safeTrim(paragraph.bodyPlaceholder) ||
+    '자유롭게 작성해 주세요'
   const items =
     paragraph.items && paragraph.items.length > 0
       ? paragraph.items
@@ -40,32 +47,38 @@ export function DocumentSessionPlanShortEssayReadonly({
   const showItemTitle = items.length >= 2 ? true : (paragraph.showItemTitle ?? false)
 
   if (!showItemTitle) {
+    const item = items[0]
+    const written = item ? safeTrim(item.bodyText) : ''
+    const filled = written.length > 0
+    const displayText = filled
+      ? written
+      : safeTrim(item?.placeholder) || ph
     return (
-      <div className="session-plan-short-essay-items">
-        {items.map(item => (
-          <div key={item.id} className="session-plan-short-essay-item-row">
-            <div className="session-plan-short-essay-block">
-              <div className="session-plan-short-essay-block__footer session-plan-short-essay-block__footer--document-readonly">
-                <SessionPlanReadonlyText
-                  text={safeTrim(item.bodyText)}
-                  placeholder={safeTrim(item.placeholder) || ph}
-                />
-              </div>
-            </div>
-          </div>
-        ))}
+      <div
+        className={[
+          'form-document-preview-paragraph__body-text',
+          filled
+            ? 'form-document-preview-paragraph__body-text--plain-filled'
+            : 'form-document-preview-paragraph__body-text--plain-placeholder',
+        ].join(' ')}
+      >
+        {displayText}
       </div>
     )
   }
 
   return (
     <div className="session-plan-short-essay-items">
-      {items.map((item, index) => (
+      {items.map((item, index) => {
+        const labelText = item.label ?? `Title ${String(index + 1).padStart(2, '0')}`
+        return (
         <div key={item.id} className="session-plan-short-essay-block">
           <div className="session-plan-short-essay-block__header">
-            <span className="session-plan-short-essay-block__title">
-              {item.label ?? `Title ${String(index + 1).padStart(2, '0')}`}
-            </span>
+            <SessionPlanItemTitle
+              itemId={item.id}
+              label={labelText}
+              titleHint={item.titleHint}
+            />
           </div>
           <div className="session-plan-short-essay-block__footer session-plan-short-essay-block__footer--document-readonly">
             <SessionPlanReadonlyText
@@ -74,7 +87,8 @@ export function DocumentSessionPlanShortEssayReadonly({
             />
           </div>
         </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

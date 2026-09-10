@@ -18,9 +18,10 @@ import { getProgramRegistrationEducationFormOptions } from './program-registrati
 import { GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS } from '@/features/program/general/lib/curriculum-progress-session-options'
 import {
   getScheduleEventPerScheduleExtraPlan,
-  isIndividualAllPerScheduleLayout,
   PRE_EDUCATION_SCHEDULE_LABEL,
 } from '@/features/program/general/lib/schedule-detail-form'
+import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
+import { IndividualPerScheduleExtraRows } from './individual-per-schedule-extra-rows'
 import {
   EMPTY_PROGRAM_REGISTRATION_MULTI_ROUND_ASSIGNMENT,
   ProgramRegistrationMultiRoundAssignmentFields,
@@ -646,12 +647,13 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   }
 
   const showParticipationMethod = !participantOrganization
-  const isAllPerLayout = isIndividualAllPerScheduleLayout({
-    participantOrganization,
-    educationFormScheduleDetail,
-    participationScheduleDetail,
-    ipsScheduleDetail,
-  })
+  const individualExtraRows = showParticipationMethod
+    ? getIndividualMultiRoundPerScheduleTableRows({
+        educationFormScheduleDetail,
+        participationScheduleDetail,
+        ipsScheduleDetail,
+      })
+    : []
 
   const multiRowPlan = getProgramRegistrationCurriculumMultiSessionRowPlan(
     educationFormScheduleDetail,
@@ -733,29 +735,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
 
   const renderMultiRoundPlanExtraRows = (roundIndex: number): ReactNode => {
     if (educationFormScheduleDetail === 'perSchedule') {
-      return (
-        <>
-          {renderEducationFormPerScheduleRow(roundIndex)}
-          {showParticipationMethod &&
-          multiRowPlan === 'p_eduPer_piAnyPer' &&
-          participationScheduleDetail === 'perSchedule' ? (
-            isAllPerLayout ? (
-              <DetailInfoForm.Row type="double">
-                <ProgramRegistrationMultiRoundAssignmentFields
-                  embedded
-                  value={assignmentForRound(roundIndex)}
-                  onChange={next => setAssignmentForRound(roundIndex, next)}
-                />
-                {renderParticipationField(roundIndex)}
-              </DetailInfoForm.Row>
-            ) : (
-              <DetailInfoForm.Row type="single">
-                {renderParticipationField(roundIndex)}
-              </DetailInfoForm.Row>
-            )
-          ) : null}
-        </>
-      )
+      return renderEducationFormPerScheduleRow(roundIndex)
     }
 
     if (multiRowPlan === 'c_allCommon_piBothPer') {
@@ -865,13 +845,66 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                     )
                   }
                 />
-                {isAllPerLayout || participantOrganization ? null : (
-                  <ProgramRegistrationMultiRoundAssignmentFields
-                    value={assignmentForRound(roundIndex)}
-                    onChange={next => setAssignmentForRound(roundIndex, next)}
+                {showParticipationMethod ? (
+                  <IndividualPerScheduleExtraRows
+                    rows={individualExtraRows}
+                    renderField={(field, options) => {
+                      if (field === 'assignment') {
+                        return (
+                          <ProgramRegistrationMultiRoundAssignmentFields
+                            embedded
+                            fullRow={options.fullRow}
+                            value={assignmentForRound(roundIndex)}
+                            onChange={next => setAssignmentForRound(roundIndex, next)}
+                          />
+                        )
+                      }
+                      if (field === 'education') {
+                        return (
+                          <DetailInfoForm.Field
+                            label="교육 형태"
+                            fullRow={options.fullRow}
+                            edit={
+                              <CmsRadioGroup
+                                size="large"
+                                value={educationFormForSession(roundIndex)}
+                                onChange={onEducationFormRadioChange(roundIndex)}
+                              >
+                                {perScheduleEducationFormOptions.map(opt => (
+                                  <CmsRadio key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                  </CmsRadio>
+                                ))}
+                              </CmsRadioGroup>
+                            }
+                            view="-"
+                          />
+                        )
+                      }
+                      if (field === 'ips') {
+                        return (
+                          <DetailInfoForm.Field
+                            label="IPS 유형"
+                            fullRow={options.fullRow}
+                            edit={
+                              <ProgramRegistrationIpsTypeFields
+                                layout={options.layout}
+                                value={ipsBySession[roundIndex] ?? { category: '', detail: '' }}
+                                onChange={(next: ProgramRegistrationIpsTypeValue) =>
+                                  setSessionIps(roundIndex, next)
+                                }
+                              />
+                            }
+                            view="-"
+                          />
+                        )
+                      }
+                      return renderParticipationField(roundIndex, { fullRow: options.fullRow })
+                    }}
                   />
+                ) : (
+                  renderMultiRoundPlanExtraRows(roundIndex)
                 )}
-                {renderMultiRoundPlanExtraRows(roundIndex)}
               </DetailInfoForm>
               {roundIndex > 1 ? (
                 <ItemDeleteButton

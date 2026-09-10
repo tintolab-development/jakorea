@@ -20,6 +20,7 @@ type MemberAssignmentSubmissionResponseExtended = MemberAssignmentSubmissionResp
   lectureProgress?: string
   submissionStatus?: string
   submissionFileIds?: number[]
+  formResponseId?: number
 }
 
 function mapTeamRole(raw?: string): AssignmentTeamRoleKey {
@@ -71,6 +72,11 @@ export function mapMemberAssignmentSubmissionsToDetail(
     )
     const canViewFromFiles = (submissionFileIds?.length ?? 0) > 0
     const canViewFromCount = (item.fileCount ?? 0) > 0
+    const formResponseIdRaw = extended.formResponseId ?? item.submissionId
+    const formResponseId =
+      typeof formResponseIdRaw === 'number' && Number.isFinite(formResponseIdRaw)
+        ? formResponseIdRaw
+        : undefined
 
     return {
       id: String(item.submissionId ?? index + 1),
@@ -90,8 +96,9 @@ export function mapMemberAssignmentSubmissionsToDetail(
       submissionStatus: extended.submissionStatus
         ? mapSubmissionStatus(extended.submissionStatus)
         : mapSubmissionStatus(item.responseStatus),
-      canViewAssignment: canViewFromFiles || canViewFromCount,
+      canViewAssignment: canViewFromFiles || canViewFromCount || formResponseId != null,
       submissionFileIds,
+      formResponseId,
     }
   })
 

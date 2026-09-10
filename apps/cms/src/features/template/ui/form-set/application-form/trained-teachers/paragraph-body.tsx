@@ -23,6 +23,7 @@ export function renderTrainedTeachersProgramApplicationParagraphBody(
     case PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule:
       return (
         <TrainedTeachersProgramApplicationPreferredScheduleParagraph
+          isTemplateAuthoringMode={isTemplateAuthoringMode}
           readOnlyPreview={readOnlyPreview}
         />
       )

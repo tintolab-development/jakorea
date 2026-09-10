@@ -78,7 +78,7 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
                 value={appliedRange?.[0] ?? null}
                 appliedSurfaceRange={appliedRange}
                 appliedSurfaceWithTime={false}
-                width="100%"
+                width={320}
                 placeholder="진행 기간을 선택하세요"
                 onRangeChange={range => persistRange(range)}
                 onChange={next => {

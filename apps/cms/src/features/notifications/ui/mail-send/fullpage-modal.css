@@ -189,7 +189,10 @@
   color: var(--color-danger, #c32f4a);
 }
 
-.mail-send-fullpage-modal .detail-info-form__field-content--edit > .mail-send-fullpage__timing {
+.mail-send-fullpage-modal .detail-info-form__field-content--edit > .mail-send-fullpage__timing,
+.mail-send-fullpage-modal
+  .detail-info-form__field-content--edit
+  > .notification-send-schedule-field.mail-send-fullpage__timing {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
@@ -199,29 +202,25 @@
   width: 100%;
 }
 
-.mail-send-fullpage__timing .app-radio-group.ant-radio-group {
-  flex: 0 0 auto;
-  flex-wrap: nowrap;
-}
-
-.mail-send-fullpage__timing-divider {
-  flex: 0 0 1px;
-  width: 1px;
-  height: 16px;
-  background: var(--default-BK, #3d3d3d);
-  opacity: 0.2;
-}
-
-.mail-send-fullpage-modal .mail-send-fullpage__timing .cms-datepicker.cms-datepicker--large {
-  flex: 1 1 0;
-  min-width: 120px;
-  width: auto;
-}
-
 .mail-send-fullpage-modal .detail-info-form__field-content--edit > * {
   display: block;
   margin-block: 0 !important;
   width: 100%;
   min-width: 0;
   align-items: stretch;
+}
+
+.mail-send-fullpage__context-vars {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.mail-send-fullpage__context-vars-hint {
+  margin: 0 0 12px;
+  color: var(--color-gray-06, #666);
+  font-size: 13px;
+  line-height: 1.5;
 }

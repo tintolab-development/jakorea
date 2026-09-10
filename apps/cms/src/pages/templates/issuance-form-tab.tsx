@@ -16,7 +16,6 @@ import {
   LECTURE_REPORT_HIDDEN_DRAG_HANDLE_IDS,
   UJAT_EDUCATION_JOURNAL_HIDDEN_DRAG_HANDLE_IDS,
   UJAT_EDUCATION_PLAN_HIDDEN_DRAG_HANDLE_IDS,
-  UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME,
   type WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import {
   getPaymentStatementA4ParagraphGap,
@@ -24,11 +23,12 @@ import {
 import {
   getPaymentStatementPreConsentA4ParagraphGap,
   PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS } from '@/features/template/model/payment-statement-pre-consent-a4-preview'
-import { createSettlementApplicationIssuanceDraft } from '@/features/template/model/settlement-application-issuance-draft'
 import { createPaymentStatementPreConsentDraft } from '@/features/template/model/payment-statement-pre-consent-draft'
 import {
+  buildSettlementApplicationDocumentPreviewDraft,
   getSettlementApplicationA4ParagraphGap,
-  SETTLEMENT_APPLICATION_A4_HIDDEN_PARAGRAPH_IDS } from '@/features/template/model/settlement-application-issuance-a4-preview'
+  SETTLEMENT_APPLICATION_DOCUMENT_PREVIEW_A4_HIDDEN_PARAGRAPH_IDS,
+} from '@/features/template/model/settlement-application-issuance-a4-preview'
 import { createLectureReportIssuanceA4Preview } from '@/features/template/model/lecture-report-issuance-a4-preview'
 import {
   createUjatEducationIssuanceA4Preview,
@@ -75,7 +75,7 @@ import { PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS } from '@/features
 import {
   SettlementApplicationIssuanceEditorLeftColumn,
   SettlementApplicationIssuanceEditorRightColumn } from '@/features/template/ui/form-set/settlement-application-issuance/editor'
-import { SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/settlement-application-issuance/paragraph-config'
+import { SETTLEMENT_APPLICATION_DOCUMENT_PREVIEW_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/settlement-application-issuance/paragraph-config'
 import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template/ui/template-management/template-custom-fields-form'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import {
@@ -126,7 +126,7 @@ function getIssuanceUserPreviewDraft(templateName?: string): WritingFormDraft {
     return createLectureReportIssuanceDraft()
   }
   if (templateName === SETTLEMENT_APPLICATION_TEMPLATE_NAME) {
-    return createSettlementApplicationIssuanceDraft()
+    return buildSettlementApplicationDocumentPreviewDraft()
   }
   if (templateName === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME) {
     return createPaymentStatementPreConsentDraft()
@@ -297,31 +297,35 @@ export function IssuanceFormTab() {
 
   const settlementPdfHostRef = useRef<HTMLDivElement>(null)
   const [settlementPdfLoading, setSettlementPdfLoading] = useState(false)
+  const settlementDocumentPreviewDraft = useMemo(
+    () => buildSettlementApplicationDocumentPreviewDraft(),
+    []
+  )
   const settlementPreviewParagraphs = useMemo(
     () =>
       getA4PreviewParagraphs(
-        settlementVm.draft.paragraphs,
-        SETTLEMENT_APPLICATION_A4_HIDDEN_PARAGRAPH_IDS
+        settlementDocumentPreviewDraft.paragraphs,
+        SETTLEMENT_APPLICATION_DOCUMENT_PREVIEW_A4_HIDDEN_PARAGRAPH_IDS
       ),
-    [settlementVm.draft.paragraphs]
+    [settlementDocumentPreviewDraft.paragraphs]
   )
   const settlementA4Title = useMemo(
     () =>
       getA4DocumentTitle(
-        settlementVm.draft,
+        settlementDocumentPreviewDraft,
         selectedTemplate?.templateName ?? SETTLEMENT_APPLICATION_TEMPLATE_NAME
       ),
-    [settlementVm.draft, selectedTemplate?.templateName]
+    [settlementDocumentPreviewDraft, selectedTemplate?.templateName]
   )
   const {
     pages: settlementPdfPages,
     overflowParagraphIds: settlementPdfOverflowParagraphIds,
     measureLayer: settlementPdfMeasureLayer } = useA4ParagraphPages({
     allParagraphs: settlementPreviewParagraphs,
-    titleNumbering: settlementVm.draft.formSettings.titleNumbering,
+    titleNumbering: settlementDocumentPreviewDraft.formSettings.titleNumbering,
     editorKind: 'horizontal_table',
     enabled: isPreviewOpen && isSettlementApplicationIssuance,
-    paragraphBodyOptions: SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS,
+    paragraphBodyOptions: SETTLEMENT_APPLICATION_DOCUMENT_PREVIEW_PARAGRAPH_BODY_OPTIONS,
     renderMode: 'contentOnly',
     paragraphGapPx: getSettlementApplicationA4ParagraphGap })
 
@@ -363,9 +367,6 @@ export function IssuanceFormTab() {
     () =>
       createUjatEducationIssuanceA4Preview({
         variant: ujatStructuredIssuanceVariant ?? 'plan',
-        ...(ujatStructuredIssuanceVariant === 'journal'
-          ? { journalInstitutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME }
-          : {}),
       }),
     [ujatStructuredIssuanceVariant]
   )
@@ -492,11 +493,6 @@ export function IssuanceFormTab() {
       ujatPreviewVariant != null
         ? createUjatEducationIssuanceA4Preview({
             variant: ujatPreviewVariant,
-            ...(isJournalPreview
-              ? {
-                  journalInstitutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME,
-                }
-              : {}),
           })
         : null
     const baseA4Options = useA4Preview
@@ -507,7 +503,7 @@ export function IssuanceFormTab() {
     const previewParagraphBodyOptions: RenderFormParagraphBodyOptions | undefined =
       ujatA4Preview?.paragraphBodyOptions ??
       (isSettlementPreview
-        ? SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS
+        ? SETTLEMENT_APPLICATION_DOCUMENT_PREVIEW_PARAGRAPH_BODY_OPTIONS
         : isPreConsentPreview
           ? PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS
           : undefined)
@@ -519,7 +515,7 @@ export function IssuanceFormTab() {
       previewLayout: baseA4Options?.previewLayout,
       paragraphBodyOptions: previewParagraphBodyOptions,
       a4HiddenParagraphIds: isSettlementPreview
-        ? SETTLEMENT_APPLICATION_A4_HIDDEN_PARAGRAPH_IDS
+        ? SETTLEMENT_APPLICATION_DOCUMENT_PREVIEW_A4_HIDDEN_PARAGRAPH_IDS
         : isPreConsentPreview
           ? PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS
           : baseA4Options?.a4HiddenParagraphIds,
@@ -820,13 +816,6 @@ export function IssuanceFormTab() {
                 UJAT_STRUCTURED_ISSUANCE_HIDDEN_DRAG_HANDLES[ujatStructuredIssuanceVariant ?? 'plan']
               }
               headingDescriptionExtraClassName="paragraph-input-explanation-title"
-              paragraphBodyOptions={
-                ujatStructuredIssuanceVariant === 'journal'
-                  ? {
-                      ujatJournalEducationInfoAutofill: {
-                        institutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME } }
-                  : undefined
-              }
             />
           ) : isLectureReportIssuance ? (
             <FormEditorLeftPanel
@@ -1038,10 +1027,10 @@ export function IssuanceFormTab() {
                 <FormDocumentPreviewBody
                   paragraphs={pageParagraphs}
                   allParagraphs={settlementPreviewParagraphs}
-                  titleNumbering={settlementVm.draft.formSettings.titleNumbering}
+                  titleNumbering={settlementDocumentPreviewDraft.formSettings.titleNumbering}
                   editorKind="horizontal_table"
                   overflowParagraphIds={settlementPdfOverflowParagraphIds}
-                  paragraphBodyOptions={SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS}
+                  paragraphBodyOptions={SETTLEMENT_APPLICATION_DOCUMENT_PREVIEW_PARAGRAPH_BODY_OPTIONS}
                   renderMode="contentOnly"
                   paragraphGapPx={getSettlementApplicationA4ParagraphGap}
                 />

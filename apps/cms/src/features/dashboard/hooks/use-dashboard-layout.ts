@@ -5,7 +5,7 @@
 
 import { useMemo, useCallback, useRef } from 'react'
 import type { User, UserRole } from '@/types/user'
-import { getDashboardWidgetsByRole, getDashboardWidgetsForUser } from '@/shared/config/dashboard-config'
+import { getDashboardWidgetsByRole, getDashboardWidgetsForUser, assignedProgramTypesForWidgetLayout } from '@/shared/config/dashboard-config'
 import type { DashboardWidgetConfig } from '@/shared/config/dashboard-config'
 import {
   useDashboardWidgetOrderStore,
@@ -21,6 +21,7 @@ import {
   isShortcutItemEnabled,
   useDashboardSettingsStore,
 } from '@/features/dashboard/model/dashboard-settings-store'
+import { useDashboardQueryScope } from '@/features/dashboard/hooks/use-dashboard-query-scope'
 
 export interface UseDashboardLayoutParams {
   userRole: UserRole | null
@@ -49,15 +50,20 @@ export function useDashboardLayout({
 }: UseDashboardLayoutParams): UseDashboardLayoutResult {
   const rowRef = useRef<HTMLDivElement | null>(null)
 
+  const queryScope = useDashboardQueryScope()
   const assignedProgramTypes = useDashboardSettingsStore(s => s.assignedProgramTypes)
+  const scheduleKinds = assignedProgramTypesForWidgetLayout(
+    assignedProgramTypes,
+    queryScope === 'remote'
+  )
 
   const widgets = useMemo(() => {
     if (userRole === 'ADMIN') {
-      if (user) return getDashboardWidgetsForUser(user, assignedProgramTypes)
+      if (user) return getDashboardWidgetsForUser(user, scheduleKinds)
       return getDashboardWidgetsByRole('ADMIN')
     }
     return getDashboardWidgetsByRole(userRole)
-  }, [userRole, user, assignedProgramTypes])
+  }, [userRole, user, scheduleKinds])
   const defaultIds = useMemo(() => buildDefaultDisplayItemIds(widgets), [widgets])
   const displayItemsMeta = useMemo(() => buildDisplayItemsMeta(widgets), [widgets])
 

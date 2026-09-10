@@ -16,7 +16,7 @@ export interface SponsorManager {
 /** 후원사 관리 목록 — 구분(기업 / 재단) */
 export type SponsorOrganizationKind = 'corporate' | 'foundation'
 
-/** 후원사 관리 목록 — 후원 상태 (제품 GO 전: active | ended만) */
+/** 후원사 관리 목록 — 후원 상태 (PD-DM-01: active | discussing | dormant | ended) */
 export type SponsorSponsorshipStatus = 'active' | 'discussing' | 'dormant' | 'ended'
 
 // 스폰서

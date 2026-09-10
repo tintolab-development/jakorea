@@ -17,6 +17,7 @@ export interface SettlementCorrectionResponse {
   reason?: string;
   requestedChangeSummary?: string;
   requestedByAdminId?: number;
+  requestedByMemberId?: number;
   requestedAt?: string;
   decidedByAdminId?: number;
   decidedAt?: string;

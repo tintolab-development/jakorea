@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   exportIssuanceFormTemplateSeeds,
+  exportRegistrationGeneralFormSeed,
   exportWritingFormTemplateSeeds,
   getIssuanceFormSeedSpecsForExport,
   getWritingFormSeedSpecsForExport,
@@ -20,6 +21,20 @@ describe('exportWritingFormTemplateSeeds', () => {
   it('writes seed json files and handoff markdown', () => {
     const result = exportWritingFormTemplateSeeds()
     expect(result.exported).toBe(31)
+  })
+
+  it('writes registration-general seed separately (Payload B)', () => {
+    const result = exportRegistrationGeneralFormSeed()
+    expect(result.paragraphCount).toBeGreaterThanOrEqual(6)
+    expect(existsSync(result.filePath)).toBe(true)
+    const body = JSON.parse(readFileSync(result.filePath, 'utf8')) as {
+      templateCode: string
+      schemaJson: { paragraphs: unknown[] }
+      extensionJson: { editorState: Record<string, unknown> }
+    }
+    expect(body.templateCode).toBe('registration-general')
+    expect(body.schemaJson.paragraphs.length).toBeGreaterThanOrEqual(6)
+    expect(body.extensionJson.editorState).toBeTruthy()
   })
 })
 

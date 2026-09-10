@@ -36,6 +36,11 @@ const PERSONAL_INFO_COLLECTION_BOTTOM =
 const PERSONAL_INFO_THIRD_PARTY_BOTTOM =
   '위의 개인정보 제3자 정보 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.'
 
+const PERSONAL_INFO_PURPOSE_CELL =
+  'JA 프로그램의 참가자 선발 및 프로그램 진행에 필요한 정보 안내'
+const PERSONAL_INFO_RETENTION_CELL =
+  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
+
 function createEconomyPersonalInfoHorizontalTable(): HorizontalTableParagraph {
   const colCount = 3
   const columnFields = Array.from({ length: colCount }, () => ({
@@ -49,12 +54,11 @@ function createEconomyPersonalInfoHorizontalTable(): HorizontalTableParagraph {
     },
     {
       kind: 'text' as const,
-      value: '1사1교 프로그램 신청 접수 및 교육 운영에 필요한 정보 안내',
+      value: PERSONAL_INFO_PURPOSE_CELL,
     },
     {
       kind: 'text' as const,
-      value:
-        '- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 프로그램 종료로부터 1년 보관 후 폐기',
+      value: PERSONAL_INFO_RETENTION_CELL,
     },
   ]
 
@@ -193,4 +197,43 @@ export function createProgramApplicationFormEconomyDraft(): WritingFormDraft {
     formSettings: { titleNumbering: 'none' },
     paragraphs,
   })
+}
+
+function patchHorizontalTableTextCell(
+  paragraph: HorizontalTableParagraph,
+  row: number,
+  col: number,
+  value: string
+): HorizontalTableParagraph {
+  const fieldDataRows = (paragraph.fieldDataRows ?? []).map(cells =>
+    cells.map(cell => ({ ...cell }))
+  )
+  const rowCells = fieldDataRows[row]
+  const cell = rowCells?.[col]
+  if (cell == null || cell.kind !== 'text' || cell.value === value) {
+    return paragraph
+  }
+  rowCells[col] = { ...cell, value }
+  return { ...paragraph, fieldDataRows }
+}
+
+/** 구 시드 고정 문구 보정 */
+export function migrateProgramApplicationFormEconomyParagraphs(
+  draft: WritingFormDraft
+): WritingFormDraft {
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (
+      paragraph.id !== PROGRAM_APPLICATION_FORM_ECONOMY_IDS.personalInfoCollection ||
+      paragraph.kind !== 'single_item' ||
+      paragraph.variant !== 'horizontal_table'
+    ) {
+      return paragraph
+    }
+    let next = patchHorizontalTableTextCell(paragraph, 0, 1, PERSONAL_INFO_PURPOSE_CELL)
+    next = patchHorizontalTableTextCell(next, 0, 2, PERSONAL_INFO_RETENTION_CELL)
+    if (next !== paragraph) changed = true
+    return next
+  })
+  return changed ? { ...draft, paragraphs } : draft
 }

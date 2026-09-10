@@ -1,19 +1,21 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, CmsSelect } from '@/shared/ui'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { MAIL_SEND_RECIPIENT_MOCK } from '@/features/notifications/model/mail-send/mock'
 import {
+  MAIL_SEND_MEMBER_TYPE_OPTIONS,
   MAIL_SEND_PARTICIPATION_TYPE_OPTIONS,
   filterMailSendRecipients,
-  mailSendParticipationTypeLabel,
+  mailSendRecipientTypeColumnTitle,
+  mailSendRecipientTypeLabel,
 } from '@/features/notifications/model/mail-send/recipients'
 import {
   MAIL_SEND_PICKER_PAGE_SIZE,
-  type MailSendParticipationType,
   type MailSendRecipient,
+  type MailSendRecipientSearchParams,
+  type MailSendRecipientTypeMode,
 } from '@/features/notifications/model/mail-send/types'
 import './recipient-select-modal.css'
 
@@ -23,71 +25,134 @@ type RecipientSelectModalProps = {
   open: boolean
   candidates?: MailSendRecipient[]
   selectedIds: string[]
+  typeMode: MailSendRecipientTypeMode
   onClose: () => void
   onConfirm: (recipients: MailSendRecipient[]) => void
+  onSearch?: (params: MailSendRecipientSearchParams) => void
+  totalCount?: number
+  totalPages?: number
+  fetchAllCandidates?: () => Promise<MailSendRecipient[]>
   zIndex?: number
 }
 
 export function RecipientSelectModal({
   open,
-  candidates = MAIL_SEND_RECIPIENT_MOCK,
+  candidates = [],
   selectedIds,
+  typeMode,
   onClose,
   onConfirm,
+  onSearch,
+  totalCount,
+  totalPages: serverTotalPages,
+  fetchAllCandidates,
   zIndex = PICKER_Z_INDEX,
 }: RecipientSelectModalProps) {
-  const [participationType, setParticipationType] = useState<MailSendParticipationType | ''>('')
+  const typeColumnTitle = mailSendRecipientTypeColumnTitle(typeMode)
+  const typeOptions =
+    typeMode === 'member' ? MAIL_SEND_MEMBER_TYPE_OPTIONS : MAIL_SEND_PARTICIPATION_TYPE_OPTIONS
+
+  const [typeValue, setTypeValue] = useState('')
   const [keyword, setKeyword] = useState('')
-  const [appliedType, setAppliedType] = useState<MailSendParticipationType | ''>('')
+  const [appliedType, setAppliedType] = useState('')
   const [appliedKeyword, setAppliedKeyword] = useState('')
   const [page, setPage] = useState(1)
-  const [checkedIds, setCheckedIds] = useState<string[]>(selectedIds)
+  const [selectedById, setSelectedById] = useState<Record<string, MailSendRecipient>>({})
+  const [selectingAll, setSelectingAll] = useState(false)
 
-  const filtered = useMemo(
-    () =>
-      filterMailSendRecipients(candidates, {
-        participationType: appliedType,
-        keyword: appliedKeyword,
-      }),
-    [appliedKeyword, appliedType, candidates]
-  )
-
-  const totalPages = Math.ceil(filtered.length / MAIL_SEND_PICKER_PAGE_SIZE)
-  const currentPage = totalPages > 0 ? Math.min(page, totalPages) : 1
-  const paged = filtered.slice(
-    (currentPage - 1) * MAIL_SEND_PICKER_PAGE_SIZE,
-    currentPage * MAIL_SEND_PICKER_PAGE_SIZE
-  )
-  const hasResults = filtered.length > 0
-  const selectedCount = checkedIds.length
-
-  const handleSearch = () => {
-    setAppliedType(participationType)
-    setAppliedKeyword(keyword.trim())
+  useEffect(() => {
+    if (!open) return
+    setTypeValue('')
+    setKeyword('')
+    setAppliedType('')
+    setAppliedKeyword('')
     setPage(1)
-  }
+    setSelectingAll(false)
+    setSelectedById(
+      Object.fromEntries(
+        candidates
+          .filter(item => selectedIds.includes(item.id))
+          .map(item => [item.id, item])
+      )
+    )
+  }, [open, typeMode])
 
-  const handleSelectAll = () => {
-    setCheckedIds(prev => {
-      const next = new Set(prev)
-      for (const recipient of filtered) next.add(recipient.id)
-      return [...next]
+  const useServerPaging = Boolean(onSearch)
+  const filtered = useMemo(() => {
+    if (useServerPaging) return candidates
+    return filterMailSendRecipients(candidates, {
+      typeMode,
+      typeValue: appliedType,
+      keyword: appliedKeyword,
+    })
+  }, [appliedKeyword, appliedType, candidates, typeMode, useServerPaging])
+
+  const clientTotalPages = Math.ceil(filtered.length / MAIL_SEND_PICKER_PAGE_SIZE)
+  const totalPages = useServerPaging ? Math.max(serverTotalPages ?? 1, 1) : clientTotalPages
+  const currentPage = totalPages > 0 ? Math.min(page, totalPages) : 1
+  const paged = useServerPaging
+    ? filtered
+    : filtered.slice(
+        (currentPage - 1) * MAIL_SEND_PICKER_PAGE_SIZE,
+        currentPage * MAIL_SEND_PICKER_PAGE_SIZE
+      )
+  const hasResults = filtered.length > 0
+  const checkedIds = useMemo(() => Object.keys(selectedById), [selectedById])
+  const selectedCount = checkedIds.length
+  const displayedTotal = useServerPaging ? (totalCount ?? filtered.length) : filtered.length
+
+  const emitSearch = (
+    nextPage: number,
+    nextType = appliedType,
+    nextKeyword = appliedKeyword
+  ) => {
+    onSearch?.({
+      typeValue: nextType,
+      keyword: nextKeyword,
+      page: Math.max(nextPage - 1, 0),
     })
   }
 
+  const handleSearch = () => {
+    const nextType = typeValue
+    const nextKeyword = keyword.trim()
+    setAppliedType(nextType)
+    setAppliedKeyword(nextKeyword)
+    setPage(1)
+    setSelectedById({})
+    emitSearch(1, nextType, nextKeyword)
+  }
+
+  const handlePageChange = (nextPage: number) => {
+    setPage(nextPage)
+    if (useServerPaging) emitSearch(nextPage)
+  }
+
+  const handleSelectAll = async () => {
+    if (fetchAllCandidates) {
+      setSelectingAll(true)
+      try {
+        const all = await fetchAllCandidates()
+        setSelectedById(Object.fromEntries(all.map(item => [item.id, item])))
+      } finally {
+        setSelectingAll(false)
+      }
+      return
+    }
+    setSelectedById(Object.fromEntries(filtered.map(item => [item.id, item])))
+  }
+
   const handleConfirm = () => {
-    const checked = new Set(checkedIds)
-    onConfirm(candidates.filter(item => checked.has(item.id)))
+    onConfirm(Object.values(selectedById))
   }
 
   const columns: ColumnsType<MailSendRecipient> = [
     {
-      title: '참여 유형',
-      dataIndex: 'participationType',
-      key: 'participationType',
+      title: typeColumnTitle,
+      key: 'type',
       width: 140,
       align: 'center',
-      render: value => mailSendParticipationTypeLabel(value) || '-',
+      render: (_value, record) => mailSendRecipientTypeLabel(record) || '-',
     },
     {
       title: '수신자명',
@@ -116,7 +181,13 @@ export function RecipientSelectModal({
       zIndex={zIndex}
       footer={
         <>
-          <CmsButton variant="secondary" size="large" type="button" onClick={handleSelectAll}>
+          <CmsButton
+            variant="secondary"
+            size="large"
+            type="button"
+            loading={selectingAll}
+            onClick={() => void handleSelectAll()}
+          >
             전체 선택
           </CmsButton>
           <CmsButton variant="primary" size="large" type="button" onClick={handleConfirm}>
@@ -129,16 +200,10 @@ export function RecipientSelectModal({
         <div className="mail-send-recipient-select-modal__search">
           <CmsSelect
             inputSize="large"
-            placeholder="참여 유형"
-            value={participationType}
-            onChange={value =>
-              setParticipationType(
-                value === 'participant' || value === 'volunteer' || value === 'instructor'
-                  ? value
-                  : ''
-              )
-            }
-            options={MAIL_SEND_PARTICIPATION_TYPE_OPTIONS}
+            placeholder={typeColumnTitle}
+            value={typeValue || undefined}
+            onChange={value => setTypeValue(String(value ?? ''))}
+            options={typeOptions}
             style={{ width: 160 }}
           />
           <span className="mail-send-recipient-select-modal__search-input">
@@ -159,10 +224,9 @@ export function RecipientSelectModal({
         </div>
 
         <p className="mail-send-recipient-select-modal__count">
-          총 {filtered.length}명 /{' '}
-          <span className="mail-send-recipient-select-modal__count-selected">
-            선택 {selectedCount}명
-          </span>
+          총 {displayedTotal}명 / 선택{' '}
+          <span className="mail-send-recipient-select-modal__count-selected">{selectedCount}</span>
+          명
         </p>
 
         {hasResults ? (
@@ -175,7 +239,17 @@ export function RecipientSelectModal({
               pagination={false}
               rowSelection={{
                 selectedRowKeys: checkedIds,
-                onChange: keys => setCheckedIds(keys.map(String)),
+                onChange: keys => {
+                  const nextIds = new Set(keys.map(String))
+                  setSelectedById(prev => {
+                    const next = { ...prev }
+                    for (const recipient of paged) {
+                      if (nextIds.has(recipient.id)) next[recipient.id] = recipient
+                      else delete next[recipient.id]
+                    }
+                    return next
+                  })
+                },
                 columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
               }}
             />
@@ -184,7 +258,7 @@ export function RecipientSelectModal({
                 variant="modal"
                 currentPage={currentPage}
                 totalPages={Math.max(totalPages, 1)}
-                onPageChange={setPage}
+                onPageChange={handlePageChange}
                 ariaLabel="수신자 설정 페이지 이동"
               />
             </div>

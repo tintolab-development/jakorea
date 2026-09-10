@@ -1,4 +1,5 @@
 import type { ProgramParticipantApplicationEditorViewModel } from '@/features/template/hooks/use-program-participant-application-editor'
+import { resolveUjatVolunteerHiddenParagraphIds } from '@/features/template/lib/ujat-volunteer-application-form-visibility'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
@@ -7,33 +8,28 @@ import {
   FormEditorTitleNumberingField,
 } from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
 
-function resolveUjatVolunteerHiddenParagraphIds(
-  applicationType: ProgramParticipantApplicationEditorViewModel['ujatVolunteerApplicationType']
-): Set<string> | undefined {
-  const hidden = new Set<string>()
-  if (applicationType === 'new') {
-    hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm)
-  }
-  if (applicationType === 'ujat-graduate') {
-    hidden.add(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems)
-  }
-  return hidden.size > 0 ? hidden : undefined
-}
-
 function filterUjatVolunteerParagraphs<T extends { id: string }>(
   paragraphs: readonly T[],
-  applicationType: ProgramParticipantApplicationEditorViewModel['ujatVolunteerApplicationType']
+  vm: ProgramParticipantApplicationEditorViewModel
 ): T[] {
-  const hidden = resolveUjatVolunteerHiddenParagraphIds(applicationType)
+  const hidden = resolveUjatVolunteerHiddenParagraphIds(vm.ujatVolunteerApplicationType, {
+    isTemplateAuthoringMode:
+      vm.leftPanelParagraphBodyOptions?.ujatProgramApplicationFormVolunteer
+        ?.isTemplateAuthoringMode,
+  })
   if (hidden == null) return [...paragraphs]
   return paragraphs.filter(p => !hidden.has(p.id))
 }
 
 function resolveUjatVolunteerSelectedParagraphId(
   activeParagraphId: string | null,
-  applicationType: ProgramParticipantApplicationEditorViewModel['ujatVolunteerApplicationType']
+  vm: ProgramParticipantApplicationEditorViewModel
 ): string | null {
-  const hidden = resolveUjatVolunteerHiddenParagraphIds(applicationType)
+  const hidden = resolveUjatVolunteerHiddenParagraphIds(vm.ujatVolunteerApplicationType, {
+    isTemplateAuthoringMode:
+      vm.leftPanelParagraphBodyOptions?.ujatProgramApplicationFormVolunteer
+        ?.isTemplateAuthoringMode,
+  })
   if (activeParagraphId != null && hidden?.has(activeParagraphId)) {
     return UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.basicInfo
   }
@@ -46,14 +42,8 @@ export function UjatProgramApplicationFormVolunteerEditorLeftColumn({
 }: {
   vm: ProgramParticipantApplicationEditorViewModel
 }) {
-  const visibleParagraphs = filterUjatVolunteerParagraphs(
-    vm.draft.paragraphs,
-    vm.ujatVolunteerApplicationType
-  )
-  const selectedCardId = resolveUjatVolunteerSelectedParagraphId(
-    vm.activeParagraphId,
-    vm.ujatVolunteerApplicationType
-  )
+  const visibleParagraphs = filterUjatVolunteerParagraphs(vm.draft.paragraphs, vm)
+  const selectedCardId = resolveUjatVolunteerSelectedParagraphId(vm.activeParagraphId, vm)
 
   return (
     <FormEditorLeftPanel
@@ -84,14 +74,8 @@ export function UjatProgramApplicationFormVolunteerEditorRightColumn({
 }: {
   vm: ProgramParticipantApplicationEditorViewModel
 }) {
-  const selectedItemId = resolveUjatVolunteerSelectedParagraphId(
-    vm.activeParagraphId,
-    vm.ujatVolunteerApplicationType
-  )
-  const sortableMiddle = filterUjatVolunteerParagraphs(
-    vm.sortableMiddle,
-    vm.ujatVolunteerApplicationType
-  )
+  const selectedItemId = resolveUjatVolunteerSelectedParagraphId(vm.activeParagraphId, vm)
+  const sortableMiddle = filterUjatVolunteerParagraphs(vm.sortableMiddle, vm)
 
   return (
     <FormEditorFieldNav

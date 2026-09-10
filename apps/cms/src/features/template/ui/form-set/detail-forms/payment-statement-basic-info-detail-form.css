@@ -65,7 +65,8 @@
   align-items: center;
 }
 
-.payment-statement-basic-info-detail-form .detail-info-form__field-content--edit
+.payment-statement-basic-info-detail-form
+  .detail-info-form__field-content--edit
   > .payment-statement-basic-info-detail-form__address {
   display: flex;
   flex-direction: row;
@@ -76,8 +77,10 @@
   min-width: 0;
 }
 
-.payment-statement-basic-info-detail-form .detail-info-form__field:has(.payment-statement-basic-info-detail-form__address),
-.payment-statement-basic-info-detail-form .detail-info-form__field:has(.payment-statement-basic-info-detail-form__account) {
+.payment-statement-basic-info-detail-form
+  .detail-info-form__field:has(.payment-statement-basic-info-detail-form__address),
+.payment-statement-basic-info-detail-form
+  .detail-info-form__field:has(.payment-statement-basic-info-detail-form__account) {
   height: auto;
   min-height: 64px;
   max-height: none;
@@ -92,6 +95,12 @@
   gap: 8px;
   width: 100%;
   min-width: 0;
+}
+
+.payment-statement-basic-info-detail-form__account > .cms-select {
+  flex: 0 0 200px;
+  width: 200px;
+  min-width: 200px;
 }
 
 .payment-statement-basic-info-detail-form__account > .cms-input,
@@ -114,12 +123,4 @@
 .payment-statement-basic-info-detail-form__address > .address-search__trigger-wrap .cms-input {
   width: 100%;
   min-width: 0;
-}
-
-/* A4 document — 카드형 radius/shadow 제거 (셀 border는 유지) */
-.form-document-preview-paragraph--content-only
-  .payment-statement-basic-info-detail-form
-  .detail-info-form__body {
-  border-radius: 0;
-  box-shadow: none;
 }

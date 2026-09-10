@@ -22,6 +22,7 @@ export function useRichTextEditor({
   preset = 'full',
   extraExtensions,
   onReady,
+  shouldRerenderOnTransaction = false,
 }: UseRichTextEditorOptions) {
   const onReadyRef = useRef(onReady)
   onReadyRef.current = onReady
@@ -44,7 +45,7 @@ export function useRichTextEditor({
       editable: enabled,
       autofocus: enabled && autofocus,
       immediatelyRender: false,
-      shouldRerenderOnTransaction: true,
+      shouldRerenderOnTransaction,
       editorProps: {
         attributes: {
           class: 'rich-text-content',

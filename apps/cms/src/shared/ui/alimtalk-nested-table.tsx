@@ -119,7 +119,9 @@ export function AlimtalkNestedTable({
           <tr>
             {hideToggle ? null : <th className="alimtalk-nested-table__toggle" aria-hidden />}
             {isItemListLayout ? (
-              <ItemListCell variant="summary" as="th" aria-hidden />
+              <ItemListCell variant="summary" as="th">
+                순서
+              </ItemListCell>
             ) : null}
             {isItemListLayout ? (
               <>
@@ -160,7 +162,7 @@ export function AlimtalkNestedTable({
                   )}
                   {isItemListLayout ? (
                     <>
-                      <ItemListCell variant="summary" aria-hidden />
+                      <ItemListCell variant="summary">{index + 1}</ItemListCell>
                       <ItemListCell variant="flex">{row.cells[0]}</ItemListCell>
                       <ItemListCell variant="flex">{row.cells[1]}</ItemListCell>
                     </>

@@ -57,7 +57,7 @@ function resolveGuide(props: MemberWithdrawGuideModalProps): {
   return {
     title: '회원 탈퇴 처리 안내',
     lines: buildMemberWithdrawMessageLines({ displayName }),
-    confirmText: confirmTextOverride ?? '탈퇴',
+    confirmText: confirmTextOverride ?? '회원 탈퇴',
     requiredConfirmInput: WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
     confirmInputPlaceholder: WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   }

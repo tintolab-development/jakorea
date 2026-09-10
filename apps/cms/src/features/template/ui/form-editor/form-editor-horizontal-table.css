@@ -54,21 +54,6 @@
   gap: 10px;
 }
 
-/* 행 추가 / 열 추가 — 140×44, 민트 채우기 + 연한 테두리 */
-.form-editor-horizontal-table-dimension-actions__btn.cms-button.ant-btn {
-  width: 140px;
-  height: 44px;
-  border-radius: var(--8, 8px);
-}
-
-.form-editor-horizontal-table-dimension-actions__btn.cms-button.ant-btn.cms-button--primary:not(
-    :disabled
-  ):not(.ant-btn-disabled) {
-  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
-  background: var(--color-mint-01, #01a1af) !important;
-  color: var(--main-WT, #fff) !important;
-}
-
 /* -------------------------------------------------------------------------- */
 /* 3. Layout / shell                                                          */
 /* -------------------------------------------------------------------------- */
@@ -82,6 +67,22 @@
   background: var(--ht-color-surface);
   /* 셀 선택 시 box-shadow가 잘리지 않도록 */
   overflow: visible;
+}
+
+/*
+ * 잠금·미리보기(행 선택 없음) — 헤더 행 사각 bg가 외곽 radius 밖으로
+ * 새지 않게 테이블에서 clip. 선택 섀도우는 canvas-interactive에서만 필요.
+ */
+.form-editor-horizontal-table-wrap:not(.form-editor-horizontal-table-wrap--canvas-interactive)
+  .form-editor-horizontal-table {
+  overflow: hidden;
+}
+
+/* 헤더 bg는 행에 있음. 행에 inner radius를 줘야 외곽 라운드 밖으로 안 새어 나감 */
+.form-editor-horizontal-table__row--header:not(.form-editor-horizontal-table__row--selected) {
+  border-top-left-radius: var(--ht-radius-cell);
+  border-top-right-radius: var(--ht-radius-cell);
+  overflow: hidden;
 }
 
 /* 테이블 외곽 radius와 그리드 스트로크 정합 */
@@ -588,6 +589,17 @@
   box-shadow: none !important;
 }
 
+.form-editor-horizontal-table-wrap--text-canvas-edit .form-editor-horizontal-table__cell-text-hit {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: text;
+}
+
 .form-editor-horizontal-table__cell-text {
   flex: 1 1 auto;
   min-width: 0;
@@ -690,7 +702,12 @@
 
 /* 다중 줄 본문이 한 줄 폭 측정값에 끌려 끝없이 늘어나지 않도록 */
 .form-editor-horizontal-table__bottom-input
-  :is(.paragraph-input__row, .paragraph-input__main, .paragraph-input__view-text, .paragraph-input__shell) {
+  :is(
+    .paragraph-input__row,
+    .paragraph-input__main,
+    .paragraph-input__view-text,
+    .paragraph-input__shell
+  ) {
   width: 100%;
   max-width: 100%;
 }
@@ -732,6 +749,24 @@
   text-align: center;
   width: 100% !important;
   max-width: 100%;
+}
+
+/* 행정정보 표 — 셀 입력값은 본문색(카드 설명용 ParagraphInput 회색 규칙 제외) */
+.form-editor-horizontal-table__cell-paragraph-input.paragraph-input--horizontal-table-cell.paragraph-input--edit.paragraph-input--filled
+  .paragraph-input__shell
+  :is(.ant-input, textarea.ant-input),
+.form-editor-horizontal-table__cell-paragraph-input.paragraph-input--horizontal-table-cell.paragraph-input--edit.paragraph-input--filled
+  .paragraph-input__shell--focused
+  :is(.ant-input, textarea.ant-input) {
+  color: var(--ht-color-text) !important;
+  -webkit-text-fill-color: var(--ht-color-text);
+  opacity: 1 !important;
+}
+
+.form-editor-horizontal-table__cell-paragraph-input.paragraph-input--horizontal-table-cell.paragraph-input--view.paragraph-input--filled
+  .paragraph-input__view-text {
+  color: var(--ht-color-text);
+  opacity: 1;
 }
 
 /* 초상권 동의서(1번) — 4열 표 항목 컬럼 */
@@ -813,7 +848,10 @@
 /* 자식은 inherit */
 .form-editor-horizontal-table-wrap[class*='--payment-pre-consent']
   .form-editor-horizontal-table__td--field
-  :is(.form-editor-horizontal-table__cell-text--body, .form-editor-horizontal-table__cell-textarea) {
+  :is(
+    .form-editor-horizontal-table__cell-text--body,
+    .form-editor-horizontal-table__cell-textarea
+  ) {
   color: inherit;
   font: inherit;
   text-align: inherit;

@@ -5,6 +5,7 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberLinkedSocialAccountResponse } from './memberLinkedSocialAccountResponse';
 
 export interface MemberDetailResponse {
   memberId?: number;
@@ -23,6 +24,12 @@ export interface MemberDetailResponse {
   guardianConsentRequired?: boolean;
   external1365Id?: string;
   roles?: string[];
+  identitySelfSignupCompletedAfterAdminRegistration?: boolean;
+  adminRegisteredNoticeVisible?: boolean;
+  socialAccounts?: MemberLinkedSocialAccountResponse[];
+  scheduleChangeCount?: number;
+  scheduleCancelCount?: number;
+  scheduleChangeCancelCount?: number;
   joinedAt?: string;
   lastLoginAt?: string;
   createdAt?: string;

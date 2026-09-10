@@ -12,6 +12,7 @@ export interface InstructorRoleReviewRequest {
   jaGrade?: string;
   rejectReason?: string;
   revokeReason?: string;
-  /** @minLength 1 */
-  reason: string;
+  reason?: string;
+  /** 알림 직접 설정 시 발송 예약 시각. null이면 즉시 발송 */
+  scheduledAt?: string;
 }

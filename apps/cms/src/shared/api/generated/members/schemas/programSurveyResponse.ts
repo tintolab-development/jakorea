@@ -7,10 +7,16 @@
  */
 
 export interface ProgramSurveyResponse {
+  bindingId?: number;
   templateId?: number;
   templateVersionId?: number;
   templateName?: string;
   versionLabel?: string;
+  targetScope?: string;
+  targetScopeId?: number;
+  shareAccessMode?: string;
+  shareActive?: boolean;
+  sharePath?: string;
   responseCount?: number;
   lastSubmittedAt?: string;
   submittedCount?: number;

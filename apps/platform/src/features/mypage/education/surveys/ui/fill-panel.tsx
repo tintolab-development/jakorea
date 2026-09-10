@@ -2,25 +2,22 @@ import { useCallback, useMemo, useState } from 'react'
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { PFAlertModal, PFButton } from '@/shared/ui'
-import { createEducationSurveyMockDraft } from '../lib/mock-survey-draft'
+import {
+  createEducationSurveyMockDraft,
+  EDUCATION_SURVEY_MOCK_CREATED_AT,
+} from '../lib/mock-survey-draft'
 import { EducationSurveyFormBody } from './survey-form-body'
 import { EducationSurveyHeader } from './survey-header'
-import type { SurveySidecarState } from './platform-survey-paragraph-body'
+import { EMPTY_SURVEY_SIDECAR, type SurveySidecarState } from '../lib/survey-sidecar'
 import styles from './fill-panel.module.css'
 
 export type EducationSurveyFillPanelProps = {
   programTitle: string
 }
 
-const EMPTY_SIDECAR: SurveySidecarState = {
-  dateValues: {},
-  timeValues: {},
-  fileNames: {},
-}
-
 export function EducationSurveyFillPanel({ programTitle }: EducationSurveyFillPanelProps) {
   const [draft, setDraft] = useState<WritingFormDraft>(() => createEducationSurveyMockDraft())
-  const [sidecar, setSidecar] = useState<SurveySidecarState>(EMPTY_SIDECAR)
+  const [sidecar, setSidecar] = useState<SurveySidecarState>(EMPTY_SURVEY_SIDECAR)
   const [alertOpen, setAlertOpen] = useState(false)
 
   const titleParagraph = useMemo(
@@ -50,7 +47,12 @@ export function EducationSurveyFillPanel({ programTitle }: EducationSurveyFillPa
     <>
       <div className={styles.shell}>
         <div className={styles.inner}>
-          {titleParagraph ? <EducationSurveyHeader paragraph={titleParagraph} /> : null}
+          {titleParagraph ? (
+            <EducationSurveyHeader
+              paragraph={titleParagraph}
+              surveyCreatedAt={EDUCATION_SURVEY_MOCK_CREATED_AT}
+            />
+          ) : null}
 
           <EducationSurveyFormBody
             draft={draft}

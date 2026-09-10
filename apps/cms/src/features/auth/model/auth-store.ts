@@ -25,6 +25,7 @@ import { clearSettlementQueryCache } from '@/features/settlement-management/api/
 import { clearMemberQueryCache } from '@/features/user/api/clear-member-query-cache'
 import { clearPerformanceQueryCache } from '@/features/education-record/api/clear-performance-query-cache'
 import { clearProgramQueryCache } from '@/features/program/shared/api/clear-query-cache'
+import { clearNotificationsQueryCache } from '@/features/notifications/api/clear-query-cache'
 import { flushSocialPendingLinks } from '@/features/auth/social-auth/flush-pending-links'
 import { fetchAdminMe } from '@/features/auth/api/fetch-admin-me'
 import { applyAdminMeToSessionUser } from '@/features/auth/lib/apply-admin-me-to-session-user'
@@ -283,6 +284,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearMemberQueryCache()
       clearPerformanceQueryCache()
       clearProgramQueryCache()
+      clearNotificationsQueryCache()
       void flushSocialPendingLinks()
       void hydrateAdminSessionFromMe()
     },
@@ -327,6 +329,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearMemberQueryCache()
       clearPerformanceQueryCache()
       clearProgramQueryCache()
+      clearNotificationsQueryCache()
       void flushSocialPendingLinks()
       void hydrateAdminSessionFromMe()
     },
@@ -378,6 +381,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearMemberQueryCache()
       clearPerformanceQueryCache()
       clearProgramQueryCache()
+      clearNotificationsQueryCache()
     },
 
     checkAuth: async () => {

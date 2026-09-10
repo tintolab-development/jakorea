@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -8,6 +8,13 @@ import {
   GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
   useProgramRegistrationOverlayKv,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX,
+  TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_OPTION,
+  TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE,
+  TRAINED_TEACHERS_REGISTRATION_REP_EN,
+  TRAINED_TEACHERS_REGISTRATION_REP_KO,
+} from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 
 const DETAILED_PROGRAM_OPTIONS = withDetailedProgramNoneOption(
   mockDetailedProgramManagementListRows.map(row => ({
@@ -19,27 +26,51 @@ const DETAILED_PROGRAM_OPTIONS = withDetailedProgramNoneOption(
 type ControlledTitleProps = {
   programTitleKo?: string
   onProgramTitleKoChange?: (title: string) => void
+  /** 교육받은 교사 등록 폼 — overlay 키·기본값 분리 */
+  trainedTeachersDefaults?: boolean
 }
 
 function ProgramRegistrationBasicInfoTitleFieldsInner({
   programTitleKo: programTitleKoProp,
   onProgramTitleKoChange,
+  trainedTeachersDefaults = false,
 }: ControlledTitleProps) {
+  const titleKoKey = trainedTeachersDefaults
+    ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.programTitleKo`
+    : GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY
+  const titleEnKey = trainedTeachersDefaults
+    ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.programTitleEn`
+    : 'generalRegistration.basicInfo.programTitleEn'
+  const publicTitleKey = trainedTeachersDefaults
+    ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.publicProgramTitle`
+    : 'generalRegistration.basicInfo.publicProgramTitle'
+  const detailedIdKey = trainedTeachersDefaults
+    ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.detailedProgramId`
+    : 'generalRegistration.basicInfo.detailedProgramId'
+
   const [localProgramTitleKo, setLocalProgramTitleKo] = useProgramRegistrationOverlayKv(
-    GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
-    ''
+    titleKoKey,
+    trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_REP_KO : ''
   )
   const [programTitleEn, setProgramTitleEn] = useProgramRegistrationOverlayKv(
-    'generalRegistration.basicInfo.programTitleEn',
-    ''
+    titleEnKey,
+    trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_REP_EN : ''
   )
   const [publicProgramTitle, setPublicProgramTitle] = useProgramRegistrationOverlayKv(
-    'generalRegistration.basicInfo.publicProgramTitle',
+    publicTitleKey,
     ''
   )
   const [detailedProgramId, setDetailedProgramId] = useProgramRegistrationOverlayKv<string>(
-    'generalRegistration.basicInfo.detailedProgramId',
-    ''
+    detailedIdKey,
+    trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE : ''
+  )
+
+  const detailedProgramOptions = useMemo(
+    () =>
+      trainedTeachersDefaults
+        ? [TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_OPTION, ...DETAILED_PROGRAM_OPTIONS]
+        : DETAILED_PROGRAM_OPTIONS,
+    [trainedTeachersDefaults]
   )
 
   const isTitleControlled = onProgramTitleKoChange != null
@@ -105,7 +136,7 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
                 inputSize="medium"
                 placeholder="세부 프로그램명을 선택하세요"
                 width="100%"
-                options={DETAILED_PROGRAM_OPTIONS}
+                options={detailedProgramOptions}
                 value={detailedProgramId}
                 onChange={v => setDetailedProgramId(String(v ?? ''))}
               />

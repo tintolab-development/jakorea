@@ -65,13 +65,7 @@ import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-p
 import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { handleError } from '@/shared/utils/error-handler'
-import {
-  ActionResultModal,
-  DeleteGuideModal,
-  buildDeleteCompletedMessageBulk,
-  buildDeleteCompletedMessageSingle,
-  buildDeleteCompletedTitle,
-} from '@/shared/ui'
+import { DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
 import '@/shared/ui/detail-fullpage-modal.css'
 import {
   memberListKindToBasicInfoEntrySource,
@@ -163,14 +157,6 @@ function displayNameForUserDelete(kind: MemberListKind, u: UserListRow): string 
   const email = u.email?.trim()
   if (email) return email
   return '(이름 없음)'
-}
-
-/** 상세 > 탈퇴 확정 후 삭제 완료 모달에 쓰는 엔티티 라벨 */
-function entityLabelForWithdrawDeletedUser(u: UserListRow): string {
-  if (u.role === 'SCHOOL') return '학교'
-  if (u.role === 'INSTRUCTOR') return '강사'
-  if (u.role === 'ADMIN') return '관리자'
-  return '회원'
 }
 
 export function UserListPage() {
@@ -278,11 +264,6 @@ export function UserListPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deletingUser, setDeletingUser] = useState<Omit<User, 'password'> | null>(null)
   const [, setDeleteLoading] = useState(false)
-
-  /** 삭제 완료 안내(결과) 모달 */
-  const [deleteResultModalOpen, setDeleteResultModalOpen] = useState(false)
-  const [deleteResultTitle, setDeleteResultTitle] = useState('')
-  const [deleteResultMessage, setDeleteResultMessage] = useState('')
 
   /**
    * 상세 GET 완료 후 동기 보관(목록 시드 선표시용 아님).
@@ -1021,6 +1002,7 @@ export function UserListPage() {
         instructorType: values.memberType === 'school_teacher' ? 'SCHOOL_TEACHER' : 'GENERAL',
         instructorCmsProfile: instructorProfileFormValuesToCmsProfile(values),
         instructorCmsSettlement: instructorProfileFormValuesToCmsSettlement(values),
+        ...(values.jaEvaluationInput ? { jaEvaluation: values.jaEvaluationInput } : {}),
         termsAgreements: buildPreRegisterTermsAgreements(
           {
             consentTermsOfService: values.consentTermsOfService,
@@ -1090,22 +1072,12 @@ export function UserListPage() {
     setDeleteLoading(true)
     try {
       await deleteUsersByListKind(toDelete, resolvedMemberListKind)
-      const domain = memberDeleteGuideDomain(resolvedMemberListKind)
-      setDeleteResultTitle(buildDeleteCompletedTitle(domain.domainLabel))
-      setDeleteResultMessage(
-        bulk
-          ? buildDeleteCompletedMessageBulk(toDelete.length, domain.bulkCounterPhrase)
-          : buildDeleteCompletedMessageSingle(
-              displayNameForUserDelete(resolvedMemberListKind, toDelete[0]),
-              domain.domainLabel
-            )
-      )
-      setDeleteResultModalOpen(true)
       setDeleteModalOpen(false)
       setDeletingUser(null)
       setBulkDeleteUsers(null)
       setSelectedRowKeys(prev => prev.filter(key => !toDelete.some(u => u.id === key)))
       invalidateList()
+      showDeleteCompletedAlert()
     } catch (error) {
       handleError(error, { defaultMessage: '회원 삭제에 실패했습니다.' })
     } finally {
@@ -1119,37 +1091,25 @@ export function UserListPage() {
     setBulkDeleteUsers(null)
   }
 
-  /** 회원 상세 > 탈퇴 확인 모달 확정 — 목록용 DeleteGuideModal 없이 바로 삭제 후 완료 안내 */
+  /** 회원 상세 > 탈퇴 확인 모달 확정 — 성공 시에만 상세 닫고 목록으로 */
   const handleWithdrawFromDetail = useCallback(
     async (u: Omit<User, 'password'>) => {
       if (!guardAdminAction({ roleCode, action: 'delete' })) return
-      flushUserDetailModal()
       setDeleteLoading(true)
       try {
         await deleteUser(u.id, resolveDeleteUserOptions(u))
-        const entityLabel = entityLabelForWithdrawDeletedUser(u)
-        setDeleteResultTitle(buildDeleteCompletedTitle(entityLabel))
-        setDeleteResultMessage(
-          buildDeleteCompletedMessageSingle(
-            displayNameForUserDelete(resolvedMemberListKind, u),
-            entityLabel
-          )
-        )
-        setDeleteResultModalOpen(true)
         setSelectedRowKeys(prev => prev.filter(key => key !== u.id))
         invalidateList()
+        flushUserDetailModal()
+        showDeleteCompletedAlert()
       } catch (error) {
         handleError(error, { defaultMessage: '회원 탈퇴 처리에 실패했습니다.' })
       } finally {
         setDeleteLoading(false)
       }
     },
-    [flushUserDetailModal, deleteUser, resolvedMemberListKind, invalidateList, roleCode]
+    [flushUserDetailModal, deleteUser, invalidateList, roleCode]
   )
-
-  const handleCloseDeleteResultModal = useCallback(() => {
-    setDeleteResultModalOpen(false)
-  }, [])
 
   const handleAdminPermissionChange = useCallback(
     async (ctx: { userId: string; nextPermission: AdminPermissionTagVariant }) => {
@@ -1407,13 +1367,6 @@ export function UserListPage() {
           confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
         />
       )}
-
-      <ActionResultModal
-        open={deleteResultModalOpen}
-        title={deleteResultTitle}
-        body={deleteResultMessage}
-        onClose={handleCloseDeleteResultModal}
-      />
 
       <InstitutionDeleteBlockedModal
         open={institutionDeleteBlockedOpen}

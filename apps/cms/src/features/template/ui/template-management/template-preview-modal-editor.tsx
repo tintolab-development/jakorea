@@ -39,6 +39,8 @@ type TemplatePreviewModalEditorProps = {
   registryEntry: TemplateRegistryDefinition | undefined
   templateId: string | undefined
   templateName: string | undefined
+  systemTemplate?: boolean
+  forceUserEditable?: boolean
   onTemplateDraftSaveConfirmed?: () => void
   registrationUserMode?: boolean
   footerAction?: TemplateFullpageModalFooterAction
@@ -116,6 +118,8 @@ function GeneralRegistrationTemplatePreviewEditor({
   registryEntry,
   templateId,
   templateName,
+  systemTemplate,
+  forceUserEditable = false,
   onTemplateDraftSaveConfirmed,
   registrationUserMode,
   footerAction,
@@ -125,9 +129,11 @@ function GeneralRegistrationTemplatePreviewEditor({
 }: TemplatePreviewModalEditorProps & { registryEntry: TemplateRegistryDefinition }) {
   const previewTitle = resolvePreviewHeaderTitle(registryEntry, templateName)
   const programRegistrationVm = useProgramRegistrationEditor(true, previewTitle, {
-    restrictCurriculumSessionStructure: true,
+    restrictCurriculumSessionStructure: false,
     programRegistrationFormVariant: registryEntry.registrationFormVariant ?? 'general',
     templateCode: registryEntry.id ?? templateId,
+    systemTemplate,
+    forceUserEditable,
     onTemplateDraftSaveConfirmed,
   })
 
@@ -256,6 +262,8 @@ function ParticipantApplicationTemplatePreviewEditor({
   registryEntry,
   templateId,
   templateName,
+  systemTemplate,
+  forceUserEditable = false,
   onTemplateDraftSaveConfirmed,
   registrationUserMode,
   footerAction,
@@ -272,6 +280,8 @@ function ParticipantApplicationTemplatePreviewEditor({
     {
       onTemplateDraftSaveConfirmed,
       templateCode: registryEntry.id ?? templateId,
+      systemTemplate,
+      forceUserEditable,
     }
   )
 

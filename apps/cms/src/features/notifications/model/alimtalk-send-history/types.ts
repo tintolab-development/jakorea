@@ -4,12 +4,13 @@ import type { AlimtalkTemplateItem } from '@/features/notifications/model/alimta
 export const ALIMTALK_SEND_STATUS_OPTIONS = [
   '전체',
   '발송 요청',
-  '발송 취소',
-  '발송 예약',
-  '발송 대기',
-  '발송 중',
-  '발송 실패',
+  '예약',
+  '대기',
+  '발송중',
   '발송 성공',
+  '발송 실패',
+  '취소',
+  '확인불가',
 ] as const
 
 export const ALIMTALK_RECEIVE_STATUS_OPTIONS = [
@@ -18,9 +19,6 @@ export const ALIMTALK_RECEIVE_STATUS_OPTIONS = [
   '확인 대기중',
   '대기중',
   '예약됨',
-  '발송 중',
-  '발송 성공',
-  '발송 실패',
   '수신 성공',
   '수신 실패',
   '취소됨',
@@ -40,6 +38,9 @@ export type AlimtalkSendHistoryRow = {
   reservedAt: string
   templateName: string
   senderInfo: string
+  receiverName: string
+  receiverPhone: string
+  /** 목록 표시용: 이름 또는 번호 (검색 호환) */
   receiverInfo: string
   broadcastTiming: Exclude<AlimtalkBroadcastTiming, '전체'>
   sendStatus: Exclude<AlimtalkSendStatus, '전체'>
@@ -49,6 +50,8 @@ export type AlimtalkSendHistoryRow = {
   sendCount: string
   sendNumber: string
   message: string
+  /** sendStatus=발송 실패일 때 failedReason 보조 문구 */
+  failedReason?: string
   phoneTemplate: AlimtalkTemplateItem
 }
 

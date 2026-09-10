@@ -1,4 +1,13 @@
-import { useState, useEffect, useLayoutEffect, useCallback, useMemo, createElement, type MutableRefObject } from 'react'
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  createElement,
+  type MutableRefObject,
+} from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
@@ -59,6 +68,8 @@ import {
   type AdminPermissionTagVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
 import {
+  applyJaEvaluationGradeToInstructorDraft,
+  mergeInstructorDetailEditFlushIntoDraft,
   draftToAdminAccountBasicInfoPatch,
   draftToAdminMemberRestrictedPatch,
   draftToAdminProvisionedIndividualBasicInfoPatch,
@@ -101,11 +112,20 @@ import {
   mergeListUserWithFetchedDetail,
 } from '@/features/user/api/merge-list-user-with-detail'
 import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
-import { upsertMember1365ExternalIdentifierRemote, upsertMemberAdminCommentRemote, deleteMemberApplicationHistoryRemote, deleteMemberProgramHistoryRemote, bulkDeleteSchoolOrganizationProgramEnrollmentHistoryRemote } from '@/features/user/api/members-api-client'
+import {
+  upsertMember1365ExternalIdentifierRemote,
+  upsertMemberAdminCommentRemote,
+  deleteMemberApplicationHistoryRemote,
+  bulkDeleteProgramHistoryRemote,
+  bulkDeleteSchoolOrganizationProgramEnrollmentHistoryRemote,
+} from '@/features/user/api/members-api-client'
 import { parseSchoolOrganizationEnrollmentRowId } from '@/features/user/api/map-school-organization-program-enrollment-history'
 import { parseOrganizationIdFromUserId } from '@/features/user/api/map-school-organization-to-user'
 import { resolveAdminCommentResource } from '@/features/user/api/resolve-admin-comment-resource'
-import { bulkIssueCertificatesRemote, bulkDownloadCertificatesRemote } from '@/features/user/api/certificates-api-client'
+import {
+  bulkIssueCertificatesRemote,
+  bulkDownloadCertificatesRemote,
+} from '@/features/user/api/certificates-api-client'
 import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
 import {
   collectParticipantIdsFromHistoryRowIds,
@@ -128,7 +148,7 @@ const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
 const BASIC_INFO_EDIT_UNMASK_REASON = '정보 수정'
 
 const BASIC_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
-  "관리자에 의해 등록된 회원은 정보 수정 시 개인정보 마스킹이 해제되며, 개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다. 해당 회원의 개인정보 열람 및 정보를 수정하시겠습니까?"
+  "관리자에 의해 등록된 회원은 정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 회원의 개인정보 열람 및 정보를 수정하시겠습니까?"
 
 export type BasicInfoEditScope = 'none' | 'profile' | 'comment' | 'instructor_fee_ja'
 
@@ -184,16 +204,15 @@ export function useUserDetailController({
   const loadProgramHistoryResources = open && mode !== 'permission'
   /** 기본정보 등 다른 LNB — 프로그램 이력·수강 API는 history 탭 진입 시에만 */
   const shouldLoadProgramHistoryTab = loadProgramHistoryResources && tabState.lnb === 'history'
-  /** 회원 상세 정보 탭 — consent-records 등 기본정보 전용 API */
-  const shouldLoadDetailInfoTab = open && mode !== 'permission' && tabState.lnb === 'detail-info'
+  /** 회원 상세 정보 탭 — consent-records·comments 등 기본정보 전용 API (권한 승인 상세도 comments 포함) */
+  const shouldLoadDetailInfoTab = open && tabState.lnb === 'detail-info'
   /** 정산 현황 탭 — 강사·교사 겸 강사 settlement API */
   const shouldLoadPaymentStatusTab =
     open && mode !== 'permission' && tabState.lnb === 'payment-status'
   const isSchoolDetail = displayUser?.role === 'SCHOOL'
   const hasProgramsChildMenu = Boolean(displayUser && programsHistoryHasChildMenu(displayUser))
   const resolvedProgramsChild = useMemo(
-    () =>
-      resolveProgramsChildForMemberDetail(displayUser, tabState.lnb, tabState.child),
+    () => resolveProgramsChildForMemberDetail(displayUser, tabState.lnb, tabState.child),
     [displayUser, tabState.lnb, tabState.child]
   )
 
@@ -201,9 +220,7 @@ export function useUserDetailController({
 
   const schoolOrganizationId = useMemo(() => {
     if (!isSchoolDetail || !displayUser) return undefined
-    return (
-      displayUser.organizationId ?? parseOrganizationIdFromUserId(displayUser.id) ?? undefined
-    )
+    return displayUser.organizationId ?? parseOrganizationIdFromUserId(displayUser.id) ?? undefined
   }, [displayUser, isSchoolDetail])
 
   const basicTabSections = useMemo(() => {
@@ -231,9 +248,16 @@ export function useUserDetailController({
     [displayUser]
   )
 
+  /** 상세 모달 재진입·대상 전환마다 comments GET (consent/teachers는 기존 key 유지) */
+  const [detailVisitKey, setDetailVisitKey] = useState(0)
+  useEffect(() => {
+    if (!open || !displayUser) return
+    setDetailVisitKey(key => key + 1)
+  }, [open, displayUser?.id])
+
   const detailTabResourceFetchKey =
     shouldLoadDetailInfoTab && displayUser
-      ? `${displayUser.id}:${displayUser.memberId ?? ''}:${schoolOrganizationId ?? ''}:${adminCommentResource?.resourceId ?? ''}:${adminCommentResource?.target ?? ''}:${basicTabSections.showConsentAgreement}:${basicTabSections.showSchoolAffiliatedTeachers}`
+      ? `${displayUser.id}:${displayUser.memberId ?? ''}:${displayUser.adminAccountId ?? ''}:${schoolOrganizationId ?? ''}:${adminCommentResource?.resourceId ?? ''}:${adminCommentResource?.target ?? ''}:${detailVisitKey}:${basicTabSections.showConsentAgreement}:${basicTabSections.showSchoolAffiliatedTeachers}`
       : ''
 
   useEffect(() => {
@@ -358,13 +382,7 @@ export function useUserDetailController({
       schoolOrganizationId,
       displayUser.id
     )
-  }, [
-    membersRemote,
-    schoolTabResourceFetchKey,
-    schoolOrganizationId,
-    displayUser?.id,
-    queryClient,
-  ])
+  }, [membersRemote, schoolTabResourceFetchKey, schoolOrganizationId, displayUser?.id, queryClient])
 
   const applications = isSchoolDetail ? schoolEnrollmentApplications : memberApplications
   const applicationsLoading = isSchoolDetail
@@ -426,6 +444,9 @@ export function useUserDetailController({
   const [basicInfoDraft, setBasicInfoDraft] = useState<AdminProvisionedMemberBasicInfoDraft | null>(
     null
   )
+  const instructorEditDraftFlushRef = useRef<
+    (() => Partial<AdminProvisionedMemberBasicInfoDraft>) | null
+  >(null)
   const [basicInfoSaveLoading, setBasicInfoSaveLoading] = useState(false)
   const [adminPermissionVariantPatching, setAdminPermissionVariantPatching] = useState(false)
   const [instructorPermissionRevokeOpen, setInstructorPermissionRevokeOpen] = useState(false)
@@ -447,8 +468,7 @@ export function useUserDetailController({
   })
 
   const resolvePersonalInfoAccessItem = useCallback(
-    () =>
-      displayUser?.schoolInfo?.schoolName?.trim() || displayUser?.name || '회원 상세 정보',
+    () => displayUser?.schoolInfo?.schoolName?.trim() || displayUser?.name || '회원 상세 정보',
     [displayUser?.name, displayUser?.schoolInfo?.schoolName]
   )
 
@@ -456,11 +476,7 @@ export function useUserDetailController({
     (payload: unknown, role: User['role'] | undefined) => {
       if (!displayUser) return
       const merged = stripRestrictedPiiForSessionUser(
-        applyPrivacyUnmaskResponseToUser(
-          displayUser,
-          payload,
-          role ?? displayUser.role
-        ),
+        applyPrivacyUnmaskResponseToUser(displayUser, payload, role ?? displayUser.role),
         displayUser,
         useAuthStore.getState().user
       )
@@ -651,17 +667,30 @@ export function useUserDetailController({
 
       if (!displayUser.memberId) return
       try {
-        await Promise.all(
-          rowIds.map(async rowId => {
-            const parsed = parseMemberProgramHistoryRowId(rowId)
-            if (!parsed) return
-            if (parsed.kind === 'application') {
-              await deleteMemberApplicationHistoryRemote(displayUser.memberId!, parsed.numericId)
-              return
-            }
-            await deleteMemberProgramHistoryRemote(displayUser.memberId!, parsed.numericId)
+        const applicationIds: number[] = []
+        const historyIds: number[] = []
+        for (const rowId of rowIds) {
+          const parsed = parseMemberProgramHistoryRowId(rowId)
+          if (!parsed) continue
+          if (parsed.kind === 'application') {
+            applicationIds.push(parsed.numericId)
+            continue
+          }
+          historyIds.push(parsed.numericId)
+        }
+        if (historyIds.length > 0) {
+          await bulkDeleteProgramHistoryRemote(displayUser.memberId, {
+            ids: historyIds.slice(0, 100),
+            reason: 'CMS 회원 상세 프로그램 이력 일괄 삭제',
           })
-        )
+        }
+        if (applicationIds.length > 0) {
+          await Promise.all(
+            applicationIds.map(applicationId =>
+              deleteMemberApplicationHistoryRemote(displayUser.memberId!, applicationId)
+            )
+          )
+        }
         await refetchApplications()
       } catch (error) {
         showAlert({
@@ -674,7 +703,12 @@ export function useUserDetailController({
   )
 
   const handleCertificateBulkIssue = useCallback(
-    async (rowIds: readonly string[], _reason: CertificateIssueReasonValue, reasonLabel: string, certificateType: 'COMPLETION' | 'ACTIVITY') => {
+    async (
+      rowIds: readonly string[],
+      _reason: CertificateIssueReasonValue,
+      reasonLabel: string,
+      certificateType: 'COMPLETION' | 'ACTIVITY'
+    ) => {
       if (!membersRemote) return
       const participantIds = collectParticipantIdsFromHistoryRowIds(rowIds)
       if (participantIds.length === 0) {
@@ -753,10 +787,7 @@ export function useUserDetailController({
   )
 
   const openWithdrawConfirm = useCallback(() => {
-    if (
-      displayUser?.role === 'SCHOOL' &&
-      institutionHasRegisteredTeachers(displayUser)
-    ) {
+    if (displayUser?.role === 'SCHOOL' && institutionHasRegisteredTeachers(displayUser)) {
       setInstitutionDeleteBlockedOpen(true)
       return
     }
@@ -922,6 +953,13 @@ export function useUserDetailController({
   const startAdminCommentEdit = useCallback(() => {
     if (!displayUser) return
     if (!shouldShowAdminCommentSectionForViewer(currentUser, displayUser)) return
+    // 권한 승인 상세 · 승인 대기: 코멘트 영역은 열람만, 작성 진입 불가
+    if (
+      mode === 'permission' &&
+      (displayUser.permissionApprovalStatus === 'PENDING' || !displayUser.permissionApprovalStatus)
+    ) {
+      return
+    }
 
     const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
     const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, displayUser.role)
@@ -960,6 +998,7 @@ export function useUserDetailController({
     focusDetailInfoTab()
   }, [
     displayUser,
+    mode,
     basicInfoEntrySource,
     searchParams,
     currentUser,
@@ -976,6 +1015,11 @@ export function useUserDetailController({
 
   const saveBasicInfoEdit = useCallback(async () => {
     if (!displayUser || !basicInfoDraft || !patchMemberBasicInfo) return
+    const flushed = instructorEditDraftFlushRef.current?.()
+    const draft = flushed
+      ? mergeInstructorDetailEditFlushIntoDraft(basicInfoDraft, flushed)
+      : basicInfoDraft
+    if (flushed) setBasicInfoDraft(draft)
     if (basicInfoEditScope === 'comment' && displayUser.role === 'ADMIN') {
       if (!canAccessAdminCommentInAdminDetail(currentUser)) return
     }
@@ -987,7 +1031,7 @@ export function useUserDetailController({
       // Remote 코멘트 전용: upsert만 호출 (상세 GET·목록 invalidate 없음)
       const commentResource = resolveAdminCommentResource(displayUser)
       if (basicInfoEditScope === 'comment' && membersRemote && commentResource) {
-        const savedComment = (basicInfoDraft.adminComment ?? '').trim()
+        const savedComment = (draft.adminComment ?? '').trim()
         if (!savedComment) {
           setBasicInfoEditing(false)
           setBasicInfoEditScope('none')
@@ -1011,6 +1055,7 @@ export function useUserDetailController({
           {
             existingCommentId: cachedComments?.latestCommentDetail?.commentId,
             screenCode: MEMBER_DETAIL_SCREEN_CODE,
+            target: commentResource.target,
           }
         )
         const commentId = saved.commentId ?? cachedComments?.latestCommentDetail?.commentId
@@ -1046,43 +1091,43 @@ export function useUserDetailController({
 
       let patch: PatchUserBasicInfoInput
       if (basicInfoEditScope === 'comment') {
-        patch = draftToSchoolAdminCommentOnlyPatch(basicInfoDraft)
+        patch = draftToSchoolAdminCommentOnlyPatch(draft)
       } else if (basicInfoEditScope === 'instructor_fee_ja') {
-        patch = draftToInstructorFeeAndJaGradePatch(basicInfoDraft)
+        patch = draftToInstructorFeeAndJaGradePatch(draft)
       } else if (displayUser.role === 'SCHOOL') {
-        patch = draftToSchoolInstitutionBasicInfoPatch(basicInfoDraft)
+        patch = draftToSchoolInstitutionBasicInfoPatch(draft)
       } else if (displayUser.role === 'INSTRUCTOR') {
-        patch = draftToAdminProvisionedInstructorBasicInfoPatch(basicInfoDraft)
+        patch = draftToAdminProvisionedInstructorBasicInfoPatch(draft)
       } else if (displayUser.role === 'ADMIN') {
         patch = canEditAdminMemberInfo(currentUser, displayUser)
-          ? draftToAdminAccountBasicInfoPatch(basicInfoDraft)
-          : draftToAdminMemberRestrictedPatch(basicInfoDraft)
+          ? draftToAdminAccountBasicInfoPatch(draft)
+          : draftToAdminMemberRestrictedPatch(draft)
       } else if (displayUser.role === 'INDIVIDUAL') {
         const enrolledSchoolBlock =
-          basicInfoDraft.schoolEnrollmentStatus === 'enrolled' &&
+          draft.schoolEnrollmentStatus === 'enrolled' &&
           !shouldSkipIndividualEnrolledSchoolReselectionGuard({
-            draftInstitution: basicInfoDraft.affiliationInstitution,
+            draftInstitution: draft.affiliationInstitution,
             originalInstitution: splitUserAffiliationForDraft(displayUser.affiliation)
               .affiliationInstitution,
-            schoolOrganizationId: basicInfoDraft.schoolOrganizationId,
-            schoolProvider: basicInfoDraft.schoolProvider,
-            schoolExternalCode: basicInfoDraft.schoolExternalCode,
+            schoolOrganizationId: draft.schoolOrganizationId,
+            schoolProvider: draft.schoolProvider,
+            schoolExternalCode: draft.schoolExternalCode,
           })
             ? resolveIndividualEnrolledSchoolSubmitBlock({
-                schoolProvider: basicInfoDraft.schoolProvider,
-                schoolOrganizationId: basicInfoDraft.schoolOrganizationId,
-                schoolExternalCode: basicInfoDraft.schoolExternalCode,
-                schoolEducationOfficeCode: basicInfoDraft.schoolEducationOfficeCode,
-                schoolRegionSido: basicInfoDraft.schoolRegionSido,
+                schoolProvider: draft.schoolProvider,
+                schoolOrganizationId: draft.schoolOrganizationId,
+                schoolExternalCode: draft.schoolExternalCode,
+                schoolEducationOfficeCode: draft.schoolEducationOfficeCode,
+                schoolRegionSido: draft.schoolRegionSido,
               })
             : null
         if (enrolledSchoolBlock != null) {
           showAlert({ title: '안내', content: enrolledSchoolBlock })
           return
         }
-        patch = draftToAdminProvisionedIndividualBasicInfoPatch(basicInfoDraft)
+        patch = draftToAdminProvisionedIndividualBasicInfoPatch(draft)
       } else {
-        patch = draftToBasicInfoPatch(basicInfoDraft)
+        patch = draftToBasicInfoPatch(draft)
       }
 
       if (
@@ -1112,7 +1157,7 @@ export function useUserDetailController({
         patch
       )
 
-      const draftId1365 = (basicInfoDraft.id1365 ?? '').trim()
+      const draftId1365 = (draft.id1365 ?? '').trim()
       const currentId1365 = (displayUser.id1365 ?? '').trim()
       if (
         displayUser.role === 'INDIVIDUAL' &&
@@ -1133,11 +1178,15 @@ export function useUserDetailController({
               MEMBER_DETAIL_SCREEN_CODE,
               commentResource.target
             ),
-            (prev: {
-              comments?: unknown[]
-              latestComment?: string
-              latestCommentDetail?: { comment: string; commentId?: number }
-            } | undefined) => ({
+            (
+              prev:
+                | {
+                    comments?: unknown[]
+                    latestComment?: string
+                    latestCommentDetail?: { comment: string; commentId?: number }
+                  }
+                | undefined
+            ) => ({
               comments: prev?.comments ?? [],
               latestComment: savedComment,
               latestCommentDetail: {
@@ -1168,9 +1217,14 @@ export function useUserDetailController({
       const skipListInvalidate =
         membersRemote &&
         (basicInfoEditScope === 'profile' || basicInfoEditScope === 'instructor_fee_ja')
-      onMemberBasicInfoSaved?.(merged, skipListInvalidate ? { skipListInvalidate: true } : undefined)
+      onMemberBasicInfoSaved?.(
+        merged,
+        skipListInvalidate ? { skipListInvalidate: true } : undefined
+      )
     } catch (error) {
-      handleError(error, { defaultMessage: '회원 정보 저장에 실패했습니다.' })
+      handleError(error, {
+        defaultMessage: getMemberApiErrorMessage(error, '회원 정보 저장에 실패했습니다.'),
+      })
     } finally {
       setBasicInfoSaveLoading(false)
     }
@@ -1185,9 +1239,12 @@ export function useUserDetailController({
     queryClient,
   ])
 
-  const updateBasicInfoDraft = useCallback((partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => {
-    setBasicInfoDraft(prev => (prev ? { ...prev, ...partial } : prev))
-  }, [])
+  const updateBasicInfoDraft = useCallback(
+    (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => {
+      setBasicInfoDraft(prev => (prev ? { ...prev, ...partial } : prev))
+    },
+    []
+  )
 
   const patchAdminPermissionVariantFromDetailView = useCallback(
     async (nextPermission: AdminPermissionTagVariant) => {
@@ -1321,7 +1378,7 @@ export function useUserDetailController({
   }, [])
 
   const completeJaGradeEvaluation = useCallback(
-    async ({ grade }: { grade: string; totalScore: number }) => {
+    async ({ grade }: { grade: string; totalScore: number; jaEvaluation?: unknown }) => {
       if (
         !guardAdminAction({
           roleCode: resolveAdminRoleCodeFromUser(currentUser),
@@ -1334,11 +1391,13 @@ export function useUserDetailController({
         throw new Error('강사 정보가 없어 평가 등급을 반영할 수 없습니다.')
       }
 
-      if (basicInfoEditing && basicInfoEditScope === 'instructor_fee_ja') {
-        setBasicInfoDraft(prev => (prev ? { ...prev, jaEvaluationGrade: grade } : prev))
+      if (basicInfoEditing) {
+        setBasicInfoDraft(prev =>
+          prev ? applyJaEvaluationGradeToInstructorDraft(prev, grade) : prev
+        )
       }
 
-      // remote: 모달에서 evaluation-grade POST 완료됨. mock만 상세 패치로 영속화.
+      // remote: 모달에서 ja-evaluation POST 완료됨. mock만 상세 패치로 영속화.
       if (patchMemberBasicInfo && !isMembersRemoteEnabled()) {
         const persisted = await patchMemberBasicInfo(displayUser.id, {
           listMetrics: { jaEvaluationGrade: grade },
@@ -1361,6 +1420,14 @@ export function useUserDetailController({
           ...displayUser.listMetrics,
           jaEvaluationGrade: grade,
         },
+        ...(displayUser.instructorCmsProfile
+          ? {
+              instructorCmsProfile: {
+                ...displayUser.instructorCmsProfile,
+                defaultJaGrade: grade,
+              },
+            }
+          : {}),
       }
 
       if (displayUser.memberId != null) {
@@ -1381,7 +1448,6 @@ export function useUserDetailController({
       patchMemberBasicInfo,
       queryClient,
       basicInfoEditing,
-      basicInfoEditScope,
     ]
   )
 
@@ -1497,8 +1563,8 @@ export function useUserDetailController({
     () =>
       Boolean(
         patchMemberBasicInfo &&
-          displayUser?.role === 'ADMIN' &&
-          canAccessAdminCommentInAdminDetail(currentUser)
+        displayUser?.role === 'ADMIN' &&
+        canAccessAdminCommentInAdminDetail(currentUser)
       ),
     [patchMemberBasicInfo, displayUser?.role, currentUser]
   )
@@ -1509,9 +1575,7 @@ export function useUserDetailController({
     // 권한 승인(강사): getDetail → instructorCmsProfile 이 있으면 이력서 카드에 반영
     if (mode === 'permission') {
       if (!displayUser.instructorCmsProfile) return null
-      const src = personalInfoRevealed
-        ? displayUser
-        : maskedUserForInstructorDetail(displayUser)
+      const src = personalInfoRevealed ? displayUser : maskedUserForInstructorDetail(displayUser)
       return userToApplicantInstructorRow(src)
     }
 
@@ -1582,6 +1646,7 @@ export function useUserDetailController({
       openJaGradeEvaluation,
       closeJaGradeEvaluation,
       completeJaGradeEvaluation,
+      instructorEditDraftFlushRef,
     },
     derived: {
       role,

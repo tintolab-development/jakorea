@@ -58,3 +58,16 @@ export async function updateFaqCategoryRemote(
 export async function deleteFaqCategoryRemote(categoryId: string): Promise<void> {
   await postsApi.deleteFaqCategory(pathId(categoryId))
 }
+
+export async function fetchFaqInlineImagesRemote(faqId: string): Promise<unknown> {
+  return unwrapApiBody(await postsApi.faqInlineImages(Number(faqId)))
+}
+
+export async function replaceFaqInlineImagesRemote(
+  faqId: string,
+  fileObjectIds: number[]
+): Promise<unknown> {
+  return unwrapApiBody(
+    await postsApi.replaceFaqInlineImages(Number(faqId), { fileObjectIds })
+  )
+}

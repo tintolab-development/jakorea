@@ -35,6 +35,10 @@ export interface AdminAccountApprovalDetailResponse {
   updatedAt?: string;
   requestedAt?: string;
   managedProgramCount?: number;
+  /** 현재 진행 중인 담당 프로그램 수 */
+  activeManagedProgramCount?: number;
+  /** 과거 포함 전체 담당 프로그램 수 */
+  totalManagedProgramCount?: number;
   /** 관리자 권한 승인/반려 결과 알림 재발송 시각 */
   notificationResentAt?: string;
   socialAccounts?: AdminLinkedSocialAccountResponse[];

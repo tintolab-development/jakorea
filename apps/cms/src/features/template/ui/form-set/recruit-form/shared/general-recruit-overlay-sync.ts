@@ -1,4 +1,4 @@
-import { useCallback, useSyncExternalStore } from 'react'
+import { useCallback, useRef, useSyncExternalStore } from 'react'
 
 /**
  * 모집 폼(개인 모집, 강사 모집, 봉사자 모집)의 공유 오버레이 스토어
@@ -28,6 +28,14 @@ export function getGeneralRecruitOverlayRecord(): Record<string, unknown> {
 }
 
 export function patchGeneralRecruitOverlay(partial: Record<string, unknown>): void {
+  let changed = false
+  for (const [key, next] of Object.entries(partial)) {
+    if (!Object.is(overlayState[key], next)) {
+      changed = true
+      break
+    }
+  }
+  if (!changed) return
   overlayState = { ...overlayState, ...partial }
   emitOverlay()
 }
@@ -37,7 +45,9 @@ export function updateGeneralRecruitOverlayKey<T>(
   updater: (prev: T | undefined) => T
 ): void {
   const prev = overlayState[key] as T | undefined
-  overlayState = { ...overlayState, [key]: updater(prev) }
+  const next = updater(prev)
+  if (Object.is(prev, next)) return
+  overlayState = { ...overlayState, [key]: next }
   emitOverlay()
 }
 
@@ -47,6 +57,7 @@ export function replaceGeneralRecruitOverlay(next: Record<string, unknown>): voi
 }
 
 export function resetGeneralRecruitOverlay(): void {
+  if (Object.keys(overlayState).length === 0) return
   overlayState = {}
   emitOverlay()
 }
@@ -56,6 +67,7 @@ export function useGeneralRecruitOverlayKv<T>(
   key: string,
   defaultValue: T
 ): [T, (next: T) => void] {
+  const defaultRef = useRef(defaultValue)
   const version = useSyncExternalStore(
     subscribeGeneralRecruitOverlay,
     getGeneralRecruitOverlayVersion,
@@ -63,7 +75,7 @@ export function useGeneralRecruitOverlayKv<T>(
   )
   void version
   const record = getGeneralRecruitOverlayRecord()
-  const value = (record[key] as T | undefined) ?? defaultValue
+  const value = (record[key] as T | undefined) ?? defaultRef.current
   const setValue = useCallback(
     (next: T) => {
       patchGeneralRecruitOverlay({ [key]: next })

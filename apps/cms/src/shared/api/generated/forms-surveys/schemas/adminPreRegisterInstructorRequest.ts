@@ -8,6 +8,7 @@
 import type { InstructorCertificationUpsertRequest } from './instructorCertificationUpsertRequest';
 import type { InstructorCmsProfile } from './instructorCmsProfile';
 import type { InstructorCmsSettlement } from './instructorCmsSettlement';
+import type { InstructorJaEvaluationInput } from './instructorJaEvaluationInput';
 import type { MemberBankAccountUpsertRequest } from './memberBankAccountUpsertRequest';
 import type { PortalSchoolSelectionRequest } from './portalSchoolSelectionRequest';
 import type { TermsAgreementRequest } from './termsAgreementRequest';
@@ -36,7 +37,7 @@ export interface AdminPreRegisterInstructorRequest {
      */
   feeGrade?: string;
   /**
-     * profile.defaultJaGrade 호환 필드
+     * 직접 입력 금지. 전달 시 INSTRUCTOR_JA_GRADE_REQUIRES_EVALUATION_WORKFLOW로 거절됩니다. jaEvaluation을 사용합니다.
      * @deprecated
      */
   jaGrade?: string;
@@ -108,4 +109,6 @@ export interface AdminPreRegisterInstructorRequest {
   schoolSelection?: PortalSchoolSelectionRequest;
   profile?: InstructorCmsProfile;
   settlement?: InstructorCmsSettlement;
+  /** JA 등급 평가 팝업에서 입력한 4개 평가항목. 총점/등급은 서버가 산정합니다. */
+  jaEvaluation?: InstructorJaEvaluationInput;
 }

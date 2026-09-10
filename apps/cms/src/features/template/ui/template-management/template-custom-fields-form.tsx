@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Checkbox, Input } from 'antd'
 import type { FileUploadResult } from '@/entities/application/api/file-upload-service'
-import { fileUploadService } from '@/entities/application/api/file-upload-service'
 import templateCertificateBg from '@/assets/images/template/templatge-background.png'
 import templateEducation from '@/assets/images/template/template-education.png'
 import templateLogo from '@/assets/images/template/template-logo.png'
@@ -130,7 +129,7 @@ export function TemplateCustomFieldsForm({
   onFieldClick,
   onSecondaryValueChange,
   onLogoFileSelected,
-  onLogoUploadResult,
+  onLogoUploadResult: _onLogoUploadResult,
   participantRowVisibility,
   onParticipantRowVisibilityChange,
   initialLogoPreviewUrls,
@@ -158,7 +157,7 @@ export function TemplateCustomFieldsForm({
     return merged
   })
   const [logoPreviewUrlByField, setLogoPreviewUrlByField] = useState<Record<string, string>>({})
-  const [logoUploading, setLogoUploading] = useState(false)
+  const [logoUploading] = useState(false)
   const logoPreviewUrlsRef = useRef<Record<string, string>>({})
   const logoFileInputRef = useRef<HTMLInputElement>(null)
 
@@ -254,28 +253,9 @@ export function TemplateCustomFieldsForm({
         return { ...prev, [fieldName]: previewUrl }
       })
       onLogoFileSelected?.(fieldName, file)
-
-      setLogoUploading(true)
-      try {
-        const result = await fileUploadService.upload(file, 'image')
-        onLogoUploadResult?.(fieldName, result)
-        setValuesByField(prev => ({ ...prev, [fieldName]: result.url }))
-        onSecondaryValueChange?.(field, result.url)
-        } catch {
-        setLogoPreviewUrlByField(prev => {
-          const u = prev[fieldName]
-          if (u) URL.revokeObjectURL(u)
-          const next = { ...prev }
-          delete next[fieldName]
-          return next
-        })
-        onLogoFileSelected?.(fieldName, null)
-        } finally {
-        setLogoUploading(false)
-        input.value = ''
-      }
+      input.value = ''
     },
-    [activeField, onSecondaryValueChange, onLogoFileSelected, onLogoUploadResult]
+    [activeField, onLogoFileSelected]
   )
 
   const activeLogoPreviewUrl =

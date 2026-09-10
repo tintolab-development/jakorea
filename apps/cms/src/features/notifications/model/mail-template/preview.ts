@@ -43,11 +43,12 @@ export function applyMailPreviewHtml(html: string): string {
   )
 }
 
+/** 기획: YYYY.MM.DD(요일) HH:mm — 미리보기 시점 기준 */
 export function formatMailPreviewDateTime(value: string | Date | undefined): string {
   const parsed = value ? dayjs(value) : dayjs()
   if (!parsed.isValid()) return '-'
   const weekday = KO_WEEKDAYS[parsed.day()] ?? ''
-  return `${parsed.year()}. ${parsed.month() + 1}. ${parsed.date()} (${weekday}) ${parsed.format('HH:mm')}`
+  return `${parsed.format('YYYY.MM.DD')}(${weekday}) ${parsed.format('HH:mm')}`
 }
 
 export function formatMailPreviewPerson(name: string | undefined, email: string | undefined): string {

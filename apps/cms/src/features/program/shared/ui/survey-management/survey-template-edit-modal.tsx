@@ -9,7 +9,6 @@ import {
 } from '@/features/template/model/template-registry/template-registry'
 import {
   DEFAULT_SURVEY_PARAGRAPH_IDS,
-  SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
@@ -112,7 +111,6 @@ export function SurveyTemplateEditModal({
           onSelectCard={editor.handleSelectCard}
           onReorderMiddle={editor.onReorderMiddle}
           updateParagraph={editor.updateParagraph}
-          hideDragHandleForParagraphIds={SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS}
           editorKind="survey"
           singleItemListActiveItemId={editor.singleItemListActiveItemId}
           onSelectSingleItemListItem={editor.onSelectSingleItemListItem}
@@ -132,10 +130,8 @@ export function SurveyTemplateEditModal({
       rightNavigation={
         <FormEditorFieldNav
           sectionTitle="커스텀 필드"
-          pinnedTop={editor.pinnedTop}
           sortableMiddle={editor.sortableMiddle}
           pinnedBottom={editor.pinnedBottom}
-          hideSortableDragHandleForIds={SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS}
           selectedItemId={editor.activeParagraphId}
           onSelectItem={editor.handleSelectCard}
           onReorderMiddle={editor.onReorderMiddle}

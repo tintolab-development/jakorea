@@ -1,6 +1,11 @@
 import { useEffect, useRef, type MouseEvent as ReactMouseEvent } from 'react'
+import { isUjatProgramApplicationInstitutionApplicationRegionMultipleChoiceSeed } from '@/features/template/model/ujat-program-application-form-institution-draft'
+import { isUjatProgramApplicationVolunteerPreferredRegionMultipleChoiceSeed } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import type { MultipleChoiceParagraph } from '@/features/template/model/writing-form-draft.schema'
-import { createDefaultMultipleChoiceItems } from '@/features/template/model/writing-form-draft.schema'
+import {
+  createDefaultMultipleChoiceItems,
+  resolveMultipleChoiceBodyDescriptionText,
+} from '@/features/template/model/writing-form-draft.schema'
 import {
   isFormPreviewReadonlyMode,
   type ParagraphBodyInteractionMode,
@@ -22,6 +27,12 @@ function mergeParagraph(
   return next
 }
 
+function MultipleChoiceBodyDescription({ paragraph }: { paragraph: MultipleChoiceParagraph }) {
+  const text = resolveMultipleChoiceBodyDescriptionText(paragraph)
+  if (!text) return null
+  return <p className="multiple-choice-body__description">{text}</p>
+}
+
 /** 객관식형 — 단락 바디: 라디오(단일) / 체크박스(중복 선택) */
 export function MultipleChoice({
   paragraph,
@@ -32,6 +43,7 @@ export function MultipleChoice({
   preservePreviewSelectionOnCardBlur = false,
   itemsEditActive,
   onActivateItemsEditor,
+  resolveItemDisplayLabel,
 }: {
   paragraph: MultipleChoiceParagraph
   onChange: (next: MultipleChoiceParagraph) => void
@@ -47,6 +59,8 @@ export function MultipleChoice({
   itemsEditActive: boolean
   /** 항목 영역 클릭 시 우측「항목 수정」·선택 테두리 연동 */
   onActivateItemsEditor?: () => void
+  /** user 모드 등 — 표시 라벨만 치환(저장 draft는 변경하지 않음) */
+  resolveItemDisplayLabel?: (item: { id: string; label: string }) => string
 }) {
   const paragraphRef = useRef(paragraph)
   paragraphRef.current = paragraph
@@ -80,6 +94,11 @@ export function MultipleChoice({
 
   const items = normalizeItems(paragraph)
   const allowMultiple = paragraph.allowMultiple ?? false
+  const isInlineDualChoice = !allowMultiple && items.length === 2
+  const isInlineWrapChoice =
+    !allowMultiple &&
+    (isUjatProgramApplicationVolunteerPreferredRegionMultipleChoiceSeed(paragraph.id) ||
+      isUjatProgramApplicationInstitutionApplicationRegionMultipleChoiceSeed(paragraph.id))
   const singleId = paragraph.selectedPreviewSingleId ?? null
   const multiIds = paragraph.selectedPreviewMultipleIds ?? []
   const isPreviewReadonly = isFormPreviewReadonlyMode(paragraphInteractionMode)
@@ -113,6 +132,7 @@ export function MultipleChoice({
 
     return (
       <div role="presentation" className={bodyClass} onClick={handleBodyClick}>
+        <MultipleChoiceBodyDescription paragraph={paragraph} />
         {items.map(item => (
           <div key={item.id} role="presentation" className="multiple-choice-row">
             <CmsCheckbox
@@ -120,7 +140,9 @@ export function MultipleChoice({
               checked={multiIds.includes(item.id)}
               onChange={e => toggleMulti(item.id, e.target.checked)}
             />
-            <span className="multiple-choice-row__label">{item.label}</span>
+            <span className="multiple-choice-row__label">
+              {resolveItemDisplayLabel?.(item) ?? item.label}
+            </span>
           </div>
         ))}
       </div>
@@ -129,8 +151,18 @@ export function MultipleChoice({
 
   return (
     <div role="presentation" className={bodyClass} onClick={handleBodyClick}>
+      <MultipleChoiceBodyDescription paragraph={paragraph} />
       <CmsRadioGroup
-        className="multiple-choice-radio-group"
+        className={[
+          'multiple-choice-radio-group',
+          isInlineWrapChoice
+            ? 'multiple-choice-radio-group--inline-wrap'
+            : isInlineDualChoice
+              ? 'multiple-choice-radio-group--inline'
+              : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         disabled={controlDisabled}
         value={singleId}
         onChange={e => patch({ selectedPreviewSingleId: e.target.value })}
@@ -138,7 +170,9 @@ export function MultipleChoice({
         {items.map(item => (
           <div key={item.id} role="presentation" className="multiple-choice-row">
             <CmsRadio value={item.id} disabled={controlDisabled} />
-            <span className="multiple-choice-row__label">{item.label}</span>
+            <span className="multiple-choice-row__label">
+              {resolveItemDisplayLabel?.(item) ?? item.label}
+            </span>
           </div>
         ))}
       </CmsRadioGroup>

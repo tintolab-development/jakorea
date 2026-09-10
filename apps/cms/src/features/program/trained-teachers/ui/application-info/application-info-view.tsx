@@ -75,6 +75,7 @@ function TrainedTeachersApplicationFormPreviewPanel({ program }: { program: Prog
           structureLockedParagraphIds: vm.structureLockedParagraphIds,
           structureLockedAuthoringChoicePreview: false,
           programApplicationFormTrainedTeachersInstitution: true,
+          programLinkedInstitutionApplicationForm: true,
         }}
         hideParagraphRequiredChrome={false}
       />

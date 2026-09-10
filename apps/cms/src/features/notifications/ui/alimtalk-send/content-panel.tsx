@@ -1,8 +1,9 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { AlimtalkNestedTable, type AlimtalkNestedLine } from '@/shared/ui/alimtalk-nested-table'
-import type {
-  AlimtalkLinkDestinations,
-  AlimtalkTemplateItem,
+import {
+  isAlimtalkExtraInfoMessageType,
+  type AlimtalkLinkDestinations,
+  type AlimtalkTemplateItem,
 } from '@/features/notifications/model/alimtalk-template/types'
 import './content-panel.css'
 
@@ -89,15 +90,18 @@ export function ContentPanel({ template }: ContentPanelProps) {
   const showEmphasis = template.emphasisType === 'TEXT'
   const showImage = template.emphasisType === 'IMAGE'
   const showItemList = template.emphasisType === 'ITEM_LIST'
+  const showExtraInfo = isAlimtalkExtraInfoMessageType(template.messageType)
 
   const contentTable = (
     <DetailInfoForm title="템플릿 내용" hideHeader mode="view">
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field label="내용" fullRow view={template.content} />
       </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field label="부가 정보" fullRow view={template.extraInfo || '-'} />
-      </DetailInfoForm.Row>
+      {showExtraInfo ? (
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field label="부가 정보" fullRow view={template.extraInfo || '-'} />
+        </DetailInfoForm.Row>
+      ) : null}
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="버튼"

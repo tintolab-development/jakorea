@@ -18,11 +18,13 @@ export const ADMIN_NOTICE_CATEGORY_FILTER_OPTIONS: {
   { label: '서류 심사 결과', value: '서류 심사 결과' },
 ]
 
-/** 등록/편집 폼용: 실제 카테고리만 */
+/**
+ * @deprecated 작성 폼은 GET notice-categories만 사용. 목록 필터·카테고리 관리 mock 초기값용.
+ */
 export const ADMIN_NOTICE_CATEGORY_OPTIONS: { label: string; value: Notice['category'] }[] =
   ADMIN_NOTICE_CATEGORY_FILTER_OPTIONS.filter((o): o is { label: string; value: Notice['category'] } => o.value !== 'ALL')
 
-/** 카테고리 관리 모달 초기 행 — mock 필터 옵션과 동일 라벨 */
+/** 카테고리 관리 모달 초기 행 — mock 필터 옵션과 동일 라벨 (원격 API 미사용 시) */
 export function createInitialNoticeCategoryRows(): NoticeCategoryRow[] {
   return ADMIN_NOTICE_CATEGORY_OPTIONS.map((o, i) => ({
     id: `notice-cat-${i}`,

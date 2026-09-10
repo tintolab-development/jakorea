@@ -10,16 +10,37 @@
  * 파일 첨부 생성 요청. 이미 생성된 fileObject를 특정 업무 리소스에 연결합니다.
  */
 export interface FileAttachmentCreateRequest {
-  /** 파일 객체 ID */
-  fileObjectId?: number;
-  /** 첨부 대상 도메인 */
-  ownerDomain?: string;
-  /** 첨부 대상 리소스 유형 */
-  ownerType?: string;
-  /** 첨부 대상 리소스 ID */
-  ownerId?: number;
-  /** 첨부 유형 */
-  attachmentType?: string;
-  /** 화면 표시 순서 */
+  /**
+     * 파일 객체 ID
+     * @minimum 1
+     */
+  fileObjectId: number;
+  /**
+     * 첨부 대상 도메인
+     * @minLength 0
+     * @maxLength 80
+     */
+  ownerDomain: string;
+  /**
+     * 첨부 대상 리소스 유형
+     * @minLength 0
+     * @maxLength 80
+     */
+  ownerType: string;
+  /**
+     * 첨부 대상 리소스 ID
+     * @minimum 1
+     */
+  ownerId: number;
+  /**
+     * 첨부 유형
+     * @minLength 0
+     * @maxLength 80
+     */
+  attachmentType: string;
+  /**
+     * 화면 표시 순서
+     * @minimum 0
+     */
   displayOrder?: number;
 }

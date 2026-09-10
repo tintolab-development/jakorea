@@ -16,9 +16,12 @@ export interface NotificationDeliveryResponse {
   recipientContactMasked?: string;
   templateCodeSnapshot?: string;
   deliveryStatus?: string;
+  /** 요청일시. 목록 기본 기간 필터 축. */
   requestedAt?: string;
+  /** 실제 발송 시각. requestedAt으로 대체하지 않음. 미발송이면 null. */
   sentAt?: string;
   failedAt?: string;
+  /** 발송 실패 사유 문자열. 성공 시 null. */
   failedReason?: string;
   providerRequestId?: string;
   providerMessageId?: string;
@@ -27,10 +30,30 @@ export interface NotificationDeliveryResponse {
   confirmedAt?: string;
   providerStatusUpdatedAt?: string;
   providerChannelType?: string;
+  /** 발송상태. ALIMTALK·EMAIL 동일. REQUESTED|SCHEDULED|WAITED|IN_PROGRESS|SENT|SEND_FAILED|CANCELED|UNKNOWN */
   sendStatus?: string;
+  /** 수신상태. ALIMTALK·EMAIL 동일. REQUESTED|CONFIRM_WAITED|WAITED|SCHEDULED|IN_PROGRESS|SENT|SEND_FAILED|DELIVERED|DELIVERY_FAILED|CANCELED|UNKNOWN */
   receiptStatus?: string;
+  /** 수신/배달 시각. openedAt으로 대체하지 않음. */
   deliveredAt?: string;
+  /** 읽음 시각. 읽음 여부 표시용만. */
   openedAt?: string;
   providerResultCode?: string;
   providerResultMessage?: string;
+  sendTiming?: string;
+  senderDisplayName?: string;
+  senderKey?: string;
+  recipientName?: string;
+  /** 템플릿 표시명. EMAIL 메일 제목(renderedTitle)과 다름 — 제목 위장 금지. */
+  templateDisplayName?: string;
+  /** 목록용 치환 제목 스냅샷. EMAIL「메일 제목」SSOT. 우선순위: rendered_preview_json.renderedTitle → titleTemplate. 없으면 null. */
+  renderedTitle?: string;
+  /** 목록용 본문 요약(plain, truncate). SMS「문자 내용」SSOT. 우선순위: renderedContent → contentTemplate. HTML은 태그 제거. ALIMTALK는 null 허용. */
+  renderedContentPreview?: string;
+  /** 치환 전 제목 스냅샷. FE fallback: renderedTitle || titleTemplate. */
+  titleTemplate?: string;
+  /** 치환 전 본문 스냅샷. 목록에서는 대용량 회피 위해 보통 null — 전문은 상세 preview. */
+  contentTemplate?: string;
+  /** SMS|LMS|MMS. SMS 목록 메시지 유형. preview/스냅샷 또는 템플릿 sms_message_type. */
+  smsMessageType?: string;
 }

@@ -43,6 +43,10 @@ export type UjatVolunteerAssignmentProgressRow = {
   attendance: UjatVolunteerAttendanceDisplay
   educationPlanSubmitted: boolean
   educationLogSubmitted: boolean
+  /** Wave11 — 교육계획서 form response id */
+  educationPlanFormResponseId?: number
+  /** Wave11 — 교육일지 form response id */
+  educationLogFormResponseId?: number
   educationProgress: UjatVolunteerEducationProgressDisplay
   /** 봉사 활동 포기 상태(역할·보기 등 제한). 배정 학급 `활동 포기`와 별도일 수 있음 */
   isWithdrawn: boolean

@@ -248,8 +248,9 @@ export function InstructorRegisterModal({
         persistMode="localOnly"
         restoreStoredDraft={false}
         onClose={() => setJaGradeEvaluationOpen(false)}
-        onComplete={({ grade }) => {
+        onComplete={({ grade, jaEvaluation }) => {
           form.setFieldValue('jaEvaluationGrade', grade)
+          form.setFieldValue('jaEvaluationInput', jaEvaluation)
           setJaGradeEvaluationOpen(false)
         }}
       />

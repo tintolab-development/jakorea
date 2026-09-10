@@ -8,7 +8,7 @@
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .app-radio-group .ant-radio-wrapper {
@@ -26,7 +26,7 @@
   animation: none !important;
 }
 
-/* ----- large (기본): 원 20px, 본문 16px, 원–텍스트 8px ----- */
+/* ----- large (기본): 원 20px, 본문 16px, 원–텍스트 8px, 옵션 간격 16px ----- */
 .app-radio-group--large.ant-radio-group {
   font-size: 16px;
 }
@@ -35,7 +35,7 @@
 .app-radio--large.ant-radio-wrapper {
   display: inline-flex;
   align-items: center !important;
-  gap: 8px;
+  gap: 8px !important;
   margin-inline-end: 0;
   font-size: 16px;
   font-weight: 500;
@@ -65,21 +65,27 @@
   transform: translate(-50%, -50%) scale(1) !important;
 }
 
-/* ----- medium: 원 18px, 본문 14px, 원–텍스트 6px ----- */
+/* ----- medium: 원 18px, 본문 15px, 원–텍스트 6px ----- */
 .app-radio-group--medium.ant-radio-group {
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .app-radio-group--medium .ant-radio-wrapper,
 .app-radio--medium.ant-radio-wrapper {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  align-items: center !important;
+  gap: 6px !important;
   margin-inline-end: 0;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
+}
+
+.app-radio-group--medium .ant-radio-wrapper .ant-radio,
+.app-radio--medium.ant-radio-wrapper .ant-radio {
+  width: 18px;
+  height: 18px;
 }
 
 .app-radio-group--medium .ant-radio-wrapper .ant-radio .ant-radio-inner,
@@ -233,6 +239,7 @@
 .app-radio--medium.ant-radio-wrapper span.ant-radio + * {
   padding-inline-start: 0 !important;
   padding-inline-end: 0 !important;
+  margin-inline-start: 0 !important;
 }
 
 .app-radio-group--large .ant-radio-wrapper span.ant-radio,

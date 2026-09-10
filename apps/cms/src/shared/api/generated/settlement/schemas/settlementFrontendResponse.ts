@@ -38,6 +38,7 @@ export interface SettlementFrontendResponse {
   calculationStatus?: string;
   statementStatus?: string;
   paymentStatus?: string;
+  paidAt?: string;
   documentGeneratedAt?: string;
   notes?: string;
   attachments?: SettlementFrontendAttachmentResponse[];

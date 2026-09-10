@@ -15,6 +15,7 @@ import './kakao-alimtalk-page.css'
 const TAB_PARAM = 'tab'
 const SEND_MODAL_PARAM = 'modal'
 const SEND_MODAL_VALUE = 'send'
+const SEND_TEMPLATE_PARAM = 'templateId'
 
 const TAB_ITEMS: { key: KakaoAlimtalkTabKey; label: string }[] = [
   { key: 'template', label: '알림톡 템플릿' },
@@ -30,6 +31,7 @@ export function KakaoAlimtalkPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
   const sendOpen = searchParams.get(SEND_MODAL_PARAM) === SEND_MODAL_VALUE
+  const sendTemplateId = searchParams.get(SEND_TEMPLATE_PARAM) ?? undefined
 
   const handleTabChange = useCallback(
     (key: string) => {
@@ -55,17 +57,34 @@ export function KakaoAlimtalkPage() {
       prev => {
         const next = new URLSearchParams(prev)
         next.set(SEND_MODAL_PARAM, SEND_MODAL_VALUE)
+        next.delete(SEND_TEMPLATE_PARAM)
         return next
       },
       { replace: false }
     )
   }, [setSearchParams])
 
+  const handleUseTemplate = useCallback(
+    (templateId: string) => {
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set(SEND_MODAL_PARAM, SEND_MODAL_VALUE)
+          next.set(SEND_TEMPLATE_PARAM, templateId)
+          return next
+        },
+        { replace: false }
+      )
+    },
+    [setSearchParams]
+  )
+
   const handleCloseSend = useCallback(() => {
     setSearchParams(
       prev => {
         const next = new URLSearchParams(prev)
         next.delete(SEND_MODAL_PARAM)
+        next.delete(SEND_TEMPLATE_PARAM)
         return next
       },
       { replace: true }
@@ -87,11 +106,15 @@ export function KakaoAlimtalkPage() {
         }
       />
       {activeKey === 'template' ? (
-        <AlimtalkTemplateList />
+        <AlimtalkTemplateList onUseTemplate={handleUseTemplate} />
       ) : (
         <AlimtalkSendHistoryPage />
       )}
-      <SendFullpageModal open={sendOpen} onClose={handleCloseSend} />
+      <SendFullpageModal
+        open={sendOpen}
+        onClose={handleCloseSend}
+        initialTemplateId={sendTemplateId}
+      />
     </div>
   )
 }

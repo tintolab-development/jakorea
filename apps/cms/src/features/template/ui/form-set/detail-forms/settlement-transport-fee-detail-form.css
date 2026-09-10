@@ -1,4 +1,7 @@
 .settlement-transport-fee-detail-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   width: 100%;
   min-width: 0;
 }
@@ -12,12 +15,6 @@
   min-height: 64px;
   max-height: 64px;
   box-sizing: border-box;
-}
-
-.settlement-transport-fee-detail-form .detail-info-form__row--single .detail-info-form__field {
-  height: auto;
-  min-height: 64px;
-  max-height: none;
 }
 
 .settlement-transport-fee-detail-form .detail-info-form__field-label,
@@ -42,15 +39,7 @@
   flex-wrap: wrap;
 }
 
-.settlement-transport-fee-detail-form__radios.app-radio-group {
-  gap: 16px;
-}
-
-.settlement-transport-fee-detail-form__view-muted {
-  color: #85969d;
-  opacity: 0.6;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
+.settlement-transport-fee-detail-form__total-block {
+  width: 100%;
+  min-width: 0;
 }

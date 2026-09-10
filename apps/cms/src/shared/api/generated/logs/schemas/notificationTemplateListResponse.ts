@@ -11,4 +11,7 @@ import type { NotificationTemplateResponse } from './notificationTemplateRespons
 export interface NotificationTemplateListResponse {
   items?: NotificationTemplateResponse[];
   params?: NotificationTemplateListResponseParams;
+  total?: number;
+  page?: number;
+  size?: number;
 }

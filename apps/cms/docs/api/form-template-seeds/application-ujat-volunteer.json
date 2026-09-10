@@ -56,7 +56,7 @@
             },
             {
               "kind": "text",
-              "value": "- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 프로그램 종료로부터 1년 보관 후 폐기"
+              "value": "이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기"
             }
           ]
         ],
@@ -124,7 +124,7 @@
             },
             {
               "kind": "text",
-              "value": "해당 프로그램이 진행되는 기간"
+              "value": "동의일로부터 3년 보관 후 폐기"
             }
           ]
         ],
@@ -194,58 +194,72 @@
       {
         "id": "ujat-program-application-volunteer-seed-preferred-region",
         "kind": "single_item",
-        "variant": "horizontal_table",
+        "variant": "multiple_choice",
         "requiredMark": true,
         "paragraphTitle": "희망 교육 활동 지역",
         "paragraphDescription": "금요일 오전 활동이 가능한 지역을 선택해 주세요.",
         "participatesInTitleNumbering": true,
-        "tableFlavor": "text",
-        "columnHeaders": [
-          "항목",
-          "내용"
-        ],
-        "dataRows": [
-          [
-            "",
-            ""
-          ]
-        ],
-        "columnFields": [],
-        "fieldDataRows": [],
-        "bottomText": "",
-        "showBottomText": false,
-        "showBottomConsent": false,
-        "bottomConsent": "agree",
         "answerRequired": true,
-        "idTypeWithInput": null
+        "allowMultiple": false,
+        "items": [
+          {
+            "id": "ujat-program-application-volunteer-preferred-region-seoul",
+            "label": "서울"
+          },
+          {
+            "id": "ujat-program-application-volunteer-preferred-region-gyeonggi-south",
+            "label": "경기(남부)"
+          },
+          {
+            "id": "ujat-program-application-volunteer-preferred-region-incheon",
+            "label": "인천"
+          },
+          {
+            "id": "ujat-program-application-volunteer-preferred-region-daejeon",
+            "label": "대전"
+          },
+          {
+            "id": "ujat-program-application-volunteer-preferred-region-daegu",
+            "label": "대구"
+          },
+          {
+            "id": "ujat-program-application-volunteer-preferred-region-busan",
+            "label": "부산"
+          },
+          {
+            "id": "ujat-program-application-volunteer-preferred-region-gwangju",
+            "label": "광주"
+          },
+          {
+            "id": "ujat-program-application-volunteer-preferred-region-jeonbuk-jeonju",
+            "label": "전북(전주)"
+          }
+        ],
+        "selectedPreviewSingleId": null,
+        "selectedPreviewMultipleIds": []
       },
       {
         "id": "ujat-program-application-volunteer-seed-education-experience",
         "kind": "single_item",
-        "variant": "horizontal_table",
+        "variant": "multiple_choice",
         "requiredMark": true,
         "paragraphTitle": "교육 진행 경험 여부",
         "paragraphDescription": "교육봉사, 강사 아르바이트 등 교육 진행 경험 여부를 선택해 주세요.",
         "participatesInTitleNumbering": true,
-        "tableFlavor": "text",
-        "columnHeaders": [
-          "항목",
-          "내용"
-        ],
-        "dataRows": [
-          [
-            "",
-            ""
-          ]
-        ],
-        "columnFields": [],
-        "fieldDataRows": [],
-        "bottomText": "",
-        "showBottomText": false,
-        "showBottomConsent": false,
-        "bottomConsent": "agree",
         "answerRequired": true,
-        "idTypeWithInput": null
+        "allowMultiple": false,
+        "items": [
+          {
+            "id": "ujat-program-application-volunteer-education-experience-yes",
+            "label": "있음"
+          },
+          {
+            "id": "ujat-program-application-volunteer-education-experience-no",
+            "label": "없음"
+          }
+        ],
+        "selectedPreviewSingleId": null,
+        "selectedPreviewMultipleIds": []
       },
       {
         "id": "ujat-program-application-volunteer-seed-interview-schedule",
@@ -281,7 +295,7 @@
         "variant": "horizontal_table",
         "requiredMark": true,
         "paragraphTitle": "자유 작성 항목",
-        "paragraphDescription": "1~4번 문항은 자유롭게 작성가능합니다.",
+        "paragraphDescription": "1~4번 문항은 자유롭게 작성 가능합니다.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [

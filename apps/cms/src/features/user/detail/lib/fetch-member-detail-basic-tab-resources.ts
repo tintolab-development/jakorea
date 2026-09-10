@@ -26,7 +26,10 @@ export async function fetchMemberDetailBasicTabResources(
   params: {
     detailTabActive: boolean
     membersRemote: boolean
-    displayUser: Pick<User, 'role' | 'memberId' | 'organizationId' | 'id'> | null | undefined
+    displayUser: Pick<
+      User,
+      'role' | 'memberId' | 'organizationId' | 'adminAccountId' | 'id'
+    > | null | undefined
     mode: 'default' | 'permission'
     showConsentAgreement: boolean
     showSchoolAffiliatedTeachers: boolean
@@ -44,12 +47,15 @@ export async function fetchMemberDetailBasicTabResources(
     organizationId,
     currentUser,
   } = params
-  if (!detailTabActive || !membersRemote || mode === 'permission' || !displayUser) return
+  if (!detailTabActive || !membersRemote || !displayUser) return
 
   const memberId = displayUser.memberId
+  const isPermissionMode = mode === 'permission'
   const tasks: Promise<unknown>[] = []
 
+  // 권한 승인 상세는 신청 스냅샷 우선 — consent·소속교사는 생략, 관리자 코멘트만 조회
   if (
+    !isPermissionMode &&
     shouldFetchMemberConsentRecords({
       role: displayUser.role,
       memberId,
@@ -60,7 +66,7 @@ export async function fetchMemberDetailBasicTabResources(
     tasks.push(fetchMemberConsentRecordsQuery(queryClient, memberId))
   }
 
-  if (showSchoolAffiliatedTeachers) {
+  if (!isPermissionMode && showSchoolAffiliatedTeachers) {
     tasks.push(
       fetchAffiliatedTeachersQuery(queryClient, {
         memberId: memberId ?? undefined,

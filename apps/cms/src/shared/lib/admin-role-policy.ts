@@ -12,6 +12,7 @@ export type { AdminRoleCode }
 export type AdminActionKind =
   | 'view'
   | 'write'
+  | 'dashboardWrite'
   | 'delete'
   | 'approve'
   | 'send'
@@ -54,6 +55,8 @@ export function parseAdminRoleCode(value: string | undefined | null): AdminRoleC
   if ((ADMIN_ROLE_CODES as readonly string[]).includes(upper)) {
     return upper as AdminRoleCode
   }
+  // OpenAPI 관리자 계정 권한 코드 MIDDLE(중간 관리자) → 세션 정책 PARTNER
+  if (upper === 'MIDDLE') return 'PARTNER'
   return null
 }
 
@@ -147,6 +150,10 @@ export function canAdminAction(input: {
     case 'send':
     case 'download':
       return roleCode !== 'VIEWER'
+    case 'dashboardWrite':
+      // DASHBOARD_WRITE: 본인 레이아웃·설정만. PROGRAM_WRITE와 묶지 않음.
+      // V80: MASTER / PM / VIEWER. PARTNER는 서버 미부여.
+      return roleCode === 'MASTER' || roleCode === 'PM' || roleCode === 'VIEWER'
     case 'approve':
       if (screen === 'admin-permission-approval' || screen === 'permission-settings') {
         return roleCode === 'MASTER'

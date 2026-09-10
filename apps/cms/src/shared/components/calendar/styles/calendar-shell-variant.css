@@ -12,7 +12,7 @@
   --calendar-shell-radius: 12px;
   --calendar-shell-border: 1px solid #d4d4d4;
   --calendar-shell-shadow: none;
-  --calendar-mini-shell-radius: 12px;
+  --calendar-mini-shell-radius: 16px;
 }
 
 /* 프로그램 목록 캘린더뷰 — 미니·메인·검색·우측 목록 모두 shadow shell */
@@ -20,5 +20,5 @@
   --calendar-shell-radius: 16px;
   --calendar-shell-border: none;
   --calendar-shell-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
-  --calendar-mini-shell-radius: 12px;
+  --calendar-mini-shell-radius: 16px;
 }
