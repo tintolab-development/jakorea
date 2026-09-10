@@ -19,9 +19,12 @@ export function resolveDashboardShortcutItems(
   const localById = new Map(SHORTCUT_ITEMS.map(item => [item.id, item]))
 
   if (!apiItems || apiItems.length === 0) {
-    return SHORTCUT_ITEMS.filter(item => isShortcutItemEnabled(shortcutEnabled, item.id))
+    return SHORTCUT_ITEMS.filter(
+      item => !item.settingsDisabled && isShortcutItemEnabled(shortcutEnabled, item.id)
+    )
   }
 
+  /** remote: 서버 useYn + preferences 그대로 (FE settingsDisabled 필터 없음) */
   return apiItems
     .filter(item => item.useYn && isShortcutItemEnabled(shortcutEnabled, item.id))
     .map(item => {
