@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MailTemplateItem, MailTemplateFormMode } from '@/features/notifications/model/mail-template/types'
-import { validateMailSenderEmail } from '@/features/notifications/model/mail-template/sender-email'
+import {
+  MAIL_TEMPLATE_DEFAULT_SENDER_EMAIL,
+  validateMailSenderEmail,
+  type ValidateMailSenderEmailOptions,
+} from '@/features/notifications/model/mail-template/sender-email'
 import {
   sanitizeMailTemplateNameInput,
   validateMailTemplateName,
@@ -23,7 +27,7 @@ export type MailTemplateFormDraft = {
 const EMPTY_DRAFT: MailTemplateFormDraft = {
   templateName: '',
   senderName: '',
-  senderEmail: '',
+  senderEmail: MAIL_TEMPLATE_DEFAULT_SENDER_EMAIL,
   ...EMPTY_MAIL_COMPOSE,
   newFiles: [],
   removedAttachmentIds: [],
@@ -67,7 +71,10 @@ export function useMailTemplateForm(
   )
 
   const [templateName, setTemplateNameState] = useState(initialDraft.templateName)
-  const [senderName, setSenderName] = useState(initialDraft.senderName)
+  /** 입력 중 부모 리렌더 방지 — 제목(subject)과 동일하게 ref만 갱신 */
+  const senderNameRef = useRef(initialDraft.senderName)
+  const [senderNameSeed, setSenderNameSeed] = useState(initialDraft.senderName)
+  const [senderNameEpoch, setSenderNameEpoch] = useState(0)
   const [senderEmail, setSenderEmail] = useState(initialDraft.senderEmail)
   const compose = useMailCompose(open, resetKey, composeInitial)
 
@@ -79,11 +86,21 @@ export function useMailTemplateForm(
     setTemplateNameState(sanitizeMailTemplateNameInput(value))
   }, [])
 
+  const setSenderName = useCallback((value: string) => {
+    senderNameRef.current = value
+  }, [])
+
+  const replaceSenderName = useCallback((value: string) => {
+    senderNameRef.current = value
+    setSenderNameSeed(value)
+    setSenderNameEpoch(key => key + 1)
+  }, [])
+
   useEffect(() => {
     if (!open) return
     const next = draftFromTemplate(mode === 'edit' ? template : null)
     setTemplateNameState(next.templateName)
-    setSenderName(next.senderName)
+    replaceSenderName(next.senderName)
     setSenderEmail(next.senderEmail)
     // 모달 open / 편집 대상 변경 시에만 리셋
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional session-scoped reset
@@ -92,7 +109,7 @@ export function useMailTemplateForm(
   const getDraft = useCallback((): MailTemplateFormDraft => {
     return {
       templateName: templateName.trim(),
-      senderName: senderName.trim(),
+      senderName: senderNameRef.current.trim(),
       senderEmail: senderEmail.trim(),
       subject: compose.getSubject().trim(),
       bodyHtml: compose.getBodyHtml(),
@@ -100,18 +117,21 @@ export function useMailTemplateForm(
       newFiles: compose.getNewFiles(),
       removedAttachmentIds: compose.getRemovedAttachmentIds(),
     }
-  }, [compose, senderEmail, senderName, templateName])
+  }, [compose, senderEmail, templateName])
 
-  const validateRequired = useCallback((): string | null => {
-    const draft = getDraft()
-    const nameError = validateMailTemplateName(draft.templateName)
-    if (nameError) return nameError
-    const senderError = validateMailSenderEmail(draft.senderEmail)
-    if (senderError) return senderError
-    if (!draft.subject) return '제목을 작성하세요.'
-    if (!draft.bodyHtml) return '내용을 작성하세요.'
-    return null
-  }, [getDraft])
+  const validateRequired = useCallback(
+    (senderOptions?: ValidateMailSenderEmailOptions): string | null => {
+      const draft = getDraft()
+      const nameError = validateMailTemplateName(draft.templateName)
+      if (nameError) return nameError
+      const senderError = validateMailSenderEmail(draft.senderEmail, senderOptions)
+      if (senderError) return senderError
+      if (!draft.subject) return '제목을 작성하세요.'
+      if (!draft.bodyHtml) return '내용을 작성하세요.'
+      return null
+    },
+    [getDraft]
+  )
 
   return {
     editor: compose.editor,
@@ -119,12 +139,14 @@ export function useMailTemplateForm(
     subjectMaxLength: compose.subjectMaxLength,
     subjectInputRef: compose.subjectInputRef,
     templateName,
-    senderName,
+    senderNameSeed,
+    senderNameEpoch,
     senderEmail,
     subject: compose.subject,
     attachmentFileNames: compose.attachmentFileNames,
     setTemplateName,
     setSenderName,
+    replaceSenderName,
     setSenderEmail,
     handleSubjectChange: compose.handleSubjectChange,
     rememberSubjectRange: compose.rememberSubjectRange,
